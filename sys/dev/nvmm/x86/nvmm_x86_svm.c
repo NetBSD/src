@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.29 2019/02/21 12:17:52 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.30 2019/02/23 08:19:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.29 2019/02/21 12:17:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.30 2019/02/23 08:19:16 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1468,265 +1468,7 @@ svm_vcpu_msr_allow(uint8_t *bitmap, uint64_t msr, bool read, bool write)
 	}
 }
 
-static void
-svm_asid_alloc(struct nvmm_cpu *vcpu)
-{
-	struct svm_cpudata *cpudata = vcpu->cpudata;
-	struct vmcb *vmcb = cpudata->vmcb;
-	size_t i, oct, bit;
 
-	mutex_enter(&svm_asidlock);
-
-	for (i = 0; i < svm_maxasid; i++) {
-		oct = i / 8;
-		bit = i % 8;
-
-		if (svm_asidmap[oct] & __BIT(bit)) {
-			continue;
-		}
-
-		svm_asidmap[oct] |= __BIT(bit);
-		vmcb->ctrl.guest_asid = i;
-		mutex_exit(&svm_asidlock);
-		return;
-	}
-
-	/*
-	 * No free ASID. Use the last one, which is shared and requires
-	 * special TLB handling.
-	 */
-	cpudata->shared_asid = true;
-	vmcb->ctrl.guest_asid = svm_maxasid - 1;
-	mutex_exit(&svm_asidlock);
-}
-
-static void
-svm_asid_free(struct nvmm_cpu *vcpu)
-{
-	struct svm_cpudata *cpudata = vcpu->cpudata;
-	struct vmcb *vmcb = cpudata->vmcb;
-	size_t oct, bit;
-
-	if (cpudata->shared_asid) {
-		return;
-	}
-
-	oct = vmcb->ctrl.guest_asid / 8;
-	bit = vmcb->ctrl.guest_asid % 8;
-
-	mutex_enter(&svm_asidlock);
-	svm_asidmap[oct] &= ~__BIT(bit);
-	mutex_exit(&svm_asidlock);
-}
-
-static void
-svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
-{
-	struct svm_cpudata *cpudata = vcpu->cpudata;
-	struct vmcb *vmcb = cpudata->vmcb;
-
-	/* Allow reads/writes of Control Registers. */
-	vmcb->ctrl.intercept_cr = 0;
-
-	/* Allow reads/writes of Debug Registers. */
-	vmcb->ctrl.intercept_dr = 0;
-
-	/* Allow exceptions 0 to 31. */
-	vmcb->ctrl.intercept_vec = 0;
-
-	/*
-	 * Allow:
-	 *  - SMI [smm interrupts]
-	 *  - VINTR [virtual interrupts]
-	 *  - CR0_SPEC [CR0 writes changing other fields than CR0.TS or CR0.MP]
-	 *  - RIDTR [reads of IDTR]
-	 *  - RGDTR [reads of GDTR]
-	 *  - RLDTR [reads of LDTR]
-	 *  - RTR [reads of TR]
-	 *  - WIDTR [writes of IDTR]
-	 *  - WGDTR [writes of GDTR]
-	 *  - WLDTR [writes of LDTR]
-	 *  - WTR [writes of TR]
-	 *  - RDTSC [rdtsc instruction]
-	 *  - PUSHF [pushf instruction]
-	 *  - POPF [popf instruction]
-	 *  - IRET [iret instruction]
-	 *  - INTN [int $n instructions]
-	 *  - INVD [invd instruction]
-	 *  - PAUSE [pause instruction]
-	 *  - INVLPG [invplg instruction]
-	 *  - TASKSW [task switches]
-	 *
-	 * Intercept the rest below.
-	 */
-	vmcb->ctrl.intercept_misc1 =
-	    VMCB_CTRL_INTERCEPT_INTR |
-	    VMCB_CTRL_INTERCEPT_NMI |
-	    VMCB_CTRL_INTERCEPT_INIT |
-	    VMCB_CTRL_INTERCEPT_RDPMC |
-	    VMCB_CTRL_INTERCEPT_CPUID |
-	    VMCB_CTRL_INTERCEPT_RSM |
-	    VMCB_CTRL_INTERCEPT_HLT |
-	    VMCB_CTRL_INTERCEPT_INVLPGA |
-	    VMCB_CTRL_INTERCEPT_IOIO_PROT |
-	    VMCB_CTRL_INTERCEPT_MSR_PROT |
-	    VMCB_CTRL_INTERCEPT_FERR_FREEZE |
-	    VMCB_CTRL_INTERCEPT_SHUTDOWN;
-
-	/*
-	 * Allow:
-	 *  - ICEBP [icebp instruction]
-	 *  - WBINVD [wbinvd instruction]
-	 *  - WCR_SPEC(0..15) [writes of CR0-15, received after instruction]
-	 *
-	 * Intercept the rest below.
-	 */
-	vmcb->ctrl.intercept_misc2 =
-	    VMCB_CTRL_INTERCEPT_VMRUN |
-	    VMCB_CTRL_INTERCEPT_VMMCALL |
-	    VMCB_CTRL_INTERCEPT_VMLOAD |
-	    VMCB_CTRL_INTERCEPT_VMSAVE |
-	    VMCB_CTRL_INTERCEPT_STGI |
-	    VMCB_CTRL_INTERCEPT_CLGI |
-	    VMCB_CTRL_INTERCEPT_SKINIT |
-	    VMCB_CTRL_INTERCEPT_RDTSCP |
-	    VMCB_CTRL_INTERCEPT_MONITOR |
-	    VMCB_CTRL_INTERCEPT_MWAIT |
-	    VMCB_CTRL_INTERCEPT_XSETBV;
-
-	/* Intercept all I/O accesses. */
-	memset(cpudata->iobm, 0xFF, IOBM_SIZE);
-	vmcb->ctrl.iopm_base_pa = cpudata->iobm_pa;
-
-	/*
-	 * Allow:
-	 *  - EFER [read]
-	 *  - STAR [read, write]
-	 *  - LSTAR [read, write]
-	 *  - CSTAR [read, write]
-	 *  - SFMASK [read, write]
-	 *  - KERNELGSBASE [read, write]
-	 *  - SYSENTER_CS [read, write]
-	 *  - SYSENTER_ESP [read, write]
-	 *  - SYSENTER_EIP [read, write]
-	 *  - FSBASE [read, write]
-	 *  - GSBASE [read, write]
-	 *  - PAT [read, write]
-	 *  - TSC [read]
-	 *
-	 * Intercept the rest.
-	 */
-	memset(cpudata->msrbm, 0xFF, MSRBM_SIZE);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_EFER, true, false);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_STAR, true, true);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_LSTAR, true, true);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_CSTAR, true, true);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_SFMASK, true, true);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_KERNELGSBASE, true, true);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_SYSENTER_CS, true, true);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_SYSENTER_ESP, true, true);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_SYSENTER_EIP, true, true);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_FSBASE, true, true);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_GSBASE, true, true);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_CR_PAT, true, true);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_TSC, true, false);
-	vmcb->ctrl.msrpm_base_pa = cpudata->msrbm_pa;
-
-	/* Generate ASID. */
-	svm_asid_alloc(vcpu);
-
-	/* Virtual TPR. */
-	vmcb->ctrl.v = VMCB_CTRL_V_INTR_MASKING;
-
-	/* Enable Nested Paging. */
-	vmcb->ctrl.enable1 = VMCB_CTRL_ENABLE_NP;
-	vmcb->ctrl.n_cr3 = mach->vm->vm_map.pmap->pm_pdirpa[0];
-
-	/* Must always be set. */
-	vmcb->state.efer = EFER_SVME;
-	cpudata->gxcr0 = XCR0_X87;
-
-	/* Init XSAVE header. */
-	cpudata->gfpu.xsh_xstate_bv = svm_xcr0_mask;
-	cpudata->gfpu.xsh_xcomp_bv = 0;
-
-	/* Set guest TSC to zero, more or less. */
-	cpudata->tsc_offset = -cpu_counter();
-
-	/* These MSRs are static. */
-	cpudata->star = rdmsr(MSR_STAR);
-	cpudata->lstar = rdmsr(MSR_LSTAR);
-	cpudata->cstar = rdmsr(MSR_CSTAR);
-	cpudata->sfmask = rdmsr(MSR_SFMASK);
-}
-
-static int
-svm_vcpu_create(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
-{
-	struct svm_cpudata *cpudata;
-	int error;
-
-	/* Allocate the SVM cpudata. */
-	cpudata = (struct svm_cpudata *)uvm_km_alloc(kernel_map,
-	    roundup(sizeof(*cpudata), PAGE_SIZE), 0,
-	    UVM_KMF_WIRED|UVM_KMF_ZERO);
-	vcpu->cpudata = cpudata;
-
-	/* VMCB */
-	error = svm_memalloc(&cpudata->vmcb_pa, (vaddr_t *)&cpudata->vmcb,
-	    VMCB_NPAGES);
-	if (error)
-		goto error;
-
-	/* I/O Bitmap */
-	error = svm_memalloc(&cpudata->iobm_pa, (vaddr_t *)&cpudata->iobm,
-	    IOBM_NPAGES);
-	if (error)
-		goto error;
-
-	/* MSR Bitmap */
-	error = svm_memalloc(&cpudata->msrbm_pa, (vaddr_t *)&cpudata->msrbm,
-	    MSRBM_NPAGES);
-	if (error)
-		goto error;
-
-	/* Init the VCPU info. */
-	svm_vcpu_init(mach, vcpu);
-
-	return 0;
-
-error:
-	if (cpudata->vmcb_pa) {
-		svm_memfree(cpudata->vmcb_pa, (vaddr_t)cpudata->vmcb,
-		    VMCB_NPAGES);
-	}
-	if (cpudata->iobm_pa) {
-		svm_memfree(cpudata->iobm_pa, (vaddr_t)cpudata->iobm,
-		    IOBM_NPAGES);
-	}
-	if (cpudata->msrbm_pa) {
-		svm_memfree(cpudata->msrbm_pa, (vaddr_t)cpudata->msrbm,
-		    MSRBM_NPAGES);
-	}
-	uvm_km_free(kernel_map, (vaddr_t)cpudata,
-	    roundup(sizeof(*cpudata), PAGE_SIZE), UVM_KMF_WIRED);
-	return error;
-}
-
-static void
-svm_vcpu_destroy(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
-{
-	struct svm_cpudata *cpudata = vcpu->cpudata;
-
-	svm_asid_free(vcpu);
-
-	svm_memfree(cpudata->vmcb_pa, (vaddr_t)cpudata->vmcb, VMCB_NPAGES);
-	svm_memfree(cpudata->iobm_pa, (vaddr_t)cpudata->iobm, IOBM_NPAGES);
-	svm_memfree(cpudata->msrbm_pa, (vaddr_t)cpudata->msrbm, MSRBM_NPAGES);
-
-	uvm_km_free(kernel_map, (vaddr_t)cpudata,
-	    roundup(sizeof(*cpudata), PAGE_SIZE), UVM_KMF_WIRED);
-}
 
 #define SVM_SEG_ATTRIB_TYPE		__BITS(4,0)
 #define SVM_SEG_ATTRIB_DPL		__BITS(6,5)
@@ -1737,7 +1479,8 @@ svm_vcpu_destroy(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 #define SVM_SEG_ATTRIB_GRAN		__BIT(11)
 
 static void
-svm_vcpu_setstate_seg(struct nvmm_x64_state_seg *seg, struct vmcb_segment *vseg)
+svm_vcpu_setstate_seg(const struct nvmm_x64_state_seg *seg,
+    struct vmcb_segment *vseg)
 {
 	vseg->selector = seg->selector;
 	vseg->attrib =
@@ -1768,7 +1511,7 @@ svm_vcpu_getstate_seg(struct nvmm_x64_state_seg *seg, struct vmcb_segment *vseg)
 }
 
 static inline bool
-svm_state_tlb_flush(struct vmcb *vmcb, struct nvmm_x64_state *state,
+svm_state_tlb_flush(const struct vmcb *vmcb, const struct nvmm_x64_state *state,
     uint64_t flags)
 {
 	if (flags & NVMM_X64_STATE_CRS) {
@@ -1798,7 +1541,7 @@ svm_state_tlb_flush(struct vmcb *vmcb, struct nvmm_x64_state *state,
 static void
 svm_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 {
-	struct nvmm_x64_state *state = (struct nvmm_x64_state *)data;
+	const struct nvmm_x64_state *state = data;
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 	struct vmcb *vmcb = cpudata->vmcb;
 	struct fxsave *fpustate;
@@ -1869,9 +1612,10 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 	}
 
 	if (flags & NVMM_X64_STATE_MSRS) {
-		/* Bit EFER_SVME is mandatory. */
+		/*
+		 * EFER_SVME is mandatory.
+		 */
 		vmcb->state.efer = state->msrs[NVMM_X64_MSR_EFER] | EFER_SVME;
-
 		vmcb->state.star = state->msrs[NVMM_X64_MSR_STAR];
 		vmcb->state.lstar = state->msrs[NVMM_X64_MSR_LSTAR];
 		vmcb->state.cstar = state->msrs[NVMM_X64_MSR_CSTAR];
@@ -2019,6 +1763,251 @@ svm_vcpu_getstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 		memcpy(&state->fpu, cpudata->gfpu.xsh_fxsave,
 		    sizeof(state->fpu));
 	}
+}
+
+/* -------------------------------------------------------------------------- */
+
+static void
+svm_asid_alloc(struct nvmm_cpu *vcpu)
+{
+	struct svm_cpudata *cpudata = vcpu->cpudata;
+	struct vmcb *vmcb = cpudata->vmcb;
+	size_t i, oct, bit;
+
+	mutex_enter(&svm_asidlock);
+
+	for (i = 0; i < svm_maxasid; i++) {
+		oct = i / 8;
+		bit = i % 8;
+
+		if (svm_asidmap[oct] & __BIT(bit)) {
+			continue;
+		}
+
+		svm_asidmap[oct] |= __BIT(bit);
+		vmcb->ctrl.guest_asid = i;
+		mutex_exit(&svm_asidlock);
+		return;
+	}
+
+	/*
+	 * No free ASID. Use the last one, which is shared and requires
+	 * special TLB handling.
+	 */
+	cpudata->shared_asid = true;
+	vmcb->ctrl.guest_asid = svm_maxasid - 1;
+	mutex_exit(&svm_asidlock);
+}
+
+static void
+svm_asid_free(struct nvmm_cpu *vcpu)
+{
+	struct svm_cpudata *cpudata = vcpu->cpudata;
+	struct vmcb *vmcb = cpudata->vmcb;
+	size_t oct, bit;
+
+	if (cpudata->shared_asid) {
+		return;
+	}
+
+	oct = vmcb->ctrl.guest_asid / 8;
+	bit = vmcb->ctrl.guest_asid % 8;
+
+	mutex_enter(&svm_asidlock);
+	svm_asidmap[oct] &= ~__BIT(bit);
+	mutex_exit(&svm_asidlock);
+}
+
+static void
+svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
+{
+	struct svm_cpudata *cpudata = vcpu->cpudata;
+	struct vmcb *vmcb = cpudata->vmcb;
+
+	/* Allow reads/writes of Control Registers. */
+	vmcb->ctrl.intercept_cr = 0;
+
+	/* Allow reads/writes of Debug Registers. */
+	vmcb->ctrl.intercept_dr = 0;
+
+	/* Allow exceptions 0 to 31. */
+	vmcb->ctrl.intercept_vec = 0;
+
+	/*
+	 * Allow:
+	 *  - SMI [smm interrupts]
+	 *  - VINTR [virtual interrupts]
+	 *  - CR0_SPEC [CR0 writes changing other fields than CR0.TS or CR0.MP]
+	 *  - RIDTR [reads of IDTR]
+	 *  - RGDTR [reads of GDTR]
+	 *  - RLDTR [reads of LDTR]
+	 *  - RTR [reads of TR]
+	 *  - WIDTR [writes of IDTR]
+	 *  - WGDTR [writes of GDTR]
+	 *  - WLDTR [writes of LDTR]
+	 *  - WTR [writes of TR]
+	 *  - RDTSC [rdtsc instruction]
+	 *  - PUSHF [pushf instruction]
+	 *  - POPF [popf instruction]
+	 *  - IRET [iret instruction]
+	 *  - INTN [int $n instructions]
+	 *  - INVD [invd instruction]
+	 *  - PAUSE [pause instruction]
+	 *  - INVLPG [invplg instruction]
+	 *  - TASKSW [task switches]
+	 *
+	 * Intercept the rest below.
+	 */
+	vmcb->ctrl.intercept_misc1 =
+	    VMCB_CTRL_INTERCEPT_INTR |
+	    VMCB_CTRL_INTERCEPT_NMI |
+	    VMCB_CTRL_INTERCEPT_INIT |
+	    VMCB_CTRL_INTERCEPT_RDPMC |
+	    VMCB_CTRL_INTERCEPT_CPUID |
+	    VMCB_CTRL_INTERCEPT_RSM |
+	    VMCB_CTRL_INTERCEPT_HLT |
+	    VMCB_CTRL_INTERCEPT_INVLPGA |
+	    VMCB_CTRL_INTERCEPT_IOIO_PROT |
+	    VMCB_CTRL_INTERCEPT_MSR_PROT |
+	    VMCB_CTRL_INTERCEPT_FERR_FREEZE |
+	    VMCB_CTRL_INTERCEPT_SHUTDOWN;
+
+	/*
+	 * Allow:
+	 *  - ICEBP [icebp instruction]
+	 *  - WBINVD [wbinvd instruction]
+	 *  - WCR_SPEC(0..15) [writes of CR0-15, received after instruction]
+	 *
+	 * Intercept the rest below.
+	 */
+	vmcb->ctrl.intercept_misc2 =
+	    VMCB_CTRL_INTERCEPT_VMRUN |
+	    VMCB_CTRL_INTERCEPT_VMMCALL |
+	    VMCB_CTRL_INTERCEPT_VMLOAD |
+	    VMCB_CTRL_INTERCEPT_VMSAVE |
+	    VMCB_CTRL_INTERCEPT_STGI |
+	    VMCB_CTRL_INTERCEPT_CLGI |
+	    VMCB_CTRL_INTERCEPT_SKINIT |
+	    VMCB_CTRL_INTERCEPT_RDTSCP |
+	    VMCB_CTRL_INTERCEPT_MONITOR |
+	    VMCB_CTRL_INTERCEPT_MWAIT |
+	    VMCB_CTRL_INTERCEPT_XSETBV;
+
+	/* Intercept all I/O accesses. */
+	memset(cpudata->iobm, 0xFF, IOBM_SIZE);
+	vmcb->ctrl.iopm_base_pa = cpudata->iobm_pa;
+
+	/* Allow direct access to certain MSRs. */
+	memset(cpudata->msrbm, 0xFF, MSRBM_SIZE);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_EFER, true, false);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_STAR, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_LSTAR, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_CSTAR, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_SFMASK, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_KERNELGSBASE, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_SYSENTER_CS, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_SYSENTER_ESP, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_SYSENTER_EIP, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_FSBASE, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_GSBASE, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_CR_PAT, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_TSC, true, false);
+	vmcb->ctrl.msrpm_base_pa = cpudata->msrbm_pa;
+
+	/* Generate ASID. */
+	svm_asid_alloc(vcpu);
+
+	/* Virtual TPR. */
+	vmcb->ctrl.v = VMCB_CTRL_V_INTR_MASKING;
+
+	/* Enable Nested Paging. */
+	vmcb->ctrl.enable1 = VMCB_CTRL_ENABLE_NP;
+	vmcb->ctrl.n_cr3 = mach->vm->vm_map.pmap->pm_pdirpa[0];
+
+	/* Must always be set. */
+	vmcb->state.efer = EFER_SVME;
+	cpudata->gxcr0 = XCR0_X87;
+
+	/* Init XSAVE header. */
+	cpudata->gfpu.xsh_xstate_bv = svm_xcr0_mask;
+	cpudata->gfpu.xsh_xcomp_bv = 0;
+
+	/* Set guest TSC to zero, more or less. */
+	cpudata->tsc_offset = -cpu_counter();
+
+	/* These MSRs are static. */
+	cpudata->star = rdmsr(MSR_STAR);
+	cpudata->lstar = rdmsr(MSR_LSTAR);
+	cpudata->cstar = rdmsr(MSR_CSTAR);
+	cpudata->sfmask = rdmsr(MSR_SFMASK);
+}
+
+static int
+svm_vcpu_create(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
+{
+	struct svm_cpudata *cpudata;
+	int error;
+
+	/* Allocate the SVM cpudata. */
+	cpudata = (struct svm_cpudata *)uvm_km_alloc(kernel_map,
+	    roundup(sizeof(*cpudata), PAGE_SIZE), 0,
+	    UVM_KMF_WIRED|UVM_KMF_ZERO);
+	vcpu->cpudata = cpudata;
+
+	/* VMCB */
+	error = svm_memalloc(&cpudata->vmcb_pa, (vaddr_t *)&cpudata->vmcb,
+	    VMCB_NPAGES);
+	if (error)
+		goto error;
+
+	/* I/O Bitmap */
+	error = svm_memalloc(&cpudata->iobm_pa, (vaddr_t *)&cpudata->iobm,
+	    IOBM_NPAGES);
+	if (error)
+		goto error;
+
+	/* MSR Bitmap */
+	error = svm_memalloc(&cpudata->msrbm_pa, (vaddr_t *)&cpudata->msrbm,
+	    MSRBM_NPAGES);
+	if (error)
+		goto error;
+
+	/* Init the VCPU info. */
+	svm_vcpu_init(mach, vcpu);
+
+	return 0;
+
+error:
+	if (cpudata->vmcb_pa) {
+		svm_memfree(cpudata->vmcb_pa, (vaddr_t)cpudata->vmcb,
+		    VMCB_NPAGES);
+	}
+	if (cpudata->iobm_pa) {
+		svm_memfree(cpudata->iobm_pa, (vaddr_t)cpudata->iobm,
+		    IOBM_NPAGES);
+	}
+	if (cpudata->msrbm_pa) {
+		svm_memfree(cpudata->msrbm_pa, (vaddr_t)cpudata->msrbm,
+		    MSRBM_NPAGES);
+	}
+	uvm_km_free(kernel_map, (vaddr_t)cpudata,
+	    roundup(sizeof(*cpudata), PAGE_SIZE), UVM_KMF_WIRED);
+	return error;
+}
+
+static void
+svm_vcpu_destroy(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
+{
+	struct svm_cpudata *cpudata = vcpu->cpudata;
+
+	svm_asid_free(vcpu);
+
+	svm_memfree(cpudata->vmcb_pa, (vaddr_t)cpudata->vmcb, VMCB_NPAGES);
+	svm_memfree(cpudata->iobm_pa, (vaddr_t)cpudata->iobm, IOBM_NPAGES);
+	svm_memfree(cpudata->msrbm_pa, (vaddr_t)cpudata->msrbm, MSRBM_NPAGES);
+
+	uvm_km_free(kernel_map, (vaddr_t)cpudata,
+	    roundup(sizeof(*cpudata), PAGE_SIZE), UVM_KMF_WIRED);
 }
 
 /* -------------------------------------------------------------------------- */
