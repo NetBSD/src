@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2259 2019/02/23 03:10:05 kamil Exp $
+#	$NetBSD: mi,v 1.2260 2019/02/23 10:43:25 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -709,6 +709,7 @@
 ./usr/include/dev/scsipi/ss_mustek.h		comp-obsolete		obsolete
 ./usr/include/dev/scsipi/ssvar.h		comp-obsolete		obsolete
 ./usr/include/dev/spkrio.h			comp-c-include
+./usr/include/dev/spi/spi_io.h			comp-c-include
 ./usr/include/dev/sun/disklabel.h		comp-c-include
 ./usr/include/dev/sun/eeprom.h			comp-c-include
 ./usr/include/dev/sun/event_var.h		comp-obsolete		obsolete
@@ -19594,6 +19595,7 @@
 ./usr/share/man/html9/specificdata_key_delete.html comp-sys-htmlman	html
 ./usr/share/man/html9/specificdata_setspecific.html comp-sys-htmlman	html
 ./usr/share/man/html9/specificdata_setspecific_nowait.html comp-sys-htmlman html
+./usr/share/man/html9/spi.html			comp-sys-htmlman	html
 ./usr/share/man/html9/spinlockinit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/spinlockmgr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/spl.html			comp-sys-htmlman	html
@@ -27626,6 +27628,7 @@
 ./usr/share/man/man9/specificdata_key_delete.9	comp-sys-man		.man
 ./usr/share/man/man9/specificdata_setspecific.9	comp-sys-man		.man
 ./usr/share/man/man9/specificdata_setspecific_nowait.9 comp-sys-man	.man
+./usr/share/man/man9/spi.9			comp-sys-man		.man
 ./usr/share/man/man9/spinlockinit.9		comp-sys-man		.man
 ./usr/share/man/man9/spinlockmgr.9		comp-sys-man		.man
 ./usr/share/man/man9/spl.9			comp-sys-man		.man
