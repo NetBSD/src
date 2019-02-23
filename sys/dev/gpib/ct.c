@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.29 2017/10/28 04:53:56 riastradh Exp $ */
+/*	$NetBSD: ct.c,v 1.30 2019/02/23 11:33:31 kamil Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.29 2017/10/28 04:53:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.30 2019/02/23 11:33:31 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ ctattach(device_t parent, device_t self, void *aux)
 	case CT7946ID:
 		if (memcmp(name, "079450", 6) == 0)
 			return;			/* not really a 7946 */
-		/* fall into... */
+		/* FALLTHROUGH */
 	case CT9144ID:
 	case CT9145ID:
 	case CT35401ID:
