@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.97 2019/02/13 08:38:25 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.98 2019/02/23 10:59:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -113,6 +113,14 @@
 #include <sys/kcpuset.h>
 #include <x86/pmap_pv.h>
 #include <uvm/pmap/pmap_pvt.h>
+
+#define	PATENTRY(n, type)	(type << ((n) * 8))
+#define	PAT_UC		0x0ULL
+#define	PAT_WC		0x1ULL
+#define	PAT_WT		0x4ULL
+#define	PAT_WP		0x5ULL
+#define	PAT_WB		0x6ULL
+#define	PAT_UCMINUS	0x7ULL
 
 #define BTSEG_NONE	0
 #define BTSEG_TEXT	1
