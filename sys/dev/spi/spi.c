@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.9 2018/09/03 16:29:33 riastradh Exp $ */
+/* $NetBSD: spi.c,v 1.10 2019/02/23 10:43:25 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,26 +42,55 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.9 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.10 2019/02/23 10:43:25 mlelstv Exp $");
 
 #include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/errno.h>
 
 #include <dev/spi/spivar.h>
+#include <dev/spi/spi_io.h>
+
+#include "ioconf.h"
+#include "locators.h"
 
 struct spi_softc {
 	struct spi_controller	sc_controller;
 	int			sc_mode;
 	int			sc_speed;
+	int			sc_slave;
 	int			sc_nslaves;
 	struct spi_handle	*sc_slaves;
+	kmutex_t		sc_lock;
+	kcondvar_t		sc_cv;
+	int			sc_flags;
+#define SPIC_BUSY		1
+};
+
+static dev_type_open(spi_open);
+static dev_type_close(spi_close);
+static dev_type_ioctl(spi_ioctl);
+
+const struct cdevsw spi_cdevsw = {
+	.d_open = spi_open,
+	.d_close = spi_close,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = spi_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 /*
@@ -71,7 +100,11 @@ struct spi_handle {
 	struct spi_softc	*sh_sc;
 	struct spi_controller	*sh_controller;
 	int			sh_slave;
+	int			sh_mode;
+	int			sh_speed;
 };
+
+#define SPI_MAXDATA 4096
 
 /*
  * API for bus drivers.
@@ -142,6 +175,9 @@ spi_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": SPI bus\n");
 	aprint_normal(": SPI bus\n");
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&sc->sc_cv, "spictl");
+
 	sc->sc_controller = *sba->sba_controller;
 	sc->sc_nslaves = sba->sba_controller->sct_nslaves;
 	/* allocate slave structures */
@@ -150,6 +186,7 @@ spi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_speed = 0;
 	sc->sc_mode = -1;
+	sc->sc_slave = -1;
 
 	/*
 	 * Initialize slave handles
@@ -164,6 +201,93 @@ spi_attach(device_t parent, device_t self, void *aux)
 	 * Locate and attach child devices
 	 */
 	config_search_ia(spi_search, self, "spi", NULL);
+}
+
+static int
+spi_open(dev_t dev, int flag, int fmt, lwp_t *l)
+{
+	struct spi_softc *sc = device_lookup_private(&spi_cd, minor(dev));
+
+	if (sc == NULL)
+		return ENXIO;
+
+	return 0;
+}
+
+static int
+spi_close(dev_t dev, int flag, int fmt, lwp_t *l)
+{
+
+	return 0;
+}
+
+static int
+spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
+{
+	struct spi_softc *sc = device_lookup_private(&spi_cd, minor(dev));
+	struct spi_handle *sh;
+	spi_ioctl_configure_t *sic;
+	spi_ioctl_transfer_t *sit;
+	uint8_t *sbuf, *rbuf;
+	int error;
+
+	if (sc == NULL)
+		return ENXIO;
+
+	switch (cmd) {
+	case SPI_IOCTL_CONFIGURE:
+		sic = (spi_ioctl_configure_t *)data;
+		if (sic->sic_addr < 0 || sic->sic_addr >= sc->sc_nslaves) {
+			error = EINVAL;
+			break;
+		}
+		sh = &sc->sc_slaves[sic->sic_addr];
+		error = spi_configure(sh, sic->sic_mode, sic->sic_speed);
+		break;
+	case SPI_IOCTL_TRANSFER:
+		sit = (spi_ioctl_transfer_t *)data;
+		if (sit->sit_addr < 0 || sit->sit_addr >= sc->sc_nslaves) {
+			error = EINVAL;
+			break;
+		}
+		sh = &sc->sc_slaves[sit->sit_addr];
+		sbuf = rbuf = NULL;
+		error = 0;
+		if (sit->sit_send && sit->sit_sendlen < SPI_MAXDATA) {
+			sbuf = malloc(sit->sit_sendlen, M_DEVBUF, M_WAITOK);
+			error = copyin(sit->sit_send, sbuf, sit->sit_sendlen);
+		}
+		if (sit->sit_recv && sit->sit_recvlen < SPI_MAXDATA) {
+			rbuf = malloc(sit->sit_recvlen, M_DEVBUF, M_WAITOK);
+		}
+		if (error == 0) {
+			if (sbuf && rbuf)
+				error = spi_send_recv(sh,
+					sit->sit_sendlen, sbuf,
+					sit->sit_recvlen, rbuf);
+			else if (sbuf)
+				error = spi_send(sh,
+					sit->sit_sendlen, sbuf);
+			else if (rbuf)
+				error = spi_recv(sh,
+					sit->sit_recvlen, rbuf);
+		}
+		if (rbuf) {
+			if (error == 0)
+				error = copyout(rbuf, sit->sit_recv,
+						sit->sit_recvlen);
+			free(rbuf, M_DEVBUF);
+		}
+		if (sbuf) {
+			free(sbuf, M_DEVBUF);
+		}
+		break;
+	default:
+		error = ENODEV;
+		break;
+	}
+
+	return error;
 }
 
 CFATTACH_DECL_NEW(spi, sizeof(struct spi_softc),
@@ -181,30 +305,39 @@ CFATTACH_DECL_NEW(spi, sizeof(struct spi_softc),
 int
 spi_configure(struct spi_handle *sh, int mode, int speed)
 {
-	int			s, rv;
-	struct spi_softc	*sc = sh->sh_sc;
-	struct spi_controller	*tag = sh->sh_controller;
 
-	/* ensure that request is compatible with other devices on the bus */
-	if ((sc->sc_mode >= 0) && (sc->sc_mode != mode))
-		return EINVAL;
+	sh->sh_mode = mode;
+	sh->sh_speed = speed;
+	return 0;
+}
 
-	s = splbio();
-	/* pick lowest configured speed */
-	if (speed == 0)
-		speed = sc->sc_speed;
-	if (sc->sc_speed)
-		speed = uimin(sc->sc_speed, speed);
+/*
+ * Acquire controller
+ */
+static void
+spi_acquire(struct spi_handle *sh)
+{
+	struct spi_softc *sc = sh->sh_sc;
 
-	rv = (*tag->sct_configure)(tag->sct_cookie, sh->sh_slave,
-	    mode, speed);
+	mutex_enter(&sc->sc_lock);
+	while ((sc->sc_flags & SPIC_BUSY) != 0)
+		cv_wait(&sc->sc_cv, &sc->sc_lock);
+	sc->sc_flags |= SPIC_BUSY;
+	mutex_exit(&sc->sc_lock);
+}
 
-	if (rv == 0) {
-		sc->sc_mode = mode;
-		sc->sc_speed = speed;
-	}
-	splx(s);
-	return rv;
+/*
+ * Release controller
+ */
+static void
+spi_release(struct spi_handle *sh)
+{
+	struct spi_softc *sc = sh->sh_sc;
+
+	mutex_enter(&sc->sc_lock);
+	sc->sc_flags &= ~SPIC_BUSY;
+	cv_broadcast(&sc->sc_cv);
+	mutex_exit(&sc->sc_lock);
 }
 
 void
@@ -212,7 +345,7 @@ spi_transfer_init(struct spi_transfer *st)
 {
 
 	mutex_init(&st->st_lock, MUTEX_DEFAULT, IPL_BIO);
-	cv_init(&st->st_cv, "spicv");
+	cv_init(&st->st_cv, "spixfr");
 
 	st->st_flags = 0;
 	st->st_errno = 0;
@@ -246,8 +379,10 @@ spi_transfer_add(struct spi_transfer *st, struct spi_chunk *chunk)
 int
 spi_transfer(struct spi_handle *sh, struct spi_transfer *st)
 {
+	struct spi_softc	*sc = sh->sh_sc;
 	struct spi_controller	*tag = sh->sh_controller;
 	struct spi_chunk	*chunk;
+	int error;
 
 	/*
 	 * Initialize "resid" counters and pointers, so that callers
@@ -260,16 +395,45 @@ spi_transfer(struct spi_handle *sh, struct spi_transfer *st)
 	}
 
 	/*
-	 * Match slave to handle's slave.
+	 * Match slave and parameters to handle
 	 */
 	st->st_slave = sh->sh_slave;
 
-	return (*tag->sct_transfer)(tag->sct_cookie, st);
+	/*
+	 * Reserve controller during transaction
+ 	 */
+	spi_acquire(sh);
+
+	st->st_spiprivate = (void *)sh;
+	
+	/*
+	 * Reconfigure controller
+	 *
+	 * XXX backends don't configure per-slave parameters
+	 * Whenever we switch slaves or change mode or speed, we
+	 * need to tell the backend.
+	 */
+	if (sc->sc_slave != sh->sh_slave
+	    || sc->sc_mode != sh->sh_mode
+	    || sc->sc_speed != sh->sh_speed) {
+		error = (*tag->sct_configure)(tag->sct_cookie,
+				sh->sh_slave, sh->sh_mode, sh->sh_speed);
+		if (error)
+			return error;
+	}
+	sc->sc_mode = sh->sh_mode;
+	sc->sc_speed = sh->sh_speed;
+	sc->sc_slave = sh->sh_slave;
+
+	error = (*tag->sct_transfer)(tag->sct_cookie, st);
+
+	return error;
 }
 
 void
 spi_wait(struct spi_transfer *st)
 {
+	struct spi_handle *sh = st->st_spiprivate;
 
 	mutex_enter(&st->st_lock);
 	while (!(st->st_flags & SPI_F_DONE)) {
@@ -278,6 +442,11 @@ spi_wait(struct spi_transfer *st)
 	mutex_exit(&st->st_lock);
 	cv_destroy(&st->st_cv);
 	mutex_destroy(&st->st_lock);
+
+	/*
+	 * End transaction
+	 */
+	spi_release(sh);
 }
 
 void
@@ -372,3 +541,4 @@ spi_send_recv(struct spi_handle *sh, int scnt, const uint8_t *snd,
 
 	return 0;
 }
+
