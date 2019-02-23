@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.5 2019/02/14 14:30:20 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.6 2019/02/23 12:27:00 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -172,6 +172,10 @@ struct nvmm_x86_conf_cpuid {
 		uint32_t edx;
 	} del;
 };
+
+#ifdef _KERNEL
+extern const struct nvmm_x64_state nvmm_x86_reset_state;
+#endif
 
 #endif /* ASM_NVMM */
 
