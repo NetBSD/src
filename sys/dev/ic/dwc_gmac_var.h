@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.12 2018/10/08 17:09:31 martin Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.13 2019/02/23 17:18:07 martin Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -117,5 +117,6 @@ struct dwc_gmac_softc {
 	void (*sc_set_speed)(struct dwc_gmac_softc *, int);
 };
 
-int dwc_gmac_attach(struct dwc_gmac_softc*, uint32_t /*mii_clk*/);
+int dwc_gmac_attach(struct dwc_gmac_softc*, int /*phy_id*/,
+    uint32_t /*mii_clk*/);
 int dwc_gmac_intr(struct dwc_gmac_softc*);
