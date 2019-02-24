@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.193 2019/02/09 02:04:19 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.194 2019/02/24 02:29:09 rin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -137,6 +137,7 @@
 ./usr/include/dev/raidframe
 ./usr/include/dev/sbus
 ./usr/include/dev/scsipi
+./usr/include/dev/spi
 ./usr/include/dev/sun
 ./usr/include/dev/tc
 ./usr/include/dev/usb
