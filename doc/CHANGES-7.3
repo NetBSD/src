@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.40 2019/02/23 07:18:00 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.41 2019/02/24 10:54:02 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -467,4 +467,8 @@ sys/net/rtsock.c		(patch)
 	Fix locking for sysctl_rtable.
 	[sborrill, ticket #1680]
 
+sys/kern/kern_time.c				1.196
+
+	Avoid panic from setitimer(2) for CLOCK_MONOTONIC.
+	[mlelstv, ticket #1196]
 
