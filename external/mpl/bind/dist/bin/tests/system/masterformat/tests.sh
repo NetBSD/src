@@ -10,6 +10,7 @@
 # information regarding copyright ownership.
 
 # shellcheck source=conf.sh
+SYSTEMTESTTOP=..
 . "$SYSTEMTESTTOP/conf.sh"
 
 status=0
@@ -98,16 +99,21 @@ ret=0
 set -- 1 2 3
 for zone in example example-explicit example-compat; do
     for server in "$@"; do
-	for name in ns mx a aaaa cname dname txt rrsig nsec \
-		       dnskey ds cdnskey cds private-dnskey private-cdnskey; do
-	    dig_with_opts "$name.$zone." "$name" "@10.53.0.$server"
+	for qname in ns mx a aaaa cname dname txt rrsig nsec \
+                dnskey ds cdnskey cds; do
+            qtype="$qname"
+	    dig_with_opts  @10.53.0.${server} -q ${qname}.${zone}. -t ${qtype}
 	    echo
-	done > "dig.out.$zone.$server.test$n"
+	done > dig.out.${zone}.${server}.test${n}
+        for qname in private-dnskey private-cdnskey; do
+            qtype=$(expr "$qname" : '.*-\(.*\)')
+	    dig_with_opts  @10.53.0.${server} -q ${qname}.${zone}. -t ${qtype}
+	done >> dig.out.${zone}.${server}.test${n}
     done
-    digcomp "dig.out.$zone.1.test$n" "dig.out.$zone.2.test$n" || ret=1
+    digcomp dig.out.${zone}.1.test${n} dig.out.${zone}.2.test${n} || ret=1
     if [ "$zone" = "example" ]; then
         set -- 1 2
-        digcomp "dig.out.$zone.1.test$n" "dig.out.$zone.3.test$n" || ret=1
+        digcomp dig.out.${zone}.1.test${n} dig.out.${zone}.3.test${n} || ret=1
     fi
 done
 n=$((n+1))
@@ -229,7 +235,7 @@ grep "added text" "dig.out.dynamic1.ns3.test$n" > /dev/null 2>&1 || ret=1
 dig_with_opts +comm @10.53.0.3 added.dynamic txt > "dig.out.dynamic2.ns3.test$n"
 grep "NXDOMAIN" "dig.out.dynamic2.ns3.test$n" > /dev/null 2>&1 || ret=1
 # using "rndc halt" ensures that we don't dump the zone file
-rndccmd 10.53.0.3 halt 2>&1 | sed 's/^/ns3 /' | cat_i
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --halt --port ${CONTROLPORT} rndc ns3
 restart
 for i in 0 1 2 3 4 5 6 7 8 9; do
     lret=0
@@ -255,7 +261,7 @@ END
 dig_with_opts @10.53.0.3 moretext.dynamic txt > "dig.out.dynamic1.ns3.test$n"
 grep "more text" "dig.out.dynamic1.ns3.test$n" > /dev/null 2>&1 || ret=1
 # using "rndc stop" will cause the zone file to flush before shutdown
-rndccmd 10.53.0.3 stop 2>&1 | sed 's/^/ns3 /' | cat_i
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rndc ns3
 rm ns3/*.jnl
 restart
 #shellcheck disable=SC2034
@@ -319,7 +325,7 @@ echo_i "checking map format zone is scheduled for resigning (signzone) ($n)"
 ret=0
 rndccmd 10.53.0.1 freeze signed > rndc.out 2>&1 || ret=1
 (cd ns1 || exit 1; $SIGNER -S -O map -f signed.db.map -o signed signed.db > /dev/null 2>&1)
-rndccmd 10.53.0.1 reload signed > rndc.out 2>&1 || ret=1
+rndc_reload ns1 10.53.0.1 signed
 rndccmd 10.53.0.1 zonestatus signed > rndc.out 2>&1 || ret=1
 grep 'next resign' rndc.out > /dev/null 2>&1 || ret=1
 n=$((n+1))

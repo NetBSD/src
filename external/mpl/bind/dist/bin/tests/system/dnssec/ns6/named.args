@@ -1,1 +1,1 @@
--m record,size,mctx -c named.conf -d 99 -X named.lock -g -T nonearest -T clienttest -T tat=1
+-m record,size,mctx -c named.conf -d 99 -D dnssec-ns6 -X named.lock -g -T nonearest -T clienttest -T tat=1

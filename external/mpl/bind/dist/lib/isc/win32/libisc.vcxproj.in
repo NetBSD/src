@@ -330,8 +330,6 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\md.h" />
     <ClInclude Include="..\include\isc\mem.h" />
     <ClInclude Include="..\include\isc\meminfo.h" />
-    <ClInclude Include="..\include\isc\msgcat.h" />
-    <ClInclude Include="..\include\isc\msgs.h" />
     <ClInclude Include="..\include\isc\mutexblock.h" />
     <ClInclude Include="..\include\isc\netaddr.h" />
     <ClInclude Include="..\include\isc\netscope.h" />
@@ -444,7 +442,6 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\netaddr.c" />
     <ClCompile Include="..\netscope.c" />
     <ClCompile Include="..\nonce.c" />
-    <ClCompile Include="..\nls\msgcat.c" />
     <ClCompile Include="..\openssl_shim.c" />
     <ClCompile Include="..\parseint.c" />
     <ClCompile Include="..\pool.c" />

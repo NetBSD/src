@@ -28,7 +28,7 @@ while [ $count != 300 ]; do
 		if [ ! "$CYGWIN" ]; then
 			$KILL -HUP `cat ns1/named.pid`
 		else
-			$RNDCCMD 10.53.0.1 reload > /dev/null 2>&1
+			rndc_reload ns1 10.53.0.1
 		fi
 	fi
 	sleep 1

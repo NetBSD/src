@@ -18,7 +18,7 @@ VERSION=@BIND9_VERSION@
 # machine generated.  The latter are handled specially in the
 # install target below.
 #
-HEADERS =	alist.h base64.h cc.h ccmsg.h events.h lib.h result.h \
+HEADERS =	alist.h base64.h cc.h ccmsg.h events.h result.h \
 		sexpr.h symtab.h symtype.h types.h util.h version.h
 SUBDIRS =
 TARGETS =

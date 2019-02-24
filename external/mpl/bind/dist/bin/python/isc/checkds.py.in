@@ -169,7 +169,7 @@ def parse_args():
     parser.add_argument('-D', '--dsfromkey', dest='dsfromkey',
                         default=os.path.join(prefix(sbindir),
                                              'dnssec-dsfromkey'),
-                        type=str, help='path to \'dig\'')
+                        type=str, help='path to \'dnssec-dsfromkey\'')
     parser.add_argument('-f', '--file', dest='masterfile', type=str,
                         help='zone master file')
     parser.add_argument('-l', '--lookaside', dest='lookaside', type=str,

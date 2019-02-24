@@ -55,14 +55,6 @@ SYSTEMTESTTOP=..
 
 DIGOPTS="+tcp +nosea +nostat +nocmd +norec +noques +noauth +noadd +nostats +dnssec -p ${PORT}"
 
-rndc_reload() {
-    echo_i "`$RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} reload 2>&1 | sed 's/^/'$1' /'`"
-    for try in 0 1 2 3 4 5 6 7 8 9; do
-        nextpart $1/named.run | grep "reloading configuration succeeded" > /dev/null && break
-        sleep 1
-    done
-}
-
 status=0
 n=0
 

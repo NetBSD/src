@@ -444,7 +444,6 @@ dns_keytable_marksecure
 dns_keytable_nextkeynode
 dns_keytable_totext
 dns_lib_init
-dns_lib_initmsgcat
 dns_lib_shutdown
 dns_loadctx_attach
 dns_loadctx_cancel
@@ -826,6 +825,7 @@ dns_rdataslab_fromrdataset
 dns_rdataslab_merge
 dns_rdataslab_size
 dns_rdataslab_subtract
+dns_rdatatype_atcname
 dns_rdatatype_atparent
 dns_rdatatype_attributes
 dns_rdatatype_format
@@ -1420,7 +1420,6 @@ dst_key_unsetnum
 dst_key_unsettime
 dst_lib_destroy
 dst_lib_init
-dst_lib_initmsgcat
 dst_region_computeid
 dst_region_computerid
 dst_result_register
@@ -1432,10 +1431,8 @@ EXPORTS
 
 dns_pps			DATA
 dns_master_style_full	DATA
-dns_msgcat		DATA
 dns_tsig_hmacmd5_name	DATA
 dns_zone_mkey_day	DATA
 dns_zone_mkey_hour	DATA
 dns_zone_mkey_month	DATA
-dst_msgcat		DATA
 @END NOLONGER

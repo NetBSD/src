@@ -49,15 +49,18 @@ class keydict:
             self._keydict[key.name][key.alg][key.keyid] = key
 
     def readone(self, path, zone):
-        match='K' + zone + '.+*.private'
+        if not zone.endswith('.'):
+            zone += '.'
+        match='K' + zone + '+*.private'
         files = glob.glob(os.path.join(path, match))
 
         found = False
         for infile in files:
             key = dnskey(infile, path, self._defttl)
-            if key.name != zone: # shouldn't ever happen
+            if key.fullname != zone: # shouldn't ever happen
                 continue
-            self._keydict[key.name][key.alg][key.keyid] = key
+            keyname=key.name if zone != '.' else '.'
+            self._keydict[keyname][key.alg][key.keyid] = key
             found = True
 
         return found

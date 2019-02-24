@@ -188,6 +188,10 @@ def parse_args():
     if args.filename and len(args.zone) > 1:
         fatal("ERROR: -f can only be used with one zone.")
 
+    # strip trailing dots if any
+    args.zone = [x[:-1] if (len(x) > 1 and x[-1] == '.') else x
+                        for x in args.zone]
+
     # convert from time arguments to seconds
     try:
         if args.maxttl:
@@ -251,7 +255,7 @@ def main():
     print("PHASE 1--Loading keys to check for internal timing problems")
 
     try:
-        kd = keydict(path=args.path, zone=args.zone, keyttl=args.keyttl)
+        kd = keydict(path=args.path, zones=args.zone, keyttl=args.keyttl)
     except Exception as e:
         fatal('ERROR: Unable to build key dictionary: ' + str(e))
 

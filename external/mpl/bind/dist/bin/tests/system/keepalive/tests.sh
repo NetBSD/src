@@ -70,7 +70,7 @@ echo_i "checking re-configured value ($n)"
 ret=0
 n=`expr $n + 1`
 $RNDCCMD tcp-timeouts 300 300 300 200 > output
-diff -b output expected || ret=1
+$DIFF -b output expected || ret=1
 $DIG $DIGOPTS +vc +keepalive foo.example @10.53.0.2 > dig.out.test$n
 grep "; TCP KEEPALIVE: 20.0 secs" dig.out.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi

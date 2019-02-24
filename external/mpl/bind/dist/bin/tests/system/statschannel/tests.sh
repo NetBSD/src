@@ -46,6 +46,7 @@ fi
 
 
 gettraffic() {
+    sleep 1
     echo_i "... using $1"
     case $1 in
         xml) path='xml/v3/traffic' ;;

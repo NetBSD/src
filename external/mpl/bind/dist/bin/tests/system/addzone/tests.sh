@@ -469,8 +469,7 @@ status=`expr $status + $ret`
 echo_i "reconfiguring server with multiple views"
 rm -f ns2/named.conf
 copy_setports ns2/named2.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reconfig 2>&1 | sed 's/^/I:ns2 /'
-sleep 5
+rndc_reconfig ns2 10.53.0.2
 
 echo_i "adding new zone to external view ($n)"
 # NOTE: The internal view has "recursion yes" set, and so queries for
@@ -591,8 +590,7 @@ status=`expr $status + $ret`
 echo_i "reconfiguring server with multiple views and new-zones-directory"
 rm -f ns2/named.conf
 copy_setports ns2/named3.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reconfig 2>&1 | sed 's/^/I:ns2 /'
-sleep 5
+rndc_reconfig ns2 10.53.0.2
 
 echo_i "checking new zone is still loaded after dir change ($n)"
 ret=0
@@ -659,8 +657,7 @@ status=`expr $status + $ret`
 
 echo_i "ensure the configuration context is cleaned up correctly ($n)"
 ret=0
-$RNDCCMD 10.53.0.2 reconfig > /dev/null 2>&1 || ret=1
-sleep 5
+rndc_reconfig ns2 10.53.0.2
 $RNDCCMD 10.53.0.2 status > /dev/null 2>&1 || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -670,8 +667,7 @@ echo_i "check delzone after reconfig failure ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 addzone 'inlineslave.example. IN { type slave; file "inlineslave.db"; masterfile-format text; masters { testmaster; }; };' > /dev/null 2>&1 || ret=1
 copy_setports ns3/named2.conf.in ns3/named.conf
-$RNDCCMD 10.53.0.3 reconfig > /dev/null 2>&1 && ret=1
-sleep 5
+rndc_reconfig ns3 10.53.0.3
 $RNDCCMD 10.53.0.3 delzone inlineslave.example > /dev/null 2>&1 || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
