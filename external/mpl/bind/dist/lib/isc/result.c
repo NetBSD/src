@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,6 @@
 #include <stdlib.h>
 
 #include <isc/lib.h>
-#include <isc/msgs.h>
 #include <isc/mutex.h>
 #include <isc/once.h>
 #include <isc/resultclass.h>
@@ -29,7 +28,6 @@ typedef struct resulttable {
 	unsigned int				base;
 	unsigned int				last;
 	const char **				text;
-	isc_msgcat_t *				msgcat;
 	int					set;
 	ISC_LINK(struct resulttable)		link;
 } resulttable;
@@ -185,7 +183,7 @@ static isc_mutex_t		lock;
 static isc_result_t
 register_table(resulttable_list_t *tables, unsigned int base,
 	       unsigned int nresults, const char **text,
-	       isc_msgcat_t *msgcat, int set)
+	       int set)
 {
 	resulttable *table;
 
@@ -203,7 +201,6 @@ register_table(resulttable_list_t *tables, unsigned int base,
 	table->base = base;
 	table->last = base + nresults - 1;
 	table->text = text;
-	table->msgcat = msgcat;
 	table->set = set;
 	ISC_LINK_INIT(table, link);
 
@@ -226,35 +223,32 @@ initialize_action(void) {
 
 	result = register_table(&description_tables,
 				ISC_RESULTCLASS_ISC, ISC_R_NRESULTS,
-				description, isc_msgcat, ISC_RESULT_RESULTSET);
-	if (result != ISC_R_SUCCESS)
+				description, ISC_RESULT_RESULTSET);
+	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "register_table() %s: %u",
-				 isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-						ISC_MSG_FAILED, "failed"),
+				 "register_table() failed: %u",
 				 result);
+	}
 
 	result = register_table(&identifier_tables,
 				ISC_RESULTCLASS_ISC, ISC_R_NRESULTS,
-				identifier, isc_msgcat, ISC_RESULT_RESULTSET);
-	if (result != ISC_R_SUCCESS)
+				identifier, ISC_RESULT_RESULTSET);
+	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "register_table() %s: %u",
-				 isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-						ISC_MSG_FAILED, "failed"),
+				 "register_table() failed: %u",
 				 result);
+	}
 }
 
 static void
 initialize(void) {
-	isc_lib_initmsgcat();
 	RUNTIME_CHECK(isc_once_do(&once, initialize_action) == ISC_R_SUCCESS);
 }
 
 static const char *
 isc_result_tomany_helper(resulttable_list_t *tables, isc_result_t result) {
 	resulttable *table;
-	const char *text, *default_text;
+	const char *text;
 	int index;
 
 	initialize();
@@ -267,20 +261,13 @@ isc_result_tomany_helper(resulttable_list_t *tables, isc_result_t result) {
 	     table = ISC_LIST_NEXT(table, link)) {
 		if (result >= table->base && result <= table->last) {
 			index = (int)(result - table->base);
-			default_text = table->text[index];
-			/*
-			 * Note: we use 'index + 1' as the message number
-			 * instead of index because isc_msgcat_get() requires
-			 * the message number to be > 0.
-			 */
-			text = isc_msgcat_get(table->msgcat, table->set,
-					      index + 1, default_text);
+			text = table->text[index];
 			break;
 		}
 	}
-	if (text == NULL)
-		text = isc_msgcat_get(isc_msgcat, ISC_RESULT_UNAVAILABLESET,
-				      1, "(result code text not available)");
+	if (text == NULL) {
+		text = "(result code text not available)";
+	}
 
 	UNLOCK(&lock);
 
@@ -299,20 +286,20 @@ isc_result_toid(isc_result_t result) {
 
 isc_result_t
 isc_result_register(unsigned int base, unsigned int nresults,
-		    const char **text, isc_msgcat_t *msgcat, int set)
+		    const char **text, int set)
 {
 	initialize();
 
 	return (register_table(&description_tables, base, nresults, text,
-			       msgcat, set));
+			       set));
 }
 
 isc_result_t
 isc_result_registerids(unsigned int base, unsigned int nresults,
-		       const char **ids, isc_msgcat_t *msgcat, int set)
+		       const char **ids, int set)
 {
 	initialize();
 
 	return (register_table(&identifier_tables, base, nresults, ids,
-			       msgcat, set));
+			       set));
 }

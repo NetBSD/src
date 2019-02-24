@@ -1,4 +1,4 @@
-/*	$NetBSD: hooks.h,v 1.2 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: hooks.h,v 1.3 2019/02/24 20:01:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -87,8 +87,14 @@
  * In order for a hook action to be called for a given hook, a pointer to that
  * action function (along with an optional pointer to action-specific data) has
  * to be inserted into the relevant hook table entry for that hook using an
- * ns_hook_add() call.  If multiple actions are set up at a single hook point,
- * they are processed in FIFO order.
+ * ns_hook_add() call.  If multiple actions are set up at a single hook point
+ * (e.g. by multiple plugin modules), they are processed in FIFO order, that is
+ * they are performed in the same order in which their relevant ns_hook_add()
+ * calls were issued.  Since the configuration is loaded from a single thread,
+ * this means that multiple actions at a single hook point are determined by
+ * the order in which the relevant plugin modules were declared in the
+ * configuration file(s).  The hook API currently does not support changing
+ * this order.
  *
  * As an example, consider the following hypothetical function in query.c:
  *

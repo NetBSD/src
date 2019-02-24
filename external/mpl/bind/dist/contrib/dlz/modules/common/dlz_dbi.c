@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dbi.c,v 1.3 2019/01/09 16:55:06 christos Exp $	*/
+/*	$NetBSD: dlz_dbi.c,v 1.4 2019/02/24 20:01:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -103,6 +103,7 @@ build_querylist(const char *query_str, char **zone, char **record,
 	bool foundclient = false;
 	char *temp_str = NULL;
 	char *right_str = NULL;
+	char *token = NULL;
 	query_list_t *tql;
 	query_segment_t *tseg = NULL;
 

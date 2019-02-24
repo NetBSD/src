@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: assertions.c,v 1.3 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,6 @@
 
 #include <isc/assertions.h>
 #include <isc/backtrace.h>
-#include <isc/msgs.h>
 #include <isc/print.h>
 #include <isc/result.h>
 
@@ -109,13 +108,13 @@ default_callback(const char *file, int line, isc_assertiontype_t type,
 	isc_result_t result;
 
 	result = isc_backtrace_gettrace(tracebuf, BACKTRACE_MAXFRAME, &nframes);
-		if (result == ISC_R_SUCCESS && nframes > 0)
-			logsuffix = ", back trace";
+	if (result == ISC_R_SUCCESS && nframes > 0) {
+		logsuffix = ", back trace";
+	}
 
-	fprintf(stderr, "%s:%d: %s(%s) %s%s\n",
-		file, line, isc_assertion_typetotext(type), cond,
-		isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-			       ISC_MSG_FAILED, "failed"), logsuffix);
+	fprintf(stderr, "%s:%d: %s(%s) failed%s\n",
+		file, line, isc_assertion_typetotext(type), cond, logsuffix);
+
 	if (result == ISC_R_SUCCESS) {
 		for (i = 0; i < nframes; i++) {
 			unsigned long offset;

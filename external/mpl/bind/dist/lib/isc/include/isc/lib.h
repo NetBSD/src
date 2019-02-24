@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: lib.h,v 1.3 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,15 +21,6 @@
 #include <isc/lang.h>
 
 ISC_LANG_BEGINDECLS
-
-LIBISC_EXTERNAL_DATA extern isc_msgcat_t *isc_msgcat;
-
-void
-isc_lib_initmsgcat(void);
-/*!<
- * \brief Initialize the ISC library's message catalog, isc_msgcat, if it
- * has not already been initialized.
- */
 
 void
 isc_lib_register(void);

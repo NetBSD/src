@@ -1,4 +1,4 @@
-/*	$NetBSD: result_test.c,v 1.2 2019/01/09 16:55:18 christos Exp $	*/
+/*	$NetBSD: result_test.c,v 1.3 2019/02/24 20:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,6 @@
 #include <isc/result.h>
 #include <isc/util.h>
 
-#include <isccc/lib.h>
 #include <isccc/result.h>
 
 /*

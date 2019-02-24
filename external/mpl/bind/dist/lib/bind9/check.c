@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -484,6 +484,43 @@ check_viewacls(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 			result = tresult;
 	}
 	return (result);
+}
+
+static isc_result_t
+check_non_viewacls(const cfg_obj_t *voptions, const cfg_obj_t *config,
+		   isc_log_t *logctx)
+{
+	const cfg_obj_t *aclobj = NULL;
+	const cfg_obj_t *options;
+	const char *where = NULL;
+	int i;
+
+	static const char *acls[] = {
+		"allow-update", "allow-update-forwarding", NULL
+	};
+
+	for (i = 0; acls[i] != NULL; i++) {
+		if (voptions != NULL && aclobj == NULL) {
+			cfg_map_get(voptions, acls[i], &aclobj);
+			where = "view";
+		}
+		if (config != NULL && aclobj == NULL) {
+			options = NULL;
+			cfg_map_get(config, "options", &options);
+			if (options != NULL) {
+				cfg_map_get(options, acls[i], &aclobj);
+				where = "options";
+			}
+		}
+		if (aclobj != NULL) {
+			cfg_obj_log(aclobj, logctx, ISC_LOG_ERROR,
+				    "'%s' can only be set per-zone, "
+				    "not in '%s'", acls[i], where);
+			return (ISC_R_FAILURE);
+		}
+	}
+
+	return (ISC_R_SUCCESS);
 }
 
 static const unsigned char zeros[16];
@@ -1960,7 +1997,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	unsigned int i;
 	dns_rdataclass_t zclass;
 	dns_fixedname_t fixedname;
-	dns_name_t *zname = NULL;
+	dns_name_t *zname = NULL; /* NULL if parsing of zone name fails. */
 	isc_buffer_t b;
 	bool root = false;
 	bool rfc1918 = false;
@@ -1979,10 +2016,10 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	};
 
 	static optionstable dialups[] = {
-	{ "notify", CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
-	{ "notify-passive", CFG_ZONE_SLAVE },
-	{ "passive", CFG_ZONE_SLAVE | CFG_ZONE_STUB },
-	{ "refresh", CFG_ZONE_SLAVE | CFG_ZONE_STUB },
+		{ "notify", CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+		{ "notify-passive", CFG_ZONE_SLAVE },
+		{ "passive", CFG_ZONE_SLAVE | CFG_ZONE_STUB },
+		{ "refresh", CFG_ZONE_SLAVE | CFG_ZONE_STUB },
 	};
 
 	znamestr = cfg_obj_asstring(cfg_tuple_get(zconfig, "name"));
@@ -2275,7 +2312,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	 * server list is used in the absence of one explicitly specified.
 	 */
 	if (ztype == CFG_ZONE_SLAVE || ztype == CFG_ZONE_STUB ||
-	    (ztype == CFG_ZONE_MIRROR && !dns_name_equal(zname, dns_rootname)))
+	    (ztype == CFG_ZONE_MIRROR && zname != NULL &&
+	     !dns_name_equal(zname, dns_rootname)))
 	{
 		obj = NULL;
 		if (cfg_map_get(zoptions, "masters", &obj) != ISC_R_SUCCESS) {
@@ -2436,10 +2474,10 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	if (ztype == CFG_ZONE_MASTER || ztype == CFG_ZONE_SLAVE ||
 	    ztype == CFG_ZONE_STUB)
 	{
-		const cfg_obj_t *dialup = NULL;
-		(void)cfg_map_get(zoptions, "dialup", &dialup);
-		if (dialup != NULL && cfg_obj_isstring(dialup)) {
-			const char *str = cfg_obj_asstring(dialup);
+		obj = NULL;
+		(void)cfg_map_get(zoptions, "dialup", &obj);
+		if (obj != NULL && cfg_obj_isstring(obj)) {
+			const char *str = cfg_obj_asstring(obj);
 			for (i = 0;
 			     i < sizeof(dialups) / sizeof(dialups[0]);
 			     i++)
@@ -2568,7 +2606,6 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 			}
 		}
 	}
-
 
 	/*
 	 * Check that max-zone-ttl isn't used with masterfile-format map
@@ -3134,7 +3171,7 @@ check_trusted_key(const cfg_obj_t *key, bool managed,
 	} else {
 		isc_buffer_usedregion(&b, &r);
 
-		if ((alg == DST_ALG_RSASHA1 || alg == DST_ALG_RSAMD5) &&
+		if ((alg == DST_ALG_RSASHA1) &&
 		    r.length > 1 && r.base[0] == 1 && r.base[1] == 3)
 			cfg_obj_log(key, logctx, ISC_LOG_WARNING,
 				    "%s key '%s' has a weak exponent",
@@ -3693,6 +3730,11 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	tresult = check_viewacls(actx, voptions, config, logctx, mctx);
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
+
+	tresult = check_non_viewacls(voptions, config, logctx);
+	if (tresult != ISC_R_SUCCESS) {
+		result = tresult;
+	}
 
 	tresult = check_recursionacls(actx, voptions, viewname,
 				      config, logctx, mctx);

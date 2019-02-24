@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpaths.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: ntpaths.h,v 1.3 2019/02/24 20:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,7 +35,8 @@ enum NtPaths {
 	LOCAL_STATE_DIR,
 	SYS_CONF_DIR,
 	RNDC_KEY_PATH,
-	SESSION_KEY_PATH
+	SESSION_KEY_PATH,
+	BIND_KEYS_PATH
 };
 
 /*

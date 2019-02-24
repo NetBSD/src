@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.2 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.3 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,3 +18,12 @@
 #else
 #include <isc/stdatomic.h>
 #endif
+
+/*
+ * We define a few additional macros to make things easier
+ */
+
+#define atomic_store_relaxed(o, v) atomic_store_explicit((o), \
+							 (v), \
+							 memory_order_relaxed)
+#define atomic_load_relaxed(o) atomic_load_explicit((o), memory_order_relaxed)
