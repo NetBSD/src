@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_demux.c,v 1.9 2018/09/03 16:29:30 riastradh Exp $ */
+/* $NetBSD: dtv_demux.c,v 1.10 2019/02/24 12:05:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.9 2018/09/03 16:29:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.10 2019/02/24 12:05:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -279,7 +279,7 @@ dtv_demux_set_pidfilter(struct dtv_demux *demux, uint16_t pid, bool onoff)
 	 * PID.
 	 */
 	if (pid == 0x2000) {
-		memset(sc->sc_ts.ts_pidfilter, onoff,
+		memset(sc->sc_ts.ts_pidfilter, onoff ? 0xff : 0,
 		    sizeof(sc->sc_ts.ts_pidfilter));
 	} else {
 		sc->sc_ts.ts_pidfilter[pid] = onoff;
