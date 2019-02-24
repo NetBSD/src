@@ -9,8 +9,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+# shellcheck source=conf.sh
+. "$SYSTEMTESTTOP/conf.sh"
+
+set -e
 
 if $PERL -e 'use Net::DNS;' 2>/dev/null
 then

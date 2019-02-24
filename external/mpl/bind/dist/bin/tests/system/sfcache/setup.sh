@@ -9,8 +9,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+# shellcheck source=conf.sh
+. "$SYSTEMTESTTOP/conf.sh"
+
+set -e
 
 $SHELL clean.sh
 
@@ -18,7 +20,5 @@ copy_setports ns1/named.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf
 copy_setports ns5/named.conf.in ns5/named.conf
 
-cd ns1 && $SHELL sign.sh
-
-cd ../ns5 && cp -f trusted.conf.bad trusted.conf
-
+cd ns1 && $SHELL sign.sh && cd ..
+cd ns5 && $SHELL sign.sh && cd ..

@@ -36,15 +36,16 @@ done
 for db in zones/bad*.db
 do
 	echo_i "checking $db ($n)"
-	ret=0
+	ret=0 v=0
 	case $db in
 	zones/bad-dns-sd-reverse.db)
-		$CHECKZONE -k fail -i local 0.0.0.0.in-addr.arpa $db > test.out.$n 2>&1 && ret=1
+		$CHECKZONE -k fail -i local 0.0.0.0.in-addr.arpa $db > test.out.$n 2>&1 || v=$?
 		;;
 	*)
-                $CHECKZONE -i local example $db > test.out.$n 2>&1 && ret=1
+                $CHECKZONE -i local example $db > test.out.$n 2>&1 || v=$?
 		;;
 	esac
+	test $v = 1 || ret=1
 	n=`expr $n + 1`
 	if [ $ret != 0 ]; then echo_i "failed"; fi
 	status=`expr $status + $ret`

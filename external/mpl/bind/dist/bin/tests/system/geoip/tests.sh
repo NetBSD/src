@@ -37,7 +37,7 @@ status=`expr $status + $ret`
 
 echo_i "reloading server"
 copy_setports ns2/named2.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -56,7 +56,7 @@ status=`expr $status + $ret`
 
 echo_i "reloading server"
 copy_setports ns2/named3.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -75,7 +75,7 @@ status=`expr $status + $ret`
 
 echo_i "reloading server"
 copy_setports ns2/named4.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -95,7 +95,7 @@ status=`expr $status + $ret`
 
 echo_i "reloading server"
 copy_setports ns2/named5.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -115,7 +115,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo_i "reloading server"
 copy_setports ns2/named6.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 if $TESTSOCK6 fd92:7065:b8e:ffff::3
@@ -146,7 +146,7 @@ status=`expr $status + $ret`
 
 echo_i "reloading server"
 copy_setports ns2/named7.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -165,7 +165,7 @@ status=`expr $status + $ret`
 
 echo_i "reloading server"
 copy_setports ns2/named8.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -184,7 +184,7 @@ status=`expr $status + $ret`
 
 echo_i "reloading server"
 copy_setports ns2/named9.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -203,7 +203,7 @@ status=`expr $status + $ret`
 
 echo_i "reloading server"
 copy_setports ns2/named10.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -222,7 +222,7 @@ status=`expr $status + $ret`
 
 echo_i "reloading server"
 copy_setports ns2/named11.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -241,7 +241,7 @@ status=`expr $status + $ret`
 
 echo_i "reloading server"
 copy_setports ns2/named12.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -260,7 +260,7 @@ status=`expr $status + $ret`
 
 echo_i "reloading server"
 copy_setports ns2/named13.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -273,7 +273,7 @@ status=`expr $status + $ret`
 
 echo_i "reloading server"
 copy_setports ns2/named14.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 
 n=`expr $n + 1`
@@ -293,7 +293,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo_i "reloading server with different geoip-directory ($n)"
 copy_setports ns2/named15.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 sleep 3
 awk '/using "..\/data2" as GeoIP directory/ {m=1} ; { if (m>0) { print } }' ns2/named.run | grep "GeoIP City .* DB not available" > /dev/null || ret=1
 [ $ret -eq 0 ] || echo_i "failed"

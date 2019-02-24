@@ -406,8 +406,7 @@ ret=0
 $DIG $DIGOPTS @10.53.0.5 www.to-be-removed.tld A > dig.ns5.prime.${n}
 grep "status: NOERROR" dig.ns5.prime.${n} > /dev/null || { ret=1; echo_i "priming failed"; }
 cp ns4/tld2.db ns4/tld.db
-($RNDCCMD 10.53.0.4 reload tld 2>&1 ) |
-sed -e '/reload queued/d' -e 's/^/ns4 /' | cat_i
+rndc_reload ns4 10.53.0.4 tld
 old=
 for i in 0 1 2 3 4 5 6 7 8 9
 do

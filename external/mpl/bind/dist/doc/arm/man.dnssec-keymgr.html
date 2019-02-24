@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2019 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -75,11 +75,12 @@
     </p>
     <p>
       DNSSEC policy can be read from a configuration file (default
-      <code class="filename">/etc/dnssec-policy.conf</code>), from which the key
-      parameters, publication and rollover schedule, and desired
-      coverage duration for any given zone can be determined.  This
+      <code class="filename">/etc/dnssec-policy.conf</code>), from which the
+      key parameters, publication and rollover schedule, and desired
+      coverage duration for any given zone can be determined. This
       file may be used to define individual DNSSEC policies on a
-      per-zone basis, or to set a default policy used for all zones.
+      per-zone basis, or to set a "<code class="literal">default</code>" policy
+      used for all zones.
     </p>
     <p>
       When <span class="command"><strong>dnssec-keymgr</strong></span> runs, it examines the DNSSEC
@@ -108,6 +109,12 @@
       key directory (either the current working directory or the directory
       set by the <code class="option">-K</code> option), and check the keys for
       all the zones represented in the directory.
+    </p>
+    <p>
+      Key times that are in the past will not be updated unless
+      the <code class="option">-f</code> is used (see below).  Key inactivation
+      and deletion times that are less than five minutes in the future
+      will be delayed by five minutes.
     </p>
     <p>
       It is expected that this tool will be run automatically and
@@ -222,7 +229,7 @@
       </li>
 <li class="listitem">
 	<p>
-	  Algorithm policies:
+	  <span class="emphasis"><em>Algorithm policies:</em></span>
 	  (<code class="option">algorithm-policy <em class="replaceable"><code>algorithm</code></em> { ... };</code> )
 	  override default per-algorithm settings.  For example, by default,
 	  RSASHA256 keys use 2048-bit key sizes for both KSK and ZSK. This
@@ -232,11 +239,13 @@
       </li>
 <li class="listitem">
 	<p>
-	  Zone policies:
+	  <span class="emphasis"><em>Zone policies:</em></span>
 	  (<code class="option">zone <em class="replaceable"><code>name</code></em> { ... };</code> )
 	  set policy for a single zone by name. A zone policy can inherit
 	  a policy class by including a <code class="option">policy</code> option.
 	  Zone names beginning with digits (i.e., 0-9) must be quoted.
+	  If a zone does not have its own policy then the
+	  "<code class="literal">default</code>" policy applies.
 	</p>
       </li>
 </ul></div>
@@ -244,81 +253,90 @@
       Options that can be specified in policies:
     </p>
     <div class="variablelist"><dl class="variablelist">
-<dt><span class="term"><span class="command"><strong>algorithm</strong></span></span></dt>
+<dt><span class="term"><span class="command"><strong>algorithm</strong></span>
+	  <em class="replaceable"><code>name</code></em><code class="literal">;</code></span></dt>
 <dd>
 	  <p>
 	    The key algorithm. If no policy is defined, the default is
 	    RSASHA256.
 	  </p>
 	</dd>
-<dt><span class="term"><span class="command"><strong>coverage</strong></span></span></dt>
+<dt><span class="term"><span class="command"><strong>coverage</strong></span>
+	  <em class="replaceable"><code>duration</code></em><code class="literal">;</code></span></dt>
 <dd>
 	  <p>
 	    The length of time to ensure that keys will be correct; no action
 	    will be taken to create new keys to be activated after this time.
-	    This can be represented as a number of seconds, or as a duration using
-	    human-readable units (examples: "1y" or "6 months").
+	    This can be represented as a number of seconds, or as a duration
+	    using human-readable units (examples: "1y" or "6 months").
 	    A default value for this option can be set in algorithm policies
 	    as well as in policy classes or zone policies.
 	    If no policy is configured, the default is six months.
 	  </p>
 	</dd>
-<dt><span class="term"><span class="command"><strong>directory</strong></span></span></dt>
+<dt><span class="term"><span class="command"><strong>directory</strong></span>
+	  <em class="replaceable"><code>path</code></em><code class="literal">;</code></span></dt>
 <dd>
 	  <p>
 	    Specifies the directory in which keys should be stored.
 	  </p>
 	</dd>
-<dt><span class="term"><span class="command"><strong>key-size</strong></span></span></dt>
+<dt><span class="term"><span class="command"><strong>key-size</strong></span> <em class="replaceable"><code>keytype</code></em>
+	  <em class="replaceable"><code>size</code></em><code class="literal">;</code></span></dt>
 <dd>
 	  <p>
 	    Specifies the number of bits to use in creating keys.
-	    Takes two arguments: keytype (eihter "zsk" or "ksk") and size.
+	    The keytype is either "zsk" or "ksk".
 	    A default value for this option can be set in algorithm policies
 	    as well as in policy classes or zone policies. If no policy is
 	    configured, the default is 2048 bits for RSA keys.
 	  </p>
 	</dd>
-<dt><span class="term"><span class="command"><strong>keyttl</strong></span></span></dt>
+<dt><span class="term"><span class="command"><strong>keyttl</strong></span>
+	  <em class="replaceable"><code>duration</code></em><code class="literal">;</code></span></dt>
 <dd>
 	  <p>
 	    The key TTL. If no policy is defined, the default is one hour.
 	  </p>
 	</dd>
-<dt><span class="term"><span class="command"><strong>post-publish</strong></span></span></dt>
+<dt><span class="term"><span class="command"><strong>post-publish</strong></span> <em class="replaceable"><code>keytype</code></em>
+	  <em class="replaceable"><code>duration</code></em><code class="literal">;</code></span></dt>
 <dd>
 	  <p>
 	    How long after inactivation a key should be deleted from the zone.
 	    Note: If <code class="option">roll-period</code> is not set, this value is
-	    ignored. Takes two arguments: keytype (eihter "zsk" or "ksk") and a
-	    duration. A default value for this option can be set in algorithm
+	    ignored. The keytype is either "zsk" or "ksk".
+	    A default duration for this option can be set in algorithm
 	    policies as well as in policy classes or zone policies. The default
 	    is one month.
 	  </p>
 	</dd>
-<dt><span class="term"><span class="command"><strong>pre-publish</strong></span></span></dt>
+<dt><span class="term"><span class="command"><strong>pre-publish</strong></span> <em class="replaceable"><code>keytype</code></em>
+	  <em class="replaceable"><code>duration</code></em><code class="literal">;</code></span></dt>
 <dd>
 	  <p>
 	    How long before activation a key should be published.  Note: If
 	    <code class="option">roll-period</code> is not set, this value is ignored.
-	    Takes two arguments: keytype (either "zsk" or "ksk") and a duration.
-	    A default value for this option can be set in algorithm policies
+	    The keytype is either "zsk" or "ksk".
+	    A default duration for this option can be set in algorithm policies
 	    as well as in policy classes or zone policies.  The default is
 	    one month.
 	  </p>
 	</dd>
-<dt><span class="term"><span class="command"><strong>roll-period</strong></span></span></dt>
+<dt><span class="term"><span class="command"><strong>roll-period</strong></span> <em class="replaceable"><code>keytype</code></em>
+	  <em class="replaceable"><code>duration</code></em><code class="literal">;</code></span></dt>
 <dd>
 	  <p>
 	    How frequently keys should be rolled over.
-	    Takes two arguments: keytype (eihter "zsk" or "ksk") and a duration.
-	    A default value for this option can be set in algorithm policies
+	    The keytype is either "zsk" or "ksk".
+	    A default duration for this option can be set in algorithm policies
 	    as well as in policy classes or zone policies.  If no policy is
-	    configured, the default is one year for ZSK's. KSK's do not
+	    configured, the default is one year for ZSKs. KSKs do not
 	    roll over by default.
 	  </p>
 	</dd>
-<dt><span class="term"><span class="command"><strong>standby</strong></span></span></dt>
+<dt><span class="term"><span class="command"><strong>standby</strong></span> <em class="replaceable"><code>keytype</code></em>
+	  <em class="replaceable"><code>number</code></em><code class="literal">;</code></span></dt>
 <dd>
 	  <p>
 	    Not yet implemented.
@@ -387,6 +405,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.5-W1 (Development Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.7 (Development Release)</p>
 </body>
 </html>

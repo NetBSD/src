@@ -39,7 +39,7 @@ EOF
     newtest "adding $host $type $ip"
     $NSUPDATE ns1/update.txt > /dev/null 2>&1 || {
 	[ "$should_fail" ] || \
-             echo_i "update failed for $host $type $ip"
+	     echo_i "update failed for $host $type $ip"
 	return 1
     }
 
@@ -48,16 +48,21 @@ EOF
     lines=`echo "$out" | grep "$ip" | wc -l`
     [ $lines -eq 1 ] || {
 	[ "$should_fail" ] || \
-            echo_i "dig output incorrect for $host $type $cmd: $out"
+	    echo_i "dig output incorrect for $host $type $cmd: $out"
 	return 1
     }
 
-    out=`$DIG $DIGOPTS +noall +answer -x $ip`
-    echo $out > added.ptr.out.$n
-    lines=`echo "$out" | grep "$host" | wc -l`
+    for i in 1 2 3 4 5 6 7 8 9 10
+    do
+	out=`$DIG $DIGOPTS +noall +answer -x $ip`
+	echo $out > added.ptr.out.$n
+	lines=`echo "$out" | grep "$host" | wc -l`
+	[ $lines -eq 1 ] && break;
+	$PERL -e 'select(undef, undef, undef, 0.1);'
+    done
     [ $lines -eq 1 ] || {
 	[ "$should_fail" ] || \
-            echo_i "dig reverse output incorrect for $host $type $cmd: $out"
+	    echo_i "dig reverse output incorrect for $host $type $cmd: $out"
 	return 1
     }
 
@@ -79,7 +84,7 @@ EOF
     newtest "deleting $host $type (was $ip)"
     $NSUPDATE ns1/update.txt > /dev/null 2>&1 || {
 	[ "$should_fail" ] || \
-             echo_i "update failed deleting $host $type"
+	     echo_i "update failed deleting $host $type"
 	return 1
     }
 
@@ -88,16 +93,21 @@ EOF
     lines=`echo "$out" | grep "$ip" | wc -l`
     [ $lines -eq 0 ] || {
 	[ "$should_fail" ] || \
-            echo_i "dig output incorrect for $host $type $cmd: $out"
+	    echo_i "dig output incorrect for $host $type $cmd: $out"
 	return 1
     }
 
-    out=`$DIG $DIGOPTS +noall +answer -x $ip`
-    echo $out > deleted.ptr.out.$n
-    lines=`echo "$out" | grep "$host" | wc -l`
+    for i in 1 2 3 4 5 6 7 8 9 10
+    do
+	out=`$DIG $DIGOPTS +noall +answer -x $ip`
+	echo $out > deleted.ptr.out.$n
+	lines=`echo "$out" | grep "$host" | wc -l`
+	[ $lines -eq 0 ] && break
+	$PERL -e 'select(undef, undef, undef, 0.1);'
+    done
     [ $lines -eq 0 ] || {
 	[ "$should_fail" ] || \
-            echo_i "dig reverse output incorrect for $host $type $cmd: $out"
+	    echo_i "dig reverse output incorrect for $host $type $cmd: $out"
 	return 1
     }
 
@@ -135,7 +145,7 @@ grep "loading params for dyndb 'sample2' from .*named.conf:" ns1/named.run > /de
 status=`expr $status + $ret`
 
 echo_i "checking dyndb still works after reload"
-$RNDCCMD 10.53.0.1 reload 2>&1 | sed 's/^/ns1 /' | cat_i
+rndc_reload ns1 10.53.0.1
 
 test_add test5.ipv4.example.nil. A "10.53.0.10" || ret=1
 status=`expr $status + $ret`

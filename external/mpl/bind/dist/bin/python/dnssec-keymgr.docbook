@@ -34,6 +34,7 @@
       <year>2016</year>
       <year>2017</year>
       <year>2018</year>
+      <year>2019</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -64,11 +65,12 @@
     </para>
     <para>
       DNSSEC policy can be read from a configuration file (default
-      <filename>/etc/dnssec-policy.conf</filename>), from which the key
-      parameters, publication and rollover schedule, and desired
-      coverage duration for any given zone can be determined.  This
+      <filename>/etc/dnssec-policy.conf</filename>), from which the
+      key parameters, publication and rollover schedule, and desired
+      coverage duration for any given zone can be determined. This
       file may be used to define individual DNSSEC policies on a
-      per-zone basis, or to set a default policy used for all zones.
+      per-zone basis, or to set a "<literal>default</literal>" policy
+      used for all zones.
     </para>
     <para>
       When <command>dnssec-keymgr</command> runs, it examines the DNSSEC
@@ -97,6 +99,12 @@
       key directory (either the current working directory or the directory
       set by the <option>-K</option> option), and check the keys for
       all the zones represented in the directory.
+    </para>
+    <para>
+      Key times that are in the past will not be updated unless
+      the <option>-f</option> is used (see below).  Key inactivation
+      and deletion times that are less than five minutes in the future
+      will be delayed by five minutes.
     </para>
     <para>
       It is expected that this tool will be run automatically and
@@ -238,7 +246,7 @@
       </listitem>
       <listitem>
 	<para>
-	  Algorithm policies:
+	  <emphasis>Algorithm policies:</emphasis>
 	  (<option>algorithm-policy <replaceable>algorithm</replaceable> { ... };</option> )
 	  override default per-algorithm settings.  For example, by default,
 	  RSASHA256 keys use 2048-bit key sizes for both KSK and ZSK. This
@@ -248,11 +256,13 @@
       </listitem>
       <listitem>
 	<para>
-	  Zone policies:
+	  <emphasis>Zone policies:</emphasis>
 	  (<option>zone <replaceable>name</replaceable> { ... };</option> )
 	  set policy for a single zone by name. A zone policy can inherit
 	  a policy class by including a <option>policy</option> option.
 	  Zone names beginning with digits (i.e., 0-9) must be quoted.
+	  If a zone does not have its own policy then the
+	  "<literal>default</literal>" policy applies.
 	</para>
       </listitem>
     </itemizedlist>
@@ -261,7 +271,8 @@
     </para>
     <variablelist>
       <varlistentry>
-	<term><command>algorithm</command></term>
+	<term><command>algorithm</command>
+	  <replaceable>name</replaceable><literal>;</literal></term>
 	<listitem>
 	  <para>
 	    The key algorithm. If no policy is defined, the default is
@@ -270,13 +281,14 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><command>coverage</command></term>
+	<term><command>coverage</command>
+	  <replaceable>duration</replaceable><literal>;</literal></term>
 	<listitem>
 	  <para>
 	    The length of time to ensure that keys will be correct; no action
 	    will be taken to create new keys to be activated after this time.
-	    This can be represented as a number of seconds, or as a duration using
-	    human-readable units (examples: "1y" or "6 months").
+	    This can be represented as a number of seconds, or as a duration
+	    using human-readable units (examples: "1y" or "6 months").
 	    A default value for this option can be set in algorithm policies
 	    as well as in policy classes or zone policies.
 	    If no policy is configured, the default is six months.
@@ -284,7 +296,8 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><command>directory</command></term>
+	<term><command>directory</command>
+	  <replaceable>path</replaceable><literal>;</literal></term>
 	<listitem>
 	  <para>
 	    Specifies the directory in which keys should be stored.
@@ -292,11 +305,12 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><command>key-size</command></term>
+	<term><command>key-size</command> <replaceable>keytype</replaceable>
+	  <replaceable>size</replaceable><literal>;</literal></term>
 	<listitem>
 	  <para>
 	    Specifies the number of bits to use in creating keys.
-	    Takes two arguments: keytype (eihter "zsk" or "ksk") and size.
+	    The keytype is either "zsk" or "ksk".
 	    A default value for this option can be set in algorithm policies
 	    as well as in policy classes or zone policies. If no policy is
 	    configured, the default is 2048 bits for RSA keys.
@@ -304,7 +318,8 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><command>keyttl</command></term>
+	<term><command>keyttl</command>
+	  <replaceable>duration</replaceable><literal>;</literal></term>
 	<listitem>
 	  <para>
 	    The key TTL. If no policy is defined, the default is one hour.
@@ -312,46 +327,50 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><command>post-publish</command></term>
+	<term><command>post-publish</command> <replaceable>keytype</replaceable>
+	  <replaceable>duration</replaceable><literal>;</literal></term>
 	<listitem>
 	  <para>
 	    How long after inactivation a key should be deleted from the zone.
 	    Note: If <option>roll-period</option> is not set, this value is
-	    ignored. Takes two arguments: keytype (eihter "zsk" or "ksk") and a
-	    duration. A default value for this option can be set in algorithm
+	    ignored. The keytype is either "zsk" or "ksk".
+	    A default duration for this option can be set in algorithm
 	    policies as well as in policy classes or zone policies. The default
 	    is one month.
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><command>pre-publish</command></term>
+	<term><command>pre-publish</command> <replaceable>keytype</replaceable>
+	  <replaceable>duration</replaceable><literal>;</literal></term>
 	<listitem>
 	  <para>
 	    How long before activation a key should be published.  Note: If
 	    <option>roll-period</option> is not set, this value is ignored.
-	    Takes two arguments: keytype (either "zsk" or "ksk") and a duration.
-	    A default value for this option can be set in algorithm policies
+	    The keytype is either "zsk" or "ksk".
+	    A default duration for this option can be set in algorithm policies
 	    as well as in policy classes or zone policies.  The default is
 	    one month.
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><command>roll-period</command></term>
+	<term><command>roll-period</command> <replaceable>keytype</replaceable>
+	  <replaceable>duration</replaceable><literal>;</literal></term>
 	<listitem>
 	  <para>
 	    How frequently keys should be rolled over.
-	    Takes two arguments: keytype (eihter "zsk" or "ksk") and a duration.
-	    A default value for this option can be set in algorithm policies
+	    The keytype is either "zsk" or "ksk".
+	    A default duration for this option can be set in algorithm policies
 	    as well as in policy classes or zone policies.  If no policy is
-	    configured, the default is one year for ZSK's. KSK's do not
+	    configured, the default is one year for ZSKs. KSKs do not
 	    roll over by default.
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><command>standby</command></term>
+	<term><command>standby</command> <replaceable>keytype</replaceable>
+	  <replaceable>number</replaceable><literal>;</literal></term>
 	<listitem>
 	  <para>
 	    Not yet implemented.

@@ -56,6 +56,12 @@ zone "verify-axfr" {
 	file "verify-axfr.db.mirror";
 };
 
+zone "verify-csk" {
+	type mirror;
+	masters { 10.53.0.2; };
+	file "verify-csk.db.mirror";
+};
+
 zone "verify-ixfr" {
 	type mirror;
 	masters { 10.53.0.2; };

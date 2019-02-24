@@ -358,7 +358,7 @@ addr () {
     digcmd $2 >$DIGNM
     #ckalive "$2" "server crashed by 'dig $2'" || return 1
     ADDR_ESC=`echo "$ADDR" | sed -e 's/\./\\\\./g'`
-    ADDR_TTL=`sed -n -e "s/^[-.a-z0-9]\{1,\}[	 ]*\([0-9]*\)	IN	AA*	${ADDR_ESC}\$/\1/p" $DIGNM`
+    ADDR_TTL=`tr -d '\r' < $DIGNM | sed -n -e "s/^[-.a-z0-9]\{1,\}[	 ]*\([0-9]*\)	IN	AA*	${ADDR_ESC}\$/\1/p"`
     if test -z "$ADDR_TTL"; then
 	setret "'dig $2' wrong; no address $ADDR record in $DIGNM"
 	return 1
@@ -430,7 +430,7 @@ for mode in native dnsrps; do
       continue
     fi
     echo_i "attempting to configure servers with DNSRPS..."
-    $PERL $SYSTEMTESTTOP/stop.pl rpz
+    $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpz
     $SHELL ./setup.sh -N -D $DEBUG
     for server in ns*; do
       resetstats $server
@@ -543,12 +543,12 @@ EOF
   addr 127.0.0.17 "a4-4.tld2 -b $ns1"	# 17 client-IP address trigger
   nxdomain a7-1.tld2			# 18 slave policy zone (RT34450)
   cp ns2/blv2.tld2.db.in ns2/bl.tld2.db
-  $RNDCCMD $ns2 reload bl.tld2 | sed 's/^/ns2 /' | cat_i
+  rndc_reload ns2 $ns2 bl.tld2
   ck_soa 2 bl.tld2 $ns3
   nochange a7-1.tld2			# 19 PASSTHRU
   sleep 1	# ensure that a clock tick has occured so that named will do the reload
   cp ns2/blv3.tld2.db.in ns2/bl.tld2.db
-  $RNDCCMD $ns2 reload bl.tld2 | sed 's/^/ns2 /' | cat_i
+  rndc_reload ns2 $ns2 bl.tld2
   ck_soa 3 bl.tld2 $ns3
   nxdomain a7-1.tld2			# 20 slave policy zone (RT34450)
   end_group
@@ -741,7 +741,7 @@ EOF
 
   # restart the main test RPZ server to see if that creates a core file
   if test -z "$HAVE_CORE"; then
-    $PERL $SYSTEMTESTTOP/stop.pl rpz ns3
+    $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpz ns3
     restart 3
     HAVE_CORE=`find ns* -name '*core*' -print`
     test -z "$HAVE_CORE" || setret "found $HAVE_CORE; memory leak?"
@@ -780,7 +780,7 @@ EOF
   echo_i "checking that going from an empty policy zone works (${t})"
   nsd $ns5 add '*.x.servfail.policy2.' x.servfail.policy2.
   sleep 1
-  $RNDCCMD $ns7 reload policy2 | sed 's/^/ns7 /' | cat_i
+  rndc_reload ns7 $ns7 policy2
   $DIG z.x.servfail -p ${PORT} @$ns7 > dig.out.${t}
   grep NXDOMAIN dig.out.${t} > /dev/null || setret "failed"
 

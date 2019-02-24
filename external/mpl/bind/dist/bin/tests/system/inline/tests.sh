@@ -332,7 +332,7 @@ n=`expr $n + 1`
 echo_i "check adding of record to unsigned master ($n)"
 ret=0
 cp ns3/master2.db.in ns3/master.db
-$RNDCCMD 10.53.0.3 reload master 2>&1 | sed 's/^/ns3 /' | cat_i
+rndc_reload ns3 10.53.0.3 master
 for i in 1 2 3 4 5 6 7 8 9
 do
 	ans=0
@@ -350,7 +350,7 @@ n=`expr $n + 1`
 echo_i "check adding record fails when SOA serial not changed ($n)"
 ret=0
 echo "c A 10.0.0.3" >> ns3/master.db
-$RNDCCMD 10.53.0.3 reload 2>&1 | sed 's/^/ns3 /' | cat_i
+rndc_reload ns3 10.53.0.3
 sleep 1
 $DIG $DIGOPTS @10.53.0.3 c.master A > dig.out.ns3.test$n
 grep "NXDOMAIN" dig.out.ns3.test$n > /dev/null || ret=1
@@ -605,7 +605,7 @@ status=`expr $status + $ret`
 copy_setports ns5/named.conf.post ns5/named.conf
 (cd ns5; $KEYGEN -q -a rsasha256 bits) > /dev/null 2>&1
 (cd ns5; $KEYGEN -q -a rsasha256 -f KSK bits) > /dev/null 2>&1
-$RNDCCMD 10.53.0.5 reload 2>&1 | sed 's/^/ns5 /' | cat_i
+rndc_reload ns5 10.53.0.5
 for i in 1 2 3 4 5 6 7 8 9 10
 do
 	ret=0
@@ -635,7 +635,7 @@ echo_i "checking rndc freeze/thaw of dynamic inline zone ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 freeze dynamic > freeze.test$n 2>&1 || ret=1
 sleep 1
-awk '$2 == ";" && $3 == "serial" { printf("%d %s %s\n", $1 + 1, $2, $3); next; }
+awk '$2 == ";" && $3 ~ /serial/ { printf("%d %s %s\n", $1 + 1, $2, $3); next; }
      { print; }
      END { print "freeze1.dynamic. 0 TXT freeze1"; } ' ns3/dynamic.db > ns3/dynamic.db.new
 mv ns3/dynamic.db.new ns3/dynamic.db
@@ -665,7 +665,7 @@ echo_i "checking rndc freeze/thaw of server ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 freeze > freeze.test$n 2>&1 || ret=1
 sleep 1
-awk '$2 == ";" && $3 == "serial" { printf("%d %s %s\n", $1 + 1, $2, $3); next; }
+awk '$2 == ";" && $3 ~ /serial/ { printf("%d %s %s\n", $1 + 1, $2, $3); next; }
      { print; }
      END { print "freeze2.dynamic. 0 TXT freeze2"; } ' ns3/dynamic.db > ns3/dynamic.db.new
 mv ns3/dynamic.db.new ns3/dynamic.db
@@ -909,7 +909,7 @@ ret=1
 sleep 1
 nextpart ns3/named.run > /dev/null
 cp ns3/master5.db.in ns3/master.db
-$RNDCCMD 10.53.0.3 reload 2>&1 | sed 's/^/ns3 /' | cat_i
+rndc_reload ns3 10.53.0.3
 for i in 1 2 3 4 5 6 7 8 9 10
 do
 	if nextpart ns3/named.run | grep "zone master.*sending notifies" > /dev/null; then

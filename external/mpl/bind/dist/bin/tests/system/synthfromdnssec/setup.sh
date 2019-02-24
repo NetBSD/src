@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 #
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
@@ -9,8 +9,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+# shellcheck source=conf.sh
+. "$SYSTEMTESTTOP/conf.sh"
+
+set -e
 
 $SHELL clean.sh
 
@@ -20,5 +22,7 @@ copy_setports ns3/named.conf.in ns3/named.conf
 copy_setports ns4/named.conf.in ns4/named.conf
 copy_setports ns5/named.conf.in ns5/named.conf
 
-cd ns1
-$SHELL sign.sh
+(
+    cd ns1
+    $SHELL sign.sh
+)

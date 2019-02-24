@@ -53,12 +53,38 @@ status=`expr $ret + $status`
 n=`expr $n + 1`
 echo_i "checking startup notify rate limit ($n)"
 ret=0
-grep 'x[0-9].*sending notify to' ns2/named.run |
-    sed 's/.*:\([0-9][0-9]\)\..*/\1/' | uniq -c | awk '{print $1}' > log.out
-# the notifies should span at least 4 seconds
-wc -l log.out | awk '$1 < 4 { exit(1) }' || ret=1
-# ... with no more than 5 in any one second
-awk '$1 > 5 { exit(1) }' log.out || ret=1
+awk '/x[0-9].*sending notify to/ {
+	split($2, a, ":");
+	this = a[1] * 3600 + a[2] * 60 + a[3];
+	if (lasta1 && lasta1 > a[1]) {
+		fix = 3600 * 24;
+	}
+	this += fix;
+	if (last) {
+		delta = this - last;
+		print delta;
+
+		total += delta;
+		if (!maxdelta || delta > maxdelta) {
+			maxdelta = delta;
+		}
+		if (!mindelta || delta < mindelta) {
+			mindelta = delta;
+		}
+	}
+	lasta1 = a[1];
+	last = this;
+	count++;
+}
+END {
+	average = total / count;
+	print "mindelta:", mindelta;
+	print "maxdelta:" maxdelta;
+	print "count:", count;
+	print "average:", average;
+	if (average < 0.180) exit(1);
+	if (count < 20) exit(1);
+}' ns2/named.run > awk.out.ns2.test$n || ret=1
 [ $ret = 0 ] || echo_i "failed"
 status=`expr $ret + $status`
 
@@ -72,7 +98,7 @@ if [ ! "$CYGWIN" ]; then
     $KILL -HUP `cat ns2/named.pid`
 else
     echo_i "reloading with example2 using rndc and waiting up to 45 seconds"
-    $RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/I:ns2 /'
+    rndc_reload ns2 10.53.0.2
 fi
 
 try=0
@@ -199,7 +225,7 @@ do
 		txt > dig.out.c.ns5.test$n || ret=1
 	grep "test string" dig.out.b.ns5.test$n > /dev/null &&
 	grep "test string" dig.out.c.ns5.test$n > /dev/null &&
-        break
+	break
 	sleep 1
 done
 grep "test string" dig.out.b.ns5.test$n > /dev/null || ret=1
