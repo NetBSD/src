@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.31 2017/10/28 04:53:56 riastradh Exp $ */
+/*	$NetBSD: mt.c,v 1.32 2019/02/24 20:54:13 kamil Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.31 2017/10/28 04:53:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.32 2019/02/24 20:54:13 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,6 +628,7 @@ mtstart(struct mt_softc *sc)
 				sc->sc_flags &= ~MTF_REW;
 				break;
 			}
+			/* FALLTHROUGH */
 		    case -2:
 			/*
 			 * -2 means "timeout" reading DSJ, which is probably
@@ -639,6 +640,7 @@ mtstart(struct mt_softc *sc)
 				    mtstart_callout, sc);
 				return;
 			}
+			/* FALLTHROUGH */
 		    case 2:
 			if (bp->b_cmd != MTNOP || !(bp->b_flags & B_CMD)) {
 				bp->b_error = EBUSY;
