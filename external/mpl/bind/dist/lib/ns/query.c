@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.4 2019/02/24 20:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -151,7 +151,7 @@ do { \
 #define NOQNAME(r)		(((r)->attributes & \
 				  DNS_RDATASETATTR_NOQNAME) != 0)
 
-/*% Does the rdataset 'r' contains a stale answer? */
+/*% Does the rdataset 'r' contain a stale answer? */
 #define STALE(r)		(((r)->attributes & \
 				  DNS_RDATASETATTR_STALE) != 0)
 
@@ -3670,40 +3670,7 @@ rpz_rewrite_name(ns_client_t *client, dns_name_t *trig_name,
 			     (st->m.type == rpz_type &&
 			      0 >= dns_name_compare(p_name, st->p_name))))
 				continue;
-#if 0
-			/*
-			 * This code would block a customer reported information
-			 * leak of rpz rules by rewriting requests in the
-			 * rpz-ip, rpz-nsip, rpz-nsdname,and rpz-passthru TLDs.
-			 * Without this code, a bad guy could request
-			 * 24.0.3.2.10.rpz-ip. to find the policy rule for
-			 * 10.2.3.0/14.  It is an insignificant leak and this
-			 * code is not worth its cost, because the bad guy
-			 * could publish "evil.com A 10.2.3.4" and request
-			 * evil.com to get the same information.
-			 * Keep code with "#if 0" in case customer demand
-			 * is irresistible.
-			 *
-			 * We have the less frequent case of a triggered
-			 * policy.  Check that we have not trigger on one
-			 * of the pretend RPZ TLDs.
-			 * This test would make it impossible to rewrite
-			 * names in TLDs that start with "rpz-" should
-			 * ICANN ever allow such TLDs.
-			 */
-			unsigned int labels;
-			labels = dns_name_countlabels(trig_name);
-			if (labels >= 2) {
-				dns_label_t label;
 
-				dns_name_getlabel(trig_name, labels-2, &label);
-				if (label.length >= sizeof(DNS_RPZ_PREFIX)-1 &&
-				    strncasecmp((const char *)label.base+1,
-						DNS_RPZ_PREFIX,
-						sizeof(DNS_RPZ_PREFIX)-1) == 0)
-					continue;
-			}
-#endif
 			if (rpz->policy != DNS_RPZ_POLICY_DISABLED) {
 				CTRACE(ISC_LOG_DEBUG(3),
 				       "rpz_rewrite_name: rpz_save_p");
@@ -5624,38 +5591,37 @@ ns_query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 				   ns_statscounter_recursclients);
 
 		if  (result == ISC_R_SOFTQUOTA) {
-			static isc_stdtime_t last = 0;
+			static atomic_uint_fast32_t last = 0;
 			isc_stdtime_t now;
 			isc_stdtime_get(&now);
-			if (now != last) {
-				last = now;
+			if (now != atomic_load_relaxed(&last)) {
+				atomic_store_relaxed(&last, now);
 				ns_client_log(client, NS_LOGCATEGORY_CLIENT,
-					      NS_LOGMODULE_QUERY,
-					      ISC_LOG_WARNING,
-					      "recursive-clients soft limit "
-					      "exceeded (%d/%d/%d), "
-					      "aborting oldest query",
-					      client->recursionquota->used,
-					      client->recursionquota->soft,
-					      client->recursionquota->max);
+				      NS_LOGMODULE_QUERY, ISC_LOG_WARNING,
+				      "recursive-clients soft limit "
+				      "exceeded (%u/%u/%u), "
+				      "aborting oldest query",
+				      isc_quota_getused(client->recursionquota),
+				      isc_quota_getsoft(client->recursionquota),
+				      isc_quota_getmax(client->recursionquota));
 			}
 			ns_client_killoldestquery(client);
 			result = ISC_R_SUCCESS;
 		} else if (result == ISC_R_QUOTA) {
-			static isc_stdtime_t last = 0;
+			static atomic_uint_fast32_t last = 0;
 			isc_stdtime_t now;
 			isc_stdtime_get(&now);
-			if (now != last) {
-				last = now;
+			if (now != atomic_load_relaxed(&last)) {
+				ns_server_t *sctx = client->sctx;
+				atomic_store_relaxed(&last, now);
 				ns_client_log(client, NS_LOGCATEGORY_CLIENT,
-					      NS_LOGMODULE_QUERY,
-					      ISC_LOG_WARNING,
-					      "no more recursive clients "
-					      "(%d/%d/%d): %s",
-					      client->sctx->recursionquota.used,
-					      client->sctx->recursionquota.soft,
-					      client->sctx->recursionquota.max,
-					      isc_result_totext(result));
+				      NS_LOGMODULE_QUERY, ISC_LOG_WARNING,
+				      "no more recursive clients "
+				      "(%u/%u/%u): %s",
+				      isc_quota_getused(&sctx->recursionquota),
+				      isc_quota_getsoft(&sctx->recursionquota),
+				      isc_quota_getmax(&sctx->recursionquota),
+				      isc_result_totext(result));
 			}
 			ns_client_killoldestquery(client);
 		}

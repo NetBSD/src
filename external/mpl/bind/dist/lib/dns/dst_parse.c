@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: dst_parse.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -188,7 +188,7 @@ check_rsa(const dst_private_t *priv, bool external) {
 
 	for (j = 0; j < priv->nelements; j++) {
 		for (i = 0; i < RSA_NTAGS; i++)
-			if (priv->elements[j].tag == TAG(DST_ALG_RSAMD5, i))
+			if (priv->elements[j].tag == TAG(DST_ALG_RSA, i))
 				break;
 		if (i == RSA_NTAGS)
 			return (-1);
@@ -338,7 +338,7 @@ check_data(const dst_private_t *priv, const unsigned int alg,
 {
 	/* XXXVIX this switch statement is too sparse to gen a jump table. */
 	switch (alg) {
-	case DST_ALG_RSAMD5:
+	case DST_ALG_RSA:
 	case DST_ALG_RSASHA1:
 	case DST_ALG_NSEC3RSASHA1:
 	case DST_ALG_RSASHA256:
@@ -663,9 +663,6 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 
 	/* XXXVIX this switch statement is too sparse to gen a jump table. */
 	switch (dst_key_alg(key)) {
-	case DST_ALG_RSAMD5:
-		fprintf(fp, "(RSA)\n");
-		break;
 	case DST_ALG_DH:
 		fprintf(fp, "(DH)\n");
 		break;

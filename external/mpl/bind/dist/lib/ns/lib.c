@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: lib.c,v 1.4 2019/02/24 20:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,6 @@
 #include <stddef.h>
 
 #include <isc/mem.h>
-#include <isc/msgcat.h>
 #include <isc/mutex.h>
 #include <isc/once.h>
 #include <isc/util.h>

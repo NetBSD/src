@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.4 2019/02/24 20:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -800,8 +800,10 @@ static isc_result_t
 cname_compatibility_action(void *data, dns_rdataset_t *rrset) {
 	UNUSED(data);
 	if (rrset->type != dns_rdatatype_cname &&
-	    ! dns_rdatatype_isdnssec(rrset->type))
+	    ! dns_rdatatype_atcname(rrset->type))
+	{
 		return (ISC_R_EXISTS);
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -1962,7 +1964,7 @@ check_dnssec(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 		if (tuple->rdata.type == dns_rdatatype_dnskey) {
 			uint8_t alg;
 			alg = tuple->rdata.data[3];
-			if (alg == DST_ALG_RSAMD5 || alg == DST_ALG_RSASHA1) {
+			if (alg == DST_ALG_RSASHA1) {
 				nseconly = true;
 				break;
 			}
@@ -2445,7 +2447,7 @@ add_signing_records(dns_db_t *db, dns_rdatatype_t privatetype,
 
 		dns_rdata_toregion(&tuple->rdata, &r);
 
-		keyid = dst_region_computeid(&r, dnskey.algorithm);
+		keyid = dst_region_computeid(&r);
 
 		buf[0] = dnskey.algorithm;
 		buf[1] = (keyid & 0xff00) >> 8;
@@ -2854,7 +2856,7 @@ update_action(isc_task_t *task, isc_event_t *event) {
 						   dns_rdatatype_cname, 0,
 						   &flag));
 				if (flag &&
-				    ! dns_rdatatype_isdnssec(rdata.type))
+				    ! dns_rdatatype_atcname(rdata.type))
 				{
 					update_log(client, zone,
 						   LOGLEVEL_PROTOCOL,
@@ -3285,7 +3287,7 @@ update_action(isc_task_t *task, isc_event_t *event) {
 
 			dns_rdata_toregion(&tuple->rdata, &r);
 			algorithm = dnskey.algorithm;
-			keyid = dst_region_computeid(&r, algorithm);
+			keyid = dst_region_computeid(&r);
 
 			result = dns_zone_signwithkey(zone, algorithm, keyid,
 					(tuple->op == DNS_DIFFOP_DEL));

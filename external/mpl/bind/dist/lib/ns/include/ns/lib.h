@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.h,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: lib.h,v 1.3 2019/02/24 20:01:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,8 +11,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NS_LIB_H
-#define NS_LIB_H 1
+#pragma once
 
 /*! \file include/ns/lib.h */
 
@@ -22,7 +21,6 @@
 ISC_LANG_BEGINDECLS
 
 LIBNS_EXTERNAL_DATA extern unsigned int ns_pps;
-LIBNS_EXTERNAL_DATA extern isc_msgcat_t *ns_msgcat;
 
 isc_result_t
 ns_lib_init(void);
@@ -37,5 +35,3 @@ ns_lib_shutdown(void);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* NS_LIB_H */

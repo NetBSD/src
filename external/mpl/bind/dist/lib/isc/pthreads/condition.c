@@ -1,4 +1,4 @@
-/*	$NetBSD: condition.c,v 1.3 2019/01/09 16:55:16 christos Exp $	*/
+/*	$NetBSD: condition.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,6 @@
 #include <errno.h>
 
 #include <isc/condition.h>
-#include <isc/msgs.h>
 #include <isc/strerr.h>
 #include <isc/string.h>
 #include <isc/time.h>
@@ -68,9 +67,7 @@ isc_condition_waituntil(isc_condition_t *c, isc_mutex_t *m, isc_time_t *t) {
 
 	strerror_r(presult, strbuf, sizeof(strbuf));
 	UNEXPECTED_ERROR(__FILE__, __LINE__,
-			 "pthread_cond_timedwait() %s %s",
-			 isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-					ISC_MSG_RETURNED, "returned"),
+			 "pthread_cond_timedwait() returned %s",
 			 strbuf);
 	return (ISC_R_UNEXPECTED);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cert_37.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: cert_37.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -57,7 +57,7 @@ fromtext_cert(ARGS_FROMTEXT) {
 	RETTOK(dns_secalg_fromtext(&secalg, &token.value.as_textregion));
 	RETERR(mem_tobuffer(target, &secalg, 1));
 
-	return (isc_base64_tobuffer(lexer, target, -1));
+	return (isc_base64_tobuffer(lexer, target, -2));
 }
 
 static inline isc_result_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: quota.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,62 +18,73 @@
 
 #include <stddef.h>
 
+#include <isc/atomic.h>
 #include <isc/quota.h>
 #include <isc/util.h>
 
+
 void
-isc_quota_init(isc_quota_t *quota, int max) {
-	quota->max = max;
-	quota->used = 0;
-	quota->soft = 0;
-	isc_mutex_init(&quota->lock);
+isc_quota_init(isc_quota_t *quota, unsigned int max) {
+	atomic_store(&quota->max, max);
+	atomic_store(&quota->used, 0);
+	atomic_store(&quota->soft, 0);
 }
 
 void
 isc_quota_destroy(isc_quota_t *quota) {
-	INSIST(quota->used == 0);
-	quota->max = 0;
-	quota->used = 0;
-	quota->soft = 0;
-	isc_mutex_destroy(&quota->lock);
+	INSIST(atomic_load(&quota->used) == 0);
+	atomic_store(&quota->max, 0);
+	atomic_store(&quota->used, 0);
+	atomic_store(&quota->soft, 0);
 }
 
 void
-isc_quota_soft(isc_quota_t *quota, int soft) {
-	LOCK(&quota->lock);
-	quota->soft = soft;
-	UNLOCK(&quota->lock);
+isc_quota_soft(isc_quota_t *quota, unsigned int soft) {
+	atomic_store(&quota->soft, soft);
 }
 
 void
-isc_quota_max(isc_quota_t *quota, int max) {
-	LOCK(&quota->lock);
-	quota->max = max;
-	UNLOCK(&quota->lock);
+isc_quota_max(isc_quota_t *quota, unsigned int max) {
+	atomic_store(&quota->max, max);
+}
+
+unsigned int
+isc_quota_getmax(isc_quota_t *quota) {
+	return (atomic_load_relaxed(&quota->max));
+}
+
+unsigned int
+isc_quota_getsoft(isc_quota_t *quota) {
+	return (atomic_load_relaxed(&quota->soft));
+}
+
+unsigned int
+isc_quota_getused(isc_quota_t *quota) {
+	return (atomic_load_relaxed(&quota->used));
 }
 
 isc_result_t
 isc_quota_reserve(isc_quota_t *quota) {
 	isc_result_t result;
-	LOCK(&quota->lock);
-	if (quota->max == 0 || quota->used < quota->max) {
-		if (quota->soft == 0 || quota->used < quota->soft)
+	uint32_t max = atomic_load(&quota->max);
+	uint32_t soft = atomic_load(&quota->soft);
+	uint32_t used = atomic_fetch_add(&quota->used, 1);
+	if (max == 0 || used < max) {
+		if (soft == 0 || used < soft) {
 			result = ISC_R_SUCCESS;
-		else
+		} else {
 			result = ISC_R_SOFTQUOTA;
-		quota->used++;
-	} else
+		}
+	} else {
+		INSIST(atomic_fetch_sub(&quota->used, 1) > 0);
 		result = ISC_R_QUOTA;
-	UNLOCK(&quota->lock);
+	}
 	return (result);
 }
 
 void
 isc_quota_release(isc_quota_t *quota) {
-	LOCK(&quota->lock);
-	INSIST(quota->used > 0);
-	quota->used--;
-	UNLOCK(&quota->lock);
+	INSIST(atomic_fetch_sub(&quota->used, 1) > 0);
 }
 
 isc_result_t

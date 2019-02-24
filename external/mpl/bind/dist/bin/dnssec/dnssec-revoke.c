@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -59,13 +59,13 @@ usage(void) {
 #else
 	fprintf(stderr, "    -E engine:    specify OpenSSL engine\n");
 #endif
-	fprintf(stderr, "    -f:	   force overwrite\n");
+	fprintf(stderr, "    -f:           force overwrite\n");
+	fprintf(stderr, "    -h:           help\n");
 	fprintf(stderr, "    -K directory: use directory for key files\n");
-	fprintf(stderr, "    -h:	   help\n");
-	fprintf(stderr, "    -r:	   remove old keyfiles after "
+	fprintf(stderr, "    -r:           remove old keyfiles after "
 					   "creating revoked version\n");
-	fprintf(stderr, "    -v level:	   set level of verbosity\n");
-	fprintf(stderr, "    -V: print version information\n");
+	fprintf(stderr, "    -v level:     set level of verbosity\n");
+	fprintf(stderr, "    -V:           print version information\n");
 	fprintf(stderr, "Output:\n");
 	fprintf(stderr, "     K<name>+<alg>+<new id>.key, "
 			     "K<name>+<alg>+<new id>.private\n");
@@ -241,7 +241,7 @@ main(int argc, char **argv) {
 		 * Remove old key file, if told to (and if
 		 * it isn't the same as the new file)
 		 */
-		if (removefile && dst_key_alg(key) != DST_ALG_RSAMD5) {
+		if (removefile) {
 			isc_buffer_init(&buf, oldname, sizeof(oldname));
 			dst_key_setflags(key, flags & ~DNS_KEYFLAG_REVOKE);
 			dst_key_buildfilename(key, DST_TYPE_PRIVATE, dir, &buf);

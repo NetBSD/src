@@ -1,4 +1,4 @@
-/*	$NetBSD: sshfp_44.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@ fromtext_sshfp(ARGS_FROMTEXT) {
 	/*
 	 * Digest.
 	 */
-	return (isc_hex_tobuffer(lexer, target, -1));
+	return (isc_hex_tobuffer(lexer, target, -2));
 }
 
 static inline isc_result_t

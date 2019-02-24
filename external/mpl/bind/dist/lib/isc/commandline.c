@@ -1,4 +1,4 @@
-/*	$NetBSD: commandline.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: commandline.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -56,7 +56,6 @@
 
 #include <isc/commandline.h>
 #include <isc/mem.h>
-#include <isc/msgs.h>
 #include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -137,12 +136,8 @@ isc_commandline_parse(int argc, char * const *argv, const char *options) {
 			isc_commandline_index++;
 
 		if (isc_commandline_errprint && *options != ':')
-			fprintf(stderr, "%s: %s -- %c\n",
+			fprintf(stderr, "%s: illegal option -- %c\n",
 				isc_commandline_progname,
-				isc_msgcat_get(isc_msgcat,
-					       ISC_MSGSET_COMMANDLINE,
-					       ISC_MSG_ILLEGALOPT,
-					       "illegal option"),
 				isc_commandline_option);
 
 		return (BADOPT);
@@ -190,13 +185,8 @@ isc_commandline_parse(int argc, char * const *argv, const char *options) {
 				return (BADARG);
 
 			if (isc_commandline_errprint)
-				fprintf(stderr, "%s: %s -- %c\n",
+				fprintf(stderr, "%s: option requires an argument -- %c\n",
 					isc_commandline_progname,
-					isc_msgcat_get(isc_msgcat,
-						       ISC_MSGSET_COMMANDLINE,
-						       ISC_MSG_OPTNEEDARG,
-						       "option requires "
-						       "an argument"),
 					isc_commandline_option);
 
 			return (BADOPT);

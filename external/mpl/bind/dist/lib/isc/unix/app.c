@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,7 +34,6 @@
 #include <isc/app.h>
 #include <isc/condition.h>
 #include <isc/mem.h>
-#include <isc/msgs.h>
 #include <isc/mutex.h>
 #include <isc/event.h>
 #include <isc/platform.h>
@@ -116,9 +115,7 @@ handle_signal(int sig, void (*handler)(int)) {
 	    sigaction(sig, &sa, NULL) < 0) {
 		strerror_r(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 isc_msgcat_get(isc_msgcat, ISC_MSGSET_APP,
-					       ISC_MSG_SIGNALSETUP,
-					       "handle_signal() %d setup: %s"),
+				 "handle_signal() %d setup: %s",
 				 sig, strbuf);
 		return (ISC_R_UNEXPECTED);
 	}

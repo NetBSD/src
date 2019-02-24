@@ -1,4 +1,4 @@
-/*	$NetBSD: nslookup.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -881,12 +881,29 @@ get_next_command(void) {
 	isc_mem_free(mctx, buf);
 }
 
+ISC_PLATFORM_NORETURN_PRE static void
+usage(void) ISC_PLATFORM_NORETURN_POST;
+
+static void
+usage(void) {
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr,
+"   nslookup [-opt ...]             # interactive mode using default server\n");
+    fprintf(stderr,
+"   nslookup [-opt ...] - server    # interactive mode using 'server'\n");
+    fprintf(stderr,
+"   nslookup [-opt ...] host        # just look up 'host' using default server\n");
+    fprintf(stderr,
+"   nslookup [-opt ...] host server # just look up 'host' using 'server'\n");
+    exit(1);
+}
+
 static void
 parse_args(int argc, char **argv) {
 	bool have_lookup = false;
 
 	usesearch = true;
-	for (argc--, argv++; argc > 0; argc--, argv++) {
+	for (argc--, argv++; argc > 0 && argv[0] != NULL; argc--, argv++) {
 		debug("main parsing %s", argv[0]);
 		if (argv[0][0] == '-') {
 			if (strncasecmp(argv[0], "-ver", 4) == 0) {
@@ -902,6 +919,9 @@ parse_args(int argc, char **argv) {
 				in_use = true;
 				addlookup(argv[0]);
 			} else {
+				if (argv[1] != NULL) {
+					usage();
+				}
 				set_nameserver(argv[0]);
 				check_ra = false;
 			}

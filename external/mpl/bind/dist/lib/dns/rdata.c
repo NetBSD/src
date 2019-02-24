@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -870,13 +870,16 @@ unknown_fromtext(dns_rdataclass_t rdclass, dns_rdatatype_t type,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	result = isc_hex_tobuffer(lexer, buf,
-				  (unsigned int)token.value.as_ulong);
-	if (result != ISC_R_SUCCESS)
-	       goto failure;
-	if (isc_buffer_usedlength(buf) != token.value.as_ulong) {
-		result = ISC_R_UNEXPECTEDEND;
-		goto failure;
+	if (token.value.as_ulong != 0U) {
+		result = isc_hex_tobuffer(lexer, buf,
+					  (unsigned int)token.value.as_ulong);
+		if (result != ISC_R_SUCCESS) {
+		       goto failure;
+		}
+		if (isc_buffer_usedlength(buf) != token.value.as_ulong) {
+			result = ISC_R_UNEXPECTEDEND;
+			goto failure;
+		}
 	}
 
 	if (dns_rdatatype_isknown(type)) {
@@ -2286,6 +2289,14 @@ dns_rdatatype_questiononly(dns_rdatatype_t type) {
 }
 
 bool
+dns_rdatatype_atcname(dns_rdatatype_t type) {
+	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_ATCNAME) != 0) {
+		return (true);
+	}
+	return (false);
+}
+
+bool
 dns_rdatatype_atparent(dns_rdatatype_t type) {
 	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_ATPARENT) != 0)
 		return (true);
@@ -2312,10 +2323,11 @@ dns_rdatatype_isdnssec(dns_rdatatype_t type) {
 
 bool
 dns_rdatatype_iszonecutauth(dns_rdatatype_t type) {
-	if ((dns_rdatatype_attributes(type)
-	     & (DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH))
+	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_ZONECUTAUTH)
 	    != 0)
+	{
 		return (true);
+	}
 	return (false);
 }
 

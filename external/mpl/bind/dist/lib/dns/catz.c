@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: catz.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -839,8 +839,9 @@ dns_catz_zone_detach(dns_catz_zone_t **zonep) {
 
 void
 dns_catz_catzs_detach(dns_catz_zones_t **catzsp) {
+	dns_catz_zones_t *catzs;
+
 	REQUIRE(catzsp != NULL && *catzsp != NULL);
-	dns_catz_zones_t *catzs = *catzsp;
 
 	catzs = *catzsp;
 	*catzsp = NULL;

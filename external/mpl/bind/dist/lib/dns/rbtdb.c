@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1922,6 +1922,7 @@ decrement_reference(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node,
 	rbtdb_nodelock_t *nodelock;
 	int bucket = node->locknum;
 	bool no_reference = true;
+	uint_fast32_t refs;
 
 	nodelock = &rbtdb->node_locks[bucket];
 
@@ -1932,7 +1933,8 @@ decrement_reference(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node,
 	/* Handle easy and typical case first. */
 	if (!node->dirty && KEEP_NODE(node, rbtdb)) {
 		if (isc_refcount_decrement(&node->references) == 1) {
-			isc_refcount_decrement(&nodelock->references);
+			refs = isc_refcount_decrement(&nodelock->references);
+			INSIST(refs > 0);
 			return (true);
 		} else {
 			return (false);
@@ -1993,7 +1995,8 @@ decrement_reference(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node,
 	} else
 		write_locked = true;
 
-	INSIST(isc_refcount_decrement(&nodelock->references) > 0);
+	refs = isc_refcount_decrement(&nodelock->references);
+	INSIST(refs > 0);
 
 	if (KEEP_NODE(node, rbtdb))
 		goto restore_locks;
@@ -2978,6 +2981,8 @@ bind_rdataset(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node,
 		rdataset->attributes |= DNS_RDATASETATTR_PREFETCH;
 	if (STALE(header)) {
 		rdataset->attributes |= DNS_RDATASETATTR_STALE;
+		rdataset->stale_ttl =
+			(rbtdb->serve_stale_ttl + header->rdh_ttl) - now;
 		rdataset->ttl = 0;
 	}
 	rdataset->private1 = rbtdb;

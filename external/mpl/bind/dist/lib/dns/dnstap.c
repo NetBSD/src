@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: dnstap.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -211,26 +211,26 @@ dns_dt_create(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
 	generation++;
 
 	env = isc_mem_get(mctx, sizeof(dns_dtenv_t));
-	if (env == NULL)
-		CHECK(ISC_R_NOMEMORY);
 
 	memset(env, 0, sizeof(dns_dtenv_t));
-
+	env->reopen_task = reopen_task;
+	isc_mutex_init(&env->reopen_lock);
+	env->reopen_queued = false;
+	env->path = isc_mem_strdup(mctx, path);
 	isc_refcount_init(&env->refcount, 1);
 	CHECK(isc_stats_create(mctx, &env->stats, dns_dnstapcounter_max));
-	env->path = isc_mem_strdup(mctx, path);
-	if (env->path == NULL)
-		CHECK(ISC_R_NOMEMORY);
 
 	fwopt = fstrm_writer_options_init();
-	if (fwopt == NULL)
+	if (fwopt == NULL) {
 		CHECK(ISC_R_NOMEMORY);
+	}
 
 	res = fstrm_writer_options_add_content_type(fwopt,
 					    DNSTAP_CONTENT_TYPE,
 					    sizeof(DNSTAP_CONTENT_TYPE) - 1);
-	if (res != fstrm_res_success)
+	if (res != fstrm_res_success) {
 		CHECK(ISC_R_FAILURE);
+	}
 
 	if (mode == dns_dtmode_file) {
 		ffwopt = fstrm_file_options_init();
@@ -245,11 +245,13 @@ dns_dt_create(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
 								  env->path);
 			fw = fstrm_unix_writer_init(fuwopt, fwopt);
 		}
-	} else
+	} else {
 		CHECK(ISC_R_FAILURE);
+	}
 
-	if (fw == NULL)
+	if (fw == NULL) {
 		CHECK(ISC_R_FAILURE);
+	}
 
 	env->iothr = fstrm_iothr_init(*foptp, &fw);
 	if (env->iothr == NULL) {
@@ -264,10 +266,6 @@ dns_dt_create(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
 	env->rolls = ISC_LOG_ROLLINFINITE;
 	env->fopt = *foptp;
 	*foptp = NULL;
-
-	env->reopen_task = reopen_task;
-	isc_mutex_init(&env->reopen_lock);
-	env->reopen_queued = false;
 
 	isc_mem_attach(mctx, &env->mctx);
 
@@ -285,16 +283,12 @@ dns_dt_create(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
 		fstrm_writer_options_destroy(&fwopt);
 
 	if (result != ISC_R_SUCCESS) {
-		if (env != NULL) {
-			isc_mutex_destroy(&env->reopen_lock);
-			if (env->mctx != NULL)
-				isc_mem_detach(&env->mctx);
-			if (env->path != NULL)
-				isc_mem_free(mctx, env->path);
-			if (env->stats != NULL)
-				isc_stats_detach(&env->stats);
-			isc_mem_put(mctx, env, sizeof(dns_dtenv_t));
+		isc_mutex_destroy(&env->reopen_lock);
+		isc_mem_free(mctx, env->path);
+		if (env->stats != NULL) {
+			isc_stats_detach(&env->stats);
 		}
+		isc_mem_putanddetach(&env->mctx, env, sizeof(dns_dtenv_t));
 	}
 
 	return (result);

@@ -1,4 +1,4 @@
-/*	$NetBSD: filter-aaaa.c,v 1.2 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: filter-aaaa.c,v 1.3 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -309,8 +309,8 @@ parse_parameters(filter_instance_t *inst, const char *parameters,
 
 	isc_buffer_constinit(&b, parameters, strlen(parameters));
 	isc_buffer_add(&b, strlen(parameters));
-	CHECK(cfg_parse_buffer4(parser, &b, cfg_file, cfg_line,
-				&cfg_type_parameters, 0, &param_obj));
+	CHECK(cfg_parse_buffer(parser, &b, cfg_file, cfg_line,
+			       &cfg_type_parameters, 0, &param_obj));
 
 	CHECK(check_syntax(param_obj, cfg, mctx, lctx, actx));
 
@@ -422,8 +422,8 @@ plugin_check(const char *parameters,
 
 	isc_buffer_constinit(&b, parameters, strlen(parameters));
 	isc_buffer_add(&b, strlen(parameters));
-	CHECK(cfg_parse_buffer4(parser, &b, cfg_file, cfg_line,
-				&cfg_type_parameters, 0, &param_obj));
+	CHECK(cfg_parse_buffer(parser, &b, cfg_file, cfg_line,
+			       &cfg_type_parameters, 0, &param_obj));
 
 	CHECK(check_syntax(param_obj, cfg, mctx, lctx, actx));
 
@@ -594,8 +594,9 @@ process_name(query_ctx_t *qctx, filter_aaaa_t mode, const dns_name_t *name,
 		CHECK(dns_message_findtype(name, dns_rdatatype_a, 0, NULL));
 	}
 
-	dns_message_findtype(name, type, 0, &rdataset);
-	dns_message_findtype(name, dns_rdatatype_rrsig, type, &sigrdataset);
+	(void)dns_message_findtype(name, type, 0, &rdataset);
+	(void)dns_message_findtype(name, dns_rdatatype_rrsig, type,
+				   &sigrdataset);
 
 	if (rdataset != NULL &&
 	    (sigrdataset == NULL || !WANTDNSSEC(qctx->client) ||

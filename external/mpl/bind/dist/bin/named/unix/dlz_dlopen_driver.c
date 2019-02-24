@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dlopen_driver.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: dlz_dlopen_driver.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -259,7 +259,7 @@ dlopen_dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 	/* Open the library */
 	dlopen_flags = RTLD_NOW|RTLD_GLOBAL;
 
-#ifdef RTLD_DEEPBIND
+#if defined(RTLD_DEEPBIND) && !__SANITIZE_ADDRESS__
 	/*
 	 * If RTLD_DEEPBIND is available then use it. This can avoid
 	 * issues with a module using a different version of a system

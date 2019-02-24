@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -758,15 +758,15 @@ dns_tsigkey_setdeleted(dns_tsigkey_t *key) {
 
 isc_result_t
 dns_tsig_sign(dns_message_t *msg) {
-	dns_tsigkey_t *key;
+	dns_tsigkey_t *key = NULL;
 	dns_rdata_any_tsig_t tsig, querytsig;
 	unsigned char data[128];
 	isc_buffer_t databuf, sigbuf;
-	isc_buffer_t *dynbuf;
+	isc_buffer_t *dynbuf = NULL;
 	dns_name_t *owner;
 	dns_rdata_t *rdata = NULL;
-	dns_rdatalist_t *datalist;
-	dns_rdataset_t *dataset;
+	dns_rdatalist_t *datalist = NULL;
+	dns_rdataset_t *dataset = NULL;
 	isc_region_t r;
 	isc_stdtime_t now;
 	isc_mem_t *mctx;
@@ -781,13 +781,15 @@ dns_tsig_sign(dns_message_t *msg) {
 	REQUIRE(VALID_TSIG_KEY(key));
 
 	/*
-	 * If this is a response, there should be a query tsig.
+	 * If this is a response, there should be a TSIG in the query with the
+	 * the exception if this is a TKEY request (see RFC 3645, Section 2.2).
 	 */
 	response = is_response(msg);
-	if (response && msg->querytsig == NULL)
-		return (DNS_R_EXPECTEDTSIG);
-
-	dynbuf = NULL;
+	if (response && msg->querytsig == NULL) {
+		if (msg->tkey != 1) {
+			return (DNS_R_EXPECTEDTSIG);
+		}
+	}
 
 	mctx = msg->mctx;
 
@@ -830,6 +832,7 @@ dns_tsig_sign(dns_message_t *msg) {
 		unsigned char header[DNS_MESSAGE_HEADERLEN];
 		isc_buffer_t headerbuf;
 		uint16_t digestbits;
+		bool querytsig_ok = false;
 
 		/*
 		 * If it is a response, we assume that the request MAC
@@ -843,9 +846,15 @@ dns_tsig_sign(dns_message_t *msg) {
 			return (ret);
 
 		/*
-		 * If this is a response, digest the request's MAC.
+		 * If this is a response, and if there was a TSIG in
+		 * the query, digest the request's MAC.
+		 *
+		 * (Note: querytsig should be non-NULL for all
+		 * responses except TKEY responses. Those may be signed
+		 * with the newly-negotiated TSIG key even if the query
+		 * wasn't signed.)
 		 */
-		if (response) {
+		if (response && msg->querytsig != NULL) {
 			dns_rdata_t querytsigrdata = DNS_RDATA_INIT;
 
 			INSIST(msg->verified_sig);
@@ -870,14 +879,8 @@ dns_tsig_sign(dns_message_t *msg) {
 			ret = dst_context_adddata(ctx, &r);
 			if (ret != ISC_R_SUCCESS)
 				goto cleanup_context;
+			querytsig_ok = true;
 		}
-#if defined(__clang__)  && \
-       ( __clang_major__ < 3 || \
-	(__clang_major__ == 3 && __clang_minor__ < 2) || \
-	(__clang_major__ == 4 && __clang_minor__ < 2))
-	/* false positive: http://llvm.org/bugs/show_bug.cgi?id=14461 */
-		else memset(&querytsig, 0, sizeof(querytsig));
-#endif
 
 		/*
 		 * Digest the header.
@@ -923,8 +926,7 @@ dns_tsig_sign(dns_message_t *msg) {
 		}
 		/* Digest the timesigned and fudge */
 		isc_buffer_clear(&databuf);
-		if (tsig.error == dns_tsigerror_badtime) {
-			INSIST(response);
+		if (tsig.error == dns_tsigerror_badtime && querytsig_ok) {
 			tsig.timesigned = querytsig.timesigned;
 		}
 		isc_buffer_putuint48(&databuf, tsig.timesigned);
@@ -975,19 +977,8 @@ dns_tsig_sign(dns_message_t *msg) {
 		dst_context_destroy(&ctx);
 		digestbits = dst_key_getbits(key->key);
 		if (digestbits != 0) {
-			/*
-			 * XXXRAY: Is this correct? What is the
-			 * expected behavior when digestbits is not an
-			 * integral multiple of 8? It looks like bytes
-			 * should either be (digestbits/8) or
-			 * (digestbits+7)/8.
-			 *
-			 * In any case, for current algorithms,
-			 * digestbits are an integral multiple of 8, so
-			 * it has the same effect as (digestbits/8).
-			 */
-			unsigned int bytes = (digestbits + 1) / 8;
-			if (response && bytes < querytsig.siglen)
+			unsigned int bytes = (digestbits + 7) / 8;
+			if (querytsig_ok && bytes < querytsig.siglen)
 				bytes = querytsig.siglen;
 			if (bytes > isc_buffer_usedlength(&sigbuf))
 				bytes = isc_buffer_usedlength(&sigbuf);
@@ -1366,18 +1357,8 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 	if (dns__tsig_algvalid(alg)) {
 		uint16_t digestbits = dst_key_getbits(key);
 
-		/*
-		 * XXXRAY: Is this correct? What is the expected
-		 * behavior when digestbits is not an integral multiple
-		 * of 8? It looks like bytes should either be
-		 * (digestbits/8) or (digestbits+7)/8.
-		 *
-		 * In any case, for current algorithms, digestbits are
-		 * an integral multiple of 8, so it has the same effect
-		 * as (digestbits/8).
-		 */
 		if (tsig.siglen > 0 && digestbits != 0 &&
-		    tsig.siglen < ((digestbits + 1) / 8))
+		    tsig.siglen < ((digestbits + 7) / 8))
 		{
 			msg->tsigstatus = dns_tsigerror_badtrunc;
 			tsig_log(msg->tsigkey, 2,
@@ -1670,19 +1651,8 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 		if (dns__tsig_algvalid(alg)) {
 			uint16_t digestbits = dst_key_getbits(key);
 
-			/*
-			 * XXXRAY: Is this correct? What is the
-			 * expected behavior when digestbits is not an
-			 * integral multiple of 8? It looks like bytes
-			 * should either be (digestbits/8) or
-			 * (digestbits+7)/8.
-			 *
-			 * In any case, for current algorithms,
-			 * digestbits are an integral multiple of 8, so
-			 * it has the same effect as (digestbits/8).
-			 */
 			if (tsig.siglen > 0 && digestbits != 0 &&
-			    tsig.siglen < ((digestbits + 1) / 8))
+			    tsig.siglen < ((digestbits + 7) / 8))
 			{
 				msg->tsigstatus = dns_tsigerror_badtrunc;
 				tsig_log(msg->tsigkey, 2,

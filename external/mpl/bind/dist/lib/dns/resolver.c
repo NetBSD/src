@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -255,7 +255,8 @@ typedef enum {
 typedef enum {
 	badns_unreachable = 0,
 	badns_response,
-	badns_validation
+	badns_validation,
+	badns_forwarder,
 } badnstype_t;
 
 struct fetchctx {
@@ -1209,6 +1210,18 @@ fctx_cancelquery(resquery_t **queryp, dns_dispatchevent_t **deventp,
 				dns_adb_timeout(fctx->adb, query->addrinfo);
 
 			/*
+			 * If "forward first;" is used and a forwarder timed
+			 * out, do not attempt to query it again in this fetch
+			 * context.
+			 */
+			if (fctx->fwdpolicy == dns_fwdpolicy_first &&
+			    ISFORWARDER(query->addrinfo))
+			{
+				add_bad(fctx, query->addrinfo, ISC_R_TIMEDOUT,
+					badns_forwarder);
+			}
+
+			/*
 			 * We don't have an RTT for this query.  Maybe the
 			 * packet was lost, or maybe this server is very
 			 * slow.  We don't know.  Increase the RTT.
@@ -1907,6 +1920,15 @@ fctx_query(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
 	task = res->buckets[fctx->bucketnum].task;
 
 	srtt = addrinfo->srtt;
+
+	/*
+	 * Allow an additional second for the kernel to resend the SYN (or
+	 * SYN without ECN in the case of stupid firewalls blocking ECN
+	 * negotiation) over the current RTT estimate.
+	 */
+	if ((options & DNS_FETCHOPT_TCP) != 0) {
+		srtt += 1000000;
+	}
 
 	/*
 	 * A forwarder needs to make multiple queries. Give it at least
@@ -3178,6 +3200,12 @@ add_bad(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, isc_result_t reason,
 			break;
 		case badns_validation:
 			break;	/* counted as 'valfail' */
+		case badns_forwarder:
+			/*
+			 * We were called to prevent the given forwarder from
+			 * being used again for this fetch context.
+			 */
+			break;
 		}
 	}
 
@@ -3485,6 +3513,18 @@ fctx_getaddresses(fetchctx_t *fctx, bool badcache) {
 	INSIST(ISC_LIST_EMPTY(fctx->altaddrs));
 
 	/*
+	 * If we have DNS_FETCHOPT_NOFORWARD set and forwarding policy
+	 * allows us to not forward - skip forwarders and go straight
+	 * to NSes. This is currently used to make sure that priming query
+	 * gets root servers' IP addresses in ADDITIONAL section.
+	 */
+	if ((fctx->options & DNS_FETCHOPT_NOFORWARD) != 0 &&
+	    (fctx->fwdpolicy != dns_fwdpolicy_only))
+	{
+		goto normal_nses;
+	}
+
+	/*
 	 * If this fctx has forwarders, use them; otherwise use any
 	 * selective forwarders specified in the view; otherwise use the
 	 * resolver's forwarders (if any).
@@ -3569,7 +3609,7 @@ fctx_getaddresses(fetchctx_t *fctx, bool badcache) {
 	/*
 	 * Normal nameservers.
 	 */
-
+ normal_nses:
 	stdoptions = DNS_ADBFIND_WANTEVENT | DNS_ADBFIND_EMPTYEVENT;
 	if (fctx->restarts == 1) {
 		/*
@@ -4014,9 +4054,11 @@ fctx_try(fetchctx_t *fctx, bool retrying, bool badcache) {
 		options &= ~DNS_FETCHOPT_QMINIMIZE;
 		fctx_increference(fctx);
 		task = res->buckets[bucketnum].task;
+		fctx_stoptimer(fctx);
 		result = dns_resolver_createfetch(fctx->res, &fctx->qminname,
 						  fctx->qmintype, &fctx->domain,
-						  &fctx->nameservers, NULL, NULL, 0,
+						  &fctx->nameservers,
+						  NULL, NULL, 0,
 						  options, 0, fctx->qc, task,
 						  resume_qmin, fctx,
 						  &fctx->qminrrset, NULL,
@@ -4345,13 +4387,12 @@ fctx_timeout(isc_task_t *task, isc_event_t *event) {
 		 * timer.
 		 */
 		result = fctx_starttimer(fctx);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			fctx_done(fctx, result, __LINE__);
-		else
-			/*
-			 * Keep trying.
-			 */
+		} else {
+			/* Keep trying */
 			fctx_try(fctx, true, false);
+		}
 	}
 
 	isc_event_free(&event);
@@ -10175,12 +10216,11 @@ dns_resolver_prime(dns_resolver_t *res) {
 		LOCK(&res->primelock);
 		result = dns_resolver_createfetch(res, dns_rootname,
 						  dns_rdatatype_ns,
-						  NULL, NULL, NULL, NULL, 0, 0,
-						  0, NULL,
-						  res->buckets[0].task,
-						  prime_done,
-						  res, rdataset, NULL,
-						  &res->primefetch);
+						  NULL, NULL, NULL, NULL, 0,
+						  DNS_FETCHOPT_NOFORWARD, 0,
+						  NULL, res->buckets[0].task,
+						  prime_done, res, rdataset,
+						  NULL, &res->primefetch);
 		UNLOCK(&res->primelock);
 		if (result != ISC_R_SUCCESS) {
 			isc_mem_put(res->mctx, rdataset, sizeof(*rdataset));

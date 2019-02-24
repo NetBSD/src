@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -451,6 +451,98 @@ set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
 }
 
 static void
+printversion(bool verbose) {
+	char rndcconf[PATH_MAX], *dot = NULL;
+
+	printf("%s %s%s%s <id:%s>\n",
+	       named_g_product, named_g_version,
+	       (*named_g_description != '\0') ? " " : "",
+	       named_g_description, named_g_srcid);
+
+	if (!verbose) {
+		return;
+	}
+
+	printf("running on %s\n", named_os_uname());
+	printf("built by %s with %s\n",
+	       named_g_builder, named_g_configargs);
+#ifdef __clang__
+	printf("compiled by CLANG %s\n", __VERSION__);
+#else
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+	printf("compiled by ICC %s\n", __VERSION__);
+#else
+#ifdef __GNUC__
+	printf("compiled by GCC %s\n", __VERSION__);
+#endif
+#endif
+#endif
+#ifdef _MSC_VER
+	printf("compiled by MSVC %d\n", _MSC_VER);
+#endif
+#ifdef __SUNPRO_C
+	printf("compiled by Solaris Studio %x\n", __SUNPRO_C);
+#endif
+	printf("compiled with OpenSSL version: %s\n",
+	       OPENSSL_VERSION_TEXT);
+#if !defined(LIBRESSL_VERSION_NUMBER) && \
+OPENSSL_VERSION_NUMBER >= 0x10100000L /* 1.1.0 or higher */
+	printf("linked to OpenSSL version: %s\n",
+	       OpenSSL_version(OPENSSL_VERSION));
+
+#else
+	printf("linked to OpenSSL version: %s\n",
+	       SSLeay_version(SSLEAY_VERSION));
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
+#ifdef HAVE_LIBXML2
+	printf("compiled with libxml2 version: %s\n",
+	       LIBXML_DOTTED_VERSION);
+	printf("linked to libxml2 version: %s\n",
+	       xmlParserVersion);
+#endif
+#if defined(HAVE_JSON) && defined(JSON_C_VERSION)
+	printf("compiled with libjson-c version: %s\n",
+	       JSON_C_VERSION);
+	printf("linked to libjson-c version: %s\n",
+	       json_c_version());
+#endif
+#if defined(HAVE_ZLIB) && defined(ZLIB_VERSION)
+	printf("compiled with zlib version: %s\n",
+	       ZLIB_VERSION);
+	printf("linked to zlib version: %s\n",
+	       zlibVersion());
+#endif
+	printf("threads support is enabled\n\n");
+
+
+	/*
+	 * The default rndc.conf and rndc.key paths are in the same
+	 * directory, but named only has rndc.key defined internally.
+	 * We construct the rndc.conf path from it. (We could use
+	 * NAMED_SYSCONFDIR here but the result would look wrong on
+	 * Windows.)
+	 */
+	strlcpy(rndcconf, named_g_keyfile, sizeof(rndcconf));
+	dot = strrchr(rndcconf, '.');
+	if (dot != NULL) {
+		size_t len = dot - rndcconf + 1;
+		snprintf(dot + 1, PATH_MAX - len, "conf");
+	}
+
+	/*
+	 * Print default configuration paths.
+	 */
+	printf("default paths:\n");
+	printf("  named configuration:  %s\n", named_g_conffile);
+	printf("  rndc configuration:   %s\n", rndcconf);
+	printf("  DNSSEC root key:      %s\n", named_g_defaultbindkeys);
+	printf("  nsupdate session key: %s\n", named_g_defaultsessionkeyfile);
+	printf("  named PID file:       %s\n", named_g_defaultpidfile);
+	printf("  named lock file:      %s\n", named_g_defaultlockfile);
+
+}
+
+static void
 parse_fuzz_arg(void) {
 	if (!strncmp(isc_commandline_argument, "client:", 7)) {
 		named_g_fuzz_addr = isc_commandline_argument + 7;
@@ -675,66 +767,10 @@ parse_command_line(int argc, char *argv[]) {
 			named_g_username = isc_commandline_argument;
 			break;
 		case 'v':
-			printf("%s %s%s%s <id:%s>\n",
-			       named_g_product, named_g_version,
-			       (*named_g_description != '\0') ? " " : "",
-			       named_g_description, named_g_srcid);
+			printversion(false);
 			exit(0);
 		case 'V':
-			printf("%s %s%s%s <id:%s>\n",
-			       named_g_product, named_g_version,
-			       (*named_g_description != '\0') ? " " : "",
-			       named_g_description, named_g_srcid);
-			printf("running on %s\n", named_os_uname());
-			printf("built by %s with %s\n",
-			       named_g_builder, named_g_configargs);
-#ifdef __clang__
-			printf("compiled by CLANG %s\n", __VERSION__);
-#else
-#if defined(__ICC) || defined(__INTEL_COMPILER)
-			printf("compiled by ICC %s\n", __VERSION__);
-#else
-#ifdef __GNUC__
-			printf("compiled by GCC %s\n", __VERSION__);
-#endif
-#endif
-#endif
-#ifdef _MSC_VER
-			printf("compiled by MSVC %d\n", _MSC_VER);
-#endif
-#ifdef __SUNPRO_C
-			printf("compiled by Solaris Studio %x\n", __SUNPRO_C);
-#endif
-			printf("compiled with OpenSSL version: %s\n",
-			       OPENSSL_VERSION_TEXT);
-#if !defined(LIBRESSL_VERSION_NUMBER) && \
-    OPENSSL_VERSION_NUMBER >= 0x10100000L /* 1.1.0 or higher */
-			printf("linked to OpenSSL version: %s\n",
-			       OpenSSL_version(OPENSSL_VERSION));
-
-#else
-			printf("linked to OpenSSL version: %s\n",
-			       SSLeay_version(SSLEAY_VERSION));
-#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
-#ifdef HAVE_LIBXML2
-			printf("compiled with libxml2 version: %s\n",
-			       LIBXML_DOTTED_VERSION);
-			printf("linked to libxml2 version: %s\n",
-			       xmlParserVersion);
-#endif
-#if defined(HAVE_JSON) && defined(JSON_C_VERSION)
-			printf("compiled with libjson-c version: %s\n",
-			       JSON_C_VERSION);
-			printf("linked to libjson-c version: %s\n",
-			       json_c_version());
-#endif
-#if defined(HAVE_ZLIB) && defined(ZLIB_VERSION)
-			printf("compiled with zlib version: %s\n",
-			       ZLIB_VERSION);
-			printf("linked to zlib version: %s\n",
-			       zlibVersion());
-#endif
-			printf("threads support is enabled\n");
+			printversion(true);
 			exit(0);
 		case 'x':
 			/* Obsolete. No longer in use. Ignore. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -82,6 +82,9 @@ struct dns_master_style {
  * very large, the tabs and spaces needed to reach it will not fit.
  */
 #define DNS_TOTEXT_LINEBREAK_MAXLEN 100
+
+/*% Does the rdataset 'r' contain a stale answer? */
+#define STALE(r) (((r)->attributes & DNS_RDATASETATTR_STALE) != 0)
 
 /*%
  * Context structure for a masterfile dump in progress.
@@ -1042,8 +1045,12 @@ dump_rdatasets_text(isc_mem_t *mctx, const dns_name_t *name,
 			/* Omit negative cache entries */
 		} else {
 			isc_result_t result;
-			if (rds->ttl < ctx->serve_stale_ttl)
-				fprintf(f, "; stale\n");
+			if (STALE(rds)) {
+				fprintf(f, "; stale (will be retained for "
+					"%u more seconds)\n",
+					(rds->stale_ttl -
+					 ctx->serve_stale_ttl));
+			}
 			result = dump_rdataset(mctx, name, rds, ctx, buffer, f);
 			if (result != ISC_R_SUCCESS)
 				dumpresult = result;
@@ -1511,13 +1518,14 @@ dumpctx_create(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 
 	dctx->do_date = dns_db_iscache(dctx->db);
 	if (dctx->do_date) {
-	    /*
-	     * Adjust the date backwards by the serve-stale TTL, if any.
-	     * This is so the TTL will be loaded correctly when next started.
-	     */
-	    (void)dns_db_getservestalettl(dctx->db,
-					  &dctx->tctx.serve_stale_ttl);
-	    dctx->now -= dctx->tctx.serve_stale_ttl;
+		/*
+		 * Adjust the date backwards by the serve-stale TTL, if any.
+		 * This is so the TTL will be loaded correctly when next
+		 * started.
+		 */
+		(void)dns_db_getservestalettl(dctx->db,
+					      &dctx->tctx.serve_stale_ttl);
+		dctx->now -= dctx->tctx.serve_stale_ttl;
 	}
 
 	if (dctx->format == dns_masterformat_text &&

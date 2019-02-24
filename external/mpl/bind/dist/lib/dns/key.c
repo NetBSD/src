@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,7 +29,7 @@
 #include "dst_internal.h"
 
 uint16_t
-dst_region_computeid(const isc_region_t *source, unsigned int alg) {
+dst_region_computeid(const isc_region_t *source) {
 	uint32_t ac;
 	const unsigned char *p;
 	int size;
@@ -39,9 +39,6 @@ dst_region_computeid(const isc_region_t *source, unsigned int alg) {
 
 	p = source->base;
 	size = source->length;
-
-	if (alg == DST_ALG_RSAMD5)
-		return ((p[size - 3] << 8) + p[size - 2]);
 
 	for (ac = 0; size > 1; size -= 2, p += 2)
 		ac += ((*p) << 8) + *(p + 1);
@@ -54,7 +51,7 @@ dst_region_computeid(const isc_region_t *source, unsigned int alg) {
 }
 
 uint16_t
-dst_region_computerid(const isc_region_t *source, unsigned int alg) {
+dst_region_computerid(const isc_region_t *source) {
 	uint32_t ac;
 	const unsigned char *p;
 	int size;
@@ -64,9 +61,6 @@ dst_region_computerid(const isc_region_t *source, unsigned int alg) {
 
 	p = source->base;
 	size = source->length;
-
-	if (alg == DST_ALG_RSAMD5)
-		return ((p[size - 3] << 8) + p[size - 2]);
 
 	ac = ((*p) << 8) + *(p + 1);
 	ac |= DNS_KEYFLAG_REVOKE;

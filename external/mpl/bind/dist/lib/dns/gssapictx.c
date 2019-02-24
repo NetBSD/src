@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapictx.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: gssapictx.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -489,7 +489,6 @@ dst_gssapi_identitymatchesrealmms(const dns_name_t *signer,
 	 */
 	rname++;
 	*sname = '\0';
-	sname = sbuf;
 
 	if (strcmp(rname, rbuf) != 0) {
 		return (false);

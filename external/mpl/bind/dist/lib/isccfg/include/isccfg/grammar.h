@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: grammar.h,v 1.4 2019/02/24 20:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,7 +34,7 @@
 
 /*% Clause may occur multiple times (e.g., "zone") */
 #define CFG_CLAUSEFLAG_MULTI 		0x00000001
-/*% Clause is obsolete */
+/*% Clause is obsolete (logs a warning, but is not a fatal error) */
 #define CFG_CLAUSEFLAG_OBSOLETE 	0x00000002
 /*% Clause is not implemented, and may never be */
 #define CFG_CLAUSEFLAG_NOTIMP	 	0x00000004
@@ -57,8 +57,10 @@
 /*% A configuration option that is ineffective due to
  * compile time options, but is harmless. */
 #define CFG_CLAUSEFLAG_NOOP		0x00000200
-/*% Clause is obsolete in a future release */
+/*% Clause will be obsolete in a future release (logs a warning) */
 #define CFG_CLAUSEFLAG_DEPRECATED	0x00000400
+/*% Clause has been obsolete so long that it's now a fatal error */
+#define CFG_CLAUSEFLAG_ANCIENT		0x00000800
 
 /*%
  * Zone types for which a clause is valid:

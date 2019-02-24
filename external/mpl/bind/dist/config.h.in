@@ -21,12 +21,6 @@
 /* Define to enable American Fuzzy Lop test harness */
 #undef ENABLE_AFL
 
-/* Define to enable rpz nsdname rules. */
-#undef ENABLE_RPZ_NSDNAME
-
-/* Define to enable rpz nsip rules. */
-#undef ENABLE_RPZ_NSIP
-
 /* define if you want TCP_FASTOPEN enabled if available */
 #undef ENABLE_TCP_FASTOPEN
 
@@ -60,20 +54,14 @@
 /* define if the compiler supports __builtin_unreachable(). */
 #undef HAVE_BUILTIN_UNREACHABLE
 
-/* Define to 1 if you have the `catgets' function. */
-#undef HAVE_CATGETS
-
 /* Define to 1 if you have the `chroot' function. */
 #undef HAVE_CHROOT
 
 /* Define if clock_gettime is available. */
 #undef HAVE_CLOCK_GETTIME
 
-/* Use cmocka */
+/* Use CMocka */
 #undef HAVE_CMOCKA
-
-/* Define to 1 if you have the <cmocka.h> header file. */
-#undef HAVE_CMOCKA_H
 
 /* Define to 1 if you have the `cpuset_setaffinity' function. */
 #undef HAVE_CPUSET_SETAFFINITY

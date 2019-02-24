@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: ds.h,v 1.3 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -39,7 +39,7 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
  * Build the rdata of a DS record.
  *
  * Requires:
- *\li	key	Points to a valid DNS KEY record.
+ *\li	key	Points to a valid DNSKEY or CDNSKEY record.
  *\li	buffer	Points to a temporary buffer of at least
  * 		#DNS_DS_BUFFERSIZE bytes.
  *\li	rdata	Points to an initialized dns_rdata_t.

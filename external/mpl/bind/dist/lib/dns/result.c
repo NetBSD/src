@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -349,22 +349,22 @@ initialize_action(void) {
 	isc_result_t result;
 
 	result = isc_result_register(ISC_RESULTCLASS_DNS, DNS_R_NRESULTS,
-				     text, dns_msgcat, DNS_RESULT_RESULTSET);
+				     text, DNS_RESULT_RESULTSET);
 	if (result == ISC_R_SUCCESS)
 		result = isc_result_register(ISC_RESULTCLASS_DNSRCODE,
 					     DNS_R_NRCODERESULTS,
-					     rcode_text, dns_msgcat,
+					     rcode_text,
 					     DNS_RESULT_RCODERESULTSET);
 	if (result != ISC_R_SUCCESS)
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_result_register() failed: %u", result);
 
 	result = isc_result_registerids(ISC_RESULTCLASS_DNS, DNS_R_NRESULTS,
-					ids, dns_msgcat, DNS_RESULT_RESULTSET);
+					ids, DNS_RESULT_RESULTSET);
 	if (result == ISC_R_SUCCESS)
 		result = isc_result_registerids(ISC_RESULTCLASS_DNSRCODE,
 						DNS_R_NRCODERESULTS,
-						rcode_ids, dns_msgcat,
+						rcode_ids,
 						DNS_RESULT_RCODERESULTSET);
 	if (result != ISC_R_SUCCESS)
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -373,7 +373,6 @@ initialize_action(void) {
 
 static void
 initialize(void) {
-	dns_lib_initmsgcat();
 	RUNTIME_CHECK(isc_once_do(&once, initialize_action) == ISC_R_SUCCESS);
 }
 
@@ -409,7 +408,6 @@ dns_result_torcode(isc_result_t result) {
 		rcode = dns_rcode_noerror;
 		break;
 	case ISC_R_BADBASE64:
-	case ISC_R_NOSPACE:
 	case ISC_R_RANGE:
 	case ISC_R_UNEXPECTEDEND:
 	case DNS_R_BADAAAA:

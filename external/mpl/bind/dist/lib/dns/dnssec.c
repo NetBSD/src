@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1624,6 +1624,15 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin,
 	     result = dns_rdataset_next(&keys)) {
 		dns_rdata_reset(&rdata);
 		dns_rdataset_current(&keys, &rdata);
+
+		REQUIRE(rdata.type == dns_rdatatype_key ||
+			rdata.type == dns_rdatatype_dnskey);
+		REQUIRE(rdata.length > 3);
+
+		/* Skip unsupported algorithms */
+		if (!dst_algorithm_supported(rdata.data[3]))
+			goto skip;
+
 		RETERR(dns_dnssec_keyfromrdata(origin, &rdata, mctx, &pubkey));
 		dst_key_setttl(pubkey, keys.ttl);
 
@@ -1811,23 +1820,20 @@ publish_key(dns_diff_t *diff, dns_dnsseckey_t *key, const dns_name_t *origin,
 	isc_result_t result;
 	dns_difftuple_t *tuple = NULL;
 	unsigned char buf[DST_KEY_MAXSIZE];
+	char keystr[DST_KEY_FORMATSIZE];
 	dns_rdata_t dnskey = DNS_RDATA_INIT;
-	char alg[80];
 
 	dns_rdata_reset(&dnskey);
 	RETERR(make_dnskey(key->key, buf, sizeof(buf), &dnskey));
+	dst_key_format(key->key, keystr, sizeof(keystr));
 
-	dns_secalg_format(dst_key_alg(key->key), alg, sizeof(alg));
-	report("Fetching %s %d/%s from key %s.",
-	       key->ksk ?  (allzsk ?  "KSK/ZSK" : "KSK") : "ZSK",
-	       dst_key_id(key->key), alg,
+	report("Fetching %s (%s) from key %s.",
+	       keystr, key->ksk ? (allzsk ? "KSK/ZSK" : "KSK") : "ZSK",
 	       key->source == dns_keysource_user ?  "file" : "repository");
 
 	if (key->prepublish && ttl > key->prepublish) {
-		char keystr[DST_KEY_FORMATSIZE];
 		isc_stdtime_t now;
 
-		dst_key_format(key->key, keystr, sizeof(keystr));
 		report("Key %s: Delaying activation to match the DNSKEY TTL.\n",
 		       keystr, ttl);
 
@@ -2041,9 +2047,11 @@ dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
 	 */
 	for (key = ISC_LIST_HEAD(*keys);
 	     key != NULL;
-	     key = ISC_LIST_NEXT(key, link)) {
+	     key = ISC_LIST_NEXT(key, link))
+	{
 		if (key->source == dns_keysource_user &&
-		    (key->hint_publish || key->force_publish)) {
+		    (key->hint_publish || key->force_publish))
+		{
 			RETERR(publish_key(diff, key, origin, ttl,
 					   mctx, allzsk, report));
 		}
@@ -2062,15 +2070,19 @@ dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
 
 		for (key = ISC_LIST_HEAD(*newkeys);
 		     key != NULL;
-		     key = ISC_LIST_NEXT(key, link)) {
+		     key = ISC_LIST_NEXT(key, link))
+		{
 			dns_ttl_t thisttl = dst_key_getttl(key->key);
 			if (thisttl != 0 &&
 			    (shortest == 0 || thisttl < shortest))
+			{
 				shortest = thisttl;
+			}
 		}
 
-		if (shortest != 0)
+		if (shortest != 0) {
 			ttl = shortest;
+		}
 	}
 
 	/*
@@ -2079,20 +2091,23 @@ dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
 	 */
 	for (key1 = ISC_LIST_HEAD(*newkeys); key1 != NULL; key1 = next) {
 		bool key_revoked = false;
+		char keystr1[DST_KEY_FORMATSIZE];
+		char keystr2[DST_KEY_FORMATSIZE];
 
 		next = ISC_LIST_NEXT(key1, link);
 
 		for (key2 = ISC_LIST_HEAD(*keys);
 		     key2 != NULL;
-		     key2 = ISC_LIST_NEXT(key2, link)) {
+		     key2 = ISC_LIST_NEXT(key2, link))
+		{
 			int f1 = dst_key_flags(key1->key);
 			int f2 = dst_key_flags(key2->key);
 			int nr1 = f1 & ~DNS_KEYFLAG_REVOKE;
 			int nr2 = f2 & ~DNS_KEYFLAG_REVOKE;
 			if (nr1 == nr2 &&
 			    dst_key_alg(key1->key) == dst_key_alg(key2->key) &&
-			    dst_key_pubcompare(key1->key, key2->key,
-					       true)) {
+			    dst_key_pubcompare(key1->key, key2->key, true))
+			{
 				int r1, r2;
 				r1 = dst_key_flags(key1->key) &
 					DNS_KEYFLAG_REVOKE;
@@ -2103,33 +2118,68 @@ dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
 			}
 		}
 
+		/* Printable version of key1 (the newly aquired key) */
+		dst_key_format(key1->key, keystr1, sizeof(keystr1));
+
 		/* No match found in keys; add the new key. */
 		if (key2 == NULL) {
 			ISC_LIST_UNLINK(*newkeys, key1, link);
 			ISC_LIST_APPEND(*keys, key1, link);
 
 			if (key1->source != dns_keysource_zoneapex &&
-			    (key1->hint_publish || key1->force_publish)) {
+			    (key1->hint_publish || key1->force_publish))
+			{
 				RETERR(publish_key(diff, key1, origin, ttl,
 						   mctx, allzsk, report));
-				if (key1->hint_sign || key1->force_sign)
+				isc_log_write(dns_lctx,
+					      DNS_LOGCATEGORY_DNSSEC,
+					      DNS_LOGMODULE_DNSSEC,
+					      ISC_LOG_INFO,
+					      "DNSKEY %s (%s) is now published",
+					      keystr1, key1->ksk ?
+					      (allzsk ? "KSK/ZSK" : "KSK") :
+					      "ZSK");
+				if (key1->hint_sign || key1->force_sign) {
 					key1->first_sign = true;
+					isc_log_write(dns_lctx,
+						      DNS_LOGCATEGORY_DNSSEC,
+						      DNS_LOGMODULE_DNSSEC,
+						      ISC_LOG_INFO,
+						      "DNSKEY %s (%s) is now "
+						      "active",
+						      keystr1, key1->ksk ?
+						      (allzsk ? "KSK/ZSK" :
+						       "KSK") : "ZSK");
+				}
 			}
 
 			continue;
 		}
+
+		/* Printable version of key2 (the old key, if any) */
+		dst_key_format(key2->key, keystr2, sizeof(keystr2));
 
 		/* Match found: remove or update it as needed */
 		if (key1->hint_remove) {
 			RETERR(remove_key(diff, key2, origin, ttl, mctx,
 					  "expired", report));
 			ISC_LIST_UNLINK(*keys, key2, link);
-			if (removed != NULL)
+
+			if (removed != NULL) {
 				ISC_LIST_APPEND(*removed, key2, link);
-			else
+				isc_log_write(dns_lctx,
+					      DNS_LOGCATEGORY_DNSSEC,
+					      DNS_LOGMODULE_DNSSEC,
+					      ISC_LOG_INFO,
+					      "DNSKEY %s (%s) is now deleted",
+					      keystr2, key2->ksk ? (allzsk ?
+					      "KSK/ZSK" : "KSK") : "ZSK");
+			} else {
 				dns_dnsseckey_destroy(mctx, &key2);
+			}
 		} else if (key_revoked &&
-			 (dst_key_flags(key1->key) & DNS_KEYFLAG_REVOKE) != 0) {
+			   (dst_key_flags(key1->key) & DNS_KEYFLAG_REVOKE) != 0)
+		{
 
 			/*
 			 * A previously valid key has been revoked.
@@ -2139,10 +2189,20 @@ dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
 			RETERR(remove_key(diff, key2, origin, ttl, mctx,
 					  "revoked", report));
 			ISC_LIST_UNLINK(*keys, key2, link);
-			if (removed != NULL)
+			if (removed != NULL) {
 				ISC_LIST_APPEND(*removed, key2, link);
-			else
+				isc_log_write(dns_lctx,
+					      DNS_LOGCATEGORY_DNSSEC,
+					      DNS_LOGMODULE_DNSSEC,
+					      ISC_LOG_INFO,
+					      "DNSKEY %s (%s) is now revoked; "
+					      "new ID is %05d",
+					      keystr2, key2->ksk ? (allzsk ?
+					      "KSK/ZSK" : "KSK") : "ZSK",
+					      dst_key_id(key1->key));
+			} else {
 				dns_dnsseckey_destroy(mctx, &key2);
+			}
 
 			RETERR(publish_key(diff, key1, origin, ttl,
 					   mctx, allzsk, report));
@@ -2162,7 +2222,27 @@ dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
 		} else {
 			if (!key2->is_active &&
 			    (key1->hint_sign || key1->force_sign))
+			{
 				key2->first_sign = true;
+				isc_log_write(dns_lctx,
+					      DNS_LOGCATEGORY_DNSSEC,
+					      DNS_LOGMODULE_DNSSEC,
+					      ISC_LOG_INFO,
+					      "DNSKEY %s (%s) is now active",
+					      keystr1, key1->ksk ? (allzsk ?
+					      "KSK/ZSK" : "KSK") : "ZSK");
+			} else if (key2->is_active &&
+				   !key1->hint_sign && !key1->force_sign)
+			{
+				isc_log_write(dns_lctx,
+					      DNS_LOGCATEGORY_DNSSEC,
+					      DNS_LOGMODULE_DNSSEC,
+					      ISC_LOG_INFO,
+					      "DNSKEY %s (%s) is now inactive",
+					      keystr1, key1->ksk ? (allzsk ?
+					      "KSK/ZSK" : "KSK") : "ZSK");
+			}
+
 			key2->hint_sign = key1->hint_sign;
 			key2->hint_publish = key1->hint_publish;
 		}

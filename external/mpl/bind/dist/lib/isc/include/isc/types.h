@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -60,7 +60,6 @@ typedef struct isc_logconfig		isc_logconfig_t;	/*%< Log Configuration */
 typedef struct isc_logmodule		isc_logmodule_t;	/*%< Log Module */
 typedef struct isc_mem			isc_mem_t;		/*%< Memory */
 typedef struct isc_mempool		isc_mempool_t;		/*%< Memory Pool */
-typedef struct isc_msgcat		isc_msgcat_t;		/*%< Message Catalog */
 typedef struct isc_netaddr		isc_netaddr_t;		/*%< Net Address */
 typedef struct isc_portset		isc_portset_t;		/*%< Port Set */
 typedef struct isc_quota		isc_quota_t;		/*%< Quota */

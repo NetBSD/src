@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.3 2019/01/09 16:55:18 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.4 2019/02/24 20:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -234,19 +234,19 @@ static cfg_type_t cfg_type_portiplist = {
 	&cfg_rep_tuple, portiplist_fields
 };
 
-/*%
- * A public key, as in the "pubkey" statement.
+/*
+ * Obsolete format for the "pubkey" statement.
  */
 static cfg_tuplefielddef_t pubkey_fields[] = {
-	{ "flags", &cfg_type_uint32, 0 },
-	{ "protocol", &cfg_type_uint32, 0 },
-	{ "algorithm", &cfg_type_uint32, 0 },
-	{ "key", &cfg_type_qstring, 0 },
-	{ NULL, NULL, 0 }
+       { "flags", &cfg_type_uint32, 0 },
+       { "protocol", &cfg_type_uint32, 0 },
+       { "algorithm", &cfg_type_uint32, 0 },
+       { "key", &cfg_type_qstring, 0 },
+       { NULL, NULL, 0 }
 };
 static cfg_type_t cfg_type_pubkey = {
-	"pubkey", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple,
-	&cfg_rep_tuple, pubkey_fields
+       "pubkey", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple,
+       &cfg_rep_tuple, pubkey_fields
 };
 
 /*%
@@ -1025,7 +1025,7 @@ options_clauses[] = {
 	{ "cookie-secret", &cfg_type_sstring, CFG_CLAUSEFLAG_MULTI },
 	{ "coresize", &cfg_type_size, 0 },
 	{ "datasize", &cfg_type_size, 0 },
-	{ "deallocate-on-exit", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
+	{ "deallocate-on-exit", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
 	{ "directory", &cfg_type_qstring, CFG_CLAUSEFLAG_CALLBACK },
 #ifdef HAVE_DNSTAP
 	{ "dnstap-output", &cfg_type_dnstapoutput, 0 },
@@ -1041,7 +1041,7 @@ options_clauses[] = {
 #endif
 	{ "dscp", &cfg_type_uint32, 0 },
 	{ "dump-file", &cfg_type_qstring, 0 },
-	{ "fake-iquery", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
+	{ "fake-iquery", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
 	{ "files", &cfg_type_size, 0 },
 	{ "flush-zones-on-shutdown", &cfg_type_boolean, 0 },
 #ifdef HAVE_DNSTAP
@@ -1075,10 +1075,10 @@ options_clauses[] = {
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
 #endif /* HAVE_GEOIP */
 	{ "geoip-use-ecs", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
-	{ "has-old-clients", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
+	{ "has-old-clients", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
 	{ "heartbeat-interval", &cfg_type_uint32, 0 },
-	{ "host-statistics", &cfg_type_boolean, CFG_CLAUSEFLAG_NOTIMP },
-	{ "host-statistics-max", &cfg_type_uint32, CFG_CLAUSEFLAG_NOTIMP },
+	{ "host-statistics", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
+	{ "host-statistics-max", &cfg_type_uint32, CFG_CLAUSEFLAG_ANCIENT },
 	{ "hostname", &cfg_type_qstringornone, 0 },
 	{ "interface-interval", &cfg_type_ttlval, 0 },
 	{ "keep-response-order", &cfg_type_bracketed_aml, 0 },
@@ -1090,8 +1090,8 @@ options_clauses[] = {
 	{ "max-rsa-exponent-size", &cfg_type_uint32, 0 },
 	{ "memstatistics", &cfg_type_boolean, 0 },
 	{ "memstatistics-file", &cfg_type_qstring, 0 },
-	{ "multiple-cnames", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
-	{ "named-xfer", &cfg_type_qstring, CFG_CLAUSEFLAG_OBSOLETE },
+	{ "multiple-cnames", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
+	{ "named-xfer", &cfg_type_qstring, CFG_CLAUSEFLAG_ANCIENT },
 	{ "notify-rate", &cfg_type_uint32, 0 },
 	{ "pid-file", &cfg_type_qstringornone, 0 },
 	{ "port", &cfg_type_uint32, 0 },
@@ -1101,7 +1101,7 @@ options_clauses[] = {
 	{ "recursive-clients", &cfg_type_uint32, 0 },
 	{ "reserved-sockets", &cfg_type_uint32, 0 },
 	{ "secroots-file", &cfg_type_qstring, 0 },
-	{ "serial-queries", &cfg_type_uint32, CFG_CLAUSEFLAG_OBSOLETE },
+	{ "serial-queries", &cfg_type_uint32, CFG_CLAUSEFLAG_ANCIENT },
 	{ "serial-query-rate", &cfg_type_uint32, 0 },
 	{ "server-id", &cfg_type_serverid, 0 },
 	{ "session-keyalg", &cfg_type_astring, 0 },
@@ -1111,7 +1111,7 @@ options_clauses[] = {
 	{ "stacksize", &cfg_type_size, 0 },
 	{ "startup-notify-rate", &cfg_type_uint32, 0 },
 	{ "statistics-file", &cfg_type_qstring, 0 },
-	{ "statistics-interval", &cfg_type_uint32, CFG_CLAUSEFLAG_NYI },
+	{ "statistics-interval", &cfg_type_uint32, CFG_CLAUSEFLAG_ANCIENT },
 	{ "tcp-advertised-timeout", &cfg_type_uint32, 0 },
 	{ "tcp-clients", &cfg_type_uint32, 0 },
 	{ "tcp-idle-timeout", &cfg_type_uint32, 0 },
@@ -1126,8 +1126,8 @@ options_clauses[] = {
 	{ "transfers-in", &cfg_type_uint32, 0 },
 	{ "transfers-out", &cfg_type_uint32, 0 },
 	{ "transfers-per-ns", &cfg_type_uint32, 0 },
-	{ "treat-cr-as-space", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
-	{ "use-id-pool", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
+	{ "treat-cr-as-space", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
+	{ "use-id-pool", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
 	{ "use-ixfr", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "use-v4-udp-ports", &cfg_type_bracketed_portlist, 0 },
 	{ "use-v6-udp-ports", &cfg_type_bracketed_portlist, 0 },
@@ -1884,7 +1884,7 @@ view_clauses[] = {
 	{ "empty-contact", &cfg_type_astring, 0 },
 	{ "empty-server", &cfg_type_astring, 0 },
 	{ "empty-zones-enable", &cfg_type_boolean, 0 },
-	{ "fetch-glue", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
+	{ "fetch-glue", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
 	{ "fetch-quota-params", &cfg_type_fetchquota, 0 },
 	{ "fetches-per-server", &cfg_type_fetchesper, 0 },
 	{ "fetches-per-zone", &cfg_type_fetchesper, 0 },
@@ -1899,8 +1899,7 @@ view_clauses[] = {
 #else
 	{ "lmdb-mapsize", &cfg_type_sizeval, CFG_CLAUSEFLAG_NOOP },
 #endif
-	{ "max-acache-size", &cfg_type_sizenodefault,
-	  CFG_CLAUSEFLAG_OBSOLETE },
+	{ "max-acache-size", &cfg_type_sizenodefault, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "max-cache-size", &cfg_type_sizeorpercent, 0 },
 	{ "max-cache-ttl", &cfg_type_ttlval, 0 },
 	{ "max-clients-per-query", &cfg_type_uint32, 0 },
@@ -1912,7 +1911,7 @@ view_clauses[] = {
 	{ "message-compression", &cfg_type_boolean, 0 },
 	{ "min-cache-ttl", &cfg_type_ttlval, 0 },
 	{ "min-ncache-ttl", &cfg_type_ttlval, 0 },
-	{ "min-roots", &cfg_type_uint32, CFG_CLAUSEFLAG_NOTIMP },
+	{ "min-roots", &cfg_type_uint32, CFG_CLAUSEFLAG_ANCIENT },
 	{ "minimal-any", &cfg_type_boolean, 0 },
 	{ "minimal-responses", &cfg_type_minimal, 0 },
 	{ "new-zones-directory", &cfg_type_qstring, 0 },
@@ -1945,7 +1944,7 @@ view_clauses[] = {
 	{ "resolver-retry-interval", &cfg_type_uint32, 0 },
 	{ "response-padding", &cfg_type_resppadding, 0 },
 	{ "response-policy", &cfg_type_rpz, 0 },
-	{ "rfc2308-type1", &cfg_type_boolean, CFG_CLAUSEFLAG_NYI },
+	{ "rfc2308-type1", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
 	{ "root-delegation-only",  &cfg_type_optional_exclude, 0 },
 	{ "root-key-sentinel", &cfg_type_boolean, 0 },
 	{ "rrset-order", &cfg_type_rrsetorder, 0 },
@@ -1956,7 +1955,7 @@ view_clauses[] = {
 	{ "stale-answer-ttl", &cfg_type_ttlval, 0 },
 	{ "suppress-initial-notify", &cfg_type_boolean, CFG_CLAUSEFLAG_NYI },
 	{ "synth-from-dnssec", &cfg_type_boolean, 0 },
-	{ "topology", &cfg_type_bracketed_aml, CFG_CLAUSEFLAG_NOTIMP },
+	{ "topology", &cfg_type_bracketed_aml, CFG_CLAUSEFLAG_ANCIENT },
 	{ "transfer-format", &cfg_type_transferformat, 0 },
 	{ "trust-anchor-telemetry", &cfg_type_boolean,
 	  CFG_CLAUSEFLAG_EXPERIMENTAL },
@@ -2088,7 +2087,7 @@ zone_clauses[] = {
 		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
 	},
 	{ "maintain-ixfr-base", &cfg_type_boolean,
-		CFG_CLAUSEFLAG_OBSOLETE
+		CFG_CLAUSEFLAG_ANCIENT
 	},
 	{ "masterfile-format", &cfg_type_masterformat,
 		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR |
@@ -2099,7 +2098,7 @@ zone_clauses[] = {
 		CFG_ZONE_STUB | CFG_ZONE_REDIRECT
 	},
 	{ "max-ixfr-log-size", &cfg_type_size,
-		CFG_CLAUSEFLAG_OBSOLETE
+		CFG_CLAUSEFLAG_ANCIENT
 	},
 	{ "max-journal-size", &cfg_type_size,
 		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
@@ -2245,13 +2244,13 @@ zone_only_clauses[] = {
 		CFG_ZONE_INVIEW
 	},
 	{ "ixfr-base", &cfg_type_qstring,
-		CFG_CLAUSEFLAG_OBSOLETE
+		CFG_CLAUSEFLAG_ANCIENT
 	},
 	{ "ixfr-from-differences", &cfg_type_boolean,
 		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "ixfr-tmp-file", &cfg_type_qstring,
-		CFG_CLAUSEFLAG_OBSOLETE
+		CFG_CLAUSEFLAG_ANCIENT
 	},
 	{ "journal", &cfg_type_qstring,
 		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
@@ -2261,7 +2260,7 @@ zone_only_clauses[] = {
 		CFG_ZONE_REDIRECT
 	},
 	{ "pubkey", &cfg_type_pubkey,
-		CFG_CLAUSEFLAG_MULTI | CFG_CLAUSEFLAG_OBSOLETE
+		CFG_CLAUSEFLAG_ANCIENT
 	},
 	{ "server-addresses", &cfg_type_bracketed_netaddrlist,
 		CFG_ZONE_STATICSTUB

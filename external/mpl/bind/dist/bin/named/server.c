@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -779,8 +779,7 @@ dstkey_fromconfig(const cfg_obj_t *vconfig, const cfg_obj_t *key,
 	keystruct.datalen = r.length;
 	keystruct.data = r.base;
 
-	if ((keystruct.algorithm == DST_ALG_RSASHA1 ||
-	     keystruct.algorithm == DST_ALG_RSAMD5) &&
+	if ((keystruct.algorithm == DST_ALG_RSASHA1) &&
 	    r.length > 1 && r.base[0] == 1 && r.base[1] == 3)
 		cfg_obj_log(key, named_g_lctx, ISC_LOG_WARNING,
 			    "%s key '%s' has a weak exponent",
@@ -2292,21 +2291,18 @@ configure_rpz(dns_view_t *view, const cfg_obj_t **maps,
 	if (zone_element == NULL)
 		return (ISC_R_SUCCESS);
 
-#ifdef ENABLE_RPZ_NSIP
 	nsip_enabled = true;
-	nsdname_enabled = true;
-#else
-	nsip_enabled = false;
-	nsdname_enabled = false;
-#endif
 	sub_obj = cfg_tuple_get(rpz_obj, "nsip-enable");
-	if (!cfg_obj_isvoid(sub_obj))
+	if (!cfg_obj_isvoid(sub_obj)) {
 		nsip_enabled = cfg_obj_asboolean(sub_obj);
+	}
 	nsip_on = nsip_enabled ? DNS_RPZ_ALL_ZBITS : 0;
 
+	nsdname_enabled = true;
 	sub_obj = cfg_tuple_get(rpz_obj, "nsdname-enable");
-	if (!cfg_obj_isvoid(sub_obj))
+	if (!cfg_obj_isvoid(sub_obj)) {
 		nsdname_enabled = cfg_obj_asboolean(sub_obj);
+	}
 	nsdname_on = nsdname_enabled ? DNS_RPZ_ALL_ZBITS : 0;
 
 	/*
@@ -2581,8 +2577,8 @@ catz_addmodzone_taskaction(isc_task_t *task, isc_event_t *event0) {
 	result = dns_catz_generate_zonecfg(ev->origin, ev->entry, &confbuf);
 	if (result == ISC_R_SUCCESS) {
 		cfg_parser_reset(cfg->add_parser);
-		result = cfg_parse_buffer3(cfg->add_parser, confbuf, "catz", 0,
-					   &cfg_type_addzoneconf, &zoneconf);
+		result = cfg_parse_buffer(cfg->add_parser, confbuf, "catz", 0,
+					  &cfg_type_addzoneconf, 0, &zoneconf);
 		isc_buffer_free(&confbuf);
 	}
 	/*
@@ -4998,16 +4994,10 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 				      &view->sortlist));
 
 	/*
-	 * Configure default allow-notify, allow-update
-	 * and allow-update-forwarding ACLs, so they can be
-	 * inherited by zones. (Note these cannot be set at
+	 * Configure default allow-update and allow-update-forwarding ACLs,
+	 * so they can be inherited by zones.  (Note these cannot be set at
 	 * options/view level.)
 	 */
-	if (view->notifyacl == NULL) {
-		CHECK(configure_view_acl(vconfig, config, named_g_config,
-					 "allow-notify", NULL, actx,
-					 named_g_mctx, &view->notifyacl));
-	}
 	if (view->updateacl == NULL) {
 		CHECK(configure_view_acl(NULL, NULL, named_g_config,
 					 "allow-update", NULL, actx,
@@ -5020,13 +5010,18 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 	}
 
 	/*
-	 * Configure default allow-transer ACL so it can be inherited
-	 * by zones. (Note this *can* be set at options or view level.)
+	 * Configure default allow-transfer and allow-notify ACLs so they
+	 * can be inherited by zones.
 	 */
 	if (view->transferacl == NULL) {
 		CHECK(configure_view_acl(vconfig, config, named_g_config,
 					 "allow-transfer", NULL, actx,
 					 named_g_mctx, &view->transferacl));
+	}
+	if (view->notifyacl == NULL) {
+		CHECK(configure_view_acl(vconfig, config, named_g_config,
+					 "allow-notify", NULL, actx,
+					 named_g_mctx, &view->notifyacl));
 	}
 
 	obj = NULL;
@@ -7649,8 +7644,8 @@ data_to_cfg(dns_view_t *view, MDB_val *key, MDB_val *data,
 	CHECK(putstr(text, ";\n"));
 
 	cfg_parser_reset(named_g_addparser);
-	result = cfg_parse_buffer3(named_g_addparser, *text, zone_name, 0,
-				   &cfg_type_addzoneconf, &zoneconf);
+	result = cfg_parse_buffer(named_g_addparser, *text, zone_name, 0,
+				  &cfg_type_addzoneconf, 0, &zoneconf);
 	if (result != ISC_R_SUCCESS) {
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 			      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
@@ -8029,6 +8024,7 @@ load_configuration(const char *filename, named_server_t *server,
 	ns_altsecretlist_t altsecrets, tmpaltsecrets;
 	unsigned int maxsocks;
 	uint32_t softquota = 0;
+	uint32_t max;
 	unsigned int initial, idle, keepalive, advertised;
 	dns_aclenv_t *env =
 		ns_interfacemgr_getaclenv(named_g_server->interfacemgr);
@@ -8221,20 +8217,20 @@ load_configuration(const char *filename, named_server_t *server,
 	configure_server_quota(maps, "recursive-clients",
 			       &server->sctx->recursionquota);
 
-	if (server->sctx->recursionquota.max > 1000) {
-		int margin = ISC_MAX(100, named_g_cpus + 1);
-		if (margin > server->sctx->recursionquota.max - 100) {
+	max = isc_quota_getmax(&server->sctx->recursionquota);
+	if (max > 1000) {
+		unsigned margin = ISC_MAX(100, named_g_cpus + 1);
+		if (margin + 100 > max) {
 			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 				      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 				      "'recursive-clients %d' too low when "
 				      "running with %d worker threads",
-				      server->sctx->recursionquota.max,
-				      named_g_cpus);
+				      max, named_g_cpus);
 			CHECK(ISC_R_RANGE);
 		}
-		softquota = server->sctx->recursionquota.max - margin;
+		softquota = max - margin;
 	} else {
-		softquota = (server->sctx->recursionquota.max * 90) / 100;
+		softquota = (max * 90) / 100;
 	}
 
 	isc_quota_soft(&server->sctx->recursionquota, softquota);
@@ -9329,6 +9325,7 @@ view_loaded(void *arg) {
 			      "FIPS mode is %s",
 			      FIPS_mode() ? "enabled" : "disabled");
 #endif
+		server->reload_in_progress = false;
 
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 			      NAMED_LOGMODULE_SERVER, ISC_LOG_NOTICE,
@@ -9384,7 +9381,7 @@ load_zones(named_server_t *server, bool init, bool reconfig) {
 		isc_refcount_increment(&zl->refs);
 		result = dns_view_asyncload(view, reconfig, view_loaded, zl);
 		if (result != ISC_R_SUCCESS) {
-			isc_refcount_decrement(&zl->refs);
+			(void)isc_refcount_decrement(&zl->refs);
 			goto cleanup;
 		}
 	}
@@ -9664,6 +9661,7 @@ named_server_create(isc_mem_t *mctx, named_server_t **serverp) {
 	CHECKFATAL(server->reload_event == NULL ?
 		   ISC_R_NOMEMORY : ISC_R_SUCCESS,
 		   "allocating reload event");
+	server->reload_in_progress = true;
 
 	/*
 	 * Setup the server task, which is responsible for coordinating
@@ -9719,7 +9717,8 @@ named_server_create(isc_mem_t *mctx, named_server_t **serverp) {
 	CHECKFATAL(server->statsfile == NULL ? ISC_R_NOMEMORY : ISC_R_SUCCESS,
 		   "isc_mem_strdup");
 
-	server->bindkeysfile = isc_mem_strdup(server->mctx, "bind.keys");
+	server->bindkeysfile = isc_mem_strdup(server->mctx,
+					      named_g_defaultbindkeys);
 	CHECKFATAL(server->bindkeysfile == NULL ? ISC_R_NOMEMORY :
 						  ISC_R_SUCCESS,
 		   "isc_mem_strdup");
@@ -9974,6 +9973,7 @@ loadconfig(named_server_t *server) {
 static isc_result_t
 reload(named_server_t *server) {
 	isc_result_t result;
+	server->reload_in_progress = true;
 	CHECK(loadconfig(server));
 
 	result = load_zones(server, false, false);
@@ -10320,6 +10320,7 @@ named_server_reloadcommand(named_server_t *server, isc_lex_t *lex,
 isc_result_t
 named_server_reconfigcommand(named_server_t *server) {
 	isc_result_t result;
+	server->reload_in_progress = true;
 
 	CHECK(loadconfig(server));
 
@@ -11456,14 +11457,19 @@ named_server_status(named_server_t *server, isc_buffer_t **text) {
 	CHECK(putstr(text, line));
 
 	snprintf(line, sizeof(line), "recursive clients: %d/%d/%d\n",
-		     server->sctx->recursionquota.used,
-		     server->sctx->recursionquota.soft,
-		     server->sctx->recursionquota.max);
+		     isc_quota_getused(&server->sctx->recursionquota),
+		     isc_quota_getsoft(&server->sctx->recursionquota),
+		     isc_quota_getmax(&server->sctx->recursionquota));
 	CHECK(putstr(text, line));
 
 	snprintf(line, sizeof(line), "tcp clients: %d/%d\n",
-		     server->sctx->tcpquota.used, server->sctx->tcpquota.max);
+		     isc_quota_getused(&server->sctx->tcpquota),
+		     isc_quota_getmax(&server->sctx->tcpquota));
 	CHECK(putstr(text, line));
+
+	if (server->reload_in_progress) {
+		CHECK(putstr(text, "reload/reconfig in progress"));
+	}
 
 	CHECK(putstr(text, "server is up and running"));
 	CHECK(putnull(text));
@@ -12727,8 +12733,8 @@ newzone_parse(named_server_t *server, char *command, dns_view_t **viewp,
 	isc_buffer_forward(&argbuf, 3);
 
 	cfg_parser_reset(named_g_addparser);
-	CHECK(cfg_parse_buffer3(named_g_addparser, &argbuf, bn, 0,
-				&cfg_type_addzoneconf, &zoneconf));
+	CHECK(cfg_parse_buffer(named_g_addparser, &argbuf, bn, 0,
+			       &cfg_type_addzoneconf, 0, &zoneconf));
 	CHECK(cfg_map_get(zoneconf, "zone", &zlist));
 	if (!cfg_obj_islist(zlist))
 		CHECK(ISC_R_FAILURE);
@@ -14709,7 +14715,7 @@ named_server_nta(named_server_t *server, isc_lex_t *lex,
 		CHECK(ISC_R_NOTFOUND);
 	}
 
-	CHECK(putnull(text));
+	(void) putnull(text);
 
  cleanup:
 	if (msg != NULL) {
@@ -14914,7 +14920,7 @@ mkey_dumpzone(dns_view_t *view, isc_buffer_t **text) {
 
 			dns_rdata_toregion(&rdata, &r);
 			isc_region_consume(&r, 12);
-			keyid = dst_region_computeid(&r, kd.algorithm);
+			keyid = dst_region_computeid(&r);
 
 			snprintf(buf, sizeof(buf), "\n    keyid: %u", keyid);
 			CHECK(putstr(text, buf));
@@ -15045,29 +15051,17 @@ named_server_mkeys(named_server_t *server, isc_lex_t *lex,
 	/* Look for the optional class name. */
 	classtxt = next_token(lex, text);
 	if (classtxt != NULL) {
-		/* Look for the optional view name. */
-		viewtxt = next_token(lex, text);
-	}
-
-	if (classtxt == NULL) {
-		rdclass = dns_rdataclass_in;
-	} else {
 		isc_textregion_t r;
 		r.base = classtxt;
 		r.length = strlen(classtxt);
 		result = dns_rdataclass_fromtext(&rdclass, &r);
 		if (result != ISC_R_SUCCESS) {
-			if (viewtxt == NULL) {
-				rdclass = dns_rdataclass_in;
-				viewtxt = classtxt;
-				result = ISC_R_SUCCESS;
-			} else {
-				snprintf(msg, sizeof(msg),
-					 "unknown class '%s'", classtxt);
-				(void) putstr(text, msg);
-				goto cleanup;
-			}
+			snprintf(msg, sizeof(msg),
+				 "unknown class '%s'", classtxt);
+			(void) putstr(text, msg);
+			goto cleanup;
 		}
+		viewtxt = next_token(lex, text);
 	}
 
 	for (view = ISC_LIST_HEAD(server->viewlist);
@@ -15096,6 +15090,9 @@ named_server_mkeys(named_server_t *server, isc_lex_t *lex,
 
 		switch (opt) {
 		case REFRESH:
+			if (!first) {
+				CHECK(putstr(text, "\n"));
+			}
 			CHECK(mkey_refresh(view, text));
 			break;
 		case STATUS:
@@ -15103,12 +15100,14 @@ named_server_mkeys(named_server_t *server, isc_lex_t *lex,
 				CHECK(putstr(text, "\n\n"));
 			}
 			CHECK(mkey_status(view, text));
-			first = false;
 			break;
 		case SYNC:
 			CHECK(dns_zone_flush(view->managed_keys));
 			break;
 		case DESTROY:
+			if (!first) {
+				CHECK(putstr(text, "\n"));
+			}
 			CHECK(mkey_destroy(server, view, text));
 			break;
 		default:
@@ -15119,6 +15118,7 @@ named_server_mkeys(named_server_t *server, isc_lex_t *lex,
 		if (viewtxt != NULL) {
 			break;
 		}
+		first = false;
 	}
 
 	if (!found) {

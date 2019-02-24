@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-keymgr.8,v 1.3 2019/01/09 16:55:00 christos Exp $
+.\"	$NetBSD: dnssec-keymgr.8,v 1.4 2019/02/24 20:01:28 christos Exp $
 .\"
-.\" Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" This Source Code Form is subject to the terms of the Mozilla Public
 .\" License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -51,7 +51,7 @@ and
 \fBdnssec\-settime\fR\&.
 .PP
 DNSSEC policy can be read from a configuration file (default
-/etc/dnssec\-policy\&.conf), from which the key parameters, publication and rollover schedule, and desired coverage duration for any given zone can be determined\&. This file may be used to define individual DNSSEC policies on a per\-zone basis, or to set a default policy used for all zones\&.
+/etc/dnssec\-policy\&.conf), from which the key parameters, publication and rollover schedule, and desired coverage duration for any given zone can be determined\&. This file may be used to define individual DNSSEC policies on a per\-zone basis, or to set a "default" policy used for all zones\&.
 .PP
 When
 \fBdnssec\-keymgr\fR
@@ -70,6 +70,10 @@ specified on the command line, then
 will search the key directory (either the current working directory or the directory set by the
 \fB\-K\fR
 option), and check the keys for all the zones represented in the directory\&.
+.PP
+Key times that are in the past will not be updated unless the
+\fB\-f\fR
+is used (see below)\&. Key inactivation and deletion times that are less than five minutes in the future will be delayed by five minutes\&.
 .PP
 It is expected that this tool will be run automatically and unattended (for example, by
 \fBcron\fR)\&.
@@ -179,7 +183,8 @@ would be used for zones that had unusually high security needs\&.
 .sp -1
 .IP \(bu 2.3
 .\}
-Algorithm policies: (\fBalgorithm\-policy \fR\fB\fIalgorithm\fR\fR\fB { \&.\&.\&. };\fR
+\fIAlgorithm policies:\fR
+(\fBalgorithm\-policy \fR\fB\fIalgorithm\fR\fR\fB { \&.\&.\&. };\fR
 ) override default per\-algorithm settings\&. For example, by default, RSASHA256 keys use 2048\-bit key sizes for both KSK and ZSK\&. This can be modified using
 \fBalgorithm\-policy\fR, and the new key sizes would then be used for any key of type RSASHA256\&.
 .RE
@@ -192,59 +197,60 @@ Algorithm policies: (\fBalgorithm\-policy \fR\fB\fIalgorithm\fR\fR\fB { \&.\&.\&
 .sp -1
 .IP \(bu 2.3
 .\}
-Zone policies: (\fBzone \fR\fB\fIname\fR\fR\fB { \&.\&.\&. };\fR
+\fIZone policies:\fR
+(\fBzone \fR\fB\fIname\fR\fR\fB { \&.\&.\&. };\fR
 ) set policy for a single zone by name\&. A zone policy can inherit a policy class by including a
 \fBpolicy\fR
-option\&. Zone names beginning with digits (i\&.e\&., 0\-9) must be quoted\&.
+option\&. Zone names beginning with digits (i\&.e\&., 0\-9) must be quoted\&. If a zone does not have its own policy then the "default" policy applies\&.
 .RE
 .PP
 Options that can be specified in policies:
 .PP
-\fBalgorithm\fR
+\fBalgorithm\fR \fIname\fR;
 .RS 4
 The key algorithm\&. If no policy is defined, the default is RSASHA256\&.
 .RE
 .PP
-\fBcoverage\fR
+\fBcoverage\fR \fIduration\fR;
 .RS 4
 The length of time to ensure that keys will be correct; no action will be taken to create new keys to be activated after this time\&. This can be represented as a number of seconds, or as a duration using human\-readable units (examples: "1y" or "6 months")\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. If no policy is configured, the default is six months\&.
 .RE
 .PP
-\fBdirectory\fR
+\fBdirectory\fR \fIpath\fR;
 .RS 4
 Specifies the directory in which keys should be stored\&.
 .RE
 .PP
-\fBkey\-size\fR
+\fBkey\-size\fR \fIkeytype\fR \fIsize\fR;
 .RS 4
-Specifies the number of bits to use in creating keys\&. Takes two arguments: keytype (eihter "zsk" or "ksk") and size\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. If no policy is configured, the default is 2048 bits for RSA keys\&.
+Specifies the number of bits to use in creating keys\&. The keytype is either "zsk" or "ksk"\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. If no policy is configured, the default is 2048 bits for RSA keys\&.
 .RE
 .PP
-\fBkeyttl\fR
+\fBkeyttl\fR \fIduration\fR;
 .RS 4
 The key TTL\&. If no policy is defined, the default is one hour\&.
 .RE
 .PP
-\fBpost\-publish\fR
+\fBpost\-publish\fR \fIkeytype\fR \fIduration\fR;
 .RS 4
 How long after inactivation a key should be deleted from the zone\&. Note: If
 \fBroll\-period\fR
-is not set, this value is ignored\&. Takes two arguments: keytype (eihter "zsk" or "ksk") and a duration\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. The default is one month\&.
+is not set, this value is ignored\&. The keytype is either "zsk" or "ksk"\&. A default duration for this option can be set in algorithm policies as well as in policy classes or zone policies\&. The default is one month\&.
 .RE
 .PP
-\fBpre\-publish\fR
+\fBpre\-publish\fR \fIkeytype\fR \fIduration\fR;
 .RS 4
 How long before activation a key should be published\&. Note: If
 \fBroll\-period\fR
-is not set, this value is ignored\&. Takes two arguments: keytype (either "zsk" or "ksk") and a duration\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. The default is one month\&.
+is not set, this value is ignored\&. The keytype is either "zsk" or "ksk"\&. A default duration for this option can be set in algorithm policies as well as in policy classes or zone policies\&. The default is one month\&.
 .RE
 .PP
-\fBroll\-period\fR
+\fBroll\-period\fR \fIkeytype\fR \fIduration\fR;
 .RS 4
-How frequently keys should be rolled over\&. Takes two arguments: keytype (eihter "zsk" or "ksk") and a duration\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. If no policy is configured, the default is one year for ZSK\*(Aqs\&. KSK\*(Aqs do not roll over by default\&.
+How frequently keys should be rolled over\&. The keytype is either "zsk" or "ksk"\&. A default duration for this option can be set in algorithm policies as well as in policy classes or zone policies\&. If no policy is configured, the default is one year for ZSKs\&. KSKs do not roll over by default\&.
 .RE
 .PP
-\fBstandby\fR
+\fBstandby\fR \fIkeytype\fR \fInumber\fR;
 .RS 4
 Not yet implemented\&.
 .RE
@@ -290,5 +296,5 @@ Allow configuration of standby keys and use of the REVOKE bit, for keys that use
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 .br

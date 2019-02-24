@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -499,7 +499,7 @@ process_dhtkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 }
 
 static isc_result_t
-process_gsstkey(dns_name_t *name, dns_rdata_tkey_t *tkeyin,
+process_gsstkey(dns_message_t *msg, dns_name_t *name, dns_rdata_tkey_t *tkeyin,
 		dns_tkeyctx_t *tctx, dns_rdata_tkey_t *tkeyout,
 		dns_tsig_keyring_t *ring)
 {
@@ -517,7 +517,7 @@ process_gsstkey(dns_name_t *name, dns_rdata_tkey_t *tkeyin,
 	 * You have to define either a gss credential (principal) to
 	 * accept with tkey-gssapi-credential, or you have to
 	 * configure a specific keytab (with tkey-gssapi-keytab) in
-	 * order to use gsstkey
+	 * order to use gsstkey.
 	 */
 	if (tctx->gsscred == NULL && tctx->gssapi_keytab == NULL) {
 		tkey_log("process_gsstkey(): no tkey-gssapi-credential "
@@ -568,8 +568,9 @@ process_gsstkey(dns_name_t *name, dns_rdata_tkey_t *tkeyin,
 	isc_stdtime_get(&now);
 
 	if (dns_name_countlabels(principal) == 0U) {
-		if (tsigkey != NULL)
+		if (tsigkey != NULL) {
 			dns_tsigkey_detach(&tsigkey);
+		}
 	} else if (tsigkey == NULL) {
 #ifdef GSSAPI
 		OM_uint32 gret, minor, lifetime;
@@ -591,14 +592,13 @@ process_gsstkey(dns_name_t *name, dns_rdata_tkey_t *tkeyin,
 		RETERR(dns_tsigkey_createfromkey(name, &tkeyin->algorithm,
 						 dstkey, true, principal,
 						 now, expire, ring->mctx, ring,
-						 NULL));
+						 &tsigkey));
 		dst_key_free(&dstkey);
 		tkeyout->inception = now;
 		tkeyout->expire = expire;
 	} else {
 		tkeyout->inception = tsigkey->inception;
 		tkeyout->expire = tsigkey->expire;
-		dns_tsigkey_detach(&tsigkey);
 	}
 
 	if (outtoken) {
@@ -625,6 +625,18 @@ process_gsstkey(dns_name_t *name, dns_rdata_tkey_t *tkeyin,
 	tkeyout->error = dns_rcode_noerror;
 
 	tkey_log("process_gsstkey(): dns_tsigerror_noerror");   /* XXXSRA */
+
+	/*
+	 * We found a TKEY to respond with.  If the request is not TSIG signed,
+	 * we need to make sure the response is signed (see RFC 3645, Section
+	 * 2.2).
+	 */
+	if (tsigkey != NULL) {
+		if (msg->tsigkey == NULL && msg->sig0key == NULL) {
+			dns_message_settsigkey(msg, tsigkey);
+		}
+		dns_tsigkey_detach(&tsigkey);
+	}
 
 	return (ISC_R_SUCCESS);
 
@@ -759,9 +771,9 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 	result = dns_message_signer(msg, &tsigner);
 	if (result != ISC_R_SUCCESS) {
 		if (tkeyin.mode == DNS_TKEYMODE_GSSAPI &&
-		    result == ISC_R_NOTFOUND)
-		       signer = NULL;
-		else {
+		    result == ISC_R_NOTFOUND) {
+			signer = NULL;
+		} else {
 			tkey_log("dns_tkey_processquery: query was not "
 				 "properly signed - rejecting");
 			result = DNS_R_FORMERR;
@@ -864,7 +876,7 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 			break;
 		case DNS_TKEYMODE_GSSAPI:
 			tkeyout.error = dns_rcode_noerror;
-			RETERR(process_gsstkey(keyname, &tkeyin, tctx,
+			RETERR(process_gsstkey(msg, keyname, &tkeyin, tctx,
 					       &tkeyout, ring));
 			break;
 		case DNS_TKEYMODE_DELETE:
@@ -881,6 +893,7 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 	}
 
  failure_with_tkey:
+
 	dns_rdata_init(&rdata);
 	isc_buffer_init(&tkeyoutbuf, tkeyoutdata, sizeof(tkeyoutdata));
 	result = dns_rdata_fromstruct(&rdata, tkeyout.common.rdclass,
@@ -914,6 +927,7 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 	return (ISC_R_SUCCESS);
 
  failure:
+
 	if (freetkeyin)
 		dns_rdata_freestruct(&tkeyin);
 	if (!ISC_LIST_EMPTY(namelist))

@@ -11,6 +11,9 @@
 
 #pragma once
 
+#include <inttypes.h>
+#include <stdbool.h>
+
 #if !defined(__has_feature)
 #define __has_feature(x) 0
 #endif
@@ -31,9 +34,9 @@
 #if !defined(__CLANG_ATOMICS) && !defined(__GNUC_ATOMICS)
 #if __has_extension(c_atomic) || __has_extension(cxx_atomic)
 #define __CLANG_ATOMICS
-#elif __GNUC_PREREQ__(4, 7)
+#elif __GNUC_PREREQ__(4, 7) || defined(__lint__)
 #define __GNUC_ATOMICS
-#elif !defined(__GNUC__) && !defined(__lint__)
+#elif !defined(__GNUC__)
 #error "isc/stdatomic.h does not support your compiler"
 #endif
 #endif
@@ -73,6 +76,7 @@ typedef int_fast32_t	atomic_int_fast32_t;
 typedef uint_fast32_t	atomic_uint_fast32_t;
 typedef int_fast64_t	atomic_int_fast64_t;
 typedef uint_fast64_t	atomic_uint_fast64_t;
+typedef bool		atomic_bool;
 
 #if defined(__CLANG_ATOMICS) /* __c11_atomic builtins */
 #define atomic_init(obj, desired)		\
@@ -123,8 +127,10 @@ typedef uint_fast64_t	atomic_uint_fast64_t;
 	({									\
 		__typeof__(obj) __v;						\
 		_Bool __r;							\
-		__v = __sync_val_compare_and_swap(obj, *(expected), desired);	\
-		__r = *(expected) == __v;					\
+		__v = (__typeof__(obj))__sync_val_compare_and_swap(obj, 	\
+								   *(expected), \
+								   desired);	\
+		__r = ((__typeof__(obj))*(expected) == __v);            	\
 		*(expected) = __v;						\
 		__r;								\
 	})
@@ -134,11 +140,11 @@ typedef uint_fast64_t	atomic_uint_fast64_t;
 
 #define atomic_load(obj) \
 	atomic_load_explicit(obj, memory_order_seq_cst)
-#define atomic_store(obj) \
-	atomic_store_explicit(obj, memory_order_seq_cst)
-#define atomic_fetch_add(obj) \
+#define atomic_store(obj, arg) \
+	atomic_store_explicit(obj, arg, memory_order_seq_cst)
+#define atomic_fetch_add(obj, arg) \
 	atomic_fetch_add_explicit(obj, arg, memory_order_seq_cst)
-#define atomic_fetch_sub(obj) \
+#define atomic_fetch_sub(obj, arg) \
 	atomic_fetch_sub_explicit(obj, arg, memory_order_seq_cst)
 #define atomic_compare_exchange_strong(obj, expected, desired)	\
 	atomic_compare_exchange_strong_explicit(obj, expected, desired, memory_order_seq_cst, memory_order_seq_cst)

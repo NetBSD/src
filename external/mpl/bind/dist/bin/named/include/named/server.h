@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -80,6 +80,7 @@ struct named_server {
 
 	isc_mutex_t		reload_event_lock;
 	isc_event_t *		reload_event;
+	bool			reload_in_progress;
 
 	bool		flushonshutdown;
 

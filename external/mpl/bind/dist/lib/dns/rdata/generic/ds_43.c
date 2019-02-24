@@ -1,4 +1,4 @@
-/*	$NetBSD: ds_43.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: ds_43.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,8 @@
 #define RDATA_GENERIC_DS_43_C
 
 #define RRTYPE_DS_ATTRIBUTES \
-	(DNS_RDATATYPEATTR_DNSSEC|DNS_RDATATYPEATTR_ATPARENT)
+	( DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH | \
+	  DNS_RDATATYPEATTR_ATPARENT )
 
 #include <isc/md.h>
 
@@ -75,7 +76,7 @@ generic_fromtext_ds(ARGS_FROMTEXT) {
 		length = ISC_SHA384_DIGESTLENGTH;
 		break;
 	default:
-		length = -1;
+		length = -2;
 		break;
 	}
 	return (isc_hex_tobuffer(lexer, target, length));

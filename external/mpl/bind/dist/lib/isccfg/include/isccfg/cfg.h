@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: cfg.h,v 1.4 2019/02/24 20:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -117,17 +117,6 @@ cfg_parse_file(cfg_parser_t *pctx, const char *file,
 
 isc_result_t
 cfg_parse_buffer(cfg_parser_t *pctx, isc_buffer_t *buffer,
-		 const cfg_type_t *type, cfg_obj_t **ret);
-isc_result_t
-cfg_parse_buffer2(cfg_parser_t *pctx, isc_buffer_t *buffer,
-		  const char *file, const cfg_type_t *type,
-		  cfg_obj_t **ret);
-isc_result_t
-cfg_parse_buffer3(cfg_parser_t *pctx, isc_buffer_t *buffer,
-		  const char *file, unsigned int line,
-		  const cfg_type_t *type, cfg_obj_t **ret);
-isc_result_t
-cfg_parse_buffer4(cfg_parser_t *pctx, isc_buffer_t *buffer,
 		  const char *file, unsigned int line,
 		  const cfg_type_t *type, unsigned int flags,
 		  cfg_obj_t **ret);

@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -92,7 +92,8 @@ EXTERN cfg_obj_t *		named_g_config		INIT(NULL);
 EXTERN const cfg_obj_t *	named_g_defaults	INIT(NULL);
 EXTERN const char *		named_g_conffile	INIT(NAMED_SYSCONFDIR
 							     "/named.conf");
-EXTERN cfg_obj_t *		named_g_bindkeys	INIT(NULL);
+EXTERN const char *		named_g_defaultbindkeys	INIT(NAMED_SYSCONFDIR
+							     "/bind.keys");
 EXTERN const char *		named_g_keyfile		INIT(NAMED_SYSCONFDIR
 							     "/rndc.key");
 
