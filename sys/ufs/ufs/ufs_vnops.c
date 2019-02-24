@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.242 2019/01/01 10:06:55 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.243 2019/02/24 19:06:40 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.242 2019/01/01 10:06:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.243 2019/02/24 19:06:40 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1268,18 +1268,27 @@ ufs_readdir(void *v)
 	}
 
 	/* round start and end down to block boundaries */
-	physstart = startoffset & ~(off_t)(ump->um_dirblksiz - 1);
-	physend = endoffset & ~(off_t)(ump->um_dirblksiz - 1);
-	skipstart = startoffset - physstart;
-	dropend = endoffset - physend;
+	physstart = rounddown2(startoffset, ump->um_dirblksiz);
+	physend = rounddown2(endoffset, ump->um_dirblksiz);
 
-	if (callerbytes - dropend < _DIRENT_MINSIZE(rawdp)) {
-		/* no room for even one struct direct */
+	if (physstart >= physend) {
+		/* Need at least one block */
 		return EINVAL;
 	}
 
+	skipstart = startoffset - physstart;
+	dropend = endoffset - physend;
+
 	/* how much to actually read */
-	rawbufmax = callerbytes + skipstart - dropend;
+	rawbufmax = callerbytes + skipstart;
+	if (rawbufmax < callerbytes)
+		return EINVAL;
+	rawbuf -= dropend;
+
+	if (rawbufmax < _DIRENT_MINSIZE(rawdp)) {
+		/* no room for even one struct direct */
+		return EINVAL;
+	}
 
 	/* read it */
 	rawbuf = kmem_alloc(rawbufmax, KM_SLEEP);
