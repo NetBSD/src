@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.434 2018/12/24 16:58:54 thorpej Exp $
+#       $NetBSD: Makefile,v 1.435 2019/02/24 02:29:56 rin Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -52,7 +52,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	secmodel_overlay.9 secmodel_securelevel.9 secmodel_suser.9 \
 	SET.9 setbit.9 setjmp.9 shutdownhook_establish.9 \
 	signal.9 skpc.9 sockopt.9 softintr.9 spl.9 specificdata.9 \
-	splraiseipl.9 \
+	spi.9 splraiseipl.9 \
 	store.9 suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 sysmon_pswitch.9 sysmon_taskq.9 tc.9 \
 	tcp_congctl.9 threadpool.9 timecounter.9 time_second.9 todr.9 \
