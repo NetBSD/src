@@ -1,5 +1,5 @@
 /*	$KAME: sctp_asconf.h,v 1.8 2005/03/06 16:04:16 itojun Exp $	*/
-/*	$NetBSD: sctp_asconf.h,v 1.1 2015/10/13 21:28:35 rjs Exp $ */
+/*	$NetBSD: sctp_asconf.h,v 1.2 2019/02/24 17:01:52 kamil Exp $ */
 
 #ifndef _NETINET_SCTP_ASCONF_H_
 #define _NETINET_SCTP_ASCONF_H_
@@ -35,6 +35,13 @@
 #include <sys/malloc.h>
 
 #if defined(_KERNEL)
+
+struct sctp_tcb;
+struct sctp_nets;
+struct sctp_asconf_chunk;
+struct sockaddr;
+struct sctp_inpcb;
+struct sctp_asconf_ack_chunk;
 
 extern void sctp_asconf_cleanup(struct sctp_tcb *, struct sctp_nets *);
 
