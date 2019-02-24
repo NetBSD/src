@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.189.8.4 2019/02/01 11:21:30 martin Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.189.8.5 2019/02/24 10:49:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.189.8.4 2019/02/01 11:21:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.189.8.5 2019/02/24 10:49:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1179,7 +1179,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 		pt->pt_type = which;
 		pt->pt_entry = which;
 		pt->pt_queued = false;
-		if (pt->pt_type == CLOCK_REALTIME)
+		if (!CLOCK_VIRTUAL_P(which))
 			callout_init(&pt->pt_ch, CALLOUT_MPSAFE);
 		else
 			pt->pt_active = 0;
