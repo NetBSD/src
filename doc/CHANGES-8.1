@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.110 2019/02/23 06:59:28 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.111 2019/02/24 10:50:49 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2524,4 +2524,9 @@ sys/kern/sysv_shm.c				1.133
 	shmctl system calls, for native as well as for the netbsd32, linux,
 	and linux32 compatibility calls.
 	[mrg, ticket #1195]
+
+sys/kern/kern_time.c				1.196
+
+	Avoid panic from setitimer(2) for CLOCK_MONOTONIC.
+	[mlelstv, ticket #1196]
 
