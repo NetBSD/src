@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.178 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.179 2019/02/24 07:20:33 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.178 2018/09/14 05:09:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.179 2019/02/24 07:20:33 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -499,6 +499,8 @@ rip_connect_pcb(struct inpcb *inp, struct sockaddr_in *addr)
 		return (EADDRNOTAVAIL);
 	if (addr->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
+	if (addr->sin_len != sizeof(*addr))
+		return EINVAL;
 	inp->inp_faddr = addr->sin_addr;
 	return (0);
 }
