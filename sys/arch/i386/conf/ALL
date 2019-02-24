@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.463 2019/02/06 11:58:31 rin Exp $
+# $NetBSD: ALL,v 1.464 2019/02/24 20:56:27 kamil Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.463 $"
+#ident		"ALL-$Revision: 1.464 $"
 
 maxusers	64		# estimated number of users
 
@@ -110,6 +110,7 @@ options 	BUFQ_PRIOCSCAN
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
+options		KUBSAN		# Kernel Undefined Behavior Sanitizer (kUBSan)
 options 	LOCKDEBUG	# expensive locking checks/support
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
@@ -118,12 +119,17 @@ options 	DDB_VERBOSE_HELP
 options 	KGDB		# remote debugger
 options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
+options		KUBSAN		# Kernel Undefined Behavior Sanitizer (kUBSan)
 options 	SYSCALL_STATS	# per syscall counts
 options 	SYSCALL_TIMES	# per syscall times
 options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 options 	KDTRACE_HOOKS	# kernel DTrace hooks
 options 	UVMHIST		# kernhist for uvm subsystem
 options 	BIOHIST		# kernhist for buff I/O
+
+# Kernel Code Coverage Driver.
+makeoptions	KCOV=1
+options		KCOV
 
 # Compatibility options
 include 	"conf/compat_netbsd09.config"
