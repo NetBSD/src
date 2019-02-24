@@ -1,4 +1,4 @@
-/*	$NetBSD: ikphy.c,v 1.13 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: ikphy.c,v 1.14 2019/02/24 17:22:21 christos Exp $	*/
 
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
@@ -59,7 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.13 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.14 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,11 +92,8 @@ static const struct mii_phy_funcs ikphy_funcs = {
 };
 
 static const struct mii_phydesc ikphys[] = {
-	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_I82563,
-	  MII_STR_xxMARVELL_I82563 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(xxMARVELL, I82563),
+	MII_PHY_END,
 };
 
 static int
