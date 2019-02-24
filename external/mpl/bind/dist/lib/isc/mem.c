@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,6 @@
 #include <isc/json.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
-#include <isc/msgs.h>
 #include <isc/mutex.h>
 #include <isc/once.h>
 #include <isc/print.h>
@@ -258,12 +257,10 @@ add_trace_entry(isc__mem_t *mctx, const void *ptr, size_t size FLARG) {
 	uint32_t hash;
 	uint32_t idx;
 
-	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0)
-		fprintf(stderr, isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-					       ISC_MSG_ADDTRACE,
-					       "add %p size %u "
-					       "file %s line %u mctx %p\n"),
+	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0) {
+		fprintf(stderr, "add %p size %zu file %s line %u mctx %p\n",
 			ptr, size, file, line, mctx);
+	}
 
 	if (mctx->debuglist == NULL)
 		return;
@@ -295,12 +292,10 @@ delete_trace_entry(isc__mem_t *mctx, const void *ptr, size_t size,
 	uint32_t hash;
 	uint32_t idx;
 
-	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0)
-		fprintf(stderr, isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-					       ISC_MSG_DELTRACE,
-					       "del %p size %u "
-					       "file %s line %u mctx %p\n"),
+	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0) {
+		fprintf(stderr, "del %p size %zu file %s line %u mctx %p\n",
 			ptr, size, file, line, mctx);
+	}
 
 	if (mctx->debuglist == NULL)
 		return;
@@ -1141,35 +1136,31 @@ print_active(isc__mem_t *mctx, FILE *out) {
 	if (mctx->debuglist != NULL) {
 		debuglink_t *dl;
 		unsigned int i;
-		const char *format;
 		bool found;
 
-		fprintf(out, "%s", isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-					    ISC_MSG_DUMPALLOC,
-					    "Dump of all outstanding "
-					    "memory allocations:\n"));
+		fputs("Dump of all outstanding memory allocations:\n", out);
 		found = false;
-		format = isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-					ISC_MSG_PTRFILELINE,
-					"\tptr %p size %u file %s line %u\n");
 		for (i = 0; i < DEBUG_TABLE_COUNT; i++) {
 			dl = ISC_LIST_HEAD(mctx->debuglist[i]);
 
-			if (dl != NULL)
+			if (dl != NULL) {
 				found = true;
+			}
 
 			while (dl != NULL) {
-				if (dl->ptr != NULL)
-					fprintf(out, format,
+				if (dl->ptr != NULL) {
+					fprintf(out,
+						"\tptr %p size %zu file %s line %u\n",
 						dl->ptr, dl->size,
 						dl->file, dl->line);
+				}
 				dl = ISC_LIST_NEXT(dl, link);
 			}
 		}
 
-		if (!found)
-			fputs(isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-					     ISC_MSG_NONE, "\tNone.\n"), out);
+		if (!found) {
+			fputs("\tNone.\n", out);
+		}
 	}
 }
 #endif
@@ -1211,27 +1202,10 @@ isc_mem_stats(isc_mem_t *ctx0, FILE *out) {
 	 */
 	pool = ISC_LIST_HEAD(ctx->pools);
 	if (pool != NULL) {
-		fprintf(out, "%s", isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-					    ISC_MSG_POOLSTATS,
-					    "[Pool statistics]\n"));
+		fputs("[Pool statistics]\n", out);
 		fprintf(out, "%15s %10s %10s %10s %10s %10s %10s %10s %1s\n",
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLNAME, "name"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLSIZE, "size"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLMAXALLOC, "maxalloc"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLALLOCATED, "allocated"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLFREECOUNT, "freecount"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLFREEMAX, "freemax"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLFILLCOUNT, "fillcount"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLGETS, "gets"),
-			"L");
+			"name", "size", "maxalloc", "allocated", "freecount",
+			"freemax", "fillcount", "gets", "L");
 	}
 	while (pool != NULL) {
 		fprintf(out, "%15s %10lu %10u %10u %10u %10u %10u %10u %s\n",

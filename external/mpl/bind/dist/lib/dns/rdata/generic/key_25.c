@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: key_25.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,11 +18,11 @@
 
 #include <dst/dst.h>
 
-#define RRTYPE_KEY_ATTRIBUTES (0)
+#define RRTYPE_KEY_ATTRIBUTES \
+	( DNS_RDATATYPEATTR_ATCNAME | DNS_RDATATYPEATTR_ZONECUTAUTH )
 
 static inline isc_result_t
 generic_fromtext_key(ARGS_FROMTEXT) {
-	isc_result_t result;
 	isc_token_t token;
 	dns_secalg_t alg;
 	dns_secproto_t proto;
@@ -56,15 +56,7 @@ generic_fromtext_key(ARGS_FROMTEXT) {
 	if ((flags & 0xc000) == 0xc000)
 		return (ISC_R_SUCCESS);
 
-	result = isc_base64_tobuffer(lexer, target, -1);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	/* Ensure there's at least enough data to compute a key ID for MD5 */
-	if (alg == DST_ALG_RSAMD5 && isc_buffer_usedlength(target) < 7)
-		return (ISC_R_UNEXPECTEDEND);
-
-	return (ISC_R_SUCCESS);
+	return (isc_base64_tobuffer(lexer, target, -2));
 }
 
 static inline isc_result_t
@@ -137,7 +129,7 @@ generic_totext_key(ARGS_TOTEXT) {
 	} else {
 		dns_rdata_toregion(rdata, &tmpr);
 		snprintf(buf, sizeof(buf), "[key id = %u]",
-			 dst_region_computeid(&tmpr, algorithm));
+			 dst_region_computeid(&tmpr));
 		RETERR(str_totext(buf, target));
 	}
 
@@ -161,7 +153,7 @@ generic_totext_key(ARGS_TOTEXT) {
 		RETERR(str_totext(" ; key id = ", target));
 		dns_rdata_toregion(rdata, &tmpr);
 		snprintf(buf, sizeof(buf), "%u",
-			 dst_region_computeid(&tmpr, algorithm));
+			 dst_region_computeid(&tmpr));
 		RETERR(str_totext(buf, target));
 	}
 	return (ISC_R_SUCCESS);
@@ -192,14 +184,6 @@ generic_fromwire_key(ARGS_FROMWIRE) {
 		dns_name_init(&name, NULL);
 		RETERR(dns_name_fromwire(&name, source, dctx, options, target));
 	}
-
-	/*
-	 * RSAMD5 computes key ID differently from other
-	 * algorithms: we need to ensure there's enough data
-	 * present for the computation
-	 */
-	if (algorithm == DST_ALG_RSAMD5 && sr.length < 3)
-		return (ISC_R_UNEXPECTEDEND);
 
 	isc_buffer_activeregion(source, &sr);
 	isc_buffer_forward(source, sr.length);

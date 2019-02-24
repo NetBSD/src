@@ -1,4 +1,4 @@
-/*	$NetBSD: hex.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: hex.h,v 1.3 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -73,20 +73,29 @@ isc_hex_decodestring(const char *cstr, isc_buffer_t *target);
 isc_result_t
 isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length);
 /*!<
- * \brief Convert hex encoded text from a lexer context into data.
+ * \brief Convert hex-encoded text from a lexer context into
+ * `target`. If 'length' is non-negative, it is the expected number of
+ * encoded octets to convert.
+ *
+ * If 'length' is -1 then 0 or more encoded octets are expected.
+ * If 'length' is -2 then 1 or more encoded octets are expected.
+ *
+ * Returns:
+ *\li	#ISC_R_BADHEX -- invalid hex encoding
+ *\li	#ISC_R_UNEXPECTEDEND: the text does not contain the expected
+ *			      number of encoded octets.
  *
  * Requires:
- *\li	'lex' is a valid lexer context
+ *\li	'lexer' is a valid lexer context
  *\li	'target' is a buffer containing binary data
- *\li	'length' is an integer
+ *\li	'length' is -2, -1, or non-negative
  *
  * Ensures:
  *\li	target will contain the data represented by the hex encoded
- *	string parsed by the lexer.  No more than length bytes will be read,
- *	if length is positive.  The 'used' pointer in target will be
- *	advanced as necessary.
+ *	string parsed by the lexer.  No more than `length` octets will
+ *	be read, if `length` is non-negative.  The 'used' pointer in
+ *	'target' will be advanced as necessary.
  */
-
 
 ISC_LANG_ENDDECLS
 

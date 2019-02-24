@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -108,11 +108,11 @@ isc_result_toid(isc_result_t);
 
 isc_result_t
 isc_result_register(unsigned int base, unsigned int nresults,
-		    const char **text, isc_msgcat_t *msgcat, int set);
+		    const char **text, int set);
 
 isc_result_t
 isc_result_registerids(unsigned int base, unsigned int nresults,
-		       const char **ids, isc_msgcat_t *msgcat, int set);
+		       const char **ids, int set);
 
 ISC_LANG_ENDDECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser_test.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: parser_test.c,v 1.4 2019/02/24 20:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -120,8 +120,8 @@ parse_buffer_test(void **state) {
 	result = cfg_parser_create(mctx, lctx, &p1);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = cfg_parse_buffer3(p1, &buf1, "text1", 0,
-				   &cfg_type_namedconf, &c1);
+	result = cfg_parse_buffer(p1, &buf1, "text1", 0,
+				  &cfg_type_namedconf, 0, &c1);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_int_equal(p1->line, 5);
 
@@ -132,8 +132,8 @@ parse_buffer_test(void **state) {
 	result = cfg_parser_create(mctx, lctx, &p2);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = cfg_parse_buffer3(p2, &buf2, "text2", 100,
-				   &cfg_type_namedconf, &c2);
+	result = cfg_parse_buffer(p2, &buf2, "text2", 100,
+				  &cfg_type_namedconf, 0, &c2);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_int_equal(p2->line, 104);
 

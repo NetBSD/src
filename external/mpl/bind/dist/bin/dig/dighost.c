@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2732,27 +2732,6 @@ send_tcp_connect(dig_query_t *query) {
 		return;
 	}
 
-	if (specified_source &&
-	    (isc_sockaddr_pf(&query->sockaddr) !=
-	     isc_sockaddr_pf(&bind_address))) {
-		printf(";; Skipping server %s, incompatible "
-		       "address family\n", query->servname);
-		query->waiting_connect = false;
-		if (ISC_LINK_LINKED(query, link))
-			next = ISC_LIST_NEXT(query, link);
-		else
-			next = NULL;
-		l = query->lookup;
-		clear_query(query);
-		if (next == NULL) {
-			printf(";; No acceptable nameservers\n");
-			check_next_lookup(l);
-			return;
-		}
-		send_tcp_connect(next);
-		return;
-	}
-
 	INSIST(query->sock == NULL);
 
 	if (keep != NULL && isc_sockaddr_equal(&keepaddr, &query->sockaddr)) {
@@ -2904,6 +2883,36 @@ send_udp(dig_query_t *query) {
 }
 
 /*%
+ * If there are more servers available for querying within 'lookup', initiate a
+ * TCP or UDP query to the next available server and return true; otherwise,
+ * return false.
+ */
+static bool
+try_next_server(dig_lookup_t *lookup) {
+	dig_query_t *current_query, *next_query;
+
+	current_query = lookup->current_query;
+	if (current_query == NULL || !ISC_LINK_LINKED(current_query, link)) {
+		return (false);
+	}
+
+	next_query = ISC_LIST_NEXT(current_query, link);
+	if (next_query == NULL) {
+		return (false);
+	}
+
+	debug("trying next server...");
+
+	if (lookup->tcp_mode) {
+		send_tcp_connect(next_query);
+	} else {
+		send_udp(next_query);
+	}
+
+	return (true);
+}
+
+/*%
  * IO timeout handler, used for both connect and recv timeouts.  If
  * retries are still allowed, either resend the UDP packet or queue a
  * new TCP lookup.  Otherwise, cancel the lookup.
@@ -2911,7 +2920,7 @@ send_udp(dig_query_t *query) {
 static void
 connect_timeout(isc_task_t *task, isc_event_t *event) {
 	dig_lookup_t *l = NULL;
-	dig_query_t *query = NULL, *cq;
+	dig_query_t *query = NULL;
 
 	UNUSED(task);
 	REQUIRE(event->ev_type == ISC_TIMEREVENT_IDLE);
@@ -2931,18 +2940,14 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
 		return;
 	}
 
-	if ((query != NULL) && (query->lookup->current_query != NULL) &&
-	    ISC_LINK_LINKED(query->lookup->current_query, link) &&
-	    (ISC_LIST_NEXT(query->lookup->current_query, link) != NULL)) {
-		debug("trying next server...");
-		cq = query->lookup->current_query;
-		if (!l->tcp_mode)
-			send_udp(ISC_LIST_NEXT(cq, link));
-		else {
-			if (query->sock != NULL)
+	if (try_next_server(l)) {
+		if (l->tcp_mode) {
+			if (query->sock != NULL) {
 				isc_socket_cancel(query->sock, NULL,
 						  ISC_SOCKCANCEL_ALL);
-			send_tcp_connect(ISC_LIST_NEXT(cq, link));
+			} else {
+				clear_query(query);
+			}
 		}
 		UNLOCK_LOOKUP;
 		return;
@@ -2989,6 +2994,27 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
 }
 
 /*%
+ * Called when a peer closes a TCP socket prematurely.
+ */
+static void
+requeue_or_update_exitcode(dig_lookup_t *lookup) {
+	if (lookup->eoferr == 0U) {
+		/*
+		 * Peer closed the connection prematurely for the first time
+		 * for this lookup.  Try again, keeping track of this failure.
+		 */
+		dig_lookup_t *requeued_lookup = requeue_lookup(lookup, true);
+		requeued_lookup->eoferr++;
+	} else {
+		/*
+		 * Peer closed the connection prematurely and it happened
+		 * previously for this lookup.  Indicate an error.
+		 */
+		exitcode = 9;
+	}
+}
+
+/*%
  * Event handler for the TCP recv which gets the length header of TCP
  * packets.  Start the next recv of length bytes.
  */
@@ -2999,7 +3025,7 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
 	isc_region_t r;
 	isc_result_t result;
 	dig_query_t *query = NULL;
-	dig_lookup_t *l, *n;
+	dig_lookup_t *l;
 	uint16_t length;
 
 	REQUIRE(event->ev_type == ISC_SOCKEVENT_RECVDONE);
@@ -3038,9 +3064,8 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
 		sockcount--;
 		debug("sockcount=%d", sockcount);
 		INSIST(sockcount >= 0);
-		if (sevent->result == ISC_R_EOF && l->eoferr == 0U) {
-			n = requeue_lookup(l, true);
-			n->eoferr++;
+		if (sevent->result == ISC_R_EOF) {
+			requeue_or_update_exitcode(l);
 		}
 		isc_event_free(&event);
 		clear_query(query);
@@ -3399,7 +3424,7 @@ process_cookie(dig_lookup_t *l, dns_message_t *msg,
 	}
 
 	INSIST(msg->cc_ok == 0 && msg->cc_bad == 0);
-	if (optlen >= len && optlen >= 8U) {
+	if (len >= 8 && optlen >= 8U) {
 		if (isc_safe_memequal(isc_buffer_current(optbuf), sent, 8)) {
 			msg->cc_ok = 1;
 		} else {
@@ -3486,6 +3511,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	dig_lookup_t *n, *l;
 	bool docancel = false;
 	bool match = true;
+	bool done_process_opt = false;
 	unsigned int parseflags;
 	dns_messageid_t id;
 	unsigned int msgflags;
@@ -3541,9 +3567,8 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			debug("sockcount=%d", sockcount);
 			INSIST(sockcount >= 0);
 		}
-		if (sevent->result == ISC_R_EOF && l->eoferr == 0U) {
-			n = requeue_lookup(l, true);
-			n->eoferr++;
+		if (sevent->result == ISC_R_EOF) {
+			requeue_or_update_exitcode(l);
 		}
 		isc_event_free(&event);
 		clear_query(query);
@@ -3780,6 +3805,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			UNLOCK_LOOKUP;
 			return;
 		}
+		done_process_opt = true;
 	}
 	if ((msg->rcode == dns_rcode_servfail && !l->servfail_stops) ||
 	    (check_ra && (msg->flags & DNS_MESSAGEFLAG_RA) == 0 && l->recurse))
@@ -3869,13 +3895,17 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		}
 	}
 
-	if (l->cookie != NULL) {
-		if (msg->opt == NULL)
-			printf(";; expected opt record in response\n");
-		else
+	if (!done_process_opt) {
+		if (l->cookie != NULL) {
+			if (msg->opt == NULL) {
+				printf(";; expected opt record in response\n");
+			} else {
+				process_opt(l, msg);
+			}
+		} else if (l->sendcookie && msg->opt != NULL) {
 			process_opt(l, msg);
-	} else if (l->sendcookie && msg->opt != NULL)
-		process_opt(l, msg);
+		}
+	}
 	if (!l->doing_xfr || l->xfr_q == query) {
 		if (msg->rcode == dns_rcode_nxdomain &&
 		    (l->origin != NULL || l->need_search)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2803,7 +2803,6 @@ dns_message_settsigkey(dns_message_t *msg, dns_tsigkey_t *key) {
 	 */
 
 	REQUIRE(DNS_MESSAGE_VALID(msg));
-	REQUIRE(msg->state == DNS_SECTION_ANY);
 
 	if (key == NULL && msg->tsigkey != NULL) {
 		if (msg->sig_reserved != 0) {

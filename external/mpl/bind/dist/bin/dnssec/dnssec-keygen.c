@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -81,14 +81,12 @@ usage(void) {
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "    -K <directory>: write keys into directory\n");
 	fprintf(stderr, "    -a <algorithm>:\n");
-	fprintf(stderr, "        RSA | RSAMD5 | RSASHA1 | NSEC3RSASHA1"
-				" |\n");
+	fprintf(stderr, "        RSASHA1 | NSEC3RSASHA1 |\n");
 	fprintf(stderr, "        RSASHA256 | RSASHA512 |\n");
 	fprintf(stderr, "        ECDSAP256SHA256 | ECDSAP384SHA384 |\n");
 	fprintf(stderr, "        ED25519 | ED448 | DH\n");
 	fprintf(stderr, "    -3: use NSEC3-capable algorithm\n");
 	fprintf(stderr, "    -b <key size in bits>:\n");
-	fprintf(stderr, "        RSAMD5:\t[1024..%d]\n", MAX_RSA);
 	fprintf(stderr, "        RSASHA1:\t[1024..%d]\n", MAX_RSA);
 	fprintf(stderr, "        NSEC3RSASHA1:\t[1024..%d]\n", MAX_RSA);
 	fprintf(stderr, "        RSASHA256:\t[1024..%d]\n", MAX_RSA);
@@ -510,23 +508,14 @@ main(int argc, char **argv) {
 			fatal("no algorithm specified");
 		}
 
-		if (strcasecmp(algname, "RSA") == 0) {
-			fprintf(stderr, "The use of RSA (RSAMD5) is not "
-					"recommended.\nIf you still wish to "
-					"use RSA (RSAMD5) please specify "
-					"\"-a RSAMD5\"\n");
-			INSIST(freeit == NULL);
-			return (1);
-		} else {
-			r.base = algname;
-			r.length = strlen(algname);
-			ret = dns_secalg_fromtext(&alg, &r);
-			if (ret != ISC_R_SUCCESS) {
-				fatal("unknown algorithm %s", algname);
-			}
-			if (alg == DST_ALG_DH) {
-				options |= DST_TYPE_KEY;
-			}
+		r.base = algname;
+		r.length = strlen(algname);
+		ret = dns_secalg_fromtext(&alg, &r);
+		if (ret != ISC_R_SUCCESS) {
+			fatal("unknown algorithm %s", algname);
+		}
+		if (alg == DST_ALG_DH) {
+			options |= DST_TYPE_KEY;
 		}
 
 		if (!dst_algorithm_supported(alg)) {
@@ -700,7 +689,6 @@ main(int argc, char **argv) {
 	}
 
 	switch (alg) {
-	case DNS_KEYALG_RSAMD5:
 	case DNS_KEYALG_RSASHA1:
 	case DNS_KEYALG_NSEC3RSASHA1:
 	case DNS_KEYALG_RSASHA256:
@@ -782,7 +770,6 @@ main(int argc, char **argv) {
 	}
 
 	switch(alg) {
-	case DNS_KEYALG_RSAMD5:
 	case DNS_KEYALG_RSASHA1:
 	case DNS_KEYALG_NSEC3RSASHA1:
 	case DNS_KEYALG_RSASHA256:

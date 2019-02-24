@@ -1,4 +1,4 @@
-/*	$NetBSD: rrsig_46.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,9 @@
 #ifndef RDATA_GENERIC_RRSIG_46_C
 #define RDATA_GENERIC_RRSIG_46_C
 
-#define RRTYPE_RRSIG_ATTRIBUTES (DNS_RDATATYPEATTR_DNSSEC)
+#define RRTYPE_RRSIG_ATTRIBUTES \
+	( DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH | \
+	  DNS_RDATATYPEATTR_ATCNAME )
 
 static inline isc_result_t
 fromtext_rrsig(ARGS_FROMTEXT) {
@@ -140,7 +142,7 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	/*
 	 * Sig.
 	 */
-	return (isc_base64_tobuffer(lexer, target, -1));
+	return (isc_base64_tobuffer(lexer, target, -2));
 }
 
 static inline isc_result_t

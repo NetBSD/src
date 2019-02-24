@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.h,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: dst_parse.h,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -46,18 +46,18 @@
 #define TAG_ALG(tag)		((unsigned int)(tag) >> TAG_SHIFT)
 #define TAG(alg, off)		(((alg) << TAG_SHIFT) + (off))
 
-/* These are used by both RSA-MD5 and RSA-SHA1 */
+/* These are used by RSA-SHA1, RSASHA256 and RSASHA512 */
 #define RSA_NTAGS		11
-#define TAG_RSA_MODULUS		((DST_ALG_RSAMD5 << TAG_SHIFT) + 0)
-#define TAG_RSA_PUBLICEXPONENT	((DST_ALG_RSAMD5 << TAG_SHIFT) + 1)
-#define TAG_RSA_PRIVATEEXPONENT	((DST_ALG_RSAMD5 << TAG_SHIFT) + 2)
-#define TAG_RSA_PRIME1		((DST_ALG_RSAMD5 << TAG_SHIFT) + 3)
-#define TAG_RSA_PRIME2		((DST_ALG_RSAMD5 << TAG_SHIFT) + 4)
-#define TAG_RSA_EXPONENT1	((DST_ALG_RSAMD5 << TAG_SHIFT) + 5)
-#define TAG_RSA_EXPONENT2	((DST_ALG_RSAMD5 << TAG_SHIFT) + 6)
-#define TAG_RSA_COEFFICIENT	((DST_ALG_RSAMD5 << TAG_SHIFT) + 7)
-#define TAG_RSA_ENGINE		((DST_ALG_RSAMD5 << TAG_SHIFT) + 8)
-#define TAG_RSA_LABEL		((DST_ALG_RSAMD5 << TAG_SHIFT) + 9)
+#define TAG_RSA_MODULUS		((DST_ALG_RSA << TAG_SHIFT) + 0)
+#define TAG_RSA_PUBLICEXPONENT	((DST_ALG_RSA << TAG_SHIFT) + 1)
+#define TAG_RSA_PRIVATEEXPONENT	((DST_ALG_RSA << TAG_SHIFT) + 2)
+#define TAG_RSA_PRIME1		((DST_ALG_RSA << TAG_SHIFT) + 3)
+#define TAG_RSA_PRIME2		((DST_ALG_RSA << TAG_SHIFT) + 4)
+#define TAG_RSA_EXPONENT1	((DST_ALG_RSA << TAG_SHIFT) + 5)
+#define TAG_RSA_EXPONENT2	((DST_ALG_RSA << TAG_SHIFT) + 6)
+#define TAG_RSA_COEFFICIENT	((DST_ALG_RSA << TAG_SHIFT) + 7)
+#define TAG_RSA_ENGINE		((DST_ALG_RSA << TAG_SHIFT) + 8)
+#define TAG_RSA_LABEL		((DST_ALG_RSA << TAG_SHIFT) + 9)
 
 #define DH_NTAGS		4
 #define TAG_DH_PRIME		((DST_ALG_DH << TAG_SHIFT) + 0)
