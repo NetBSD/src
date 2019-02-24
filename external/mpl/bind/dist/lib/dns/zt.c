@@ -1,4 +1,4 @@
-/*	$NetBSD: zt.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: zt.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -181,6 +181,16 @@ dns_zt_find(dns_zt_t *zt, const dns_name_t *name, unsigned int options,
 		 * a mirror zone which is expired or not yet loaded, treat it
 		 * as non-existent.  This will trigger a fallback to recursion
 		 * instead of returning a SERVFAIL.
+		 *
+		 * Note that currently only the deepest match in the zone table
+		 * is checked.  Consider a server configured with two mirror
+		 * zones: "bar" and its child, "foo.bar".  If zone data is
+		 * available for "bar" but not for "foo.bar", a query with
+		 * QNAME equal to or below "foo.bar" will cause ISC_R_NOTFOUND
+		 * to be returned, not DNS_R_PARTIALMATCH, despite zone data
+		 * being available for "bar".  This is considered to be an edge
+		 * case, handling which more appropriately is possible, but
+		 * arguably not worth the added complexity.
 		 */
 		if ((options & DNS_ZTFIND_MIRROR) != 0 &&
 		    dns_zone_gettype(dummy) == dns_zone_mirror &&

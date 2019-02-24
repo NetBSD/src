@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1813,8 +1813,18 @@ dns_nsec3_maxiterations(dns_db_t *db, dns_dbversion_t *version,
 	     result == ISC_R_SUCCESS;
 	     result = dns_rdataset_next(&rdataset)) {
 		dns_rdata_t rdata = DNS_RDATA_INIT;
-
 		dns_rdataset_current(&rdataset, &rdata);
+
+		REQUIRE(rdata.type == dns_rdatatype_key ||
+			rdata.type == dns_rdatatype_dnskey);
+		REQUIRE(rdata.length > 3);
+
+		/* Skip unsupported algorithms when
+		 * calculating the maximum iterations.
+		 */
+		if (!dst_algorithm_supported(rdata.data[3]))
+			continue;
+
 		isc_buffer_init(&buffer, rdata.data, rdata.length);
 		isc_buffer_add(&buffer, rdata.length);
 		CHECK(dst_key_fromdns(dns_db_origin(db), rdataset.rdclass,

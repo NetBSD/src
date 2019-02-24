@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,6 @@
 #include <inttypes.h>
 
 #include <isc/buffer.h>
-#include <isc/msgs.h>
 #include <isc/net.h>
 #include <isc/netaddr.h>
 #include <isc/print.h>
@@ -198,9 +197,7 @@ isc_netaddr_format(const isc_netaddr_t *na, char *array, unsigned int size) {
 
 	if (result != ISC_R_SUCCESS) {
 		snprintf(array, size,
-			 isc_msgcat_get(isc_msgcat, ISC_MSGSET_NETADDR,
-					ISC_MSG_UNKNOWNADDR,
-					"<unknown address, family %u>"),
+			 "<unknown address, family %u>",
 			 na->family);
 		array[size - 1] = '\0';
 	}

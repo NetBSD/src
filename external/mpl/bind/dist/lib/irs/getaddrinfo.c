@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -127,6 +127,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
 
 #include <isc/app.h>
 #include <isc/buffer.h>
@@ -341,25 +347,45 @@ getaddrinfo(const char *hostname, const char *servname,
 
 		port = strtol(servname, &e, 10);
 		if (*e == '\0') {
-			if (socktype == 0)
+			if (socktype == 0) {
 				return (EAI_SOCKTYPE);
-			if (port < 0 || port > 65535)
+			}
+			if (port < 0 || port > 65535) {
 				return (EAI_SERVICE);
+			}
 			port = htons((unsigned short) port);
 		} else {
+#ifdef _WIN32
+			WORD wVersionRequested;
+			WSADATA wsaData;
+
+			wVersionRequested = MAKEWORD(2, 0);
+
+			err = WSAStartup(wVersionRequested, &wsaData );
+			if (err != 0) {
+				return (EAI_FAIL);
+			}
+#endif
 			sp = getservbyname(servname, proto);
-			if (sp == NULL)
+			if (sp != NULL)
+				port = sp->s_port;
+#ifdef _WIN32
+			WSACleanup();
+#endif
+			if (sp == NULL) {
 				return (EAI_SERVICE);
-			port = sp->s_port;
+			}
 			if (socktype == 0) {
-				if (strcmp(sp->s_proto, "tcp") == 0)
+				if (strcmp(sp->s_proto, "tcp") == 0) {
 					socktype = SOCK_STREAM;
-				else if (strcmp(sp->s_proto, "udp") == 0)
+				} else if (strcmp(sp->s_proto, "udp") == 0) {
 					socktype = SOCK_DGRAM;
+				}
 			}
 		}
-	} else
+	} else {
 		port = 0;
+	}
 
 	/*
 	 * Next, deal with just a service name, and no hostname.

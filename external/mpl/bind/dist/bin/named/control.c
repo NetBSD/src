@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: control.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -154,16 +154,11 @@ named_control_docommand(isccc_sexpr_t *message, bool readonly,
 		      "received control channel command '%s'",
 		      cmdline);
 
-	if (command_compare(command, NAMED_COMMAND_RELOAD)) {
-		result = named_server_reloadcommand(named_g_server, lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_RECONFIG)) {
-		result = named_server_reconfigcommand(named_g_server);
-	} else if (command_compare(command, NAMED_COMMAND_REFRESH)) {
-		result = named_server_refreshcommand(named_g_server, lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_RETRANSFER)) {
-		result = named_server_retransfercommand(named_g_server,
-							lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_HALT)) {
+	/*
+	 * After the lengthy "halt" and "stop", the commands are
+	 * handled in alphabetical order of the NAMED_COMMAND_ macros.
+	 */
+	if (command_compare(command, NAMED_COMMAND_HALT)) {
 #ifdef HAVE_LIBSCF
 		/*
 		 * If we are managed by smf(5), AND in chroot, then
@@ -208,83 +203,90 @@ named_control_docommand(isccc_sexpr_t *message, bool readonly,
 		named_os_shutdownmsg(cmdline, *text);
 		isc_app_shutdown();
 		result = ISC_R_SUCCESS;
-	} else if (command_compare(command, NAMED_COMMAND_DUMPSTATS)) {
-		result = named_server_dumpstats(named_g_server);
-	} else if (command_compare(command, NAMED_COMMAND_QUERYLOG)) {
-		result = named_server_togglequerylog(named_g_server, lex);
+	} else if (command_compare(command, NAMED_COMMAND_ADDZONE) ||
+		   command_compare(command, NAMED_COMMAND_MODZONE)) {
+		result = named_server_changezone(named_g_server, cmdline, text);
+	} else if (command_compare(command, NAMED_COMMAND_DELZONE)) {
+		result = named_server_delzone(named_g_server, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_DNSTAP) ||
+		   command_compare(command, NAMED_COMMAND_DNSTAPREOPEN)) {
+		result = named_server_dnstap(named_g_server, lex, text);
 	} else if (command_compare(command, NAMED_COMMAND_DUMPDB)) {
 		named_server_dumpdb(named_g_server, lex, text);
 		result = ISC_R_SUCCESS;
-	} else if (command_compare(command, NAMED_COMMAND_SECROOTS)) {
-		result = named_server_dumpsecroots(named_g_server, lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_TRACE)) {
-		result = named_server_setdebuglevel(named_g_server, lex);
-	} else if (command_compare(command, NAMED_COMMAND_NOTRACE)) {
-		named_g_debuglevel = 0;
-		isc_log_setdebuglevel(named_g_lctx, named_g_debuglevel);
-		result = ISC_R_SUCCESS;
+	} else if (command_compare(command, NAMED_COMMAND_DUMPSTATS)) {
+		result = named_server_dumpstats(named_g_server);
 	} else if (command_compare(command, NAMED_COMMAND_FLUSH)) {
 		result = named_server_flushcache(named_g_server, lex);
 	} else if (command_compare(command, NAMED_COMMAND_FLUSHNAME)) {
 		result = named_server_flushnode(named_g_server, lex, false);
 	} else if (command_compare(command, NAMED_COMMAND_FLUSHTREE)) {
 		result = named_server_flushnode(named_g_server, lex, true);
-	} else if (command_compare(command, NAMED_COMMAND_STATUS)) {
-		result = named_server_status(named_g_server, text);
-	} else if (command_compare(command, NAMED_COMMAND_TSIGLIST)) {
-		result = named_server_tsiglist(named_g_server, text);
-	} else if (command_compare(command, NAMED_COMMAND_TSIGDELETE)) {
-		result = named_server_tsigdelete(named_g_server, lex, text);
 	} else if (command_compare(command, NAMED_COMMAND_FREEZE)) {
-		result = named_server_freeze(named_g_server, true, lex,
-					     text);
-	} else if (command_compare(command, NAMED_COMMAND_UNFREEZE) ||
-		   command_compare(command, NAMED_COMMAND_THAW)) {
-		result = named_server_freeze(named_g_server, false, lex,
-					     text);
-	} else if (command_compare(command, NAMED_COMMAND_SCAN)) {
-		result = ISC_R_SUCCESS;
-		named_server_scan_interfaces(named_g_server);
-	} else if (command_compare(command, NAMED_COMMAND_SYNC)) {
-		result = named_server_sync(named_g_server, lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_RECURSING)) {
-		result = named_server_dumprecursing(named_g_server);
-	} else if (command_compare(command, NAMED_COMMAND_TIMERPOKE)) {
-		result = ISC_R_SUCCESS;
-		isc_timermgr_poke(named_g_timermgr);
-	} else if (command_compare(command, NAMED_COMMAND_NULL)) {
-		result = ISC_R_SUCCESS;
+		result = named_server_freeze(named_g_server, true, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_LOADKEYS) ||
+		   command_compare(command, NAMED_COMMAND_SIGN)) {
+		result = named_server_rekey(named_g_server, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_MKEYS)) {
+		result = named_server_mkeys(named_g_server, lex, text);
 	} else if (command_compare(command, NAMED_COMMAND_NOTIFY)) {
 		result = named_server_notifycommand(named_g_server, lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_VALIDATION)) {
-		result = named_server_validation(named_g_server, lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_SIGN) ||
-		   command_compare(command, NAMED_COMMAND_LOADKEYS)) {
-		result = named_server_rekey(named_g_server, lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_ADDZONE) ||
-		   command_compare(command, NAMED_COMMAND_MODZONE)) {
-		result = named_server_changezone(named_g_server, cmdline, text);
-	} else if (command_compare(command, NAMED_COMMAND_DELZONE)) {
-		result = named_server_delzone(named_g_server, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_NOTRACE)) {
+		named_g_debuglevel = 0;
+		isc_log_setdebuglevel(named_g_lctx, named_g_debuglevel);
+		result = ISC_R_SUCCESS;
+	} else if (command_compare(command, NAMED_COMMAND_NTA)) {
+		result = named_server_nta(named_g_server, lex, readonly, text);
+	} else if (command_compare(command, NAMED_COMMAND_NULL)) {
+		result = ISC_R_SUCCESS;
+	} else if (command_compare(command, NAMED_COMMAND_QUERYLOG)) {
+		result = named_server_togglequerylog(named_g_server, lex);
+	} else if (command_compare(command, NAMED_COMMAND_RECONFIG)) {
+		result = named_server_reconfigcommand(named_g_server);
+	} else if (command_compare(command, NAMED_COMMAND_RECURSING)) {
+		result = named_server_dumprecursing(named_g_server);
+	} else if (command_compare(command, NAMED_COMMAND_REFRESH)) {
+		result = named_server_refreshcommand(named_g_server, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_RELOAD)) {
+		result = named_server_reloadcommand(named_g_server, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_RETRANSFER)) {
+		result = named_server_retransfercommand(named_g_server,
+							lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_SCAN)) {
+		named_server_scan_interfaces(named_g_server);
+		result = ISC_R_SUCCESS;
+	} else if (command_compare(command, NAMED_COMMAND_SECROOTS)) {
+		result = named_server_dumpsecroots(named_g_server, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_SERVESTALE)) {
+		result = named_server_servestale(named_g_server, lex, text);
 	} else if (command_compare(command, NAMED_COMMAND_SHOWZONE)) {
 		result = named_server_showzone(named_g_server, lex, text);
 	} else if (command_compare(command, NAMED_COMMAND_SIGNING)) {
 		result = named_server_signing(named_g_server, lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_ZONESTATUS)) {
-		result = named_server_zonestatus(named_g_server, lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_NTA)) {
-		result = named_server_nta(named_g_server, lex, readonly, text);
-	} else if (command_compare(command, NAMED_COMMAND_TESTGEN)) {
-		result = named_server_testgen(lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_MKEYS)) {
-		result = named_server_mkeys(named_g_server, lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_DNSTAP) ||
-		   command_compare(command, NAMED_COMMAND_DNSTAPREOPEN)) {
-		result = named_server_dnstap(named_g_server, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_STATUS)) {
+		result = named_server_status(named_g_server, text);
+	} else if (command_compare(command, NAMED_COMMAND_SYNC)) {
+		result = named_server_sync(named_g_server, lex, text);
 	} else if (command_compare(command, NAMED_COMMAND_TCPTIMEOUTS)) {
 		result = named_server_tcptimeouts(lex, text);
-	} else if (command_compare(command, NAMED_COMMAND_SERVESTALE)) {
-		result = named_server_servestale(named_g_server, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_TESTGEN)) {
+		result = named_server_testgen(lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_THAW) ||
+		   command_compare(command, NAMED_COMMAND_UNFREEZE)) {
+		result = named_server_freeze(named_g_server, false, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_TIMERPOKE)) {
+		isc_timermgr_poke(named_g_timermgr);
+		result = ISC_R_SUCCESS;
+	} else if (command_compare(command, NAMED_COMMAND_TRACE)) {
+		result = named_server_setdebuglevel(named_g_server, lex);
+	} else if (command_compare(command, NAMED_COMMAND_TSIGDELETE)) {
+		result = named_server_tsigdelete(named_g_server, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_TSIGLIST)) {
+		result = named_server_tsiglist(named_g_server, text);
+	} else if (command_compare(command, NAMED_COMMAND_VALIDATION)) {
+		result = named_server_validation(named_g_server, lex, text);
+	} else if (command_compare(command, NAMED_COMMAND_ZONESTATUS)) {
+		result = named_server_zonestatus(named_g_server, lex, text);
 	} else {
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 			      NAMED_LOGMODULE_CONTROL, ISC_LOG_WARNING,

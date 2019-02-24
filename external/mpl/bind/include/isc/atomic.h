@@ -16,3 +16,12 @@
 #else
 #include <isc/stdatomic.h>
 #endif
+
+/*
+ * We define a few additional macros to make things easier
+ */
+
+#define atomic_store_relaxed(o, v) atomic_store_explicit((o), \
+							 (v), \
+							 memory_order_relaxed)
+#define atomic_load_relaxed(o) atomic_load_explicit((o), memory_order_relaxed)

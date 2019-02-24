@@ -1,4 +1,4 @@
-/*	$NetBSD: hex.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: hex.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -123,31 +123,43 @@ hex_decode_finish(hex_decode_ctx_t *ctx) {
 
 isc_result_t
 isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
+	unsigned int before, after;
 	hex_decode_ctx_t ctx;
 	isc_textregion_t *tr;
 	isc_token_t token;
 	bool eol;
 
+	REQUIRE(length >= -2);
+
 	hex_decode_init(&ctx, length, target);
 
+	before = isc_buffer_usedlength(target);
 	while (ctx.length != 0) {
 		unsigned int i;
 
-		if (length > 0)
+		if (length > 0) {
 			eol = false;
-		else
+		} else {
 			eol = true;
+		}
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string, eol));
-		if (token.type != isc_tokentype_string)
+		if (token.type != isc_tokentype_string) {
 			break;
+		}
 		tr = &token.value.as_textregion;
-		for (i = 0; i < tr->length; i++)
+		for (i = 0; i < tr->length; i++) {
 			RETERR(hex_decode_char(&ctx, tr->base[i]));
+		}
 	}
-	if (ctx.length < 0)
+	after = isc_buffer_usedlength(target);
+	if (ctx.length < 0) {
 		isc_lex_ungettoken(lexer, &token);
+	}
 	RETERR(hex_decode_finish(&ctx));
+	if (length == -2 && before == after) {
+		return (ISC_R_UNEXPECTEDEND);
+	}
 	return (ISC_R_SUCCESS);
 }
 

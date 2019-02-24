@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,6 @@
 #include <isc/file.h>
 #include <isc/lex.h>
 #include <isc/mem.h>
-#include <isc/msgs.h>
 #include <isc/parseint.h>
 #include <isc/print.h>
 #include <isc/stdio.h>
@@ -856,11 +855,9 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 			break;
 		default:
 			FATAL_ERROR(__FILE__, __LINE__,
-				    isc_msgcat_get(isc_msgcat, ISC_MSGSET_LEX,
-						   ISC_MSG_UNEXPECTEDSTATE,
-						   "Unexpected state %d"),
+				    "Unexpected state %d",
 				    state);
-			/* Does not return. */
+			ISC_UNREACHABLE();
 		}
 
 	} while (!done);

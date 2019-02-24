@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.4 2019/02/24 20:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -647,11 +647,22 @@ static rrstream_methods_t compound_rrstream_methods = {
 };
 
 /**************************************************************************/
-/*
+
+/*%
+ * Structure holding outgoing transfer statistics
+ */
+struct xfr_stats {
+	uint64_t	nmsg;	/*%< Number of messages sent */
+	uint64_t	nrecs;	/*%< Number of records sent */
+	uint64_t	nbytes;	/*%< Number of bytes sent */
+	isc_time_t	start;	/*%< Start time of the transfer */
+	isc_time_t	end;	/*%< End time of the transfer */
+};
+
+/*%
  * An 'xfrout_ctx_t' contains the state of an outgoing AXFR or IXFR
  * in progress.
  */
-
 typedef struct {
 	isc_mem_t 		*mctx;
 	ns_client_t		*client;
@@ -664,21 +675,22 @@ typedef struct {
 	dns_dbversion_t 	*ver;
 	isc_quota_t		*quota;
 	rrstream_t 		*stream;	/* The XFR RR stream */
-	bool		end_of_stream;	/* EOS has been reached */
+	bool			question_added;	/* QUESTION section sent? */
+	bool			end_of_stream;	/* EOS has been reached */
 	isc_buffer_t 		buf;		/* Buffer for message owner
 						   names and rdatas */
 	isc_buffer_t 		txlenbuf;	/* Transmit length buffer */
 	isc_buffer_t		txbuf;		/* Transmit message buffer */
 	void 			*txmem;
 	unsigned int 		txmemlen;
-	unsigned int		nmsg;		/* Number of messages sent */
 	dns_tsigkey_t		*tsigkey;	/* Key used to create TSIG */
 	isc_buffer_t		*lasttsig;	/* the last TSIG */
-	bool		verified_tsig;	/* verified request MAC */
-	bool		many_answers;
+	bool			verified_tsig;	/* verified request MAC */
+	bool			many_answers;
 	int			sends;		/* Send in progress */
-	bool		shuttingdown;
+	bool			shuttingdown;
 	const char		*mnemonic;	/* Style of transfer */
+	struct xfr_stats	stats;		/*%< Transfer statistics */
 } xfrout_ctx_t;
 
 static isc_result_t
@@ -807,12 +819,12 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	result = dns_zt_find(client->view->zonetable, question_name, 0, NULL,
 			     &zone);
 
-	if (result != ISC_R_SUCCESS) {
+	if (result != ISC_R_SUCCESS || dns_zone_gettype(zone) == dns_zone_dlz) {
 		/*
-		 * Normal zone table does not have a match.
-		 * Try the DLZ database
+		 * The normal zone table does not have a match, or this is
+		 * marked in the zone table as a DLZ zone. Check the DLZ
+		 * databases for a match.
 		 */
-		// Temporary: only searching the first DLZ database
 		if (! ISC_LIST_EMPTY(client->view->dlz_searched)) {
 			result = dns_dlzallowzonexfr(client->view,
 						     question_name,
@@ -1182,11 +1194,11 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 		dns_zone_attach(zone, &xfr->zone);
 	dns_db_attach(db, &xfr->db);
 	dns_db_attachversion(db, ver, &xfr->ver);
+	xfr->question_added = false;
 	xfr->end_of_stream = false;
 	xfr->tsigkey = tsigkey;
 	xfr->lasttsig = lasttsig;
 	xfr->verified_tsig = verified_tsig;
-	xfr->nmsg = 0;
 	xfr->many_answers = many_answers;
 	xfr->sends = 0;
 	xfr->shuttingdown = false;
@@ -1197,6 +1209,11 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 	xfr->txmemlen = 0;
 	xfr->stream = NULL;
 	xfr->quota = NULL;
+
+	xfr->stats.nmsg = 0;
+	xfr->stats.nrecs = 0;
+	xfr->stats.nbytes = 0;
+	isc_time_now(&xfr->stats.start);
 
 	/*
 	 * Allocate a temporary buffer for the uncompressed response
@@ -1346,7 +1363,7 @@ sendstream(xfrout_ctx_t *xfr) {
 		 * BIND 8.2.1 will not recognize an IXFR if it does not
 		 * have a question section.
 		 */
-		if (xfr->nmsg == 0) {
+		if (!xfr->question_added) {
 			dns_name_t *qname = NULL;
 			isc_region_t r;
 
@@ -1378,6 +1395,7 @@ sendstream(xfrout_ctx_t *xfr) {
 			ISC_LIST_APPEND(qname->list, qrdataset, link);
 
 			dns_message_addname(msg, qname, DNS_SECTION_QUESTION);
+			xfr->question_added = true;
 		} else {
 			/*
 			 * Reserve space for the 12-byte message header
@@ -1482,6 +1500,8 @@ sendstream(xfrout_ctx_t *xfr) {
 		dns_message_addname(msg, msgname, DNS_SECTION_ANSWER);
 		msgname = NULL;
 
+		xfr->stats.nrecs++;
+
 		result = xfr->stream->methods->next(xfr->stream);
 		if (result == ISC_R_NOMORE) {
 			xfr->end_of_stream = true;
@@ -1535,8 +1555,6 @@ sendstream(xfrout_ctx_t *xfr) {
 
 	/* Advance lasttsig to be the last TSIG generated */
 	CHECK(dns_message_getquerytsig(msg, xfr->mctx, &xfr->lasttsig));
-
-	xfr->nmsg++;
 
  failure:
 	if (msgname != NULL) {
@@ -1619,10 +1637,21 @@ xfrout_senddone(isc_task_t *task, isc_event_t *event) {
 	UNUSED(task);
 
 	INSIST(event->ev_type == ISC_SOCKEVENT_SENDDONE);
+	INSIST((xfr->client->attributes & NS_CLIENTATTR_TCP) != 0);
 
-	isc_event_free(&event);
 	xfr->sends--;
 	INSIST(xfr->sends == 0);
+
+	/*
+	 * Update transfer statistics if sending succeeded, accounting for the
+	 * two-byte TCP length prefix included in the number of bytes sent.
+	 */
+	if (evresult == ISC_R_SUCCESS) {
+		xfr->stats.nmsg++;
+		xfr->stats.nbytes += sev->region.length - 2;
+	}
+
+	isc_event_free(&event);
 
 	(void)isc_timer_touch(xfr->client->timer);
 	if (xfr->shuttingdown == true) {
@@ -1633,8 +1662,28 @@ xfrout_senddone(isc_task_t *task, isc_event_t *event) {
 		sendstream(xfr);
 	} else {
 		/* End of zone transfer stream. */
+		uint64_t msecs, persec;
+
 		inc_stats(xfr->client, xfr->zone, ns_statscounter_xfrdone);
-		xfrout_log(xfr, ISC_LOG_INFO, "%s ended", xfr->mnemonic);
+		isc_time_now(&xfr->stats.end);
+		msecs = isc_time_microdiff(&xfr->stats.end, &xfr->stats.start);
+		msecs /= 1000;
+		if (msecs == 0) {
+			msecs = 1;
+		}
+		persec = (xfr->stats.nbytes * 1000) / msecs;
+		xfrout_log(xfr, ISC_LOG_INFO,
+			   "%s ended: "
+			   "%" PRIu64 " messages, %" PRIu64 " records, "
+			   "%" PRIu64 " bytes, "
+			   "%u.%03u secs (%u bytes/sec)",
+			   xfr->mnemonic,
+			   xfr->stats.nmsg, xfr->stats.nrecs,
+			   xfr->stats.nbytes,
+			   (unsigned int) (msecs / 1000),
+			   (unsigned int) (msecs % 1000),
+			   (unsigned int) persec);
+
 		ns_client_next(xfr->client, ISC_R_SUCCESS);
 		xfrout_ctx_destroy(&xfr);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.3 2019/01/09 16:55:18 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.4 2019/02/24 20:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -624,32 +624,9 @@ cfg_parse_file(cfg_parser_t *pctx, const char *filename,
 
 isc_result_t
 cfg_parse_buffer(cfg_parser_t *pctx, isc_buffer_t *buffer,
-	const cfg_type_t *type, cfg_obj_t **ret)
-{
-	return (cfg_parse_buffer4(pctx, buffer, NULL, 0, type, 0, ret));
-}
-
-isc_result_t
-cfg_parse_buffer2(cfg_parser_t *pctx, isc_buffer_t *buffer,
-		  const char *file, const cfg_type_t *type,
-		  cfg_obj_t **ret)
-{
-	return (cfg_parse_buffer4(pctx, buffer, file, 0, type, 0, ret));
-}
-
-isc_result_t
-cfg_parse_buffer3(cfg_parser_t *pctx, isc_buffer_t *buffer,
-		  const char *file, unsigned int line,
-		  const cfg_type_t *type, cfg_obj_t **ret)
-{
-	return (cfg_parse_buffer4(pctx, buffer, file, line, type, 0, ret));
-}
-
-isc_result_t
-cfg_parse_buffer4(cfg_parser_t *pctx, isc_buffer_t *buffer,
-		  const char *file, unsigned int line,
-		  const cfg_type_t *type, unsigned int flags,
-		  cfg_obj_t **ret)
+		 const char *file, unsigned int line,
+		 const cfg_type_t *type, unsigned int flags,
+		 cfg_obj_t **ret)
 {
 	isc_result_t result;
 
@@ -2017,24 +1994,37 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 
 		/* Clause is known. */
 
+		/* Issue fatal errors if appropriate */
+		if ((clause->flags & CFG_CLAUSEFLAG_ANCIENT) != 0) {
+			cfg_parser_error(pctx, 0,
+					 "option '%s' no longer exists",
+					 clause->name);
+			CHECK(ISC_R_FAILURE);
+		}
+
 		/* Issue warnings if appropriate */
 		if ((pctx->flags & CFG_PCTX_NODEPRECATED) == 0 &&
 		    (clause->flags & CFG_CLAUSEFLAG_DEPRECATED) != 0)
 		{
-			cfg_parser_warning(pctx, 0, "option '%s' is deprecated",
+			cfg_parser_warning(pctx, 0,
+					   "option '%s' is deprecated",
 					   clause->name);
 		}
 		if ((clause->flags & CFG_CLAUSEFLAG_OBSOLETE) != 0) {
-			cfg_parser_warning(pctx, 0, "option '%s' is obsolete",
+			cfg_parser_warning(pctx, 0,
+					   "option '%s' is obsolete and "
+					   "should be removed ",
 					   clause->name);
 		}
 		if ((clause->flags & CFG_CLAUSEFLAG_NOTIMP) != 0) {
-			cfg_parser_warning(pctx, 0, "option '%s' is "
-					   "not implemented", clause->name);
+			cfg_parser_warning(pctx, 0,
+					   "option '%s' is not implemented",
+					   clause->name);
 		}
 		if ((clause->flags & CFG_CLAUSEFLAG_NYI) != 0) {
-			cfg_parser_warning(pctx, 0, "option '%s' is "
-					   "not implemented", clause->name);
+			cfg_parser_warning(pctx, 0,
+					   "option '%s' is not implemented",
+					   clause->name);
 		}
 		if ((clause->flags & CFG_CLAUSEFLAG_NOOP) != 0) {
 			cfg_parser_warning(pctx, 0, "option '%s' was not "
@@ -2043,11 +2033,10 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 		}
 
 		if ((clause->flags & CFG_CLAUSEFLAG_NOTCONFIGURED) != 0) {
-			cfg_parser_warning(pctx, 0, "option '%s' was not "
+			cfg_parser_error(pctx, 0, "option '%s' was not "
 					   "enabled at compile time",
 					   clause->name);
-			result = ISC_R_FAILURE;
-			goto cleanup;
+			CHECK(ISC_R_FAILURE);
 		}
 
 		/*
@@ -2103,8 +2092,9 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 						       callback));
 				CHECK(parse_semicolon(pctx));
 			} else if (result == ISC_R_SUCCESS) {
-				cfg_parser_error(pctx, CFG_LOG_NEAR, "'%s' redefined",
-					     clause->name);
+				cfg_parser_error(pctx, CFG_LOG_NEAR,
+						 "'%s' redefined",
+						 clause->name);
 				result = ISC_R_EXISTS;
 				goto cleanup;
 			} else {
@@ -2301,6 +2291,7 @@ static struct flagtext {
 	{ CFG_CLAUSEFLAG_EXPERIMENTAL, "experimental" },
 	{ CFG_CLAUSEFLAG_NOOP, "non-operational" },
 	{ CFG_CLAUSEFLAG_DEPRECATED, "deprecated" },
+	{ CFG_CLAUSEFLAG_ANCIENT, "ancient" },
 	{ 0, NULL }
 };
 

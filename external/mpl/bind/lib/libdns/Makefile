@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2019/01/09 16:55:22 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2019/02/24 20:01:33 christos Exp $
 
 LIB=dns
 #USE_SHLIBDIR=   yes
@@ -24,7 +24,7 @@ CWARNFLAGS.clang+=	-Wno-tautological-constant-out-of-range-compare
 COPTS.${f}.c+=  -Wno-pointer-sign -fno-strict-aliasing
 .endfor
 
-DNSSEC_SRCS=	dst_api.c dst_lib.c dst_parse.c dst_result.c \
+DNSSEC_SRCS=	dst_api.c dst_parse.c dst_result.c \
 	gssapictx.c hmac_link.c key.c openssl_link.c \
 	openssldh_link.c opensslrsa_link.c \
 	opensslecdsa_link.c openssleddsa_link.c

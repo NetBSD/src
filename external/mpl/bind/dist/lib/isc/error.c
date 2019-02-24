@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.3 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,6 @@
 #include <stdlib.h>
 
 #include <isc/error.h>
-#include <isc/msgs.h>
 #include <isc/print.h>
 
 /*% Default unexpected callback. */
@@ -74,9 +73,7 @@ isc_error_fatal(const char *file, int line, const char *format, ...) {
 
 void
 isc_error_runtimecheck(const char *file, int line, const char *expression) {
-	isc_error_fatal(file, line, "RUNTIME_CHECK(%s) %s", expression,
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-				       ISC_MSG_FAILED, "failed"));
+	isc_error_fatal(file, line, "RUNTIME_CHECK(%s) failed", expression);
 }
 
 static void
@@ -93,9 +90,7 @@ static void
 default_fatal_callback(const char *file, int line, const char *format,
 		       va_list args)
 {
-	fprintf(stderr, "%s:%d: %s: ", file, line,
-		isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-			       ISC_MSG_FATALERROR, "fatal error"));
+	fprintf(stderr, "%s:%d: fatal error: ", file, line);
 	vfprintf(stderr, format, args);
 	fprintf(stderr, "\n");
 	fflush(stderr);
