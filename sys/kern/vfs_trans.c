@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.55 2019/02/21 08:52:53 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.56 2019/02/24 16:11:24 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.55 2019/02/21 08:52:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.56 2019/02/24 16:11:24 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -543,6 +543,9 @@ fstrans_done(struct mount *mp)
 		return;
 	}
 
+	if (__predict_false(fstrans_gone_count > 0))
+		fstrans_clear_lwp_info();
+
 	s = pserialize_read_enter();
 	if (__predict_true(fmi->fmi_state == FSTRANS_NORMAL)) {
 		fli->fli_trans_cnt = 0;
@@ -551,9 +554,6 @@ fstrans_done(struct mount *mp)
 		return;
 	}
 	pserialize_read_exit(s);
-
-	if (__predict_false(fstrans_gone_count > 0))
-		fstrans_clear_lwp_info();
 
 	mutex_enter(&fstrans_lock);
 	fli->fli_trans_cnt = 0;
