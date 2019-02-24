@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.52 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.53 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.52 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.53 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,17 +97,10 @@ static const struct mii_phy_funcs sqphy_84220_funcs = {
 };
 
 static const struct mii_phydesc sqphys[] = {
-	{ MII_OUI_SEEQ,			MII_MODEL_SEEQ_80220,
-	  MII_STR_SEEQ_80220 },
-
-	{ MII_OUI_SEEQ,			MII_MODEL_SEEQ_80225,
-	  MII_STR_SEEQ_80225 },
-
-	{ MII_OUI_SEEQ,			MII_MODEL_SEEQ_84220,
-	  MII_STR_SEEQ_84220 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(SEEQ, 80220),
+	MII_PHY_DESC(SEEQ, 80225),
+	MII_PHY_DESC(SEEQ, 84220),
+	MII_PHY_END,
 };
 
 static int

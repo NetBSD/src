@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.6 2019/02/14 04:13:40 msaitoh Exp $	*/
+/*	$NetBSD: micphy.c,v 1.7 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.6 2019/02/14 04:13:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.7 2019/02/24 17:22:21 christos Exp $");
 
 #include "opt_mii.h"
 
@@ -94,14 +94,9 @@ static const struct mii_phy_funcs micphy_funcs = {
 };
 
 static const struct mii_phydesc micphys[] = {
-	{ MII_OUI_MICREL,		MII_MODEL_MICREL_KSZ8081,
-	  MII_STR_MICREL_KSZ8081 },
-
-	{ MII_OUI_MICREL,		MII_MODEL_MICREL_KSZ9021RNI,
-	  MII_STR_MICREL_KSZ9021RNI },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(MICREL, KSZ8081),
+	MII_PHY_DESC(MICREL, KSZ9021RNI),
+	MII_PHY_END,
 };
 
 #define	MII_KSZ8081_PHYCTL2			0x1f

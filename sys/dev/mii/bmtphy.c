@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphy.c,v 1.33 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.34 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.33 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.34 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,23 +94,14 @@ static const struct mii_phy_funcs bmtphy_funcs = {
 };
 
 static const struct mii_phydesc bmtphys[] = {
-	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_3C905B,
-	  MII_STR_xxBROADCOM_3C905B },
-	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_3C905C,
-	  MII_STR_xxBROADCOM_3C905C },
-	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5201,
-	  MII_STR_xxBROADCOM_BCM5201 },
-	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5214,
-	  MII_STR_xxBROADCOM_BCM5214 },
-	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5221,
-	  MII_STR_xxBROADCOM_BCM5221 },
-	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5222,
-	  MII_STR_xxBROADCOM_BCM5222 },
-	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM4401,
-	  MII_STR_xxBROADCOM_BCM4401 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(xxBROADCOM, 3C905B),
+	MII_PHY_DESC(xxBROADCOM, 3C905C),
+	MII_PHY_DESC(xxBROADCOM, BCM5201),
+	MII_PHY_DESC(xxBROADCOM, BCM5214),
+	MII_PHY_DESC(xxBROADCOM, BCM5221),
+	MII_PHY_DESC(xxBROADCOM, BCM5222),
+	MII_PHY_DESC(xxBROADCOM, BCM4401),
+	MII_PHY_END,
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.47 2019/02/21 15:41:56 msaitoh Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.48 2019/02/24 17:22:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.47 2019/02/21 15:41:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.48 2019/02/24 17:22:21 christos Exp $");
 
 
 /*
@@ -83,17 +83,10 @@ static const struct mii_phy_funcs rgephy_funcs = {
 };
 
 static const struct mii_phydesc rgephys[] = {
-	{ MII_OUI_xxREALTEK,		MII_MODEL_xxREALTEK_RTL8169S,
-	  MII_STR_xxREALTEK_RTL8169S },
-
-	{ MII_OUI_REALTEK,		MII_MODEL_REALTEK_RTL8169S,
-	  MII_STR_REALTEK_RTL8169S },
-
-	{ MII_OUI_REALTEK,		MII_MODEL_REALTEK_RTL8251,
-	  MII_STR_REALTEK_RTL8251 },
-
-	{ 0,				0,
-	  NULL }
+	MII_PHY_DESC(xxREALTEK, RTL8169S),
+	MII_PHY_DESC(REALTEK, RTL8169S),
+	MII_PHY_DESC(REALTEK, RTL8251),
+	MII_PHY_END,
 };
 
 static int
