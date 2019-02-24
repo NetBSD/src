@@ -254,10 +254,10 @@ ATF_TC_BODY(kcov_basic, tc)
 	ATF_REQUIRE_MSG(ioctl(fd, KCOV_IOC_ENABLE) == 0,
 	    "Unable to enable kcov ");
 
-	__atomic_store_n(&buf[0], 0 , __ATOMIC_RELAXED);
+	KCOV_STORE(&buf[0], 0);
 
 	sleep(0);
-	ATF_REQUIRE_MSG(__atomic_load_n(&buf[0], __ATOMIC_RELAXED) != 0, "No records found");
+	ATF_REQUIRE_MSG(KCOV_LOAD(&buf[0]) != 0, "No records found");
 
 	ATF_REQUIRE_MSG(ioctl(fd, KCOV_IOC_DISABLE) == 0,
 	    "Unable to disable kcov");
@@ -270,9 +270,9 @@ thread_test_helper(void *ptr)
 {
 	kcov_int_t *buf = ptr;
 
-	__atomic_store_n(&buf[0], 0, __ATOMIC_RELAXED);
+	KCOV_STORE(&buf[0], 0);
 	sleep(0);
-	ATF_REQUIRE_MSG(__atomic_load_n(&buf[0], __ATOMIC_RELAXED) == 0,
+	ATF_REQUIRE_MSG(KCOV_LOAD(&buf[0]) == 0,
 	    "Records changed in blocked thread");
 
 	return NULL;
@@ -311,9 +311,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, kcov_enable_no_disable);
 	ATF_TP_ADD_TC(tp, kcov_enable_no_disable_no_close);
 	ATF_TP_ADD_TC(tp, kcov_mmap_enable_thread_close);
-#ifdef __HAVE_ATOMIC64_OPS
 	ATF_TP_ADD_TC(tp, kcov_basic);
 	ATF_TP_ADD_TC(tp, kcov_thread);
-#endif
 	return atf_no_error();
 }
