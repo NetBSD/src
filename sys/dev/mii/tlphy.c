@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.63 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.64 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.63 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.64 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,11 +107,8 @@ static const struct mii_phy_funcs tlphy_funcs = {
 };
 
 static const struct mii_phydesc tlphys[] = {
-	{ MII_OUI_TI,		MII_MODEL_TI_TLAN10T,
-	  MII_STR_TI_TLAN10T },
-
-	{ 0,			0,
-	  NULL },
+	MII_PHY_DESC(TI, TLAN10T),
+	MII_PHY_END,
 };
 
 static int

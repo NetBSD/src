@@ -1,4 +1,4 @@
-/*	$NetBSD: iophy.c,v 1.39 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: iophy.c,v 1.40 2019/02/24 17:22:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.39 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.40 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,14 +90,9 @@ static const struct mii_phy_funcs iophy_funcs = {
 };
 
 static const struct mii_phydesc iophys[] = {
-	{ MII_OUI_xxINTEL,		MII_MODEL_xxINTEL_I82553,
-	  MII_STR_xxINTEL_I82553 },
-
-	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82553,
-	  MII_STR_yyINTEL_I82553 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(xxINTEL, I82553),
+	MII_PHY_DESC(yyINTEL, I82553),
+	MII_PHY_END,
 };
 
 static int
