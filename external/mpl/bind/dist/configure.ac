@@ -191,14 +191,19 @@ except: exit(1)'
 testply='try: import ply
 except: exit(1)'
 
+default_with_python="python python3 python3.7 python3.6 python3.5 python3.4 python3.3 python3.2 python2 python2.7"
+
 AC_ARG_WITH([python],
 	    AS_HELP_STRING([--with-python=PATH],
 			   [specify path to Python interpreter]),
-	    [], [with_python="python python3 python3.7 python3.6 python3.5 python3.4 python3.3 python3.2 python2 python2.7"])
+	    [], [with_python=$default_with_python])
 AC_ARG_WITH([python-install-dir],
 	    AS_HELP_STRING([--with-python-install-dir=PATH],
 			   [installation directory for Python modules]),
 	    [], with_python_install_dir="")
+
+AS_IF([test "$with_python" = "yes"],
+      [with_python=$default_with_python])
 
 AS_IF([test "$with_python" = "no"],
       [AC_MSG_CHECKING([for Python support])
@@ -409,7 +414,7 @@ AS_CASE([$host],
 	       [[__asm__ __volatile__ ("yield")]]
 	     )],
 	    [AC_MSG_RESULT([yes])],
-	    [AC_MSG_ERROR([no, try adding -march=native or -march=armv7-a to CFLAGS (see PLATFORM.md for more information)])])])
+	    [AC_MSG_ERROR([no, try adding -march=native or -march=armv7-a to CFLAGS (see PLATFORMS.md for more information)])])])
 
 AC_CHECK_FUNCS([sysctlbyname])
 
@@ -748,22 +753,25 @@ AC_CHECK_FUNCS([ECDSA_sign ECDSA_verify], [:],
 
 AC_MSG_CHECKING([for ECDSA P-256 support])
 AC_COMPILE_IFELSE(
-    [AC_LANG_PROGRAM([[#include <openssl/evp.h>]],
-		     [[EVP_PKEY_CTX *ctx = NID_X9_62_prime256v1;]])],
+    [AC_LANG_PROGRAM([[#include <openssl/evp.h>
+		       #include <openssl/ec.h>]],
+		     [[EC_KEY *key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);]])],
     [AC_MSG_RESULT([yes])],
     [AC_MSG_FAILURE([not found.  ECDSA P-256 support in OpenSSL is mandatory.])])
 
 AC_MSG_CHECKING([for ECDSA P-384 support])
 AC_COMPILE_IFELSE(
-    [AC_LANG_PROGRAM([[#include <openssl/evp.h>]],
-		     [[EVP_PKEY_CTX *ctx = NID_secp384r1;]])],
+    [AC_LANG_PROGRAM([[#include <openssl/evp.h>
+		       #include <openssl/ec.h>]],
+		     [[EC_KEY *key = EC_KEY_new_by_curve_name(NID_secp384r1);]])],
     [AC_MSG_RESULT([yes])],
     [AC_MSG_FAILURE([not found.  ECDSA P-384 support in OpenSSL is mandatory.])])
 
 AC_MSG_CHECKING([for Ed25519 support])
 AC_COMPILE_IFELSE(
-    [AC_LANG_PROGRAM([[#include <openssl/evp.h>]],
-		     [[EVP_PKEY_CTX *ctx = NID_ED25519;]])],
+    [AC_LANG_PROGRAM([[#include <openssl/evp.h>
+		       #include <openssl/ec.h>]],
+		     [[EC_KEY *key = EC_KEY_new_by_curve_name(NID_ED25519);]])],
     [AC_DEFINE([HAVE_OPENSSL_ED25519], [1], [define if OpenSSL supports Ed25519])
      AC_MSG_RESULT([yes])],
     [AC_MSG_RESULT([no])])
@@ -771,8 +779,9 @@ AC_COMPILE_IFELSE(
 AC_MSG_CHECKING([for Ed448 support])
 AC_MSG_RESULT([broken])
 #AC_COMPILE_IFELSE(
-#    [AC_LANG_PROGRAM([[#include <openssl/evp.h>]],
-#		     [[EVP_PKEY_CTX *ctx = NID_ED448;]])],
+#    [AC_LANG_PROGRAM([[#include <openssl/evp.h>
+#		       #include <openssl/ec.h>]],
+#		     [[EC_KEY *key = EC_KEY_new_by_curve_name(NID_ED448);]])],
 #    [AC_DEFINE([HAVE_OPENSSL_ED448], [1], [define if OpenSSL supports Ed448])
 #     AC_MSG_RESULT([yes])],
 #    [AC_MSG_RESULT([no])])
@@ -1522,11 +1531,6 @@ AC_SUBST(MKDEPCFLAGS)
 AC_SUBST(MKDEPPROG)
 
 #
-# NLS
-#
-AC_CHECK_FUNCS([catgets])
-
-#
 # -lxnet buys us one big porting headache...  standards, gotta love 'em.
 #
 # AC_CHECK_LIB(xnet, socket, ,
@@ -2035,42 +2039,6 @@ case "$enable_fixed" in
 esac
 
 #
-# Enable response policy rewriting using NS IP addresses
-#
-AC_ARG_ENABLE(rpz-nsip,
-	      AS_HELP_STRING([--disable-rpz-nsip],
-			     [disable rpz nsip rules [default=enabled]]),
-	      enable_nsip="$enableval", enable_nsip="yes")
-case "$enable_nsip" in
-	yes)
-		AC_DEFINE(ENABLE_RPZ_NSIP, 1,
-			  [Define to enable rpz nsip rules.])
-		;;
-	no)
-		;;
-	*)
-		;;
-esac
-
-#
-# Enable response policy rewriting using NS name
-#
-AC_ARG_ENABLE(rpz-nsdname,
-	      AS_HELP_STRING([--disable-rpz-nsdname],
-			     [disable rpz nsdname rules [default=enabled]]),
-	      enable_nsdname="$enableval", enable_nsdname="yes")
-case "$enable_nsdname" in
-	yes)
-		AC_DEFINE(ENABLE_RPZ_NSDNAME, 1,
-			  [Define to enable rpz nsdname rules.])
-		;;
-	no)
-		;;
-	*)
-		;;
-esac
-
-#
 # Activate dnstap?
 #
 AC_ARG_ENABLE(dnstap,
@@ -2350,38 +2318,19 @@ AC_SUBST([LIBIDN2_LIBS])
 #
 
 AC_ARG_WITH([cmocka],
-	    [AS_HELP_STRING([--with-cmocka=no],[enable cmocka based tests (default is no)])],
-	    [:],[with_cmocka=no])
+	    [AS_HELP_STRING([--with-cmocka=detect],[enable CMocka based tests (default is detect)])],
+	    [],[with_cmocka=detect])
 
 AS_CASE([$with_cmocka],
-	[no],[:],
-	[yes],[
-            PKG_CHECK_MODULES([CMOCKA], [cmocka >= 1.0.0],
-			      [AC_DEFINE([HAVE_CMOCKA], [1], [Use cmocka])])
-            UNITTESTS=tests
-            ],
-	[*],[
-	    save_CFLAGS="$CFLAGS"
-	    save_LIBS="$LIBS"
-	    CFLAGS="$CFLAGS -I$with_cmocka/include"
-	    LIBS="$LIBS -L$with_cmocka/lib"
-	    AC_CHECK_HEADERS([cmocka.h],
-			     [:],
-			     [AC_MSG_ERROR([cmocka.h not found])],
-			     [#include <stdarg.h>
-			      #include <stddef.h>
-			      #include <setjmp.h>
-			     ])
-	    AC_SEARCH_LIBS([cmocka_set_message_output],
-			   [cmocka],
-			   [
-			       CMOCKA_CFLAGS="-I$with_cmocka/include"
-			       CMOCKA_LIBS="-L$with_cmocka/lib -lcmocka"
-                               UNITTESTS=tests
-			       AC_DEFINE([HAVE_CMOCKA], [1], [Use cmocka])
-			   ],
-			   [AC_MSG_ERROR([cmocka unit testing framework not found in $with_cmocka path])])
-	    ])
+	[no],[],
+	[detect],[PKG_CHECK_MODULES([CMOCKA], [cmocka >= 1.0.0],
+				    [AC_DEFINE([HAVE_CMOCKA], [1], [Use CMocka])
+				     UNITTESTS=tests],[with_cmocka=no])],
+	[yes],[PKG_CHECK_MODULES([CMOCKA], [cmocka >= 1.0.0],
+				 [AC_DEFINE([HAVE_CMOCKA], [1], [Use CMocka])])
+	                          UNITTESTS=tests],
+	[AC_MSG_ERROR([Use PKG_CONFIG_PATH to specify path to CMocka library])]
+       )
 AC_SUBST([CMOCKA_CFLAGS])
 AC_SUBST([CMOCKA_LIBS])
 AC_SUBST(UNITTESTS)
@@ -3057,7 +3006,6 @@ AC_CONFIG_FILES([
 	lib/isc/include/pk11/Makefile
 	lib/isc/include/pkcs11/Makefile
 	lib/isc/tests/Makefile
-	lib/isc/nls/Makefile
 	lib/isc/unix/Makefile
 	lib/isc/unix/include/Makefile
 	lib/isc/unix/include/isc/Makefile
@@ -3207,7 +3155,7 @@ report() {
 	echo "    Very verbose query trace logging (--enable-querytrace)"
 
     test "yes" = "$use_libtool" || echo "    Use GNU libtool (--with-libtool)"
-    test "no" = "$with_cmocka" && echo "    CMocka Unit Testng Framework (--with-cmocka)"
+    test "no" = "$with_cmocka" && echo "    CMocka Unit Testing Framework (--with-cmocka)"
 
     test "X$PYTHON" = "X" && echo "    Python tools (--with-python)"
     test "X$XMLSTATS" = "X" && echo "    XML statistics (--with-libxml2)"

@@ -51,7 +51,7 @@ check_stderr() {
 }
 
 check_stdout() {
-	cmp out.$n "${out:-empty}" >/dev/null && return
+	$DIFF out.$n "${out:-empty}" >/dev/null && return
 	echo_d "stdout did not match '$out'"
 	(	echo "wanted"
 		cat "$out"
@@ -127,10 +127,10 @@ name='in-place backup correct modification time'
 testcase 0 $PERL checkmtime.pl 7200 DS.inplace.bak
 
 name='in-place correct output'
-testcase 0 cmp DS.1 DS.inplace
+testcase 0 $DIFF DS.1 DS.inplace
 
 name='in-place backup unmodified'
-testcase 0 cmp DS.1 DS.inplace.bak
+testcase 0 $DIFF DS.1 DS.inplace.bak
 
 name='one mangled DS'
 err='found RRSIG by key'

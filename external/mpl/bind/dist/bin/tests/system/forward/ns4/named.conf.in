@@ -19,6 +19,7 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	dnssec-validation yes;
+	minimal-responses yes;
 };
 
 zone "." {

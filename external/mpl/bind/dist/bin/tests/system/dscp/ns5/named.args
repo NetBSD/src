@@ -1,1 +1,1 @@
--m record,size,mctx -T clienttest -c named.conf -d 99 -X named.lock -g -U 4 -T dscp=46
+-m record,size,mctx -T clienttest -c named.conf -d 99 -D dscp-ns5 -X named.lock -g -U 4 -T dscp=46

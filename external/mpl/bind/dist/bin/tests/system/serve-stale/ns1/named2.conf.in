@@ -26,9 +26,10 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.1; };
 	listen-on-v6 { none; };
+	dump-file "named_dump1.db";
 	recursion yes;
 	max-stale-ttl 7200;
-	stale-answer-ttl 2;
+	stale-answer-ttl 3;
 	stale-answer-enable yes;
 };
 

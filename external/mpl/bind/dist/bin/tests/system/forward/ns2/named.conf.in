@@ -46,6 +46,11 @@ zone "example4." {
 	file "example.db";
 };
 
+zone "example7." {
+	type master;
+	file "example.db";
+};
+
 zone "grafted." {
 	type master;
 	file "example.db";

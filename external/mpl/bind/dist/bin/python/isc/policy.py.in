@@ -71,7 +71,7 @@ class PolicyLex:
         return t
 
     def t_ALGNAME(self, t):
-        r'(?i)\b(RSAMD5|DH|ECC|RSASHA1|NSEC3RSASHA1|RSASHA256|RSASHA512|ECDSAP256SHA256|ECDSAP384SHA384|ED25519|ED448)\b'
+        r'(?i)\b(DH|ECC|RSASHA1|NSEC3RSASHA1|RSASHA256|RSASHA512|ECDSAP256SHA256|ECDSAP384SHA384|ED25519|ED448)\b'
         t.value = t.value.upper()
         return t
 
@@ -132,8 +132,7 @@ class Policy:
     keyttl = None
     coverage = None
     directory = None
-    valid_key_sz_per_algo = {'RSAMD5': [1024, 4096],
-                             'RSASHA1': [1024, 4096],
+    valid_key_sz_per_algo = {'RSASHA1': [1024, 4096],
                              'NSEC3RSASHA1': [512, 4096],
                              'RSASHA256': [1024, 4096],
                              'RSASHA512': [1024, 4096],
@@ -322,10 +321,6 @@ class dnssec_policy:
         # set default algorithm policies
 
         # these can use default settings
-        self.alg_policy['RSAMD5'] = copy(p)
-        self.alg_policy['RSAMD5'].algorithm = "RSAMD5"
-        self.alg_policy['RSAMD5'].name = "RSAMD5"
-
         self.alg_policy['RSASHA1'] = copy(p)
         self.alg_policy['RSASHA1'].algorithm = "RSASHA1"
         self.alg_policy['RSASHA1'].name = "RSASHA1"

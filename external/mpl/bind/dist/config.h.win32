@@ -43,19 +43,19 @@
 #endif
 
 /*
- * Minimum version is Windows Vista and Windows Server 2008
+ * Minimum version is Windows 8 and Windows Server 2012
  */
 #ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0600
+#define _WIN32_WINNT 0x0602
 #endif
-#if _WIN32_WINNT < 0x0600
-#error Minimum Target environment is Windows Vista and Windows Server 2008
+#if _WIN32_WINNT < 0x0602
+#error Minimum Target environment is Windows 8 and Windows Server 2012
 #endif
 #ifndef NTDDI_VERSION
-#define NTDDI_VERSION 0x06000100
+#define NTDDI_VERSION 0x06020000
 #endif
-#if NTDDI_VERSION < 0x06000100
-#error Minimum Target environment is Windows Vista and Windows Server 2008
+#if NTDDI_VERSION < 0x06020000
+#error Minimum Target environment is Windows 8 and Windows Server 2012
 #endif
 
 /* Define if you have the ANSI C header files.  */
@@ -72,9 +72,6 @@
 
 /* define on Solaris to get sigwait() to work using pthreads semantics */
 /* #undef _POSIX_PTHREAD_SEMANTICS */
-
-/* define if catgets() is available */
-/* #undef HAVE_CATGETS */
 
 /* define if you need to #define _XPG4_2 before including sys/socket.h */
 /* #undef NEED_XPG4_2_BEFORE_SOCKET_H */
@@ -327,12 +324,6 @@ typedef __int64 off_t;
 
 /* Define if zlib was found */
 @HAVE_ZLIB@
-
-/* Define to enable rpz-nsdname rules. */
-@ENABLE_RPZ_NSDNAME@
-
-/* Define to enable rpz-nsip rules. */
-@ENABLE_RPZ_NSIP@
 
 /* From enable developer */
 @ISC_LIST_CHECKINIT@

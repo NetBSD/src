@@ -368,7 +368,14 @@ openpgpkey		OPENPGPKEY	( AQMFD5raczCJHViKtLYhWGz8hMY
 csync01			CSYNC	0 0 A NS AAAA
 csync02			CSYNC	0 0
 
-; type 63 -- 98 (unassigned)
+;type	63
+zonemd01		ZONEMD	2019020700 1 0 (
+                                C220B8A6ED5728A971902F7E3D4FD93A
+                                DEEA88B0453C2E8E8C863D465AB06CF3
+                                4EB95B266398C98B59124FA239CB7EEB
+				)
+
+; type 64 -- 98 (unassigned)
 
 ; type 99
 spf01			SPF	"v=spf1 -all"
@@ -455,7 +462,15 @@ doa01			DOA	( 1234567890 1234567890 1 "image/gif"
 				  hmsBich1awPAjkY1SZR8bJWrz382SGqIBQQFQd4IsUTaX+ceuudPEQA7 )
 doa02			DOA	0 1 2 "" aHR0cHM6Ly93d3cuaXNjLm9yZy8=
 
-; type 260 -- 32767 (unassigned)
+; type 260
+amtrelay01		AMTRELAY 0 0 0
+amtrelay02		AMTRELAY 0 1 0
+amtrelay03		AMTRELAY 0 0 1 0.0.0.0
+amtrelay04		AMTRELAY 0 0 2 ::
+amtrelay05		AMTRELAY 0 0 3 example.net.
+amtrelay06		AMTRELAY \# 2 0004
+
+; type 261 -- 32767 (unassigned)
 
 ; type 32768
 ta			TA	30795 1 1 (

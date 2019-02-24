@@ -9,8 +9,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+# shellcheck source=conf.sh
+. "$SYSTEMTESTTOP/conf.sh"
+
+set -e
 
 zone=.
 infile=root.db.in
@@ -18,17 +20,17 @@ zonefile=root.db
 
 (cd ../ns2 && $SHELL sign.sh )
 
-cp ../ns2/dsset-example$TP .
+cp "../ns2/dsset-example$TP" .
 
-keyname=`$KEYGEN -q -a RSAMD5 -b 1024 -n zone $zone`
+keyname=$($KEYGEN -q -a "${DEFAULT_ALGORITHM}" -b "${DEFAULT_BITS}" -n zone $zone)
 
-cat $infile $keyname.key > $zonefile
+cat "$infile" "$keyname.key" > "$zonefile"
 
 $SIGNER -P -g -o $zone $zonefile > /dev/null
 
 # Configure the resolving server with a trusted key.
-keyfile_to_trusted_keys $keyname > trusted.conf
+keyfile_to_trusted_keys "$keyname" > trusted.conf
 cp trusted.conf ../ns2/trusted.conf
 
 # ...or with a managed key.
-keyfile_to_managed_keys $keyname > managed.conf
+keyfile_to_managed_keys "$keyname" > managed.conf

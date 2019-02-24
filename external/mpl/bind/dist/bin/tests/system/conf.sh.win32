@@ -37,6 +37,7 @@ ALTERNATIVE_ALGORITHM_NUMBER=8
 ALTERNATIVE_BITS=1280
 
 ARPANAME=$TOP/Build/$VSCONF/arpaname@EXEEXT@
+CDS=$TOP/Build/$VSCONF/dnssec-cds@EXEEXT@
 CHECKCONF=$TOP/Build/$VSCONF/named-checkconf@EXEEXT@
 CHECKDS="$PYTHON `cygpath -w $TOP/bin/python/dnssec-checkds.py`"
 CHECKZONE=$TOP/Build/$VSCONF/named-checkzone@EXEEXT@
@@ -55,6 +56,7 @@ KEYGEN=$TOP/Build/$VSCONF/dnssec-keygen@EXEEXT@
 KEYMGR="$PYTHON `cygpath -w $TOP/bin/python/dnssec-keymgr.py`"
 MDIG=$TOP/Build/$VSCONF/mdig@EXEEXT@
 NAMED=$TOP/Build/$VSCONF/named@EXEEXT@
+NSEC3HASH=$TOP/Build/$VSCONF/nsec3hash@EXEEXT@
 NSLOOKUP=$TOP/Build/$VSCONF/nslookup@EXEEXT@
 NSUPDATE=$TOP/Build/$VSCONF/nsupdate@EXEEXT@
 NZD2NZF=$TOP/Build/$VSCONF/named-nzd2nzf@EXEEXT@
@@ -73,6 +75,7 @@ TSIGKEYGEN=$TOP/Build/$VSCONF/tsig-keygen@EXEEXT@
 VERIFY=$TOP/Build/$VSCONF/dnssec-verify@EXEEXT@
 
 # to port WIRETEST=$TOP/Build/$VSCONF/wire_test@EXEEXT@
+WIRETEST=
 
 BIGKEY=$TOP/Build/$VSCONF/bigkey@EXEEXT@
 GENCHECK=$TOP/Build/$VSCONF/gencheck@EXEEXT@
@@ -92,32 +95,38 @@ KRB5_CONFIG=NUL
 #
 # List of tests that use ports 5300 and 9953.  For this reason, these must
 # be run sequentially.
-SEQUENTIALDIRS="acl additional addzone autosign builtin \
-	 cacheclean case \
-	 checkconf @CHECKDS@ checknames checkzone cookie @COVERAGE@ \
-	 database digdelv dlv dlvauto dlz dlzexternal dname \
-	 dns64 dnssec @DNSTAP@ dscp dsdigest dyndb ecdsa eddsa \
-	 ednscompliance emptyzones \
-	 fetchlimit filter-aaaa formerr forward geoip glue idna inline ixfr \
-	 keepalive @KEYMGR@ legacy limits logfileconfig masterfile \
-	 masterformat metadata mirror mkeys names notify nslookup nsupdate \
-	 nzd2nzf padding pending pipelined @PKCS11_TEST@ qmin \
-	 reclimit redirect resolver rndc rpz rrchecker rrl \
-	 rrsetorder rsabigexponent runtime sfcache smartsign sortlist \
-	 spf staticstub statistics statschannel stub tcp tkey tsig \
-	 tsiggss ttl unknown upforwd verify views wildcard xfer xferquota \
-	 zero zonechecks"
+SEQUENTIALDIRS="ecdsa eddsa @PKCS11_TEST@ tkey"
 
 # List of tests that use unique ports (other than 5300 and 9953). These
 # tests can be run in parallel.
 #
-# This symbol must be kept in step with the PARALLEL macro in Makefile.in
-PARALLELDIRS="allow-query catz rpzrecurse serve-stale"
+# XXX: Note that tests are not currently run in parallel on Windows, so it
+# isn't strictly necessary to maintain these as separate lists in this file,
+# but using the same variable names as in conf.sh.in may simplify keeping the
+# lists in sync.
+#
+# XXX: removed logfileconfig as it doesn't currently work on windows.
+PARALLELDIRS="acl additional addzone allow-query auth autosign \
+	builtin cacheclean case catz cds chain \
+	checkconf checknames checkzone \
+	@CHECKDS@ @COVERAGE@ @KEYMGR@ \
+	cookie database digdelv dlv dlz dlzexternal \
+	dns64 dnssec @DNSTAP@ dscp dsdigest dyndb \
+	ednscompliance emptyzones \
+	fetchlimit filter-aaaa formerr forward \
+	geoip glue idna inline integrity ixfr keepalive \
+	legacy limits masterfile masterformat metadata mirror mkeys \
+	names notify nslookup nsupdate nzd2nzf \
+	padding pending pipelined qmin \
+	reclimit redirect resolver rndc rootkeysentinel rpz rpzrecurse \
+	rrchecker rrl rrsetorder rsabigexponent runtime \
+	serve-stale sfcache smartsign sortlist \
+	spf staticstub statistics statschannel stub synthfromdnssec \
+	tcp tools tsig tsiggss ttl \
+	unknown upforwd verify views wildcard \
+	xfer xferquota zero zonechecks"
 
 SUBDIRS="$SEQUENTIALDIRS $PARALLELDIRS"
-
-# missing: chain integrity
-# extra: dname ednscompliance forward
 
 #Things that are different on Windows
 KILL="/bin/kill -f"
@@ -133,25 +142,12 @@ CURL=/usr/bin/curl
 XMLLINT=/usr/bin/xmllint
 PERL=/usr/bin/perl
 
-if test -n "$PERL"
-then
-	if $PERL -e "use IO::Socket::INET6;" 2> /dev/null
-	then
-		TESTSOCK6="$PERL $TOP/bin/tests/system/testsock6.pl"
-	else
-		TESTSOCK6=false
-	fi
-else
-	TESTSOCK6=false
-fi
-
-TESTSOCK6="$TESTSOCK6"
-
 #
 # PsSuspend is part of PSTools and can be downloaded from
 # https://download.sysinternals.com/files/PSTools.zip
 #
 PSSUSPEND=@PSSUSPEND@
+
 PYTHON=@PYTHON@
 
 #
@@ -162,190 +158,8 @@ HAVEJSONSTATS=@JSONSTATS@
 ZLIB=@ZLIB@
 NZD=@NZD_TOOLS@
 
-. ${TOP}/version
-
-#
-# Set up color-coded test output
-#
-if test -t 1 && type tput > /dev/null; then
-    COLOR_END=`tput setaf 4`    # blue
-    COLOR_FAIL=`tput setaf 1`   # red
-    COLOR_INFO=`tput bold`      # bold
-    COLOR_NONE=`tput sgr0`
-    COLOR_PASS=`tput setaf 2`   # green
-    COLOR_START=`tput setaf 4`  # blue
-    COLOR_WARN=`tput setaf 3`   # yellow
-else
-    # set to empty strings so printf succeeds
-    COLOR_END=''
-    COLOR_FAIL=''
-    COLOR_INFO=''
-    COLOR_NONE=''
-    COLOR_PASS=''
-    COLOR_START=''
-    COLOR_WARN=''
-fi
-
-echofail () {
-        printf "${COLOR_FAIL}%s${COLOR_NONE}\n" "$*"
-}
-echowarn () {
-        printf "${COLOR_WARN}%s${COLOR_NONE}\n" "$*"
-}
-echopass () {
-        printf "${COLOR_PASS}%s${COLOR_NONE}\n" "$*"
-}
-echoinfo () {
-        printf "${COLOR_INFO}%s${COLOR_NONE}\n" "$*"
-}
-echostart () {
-        printf "${COLOR_START}%s${COLOR_NONE}\n" "$*"
-}
-echoend () {
-        printf "${COLOR_END}%s${COLOR_NONE}\n" "$*"
-}
-
-SYSTESTDIR="`basename $PWD`"
-
-echo_i() {
-    echo "$@" | while read __LINE ; do
-       echoinfo "I:$SYSTESTDIR:$__LINE"
-    done
-}
-
-echo_ic() {
-    echo "$@" | while read __LINE ; do
-       echoinfo "I:$SYSTESTDIR:  $__LINE"
-    done
-}
-
-cat_i() {
-    while read __LINE ; do
-       echoinfo "I:$SYSTESTDIR:$__LINE"
-    done
-}
-
-digcomp() {
-    output=`$PERL $SYSTEMTESTTOP/digcomp.pl "$@"`
-    result=$?
-    [ -n "$output" ] &&  { echo "digcomp failed:"; echo "$output"; } | cat_i
-    return $result
-}
-
-#
-# Useful functions in test scripts
-#
-
-# keyfile_to_keys_section: helper function for keyfile_to_*_keys() which
-# converts keyfile data into a configuration section using the supplied
-# parameters
-keyfile_to_keys_section() {
-    section_name=$1
-    key_prefix=$2
-    shift
-    shift
-    echo "$section_name {"
-    for keyname in $*; do
-        awk '!/^; /{
-            printf "\t\""$1"\" "
-            printf "'"$key_prefix"'"
-            printf $4 " " $5 " " $6 " \""
-            for (i=7; i<=NF; i++) printf $i
-            printf "\";\n"
-        }' $keyname.key
-    done
-    echo "};"
-}
-
-# keyfile_to_trusted_keys: convert key data contained in the keyfile(s)
-# provided to a "trusted-keys" section suitable for including in a
-# resolver's configuration file
-keyfile_to_trusted_keys() {
-    keyfile_to_keys_section "trusted-keys" "" $*
-}
-
-# keyfile_to_managed_keys: convert key data contained in the keyfile(s)
-# provided to a "managed-keys" section suitable for including in a
-# resolver's configuration file
-keyfile_to_managed_keys() {
-    keyfile_to_keys_section "managed-keys" "initial-key " $*
-}
-
-# nextpart*() - functions for reading files incrementally
-#
-# These functions aim to facilitate looking for (or waiting for)
-# messages which may be logged more than once throughout the lifetime of
-# a given named instance by outputting just the part of the file which
-# has been appended since the last time we read it.
-#
-# Calling some of these functions causes temporary *.prev files to be
-# created that need to be cleaned up manually (usually by a given system
-# test's clean.sh script).
-#
-# Note that unlike other nextpart*() functions, nextpartread() is not
-# meant to be directly used in system tests; its sole purpose is to
-# reduce code duplication below.
-#
-# A quick usage example:
-#
-#     $ echo line1 > named.log
-#     $ echo line2 >> named.log
-#     $ nextpart named.log
-#     line1
-#     line2
-#     $ echo line3 >> named.log
-#     $ nextpart named.log
-#     line3
-#     $ nextpart named.log
-#     $ echo line4 >> named.log
-#     $ nextpartpeek named.log
-#     line4
-#     $ nextpartpeek named.log
-#     line4
-#     $ nextpartreset named.log
-#     $ nextpartpeek named.log
-#     line1
-#     line2
-#     line3
-#     line4
-#     $ nextpart named.log
-#     line1
-#     line2
-#     line3
-#     line4
-#     $ nextpart named.log
-#     $
-
-# nextpartreset: reset the marker used by nextpart() and nextpartpeek()
-# so that it points to the start of the given file
-nextpartreset() {
-    echo "0" > $1.prev
-}
-
-# nextpartread: read everything that's been appended to a file since the
-# last time 'nextpart' was called and print it to stdout, print the
-# total number of lines read from that file so far to stderr
-nextpartread() {
-    [ -f $1.prev ] || nextpartreset $1
-    prev=`cat $1.prev`
-    awk "NR > $prev "'{ print }
-         END          { print NR > "/dev/stderr" }' $1
-}
-
-# nextpart: read everything that's been appended to a file since the
-# last time 'nextpart' was called
-nextpart() {
-	nextpartread $1 2> $1.prev.tmp
-	mv $1.prev.tmp $1.prev
-}
-
-# nextpartpeek: read everything that's been appended to a file since the
-# last time 'nextpart' was called
-nextpartpeek() {
-	nextpartread $1 2> /dev/null
-}
-
 # copy_setports - Copy Configuration File and Replace Ports
+# Unfortunately it has to be different on Windows.
 #
 # Convenience function to copy a configuration file, replacing the tokens
 # QUERYPORT, CONTROLPORT and EXTRAPORT[1-8] with the values of the equivalent
@@ -381,42 +195,5 @@ copy_setports() {
 	$1 > $2
 }
 
-#
-# Export command paths
-#
-export ARPANAME
-export BIGKEY
-export CHECKZONE
-export DESCRIPTION
-export DIG
-export FEATURETEST
-export FSTRM_CAPTURE
-export GENCHECK
-export JOURNALPRINT
-export KEYCREATE
-export KEYDELETE
-export KEYFRLAB
-export KEYGEN
-export KEYSETTOOL
-export KEYSIGNER
-export KRB5_CONFIG
-export MAKEJOURNAL
-export MDIG
-export NAMED
-export NSLOOKUP
-export NSUPDATE
-export NZD2NZF
-export PERL
-export PIPEQUERIES
-export PK11DEL
-export PK11GEN
-export PK11LIST
-export PSSUSPEND
-export PYTHON
-export RESOLVE
-export RNDC
-export RRCHECKER
-export SAMPLEUPDATE
-export SIGNER
-export SUBDIRS
-export TESTSOCK6
+# The rest is shared between Windows and Unices
+. $TOP/bin/tests/system/conf.sh.common

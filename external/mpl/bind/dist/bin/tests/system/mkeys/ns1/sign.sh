@@ -26,13 +26,18 @@ cp managed.conf ../ns2/managed.conf
 cp managed.conf ../ns4/managed.conf
 cp managed.conf ../ns5/managed.conf
 
-# Configure a trusted key statement (used by delv)
+# Configure a trusted key statement (used by delv).
 keyfile_to_trusted_keys $keyname > trusted.conf
+
+# Prepare an unsupported algorithm key.
+unsupportedkey=Kunknown.+255+00000
+cp unsupported.key "${unsupportedkey}.key"
 
 #
 #  Save keyname and keyid for managed key id test.
 #
 echo "$keyname" > managed.key
+echo "$zskkeyname" > zone.key
 keyid=`expr $keyname : 'K\.+00.+\([0-9]*\)'`
 keyid=`expr $keyid + 0`
 echo "$keyid" > managed.key.id

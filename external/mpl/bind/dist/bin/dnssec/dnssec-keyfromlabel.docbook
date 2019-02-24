@@ -43,6 +43,7 @@
       <year>2016</year>
       <year>2017</year>
       <year>2018</year>
+      <year>2019</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -105,7 +106,7 @@
 	<listitem>
 	  <para>
 	    Selects the cryptographic algorithm.  The value of
-	    <option>algorithm</option> must be one of RSAMD5, RSASHA1,
+	    <option>algorithm</option> must be one of RSASHA1,
 	    NSEC3RSASHA1, RSASHA256, RSASHA512,
 	    ECDSAP256SHA256, ECDSAP384SHA384, ED25519 or ED448.
 	  </para>

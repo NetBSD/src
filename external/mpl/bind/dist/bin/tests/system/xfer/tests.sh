@@ -68,11 +68,11 @@ digcomp dig.out.ns2 dig.out.ns3 || status=1
 
 echo_i "reload servers for in preparation for ixfr-from-differences tests"
 
-$RNDCCMD 10.53.0.1 reload 2>&1 | sed 's/^/ns1 /' | cat_i
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
-$RNDCCMD 10.53.0.3 reload 2>&1 | sed 's/^/ns3 /' | cat_i
-$RNDCCMD 10.53.0.6 reload 2>&1 | sed 's/^/ns6 /' | cat_i
-$RNDCCMD 10.53.0.7 reload 2>&1 | sed 's/^/ns7 /' | cat_i
+rndc_reload ns1 10.53.0.1
+rndc_reload ns2 10.53.0.2
+rndc_reload ns3 10.53.0.3
+rndc_reload ns6 10.53.0.6
+rndc_reload ns7 10.53.0.7
 
 sleep 2
 
@@ -83,28 +83,28 @@ $PERL -i -p -e '
 	s/1397051952/1397051953/
 ' ns1/slave.db
 
-$RNDCCMD 10.53.0.1 reload 2>&1 | sed 's/^/ns1 /' | cat_i
+rndc_reload ns1 10.53.0.1
 
 $PERL -i -p -e '
 	s/0\.0\.0\.0/0.0.0.1/;
 	s/1397051952/1397051953/
 ' ns2/example.db
 
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reload ns2 10.53.0.2
 
 $PERL -i -p -e '
 	s/0\.0\.0\.0/0.0.0.1/;
 	s/1397051952/1397051953/
 ' ns6/master.db
 
-$RNDCCMD 10.53.0.6 reload 2>&1 | sed 's/^/ns6 /' | cat_i
+rndc_reload ns6 10.53.0.6
 
 $PERL -i -p -e '
 	s/0\.0\.0\.0/0.0.0.1/;
 	s/1397051952/1397051953/
 ' ns7/master2.db
 
-$RNDCCMD 10.53.0.7 reload 2>&1 | sed 's/^/ns7 /' | cat_i
+rndc_reload ns7 10.53.0.7
 
 sleep 3
 
@@ -272,7 +272,7 @@ EOF
 
 cur=`awk 'END {print NR}' ns4/named.run`
 
-$RNDCCMD 10.53.0.4 reload | sed 's/^/ns4 /' | cat_i
+rndc_reload ns4 10.53.0.4
 
 for i in 0 1 2 3 4 5 6 7 8 9
 do
@@ -461,6 +461,50 @@ do
     sleep 1
 done
 grep "'ixfr-too-big/IN'.*: too many records" ns6/named.run >/dev/null || tmp=1
+if test $tmp != 0 ; then echo_i "failed"; fi
+status=`expr $status + $tmp`
+
+n=`expr $n + 1`
+echo_i "checking whether dig calculates AXFR statistics correctly"
+# Loop until the secondary server manages to transfer the "xfer-stats" zone so
+# that we can both check dig output and immediately proceed with the next test.
+# Use -b so that we can discern between incoming and outgoing transfers in ns3
+# logs later on.
+tmp=1
+for i in 1 2 3 4 5 6 7 8 9 10; do
+	$DIG $DIGOPTS +noedns +stat -b 10.53.0.2 @10.53.0.3 xfer-stats. AXFR > dig.out.ns3.$n
+	if grep "; Transfer failed" dig.out.ns3.$n > /dev/null; then
+		sleep 1
+	else
+		tmp=0
+		break
+	fi
+done
+if [ $tmp -ne 0 ]; then
+	echo_i "timed out waiting for zone transfer"
+else
+	get_dig_xfer_stats dig.out.ns3.$n > stats.dig
+	diff axfr-stats.good stats.dig || tmp=1
+fi
+if test $tmp != 0 ; then echo_i "failed"; fi
+status=`expr $status + $tmp`
+
+# Note: in the next two tests, we use ns3 logs for checking both incoming and
+# outgoing transfer statistics as ns3 is both a secondary server (for ns1) and a
+# primary server (for dig queries from the previous test) for "xfer-stats".
+n=`expr $n + 1`
+echo_i "checking whether named calculates incoming AXFR statistics correctly"
+tmp=0
+get_named_xfer_stats ns3/named.run 10.53.0.1 xfer-stats "Transfer completed" > stats.incoming
+diff axfr-stats.good stats.incoming || tmp=1
+if test $tmp != 0 ; then echo_i "failed"; fi
+status=`expr $status + $tmp`
+
+n=`expr $n + 1`
+echo_i "checking whether named calculates outgoing AXFR statistics correctly"
+tmp=0
+get_named_xfer_stats ns3/named.run 10.53.0.2 xfer-stats "AXFR ended" > stats.outgoing
+diff axfr-stats.good stats.outgoing || tmp=1
 if test $tmp != 0 ; then echo_i "failed"; fi
 status=`expr $status + $tmp`
 

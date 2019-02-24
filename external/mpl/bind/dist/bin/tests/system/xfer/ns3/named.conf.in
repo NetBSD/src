@@ -69,3 +69,9 @@ zone "mapped" {
 	masterfile-format map;
 	file "mapped.bk";
 };
+
+zone "xfer-stats" {
+	type slave;
+	masters { 10.53.0.1; };
+	file "xfer-stats.bk";
+};

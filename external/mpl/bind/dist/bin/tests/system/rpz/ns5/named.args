@@ -1,3 +1,2 @@
 # run the performace test close to real life
-
--c named.conf -X named.lock -gd3
+-c named.conf -D rpz-ns5 -X named.lock -gd3

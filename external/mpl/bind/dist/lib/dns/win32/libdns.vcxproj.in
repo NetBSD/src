@@ -129,7 +129,6 @@
     <ClCompile Include="..\dnssec.c" />
     <ClCompile Include="..\ds.c" />
     <ClCompile Include="..\dst_api.c" />
-    <ClCompile Include="..\dst_lib.c" />
     <ClCompile Include="..\dst_parse.c" />
     <ClCompile Include="..\dst_result.c" />
     <ClCompile Include="..\dyndb.c" />
@@ -324,7 +323,6 @@
     <ClInclude Include="..\include\dns\zt.h" />
     <ClInclude Include="..\include\dst\dst.h" />
     <ClInclude Include="..\include\dst\gssapi.h" />
-    <ClInclude Include="..\include\dst\lib.h" />
     <ClInclude Include="..\include\dst\result.h" />
     <ClInclude Include="..\rbtdb.h" />
     <ClInclude Include="..\rdatalist_p.h" />

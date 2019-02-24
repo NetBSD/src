@@ -33,8 +33,6 @@ UNIXOBJS =	unix/pk11_api.@O@ \
 		unix/stdio.@O@ unix/stdtime.@O@ \
 		unix/syslog.@O@ unix/time.@O@
 
-NLSOBJS =	nls/msgcat.@O@
-
 THREADOBJS =	pthreads/condition.@O@ pthreads/mutex.@O@ pthreads/thread.@O@
 
 WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/errno.@O@ \
@@ -58,7 +56,7 @@ OBJS =		pk11.@O@ pk11_result.@O@ \
 		serial.@O@ sockaddr.@O@ stats.@O@ \
 		string.@O@ symtab.@O@ task.@O@ taskpool.@O@ \
 		tm.@O@ timer.@O@ version.@O@ \
-		${UNIXOBJS} ${NLSOBJS} ${THREADOBJS}
+		${UNIXOBJS} ${THREADOBJS}
 SYMTBLOBJS =	backtrace-emptytbl.@O@
 
 # Alphabetically
@@ -82,7 +80,7 @@ LIBS =		@OPENSSL_LIBS@ @LIBS@
 # Attempt to disable parallel processing.
 .NOTPARALLEL:
 .NO_PARALLEL:
-SUBDIRS =	include unix nls pthreads
+SUBDIRS =	include unix pthreads
 TARGETS =	timestamp
 TESTDIRS =	@UNITTESTS@
 

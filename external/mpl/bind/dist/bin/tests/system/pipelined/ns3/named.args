@@ -1,1 +1,1 @@
--m record,size,mctx -c named.conf -d 99 -X named.lock -g -T delay=200
+-m record,size,mctx -c named.conf -d 99 -D pipelined-ns3 -X named.lock -g -T delay=200

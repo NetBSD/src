@@ -18,7 +18,7 @@ lib/dns			The DNS library
     resolver.c		The "full resolver" (performs recursive lookups)
     validator.c		The DNSSEC validator
     db.c		The database interface
-    sdb.c		The simple database interface
+    sdb.c		The simple database interface (deprecated)
     rbtdb.c		The red-black tree database
 lib/dns/rdata		Routines for handling the various RR types
 lib/dns/sec		Cryptographic libraries for DNSSEC
@@ -36,7 +36,6 @@ doc/arm			The BIND 9 Administrator Reference Manual
 doc/man			Man pages
 contrib			Contributed and other auxiliary code
 contrib/idn/mdnkit	The multilingual domain name evaluation kit
-contrib/sdb		Sample drivers for the simple database interface
 make			Makefile fragments, used by configure
 
 The library interfaces are mainly documented in the form of comments

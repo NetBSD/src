@@ -32,9 +32,9 @@ ret=0
 for dir in [0-9][0-9]-*; do
         ret=0
         echo_i "$dir"
-        args= warn= error= ok= retcode= match=
+        args= warn= error= ok= retcode= match= zones=
         . $dir/expect
-        $COVERAGE $args -K $dir example.com > coverage.$n 2>&1
+        $COVERAGE $args -K $dir ${zones:-example.com} > coverage.$n 2>&1
 
         # check that return code matches expectations
         found=$?

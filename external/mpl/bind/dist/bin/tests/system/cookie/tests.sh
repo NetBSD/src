@@ -21,7 +21,7 @@ n=0
 getcookie() {
 	awk '$2 == "COOKIE:" {
 		print $3;
-	}' < $1
+	}' < $1 | tr -d '\r'
 }
 
 fullcookie() {
@@ -37,21 +37,21 @@ havetc() {
 for bad in bad*.conf
 do
 	n=`expr $n + 1`
-        echo_i "checking that named-checkconf detects error in $bad ($n)"
-        ret=0
-        $CHECKCONF $bad > /dev/null 2>&1 && ret=1
-        if [ $ret != 0 ]; then echo_i "failed"; fi
-        status=`expr $status + $ret`
+	echo_i "checking that named-checkconf detects error in $bad ($n)"
+	ret=0
+	$CHECKCONF $bad > /dev/null 2>&1 && ret=1
+	if [ $ret != 0 ]; then echo_i "failed"; fi
+	status=`expr $status + $ret`
 done
 
 for good in good*.conf
 do
 	n=`expr $n + 1`
-        echo_i "checking that named-checkconf detects accepts $good ($n)"
-        ret=0
-        $CHECKCONF $good > /dev/null 2>&1 || ret=1
-        if [ $ret != 0 ]; then echo_i "failed"; fi
-        status=`expr $status + $ret`
+	echo_i "checking that named-checkconf detects accepts $good ($n)"
+	ret=0
+	$CHECKCONF $good > /dev/null 2>&1 || ret=1
+	if [ $ret != 0 ]; then echo_i "failed"; fi
+	status=`expr $status + $ret`
 done
 
 n=`expr $n + 1`
@@ -142,8 +142,12 @@ n=`expr $n + 1`
 echo_i "checking for COOKIE value in adb ($n)"
 ret=0
 $RNDCCMD 10.53.0.1 dumpdb
-sleep 1
-grep "10.53.0.2.*\[cookie=" ns1/named_dump.db > /dev/null|| ret=1
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+  sleep 1
+  grep "10.53.0.2.*\[cookie=" ns1/named_dump.db > /dev/null && break
+done
+grep "10.53.0.2.*\[cookie=" ns1/named_dump.db > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -177,6 +181,30 @@ grep "flags: qr[^;]* ad[ ;]" dig.out.test$n > /dev/null && ret=1
 grep BADCOOKIE dig.out.test$n > /dev/null || ret=1
 linecount=`getcookie dig.out.test$n | wc -l`
 if [ $linecount != 2 ]; then ret=1; fi
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "send undersized cookie ($n)"
+ret=0
+$DIG $DIGOPTS +qr +cookie=000000 soa @10.53.0.1 > dig.out.test$n || ret=1
+grep "status: FORMERR" dig.out.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "send oversized for named cookie ($n)"
+ret=0
+$DIG $DIGOPTS +qr +cookie=${cookie}00 soa @10.53.0.1 > dig.out.test$n || ret=1
+grep "COOKIE: [a-f0-9]* (good)" dig.out.test$n > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "send oversized for named cookie with server requiring a good cookie ($n)"
+ret=0
+$DIG $DIGOPTS +qr +cookie=${cookie}00 soa @10.53.0.3 > dig.out.test$n || ret=1
+grep "COOKIE: [a-f0-9]* (good)" dig.out.test$n > /dev/null 2>&1 || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

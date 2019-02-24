@@ -37,7 +37,6 @@ isccc_ccmsg_setmaxsize
 isccc_ccmsg_readmessage
 isccc_ccmsg_cancelread
 isccc_ccmsg_invalidate
-isccc_lib_initmsgcat
 isccc_result_totext
 isccc_result_register
 isccc_sexpr_cons
@@ -64,7 +63,3 @@ isccc_symtab_lookup
 isccc_symtab_define
 isccc_symtab_undefine
 isccc_symtab_foreach
-
-; Exported Data
-
-;isccc_msgcat

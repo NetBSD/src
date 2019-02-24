@@ -34,6 +34,7 @@
       <year>2016</year>
       <year>2017</year>
       <year>2018</year>
+      <year>2019</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <!-- insert copyright end -->
@@ -1084,15 +1085,8 @@ zone "eng.example.com" {
 		  (<command>rndc</command>) program allows the
 		  system
 		  administrator to control the operation of a name server.
-		  Since <acronym>BIND</acronym> 9.2, <command>rndc</command>
-		  supports all the commands of the BIND 8 <command>ndc</command>
-		  utility except <command>ndc start</command> and
-		  <command>ndc restart</command>, which were also
-		  not supported in <command>ndc</command>'s
-		  channel mode.
 		  If you run <command>rndc</command> without any
-		  options
-		  it will display a usage message as follows:
+		  options, it will display a usage message as follows:
 		</para>
 		<cmdsynopsis label="Usage" sepchar=" ">
 		  <command>rndc</command>
@@ -2101,41 +2095,36 @@ allow-update { !{ !localnets; any; }; key host1-host2. ;};
 	</para>
 
 	<para>
-	  A secure zone must contain one or more zone keys.  The
-	  zone keys will sign all other records in the zone, as well as
-	  the zone keys of any secure delegated zones.  Zone keys must
-	  have the same name as the zone, a name type of
-	  <command>ZONE</command>, and must be usable for
-	  authentication.
-	  It is recommended that zone keys use a cryptographic algorithm
-	  designated as "mandatory to implement" by the IETF; currently
-	  the only one is RSASHA1.
+	  A secure zone must contain one or more zone keys.  The zone keys will
+	  sign all other records in the zone, as well as the zone keys of any
+	  secure delegated zones.  Zone keys must have the same name as the
+	  zone, a name type of <command>ZONE</command>, and must be usable for
+	  authentication.  It is recommended that zone keys use a cryptographic
+	  algorithm designated as "mandatory to implement" by the IETF;
+	  currently the are two algorithms: RSASHA256 and ECDSAP256SHA256.
+	  ECDSAP256SHA256 is recommended for current and future deployments.
 	</para>
 
 	<para>
-	  The following command will generate a 768-bit RSASHA1 key for
+	  The following command will generate a ECDSAP256SHA256 key for
 	  the <filename>child.example</filename> zone:
 	</para>
 
 	<para>
-	  <userinput>dnssec-keygen -a RSASHA1 -b 768 -n ZONE child.example.</userinput>
+	  <userinput>dnssec-keygen -a ECDSAP256SHA256 -n ZONE child.example.</userinput>
 	</para>
 
 	<para>
 	  Two output files will be produced:
-	  <filename>Kchild.example.+005+12345.key</filename> and
-	  <filename>Kchild.example.+005+12345.private</filename>
-	  (where
-	  12345 is an example of a key tag).  The key filenames contain
-	  the key name (<filename>child.example.</filename>),
-	  algorithm (3
-	  is DSA, 1 is RSAMD5, 5 is RSASHA1, etc.), and the key tag (12345 in
-	  this case).
-	  The private key (in the <filename>.private</filename>
-	  file) is
-	  used to generate signatures, and the public key (in the
-	  <filename>.key</filename> file) is used for signature
-	  verification.
+	  <filename>Kchild.example.+013+12345.key</filename> and
+	  <filename>Kchild.example.+013+12345.private</filename> (where 12345 is
+	  an example of a key tag).  The key filenames contain the key name
+	  (<filename>child.example.</filename>), algorithm (5 is RSASHA1, 8 is
+	  RSASHA256, 13 is ECDSAP256SHA256, 15 is ED25519 etc.), and the key tag
+	  (12345 in this case).  The private key (in the
+	  <filename>.private</filename> file) is used to generate signatures,
+	  and the public key (in the <filename>.key</filename> file) is used for
+	  signature verification.
 	</para>
 
 	<para>
@@ -3605,12 +3594,9 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 </programlisting>
 
 	<para>
-	  In <acronym>BIND</acronym> 9, the logging configuration
-	  is only established when
-	  the entire configuration file has been parsed.  In <acronym>BIND</acronym> 8, it was
-	  established as soon as the <command>logging</command>
-	  statement
-	  was parsed. When the server is starting up, all logging messages
+	  The logging configuration is only established when
+	  the entire configuration file has been parsed.
+	  When the server is starting up, all logging messages
 	  regarding syntax errors in the configuration file go to the default
 	  channels, or to standard error if the <option>-g</option> option
 	  was specified.
@@ -4669,20 +4655,6 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	  </varlistentry>
 
 	  <varlistentry>
-	    <term><command>named-xfer</command></term>
-	    <listitem>
-	      <para>
-		<emphasis>This option is obsolete.</emphasis> It
-		was used in <acronym>BIND</acronym> 8 to specify
-		the pathname to the <command>named-xfer</command>
-		program.  In <acronym>BIND</acronym> 9, no separate
-		<command>named-xfer</command> program is needed;
-		its functionality is built into the name server.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-
-	  <varlistentry>
 	    <term><command>qname-minimization</command></term>
 	    <listitem>
 	      <para>
@@ -5536,13 +5508,11 @@ options {
 	      <term><command>auth-nxdomain</command></term>
 	      <listitem>
 		<para>
-		  If <userinput>yes</userinput>, then the <command>AA</command> bit
-		  is always set on NXDOMAIN responses, even if the server is
-		  not actually
-		  authoritative. The default is <userinput>no</userinput>;
-		  this is
-		  a change from <acronym>BIND</acronym> 8. If you
-		  are using very old DNS software, you
+		  If <userinput>yes</userinput>, then the
+		  <command>AA</command> bit is always set on NXDOMAIN
+		  responses, even if the server is not actually
+		  authoritative. The default is <userinput>no</userinput>.
+		  If you are using very old DNS software, you
 		  may need to set it to <userinput>yes</userinput>.
 		</para>
 	      </listitem>
@@ -5798,34 +5768,6 @@ options {
 	    </varlistentry>
 
 	    <varlistentry>
-	      <term><command>fake-iquery</command></term>
-	      <listitem>
-		<para>
-		  In <acronym>BIND</acronym> 8, this option
-		  enabled simulating the obsolete DNS query type
-		  IQUERY. <acronym>BIND</acronym> 9 never does
-		  IQUERY simulation.
-		</para>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
-	      <term><command>fetch-glue</command></term>
-	      <listitem>
-		<para>
-		  <emphasis>This option is obsolete</emphasis>.
-		  In BIND 8, <userinput>fetch-glue yes</userinput>
-		  caused the server to attempt to fetch glue resource records
-		  it
-		  didn't have when constructing the additional
-		  data section of a response.  This is now considered a bad
-		  idea
-		  and BIND 9 never does it.
-		</para>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
 	      <term><command>flush-zones-on-shutdown</command></term>
 	      <listitem>
 		<para>
@@ -5849,54 +5791,12 @@ options {
 	    </varlistentry>
 
 	    <varlistentry>
-	      <term><command>has-old-clients</command></term>
-	      <listitem>
-		<para>
-		  This option was incorrectly implemented
-		  in <acronym>BIND</acronym> 8, and is ignored by <acronym>BIND</acronym> 9.
-		  To achieve the intended effect
-		  of
-		  <command>has-old-clients</command> <userinput>yes</userinput>, specify
-		  the two separate options <command>auth-nxdomain</command> <userinput>yes</userinput>
-		  and <command>rfc2308-type1</command> <userinput>no</userinput> instead.
-		</para>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
-	      <term><command>host-statistics</command></term>
-	      <listitem>
-		<para>
-		  In BIND 8, this enabled keeping of
-		  statistics for every host that the name server interacts
-		  with.
-		  Not implemented in BIND 9.
-		</para>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
 	      <term><command>root-key-sentinel</command></term>
 	      <listitem>
 		<para>
 		  Respond to root key sentinel probes as described in
 		  draft-ietf-dnsop-kskroll-sentinel-08. The default is
 		  <userinput>yes</userinput>.
-		</para>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
-	      <term><command>maintain-ixfr-base</command></term>
-	      <listitem>
-		<para>
-		  <emphasis>This option is obsolete</emphasis>.
-		  It was used in <acronym>BIND</acronym> 8 to
-		  determine whether a transaction log was
-		  kept for Incremental Zone Transfer. <acronym>BIND</acronym> 9 maintains a transaction
-		  log whenever possible.  If you need to disable outgoing
-		  incremental zone
-		  transfers, use <command>provide-ixfr</command> <userinput>no</userinput>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -5989,19 +5889,6 @@ options {
 		  turned on for these queries, so no unnecessary records
 		  will be added to the authority or additional sections.
 		  The default is <userinput>no</userinput>.
-		</para>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
-	      <term><command>multiple-cnames</command></term>
-	      <listitem>
-		<para>
-		  This option was used in <acronym>BIND</acronym> 8 to allow
-		  a domain name to have multiple CNAME records in violation of
-		  the DNS standards.  <acronym>BIND</acronym> 9.2 onwards
-		  always strictly enforces the CNAME rules both in master
-		  files and dynamic updates.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6291,24 +6178,6 @@ options {
 	    </varlistentry>
 
 	    <varlistentry>
-	      <term><command>rfc2308-type1</command></term>
-	      <listitem>
-		<para>
-		  Setting this to <userinput>yes</userinput> will
-		  cause the server to send NS records along with the SOA
-		  record for negative
-		  answers. The default is <userinput>no</userinput>.
-		</para>
-		<note>
-		  <simpara>
-		    Not yet implemented in <acronym>BIND</acronym>
-		    9.
-		  </simpara>
-		</note>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
 	      <term><command>trust-anchor-telemetry</command></term>
 	      <listitem>
 		<para>
@@ -6334,17 +6203,6 @@ options {
 		</para>
 		<para>
 		  The default is <userinput>yes</userinput>.
-		</para>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
-	      <term><command>use-id-pool</command></term>
-	      <listitem>
-		<para>
-		  <emphasis>This option is obsolete</emphasis>.
-		  <acronym>BIND</acronym> 9 always allocates query
-		  IDs from a pool.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6393,24 +6251,6 @@ options {
 		  See the description of
 		  <command>request-expire</command> in
 		  <xref linkend="server_statement_definition_and_usage"/>.
-		</para>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
-	      <term><command>treat-cr-as-space</command></term>
-	      <listitem>
-		<para>
-		  This option was used in <acronym>BIND</acronym>
-		  8 to make
-		  the server treat carriage return ("<command>\r</command>") characters the same way
-		  as a space or tab character,
-		  to facilitate loading of zone files on a UNIX system that
-		  were generated
-		  on an NT or DOS machine. In <acronym>BIND</acronym> 9, both UNIX "<command>\n</command>"
-		  and NT/DOS "<command>\r\n</command>" newlines
-		  are always accepted,
-		  and the option is ignored.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6549,8 +6389,8 @@ options {
 	      </listitem>
 	    </varlistentry>
 
-	    <varlistentry>
-	      <term><command>dnssec-validation</command></term>
+	    <varlistentry xml:id="dnssec_validation">
+	      <term xml:id="dnssec_validation_term"><command>dnssec-validation</command></term>
 	      <listitem>
 		<para>
 		  This enables DNSSEC validation in <command>named</command>.
@@ -6893,8 +6733,7 @@ options {
 	      <listitem>
 		<para>
 		  Try to refresh the zone using TCP if UDP queries fail.
-		  For BIND 8 compatibility, the default is
-		  <command>yes</command>.
+		  The default is <command>yes</command>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -7057,18 +6896,24 @@ options {
 	      <term><command>allow-notify</command></term>
 	      <listitem>
 		<para>
-		  Specifies which hosts are allowed to
-		  notify this server, a slave, of zone changes in addition
-		  to the zone masters.
-		  <command>allow-notify</command> may also be
-		  specified in the
-		  <command>zone</command> statement, in which case
-		  it overrides the
-		  <command>options allow-notify</command>
-		  statement.  It is only meaningful
-		  for a slave zone.  If not specified, the default is to
-		  process notify messages
-		  only from a zone's master.
+		  This ACL specifies which hosts may send NOTIFY messages
+		  to inform this server of changes to zones for which it
+		  is acting as a secondary server.  This is only
+		  applicable for secondary zones (i.e., type
+		  <literal>secondary</literal> or <literal>slave</literal>).
+		</para>
+		<para>
+		  If this option is set in <command>view</command> or
+		  <command>options</command>, it is globally applied to
+		  all secondary zones. If set in the <command>zone</command>
+		  statement, the global value is overridden.
+		</para>
+		<para>
+		  If not specified, the default is to process NOTIFY
+		  messages only from the configured
+		  <command>masters</command> for the zone.
+		  <command>allow-notify</command> can be used to expand the
+		  list of permitted hosts, not to reduce it.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -7203,11 +7048,16 @@ options {
 	      <term><command>allow-update</command></term>
 	      <listitem>
 		<para>
-		  Specifies which hosts are allowed to
-		  submit Dynamic DNS updates for master zones. The default is
-		  to deny
-		  updates from all hosts.  Note that allowing updates based
-		  on the requestor's IP address is insecure; see
+		  When set in the <command>zone</command> statement for
+		  a master zone, specifies which hosts are allowed to
+		  submit Dynamic DNS updates to that zone.  The default
+		  is to deny updates from all hosts.  This can only
+		  be set at the <command>zone</command> level, not in
+		  <command>options</command> or <command>view</command>.
+		</para>
+		<para>
+		  Note that allowing updates based on the
+		  requestor's IP address is insecure; see
 		  <xref linkend="dynamic_update_security"/> for details.
 		</para>
 	      </listitem>
@@ -7217,29 +7067,30 @@ options {
 	      <term><command>allow-update-forwarding</command></term>
 	      <listitem>
 		<para>
-		  Specifies which hosts are allowed to
-		  submit Dynamic DNS updates to slave zones to be forwarded to
-		  the
-		  master.  The default is <userinput>{ none; }</userinput>,
-		  which
-		  means that no update forwarding will be performed.  To
-		  enable
-		  update forwarding, specify
+		  When set in the <command>zone</command> statement for
+		  a slave zone, specifies which hosts are allowed to
+		  submit Dynamic DNS updates and have them be forwarded
+		  to the master.  The default is
+		  <userinput>{ none; }</userinput>, which means that no
+		  update forwarding will be performed.  This can only be
+		  set at the <command>zone</command> level, not in
+		  <command>options</command> or <command>view</command>.
+		</para>
+		<para>
+		  To enable update forwarding, specify
 		  <userinput>allow-update-forwarding { any; };</userinput>.
-		  Specifying values other than <userinput>{ none; }</userinput> or
-		  <userinput>{ any; }</userinput> is usually
-		  counterproductive, since
-		  the responsibility for update access control should rest
-		  with the
-		  master server, not the slaves.
+		  in the <command>zone</command> statement.
+		  Specifying values other than <userinput>{ none; }</userinput>
+		  or <userinput>{ any; }</userinput> is usually
+		  counterproductive; the responsibility for update
+		  access control should rest with the master server, not
+		  the slave.
 		</para>
 		<para>
 		  Note that enabling the update forwarding feature on a slave
-		  server
-		  may expose master servers relying on insecure IP address
-		  based
-		  access control to attacks; see <xref linkend="dynamic_update_security"/>
-		  for more details.
+		  server may expose master servers to attacks if they rely
+		  on insecure IP-address-based access control; see
+		  <xref linkend="dynamic_update_security"/> for more details.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -7263,13 +7114,14 @@ options {
 	      <term xml:id="allow_transfer_term"><command>allow-transfer</command></term>
 	      <listitem>
 		<para>
-		  Specifies which hosts are allowed to
-		  receive zone transfers from the server. <command>allow-transfer</command> may
-		  also be specified in the <command>zone</command>
-		  statement, in which
-		  case it overrides the <command>options allow-transfer</command> statement.
-		  If not specified, the default is to allow transfers to all
-		  hosts.
+		  Specifies which hosts are allowed to receive zone
+		  transfers from the server.  <command>allow-transfer</command>
+		  may also be specified in the <command>zone</command>
+		  statement, in which case it overrides the
+		  <command>allow-transfer</command> statement set in
+		  <command>options</command> or <command>view</command>.
+		  If not specified, the default is to allow transfers to
+		  all hosts.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -7764,22 +7616,6 @@ avoid-v6-udp-ports {};
 	    </varlistentry>
 
 	    <varlistentry>
-	      <term><command>serial-queries</command></term>
-	      <listitem>
-		<para>
-		  In BIND 8, the <command>serial-queries</command>
-		  option
-		  set the maximum number of concurrent serial number queries
-		  allowed to be outstanding at any given time.
-		  BIND 9 does not limit the number of outstanding
-		  serial queries and ignores the <command>serial-queries</command> option.
-		  Instead, it limits the rate at which the queries are sent
-		  as defined using the <command>serial-query-rate</command> option.
-		</para>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
 	      <term><command>transfer-format</command></term>
 	      <listitem>
 
@@ -7964,10 +7800,9 @@ avoid-v6-udp-ports {};
 	      <listitem>
 		<para>
 		  Use the alternate transfer sources or not.  If views are
-		  specified this defaults to <command>no</command>
+		  specified this defaults to <command>no</command>,
 		  otherwise it defaults to
-		  <command>yes</command> (for BIND 8
-		  compatibility).
+		  <command>yes</command>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -8151,18 +7986,6 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	  <variablelist>
 
 	    <varlistentry>
-	      <term><command>max-ixfr-log-size</command></term>
-	      <listitem>
-		<para>
-		  This option is obsolete; it is accepted
-		  and ignored for BIND 8 compatibility.  The option
-		  <command>max-journal-size</command> performs a
-		  similar function in BIND 9.
-		</para>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
 	      <term><command>max-journal-size</command></term>
 	      <listitem>
 		<para>
@@ -8194,17 +8017,6 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		<para>
 		  The maximum number of records permitted in a zone.
 		  The default is zero which means unlimited.
-		</para>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
-	      <term><command>host-statistics-max</command></term>
-	      <listitem>
-		<para>
-		  In BIND 8, specifies the maximum number of host statistics
-		  entries to be kept.
-		  Not implemented in BIND 9.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -8627,36 +8439,6 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	      </listitem>
 	    </varlistentry>
 
-	    <varlistentry>
-	      <term><command>statistics-interval</command></term>
-	      <listitem>
-		<para>
-		  Name server statistics will be logged
-		  every <command>statistics-interval</command>
-		  minutes. The default is
-		  60. The maximum value is 28 days (40320 minutes).
-		  If set to 0, no statistics will be logged.
-		  </para><note>
-		  <simpara>
-		    Not yet implemented in
-		    <acronym>BIND</acronym> 9.
-		  </simpara>
-		</note>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
-	      <term><command>topology</command></term>
-	      <listitem>
-		<para>
-		  In BIND 8, this option indicated network topology
-		  so that preferential treatment could be given to
-		  the topologicaly closest name servers when sending
-		  queries. It is not implemented in BIND 9.
-		</para>
-	      </listitem>
-	    </varlistentry>
-
 	  </variablelist>
 
 	</section>
@@ -9012,23 +8794,6 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  <command>stale-answer-enable</command> or via
 		  <command>rndc serve-stale on</command>.
 		</para>
-	      </listitem>
-	    </varlistentry>
-
-	    <varlistentry>
-	      <term><command>min-roots</command></term>
-	      <listitem>
-		<para>
-		  The minimum number of root servers that
-		  is required for a request for the root servers to be
-		  accepted. The default
-		  is <userinput>2</userinput>.
-		</para>
-		<note>
-		  <simpara>
-		    Not implemented in <acronym>BIND</acronym> 9.
-		  </simpara>
-		</note>
 	      </listitem>
 	    </varlistentry>
 
@@ -11526,86 +11291,125 @@ view "external" {
 		    </entry>
 		    <entry colname="2">
 		      <para>
+		        <emphasis role="bold">Note:</emphasis> using
+		        this zone type with any zone other than the root
+		        zone should be considered
+		        <emphasis>experimental</emphasis> and may cause
+		        performance issues, especially for zones which
+		        are large and/or frequently updated.
 		      </para>
 		      <para>
-			A mirror zone acts like a zone of type
-			<userinput>secondary</userinput> whose data is
-			subject to DNSSEC validation before being used
-			in answers.  Validation is performed during the
-			zone transfer process, and again when the zone
-			file is loaded from disk when
-			<command>named</command> is restarted.  If
-			validation fails, a retransfer of the zone is
-			scheduled; if the mirror zone had not previously
-			been loaded or if the previous version has
-			expired, traditional DNS recursion will be used
-			to look up the answers instead.
+		        A mirror zone acts like a zone of type
+		        <userinput>secondary</userinput> whose data is
+		        subject to DNSSEC validation before being used
+		        in answers.  Validation is performed during the
+		        zone transfer process (for both AXFR and IXFR),
+		        and again when the zone file is loaded from disk
+		        when <command>named</command> is restarted.  If
+		        validation of a new version of a mirror zone
+		        fails, a retransfer is scheduled and the most
+		        recent correctly validated version of that zone
+		        is used until it expires; if a newer version of
+		        that zone is later correctly validated, it
+		        replaces the previously used version.  If no
+		        usable zone data is available for a mirror zone
+		        (either because it was never loaded from disk
+		        and has not yet been transferred from a primary
+		        server or because its most recent correctly
+		        validated version expired), traditional DNS
+		        recursion will be used to look up the answers
+		        instead.
 		      </para>
 		      <para>
-			For validation to succeed, a key-signing key
-			(KSK) for the zone must be configured as a trust
-			anchor in <filename>named.conf</filename>: that
-			is, a key for the zone must either be specified
-			in <command>managed-keys</command> or
-			<command>trusted-keys</command>, or in the case
-			of the root zone,
-			<command>dnssec-validation</command> must be set
-			to <userinput>auto</userinput>.  Answers coming
-			from a mirror zone look almost exactly like
-			answers from a zone of type
-			<userinput>secondary</userinput>, with the
-			notable exceptions that the AA bit
-			("authoritative answer") is not set, and the AD
-			bit ("authenticated data") is.
+		        While any zone may be configured with this type,
+		        it is intended to be used to set up a fast local
+		        copy of the root zone, similar to the one
+		        described in RFC 7706.  Note, however, that
+		        mirror zones are not supposed to augment the
+		        example configuration provided by RFC 7706 but
+		        rather to replace it altogether.
 		      </para>
 		      <para>
-			Since mirror zones are intended to be used by
-			recursive resolvers, adding one to a view with
-			recursion disabled is considered to be a
-			configuration error.
-		      </para>
-		      <para>
-			When configuring NOTIFY for a mirror zone, only
-			<userinput>notify no;</userinput> and
-			<userinput>notify explicit;</userinput> can be
-			used.  Using any other
-			<userinput>notify</userinput> setting at the
-			zone level is a configuration error.  Using any
-			other <userinput>notify</userinput> setting at
-			the <userinput>options</userinput> or
-			<userinput>view</userinput> level will cause
-			that setting to be overridden with
-			<userinput>notify explicit;</userinput> for the
-			mirror zone in question.
-		      </para>
-		      <para>
-			Outgoing transfers of mirror zones are disabled
-			by default but may be enabled using
-			<xref endterm="allow_transfer_term" linkend="allow_transfer"/>.
-		      </para>
-		      <para>
-			While any zone may be configured with this type,
-			it is intended to be used to set up a fast local
-			copy of the root zone, similar to the one
-			described in RFC 7706.  Note, however, that
-			mirror zones are not supposed to augment the
-			example configuration provided by RFC 7706 but
-			rather to replace it altogether.
-		      </para>
-		      <para>
-			A default list of primary servers for the root
-			zone is built into <command>named</command> and
-			thus IANA root zone mirroring can be enabled
-			using the following configuration:
+		        A default list of primary servers for the IANA
+		        root zone is built into <command>named</command>
+		        and thus its mirroring can be enabled using the
+		        following configuration:
 		      </para>
 <programlisting>zone "." {
 	type mirror;
 };</programlisting>
 		      <para>
-			To make mirror zone contents persist between
-			<command>named</command> restarts, use the
-			<xref endterm="file_option_term" linkend="file_option"/>
-			option.
+		        In order to set up mirroring of any other zone,
+		        an explicit list of primary servers needs to be
+		        provided using the <command>masters</command>
+		        option (see <xref linkend="masters_grammar"/>
+		        for details).
+		      </para>
+		      <para>
+		        To make mirror zone contents persist between
+		        <command>named</command> restarts, use the
+		        <xref endterm="file_option_term" linkend="file_option"/>
+		        option.
+		      </para>
+		      <para>
+		        Mirror zone validation always happens for the
+		        entire zone contents, i.e. no "incremental
+		        validation" takes place, even for IXFRs.  This
+		        is required to ensure that each version of the
+		        zone used by the resolver is fully
+		        self-consistent with respect to DNSSEC.  Other,
+		        more efficient zone verification methods may be
+		        added in the future.
+		      </para>
+		      <para>
+		        For validation to succeed, a key-signing key
+		        (KSK) for the zone must be configured as a trust
+		        anchor in <filename>named.conf</filename>: that
+		        is, a key for the zone must either be specified
+		        in <command>managed-keys</command> or
+		        <command>trusted-keys</command>.  In the case
+		        of the root zone, you may also rely on the
+		        built-in root trust anchor, which is enabled
+			when <xref endterm="dnssec_validation_term"
+			  linkend="dnssec_validation"/> is set to the
+			default value <userinput>auto</userinput>.
+		      </para>
+		      <para>
+			Answers coming from a mirror zone look almost
+			exactly like answers from a zone of type
+		        <userinput>secondary</userinput>, with the
+		        notable exceptions that the AA bit
+		        ("authoritative answer") is not set, and the AD
+		        bit ("authenticated data") is.
+		      </para>
+		      <para>
+		        Since mirror zones are intended to be used by
+		        recursive resolvers, adding one to a view with
+		        recursion disabled is considered to be a
+		        configuration error.
+		      </para>
+		      <para>
+		        When configuring NOTIFY for a mirror zone, only
+		        <userinput>notify no;</userinput> and
+		        <userinput>notify explicit;</userinput> can be
+		        used.  Using any other <command>notify</command>
+		        setting at the zone level is a configuration
+		        error.  Using any other
+		        <command>notify</command> setting at the
+		        <command>options</command> or
+		        <command>view</command> level will cause
+		        that setting to be overridden with
+		        <userinput>notify explicit;</userinput> for the
+		        mirror zone in question.  Since the global
+		        default for the <command>notify</command> option
+		        is <userinput>yes</userinput>, mirror zones are
+		        by default configured with
+		        <userinput>notify explicit;</userinput>.
+		      </para>
+		      <para>
+		        Outgoing transfers of mirror zones are disabled
+		        by default but may be enabled using
+		        <xref endterm="allow_transfer_term" linkend="allow_transfer"/>.
 		      </para>
 		    </entry>
 		  </row>
@@ -12155,33 +11959,6 @@ view "external" {
 	      </varlistentry>
 
 	      <varlistentry>
-		<term><command>ixfr-base</command></term>
-		<listitem>
-		  <para>
-		    Was used in <acronym>BIND</acronym> 8 to
-		    specify the name
-		    of the transaction log (journal) file for dynamic update
-		    and IXFR.
-		    <acronym>BIND</acronym> 9 ignores the option
-		    and constructs the name of the journal
-		    file by appending "<filename>.jnl</filename>"
-		    to the name of the
-		    zone file.
-		  </para>
-		</listitem>
-	      </varlistentry>
-
-	      <varlistentry>
-		<term><command>ixfr-tmp-file</command></term>
-		<listitem>
-		  <para>
-		    Was an undocumented option in <acronym>BIND</acronym> 8.
-		    Ignored in <acronym>BIND</acronym> 9.
-		  </para>
-		</listitem>
-	      </varlistentry>
-
-	      <varlistentry>
 		<term><command>journal</command></term>
 		<listitem>
 		  <para>
@@ -12279,20 +12056,6 @@ view "external" {
 		    See the description of
 		    <command>notify-to-soa</command> in
 		    <xref linkend="boolean_options"/>.
-		  </para>
-		</listitem>
-	      </varlistentry>
-
-	      <varlistentry>
-		<term><command>pubkey</command></term>
-		<listitem>
-		  <para>
-		    In <acronym>BIND</acronym> 8, this option was
-		    intended for specifying
-		    a public zone key for verification of signatures in DNSSEC
-		    signed
-		    zones when they are loaded from disk. <acronym>BIND</acronym> 9 does not verify signatures
-		    on load and ignores the option.
 		  </para>
 		</listitem>
 	      </varlistentry>
@@ -13369,6 +13132,20 @@ view external {
 		  <row rowsep="0">
 		    <entry colname="1">
 		      <para>
+			AMTRELAY
+		      </para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			Automatic Multicast Tunneling Relay
+			discovery record.
+			Work in progress draft-ietf-mboned-driad-amt-discovery.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para>
 			APL
 		      </para>
 		    </entry>
@@ -14323,6 +14100,19 @@ view external {
 		      </para>
 		    </entry>
 		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para>
+			ZONEMD
+		      </para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			Zone Message Digest.
+			Work in progress draft-wessels-dns-zone-digest.
+		      </para>
+		    </entry>
+		  </row>
 		</tbody>
 	      </tgroup>
 	    </informaltable>
@@ -15242,9 +15032,6 @@ HOST-127.EXAMPLE. MX 0 .
 	  <para>
 	    The <command>$GENERATE</command> directive is a <acronym>BIND</acronym> extension
 	    and not part of the standard zone file format.
-	  </para>
-	  <para>
-	    BIND 8 did not support the optional TTL and CLASS fields.
 	  </para>
 	</section>
 

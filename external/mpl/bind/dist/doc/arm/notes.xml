@@ -27,12 +27,6 @@
       leading up to the stable BIND 9.14 release, this document will be
       updated with additional features added and bugs fixed.
     </para>
-    <para>
-      BIND 9.13.5-W1 is a minimal patch release, addressing a build error
-      on Windows systems that caused some files to be omitted from the ZIP
-      files originally published for BIND 9.13.5. There is no need to use
-      BIND 9.13.5-W1 on any operating system other than Windows.
-    </para>
   </section>
 
   <section xml:id="relnotes_versions"><info><title>Note on Version Numbering</title></info>
@@ -144,6 +138,31 @@
 	  NSEC/NSEC3 chain, but incompletely -- this can result in
 	  a broken chain, affecting validation of proof of nonexistence
 	  for records in the zone. [GL #771]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>named</command> could crash if it managed a DNSSEC
+	  security root with <command>managed-keys</command> and the
+	  authoritative zone rolled the key to an algorithm not supported
+	  by BIND 9.  This flaw is disclosed in CVE-2018-5745. [GL #780]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>named</command> leaked memory when processing a
+	  request with multiple Key Tag EDNS options present. ISC
+	  would like to thank Toshifumi Sakaguchi for bringing this
+	  to our attention.  This flaw is disclosed in CVE-2018-5744.
+	  [GL #772]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Zone transfer controls for writable DLZ zones were not
+	  effective as the <command>allowzonexfr</command> method was
+	  not being called for such zones. This flaw is disclosed in
+	  CVE-2019-6465. [GL #790]
 	</para>
       </listitem>
     </itemizedlist>
@@ -267,6 +286,13 @@
 	  records (negative caching).  The configured minimum TTL for both
 	  configuration options cannot exceed 90 seconds.
 	</para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>rndc status</command> output now includes a
+          <command>reconfig/reload in progress</command> status line if named
+          configuration is being reloaded.
+        </para>
       </listitem>
     </itemizedlist>
   </section>
@@ -451,6 +477,22 @@
 	  removed from BIND as the DSA key length is limited to 1024
 	  bits and this is not considered secure enough.
 	</para>
+	<para>
+	  Support for RSAMD5 algorithm has been removed freom BIND as the usage
+	  of the RSAMD5 algorithm for DNSSEC has been deprecated in RFC6725 and
+	  the security of MD5 algorithm has been compromised and the its usage
+	  is considered harmful.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  The incomplete support for internationalization message catalogs has
+	  been removed from BIND. Since the internationalization was never
+	  completed, and no localized message catalogs were ever made available
+	  for the portions of BIND in which they could have been used, this
+	  change will have no effect except to simplify the source code. BIND's
+	  log messages and other output were already only available in English.
+	</para>
       </listitem>
     </itemizedlist>
   </section>
@@ -578,6 +620,13 @@
 	<para>
 	  The new <command>dig -r</command> command line option
 	  disables reading of the file <filename>$HOME/.digrc</filename>.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Zone signing and key maintenance events are now logged to the
+	  <command>dnssec</command> category rather than
+	  <command>zone</command>.
 	</para>
       </listitem>
     </itemizedlist>

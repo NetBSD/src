@@ -378,7 +378,7 @@ if [ ! "$CYGWIN" ]; then
     $KILL -HUP `cat ns2/named.pid`
 else
     echo_i "reload slave"
-    $RNDCCMD 10.53.0.2 reload > /dev/null 2>&1
+    rndc_reload ns2 10.53.0.2
 fi
 
 sleep 5
@@ -401,7 +401,7 @@ if [ ! "$CYGWIN" ]; then
     $KILL -HUP `cat ns2/named.pid`
 else
     echo_i "reload slave again"
-    $RNDCCMD 10.53.0.2 reload > /dev/null 2>&1
+    rndc_reload ns2 10.53.0.2
 fi
 
 sleep 5

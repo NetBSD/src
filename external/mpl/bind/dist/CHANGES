@@ -1,6 +1,195 @@
-	--- 9.13.5-W1 released ---
+	--- 9.13.7 released ---
+
+5165.	[contrib]	Removed SDB drivers from contrib; they're obsolete.
+			[GL #428]
+
+5164.	[bug]		Correct errno to result translation in dlz filesystem
+			modules. [GL #884]
+
+5163.	[cleanup]	Out-of-tree builds failed --enable-dnstap. [GL #836]
+
+5162.	[cleanup]	Improve dnssec-keymgr manual. Thanks to Tony Finch.
+			[GL !1518]
+
+5161.	[bug]		Do not require the SEP bit to be set for mirror zone
+			trust anchors. [GL #873]
+
+5160.	[contrib]	Added DNAME support to the DLZ LDAP schema. Also
+			fixed a compilation bug affecting several DLZ
+			modules. [GL #872]
+
+5159.	[bug]		dnssec-coverage was incorrectly ignoring
+			names specified on the command line without
+			trailing dots. [GL !1478]
+
+5158.	[protocol]	Add support for AMTRELAY and ZONEMD. [GL #867]
+
+5157.	[bug]		Nslookup now errors out if there are extra command
+			line arguments. [GL #207]
+
+5141.	[security]	Zone transfer controls for writable DLZ zones were
+			not effective as the allowzonexfr method was not being
+			called for such zones. (CVE-2019-6465) [GL #790]
+
+5118.	[security]	Named could crash if it is managing a key with
+			`managed-keys` and the authoritative zone is rolling
+			the key to an unsupported algorithm. (CVE-2018-5745)
+			[GL #780]
+
+5110.	[security]	Named leaked memory if there were multiple Key Tag
+			EDNS options present. (CVE-2018-5744) [GL #772]
+
+	--- 9.13.6 released ---
+
+5156.	[doc]		Extended and refined the section of the ARM describing
+			mirror zones. [GL #774]
+
+5155.	[func]		"named -V" now outputs the default paths to
+			named.conf, rndc.conf, bind.keys, and other
+			files used or created by named and other tools, so
+			that the correct paths to these files can quickly be
+			determined regardless of the configure settings
+			used when BIND was built. [GL #859]
+
+5154.	[bug]		dig: process_opt could be called twice on the same
+			message leading to a assertion failure. [GL #860]
+
+5153.	[func]		Zone transfer statistics (size, number of records, and
+			number of messages) are now logged for outgoing
+			transfers as well as incoming ones. [GL #513]
+
+5152.	[func]		Improved logging of DNSSEC key events:
+			- Zone signing and DNSKEY maintenance events are
+			  now logged to the "dnssec" category
+			- Messages are now logged when DNSSEC keys are
+			  pubished, activated, inactivated, deleted,
+			  or revoked.
+			[GL #714]
+
+5151.	[func]		Options that have been been marked as obsolete in
+			named.conf for a very long time are now fatal
+			configuration errors. [GL #358]
+
+5150.	[cleanup]	Remove the ability to compile BIND with assertions
+			disabled. [GL #735]
+
+5149.	[func]		"rndc dumpdb" now prints a line above a stale RRset
+			indicating how long the data will be retained in the
+			cache for emergency use. [GL #101]
+
+5148.	[bug]		named did not sign the TKEY response. [GL #821]
+
+5147.	[bug]		dnssec-keymgr: Add a five-minute margin to better
+			handle key events close to 'now'. [GL #848]
+
+5146.	[placeholder]
+
+5145.	[func]		Use atomics instead of locked variables for isc_quota
+			and isc_counter. [GL !1389]
+
+5144.	[bug]		dig now returns a non-zero exit code when a TCP
+			connection is prematurely closed by a peer more than
+			once for the same lookup.  [GL #820]
+
+5143.	[bug]		dnssec-keymgr and dnssec-coverage failed to find
+			key files for zone names ending in ".". [GL #560]
+
+5142.	[cleanup]	Removed "configure --disable-rpz-nsip" and
+			"--disable-rpz-nsdname" options. "nsip-enable"
+			and "nsdname-enable" both now default to yes,
+			regardless of compile-time settings. [GL #824]
+
+5140.	[bug]		Don't immediately mark existing keys as inactive and
+			deleted when running dnssec-keymgr for the first
+			time. [GL #117]
+
+5139.	[bug]		If possible, don't use forwarders when priming.
+			This ensures we can get root server IP addresses
+			from priming query response glue, which may not
+			be present if the forwarding server is returning
+			minimal responses. [GL #752]
+
+5138.	[bug]		Under some circumstances named could hit an assertion
+			failure when doing qname minimization when using
+			forwarders. [GL #797]
+
+5137.	[func]		named now logs messages whenever a mirror zone becomes
+			usable or unusable for resolution purposes. [GL #818]
+
+5136.	[cleanup]	Check in named-checkconf that allow-update and
+			allow-update-forwarding are not set at the
+			view/options level; fix documentation. [GL #512]
+
+5135.	[port]		sparc: Use smt_pause() instead of pause. [GL #816]
+
+5134.	[bug]		win32: WSAStartup was not called before getservbyname
+			was called. [GL #590]
+
+5133.	[bug]		'rndc managed-keys' didn't handle class and view
+			correctly and failed to add new lines between each
+			view. [GL !1327]
+
+5132.	[bug]		Fix race condition in cleanup part of dns_dt_create().
+			[GL !1323]
+
+5131.	[cleanup]	Address Coverity warnings. [GL #801]
+
+5130.	[cleanup]	Remove support for l10n message catalogs. [GL #709]
+
+5129.	[contrib]	sdlz_helper.c:build_querylist was not properly
+			splitting the query string. [GL #798]
+
+5128.	[bug]		Refreshkeytime was not being updated for managed
+			keys zones. [GL #784]
+
+5127.	[bug]		rcode.c:maybe_numeric failed to handle NUL in text
+			regions. [GL #807]
+
+5126.	[bug]		Named incorrectly accepted empty base64 and hex encoded
+			fields when reading master files. [GL #807]
+
+5125.	[bug]		Allow for up to 100 records or 64k of data when caching
+			a negative response. [GL #804]
+
+5124.	[bug]		Named could incorrectly return FORMERR rather than
+			SERVFAIL. [GL #804]
+
+5123.	[bug]		dig could hang indefinitely after encountering an error
+			before creating a TCP socket. [GL #692]
+
+5122.	[bug]		In a "forward first;" configuration, a forwarder
+			timeout did not prevent that forwarder from being
+			queried again after falling back to full recursive
+			resolution. [GL #315]
+
+5121.	[contrib]	dlz_stub_driver.c fails to return ISC_R_NOTFOUND on none
+			matching zone names. [GL !1299]
+
+5120.	[placeholder]
+
+5119.	[placeholder]
+
+5117.	[placeholder]
+
+5116.	[bug]		Named/named-checkconf triggered a assertion when
+			a mirror zone's name is bad. [GL #778]
+
+5115.	[bug]		Allow unsupported algorithms in zone when not used for
+			signing with dnssec-signzone. [GL #783]
+
+5114.	[func]		Include a 'reconfig/reload in progress' status line
+			in rndc status, use it in tests.
 
 5113.	[port]		Fixed a Windows build error.
+
+5112.	[bug]		Named/named-checkconf could dump core if there was
+			a missing masters clause and a bad notify clause.
+			[GL #779]
+
+5111.	[bug]		Occluded DNSKEY records could make it into the
+			delegating NSEC/NSEC3 bitmap. [GL #742]
+
+5109.	[cleanup]	Remove support for RSAMD5 algorithm. [GL #628]
 
 	--- 9.13.5 released ---
 
@@ -8,7 +197,7 @@
 			removing out of date keys leading to invalid NSEC
 			and NSEC3 records being added to the zone. [GL #771]
 
-5107.	[bug]		'host -U' did not work.	[GL #769]
+5107.	[bug]		'host -U' did not work. [GL #769]
 
 5106.	[experimental]	A new "plugin" mechanism has been added to allow
 			extension of query processing functionality through

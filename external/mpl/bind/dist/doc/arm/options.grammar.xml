@@ -41,9 +41,9 @@
 	<command>bindkeys-file</command> <replaceable>quoted_string</replaceable>;
 	<command>blackhole</command> { <replaceable>address_match_element</replaceable>; ... };
 	<command>cache-file</command> <replaceable>quoted_string</replaceable>;
-	<command>catalog-zones</command> { zone <replaceable>quoted_string</replaceable> [ default-masters [ port
-	    <replaceable>integer</replaceable> ] [ dscp <replaceable>integer</replaceable> ] { ( <replaceable>masters</replaceable> | <replaceable>ipv4_address</replaceable> [
-	    <command>port</command> <replaceable>integer</replaceable> ] | <replaceable>ipv6_address</replaceable> [ port <replaceable>integer</replaceable> ] ) [ key
+	<command>catalog-zones</command> { zone <replaceable>string</replaceable> [ default-masters [ port <replaceable>integer</replaceable> ]
+	    [ dscp <replaceable>integer</replaceable> ] { ( <replaceable>masters</replaceable> | <replaceable>ipv4_address</replaceable> [ port
+	    <replaceable>integer</replaceable> ] | <replaceable>ipv6_address</replaceable> [ port <replaceable>integer</replaceable> ] ) [ key
 	    <replaceable>string</replaceable> ]; ... } ] [ zone-directory <replaceable>quoted_string</replaceable> ] [
 	    <command>in-memory</command> <replaceable>boolean</replaceable> ] [ min-update-interval <replaceable>ttlval</replaceable> ]; ... };
 	<command>check-dup-records</command> ( fail | warn | ignore );
@@ -97,12 +97,15 @@
 	<command>dnssec-secure-to-insecure</command> <replaceable>boolean</replaceable>;
 	<command>dnssec-update-mode</command> ( maintain | no-resign );
 	<command>dnssec-validation</command> ( yes | no | auto );
-	<command>dnstap</command> { ( all | auth | client | forwarder | resolver | update ) [
-	    ( query | response ) ]; ... };
-	<command>dnstap-identity</command> ( <replaceable>quoted_string</replaceable> | none | hostname );
-	<command>dnstap-output</command> ( file | unix ) <replaceable>quoted_string</replaceable> [ size ( unlimited |
-	    <replaceable>size</replaceable> ) ] [ versions ( unlimited | <replaceable>integer</replaceable> ) ] [ suffix (
-	    <command>increment</command> | timestamp ) ];
+	<command>dnstap</command> { ( all | auth | client | forwarder |
+	    <command>resolver</command> | update ) [ ( query | response ) ];
+	    ... };
+	<command>dnstap-identity</command> ( <replaceable>quoted_string</replaceable> | none |
+	    <command>hostname</command> );
+	<command>dnstap-output</command> ( file | unix ) <replaceable>quoted_string</replaceable> [
+	    <command>size</command> ( unlimited | <replaceable>size</replaceable> ) ] [ versions (
+	    <command>unlimited</command> | <replaceable>integer</replaceable> ) ] [ suffix ( increment
+	    | timestamp ) ];
 	<command>dnstap-version</command> ( <replaceable>quoted_string</replaceable> | none );
 	<command>dscp</command> <replaceable>integer</replaceable>;
 	<command>dual-stack-servers</command> [ port <replaceable>integer</replaceable> ] { ( <replaceable>quoted_string</replaceable> [ port
@@ -118,9 +121,6 @@
 	<command>fetches-per-server</command> <replaceable>integer</replaceable> [ ( drop | fail ) ];
 	<command>fetches-per-zone</command> <replaceable>integer</replaceable> [ ( drop | fail ) ];
 	<command>files</command> ( default | unlimited | <replaceable>sizeval</replaceable> );
-	<command>filter-aaaa</command> { <replaceable>address_match_element</replaceable>; ... };
-	<command>filter-aaaa-on-v4</command> ( break-dnssec | <replaceable>boolean</replaceable> );
-	<command>filter-aaaa-on-v6</command> ( break-dnssec | <replaceable>boolean</replaceable> );
 	<command>flush-zones-on-shutdown</command> <replaceable>boolean</replaceable>;
 	<command>forward</command> ( first | only );
 	<command>forwarders</command> [ port <replaceable>integer</replaceable> ] [ dscp <replaceable>integer</replaceable> ] { ( <replaceable>ipv4_address</replaceable>
@@ -176,6 +176,8 @@
 	<command>memstatistics</command> <replaceable>boolean</replaceable>;
 	<command>memstatistics-file</command> <replaceable>quoted_string</replaceable>;
 	<command>message-compression</command> <replaceable>boolean</replaceable>;
+	<command>min-cache-ttl</command> <replaceable>ttlval</replaceable>;
+	<command>min-ncache-ttl</command> <replaceable>ttlval</replaceable>;
 	<command>min-refresh-time</command> <replaceable>integer</replaceable>;
 	<command>min-retry-time</command> <replaceable>integer</replaceable>;
 	<command>minimal-any</command> <replaceable>boolean</replaceable>;
@@ -239,18 +241,17 @@
 	<command>resolver-retry-interval</command> <replaceable>integer</replaceable>;
 	<command>response-padding</command> { <replaceable>address_match_element</replaceable>; ... } block-size
 	    <replaceable>integer</replaceable>;
-	<command>response-policy</command> { zone <replaceable>quoted_string</replaceable> [ log <replaceable>boolean</replaceable> ] [
-	    <command>max-policy-ttl</command> <replaceable>ttlval</replaceable> ] [ min-update-interval <replaceable>ttlval</replaceable> ] [
-	    <command>policy</command> ( cname | disabled | drop | given | no-op | nodata |
-	    <command>nxdomain</command> | passthru | tcp-only <replaceable>quoted_string</replaceable> ) ] [
-	    <command>recursive-only</command> <replaceable>boolean</replaceable> ] [ nsip-enable <replaceable>boolean</replaceable> ] [
-	    <command>nsdname-enable</command> <replaceable>boolean</replaceable> ]; ... } [ break-dnssec <replaceable>boolean</replaceable> ] [
-	    <command>max-policy-ttl</command> <replaceable>ttlval</replaceable> ] [ min-update-interval <replaceable>ttlval</replaceable> ] [
-	    <command>min-ns-dots</command> <replaceable>integer</replaceable> ] [ nsip-wait-recurse <replaceable>boolean</replaceable> ] [
-	    <command>qname-wait-recurse</command> <replaceable>boolean</replaceable> ] [ recursive-only <replaceable>boolean</replaceable> ] [
-	    <command>nsip-enable</command> <replaceable>boolean</replaceable> ] [ nsdname-enable <replaceable>boolean</replaceable> ] [
-	    <command>dnsrps-enable</command> <replaceable>boolean</replaceable> ] [ dnsrps-options { <replaceable>unspecified-text</replaceable>
-	    } ];
+	<command>response-policy</command> { zone <replaceable>string</replaceable> [ log <replaceable>boolean</replaceable> ] [ max-policy-ttl
+	    <replaceable>ttlval</replaceable> ] [ min-update-interval <replaceable>ttlval</replaceable> ] [ policy ( cname |
+	    <command>disabled</command> | drop | given | no-op | nodata | nxdomain | passthru
+	    | tcp-only <replaceable>quoted_string</replaceable> ) ] [ recursive-only <replaceable>boolean</replaceable> ] [
+	    <command>nsip-enable</command> <replaceable>boolean</replaceable> ] [ nsdname-enable <replaceable>boolean</replaceable> ]; ... } [
+	    <command>break-dnssec</command> <replaceable>boolean</replaceable> ] [ max-policy-ttl <replaceable>ttlval</replaceable> ] [
+	    <command>min-update-interval</command> <replaceable>ttlval</replaceable> ] [ min-ns-dots <replaceable>integer</replaceable> ] [
+	    <command>nsip-wait-recurse</command> <replaceable>boolean</replaceable> ] [ qname-wait-recurse <replaceable>boolean</replaceable> ]
+	    [ recursive-only <replaceable>boolean</replaceable> ] [ nsip-enable <replaceable>boolean</replaceable> ] [
+	    <command>nsdname-enable</command> <replaceable>boolean</replaceable> ] [ dnsrps-enable <replaceable>boolean</replaceable> ] [
+	    <command>dnsrps-options</command> { <replaceable>unspecified-text</replaceable> } ];
 	<command>root-delegation-only</command> [ exclude { <replaceable>string</replaceable>; ... } ];
 	<command>root-key-sentinel</command> <replaceable>boolean</replaceable>;
 	<command>rrset-order</command> { [ class <replaceable>string</replaceable> ] [ type <replaceable>string</replaceable> ] [ name

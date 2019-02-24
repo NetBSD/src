@@ -13,49 +13,50 @@ offer support on a "best effort" basis for some.
 
 Regularly tested platforms
 
-As of May 2018, BIND 9.13 is tested on the following systems:
+As of Jan 2019, BIND 9.13 is fully supported and regularly tested on the
+following systems:
 
-  * Debian 8, 9
+  * Debian 8, 9, 10
   * Ubuntu 16.04, 18.04
-  * Fedora 27, 28
-  * Red Hat/CentOS 6, 7
-  * FreeBSD 10.x, 11.x
-  * OpenBSD 6.3
+  * Fedora 28, 29
+  * Red Hat Enterprise Linux / CentOS 6, 7
+  * FreeBSD 11.x
+  * OpenBSD 6.2, 6.3
 
 The amd64, i386, armhf and arm64 CPU architectures are all fully
 supported.
 
 Best effort
 
-The following are platforms on which BIND is known to build and run, but
-on which it is not routinely tested. ISC makes every effort to fix bugs on
-these platforms, but may be unable to do so quickly due to lack of
-hardware, less familiarity on the part of engineering staff, and other
-constraints.
+The following are platforms on which BIND is known to build and run. ISC
+makes every effort to fix bugs on these platforms, but may be unable to do
+so quickly due to lack of hardware, less familiarity on the part of
+engineering staff, and other constraints. With the exception of Windows
+Server 2012 R2, none of these are tested regularly by ISC.
 
-  * Windows 10 / x64
   * Windows Server 2012 R2, 2016 / x64
+  * Windows 10 / x64
   * macOS 10.12+
-  * Solaris 10
-  * FreeBSD 12+
-  * OpenBSD 6.2
+  * Solaris 11
+  * FreeBSD 10.x, 12.0+
+  * OpenBSD 6.4+
   * NetBSD
-  * Older or less popular Linux distributions still supported by their
-    vendors, such as:
+  * Other Linux distributions still supported by their vendors, such as:
       + Ubuntu 14.04, 18.10+
       + Gentoo
-      + ArchLinux
+      + Arch Linux
       + Alpine Linux
-  * OpenWRT/LEDE 17.0
+  * OpenWRT/LEDE 17.01+
   * Other CPU architectures (mips, mipsel, sparc, ...)
 
 Unsupported platforms
 
-These are platforms on which BIND is known not to build or run:
+These are platforms on which BIND 9.13 is known not to build or run:
 
   * Platforms without at least OpenSSL 1.0.2
   * Windows 10 / x86
   * Windows Server 2012 and older
+  * Solaris 10 and older
   * Platforms that don't support IPv6 Advanced Socket API (RFC 3542)
   * Platforms that don't support atomic operations (via compiler or
     library)
@@ -80,7 +81,7 @@ Debian armhf documentation):
   * The lowest worthwhile CPU implementation is Armv7-A, therefore the
     recommended build option is -march=armv7-a.
 
-  * FPU should be set at VFPv3-D16 as they represent the miminum
+  * FPU should be set at VFPv3-D16 as they represent the minimum
     specification of the processors to support here, therefore the
     recommended build option is -mfpu=vfpv3-d16.
 

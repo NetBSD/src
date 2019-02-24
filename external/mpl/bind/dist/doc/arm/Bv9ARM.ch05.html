@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2019 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1312,12 +1312,9 @@
 </pre>
 
         <p>
-          In <acronym class="acronym">BIND</acronym> 9, the logging configuration
-          is only established when
-          the entire configuration file has been parsed.  In <acronym class="acronym">BIND</acronym> 8, it was
-          established as soon as the <span class="command"><strong>logging</strong></span>
-          statement
-          was parsed. When the server is starting up, all logging messages
+          The logging configuration is only established when
+          the entire configuration file has been parsed.
+          When the server is starting up, all logging messages
           regarding syntax errors in the configuration file go to the default
           channels, or to standard error if the <code class="option">-g</code> option
           was specified.
@@ -2393,9 +2390,9 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>bindkeys-file</strong></span> <em class="replaceable"><code>quoted_string</code></em>;
 	<span class="command"><strong>blackhole</strong></span> { <em class="replaceable"><code>address_match_element</code></em>; ... };
 	<span class="command"><strong>cache-file</strong></span> <em class="replaceable"><code>quoted_string</code></em>;
-	<span class="command"><strong>catalog-zones</strong></span> { zone <em class="replaceable"><code>quoted_string</code></em> [ default-masters [ port
-	    <em class="replaceable"><code>integer</code></em> ] [ dscp <em class="replaceable"><code>integer</code></em> ] { ( <em class="replaceable"><code>masters</code></em> | <em class="replaceable"><code>ipv4_address</code></em> [
-	    <span class="command"><strong>port</strong></span> <em class="replaceable"><code>integer</code></em> ] | <em class="replaceable"><code>ipv6_address</code></em> [ port <em class="replaceable"><code>integer</code></em> ] ) [ key
+	<span class="command"><strong>catalog-zones</strong></span> { zone <em class="replaceable"><code>string</code></em> [ default-masters [ port <em class="replaceable"><code>integer</code></em> ]
+	    [ dscp <em class="replaceable"><code>integer</code></em> ] { ( <em class="replaceable"><code>masters</code></em> | <em class="replaceable"><code>ipv4_address</code></em> [ port
+	    <em class="replaceable"><code>integer</code></em> ] | <em class="replaceable"><code>ipv6_address</code></em> [ port <em class="replaceable"><code>integer</code></em> ] ) [ key
 	    <em class="replaceable"><code>string</code></em> ]; ... } ] [ zone-directory <em class="replaceable"><code>quoted_string</code></em> ] [
 	    <span class="command"><strong>in-memory</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ min-update-interval <em class="replaceable"><code>ttlval</code></em> ]; ... };
 	<span class="command"><strong>check-dup-records</strong></span> ( fail | warn | ignore );
@@ -2449,12 +2446,15 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>dnssec-secure-to-insecure</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>dnssec-update-mode</strong></span> ( maintain | no-resign );
 	<span class="command"><strong>dnssec-validation</strong></span> ( yes | no | auto );
-	<span class="command"><strong>dnstap</strong></span> { ( all | auth | client | forwarder | resolver | update ) [
-	    ( query | response ) ]; ... };
-	<span class="command"><strong>dnstap-identity</strong></span> ( <em class="replaceable"><code>quoted_string</code></em> | none | hostname );
-	<span class="command"><strong>dnstap-output</strong></span> ( file | unix ) <em class="replaceable"><code>quoted_string</code></em> [ size ( unlimited |
-	    <em class="replaceable"><code>size</code></em> ) ] [ versions ( unlimited | <em class="replaceable"><code>integer</code></em> ) ] [ suffix (
-	    <span class="command"><strong>increment</strong></span> | timestamp ) ];
+	<span class="command"><strong>dnstap</strong></span> { ( all | auth | client | forwarder |
+	    <span class="command"><strong>resolver</strong></span> | update ) [ ( query | response ) ];
+	    ... };
+	<span class="command"><strong>dnstap-identity</strong></span> ( <em class="replaceable"><code>quoted_string</code></em> | none |
+	    <span class="command"><strong>hostname</strong></span> );
+	<span class="command"><strong>dnstap-output</strong></span> ( file | unix ) <em class="replaceable"><code>quoted_string</code></em> [
+	    <span class="command"><strong>size</strong></span> ( unlimited | <em class="replaceable"><code>size</code></em> ) ] [ versions (
+	    <span class="command"><strong>unlimited</strong></span> | <em class="replaceable"><code>integer</code></em> ) ] [ suffix ( increment
+	    | timestamp ) ];
 	<span class="command"><strong>dnstap-version</strong></span> ( <em class="replaceable"><code>quoted_string</code></em> | none );
 	<span class="command"><strong>dscp</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>dual-stack-servers</strong></span> [ port <em class="replaceable"><code>integer</code></em> ] { ( <em class="replaceable"><code>quoted_string</code></em> [ port
@@ -2470,9 +2470,6 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>fetches-per-server</strong></span> <em class="replaceable"><code>integer</code></em> [ ( drop | fail ) ];
 	<span class="command"><strong>fetches-per-zone</strong></span> <em class="replaceable"><code>integer</code></em> [ ( drop | fail ) ];
 	<span class="command"><strong>files</strong></span> ( default | unlimited | <em class="replaceable"><code>sizeval</code></em> );
-	<span class="command"><strong>filter-aaaa</strong></span> { <em class="replaceable"><code>address_match_element</code></em>; ... };
-	<span class="command"><strong>filter-aaaa-on-v4</strong></span> ( break-dnssec | <em class="replaceable"><code>boolean</code></em> );
-	<span class="command"><strong>filter-aaaa-on-v6</strong></span> ( break-dnssec | <em class="replaceable"><code>boolean</code></em> );
 	<span class="command"><strong>flush-zones-on-shutdown</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>forward</strong></span> ( first | only );
 	<span class="command"><strong>forwarders</strong></span> [ port <em class="replaceable"><code>integer</code></em> ] [ dscp <em class="replaceable"><code>integer</code></em> ] { ( <em class="replaceable"><code>ipv4_address</code></em>
@@ -2528,6 +2525,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>memstatistics</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>memstatistics-file</strong></span> <em class="replaceable"><code>quoted_string</code></em>;
 	<span class="command"><strong>message-compression</strong></span> <em class="replaceable"><code>boolean</code></em>;
+	<span class="command"><strong>min-cache-ttl</strong></span> <em class="replaceable"><code>ttlval</code></em>;
+	<span class="command"><strong>min-ncache-ttl</strong></span> <em class="replaceable"><code>ttlval</code></em>;
 	<span class="command"><strong>min-refresh-time</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>min-retry-time</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>minimal-any</strong></span> <em class="replaceable"><code>boolean</code></em>;
@@ -2591,18 +2590,17 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>resolver-retry-interval</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>response-padding</strong></span> { <em class="replaceable"><code>address_match_element</code></em>; ... } block-size
 	    <em class="replaceable"><code>integer</code></em>;
-	<span class="command"><strong>response-policy</strong></span> { zone <em class="replaceable"><code>quoted_string</code></em> [ log <em class="replaceable"><code>boolean</code></em> ] [
-	    <span class="command"><strong>max-policy-ttl</strong></span> <em class="replaceable"><code>ttlval</code></em> ] [ min-update-interval <em class="replaceable"><code>ttlval</code></em> ] [
-	    <span class="command"><strong>policy</strong></span> ( cname | disabled | drop | given | no-op | nodata |
-	    <span class="command"><strong>nxdomain</strong></span> | passthru | tcp-only <em class="replaceable"><code>quoted_string</code></em> ) ] [
-	    <span class="command"><strong>recursive-only</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ nsip-enable <em class="replaceable"><code>boolean</code></em> ] [
-	    <span class="command"><strong>nsdname-enable</strong></span> <em class="replaceable"><code>boolean</code></em> ]; ... } [ break-dnssec <em class="replaceable"><code>boolean</code></em> ] [
-	    <span class="command"><strong>max-policy-ttl</strong></span> <em class="replaceable"><code>ttlval</code></em> ] [ min-update-interval <em class="replaceable"><code>ttlval</code></em> ] [
-	    <span class="command"><strong>min-ns-dots</strong></span> <em class="replaceable"><code>integer</code></em> ] [ nsip-wait-recurse <em class="replaceable"><code>boolean</code></em> ] [
-	    <span class="command"><strong>qname-wait-recurse</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ recursive-only <em class="replaceable"><code>boolean</code></em> ] [
-	    <span class="command"><strong>nsip-enable</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ nsdname-enable <em class="replaceable"><code>boolean</code></em> ] [
-	    <span class="command"><strong>dnsrps-enable</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ dnsrps-options { <em class="replaceable"><code>unspecified-text</code></em>
-	    } ];
+	<span class="command"><strong>response-policy</strong></span> { zone <em class="replaceable"><code>string</code></em> [ log <em class="replaceable"><code>boolean</code></em> ] [ max-policy-ttl
+	    <em class="replaceable"><code>ttlval</code></em> ] [ min-update-interval <em class="replaceable"><code>ttlval</code></em> ] [ policy ( cname |
+	    <span class="command"><strong>disabled</strong></span> | drop | given | no-op | nodata | nxdomain | passthru
+	    | tcp-only <em class="replaceable"><code>quoted_string</code></em> ) ] [ recursive-only <em class="replaceable"><code>boolean</code></em> ] [
+	    <span class="command"><strong>nsip-enable</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ nsdname-enable <em class="replaceable"><code>boolean</code></em> ]; ... } [
+	    <span class="command"><strong>break-dnssec</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ max-policy-ttl <em class="replaceable"><code>ttlval</code></em> ] [
+	    <span class="command"><strong>min-update-interval</strong></span> <em class="replaceable"><code>ttlval</code></em> ] [ min-ns-dots <em class="replaceable"><code>integer</code></em> ] [
+	    <span class="command"><strong>nsip-wait-recurse</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ qname-wait-recurse <em class="replaceable"><code>boolean</code></em> ]
+	    [ recursive-only <em class="replaceable"><code>boolean</code></em> ] [ nsip-enable <em class="replaceable"><code>boolean</code></em> ] [
+	    <span class="command"><strong>nsdname-enable</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ dnsrps-enable <em class="replaceable"><code>boolean</code></em> ] [
+	    <span class="command"><strong>dnsrps-options</strong></span> { <em class="replaceable"><code>unspecified-text</code></em> } ];
 	<span class="command"><strong>root-delegation-only</strong></span> [ exclude { <em class="replaceable"><code>string</code></em>; ... } ];
 	<span class="command"><strong>root-key-sentinel</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>rrset-order</strong></span> { [ class <em class="replaceable"><code>string</code></em> ] [ type <em class="replaceable"><code>string</code></em> ] [ name
@@ -3077,17 +3075,6 @@ badresp:1,adberr:0,findfail:0,valfail:0]
                 path, it will be relative to the working directory. The
                 directory <span class="emphasis"><em>must</em></span> be writable by the
                 effective user ID of the <span class="command"><strong>named</strong></span> process.
-              </p>
-            </dd>
-<dt><span class="term"><span class="command"><strong>named-xfer</strong></span></span></dt>
-<dd>
-              <p>
-                <span class="emphasis"><em>This option is obsolete.</em></span> It
-                was used in <acronym class="acronym">BIND</acronym> 8 to specify
-                the pathname to the <span class="command"><strong>named-xfer</strong></span>
-                program.  In <acronym class="acronym">BIND</acronym> 9, no separate
-                <span class="command"><strong>named-xfer</strong></span> program is needed;
-                its functionality is built into the name server.
               </p>
             </dd>
 <dt><span class="term"><span class="command"><strong>qname-minimization</strong></span></span></dt>
@@ -3836,13 +3823,11 @@ options {
 <dt><span class="term"><span class="command"><strong>auth-nxdomain</strong></span></span></dt>
 <dd>
                 <p>
-                  If <strong class="userinput"><code>yes</code></strong>, then the <span class="command"><strong>AA</strong></span> bit
-                  is always set on NXDOMAIN responses, even if the server is
-                  not actually
-                  authoritative. The default is <strong class="userinput"><code>no</code></strong>;
-                  this is
-                  a change from <acronym class="acronym">BIND</acronym> 8. If you
-                  are using very old DNS software, you
+                  If <strong class="userinput"><code>yes</code></strong>, then the
+                  <span class="command"><strong>AA</strong></span> bit is always set on NXDOMAIN
+                  responses, even if the server is not actually
+                  authoritative. The default is <strong class="userinput"><code>no</code></strong>.
+                  If you are using very old DNS software, you
                   may need to set it to <strong class="userinput"><code>yes</code></strong>.
                 </p>
               </dd>
@@ -4088,28 +4073,6 @@ options {
                 </p>
 
               </dd>
-<dt><span class="term"><span class="command"><strong>fake-iquery</strong></span></span></dt>
-<dd>
-                <p>
-                  In <acronym class="acronym">BIND</acronym> 8, this option
-                  enabled simulating the obsolete DNS query type
-                  IQUERY. <acronym class="acronym">BIND</acronym> 9 never does
-                  IQUERY simulation.
-                </p>
-              </dd>
-<dt><span class="term"><span class="command"><strong>fetch-glue</strong></span></span></dt>
-<dd>
-                <p>
-                  <span class="emphasis"><em>This option is obsolete</em></span>.
-                  In BIND 8, <strong class="userinput"><code>fetch-glue yes</code></strong>
-                  caused the server to attempt to fetch glue resource records
-                  it
-                  didn't have when constructing the additional
-                  data section of a response.  This is now considered a bad
-                  idea
-                  and BIND 9 never does it.
-                </p>
-              </dd>
 <dt><span class="term"><span class="command"><strong>flush-zones-on-shutdown</strong></span></span></dt>
 <dd>
                 <p>
@@ -4127,45 +4090,12 @@ options {
                   but is now obsolete.
                 </p>
               </dd>
-<dt><span class="term"><span class="command"><strong>has-old-clients</strong></span></span></dt>
-<dd>
-                <p>
-                  This option was incorrectly implemented
-                  in <acronym class="acronym">BIND</acronym> 8, and is ignored by <acronym class="acronym">BIND</acronym> 9.
-                  To achieve the intended effect
-                  of
-                  <span class="command"><strong>has-old-clients</strong></span> <strong class="userinput"><code>yes</code></strong>, specify
-                  the two separate options <span class="command"><strong>auth-nxdomain</strong></span> <strong class="userinput"><code>yes</code></strong>
-                  and <span class="command"><strong>rfc2308-type1</strong></span> <strong class="userinput"><code>no</code></strong> instead.
-                </p>
-              </dd>
-<dt><span class="term"><span class="command"><strong>host-statistics</strong></span></span></dt>
-<dd>
-                <p>
-                  In BIND 8, this enabled keeping of
-                  statistics for every host that the name server interacts
-                  with.
-                  Not implemented in BIND 9.
-                </p>
-              </dd>
 <dt><span class="term"><span class="command"><strong>root-key-sentinel</strong></span></span></dt>
 <dd>
                 <p>
                   Respond to root key sentinel probes as described in
                   draft-ietf-dnsop-kskroll-sentinel-08. The default is
                   <strong class="userinput"><code>yes</code></strong>.
-                </p>
-              </dd>
-<dt><span class="term"><span class="command"><strong>maintain-ixfr-base</strong></span></span></dt>
-<dd>
-                <p>
-                  <span class="emphasis"><em>This option is obsolete</em></span>.
-                  It was used in <acronym class="acronym">BIND</acronym> 8 to
-                  determine whether a transaction log was
-                  kept for Incremental Zone Transfer. <acronym class="acronym">BIND</acronym> 9 maintains a transaction
-                  log whenever possible.  If you need to disable outgoing
-                  incremental zone
-                  transfers, use <span class="command"><strong>provide-ixfr</strong></span> <strong class="userinput"><code>no</code></strong>.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>message-compression</strong></span></span></dt>
@@ -4247,16 +4177,6 @@ options {
                   turned on for these queries, so no unnecessary records
                   will be added to the authority or additional sections.
                   The default is <strong class="userinput"><code>no</code></strong>.
-                </p>
-              </dd>
-<dt><span class="term"><span class="command"><strong>multiple-cnames</strong></span></span></dt>
-<dd>
-                <p>
-                  This option was used in <acronym class="acronym">BIND</acronym> 8 to allow
-                  a domain name to have multiple CNAME records in violation of
-                  the DNS standards.  <acronym class="acronym">BIND</acronym> 9.2 onwards
-                  always strictly enforces the CNAME rules both in master
-                  files and dynamic updates.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>notify</strong></span></span></dt>
@@ -4503,22 +4423,6 @@ options {
                   of two (for instance, 128), but this is not mandatory.
                 </p>
               </dd>
-<dt><span class="term"><span class="command"><strong>rfc2308-type1</strong></span></span></dt>
-<dd>
-                <p>
-                  Setting this to <strong class="userinput"><code>yes</code></strong> will
-                  cause the server to send NS records along with the SOA
-                  record for negative
-                  answers. The default is <strong class="userinput"><code>no</code></strong>.
-                </p>
-                <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
-<h3 class="title">Note</h3>
-                  <p>
-                    Not yet implemented in <acronym class="acronym">BIND</acronym>
-                    9.
-                  </p>
-                </div>
-              </dd>
 <dt><span class="term"><span class="command"><strong>trust-anchor-telemetry</strong></span></span></dt>
 <dd>
                 <p>
@@ -4544,14 +4448,6 @@ options {
                 </p>
                 <p>
                   The default is <strong class="userinput"><code>yes</code></strong>.
-                </p>
-              </dd>
-<dt><span class="term"><span class="command"><strong>use-id-pool</strong></span></span></dt>
-<dd>
-                <p>
-                  <span class="emphasis"><em>This option is obsolete</em></span>.
-                  <acronym class="acronym">BIND</acronym> 9 always allocates query
-                  IDs from a pool.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>use-ixfr</strong></span></span></dt>
@@ -4592,21 +4488,6 @@ options {
                   <span class="command"><strong>request-expire</strong></span> in
                   <a class="xref" href="Bv9ARM.ch05.html#server_statement_definition_and_usage" title="server Statement Definition and Usage">the section called &#8220;<span class="command"><strong>server</strong></span> Statement Definition and
             Usage&#8221;</a>.
-                </p>
-              </dd>
-<dt><span class="term"><span class="command"><strong>treat-cr-as-space</strong></span></span></dt>
-<dd>
-                <p>
-                  This option was used in <acronym class="acronym">BIND</acronym>
-                  8 to make
-                  the server treat carriage return ("<span class="command"><strong>\r</strong></span>") characters the same way
-                  as a space or tab character,
-                  to facilitate loading of zone files on a UNIX system that
-                  were generated
-                  on an NT or DOS machine. In <acronym class="acronym">BIND</acronym> 9, both UNIX "<span class="command"><strong>\n</strong></span>"
-                  and NT/DOS "<span class="command"><strong>\r\n</strong></span>" newlines
-                  are always accepted,
-                  and the option is ignored.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>match-mapped-addresses</strong></span></span></dt>
@@ -4728,7 +4609,9 @@ options {
                   The default is <strong class="userinput"><code>yes</code></strong>.
                 </p>
               </dd>
-<dt><span class="term"><span class="command"><strong>dnssec-validation</strong></span></span></dt>
+<dt>
+<a name="dnssec_validation"></a><span class="term"><a name="dnssec_validation_term"></a><span class="command"><strong>dnssec-validation</strong></span></span>
+</dt>
 <dd>
                 <p>
                   This enables DNSSEC validation in <span class="command"><strong>named</strong></span>.
@@ -5021,8 +4904,7 @@ options {
 <dd>
                 <p>
                   Try to refresh the zone using TCP if UDP queries fail.
-                  For BIND 8 compatibility, the default is
-                  <span class="command"><strong>yes</strong></span>.
+                  The default is <span class="command"><strong>yes</strong></span>.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>dnssec-secure-to-insecure</strong></span></span></dt>
@@ -5174,18 +5056,24 @@ options {
 <dt><span class="term"><span class="command"><strong>allow-notify</strong></span></span></dt>
 <dd>
                 <p>
-                  Specifies which hosts are allowed to
-                  notify this server, a slave, of zone changes in addition
-                  to the zone masters.
-                  <span class="command"><strong>allow-notify</strong></span> may also be
-                  specified in the
-                  <span class="command"><strong>zone</strong></span> statement, in which case
-                  it overrides the
-                  <span class="command"><strong>options allow-notify</strong></span>
-                  statement.  It is only meaningful
-                  for a slave zone.  If not specified, the default is to
-                  process notify messages
-                  only from a zone's master.
+                  This ACL specifies which hosts may send NOTIFY messages
+                  to inform this server of changes to zones for which it
+                  is acting as a secondary server.  This is only
+                  applicable for secondary zones (i.e., type
+                  <code class="literal">secondary</code> or <code class="literal">slave</code>).
+                </p>
+                <p>
+                  If this option is set in <span class="command"><strong>view</strong></span> or
+                  <span class="command"><strong>options</strong></span>, it is globally applied to
+                  all secondary zones. If set in the <span class="command"><strong>zone</strong></span>
+                  statement, the global value is overridden.
+                </p>
+                <p>
+                  If not specified, the default is to process NOTIFY
+                  messages only from the configured
+                  <span class="command"><strong>masters</strong></span> for the zone.
+                  <span class="command"><strong>allow-notify</strong></span> can be used to expand the
+                  list of permitted hosts, not to reduce it.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>allow-query</strong></span></span></dt>
@@ -5301,40 +5189,46 @@ options {
 <dt><span class="term"><span class="command"><strong>allow-update</strong></span></span></dt>
 <dd>
                 <p>
-                  Specifies which hosts are allowed to
-                  submit Dynamic DNS updates for master zones. The default is
-                  to deny
-                  updates from all hosts.  Note that allowing updates based
-                  on the requestor's IP address is insecure; see
+                  When set in the <span class="command"><strong>zone</strong></span> statement for
+                  a master zone, specifies which hosts are allowed to
+                  submit Dynamic DNS updates to that zone.  The default
+                  is to deny updates from all hosts.  This can only
+                  be set at the <span class="command"><strong>zone</strong></span> level, not in
+                  <span class="command"><strong>options</strong></span> or <span class="command"><strong>view</strong></span>.
+                </p>
+                <p>
+                  Note that allowing updates based on the
+                  requestor's IP address is insecure; see
                   <a class="xref" href="Bv9ARM.ch06.html#dynamic_update_security" title="Dynamic Update Security">the section called &#8220;Dynamic Update Security&#8221;</a> for details.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>allow-update-forwarding</strong></span></span></dt>
 <dd>
                 <p>
-                  Specifies which hosts are allowed to
-                  submit Dynamic DNS updates to slave zones to be forwarded to
-                  the
-                  master.  The default is <strong class="userinput"><code>{ none; }</code></strong>,
-                  which
-                  means that no update forwarding will be performed.  To
-                  enable
-                  update forwarding, specify
+                  When set in the <span class="command"><strong>zone</strong></span> statement for
+                  a slave zone, specifies which hosts are allowed to
+                  submit Dynamic DNS updates and have them be forwarded
+                  to the master.  The default is
+                  <strong class="userinput"><code>{ none; }</code></strong>, which means that no
+                  update forwarding will be performed.  This can only be
+                  set at the <span class="command"><strong>zone</strong></span> level, not in
+                  <span class="command"><strong>options</strong></span> or <span class="command"><strong>view</strong></span>.
+                </p>
+                <p>
+                  To enable update forwarding, specify
                   <strong class="userinput"><code>allow-update-forwarding { any; };</code></strong>.
-                  Specifying values other than <strong class="userinput"><code>{ none; }</code></strong> or
-                  <strong class="userinput"><code>{ any; }</code></strong> is usually
-                  counterproductive, since
-                  the responsibility for update access control should rest
-                  with the
-                  master server, not the slaves.
+                  in the <span class="command"><strong>zone</strong></span> statement.
+                  Specifying values other than <strong class="userinput"><code>{ none; }</code></strong>
+                  or <strong class="userinput"><code>{ any; }</code></strong> is usually
+                  counterproductive; the responsibility for update
+                  access control should rest with the master server, not
+                  the slave.
                 </p>
                 <p>
                   Note that enabling the update forwarding feature on a slave
-                  server
-                  may expose master servers relying on insecure IP address
-                  based
-                  access control to attacks; see <a class="xref" href="Bv9ARM.ch06.html#dynamic_update_security" title="Dynamic Update Security">the section called &#8220;Dynamic Update Security&#8221;</a>
-                  for more details.
+                  server may expose master servers to attacks if they rely
+                  on insecure IP-address-based access control; see
+                  <a class="xref" href="Bv9ARM.ch06.html#dynamic_update_security" title="Dynamic Update Security">the section called &#8220;Dynamic Update Security&#8221;</a> for more details.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>allow-v6-synthesis</strong></span></span></dt>
@@ -5354,13 +5248,14 @@ options {
 </dt>
 <dd>
                 <p>
-                  Specifies which hosts are allowed to
-                  receive zone transfers from the server. <span class="command"><strong>allow-transfer</strong></span> may
-                  also be specified in the <span class="command"><strong>zone</strong></span>
-                  statement, in which
-                  case it overrides the <span class="command"><strong>options allow-transfer</strong></span> statement.
-                  If not specified, the default is to allow transfers to all
-                  hosts.
+                  Specifies which hosts are allowed to receive zone
+                  transfers from the server.  <span class="command"><strong>allow-transfer</strong></span>
+                  may also be specified in the <span class="command"><strong>zone</strong></span>
+                  statement, in which case it overrides the
+                  <span class="command"><strong>allow-transfer</strong></span> statement set in
+                  <span class="command"><strong>options</strong></span> or <span class="command"><strong>view</strong></span>.
+                  If not specified, the default is to allow transfers to
+                  all hosts.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>blackhole</strong></span></span></dt>
@@ -5819,19 +5714,6 @@ avoid-v6-udp-ports {};
                   to zero, it will be silently raised to one.
                 </p>
               </dd>
-<dt><span class="term"><span class="command"><strong>serial-queries</strong></span></span></dt>
-<dd>
-                <p>
-                  In BIND 8, the <span class="command"><strong>serial-queries</strong></span>
-                  option
-                  set the maximum number of concurrent serial number queries
-                  allowed to be outstanding at any given time.
-                  BIND 9 does not limit the number of outstanding
-                  serial queries and ignores the <span class="command"><strong>serial-queries</strong></span> option.
-                  Instead, it limits the rate at which the queries are sent
-                  as defined using the <span class="command"><strong>serial-query-rate</strong></span> option.
-                </p>
-              </dd>
 <dt><span class="term"><span class="command"><strong>transfer-format</strong></span></span></dt>
 <dd>
 
@@ -5993,10 +5875,9 @@ avoid-v6-udp-ports {};
 <dd>
                 <p>
                   Use the alternate transfer sources or not.  If views are
-                  specified this defaults to <span class="command"><strong>no</strong></span>
+                  specified this defaults to <span class="command"><strong>no</strong></span>,
                   otherwise it defaults to
-                  <span class="command"><strong>yes</strong></span> (for BIND 8
-                  compatibility).
+                  <span class="command"><strong>yes</strong></span>.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>notify-source</strong></span></span></dt>
@@ -6164,15 +6045,6 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
           </p>
 
           <div class="variablelist"><dl class="variablelist">
-<dt><span class="term"><span class="command"><strong>max-ixfr-log-size</strong></span></span></dt>
-<dd>
-                <p>
-                  This option is obsolete; it is accepted
-                  and ignored for BIND 8 compatibility.  The option
-                  <span class="command"><strong>max-journal-size</strong></span> performs a
-                  similar function in BIND 9.
-                </p>
-              </dd>
 <dt><span class="term"><span class="command"><strong>max-journal-size</strong></span></span></dt>
 <dd>
                 <p>
@@ -6201,14 +6073,6 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                 <p>
                   The maximum number of records permitted in a zone.
                   The default is zero which means unlimited.
-                </p>
-              </dd>
-<dt><span class="term"><span class="command"><strong>host-statistics-max</strong></span></span></dt>
-<dd>
-                <p>
-                  In BIND 8, specifies the maximum number of host statistics
-                  entries to be kept.
-                  Not implemented in BIND 9.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>recursive-clients</strong></span></span></dt>
@@ -6587,32 +6451,6 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   used to specify the value.
                 </p>
               </dd>
-<dt><span class="term"><span class="command"><strong>statistics-interval</strong></span></span></dt>
-<dd>
-                <p>
-                  Name server statistics will be logged
-                  every <span class="command"><strong>statistics-interval</strong></span>
-                  minutes. The default is
-                  60. The maximum value is 28 days (40320 minutes).
-                  If set to 0, no statistics will be logged.
-                  </p>
-<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
-<h3 class="title">Note</h3>
-                  <p>
-                    Not yet implemented in
-                    <acronym class="acronym">BIND</acronym> 9.
-                  </p>
-                </div>
-              </dd>
-<dt><span class="term"><span class="command"><strong>topology</strong></span></span></dt>
-<dd>
-                <p>
-                  In BIND 8, this option indicated network topology
-                  so that preferential treatment could be given to
-                  the topologicaly closest name servers when sending
-                  queries. It is not implemented in BIND 9.
-                </p>
-              </dd>
 </dl></div>
 
         </div>
@@ -6957,21 +6795,6 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   <span class="command"><strong>stale-answer-enable</strong></span> or via
                   <span class="command"><strong>rndc serve-stale on</strong></span>.
                 </p>
-              </dd>
-<dt><span class="term"><span class="command"><strong>min-roots</strong></span></span></dt>
-<dd>
-                <p>
-                  The minimum number of root servers that
-                  is required for a request for the root servers to be
-                  accepted. The default
-                  is <strong class="userinput"><code>2</code></strong>.
-                </p>
-                <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
-<h3 class="title">Note</h3>
-                  <p>
-                    Not implemented in <acronym class="acronym">BIND</acronym> 9.
-                  </p>
-                </div>
               </dd>
 <dt><span class="term"><span class="command"><strong>sig-validity-interval</strong></span></span></dt>
 <dd>
@@ -9695,20 +9518,75 @@ view "external" {
                     </td>
 <td>
                       <p>
+                        <span class="bold"><strong>Note:</strong></span> using
+                        this zone type with any zone other than the root
+                        zone should be considered
+                        <span class="emphasis"><em>experimental</em></span> and may cause
+                        performance issues, especially for zones which
+                        are large and/or frequently updated.
                       </p>
                       <p>
                         A mirror zone acts like a zone of type
                         <strong class="userinput"><code>secondary</code></strong> whose data is
                         subject to DNSSEC validation before being used
                         in answers.  Validation is performed during the
-                        zone transfer process, and again when the zone
-                        file is loaded from disk when
-                        <span class="command"><strong>named</strong></span> is restarted.  If
-                        validation fails, a retransfer of the zone is
-                        scheduled; if the mirror zone had not previously
-                        been loaded or if the previous version has
-                        expired, traditional DNS recursion will be used
-                        to look up the answers instead.
+                        zone transfer process (for both AXFR and IXFR),
+                        and again when the zone file is loaded from disk
+                        when <span class="command"><strong>named</strong></span> is restarted.  If
+                        validation of a new version of a mirror zone
+                        fails, a retransfer is scheduled and the most
+                        recent correctly validated version of that zone
+                        is used until it expires; if a newer version of
+                        that zone is later correctly validated, it
+                        replaces the previously used version.  If no
+                        usable zone data is available for a mirror zone
+                        (either because it was never loaded from disk
+                        and has not yet been transferred from a primary
+                        server or because its most recent correctly
+                        validated version expired), traditional DNS
+                        recursion will be used to look up the answers
+                        instead.
+                      </p>
+                      <p>
+                        While any zone may be configured with this type,
+                        it is intended to be used to set up a fast local
+                        copy of the root zone, similar to the one
+                        described in RFC 7706.  Note, however, that
+                        mirror zones are not supposed to augment the
+                        example configuration provided by RFC 7706 but
+                        rather to replace it altogether.
+                      </p>
+                      <p>
+                        A default list of primary servers for the IANA
+                        root zone is built into <span class="command"><strong>named</strong></span>
+                        and thus its mirroring can be enabled using the
+                        following configuration:
+                      </p>
+<pre class="programlisting">zone "." {
+        type mirror;
+};</pre>
+                      <p>
+                        In order to set up mirroring of any other zone,
+                        an explicit list of primary servers needs to be
+                        provided using the <span class="command"><strong>masters</strong></span>
+                        option (see <a class="xref" href="Bv9ARM.ch05.html#masters_grammar" title="masters Statement Grammar">the section called &#8220;<span class="command"><strong>masters</strong></span> Statement Grammar&#8221;</a>
+                        for details).
+                      </p>
+                      <p>
+                        To make mirror zone contents persist between
+                        <span class="command"><strong>named</strong></span> restarts, use the
+                        <a class="xref" href="Bv9ARM.ch05.html#file_option"><span class="command"><strong>file</strong></span></a>
+                        option.
+                      </p>
+                      <p>
+                        Mirror zone validation always happens for the
+                        entire zone contents, i.e. no "incremental
+                        validation" takes place, even for IXFRs.  This
+                        is required to ensure that each version of the
+                        zone used by the resolver is fully
+                        self-consistent with respect to DNSSEC.  Other,
+                        more efficient zone verification methods may be
+                        added in the future.
                       </p>
                       <p>
                         For validation to succeed, a key-signing key
@@ -9716,12 +9594,15 @@ view "external" {
                         anchor in <code class="filename">named.conf</code>: that
                         is, a key for the zone must either be specified
                         in <span class="command"><strong>managed-keys</strong></span> or
-                        <span class="command"><strong>trusted-keys</strong></span>, or in the case
-                        of the root zone,
-                        <span class="command"><strong>dnssec-validation</strong></span> must be set
-                        to <strong class="userinput"><code>auto</code></strong>.  Answers coming
-                        from a mirror zone look almost exactly like
-                        answers from a zone of type
+                        <span class="command"><strong>trusted-keys</strong></span>.  In the case
+                        of the root zone, you may also rely on the
+                        built-in root trust anchor, which is enabled
+                        when <a class="xref" href="Bv9ARM.ch05.html#dnssec_validation"><span class="command"><strong>dnssec-validation</strong></span></a> is set to the
+                        default value <strong class="userinput"><code>auto</code></strong>.
+                      </p>
+                      <p>
+                        Answers coming from a mirror zone look almost
+                        exactly like answers from a zone of type
                         <strong class="userinput"><code>secondary</code></strong>, with the
                         notable exceptions that the AA bit
                         ("authoritative answer") is not set, and the AD
@@ -9737,44 +9618,24 @@ view "external" {
                         When configuring NOTIFY for a mirror zone, only
                         <strong class="userinput"><code>notify no;</code></strong> and
                         <strong class="userinput"><code>notify explicit;</code></strong> can be
-                        used.  Using any other
-                        <strong class="userinput"><code>notify</code></strong> setting at the
-                        zone level is a configuration error.  Using any
-                        other <strong class="userinput"><code>notify</code></strong> setting at
-                        the <strong class="userinput"><code>options</code></strong> or
-                        <strong class="userinput"><code>view</code></strong> level will cause
+                        used.  Using any other <span class="command"><strong>notify</strong></span>
+                        setting at the zone level is a configuration
+                        error.  Using any other
+                        <span class="command"><strong>notify</strong></span> setting at the
+                        <span class="command"><strong>options</strong></span> or
+                        <span class="command"><strong>view</strong></span> level will cause
                         that setting to be overridden with
                         <strong class="userinput"><code>notify explicit;</code></strong> for the
-                        mirror zone in question.
+                        mirror zone in question.  Since the global
+                        default for the <span class="command"><strong>notify</strong></span> option
+                        is <strong class="userinput"><code>yes</code></strong>, mirror zones are
+                        by default configured with
+                        <strong class="userinput"><code>notify explicit;</code></strong>.
                       </p>
                       <p>
                         Outgoing transfers of mirror zones are disabled
                         by default but may be enabled using
                         <a class="xref" href="Bv9ARM.ch05.html#allow_transfer"><span class="command"><strong>allow-transfer</strong></span></a>.
-                      </p>
-                      <p>
-                        While any zone may be configured with this type,
-                        it is intended to be used to set up a fast local
-                        copy of the root zone, similar to the one
-                        described in RFC 7706.  Note, however, that
-                        mirror zones are not supposed to augment the
-                        example configuration provided by RFC 7706 but
-                        rather to replace it altogether.
-                      </p>
-                      <p>
-                        A default list of primary servers for the root
-                        zone is built into <span class="command"><strong>named</strong></span> and
-                        thus IANA root zone mirroring can be enabled
-                        using the following configuration:
-                      </p>
-<pre class="programlisting">zone "." {
-        type mirror;
-};</pre>
-                      <p>
-                        To make mirror zone contents persist between
-                        <span class="command"><strong>named</strong></span> restarts, use the
-                        <a class="xref" href="Bv9ARM.ch05.html#file_option"><span class="command"><strong>file</strong></span></a>
-                        option.
                       </p>
                     </td>
 </tr>
@@ -10252,27 +10113,6 @@ view "external" {
                     not used.
                   </p>
                 </dd>
-<dt><span class="term"><span class="command"><strong>ixfr-base</strong></span></span></dt>
-<dd>
-                  <p>
-                    Was used in <acronym class="acronym">BIND</acronym> 8 to
-                    specify the name
-                    of the transaction log (journal) file for dynamic update
-                    and IXFR.
-                    <acronym class="acronym">BIND</acronym> 9 ignores the option
-                    and constructs the name of the journal
-                    file by appending "<code class="filename">.jnl</code>"
-                    to the name of the
-                    zone file.
-                  </p>
-                </dd>
-<dt><span class="term"><span class="command"><strong>ixfr-tmp-file</strong></span></span></dt>
-<dd>
-                  <p>
-                    Was an undocumented option in <acronym class="acronym">BIND</acronym> 8.
-                    Ignored in <acronym class="acronym">BIND</acronym> 9.
-                  </p>
-                </dd>
 <dt><span class="term"><span class="command"><strong>journal</strong></span></span></dt>
 <dd>
                   <p>
@@ -10343,17 +10183,6 @@ view "external" {
                     See the description of
                     <span class="command"><strong>notify-to-soa</strong></span> in
                     <a class="xref" href="Bv9ARM.ch05.html#boolean_options" title="Boolean Options">the section called &#8220;Boolean Options&#8221;</a>.
-                  </p>
-                </dd>
-<dt><span class="term"><span class="command"><strong>pubkey</strong></span></span></dt>
-<dd>
-                  <p>
-                    In <acronym class="acronym">BIND</acronym> 8, this option was
-                    intended for specifying
-                    a public zone key for verification of signatures in DNSSEC
-                    signed
-                    zones when they are loaded from disk. <acronym class="acronym">BIND</acronym> 9 does not verify signatures
-                    on load and ignores the option.
                   </p>
                 </dd>
 <dt><span class="term"><span class="command"><strong>zone-statistics</strong></span></span></dt>
@@ -11392,6 +11221,20 @@ view external {
 <tr>
 <td>
                       <p>
+                        AMTRELAY
+                      </p>
+                    </td>
+<td>
+                      <p>
+                        Automatic Multicast Tunneling Relay
+                        discovery record.
+                        Work in progress draft-ietf-mboned-driad-amt-discovery.
+                      </p>
+                    </td>
+</tr>
+<tr>
+<td>
+                      <p>
                         APL
                       </p>
                     </td>
@@ -12343,6 +12186,19 @@ view external {
                       <p>
                         Representation of X.25 network addresses.
                         Experimental.  Described in RFC 1183.
+                      </p>
+                    </td>
+</tr>
+<tr>
+<td>
+                      <p>
+                        ZONEMD
+                      </p>
+                    </td>
+<td>
+                      <p>
+                        Zone Message Digest.
+                        Work in progress draft-wessels-dns-zone-digest.
                       </p>
                     </td>
 </tr>
@@ -13301,9 +13157,6 @@ HOST-127.EXAMPLE. MX 0 .
           <p>
             The <span class="command"><strong>$GENERATE</strong></span> directive is a <acronym class="acronym">BIND</acronym> extension
             and not part of the standard zone file format.
-          </p>
-          <p>
-            BIND 8 did not support the optional TTL and CLASS fields.
           </p>
         </div>
 
@@ -14978,6 +14831,6 @@ HOST-127.EXAMPLE. MX 0 .
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.5-W1 (Development Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.7 (Development Release)</p>
 </body>
 </html>

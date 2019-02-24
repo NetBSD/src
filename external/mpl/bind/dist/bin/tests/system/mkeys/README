@@ -19,3 +19,6 @@ managed-keys.jnl, causing RFC 5011 initialization to fail.
 
 ns5 is a validator which is prevented from getting a response from the
 root server, causing key refresh queries to fail.
+
+ns6 is a validator which has unsupported algorithms, one at start up,
+one because of an algorithm rollover.

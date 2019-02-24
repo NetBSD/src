@@ -17,10 +17,20 @@ RNDCCMD="$RNDC -c $SYSTEMTESTTOP/common/rndc.conf -p ${CONTROLPORT} -s"
 
 # Wait until the transfer of the given zone to ns3 either completes successfully
 # or is aborted by a verification failure or a REFUSED response from the master.
+# Note that matching on any transfer status is deliberately avoided because some
+# checks performed by this test cause transfer attempts to end with the "IXFR
+# failed" status, which is followed by an AXFR retry and this test needs to
+# check what the result of the latter transfer attempt is.
 wait_for_transfer() {
 	zone=$1
 	for i in 1 2 3 4 5 6 7 8 9 10; do
-		nextpartpeek ns3/named.run | egrep "'$zone/IN'.*Transfer status: (success|verify failure|REFUSED)" > /dev/null && return
+		# Wait until a "freeing transfer context" message is logged
+		# after one of the transfer results we are looking for is
+		# logged.  This is needed to prevent races when checking for
+		# "mirror zone is now in use" messages.
+		nextpartpeek ns3/named.run | \
+			awk "matched; /'$zone\/IN'.*Transfer status: (success|verify failure|REFUSED)/ {matched=1}" | \
+			grep "'$zone/IN'.*freeing transfer context" > /dev/null && return
 		sleep 1
 	done
 	echo_i "exceeded time limit waiting for proof of '$zone' being transferred to appear in ns3/named.run"
@@ -34,7 +44,13 @@ wait_for_load() {
 	serial=$2
 	log=$3
 	for i in 1 2 3 4 5 6 7 8 9 10; do
-		nextpartpeek $log | egrep "$zone.*(loaded serial $serial|unable to load)" > /dev/null && return
+		# Wait until a "zone_postload: (...): done" message is logged
+		# after one of the loading-related messages we are looking for
+		# is logged.  This is needed to prevent races when checking for
+		# "mirror zone is now in use" messages.
+		nextpartpeek $log | \
+			awk "matched; /$zone.*(loaded serial $serial|unable to load)/ {matched=1}" | \
+			grep "zone_postload: zone $zone/IN: done" > /dev/null && return
 		sleep 1
 	done
 	echo_i "exceeded time limit waiting for proof of '$zone' being loaded to appear in $log"
@@ -45,7 +61,7 @@ wait_for_load() {
 reload_zone() {
 	zone=$1
 	serial=$2
-	$RNDCCMD 10.53.0.2 reload > /dev/null 2>&1
+	rndc_reload ns2 10.53.0.2
 	wait_for_load $zone $serial ns2/named.run
 }
 
@@ -61,8 +77,10 @@ echo_i "checking that an unsigned mirror zone is rejected ($n)"
 ret=0
 wait_for_transfer verify-unsigned
 $DIG $DIGOPTS @10.53.0.3 +norec verify-unsigned SOA > dig.out.ns3.test$n 2>&1 || ret=1
-grep "${UPDATED_SERIAL_BAD}.*; serial" dig.out.ns3.test$n > /dev/null && ret=1
-nextpart ns3/named.run | grep "verify-unsigned.*Zone contains no DNSSEC keys" > /dev/null || ret=1
+grep "ANSWER: 0" dig.out.ns3.test$n > /dev/null || ret=1
+grep "${ORIGINAL_SERIAL}.*; serial" dig.out.ns3.test$n > /dev/null && ret=1
+nextpartpeek ns3/named.run | grep "verify-unsigned.*Zone contains no DNSSEC keys" > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "verify-unsigned.*mirror zone is now in use" > /dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -72,8 +90,22 @@ ret=0
 nextpartreset ns3/named.run
 wait_for_transfer verify-untrusted
 $DIG $DIGOPTS @10.53.0.3 +norec verify-untrusted SOA > dig.out.ns3.test$n 2>&1 || ret=1
-grep "${UPDATED_SERIAL_BAD}.*; serial" dig.out.ns3.test$n > /dev/null && ret=1
-nextpart ns3/named.run | grep "verify-untrusted.*No trusted KSK DNSKEY found" > /dev/null || ret=1
+grep "ANSWER: 0" dig.out.ns3.test$n > /dev/null || ret=1
+grep "${ORIGINAL_SERIAL}.*; serial" dig.out.ns3.test$n > /dev/null && ret=1
+nextpartpeek ns3/named.run | grep "verify-untrusted.*No trusted DNSKEY found" > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "verify-untrusted.*mirror zone is now in use" > /dev/null && ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking that a mirror zone signed using a CSK without the SEP bit set is accepted ($n)"
+ret=0
+nextpartreset ns3/named.run
+wait_for_transfer verify-csk
+$DIG $DIGOPTS @10.53.0.3 +norec verify-csk SOA > dig.out.ns3.test$n 2>&1 || ret=1
+grep "ANSWER: 0" dig.out.ns3.test$n > /dev/null && ret=1
+grep "${ORIGINAL_SERIAL}.*; serial" dig.out.ns3.test$n > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "verify-csk.*mirror zone is now in use" > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -83,8 +115,10 @@ ret=0
 nextpartreset ns3/named.run
 wait_for_transfer verify-axfr
 $DIG $DIGOPTS @10.53.0.3 +norec verify-axfr SOA > dig.out.ns3.test$n 2>&1 || ret=1
+grep "ANSWER: 0" dig.out.ns3.test$n > /dev/null || ret=1
 grep "${UPDATED_SERIAL_BAD}.*; serial" dig.out.ns3.test$n > /dev/null && ret=1
-nextpart ns3/named.run | grep "No correct RSASHA256 signature for verify-axfr SOA" > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "No correct RSASHA256 signature for verify-axfr SOA" > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "verify-axfr.*mirror zone is now in use" > /dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -97,7 +131,9 @@ reload_zone verify-axfr ${UPDATED_SERIAL_GOOD}
 $RNDCCMD 10.53.0.3 retransfer verify-axfr > /dev/null 2>&1
 wait_for_transfer verify-axfr
 $DIG $DIGOPTS @10.53.0.3 +norec verify-axfr SOA > dig.out.ns3.test$n 2>&1 || ret=1
+grep "ANSWER: 0" dig.out.ns3.test$n > /dev/null && ret=1
 grep "${UPDATED_SERIAL_GOOD}.*; serial" dig.out.ns3.test$n > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "verify-axfr.*mirror zone is now in use" > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -106,7 +142,9 @@ echo_i "checking that an IXFR of an incorrectly signed mirror zone is rejected (
 nextpartreset ns3/named.run
 ret=0
 wait_for_transfer verify-ixfr
-nextpart ns3/named.run > /dev/null
+# Sanity check: the initial, properly signed version of the zone should have
+# been announced as coming into effect.
+nextpart ns3/named.run | grep "verify-ixfr.*mirror zone is now in use" > /dev/null || ret=1
 # Make a copy of the original zone file for reuse in journal tests below.
 cp ns2/verify-ixfr.db.signed ns3/verify-journal.db.mirror
 # Wait 1 second so that the zone file timestamp changes and the subsequent
@@ -126,8 +164,14 @@ if [ `nextpartpeek ns3/named.run | grep "verify-ixfr.*got incremental response" 
 fi
 # Ensure the new, bad version of the zone was not accepted.
 $DIG $DIGOPTS @10.53.0.3 +norec verify-ixfr SOA > dig.out.ns3.test$n 2>&1 || ret=1
+# A positive answer is expected as the original version of the "verify-ixfr"
+# zone should have been successfully verified.
+grep "ANSWER: 0" dig.out.ns3.test$n > /dev/null && ret=1
 grep "${UPDATED_SERIAL_BAD}.*; serial" dig.out.ns3.test$n > /dev/null && ret=1
-nextpart ns3/named.run | grep "No correct RSASHA256 signature for verify-ixfr SOA" > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "No correct RSASHA256 signature for verify-ixfr SOA" > /dev/null || ret=1
+# Despite the verification failure for this IXFR, this mirror zone should still
+# be in use as its previous version should have been verified successfully.
+nextpartpeek ns3/named.run | grep "verify-ixfr.*mirror zone is no longer in use" > /dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -147,7 +191,12 @@ $RNDCCMD 10.53.0.3 refresh verify-ixfr > /dev/null 2>&1
 wait_for_transfer verify-ixfr
 # Ensure the new, good version of the zone was accepted.
 $DIG $DIGOPTS @10.53.0.3 +norec verify-ixfr SOA > dig.out.ns3.test$n 2>&1 || ret=1
+grep "ANSWER: 0" dig.out.ns3.test$n > /dev/null && ret=1
 grep "${UPDATED_SERIAL_GOOD}.*; serial" dig.out.ns3.test$n > /dev/null || ret=1
+# The log message announcing the mirror zone coming into effect should not have
+# been logged this time since the mirror zone in question is expected to
+# already be in use before this test case is checked.
+nextpartpeek ns3/named.run | grep "verify-ixfr.*mirror zone is now in use" > /dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -157,8 +206,10 @@ ret=0
 nextpartreset ns3/named.run
 wait_for_load verify-load ${UPDATED_SERIAL_BAD} ns3/named.run
 $DIG $DIGOPTS @10.53.0.3 +norec verify-load SOA > dig.out.ns3.test$n 2>&1 || ret=1
+grep "ANSWER: 0" dig.out.ns3.test$n > /dev/null || ret=1
 grep "${UPDATED_SERIAL_BAD}.*; serial" dig.out.ns3.test$n > /dev/null && ret=1
-nextpart ns3/named.run | grep "No correct RSASHA256 signature for verify-load SOA" > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "No correct RSASHA256 signature for verify-load SOA" > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "verify-load.*mirror zone is now in use" > /dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -171,7 +222,9 @@ nextpart ns3/named.run > /dev/null
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} mirror ns3
 wait_for_load verify-load ${UPDATED_SERIAL_GOOD} ns3/named.run
 $DIG $DIGOPTS @10.53.0.3 +norec verify-load SOA > dig.out.ns3.test$n 2>&1 || ret=1
+grep "ANSWER: 0" dig.out.ns3.test$n > /dev/null && ret=1
 grep "${UPDATED_SERIAL_GOOD}.*; serial" dig.out.ns3.test$n > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "verify-load.*mirror zone is now in use" > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -181,12 +234,32 @@ ret=0
 $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} mirror ns3
 cp ns3/verify-journal.db.mirror ns3/verify-ixfr.db.mirror
 cp ns3/verify-journal.db.bad.mirror.jnl ns3/verify-ixfr.db.mirror.jnl
+# Temporarily disable transfers of the "verify-ixfr" zone on ns2.  This is
+# required to reliably test whether the message announcing the mirror zone
+# coming into effect is not logged after a failed journal verification since
+# otherwise a corrected version of the zone may be transferred after
+# verification fails but before we look for the aforementioned log message.
+# (NOTE: Keep the embedded newline in the sed function list below.)
+sed '/^zone "verify-ixfr" {$/,/^};$/ {
+	s/10.53.0.3/10.53.0.254/
+}' ns2/named.conf > ns2/named.conf.modified
+mv ns2/named.conf.modified ns2/named.conf
+rndc_reconfig ns2 10.53.0.2
 nextpart ns3/named.run > /dev/null
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} mirror ns3
 wait_for_load verify-ixfr ${UPDATED_SERIAL_BAD} ns3/named.run
 $DIG $DIGOPTS @10.53.0.3 +norec verify-ixfr SOA > dig.out.ns3.test$n 2>&1 || ret=1
+grep "ANSWER: 0" dig.out.ns3.test$n > /dev/null || ret=1
 grep "${UPDATED_SERIAL_BAD}.*; serial" dig.out.ns3.test$n > /dev/null && ret=1
-nextpart ns3/named.run | grep "No correct RSASHA256 signature for verify-ixfr SOA" > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "No correct RSASHA256 signature for verify-ixfr SOA" > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "verify-ixfr.*mirror zone is now in use" > /dev/null && ret=1
+# Restore transfers for the "verify-ixfr" zone on ns2.
+# (NOTE: Keep the embedded newline in the sed function list below.)
+sed '/^zone "verify-ixfr" {$/,/^};$/ {
+	s/10.53.0.254/10.53.0.3/
+}' ns2/named.conf > ns2/named.conf.modified
+mv ns2/named.conf.modified ns2/named.conf
+rndc_reconfig ns2 10.53.0.2
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -200,7 +273,9 @@ nextpart ns3/named.run > /dev/null
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} mirror ns3
 wait_for_load verify-ixfr ${UPDATED_SERIAL_GOOD} ns3/named.run
 $DIG $DIGOPTS @10.53.0.3 +norec verify-ixfr SOA > dig.out.ns3.test$n 2>&1 || ret=1
+grep "ANSWER: 0" dig.out.ns3.test$n > /dev/null && ret=1
 grep "${UPDATED_SERIAL_GOOD}.*; serial" dig.out.ns3.test$n > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "verify-ixfr.*mirror zone is now in use" > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -301,9 +376,11 @@ grep "flags:.* ad" dig.out.ns3.test$n.1 > /dev/null || ret=1
 # Sanity check: the authoritative server should have been queried.
 nextpart ns2/named.run | grep "query 'foo.initially-unavailable/A/IN'" > /dev/null || ret=1
 # Reconfigure ns2 so that the zone can be mirrored on ns3.
-sed "s/10.53.0.254/10.53.0.3/;" ns2/named.conf > ns2/named.conf.modified
+sed '/^zone "initially-unavailable" {$/,/^};$/ {
+	s/10.53.0.254/10.53.0.3/
+}' ns2/named.conf > ns2/named.conf.modified
 mv ns2/named.conf.modified ns2/named.conf
-$RNDCCMD 10.53.0.2 reconfig > /dev/null 2>&1
+rndc_reconfig ns2 10.53.0.2
 # Flush the cache on ns3 and retransfer the mirror zone.
 $RNDCCMD 10.53.0.3 flush > /dev/null 2>&1
 nextpart ns3/named.run > /dev/null
@@ -324,9 +401,11 @@ echo_i "checking that resolution succeeds with expired mirror zone data ($n)"
 ret=0
 # Reconfigure ns2 so that the zone from the previous test can no longer be
 # mirrored on ns3.
-sed "s/10.53.0.3/10.53.0.254/;" ns2/named.conf > ns2/named.conf.modified
+sed '/^zone "initially-unavailable" {$/,/^};$/ {
+	s/10.53.0.3/10.53.0.254/
+}' ns2/named.conf > ns2/named.conf.modified
 mv ns2/named.conf.modified ns2/named.conf
-$RNDCCMD 10.53.0.2 reconfig > /dev/null 2>&1
+rndc_reconfig ns2 10.53.0.2
 # Stop ns3, update the timestamp of the zone file to one far in the past, then
 # restart ns3.
 $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} mirror ns3
@@ -335,7 +414,9 @@ nextpart ns3/named.run > /dev/null
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} mirror ns3
 # Ensure named attempts to retransfer the zone due to its expiry.
 wait_for_transfer initially-unavailable
-nextpart ns3/named.run | grep "initially-unavailable.*expired" > /dev/null || ret=1
+# Ensure the expected messages were logged.
+nextpartpeek ns3/named.run | grep "initially-unavailable.*expired" > /dev/null || ret=1
+nextpartpeek ns3/named.run | grep "initially-unavailable.*mirror zone is no longer in use" > /dev/null || ret=1
 # Query for a record in the expired zone.  Resolution should still succeed.
 $DIG $DIGOPTS @10.53.0.3 foo.initially-unavailable. A > dig.out.ns3.test$n 2>&1 || ret=1
 # Check response code and flags in the answer.
@@ -394,7 +475,7 @@ sed '/^zone "verify-reconfig" {$/,/^};$/ {
 }' ns3/named.conf > ns3/named.conf.modified
 mv ns3/named.conf.modified ns3/named.conf
 nextpart ns3/named.run > /dev/null
-$RNDCCMD 10.53.0.3 reconfig > /dev/null 2>&1
+rndc_reconfig ns3 10.53.0.3
 # Zones whose type was changed should not be reusable, which means the tested
 # zone should have been reloaded from disk.
 wait_for_load verify-reconfig ${ORIGINAL_SERIAL} ns3/named.run
@@ -418,7 +499,7 @@ sed '/^zone "verify-reconfig" {$/,/^};$/ {
 	s/type slave;/type mirror;/
 }' ns3/named.conf > ns3/named.conf.modified
 mv ns3/named.conf.modified ns3/named.conf
-$RNDCCMD 10.53.0.3 reconfig > /dev/null 2>&1
+rndc_reconfig ns3 10.53.0.3
 # The reconfigured zone should fail verification.
 wait_for_load verify-reconfig ${UPDATED_SERIAL_BAD} ns3/named.run
 $DIG $DIGOPTS @10.53.0.3 +norec verify-reconfig SOA > dig.out.ns3.test$n 2>&1 || ret=1

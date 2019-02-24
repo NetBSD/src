@@ -111,7 +111,7 @@ options {
         cookie-secret <string>; // may occur multiple times
         coresize ( default | unlimited | <sizeval> );
         datasize ( default | unlimited | <sizeval> );
-        deallocate-on-exit <boolean>; // obsolete
+        deallocate-on-exit <boolean>; // ancient
         deny-answer-addresses { <address_match_element>; ... } [
             except-from { <string>; ... } ];
         deny-answer-aliases { <string>; ... } [ except-from { <string>; ...
@@ -166,8 +166,8 @@ options {
         empty-contact <string>;
         empty-server <string>;
         empty-zones-enable <boolean>;
-        fake-iquery <boolean>; // obsolete
-        fetch-glue <boolean>; // obsolete
+        fake-iquery <boolean>; // ancient
+        fetch-glue <boolean>; // ancient
         fetch-quota-params <integer> <fixedpoint> <fixedpoint> <fixedpoint>;
         fetches-per-server <integer> [ ( drop | fail ) ];
         fetches-per-zone <integer> [ ( drop | fail ) ];
@@ -189,10 +189,10 @@ options {
         geoip-directory ( <quoted_string> | none ); // not configured
         geoip-use-ecs <boolean>; // obsolete
         glue-cache <boolean>;
-        has-old-clients <boolean>; // obsolete
+        has-old-clients <boolean>; // ancient
         heartbeat-interval <integer>;
-        host-statistics <boolean>; // not implemented
-        host-statistics-max <integer>; // not implemented
+        host-statistics <boolean>; // ancient
+        host-statistics-max <integer>; // ancient
         hostname ( <quoted_string> | none );
         inline-signing <boolean>;
         interface-interval <ttlval>;
@@ -209,7 +209,7 @@ options {
             <address_match_element>; ... }; // may occur multiple times
         lmdb-mapsize <sizeval>; // non-operational
         lock-file ( <quoted_string> | none );
-        maintain-ixfr-base <boolean>; // obsolete
+        maintain-ixfr-base <boolean>; // ancient
         managed-keys-directory <quoted_string>;
         masterfile-format ( map | raw | text );
         masterfile-style ( full | relative );
@@ -218,7 +218,7 @@ options {
         max-cache-size ( default | unlimited | <sizeval> | <percentage> );
         max-cache-ttl <ttlval>;
         max-clients-per-query <integer>;
-        max-ixfr-log-size ( default | unlimited | <sizeval> ); // obsolete
+        max-ixfr-log-size ( default | unlimited | <sizeval> ); // ancient
         max-journal-size ( default | unlimited | <sizeval> );
         max-ncache-ttl <ttlval>;
         max-records <integer>;
@@ -241,12 +241,12 @@ options {
         min-ncache-ttl <ttlval>;
         min-refresh-time <integer>;
         min-retry-time <integer>;
-        min-roots <integer>; // not implemented
+        min-roots <integer>; // ancient
         minimal-any <boolean>;
         minimal-responses ( no-auth | no-auth-recursive | <boolean> );
         multi-master <boolean>;
-        multiple-cnames <boolean>; // obsolete
-        named-xfer <quoted_string>; // obsolete
+        multiple-cnames <boolean>; // ancient
+        named-xfer <quoted_string>; // ancient
         new-zones-directory <quoted_string>;
         no-case-compress { <address_match_element>; ... };
         nocookie-udp-size <integer>;
@@ -321,14 +321,14 @@ options {
             [ recursive-only <boolean> ] [ nsip-enable <boolean> ] [
             nsdname-enable <boolean> ] [ dnsrps-enable <boolean> ] [
             dnsrps-options { <unspecified-text> } ];
-        rfc2308-type1 <boolean>; // not yet implemented
+        rfc2308-type1 <boolean>; // ancient
         root-delegation-only [ exclude { <string>; ... } ];
         root-key-sentinel <boolean>;
         rrset-order { [ class <string> ] [ type <string> ] [ name
             <quoted_string> ] <string> <string>; ... };
         secroots-file <quoted_string>;
         send-cookie <boolean>;
-        serial-queries <integer>; // obsolete
+        serial-queries <integer>; // ancient
         serial-query-rate <integer>;
         serial-update-method ( date | increment | unixtime );
         server-id ( <quoted_string> | none | hostname );
@@ -347,7 +347,7 @@ options {
         stale-answer-ttl <ttlval>;
         startup-notify-rate <integer>;
         statistics-file <quoted_string>;
-        statistics-interval <integer>; // not yet implemented
+        statistics-interval <integer>; // ancient
         suppress-initial-notify <boolean>; // not yet implemented
         synth-from-dnssec <boolean>;
         tcp-advertised-timeout <integer>;
@@ -360,7 +360,7 @@ options {
         tkey-domain <quoted_string>;
         tkey-gssapi-credential <quoted_string>;
         tkey-gssapi-keytab <quoted_string>;
-        topology { <address_match_element>; ... }; // not implemented
+        topology { <address_match_element>; ... }; // ancient
         transfer-format ( many-answers | one-answer );
         transfer-message-size <integer>;
         transfer-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [
@@ -370,12 +370,12 @@ options {
         transfers-in <integer>;
         transfers-out <integer>;
         transfers-per-ns <integer>;
-        treat-cr-as-space <boolean>; // obsolete
+        treat-cr-as-space <boolean>; // ancient
         trust-anchor-telemetry <boolean>; // experimental
         try-tcp-refresh <boolean>;
         update-check-ksk <boolean>;
         use-alt-transfer-source <boolean>;
-        use-id-pool <boolean>; // obsolete
+        use-id-pool <boolean>; // ancient
         use-ixfr <boolean>; // obsolete
         use-queryport-pool <boolean>; // obsolete
         use-v4-udp-ports { <portrange>; ... };
@@ -532,7 +532,7 @@ view <string> [ <class> ] {
         empty-contact <string>;
         empty-server <string>;
         empty-zones-enable <boolean>;
-        fetch-glue <boolean>; // obsolete
+        fetch-glue <boolean>; // ancient
         fetch-quota-params <integer> <fixedpoint> <fixedpoint> <fixedpoint>;
         fetches-per-server <integer> [ ( drop | fail ) ];
         fetches-per-zone <integer> [ ( drop | fail ) ];
@@ -553,7 +553,7 @@ view <string> [ <class> ] {
         key-directory <quoted_string>;
         lame-ttl <ttlval>;
         lmdb-mapsize <sizeval>; // non-operational
-        maintain-ixfr-base <boolean>; // obsolete
+        maintain-ixfr-base <boolean>; // ancient
         managed-keys { <string> <string>
             <integer> <integer> <integer>
             <quoted_string>; ... }; // may occur multiple times
@@ -566,7 +566,7 @@ view <string> [ <class> ] {
         max-cache-size ( default | unlimited | <sizeval> | <percentage> );
         max-cache-ttl <ttlval>;
         max-clients-per-query <integer>;
-        max-ixfr-log-size ( default | unlimited | <sizeval> ); // obsolete
+        max-ixfr-log-size ( default | unlimited | <sizeval> ); // ancient
         max-journal-size ( default | unlimited | <sizeval> );
         max-ncache-ttl <ttlval>;
         max-records <integer>;
@@ -586,7 +586,7 @@ view <string> [ <class> ] {
         min-ncache-ttl <ttlval>;
         min-refresh-time <integer>;
         min-retry-time <integer>;
-        min-roots <integer>; // not implemented
+        min-roots <integer>; // ancient
         minimal-any <boolean>;
         minimal-responses ( no-auth | no-auth-recursive | <boolean> );
         multi-master <boolean>;
@@ -658,7 +658,7 @@ view <string> [ <class> ] {
             [ recursive-only <boolean> ] [ nsip-enable <boolean> ] [
             nsdname-enable <boolean> ] [ dnsrps-enable <boolean> ] [
             dnsrps-options { <unspecified-text> } ];
-        rfc2308-type1 <boolean>; // not yet implemented
+        rfc2308-type1 <boolean>; // ancient
         root-delegation-only [ exclude { <string>; ... } ];
         root-key-sentinel <boolean>;
         rrset-order { [ class <string> ] [ type <string> ] [ name
@@ -711,7 +711,7 @@ view <string> [ <class> ] {
         stale-answer-ttl <ttlval>;
         suppress-initial-notify <boolean>; // not yet implemented
         synth-from-dnssec <boolean>;
-        topology { <address_match_element>; ... }; // not implemented
+        topology { <address_match_element>; ... }; // ancient
         transfer-format ( many-answers | one-answer );
         transfer-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [
             dscp <integer> ];
@@ -771,19 +771,19 @@ view <string> [ <class> ] {
                     dscp <integer> ]; ... };
                 in-view <string>;
                 inline-signing <boolean>;
-                ixfr-base <quoted_string>; // obsolete
+                ixfr-base <quoted_string>; // ancient
                 ixfr-from-differences <boolean>;
-                ixfr-tmp-file <quoted_string>; // obsolete
+                ixfr-tmp-file <quoted_string>; // ancient
                 journal <quoted_string>;
                 key-directory <quoted_string>;
-                maintain-ixfr-base <boolean>; // obsolete
+                maintain-ixfr-base <boolean>; // ancient
                 masterfile-format ( map | raw | text );
                 masterfile-style ( full | relative );
                 masters [ port <integer> ] [ dscp <integer> ] { ( <masters>
                     | <ipv4_address> [ port <integer> ] | <ipv6_address> [
                     port <integer> ] ) [ key <string> ]; ... };
                 max-ixfr-log-size ( default | unlimited |
-                    <sizeval> ); // obsolete
+                    <sizeval> ); // ancient
                 max-journal-size ( default | unlimited | <sizeval> );
                 max-records <integer>;
                 max-refresh-time <integer>;
@@ -804,10 +804,8 @@ view <string> [ <class> ] {
                     | * ) ] [ dscp <integer> ];
                 notify-to-soa <boolean>;
                 nsec3-test-zone <boolean>; // test only
-                pubkey <integer>
-                    <integer>
-                    <integer>
-                    <quoted_string>; // obsolete, may occur multiple times
+                pubkey <integer> <integer> <integer>
+                    <quoted_string>; // ancient
                 request-expire <boolean>;
                 request-ixfr <boolean>;
                 serial-update-method ( date | increment | unixtime );
@@ -877,18 +875,18 @@ zone <string> [ <class> ] {
             | <ipv6_address> ) [ port <integer> ] [ dscp <integer> ]; ... };
         in-view <string>;
         inline-signing <boolean>;
-        ixfr-base <quoted_string>; // obsolete
+        ixfr-base <quoted_string>; // ancient
         ixfr-from-differences <boolean>;
-        ixfr-tmp-file <quoted_string>; // obsolete
+        ixfr-tmp-file <quoted_string>; // ancient
         journal <quoted_string>;
         key-directory <quoted_string>;
-        maintain-ixfr-base <boolean>; // obsolete
+        maintain-ixfr-base <boolean>; // ancient
         masterfile-format ( map | raw | text );
         masterfile-style ( full | relative );
         masters [ port <integer> ] [ dscp <integer> ] { ( <masters> |
             <ipv4_address> [ port <integer> ] | <ipv6_address> [ port
             <integer> ] ) [ key <string> ]; ... };
-        max-ixfr-log-size ( default | unlimited | <sizeval> ); // obsolete
+        max-ixfr-log-size ( default | unlimited | <sizeval> ); // ancient
         max-journal-size ( default | unlimited | <sizeval> );
         max-records <integer>;
         max-refresh-time <integer>;
@@ -909,8 +907,7 @@ zone <string> [ <class> ] {
             [ dscp <integer> ];
         notify-to-soa <boolean>;
         nsec3-test-zone <boolean>; // test only
-        pubkey <integer> <integer>
-            <integer> <quoted_string>; // obsolete, may occur multiple times
+        pubkey <integer> <integer> <integer> <quoted_string>; // ancient
         request-expire <boolean>;
         request-ixfr <boolean>;
         serial-update-method ( date | increment | unixtime );

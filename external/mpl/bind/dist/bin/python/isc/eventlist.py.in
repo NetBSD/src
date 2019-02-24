@@ -73,7 +73,7 @@ class eventlist:
                     kok = self.checkzone(z, "KSK", until, output)
                 if not no_zsk and z in self._Z.keys():
                     found = True
-                    kok = self.checkzone(z, "ZSK", until, output)
+                    zok = self.checkzone(z, "ZSK", until, output)
 
         if not found:
             output("ERROR: No key events found")

@@ -44,3 +44,9 @@ zone "example3." {
 	forward only;
 	forwarders { };
 };
+
+zone "example7." {
+	type forward;
+	forward first;
+	forwarders { 10.53.0.6; };
+};

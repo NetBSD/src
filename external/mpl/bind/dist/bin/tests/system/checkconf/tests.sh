@@ -78,6 +78,14 @@ do
 done
 
 n=`expr $n + 1`
+echo_i "checking that ancient options report a fatal error ($n)"
+ret=0
+$CHECKCONF ancient.conf > ancient.out 2>&1 && ret=1
+grep "no longer exists" ancient.out > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
 echo_i "checking that named-checkconf -z catches missing hint file ($n)"
 ret=0
 $CHECKCONF -z hint-nofile.conf > hint-nofile.out 2>&1 && ret=1
@@ -340,6 +348,7 @@ echo_i "check that named-checkconf -l print out the zone list ($n)"
 ret=0
 $CHECKCONF -l good.conf |
 grep -v "is not implemented" |
+grep -v "no longer exists" |
 grep -v "is obsolete" > checkconf.out$n || ret=1
 diff good.zonelist checkconf.out$n  > diff.out$n || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi

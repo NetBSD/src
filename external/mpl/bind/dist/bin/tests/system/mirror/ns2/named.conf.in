@@ -55,10 +55,16 @@ zone "verify-axfr" {
 	file "verify-axfr.db.signed";
 };
 
+zone "verify-csk" {
+	type master;
+	file "verify-csk.db.signed";
+};
+
 zone "verify-ixfr" {
 	type master;
 	file "verify-ixfr.db.signed";
 	ixfr-from-differences yes;
+	allow-transfer { 10.53.0.3; };
 };
 
 zone "verify-reconfig" {

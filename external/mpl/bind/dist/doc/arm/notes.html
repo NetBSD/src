@@ -15,7 +15,7 @@
 
   <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id-1.2"></a>Release Notes for BIND Version 9.13.5-W1</h2></div></div></div>
+<a name="id-1.2"></a>Release Notes for BIND Version 9.13.7</h2></div></div></div>
   
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
@@ -26,12 +26,6 @@
       have been introduced on this branch.  With each development release
       leading up to the stable BIND 9.14 release, this document will be
       updated with additional features added and bugs fixed.
-    </p>
-    <p>
-      BIND 9.13.5-W1 is a minimal patch release, addressing a build error
-      on Windows systems that caused some files to be omitted from the ZIP
-      files originally published for BIND 9.13.5. There is no need to use
-      BIND 9.13.5-W1 on any operating system other than Windows.
     </p>
   </div>
 
@@ -152,6 +146,31 @@
 	  NSEC/NSEC3 chain, but incompletely -- this can result in
 	  a broken chain, affecting validation of proof of nonexistence
 	  for records in the zone. [GL #771]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>named</strong></span> could crash if it managed a DNSSEC
+	  security root with <span class="command"><strong>managed-keys</strong></span> and the
+	  authoritative zone rolled the key to an algorithm not supported
+	  by BIND 9.  This flaw is disclosed in CVE-2018-5745. [GL #780]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>named</strong></span> leaked memory when processing a
+	  request with multiple Key Tag EDNS options present. ISC
+	  would like to thank Toshifumi Sakaguchi for bringing this
+	  to our attention.  This flaw is disclosed in CVE-2018-5744.
+	  [GL #772]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Zone transfer controls for writable DLZ zones were not
+	  effective as the <span class="command"><strong>allowzonexfr</strong></span> method was
+	  not being called for such zones. This flaw is disclosed in
+	  CVE-2019-6465. [GL #790]
 	</p>
       </li>
 </ul></div>
@@ -277,6 +296,13 @@
 	  records (negative caching).  The configured minimum TTL for both
 	  configuration options cannot exceed 90 seconds.
 	</p>
+      </li>
+<li class="listitem">
+        <p>
+          <span class="command"><strong>rndc status</strong></span> output now includes a
+          <span class="command"><strong>reconfig/reload in progress</strong></span> status line if named
+          configuration is being reloaded.
+        </p>
       </li>
 </ul></div>
   </div>
@@ -462,6 +488,22 @@
 	  removed from BIND as the DSA key length is limited to 1024
 	  bits and this is not considered secure enough.
 	</p>
+	<p>
+	  Support for RSAMD5 algorithm has been removed freom BIND as the usage
+	  of the RSAMD5 algorithm for DNSSEC has been deprecated in RFC6725 and
+	  the security of MD5 algorithm has been compromised and the its usage
+	  is considered harmful.
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  The incomplete support for internationalization message catalogs has
+	  been removed from BIND. Since the internationalization was never
+	  completed, and no localized message catalogs were ever made available
+	  for the portions of BIND in which they could have been used, this
+	  change will have no effect except to simplify the source code. BIND's
+	  log messages and other output were already only available in English.
+	</p>
       </li>
 </ul></div>
   </div>
@@ -591,6 +633,13 @@
 	<p>
 	  The new <span class="command"><strong>dig -r</strong></span> command line option
 	  disables reading of the file <code class="filename">$HOME/.digrc</code>.
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Zone signing and key maintenance events are now logged to the
+	  <span class="command"><strong>dnssec</strong></span> category rather than
+	  <span class="command"><strong>zone</strong></span>.
 	</p>
       </li>
 </ul></div>

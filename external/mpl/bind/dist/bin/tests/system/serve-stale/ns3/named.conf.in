@@ -27,8 +27,8 @@ options {
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
 	recursion yes;
-	// max-stale-ttl 3600;
-	// stale-answer-ttl 3;
+	dump-file "named_dump3.db";
+	// This configuration has no serve-stale options set.
 };
 
 zone "." {

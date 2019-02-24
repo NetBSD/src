@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2019 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -51,105 +51,167 @@
 <h2>Synopsis</h2>
     <div class="cmdsynopsis"><p>
       <code class="command">dnssec-dsfromkey</code> 
-       [<code class="option">-v <em class="replaceable"><code>level</code></em></code>]
-       [<code class="option">-1</code>]
-       [<code class="option">-2</code>]
-       [<code class="option">-a <em class="replaceable"><code>alg</code></em></code>]
-       [<code class="option">-C</code>]
-       [<code class="option">-l <em class="replaceable"><code>domain</code></em></code>]
+       [
+	 <code class="option">-1</code> 
+	 |   <code class="option">-2</code> 
+	 |   <code class="option">-a <em class="replaceable"><code>alg</code></em></code> 
+      ]
+       [
+	 <code class="option">-C</code> 
+	 |   <code class="option">-l <em class="replaceable"><code>domain</code></em></code> 
+      ]
        [<code class="option">-T <em class="replaceable"><code>TTL</code></em></code>]
+       [<code class="option">-v <em class="replaceable"><code>level</code></em></code>]
+       [<code class="option">-K <em class="replaceable"><code>directory</code></em></code>]
        {keyfile}
     </p></div>
     <div class="cmdsynopsis"><p>
       <code class="command">dnssec-dsfromkey</code> 
-       {-s}
-       [<code class="option">-1</code>]
-       [<code class="option">-2</code>]
-       [<code class="option">-a <em class="replaceable"><code>alg</code></em></code>]
-       [<code class="option">-K <em class="replaceable"><code>directory</code></em></code>]
-       [<code class="option">-l <em class="replaceable"><code>domain</code></em></code>]
-       [<code class="option">-s</code>]
-       [<code class="option">-c <em class="replaceable"><code>class</code></em></code>]
+       [
+	 <code class="option">-1</code> 
+	 |   <code class="option">-2</code> 
+	 |   <code class="option">-a <em class="replaceable"><code>alg</code></em></code> 
+      ]
+       [
+	 <code class="option">-C</code> 
+	 |   <code class="option">-l <em class="replaceable"><code>domain</code></em></code> 
+      ]
        [<code class="option">-T <em class="replaceable"><code>TTL</code></em></code>]
-       [<code class="option">-f <em class="replaceable"><code>file</code></em></code>]
-       [<code class="option">-A</code>]
        [<code class="option">-v <em class="replaceable"><code>level</code></em></code>]
-       {dnsname}
-   </p></div>
+       [<code class="option">-c <em class="replaceable"><code>class</code></em></code>]
+       [<code class="option">-A</code>]
+       {<code class="option">-f <em class="replaceable"><code>file</code></em></code>}
+       [dnsname]
+    </p></div>
     <div class="cmdsynopsis"><p>
       <code class="command">dnssec-dsfromkey</code> 
-       [<code class="option">-h</code>]
-       [<code class="option">-V</code>]
-   </p></div>
+       [
+	 <code class="option">-1</code> 
+	 |   <code class="option">-2</code> 
+	 |   <code class="option">-a <em class="replaceable"><code>alg</code></em></code> 
+      ]
+       [
+	 <code class="option">-C</code> 
+	 |   <code class="option">-l <em class="replaceable"><code>domain</code></em></code> 
+      ]
+       [<code class="option">-T <em class="replaceable"><code>TTL</code></em></code>]
+       [<code class="option">-v <em class="replaceable"><code>level</code></em></code>]
+       [<code class="option">-c <em class="replaceable"><code>class</code></em></code>]
+       [<code class="option">-K <em class="replaceable"><code>directory</code></em></code>]
+       {-s}
+       {dnsname}
+    </p></div>
+    <div class="cmdsynopsis"><p>
+      <code class="command">dnssec-dsfromkey</code> 
+       [
+	 <code class="option">-h</code> 
+	 |   <code class="option">-V</code> 
+      ]
+    </p></div>
   </div>
 
   <div class="refsection">
 <a name="id-1.13.9.7"></a><h2>DESCRIPTION</h2>
 
-    <p><span class="command"><strong>dnssec-dsfromkey</strong></span>
-      outputs the Delegation Signer (DS) resource record (RR), as defined in
-      RFC 3658 and RFC 4509, for the given key(s).
+    <p>
+      The <span class="command"><strong>dnssec-dsfromkey</strong></span> command outputs DS (Delegation
+      Signer) resource records (RRs) and other similarly-constructed RRs:
+      with the <code class="option">-l</code> option it outputs DLV (DNSSEC Lookaside
+      Validation) RRs; or with the <code class="option">-C</code> it outputs CDS (Child
+      DS) RRs.
     </p>
+
+    <p>
+      The input keys can be specified in a number of ways:
+    </p>
+
+    <p>
+      By default, <span class="command"><strong>dnssec-dsfromkey</strong></span> reads a key file
+      named like <code class="filename">Knnnn.+aaa+iiiii.key</code>, as generated
+      by <span class="command"><strong>dnssec-keygen</strong></span>.
+    </p>
+
+    <p>
+      With the <code class="option">-f <em class="replaceable"><code>file</code></em></code>
+      option, <span class="command"><strong>dnssec-dsfromkey</strong></span> reads keys from a zone file
+      or partial zone file (which can contain just the DNSKEY records).
+    </p>
+
+    <p>
+      With the <code class="option">-s</code>
+      option, <span class="command"><strong>dnssec-dsfromkey</strong></span> reads
+      a <code class="filename">keyset-</code> file, as generated
+      by <span class="command"><strong>dnssec-keygen</strong></span> <code class="option">-C</code>.
+    </p>
+
   </div>
 
   <div class="refsection">
 <a name="id-1.13.9.8"></a><h2>OPTIONS</h2>
 
-
     <div class="variablelist"><dl class="variablelist">
 <dt><span class="term">-1</span></dt>
 <dd>
 	  <p>
-	    Use SHA-1 as the digest algorithm (the default is to use
-	    both SHA-1 and SHA-256).
+	    An abbreviation for <code class="option">-a SHA1</code>
 	  </p>
 	</dd>
 <dt><span class="term">-2</span></dt>
 <dd>
 	  <p>
-	    Use SHA-256 as the digest algorithm.
+	    An abbreviation for <code class="option">-a SHA-256</code>
 	  </p>
 	</dd>
 <dt><span class="term">-a <em class="replaceable"><code>algorithm</code></em></span></dt>
 <dd>
 	  <p>
-	    Select the digest algorithm. The value of
-	    <code class="option">algorithm</code> must be one of SHA-1 (SHA1),
-	    SHA-256 (SHA256) or SHA-384 (SHA384).
-	    These values are case insensitive.
+	    Specify a digest algorithm to use when converting DNSKEY
+	    records to DS records. This option can be repeated, so
+	    that multiple DS records are created for each DNSKEY
+	    record.
+          </p>
+          <p>
+	    The <em class="replaceable"><code>algorithm</code></em> must be one of
+	    SHA-1, SHA-256, or SHA-384.  These values are case insensitive,
+	    and the hyphen may be omitted.  If no algorithm is specified,
+	    the default is SHA-256.
 	  </p>
 	</dd>
+<dt><span class="term">-A</span></dt>
+<dd>
+          <p>
+            Include ZSKs when generating DS records. Without this option, only
+            keys which have the KSK flag set will be converted to DS records
+            and printed. Useful only in <code class="option">-f</code> zone file mode.
+          </p>
+        </dd>
+<dt><span class="term">-c <em class="replaceable"><code>class</code></em></span></dt>
+<dd>
+	  <p>
+	    Specifies the DNS class (default is IN). Useful only
+	    in <code class="option">-s</code> keyset or <code class="option">-f</code>
+	    zone file mode.
+	  </p>
+	  </dd>
 <dt><span class="term">-C</span></dt>
 <dd>
 	  <p>
-	    Generate CDS records rather than DS records.  This is mutually
-	    exclusive with generating lookaside records.
-	  </p>
-	</dd>
-<dt><span class="term">-T <em class="replaceable"><code>TTL</code></em></span></dt>
-<dd>
-	  <p>
-	    Specifies the TTL of the DS records.
-	  </p>
-	  </dd>
-<dt><span class="term">-K <em class="replaceable"><code>directory</code></em></span></dt>
-<dd>
-	  <p>
-	    Look for key files (or, in keyset mode,
-	    <code class="filename">keyset-</code> files) in
-	    <code class="option">directory</code>.
+	    Generate CDS records rather than DS records. This is mutually
+	    exclusive with the <code class="option">-l</code> option for generating DLV
+	    records.
 	  </p>
 	</dd>
 <dt><span class="term">-f <em class="replaceable"><code>file</code></em></span></dt>
 <dd>
 	  <p>
-	    Zone file mode: in place of the keyfile name, the argument is
-	    the DNS domain name of a zone master file, which can be read
+	    Zone file mode: <span class="command"><strong>dnssec-dsfromkey</strong></span>'s
+	    final <em class="replaceable"><code>dnsname</code></em> argument is
+	    the DNS domain name of a zone whose master file can be read
 	    from <code class="option">file</code>.  If the zone name is the same as
 	    <code class="option">file</code>, then it may be omitted.
 	  </p>
 	  <p>
-	    If <code class="option">file</code> is set to <code class="literal">"-"</code>, then
+	    If <em class="replaceable"><code>file</code></em> is <code class="literal">"-"</code>, then
 	    the zone data is read from the standard input.  This makes it
 	    possible to use the output of the <span class="command"><strong>dig</strong></span>
 	    command as input, as in:
@@ -158,49 +220,47 @@
 	    <strong class="userinput"><code>dig dnskey example.com | dnssec-dsfromkey -f - example.com</code></strong>
 	  </p>
 	</dd>
-<dt><span class="term">-A</span></dt>
+<dt><span class="term">-h</span></dt>
 <dd>
-          <p>
-            Include ZSKs when generating DS records.  Without this option,
-            only keys which have the KSK flag set will be converted to DS
-            records and printed.  Useful only in zone file mode.
-          </p>
-        </dd>
+	  <p>
+	    Prints usage information.
+	  </p>
+	</dd>
+<dt><span class="term">-K <em class="replaceable"><code>directory</code></em></span></dt>
+<dd>
+	  <p>
+	    Look for key files or <code class="filename">keyset-</code> files in
+	    <code class="option">directory</code>.
+	  </p>
+	</dd>
 <dt><span class="term">-l <em class="replaceable"><code>domain</code></em></span></dt>
 <dd>
 	  <p>
-	    Generate a DLV set instead of a DS set.  The specified
-	    <code class="option">domain</code> is appended to the name for each
+	    Generate a DLV set instead of a DS set. The specified
+	    <em class="replaceable"><code>domain</code></em> is appended to the name for each
 	    record in the set.
-	    The DNSSEC Lookaside Validation (DLV) RR is described
-	    in RFC 4431.  This is mutually exclusive with generating
-	    CDS records.
+	    This is mutually exclusive with the <code class="option">-C</code> option
+	    for generating CDS records.
 	  </p>
 	</dd>
 <dt><span class="term">-s</span></dt>
 <dd>
 	  <p>
-	    Keyset mode: in place of the keyfile name, the argument is
-	    the DNS domain name of a keyset file.
+	    Keyset mode: <span class="command"><strong>dnssec-dsfromkey</strong></span>'s
+	    final <em class="replaceable"><code>dnsname</code></em> argument is the DNS
+	    domain name used to locate a <code class="filename">keyset-</code> file.
 	  </p>
 	</dd>
-<dt><span class="term">-c <em class="replaceable"><code>class</code></em></span></dt>
+<dt><span class="term">-T <em class="replaceable"><code>TTL</code></em></span></dt>
 <dd>
 	  <p>
-	    Specifies the DNS class (default is IN).  Useful only
-	    in keyset or zone file mode.
+	    Specifies the TTL of the DS records. By default the TTL is omitted.
 	  </p>
 	  </dd>
 <dt><span class="term">-v <em class="replaceable"><code>level</code></em></span></dt>
 <dd>
 	  <p>
 	    Sets the debugging level.
-	  </p>
-	</dd>
-<dt><span class="term">-h</span></dt>
-<dd>
-	  <p>
-	    Prints usage information.
 	  </p>
 	</dd>
 <dt><span class="term">-V</span></dt>
@@ -218,22 +278,23 @@
     <p>
       To build the SHA-256 DS RR from the
       <strong class="userinput"><code>Kexample.com.+003+26160</code></strong>
-      keyfile name, the following command would be issued:
+      keyfile name, you can issue the following command:
     </p>
     <p><strong class="userinput"><code>dnssec-dsfromkey -2 Kexample.com.+003+26160</code></strong>
     </p>
     <p>
       The command would print something like:
     </p>
-    <p><strong class="userinput"><code>example.com. IN DS 26160 5 2 3A1EADA7A74B8D0BA86726B0C227AA85AB8BBD2B2004F41A868A54F0 C5EA0B94</code></strong>
+    <p><strong class="userinput"><code>example.com. IN DS 26160 5 2 3A1EADA7A74B8D0BA86726B0C227AA85AB8BBD2B2004F41A868A54F0C5EA0B94</code></strong>
     </p>
+
   </div>
 
   <div class="refsection">
 <a name="id-1.13.9.10"></a><h2>FILES</h2>
 
     <p>
-      The keyfile can be designed by the key identification
+      The keyfile can be designated by the key identification
       <code class="filename">Knnnn.+aaa+iiiii</code> or the full file name
       <code class="filename">Knnnn.+aaa+iiiii.key</code> as generated by
       <span class="refentrytitle">dnssec-keygen</span>(8).
@@ -263,9 +324,11 @@
 	<span class="refentrytitle">dnssec-signzone</span>(8)
       </span>,
       <em class="citetitle">BIND 9 Administrator Reference Manual</em>,
-      <em class="citetitle">RFC 3658</em>,
-      <em class="citetitle">RFC 4431</em>.
-      <em class="citetitle">RFC 4509</em>.
+      <em class="citetitle">RFC 3658</em> (DS RRs),
+      <em class="citetitle">RFC 4431</em> (DLV RRs),
+      <em class="citetitle">RFC 4509</em> (SHA-256 for DS RRs),
+      <em class="citetitle">RFC 6605</em> (SHA-384 for DS RRs),
+      <em class="citetitle">RFC 7344</em> (CDS and CDNSKEY RRs).
     </p>
   </div>
 
@@ -289,6 +352,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.5-W1 (Development Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.7 (Development Release)</p>
 </body>
 </html>

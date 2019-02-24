@@ -1227,7 +1227,7 @@ rekey_calls=`grep "zone reconf.example.*next key event" ns3/named.run | wc -l`
 [ "$rekey_calls" -eq 0 ] || ret=1
 # ...then we add auto-dnssec and reconfigure
 $RNDCCMD 10.53.0.3 modzone reconf.example '{ type master; file "reconf.example.db"; allow-update { any; }; auto-dnssec maintain; };' 2>&1 | sed 's/^/ns3 /' | cat_i
-$RNDCCMD 10.53.0.3 reconfig 2>&1 | sed 's/^/ns3 /' | cat_i
+rndc_reconfig ns3 10.53.0.3
 for i in 0 1 2 3 4 5 6 7 8 9; do
     lret=0
     rekey_calls=`grep "zone reconf.example.*next key event" ns3/named.run | wc -l`
@@ -1446,6 +1446,39 @@ fi
 $DIG $DIGOPTS delzsk.example AXFR @10.53.0.3 > dig.out.ns3.3.test$n || ret=1
 grep "589R358VSPJUFVAJU949JPVF74D9PTGH" dig.out.ns3.3.test$n > /dev/null 2>&1 && ret=1
 n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "check that DNAME at apex with NSEC3 is correctly signed (auto-dnssec maintain) ($n)"
+ret=0
+$DIG $DIGOPTS txt dname-at-apex-nsec3.example @10.53.0.3 > dig.out.ns3.test$n || ret=1
+grep "RRSIG NSEC3 7 3 3600" dig.out.ns3.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "checking that DNAME is not treated as a delegation when signing ($n)"
+ret=0
+$DIG $DIGOPTS dname-and-txt.secure.example. DNAME @10.53.0.3 > dig.out.ns3.1.test$n || ret=1
+grep "dname-and-txt.secure.example.*RRSIG.*DNAME" dig.out.ns3.1.test$n > /dev/null 2>&1 || ret=1
+$DIG $DIGOPTS dname-and-txt.secure.example. TXT @10.53.0.3 > dig.out.ns3.2.test$n || ret=1
+grep "dname-and-txt.secure.example.*RRSIG.*TXT" dig.out.ns3.2.test$n > /dev/null 2>&1 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "checking key maintenance events were logged correctly ($n)"
+ret=0
+pub=`grep "DNSKEY .* is now published" ns1/named.run | wc -l`
+[ "$pub" -eq 6 ] || ret=1
+act=`grep "DNSKEY .* is now active" ns1/named.run | wc -l`
+[ "$act" -eq 5 ] || ret=1
+rev=`grep "DNSKEY .* is now revoked" ns1/named.run | wc -l`
+[ "$rev" -eq 1 ] || ret=1
+inac=`grep "DNSKEY .* is now inactive" ns1/named.run | wc -l`
+[ "$inac" -eq 1 ] || ret=1
+del=`grep "DNSKEY .* is now deleted" ns1/named.run | wc -l`
+[ "$del" -eq 1 ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

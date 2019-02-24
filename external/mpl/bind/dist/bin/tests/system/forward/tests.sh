@@ -11,6 +11,7 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 DIGOPTS="-p ${PORT}"
+SENDCMD="$PERL ../send.pl 10.53.0.6 $EXTRAPORT1"
 
 root=10.53.0.1
 hidden=10.53.0.2
@@ -128,6 +129,33 @@ echo_i "checking that ULA inherited 'forward first;' zones are warned about"
 ret=0
 $CHECKCONF ula-inherited.conf | grep "forward first;" >/dev/null || ret=1
 $CHECKCONF ula-notinherited.conf | grep "forward first;" >/dev/null && ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "checking that a forwarder timeout prevents it from being reused in the same fetch context"
+ret=0
+# Make ans6 receive queries without responding to them.
+echo "//" | $SENDCMD
+# Query for a record in a zone which is forwarded to a non-responding forwarder
+# and is delegated from the root to check whether the forwarder will be retried
+# when a delegation is encountered after falling back to full recursive
+# resolution.
+$DIG $DIGOPTS txt.example7. txt @$f1 > dig.out.f1 || ret=1
+# The forwarder for the "example7" zone should only be queried once.
+sent=`tr -d '\r' < ns3/named.run | sed -n '/sending packet to 10.53.0.6/,/^$/p' | grep ";txt.example7.*IN.*TXT" | wc -l`
+if [ $sent -ne 1 ]; then ret=1; fi
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "checking that priming queries are not forwarded"
+ret=0
+$DIG $DIGOPTS +noadd +noauth txt.example1. txt @10.53.0.7 > dig.out.f7 || ret=1
+sent=`tr -d '\r' < ns7/named.run | sed -n '/sending packet to 10.53.0.1/,/^$/p' | grep ";.*IN.*NS" | wc -l`
+[ $sent -eq 1 ] || ret=1
+sent=`grep "10.53.0.7#.* (.): query '\./NS/IN' approved" ns4/named.run | wc -l`
+[ $sent -eq 0 ] || ret=1
+sent=`grep "10.53.0.7#.* (.): query '\./NS/IN' approved" ns1/named.run | wc -l`
+[ $sent -eq 1 ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

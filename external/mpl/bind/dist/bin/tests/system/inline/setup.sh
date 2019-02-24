@@ -16,6 +16,7 @@ cp ns1/root.db.in ns1/root.db
 rm -f ns1/root.db.signed
 
 touch ns2/trusted.conf
+cp ns2/nsec3-loop.db.in ns2/nsec3-loop.db
 cp ns2/bits.db.in ns2/bits.db
 cp ns2/bits.db.in ns2/inactiveksk.db
 cp ns2/bits.db.in ns2/inactivezsk.db

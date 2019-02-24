@@ -13,8 +13,10 @@
 # Clean up after a specified system test.
 #
 
-SYSTEMTESTTOP=.
+SYSTEMTESTTOP="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
 . $SYSTEMTESTTOP/conf.sh
+
+export SYSTEMTESTTOP
 
 # See if the "-r" flag is present.  This will usually be set when all the tests
 # are run (e.g. from "runall.sh") and tells the script not to delete the

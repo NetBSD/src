@@ -46,6 +46,7 @@ my $A = "ns.example 300 IN A $localaddr";
 # Records to be TTL stretched
 #
 my $TXT = "data.example 1 IN TXT \"A text record with a 1 second ttl\"";
+my $LONGTXT = "longttl.example 600 IN TXT \"A text record with a 600 second ttl\"";
 my $negSOA = "example 1 IN SOA . . 0 0 0 0 300";
 
 sub reply_handler {
@@ -109,6 +110,15 @@ sub reply_handler {
     } elsif ($qname eq "data.example") {
 	if ($qtype eq "TXT") {
 	    my $rr = new Net::DNS::RR($TXT);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($negSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "longttl.example") {
+	if ($qtype eq "TXT") {
+	    my $rr = new Net::DNS::RR($LONGTXT);
 	    push @ans, $rr;
 	} else {
 	    my $rr = new Net::DNS::RR($negSOA);

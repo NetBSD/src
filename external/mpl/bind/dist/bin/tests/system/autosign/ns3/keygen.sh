@@ -325,3 +325,12 @@ ksk=`$KEYGEN -a NSEC3RSASHA1 -3 -q -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -a NSEC3RSASHA1 -3 -q $zone > kg.out 2>&1 || dumpit kg.out
 zsk=`$KEYGEN -a NSEC3RSASHA1 -3 -q -I now-1w $zone 2>kg.out` || dumpit kg.out
 echo $zsk > ../delzsk.key
+
+#
+#  Check that NSEC3 are correctly signed and returned from below a DNAME
+#
+setup dname-at-apex-nsec3.example
+cp $infile $zonefile
+ksk=`$KEYGEN -q -a RSASHA1 -3 -fk $zone 2> kg.out` || dumpit kg.out
+$KEYGEN -q -a RSASHA1 -3 $zone > kg.out 2>&1 || dumpit kg.out
+$DSFROMKEY $ksk.key > dsset-${zone}$TP

@@ -1,0 +1,326 @@
+#!/bin/sh
+#
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+if test -n "$PERL"
+then
+	if $PERL -e "use IO::Socket::INET6;" 2> /dev/null
+	then
+		TESTSOCK6="$PERL $TOP/bin/tests/system/testsock6.pl"
+	else
+		TESTSOCK6=false
+	fi
+else
+	TESTSOCK6=false
+fi
+
+TESTSOCK6="$TESTSOCK6"
+
+. ${TOP}/version
+
+#
+# Set up color-coded test output
+#
+if [ ${SYSTEMTEST_FORCE_COLOR:-0} -eq 1 ] || test -t 1 && type tput > /dev/null 2>&1 && tput setaf 7 > /dev/null 2>&1 ; then
+    COLOR_END=`tput setaf 4`    # blue
+    COLOR_FAIL=`tput setaf 1`   # red
+    COLOR_INFO=`tput bold`      # bold
+    COLOR_NONE=`tput sgr0`
+    COLOR_PASS=`tput setaf 2`   # green
+    COLOR_START=`tput setaf 4`  # blue
+    COLOR_WARN=`tput setaf 3`   # yellow
+else
+    # set to empty strings so printf succeeds
+    COLOR_END=''
+    COLOR_FAIL=''
+    COLOR_INFO=''
+    COLOR_NONE=''
+    COLOR_PASS=''
+    COLOR_START=''
+    COLOR_WARN=''
+fi
+
+if type printf > /dev/null 2>&1
+then
+	echofail () {
+		printf "${COLOR_FAIL}%s${COLOR_NONE}\n" "$*"
+	}
+	echowarn () {
+		printf "${COLOR_WARN}%s${COLOR_NONE}\n" "$*"
+	}
+	echopass () {
+		printf "${COLOR_PASS}%s${COLOR_NONE}\n" "$*"
+	}
+	echoinfo () {
+		printf "${COLOR_INFO}%s${COLOR_NONE}\n" "$*"
+	}
+	echostart () {
+		printf "${COLOR_START}%s${COLOR_NONE}\n" "$*"
+	}
+	echoend () {
+		printf "${COLOR_END}%s${COLOR_NONE}\n" "$*"
+	}
+else
+	echofail () {
+		echo "$*"
+	}
+	echowarn () {
+		echo "$*"
+	}
+	echopass () {
+		echo "$*"
+	}
+	echoinfo () {
+		echo "$*"
+	}
+	echostart () {
+		echo "$*"
+	}
+	echoend () {
+		echo "$*"
+	}
+fi
+
+SYSTESTDIR="`basename $PWD`"
+
+echo_i() {
+    echo "$@" | while read __LINE ; do
+       echoinfo "I:$SYSTESTDIR:$__LINE"
+    done
+}
+
+echo_ic() {
+    echo "$@" | while read __LINE ; do
+       echoinfo "I:$SYSTESTDIR:  $__LINE"
+    done
+}
+
+cat_i() {
+    while read __LINE ; do
+       echoinfo "I:$SYSTESTDIR:$__LINE"
+    done
+}
+
+echo_d() {
+    echo "$@" | while read __LINE ; do
+       echoinfo "D:$SYSTESTDIR:$__LINE"
+    done
+}
+
+cat_d() {
+    while read __LINE ; do
+       echoinfo "D:$SYSTESTDIR:$__LINE"
+    done
+}
+
+digcomp() {
+    output=`$PERL $SYSTEMTESTTOP/digcomp.pl "$@"`
+    result=$?
+    [ -n "$output" ] &&  { echo "digcomp failed:"; echo "$output"; } | cat_i
+    return $result
+}
+
+#
+# Useful functions in test scripts
+#
+
+# keyfile_to_keys_section: helper function for keyfile_to_*_keys() which
+# converts keyfile data into a configuration section using the supplied
+# parameters
+keyfile_to_keys_section() {
+    section_name=$1
+    key_prefix=$2
+    shift
+    shift
+    echo "$section_name {"
+    for keyname in $*; do
+        awk '!/^; /{
+            printf "\t\""$1"\" "
+            printf "'"$key_prefix"'"
+            printf $4 " " $5 " " $6 " \""
+            for (i=7; i<=NF; i++) printf $i
+            printf "\";\n"
+        }' $keyname.key
+    done
+    echo "};"
+}
+
+# keyfile_to_trusted_keys: convert key data contained in the keyfile(s)
+# provided to a "trusted-keys" section suitable for including in a
+# resolver's configuration file
+keyfile_to_trusted_keys() {
+    keyfile_to_keys_section "trusted-keys" "" $*
+}
+
+# keyfile_to_managed_keys: convert key data contained in the keyfile(s)
+# provided to a "managed-keys" section suitable for including in a
+# resolver's configuration file
+keyfile_to_managed_keys() {
+    keyfile_to_keys_section "managed-keys" "initial-key " $*
+}
+
+# nextpart*() - functions for reading files incrementally
+#
+# These functions aim to facilitate looking for (or waiting for)
+# messages which may be logged more than once throughout the lifetime of
+# a given named instance by outputting just the part of the file which
+# has been appended since the last time we read it.
+#
+# Calling some of these functions causes temporary *.prev files to be
+# created that need to be cleaned up manually (usually by a given system
+# test's clean.sh script).
+#
+# Note that unlike other nextpart*() functions, nextpartread() is not
+# meant to be directly used in system tests; its sole purpose is to
+# reduce code duplication below.
+#
+# A quick usage example:
+#
+#     $ echo line1 > named.log
+#     $ echo line2 >> named.log
+#     $ nextpart named.log
+#     line1
+#     line2
+#     $ echo line3 >> named.log
+#     $ nextpart named.log
+#     line3
+#     $ nextpart named.log
+#     $ echo line4 >> named.log
+#     $ nextpartpeek named.log
+#     line4
+#     $ nextpartpeek named.log
+#     line4
+#     $ nextpartreset named.log
+#     $ nextpartpeek named.log
+#     line1
+#     line2
+#     line3
+#     line4
+#     $ nextpart named.log
+#     line1
+#     line2
+#     line3
+#     line4
+#     $ nextpart named.log
+#     $
+
+# nextpartreset: reset the marker used by nextpart() and nextpartpeek()
+# so that it points to the start of the given file
+nextpartreset() {
+    echo "0" > $1.prev
+}
+
+# nextpartread: read everything that's been appended to a file since the
+# last time nextpart() was called and print it to stdout, print the
+# total number of lines read from that file so far to stderr
+nextpartread() {
+    [ -f $1.prev ] || nextpartreset $1
+    prev=`cat $1.prev`
+    awk "NR > $prev "'{ print }
+         END          { print NR > "/dev/stderr" }' $1
+}
+
+# nextpart: read everything that's been appended to a file since the
+# last time nextpart() was called
+nextpart() {
+	nextpartread $1 2> $1.prev.tmp
+	mv $1.prev.tmp $1.prev
+}
+
+# nextpartpeek: read everything that's been appended to a file since the
+# last time nextpart() was called
+nextpartpeek() {
+	nextpartread $1 2> /dev/null
+}
+
+rndc_reload() {
+    echo_i "`$RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} reload $3 2>&1 | sed 's/^/'$1' /'`"
+    # reloading single zone is synchronous, if we're reloading whole server
+    # we need to wait for reload to finish
+    if [ -z "$3" ]; then
+	for __try in 0 1 2 3 4 5 6 7 8 9; do
+	    $RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} status | grep "reload/reconfig in progress" > /dev/null || break; 
+	    sleep 1
+	done
+    fi
+}
+
+rndc_reconfig() {
+    echo_i "`$RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} reconfig 2>&1 | sed 's/^/'$1' /'`"
+    for __try in 0 1 2 3 4 5 6 7 8 9; do
+        $RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} status | grep "reload/reconfig in progress" > /dev/null || break; 
+	sleep 1
+    done
+}
+
+# get_dig_xfer_stats: extract transfer statistics from dig output stored
+# in $1, converting them to a format used by some system tests.
+get_dig_xfer_stats() {
+	LOGFILE="$1"
+	echo "messages=`sed -n "s/^;; XFR size: .*messages \([0-9][0-9]*\).*/\1/p" "${LOGFILE}"`"
+	echo "records=`sed -n "s/^;; XFR size: \([0-9][0-9]*\) records.*/\1/p" "${LOGFILE}"`"
+	echo "bytes=`sed -n "s/^;; XFR size: .*bytes \([0-9][0-9]*\).*/\1/p" "${LOGFILE}"`"
+}
+
+# get_named_xfer_stats: from named log file $1, extract transfer
+# statistics for the last transfer for peer $2 and zone $3, converting
+# them to a format used by some system tests.
+get_named_xfer_stats() {
+	LOGFILE="$1"
+	PEER="$2"
+	ZONE="$3"
+	echo "messages=`grep "${PEER}" "${LOGFILE}" | sed -n "s/.*${ZONE}.* \([0-9][0-9]*\) messages.*/\1/p" | tail -1`"
+	echo "records=`grep "${PEER}" "${LOGFILE}" | sed -n "s/.*${ZONE}.* \([0-9][0-9]*\) records.*/\1/p" | tail -1`"
+	echo "bytes=`grep "${PEER}" "${LOGFILE}" | sed -n "s/.*${ZONE}.* \([0-9][0-9]*\) bytes.*/\1/p" | tail -1`"
+}
+
+#
+# Export command paths
+#
+export ARPANAME
+export BIGKEY
+export CDS
+export CHECKZONE
+export DESCRIPTION
+export DIG
+export FEATURETEST
+export FSTRM_CAPTURE
+export GENCHECK
+export JOURNALPRINT
+export KEYCREATE
+export KEYDELETE
+export KEYFRLAB
+export KEYGEN
+export KEYSETTOOL
+export KEYSIGNER
+export KRB5_CONFIG
+export MAKEJOURNAL
+export MDIG
+export NAMED
+export NSEC3HASH
+export NSLOOKUP
+export NSUPDATE
+export NZD2NZF
+export PERL
+export PIPEQUERIES
+export PK11DEL
+export PK11GEN
+export PK11LIST
+export PSSUSPEND
+export PYTHON
+export RESOLVE
+export RNDC
+export RRCHECKER
+export SAMPLEUPDATE
+export SIGNER
+export SUBDIRS
+export TESTSOCK6
+export TSIGKEYGEN
+export WIRETEST

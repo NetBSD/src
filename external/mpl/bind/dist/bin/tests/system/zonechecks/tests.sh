@@ -220,7 +220,7 @@ checkfor "files: reload.db, soa.db$" rndc.out.postreload
 sleep 1
 echo "@ 0 SOA . . 3 0 0 0 0" > ns1/reload.db
 echo "@ 0 NS ." >> ns1/reload.db
-$RNDCCMD 10.53.0.1 reload reload.example | sed 's/^/ns1 /' | cat_i
+rndc_reload ns1 10.53.0.1 reload.example
 for i in 0 1 2 3 4 5 6 7 8 9
 do
 	$DIG $DIGOPTS reload.example SOA @10.53.0.1 > dig.out

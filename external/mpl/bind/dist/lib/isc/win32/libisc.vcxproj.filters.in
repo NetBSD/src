@@ -143,12 +143,6 @@
     <ClInclude Include="..\include\isc\meminfo.h">
       <Filter>Win32 Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\isc\msgcat.h">
-      <Filter>Library Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\isc\msgs.h">
-      <Filter>Library Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\isc\mutexblock.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -536,9 +530,6 @@
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\mem.c">
-      <Filter>Library Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\nls\msgcat.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\mutexblock.c">

@@ -14,7 +14,7 @@ top_srcdir =	@top_srcdir@
 VERSION=@BIND9_VERSION@
 
 HEADERS =	dir.h net.h netdb.h offset.h stat.h \
-		stdtime.h syslog.h time.h
+		stdatomic.h stdtime.h syslog.h time.h
 
 SUBDIRS =
 TARGETS =

@@ -21,7 +21,7 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	notify yes;
-	disable-algorithms . { @DEFAULT_ALGORITHM@; };
+	disable-algorithms . { @ALTERNATIVE_ALGORITHM@; };
 	dnssec-enable yes;
 	dnssec-validation yes;
 	dnssec-lookaside . trust-anchor dlv;

@@ -24,4 +24,13 @@ options {
 	dnssec-validation no;
 };
 
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm hmac-sha256;
+};
+
+controls {
+	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
 zone "child.example.tld" { type master; file "child.example.db"; };

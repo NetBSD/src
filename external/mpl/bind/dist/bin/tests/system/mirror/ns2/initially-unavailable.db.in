@@ -8,7 +8,7 @@
 ; information regarding copyright ownership.
 
 $TTL 3600
-@		SOA	a.root-servers.nil. hostmaster 2000010100 3600 1200 604800 3600
+@		SOA	a.root-servers.nil. hostmaster 1 3600 1200 604800 3600
 @		NS	ns2
 ns2		A	10.53.0.2
 foo		CNAME	foo.example.

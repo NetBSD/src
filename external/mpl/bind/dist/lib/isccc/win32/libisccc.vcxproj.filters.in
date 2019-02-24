@@ -36,9 +36,6 @@
     <ClCompile Include="..\ccmsg.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\lib.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\result.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -63,9 +60,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isccc\events.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\isccc\lib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isccc\result.h">
