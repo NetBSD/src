@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.19 2019/01/22 03:42:27 msaitoh Exp $ */
+/*	$NetBSD: atphy.c,v 1.20 2019/02/24 17:22:21 christos Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.19 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.20 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,18 +91,12 @@ const struct mii_phy_funcs atphy_funcs = {
 };
 
 static const struct mii_phydesc etphys[] = {
-	{ MII_OUI_ATHEROS,	MII_MODEL_ATHEROS_F1,
-	  MII_STR_ATHEROS_F1 },
-	{ MII_OUI_ATTANSIC,	MII_MODEL_ATTANSIC_L1,
-	  MII_STR_ATTANSIC_L1 },
-	{ MII_OUI_ATTANSIC,	MII_MODEL_ATTANSIC_L2,
-	  MII_STR_ATTANSIC_L2 },
-	{ MII_OUI_ATTANSIC,	MII_MODEL_ATTANSIC_AR8021,
-	  MII_STR_ATTANSIC_AR8021 },
-	{ MII_OUI_ATTANSIC,	MII_MODEL_ATTANSIC_AR8035,
-	  MII_STR_ATTANSIC_AR8035 },
-	{ 0,			0,
-	  NULL },
+	MII_PHY_DESC(ATHEROS, F1),
+	MII_PHY_DESC(ATTANSIC, L1),
+	MII_PHY_DESC(ATTANSIC, L2),
+	MII_PHY_DESC(ATTANSIC, AR8021),
+	MII_PHY_DESC(ATTANSIC, AR8035),
+	MII_PHY_END,
 };
 
 static bool

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvphy.c,v 1.11 2019/01/23 03:38:26 msaitoh Exp $	*/
+/*	$NetBSD: mvphy.c,v 1.12 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.11 2019/01/23 03:38:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.12 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,11 +86,8 @@ static const struct mii_phy_funcs mvphy_funcs = {
 };
 
 static const struct mii_phydesc mvphys[] = {
-	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E6060,
-	  MII_STR_xxMARVELL_E6060 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(xxMARVELL, E6060),
+	MII_PHY_END,
 };
 
 /*

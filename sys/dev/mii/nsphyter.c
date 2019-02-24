@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.40 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.41 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.40 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.41 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,20 +97,11 @@ static const struct mii_phy_funcs nsphyter_funcs = {
 };
 
 static const struct mii_phydesc nsphyters[] = {
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83843,
-	  MII_STR_xxNATSEMI_DP83843 },
-
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83847,
-	  MII_STR_xxNATSEMI_DP83847 },
-
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83849,
-	  MII_STR_xxNATSEMI_DP83849 },
-
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83815,
-	  MII_STR_xxNATSEMI_DP83815 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(xxNATSEMI, DP83843),
+	MII_PHY_DESC(xxNATSEMI, DP83847),
+	MII_PHY_DESC(xxNATSEMI, DP83849),
+	MII_PHY_DESC(xxNATSEMI, DP83815),
+	MII_PHY_END,
 };
 
 static int

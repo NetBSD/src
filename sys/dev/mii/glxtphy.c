@@ -1,4 +1,4 @@
-/*	$NetBSD: glxtphy.c,v 1.27 2019/02/19 02:51:02 msaitoh Exp $	*/
+/*	$NetBSD: glxtphy.c,v 1.28 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.27 2019/02/19 02:51:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.28 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,14 +91,9 @@ static const struct mii_phy_funcs glxtphy_funcs = {
 };
 
 static const struct mii_phydesc glxtphys[] = {
-	{ MII_OUI_LEVEL1,		MII_MODEL_LEVEL1_LXT1000_OLD,
-	  MII_STR_LEVEL1_LXT1000_OLD },
-
-	{ MII_OUI_LEVEL1,		MII_MODEL_LEVEL1_LXT1000,
-	  MII_STR_LEVEL1_LXT1000 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(LEVEL1, LXT1000_OLD),
+	MII_PHY_DESC(LEVEL1, LXT1000),
+	MII_PHY_END,
 };
 
 static int

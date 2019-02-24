@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.52 2019/02/13 08:42:26 msaitoh Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.53 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.52 2019/02/13 08:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.53 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,23 +92,12 @@ static const struct mii_phy_funcs icsphy_funcs = {
 };
 
 static const struct mii_phydesc icsphys[] = {
-	{ MII_OUI_ICS,		MII_MODEL_ICS_1889,
-	  MII_STR_ICS_1889 },
-
-	{ MII_OUI_ICS,		MII_MODEL_ICS_1890,
-	  MII_STR_ICS_1890 },
-
-	{ MII_OUI_ICS,		MII_MODEL_ICS_1892,
-	  MII_STR_ICS_1892 },
-
-	{ MII_OUI_ICS,		MII_MODEL_ICS_1893,
-	  MII_STR_ICS_1893 },
-
-	{ MII_OUI_ICS,		MII_MODEL_ICS_1893C,
-	  MII_STR_ICS_1893C },
-
-	{ 0,			0,
-	  NULL },
+	MII_PHY_DESC(ICS, 1889),
+	MII_PHY_DESC(ICS, 1890),
+	MII_PHY_DESC(ICS, 1892),
+	MII_PHY_DESC(ICS, 1893),
+	MII_PHY_DESC(ICS, 1893C),
+	MII_PHY_END,
 };
 
 static int

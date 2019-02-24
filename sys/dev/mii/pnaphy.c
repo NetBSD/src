@@ -1,4 +1,4 @@
-/*	$NetBSD: pnaphy.c,v 1.22 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: pnaphy.c,v 1.23 2019/02/24 17:22:21 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.22 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.23 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,11 +77,8 @@ static const struct mii_phy_funcs pnaphy_funcs = {
 };
 
 static const struct mii_phydesc pnaphys[] = {
-	{ MII_OUI_yyAMD,		MII_MODEL_yyAMD_79c901home,
-	  MII_STR_yyAMD_79c901home },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(yyAMD, 79c901home),
+	MII_PHY_END,
 };
 
 static int

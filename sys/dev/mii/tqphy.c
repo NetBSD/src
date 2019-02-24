@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.41 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.42 2019/02/24 17:22:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.41 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.42 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,14 +92,11 @@ static const struct mii_phy_funcs tqphy_funcs = {
 };
 
 static const struct mii_phydesc tqphys[] = {
-	{ MII_OUI_xxTSC,		MII_MODEL_xxTSC_78Q2120,
-	  MII_STR_xxTSC_78Q2120 },
+	MII_PHY_DESC(xxTSC, 78Q2120),
 #if 0
-	{ MII_OUI_xxTSC,		MII_MODEL_TSC_78Q2121,
-	  MII_STR_TSC_78Q2121 },
+	MII_PHY_DESC(xxTSC, 78Q2121),
 #endif
-	{ 0,				0,
-	  NULL },
+	MII_PHY_END,
 };
 
 static int

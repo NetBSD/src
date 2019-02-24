@@ -1,4 +1,4 @@
-/*	$NetBSD: acphy.c,v 1.26 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: acphy.c,v 1.27 2019/02/24 17:22:21 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.26 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.27 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,21 +72,13 @@ static const struct mii_phy_funcs acphy_funcs = {
 };
 
 static const struct mii_phydesc acphys[] = {
-	{ MII_OUI_ALTIMA,		MII_MODEL_ALTIMA_AC101,
-	  MII_STR_ALTIMA_AC101 },
-	{ MII_OUI_ALTIMA,		MII_MODEL_ALTIMA_AC101L,
-	  MII_STR_ALTIMA_AC101L },
-	{ MII_OUI_ALTIMA,		MII_MODEL_ALTIMA_Am79C874,
-	  MII_STR_ALTIMA_Am79C874 },
-	{ MII_OUI_ALTIMA,		MII_MODEL_ALTIMA_Am79C875,
-	  MII_STR_ALTIMA_Am79C875 },
-
+	MII_PHY_DESC(ALTIMA, AC101),
+	MII_PHY_DESC(ALTIMA, AC101L),
+	MII_PHY_DESC(ALTIMA, Am79C874),
+	MII_PHY_DESC(ALTIMA, Am79C875),
 	/* XXX This is reported to work, but it's not from any data sheet. */
-	{ MII_OUI_ALTIMA,		MII_MODEL_ALTIMA_ACXXX,
-	  MII_STR_ALTIMA_ACXXX },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(ALTIMA, ACXXX),
+	MII_PHY_END,
 };
 
 static int

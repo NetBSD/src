@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.31 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.32 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.31 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.32 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,17 +99,10 @@ static const struct mii_phy_funcs gphyter_funcs = {
 };
 
 static const struct mii_phydesc gphyters[] = {
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83861,
-	  MII_STR_xxNATSEMI_DP83861 },
-
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83865,
-	  MII_STR_xxNATSEMI_DP83865 },
-
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83891,
-	  MII_STR_xxNATSEMI_DP83891 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(xxNATSEMI, DP83861),
+	MII_PHY_DESC(xxNATSEMI, DP83865),
+	MII_PHY_DESC(xxNATSEMI, DP83891),
+	MII_PHY_END,
 };
 
 static int

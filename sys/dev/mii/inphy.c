@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.56 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: inphy.c,v 1.57 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.56 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.57 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,23 +92,12 @@ static const struct mii_phy_funcs inphy_funcs = {
 };
 
 static const struct mii_phydesc inphys[] = {
-	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82555,
-	  MII_STR_yyINTEL_I82555 },
-
-	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82562EH,
-	  MII_STR_yyINTEL_I82562EH },
-
-	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82562EM,
-	  MII_STR_yyINTEL_I82562EM },
-
-	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82562ET,
-	  MII_STR_yyINTEL_I82562ET },
-
-	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82562G,
-	  MII_STR_yyINTEL_I82562G },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(yyINTEL, I82555),
+	MII_PHY_DESC(yyINTEL, I82562EH),
+	MII_PHY_DESC(yyINTEL, I82562EM),
+	MII_PHY_DESC(yyINTEL, I82562ET),
+	MII_PHY_DESC(yyINTEL, I82562G),
+	MII_PHY_END,
 };
 
 static int

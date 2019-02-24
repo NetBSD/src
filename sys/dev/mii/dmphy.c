@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.38 2019/02/18 07:27:15 msaitoh Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.39 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.38 2019/02/18 07:27:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.39 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,17 +92,10 @@ static const struct mii_phy_funcs dmphy_funcs = {
 };
 
 static const struct mii_phydesc dmphys[] = {
-	{ MII_OUI_xxDAVICOM,		MII_MODEL_xxDAVICOM_DM9101,
-	  MII_STR_xxDAVICOM_DM9101 },
-
-	{ MII_OUI_xxDAVICOM,		MII_MODEL_xxDAVICOM_DM9102,
-	  MII_STR_xxDAVICOM_DM9102 },
-
-	{ MII_OUI_DAVICOM,		MII_MODEL_xxDAVICOM_DM9101,
-	  MII_STR_xxDAVICOM_DM9101 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(xxDAVICOM, DM9101),
+	MII_PHY_DESC(xxDAVICOM, DM9102),
+	MII_PHY_DESC(xxDAVICOM, DM9101),
+	MII_PHY_END,
 };
 
 static int
