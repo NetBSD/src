@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.72 2019/01/28 12:53:01 martin Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.73 2019/02/24 07:20:33 maxv Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.72 2019/01/28 12:53:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.73 2019/02/24 07:20:33 maxv Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_atalk.h"
@@ -185,9 +185,11 @@ at_pcbconnect(struct ddpcb *ddp, struct sockaddr_at *sat)
 	struct ifnet   *ifp;
 	u_short         hintnet = 0, net;
 
-	if (sat->sat_family != AF_APPLETALK) {
+	if (sat->sat_family != AF_APPLETALK)
 		return EAFNOSUPPORT;
-	}
+	if (sat->sat_len != sizeof(*sat))
+		return EINVAL;
+
 	/*
          * Under phase 2, network 0 means "the network".  We take "the
          * network" to mean the network the control block is bound to.

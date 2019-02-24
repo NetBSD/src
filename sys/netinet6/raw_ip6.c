@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.173 2019/01/28 12:53:01 martin Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.174 2019/02/24 07:20:33 maxv Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.173 2019/01/28 12:53:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.174 2019/02/24 07:20:33 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -716,6 +716,8 @@ rip6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		return EADDRNOTAVAIL;
 	if (addr->sin6_family != AF_INET6)
 		return EAFNOSUPPORT;
+	if (addr->sin6_len != sizeof(*addr))
+		return EINVAL;
 
 	/*
 	 * Application should provide a proper zone ID or the use of
