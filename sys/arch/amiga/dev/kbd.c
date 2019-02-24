@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.57 2014/07/25 08:10:31 dholland Exp $ */
+/*	$NetBSD: kbd.c,v 1.58 2019/02/24 19:25:35 jandberg Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.57 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.58 2019/02/24 19:25:35 jandberg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ struct kbd_softc {
 	int k_console;		/* true if used as console keyboard */
 #if NWSKBD>0
 	device_t k_wskbddev; /* pointer to wskbd for sending strokes */
-	int k_pollingmode;         /* polling mode on? whatever it isss... */
+	int k_pollingmode;         /* Polling mode on? Otherwise send events. */
 #endif
 };
 struct kbd_softc kbd_softc;
