@@ -1,4 +1,4 @@
-Release Notes for BIND Version 9.13.5-W1
+Release Notes for BIND Version 9.13.7
 
 Introduction
 
@@ -7,11 +7,6 @@ summarizes new features and functional changes that have been introduced
 on this branch. With each development release leading up to the stable
 BIND 9.14 release, this document will be updated with additional features
 added and bugs fixed.
-
-BIND 9.13.5-W1 is a minimal patch release, addressing a build error on
-Windows systems that caused some files to be omitted from the ZIP files
-originally published for BIND 9.13.5. There is no need to use BIND
-9.13.5-W1 on any operating system other than Windows.
 
 Note on Version Numbering
 
@@ -94,6 +89,20 @@ Security Fixes
     affecting validation of proof of nonexistence for records in the zone.
     [GL #771]
 
+  * named could crash if it managed a DNSSEC security root with
+    managed-keys and the authoritative zone rolled the key to an algorithm
+    not supported by BIND 9. This flaw is disclosed in CVE-2018-5745. [GL
+    #780]
+
+  * named leaked memory when processing a request with multiple Key Tag
+    EDNS options present. ISC would like to thank Toshifumi Sakaguchi for
+    bringing this to our attention. This flaw is disclosed in
+    CVE-2018-5744. [GL #772]
+
+  * Zone transfer controls for writable DLZ zones were not effective as
+    the allowzonexfr method was not being called for such zones. This flaw
+    is disclosed in CVE-2019-6465. [GL #790]
+
 New Features
 
   * Task manager and socket code have been substantially modified. The
@@ -165,6 +174,9 @@ New Features
     information about non-existent records (negative caching). The
     configured minimum TTL for both configuration options cannot exceed 90
     seconds.
+
+  * rndc status output now includes a reconfig/reload in progress status
+    line if named configuration is being reloaded.
 
 Removed Features
 
@@ -278,6 +290,18 @@ Removed Features
     BIND as the DSA key length is limited to 1024 bits and this is not
     considered secure enough.
 
+    Support for RSAMD5 algorithm has been removed freom BIND as the usage
+    of the RSAMD5 algorithm for DNSSEC has been deprecated in RFC6725 and
+    the security of MD5 algorithm has been compromised and the its usage
+    is considered harmful.
+
+  * The incomplete support for internationalization message catalogs has
+    been removed from BIND. Since the internationalization was never
+    completed, and no localized message catalogs were ever made available
+    for the portions of BIND in which they could have been used, this
+    change will have no effect except to simplify the source code. BIND's
+    log messages and other output were already only available in English.
+
 Feature Changes
 
   * BIND will now always use the best CSPRNG (cryptographically-secure
@@ -341,6 +365,9 @@ Feature Changes
 
   * The new dig -r command line option disables reading of the file $HOME
     /.digrc.
+
+  * Zone signing and key maintenance events are now logged to the dnssec
+    category rather than zone.
 
 Bug Fixes
 

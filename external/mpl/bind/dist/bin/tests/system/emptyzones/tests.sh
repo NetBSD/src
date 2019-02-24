@@ -21,8 +21,7 @@ n=0
 n=`expr $n + 1`
 echo_i "check that switching to automatic empty zones works ($n)"
 ret=0
-$RNDCCMD 10.53.0.1 reload > /dev/null || ret=1
-sleep 5
+rndc_reload ns1 10.53.0.1
 
 copy_setports ns1/named2.conf.in ns1/named.conf
 $RNDCCMD 10.53.0.1 reload > /dev/null || ret=1

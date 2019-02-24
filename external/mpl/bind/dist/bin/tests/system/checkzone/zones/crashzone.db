@@ -14,7 +14,7 @@ dyn.example.net.	7200	IN SOA	ns1.example.net. hostmaster.example.net. (
 					1209600    ; expire (2 weeks)
 					7200       ; minimum (2 hours)
 					)
-			7200	RRSIG	SOA 7 3 7200 2010	20100225214229 30323 dyn.example.net.
+			7200	RRSIG	SOA 7 3 7200 2010	20100225214229 30323 dyn.example.net. MuyI
 			7200	NS	ns1.example.net.
 			7200	NS	ns2.example.net.
 			3600	RRSIG	DNSKEY 7 3 3600 20100227180048 (

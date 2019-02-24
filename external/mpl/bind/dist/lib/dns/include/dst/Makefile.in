@@ -13,7 +13,7 @@ top_srcdir =	@top_srcdir@
 
 VERSION=@BIND9_VERSION@
 
-HEADERS =	dst.h gssapi.h lib.h result.h
+HEADERS =	dst.h gssapi.h result.h
 
 SUBDIRS =
 TARGETS =

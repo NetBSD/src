@@ -1,4 +1,4 @@
-kargs="-c policy.conf example.com"
+kargs="example.com"
 kmatch=""
 kret=1
 cargs="-d 1w -m 2w example.com"

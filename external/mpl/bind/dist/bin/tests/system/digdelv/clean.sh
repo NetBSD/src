@@ -9,14 +9,17 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-rm -f */named.memstats
-rm -f */named.run
-rm -f */named.conf
-rm -f delv.out.test*
-rm -f dig.out.*test*
-rm -f dig.out.mm.*
-rm -f dig.out.mn.*
-rm -f dig.out.nm.*
-rm -f dig.out.nn.*
-rm -f ns*/named.lock
-rm -f ns*/managed-keys.bind*
+set -e
+
+rm -f ./*/named.memstats
+rm -f ./*/named.run
+rm -f ./*/named.conf
+rm -f ./delv.out.test*
+rm -f ./dig.out.*test*
+rm -f ./dig.out.mm.*
+rm -f ./dig.out.mn.*
+rm -f ./dig.out.nm.*
+rm -f ./dig.out.nn.*
+rm -f ./ns*/named.lock
+rm -f ./ns*/managed-keys.bind*
+rm -f ./ns2/example.db ./ns2/K* ./ns2/keyid ./ns2/keydata

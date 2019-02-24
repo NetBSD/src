@@ -749,13 +749,13 @@ $TESTSOCK6 fd92:7065:b8e:ffff::1 || {
 # Reconfiguring for IPv6 tests
 echo_i "reconfiguring servers"
 copy_setports ns1/named2.conf.in ns1/named.conf
-$RNDCCMD 10.53.0.1 reconfig 2>&1 | sed 's/^/ns1 /' | cat_i
+rndc_reconfig ns1 10.53.0.1
 copy_setports ns2/named2.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reconfig 2>&1 | sed 's/^/ns2 /' | cat_i
+rndc_reconfig ns2 10.53.0.2
 copy_setports ns3/named2.conf.in ns3/named.conf
-$RNDCCMD 10.53.0.3 reconfig 2>&1 | sed 's/^/ns3 /' | cat_i
+rndc_reconfig ns3 10.53.0.3
 copy_setports ns4/named2.conf.in ns4/named.conf
-$RNDCCMD 10.53.0.4 reconfig 2>&1 | sed 's/^/ns4 /' | cat_i
+rndc_reconfig ns4 10.53.0.4
 
 # BEGIN IPv6 TESTS
 

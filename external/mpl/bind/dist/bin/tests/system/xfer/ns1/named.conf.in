@@ -52,3 +52,8 @@ zone "ixfr-too-big" {
 	allow-update { any; };
 	file "ixfr-too-big.db";
 };
+
+zone "xfer-stats" {
+	type master;
+	file "xfer-stats.db";
+};

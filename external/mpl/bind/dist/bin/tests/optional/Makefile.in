@@ -47,7 +47,6 @@ XTARGETS =	adb_test@EXEEXT@ \
 		backtrace_test_nosymtbl@EXEEXT@ \
 		byname_test@EXEEXT@ \
 		db_test@EXEEXT@ \
-		dst_test@EXEEXT@ \
 		gsstest@EXEEXT@ \
 		fsaccess_test@EXEEXT@ \
 		inter_test@EXEEXT@ \
@@ -76,7 +75,6 @@ XSRCS =		adb_test.c \
 		backtrace_test.c \
 		byname_test.c \
 		db_test.c \
-		dst_test.c \
 		fsaccess_test.c \
 		gsstest.c \
 		inter_test.c \
@@ -236,10 +234,6 @@ inter_test@EXEEXT@: inter_test.@O@ ${ISCDEPLIBS}
 sig0_test@EXEEXT@: sig0_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ sig0_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
-
-dst_test@EXEEXT@: dst_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} \
-		-o $@ dst_test.@O@ ${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 gsstest@EXEEXT@: gsstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} \

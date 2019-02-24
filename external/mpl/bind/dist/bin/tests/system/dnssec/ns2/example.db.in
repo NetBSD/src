@@ -97,6 +97,9 @@ ns.optout-unknown	A	10.53.0.3
 dnskey-unknown		NS	ns.dnskey-unknown
 ns.dnskey-unknown	A	10.53.0.3
 
+dnskey-unsupported	NS	ns.dnskey-unsupported
+ns.dnskey-unsupported	A	10.53.0.3
+
 dnskey-nsec3-unknown	NS	ns.dnskey-nsec3-unknown
 ns.dnskey-nsec3-unknown	A	10.53.0.3
 
@@ -111,7 +114,7 @@ ns.rsasha256		A	10.53.0.3
 rsasha512		NS	ns.rsasha512
 ns.rsasha512		A	10.53.0.3
 
-kskonly 		NS	ns.kskonly
+kskonly			NS	ns.kskonly
 ns.kskonly		A	10.53.0.3
 
 update-nsec3		NS	ns.update-nsec3
@@ -158,3 +161,5 @@ ns.managed-future	A	10.53.0.3
 
 revkey			NS	ns.revkey
 ns.revkey		A	10.53.0.3
+
+dname-at-apex-nsec3	NS	ns3

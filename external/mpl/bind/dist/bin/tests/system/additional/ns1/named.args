@@ -1,2 +1,2 @@
 # this server runs named with only one worker thread
--m record,size,mctx -c named.conf -d 99 -X named.lock -g -T clienttest -n 1
+-m record,size,mctx -c named.conf -d 99 -D additional-ns1 -X named.lock -g -T clienttest -n 1

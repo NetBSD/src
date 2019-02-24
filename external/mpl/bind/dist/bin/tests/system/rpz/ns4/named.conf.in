@@ -24,6 +24,15 @@ options {
 	dnssec-validation yes;
 };
 
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm hmac-sha256;
+};
+
+controls {
+	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
 include "../trusted.conf";
 zone "." { type hint; file "hints"; };
 

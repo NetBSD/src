@@ -227,7 +227,7 @@ do
 	grep "addition 6" ns2/other.db > /dev/null && break
 	sleep 1
 done
-serial=`awk '$3 == "serial" {print $1}' ns2/other.db`
+serial=`awk '$3 ~ /serial/ {print $1}' ns2/other.db`
 newserial=`expr $serial + 1`
 sed s/$serial/$newserial/ ns2/other.db > ns2/other.db.new
 echo 'frozen TXT "frozen addition"' >> ns2/other.db.new
@@ -270,7 +270,7 @@ do
 	grep "addition 6" ns2/nil.db > /dev/null && break
 	sleep 1
 done
-serial=`awk '$3 == "serial" {print $1}' ns2/nil.db`
+serial=`awk '$3 ~ /serial/ {print $1}' ns2/nil.db`
 newserial=`expr $serial + 1`
 sed s/$serial/$newserial/ ns2/nil.db > ns2/nil.db.new
 echo 'frozen TXT "frozen addition"' >> ns2/nil.db.new

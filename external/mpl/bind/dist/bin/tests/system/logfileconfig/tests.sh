@@ -36,7 +36,7 @@ DLFILE="named_deflog"
 
 PIDFILE="${THISDIR}/${CONFDIR}/named.pid"
 myRNDC="$RNDC -c ${THISDIR}/${CONFDIR}/rndc.conf"
-myNAMED="$NAMED -c ${THISDIR}/${CONFDIR}/named.conf -m record,size,mctx -T clienttest -T nosyslog -d 99 -X named.lock -U 4"
+myNAMED="$NAMED -c ${THISDIR}/${CONFDIR}/named.conf -m record,size,mctx -T clienttest -T nosyslog -d 99 -D logfileconfig-ns1 -X named.lock -U 4"
 
 # Test given condition.  If true, test again after a second.  Used for testing
 # filesystem-dependent conditions in order to prevent false negatives caused by
@@ -63,6 +63,7 @@ status=0
 n=0
 
 cd $CONFDIR
+export SYSTEMTESTTOP=../..
 
 echo_i "testing log file validity (named -g + only plain files allowed)"
 

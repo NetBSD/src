@@ -82,3 +82,5 @@ ns.nsec3-to-nsec	A	10.53.0.3
 
 oldsigs			NS	ns.oldsigs
 ns.oldsigs		A	10.53.0.3
+
+dname-at-apex-nsec3	NS	ns3
