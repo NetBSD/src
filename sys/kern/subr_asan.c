@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.3 2019/02/13 14:55:29 kamil Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.4 2019/02/24 08:02:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.3 2019/02/13 14:55:29 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.4 2019/02/24 08:02:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -182,6 +182,16 @@ kasan_shadow_1byte_markvalid(unsigned long addr)
 }
 
 static __always_inline void
+kasan_shadow_Nbyte_markvalid(const void *addr, size_t size)
+{
+	size_t i;
+
+	for (i = 0; i < size; i++) {
+		kasan_shadow_1byte_markvalid((unsigned long)addr+i);
+	}
+}
+
+static __always_inline void
 kasan_shadow_Nbyte_fill(const void *addr, size_t size, uint8_t val)
 {
 	void *shad;
@@ -210,16 +220,10 @@ kasan_add_redzone(size_t *size)
 static void
 kasan_markmem(const void *addr, size_t size, bool valid)
 {
-	size_t i;
-
 	KASSERT((vaddr_t)addr % KASAN_SHADOW_SCALE_SIZE == 0);
-
 	if (valid) {
-		for (i = 0; i < size; i++) {
-			kasan_shadow_1byte_markvalid((unsigned long)addr+i);
-		}
+		kasan_shadow_Nbyte_markvalid(addr, size);
 	} else {
-		KASSERT(size % KASAN_SHADOW_SCALE_SIZE == 0);
 		kasan_shadow_Nbyte_fill(addr, size, KASAN_MEMORY_REDZONE);
 	}
 }
@@ -537,3 +541,17 @@ ASAN_SET_SHADOW(f2);
 ASAN_SET_SHADOW(f3);
 ASAN_SET_SHADOW(f5);
 ASAN_SET_SHADOW(f8);
+
+void __asan_poison_stack_memory(const void *, size_t);
+void __asan_unpoison_stack_memory(const void *, size_t);
+
+void __asan_poison_stack_memory(const void *addr, size_t size)
+{
+	size = roundup(size, KASAN_SHADOW_SCALE_SIZE);
+	kasan_shadow_Nbyte_fill(addr, size, KASAN_USE_AFTER_SCOPE);
+}
+
+void __asan_unpoison_stack_memory(const void *addr, size_t size)
+{
+	kasan_shadow_Nbyte_markvalid(addr, size);
+}
