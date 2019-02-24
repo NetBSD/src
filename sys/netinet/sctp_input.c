@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.12 2019/02/12 14:40:38 rjs Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.13 2019/02/24 21:07:59 kamil Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.12 2019/02/12 14:40:38 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.13 2019/02/24 21:07:59 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -682,6 +682,7 @@ sctp_process_unrecog_chunk(struct sctp_tcb *stcb, struct sctp_paramhdr *phdr,
 			printf("Strange peer, snds ASCONF but does not recongnize asconf-ack?\n");
 		}
 #endif
+		/* FALLTHROUGH */
 	case SCTP_ASCONF:
 #ifdef SCTP_DEBUG
 		if (sctp_debug_on & SCTP_DEBUG_INPUT2) {
