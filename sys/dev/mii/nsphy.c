@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.62 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.63 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.62 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.63 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,11 +93,8 @@ static const struct mii_phy_funcs nsphy_funcs = {
 };
 
 static const struct mii_phydesc nsphys[] = {
-	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83840,
-	  MII_STR_xxNATSEMI_DP83840 },
-
-	{ 0,				0,
-	  NULL },
+	MII_PHY_DESC(xxNATSEMI, DP83840),
+	MII_PHY_END,
 };
 
 static int

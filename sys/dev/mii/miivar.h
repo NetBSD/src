@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.64 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: miivar.h,v 1.65 2019/02/24 17:22:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -186,6 +186,10 @@ struct mii_phydesc {
 	uint32_t mpd_model;		/* the PHY's model */
 	const char *mpd_name;		/* the PHY's name */
 };
+
+#define MII_PHY_DESC(a, b) { MII_OUI_ ## a, MII_MODEL_ ## a ## _ ## b, \
+        MII_STR_ ## a ## _ ## b }
+#define MII_PHY_END     { 0, 0, NULL }
 
 /*
  * An array of these structures map MII media types to BMCR/ANAR settings.

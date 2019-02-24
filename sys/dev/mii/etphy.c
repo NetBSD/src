@@ -1,4 +1,4 @@
-/*	$NetBSD: etphy.c,v 1.2 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: etphy.c,v 1.3 2019/02/24 17:22:21 christos Exp $	*/
 /*	$OpenBSD: etphy.c,v 1.4 2008/04/02 20:12:58 brad Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.2 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.3 2019/02/24 17:22:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,10 +88,8 @@ const struct mii_phy_funcs etphy_funcs = {
 };
 
 static const struct mii_phydesc etphys[] = {
-	{ MII_OUI_AGERE,	MII_MODEL_AGERE_ET1011,
-	  MII_STR_AGERE_ET1011 },
-	{ 0,			0,
-	  NULL },
+	MII_PHY_DESC(AGERE, ET1011),
+	MII_PHY_END,
 };
 
 CFATTACH_DECL_NEW(etphy, sizeof(struct mii_softc),
