@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.277 2019/02/19 13:51:16 sevan Exp $
+$NetBSD: acronyms,v 1.278 2019/02/24 07:39:33 pgoyette Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -445,6 +445,8 @@ PTO	{paid,personal} time off
 PTO	parent-teacher organization
 PTO	please turn over
 PTO	power takeoff
+PTT	push-to-talk
+PTT	post-telephone-telegraph
 PTV	parental tunnel vision
 QED	quod erat demonstrandum
 QFT	quoted for truth
