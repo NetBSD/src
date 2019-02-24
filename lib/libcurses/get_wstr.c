@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wstr.c,v 1.5 2018/11/22 22:16:45 uwe Exp $ */
+/*   $NetBSD: get_wstr.c,v 1.6 2019/02/24 20:20:18 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wstr.c,v 1.5 2018/11/22 22:16:45 uwe Exp $");
+__RCSID("$NetBSD: get_wstr.c,v 1.6 2019/02/24 20:20:18 roy Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -61,7 +61,7 @@ getn_wstr(wchar_t *wstr, int n)
  *	Get a string from stdscr starting at (cury, curx).
  */
 __warn_references(get_wstr,
-	"warning: this program uses get_wstr(), which is unsafe.")
+	"warning: this program uses get_wstr(), which is unsafe.");
 int
 get_wstr(wchar_t *wstr)
 {
@@ -83,7 +83,7 @@ mvgetn_wstr(int y, int x, wchar_t *wstr, int n)
  *	  Get a string from stdscr starting at (y, x).
  */
 __warn_references(mvget_wstr,
-	"warning: this program uses mvget_wstr(), which is unsafe.")
+	"warning: this program uses mvget_wstr(), which is unsafe.");
 int
 mvget_wstr(int y, int x, wchar_t *wstr)
 {
@@ -109,7 +109,7 @@ mvwgetn_wstr(WINDOW *win, int y, int x, wchar_t *wstr, int n)
  *	  Get a string from the given window starting at (y, x).
  */
 __warn_references(mvget_wstr,
-	"warning: this program uses mvget_wstr(), which is unsafe.")
+	"warning: this program uses mvget_wstr(), which is unsafe.");
 int
 mvwget_wstr(WINDOW *win, int y, int x, wchar_t *wstr)
 {
@@ -124,7 +124,7 @@ mvwget_wstr(WINDOW *win, int y, int x, wchar_t *wstr)
  *	Get a string starting at (cury, curx).
  */
 __warn_references(wget_wstr,
-	"warning: this program uses wget_wstr(), which is unsafe.")
+	"warning: this program uses wget_wstr(), which is unsafe.");
 int
 wget_wstr(WINDOW *win, wchar_t *wstr)
 {
