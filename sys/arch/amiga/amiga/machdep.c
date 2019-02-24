@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.250 2018/12/05 09:34:46 mlelstv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.251 2019/02/24 19:24:20 jandberg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.250 2018/12/05 09:34:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.251 2019/02/24 19:24:20 jandberg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,9 @@ cpu_reboot(register int howto, char *bootstr)
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);
 		cngetc();
+		cnpollc(0);
 	}
 
 	printf("rebooting...\n");
