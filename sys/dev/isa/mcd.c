@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.117 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: mcd.c,v 1.118 2019/02/24 20:50:03 kamil Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.117 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.118 2019/02/24 20:50:03 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1192,6 +1192,7 @@ mcdintr(void *arg)
 		mbx->count = RDELAY_WAITMODE;
 		mbx->state = MCD_S_WAITMODE;
 
+		/* FALLTHROUGH */
 	case MCD_S_WAITMODE:
 		callout_stop(&sc->sc_pintr_ch);
 		for (i = 20; i; i--) {
@@ -1230,6 +1231,7 @@ mcdintr(void *arg)
 		mbx->count = RDELAY_WAITREAD;
 		mbx->state = MCD_S_WAITREAD;
 
+		/* FALLTHROUGH */
 	case MCD_S_WAITREAD:
 		callout_stop(&sc->sc_pintr_ch);
 	nextblock:
