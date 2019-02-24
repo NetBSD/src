@@ -1,4 +1,4 @@
-/*	$NetBSD: dyndb.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: dyndb.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -135,7 +135,7 @@ load_library(isc_mem_t *mctx, const char *filename, const char *instname,
 		      instname, filename);
 
 	flags = RTLD_NOW|RTLD_LOCAL;
-#ifdef RTLD_DEEPBIND
+#if defined(RTLD_DEEPBIND) && !__SANITIZE_ADDRESS__
 	flags |= RTLD_DEEPBIND;
 #endif
 

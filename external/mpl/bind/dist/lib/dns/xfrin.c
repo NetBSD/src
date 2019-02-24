@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -134,6 +134,13 @@ struct dns_xfrin_ctx {
 	/*% Incoming reply TCP message */
 	dns_tcpmsg_t		tcpmsg;
 	bool		tcpmsg_valid;
+
+	/*%
+	 * Whether the zone originally had a database attached at the time this
+	 * transfer context was created.  Used by maybe_free() when making
+	 * logging decisions.
+	 */
+	bool			zone_had_db;
 
 	dns_db_t 		*db;
 	dns_dbversion_t 	*ver;
@@ -659,6 +666,10 @@ dns_xfrin_create(dns_zone_t *zone, dns_rdatatype_t xfrtype,
 			   dns_zone_getclass(zone), xfrtype, masteraddr,
 			   sourceaddr, dscp, tsigkey, &xfr));
 
+	if (db != NULL) {
+		xfr->zone_had_db = true;
+	}
+
 	CHECK(xfrin_start(xfr));
 
 	xfr->done = done;
@@ -823,6 +834,7 @@ xfrin_create(isc_mem_t *mctx,
 	/* tcpmsg */
 	xfr->tcpmsg_valid = false;
 
+	xfr->zone_had_db = false;
 	xfr->db = NULL;
 	if (db != NULL)
 		dns_db_attach(db, &xfr->db);
@@ -1515,8 +1527,21 @@ maybe_free(dns_xfrin_ctx_t *xfr) {
 	if (xfr->db != NULL)
 		dns_db_detach(&xfr->db);
 
-	if (xfr->zone != NULL)
+	if (xfr->zone != NULL) {
+		if (!xfr->zone_had_db &&
+		    xfr->shuttingdown &&
+		    xfr->shutdown_result == ISC_R_SUCCESS &&
+		    dns_zone_gettype(xfr->zone) == dns_zone_mirror)
+		{
+			dns_zone_log(xfr->zone, ISC_LOG_INFO,
+				     "mirror zone is now in use");
+		}
+		xfrin_log(xfr, ISC_LOG_DEBUG(99), "freeing transfer context");
+		/*
+		 * xfr->zone must not be detached before xfrin_log() is called.
+		 */
 		dns_zone_idetach(&xfr->zone);
+	}
 
 	isc_mem_putanddetach(&xfr->mctx, xfr, sizeof(*xfr));
 }

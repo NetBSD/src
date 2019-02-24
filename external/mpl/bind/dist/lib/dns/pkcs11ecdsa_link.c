@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11ecdsa_link.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: pkcs11ecdsa_link.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -839,6 +839,7 @@ pkcs11ecdsa_fetch(dst_key_t *key, const char *engine, const char *label,
 
 	attr->type = CKA_EC_PARAMS;
 	pubattr = pk11_attribute_bytype(pubec, CKA_EC_PARAMS);
+	INSIST(pubattr != NULL);
 	attr->pValue = isc_mem_get(key->mctx, pubattr->ulValueLen);
 	if (attr->pValue == NULL)
 		DST_RET(ISC_R_NOMEMORY);
@@ -848,6 +849,7 @@ pkcs11ecdsa_fetch(dst_key_t *key, const char *engine, const char *label,
 
 	attr->type = CKA_EC_POINT;
 	pubattr = pk11_attribute_bytype(pubec, CKA_EC_POINT);
+	INSIST(pubattr != NULL);
 	attr->pValue = isc_mem_get(key->mctx, pubattr->ulValueLen);
 	if (attr->pValue == NULL)
 		DST_RET(ISC_R_NOMEMORY);

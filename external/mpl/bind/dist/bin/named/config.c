@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -325,9 +325,9 @@ named_config_parsedefaults(cfg_parser_t *parser, cfg_obj_t **conf) {
 
 	isc_buffer_init(&b, defaultconf, sizeof(defaultconf) - 1);
 	isc_buffer_add(&b, sizeof(defaultconf) - 1);
-	return (cfg_parse_buffer4(parser, &b, __FILE__, 0,
-				  &cfg_type_namedconf,
-				  CFG_PCTX_NODEPRECATED, conf));
+	return (cfg_parse_buffer(parser, &b, __FILE__, 0,
+				 &cfg_type_namedconf,
+				 CFG_PCTX_NODEPRECATED, conf));
 }
 
 isc_result_t

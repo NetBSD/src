@@ -86,6 +86,7 @@
 #include "rdata/generic/cdnskey_60.c"
 #include "rdata/generic/openpgpkey_61.c"
 #include "rdata/generic/csync_62.c"
+#include "rdata/generic/zonemd_63.c"
 #include "rdata/generic/spf_99.c"
 #include "rdata/generic/unspec_103.c"
 #include "rdata/generic/nid_104.c"
@@ -100,6 +101,7 @@
 #include "rdata/generic/caa_257.c"
 #include "rdata/generic/avc_258.c"
 #include "rdata/generic/doa_259.c"
+#include "rdata/generic/amtrelay_260.c"
 #include "rdata/generic/ta_32768.c"
 #include "rdata/generic/dlv_32769.c"
 #include "rdata/generic/keydata_65533.c"
@@ -227,6 +229,7 @@
 	case 60: result = fromtext_cdnskey(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 61: result = fromtext_openpgpkey(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 62: result = fromtext_csync(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 63: result = fromtext_zonemd(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 99: result = fromtext_spf(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 103: result = fromtext_unspec(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 104: result = fromtext_nid(rdclass, type, lexer, origin, options, target, callbacks); break; \
@@ -245,6 +248,7 @@
 	case 257: result = fromtext_caa(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 258: result = fromtext_avc(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 259: result = fromtext_doa(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 260: result = fromtext_amtrelay(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 32768: result = fromtext_ta(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 32769: result = fromtext_dlv(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 65533: result = fromtext_keydata(rdclass, type, lexer, origin, options, target, callbacks); break; \
@@ -372,6 +376,7 @@
 	case 60: result = totext_cdnskey(rdata, tctx, target); break; \
 	case 61: result = totext_openpgpkey(rdata, tctx, target); break; \
 	case 62: result = totext_csync(rdata, tctx, target); break; \
+	case 63: result = totext_zonemd(rdata, tctx, target); break; \
 	case 99: result = totext_spf(rdata, tctx, target); break; \
 	case 103: result = totext_unspec(rdata, tctx, target); break; \
 	case 104: result = totext_nid(rdata, tctx, target); break; \
@@ -390,6 +395,7 @@
 	case 257: result = totext_caa(rdata, tctx, target); break; \
 	case 258: result = totext_avc(rdata, tctx, target); break; \
 	case 259: result = totext_doa(rdata, tctx, target); break; \
+	case 260: result = totext_amtrelay(rdata, tctx, target); break; \
 	case 32768: result = totext_ta(rdata, tctx, target); break; \
 	case 32769: result = totext_dlv(rdata, tctx, target); break; \
 	case 65533: result = totext_keydata(rdata, tctx, target); break; \
@@ -517,6 +523,7 @@
 	case 60: result = fromwire_cdnskey(rdclass, type, source, dctx, options, target); break; \
 	case 61: result = fromwire_openpgpkey(rdclass, type, source, dctx, options, target); break; \
 	case 62: result = fromwire_csync(rdclass, type, source, dctx, options, target); break; \
+	case 63: result = fromwire_zonemd(rdclass, type, source, dctx, options, target); break; \
 	case 99: result = fromwire_spf(rdclass, type, source, dctx, options, target); break; \
 	case 103: result = fromwire_unspec(rdclass, type, source, dctx, options, target); break; \
 	case 104: result = fromwire_nid(rdclass, type, source, dctx, options, target); break; \
@@ -535,6 +542,7 @@
 	case 257: result = fromwire_caa(rdclass, type, source, dctx, options, target); break; \
 	case 258: result = fromwire_avc(rdclass, type, source, dctx, options, target); break; \
 	case 259: result = fromwire_doa(rdclass, type, source, dctx, options, target); break; \
+	case 260: result = fromwire_amtrelay(rdclass, type, source, dctx, options, target); break; \
 	case 32768: result = fromwire_ta(rdclass, type, source, dctx, options, target); break; \
 	case 32769: result = fromwire_dlv(rdclass, type, source, dctx, options, target); break; \
 	case 65533: result = fromwire_keydata(rdclass, type, source, dctx, options, target); break; \
@@ -662,6 +670,7 @@
 	case 60: result = towire_cdnskey(rdata, cctx, target); break; \
 	case 61: result = towire_openpgpkey(rdata, cctx, target); break; \
 	case 62: result = towire_csync(rdata, cctx, target); break; \
+	case 63: result = towire_zonemd(rdata, cctx, target); break; \
 	case 99: result = towire_spf(rdata, cctx, target); break; \
 	case 103: result = towire_unspec(rdata, cctx, target); break; \
 	case 104: result = towire_nid(rdata, cctx, target); break; \
@@ -680,6 +689,7 @@
 	case 257: result = towire_caa(rdata, cctx, target); break; \
 	case 258: result = towire_avc(rdata, cctx, target); break; \
 	case 259: result = towire_doa(rdata, cctx, target); break; \
+	case 260: result = towire_amtrelay(rdata, cctx, target); break; \
 	case 32768: result = towire_ta(rdata, cctx, target); break; \
 	case 32769: result = towire_dlv(rdata, cctx, target); break; \
 	case 65533: result = towire_keydata(rdata, cctx, target); break; \
@@ -807,6 +817,7 @@
 	case 60: result = compare_cdnskey(rdata1, rdata2); break; \
 	case 61: result = compare_openpgpkey(rdata1, rdata2); break; \
 	case 62: result = compare_csync(rdata1, rdata2); break; \
+	case 63: result = compare_zonemd(rdata1, rdata2); break; \
 	case 99: result = compare_spf(rdata1, rdata2); break; \
 	case 103: result = compare_unspec(rdata1, rdata2); break; \
 	case 104: result = compare_nid(rdata1, rdata2); break; \
@@ -825,6 +836,7 @@
 	case 257: result = compare_caa(rdata1, rdata2); break; \
 	case 258: result = compare_avc(rdata1, rdata2); break; \
 	case 259: result = compare_doa(rdata1, rdata2); break; \
+	case 260: result = compare_amtrelay(rdata1, rdata2); break; \
 	case 32768: result = compare_ta(rdata1, rdata2); break; \
 	case 32769: result = compare_dlv(rdata1, rdata2); break; \
 	case 65533: result = compare_keydata(rdata1, rdata2); break; \
@@ -952,6 +964,7 @@
 	case 60: result = casecompare_cdnskey(rdata1, rdata2); break; \
 	case 61: result = casecompare_openpgpkey(rdata1, rdata2); break; \
 	case 62: result = casecompare_csync(rdata1, rdata2); break; \
+	case 63: result = casecompare_zonemd(rdata1, rdata2); break; \
 	case 99: result = casecompare_spf(rdata1, rdata2); break; \
 	case 103: result = casecompare_unspec(rdata1, rdata2); break; \
 	case 104: result = casecompare_nid(rdata1, rdata2); break; \
@@ -970,6 +983,7 @@
 	case 257: result = casecompare_caa(rdata1, rdata2); break; \
 	case 258: result = casecompare_avc(rdata1, rdata2); break; \
 	case 259: result = casecompare_doa(rdata1, rdata2); break; \
+	case 260: result = casecompare_amtrelay(rdata1, rdata2); break; \
 	case 32768: result = casecompare_ta(rdata1, rdata2); break; \
 	case 32769: result = casecompare_dlv(rdata1, rdata2); break; \
 	case 65533: result = casecompare_keydata(rdata1, rdata2); break; \
@@ -1097,6 +1111,7 @@
 	case 60: result = fromstruct_cdnskey(rdclass, type, source, target); break; \
 	case 61: result = fromstruct_openpgpkey(rdclass, type, source, target); break; \
 	case 62: result = fromstruct_csync(rdclass, type, source, target); break; \
+	case 63: result = fromstruct_zonemd(rdclass, type, source, target); break; \
 	case 99: result = fromstruct_spf(rdclass, type, source, target); break; \
 	case 103: result = fromstruct_unspec(rdclass, type, source, target); break; \
 	case 104: result = fromstruct_nid(rdclass, type, source, target); break; \
@@ -1115,6 +1130,7 @@
 	case 257: result = fromstruct_caa(rdclass, type, source, target); break; \
 	case 258: result = fromstruct_avc(rdclass, type, source, target); break; \
 	case 259: result = fromstruct_doa(rdclass, type, source, target); break; \
+	case 260: result = fromstruct_amtrelay(rdclass, type, source, target); break; \
 	case 32768: result = fromstruct_ta(rdclass, type, source, target); break; \
 	case 32769: result = fromstruct_dlv(rdclass, type, source, target); break; \
 	case 65533: result = fromstruct_keydata(rdclass, type, source, target); break; \
@@ -1242,6 +1258,7 @@
 	case 60: result = tostruct_cdnskey(rdata, target, mctx); break; \
 	case 61: result = tostruct_openpgpkey(rdata, target, mctx); break; \
 	case 62: result = tostruct_csync(rdata, target, mctx); break; \
+	case 63: result = tostruct_zonemd(rdata, target, mctx); break; \
 	case 99: result = tostruct_spf(rdata, target, mctx); break; \
 	case 103: result = tostruct_unspec(rdata, target, mctx); break; \
 	case 104: result = tostruct_nid(rdata, target, mctx); break; \
@@ -1260,6 +1277,7 @@
 	case 257: result = tostruct_caa(rdata, target, mctx); break; \
 	case 258: result = tostruct_avc(rdata, target, mctx); break; \
 	case 259: result = tostruct_doa(rdata, target, mctx); break; \
+	case 260: result = tostruct_amtrelay(rdata, target, mctx); break; \
 	case 32768: result = tostruct_ta(rdata, target, mctx); break; \
 	case 32769: result = tostruct_dlv(rdata, target, mctx); break; \
 	case 65533: result = tostruct_keydata(rdata, target, mctx); break; \
@@ -1387,6 +1405,7 @@
 	case 60: freestruct_cdnskey(source); break; \
 	case 61: freestruct_openpgpkey(source); break; \
 	case 62: freestruct_csync(source); break; \
+	case 63: freestruct_zonemd(source); break; \
 	case 99: freestruct_spf(source); break; \
 	case 103: freestruct_unspec(source); break; \
 	case 104: freestruct_nid(source); break; \
@@ -1405,6 +1424,7 @@
 	case 257: freestruct_caa(source); break; \
 	case 258: freestruct_avc(source); break; \
 	case 259: freestruct_doa(source); break; \
+	case 260: freestruct_amtrelay(source); break; \
 	case 32768: freestruct_ta(source); break; \
 	case 32769: freestruct_dlv(source); break; \
 	case 65533: freestruct_keydata(source); break; \
@@ -1532,6 +1552,7 @@
 	case 60: result = additionaldata_cdnskey(rdata, add, arg); break; \
 	case 61: result = additionaldata_openpgpkey(rdata, add, arg); break; \
 	case 62: result = additionaldata_csync(rdata, add, arg); break; \
+	case 63: result = additionaldata_zonemd(rdata, add, arg); break; \
 	case 99: result = additionaldata_spf(rdata, add, arg); break; \
 	case 103: result = additionaldata_unspec(rdata, add, arg); break; \
 	case 104: result = additionaldata_nid(rdata, add, arg); break; \
@@ -1550,6 +1571,7 @@
 	case 257: result = additionaldata_caa(rdata, add, arg); break; \
 	case 258: result = additionaldata_avc(rdata, add, arg); break; \
 	case 259: result = additionaldata_doa(rdata, add, arg); break; \
+	case 260: result = additionaldata_amtrelay(rdata, add, arg); break; \
 	case 32768: result = additionaldata_ta(rdata, add, arg); break; \
 	case 32769: result = additionaldata_dlv(rdata, add, arg); break; \
 	case 65533: result = additionaldata_keydata(rdata, add, arg); break; \
@@ -1677,6 +1699,7 @@
 	case 60: result = digest_cdnskey(rdata, digest, arg); break; \
 	case 61: result = digest_openpgpkey(rdata, digest, arg); break; \
 	case 62: result = digest_csync(rdata, digest, arg); break; \
+	case 63: result = digest_zonemd(rdata, digest, arg); break; \
 	case 99: result = digest_spf(rdata, digest, arg); break; \
 	case 103: result = digest_unspec(rdata, digest, arg); break; \
 	case 104: result = digest_nid(rdata, digest, arg); break; \
@@ -1695,6 +1718,7 @@
 	case 257: result = digest_caa(rdata, digest, arg); break; \
 	case 258: result = digest_avc(rdata, digest, arg); break; \
 	case 259: result = digest_doa(rdata, digest, arg); break; \
+	case 260: result = digest_amtrelay(rdata, digest, arg); break; \
 	case 32768: result = digest_ta(rdata, digest, arg); break; \
 	case 32769: result = digest_dlv(rdata, digest, arg); break; \
 	case 65533: result = digest_keydata(rdata, digest, arg); break; \
@@ -1822,6 +1846,7 @@
 	case 60: result = checkowner_cdnskey(name, rdclass, type, wildcard); break; \
 	case 61: result = checkowner_openpgpkey(name, rdclass, type, wildcard); break; \
 	case 62: result = checkowner_csync(name, rdclass, type, wildcard); break; \
+	case 63: result = checkowner_zonemd(name, rdclass, type, wildcard); break; \
 	case 99: result = checkowner_spf(name, rdclass, type, wildcard); break; \
 	case 103: result = checkowner_unspec(name, rdclass, type, wildcard); break; \
 	case 104: result = checkowner_nid(name, rdclass, type, wildcard); break; \
@@ -1840,6 +1865,7 @@
 	case 257: result = checkowner_caa(name, rdclass, type, wildcard); break; \
 	case 258: result = checkowner_avc(name, rdclass, type, wildcard); break; \
 	case 259: result = checkowner_doa(name, rdclass, type, wildcard); break; \
+	case 260: result = checkowner_amtrelay(name, rdclass, type, wildcard); break; \
 	case 32768: result = checkowner_ta(name, rdclass, type, wildcard); break; \
 	case 32769: result = checkowner_dlv(name, rdclass, type, wildcard); break; \
 	case 65533: result = checkowner_keydata(name, rdclass, type, wildcard); break; \
@@ -1967,6 +1993,7 @@
 	case 60: result = checknames_cdnskey(rdata, owner, bad); break; \
 	case 61: result = checknames_openpgpkey(rdata, owner, bad); break; \
 	case 62: result = checknames_csync(rdata, owner, bad); break; \
+	case 63: result = checknames_zonemd(rdata, owner, bad); break; \
 	case 99: result = checknames_spf(rdata, owner, bad); break; \
 	case 103: result = checknames_unspec(rdata, owner, bad); break; \
 	case 104: result = checknames_nid(rdata, owner, bad); break; \
@@ -1985,6 +2012,7 @@
 	case 257: result = checknames_caa(rdata, owner, bad); break; \
 	case 258: result = checknames_avc(rdata, owner, bad); break; \
 	case 259: result = checknames_doa(rdata, owner, bad); break; \
+	case 260: result = checknames_amtrelay(rdata, owner, bad); break; \
 	case 32768: result = checknames_ta(rdata, owner, bad); break; \
 	case 32769: result = checknames_dlv(rdata, owner, bad); break; \
 	case 65533: result = checknames_keydata(rdata, owner, bad); break; \
@@ -2179,6 +2207,9 @@
 			RDATATYPE_COMPARE("csync", 62, _typename,  _length, _typep); \
 			RDATATYPE_COMPARE("uri", 256, _typename,  _length, _typep); \
 			break; \
+		case 0: \
+			RDATATYPE_COMPARE("zonemd", 63, _typename,  _length, _typep); \
+			break; \
 		case 230: \
 			RDATATYPE_COMPARE("uinfo", 100, _typename,  _length, _typep); \
 			break; \
@@ -2227,6 +2258,9 @@
 			break; \
 		case 7: \
 			RDATATYPE_COMPARE("doa", 259, _typename,  _length, _typep); \
+			break; \
+		case 161: \
+			RDATATYPE_COMPARE("amtrelay", 260, _typename,  _length, _typep); \
 			break; \
 	}
 #define RDATATYPE_ATTRIBUTE_SW \
@@ -2293,6 +2327,7 @@
 	case 60: return (RRTYPE_CDNSKEY_ATTRIBUTES); \
 	case 61: return (RRTYPE_OPENPGPKEY_ATTRIBUTES); \
 	case 62: return (RRTYPE_CSYNC_ATTRIBUTES); \
+	case 63: return (RRTYPE_ZONEMD_ATTRIBUTES); \
 	case 99: return (RRTYPE_SPF_ATTRIBUTES); \
 	case 100: return (0); \
 	case 101: return (0); \
@@ -2315,6 +2350,7 @@
 	case 257: return (RRTYPE_CAA_ATTRIBUTES); \
 	case 258: return (RRTYPE_AVC_ATTRIBUTES); \
 	case 259: return (RRTYPE_DOA_ATTRIBUTES); \
+	case 260: return (RRTYPE_AMTRELAY_ATTRIBUTES); \
 	case 32768: return (RRTYPE_TA_ATTRIBUTES); \
 	case 32769: return (RRTYPE_DLV_ATTRIBUTES); \
 	case 65533: return (RRTYPE_KEYDATA_ATTRIBUTES); \
@@ -2383,6 +2419,7 @@
 	case 60: return (str_totext("CDNSKEY", target)); \
 	case 61: return (str_totext("OPENPGPKEY", target)); \
 	case 62: return (str_totext("CSYNC", target)); \
+	case 63: return (str_totext("ZONEMD", target)); \
 	case 99: return (str_totext("SPF", target)); \
 	case 100: return (str_totext("UINFO", target)); \
 	case 101: return (str_totext("UID", target)); \
@@ -2405,6 +2442,7 @@
 	case 257: return (str_totext("CAA", target)); \
 	case 258: return (str_totext("AVC", target)); \
 	case 259: return (str_totext("DOA", target)); \
+	case 260: return (str_totext("AMTRELAY", target)); \
 	case 32768: return (str_totext("TA", target)); \
 	case 32769: return (str_totext("DLV", target)); \
 	}

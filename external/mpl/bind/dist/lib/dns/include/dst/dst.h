@@ -1,4 +1,4 @@
-/*	$NetBSD: dst.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -48,8 +48,8 @@ typedef struct dst_context 	dst_context_t;
 
 /* DST algorithm codes */
 #define DST_ALG_UNKNOWN		0
+#define DST_ALG_RSA		1 /* Used for parsing RSASHA1, RSASHA256 and RSASHA512 */
 #define DST_ALG_RSAMD5		1
-#define DST_ALG_RSA		DST_ALG_RSAMD5	/*%< backwards compatibility */
 #define DST_ALG_DH		2
 #define DST_ALG_DSA		3
 #define DST_ALG_ECC		4
@@ -72,8 +72,7 @@ typedef struct dst_context 	dst_context_t;
 #define DST_ALG_HMACSHA512	165	/* XXXMPA */
 #define DST_ALG_INDIRECT	252
 #define DST_ALG_PRIVATE		254
-#define DST_ALG_EXPAND		255
-#define DST_MAX_ALGS		255
+#define DST_MAX_ALGS		256
 
 /*% A buffer of this size is large enough to hold any key */
 #define DST_KEY_MAXSIZE		1280
@@ -753,12 +752,12 @@ dst_key_secretsize(const dst_key_t *key, unsigned int *n);
  */
 
 uint16_t
-dst_region_computeid(const isc_region_t *source, unsigned int alg);
+dst_region_computeid(const isc_region_t *source);
 uint16_t
-dst_region_computerid(const isc_region_t *source, unsigned int alg);
+dst_region_computerid(const isc_region_t *source);
 /*%<
  * Computes the (revoked) key id of the key stored in the provided
- * region with the given algorithm.
+ * region.
  *
  * Requires:
  *\li	"source" contains a valid, non-NULL region.

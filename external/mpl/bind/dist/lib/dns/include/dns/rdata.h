@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: rdata.h,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -592,7 +592,6 @@ dns_rdatatype_isknown(dns_rdatatype_t type);
  *
  */
 
-
 isc_result_t
 dns_rdata_additionaldata(dns_rdata_t *rdata, dns_additionaldatafunc_t add,
 			 void *arg);
@@ -685,6 +684,16 @@ dns_rdatatype_atparent(dns_rdatatype_t type);
  *
  */
 
+bool
+dns_rdatatype_atcname(dns_rdatatype_t type);
+/*%<
+ * Return true iff rdata of type 'type' can appear beside a cname.
+ *
+ * Requires:
+ * \li	'type' is a valid rdata type.
+ *
+ */
+
 unsigned int
 dns_rdatatype_attributes(dns_rdatatype_t rdtype);
 /*%<
@@ -713,10 +722,12 @@ dns_rdatatype_attributes(dns_rdatatype_t rdtype);
 #define DNS_RDATATYPEATTR_UNKNOWN		0x00000040U
 /*% Is META, and can only be in a question section */
 #define DNS_RDATATYPEATTR_QUESTIONONLY		0x00000080U
-/*% is META, and can NOT be in a question section */
+/*% Is META, and can NOT be in a question section */
 #define DNS_RDATATYPEATTR_NOTQUESTION		0x00000100U
 /*% Is present at zone cuts in the parent, not the child */
 #define DNS_RDATATYPEATTR_ATPARENT		0x00000200U
+/*% Can exist along side a CNAME */
+#define DNS_RDATATYPEATTR_ATCNAME		0x00000400U
 
 dns_rdatatype_t
 dns_rdata_covers(dns_rdata_t *rdata);

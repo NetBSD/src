@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.4 2019/02/24 20:01:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -85,9 +85,9 @@
 /*% nameserver client structure */
 struct ns_client {
 	unsigned int		magic;
-	isc_mem_t *		mctx;
-	ns_server_t *		sctx;
-	ns_clientmgr_t *	manager;
+	isc_mem_t		*mctx;
+	ns_server_t		*sctx;
+	ns_clientmgr_t		*manager;
 	int			state;
 	int			newstate;
 	int			naccepts;
@@ -97,7 +97,7 @@ struct ns_client {
 	int			nupdates;
 	int			nctls;
 	int			references;
-	bool		needshutdown; 	/*
+	bool			needshutdown;	/*
 						 * Used by clienttest to get
 						 * the client to go from
 						 * inactive to free state
@@ -105,26 +105,26 @@ struct ns_client {
 						 * client's task.
 						 */
 	unsigned int		attributes;
-	isc_task_t *		task;
-	dns_view_t *		view;
-	dns_dispatch_t *	dispatch;
-	isc_socket_t *		udpsocket;
-	isc_socket_t *		tcplistener;
-	isc_socket_t *		tcpsocket;
-	unsigned char *		tcpbuf;
+	isc_task_t		*task;
+	dns_view_t		*view;
+	dns_dispatch_t		*dispatch;
+	isc_socket_t		*udpsocket;
+	isc_socket_t		*tcplistener;
+	isc_socket_t		*tcpsocket;
+	unsigned char		*tcpbuf;
 	dns_tcpmsg_t		tcpmsg;
-	bool		tcpmsg_valid;
-	isc_timer_t *		timer;
-	isc_timer_t *		delaytimer;
-	bool 		timerset;
-	dns_message_t *		message;
-	isc_socketevent_t *	sendevent;
-	isc_socketevent_t *	recvevent;
-	unsigned char *		recvbuf;
-	dns_rdataset_t *	opt;
+	bool			tcpmsg_valid;
+	isc_timer_t		*timer;
+	isc_timer_t		*delaytimer;
+	bool 			timerset;
+	dns_message_t		*message;
+	isc_socketevent_t	*sendevent;
+	isc_socketevent_t	*recvevent;
+	unsigned char		*recvbuf;
+	dns_rdataset_t		*opt;
 	uint16_t		udpsize;
 	uint16_t		extflags;
-	int16_t		ednsversion;	/* -1 noedns */
+	int16_t			ednsversion;	/* -1 noedns */
 	void			(*next)(ns_client_t *);
 	void			(*shutdown)(void *arg, isc_result_t result);
 	void 			*shutdown_arg;
@@ -132,20 +132,20 @@ struct ns_client {
 	isc_time_t		requesttime;
 	isc_stdtime_t		now;
 	isc_time_t		tnow;
-	dns_name_t		signername;   /*%< [T]SIG key name */
-	dns_name_t *		signer;	      /*%< NULL if not valid sig */
-	bool		mortal;	      /*%< Die after handling request */
-	bool		pipelined;   /*%< TCP queries not in sequence */
+	dns_name_t		signername;	/*%< [T]SIG key name */
+	dns_name_t		*signer;	/*%< NULL if not valid sig */
+	bool			mortal;		/*%< Die after handling request */
+	bool			pipelined;	/*%< TCP queries not in sequence */
 	isc_quota_t		*tcpquota;
 	isc_quota_t		*recursionquota;
 	ns_interface_t		*interface;
 
 	isc_sockaddr_t		peeraddr;
-	bool		peeraddr_valid;
+	bool			peeraddr_valid;
 	isc_netaddr_t		destaddr;
 	isc_sockaddr_t		destsockaddr;
 
-	dns_ecs_t		ecs;   /*%< EDNS client subnet sent by client */
+	dns_ecs_t		ecs;		/*%< EDNS client subnet sent by client */
 
 	struct in6_pktinfo	pktinfo;
 	isc_dscp_t		dscp;

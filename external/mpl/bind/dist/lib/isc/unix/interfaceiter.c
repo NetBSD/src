@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,7 +32,6 @@
 #include <isc/log.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
-#include <isc/msgs.h>
 #include <isc/net.h>
 #include <isc/print.h>
 #include <isc/result.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -320,30 +320,27 @@ usage(void) ISC_PLATFORM_NORETURN_POST;
 static void
 usage(void) {
 	fprintf(stderr, "Usage:\n");
-	fprintf(stderr,	"    %s options [-K dir] keyfile\n\n", program);
-	fprintf(stderr, "    %s options [-K dir] [-c class] -s dnsname\n\n",
-		program);
-	fprintf(stderr, "    %s options -f zonefile (as zone name)\n\n", program);
-	fprintf(stderr, "    %s options -f zonefile zonename\n\n", program);
+	fprintf(stderr,	"    %s [options] keyfile\n\n", program);
+	fprintf(stderr, "    %s [options] -f zonefile [zonename]\n\n", program);
+	fprintf(stderr, "    %s [options] -s dnsname\n\n", program);
+	fprintf(stderr, "    %s [-h|-V]\n\n", program);
 	fprintf(stderr, "Version: %s\n", VERSION);
-	fprintf(stderr, "Options:\n");
-	fprintf(stderr, "    -v <verbose level>\n");
-	fprintf(stderr, "    -V: print version information\n");
-	fprintf(stderr, "    -K <directory>: directory in which to find "
-			"key file or keyset file\n");
-	fprintf(stderr, "    -a algorithm: digest algorithm "
-			"(SHA-1, SHA-256 or SHA-384)\n");
-	fprintf(stderr, "    -1: use SHA-1\n");
-	fprintf(stderr, "    -2: use SHA-256\n");
-	fprintf(stderr, "    -C: print CDS record\n");
-	fprintf(stderr, "    -l: add lookaside zone and print DLV records\n");
-	fprintf(stderr, "    -s: read keyset from keyset-<dnsname> file\n");
-	fprintf(stderr, "    -c class: rdata class for DS set (default: IN)\n");
-	fprintf(stderr, "    -T TTL\n");
-	fprintf(stderr, "    -f file: read keyset from zone file\n");
-	fprintf(stderr, "    -A: when used with -f, "
-			"include all keys in DS set, not just KSKs\n");
-	fprintf(stderr, "Output: DS or DLV RRs\n");
+	fprintf(stderr, "Options:\n"
+"    -1: digest algorithm SHA-1\n"
+"    -2: digest algorithm SHA-256\n"
+"    -a algorithm: digest algorithm (SHA-1, SHA-256 or SHA-384)\n"
+"    -A: include all keys in DS set, not just KSKs (-f only)\n"
+"    -c class: rdata class for DS set (default IN) (-f or -s only)\n"
+"    -C: print CDS records\n"
+"    -f zonefile: read keys from a zone file\n"
+"    -h: print help information\n"
+"    -K directory: where to find key or keyset files\n"
+"    -l zone: print DLV records in the given lookaside zone\n"
+"    -s: read keys from keyset-<dnsname> file\n"
+"    -T: TTL of output records (omitted by default)\n"
+"    -v level: verbosity\n"
+"    -V: print version information\n");
+	fprintf(stderr, "Output: DS, DLV, or CDS RRs\n");
 
 	exit (-1);
 }
