@@ -1,4 +1,4 @@
-/*   $NetBSD: in_wchstr.c,v 1.5 2018/11/22 22:16:45 uwe Exp $ */
+/*   $NetBSD: in_wchstr.c,v 1.6 2019/02/24 20:20:18 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: in_wchstr.c,v 1.5 2018/11/22 22:16:45 uwe Exp $");
+__RCSID("$NetBSD: in_wchstr.c,v 1.6 2019/02/24 20:20:18 roy Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: in_wchstr.c,v 1.5 2018/11/22 22:16:45 uwe Exp $");
  *	Return an array of wide characters at cursor position from stdscr.
  */
 __warn_references(in_wchstr,
-	"warning: this program uses in_wchstr(), which is unsafe.")
+	"warning: this program uses in_wchstr(), which is unsafe.");
 int
 in_wchstr(cchar_t *wchstr)
 {
@@ -65,7 +65,7 @@ in_wchnstr(cchar_t *wchstr, int n)
  *  Return an array of wide characters at position (y, x) from stdscr.
  */
 __warn_references(mvin_wchstr,
-	"warning: this program uses mvin_wchstr(), which is unsafe.")
+	"warning: this program uses mvin_wchstr(), which is unsafe.");
 int
 mvin_wchstr(int y, int x, cchar_t *wchstr)
 {
@@ -83,7 +83,7 @@ mvin_wchnstr(int y, int x, cchar_t *wchstr, int n)
  *  Return an array wide characters at position (y, x) from the given window.
  */
 __warn_references(mvwin_wchstr,
-	"warning: this program uses mvwin_wchstr(), which is unsafe.")
+	"warning: this program uses mvwin_wchstr(), which is unsafe.");
 int
 mvwin_wchstr(WINDOW *win, int y, int x, cchar_t *wchstr)
 {
@@ -107,7 +107,7 @@ mvwin_wchnstr(WINDOW *win, int y, int x, cchar_t *wchstr, int n)
  *	Return an array of characters at cursor position.
  */
 __warn_references(win_wchstr,
-	"warning: this program uses win_wchstr(), which is unsafe.")
+	"warning: this program uses win_wchstr(), which is unsafe.");
 int
 win_wchstr(WINDOW *win, cchar_t *wchstr)
 {
