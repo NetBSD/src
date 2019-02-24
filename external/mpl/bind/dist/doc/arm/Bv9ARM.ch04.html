@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2019 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -921,41 +921,36 @@ allow-update { !{ !localnets; any; }; key host1-host2. ;};
         </p>
 
         <p>
-          A secure zone must contain one or more zone keys.  The
-          zone keys will sign all other records in the zone, as well as
-          the zone keys of any secure delegated zones.  Zone keys must
-          have the same name as the zone, a name type of
-          <span class="command"><strong>ZONE</strong></span>, and must be usable for
-          authentication.
-          It is recommended that zone keys use a cryptographic algorithm
-          designated as "mandatory to implement" by the IETF; currently
-          the only one is RSASHA1.
+          A secure zone must contain one or more zone keys.  The zone keys will
+          sign all other records in the zone, as well as the zone keys of any
+          secure delegated zones.  Zone keys must have the same name as the
+          zone, a name type of <span class="command"><strong>ZONE</strong></span>, and must be usable for
+          authentication.  It is recommended that zone keys use a cryptographic
+          algorithm designated as "mandatory to implement" by the IETF;
+          currently the are two algorithms: RSASHA256 and ECDSAP256SHA256.
+          ECDSAP256SHA256 is recommended for current and future deployments.
         </p>
 
         <p>
-          The following command will generate a 768-bit RSASHA1 key for
+          The following command will generate a ECDSAP256SHA256 key for
           the <code class="filename">child.example</code> zone:
         </p>
 
         <p>
-          <strong class="userinput"><code>dnssec-keygen -a RSASHA1 -b 768 -n ZONE child.example.</code></strong>
+          <strong class="userinput"><code>dnssec-keygen -a ECDSAP256SHA256 -n ZONE child.example.</code></strong>
         </p>
 
         <p>
           Two output files will be produced:
-          <code class="filename">Kchild.example.+005+12345.key</code> and
-          <code class="filename">Kchild.example.+005+12345.private</code>
-          (where
-          12345 is an example of a key tag).  The key filenames contain
-          the key name (<code class="filename">child.example.</code>),
-          algorithm (3
-          is DSA, 1 is RSAMD5, 5 is RSASHA1, etc.), and the key tag (12345 in
-          this case).
-          The private key (in the <code class="filename">.private</code>
-          file) is
-          used to generate signatures, and the public key (in the
-          <code class="filename">.key</code> file) is used for signature
-          verification.
+          <code class="filename">Kchild.example.+013+12345.key</code> and
+          <code class="filename">Kchild.example.+013+12345.private</code> (where 12345 is
+          an example of a key tag).  The key filenames contain the key name
+          (<code class="filename">child.example.</code>), algorithm (5 is RSASHA1, 8 is
+          RSASHA256, 13 is ECDSAP256SHA256, 15 is ED25519 etc.), and the key tag
+          (12345 in this case).  The private key (in the
+          <code class="filename">.private</code> file) is used to generate signatures,
+          and the public key (in the <code class="filename">.key</code> file) is used for
+          signature verification.
         </p>
 
         <p>
@@ -2868,6 +2863,6 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.5-W1 (Development Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.7 (Development Release)</p>
 </body>
 </html>

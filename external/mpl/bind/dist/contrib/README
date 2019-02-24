@@ -1,62 +1,39 @@
-This directory contains contributed scripts, tools, libraries, and other
-useful accessories to BIND 9.  Contrib software is not supported by ISC,
-but reported bugs will be fixed as time permits.
+This directory contains scripts, tools, and other useful accessories to
+BIND 9.  Contrib software is not supported by ISC, but reported bugs will
+be fixed as time permits.
 
     - scripts/
 
       Assorted useful scripts, including 'nanny' which monitors 
       named and restarts it in the event of a crash, 'zone-edit'
-      which enables editing of a dynamic zone, and others
+      which enables editing of a dynamic zone, and others.
 
     - dane/
 
       mkdane.sh generates TLSA records for use with DNS-based
-      Authentication of Named Entities (DANE)
+      Authentication of Named Entities (DANE).
 
     - dnspriv/
 
       Sample configuration for setting up a DNS-over-TLS server
-      using BIND with Nginx as a TLS proxy
+      using BIND with Nginx as a TLS proxy.
+
+    - kasp/
+
+      Scripts for converting key and signature policies from OpenDNSSEC
+      KASP format to the policy.conf format used by dnssec-keymgr.
 
     - dlz/modules
 
       Dynamically linkable DLZ modules that can be configured into
       named at runtime, enabling access to external data sources including
-      LDAP, MySQL, Berkeley DB, perl scripts, etc
+      LDAP, MySQL, Berkeley DB, perl scripts, etc.
 
     - dlz/drivers
 
       Old-style DLZ drivers that can be linked into named at compile
-      time.  (These are no longer actively maintained and are expected
-      to be deprecated eventually.)
+      time. (These are no longer actively maintained and are expected
+      to be removed eventually.)
 
-    - sdb/
-
-      SDB drivers: another mechanism for accessing external data
-      sources. (These are no longer actively maintained and are
-      expected to be deprecated eventually.)
-
-External tools:
-
-    - https://gitlab.isc.org/isc-projects/queryperf
-
-      A DNS query performance testing tool
-
-    - https://gitlab.isc.org/isc-projects/perftcpdns
-
-      A performance testing tool for DNS over TCP
-
-    - https://gitlab.isc.org/isc-projects/dnsperf
-
-      DNS server performance testing tools, like 'queryperf' but more
-      advanced: 'dnsperf' focuses on authoritative server performance
-      and 'resperf' on recursive server performance.  The patch that
-      adds support for EDNS Client Subnet has been applied to the
-      git repository.
-
-Formerly, there was more software included in this directory, but we
-have removed it in favour of using canonical upstream locations.  You
-can find the links to the nslint, query-loc and zkt, and other software
-we find useful but do not necessarily support, at:
-
-      https://www.isc.org/community/tools/
+Some links to useful software and other resources related to BIND 9 and
+DNS can be found at https://www.isc.org/dns-tools-and-resources.

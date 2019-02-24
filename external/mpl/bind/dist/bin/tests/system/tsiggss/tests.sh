@@ -15,24 +15,41 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 status=0
+n=1
 
 DIGOPTS="@10.53.0.1 -p ${PORT}"
 
-test_update() {
-    host="$1"
-    type="$2"
-    cmd="$3"
-    digout="$4"
+test_update () {
+    num="$1"
+    host="$2"
+    type="$3"
+    cmd="$4"
+    digout="$5"
 
     cat <<EOF > ns1/update.txt
 server 10.53.0.1 ${PORT}
 update add $host $cmd
 send
+answer
 EOF
     echo "I:testing update for $host $type $cmd"
-    $NSUPDATE -g -d ns1/update.txt > nsupdate.out 2>&1 || {
+    $NSUPDATE -g -d ns1/update.txt > nsupdate.out${num} 2>&1 || {
 	echo "I:update failed for $host $type $cmd"
-	sed "s/^/I:/" nsupdate.out
+	sed "s/^/I:/" nsupdate.out${num}
+	return 1
+    }
+
+    # Verify that TKEY response is signed.
+    tkeyout=`awk '/recvmsg reply from GSS-TSIG query/,/Sending update to/' nsupdate.out${num}`
+    pattern="recvmsg reply from GSS-TSIG query .* opcode: QUERY, status: NOERROR, id: .* flags: qr; QUESTION: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1 ;; QUESTION SECTION: ;.* ANY TKEY ;; ANSWER SECTION: .* 0 ANY TKEY gss-tsig\. .* ;; TSIG PSEUDOSECTION: .* 0 ANY TSIG gss-tsig\. .* NOERROR 0"
+    echo $tkeyout | grep "$pattern" > /dev/null || {
+	echo "I:bad tkey response (not tsig signed)"
+	return 1
+    }
+
+    # Weak verification that TKEY response is signed.
+    grep -q "flags: qr; QUESTION: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1" nsupdate.out${num} || {
+	echo "I:bad tkey response (not tsig signed)"
 	return 1
     }
 
@@ -45,29 +62,75 @@ EOF
     return 0
 }
 
-echo "I:testing updates as administrator"
+
+# Testing updates with good credentials.
 KRB5CCNAME="FILE:"`pwd`/ns1/administrator.ccache
 export KRB5CCNAME
 
-test_update testdc1.example.nil. A "86400 A 10.53.0.10" "10.53.0.10" || status=1
-test_update testdc2.example.nil. A "86400 A 10.53.0.11" "10.53.0.11" || status=1
-test_update denied.example.nil. TXT "86400 TXT helloworld" "helloworld" > /dev/null && status=1
+echo "I:testing updates to testdc1 as administrator ($n)"
+ret=0
+test_update $n testdc1.example.nil. A "86400 A 10.53.0.10" "10.53.0.10" || ret=1
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-echo "I:testing updates as a user"
+echo "I:testing updates to testdc2 as administrator ($n)"
+ret=0
+test_update $n testdc2.example.nil. A "86400 A 10.53.0.11" "10.53.0.11" || ret=1
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+echo "I:testing updates to denied as administrator ($n)"
+ret=0
+test_update $n denied.example.nil. TXT "86400 TXT helloworld" "helloworld" > /dev/null && ret=1
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+
+# Testing denied updates.
 KRB5CCNAME="FILE:"`pwd`/ns1/testdenied.ccache
 export KRB5CCNAME
 
-test_update testdenied.example.nil. A "86400 A 10.53.0.12" "10.53.0.12" > /dev/null && status=1
-test_update testdenied.example.nil. TXT "86400 TXT helloworld" "helloworld" || status=1
+echo "I:testing updates to denied (A) as a user ($n)"
+ret=0
+test_update $n testdenied.example.nil. A "86400 A 10.53.0.12" "10.53.0.12" > /dev/null && ret=1
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-echo "I:testing external update policy"
-test_update testcname.example.nil. TXT "86400 CNAME testdenied.example.nil" "testdenied" > /dev/null && status=1
+echo "I:testing updates to denied (TXT) as a user ($n)"
+ret=0
+test_update $n testdenied.example.nil. TXT "86400 TXT helloworld" "helloworld" || ret=1
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+echo "I:testing external update policy (CNAME) ($n)"
+ret=0
+test_update $n testcname.example.nil. CNAME "86400 CNAME testdenied.example.nil" "testdenied" > /dev/null && ret=1
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+echo "I:testing external update policy (CNAME) with auth sock ($n)"
+ret=0
 $PERL ./authsock.pl --type=CNAME --path=ns1/auth.sock --pidfile=authsock.pid --timeout=120 > /dev/null 2>&1 &
 sleep 1
-test_update testcname.example.nil. TXT "86400 CNAME testdenied.example.nil" "testdenied" || status=1
-test_update testcname.example.nil. TXT "86400 A 10.53.0.13" "10.53.0.13" > /dev/null && status=1
+test_update $n testcname.example.nil. CNAME "86400 CNAME testdenied.example.nil" "testdenied" || ret=1
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-echo "I:testing external policy with SIG(0) key"
+echo "I:testing external update policy (A) ($n)"
+ret=0
+test_update $n testcname.example.nil. A "86400 A 10.53.0.13" "10.53.0.13" > /dev/null && ret=1
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+echo "I:testing external policy with SIG(0) key ($n)"
 ret=0
 $NSUPDATE -k ns1/Kkey.example.nil.*.private <<END > /dev/null 2>&1 || ret=1
 server 10.53.0.1 ${PORT}
@@ -78,24 +141,31 @@ END
 output=`$DIG $DIGOPTS +short cname fred.example.nil.`
 [ -n "$output" ] || ret=1
 [ $ret -eq 0 ] || echo "I:failed"
-status=`expr $status + $ret`
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-echo "I:ensure too long realm name is fatal in non-interactive mode"
+echo "I:ensure too long realm name is fatal in non-interactive mode ($n)"
 ret=0
-$NSUPDATE <<END > nsupdate.out 2>&1 && ret=1
+$NSUPDATE <<END > nsupdate.out${n} 2>&1 && ret=1
     realm namenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamename
 END
-grep "realm is too long" nsupdate.out > /dev/null || ret=1
-grep "syntax error" nsupdate.out > /dev/null || ret=1
-[ $ret = 0 ] || { echo I:failed; status=1; }
+grep "realm is too long" nsupdate.out${n} > /dev/null || ret=1
+grep "syntax error" nsupdate.out${n} > /dev/null || ret=1
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-echo "I:ensure too long realm name is not fatal in interactive mode"
+echo "I:ensure too long realm name is not fatal in interactive mode ($n)"
 ret=0
-$NSUPDATE -i <<END > nsupdate.out 2>&1 || ret=1
+$NSUPDATE -i <<END > nsupdate.out${n} 2>&1 || ret=1
     realm namenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamenamename
 END
-grep "realm is too long" nsupdate.out > /dev/null || ret=1
+grep "realm is too long" nsupdate.out${n} > /dev/null || ret=1
 [ $ret = 0 ] || { echo I:failed; status=1; }
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
 [ $status -eq 0 ] && echo "I:tsiggss tests all OK"
 

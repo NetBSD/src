@@ -148,7 +148,7 @@ if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 
 n=`expr $n + 1`
 echo_i "Checking that reloading empty zones is silent ($n)"
-$RNDCCMD 10.53.0.1 reload > /dev/null
+rndc_reload ns1 10.53.0.1
 ret=0
 grep "automatic empty zone" ns1/named.run > /dev/null || ret=1
 grep "received control channel command 'reload'" ns1/named.run > /dev/null || ret=1

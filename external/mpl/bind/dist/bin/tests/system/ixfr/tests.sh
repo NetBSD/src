@@ -54,7 +54,7 @@ zone "nil" {
 };
 EOF
 
-$RNDCCMD 10.53.0.1 reload | sed 's/^/ns1 /' | cat_i
+rndc_reload ns1 10.53.0.1
 
 for i in 0 1 2 3 4 5 6 7 8 9
 do
@@ -306,6 +306,31 @@ if [ ${ret} != 0 ]; then
 	echo_i "failed";
 	status=1;
 fi
+
+echo_i "checking whether dig calculates IXFR statistics correctly"
+ret=0
+$DIG $DIGOPTS +noedns +stat -b 10.53.0.4 @10.53.0.4 test. ixfr=2 > dig.out1
+get_dig_xfer_stats dig.out1 > stats.dig
+diff ixfr-stats.good stats.dig || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+# Note: in the next two tests, we use ns4 logs for checking both incoming and
+# outgoing transfer statistics as ns4 is both a secondary server (for ns3) and a
+# primary server (for dig queries from the previous test) for "test".
+echo_i "checking whether named calculates incoming IXFR statistics correctly"
+ret=0
+get_named_xfer_stats ns4/named.run 10.53.0.3 test "Transfer completed" > stats.incoming
+diff ixfr-stats.good stats.incoming || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "checking whether named calculates outgoing IXFR statistics correctly"
+ret=0
+get_named_xfer_stats ns4/named.run 10.53.0.4 test "IXFR ended" > stats.outgoing
+diff ixfr-stats.good stats.outgoing || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

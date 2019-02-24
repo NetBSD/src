@@ -35,10 +35,7 @@ DSFILENAME2=dsset-`echo $zone2 |sed -e "s/\.$//g"`$TP
 $DSFROMKEY -a SHA-256 $keyname12 > $DSFILENAME1
 $DSFROMKEY -a SHA-256 $keyname22 > $DSFILENAME2
 
-supported=`cat ../supported`
-case "$supported" in
-    *) algo=SHA-384 ;;
-esac
+algo=SHA-384
 
 $DSFROMKEY -a $algo $keyname12 >> $DSFILENAME1
 $DSFROMKEY -a $algo $keyname22 > $DSFILENAME2

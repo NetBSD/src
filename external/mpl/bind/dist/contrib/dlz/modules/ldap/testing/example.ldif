@@ -40,6 +40,14 @@ dn: dlzHostName=~,dlzZoneName=example.com,ou=dns,o=bind-dlz
 objectclass: dlzHost
 dlzHostName: ~
 
+dn: dlzHostName=cname,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzHost
+dlzHostName: cname
+
+dn: dlzHostName=dname,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzHost
+dlzHostName: dname
+
 dn: dlzRecordID=1,dlzHostName=@,dlzZoneName=example.com,ou=dns,o=bind-dlz
 objectclass: dlzGenericRecord
 dlzRecordID: 1
@@ -166,3 +174,19 @@ dn: dlzRecordID=15,dlzZoneName=example.com,ou=dns,o=bind-dlz
 objectclass: dlzXFR
 dlzRecordID: 15
 dlzIPAddr: 127.0.0.1
+
+dn: dlzRecordID=16,dlzHostName=cname,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzCNameRecord
+dlzRecordID: 16
+dlzHostName: cname
+dlzType: cname
+dlzData: www
+dlzTTL: 10
+
+dn: dlzRecordID=17,dlzHostName=dname,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzDNameRecord
+dlzRecordID: 17
+dlzHostName: dname
+dlzType: dname
+dlzData: example.net.
+dlzTTL: 10

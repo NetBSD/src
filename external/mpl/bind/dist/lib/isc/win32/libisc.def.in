@@ -312,7 +312,6 @@ isc_lfsr_generate
 isc_lfsr_generate32
 isc_lfsr_init
 isc_lfsr_skip
-isc_lib_initmsgcat
 isc_lib_register
 isc_log_categorybyname
 isc_log_closefilelogs
@@ -322,10 +321,6 @@ isc_log_destroy
 isc_log_getdebuglevel
 isc_log_getduplicateinterval
 isc_log_gettag
-isc_log_ivwrite
-isc_log_ivwrite1
-isc_log_iwrite
-isc_log_iwrite1
 isc_log_modulebyname
 isc_log_opensyslog
 isc_log_registercategories
@@ -394,9 +389,6 @@ isc_mempool_setfillcount
 isc_mempool_setfreemax
 isc_mempool_setmaxalloc
 isc_mempool_setname
-isc_msgcat_close
-isc_msgcat_get
-isc_msgcat_open
 isc_mutexblock_destroy
 isc_mutexblock_init
 isc_net_disableipv4
@@ -457,6 +449,9 @@ isc_portset_removerange
 isc_quota_attach
 isc_quota_destroy
 isc_quota_detach
+isc_quota_getmax
+isc_quota_getsoft
+isc_quota_getused
 isc_quota_init
 isc_quota_max
 isc_quota_release
@@ -658,7 +653,6 @@ pk11_get_lib_name
 pk11_get_load_error_message
 pk11_get_session
 pk11_initialize
-pk11_initmsgcat
 pk11_mem_get
 pk11_mem_put
 pk11_numbits
@@ -723,9 +717,7 @@ isc_commandline_reset		DATA
 isc_dscp_check_value		DATA
 isc_hashctx			DATA
 isc_mem_debugging		DATA
-isc_msgcat			DATA
 @IF PKCS11
-pk11_msgcat			DATA
 pk11_verbose_init		DATA
 @END PKCS11
 @END NOLONGER

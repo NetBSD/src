@@ -14,7 +14,7 @@ AC_DEFUN([AX_POSIX_SHELL],
 			    AS_CASE([$ac_cv_prog_shell],
 				    [/*],[
 				      AS_IF(["$ac_cv_prog_shell" -c "$ac_test_shell_script" 2>/dev/null],
-					    [ac_cv_path_shell=$SHELL])
+					    [break])
 				    ])
 			  done
 			 ])
