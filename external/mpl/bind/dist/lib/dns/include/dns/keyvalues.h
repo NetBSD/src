@@ -1,4 +1,4 @@
-/*	$NetBSD: keyvalues.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: keyvalues.h,v 1.1.1.3 2019/02/24 18:56:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -55,7 +55,7 @@
 
 /* The Algorithm field of the KEY and SIG RR's is an integer, {1..254} */
 #define DNS_KEYALG_RSAMD5	1       /*%< RSA with MD5 */
-#define DNS_KEYALG_RSA		DNS_KEYALG_RSAMD5
+#define DNS_KEYALG_RSA		1	/*%< Used just for tagging */
 #define DNS_KEYALG_DH		2       /*%< Diffie Hellman KEY */
 #define DNS_KEYALG_DSA		3       /*%< DSA KEY */
 #define DNS_KEYALG_NSEC3DSA	6

@@ -33,8 +33,8 @@ copy_setports ns3/named2.conf.in ns3/named.conf
 echo_i "reloading ns2 and ns3 with rndc"
 nextpart ns2/named.run > /dev/null
 nextpart ns3/named.run > /dev/null
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
-$RNDCCMD 10.53.0.3 reload 2>&1 | sed 's/^/ns3 /' | cat_i
+rndc_reload ns2 10.53.0.2
+rndc_reload ns3 10.53.0.3
 
 echo_i "wait for reload"
 a=0 b=0

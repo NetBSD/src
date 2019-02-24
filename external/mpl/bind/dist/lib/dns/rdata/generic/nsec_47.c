@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec_47.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: nsec_47.c,v 1.1.1.3 2019/02/24 18:56:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,9 @@
  * The attributes do not include DNS_RDATATYPEATTR_SINGLETON
  * because we must be able to handle a parent/child NSEC pair.
  */
-#define RRTYPE_NSEC_ATTRIBUTES (DNS_RDATATYPEATTR_DNSSEC)
+#define RRTYPE_NSEC_ATTRIBUTES \
+	( DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH | \
+	  DNS_RDATATYPEATTR_ATCNAME )
 
 static inline isc_result_t
 fromtext_nsec(ARGS_FROMTEXT) {

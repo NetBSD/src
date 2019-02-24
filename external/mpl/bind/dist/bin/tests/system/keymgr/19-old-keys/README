@@ -1,0 +1,7 @@
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+This directory has a key set which is valid, but which was published
+and activated more than one rollover period ago. dnssec-keymgr should
+not mark the keys as already being inactive and deleted.

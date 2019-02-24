@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_test.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
+/*	$NetBSD: socket_test.c,v 1.1.1.3 2019/02/24 18:56:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -819,6 +819,7 @@ udp_trunc_test(void **state) {
 	completion_init(&completion);
 	recv_trunc = false;
 	result = isc_socket_recv(s2, &r, 1, task, event_done, &completion);
+	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(completion.done);
 	assert_int_equal(completion.result, ISC_R_SUCCESS);

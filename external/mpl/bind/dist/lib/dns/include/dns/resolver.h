@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.1.1.3 2019/02/24 18:56:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -120,6 +120,8 @@ typedef enum {
 							when doing qname
 							minimization on
 							ip6.arpa. */
+#define DNS_FETCHOPT_NOFORWARD		0x00080000 /*%< Do not use forwarders
+							if possible. */
 
 /* Reserved in use by adb.c		0x00400000 */
 #define	DNS_FETCHOPT_EDNSVERSIONSET	0x00800000

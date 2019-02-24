@@ -120,7 +120,9 @@ while (<FH>) {
 
 my $blank = 0;
 while (<FH>) {
-	if (m{// not.*implemented} || m{// obsolete} || m{// test.*only}) {
+	if (m{// not.*implemented} || m{// obsolete} ||
+            m{// ancient} || m{// test.*only})
+        {
 		next;
 	}
 

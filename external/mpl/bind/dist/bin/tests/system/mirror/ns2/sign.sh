@@ -32,6 +32,18 @@ done
 # the "root" zone on ns1.
 keys_to_trust="$keys_to_trust $keyname1"
 
+# Prepare a zone signed using a Combined Signing Key (CSK) without the SEP bit
+# set and add that key to the list of keys to trust.
+zone=verify-csk
+infile=verify.db.in
+zonefile=verify-csk.db
+
+keyname=`$KEYGEN -a RSASHA256 $zone 2> /dev/null`
+cat $infile $keyname.key > $zonefile
+$SIGNER -P -o $zone $zonefile > /dev/null
+keys_to_trust="$keys_to_trust $keyname"
+
+# Prepare remaining zones used in the test.
 ORIGINAL_SERIAL=`awk '$2 == "SOA" {print $5}' verify.db.in`
 UPDATED_SERIAL_BAD=`expr ${ORIGINAL_SERIAL} + 1`
 UPDATED_SERIAL_GOOD=`expr ${ORIGINAL_SERIAL} + 2`

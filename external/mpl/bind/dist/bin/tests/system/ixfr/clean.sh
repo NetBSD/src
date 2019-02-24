@@ -9,6 +9,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+rm -f stats.*
 rm -f ns1/myftp.db
 rm -f ns3/*.jnl ns3/mytest.db ns3/subtest.db
 rm -f ns4/*.jnl ns4/*.db
@@ -19,4 +20,4 @@ rm -f */ans.run
 rm -f dig.out dig.out1 dig.out2 dig.out3
 rm -f ns3/large.db
 rm -f ns*/named.lock
-rm -f ns*/managed-keys.bind*
+rm -f ns*/managed-keys.bind* ns*/*.mkeys

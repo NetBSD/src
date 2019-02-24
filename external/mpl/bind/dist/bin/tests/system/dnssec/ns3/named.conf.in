@@ -151,6 +151,16 @@ zone "dnskey-unknown.example" {
 	file "dnskey-unknown.example.db.signed";
 };
 
+zone "dnskey-unsupported.example" {
+	type master;
+	file "dnskey-unsupported.example.db.signed";
+};
+
+zone "dnskey-unsupported-2.example" {
+	type master;
+	file "dnskey-unsupported-2.example.db.signed";
+};
+
 zone "dnskey-nsec3-unknown.example" {
 	type master;
 	nsec3-test-zone yes;
@@ -292,6 +302,16 @@ zone "managed-future.example" {
 zone "revkey.example" {
 	type master;
 	file "revkey.example.db.signed";
+};
+
+zone "dname-at-apex-nsec3.example" {
+	type master;
+	file "dname-at-apex-nsec3.example.db.signed";
+};
+
+zone "occluded.example" {
+	type master;
+	file "occluded.example.db.signed";
 };
 
 include "siginterval.conf";

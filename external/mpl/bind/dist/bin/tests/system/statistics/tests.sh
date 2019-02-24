@@ -69,9 +69,10 @@ echo_i "dumping initial stats for ns3 ($n)"
 rm -f ns3/named.stats
 $RNDCCMD -s 10.53.0.3 stats > /dev/null 2>&1
 [ -f ns3/named.stats ] || ret=1
-[ "$CYGWIN" ] || \
-nsock0nstat=`grep "UDP/IPv4 sockets active" ns3/named.stats | awk '{print $1}'`
-[ 0 -ne ${nsock0nstat:-0} ] || ret=1
+if [ ! "$CYGWIN" ]; then
+    nsock0nstat=`grep "UDP/IPv4 sockets active" ns3/named.stats | awk '{print $1}'`
+    [ 0 -ne ${nsock0nstat:-0} ] || ret=1
+fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`

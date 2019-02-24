@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.1.1.3 2019/02/24 18:56:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,6 @@
 #include <isc/app.h>
 #include <isc/condition.h>
 #include <isc/mem.h>
-#include <isc/msgs.h>
 #include <isc/mutex.h>
 #include <isc/event.h>
 #include <isc/platform.h>

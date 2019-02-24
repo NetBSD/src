@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_stub_driver.c,v 1.1.1.1 2018/08/12 12:07:50 christos Exp $	*/
+/*	$NetBSD: dlz_stub_driver.c,v 1.1.1.2 2019/02/24 18:56:43 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -106,11 +106,17 @@ static isc_result_t
 stub_dlz_allowzonexfr(void *driverarg, void *dbdata, const char *name,
 		      const char *client)
 {
+	config_data_t *cd;
+
 	UNUSED(driverarg);
-	UNUSED(dbdata);
-	UNUSED(name);
 	UNUSED(client);
-	return ISC_R_SUCCESS;
+
+	cd = (config_data_t *) dbdata;
+
+	if (strcmp(name, cd->myname) == 0) {
+		return (ISC_R_SUCCESS);
+	}
+	return (ISC_R_NOTFOUND);
 }
 
 static isc_result_t

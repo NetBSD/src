@@ -289,4 +289,11 @@ zone "delzsk.example." {
 	auto-dnssec maintain;
 };
 
+zone "dname-at-apex-nsec3.example" {
+	type master;
+	file "dname-at-apex-nsec3.example.db";
+	allow-update { any; };
+	auto-dnssec maintain;
+};
+
 include "trusted.conf";

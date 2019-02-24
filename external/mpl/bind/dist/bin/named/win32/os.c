@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.3 2019/02/24 18:56:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -61,6 +61,7 @@ named_paths_init(void) {
 	named_g_defaultlockfile = isc_ntpaths_get(NAMED_LOCK_PATH);
 	named_g_keyfile = isc_ntpaths_get(RNDC_KEY_PATH);
 	named_g_defaultsessionkeyfile = isc_ntpaths_get(SESSION_KEY_PATH);
+	named_g_defaultbindkeys = isc_ntpaths_get(BIND_KEYS_PATH);
 	named_g_defaultdnstap = NULL;
 
 	Initialized = TRUE;

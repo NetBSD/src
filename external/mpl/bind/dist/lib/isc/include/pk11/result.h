@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.1.1.1 2018/08/12 12:08:25 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.2 2019/02/24 18:56:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,11 +36,6 @@
 #define PK11_R_NRESULTS			5	/* Number of results */
 
 ISC_LANG_BEGINDECLS
-
-LIBISC_EXTERNAL_DATA extern isc_msgcat_t *pk11_msgcat;
-
-void
-pk11_initmsgcat(void);
 
 const char *
 pk11_result_totext(isc_result_t);

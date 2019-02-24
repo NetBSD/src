@@ -31,3 +31,5 @@ ns.private		A	10.53.0.2
 insecure		NS	ns.insecure
 ns.insecure		A	10.53.0.2
 
+dname-and-txt		DNAME	@
+			TXT	"DNAME and TXT"

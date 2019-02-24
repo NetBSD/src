@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.1.1.2 2019/01/09 16:48:16 christos Exp $	*/
+/*	$NetBSD: driver.c,v 1.1.1.3 2019/02/24 18:56:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -538,10 +538,22 @@ dlz_lookup(const char *zone, const char *name, void *dbdata,
  */
 isc_result_t
 dlz_allowzonexfr(void *dbdata, const char *name, const char *client) {
-	UNUSED(client);
+	isc_result_t result;
 
-	/* Just say yes for all our zones */
-	return (dlz_findzonedb(dbdata, name, NULL, NULL));
+	result = dlz_findzonedb(dbdata, name, NULL, NULL);
+	if (result != ISC_R_SUCCESS) {
+		return (result);
+	}
+
+	/*
+	 * Exception for 10.53.0.5 so we can test that allow-transfer
+	 * is effective.
+	 */
+	if (strcmp(client, "10.53.0.5") == 0) {
+		return (ISC_R_NOPERM);
+	}
+
+	return (ISC_R_SUCCESS);
 }
 
 /*

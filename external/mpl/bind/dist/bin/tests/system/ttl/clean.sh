@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. ../conf.sh
+. $SYSTEMTESTTOP/conf.sh
 
 rm -f ./dig.out.*
 rm -f ./*/named.conf

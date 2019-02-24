@@ -113,7 +113,6 @@
     <ClCompile Include="..\base64.c" />
     <ClCompile Include="..\cc.c" />
     <ClCompile Include="..\ccmsg.c" />
-    <ClCompile Include="..\lib.c" />
     <ClCompile Include="..\result.c" />
     <ClCompile Include="..\sexpr.c" />
     <ClCompile Include="..\symtab.c" />
@@ -126,7 +125,6 @@
     <ClInclude Include="..\include\isccc\cc.h" />
     <ClInclude Include="..\include\isccc\ccmsg.h" />
     <ClInclude Include="..\include\isccc\events.h" />
-    <ClInclude Include="..\include\isccc\lib.h" />
     <ClInclude Include="..\include\isccc\result.h" />
     <ClInclude Include="..\include\isccc\sexpr.h" />
     <ClInclude Include="..\include\isccc\symtab.h" />
