@@ -1,4 +1,4 @@
-/*	$NetBSD: can_pcb.c,v 1.6 2017/06/09 08:21:41 bouyer Exp $	*/
+/*	$NetBSD: can_pcb.c,v 1.7 2019/02/25 06:49:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.6 2017/06/09 08:21:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.7 2019/02/25 06:49:44 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,8 @@ can_pcbbind(void *v, struct sockaddr_can *scan, struct lwp *l)
 
 	if (scan->can_family != AF_CAN)
 		return (EAFNOSUPPORT);
+	if (scan->can_len != sizeof(*scan))
+		return EINVAL;
 	mutex_enter(&canp->canp_mtx);
 	if (scan->can_ifindex != 0) {
 		canp->canp_ifp = if_byindex(scan->can_ifindex);
@@ -157,6 +159,8 @@ can_pcbconnect(void *v, struct sockaddr_can *scan)
 
 	if (scan->can_family != AF_CAN)
 		return (EAFNOSUPPORT);
+	if (scan->can_len != sizeof(*scan))
+		return EINVAL;
 #if 0
 	mutex_enter(&canp->canp_mtx);
 	memcpy(&canp->canp_dst, scan, sizeof(struct sockaddr_can));
