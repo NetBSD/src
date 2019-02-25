@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephyreg.h,v 1.11 2018/06/27 07:51:36 msaitoh Exp $	*/
+/*	$NetBSD: rgephyreg.h,v 1.12 2019/02/25 06:59:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -39,6 +39,7 @@
 
 #define	RGEPHY_8211B		2
 #define	RGEPHY_8211C		3
+#define	RGEPHY_8211D		4
 #define	RGEPHY_8211E		5
 #define	RGEPHY_8211F		6
 
