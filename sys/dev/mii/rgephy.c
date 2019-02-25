@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.48 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.49 2019/02/25 06:59:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.48 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.49 2019/02/25 06:59:37 msaitoh Exp $");
 
 
 /*
@@ -696,7 +696,7 @@ rgephy_reset(struct mii_softc *sc)
 	/* NWay enable and Restart NWay */
 	PHY_WRITE(sc, MII_BMCR, BMCR_RESET | BMCR_AUTOEN | BMCR_STARTNEG);
 
-	if (sc->mii_mpd_rev == RGEPHY_8211F) {
+	if (sc->mii_mpd_rev >= RGEPHY_8211D) {
 		/* RTL8211F */
 		delay(10000);
 		/* disable EEE */
