@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.49 2019/02/25 06:59:37 msaitoh Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.50 2019/02/25 07:36:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.49 2019/02/25 06:59:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.50 2019/02/25 07:36:16 msaitoh Exp $");
 
 
 /*
@@ -702,7 +702,7 @@ rgephy_reset(struct mii_softc *sc)
 		/* disable EEE */
 		PHY_WRITE(sc, MII_MMDACR, MMDACR_FN_ADDRESS | MDIO_MMD_AN);
 		PHY_WRITE(sc, MII_MMDAADR, MDIO_AN_EEEADVERT);
-		PHY_WRITE(sc, MII_MMDACR, MMDACR_FN_DATANPI | MDIO_MMD_AN);
+		PHY_WRITE(sc, MII_MMDACR, MMDACR_FN_DATA | MDIO_MMD_AN);
 		PHY_WRITE(sc, MII_MMDAADR, 0x0000);
 	}
 }
