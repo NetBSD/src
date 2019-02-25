@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2260 2019/02/23 10:43:25 mlelstv Exp $
+#	$NetBSD: mi,v 1.2261 2019/02/25 10:25:40 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11761,6 +11761,7 @@
 ./usr/share/man/cat9/specificdata_key_delete.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/specificdata_setspecific.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/specificdata_setspecific_nowait.0 comp-sys-catman	.cat
+./usr/share/man/cat9/spi.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/spinlockinit.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/spinlockmgr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/spl.0			comp-sys-catman		.cat
