@@ -1,4 +1,4 @@
-/* $NetBSD: meson_dwmac.c,v 1.2 2019/02/23 17:18:38 martin Exp $ */
+/* $NetBSD: meson_dwmac.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.2 2019/02/23 17:18:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,13 +53,13 @@ __KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.2 2019/02/23 17:18:38 martin Exp $
 
 static const char * compatible[] = {
 	"amlogic,meson8b-dwmac",
+	"amlogic,meson-gx-dwmac",
 	NULL
 };
 
 static int
 meson_dwmac_reset(const int phandle)
 {
-#if notyet
 	struct fdtbus_gpio_pin *pin_reset;
 	const u_int *reset_delay_us;
 	bool reset_active_low;
@@ -83,7 +83,6 @@ meson_dwmac_reset(const int phandle)
 	delay(be32toh(reset_delay_us[1]));
 	fdtbus_gpio_write(pin_reset, val);
 	delay(be32toh(reset_delay_us[2]));
-#endif
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.4 2019/01/31 13:06:10 skrll Exp $ */
+/* $NetBSD: meson_platform.c,v 1.5 2019/02/25 19:30:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.4 2019/01/31 13:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.5 2019/02/25 19:30:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.4 2019/01/31 13:06:10 skrll Exp
 #include <arm/cpufunc.h>
 
 #include <arm/cortex/a9tmr_var.h>
+#include <arm/cortex/gtmr_var.h>
 #include <arm/cortex/pl310_var.h>
 #include <arm/cortex/scu_reg.h>
 
@@ -64,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.4 2019/01/31 13:06:10 skrll Exp
 
 #define	MESON_CORE_APB3_VBASE	KERNEL_IO_VBASE
 #define	MESON_CORE_APB3_PBASE	0xc0000000
-#define	MESON_CORE_APB3_SIZE	0x01300000
+#define	MESON_CORE_APB3_SIZE	0x01400000
 
 #define MESON_CBUS_OFFSET	0x01100000
 
@@ -84,8 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.4 2019/01/31 13:06:10 skrll Exp
 #define MESON8B_ARM_SCU_BASE	0x00100000
 
 #define MESON8B_AOBUS_VBASE	(MESON8B_ARM_VBASE + MESON8B_ARM_SIZE)
-#define	MESON8B_AOBUS_PBASE	0xc8100000
-#define MESON8B_AOBUS_SIZE	0x00100000
+#define	MESON8B_AOBUS_PBASE	0xc8000000
+#define MESON8B_AOBUS_SIZE	0x00200000
 
 #define MESON_AOBUS_PWR_CTRL0_REG	0xe0
 #define MESON_AOBUS_PWR_CTRL1_REG	0xe4
@@ -96,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.4 2019/01/31 13:06:10 skrll Exp
 
 #define MESON8B_SRAM_VBASE	(MESON8B_AOBUS_VBASE + MESON8B_AOBUS_SIZE)
 #define MESON8B_SRAM_PBASE	0xd9000000
-#define MESON8B_SRAM_SIZE	0x00010000	/* 0x10000 rounded up */
+#define MESON8B_SRAM_SIZE	0x00200000	/* 0x10000 rounded up */
 
 #define MESON8B_SRAM_CPUCONF_OFFSET		0x1ff80
 #define MESON8B_SRAM_CPUCONF_CTRL_REG		0x00
@@ -183,7 +184,7 @@ meson_platform_device_register(device_t self, void *aux)
 		}
 	}
 
-	if (device_is_a(self, "genfb")) {
+	if (device_is_a(self, "mesonfb")) {
 		int scale, depth;
 
 		if (get_bootconf_option(boot_args, "fb.scale",
@@ -312,7 +313,7 @@ meson_platform_reset(void)
 	}
 }
 
-#if defined(MULTIPROCESSOR)
+#if defined(SOC_MESON8B)
 static void
 meson8b_mpinit_delay(u_int n)
 {
@@ -395,13 +396,11 @@ cpu_enable_meson8b(int phandle)
 }
 
 ARM_CPU_METHOD(meson8b, "amlogic,meson8b-smp", cpu_enable_meson8b);
-#endif
 
 static int
-meson_mpstart(void)
+meson8b_mpstart(void)
 {
 	int ret = 0;
-#ifdef MULTIPROCESSOR
 	const bus_addr_t cbar = armreg_cbar_read();
 	bus_space_tag_t bst = &arm_generic_bs_tag;
 
@@ -429,12 +428,9 @@ meson_mpstart(void)
 	armv7_dcache_wbinv_all();
 
 	ret = arm_fdt_cpu_mpstart();
-#endif
 	return ret;
 }
 
-
-#if defined(SOC_MESON8B)
 static const struct arm_platform meson8b_platform = {
 	.ap_devmap = meson_platform_devmap,
 	.ap_bootstrap = meson8b_platform_bootstrap,
@@ -443,8 +439,23 @@ static const struct arm_platform meson8b_platform = {
 	.ap_reset = meson_platform_reset,
 	.ap_delay = a9tmr_delay,
 	.ap_uart_freq = meson_platform_uart_freq,
-	.ap_mpstart = meson_mpstart,
+	.ap_mpstart = meson8b_mpstart,
 };
 
 ARM_PLATFORM(meson8b, "amlogic,meson8b", &meson8b_platform);
+#endif	/* SOC_MESON8B */
+
+#if defined(SOC_MESONGXBB)
+static const struct arm_platform mesongxbb_platform = {
+	.ap_devmap = meson_platform_devmap,
+	.ap_bootstrap = meson_platform_bootstrap,
+	.ap_init_attach_args = meson_platform_init_attach_args,
+	.ap_device_register = meson_platform_device_register,
+	.ap_reset = meson_platform_reset,
+	.ap_delay = gtmr_delay,
+	.ap_uart_freq = meson_platform_uart_freq,
+	.ap_mpstart = arm_fdt_cpu_mpstart,
+};
+
+ARM_PLATFORM(mesongxbb, "amlogic,meson-gxbb", &mesongxbb_platform);
 #endif
