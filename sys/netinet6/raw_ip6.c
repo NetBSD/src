@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.174 2019/02/24 07:20:33 maxv Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.175 2019/02/25 06:49:44 maxv Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.174 2019/02/24 07:20:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.175 2019/02/25 06:49:44 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -889,6 +889,10 @@ rip6_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 
 		if (dst->sin6_family != AF_INET6) {
 			error = EAFNOSUPPORT;
+			goto release;
+		}
+		if (dst->sin6_len != sizeof(*dst)) {
+			error = EINVAL;
 			goto release;
 		}
 	}

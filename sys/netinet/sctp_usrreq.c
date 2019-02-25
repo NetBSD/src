@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.17 2019/02/24 07:20:33 maxv Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.18 2019/02/25 06:49:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.17 2019/02/24 07:20:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.18 2019/02/25 06:49:44 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -638,6 +638,11 @@ sctp_send(struct socket *so, struct mbuf *m, struct sockaddr *addr,
 		return EINVAL;
 	}
 #endif /* INET6 */
+
+	/*
+	 * XXX XXX XXX Check addr->sa_len?
+	 */
+
  connected_type:
 	/* now what about control */
 	if (control) {
