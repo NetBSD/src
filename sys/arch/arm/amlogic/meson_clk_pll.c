@@ -1,4 +1,4 @@
-/* $NetBSD: meson_clk_pll.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_clk_pll.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_clk_pll.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_clk_pll.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,6 +57,8 @@ meson_clk_pll_get_rate(struct meson_clk_softc *sc,
 	if (parent_rate == 0)
 		return 0;
 
+	CLK_LOCK(sc);
+
 	val = CLK_READ(sc, pll->n.reg);
 	n = __SHIFTOUT(val, pll->n.mask);
 
@@ -69,6 +71,8 @@ meson_clk_pll_get_rate(struct meson_clk_softc *sc,
 	} else {
 		frac = 0;
 	}
+
+	CLK_UNLOCK(sc);
 
 	rate = parent_rate * m;
 	if (frac) {
