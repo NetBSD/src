@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.140 2019/02/13 08:40:14 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.141 2019/02/25 06:23:53 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.140 2019/02/13 08:39:55 msaitoh Exp
+ *	NetBSD: miidevs,v 1.142 2019/02/25 06:23:33 msaitoh Exp
  */
 
 /*-
@@ -141,6 +141,20 @@
 #define	MII_MODEL_xxASIX_AX88X9X	0x0031
 #define	MII_STR_xxASIX_AX88X9X	"Ax88x9x internal PHY"
 
+/* Altima Communications PHYs */
+/* Don't know the model for ACXXX */
+#define	MII_MODEL_ALTIMA_ACXXX	0x0001
+#define	MII_STR_ALTIMA_ACXXX	"ACXXX 10/100 media interface"
+#define	MII_MODEL_ALTIMA_AC101L	0x0012
+#define	MII_STR_ALTIMA_AC101L	"AC101L 10/100 media interface"
+#define	MII_MODEL_ALTIMA_AC101	0x0021
+#define	MII_STR_ALTIMA_AC101	"AC101 10/100 media interface"
+/* AMD Am79C87[45] have ALTIMA OUI */
+#define	MII_MODEL_ALTIMA_Am79C875	0x0014
+#define	MII_STR_ALTIMA_Am79C875	"Am79C875 10/100 media interface"
+#define	MII_MODEL_ALTIMA_Am79C874	0x0021
+#define	MII_STR_ALTIMA_Am79C874	"Am79C874 10/100 media interface"
+
 /* Atheros PHYs */
 #define	MII_MODEL_ATHEROS_F1	0x0001
 #define	MII_STR_ATHEROS_F1	"F1 10/100/1000 PHY"
@@ -156,20 +170,6 @@
 #define	MII_STR_ATTANSIC_AR8021	"Atheros AR8021 10/100/1000 PHY"
 #define	MII_MODEL_ATTANSIC_AR8035	0x0007
 #define	MII_STR_ATTANSIC_AR8035	"Atheros AR8035 10/100/1000 PHY"
-
-/* Altima Communications PHYs */
-/* Don't know the model for ACXXX */
-#define	MII_MODEL_ALTIMA_ACXXX	0x0001
-#define	MII_STR_ALTIMA_ACXXX	"ACXXX 10/100 media interface"
-#define	MII_MODEL_ALTIMA_AC101L	0x0012
-#define	MII_STR_ALTIMA_AC101L	"AC101L 10/100 media interface"
-#define	MII_MODEL_ALTIMA_AC101	0x0021
-#define	MII_STR_ALTIMA_AC101	"AC101 10/100 media interface"
-/* AMD Am79C87[45] have ALTIMA OUI */
-#define	MII_MODEL_ALTIMA_Am79C875	0x0014
-#define	MII_STR_ALTIMA_Am79C875	"Am79C875 10/100 media interface"
-#define	MII_MODEL_ALTIMA_Am79C874	0x0021
-#define	MII_STR_ALTIMA_Am79C874	"Am79C874 10/100 media interface"
 
 /* Advanced Micro Devices PHYs */
 /* see Davicom DM9101 for Am79C873 */
@@ -312,6 +312,8 @@
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */
+#define	MII_MODEL_DAVICOM_DM9101	0x0000
+#define	MII_STR_DAVICOM_DM9101	"DM9101 (AMD Am79C873) 10/100 media interface"
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 (AMD Am79C873) 10/100 media interface"
 #define	MII_MODEL_xxDAVICOM_DM9102	0x0004
