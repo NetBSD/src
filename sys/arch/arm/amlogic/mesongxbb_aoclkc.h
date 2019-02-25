@@ -1,7 +1,7 @@
-/* $NetBSD: meson_clk_gate.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: mesongxbb_aoclkc.h,v 1.1 2019/02/25 19:30:17 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,48 +26,22 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_clk_gate.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $");
+#ifndef _MESONGXBB_AOCLKC_H
+#define _MESONGXBB_AOCLKC_H
 
-#include <sys/param.h>
-#include <sys/bus.h>
+#define	MESONGXBB_RESET_AO_REMOTE	0
+#define	MESONGXBB_RESET_AO_I2C_MASTER	1
+#define	MESONGXBB_RESET_AO_I2C_SLAVE	2
+#define	MESONGXBB_RESET_AO_UART1	3
+#define	MESONGXBB_RESET_AO_UART2	4
+#define	MESONGXBB_RESET_AO_IR_BLASTER	5
 
-#include <dev/clk/clk_backend.h>
+#define	MESONGXBB_CLOCK_AO_REMOTE	0
+#define	MESONGXBB_CLOCK_AO_I2C_MASTER	1
+#define	MESONGXBB_CLOCK_AO_I2C_SLAVE	2
+#define	MESONGXBB_CLOCK_AO_UART1	3
+#define	MESONGXBB_CLOCK_AO_UART2	4
+#define	MESONGXBB_CLOCK_AO_IR_BLASTER	5
+#define	MESONGXBB_CLOCK_CEC_32K		6
 
-#include <arm/amlogic/meson_clk.h>
-
-int
-meson_clk_gate_enable(struct meson_clk_softc *sc, struct meson_clk_clk *clk,
-    int enable)
-{
-	struct meson_clk_gate *gate = &clk->u.gate;
-	uint32_t val;
-	int set;
-
-	KASSERT(clk->type == MESON_CLK_GATE);
-
-	set = (gate->flags & MESON_CLK_GATE_SET_TO_DISABLE) ? !enable : enable;
-
-	CLK_LOCK(sc);
-
-	val = CLK_READ(sc, gate->reg);
-	if (set)
-		val |= gate->mask;
-	else
-		val &= ~gate->mask;
-	CLK_WRITE(sc, gate->reg, val);
-
-	CLK_UNLOCK(sc);
-
-	return 0;
-}
-
-const char *
-meson_clk_gate_get_parent(struct meson_clk_softc *sc, struct meson_clk_clk *clk)
-{
-	struct meson_clk_gate *gate = &clk->u.gate;
-
-	KASSERT(clk->type == MESON_CLK_GATE);
-
-	return gate->parent;
-}
+#endif /* _MESONGXBB_AOCLKC_H */

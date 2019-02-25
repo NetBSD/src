@@ -1,4 +1,4 @@
-/* $NetBSD: meson_usbphy.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_usbphy.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_usbphy.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_usbphy.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,6 +61,7 @@ enum meson_usbphy_type {
 
 static const struct of_compat_data compat_data[] = {
 	{ "amlogic,meson8b-usb2-phy",		USBPHY_MESON8B },
+	{ "amlogic,meson-gxbb-usb2-phy",	USBPHY_MESON8B },
 	{ NULL }
 };
 
@@ -115,9 +116,22 @@ static int
 meson_usbphy_enable(device_t dev, void *priv, bool enable)
 {
 	struct meson_usbphy_softc * const sc = device_private(dev);
+	struct fdtbus_regulator *reg;
 	uint32_t val;
+	int error;
 
 	if (enable) {
+		if (of_hasprop(sc->sc_phandle, "phy-supply")) {
+			reg = fdtbus_regulator_acquire(sc->sc_phandle, "phy-supply");
+			if (reg != NULL) {
+				error = fdtbus_regulator_enable(reg);
+				if (error != 0)
+					device_printf(dev, "WARNING: couldn't enable phy-supply: %d\n", error);
+			} else {
+				device_printf(dev, "WARNING: couldn't acquire phy-supply\n");
+			}
+		}
+
 		delay(1000);
 
 		val = PHY_READ(sc, PREI_USB_PHY_CFG_REG);
