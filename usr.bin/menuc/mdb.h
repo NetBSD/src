@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.h,v 1.10 2018/11/21 20:04:48 martin Exp $	*/
+/*	$NetBSD: mdb.h,v 1.11 2019/02/25 20:47:37 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,5 +95,6 @@ struct menu_info {
 #define MC_DFLTEXIT 32
 #define MC_ALWAYS_SCROLL 64
 #define MC_SUBMENU 128
+#define	MC_CONTINUOUS 256
 #define MC_VALID 0x10000
 #endif
