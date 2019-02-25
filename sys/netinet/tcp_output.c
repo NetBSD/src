@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.210 2018/12/27 16:59:17 maxv Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.211 2019/02/25 10:49:16 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.210 2018/12/27 16:59:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.211 2019/02/25 10:49:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1340,9 +1340,9 @@ reset:			TCP_REASS_UNLOCK(tp);
 		break;
 	}
 	if (tp->t_template == NULL)
-		panic("tcp_output");
+		panic("%s: no template", __func__);
 	if (tp->t_template->m_len < iphdrlen)
-		panic("tcp_output");
+		panic("%s: %d < %d", __func__, tp->t_template->m_len, iphdrlen);
 	bcopy(mtod(tp->t_template, void *), mtod(m, void *), iphdrlen);
 
 	/*
