@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.66 2019/02/16 18:57:21 martin Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.67 2019/02/25 20:47:37 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -141,7 +141,8 @@ init_menu(menudesc *m)
 	y = m->y;
 	w = m->w;
 	wmax = 0;
-	hadd = ((m->mopt & MC_NOBOX) ? 0 : 2);
+	hadd = ((m->mopt & MC_NOBOX) ? 0 :
+	    ((m->mopt & MC_CONTINUOUS) ? 1 : 2));
 	wadd = ((m->mopt & MC_NOBOX) ? 2 : 4);
 	if (!(m->mopt & MC_NOSHORTCUT))
 		wadd += 3;
@@ -358,7 +359,8 @@ draw_menu(menudesc *m, void *arg)
 			if (ep == NULL || *ep == 0)
 				break;
 		}
-		tadd++;
+		if ((m->mopt & MC_CONTINUOUS) == 0)
+			tadd++;
 	}
 
 	cury = tadd;
