@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.244 2019/02/25 00:11:13 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.245 2019/02/25 00:51:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.244 2019/02/25 00:11:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.245 2019/02/25 00:51:24 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1246,7 +1246,7 @@ ufs_readdir(void *v)
 	size_t		numcookies, maxcookies;
 	/* disk buffer */
 	off_t		physstart, physend;
-	size_t		skipstart, dropend;
+	size_t		skipstart;
 	char		*rawbuf;
 	size_t		rawbufmax, rawbytes;
 	struct uio	rawuio;
@@ -1277,7 +1277,6 @@ ufs_readdir(void *v)
 	}
 
 	skipstart = startoffset - physstart;
-	dropend = endoffset - physend;
 
 	/* how much to actually read */
 	rawbufmax = callerbytes + skipstart;
