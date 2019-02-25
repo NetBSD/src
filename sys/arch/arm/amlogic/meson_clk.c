@@ -1,4 +1,4 @@
-/* $NetBSD: meson_clk.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_clk.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_clk.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_clk.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_clk.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $
 #include <sys/device.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/syscon.h>
 
 #include <dev/clk/clk_backend.h>
 
@@ -72,8 +73,10 @@ meson_clk_reset_assert(device_t dev, void *priv)
 	struct meson_clk_softc * const sc = device_private(dev);
 	struct meson_clk_reset * const reset = priv;
 
+	CLK_LOCK(sc);
 	const uint32_t val = CLK_READ(sc, reset->reg);
 	CLK_WRITE(sc, reset->reg, val | reset->mask);
+	CLK_UNLOCK(sc);
 
 	return 0;
 }
@@ -84,8 +87,10 @@ meson_clk_reset_deassert(device_t dev, void *priv)
 	struct meson_clk_softc * const sc = device_private(dev);
 	struct meson_clk_reset * const reset = priv;
 
+	CLK_LOCK(sc);
 	const uint32_t val = CLK_READ(sc, reset->reg);
 	CLK_WRITE(sc, reset->reg, val & ~reset->mask);
+	CLK_UNLOCK(sc);
 
 	return 0;
 }
@@ -298,21 +303,10 @@ meson_clk_clock_find(struct meson_clk_softc *sc, const char *name)
 	return NULL;
 }
 
-int
-meson_clk_attach(struct meson_clk_softc *sc, u_int reg_index)
+void
+meson_clk_attach(struct meson_clk_softc *sc)
 {
-	bus_addr_t addr;
-	bus_size_t size;
 	int i;
-
-	if (fdtbus_get_reg(sc->sc_phandle, reg_index, &addr, &size) != 0) {
-		aprint_error(": couldn't get registers\n");
-		return ENXIO;
-	}
-	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
-		aprint_error(": couldn't map registers\n");
-		return ENXIO;
-	}
 
 	sc->sc_clkdom.name = device_xname(sc->sc_dev);
 	sc->sc_clkdom.funcs = &meson_clk_clock_funcs;
@@ -322,13 +316,13 @@ meson_clk_attach(struct meson_clk_softc *sc, u_int reg_index)
 		clk_attach(&sc->sc_clks[i].base);
 	}
 
-	fdtbus_register_clock_controller(sc->sc_dev, sc->sc_phandle,
-	    &meson_clk_fdtclock_funcs);
+	if (sc->sc_nclks > 0)
+		fdtbus_register_clock_controller(sc->sc_dev, sc->sc_phandle,
+		    &meson_clk_fdtclock_funcs);
 
-	fdtbus_register_reset_controller(sc->sc_dev, sc->sc_phandle,
-	    &meson_clk_fdtreset_funcs);
-
-	return 0;
+	if (sc->sc_nresets > 0)
+		fdtbus_register_reset_controller(sc->sc_dev, sc->sc_phandle,
+		    &meson_clk_fdtreset_funcs);
 }
 
 void
@@ -366,4 +360,36 @@ meson_clk_print(struct meson_clk_softc *sc)
         	    type);
 		aprint_debug("%10u Hz\n", clk_get_rate(&clk->base));
 	}
+}
+
+void
+meson_clk_lock(struct meson_clk_softc *sc)
+{
+	if (sc->sc_syscon != NULL)
+		syscon_lock(sc->sc_syscon);
+}
+
+void
+meson_clk_unlock(struct meson_clk_softc *sc)
+{
+	if (sc->sc_syscon != NULL)
+		syscon_unlock(sc->sc_syscon);
+}
+
+uint32_t
+meson_clk_read(struct meson_clk_softc *sc, bus_size_t reg)
+{
+	if (sc->sc_syscon != NULL)
+		return syscon_read_4(sc->sc_syscon, reg);
+	else
+		return bus_space_read_4(sc->sc_bst, sc->sc_bsh, reg);
+}
+
+void
+meson_clk_write(struct meson_clk_softc *sc, bus_size_t reg, uint32_t val)
+{
+	if (sc->sc_syscon != NULL)
+		syscon_write_4(sc->sc_syscon, reg, val);
+	else
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, reg, val);
 }

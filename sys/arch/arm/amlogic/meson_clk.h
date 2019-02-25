@@ -1,4 +1,4 @@
-/* $NetBSD: meson_clk.h,v 1.2 2019/01/20 17:28:00 jmcneill Exp $ */
+/* $NetBSD: meson_clk.h,v 1.3 2019/02/25 19:30:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -30,6 +30,7 @@
 #define _ARM_MESON_CLK_H
 
 #include <dev/clk/clk_backend.h>
+#include <dev/fdt/syscon.h>
 
 struct meson_clk_softc;
 struct meson_clk_clk;
@@ -338,8 +339,11 @@ struct meson_clk_clk {
 struct meson_clk_softc {
 	device_t		sc_dev;
 	int			sc_phandle;
+
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
+
+	struct syscon		*sc_syscon;
 
 	struct clk_domain	sc_clkdom;
 
@@ -350,14 +354,19 @@ struct meson_clk_softc {
 	u_int			sc_nclks;
 };
 
-int	meson_clk_attach(struct meson_clk_softc *, u_int);
+void	meson_clk_attach(struct meson_clk_softc *);
 struct meson_clk_clk *meson_clk_clock_find(struct meson_clk_softc *,
 					   const char *);
 void	meson_clk_print(struct meson_clk_softc *);
 
-#define CLK_READ(sc, reg)	\
-	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
-#define CLK_WRITE(sc, reg, val)	\
-	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+void	meson_clk_lock(struct meson_clk_softc *);
+void	meson_clk_unlock(struct meson_clk_softc *);
+uint32_t meson_clk_read(struct meson_clk_softc *, bus_size_t);
+void	meson_clk_write(struct meson_clk_softc *, bus_size_t, uint32_t);
+
+#define	CLK_LOCK	meson_clk_lock
+#define	CLK_UNLOCK	meson_clk_unlock
+#define	CLK_READ	meson_clk_read
+#define	CLK_WRITE	meson_clk_write
 
 #endif /* _ARM_MESON_CLK_H */

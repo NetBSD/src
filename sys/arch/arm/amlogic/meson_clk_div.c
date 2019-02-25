@@ -1,4 +1,4 @@
-/* $NetBSD: meson_clk_div.c,v 1.2 2019/01/20 17:27:30 jmcneill Exp $ */
+/* $NetBSD: meson_clk_div.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_clk_div.c,v 1.2 2019/01/20 17:27:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_clk_div.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,7 +56,10 @@ meson_clk_div_get_rate(struct meson_clk_softc *sc,
 	if (rate == 0)
 		return 0;
 
+	CLK_LOCK(sc);
 	val = CLK_READ(sc, div->reg);
+	CLK_UNLOCK(sc);
+
 	if (div->div)
 		ratio = __SHIFTOUT(val, div->div);
 	else
@@ -81,7 +84,7 @@ meson_clk_div_set_rate(struct meson_clk_softc *sc,
 	struct clk *clkp, *clkp_parent;
 	int parent_rate;
 	uint32_t val, raw_div;
-	int ratio;
+	int ratio, error;
 
 	KASSERT(clk->type == MESON_CLK_DIV);
 
@@ -96,28 +99,41 @@ meson_clk_div_set_rate(struct meson_clk_softc *sc,
 	if (div->div == 0)
 		return ENXIO;
 
+	CLK_LOCK(sc);
+
 	val = CLK_READ(sc, div->reg);
 
 	parent_rate = clk_get_rate(clkp_parent);
-	if (parent_rate == 0)
-		return (new_rate == 0) ? 0 : ERANGE;
+	if (parent_rate == 0) {
+		error = (new_rate == 0) ? 0 : ERANGE;
+		goto done;
+	}
 
 	ratio = howmany(parent_rate, new_rate);
 	if ((div->flags & MESON_CLK_DIV_POWER_OF_TWO) != 0) {
-		return EINVAL;
+		error = EINVAL;
+		goto done;
 	} else if ((div->flags & MESON_CLK_DIV_CPU_SCALE_TABLE) != 0) {
-		return EINVAL;
+		error = EINVAL;
+		goto done;
 	} else {
 		raw_div = (ratio > 0) ? ratio - 1 : 0;
 	}
-	if (raw_div > __SHIFTOUT_MASK(div->div))
-		return ERANGE;
+	if (raw_div > __SHIFTOUT_MASK(div->div)) {
+		error = ERANGE;
+		goto done;
+	}
 
 	val &= ~div->div;
 	val |= __SHIFTIN(raw_div, div->div);
 	CLK_WRITE(sc, div->reg, val);
 
-	return 0;
+	error = 0;
+
+done:
+	CLK_UNLOCK(sc);
+
+	return error;
 }
 
 const char *

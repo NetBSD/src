@@ -1,4 +1,4 @@
-/* $NetBSD: meson_clk_mux.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_clk_mux.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_clk_mux.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_clk_mux.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,7 +45,10 @@ meson_clk_mux_get_parent(struct meson_clk_softc *sc, struct meson_clk_clk *clk)
 
 	KASSERT(clk->type == MESON_CLK_MUX);
 
+	CLK_LOCK(sc);
 	val = CLK_READ(sc, mux->reg);
+	CLK_UNLOCK(sc);
+
 	sel = __SHIFTOUT(val, mux->sel);
 	if (sel >= mux->nparents)
 		return NULL;

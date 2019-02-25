@@ -1,4 +1,4 @@
-#	$NetBSD: files.meson,v 1.4 2019/01/20 17:58:22 jmcneill Exp $
+#	$NetBSD: files.meson,v 1.5 2019/02/25 19:30:17 jmcneill Exp $
 #
 # Configuration info for Amlogic Meson family SoCs
 #
@@ -22,6 +22,16 @@ device	meson8bclkc: meson_clk
 attach	meson8bclkc at fdt with meson8b_clkc
 file	arch/arm/amlogic/meson8b_clkc.c		meson8b_clkc
 
+# Meson GXBB clock controller
+device	gxbbclkc: meson_clk
+attach	gxbbclkc at fdt with mesongxbb_clkc
+file	arch/arm/amlogic/mesongxbb_clkc.c	mesongxbb_clkc
+
+# Meson GXBB AO clock controller
+device	gxbbaoclkc: meson_clk
+attach	gxbbaoclkc at fdt with mesongxbb_aoclkc
+file	arch/arm/amlogic/mesongxbb_aoclkc.c	mesongxbb_aoclkc
+
 # Meson reset controller
 device	mesonresets
 attach	mesonresets at fdt with meson_resets
@@ -33,7 +43,8 @@ attach	mesonuart at fdt with meson_uart
 file	arch/arm/amlogic/meson_uart.c		meson_uart
 
 # Framebuffer console
-attach	genfb at fdt with meson_genfb
+device	mesonfb
+attach	mesonfb at fdt with meson_genfb
 file	arch/arm/amlogic/meson_genfb.c		meson_genfb & soc_meson
 
 # GPIO
@@ -41,16 +52,22 @@ device	mesonpinctrl: gpiobus
 attach	mesonpinctrl at fdt with meson_pinctrl
 file	arch/arm/amlogic/meson_pinctrl.c	meson_pinctrl
 file	arch/arm/amlogic/meson8b_pinctrl.c	meson_pinctrl & soc_meson8b
+file	arch/arm/amlogic/mesongxbb_pinctrl.c	meson_pinctrl & soc_mesongxbb
 
-# SDHC
+# Meson8b SDHC
 device	mesonsdhc: sdmmcbus
 attach	mesonsdhc at fdt with meson_sdhc
 file	arch/arm/amlogic/meson_sdhc.c		meson_sdhc
 
-# SDIO
+# Meson8b SDIO
 device	mesonsdio: sdmmcbus
 attach	mesonsdio at fdt with meson_sdio
 file	arch/arm/amlogic/meson_sdio.c		meson_sdio
+
+# Meson GX MMC
+device	mesongxmmc: sdmmcbus
+attach	mesongxmmc at fdt with mesongx_mmc
+file	arch/arm/amlogic/mesongx_mmc.c		mesongx_mmc 
 
 # USB PHY
 device	mesonusbphy
@@ -79,3 +96,4 @@ file	arch/arm/amlogic/meson_wdt.c		meson_wdt
 # SOC parameters
 defflag	opt_soc.h			SOC_MESON
 defflag	opt_soc.h			SOC_MESON8B: SOC_MESON
+defflag	opt_soc.h			SOC_MESONGXBB: SOC_MESON

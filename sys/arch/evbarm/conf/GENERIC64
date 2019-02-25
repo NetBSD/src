@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.79 2019/02/08 00:19:57 macallan Exp $
+#	$NetBSD: GENERIC64,v 1.80 2019/02/25 19:30:17 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -14,10 +14,21 @@ include	"arch/evbarm/conf/GENERIC.common"
 #
 makeoptions 	DTSARCH="arm aarch64"
 makeoptions	DTSGNUARCH="arm arm64"
-makeoptions	DTSSUBDIR="allwinner broadcom nvidia rockchip"
+makeoptions	DTSSUBDIR="allwinner amlogic broadcom nvidia rockchip"
 makeoptions	DTS="
 	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-3-b-plus.dts
+
+	meson-gxbb-nanopi-k2.dts
+	meson-gxbb-nexbox-a95x.dts
+	meson-gxbb-odroidc2.dts
+	meson-gxbb-p200.dts
+	meson-gxbb-p201.dts
+	meson-gxbb-vega-s95-meta.dts
+	meson-gxbb-vega-s95-pro.dts
+	meson-gxbb-vega-s95-telos.dts
+	meson-gxbb-wetek-hub.dts
+	meson-gxbb-wetek-play2.dts
 
 	rk3328-evb.dts
 	rk3328-roc-cc.dts
@@ -60,6 +71,7 @@ options 	CPU_CORTEXA53
 options 	CPU_CORTEXA57
 options 	CPU_THUNDERX
 options 	SOC_BCM2837
+options 	SOC_MESONGXBB
 options 	SOC_RK3328
 options 	SOC_RK3399
 options 	SOC_SUN50I_A64
@@ -80,6 +92,7 @@ options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 options 	INCLUDE_CONFIG_FILE
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 #options 	EARLYCONS=bcm2837
+#options 	EARLYCONS=meson, CONSADDR=0xc81004c0
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
 #options 	EARLYCONS=rk3399, CONSADDR=0xff1a0000
 #options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
@@ -185,6 +198,9 @@ tegrapmc*	at fdt? pass 4		# NVIDIA Tegra PMC
 # Clock and Reset controller
 bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
 bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
+gxbbaoclkc*	at fdt? pass 2		# Amlogic Meson GXBB AO clock controller
+gxbbclkc*	at fdt? pass 2		# Amlogic Meson GXBB EE clock controller
+mesonresets*	at fdt? pass 2		# Amlogic Meson misc. clock resets
 rkcru*		at fdt? pass 2		# Rockchip RK3328 CRU
 sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
 sun8ih3rccu*	at fdt? pass 2		# Allwinner H3/H5 CCU (PRCM)
@@ -200,6 +216,7 @@ tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 
 # GPIO controller
 bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
+mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio*		at fdt?			# ARM PrimeCell PL061 GPIO
 plgpio*		at acpi?
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
@@ -268,6 +285,7 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 # UART
 com*		at fdt?	pass 4			# UART
 com*		at acpi?
+mesonuart*	at fdt? pass 4			# Amlogic Meson UART
 plcom*		at fdt?	pass 4			# ARM PL011 UART
 plcom*		at acpi?
 puc*		at pci? dev ? function ?	# PCI "universal" comm. cards
@@ -310,6 +328,7 @@ tegrartc*	at fdt?			# NVIDIA Tegra RTC
 
 # SDMMC
 dwcmmc*		at fdt?			# Designware SD/MMC
+mesongxmmc*	at fdt?			# Amlogic Meson GX eMMC/SD/SDIO controller
 mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
 sdhc*		at fdt?			# SD Host Controller Interface
 sdhost*		at fdt?			# Broadcom BCM283x SD Host Interface
@@ -398,6 +417,7 @@ sunxithermal*	at fdt?			# Allwinner thermal sensor controller
 tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 
 # USB
+mesonusbphy*	at fdt? pass 9		# Amlogic Meson USB2 PHY
 rkusb*		at fdt? pass 9		# Rockchip USB PHY
 rkusbphy*	at rkusb?
 sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY
