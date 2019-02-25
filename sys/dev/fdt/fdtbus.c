@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.26 2019/01/19 20:50:48 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.27 2019/02/25 19:28:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.26 2019/01/19 20:50:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.27 2019/02/25 19:28:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ static void	fdt_add_node(struct fdt_node *);
 static u_int	fdt_get_order(int);
 
 static const char * const fdtbus_compatible[] =
-    { "simple-bus", "simple-mfd", NULL };
+    { "simple-bus", NULL };
 
 CFATTACH_DECL2_NEW(simplebus, sizeof(struct fdt_softc),
     fdt_match, fdt_attach, NULL, NULL, fdt_rescan, fdt_childdet);
@@ -352,7 +352,7 @@ fdt_find_with_property(const char *prop, int *pindex)
 	int index = 0;
 
 	TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
-		if (index < *pindex)
+		if (index++ < *pindex)
 			continue;
 		if (of_hasprop(node->n_phandle, prop)) {
 			*pindex = index;
