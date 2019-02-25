@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b_clkc.c,v 1.2 2019/01/20 17:28:34 jmcneill Exp $ */
+/* $NetBSD: meson8b_clkc.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.2 2019/01/20 17:28:34 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,6 +99,7 @@ meson8b_clkc_pll_sys_set_rate(struct meson_clk_softc *sc,
     struct meson_clk_clk *clk, u_int rate)
 {
 	struct clk *clkp, *clkp_parent;
+	int error;
 
 	KASSERT(clk->type == MESON_CLK_PLL);
 
@@ -115,6 +116,8 @@ meson8b_clkc_pll_sys_set_rate(struct meson_clk_softc *sc,
 	if (parent_rate == 0)
 		return EIO;
 
+	CLK_LOCK(sc);
+
 	uint32_t cntl0 = CLK_READ(sc, HHI_SYS_CPU_CLK_CNTL0);
 	uint32_t cntl = CLK_READ(sc, HHI_SYS_PLL_CNTL);
 
@@ -130,12 +133,18 @@ meson8b_clkc_pll_sys_set_rate(struct meson_clk_softc *sc,
 		new_mul *= 2;
 	}
 
-	if ((cntl0 & HHI_SYS_CPU_CLK_CNTL0_CLKSEL) == 0)
-		return EIO;
-	if (__SHIFTOUT(cntl0, HHI_SYS_CPU_CLK_CNTL0_PLLSEL) != 1)
-		return EIO;
-	if (__SHIFTOUT(cntl0, HHI_SYS_CPU_CLK_CNTL0_SOUTSEL) != 0)
-		return EIO;
+	if ((cntl0 & HHI_SYS_CPU_CLK_CNTL0_CLKSEL) == 0) {
+		error = EIO;
+		goto done;
+	}
+	if (__SHIFTOUT(cntl0, HHI_SYS_CPU_CLK_CNTL0_PLLSEL) != 1) {
+		error = EIO;
+		goto done;
+	}
+	if (__SHIFTOUT(cntl0, HHI_SYS_CPU_CLK_CNTL0_SOUTSEL) != 0) {
+		error = EIO;
+		goto done;
+	}
 
 	cntl &= ~HHI_SYS_PLL_CNTL_MUL;
 	cntl |= __SHIFTIN(new_mul, HHI_SYS_PLL_CNTL_MUL);
@@ -159,7 +168,12 @@ meson8b_clkc_pll_sys_set_rate(struct meson_clk_softc *sc,
 		CLK_WRITE(sc, HHI_SYS_CPU_CLK_CNTL0, cntl0);
 	} while ((CLK_READ(sc, HHI_SYS_PLL_CNTL) & HHI_SYS_PLL_CNTL_LOCK) == 0);
 
-	return 0;
+	error = 0;
+
+done:
+	CLK_UNLOCK(sc);
+
+	return error;
 }
 
 static struct meson_clk_clk meson8b_clkc_clks[] = {
@@ -319,10 +333,20 @@ meson8b_clkc_attach(device_t parent, device_t self, void *aux)
 {
 	struct meson_clk_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	bus_addr_t addr;
+	bus_size_t size;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
 	sc->sc_bst = faa->faa_bst;
+	if (fdtbus_get_reg(sc->sc_phandle, MESON8B_CLKC_REG_INDEX, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
+	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
+		aprint_error(": couldn't map registers\n");
+		return;
+	}
 
 	sc->sc_resets = meson8b_clkc_resets;
 	sc->sc_nresets = __arraycount(meson8b_clkc_resets);
@@ -330,8 +354,7 @@ meson8b_clkc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_clks = meson8b_clkc_clks;
 	sc->sc_nclks = __arraycount(meson8b_clkc_clks);
 
-	if (meson_clk_attach(sc, MESON8B_CLKC_REG_INDEX) != 0)
-		return;
+	meson_clk_attach(sc);
 
 	aprint_naive("\n");
 	aprint_normal(": Meson8b clock controller\n");
