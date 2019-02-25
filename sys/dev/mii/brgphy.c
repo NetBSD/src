@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.81 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.82 2019/02/25 04:56:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.81 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.82 2019/02/25 04:56:30 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,12 +140,16 @@ static const struct mii_phy_funcs brgphy_5709s_funcs = {
 static const struct mii_phydesc brgphys[] = {
 	MII_PHY_DESC(BROADCOM, BCM5400),
 	MII_PHY_DESC(BROADCOM, BCM5401),
+	MII_PHY_DESC(BROADCOM, BCM5402),
+	MII_PHY_DESC(BROADCOM, BCM5404),
 	MII_PHY_DESC(BROADCOM, BCM5411),
 	MII_PHY_DESC(BROADCOM, BCM5421),
-	MII_PHY_DESC(BROADCOM, BCM5462),
+	MII_PHY_DESC(BROADCOM, BCM5424),
 	MII_PHY_DESC(BROADCOM, BCM5461),
-	MII_PHY_DESC(BROADCOM, BCM54K2),
+	MII_PHY_DESC(BROADCOM, BCM5462),
 	MII_PHY_DESC(BROADCOM, BCM5464),
+	MII_PHY_DESC(BROADCOM, BCM5466),
+	MII_PHY_DESC(BROADCOM, BCM54K2),
 	MII_PHY_DESC(BROADCOM, BCM5701),
 	MII_PHY_DESC(BROADCOM, BCM5703),
 	MII_PHY_DESC(BROADCOM, BCM5704),
