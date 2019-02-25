@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.243 2019/02/24 19:06:40 mlelstv Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.244 2019/02/25 00:11:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.243 2019/02/24 19:06:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.244 2019/02/25 00:11:13 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1283,7 +1283,6 @@ ufs_readdir(void *v)
 	rawbufmax = callerbytes + skipstart;
 	if (rawbufmax < callerbytes)
 		return EINVAL;
-	rawbuf -= dropend;
 
 	if (rawbufmax < _DIRENT_MINSIZE(rawdp)) {
 		/* no room for even one struct direct */
