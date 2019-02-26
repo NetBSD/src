@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.39 2016/07/07 06:55:40 msaitoh Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.40 2019/02/26 15:55:33 joerg Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.39 2016/07/07 06:55:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.40 2019/02/26 15:55:33 joerg Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -623,11 +623,11 @@ xenbus_probe(void *unused)
 	xenbus_probe_backends();
 
 	/* Watch for changes. */
-	fe_watch.node = malloc(strlen("device" + 1), M_DEVBUF, M_NOWAIT);
+	fe_watch.node = malloc(strlen("device") + 1, M_DEVBUF, M_NOWAIT);
 	strcpy(fe_watch.node, "device");
 	fe_watch.xbw_callback = frontend_changed;
 	register_xenbus_watch(&fe_watch);
-	be_watch.node = malloc(strlen("backend" + 1), M_DEVBUF, M_NOWAIT);
+	be_watch.node = malloc(strlen("backend") + 1, M_DEVBUF, M_NOWAIT);
 	strcpy(be_watch.node, "backend");
 	be_watch.xbw_callback = backend_changed;
 	register_xenbus_watch(&be_watch);
