@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 2019/02/17 00:22:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.92 2019/02/26 21:09:18 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -36,7 +36,6 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--with-pkgversion="NetBSD ${NETBSD_GCC_VERSION}" \
 			--with-system-zlib \
 			--without-isl \
-			--disable-libstdcxx-dual-abi \
 			--enable-__cxa_atexit \
 			--enable-libstdcxx-time=rt \
 			--enable-libstdcxx-threads \
