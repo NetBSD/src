@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.31 2019/02/23 12:27:00 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.32 2019/02/26 12:23:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.31 2019/02/23 12:27:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.32 2019/02/26 12:23:12 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -884,15 +884,6 @@ svm_exit_hlt(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 #define SVM_EXIT_IO_STR		__BIT(2)
 #define SVM_EXIT_IO_IN		__BIT(0)
 
-static const int seg_to_nvmm[] = {
-	[0] = NVMM_X64_SEG_ES,
-	[1] = NVMM_X64_SEG_CS,
-	[2] = NVMM_X64_SEG_SS,
-	[3] = NVMM_X64_SEG_DS,
-	[4] = NVMM_X64_SEG_FS,
-	[5] = NVMM_X64_SEG_GS
-};
-
 static void
 svm_exit_io(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
@@ -913,7 +904,7 @@ svm_exit_io(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	if (svm_decode_assist) {
 		KASSERT(__SHIFTOUT(info, SVM_EXIT_IO_SEG) < 6);
-		exit->u.io.seg = seg_to_nvmm[__SHIFTOUT(info, SVM_EXIT_IO_SEG)];
+		exit->u.io.seg = __SHIFTOUT(info, SVM_EXIT_IO_SEG);
 	} else {
 		exit->u.io.seg = -1;
 	}
@@ -1468,15 +1459,14 @@ svm_vcpu_msr_allow(uint8_t *bitmap, uint64_t msr, bool read, bool write)
 	}
 }
 
-
-
-#define SVM_SEG_ATTRIB_TYPE		__BITS(4,0)
+#define SVM_SEG_ATTRIB_TYPE		__BITS(3,0)
+#define SVM_SEG_ATTRIB_S		__BIT(4)
 #define SVM_SEG_ATTRIB_DPL		__BITS(6,5)
 #define SVM_SEG_ATTRIB_P		__BIT(7)
 #define SVM_SEG_ATTRIB_AVL		__BIT(8)
-#define SVM_SEG_ATTRIB_LONG		__BIT(9)
-#define SVM_SEG_ATTRIB_DEF32		__BIT(10)
-#define SVM_SEG_ATTRIB_GRAN		__BIT(11)
+#define SVM_SEG_ATTRIB_L		__BIT(9)
+#define SVM_SEG_ATTRIB_DEF		__BIT(10)
+#define SVM_SEG_ATTRIB_G		__BIT(11)
 
 static void
 svm_vcpu_setstate_seg(const struct nvmm_x64_state_seg *seg,
@@ -1485,12 +1475,13 @@ svm_vcpu_setstate_seg(const struct nvmm_x64_state_seg *seg,
 	vseg->selector = seg->selector;
 	vseg->attrib =
 	    __SHIFTIN(seg->attrib.type, SVM_SEG_ATTRIB_TYPE) |
+	    __SHIFTIN(seg->attrib.s, SVM_SEG_ATTRIB_S) |
 	    __SHIFTIN(seg->attrib.dpl, SVM_SEG_ATTRIB_DPL) |
 	    __SHIFTIN(seg->attrib.p, SVM_SEG_ATTRIB_P) |
 	    __SHIFTIN(seg->attrib.avl, SVM_SEG_ATTRIB_AVL) |
-	    __SHIFTIN(seg->attrib.lng, SVM_SEG_ATTRIB_LONG) |
-	    __SHIFTIN(seg->attrib.def32, SVM_SEG_ATTRIB_DEF32) |
-	    __SHIFTIN(seg->attrib.gran, SVM_SEG_ATTRIB_GRAN);
+	    __SHIFTIN(seg->attrib.l, SVM_SEG_ATTRIB_L) |
+	    __SHIFTIN(seg->attrib.def, SVM_SEG_ATTRIB_DEF) |
+	    __SHIFTIN(seg->attrib.g, SVM_SEG_ATTRIB_G);
 	vseg->limit = seg->limit;
 	vseg->base = seg->base;
 }
@@ -1500,12 +1491,13 @@ svm_vcpu_getstate_seg(struct nvmm_x64_state_seg *seg, struct vmcb_segment *vseg)
 {
 	seg->selector = vseg->selector;
 	seg->attrib.type = __SHIFTOUT(vseg->attrib, SVM_SEG_ATTRIB_TYPE);
+	seg->attrib.s = __SHIFTOUT(vseg->attrib, SVM_SEG_ATTRIB_S);
 	seg->attrib.dpl = __SHIFTOUT(vseg->attrib, SVM_SEG_ATTRIB_DPL);
 	seg->attrib.p = __SHIFTOUT(vseg->attrib, SVM_SEG_ATTRIB_P);
 	seg->attrib.avl = __SHIFTOUT(vseg->attrib, SVM_SEG_ATTRIB_AVL);
-	seg->attrib.lng = __SHIFTOUT(vseg->attrib, SVM_SEG_ATTRIB_LONG);
-	seg->attrib.def32 = __SHIFTOUT(vseg->attrib, SVM_SEG_ATTRIB_DEF32);
-	seg->attrib.gran = __SHIFTOUT(vseg->attrib, SVM_SEG_ATTRIB_GRAN);
+	seg->attrib.l = __SHIFTOUT(vseg->attrib, SVM_SEG_ATTRIB_L);
+	seg->attrib.def = __SHIFTOUT(vseg->attrib, SVM_SEG_ATTRIB_DEF);
+	seg->attrib.g = __SHIFTOUT(vseg->attrib, SVM_SEG_ATTRIB_G);
 	seg->limit = vseg->limit;
 	seg->base = vseg->base;
 }
