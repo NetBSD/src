@@ -1,4 +1,4 @@
-/* $NetBSD: mesongxbb_pinctrl.c,v 1.1 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: mesongxbb_pinctrl.c,v 1.2 2019/02/26 21:55:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongxbb_pinctrl.c,v 1.1 2019/02/25 19:30:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongxbb_pinctrl.c,v 1.2 2019/02/26 21:55:28 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -255,11 +255,30 @@ static const struct meson_pinctrl_gpio mesongxbb_periphs_gpios[] = {
 	CBUS_GPIO(GPIODV_21, 0, 21),
 	CBUS_GPIO(GPIODV_22, 0, 22),
 
+	/* GPIOY */
+	CBUS_GPIO(GPIOY_0, 1, 0),
+	CBUS_GPIO(GPIOY_1, 1, 1),
+	CBUS_GPIO(GPIOY_2, 1, 2),
+	CBUS_GPIO(GPIOY_3, 1, 3),
+	CBUS_GPIO(GPIOY_4, 1, 4),
+	CBUS_GPIO(GPIOY_5, 1, 5),
+	CBUS_GPIO(GPIOY_6, 1, 6),
+	CBUS_GPIO(GPIOY_7, 1, 7),
+	CBUS_GPIO(GPIOY_8, 1, 8),
+	CBUS_GPIO(GPIOY_9, 1, 9),
+	CBUS_GPIO(GPIOY_10, 1, 10),
+	CBUS_GPIO(GPIOY_11, 1, 11),
+	CBUS_GPIO(GPIOY_12, 1, 12),
+	CBUS_GPIO(GPIOY_13, 1, 13),
+	CBUS_GPIO(GPIOY_14, 1, 14),
+	CBUS_GPIO(GPIOY_15, 1, 15),
+	CBUS_GPIO(GPIOY_16, 1, 16),
+
 	/* GPIOH */
-	CBUS_GPIO(GPIOH_0, 1, 0),
-	CBUS_GPIO(GPIOH_1, 1, 1),
-	CBUS_GPIO(GPIOH_2, 1, 2),
-	CBUS_GPIO(GPIOH_3, 1, 3),
+	CBUS_GPIO(GPIOH_0, 1, 20),
+	CBUS_GPIO(GPIOH_1, 1, 21),
+	CBUS_GPIO(GPIOH_2, 1, 22),
+	CBUS_GPIO(GPIOH_3, 1, 23),
 
 	/* BOOT */
 	CBUS_GPIO(BOOT_0, 2, 0),
