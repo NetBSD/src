@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.277 2019/02/18 00:42:55 rin Exp $
+# $NetBSD: mi,v 1.278 2019/02/26 10:01:40 isaki Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1889,6 +1889,14 @@
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_bpfjit.debug		tests-lib-debug		debug,atf,sljit,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_cop.debug			tests-lib-debug		debug,atf,sljit,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_extmem.debug		tests-lib-debug		debug,atf,sljit,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_add.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_and.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_compare_and_swap.debug	tests-lib-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_lock.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_nand.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_or.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_sub.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/atomic/t___sync_xor.debug	tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/atomic/t_atomic_add.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/atomic/t_atomic_and.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/atomic/t_atomic_cas.debug	tests-lib-debug		debug,atf,compattestfile

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.808 2019/02/18 00:42:55 rin Exp $
+# $NetBSD: mi,v 1.809 2019/02/26 10:01:40 isaki Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2445,6 +2445,14 @@
 ./usr/tests/lib/libc/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libc/atomic			tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/libc/atomic/Atffile		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/atomic/t___sync_add	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/atomic/t___sync_and	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/atomic/t___sync_compare_and_swap	tests-lib-tests	compattestfile,atf
+./usr/tests/lib/libc/atomic/t___sync_lock	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/atomic/t___sync_nand	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/atomic/t___sync_or		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/atomic/t___sync_sub	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/atomic/t___sync_xor	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/atomic/t_atomic_add	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/atomic/t_atomic_and	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/atomic/t_atomic_cas	tests-lib-tests		compattestfile,atf
