@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.68 2019/01/27 02:08:48 pgoyette Exp $	*/
+/*	$NetBSD: keysock.c,v 1.69 2019/02/26 06:52:34 maxv Exp $	*/
 /*	$FreeBSD: keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.68 2019/01/27 02:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.69 2019/02/26 06:52:34 maxv Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -383,10 +383,12 @@ key_attach(struct socket *so, int proto)
 
 	s = splsoftnet();
 
-	KASSERT(so->so_lock == NULL);
-	mutex_obj_hold(key_so_mtx);
-	so->so_lock = key_so_mtx;
-	solock(so);
+	if (so->so_lock != key_so_mtx) {
+		KASSERT(so->so_lock == NULL);
+		mutex_obj_hold(key_so_mtx);
+		so->so_lock = key_so_mtx;
+		solock(so);
+	}
 
 	error = raw_attach(so, proto, &key_rawcb);
 	if (error) {
