@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.7 2018/11/20 19:02:07 martin Exp $	*/
+/*	$NetBSD: run.c,v 1.8 2019/02/26 13:09:35 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -354,7 +354,7 @@ show_cmd(const char *scmd, struct winsize *win)
 	standend();
 	addstr("\n\n");
 	for (n = win->ws_col; (m = min(n, 30)) > 0; n -= m)
-		addstr( "------------------------------" + 30 - m);
+		addstr(&"------------------------------"[30 - m]);
 	refresh();
 
 	nrow = getcury(stdscr) + 1;
