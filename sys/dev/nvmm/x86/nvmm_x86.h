@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.6 2019/02/23 12:27:00 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.7 2019/02/26 12:23:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,12 +33,12 @@
 #define _NVMM_X86_H_
 
 /* Segments. */
-#define NVMM_X64_SEG_CS			0
-#define NVMM_X64_SEG_DS			1
-#define NVMM_X64_SEG_ES			2
-#define NVMM_X64_SEG_FS			3
-#define NVMM_X64_SEG_GS			4
-#define NVMM_X64_SEG_SS			5
+#define NVMM_X64_SEG_ES			0
+#define NVMM_X64_SEG_CS			1
+#define NVMM_X64_SEG_SS			2
+#define NVMM_X64_SEG_DS			3
+#define NVMM_X64_SEG_FS			4
+#define NVMM_X64_SEG_GS			5
 #define NVMM_X64_SEG_GDT		6
 #define NVMM_X64_SEG_IDT		7
 #define NVMM_X64_SEG_LDT		8
@@ -109,18 +109,19 @@
 #include <x86/cpu_extended_state.h>
 
 struct nvmm_x64_state_seg {
-	uint64_t selector;
+	uint16_t selector;
 	struct {		/* hidden */
-		uint64_t type:5;
-		uint64_t dpl:2;
-		uint64_t p:1;
-		uint64_t avl:1;
-		uint64_t lng:1;
-		uint64_t def32:1;
-		uint64_t gran:1;
-		uint64_t rsvd:52;
+		uint16_t type:4;
+		uint16_t s:1;
+		uint16_t dpl:2;
+		uint16_t p:1;
+		uint16_t avl:1;
+		uint16_t l:1;
+		uint16_t def:1;
+		uint16_t g:1;
+		uint16_t rsvd:4;
 	} attrib;
-	uint64_t limit;		/* hidden */
+	uint32_t limit;		/* hidden */
 	uint64_t base;		/* hidden */
 };
 

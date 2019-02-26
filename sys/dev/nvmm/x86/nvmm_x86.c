@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.1 2019/02/23 12:27:00 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.2 2019/02/26 12:23:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.1 2019/02/23 12:27:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.2 2019/02/26 12:23:12 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,48 +54,23 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.1 2019/02/23 12:27:00 maxv Exp $");
 
 const struct nvmm_x64_state nvmm_x86_reset_state = {
 	.segs = {
-		[NVMM_X64_SEG_CS] = {
-			.selector = 0xF000,
-			.base = 0xFFFF0000,
-			.limit = 0xFFFF,
-			.attrib = {
-				.type = SDT_MEMRWA,
-				.p = 1,
-			}
-		},
-		[NVMM_X64_SEG_DS] = {
-			.selector = 0x0000,
-			.base = 0x00000000,
-			.limit = 0xFFFF,
-			.attrib = {
-				.type = SDT_MEMRWA,
-				.p = 1,
-			}
-		},
 		[NVMM_X64_SEG_ES] = {
 			.selector = 0x0000,
 			.base = 0x00000000,
 			.limit = 0xFFFF,
 			.attrib = {
-				.type = SDT_MEMRWA,
+				.type = 3,
+				.s = 1,
 				.p = 1,
 			}
 		},
-		[NVMM_X64_SEG_FS] = {
-			.selector = 0x0000,
-			.base = 0x00000000,
+		[NVMM_X64_SEG_CS] = {
+			.selector = 0xF000,
+			.base = 0xFFFF0000,
 			.limit = 0xFFFF,
 			.attrib = {
-				.type = SDT_MEMRWA,
-				.p = 1,
-			}
-		},
-		[NVMM_X64_SEG_GS] = {
-			.selector = 0x0000,
-			.base = 0x00000000,
-			.limit = 0xFFFF,
-			.attrib = {
-				.type = SDT_MEMRWA,
+				.type = 3,
+				.s = 1,
 				.p = 1,
 			}
 		},
@@ -104,7 +79,38 @@ const struct nvmm_x64_state nvmm_x86_reset_state = {
 			.base = 0x00000000,
 			.limit = 0xFFFF,
 			.attrib = {
-				.type = SDT_MEMRWA,
+				.type = 3,
+				.s = 1,
+				.p = 1,
+			}
+		},
+		[NVMM_X64_SEG_DS] = {
+			.selector = 0x0000,
+			.base = 0x00000000,
+			.limit = 0xFFFF,
+			.attrib = {
+				.type = 3,
+				.s = 1,
+				.p = 1,
+			}
+		},
+		[NVMM_X64_SEG_FS] = {
+			.selector = 0x0000,
+			.base = 0x00000000,
+			.limit = 0xFFFF,
+			.attrib = {
+				.type = 3,
+				.s = 1,
+				.p = 1,
+			}
+		},
+		[NVMM_X64_SEG_GS] = {
+			.selector = 0x0000,
+			.base = 0x00000000,
+			.limit = 0xFFFF,
+			.attrib = {
+				.type = 3,
+				.s = 1,
 				.p = 1,
 			}
 		},
@@ -113,7 +119,8 @@ const struct nvmm_x64_state nvmm_x86_reset_state = {
 			.base = 0x00000000,
 			.limit = 0xFFFF,
 			.attrib = {
-				.type = SDT_MEMRW,
+				.type = 2,
+				.s = 1,
 				.p = 1,
 			}
 		},
@@ -122,7 +129,8 @@ const struct nvmm_x64_state nvmm_x86_reset_state = {
 			.base = 0x00000000,
 			.limit = 0xFFFF,
 			.attrib = {
-				.type = SDT_MEMRW,
+				.type = 2,
+				.s = 1,
 				.p = 1,
 			}
 		},
@@ -132,6 +140,7 @@ const struct nvmm_x64_state nvmm_x86_reset_state = {
 			.limit = 0xFFFF,
 			.attrib = {
 				.type = SDT_SYSLDT,
+				.s = 0,
 				.p = 1,
 			}
 		},
@@ -141,6 +150,7 @@ const struct nvmm_x64_state nvmm_x86_reset_state = {
 			.limit = 0xFFFF,
 			.attrib = {
 				.type = SDT_SYS286BSY,
+				.s = 0,
 				.p = 1,
 			}
 		},

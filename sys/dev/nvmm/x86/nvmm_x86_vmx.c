@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.14 2019/02/23 12:27:00 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.15 2019/02/26 12:23:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.14 2019/02/23 12:27:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.15 2019/02/26 12:23:12 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1320,15 +1320,6 @@ vmx_exit_cr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 #define		IO_ADRSIZE_64	2
 #define VMX_INFO_IO_SEG		__BITS(17,15)
 
-static const int seg_to_nvmm[] = {
-	[0] = NVMM_X64_SEG_ES,
-	[1] = NVMM_X64_SEG_CS,
-	[2] = NVMM_X64_SEG_SS,
-	[3] = NVMM_X64_SEG_DS,
-	[4] = NVMM_X64_SEG_FS,
-	[5] = NVMM_X64_SEG_GS
-};
-
 static void
 vmx_exit_io(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
@@ -1349,7 +1340,7 @@ vmx_exit_io(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	exit->u.io.port = __SHIFTOUT(qual, VMX_QUAL_IO_PORT);
 
 	KASSERT(__SHIFTOUT(info, VMX_INFO_IO_SEG) < 6);
-	exit->u.io.seg = seg_to_nvmm[__SHIFTOUT(info, VMX_INFO_IO_SEG)];
+	exit->u.io.seg = __SHIFTOUT(info, VMX_INFO_IO_SEG);
 
 	if (__SHIFTOUT(info, VMX_INFO_IO_ADRSIZE) == IO_ADRSIZE_64) {
 		exit->u.io.address_size = 8;
@@ -1938,13 +1929,14 @@ vmx_vcpu_msr_allow(uint8_t *bitmap, uint64_t msr, bool read, bool write)
 	}
 }
 
-#define VMX_SEG_ATTRIB_TYPE		__BITS(4,0)
+#define VMX_SEG_ATTRIB_TYPE		__BITS(3,0)
+#define VMX_SEG_ATTRIB_S		__BIT(4)
 #define VMX_SEG_ATTRIB_DPL		__BITS(6,5)
 #define VMX_SEG_ATTRIB_P		__BIT(7)
 #define VMX_SEG_ATTRIB_AVL		__BIT(12)
-#define VMX_SEG_ATTRIB_LONG		__BIT(13)
-#define VMX_SEG_ATTRIB_DEF32		__BIT(14)
-#define VMX_SEG_ATTRIB_GRAN		__BIT(15)
+#define VMX_SEG_ATTRIB_L		__BIT(13)
+#define VMX_SEG_ATTRIB_DEF		__BIT(14)
+#define VMX_SEG_ATTRIB_G		__BIT(15)
 #define VMX_SEG_ATTRIB_UNUSABLE		__BIT(16)
 
 static void
@@ -1954,12 +1946,13 @@ vmx_vcpu_setstate_seg(const struct nvmm_x64_state_seg *segs, int idx)
 
 	attrib =
 	    __SHIFTIN(segs[idx].attrib.type, VMX_SEG_ATTRIB_TYPE) |
+	    __SHIFTIN(segs[idx].attrib.s, VMX_SEG_ATTRIB_S) |
 	    __SHIFTIN(segs[idx].attrib.dpl, VMX_SEG_ATTRIB_DPL) |
 	    __SHIFTIN(segs[idx].attrib.p, VMX_SEG_ATTRIB_P) |
 	    __SHIFTIN(segs[idx].attrib.avl, VMX_SEG_ATTRIB_AVL) |
-	    __SHIFTIN(segs[idx].attrib.lng, VMX_SEG_ATTRIB_LONG) |
-	    __SHIFTIN(segs[idx].attrib.def32, VMX_SEG_ATTRIB_DEF32) |
-	    __SHIFTIN(segs[idx].attrib.gran, VMX_SEG_ATTRIB_GRAN) |
+	    __SHIFTIN(segs[idx].attrib.l, VMX_SEG_ATTRIB_L) |
+	    __SHIFTIN(segs[idx].attrib.def, VMX_SEG_ATTRIB_DEF) |
+	    __SHIFTIN(segs[idx].attrib.g, VMX_SEG_ATTRIB_G) |
 	    (!segs[idx].attrib.p ? VMX_SEG_ATTRIB_UNUSABLE : 0);
 
 	if (idx != NVMM_X64_SEG_GDT && idx != NVMM_X64_SEG_IDT) {
@@ -1973,22 +1966,26 @@ vmx_vcpu_setstate_seg(const struct nvmm_x64_state_seg *segs, int idx)
 static void
 vmx_vcpu_getstate_seg(struct nvmm_x64_state_seg *segs, int idx)
 {
-	uint64_t attrib = 0;
+	uint64_t selector, base, limit, attrib = 0;
 
 	if (idx != NVMM_X64_SEG_GDT && idx != NVMM_X64_SEG_IDT) {
-		vmx_vmread(vmx_guest_segs[idx].selector, &segs[idx].selector);
+		vmx_vmread(vmx_guest_segs[idx].selector, &selector);
 		vmx_vmread(vmx_guest_segs[idx].attrib, &attrib);
 	}
-	vmx_vmread(vmx_guest_segs[idx].limit, &segs[idx].limit);
-	vmx_vmread(vmx_guest_segs[idx].base, &segs[idx].base);
+	vmx_vmread(vmx_guest_segs[idx].limit, &limit);
+	vmx_vmread(vmx_guest_segs[idx].base, &base);
 
+	segs[idx].selector = selector;
+	segs[idx].limit = limit;
+	segs[idx].base = base;
 	segs[idx].attrib.type = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_TYPE);
+	segs[idx].attrib.s = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_S);
 	segs[idx].attrib.dpl = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_DPL);
 	segs[idx].attrib.p = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_P);
 	segs[idx].attrib.avl = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_AVL);
-	segs[idx].attrib.lng = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_LONG);
-	segs[idx].attrib.def32 = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_DEF32);
-	segs[idx].attrib.gran = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_GRAN);
+	segs[idx].attrib.l = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_L);
+	segs[idx].attrib.def = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_DEF);
+	segs[idx].attrib.g = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_G);
 	if (attrib & VMX_SEG_ATTRIB_UNUSABLE) {
 		segs[idx].attrib.p = 0;
 	}
