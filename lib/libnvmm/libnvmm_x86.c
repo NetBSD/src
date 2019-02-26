@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.24 2019/02/17 20:25:46 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.25 2019/02/26 10:18:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -2556,6 +2556,8 @@ x86_decode(uint8_t *inst_bytes, size_t inst_len, struct x86_instr *instr,
 
 	memset(instr, 0, sizeof(*instr));
 	instr->legpref.seg = -1;
+	instr->src.hardseg = -1;
+	instr->dst.hardseg = -1;
 
 	fsm.is64bit = is_64bit(state);
 	fsm.is32bit = is_32bit(state);
@@ -2926,7 +2928,7 @@ store_to_gva(struct nvmm_x64_state *state, struct x86_instr *instr,
 		gva += store->disp.data;
 	}
 
-	if (store->hardseg != 0) {
+	if (store->hardseg != -1) {
 		seg = store->hardseg;
 	} else {
 		if (__predict_false(instr->legpref.seg != -1)) {
