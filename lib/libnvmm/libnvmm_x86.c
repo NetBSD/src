@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.25 2019/02/26 10:18:39 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.26 2019/02/26 12:23:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -60,11 +60,12 @@ int
 nvmm_vcpu_dump(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
 {
 	struct nvmm_x64_state state;
+	uint16_t *attr;
 	size_t i;
 	int ret;
 
 	const char *segnames[] = {
-		"CS", "DS", "ES", "FS", "GS", "SS", "GDT", "IDT", "LDT", "TR"
+		"ES", "CS", "SS", "DS", "FS", "GS", "GDT", "IDT", "LDT", "TR"
 	};
 
 	ret = nvmm_vcpu_getstate(mach, cpuid, &state, NVMM_X64_STATE_ALL);
@@ -72,26 +73,26 @@ nvmm_vcpu_dump(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
 		return -1;
 
 	printf("+ VCPU id=%d\n", (int)cpuid);
-	printf("| -> RIP=%p\n", (void *)state.gprs[NVMM_X64_GPR_RIP]);
-	printf("| -> RSP=%p\n", (void *)state.gprs[NVMM_X64_GPR_RSP]);
-	printf("| -> RAX=%p\n", (void *)state.gprs[NVMM_X64_GPR_RAX]);
-	printf("| -> RBX=%p\n", (void *)state.gprs[NVMM_X64_GPR_RBX]);
-	printf("| -> RCX=%p\n", (void *)state.gprs[NVMM_X64_GPR_RCX]);
+	printf("| -> RIP=%"PRIx64"\n", state.gprs[NVMM_X64_GPR_RIP]);
+	printf("| -> RSP=%"PRIx64"\n", state.gprs[NVMM_X64_GPR_RSP]);
+	printf("| -> RAX=%"PRIx64"\n", state.gprs[NVMM_X64_GPR_RAX]);
+	printf("| -> RBX=%"PRIx64"\n", state.gprs[NVMM_X64_GPR_RBX]);
+	printf("| -> RCX=%"PRIx64"\n", state.gprs[NVMM_X64_GPR_RCX]);
 	printf("| -> RFLAGS=%p\n", (void *)state.gprs[NVMM_X64_GPR_RFLAGS]);
 	for (i = 0; i < NVMM_X64_NSEG; i++) {
-		printf("| -> %s: sel=0x%lx base=%p, limit=%p, P=%d, D=%d L=%d\n",
+		attr = (uint16_t *)&state.segs[i].attrib;
+		printf("| -> %s: sel=0x%x base=%"PRIx64", limit=%x, attrib=%x\n",
 		    segnames[i],
 		    state.segs[i].selector,
-		    (void *)state.segs[i].base,
-		    (void *)state.segs[i].limit,
-		    state.segs[i].attrib.p, state.segs[i].attrib.def32,
-		    state.segs[i].attrib.lng);
+		    state.segs[i].base,
+		    state.segs[i].limit,
+		    *attr);
 	}
-	printf("| -> MSR_EFER=%p\n", (void *)state.msrs[NVMM_X64_MSR_EFER]);
-	printf("| -> CR0=%p\n", (void *)state.crs[NVMM_X64_CR_CR0]);
-	printf("| -> CR3=%p\n", (void *)state.crs[NVMM_X64_CR_CR3]);
-	printf("| -> CR4=%p\n", (void *)state.crs[NVMM_X64_CR_CR4]);
-	printf("| -> CR8=%p\n", (void *)state.crs[NVMM_X64_CR_CR8]);
+	printf("| -> MSR_EFER=%"PRIx64"\n", state.msrs[NVMM_X64_MSR_EFER]);
+	printf("| -> CR0=%"PRIx64"\n", state.crs[NVMM_X64_CR_CR0]);
+	printf("| -> CR3=%"PRIx64"\n", state.crs[NVMM_X64_CR_CR3]);
+	printf("| -> CR4=%"PRIx64"\n", state.crs[NVMM_X64_CR_CR4]);
+	printf("| -> CR8=%"PRIx64"\n", state.crs[NVMM_X64_CR_CR8]);
 
 	return 0;
 }
@@ -449,21 +450,21 @@ is_long_mode(struct nvmm_x64_state *state)
 static inline bool
 is_64bit(struct nvmm_x64_state *state)
 {
-	return (state->segs[NVMM_X64_SEG_CS].attrib.lng != 0);
+	return (state->segs[NVMM_X64_SEG_CS].attrib.l != 0);
 }
 
 static inline bool
 is_32bit(struct nvmm_x64_state *state)
 {
-	return (state->segs[NVMM_X64_SEG_CS].attrib.lng == 0) &&
-	    (state->segs[NVMM_X64_SEG_CS].attrib.def32 == 1);
+	return (state->segs[NVMM_X64_SEG_CS].attrib.l == 0) &&
+	    (state->segs[NVMM_X64_SEG_CS].attrib.def == 1);
 }
 
 static inline bool
 is_16bit(struct nvmm_x64_state *state)
 {
-	return (state->segs[NVMM_X64_SEG_CS].attrib.lng == 0) &&
-	    (state->segs[NVMM_X64_SEG_CS].attrib.def32 == 0);
+	return (state->segs[NVMM_X64_SEG_CS].attrib.l == 0) &&
+	    (state->segs[NVMM_X64_SEG_CS].attrib.def == 0);
 }
 
 static int
@@ -479,8 +480,8 @@ segment_check(struct nvmm_x64_state_seg *seg, gvaddr_t gva, size_t size)
 		goto error;
 	}
 
-	limit = (seg->limit + 1);
-	if (__predict_true(seg->attrib.gran)) {
+	limit = (uint64_t)seg->limit + 1;
+	if (__predict_true(seg->attrib.g)) {
 		limit *= PAGE_SIZE;
 	}
 

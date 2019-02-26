@@ -57,12 +57,13 @@ init_seg(struct nvmm_x64_state_seg *seg, int type, int sel)
 {
 	seg->selector = sel;
 	seg->attrib.type = type;
+	seg->attrib.s = (type & 0b10000) != 0;
 	seg->attrib.dpl = 0;
 	seg->attrib.p = 1;
 	seg->attrib.avl = 1;
-	seg->attrib.lng = 1;
-	seg->attrib.def32 = 0;
-	seg->attrib.gran = 1;
+	seg->attrib.l = 1;
+	seg->attrib.def = 0;
+	seg->attrib.g = 1;
 	seg->limit = 0x0000FFFF;
 	seg->base = 0x00000000;
 }
