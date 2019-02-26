@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.65 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: miivar.h,v 1.66 2019/02/26 05:26:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 
+#include <dev/mii/mii.h>
 #include <dev/mii/mii_verbose.h>
 
 /*
@@ -221,6 +222,57 @@ struct mii_media {
 #define	PHY_WRITE(p, r, v) \
 	(*(p)->mii_pdata->mii_writereg)(device_parent((p)->mii_dev), \
 	    (p)->mii_phy, (r), (v))
+
+/*
+ * Setup MDD indirect access. Set device address and register number.
+ * "addr" variable takes an address ORed with the function (MMDACR_FN_*).
+ *
+ */
+static inline int
+MMD_INDIRECT(struct mii_softc *sc, uint16_t daddr, uint16_t regnum)
+{
+	int rv;
+
+	/*
+	 * Set the MMD device address and set the access mode (function)
+	 * to address.
+	 */
+	if ((rv = PHY_WRITE(sc, MII_MMDACR, (daddr & ~MMDACR_FUNCMASK))) != 0)
+		return rv;
+
+	/* Set the register number */
+	if ((rv = PHY_WRITE(sc, MII_MMDAADR, regnum)) != 0)
+		return rv;
+
+	/* Set the access mode (function) */
+	rv = PHY_WRITE(sc, MII_MMDACR, daddr);
+
+	return rv;
+}
+
+static inline int
+MMD_INDIRECT_READ(struct mii_softc *sc, uint16_t daddr, uint16_t regnum,
+    uint16_t *valp)
+{
+	int rv;
+
+	if ((rv = MMD_INDIRECT(sc, daddr, regnum)) != 0)
+		return rv;
+
+	return PHY_READ(sc, MII_MMDAADR, valp);
+}
+
+static inline int
+MMD_INDIRECT_WRITE(struct mii_softc *sc, uint16_t daddr, uint16_t regnum,
+    uint16_t val)
+{
+	int rv;
+
+	if ((rv = MMD_INDIRECT(sc, daddr, regnum)) != 0)
+		return rv;
+
+	return PHY_WRITE(sc, MII_MMDAADR, val);
+}
 
 #define	PHY_SERVICE(p, d, o) \
 	(*(p)->mii_funcs->pf_service)((p), (d), (o))
