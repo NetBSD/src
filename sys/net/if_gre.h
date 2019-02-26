@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.43 2015/09/06 06:01:01 dholland Exp $ */
+/*	$NetBSD: if_gre.h,v 1.44 2019/02/26 09:43:37 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -158,13 +158,13 @@ extern int ip_gre_ttl;
  * ioctls needed to manipulate the interface
  */
 
-#define GRESADDRS	_IOW('i', 101, struct ifreq)
-#define GRESADDRD	_IOW('i', 102, struct ifreq)
+#define GRESADDRS	 _IOW('i', 101, struct ifreq)
+#define GRESADDRD	 _IOW('i', 102, struct ifreq)
 #define GREGADDRS	_IOWR('i', 103, struct ifreq)
 #define GREGADDRD	_IOWR('i', 104, struct ifreq)
-#define GRESPROTO	_IOW('i' , 105, struct ifreq)
+#define GRESPROTO	 _IOW('i', 105, struct ifreq)
 #define GREGPROTO	_IOWR('i', 106, struct ifreq)
-#define GRESSOCK	_IOW('i' , 107, struct ifreq)
-#define GREDSOCK	_IOW('i' , 108, struct ifreq)
+#define GRESSOCK	 _IOW('i', 107, struct ifreq)
+#define GREDSOCK	 _IOW('i', 108, struct ifreq)
 
 #endif /* !_NET_IF_GRE_H_ */
