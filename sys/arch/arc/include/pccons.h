@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.h,v 1.6 2001/06/13 15:05:47 soda Exp $	*/
+/*	$NetBSD: pccons.h,v 1.7 2019/02/26 10:30:28 msaitoh Exp $	*/
 /*	$OpenBSD: pccons.h,v 1.2 1996/09/01 16:50:12 deraadt Exp $	*/
 /*	NetBSD: pccons.h,v 1.4 1996/02/02 18:06:06 mycroft Exp	*/
 
@@ -36,11 +36,11 @@ typedef struct {
 	char shift_altgr[KB_CODE_SIZE];
 } pccons_keymap_t;
 
-#define CONSOLE_X_MODE_ON		_IO('t',121)
-#define CONSOLE_X_MODE_OFF		_IO('t',122)
-#define CONSOLE_X_BELL			_IOW('t',123,int[2])
-#define CONSOLE_SET_TYPEMATIC_RATE	_IOW('t',124,u_char)
-#define CONSOLE_GET_KEYMAP		_IOR('t',128,pccons_keymap_t[KB_NUM_KEYS])
-#define CONSOLE_SET_KEYMAP		_IOW('t',129,pccons_keymap_t[KB_NUM_KEYS])
+#define CONSOLE_X_MODE_ON	    _IO('t', 121)
+#define CONSOLE_X_MODE_OFF	    _IO('t', 122)
+#define CONSOLE_X_BELL		   _IOW('t', 123, int[2])
+#define CONSOLE_SET_TYPEMATIC_RATE _IOW('t', 124, u_char)
+#define CONSOLE_GET_KEYMAP	   _IOR('t', 128, pccons_keymap_t[KB_NUM_KEYS])
+#define CONSOLE_SET_KEYMAP	   _IOW('t', 129, pccons_keymap_t[KB_NUM_KEYS])
 
 #endif /* _PCCONS_H_ */
