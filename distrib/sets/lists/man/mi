@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1638 2019/02/23 03:10:05 kamil Exp $
+# $NetBSD: mi,v 1.1639 2019/02/26 07:31:49 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -592,6 +592,7 @@
 ./usr/share/man/cat1/units.0			man-util-catman		.cat
 ./usr/share/man/cat1/unlzf.0			man-util-catman		.cat
 ./usr/share/man/cat1/unlzma.0			man-util-catman		.cat
+./usr/share/man/cat1/unpigz.0			man-util-catman		.cat
 ./usr/share/man/cat1/unvis.0			man-util-catman		.cat
 ./usr/share/man/cat1/unxz.0			man-util-catman		.cat
 ./usr/share/man/cat1/unzip.0			man-util-catman		.cat
@@ -3808,6 +3809,7 @@
 ./usr/share/man/html1/units.html		man-util-htmlman	html
 ./usr/share/man/html1/unlzf.html		man-util-htmlman	html
 ./usr/share/man/html1/unlzma.html		man-util-htmlman	html
+./usr/share/man/html1/unpigz.html		man-util-htmlman	html
 ./usr/share/man/html1/unvis.html		man-util-htmlman	html
 ./usr/share/man/html1/unxz.html			man-util-htmlman	html
 ./usr/share/man/html1/unzip.html		man-util-htmlman	html
@@ -6680,6 +6682,7 @@
 ./usr/share/man/man1/units.1			man-util-man		.man
 ./usr/share/man/man1/unlzf.1			man-util-man		.man
 ./usr/share/man/man1/unlzma.1			man-util-man		.man
+./usr/share/man/man1/unpigz.1			man-util-man		.man
 ./usr/share/man/man1/unvis.1			man-util-man		.man
 ./usr/share/man/man1/unxz.1			man-util-man		.man
 ./usr/share/man/man1/unzip.1			man-util-man		.man

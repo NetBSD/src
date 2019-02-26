@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1201 2019/02/23 10:43:25 mlelstv Exp $
+# $NetBSD: mi,v 1.1202 2019/02/26 07:31:49 rin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -995,6 +995,7 @@
 ./usr/bin/units					base-util-bin
 ./usr/bin/unlzf					base-util-bin
 ./usr/bin/unlzma				base-util-bin
+./usr/bin/unpigz				base-util-bin
 ./usr/bin/unvis					base-util-bin
 ./usr/bin/unxz					base-util-bin
 ./usr/bin/unzip					base-util-bin
