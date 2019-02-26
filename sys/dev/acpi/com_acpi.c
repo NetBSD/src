@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.38 2018/12/24 17:44:40 christos Exp $ */
+/* $NetBSD: com_acpi.c,v 1.39 2019/02/26 06:15:55 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.38 2018/12/24 17:44:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.39 2019/02/26 06:15:55 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -174,7 +174,7 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 
 	if (!ISSET(sc->sc_hwflags, COM_HW_POLL))
 		asc->sc_ih = acpi_intr_establish(self,
-		    (intptr_t)aa->aa_node->ad_handle,
+		    (uint64_t)aa->aa_node->ad_handle,
 		    IPL_SERIAL, true, comintr, sc, device_xname(self));
 
 	if (!pmf_device_register(self, NULL, com_resume))
