@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_dma.c,v 1.3 2019/02/27 16:30:40 jakllsch Exp $ */
+/* $NetBSD: fdt_dma.c,v 1.4 2019/02/27 16:56:00 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_dma.c,v 1.3 2019/02/27 16:30:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_dma.c,v 1.4 2019/02/27 16:56:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,36 +132,14 @@ done:
 struct fdtbus_dma *
 fdtbus_dma_get(int phandle, const char *name, void (*cb)(void *), void *cbarg)
 {
-	struct fdtbus_dma *dma = NULL;
-	char *dma_names = NULL;
-	const char *p;
 	u_int index;
-	int len, resid;
+	int err;
 
-	len = OF_getproplen(phandle, "dma-names");
-	if (len <= 0)
+	err = fdtbus_get_index(phandle, "dma-names", name, &index);
+	if (err != 0)
 		return NULL;
 
-	dma_names = kmem_alloc(len, KM_SLEEP);
-	if (OF_getprop(phandle, "dma-names", dma_names, len) != len) {
-		kmem_free(dma_names, len);
-		return NULL;
-	}
-
-	p = dma_names;
-	for (index = 0, resid = len; resid > 0; index++) {
-		if (strcmp(p, name) == 0) {
-			dma = fdtbus_dma_get_index(phandle, index, cb, cbarg);
-			break;
-		}
-		resid -= strlen(p) + 1;
-		p += strlen(p) + 1;
-	}
-
-	if (dma_names)
-		kmem_free(dma_names, len);
-
-	return dma;
+	return fdtbus_dma_get_index(phandle, index, cb, cbarg);
 }
 
 void

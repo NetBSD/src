@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_clock.c,v 1.7 2019/02/27 16:30:40 jakllsch Exp $ */
+/* $NetBSD: fdt_clock.c,v 1.8 2019/02/27 16:56:00 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.7 2019/02/27 16:30:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.8 2019/02/27 16:56:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -123,25 +123,14 @@ fdtbus_clock_get_index(int phandle, u_int index)
 static struct clk *
 fdtbus_clock_get_prop(int phandle, const char *clkname, const char *prop)
 {
-	struct clk *clk = NULL;
-	const char *p;
 	u_int index;
-	int len, resid;
+	int err;
 
-	p = fdtbus_get_prop(phandle, prop, &len);
-	if (p == NULL)
+	err = fdtbus_get_index(phandle, prop, clkname, &index);
+	if (err != 0)
 		return NULL;
 
-	for (index = 0, resid = len; resid > 0; index++) {
-		if (strcmp(p, clkname) == 0) {
-			clk = fdtbus_clock_get_index(phandle, index);
-			break;
-		}
-		resid -= strlen(p) + 1;
-		p += strlen(p) + 1;
-	}
-
-	return clk;
+	return fdtbus_clock_get_index(phandle, index);
 }
 
 static u_int
@@ -182,26 +171,20 @@ struct clk *
 fdtbus_clock_byname(const char *clkname)
 {
 	struct fdtbus_clock_controller *cc;
-	u_int len, resid, index, clock_cells;
-	const char *p;
+	u_int index, clock_cells;
+	int err;
 
 	LIST_FOREACH(cc, &fdtbus_clock_controllers, cc_next) {
-		if (!of_hasprop(cc->cc_phandle, "clock-output-names"))
+		err = fdtbus_get_index(cc->cc_phandle, "clock-output-names", clkname, &index);
+		if (err != 0)
 			continue;
-		p = fdtbus_get_prop(cc->cc_phandle, "clock-output-names", &len);
-		for (index = 0, resid = len; resid > 0; index++) {
-			if (strcmp(p, clkname) == 0) {
-				if (of_getprop_uint32(cc->cc_phandle, "#clock-cells", &clock_cells))
-					break;
-				const u_int index_raw = htobe32(index);
-				return cc->cc_funcs->decode(cc->cc_dev,
-				    cc->cc_phandle,
-				    clock_cells > 0 ? &index_raw : NULL,
-				    clock_cells > 0 ? 4 : 0);
-			}
-			resid -= strlen(p) + 1;
-			p += strlen(p) + 1;
-		}
+		if (of_getprop_uint32(cc->cc_phandle, "#clock-cells", &clock_cells))
+			continue;
+		const u_int index_raw = htobe32(index);
+		return cc->cc_funcs->decode(cc->cc_dev,
+		    cc->cc_phandle,
+		    clock_cells > 0 ? &index_raw : NULL,
+		    clock_cells > 0 ? 4 : 0);
 	}
 
 	return NULL;
