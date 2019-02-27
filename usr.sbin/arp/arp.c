@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.63 2018/07/31 09:45:52 nonaka Exp $ */
+/*	$NetBSD: arp.c,v 1.64 2019/02/27 23:29:50 dholland Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.63 2018/07/31 09:45:52 nonaka Exp $");
+__RCSID("$NetBSD: arp.c,v 1.64 2019/02/27 23:29:50 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,8 +276,10 @@ set(int argc, char **argv)
 	argc -= 2;
 	argv += 2;
 
-	if (getinetaddr(host, &sin_m.sin_addr) == -1)
+	if (getinetaddr(host, &sin_m.sin_addr) == -1) {
+		prog_close(s);
 		return (1);
+	}
 	if (strcmp(eaddr, "auto") != 0 && atosdl(eaddr, &sdl_m))
 		warnx("invalid link-level address '%s'", eaddr);
 	doing_proxy = flags = export_only = expire_time = 0;
@@ -310,13 +312,16 @@ set(int argc, char **argv)
 
 	}
 	if (doing_proxy && strcmp(eaddr, "auto") == 0) {
-		if (getetheraddr(sin_m.sin_addr, &sdl_m) == -1)
+		if (getetheraddr(sin_m.sin_addr, &sdl_m) == -1) {
+			prog_close(s);
 			return 1;
+		}
 	}
 tryagain:
 	rtm = rtmsg(s, RTM_GET, NULL, &sin_m, &sdl_m);
 	if (rtm == NULL) {
 		warn("%s", host);
+		prog_close(s);
 		return (1);
 	}
 	sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
@@ -327,10 +332,12 @@ tryagain:
 			goto overwrite;
 		if (doing_proxy == 0) {
 			warnx("set: can only proxy for %s", host);
+			prog_close(s);
 			return (1);
 		}
 		if (sin_m.sin_other & SIN_PROXY) {
 			warnx("set: proxy entry exists for non 802 device");
+			prog_close(s);
 			return (1);
 		}
 		sin_m.sin_other = SIN_PROXY;
@@ -341,6 +348,7 @@ overwrite:
 	if (sdl->sdl_family != AF_LINK) {
 		warnx("cannot intuit interface index and type for %s",
 		    host);
+		prog_close(s);
 		return (1);
 	}
 	sdl_m.sdl_type = sdl->sdl_type;
@@ -351,6 +359,7 @@ overwrite:
 	rtm = rtmsg(s, RTM_ADD, NULL, &sin_m, &sdl_m);
 	if (vflag)
 		(void)printf("%s (%s) added\n", host, eaddr);
+	prog_close(s);
 	return (rtm == NULL) ? 1 : 0;
 }
 
@@ -407,6 +416,7 @@ delete_one(struct rt_msghdr *rtm)
 	if (sdl->sdl_family != AF_LINK)
 		return (1);
 	rtm = rtmsg(s, RTM_DELETE, rtm, sina, sdl);
+	prog_close(s);
 	if (rtm == NULL)
 		return (1);
 	return (0);
