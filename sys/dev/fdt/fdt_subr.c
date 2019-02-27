@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.28 2019/02/27 16:30:40 jakllsch Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.29 2019/02/27 16:56:00 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.28 2019/02/27 16:30:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.29 2019/02/27 16:56:00 jakllsch Exp $");
 
 #include "opt_fdt.h"
 
@@ -215,26 +215,14 @@ int
 fdtbus_get_reg_byname(int phandle, const char *name, bus_addr_t *paddr,
     bus_size_t *psize)
 {
-	const char *reg_names, *p;
 	u_int index;
-	int len, resid;
-	int error = ENOENT;
+	int error;
 
-	reg_names = fdtbus_get_prop(phandle, "reg-names", &len);
-	if (len <= 0)
-		return error;
+	error = fdtbus_get_index(phandle, "reg-names", name, &index);
+	if (error != 0)
+		return ENOENT;
 
-	p = reg_names;
-	for (index = 0, resid = len; resid > 0; index++) {
-		if (strcmp(p, name) == 0) {
-			error = fdtbus_get_reg(phandle, index, paddr, psize);
-			break;
-		}
-		resid -= strlen(p) + 1;
-		p += strlen(p) + 1;
-	}
-
-	return error;
+	return fdtbus_get_reg(phandle, index, paddr, psize);
 }
 
 int
@@ -479,4 +467,27 @@ fdtbus_get_string_index(int phandle, const char *prop, u_int index)
 	}
 
 	return NULL;
+}
+
+int
+fdtbus_get_index(int phandle, const char *prop, const char *name, u_int *idx)
+{
+	const char *p;
+	size_t pl;
+	u_int index;
+	int len;
+
+	p = fdtbus_get_prop(phandle, prop, &len);
+	if (p == NULL || len <= 0)
+		return -1;
+
+	for (index = 0; len > 0;
+	    pl = strlen(p) + 1, len -= pl, p += pl, index++) {
+		if (strcmp(p, name) == 0) {
+			*idx = index;
+			return 0;
+		}
+	}
+
+	return -1;
 }
