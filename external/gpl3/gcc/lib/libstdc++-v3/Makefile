@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2019/02/17 00:05:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.44 2019/02/27 08:21:42 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -20,7 +20,7 @@ COPTS.random.cc+=	${${ACTIVE_CC} == "clang":? -mrdrnd :}
 
 SYMBOLS=	libstdc++-symbols.ver
 .if ${MKPIC} != "no"
-${SYMBOLS}:
+${SYMBOLS}: Makefile
 	cat ${DIST}/libstdc++-v3/config/abi/pre/gnu.ver ${G_port_specific_symbol_files} | \
 	${TOOL_GREP} -E -v '^[     ]*#(#| |$$)' | \
 	${CXX} -I${DESTDIR}/usr/include/g++ -E -P -include ${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/c++config.h - > \
@@ -146,27 +146,15 @@ SRCS+=	c98-codecvt.cc c11-codecvt.cc
 
 .include "../Makefile.gthr"
 
-# XXX Make this either/or, not one, and maybe another
-# XXX pull out libstdc++/Makefile/cxx11_sources for many of these.
+# XXX Special rules in c++98/Makefile; may move into c++11 in future GCC.
 CXX11_ALWAYS=	localename.cc \
-		locale_init.cc \
-		compatibility-c++0x.cc \
-		compatibility-atomic-c++0x.cc \
-		compatibility-thread-c++0x.cc \
-		compatibility-chrono.cc \
-		compatibility-condvar.cc \
-		ios_failure.cc
+		locale_init.cc
 
-.for _s in ${CXX11_ALWAYS}
+.for _s in ${G_cxx11_sources} ${CXX11_ALWAYS}
 COPTS.${_s}+= -std=gnu++11
 .endfor
 
-# XXX pull out libstdc++/Makefile/cxx98_sources for many of these.
-CXX98_ALWAYS=	compatibility.cc \
-		compatibility-debug_list.cc \
-		compatibility-debug_list-2.cc
-
-.for _s in ${CXX98_ALWAYS}
+.for _s in ${G_cxx98_sources}
 COPTS.${_s}+= -std=gnu++98
 .endfor
 
