@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.20 2018/11/13 01:06:37 jakllsch Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.21 2019/02/27 17:01:57 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.20 2018/11/13 01:06:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.21 2019/02/27 17:01:57 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -143,6 +143,20 @@ fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
 
 	return fdtbus_intr_establish_raw(ihandle, specifier, ipl,
 	    flags, func, arg);
+}
+
+void *
+fdtbus_intr_establish_byname(int phandle, const char *name, int ipl,
+    int flags, int (*func)(void *), void *arg)
+{
+	u_int index;
+	int err;
+
+	err = fdtbus_get_index(phandle, "interrupt-names", name, &index);
+	if (err != 0)
+		return NULL;
+
+	return fdtbus_intr_establish(phandle, index, ipl, flags, func, arg);
 }
 
 void *
