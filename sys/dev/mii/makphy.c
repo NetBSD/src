@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.56 2019/02/25 04:26:22 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.57 2019/02/27 18:21:04 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.56 2019/02/25 04:26:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.57 2019/02/27 18:21:04 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ makphy_isi210(device_t parent, struct mii_attach_args *ma)
 
 	/* I21[01]'s model number is 0 */
 	if ((MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxMARVELL)
-	    && (MII_MODEL(ma->mii_id2) == 0)
+	    && (MII_MODEL(ma->mii_id2) == MII_MODEL_xxMARVELL_I210)
 	    && (device_is_a(parent, "wm")))
 		return true;
 	return false;
