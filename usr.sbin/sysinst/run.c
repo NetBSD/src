@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.8 2019/02/26 13:09:35 joerg Exp $	*/
+/*	$NetBSD: run.c,v 1.9 2019/02/27 11:35:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -335,7 +335,7 @@ free_argv(char **argv)
 static WINDOW *
 show_cmd(const char *scmd, struct winsize *win)
 {
-	int n, m;
+	int n;
 	WINDOW *actionwin;
 	int nrow;
 
@@ -353,8 +353,8 @@ show_cmd(const char *scmd, struct winsize *win)
 	printw("%s", scmd);
 	standend();
 	addstr("\n\n");
-	for (n = win->ws_col; (m = min(n, 30)) > 0; n -= m)
-		addstr(&"------------------------------"[30 - m]);
+	for (n = 0; n < win->ws_col; n++)
+		addstr("-");
 	refresh();
 
 	nrow = getcury(stdscr) + 1;
