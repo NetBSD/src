@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_phy.c,v 1.3 2019/01/30 01:24:00 jmcneill Exp $ */
+/* $NetBSD: fdt_phy.c,v 1.4 2019/02/27 16:30:40 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_phy.c,v 1.3 2019/01/30 01:24:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_phy.c,v 1.4 2019/02/27 16:30:40 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -153,7 +153,7 @@ fdtbus_phy_get(int phandle, const char *phyname)
 			phy = fdtbus_phy_get_index(phandle, index);
 			break;
 		}
-		resid -= strlen(p);
+		resid -= strlen(p) + 1;
 		p += strlen(p) + 1;
 	}
 

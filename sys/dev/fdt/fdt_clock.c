@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_clock.c,v 1.6 2018/09/09 07:21:18 aymeric Exp $ */
+/* $NetBSD: fdt_clock.c,v 1.7 2019/02/27 16:30:40 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.6 2018/09/09 07:21:18 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.7 2019/02/27 16:30:40 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -137,7 +137,7 @@ fdtbus_clock_get_prop(int phandle, const char *clkname, const char *prop)
 			clk = fdtbus_clock_get_index(phandle, index);
 			break;
 		}
-		resid -= strlen(p);
+		resid -= strlen(p) + 1;
 		p += strlen(p) + 1;
 	}
 
