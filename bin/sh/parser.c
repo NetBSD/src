@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.166 2019/02/09 09:50:31 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.167 2019/02/27 04:10:56 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.166 2019/02/09 09:50:31 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.167 2019/02/27 04:10:56 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1657,7 +1657,7 @@ readcstyleesc(char *out)
 	switch (c) {
 	case '\0':
 	case PEOF:
-		synerror("Unterminated quoted string");
+		synerror("Unterminated quoted string ($'...)");
 	case '\n':
 		plinno++;
 		VTRACE(DBG_LEXER, ("@%d ", plinno));
@@ -1739,22 +1739,62 @@ readcstyleesc(char *out)
 				synerror("Invalid \\u escape sequence");
 
 			/* XXX should we use iconv here. What locale? */
-			CHECKSTRSPACE(4, out);
+			CHECKSTRSPACE(12, out);
 
+/*
+ * Add a byte to output string, while checking if it needs to
+ * be escaped -- if its value happens to match the value of one
+ * of our internal CTL* chars - which would (at a minumum) be
+ * summarily removed later, if not escaped.
+ *
+ * The current definition of ISCTL() allows the compiler to
+ * optimise away either half, or all, of the test in most of
+ * the cases here (0xc0 | anything) cannot be between 08x0 and 0x9f
+ * for example, so there a test is not needed).
+ *
+ * Which tests can be removed depends upon the actual values
+ * selected for the CTL* chars.
+ */
+#define	ESC_USTPUTC(c, o) do {				\
+		char _ch = (c);				\
+							\
+		if (ISCTL(_ch))				\
+			USTPUTC(CTLESC, o);		\
+		USTPUTC(_ch, o);			\
+	} while (0)
+
+			VTRACE(DBG_LEXER, ("CSTR(\\%c%8.8x)", n==4?'u':'U', v));
 			if (v <= 0x7ff) {
-				USTPUTC(0xc0 | v >> 6, out);
-				USTPUTC(0x80 | (v & 0x3f), out);
+				ESC_USTPUTC(0xc0 | v >> 6, out);
+				ESC_USTPUTC(0x80 | (v & 0x3f), out);
 				return out;
 			} else if (v <= 0xffff) {
-				USTPUTC(0xe0 | v >> 12, out);
-				USTPUTC(0x80 | ((v >> 6) & 0x3f), out);
-				USTPUTC(0x80 | (v & 0x3f), out);
+				ESC_USTPUTC(0xe0 | v >> 12, out);
+				ESC_USTPUTC(0x80 | ((v >> 6) & 0x3f), out);
+				ESC_USTPUTC(0x80 | (v & 0x3f), out);
 				return out;
 			} else if (v <= 0x10ffff) {
-				USTPUTC(0xf0 | v >> 18, out);
-				USTPUTC(0x80 | ((v >> 12) & 0x3f), out);
-				USTPUTC(0x80 | ((v >> 6) & 0x3f), out);
-				USTPUTC(0x80 | (v & 0x3f), out);
+				ESC_USTPUTC(0xf0 | v >> 18, out);
+				ESC_USTPUTC(0x80 | ((v >> 12) & 0x3f), out);
+				ESC_USTPUTC(0x80 | ((v >> 6) & 0x3f), out);
+				ESC_USTPUTC(0x80 | (v & 0x3f), out);
+				return out;
+
+	/* these next two are not very likely, but we may as well be complete */
+			} else if (v <= 0x3FFFFFF) {
+				ESC_USTPUTC(0xf8 | v >> 24, out);
+				ESC_USTPUTC(0x80 | ((v >> 18) & 0x3f), out);
+				ESC_USTPUTC(0x80 | ((v >> 12) & 0x3f), out);
+				ESC_USTPUTC(0x80 | ((v >> 6) & 0x3f), out);
+				ESC_USTPUTC(0x80 | (v & 0x3f), out);
+				return out;
+			} else if (v <= 0x7FFFFFFF) {
+				ESC_USTPUTC(0xfC | v >> 30, out);
+				ESC_USTPUTC(0x80 | ((v >> 24) & 0x3f), out);
+				ESC_USTPUTC(0x80 | ((v >> 18) & 0x3f), out);
+				ESC_USTPUTC(0x80 | ((v >> 12) & 0x3f), out);
+				ESC_USTPUTC(0x80 | ((v >> 6) & 0x3f), out);
+				ESC_USTPUTC(0x80 | (v & 0x3f), out);
 				return out;
 			}
 			if (v > 127)
@@ -1789,7 +1829,7 @@ readcstyleesc(char *out)
 			if (c == '\\')
 				c = pgetc();
 			if (c == PEOF)
-				synerror("Unterminated quoted string");
+				synerror("Unterminated quoted string ($'...)");
 			if (c == '\n') {
 				plinno++;
 				if (doprompt)
@@ -2408,7 +2448,7 @@ noexpand(char *text)
 			continue;
 		if (c == CTLESC)
 			p++;
-		else if (BASESYNTAX[(int)c] == CCTL)
+		else if (ISCTL(c))
 			return 0;
 	}
 	return 1;
