@@ -1,4 +1,4 @@
-/*	$NetBSD: arp_hostops.c,v 1.1 2015/07/29 06:07:35 ozaki-r Exp $	*/
+/*	$NetBSD: arp_hostops.c,v 1.2 2019/02/27 23:29:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: arp_hostops.c,v 1.1 2015/07/29 06:07:35 ozaki-r Exp $");
+__RCSID("$NetBSD: arp_hostops.c,v 1.2 2019/02/27 23:29:50 dholland Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ const struct prog_ops prog_ops = {
 
 	.op_read = read,
 	.op_write = write,
+	.op_close = close,
 
 	.op_sysctl = sysctl,
 };
