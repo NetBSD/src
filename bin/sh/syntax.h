@@ -1,4 +1,4 @@
-/*	$NetBSD: syntax.h,v 1.11 2018/12/03 06:40:26 kre Exp $	*/
+/*	$NetBSD: syntax.h,v 1.12 2019/02/27 04:10:56 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -90,6 +90,11 @@
 /* true if the arg char needs CTLESC to protect it */
 #define	NEEDESC(c)	(SQSYNTAX[(int)(c)] == CCTL || \
 			 SQSYNTAX[(int)(c)] == CSBACK)
+
+#define	ISCTL(c)	((c) >= CTL_FIRST && (c) <= CTL_LAST)
+#if 0				/* alternative form (generally slower) */
+#define	ICCTL(c)	(BASESYNTAX[(int)(c)] == CCTL)
+#endif
 
 extern const char basesyntax[];
 extern const char dqsyntax[];
