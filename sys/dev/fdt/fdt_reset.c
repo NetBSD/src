@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_reset.c,v 1.3 2019/02/27 16:30:40 jakllsch Exp $ */
+/* $NetBSD: fdt_reset.c,v 1.4 2019/02/27 16:56:00 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_reset.c,v 1.3 2019/02/27 16:30:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_reset.c,v 1.4 2019/02/27 16:56:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,36 +131,14 @@ done:
 struct fdtbus_reset *
 fdtbus_reset_get(int phandle, const char *rstname)
 {
-	struct fdtbus_reset *rst = NULL;
-	char *reset_names = NULL;
-	const char *p;
 	u_int index;
-	int len, resid;
+	int err;
 
-	len = OF_getproplen(phandle, "reset-names");
-	if (len <= 0)
+	err = fdtbus_get_index(phandle, "reset-names", rstname, &index);
+	if (err != 0)
 		return NULL;
 
-	reset_names = kmem_alloc(len, KM_SLEEP);
-	if (OF_getprop(phandle, "reset-names", reset_names, len) != len) {
-		kmem_free(reset_names, len);
-		return NULL;
-	}
-
-	p = reset_names;
-	for (index = 0, resid = len; resid > 0; index++) {
-		if (strcmp(p, rstname) == 0) {
-			rst = fdtbus_reset_get_index(phandle, index);
-			break;
-		}
-		resid -= strlen(p) + 1;
-		p += strlen(p) + 1;
-	}
-
-	if (reset_names)
-		kmem_free(reset_names, len);
-
-	return rst;
+	return fdtbus_reset_get_index(phandle, index);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.48 2019/01/30 01:24:00 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.49 2019/02/27 16:56:00 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -379,6 +379,7 @@ bool		fdtbus_status_okay(int);
 const void *	fdtbus_get_prop(int, const char *, int *);
 const char *	fdtbus_get_string(int, const char *);
 const char *	fdtbus_get_string_index(int, const char *, u_int);
+int		fdtbus_get_index(int, const char *, const char *, u_int *);
 
 void		fdt_add_bus(device_t, int, struct fdt_attach_args *);
 void		fdt_add_bus_match(device_t, int, struct fdt_attach_args *,

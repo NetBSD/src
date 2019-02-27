@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_phy.c,v 1.4 2019/02/27 16:30:40 jakllsch Exp $ */
+/* $NetBSD: fdt_phy.c,v 1.5 2019/02/27 16:56:00 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_phy.c,v 1.4 2019/02/27 16:30:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_phy.c,v 1.5 2019/02/27 16:56:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,36 +131,14 @@ done:
 struct fdtbus_phy *
 fdtbus_phy_get(int phandle, const char *phyname)
 {
-	struct fdtbus_phy *phy = NULL;
-	char *phy_names = NULL;
-	const char *p;
 	u_int index;
-	int len, resid;
+	int err;
 
-	len = OF_getproplen(phandle, "phy-names");
-	if (len <= 0)
+	err = fdtbus_get_index(phandle, "phy-names", phyname, &index);
+	if (err != 0)
 		return NULL;
 
-	phy_names = kmem_alloc(len, KM_SLEEP);
-	if (OF_getprop(phandle, "phy-names", phy_names, len) != len) {
-		kmem_free(phy_names, len);
-		return NULL;
-	}
-
-	p = phy_names;
-	for (index = 0, resid = len; resid > 0; index++) {
-		if (strcmp(p, phyname) == 0) {
-			phy = fdtbus_phy_get_index(phandle, index);
-			break;
-		}
-		resid -= strlen(p) + 1;
-		p += strlen(p) + 1;
-	}
-
-	if (phy_names)
-		kmem_free(phy_names, len);
-
-	return phy;
+	return fdtbus_phy_get_index(phandle, index);
 }
 
 void

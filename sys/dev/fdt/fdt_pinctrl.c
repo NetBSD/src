@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_pinctrl.c,v 1.7 2019/01/23 04:23:01 thorpej Exp $ */
+/* $NetBSD: fdt_pinctrl.c,v 1.8 2019/02/27 16:56:00 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.7 2019/01/23 04:23:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.8 2019/02/27 16:56:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,22 +118,14 @@ fdtbus_pinctrl_set_config_index(int phandle, u_int index)
 int
 fdtbus_pinctrl_set_config(int phandle, const char *cfgname)
 {
-	const char *pinctrl_names, *name;
-	int len, index;
+	u_int index;
+	int err;
 
-	if ((len = OF_getproplen(phandle, "pinctrl-names")) < 0)
+	err = fdtbus_get_index(phandle, "pinctrl-names", cfgname, &index);
+	if (err != 0)
 		return -1;
 
-	pinctrl_names = fdtbus_get_string(phandle, "pinctrl-names");
-
-	for (name = pinctrl_names, index = 0; len > 0;
-	     len -= strlen(name) + 1, name += strlen(name) + 1, index++) {
-		if (strcmp(name, cfgname) == 0)
-			return fdtbus_pinctrl_set_config_index(phandle, index);
-	}
-
-	/* Not found */
-	return -1;
+	return fdtbus_pinctrl_set_config_index(phandle, index);
 }
 
 static void
