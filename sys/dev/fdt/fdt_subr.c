@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.27 2019/01/30 00:56:47 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.28 2019/02/27 16:30:40 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.27 2019/01/30 00:56:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.28 2019/02/27 16:30:40 jakllsch Exp $");
 
 #include "opt_fdt.h"
 
@@ -230,7 +230,7 @@ fdtbus_get_reg_byname(int phandle, const char *name, bus_addr_t *paddr,
 			error = fdtbus_get_reg(phandle, index, paddr, psize);
 			break;
 		}
-		resid -= strlen(p);
+		resid -= strlen(p) + 1;
 		p += strlen(p) + 1;
 	}
 

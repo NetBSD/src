@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_dma.c,v 1.2 2018/06/30 20:34:43 jmcneill Exp $ */
+/* $NetBSD: fdt_dma.c,v 1.3 2019/02/27 16:30:40 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_dma.c,v 1.2 2018/06/30 20:34:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_dma.c,v 1.3 2019/02/27 16:30:40 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -154,7 +154,7 @@ fdtbus_dma_get(int phandle, const char *name, void (*cb)(void *), void *cbarg)
 			dma = fdtbus_dma_get_index(phandle, index, cb, cbarg);
 			break;
 		}
-		resid -= strlen(p);
+		resid -= strlen(p) + 1;
 		p += strlen(p) + 1;
 	}
 
