@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.458 2018/09/03 16:29:30 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.459 2019/02/27 02:27:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.458 2018/09/03 16:29:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.459 2019/02/27 02:27:38 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -923,10 +923,6 @@ audiodetach(device_t self, int flags)
 	/*
 	 * Nuke the vnodes for any open instances (calls close).
 	 * Will wait until any activity on the device nodes has ceased.
-	 *
-	 * XXXAD NOT YET.
-	 *
-	 * XXXAD NEED TO PREVENT NEW REFERENCES THROUGH AUDIO_ENTER().
 	 */
 	mn = device_unit(self);
 	vdevgone(maj, mn | SOUND_DEVICE,    mn | SOUND_DEVICE, VCHR);
