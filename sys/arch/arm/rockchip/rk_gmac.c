@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.9 2019/02/23 17:18:38 martin Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.10 2019/02/27 07:16:00 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.9 2019/02/23 17:18:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.10 2019/02/27 07:16:00 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -152,7 +152,7 @@ rk3328_gmac_set_speed_rgmii(struct dwc_gmac_softc *sc, int speed)
 #define	 RK3399_GRF_SOC_CON5_RMII_MODE		__BIT(6)
 #define	 RK3399_GRF_SOC_CON5_GMAC_CLK_SEL	__BITS(5,4)
 #define	  RK3399_GRF_SOC_CON5_GMAC_CLK_SEL_125M	0
-#define	  RK3399_GRF_SOC_CON5_GMAC_CLK_SEL_25M	1
+#define	  RK3399_GRF_SOC_CON5_GMAC_CLK_SEL_25M	3
 #define	  RK3399_GRF_SOC_CON5_GMAC_CLK_SEL_2_5M	2
 #define	 RK3399_GRF_SOC_CON5_RMII_CLK_SEL	__BIT(3)
 #define	RK3399_GRF_SOC_CON6		0x0c218
