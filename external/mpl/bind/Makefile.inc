@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2019/01/09 16:54:58 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2019/02/28 22:18:21 joerg Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -9,7 +9,8 @@ USE_FORT?= yes	# network client/server
 
 WARNS?=	1
 
-CWARNFLAGS.clang+=	-Wno-unused-value -Wno-parentheses
+CWARNFLAGS.clang+=	-Wno-unused-value -Wno-parentheses \
+			-Wno-atomic-alignment
 
 .include <bsd.own.mk>
 
