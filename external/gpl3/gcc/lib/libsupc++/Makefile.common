@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.12 2019/02/01 10:37:13 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.13 2019/02/28 01:11:04 mrg Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -15,9 +15,10 @@ LIBSTDCXX_MACHINE_ARCH=${GCC_MACHINE_ARCH}
 # Make sure we get G_*_SOURCES, etc.*, for the .for loops
 .include "${.CURDIR}/../libstdc++-v3/arch/${LIBSTDCXX_MACHINE_ARCH}/defs.mk"
 
-LIBSTDCXXSRCS=	${G_SRC_SOURCES} ${G_CPP98_SOURCES} ${G_CPP11_SOURCES} ${G_FILESYSTEM_SOURCES}
-# XXX XXX dir.o doesn't have <deque> stuff properly, leave it out for now?
 LIBSTDCXXSRCS=	${G_SRC_SOURCES} ${G_CPP98_SOURCES} ${G_CPP11_SOURCES}
+# XXX XXX dir.o doesn't have <deque> stuff properly, leave it out for now
+#LIBSTDCXXSRCS+=	${G_FILESYSTEM_SOURCES}
+
 LIBSUPCXXSRCS=	${G_LIBSUPCXX_SOURCES} ${G_LIBSUPCXX_C_SOURCES}
 
 CPPFLAGS+=	-I${DIST}/gcc
