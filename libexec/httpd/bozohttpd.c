@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.111 2019/01/22 05:32:57 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.112 2019/02/28 08:28:21 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -137,7 +137,6 @@
 #include <netdb.h>
 #include <pwd.h>
 #include <grp.h>
-#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -148,6 +147,9 @@
 
 #include "bozohttpd.h"
 
+#ifndef SSL_TIMEOUT
+#define	SSL_TIMEOUT		"30"	/* wait for 30 seconds for ssl handshake  */
+#endif
 #ifndef INITIAL_TIMEOUT
 #define	INITIAL_TIMEOUT		"30"	/* wait for 30 seconds initially */
 #endif
@@ -183,7 +185,7 @@ struct {
 	{ NULL,               NULL },
 };
 
-volatile sig_atomic_t	timeout_hit;
+volatile sig_atomic_t	bozo_timeout_hit;
 
 /*
  * check there's enough space in the prefs and names arrays.
@@ -371,18 +373,19 @@ bozo_clean_request(bozo_httpreq_t *request)
 static void
 alarmer(int sig)
 {
-	timeout_hit = 1;
+	bozo_timeout_hit = 1;
 }
 
 
 /*
- * set a timeout for "initial", "header", or "request".
+ * set a timeout for "ssl", "initial", "header", or "request".
  */
 int
 bozo_set_timeout(bozohttpd_t *httpd, bozoprefs_t *prefs,
 		 const char *target, const char *val)
 {
 	const char **cur, *timeouts[] = {
+		"ssl timeout",
 		"initial timeout",
 		"header timeout",
 		"request timeout",
@@ -602,13 +605,9 @@ bozo_read_request(bozohttpd_t *httpd)
 	/*
 	 * if we're in daemon mode, bozo_daemon_fork() will return here twice
 	 * for each call.  once in the child, returning 0, and once in the
-	 * parent, returning 1.  for each child, then we can setup SSL, and
-	 * the parent can signal the caller there was no request to process
-	 * and it will wait for another.
+	 * parent, returning 1 for each child.
 	 */
 	if (bozo_daemon_fork(httpd))
-		return NULL;
-	if (bozo_ssl_accept(httpd))
 		return NULL;
 
 	request = bozomalloc(httpd, sizeof(*request));
@@ -685,6 +684,14 @@ bozo_read_request(bozohttpd_t *httpd)
 		goto cleanup;
 	}
 
+	/*
+	 * now to try to setup SSL, and upon failure parent can signal the
+	 * caller there was no request to process and it will wait for
+	 * another.
+	 */
+	if (bozo_ssl_accept(httpd))
+		return NULL;
+
 	alarm(httpd->initial_timeout);
 	while ((str = bozodgetln(httpd, STDIN_FILENO, &len, bozo_read)) != NULL) {
 		alarm(0);
@@ -707,9 +714,9 @@ bozo_read_request(bozohttpd_t *httpd)
 		if (ts.tv_sec > ots.tv_sec &&
 		    ts.tv_sec > httpd->request_timeout &&
 		    ts.tv_sec - httpd->request_timeout > ots.tv_sec)
-			timeout_hit = 1;
+			bozo_timeout_hit = 1;
 
-		if (timeout_hit) {
+		if (bozo_timeout_hit) {
 			bozo_http_error(httpd, 408, NULL, "request timed out");
 			goto cleanup;
 		}
@@ -2464,6 +2471,8 @@ bozo_init_prefs(bozohttpd_t *httpd, bozoprefs_t *prefs)
 		rv = 1;
 	if (!bozo_set_pref(httpd, prefs, "public_html", PUBLIC_HTML))
 		rv = 1;
+	if (!bozo_set_pref(httpd, prefs, "ssl timeout", SSL_TIMEOUT))
+		rv = 1;
 	if (!bozo_set_pref(httpd, prefs, "initial timeout", INITIAL_TIMEOUT))
 		rv = 1;
 	if (!bozo_set_pref(httpd, prefs, "header timeout", HEADER_WAIT_TIME))
@@ -2563,6 +2572,9 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	}
 	if ((cp = bozo_get_pref(prefs, "public_html")) != NULL) {
 		httpd->public_html = bozostrdup(httpd, NULL, cp);
+	}
+	if ((cp = bozo_get_pref(prefs, "ssl timeout")) != NULL) {
+		httpd->ssl_timeout = atoi(cp);
 	}
 	if ((cp = bozo_get_pref(prefs, "initial timeout")) != NULL) {
 		httpd->initial_timeout = atoi(cp);
