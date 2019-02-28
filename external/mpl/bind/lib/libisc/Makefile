@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2019/02/24 20:01:33 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2019/02/28 17:40:06 christos Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -47,6 +47,7 @@ SRCS+=		ipv6.c
 # libcall ones which are inefficient. But this should not be an
 # error anyway.
 COPTS.mem.c+= ${${ACTIVE_CC} == "clang":? -Wno-error-atomic-alignment :}
+COPTS.counter.c+= ${${ACTIVE_CC} == "clang":? -Wno-error-atomic-alignment :}
 
 
 
