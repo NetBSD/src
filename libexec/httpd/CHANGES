@@ -1,10 +1,11 @@
-$NetBSD: CHANGES,v 1.39 2019/01/27 04:40:57 dholland Exp $
+$NetBSD: CHANGES,v 1.40 2019/02/28 09:16:42 mrg Exp $
 
-changes in bozohttpd 20190121:
+changes in bozohttpd 20190228:
+	o  extend timeout facility to ssl and stop servers hanging forever
+	   if the client never sends anything.  reported by Steffen in netbsd
+	   PR#50655.
 	o  don't display special files in the directory index.  they aren't
 	   served, but links to them are generated.
-
-changes in bozohttpd 20190116:
 	o  fix CGI '+' parameter handling, some error checking, and a double
 	   free.  from rajeev_v_pillai@yahoo.com
 	o  more directory indexing clean up.  from rajeev_v_pillai@yahoo.com
