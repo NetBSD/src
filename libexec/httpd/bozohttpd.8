@@ -1,8 +1,8 @@
-.\"	$NetBSD: bozohttpd.8,v 1.78 2019/01/17 07:46:16 mrg Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.79 2019/02/28 08:28:21 mrg Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2018 Matthew R. Green
+.\" Copyright (c) 1997-2019 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 7, 2019
+.Dd February 27, 2019
 .Dt BOZOHTTPD 8
 .Os
 .Sh NAME
@@ -245,11 +245,13 @@ to
 The valid values of
 .Ar type
 are
+.Dq ssl timeout ,
 .Dq initial timeout ,
 .Dq header timeout ,
 and
 .Dq request timeout .
-The default values are 30 seconds, 10 seconds and 600 seconds, respectively.
+The default values are 30 seconds, 30 seconds, 10 seconds and 600 seconds,
+respectively.
 .It Fl t Ar chrootdir
 Makes
 .Nm

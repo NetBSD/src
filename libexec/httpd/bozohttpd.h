@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.h,v 1.58 2019/01/22 05:32:57 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.59 2019/02/28 08:28:21 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2018 Matthew R. Green
+ * Copyright (c) 1997-2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include "netbsd_queue.h"
 
 #include <stdbool.h>
+#include <signal.h>
 
 #include <sys/stat.h>
 
@@ -119,6 +120,7 @@ typedef struct bozohttpd_t {
 	int		 hide_dots;	/* hide .* */
 	int		 process_cgi;	/* use the cgi handler */
 	char		*cgibin;	/* cgi-bin directory */
+	unsigned	ssl_timeout;	/* ssl timeout */
 	unsigned	initial_timeout;/* first line timeout */
 	unsigned	header_timeout;	/* header lines timeout */
 	unsigned	request_timeout;/* total session timeout */
@@ -433,5 +435,7 @@ int bozo_set_pref(bozohttpd_t *, bozoprefs_t *, const char *, const char *);
 char *bozo_get_pref(bozoprefs_t *, const char *);
 
 int bozo_get_version(char */*buf*/, size_t /*size*/);
+
+extern volatile sig_atomic_t	bozo_timeout_hit;
 
 #endif	/* BOZOHTTOPD_H_ */
