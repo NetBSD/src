@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.7 2019/02/28 00:17:13 jakllsch Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.8 2019/02/28 00:47:10 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.7 2019/02/28 00:17:13 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.8 2019/02/28 00:47:10 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.7 2019/02/28 00:17:13 jakllsch Exp
 #include <dev/fdt/fdtvar.h>
 
 #include <arm/pci/pci_msi_machdep.h>
+#include <arm/fdt/pcihost_fdtvar.h>
 
 #define	IH_INDEX_MASK			0x0000ffff
 #define	IH_MPSAFE			0x80000000
@@ -60,63 +61,11 @@ __KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.7 2019/02/28 00:17:13 jakllsch Exp
 
 #define	PCIHOST_CACHELINE_SIZE		arm_dcache_align
 
-/* Physical address format bit definitions */
-#define	PHYS_HI_RELO			__BIT(31)
-#define	PHYS_HI_PREFETCH		__BIT(30)
-#define	PHYS_HI_ALIASED			__BIT(29)
-#define	PHYS_HI_SPACE			__BITS(25,24)
-#define	 PHYS_HI_SPACE_CFG		0
-#define	 PHYS_HI_SPACE_IO		1
-#define	 PHYS_HI_SPACE_MEM32		2
-#define	 PHYS_HI_SPACE_MEM64		3
-#define	PHYS_HI_BUS			__BITS(23,16)
-#define	PHYS_HI_DEVICE			__BITS(15,11)
-#define	PHYS_HI_FUNCTION		__BITS(10,8)
-#define	PHYS_HI_REGISTER		__BITS(7,0)
-
-static int pcihost_segment = 0;
-
-enum pcihost_type {
-	PCIHOST_CAM = 1,
-	PCIHOST_ECAM,
-};
-
-struct pcih_bus_space {
-	struct bus_space	bst;
-
-	int		(*map)(void *, bus_addr_t, bus_size_t,
-			      int, bus_space_handle_t *);
-	struct space_range {
-		bus_addr_t	bpci;
-		bus_addr_t	bbus;
-		bus_size_t	size;
-	} 			ranges[4];
-	size_t			nranges;
-};
-
-struct pcihost_softc {
-	device_t		sc_dev;
-	bus_dma_tag_t		sc_dmat;
-	bus_space_tag_t		sc_bst;
-	bus_space_handle_t	sc_bsh;
-	int			sc_phandle;
-
-	enum pcihost_type	sc_type;
-
-	u_int			sc_seg;
-	u_int			sc_bus_min;
-	u_int			sc_bus_max;
-
-	struct arm32_pci_chipset sc_pc;
-
-	struct pcih_bus_space	sc_io;
-	struct pcih_bus_space	sc_mem;
-};
+int pcihost_segment = 0;
 
 static int	pcihost_match(device_t, cfdata_t, void *);
 static void	pcihost_attach(device_t, device_t, void *);
 
-static void	pcihost_init(pci_chipset_tag_t, void *);
 static int	pcihost_config(struct pcihost_softc *);
 
 static void	pcihost_attach_hook(device_t, device_t,
@@ -167,11 +116,9 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcihost_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
-	struct pcibus_attach_args pba;
 	bus_addr_t cs_addr;
 	bus_size_t cs_size;
-	const u_int *data;
-	int error, len;
+	int error;
 
 	if (fdtbus_get_reg(faa->faa_phandle, 0, &cs_addr, &cs_size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -192,9 +139,20 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Generic PCI host controller\n");
 
+	pcihost_init(&sc->sc_pc, sc);
+	pcihost_init2(sc);
+}
+
+void
+pcihost_init2(struct pcihost_softc *sc)
+{
+	struct pcibus_attach_args pba;
+	const u_int *data;
+	int len;
+
 	if ((data = fdtbus_get_prop(sc->sc_phandle, "bus-range", &len)) != NULL) {
 		if (len != 8) {
-			aprint_error_dev(self, "malformed 'bus-range' property\n");
+			aprint_error_dev(sc->sc_dev, "malformed 'bus-range' property\n");
 			return;
 		}
 		sc->sc_bus_min = be32toh(data[0]);
@@ -212,8 +170,6 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (of_getprop_uint32(sc->sc_phandle, "linux,pci-domain", &sc->sc_seg))
 		sc->sc_seg = pcihost_segment++;
-
-	pcihost_init(&sc->sc_pc, sc);
 
 	if (pcihost_config(sc) != 0)
 		return;
@@ -239,10 +195,10 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = sc->sc_bus_min;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found_ia(sc->sc_dev, "pcibus", &pba, pcibusprint);
 }
 
-static void
+void
 pcihost_init(pci_chipset_tag_t pc, void *priv)
 {
 	pc->pc_conf_v = priv;
