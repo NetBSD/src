@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.64 2019/02/27 23:29:50 dholland Exp $ */
+/*	$NetBSD: arp.c,v 1.65 2019/02/28 01:20:25 nonaka Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.64 2019/02/27 23:29:50 dholland Exp $");
+__RCSID("$NetBSD: arp.c,v 1.65 2019/02/28 01:20:25 nonaka Exp $");
 #endif
 #endif /* not lint */
 
@@ -413,8 +413,10 @@ delete_one(struct rt_msghdr *rtm)
 	sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
 	sdl = (struct sockaddr_dl *)(void *)(RT_ROUNDUP(sina->sin_len) +
 	    (char *)(void *)sina);
-	if (sdl->sdl_family != AF_LINK)
+	if (sdl->sdl_family != AF_LINK) {
+		prog_close(s);
 		return (1);
+	}
 	rtm = rtmsg(s, RTM_DELETE, rtm, sina, sdl);
 	prog_close(s);
 	if (rtm == NULL)
