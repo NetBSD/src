@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.628 2019/02/23 11:41:08 kamil Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.629 2019/02/28 16:56:35 khorben Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.628 2019/02/23 11:41:08 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.629 2019/02/28 16:56:35 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -13482,7 +13482,7 @@ wm_nvm_version(struct wm_softc *sc)
 	 *	82572EI	0x5069	5.6.9?
 	 *	82574L	0x1080	1.8.0?	(the spec update notes about 2.1.4)
 	 *		0x2013	2.1.3?
-	 *	82583	0x10a0	1.10.0? (document says it's default vaule)
+	 *	82583	0x10a0	1.10.0? (document says it's default value)
 	 */
 
 	/*

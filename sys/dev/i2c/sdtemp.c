@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.34 2018/06/16 21:22:13 thorpej Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.35 2019/02/28 16:56:35 khorben Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.34 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.35 2019/02/28 16:56:35 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	 * IDT's devices and some Microchip's devices have the resolution
 	 * register in the vendor specific registers area. The devices'
 	 * resolution bits in the capability register are not the maximum
-	 * resolution but the current vaule of the setting.
+	 * resolution but the current value of the setting.
 	 */
 	if (sdtemp_dev_table[i].sdtemp_config != NULL)
 		sdtemp_dev_table[i].sdtemp_config(sc);
