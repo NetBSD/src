@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2014/11/20 07:07:13 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2019/02/28 02:35:37 isaki Exp $
 
 #
 # Note: The atomic operations here in these assembly files are atomic
@@ -30,6 +30,7 @@ SRCS+=  atomic_add_16_cas.c atomic_add_8_cas.c	\
 	atomic_nand_32_cas.c atomic_nand_16_cas.c atomic_nand_8_cas.c	\
 	atomic_xor_32_cas.c atomic_xor_16_cas.c atomic_xor_8_cas.c	\
 	atomic_and_32_cas.c atomic_and_16_cas.c atomic_and_8_cas.c	\
+	atomic_and_16_nv_cas.c atomic_and_8_nv_cas.c			\
 	atomic_or_32_cas.c atomic_or_16_cas.c atomic_or_8_cas.c		\
 	atomic_cas_32_cas.c atomic_cas_16_cas.c atomic_cas_8_cas.c	\
 	atomic_swap_32_cas.c atomic_swap_16_cas.c atomic_swap_8_cas.c
