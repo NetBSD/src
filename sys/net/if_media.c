@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.36 2018/03/30 13:21:24 mlelstv Exp $	*/
+/*	$NetBSD: if_media.c,v 1.37 2019/02/28 05:25:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.36 2018/03/30 13:21:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.37 2019/02/28 05:25:35 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
     u_long cmd)
 {
 	struct ifmedia_entry *match;
-	struct ifmediareq *ifmr = (struct ifmediareq *) ifr;
+	struct ifmediareq *ifmr = (struct ifmediareq *)ifr;
 	int error = 0;
 #ifdef OSIOCSIFMEDIA
 	struct oifreq *oifr = (struct oifreq *)ifr;
@@ -290,8 +290,7 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		 *     Similarly, if best match changed (kernel debugger?).
 		 */
 		if ((IFM_SUBTYPE(newmedia) != IFM_AUTO) &&
-		    (newmedia == ifm->ifm_media) &&
-		    (match == ifm->ifm_cur))
+		    (newmedia == ifm->ifm_media) && (match == ifm->ifm_cur))
 			return 0;
 
 		/*
@@ -382,8 +381,8 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	int e;
 
 	/*
-	 * If if_is_mpsafe(ifp), KERNEL_LOCK isn't held here, but _ifmedia_ioctl
-	 * isn't MP-safe yet, so we must hold the lock.
+	 * If if_is_mpsafe(ifp), KERNEL_LOCK isn't held here,
+	 * but _ifmedia_ioctl isn't MP-safe yet, so we must hold the lock.
 	 */
 	KERNEL_LOCK_IF_IFP_MPSAFE(ifp);
 	e = _ifmedia_ioctl(ifp, ifr, ifm, cmd);
@@ -402,8 +401,7 @@ ifmedia_match(struct ifmedia *ifm, u_int target, u_int mask)
 	match = NULL;
 	mask = ~mask;
 
-	for (next = TAILQ_FIRST(&ifm->ifm_list); next != NULL;
-	     next = TAILQ_NEXT(next, ifm_list)) {
+	TAILQ_FOREACH(next, &ifm->ifm_list, ifm_list) {
 		if ((next->ifm_media & mask) == (target & mask)) {
 			if (match) {
 #if defined(IFMEDIA_DEBUG) || defined(DIAGNOSTIC)
@@ -428,8 +426,7 @@ ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 {
 	struct ifmedia_entry *ife, *nife;
 
-	for (ife = TAILQ_FIRST(&ifm->ifm_list); ife != NULL; ife = nife) {
-		nife = TAILQ_NEXT(ife, ifm_list);
+	TAILQ_FOREACH_SAFE(ife, &ifm->ifm_list, ifm_list, nife) {
 		if (inst == IFM_INST_ANY ||
 		    inst == IFM_INST(ife->ifm_media)) {
 			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
