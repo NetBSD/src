@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.210 2018/11/30 10:18:37 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.211 2019/02/28 16:56:35 khorben Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.210 2018/11/30 10:18:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.211 2019/02/28 16:56:35 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3726,7 +3726,7 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int extcapoff)
 		printf("Device Specific Mode\n");
 		break;
 	default:
-		printf("(reserved vaule)\n");
+		printf("(reserved value)\n");
 		break;
 	}
 	printf("      TPH Requester Enable: ");
@@ -3741,7 +3741,7 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int extcapoff)
 		printf("TPH and Extended TPH");
 		break;
 	default:
-		printf("(reserved vaule)\n");
+		printf("(reserved value)\n");
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.112 2019/01/31 05:20:49 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.113 2019/02/28 16:56:35 khorben Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1493,7 +1493,7 @@ struct livengood_tcpip_ctxdesc {
 #define WM_INVM_DATA_REG(reg)	(0x12120 + 4*(reg))
 #define INVM_SIZE			64 /* Number of INVM Data Registers */
 
-/* iNVM default vaule */
+/* iNVM default value */
 #define NVM_INIT_CTRL_2_DEFAULT_I211	0x7243
 #define NVM_INIT_CTRL_4_DEFAULT_I211	0x00c1
 #define NVM_LED_1_CFG_DEFAULT_I211	0x0184
