@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.61 2019/02/22 22:25:22 uwe Exp $	*/
+/*	$NetBSD: tip.c,v 1.62 2019/02/28 17:41:27 gson Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.61 2019/02/22 22:25:22 uwe Exp $");
+__RCSID("$NetBSD: tip.c,v 1.62 2019/02/28 17:41:27 gson Exp $");
 #endif /* not lint */
 
 /*
@@ -332,7 +332,7 @@ intprompt(int dummy __unused)
 /*
  * getchar() wrapper that checks for EOF on the local end.
  */
-static char
+static int
 xgetchar(void)
 {
 	int c = getchar();
@@ -341,7 +341,7 @@ xgetchar(void)
 		/* NOTREACHED */
 	}
 
-	return (char)c & STRIP_PAR;
+	return c & STRIP_PAR;
 }
 
 
