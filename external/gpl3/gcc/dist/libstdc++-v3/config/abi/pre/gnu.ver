@@ -1007,7 +1007,10 @@ GLIBCXX_3.4 {
 #ifdef HAVE_SYMVER_SYMBOL_RENAMING_RUNTIME_SUPPORT
    # GLIBCXX_ABI compatibility only.
     # std::string
+    # XXXMRG this causes dupe symbols on netbsd
+#if 0
     _ZNKSs11_M_disjunctEPKc;
+#endif
     _ZNKSs15_M_check_lengthE[jmy][jmy]PKc;
     _ZNSs4_Rep26_M_set_length_and_sharableE*;
     _ZNSs7_M_copyEPcPKc[jmy];
@@ -1015,7 +1018,10 @@ GLIBCXX_3.4 {
     _ZNSs9_M_assignEPc[jmy]c;
 
     # std::wstring
+    # XXXMRG this causes dupe symbols on netbsd
+#if 0
     _ZNKSbIwSt11char_traitsIwESaIwEE11_M_disjunctEPKw;
+#endif
     _ZNKSbIwSt11char_traitsIwESaIwEE15_M_check_lengthE[jmy][jmy]PKc;
     _ZNSbIwSt11char_traitsIwESaIwEE4_Rep26_M_set_length_and_sharableE*;
     _ZNSbIwSt11char_traitsIwESaIwEE7_M_copyEPwPKw[jmy];
