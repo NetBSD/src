@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch32_syscall.c,v 1.1 2018/10/12 01:28:57 ryo Exp $	*/
+/*	$NetBSD: aarch32_syscall.c,v 1.2 2019/03/01 02:40:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarch32_syscall.c,v 1.1 2018/10/12 01:28:57 ryo Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: aarch32_syscall.c,v 1.2 2019/03/01 02:40:01 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/ktrace.h>

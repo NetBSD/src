@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3 2018/07/17 00:36:30 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.4 2019/03/01 02:40:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_multiprocessor.h"
 /* DO NOT INCLUDE opt_compat_XXX.h */
 
 #include <sys/param.h>
@@ -62,7 +61,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2018/07/17 00:36:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2019/03/01 02:40:01 mrg Exp $");
 
 void
 cpu_spawn_return(struct lwp *l)
