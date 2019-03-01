@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.180 2018/11/28 19:46:22 mlelstv Exp $	*/
+/*	$NetBSD: lwp.h,v 1.181 2019/03/01 09:02:03 hannken Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -180,6 +180,7 @@ struct lwp {
 	struct kauth_cred *l_cred;	/* !: cached credentials */
 	struct filedesc	*l_fd;		/* !: cached copy of proc::p_fd */
 	void		*l_emuldata;	/* !: kernel lwp-private data */
+	struct fstrans_lwp_info *l_fstrans; /* (: fstrans private data */
 	u_int		l_cv_signalled;	/* c: restarted by cv_signal() */
 	u_short		l_shlocks;	/* !: lockdebug: shared locks held */
 	u_short		l_exlocks;	/* !: lockdebug: excl. locks held */

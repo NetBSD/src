@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.195 2018/11/26 17:18:01 skrll Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.196 2019/03/01 09:02:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.195 2018/11/26 17:18:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.196 2019/03/01 09:02:03 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -236,6 +236,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.195 2018/11/26 17:18:01 skrll Exp $")
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
 #include <sys/filedesc.h>
+#include <sys/fstrans.h>
 #include <sys/dtrace_bsd.h>
 #include <sys/sdt.h>
 #include <sys/xcall.h>
@@ -1092,6 +1093,9 @@ lwp_exit(struct lwp *l)
 
 	/* Drop filedesc reference. */
 	fd_free();
+
+	/* Release fstrans private data. */
+	fstrans_lwp_dtor(l);
 
 	/* Delete the specificdata while it's still safe to sleep. */
 	lwp_finispecific(l);
