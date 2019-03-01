@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73 2015/08/24 17:37:10 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.74 2019/03/01 16:42:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.73 2015/08/24 17:37:10 bouyer Exp $");
+__RCSID("$NetBSD: main.c,v 1.74 2019/03/01 16:42:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 	temp = _PATH_DTMP;
 	strcpy(labelstr, "none");	/* XXX safe strcpy. */
 	if (TP_BSIZE / DEV_BSIZE == 0 || TP_BSIZE % DEV_BSIZE != 0)
-		quit("TP_BSIZE must be a multiple of DEV_BSIZE\n");
+		quit("TP_BSIZE must be a multiple of DEV_BSIZE");
 	level = '0';
 	timestamp = 0;
 
@@ -286,11 +286,12 @@ main(int argc, char *argv[])
 		error = lstat(argv[i], &sb);
 		if (Fflag || (!error && (S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode)))) {
 			if (error)
-				quit("Cannot stat %s: %s\n", argv[i], strerror(errno));
+				quite(errno, "can't stat %s", argv[i]);
 			disk = argv[i];
  multicheck:
 			if (dirc != 0)
-				quit("Can't dump a disk or image at the same time as a file list\n");
+				quit("can't dump a disk or image at the same"
+				" time as a file list");
 			break;
 		}
 		if ((dt = fstabsearch(argv[i])) != NULL) {
@@ -299,8 +300,7 @@ main(int argc, char *argv[])
 			goto multicheck;
 		}
 		if (statvfs(argv[i], &fsbuf) == -1)
-			quit("Cannot statvfs %s: %s\n", argv[i],
-			    strerror(errno));
+			quite(errno, "can't statvfs %s", argv[i]);
 		disk = fsbuf.f_mntfromname;
 		if (strcmp(argv[i], fsbuf.f_mntonname) == 0)
 			goto multicheck;
@@ -318,7 +318,7 @@ main(int argc, char *argv[])
 			    mountpoint);
 		} else {
 			if (strcmp(mountpoint, fsbuf.f_mntonname) != 0)
-				quit("%s is not on %s\n", argv[i], mountpoint);
+				quit("%s is not on %s", argv[i], mountpoint);
 		}
 		msg("Dumping file/directory %s\n", argv[i]);
 		dirc++;
@@ -403,18 +403,18 @@ main(int argc, char *argv[])
 	mntinfo = mntinfosearch(disk);
 	if ((dt = fstabsearch(disk)) != NULL) {
 		if (getfsspecname(buf, sizeof(buf), dt->fs_spec) == NULL)
-			quit("%s (%s)", buf, strerror(errno));
+			quite(errno, "can't resolve mount %s (%s)", dt->fs_spec,
+			    buf);
 		if (getdiskrawname(rbuf, sizeof(rbuf), buf) == NULL)
-			quit("Can't get disk raw name for `%s' (%s)",
-			    buf, strerror(errno));
+			quite(errno, "can't get disk raw name for %s", buf);
 		disk = rbuf;
 		mountpoint = dt->fs_file;
 		msg("Found %s on %s in %s\n", disk, mountpoint, _PATH_FSTAB);
 	} else if (mntinfo != NULL) {
 		if (getdiskrawname(rbuf, sizeof(rbuf), mntinfo->f_mntfromname)
 		    == NULL)
-			quit("Can't get disk raw name for `%s' (%s)",
-			    mntinfo->f_mntfromname, strerror(errno));
+			quite(errno, "can't get disk raw name for %s",
+			    mntinfo->f_mntfromname);
 		disk = rbuf;
 		mountpoint = mntinfo->f_mntonname;
 		msg("Found %s on %s in mount table\n", disk, mountpoint);
@@ -592,7 +592,8 @@ main(int argc, char *argv[])
 	 * Allocate tape buffer.
 	 */
 	if (!alloctape())
-		quit("can't allocate tape buffers - try a smaller blocking factor.\n");
+		quit("can't allocate tape buffers - try a smaller"
+		    " blocking factor.");
 
 	startnewtape(1);
 	(void)time((time_t *)&(tstart_writing));
@@ -709,7 +710,7 @@ sig(int signo)
 	case SIGTERM:
 	case SIGTRAP:
 		if (pipeout)
-			quit("Signal on pipe: cannot recover\n");
+			quit("Signal on pipe: cannot recover");
 		msg("Rewriting attempted as response to signal %s.\n", sys_siglist[signo]);
 		(void)fflush(stderr);
 		(void)fflush(stdout);
@@ -805,7 +806,7 @@ xcalloc(size_t number, size_t size)
 
 	p = calloc(number, size);
 	if (p == NULL)
-		quit("%s\n", strerror(errno));
+		quite(errno, "Can't allocate %zu bytes", size * number);
 	return (p);
 }
 
@@ -816,7 +817,7 @@ xmalloc(size_t size)
 
 	p = malloc(size);
 	if (p == NULL)
-		quit("%s\n", strerror(errno));
+		quite(errno, "Can't allocate %zu bytes", size);
 	return (p);
 }
 
@@ -827,6 +828,6 @@ xstrdup(const char *str)
 
 	p = strdup(str);
 	if (p == NULL)
-		quit("%s\n", strerror(errno));
+		quite(errno, "Can't copy %s", str);
 	return (p);
 }
