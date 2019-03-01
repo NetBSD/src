@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2019/02/27 08:21:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.45 2019/03/01 08:15:23 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -18,15 +18,19 @@ LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
 COPTS.random.cc+=	${${ACTIVE_CC} == "clang":? -mrdrnd :}
 .endif
 
+DIST=		${GCCDIST}
+GNUVER=		${DIST}/libstdc++-v3/config/abi/pre/gnu.ver
 SYMBOLS=	libstdc++-symbols.ver
 .if ${MKPIC} != "no"
-${SYMBOLS}: Makefile
-	cat ${DIST}/libstdc++-v3/config/abi/pre/gnu.ver ${G_port_specific_symbol_files} | \
+${SYMBOLS}: Makefile ${GNUVER}
+	cat ${GNUVER} ${G_port_specific_symbol_files} | \
 	${TOOL_GREP} -E -v '^[     ]*#(#| |$$)' | \
-	${CXX} -I${DESTDIR}/usr/include/g++ -E -P -include ${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/c++config.h - > \
+	${CXX} -I${DESTDIR}/usr/include/g++ -E -P -include ${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/symver-config.h - > \
 	${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET} && rm -f ${.TARGET}.tmp
 
-CLEANFILES+=	${SYMBOLS}
+CLEANFILES+=	${SYMBOLS} ${SYMBOLS}.tmp
+
+DPADD+=		${SYMBOLS}
 
 .if ${MKPICLIB} != "no"
 libstdc++_pic.a:: ${SYMBOLS}
