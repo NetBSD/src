@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbusicreg.h,v 1.1 2019/02/15 08:54:02 nonaka Exp $	*/
+/*	$NetBSD: vmbusicreg.h,v 1.2 2019/03/01 10:02:33 nonaka Exp $	*/
 /*	$OpenBSD: hypervicreg.h,v 1.6 2017/11/07 16:49:42 mikeb Exp $	*/
 
 /*-
@@ -31,8 +31,6 @@
 
 #ifndef _VMBUSICREG_H_
 #define _VMBUSICREG_H_
-
-#define VMBUS_IC_BUFRINGSIZE		(4 * PAGE_SIZE)
 
 #define VMBUS_ICMSG_TYPE_NEGOTIATE	0
 #define VMBUS_ICMSG_TYPE_HEARTBEAT	1
