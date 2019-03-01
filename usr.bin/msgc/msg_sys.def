@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.43 2019/01/22 18:39:49 martin Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.44 2019/03/01 17:02:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -490,6 +490,7 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 	WINDOW *svmsg = NULL, *sv_win = NULL; /* XXX -Wuninitialized [many] */
 	int maxx, maxy;
 	int msg_flags = MSG_PROMPT_ECHO | MSG_PROMPT_HIDE_DFLT;
+	const char *np, *ep;
 
 	maxx = getmaxx(msg_win);
 	maxy = getmaxy(msg_win);
@@ -517,6 +518,12 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 
 	if (x == -1)
 		x = (maxx - w) / 2 + 1;
+	if (h < 0) {
+		h = 3;
+		for (np = msg_string(msg_no); (ep = strchr(np, '\n'));
+		    np = ep + 1)
+			h++;
+	}
 	if (h < 3)
 		h = 3;
 	if (y < 3)
