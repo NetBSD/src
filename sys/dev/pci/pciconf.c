@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.40 2019/03/01 07:02:56 msaitoh Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.41 2019/03/01 09:26:00 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.40 2019/03/01 07:02:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.41 2019/03/01 09:26:00 msaitoh Exp $");
 
 #include "opt_pci.h"
 
@@ -306,9 +306,9 @@ set_busreg(pci_chipset_tag_t pc, pcitag_t tag, int prim, int sec, int sub)
 {
 	pcireg_t	busreg;
 
-	busreg  =  prim << PCI_BRIDGE_BUS_PRIMARY_SHIFT;
-	busreg |=   sec << PCI_BRIDGE_BUS_SECONDARY_SHIFT;
-	busreg |=   sub << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT;
+	busreg  =  __SHIFTIN(prim, PCI_BRIDGE_BUS_PRIMARY);
+	busreg |=  __SHIFTIN(sec,  PCI_BRIDGE_BUS_SECONDARY);
+	busreg |=  __SHIFTIN(sub,  PCI_BRIDGE_BUS_SUBORDINATE);
 	pci_conf_write(pc, tag, PCI_BRIDGE_BUS_REG, busreg);
 }
 
@@ -486,9 +486,9 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 
 		busreg = pci_conf_read(pb->pc, tag, PCI_BUSNUM);
 		busreg  =  (busreg & 0xff000000) |
-		    pb->busno << PCI_BRIDGE_BUS_PRIMARY_SHIFT |
-		    pb->next_busno << PCI_BRIDGE_BUS_SECONDARY_SHIFT |
-		    pb->next_busno << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT;
+		    __SHIFTIN(pb->busno, PCI_BRIDGE_BUS_PRIMARY) |
+		    __SHIFTIN(pb->next_busno, PCI_BRIDGE_BUS_SECONDARY) |
+		    __SHIFTIN(pb->next_busno, PCI_BRIDGE_BUS_SUBORDINATE);
 		pci_conf_write(pb->pc, tag, PCI_BUSNUM, busreg);
 
 		pb->next_busno++;
@@ -867,9 +867,8 @@ configure_bridge(pciconf_dev_t *pd)
 		io_limit = 0x0000;
 	}
 	if (pb->io_32bit) {
-		iohigh =
-		    ((io_base >> 16) << PCI_BRIDGE_IOHIGH_BASE_SHIFT) |
-		    ((io_limit >> 16) << PCI_BRIDGE_IOHIGH_LIMIT_SHIFT);
+		iohigh = __SHIFTIN(io_base >> 16, PCI_BRIDGE_IOHIGH_BASE) |
+		    __SHIFTIN(io_limit >> 16, PCI_BRIDGE_IOHIGH_LIMIT);
 	} else {
 		if (io_limit > 0xFFFF) {
 			printf("Bus %d bridge does not support 32-bit I/O.  ",
@@ -881,11 +880,11 @@ configure_bridge(pciconf_dev_t *pd)
 		iohigh = 0;
 	}
 	io = pci_conf_read(pb->pc, pd->tag, PCI_BRIDGE_STATIO_REG) &
-	    (PCI_BRIDGE_STATIO_STATUS_MASK << PCI_BRIDGE_STATIO_STATUS_SHIFT);
-	io |= (((io_base >> 8) & PCI_BRIDGE_STATIO_IOBASE_MASK)
-	    << PCI_BRIDGE_STATIO_IOBASE_SHIFT);
-	io |= (((io_limit >> 8) & PCI_BRIDGE_STATIO_IOLIMIT_MASK)
-	    << PCI_BRIDGE_STATIO_IOLIMIT_SHIFT);
+	    PCI_BRIDGE_STATIO_STATUS;
+	io |= __SHIFTIN((io_base >> 8) & PCI_BRIDGE_STATIO_IOADDR,
+	    PCI_BRIDGE_STATIO_IOBASE);
+	io |= __SHIFTIN((io_limit >> 8) & PCI_BRIDGE_STATIO_IOADDR,
+	    PCI_BRIDGE_STATIO_IOLIMIT);
 	pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_STATIO_REG, io);
 	pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_IOHIGH_REG, iohigh);
 
@@ -905,10 +904,10 @@ configure_bridge(pciconf_dev_t *pd)
 		mem_limit = 0x000000;
 	}
 #endif
-	mem = (((mem_base >> 20) & PCI_BRIDGE_MEMORY_BASE_MASK)
-	    << PCI_BRIDGE_MEMORY_BASE_SHIFT);
-	mem |= (((mem_limit >> 20) & PCI_BRIDGE_MEMORY_LIMIT_MASK)
-	    << PCI_BRIDGE_MEMORY_LIMIT_SHIFT);
+	mem = __SHIFTIN((mem_base >> 16) & PCI_BRIDGE_MEMORY_ADDR,
+	    PCI_BRIDGE_MEMORY_BASE);
+	mem |= __SHIFTIN((mem_limit >> 16) & PCI_BRIDGE_MEMORY_ADDR,
+	    PCI_BRIDGE_MEMORY_LIMIT);
 	pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_MEMORY_REG, mem);
 
 	/* Configure prefetchable mem base & limit */
@@ -930,10 +929,10 @@ configure_bridge(pciconf_dev_t *pd)
 		mem_limit = 0x000000;
 	}
 #endif
-	mem = (((mem_base >> 20) & PCI_BRIDGE_PREFETCHMEM_BASE_MASK)
-	    << PCI_BRIDGE_PREFETCHMEM_BASE_SHIFT);
-	mem |= (((mem_limit >> 20) & PCI_BRIDGE_PREFETCHMEM_LIMIT_MASK)
-	    << PCI_BRIDGE_PREFETCHMEM_LIMIT_SHIFT);
+	mem = __SHIFTIN((mem_base >> 16) & PCI_BRIDGE_PREFETCHMEM_ADDR,
+	    PCI_BRIDGE_PREFETCHMEM_BASE);
+	mem |= __SHIFTIN((mem_limit >> 16) & PCI_BRIDGE_PREFETCHMEM_ADDR,
+	    PCI_BRIDGE_PREFETCHMEM_LIMIT);
 	pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_PREFETCHMEM_REG, mem);
 	/*
 	 * XXX -- 64-bit systems need a lot more than just this...
@@ -941,10 +940,10 @@ configure_bridge(pciconf_dev_t *pd)
 	if (isprefetchmem64) {
 		mem_base  = (uint64_t)mem_base  >> 32;
 		mem_limit = (uint64_t)mem_limit >> 32;
-		pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_PREFETCHBASE32_REG,
-		    mem_base & 0xffffffff);
-		pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_PREFETCHLIMIT32_REG,
-		    mem_limit & 0xffffffff);
+		pci_conf_write(pb->pc, pd->tag,
+		    PCI_BRIDGE_PREFETCHBASEUP32_REG, mem_base & 0xffffffff);
+		pci_conf_write(pb->pc, pd->tag,
+		    PCI_BRIDGE_PREFETCHLIMITUP32_REG, mem_limit & 0xffffffff);
 	}
 
 	rv = configure_bus(pb);
@@ -957,13 +956,11 @@ configure_bridge(pciconf_dev_t *pd)
 		extent_destroy(pb->pmemext);
 	if (rv == 0) {
 		cmd = pci_conf_read(pd->pc, pd->tag, PCI_BRIDGE_CONTROL_REG);
-		cmd &= PCI_BRIDGE_CONTROL_MASK;
-		cmd |= (PCI_BRIDGE_CONTROL_PERE | PCI_BRIDGE_CONTROL_SERR)
-		    << PCI_BRIDGE_CONTROL_SHIFT;
-		if (pb->fast_b2b) {
-			cmd |= PCI_BRIDGE_CONTROL_SECFASTB2B
-			    << PCI_BRIDGE_CONTROL_SHIFT;
-		}
+		cmd &= ~PCI_BRIDGE_CONTROL; /* Clear control bit first */
+		cmd |= PCI_BRIDGE_CONTROL_PERE | PCI_BRIDGE_CONTROL_SERR;
+		if (pb->fast_b2b)
+			cmd |= PCI_BRIDGE_CONTROL_SECFASTB2B;
+
 		pci_conf_write(pd->pc, pd->tag, PCI_BRIDGE_CONTROL_REG, cmd);
 		cmd = pci_conf_read(pd->pc, pd->tag, PCI_COMMAND_STATUS_REG);
 		cmd |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;

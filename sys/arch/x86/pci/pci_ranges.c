@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_ranges.c,v 1.7 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: pci_ranges.c,v 1.8 2019/03/01 09:25:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.7 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.8 2019/03/01 09:25:59 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -173,15 +173,14 @@ io_range_extend_by_vga_enable(struct range_infer_ctx *ric,
 			, .r_mask = PCI_COMMAND_IO_ENABLE
 		  }, {
 			  .r_ofs = PCI_BRIDGE_CONTROL_REG
-			, .r_mask =
-			    PCI_BRIDGE_CONTROL_VGA << PCI_BRIDGE_CONTROL_SHIFT
+			, .r_mask = PCI_BRIDGE_CONTROL_VGA;
 		  }}
 	}, pal[2];
 
 	aprint_debug("%s: %d.%d.%d enter\n", __func__, bus, dev, fun);
 
 	if ((csr & PCI_COMMAND_IO_ENABLE) == 0 ||
-	    (bcr & (PCI_BRIDGE_CONTROL_VGA << PCI_BRIDGE_CONTROL_SHIFT)) == 0) {
+	    (bcr & PCI_BRIDGE_CONTROL_VGA) == 0) {
 		aprint_debug("%s: %d.%d.%d I/O or VGA disabled\n",
 		    __func__, bus, dev, fun);
 		return true;
@@ -228,10 +227,8 @@ io_range_extend_by_win(struct range_infer_ctx *ric,
 	r[0].r_ofs = ofs;
 	r[0].r_val = io;
 
-	baser = ((io >> PCI_BRIDGE_STATIO_IOBASE_SHIFT) &
-	    PCI_BRIDGE_STATIO_IOBASE_MASK) >> 4;
-	limitr = ((io >> PCI_BRIDGE_STATIO_IOLIMIT_SHIFT) &
-	    PCI_BRIDGE_STATIO_IOLIMIT_MASK) >> 4;
+	baser = __SHIFTOUT(io, PCI_BRIDGE_STATIO_IOBASE) >> 4;
+	limitr = __SHIFTOUT(io, PCI_BRIDGE_STATIO_IOLIMIT) >> 4;
 
 	if (PCI_BRIDGE_IO_32BITS(io)) {
 		pcireg_t baseh, limith;
@@ -240,10 +237,8 @@ io_range_extend_by_win(struct range_infer_ctx *ric,
 		r[1].r_ofs = ofshigh;
 		r[1].r_val = iohigh;
 
-		baseh = (iohigh >> PCI_BRIDGE_IOHIGH_BASE_SHIFT)
-		    & PCI_BRIDGE_IOHIGH_BASE_MASK;
-		limith = (iohigh >> PCI_BRIDGE_IOHIGH_LIMIT_SHIFT)
-		    & PCI_BRIDGE_IOHIGH_LIMIT_MASK;
+		baseh = __SHIFTOUT(iohigh, PCI_BRIDGE_IOHIGH_BASE);
+		limith = __SHIFTOUT(iohigh, PCI_BRIDGE_IOHIGH_LIMIT);
 
 		baser |= baseh << 4;
 		limitr |= limith << 4;
@@ -447,15 +442,14 @@ mmio_range_extend_by_vga_enable(struct range_infer_ctx *ric,
 			, .r_mask = PCI_COMMAND_MEM_ENABLE
 		  }, {
 			  .r_ofs = PCI_BRIDGE_CONTROL_REG
-			, .r_mask =
-			    PCI_BRIDGE_CONTROL_VGA << PCI_BRIDGE_CONTROL_SHIFT
+			, .r_mask = PCI_BRIDGE_CONTROL_VGA
 		  }}
 	}, pal;
 
 	aprint_debug("%s: %d.%d.%d enter\n", __func__, bus, dev, fun);
 
 	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0 ||
-	    (bcr & (PCI_BRIDGE_CONTROL_VGA << PCI_BRIDGE_CONTROL_SHIFT)) == 0) {
+	    (bcr & PCI_BRIDGE_CONTROL_VGA) == 0) {
 		aprint_debug("%s: %d.%d.%d memory or VGA disabled\n",
 		    __func__, bus, dev, fun);
 		return true;

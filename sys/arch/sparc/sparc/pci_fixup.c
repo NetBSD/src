@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_fixup.c,v 1.1 2013/04/16 06:57:06 jdc Exp $	*/
+/*	$NetBSD: pci_fixup.c,v 1.2 2019/03/01 09:25:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -479,10 +479,10 @@ mspcic_pci_fixup(int depth, pcitag_t starttag, int *maxbus, uint32_t *io,
 	/* 64-bit prefetchable range (if supported) - set it to 0 */
 	val = pci_conf_read(NULL, starttag, PCI_BRIDGE_PREFETCHMEM_REG);
 	if (val & 0x01) {
-		pci_conf_write(NULL, starttag, PCI_BRIDGE_PREFETCHBASE32_REG,
-		    (pcireg_t) ~0);
-		pci_conf_write(NULL, starttag, PCI_BRIDGE_PREFETCHLIMIT32_REG,
-		    (pcireg_t) 0);
+		pci_conf_write(NULL, starttag,
+		    PCI_BRIDGE_PREFETCHBASEUP32_REG, (pcireg_t) ~0);
+		pci_conf_write(NULL, starttag,
+		    PCI_BRIDGE_PREFETCHLIMITUP32_REG, (pcireg_t) 0);
 	}
 
 #ifdef SPARC_PCI_FIXUP_DEBUG
