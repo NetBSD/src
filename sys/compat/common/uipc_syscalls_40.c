@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.17 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.18 2019/03/01 11:06:56 pgoyette Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.17 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.18 2019/03/01 11:06:56 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -169,12 +169,12 @@ void
 uipc_syscalls_40_init(void)
 {
  
-	MODULE_SET_HOOK(uipc_syscalls_40_hook, "uipc40", compat_ifconf);
+	MODULE_HOOK_SET(uipc_syscalls_40_hook, "uipc40", compat_ifconf);
 }
  
 void
 uipc_syscalls_40_fini(void)
 {
  
-	MODULE_UNSET_HOOK(uipc_syscalls_40_hook);
+	MODULE_HOOK_UNSET(uipc_syscalls_40_hook);
 }

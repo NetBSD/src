@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent_50.c,v 1.3 2019/01/29 09:28:50 pgoyette Exp $ */
+/* $NetBSD: wsevent_50.c,v 1.4 2019/03/01 11:06:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent_50.c,v 1.3 2019/01/29 09:28:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent_50.c,v 1.4 2019/03/01 11:06:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -148,7 +148,7 @@ void
 wsevent_50_init(void)
 {
 
-	MODULE_SET_HOOK(wscons_copyout_events_50_hook, "wsc_50",
+	MODULE_HOOK_SET(wscons_copyout_events_50_hook, "wsc_50",
 	    wsevent_copyout_events50);
 }
 
@@ -156,5 +156,5 @@ void
 wsevent_50_fini(void)
 {
 
-	MODULE_UNSET_HOOK(wscons_copyout_events_50_hook);
+	MODULE_HOOK_UNSET(wscons_copyout_events_50_hook);
 }

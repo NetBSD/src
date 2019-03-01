@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_20.c,v 1.4 2019/01/29 09:28:50 pgoyette Exp $	*/
+/*	$NetBSD: ieee80211_20.c,v 1.5 2019/03/01 11:06:56 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_20.c,v 1.4 2019/01/29 09:28:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_20.c,v 1.5 2019/03/01 11:06:56 pgoyette Exp $");
 #endif
 
 /*
@@ -119,12 +119,12 @@ void
 ieee80211_20_init(void)
 {
 
-	MODULE_SET_HOOK(ieee80211_ioctl_20_hook, "ieee20", ieee80211_20_ioctl);
+	MODULE_HOOK_SET(ieee80211_ioctl_20_hook, "ieee20", ieee80211_20_ioctl);
 }
 
 void
 ieee80211_20_fini(void)
 {
 
-	MODULE_UNSET_HOOK(ieee80211_ioctl_20_hook);
+	MODULE_HOOK_UNSET(ieee80211_ioctl_20_hook);
 }

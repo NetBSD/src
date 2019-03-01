@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.99 2019/01/27 02:08:48 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.100 2019/03/01 11:06:57 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.99 2019/01/27 02:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.100 2019/03/01 11:06:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,7 @@ reterr:
 	default:
 		/* Check for backward compatible commands */
 
-		MODULE_CALL_HOOK(ocryptof_50_hook, (fp, cmd, data),
+		MODULE_HOOK_CALL(ocryptof_50_hook, (fp, cmd, data),
 		    enosys(), error);
 		if (error == ENOSYS)
 			error = EINVAL;

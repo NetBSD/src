@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.17 2019/01/27 02:08:38 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.18 2019/03/01 11:06:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.17 2019/01/27 02:08:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.18 2019/03/01 11:06:55 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -314,7 +314,7 @@ void
 netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 
-	MODULE_CALL_VOID_HOOK(netbsd32_sendsig_hook, (ksi, mask),  
+	MODULE_HOOK_CALL_VOID(netbsd32_sendsig_hook, (ksi, mask),  
 	    netbsd32_sendsig_siginfo(ksi, mask));
 }
 
@@ -329,14 +329,14 @@ void
 netbsd32_machdep_md_init(void) 
 {
 
-	MODULE_SET_HOOK(netbsd32_machine32_hook, "mach32", netbsd32_machine32);
+	MODULE_HOOK_SET(netbsd32_machine32_hook, "mach32", netbsd32_machine32);
 }
 
 void
 netbsd32_machdep_md_fini(void)
 {
 
-	MODULE_UNSET_HOOK(netbsd32_machine32_hook);
+	MODULE_HOOK_UNSET(netbsd32_machine32_hook);
 }
 
 

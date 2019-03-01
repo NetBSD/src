@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.14 2019/01/27 02:08:41 pgoyette Exp $ */
+/*	$NetBSD: bio.c,v 1.15 2019/03/01 11:06:56 pgoyette Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.14 2019/01/27 02:08:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.15 2019/03/01 11:06:56 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -189,7 +189,7 @@ bioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct  lwp *l)
 			return ENOENT;
 		}
 		mutex_exit(&bio_lock);
-		MODULE_CALL_HOOK(compat_bio_30_hook,
+		MODULE_HOOK_CALL(compat_bio_30_hook,
 		    (common->bc_cookie, cmd, addr, bio_delegate_ioctl),
 		    enosys(), error);
 		if (error == ENOSYS)

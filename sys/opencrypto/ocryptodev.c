@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.12 2019/01/27 02:08:48 pgoyette Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.13 2019/03/01 11:06:57 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.12 2019/01/27 02:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.13 2019/03/01 11:06:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,14 +291,14 @@ static void
 crypto_50_init(void)
 {
 
-	MODULE_SET_HOOK(ocryptof_50_hook, "cryp50", ocryptof_ioctl);
+	MODULE_HOOK_SET(ocryptof_50_hook, "cryp50", ocryptof_ioctl);
 }
 
 static void
 crypto_50_fini(void)
 {
 
-	MODULE_UNSET_HOOK(ocryptof_50_hook);
+	MODULE_HOOK_UNSET(ocryptof_50_hook);
 }
 
 MODULE(MODULE_CLASS_EXEC, compat_crypto_50, "crypto,compat_50");

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.92 2019/01/29 09:28:50 pgoyette Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.93 2019/03/01 11:06:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.92 2019/01/29 09:28:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.93 2019/03/01 11:06:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1492,11 +1492,11 @@ rnd_system_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 
 	default:
-		MODULE_CALL_HOOK(rnd_ioctl_50_hook, (fp, cmd, addr),
+		MODULE_HOOK_CALL(rnd_ioctl_50_hook, (fp, cmd, addr),
 		    enosys(), ret);
 #if defined(_LP64)
 		if (ret == ENOSYS)
-			MODULE_CALL_HOOK(rnd_ioctl32_50_hook, (fp, cmd, addr),
+			MODULE_HOOK_CALL(rnd_ioctl32_50_hook, (fp, cmd, addr),
 			    enosys(), ret);
 #endif
 		if (ret == ENOSYS)

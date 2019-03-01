@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.28 2019/01/28 16:55:57 christos Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.29 2019/03/01 11:06:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.28 2019/01/28 16:55:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.29 2019/03/01 11:06:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -323,7 +323,7 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 
 	default:
 		(void)module_autoload("compat_80", MODULE_CLASS_EXEC);
-		MODULE_CALL_HOOK(compat_modstat_80_hook,
+		MODULE_HOOK_CALL(compat_modstat_80_hook,
 		    (SCARG(uap, cmd), &iov, arg), enosys(), error);
 		if (error == ENOSYS)
 			error = EINVAL;

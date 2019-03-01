@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.2 2019/01/27 02:08:50 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.3 2019/03/01 11:06:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ extern struct hook ## _t {					\
 	type			(*f)args;			\
 } hook __cacheline_aligned;
 
-#define MODULE_SET_HOOK(hook, waitchan, func)			\
+#define MODULE_HOOK_SET(hook, waitchan, func)			\
 do {								\
 								\
 	KASSERT(!hook.hooked);					\
@@ -73,7 +73,7 @@ do {								\
 	hook.hooked = true;					\
 } while /* CONSTCOND */ (0)
 
-#define MODULE_UNSET_HOOK(hook)					\
+#define MODULE_HOOK_UNSET(hook)					\
 do {								\
 								\
 	KASSERT(kernconfig_is_held());				\
@@ -103,7 +103,7 @@ do {								\
 	pserialize_destroy(hook.psz);				\
 } while /* CONSTCOND */ (0)
 
-#define MODULE_CALL_HOOK(hook, args, default, retval)		\
+#define MODULE_HOOK_CALL(hook, args, default, retval)		\
 do {								\
 	bool __hooked;						\
 	int __hook_s;						\
@@ -125,7 +125,7 @@ do {								\
 	}							\
 } while /* CONSTCOND */ (0)
 
-#define MODULE_CALL_VOID_HOOK(hook, args, default)		\
+#define MODULE_HOOK_CALL_VOID(hook, args, default)		\
 do {								\
 	bool __hooked;						\
 	int __hook_s;						\

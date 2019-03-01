@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.177 2019/01/27 02:08:41 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.178 2019/03/01 11:06:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.177 2019/01/27 02:08:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.178 2019/03/01 11:06:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1097,7 +1097,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		make = 1;
 		break;
 	default:
-		MODULE_CALL_HOOK(ccd_ioctl_60_hook,
+		MODULE_HOOK_CALL(ccd_ioctl_60_hook,
 				 (0, cmd, NULL, 0, NULL, NULL),
 				 enosys(), hook);
 		if (hook == 0)
@@ -1111,7 +1111,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return ENOENT;
 	uc = kauth_cred_get();
 
-	MODULE_CALL_HOOK(ccd_ioctl_60_hook,
+	MODULE_HOOK_CALL(ccd_ioctl_60_hook,
 			 (dev, cmd, data, flag, l, ccdioctl),
 			 enosys(), error);
 	if (error != ENOSYS)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.59 2019/01/27 02:08:42 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.60 2019/03/01 11:06:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.59 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.60 2019/03/01 11:06:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -346,7 +346,7 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 
 		pev.pev_type = POWER_EVENT_SWITCH_STATE_CHANGE;
 
-		MODULE_CALL_VOID_HOOK(compat_sysmon_power_40_hook,
+		MODULE_HOOK_CALL_VOID(compat_sysmon_power_40_hook,
 		    (&pev, pswitch, event), __nothing);
 
 		error = sysmon_power_make_dictionary(ped->dict,

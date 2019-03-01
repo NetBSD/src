@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power_40.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_power_40.c,v 1.3 2019/03/01 11:06:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -62,7 +62,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power_40.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power_40.c,v 1.3 2019/03/01 11:06:56 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -96,7 +96,7 @@ void
 sysmon_power_40_init(void)
 {
 
-	MODULE_SET_HOOK(compat_sysmon_power_40_hook, "smon60",
+	MODULE_HOOK_SET(compat_sysmon_power_40_hook, "smon60",
 	    compat_40_sysmon_power);
 }
 
@@ -104,5 +104,5 @@ void
 sysmon_power_40_fini(void)
 {
 
-	MODULE_UNSET_HOOK(compat_sysmon_power_40_hook);
+	MODULE_HOOK_UNSET(compat_sysmon_power_40_hook);
 }
