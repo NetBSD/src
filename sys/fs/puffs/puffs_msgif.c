@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.103 2019/01/29 09:28:50 pgoyette Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.104 2019/03/01 11:06:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.103 2019/01/29 09:28:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.104 2019/03/01 11:06:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -353,7 +353,7 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 #if 1
 	/* check if we do compat adjustments */
 	if (pmp->pmp_docompat) {
-		MODULE_CALL_HOOK(puffs_out_50_hook, (preq, &creq, &delta),
+		MODULE_HOOK_CALL(puffs_out_50_hook, (preq, &creq, &delta),
 		    enosys(), ret);
 		if (ret == 0) {
 			park->park_creq = park->park_preq;
@@ -813,7 +813,7 @@ puffsop_msg(void *ctx, struct puffs_req *preq)
 			size_t csize;
 
 			KASSERT(pmp->pmp_docompat);
-			MODULE_CALL_VOID_HOOK(puffs_in_50_hook,
+			MODULE_HOOK_CALL_VOID(puffs_in_50_hook,
 			     (preq, park->park_creq), __nothing);
 			creq = park->park_creq;
 			csize = park->park_creqlen;

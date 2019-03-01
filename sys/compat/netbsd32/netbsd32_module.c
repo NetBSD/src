@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.9 2019/01/31 16:03:50 christos Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.10 2019/03/01 11:06:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.9 2019/01/31 16:03:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.10 2019/03/01 11:06:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -216,7 +216,7 @@ netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 
 	arg = SCARG_P32(uap, arg);
 
-	MODULE_CALL_HOOK(compat32_80_modctl_hook, (lwp, uap, result),
+	MODULE_HOOK_CALL(compat32_80_modctl_hook, (lwp, uap, result),
 	    enosys(), error);
 	if (error != EPASSTHROUGH && error != ENOSYS)
 		return error;

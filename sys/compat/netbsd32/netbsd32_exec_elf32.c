@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.42 2019/02/26 06:28:43 rin Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.43 2019/03/01 11:06:56 pgoyette Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.42 2019/02/26 06:28:43 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.43 2019/03/01 11:06:56 pgoyette Exp $");
 
 #define	ELFSIZE		32
 
@@ -112,7 +112,7 @@ ELFNAME2(netbsd32,probe_noteless)(struct lwp *l, struct exec_package *epp,
 	const char *m;
 
  	if (itp && epp->ep_interp == NULL) {
-		MODULE_CALL_HOOK(netbsd32_machine32_hook, (), machine, m);
+		MODULE_HOOK_CALL(netbsd32_machine32_hook, (), machine, m);
 		(void)compat_elf_check_interp(epp, itp, m);
 	}
 #ifdef _LP64

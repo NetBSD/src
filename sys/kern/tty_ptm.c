@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.39 2019/01/29 09:28:50 pgoyette Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.40 2019/03/01 11:06:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.39 2019/01/29 09:28:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.40 2019/03/01 11:06:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -403,7 +403,7 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			goto bad2;
 		return 0;
 	default:
-		MODULE_CALL_HOOK(tty_ptmioctl_60_hook,
+		MODULE_HOOK_CALL(tty_ptmioctl_60_hook,
 		    (dev, cmd, data, flag, l), EPASSTHROUGH, error);
 		if (error != EPASSTHROUGH)
 			return error;

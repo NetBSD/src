@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd_30.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: vnd_30.c,v 1.3 2019/03/01 11:06:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd_30.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd_30.c,v 1.3 2019/03/01 11:06:56 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -123,12 +123,12 @@ void
 vnd_30_init(void)
 {
 
-	MODULE_SET_HOOK(compat_vndioctl_30_hook, "vnd_30", compat_30_vndioctl);
+	MODULE_HOOK_SET(compat_vndioctl_30_hook, "vnd_30", compat_30_vndioctl);
 }
 
 void
 vnd_30_fini(void)
 {
 
-	MODULE_UNSET_HOOK(compat_vndioctl_30_hook);
+	MODULE_HOOK_UNSET(compat_vndioctl_30_hook);
 }

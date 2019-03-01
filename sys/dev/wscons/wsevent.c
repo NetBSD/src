@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.41 2019/01/29 09:28:50 pgoyette Exp $ */
+/* $NetBSD: wsevent.c,v 1.42 2019/03/01 11:06:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.41 2019/01/29 09:28:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.42 2019/03/01 11:06:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -197,7 +197,7 @@ wsevent_copyout_events(const struct wscons_event *events, int cnt,
 
 	switch (ver) {
 	case 0:
-		MODULE_CALL_HOOK(wscons_copyout_events_50_hook,
+		MODULE_HOOK_CALL(wscons_copyout_events_50_hook,
 		    (events, cnt, uio), enosys(), error);
 		if (error == ENOSYS)
 			error = EINVAL;
