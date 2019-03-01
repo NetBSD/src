@@ -524,7 +524,7 @@ string_to_explicit_location (const char **argp,
      character is an explicit location.  "-p" is reserved, though,
      for probe locations.  */
   if (argp == NULL
-      || *argp == '\0'
+      || *argp == NULL
       || *argp[0] != '-'
       || !isalpha ((*argp)[1])
       || ((*argp)[0] == '-' && (*argp)[1] == 'p'))
