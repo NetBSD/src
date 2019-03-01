@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.17 2019/02/10 08:39:48 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.18 2019/03/01 08:05:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.17 2019/02/10 08:39:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.18 2019/03/01 08:05:46 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -108,7 +108,7 @@ static struct pic_ops bcm2835_picops = {
 	.pic_set_priority = bcm2835_set_priority,
 };
 
-struct pic_softc bcm2835_pic = {
+static struct pic_softc bcm2835_pic = {
 	.pic_ops = &bcm2835_picops,
 	.pic_maxsources = BCM2835_NIRQ,
 	.pic_name = "bcm2835 pic",
@@ -126,7 +126,7 @@ static struct pic_ops bcm2836mp_picops = {
 #endif
 };
 
-struct pic_softc bcm2836mp_pic[BCM2836_NCPUS] = {
+static struct pic_softc bcm2836mp_pic[BCM2836_NCPUS] = {
 	[0 ... BCM2836_NCPUS - 1] = {
 		.pic_ops = &bcm2836mp_picops,
 		.pic_maxsources = BCM2836_NIRQPERCPU,
