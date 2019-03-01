@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.262 2018/01/27 23:07:36 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.263 2019/03/01 04:29:20 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.262 2018/01/27 23:07:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.263 2019/03/01 04:29:20 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2245,7 +2245,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
  * pmap_pageidlezero:		[ INTERFACE ]
  *
  *	Page zero'er for the idle loop.  Returns true if the
- *	page was zero'd, FLASE if we aborted for some reason.
+ *	page was zero'd, FALSE if we aborted for some reason.
  */
 bool
 pmap_pageidlezero(paddr_t pa)
