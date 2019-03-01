@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1203 2019/03/01 08:17:51 nonaka Exp $
+# $NetBSD: GENERIC,v 1.1204 2019/03/01 12:23:10 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1203 $"
+#ident		"GENERIC-$Revision: 1.1204 $"
 
 maxusers	64		# estimated number of users
 
@@ -1433,7 +1433,7 @@ hvs*		at vmbus?		# Hyper-V StorVSC
 hvheartbeat*	at vmbus?		# Hyper-V Heartbeat Service
 hvshutdown*	at vmbus?		# Hyper-V Guest Shutdown Service
 hvtimesync*	at vmbus?		# Hyper-V Time Synchronization Service
-hvkvp*		at vmbus?		# Hyper-V Data Exchange Service
+#hvkvp*		at vmbus?		# Hyper-V Data Exchange Service
 
 
 # Pull in optional local configuration
