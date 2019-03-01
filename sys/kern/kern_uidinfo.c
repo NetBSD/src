@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uidinfo.c,v 1.10 2017/03/18 05:49:56 riastradh Exp $	*/
+/*	$NetBSD: kern_uidinfo.c,v 1.11 2019/03/01 03:03:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.10 2017/03/18 05:49:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.11 2019/03/01 03:03:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ sysctl_kern_uidinfo_cnt(SYSCTLFN_ARGS)
 		_MEM(proccnt),
 		_MEM(lwpcnt),
 		_MEM(lockcnt),
+		_MEM(semcnt),
 		_MEM(sbsize),
 #undef _MEM
 	};
@@ -115,6 +116,12 @@ sysctl_kern_uidinfo_setup(void)
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "lockcnt",
 		       SYSCTL_DESCR("Number of locks for the current user"),
+		       sysctl_kern_uidinfo_cnt, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(&kern_uidinfo_sysctllog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "semcnt",
+		       SYSCTL_DESCR("Number of semaphores used for the current user"),
 		       sysctl_kern_uidinfo_cnt, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(&kern_uidinfo_sysctllog, 0, &rnode, &cnode,
@@ -217,6 +224,22 @@ chglwpcnt(uid_t uid, int diff)
 	lwpcnt = atomic_add_long_nv(&uip->ui_lwpcnt, diff);
 	KASSERT(lwpcnt >= 0);
 	return lwpcnt;
+}
+
+/*
+ * Change the count associated with number of semaphores
+ * a given user is using.
+ */
+int
+chgsemcnt(uid_t uid, int diff)
+{
+	struct uidinfo *uip;
+	long semcnt;
+
+	uip = uid_find(uid);
+	semcnt = atomic_add_long_nv(&uip->ui_semcnt, diff);
+	KASSERT(semcnt >= 0);
+	return semcnt;
 }
 
 int

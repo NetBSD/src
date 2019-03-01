@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.350 2018/12/05 18:16:51 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.351 2019/03/01 03:03:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -316,7 +316,6 @@ struct proc {
 	pid_t 		p_vfpid_done;	/* :: vforked done pid */
 	lwpid_t		p_lwp_created;	/* :: lwp created */
 	lwpid_t		p_lwp_exited;	/* :: lwp exited */
-	u_int		p_nsems;	/* Count of semaphores */
 	char		*p_path;	/* :: full pathname of executable */
 
 /*
@@ -338,7 +337,6 @@ struct proc {
 
 	vaddr_t		p_psstrp;	/* :: address of process's ps_strings */
 	u_int		p_pax;		/* :: PAX flags */
-
 	int		p_xexit;	/* p: exit code */
 /*
  * End area that is copied on creation
