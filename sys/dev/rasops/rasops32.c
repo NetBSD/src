@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.31 2019/03/01 23:17:05 jakllsch Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.32 2019/03/01 23:20:13 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.31 2019/03/01 23:17:05 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.32 2019/03/01 23:20:13 jakllsch Exp $");
 
 #include "opt_rasops.h"
 
@@ -195,8 +195,8 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	clr[1] = ri->ri_devcmap[(attr >> 24) & 0xf];
 
 	if (uc == ' ') {
-	        for (cnt = 0; cnt < width; cnt++)
-	                buffer[cnt] = clr[0];
+		for (cnt = 0; cnt < width; cnt++)
+			buffer[cnt] = clr[0];
 		while (height--) {
 			dp = rp;
 			DELTA(rp, ri->ri_stride, int32_t *);
@@ -224,8 +224,8 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 					r = aval * r1 + (255 - aval) * r0;
 					g = aval * g1 + (255 - aval) * g0;
 					b = aval * b1 + (255 - aval) * b0;
-					buffer[x] = (r & 0xff00) << 8 | 
-					      (g & 0xff00) | 
+					buffer[x] = (r & 0xff00) << 8 |
+					      (g & 0xff00) |
 					      (b & 0xff00) >> 8;
 				}
 				fr++;
@@ -236,7 +236,7 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do underline */
 	if ((attr & WSATTR_UNDERLINE) != 0) {
-	        rp = (uint32_t *)rrp;                         
+		rp = (uint32_t *)rrp;
 		height = font->fontheight;
 		DELTA(rp, (ri->ri_stride * (height - 2)), int32_t *);
 		while (width--)
