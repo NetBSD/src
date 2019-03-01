@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.54 2019/02/21 21:49:23 christos Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.55 2019/03/01 03:03:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.54 2019/02/21 21:49:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.55 2019/03/01 03:03:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.54 2019/02/21 21:49:23 christos Exp $
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
 #include <sys/sysctl.h>
+#include <sys/uidinfo.h>
 #include <sys/cprng.h>
 
 MODULE(MODULE_CLASS_MISC, ksem, NULL);
@@ -467,8 +468,10 @@ ksem_create(lwp_t *l, const char *name, ksem_t **ksret, mode_t mode, u_int val)
 		len = 0;
 	}
 
-	if (atomic_inc_uint_nv(&l->l_proc->p_nsems) > SEM_NSEMS_MAX) {
-		atomic_dec_uint(&l->l_proc->p_nsems);
+	u_int cnt;
+	uid_t uid = kauth_cred_getuid(l->l_cred);
+	if ((cnt = chgsemcnt(uid, 1)) > SEM_NSEMS_MAX) {
+		chgsemcnt(uid, -1);
 		if (kname != NULL)
 			kmem_free(kname, len);
 		return ENOSPC;
@@ -511,7 +514,7 @@ ksem_free(ksem_t *ks)
 	kmem_free(ks, sizeof(ksem_t));
 
 	atomic_dec_uint(&nsems_total);
- 	atomic_dec_uint(&curproc->p_nsems);	
+	chgsemcnt(kauth_cred_getuid(curproc->p_cred), -1);
 }
 
 #define	KSEM_ID_IS_PSHARED(id)		\
