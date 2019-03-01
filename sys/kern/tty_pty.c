@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.142 2015/08/20 09:45:45 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.142.10.1 2019/03/01 18:59:58 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142 2015/08/20 09:45:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.10.1 2019/03/01 18:59:58 martin Exp $");
 
 #include "opt_ptm.h"
 
@@ -937,6 +937,10 @@ filt_ptcread(struct knote *kn, long hint)
 		if (((pti->pt_flags & PF_PKT) && pti->pt_send) ||
 		    ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl))
 			kn->kn_data++;
+	}
+	if (!ISSET(tp->t_state, TS_CARR_ON)) {
+		kn->kn_flags |= EV_EOF;
+		canread = 1;
 	}
 
 	if ((hint & NOTE_SUBMIT) == 0) {

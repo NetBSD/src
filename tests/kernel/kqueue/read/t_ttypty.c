@@ -1,7 +1,7 @@
-/* $NetBSD: t_ttypty.c,v 1.2 2017/01/13 21:30:41 christos Exp $ */
+/* $NetBSD: t_ttypty.c,v 1.2.6.1 2019/03/01 18:59:58 martin Exp $ */
 
 /*-
- * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2008, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2008\
+__COPYRIGHT("@(#) Copyright (c) 2008, 2019\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ttypty.c,v 1.2 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_ttypty.c,v 1.2.6.1 2019/03/01 18:59:58 martin Exp $");
 
 #include <sys/event.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 
 #include <poll.h>
@@ -135,10 +136,48 @@ ATF_TC_BODY(slave, tc)
 	h_check(false);
 }
 
+ATF_TC(closed_slave);
+ATF_TC_HEAD(closed_slave, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"Checks EVFILT_READ reporting for slave tty being closed");
+}
+ATF_TC_BODY(closed_slave, tc)
+{
+	char slavetty[1024];
+	struct kevent event[1];
+	int amaster, aslave;
+	int kq, n;
+	struct timespec timeout = {5, 0};
+
+	RL(openpty(&amaster, &aslave, slavetty, NULL, NULL));
+
+	(void)printf("tty: openpty master %d slave %d tty '%s'\n",
+		amaster, aslave, slavetty);
+
+	RL(kq = kqueue());
+
+	EV_SET(&event[0], amaster, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
+	RL(kevent(kq, event, 1, NULL, 0, NULL));
+
+	RL(close(aslave));
+
+	RL(n = kevent(kq, NULL, 0, event, 1, &timeout));
+
+	(void)printf("kevent num %d filt %d flags: %#x, fflags: %#x, "
+	    "data: %" PRId64 "\n", n, event[0].filter, event[0].flags,
+	    event[0].fflags, event[0].data);
+
+	ATF_REQUIRE_EQ(n, 1);
+	ATF_REQUIRE_EQ(event[0].filter, EVFILT_READ);
+	ATF_REQUIRE_EQ(event[0].flags & EV_EOF, EV_EOF);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, master);
 	ATF_TP_ADD_TC(tp, slave);
+	ATF_TP_ADD_TC(tp, closed_slave);
 
 	return atf_no_error();
 }
