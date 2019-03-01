@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_16_cas.c,v 1.3 2014/06/23 21:53:45 joerg Exp $	*/
+/*	$NetBSD: atomic_or_16_cas.c,v 1.4 2019/03/01 09:57:32 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ or_and_fetch_2(volatile uint16_t *addr, uint16_t val, ...)
 		old = *addr;
 		new = old | val;
 	} while (atomic_cas_16(addr, old, new) != old);
-	return old;
+	return new;
 }
 
 __strong_alias(__atomic_fetch_or_2,__sync_fetch_and_or_2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_8_cas.c,v 1.3 2014/06/23 21:53:45 joerg Exp $	*/
+/*	$NetBSD: atomic_or_8_cas.c,v 1.4 2019/03/01 09:57:32 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ or_and_fetch_1(volatile uint8_t *addr, uint8_t val, ...)
 		old = *addr;
 		new = old | val;
 	} while (atomic_cas_8(addr, old, new) != old);
-	return old;
+	return new;
 }
 
 __strong_alias(__atomic_fetch_or_1,__sync_fetch_and_or_1)
