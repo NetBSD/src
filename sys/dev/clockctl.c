@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.36 2019/01/27 02:08:41 pgoyette Exp $ */
+/*      $NetBSD: clockctl.c,v 1.37 2019/03/01 11:06:56 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.36 2019/01/27 02:08:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.37 2019/03/01 11:06:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -263,7 +263,7 @@ clockctlioctl(
 		break;
 	}
 	default:
-		MODULE_CALL_HOOK(clockctl_ioctl_50_hook,
+		MODULE_HOOK_CALL(clockctl_ioctl_50_hook,
 		    (dev, cmd, data, flags, l), enosys(), error);
 		if (error == ENOSYS)
 			error = ENOTTY;

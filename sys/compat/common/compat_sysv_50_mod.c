@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysv_50_mod.c,v 1.3 2019/01/29 09:28:50 pgoyette Exp $	*/
+/*	$NetBSD: compat_sysv_50_mod.c,v 1.4 2019/03/01 11:06:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_sysv_50_mod.c,v 1.3 2019/01/29 09:28:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sysv_50_mod.c,v 1.4 2019/03/01 11:06:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -75,7 +75,7 @@ compat_sysv_50_modcmd(modcmd_t cmd, void *arg)
 		if (error != 0) {
 			break;
 		}
-		MODULE_SET_HOOK(sysvipc_sysctl_50_hook, "sysv50",
+		MODULE_HOOK_SET(sysvipc_sysctl_50_hook, "sysv50",
 		    sysctl_kern_sysvipc50);
 		break;
 
@@ -84,7 +84,7 @@ compat_sysv_50_modcmd(modcmd_t cmd, void *arg)
 		if (error != 0) {
 			break;
 		}
-		MODULE_UNSET_HOOK(sysvipc_sysctl_50_hook);
+		MODULE_HOOK_UNSET(sysvipc_sysctl_50_hook);
 		break;
 
 	default:
