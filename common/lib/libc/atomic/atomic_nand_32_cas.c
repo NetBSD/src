@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_nand_32_cas.c,v 1.1 2014/02/21 10:52:50 martin Exp $	*/
+/*	$NetBSD: atomic_nand_32_cas.c,v 1.2 2019/03/01 06:14:52 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -59,3 +59,5 @@ nand_and_fetch_4(volatile uint32_t *addr, uint32_t val, ...)
 	} while (atomic_cas_32(addr, old, new) != old);
 	return new;
 }
+
+__strong_alias(__atomic_fetch_nand_4,__sync_fetch_and_nand_4)
