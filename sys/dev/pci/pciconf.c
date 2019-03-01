@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.39 2019/03/01 05:41:56 msaitoh Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.40 2019/03/01 07:02:56 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.39 2019/03/01 05:41:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.40 2019/03/01 07:02:56 msaitoh Exp $");
 
 #include "opt_pci.h"
 
@@ -191,7 +191,7 @@ get_io_desc(pciconf_bus_t *pb, bus_size_t size)
 	int	i, n;
 
 	n = pb->niowin;
-	for (i=n; i > 0 && size > pb->pciiowin[i-1].size; i--)
+	for (i = n; i > 0 && size > pb->pciiowin[i-1].size; i--)
 		pb->pciiowin[i] = pb->pciiowin[i-1]; /* struct copy */
 	return &pb->pciiowin[i];
 }
@@ -202,7 +202,7 @@ get_mem_desc(pciconf_bus_t *pb, bus_size_t size)
 	int	i, n;
 
 	n = pb->nmemwin;
-	for (i=n; i > 0 && size > pb->pcimemwin[i-1].size; i--)
+	for (i = n; i > 0 && size > pb->pcimemwin[i-1].size; i--)
 		pb->pcimemwin[i] = pb->pcimemwin[i-1]; /* struct copy */
 	return &pb->pcimemwin[i];
 }
@@ -249,7 +249,7 @@ probe_bus(pciconf_bus_t *pb)
 
 		if (pci_conf_debug) {
 			printf("id=%x: Vendor=%x, Product=%x\n",
-			    id, PCI_VENDOR(id),PCI_PRODUCT(id));
+			    id, PCI_VENDOR(id), PCI_PRODUCT(id));
 		}
 		/* Invalid vendor ID value? */
 		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
@@ -257,12 +257,12 @@ probe_bus(pciconf_bus_t *pb)
 
 		bhlcr = pci_conf_read(pb->pc, tag, PCI_BHLC_REG);
 		nfunction = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
-		for (function = 0 ; function < nfunction ; function++) {
+		for (function = 0; function < nfunction; function++) {
 			tag = pci_make_tag(pb->pc, pb->busno, device, function);
 			id = pci_conf_read(pb->pc, tag, PCI_ID_REG);
 			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
 				continue;
-			if (pb->ndevs+1 < MAX_CONF_DEV) {
+			if (pb->ndevs + 1 < MAX_CONF_DEV) {
 				if (pci_conf_debug) {
 					print_tag(pb->pc, tag);
 					printf("Found dev 0x%04x 0x%04x -- "
@@ -344,18 +344,16 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	pb->io_32bit = 0;
 	if (parent->io_32bit) {
 		io = pci_conf_read(parent->pc, pd->tag, PCI_BRIDGE_STATIO_REG);
-		if (PCI_BRIDGE_IO_32BITS(io)) {
+		if (PCI_BRIDGE_IO_32BITS(io))
 			pb->io_32bit = 1;
-		}
 	}
 
 	pb->pmem_64bit = 0;
 	if (parent->pmem_64bit) {
 		pmem = pci_conf_read(parent->pc, pd->tag,
 		    PCI_BRIDGE_PREFETCHMEM_REG);
-		if (PCI_BRIDGE_PREFETCHMEM_64BITS(pmem)) {
+		if (PCI_BRIDGE_PREFETCHMEM_64BITS(pmem))
 			pb->pmem_64bit = 1;
-		}
 	}
 
 	if (probe_bus(pb)) {
@@ -364,7 +362,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	}
 
 	/* We have found all subordinate busses now, reprogram busreg. */
-	pb->last_busno = pb->next_busno-1;
+	pb->last_busno = pb->next_busno - 1;
 	parent->next_busno = pb->next_busno;
 	set_busreg(parent->pc, pd->tag, parent->busno, pb->busno,
 		   pb->last_busno);
@@ -397,7 +395,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 			     parent->nmemwin);
 			goto err;
 		}
-		pb->mem_total |= pb->mem_align-1; /* Round up */
+		pb->mem_total |= pb->mem_align - 1; /* Round up */
 		pm = get_mem_desc(parent, pb->mem_total);
 		pm->dev = pd;
 		pm->reg = 0;
@@ -415,7 +413,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 			printf("pciconf: too many MEM windows\n");
 			goto err;
 		}
-		pb->pmem_total |= pb->pmem_align-1; /* Round up */
+		pb->pmem_total |= pb->pmem_align - 1; /* Round up */
 		pm = get_mem_desc(parent, pb->pmem_total);
 		pm->dev = pd;
 		pm->reg = 0;
@@ -716,7 +714,7 @@ setup_iowins(pciconf_bus_t *pb)
 	pciconf_win_t	*pi;
 	pciconf_dev_t	*pd;
 
-	for (pi=pb->pciiowin; pi < &pb->pciiowin[pb->niowin] ; pi++) {
+	for (pi = pb->pciiowin; pi < &pb->pciiowin[pb->niowin]; pi++) {
 		if (pi->size == 0)
 			continue;
 
@@ -766,7 +764,7 @@ setup_memwins(pciconf_bus_t *pb)
 	pcireg_t	base;
 	struct extent	*ex;
 
-	for (pm=pb->pcimemwin; pm < &pb->pcimemwin[pb->nmemwin] ; pm++) {
+	for (pm = pb->pcimemwin; pm < &pb->pcimemwin[pb->nmemwin]; pm++) {
 		if (pm->size == 0)
 			continue;
 
@@ -824,7 +822,7 @@ setup_memwins(pciconf_bus_t *pb)
 			}
 		}
 	}
-	for (pm=pb->pcimemwin; pm < &pb->pcimemwin[pb->nmemwin] ; pm++) {
+	for (pm = pb->pcimemwin; pm < &pb->pcimemwin[pb->nmemwin]; pm++) {
 		if (pm->reg == PCI_MAPREG_ROM && pm->address != -1) {
 			pd = pm->dev;
 			if (!(pd->enable & PCI_CONF_MAP_ROM))
@@ -1025,7 +1023,7 @@ configure_bus(pciconf_bus_t *pb)
 	/*
 	 * Configure the latency for the devices, and enable them.
 	 */
-	for (pd=pb->device ; pd < &pb->device[pb->ndevs] ; pd++) {
+	for (pd = pb->device; pd < &pb->device[pb->ndevs]; pd++) {
 		pcireg_t cmd, classreg, misc;
 		int	ltim;
 
@@ -1140,7 +1138,7 @@ pci_configure_bus(pci_chipset_tag_t pc, struct extent *ioext,
 	pb->io_total = pb->mem_total = pb->pmem_total = 0;
 
 	rv = probe_bus(pb);
-	pb->last_busno = pb->next_busno-1;
+	pb->last_busno = pb->next_busno - 1;
 	if (rv == 0)
 		rv = configure_bus(pb);
 
