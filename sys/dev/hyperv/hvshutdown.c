@@ -1,4 +1,4 @@
-/*	$NetBSD: hvshutdown.c,v 1.1 2019/02/15 08:54:01 nonaka Exp $	*/
+/*	$NetBSD: hvshutdown.c,v 1.2 2019/03/01 08:17:51 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2014,2016 Microsoft Corp.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hvshutdown.c,v 1.1 2019/02/15 08:54:01 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvshutdown.c,v 1.2 2019/03/01 08:17:51 nonaka Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/utilities/vmbus_shutdown.c 310324 2016-12-20 09:46:14Z sephe $");
@@ -86,7 +86,7 @@ hvshutdown_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	aprint_naive("\n");
-	aprint_normal(": Hyper-V Shutdown\n");
+	aprint_normal(": Hyper-V Guest Shutdown Service\n");
 
 	error = vmbusic_attach(self, aa, hvshutdown_channel_cb);
 	if (error)
