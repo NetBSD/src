@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.36 2018/05/19 17:21:42 jakllsch Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.37 2019/03/01 05:41:56 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.36 2018/05/19 17:21:42 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.37 2019/03/01 05:41:56 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
     bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
 	pcireg_t address, mask, address1 = 0, mask1 = 0xffffffff;
-	u_int64_t waddress, wmask;
+	uint64_t waddress, wmask;
 	int s, is64bit, isrom;
 
 	is64bit = (PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT);
@@ -174,8 +174,8 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 		}
 	}
 
-	waddress = (u_int64_t)address1 << 32UL | address;
-	wmask = (u_int64_t)mask1 << 32UL | mask;
+	waddress = (uint64_t)address1 << 32UL | address;
+	wmask = (uint64_t)mask1 << 32UL | mask;
 
 	if ((is64bit && PCI_MAPREG_MEM64_SIZE(wmask) == 0) ||
 	    (!is64bit && PCI_MAPREG_MEM_SIZE(mask) == 0)) {
@@ -195,7 +195,7 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 		 * fit in 32 bits.  We implicitly assume that if
 		 * bus_addr_t is 64-bit, then so is bus_size_t.
 		 */
-		if (sizeof(u_int64_t) > sizeof(bus_addr_t) &&
+		if (sizeof(uint64_t) > sizeof(bus_addr_t) &&
 		    (address1 != 0 || mask1 != 0xffffffff)) {
 			printf("pci_mem_find: 64-bit memory map which is "
 			    "inaccessible on a 32-bit platform\n");
@@ -207,7 +207,7 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 		return 1;
 	}
 
-	if (sizeof(u_int64_t) > sizeof(bus_addr_t)) {
+	if (sizeof(uint64_t) > sizeof(bus_addr_t)) {
 		if (basep != NULL)
 			*basep = PCI_MAPREG_MEM_ADDR(address);
 		if (sizep != NULL)
