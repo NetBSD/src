@@ -1,11 +1,12 @@
-#	$NetBSD: files.scsipi,v 1.41 2005/12/11 12:23:50 christos Exp $
+#	$NetBSD: files.scsipi,v 1.41.156.1 2019/03/01 17:29:32 martin Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
 # their own "major" declarations for the appropriate devices.
 
 defflag	opt_scsi.h		SCSIVERBOSE ST_ENABLE_EARLYWARN
-				SES_ENABLE_PASSTHROUGH SCSI_OLD_NOINQUIRY
+				ST_SUNCOMPAT SES_ENABLE_PASSTHROUGH
+				SCSI_OLD_NOINQUIRY
 defparam opt_scsi.h		ST_MOUNT_DELAY SDRETRIES SD_IO_TIMEOUT
 
 defflag	opt_scsipi_debug.h	SCSIPI_DEBUG
