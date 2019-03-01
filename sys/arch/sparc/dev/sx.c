@@ -1,4 +1,4 @@
-/*	$NetBSD: sx.c,v 1.3 2014/04/15 10:24:54 macallan Exp $	*/
+/*	$NetBSD: sx.c,v 1.4 2019/03/01 02:30:42 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.3 2014/04/15 10:24:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.4 2019/03/01 02:30:42 macallan Exp $");
 
 #include "locators.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.3 2014/04/15 10:24:54 macallan Exp $");
 #include <sparc/sparc/asm.h>
 #include <sparc/dev/sxvar.h>
 #include <sparc/dev/sxreg.h>
+#include "opt_sx.h"
 
 /* autoconfiguration driver */
 static	int sx_match(device_t, struct cfdata *, void *);
@@ -56,6 +57,8 @@ static	void sx_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(sx, sizeof(struct sx_softc),
     sx_match, sx_attach, NULL, NULL);
+
+static struct sx_softc *sx0 = NULL;
 
 static int
 sx_match(device_t parent, struct cfdata *cf, void *aux)
@@ -90,7 +93,7 @@ sx_attach(device_t parent, device_t self, void *aux)
 	id = sx_read(sc, SX_ID);
 	aprint_normal_dev(self, "architecture rev. %d chip rev. %d\n",
 	    (id & SX_ARCHITECTURE_MASK),
-	    (id & SX_CHIP_REVISION) >> 8);
+	    (id & SX_CHIP_REVISION) >> 3);
 
 	/* stop the processor */
 	sx_write(sc, SX_CONTROL_STATUS, 0);
@@ -113,6 +116,8 @@ sx_attach(device_t parent, device_t self, void *aux)
 
 	/* ... and start the processor again */
 	sx_write(sc, SX_CONTROL_STATUS, SX_PB | SX_GO);
+
+	sx0 = sc;
 
 #ifdef SX_DEBUG
 	sta(0xfc000000, ASI_SX, SX_LD(8, 31, 0));
@@ -143,3 +148,15 @@ sx_attach(device_t parent, device_t self, void *aux)
 #endif
 }
 
+void
+sx_dump(void)
+{
+	if (sx0 == NULL)
+		return;
+	printf("SX STATUS: %08x\n",
+	    bus_space_read_4(sx0->sc_tag, sx0->sc_regh, SX_CONTROL_STATUS));
+	printf("SX ERROR : %08x\n",
+	    bus_space_read_4(sx0->sc_tag, sx0->sc_regh, SX_ERROR));
+	printf("SX DIAG  : %08x\n",
+	    bus_space_read_4(sx0->sc_tag, sx0->sc_regh, SX_DIAGNOSTICS));
+}
