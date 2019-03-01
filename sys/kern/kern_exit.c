@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.273 2018/11/29 12:37:22 maxv Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.274 2019/03/01 09:02:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.273 2018/11/29 12:37:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.274 2019/03/01 09:02:03 hannken Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.273 2018/11/29 12:37:22 maxv Exp $")
 #include <sys/buf.h>
 #include <sys/wait.h>
 #include <sys/file.h>
+#include <sys/fstrans.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/pool.h>
@@ -399,6 +400,9 @@ exit1(struct lwp *l, int exitcode, int signo)
 		}
 	}
 	fixjobc(p, p->p_pgrp, 0);
+
+	/* Release fstrans private data. */
+	fstrans_lwp_dtor(l);
 
 	/*
 	 * Finalize the last LWP's specificdata, as well as the
