@@ -1,4 +1,4 @@
-/*	$NetBSD: itime.c,v 1.20 2013/06/15 01:27:19 christos Exp $	*/
+/*	$NetBSD: itime.c,v 1.21 2019/03/01 16:42:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: itime.c,v 1.20 2013/06/15 01:27:19 christos Exp $");
+__RCSID("$NetBSD: itime.c,v 1.21 2019/03/01 16:42:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,8 +87,8 @@ initdumptimes(void)
 		}
 		(void) fclose(df);
 		if ((df = fopen(dumpdates, "r")) == NULL) {
-			quit("cannot read %s even after creating it: %s\n",
-			    dumpdates, strerror(errno));
+			quite(errno, "cannot read %s even after creating it",
+			    dumpdates);
 			/* NOTREACHED */
 		}
 	}
@@ -175,7 +175,7 @@ putdumptime(void)
 	if(uflag == 0)
 		return;
 	if ((df = fopen(dumpdates, "r+")) == NULL)
-		quit("cannot rewrite %s: %s\n", dumpdates, strerror(errno));
+		quite(errno, "cannot rewrite %s", dumpdates);
 	fd = fileno(df);
 	(void) flock(fd, LOCK_EX);
 	fname = disk;
@@ -184,7 +184,7 @@ putdumptime(void)
 	nddates = 0;
 	readdumptimes(df);
 	if (fseek(df, 0L, 0) < 0)
-		quit("fseek: %s\n", strerror(errno));
+		quite(errno, "can't fseek %s", dumpdates);
 	spcl.c_ddate = 0;
 	ITITERATE(i, dtwalk) {
 		if (strncmp(fname, dtwalk->dd_name,
@@ -211,9 +211,9 @@ putdumptime(void)
 		dumprecout(df, dtwalk);
 	}
 	if (fflush(df))
-		quit("%s: %s\n", dumpdates, strerror(errno));
+		quite(errno, "can't flush %s", dumpdates);
 	if (ftruncate(fd, ftell(df)))
-		quit("ftruncate (%s): %s\n", dumpdates, strerror(errno));
+		quite(errno, "can't ftruncate %s", dumpdates);
 	(void) fclose(df);
 	msg("level %c dump on %s", level,
 		spcl.c_date == 0 ? "the epoch\n" : ctime(&dtfound->dd_ddate));
@@ -227,7 +227,7 @@ dumprecout(FILE *file, struct dumpdates *what)
 		    what->dd_name,
 		    what->dd_level,
 		    ctime(&what->dd_ddate)) < 0)
-		quit("%s: %s\n", dumpdates, strerror(errno));
+		quite(errno, "can't write %s", dumpdates);
 }
 
 int	recno;
