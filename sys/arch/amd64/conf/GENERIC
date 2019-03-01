@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.519 2019/03/01 11:06:55 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.520 2019/03/01 12:25:09 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.519 $"
+#ident		"GENERIC-$Revision: 1.520 $"
 
 maxusers	64		# estimated number of users
 
@@ -1090,7 +1090,7 @@ vmbus*		at acpi?		# Hyper-V VMBus
 hvn*		at vmbus?		# Hyper-V NetVSC
 hvs*		at vmbus?		# Hyper-V StorVSC
 hvheartbeat*	at vmbus?		# Hyper-V Heartbeat Service
-hvshutdown*	at vmbus?		# Hyper-V Geust Shutdown Service
+hvshutdown*	at vmbus?		# Hyper-V Guest Shutdown Service
 hvtimesync*	at vmbus?		# Hyper-V Time Synchronization Service
 #hvkvp*		at vmbus?		# Hyper-V Data Exchange Service
 
