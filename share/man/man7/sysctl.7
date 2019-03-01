@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.137 2018/12/05 21:15:20 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.138 2019/03/01 03:05:08 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd December 5, 2018
+.Dd February 28, 2019
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1269,6 +1269,7 @@ Resource usage for the current user.
 .It kern.uidinfo.proccnt	integer	no
 .It kern.uidinfo.lwpcnt	integer	no
 .It kern.uidinfo.lockcnt	integer	no
+.It kern.uidinfo.semcnt	integer	no
 .It kern.uidinfo.sbsize	integer	no
 .El
 .Bl -tag -width "123456"
@@ -1279,6 +1280,8 @@ Returns the number of active threads for the current user; the first thread
 of each process is not counted.
 .It Li kern.uidinfo.lockcnt
 Number of locks held by the current user.
+.It Li kern.uidinfo.semcnt
+Number of semaphores held by the current user.
 .It Li kern.uidinfo.sbsize
 Number of bytes in socket buffers allocated to the current user.
 .El
