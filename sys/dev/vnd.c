@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.271 2019/01/27 02:08:41 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.272 2019/03/01 11:06:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.271 2019/01/27 02:08:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.272 2019/03/01 11:06:56 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1162,7 +1162,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	default:
 		/* First check for COMPAT_50 hook */
-		MODULE_CALL_HOOK(compat_vndioctl_50_hook,
+		MODULE_HOOK_CALL(compat_vndioctl_50_hook,
 		    (cmd, l, data, unit, &vattr, vndioctl_get),
 		    enosys(), error);
 
@@ -1178,7 +1178,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* If not already handled, try the COMPAT_30 hook */
 		if (error == EPASSTHROUGH)
-			MODULE_CALL_HOOK(compat_vndioctl_30_hook,
+			MODULE_HOOK_CALL(compat_vndioctl_30_hook,
 			    (cmd, l, data, unit, &vattr, vndioctl_get),
 			    enosys(), error);
 

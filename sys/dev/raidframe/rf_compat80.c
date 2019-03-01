@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.12 2019/02/09 03:33:59 christos Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.13 2019/03/01 11:06:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -348,14 +348,14 @@ static void
 raidframe_80_init(void)
 {
   
-	MODULE_SET_HOOK(raidframe_ioctl_80_hook, "raid80", raidframe_ioctl_80);
+	MODULE_HOOK_SET(raidframe_ioctl_80_hook, "raid80", raidframe_ioctl_80);
 }
  
 static void
 raidframe_80_fini(void)
 {
  
-	MODULE_UNSET_HOOK(raidframe_ioctl_80_hook);
+	MODULE_HOOK_UNSET(raidframe_ioctl_80_hook);
 }
 
 MODULE(MODULE_CLASS_EXEC, compat_raid_80, "raid,compat_80");

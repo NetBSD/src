@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_compat.c,v 1.6 2019/01/29 09:28:50 pgoyette Exp $	*/
+/*	$NetBSD: puffs_compat.c,v 1.7 2019/03/01 11:06:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.6 2019/01/29 09:28:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.7 2019/03/01 11:06:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -439,13 +439,13 @@ puffs_compat_incoming(struct puffs_req *preq, struct puffs_req *creq)
 void puffs_50_init(void)
 {
 
-	MODULE_SET_HOOK(puffs_out_50_hook, "pffs50", puffs_compat_outgoing);
-	MODULE_SET_HOOK(puffs_in_50_hook, "pffs50", puffs_compat_incoming);
+	MODULE_HOOK_SET(puffs_out_50_hook, "pffs50", puffs_compat_outgoing);
+	MODULE_HOOK_SET(puffs_in_50_hook, "pffs50", puffs_compat_incoming);
 }
 
 void puffs_50_fini(void)
 {
 
-	MODULE_UNSET_HOOK(puffs_out_50_hook);
-	MODULE_UNSET_HOOK(puffs_in_50_hook);
+	MODULE_HOOK_UNSET(puffs_out_50_hook);
+	MODULE_HOOK_UNSET(puffs_in_50_hook);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.177 2019/02/03 03:19:28 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.178 2019/03/01 11:06:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.177 2019/02/03 03:19:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.178 2019/03/01 11:06:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -696,7 +696,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 	mutex_exit(&usb_event_lock);
 	if (!error) {
 		if (useold) { /* copy fields to old struct */
-			MODULE_CALL_HOOK(usb_subr_copy_30_hook,
+			MODULE_HOOK_CALL(usb_subr_copy_30_hook,
 			    (ue, ueo, uio), enosys(), error);
 			if (error == ENOSYS)
 				error = EINVAL;
@@ -877,7 +877,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			error = ENXIO;
 			goto fail;
 		}
-		MODULE_CALL_HOOK(usb_subr_fill_30_hook,
+		MODULE_HOOK_CALL(usb_subr_fill_30_hook,
 		    (dev, di, 1, usbd_devinfo_vp, usbd_printBCD),
 		    enosys(), error);
 		if (error == ENOSYS)

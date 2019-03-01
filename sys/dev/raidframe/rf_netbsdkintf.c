@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.375 2019/02/20 10:04:28 hannken Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.376 2019/03/01 11:06:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.375 2019/02/20 10:04:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.376 2019/03/01 11:06:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -1719,20 +1719,20 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if ((l->l_proc->p_flag & PK_32) != 0) {
 			module_autoload("compat_netbsd32_raid",
 			    MODULE_CLASS_EXEC);
-			MODULE_CALL_HOOK(raidframe_netbsd32_ioctl_hook,
+			MODULE_HOOK_CALL(raidframe_netbsd32_ioctl_hook,
 			    (rs, cmd, data), enosys(), retcode);
 			if (retcode != EPASSTHROUGH)
 				return retcode;
 		}
 #endif
 		module_autoload("compat_raid_80", MODULE_CLASS_EXEC);
-		MODULE_CALL_HOOK(raidframe_ioctl_80_hook,
+		MODULE_HOOK_CALL(raidframe_ioctl_80_hook,
 		    (rs, cmd, data), enosys(), retcode);
 		if (retcode != EPASSTHROUGH)
 			return retcode;
 
 		module_autoload("compat_raid_50", MODULE_CLASS_EXEC);
-		MODULE_CALL_HOOK(raidframe_ioctl_50_hook,
+		MODULE_HOOK_CALL(raidframe_ioctl_50_hook,
 		    (rs, cmd, data), enosys(), retcode);
 		if (retcode != EPASSTHROUGH)
 			return retcode;

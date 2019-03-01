@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.7 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.8 2019/03/01 11:06:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -116,12 +116,12 @@ void
 uipc_syscalls_50_init(void)
 {
 
-	MODULE_SET_HOOK(uipc_syscalls_50_hook, "uipc50", compat_ifdatareq);
+	MODULE_HOOK_SET(uipc_syscalls_50_hook, "uipc50", compat_ifdatareq);
 }
 
 void
 uipc_syscalls_50_fini(void)
 {
  
-	MODULE_UNSET_HOOK(uipc_syscalls_50_hook);
+	MODULE_HOOK_UNSET(uipc_syscalls_50_hook);
 }

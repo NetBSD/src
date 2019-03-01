@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.526 2019/02/20 10:05:20 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.527 2019/03/01 11:06:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.526 2019/02/20 10:05:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.527 2019/03/01 11:06:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1644,7 +1644,7 @@ do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
 	int error;
 
 	if (path == NULL) {
-		MODULE_CALL_HOOK(vfs_openat_10_hook, (&pb), enosys(), error);
+		MODULE_HOOK_CALL(vfs_openat_10_hook, (&pb), enosys(), error);
 		if (error == ENOSYS)
 			goto no_compat;
 		if (error)
