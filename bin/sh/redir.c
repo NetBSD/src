@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.64 2019/02/09 09:34:43 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.65 2019/03/01 05:23:35 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.64 2019/02/09 09:34:43 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.65 2019/03/01 05:23:35 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,17 @@ __RCSID("$NetBSD: redir.c,v 1.64 2019/02/09 09:34:43 kre Exp $");
 # define PIPESIZE 4096		/* amount of buffering in a pipe */
 #else
 # define PIPESIZE PIPE_BUF
+#endif
+
+#ifndef FD_CLOEXEC
+# define FD_CLOEXEC	1	/* well known from before there was a name */
+#endif
+
+#ifndef F_DUPFD_CLOEXEC
+#define F_DUPFD_CLOEXEC	F_DUPFD
+#define CLOEXEC(fd)	(fcntl((fd), F_SETFD, fcntl((fd),F_GETFD) | FD_CLOEXEC))
+#else
+#define CLOEXEC(fd)
 #endif
 
 
@@ -511,9 +522,14 @@ copyfd(int from, int to, int cloexec)
 {
 	int newfd;
 
-	if (cloexec && to > 2)
+	if (cloexec && to > 2) {
+#ifdef O_CLOEXEC
 		newfd = dup3(from, to, O_CLOEXEC);
-	else
+#else
+		newfd = dup2(from, to);
+		fcntl(newfd, F_SETFD, fcntl(newfd,F_GETFD) | FD_CLOEXEC);
+#endif
+	} else
 		newfd = dup2(from, to);
 
 	return newfd;
@@ -658,13 +674,6 @@ renumber_sh_fd(struct shell_fds *fp)
 	if (fp == NULL)
 		return;
 
-#ifndef	F_DUPFD_CLOEXEC
-#define	F_DUPFD_CLOEXEC	F_DUPFD
-#define	CLOEXEC(fd)	(fcntl((fd), F_SETFD, fcntl((fd),F_GETFD) | FD_CLOEXEC))
-#else
-#define	CLOEXEC(fd)
-#endif
-
 	/*
 	 * if we have had a collision, and the sh fd was a "big" one
 	 * try moving the sh fd base to a higher number (if possible)
@@ -702,41 +711,115 @@ static const struct flgnames {
 } nv[] = {
 #ifdef O_APPEND
 	{ "append",	2,	O_APPEND 	},
+#else
+# define O_APPEND 0
 #endif
 #ifdef O_ASYNC
 	{ "async",	2,	O_ASYNC		},
+#else
+# define O_ASYNC 0
 #endif
 #ifdef O_SYNC
 	{ "sync",	2,	O_SYNC		},
+#else
+# define O_SYNC 0
 #endif
 #ifdef O_NONBLOCK
 	{ "nonblock",	3,	O_NONBLOCK	},
+#else
+# define O_NONBLOCK 0
 #endif
 #ifdef O_FSYNC
 	{ "fsync",	2,	O_FSYNC		},
+#else
+# define O_FSYNC 0
 #endif
 #ifdef O_DSYNC
 	{ "dsync",	2,	O_DSYNC		},
+#else
+# define O_DSYNC 0
 #endif
 #ifdef O_RSYNC
 	{ "rsync",	2,	O_RSYNC		},
+#else
+# define O_RSYNC 0
 #endif
 #ifdef O_ALT_IO
 	{ "altio",	2,	O_ALT_IO	},
+#else
+# define O_ALT_IO 0
 #endif
 #ifdef O_DIRECT
 	{ "direct",	2,	O_DIRECT	},
+#else
+# define O_DIRECT 0
 #endif
 #ifdef O_NOSIGPIPE
 	{ "nosigpipe",	3,	O_NOSIGPIPE	},
+#else
+# define O_NOSIGPIPE 0
 #endif
-#ifdef O_CLOEXEC
+
+#define ALLFLAGS (O_APPEND|O_ASYNC|O_SYNC|O_NONBLOCK|O_DSYNC|O_RSYNC|\
+    O_ALT_IO|O_DIRECT|O_NOSIGPIPE)
+
+#ifndef	O_CLOEXEC
+# define O_CLOEXEC	((~0 & ~ALLFLAGS) ^	 \
+				((~0 & ~ALLFLAGS) & ((~0 & ~ALLFLAGS) - 1)))
+#endif
+
+	/* for any system we support, close on exec is always defined */
 	{ "cloexec",	2,	O_CLOEXEC	},
-#endif
 	{ 0, 0, 0 }
 };
-#define ALLFLAGS (O_APPEND|O_ASYNC|O_SYNC|O_NONBLOCK|O_DSYNC|O_RSYNC|\
-    O_ALT_IO|O_DIRECT|O_NOSIGPIPE|O_CLOEXEC)
+
+#ifndef O_ACCMODE
+# define O_ACCMODE	0
+#endif
+#ifndef O_RDONLY
+# define O_RDONLY	0
+#endif
+#ifndef O_WRONLY
+# define O_WRONLY	0
+#endif
+#ifndef O_RWDR
+# define O_RWDR		0
+#endif
+#ifndef O_SHLOCK
+# define O_SHLOCK	0
+#endif
+#ifndef O_EXLOCK
+# define O_EXLOCK	0
+#endif
+#ifndef O_NOFOLLOW
+# define O_NOFOLLOW	0
+#endif
+#ifndef O_CREAT
+# define O_CREAT	0
+#endif
+#ifndef O_TRUNC
+# define O_TRUNC	0
+#endif
+#ifndef O_EXCL
+# define O_EXCL		0
+#endif
+#ifndef O_NOCTTY
+# define O_NOCTTY	0
+#endif
+#ifndef O_DIRECTORY
+# define O_DIRECTORY	0
+#endif
+#ifndef O_REGULAR
+# define O_REGULAR	0
+#endif
+/*
+ * flags that F_GETFL might return that we want to ignore
+ *
+ * F_GETFL should not actually return these, they're all just open()
+ * modifiers, rather than state, but just in case...
+ */
+#define IGNFLAGS (O_ACCMODE|O_RDONLY|O_WRONLY|O_RDWR|O_SHLOCK|O_EXLOCK| \
+    O_NOFOLLOW|O_CREAT|O_TRUNC|O_EXCL|O_NOCTTY|O_DIRECTORY|O_REGULAR)
 
 static int
 getflags(int fd, int p)
@@ -760,9 +843,10 @@ getflags(int fd, int p)
 			return -1;
 		error("Can't get flags for fd=%d (%s)", fd, strerror(errno));
 	}
+	f &= ~IGNFLAGS;		/* clear anything we know about, but ignore */
 	if (c & FD_CLOEXEC)
 		f |= O_CLOEXEC;
-	return f & ALLFLAGS;
+	return f;
 }
 
 static void
