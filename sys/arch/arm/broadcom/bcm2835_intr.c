@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.18 2019/03/01 08:05:46 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.19 2019/03/01 14:53:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.18 2019/03/01 08:05:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.19 2019/03/01 14:53:12 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.18 2019/03/01 08:05:46 skrll Exp 
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 
 #include <dev/fdt/fdtvar.h>
@@ -145,6 +147,20 @@ static struct fdtbus_interrupt_controller_func bcm2836mpicu_fdt_funcs = {
 	.disestablish = bcm2836mp_icu_fdt_disestablish,
 	.intrstr = bcm2836mp_icu_fdt_intrstr
 };
+
+struct bcm2836mp_interrupt {
+	bool bi_done;
+	TAILQ_ENTRY(bcm2836mp_interrupt) bi_next;
+	int bi_irq;
+	int bi_ipl;
+	int bi_flags;
+	int (*bi_func)(void *);
+	void *bi_arg;
+	void *bi_ihs[BCM2836_NCPUS];
+};
+
+static TAILQ_HEAD(, bcm2836mp_interrupt) bcm2836mp_interrupts =
+    TAILQ_HEAD_INITIALIZER(bcm2836mp_interrupts);
 
 struct bcm2835icu_softc {
 	device_t		sc_dev;
@@ -450,20 +466,19 @@ bcm2835_icu_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen
 }
 
 #define	BCM2836MP_TIMER_IRQS	__BITS(3,0)
-#define	BCM2836MP_MAILBOX_IRQS	__BITS(4,4)
-
-#define	BCM2836MP_ALL_IRQS	(BCM2836MP_TIMER_IRQS | BCM2836MP_MAILBOX_IRQS)
+#define	BCM2836MP_MAILBOX_IRQS	__BITS(4,7)
+#define	BCM2836MP_GPU_IRQ	__BIT(8)
+#define	BCM2836MP_PMU_IRQ	__BIT(9)
+#define	BCM2836MP_ALL_IRQS	(BCM2836MP_TIMER_IRQS | BCM2836MP_MAILBOX_IRQS | BCM2836MP_GPU_IRQ | BCM2836MP_PMU_IRQ)
 
 static void
 bcm2836mp_pic_unblock_irqs(struct pic_softc *pic, size_t irqbase,
     uint32_t irq_mask)
 {
-	struct cpu_info * const ci = curcpu();
-	const cpuid_t cpuid = ci->ci_core_id;
 	const bus_space_tag_t iot = bcml1icu_sc->sc_iot;
 	const bus_space_handle_t ioh = bcml1icu_sc->sc_ioh;
+	const cpuid_t cpuid = pic - &bcm2836mp_pic[0];
 
-	KASSERT(pic == &bcm2836mp_pic[cpuid]);
 	KASSERT(irqbase == 0);
 
 	if (irq_mask & BCM2836MP_TIMER_IRQS) {
@@ -492,6 +507,12 @@ bcm2836mp_pic_unblock_irqs(struct pic_softc *pic, size_t irqbase,
 		    BCM2836_LOCAL_MAILBOX_IRQ_CONTROL_SIZE,
 		    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 	}
+	if (irq_mask & BCM2836MP_PMU_IRQ) {
+		bus_space_write_4(iot, ioh, BCM2836_LOCAL_PM_ROUTING_SET,
+		    __BIT(cpuid));
+		bus_space_barrier(iot, ioh, BCM2836_LOCAL_PM_ROUTING_SET, 4,
+		    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
+	}
 
 	return;
 }
@@ -500,12 +521,10 @@ static void
 bcm2836mp_pic_block_irqs(struct pic_softc *pic, size_t irqbase,
     uint32_t irq_mask)
 {
-	struct cpu_info * const ci = curcpu();
-	const cpuid_t cpuid = ci->ci_core_id;
 	const bus_space_tag_t iot = bcml1icu_sc->sc_iot;
 	const bus_space_handle_t ioh = bcml1icu_sc->sc_ioh;
+	const cpuid_t cpuid = pic - &bcm2836mp_pic[0];
 
-	KASSERT(pic == &bcm2836mp_pic[cpuid]);
 	KASSERT(irqbase == 0);
 
 	if (irq_mask & BCM2836MP_TIMER_IRQS) {
@@ -525,6 +544,10 @@ bcm2836mp_pic_block_irqs(struct pic_softc *pic, size_t irqbase,
 		bus_space_write_4(iot, ioh,
 		    BCM2836_LOCAL_MAILBOX_IRQ_CONTROLN(cpuid),
 		    val);
+	}
+	if (irq_mask & BCM2836MP_PMU_IRQ) {
+		bus_space_write_4(iot, ioh, BCM2836_LOCAL_PM_ROUTING_CLR,
+		     __BIT(cpuid));
 	}
 
 	bcm2835_barrier();
@@ -656,14 +679,18 @@ bcm2836mp_intr_init(void *priv, struct cpu_info *ci)
 #if defined(MULTIPROCESSOR)
 	intr_establish(BCM2836_INT_MAILBOX0_CPUN(cpuid), IPL_HIGH,
 	    IST_LEVEL | IST_MPSAFE, bcm2836mp_ipi_handler, NULL);
-#endif
-	/* clock interrupt will attach with gtmr */
-	if (cpuid == 0)
-		return;
-#if defined(SOC_BCM2836)
-	intr_establish(BCM2836_INT_CNTVIRQ_CPUN(cpuid), IPL_CLOCK,
-	    IST_LEVEL | IST_MPSAFE, gtmr_intr, NULL);
 
+	struct bcm2836mp_interrupt *bip;
+	TAILQ_FOREACH(bip, &bcm2836mp_interrupts, bi_next) {
+		if (bip->bi_done)
+			continue;
+
+		const int irq = BCM2836_INT_BASECPUN(cpuid) + bip->bi_irq;
+		void *ih = intr_establish(irq, bip->bi_ipl,
+		    IST_LEVEL | bip->bi_flags, bip->bi_func, bip->bi_arg);
+
+		bip->bi_ihs[cpuid] = ih;
+	}
 #endif
 }
 
@@ -672,7 +699,7 @@ bcm2836mp_icu_fdt_decode_irq(u_int *specifier)
 {
 	if (!specifier)
 		return -1;
-	return be32toh(specifier[0]) + BCM2836_INT_LOCALBASE;
+	return be32toh(specifier[0]);
 }
 
 static void *
@@ -680,19 +707,95 @@ bcm2836mp_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
     int (*func)(void *), void *arg)
 {
 	int iflags = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
-	int irq;
+	struct bcm2836mp_interrupt *bip;
+	void *ih;
 
-	irq = bcm2836mp_icu_fdt_decode_irq(specifier);
+	int irq = bcm2836mp_icu_fdt_decode_irq(specifier);
 	if (irq == -1)
 		return NULL;
 
-	return intr_establish(irq, ipl, IST_LEVEL | iflags, func, arg);
+	TAILQ_FOREACH(bip, &bcm2836mp_interrupts, bi_next) {
+		if (irq == bip->bi_irq)
+			return NULL;
+	}
+
+	bip = kmem_alloc(sizeof(*bip), KM_SLEEP);
+	if (bip == NULL)
+		return NULL;
+
+	bip->bi_done = false;
+	bip->bi_irq = irq;
+	bip->bi_ipl = ipl;
+	bip->bi_flags = IST_LEVEL | iflags;
+	bip->bi_func = func;
+	bip->bi_arg = arg;
+
+	/*
+	 * If we're not cold and the BPs have been started then we can register the
+	 * interupt for all CPUs now, e.g. PMU
+	 */
+	if (!cold) {
+		for (cpuid_t cpuid = 0; cpuid < BCM2836_NCPUS; cpuid++) {
+			ih = intr_establish(BCM2836_INT_BASECPUN(cpuid) + irq, ipl,
+			    IST_LEVEL | iflags, func, arg);
+			if (!ih) {
+				kmem_free(bip, sizeof(*bip));
+				return NULL;
+			}
+			bip->bi_ihs[cpuid] = ih;
+
+		}
+		bip->bi_done = true;
+		ih = bip->bi_ihs[0];
+		goto done;
+	}
+
+	/*
+	 * Otherwise we can only establish the interrupt for the BP and
+	 * delay until bcm2836mp_intr_init is called for each AP, e.g.
+	 * gtmr
+	 */
+	ih = intr_establish(BCM2836_INT_BASECPUN(0) + irq, ipl,
+	    IST_LEVEL | iflags, func, arg);
+	if (!ih) {
+		kmem_free(bip, sizeof(*bip));
+		return NULL;
+	}
+
+	bip->bi_ihs[0] = ih;
+	for (cpuid_t cpuid = 1; cpuid < BCM2836_NCPUS; cpuid++)
+		bip->bi_ihs[cpuid] = NULL;
+
+done:
+	TAILQ_INSERT_TAIL(&bcm2836mp_interrupts, bip, bi_next);
+
+	/*
+	 * Return the intr_establish handle for cpu 0 for API compatibility.
+	 * Any cpu would do here as these sources don't support set_affinity
+	 * when the handle is used in interrupt_distribute(9)
+	 */
+	return ih;
 }
 
 static void
 bcm2836mp_icu_fdt_disestablish(device_t dev, void *ih)
 {
-	intr_disestablish(ih);
+	struct bcm2836mp_interrupt *bip;
+
+	TAILQ_FOREACH(bip, &bcm2836mp_interrupts, bi_next) {
+		if (bip->bi_ihs[0] == ih)
+			break;
+	}
+
+	if (bip == NULL)
+		return;
+
+	for (cpuid_t cpuid = 0; cpuid < BCM2836_NCPUS; cpuid++)
+		intr_disestablish(bip->bi_ihs[cpuid]);
+
+	TAILQ_REMOVE(&bcm2836mp_interrupts, bip, bi_next);
+
+	kmem_free(bip, sizeof(*bip));
 }
 
 static bool
