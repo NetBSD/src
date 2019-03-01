@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.12 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: tda.c,v 1.13 2019/03/01 02:38:17 mrg Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.12 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.13 2019/03/01 02:38:17 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.12 2018/06/16 21:22:13 thorpej Exp $");
 #define SENSOR_FAN_CPU		0
 #define SENSOR_FAN_SYS		1
 
-#define CPU_TEMP_MAX		(67 * 1000000 + 273150000)
-#define CPU_TEMP_MIN		(57 * 1000000 + 273150000)
-#define SYS_TEMP_MAX		(30 * 1000000 + 273150000)
-#define SYS_TEMP_MIN		(20 * 1000000 + 273150000)
+#define DEGC_TO_mK(c)		(((c) * 1000000) + 273150000)
+
+#define CPU_TEMP_MAX		DEGC_TO_mK(67)
+#define CPU_TEMP_MIN		DEGC_TO_mK(57)
+#define SYS_TEMP_MAX		DEGC_TO_mK(30)
+#define SYS_TEMP_MIN		DEGC_TO_mK(20)
 
 struct tda_softc {
 	device_t		sc_dev;
