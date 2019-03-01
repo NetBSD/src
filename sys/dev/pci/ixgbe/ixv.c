@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.19 2019/01/27 18:35:19 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.20 2019/03/01 17:33:24 martin Exp $*/
 
 /******************************************************************************
 
@@ -1032,7 +1032,7 @@ ixv_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
 
-	if (!adapter->link_active) {
+	if (adapter->link_active != LINK_STATE_UP) {
 		ifmr->ifm_active |= IFM_NONE;
 		IXGBE_CORE_UNLOCK(adapter);
 		return;
@@ -1307,7 +1307,7 @@ ixv_update_link_status(struct adapter *adapter)
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
 	if (adapter->link_up) {
-		if (adapter->link_active == FALSE) {
+		if (adapter->link_active != LINK_STATE_UP) {
 			if (bootverbose) {
 				const char *bpsmsg;
 
@@ -1337,15 +1337,20 @@ ixv_update_link_status(struct adapter *adapter)
 				device_printf(dev, "Link is up %s %s \n",
 				    bpsmsg, "Full Duplex");
 			}
-			adapter->link_active = TRUE;
+			adapter->link_active = LINK_STATE_UP;
 			if_link_state_change(ifp, LINK_STATE_UP);
 		}
-	} else { /* Link down */
-		if (adapter->link_active == TRUE) {
+	} else {
+		/*
+		 * Do it when link active changes to DOWN. i.e.
+		 * a) LINK_STATE_UNKNOWN -> LINK_STATE_DOWN
+		 * b) LINK_STATE_UP      -> LINK_STATE_DOWN
+		 */
+		if (adapter->link_active != LINK_STATE_DOWN) {
 			if (bootverbose)
 				device_printf(dev, "Link is Down\n");
 			if_link_state_change(ifp, LINK_STATE_DOWN);
-			adapter->link_active = FALSE;
+			adapter->link_active = LINK_STATE_DOWN;
 		}
 	}
 } /* ixv_update_link_status */

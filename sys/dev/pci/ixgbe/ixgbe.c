@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.27 2019/01/28 13:03:02 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.28 2019/03/01 17:33:24 martin Exp $ */
 
 /******************************************************************************
 
@@ -1594,7 +1594,7 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	stats->mpctotal.ev_count += total_missed_rx;
 
 	/* Document says M[LR]FC are valid when link is up and 10Gbps */
-	if ((adapter->link_active == TRUE)
+	if ((adapter->link_active == LINK_STATE_UP)
 	    && (adapter->link_speed == IXGBE_LINK_SPEED_10GB_FULL)) {
 		stats->mlfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MLFC);
 		stats->mrfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MRFC);
@@ -2692,7 +2692,7 @@ ixgbe_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
 
-	if (!adapter->link_active) {
+	if (adapter->link_active != LINK_STATE_UP) {
 		ifmr->ifm_active |= IFM_NONE;
 		IXGBE_CORE_UNLOCK(adapter);
 		return;
@@ -4665,7 +4665,7 @@ ixgbe_update_link_status(struct adapter *adapter)
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
 	if (adapter->link_up) {
-		if (adapter->link_active == FALSE) {
+		if (adapter->link_active != LINK_STATE_UP) {
 			/*
 			 * To eliminate influence of the previous state
 			 * in the same way as ixgbe_init_locked().
@@ -4714,7 +4714,7 @@ ixgbe_update_link_status(struct adapter *adapter)
 				device_printf(dev, "Link is up %s %s \n",
 				    bpsmsg, "Full Duplex");
 			}
-			adapter->link_active = TRUE;
+			adapter->link_active = LINK_STATE_UP;
 			/* Update any Flow Control changes */
 			ixgbe_fc_enable(&adapter->hw);
 			/* Update DMA coalescing config */
@@ -4724,12 +4724,17 @@ ixgbe_update_link_status(struct adapter *adapter)
 			if (adapter->feat_en & IXGBE_FEATURE_SRIOV)
 				ixgbe_ping_all_vfs(adapter);
 		}
-	} else { /* Link down */
-		if (adapter->link_active == TRUE) {
+	} else {
+		/*
+		 * Do it when link active changes to DOWN. i.e.
+		 * a) LINK_STATE_UNKNOWN -> LINK_STATE_DOWN
+		 * b) LINK_STATE_UP      -> LINK_STATE_DOWN
+		 */
+		if (adapter->link_active != LINK_STATE_DOWN) {
 			if (bootverbose)
 				device_printf(dev, "Link is Down\n");
 			if_link_state_change(ifp, LINK_STATE_DOWN);
-			adapter->link_active = FALSE;
+			adapter->link_active = LINK_STATE_DOWN;
 			if (adapter->feat_en & IXGBE_FEATURE_SRIOV)
 				ixgbe_ping_all_vfs(adapter);
 			ixgbe_drain_all(adapter);
