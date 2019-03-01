@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_pci.c,v 1.15 2018/11/16 15:06:23 jmcneill Exp $	*/
+/*	$NetBSD: iq80310_pci.c,v 1.16 2019/03/01 09:25:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_pci.c,v 1.15 2018/11/16 15:06:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_pci.c,v 1.16 2019/03/01 09:25:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,8 @@ iq80310_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 * the i80312.
 	 */
 
-	reg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
-	sbus = PPB_BUSINFO_SECONDARY(reg);
+	reg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PCI_BRIDGE_BUS_REG);
+	sbus = PCI_BRIDGE_BUS_NUM_SECONDARY(reg);
 
 	if (pa->pa_bus != sbus) {
 		printf("iq80310_pci_intr_map: %d/%d/%d not on Secondary bus\n",
@@ -149,9 +149,9 @@ iq80310_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 * and can determine if we're looking at that device.
 	 */
 
-	reg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
-	pbus = PPB_BUSINFO_PRIMARY(reg);
-	sbus = PPB_BUSINFO_SECONDARY(reg);
+	reg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PCI_BRIDGE_BUS_REG);
+	pbus = PCI_BRIDGE_BUS_NUM_PRIMARY(reg);
+	sbus = PCI_BRIDGE_BUS_NUM_SECONDARY(reg);
 
 	/*
 	 * XXX We don't know how to map interrupts on the Primary
@@ -192,8 +192,8 @@ iq80310_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	}
 
 	/* Now read the PPB's secondary bus number. */
-	reg = pci_conf_read(pa->pa_pc, tag, PPB_REG_BUSINFO);
-	sbus = PPB_BUSINFO_SECONDARY(reg);
+	reg = pci_conf_read(pa->pa_pc, tag, PCI_BRIDGE_BUS_REG);
+	sbus = PCI_BRIDGE_BUS_NUM_SECONDARY(reg);
 
 	if (pa->pa_bus == sbus && pa->pa_device == 0 &&
 	    pa->pa_function == 0) {

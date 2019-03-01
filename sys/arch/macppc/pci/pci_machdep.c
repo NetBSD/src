@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.41 2016/10/19 00:08:41 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.42 2019/03/01 09:25:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41 2016/10/19 00:08:41 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.42 2019/03/01 09:25:59 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -318,7 +318,7 @@ fixpci(int parent, pci_chipset_tag_t pc)
 			 * we found a CardBus bridge. Check if the bus number
 			 * is sane
 			 */
-			bi = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+			bi = pci_conf_read(pc, tag, PCI_BRIDGE_BUS_REG);
 			busid = bi & 0xff;
 			if (busid == 0) {
 				fix_cardbus_bridge(node, pc, tag);
@@ -360,11 +360,11 @@ fix_cardbus_bridge(int node, pci_chipset_tag_t pc, pcitag_t tag)
 		path[len] = 0;
 		aprint_verbose("\n%s: fixing bus number to %d", path, bus_number);
 		pci_decompose_tag(pc, tag, &bus, &dev, &fn);
-		bi = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+		bi = pci_conf_read(pc, tag, PCI_BRIDGE_BUS_REG);
 		bi &= 0xff000000;
 		/* XXX subordinate is always 32 here */
 		bi |= (bus & 0xff) | (bus_number << 8) | 0x200000;
-		pci_conf_write(pc, tag, PPB_REG_BUSINFO, bi);
+		pci_conf_write(pc, tag, PCI_BRIDGE_BUS_REG, bi);
 	}
 }
 
