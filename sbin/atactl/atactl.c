@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.79 2018/12/05 06:49:54 mrg Exp $	*/
+/*	$NetBSD: atactl.c,v 1.80 2019/03/01 02:33:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.79 2018/12/05 06:49:54 mrg Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.80 2019/03/01 02:33:43 mrg Exp $");
 #endif
 
 
@@ -299,7 +299,7 @@ static const struct attr_table {
 	{ 180,          "Unused Reserved Block Count", NULL },
 	{ 181,          "Program Fail Count", NULL },
 	{ 182,          "Erase Fail Count", NULL },
-	{ 183,          "SATA Downshift Error Count", NULL },
+	{ 183,          "Runtime Bad Block", NULL },
 	{ 184,          "End-to-end error", NULL },
 	{ 185,          "Head Stability", NULL },
 	{ 186,          "Induced Op-Vibration Detection", NULL },
@@ -360,6 +360,7 @@ static const struct attr_table micron_smart_names[] = {
 	{   5,		"Reallocated NAND block count", NULL },
 	{ 173,          "Average block erase count", NULL },
 	{ 181,          "Non 4K aligned access count", NULL },
+	{ 183,          "SATA Downshift Error Count", NULL },
 	{ 184,          "Error correction count", NULL },
 	{ 189,          "Factory bad block count", NULL },
 	{ 197,		"Current pending ECC count", NULL },
@@ -372,15 +373,43 @@ static const struct attr_table micron_smart_names[] = {
 };
 
 /*
+ * Intel specific SMART attributes.  Fill me in with more.
+ */
+static const struct attr_table intel_smart_names[] = {
+	{ 183,          "SATA Downshift Error Count", NULL },
+};
+
+/*
  * Vendor-specific SMART attribute table.  Can be used to override
  * a particular attribute name and special printer function, with the
  * default is the main table.
  */
-const struct vendor_name_table {
+static const struct vendor_name_table {
 	const char *name;
 	const struct attr_table *table;
 } vendor_smart_names[] = {
-	{ .name = "Micron", .table = micron_smart_names },
+	{ "Micron",		micron_smart_names },
+	{ "Intel",		intel_smart_names },
+};
+
+/*
+ * Global model -> vendor table.  Extend this to regexp.
+ */
+static const struct model_to_vendor_table {
+	const char *model;
+	const char *vendor;
+} model_to_vendor[] = {
+	{ "Crucial",		"Micron" },
+	{ "Micron",		"Micron" },
+	{ "C300-CT",		"Micron" },
+	{ "C400-MT",		"Micron" },
+	{ "M4-CT",		"Micron" },
+	{ "M500",		"Micron" },
+	{ "M510",		"Micron" },
+	{ "M550",		"Micron" },
+	{ "MTFDDA",		"Micron" },
+	{ "EEFDDA",		"Micron" },
+	{ "INTEL",		"Intel" },
 };
 
 static const struct bitinfo ata_sec_st[] = {
@@ -1009,21 +1038,7 @@ compute_capacity(uint64_t *capacityp, uint64_t *sectorsp, uint32_t *secsizep)
 static const char *
 guess_vendor(void)
 {
-	struct {
-		const char *model;
-		const char *vendor;
-	} model_to_vendor[] = {
-		{ "Crucial", "Micron" },
-		{ "Micron", "Micron" },
-		{ "C300-CT", "Micron" },
-		{ "C400-MT", "Micron" },
-		{ "M4-CT", "Micron" },
-		{ "M500", "Micron" },
-		{ "M510", "Micron" },
-		{ "M550", "Micron" },
-		{ "MTFDDA", "Micron" },
-		{ "EEFDDA", "Micron" },
-	};
+
 	unsigned i;
 
 	for (i = 0; i < __arraycount(model_to_vendor); i++)
