@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.65 2019/03/01 05:23:35 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.66 2019/03/01 06:15:01 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.65 2019/03/01 05:23:35 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.66 2019/03/01 06:15:01 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -764,8 +764,7 @@ static const struct flgnames {
     O_ALT_IO|O_DIRECT|O_NOSIGPIPE)
 
 #ifndef	O_CLOEXEC
-# define O_CLOEXEC	((~0 & ~ALLFLAGS) ^	 \
-				((~0 & ~ALLFLAGS) & ((~0 & ~ALLFLAGS) - 1)))
+# define O_CLOEXEC	((~ALLFLAGS) ^ ((~ALLFLAGS) & ((~ALLFLAGS) - 1)))
 #endif
 
 	/* for any system we support, close on exec is always defined */
