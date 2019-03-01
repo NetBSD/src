@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.29 2013/09/15 09:39:47 martin Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.30 2019/03/01 23:14:13 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.29 2013/09/15 09:39:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.30 2019/03/01 23:14:13 jakllsch Exp $");
 
 #include "opt_rasops.h"
 
@@ -237,6 +237,7 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	/* Do underline */
 	if ((attr & 1) != 0) {
 	        rp = (uint32_t *)rrp;                         
+		height = font->fontheight;
 		DELTA(rp, (ri->ri_stride * (height - 2)), int32_t *);
 		while (width--)
 			*rp++ = clr[1];
