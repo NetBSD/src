@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.158 2018/12/19 13:57:49 maxv Exp $
+#	$NetBSD: files.sparc,v 1.159 2019/03/01 02:28:27 macallan Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -122,6 +122,7 @@ file	arch/sparc/sparc/memecc.c		eccmemctl
 device sx {}
 attach sx at mainbus
 file	arch/sparc/dev/sx.c			sx needs-flag
+defflag	opt_sx.h	SX_DEBUG
 
 device tctrl: sysmon_envsys, sysmon_power, sysmon_taskq
 attach tctrl at obio
