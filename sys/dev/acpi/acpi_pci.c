@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.25 2019/01/27 02:08:41 pgoyette Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.26 2019/03/01 09:26:00 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.25 2019/01/27 02:08:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.26 2019/03/01 09:26:00 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -354,8 +354,8 @@ acpi_pcidev_ppb_downbus(uint16_t segment, uint16_t bus, uint16_t device,
 		return AE_TYPE;
 
 	/* This is a PCI-to-PCI bridge.  Get its secondary bus#. */
-	val = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
-	*downbus = PPB_BUSINFO_SECONDARY(val);
+	val = pci_conf_read(pc, tag, PCI_BRIDGE_BUS_REG);
+	*downbus = PCI_BRIDGE_BUS_NUM_SECONDARY(val);
 
 	return AE_OK;
 }

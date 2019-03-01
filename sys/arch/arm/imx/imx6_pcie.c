@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.7 2018/12/16 16:45:11 skrll Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.8 2019/03/01 09:25:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2016  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.7 2018/12/16 16:45:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.8 2019/03/01 09:25:59 msaitoh Exp $");
 
 #include "opt_pci.h"
 
@@ -688,12 +688,11 @@ imx6pcie_setup(struct imx6pcie_softc * const sc)
 
 	/* Bus number */
 	v = PCIE_READ(sc, PCI_BRIDGE_BUS_REG);
-	v &= ~(PCI_BRIDGE_BUS_EACH_MASK << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT |
-	    PCI_BRIDGE_BUS_EACH_MASK << PCI_BRIDGE_BUS_SECONDARY_SHIFT |
-	    PCI_BRIDGE_BUS_EACH_MASK << PCI_BRIDGE_BUS_PRIMARY_SHIFT);
-	v |= PCI_BRIDGE_BUS_SUBORDINATE(1);
-	v |= PCI_BRIDGE_BUS_SECONDARY(1);
-	v |= PCI_BRIDGE_BUS_PRIMARY(0);
+	v &= ~(PCI_BRIDGE_BUS_SUBORDINATE | PCI_BRIDGE_BUS_SECONDARY |
+	    PCI_BRIDGE_BUS_PRIMARY);
+	v |= PCI_BRIDGE_BUS_NUM_SUBORDINATE(1);
+	v |= PCI_BRIDGE_BUS_NUM_SECONDARY(1);
+	v |= PCI_BRIDGE_BUS_NUM_PRIMARY(0);
 	PCIE_WRITE(sc, PCI_BRIDGE_BUS_REG, v);
 
 	/* Command register */

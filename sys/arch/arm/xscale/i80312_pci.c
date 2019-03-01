@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci.c,v 1.16 2015/10/02 05:22:50 msaitoh Exp $	*/
+/*	$NetBSD: i80312_pci.c,v 1.17 2019/03/01 09:25:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.16 2015/10/02 05:22:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.17 2019/03/01 09:25:59 msaitoh Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -106,9 +106,9 @@ i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 	 * the Secondary bus.
 	 */
 
-	binfo = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
-	/* pbus = PPB_BUSINFO_PRIMARY(binfo); */
-	sbus = PPB_BUSINFO_SECONDARY(binfo);
+	binfo = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PCI_BRIDGE_BUS_REG);
+	/* pbus = PCI_BRIDGE_BUS_NUM_PRIMARY(binfo); */
+	sbus = PCI_BRIDGE_BUS_NUM_SECONDARY(binfo);
 
 	ioext  = extent_create("pciio", sc->sc_sioout_base,
 	    sc->sc_sioout_base + sc->sc_sioout_size - 1,
@@ -185,9 +185,9 @@ i80312_pci_conf_setup(struct i80312_softc *sc, pcitag_t tag, int offset,
 
 	i80312_pci_decompose_tag(sc, tag, &ps->ps_b, &ps->ps_d, &ps->ps_f);
 
-	binfo = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
-	pbus = PPB_BUSINFO_PRIMARY(binfo);
-	sbus = PPB_BUSINFO_SECONDARY(binfo);
+	binfo = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PCI_BRIDGE_BUS_REG);
+	pbus = PCI_BRIDGE_BUS_NUM_PRIMARY(binfo);
+	sbus = PCI_BRIDGE_BUS_NUM_SECONDARY(binfo);
 
 	/*
 	 * If the bus # is the Primary bus #, use the Primary
