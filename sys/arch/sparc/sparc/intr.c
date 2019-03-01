@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.120 2019/02/04 09:57:39 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.121 2019/03/01 02:33:55 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,10 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.120 2019/02/04 09:57:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.121 2019/03/01 02:33:55 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
+#include "sx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.120 2019/02/04 09:57:39 mrg Exp $");
 
 #if defined(MULTIPROCESSOR) && defined(DDB)
 #include <machine/db_machdep.h>
+#endif
+
+#if NSX > 0
+#include <sys/bus.h>
+#include <sparc/dev/sxvar.h>
 #endif
 
 #if defined(MULTIPROCESSOR)
@@ -255,7 +261,10 @@ nmi_hard(void)
 	si = *((uint32_t *)ICR_SI_PEND);
 	snprintb(bits, sizeof(bits), SINTR_BITS, si);
 	printf("cpu%d: NMI: system interrupts: %s\n", cpu_number(), bits);
-		
+
+#if NSX > 0
+	sx_dump();
+#endif
 
 	if ((si & SINTR_M) != 0) {
 		/* ECC memory error */
