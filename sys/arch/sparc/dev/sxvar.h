@@ -1,4 +1,4 @@
-/*	$NetBSD: sxvar.h,v 1.3 2014/06/29 03:57:10 tsutsui Exp $	*/
+/*	$NetBSD: sxvar.h,v 1.4 2019/03/01 02:30:42 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -50,5 +50,7 @@ sx_read(struct sx_softc *sc, int addr)
 {
 	return bus_space_read_4(sc->sc_tag, sc->sc_regh, addr);
 }
+
+void sx_dump(void);
 
 #endif
