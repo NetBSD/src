@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.89 2018/10/28 14:30:31 skrll Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.90 2019/03/01 09:25:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.89 2018/10/28 14:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.90 2019/03/01 09:25:59 msaitoh Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -376,13 +376,13 @@ initarm(void *arg)
 		printf("Resetting secondary PCI bus...\n");
 #endif
 		reg = bus_space_read_4(&obio_bs_tag,
-		    I80312_PMMR_BASE + I80312_PPB_BASE, PPB_REG_BRIDGECONTROL);
+		    I80312_PMMR_BASE + I80312_PPB_BASE, PCI_BRIDGE_CONTROL_REG);
 		bus_space_write_4(&obio_bs_tag,
-		    I80312_PMMR_BASE + I80312_PPB_BASE, PPB_REG_BRIDGECONTROL,
-		    reg | PPB_BC_SECONDARY_RESET);
+		    I80312_PMMR_BASE + I80312_PPB_BASE, PCI_BRIDGE_CONTROL_REG,
+		    reg | PCI_BRIDGE_CONTROL_SECBR);
 		delay(10 * 1000);	/* 10ms enough? */
 		bus_space_write_4(&obio_bs_tag,
-		    I80312_PMMR_BASE + I80312_PPB_BASE, PPB_REG_BRIDGECONTROL,
+		    I80312_PMMR_BASE + I80312_PPB_BASE, PCI_BRIDGE_CONTROL_REG,
 		    reg);
 	}
 

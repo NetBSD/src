@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.23 2012/10/14 14:20:57 msaitoh Exp $	*/
+/*	$NetBSD: i80312.c,v 1.24 2019/03/01 09:25:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.23 2012/10/14 14:20:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.24 2019/03/01 09:25:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,10 +268,10 @@ i80312_attach(struct i80312_softc *sc)
 	 */
 	if (sc->sc_is_host) {
 		bus_space_write_4(sc->sc_st, sc->sc_ppb_sh,
-		    PPB_REG_BUSINFO,
-		    (0 << PCI_BRIDGE_BUS_PRIMARY_SHIFT) |
-		    (1 << PCI_BRIDGE_BUS_SECONDARY_SHIFT) |
-		    (1 << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT));
+		    PCI_BRIDGE_BUS_REG,
+		    __SHIFTIN(0, PCI_BRIDGE_BUS_PRIMARY) |
+		    __SHIFTIN(1, PCI_BRIDGE_BUS_SECONDARY) |
+		    __SHIFTIN(1, PCI_BRIDGE_BUS_SUBORDINATE));
 	}
 
 	/* Initialize the bus space tags. */
@@ -306,13 +306,13 @@ i80312_attach(struct i80312_softc *sc)
 	 * is the only bus on which we can have a private device
 	 * space.
 	 */
-	preg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
+	preg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PCI_BRIDGE_BUS_REG);
 	pba.pba_iot = &sc->sc_pci_iot;
 	pba.pba_memt = &sc->sc_pci_memt;
 	pba.pba_dmat = &sc->sc_pci_dmat;
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &sc->sc_pci_chipset;
-	pba.pba_bus = PPB_BUSINFO_SECONDARY(preg);
+	pba.pba_bus = PCI_BRIDGE_BUS_NUM_SECONDARY(preg);
 	pba.pba_bridgetag = NULL;
 	pba.pba_intrswiz = 3;
 	pba.pba_intrtag = 0;

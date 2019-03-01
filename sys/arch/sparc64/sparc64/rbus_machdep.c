@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.16 2011/07/01 18:49:24 dyoung Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.17 2019/03/01 09:25:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.16 2011/07/01 18:49:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.17 2019/03/01 09:25:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -157,10 +157,10 @@ pccbb_attach_hook(device_t parent, device_t self, struct pci_attach_args *pa)
 		if (bus >= 256)
 			printf("pccbb_attach_hook: 256 >= busses exist\n");
 		else {
-			reg = pci_conf_read(pc, pa->pa_tag, PPB_REG_BUSINFO);
+			reg = pci_conf_read(pc, pa->pa_tag, PCI_BRIDGE_BUS_REG);
 			reg &= 0xff000000;
 			reg |= pa->pa_bus | (bus << 8) | (bus << 16);
-			pci_conf_write(pc, pa->pa_tag, PPB_REG_BUSINFO, reg);
+			pci_conf_write(pc, pa->pa_tag, PCI_BRIDGE_BUS_REG, reg);
 #ifdef DIAGNOSTIC
 			if ((*pc->spc_busnode)[bus].node != 0)
 				printf("pccbb_attach_hook: override bus %d"

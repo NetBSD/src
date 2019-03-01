@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.45 2017/06/01 02:45:09 chs Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.46 2019/03/01 09:26:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.45 2017/06/01 02:45:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.46 2019/03/01 09:26:00 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,12 +265,12 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 
 	    /* first round amount of space up */
 	    rct.bussize_ioreqs[busnum] =
-	      rbus_round_up(rct.bussize_ioreqs[busnum],  PPB_IO_MIN);
+	      rbus_round_up(rct.bussize_ioreqs[busnum],  PCI_BRIDGE_IO_MIN);
 	    rct.bussize_ioreqs[pci_bus_parent[busnum]] +=
 	      rct.bussize_ioreqs[busnum];
 
 	    rct.bussize_memreqs[busnum] =
-	      rbus_round_up(rct.bussize_memreqs[busnum], PPB_MEM_MIN);
+	      rbus_round_up(rct.bussize_memreqs[busnum], PCI_BRIDGE_MEM_MIN);
 	    rct.bussize_memreqs[pci_bus_parent[busnum]] +=
 	      rct.bussize_memreqs[busnum];
 
@@ -278,8 +278,8 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	}
 
 	rct.bussize_ioreqs[minbus] =
-	  rbus_round_up(rct.bussize_ioreqs[minbus], 4096);
-	rct.bussize_memreqs[minbus] =
+	  rbus_round_up(rct.bussize_ioreqs[minbus], PCI_BRIDGE_IO_MIN);
+	rct.bussize_memreqs[minbus] =  /* XXX Not 8 but PCI_BRIDGE_MEM_MIN ? */
 	  rbus_round_up(rct.bussize_memreqs[minbus], 8);
 
 	printf("%s: total needs IO %08zx and MEM %08zx\n",
@@ -376,11 +376,11 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 			   PCI_COMMAND_STATUS_REG, reg);
 
 	    /* now init the limit register for I/O */
-	    pci_conf_write(pc, pci_bus_tag[busnum], PPB_REG_IOSTATUS,
-			   (((start & 0xf000) >> 8) << PPB_IOBASE_SHIFT) |
-			   ((((start +
-			       rct.bussize_ioreqs[busnum] +
-			       4095) & 0xf000) >> 8) << PPB_IOLIMIT_SHIFT));
+	    pci_conf_write(pc, pci_bus_tag[busnum], PCI_BRIDGE_STATIO_REG,
+		__SHIFTIN((start >> 8)
+		    & PCI_BRIDGE_STATIO_IOADDR, PCI_BRIDGE_STATIO_IOBASE) |
+		__SHIFTIN(((start + rct.bussize_ioreqs[busnum] + 4095) >> 8)
+		    & PCI_BRIDGE_STATIO_IOADDR, PCI_BRIDGE_STATIO_IOLIMIT));
 	  }
 
 	  if(rct.bussize_memreqs[busnum]) {
@@ -412,22 +412,20 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 			   PCI_COMMAND_STATUS_REG, reg);
 
 	    /* now init the limit register for memory */
-	    pci_conf_write(pc, pci_bus_tag[busnum], PPB_REG_MEM,
-			   ((start & PPB_MEM_MASK)
-			    >> PPB_MEM_SHIFT) << PPB_MEMBASE_SHIFT |
-			   (((start +
-			     rct.bussize_memreqs[busnum] +
-			      PPB_MEM_MIN-1) >> PPB_MEM_SHIFT)
-			    << PPB_MEMLIMIT_SHIFT));
+	    pci_conf_write(pc, pci_bus_tag[busnum], PCI_BRIDGE_MEMORY_REG,
+		__SHIFTIN((start >> 16) & PCI_BRIDGE_MEMORY_ADDR,
+		    PCI_BRIDGE_MEMORY_BASE) |
+		__SHIFTIN(((start + rct.bussize_memreqs[busnum] + PPB_MEM_MIN
+			    - 1) >> 16) & PCI_BRIDGE_MEMORY_ADDR,
+		    PCI_BRIDGE_MEMORY_LIMIT));
 
 	    /* and set the prefetchable limits as well */
-	    pci_conf_write(pc, pci_bus_tag[busnum], PPB_REG_PREFMEM,
-			   ((start & PPB_MEM_MASK)
-			    >> PPB_MEM_SHIFT) << PPB_MEMBASE_SHIFT |
-			   (((start +
-			     rct.bussize_memreqs[busnum] +
-			      PPB_MEM_MIN-1) >> PPB_MEM_SHIFT)
-			    << PPB_MEMLIMIT_SHIFT));
+	    pci_conf_write(pc, pci_bus_tag[busnum], PCI_BRIDGE_PREFETCHMEM_REG,
+		__SHIFTIN((start >> 16) & PCI_BRIDGE_PREFETCHMEM_ADDR,
+		    PCI_BRIDGE_PREFETCHMEM_BASE) |
+		__SHIFTIN(((start + rct.bussize_memreqs[busnum] + PPB_MEM_MIN
+			    - 1) >> 16) & PCI_BRIDGE_PREFETCHMEM_ADDR,
+		    PCI_BRIDGE_PREFETCHMEM_LIMIT));
 
 	    /* pci_conf_print(pc, pci_bus_tag[busnum], NULL); */
 	  }
@@ -622,38 +620,37 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	csc->sc_tag = ca->ca_tag;
 
-	busdata = Cardbus_conf_read(ct, ca->ca_tag, PPB_REG_BUSINFO);
+	busdata = Cardbus_conf_read(ct, ca->ca_tag, PCI_BRIDGE_BUS_REG);
 	minbus = pcibios_max_bus;
 	maxbus = minbus;		/* XXX; gcc */
 
-	if (PPB_BUSINFO_SECONDARY(busdata) == 0) {
+	if (PCI_BRIDGE_BUS_NUM_SECONDARY(busdata) == 0) {
 		aprint_error_dev(self, "not configured by system firmware calling pci_bus_fixup(%d)\n", 0);
 
 	  /*
 	   * first, pull the reset wire on the secondary bridge
 	   * to clear all devices
 	   */
-	  busdata = Cardbus_conf_read(ct, ca->ca_tag,
-				      PPB_REG_BRIDGECONTROL);
-	  Cardbus_conf_write(ct, ca->ca_tag, PPB_REG_BRIDGECONTROL,
-			     busdata | PPB_BC_SECONDARY_RESET);
+	  busdata = Cardbus_conf_read(ct, ca->ca_tag, PCI_BRIDGE_CONTROL_REG);
+	  Cardbus_conf_write(ct, ca->ca_tag, PCI_BRIDGE_CONTROL_REG,
+	      busdata | PCI_BRIDGE_CONTROL_SECBR);
 	  delay(1);
-	  Cardbus_conf_write(ct, ca->ca_tag, PPB_REG_BRIDGECONTROL,
+	  Cardbus_conf_write(ct, ca->ca_tag, PCI_BRIDGE_CONTROL_REG,
 			     busdata);
 
 	  /* then go initialize the bridge control registers */
 	  maxbus = pci_bus_fixup(psc->sc_pc, 0);
 	}
 
-	busdata = Cardbus_conf_read(ct, ca->ca_tag, PPB_REG_BUSINFO);
-	if(PPB_BUSINFO_SECONDARY(busdata) == 0) {
+	busdata = Cardbus_conf_read(ct, ca->ca_tag, PCI_BRIDGE_BUS_REG);
+	if(PCI_BRIDGE_BUS_NUM_SECONDARY(busdata) == 0) {
 		aprint_error_dev(self, "still not configured, not fixable.\n");
 		return;
 	}
 
 #if 0
-	minbus = PPB_BUSINFO_SECONDARY(busdata);
-	maxbus = PPB_BUSINFO_SUBORDINATE(busdata);
+	minbus = PCI_BRIDGE_BUS_NUM_SECONDARY(busdata);
+	maxbus = PCI_BRIDGE_BUS_NUM_SUBORDINATE(busdata);
 #endif
 
 	/* now, go and assign addresses for the new devices */
@@ -691,8 +688,8 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 	pba.pba_memt = ca->ca_memt;
 	pba.pba_dmat = ca->ca_dmat;
 	pba.pba_pc   = psc->sc_pc;
-	pba.pba_flags    = PCI_FLAGS_IO_OKAY|PCI_FLAGS_MEM_OKAY;
-	pba.pba_bus      = PPB_BUSINFO_SECONDARY(busdata);
+	pba.pba_flags    = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
+	pba.pba_bus      = PCI_BRIDGE_BUS_NUM_SECONDARY(busdata);
 	pba.pba_bridgetag = &csc->sc_tag;
 	/*pba.pba_intrswiz = parent_sc->sc_intrswiz; */
 	pba.pba_intrtag  = psc->sc_pa.pa_intrtag;

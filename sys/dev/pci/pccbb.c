@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.213 2019/03/01 05:41:56 msaitoh Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.214 2019/03/01 09:26:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.213 2019/03/01 05:41:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.214 2019/03/01 09:26:00 msaitoh Exp $");
 
 /*
 #define CBB_DEBUG
@@ -764,13 +764,13 @@ pccbb_chipinit(struct pccbb_softc *sc)
 	bcr |= CB_BCR_INTR_IREQ_ENABLE;		/* disable PCI Intr */
 	bcr |= CB_BCR_WRITE_POST_ENABLE;	/* enable write post */
 	/* assert reset */
-	bcr |= PCI_BRIDGE_CONTROL_SECBR	<< PCI_BRIDGE_CONTROL_SHIFT;
+	bcr |= PCI_BRIDGE_CONTROL_SECBR;
         /* Set master abort mode to 1, forward SERR# from secondary
          * to primary, and detect parity errors on secondary.
 	 */
-	bcr |= PCI_BRIDGE_CONTROL_MABRT	<< PCI_BRIDGE_CONTROL_SHIFT;
-	bcr |= PCI_BRIDGE_CONTROL_SERR << PCI_BRIDGE_CONTROL_SHIFT;
-	bcr |= PCI_BRIDGE_CONTROL_PERE << PCI_BRIDGE_CONTROL_SHIFT;
+	bcr |= PCI_BRIDGE_CONTROL_MABRT;
+	bcr |= PCI_BRIDGE_CONTROL_SERR;
+	bcr |= PCI_BRIDGE_CONTROL_PERE;
 	pci_conf_write(pc, tag, PCI_BRIDGE_CONTROL_REG, bcr);
 
 	switch (sc->sc_chipset) {
@@ -1443,14 +1443,14 @@ cb_reset(struct pccbb_softc *sc)
 	aprint_debug("%s: enter bcr %" PRIx32 "\n", __func__, bcr);
 
 	/* Reset bit Assert (bit 6 at 0x3E) */
-	bcr |= PCI_BRIDGE_CONTROL_SECBR << PCI_BRIDGE_CONTROL_SHIFT;
+	bcr |= PCI_BRIDGE_CONTROL_SECBR;
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG, bcr);
 	aprint_debug("%s: wrote bcr %" PRIx32 "\n", __func__, bcr);
 	delay_ms(reset_duration, sc);
 
 	if (CBB_CARDEXIST & sc->sc_flags) {	/* A card exists.  Reset it! */
 		/* Reset bit Deassert (bit 6 at 0x3E) */
-		bcr &= ~(PCI_BRIDGE_CONTROL_SECBR << PCI_BRIDGE_CONTROL_SHIFT);
+		bcr &= ~(PCI_BRIDGE_CONTROL_SECBR);
 		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG,
 		    bcr);
 		aprint_debug("%s: wrote bcr %" PRIx32 "\n", __func__, bcr);

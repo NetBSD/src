@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.211 2019/02/28 16:56:35 khorben Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.212 2019/03/01 09:26:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.211 2019/02/28 16:56:35 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.212 2019/03/01 09:26:00 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -4504,13 +4504,13 @@ pci_conf_print_type1(
 
 	rval = regs[o2i(PCI_BRIDGE_BUS_REG)];
 	printf("    Primary bus number: 0x%02x\n",
-	    PCI_BRIDGE_BUS_PRIMARY(rval));
+	    PCI_BRIDGE_BUS_NUM_PRIMARY(rval));
 	printf("    Secondary bus number: 0x%02x\n",
-	    PCI_BRIDGE_BUS_SECONDARY(rval));
+	    PCI_BRIDGE_BUS_NUM_SECONDARY(rval));
 	printf("    Subordinate bus number: 0x%02x\n",
-	    PCI_BRIDGE_BUS_SUBORDINATE(rval));
+	    PCI_BRIDGE_BUS_NUM_SUBORDINATE(rval));
 	printf("    Secondary bus latency timer: 0x%02x\n",
-	    PCI_BRIDGE_BUS_SEC_LATTIMER(rval));
+	    PCI_BRIDGE_BUS_SEC_LATTIMER_VAL(rval));
 
 	rval = regs[o2i(PCI_BRIDGE_STATIO_REG)];
 	pci_conf_print_ssr(__SHIFTOUT(rval, __BITS(31, 16)));
@@ -4524,14 +4524,12 @@ pci_conf_print_type1(
 	else
 		use_upper = 0;
 	onoff("32bit I/O", rval, use_upper);
-	base = (rval & PCI_BRIDGE_STATIO_IOBASE_MASK) << 8;
-	limit = ((rval >> PCI_BRIDGE_STATIO_IOLIMIT_SHIFT)
-	    & PCI_BRIDGE_STATIO_IOLIMIT_MASK) << 8;
-	limit |= 0x00000fff;
+	base = PCI_BRIDGE_STATIO_IOBASE_ADDR(rval);
+	limit = PCI_BRIDGE_STATIO_IOLIMIT_ADDR(rval);
 
 	rval = regs[o2i(PCI_BRIDGE_IOHIGH_REG)];
-	base_h = (rval >> 0) & 0xffff;
-	limit_h = (rval >> 16) & 0xffff;
+	base_h = __SHIFTOUT(rval, PCI_BRIDGE_IOHIGH_BASE);
+	limit_h = __SHIFTOUT(rval, PCI_BRIDGE_IOHIGH_LIMIT);
 	printf("      base upper 16 bits register:  0x%04x\n", base_h);
 	printf("      limit upper 16 bits register: 0x%04x\n", limit_h);
 
@@ -4550,14 +4548,12 @@ pci_conf_print_type1(
 	/* Non-prefetchable memory region */
 	rval = regs[o2i(PCI_BRIDGE_MEMORY_REG)];
 	printf("    Memory region:\n");
-	printf("      base register:  0x%04x\n",
-	    (rval >> 0) & 0xffff);
-	printf("      limit register: 0x%04x\n",
-	    (rval >> 16) & 0xffff);
-	base = ((rval >> PCI_BRIDGE_MEMORY_BASE_SHIFT)
-	    & PCI_BRIDGE_MEMORY_BASE_MASK) << 20;
-	limit = (((rval >> PCI_BRIDGE_MEMORY_LIMIT_SHIFT)
-		& PCI_BRIDGE_MEMORY_LIMIT_MASK) << 20) | 0x000fffff;
+	printf("      base register:  0x%04hx\n",
+	    (uint16_t)__SHIFTOUT(rval, PCI_BRIDGE_MEMORY_BASE));
+	printf("      limit register: 0x%04hx\n",
+	    (uint16_t)__SHIFTOUT(rval, PCI_BRIDGE_MEMORY_LIMIT));
+	base = PCI_BRIDGE_MEMORY_BASE_ADDR(rval);
+	limit = PCI_BRIDGE_MEMORY_LIMIT_ADDR(rval);
 	if (base < limit)
 		printf("      range: 0x%08x-0x%08x\n", base, limit);
 	else
@@ -4570,8 +4566,8 @@ pci_conf_print_type1(
 	    (rval >> 0) & 0xffff);
 	printf("      limit register: 0x%04x\n",
 	    (rval >> 16) & 0xffff);
-	base_h = regs[o2i(PCI_BRIDGE_PREFETCHBASE32_REG)];
-	limit_h = regs[o2i(PCI_BRIDGE_PREFETCHLIMIT32_REG)];
+	base_h = regs[o2i(PCI_BRIDGE_PREFETCHBASEUP32_REG)];
+	limit_h = regs[o2i(PCI_BRIDGE_PREFETCHLIMITUP32_REG)];
 	printf("      base upper 32 bits register:  0x%08x\n",
 	    base_h);
 	printf("      limit upper 32 bits register: 0x%08x\n",
@@ -4581,10 +4577,8 @@ pci_conf_print_type1(
 	else
 		use_upper = 0;
 	onoff("64bit memory address", rval, use_upper);
-	pbase = ((rval >> PCI_BRIDGE_PREFETCHMEM_BASE_SHIFT)
-	    & PCI_BRIDGE_PREFETCHMEM_BASE_MASK) << 20;
-	plimit = (((rval >> PCI_BRIDGE_PREFETCHMEM_LIMIT_SHIFT)
-		& PCI_BRIDGE_PREFETCHMEM_LIMIT_MASK) << 20) | 0x000fffff;
+	pbase = PCI_BRIDGE_PREFETCHMEM_BASE_ADDR(rval);
+	plimit = PCI_BRIDGE_PREFETCHMEM_LIMIT_ADDR(rval);
 	if (use_upper == 1) {
 		pbase |= (uint64_t)base_h << 32;
 		plimit |= (uint64_t)limit_h << 32;
@@ -4606,8 +4600,8 @@ pci_conf_print_type1(
 	else
 		printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
 
-	/* XXX */
-	printf("    Expansion ROM Base Address: 0x%08x\n", regs[o2i(0x38)]);
+	printf("    Expansion ROM Base Address: 0x%08x\n",
+	    regs[o2i(PCI_BRIDGE_EXPROMADDR_REG)]);
 
 	rval = regs[o2i(PCI_INTERRUPT_REG)];
 	printf("    Interrupt line: 0x%02x\n",
@@ -4635,9 +4629,9 @@ pci_conf_print_type1(
 		break;
 	}
 	printf("\n");
-	rval = (regs[o2i(PCI_BRIDGE_CONTROL_REG)] >> PCI_BRIDGE_CONTROL_SHIFT)
-	    & PCI_BRIDGE_CONTROL_MASK;
-	printf("    Bridge control register: 0x%04x\n", rval); /* XXX bits */
+	rval = regs[o2i(PCI_BRIDGE_CONTROL_REG)];
+	printf("    Bridge control register: 0x%04hx\n",
+	    (uint16_t)__SHIFTOUT(rval, PCI_BRIDGE_CONTROL));
 	onoff("Parity error response", rval, PCI_BRIDGE_CONTROL_PERE);
 	onoff("Secondary SERR forwarding", rval, PCI_BRIDGE_CONTROL_SERR);
 	onoff("ISA enable", rval, PCI_BRIDGE_CONTROL_ISA);
@@ -4651,7 +4645,15 @@ pci_conf_print_type1(
 		onoff("VGA 16bit enable", rval, PCI_BRIDGE_CONTROL_VGA16);
 	onoff("Master abort reporting", rval, PCI_BRIDGE_CONTROL_MABRT);
 	onoff("Secondary bus reset", rval, PCI_BRIDGE_CONTROL_SECBR);
-	onoff("Fast back-to-back capable", rval,PCI_BRIDGE_CONTROL_SECFASTB2B);
+	onoff("Fast back-to-back enable", rval, PCI_BRIDGE_CONTROL_SECFASTB2B);
+	onoff("Primary Discard Timer", rval,
+	    PCI_BRIDGE_CONTROL_PRI_DISC_TIMER);
+	onoff("Secondary Discard Timer",
+	    rval, PCI_BRIDGE_CONTROL_SEC_DISC_TIMER);
+	onoff("Discard Timer Status", rval,
+	    PCI_BRIDGE_CONTROL_DISC_TIMER_STAT);
+	onoff("Discard Timer SERR# Enable", rval,
+	    PCI_BRIDGE_CONTROL_DISC_TIMER_SERR);
 }
 
 static void
