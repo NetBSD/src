@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.111 2019/02/24 10:50:49 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.112 2019/03/01 19:02:43 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2529,4 +2529,31 @@ sys/kern/kern_time.c				1.196
 
 	Avoid panic from setitimer(2) for CLOCK_MONOTONIC.
 	[mlelstv, ticket #1196]
+
+sys/dev/scsipi/files.scsipi			1.42
+sys/dev/scsipi/st.c				1.236,1.237
+
+	PR kern/53949: fix file mark handling.
+	st(4): Fix (but disable by default) SUN compatibility mode.
+	[kardel, ticket #1197]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.52
+sys/dev/pci/ixgbe/ixgbe.c			1.174
+sys/dev/pci/ixgbe/ixgbe.h			1.54
+sys/dev/pci/ixgbe/ixv.c				1.109
+
+	ixg(4): fix link state handling.
+	[msaitoh, ticket #1199]
+
+external/gpl3/gdb/dist/gdb/ChangeLog		(apply patch)
+external/gpl3/gdb/dist/gdb/location.c		(apply patch)
+
+	Fix build of gdb on hosts using newer gcc versions.
+	[kamil, ticket #1200]
+
+sys/kern/tty_pty.c				1.145
+tests/kernel/kqueue/read/t_ttypty.c		1.3
+
+	Fix reporting of EOF via kevent and add a test case.
+	[kamil, ticket #1201]
 
