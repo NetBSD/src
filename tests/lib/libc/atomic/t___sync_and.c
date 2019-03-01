@@ -1,4 +1,4 @@
-/*	$NetBSD: t___sync_and.c,v 1.2 2019/02/27 15:32:11 christos Exp $	*/
+/*	$NetBSD: t___sync_and.c,v 1.3 2019/03/01 05:39:01 isaki Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t___sync_and.c,v 1.2 2019/02/27 15:32:11 christos Exp $");
+__RCSID("$NetBSD: t___sync_and.c,v 1.3 2019/03/01 05:39:01 isaki Exp $");
 
 #include <atf-c.h>
 #include <inttypes.h>
@@ -54,7 +54,6 @@ ATF_TC_HEAD(NAME, tc) \
 { \
 	atf_tc_set_md_var(tc, "descr", #NAME); \
 } \
-extern TYPE NAME(volatile TYPE *, TYPE) __attribute__((__weak__)); \
 ATF_TC_BODY(NAME, tc) \
 { \
 	volatile TYPE val; \
@@ -66,8 +65,6 @@ ATF_TC_BODY(NAME, tc) \
 	src = (TYPE)SRC; \
 	expval = (TYPE)EXPECT; \
 	expres = (TYPE)DST; \
-	if (NAME == NULL) \
-		return; \
 	res = NAME(&val, src); \
 	ATF_REQUIRE_MSG(val == expval, \
 	    "val expects 0x%" FMT " but 0x%" FMT, expval, val); \
@@ -88,7 +85,6 @@ ATF_TC_HEAD(NAME, tc) \
 { \
 	atf_tc_set_md_var(tc, "descr", #NAME); \
 } \
-extern TYPE NAME(volatile TYPE *, TYPE) __attribute__((__weak__)); \
 ATF_TC_BODY(NAME, tc) \
 { \
 	volatile TYPE val; \
@@ -98,8 +94,6 @@ ATF_TC_BODY(NAME, tc) \
 	val = (TYPE)DST; \
 	src = (TYPE)SRC; \
 	exp = (TYPE)EXPECT; \
-	if (NAME == NULL) \
-		return; \
 	res = NAME(&val, src); \
 	ATF_REQUIRE_MSG(val == exp, \
 	    "val expects 0x%" FMT " but 0x%" FMT, exp, val); \
