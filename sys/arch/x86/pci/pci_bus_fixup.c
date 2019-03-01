@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_fixup.c,v 1.2 2011/07/01 18:22:08 dyoung Exp $	*/
+/*	$NetBSD: pci_bus_fixup.c,v 1.3 2019/03/01 09:25:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.2 2011/07/01 18:22:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.3 2019/03/01 09:25:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,10 +119,12 @@ pci_bus_fixup(pci_chipset_tag_t pc, int bus)
 				/* Assign the bridge's secondary bus #. */
 				bus_max++;
 
-				reg = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+				reg = pci_conf_read(pc, tag,
+				    PCI_BRIDGE_BUS_REG);
 				reg &= 0xff000000;
 				reg |= bus | (bus_max << 8) | (0xff << 16);
-				pci_conf_write(pc, tag, PPB_REG_BUSINFO, reg);
+				pci_conf_write(pc, tag, PCI_BRIDGE_BUS_REG,
+				    reg);
 
 				/* Scan subordinate bus. */
 				bus_sub = pci_bus_fixup(pc, bus_max);
@@ -130,7 +132,8 @@ pci_bus_fixup(pci_chipset_tag_t pc, int bus)
 				/* Configure the bridge. */
 				reg &= 0xff000000;
 				reg |= bus | (bus_max << 8) | (bus_sub << 16);
-				pci_conf_write(pc, tag, PPB_REG_BUSINFO, reg);
+				pci_conf_write(pc, tag, PCI_BRIDGE_BUS_REG,
+				    reg);
 
 				/* record relationship */
 				pci_bus_parent[bus_max]=bus;
@@ -157,8 +160,8 @@ pci_bridge_reset(pci_chipset_tag_t pc, pcitag_t tag, void *ctx)
 {
 	pcireg_t reg;
 
-	reg = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+	reg = pci_conf_read(pc, tag, PCI_BRIDGE_BUS_REG);
 	reg &= 0xff000000;
 	reg |= 0x00ffffff;	/* max bus # */
-	pci_conf_write(pc, tag, PPB_REG_BUSINFO, reg);
+	pci_conf_write(pc, tag, PCI_BRIDGE_BUS_REG, reg);
 }
