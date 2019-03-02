@@ -1,4 +1,4 @@
-/* $NetBSD: meson_dwmac.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: meson_dwmac.c,v 1.4 2019/03/02 12:24:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.4 2019/03/02 12:24:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,8 +48,12 @@ __KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp
 
 #include <dev/fdt/fdtvar.h>
 
-#define	GMAC_TX_RATE_MII		25000000
-#define	GMAC_TX_RATE_RGMII		125000000
+#define	PRG_ETHERNET_ADDR0		0x00
+#define	 CLKGEN_ENABLE			__BIT(12)
+#define	 PHY_CLK_ENABLE			__BIT(10)
+#define	 MP2_CLK_OUT_DIV		__BITS(9,7)
+#define	 TX_CLK_DELAY			__BITS(6,5)
+#define	 PHY_INTERFACE_SEL		__BIT(0)
 
 static const char * compatible[] = {
 	"amlogic,meson8b-dwmac",
@@ -87,6 +91,29 @@ meson_dwmac_reset(const int phandle)
 	return 0;
 }
 
+static void
+meson_dwmac_set_mode_rgmii(int phandle, bus_space_tag_t bst,
+    bus_space_handle_t bsh, struct clk *clkin)
+{
+	u_int tx_delay;
+	uint32_t val;
+
+	const u_int div = clk_get_rate(clkin) / 250000000;
+
+	if (of_getprop_uint32(phandle, "amlogic,tx-delay-ns", &tx_delay) != 0)
+		tx_delay = 2;
+
+	val = bus_space_read_4(bst, bsh, PRG_ETHERNET_ADDR0);
+	val |= PHY_INTERFACE_SEL;
+	val &= ~TX_CLK_DELAY;
+	val |= __SHIFTIN((tx_delay >> 1), TX_CLK_DELAY);
+	val &= ~MP2_CLK_OUT_DIV;
+	val |= __SHIFTIN(div, MP2_CLK_OUT_DIV);
+	val |= PHY_CLK_ENABLE;
+	val |= CLKGEN_ENABLE;
+	bus_space_write_4(bst, bsh, PRG_ETHERNET_ADDR0, val);
+}
+
 static int
 meson_dwmac_intr(void *arg)
 {
@@ -109,21 +136,24 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 	struct dwc_gmac_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	bus_space_handle_t prgeth_bsh;
 	struct fdtbus_reset *rst_gmac;
-	struct clk *clk_gmac;
+	struct clk *clk_gmac, *clk_in[2];
 	const char *phy_mode;
 	char intrstr[128];
-	bus_addr_t addr;
-	bus_size_t size;
+	bus_addr_t addr[2];
+	bus_size_t size[2];
 
-	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+	if (fdtbus_get_reg(phandle, 0, &addr[0], &size[0]) != 0 ||
+	    fdtbus_get_reg(phandle, 1, &addr[1], &size[1]) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
-	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
+	if (bus_space_map(sc->sc_bst, addr[0], size[0], 0, &sc->sc_bsh) != 0 ||
+	    bus_space_map(sc->sc_bst, addr[1], size[1], 0, &prgeth_bsh) != 0) {
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
@@ -135,7 +165,9 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 	}
 
 	clk_gmac = fdtbus_clock_get(phandle, "stmmaceth");
-	if (clk_gmac == NULL) {
+	clk_in[0] = fdtbus_clock_get(phandle, "clkin0");
+	clk_in[1] = fdtbus_clock_get(phandle, "clkin1");
+	if (clk_gmac == NULL || clk_in[0] == NULL || clk_in[1] == NULL) {
 		aprint_error(": couldn't get clocks\n");
 		return;
 	}
@@ -147,22 +179,13 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": missing 'phy-mode' property\n");
 		return;
 	}
-#if notyet
-	if (strcmp(phy_mode, "mii") == 0) {
-		if (clk_set_rate(clk_gmac_tx, GMAC_TX_RATE_MII) != 0) {
-			aprint_error(": failed to set TX clock rate (MII)\n");
-			return;
-		}
-	} else if (strcmp(phy_mode, "rgmii") == 0) {
-		if (clk_set_rate(clk_gmac_tx, GMAC_TX_RATE_RGMII) != 0) {
-			aprint_error(": failed to set TX clock rate (RGMII)\n");
-			return;
-		}
+
+	if (strcmp(phy_mode, "rgmii") == 0) {
+		meson_dwmac_set_mode_rgmii(phandle, sc->sc_bst, prgeth_bsh, clk_in[0]);
 	} else {
 		aprint_error(": unsupported phy-mode '%s'\n", phy_mode);
 		return;
 	}
-#endif
 
 	if (clk_enable(clk_gmac) != 0) {
 		aprint_error(": couldn't enable clock\n");
