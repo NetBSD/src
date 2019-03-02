@@ -3081,6 +3081,36 @@ see node `modules\(aq in the CVS manual.)
 .SP
 See see node `Tracking sources\(aq in the CVS manual, and see node `From files\(aq in the CVS manual.
 .SP
+.SH "init"
+.SS "Initialize a repository"
+.IX "init (subcommand)"
+.SP
+.IP "\(bu" 2
+init
+.IP "\(bu" 2
+Requires: working directory.
+.IP "\(bu" 2
+Changes: repository, working directory.
+.SP
+The \fBinit\fR command initializes a repository by adding the
+\fBCVSROOT\fR subdirectory and some default control files. You must
+use this command or initialize the repository in some other way before
+you can use it. Specify the root of the repository with the general
+\fB-d\fR option.
+.SP
+Note \fBinit\fR will enable history logging; if you don\(aqt want that,
+remove the history file after running \fBinit\fR.
+.SP
+.SH "init examples"
+.SP
+.PD 0
+.SP
+.IP "" 2
+$ cvs -d /usr/local/cvsroot init
+
+.PD
+.IP "" 0
+.SP
 .SH "log"
 .SS "Print out log information for files"
 .IX "log (subcommand)"
