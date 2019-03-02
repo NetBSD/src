@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_fdt.c,v 1.4 2019/01/19 20:53:32 jmcneill Exp $	*/
+/*	$NetBSD: dwc2_fdt.c,v 1.5 2019/03/02 13:21:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.4 2019/01/19 20:53:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.5 2019/03/02 13:21:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ static const struct dwc2_fdt_config dwc2_fdt_generic_config = {
 
 static const struct of_compat_data compat_data[] = {
 	{ "amlogic,meson8b-usb",	(uintptr_t)&dwc2_fdt_meson8b_config },
+	{ "amlogic,meson-gxbb-usb",	(uintptr_t)&dwc2_fdt_meson8b_config },
 	{ "rockchip,rk3066-usb",	(uintptr_t)&dwc2_fdt_rk3066_config },
 	{ "snps,dwc2",			(uintptr_t)&dwc2_fdt_generic_config },
 	{ NULL }
@@ -209,11 +210,14 @@ dwc2_fdt_amlogic_params(struct dwc2_fdt_softc *sc, struct dwc2_core_params *para
 
 	params->otg_cap = DWC2_CAP_PARAM_NO_HNP_SRP_CAPABLE;
 	params->speed = DWC2_SPEED_PARAM_HIGH;
+	params->dma_enable = 1;
+	params->enable_dynamic_fifo = 1,
 	params->host_rx_fifo_size = 512;
 	params->host_nperio_tx_fifo_size = 500;
 	params->host_perio_tx_fifo_size = 500;
 	params->host_channels = 16;
 	params->phy_type = DWC2_PHY_TYPE_PARAM_UTMI;
+	params->reload_ctl = 1,
 	params->ahbcfg = GAHBCFG_HBSTLEN_INCR8 << GAHBCFG_HBSTLEN_SHIFT;
 #ifdef DWC2_POWER_DOWN_PARAM_NONE
 	params->power_down = DWC2_POWER_DOWN_PARAM_NONE;
