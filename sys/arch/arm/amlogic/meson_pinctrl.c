@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pinctrl.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: meson_pinctrl.c,v 1.4 2019/03/02 11:15:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.3 2019/02/25 19:30:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.4 2019/03/02 11:15:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -321,8 +321,10 @@ meson_pinctrl_gpio_acquire(device_t dev, const void *data, size_t len, int flags
 {
 	struct meson_pinctrl_softc * const sc = device_private(dev);
 	const struct meson_pinctrl_gpio *pin_def;
+	const struct meson_pinctrl_group *group;
 	struct meson_pinctrl_gpio_pin *gpin;
 	const u_int *gpio = data;
+	u_int n, bank;
 
 	if (len != 12)
 		return NULL;
@@ -333,6 +335,15 @@ meson_pinctrl_gpio_acquire(device_t dev, const void *data, size_t len, int flags
 	pin_def = meson_pinctrl_gpio_lookup(sc, id);
 	if (pin_def == NULL)
 		return NULL;
+
+	/* Disable conflicting groups */
+	for (n = 0; n < sc->sc_conf->ngroups; n++) {
+		group = &sc->sc_conf->groups[n];
+		for (bank = 0; bank < group->nbank; bank++) {
+			if (group->bank[bank] == pin_def->id)
+				meson_pinctrl_set_group(sc, group, false);
+		}
+	}
 
 	mutex_enter(&sc->sc_lock);
 	meson_pinctrl_pin_dir(sc, pin_def, flags);
