@@ -1952,7 +1952,8 @@ cvs -d /usr/local/cvsroot init
 @code{cvs init} is careful to never overwrite any
 existing files in the repository, so no harm is done if
 you run @code{cvs init} on an already set-up
-repository.
+repository. Note you may need to be a member of the
+group @code{cvsadmin} to do this.
 
 @code{cvs init} will enable history logging; if you
 don't want that, remove the history file after running
@@ -8126,6 +8127,7 @@ reference to @sc{cvs} commands, @pxref{Invoking CVS}).
 * export::                      Export sources from CVS, similar to checkout
 * history::                     Show status of files and users
 * import::                      Import sources into CVS, using vendor branches
+* init::                        Initialize a repository
 * log::                         Show log messages for files
 * ls & rls::                    List files in the repository
 * rdiff::                       'patch' format diffs between releases
@@ -10865,6 +10867,37 @@ to recreate symbolic links on checkout, update, etc.;
 @appendixsubsec import examples
 
 See @ref{Tracking sources}, and @ref{From files}.
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node init
+@appendixsec init---Initialize a repository
+@cindex init (subcommand)
+
+@itemize @bullet
+@item
+init
+@item
+Requires: working directory.
+@item
+Changes: repository, working directory.
+@end itemize
+
+The @code{init} command initializes a repository by adding the
+@file{CVSROOT} subdirectory and some default control files. You must
+use this command or initialize the repository in some other way before
+you can use it. Specify the root of the repository with the general
+@code{-d} option.
+
+Note @code{init} will enable history logging; if you don't want that,
+remove the history file after running @code{init}.
+
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@node init examples
+@appendixsubsec init examples
+
+@example
+$ cvs -d /usr/local/cvsroot init
+@end example
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node log
