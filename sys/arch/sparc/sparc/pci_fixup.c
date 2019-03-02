@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_fixup.c,v 1.2 2019/03/01 09:25:59 msaitoh Exp $	*/
+/*	$NetBSD: pci_fixup.c,v 1.3 2019/03/02 14:21:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -323,8 +323,8 @@ mspcic_pci_fixup(int depth, pcitag_t starttag, int *maxbus, uint32_t *io,
 
 	/* Secondary bus = startbus, subordinate bus = 0xff */
 	pci_conf_write(NULL, starttag, PCI_BRIDGE_BUS_REG,
-	    ((startbus & 0xff) << PCI_BRIDGE_BUS_SECONDARY_SHIFT) |
-	    (0xff << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT));
+	    __SHIFTIN(startbus & 0xff,  PCI_BRIDGE_BUS_SECONDARY) |
+	    __SHIFTIN(0xff, PCI_BRIDGE_BUS_SUBORDINATE));
 
 	/*
 	 * Fix up bus numbering, bus addresses, device addresses,
@@ -441,8 +441,8 @@ mspcic_pci_fixup(int depth, pcitag_t starttag, int *maxbus, uint32_t *io,
 
 	/* Secondary bus = startbus, subordinate bus = maxbus */
 	pci_conf_write(NULL, starttag, PCI_BRIDGE_BUS_REG,
-	    ((startbus & 0xff) << PCI_BRIDGE_BUS_SECONDARY_SHIFT) |
-	    ((*maxbus & 0xff) << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT));
+	    __SHIFTIN(startbus & 0xff,  PCI_BRIDGE_BUS_SECONDARY) |
+	    __SHIFTIN(*maxbus & 0xff, PCI_BRIDGE_BUS_SUBORDINATE));
 
 	/* 16-bit I/O range */
 	val = ((startio & 0xf000) >> 8) | ((*(io) - 1) & 0xf000);
