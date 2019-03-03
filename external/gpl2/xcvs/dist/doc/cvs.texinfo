@@ -111,9 +111,9 @@ approved by the Free Software Foundation.
 @sp 4
 @comment The title is printed in a large font.
 @center @titlefont{Version Management}
-@sp
+@sp 1
 @center @titlefont{with}
-@sp
+@sp 1
 @center @titlefont{CVS}
 @sp 2
 @center for @sc{cvs} @value{VERSION}
