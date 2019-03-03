@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.34 2019/02/10 10:35:51 martin Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.35 2019/03/03 02:28:14 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -289,13 +289,20 @@ migrate(gpt_t gpt, u_int parts, int force, int slice, int active)
 			type = GPT_TYPE_EFI;
 			break;
 
-		case MBR_PTYPE_NTFS:
 		case MBR_PTYPE_FAT12:
 		case MBR_PTYPE_FAT16S:
 		case MBR_PTYPE_FAT16B:
+		case MBR_PTYPE_NTFS:
 		case MBR_PTYPE_FAT32:
 		case MBR_PTYPE_FAT32L:
 		case MBR_PTYPE_FAT16L:
+		case MBR_PTYPE_OS2_DOS12:
+		case MBR_PTYPE_OS2_DOS16S:
+		case MBR_PTYPE_OS2_DOS16B:
+		case MBR_PTYPE_OS2_IFS:
+		case MBR_PTYPE_HID_FAT32:
+		case MBR_PTYPE_HID_FAT32_LBA:
+		case MBR_PTYPE_HID_FAT16_LBA:
 			type = GPT_TYPE_MS_BASIC_DATA;
 			break;
 
