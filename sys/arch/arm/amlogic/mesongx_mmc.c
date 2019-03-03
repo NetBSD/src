@@ -1,4 +1,4 @@
-/* $NetBSD: mesongx_mmc.c,v 1.1 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: mesongx_mmc.c,v 1.2 2019/03/03 12:54:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.1 2019/02/25 19:30:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.2 2019/03/03 12:54:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -370,6 +370,9 @@ mesongx_mmc_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
+	if (sc->sc_pwrseq)
+		fdtbus_mmc_pwrseq_reset(sc->sc_pwrseq);
+
 	config_interrupts(self, mesongx_mmc_attach_i);
 }
 
@@ -535,15 +538,13 @@ mesongx_mmc_attach_i(device_t self)
 	if (of_getprop_bool(sc->sc_phandle, "cap-mmc-highspeed"))
 		saa.saa_caps |= SMC_CAPS_MMC_HIGHSPEED;
 
-	if (sc->sc_reg_vqmmc != NULL) {
-		if (of_getprop_bool(sc->sc_phandle, "mmc-ddr-1_8v")) {
-			saa.saa_caps |= SMC_CAPS_MMC_DDR52;
-			sc->sc_host_ocr |= MMC_OCR_S18A;
-		}
-		if (of_getprop_bool(sc->sc_phandle, "mmc-hs200-1_8v")) {
-			saa.saa_caps |= SMC_CAPS_MMC_HS200;
-			sc->sc_host_ocr |= MMC_OCR_S18A;
-		}
+	if (of_getprop_bool(sc->sc_phandle, "mmc-ddr-1_8v")) {
+		saa.saa_caps |= SMC_CAPS_MMC_DDR52;
+		sc->sc_host_ocr |= MMC_OCR_1_65V_1_95V;
+	}
+	if (of_getprop_bool(sc->sc_phandle, "mmc-hs200-1_8v")) {
+		saa.saa_caps |= SMC_CAPS_MMC_HS200;
+		sc->sc_host_ocr |= MMC_OCR_1_65V_1_95V;
 	}
 
 	if (width == 4)
