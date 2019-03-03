@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.22 2019/02/11 14:59:32 cherry Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.23 2019/03/03 17:33:33 maxv Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.22 2019/02/11 14:59:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.23 2019/03/03 17:33:33 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ acpi_md_OsWritable(void *Pointer, uint32_t Length)
 
 	for (; sva < eva; sva += PAGE_SIZE) {
 		pte = kvtopte(sva);
-		if ((*pte & (PG_V|PG_W)) != (PG_V|PG_W)) {
+		if ((*pte & (PG_V|PG_RW)) != (PG_V|PG_RW)) {
 			rv = FALSE;
 			break;
 		}
