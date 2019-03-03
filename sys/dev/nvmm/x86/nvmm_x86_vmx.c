@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.15 2019/02/26 12:23:12 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.16 2019/03/03 07:01:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.15 2019/02/26 12:23:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.16 2019/03/03 07:01:09 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -992,14 +992,16 @@ vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 
 	switch (eax) {
 	case 0x00000001:
+		cpudata->gprs[NVMM_X64_GPR_RAX] &= nvmm_cpuid_00000001.eax;
+
 		cpudata->gprs[NVMM_X64_GPR_RBX] &= ~CPUID_LOCAL_APIC_ID;
 		cpudata->gprs[NVMM_X64_GPR_RBX] |= __SHIFTIN(vcpu->cpuid,
 		    CPUID_LOCAL_APIC_ID);
-		cpudata->gprs[NVMM_X64_GPR_RCX] &=
-		    ~(CPUID2_VMX|CPUID2_SMX|CPUID2_EST|CPUID2_TM2|CPUID2_PDCM|
-		      CPUID2_PCID|CPUID2_DEADLINE);
-		cpudata->gprs[NVMM_X64_GPR_RDX] &=
-		    ~(CPUID_DS|CPUID_ACPI|CPUID_TM);
+
+		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000001.ecx;
+		cpudata->gprs[NVMM_X64_GPR_RCX] |= CPUID2_RAZ;
+
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_00000001.edx;
 
 		/* CPUID2_OSXSAVE depends on CR4. */
 		vmx_vmread(VMCS_GUEST_CR4, &cr4);
@@ -1015,10 +1017,10 @@ vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 		break;
 	case 0x00000007:
-		cpudata->gprs[NVMM_X64_GPR_RBX] &= ~CPUID_SEF_INVPCID;
-		cpudata->gprs[NVMM_X64_GPR_RDX] &=
-		    ~(CPUID_SEF_IBRS|CPUID_SEF_STIBP|CPUID_SEF_L1D_FLUSH|
-		      CPUID_SEF_SSBD);
+		cpudata->gprs[NVMM_X64_GPR_RAX] &= nvmm_cpuid_00000007.eax;
+		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_00000007.ebx;
+		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000007.ecx;
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_00000007.edx;
 		break;
 	case 0x0000000D:
 		if (vmx_xcr0_mask == 0) {
@@ -1050,7 +1052,10 @@ vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RDX], " ___", 4);
 		break;
 	case 0x80000001:
-		cpudata->gprs[NVMM_X64_GPR_RDX] &= ~CPUID_RDTSCP;
+		cpudata->gprs[NVMM_X64_GPR_RAX] &= nvmm_cpuid_80000001.eax;
+		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_80000001.ebx;
+		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_80000001.ecx;
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_80000001.edx;
 		break;
 	default:
 		break;

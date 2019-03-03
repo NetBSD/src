@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.32 2019/02/26 12:23:12 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.33 2019/03/03 07:01:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.32 2019/02/26 12:23:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.33 2019/03/03 07:01:09 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -758,15 +758,35 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 
 	switch (eax) {
 	case 0x00000001:
+		cpudata->vmcb->state.rax &= nvmm_cpuid_00000001.eax;
+
 		cpudata->gprs[NVMM_X64_GPR_RBX] &= ~CPUID_LOCAL_APIC_ID;
 		cpudata->gprs[NVMM_X64_GPR_RBX] |= __SHIFTIN(vcpu->cpuid,
 		    CPUID_LOCAL_APIC_ID);
+
+		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000001.ecx;
+		cpudata->gprs[NVMM_X64_GPR_RCX] |= CPUID2_RAZ;
+
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_00000001.edx;
 
 		/* CPUID2_OSXSAVE depends on CR4. */
 		cr4 = cpudata->vmcb->state.cr4;
 		if (!(cr4 & CR4_OSXSAVE)) {
 			cpudata->gprs[NVMM_X64_GPR_RCX] &= ~CPUID2_OSXSAVE;
 		}
+		break;
+	case 0x00000005:
+	case 0x00000006:
+		cpudata->vmcb->state.rax = 0;
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
+	case 0x00000007:
+		cpudata->vmcb->state.rax &= nvmm_cpuid_00000007.eax;
+		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_00000007.ebx;
+		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000007.ecx;
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_00000007.edx;
 		break;
 	case 0x0000000D:
 		if (svm_xcr0_mask == 0) {
@@ -798,8 +818,10 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RDX], " ___", 4);
 		break;
 	case 0x80000001:
-		cpudata->gprs[NVMM_X64_GPR_RCX] &= ~CPUID_SVM;
-		cpudata->gprs[NVMM_X64_GPR_RDX] &= ~CPUID_RDTSCP;
+		cpudata->vmcb->state.rax &= nvmm_cpuid_80000001.eax;
+		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_80000001.ebx;
+		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_80000001.ecx;
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_80000001.edx;
 		break;
 	default:
 		break;
