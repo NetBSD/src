@@ -1,4 +1,4 @@
-/* $NetBSD: mmc_pwrseq_simple.c,v 1.1 2017/10/22 13:56:49 jmcneill Exp $ */
+/* $NetBSD: mmc_pwrseq_simple.c,v 1.2 2019/03/03 12:54:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmc_pwrseq_simple.c,v 1.1 2017/10/22 13:56:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmc_pwrseq_simple.c,v 1.2 2019/03/03 12:54:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -45,7 +45,7 @@ static const char * const compatible[] = {
 	NULL
 };
 
-struct mmcpwrseq_softc {
+struct mmcpwrseq_simple_softc {
 	device_t sc_dev;
 	int sc_phandle;
 	struct clk *sc_clk;
@@ -56,9 +56,9 @@ struct mmcpwrseq_softc {
 };
 
 static void
-mmcpwrseq_pre_power_on(device_t dev)
+mmcpwrseq_simple_pre_power_on(device_t dev)
 {
-	struct mmcpwrseq_softc * const sc = device_private(dev);
+	struct mmcpwrseq_simple_softc * const sc = device_private(dev);
 	int error;
 
 	if (sc->sc_clk) {
@@ -74,9 +74,9 @@ mmcpwrseq_pre_power_on(device_t dev)
 }
 
 static void
-mmcpwrseq_post_power_on(device_t dev)
+mmcpwrseq_simple_post_power_on(device_t dev)
 {
-	struct mmcpwrseq_softc * const sc = device_private(dev);
+	struct mmcpwrseq_simple_softc * const sc = device_private(dev);
 
 	for (u_int n = 0; n < sc->sc_npins; n++)
 		fdtbus_gpio_write(sc->sc_pins[n], 0);
@@ -87,9 +87,9 @@ mmcpwrseq_post_power_on(device_t dev)
 }
 
 static void
-mmcpwrseq_power_off(device_t dev)
+mmcpwrseq_simple_power_off(device_t dev)
 {
-	struct mmcpwrseq_softc * const sc = device_private(dev);
+	struct mmcpwrseq_simple_softc * const sc = device_private(dev);
 
 	for (u_int n = 0; n < sc->sc_npins; n++)
 		fdtbus_gpio_write(sc->sc_pins[n], 1);
@@ -98,14 +98,14 @@ mmcpwrseq_power_off(device_t dev)
 		delay(sc->sc_power_off_delay_us);
 }
 
-static const struct fdtbus_mmc_pwrseq_func mmcpwrseq_funcs = {
-	.pre_power_on = mmcpwrseq_pre_power_on,
-	.post_power_on = mmcpwrseq_post_power_on,
-	.power_off = mmcpwrseq_power_off,
+static const struct fdtbus_mmc_pwrseq_func mmcpwrseq_simple_funcs = {
+	.pre_power_on = mmcpwrseq_simple_pre_power_on,
+	.post_power_on = mmcpwrseq_simple_post_power_on,
+	.power_off = mmcpwrseq_simple_power_off,
 };
 
 static int
-mmcpwrseq_match(device_t parent, cfdata_t cf, void *aux)
+mmcpwrseq_simple_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
@@ -113,9 +113,9 @@ mmcpwrseq_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
-mmcpwrseq_attach(device_t parent, device_t self, void *aux)
+mmcpwrseq_simple_attach(device_t parent, device_t self, void *aux)
 {
-	struct mmcpwrseq_softc * const sc = device_private(self);
+	struct mmcpwrseq_simple_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 
@@ -156,10 +156,10 @@ mmcpwrseq_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_power_off_delay_us);
 
 	aprint_naive("\n");
-	aprint_normal("\n");
+	aprint_normal(": Simple MMC power sequence provider\n");
 
-	fdtbus_register_mmc_pwrseq(self, phandle, &mmcpwrseq_funcs);
+	fdtbus_register_mmc_pwrseq(self, phandle, &mmcpwrseq_simple_funcs);
 }
 
-CFATTACH_DECL_NEW(mmcpwrseq, sizeof(struct mmcpwrseq_softc),
-	mmcpwrseq_match, mmcpwrseq_attach, NULL, NULL);
+CFATTACH_DECL_NEW(mmcpwrseq_simple, sizeof(struct mmcpwrseq_simple_softc),
+	mmcpwrseq_simple_match, mmcpwrseq_simple_attach, NULL, NULL);

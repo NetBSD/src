@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.42 2019/01/30 01:24:00 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.43 2019/03/03 12:54:07 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -72,8 +72,10 @@ attach	cpus at fdt
 file	dev/fdt/cpus.c				cpus
 
 device	mmcpwrseq
-attach	mmcpwrseq at fdt
-file	dev/fdt/mmc_pwrseq_simple.c		mmcpwrseq
+attach	mmcpwrseq at fdt with mmcpwrseq_simple
+file	dev/fdt/mmc_pwrseq_simple.c		mmcpwrseq_simple
+attach	mmcpwrseq at fdt with mmcpwrseq_emmc
+file	dev/fdt/mmc_pwrseq_emmc.c		mmcpwrseq_emmc
 
 device	syscon { } : fdt
 attach	syscon at fdt
