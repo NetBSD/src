@@ -1,11 +1,11 @@
-/*	$NetBSD: atactl.c,v 1.81 2019/03/03 04:48:19 mrg Exp $	*/
+/*	$NetBSD: atactl.c,v 1.82 2019/03/03 04:51:57 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Ken Hornstein.
+ * by Ken Hornstein and Matthew R. Green.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.81 2019/03/03 04:48:19 mrg Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.82 2019/03/03 04:51:57 mrg Exp $");
 #endif
 
 

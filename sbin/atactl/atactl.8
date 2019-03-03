@@ -1,10 +1,10 @@
-.\"	$NetBSD: atactl.8,v 1.28 2018/12/05 14:45:59 wiz Exp $
+.\"	$NetBSD: atactl.8,v 1.29 2019/03/03 04:51:57 mrg Exp $
 .\"
-.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Ken Hornstein.
+.\" by Ken Hornstein and Matthew R. Green.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 5, 2018
+.Dd March 2, 2019
 .Dt ATACTL 8
 .Os
 .Sh NAME
@@ -293,6 +293,5 @@ locked.
 .Pp
 The
 .Cm smart status
-command is currently unable to automatically determine the vendor
-attribute name table to use.
-The vendor must be specified manually.
+command currently guesses the vendor attribute name table to use,
+and may be wrong or miss supported devices.
