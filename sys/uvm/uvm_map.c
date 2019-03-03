@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.357 2018/12/17 06:53:01 kamil Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.358 2019/03/03 17:37:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.357 2018/12/17 06:53:01 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.358 2019/03/03 17:37:36 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -3098,7 +3098,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 			/* update pmap! */
 			uvm_map_lock_entry(current);
 			pmap_protect(map->pmap, current->start, current->end,
-			    current->protection & MASK(entry));
+			    current->protection & MASK(current));
 			uvm_map_unlock_entry(current);
 
 			/*
@@ -3124,11 +3124,11 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		 */
 
 		if ((map->flags & VM_MAP_WIREFUTURE) != 0 &&
-		    VM_MAPENT_ISWIRED(entry) == 0 &&
+		    VM_MAPENT_ISWIRED(current) == 0 &&
 		    old_prot == VM_PROT_NONE &&
 		    new_prot != VM_PROT_NONE) {
-			if (uvm_map_pageable(map, entry->start,
-			    entry->end, false,
+			if (uvm_map_pageable(map, current->start,
+			    current->end, false,
 			    UVM_LK_ENTER|UVM_LK_EXIT) != 0) {
 
 				/*
