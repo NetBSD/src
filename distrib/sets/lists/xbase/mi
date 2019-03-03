@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.146 2018/12/30 09:19:04 mrg Exp $
+# $NetBSD: mi,v 1.147 2019/03/03 17:52:32 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -267,6 +267,8 @@
 ./usr/X11R7/include/freetype2/internal			base-obsolete	obsolete
 ./usr/X11R7/include/freetype2/internal/services		base-obsolete	obsolete
 ./usr/X11R7/include/libdrm				base-x11-root	xorg
+./usr/X11R7/include/libdrm/nouveau			base-x11-root	xorg
+./usr/X11R7/include/libdrm/nouveau/nvif			base-x11-root	xorg
 ./usr/X11R7/include/libkms				base-x11-root	xorg
 ./usr/X11R7/include/pixman-1				base-x11-root	xorg
 ./usr/X11R7/include/xcb					base-x11-root	xorg
