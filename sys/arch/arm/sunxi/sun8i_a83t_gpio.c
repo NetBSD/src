@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_a83t_gpio.c,v 1.4 2018/12/31 19:07:21 jmcneill Exp $ */
+/* $NetBSD: sun8i_a83t_gpio.c,v 1.5 2019/03/03 17:09:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_a83t_gpio.c,v 1.4 2018/12/31 19:07:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_a83t_gpio.c,v 1.5 2019/03/03 17:09:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ static const struct sunxi_gpio_pins a83t_r_pins[] = {
 	{ "PL9",   0, 9,  { "gpio_in", "gpio_out", "s_i2c", NULL, NULL, NULL, "irq" } },
 	{ "PL10",  0, 10, { "gpio_in", "gpio_out", "s_pwm", NULL, NULL, NULL, "irq" } },
 	{ "PL11",  0, 11, { "gpio_in", "gpio_out", NULL, NULL, NULL, "irq" } },
-	{ "PL12",  0, 12, { "gpio_in", "gpio_out", "s_cir", NULL, NULL, NULL, "irq" } },
+	{ "PL12",  0, 12, { "gpio_in", "gpio_out", "s_cir_rx", NULL, NULL, NULL, "irq" } },
 };
 
 const struct sunxi_gpio_padconf sun8i_a83t_padconf = {
