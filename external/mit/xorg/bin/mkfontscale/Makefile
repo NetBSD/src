@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2018/05/09 08:39:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2019/03/03 09:26:04 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	mkfontscale
-SRCS=	mkfontscale.c list.c hash.c ident.c
+SRCS=	mkfontscale.c constlist.c hash.c ident.c list.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
