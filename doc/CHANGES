@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2505 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2506 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -48,6 +48,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	lm(4): Add support for NCT5174D, NCT6775F, NCT6779D and NCT679[1235]D.
 		[msaitoh 20170711]
 	arm: Add support for NVIDIA Tegra X1 SoC. [jmcneill 20170720]
+	arm: Add support for Allwinner A64 SoC. [jmcneill 20170723]
 	gzip(1): Add SIGINFO support. [mrg 20170804]
 	i386: Remove vm86. [maxv 20170812]
 	itesio(4): Add support IT8628E. [hauke 20170814]
@@ -61,6 +62,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	tcpdump(8): Import 4.9.2. [christos 20170908]
 	veriexecgen(8): Drop support for MD5, SHA1, RMD160. [sevan 20170909]
 	itesio(4): Add support IT8728GF and IT877[12]E [hauke 20170814]
+	arm: Add support for Allwinner A13 and R8 SoCs. [jmcneill 20170825]
 	veriexec(4): Drop support for VERIFIED_EXEC_FP_MD5,
 		VERIFIED_EXEC_FP_SHA1, and VERIFIED_EXEC_FP_RMD160 options.
 		[sevan 20170913]
@@ -73,6 +75,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[jdolecek 20171007]
 	OpenSSH: Imported 7.6. [christos 20171007]
 	amd64: Add support for Kernel ASLR [maxv 20171010]
+	arm: Add support for Allwinner H5 SoC. [jmcneill 20171011]
 	tmux(1): Imported 2.6. [christos 20171012]
 	amd64: Add support for SMAP. [maxv 20171017]
 	amd64: Add support for USER_LDT. [maxv 20171021]
@@ -83,6 +86,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernhist(9): Reworked the export-via-sysctl code to use uintptr_t
 		arguments, PR kern/52639.  Requires contemporaneous update
 		of vmstat(1). [pgoyette 20171028]
+	arm: Add support for NextThing GR8 SoC. [jmcneill 20171106]
 	acpi(4): Updated ACPICA to 20171110. [christos 20171111]
 	sunxinand(4): Add driver for Allwinner NAND Flash Controller.
 		[jmcneill 20171113]
@@ -298,6 +302,8 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	binutils: Updated to FSF binutils 2.31.1.  [christos 20181231]
 	services(5), protocols(5): Pull iana-generated services and protocols
 	    [christos 20190103]
+	arm: Add SMP support for Allwinner multi-cluster SoCs (A83T, A80)
+	    [jmcneill 20190103]
 	wpa: Import wpa_supplicant and hostapd 2.7. [christos 20190104]
 	acpi(4): Updated ACPICA to 20181213. [christos 20190104]
 	tmux(1): Imported 2.8. [christos 20190104]
@@ -314,6 +320,8 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		tables, lock-free state lookup, incremental state G/C, etc).
 		[rmind 20190119]
 	gcc: Import GCC 7.4.  [mrg 20190119]
+	arm: Update Amlogic S805 SoC support to use FDT based configuration.
+		[jmcneill 20190119]
 	dhcpcd: Import dhcpcd-7.1.0. [roy 20190122]
 	kernel: Remove the satlink driver. [maxv 20190127]
 	kernel: Merged [pgoyette-compat] branch - for details, see
