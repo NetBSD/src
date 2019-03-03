@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.41 2017/09/07 10:23:33 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.42 2019/03/03 03:20:42 jnemeth Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -343,6 +343,9 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 
 	if (argc != optind)
 		return usage();
+
+	if (map_find(gpt, MAP_TYPE_PRI_GPT_HDR) == NULL)
+		printf("GPT not found, displaying data from MBR.\n\n");
 
 	if (xshow & SHOW_ALL)
 		return show_all(gpt);
