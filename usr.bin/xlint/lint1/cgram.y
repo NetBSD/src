@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.100 2019/01/04 18:51:23 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.101 2019/03/03 23:06:08 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.100 2019/01/04 18:51:23 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.101 2019/03/03 23:06:08 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -201,6 +201,7 @@ anonymize(sym_t *s)
 /* Type Attributes */
 %token <y_type>		T_ATTRIBUTE
 %token <y_type>		T_AT_ALIAS
+%token <y_type>		T_AT_ALLOC_SIZE
 %token <y_type>		T_AT_ALIGNED
 %token <y_type>		T_AT_ALWAYS_INLINE
 %token <y_type>		T_AT_BOUNDED
@@ -217,12 +218,14 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_FORMAT_STRFTIME
 %token <y_type>		T_AT_FORMAT_SYSLOG
 %token <y_type>		T_AT_GNU_INLINE
+%token <y_type>		T_AT_MALLOC
 %token <y_type>		T_AT_MAY_ALIAS
 %token <y_type>		T_AT_MINBYTES
 %token <y_type>		T_AT_MODE
 %token <y_type>		T_AT_NOINLINE
 %token <y_type>		T_AT_NONNULL
 %token <y_type>		T_AT_NORETURN
+%token <y_type>		T_AT_NOTHROW
 %token <y_type>		T_AT_NO_INSTRUMENT_FUNCTION
 %token <y_type>		T_AT_PACKED
 %token <y_type>		T_AT_PCS
@@ -531,6 +534,7 @@ type_attribute_spec:
 	| T_AT_DEPRECATED T_LPARN string T_RPARN
 	| T_AT_DEPRECATED
 	| T_AT_ALIGNED T_LPARN constant T_RPARN
+	| T_AT_ALLOC_SIZE T_LPARN constant T_RPARN
 	| T_AT_BOUNDED T_LPARN type_attribute_bounded_type
 	  T_COMMA constant T_COMMA constant T_RPARN
 	| T_AT_SENTINEL T_LPARN constant T_RPARN
@@ -543,10 +547,12 @@ type_attribute_spec:
 	| T_AT_ALIGNED 
 	| T_AT_CONSTRUCTOR 
 	| T_AT_DESTRUCTOR 
+	| T_AT_MALLOC
 	| T_AT_MAY_ALIAS
 	| T_AT_NO_INSTRUMENT_FUNCTION
 	| T_AT_NOINLINE
 	| T_AT_NORETURN
+	| T_AT_NOTHROW
 	| T_AT_COLD
 	| T_AT_RETURNS_TWICE
 	| T_AT_PACKED {

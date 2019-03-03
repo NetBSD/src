@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.86 2019/01/04 18:51:23 christos Exp $ */
+/* $NetBSD: scan.l,v 1.87 2019/03/03 23:06:08 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.86 2019/01/04 18:51:23 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.87 2019/03/03 23:06:08 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -216,6 +216,7 @@ static	struct	kwtab {
 	{ "alias",	T_AT_ALIAS,	0,	0,	0,	  0,0,1,1,5 },
 	{ "aligned",	T_AT_ALIGNED,	0,	0,	0,	  0,0,1,1,5 },
 	{ "alignof",	T_ALIGNOF,	0,	0,	0,	  0,0,0,0,4 },
+	{ "alloc_size",	T_AT_ALLOC_SIZE,0,	0,	0,	  0,0,1,1,5 },
 	{ "always_inline", T_AT_ALWAYS_INLINE, 0,0,	0,	  0,0,1,1,5 },
 	{ "asm",	T_ASM,		0,	0,	0,	  0,0,1,0,7 },
 	{ "attribute",	T_ATTRIBUTE,	0,	0,	0,	  0,0,1,0,6 },
@@ -250,6 +251,7 @@ static	struct	kwtab {
 	{ "inline",	T_SCLASS,	INLINE,	0,	0,	  0,1,0,0,7 },
 	{ "int",	T_TYPE,		0,	INT,	0,	  0,0,0,0,1 },
 	{ "long",	T_TYPE,		0,	LONG,	0,	  0,0,0,0,1 },
+	{ "malloc",	T_AT_MALLOC,	0,	0,	0,	  0,0,1,1,5 },
 	{ "may_alias",	T_AT_MAY_ALIAS,	0,	0,	0,	  0,0,1,1,5 },
 	{ "minbytes",	T_AT_MINBYTES,	0,	0,	0,	  0,0,1,1,5 },
 	{ "mode",	T_AT_MODE,	0,	0,	0,	  0,0,1,1,5 },
@@ -258,6 +260,7 @@ static	struct	kwtab {
 	{ "nonnull",	T_AT_NONNULL,	0,	0,	0,	  0,0,1,1,5 },
 	{ "noinline",	T_AT_NOINLINE,	0,	0,	0,	  0,0,1,1,5 },
 	{ "noreturn",	T_AT_NORETURN,	0,	0,	0,	  0,0,1,1,5 },
+	{ "nothrow",	T_AT_NOTHROW,	0,	0,	0,	  0,0,1,1,5 },
 	{ "packed",	T_AT_PACKED,	0,	0,	0,	  0,0,1,1,5 },
 	{ "packed",	T_PACKED,	0,	0,	0,	  0,0,0,0,2 },
 	{ "pcs",	T_AT_PCS,	0,	0,	0,	  0,0,0,0,5 },
