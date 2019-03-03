@@ -1939,6 +1939,9 @@ possible to use @sc{cvs} to read from a repository
 which one only has read access to; @sc{cvs} needs to be
 able to create lock files (@pxref{Concurrency}).
 
+To create a repository, run the @code{cvs init} 	 
+command (@pxref{init}).
+
 @node Backing up
 @section Backing up a repository
 @cindex Repository, backing up
@@ -10868,21 +10871,20 @@ use this command or initialize the repository in some other way before
 you can use it. Specify the root of the repository with the general
 @code{-d} option.  This will set up an empty repository in the
 @sc{cvs} root specified in the usual way (@pxref{Repository}).
-For example,
 
-@code{cvs init} is careful to never overwrite any
-existing files in the repository, so no harm is done if
-you run @code{cvs init} on an already set-up
-repository. Note you may need to be a member of the
-group @code{cvsadmin} to do this.
+@code{init} is careful to never overwrite any existing files in the
+repository, so no harm is done if you run @code{init} on an already
+set-up repository. Note you may need to be a member of the group
+@code{cvsadmin} to do this.
 
 Note @code{init} will enable history logging; if you don't want that,
-remove the history file after running @code{init}.  @xref{history file}.
+remove the history file after running @code{init} (@pxref{history file}).
 
 @menu
 * init examples:              init examples
 @end menu
 
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 @node init examples
 @appendixsubsec init examples
 
