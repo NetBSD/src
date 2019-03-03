@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.112 2019/03/01 19:02:43 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.113 2019/03/03 11:11:18 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2556,4 +2556,17 @@ tests/kernel/kqueue/read/t_ttypty.c		1.3
 
 	Fix reporting of EOF via kevent and add a test case.
 	[kamil, ticket #1201]
+
+usr.sbin/arp/arp.c				1.64,1.65
+usr.sbin/arp/arp_hostops.c			1.2
+usr.sbin/arp/arp_rumpops.c			1.2
+usr.sbin/arp/prog_ops.h				1.2
+
+	Fix socket file descriptor leaks.
+	[dholland, ticket #1198]
+
+sys/sys/cdefs.h					1.138
+
+	Stop mangling __func__ for C++11 and newer.
+	[kamil, ticket #1202]
 
