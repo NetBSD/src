@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mc_smp.c,v 1.3 2019/01/03 14:44:21 jmcneill Exp $ */
+/* $NetBSD: sunxi_mc_smp.c,v 1.4 2019/03/03 17:00:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mc_smp.c,v 1.3 2019/01/03 14:44:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mc_smp.c,v 1.4 2019/03/03 17:00:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -156,6 +156,8 @@ sunxi_mc_smp_start(bus_space_tag_t bst, bus_space_handle_t prcm, bus_space_handl
 	if (soc == MC_SOC_A83T) {
 		if (cpu == 0)
 			val &= ~__BIT(4);
+		else
+			val &= ~__BIT(cpu);
 		val &= ~__BIT(0);	/* cluster power gate */
 	} else {
 		val &= ~__BIT(cpu);
