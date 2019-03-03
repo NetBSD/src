@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2019/01/03 23:39:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2019/03/03 09:19:02 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xhost
 
 CPPFLAGS+=${X11FLAGS.CONNECTION} -DBSD44SOCKETS
+CPPFLAGS+=-DHAVE_INET_ATON
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=      -DIPv6
