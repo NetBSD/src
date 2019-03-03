@@ -3086,7 +3086,7 @@ See see node `Tracking sources\(aq in the CVS manual, and see node `From files\(
 .IX "init (subcommand)"
 .SP
 .IP "\(bu" 2
-init
+Synopsis: init
 .IP "\(bu" 2
 Requires: working directory.
 .IP "\(bu" 2
@@ -3096,10 +3096,16 @@ The \fBinit\fR command initializes a repository by adding the
 \fBCVSROOT\fR subdirectory and some default control files. You must
 use this command or initialize the repository in some other way before
 you can use it. Specify the root of the repository with the general
-\fB-d\fR option.
+\fB-d\fR option.  This will set up an empty repository in the
+\fBcvs\fR root specified in the usual way (see node `Repository\(aq in the CVS manual).
+.SP
+\fBinit\fR is careful to never overwrite any existing files in the
+repository, so no harm is done if you run \fBinit\fR on an already
+set-up repository. Note you may need to be a member of the group
+\fBcvsadmin\fR to do this.
 .SP
 Note \fBinit\fR will enable history logging; if you don\(aqt want that,
-remove the history file after running \fBinit\fR.
+remove the history file after running \fBinit\fR (see node `history file\(aq in the CVS manual).
 .SP
 .SH "init examples"
 .SP
