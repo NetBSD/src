@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.55.8.4 2018/07/31 17:08:00 martin Exp $ */
+/*	$NetBSD: arp.c,v 1.55.8.5 2019/03/03 11:01:48 martin Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.55.8.4 2018/07/31 17:08:00 martin Exp $");
+__RCSID("$NetBSD: arp.c,v 1.55.8.5 2019/03/03 11:01:48 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,8 +276,10 @@ set(int argc, char **argv)
 	argc -= 2;
 	argv += 2;
 
-	if (getinetaddr(host, &sin_m.sin_addr) == -1)
+	if (getinetaddr(host, &sin_m.sin_addr) == -1) {
+		prog_close(s);
 		return (1);
+	}
 	if (atosdl(eaddr, &sdl_m))
 		warnx("invalid link-level address '%s'", eaddr);
 	doing_proxy = flags = export_only = expire_time = 0;
@@ -313,6 +315,7 @@ tryagain:
 	rtm = rtmsg(s, RTM_GET, NULL, &sin_m, &sdl_m);
 	if (rtm == NULL) {
 		warn("%s", host);
+		prog_close(s);
 		return (1);
 	}
 	sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
@@ -323,10 +326,12 @@ tryagain:
 			goto overwrite;
 		if (doing_proxy == 0) {
 			warnx("set: can only proxy for %s", host);
+			prog_close(s);
 			return (1);
 		}
 		if (sin_m.sin_other & SIN_PROXY) {
 			warnx("set: proxy entry exists for non 802 device");
+			prog_close(s);
 			return (1);
 		}
 		sin_m.sin_other = SIN_PROXY;
@@ -337,6 +342,7 @@ overwrite:
 	if (sdl->sdl_family != AF_LINK) {
 		warnx("cannot intuit interface index and type for %s",
 		    host);
+		prog_close(s);
 		return (1);
 	}
 	sdl_m.sdl_type = sdl->sdl_type;
@@ -347,6 +353,7 @@ overwrite:
 	rtm = rtmsg(s, RTM_ADD, NULL, &sin_m, &sdl_m);
 	if (vflag)
 		(void)printf("%s (%s) added\n", host, eaddr);
+	prog_close(s);
 	return (rtm == NULL) ? 1 : 0;
 }
 
@@ -400,9 +407,12 @@ delete_one(struct rt_msghdr *rtm)
 	sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
 	sdl = (struct sockaddr_dl *)(void *)(RT_ROUNDUP(sina->sin_len) +
 	    (char *)(void *)sina);
-	if (sdl->sdl_family != AF_LINK)
+	if (sdl->sdl_family != AF_LINK) {
+		prog_close(s);
 		return (1);
+	}
 	rtm = rtmsg(s, RTM_DELETE, rtm, sina, sdl);
+	prog_close(s);
 	if (rtm == NULL)
 		return (1);
 	return (0);

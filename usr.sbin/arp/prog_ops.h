@@ -1,4 +1,4 @@
-/*      $NetBSD: prog_ops.h,v 1.1 2015/07/29 06:07:35 ozaki-r Exp $	*/
+/*      $NetBSD: prog_ops.h,v 1.1.8.1 2019/03/03 11:01:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@ struct prog_ops {
 
 	ssize_t (*op_read)(int, void *, size_t);
 	ssize_t (*op_write)(int, const void *, size_t);
+
+	int (*op_close)(int);
 };
 extern const struct prog_ops prog_ops;
 
@@ -54,6 +56,7 @@ extern const struct prog_ops prog_ops;
 #define prog_getpid prog_ops.op_getpid
 #define prog_read prog_ops.op_read
 #define prog_write prog_ops.op_write
+#define prog_close prog_ops.op_close
 #define prog_sysctl prog_ops.op_sysctl
 #else
 #define prog_init ((int (*)(void))NULL)
@@ -62,6 +65,7 @@ extern const struct prog_ops prog_ops;
 #define prog_getpid getpid
 #define prog_read read
 #define prog_write write
+#define prog_close close
 #define prog_sysctl sysctl
 #endif
 
