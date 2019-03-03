@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.80 2019/03/01 02:33:43 mrg Exp $	*/
+/*	$NetBSD: atactl.c,v 1.81 2019/03/03 04:48:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.80 2019/03/01 02:33:43 mrg Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.81 2019/03/03 04:48:19 mrg Exp $");
 #endif
 
 
@@ -380,6 +380,18 @@ static const struct attr_table intel_smart_names[] = {
 };
 
 /*
+ * Samsung specific SMART attributes.  Fill me in with more.
+ */
+static const struct attr_table samsung_smart_names[] = {
+	{ 235,          "POR Recovery Count", NULL },
+	{ 243,          "SATA Downshift Count", NULL },
+	{ 244,          "Thermal Throttle Status", NULL },
+	{ 245,          "Timed Workload Media Wear", NULL },
+	{ 251,          "NAND Writes", NULL },
+};
+
+
+/*
  * Vendor-specific SMART attribute table.  Can be used to override
  * a particular attribute name and special printer function, with the
  * default is the main table.
@@ -390,6 +402,7 @@ static const struct vendor_name_table {
 } vendor_smart_names[] = {
 	{ "Micron",		micron_smart_names },
 	{ "Intel",		intel_smart_names },
+	{ "Samsung",		samsung_smart_names },
 };
 
 /*
@@ -410,6 +423,7 @@ static const struct model_to_vendor_table {
 	{ "MTFDDA",		"Micron" },
 	{ "EEFDDA",		"Micron" },
 	{ "INTEL",		"Intel" },
+	{ "SAMSUNG",		"Samsung" },
 };
 
 static const struct bitinfo ata_sec_st[] = {
