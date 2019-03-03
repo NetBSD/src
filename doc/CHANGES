@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2504 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2505 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -333,3 +333,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	bge(4): Add support for BCM5762, BCM5725, BCM5727, BCM57764, BCM57767
 		and BCM57787 [msaitoh 20190220]
 	bind: Import version 9.13.7. [christos 20190224]
+	arm: Add support for Amlogic S905 SoC. [jmcneill 20190225]
