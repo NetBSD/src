@@ -1939,26 +1939,6 @@ possible to use @sc{cvs} to read from a repository
 which one only has read access to; @sc{cvs} needs to be
 able to create lock files (@pxref{Concurrency}).
 
-@cindex init (subcommand)
-To create a repository, run the @code{cvs init}
-command.  It will set up an empty repository in the
-@sc{cvs} root specified in the usual way
-(@pxref{Repository}).  For example,
-
-@example
-cvs -d /usr/local/cvsroot init
-@end example
-
-@code{cvs init} is careful to never overwrite any
-existing files in the repository, so no harm is done if
-you run @code{cvs init} on an already set-up
-repository. Note you may need to be a member of the
-group @code{cvsadmin} to do this.
-
-@code{cvs init} will enable history logging; if you
-don't want that, remove the history file after running
-@code{cvs init}.  @xref{history file}.
-
 @node Backing up
 @section Backing up a repository
 @cindex Repository, backing up
@@ -10875,7 +10855,7 @@ See @ref{Tracking sources}, and @ref{From files}.
 
 @itemize @bullet
 @item
-init
+Synopsis: init
 @item
 Requires: working directory.
 @item
@@ -10886,12 +10866,23 @@ The @code{init} command initializes a repository by adding the
 @file{CVSROOT} subdirectory and some default control files. You must
 use this command or initialize the repository in some other way before
 you can use it. Specify the root of the repository with the general
-@code{-d} option.
+@code{-d} option.  This will set up an empty repository in the
+@sc{cvs} root specified in the usual way (@pxref{Repository}).
+For example,
+
+@code{cvs init} is careful to never overwrite any
+existing files in the repository, so no harm is done if
+you run @code{cvs init} on an already set-up
+repository. Note you may need to be a member of the
+group @code{cvsadmin} to do this.
 
 Note @code{init} will enable history logging; if you don't want that,
-remove the history file after running @code{init}.
+remove the history file after running @code{init}.  @xref{history file}.
 
-@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@menu
+* init examples:              init examples
+@end menu
+
 @node init examples
 @appendixsubsec init examples
 
