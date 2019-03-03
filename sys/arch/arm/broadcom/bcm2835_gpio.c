@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.10 2019/02/07 21:16:35 mlelstv Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.11 2019/03/03 16:29:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.10 2019/02/07 21:16:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.11 2019/03/03 16:29:00 skrll Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -414,7 +414,7 @@ bcmgpio_intr(void *arg)
 			if (!mpsafe)
 				KERNEL_UNLOCK_ONE(curlwp);
 		}
-		
+
 		/*
 		 * Now that all of the handlers have been called,
 		 * we can clear the indicators for any level-triggered
@@ -450,7 +450,7 @@ bmcgpio_intr_enable(struct bcmgpio_softc *sc, int (*func)(void *), void *arg,
 	/* Can't have HIGH and LOW together. */
 	if (has_level == (BCMGPIO_INTR_HIGH_LEVEL|BCMGPIO_INTR_LOW_LEVEL))
 		return (NULL);
-	
+
 	/* Can't have EDGE and LEVEL together. */
 	if (has_edge && has_level)
 		return (NULL);
