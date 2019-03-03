@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_mod.c,v 1.5 2014/03/07 01:33:44 christos Exp $	*/
+/*	$NetBSD: ultrix_mod.c,v 1.6 2019/03/03 22:25:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_mod.c,v 1.5 2014/03/07 01:33:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_mod.c,v 1.6 2019/03/03 22:25:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_mod.c,v 1.5 2014/03/07 01:33:44 christos Exp 
 #define	MD1	""
 #endif
 
-MODULE(MODULE_CLASS_EXEC, compat_ultrix, "compat" MD1);
+MODULE(MODULE_CLASS_EXEC, compat_ultrix, "compat_13" MD1);
 
 static struct execsw ultrix_execsw[] = {
 #ifdef EXEC_ECOFF
