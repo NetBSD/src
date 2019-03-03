@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.132.6.1 2018/01/13 21:33:14 snj Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.132.6.2 2019/03/03 11:10:16 martin Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -405,18 +405,16 @@
 #endif
 
 /*
- * C99 defines __func__ predefined identifier, which was made available
- * in GCC 2.95.
+ * C99 and C++11 define __func__ predefined identifier, which was made
+ * available in GCC 2.95.
  */
-#if !(__STDC_VERSION__ >= 199901L)
-#if __GNUC_PREREQ__(2, 6)
-#define	__func__	__PRETTY_FUNCTION__
-#elif __GNUC_PREREQ__(2, 4)
+#if !(__STDC_VERSION__ >= 199901L) && !(__cplusplus - 0 >= 201103L)
+#if __GNUC_PREREQ__(2, 4)
 #define	__func__	__FUNCTION__
 #else
 #define	__func__	""
 #endif
-#endif /* !(__STDC_VERSION__ >= 199901L) */
+#endif /* !(__STDC_VERSION__ >= 199901L) && !(__cplusplus - 0 >= 201103L) */
 
 #if defined(_KERNEL)
 #if defined(NO_KERNEL_RCSIDS)
