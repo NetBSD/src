@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.22 2017/08/29 07:53:54 mrg Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.23 2019/03/03 17:52:32 maya Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
@@ -27,6 +27,8 @@
 ./usr/X11R7/include/freetype2/freetype/cache
 ./usr/X11R7/include/freetype2/freetype/config
 ./usr/X11R7/include/libdrm
+./usr/X11R7/include/libdrm/nouveau
+./usr/X11R7/include/libdrm/nouveau/nvif
 ./usr/X11R7/include/libkms
 ./usr/X11R7/include/pixman-1
 ./usr/X11R7/include/xcb

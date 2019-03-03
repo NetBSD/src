@@ -1,4 +1,11 @@
-# $NetBSD: md.evbarm,v 1.7 2016/01/31 18:40:23 christos Exp $
+# $NetBSD: md.evbarm,v 1.8 2019/03/03 17:52:32 maya Exp $
+./usr/X11R7/include/libdrm/nouveau/nvif/cl0080.h	-unknown-	xorg
+./usr/X11R7/include/libdrm/nouveau/nvif/cl9097.h	-unknown-	xorg
+./usr/X11R7/include/libdrm/nouveau/nvif/class.h		-unknown-	xorg
+./usr/X11R7/include/libdrm/nouveau/nvif/if0002.h	-unknown-	xorg
+./usr/X11R7/include/libdrm/nouveau/nvif/if0003.h	-unknown-	xorg
+./usr/X11R7/include/libdrm/nouveau/nvif/ioctl.h		-unknown-	xorg
+./usr/X11R7/include/libdrm/nouveau/nvif/unpack.h	-unknown-	xorg
 ./usr/X11R7/lib/libdrm_nouveau.a			-unknown-	xorg
 ./usr/X11R7/lib/libdrm_nouveau_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libdrm_nouveau_pic.a			-unknown-	xorg,picinstall
