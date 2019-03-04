@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.267 2019/03/03 17:55:04 maya Exp $
+#	$NetBSD: Makefile,v 1.268 2019/03/04 08:22:19 maya Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -170,10 +170,6 @@ SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
-
-.if (${MKLLVM} != "no")
-SUBDIR+=	../external/bsd/llvm/lib	# depends on libexecinfo
-.endif
 
 .for sanitizer in asan lsan ubsan
 .if exists(../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer})
