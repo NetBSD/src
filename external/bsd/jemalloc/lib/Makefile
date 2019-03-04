@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2019/03/04 17:29:49 christos Exp $
+# $NetBSD: Makefile,v 1.2 2019/03/04 19:41:37 christos Exp $
 
+WARNS?= 5
 .include <bsd.init.mk>
 
 LIB=jemalloc
