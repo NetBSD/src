@@ -58,7 +58,6 @@ ffs_u32(uint32_t bitmap) {
 #else
 #error No implementation for 32-bit ffs()
 #endif
-	return ffs_u(bitmap);
 }
 
 BIT_UTIL_INLINE uint64_t
