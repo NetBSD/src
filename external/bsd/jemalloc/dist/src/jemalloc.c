@@ -157,7 +157,12 @@ static const void (WINAPI *init_init_lock)(void) = _init_init_lock;
 #endif
 #endif
 #else
+#ifndef __lint__
+// Broken lint
 static malloc_mutex_t	init_lock = MALLOC_MUTEX_INITIALIZER;
+#else
+static malloc_mutex_t	init_lock;
+#endif
 #endif
 
 typedef struct {
@@ -562,8 +567,8 @@ arena_choose_hard(tsd_t *tsd, bool internal) {
 				/* Initialize a new arena. */
 				choose[j] = first_null;
 				arena = arena_init_locked(tsd_tsdn(tsd),
-				    choose[j],
-				    (extent_hooks_t *)&extent_hooks_default);
+				    choose[j], (extent_hooks_t *)
+				    __UNCONST(&extent_hooks_default));
 				if (arena == NULL) {
 					malloc_mutex_unlock(tsd_tsdn(tsd),
 					    &arenas_lock);
@@ -974,7 +979,7 @@ malloc_conf_init(void) {
 #define CONF_HANDLE_T_U(t, o, n, min, max, check_min, check_max, clip)	\
 			if (CONF_MATCH(n)) {				\
 				uintmax_t um;				\
-				char *end;				\
+				const char *end;			\
 									\
 				set_errno(0);				\
 				um = malloc_strtoumax(v, &end, 0);	\
@@ -1051,12 +1056,12 @@ malloc_conf_init(void) {
 			CONF_HANDLE_BOOL(opt_abort, "abort")
 			CONF_HANDLE_BOOL(opt_abort_conf, "abort_conf")
 			if (strncmp("metadata_thp", k, klen) == 0) {
-				int i;
+				int ii;
 				bool match = false;
-				for (i = 0; i < metadata_thp_mode_limit; i++) {
-					if (strncmp(metadata_thp_mode_names[i],
+				for (ii = 0; ii < metadata_thp_mode_limit; ii++) {
+					if (strncmp(metadata_thp_mode_names[ii],
 					    v, vlen) == 0) {
-						opt_metadata_thp = i;
+						opt_metadata_thp = ii;
 						match = true;
 						break;
 					}
@@ -1069,18 +1074,18 @@ malloc_conf_init(void) {
 			}
 			CONF_HANDLE_BOOL(opt_retain, "retain")
 			if (strncmp("dss", k, klen) == 0) {
-				int i;
+				int ii;
 				bool match = false;
-				for (i = 0; i < dss_prec_limit; i++) {
-					if (strncmp(dss_prec_names[i], v, vlen)
+				for (ii = 0; ii < dss_prec_limit; ii++) {
+					if (strncmp(dss_prec_names[ii], v, vlen)
 					    == 0) {
-						if (extent_dss_prec_set(i)) {
+						if (extent_dss_prec_set(ii)) {
 							malloc_conf_error(
 							    "Error setting dss",
 							    k, klen, v, vlen);
 						} else {
 							opt_dss =
-							    dss_prec_names[i];
+							    dss_prec_names[ii];
 							match = true;
 							break;
 						}
@@ -1143,21 +1148,21 @@ malloc_conf_init(void) {
 			CONF_HANDLE_BOOL(opt_tcache, "tcache")
 			CONF_HANDLE_SIZE_T(opt_lg_extent_max_active_fit,
 			    "lg_extent_max_active_fit", 0,
-			    (sizeof(size_t) << 3), yes, yes, false)
+			    (sizeof(size_t) << 3), no, yes, false)
 			CONF_HANDLE_SSIZE_T(opt_lg_tcache_max, "lg_tcache_max",
 			    -1, (sizeof(size_t) << 3) - 1)
 			if (strncmp("percpu_arena", k, klen) == 0) {
 				bool match = false;
-				for (int i = percpu_arena_mode_names_base; i <
-				    percpu_arena_mode_names_limit; i++) {
-					if (strncmp(percpu_arena_mode_names[i],
+				for (int ii = percpu_arena_mode_names_base; ii <
+				    percpu_arena_mode_names_limit; ii++) {
+					if (strncmp(percpu_arena_mode_names[ii],
 					    v, vlen) == 0) {
 						if (!have_percpu_arena) {
 							malloc_conf_error(
 							    "No getcpu support",
 							    k, klen, v, vlen);
 						}
-						opt_percpu_arena = i;
+						opt_percpu_arena = ii;
 						match = true;
 						break;
 					}
@@ -1204,15 +1209,15 @@ malloc_conf_init(void) {
 			}
 			if (CONF_MATCH("thp")) {
 				bool match = false;
-				for (int i = 0; i < thp_mode_names_limit; i++) {
-					if (strncmp(thp_mode_names[i],v, vlen)
+				for (int ii = 0; ii < thp_mode_names_limit; ii++) {
+					if (strncmp(thp_mode_names[ii],v, vlen)
 					    == 0) {
 						if (!have_madvise_huge) {
 							malloc_conf_error(
 							    "No THP support",
 							    k, klen, v, vlen);
 						}
-						opt_thp = i;
+						opt_thp = ii;
 						match = true;
 						break;
 					}
@@ -1272,7 +1277,7 @@ malloc_init_hard_needed(void) {
 }
 
 static bool
-malloc_init_hard_a0_locked() {
+malloc_init_hard_a0_locked(void) {
 	malloc_initializer = INITIALIZER;
 
 	if (config_prof) {
@@ -1321,7 +1326,7 @@ malloc_init_hard_a0_locked() {
 	 * Initialize one arena here.  The rest are lazily created in
 	 * arena_choose_hard().
 	 */
-	if (arena_init(TSDN_NULL, 0, (extent_hooks_t *)&extent_hooks_default)
+	if (arena_init(TSDN_NULL, 0, (extent_hooks_t *)__UNCONST(&extent_hooks_default))
 	    == NULL) {
 		return true;
 	}
@@ -2167,12 +2172,12 @@ JEMALLOC_ALWAYS_INLINE void *
 irealloc_prof(tsd_t *tsd, void *old_ptr, size_t old_usize, size_t usize,
    alloc_ctx_t *alloc_ctx) {
 	void *p;
-	bool prof_active;
+	bool prof_activex;
 	prof_tctx_t *old_tctx, *tctx;
 
-	prof_active = prof_active_get_unlocked();
+	prof_activex = prof_active_get_unlocked();
 	old_tctx = prof_tctx_get(tsd_tsdn(tsd), old_ptr, alloc_ctx);
-	tctx = prof_alloc_prep(tsd, usize, prof_active, true);
+	tctx = prof_alloc_prep(tsd, usize, prof_activex, true);
 	if (unlikely((uintptr_t)tctx != (uintptr_t)1U)) {
 		p = irealloc_prof_sample(tsd, old_ptr, old_usize, usize, tctx);
 	} else {
@@ -2182,8 +2187,8 @@ irealloc_prof(tsd_t *tsd, void *old_ptr, size_t old_usize, size_t usize,
 		prof_alloc_rollback(tsd, tctx, true);
 		return NULL;
 	}
-	prof_realloc(tsd, p, usize, tctx, prof_active, true, old_ptr, old_usize,
-	    old_tctx);
+	prof_realloc(tsd, p, usize, tctx, prof_activex, true, old_ptr,
+	    old_usize, old_tctx);
 
 	return p;
 }
@@ -2306,9 +2311,14 @@ je_realloc(void *ptr, size_t size) {
 				tcache = NULL;
 			}
 			ifree(tsd, ptr, tcache, true);
-
+#ifdef notyet
+			/*
+			 * sshd depends on realloc(p, 0) returning non-NULL
+			 * disable for compatibility for now
+			 */
 			LOG("core.realloc.exit", "result: %p", NULL);
 			return NULL;
+#endif
 		}
 		size = 1;
 	}
@@ -2340,9 +2350,9 @@ je_realloc(void *ptr, size_t size) {
 		tsdn = tsd_tsdn(tsd);
 	} else {
 		/* realloc(NULL, size) is equivalent to malloc(size). */
-		void *ret = je_malloc(size);
-		LOG("core.realloc.exit", "result: %p", ret);
-		return ret;
+		void *ret1 = je_malloc(size);
+		LOG("core.realloc.exit", "result: %p", ret1);
+		return ret1;
 	}
 
 	if (unlikely(ret == NULL)) {
@@ -2620,12 +2630,12 @@ irallocx_prof(tsd_t *tsd, void *old_ptr, size_t old_usize, size_t size,
     size_t alignment, size_t *usize, bool zero, tcache_t *tcache,
     arena_t *arena, alloc_ctx_t *alloc_ctx) {
 	void *p;
-	bool prof_active;
+	bool prof_activex;
 	prof_tctx_t *old_tctx, *tctx;
 
-	prof_active = prof_active_get_unlocked();
+	prof_activex = prof_active_get_unlocked();
 	old_tctx = prof_tctx_get(tsd_tsdn(tsd), old_ptr, alloc_ctx);
-	tctx = prof_alloc_prep(tsd, *usize, prof_active, false);
+	tctx = prof_alloc_prep(tsd, *usize, prof_activex, false);
 	if (unlikely((uintptr_t)tctx != (uintptr_t)1U)) {
 		p = irallocx_prof_sample(tsd_tsdn(tsd), old_ptr, old_usize,
 		    *usize, alignment, zero, tcache, arena, tctx);
@@ -2649,7 +2659,7 @@ irallocx_prof(tsd_t *tsd, void *old_ptr, size_t old_usize, size_t size,
 		 */
 		*usize = isalloc(tsd_tsdn(tsd), p);
 	}
-	prof_realloc(tsd, p, *usize, tctx, prof_active, false, old_ptr,
+	prof_realloc(tsd, p, *usize, tctx, prof_activex, false, old_ptr,
 	    old_usize, old_tctx);
 
 	return p;
@@ -2780,10 +2790,10 @@ JEMALLOC_ALWAYS_INLINE size_t
 ixallocx_prof(tsd_t *tsd, void *ptr, size_t old_usize, size_t size,
     size_t extra, size_t alignment, bool zero, alloc_ctx_t *alloc_ctx) {
 	size_t usize_max, usize;
-	bool prof_active;
+	bool prof_activex;
 	prof_tctx_t *old_tctx, *tctx;
 
-	prof_active = prof_active_get_unlocked();
+	prof_activex = prof_active_get_unlocked();
 	old_tctx = prof_tctx_get(tsd_tsdn(tsd), ptr, alloc_ctx);
 	/*
 	 * usize isn't knowable before ixalloc() returns when extra is non-zero.
@@ -2806,7 +2816,7 @@ ixallocx_prof(tsd_t *tsd, void *ptr, size_t old_usize, size_t size,
 			usize_max = LARGE_MAXCLASS;
 		}
 	}
-	tctx = prof_alloc_prep(tsd, usize_max, prof_active, false);
+	tctx = prof_alloc_prep(tsd, usize_max, prof_activex, false);
 
 	if (unlikely((uintptr_t)tctx != (uintptr_t)1U)) {
 		usize = ixallocx_prof_sample(tsd_tsdn(tsd), ptr, old_usize,
@@ -2819,7 +2829,7 @@ ixallocx_prof(tsd_t *tsd, void *ptr, size_t old_usize, size_t size,
 		prof_alloc_rollback(tsd, tctx, false);
 		return usize;
 	}
-	prof_realloc(tsd, ptr, usize, tctx, prof_active, false, ptr, old_usize,
+	prof_realloc(tsd, ptr, usize, tctx, prof_activex, false, ptr, old_usize,
 	    old_tctx);
 
 	return usize;
