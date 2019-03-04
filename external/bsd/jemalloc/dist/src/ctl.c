@@ -234,7 +234,7 @@ CTL_PROTO(stats_mutexes_reset)
 #define NAME(n)	{true},	n
 #define CHILD(t, c)							\
 	sizeof(c##_node) / sizeof(ctl_##t##_node_t),			\
-	(ctl_node_t *)c##_node,						\
+	(const ctl_node_t *)c##_node,					\
 	NULL
 #define CTL(c)	0, NULL, c##_ctl
 
@@ -1299,14 +1299,14 @@ ctl_postfork_child(tsdn_t *tsdn) {
 		ret = EPERM;						\
 		goto label_return;					\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define WRITEONLY()	do {						\
 	if (oldp != NULL || oldlenp != NULL) {				\
 		ret = EPERM;						\
 		goto label_return;					\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define READ_XOR_WRITE()	do {					\
 	if ((oldp != NULL && oldlenp != NULL) && (newp != NULL ||	\
@@ -1314,7 +1314,7 @@ ctl_postfork_child(tsdn_t *tsdn) {
 		ret = EPERM;						\
 		goto label_return;					\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define READ(v, t)	do {						\
 	if (oldp != NULL && oldlenp != NULL) {				\
@@ -1327,7 +1327,7 @@ ctl_postfork_child(tsdn_t *tsdn) {
 		}							\
 		*(t *)oldp = (v);					\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define WRITE(v, t)	do {						\
 	if (newp != NULL) {						\
@@ -1337,7 +1337,7 @@ ctl_postfork_child(tsdn_t *tsdn) {
 		}							\
 		(v) = *(t *)newp;					\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define MIB_UNSIGNED(v, i) do {						\
 	if (mib[i] > UINT_MAX) {					\
@@ -1345,7 +1345,7 @@ ctl_postfork_child(tsdn_t *tsdn) {
 		goto label_return;					\
 	}								\
 	v = (unsigned)mib[i];						\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /*
  * There's a lot of code duplication in the following macros due to limitations
@@ -2262,7 +2262,7 @@ arena_i_extent_hooks_ctl(tsd_t *tsd, const size_t *mib, size_t miblen,
 				goto label_return;
 			}
 			old_extent_hooks =
-			    (extent_hooks_t *)&extent_hooks_default;
+			    (extent_hooks_t *)__UNCONST(&extent_hooks_default);
 			READ(old_extent_hooks, extent_hooks_t *);
 			if (newp != NULL) {
 				/* Initialize a new arena as a side effect. */
@@ -2459,7 +2459,7 @@ arenas_create_ctl(tsd_t *tsd, const size_t *mib, size_t miblen, void *oldp,
 
 	malloc_mutex_lock(tsd_tsdn(tsd), &ctl_mtx);
 
-	extent_hooks = (extent_hooks_t *)&extent_hooks_default;
+	extent_hooks = (extent_hooks_t *)__UNCONST(&extent_hooks_default);
 	WRITE(extent_hooks, extent_hooks_t *);
 	if ((arena_ind = ctl_arena_init(tsd, extent_hooks)) == UINT_MAX) {
 		ret = EAGAIN;
@@ -2806,8 +2806,8 @@ stats_mutexes_reset_ctl(tsd_t *tsd, const size_t *mib, size_t miblen,
 		MUTEX_PROF_RESET(arena->tcache_ql_mtx);
 		MUTEX_PROF_RESET(arena->base->mtx);
 
-		for (szind_t i = 0; i < NBINS; i++) {
-			bin_t *bin = &arena->bins[i];
+		for (szind_t j = 0; j < NBINS; j++) {
+			bin_t *bin = &arena->bins[j];
 			MUTEX_PROF_RESET(bin->lock);
 		}
 	}
