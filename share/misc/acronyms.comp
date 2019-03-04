@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.233 2019/03/04 13:37:53 sevan Exp $
+$NetBSD: acronyms.comp,v 1.234 2019/03/04 14:31:26 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1605,6 +1605,7 @@ XGA	Extended Graphics Array
 XHR	XMLHttpRequest
 XIP	execute in place
 XML	Extensible Markup Language
+XNA	XNA's not acronymed
 XNS	Xerox network systems
 XOR	exclusive or
 XP	extreme programming
