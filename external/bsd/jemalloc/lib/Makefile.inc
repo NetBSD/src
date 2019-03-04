@@ -1,0 +1,51 @@
+#	$NetBSD: Makefile.inc,v 1.1 2019/03/04 17:29:24 christos Exp $
+
+JEMALLOC:=${.PARSEDIR}/../
+
+JEMALLOC_SRCS+= \
+jemalloc.c \
+arena.c \
+background_thread.c \
+base.c \
+bin.c \
+bitmap.c \
+ckh.c \
+ctl.c \
+divide.c \
+extent.c \
+extent_dss.c \
+extent_mmap.c \
+hash.c \
+hooks.c \
+large.c \
+log.c \
+malloc_io.c \
+mutex.c \
+mutex_pool.c \
+nstime.c \
+pages.c \
+prng.c \
+prof.c \
+rtree.c \
+stats.c \
+sz.c \
+tcache.c \
+ticker.c \
+tsd.c \
+witness.c
+
+.PATH: ${JEMALLOC}/dist/src ${JEMALLOC}/lib
+.for i in ${JEMALLOC_SRCS}
+CPPFLAGS.${i}+=-I${JEMALLOC}/include -DJEMALLOC_NO_PRIVATE_NAMESPACE
+COPTS.${i}+= -fvisibility=hidden -funroll-loops 
+.endfor
+
+COPTS.background_thread.c+=-Wno-error=stack-protector
+COPTS.ctl.c+=-Wno-error=stack-protector
+COPTS.stats.c+=-Wno-error=stack-protector -Wno-error=format-nonliteral
+COPTS.tcache.c+=-Wno-error=stack-protector
+
+SRCS+=${JEMALLOC_SRCS}
+
+jemalloc.d jemalloc.pico jemalloc.o jemalloc.ln jemalloc.po jemalloc.go: \
+    ${JEMALLOC}/dist/src/jemalloc.c
