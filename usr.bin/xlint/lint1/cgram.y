@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.101 2019/03/03 23:06:08 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.102 2019/03/04 15:26:18 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.101 2019/03/03 23:06:08 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.102 2019/03/04 15:26:18 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -212,6 +212,7 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_DESTRUCTOR
 %token <y_type>		T_AT_FORMAT
 %token <y_type>		T_AT_FORMAT_ARG
+%token <y_type>		T_AT_FORMAT_GNU_PRINTF
 %token <y_type>		T_AT_FORMAT_PRINTF
 %token <y_type>		T_AT_FORMAT_SCANF
 %token <y_type>		T_AT_FORMAT_STRFMON
@@ -515,7 +516,8 @@ declaration:
 	;
 
 type_attribute_format_type:
-	  T_AT_FORMAT_PRINTF
+	  T_AT_FORMAT_GNU_PRINTF
+	| T_AT_FORMAT_PRINTF
 	| T_AT_FORMAT_SCANF
 	| T_AT_FORMAT_STRFMON
 	| T_AT_FORMAT_STRFTIME
