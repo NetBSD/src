@@ -99,14 +99,14 @@ prof_sample_accum_update(tsd_t *tsd, size_t usize, bool update,
 }
 
 JEMALLOC_ALWAYS_INLINE prof_tctx_t *
-prof_alloc_prep(tsd_t *tsd, size_t usize, bool prof_active, bool update) {
+prof_alloc_prep(tsd_t *tsd, size_t usize, bool _prof_active, bool update) {
 	prof_tctx_t *ret;
 	prof_tdata_t *tdata;
 	prof_bt_t bt;
 
 	assert(usize == sz_s2u(usize));
 
-	if (!prof_active || likely(prof_sample_accum_update(tsd, usize, update,
+	if (!_prof_active || likely(prof_sample_accum_update(tsd, usize, update,
 	    &tdata))) {
 		ret = (prof_tctx_t *)(uintptr_t)1U;
 	} else {
@@ -135,14 +135,14 @@ prof_malloc(tsdn_t *tsdn, const void *ptr, size_t usize, alloc_ctx_t *alloc_ctx,
 
 JEMALLOC_ALWAYS_INLINE void
 prof_realloc(tsd_t *tsd, const void *ptr, size_t usize, prof_tctx_t *tctx,
-    bool prof_active, bool updated, const void *old_ptr, size_t old_usize,
+    bool _prof_active, bool updated, const void *old_ptr, size_t old_usize,
     prof_tctx_t *old_tctx) {
 	bool sampled, old_sampled, moved;
 
 	cassert(config_prof);
 	assert(ptr != NULL || (uintptr_t)tctx <= (uintptr_t)1U);
 
-	if (prof_active && !updated && ptr != NULL) {
+	if (_prof_active && !updated && ptr != NULL) {
 		assert(usize == isalloc(tsd_tsdn(tsd), ptr));
 		if (prof_sample_accum_update(tsd, usize, true, NULL)) {
 			/*
