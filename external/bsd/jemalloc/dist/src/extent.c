@@ -1113,14 +1113,14 @@ extent_recycle(tsdn_t *tsdn, arena_t *arena, extent_hooks_t **r_extent_hooks,
 
 	if (*zero) {
 		void *addr = extent_base_get(extent);
-		size_t size = extent_size_get(extent);
+		size_t sz = extent_size_get(extent);
 		if (!extent_zeroed_get(extent)) {
-			if (pages_purge_forced(addr, size)) {
-				memset(addr, 0, size);
+			if (pages_purge_forced(addr, sz)) {
+				memset(addr, 0, sz);
 			}
 		} else if (config_debug) {
 			size_t *p = (size_t *)(uintptr_t)addr;
-			for (size_t i = 0; i < size / sizeof(size_t); i++) {
+			for (size_t i = 0; i < sz / sizeof(size_t); i++) {
 				assert(p[i] == 0);
 			}
 		}
@@ -1365,18 +1365,18 @@ extent_grow_retained(tsdn_t *tsdn, arena_t *arena,
 		extent_addr_randomize(tsdn, extent, alignment);
 	}
 	if (slab) {
-		rtree_ctx_t rtree_ctx_fallback;
-		rtree_ctx_t *rtree_ctx = tsdn_rtree_ctx(tsdn,
-		    &rtree_ctx_fallback);
+		rtree_ctx_t rtree_ctx_fallback1;
+		rtree_ctx_t *rtree_ctx1 = tsdn_rtree_ctx(tsdn,
+		    &rtree_ctx_fallback1);
 
 		extent_slab_set(extent, true);
-		extent_interior_register(tsdn, rtree_ctx, extent, szind);
+		extent_interior_register(tsdn, rtree_ctx1, extent, szind);
 	}
 	if (*zero && !extent_zeroed_get(extent)) {
 		void *addr = extent_base_get(extent);
-		size_t size = extent_size_get(extent);
-		if (pages_purge_forced(addr, size)) {
-			memset(addr, 0, size);
+		size_t sz = extent_size_get(extent);
+		if (pages_purge_forced(addr, sz)) {
+			memset(addr, 0, sz);
 		}
 	}
 
