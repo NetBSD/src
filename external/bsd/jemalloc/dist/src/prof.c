@@ -1267,7 +1267,7 @@ struct prof_tdata_merge_iter_arg_s {
 };
 
 static prof_tdata_t *
-prof_tdata_merge_iter(prof_tdata_tree_t *tdatas, prof_tdata_t *tdata,
+prof_tdata_merge_iter(prof_tdata_tree_t *tdatasunused, prof_tdata_t *tdata,
     void *opaque) {
 	struct prof_tdata_merge_iter_arg_s *arg =
 	    (struct prof_tdata_merge_iter_arg_s *)opaque;
@@ -1302,7 +1302,7 @@ prof_tdata_merge_iter(prof_tdata_tree_t *tdatas, prof_tdata_t *tdata,
 }
 
 static prof_tdata_t *
-prof_tdata_dump_iter(prof_tdata_tree_t *tdatas, prof_tdata_t *tdata,
+prof_tdata_dump_iter(prof_tdata_tree_t *tdatasunused, prof_tdata_t *tdata,
     void *arg) {
 	bool propagate_err = *(bool *)arg;
 
@@ -1867,7 +1867,7 @@ prof_gdump(tsdn_t *tsdn) {
 
 static void
 prof_bt_hash(const void *key, size_t r_hash[2]) {
-	prof_bt_t *bt = (prof_bt_t *)key;
+	const prof_bt_t *bt = (const prof_bt_t *)key;
 
 	cassert(config_prof);
 
@@ -1876,8 +1876,8 @@ prof_bt_hash(const void *key, size_t r_hash[2]) {
 
 static bool
 prof_bt_keycomp(const void *k1, const void *k2) {
-	const prof_bt_t *bt1 = (prof_bt_t *)k1;
-	const prof_bt_t *bt2 = (prof_bt_t *)k2;
+	const prof_bt_t *bt1 = (const prof_bt_t *)k1;
+	const prof_bt_t *bt2 = (const prof_bt_t *)k2;
 
 	cassert(config_prof);
 
@@ -2050,7 +2050,7 @@ prof_tdata_expire(tsdn_t *tsdn, prof_tdata_t *tdata) {
 }
 
 static prof_tdata_t *
-prof_tdata_reset_iter(prof_tdata_tree_t *tdatas, prof_tdata_t *tdata,
+prof_tdata_reset_iter(prof_tdata_tree_t *tdatasunused, prof_tdata_t *tdata,
     void *arg) {
 	tsdn_t *tsdn = (tsdn_t *)arg;
 
@@ -2141,7 +2141,7 @@ prof_thread_name_alloc(tsdn_t *tsdn, const char *thread_name) {
 
 	size = strlen(thread_name) + 1;
 	if (size == 1) {
-		return "";
+		return __UNCONST(""); // XXX
 	}
 
 	ret = iallocztm(tsdn, size, sz_size2index(size), false, NULL, true,
@@ -2170,7 +2170,7 @@ prof_thread_name_set(tsd_t *tsd, const char *thread_name) {
 	}
 	for (i = 0; thread_name[i] != '\0'; i++) {
 		char c = thread_name[i];
-		if (!isgraph(c) && !isblank(c)) {
+		if (!isgraph((unsigned char)c) && !isblank((unsigned char)c)) {
 			return EFAULT;
 		}
 	}
