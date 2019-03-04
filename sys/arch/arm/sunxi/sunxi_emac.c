@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.21 2019/01/22 03:42:25 msaitoh Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.22 2019/03/04 11:35:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.21 2019/01/22 03:42:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.22 2019/03/04 11:35:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1440,6 +1440,7 @@ sunxi_emac_attach(device_t parent, device_t self, void *aux)
 			       IFCAP_CSUM_TCPv4_Tx |
 			       IFCAP_CSUM_UDPv4_Rx |
 			       IFCAP_CSUM_UDPv4_Tx;
+	ifp->if_capenable = ifp->if_capabilities;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
