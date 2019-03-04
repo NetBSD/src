@@ -41,7 +41,7 @@
 #define MALLOC_PRINTF_BUFSIZE	4096
 
 int buferror(int err, char *buf, size_t buflen);
-uintmax_t malloc_strtoumax(const char *restrict nptr, char **restrict endptr,
+uintmax_t malloc_strtoumax(const char *restrict nptr, const char **restrict endptr,
     int base);
 void malloc_write(const char *s);
 
