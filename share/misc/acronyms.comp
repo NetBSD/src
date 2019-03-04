@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.232 2019/02/21 01:20:45 sevan Exp $
+$NetBSD: acronyms.comp,v 1.233 2019/03/04 13:37:53 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1344,6 +1344,7 @@ SMP	symmetric multiprocessing
 SMT	simultaneous multithreading
 SMTP	Simple Mail Transfer Protocol
 SMU	system management unit
+SNA	systems network architecture
 SNAP	Sub-Network Access Protocol
 SNIA	Storage Networking Industry Association
 SNMP	Simple Network Management Protocol
@@ -1439,6 +1440,7 @@ TKIP	Temporal Key Integrity Protocol
 TLA	top level aggregator
 TLB	translation lookaside buffer
 TLD	top level domain
+TLI	transport layer interface
 TLS	thread local storage
 TLS	transport layer security
 TM	Turing machine
@@ -1603,12 +1605,14 @@ XGA	Extended Graphics Array
 XHR	XMLHttpRequest
 XIP	execute in place
 XML	Extensible Markup Language
+XNS	Xerox network systems
 XOR	exclusive or
 XP	extreme programming
 XSI	X/Open System Interface
 XSL	extensible stylesheet language
 XSS	cross site scripting
 XT	extended technology
+XTI	X/Open transport interface
 XUL	XML user interface language
 YACC	yet another compiler compiler
 YAML	YAML ain't markup language
