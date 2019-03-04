@@ -103,7 +103,7 @@ typedef struct {
 		.n_wait_times = 0, \
 		.n_spin_acquired = 0, \
 		.max_n_thds = 0, \
-		.n_waiting_thds = 0, \
+		.n_waiting_thds = ATOMIC_INIT(0), \
 		.n_owner_switches = 0, \
 		.prev_owner = NULL, \
 		.n_lock_ops = 0, \
