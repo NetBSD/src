@@ -110,10 +110,10 @@ struct malloc_mutex_s {
       WITNESS_INITIALIZER("mutex", WITNESS_RANK_OMIT)}
 #else
 #    define MALLOC_MUTEX_TYPE PTHREAD_MUTEX_DEFAULT
-#    define MALLOC_MUTEX_INITIALIZER {{ \
+#    define MALLOC_MUTEX_INITIALIZER {{{ \
 	.prof_data = MUTEX_PROF_DATA_INITIALIZER, \
 	.lock = PTHREAD_MUTEX_INITIALIZER, \
-	},	\
+	}},	\
         WITNESS_INITIALIZER("mutex", WITNESS_RANK_OMIT)}
 #endif
 
