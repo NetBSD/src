@@ -111,7 +111,7 @@ buferror(int err, char *buf, size_t buflen) {
 }
 
 uintmax_t
-malloc_strtoumax(const char *restrict nptr, char **restrict endptr, int base) {
+malloc_strtoumax(const char *restrict nptr, const char **restrict endptr, int base) {
 	uintmax_t ret, digit;
 	unsigned b;
 	bool neg;
@@ -223,9 +223,9 @@ label_return:
 	if (endptr != NULL) {
 		if (p == ns) {
 			/* No characters were converted. */
-			*endptr = (char *)nptr;
+			*endptr = nptr;
 		} else {
-			*endptr = (char *)p;
+			*endptr = p;
 		}
 	}
 	return ret;
@@ -460,7 +460,7 @@ malloc_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 			case '5': case '6': case '7': case '8': case '9': {
 				uintmax_t uwidth;
 				set_errno(0);
-				uwidth = malloc_strtoumax(f, (char **)&f, 10);
+				uwidth = malloc_strtoumax(f, &f, 10);
 				assert(uwidth != UINTMAX_MAX || get_errno() !=
 				    ERANGE);
 				width = (int)uwidth;
@@ -484,7 +484,7 @@ malloc_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 			case '5': case '6': case '7': case '8': case '9': {
 				uintmax_t uprec;
 				set_errno(0);
-				uprec = malloc_strtoumax(f, (char **)&f, 10);
+				uprec = malloc_strtoumax(f, &f, 10);
 				assert(uprec != UINTMAX_MAX || get_errno() !=
 				    ERANGE);
 				prec = (int)uprec;
