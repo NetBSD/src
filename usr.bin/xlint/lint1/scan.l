@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.88 2019/03/04 15:26:18 christos Exp $ */
+/* $NetBSD: scan.l,v 1.89 2019/03/04 17:45:16 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.88 2019/03/04 15:26:18 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.89 2019/03/04 17:45:16 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -209,6 +209,7 @@ static	struct	kwtab {
 	{ "__int128_t",	T_TYPE,		0,	INT128,	0,	  0,1,0,0,1 },
 	{ "__uint128_t",T_TYPE,		0,	UINT128,0,	  0,1,0,0,1 },
 #endif
+	{ "__thread",	T_QUAL,		0,	0,	THREAD,	  0,0,1,0,7 },
 	{ "_Bool",	T_TYPE,		0,	BOOL,	0,	  0,1,0,0,1 },
 	{ "_Complex",	T_TYPE,		0,	COMPLEX,0,	  0,1,0,0,1 },
 	{ "_Generic",	T_GENERIC,	0,	0,	0,	  0,1,0,0,1 },
@@ -284,9 +285,10 @@ static	struct	kwtab {
 	{ "string",	T_AT_STRING,	0,	0,	0,	  0,0,1,1,5 },
 	{ "struct",	T_SOU,		0,	STRUCT,	0,	  0,0,0,0,1 },
 	{ "switch",	T_SWITCH,	0,	0,	0,	  0,0,0,0,1 },
-	{ "symbolrename", T_SYMBOLRENAME, 0,	0,	0,	  0,0,0,0,2 },
+	{ "symbolrename", T_SYMBOLRENAME,0,	0,	0,	  0,0,0,0,2 },
 	{ "syslog",	T_AT_FORMAT_SYSLOG,0,	0,	0,	  0,0,1,1,5 },
 	{ "transparent_union",T_AT_TUNION,0,	0,	0,	  0,0,1,1,5 },
+	{ "tls_model",	T_AT_TLS_MODEL,	0,	0,	0,	  0,0,1,1,5 },
 	{ "typedef",	T_SCLASS,	TYPEDEF, 0,	0,	  0,0,0,0,1 },
 	{ "typeof",	T_TYPEOF,	0,	0,	0,	  0,0,1,0,7 },
 	{ "union",	T_SOU,		0,	UNION,	0,	  0,0,0,0,1 },
