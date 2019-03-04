@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.94 2018/01/05 20:51:13 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.95 2019/03/04 17:30:33 christos Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
 .PATH: ${ARCHDIR}/stdlib ${.CURDIR}/stdlib
 
 SRCS+=	_env.c _rand48.c \
-	a64l.c abort.c aligned_alloc.c atexit.c atof.c atoi.c atol.c atoll.c \
+	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
 	bsearch.c cxa_thread_atexit.c drand48.c exit.c \
 	getenv.c getopt.c getopt_long.c getsubopt.c \
 	hcreate.c heapsort.c imaxdiv.c insque.c jrand48.c l64a.c lldiv.c \
@@ -26,11 +26,15 @@ SRCS+=	div.c ldiv.c imaxdiv.c
 SRCS+= erand48_ieee754.c
 
 .if ${RUMPRUN} != "yes"
-.if (${USE_JEMALLOC} != "no")
-SRCS+=	jemalloc.c
-.else
+.   if (${USE_JEMALLOC} != "no")
+.      if ${HAVE_JEMALLOC} > 100
+.         include "${NETBSDSRCDIR}/external/bsd/jemalloc/lib/Makefile.inc"
+.      else
+SRCS+=	jemalloc.c aligned_alloc.c
+.      endif 
+.   else
 SRCS+=	malloc.c
-.endif
+.   endif
 .endif
 
 CPPFLAGS.strtol.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
