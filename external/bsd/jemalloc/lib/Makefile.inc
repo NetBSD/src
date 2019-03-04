@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2019/03/04 17:29:24 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2019/03/04 19:41:51 christos Exp $
 
 JEMALLOC:=${.PARSEDIR}/../
 
@@ -42,7 +42,7 @@ COPTS.${i}+= -fvisibility=hidden -funroll-loops
 
 COPTS.background_thread.c+=-Wno-error=stack-protector
 COPTS.ctl.c+=-Wno-error=stack-protector
-COPTS.stats.c+=-Wno-error=stack-protector -Wno-error=format-nonliteral
+COPTS.stats.c+=-Wno-error=stack-protector
 COPTS.tcache.c+=-Wno-error=stack-protector
 
 SRCS+=${JEMALLOC_SRCS}
