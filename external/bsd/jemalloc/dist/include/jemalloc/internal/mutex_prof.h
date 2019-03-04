@@ -96,17 +96,16 @@ typedef struct {
 	uint64_t		n_lock_ops;
 } mutex_prof_data_t;
 
-#define MUTEX_PROF_DATA_ZERO_INITIALIZER \
+#define MUTEX_PROF_DATA_INITIALIZER \
 	{ \
-		.tot_wait_time = NSTIME_ZERO_INITIALIZER, \
-		.max_wait_time = NSTIME_ZERO_INITIALIZER, \
+		.tot_wait_time = NSTIME_INITIALIZER, \
+		.max_wait_time = NSTIME_INITIALIZER, \
 		.n_wait_times = 0, \
 		.n_spin_acquired = 0, \
 		.max_n_thds = 0, \
-		.n_waiting_thds = 0, \
+		.n_waiting_thds = ATOMIC_INIT(0), \
 		.n_owner_switches = 0, \
 		.prev_owner = NULL, \
 		.n_lock_ops = 0, \
 	}
-
 #endif /* JEMALLOC_INTERNAL_MUTEX_PROF_H */
