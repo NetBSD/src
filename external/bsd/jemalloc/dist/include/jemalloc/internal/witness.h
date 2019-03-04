@@ -65,7 +65,13 @@
 /* PER-WITNESS DATA */
 /******************************************************************************/
 #if defined(JEMALLOC_DEBUG)
-#  define WITNESS_INITIALIZER(name, rank) {name, rank, NULL, NULL, {NULL, NULL}}
+#  define WITNESS_INITIALIZER(_name, _rank) { \
+	.name = _name, \
+	.rank = _rank, \
+	.comp = NULL, \
+	.opaque = NULL, \
+	.link = { .qre_prev = NULL, .qre_next = NULL }, \
+}
 #else
 #  define WITNESS_INITIALIZER(name, rank)
 #endif
