@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.103 2019/03/04 15:28:18 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.104 2019/03/04 17:45:16 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.103 2019/03/04 15:28:18 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.104 2019/03/04 17:45:16 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -235,6 +235,7 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_SECTION
 %token <y_type>		T_AT_SENTINEL
 %token <y_type>		T_AT_STRING
+%token <y_type>		T_AT_TLS_MODEL
 %token <y_type>		T_AT_TUNION
 %token <y_type>		T_AT_UNUSED
 %token <y_type>		T_AT_USED
@@ -547,6 +548,7 @@ type_attribute_spec:
 	| T_AT_ALIAS T_LPARN string T_RPARN
 	| T_AT_PCS T_LPARN string T_RPARN
 	| T_AT_SECTION T_LPARN string T_RPARN
+	| T_AT_TLS_MODEL T_LPARN string T_RPARN
 	| T_AT_ALIGNED 
 	| T_AT_CONSTRUCTOR 
 	| T_AT_DESTRUCTOR 

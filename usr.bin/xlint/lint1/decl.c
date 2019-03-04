@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.69 2018/09/07 15:16:15 christos Exp $ */
+/* $NetBSD: decl.c,v 1.70 2019/03/04 17:45:16 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.69 2018/09/07 15:16:15 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.70 2019/03/04 17:45:16 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -568,6 +568,8 @@ addqual(tqual_t q)
 		}
 		dcs->d_const = 1;
 	} else {
+		if (q == THREAD)
+			return;
 		if (q != VOLATILE)
 			LERROR("addqual()");
 		if (dcs->d_volatile) {
