@@ -1,4 +1,4 @@
-/*	$NetBSD: uuencode.c,v 1.16 2014/09/06 18:58:35 dholland Exp $	*/
+/*	$NetBSD: uuencode.c,v 1.17 2019/03/04 05:37:08 rin Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)uuencode.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: uuencode.c,v 1.16 2014/09/06 18:58:35 dholland Exp $");
+__RCSID("$NetBSD: uuencode.c,v 1.17 2019/03/04 05:37:08 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,6 +165,12 @@ encode(void)
 		if (putchar(ch) == EOF)
 			break;
 		for (p = buf; n > 0; n -= 3, p += 3) {
+			/* Pad with nulls if not a multiple of 3. */
+			if (n < 3) {
+				p[2] = '\0';
+				if (n < 2)
+					p[1] = '\0';
+			}
 			ch = *p >> 2;
 			ch = ENC(ch);
 			if (putchar(ch) == EOF)

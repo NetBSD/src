@@ -1,4 +1,4 @@
-.\"	$NetBSD: uuencode.5,v 1.12 2016/06/06 15:09:33 abhinav Exp $
+.\"	$NetBSD: uuencode.5,v 1.13 2019/03/04 05:37:08 rin Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)uuencode.format.5	8.2 (Berkeley) 1/12/94
 .\"
-.Dd June 2, 2016
+.Dd March 4, 2019
 .Dt UUENCODE 5
 .Os
 .Sh NAME
@@ -118,11 +118,11 @@ backquote character \`).
 Obviously, not every input file will be a multiple of three bytes in size.
 In these cases,
 .Xr uuencode 1
-will pad the remaining one or two bytes of data with garbage bytes until
+will pad the remaining one or two bytes of data with null characters until
 a three byte group is created.
 The byte count in a line containing
-garbage padding will reflect the actual number of bytes encoded, making
-it possible to convey how many bytes are garbage.
+null padding will reflect the actual number of bytes encoded, making
+it possible to convey how many bytes are null.
 .Pp
 The trailer line consists of
 .Dq end
