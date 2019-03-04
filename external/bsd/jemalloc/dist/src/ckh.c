@@ -356,14 +356,14 @@ ckh_shrink(tsd_t *tsd, ckh_t *ckh) {
 }
 
 bool
-ckh_new(tsd_t *tsd, ckh_t *ckh, size_t minitems, ckh_hash_t *hash,
+ckh_new(tsd_t *tsd, ckh_t *ckh, size_t minitems, ckh_hash_t *hashp,
     ckh_keycomp_t *keycomp) {
 	bool ret;
 	size_t mincells, usize;
 	unsigned lg_mincells;
 
 	assert(minitems > 0);
-	assert(hash != NULL);
+	assert(hashp != NULL);
 	assert(keycomp != NULL);
 
 #ifdef CKH_COUNT
@@ -392,7 +392,7 @@ ckh_new(tsd_t *tsd, ckh_t *ckh, size_t minitems, ckh_hash_t *hash,
 	}
 	ckh->lg_minbuckets = lg_mincells - LG_CKH_BUCKET_CELLS;
 	ckh->lg_curbuckets = lg_mincells - LG_CKH_BUCKET_CELLS;
-	ckh->hash = hash;
+	ckh->hash = hashp;
 	ckh->keycomp = keycomp;
 
 	usize = sz_sa2u(sizeof(ckhc_t) << lg_mincells, CACHELINE);
@@ -449,10 +449,10 @@ ckh_iter(ckh_t *ckh, size_t *tabind, void **key, void **data) {
 	    LG_CKH_BUCKET_CELLS)); i < ncells; i++) {
 		if (ckh->tab[i].key != NULL) {
 			if (key != NULL) {
-				*key = (void *)ckh->tab[i].key;
+				*key = (void *)__UNCONST(ckh->tab[i].key);
 			}
 			if (data != NULL) {
-				*data = (void *)ckh->tab[i].data;
+				*data = (void *)__UNCONST(ckh->tab[i].data);
 			}
 			*tabind = i + 1;
 			return false;
@@ -495,10 +495,10 @@ ckh_remove(tsd_t *tsd, ckh_t *ckh, const void *searchkey, void **key,
 	cell = ckh_isearch(ckh, searchkey);
 	if (cell != SIZE_T_MAX) {
 		if (key != NULL) {
-			*key = (void *)ckh->tab[cell].key;
+			*key = (void *)__UNCONST(ckh->tab[cell].key);
 		}
 		if (data != NULL) {
-			*data = (void *)ckh->tab[cell].data;
+			*data = (void *)__UNCONST(ckh->tab[cell].data);
 		}
 		ckh->tab[cell].key = NULL;
 		ckh->tab[cell].data = NULL; /* Not necessary. */
@@ -527,10 +527,10 @@ ckh_search(ckh_t *ckh, const void *searchkey, void **key, void **data) {
 	cell = ckh_isearch(ckh, searchkey);
 	if (cell != SIZE_T_MAX) {
 		if (key != NULL) {
-			*key = (void *)ckh->tab[cell].key;
+			*key = (void *)__UNCONST(ckh->tab[cell].key);
 		}
 		if (data != NULL) {
-			*data = (void *)ckh->tab[cell].data;
+			*data = (void *)__UNCONST(ckh->tab[cell].data);
 		}
 		return false;
 	}
@@ -548,7 +548,7 @@ ckh_string_keycomp(const void *k1, const void *k2) {
 	assert(k1 != NULL);
 	assert(k2 != NULL);
 
-	return !strcmp((char *)k1, (char *)k2);
+	return !strcmp((const char *)k1, (const char *)k2);
 }
 
 void
