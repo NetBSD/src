@@ -1008,10 +1008,10 @@ stats_general_print(emitter_t *emitter) {
 	emitter_kv(emitter, "nbins", "Number of bin size classes",
 	    emitter_type_unsigned, &nbins);
 
-	unsigned nhbins;
-	CTL_GET("arenas.nhbins", &nhbins, unsigned);
+	unsigned nh_bins;
+	CTL_GET("arenas.nhbins", &nh_bins, unsigned);
 	emitter_kv(emitter, "nhbins", "Number of thread-cache bin size classes",
-	    emitter_type_unsigned, &nhbins);
+	    emitter_type_unsigned, &nh_bins);
 
 	/*
 	 * We do enough mallctls in a loop that we actually want to omit them
