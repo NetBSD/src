@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1599 2019/02/24 20:04:01 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1600 2019/03/04 17:36:35 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -598,6 +598,19 @@ NetBSD-current always contains latest ipsec-tools code. On the other hand,
 ipsec-tools has stable branches (e.g.: ipsec-tools-0_7-branch), which
 are manually pulled up to NetBSD stable branches (e.g.: netbsd-4 is regularly
 sync with ipsec-tools-0_7-branch)
+
+Package:	jemalloc
+Version:	5.1.0
+Current Vers:	5.1.0
+Maintainer:	Christos Zoulas
+Archive Site:	https://github.com/jemalloc/jemalloc
+Home Page:	https://jemalloc.net
+Date:		2019-03-04
+Mailing List:	
+Responsible:	christos
+License:	BSD
+Location:	external/bsd/jemalloc
+Notes:
 
 Package:	KAME IPv6
 Version:	KAME/NetBSD SNAP kit
