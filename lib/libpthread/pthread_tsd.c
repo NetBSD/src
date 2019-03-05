@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.16 2017/07/09 20:21:08 christos Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.17 2019/03/05 01:35:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.16 2017/07/09 20:21:08 christos Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.17 2019/03/05 01:35:52 christos Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: pthread_tsd.c,v 1.16 2017/07/09 20:21:08 christos Exp $");
 #include "pthread.h"
 #include "pthread_int.h"
 #include "reentrant.h"
+#include "tsd.h"
 
 int pthread_keys_max;
 static pthread_mutex_t tsd_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -361,4 +362,24 @@ pthread__destroy_tsd(pthread_t self)
 
 	self->pt_havespecific = 0;
 	pthread_mutex_lock(&self->pt_lock);
+}
+
+void
+pthread__copy_tsd(pthread_t self)
+{
+	for (size_t key = 0; key < TSD_KEYS_MAX; key++) {
+
+		if (__libc_tsd[key].tsd_inuse == 0)
+			continue;
+
+		pthread__assert(pthread__tsd_destructors[key] == NULL);
+		pthread__tsd_destructors[key] = __libc_tsd[key].tsd_dtor ?
+		    __libc_tsd[key].tsd_dtor : null_destructor;
+		nextkey = (key + 1) % pthread_keys_max;
+
+		self->pt_havespecific = 1;
+		struct pt_specific *pt = &self->pt_specific[key];
+		pt->pts_value = __libc_tsd[key].tsd_val;
+		__libc_tsd[key].tsd_inuse = 0;
+	}
 }
