@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.3 2019/01/22 03:42:25 msaitoh Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.4 2019/03/05 08:25:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.3 2019/01/22 03:42:25 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.4 2019/03/05 08:25:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,8 +81,6 @@ __KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.3 2019/01/22 03:42:25 msaitoh Exp $");
 #include <arch/arm/omap/if_cpswreg.h>
 #include <arch/arm/omap/sitara_cmreg.h>
 #include <arch/arm/omap/sitara_cm.h>
-
-#define ETHER_ALIGN (roundup2(ETHER_HDR_LEN, sizeof(uint32_t)) - ETHER_HDR_LEN)
 
 #define CPSW_TXFRAGS	16
 

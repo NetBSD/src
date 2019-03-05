@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.20 2019/01/08 08:47:21 msaitoh Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.21 2019/03/05 08:25:02 msaitoh Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.20 2019/01/08 08:47:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.21 2019/03/05 08:25:02 msaitoh Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1041,7 +1041,6 @@ cmalo_rx(struct malo_softc *sc)
 	memcpy(data + (ETHER_ADDR_LEN * 2), data + i, rxdesc->pkglen - i);
 	rxdesc->pkglen -= sizeof(struct llc);
 
-#define ETHER_ALIGN	2 /* XXX */
 	/* prepare mbuf */
 	m = m_devget(sc->sc_data + rxdesc->pkgoffset,
 	    rxdesc->pkglen, ETHER_ALIGN, ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.76 2018/12/21 04:43:17 msaitoh Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.77 2019/03/05 08:25:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -64,6 +64,14 @@
 #define	EVL_PRIOFTAG(tag)	(((tag) >> 13) & 7)	/* Priority */
 #define	EVL_CFIOFTAG(tag)	(((tag) >> 12) & 1)	/* CFI */
 #define	ETHER_PPPOE_ENCAP_LEN	8	/* length of PPPoE encapsulation */
+
+/*
+ * Mbuf adjust factor to force 32-bit alignment of IP header.
+ * Drivers should do m_adj(m, ETHER_ALIGN) when setting up a
+ * receive so the upper layers get the IP header properly aligned
+ * past the 14-byte Ethernet header.
+ */
+#define	ETHER_ALIGN	2	/* driver adjust for IP hdr alignment */
 
 /*
  * Ethernet address - 6 octets
