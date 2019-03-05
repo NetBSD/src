@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.24 2019/03/05 11:25:01 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.25 2019/03/05 11:41:13 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -31,6 +31,7 @@ makeoptions	DTS="
 	exynos5422-odroidxu3.dts
 	exynos5422-odroidxu4.dts
 
+	meson8b-ec100.dts
 	meson8b-mxq.dts
 	meson8b-odroidc1.dts
 
@@ -120,11 +121,12 @@ makeoptions	DTS="
 	sun8i-h2-plus-orangepi-r1.dts
 	sun8i-h2-plus-orangepi-zero.dts
 
+	sun8i-h3-bananapi-m2-plus-v1.2.dts
 	sun8i-h3-bananapi-m2-plus.dts
 	sun8i-h3-beelink-x2.dts
 	sun8i-h3-libretech-all-h3-cc.dts
-	sun8i-h3-nanopi-m1.dts
 	sun8i-h3-nanopi-m1-plus.dts
+	sun8i-h3-nanopi-m1.dts
 	sun8i-h3-nanopi-neo.dts
 	sun8i-h3-nanopi-neo-air.dts
 	sun8i-h3-orangepi-2.dts
@@ -134,6 +136,7 @@ makeoptions	DTS="
 	sun8i-h3-orangepi-pc.dts
 	sun8i-h3-orangepi-plus.dts
 	sun8i-h3-orangepi-plus2e.dts
+	sun8i-h3-orangepi-zero-plus2.dts
 
 	sun9i-a80-cubieboard4.dts
 	sun9i-a80-optimus.dts
@@ -157,6 +160,7 @@ makeoptions	DTS="
 	sun50i-h5-orangepi-zero-plus2.dts
 
 	tegra124-apalis-eval.dts
+	tegra124-apalis-v1.2-eval.dts
 	tegra124-jetson-tk1.dts
 	tegra124-nyan-big.dts
 	tegra124-nyan-blaze.dts
