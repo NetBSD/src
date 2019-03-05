@@ -61,6 +61,9 @@ struct malloc_mutex_s {
 #if defined(JEMALLOC_DEBUG)
 	witness_t			witness;
 	malloc_mutex_lock_order_t	lock_order;
+#define LOCK_ORDER_INITIALIZER(field, a)	field = a,
+#else
+#define LOCK_ORDER_INITIALIZER(field, a)
 #endif
 };
 
@@ -97,25 +100,35 @@ struct malloc_mutex_s {
 #ifdef _WIN32
 #  define MALLOC_MUTEX_INITIALIZER
 #elif (defined(JEMALLOC_OS_UNFAIR_LOCK))
-#  define MALLOC_MUTEX_INITIALIZER					\
-     {{{MUTEX_PROF_DATA_INITIALIZER, OS_UNFAIR_LOCK_INIT}},		\
-      WITNESS_INITIALIZER("mutex", WITNESS_RANK_OMIT)}
+#  define MALLOC_MUTEX_INITIALIZER {{{					\
+	.prof_data = MUTEX_PROF_DATA_INITIALIZER, 			\
+	.lock = OS_UNFAIR_LOCK_INIT,					\
+	}},								\
+	WITNESS_INITIALIZER(.witness, "mutex", WITNESS_RANK_OMIT)	\
+	LOCK_ORDER_INITIALIZER(.lock_order, malloc_mutex_rank_exclusive)}
 #elif (defined(JEMALLOC_OSSPIN))
-#  define MALLOC_MUTEX_INITIALIZER					\
-     {{{MUTEX_PROF_DATA_INITIALIZER, 0}},				\
-      WITNESS_INITIALIZER("mutex", WITNESS_RANK_OMIT)}
+#  define MALLOC_MUTEX_INITIALIZER {{{					\
+	.prof_data = MUTEX_PROF_DATA_INITIALIZER,			\
+	.lock = 0,							\
+	}},								\
+	WITNESS_INITIALIZER(.witness, "mutex", WITNESS_RANK_OMIT)	\
+	LOCK_ORDER_INITIALIZER(.lock_order, malloc_mutex_rank_exclusive)}
 #elif (defined(JEMALLOC_MUTEX_INIT_CB))
-#  define MALLOC_MUTEX_INITIALIZER					\
-     {{{MUTEX_PROF_DATA_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, NULL}},	\
-      WITNESS_INITIALIZER("mutex", WITNESS_RANK_OMIT)}
+#  define MALLOC_MUTEX_INITIALIZER {{{					\
+	.prof_data = MUTEX_PROF_DATA_INITIALIZER,			\
+	.lock = PTHREAD_MUTEX_INITIALIZER,				\
+	.postponed_next = NULL,						\
+	}},	\
+	WITNESS_INITIALIZER(.witness, "mutex", WITNESS_RANK_OMIT)	\
+	LOCK_ORDER_INITIALIZER(.lock_order, malloc_mutex_rank_exclusive)}
 #else
 #    define MALLOC_MUTEX_TYPE PTHREAD_MUTEX_DEFAULT
-#    define MALLOC_MUTEX_INITIALIZER					\
-       {{{
-       .prof_data = MUTEX_PROF_DATA_INITIALIZER, 
-       .lock = PTHREAD_MUTEX_INITIALIZER,
-       }},	\
-        WITNESS_INITIALIZER("mutex", WITNESS_RANK_OMIT)}
+#    define MALLOC_MUTEX_INITIALIZER {{{ 				\
+	.prof_data = MUTEX_PROF_DATA_INITIALIZER, 			\
+	.lock = PTHREAD_MUTEX_INITIALIZER, 				\
+	}},								\
+        WITNESS_INITIALIZER(.witness, "mutex", WITNESS_RANK_OMIT) 	\
+	LOCK_ORDER_INITIALIZER(.lock_order, malloc_mutex_rank_exclusive)}
 #endif
 
 #ifdef JEMALLOC_LAZY_LOCK
