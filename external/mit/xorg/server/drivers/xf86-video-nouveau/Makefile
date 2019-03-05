@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2019/01/01 00:37:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2019/03/05 09:08:51 mrg Exp $
 
 DRIVER=		xf86-video-nouveau
 DRIVER_NAME=	nouveau_drv
@@ -39,10 +39,6 @@ LIBDPLIBS+=	drm_nouveau ${.CURDIR}/../../../lib/libdrm_nouveau
 MAN=		nouveau.4
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
-
-CPPFLAGS+=	-DNV_MAJOR_VERSION=${PACKAGE_MAJOR}
-CPPFLAGS+=	-DNV_MINOR_VERSION=${PACKAGE_MINOR}
-CPPFLAGS+=	-DNV_PATCHLEVEL=${PACKAGE_PATCH}
 CPPFLAGS+=	-DNV_DRIVER_DATE=${DRIVER_DATE}
 
 .include "../Makefile.xf86-driver"
