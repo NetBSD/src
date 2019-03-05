@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.46 2019/03/01 09:26:00 msaitoh Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.47 2019/03/05 08:16:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.46 2019/03/01 09:26:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.47 2019/03/05 08:16:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,16 +415,17 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	    pci_conf_write(pc, pci_bus_tag[busnum], PCI_BRIDGE_MEMORY_REG,
 		__SHIFTIN((start >> 16) & PCI_BRIDGE_MEMORY_ADDR,
 		    PCI_BRIDGE_MEMORY_BASE) |
-		__SHIFTIN(((start + rct.bussize_memreqs[busnum] + PPB_MEM_MIN
-			    - 1) >> 16) & PCI_BRIDGE_MEMORY_ADDR,
-		    PCI_BRIDGE_MEMORY_LIMIT));
+		__SHIFTIN(((start + rct.bussize_memreqs[busnum]
+			    + PCI_BRIDGE_MEM_MIN - 1) >> 16)
+		    & PCI_BRIDGE_MEMORY_ADDR, PCI_BRIDGE_MEMORY_LIMIT));
 
 	    /* and set the prefetchable limits as well */
 	    pci_conf_write(pc, pci_bus_tag[busnum], PCI_BRIDGE_PREFETCHMEM_REG,
 		__SHIFTIN((start >> 16) & PCI_BRIDGE_PREFETCHMEM_ADDR,
 		    PCI_BRIDGE_PREFETCHMEM_BASE) |
-		__SHIFTIN(((start + rct.bussize_memreqs[busnum] + PPB_MEM_MIN
-			    - 1) >> 16) & PCI_BRIDGE_PREFETCHMEM_ADDR,
+		__SHIFTIN(((start + rct.bussize_memreqs[busnum]
+			    + PCI_BRIDGE_MEM_MIN - 1) >> 16)
+		    & PCI_BRIDGE_PREFETCHMEM_ADDR,
 		    PCI_BRIDGE_PREFETCHMEM_LIMIT));
 
 	    /* pci_conf_print(pc, pci_bus_tag[busnum], NULL); */
