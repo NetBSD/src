@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1365 2019/02/20 07:47:11 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1366 2019/03/05 03:47:57 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3525,6 +3525,10 @@ product INTEL X550T1	 	0x15d1	X550 10G Ethernet
 product INTEL I219_V5		0x15d6	I219-V Ethernet Connection
 product INTEL I219_LM4		0x15d7	I219-LM Ethernet Connection
 product INTEL I219_V4		0x15d8	I219-V Ethernet Connection
+product INTEL I219_LM8		0x15df	I219-LM Ethernet Connection
+product INTEL I219_V8		0x15e0	I219-V Ethernet Connection
+product INTEL I219_LM9		0x15e1	I219-LM Ethernet Connection
+product INTEL I219_V9		0x15e2	I219-V Ethernet Connection
 product INTEL I219_LM5		0x15e3	I219-LM Ethernet Connection
 product INTEL C3K_X553_SGMII	0x15e4	C3000 X553 1GbE SGMII (10G SKU)
 product INTEL C3K_X553_SGMII_L	0x15e5	C3000 X553 1GbE SGMII (non-10G SKU)
