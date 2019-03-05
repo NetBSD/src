@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.1 2019/02/15 08:54:01 nonaka Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.2 2019/03/05 08:25:02 msaitoh Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.1 2019/02/15 08:54:01 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.2 2019/03/05 08:25:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -66,10 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.1 2019/02/15 08:54:01 nonaka Exp $");
 
 #ifndef EVL_PRIO_BITS
 #define EVL_PRIO_BITS	13
-#endif
-
-#ifndef ETHER_ALIGN
-#define ETHER_ALIGN	2
 #endif
 
 #define HVN_NVS_MSGSIZE			32

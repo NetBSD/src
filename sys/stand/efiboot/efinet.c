@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.4 2018/11/15 23:52:33 jmcneill Exp $	*/
+/*	$NetBSD: efinet.c,v 1.5 2019/03/05 08:25:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -37,10 +37,6 @@
 #include <lib/libsa/dev_net.h>
 
 #include "devopen.h"
-
-#ifndef ETHER_ALIGN
-#define ETHER_ALIGN	2
-#endif
 
 #define ETHER_EXT_LEN	(ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_ALIGN)
 

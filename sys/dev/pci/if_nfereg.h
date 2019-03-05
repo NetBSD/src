@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfereg.h,v 1.7 2008/04/17 19:12:26 christos Exp $	*/
+/*	$NetBSD: if_nfereg.h,v 1.8 2019/03/05 08:25:02 msaitoh Exp $	*/
 /*	$OpenBSD: if_nfereg.h,v 1.22 2007/12/05 08:30:33 jsg Exp $	*/
 
 /*-
@@ -24,8 +24,6 @@
 
 #define NFE_RX_NEXTDESC(x)	(((x) + 1) & (NFE_RX_RING_COUNT - 1))
 #define NFE_TX_NEXTDESC(x)	(((x) + 1) & (NFE_TX_RING_COUNT - 1))
-
-#define	ETHER_ALIGN		2
 
 #define NFE_JUMBO_FRAMELEN	9018
 #define NFE_JUMBO_MTU		(NFE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)

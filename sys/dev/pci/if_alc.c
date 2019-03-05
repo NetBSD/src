@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.30 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.31 2019/03/05 08:25:02 msaitoh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -175,7 +175,6 @@ CFATTACH_DECL_NEW(alc, sizeof(struct alc_softc),
 int alcdebug = 0;
 #define	DPRINTF(x)	do { if (alcdebug) printf x; } while (0)
 
-#define ETHER_ALIGN		2
 #define ALC_CSUM_FEATURES	(M_CSUM_TCPv4 | M_CSUM_UDPv4)
 
 static int

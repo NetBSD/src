@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.11 2019/02/17 09:33:19 rin Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.12 2019/03/05 08:25:03 msaitoh Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -305,5 +305,3 @@ struct axen_softc {
 
 #define GET_MII(sc) (&(sc)->axen_mii)
 #define GET_IFP(sc) (&(sc)->sc_if)
-
-#define ETHER_ALIGN		2
