@@ -33,9 +33,12 @@
  * Hyper-threaded CPUs may need a special instruction inside spin loops in
  * order to yield to another virtual CPU.
  */
+#ifdef __x86_64__
+/* XXX: I will take care of this later */
 #define CPU_SPINWAIT __asm__ volatile("pause")
 /* 1 if CPU_SPINWAIT is defined, 0 otherwise. */
 #define HAVE_CPU_SPINWAIT 1
+#endif
 
 /*
  * Number of significant bits in virtual addresses.  This may be less than the
@@ -43,6 +46,7 @@
  * bits are the same as bit 47.
  */
 #ifdef _LP64
+/* XXX: I will take care of this later */
 #define LG_VADDR 48
 #else
 #define LG_VADDR 32
@@ -195,7 +199,8 @@
 /* #undef LG_QUANTUM */
 
 /* One page is 2^LG_PAGE bytes. */
-#define LG_PAGE 12
+#include <machine/vmparam.h>
+#define LG_PAGE PAGE_SHIFT
 
 /*
  * One huge page is 2^LG_HUGEPAGE bytes.  Note that this is defined even if the
@@ -311,7 +316,10 @@
 #define JEMALLOC_HAS_RESTRICT 1
 
 /* For use by hash code. */
-/* #undef JEMALLOC_BIG_ENDIAN */
+#include <sys/endian.h>
+#if _BYTE_ORDER == _BIG_ENDIAN
+#define JEMALLOC_BIG_ENDIAN 1
+#endif
 
 /* sizeof(int) == 2^LG_SIZEOF_INT. */
 #define LG_SIZEOF_INT 2
