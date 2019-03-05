@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casvar.h,v 1.5 2015/04/14 20:32:36 riastradh Exp $ */
+/*	$NetBSD: if_casvar.h,v 1.6 2019/03/05 08:25:02 msaitoh Exp $ */
 /*	$OpenBSD: if_casvar.h,v 1.6 2009/06/13 12:18:58 kettenis Exp $	*/
 
 /*
@@ -257,7 +257,5 @@ do {									\
 
 #define CAS_INTR_PCI	1
 #define CAS_INTR_REG	2
-
-#define ETHER_ALIGN	2
 
 #endif

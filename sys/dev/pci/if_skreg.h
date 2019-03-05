@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.25 2018/09/14 18:46:47 jakllsch Exp $ */
+/* $NetBSD: if_skreg.h,v 1.26 2019/03/05 08:25:02 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1764,7 +1764,6 @@ struct msk_status_desc {
 
 #define SK_MAXUNIT	256
 #define SK_TIMEOUT	1000
-#define ETHER_ALIGN	2
 
 /* YUKON registers */
 

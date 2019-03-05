@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.95 2019/02/20 17:00:20 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.96 2019/03/05 08:25:02 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2628,8 +2628,6 @@ struct bge_gib {
  * alignes the packet after the Ethernet header at a 32-bit
  * boundary.
  */
-
-#define ETHER_ALIGN 2
 
 #define BGE_FRAMELEN		ETHER_MAX_LEN
 #define BGE_MAX_FRAMELEN	1536

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.36 2019/01/22 03:42:25 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.37 2019/03/05 08:25:02 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.36 2019/01/22 03:42:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.37 2019/03/05 08:25:02 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -234,10 +234,6 @@ static int	npe_debug;
 
 #define	NPE_TXBUF	128
 #define	NPE_RXBUF	64
-
-#ifndef ETHER_ALIGN
-#define	ETHER_ALIGN	2	/* XXX: Ditch this */
-#endif
 
 #define MAC2UINT64(addr)	(((uint64_t)addr[0] << 40)	\
 				    + ((uint64_t)addr[1] << 32)	\

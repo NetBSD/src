@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.11 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.12 2019/03/05 08:25:03 msaitoh Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -40,8 +40,6 @@
 
 #define	UDAV_TX_TIMEOUT		1000
 #define	UDAV_TIMEOUT		10000
-
-#define	ETHER_ALIGN		2
 
 
 /* Packet length */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.27 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.28 2019/03/05 08:25:03 msaitoh Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -267,7 +267,6 @@ struct aue_softc {
 };
 
 #define AUE_TIMEOUT		1000
-#define ETHER_ALIGN		2
 #define AUE_BUFSZ		1536
 #define AUE_MIN_FRAMELEN	60
 #define AUE_TX_TIMEOUT		10000 /* ms */

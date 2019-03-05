@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.67 2019/01/22 03:42:27 msaitoh Exp $ */
+/* $NetBSD: if_vge.c,v 1.68 2019/03/05 08:25:02 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.67 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.68 2019/03/05 08:25:02 msaitoh Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -143,7 +143,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.67 2019/01/22 03:42:27 msaitoh Exp $");
  *
  * See also comment in vge_encap().
  */
-#define ETHER_ALIGN		2
 
 #ifdef __NO_STRICT_ALIGNMENT
 #define VGE_RX_BUFSIZE		MCLBYTES

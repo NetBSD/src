@@ -1,4 +1,4 @@
-/*$NetBSD: ixgbe_netbsd.h,v 1.10 2018/12/21 07:13:30 msaitoh Exp $*/
+/*$NetBSD: ixgbe_netbsd.h,v 1.11 2019/03/05 08:25:02 msaitoh Exp $*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,8 +49,6 @@
 	IFCAP_CSUM_TCPv6_Tx|IFCAP_CSUM_UDPv6_Tx)
 
 #define IFCAP_HWCSUM	(IFCAP_RXCSUM|IFCAP_TXCSUM)
-
-#define	ETHER_ALIGN		2
 
 struct ixgbe_dma_tag {
 	bus_dma_tag_t	dt_dmat;

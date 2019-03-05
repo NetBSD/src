@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.22 2019/03/04 11:35:38 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.23 2019/03/05 08:25:02 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.22 2019/03/04 11:35:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.23 2019/03/05 08:25:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.22 2019/03/04 11:35:38 jmcneill Exp
 #endif
 
 #define	EMAC_IFNAME		"emac%d"
-
-#define	ETHER_ALIGN		2
 
 #define	EMAC_LOCK(sc)		mutex_enter(&(sc)->mtx)
 #define	EMAC_UNLOCK(sc)		mutex_exit(&(sc)->mtx)

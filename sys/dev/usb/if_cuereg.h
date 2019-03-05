@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.20 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.21 2019/03/05 08:25:03 msaitoh Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -118,7 +118,6 @@
 #define CUE_MCAST_TABLE_LEN			64
 
 #define CUE_TIMEOUT		1000
-#define ETHER_ALIGN		2
 #define CUE_BUFSZ		1536
 #define CUE_MIN_FRAMELEN	60
 #define CUE_RX_FRAMES		1
