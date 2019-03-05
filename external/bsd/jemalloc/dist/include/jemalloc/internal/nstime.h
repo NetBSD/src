@@ -3,12 +3,11 @@
 
 /* Maximum supported number of seconds (~584 years). */
 #define NSTIME_SEC_MAX KQU(18446744072)
-#define NSTIME_INITIALIZER { .ns = 0 }
+#define NSTIME_INITIALIZER { .ns = 0, }
 
 typedef struct {
 	uint64_t ns;
 } nstime_t;
-
 
 void nstime_init(nstime_t *time, uint64_t ns);
 void nstime_init2(nstime_t *time, uint64_t sec, uint64_t nsec);
