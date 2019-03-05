@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.175 2019/03/05 09:42:36 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.176 2019/03/05 10:26:08 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1570,7 +1570,8 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	u32                   missed_rx = 0, bprc, lxon, lxoff, total;
 	u64                   total_missed_rx = 0;
 	uint64_t              crcerrs, rlec;
-	int		      i, j;
+	unsigned int          queue_counters;
+	int		      i;
 
 	crcerrs = IXGBE_READ_REG(hw, IXGBE_CRCERRS);
 	stats->crcerrs.ev_count += crcerrs;
@@ -1580,14 +1581,13 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	if (hw->mac.type == ixgbe_mac_X550)
 		stats->mbsdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MBSDC);
 
-	/* 16 registers */
-	for (i = 0; i < __arraycount(stats->qprc); i++) {
-		j = i % adapter->num_queues;
-
-		stats->qprc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPRC(i));
-		stats->qptc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPTC(i));
+	/* 16 registers exist */
+	queue_counters = uimin(__arraycount(stats->qprc), adapter->num_queues);
+	for (i = 0; i < queue_counters; i++) {
+		stats->qprc[i].ev_count += IXGBE_READ_REG(hw, IXGBE_QPRC(i));
+		stats->qptc[i].ev_count += IXGBE_READ_REG(hw, IXGBE_QPTC(i));
 		if (hw->mac.type >= ixgbe_mac_82599EB) {
-			stats->qprdc[j].ev_count
+			stats->qprdc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
 		}
 	}
