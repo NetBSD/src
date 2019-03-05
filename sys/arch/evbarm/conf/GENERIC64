@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.80 2019/02/25 19:30:17 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.81 2019/03/05 11:44:22 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -18,6 +18,7 @@ makeoptions	DTSSUBDIR="allwinner amlogic broadcom nvidia rockchip"
 makeoptions	DTS="
 	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-3-b-plus.dts
+	bcm2837-rpi-cm3-io3.dts
 
 	meson-gxbb-nanopi-k2.dts
 	meson-gxbb-nexbox-a95x.dts
@@ -35,9 +36,13 @@ makeoptions	DTS="
 	rk3328-rock64.dts
 
 	rk3399-evb.dts
+	rk3399-ficus.dts
 	rk3399-firefly.dts
+	rk3399-gru-bob.dts
 	rk3399-gru-kevin.dts
 	rk3399-puma-haikou.dts
+	rk3399-roc-pc.dts
+	rk3399-rock960.dts
 	rk3399-rockpro64.dts
 	rk3399-sapphire-excavator.dts
 	rk3399-sapphire.dts
@@ -52,6 +57,8 @@ makeoptions	DTS="
 	sun50i-a64-sopine-baseboard.dts
 	sun50i-a64-teres-i.dts
 
+	sun50i-h5-bananapi-m2-plus-v1.2.dts
+	sun50i-h5-bananapi-m2-plus.dts
 	sun50i-h5-libretech-all-h3-cc.dts
 	sun50i-h5-nanopi-neo-plus2.dts
 	sun50i-h5-nanopi-neo2.dts
@@ -60,6 +67,7 @@ makeoptions	DTS="
 	sun50i-h5-orangepi-zero-plus.dts
 	sun50i-h5-orangepi-zero-plus2.dts
 
+	sun50i-h6-orangepi-one-plus.dts
 	sun50i-h6-pine-h64.dts
 
 	tegra210-p2371-0000.dts
