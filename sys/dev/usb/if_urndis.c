@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.20 2019/02/14 03:33:55 nonaka Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.21 2019/03/05 08:25:03 msaitoh Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.20 2019/02/14 03:33:55 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.21 2019/03/05 08:25:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -112,7 +112,6 @@ struct urndis_softc {
 
 #define DEVNAME(sc)	(device_xname(sc->sc_dev))
 
-#define ETHER_ALIGN 2
 #define URNDIS_RESPONSE_LEN 0x400
 
 
