@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.152 2018/08/19 02:10:42 kamil Exp $	*/
+/*	$NetBSD: pthread.c,v 1.153 2019/03/05 01:35:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.152 2018/08/19 02:10:42 kamil Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.153 2019/03/05 01:35:52 christos Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1330,6 +1330,7 @@ pthread__initmainstack(void)
 			break;
 		}
 	}
+	pthread__copy_tsd(pthread__main);
 }
 
 /*

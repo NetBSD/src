@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.28 2016/10/31 18:10:11 kamil Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.29 2019/03/05 01:35:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.28 2016/10/31 18:10:11 kamil Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.29 2019/03/05 01:35:52 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: thread-stub.c,v 1.28 2016/10/31 18:10:11 kamil Exp $");
 #define pthread_detach	__libc_pthread_detach
 #include "namespace.h"
 #include "reentrant.h"
+#include "tsd.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -280,13 +281,7 @@ __libc_rwlock_catchall_stub(rwlock_t *l)
  * implementation, since some thread-safe libraries want to use it.
  */
 
-#define	TSD_KEYS_MAX	64
-
-static struct {
-	void *tsd_val;
-	void (*tsd_dtor)(void *);
-	int tsd_inuse;
-} __libc_tsd[TSD_KEYS_MAX];
+struct __libc_tsd __libc_tsd[TSD_KEYS_MAX];
 static int __libc_tsd_nextkey;
 
 __weak_alias(__libc_thr_keycreate,__libc_thr_keycreate_stub)
