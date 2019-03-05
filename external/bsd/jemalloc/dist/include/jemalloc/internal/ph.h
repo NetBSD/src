@@ -374,11 +374,13 @@ a_prefix##remove(a_ph_type *ph, a_type *phn) {				\
 				    parent);				\
 			}						\
 		} else {						\
-			assert(phn_prev_get(a_type, a_field, phn) !=	\
-			    NULL);					\
-			phn_next_set(a_type, a_field,			\
-			    phn_prev_get(a_type, a_field, phn),		\
-			    phn_next_get(a_type, a_field, phn));	\
+			a_type *prev = phn_prev_get(a_type, a_field, 	\
+			    phn);					\
+			if (prev != NULL) {				\
+				phn_next_set(a_type, a_field, prev,	\
+				    phn_next_get(a_type, a_field,	\
+				    phn));				\
+			}						\
 		}							\
 		if (phn_next_get(a_type, a_field, phn) != NULL) {	\
 			phn_prev_set(a_type, a_field,			\
