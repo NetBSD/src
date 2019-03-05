@@ -65,15 +65,15 @@
 /* PER-WITNESS DATA */
 /******************************************************************************/
 #if defined(JEMALLOC_DEBUG)
-#  define WITNESS_INITIALIZER(_name, _rank) { \
+#  define WITNESS_INITIALIZER(_field, _name, _rank) _field = { \
 	.name = _name, \
 	.rank = _rank, \
 	.comp = NULL, \
 	.opaque = NULL, \
 	.link = { .qre_prev = NULL, .qre_next = NULL }, \
-}
+},
 #else
-#  define WITNESS_INITIALIZER(name, rank)
+#  define WITNESS_INITIALIZER(field, name, rank)
 #endif
 
 typedef struct witness_s witness_t;
