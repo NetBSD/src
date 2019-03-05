@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.64 2017/12/08 09:24:31 kre Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.65 2019/03/05 22:49:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.64 2017/12/08 09:24:31 kre Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.65 2019/03/05 22:49:38 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -122,8 +122,14 @@ pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
 {
 	uintptr_t type, proto, val, ceil;
 
+#if 0
+	/*
+	 * Always initialize the mutex structure, maybe be used later
+	 * and the cost should be minimal.
+	 */
 	if (__predict_false(__uselibcstub))
 		return __libc_mutex_init_stub(ptm, attr);
+#endif
 
 	if (attr == NULL) {
 		type = PTHREAD_MUTEX_NORMAL;
