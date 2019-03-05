@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.174 2019/02/22 06:49:15 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.175 2019/03/05 09:42:36 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1592,8 +1592,8 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		}
 	}
 
-	/* 8 registers */
-	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
+	/* 8 registers exist */
+	for (i = 0; i < IXGBE_TC_COUNTER_NUM; i++) {
 		uint32_t mp;
 
 		/* MPC */
@@ -1773,7 +1773,7 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 
 	/* Max number of traffic class is 8 */
 	KASSERT(IXGBE_DCB_MAX_TRAFFIC_CLASS == 8);
-	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
+	for (i = 0; i < IXGBE_TC_COUNTER_NUM; i++) {
 		snprintf(adapter->tcs[i].evnamebuf,
 		    sizeof(adapter->tcs[i].evnamebuf), "%s tc%d",
 		    xname, i);
@@ -2072,7 +2072,7 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	adapter->msf_sicount.ev_count = 0;
 	adapter->phy_sicount.ev_count = 0;
 
-	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
+	for (i = 0; i < IXGBE_TC_COUNTER_NUM; i++) {
 		if (i < __arraycount(stats->mpc)) {
 			stats->mpc[i].ev_count = 0;
 			if (hw->mac.type == ixgbe_mac_82598EB)
@@ -3605,7 +3605,7 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&adapter->msf_sicount);
 	evcnt_detach(&adapter->phy_sicount);
 
-	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
+	for (i = 0; i < IXGBE_TC_COUNTER_NUM; i++) {
 		if (i < __arraycount(stats->mpc)) {
 			evcnt_detach(&stats->mpc[i]);
 			if (hw->mac.type == ixgbe_mac_82598EB)
