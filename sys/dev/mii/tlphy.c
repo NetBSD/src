@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.64 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.65 2019/03/05 02:13:15 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.64 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.65 2019/03/05 02:13:15 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,12 +180,19 @@ tlphyattach(device_t parent, device_t self, void *aux)
 	if (sc->mii_capabilities & BMSR_MEDIAMASK) {
 		aprint_normal("%s", sep);
 		mii_phy_add_media(sc);
-	} else if ((tsc->sc_tlphycap &
+	} else {
+		if ((tsc->sc_tlphycap &
 		    (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5)) == 0)
-		aprint_error("no media present");
-	else if (!pmf_device_register(self, NULL, mii_phy_resume)) {
-		aprint_normal("\n");
-		aprint_error_dev(self, "couldn't establish power handler");
+			aprint_error("no media present");
+		/*
+		 * mii_phy_add_media() automatically install power handler,
+		 * but if_media_add() doesn't. Do it now.
+		 */
+		if (!pmf_device_register(self, NULL, mii_phy_resume)) {
+			aprint_normal("\n");
+			aprint_error_dev(self,
+			    "couldn't establish power handler");
+		}
 	}
 	aprint_normal("\n");
 #undef ADD
