@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.54 2019/02/05 06:17:01 msaitoh Exp $ */
+/* $NetBSD: sbmac.c,v 1.55 2019/03/05 08:25:02 msaitoh Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.54 2019/02/05 06:17:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.55 2019/03/05 08:25:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -121,8 +121,6 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 /* These are limited to fit within one virtual page, and must be 2**N.  */
 #define	SBMAC_MAX_TXDESCR	256		/* should be 1024 */
 #define	SBMAC_MAX_RXDESCR	256		/* should be 512 */
-
-#define	ETHER_ALIGN	2
 
 /* DMA Descriptor structure */
 

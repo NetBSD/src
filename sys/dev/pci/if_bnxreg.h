@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.19 2018/06/03 10:01:22 maxv Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.20 2019/03/05 08:25:02 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -31,8 +31,6 @@
  *
  * $FreeBSD: src/sys/dev/bce/if_bcereg.h,v 1.4 2006/05/04 00:34:07 mjacob Exp $
  */
-
-#define ETHER_ALIGN	2
 
 /* General controller flags -- bnx_flags element in bnx_softc */
 #define BNX_PCIX_FLAG                   0x01

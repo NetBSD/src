@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.55 2019/01/22 03:42:27 msaitoh Exp $ */
+/*	$NetBSD: if_age.c,v 1.56 2019/03/05 08:25:02 msaitoh Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.55 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.56 2019/03/05 08:25:02 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -124,7 +124,6 @@ CFATTACH_DECL_NEW(age, sizeof(struct age_softc),
 int agedebug = 0;
 #define	DPRINTF(x)	do { if (agedebug) printf x; } while (0)
 
-#define ETHER_ALIGN 2
 #define AGE_CSUM_FEATURES	(M_CSUM_TCPv4 | M_CSUM_UDPv4)
 
 static int

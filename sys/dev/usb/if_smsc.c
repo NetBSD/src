@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.42 2019/02/02 19:02:59 dholland Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.43 2019/03/05 08:25:03 msaitoh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.42 2019/02/02 19:02:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.43 2019/03/05 08:25:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -110,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.42 2019/02/02 19:02:59 dholland Exp $"
 int smsc_debug = 0;
 #endif
 
-#define ETHER_ALIGN 2
 /*
  * Various supported device vendors/products.
  */

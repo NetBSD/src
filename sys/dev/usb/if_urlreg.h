@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.11 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.12 2019/03/05 08:25:03 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -39,8 +39,6 @@
 
 #define	URL_TX_TIMEOUT		1000
 #define	URL_TIMEOUT		10000
-
-#define	ETHER_ALIGN		2
 
 
 /* Packet length */

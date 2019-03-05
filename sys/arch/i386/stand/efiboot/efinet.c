@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.2 2018/09/03 16:29:25 riastradh Exp $	*/
+/*	$NetBSD: efinet.c,v 1.3 2019/03/05 08:25:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -39,10 +39,6 @@ __FBSDID("$FreeBSD: head/stand/efi/libefi/efinet.c 321621 2017-07-27 15:06:34Z a
 
 #include <bootinfo.h>
 #include "devopen.h"
-
-#ifndef ETHER_ALIGN
-#define ETHER_ALIGN	2
-#endif
 
 #define ETHER_EXT_LEN	(ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_ALIGN)
 

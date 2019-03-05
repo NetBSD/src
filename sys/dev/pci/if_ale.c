@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.27 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.28 2019/03/05 08:25:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.27 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.28 2019/03/05 08:25:02 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -124,7 +124,6 @@ CFATTACH_DECL_NEW(ale, sizeof(struct ale_softc),
 int aledebug = 0;
 #define DPRINTF(x)	do { if (aledebug) printf x; } while (0)
 
-#define ETHER_ALIGN 2
 #define ALE_CSUM_FEATURES	(M_CSUM_TCPv4 | M_CSUM_UDPv4)
 
 static int
