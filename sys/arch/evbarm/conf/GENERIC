@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.23 2019/02/25 19:30:17 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.24 2019/03/05 11:25:01 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -17,6 +17,7 @@ makeoptions	DTSGNUARCH="arm arm64"
 makeoptions	DTSSUBDIR="allwinner broadcom nvidia rockchip socfpga"
 makeoptions	DTS="
 	bcm2836-rpi-2-b.dts
+	bcm2837-rpi-cm3-io3.dts
 	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-3-b-plus.dts
 
