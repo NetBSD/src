@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2019/03/05 08:35:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2019/03/06 01:13:38 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -13,12 +13,12 @@ SRCS+=		Login.c greet.c verify.c
 CPPFLAGS+=	-DSTATIC_GREETER_LIB
 .endif
 
-CPPFLAGS+=		-DRETSIGTYPE=void
-CPPFLAGS.auth.c=	-DBSD44SOCKETS
-CPPFLAGS.socket.c=	-DBSD44SOCKETS
-CPPFLAGS.xdmcp.c=	-DBSD44SOCKETS
-CPPFLAGS.xdmshell.c=	-DHAS_VFORK
-CPPFLAGS.resource.c=	\
+CPPFLAGS+=		-DRETSIGTYPE=void -DHAVE_SECURITY_PAM_TYPES_H -DHAVE_SECURITY_PAM_APPL_H
+CPPFLAGS.auth.c+=	-DBSD44SOCKETS
+CPPFLAGS.socket.c+=	-DBSD44SOCKETS
+CPPFLAGS.xdmcp.c+=	-DBSD44SOCKETS
+CPPFLAGS.xdmshell.c+=	-DHAS_VFORK
+CPPFLAGS.resource.c+=	\
 	-DDEF_SERVER_LINE="\":0 local ${X11BINDIR}/X :0\"" \
 	-DXRDB_PROGRAM=\"${X11BINDIR}/xrdb\" \
 	-DDEF_SESSION="\"${X11BINDIR}/xterm -ls\"" \
@@ -28,7 +28,7 @@ CPPFLAGS.resource.c=	\
 	-DDEF_FAILSAFE_CLIENT=\"${X11BINDIR}/xterm\" \
 	-DDEF_XDM_CONFIG=\"${XDMDIR}/xdm-config\" \
 	-DDEF_AUTH_DIR=\"${XDMVARDIR}\" \
-	-DDEF_GREETER_LIB=\"${XDMGREETERLIB}\"
+	-DDEF_GREETER_LIB=\"${XDMGREETERLIB}\" \
 
 LDADD+=		-lXau -lXdmcp -lXft -lXinerama -lXpm
 LDADD+=		-lXmu -lXt -lSM -lICE -lXext -lXrender -lX11
