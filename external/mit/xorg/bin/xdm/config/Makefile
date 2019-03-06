@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2019/03/06 05:21:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2019/03/06 05:59:25 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -55,8 +55,8 @@ FILESBUILD_$f=yes
 		-e 's,MKTEMP_COMMAND,/usr/bin/mktemp,' \
 		-e 's,XCOMM,\#,' \
 		-e 's,XHASH,\#,' \
-		-e 's,\<NLBS\>,\\n\\,' \
-		-e 's,\<BS\>,\\,' \
+		-e 's,NLBS$$,\\n\\,' \
+		-e 's,BS$$,\\,' \
 		-e 's,/\*\*/,,g' \
 		< ${.IMPSRC} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 
