@@ -15,13 +15,13 @@ xlogin*login.translations: #override BS
 
 xlogin*greeting: Welcome to CLIENTHOST
 xlogin*namePrompt: \040\040\040\040\040\040\040Login:
-xlogin*fail: Login incorrect
+xlogin*fail: Login incorrect or forbidden by policy
 
 XHASHif WIDTH > 800
 xlogin*greetFont: -adobe-helvetica-bold-o-normal-*-18-*-*-*-*-*-iso8859-1
-xlogin*font: -adobe-helvetica-medium-r-normal-*-14-*-*-*-*-*-iso8859-1
-xlogin*promptFont: -adobe-helvetica-bold-r-normal-*-14-*-*-*-*-*-iso8859-1
-xlogin*failFont: -adobe-helvetica-bold-r-normal-*-14-*-*-*-*-*-iso8859-1
+xlogin*font: -adobe-helvetica-medium-o-normal-*-14-*-*-*-*-*-iso8859-1
+xlogin*promptFont: -adobe-helvetica-medium-r-normal-*-14-*-*-*-*-*-iso8859-1
+xlogin*failFont: -adobe-helvetica-medium-r-normal-*-14-*-*-*-*-*-iso8859-1
 xlogin*greetFace:	Serif-24:bold:italic
 xlogin*face: 		Helvetica-14
 xlogin*promptFace: 	Helvetica-14:bold
@@ -57,6 +57,8 @@ xlogin*innerFramesWidth: 1
 xlogin*shdColor: black
 xlogin*hiColor: black
 XHASHendif
+#ifdef XPM
+XHASHif PLANES >= 8
 XHASHif 1
 ! XDM has no support for images with alpha channel, so we precomputed a
 ! NetBSD logo with fixed background and use it here. If you change this
@@ -75,8 +77,6 @@ XHASHelse
 ! Antialiased borders look ugly this way, but it works with arbitrary
 ! background colours.
 !
-#ifdef XPM
-XHASHif PLANES >= 8
 xlogin*logoFileName: BITMAPDIR/**//XDM_PIXMAP
 xlogin*useShape: true
 XHASHendif
