@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.142 2019/02/27 03:05:39 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.143 2019/03/06 04:46:41 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.143 2019/02/27 03:05:18 msaitoh Exp
+ *	NetBSD: miidevs,v 1.144 2019/03/06 04:46:17 msaitoh Exp
  */
 
 /*-
@@ -551,6 +551,10 @@
 #define	MII_STR_SMSC_LAN8710_LAN8720	"SMSC LAN8710/LAN8720 10/100 Ethernet Transceiver"
 #define	MII_MODEL_SMSC_LAN8740	0x0011
 #define	MII_STR_SMSC_LAN8740	"SMSC LAN8740 10/100 media interface"
+#define	MII_MODEL_SMSC_LAN8741A	0x0012
+#define	MII_STR_SMSC_LAN8741A	"SMSC LAN8741A 10/100 media interface"
+#define	MII_MODEL_SMSC_LAN8742	0x0013
+#define	MII_STR_SMSC_LAN8742	"SMSC LAN8742 10/100 media interface"
 
 /* Texas Instruments PHYs */
 #define	MII_MODEL_TI_TLAN10T	0x0001
