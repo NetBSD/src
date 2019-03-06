@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.24 2019/03/05 08:25:03 msaitoh Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.25 2019/03/06 08:08:25 msaitoh Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.24 2019/03/05 08:25:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.25 2019/03/06 08:08:25 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1841,7 +1841,7 @@ upgt_rx(struct upgt_softc *sc, uint8_t *data, int pkglen)
 	rxdesc = (struct upgt_lmac_rx_desc *)data;
 
 	/* create mbuf which is suitable for strict alignment archs */
-	m = m_devget(rxdesc->data, pkglen, ETHER_ALIGN, ifp);
+	m = m_devget(rxdesc->data, pkglen, 0, ifp);
 	if (m == NULL) {
 		DPRINTF(1, "%s: could not create RX mbuf\n",
 		   device_xname(sc->sc_dev));
