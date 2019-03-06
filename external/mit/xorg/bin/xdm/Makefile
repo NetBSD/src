@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2019/03/06 03:38:30 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2019/03/06 12:40:23 nakayama Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ SRCS+=		Login.c greet.c verify.c
 CPPFLAGS+=	-DSTATIC_GREETER_LIB
 .endif
 
-CPPFLAGS+=		-DRETSIGTYPE=void -DHAVE_SECURITY_PAM_TYPES_H -DHAVE_SECURITY_PAM_APPL_H
+CPPFLAGS+=		-DRETSIGTYPE=void
 CPPFLAGS.auth.c+=	-DBSD44SOCKETS
 CPPFLAGS.socket.c+=	-DBSD44SOCKETS
 CPPFLAGS.xdmcp.c+=	-DBSD44SOCKETS

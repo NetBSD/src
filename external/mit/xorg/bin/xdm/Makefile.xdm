@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xdm,v 1.9 2018/05/09 08:39:55 mrg Exp $
+#	$NetBSD: Makefile.xdm,v 1.10 2019/03/06 12:40:23 nakayama Exp $
 
 XDMVARDIR=	/var/db/xdm
 XDMDIR=		${X11ETCDIR}/xdm
@@ -39,11 +39,12 @@ CPPFLAGS+=	-DBINDIR=\"${X11BINDIR}\" -DXDMDIR=\"${XDMDIR}\" \
 LDFLAGS+=	-Wl,--export-dynamic
 
 .if (${USE_PAM} != "no")
-CPPFLAGS+=      -DUSE_PAM
+CPPFLAGS+=	-DUSE_PAM
+CPPFLAGS+=	-DHAVE_SECURITY_PAM_TYPES_H -DHAVE_SECURITY_PAM_APPL_H
 .endif
 
 .if (${USE_INET6} != "no")
-CPPFLAGS+=      -DIPv6
+CPPFLAGS+=	-DIPv6
 .endif
 
 .PATH:		${X11SRCDIR.xdm}
