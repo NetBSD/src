@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_ext2fs.8,v 1.12 2017/07/03 21:33:42 wiz Exp $
+.\"	$NetBSD: newfs_ext2fs.8,v 1.13 2019/03/06 05:11:13 mrg Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd March 1, 2009
+.Dd March 5, 2019
 .Dt NEWFS_EXT2FS 8
 .Os
 .Sh NAME
@@ -140,10 +140,10 @@ Select the filesystem-format.
 .Ql GOOD_OLD_REV ;
 this option is primarily used to build root file systems that can be
 understood by old or dumb firmwares for bootstrap.
-(default)
 .It 1
 .Ql DYNAMIC_REV ;
-various extended (and sometimes incompatible) features are enabled
+the default.
+Various extended (and sometimes incompatible) features are enabled
 (though not all features are supported on
 .Nx ) .
 Currently only the following features are supported:
