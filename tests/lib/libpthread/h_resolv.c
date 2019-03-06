@@ -1,4 +1,4 @@
-/* $NetBSD: h_resolv.c,v 1.2 2010/11/03 16:10:22 christos Exp $ */
+/* $NetBSD: h_resolv.c,v 1.3 2019/03/06 01:20:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: h_resolv.c,v 1.2 2010/11/03 16:10:22 christos Exp $");
+__RCSID("$NetBSD: h_resolv.c,v 1.3 2019/03/06 01:20:15 christos Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -56,7 +56,7 @@ static void usage(void)  __attribute__((__noreturn__));
 static void load(const char *);
 static void resolvone(int);
 static void *resolvloop(void *);
-static void run(int *);
+static pthread_t run(int *);
 
 static pthread_mutex_t stats = PTHREAD_MUTEX_INITIALIZER;
 
@@ -77,7 +77,7 @@ load(const char *fname)
 	char *line;
 
 	if ((fp = fopen(fname, "r")) == NULL)
-		err(1, "Cannot open `%s'", fname);
+		err(EXIT_FAILURE, "Cannot open `%s'", fname);
 	while ((line = fgetln(fp, &len)) != NULL) {
 		char c = line[len];
 		char *ptr;
@@ -130,18 +130,20 @@ resolvloop(void *p)
 	return NULL;
 }
 
-static void
+static pthread_t
 run(int *nhosts)
 {
 	pthread_t self = pthread_self();
 	if (pthread_create(&self, NULL, resolvloop, nhosts) != 0)
-		err(1, "pthread_create");
+		err(EXIT_FAILURE, "pthread_create");
+	return self;
 }
 
 int
 main(int argc, char *argv[])
 {
 	int nthreads = NTHREADS;
+	pthread_t *threads;
 	int nhosts = NHOSTS;
 	int i, c, done, *nleft;
 	hosts = sl_init();
@@ -170,16 +172,18 @@ main(int argc, char *argv[])
 		usage();
 
 	if ((nleft = malloc(nthreads * sizeof(int))) == NULL)
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 	if ((ask = calloc(hosts->sl_cur, sizeof(int))) == NULL)
-		err(1, "calloc");
+		err(EXIT_FAILURE, "calloc");
 	if ((got = calloc(hosts->sl_cur, sizeof(int))) == NULL)
-		err(1, "calloc");
+		err(EXIT_FAILURE, "calloc");
+	if ((threads = malloc(nthreads * sizeof(pthread_t))) == NULL)
+		err(EXIT_FAILURE, "calloc");
 
 
 	for (i = 0; i < nthreads; i++) {
 		nleft[i] = nhosts;
-		run(&nleft[i]);
+		threads[i] = run(&nleft[i]);
 	}
 
 	for (done = 0; !done;) {
@@ -200,6 +204,9 @@ main(int argc, char *argv[])
 			c++;
 		}
 	}
+	for (i = 0; i < nthreads; i++)
+		pthread_join(threads[i], NULL);
+	free(threads);
 	free(nleft);
 	free(ask);
 	free(got);
