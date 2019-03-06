@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2018/05/09 08:39:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2019/03/06 02:44:05 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ SRCS=	\
 	verify.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xdm}/include -DRETSIGTYPE=void
+CPPFLAGS+=	-DHAVE_SECURITY_PAM_TYPES_H -DHAVE_SECURITY_PAM_APPL_H
 # XXX: Enabling this, which should allow --export-dynamic to
 # be elided, causes xdm to fail to accept password input and
 # then crash at login "failure".
