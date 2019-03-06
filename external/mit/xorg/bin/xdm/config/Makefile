@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2019/03/06 04:43:50 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2019/03/06 05:21:50 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -31,6 +31,7 @@ FILESBUILD_$f=yes
 
 .in:
 	${_MKTARGET_CREATE}
+	rm -f ${.TARGET}
 	${TOOL_SED} \
 		-e '/ifdef XPM/d' -e '/endif \/\* XPM \*\//d' \
 		-e 's,BITMAPDIR,${X11INCDIR}/X11/pixmaps,' \
@@ -56,14 +57,17 @@ FILESBUILD_$f=yes
 		-e 's,XHASH,\#,' \
 		-e 's,\<NLBS\>,\\n\\,' \
 		-e 's,\<BS\>,\\,' \
-		-e 's,/\*\*/,,g' < ${.IMPSRC} > ${.TARGET}
+		-e 's,/\*\*/,,g' \
+		< ${.IMPSRC} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+
+CLEANFILES+=	${SEDSCRIPTS} ${SEDSCRIPTS:=.tmp}
 
 CONFIGFILES+=		GiveConsole TakeConsole \
-			Xaccess Xservers.fs Xsession Xsetup_0 Xwilling \
-			${SEDSCRIPTS} 
+			Xaccess Xservers.fs Xsession Xsetup_0 Xwilling
 FILES+=			xorg-bw.xpm xorg.xpm \
 			NetBSD-bw.xpm NetBSD-inv.xpm NetBSD.xpm	\
-			NetBSD-flag.png NetBSD-flag1.xpm NetBSD-flag2.xpm
+			NetBSD-flag.png NetBSD-flag1.xpm NetBSD-flag2.xpm \
+			${SEDSCRIPTS} 
 FILESDIR=		${XDMDIR}
 FILESDIR_xorg.xpm=	${X11INCDIR}/X11/pixmaps
 FILESDIR_xorg-bw.xpm=	${X11INCDIR}/X11/pixmaps
