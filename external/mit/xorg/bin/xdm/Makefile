@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2019/03/06 01:13:38 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2019/03/06 03:38:30 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -28,7 +28,7 @@ CPPFLAGS.resource.c+=	\
 	-DDEF_FAILSAFE_CLIENT=\"${X11BINDIR}/xterm\" \
 	-DDEF_XDM_CONFIG=\"${XDMDIR}/xdm-config\" \
 	-DDEF_AUTH_DIR=\"${XDMVARDIR}\" \
-	-DDEF_GREETER_LIB=\"${XDMGREETERLIB}\" \
+	-DDEF_GREETER_LIB=\"${XDMGREETERLIB}\"
 
 LDADD+=		-lXau -lXdmcp -lXft -lXinerama -lXpm
 LDADD+=		-lXmu -lXt -lSM -lICE -lXext -lXrender -lX11
