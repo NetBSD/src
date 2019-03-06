@@ -1,4 +1,4 @@
-/* $NetBSD: sun6i_dma.c,v 1.8 2019/03/02 16:55:13 jakllsch Exp $ */
+/* $NetBSD: sun6i_dma.c,v 1.9 2019/03/06 19:16:53 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.8 2019/03/02 16:55:13 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.9 2019/03/06 19:16:53 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -335,7 +335,7 @@ sun6idma_transfer(device_t dev, void *priv, struct fdtbus_dma_req *req)
 			desc[j].dma_next = htole32(DMA_NULL);
 	}
 
-#if maybenever
+#if notyet && maybenever
 	DMA_WRITE(sc, DMA_MODE_REG(ch->ch_index),
 	    DMA_MODE_DST(MODE_HANDSHAKE)|DMA_MODE_SRC(MODE_HANDSHAKE));
 #endif
