@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2019/03/05 08:35:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2019/03/06 04:43:50 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -23,18 +23,22 @@ DEFAULTVT=	# defined empty
 
 UUDECODE_FILES=	NetBSD-flag.png
 SEDSCRIPTS=	Xresources Xreset Xservers.ws Xsession Xstartup xdm-config 
+.for f in ${SEDSCRIPTS}
+FILESBUILD_$f=yes
+.endfor
 
-SUFFIXES = .in
+.SUFFIXES: .in
 
 .in:
-	$(TOOL_SED) \
+	${_MKTARGET_CREATE}
+	${TOOL_SED} \
 		-e '/ifdef XPM/d' -e '/endif \/\* XPM \*\//d' \
 		-e 's,BITMAPDIR,${X11INCDIR}/X11/pixmaps,' \
 		-e 's,XDM_PIXMAP,NetBSD.xpm,' \
 		-e 's,XDM_BWPIXMAP,NetBSD-bw.xpm,' \
 		-e 's,BINDIR,$(X11BINDIR),' \
 		-e 's,DEFAULTVT,$(DEFAULTVT),' \
-		-e 's,XDMDIR,$(XDMDIR),'
+		-e 's,XDMDIR,$(XDMDIR),' \
 		-e 's,XDMLOGDIR,$(XDMLOGDIR),' \
 		-e 's,XDMXAUTHDIR,$(XDMVARDIR),' \
 		-e 's,XDMPIDDIR,$(XDMPIDDIR),' \
@@ -50,14 +54,14 @@ SUFFIXES = .in
 		-e 's,MKTEMP_COMMAND,/usr/bin/mktemp,' \
 		-e 's,XCOMM,\#,' \
 		-e 's,XHASH,\#,' \
-		-e 's,NLBS,\\n\\,' \
-		-e 's,BS,\\,' \
-		-e 's,/\*\*/,,g'
+		-e 's,\<NLBS\>,\\n\\,' \
+		-e 's,\<BS\>,\\,' \
+		-e 's,/\*\*/,,g' < ${.IMPSRC} > ${.TARGET}
 
-CONFIGFILES=		GiveConsole TakeConsole \
+CONFIGFILES+=		GiveConsole TakeConsole \
 			Xaccess Xservers.fs Xsession Xsetup_0 Xwilling \
 			${SEDSCRIPTS} 
-FILES=			xorg-bw.xpm xorg.xpm \
+FILES+=			xorg-bw.xpm xorg.xpm \
 			NetBSD-bw.xpm NetBSD-inv.xpm NetBSD.xpm	\
 			NetBSD-flag.png NetBSD-flag1.xpm NetBSD-flag2.xpm
 FILESDIR=		${XDMDIR}
