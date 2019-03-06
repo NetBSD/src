@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.143 2019/02/27 03:05:18 msaitoh Exp $
+$NetBSD: miidevs,v 1.144 2019/03/06 04:46:17 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -362,6 +362,8 @@ model SMSC LAN83C185		0x000a SMSC LAN83C185 10/100 PHY
 model SMSC LAN8700		0x000c SMSC LAN8700 10/100 Ethernet Transceiver
 model SMSC LAN8710_LAN8720	0x000f SMSC LAN8710/LAN8720 10/100 Ethernet Transceiver
 model SMSC LAN8740		0x0011 SMSC LAN8740 10/100 media interface
+model SMSC LAN8741A		0x0012 SMSC LAN8741A 10/100 media interface
+model SMSC LAN8742		0x0013 SMSC LAN8742 10/100 media interface
 
 /* Texas Instruments PHYs */
 model TI TLAN10T		0x0001 ThunderLAN 10BASE-T media interface
