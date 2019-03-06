@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.81 2019/03/05 11:44:22 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.82 2019/03/06 19:36:59 jakllsch Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -411,6 +411,7 @@ options 	WSDISPLAY_COMPAT_USL
 options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	WSDISPLAY_MULTICONS
+options 	WSDISPLAY_SCROLLSUPPORT
 pseudo-device	wsmux
 pseudo-device	wsfont
 
