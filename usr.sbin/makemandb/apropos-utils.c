@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.40 2017/11/25 14:29:38 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.41 2019/03/07 22:08:59 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.40 2017/11/25 14:29:38 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.41 2019/03/07 22:08:59 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -270,31 +270,37 @@ unzip(sqlite3_context *pctx, int nval, sqlite3_value **apval)
 	unsigned int rc;
 	unsigned char *outbuf;
 	z_stream stream;
+	long total_out;
 
 	assert(nval == 1);
+	memset(&stream, 0, sizeof(stream));
 	stream.next_in = __UNCONST(sqlite3_value_blob(apval[0]));
 	stream.avail_in = sqlite3_value_bytes(apval[0]);
-	stream.avail_out = stream.avail_in * 2 + 100;
-	stream.next_out = outbuf = emalloc(stream.avail_out);
 	stream.zalloc = NULL;
 	stream.zfree = NULL;
 
 	if (inflateInit(&stream) != Z_OK) {
-		free(outbuf);
 		return;
 	}
 
+	total_out = stream.avail_out = stream.avail_in * 2 + 100;
+	stream.next_out = outbuf = emalloc(stream.avail_out);
 	while ((rc = inflate(&stream, Z_SYNC_FLUSH)) != Z_STREAM_END) {
 		if (rc != Z_OK ||
 		    (stream.avail_out != 0 && stream.avail_in == 0)) {
 			free(outbuf);
 			return;
 		}
-		outbuf = erealloc(outbuf, stream.total_out * 2);
+		total_out <<= 1;
+		outbuf = erealloc(outbuf, total_out);
 		stream.next_out = outbuf + stream.total_out;
-		stream.avail_out = stream.total_out;
+		stream.avail_out = total_out - stream.total_out;
 	}
 	if (inflateEnd(&stream) != Z_OK) {
+		free(outbuf);
+		return;
+	}
+	if (stream.total_out == 0) {
 		free(outbuf);
 		return;
 	}
