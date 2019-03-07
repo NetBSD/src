@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.26 2019/02/26 12:23:12 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.27 2019/03/07 15:47:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include "nvmm.h"
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define __cacheline_aligned __attribute__((__aligned__(64)))
 
 #include <x86/specialreg.h>
 
@@ -904,15 +905,15 @@ struct x86_legpref {
 	bool adr_ovr:1;
 	bool rep:1;
 	bool repn:1;
-	int seg;
+	int8_t seg;
 };
 
 struct x86_rexpref {
-	bool present;
-	bool w;
-	bool r;
-	bool x;
-	bool b;
+	bool b:1;
+	bool x:1;
+	bool r:1;
+	bool w:1;
+	bool present:1;
 };
 
 struct x86_reg {
@@ -962,10 +963,9 @@ enum REGMODRM__Rm {
 };
 
 struct x86_regmodrm {
-	bool present;
-	enum REGMODRM__Mod mod;
-	enum REGMODRM__Reg reg;
-	enum REGMODRM__Rm rm;
+	uint8_t mod:2;
+	uint8_t reg:3;
+	uint8_t rm:3;
 };
 
 struct x86_immediate {
@@ -999,22 +999,20 @@ struct x86_store {
 };
 
 struct x86_instr {
-	size_t len;
+	uint8_t len;
 	struct x86_legpref legpref;
 	struct x86_rexpref rexpref;
-	size_t operand_size;
-	size_t address_size;
+	struct x86_regmodrm regmodrm;
+	uint8_t operand_size;
+	uint8_t address_size;
 	uint64_t zeroextend_mask;
 
-	struct x86_regmodrm regmodrm;
-
 	const struct x86_opcode *opcode;
+	const struct x86_emul *emul;
 
 	struct x86_store src;
 	struct x86_store dst;
 	struct x86_store *strm;
-
-	const struct x86_emul *emul;
 };
 
 struct x86_decode_fsm {
@@ -1030,22 +1028,21 @@ struct x86_decode_fsm {
 };
 
 struct x86_opcode {
-	uint8_t byte;
-	bool regmodrm;
-	bool regtorm;
-	bool dmo;
-	bool todmo;
-	bool movs;
-	bool stos;
-	bool lods;
-	bool szoverride;
-	int defsize;
-	int allsize;
-	bool group1;
-	bool group3;
-	bool group11;
-	bool immediate;
-	int flags;
+	bool valid:1;
+	bool regmodrm:1;
+	bool regtorm:1;
+	bool dmo:1;
+	bool todmo:1;
+	bool movs:1;
+	bool stos:1;
+	bool lods:1;
+	bool szoverride:1;
+	bool group1:1;
+	bool group3:1;
+	bool group11:1;
+	bool immediate:1;
+	uint8_t defsize;
+	uint8_t flags;
 	const struct x86_emul *emul;
 };
 
@@ -1062,59 +1059,56 @@ struct x86_group_entry {
 #define FLAG_immz	0x02
 #define FLAG_ze		0x04
 
-static const struct x86_group_entry group1[8] = {
+static const struct x86_group_entry group1[8] __cacheline_aligned = {
 	[1] = { .emul = &x86_emul_or },
 	[4] = { .emul = &x86_emul_and },
 	[6] = { .emul = &x86_emul_xor },
 	[7] = { .emul = &x86_emul_cmp }
 };
 
-static const struct x86_group_entry group3[8] = {
+static const struct x86_group_entry group3[8] __cacheline_aligned = {
 	[0] = { .emul = &x86_emul_test },
 	[1] = { .emul = &x86_emul_test }
 };
 
-static const struct x86_group_entry group11[8] = {
+static const struct x86_group_entry group11[8] __cacheline_aligned = {
 	[0] = { .emul = &x86_emul_mov }
 };
 
-static const struct x86_opcode primary_opcode_table[] = {
+static const struct x86_opcode primary_opcode_table[256] __cacheline_aligned = {
 	/*
 	 * Group1
 	 */
-	{
+	[0x80] = {
 		/* Eb, Ib */
-		.byte = 0x80,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.group1 = true,
 		.immediate = true,
 		.emul = NULL /* group1 */
 	},
-	{
+	[0x81] = {
 		/* Ev, Iz */
-		.byte = 0x81,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.group1 = true,
 		.immediate = true,
 		.flags = FLAG_immz,
 		.emul = NULL /* group1 */
 	},
-	{
+	[0x83] = {
 		/* Ev, Ib */
-		.byte = 0x83,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.group1 = true,
 		.immediate = true,
 		.flags = FLAG_imm8,
@@ -1124,26 +1118,24 @@ static const struct x86_opcode primary_opcode_table[] = {
 	/*
 	 * Group3
 	 */
-	{
+	[0xF6] = {
 		/* Eb, Ib */
-		.byte = 0xF6,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.group3 = true,
 		.immediate = true,
 		.emul = NULL /* group3 */
 	},
-	{
+	[0xF7] = {
 		/* Ev, Iz */
-		.byte = 0xF7,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.group3 = true,
 		.immediate = true,
 		.flags = FLAG_immz,
@@ -1153,26 +1145,24 @@ static const struct x86_opcode primary_opcode_table[] = {
 	/*
 	 * Group11
 	 */
-	{
+	[0xC6] = {
 		/* Eb, Ib */
-		.byte = 0xC6,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.group11 = true,
 		.immediate = true,
 		.emul = NULL /* group11 */
 	},
-	{
+	[0xC7] = {
 		/* Ev, Iz */
-		.byte = 0xC7,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.group11 = true,
 		.immediate = true,
 		.flags = FLAG_immz,
@@ -1182,353 +1172,321 @@ static const struct x86_opcode primary_opcode_table[] = {
 	/*
 	 * OR
 	 */
-	{
+	[0x08] = {
 		/* Eb, Gb */
-		.byte = 0x08,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_or
 	},
-	{
+	[0x09] = {
 		/* Ev, Gv */
-		.byte = 0x09,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_or
 	},
-	{
+	[0x0A] = {
 		/* Gb, Eb */
-		.byte = 0x0A,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = false,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_or
 	},
-	{
+	[0x0B] = {
 		/* Gv, Ev */
-		.byte = 0x0B,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = false,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_or
 	},
 
 	/*
 	 * AND
 	 */
-	{
+	[0x20] = {
 		/* Eb, Gb */
-		.byte = 0x20,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_and
 	},
-	{
+	[0x21] = {
 		/* Ev, Gv */
-		.byte = 0x21,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_and
 	},
-	{
+	[0x22] = {
 		/* Gb, Eb */
-		.byte = 0x22,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = false,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_and
 	},
-	{
+	[0x23] = {
 		/* Gv, Ev */
-		.byte = 0x23,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = false,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_and
 	},
 
 	/*
 	 * SUB
 	 */
-	{
+	[0x28] = {
 		/* Eb, Gb */
-		.byte = 0x28,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_sub
 	},
-	{
+	[0x29] = {
 		/* Ev, Gv */
-		.byte = 0x29,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_sub
 	},
-	{
+	[0x2A] = {
 		/* Gb, Eb */
-		.byte = 0x2A,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = false,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_sub
 	},
-	{
+	[0x2B] = {
 		/* Gv, Ev */
-		.byte = 0x2B,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = false,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_sub
 	},
 
 	/*
 	 * XOR
 	 */
-	{
+	[0x30] = {
 		/* Eb, Gb */
-		.byte = 0x30,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_xor
 	},
-	{
+	[0x31] = {
 		/* Ev, Gv */
-		.byte = 0x31,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_xor
 	},
-	{
+	[0x32] = {
 		/* Gb, Eb */
-		.byte = 0x32,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = false,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_xor
 	},
-	{
+	[0x33] = {
 		/* Gv, Ev */
-		.byte = 0x33,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = false,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_xor
 	},
 
 	/*
 	 * MOV
 	 */
-	{
+	[0x88] = {
 		/* Eb, Gb */
-		.byte = 0x88,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_mov
 	},
-	{
+	[0x89] = {
 		/* Ev, Gv */
-		.byte = 0x89,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_mov
 	},
-	{
+	[0x8A] = {
 		/* Gb, Eb */
-		.byte = 0x8A,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = false,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_mov
 	},
-	{
+	[0x8B] = {
 		/* Gv, Ev */
-		.byte = 0x8B,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = false,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_mov
 	},
-	{
+	[0xA0] = {
 		/* AL, Ob */
-		.byte = 0xA0,
+		.valid = true,
 		.dmo = true,
 		.todmo = false,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_mov
 	},
-	{
+	[0xA1] = {
 		/* rAX, Ov */
-		.byte = 0xA1,
+		.valid = true,
 		.dmo = true,
 		.todmo = false,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_mov
 	},
-	{
+	[0xA2] = {
 		/* Ob, AL */
-		.byte = 0xA2,
+		.valid = true,
 		.dmo = true,
 		.todmo = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_mov
 	},
-	{
+	[0xA3] = {
 		/* Ov, rAX */
-		.byte = 0xA3,
+		.valid = true,
 		.dmo = true,
 		.todmo = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_mov
 	},
 
 	/*
 	 * MOVS
 	 */
-	{
+	[0xA4] = {
 		/* Yb, Xb */
-		.byte = 0xA4,
+		.valid = true,
 		.movs = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_movs
 	},
-	{
+	[0xA5] = {
 		/* Yv, Xv */
-		.byte = 0xA5,
+		.valid = true,
 		.movs = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_movs
 	},
 
 	/*
 	 * STOS
 	 */
-	{
+	[0xAA] = {
 		/* Yb, AL */
-		.byte = 0xAA,
+		.valid = true,
 		.stos = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_stos
 	},
-	{
+	[0xAB] = {
 		/* Yv, rAX */
-		.byte = 0xAB,
+		.valid = true,
 		.stos = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_stos
 	},
 
 	/*
 	 * LODS
 	 */
-	{
+	[0xAC] = {
 		/* AL, Xb */
-		.byte = 0xAC,
+		.valid = true,
 		.lods = true,
 		.szoverride = false,
 		.defsize = OPSIZE_BYTE,
-		.allsize = -1,
 		.emul = &x86_emul_lods
 	},
-	{
+	[0xAD] = {
 		/* rAX, Xv */
-		.byte = 0xAD,
+		.valid = true,
 		.lods = true,
 		.szoverride = true,
 		.defsize = -1,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.emul = &x86_emul_lods
 	},
 };
 
-static const struct x86_opcode secondary_opcode_table[] = {
+static const struct x86_opcode secondary_opcode_table[256] __cacheline_aligned = {
 	/*
 	 * MOVZX
 	 */
-	{
+	[0xB6] = {
 		/* Gv, Eb */
-		.byte = 0xB6,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = false,
 		.szoverride = true,
 		.defsize = OPSIZE_BYTE,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.flags = FLAG_ze,
 		.emul = &x86_emul_mov
 	},
-	{
+	[0xB7] = {
 		/* Gv, Ew */
-		.byte = 0xB7,
+		.valid = true,
 		.regmodrm = true,
 		.regtorm = false,
 		.szoverride = true,
 		.defsize = OPSIZE_WORD,
-		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.flags = FLAG_ze,
 		.emul = &x86_emul_mov
 	},
@@ -1537,7 +1495,7 @@ static const struct x86_opcode secondary_opcode_table[] = {
 static const struct x86_reg gpr_map__rip = { NVMM_X64_GPR_RIP, 0xFFFFFFFFFFFFFFFF };
 
 /* [REX-present][enc][opsize] */
-static const struct x86_reg gpr_map__special[2][4][8] = {
+static const struct x86_reg gpr_map__special[2][4][8] __cacheline_aligned = {
 	[false] = {
 		/* No REX prefix. */
 		[0b00] = {
@@ -1627,7 +1585,7 @@ static const struct x86_reg gpr_map__special[2][4][8] = {
 };
 
 /* [depends][enc][size] */
-static const struct x86_reg gpr_map[2][8][8] = {
+static const struct x86_reg gpr_map[2][8][8] __cacheline_aligned = {
 	[false] = {
 		/* Not extended. */
 		[0b000] = {
@@ -1813,7 +1771,7 @@ fsm_read(struct x86_decode_fsm *fsm, uint8_t *bytes, size_t n)
 	return 0;
 }
 
-static void
+static inline void
 fsm_advance(struct x86_decode_fsm *fsm, size_t n,
     int (*fn)(struct x86_decode_fsm *, struct x86_instr *))
 {
@@ -2188,10 +2146,9 @@ node_regmodrm(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 
 	opcode = instr->opcode;
 
-	instr->regmodrm.present = true;
-	instr->regmodrm.mod = ((byte & 0b11000000) >> 6);
-	instr->regmodrm.reg = ((byte & 0b00111000) >> 3);
 	instr->regmodrm.rm  = ((byte & 0b00000111) >> 0);
+	instr->regmodrm.reg = ((byte & 0b00111000) >> 3);
+	instr->regmodrm.mod = ((byte & 0b11000000) >> 6);
 
 	if (opcode->regtorm) {
 		strg = &instr->src;
@@ -2316,11 +2273,6 @@ get_operand_size(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 		}
 	}
 
-	/* See if available */
-	if ((opcode->allsize & opsize) == 0) {
-		// XXX do we care?
-	}
-
 	return opsize;
 }
 
@@ -2353,21 +2305,15 @@ node_primary_opcode(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 {
 	const struct x86_opcode *opcode;
 	uint8_t byte;
-	size_t i, n;
 
 	if (fsm_read(fsm, &byte, sizeof(byte)) == -1) {
 		return -1;
 	}
 
-	n = sizeof(primary_opcode_table) / sizeof(primary_opcode_table[0]);
-	for (i = 0; i < n; i++) {
-		if (primary_opcode_table[i].byte == byte)
-			break;
-	}
-	if (i == n) {
+	opcode = &primary_opcode_table[byte];
+	if (__predict_false(!opcode->valid)) {
 		return -1;
 	}
-	opcode = &primary_opcode_table[i];
 
 	instr->opcode = opcode;
 	instr->emul = opcode->emul;
@@ -2400,21 +2346,15 @@ node_secondary_opcode(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 {
 	const struct x86_opcode *opcode;
 	uint8_t byte;
-	size_t i, n;
 
 	if (fsm_read(fsm, &byte, sizeof(byte)) == -1) {
 		return -1;
 	}
 
-	n = sizeof(secondary_opcode_table) / sizeof(secondary_opcode_table[0]);
-	for (i = 0; i < n; i++) {
-		if (secondary_opcode_table[i].byte == byte)
-			break;
-	}
-	if (i == n) {
+	opcode = &secondary_opcode_table[byte];
+	if (__predict_false(!opcode->valid)) {
 		return -1;
 	}
-	opcode = &secondary_opcode_table[i];
 
 	instr->opcode = opcode;
 	instr->emul = opcode->emul;
@@ -2495,11 +2435,11 @@ node_rex_prefix(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 		if (__predict_false(!fsm->is64bit)) {
 			return -1;
 		}
-		rexpref->present = true;
-		rexpref->w = ((byte & 0x8) != 0);
-		rexpref->r = ((byte & 0x4) != 0);
-		rexpref->x = ((byte & 0x2) != 0);
 		rexpref->b = ((byte & 0x1) != 0);
+		rexpref->x = ((byte & 0x2) != 0);
+		rexpref->r = ((byte & 0x4) != 0);
+		rexpref->w = ((byte & 0x8) != 0);
+		rexpref->present = true;
 		n = 1;
 	}
 
