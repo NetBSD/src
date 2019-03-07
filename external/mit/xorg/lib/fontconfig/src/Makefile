@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2018/05/09 08:15:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2019/03/07 03:56:15 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -131,6 +131,12 @@ PKGCONFIG_SED_FLAGS= \
 	    s,@localstatedir@,/var,; \
 	    s,@BASECONFIGDIR@,/etc/fonts,; \
 	    s,@fc_cachedir@,${FONTCONFIG_PATH},"
+
+LIBUUID_DIST=	${NETBSDSRCDIR}/external/bsd/libuuid_ul/lib/libuuid_ul
+.include "${LIBUUID_DIST}/libuuid_ul-rename.mk"
+LIBUUID_ULDIR!=	cd ${LIBUUID_DIST} && ${PRINTOBJDIR}
+LDADD+=		${LIBUUID_ULDIR}/libuuid_ul.a
+DPADD+=		${LIBUUID_ULDIR}/libuuid_ul.a
 
 # XXX
 CPPFLAGS.fcxml.c=	-Wno-error
