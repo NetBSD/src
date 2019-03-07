@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.159 2018/12/16 17:46:58 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.160 2019/03/07 12:29:14 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -251,8 +251,6 @@ struct stat;
 struct knote;
 struct sockaddr_big;
 enum uio_seg;
-
-struct	mbuf *getsombuf(struct socket *, int);
 
 /* 0x400 is SO_OTIMESTAMP */
 #define SOOPT_TIMESTAMP(o)     ((o) & (SO_TIMESTAMP | 0x400))
