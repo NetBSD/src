@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.143 2019/03/06 04:46:41 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.144 2019/03/07 03:27:14 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.144 2019/03/06 04:46:17 msaitoh Exp
+ *	NetBSD: miidevs,v 1.145 2019/03/07 03:26:53 msaitoh Exp
  */
 
 /*-
@@ -547,6 +547,10 @@
 #define	MII_STR_SMSC_LAN83C185	"SMSC LAN83C185 10/100 PHY"
 #define	MII_MODEL_SMSC_LAN8700	0x000c
 #define	MII_STR_SMSC_LAN8700	"SMSC LAN8700 10/100 Ethernet Transceiver"
+#define	MII_MODEL_SMSC_LAN911X	0x000d
+#define	MII_STR_SMSC_LAN911X	"SMSC LAN911X internal 10/100 PHY"
+#define	MII_MODEL_SMSC_LAN75XX	0x000e
+#define	MII_STR_SMSC_LAN75XX	"SMSC LAN75XX internal 10/100 PHY"
 #define	MII_MODEL_SMSC_LAN8710_LAN8720	0x000f
 #define	MII_STR_SMSC_LAN8710_LAN8720	"SMSC LAN8710/LAN8720 10/100 Ethernet Transceiver"
 #define	MII_MODEL_SMSC_LAN8740	0x0011
