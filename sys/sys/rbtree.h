@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.2 2012/02/17 08:20:55 yamt Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.3 2019/03/07 12:05:54 roy Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -102,12 +102,20 @@ typedef struct rb_node {
 
 #define RB_TREE_MIN(T) rb_tree_iterate((T), NULL, RB_DIR_LEFT)
 #define RB_TREE_MAX(T) rb_tree_iterate((T), NULL, RB_DIR_RIGHT)
+#define RB_TREE_NEXT(T, N) rb_tree_iterate((T), (N), RB_DIR_RIGHT)
+#define RB_TREE_PREV(T, N) rb_tree_iterate((T), (N), RB_DIR_LEFT)
 #define RB_TREE_FOREACH(N, T) \
-    for ((N) = RB_TREE_MIN(T); (N); \
-	(N) = rb_tree_iterate((T), (N), RB_DIR_RIGHT))
+    for ((N) = RB_TREE_MIN(T); (N); (N) = RB_TREE_NEXT((T), (N)))
 #define RB_TREE_FOREACH_REVERSE(N, T) \
-    for ((N) = RB_TREE_MAX(T); (N); \
-	(N) = rb_tree_iterate((T), (N), RB_DIR_LEFT))
+    for ((N) = RB_TREE_MAX(T); (N); (N) = RB_TREE_PREV((T), (N)))
+#define RB_TREE_FOREACH_SAFE(N, T, S) \
+    for ((N) = RB_TREE_MIN(T); \
+        (N) && ((S) = RB_TREE_NEXT((T), (N)), 1); \
+        (N) = (S))
+#define RB_TREE_FOREACH_REVERSE_SAFE(N, T, S) \
+    for ((N) = RB_TREE_MAX(T); \
+        (N) && ((S) = RB_TREE_PREV((T), (N)), 1); \
+        (N) = (S))
 
 #ifdef RBDEBUG
 TAILQ_HEAD(rb_node_qh, rb_node);
