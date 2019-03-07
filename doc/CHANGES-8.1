@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.113 2019/03/03 11:11:18 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.114 2019/03/07 17:43:03 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2569,4 +2569,87 @@ sys/sys/cdefs.h					1.138
 
 	Stop mangling __func__ for C++11 and newer.
 	[kamil, ticket #1202]
+
+bin/sleep/sleep.c				1.25
+
+	Allow the decimal radix character '.' to work, regardless of
+	what the current locale's radix character happens to be.
+	[kre, ticket #1169]
+
+sys/net/rtsock.c				1.247
+
+	Protect sysctl_rtable with KERNEL_LOCK and softnet_lock.
+	[ozaki-r, ticket #1203]
+
+sys/arch/x86/x86/procfs_machdep.c		1.28
+
+	- Add wbnoinvd, virt_ssbd, tme, cldemote, movdiri, movdir64b and
+	  pconfig.
+	- Move AMD 0x80000008 ebx's ibpb, ibrs and stibp to x86_features[8]
+	  linux mapping.
+	[msaitoh, ticket #1204]
+
+sys/dev/pci/pcidevs				1.1363-1.1366
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Add Tundra (now IDT) TSI381 and PEB383.
+	Add some Broadcom Ethernet devices.
+	Add SK-NET SK-9Mxx Gigabit Ethernet.
+	Add Intel I219 variations for Cannon Lake.
+	[msaitoh, ticket #1205]
+
+sys/dev/pci/if_wmreg.h			1.113
+sys/dev/pci/if_wmvar.h			1.43-1.44
+sys/dev/pci/if_wm.c			1.626-1.627, 1.629-1.636 via patch
+
+	- Add support for I210 SGMII Flash-less device.
+	- Add I219 variations for Cannon Lake.
+	- Add missing rnd_detach_source().
+	- Use  do { ... } while (0) for DPRINTF(x, y).
+	- Swap enumeration of 82578 and 82577 PHY in if_wmvar.h. No functional  
+	  change.
+	- Add KASSERT.
+	- Update TODO list. Add comment. Fix typo in comment.
+	[msaitoh, ticket #1206]
+
+sys/dev/mii/miidevs				1.133-1.144
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+
+	- Add ASIX, Tridium, Data Track Technology, Netas, Ralink Technology,
+	  Sunplus Technology and ADMtek's OUI.
+	- Add VIA and Vitesse's OUI and devices.
+	- Add yet another BROADCOM OUI number and BCM5725C.
+	- Add Marvell 88E1240.
+	- Marvell model 0x0029 is not 88E1116R but E1318S.
+	- Add RTL8201E.
+	- Add Broadcom BCM540[24], BCM5424, BCM5466 and BCM54[78]8.
+	- Add ICS1893C.
+	- Add Micrel KSZ8081 and KSZ9031.
+	- Add non-xx'ed DAVICOM DM9101.
+	- Add SMSC(now Microchip) LAN83C185, LAN8740, LAN8741A and LAN8742.
+	- Change CS8244's OUI from xxCICADA to CICADA.
+	- Sort by OUI and model number. Sort in alphabetical order a bit.
+	- Add missing white space.
+	[msaitoh, ticket #1207]
+
+sys/dev/mii/makphy.c				1.53
+
+	- Add 88E1240.
+	- Rename E1116R_29 to E1318S
+	[msaitoh, ticket #1208]
+
+sys/dev/pci/if_bge.c			1.323-1.327
+sys/dev/pci/if_bgereg.h 		1.95
+sys/dev/mii/brgphy.c			1.80
+share/man/man4/bge.4			1.16
+
+	- Add BCM5717's another device ID support.
+	- Add BCM5702FE, another BCM5704S and SysKonnect SK-9Mxx support.
+	- Add support for BCM5762 ASIC devices.
+	- Add BCM5762, BCM5725, BCM5727, BCM57764, BCM57767 and BCM57787.
+	- Simplify PCI device table.
+	- Add /* FALLTHROUGH */
+	[msaitoh, ticket #1209]
 
