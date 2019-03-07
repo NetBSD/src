@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.15.2.7 2018/11/18 11:16:52 martin Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.15.2.8 2019/03/07 17:01:18 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.7 2018/11/18 11:16:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.8 2019/03/07 17:01:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,14 +115,14 @@ static const char * const x86_features[][32] = {
 	"hw_pstate", "proc_feedback", "sme", NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+	NULL, "ibrs", "ibpb", "stibp", NULL, NULL, NULL, NULL},
 
 	{ /* (8) Linux mapping */
 	"tpr_shadow", "vnmi", "flexpriority", "ept",
 	"vpid", "npt", "lbrv", "svm_lock",
 	"nrip_save", "tsc_scale", "vmcb_clean", "flushbyasid",
 	"decodeassists", "pausefilter", "pfthreshold", "vmmcall",
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, "ept_ad", NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (9) Intel-defined: 00000007 ebx */
@@ -153,9 +153,9 @@ static const char * const x86_features[][32] = {
 
 	{ /* (13) AMD 0x80000008 ebx */
 	"clzero", "irperf", "xsaveerptr", NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, "ibpb", NULL, "ibrs", "stibp",
+	NULL, "wbnoinvd", NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+	NULL, "virt_ssbd", NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (14) 0x00000006 eax */
 	"dtherm", "ida", "arat", NULL, "pln", NULL, "pts", "hwp",
@@ -176,9 +176,9 @@ static const char * const x86_features[][32] = {
 	NULL, "avx512vbmi", "umip", "pku",
 	"ospke", NULL, "avx512_vbmi2", NULL,
 	"gfni", "vaes", "vpclmulqdq", "avx512_vnni",
-	"avx512_bitalg", NULL, "avx512_vpopcntdq", NULL,
+	"avx512_bitalg", "tme", "avx512_vpopcntdq", NULL,
 	"la57", NULL, NULL, NULL, NULL, NULL, "rdpid", NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+	NULL, "cldemote", NULL, "movdiri", "movdir64b", NULL, NULL, NULL},
 
 	{ /* (17) 0x80000007 ebx */
 	"overflow_recov", "succor", NULL, "smca", NULL, NULL, NULL, NULL,
@@ -189,7 +189,7 @@ static const char * const x86_features[][32] = {
 	{ /* (18) Intel 0x00000007 edx */
 	NULL, NULL, "avx512_4vnniw", "avx512_4fmaps", NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, "pconfig", NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	"flush_l1d", "arch_capabilities", NULL, "ssbd"},
 };
