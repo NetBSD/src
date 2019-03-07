@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.15 2018/08/12 16:48:04 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.16 2019/03/07 00:35:22 jakllsch Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -52,6 +52,16 @@ file	arch/arm/rockchip/rk_usb.c		rk_usb | rk_usbphy
 # GMAC
 attach	awge at fdt with rk_gmac
 file	arch/arm/rockchip/rk_gmac.c		rk_gmac
+
+# PCIe PHY
+device	rkpciephy
+attach	rkpciephy at fdt
+file	arch/arm/rockchip/rk3399_pcie_phy.c	rkpciephy
+
+# PCIe host
+device	rkpcie: pcibus, pcihost_fdt
+attach	rkpcie at fdt
+file	arch/arm/rockchip/rk3399_pcie.c		rkpcie
 
 # SOC parameters
 defflag	opt_soc.h			SOC_ROCKCHIP
