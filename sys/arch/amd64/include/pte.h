@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.9 2016/05/13 11:17:20 maxv Exp $	*/
+/*	$NetBSD: pte.h,v 1.10 2019/03/07 13:26:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -98,10 +98,8 @@ typedef uint64_t pt_entry_t;		/* PTE */
  * PDE/PTE bits. These are no different from their i386 counterparts.
  */
 #define PG_V		0x0000000000000001	/* valid */
-#define PG_RO		0x0000000000000000	/* read-only */
 #define PG_RW		0x0000000000000002	/* read-write */
 #define PG_u		0x0000000000000004	/* user accessible */
-#define PG_PROT		0x0000000000000006
 #define PG_WT		0x0000000000000008	/* write-through */
 #define PG_N		0x0000000000000010	/* non-cacheable */
 #define PG_U		0x0000000000000020	/* used */
@@ -123,7 +121,6 @@ typedef uint64_t pt_entry_t;		/* PTE */
 /*
  * Short forms of protection codes.
  */
-#define PG_KR		0x0000000000000000	/* kernel read-only */
 #define PG_KW		0x0000000000000002	/* kernel read-write */
 
 #include <x86/pte.h>

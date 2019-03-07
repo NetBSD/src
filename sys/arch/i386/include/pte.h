@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.28 2019/03/07 13:02:13 maxv Exp $	*/
+/*	$NetBSD: pte.h,v 1.29 2019/03/07 13:26:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -148,10 +148,8 @@ typedef uint32_t pt_entry_t;		/* PTE */
  * XXXCDC: need to rename these (PG_u == ugly).
  */
 #define PG_V		0x00000001	/* valid entry */
-#define PG_RO		0x00000000	/* read-only page */
 #define PG_RW		0x00000002	/* read-write page */
 #define PG_u		0x00000004	/* user accessible page */
-#define PG_PROT		0x00000806	/* all protection bits */
 #define PG_WT		0x00000008	/* write through */
 #define PG_N		0x00000010	/* non-cacheable */
 #define PG_U		0x00000020	/* has been used */
@@ -167,7 +165,6 @@ typedef uint32_t pt_entry_t;		/* PTE */
 /*
  * various short-hand protection codes
  */
-#define PG_KR		0x00000000	/* kernel read-only */
 #define PG_KW		0x00000002	/* kernel read-write */
 
 #ifdef PAE

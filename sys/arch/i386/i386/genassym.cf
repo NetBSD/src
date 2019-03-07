@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.111 2019/02/15 08:54:01 nonaka Exp $
+#	$NetBSD: genassym.cf,v 1.112 2019/03/07 13:26:24 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -144,7 +144,6 @@ define	KERNTEXTOFF		KERNTEXTOFF
 define	PG_RW			PG_RW
 define	PG_V			PG_V
 define	PG_KW			PG_KW
-define	PG_KR			PG_KR
 define	PGEX_U			PGEX_U
 
 define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
