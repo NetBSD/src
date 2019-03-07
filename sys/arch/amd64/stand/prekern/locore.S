@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2018/05/25 16:01:31 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 2019/03/07 13:26:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2007, 2008, 2016, 2017 The NetBSD Foundation, Inc.
@@ -424,7 +424,7 @@ ENTRY(start)
 	movl	$_C_LABEL(__rodata_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PG_V),%eax
 	fillkpt
 
 	/* Map the prekern rodata R. */
@@ -432,7 +432,7 @@ ENTRY(start)
 	movl	$_C_LABEL(__data_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PG_V),%eax
 	fillkpt_nox
 
 	/* Map the prekern data+bss RW. */
@@ -448,7 +448,7 @@ ENTRY(start)
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PG_V),%eax
 	fillkpt_nox
 
 	/* Map the BOOTSTRAP TABLES RW. */

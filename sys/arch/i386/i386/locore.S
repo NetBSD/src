@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.164 2019/02/13 05:36:59 cherry Exp $	*/
+/*	$NetBSD: locore.S,v 1.165 2019/03/07 13:26:24 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.164 2019/02/13 05:36:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.165 2019/03/07 13:26:24 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -693,7 +693,7 @@ no_NOX:
 	movl	$RELOC(__rodata_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PG_V),%eax
 	fillkpt
 
 	/* Map the kernel rodata R. */
@@ -701,7 +701,7 @@ no_NOX:
 	movl	$RELOC(__data_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PG_V),%eax
 	fillkpt_nox
 
 	/* Map the kernel data+bss RW. */

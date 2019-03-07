@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.8 2019/01/19 13:17:32 martin Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.9 2019/03/07 13:26:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.8 2019/01/19 13:17:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.9 2019/03/07 13:26:24 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -170,7 +170,6 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		/*
 		 * Make the kernel text page writable.
 		 */
-		pmap_pte_clearbits(ppte, PG_KR);
 		pmap_pte_setbits(ppte, PG_KW);
 		pmap_update_pg(addr);
 
@@ -190,7 +189,6 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		 * Turn the page back to read-only.
 		 */
 		pmap_pte_clearbits(ppte, PG_KW);
-		pmap_pte_setbits(ppte, PG_KR);
 		pmap_update_pg(addr);
 
 		/*

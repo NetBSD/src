@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.327 2019/02/23 10:59:12 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.328 2019/03/07 13:26:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.327 2019/02/23 10:59:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.328 2019/03/07 13:26:24 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1068,9 +1068,9 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * into a x86 PTE.
 	 */
 	protection_codes[VM_PROT_NONE] = pmap_pg_nx;
-	protection_codes[VM_PROT_EXECUTE] = PG_RO | PG_X;
-	protection_codes[VM_PROT_READ] = PG_RO | pmap_pg_nx;
-	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_RO | PG_X;
+	protection_codes[VM_PROT_EXECUTE] = PG_X;
+	protection_codes[VM_PROT_READ] = pmap_pg_nx;
+	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_X;
 	protection_codes[VM_PROT_WRITE] = PG_RW | pmap_pg_nx;
 	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW | PG_X;
 	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_RW | pmap_pg_nx;
@@ -1660,7 +1660,7 @@ pmap_remap_largepages(void)
 		pa = roundup(bootspace.segs[i].pa, NBPD_L2);
 		for (/* */; kva < kva_end; kva += NBPD_L2, pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
-			*pde = pa | pmap_pg_g | PG_PS | PG_KR | PG_V;
+			*pde = pa | pmap_pg_g | PG_PS | PG_V;
 			tlbflushg();
 		}
 	}
@@ -1679,7 +1679,7 @@ pmap_remap_largepages(void)
 		pa = roundup(bootspace.segs[i].pa, NBPD_L2);
 		for (/* */; kva < kva_end; kva += NBPD_L2, pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
-			*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_KR | PG_V;
+			*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_V;
 			tlbflushg();
 		}
 	}

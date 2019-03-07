@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.82 2019/02/04 18:14:53 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.83 2019/03/07 13:26:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.82 2019/02/04 18:14:53 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.83 2019/03/07 13:26:24 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -769,20 +769,19 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 			pte[pl1_pi(page)] |= PG_V;
 			if (page < (vaddr_t)&__rodata_start) {
-				/* Map the kernel text RX. */
-				pte[pl1_pi(page)] |= PG_RO;
+				/* Map the kernel text RX. Nothing to do. */
 			} else if (page >= (vaddr_t)&__rodata_start &&
 			    page < (vaddr_t)&__data_start) {
 				/* Map the kernel rodata R. */
-				pte[pl1_pi(page)] |= PG_RO | xpmap_pg_nx;
+				pte[pl1_pi(page)] |= xpmap_pg_nx;
 			} else if (page >= old_pgd &&
 			    page < old_pgd + (old_count * PAGE_SIZE)) {
 				/* Map the old page tables R. */
-				pte[pl1_pi(page)] |= PG_RO | xpmap_pg_nx;
+				pte[pl1_pi(page)] |= xpmap_pg_nx;
 			} else if (page >= new_pgd &&
 			    page < new_pgd + ((new_count + PDIRSZ) * PAGE_SIZE)) {
 				/* Map the new page tables R. */
-				pte[pl1_pi(page)] |= PG_RO | xpmap_pg_nx;
+				pte[pl1_pi(page)] |= xpmap_pg_nx;
 #ifdef i386
 			} else if (page == (vaddr_t)tmpgdt) {
 				/*
@@ -816,10 +815,10 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 #ifdef __x86_64__
 	/* Recursive entry in pmap_kernel(). */
 	L4[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)L4 - KERNBASE)
-	    | PG_RO | PG_V | xpmap_pg_nx;
+	    | PG_V | xpmap_pg_nx;
 	/* Recursive entry in higher-level per-cpu PD. */
 	L4cpu[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)L4cpu - KERNBASE)
-	    | PG_RO | PG_V | xpmap_pg_nx;
+	    | PG_V | xpmap_pg_nx;
 
 	/* Mark tables RO */
 	xen_bt_set_readonly((vaddr_t)L2);
