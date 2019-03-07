@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.57 2019/02/23 17:18:07 martin Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.58 2019/03/07 14:02:16 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.57 2019/02/23 17:18:07 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.58 2019/03/07 14:02:16 msaitoh Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -306,7 +306,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
         mii->mii_readreg = dwc_gmac_miibus_read_reg;
         mii->mii_writereg = dwc_gmac_miibus_write_reg;
         mii->mii_statchg = dwc_gmac_miibus_statchg;
-        mii_attach(sc->sc_dev, mii, phy_id, MII_PHY_ANY, MII_OFFSET_ANY,
+        mii_attach(sc->sc_dev, mii, 0xffffffff, phy_id, MII_OFFSET_ANY,
 	    MIIF_DOPAUSE);
 
         if (LIST_EMPTY(&mii->mii_phys)) {
