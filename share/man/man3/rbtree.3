@@ -1,4 +1,4 @@
-.\"     $NetBSD: rbtree.3,v 1.12 2016/08/30 05:12:00 dholland Exp $
+.\"     $NetBSD: rbtree.3,v 1.13 2019/03/07 12:05:54 roy Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 29, 2016
+.Dd March 4, 2019
 .Dt RBTREE 3
 .Os
 .Sh NAME
@@ -55,8 +55,12 @@
 .Fn RB_TREE_MIN "rb_tree_t *rbt"
 .Ft void *
 .Fn RB_TREE_MAX "rb_tree_t *rbt"
+.Fn RB_TREE_NEXT "rb_tree_t *rbt" "void *rb"
+.Fn RB_TREE_PREV "rb_tree_t *rbt" "void *rb"
 .Fn RB_TREE_FOREACH "void *rb" "rb_tree_t *rbt"
+.Fn RB_TREE_FOREACH_SAFE "void *rb" "rb_tree_t *rbt" "void *tmp"
 .Fn RB_TREE_FOREACH_REVERSE "void *rb" "rb_tree_t *rbt"
+.Fn RB_TREE_FOREACH_REVERSE_SAFE "void *rb" "rb_tree_t *rbt" "void *tmp"
 .Sh DESCRIPTION
 .Nm
 provides red-black trees.
@@ -242,6 +246,18 @@ i.e. the node with the greatest key, or
 if
 .Fa rbt
 is empty.
+.It Fn RB_TREE_NEXT "rbt" "rb"
+Return the next node in
+.Fa rbt ,
+or
+.Dv NULL
+if there is none.
+.It Fn RB_TREE_PREV "rbt" "rb"
+Return the previous node in
+.Fa rbt ,
+or
+.Dv NULL
+if there is none.
 .It Fn RB_TREE_FOREACH "rb" "rbt"
 .Nm RB_TREE_FOREACH
 is a macro to be used in the place of a
@@ -251,6 +267,11 @@ header preceding a statement to traverse the nodes in
 from least to greatest, assigning
 .Fa rb
 to each node in turn and executing the statement.
+.It Fn RB_TREE_FOREACH_SAFE "rb" "rbt" "tmp"
+Allows both the removal of
+.Fa rb
+as well as freeing it from within the loop safely without interfering
+with the traversal.
 .It Fn RB_TREE_FOREACH_REVERSE "rb" "rbt"
 .Nm RB_TREE_FOREACH_REVERSE
 is a macro to be used in the place of a
@@ -260,6 +281,11 @@ header preceding a statement to traverse the nodes in
 from greatest to least, assigning
 .Fa rb
 to each node in turn and executing the statement.
+.It Fn RB_TREE_FOREACH_REVERSE_SAFE "rb" "rbt" "tmp"
+Allows both the removal of
+.Fa rb
+as well as freeing it from within the loop safely without interfering
+with the traversal.
 .El
 .Sh CODE REFERENCES
 The
