@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.16 2019/03/03 07:01:09 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.17 2019/03/07 15:06:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.16 2019/03/03 07:01:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.17 2019/03/07 15:06:37 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,13 +282,14 @@ int vmx_vmresume(uint64_t *gprs);
 #define VMCS_ENTRY_MSR_LOAD_COUNT		0x00004014
 #define VMCS_ENTRY_INTR_INFO			0x00004016
 #define		INTR_INFO_VECTOR		__BITS(7,0)
-#define		INTR_INFO_TYPE_EXT_INT		(0 << 8)
-#define		INTR_INFO_TYPE_NMI		(2 << 8)
-#define		INTR_INFO_TYPE_HW_EXC		(3 << 8)
-#define		INTR_INFO_TYPE_SW_INT		(4 << 8)
-#define		INTR_INFO_TYPE_PRIV_SW_EXC	(5 << 8)
-#define		INTR_INFO_TYPE_SW_EXC		(6 << 8)
-#define		INTR_INFO_TYPE_OTHER		(7 << 8)
+#define		INTR_INFO_TYPE			__BITS(10,8)
+#define			INTR_TYPE_EXT_INT	0
+#define			INTR_TYPE_NMI		2
+#define			INTR_TYPE_HW_EXC	3
+#define			INTR_TYPE_SW_INT	4
+#define			INTR_TYPE_PRIV_SW_EXC	5
+#define			INTR_TYPE_SW_EXC	6
+#define			INTR_TYPE_OTHER		7
 #define		INTR_INFO_ERROR			__BIT(11)
 #define		INTR_INFO_VALID			__BIT(31)
 #define VMCS_ENTRY_EXCEPTION_ERROR		0x00004018
@@ -883,12 +884,12 @@ vmx_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	switch (event->type) {
 	case NVMM_EVENT_INTERRUPT_HW:
-		type = INTR_INFO_TYPE_EXT_INT;
+		type = INTR_TYPE_EXT_INT;
 		if (event->vector == 2) {
-			type = INTR_INFO_TYPE_NMI;
+			type = INTR_TYPE_NMI;
 		}
 		vmx_vmread(VMCS_GUEST_INTERRUPTIBILITY, &intstate);
-		if (type == INTR_INFO_TYPE_NMI) {
+		if (type == INTR_TYPE_NMI) {
 			if (cpudata->nmi_window_exit) {
 				ret = EAGAIN;
 				goto out;
@@ -917,7 +918,7 @@ vmx_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			ret = EINVAL;
 			goto out;
 		}
-		type = INTR_INFO_TYPE_HW_EXC;
+		type = INTR_TYPE_HW_EXC;
 		err = vmx_event_has_error(event->vector);
 		break;
 	default:
@@ -927,7 +928,7 @@ vmx_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	info =
 	    __SHIFTIN(event->vector, INTR_INFO_VECTOR) |
-	    type |
+	    __SHIFTIN(type, INTR_INFO_TYPE) |
 	    __SHIFTIN(err, INTR_INFO_ERROR) |
 	    __SHIFTIN(1, INTR_INFO_VALID);
 	vmx_vmwrite(VMCS_ENTRY_INTR_INFO, info);
@@ -982,6 +983,28 @@ vmx_inkernel_advance(void)
 	vmx_vmread(VMCS_GUEST_INTERRUPTIBILITY, &intstate);
 	vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY,
 	    intstate & ~(INT_STATE_STI|INT_STATE_MOVSS));
+}
+
+static void
+vmx_exit_exc_nmi(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
+    struct nvmm_exit *exit)
+{
+	uint64_t qual;
+
+	vmx_vmread(VMCS_EXIT_INTR_INFO, &qual);
+
+	if ((qual & INTR_INFO_VALID) == 0) {
+		goto error;
+	}
+	if (__SHIFTOUT(qual, INTR_INFO_TYPE) != INTR_TYPE_NMI) {
+		goto error;
+	}
+
+	exit->reason = NVMM_EXIT_NONE;
+	return;
+
+error:
+	exit->reason = NVMM_EXIT_INVALID;
 }
 
 static void
@@ -1753,6 +1776,9 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		exitcode &= __BITS(15,0);
 
 		switch (exitcode) {
+		case VMCS_EXITCODE_EXC_NMI:
+			vmx_exit_exc_nmi(mach, vcpu, exit);
+			break;
 		case VMCS_EXITCODE_EXT_INT:
 			exit->reason = NVMM_EXIT_NONE;
 			break;
