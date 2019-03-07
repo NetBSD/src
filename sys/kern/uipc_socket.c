@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.270 2019/03/07 12:22:43 maxv Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.271 2019/03/07 12:29:14 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.270 2019/03/07 12:22:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.271 2019/03/07 12:29:14 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -373,16 +373,6 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	}
 
 	return space;
-}
-
-struct mbuf *
-getsombuf(struct socket *so, int type)
-{
-	struct mbuf *m;
-
-	m = m_get(M_WAIT, type);
-	MCLAIM(m, so->so_mowner);
-	return m;
 }
 
 static int
