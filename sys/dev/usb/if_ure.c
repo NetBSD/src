@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.3 2019/02/09 07:50:47 rin Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.4 2019/03/07 14:00:25 msaitoh Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
@@ -29,7 +29,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.3 2019/02/09 07:50:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.4 2019/03/07 14:00:25 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1235,6 +1235,9 @@ ure_attach(device_t parent, device_t self, void *aux)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->ure_udev, sc->ure_dev);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -1243,6 +1246,8 @@ ure_detach(device_t self, int flags)
 	struct ure_softc *sc = device_private(self);
 	struct ifnet *ifp = GET_IFP(sc);
 	int s;
+
+	pmf_device_deregister(self);
 
 	sc->ure_dying = true;
 
