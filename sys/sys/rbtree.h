@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.4 2019/03/07 12:07:42 roy Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.5 2019/03/07 14:39:21 roy Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,8 +57,8 @@ typedef struct rb_node {
 	 * rb_node will have an alignment of 4 or 8 bytes.
 	 */
 	uintptr_t rb_info;
-#define	RB_FLAG_POSITION	__BIT(1)
-#define	RB_FLAG_RED		__BIT(0)
+#define	RB_FLAG_POSITION	(uintptr_t)0x2
+#define	RB_FLAG_RED		(uintptr_t)0x1
 #define	RB_FLAG_MASK		(RB_FLAG_POSITION|RB_FLAG_RED)
 #define	RB_FATHER(rb) \
     ((struct rb_node *)((rb)->rb_info & ~RB_FLAG_MASK))
