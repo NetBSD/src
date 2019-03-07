@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.68 2019/02/01 03:20:35 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.69 2019/03/07 14:55:49 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.68 2019/02/01 03:20:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.69 2019/03/07 14:55:49 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2970,6 +2970,21 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCDELMULTI:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/* setup multicast filter, etc */
+			error = 0;
+		}
+		break;
+
+	case SIOCS80211CHANNEL:
+		/*
+		 * This allows for fast channel switching in monitor mode
+		 * (used by kismet). In IBSS mode, we must explicitly reset
+		 * the interface to generate a new beacon frame.
+		 */
+		error = ieee80211_ioctl(ic, cmd, data);
+		if (error == ENETRESET &&
+		    ic->ic_opmode == IEEE80211_M_MONITOR) {
+			urtwn_set_chan(sc, ic->ic_curchan,
+			    IEEE80211_HTINFO_2NDCHAN_NONE);
 			error = 0;
 		}
 		break;
