@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.29 2019/03/07 13:26:24 maxv Exp $	*/
+/*	$NetBSD: pte.h,v 1.30 2019/03/07 14:40:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -96,10 +96,6 @@ typedef uint32_t pt_entry_t;		/* PTE */
 
 #endif
 
-/*
- * now we define various for playing with virtual addresses
- */
-
 #ifdef PAE
 #define L1_SHIFT	12
 #define L2_SHIFT	21
@@ -117,8 +113,15 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define L2_FRAME	(L3_FRAME | L2_MASK)
 #define L1_FRAME	(L2_FRAME|L1_MASK)
 
+/* XXX To be deleted. */
 #define PG_FRAME	0x000ffffffffff000ULL /* page frame mask */
 #define PG_LGFRAME	0x000fffffffe00000ULL /* large (2MB) page frame mask */
+
+#define PTE_4KFRAME	0x000ffffffffff000ULL
+#define PTE_2MFRAME	0x000fffffffe00000ULL
+
+#define PTE_FRAME	PTE_4KFRAME
+#define PTE_LGFRAME	PTE_2MFRAME
 
 /* macros to get real L2 and L3 index, from our "extended" L2 index */
 #define l2tol3(idx)	((idx) >> (L3_SHIFT - L2_SHIFT))
@@ -137,15 +140,45 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define L2_FRAME	(L2_MASK)
 #define L1_FRAME	(L2_FRAME|L1_MASK)
 
+/* XXX To be deleted. */
 #define PG_FRAME	0xfffff000	/* page frame mask */
 #define PG_LGFRAME	0xffc00000	/* large (4MB) page frame mask */
+
+#define PTE_4KFRAME	0xfffff000
+#define PTE_4MFRAME	0xffc00000
+
+#define PTE_FRAME	PTE_4KFRAME
+#define PTE_LGFRAME	PTE_4MFRAME
 
 #endif /* PAE */
 
 /*
+ * x86 PTE/PDE bits.
+ */
+#define PTE_P		0x00000001	/* Present */
+#define PTE_W		0x00000002	/* Write */
+#define PTE_U		0x00000004	/* User */
+#define PTE_PWT		0x00000008	/* Write-Through */
+#define PTE_PCD		0x00000010	/* Cache-Disable */
+#define PTE_A		0x00000020	/* Accessed */
+#define PTE_D		0x00000040	/* Dirty */
+#define PTE_PAT		0x00000080	/* PAT on 4KB Pages */
+#define PTE_PS		0x00000080	/* Large Page Size */
+#define PTE_G		0x00000100	/* Global Translation */
+#define PTE_AVL1	0x00000200	/* Ignored by Hardware */
+#define PTE_AVL2	0x00000400	/* Ignored by Hardware */
+#define PTE_AVL3	0x00000800	/* Ignored by Hardware */
+#define PTE_LGPAT	0x00001000	/* PAT on Large Pages */
+#ifdef PAE
+#define PTE_NX	0x8000000000000000ULL	/* No Execute */
+#else
+#define PTE_NX		0		/* Dummy */
+#endif
+
+/*
  * here we define the bits of the PDE/PTE, as described above:
- *
  * XXXCDC: need to rename these (PG_u == ugly).
+ * XXX To be deleted.
  */
 #define PG_V		0x00000001	/* valid entry */
 #define PG_RW		0x00000002	/* read-write page */
@@ -161,12 +194,7 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define PG_AVAIL2	0x00000400	/* ignored by hardware */
 #define PG_AVAIL3	0x00000800	/* ignored by hardware */
 #define PG_LGPAT	0x00001000	/* PAT on large pages */
-
-/*
- * various short-hand protection codes
- */
 #define PG_KW		0x00000002	/* kernel read-write */
-
 #ifdef PAE
 #define PG_NX		0x8000000000000000ULL /* No-execute */
 #else
