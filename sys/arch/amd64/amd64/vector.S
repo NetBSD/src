@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.69 2019/02/15 08:54:01 nonaka Exp $	*/
+/*	$NetBSD: vector.S,v 1.70 2019/03/07 10:16:07 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -277,12 +277,12 @@ IDTVEC(recurse_hyperv_hypercall)
 	INTR_RECURSE_ENTRY
 	jmp	1f
 IDTVEC_END(recurse_hyperv_hypercall)
-NENTRY(handle_hyperv_hypercall)
+IDTVEC(handle_hyperv_hypercall)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_NET,%ebx
 	jae	2f
 	jmp	1f
-END(handle_hyperv_hypercall)
+IDTVEC_END(handle_hyperv_hypercall)
 IDTVEC(resume_hyperv_hypercall)
 1:
 	incl	CPUVAR(IDEPTH)
@@ -302,7 +302,7 @@ IDTVEC(intr_hyperv_hypercall)
 	pushq	$0
 	pushq	$T_ASTFLT
 	INTRENTRY
-	jmp	_C_LABEL(handle_hyperv_hypercall)
+	jmp	_C_LABEL(Xhandle_hyperv_hypercall)
 IDTVEC_END(intr_hyperv_hypercall)
 	TEXT_USER_END
 #endif	/* NHYPERV > 0 */
