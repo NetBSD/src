@@ -1,4 +1,4 @@
-/* $NetBSD: sleep.c,v 1.24 2011/08/29 14:51:19 joerg Exp $ */
+/* $NetBSD: sleep.c,v 1.24.36.1 2019/03/07 16:56:51 martin Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.24 2011/08/29 14:51:19 joerg Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.24.36.1 2019/03/07 16:56:51 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ int
 main(int argc, char *argv[])
 {
 	char *arg, *temp;
+	const char *msg;
 	double fval, ival, val;
 	struct timespec ntime;
 	time_t original;
@@ -100,36 +101,71 @@ main(int argc, char *argv[])
 	 * problem. Why use an isdigit() check instead of checking for
 	 * a period? Because doing it this way means locales will be
 	 * handled transparently by the atof code.
+	 *
+	 * Since fracflag is set for any non-digit, we also fall
+	 * into the floating point conversion path if the input
+	 * is hex (the 'x' in 0xA is not a digit).  Then if
+	 * strtod() handles hex (on NetBSD it does) so will we.
 	 */
 	fracflag = 0;
 	arg = *argv;
 	for (temp = arg; *temp != '\0'; temp++)
-		if (!isdigit((unsigned char)*temp))
+		if (!isdigit((unsigned char)*temp)) {
+			ch = *temp;
 			fracflag++;
+		}
 
 	if (fracflag) {
-		val = atof(arg);
-		if (val <= 0)
+		/*
+		 * If the radix char in the arg was a '.'
+		 * (as is likely when used from scripts, etc)
+		 * then force the C locale, so atof() works
+		 * as intended, even if the user's locale
+		 * expects something different, like ','
+		 * (but leave the locale alone otherwise, so if
+		 * the user entered 2,4 and that is correct for
+		 * the locale, it will work).
+		 */
+		if (ch == '.')
+			(void)setlocale(LC_ALL, "C");
+		val = strtod(arg, &temp);
+		if (val < 0 || temp == arg || *temp != '\0')
 			usage();
 		ival = floor(val);
 		fval = (1000000000 * (val-ival));
 		ntime.tv_sec = ival;
 		ntime.tv_nsec = fval;
-	}
-	else {
-		ntime.tv_sec = atol(arg);
-		if (ntime.tv_sec <= 0)
+		if (ntime.tv_sec == 0 && ntime.tv_nsec == 0)
+			return EXIT_SUCCESS;	/* was 0.0 or underflowed */
+	} else {
+		ntime.tv_sec = strtol(arg, &temp, 10);
+		if (ntime.tv_sec < 0 || temp == arg || *temp != '\0')
+			usage();
+		if (ntime.tv_sec == 0)
 			return EXIT_SUCCESS;
 		ntime.tv_nsec = 0;
 	}
 
 	original = ntime.tv_sec;
+	if (ntime.tv_nsec != 0)
+		msg = " and a bit";
+	else
+		msg = "";
+
 	signal(SIGINFO, report_request);
 	while ((rv = nanosleep(&ntime, &ntime)) != 0) {
 		if (report_requested) {
-		/* Reporting does not bother with nanoseconds. */
-			warnx("about %d second(s) left out of the original %d",
-			(int)ntime.tv_sec, (int)original);
+			/* Reporting does not bother (much) with nanoseconds. */
+			if (ntime.tv_sec == 0)
+			    warnx("in the final moments of the original"
+			       " %ld%s second%s", (long)original, msg,
+			       original == 1 && *msg == '\0' ? "" : "s");
+			else
+			    warnx("between %ld and %ld seconds left"
+				" out of the original %ld%s",
+				(long)ntime.tv_sec, (long)ntime.tv_sec + 1,
+				(long)original, msg);
+
 			report_requested = 0;
 		} else
 			break;
