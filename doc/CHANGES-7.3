@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.41 2019/02/24 10:54:02 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.42 2019/03/07 16:49:40 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -471,4 +471,11 @@ sys/kern/kern_time.c				1.196
 
 	Avoid panic from setitimer(2) for CLOCK_MONOTONIC.
 	[mlelstv, ticket #1196]
+
+sys/dev/scsipi/files.scsipi			1.42
+sys/dev/scsipi/st.c				1.236 (patch), 1.237
+
+	PR kern/53949: fix file mark handling.
+	st(4): Fix (but disable by default) SUN compatibility mode.
+	[kardel, ticket #1682]
 
