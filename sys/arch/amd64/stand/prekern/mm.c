@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.22 2018/06/20 11:49:37 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.23 2019/03/07 13:26:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -44,9 +44,9 @@ static const uint8_t pads[4] = {
 #define MM_PROT_EXECUTE	0x02
 
 static const pt_entry_t protection_codes[3] = {
-	[MM_PROT_READ] = PG_RO | PG_NX,
+	[MM_PROT_READ] = PG_NX,
 	[MM_PROT_WRITE] = PG_RW | PG_NX,
-	[MM_PROT_EXECUTE] = PG_RO,
+	[MM_PROT_EXECUTE] = 0,
 	/* RWX does not exist */
 };
 

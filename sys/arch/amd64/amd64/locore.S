@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.178 2019/02/14 08:18:25 cherry Exp $	*/
+/*	$NetBSD: locore.S,v 1.179 2019/03/07 13:26:24 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -680,7 +680,7 @@ ENTRY(start)
 	movl	$RELOC(__rodata_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PG_V),%eax
 	fillkpt
 
 	/* Map the kernel rodata R. */
@@ -688,7 +688,7 @@ ENTRY(start)
 	movl	$RELOC(__data_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
+	orl	$(PG_V),%eax
 	fillkpt_nox
 
 	/* Map the kernel data+bss RW. */
