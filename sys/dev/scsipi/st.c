@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.226 2014/08/10 16:44:36 tls Exp $ */
+/*	$NetBSD: st.c,v 1.226.2.1 2019/03/07 16:49:10 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.226 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.226.2.1 2019/03/07 16:49:10 martin Exp $");
 
 #include "opt_scsi.h"
 
@@ -605,6 +605,30 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 		 */
 		if ((st->flags & ST_MOUNTED) || ST_MOUNT_DELAY == 0 ||
 		    (st->mt_key != SKEY_NOT_READY)) {
+			device_printf(st->sc_dev,
+				      "mount error (sense key=%d) - "
+				      "terminating mount session\n",
+				      st->mt_key);
+			/*
+			 * the following should not trigger unless
+			 * something serious happened while the device
+			 * was open (PREVENT MEDIUM REMOVAL in effect)
+			 */
+			if (st->flags & ST_WRITTEN &&
+			    st->mt_key == SKEY_UNIT_ATTENTION) {
+				/*
+				 * device / media state may have changed
+				 * refrain from writing missing file marks
+				 * onto potentially newly inserted/formatted
+				 * media (e. g. emergency EJECT/RESET/etc.)
+				 */
+				st->flags &= ~(ST_WRITTEN|ST_FM_WRITTEN);
+
+				device_printf(st->sc_dev,
+                                    "CAUTION: file marks/data may be missing"
+                                    " - ASC = 0x%02x, ASCQ = 0x%02x\n",
+					      st->asc, st->ascq);
+			}
 			goto bad;
 		}
 
@@ -713,15 +737,30 @@ stclose(dev_t dev, int flags, int mode, struct lwp *l)
 	 */
 
 	stxx = st->flags & (ST_WRITTEN | ST_FM_WRITTEN);
-	if (((flags & FWRITE) && stxx == ST_WRITTEN) ||
-	    ((flags & O_ACCMODE) == FWRITE && stxx == 0)) {
-		int nm;
+	if ((flags & FWRITE) != 0) {
+		int nm = 0;
+#ifdef ST_SUNCOMPAT
+		/*
+		 * on request only
+		 * original compat code has not been working
+		 * since ~1998
+		 */
+		if ((flags & O_ACCMODE) == FWRITE && (stxx == 0)) {
+			st->flags |= ST_WRITTEN;
+			SC_DEBUG(st->sc_periph, SCSIPI_DB3,
+				 ("SUN compatibility: write FM(s) at close\n"));
+	        }
+#endif
 		error = st_check_eod(st, FALSE, &nm, 0);
+		SC_DEBUG(st->sc_periph, SCSIPI_DB3,
+			 ("wrote %d FM(s) at close error=%d\n", nm, error));
 	}
 
 	/* Allow robots to eject tape if needed.  */
-	scsipi_prevent(periph, SPAMR_ALLOW,
-	    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
+	if (!(st->quirks & ST_Q_NOPREVENT)) {
+		scsipi_prevent(periph, SPAMR_ALLOW,
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
+	}
 
 	switch (STMODE(dev)) {
 	case NORMAL_MODE:
@@ -755,18 +794,28 @@ stclose(dev_t dev, int flags, int mode, struct lwp *l)
 			 * If both statements are true, then we backspace
 			 * one filemark.
 			 */
+			stxx &= ~ST_FM_WRITTEN;
 			stxx |= (st->flags & ST_2FM_AT_EOD);
 			if ((flags & FWRITE) != 0 &&
 			    (stxx == (ST_2FM_AT_EOD|ST_WRITTEN))) {
 				error = st_space(st, -1, SP_FILEMARKS, 0);
+				SC_DEBUG(st->sc_periph, SCSIPI_DB3, ("st_space(-1) error=%d\n", error));
+			} else {
+				SC_DEBUG(st->sc_periph, SCSIPI_DB3, ("no backspacing - flags = 0x%x, stxx=0x%x, st->flags=0x%x\n", flags, stxx, st->flags));
 			}
+		} else {
+			SC_DEBUG(st->sc_periph, SCSIPI_DB3, ("error %d from st_check_eod\n", error));
 		}
+	
 		break;
 	case EJECT_MODE:
 		st_unmount(st, EJECT);
 		break;
 	}
 
+	KASSERTMSG((st->flags & ST_WRITTEN) == 0,
+		   "pending ST_WRITTEN flag NOT cleared (flags=0x%x)", st->flags);
+	
 	scsipi_wait_drain(periph);
 
 	scsipi_adapter_delref(adapt);
@@ -894,7 +943,7 @@ st_unmount(struct st_softc *st, boolean eject)
 
 	/*
 	 * Section 9.3.3 of the SCSI specs states that a device shall return
-	 * the density value specified in the last succesfull MODE SELECT
+	 * the density value specified in the last successful MODE SELECT
 	 * after an unload operation, in case it is not able to
 	 * automatically determine the density of the new medium.
 	 *
@@ -1051,6 +1100,8 @@ ststrategy(struct buf *bp)
 
 	/* If offset is negative, error */
 	if (bp->b_blkno < 0) {
+		SC_DEBUG(periph, SCSIPI_DB3,
+			 ("EINVAL: ststrategy negative blockcount %" PRId64 "\n", bp->b_blkno));
 		bp->b_error = EINVAL;
 		goto abort;
 	}
@@ -1313,8 +1364,12 @@ stread(dev_t dev, struct uio *uio, int iomode)
 {
 	struct st_softc *st = device_lookup_private(&st_cd, STUNIT(dev));
 
-	return physio(ststrategy, NULL, dev, B_READ,
-	    st->sc_periph->periph_channel->chan_adapter->adapt_minphys, uio);
+	int r = physio(ststrategy, NULL, dev, B_READ,
+		       st->sc_periph->periph_channel->chan_adapter->adapt_minphys, uio);
+
+	SC_DEBUG(st->sc_periph, SCSIPI_DB1, ("[stread: result=%d]\n", r));
+
+	return r;
 }
 
 static int
@@ -1322,8 +1377,12 @@ stwrite(dev_t dev, struct uio *uio, int iomode)
 {
 	struct st_softc *st = device_lookup_private(&st_cd, STUNIT(dev));
 
-	return physio(ststrategy, NULL, dev, B_WRITE,
+	int r = physio(ststrategy, NULL, dev, B_WRITE,
 	    st->sc_periph->periph_channel->chan_adapter->adapt_minphys, uio);
+
+	SC_DEBUG(st->sc_periph, SCSIPI_DB1, ("[stwrite: result=%d]\n", r));
+
+	return r;
 }
 
 /*
@@ -1734,8 +1793,12 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 	 * It's hard to write a negative number of file marks.
 	 * Don't try.
 	 */
-	if (number < 0)
+	if (number < 0) {
+		SC_DEBUG(st->sc_periph, SCSIPI_DB3,
+			 ("EINVAL: st_write_filemarks not writing %d file marks\n", number));
 		return EINVAL;
+	}
+	
 	switch (number) {
 	case 0:		/* really a command to sync the drive's buffers */
 		break;
@@ -1930,8 +1993,11 @@ st_rdpos(struct st_softc *st, int hard, uint32_t *blkptr)
 			printf("%02x ", posdata[hard] & 0xff);
 		printf("\n");
 #endif
-		if (posdata[0] & 0x4)	/* Block Position Unknown */
+		if (posdata[0] & 0x4) {	/* Block Position Unknown */
+			SC_DEBUG(st->sc_periph, SCSIPI_DB3,
+				 ("EINVAL: strdpos block position unknown\n"));
 			error = EINVAL;
+		}	
 		else
 			*blkptr = _4btol(&posdata[4]);
 	}
