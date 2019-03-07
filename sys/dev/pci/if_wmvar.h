@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.33.6.4 2019/01/31 06:43:48 martin Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.33.6.5 2019/03/07 17:11:53 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -160,19 +160,41 @@ typedef enum {
 	WM_T_PCH_CNP,			/* (I219) */
 } wm_chip_type;
 
+/*
+ * Variations of internal or external PHYs
+ *
+ *  +- 82562 - 8254[17] - 8257[12] - 82566
+ *  |
+ * -+------------------------------------->
+ *
+ *
+ *	  +---------------------------- I347 ----- E1512 ---- E1543
+ *	  |					     |
+ *	  |	       +--------------------------- I210 - I211
+ *	  |	       |
+ *	  |	       |			+-------------+--- 82580 - I350
+ *	  |	       |			|	      |
+ *	  |	       |  +- 578 - 577 - 579 - I217 - I218 - I219
+ *	  |	       |  |
+ *   +- 56[34] -- 567 -- 573
+ *   |		(E1149) (E1111)
+ *   |
+ *  -+----------------------------------------------------------------------->
+ */
+
 typedef enum {
 	WMPHY_UNKNOWN = 0,
 	WMPHY_NONE,
-	WMPHY_M88,
-	WMPHY_IGP,
-	WMPHY_IGP_2,
-	WMPHY_GG82563,	/* 82563: 80003 */
+	WMPHY_M88,	/* 88E1000: 8254[34], E1011: 8254[056], E1111: 82573 */
+	WMPHY_IGP,	/* 8254[17] */
+	WMPHY_IGP_2,	/* 8257[12] */
+	WMPHY_GG82563,	/* 8256[34]: 80003 */
 	WMPHY_IGP_3,	/* 82566: 82575, 82576, ICH8, ICH9 */
-	WMPHY_IFE,	/* 82562 */
+	WMPHY_IFE,	/* 82562: ICH8 ICH9 */
 	WMPHY_BM,	/* 82567: ICH8 ICH9 ICH10 */
-	WMPHY_82577,	/* 82577: PCH */
 	WMPHY_82578,	/* 82578: PCH */
-	WMPHY_82579,	/* 82579: PCH2 */
+	WMPHY_82577,	/* 82577: PCH (NOTE: functionality newer than 82578) */
+	WMPHY_82579,	/* 82579 : PCH2 */
 	WMPHY_I217,	/* I217:  _LPT, I218: _LPT, I219: _SPT _CNP */
 	WMPHY_82580,	/* 82580: 82580 or I350 */
 	WMPHY_VF,
