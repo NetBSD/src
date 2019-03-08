@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpuser.3,v 1.1 2014/11/09 17:39:38 pooka Exp $
+.\"     $NetBSD: rumpuser.3,v 1.2 2019/03/08 08:12:39 msaitoh Exp $
 .\"
 .\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
@@ -758,7 +758,7 @@ mutex, the mutex is acquired first.
 In the final case the order is implementation-defined.
 .Sh RETURN VALUES
 All routines which return an integer return an errno value.
-The hypervisor must translate the value to the the native errno
+The hypervisor must translate the value to the native errno
 namespace used by the rump kernel.
 Routines which do not return an integer may never fail.
 .Sh SEE ALSO
