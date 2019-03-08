@@ -1,4 +1,4 @@
-/* $NetBSD: drm_gem_cma_helper.c,v 1.6 2018/08/27 15:27:43 riastradh Exp $ */
+/* $NetBSD: drm_gem_cma_helper.c,v 1.7 2019/03/08 02:53:22 mrg Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.6 2018/08/27 15:27:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.7 2019/03/08 02:53:22 mrg Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_gem_cma_helper.h>
@@ -194,7 +194,7 @@ drm_gem_cma_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 	vm_prot_t mapprot;
 
 	if (UVM_ET_ISCOPYONWRITE(entry))
-		return -EIO;
+		return EIO;
 
 	curr_offset = entry->offset + (vaddr - entry->start);
 	curr_va = vaddr;
@@ -210,7 +210,7 @@ drm_gem_cma_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		mdpgno = bus_dmamem_mmap(obj->dmat, obj->dmasegs, 1,
 		    curr_offset, access_type, BUS_DMA_PREFETCHABLE);
 		if (mdpgno == -1) {
-			retval = -EIO;
+			retval = EIO;
 			break;
 		}
 		paddr = pmap_phys_address(mdpgno);
@@ -222,7 +222,7 @@ drm_gem_cma_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 			pmap_update(ufi->orig_map->pmap);
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 			uvm_wait("drm_gem_cma_fault");
-			return -ERESTART;
+			return ERESTART;
 		}
 	}
 
