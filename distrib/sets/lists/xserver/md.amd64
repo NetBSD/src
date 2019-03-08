@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.105 2019/01/22 03:11:32 kamil Exp $
+# $NetBSD: md.amd64,v 1.106 2019/03/08 12:18:41 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -48,7 +48,7 @@
 ./usr/X11R7/lib/modules/dri/unichrome_dri.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/unichrome_dri.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/amdgpu_drv.so		-unknown-	xorg,xorg_server_ver=120
-./usr/X11R7/lib/modules/drivers/amdgpu_drv.so.18		-unknown-	xorg,xorg_server_ver=120
+./usr/X11R7/lib/modules/drivers/amdgpu_drv.so.19	-unknown-	xorg,xorg_server_ver=120
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg,xorg_server_ver=110

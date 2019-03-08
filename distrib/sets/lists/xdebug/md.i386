@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.39 2019/01/10 23:10:23 uwe Exp $
+# $NetBSD: md.i386,v 1.40 2019/03/08 12:18:41 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg
@@ -84,7 +84,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/tdfx_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/trident_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/unichrome_dri.so.0.debug	-unknown-		xorg,debug,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/amdgpu_drv.so.18.debug	-unknown-		xorg,debug,xorg_server_ver=120
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/amdgpu_drv.so.19.debug	-unknown-		xorg,debug,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=120,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=110
