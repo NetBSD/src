@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.146 2019/03/08 05:26:04 msaitoh Exp $
+$NetBSD: miidevs,v 1.147 2019/03/08 07:08:49 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -91,35 +91,27 @@ oui NATSEMI			0x080017	National Semiconductor
 oui TI				0x080028	Texas Instruments
 oui BROADCOM4			0x18c086	Broadcom Corporation
 
-/* Some Intel 82553's use an alternative OUI. */
-oui xxINTEL			0x001f00	Intel
-
-/* Some VIA 6122's use an alternative OUI. */
-oui xxCICADA			0x00c08f	Cicada Semiconductor
-
-/* bad bitorder (bits "g" and "h" (= MSBs byte 1) lost) */
+/* Unregisterd or wrong OUI */
+oui yyREALTEK			0x000004	Realtek
 oui yyAMD			0x000058	Advanced Micro Devices
-oui xxBROADCOM			0x000818	Broadcom Corporation
-oui xxBROADCOM_ALT1		0x0050ef	Broadcom Corporation
-oui xxDAVICOM			0x000676	Davicom Semiconductor
-oui yyINTEL			0x005500	Intel
-oui xxMARVELL			0x000ac2	Marvell Semiconductor
 oui xxMYSON			0x00032d	Myson Technology
-oui xxNATSEMI			0x1000e8	National Semiconductor
-oui xxQUALSEMI			0x00068a	Quality Semiconductor
 oui xxTSC			0x00039c	TDK Semiconductor
-
-/* bad byteorder (bits "q" and "r" (= LSBs byte 3) lost) */
+oui xxASIX			0x000674	Asix Semiconductor
+oui xxDAVICOM			0x000676	Davicom Semiconductor
+oui xxQUALSEMI			0x00068a	Quality Semiconductor
+oui xxREALTEK			0x000732	Realtek
+oui xxBROADCOM			0x000818	Broadcom Corporation
+oui xxPMCSIERRA			0x0009c0	PMC-Sierra
+oui xxMARVELL			0x000ac2	Marvell Semiconductor
+oui xxINTEL			0x001f00	Intel
+oui xxBROADCOM_ALT1		0x0050ef	Broadcom Corporation
+oui yyINTEL			0x005500	Intel
+oui xxPMCSIERRA2		0x009057	PMC-Sierra
+oui xxCICADA			0x00c08f	Cicada Semiconductor
+oui xxNATSEMI			0x1000e8	National Semiconductor
 oui xxLEVEL1			0x782000	Level 1
 oui xxXAQTI			0xace000	XaQti Corp.
 
-/* Don't know what's going on here. */
-oui xxASIX			0x000674	Asix Semiconductor
-oui xxPMCSIERRA			0x0009c0	PMC-Sierra
-oui xxPMCSIERRA2		0x009057	PMC-Sierra
-
-oui xxREALTEK			0x000732	Realtek
-oui yyREALTEK			0x000004	Realtek
 /*
  * List of known models.  Grouped by oui.
  */
