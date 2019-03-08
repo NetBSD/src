@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1366 2019/03/05 03:47:57 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1367 2019/03/08 03:44:19 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4698,8 +4698,18 @@ product INTEL E5_UNICAST	0x3ce8	E5 Unicast
 product INTEL E5_SAD_1		0x3cf4	E5 SAD
 product INTEL E5_BROADCAST	0x3cf5	E5 Broadcast
 product INTEL E5_SAD_2		0x3cf6	E5 SAD
+product INTEL XEONE_S_D_HOST_DRAM_2C 0x3e0f Xeon E (S, Desktop) Host Bridge, DRAM
+product INTEL XEONE_H_HOST_DRAM_4C 0x3e10 Xeon E (H) Host Bridge, DRAM
+product INTEL XEONE_S_W_HOST_DRAM_4C 0x3e18 Xeon E (S, WS) Host Bridge, DRAM
 product INTEL CORE8G_S_HOST_DRAM_4C 0x3e1f Core 8G (S) Host Bridge, DRAM
+product INTEL CORE8G_U_HOST_DRAM_4C 0x3e34 Core 8G (U) Host Bridge, DRAM
+product INTEL CORE8G_U_HOST_DRAM_2C 0x3e35 Core 8G (U) Host Bridge, DRAM
 product INTEL CORE8G_S_HOST_DRAM_6C 0x3ec2 Core 8G (S) Host Bridge, DRAM
+product INTEL XEONE_S_D_HOST_DRAM_8C 0x3e30 Xeon E (S, Desktop) Host Bridge, DRAM
+product INTEL XEONE_S_W_HOST_DRAM_8C 0x3e31 Xeon E (S, WS) Host Bridge, DRAM
+product INTEL XEONE_S_S_HOST_DRAM_8C 0x3e32 Xeon E (S, Server) Host Bridge, DRAM
+product INTEL XEONE_S_S_HOST_DRAM_4C 0x3e33 Xeon E (S, Server) Host Bridge, DRAM
+product INTEL XEONE_H_HOST_DRAM_6C 0x3e4c Xeon E (H) Host Bridge, DRAM
 product INTEL CORE8G_PCIE_X16	0x3e81 Core 8G (S) PCIe x16
 product INTEL CORE8G_PCIE_X8	0x3e85 Core 8G (S) PCIe x16
 product INTEL CORE8G_PCIE_X4	0x3e89 Core 8G (S) PCIe x16
@@ -4707,8 +4717,14 @@ product INTEL COFLK_IGD_1	0x3e90	UHD Graphics 610
 product INTEL COFLK_IGD_2	0x3e91	UHD Graphics 630
 product INTEL COFLK_IGD_3	0x3e92	UHD Graphics 630
 product INTEL COFLK_IGD_4	0x3e93	UHD Graphics 610
+product INTEL XEONE_IGD		0x3e96	UHD Graphics P630
 product INTEL COFLK_IGD_5	0x3e9b	UHD Graphics 630
 product INTEL COFLK_IGD_6	0x3ea5	Iris Plus Graphics 655
+product INTEL XEONE_S_D_HOST_DRAM_6C 0x3ec2 Xeon E (S, Desktop) Host Bridge, DRAM
+product INTEL XEONE_S_W_HOST_DRAM_6C 0x3ec6 Xeon E (S, WS) Host Bridge, DRAM
+product INTEL XEONE_S_S_HOST_DRAM_6C 0x3eca Xeon E (S, Server) Host Bridge, DRAM
+product INTEL XEONE_U_HOST_DRAM_2C 0x3ecc Xeon E (U) Host Bridge, DRAM
+product INTEL XEONE_U_HOST_DRAM_4C 0x3ed0 Xeon E (U) Host Bridge, DRAM
 product INTEL 5400_HB		0x4000	5400 Host
 product INTEL 5400A_HB		0x4001	5400A Host
 product INTEL 5400B_HB		0x4003	5400B Host
