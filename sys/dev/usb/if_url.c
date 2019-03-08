@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.61 2019/01/22 03:42:28 msaitoh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.62 2019/03/08 03:05:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.61 2019/01/22 03:42:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.62 2019/03/08 03:05:15 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -325,6 +325,9 @@ url_attach(device_t parent, device_t self, void *aux)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, sc->sc_dev);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
  bad:
@@ -345,6 +348,8 @@ url_detach(device_t self, int flags)
 	/* Detached before attached finished */
 	if (!sc->sc_attached)
 		return 0;
+
+	pmf_device_deregister(self);
 
 	/*
 	 * XXX Halting callout guarantees no more tick tasks.  What
