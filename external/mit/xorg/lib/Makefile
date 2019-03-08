@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2019/03/08 09:58:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.45 2019/03/08 11:14:49 mrg Exp $
 
 # build libraries for xorg
 
@@ -17,7 +17,6 @@ SUBDIR+=libdrm_radeon pixman
 SUBDIR+=xkeyboard-config
 .endif
 SUBDIR+=libxcb \
-#SUBDIR+=../../../bsd/libuuid_ul/lib/libuuid_ul \
 	.WAIT
 .if !defined(MLIBDIR)
 SUBDIR+=dri7 dri gallium
