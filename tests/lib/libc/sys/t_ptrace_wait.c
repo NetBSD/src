@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.99 2019/03/02 01:01:20 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.100 2019/03/08 23:35:01 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.99 2019/03/02 01:01:20 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.100 2019/03/08 23:35:01 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -534,8 +534,6 @@ traceme_signalmasked_crash(int sig)
 
 	memset(&info, 0, sizeof(info));
 
-	atf_tc_expect_fail("Unexpected sigmask reset on crash under debugger");
-
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -710,8 +708,6 @@ traceme_signalignored_crash(int sig)
 	if (sig == SIGILL)
 		atf_tc_skip("PTRACE_ILLEGAL_ASM not defined");
 #endif
-
-	atf_tc_expect_fail("Unexpected sigmask reset on crash under debugger");
 
 	memset(&info, 0, sizeof(info));
 
@@ -1934,10 +1930,6 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 #endif
 
 	memset(&info, 0, sizeof(info));
-
-	if (masked || ignored)
-		atf_tc_expect_fail("Unexpected sigmask reset on crash under "
-		    "debugger");
 
 	DPRINTF("Spawn tracee\n");
 	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
@@ -3833,10 +3825,6 @@ ptrace_step(int N, int setstep, bool masked, bool ignored)
 	/* PT_STEP not supported on arm 32-bit */
 	atf_tc_expect_fail("PR kern/52119");
 #endif
-
-	if (masked || ignored)
-		atf_tc_expect_fail("Unexpected sigmask reset on crash under "
-		    "debugger");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
