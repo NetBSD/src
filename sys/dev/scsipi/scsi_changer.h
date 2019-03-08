@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_changer.h,v 1.20 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.21 2019/03/08 08:35:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1999 Jason R. Thorpe <thorpej@and.com>
@@ -368,7 +368,7 @@ struct page_device_capabilities {
  * Some of these fields can be a little confusing, so an explanation
  * is in order.
  *
- * Each component within a a medium changer apparatus is called an
+ * Each component within a medium changer apparatus is called an
  * "element".
  *
  * The "medium transport element address" is the address of the first
