@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2018/05/09 08:13:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2019/03/08 09:58:24 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -12,11 +12,12 @@ EXPAT=		${NETBSDSRCDIR}/external/mit/expat/dist
 SRCS.fc-cache=	fc-cache.c
 
 .PATH:	${FONTCONFIG}/src
-SRCS.fontconfig=	fcatomic.c fcblanks.c fccache.c fccfg.c \
+SRCS.fontconfig=	fcatomic.c fccache.c fccfg.c \
 		fccharset.c fcdbg.c fccompat.c fcdefault.c fcdir.c \
-		fcfreetype.c fcfs.c fcinit.c fclang.c \
+		fcfreetype.c fcfs.c fchash.c fcinit.c fclang.c \
 		fclist.c fcmatch.c fcmatrix.c fcname.c fcobjs.c \
-		fcpat.c fcrange.c fcserialize.c fcstat.c fcstr.c \
+		fcpat.c fcptrlist.c \
+		fcrange.c fcserialize.c fcstat.c fcstr.c \
 		fcweight.c fcxml.c \
 		ftglue.c
 
@@ -91,6 +92,7 @@ SRCS=	${SRCS.fc-cache} ${SRCS.fontconfig} ${SRCS.freetype} ${SRCS.expat}
 # XXX ALIGNOF_VOID_P=8 not valid for 32 bit, but probably ok?
 HOST_CPPFLAGS=	-DFONTCONFIG_PATH='"${DESTDIR}/etc/X11/fonts"' \
 		-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"' \
+		-DFC_TEMPLATEDIR='"${DESTDIR}${X11FONTDIR}"' \
 		-DFC_CACHEDIR='"${DESTDIR}/var/cache/fontconfig"' \
 		-DFC_GPERF_SIZE_T=unsigned \
 		-DFC_NO_MT=1 \
@@ -114,7 +116,10 @@ HOST_CPPFLAGS+=	-I${FONTCONFIG} -I${FREETYPE} \
 		-I${FREETYPE}/include -I${FREETYPE}/include/freetype \
 		-I${EXPAT}/lib \
 		-I${FONTCONFIG}/../include \
-		-I${DESTDIR}${X11INCDIR} -I.
+		-I${DESTDIR}${X11INCDIR} -I. \
+		-I${FONTCONFIG}/../include
+
+HOST_CPPFLAGS+=	-DTOOL_FCCACHE
 
 LDADD=	-lz
 #LDADD+=	-lbz2

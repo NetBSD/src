@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2018/08/30 05:39:21 maya Exp $
+#	$NetBSD: Makefile,v 1.7 2019/03/08 09:58:24 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,13 +7,14 @@ FONTCONFIG_LINKS= \
 	10-hinting-slight.conf \
 	10-scale-bitmap-fonts.conf \
 	20-unhint-small-vera.conf \
-	30-urw-aliases.conf \
 	30-metric-aliases.conf \
 	40-nonlatin.conf \
+	45-generic.conf \
 	45-latin.conf \
 	49-sansserif.conf \
 	50-user.conf \
 	51-local.conf \
+	60-generic.conf \
 	60-latin.conf \
 	65-fonts-persian.conf \
 	65-nonlatin.conf \
@@ -30,3 +31,5 @@ CONFIGSYMLINKS+=${CONFAVAILDIR}/${_conffile} ${CONFDIR}/${_conffile}
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
+
+# obsolete 30-urw-aliases.conf 
