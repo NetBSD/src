@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpuser.3,v 1.2 2019/03/08 08:12:39 msaitoh Exp $
+.\"     $NetBSD: rumpuser.3,v 1.3 2019/03/08 08:24:41 wiz Exp $
 .\"
 .\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
@@ -254,7 +254,6 @@ opaque arg that must be passed to
 These routines perform scatter-gather I/O which is not
 block I/O by nature and therefore cannot be handled by
 .Fn rumpuser_bio .
-.Pp
 .Bl -tag -width "xenum_rumpclock"
 .It Fa fd
 file descriptor to perform I/O on
@@ -294,7 +293,6 @@ Synchronizes
 .Fa fd
 with respect to backing storage.
 The other arguments are:
-.Pp
 .Bl -tag -width "xenum_rumpclock"
 .It Fa flags
 controls how synchronization happens.
@@ -311,7 +309,6 @@ Flush cached writes.
 .Pp
 The following additional parameters may be passed in
 .Fa flags :
-.Pp
 .Bl -tag -width "XRUMPUSER_SYNCFD_BARRIER"
 .It Dv RUMPUSER_SYNCFD_BARRIER
 Issue a barrier.
@@ -338,7 +335,6 @@ retain semantics.
 .Pp
 .Ft int
 .Fn rumpuser_clock_gettime "int enum_rumpclock" "int64_t *sec" "long *nsec"
-.Pp
 .Bl -tag -width "xenum_rumpclock"
 .It Fa enum_rumpclock
 specifies the clock type.
@@ -429,7 +425,6 @@ on the console.
 .Pp
 Do output based on printf-like parameters.
 .Ss Signals
-.Pp
 A rump kernel should be able to send signals to client programs
 due to some standard interfaces including signal delivery in their
 specifications.
@@ -444,7 +439,6 @@ process containing the rump kernel.
 .Pp
 .Ft int
 .Fn rumpuser_kill "int64_t pid" "int sig"
-.Pp
 .Bl -tag -width "xenum_rumpclock"
 .It Fa pid
 The pid of the rump kernel process that the signal is directed to.
@@ -456,7 +450,9 @@ may also be specified to indicate no hint.
 This value will be removed in a future version of the hypercall interface.
 .It Fa sig
 Number of signal to raise.
-The value is in NetBSD signal number namespace.
+The value is in
+.Nx
+signal number namespace.
 In case the host has a native representation for signals, the
 value should be translated before the signal is raised.
 In case there is no mapping between
@@ -476,7 +472,6 @@ protocol provides equivalent functionality for remote clients.
 .Ss Random pool
 .Ft int
 .Fn rumpuser_getrandom "void *buf" "size_t buflen" "int flags" "size_t *retp"
-.Pp
 .Bl -tag -width "xenum_rumpclock"
 .It Fa buf
 buffer that the randomness is written to
