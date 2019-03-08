@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.59 2019/02/28 08:28:21 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.60 2019/03/08 03:12:28 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -198,6 +198,16 @@ typedef struct bozoprefs_t {
 	char		**name;		/* names of each entry */
 	char		**value;	/* values for the name entries */
 } bozoprefs_t;
+
+/* sun2 has a tiny VA range */
+#ifdef __mc68010__
+#ifndef BOZO_WRSZ
+#define BOZO_WRSZ	(16 * 1024)
+#endif
+#ifndef BOZO_MMAPSZ
+#define BOZO_MMAPSZ	(BOZO_WRSZ * 4)
+#endif
+#endif
 
 /* by default write in upto 64KiB chunks, and mmap in upto 64MiB chunks */
 #ifndef BOZO_WRSZ
