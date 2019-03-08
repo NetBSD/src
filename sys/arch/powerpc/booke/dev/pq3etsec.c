@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.40 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.41 2019/03/08 08:12:39 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.40 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.41 2019/03/08 08:12:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2528,7 +2528,7 @@ pq3etsec_soft_intr(void *arg)
 	    || pq3etsec_txq_active_p(sc, &sc->sc_txq)) {
 		/*
 		 * Let's do what we came here for.  Consume transmitted
-		 * packets off the the transmit ring.
+		 * packets off the transmit ring.
 		 */
 		if (!pq3etsec_txq_consume(sc, &sc->sc_txq)
 		    || !pq3etsec_txq_enqueue(sc, &sc->sc_txq)) {

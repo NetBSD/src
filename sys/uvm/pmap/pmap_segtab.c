@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.6 2017/05/12 12:18:37 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.7 2019/03/08 08:12:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.6 2017/05/12 12:18:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.7 2019/03/08 08:12:40 msaitoh Exp $");
 
 /*
  *	Manages physical address maps.
@@ -193,7 +193,7 @@ static void
 pmap_segtab_free(pmap_segtab_t *stp)
 {
 	/*
-	 * Insert the the segtab into the segtab freelist.
+	 * Insert the segtab into the segtab freelist.
 	 */
 	mutex_spin_enter(&pmap_segtab_lock);
 	stp->seg_seg[0] = pmap_segtab_info.free_segtab;
