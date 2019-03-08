@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.32 2019/01/22 03:42:25 msaitoh Exp $ */
+/* $Id: if_ae.c,v 1.33 2019/03/08 08:35:58 msaitoh Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -91,14 +91,14 @@
  *    for TCP/IP.  (Aligning IP headers on a word.)
  *
  * 2) There is stuff in original tulip to shut down the device when reacting
- *    to a a change in link status.  Is that needed.
+ *    to a change in link status.  Is that needed.
  *
  * 3) Test with variety of 10/100 HDX/FDX scenarios.
  *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.32 2019/01/22 03:42:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.33 2019/03/08 08:35:58 msaitoh Exp $");
 
 
 #include <sys/param.h>

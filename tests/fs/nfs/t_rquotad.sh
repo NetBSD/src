@@ -1,4 +1,4 @@
-# $NetBSD: t_rquotad.sh,v 1.5 2016/08/10 23:25:39 kre Exp $ 
+# $NetBSD: t_rquotad.sh,v 1.6 2019/03/08 08:35:58 msaitoh Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -54,7 +54,7 @@ get_nfs_quota()
 		;;
 	esac
 
-#start a a nfs server
+#start a nfs server
 
 	atf_check -s exit:0 rump_server -lrumpvfs -lrumpdev -lrumpnet   \
 	    -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6          \
