@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.144 2019/03/07 03:27:14 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.145 2019/03/08 05:26:21 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.145 2019/03/07 03:26:53 msaitoh Exp
+ *	NetBSD: miidevs,v 1.146 2019/03/08 05:26:04 msaitoh Exp
  */
 
 /*-
@@ -380,8 +380,8 @@
 #define	MII_STR_xxMARVELL_I210	"I210 10/100/1000 media interface"
 #define	MII_MODEL_xxMARVELL_I82563	0x000a
 #define	MII_STR_xxMARVELL_I82563	"i82563 10/100/1000 media interface"
-#define	MII_MODEL_ATHEROS_I82578	0x0004
-#define	MII_STR_ATHEROS_I82578	"Intel 82578 10/100/1000 media interface"
+#define	MII_MODEL_ATTANSIC_I82578	0x0004
+#define	MII_STR_ATTANSIC_I82578	"Intel 82578 10/100/1000 media interface"
 
 
 /* JMicron PHYs */
