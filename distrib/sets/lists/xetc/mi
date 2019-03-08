@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.31 2018/08/30 05:39:21 maya Exp $
+# $NetBSD: mi,v 1.32 2019/03/08 09:58:23 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -66,10 +66,12 @@
 ./etc/fonts/conf.d/30-metric-aliases.conf		-unknown-	xorg
 ./etc/fonts/conf.d/30-urw-aliases.conf			-unknown-	xorg
 ./etc/fonts/conf.d/40-nonlatin.conf			-unknown-	xorg
+./etc/fonts/conf.d/45-generic.conf			-unknown-	xorg
 ./etc/fonts/conf.d/45-latin.conf			-unknown-	xorg
 ./etc/fonts/conf.d/49-sansserif.conf			-unknown-	xorg
 ./etc/fonts/conf.d/50-user.conf				-unknown-	xorg
 ./etc/fonts/conf.d/51-local.conf			-unknown-	xorg
+./etc/fonts/conf.d/60-generic.conf			-unknown-	xorg
 ./etc/fonts/conf.d/60-latin.conf			-unknown-	xorg
 ./etc/fonts/conf.d/65-fonts-persian.conf		-unknown-	xorg
 ./etc/fonts/conf.d/65-nonlatin.conf			-unknown-	xorg

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.28 2018/03/11 09:43:39 mrg Exp $
+# $NetBSD: mi,v 1.29 2019/03/08 09:58:23 mrg Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						-unknown-	debuglib,xorg,compatx11dir
 ./usr/X11R7/lib/libFS_g.a				-unknown-	debuglib,xorg,compatx11file
@@ -118,6 +118,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/editres.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fc-cache.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fc-cat.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/fc-conflist.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fc-list.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fc-match.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fc-pattern.debug	-unknown-	debug,xorg

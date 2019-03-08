@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.147 2019/03/03 17:52:32 maya Exp $
+# $NetBSD: mi,v 1.148 2019/03/08 09:58:23 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -21,6 +21,7 @@
 ./usr/X11R7/bin/editres					-unknown-	xorg
 ./usr/X11R7/bin/fc-cache				-unknown-	xorg
 ./usr/X11R7/bin/fc-cat					-unknown-	xorg
+./usr/X11R7/bin/fc-conflist				-unknown-	xorg
 ./usr/X11R7/bin/fc-list					-unknown-	xorg
 ./usr/X11R7/bin/fc-match				-unknown-	xorg
 ./usr/X11R7/bin/fc-pattern				-unknown-	xorg
@@ -1272,6 +1273,7 @@
 ./usr/X11R7/man/cat1/editres.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-cache.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-cat.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/fc-conflist.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-list.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-match.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-pattern.0			-unknown-	.cat,xorg
@@ -1416,6 +1418,7 @@
 ./usr/X11R7/man/html1/editres.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-cache.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-cat.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/fc-conflist.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-list.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-match.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-pattern.html			-unknown-	html,xorg
@@ -1560,6 +1563,7 @@
 ./usr/X11R7/man/man1/editres.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-cache.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-cat.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/fc-conflist.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-list.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-match.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-pattern.1			-unknown-	.man,xorg
