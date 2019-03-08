@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.32 2019/03/08 09:58:23 mrg Exp $
+# $NetBSD: mi,v 1.33 2019/03/08 12:21:03 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -44,7 +44,7 @@
 ./etc/fonts/conf.avail/20-unhint-small-vera.conf	-unknown-	xorg
 ./etc/fonts/conf.avail/25-unhint-nonlatin.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/30-metric-aliases.conf		-unknown-	xorg
-./etc/fonts/conf.avail/30-urw-aliases.conf		-unknown-	xorg
+./etc/fonts/conf.avail/30-urw-aliases.conf		-unknown-	obsolete
 ./etc/fonts/conf.avail/40-nonlatin.conf			-unknown-	xorg
 ./etc/fonts/conf.avail/45-latin.conf			-unknown-	xorg
 ./etc/fonts/conf.avail/49-sansserif.conf		-unknown-	xorg
@@ -64,7 +64,7 @@
 ./etc/fonts/conf.d/20-fix-globaladvance.conf		-unknown-	obsolete
 ./etc/fonts/conf.d/20-unhint-small-vera.conf		-unknown-	xorg
 ./etc/fonts/conf.d/30-metric-aliases.conf		-unknown-	xorg
-./etc/fonts/conf.d/30-urw-aliases.conf			-unknown-	xorg
+./etc/fonts/conf.d/30-urw-aliases.conf			-unknown-	obsolete
 ./etc/fonts/conf.d/40-nonlatin.conf			-unknown-	xorg
 ./etc/fonts/conf.d/45-generic.conf			-unknown-	xorg
 ./etc/fonts/conf.d/45-latin.conf			-unknown-	xorg
