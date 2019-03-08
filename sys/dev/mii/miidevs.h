@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.145 2019/03/08 05:26:21 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.146 2019/03/08 07:10:54 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.146 2019/03/08 05:26:04 msaitoh Exp
+ *	NetBSD: miidevs,v 1.148 2019/03/08 07:10:26 msaitoh Exp
  */
 
 /*-
@@ -98,35 +98,28 @@
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
 #define	MII_OUI_BROADCOM4	0x18c086	/* Broadcom Corporation */
 
-/* Some Intel 82553's use an alternative OUI. */
-#define	MII_OUI_xxINTEL	0x001f00	/* Intel */
-
-/* Some VIA 6122's use an alternative OUI. */
-#define	MII_OUI_xxCICADA	0x00c08f	/* Cicada Semiconductor */
-
-/* bad bitorder (bits "g" and "h" (= MSBs byte 1) lost) */
+/* Unregisterd or wrong OUI */
+#define	MII_OUI_yyREALTEK	0x000004	/* Realtek */
 #define	MII_OUI_yyAMD	0x000058	/* Advanced Micro Devices */
-#define	MII_OUI_xxBROADCOM	0x000818	/* Broadcom Corporation */
-#define	MII_OUI_xxBROADCOM_ALT1	0x0050ef	/* Broadcom Corporation */
-#define	MII_OUI_xxDAVICOM	0x000676	/* Davicom Semiconductor */
-#define	MII_OUI_yyINTEL	0x005500	/* Intel */
-#define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
 #define	MII_OUI_xxMYSON	0x00032d	/* Myson Technology */
-#define	MII_OUI_xxNATSEMI	0x1000e8	/* National Semiconductor */
-#define	MII_OUI_xxQUALSEMI	0x00068a	/* Quality Semiconductor */
 #define	MII_OUI_xxTSC	0x00039c	/* TDK Semiconductor */
-
-/* bad byteorder (bits "q" and "r" (= LSBs byte 3) lost) */
+#define	MII_OUI_xxASIX	0x000674	/* Asix Semiconductor */
+#define	MII_OUI_xxDAVICOM	0x000676	/* Davicom Semiconductor */
+#define	MII_OUI_xxQUALSEMI	0x00068a	/* Quality Semiconductor */
+#define	MII_OUI_xxREALTEK	0x000732	/* Realtek */
+#define	MII_OUI_xxBROADCOM	0x000818	/* Broadcom Corporation */
+#define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
+#define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
+#define	MII_OUI_xxINTEL	0x001f00	/* Intel */
+#define	MII_OUI_xxBROADCOM_ALT1	0x0050ef	/* Broadcom Corporation */
+#define	MII_OUI_yyINTEL	0x005500	/* Intel */
+#define	MII_OUI_yyASIX	0x007063	/* Asix Semiconductor */
+#define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
+#define	MII_OUI_xxCICADA	0x00c08f	/* Cicada Semiconductor */
+#define	MII_OUI_xxNATSEMI	0x1000e8	/* National Semiconductor */
 #define	MII_OUI_xxLEVEL1	0x782000	/* Level 1 */
 #define	MII_OUI_xxXAQTI	0xace000	/* XaQti Corp. */
 
-/* Don't know what's going on here. */
-#define	MII_OUI_xxASIX	0x000674	/* Asix Semiconductor */
-#define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
-#define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
-
-#define	MII_OUI_xxREALTEK	0x000732	/* Realtek */
-#define	MII_OUI_yyREALTEK	0x000004	/* Realtek */
 /*
  * List of known models.  Grouped by oui.
  */
@@ -140,6 +133,12 @@
 /* Asix semiconductor PHYs */
 #define	MII_MODEL_xxASIX_AX88X9X	0x0031
 #define	MII_STR_xxASIX_AX88X9X	"Ax88x9x internal PHY"
+#define	MII_MODEL_yyASIX_AX88772	0x0001
+#define	MII_STR_yyASIX_AX88772	"AX88772 internal PHY"
+#define	MII_MODEL_yyASIX_AX88772A	0x0006
+#define	MII_STR_yyASIX_AX88772A	"AX88772A internal PHY"
+#define	MII_MODEL_yyASIX_AX88772B	0x0008
+#define	MII_STR_yyASIX_AX88772B	"AX88772B internal PHY"
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */
