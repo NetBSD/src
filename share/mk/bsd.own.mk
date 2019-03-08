@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1107 2019/03/04 21:19:58 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1108 2019/03/08 20:35:10 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -172,7 +172,11 @@ EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
 # What version of jemalloc we use (100 is the one
 # built-in to libc from 2005 (pre version 3).
 #
+.if ${MACHINE_CPU} == "x86_64"
+HAVE_JEMALLOC?=		510
+.else
 HAVE_JEMALLOC?=		100
+.endif
 
 .if empty(.MAKEFLAGS:tW:M*-V .OBJDIR*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
