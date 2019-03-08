@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.34 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.35 2019/03/08 09:59:15 msaitoh Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.34 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.35 2019/03/08 09:59:15 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,16 +61,15 @@ struct rlphy_softc {
 	int sc_rtl8201;
 };
 
-int	rlphymatch(device_t, cfdata_t, void *);
-void	rlphyattach(device_t, device_t, void *);
+static int	rlphymatch(device_t, cfdata_t, void *);
+static void	rlphyattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(rlphy, sizeof(struct rlphy_softc),
     rlphymatch, rlphyattach, mii_phy_detach, mii_phy_activate);
 
-int	rlphy_service(struct mii_softc *, struct mii_data *, int);
-void	rlphy_status(struct mii_softc *);
-
-static void rlphy_reset(struct mii_softc *);
+static int	rlphy_service(struct mii_softc *, struct mii_data *, int);
+static void	rlphy_status(struct mii_softc *);
+static void	rlphy_reset(struct mii_softc *);
 
 const struct mii_phy_funcs rlphy_funcs = {
 	rlphy_service, rlphy_status, rlphy_reset,
@@ -83,7 +82,7 @@ static const struct mii_phydesc rlphys[] = {
 	MII_PHY_END,
 };
 
-int
+static int
 rlphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -109,7 +108,7 @@ rlphymatch(device_t parent, cfdata_t match, void *aux)
 	return 5;
 }
 
-void
+static void
 rlphyattach(device_t parent, device_t self, void *aux)
 {
 	struct rlphy_softc *rsc = device_private(self);
@@ -148,7 +147,7 @@ rlphyattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -205,7 +204,7 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 rlphy_status(struct mii_softc *sc)
 {
 	struct rlphy_softc *rsc = (void *)sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.41 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.42 2019/03/08 09:59:15 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.41 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.42 2019/03/08 09:59:15 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ nsphyter_status(struct mii_softc *sc)
 		mii->mii_media_active = ife->ifm_media;
 }
 
-void
+static void
 nsphyter_reset(struct mii_softc *sc)
 {
 	int i;
