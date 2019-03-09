@@ -1,4 +1,4 @@
-/* $NetBSD: SYS.h,v 1.2 2019/03/09 02:33:02 christos Exp $ */
+/* $NetBSD: SYS.h,v 1.3 2019/03/09 02:50:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -43,7 +43,9 @@
 	SYSTRAP(y)
 
 #define _INVOKE_CERROR()						\
-	b	_C_LABEL(__cerror)
+	b.cc	1f;							\
+	b	_C_LABEL(__cerror);					\
+1:
 
 #define _SYSCALL(x, y)							\
 	_SYSCALL_NOERROR(x,y);						\
