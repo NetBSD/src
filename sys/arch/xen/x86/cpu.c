@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.128 2019/02/02 12:32:55 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.129 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.128 2019/02/02 12:32:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.129 2019/03/09 08:42:25 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -797,7 +797,7 @@ gdt_prepframes(paddr_t *frames, vaddr_t base, uint32_t entries)
 
 		/* Mark Read-only */
 		pmap_pte_clearbits(kvtopte(base + (i << PAGE_SHIFT)),
-		    PG_RW);
+		    PTE_W);
 	}
 }
 
@@ -1151,7 +1151,7 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 	/* don't update the kernel L3 slot */
 	for (i = 0; i < PDP_SIZE - 1; i++) {
 		xpq_queue_pte_update(l3_pd + i * sizeof(pd_entry_t),
-		    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
+		    xpmap_ptom(pmap->pm_pdirpa[i]) | PTE_P);
 	}
 #endif
 
@@ -1213,7 +1213,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	/* Initialise L2 entries 0 - 2: Point them to pmap_kernel() */
 	for (i = 0; i < PDP_SIZE - 1; i++) {
 		ci->ci_pae_l3_pdir[i] =
-		    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[i]) | PG_V;
+		    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[i]) | PTE_P;
 	}
 #endif
 
@@ -1235,7 +1235,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 
 	/* Recursive kernel mapping */
 	ci->ci_kpm_pdir[PDIR_SLOT_PTE] = xpmap_ptom_masked(ci->ci_kpm_pdirpa)
-	    | PG_V | xpmap_pg_nx;
+	    | PTE_P | xpmap_pg_nx;
 #else
 	/* Copy over the pmap_kernel() shadow L2 entries */
 	memcpy(ci->ci_kpm_pdir, pmap_kernel()->pm_pdir + PDIR_SLOT_KERN,
@@ -1254,7 +1254,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	 * Initialize L3 entry 3. This mapping is shared across all pmaps and is
 	 * static, ie: loading a new pmap will not update this entry.
 	 */
-	ci->ci_pae_l3_pdir[3] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PG_V;
+	ci->ci_pae_l3_pdir[3] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PTE_P;
 
 	/* Xen wants a RO L3. */
 	pmap_protect(pmap_kernel(), (vaddr_t)ci->ci_pae_l3_pdir,

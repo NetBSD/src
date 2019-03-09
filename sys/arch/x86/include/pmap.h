@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.98 2019/02/23 10:59:12 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.99 2019/03/09 08:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -331,7 +331,7 @@ extern long nkptp[PTP_LEVELS];
 #define pmap_move(DP,SP,D,L,S)
 #define pmap_phys_address(ppn)		(x86_ptob(ppn) & ~X86_MMAP_FLAG_MASK)
 #define pmap_mmap_flags(ppn)		x86_mmap_flags(ppn)
-#define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
+#define pmap_valid_entry(E) 		((E) & PTE_P) /* is PDE or PTE valid? */
 
 #if defined(__x86_64__) || defined(PAE)
 #define X86_MMAP_FLAG_SHIFT	(64 - PGSHIFT)
