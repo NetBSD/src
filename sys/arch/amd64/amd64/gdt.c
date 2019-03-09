@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.46 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: gdt.c,v 1.47 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.46 2019/02/11 14:59:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.47 2019/03/09 08:42:25 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -330,7 +330,7 @@ lgdt(struct region_descriptor *desc)
 		va = desc->rd_base + (i << PAGE_SHIFT);
 		frames[i] = ((paddr_t)xpmap_ptetomach((pt_entry_t *)va)) >>
 		    PAGE_SHIFT;
-		pmap_pte_clearbits(kvtopte(va), PG_RW);
+		pmap_pte_clearbits(kvtopte(va), PTE_W);
 	}
 
 	if (HYPERVISOR_set_gdt(frames, (desc->rd_limit + 1) >> 3))

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.21 2019/02/13 06:52:43 cherry Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.22 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.21 2019/02/13 06:52:43 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.22 2019/03/09 08:42:25 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -334,7 +334,7 @@ xen_prepare_resume(void)
 {
 	/* map the new shared_info page */
 	if (HYPERVISOR_update_va_mapping((vaddr_t)HYPERVISOR_shared_info,
-	    xen_start_info.shared_info | PG_RW | PG_V,
+	    xen_start_info.shared_info | PTE_W | PTE_P,
 	    UVMF_INVLPG)) {
 		DPRINTK(("could not map new shared info page"));
 		HYPERVISOR_crash();

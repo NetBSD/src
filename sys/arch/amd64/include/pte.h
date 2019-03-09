@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.11 2019/03/07 14:40:35 maxv Exp $	*/
+/*	$NetBSD: pte.h,v 1.12 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -120,30 +120,27 @@ typedef uint64_t pt_entry_t;		/* PTE */
 #define PTE_FRAME	PTE_4KFRAME
 #define PTE_LGFRAME	PTE_2MFRAME
 
-/*
- * PDE/PTE bits. These are no different from their i386 counterparts.
- * XXX To be deleted.
- */
-#define PG_V		0x0000000000000001	/* valid */
-#define PG_RW		0x0000000000000002	/* read-write */
-#define PG_u		0x0000000000000004	/* user accessible */
-#define PG_WT		0x0000000000000008	/* write-through */
-#define PG_N		0x0000000000000010	/* non-cacheable */
-#define PG_U		0x0000000000000020	/* used */
-#define PG_M		0x0000000000000040	/* modified */
-#define PG_PAT		0x0000000000000080	/* PAT (on pte) */
-#define PG_PS		0x0000000000000080	/* 2MB page size (on pde) */
-#define PG_G		0x0000000000000100	/* not flushed */
-#define PG_AVAIL1	0x0000000000000200
-#define PG_AVAIL2	0x0000000000000400
-#define PG_AVAIL3	0x0000000000000800
-#define PG_LGPAT	0x0000000000001000	/* PAT on large pages */
-#define PG_FRAME	0x000ffffffffff000
-#define PG_NX		0x8000000000000000
-#define PG_2MFRAME	0x000fffffffe00000	/* large (2M) page frame mask */
-#define PG_1GFRAME	0x000fffffc0000000	/* large (1G) page frame mask */
-#define PG_LGFRAME	PG_2MFRAME
-#define PG_KW		0x0000000000000002	/* kernel read-write */
+/* XXX To be deleted. */
+#define PG_V		PTE_P
+#define PG_RW		PTE_W
+#define PG_u		PTE_U
+#define PG_WT		PTE_PWT
+#define PG_N		PTE_PCD
+#define PG_U		PTE_A
+#define PG_M		PTE_D
+#define PG_PAT		PTE_PAT
+#define PG_PS		PTE_PS
+#define PG_G		PTE_G
+#define PG_AVAIL1	PTE_AVL1
+#define PG_AVAIL2	PTE_AVL2
+#define PG_AVAIL3	PTE_AVL3
+#define PG_LGPAT	PTE_LGPAT
+#define PG_FRAME	PTE_FRAME
+#define PG_NX		PTE_NX
+#define PG_2MFRAME	PTE_2MFRAME
+#define PG_1GFRAME	PTE_1GFRAME
+#define PG_LGFRAME	PTE_LGFRAME
+#define PG_KW		PTE_W
 
 #include <x86/pte.h>
 
