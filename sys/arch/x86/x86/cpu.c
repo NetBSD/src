@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.167 2019/02/15 08:54:01 nonaka Exp $	*/
+/*	$NetBSD: cpu.c,v 1.168 2019/03/09 08:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.167 2019/02/15 08:54:01 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.168 2019/03/09 08:42:26 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -919,7 +919,7 @@ cpu_hatch(void *v)
 #ifdef PAE
 	pd_entry_t * l3_pd = ci->ci_pae_l3_pdir;
 	for (i = 0 ; i < PDP_SIZE; i++) {
-		l3_pd[i] = pmap_kernel()->pm_pdirpa[i] | PG_V;
+		l3_pd[i] = pmap_kernel()->pm_pdirpa[i] | PTE_P;
 	}
 	lcr3(ci->ci_pae_l3_pdirpa);
 #else
@@ -1321,7 +1321,7 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 		x86_disable_intr();
 
 	for (i = 0 ; i < PDP_SIZE; i++) {
-		l3_pd[i] = pmap->pm_pdirpa[i] | PG_V;
+		l3_pd[i] = pmap->pm_pdirpa[i] | PTE_P;
 	}
 
 	if (interrupts_enabled)
