@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71.2.7 2018/06/23 11:39:02 martin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.71.2.8 2019/03/09 17:10:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -488,6 +488,8 @@ void	startrtclock(void);
 void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
+unsigned int gettick(void);
+extern void (*x86_delay)(unsigned int);
 #endif
 
 /* cpu.c */

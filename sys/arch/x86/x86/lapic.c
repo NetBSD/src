@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.58.2.5 2018/04/05 18:15:03 martin Exp $	*/
+/*	$NetBSD: lapic.c,v 1.58.2.6 2019/03/09 17:10:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.58.2.5 2018/04/05 18:15:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.58.2.6 2019/03/09 17:10:19 martin Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -586,7 +586,6 @@ lapic_initclocks(void)
 	lapic_eoi();
 }
 
-extern unsigned int gettick(void);	/* XXX put in header file */
 extern u_long rtclock_tval; /* XXX put in header file */
 extern void (*initclock_func)(void); /* XXX put in header file */
 
@@ -609,6 +608,9 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	uint64_t tmp;
 	int i;
 	char tbuf[9];
+
+	if (lapic_per_second != 0)
+		goto calibrate_done;
 
 	aprint_debug_dev(ci->ci_dev, "calibrating local timer\n");
 
@@ -640,6 +642,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	tmp = initial_lapic - cur_lapic;
 	lapic_per_second = (tmp * TIMER_FREQ + seen / 2) / seen;
 
+calibrate_done:
 	humanize_number(tbuf, sizeof(tbuf), lapic_per_second, "Hz", 1000);
 
 	aprint_debug_dev(ci->ci_dev, "apic clock running at %s\n", tbuf);
@@ -760,7 +763,7 @@ i82489_ipi_init(int target)
 
 	i82489_writereg(LAPIC_ICRLO, LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT);
 	i82489_icr_wait();
-	i8254_delay(10000);
+	x86_delay(10000);
 	i82489_writereg(LAPIC_ICRLO,
 	    LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);
 	i82489_icr_wait();
@@ -832,7 +835,7 @@ x2apic_ipi_init(int target)
 
 	x2apic_write_icr(target, LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT);
 
-	i8254_delay(10000);
+	x86_delay(10000);
 
 	x2apic_write_icr(0,
 	    LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 2009/06/16 21:05:34 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.33.56.1 2019/03/09 17:10:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2009/06/16 21:05:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33.56.1 2019/03/09 17:10:20 martin Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -183,8 +183,8 @@ int clock_debug = 0;
 #define DPRINTF(arg)
 #endif
 
-/* Used by lapic.c */
-unsigned int	gettick(void);
+void (*x86_delay)(unsigned int) = i8254_delay;
+
 void		sysbeep(int, int);
 static void     tickle_tc(void);
 

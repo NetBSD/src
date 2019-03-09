@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.20 2014/05/19 22:47:54 rmind Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.20.20.1 2019/03/09 17:10:20 martin Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
@@ -27,6 +27,7 @@
  */
 #define LIR_IPI		31
 #define LIR_TIMER	30
+#define LIR_HV		29
 
 /*
  * XXX These should be lowest numbered, but right now would
@@ -34,11 +35,11 @@
  * means that soft interrupt take priority over hardware
  * interrupts when lowering the priority level!
  */
-#define	SIR_SERIAL	29
-#define	SIR_NET		28
-#define	SIR_BIO		27
-#define	SIR_CLOCK	26
-#define	SIR_PREEMPT	25
+#define	SIR_SERIAL	28
+#define	SIR_NET		27
+#define	SIR_BIO		26
+#define	SIR_CLOCK	25
+#define	SIR_PREEMPT	24
 
 /*
  * Maximum # of interrupt sources per CPU. 32 to fit in one word.

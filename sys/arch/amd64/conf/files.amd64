@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.88.8.4 2018/06/09 15:12:21 martin Exp $
+#	$NetBSD: files.amd64,v 1.88.8.5 2019/03/09 17:10:20 martin Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -197,6 +197,12 @@ include "dev/ieee1394/files.ieee1394"
 include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
 file	arch/amd64/acpi/acpi_wakeup_low.S	acpi
+
+# Microsoft Hyper-V
+include "dev/hyperv/files.hyperv"
+
+attach	vmbus at acpinodebus with vmbus_acpi
+file	dev/acpi/vmbus_acpi.c			vmbus_acpi
 
 include	"arch/amd64/conf/majors.amd64"
 endif #xen

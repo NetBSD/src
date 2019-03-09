@@ -1,0 +1,34 @@
+#	$NetBSD: files.hyperv,v 1.1.2.2 2019/03/09 17:10:19 martin Exp $
+
+define	hypervvmbus {}
+device	vmbus: hypervvmbus
+file	dev/hyperv/vmbus.c		vmbus needs-flag
+
+device	hvn: ether, ifnet, arp
+attach	hvn at hypervvmbus
+file	dev/hyperv/if_hvn.c		hvn
+
+device	hvs: scsi
+attach	hvs at hypervvmbus
+file	dev/hyperv/hvs.c		hvs
+
+device	hvheartbeat
+attach	hvheartbeat at hypervvmbus
+file	dev/hyperv/hvheartbeat.c	hvheartbeat
+
+device	hvkvp
+attach	hvkvp at hypervvmbus
+file	dev/hyperv/hvkvp.c		hvkvp
+
+device	hvshutdown: sysmon_power, sysmon_taskq
+attach	hvshutdown at hypervvmbus
+file	dev/hyperv/hvshutdown.c		hvshutdown
+
+device	hvtimesync
+attach	hvtimesync at hypervvmbus
+file	dev/hyperv/hvtimesync.c		hvtimesync
+
+file	dev/hyperv/vmbusic.c		hvheartbeat | hvkvp | hvshutdown |
+					hvtimesync
+
+file	dev/hyperv/hyperv_common.c	hyperv | vmbus
