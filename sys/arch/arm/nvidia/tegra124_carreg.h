@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_carreg.h,v 1.6 2017/07/21 01:01:22 jmcneill Exp $ */
+/* $NetBSD: tegra124_carreg.h,v 1.7 2019/03/09 19:41:26 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -426,6 +426,10 @@
 #define CAR_CCLKG_BURST_POLICY_CWAKEUP_IDLE_SOURCE __BITS(3,0)
 #define CAR_CCLKG_BURST_POLICY_CWAKEUP_SOURCE_CLKM		0
 #define CAR_CCLKG_BURST_POLICY_CWAKEUP_SOURCE_PLLX_OUT0_LJ	8
+
+#define CAR_CLKSRC_MSELECT_REG		0x3b4
+#define CAR_CLKSRC_MSELECT_SRC		__BITS(31,29)
+#define CAR_CLKSRC_MSELECT_DIV		__BITS(7,0)
 
 #define CAR_CLKSRC_TSENSOR_REG		0x3b8
 #define CAR_CLKSRC_TSENSOR_SRC		__BITS(31,29)
