@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.23 2019/03/07 13:26:24 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.24 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -44,8 +44,8 @@ static const uint8_t pads[4] = {
 #define MM_PROT_EXECUTE	0x02
 
 static const pt_entry_t protection_codes[3] = {
-	[MM_PROT_READ] = PG_NX,
-	[MM_PROT_WRITE] = PG_RW | PG_NX,
+	[MM_PROT_READ] = PTE_NX,
+	[MM_PROT_WRITE] = PTE_W | PTE_NX,
 	[MM_PROT_EXECUTE] = 0,
 	/* RWX does not exist */
 };
@@ -67,16 +67,16 @@ mm_init(paddr_t first_pa)
 static void
 mm_enter_pa(paddr_t pa, vaddr_t va, pte_prot_t prot)
 {
-	if (PTE_BASE[pl1_i(va)] & PG_V) {
+	if (PTE_BASE[pl1_i(va)] & PTE_P) {
 		fatal("mm_enter_pa: mapping already present");
 	}
-	PTE_BASE[pl1_i(va)] = pa | PG_V | protection_codes[prot];
+	PTE_BASE[pl1_i(va)] = pa | PTE_P | protection_codes[prot];
 }
 
 static void
 mm_reenter_pa(paddr_t pa, vaddr_t va, pte_prot_t prot)
 {
-	PTE_BASE[pl1_i(va)] = pa | PG_V | protection_codes[prot];
+	PTE_BASE[pl1_i(va)] = pa | PTE_P | protection_codes[prot];
 }
 
 static void
@@ -109,7 +109,7 @@ mm_palloc(size_t npages)
 static bool
 mm_pte_is_valid(pt_entry_t pte)
 {
-	return ((pte & PG_V) != 0);
+	return ((pte & PTE_P) != 0);
 }
 
 static void
@@ -124,7 +124,7 @@ mm_mprotect(vaddr_t startva, size_t size, pte_prot_t prot)
 
 	for (i = 0; i < npages; i++) {
 		va = startva + i * PAGE_SIZE;
-		pa = (PTE_BASE[pl1_i(va)] & PG_FRAME);
+		pa = (PTE_BASE[pl1_i(va)] & PTE_FRAME);
 		mm_reenter_pa(pa, va, prot);
 		mm_flush_va(va);
 	}
@@ -175,7 +175,7 @@ mm_map_tree(vaddr_t startva, vaddr_t endva)
 	ASSERT(nL4e == 1);
 	if (!mm_pte_is_valid(L4_BASE[L4e_idx])) {
 		pa = mm_palloc(1);
-		L4_BASE[L4e_idx] = pa | PG_V | PG_RW;
+		L4_BASE[L4e_idx] = pa | PTE_P | PTE_W;
 	}
 
 	/* Build L3. */
@@ -186,7 +186,7 @@ mm_map_tree(vaddr_t startva, vaddr_t endva)
 			continue;
 		}
 		pa = mm_palloc(1);
-		L3_BASE[L3e_idx+i] = pa | PG_V | PG_RW;
+		L3_BASE[L3e_idx+i] = pa | PTE_P | PTE_W;
 	}
 
 	/* Build L2. */
@@ -197,7 +197,7 @@ mm_map_tree(vaddr_t startva, vaddr_t endva)
 			continue;
 		}
 		pa = mm_palloc(1);
-		L2_BASE[L2e_idx+i] = pa | PG_V | PG_RW;
+		L2_BASE[L2e_idx+i] = pa | PTE_P | PTE_W;
 	}
 }
 

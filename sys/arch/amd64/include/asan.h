@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.2 2019/02/04 15:07:34 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.3 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -102,19 +102,19 @@ kasan_md_shadow_map_page(vaddr_t va)
 
 	if (!pmap_valid_entry(L4_BASE[pl4_i(va)])) {
 		pa = __md_palloc();
-		L4_BASE[pl4_i(va)] = pa | PG_KW | pmap_pg_nx | PG_V;
+		L4_BASE[pl4_i(va)] = pa | PTE_W | pmap_pg_nx | PTE_P;
 	}
 	if (!pmap_valid_entry(L3_BASE[pl3_i(va)])) {
 		pa = __md_palloc();
-		L3_BASE[pl3_i(va)] = pa | PG_KW | pmap_pg_nx | PG_V;
+		L3_BASE[pl3_i(va)] = pa | PTE_W | pmap_pg_nx | PTE_P;
 	}
 	if (!pmap_valid_entry(L2_BASE[pl2_i(va)])) {
 		pa = __md_palloc();
-		L2_BASE[pl2_i(va)] = pa | PG_KW | pmap_pg_nx | PG_V;
+		L2_BASE[pl2_i(va)] = pa | PTE_W | pmap_pg_nx | PTE_P;
 	}
 	if (!pmap_valid_entry(L1_BASE[pl1_i(va)])) {
 		pa = __md_palloc();
-		L1_BASE[pl1_i(va)] = pa | PG_KW | pmap_pg_g | pmap_pg_nx | PG_V;
+		L1_BASE[pl1_i(va)] = pa | PTE_W | pmap_pg_g | pmap_pg_nx | PTE_P;
 	}
 }
 

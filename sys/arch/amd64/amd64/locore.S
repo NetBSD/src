@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.179 2019/03/07 13:26:24 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.180 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -187,8 +187,8 @@
 #define	_RELOC(x)	((x) - KERNBASE)
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
-/* 32bit version of PG_NX */
-#define PG_NX32	0x80000000
+/* 32bit version of PTE_NX */
+#define PTE_NX32	0x80000000
 
 #if L2_SLOT_KERNBASE > 0
 #define TABLE_L2_ENTRIES (2 * (NKL2_KIMG_ENTRIES + 1))
@@ -307,7 +307,7 @@
 	ELFNOTE(Xen, XEN_ELFNOTE_HV_START_LOW,   .quad,  HYPERVISOR_VIRT_START)
 	ELFNOTE(Xen, XEN_ELFNOTE_FEATURES,       .asciz, "")
 	ELFNOTE(Xen, XEN_ELFNOTE_PAE_MODE,       .asciz, "yes")
-	ELFNOTE(Xen, XEN_ELFNOTE_L1_MFN_VALID,   .long,  PG_V, PG_V)\
+	ELFNOTE(Xen, XEN_ELFNOTE_L1_MFN_VALID,   .long,  PTE_P, PTE_P)\
 	ELFNOTE(Xen, XEN_ELFNOTE_LOADER,         .asciz, "generic")     
 	ELFNOTE(Xen, XEN_ELFNOTE_SUSPEND_CANCEL, .long,  0)
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
@@ -586,13 +586,13 @@ ENTRY(start)
 	movl	$RELOC(tmpstk),%esp
 
 	/*
-	 * Retrieve the NX/XD flag. We use the 32bit version of PG_NX.
+	 * Retrieve the NX/XD flag. We use the 32bit version of PTE_NX.
 	 */
 	movl	$0x80000001,%eax
 	cpuid
 	andl	$CPUID_NOX,%edx
 	jz	.Lno_NOX
-	movl	$PG_NX32,RELOC(nox_flag)
+	movl	$PTE_NX32,RELOC(nox_flag)
 .Lno_NOX:
 
 /*
@@ -680,7 +680,7 @@ ENTRY(start)
 	movl	$RELOC(__rodata_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V),%eax
+	orl	$(PTE_P),%eax
 	fillkpt
 
 	/* Map the kernel rodata R. */
@@ -688,7 +688,7 @@ ENTRY(start)
 	movl	$RELOC(__data_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V),%eax
+	orl	$(PTE_P),%eax
 	fillkpt_nox
 
 	/* Map the kernel data+bss RW. */
@@ -696,7 +696,7 @@ ENTRY(start)
 	movl	$RELOC(__kernel_end),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* Map [SYMS]+[PRELOADED MODULES] RW. */
@@ -704,21 +704,21 @@ ENTRY(start)
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* Map the BOOTSTRAP TABLES RW. */
 	movl	%esi,%eax		/* start of BOOTSTRAP TABLES */
 	movl	$TABLESIZE,%ecx		/* length of BOOTSTRAP TABLES */
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* We are on (4). Map ISA I/O MEM RW. */
 	movl	$IOM_BEGIN,%eax
 	movl	$IOM_SIZE,%ecx	/* size of ISA I/O MEM */
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW/*|PG_N*/),%eax
+	orl	$(PTE_P|PTE_W/*|PTE_PCD*/),%eax
 	fillkpt_nox
 
 	/*
@@ -726,7 +726,7 @@ ENTRY(start)
 	 */
 	leal	(PROC0_PTP2_OFF)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$(NKL2_KIMG_ENTRIES+1),%ecx
 	fillkpt
 
@@ -734,7 +734,7 @@ ENTRY(start)
 	/* If needed, set up level 2 entries for actual kernel mapping */
 	leal	(PROC0_PTP2_OFF + L2_SLOT_KERNBASE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$(NKL2_KIMG_ENTRIES+1),%ecx
 	fillkpt
 #endif
@@ -744,7 +744,7 @@ ENTRY(start)
 	 */
 	leal	(PROC0_PTP3_OFF)(%esi),%ebx
 	leal	(PROC0_PTP2_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$NKL3_KIMG_ENTRIES,%ecx
 	fillkpt
 
@@ -752,7 +752,7 @@ ENTRY(start)
 	/* If needed, set up level 3 entries for actual kernel mapping */
 	leal	(PROC0_PTP3_OFF + L3_SLOT_KERNBASE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PTP2_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$NKL3_KIMG_ENTRIES,%ecx
 	fillkpt
 #endif
@@ -762,14 +762,14 @@ ENTRY(start)
 	 */
 	leal	(PROC0_PML4_OFF)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
 	/* Set up L4 entries for actual kernel mapping */
 	leal	(PROC0_PML4_OFF + L4_SLOT_KERNBASE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 

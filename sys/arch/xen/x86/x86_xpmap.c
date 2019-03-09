@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.83 2019/03/07 13:26:24 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.84 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.83 2019/03/07 13:26:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.84 2019/03/09 08:42:25 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -180,7 +180,7 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 	for (va = base; va < end; va += PAGE_SIZE) {
 		KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 		ptp = kvtopte(va);
-		pmap_pte_clearbits(ptp, PG_RW);
+		pmap_pte_clearbits(ptp, PTE_W);
 	}
 	s = splvm(); /* XXXSMP */
 	xpq_queue_set_ldt(base, entries);
@@ -681,8 +681,8 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 	/* link L4->L3 */
 	addr = ((u_long)L3) - KERNBASE;
-	L4cpu[pl4_pi(KERNTEXTOFF)] = xpmap_ptom_masked(addr) | PG_V | PG_RW;
-	L4[pl4_pi(KERNTEXTOFF)] = xpmap_ptom_masked(addr) | PG_V | PG_RW;
+	L4cpu[pl4_pi(KERNTEXTOFF)] = xpmap_ptom_masked(addr) | PTE_P | PTE_W;
+	L4[pl4_pi(KERNTEXTOFF)] = xpmap_ptom_masked(addr) | PTE_P | PTE_W;
 
 	/* L2 */
 	L2 = (pd_entry_t *)avail;
@@ -691,7 +691,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 	/* link L3->L2 */
 	addr = ((u_long)L2) - KERNBASE;
-	L3[pl3_pi(KERNTEXTOFF)] = xpmap_ptom_masked(addr) | PG_V | PG_RW;
+	L3[pl3_pi(KERNTEXTOFF)] = xpmap_ptom_masked(addr) | PTE_P | PTE_W;
 #else
 	/* no L4 on i386PAE */
 	__USE(L4cpu);
@@ -720,10 +720,10 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	 */
 	addr = ((u_long)L2) - KERNBASE;
 	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
-		L3[i] = xpmap_ptom_masked(addr) | PG_V;
+		L3[i] = xpmap_ptom_masked(addr) | PTE_P;
 	}
 	addr += PAGE_SIZE;
-	L3[3] = xpmap_ptom_masked(addr) | PG_V;
+	L3[3] = xpmap_ptom_masked(addr) | PTE_P;
 #endif
 
 	/* Level 1 */
@@ -767,7 +767,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 			}
 #endif
 
-			pte[pl1_pi(page)] |= PG_V;
+			pte[pl1_pi(page)] |= PTE_P;
 			if (page < (vaddr_t)&__rodata_start) {
 				/* Map the kernel text RX. Nothing to do. */
 			} else if (page >= (vaddr_t)&__rodata_start &&
@@ -795,17 +795,17 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 			} else if (page >= (vaddr_t)&__data_start &&
 			    page < (vaddr_t)&__kernel_end) {
 				/* Map the kernel data+bss RW. */
-				pte[pl1_pi(page)] |= PG_RW | xpmap_pg_nx;
+				pte[pl1_pi(page)] |= PTE_W | xpmap_pg_nx;
 			} else {
 				/* Map the page RW. */
-				pte[pl1_pi(page)] |= PG_RW | xpmap_pg_nx;
+				pte[pl1_pi(page)] |= PTE_W | xpmap_pg_nx;
 			}
 
 			page += PAGE_SIZE;
 		}
 
 		addr = ((u_long)pte) - KERNBASE;
-		L2[pl2_pi(cur_page)] = xpmap_ptom_masked(addr) | PG_RW | PG_V;
+		L2[pl2_pi(cur_page)] = xpmap_ptom_masked(addr) | PTE_W | PTE_P;
 
 		/* Mark readonly */
 		xen_bt_set_readonly((vaddr_t)pte);
@@ -815,10 +815,10 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 #ifdef __x86_64__
 	/* Recursive entry in pmap_kernel(). */
 	L4[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)L4 - KERNBASE)
-	    | PG_V | xpmap_pg_nx;
+	    | PTE_P | xpmap_pg_nx;
 	/* Recursive entry in higher-level per-cpu PD. */
 	L4cpu[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)L4cpu - KERNBASE)
-	    | PG_V | xpmap_pg_nx;
+	    | PTE_P | xpmap_pg_nx;
 
 	/* Mark tables RO */
 	xen_bt_set_readonly((vaddr_t)L2);
@@ -837,7 +837,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	 */
 	addr = (u_long)L2 - KERNBASE;
 	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
-		L2[PDIR_SLOT_PTE + i] = xpmap_ptom_masked(addr) | PG_V |
+		L2[PDIR_SLOT_PTE + i] = xpmap_ptom_masked(addr) | PTE_P |
 		    xpmap_pg_nx;
 	}
 
@@ -888,7 +888,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 		addr = (u_long)L2 - KERNBASE + PAGE_SIZE * 3;
 		xpq_queue_pte_update(
 		    xpmap_ptom(((vaddr_t)&L2[PDIR_SLOT_PTE + 3]) - KERNBASE),
-		    xpmap_ptom_masked(addr) | PG_V);
+		    xpmap_ptom_masked(addr) | PTE_P);
 		xpq_flush_queue();
 #endif
 	}
@@ -907,7 +907,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	pte += pl1_pi(page);
 	while (page < old_pgd + (old_count * PAGE_SIZE) && page < map_end) {
 		addr = xpmap_ptom(((u_long)pte) - KERNBASE);
-		xpq_queue_pte_update(addr, *pte | PG_RW);
+		xpq_queue_pte_update(addr, *pte | PTE_W);
 		page += PAGE_SIZE;
 		/*
 		 * Our PTEs are contiguous so it's safe to just "++" here.
@@ -926,7 +926,7 @@ xen_bt_set_readonly(vaddr_t page)
 	pt_entry_t entry;
 
 	entry = xpmap_ptom_masked(page - KERNBASE);
-	entry |= PG_V | xpmap_pg_nx;
+	entry |= PTE_P | xpmap_pg_nx;
 
 	HYPERVISOR_update_va_mapping(page, entry, UVMF_INVLPG);
 }
