@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.25 2019/01/27 02:08:34 pgoyette Exp $	*/
+/*	$NetBSD: fbt.c,v 1.26 2019/03/09 18:53:52 kamil Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -1316,7 +1316,7 @@ fbt_unload(void)
 static int
 dtrace_fbt_modcmd(modcmd_t cmd, void *data)
 {
-	int bmajor = -1, cmajor = -1;
+	int bmajor = -1, cmajor = 352;
 	int error;
 
 	switch (cmd) {

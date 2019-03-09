@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.83 2019/02/23 12:25:33 kamil Exp $
+# $NetBSD: majors,v 1.84 2019/03/09 18:53:52 kamil Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -83,3 +83,5 @@ device-major kcov      char 346            kcov
 device-major spi       char 347		   spi
 # Majors 348-350 are reserved for HAXM (pkgsrc/emulators/haxm)
 # Major 351 is reserved for sys/modules/examples
+# Major 352 is reserved for external/cddl/osnet/dev/fbt/fbt.c
+# Major 353 is reserved for external/cddl/osnet/dev/sdt/sdt.c

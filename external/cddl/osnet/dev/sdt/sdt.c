@@ -39,7 +39,7 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.19 2018/05/28 21:05:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.20 2019/03/09 18:53:52 kamil Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/proc.h>
@@ -550,7 +550,7 @@ MODULE_DEPEND(sdt, dtrace, 1, 1, 1);
 static int
 dtrace_sdt_modcmd(modcmd_t cmd, void *data)
 {
-	int bmajor = -1, cmajor = -1;
+	int bmajor = -1, cmajor = 353;
 	int error;
 
 	switch (cmd) {
