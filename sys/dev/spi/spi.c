@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.10 2019/02/23 10:43:25 mlelstv Exp $ */
+/* $NetBSD: spi.c,v 1.11 2019/03/09 07:53:12 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.10 2019/02/23 10:43:25 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.11 2019/03/09 07:53:12 mlelstv Exp $");
 
 #include "locators.h"
 
@@ -250,14 +250,19 @@ spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			error = EINVAL;
 			break;
 		}
+		if ((sit->sit_send && sit->sit_sendlen == 0)
+		    || (sit->sit_recv && sit->sit_recv == 0)) {
+			error = EINVAL;
+			break;
+		}
 		sh = &sc->sc_slaves[sit->sit_addr];
 		sbuf = rbuf = NULL;
 		error = 0;
-		if (sit->sit_send && sit->sit_sendlen < SPI_MAXDATA) {
+		if (sit->sit_send && sit->sit_sendlen <= SPI_MAXDATA) {
 			sbuf = malloc(sit->sit_sendlen, M_DEVBUF, M_WAITOK);
 			error = copyin(sit->sit_send, sbuf, sit->sit_sendlen);
 		}
-		if (sit->sit_recv && sit->sit_recvlen < SPI_MAXDATA) {
+		if (sit->sit_recv && sit->sit_recvlen <= SPI_MAXDATA) {
 			rbuf = malloc(sit->sit_recvlen, M_DEVBUF, M_WAITOK);
 		}
 		if (error == 0) {
