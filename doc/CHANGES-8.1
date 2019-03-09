@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.114 2019/03/07 17:43:03 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.115 2019/03/09 17:13:18 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2652,4 +2652,47 @@ share/man/man4/bge.4			1.16
 	- Simplify PCI device table.
 	- Add /* FALLTHROUGH */
 	[msaitoh, ticket #1209]
+
+sys/arch/amd64/amd64/genassym.cf		1.74 (patch)
+sys/arch/amd64/amd64/vector.S			1.69,1.70 (patch)
+sys/arch/amd64/conf/GENERIC			1.516,1.518-1.520 (patch)
+sys/arch/amd64/conf/files.amd64			1.112 (patch)
+sys/arch/i386/conf/GENERIC			1.1201,1.1203,1.1204 (patch)
+sys/arch/i386/conf/files.i386			1.400 (patch)
+sys/arch/i386/i386/genassym.cf			1.111 (patch)
+sys/arch/i386/i386/vector.S			1.83 (patch)
+sys/arch/x86/conf/files.x86			1.107 (patch)
+sys/arch/x86/include/cpu.h			1.105 (patch)
+sys/arch/x86/include/intrdefs.h			1.22 (patch)
+sys/arch/x86/isa/clock.c			1.34 (patch)
+sys/arch/x86/x86/cpu.c				1.167 (patch)
+sys/arch/x86/x86/hyperv.c			1.1 (patch)
+sys/arch/x86/x86/hypervreg.h			1.1 (patch)
+sys/arch/x86/x86/intr.c				1.144 (patch)
+sys/arch/x86/x86/lapic.c			1.69 (patch)
+sys/arch/x86/x86/lapic.c			1.70 (patch)
+sys/arch/x86/x86/x86_machdep.c			1.124 (patch)
+sys/dev/acpi/vmbus_acpi.c			1.1 (patch)
+sys/dev/hyperv/files.hyperv			1.1 (patch)
+sys/dev/hyperv/hvheartbeat.c			1.1,1.2 (patch)
+sys/dev/hyperv/hvs.c				1.1 (patch)
+sys/dev/hyperv/hvshutdown.c			1.1,1.2 (patch)
+sys/dev/hyperv/hvtimesync.c			1.1,1.2 (patch)
+sys/dev/hyperv/hyperv_common.c			1.1 (patch)
+sys/dev/hyperv/hypervreg.h			1.1 (patch)
+sys/dev/hyperv/hypervvar.h			1.1 (patch)
+sys/dev/hyperv/if_hvn.c				1.1 (patch)
+sys/dev/hyperv/if_hvnreg.h			1.1 (patch)
+sys/dev/hyperv/vmbus.c				1.1,1.2 (patch)
+sys/dev/hyperv/vmbusic.c			1.1 (patch)
+sys/dev/hyperv/vmbusicreg.h			1.1,1.2 (patch)
+sys/dev/hyperv/vmbusicvar.h			1.1 (patch)
+sys/dev/hyperv/vmbusvar.h			1.1 (patch)
+sys/dev/ic/ndisreg.h				1.1 (patch)
+sys/dev/ic/rndisreg.h				1.1,1.2 (patch)
+sys/dev/usb/if_urndis.c				1.20 (patch)
+sys/dev/usb/if_urndisreg.h			delete
+
+	Add Microsoft Hyper-V support.
+	[nonaka, ticket #1210]
 
