@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.223 2019/03/08 08:19:56 martin Exp $
+# $NetBSD: postinstall,v 1.224 2019/03/09 23:46:34 mrg Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1018,12 +1018,13 @@ do_fontconfig()
 		20-unhint-small-vera.conf \
 		25-unhint-nonlatin.conf \
 		30-metric-aliases.conf \
-		30-urw-aliases.conf \
 		40-nonlatin.conf \
+		45-generic.conf \
 		45-latin.conf \
 		49-sansserif.conf \
 		50-user.conf \
 		51-local.conf \
+		60-generic.conf \
 		60-latin.conf \
 		65-fonts-persian.conf \
 		65-khmer.conf \
