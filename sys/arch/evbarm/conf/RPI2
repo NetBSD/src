@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI2,v 1.7 2018/10/18 09:01:54 skrll Exp $
+#	$NetBSD: RPI2,v 1.8 2019/03/09 15:22:45 skrll Exp $
 #
 #	RPi2 -- Raspberry Pi 2
 #
@@ -31,6 +31,7 @@ makeoptions	DTS="
 	bcm2836-rpi-2-b.dts
 	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-3-b-plus.dts
+	bcm2837-rpi-cm3-io3.dts
 "
 # Architecture options
 
