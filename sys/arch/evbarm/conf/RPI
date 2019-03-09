@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.85 2018/10/18 09:01:54 skrll Exp $
+#	$NetBSD: RPI,v 1.86 2019/03/09 15:23:59 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -16,6 +16,7 @@ makeoptions	DTS="
 	bcm2835-rpi-b.dts
 	bcm2835-rpi-b-plus.dts
 	bcm2835-rpi-b-rev2.dts
+	bcm2835-rpi-cm1-io1.dts
 	bcm2835-rpi-zero.dts
 	bcm2835-rpi-zero-w.dts
 "
