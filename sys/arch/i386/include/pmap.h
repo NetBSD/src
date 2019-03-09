@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.122 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.123 2019/03/09 09:09:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -224,7 +224,7 @@
 #define L2_SLOT_KERN	(KERNBASE/NBPD_L2)   /* 768: start of kernel space */
 #endif /* PAE */
 
-#define	L2_SLOT_KERNBASE L2_SLOT_KERN
+#define L2_SLOT_KERNBASE L2_SLOT_KERN
 
 #define PDIR_SLOT_KERN	L2_SLOT_KERN
 #define PDIR_SLOT_PTE	L2_SLOT_PTE
@@ -278,18 +278,22 @@
 #define PTP_LEVELS	2
 
 /*
- * PG_AVAIL usage: we make use of the ignored bits of the PTE
+ * PTE_AVL usage: we make use of the ignored bits of the PTE
  */
+#define PTE_WIRED	PTE_AVL1	/* Wired Mapping */
+#define PTE_PVLIST	PTE_AVL2	/* Mapping has entry on pvlist */
+#define PTE_X		PTE_AVL3	/* Executable */
 
-#define PG_W		PG_AVAIL1	/* "wired" mapping */
-#define PG_PVLIST	PG_AVAIL2	/* mapping has entry on pvlist */
-#define PG_X		PG_AVAIL3	/* executable mapping */
+/* XXX To be deleted. */
+#define PG_W		PTE_WIRED
+#define PG_PVLIST	PTE_PVLIST
+#define PG_X		PTE_X
 
 #include <x86/pmap.h>
 
 #ifndef XENPV
 #define pmap_pa2pte(a)			(a)
-#define pmap_pte2pa(a)			((a) & PG_FRAME)
+#define pmap_pte2pa(a)			((a) & PTE_FRAME)
 #define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
 #define pmap_pte_flush()		/* nothing */
 
@@ -323,7 +327,7 @@ pmap_pa2pte(paddr_t pa)
 static __inline paddr_t
 pmap_pte2pa(pt_entry_t pte)
 {
-	return xpmap_mtop_masked(pte & PG_FRAME);
+	return xpmap_mtop_masked(pte & PTE_FRAME);
 }
 static __inline void
 pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
