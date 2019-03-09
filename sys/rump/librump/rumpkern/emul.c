@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.189 2018/12/05 19:56:49 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.190 2019/03/09 09:02:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.189 2018/12/05 19:56:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.190 2019/03/09 09:02:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -291,6 +291,15 @@ rump_fstrans_done(struct mount *mp)
 
 }
 __weak_alias(fstrans_done,rump_fstrans_done);
+
+
+void rump_fstrans_lwp_dtor(struct lwp *);
+void
+rump_fstrans_lwp_dtor(struct lwp *l)
+{
+
+}
+__weak_alias(fstrans_lwp_dtor,rump_fstrans_lwp_dtor);
 
 /*
  * Provide weak aliases for tty routines used by printf.
