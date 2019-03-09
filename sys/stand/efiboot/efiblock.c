@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.4 2018/11/01 00:43:38 jmcneill Exp $ */
+/* $NetBSD: efiblock.c,v 1.5 2019/03/09 13:16:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -315,6 +315,8 @@ efi_block_probe(void)
 		depth = efi_device_path_depth(efi_bootdp, MEDIA_DEVICE_PATH);
 		if (depth == 0)
 			depth = 1;
+		else if (depth == -1)
+			depth = 2;
 	}
 
 	for (n = 0; n < efi_nblock; n++) {
