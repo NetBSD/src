@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.141 2019/02/16 12:05:30 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.142 2019/03/09 08:42:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,7 +45,7 @@
  * Bits in 486 special registers:
  */
 #define CR0_NE	0x00000020	/* Numeric Error enable (EX16 vs IRQ13) */
-#define CR0_WP	0x00010000	/* Write Protect (honor PG_RW in all modes) */
+#define CR0_WP	0x00010000	/* Write Protect (honor PTE_W in all modes) */
 #define CR0_AM	0x00040000	/* Alignment Mask (set to enable AC flag) */
 #define CR0_NW	0x20000000	/* Not Write-through */
 #define CR0_CD	0x40000000	/* Cache Disable */

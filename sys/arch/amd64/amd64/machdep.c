@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.326 2019/02/14 08:18:25 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.327 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.326 2019/02/14 08:18:25 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.327 2019/03/09 08:42:25 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1589,8 +1589,8 @@ init_pte(void)
 #ifndef XENPV
 	extern uint32_t nox_flag;
 	pd_entry_t *pdir = (pd_entry_t *)bootspace.pdir;
-	pdir[L4_SLOT_PTE] = PDPpaddr | PG_KW | ((uint64_t)nox_flag << 32) |
-	    PG_V;
+	pdir[L4_SLOT_PTE] = PDPpaddr | PTE_W | ((uint64_t)nox_flag << 32) |
+	    PTE_P;
 #endif
 
 	extern pd_entry_t *normal_pdes[3];

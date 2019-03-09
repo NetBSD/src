@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.22 2018/12/06 17:44:28 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.23 2019/03/09 08:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.22 2018/12/06 17:44:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.23 2019/03/09 08:42:26 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -256,7 +256,7 @@ svs_tree_add(struct cpu_info *ci, vaddr_t va)
 					__func__, cpu_index(ci));
 			pa = VM_PAGE_TO_PHYS(pg);
 
-			dstpde[pidx] = PG_V | PG_RW | pa;
+			dstpde[pidx] = PTE_P | PTE_W | pa;
 		}
 
 		pa = (paddr_t)(dstpde[pidx] & PG_FRAME);
@@ -370,7 +370,7 @@ svs_utls_init(struct cpu_info *ci)
 	if (pmap_valid_entry(pd[pidx])) {
 		panic("%s: L1 page already mapped", __func__);
 	}
-	pd[pidx] = PG_V | PG_RW | pmap_pg_nx | pa;
+	pd[pidx] = PTE_P | PTE_W | pmap_pg_nx | pa;
 
 	/*
 	 * Now, allocate a VA in the kernel map, that points to the UTLS

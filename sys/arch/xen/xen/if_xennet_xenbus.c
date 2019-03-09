@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.85 2019/02/14 08:18:26 cherry Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.86 2019/03/09 08:42:25 maxv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.85 2019/02/14 08:18:26 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.86 2019/03/09 08:42:25 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -860,7 +860,7 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 				mmu[0].ptr = (ma << PAGE_SHIFT) | MMU_MACHPHYS_UPDATE;
 				mmu[0].val = pa >> PAGE_SHIFT;
 				MULTI_update_va_mapping(&mcl[0], va,
-				    (ma << PAGE_SHIFT) | PG_V | PG_KW | xpmap_pg_nx,
+				    (ma << PAGE_SHIFT) | PTE_P | PTE_W | xpmap_pg_nx,
 				    UVMF_TLB_FLUSH|UVMF_ALL);
 				xpmap_ptom_map(pa, ptoa(ma));
 				mcl[1].op = __HYPERVISOR_mmu_update;
@@ -1057,7 +1057,7 @@ again:
 			mmu[0].ptr = (ma << PAGE_SHIFT) | MMU_MACHPHYS_UPDATE;
 			mmu[0].val = pa >> PAGE_SHIFT;
 			MULTI_update_va_mapping(&mcl[0], va,
-			    (ma << PAGE_SHIFT) | PG_V | PG_KW | xpmap_pg_nx,
+			    (ma << PAGE_SHIFT) | PTE_P | PTE_W | xpmap_pg_nx,
 			    UVMF_TLB_FLUSH|UVMF_ALL);
 			xpmap_ptom_map(pa, ptoa(ma));
 			mcl[1].op = __HYPERVISOR_mmu_update;

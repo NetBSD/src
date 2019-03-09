@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.70 2019/02/17 05:06:16 nonaka Exp $	*/
+/*	$NetBSD: lapic.c,v 1.71 2019/03/09 08:42:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.70 2019/02/17 05:06:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.71 2019/03/09 08:42:26 maxv Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -387,7 +387,7 @@ lapic_map(paddr_t lapic_base)
 	 */
 
 	pte = kvtopte(va);
-	*pte = lapic_base | PG_RW | PG_V | PG_N | pmap_pg_g | pmap_pg_nx;
+	*pte = lapic_base | PTE_W | PTE_P | PTE_PCD | pmap_pg_g | pmap_pg_nx;
 	invlpg(va);
 
 #ifdef MULTIPROCESSOR

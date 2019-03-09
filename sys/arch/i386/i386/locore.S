@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.165 2019/03/07 13:26:24 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.166 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.165 2019/03/07 13:26:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.166 2019/03/09 08:42:25 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -167,8 +167,8 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.165 2019/03/07 13:26:24 maxv Exp $");
 #endif /* XENPV */
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
-/* 32bit version of PG_NX */
-#define PG_NX32	0x80000000
+/* 32bit version of PTE_NX */
+#define PTE_NX32	0x80000000
 
 #ifndef PAE
 #define	PROC0_PDIR_OFF	0
@@ -551,13 +551,13 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%eax,RELOC(cpuid_level)
 
 	/*
-	 * Retrieve the NX/XD flag. We use the 32bit version of PG_NX.
+	 * Retrieve the NX/XD flag. We use the 32bit version of PTE_NX.
 	 */
 	movl	$0x80000001,%eax
 	cpuid
 	andl	$CPUID_NOX,%edx
 	jz	no_NOX
-	movl	$PG_NX32,RELOC(nox_flag)
+	movl	$PTE_NX32,RELOC(nox_flag)
 no_NOX:
 
 2:
@@ -693,7 +693,7 @@ no_NOX:
 	movl	$RELOC(__rodata_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V),%eax
+	orl	$(PTE_P),%eax
 	fillkpt
 
 	/* Map the kernel rodata R. */
@@ -701,7 +701,7 @@ no_NOX:
 	movl	$RELOC(__data_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V),%eax
+	orl	$(PTE_P),%eax
 	fillkpt_nox
 
 	/* Map the kernel data+bss RW. */
@@ -709,7 +709,7 @@ no_NOX:
 	movl	$RELOC(__kernel_end),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* Map [SYMS]+[PRELOADED MODULES] RW. */
@@ -717,21 +717,21 @@ no_NOX:
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* Map the BOOTSTRAP TABLES RW. */
 	movl	%esi,%eax		/* start of BOOTSTRAP TABLES */
 	movl	RELOC(tablesize),%ecx	/* length of BOOTSTRAP TABLES */
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	fillkpt_nox
 
 	/* We are on (4). Map ISA I/O MEM RW. */
 	movl	$IOM_BEGIN,%eax
 	movl	$IOM_SIZE,%ecx	/* size of ISA I/O MEM */
 	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW/*|PG_N*/),%eax
+	orl	$(PTE_P|PTE_W/*|PTE_PCD*/),%eax
 	fillkpt_nox
 
 	/*
@@ -739,21 +739,21 @@ no_NOX:
 	 */
 	leal	(PROC0_PDIR_OFF)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
 	/* Set up L2 entries for actual kernel mapping */
 	leal	(PROC0_PDIR_OFF + L2_SLOT_KERNBASE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
 	/* Install recursive top level PDE */
 	leal	(PROC0_PDIR_OFF + PDIR_SLOT_PTE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PDIR_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW),%eax
+	orl	$(PTE_P|PTE_W),%eax
 	movl	$PDP_SIZE,%ecx
 	fillkpt_nox
 
@@ -763,7 +763,7 @@ no_NOX:
 	 */
 	leal	(PROC0_L3_OFF)(%esi),%ebx
 	leal	(PROC0_PDIR_OFF)(%esi),%eax
-	orl	$(PG_V),%eax
+	orl	$(PTE_P),%eax
 	movl	$PDP_SIZE,%ecx
 	fillkpt
 

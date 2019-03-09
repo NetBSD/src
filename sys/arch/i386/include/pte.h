@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.30 2019/03/07 14:40:35 maxv Exp $	*/
+/*	$NetBSD: pte.h,v 1.31 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -175,31 +175,23 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define PTE_NX		0		/* Dummy */
 #endif
 
-/*
- * here we define the bits of the PDE/PTE, as described above:
- * XXXCDC: need to rename these (PG_u == ugly).
- * XXX To be deleted.
- */
-#define PG_V		0x00000001	/* valid entry */
-#define PG_RW		0x00000002	/* read-write page */
-#define PG_u		0x00000004	/* user accessible page */
-#define PG_WT		0x00000008	/* write through */
-#define PG_N		0x00000010	/* non-cacheable */
-#define PG_U		0x00000020	/* has been used */
-#define PG_M		0x00000040	/* has been modified */
-#define PG_PAT		0x00000080	/* PAT (on pte) */
-#define PG_PS		0x00000080	/* 4MB page size (2MB for PAE) */
-#define PG_G		0x00000100	/* global, don't TLB flush */
-#define PG_AVAIL1	0x00000200	/* ignored by hardware */
-#define PG_AVAIL2	0x00000400	/* ignored by hardware */
-#define PG_AVAIL3	0x00000800	/* ignored by hardware */
-#define PG_LGPAT	0x00001000	/* PAT on large pages */
-#define PG_KW		0x00000002	/* kernel read-write */
-#ifdef PAE
-#define PG_NX		0x8000000000000000ULL /* No-execute */
-#else
-#define PG_NX		0		/* dummy */
-#endif
+/* XXX To be deleted. */
+#define PG_V		PTE_P
+#define PG_RW		PTE_W
+#define PG_u		PTE_U
+#define PG_WT		PTE_PWT
+#define PG_N		PTE_PCD
+#define PG_U		PTE_A
+#define PG_M		PTE_D
+#define PG_PAT		PTE_PAT
+#define PG_PS		PTE_PS
+#define PG_G		PTE_G
+#define PG_AVAIL1	PTE_AVL1
+#define PG_AVAIL2	PTE_AVL2
+#define PG_AVAIL3	PTE_AVL3
+#define PG_LGPAT	PTE_LGPAT
+#define PG_KW		PTE_W
+#define PG_NX		PTE_NX
 
 #include <x86/pte.h>
 

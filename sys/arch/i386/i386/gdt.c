@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.69 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: gdt.c,v 1.70 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.69 2019/02/11 14:59:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.70 2019/03/09 08:42:25 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -211,12 +211,12 @@ gdt_init_cpu(struct cpu_info *ci)
 
 		/* 
 		 * Our own
-		 * 	pmap_pte_clearbits(ptp, PG_RW)
+		 * 	pmap_pte_clearbits(ptp, PTE_W)
 		 * but without spl(), since %fs is not set up properly yet; ie
 		 * curcpu() won't work at this point and spl() will break.
 		 */
 		if (HYPERVISOR_update_va_mapping((vaddr_t)va,
-		    *ptp & ~PG_RW, UVMF_INVLPG) < 0) {
+		    *ptp & ~PTE_W, UVMF_INVLPG) < 0) {
 			panic("%s page RO update failed.\n", __func__);
 		}
 	}

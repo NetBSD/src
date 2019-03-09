@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.29 2019/03/07 13:26:24 maxv Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.30 2019/03/09 08:42:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.29 2019/03/07 13:26:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.30 2019/03/09 08:42:25 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -175,7 +175,7 @@ pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot, u_int flags)
 	else
 		pte = kvtopte(va);
 
-	npte = ma | ((prot & VM_PROT_WRITE) ? PG_RW : 0) | PG_V;
+	npte = ma | ((prot & VM_PROT_WRITE) ? PTE_W : 0) | PTE_P;
 	if (flags & PMAP_NOCACHE)
 		npte |= PG_N;
 
@@ -225,7 +225,7 @@ pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pmap_unmap_ptes(pmap, pmap2);
 	kpreempt_enable();
 
-	if (__predict_true((pte & PG_V) != 0)) {
+	if (__predict_true((pte & PTE_P) != 0)) {
 		if (pap != NULL)
 			*pap = (pte & PG_FRAME) | (va & (NBPD_L1 - 1));
 		return true;
@@ -274,7 +274,7 @@ pmap_map_recursive_entries(void)
 		for (i = 0; i < PDP_SIZE; i++) {
 			xpq_queue_pte_update(
 			    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_PTE + i)),
-			    xpmap_ptom((pm)->pm_pdirpa[i]) | PG_V);
+			    xpmap_ptom((pm)->pm_pdirpa[i]) | PTE_P);
 		}
 	}
 	mutex_exit(&pmaps_lock);
@@ -282,7 +282,7 @@ pmap_map_recursive_entries(void)
 	for (i = 0; i < PDP_SIZE; i++) {
 		xpq_queue_pte_update(
 		    xpmap_ptom(pmap_pdirpa(pmap_kernel(), PDIR_SLOT_PTE + i)),
-		    xpmap_ptom(pmap_kernel()->pm_pdirpa[i]) | PG_V);
+		    xpmap_ptom(pmap_kernel()->pm_pdirpa[i]) | PTE_P);
 	}
 }
 

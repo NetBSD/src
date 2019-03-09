@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.4 2018/08/05 18:57:49 reinoud Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.5 2019/03/09 08:42:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.4 2018/08/05 18:57:49 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.5 2019/03/09 08:42:26 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -152,7 +152,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		ppte = kvtopte(addr);
 		pte = *ppte;
 
-		if ((pte & PG_V) == 0) {
+		if ((pte & PTE_P) == 0) {
 			printf(" address %p not a valid page\n", dst);
 			return;
 		}
@@ -173,8 +173,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		/*
 		 * Make the kernel text page writable.
 		 */
-		pmap_pte_clearbits(ppte, PG_KR);
-		pmap_pte_setbits(ppte, PG_KW);
+		pmap_pte_setbits(ppte, PTE_W);
 		pmap_update_pg(addr);
 
 		/*
@@ -192,8 +191,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		/*
 		 * Turn the page back to read-only.
 		 */
-		pmap_pte_clearbits(ppte, PG_KW);
-		pmap_pte_setbits(ppte, PG_KR);
+		pmap_pte_clearbits(ppte, PTE_W);
 		pmap_update_pg(addr);
 
 		/*
