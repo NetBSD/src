@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.24 2019/03/09 08:42:25 maxv Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.25 2019/03/09 10:04:41 kre Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.24 2019/03/09 08:42:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.25 2019/03/09 10:04:41 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,12 +174,12 @@ acpi_md_intr_establish(uint32_t InterruptNumber, int ipl, int type,
 {
 	void *ih;
 	struct pic *pic;
+	int irq, pin;
 #if NIOAPIC > 0
 	struct ioapic_softc *sc;
 	struct acpi_md_override ovr;
 	struct mp_intr_map tmpmap, *mip, **mipp = NULL;
-#endif
-	int irq, pin, redir, mpflags;
+	int redir, mpflags;
 
 	/*
 	 * ACPI interrupts default to level-triggered active-low.
@@ -188,7 +188,6 @@ acpi_md_intr_establish(uint32_t InterruptNumber, int ipl, int type,
 	mpflags = (MPS_INTTR_LEVEL << 2) | MPS_INTPO_ACTLO;
 	redir = IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 
-#if NIOAPIC > 0
 
 	/*
 	 * Apply any MADT override setting.
