@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.77 2019/02/02 12:32:55 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.78 2019/03/09 09:51:29 kre Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.77 2019/02/02 12:32:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.78 2019/03/09 09:51:29 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -751,7 +751,7 @@ xen_resumeclocks(struct cpu_info *ci)
 {
 	char intr_xname[INTRDEVNAMEBUF];
 	int evtch;
-	int error;
+	int error __diagused;
 
 	KASSERT(ci == curcpu());
 	KASSERT(kpreempt_disabled());
