@@ -1,4 +1,4 @@
-/*	$NetBSD: cvslatest.c,v 1.7 2018/03/11 14:59:41 christos Exp $	*/
+/*	$NetBSD: cvslatest.c,v 1.8 2019/03/09 16:18:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cvslatest.c,v 1.7 2018/03/11 14:59:41 christos Exp $");
+__RCSID("$NetBSD: cvslatest.c,v 1.8 2019/03/09 16:18:22 christos Exp $");
 
 /*
  * Find the latest timestamp in a set of CVS trees, by examining the
@@ -212,8 +212,8 @@ findCVSDir(char *path, size_t pathlen, const char *name)
 	}
 	n = "CVS";
 out:
-	closedir(dirp);
 	strlcpy(path, n, pathlen);
+	closedir(dirp);
 	return path;
 }
 
