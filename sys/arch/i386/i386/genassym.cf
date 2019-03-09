@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.99.10.1 2018/03/13 15:47:44 martin Exp $
+#	$NetBSD: genassym.cf,v 1.99.10.2 2019/03/09 17:10:21 martin Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -358,6 +358,7 @@ define	SIZEOF_TLOG		sizeof(struct tlog)
 
 define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
+define	IPL_NET			IPL_NET
 define	IPL_SCHED		IPL_SCHED
 define	IPL_CLOCK		IPL_CLOCK
 define	IPL_HIGH		IPL_HIGH
@@ -368,6 +369,7 @@ define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
 
 define	LIR_IPI			LIR_IPI
 define	LIR_TIMER		LIR_TIMER
+define	LIR_HV			LIR_HV
 
 define	SIR_NET			SIR_NET
 define	SIR_CLOCK		SIR_CLOCK

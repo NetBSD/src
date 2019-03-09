@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1156.2.13 2018/12/07 17:11:37 martin Exp $
+# $NetBSD: GENERIC,v 1.1156.2.14 2019/03/09 17:10:20 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1156.2.13 $"
+#ident		"GENERIC-$Revision: 1.1156.2.14 $"
 
 maxusers	64		# estimated number of users
 
@@ -38,6 +38,7 @@ options 	SPECTRE_V2_GCC_MITIGATION
 acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
 coretemp*	at cpu?		# Intel on-die thermal sensor
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
+hyperv0		at cpu0		# Microsoft Hyper-V
 #odcm0		at cpu0		# On-demand clock modulation
 #padlock0	at cpu0		# VIA PadLock
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
@@ -1435,6 +1436,15 @@ ld* at virtio?				# Virtio disk device
 vioif* at virtio?			# Virtio network device
 viornd* at virtio?			# Virtio entropy device
 vioscsi* at virtio?			# Virtio SCSI device
+
+# Hyper-V devices
+vmbus*		at acpi?		# Hyper-V VMBus
+hvn*		at vmbus?		# Hyper-V NetVSC
+hvs*		at vmbus?		# Hyper-V StorVSC
+hvheartbeat*	at vmbus?		# Hyper-V Heartbeat Service
+hvshutdown*	at vmbus?		# Hyper-V Guest Shutdown Service
+hvtimesync*	at vmbus?		# Hyper-V Time Synchronization Service
+#hvkvp*		at vmbus?		# Hyper-V Data Exchange Service
 
 
 # Pull in optional local configuration

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.101.2.5 2018/04/05 18:15:03 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.101.2.6 2019/03/09 17:10:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.101.2.5 2018/04/05 18:15:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.101.2.6 2019/03/09 17:10:19 martin Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -166,6 +166,15 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.101.2.5 2018/04/05 18:15:03 martin Exp $"
 #include "lapic.h"
 #include "pci.h"
 #include "acpica.h"
+#ifndef XEN
+#include "hyperv.h"
+#if NHYPERV > 0
+#include <dev/hyperv/hypervvar.h>
+
+extern void Xresume_hyperv_hypercall(void);
+extern void Xrecurse_hyperv_hypercall(void);
+#endif
+#endif
 
 #if NIOAPIC > 0 || NACPICA > 0
 #include <machine/i82093var.h> 
@@ -1266,6 +1275,9 @@ struct intrhand fake_softbio_intrhand;
 struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
 struct intrhand fake_preempt_intrhand;
+#if NHYPERV > 0
+struct intrhand fake_hyperv_intrhand;
+#endif
 
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 static const char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
@@ -1327,6 +1339,20 @@ cpu_intr_init(struct cpu_info *ci)
 	for (i = 0; i < X86_NIPI; i++)
 		evcnt_attach_dynamic(&ci->ci_ipi_events[i], EVCNT_TYPE_MISC,
 		    NULL, device_xname(ci->ci_dev), x86_ipi_names[i]);
+#endif
+
+#if NHYPERV > 0
+	if (hyperv_hypercall_enabled()) {
+		isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
+		isp->is_recurse = Xrecurse_hyperv_hypercall;
+		isp->is_resume = Xresume_hyperv_hypercall;
+		fake_hyperv_intrhand.ih_level = IPL_NET;
+		isp->is_handlers = &fake_hyperv_intrhand;
+		isp->is_pic = &local_pic;
+		ci->ci_isources[LIR_HV] = isp;
+		evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
+		    device_xname(ci->ci_dev), "Hyper-V hypercall");
+	}
 #endif
 #endif
 

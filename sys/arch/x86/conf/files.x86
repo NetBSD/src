@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.88.6.1 2018/03/22 16:59:03 martin Exp $
+#	$NetBSD: files.x86,v 1.88.6.2 2019/03/09 17:10:20 martin Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -67,6 +67,10 @@ file	arch/x86/x86/viac7temp.c	viac7temp
 device	vmt: sysmon_power, sysmon_taskq
 attach	vmt at cpufeaturebus
 file	arch/x86/x86/vmt.c		vmt
+
+device	hyperv
+attach	hyperv at cpufeaturebus
+file	arch/x86/x86/hyperv.c		hyperv needs-flag
 
 file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c		machdep

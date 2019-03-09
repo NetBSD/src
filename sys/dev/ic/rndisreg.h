@@ -1,4 +1,5 @@
-/*	$NetBSD: if_urndisreg.h,v 1.3 2016/12/04 10:12:35 skrll Exp $ */
+/*	$NetBSD: rndisreg.h,v 1.2.2.2 2019/03/09 17:10:20 martin Exp $ */
+/*	NetBSD: if_urndisreg.h,v 1.4 2018/11/09 21:57:09 maya Exp */
 /*	$OpenBSD: if_urndisreg.h,v 1.14 2010/07/08 18:22:01 ckuethe Exp $ */
 
 /*
@@ -20,60 +21,23 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RNDIS_RX_LIST_CNT	1
-#define RNDIS_TX_LIST_CNT	1
-#define RNDIS_BUFSZ		1562
+#ifndef _DEV_IC_RNDISREG_H_
+#define _DEV_IC_RNDISREG_H_
 
-struct urndis_chain {
-	struct urndis_softc	*sc_softc;
-	struct usbd_xfer	*sc_xfer;
-	char			*sc_buf;
-	struct mbuf		*sc_mbuf;
-	int			 sc_idx;
-};
+/* Canonical major/minor version as of 22th Aug. 2016. */
+#define RNDIS_VERSION_MAJOR		0x00000001
+#define RNDIS_VERSION_MINOR		0x00000000
 
-struct urndis_cdata {
-	struct urndis_chain	sc_rx_chain[RNDIS_RX_LIST_CNT];
-	struct urndis_chain	sc_tx_chain[RNDIS_TX_LIST_CNT];
-	int			sc_tx_cnt;
-};
-
-#define GET_IFP(sc) (&(sc)->sc_ec.ec_if)
-struct urndis_softc {
-	device_t			sc_dev;
-
-	char				sc_attached;
-	int				sc_dying;
-	struct ethercom			sc_ec;
-
-	/* RNDIS device info */
-	uint32_t			sc_lim_pktsz;
-	uint32_t			sc_filter;
-
-	/* USB goo */
-	struct usbd_device *		sc_udev;
-	int				sc_ifaceno_ctl;
-	struct usbd_interface *		sc_iface_ctl;
-	struct usbd_interface *		sc_iface_data;
-
-	struct timeval			sc_rx_notice;
-	int				sc_bulkin_no;
-	struct usbd_pipe *		sc_bulkin_pipe;
-	int				sc_bulkout_no;
-	struct usbd_pipe *		sc_bulkout_pipe;
-
-	struct urndis_cdata		sc_data;
-};
-
-#define RNDIS_STATUS_BUFFER_OVERFLOW 	0x80000005L
-#define RNDIS_STATUS_FAILURE 		0xC0000001L
-#define RNDIS_STATUS_INVALID_DATA 	0xC0010015L
-#define RNDIS_STATUS_MEDIA_CONNECT 	0x4001000BL
-#define RNDIS_STATUS_MEDIA_DISCONNECT 	0x4001000CL
-#define RNDIS_STATUS_NOT_SUPPORTED 	0xC00000BBL
-#define RNDIS_STATUS_PENDING 		STATUS_PENDING /* XXX */
-#define RNDIS_STATUS_RESOURCES 		0xC000009AL
-#define RNDIS_STATUS_SUCCESS 		0x00000000L
+#define RNDIS_STATUS_SUCCESS		0x00000000L
+#define RNDIS_STATUS_PENDING		0x00000103L
+#define RNDIS_STATUS_MEDIA_CONNECT	0x4001000BL
+#define RNDIS_STATUS_MEDIA_DISCONNECT	0x4001000CL
+#define RNDIS_STATUS_OFFLOAD_CURRENT_CONFIG	0x40020006
+#define RNDIS_STATUS_BUFFER_OVERFLOW	0x80000005L
+#define RNDIS_STATUS_FAILURE		0xC0000001L
+#define RNDIS_STATUS_RESOURCES		0xC000009AL
+#define RNDIS_STATUS_NOT_SUPPORTED	0xC00000BBL
+#define RNDIS_STATUS_INVALID_DATA	0xC0010015L
 
 #define	OID_GEN_SUPPORTED_LIST		0x00010101
 #define	OID_GEN_HARDWARE_STATUS		0x00010102
@@ -120,11 +84,24 @@ struct urndis_softc {
 #define	OID_802_3_XMIT_TIMES_CRS_LOST	0x01020206
 #define	OID_802_3_XMIT_LATE_COLLISIONS	0x01020207
 
+#define OID_TCP_OFFLOAD_PARAMETERS	0xFC01020C
+
 #define RNDIS_MEDIUM_802_3		0x00000000
+
+#define RNDIS_MAJOR_VERSION		0x00000001U
+#define RNDIS_MINOR_VERSION		0x00000000U
 
 /* Device flags */
 #define RNDIS_DF_CONNECTIONLESS		0x00000001
 #define RNDIS_DF_CONNECTION_ORIENTED	0x00000002
+
+/*
+ * Common RNDIS message header.
+ */
+struct rndis_msghdr {
+	uint32_t	rm_type;
+	uint32_t	rm_len;
+};
 
 /*
  * RNDIS data message
@@ -132,7 +109,7 @@ struct urndis_softc {
 #define REMOTE_NDIS_PACKET_MSG		0x00000001
 
 
-struct urndis_packet_msg {
+struct rndis_packet_msg {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_dataoffset;
@@ -146,10 +123,31 @@ struct urndis_packet_msg {
 	uint32_t	rm_reserved;
 };
 
+/* Per-packet-info for RNDIS data message */
+struct rndis_pktinfo {
+	uint32_t	rm_size;
+	uint32_t	rm_type;
+	uint32_t	rm_pktinfooffset;
+	uint8_t		rm_data[0];
+};
+
+#define NDIS_PKTINFO_TYPE_CSUM		0
+#define NDIS_PKTINFO_TYPE_IPSEC		1
+#define NDIS_PKTINFO_TYPE_LSO		2
+#define NDIS_PKTINFO_TYPE_CLASSIFY	3
+/* reserved 4 */
+#define NDIS_PKTINFO_TYPE_SGLIST	5
+#define NDIS_PKTINFO_TYPE_VLAN		6
+#define NDIS_PKTINFO_TYPE_ORIG		7
+#define NDIS_PKTINFO_TYPE_PKT_CANCELID	8
+#define NDIS_PKTINFO_TYPE_ORIG_NBLIST	9
+#define NDIS_PKTINFO_TYPE_CACHE_NBLIST	10
+#define NDIS_PKTINFO_TYPE_PKT_PAD	11
+
 /*
  * RNDIS control messages
  */
-struct urndis_comp_hdr {
+struct rndis_comp_hdr {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_rid;
@@ -160,7 +158,7 @@ struct urndis_comp_hdr {
 #define REMOTE_NDIS_INITIALIZE_MSG	0x00000002
 #define REMOTE_NDIS_INITIALIZE_CMPLT	0x80000002
 
-struct urndis_init_req {
+struct rndis_init_req {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_rid;
@@ -169,7 +167,7 @@ struct urndis_init_req {
 	uint32_t	rm_max_xfersz;
 };
 
-struct urndis_init_comp {
+struct rndis_init_comp {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_rid;
@@ -188,7 +186,7 @@ struct urndis_init_comp {
 /* Halt the device.  No response sent. */
 #define REMOTE_NDIS_HALT_MSG		0x00000003
 
-struct urndis_halt_req {
+struct rndis_halt_req {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_rid;
@@ -198,7 +196,7 @@ struct urndis_halt_req {
 #define REMOTE_NDIS_QUERY_MSG		0x00000004
 #define REMOTE_NDIS_QUERY_CMPLT		0x80000004
 
-struct urndis_query_req {
+struct rndis_query_req {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_rid;
@@ -208,7 +206,7 @@ struct urndis_query_req {
 	uint32_t	rm_devicevchdl;
 };
 
-struct urndis_query_comp {
+struct rndis_query_comp {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_rid;
@@ -221,7 +219,7 @@ struct urndis_query_comp {
 #define REMOTE_NDIS_SET_MSG		0x00000005
 #define REMOTE_NDIS_SET_CMPLT		0x80000005
 
-struct urndis_set_req {
+struct rndis_set_req {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_rid;
@@ -231,7 +229,7 @@ struct urndis_set_req {
 	uint32_t	rm_devicevchdl;
 };
 
-struct urndis_set_comp {
+struct rndis_set_comp {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_rid;
@@ -241,7 +239,7 @@ struct urndis_set_comp {
 #define REMOTE_NDIS_SET_PARAM_NUMERIC	0x00000000
 #define REMOTE_NDIS_SET_PARAM_STRING	0x00000002
 
-struct urndis_set_parameter {
+struct rndis_set_parameter {
 	uint32_t	rm_nameoffset;
 	uint32_t	rm_namelen;
 	uint32_t	rm_type;
@@ -253,13 +251,13 @@ struct urndis_set_parameter {
 #define REMOTE_NDIS_RESET_MSG		0x00000006
 #define REMOTE_NDIS_RESET_CMPLT		0x80000006
 
-struct urndis_reset_req {
+struct rndis_reset_req {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_rid;
 };
 
-struct urndis_reset_comp {
+struct rndis_reset_comp {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_status;
@@ -273,13 +271,13 @@ struct urndis_reset_comp {
 #define REMOTE_NDIS_KEEPALIVE_MSG	0x00000008
 #define REMOTE_NDIS_KEEPALIVE_CMPLT	0x80000008
 
-struct urndis_keepalive_req {
+struct rndis_keepalive_req {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_rid;
 };
 
-struct urndis_keepalive_comp {
+struct rndis_keepalive_comp {
 	uint32_t	rm_type;
 	uint32_t	rm_len;
 	uint32_t	rm_rid;
@@ -301,7 +299,8 @@ struct urndis_keepalive_comp {
 #define RNDIS_PACKET_TYPE_MAC_FRAME		0x00008000
 
 /* Rndis offsets */
-#define RNDIS_HEADER_OFFSET	(sizeof(uint32_t) * 2)
-#define RNDIS_DATA_OFFSET	(sizeof(struct urndis_packet_msg) - \
-				 offsetof(struct urndis_packet_msg, \
-				 rm_dataoffset))
+#define RNDIS_HEADER_OFFSET	(sizeof(struct rndis_msghdr))
+#define RNDIS_DATA_OFFSET	(sizeof(struct rndis_packet_msg) - \
+				    RNDIS_HEADER_OFFSET)
+
+#endif /* _DEV_IC_RNDISREG_H_ */

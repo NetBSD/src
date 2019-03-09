@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.378.6.3 2018/06/09 15:12:21 martin Exp $
+#	$NetBSD: files.i386,v 1.378.6.4 2019/03/09 17:10:20 martin Exp $
 #
 # new style config file for i386 architecture
 #
@@ -439,6 +439,12 @@ include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
 file	arch/i386/acpi/acpi_wakeup_low.S	acpi
+
+# Microsoft Hyper-V
+include "dev/hyperv/files.hyperv"
+
+attach	vmbus at acpinodebus with vmbus_acpi
+file	dev/acpi/vmbus_acpi.c			vmbus_acpi
 
 # Obsolete vesabios/vesafb flags
 obsolete	defflag	opt_vesabios.h	VESABIOSVERBOSE
