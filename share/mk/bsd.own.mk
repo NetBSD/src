@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1110 2019/03/10 02:29:52 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1111 2019/03/10 11:02:46 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1436,7 +1436,7 @@ X11SRCDIRMIT?=		${X11SRCDIR}/external/mit
 	FS ICE SM X11 XScrnSaver XTrap Xau Xcomposite Xcursor Xdamage \
 	Xdmcp Xevie Xext Xfixes Xfont Xfont2 Xft Xi Xinerama Xmu Xpresent Xpm \
 	Xrandr Xrender Xres Xt Xtst Xv XvMC Xxf86dga Xxf86misc Xxf86vm drm \
-	epoxy fontenc xkbfile xkbui Xaw pciaccess xcb xshmfence \
+	epoxy fontenc vdpau xkbfile xkbui Xaw pciaccess xcb xshmfence \
 	pthread-stubs
 X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 .endfor
@@ -1467,7 +1467,12 @@ HAVE_XORG_SERVER_VER?=120
 .endif
 
 # MesaLib.old and MesaLib7 go together, and MesaLib is alone.
+HAVE_MESA_VER?=	10
+.if ${HAVE_MESA_VER} == "10"
 EXTERNAL_MESALIB_DIR?=	MesaLib.old
+.else
+EXTERNAL_MESALIB_DIR?=	MesaLib
+.endif
 
 .if ${HAVE_XORG_SERVER_VER} == "120"
 XORG_SERVER_SUBDIR?=xorg-server
