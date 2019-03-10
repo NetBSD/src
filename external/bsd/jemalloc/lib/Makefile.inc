@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2019/03/10 02:49:52 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2019/03/10 15:32:42 christos Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -39,7 +39,7 @@ witness.c
 .PATH.3: ${JEMALLOC}/dist/doc
 .for i in ${JEMALLOC_SRCS}
 CPPFLAGS.${i}+=-I${JEMALLOC}/include -DJEMALLOC_NO_PRIVATE_NAMESPACE \
-    -DJEMALLOC_WEAK_NOSTD
+    -DJEMALLOC_WEAK_NOSTD -DJEMALLOC_DEBUG
 COPTS.${i}+= -fvisibility=hidden -funroll-loops 
 .endfor
 
