@@ -862,7 +862,7 @@ malloc_conf_next(char const **opts_p, char const **k_p, size_t *klen_p,
 	return false;
 }
 
-static void
+static JEMALLOC_NORETURN void
 malloc_abort_invalid_conf(void) {
 	assert(opt_abort_conf);
 	malloc_printf("<jemalloc>: Abort (abort_conf:true) on invalid conf "
