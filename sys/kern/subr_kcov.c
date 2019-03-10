@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.5 2019/03/10 17:51:00 kamil Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.6 2019/03/10 22:34:14 kamil Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -417,7 +417,7 @@ trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, intptr_t pc)
 	}
 
 	if (kd->mode != KCOV_MODE_TRACE_CMP) {
-		/* PC tracing mode not enabled */
+		/* CMP tracing mode not enabled */
 		return;
 	}
 
