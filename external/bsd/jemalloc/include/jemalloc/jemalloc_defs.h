@@ -5,8 +5,10 @@
 /* Defined if alloc_size attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_ALLOC_SIZE 
 
+#ifndef __clang__
 /* Defined if format(gnu_printf, ...) attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_FORMAT_GNU_PRINTF 
+#endif
 
 /* Defined if format(printf, ...) attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_FORMAT_PRINTF 

@@ -11,7 +11,9 @@ extern "C" {
 #define JEMALLOC_HAVE_ATTR_ALLOC_SIZE
 
 /* Defined if format(gnu_printf, ...) attribute is supported. */
+#ifndef __clang__
 #define JEMALLOC_HAVE_ATTR_FORMAT_GNU_PRINTF
+#endif
 
 /* Defined if format(printf, ...) attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_FORMAT_PRINTF
