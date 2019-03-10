@@ -1,4 +1,4 @@
-/* $NetBSD: sleep.c,v 1.29 2019/01/27 02:00:45 christos Exp $ */
+/* $NetBSD: sleep.c,v 1.30 2019/03/10 15:18:45 kre Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,17 +39,19 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.29 2019/01/27 02:00:45 christos Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.30 2019/03/10 15:18:45 kre Exp $");
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <locale.h>
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -73,9 +75,10 @@ main(int argc, char *argv[])
 	const char *msg;
 	double fval, ival, val;
 	struct timespec ntime;
+	struct timespec endtime;
+	struct timespec now;
 	time_t original;
 	int ch, fracflag;
-	unsigned delay;
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
@@ -145,9 +148,15 @@ main(int argc, char *argv[])
 		if (ntime.tv_sec == 0 && ntime.tv_nsec == 0)
 			return EXIT_SUCCESS;	/* was 0.0 or underflowed */
 	} else {
+		errno = 0;
 		ntime.tv_sec = strtol(arg, &temp, 10);
 		if (ntime.tv_sec < 0 || temp == arg || *temp != '\0')
 			usage();
+		if (errno == ERANGE)
+			errx(EXIT_FAILURE, "Requested delay (%s) out of range",
+			    arg);
+		else if (errno != 0)
+			err(EXIT_FAILURE, "Requested delay (%s)", arg);
 
 		if (ntime.tv_sec == 0)
 			return EXIT_SUCCESS;
@@ -155,40 +164,45 @@ main(int argc, char *argv[])
 	}
 
 	original = ntime.tv_sec;
-	if (ntime.tv_nsec != 0)
-		msg = " and a bit";
-	else
+	if (original < 86400) {
+		if (ntime.tv_nsec > 1000000000 * 2 / 3) {
+			original++;
+			msg = " less a bit";
+		} else if (ntime.tv_nsec != 0)
+			msg = " and a bit";
+		else
+			msg = "";
+	} else
 		msg = "";
 
+	if (clock_gettime(CLOCK_MONOTONIC, &now) != 0)
+		err(EXIT_FAILURE, "clock_gettime");
+	timespecadd(&now, &ntime, &endtime);
+
+	if (endtime.tv_sec < now.tv_sec || (endtime.tv_sec == now.tv_sec &&
+	    endtime.tv_nsec <= now.tv_nsec))
+		errx(EXIT_FAILURE, "cannot sleep beyond the end of time");
+
 	signal(SIGINFO, report_request);
+	for (;;) {
+		int e;
 
-	if (ntime.tv_sec <= 10000) {			/* arbitrary */
-		while (nanosleep(&ntime, &ntime) != 0) {
-			if (report_requested) {
-				report(ntime.tv_sec, original, msg);
-				report_requested = 0;
-			} else
-				err(EXIT_FAILURE, "nanosleep failed");
+		if ((e = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
+		     &endtime, NULL)) == 0)
+			return EXIT_SUCCESS;
+
+		if (!report_requested || e != EINTR) {
+			errno = e;
+			err(EXIT_FAILURE, "clock_nanotime");
 		}
-	} else while (ntime.tv_sec > 0) {
-		delay = (unsigned int)ntime.tv_sec;
 
-		if ((time_t)delay != ntime.tv_sec || delay > 30 * 86400)
-			delay = 30 * 86400;
+		report_requested = 0;
+		if (clock_gettime(CLOCK_MONOTONIC, &now) != 0) /* Huh? */
+			continue;
 
-		ntime.tv_sec -= delay;
-		delay = sleep(delay);
-		ntime.tv_sec += delay;
-
-		if (delay != 0 && report_requested) {
-			report(ntime.tv_sec, original, "");
-			report_requested = 0;
-		} else
-			break;
+		timespecsub(&endtime, &now, &ntime);
+		report(ntime.tv_sec, original, msg);
 	}
-
-	return EXIT_SUCCESS;
-	/* NOTREACHED */
 }
 
 	/* Reporting does not bother with nanoseconds. */
@@ -197,7 +211,7 @@ report(const time_t remain, const time_t original, const char * const msg)
 {
 	if (remain == 0)
 		warnx("In the final moments of the original"
-		    " %jd%s second%s", (intmax_t)original, msg,
+		    " %g%s second%s", (double)original, msg,
 		    original == 1 && *msg == '\0' ? "" : "s");
 	else if (remain < 2000)
 		warnx("Between %jd and %jd seconds left"
@@ -205,11 +219,13 @@ report(const time_t remain, const time_t original, const char * const msg)
 		    (intmax_t)remain, (intmax_t)remain + 1, (double)original,
 		    msg);
 	else if ((original - remain) < 100000 && (original-remain) < original/8)
-		warnx("Have waited only %jd seconds of the original %g",
-			(intmax_t)(original - remain), (double)original);
+		warnx("Have waited only %jd second%s of the original %g%s",
+			(intmax_t)(original - remain),
+			(original - remain) == 1 ? "" : "s",
+			(double)original, msg);
 	else
-		warnx("Approximately %g seconds left out of the original %g",
-			(double)remain, (double)original);
+		warnx("Approximately %g seconds left out of the original %g%s",
+			(double)remain, (double)original, msg);
 }
 
 static void
