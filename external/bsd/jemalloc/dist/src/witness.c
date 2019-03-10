@@ -14,7 +14,7 @@ witness_init(witness_t *witness, const char *name, witness_rank_t rank,
 	witness->opaque = opaque;
 }
 
-static void
+static JEMALLOC_NORETURN void
 witness_lock_error_impl(const witness_list_t *witnesses,
     const witness_t *witness) {
 	witness_t *w;
@@ -28,7 +28,7 @@ witness_lock_error_impl(const witness_list_t *witnesses,
 }
 witness_lock_error_t *JET_MUTABLE witness_lock_error = witness_lock_error_impl;
 
-static void
+static JEMALLOC_NORETURN void
 witness_owner_error_impl(const witness_t *witness) {
 	malloc_printf("<jemalloc>: Should own %s(%u)\n", witness->name,
 	    witness->rank);
@@ -37,7 +37,7 @@ witness_owner_error_impl(const witness_t *witness) {
 witness_owner_error_t *JET_MUTABLE witness_owner_error =
     witness_owner_error_impl;
 
-static void
+static JEMALLOC_NORETURN void
 witness_not_owner_error_impl(const witness_t *witness) {
 	malloc_printf("<jemalloc>: Should not own %s(%u)\n", witness->name,
 	    witness->rank);
@@ -46,7 +46,7 @@ witness_not_owner_error_impl(const witness_t *witness) {
 witness_not_owner_error_t *JET_MUTABLE witness_not_owner_error =
     witness_not_owner_error_impl;
 
-static void
+static JEMALLOC_NORETURN void
 witness_depth_error_impl(const witness_list_t *witnesses,
     witness_rank_t rank_inclusive, unsigned depth) {
 	witness_t *w;

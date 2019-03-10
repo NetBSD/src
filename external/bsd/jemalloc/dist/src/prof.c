@@ -207,7 +207,7 @@ rb_gen(static UNUSED, tdata_tree_, prof_tdata_tree_t, prof_tdata_t, tdata_link,
 
 /******************************************************************************/
 
-void
+JEMALLOC_NORETURN void
 prof_alloc_rollback(tsd_t *tsd, prof_tctx_t *tctx, bool updated) {
 	prof_tdata_t *tdata;
 
@@ -237,7 +237,7 @@ prof_alloc_rollback(tsd_t *tsd, prof_tctx_t *tctx, bool updated) {
 	}
 }
 
-void
+JEMALLOC_NORETURN void
 prof_malloc_sample_object(tsdn_t *tsdn, const void *ptr, size_t usize,
     prof_tctx_t *tctx) {
 	prof_tctx_set(tsdn, ptr, usize, NULL, tctx);
@@ -268,7 +268,7 @@ prof_free_sampled_object(tsd_t *tsd, size_t usize, prof_tctx_t *tctx) {
 	}
 }
 
-void
+JEMALLOC_NORETURN void
 bt_init(prof_bt_t *bt, void **vec) {
 	cassert(config_prof);
 
@@ -276,7 +276,7 @@ bt_init(prof_bt_t *bt, void **vec) {
 	bt->len = 0;
 }
 
-static void
+static JEMALLOC_NORETURN void
 prof_enter(tsd_t *tsd, prof_tdata_t *tdata) {
 	cassert(config_prof);
 	assert(tdata == prof_tdata_get(tsd, false));
@@ -289,7 +289,7 @@ prof_enter(tsd_t *tsd, prof_tdata_t *tdata) {
 	malloc_mutex_lock(tsd_tsdn(tsd), &bt2gctx_mtx);
 }
 
-static void
+static JEMALLOC_NORETURN void
 prof_leave(tsd_t *tsd, prof_tdata_t *tdata) {
 	cassert(config_prof);
 	assert(tdata == prof_tdata_get(tsd, false));
@@ -530,7 +530,7 @@ prof_backtrace(prof_bt_t *bt) {
 #undef BT_FRAME
 }
 #else
-void
+JEMALLOC_NORETURN void
 prof_backtrace(prof_bt_t *bt) {
 	cassert(config_prof);
 	not_reached();
@@ -575,7 +575,7 @@ prof_gctx_create(tsdn_t *tsdn, prof_bt_t *bt) {
 	return gctx;
 }
 
-static void
+static JEMALLOC_NORETURN void
 prof_gctx_try_destroy(tsd_t *tsd, prof_tdata_t *tdata_self, prof_gctx_t *gctx,
     prof_tdata_t *tdata) {
 	cassert(config_prof);
@@ -1175,7 +1175,7 @@ label_return:
 	return ret;
 }
 
-static void
+static JEMALLOC_NORETURN void
 prof_dump_gctx_prep(tsdn_t *tsdn, prof_gctx_t *gctx, prof_gctx_tree_t *gctxs) {
 	cassert(config_prof);
 
@@ -1548,7 +1548,7 @@ label_return:
 	return ret;
 }
 
-static void
+static JEMALLOC_NORETURN void
 prof_dump_prep(tsd_t *tsd, prof_tdata_t *tdata,
     struct prof_tdata_merge_iter_arg_s *prof_tdata_merge_iter_arg,
     struct prof_gctx_merge_iter_arg_s *prof_gctx_merge_iter_arg,
@@ -1719,7 +1719,7 @@ prof_cnt_all(uint64_t *curobjs, uint64_t *curbytes, uint64_t *accumobjs,
 
 #define DUMP_FILENAME_BUFSIZE	(PATH_MAX + 1)
 #define VSEQ_INVALID		UINT64_C(0xffffffffffffffff)
-static void
+static JEMALLOC_NORETURN void
 prof_dump_filename(char *filename, char v, uint64_t vseq) {
 	cassert(config_prof);
 
@@ -1741,8 +1741,9 @@ static void
 prof_fdump(void) {
 	tsd_t *tsd;
 	char filename[DUMP_FILENAME_BUFSIZE];
-
+#ifndef __clang__
 	cassert(config_prof);
+#endif
 	assert(opt_prof_final);
 	assert(opt_prof_prefix[0] != '\0');
 
@@ -1778,8 +1779,9 @@ void
 prof_idump(tsdn_t *tsdn) {
 	tsd_t *tsd;
 	prof_tdata_t *tdata;
-
+#ifndef __clang__
 	cassert(config_prof);
+#endif
 
 	if (!prof_booted || tsdn_null(tsdn) || !prof_active_get_unlocked()) {
 		return;
@@ -1835,8 +1837,9 @@ void
 prof_gdump(tsdn_t *tsdn) {
 	tsd_t *tsd;
 	prof_tdata_t *tdata;
-
+#ifndef __clang__
 	cassert(config_prof);
+#endif
 
 	if (!prof_booted || tsdn_null(tsdn) || !prof_active_get_unlocked()) {
 		return;
@@ -1865,7 +1868,7 @@ prof_gdump(tsdn_t *tsdn) {
 	}
 }
 
-static void
+static JEMALLOC_NORETURN void
 prof_bt_hash(const void *key, size_t r_hash[2]) {
 	const prof_bt_t *bt = (const prof_bt_t *)key;
 
@@ -2256,7 +2259,7 @@ prof_gdump_set(tsdn_t *tsdn, bool gdump) {
 	return prof_gdump_old;
 }
 
-void
+JEMALLOC_NORETURN void
 prof_boot0(void) {
 	cassert(config_prof);
 
@@ -2264,7 +2267,7 @@ prof_boot0(void) {
 	    sizeof(PROF_PREFIX_DEFAULT));
 }
 
-void
+JEMALLOC_NORETURN void
 prof_boot1(void) {
 	cassert(config_prof);
 
