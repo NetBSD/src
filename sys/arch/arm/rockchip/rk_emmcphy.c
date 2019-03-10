@@ -1,4 +1,4 @@
-/* $NetBSD: rk_emmcphy.c,v 1.1 2019/03/10 11:10:21 jmcneill Exp $ */
+/* $NetBSD: rk_emmcphy.c,v 1.2 2019/03/10 19:47:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_emmcphy.c,v 1.1 2019/03/10 11:10:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_emmcphy.c,v 1.2 2019/03/10 19:47:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_emmcphy.c,v 1.1 2019/03/10 11:10:21 jmcneill Exp 
 #include <sys/kmem.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/syscon.h>
 
 #define	GRF_EMMCPHY_CON0	0x00
 #define	 PHYCTRL_FRQSEL			__BITS(13,12)
@@ -93,15 +94,16 @@ static const char * const compatible[] = {
 
 struct rk_emmcphy_softc {
 	device_t		sc_dev;
-	bus_space_tag_t		sc_bst;
-	bus_space_handle_t	sc_bsh;
+	struct syscon		*sc_syscon;
+	bus_addr_t		sc_regbase;
 	int			sc_phandle;
+	struct clk		*sc_clk;
 };
 
 #define RD4(sc, reg) 		\
-    bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
+	syscon_read_4((sc)->sc_syscon, (sc)->sc_regbase + (reg))
 #define WR4(sc, reg, val) 	\
-    bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+	syscon_write_4((sc)->sc_syscon, (sc)->sc_regbase + (reg), (val))
 
 static int	rk_emmcphy_match(device_t, cfdata_t, void *);
 static void	rk_emmcphy_attach(device_t, device_t, void *);
@@ -112,10 +114,15 @@ CFATTACH_DECL_NEW(rkemmcphy, sizeof(struct rk_emmcphy_softc),
 static void *
 rk_emmcphy_acquire(device_t dev, const void *data, size_t len)
 {
+	struct rk_emmcphy_softc * const sc = device_private(dev);
+
 	if (len != 0)
 		return NULL;
 
-	return device_private(dev);
+	if (sc->sc_clk == NULL)
+		sc->sc_clk = fdtbus_clock_get(sc->sc_phandle, "emmcclk");
+
+	return sc;
 }
 
 static void
@@ -126,22 +133,23 @@ rk_emmcphy_release(device_t dev, void *priv)
 static int
 rk_emmcphy_enable(device_t dev, void *priv, bool enable)
 {
-	struct rk_emmcphy_softc * const sc = priv;
-	const int phandle = sc->sc_phandle;
-	struct clk *clk;
+	struct rk_emmcphy_softc * const sc = device_private(dev);
 	uint32_t mask, val;
 	u_int rate, frqsel;
+
+	syscon_lock(sc->sc_syscon);
 
 	/* Power down PHY and disable DLL before making changes */
 	mask = PHYCTRL_ENDLL | PHYCTRL_PDB;
 	val = 0;
 	WR4(sc, GRF_EMMCPHY_CON6, (mask << 16) | val);
 
-	if (enable == false)
+	if (enable == false) {
+		syscon_unlock(sc->sc_syscon);
 		return 0;
+	}
 
-	clk = fdtbus_clock_get(phandle, "emmcclk");
-	rate = clk ? clk_get_rate(clk) : 0;
+	rate = sc->sc_clk ? clk_get_rate(sc->sc_clk) : 0;
 
 	if (rate != 0) {
 		if (rate < 75000000)
@@ -168,6 +176,7 @@ rk_emmcphy_enable(device_t dev, void *priv, bool enable)
 	val = RD4(sc, GRF_EMMCPHY_STATUS);
 	if ((val & PHYCTRL_CALDONE) == 0) {
 		device_printf(dev, "PHY calibration did not complete\n");
+		syscon_unlock(sc->sc_syscon);
 		return EIO;
 	}
 
@@ -187,9 +196,12 @@ rk_emmcphy_enable(device_t dev, void *priv, bool enable)
 		val = RD4(sc, GRF_EMMCPHY_STATUS);
 		if ((val & PHYCTRL_DLLRDY) == 0) {
 			device_printf(dev, "DLL loop failed to lock\n");
+			syscon_unlock(sc->sc_syscon);
 			return EIO;
 		}
 	}
+
+	syscon_unlock(sc->sc_syscon);
 
 	return 0;
 }
@@ -224,11 +236,12 @@ rk_emmcphy_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
-	sc->sc_bst = faa->faa_bst;
-	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
-		aprint_error(": couldn't map registers\n");
+	sc->sc_syscon = fdtbus_syscon_lookup(OF_parent(phandle));
+	if (sc->sc_syscon == NULL) {
+		aprint_error(": couldn't get syscon\n");
 		return;
 	}
+	sc->sc_regbase = addr;
 
 	aprint_naive("\n");
 	aprint_normal(": eMMC PHY\n");
