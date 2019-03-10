@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.30 2019/03/09 08:42:25 maxv Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.31 2019/03/10 16:30:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.30 2019/03/09 08:42:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.31 2019/03/10 16:30:01 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -212,15 +212,17 @@ pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pd_entry_t pde;
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
+	int lvl;
 
 	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
-	if (!pmap_pdes_valid(va, pdes, &pde)) {
+	if (!pmap_pdes_valid(va, pdes, &pde, &lvl)) {
 		pmap_unmap_ptes(pmap, pmap2);
 		kpreempt_enable();
 		return false;
 	}
 
+	KASSERT(lvl == 1);
 	pte = ptes[pl1_i(va)];
 	pmap_unmap_ptes(pmap, pmap2);
 	kpreempt_enable();
