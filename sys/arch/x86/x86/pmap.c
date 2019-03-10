@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.329 2019/03/09 08:42:26 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.330 2019/03/10 16:30:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.329 2019/03/09 08:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.330 2019/03/10 16:30:01 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3031,22 +3031,28 @@ pmap_deactivate(struct lwp *l)
  * some misc. functions
  */
 
-int
-pmap_pdes_invalid(vaddr_t va, pd_entry_t * const *pdes, pd_entry_t *lastpde)
+bool
+pmap_pdes_valid(vaddr_t va, pd_entry_t * const *pdes, pd_entry_t *lastpde,
+    int *lastlvl)
 {
-	int i;
 	unsigned long index;
 	pd_entry_t pde;
+	int i;
 
 	for (i = PTP_LEVELS; i > 1; i--) {
 		index = pl_i(va, i);
 		pde = pdes[i - 2][index];
-		if ((pde & PTE_P) == 0)
-			return i;
+		if ((pde & PTE_P) == 0) {
+			*lastlvl = i;
+			return false;
+		}
+		if (pde & PTE_PS)
+			break;
 	}
 	if (lastpde != NULL)
 		*lastpde = pde;
-	return 0;
+	*lastlvl = i;
+	return true;
 }
 
 /*
@@ -3063,6 +3069,7 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	paddr_t pa;
 	lwp_t *l;
 	bool hard, rv;
+	int lvl;
 
 	if (__predict_false(pmap->pm_extract != NULL)) {
 		return (*pmap->pm_extract)(pmap, va, pap);
@@ -3083,8 +3090,8 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 
 	kpreempt_disable();
 	ci = l->l_cpu;
-	if (__predict_true(!ci->ci_want_pmapload && ci->ci_pmap == pmap) ||
-	    pmap == pmap_kernel()) {
+	if (pmap == pmap_kernel() ||
+	    __predict_true(!ci->ci_want_pmapload && ci->ci_pmap == pmap)) {
 		/*
 		 * no need to lock, because it's pmap_kernel() or our
 		 * own pmap and is active.  if a user pmap, the caller
@@ -3101,14 +3108,17 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 		hard = true;
 		pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 	}
-	if (pmap_pdes_valid(va, pdes, &pde)) {
-		pte = ptes[pl1_i(va)];
-		if (pde & PTE_PS) {
+	if (pmap_pdes_valid(va, pdes, &pde, &lvl)) {
+		if (lvl == 2) {
 			pa = (pde & PTE_LGFRAME) | (va & (NBPD_L2 - 1));
 			rv = true;
-		} else if (__predict_true((pte & PTE_P) != 0)) {
-			pa = pmap_pte2pa(pte) | (va & (NBPD_L1 - 1));
-			rv = true;
+		} else {
+			KASSERT(lvl == 1);
+			pte = ptes[pl1_i(va)];
+			if (__predict_true((pte & PTE_P) != 0)) {
+				pa = pmap_pte2pa(pte) | (va & (NBPD_L1 - 1));
+				rv = true;
+			}
 		}
 	}
 	if (__predict_false(hard)) {
@@ -3531,6 +3541,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	vaddr_t blkendva, va = sva;
 	struct vm_page *ptp;
 	struct pmap *pmap2;
+	int lvl;
 
 	if (__predict_false(pmap->pm_remove != NULL)) {
 		(*pmap->pm_remove)(pmap, sva, eva);
@@ -3545,7 +3556,8 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	 */
 
 	if (va + PAGE_SIZE == eva) {
-		if (pmap_pdes_valid(va, pdes, &pde)) {
+		if (pmap_pdes_valid(va, pdes, &pde, &lvl)) {
+			KASSERT(lvl == 1);
 
 			/* PA of the PTP */
 			ptppa = pmap_pte2pa(pde);
@@ -3572,19 +3584,17 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 				pmap_free_ptp(pmap, ptp, va, ptes, pdes);
 		}
 	} else for (/* null */ ; va < eva ; va = blkendva) {
-		int lvl;
-
 		/* determine range of block */
 		blkendva = x86_round_pdr(va+1);
 		if (blkendva > eva)
 			blkendva = eva;
 
-		lvl = pmap_pdes_invalid(va, pdes, &pde);
-		if (lvl != 0) {
+		if (!pmap_pdes_valid(va, pdes, &pde, &lvl)) {
 			/* Skip a range corresponding to an invalid pde. */
 			blkendva = (va & ptp_frames[lvl - 1]) + nbpd[lvl - 1];
  			continue;
 		}
+		KASSERT(lvl == 1);
 
 		/* PA of the PTP */
 		ptppa = pmap_pte2pa(pde);
@@ -4003,6 +4013,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	pt_entry_t * const *pdes;
 	struct pmap *pmap2;
 	vaddr_t blockend, va;
+	int lvl;
 
 	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
 
@@ -4034,10 +4045,11 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			blockend = eva;
 
 		/* Is it a valid block? */
-		if (!pmap_pdes_valid(va, pdes, NULL)) {
+		if (!pmap_pdes_valid(va, pdes, NULL, &lvl)) {
 			continue;
 		}
 		KASSERT(va < VM_MAXUSER_ADDRESS || va >= VM_MAX_ADDRESS);
+		KASSERT(lvl == 1);
 
 		spte = &ptes[pl1_i(va)];
 		epte = &ptes[pl1_i(blockend)];
@@ -4078,6 +4090,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	pt_entry_t *ptes, *ptep, opte;
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
+	int lvl;
 
 	if (__predict_false(pmap->pm_unwire != NULL)) {
 		(*pmap->pm_unwire)(pmap, va);
@@ -4088,9 +4101,10 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 
-	if (!pmap_pdes_valid(va, pdes, NULL)) {
+	if (!pmap_pdes_valid(va, pdes, NULL, &lvl)) {
 		panic("%s: invalid PDE va=%#" PRIxVADDR, __func__, va);
 	}
+	KASSERT(lvl == 1);
 
 	ptep = &ptes[pl1_i(va)];
 	opte = *ptep;
@@ -4623,6 +4637,7 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
 	vaddr_t blkendva;
+	int lvl;
 
 	/*
 	 * if end is out of range truncate.
@@ -4651,8 +4666,9 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			blkendva = eva;
 
 		/* valid block? */
-		if (!pmap_pdes_valid(sva, pdes, NULL))
+		if (!pmap_pdes_valid(sva, pdes, NULL, &lvl))
 			continue;
+		KASSERT(lvl == 1);
 
 		pte = &ptes[pl1_i(sva)];
 		for (/* null */; sva < blkendva ; sva += PAGE_SIZE, pte++) {
