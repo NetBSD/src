@@ -418,10 +418,10 @@ kcov_multiple_threads(size_t N)
 
 	ATF_REQUIRE(__arraycount(thread) >= N);
 
-	for (i = 0; i < __arraycount(thread); i++)
+	for (i = 0; i < N; i++)
 		pthread_create(&thread[i], NULL, multiple_threads_helper, NULL);
 
-	for (i = 0; i < __arraycount(thread); i++)
+	for (i = 0; i < N; i++)
 		pthread_join(thread[i], NULL);
 }
 
