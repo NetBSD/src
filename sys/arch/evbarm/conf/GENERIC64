@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.82 2019/03/06 19:36:59 jakllsch Exp $
+#	$NetBSD: GENERIC64,v 1.83 2019/03/10 11:10:21 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -338,6 +338,7 @@ tegrartc*	at fdt?			# NVIDIA Tegra RTC
 dwcmmc*		at fdt?			# Designware SD/MMC
 mesongxmmc*	at fdt?			# Amlogic Meson GX eMMC/SD/SDIO controller
 mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
+rkemmcphy*	at fdt?			# Rockchip eMMC PHY
 sdhc*		at fdt?			# SD Host Controller Interface
 sdhost*		at fdt?			# Broadcom BCM283x SD Host Interface
 sunximmc*	at fdt?			# Allwinner SD/MMC
