@@ -41,7 +41,7 @@ prof_accum_add(tsdn_t *tsdn, prof_accum_t *prof_accum, uint64_t accumbytes) {
 	return overflow;
 }
 
-static inline void
+static JEMALLOC_NORETURN inline void
 prof_accum_cancel(tsdn_t *tsdn, prof_accum_t *prof_accum, size_t usize) {
 	cassert(config_prof);
 
