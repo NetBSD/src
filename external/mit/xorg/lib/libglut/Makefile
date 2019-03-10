@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2016/01/05 13:07:47 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2019/03/10 02:29:53 mrg Exp $
 
 .include <bsd.own.mk>
+
+.include "../mesa-which.mk"
 
 LIB=		glut
 
@@ -55,7 +57,7 @@ SRCS=	\
 	glut_winmisc.c \
 	layerutil.c
 
-CPPFLAGS+=	-I${X11SRCDIR.MesaGLUT}/include -I${X11SRCDIR.MesaLib}/include
+CPPFLAGS+=	-I${X11SRCDIR.MesaGLUT}/include -I${X11SRCDIR.Mesa}/include
 CFLAGS+=	-fno-strict-aliasing -fexceptions
 
 .PATH:		${X11SRCDIR.MesaGLUT}/include/GL
@@ -66,7 +68,7 @@ LIBDPLIBS=	Xi	${.CURDIR}/../libXi \
 		Xmu	${.CURDIR}/../libXmu \
 		Xt	${.CURDIR}/../libXt \
 		X11	${.CURDIR}/../libX11/dynamic \
-		GL	${.CURDIR}/../libGL \
+		GL	${.CURDIR}/../libGL${OLD_PREFIX} \
 		GLU	${.CURDIR}/../libGLU
 
 LIBDPLIBS+=	m ${NETBSDSRCDIR}/lib/libm

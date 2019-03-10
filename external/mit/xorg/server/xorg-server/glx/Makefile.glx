@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.glx,v 1.13 2018/12/31 11:14:04 mrg Exp $
+#	$NetBSD: Makefile.glx,v 1.14 2019/03/10 02:29:53 mrg Exp $
 
 .PATH:	${X11SRCDIR.xorg-server}/glx
-.PATH:	${X11SRCDIR.MesaLib}/src/mesa/glapi
-.PATH:	${X11SRCDIR.MesaLib}/src/glx
+.PATH:	${X11SRCDIR.Mesa}/src/mesa/glapi
+.PATH:	${X11SRCDIR.Mesa}/src/glx
 
 SRCS.glx= \
 	clientinfo.c \
@@ -58,11 +58,11 @@ CPPFLAGS+= \
 	-I${X11SRCDIR.xorg-server}/hw/xfree86/dri \
 	-I${X11SRCDIR.xorg-server}/hw/xfree86/dri2 \
 	-I${X11SRCDIR.xorg-server}/present \
-	-I${X11SRCDIR.MesaLib}/include \
-	-I${X11SRCDIR.MesaLib}/src/glx \
-	-I${X11SRCDIR.MesaLib}/src/mesa \
-	-I${X11SRCDIR.MesaLib}/src/mesa/main \
-	-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
+	-I${X11SRCDIR.Mesa}/include \
+	-I${X11SRCDIR.Mesa}/src/glx \
+	-I${X11SRCDIR.Mesa}/src/mesa \
+	-I${X11SRCDIR.Mesa}/src/mesa/main \
+	-I${X11SRCDIR.Mesa}/src/mesa/glapi \
 	-I${DESTDIR}${X11INCDIR}/X11 \
 	-I${DESTDIR}${X11INCDIR}/libdrm \
 	-I${DESTDIR}${X11INCDIR}/xorg \
