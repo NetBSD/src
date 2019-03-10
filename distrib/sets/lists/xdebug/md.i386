@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.40 2019/03/08 12:18:41 mrg Exp $
+# $NetBSD: md.i386,v 1.41 2019/03/10 11:18:02 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg
@@ -6,6 +6,7 @@
 ./usr/X11R7/lib/libdrm_amdgpu_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libdrm_intel_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libdrm_nouveau_g.a			-unknown-	debuglib,xorg
+./usr/X11R7/lib/libvdpau_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libGLcore_g.a	-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		-unknown-	obsolete
@@ -51,6 +52,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_intel.so.0.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.2.0.debug	-unknown-		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.3.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libvdpau.so.1.0.debug		-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i810_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i915_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i965_dri.so.0.debug	-unknown-		xorg,debug
