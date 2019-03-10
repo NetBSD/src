@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.4 2019/03/10 12:54:39 kamil Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.5 2019/03/10 17:51:00 kamil Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -49,6 +49,9 @@
 #include <sys/kcov.h>
 
 #define KCOV_BUF_MAX_ENTRIES	(256 << 10)
+
+#define KCOV_CMP_CONST		1
+#define KCOV_CMP_SIZE(x)	((x) << 1)
 
 static dev_type_open(kcov_open);
 
@@ -107,6 +110,7 @@ typedef struct kcov_desc {
 	struct uvm_object *uobj;
 	size_t bufnent;
 	size_t bufsize;
+	int mode;
 	bool enabled;
 	bool lwpfree;
 } kcov_t;
@@ -231,6 +235,7 @@ static int
 kcov_fops_ioctl(file_t *fp, u_long cmd, void *addr)
 {
 	int error = 0;
+	int mode;
 	kcov_t *kd;
 
 	kd = fp->f_data;
@@ -259,6 +264,20 @@ kcov_fops_ioctl(file_t *fp, u_long cmd, void *addr)
 			error = ENOBUFS;
 			break;
 		}
+
+		mode = *((int *)addr);
+		switch (mode) {
+		case KCOV_MODE_NONE:
+		case KCOV_MODE_TRACE_PC:
+		case KCOV_MODE_TRACE_CMP:
+			kd->mode = mode;
+			break;
+		default:
+			error = EINVAL;
+		}
+		if (error)
+			break;
+
 		lwp_setspecific(kcov_lwp_key, kd);
 		kd->enabled = true;
 		break;
@@ -356,12 +375,174 @@ __sanitizer_cov_trace_pc(void)
 		return;
 	}
 
+	if (kd->mode != KCOV_MODE_TRACE_PC) {
+		/* PC tracing mode not enabled */
+		return;
+	}
+
 	idx = KCOV_LOAD(kd->buf[0]);
 	if (idx < kd->bufnent) {
 		KCOV_STORE(kd->buf[idx+1],
 		    (intptr_t)__builtin_return_address(0));
 		KCOV_STORE(kd->buf[0], idx + 1);
 	}
+}
+
+static void
+trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, intptr_t pc)
+{
+	extern int cold;
+	uint64_t idx;
+	kcov_t *kd;
+
+	if (__predict_false(cold)) {
+		/* Do not trace during boot. */
+		return;
+	}
+
+	if (in_interrupt()) {
+		/* Do not trace in interrupts. */
+		return;
+	}
+
+	kd = lwp_getspecific(kcov_lwp_key);
+	if (__predict_true(kd == NULL)) {
+		/* Not traced. */
+		return;
+	}
+
+	if (!kd->enabled) {
+		/* Tracing not enabled */
+		return;
+	}
+
+	if (kd->mode != KCOV_MODE_TRACE_CMP) {
+		/* PC tracing mode not enabled */
+		return;
+	}
+
+	idx = KCOV_LOAD(kd->buf[0]);
+	if ((idx * 4 + 4) <= kd->bufnent) {
+		KCOV_STORE(kd->buf[idx * 4 + 1], type);
+		KCOV_STORE(kd->buf[idx * 4 + 2], arg1);
+		KCOV_STORE(kd->buf[idx * 4 + 3], arg2);
+		KCOV_STORE(kd->buf[idx * 4 + 4], pc);
+		KCOV_STORE(kd->buf[0], idx + 1);
+	}
+}
+
+void __sanitizer_cov_trace_cmp1(uint8_t arg1, uint8_t arg2);
+
+void
+__sanitizer_cov_trace_cmp1(uint8_t arg1, uint8_t arg2)
+{
+
+	trace_cmp(KCOV_CMP_SIZE(0), arg1, arg2,
+	    (intptr_t)__builtin_return_address(0));
+}
+
+void __sanitizer_cov_trace_cmp2(uint16_t arg1, uint16_t arg2);
+
+void
+__sanitizer_cov_trace_cmp2(uint16_t arg1, uint16_t arg2)
+{
+
+	trace_cmp(KCOV_CMP_SIZE(1), arg1, arg2,
+	    (intptr_t)__builtin_return_address(0));
+}
+
+void __sanitizer_cov_trace_cmp4(uint32_t arg1, uint32_t arg2);
+
+void
+__sanitizer_cov_trace_cmp4(uint32_t arg1, uint32_t arg2)
+{
+
+	trace_cmp(KCOV_CMP_SIZE(2), arg1, arg2,
+	    (intptr_t)__builtin_return_address(0));
+}
+
+void __sanitizer_cov_trace_cmp8(uint64_t arg1, uint64_t arg2);
+
+void
+__sanitizer_cov_trace_cmp8(uint64_t arg1, uint64_t arg2)
+{
+
+	trace_cmp(KCOV_CMP_SIZE(3), arg1, arg2,
+	    (intptr_t)__builtin_return_address(0));
+}
+
+void __sanitizer_cov_trace_const_cmp1(uint8_t arg1, uint8_t arg2);
+
+void
+__sanitizer_cov_trace_const_cmp1(uint8_t arg1, uint8_t arg2)
+{
+
+	trace_cmp(KCOV_CMP_SIZE(0) | KCOV_CMP_CONST, arg1, arg2,
+	    (intptr_t)__builtin_return_address(0));
+}
+
+void __sanitizer_cov_trace_const_cmp2(uint16_t arg1, uint16_t arg2);
+
+void
+__sanitizer_cov_trace_const_cmp2(uint16_t arg1, uint16_t arg2)
+{
+
+	trace_cmp(KCOV_CMP_SIZE(1) | KCOV_CMP_CONST, arg1, arg2,
+	    (intptr_t)__builtin_return_address(0));
+}
+
+void __sanitizer_cov_trace_const_cmp4(uint32_t arg1, uint32_t arg2);
+
+void
+__sanitizer_cov_trace_const_cmp4(uint32_t arg1, uint32_t arg2)
+{
+
+	trace_cmp(KCOV_CMP_SIZE(2) | KCOV_CMP_CONST, arg1, arg2,
+	    (intptr_t)__builtin_return_address(0));
+}
+
+void __sanitizer_cov_trace_const_cmp8(uint64_t arg1, uint64_t arg2);
+
+void
+__sanitizer_cov_trace_const_cmp8(uint64_t arg1, uint64_t arg2)
+{
+
+	trace_cmp(KCOV_CMP_SIZE(3) | KCOV_CMP_CONST, arg1, arg2,
+	    (intptr_t)__builtin_return_address(0));
+}
+
+void __sanitizer_cov_trace_switch(uint64_t val, uint64_t *cases);
+
+void
+__sanitizer_cov_trace_switch(uint64_t val, uint64_t *cases)
+{
+	uint64_t i, nbits, ncases, type;
+	intptr_t pc;
+
+	pc = (intptr_t)__builtin_return_address(0);
+	ncases = cases[0];
+	nbits = cases[1];
+
+	switch (nbits) {
+	case 8:
+		type = KCOV_CMP_SIZE(0);
+		break;
+	case 16:
+		type = KCOV_CMP_SIZE(1);
+		break;
+	case 32:
+		type = KCOV_CMP_SIZE(2);
+		break;
+	case 64:
+		type = KCOV_CMP_SIZE(3);
+		break;
+	default:
+		return;
+	}
+	type |= KCOV_CMP_CONST;
+
+	for (i = 0; i < ncases; i++)
+		trace_cmp(type, cases[i + 2], val, pc);
 }
 
 /* -------------------------------------------------------------------------- */
