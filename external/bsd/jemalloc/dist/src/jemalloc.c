@@ -29,7 +29,7 @@ __weak_alias(sdallocx, je_sdallocx)
 __weak_alias(nallocx, je_nallocx)
 
 __weak_alias(mallctl, je_mallctl)
-__weak_alias(mallctltomib, je_mallctltomib)
+__weak_alias(mallctlnametomib, je_mallctlnametomib)
 __weak_alias(mallctlbymib, je_mallctlbymib)
 
 __weak_alias(malloc_stats_print, je_malloc_stats_print)
