@@ -1,4 +1,4 @@
-/*      $NetBSD: kcov.h,v 1.3 2019/02/25 13:19:14 kamil Exp $        */
+/*      $NetBSD: kcov.h,v 1.4 2019/03/10 17:51:00 kamil Exp $        */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -37,8 +37,12 @@
 #include <sys/atomic.h>
 
 #define KCOV_IOC_SETBUFSIZE	_IOW('K', 1, uint64_t)
-#define KCOV_IOC_ENABLE		_IO('K', 2)
+#define KCOV_IOC_ENABLE		_IOW('K', 2, int)
 #define KCOV_IOC_DISABLE	_IO('K', 3)
+
+#define KCOV_MODE_NONE		0
+#define KCOV_MODE_TRACE_PC	1
+#define KCOV_MODE_TRACE_CMP	2
 
 typedef volatile uint64_t kcov_int_t;
 #define KCOV_ENTRY_SIZE sizeof(kcov_int_t)
