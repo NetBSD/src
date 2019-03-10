@@ -1,7 +1,7 @@
 Sanitizer and related tasks.
 
 Short term:
- - compiler-rt import and integration with base
+ - compiler-rt sanitizers integration with base
  - merge TSan, MSan and libFuzzer ATF tests
  - prepare MKSANITIZER readme
 
@@ -12,7 +12,6 @@ Long term:
  - improve the framework for ioctl(2) database and handle special cases when a
    part of a struct can be uninitialized and passed to the kernel (MSan)
  - port or finish the port of:
-   * ESan,
    * LSan,
    * shadowcallstack,
    * cfi,
@@ -29,7 +28,6 @@ Long term:
  - attach a NetBSD buildbot testing build of compiler-rt and executing tests
  - make compiler-rt buildable with GCC
  - finish the support of float128 for Clang/LLVM/libstdc++/libgcc
- - lld port to NetBSD (GNU ld(1) is too slow for serious LLVM development)
  - merge of the libFuzzer integration with the basesystem
  - oom-killer ATF tests and fixes
  - utime(3) allow changing actime regardless of noatime mount property
@@ -38,10 +36,7 @@ Long term:
 
 
 Unspecified:
+ - kernel-msan https://github.com/google/kmsan
  - kernel-tsan? upstream development is stalled with patches for Linux 4.2
    https://github.com/google/ktsan
- - kernek-msan? in development for Linux
-   https://github.com/google/kmsan
  - kernel-safestack? implemented in Fuchsia/Magenta
- - kernel coverage (KCOV?)
- - syzkaller port
