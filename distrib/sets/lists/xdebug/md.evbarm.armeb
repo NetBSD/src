@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm.armeb,v 1.10 2018/12/31 11:59:23 mrg Exp $
+# $NetBSD: md.evbarm.armeb,v 1.11 2019/03/10 11:18:02 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	debuglib,xorg,obsolete
@@ -22,6 +22,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/cvt.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.3.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libvdpau.so.1.0.debug		-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libkbd_drv.so.1.debug	obsolete	xorg,obsolete
