@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.18 2018/08/03 02:20:20 kamil Exp $
+#	$NetBSD: Makefile,v 1.19 2019/03/10 02:29:53 mrg Exp $
 
 .include <bsd.own.mk>
+
+.include "../mesa-which.mk"
 
 LIB=		GLU
 LIBISCXX=	yes
@@ -131,7 +133,7 @@ INCSDIR=${X11INCDIR}/GL
 
 LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 		X11	${.CURDIR}/../libX11/dynamic \
-		GL	${.CURDIR}/../libGL \
+		GL	${.CURDIR}/../libGL${OLD_PREFIX} \
 		Xxf86vm	${.CURDIR}/../libXxf86vm \
 		Xfixes	${.CURDIR}/../libXfixes \
 		Xdamage	${.CURDIR}/../libXdamage \
@@ -140,7 +142,7 @@ LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 
 PKGCONFIG=	glu
 PKGDIST.glu=	${X11SRCDIR.glu}
-.include "${.CURDIR}/../libGL/mesa-ver.mk"
+.include "${.CURDIR}/../libGL${OLD_PREFIX}/mesa-ver.mk"
 PKGCONFIG_VERSION.glu=	${MESA_VER}
 PKGCONFIG_SED_FLAGS= \
 	-e "s,@GLU_REQUIRES@,gl,"

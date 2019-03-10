@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2019/03/10 02:29:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.1 2019/03/10 02:29:53 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -28,18 +28,18 @@ CFLAGS+=	-fno-strict-aliasing -fexceptions
 
 COPTS.gbm_dri.c+=	-Wno-error
 
-.include "../libloader.mk"
+.include "../libloader.old.mk"
 
 .PATH:	${X11SRCDIR.Mesa}/src/gbm/main
 INCS=		gbm.h
 INCSDIR=	${X11INCDIR}
 
-LIBDPLIBS=      glapi	${.CURDIR}/../libglapi
+LIBDPLIBS=      glapi	${.CURDIR}/../libglapi.old
 LIBDPLIBS=      drm     ${.CURDIR}/../libdrm
 
 PKGCONFIG=	gbm
 PKGDIST.gbm=	${X11SRCDIR.Mesa}/src/gbm/main
-.include "${.CURDIR}/../libGL/mesa-ver.mk"
+.include "${.CURDIR}/../libGL.old/mesa-ver.mk"
 PKGCONFIG_VERSION.gbm=	${MESA_VER}
 
 .include "../libdrm/Makefile.defines"

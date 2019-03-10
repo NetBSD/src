@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1109 2019/03/09 17:59:28 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1110 2019/03/10 02:29:52 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1466,6 +1466,9 @@ HAVE_XORG_SERVER_VER?=110
 HAVE_XORG_SERVER_VER?=120
 .endif
 
+# MesaLib.old and MesaLib7 go together, and MesaLib is alone.
+EXTERNAL_MESALIB_DIR?=	MesaLib.old
+
 .if ${HAVE_XORG_SERVER_VER} == "120"
 XORG_SERVER_SUBDIR?=xorg-server
 . if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
@@ -1485,7 +1488,7 @@ HAVE_XORG_GLAMOR?=	no
 	xorg-cf-files imake xbiff xkeyboard-config \
 	xbitmaps appres xeyes xev xedit sessreg pixman \
 	beforelight bitmap editres makedepend fonttosfnt fslsfonts fstobdf \
-	glu glw mesa-demos MesaGLUT MesaLib MesaLib7 \
+	glu glw mesa-demos MesaGLUT MesaLib MesaLib.old MesaLib7 \
 	ico iceauth listres lndir \
 	luit xproxymanagementprotocol mkfontdir oclock proxymngr rgb \
 	rstart setxkbmap showfont smproxy twm viewres \
@@ -1509,6 +1512,9 @@ HAVE_XORG_GLAMOR?=	no
 	font-sony-misc font-util ttf-bitstream-vera encodings
 X11SRCDIR.${_dir}?=		${X11SRCDIRMIT}/${_dir}/dist
 .endfor
+
+# X11SRCDIR.Mesa points to the currently used Mesa sources
+X11SRCDIR.Mesa?=		${X11SRCDIRMIT}/${EXTERNAL_MESALIB_DIR}/dist
 
 .for _i in \
 	elographics keyboard mouse synaptics vmmouse void ws
