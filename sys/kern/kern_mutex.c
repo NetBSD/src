@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.75 2018/08/31 01:23:57 ozaki-r Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.76 2019/03/10 12:49:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.75 2018/08/31 01:23:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.76 2019/03/10 12:49:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.75 2018/08/31 01:23:57 ozaki-r Exp 
 do {								\
 	if (__predict_false(!(cond)))				\
 		MUTEX_ABORT(mtx, "assertion failed: " #cond);	\
-} while (/* CONSTCOND */ 0);
+} while (/* CONSTCOND */ 0)
 
 #else	/* LOCKDEBUG */
 
@@ -182,10 +182,10 @@ do {									\
 	(((int)(mtx)->mtx_owner & MUTEX_BIT_WAITERS) != 0)
 
 #define	MUTEX_INITIALIZE_ADAPTIVE(mtx, dodebug)				\
+do {									\
 	if (!dodebug)							\
 		(mtx)->mtx_owner |= MUTEX_BIT_NODEBUG;			\
-do {									\
-} while (/* CONSTCOND */ 0);
+} while (/* CONSTCOND */ 0)
 
 #define	MUTEX_INITIALIZE_SPIN(mtx, dodebug, ipl)			\
 do {									\
@@ -199,7 +199,7 @@ do {									\
 #define	MUTEX_DESTROY(mtx)						\
 do {									\
 	(mtx)->mtx_owner = MUTEX_THREAD;				\
-} while (/* CONSTCOND */ 0);
+} while (/* CONSTCOND */ 0)
 
 #define	MUTEX_SPIN_P(mtx)		\
     (((mtx)->mtx_owner & MUTEX_BIT_SPIN) != 0)
