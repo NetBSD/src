@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.4 2018/11/11 22:39:25 jakllsch Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.5 2019/03/10 11:09:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.4 2018/11/11 22:39:25 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.5 2019/03/10 11:09:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -360,6 +360,7 @@ static const char * mux_uart2_parents[] = { "clk_uart2_div", "clk_uart2_frac", "
 static const char * mux_uart3_parents[] = { "clk_uart3_div", "clk_uart3_frac", "xin24m" };
 static const char * mux_rmii_parents[] = { "clk_gmac", "clkin_gmac" };
 static const char * mux_aclk_gmac_parents[] = { "cpll_aclk_gmac_src", "gpll_aclk_gmac_src" };
+static const char * mux_aclk_emmc_parents[] = { "cpll_aclk_emmc_src", "gpll_aclk_emmc_src" };
 static const char * mux_pll_src_24m_pciephy_parents[] = { "xin24m", "clk_pciephy_ref100m" };
 static const char * mux_pciecore_cru_phy_parents[] = { "clk_pcie_core_cru", "clk_pcie_core_phy" };
 
@@ -610,6 +611,24 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     0),
 	RK_GATE(RK3399_HCLK_SDMMC, "hclk_sdmmc", "hclk_sd", CLKGATE_CON(33), 8),
 	RK_GATE(RK3399_HCLK_SDIO, "hclk_sdio", "pclk_perilp1", CLKGATE_CON(34), 4),
+
+	/*
+	 * eMMC
+	 */
+	RK_COMPOSITE(RK3399_SCLK_EMMC, "clk_emmc", mux_pll_src_cpll_gpll_npll_ppll_upll_24m_parents,
+		     CLKSEL_CON(22),	/* muxdiv_reg */
+		     __BITS(10,8),	/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(6),	/* gate_reg */
+		     __BIT(14),		/* gate_mask */
+		     0),
+	RK_GATE(0, "cpll_aclk_emmc_src", "cpll", CLKGATE_CON(6), 13),
+	RK_GATE(0, "gpll_aclk_emmc_src", "gpll", CLKGATE_CON(6), 12),
+	RK_COMPOSITE_NOGATE(RK3399_ACLK_EMMC, "aclk_emmc", mux_aclk_emmc_parents,
+			    CLKSEL_CON(22),	/* muxdiv_reg */
+			    __BIT(7),		/* mux_mask */
+			    __BITS(4,0),	/* div_mask */
+			    0),
 
 	/*
 	 * GMAC
