@@ -1,4 +1,7 @@
-# $NetBSD: md.evbarm,v 1.2 2016/08/18 19:27:33 skrll Exp $
+# $NetBSD: md.evbarm,v 1.3 2019/03/10 22:00:37 christos Exp $
 ./usr/X11R7/lib/libdrm_nouveau.so		-unknown-		xorg
 ./usr/X11R7/lib/libdrm_nouveau.so.3		-unknown-		xorg
 ./usr/X11R7/lib/libdrm_nouveau.so.3.0		-unknown-		xorg
+./usr/X11R7/lib/libvdpau.so			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libvdpau.so.1			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libvdpau.so.1.0			-unknown-		xorg,compatx11file
