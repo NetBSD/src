@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2017/01/11 12:02:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2019/03/10 12:14:06 mrg Exp $
 
 LIB=	LLVMRuntimeDyld
 
@@ -17,4 +17,8 @@ SRCS+=	JITSymbol.cpp \
 
 SRCS+=	RuntimeDyldELFMips.cpp
 
+.if defined(HOSTLIB)
+.include <bsd.hostlib.mk>
+.else
 .include <bsd.lib.mk>
+.endif
