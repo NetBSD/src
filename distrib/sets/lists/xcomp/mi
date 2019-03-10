@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.205 2019/03/09 18:38:34 kamil Exp $
+#	 $NetBSD: mi,v 1.206 2019/03/10 11:18:02 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -29,7 +29,8 @@
 ./usr/X11R7/include/GL/internal/sarea.h			-unknown-	obsolete
 ./usr/X11R7/include/GL/osmesa.h				-unknown-	xorg
 ./usr/X11R7/include/GL/wglext.h				-unknown-	xorg
-./usr/X11R7/include/GL/wmesa.h				-unknown-	xorg
+./usr/X11R7/include/GL/wmesa.h				-unknown-	xorg,obsolete,mesa_ver=18
+./usr/X11R7/include/GL/wmesa.h				-unknown-	xorg,mesa_ver=10
 ./usr/X11R7/include/GL/xmesa.h				-unknown-	obsolete
 ./usr/X11R7/include/GL/xmesa_x.h			-unknown-	obsolete
 ./usr/X11R7/include/GL/xmesa_xf86.h			-unknown-	obsolete

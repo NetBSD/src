@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.148 2019/03/08 09:58:23 mrg Exp $
+# $NetBSD: mi,v 1.149 2019/03/10 11:18:02 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -147,6 +147,8 @@
 ./usr/X11R7/include/DPS					base-x11-root	xorg
 ./usr/X11R7/include/GL					base-x11-root	xorg
 ./usr/X11R7/include/GL/internal				base-x11-root	xorg
+./usr/X11R7/include/KHR					base-x11-root	xorg
+./usr/X11R7/include/vdpau				base-x11-root	xorg
 ./usr/X11R7/include/X11					base-x11-root	xorg
 ./usr/X11R7/include/X11/ICE				base-x11-root	xorg
 ./usr/X11R7/include/X11/PM				base-x11-root	xorg
