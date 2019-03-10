@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/03/10 11:18:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2019/03/10 12:44:58 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,8 +18,7 @@ CFLAGS+=	-DVDPAU_SYSCONFDIR=\"${VDPAU_SYSCONFDIR}\" \
 SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 
-# XXX todo
-#PKGDIST=	libvdpau
+PKGDIST=	vdpau
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.9 2019/03/10 11:18:02 mrg Exp $
+# $NetBSD: md.evbarm,v 1.10 2019/03/10 12:44:58 mrg Exp $
 ./usr/X11R7/include/libdrm/nouveau/nvif/cl0080.h	-unknown-	xorg
 ./usr/X11R7/include/libdrm/nouveau/nvif/cl9097.h	-unknown-	xorg
 ./usr/X11R7/include/libdrm/nouveau/nvif/class.h		-unknown-	xorg
@@ -15,6 +15,6 @@
 ./usr/X11R7/lib/libvdpau.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libvdpau_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libvdpau_pic.a				-unknown-	xorg,picinstall,compatx11file
-#./usr/X11R7/lib/pkgconfig/libvdpau.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/vdpau.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/libdrm_nouveau.pc		-unknown-	xorg
 ./usr/libdata/lint/llib-ldrm_nouveau.ln			-unknown-	lint,xorg
