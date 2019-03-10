@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2014/12/18 06:24:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2019/03/10 02:29:53 mrg Exp $
 
 .include <bsd.own.mk>
+
+.include "../mesa-which.mk"
 
 LIB=	GLw
 .PATH:	${X11SRCDIR.glw}
@@ -30,14 +32,14 @@ LIBDPLIBS=	Xext		${.CURDIR}/../libXext \
 		Xdamage		${.CURDIR}/../libXdamage \
 		m		${.CURDIR}/../../../../../lib/libm \
 		drm		${.CURDIR}/../libdrm \
-		GL		${.CURDIR}/../libGL \
+		GL		${.CURDIR}/../libGL${OLD_PREFIX} \
 		ICE		${.CURDIR}/../libICE \
 		SM		${.CURDIR}/../libSM \
 		Xt		${.CURDIR}/../libXt \
 		xcb-dri2	${.CURDIR}/../libxcb/dri2
 
 PKGCONFIG=	glw
-PKGDIST.glw=	${X11SRCDIR.MesaLib}/src/glw
+PKGDIST.glw=	${X11SRCDIR.Mesa}/src/glw
 PKGCONFIG_VERSION.glw=	1.0.0
 
 .include <bsd.x11.mk>

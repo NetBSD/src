@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2019/01/01 00:37:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2019/03/10 02:29:53 mrg Exp $
 
 .include <bsd.own.mk>
+
+.include "../../../lib/mesa-which.mk"
 
 DRIVER=		xf86-video-ati-kms
 DRIVER_NAME=	radeon_drv
@@ -53,6 +55,6 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.${DRIVER}}/../include
 
-LIBDPLIBS+=	gbm ${.CURDIR}/../../../lib/libgbm
+LIBDPLIBS+=	gbm ${.CURDIR}/../../../lib/libgbm${OLD_PREFIX}
 
 .include "../Makefile.xf86-driver"

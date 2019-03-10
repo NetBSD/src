@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.29 2019/03/10 02:29:52 mrg Exp $
+# $NetBSD: Makefile,v 1.1 2019/03/10 02:29:52 mrg Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -351,7 +351,7 @@ SRCS+=	${DRI_SOURCES.${_d}}
 
 LIBDPLIBS+=	expat		${NETBSDSRCDIR}/external/mit/expat/lib/libexpat
 LIBDPLIBS+=	m		${NETBSDSRCDIR}/lib/libm
-LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi
+LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi.old
 LIBDPLIBS+= 	drm		${.CURDIR}/../libdrm
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 LIBDPLIBS+= 	drm_intel	${.CURDIR}/../libdrm_intel
@@ -359,15 +359,15 @@ LIBDPLIBS+= 	drm_intel	${.CURDIR}/../libdrm_intel
 LIBDPLIBS+= 	drm_radeon	${.CURDIR}/../libdrm_radeon
 
 MESA_SRC_MODULES=  main math math_xform vbo tnl swrast ss common asm_c program asm_s
-.include "../libmesa.mk"
-.include "../libglsl.mk"
+.include "../libmesa.old.mk"
+.include "../libglsl.old.mk"
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS+=	streaming-load-memcpy.c
 CPPFLAGS.streaming-load-memcpy.c+= -msse4.1
 .endif
 
-.include "../driver.mk"
+.include "../driver.old.mk"
 
 .for _d in ${DRIVERS}
 SYMLINKS+= mesa_dri_drivers.so.${SHLIB_MAJOR} ${DRIDIR}/${_d}_dri.so.${SHLIB_MAJOR} 
@@ -381,7 +381,7 @@ SYMLINKS+= mesa_dri_drivers.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.
 
 PKGCONFIG=	dri
 PKGDIST.dri=	${X11SRCDIR.Mesa}/src/mesa/drivers/dri
-.include "${.CURDIR}/../libGL/mesa-ver.mk"
+.include "${.CURDIR}/../libGL.old/mesa-ver.mk"
 PKGCONFIG_VERSION.dri=	${MESA_VER}
 
 # XXX remove these from bsd.x11.mk

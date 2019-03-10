@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.1.1 2016/06/10 03:42:14 mrg Exp $
+# $NetBSD: Makefile,v 1.2 2019/03/10 02:29:54 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
 XMODULEDIRANDSTATIC=	# define
@@ -24,7 +24,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/parser \
 		-I${X11SRCDIR.xorg-server}/ramdac \
 		-I${X11SRCDIR.xorg-server}/Xext \
-		-I${X11SRCDIR.MesaLib}/include \
+		-I${X11SRCDIR.Mesa}/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/dri \
 		-I${DESTDIR}${X11INCDIR}/libdrm \

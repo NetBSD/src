@@ -1,4 +1,4 @@
-#	$NetBSD: libglsl.mk,v 1.3 2019/03/10 02:29:52 mrg Exp $
+#	$NetBSD: libglsl.old.mk,v 1.1 2019/03/10 02:29:52 mrg Exp $
 
 LIBGLSL_GENERATED_CXX_FILES = \
 	glsl_lexer.cpp \

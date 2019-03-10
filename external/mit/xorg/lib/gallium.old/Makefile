@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2019/03/10 02:29:52 mrg Exp $
+# $NetBSD: Makefile,v 1.1 2019/03/10 02:29:52 mrg Exp $
 
 # Link the gallium mega driver.
 
@@ -546,7 +546,7 @@ SRCS+=	${GALLIUM_SOURCES.${_d}}
 #SRCS+=	${GALLIUM_SOURCES.${_d}}
 #. endif
 
-.include "../libloader.mk"
+.include "../libloader.old.mk"
 
 .if ${BUILD_RADEON} == 1
 CFLAGS+=	-pthread
@@ -564,15 +564,15 @@ LIBDPLIBS+= 	drm_radeon	${.CURDIR}/../libdrm_radeon
 LIBDPLIBS+= 	drm_nouveau	${.CURDIR}/../libdrm_nouveau
 .endif	# ${BUILD_NOUVEAU} == 1
 .endif	# ${BUILD_RADEON} == 1 || ${BUILD_NOUVEAU} == 1
-LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi
+LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi.old
 LIBDPLIBS+=	expat		${.CURDIR}/../../../../../external/mit/expat/lib/libexpat
 
 LDFLAGS+=	-Wl,--version-script=${X11SRCDIR.Mesa}/src/gallium/targets/dri/dri.sym
 
 ##  build mesagallium parts
 MESA_SRC_MODULES=  main math vbo state_tracker program asm_s
-.include "../libmesa.mk"
-.include "../libglsl.mk"
+.include "../libmesa.old.mk"
+.include "../libglsl.old.mk"
 
 # Special addition for just gallium; it misses the rest of asm_c files.
 .PATH: ${X11SRCDIR.Mesa}/src/mesa/x86
@@ -583,7 +583,7 @@ SRCS+=	streaming-load-memcpy.c
 CFLAGS.streaming-load-memcpy.c+= -msse4.1
 .endif
 
-.include "../driver.mk"
+.include "../driver.old.mk"
 
 
 .PATH: ${X11SRCDIR.Mesa}/src/gallium/targets/dri

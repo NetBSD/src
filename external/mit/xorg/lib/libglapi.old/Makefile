@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2019/03/10 02:29:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.1 2019/03/10 02:29:53 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -49,7 +49,7 @@ CPPFLAGS+= \
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
-.include "${.CURDIR}/../libGL/mesa-ver.mk"
+.include "${.CURDIR}/../libGL.old/mesa-ver.mk"
 
 CFLAGS+=	-fno-strict-aliasing -fvisibility=hidden -pthread -fno-builtin-memcmp
 

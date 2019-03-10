@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2019/03/10 02:29:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.1 2019/03/10 02:29:52 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -89,7 +89,7 @@ CPPFLAGS.${fn}=-DDEFAULT_DRIVER_DIR=\"${X11USRLIBDIR}/modules/dri\"
 .endfor
 .endif
 
-.include "../libloader.mk"
+.include "../libloader.old.mk"
 
 .PATH:		${X11SRCDIR.Mesa}/src/glw
 .PATH:		${X11SRCDIR.Mesa}/include/GL
@@ -152,7 +152,7 @@ LIBDPLIBS=	Xext		${.CURDIR}/../libXext \
 		Xxf86vm		${.CURDIR}/../libXxf86vm \
 		Xfixes		${.CURDIR}/../libXfixes \
 		Xdamage		${.CURDIR}/../libXdamage \
-		glapi		${.CURDIR}/../libglapi \
+		glapi		${.CURDIR}/../libglapi.old \
 		drm		${.CURDIR}/../libdrm \
 		X11-xcb		${.CURDIR}/../libX11/libX11-xcb \
 		xcb-dri2	${.CURDIR}/../libxcb/dri2 \
@@ -164,7 +164,7 @@ MKLINT=no
 
 PKGCONFIG=	gl
 PKGDIST.gl=	${X11SRCDIR.Mesa}/src/mesa
-.include "${.CURDIR}/../libGL/mesa-ver.mk"
+.include "${.CURDIR}/../libGL.old/mesa-ver.mk"
 PKGCONFIG_VERSION.gl=	${MESA_VER}
 
 # XXX remove these from bsd.x11.mk
