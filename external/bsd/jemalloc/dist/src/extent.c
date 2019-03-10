@@ -697,7 +697,7 @@ extent_interior_register(tsdn_t *tsdn, rtree_ctx_t *rtree_ctx, extent_t *extent,
 	}
 }
 
-static void
+static JEMALLOC_NORETURN void
 extent_gdump_add(tsdn_t *tsdn, const extent_t *extent) {
 	cassert(config_prof);
 	/* prof_gdump() requirement. */
@@ -723,7 +723,7 @@ extent_gdump_add(tsdn_t *tsdn, const extent_t *extent) {
 	}
 }
 
-static void
+static JEMALLOC_NORETURN void
 extent_gdump_sub(tsdn_t *tsdn, const extent_t *extent) {
 	cassert(config_prof);
 
