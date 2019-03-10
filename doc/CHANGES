@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2507 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2508 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -343,3 +343,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	bind: Import version 9.13.7. [christos 20190224]
 	arm: Add support for Amlogic S905 SoC. [jmcneill 20190225]
 	jemalloc: Import 5.1.0 [christos 20190304]
+	kcov(4): Added driver for kernel coverage tracing [kamil 20190310]
