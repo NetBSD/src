@@ -94,7 +94,7 @@ extern "C" {
 #undef je_nallocx
 
 #undef je_mallctl
-#undef je_mallctltomib
+#undef je_mallctlnametomib
 #undef je_mallctlbymib
 
 #undef je_malloc_stats_print
