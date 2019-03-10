@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.3 2019/02/23 12:07:40 kamil Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.4 2019/03/10 12:54:39 kamil Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -38,7 +38,10 @@
 
 #include <sys/conf.h>
 #include <sys/condvar.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/kmem.h>
+#include <sys/mman.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
 
@@ -47,28 +50,67 @@
 
 #define KCOV_BUF_MAX_ENTRIES	(256 << 10)
 
+static dev_type_open(kcov_open);
+
+const struct cdevsw kcov_cdevsw = {
+	.d_open = kcov_open,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
+};
+
+static int kcov_fops_ioctl(file_t *, u_long, void *);
+static int kcov_fops_close(file_t *);
+static int kcov_fops_mmap(file_t *, off_t *, size_t, int, int *, int *,
+    struct uvm_object **, int *);
+
+const struct fileops kcov_fileops = {
+	.fo_read = fbadop_read,
+	.fo_write = fbadop_write,
+	.fo_ioctl = kcov_fops_ioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = fnullop_poll,
+	.fo_stat = fbadop_stat,
+	.fo_close = kcov_fops_close,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_restart = fnullop_restart,
+	.fo_mmap = kcov_fops_mmap,
+};
+
 /*
- * The KCOV descriptors are allocated during open(), and are associated with
- * the calling proc. They are freed lazily when their refcount reaches zero,
- * only when the process exits; this guarantees that kd->buf is not mmapped
- * in a currently running LWP. A KCOV descriptor is active on only one LWP
- * at the same time within the proc.
+ * The KCOV descriptors (KD) are allocated during open(), and are associated
+ * with a file descriptor.
  *
- * In the refcount, one ref is for the proc, and one ref is for the LWP where
- * the descriptor is active. In each case, the descriptor is pointed to in
- * the proc's and LWP's specificdata.
+ * An LWP can 'enable' a KD. When this happens, this LWP becomes the owner of
+ * the KD, and no LWP can 'disable' this KD except the owner.
+ *
+ * A KD is freed when its file descriptor is closed _iff_ the KD is not active
+ * on an LWP. If it is, we ask the LWP to free it when it exits.
+ *
+ * The buffers mmapped are in a dedicated uobj, therefore there is no risk
+ * that the kernel frees a buffer still mmapped in a process: the uobj
+ * refcount will be non-zero, so the backing is not freed until an munmap
+ * occurs on said process.
  */
 
 typedef struct kcov_desc {
 	kmutex_t lock;
-	int refcnt;
 	kcov_int_t *buf;
+	struct uvm_object *uobj;
 	size_t bufnent;
 	size_t bufsize;
-	TAILQ_ENTRY(kcov_desc) entry;
+	bool enabled;
+	bool lwpfree;
 } kcov_t;
 
-static specificdata_key_t kcov_proc_key;
 static specificdata_key_t kcov_lwp_key;
 
 static void
@@ -76,7 +118,6 @@ kcov_lock(kcov_t *kd)
 {
 
 	mutex_enter(&kd->lock);
-	KASSERT(kd->refcnt > 0);
 }
 
 static void
@@ -87,60 +128,38 @@ kcov_unlock(kcov_t *kd)
 }
 
 static void
-kcov_lwp_take(kcov_t *kd)
+kcov_free(kcov_t *kd)
 {
 
-	kd->refcnt++;
-	KASSERT(kd->refcnt == 2);
-	lwp_setspecific(kcov_lwp_key, kd);
+	KASSERT(kd != NULL);
+	if (kd->buf != NULL) {
+		uvm_deallocate(kernel_map, (vaddr_t)kd->buf, kd->bufsize);
+	}
+	mutex_destroy(&kd->lock);
+	kmem_free(kd, sizeof(*kd));
 }
 
 static void
-kcov_lwp_release(kcov_t *kd)
-{
-
-	KASSERT(kd->refcnt == 2);
-	kd->refcnt--;
-	lwp_setspecific(kcov_lwp_key, NULL);
-}
-
-static inline bool
-kcov_is_owned(kcov_t *kd)
-{
-
-	return (kd->refcnt > 1);
-}
-
-static void
-kcov_free(void *arg)
+kcov_lwp_free(void *arg)
 {
 	kcov_t *kd = (kcov_t *)arg;
-	bool dofree;
 
 	if (kd == NULL) {
 		return;
 	}
-
 	kcov_lock(kd);
-	kd->refcnt--;
+	kd->enabled = false;
 	kcov_unlock(kd);
-	dofree = (kd->refcnt == 0);
-
-	if (!dofree) {
-		return;
+	if (kd->lwpfree) {
+		kcov_free(kd);
 	}
-	if (kd->buf != NULL) {
-		uvm_km_free(kernel_map, (vaddr_t)kd->buf, kd->bufsize,
-		    UVM_KMF_WIRED);
-	}
-	mutex_destroy(&kd->lock);
-	kmem_free(kd, sizeof(*kd));
 }
 
 static int
 kcov_allocbuf(kcov_t *kd, uint64_t nent)
 {
 	size_t size;
+	int error;
 
 	if (nent < 2 || nent > KCOV_BUF_MAX_ENTRIES)
 		return EINVAL;
@@ -148,13 +167,25 @@ kcov_allocbuf(kcov_t *kd, uint64_t nent)
 		return EEXIST;
 
 	size = roundup(nent * KCOV_ENTRY_SIZE, PAGE_SIZE);
-	kd->buf = (kcov_int_t *)uvm_km_alloc(kernel_map, size, 0,
-	    UVM_KMF_WIRED|UVM_KMF_ZERO);
-	if (kd->buf == NULL)
-		return ENOMEM;
-
 	kd->bufnent = nent - 1;
 	kd->bufsize = size;
+	kd->uobj = uao_create(kd->bufsize, 0);
+
+	/* Map the uobj into the kernel address space, as wired. */
+	kd->buf = NULL;
+	error = uvm_map(kernel_map, (vaddr_t *)&kd->buf, kd->bufsize, kd->uobj,
+	    0, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_SHARE,
+	    UVM_ADV_RANDOM, 0));
+	if (error) {
+		uao_detach(kd->uobj);
+		return error;
+	}
+	error = uvm_map_pageable(kernel_map, (vaddr_t)kd->buf,
+	    (vaddr_t)kd->buf + size, false, 0);
+	if (error) {
+		uvm_deallocate(kernel_map, (vaddr_t)kd->buf, size);
+		return error;
+	}
 
 	return 0;
 }
@@ -164,50 +195,63 @@ kcov_allocbuf(kcov_t *kd, uint64_t nent)
 static int
 kcov_open(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct proc *p = l->l_proc;
+	struct file *fp;
+	int error, fd;
 	kcov_t *kd;
 
-	kd = proc_getspecific(p, kcov_proc_key);
-	if (kd != NULL)
-		return EBUSY;
+	error = fd_allocfile(&fp, &fd);
+	if (error)
+		return error;
 
 	kd = kmem_zalloc(sizeof(*kd), KM_SLEEP);
 	mutex_init(&kd->lock, MUTEX_DEFAULT, IPL_NONE);
-	kd->refcnt = 1;
-	proc_setspecific(p, kcov_proc_key, kd);
 
-	return 0;
+	return fd_clone(fp, fd, flag, &kcov_fileops, kd);
 }
 
 static int
-kcov_close(dev_t dev, int flag, int mode, struct lwp *l)
+kcov_fops_close(file_t *fp)
 {
+	kcov_t *kd = fp->f_data;
+
+	kcov_lock(kd);
+	if (kd->enabled) {
+		kd->lwpfree = true;
+		kcov_unlock(kd);
+	} else {
+		kcov_unlock(kd);
+		kcov_free(kd);
+	}
+	fp->f_data = NULL;
 
    	return 0;
 }
 
 static int
-kcov_ioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
+kcov_fops_ioctl(file_t *fp, u_long cmd, void *addr)
 {
-	struct proc *p = l->l_proc;
 	int error = 0;
 	kcov_t *kd;
 
-	kd = proc_getspecific(p, kcov_proc_key);
+	kd = fp->f_data;
 	if (kd == NULL)
 		return ENXIO;
 	kcov_lock(kd);
 
 	switch (cmd) {
 	case KCOV_IOC_SETBUFSIZE:
-		if (kcov_is_owned(kd)) {
+		if (kd->enabled) {
 			error = EBUSY;
 			break;
 		}
 		error = kcov_allocbuf(kd, *((uint64_t *)addr));
 		break;
 	case KCOV_IOC_ENABLE:
-		if (kcov_is_owned(kd)) {
+		if (kd->enabled) {
+			error = EBUSY;
+			break;
+		}
+		if (lwp_getspecific(kcov_lwp_key) != NULL) {
 			error = EBUSY;
 			break;
 		}
@@ -215,16 +259,20 @@ kcov_ioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			error = ENOBUFS;
 			break;
 		}
-		KASSERT(l == curlwp);
-		kcov_lwp_take(kd);
+		lwp_setspecific(kcov_lwp_key, kd);
+		kd->enabled = true;
 		break;
 	case KCOV_IOC_DISABLE:
-		if (lwp_getspecific(kcov_lwp_key) == NULL) {
+		if (!kd->enabled) {
 			error = ENOENT;
 			break;
 		}
-		KASSERT(l == curlwp);
-		kcov_lwp_release(kd);
+		if (lwp_getspecific(kcov_lwp_key) != kd) {
+			error = ENOENT;
+			break;
+		}
+		lwp_setspecific(kcov_lwp_key, NULL);
+		kd->enabled = false;
 		break;
 	default:
 		error = EINVAL;
@@ -234,28 +282,42 @@ kcov_ioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	return error;
 }
 
-static paddr_t
-kcov_mmap(dev_t dev, off_t offset, int prot)
+static int
+kcov_fops_mmap(file_t *fp, off_t *offp, size_t size, int prot, int *flagsp,
+    int *advicep, struct uvm_object **uobjp, int *maxprotp)
 {
+	off_t off = *offp;
 	kcov_t *kd;
-	paddr_t pa;
-	vaddr_t va;
+	int error = 0;
 
-	kd = proc_getspecific(curproc, kcov_proc_key);
-	KASSERT(kd != NULL);
+	if (prot & PROT_EXEC)
+		return EACCES;
+	if (off < 0)
+		return EINVAL;
+	if (size > KCOV_BUF_MAX_ENTRIES * KCOV_ENTRY_SIZE)
+		return EINVAL;
+	if (off > KCOV_BUF_MAX_ENTRIES * KCOV_ENTRY_SIZE)
+		return EINVAL;
 
-	if ((offset < 0) || (offset >= kd->bufnent * KCOV_ENTRY_SIZE)) {
-		return (paddr_t)-1;
-	}
-	if (offset & PAGE_MASK) {
-		return (paddr_t)-1;
-	}
-	va = (vaddr_t)kd->buf + offset;
-	if (!pmap_extract(pmap_kernel(), va, &pa)) {
-		return (paddr_t)-1;
+	kd = fp->f_data;
+	if (kd == NULL)
+		return ENXIO;
+	kcov_lock(kd);
+
+	if ((size + off) > kd->bufsize) {
+		error = ENOMEM;
+		goto out;
 	}
 
-	return atop(pa);
+	uao_reference(kd->uobj);
+
+	*uobjp = kd->uobj;
+	*maxprotp = prot;
+	*advicep = UVM_ADV_RANDOM;
+
+out:
+	kcov_unlock(kd);
+	return error;
 }
 
 static inline bool
@@ -289,29 +351,20 @@ __sanitizer_cov_trace_pc(void)
 		return;
 	}
 
-	idx = kd->buf[0];
+	if (!kd->enabled) {
+		/* Tracing not enabled */
+		return;
+	}
+
+	idx = KCOV_LOAD(kd->buf[0]);
 	if (idx < kd->bufnent) {
-		kd->buf[idx+1] = (intptr_t)__builtin_return_address(0);
-		kd->buf[0]++;
+		KCOV_STORE(kd->buf[idx+1],
+		    (intptr_t)__builtin_return_address(0));
+		KCOV_STORE(kd->buf[0], idx + 1);
 	}
 }
 
 /* -------------------------------------------------------------------------- */
-
-const struct cdevsw kcov_cdevsw = {
-	.d_open = kcov_open,
-	.d_close = kcov_close,
-	.d_read = noread,
-	.d_write = nowrite,
-	.d_ioctl = kcov_ioctl,
-	.d_stop = nostop,
-	.d_tty = notty,
-	.d_poll = nopoll,
-	.d_mmap = kcov_mmap,
-	.d_kqfilter = nokqfilter,
-	.d_discard = nodiscard,
-	.d_flag = D_OTHER | D_MPSAFE
-};
 
 MODULE(MODULE_CLASS_ANY, kcov, NULL);
 
@@ -319,8 +372,7 @@ static void
 kcov_init(void)
 {
 
-	proc_specific_key_create(&kcov_proc_key, kcov_free);
-	lwp_specific_key_create(&kcov_lwp_key, kcov_free);
+	lwp_specific_key_create(&kcov_lwp_key, kcov_lwp_free);
 }
 
 static int

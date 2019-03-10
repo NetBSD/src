@@ -35,6 +35,7 @@
 #include <sys/kcov.h>
 #include <sys/mman.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -55,11 +56,37 @@ open_kcov(void)
 	return fd;
 }
 
+ATF_TC_WITHOUT_HEAD(kcov_multiopen);
+ATF_TC_BODY(kcov_multiopen, tc)
+{
+	int fd1, fd2;
+	fd1 = open_kcov();
+
+	fd2 = open("/dev/kcov", O_RDWR);
+	ATF_REQUIRE(fd2 != -1);
+
+	close(fd1);
+	close(fd2);
+}
+
+ATF_TC_WITHOUT_HEAD(kcov_open_close_open);
+ATF_TC_BODY(kcov_open_close_open, tc)
+{
+	int fd;
+
+	fd = open_kcov();
+	close(fd);
+	fd = open("/dev/kcov", O_RDWR);
+	ATF_REQUIRE(fd != -1);
+
+	close(fd);
+}
+
 ATF_TC_WITHOUT_HEAD(kcov_bufsize);
 ATF_TC_BODY(kcov_bufsize, tc)
 {
 	int fd;
-	kcov_int_t size;
+	uint64_t size;
 	fd = open_kcov();
 
 	size = 0;
@@ -75,7 +102,7 @@ ATF_TC_BODY(kcov_mmap, tc)
 {
 	void *data;
 	int fd;
-	kcov_int_t size = 2 * PAGE_SIZE / KCOV_ENTRY_SIZE;
+	uint64_t size = 2 * PAGE_SIZE / KCOV_ENTRY_SIZE;
 
 	fd = open_kcov();
 
@@ -97,7 +124,7 @@ ATF_TC_WITHOUT_HEAD(kcov_mmap_no_munmap);
 ATF_TC_BODY(kcov_mmap_no_munmap, tc)
 {
 	int fd;
-	kcov_int_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
+	uint64_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
 
 	fd = open_kcov();
 
@@ -113,7 +140,7 @@ ATF_TC_WITHOUT_HEAD(kcov_mmap_no_munmap_no_close);
 ATF_TC_BODY(kcov_mmap_no_munmap_no_close, tc)
 {
 	int fd;
-	kcov_int_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
+	uint64_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
 
 	fd = open_kcov();
 
@@ -129,7 +156,7 @@ static void *
 kcov_mmap_enable_thread(void *data)
 {
 	int fd;
-	kcov_int_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
+	uint64_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
 
 	fd = open_kcov();
 	*(int *)data = fd;
@@ -165,7 +192,7 @@ ATF_TC_WITHOUT_HEAD(kcov_enable);
 ATF_TC_BODY(kcov_enable, tc)
 {
 	int fd;
-	kcov_int_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
+	uint64_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
 
 	fd = open_kcov();
 
@@ -195,7 +222,7 @@ ATF_TC_WITHOUT_HEAD(kcov_enable_no_disable);
 ATF_TC_BODY(kcov_enable_no_disable, tc)
 {
 	int fd;
-	kcov_int_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
+	uint64_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
 
 	fd = open_kcov();
 	ATF_REQUIRE(ioctl(fd, KCOV_IOC_SETBUFSIZE, &size) ==0);
@@ -207,7 +234,7 @@ ATF_TC_WITHOUT_HEAD(kcov_enable_no_disable_no_close);
 ATF_TC_BODY(kcov_enable_no_disable_no_close, tc)
 {
 	int fd;
-	kcov_int_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
+	uint64_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
 
 	fd = open_kcov();
 	ATF_REQUIRE(ioctl(fd, KCOV_IOC_SETBUFSIZE, &size) ==0);
@@ -219,7 +246,7 @@ common_head(int *fdp)
 {
 	void *data;
 	int fd;
-	kcov_int_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
+	uint64_t size = PAGE_SIZE / KCOV_ENTRY_SIZE;
 
 	fd = open_kcov();
 
@@ -264,21 +291,38 @@ ATF_TC_BODY(kcov_basic, tc)
 	common_tail(fd, buf);
 }
 
+ATF_TC_WITHOUT_HEAD(kcov_multienable_on_the_same_thread);
+ATF_TC_BODY(kcov_multienable_on_the_same_thread, tc)
+{
+	kcov_int_t *buf1, *buf2;
+	int fd1, fd2;
+
+	buf1 = common_head(&fd1);
+	buf2 = common_head(&fd2);
+	ATF_REQUIRE_MSG(ioctl(fd1, KCOV_IOC_ENABLE) == 0,
+	    "Unable to enable kcov");
+	ATF_REQUIRE_ERRNO(EBUSY, ioctl(fd2, KCOV_IOC_ENABLE) != 0);
+
+	ATF_REQUIRE_MSG(ioctl(fd1, KCOV_IOC_DISABLE) == 0,
+	    "Unable to disable kcov");
+
+	common_tail(fd1, buf1);
+	common_tail(fd2, buf2);
+}
+
 static void *
-thread_test_helper(void *ptr)
+thread_buffer_access_test_helper(void *ptr)
 {
 	kcov_int_t *buf = ptr;
 
-	KCOV_STORE(buf[0], 0);
-	sleep(0);
-	ATF_REQUIRE_MSG(KCOV_LOAD(buf[0]) == 0,
-	    "Records changed in blocked thread");
+	/* Test mapped buffer access from a custom thread */
+	KCOV_STORE(buf[0], KCOV_LOAD(buf[0]));
 
 	return NULL;
 }
 
-ATF_TC_WITHOUT_HEAD(kcov_thread);
-ATF_TC_BODY(kcov_thread, tc)
+ATF_TC_WITHOUT_HEAD(kcov_buffer_access_from_custom_thread);
+ATF_TC_BODY(kcov_buffer_access_from_custom_thread, tc)
 {
 	pthread_t thread;
 	kcov_int_t *buf;
@@ -289,7 +333,8 @@ ATF_TC_BODY(kcov_thread, tc)
 	ATF_REQUIRE_MSG(ioctl(fd, KCOV_IOC_ENABLE) == 0,
 	    "Unable to enable kcov ");
 
-	pthread_create(&thread, NULL, thread_test_helper, __UNVOLATILE(buf));
+	pthread_create(&thread, NULL, thread_buffer_access_test_helper,
+	    __UNVOLATILE(buf));
 	pthread_join(thread, NULL);
 
 	ATF_REQUIRE_MSG(ioctl(fd, KCOV_IOC_DISABLE) == 0,
@@ -298,9 +343,107 @@ ATF_TC_BODY(kcov_thread, tc)
 	common_tail(fd, buf);
 }
 
+static void *
+thread_test_helper(void *ptr)
+{
+	volatile int i;
+
+	/* It does not matter what operation is in action. */
+	for (i = 0; i < 1000; i++) {
+		if (getpid() == 0)
+			break;
+	}
+
+	return NULL;
+}
+
+ATF_TC_WITHOUT_HEAD(kcov_thread);
+ATF_TC_BODY(kcov_thread, tc)
+{
+	pthread_t thread;
+	kcov_int_t *buf;
+	int fd;
+	volatile int i;
+
+	buf = common_head(&fd);
+
+	ATF_REQUIRE_MSG(ioctl(fd, KCOV_IOC_ENABLE) == 0,
+	    "Unable to enable kcov ");
+
+	/* The thread does something, does not matter what exactly. */
+	pthread_create(&thread, NULL, thread_test_helper, __UNVOLATILE(buf));
+
+	KCOV_STORE(buf[0], 0);
+	for (i = 0; i < 10000; i++)
+		continue;
+	ATF_REQUIRE_EQ_MSG(KCOV_LOAD(buf[0]), 0,
+	    "Records changed in blocked thread");
+
+	pthread_join(thread, NULL);
+
+	ATF_REQUIRE_EQ_MSG(ioctl(fd, KCOV_IOC_DISABLE), 0,
+	    "Unable to disable kcov");
+
+	common_tail(fd, buf);
+}
+
+static void *
+multiple_threads_helper(void *ptr __unused)
+{
+	kcov_int_t *buf;
+	int fd;
+
+	buf = common_head(&fd);
+	ATF_REQUIRE_MSG(ioctl(fd, KCOV_IOC_ENABLE) == 0,
+	    "Unable to enable kcov ");
+
+	KCOV_STORE(buf[0], 0);
+
+	sleep(0);
+	ATF_REQUIRE_MSG(KCOV_LOAD(buf[0]) != 0, "No records found");
+
+	ATF_REQUIRE_MSG(ioctl(fd, KCOV_IOC_DISABLE) == 0,
+	    "Unable to disable kcov");
+
+	common_tail(fd, buf);
+
+	return NULL;
+}
+
+static void
+kcov_multiple_threads(size_t N)
+{
+	pthread_t thread[32];
+	size_t i;
+
+	ATF_REQUIRE(__arraycount(thread) >= N);
+
+	for (i = 0; i < __arraycount(thread); i++)
+		pthread_create(&thread[i], NULL, multiple_threads_helper, NULL);
+
+	for (i = 0; i < __arraycount(thread); i++)
+		pthread_join(thread[i], NULL);
+}
+
+#define KCOV_MULTIPLE_THREADS(n)		\
+ATF_TC_WITHOUT_HEAD(kcov_multiple_threads##n);	\
+ATF_TC_BODY(kcov_multiple_threads##n, tc)	\
+{						\
+						\
+	kcov_multiple_threads(n);		\
+}
+
+KCOV_MULTIPLE_THREADS(2)
+KCOV_MULTIPLE_THREADS(4)
+KCOV_MULTIPLE_THREADS(8)
+KCOV_MULTIPLE_THREADS(16)
+KCOV_MULTIPLE_THREADS(32)
+
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, kcov_multiopen);
+	ATF_TP_ADD_TC(tp, kcov_open_close_open);
 	ATF_TP_ADD_TC(tp, kcov_bufsize);
 	ATF_TP_ADD_TC(tp, kcov_mmap);
 	ATF_TP_ADD_TC(tp, kcov_mmap_no_munmap);
@@ -310,6 +453,13 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, kcov_enable_no_disable_no_close);
 	ATF_TP_ADD_TC(tp, kcov_mmap_enable_thread_close);
 	ATF_TP_ADD_TC(tp, kcov_basic);
+	ATF_TP_ADD_TC(tp, kcov_multienable_on_the_same_thread);
+	ATF_TP_ADD_TC(tp, kcov_buffer_access_from_custom_thread);
 	ATF_TP_ADD_TC(tp, kcov_thread);
+	ATF_TP_ADD_TC(tp, kcov_multiple_threads2);
+	ATF_TP_ADD_TC(tp, kcov_multiple_threads4);
+	ATF_TP_ADD_TC(tp, kcov_multiple_threads8);
+	ATF_TP_ADD_TC(tp, kcov_multiple_threads16);
+	ATF_TP_ADD_TC(tp, kcov_multiple_threads32);
 	return atf_no_error();
 }
