@@ -1,3 +1,5 @@
+#include <sys/cdefs.h>
+
 #define JEMALLOC_C_
 #include "jemalloc/internal/jemalloc_preamble.h"
 #include "jemalloc/internal/jemalloc_internal_includes.h"
@@ -17,6 +19,25 @@
 #include "jemalloc/internal/sz.h"
 #include "jemalloc/internal/ticker.h"
 #include "jemalloc/internal/util.h"
+
+__weak_alias(mallocx, je_mallocx)
+__weak_alias(rallocx, je_rallocx)
+__weak_alias(xallocx, je_xallocx)
+__weak_alias(sallocx, je_sallocx)
+__weak_alias(dallocx, je_dallocx)
+__weak_alias(sdallocx, je_sdallocx)
+__weak_alias(nallocx, je_nallocx)
+
+__weak_alias(mallctl, je_mallctl)
+__weak_alias(mallctltomib, je_mallctltomib)
+__weak_alias(mallctlbymib, je_mallctlbymib)
+
+__weak_alias(malloc_stats_print, je_malloc_stats_print)
+__weak_alias(malloc_usable_size, je_malloc_usable_size)
+
+__weak_alias(malloc_message, je_malloc_message)
+
+__weak_alias(malloc_conf, je_malloc_conf)
 
 /******************************************************************************/
 /* Data. */
