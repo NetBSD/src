@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.5 2019/03/09 06:12:55 christos Exp $	*/
+/*	$NetBSD: malloc.h,v 1.6 2019/03/10 03:54:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -49,9 +49,9 @@ void malloc_stats_print(void (*)(void *, const char *), void *, const char *);
 
 size_t malloc_usable_size(const void *);
 
-void (*malloc_message)(void *, const char *);
+extern void (*malloc_message)(void *, const char *);
 
-const char *malloc_conf;
+extern const char *malloc_conf;
 
 __END_DECLS
 
