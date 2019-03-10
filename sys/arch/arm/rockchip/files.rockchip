@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.16 2019/03/07 00:35:22 jakllsch Exp $
+#	$NetBSD: files.rockchip,v 1.17 2019/03/10 11:10:21 jmcneill Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -62,6 +62,11 @@ file	arch/arm/rockchip/rk3399_pcie_phy.c	rkpciephy
 device	rkpcie: pcibus, pcihost_fdt
 attach	rkpcie at fdt
 file	arch/arm/rockchip/rk3399_pcie.c		rkpcie
+
+# eMMC PHY
+device	rkemmcphy
+attach	rkemmcphy at fdt
+file	arch/arm/rockchip/rk_emmcphy.c		rkemmcphy
 
 # SOC parameters
 defflag	opt_soc.h			SOC_ROCKCHIP
