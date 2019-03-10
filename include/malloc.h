@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.6 2019/03/10 03:54:08 christos Exp $	*/
+/*	$NetBSD: malloc.h,v 1.7 2019/03/10 15:31:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ void sdallocx(void *, size_t, int);
 size_t nallocx(size_t, int);
 
 int mallctl(const char *, void *, size_t *, void *, size_t);
-int mallctltomib(const char *, size_t *, size_t *);
+int mallctlnametomib(const char *, size_t *, size_t *);
 int mallctlbymib(const size_t *, size_t, void *, size_t *, void *, size_t);
 
 void malloc_stats_print(void (*)(void *, const char *), void *, const char *);
