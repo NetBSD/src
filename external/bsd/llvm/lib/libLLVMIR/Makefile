@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2018/07/17 18:55:28 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2019/03/10 12:14:06 mrg Exp $
 
 LIB=	LLVMIR
 
@@ -9,6 +9,8 @@ LIB=	LLVMIR
 TABLEGEN_SRC=		AttributesCompatFunc.td
 TABLEGEN_OUTPUT= \
 	AttributesCompatFunc.inc|-gen-attrs
+
+.include "${.PARSEDIR}/../../tablegen.mk"
 
 SRCS+=	AsmWriter.cpp \
 	Attributes.cpp \
@@ -61,8 +63,6 @@ SRCS+=	AsmWriter.cpp \
 	Value.cpp \
 	ValueSymbolTable.cpp \
 	Verifier.cpp
-
-.include "${.PARSEDIR}/../../tablegen.mk"
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
