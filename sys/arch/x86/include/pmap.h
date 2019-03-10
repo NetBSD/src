@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.99 2019/03/09 08:42:26 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.100 2019/03/10 16:30:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -372,7 +372,8 @@ void		pmap_map_ptes(struct pmap *, struct pmap **, pd_entry_t **,
 		    pd_entry_t * const **);
 void		pmap_unmap_ptes(struct pmap *, struct pmap *);
 
-int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
+bool		pmap_pdes_valid(vaddr_t, pd_entry_t * const *, pd_entry_t *,
+		    int *lastlvl);
 
 u_int		x86_mmap_flags(paddr_t);
 
@@ -423,12 +424,6 @@ bool	pmap_pageidlezero(paddr_t);
 /*
  * inline functions
  */
-
-__inline static bool __unused
-pmap_pdes_valid(vaddr_t va, pd_entry_t * const *pdes, pd_entry_t *lastpde)
-{
-	return pmap_pdes_invalid(va, pdes, lastpde) == 0;
-}
 
 /*
  * pmap_update_pg: flush one page from the TLB (or flush the whole thing
