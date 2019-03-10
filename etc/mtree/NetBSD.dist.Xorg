@@ -1,10 +1,11 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.23 2019/03/03 17:52:32 maya Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.24 2019/03/10 11:18:02 mrg Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
 ./usr/X11R7/include/DPS
 ./usr/X11R7/include/GL
 ./usr/X11R7/include/GL/internal
+./usr/X11R7/include/KHR
 ./usr/X11R7/include/X11
 ./usr/X11R7/include/X11/ICE
 ./usr/X11R7/include/X11/PM
@@ -31,6 +32,7 @@
 ./usr/X11R7/include/libdrm/nouveau/nvif
 ./usr/X11R7/include/libkms
 ./usr/X11R7/include/pixman-1
+./usr/X11R7/include/vdpau
 ./usr/X11R7/include/xcb
 ./usr/X11R7/include/xorg
 ./usr/X11R7/lib
