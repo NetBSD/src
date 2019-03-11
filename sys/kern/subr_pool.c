@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.233 2019/02/11 11:12:58 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.234 2019/03/11 20:21:32 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.233 2019/02/11 11:12:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.234 2019/03/11 20:21:32 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -258,8 +258,10 @@ static void pool_print1(struct pool *, const char *,
 static int pool_chk_page(struct pool *, const char *,
 			 struct pool_item_header *);
 
+/* -------------------------------------------------------------------------- */
+
 static inline unsigned int
-pr_item_notouch_index(const struct pool *pp, const struct pool_item_header *ph,
+pr_item_bitmap_index(const struct pool *pp, const struct pool_item_header *ph,
     const void *v)
 {
 	const char *cp = v;
@@ -272,10 +274,10 @@ pr_item_notouch_index(const struct pool *pp, const struct pool_item_header *ph,
 }
 
 static inline void
-pr_item_notouch_put(const struct pool *pp, struct pool_item_header *ph,
+pr_item_bitmap_put(const struct pool *pp, struct pool_item_header *ph,
     void *obj)
 {
-	unsigned int idx = pr_item_notouch_index(pp, ph, obj);
+	unsigned int idx = pr_item_bitmap_index(pp, ph, obj);
 	pool_item_bitmap_t *bitmap = ph->ph_bitmap + (idx / BITMAP_SIZE);
 	pool_item_bitmap_t mask = 1U << (idx & BITMAP_MASK);
 
@@ -284,7 +286,7 @@ pr_item_notouch_put(const struct pool *pp, struct pool_item_header *ph,
 }
 
 static inline void *
-pr_item_notouch_get(const struct pool *pp, struct pool_item_header *ph)
+pr_item_bitmap_get(const struct pool *pp, struct pool_item_header *ph)
 {
 	pool_item_bitmap_t *bitmap = ph->ph_bitmap;
 	unsigned int idx;
@@ -311,7 +313,7 @@ pr_item_notouch_get(const struct pool *pp, struct pool_item_header *ph)
 }
 
 static inline void
-pr_item_notouch_init(const struct pool *pp, struct pool_item_header *ph)
+pr_item_bitmap_init(const struct pool *pp, struct pool_item_header *ph)
 {
 	pool_item_bitmap_t *bitmap = ph->ph_bitmap;
 	const int n = howmany(pp->pr_itemsperpage, BITMAP_SIZE);
@@ -321,6 +323,60 @@ pr_item_notouch_init(const struct pool *pp, struct pool_item_header *ph)
 		bitmap[i] = (pool_item_bitmap_t)-1;
 	}
 }
+
+/* -------------------------------------------------------------------------- */
+
+static inline void
+pr_item_linkedlist_put(const struct pool *pp, struct pool_item_header *ph,
+    void *obj)
+{
+	struct pool_item *pi = obj;
+
+#ifdef POOL_CHECK_MAGIC
+	pi->pi_magic = PI_MAGIC;
+#endif
+
+	if (pp->pr_redzone) {
+		/*
+		 * Mark the pool_item as valid. The rest is already
+		 * invalid.
+		 */
+		kasan_mark(pi, sizeof(*pi), sizeof(*pi));
+	}
+
+	LIST_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
+}
+
+static inline void *
+pr_item_linkedlist_get(struct pool *pp, struct pool_item_header *ph)
+{
+	struct pool_item *pi;
+	void *v;
+
+	v = pi = LIST_FIRST(&ph->ph_itemlist);
+	if (__predict_false(v == NULL)) {
+		mutex_exit(&pp->pr_lock);
+		panic("%s: [%s] page empty", __func__, pp->pr_wchan);
+	}
+	KASSERTMSG((pp->pr_nitems > 0),
+	    "%s: [%s] nitems %u inconsistent on itemlist",
+	    __func__, pp->pr_wchan, pp->pr_nitems);
+#ifdef POOL_CHECK_MAGIC
+	KASSERTMSG((pi->pi_magic == PI_MAGIC),
+	    "%s: [%s] free list modified: "
+	    "magic=%x; page %p; item addr %p", __func__,
+	    pp->pr_wchan, pi->pi_magic, ph->ph_page, pi);
+#endif
+
+	/*
+	 * Remove from item list.
+	 */
+	LIST_REMOVE(pi, pi_list);
+
+	return v;
+}
+
+/* -------------------------------------------------------------------------- */
 
 static inline int
 phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
@@ -777,7 +833,6 @@ pool_alloc_item_header(struct pool *pp, void *storage, int flags)
 void *
 pool_get(struct pool *pp, int flags)
 {
-	struct pool_item *pi;
 	struct pool_item_header *ph;
 	void *v;
 
@@ -892,27 +947,9 @@ pool_get(struct pool *pp, int flags)
 	if (pp->pr_roflags & PR_NOTOUCH) {
 		KASSERTMSG((ph->ph_nmissing < pp->pr_itemsperpage),
 		    "%s: %s: page empty", __func__, pp->pr_wchan);
-		v = pr_item_notouch_get(pp, ph);
+		v = pr_item_bitmap_get(pp, ph);
 	} else {
-		v = pi = LIST_FIRST(&ph->ph_itemlist);
-		if (__predict_false(v == NULL)) {
-			mutex_exit(&pp->pr_lock);
-			panic("%s: [%s] page empty", __func__, pp->pr_wchan);
-		}
-		KASSERTMSG((pp->pr_nitems > 0),
-		    "%s: [%s] nitems %u inconsistent on itemlist",
-		    __func__, pp->pr_wchan, pp->pr_nitems);
-#ifdef POOL_CHECK_MAGIC
-		KASSERTMSG((pi->pi_magic == PI_MAGIC),
-		    "%s: [%s] free list modified: "
-		    "magic=%x; page %p; item addr %p", __func__,
-		    pp->pr_wchan, pi->pi_magic, ph->ph_page, pi);
-#endif
-
-		/*
-		 * Remove from item list.
-		 */
-		LIST_REMOVE(pi, pi_list);
+		v = pr_item_linkedlist_get(pp, ph);
 	}
 	pp->pr_nitems--;
 	pp->pr_nout++;
@@ -973,7 +1010,6 @@ pool_get(struct pool *pp, int flags)
 static void
 pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 {
-	struct pool_item *pi = v;
 	struct pool_item_header *ph;
 
 	KASSERT(mutex_owned(&pp->pr_lock));
@@ -992,21 +1028,9 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 	 * Return to item list.
 	 */
 	if (pp->pr_roflags & PR_NOTOUCH) {
-		pr_item_notouch_put(pp, ph, v);
+		pr_item_bitmap_put(pp, ph, v);
 	} else {
-#ifdef POOL_CHECK_MAGIC
-		pi->pi_magic = PI_MAGIC;
-#endif
-
-		if (pp->pr_redzone) {
-			/*
-			 * Mark the pool_item as valid. The rest is already
-			 * invalid.
-			 */
-			kasan_mark(pi, sizeof(*pi), sizeof(*pi));
-		}
-
-		LIST_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
+		pr_item_linkedlist_put(pp, ph, v);
 	}
 	KDASSERT(ph->ph_nmissing != 0);
 	ph->ph_nmissing--;
@@ -1244,7 +1268,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 	pp->pr_nitems += n;
 
 	if (pp->pr_roflags & PR_NOTOUCH) {
-		pr_item_notouch_init(pp, ph);
+		pr_item_bitmap_init(pp, ph);
 	} else {
 		while (n--) {
 			pi = (struct pool_item *)cp;
@@ -2982,7 +3006,7 @@ pool_allocated(struct pool *pp, struct pool_item_header *ph, uintptr_t addr)
 {
 
 	if ((pp->pr_roflags & PR_NOTOUCH) != 0) {
-		unsigned int idx = pr_item_notouch_index(pp, ph, (void *)addr);
+		unsigned int idx = pr_item_bitmap_index(pp, ph, (void *)addr);
 		pool_item_bitmap_t *bitmap =
 		    ph->ph_bitmap + (idx / BITMAP_SIZE);
 		pool_item_bitmap_t mask = 1 << (idx & BITMAP_MASK);
