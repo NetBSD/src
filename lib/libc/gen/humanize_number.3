@@ -1,4 +1,4 @@
-.\"	$NetBSD: humanize_number.3,v 1.11 2011/08/20 21:35:32 wiz Exp $
+.\"	$NetBSD: humanize_number.3,v 1.12 2019/03/11 15:10:51 kre Exp $
 .\"
 .\" Copyright (c) 1999, 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 14, 2011
+.Dd March 11, 2019
 .Dt HUMANIZE_NUMBER 3
 .Os
 .Sh NAME
@@ -47,21 +47,21 @@ function formats the signed 64 bit quantity given in
 .Fa number
 into
 .Fa buffer .
-A space and then
+A space and then the
 .Fa suffix
+.Pq "if not null"
 is appended to the end.
-.Fa buffer
-must be at least
 .Fa len
-bytes long.
+gives the size of the
+.Fa buffer .
 .Pp
 If the formatted number (including
 .Fa suffix )
 would be too long to fit into
 .Fa buffer ,
-then divide
+then repeatedly divide
 .Fa number
-by 1024 until it will.
+by 1024 until it will fit.
 In this case, prefix
 .Fa suffix
 with the appropriate SI designator.
@@ -85,11 +85,11 @@ in order to ensure a useful result is generated into
 To use a specific prefix, specify this as
 .Fa scale
 (Multiplier = 1024 ^ scale).
-This can not be combined with any of the
+The
 .Fa scale
-flags below.
+must be at least 0 and no more than 6.
 .Pp
-The following flags may be passed in
+Alternatively, one of fhe following special values may be given as
 .Pa scale :
 .Bl -tag -width Dv -offset indent
 .It Dv HN_AUTOSCALE
@@ -98,13 +98,20 @@ Format the buffer using the lowest multiplier possible.
 Return the prefix index number (the number of times
 .Fa number
 must be divided to fit) instead of formatting it to the buffer.
+That is, the
+.Fa scale
+that would have been used if
+.Dv HN_AUTOSCALE
+had been used.
 .El
 .Pp
 The following flags may be passed in
 .Pa flags :
 .Bl -tag -width Dv -offset indent
 .It Dv HN_DECIMAL
-If the final result is less than 10, display it using one digit.
+If the final numeric result is less than 10,
+and is not the same as the original value (that is, it has been scaled)
+display it using a decimal radix character, and one following digit.
 .It Dv HN_NOSPACE
 Do not put a space between
 .Fa number
@@ -115,7 +122,21 @@ Use 'B' (bytes) as prefix if the original result does not have a prefix.
 Divide
 .Fa number
 with 1000 instead of 1024.
+That is, use decimal scaling instead of binary.
 .El
+.Pp
+To generate the shortest meaningful value,
+a buffer length
+.Pq Fa len
+that is 6 greater the length of the
+.Fa suffix
+along with
+.Dv HN_AUTOSCALE
+will ensure the highest meaningful scale is used.
+Allow one extra byte for the sign if the number is negative,
+and one less if the
+.Dv HN_NOSPACE
+flag is used.
 .Pp
 The
 .Fn dehumanize_number
