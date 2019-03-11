@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.129 2019/03/03 22:02:49 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.130 2019/03/11 06:25:55 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -395,6 +395,10 @@ _X11MANTRANSFORM= \
 	__apploaddir__		${X11ROOTDIR}/lib/X11/app-defaults \
 	__appmansuffix__ 	1 \
 	__bindir__		${X11BINDIR} \
+	__datadir__		${X11LIBDIR} \
+	__libdir__		${X11ROOTDIR}/lib \
+	__xkbconfigroot__	${X11LIBDIR}/xkb \
+	__sysconfdir__		/etc \
 	__drivermansuffix__	4 \
 	__filemansuffix__	5 \
 	__LIB_MAN_SUFFIX__	3 \
@@ -413,7 +417,7 @@ _X11MANTRANSFORM+= \
 	__vendorversion__	${XORGVERSION:C/ /%/gW} \
 	__XCONFIGFILE__		xorg.conf \
 	__xconfigfile__		xorg.conf \
-	__XCONFIGFILEMAN__	'__XCONFIGFILE__%(__filemansuffix__)' \
+	__XCONFIGFILEMAN__	'xorg.conf(5)' \
 	__xorgversion__		${XORGVERSION:C/ /%/gW} \
 	__XSERVERNAME__		Xorg \
 	__xservername__		Xorg
