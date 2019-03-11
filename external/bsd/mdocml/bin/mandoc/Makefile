@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2018/08/16 06:24:40 kre Exp $
+# $NetBSD: Makefile,v 1.18 2019/03/11 17:59:28 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -8,10 +8,18 @@ SRCS=	\
 eqn_html.c \
 eqn_term.c \
 html.c \
+dba.c \
+dba_array.c \
+dba_read.c \
+dba_write.c \
+dbm.c \
+dbm_map.c \
 main.c \
 man_html.c \
 man_term.c \
+mandocdb.c \
 manpath.c \
+mansearch.c \
 mdoc_html.c \
 mdoc_markdown.c \
 mdoc_term.c \
