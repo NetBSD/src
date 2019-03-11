@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2015/07/19 07:55:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2019/03/11 06:25:55 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -68,6 +68,9 @@ LIBDPLIBS=\
 
 PKGCONFIG=	xaw7
 PKGDIST=	${LIBOLD}
+
+X11EXTRAMANTRANSFORMS+= \
+	__docdir__		${X11LIBDIR}/doc
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
