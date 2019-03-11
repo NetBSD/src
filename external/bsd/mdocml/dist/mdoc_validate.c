@@ -64,7 +64,7 @@ static	size_t		macro2len(enum roff_tok);
 static	void	 rewrite_macro2len(struct roff_man *, char **);
 static	int	 similar(const char *, const char *);
 
-static	void	 post_abort(POST_ARGS);
+static	void	 post_abort(POST_ARGS) __dead;
 static	void	 post_an(POST_ARGS);
 static	void	 post_an_norm(POST_ARGS);
 static	void	 post_at(POST_ARGS);
