@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.11 2018/08/16 05:03:17 kre Exp $
+# $NetBSD: Makefile,v 1.12 2019/03/11 00:15:38 christos Exp $
 
 LIBISPRIVATE=	yes
 
 LIB=	mandoc
 SRCS=	\
+arch.c \
 att.c \
 chars.c \
 compat_ohash.c \
@@ -15,6 +16,7 @@ man_macro.c \
 man_validate.c \
 mandoc.c \
 mandoc_aux.c \
+mandoc_msg.c \
 mandoc_ohash.c \
 mandoc_xr.c \
 mdoc.c \
