@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.149 2019/03/10 11:18:02 mrg Exp $
+# $NetBSD: mi,v 1.150 2019/03/11 09:20:13 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -62,6 +62,7 @@
 ./usr/X11R7/bin/ssh-askpass				-unknown-	xorg
 ./usr/X11R7/bin/startx					-unknown-	xorg
 ./usr/X11R7/bin/sxpm					-unknown-	xorg
+./usr/X11R7/bin/transset				-unknown-	xorg
 ./usr/X11R7/bin/twm					-unknown-	xorg
 ./usr/X11R7/bin/ucs2any					-unknown-	xorg
 ./usr/X11R7/bin/uxterm					-unknown-	xorg
@@ -148,7 +149,6 @@
 ./usr/X11R7/include/GL					base-x11-root	xorg
 ./usr/X11R7/include/GL/internal				base-x11-root	xorg
 ./usr/X11R7/include/KHR					base-x11-root	xorg
-./usr/X11R7/include/vdpau				base-x11-root	xorg
 ./usr/X11R7/include/X11					base-x11-root	xorg
 ./usr/X11R7/include/X11/ICE				base-x11-root	xorg
 ./usr/X11R7/include/X11/PM				base-x11-root	xorg
@@ -274,6 +274,7 @@
 ./usr/X11R7/include/libdrm/nouveau/nvif			base-x11-root	xorg
 ./usr/X11R7/include/libkms				base-x11-root	xorg
 ./usr/X11R7/include/pixman-1				base-x11-root	xorg
+./usr/X11R7/include/vdpau				base-x11-root	xorg
 ./usr/X11R7/include/xcb					base-x11-root	xorg
 ./usr/X11R7/include/xorg				base-x11-root	xorg
 ./usr/X11R7/lib						base-x11-root	xorg,compatx11dir
@@ -1310,6 +1311,7 @@
 ./usr/X11R7/man/cat1/ssh-askpass.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/startx.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/sxpm.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/transset.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/twm.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/ucs2any.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/viewres.0				-unknown-	.cat,xorg
@@ -1455,6 +1457,7 @@
 ./usr/X11R7/man/html1/ssh-askpass.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/startx.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/sxpm.html				-unknown-	html,xorg
+./usr/X11R7/man/html1/transset.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/twm.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/ucs2any.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/viewres.html			-unknown-	html,xorg
@@ -1601,6 +1604,7 @@
 ./usr/X11R7/man/man1/ssh-askpass.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/startx.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/sxpm.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/transset.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/twm.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/ucs2any.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/viewres.1				-unknown-	.man,xorg

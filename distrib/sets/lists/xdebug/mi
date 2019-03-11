@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.29 2019/03/08 09:58:23 mrg Exp $
+# $NetBSD: mi,v 1.30 2019/03/11 09:20:13 mrg Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						-unknown-	debuglib,xorg,compatx11dir
 ./usr/X11R7/lib/libFS_g.a				-unknown-	debuglib,xorg,compatx11file
@@ -152,6 +152,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/smproxy.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/ssh-askpass.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/sxpm.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/transset.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/twm.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/ucs2any.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/viewres.debug		-unknown-	debug,xorg

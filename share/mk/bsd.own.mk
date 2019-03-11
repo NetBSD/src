@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1111 2019/03/10 11:02:46 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1112 2019/03/11 09:20:14 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1496,7 +1496,7 @@ HAVE_XORG_GLAMOR?=	no
 	glu glw mesa-demos MesaGLUT MesaLib MesaLib.old MesaLib7 \
 	ico iceauth listres lndir \
 	luit xproxymanagementprotocol mkfontdir oclock proxymngr rgb \
-	rstart setxkbmap showfont smproxy twm viewres \
+	rstart setxkbmap showfont smproxy transset twm viewres \
 	x11perf xauth xcalc xclipboard \
 	xclock xcmsdb xconsole xditview xdpyinfo xdriinfo xdm \
 	xfd xf86dga xfindproxy xfontsel xfwp xgamma xgc xhost xinit \
