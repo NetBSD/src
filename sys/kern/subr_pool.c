@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.234 2019/03/11 20:21:32 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.235 2019/03/11 20:38:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.234 2019/03/11 20:21:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.235 2019/03/11 20:38:27 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -431,7 +431,12 @@ pr_find_pagehead(struct pool *pp, void *v)
 		    (void *)((uintptr_t)v & pp->pr_alloc->pa_pagemask);
 
 		if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
-			ph = (struct pool_item_header *)((char *)page + pp->pr_phoffset);
+			ph = (struct pool_item_header *)
+			    ((char *)page + pp->pr_phoffset);
+			if (__predict_false((void *)ph->ph_page != page)) {
+				panic("%s: [%s] item not part of pool",
+				    __func__, pp->pr_wchan);
+			}
 		} else {
 			tmp.ph_page = page;
 			ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
