@@ -114,7 +114,7 @@ dbm_open(const char *fname)
 			goto fail;
 		}
 		nvals[im] = be32toh(*ep);
-		macros[im] = (struct macro *)++ep;
+		macros[im] = (struct macro *)__UNCONST(++ep);
 	}
 	return 0;
 

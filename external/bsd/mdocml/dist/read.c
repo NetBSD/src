@@ -62,7 +62,6 @@ static	void	  choose_parser(struct mparse *);
 static	void	  free_buf_list(struct buf *);
 static	void	  resize_buf(struct buf *, size_t);
 static	int	  mparse_buf_r(struct mparse *, const struct buf, size_t, int);
-static	int	  mparse_buf_r(struct mparse *, struct buf, size_t, int);
 static	int	  read_whole_file(struct mparse *, int, struct buf *, int *);
 static	void	  mparse_end(struct mparse *);
 

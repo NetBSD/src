@@ -167,7 +167,7 @@ dba_page_new(struct dba_array *pages, const char *arch,
 	dba_array_add(page, entry);
 	if (arch != NULL && *arch != '\0') {
 		entry = dba_array_new(1, DBA_STR | DBA_GROW);
-		dba_array_add(entry, (void *)arch);
+		dba_array_add(entry, __UNCONST(arch));
 	} else
 		entry = NULL;
 	dba_array_add(page, entry);
@@ -208,7 +208,7 @@ dba_page_add(struct dba_array *page, int32_t ie, const char *str)
 		if (strcmp(entry, str) == 0)
 			return;
 	}
-	dba_array_add(entries, (void *)str);
+	dba_array_add(entries, __UNCONST(str));
 }
 
 /*

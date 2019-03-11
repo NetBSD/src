@@ -87,9 +87,7 @@ struct	curparse {
 };
 
 
-#ifdef HAVE_SQLITE3
 int			  mandocdb(int, char *[]);
-#endif
 
 static	void		  check_xr(void);
 static	int		  fs_lookup(const struct manpaths *,
@@ -151,11 +149,9 @@ main(int argc, char *argv[])
 #endif
 
 	mandoc_msg_setoutfile(stderr);
-#ifdef HAVE_SQLITE3
 	if (strncmp(progname, "mandocdb", 8) == 0 ||
 	    strcmp(progname, BINM_MAKEWHATIS) == 0)
 		return mandocdb(argc, argv);
-#endif
 
 #if HAVE_PLEDGE
 	if (pledge("stdio rpath tmppath tty proc exec", NULL) == -1)
@@ -394,18 +390,9 @@ main(int argc, char *argv[])
 		/* Access the mandoc database. */
 
 		manconf_parse(&conf, conf_file, defpaths, auxpaths);
-#if HAVE_SQLITE3
 		if ( ! mansearch(&search, &conf.manpath,
 		    argc, argv, &res, &sz))
 			usage(search.argmode);
-#else
-		if (search.argmode != ARG_NAME) {
-			fputs("mandoc: database support not compiled in\n",
-			    stderr);
-			return (int)MANDOCLEVEL_BADARG;
-		}
-		sz = 0;
-#endif
 
 		if (sz == 0 && search.argmode == ARG_NAME)
 			fs_search(&search, &conf.manpath,
@@ -616,9 +603,7 @@ main(int argc, char *argv[])
 out:
 	if (search.argmode != ARG_FILE) {
 		manconf_free(&conf);
-#ifdef HAVE_SQLITE3
 		mansearch_free(res, sz);
-#endif
 	}
 
 	free(curp.os_s);
@@ -932,10 +917,8 @@ check_xr(void)
 		search.outkey = NULL;
 		search.argmode = ARG_NAME;
 		search.firstmatch = 1;
-#ifdef HAVE_SQLITE3
 		if (mansearch(&search, &paths, 1, &xr->name, NULL, &sz))
 			continue;
-#endif
 		if (fs_search(&search, &paths, 1, &xr->name, NULL, &sz))
 			continue;
 		if (xr->count == 1)
