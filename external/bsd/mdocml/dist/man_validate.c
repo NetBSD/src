@@ -41,7 +41,7 @@
 
 typedef	void	(*v_check)(CHKARGS);
 
-static	void	  check_abort(CHKARGS);
+static	void	  check_abort(CHKARGS) __dead;
 static	void	  check_par(CHKARGS);
 static	void	  check_part(CHKARGS);
 static	void	  check_root(CHKARGS);
