@@ -584,8 +584,8 @@ treescan(void)
 	argv[0] = ".";
 	argv[1] = NULL;
 
-	f = fts_open((char * const *)argv, FTS_PHYSICAL | FTS_NOCHDIR,
-	    fts_compare);
+	f = fts_open((char * const *)__UNCONST(*argv),
+	    FTS_PHYSICAL | FTS_NOCHDIR, fts_compare);
 	if (f == NULL) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
 		say("", "&fts_open");
