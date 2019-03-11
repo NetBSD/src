@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.44 2019/03/10 11:18:02 mrg Exp $
+# $NetBSD: md.amd64,v 1.45 2019/03/11 17:50:19 kamil Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg,compatx11file
@@ -6,6 +6,7 @@
 ./usr/X11R7/lib/libdrm_amdgpu_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libdrm_intel_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau_g.a			-unknown-	debuglib,xorg,compatx11file
+./usr/X11R7/lib/libvdpau_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	xorg,debuglib,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	xorg,debuglib,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		-unknown-	xorg,debuglib,obsolete
