@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.58 2019/03/11 00:14:44 christos Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.59 2019/03/11 00:31:36 christos Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.58 2019/03/11 00:14:44 christos Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.59 2019/03/11 00:31:36 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -39,7 +39,6 @@ __RCSID("$NetBSD: makemandb.c,v 1.58 2019/03/11 00:14:44 christos Exp $");
 #include "dist/mandoc.h"
 #include "dist/mdoc.h"
 #include "dist/roff.h"
-#include "dist/roff_int.h"
 #include "dist/mandoc_parse.h"
 
 #define BUFLEN 1024
