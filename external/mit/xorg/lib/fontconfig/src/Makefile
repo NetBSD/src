@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2019/03/08 09:58:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.24 2019/03/11 01:40:05 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -297,6 +297,8 @@ PKGCONFIG_SED_FLAGS= \
 	-e "s,@sysconfdir@,${X11ETCDIR},; \
 	    s,@localstatedir@,/var,; \
 	    s,@BASECONFIGDIR@,${FONTCONFIG_PATH},; \
+	    s,@PKG_EXPAT_LIBS@,-lexpat,; \
+	    s,@PKG_EXPAT_CFLAGS@,,; \
 	    s,@TEMPLATEDIR@,${TEMPLATEDIR},; \
 	    s,@fc_cachedir@,${FONTCONFIG_PATH},"
 
