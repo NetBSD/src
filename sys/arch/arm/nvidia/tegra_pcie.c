@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.25 2018/11/16 15:06:22 jmcneill Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.26 2019/03/12 18:46:20 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.25 2018/11/16 15:06:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.26 2019/03/12 18:46:20 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -185,7 +185,7 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	error = bus_space_map(sc->sc_bst, pads_addr, pads_size, 0,
 	    &sc->sc_bsh_pads);
 	if (error) {
-		aprint_error(": couldn't map afi registers: %d\n", error);
+		aprint_error(": couldn't map pads registers: %d\n", error);
 		return;
 	}
 	error = bus_space_map(sc->sc_bst, cs_addr, cs_size, 0,
