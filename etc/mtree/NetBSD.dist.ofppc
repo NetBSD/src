@@ -1,3 +1,0 @@
-#	$NetBSD: NetBSD.dist.ofppc,v 1.1 2019/03/01 04:39:37 mrg Exp $
-
-./usr/include/ofppc
