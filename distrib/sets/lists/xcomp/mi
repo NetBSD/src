@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.206 2019/03/10 11:18:02 mrg Exp $
+#	 $NetBSD: mi,v 1.207 2019/03/12 03:37:23 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -34,6 +34,7 @@
 ./usr/X11R7/include/GL/xmesa.h				-unknown-	obsolete
 ./usr/X11R7/include/GL/xmesa_x.h			-unknown-	obsolete
 ./usr/X11R7/include/GL/xmesa_xf86.h			-unknown-	obsolete
+./usr/X11R7/include/KHR/khrplatform.h			-unknown-	xorg,mesa_ver=18
 ./usr/X11R7/include/X11/CallbackI.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Composite.h			-unknown-	xorg
 ./usr/X11R7/include/X11/CompositeP.h			-unknown-	xorg

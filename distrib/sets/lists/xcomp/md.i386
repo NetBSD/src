@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.58 2019/03/11 08:05:18 mrg Exp $
+# $NetBSD: md.i386,v 1.59 2019/03/12 03:37:23 mrg Exp $
 #./usr/libdata/lint/llib-lIntelXvMC.ln			-unknown-	lint,xorg
 ./usr/X11R7/include/intel_bufmgr.h			-unknown-	obsolete
 ./usr/X11R7/include/libdrm/nouveau/nvif/cl0080.h	-unknown-	xorg
@@ -8,7 +8,6 @@
 ./usr/X11R7/include/libdrm/nouveau/nvif/if0003.h	-unknown-	xorg
 ./usr/X11R7/include/libdrm/nouveau/nvif/ioctl.h		-unknown-	xorg
 ./usr/X11R7/include/libdrm/nouveau/nvif/unpack.h	-unknown-	xorg
-./usr/X11R7/include/KHR/khrplatform.h			-unknown-	xorg,mesa_ver=18
 ./usr/X11R7/include/vdpau/vdpau.h			-unknown-	xorg
 ./usr/X11R7/include/vdpau/vdpau_x11.h			-unknown-	xorg
 ./usr/X11R7/lib/libI810XvMC.a				-unknown-	xorg
