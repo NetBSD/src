@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.7 2019/03/10 15:31:02 christos Exp $	*/
+/*	$NetBSD: malloc.h,v 1.8 2019/03/12 15:11:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ __BEGIN_DECLS
 void *mallocx(size_t, int);
 void *rallocx(void *, size_t, int);
 size_t xallocx(void *, size_t, size_t, int);
-size_t sallocx(void *, int);
+size_t sallocx(const void *, int);
 void dallocx(void *, int);
 void sdallocx(void *, size_t, int);
 size_t nallocx(size_t, int);
@@ -49,9 +49,11 @@ void malloc_stats_print(void (*)(void *, const char *), void *, const char *);
 
 size_t malloc_usable_size(const void *);
 
-extern void (*malloc_message)(void *, const char *);
+void (*malloc_message_get(void))(void *, const char *);
+void malloc_message_set(void (*)(void *, const char *));
 
-extern const char *malloc_conf;
+const char *malloc_conf_get(void);
+void malloc_conf_set(const char *);
 
 __END_DECLS
 
