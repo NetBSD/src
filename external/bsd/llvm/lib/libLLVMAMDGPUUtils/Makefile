@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2019/03/10 12:14:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2019/03/12 02:07:14 maya Exp $
 
 LIB=	LLVMAMDGPUUtils
 
 .include <bsd.init.mk>
 
-X86_OBJDIR!=	cd ${.CURDIR}/../libLLVMAMDGPUCodeGen && ${PRINTOBJDIR}
-CPPFLAGS+=	-I${X86_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/AMDGPU
+AMDGPU_OBJDIR!=	cd ${.CURDIR}/../libLLVMAMDGPUCodeGen && ${PRINTOBJDIR}
+CPPFLAGS+=	-I${AMDGPU_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/AMDGPU
 
 CPPFLAGS+=	-I${LLVM_SRCDIR}/lib/Target/AMDGPU
 
