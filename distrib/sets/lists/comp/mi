@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2261 2019/02/25 10:25:40 kamil Exp $
+#	$NetBSD: mi,v 1.2262 2019/03/12 15:10:43 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -708,8 +708,8 @@
 ./usr/include/dev/scsipi/ses.h			comp-c-include
 ./usr/include/dev/scsipi/ss_mustek.h		comp-obsolete		obsolete
 ./usr/include/dev/scsipi/ssvar.h		comp-obsolete		obsolete
-./usr/include/dev/spkrio.h			comp-c-include
 ./usr/include/dev/spi/spi_io.h			comp-c-include
+./usr/include/dev/spkrio.h			comp-c-include
 ./usr/include/dev/sun/disklabel.h		comp-c-include
 ./usr/include/dev/sun/eeprom.h			comp-c-include
 ./usr/include/dev/sun/event_var.h		comp-obsolete		obsolete
@@ -3449,6 +3449,8 @@
 ./usr/lib/libiscsi_p.a				comp-iscsi-proflib	compatfile,iscsi,profile
 ./usr/lib/libisns.a				comp-isns-lib		compatfile
 ./usr/lib/libisns_p.a				comp-isns-proflib	compatfile,profile
+./usr/lib/libjemalloc.a				comp-c-lib		compatfile
+./usr/lib/libjemalloc_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libkadm.a				comp-obsolete		obsolete
 ./usr/lib/libkadm5clnt.a			comp-krb5-lib		compatfile,kerberos
 ./usr/lib/libkadm5clnt_p.a			comp-krb5-proflib	compatfile,kerberos,profile
