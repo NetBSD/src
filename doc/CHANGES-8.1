@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.115 2019/03/09 17:13:18 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.116 2019/03/12 17:48:50 snj Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2695,4 +2695,14 @@ sys/dev/usb/if_urndisreg.h			delete
 
 	Add Microsoft Hyper-V support.
 	[nonaka, ticket #1210]
+
+sys/compat/netbsd32/netbsd32_compat_60.c	1.3
+
+	don't forget to convert the timespec.
+	[martin, ticket #1211]
+
+external/bsd/bzip2/dist/bzip2recover.c		1.4
+
+	CVE-2016-3189 bzip2: heap use after free in bzip2recover
+	[martin, ticket #1212]
 
