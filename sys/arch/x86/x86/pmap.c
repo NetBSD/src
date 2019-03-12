@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.330 2019/03/10 16:30:01 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.331 2019/03/12 08:29:52 gson Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.330 2019/03/10 16:30:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.331 2019/03/12 08:29:52 gson Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4117,7 +4117,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 		pmap_stats_update_bypte(pmap, npte, opte);
 	} else {
 		printf("%s: wiring for pmap %p va %#" PRIxVADDR
-		    "did not change!\n", __func__, pmap, va);
+		    " did not change!\n", __func__, pmap, va);
 	}
 
 	/* Release pmap. */
