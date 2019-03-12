@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2recover.c,v 1.3 2012/05/07 00:45:47 wiz Exp $	*/
+/*	$NetBSD: bzip2recover.c,v 1.3.28.1 2019/03/12 17:48:03 snj Exp $	*/
 
 /*-----------------------------------------------------------*/
 /*--- Block recoverer program for bzip2                   ---*/
@@ -472,6 +472,7 @@ Int32 main ( Int32 argc, Char** argv )
             bsPutUChar ( bsWr, 0x50 ); bsPutUChar ( bsWr, 0x90 );
             bsPutUInt32 ( bsWr, blockCRC );
             bsClose ( bsWr );
+            outFile = NULL;
          }
          if (wrBlock >= rbCtr) break;
          wrBlock++;
