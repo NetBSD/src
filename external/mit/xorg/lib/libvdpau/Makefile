@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2019/03/10 12:44:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2019/03/12 11:05:09 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ SRCS=	vdpau_wrapper.c \
 VDPAU_SYSCONFDIR=	${X11ETCDIR}/vdpau
 VDPAU_MODULEDIR=	${X11LIBDIR}/vdpau
 
-CFLAGS+=	-DVDPAU_SYSCONFDIR=\"${VDPAU_SYSCONFDIR}\" \
+CPPFLAGS+=	-DVDPAU_SYSCONFDIR=\"${VDPAU_SYSCONFDIR}\" \
 		-DVDPAU_MODULEDIR=\"${VDPAU_MODULEDIR}\"
 
 SHLIB_MAJOR=	1
