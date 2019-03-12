@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.859 2019/03/12 15:10:43 christos Exp $
+# $NetBSD: shl.mi,v 1.860 2019/03/12 16:50:35 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -302,6 +302,7 @@
 ./usr/lib/libgcc_s.so.1.0			base-sys-shlib		compatfile,gcc
 ./usr/lib/libgnumalloc.so			base-sys-shlib		compatfile
 ./usr/lib/libgnumalloc.so.1			base-sys-shlib		compatfile
+./usr/lib/libgnumalloc.so.1.0			base-sys-shlib		compatfile
 ./usr/lib/libgomp.so				base-sys-shlib		compatfile,gcc
 ./usr/lib/libgomp.so.1				base-sys-shlib		compatfile,gcc=6
 ./usr/lib/libgomp.so.1.2			base-obsolete		obsolete
@@ -354,7 +355,6 @@
 ./usr/lib/libjemalloc.so			base-sys-shlib		compatfile
 ./usr/lib/libjemalloc.so.0			base-sys-shlib		compatfile
 ./usr/lib/libjemalloc.so.0.0			base-sys-shlib		compatfile
-./usr/lib/libjemalloc.so.1.0			base-sys-shlib		compatfile
 ./usr/lib/libkadm.so				base-obsolete		obsolete
 ./usr/lib/libkadm5clnt.so			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libkadm5clnt.so.14			base-krb5-shlib		compatfile,kerberos
