@@ -1,0 +1,3 @@
+#	$NetBSD: NetBSD.dist.sun3,v 1.1 2019/03/12 10:07:49 mrg Exp $
+
+./usr/include/sun68k
