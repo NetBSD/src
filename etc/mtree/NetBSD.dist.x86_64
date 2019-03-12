@@ -1,6 +1,5 @@
-#	$NetBSD: NetBSD.dist.x86_64,v 1.13 2019/02/09 21:43:23 mrg Exp $
+#	$NetBSD: NetBSD.dist.x86_64,v 1.14 2019/03/12 10:07:49 mrg Exp $
 
-./usr/include/amd64
 ./usr/include/dev/nvmm
 ./usr/include/dev/nvmm/x86
 ./usr/include/i386

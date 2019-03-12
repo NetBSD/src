@@ -1,3 +1,0 @@
-#	$NetBSD: NetBSD.dist.aarch64,v 1.6 2019/02/17 05:29:08 mrg Exp $
-
-./usr/include/aarch64
