@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.278 2019/02/26 10:01:40 isaki Exp $
+# $NetBSD: mi,v 1.279 2019/03/12 15:10:44 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -85,6 +85,7 @@
 ./usr/lib/libisccfg_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libiscsi_g.a				comp-c-debuglib		debuglib,compatfile,iscsi
 ./usr/lib/libisns_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libjemalloc_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libkadm5clnt_g.a			comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libkadm5srv_g.a			comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libkafs_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
@@ -1707,7 +1708,6 @@
 ./usr/libdata/debug/usr/tests/kernel/h_ps_strings1.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_ps_strings2.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_segv.debug			tests-kernel-tests	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/kernel/t_ksem.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_fifo.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_file.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_file2.debug		tests-kernel-tests	debug,atf,compattestfile
@@ -1732,6 +1732,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_filedesc.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_kauth_pr_47598.debug		tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/t_ksem.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_lock.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_lockf.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-obsolete		obsolete,compattestfile
