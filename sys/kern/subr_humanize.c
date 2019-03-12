@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_humanize.c,v 1.1 2009/10/02 15:48:41 pooka Exp $	*/
+/*	$NetBSD: subr_humanize.c,v 1.2 2019/03/12 00:25:44 kre Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_humanize.c,v 1.1 2009/10/02 15:48:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_humanize.c,v 1.2 2019/03/12 00:25:44 kre Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ humanize_number(char *buf, size_t len, uint64_t bytes, const char *suffix,
        	/* prefixes are: (none), kilo, Mega, Giga, Tera, Peta, Exa */
 	const char *prefixes;
 	int		r;
-	uint64_t	umax;
+	uint64_t	umax, b10;
 	size_t		i, suffixlen;
 
 	if (buf == NULL || suffix == NULL)
@@ -77,14 +77,23 @@ humanize_number(char *buf, size_t len, uint64_t bytes, const char *suffix,
 		prefixes = " kMGTPE"; /* SI for decimal multiplies */
 
 	umax = 1;
+	b10 = bytes/10;
 	for (i = 0; i < len - suffixlen - 3; i++) {
+		if (umax > b10) {
+			/*
+			 * there is space for the unscaled number
+			 * but bytes might be ~0 - there is no bigger
+			 * value available for umax, so we must skip
+			 * the "bytes >= umax" test below
+			 */
+			i = 0;
+			goto nodiv;
+		}
 		umax *= 10;
-		if (umax > bytes)
-			break;
 	}
 	for (i = 0; bytes >= umax && prefixes[i + 1]; i++)
 		bytes /= divisor;
-
+ nodiv:
 	r = snprintf(buf, len, "%qu%s%c%s", (unsigned long long)bytes,
 	    i == 0 ? "" : " ", prefixes[i], suffix);
 
