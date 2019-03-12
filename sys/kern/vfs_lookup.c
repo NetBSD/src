@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.208 2017/07/09 22:48:44 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.209 2019/03/12 14:03:35 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.208 2017/07/09 22:48:44 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.209 2019/03/12 14:03:35 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -469,6 +469,8 @@ struct namei_state {
 	int slashes;
 
 	unsigned attempt_retry:1;	/* true if error allows emul retry */
+	unsigned root_referenced:1;	/* true if ndp->ni_rootdir and
+					     ndp->ni_erootdir were referenced */
 };
 
 
@@ -485,6 +487,8 @@ namei_init(struct namei_state *state, struct nameidata *ndp)
 	state->docache = 0;
 	state->rdonly = 0;
 	state->slashes = 0;
+
+	state->root_referenced = 0;
 
 	KASSERTMSG((state->cnp->cn_cred != NULL), "namei: bad cred/proc");
 	KASSERTMSG(((state->cnp->cn_nameiop & (~OPMASK)) == 0),
@@ -510,8 +514,11 @@ namei_cleanup(struct namei_state *state)
 {
 	KASSERT(state->cnp == &state->ndp->ni_cnd);
 
-	/* nothing for now */
-	(void)state;
+	if (state->root_referenced) {
+		vrele(state->ndp->ni_rootdir);
+		if (state->ndp->ni_erootdir != NULL)
+			vrele(state->ndp->ni_erootdir);
+	}
 }
 
 //////////////////////////////
@@ -578,11 +585,15 @@ namei_getstartdir(struct namei_state *state)
 	/*
 	 * Get a reference to the start dir so we can safely unlock cwdi.
 	 *
-	 * XXX: should we hold references to rootdir and erootdir while
-	 * we're running? What happens if a multithreaded process chroots
-	 * during namei?
+	 * Must hold references to rootdir and erootdir while we're running.
+	 * A multithreaded process may chroot during namei.
 	 */
 	vref(startdir);
+	KASSERT(! state->root_referenced);
+	vref(state->ndp->ni_rootdir);
+	if (state->ndp->ni_erootdir != NULL)
+		vref(state->ndp->ni_erootdir);
+	state->root_referenced = 1;
 
 	rw_exit(&cwdi->cwdi_lock);
 	return startdir;
@@ -603,6 +614,9 @@ namei_getstartdir_for_nfsd(struct namei_state *state)
 	state->ndp->ni_erootdir = NULL;
 
 	vref(state->ndp->ni_atdir);
+	KASSERT(! state->root_referenced);
+	vref(state->ndp->ni_rootdir);
+	state->root_referenced = 1;
 	return state->ndp->ni_atdir;
 }
 
