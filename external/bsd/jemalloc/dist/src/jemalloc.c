@@ -20,24 +20,31 @@
 #include "jemalloc/internal/ticker.h"
 #include "jemalloc/internal/util.h"
 
-__weak_alias(mallocx, je_mallocx)
-__weak_alias(rallocx, je_rallocx)
-__weak_alias(xallocx, je_xallocx)
-__weak_alias(sallocx, je_sallocx)
-__weak_alias(dallocx, je_dallocx)
-__weak_alias(sdallocx, je_sdallocx)
-__weak_alias(nallocx, je_nallocx)
+#ifdef JEMALLOC_WEAK_NOSTD
+__weak_alias(mallocx, __je_mallocx)
+__weak_alias(rallocx, __je_rallocx)
+__weak_alias(xallocx, __je_xallocx)
+__weak_alias(sallocx, __je_sallocx)
+__weak_alias(dallocx, __je_dallocx)
+__weak_alias(sdallocx, __je_sdallocx)
+__weak_alias(nallocx, __je_nallocx)
 
-__weak_alias(mallctl, je_mallctl)
-__weak_alias(mallctlnametomib, je_mallctlnametomib)
-__weak_alias(mallctlbymib, je_mallctlbymib)
+__weak_alias(mallctl, __je_mallctl)
+__weak_alias(mallctlnametomib, __je_mallctlnametomib)
+__weak_alias(mallctlbymib, __je_mallctlbymib)
 
-__weak_alias(malloc_stats_print, je_malloc_stats_print)
-__weak_alias(malloc_usable_size, je_malloc_usable_size)
+__weak_alias(malloc_stats_print, __je_malloc_stats_print)
+__weak_alias(malloc_usable_size, __je_malloc_usable_size)
 
-__weak_alias(malloc_message, je_malloc_message)
+__weak_alias(malloc_message, __je_malloc_message)
+__weak_alias(malloc_conf, __je_malloc_conf)
 
-__weak_alias(malloc_conf, je_malloc_conf)
+__weak_alias(malloc_message_get, __je_malloc_message_get)
+__weak_alias(malloc_conf_get, __je_malloc_conf_get)
+
+__weak_alias(malloc_message_set, __je_malloc_message_set)
+__weak_alias(malloc_conf_set, __je_malloc_conf_set)
+#endif
 
 /******************************************************************************/
 /* Data. */
@@ -3352,6 +3359,30 @@ jemalloc_postfork_child(void) {
 	malloc_mutex_postfork_child(tsd_tsdn(tsd), &arenas_lock);
 	tcache_postfork_child(tsd_tsdn(tsd));
 	ctl_postfork_child(tsd_tsdn(tsd));
+}
+
+void (*
+je_malloc_message_get(void))(void *, const char *)
+{
+	return je_malloc_message;
+}
+
+void
+je_malloc_message_set(void (*m)(void *, const char *))
+{
+	je_malloc_message = m;
+}
+
+const char *
+je_malloc_conf_get(void)
+{
+	return je_malloc_conf;
+}
+
+void
+je_malloc_conf_set(const char *m)
+{
+	je_malloc_conf = m;
 }
 
 /******************************************************************************/

@@ -64,48 +64,51 @@ extern "C" {
 #ifndef JEMALLOC_NO_RENAME
 #  define je_aligned_alloc aligned_alloc
 #  define je_calloc calloc
-#  define je_dallocx dallocx
 #  define je_free free
+#  define je_malloc malloc
+#  define je_posix_memalign posix_memalign
+#  define je_realloc realloc
+#  define je_valloc valloc
+
+# ifndef JEMALLOC_PROTECT_NOSTD
+#  define je_dallocx dallocx
 #  define je_mallctl mallctl
 #  define je_mallctlbymib mallctlbymib
 #  define je_mallctlnametomib mallctlnametomib
-#  define je_malloc malloc
 #  define je_malloc_conf malloc_conf
+#  define je_malloc_conf_get malloc_conf_get
+#  define je_malloc_conf_set malloc_conf_set
 #  define je_malloc_message malloc_message
+#  define je_malloc_message_get malloc_message_get
+#  define je_malloc_message_set malloc_message_set
 #  define je_malloc_stats_print malloc_stats_print
 #  define je_malloc_usable_size malloc_usable_size
 #  define je_mallocx mallocx
 #  define je_nallocx nallocx
-#  define je_posix_memalign posix_memalign
 #  define je_rallocx rallocx
-#  define je_realloc realloc
 #  define je_sallocx sallocx
 #  define je_sdallocx sdallocx
 #  define je_xallocx xallocx
-#  define je_valloc valloc
-#endif
-
-#ifdef JEMALLOC_WEAK_NOSTD
-
-#undef je_mallocx
-#undef je_rallocx
-#undef je_xallocx
-#undef je_sallocx
-#undef je_dallocx
-#undef je_sdallocx
-#undef je_nallocx
-
-#undef je_mallctl
-#undef je_mallctlnametomib
-#undef je_mallctlbymib
-
-#undef je_malloc_stats_print
-#undef je_malloc_usable_size
-
-#undef je_malloc_message
-
-#undef je_malloc_conf
-
+# else
+#  define je_dallocx		__je_dallocx
+#  define je_mallctl		__je_mallctl
+#  define je_mallctlbymib	__je_mallctlbymib
+#  define je_mallctlnametomib	__je_mallctlnametomib
+#  define je_malloc_conf	__je_malloc_conf
+#  define je_malloc_conf_get	__je_malloc_conf_get
+#  define je_malloc_conf_set	__je_malloc_conf_set
+#  define je_malloc_message	__je_malloc_message
+#  define je_malloc_message_get	__je_malloc_message_get
+#  define je_malloc_message_set	__je_malloc_message_set
+#  define je_malloc_stats_print	__je_malloc_stats_print
+#  define je_malloc_usable_size	__je_malloc_usable_size
+#  define je_mallocx		__je_mallocx
+#  define je_nallocx		__je_nallocx
+#  define je_rallocx		__je_rallocx
+#  define je_sallocx		__je_sallocx
+#  define je_sdallocx		__je_sdallocx
+#  define je_xallocx		__je_xallocx
+# endif
 #endif
 
 #include <stdlib.h>
@@ -241,6 +244,12 @@ extern "C" {
 extern JEMALLOC_EXPORT const char	*je_malloc_conf;
 extern JEMALLOC_EXPORT void		(*je_malloc_message)(void *cbopaque,
     const char *s);
+extern JEMALLOC_EXPORT const char	*je_malloc_conf_get(void);
+extern JEMALLOC_EXPORT void 		je_malloc_conf_set(const char *);
+extern JEMALLOC_EXPORT void		(*je_malloc_message_get(void))
+    (void *cbopaque, const char *s);
+extern JEMALLOC_EXPORT void		je_malloc_message_set(
+    void (*)(void *cbopaque, const char *s));
 
 JEMALLOC_EXPORT JEMALLOC_ALLOCATOR JEMALLOC_RESTRICT_RETURN
     void JEMALLOC_NOTHROW	*je_malloc(size_t size)
