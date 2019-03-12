@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.858 2019/03/04 23:03:10 rin Exp $
+# $NetBSD: shl.mi,v 1.859 2019/03/12 15:10:43 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -103,9 +103,6 @@
 ./lib/npf/ext_rndblock.so.0			base-npf-shlib		compatfile,npf
 ./lib/npf/ext_rndblock.so.0.0			base-npf-shlib		compatfile,npf
 ./libexec/ld.elf_so				base-sys-shlib		dynamicroot
-./usr/lib/libbozohttpd.so 			base-sys-shlib		compatfile
-./usr/lib/libbozohttpd.so.0			base-sys-shlib		compatfile
-./usr/lib/libbozohttpd.so.0.0			base-sys-shlib		compatfile
 ./usr/lib/i18n/libBIG5.so			base-i18n-shlib		compatfile
 ./usr/lib/i18n/libBIG5.so.5			base-i18n-shlib		compatfile
 ./usr/lib/i18n/libBIG5.so.5.0			base-i18n-shlib		compatfile
@@ -210,6 +207,9 @@
 ./usr/lib/libbluetooth.so			base-sys-shlib		compatfile
 ./usr/lib/libbluetooth.so.4			base-sys-shlib		compatfile
 ./usr/lib/libbluetooth.so.4.2			base-sys-shlib		compatfile
+./usr/lib/libbozohttpd.so 			base-sys-shlib		compatfile
+./usr/lib/libbozohttpd.so.0			base-sys-shlib		compatfile
+./usr/lib/libbozohttpd.so.0.0			base-sys-shlib		compatfile
 ./usr/lib/libbsdmalloc.so			base-sys-shlib		compatfile
 ./usr/lib/libbsdmalloc.so.0			base-sys-shlib		compatfile
 ./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib		compatfile
@@ -302,7 +302,6 @@
 ./usr/lib/libgcc_s.so.1.0			base-sys-shlib		compatfile,gcc
 ./usr/lib/libgnumalloc.so			base-sys-shlib		compatfile
 ./usr/lib/libgnumalloc.so.1			base-sys-shlib		compatfile
-./usr/lib/libgnumalloc.so.1.0			base-sys-shlib		compatfile
 ./usr/lib/libgomp.so				base-sys-shlib		compatfile,gcc
 ./usr/lib/libgomp.so.1				base-sys-shlib		compatfile,gcc=6
 ./usr/lib/libgomp.so.1.2			base-obsolete		obsolete
@@ -352,6 +351,10 @@
 ./usr/lib/libisns.so				base-isns-shlib		compatfile
 ./usr/lib/libisns.so.0				base-isns-shlib		compatfile
 ./usr/lib/libisns.so.0.0			base-isns-shlib		compatfile
+./usr/lib/libjemalloc.so			base-sys-shlib		compatfile
+./usr/lib/libjemalloc.so.0			base-sys-shlib		compatfile
+./usr/lib/libjemalloc.so.0.0			base-sys-shlib		compatfile
+./usr/lib/libjemalloc.so.1.0			base-sys-shlib		compatfile
 ./usr/lib/libkadm.so				base-obsolete		obsolete
 ./usr/lib/libkadm5clnt.so			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libkadm5clnt.so.14			base-krb5-shlib		compatfile,kerberos

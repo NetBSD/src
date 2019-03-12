@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.324 2019/02/14 20:42:40 christos Exp $
+# $NetBSD: shl.mi,v 1.325 2019/03/12 15:10:44 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -70,6 +70,7 @@
 ./usr/lib/libisccfg_pic.a			comp-bind-piclib	compatfile,picinstall
 ./usr/lib/libiscsi_pic.a			comp-c-piclib		compatfile,picinstall,iscsi
 ./usr/lib/libisns_pic.a				comp-isns-piclib	compatfile,picinstall
+./usr/lib/libjemalloc_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libkadm5clnt_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libkadm5srv_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libkadm_pic.a				comp-obsolete		obsolete
@@ -118,8 +119,6 @@
 ./usr/lib/libobjc_pic.a				comp-objc-piclib	compatfile,picinstall,gcccmds
 ./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=231
 ./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=231
-./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
-./usr/lib/libossaudio_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libp2k_pic.a				comp-puffs-piclib	compatfile,picinstall,rump
@@ -277,8 +276,8 @@
 ./usr/lib/libwind_pic.a				comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libwrap_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libz_pic.a				comp-c-piclib		compatfile,picinstall
-./usr/lib/libzfs_pic.a				comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libzfs_core_pic.a			comp-zfs-piclib		compatfile,picinstall,zfs
+./usr/lib/libzfs_pic.a				comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libzpool_pic.a			comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/libexec/liblto_plugin.so			comp-c-bin              gcc
 ./usr/libexec/liblto_plugin.so.0		comp-c-bin              gcc
