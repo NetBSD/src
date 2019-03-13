@@ -1,4 +1,4 @@
-/* $NetBSD: rk_emmcphy.c,v 1.2 2019/03/10 19:47:03 jmcneill Exp $ */
+/* $NetBSD: rk_emmcphy.c,v 1.3 2019/03/13 10:28:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_emmcphy.c,v 1.2 2019/03/10 19:47:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_emmcphy.c,v 1.3 2019/03/13 10:28:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -138,6 +138,18 @@ rk_emmcphy_enable(device_t dev, void *priv, bool enable)
 	u_int rate, frqsel;
 
 	syscon_lock(sc->sc_syscon);
+
+	if (enable) {
+		/* Drive strength */
+		mask = PHYCTRL_DR_TY;
+		val = __SHIFTIN(0, PHYCTRL_DR_TY);
+		WR4(sc, GRF_EMMCPHY_CON6, (mask << 16) | val);
+
+		/* Enable output tap delay */
+		mask = PHYCTRL_OTAPDLYENA | PHYCTRL_OTAPDLYSEL;
+		val = PHYCTRL_OTAPDLYENA | __SHIFTIN(4, PHYCTRL_OTAPDLYSEL);
+		WR4(sc, GRF_EMMCPHY_CON0, (mask << 16) | val);
+	}
 
 	/* Power down PHY and disable DLL before making changes */
 	mask = PHYCTRL_ENDLL | PHYCTRL_PDB;
