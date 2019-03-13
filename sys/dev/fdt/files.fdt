@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.43 2019/03/03 12:54:07 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.44 2019/03/13 12:17:45 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -144,3 +144,7 @@ file	dev/fdt/dwiic_fdt.c			dwiic_fdt
 # AMD Cryptographic Coprocessor
 attach	amdccp at fdt with amdccp_fdt
 file	dev/fdt/amdccp_fdt.c			amdccp_fdt
+
+# Arasan SDHCI controller
+attach	sdhc at fdt with arasan_sdhc_fdt
+file	dev/fdt/arasan_sdhc_fdt.c		arasan_sdhc_fdt
