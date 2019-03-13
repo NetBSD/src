@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.29 2017/04/22 21:49:41 jmcneill Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.30 2019/03/13 12:16:49 jmcneill Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -61,6 +61,7 @@ struct sdhc_softc {
 #define	SDHC_FLAG_USDHC		0x00800000 /* Freescale uSDHC */
 #define	SDHC_FLAG_NO_AUTO_STOP	0x01000000 /* No auto CMD12 */
 #define	SDHC_FLAG_NO_BUSY_INTR	0x02000000 /* No intr when RESP_BUSY */
+#define	SDHC_FLAG_STOP_WITH_TC	0x04000000 /* CMD12 can set xfer complete w/o SCF_RSP_BSY */
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */
@@ -72,6 +73,7 @@ struct sdhc_softc {
 	int (*sc_vendor_card_detect)(struct sdhc_softc *);
 	int (*sc_vendor_bus_width)(struct sdhc_softc *, int);
 	int (*sc_vendor_bus_clock)(struct sdhc_softc *, int);
+	int (*sc_vendor_bus_clock_post)(struct sdhc_softc *, int);
 	int (*sc_vendor_transfer_data_dma)(struct sdhc_softc *, struct sdmmc_command *);
 	void (*sc_vendor_hw_reset)(struct sdhc_softc *, struct sdhc_host *);
 	int (*sc_vendor_signal_voltage)(struct sdhc_softc *, int);
