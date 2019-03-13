@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.176 2019/03/05 10:26:08 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.177 2019/03/13 10:02:13 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2369,33 +2369,32 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	struct rx_ring	*rxr;
 	int             i;
 	u32		ctrl;
-
+	bool		hwtagging;
 
 	/*
-	 * We get here thru init_locked, meaning
-	 * a soft reset, this has already cleared
-	 * the VFTA and other state, so if there
-	 * have been no vlan's registered do nothing.
+	 *  This function is called from both if_init and ifflags_cb()
+	 * on NetBSD.
 	 */
-	if (!VLAN_ATTACHED(&adapter->osdep.ec))
-		return;
+
+	/* Enalble HW tagging only if any vlan is attached */
+	hwtagging = (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING)
+	    && VLAN_ATTACHED(&adapter->osdep.ec);
 
 	/* Setup the queues for vlans */
-	if (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING) {
-		for (i = 0; i < adapter->num_queues; i++) {
-			rxr = &adapter->rx_rings[i];
-			/* On 82599 the VLAN enable is per/queue in RXDCTL */
-			if (hw->mac.type != ixgbe_mac_82598EB) {
-				ctrl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(rxr->me));
+	for (i = 0; i < adapter->num_queues; i++) {
+		rxr = &adapter->rx_rings[i];
+		/* On 82599 the VLAN enable is per/queue in RXDCTL */
+		if (hw->mac.type != ixgbe_mac_82598EB) {
+			ctrl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(rxr->me));
+			if (hwtagging)
 				ctrl |= IXGBE_RXDCTL_VME;
-				IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(rxr->me), ctrl);
-			}
-			rxr->vtag_strip = TRUE;
+			else
+				ctrl &= ~IXGBE_RXDCTL_VME;
+			IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(rxr->me), ctrl);
 		}
+		rxr->vtag_strip = hwtagging ? TRUE : FALSE;
 	}
 
-	if ((ec->ec_capenable & ETHERCAP_VLAN_HWFILTER) == 0)
-		return;
 	/*
 	 * A soft reset zero's out the VFTA, so
 	 * we need to repopulate it now.
@@ -2407,12 +2406,17 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 
 	ctrl = IXGBE_READ_REG(hw, IXGBE_VLNCTRL);
 	/* Enable the Filter Table if enabled */
-	if (ec->ec_capenable & ETHERCAP_VLAN_HWFILTER) {
-		ctrl &= ~IXGBE_VLNCTRL_CFIEN;
+	if (ec->ec_capenable & ETHERCAP_VLAN_HWFILTER)
 		ctrl |= IXGBE_VLNCTRL_VFE;
+	else
+		ctrl &= ~IXGBE_VLNCTRL_VFE;
+	/* VLAN hw tagging for 82598 */
+	if (hw->mac.type == ixgbe_mac_82598EB) {
+		if (hwtagging)
+			ctrl |= IXGBE_VLNCTRL_VME;
+		else
+			ctrl &= ~IXGBE_VLNCTRL_VME;
 	}
-	if (hw->mac.type == ixgbe_mac_82598EB)
-		ctrl |= IXGBE_VLNCTRL_VME;
 	IXGBE_WRITE_REG(hw, IXGBE_VLNCTRL, ctrl);
 } /* ixgbe_setup_vlan_hw_support */
 
