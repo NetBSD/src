@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.109 2019/02/22 06:49:15 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.110 2019/03/13 10:08:02 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1972,27 +1972,31 @@ ixv_setup_vlan_support(struct adapter *adapter)
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct rx_ring  *rxr;
 	u32		ctrl, vid, vfta, retry;
+	bool		hwtagging;
 
 	/*
-	 * We get here thru init_locked, meaning
-	 * a soft reset, this has already cleared
-	 * the VFTA and other state, so if there
-	 * have been no vlan's registered do nothing.
+	 *  This function is called from both if_init and ifflags_cb()
+	 * on NetBSD.
 	 */
-	if (!VLAN_ATTACHED(ec))
-		return;
+
+	/* Enalble HW tagging only if any vlan is attached */
+	hwtagging = (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING)
+	    && VLAN_ATTACHED(&adapter->osdep.ec);
 
 	/* Enable the queues */
 	for (int i = 0; i < adapter->num_queues; i++) {
 		rxr = &adapter->rx_rings[i];
 		ctrl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(rxr->me));
-		ctrl |= IXGBE_RXDCTL_VME;
+		if (hwtagging)
+			ctrl |= IXGBE_RXDCTL_VME;
+		else
+			ctrl &= ~IXGBE_RXDCTL_VME;
 		IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(rxr->me), ctrl);
 		/*
 		 * Let Rx path know that it needs to store VLAN tag
 		 * as part of extra mbuf info.
 		 */
-		rxr->vtag_strip = TRUE;
+		rxr->vtag_strip = hwtagging ? TRUE : FALSE;
 	}
 
 #if 1
