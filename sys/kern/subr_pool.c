@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.235 2019/03/11 20:38:27 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.236 2019/03/13 20:56:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.235 2019/03/11 20:38:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.236 2019/03/13 20:56:33 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -139,7 +139,7 @@ static int pool_bigidx(size_t);
 int pool_inactive_time = 10;
 
 /* Next candidate for drainage (see pool_drain()) */
-static struct pool	*drainpp;
+static struct pool *drainpp;
 
 /* This lock protects both pool_head and drainpp. */
 static kmutex_t pool_head_lock;
@@ -383,16 +383,15 @@ phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
 {
 
 	/*
-	 * we consider pool_item_header with smaller ph_page bigger.
-	 * (this unnatural ordering is for the benefit of pr_find_pagehead.)
+	 * We consider pool_item_header with smaller ph_page bigger. This
+	 * unnatural ordering is for the benefit of pr_find_pagehead.
 	 */
-
 	if (a->ph_page < b->ph_page)
-		return (1);
+		return 1;
 	else if (a->ph_page > b->ph_page)
-		return (-1);
+		return -1;
 	else
-		return (0);
+		return 0;
 }
 
 SPLAY_PROTOTYPE(phtree, pool_item_header, ph_node, phtree_compare);
@@ -592,7 +591,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 			palloc = &pool_allocator_kmem_fullpage;
 		else if (palloc == &pool_allocator_nointr)
 			palloc = &pool_allocator_nointr_fullpage;
-	}		
+	}
 #endif /* POOL_SUBPAGE */
 	if (!cold)
 		mutex_enter(&pool_allocator_lock);
@@ -653,21 +652,20 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_freecheck = NULL;
 	pool_redzone_init(pp, size);
 
+	/* Silently enforce '0 <= ioff < align'. */
+	ioff %= align;
+
 	/*
-	 * Decide whether to put the page header off page to avoid
-	 * wasting too large a part of the page or too big item.
-	 * Off-page page headers go on a hash table, so we can match
-	 * a returned item with its header based on the page address.
-	 * We use 1/16 of the page size and about 8 times of the item
-	 * size as the threshold (XXX: tune)
+	 * Decide whether to put the page header off page to avoid wasting too
+	 * large a part of the page or too big item. Off-page page headers go
+	 * on a hash table, so we can match a returned item with its header
+	 * based on the page address. We use 1/16 of the page size and about 8
+	 * times of the item size as the threshold. (XXX: tune)
 	 *
-	 * However, we'll put the header into the page if we can put
-	 * it without wasting any items.
-	 *
-	 * Silently enforce `0 <= ioff < align'.
+	 * However, we'll put the header into the page if we can put it without
+	 * wasting any items.
 	 */
-	pp->pr_itemoffset = ioff %= align;
-	/* See the comment below about reserved bytes. */
+	pp->pr_itemoffset = ioff;
 	trysize = palloc->pa_pagesz - ((align - ioff) % align);
 	phsize = ALIGN(sizeof(struct pool_item_header));
 	if (pp->pr_roflags & PR_PHINPAGE ||
@@ -829,7 +827,7 @@ pool_alloc_item_header(struct pool *pp, void *storage, int flags)
 	else
 		ph = pool_get(pp->pr_phpool, flags);
 
-	return (ph);
+	return ph;
 }
 
 /*
@@ -900,7 +898,7 @@ pool_get(struct pool *pp, int flags)
 
 		mutex_exit(&pp->pr_lock);
 		KASSERT((flags & (PR_NOWAIT|PR_LIMITFAIL)) != 0);
-		return (NULL);
+		return NULL;
 	}
 
 	/*
@@ -943,7 +941,7 @@ pool_get(struct pool *pp, int flags)
 			pp->pr_nfail++;
 			mutex_exit(&pp->pr_lock);
 			KASSERT((flags & (PR_WAITOK|PR_NOWAIT)) == PR_NOWAIT);
-			return (NULL);
+			return NULL;
 		}
 
 		/* Start the allocation process over. */
@@ -1126,6 +1124,9 @@ pool_put(struct pool *pp, void *v)
 static int
 pool_grow(struct pool *pp, int flags)
 {
+	struct pool_item_header *ph;
+	char *cp;
+
 	/*
 	 * If there's a pool_grow in progress, wait for it to complete
 	 * and try again from the top.
@@ -1157,11 +1158,11 @@ pool_grow(struct pool *pp, int flags)
 	else
 		pp->pr_flags |= PR_GROWINGNOWAIT;
 
-	char *cp = pool_allocator_alloc(pp, flags);
+	cp = pool_allocator_alloc(pp, flags);
 	if (__predict_false(cp == NULL))
 		goto out;
 
-	struct pool_item_header *ph = pool_alloc_item_header(pp, cp, flags);
+	ph = pool_alloc_item_header(pp, cp, flags);
 	if (__predict_false(ph == NULL)) {
 		pool_allocator_free(pp, cp);
 		goto out;
@@ -1226,10 +1227,10 @@ pool_prime(struct pool *pp, int n)
 static void
 pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 {
-	struct pool_item *pi;
-	void *cp = storage;
 	const unsigned int align = pp->pr_align;
 	const unsigned int ioff = pp->pr_itemoffset;
+	struct pool_item *pi;
+	void *cp = storage;
 	int n;
 
 	KASSERT(mutex_owned(&pp->pr_lock));
@@ -1259,7 +1260,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 		pp->pr_curcolor = 0;
 
 	/*
-	 * Adjust storage to apply aligment to `pr_itemoffset' in each item.
+	 * Adjust storage to apply alignment to `pr_itemoffset' in each item.
 	 */
 	if (ioff != 0)
 		cp = (char *)cp + align - ioff;
@@ -1439,7 +1440,7 @@ pool_reclaim(struct pool *pp)
 		if (klock) {
 			KERNEL_UNLOCK_ONE(NULL);
 		}
-		return (0);
+		return 0;
 	}
 
 	LIST_INIT(&pq);
@@ -1481,7 +1482,7 @@ pool_reclaim(struct pool *pp)
 		KERNEL_UNLOCK_ONE(NULL);
 	}
 
-	return (rv);
+	return rv;
 }
 
 /*
@@ -1803,7 +1804,7 @@ pool_chk(struct pool *pp, const char *label)
 
 out:
 	mutex_exit(&pp->pr_lock);
-	return (r);
+	return r;
 }
 
 /*
@@ -2501,7 +2502,7 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int s, void *object)
 	pool_cache_destruct_object(pc, object);
 
 	return false;
-} 
+}
 
 /*
  * pool_cache_put{,_paddr}:
@@ -2548,7 +2549,7 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 		}
 
 		/*
-		 * Can't free to either group: try the slow path. 
+		 * Can't free to either group: try the slow path.
 		 * If put_slow() releases the object for us, it
 		 * will return false.  Otherwise we need to retry.
 		 */
