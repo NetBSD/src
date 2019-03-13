@@ -206,6 +206,7 @@ void OPENSSL_cpuid_setup(void)
     }
 # endif
 
+#if __ARM_MAX_ARCH__>=7
     /* Things that getauxval didn't tell us */
     if (sigsetjmp(ill_jmp, 1) == 0) {
         _armv7_tick();
