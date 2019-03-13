@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.42 2018/09/03 16:29:33 riastradh Exp $	*/
+/*	$NetBSD: zx.c,v 1.43 2019/03/13 22:12:46 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.42 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.43 2019/03/13 22:12:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,16 +475,24 @@ zxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 			if (cu->cmap.index > 2 ||
 			    cu->cmap.count > 2 - cu->cmap.index)
 				return (EINVAL);
-			for (i = 0; i < cu->cmap.count; i++) {
-				if ((v = fubyte(&cu->cmap.red[i])) < 0)
-					return (EFAULT);
-				sc->sc_curcmap[i + cu->cmap.index + 0] = v;
-				if ((v = fubyte(&cu->cmap.green[i])) < 0)
-					return (EFAULT);
-				sc->sc_curcmap[i + cu->cmap.index + 2] = v;
-				if ((v = fubyte(&cu->cmap.blue[i])) < 0)
-					return (EFAULT);
-				sc->sc_curcmap[i + cu->cmap.index + 4] = v;
+
+			uint8_t red[2], green[2], blue[2];
+			const u_int cnt = cu->cmap.count;
+
+			if (cnt &&
+			    ((error = copyin(cu->cmap.red,   red,   cnt)) ||
+			     (error = copyin(cu->cmap.green, green, cnt)) ||
+			     (error = copyin(cu->cmap.blue,  blue,  cnt)))) {
+				return error;
+			}
+
+			for (i = 0; i < cnt; i++) {
+				sc->sc_curcmap[i + cu->cmap.index + 0] =
+				    red[i];
+				sc->sc_curcmap[i + cu->cmap.index + 2] =
+				    green[i];
+				sc->sc_curcmap[i + cu->cmap.index + 4] =
+				    blue[i];
 			}
 			zx_cursor_color(sc);
 		}
