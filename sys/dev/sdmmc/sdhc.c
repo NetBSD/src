@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.101 2017/06/23 08:43:59 ryo Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.102 2019/03/13 12:16:49 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.101 2017/06/23 08:43:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.102 2019/03/13 12:16:49 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1236,6 +1236,12 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 			HCLR1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
 	}
 
+	if (hp->sc->sc_vendor_bus_clock_post) {
+		error = (*hp->sc->sc_vendor_bus_clock_post)(hp->sc, freq);
+		if (error != 0)
+			goto out;
+	}
+
 out:
 	mutex_exit(&hp->intr_lock);
 
@@ -1554,6 +1560,11 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			HSET2(hp, SDHC_EINTR_SIGNAL_EN, eintr);
 			HSET2(hp, SDHC_EINTR_STATUS_EN, eintr);
 		}
+	}
+
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_STOP_WITH_TC)) {
+		if (cmd->c_opcode == MMC_STOP_TRANSMISSION)
+			SET(cmd->c_flags, SCF_RSP_BSY);
 	}
 
 	/*
