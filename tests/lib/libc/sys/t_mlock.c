@@ -1,4 +1,4 @@
-/* $NetBSD: t_mlock.c,v 1.6 2016/08/09 12:02:44 kre Exp $ */
+/* $NetBSD: t_mlock.c,v 1.7 2019/03/13 08:50:12 kre Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mlock.c,v 1.6 2016/08/09 12:02:44 kre Exp $");
+__RCSID("$NetBSD: t_mlock.c,v 1.7 2019/03/13 08:50:12 kre Exp $");
 
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: t_mlock.c,v 1.6 2016/08/09 12:02:44 kre Exp $");
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 static long page = 0;
@@ -55,16 +56,26 @@ ATF_TC_HEAD(mlock_clip, tc)
 ATF_TC_BODY(mlock_clip, tc)
 {
 	void *buf;
+	int err1, err2;
 
 	buf = malloc(page);
 	ATF_REQUIRE(buf != NULL);
+	fprintf(stderr, "mlock_clip: buf = %p (page=%ld)\n", buf, page);
 
 	if (page < 1024)
 		atf_tc_skip("page size too small");
 
 	for (size_t i = page; i >= 1; i = i - 1024) {
-		(void)mlock(buf, page - i);
-		(void)munlock(buf, page - i);
+		err1 = mlock(buf, page - i);
+		if (err1 != 0)
+			fprintf(stderr, "mlock_clip: page=%ld i=%zu,"
+			    " mlock(%p, %ld): %s\n", page, i, buf, page - i,
+			    strerror(errno));
+		err2 = munlock(buf, page - i);
+		if (err2 != 0)
+			fprintf(stderr, "mlock_clip: page=%ld i=%zu,"
+			    " munlock(%p, %ld): %s (mlock %s)\n", page, i,
+			    buf, page - i, strerror(errno), err1?"failed":"ok");
 	}
 
 	free(buf);
@@ -81,6 +92,7 @@ ATF_TC_BODY(mlock_err, tc)
 {
 	void *invalid_ptr;
 	void *buf;
+	int mlock_err, munlock_err;
 
 	/*
 	 * Any bad address must return ENOMEM (for lock & unlock)
@@ -105,6 +117,7 @@ ATF_TC_BODY(mlock_err, tc)
 
 	buf = malloc(page);
 	ATF_REQUIRE(buf != NULL);
+	fprintf(stderr, "mlock_err: buf = %p (page=%ld)\n", buf, page);
 
 	/*
 	 * unlocking memory that is not locked is an error...
@@ -116,8 +129,18 @@ ATF_TC_BODY(mlock_err, tc)
 	/*
 	 * These are permitted to fail (EINVAL) but do not on NetBSD
 	 */
-	ATF_REQUIRE(mlock((void *)(((uintptr_t)buf) + page/3), page/5) == 0);
-	ATF_REQUIRE(munlock((void *)(((uintptr_t)buf) + page/3), page/5) == 0);
+	mlock_err = mlock((void *)(((uintptr_t)buf) + page/3), page/5);
+	if (mlock_err != 0)
+	    fprintf(stderr, "mlock_err: mlock(%p, %ld): %d [%d] %s\n",
+		(void *)(((uintptr_t)buf) + page/3), page/5, mlock_err,
+		errno, strerror(errno));
+	ATF_REQUIRE(mlock_err == 0);
+	munlock_err= munlock((void *)(((uintptr_t)buf) + page/3), page/5);
+	if (munlock_err != 0)
+	    fprintf(stderr, "mlock_err: munlock(%p, %ld): %d [%d] %s\n",
+		(void *)(((uintptr_t)buf) + page/3), page/5, munlock_err,
+		errno, strerror(errno));
+	ATF_REQUIRE(munlock_err == 0);
 
 	(void)free(buf);
 
@@ -150,6 +173,7 @@ ATF_TC_BODY(mlock_limits, tc)
 
 	buf = malloc(page);
 	ATF_REQUIRE(buf != NULL);
+	fprintf(stderr, "mlock_limits: buf = %p (page=%ld)\n", buf, page);
 
 	pid = fork();
 	ATF_REQUIRE(pid >= 0);
@@ -161,7 +185,7 @@ ATF_TC_BODY(mlock_limits, tc)
 			res.rlim_cur = i - 1;
 			res.rlim_max = i - 1;
 
-			(void)fprintf(stderr, "trying to lock %zd bytes "
+			(void)fprintf(stderr, "trying to lock %zu bytes "
 			    "with %zu byte limit\n", i, (size_t)res.rlim_cur);
 
 			if (setrlimit(RLIMIT_MEMLOCK, &res) != 0)
@@ -169,7 +193,9 @@ ATF_TC_BODY(mlock_limits, tc)
 
 			errno = 0;
 
-			if (mlock(buf, i) != -1 || errno != EAGAIN) {
+			if ((sta = mlock(buf, i)) != -1 || errno != EAGAIN) {
+				fprintf(stderr, "mlock(%p, %zu): %d [%d] %s\n",
+				    buf, i, sta, errno, strerror(errno));
 				(void)munlock(buf, i);
 				_exit(EXIT_FAILURE);
 			}
@@ -203,20 +229,39 @@ ATF_TC_BODY(mlock_mmap, tc)
 	 */
 	buf = mmap(NULL, page, PROT_READ | PROT_WRITE, flags, -1, 0);
 
+	if (buf == MAP_FAILED)
+		fprintf(stderr,
+		    "mlock_mmap: mmap(NULL, %ld, %#x, %#x, -1, 0): MAP_FAILED"
+		    " [%d] %s\n", page, PROT_READ | PROT_WRITE, flags, errno,
+		    strerror(errno));
+
 	ATF_REQUIRE(buf != MAP_FAILED);
+
+	fprintf(stderr, "mlock_mmap: buf=%p, page=%ld\n", buf, page);
+
 	ATF_REQUIRE(mlock(buf, page) == 0);
 	ATF_REQUIRE(munlock(buf, page) == 0);
 	ATF_REQUIRE(munmap(buf, page) == 0);
 	ATF_REQUIRE(munlock(buf, page) != 0);
+
+	fprintf(stderr, "mlock_mmap: first test succeeded\n");
 
 	/*
 	 * But it should be impossible to mlock(2) a PROT_NONE mapping.
 	 */
 	buf = mmap(NULL, page, PROT_NONE, flags, -1, 0);
 
+	if (buf == MAP_FAILED)
+		fprintf(stderr,
+		    "mlock_mmap: mmap(NULL, %ld, %#x, %#x, -1, 0): MAP_FAILED"
+		    " [%d] %s\n", page, PROT_NONE, flags, errno,
+		    strerror(errno));
+
 	ATF_REQUIRE(buf != MAP_FAILED);
 	ATF_REQUIRE(mlock(buf, page) != 0);
 	ATF_REQUIRE(munmap(buf, page) == 0);
+
+	fprintf(stderr, "mlock_mmap: second test succeeded\n");
 }
 
 ATF_TC(mlock_nested);
@@ -230,14 +275,26 @@ ATF_TC_BODY(mlock_nested, tc)
 {
 	const size_t maxiter = 100;
 	void *buf;
+	int err;
 
 	buf = malloc(page);
 	ATF_REQUIRE(buf != NULL);
+	fprintf(stderr, "mlock_nested: buf = %p (page=%ld)\n", buf, page);
 
-	for (size_t i = 0; i < maxiter; i++)
-		ATF_REQUIRE(mlock(buf, page) == 0);
+	for (size_t i = 0; i < maxiter; i++) {
+		err = mlock(buf, page);
+		if (err != 0)
+		    fprintf(stderr,
+		    "mlock_nested: i=%zu (of %zu) mlock(%p, %ld): %d [%d] %s\n",
+			i, maxiter, buf, page, err, errno, strerror(errno));
+		ATF_REQUIRE(err == 0);
+	}
 
-	ATF_REQUIRE(munlock(buf, page) == 0);
+	err = munlock(buf, page);
+	if (err != 0)
+		fprintf(stderr, "mlock_nested: munlock(%p, %ld): %d [%d] %s\n",
+		    buf, page, err, errno, strerror(errno));
+	ATF_REQUIRE(err == 0);
 	free(buf);
 }
 
@@ -245,6 +302,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	page = sysconf(_SC_PAGESIZE);
+	fprintf(stderr, "t_mlock: pagesize %ld\n", page);
 	ATF_REQUIRE(page >= 0);
 
 	ATF_TP_ADD_TC(tp, mlock_clip);
