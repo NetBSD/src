@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.116 2019/03/12 17:48:50 snj Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.117 2019/03/13 10:53:16 msaitoh Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2706,3 +2706,7 @@ external/bsd/bzip2/dist/bzip2recover.c		1.4
 	CVE-2016-3189 bzip2: heap use after free in bzip2recover
 	[martin, ticket #1212]
 
+sys/arch/mvme68k/dev/pcctwo_68k.c		1.11
+
+	Fix small (but fatal) oversight in device/softc split.
+	[martin, ticket #1213]
