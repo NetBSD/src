@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.43 2019/03/13 22:12:46 thorpej Exp $	*/
+/*	$NetBSD: zx.c,v 1.44 2019/03/13 22:30:01 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.43 2019/03/13 22:12:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.44 2019/03/13 22:30:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -771,7 +771,7 @@ zx_cursor_color(struct zx_softc *sc)
 
 	tmp = sc->sc_curcmap[1] | (sc->sc_curcmap[3] << 8) |
 	    (sc->sc_curcmap[5] << 16);
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_data, sc->sc_curcmap[1]);
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_data, tmp);
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc,
 	    bus_space_read_4(sc->sc_bt, sc->sc_bhzcu, zcu_misc) | 0x03);
