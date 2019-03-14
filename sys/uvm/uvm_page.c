@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.198 2018/05/19 15:03:26 jdolecek Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.199 2019/03/14 19:10:04 kre Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.198 2018/05/19 15:03:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.199 2019/03/14 19:10:04 kre Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1605,9 +1605,11 @@ void
 uvm_pageunwire(struct vm_page *pg)
 {
 	KASSERT(mutex_owned(&uvm_pageqlock));
+	KASSERT(pg->wire_count != 0);
 	pg->wire_count--;
 	if (pg->wire_count == 0) {
 		uvm_pageactivate(pg);
+		KASSERT(uvmexp.wired != 0);
 		uvmexp.wired--;
 	}
 }
