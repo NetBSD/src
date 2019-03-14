@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.18 2019/03/14 19:26:44 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.19 2019/03/14 20:29:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.18 2019/03/14 19:26:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.19 2019/03/14 20:29:53 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,6 +648,8 @@ struct vmx_cpudata {
 	struct vmcs *vmcs;
 	paddr_t vmcs_pa;
 	size_t vmcs_refcnt;
+	struct cpu_info *vmcs_ci;
+	bool vmcs_launched;
 
 	/* MSR bitmap */
 	uint8_t *msrbm;
@@ -762,9 +764,35 @@ vmx_get_revision(void)
 }
 
 static void
+vmx_vmclear_ipi(void *arg1, void *arg2)
+{
+	paddr_t vmcs_pa = (paddr_t)arg1;
+	vmx_vmclear(&vmcs_pa);
+}
+
+static void
+vmx_vmclear_remote(struct cpu_info *ci, paddr_t vmcs_pa)
+{
+	uint64_t xc;
+	int bound;
+
+	KASSERT(kpreempt_disabled());
+
+	bound = curlwp_bind();
+	kpreempt_enable();
+
+	xc = xc_unicast(XC_HIGHPRI, vmx_vmclear_ipi, (void *)vmcs_pa, NULL, ci);
+	xc_wait(xc);
+
+	kpreempt_disable();
+	curlwp_bindx(bound);
+}
+
+static void
 vmx_vmcs_enter(struct nvmm_cpu *vcpu)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
+	struct cpu_info *vmcs_ci;
 	paddr_t oldpa __diagused;
 
 	cpudata->vmcs_refcnt++;
@@ -777,12 +805,22 @@ vmx_vmcs_enter(struct nvmm_cpu *vcpu)
 		return;
 	}
 
+	vmcs_ci = cpudata->vmcs_ci;
+	cpudata->vmcs_ci = (void *)0x00FFFFFFFFFFFFFF; /* clobber */
+
 	kpreempt_disable();
 
-#ifdef DIAGNOSTIC
-	vmx_vmptrst(&oldpa);
-	KASSERT(oldpa == 0xFFFFFFFFFFFFFFFF);
-#endif
+	if (vmcs_ci == NULL) {
+		/* This VMCS is loaded for the first time. */
+		vmx_vmclear(&cpudata->vmcs_pa);
+		cpudata->vmcs_launched = false;
+	} else if (vmcs_ci != curcpu()) {
+		/* This VMCS is active on a remote CPU. */
+		vmx_vmclear_remote(vmcs_ci, cpudata->vmcs_pa);
+		cpudata->vmcs_launched = false;
+	} else {
+		/* This VMCS is active on curcpu, nothing to do. */
+	}
 
 	vmx_vmptrld(&cpudata->vmcs_pa);
 }
@@ -804,6 +842,24 @@ vmx_vmcs_leave(struct nvmm_cpu *vcpu)
 	if (cpudata->vmcs_refcnt > 0) {
 		return;
 	}
+
+	cpudata->vmcs_ci = curcpu();
+	kpreempt_enable();
+}
+
+static void
+vmx_vmcs_destroy(struct nvmm_cpu *vcpu)
+{
+	struct vmx_cpudata *cpudata = vcpu->cpudata;
+	paddr_t oldpa __diagused;
+
+	KASSERT(kpreempt_disabled());
+#ifdef DIAGNOSTIC
+	vmx_vmptrst(&oldpa);
+	KASSERT(oldpa == cpudata->vmcs_pa);
+#endif
+	KASSERT(cpudata->vmcs_refcnt == 1);
+	cpudata->vmcs_refcnt--;
 
 	vmx_vmclear(&cpudata->vmcs_pa);
 	kpreempt_enable();
@@ -1721,11 +1777,12 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	uint64_t intstate;
 	uint64_t machgen;
 	int hcpu, s, ret;
-	bool launched = false;
+	bool launched;
 
 	vmx_vmcs_enter(vcpu);
 	ci = curcpu();
 	hcpu = cpu_number();
+	launched = cpudata->vmcs_launched;
 
 	vmx_gtlb_catchup(vcpu, hcpu);
 	vmx_htlb_catchup(vcpu, hcpu);
@@ -1859,6 +1916,8 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			break;
 		}
 	}
+
+	cpudata->vmcs_launched = launched;
 
 	vmx_vcpu_guest_misc_leave(vcpu);
 	vmx_vcpu_guest_dbregs_leave(vcpu);
@@ -2515,7 +2574,7 @@ vmx_vcpu_destroy(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 
 	vmx_vmcs_enter(vcpu);
 	vmx_asid_free(vcpu);
-	vmx_vmcs_leave(vcpu);
+	vmx_vmcs_destroy(vcpu);
 
 	kcpuset_destroy(cpudata->htlb_want_flush);
 
