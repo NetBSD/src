@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_scdebug.c,v 1.1 2018/09/14 01:55:19 mrg Exp $	*/
+/*	$NetBSD: kern_scdebug.c,v 1.2 2019/03/14 19:51:49 palle Exp $	*/
 
 /*
  * Copyright (c) 2015 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_scdebug.c,v 1.1 2018/09/14 01:55:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_scdebug.c,v 1.2 2019/03/14 19:51:49 palle Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -112,9 +112,9 @@ KERNHIST_DEFINE(scdebughist);
 #define SCDEBUG_KERNHIST_CALLED(a)		KERNHIST_CALLED(a)
 #define SCDEBUG_KERNHIST_LOG(a,b,c,d,e,f)	KERNHIST_LOG(a,b,c,d,e,f)
 #else
-#define SCDEBUG_KERNHIST_FUNC(a)		/* nothing */
-#define SCDEBUG_KERNHIST_CALLED(a)		/* nothing */
-#define SCDEBUG_KERNHIST_LOG(a,b,c,d,e,f)	/* nothing */
+#define SCDEBUG_KERNHIST_FUNC(a)		{} /* nothing */
+#define SCDEBUG_KERNHIST_CALLED(a)		{} /* nothing */
+#define SCDEBUG_KERNHIST_LOG(a,b,c,d,e,f)	{} /* nothing */
 /* The non-kernhist support version can elide all this code easily. */
 #undef	SCDEBUG_KERNHIST
 #define	SCDEBUG_KERNHIST 0
