@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.20 2018/11/22 22:16:45 uwe Exp $ */
+/*   $NetBSD: get_wch.c,v 1.21 2019/03/14 00:36:06 rin Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.20 2018/11/22 22:16:45 uwe Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.21 2019/03/14 00:36:06 rin Exp $");
 #endif						  /* not lint */
 
 #include <errno.h>
@@ -48,8 +48,8 @@ __RCSID("$NetBSD: get_wch.c,v 1.20 2018/11/22 22:16:45 uwe Exp $");
 #include "curses_private.h"
 #include "keymap.h"
 
-static short   wstate;		  /* state of the wcinkey function */
-extern short state;		/* storage declared in getch.c */
+static short wstate;		/* state of the wcinkey function */
+extern short _cursesi_state;	/* storage declared in getch.c */
 
 /* prototypes for private functions */
 static int inkey(wchar_t *wc, int to, int delay);
@@ -216,7 +216,7 @@ inkey(wchar_t *wc, int to, int delay)
 				*wc = inbuf[*start];
 				*working = *start = (*start +1) % MAX_CBUF_SIZE;
 				if (*start == *end) {
-					state = wstate = INKEY_NORM;
+					_cursesi_state = wstate = INKEY_NORM;
 #ifdef DEBUG
 					__CTRACE(__CTRACE_INPUT,
 					    "inkey: WCASSEMBLING=>NORM, "
@@ -224,7 +224,7 @@ inkey(wchar_t *wc, int to, int delay)
 					    *start, *working, *end);
 #endif /* DEBUG */
 				} else {
-					state = wstate = INKEY_BACKOUT;
+					_cursesi_state = wstate = INKEY_BACKOUT;
 #ifdef DEBUG
 					__CTRACE(__CTRACE_INPUT,
 					    "inkey: WCASSEMBLING=>BACKOUT, "
@@ -283,7 +283,7 @@ inkey(wchar_t *wc, int to, int delay)
 
 				if (*start == *end) {
 					/* only one char processed */
-					state = wstate = INKEY_NORM;
+					_cursesi_state = wstate = INKEY_NORM;
 #ifdef DEBUG
 					__CTRACE(__CTRACE_INPUT,
 					    "inkey: WCASSEMBLING=>NORM, "
@@ -293,7 +293,7 @@ inkey(wchar_t *wc, int to, int delay)
 				} else {
 					/* otherwise we must have more than
 					 * one char to backout */
-					state = wstate = INKEY_BACKOUT;
+					_cursesi_state = wstate = INKEY_BACKOUT;
 #ifdef DEBUG
 					__CTRACE(__CTRACE_INPUT,
 					    "inkey: WCASSEMBLING=>BACKOUT, "
@@ -381,7 +381,7 @@ inkey(wchar_t *wc, int to, int delay)
 			}
 
 			if (*start == *end) {	/* only one char processed */
-				state = wstate = INKEY_NORM;
+				_cursesi_state = wstate = INKEY_NORM;
 #ifdef DEBUG
 				__CTRACE(__CTRACE_INPUT,
 				    "inkey: Empty cbuf=>NORM, "
@@ -391,7 +391,7 @@ inkey(wchar_t *wc, int to, int delay)
 			} else {
 				/* otherwise we must have more than one
 				 * char to backout */
-				state = wstate = INKEY_BACKOUT;
+				_cursesi_state = wstate = INKEY_BACKOUT;
 #ifdef DEBUG
 				__CTRACE(__CTRACE_INPUT,
 				    "inkey: Non-empty cbuf=>BACKOUT, "
@@ -416,7 +416,7 @@ inkey(wchar_t *wc, int to, int delay)
 #endif /* DEBUG */
 				if (*start == *end) {
 					/* if it is go back to normal */
-					state = wstate = INKEY_NORM;
+					_cursesi_state = wstate = INKEY_NORM;
 #ifdef DEBUG
 					__CTRACE(__CTRACE_INPUT,
 					    "[inkey]=>NORM, start(%d), "
@@ -425,7 +425,7 @@ inkey(wchar_t *wc, int to, int delay)
 #endif /* DEBUG */
 				} else {
 					/* otherwise go to backout state */
-					state = wstate = INKEY_BACKOUT;
+					_cursesi_state = wstate = INKEY_BACKOUT;
 #ifdef DEBUG
 					__CTRACE(__CTRACE_INPUT,
 					    "[inkey]=>BACKOUT, start(%d), "
