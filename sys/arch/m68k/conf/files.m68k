@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.48 2018/12/19 13:57:47 maxv Exp $
+#	$NetBSD: files.m68k,v 1.49 2019/03/14 16:59:09 thorpej Exp $
 #
 
 defflag	opt_fpsp.h		FPSP
@@ -21,7 +21,6 @@ file	arch/m68k/m68k/kgdb_m68k.c		kgdb
 file	arch/m68k/m68k/kobj_machdep.c		modular
 file	arch/m68k/m68k/lock_stubs.s
 file	arch/m68k/m68k/m68k_machdep.c
-file	arch/m68k/m68k/mappedcopy.c		mappedcopy
 file	arch/m68k/m68k/oc_cksum.s		(inet | inet6) & cpu_in_cksum
 file	arch/m68k/m68k/process_machdep.c
 file	arch/m68k/m68k/reenter_syscall.s

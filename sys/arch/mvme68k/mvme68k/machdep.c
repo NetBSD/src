@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.154 2016/05/31 03:25:46 dholland Exp $	*/
+/*	$NetBSD: machdep.c,v 1.155 2019/03/14 16:59:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.154 2016/05/31 03:25:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2019/03/14 16:59:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -966,19 +966,6 @@ initcpu(void)
 	extern uint8_t illinst;
 #endif
 	extern uint8_t fpfault;
-#endif
-
-#ifdef MAPPEDCOPY
-	extern u_int mappedcopysize;
-
-	/*
-	 * Initialize lower bound for doing copyin/copyout using
-	 * page mapping (if not already set).  We don't do this on
-	 * VAC machines as it loses big time.
-	 */
-	if (mappedcopysize == 0) {
-		mappedcopysize = PAGE_SIZE;
-	}
 #endif
 
 #if defined(M68060)

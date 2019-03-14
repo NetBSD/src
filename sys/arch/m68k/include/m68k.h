@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.22 2012/02/19 21:06:13 rmind Exp $	*/
+/*	$NetBSD: m68k.h,v 1.23 2019/03/14 16:59:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -119,13 +119,6 @@ void	w16copy(const void *, void *, u_int);
 
 /* fpu.c */
 int	fpu_probe(void);
-
-#ifdef MAPPEDCOPY
-/* mappedcopy.c */
-int	mappedcopyin(void *fromp, void *top, size_t count);
-int	mappedcopyout(void *fromp, void *top, size_t count);
-extern	u_int mappedcopysize;
-#endif /* MAPPEDCOPY */
 
 /* regdump.c */
 void	regdump(struct trapframe *, int);
