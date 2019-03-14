@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.169 2017/12/19 18:34:47 kamil Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.170 2019/03/14 19:10:04 kre Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.169 2017/12/19 18:34:47 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.170 2019/03/14 19:10:04 kre Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -759,8 +759,12 @@ sys_mlock(struct lwp *l, const struct sys_mlock_args *uap, register_t *retval)
 
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t)round_page(size);
+	if (size != 0) {
+		size += pageoff;
+		size = (vsize_t)round_page(size);
+	}
+	if (addr + size < addr)
+		return ENOMEM;
 
 	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
 	if (error)
@@ -810,8 +814,12 @@ sys_munlock(struct lwp *l, const struct sys_munlock_args *uap,
 
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t)round_page(size);
+	if (size != 0) {
+		size += pageoff;
+		size = (vsize_t)round_page(size);
+	}
+	if (addr + size < addr)
+		return ENOMEM;
 
 	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
 	if (error)

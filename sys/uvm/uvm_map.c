@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.358 2019/03/03 17:37:36 maxv Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.359 2019/03/14 19:10:04 kre Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.358 2019/03/03 17:37:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.359 2019/03/14 19:10:04 kre Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -3358,6 +3358,14 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 		return EFAULT;
 	}
 	entry = start_entry;
+
+	if (start == end) {		/* nothing required */
+		if ((lockflags & UVM_LK_EXIT) == 0)
+			vm_map_unlock(map);
+
+		UVMHIST_LOG(maphist,"<- done (nothing)",0,0,0,0);
+		return 0;
+	}
 
 	/*
 	 * handle wiring and unwiring separately.
