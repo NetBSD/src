@@ -1,4 +1,4 @@
-/*$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.33 2017/05/22 17:15:45 ragge Exp $*/
+/*$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.34 2019/03/14 23:49:38 thorpej Exp $*/
 /*
  * Copyright (c) 2015 Charles H. Dickman. All rights reserved.
  * Derived from smg.c
@@ -31,7 +31,7 @@
 /*3456789012345678901234567890123456789012345678901234567890123456789012345678*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.33 2017/05/22 17:15:45 ragge Exp $");
+__KERNEL_RCSID(0, "$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.34 2019/03/14 23:49:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -785,16 +785,18 @@ qv_setcursor(struct qv_softc *sc, struct wsdisplay_cursor *v)
 	}
 	if (v->which & WSDISPLAY_CURSOR_DOCMAP) {
 		/* First background */
-		red = fusword(v->cmap.red);
-		green = fusword(v->cmap.green);
-		blue = fusword(v->cmap.blue);
-		bgmask = (((30L * red + 59L * green + 11L * blue) >> 8) >=
-		    (((1<<8)-1)*50)) ? ~0 : 0;
-		red = fusword(v->cmap.red+2);
-		green = fusword(v->cmap.green+2);
-		blue = fusword(v->cmap.blue+2);
-		fgmask = (((30L * red + 59L * green + 11L * blue) >> 8) >=
-		    (((1<<8)-1)*50)) ? ~0 : 0;
+		if (copyin(v->cmap.red, &red, sizeof(red)) == 0 &&
+		    copyin(v->cmap.green, &green, sizeof(green)) == 0 &&
+		    copyin(v->cmap.blue, &blue, sizeof(blue)) == 0) {
+			bgmask = (((30L * red + 59L * green + 11L * blue) >> 8)
+			    >= (((1<<8)-1)*50)) ? ~0 : 0;
+		}
+		if (copyin(v->cmap.red + 2, &red, sizeof(red)) == 0 &&
+		    copyin(v->cmap.green + 2, &green, sizeof(green)) == 0 &&
+		    copyin(v->cmap.blue + 2, &blue, sizeof(blue)) == 0) {
+			fgmask = (((30L * red + 59L * green + 11L * blue) >> 8)
+			    >= (((1<<8)-1)*50)) ? ~0 : 0;
+		}
 	}
 	if (v->which & WSDISPLAY_CURSOR_DOSHAPE) {
 		copyin(v->image, curfg, sizeof(curfg));
