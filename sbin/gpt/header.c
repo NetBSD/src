@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: header.c,v 1.9 2018/05/01 08:17:13 martin Exp $");
+__RCSID("$NetBSD: header.c,v 1.10 2019/03/14 10:26:10 mlelstv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -90,11 +90,11 @@ header(gpt_t gpt)
 	revision = le32toh(hdr->hdr_revision);
 	printf("- GPT Header Revision: %u.%u\n", revision >> 16,
 	     revision & 0xffff);
-	gpt_show_num("- First Data Sector", hdr->hdr_lba_start);
-	gpt_show_num("- Last Data Sector", hdr->hdr_lba_end);
+	gpt_show_num("- First Data Sector", le64toh(hdr->hdr_lba_start));
+	gpt_show_num("- Last Data Sector", le64toh(hdr->hdr_lba_end));
 	gpt_uuid_snprintf(buf, sizeof(buf), "%d", hdr->hdr_guid);
 	printf("- Media GUID: %s\n", buf);
-	printf("- Number of GPT Entries: %u\n", hdr->hdr_entries);
+	printf("- Number of GPT Entries: %u\n", le32toh(hdr->hdr_entries));
 	return 0;
 }
 
