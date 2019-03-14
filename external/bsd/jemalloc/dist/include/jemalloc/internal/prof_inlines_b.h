@@ -44,7 +44,7 @@ prof_tctx_get(tsdn_t *tsdn, const void *ptr, alloc_ctx_t *alloc_ctx) {
 	return arena_prof_tctx_get(tsdn, ptr, alloc_ctx);
 }
 
-JEMALLOC_ALWAYS_INLINE void
+JEMALLOC_NORETURN JEMALLOC_ALWAYS_INLINE void
 prof_tctx_set(tsdn_t *tsdn, const void *ptr, size_t usize,
     alloc_ctx_t *alloc_ctx, prof_tctx_t *tctx) {
 	cassert(config_prof);
@@ -53,7 +53,7 @@ prof_tctx_set(tsdn_t *tsdn, const void *ptr, size_t usize,
 	arena_prof_tctx_set(tsdn, ptr, usize, alloc_ctx, tctx);
 }
 
-JEMALLOC_ALWAYS_INLINE void
+JEMALLOC_NORETURN JEMALLOC_ALWAYS_INLINE void
 prof_tctx_reset(tsdn_t *tsdn, const void *ptr, prof_tctx_t *tctx) {
 	cassert(config_prof);
 	assert(ptr != NULL);
@@ -118,7 +118,7 @@ prof_alloc_prep(tsd_t *tsd, size_t usize, bool _prof_active, bool update) {
 	return ret;
 }
 
-JEMALLOC_ALWAYS_INLINE void
+JEMALLOC_NORETURN JEMALLOC_ALWAYS_INLINE void
 prof_malloc(tsdn_t *tsdn, const void *ptr, size_t usize, alloc_ctx_t *alloc_ctx,
     prof_tctx_t *tctx) {
 	cassert(config_prof);
@@ -133,7 +133,7 @@ prof_malloc(tsdn_t *tsdn, const void *ptr, size_t usize, alloc_ctx_t *alloc_ctx,
 	}
 }
 
-JEMALLOC_ALWAYS_INLINE void
+JEMALLOC_NORETURN JEMALLOC_ALWAYS_INLINE void
 prof_realloc(tsd_t *tsd, const void *ptr, size_t usize, prof_tctx_t *tctx,
     bool _prof_active, bool updated, const void *old_ptr, size_t old_usize,
     prof_tctx_t *old_tctx) {
@@ -191,7 +191,7 @@ prof_realloc(tsd_t *tsd, const void *ptr, size_t usize, prof_tctx_t *tctx,
 	}
 }
 
-JEMALLOC_ALWAYS_INLINE void
+JEMALLOC_NORETURN JEMALLOC_ALWAYS_INLINE void
 prof_free(tsd_t *tsd, const void *ptr, size_t usize, alloc_ctx_t *alloc_ctx) {
 	prof_tctx_t *tctx = prof_tctx_get(tsd_tsdn(tsd), ptr, alloc_ctx);
 
