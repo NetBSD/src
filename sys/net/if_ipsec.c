@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.20 2018/12/26 08:55:14 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.21 2019/03/14 03:52:40 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.20 2018/12/26 08:55:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.21 2019/03/14 03:52:40 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1105,6 +1105,7 @@ if_ipsec_delete_tunnel(struct ifnet *ifp)
 		mutex_exit(&sc->ipsec_lock);
 		encap_lock_exit();
 		kmem_free(nvar, sizeof(*nvar));
+		kmem_free(nullvar, sizeof(*nullvar));
 		return;
 	}
 
@@ -1192,6 +1193,8 @@ if_ipsec_ensure_flags(struct ifnet *ifp, short oflags)
 		/* nothing to do */
 		mutex_exit(&sc->ipsec_lock);
 		encap_lock_exit();
+		kmem_free(nvar, sizeof(*nvar));
+		kmem_free(nullvar, sizeof(*nullvar));
 		return 0;
 	}
 
