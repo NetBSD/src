@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.17 2019/03/07 15:06:37 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.18 2019/03/14 19:26:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.17 2019/03/07 15:06:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.18 2019/03/14 19:26:44 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -794,14 +794,14 @@ vmx_vmcs_leave(struct nvmm_cpu *vcpu)
 	paddr_t oldpa __diagused;
 
 	KASSERT(kpreempt_disabled());
+#ifdef DIAGNOSTIC
+	vmx_vmptrst(&oldpa);
+	KASSERT(oldpa == cpudata->vmcs_pa);
+#endif
 	KASSERT(cpudata->vmcs_refcnt > 0);
 	cpudata->vmcs_refcnt--;
 
 	if (cpudata->vmcs_refcnt > 0) {
-#ifdef DIAGNOSTIC
-		vmx_vmptrst(&oldpa);
-		KASSERT(oldpa == cpudata->vmcs_pa);
-#endif
 		return;
 	}
 
