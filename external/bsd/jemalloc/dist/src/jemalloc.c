@@ -2339,14 +2339,9 @@ je_realloc(void *ptr, size_t size) {
 				tcache = NULL;
 			}
 			ifree(tsd, ptr, tcache, true);
-#ifdef notyet
-			/*
-			 * sshd depends on realloc(p, 0) returning non-NULL
-			 * disable for compatibility for now
-			 */
+
 			LOG("core.realloc.exit", "result: %p", NULL);
 			return NULL;
-#endif
 		}
 		size = 1;
 	}
