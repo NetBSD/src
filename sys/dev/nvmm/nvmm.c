@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.9 2019/03/07 15:22:21 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.10 2019/03/14 19:10:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.9 2019/03/07 15:22:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.10 2019/03/14 19:10:27 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,6 +488,9 @@ nvmm_do_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		(*nvmm_impl->vcpu_run)(mach, vcpu, exit);
 
 		if (__predict_true(exit->reason != NVMM_EXIT_MEMORY)) {
+			break;
+		}
+		if (exit->u.mem.gpa >= mach->gpa_end) {
 			break;
 		}
 		if (uvm_fault(&vm->vm_map, exit->u.mem.gpa, VM_PROT_ALL)) {
