@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.45 2013/09/07 19:06:29 chs Exp $	*/
+/*	$NetBSD: copy.s,v 1.46 2019/03/14 16:59:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,10 +122,6 @@ ENTRY(copyin)
 	CHECK_SFC
 	movl	12(%sp),%d0		| check count
 	jeq	.Lciret			| == 0, don't do anything
-#ifdef MAPPEDCOPY
-	cmpl	_C_LABEL(mappedcopysize),%d0 | size >= mappedcopysize
-	jcc	_C_LABEL(mappedcopyin)	| yes, go do it the new way
-#endif
 	movl	%d2,-(%sp)		| save scratch register
 	GETCURPCB(%a0)			| set fault handler
 	movl	#.Lcifault,PCB_ONFAULT(%a0)
@@ -187,10 +183,6 @@ ENTRY(copyout)
 	CHECK_DFC
 	movl	12(%sp),%d0		| check count
 	jeq	.Lcoret			| == 0, don't do anything
-#ifdef MAPPEDCOPY
-	cmpl	_C_LABEL(mappedcopysize),%d0 | size >= mappedcopysize
-	jcc	_C_LABEL(mappedcopyout)	| yes, go do it the new way
-#endif
 	movl	%d2,-(%sp)		| save scratch register
 	GETCURPCB(%a0)			| set fault handler
 	movl	#.Lcofault,PCB_ONFAULT(%a0)
