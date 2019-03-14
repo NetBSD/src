@@ -78,7 +78,9 @@ size_t		lg_prof_sample;
  * creating/destroying mutexes.
  */
 static malloc_mutex_t	*gctx_locks;
+#ifdef JEMALLOC_PROF
 static atomic_u_t	cum_gctxs; /* Atomic counter. */
+#endif
 
 /*
  * Table of mutexes that are shared among tdata's.  No operations require
@@ -103,14 +105,18 @@ malloc_mutex_t		bt2gctx_mtx;
 static prof_tdata_tree_t	tdatas;
 static malloc_mutex_t	tdatas_mtx;
 
+#ifdef JEMALLOC_PROF
 static uint64_t		next_thr_uid;
+#endif
 static malloc_mutex_t	next_thr_uid_mtx;
 
 static malloc_mutex_t	prof_dump_seq_mtx;
+#ifdef JEMALLOC_PROF
 static uint64_t		prof_dump_seq;
 static uint64_t		prof_dump_iseq;
 static uint64_t		prof_dump_mseq;
 static uint64_t		prof_dump_useq;
+#endif
 
 /*
  * This buffer is rather large for stack allocation, so use a single buffer for
@@ -128,8 +134,10 @@ static char		prof_dump_buf[
 static size_t		prof_dump_buf_end;
 static int		prof_dump_fd;
 
+#ifdef JEMALLOC_PROF
 /* Do not dump any profiles until bootstrapping is complete. */
 static bool		prof_booted = false;
+#endif
 
 /******************************************************************************/
 /*
@@ -143,7 +151,9 @@ static bool	prof_tdata_should_destroy(tsdn_t *tsdn, prof_tdata_t *tdata,
     bool even_if_attached);
 static void	prof_tdata_destroy(tsd_t *tsd, prof_tdata_t *tdata,
     bool even_if_attached);
+#ifdef JEMALLOC_PROF
 static char	*prof_thread_name_alloc(tsdn_t *tsdn, const char *thread_name);
+#endif
 
 /******************************************************************************/
 /* Red-black trees. */
@@ -207,7 +217,7 @@ rb_gen(static UNUSED, tdata_tree_, prof_tdata_tree_t, prof_tdata_t, tdata_link,
 
 /******************************************************************************/
 
-JEMALLOC_NORETURN void
+JEMALLOC_PROF_NORETURN void
 prof_alloc_rollback(tsd_t *tsd, prof_tctx_t *tctx, bool updated) {
 	prof_tdata_t *tdata;
 
@@ -237,7 +247,7 @@ prof_alloc_rollback(tsd_t *tsd, prof_tctx_t *tctx, bool updated) {
 	}
 }
 
-JEMALLOC_NORETURN void
+JEMALLOC_PROF_NORETURN void
 prof_malloc_sample_object(tsdn_t *tsdn, const void *ptr, size_t usize,
     prof_tctx_t *tctx) {
 	prof_tctx_set(tsdn, ptr, usize, NULL, tctx);
@@ -268,7 +278,7 @@ prof_free_sampled_object(tsd_t *tsd, size_t usize, prof_tctx_t *tctx) {
 	}
 }
 
-JEMALLOC_NORETURN void
+JEMALLOC_PROF_NORETURN void
 bt_init(prof_bt_t *bt, void **vec) {
 	cassert(config_prof);
 
@@ -276,7 +286,7 @@ bt_init(prof_bt_t *bt, void **vec) {
 	bt->len = 0;
 }
 
-static JEMALLOC_NORETURN void
+static JEMALLOC_PROF_NORETURN void
 prof_enter(tsd_t *tsd, prof_tdata_t *tdata) {
 	cassert(config_prof);
 	assert(tdata == prof_tdata_get(tsd, false));
@@ -289,7 +299,7 @@ prof_enter(tsd_t *tsd, prof_tdata_t *tdata) {
 	malloc_mutex_lock(tsd_tsdn(tsd), &bt2gctx_mtx);
 }
 
-static JEMALLOC_NORETURN void
+static JEMALLOC_PROF_NORETURN void
 prof_leave(tsd_t *tsd, prof_tdata_t *tdata) {
 	cassert(config_prof);
 	assert(tdata == prof_tdata_get(tsd, false));
@@ -537,6 +547,7 @@ prof_backtrace(prof_bt_t *bt) {
 }
 #endif
 
+#ifdef JEMALLOC_PROF
 static malloc_mutex_t *
 prof_gctx_mutex_choose(void) {
 	unsigned ngctxs = atomic_fetch_add_u(&cum_gctxs, 1, ATOMIC_RELAXED);
@@ -574,8 +585,9 @@ prof_gctx_create(tsdn_t *tsdn, prof_bt_t *bt) {
 	gctx->bt.len = bt->len;
 	return gctx;
 }
+#endif
 
-static JEMALLOC_NORETURN void
+static JEMALLOC_PROF_NORETURN void
 prof_gctx_try_destroy(tsd_t *tsd, prof_tdata_t *tdata_self, prof_gctx_t *gctx,
     prof_tdata_t *tdata) {
 	cassert(config_prof);
@@ -716,6 +728,7 @@ prof_tctx_destroy(tsd_t *tsd, prof_tctx_t *tctx) {
 	}
 }
 
+#ifdef JEMALLOC_PROF
 static bool
 prof_lookup_global(tsd_t *tsd, prof_bt_t *bt, prof_tdata_t *tdata,
     void **p_btkey, prof_gctx_t **p_gctx, bool *p_new_gctx) {
@@ -780,17 +793,18 @@ prof_lookup_global(tsd_t *tsd, prof_bt_t *bt, prof_tdata_t *tdata,
 	*p_new_gctx = new_gctx;
 	return false;
 }
+#endif
 
-prof_tctx_t *
+JEMALLOC_PROF_NORETURN prof_tctx_t *
 prof_lookup(tsd_t *tsd, prof_bt_t *bt) {
+	cassert(config_prof);
+#ifdef JEMALLOC_PROF
 	union {
 		prof_tctx_t	*p;
 		void		*v;
 	} ret;
 	prof_tdata_t *tdata;
 	bool not_found;
-
-	cassert(config_prof);
 
 	tdata = prof_tdata_get(tsd, false);
 	if (tdata == NULL) {
@@ -853,6 +867,7 @@ prof_lookup(tsd_t *tsd, prof_bt_t *bt) {
 	}
 
 	return ret.p;
+#endif
 }
 
 /*
@@ -994,6 +1009,7 @@ prof_dump_flush(bool propagate_err) {
 	return ret;
 }
 
+#ifdef JEMALLOC_PROF
 static bool
 prof_dump_close(bool propagate_err) {
 	bool ret;
@@ -1005,6 +1021,7 @@ prof_dump_close(bool propagate_err) {
 
 	return ret;
 }
+#endif
 
 static bool
 prof_dump_write(bool propagate_err, const char *s) {
@@ -1052,6 +1069,7 @@ prof_dump_printf(bool propagate_err, const char *format, ...) {
 	return ret;
 }
 
+#ifdef JEMALLOC_PROF
 static void
 prof_tctx_merge_tdata(tsdn_t *tsdn, prof_tctx_t *tctx, prof_tdata_t *tdata) {
 	malloc_mutex_assert_owner(tsdn, tctx->tdata->lock);
@@ -1175,9 +1193,8 @@ label_return:
 	return ret;
 }
 
-static JEMALLOC_NORETURN void
+static void
 prof_dump_gctx_prep(tsdn_t *tsdn, prof_gctx_t *gctx, prof_gctx_tree_t *gctxs) {
-	cassert(config_prof);
 
 	malloc_mutex_lock(tsdn, gctx->lock);
 
@@ -1300,6 +1317,7 @@ prof_tdata_merge_iter(prof_tdata_tree_t *tdatasunused, prof_tdata_t *tdata,
 
 	return NULL;
 }
+#endif
 
 static prof_tdata_t *
 prof_tdata_dump_iter(prof_tdata_tree_t *tdatasunused, prof_tdata_t *tdata,
@@ -1343,6 +1361,7 @@ prof_dump_header_impl(tsdn_t *tsdn, bool propagate_err,
 }
 prof_dump_header_t *JET_MUTABLE prof_dump_header = prof_dump_header_impl;
 
+#ifdef JEMALLOC_PROF
 static bool
 prof_dump_gctx(tsdn_t *tsdn, bool propagate_err, prof_gctx_t *gctx,
     const prof_bt_t *bt, prof_gctx_tree_t *gctxs) {
@@ -1495,7 +1514,6 @@ label_return:
 static void
 prof_leakcheck(const prof_cnt_t *cnt_all, size_t leak_ngctx,
     const char *filename) {
-#ifdef JEMALLOC_PROF
 	/*
 	 * Scaling is equivalent AdjustSamples() in jeprof, but the result may
 	 * differ slightly from what jeprof reports, because here we scale the
@@ -1520,7 +1538,6 @@ prof_leakcheck(const prof_cnt_t *cnt_all, size_t leak_ngctx,
 		    "<jemalloc>: Run jeprof on \"%s\" for leak detail\n",
 		    filename);
 	}
-#endif
 }
 
 struct prof_gctx_dump_iter_arg_s {
@@ -1548,7 +1565,7 @@ label_return:
 	return ret;
 }
 
-static JEMALLOC_NORETURN void
+static void
 prof_dump_prep(tsd_t *tsd, prof_tdata_t *tdata,
     struct prof_tdata_merge_iter_arg_s *prof_tdata_merge_iter_arg,
     struct prof_gctx_merge_iter_arg_s *prof_gctx_merge_iter_arg,
@@ -1669,6 +1686,7 @@ prof_dump(tsd_t *tsd, bool propagate_err, const char *filename,
 	}
 	return false;
 }
+#endif
 
 #ifdef JEMALLOC_JET
 void
@@ -1717,9 +1735,10 @@ prof_cnt_all(uint64_t *curobjs, uint64_t *curbytes, uint64_t *accumobjs,
 }
 #endif
 
+#ifdef JEMALLOC_PROF
 #define DUMP_FILENAME_BUFSIZE	(PATH_MAX + 1)
 #define VSEQ_INVALID		UINT64_C(0xffffffffffffffff)
-static JEMALLOC_NORETURN void
+static void
 prof_dump_filename(char *filename, char v, uint64_t vseq) {
 	cassert(config_prof);
 
@@ -1739,11 +1758,10 @@ prof_dump_filename(char *filename, char v, uint64_t vseq) {
 
 static void
 prof_fdump(void) {
+	cassert(config_prof);
 	tsd_t *tsd;
 	char filename[DUMP_FILENAME_BUFSIZE];
-#ifndef __clang__
-	cassert(config_prof);
-#endif
+
 	assert(opt_prof_final);
 	assert(opt_prof_prefix[0] != '\0');
 
@@ -1758,11 +1776,12 @@ prof_fdump(void) {
 	malloc_mutex_unlock(tsd_tsdn(tsd), &prof_dump_seq_mtx);
 	prof_dump(tsd, false, filename, opt_prof_leak);
 }
+#endif
 
-bool
+JEMALLOC_PROF_NORETURN bool
 prof_accum_init(tsdn_t *tsdn, prof_accum_t *prof_accum) {
 	cassert(config_prof);
-
+#ifdef JEMALLOC_PROF
 #ifndef JEMALLOC_ATOMIC_U64
 	if (malloc_mutex_init(&prof_accum->mtx, "prof_accum",
 	    WITNESS_RANK_PROF_ACCUM, malloc_mutex_rank_exclusive)) {
@@ -1773,15 +1792,15 @@ prof_accum_init(tsdn_t *tsdn, prof_accum_t *prof_accum) {
 	atomic_store_u64(&prof_accum->accumbytes, 0, ATOMIC_RELAXED);
 #endif
 	return false;
+#endif
 }
 
-void
+JEMALLOC_PROF_NORETURN void
 prof_idump(tsdn_t *tsdn) {
+	cassert(config_prof);
+#ifdef JEMALLOC_PROF
 	tsd_t *tsd;
 	prof_tdata_t *tdata;
-#ifndef __clang__
-	cassert(config_prof);
-#endif
 
 	if (!prof_booted || tsdn_null(tsdn) || !prof_active_get_unlocked()) {
 		return;
@@ -1808,11 +1827,13 @@ prof_idump(tsdn_t *tsdn) {
 		malloc_mutex_unlock(tsd_tsdn(tsd), &prof_dump_seq_mtx);
 		prof_dump(tsd, false, filename, false);
 	}
+#endif
 }
 
-bool
+JEMALLOC_PROF_NORETURN bool
 prof_mdump(tsd_t *tsd, const char *filename) {
 	cassert(config_prof);
+#ifdef JEMALLOC_PROF
 	assert(tsd_reentrancy_level_get(tsd) == 0);
 
 	if (!opt_prof || !prof_booted) {
@@ -1831,15 +1852,15 @@ prof_mdump(tsd_t *tsd, const char *filename) {
 		filename = filename_buf;
 	}
 	return prof_dump(tsd, true, filename, false);
+#endif
 }
 
-void
+JEMALLOC_PROF_NORETURN void
 prof_gdump(tsdn_t *tsdn) {
+	cassert(config_prof);
+#ifdef JEMALLOC_PROF
 	tsd_t *tsd;
 	prof_tdata_t *tdata;
-#ifndef __clang__
-	cassert(config_prof);
-#endif
 
 	if (!prof_booted || tsdn_null(tsdn) || !prof_active_get_unlocked()) {
 		return;
@@ -1866,9 +1887,11 @@ prof_gdump(tsdn_t *tsdn) {
 		malloc_mutex_unlock(tsdn, &prof_dump_seq_mtx);
 		prof_dump(tsd, false, filename, false);
 	}
+#endif
 }
 
-static JEMALLOC_NORETURN void
+#ifdef JEMALLOC_PROF
+static void
 prof_bt_hash(const void *key, size_t r_hash[2]) {
 	const prof_bt_t *bt = (const prof_bt_t *)key;
 
@@ -1947,11 +1970,15 @@ prof_tdata_init_impl(tsd_t *tsd, uint64_t thr_uid, uint64_t thr_discrim,
 
 	return tdata;
 }
+#endif
 
-prof_tdata_t *
+JEMALLOC_PROF_NORETURN prof_tdata_t *
 prof_tdata_init(tsd_t *tsd) {
+	cassert(config_prof);
+#ifdef JEMALLOC_PROF
 	return prof_tdata_init_impl(tsd, prof_thr_uid_alloc(tsd_tsdn(tsd)), 0,
 	    NULL, prof_thread_active_init_get(tsd_tsdn(tsd)));
+#endif
 }
 
 static bool
@@ -2022,8 +2049,10 @@ prof_tdata_detach(tsd_t *tsd, prof_tdata_t *tdata) {
 	}
 }
 
-prof_tdata_t *
+JEMALLOC_PROF_NORETURN prof_tdata_t *
 prof_tdata_reinit(tsd_t *tsd, prof_tdata_t *tdata) {
+	cassert(config_prof);
+#ifdef JEMALLOC_PROF
 	uint64_t thr_uid = tdata->thr_uid;
 	uint64_t thr_discrim = tdata->thr_discrim + 1;
 	char *thread_name = (tdata->thread_name != NULL) ?
@@ -2033,6 +2062,7 @@ prof_tdata_reinit(tsd_t *tsd, prof_tdata_t *tdata) {
 	prof_tdata_detach(tsd, tdata);
 	return prof_tdata_init_impl(tsd, thr_uid, thr_discrim, thread_name,
 	    active);
+#endif
 }
 
 static bool
@@ -2122,8 +2152,10 @@ prof_active_set(tsdn_t *tsdn, bool active) {
 	return prof_active_old;
 }
 
-const char *
+JEMALLOC_PROF_NORETURN const char *
 prof_thread_name_get(tsd_t *tsd) {
+	cassert(config_prof);
+#ifdef JEMALLOC_PROF
 	prof_tdata_t *tdata;
 
 	tdata = prof_tdata_get(tsd, true);
@@ -2131,8 +2163,10 @@ prof_thread_name_get(tsd_t *tsd) {
 		return "";
 	}
 	return (tdata->thread_name != NULL ? tdata->thread_name : "");
+#endif
 }
 
+#ifdef JEMALLOC_PROF
 static char *
 prof_thread_name_alloc(tsdn_t *tsdn, const char *thread_name) {
 	char *ret;
@@ -2155,9 +2189,12 @@ prof_thread_name_alloc(tsdn_t *tsdn, const char *thread_name) {
 	memcpy(ret, thread_name, size);
 	return ret;
 }
+#endif
 
-int
+JEMALLOC_PROF_NORETURN int
 prof_thread_name_set(tsd_t *tsd, const char *thread_name) {
+	cassert(config_prof);
+#ifdef JEMALLOC_PROF
 	prof_tdata_t *tdata;
 	unsigned i;
 	char *s;
@@ -2192,10 +2229,13 @@ prof_thread_name_set(tsd_t *tsd, const char *thread_name) {
 		tdata->thread_name = s;
 	}
 	return 0;
+#endif
 }
 
-bool
+JEMALLOC_PROF_NORETURN bool
 prof_thread_active_get(tsd_t *tsd) {
+	cassert(config_prof);
+#ifdef JEMALLOC_PROF
 	prof_tdata_t *tdata;
 
 	tdata = prof_tdata_get(tsd, true);
@@ -2203,10 +2243,13 @@ prof_thread_active_get(tsd_t *tsd) {
 		return false;
 	}
 	return tdata->active;
+#endif
 }
 
-bool
+JEMALLOC_PROF_NORETURN bool
 prof_thread_active_set(tsd_t *tsd, bool active) {
+	cassert(config_prof);
+#ifdef JEMALLOC_PROF
 	prof_tdata_t *tdata;
 
 	tdata = prof_tdata_get(tsd, true);
@@ -2215,6 +2258,7 @@ prof_thread_active_set(tsd_t *tsd, bool active) {
 	}
 	tdata->active = active;
 	return false;
+#endif
 }
 
 bool
@@ -2259,7 +2303,7 @@ prof_gdump_set(tsdn_t *tsdn, bool gdump) {
 	return prof_gdump_old;
 }
 
-JEMALLOC_NORETURN void
+JEMALLOC_PROF_NORETURN void
 prof_boot0(void) {
 	cassert(config_prof);
 
@@ -2267,7 +2311,7 @@ prof_boot0(void) {
 	    sizeof(PROF_PREFIX_DEFAULT));
 }
 
-JEMALLOC_NORETURN void
+JEMALLOC_PROF_NORETURN void
 prof_boot1(void) {
 	cassert(config_prof);
 
@@ -2291,10 +2335,10 @@ prof_boot1(void) {
 	}
 }
 
-bool
+JEMALLOC_PROF_NORETURN bool
 prof_boot2(tsd_t *tsd) {
 	cassert(config_prof);
-
+#ifdef JEMALLOC_PROF
 	if (opt_prof) {
 		unsigned i;
 
@@ -2398,6 +2442,7 @@ prof_boot2(tsd_t *tsd) {
 	prof_booted = true;
 
 	return false;
+#endif
 }
 
 void
