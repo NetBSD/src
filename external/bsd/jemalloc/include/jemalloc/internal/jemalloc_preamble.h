@@ -89,8 +89,10 @@ static const bool config_lazy_lock =
 static const char * const config_malloc_conf = JEMALLOC_CONFIG_MALLOC_CONF;
 static const bool config_prof =
 #ifdef JEMALLOC_PROF
+# define JEMALLOC_PROF_NORETURN
     true
 #else
+# define JEMALLOC_PROF_NORETURN JEMALLOC_NORETURN
     false
 #endif
     ;
