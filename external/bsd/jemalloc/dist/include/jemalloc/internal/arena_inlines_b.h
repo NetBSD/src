@@ -27,7 +27,7 @@ arena_prof_tctx_get(tsdn_t *tsdn, const void *ptr, alloc_ctx_t *alloc_ctx) {
 	return (prof_tctx_t *)(uintptr_t)1U;
 }
 
-JEMALLOC_ALWAYS_INLINE void
+JEMALLOC_NORETURN JEMALLOC_ALWAYS_INLINE void
 arena_prof_tctx_set(tsdn_t *tsdn, const void *ptr, UNUSED size_t usize,
     alloc_ctx_t *alloc_ctx, prof_tctx_t *tctx) {
 	cassert(config_prof);
@@ -46,7 +46,7 @@ arena_prof_tctx_set(tsdn_t *tsdn, const void *ptr, UNUSED size_t usize,
 	}
 }
 
-static inline void
+static JEMALLOC_NORETURN inline void
 arena_prof_tctx_reset(tsdn_t *tsdn, const void *ptr, UNUSED prof_tctx_t *tctx) {
 	cassert(config_prof);
 	assert(ptr != NULL);
