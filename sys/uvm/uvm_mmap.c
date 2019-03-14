@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.170 2019/03/14 19:10:04 kre Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.171 2019/03/14 21:09:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.170 2019/03/14 19:10:04 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.171 2019/03/14 21:09:03 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -67,7 +67,7 @@ static int uvm_mmap(struct vm_map *, vaddr_t *, vsize_t, vm_prot_t, vm_prot_t,
     int, int, struct uvm_object *, voff_t, vsize_t);
 
 static int
-range_test(struct vm_map *map, vaddr_t addr, vsize_t size, bool ismmap)
+range_test(const struct vm_map *map, vaddr_t addr, vsize_t size, bool ismmap)
 {
 	vaddr_t vm_min_address = vm_map_min(map);
 	vaddr_t vm_max_address = vm_map_max(map);
@@ -86,6 +86,26 @@ range_test(struct vm_map *map, vaddr_t addr, vsize_t size, bool ismmap)
 #endif
 
 	return res;
+}
+
+/*
+ * align the address to a page boundary, and adjust the size accordingly
+ */
+static int
+round_and_check(const struct vm_map *map, vaddr_t *addr, vsize_t *size)
+{
+	const vsize_t pageoff = (vsize_t)(*addr & PAGE_MASK);
+
+	*addr -= pageoff;
+
+	if (*size != 0) {
+		*size += pageoff;
+		*size = (vsize_t)round_page(*size);
+	} else if (*addr + *size < *addr) {
+		return ENOMEM;
+	}
+
+	return range_test(map, *addr, *size, false);
 }
 
 /*
@@ -405,7 +425,7 @@ sys___msync13(struct lwp *l, const struct sys___msync13_args *uap,
 	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
-	vsize_t size, pageoff;
+	vsize_t size;
 	struct vm_map *map;
 	int error, flags, uvmflags;
 	bool rv;
@@ -427,22 +447,11 @@ sys___msync13(struct lwp *l, const struct sys___msync13_args *uap,
 		flags |= MS_SYNC;
 
 	/*
-	 * align the address to a page boundary and adjust the size accordingly.
-	 */
-
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t)round_page(size);
-
-
-	/*
 	 * get map
 	 */
 	map = &p->p_vmspace->vm_map;
 
-	error = range_test(map, addr, size, false);
-	if (error)
+	if (round_and_check(map, &addr, &size))
 		return ENOMEM;
 
 	/*
@@ -497,10 +506,9 @@ sys_munmap(struct lwp *l, const struct sys_munmap_args *uap, register_t *retval)
 	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
-	vsize_t size, pageoff;
+	vsize_t size;
 	struct vm_map *map;
 	struct vm_map_entry *dead_entries;
-	int error;
 
 	/*
 	 * get syscall args.
@@ -509,23 +517,13 @@ sys_munmap(struct lwp *l, const struct sys_munmap_args *uap, register_t *retval)
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 
-	/*
-	 * align the address to a page boundary and adjust the size accordingly.
-	 */
+	map = &p->p_vmspace->vm_map;
 
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t)round_page(size);
+	if (round_and_check(map, &addr, &size))
+		return EINVAL;
 
 	if (size == 0)
 		return 0;
-
-	map = &p->p_vmspace->vm_map;
-
-	error = range_test(map, addr, size, false);
-	if (error)
-		return EINVAL;
 
 	vm_map_lock(map);
 #if 0
@@ -560,7 +558,7 @@ sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap,
 	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
-	vsize_t size, pageoff;
+	vsize_t size;
 	vm_prot_t prot;
 	int error;
 
@@ -572,17 +570,7 @@ sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap,
 	size = (vsize_t)SCARG(uap, len);
 	prot = SCARG(uap, prot) & VM_PROT_ALL;
 
-	/*
-	 * align the address to a page boundary and adjust the size accordingly.
-	 */
-
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	size += pageoff;
-	size = round_page(size);
-
-	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
-	if (error)
+	if (round_and_check(&p->p_vmspace->vm_map, &addr, &size))
 		return EINVAL;
 
 	error = uvm_map_protect_user(l, addr, addr + size, prot);
@@ -604,7 +592,7 @@ sys_minherit(struct lwp *l, const struct sys_minherit_args *uap,
 	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
-	vsize_t size, pageoff;
+	vsize_t size;
 	vm_inherit_t inherit;
 	int error;
 
@@ -612,17 +600,7 @@ sys_minherit(struct lwp *l, const struct sys_minherit_args *uap,
 	size = (vsize_t)SCARG(uap, len);
 	inherit = SCARG(uap, inherit);
 
-	/*
-	 * align the address to a page boundary and adjust the size accordingly.
-	 */
-
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t)round_page(size);
-
-	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
-	if (error)
+	if (round_and_check(&p->p_vmspace->vm_map, &addr, &size))
 		return EINVAL;
 
 	error = uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr + size,
@@ -646,24 +624,14 @@ sys_madvise(struct lwp *l, const struct sys_madvise_args *uap,
 	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
-	vsize_t size, pageoff;
+	vsize_t size;
 	int advice, error;
 
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 	advice = SCARG(uap, behav);
 
-	/*
-	 * align the address to a page boundary, and adjust the size accordingly
-	 */
-
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	size += pageoff;
-	size = (vsize_t)round_page(size);
-
-	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
-	if (error)
+	if (round_and_check(&p->p_vmspace->vm_map, &addr, &size))
 		return EINVAL;
 
 	switch (advice) {
@@ -743,7 +711,7 @@ sys_mlock(struct lwp *l, const struct sys_mlock_args *uap, register_t *retval)
 	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
-	vsize_t size, pageoff;
+	vsize_t size;
 	int error;
 
 	/*
@@ -753,21 +721,7 @@ sys_mlock(struct lwp *l, const struct sys_mlock_args *uap, register_t *retval)
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 
-	/*
-	 * align the address to a page boundary and adjust the size accordingly
-	 */
-
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	if (size != 0) {
-		size += pageoff;
-		size = (vsize_t)round_page(size);
-	}
-	if (addr + size < addr)
-		return ENOMEM;
-
-	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
-	if (error)
+	if (round_and_check(&p->p_vmspace->vm_map, &addr, &size))
 		return ENOMEM;
 
 	if (atop(size) + uvmexp.wired > uvmexp.wiredmax)
@@ -798,8 +752,7 @@ sys_munlock(struct lwp *l, const struct sys_munlock_args *uap,
 	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
-	vsize_t size, pageoff;
-	int error;
+	vsize_t size;
 
 	/*
 	 * extract syscall args from uap
@@ -808,26 +761,10 @@ sys_munlock(struct lwp *l, const struct sys_munlock_args *uap,
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 
-	/*
-	 * align the address to a page boundary, and adjust the size accordingly
-	 */
-
-	pageoff = (addr & PAGE_MASK);
-	addr -= pageoff;
-	if (size != 0) {
-		size += pageoff;
-		size = (vsize_t)round_page(size);
-	}
-	if (addr + size < addr)
+	if (round_and_check(&p->p_vmspace->vm_map, &addr, &size))
 		return ENOMEM;
 
-	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
-	if (error)
-		return ENOMEM;
-
-	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, true,
-	    0);
-	if (error)
+	if (uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, true, 0))
 		return ENOMEM;
 
 	return 0;
