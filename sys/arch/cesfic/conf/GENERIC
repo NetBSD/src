@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.70 2018/08/01 20:04:10 maxv Exp $
+# $NetBSD: GENERIC,v 1.71 2019/03/14 16:59:09 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -89,10 +89,6 @@ options 	INET		# Internet protocols
 #options 	ALTQ_RED	# Random Early Detection
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
-
-# This option enables a different copyin/copyout that uses page
-# mapping for large copies.
-#options 	MAPPEDCOPY	# different copyin/copyout for large copies
 
 options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
 options 	COMPAT_AOUT_M68K # support for NetBSD a.out executables

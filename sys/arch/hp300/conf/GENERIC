@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.200 2018/12/19 13:57:47 maxv Exp $
+# $NetBSD: GENERIC,v 1.201 2019/03/14 16:59:09 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.200 $"
+#ident 		"GENERIC-$Revision: 1.201 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -149,7 +149,6 @@ options 	NFS_BOOT_DHCP	# use dhcp for NFS boot
 options 	USELEDS		# make the lights twinkle
 #options 	PANICBUTTON	# two fast <reset>s on HIL dump kernel
 #options 	CONSCODE=9	# force console at this select code
-#options 	MAPPEDCOPY	# different copyin/copyout for large copies
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

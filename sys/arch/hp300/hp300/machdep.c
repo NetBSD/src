@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.229 2014/04/20 04:12:54 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.230 2019/03/14 16:59:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.229 2014/04/20 04:12:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.230 2019/03/14 16:59:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -868,17 +868,6 @@ static void
 initcpu(void)
 {
 
-#ifdef MAPPEDCOPY
-	/*
-	 * Initialize lower bound for doing copyin/copyout using
-	 * page mapping (if not already set).  We don't do this on
-	 * VAC machines as it loses big time.
-	 */
-	if (ectype == EC_VIRT)
-		mappedcopysize = -1;	/* in case it was patched */
-	else
-		mappedcopysize = PAGE_SIZE;
-#endif
 	parityenable();
 #ifdef USELEDS
 	ledinit();
