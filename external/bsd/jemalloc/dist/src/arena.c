@@ -642,9 +642,11 @@ arena_maybe_decay(tsdn_t *tsdn, arena_t *arena, arena_decay_t *decay,
 		 */
 		nstime_copy(&decay->epoch, &time);
 		arena_decay_deadline_init(decay);
+#ifndef __NetBSD__
 	} else {
 		/* Verify that time does not go backwards. */
 		assert(nstime_compare(&decay->epoch, &time) <= 0);
+#endif
 	}
 
 	/*
