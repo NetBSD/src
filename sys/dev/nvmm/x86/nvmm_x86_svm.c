@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.33 2019/03/03 07:01:09 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.34 2019/03/14 19:15:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.33 2019/03/03 07:01:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.34 2019/03/14 19:15:26 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ struct vmcb_ctrl {
 #define VMCB_CTRL_TLB_CTRL_FLUSH_GUEST_NONGLOBAL	0x07
 
 	uint64_t v;
-#define VMCB_CTRL_V_TPR			__BITS(7,0)
+#define VMCB_CTRL_V_TPR			__BITS(3,0)
 #define VMCB_CTRL_V_IRQ			__BIT(8)
 #define VMCB_CTRL_V_VGIF		__BIT(9)
 #define VMCB_CTRL_V_INTR_PRIO		__BITS(19,16)
