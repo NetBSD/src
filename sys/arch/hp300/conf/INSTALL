@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.63 2018/08/01 20:04:11 maxv Exp $
+# $NetBSD: INSTALL,v 1.64 2019/03/14 16:59:09 thorpej Exp $
 #
 # INSTALL machine description file
 #
@@ -88,10 +88,6 @@ options 	INET		# Internet protocols
 #options 	USELEDS		# make the lights twinkle
 #options 	PANICBUTTON	# two fast <reset>s on HIL dump kernel
 #options 	CONSCODE=9	# force console at this select code
-
-# This option enables a different copyin/copyout that uses page
-# mapping for large copies.
-#options 	MAPPEDCOPY	# different copyin/copyout for large copies
 
 # Debugging options
 #options 	DIAGNOSTIC	# Extra kernel sanity checks
