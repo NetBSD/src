@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.110 2019/03/13 10:08:02 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.111 2019/03/15 02:38:20 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1979,9 +1979,9 @@ ixv_setup_vlan_support(struct adapter *adapter)
 	 * on NetBSD.
 	 */
 
-	/* Enalble HW tagging only if any vlan is attached */
+	/* Enable HW tagging only if any vlan is attached */
 	hwtagging = (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING)
-	    && VLAN_ATTACHED(&adapter->osdep.ec);
+	    && VLAN_ATTACHED(ec);
 
 	/* Enable the queues */
 	for (int i = 0; i < adapter->num_queues; i++) {
