@@ -1,8 +1,6 @@
-#	$NetBSD: libmesa.mk,v 1.4 2019/03/10 10:51:58 mrg Exp $
+#	$NetBSD: libmesa.mk,v 1.5 2019/03/15 03:10:25 mrg Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
-
-INCLUDES.all=	mapi mesa
 
 CPPFLAGS.ac_surface.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=enum-conversion :}
 
@@ -465,10 +463,6 @@ CPPFLAGS.${_s}+=	-I${X11SRCDIR.Mesa}/src/${_path_}
 .  endfor
 . endfor
 
-.endfor
-
-.for _path_ in ${INCLUDES.all}
-CPPFLAGS+=	-I${X11SRCDIR.Mesa}/src/${_path_}
 .endfor
 
 CPPFLAGS+=	-I${X11SRCDIR.Mesa}/include
