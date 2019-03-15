@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.39 2019/03/15 04:26:13 mrg Exp $
+# $NetBSD: mi,v 1.40 2019/03/15 07:03:36 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9,10 +9,14 @@
 ./usr/X11R7/lib/modules/dri/gallium_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/kms_swrast_dri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	obsolete,xorg,!machine=amd64,!machine=i386
+./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	obsolete,!machine=amd64,!machine=i386
+./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	obsolete,machine=amd64,mesa_ver=18
+./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	obsolete,machine=i386,mesa_ver=18
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	xorg,machine=amd64,mesa_ver=10
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	xorg,machine=i386,mesa_ver=10
-./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	obsolete,xorg,!machine=amd64,!machine=i386
+./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	obsolete,!machine=amd64,!machine=i386
+./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	obsolete,machine=amd64,mesa_ver=18
+./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	obsolete,machine=i386,mesa_ver=18
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	xorg,machine=amd64,mesa_ver=10
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	xorg,machine=i386,mesa_ver=10
 ./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
