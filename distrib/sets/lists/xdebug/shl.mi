@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.44 2018/06/06 03:09:12 snj Exp $
+# $NetBSD: shl.mi,v 1.45 2019/03/15 04:26:13 mrg Exp $
 ./usr/libdata/debug/usr/X11R7/lib	-unknown-		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	obsolete		xorg,obsolete
@@ -106,8 +106,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/libxshmfence.so.1.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/gallium_dri.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0.debug	-unknown-	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	-unknown-	xorg,debug,machine=amd64
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	-unknown-	xorg,debug,machine=i386
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	-unknown-	xorg,debug,machine=amd64,mesa_ver=10
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	-unknown-	xorg,debug,machine=i386,mesa_ver=10
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	obsolete	obsolete,xorg,debug,!machine=i386,!machine=amd64
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libswrast_dri.so.0.debug	obsolete	obsolete,xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	-unknown-	xorg,debug,machine=amd64
