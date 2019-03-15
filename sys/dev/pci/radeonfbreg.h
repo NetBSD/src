@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfbreg.h,v 1.6 2017/08/23 19:21:14 macallan Exp $	*/
+/*	$NetBSD: radeonfbreg.h,v 1.7 2019/03/15 22:09:21 macallan Exp $	*/
 
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_reg.h,v 1.31 2003/11/10 18:41:23 tsi Exp $ */
 /*
@@ -218,6 +218,7 @@
 #	define RADEON_BUS_MSTR_RD_MULT	     (1 << 20)
 #	define RADEON_BUS_MSTR_RD_LINE	     (1 << 21)
 #	define RADEON_BUS_RETRY_WS_SHIFT	16
+#       define RADEON_BUS_BIOS_DIS_ROM       (1 << 12)
 #define RADEON_BUS_CNTL1                    0x0034
 #       define RADEON_BUS_WAIT_ON_LOCK_EN    (1 << 4)
 
@@ -1270,6 +1271,10 @@
 #define RADEON_VID_BUFFER_CONTROL           0x0900
 #define RADEON_VIDEOMUX_CNTL                0x0190
 #define RADEON_VIPH_CONTROL                 0x0c40 /* ? */
+#       define RADEON_VIP_BUSY 0
+#       define RADEON_VIP_IDLE 1
+#       define RADEON_VIP_RESET 2
+#       define RADEON_VIPH_EN               (1 << 21)
 
 #define RADEON_WAIT_UNTIL                   0x1720
 #       define RADEON_WAIT_CRTC_PFLIP       (1 << 0)
@@ -2141,7 +2146,10 @@
 #       define RADEON_VF_NUM_VERTICES_SHIFT           16
 
 #define RADEON_SE_PORT_DATA0			0x2000
- 
+#define RADEON_SEPROM_CNTL1			0x01c0
+#       define RADEON_SCK_PRESCALE_SHIFT	24
+#       define RADEON_SCK_PRESCALE_MASK	(0xff << 24)
+
 #define R200_SE_VAP_CNTL			0x2080
 #       define R200_VAP_TCL_ENABLE		0x00000001
 #       define R200_VAP_SINGLE_BUF_STATE_ENABLE	0x00000010
@@ -2610,6 +2618,9 @@
 #define R200_PP_TXMULTI_CTL_0			0x2c1c
 #define R200_SE_VTX_STATE_CNTL			0x2180
 #       define R200_UPDATE_USER_COLOR_0_ENA_MASK (1<<16)
+
+#define R300_CRTC_TILE_X0_Y0	            0x0350
+#define R300_CRTC2_TILE_X0_Y0	            0x0358
 
 				/* Registers for CP and Microcode Engine */
 #define RADEON_CP_ME_RAM_ADDR               0x07d4
