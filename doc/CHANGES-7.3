@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.43 2019/03/13 12:34:15 msaitoh Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.44 2019/03/15 14:37:33 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -493,3 +493,10 @@ sys/arch/mvme68k/dev/pcctwo_68k.c		1.11
 
 	Fix small (but fatal) oversight in device/softc split.
 	[martin, ticket #1685]
+
+lib/libcurses/get_wch.c				1.21
+lib/libcurses/getch.c				1.71
+
+	Rename global variable "state" to "_cursesi_state".
+	[rin, ticket #1686]
+
