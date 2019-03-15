@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.177 2019/03/13 10:02:13 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.178 2019/03/15 02:38:20 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2376,14 +2376,16 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	 * on NetBSD.
 	 */
 
-	/* Enalble HW tagging only if any vlan is attached */
+	/* Enable HW tagging only if any vlan is attached */
 	hwtagging = (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING)
-	    && VLAN_ATTACHED(&adapter->osdep.ec);
+	    && VLAN_ATTACHED(ec);
 
 	/* Setup the queues for vlans */
 	for (i = 0; i < adapter->num_queues; i++) {
 		rxr = &adapter->rx_rings[i];
-		/* On 82599 the VLAN enable is per/queue in RXDCTL */
+		/*
+		 * On 82599 and later, the VLAN enable is per/queue in RXDCTL.
+		 */
 		if (hw->mac.type != ixgbe_mac_82598EB) {
 			ctrl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(rxr->me));
 			if (hwtagging)
