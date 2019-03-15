@@ -1,4 +1,4 @@
-/* $NetBSD: mesongx_mmc.c,v 1.2 2019/03/03 12:54:58 jmcneill Exp $ */
+/* $NetBSD: mesongx_mmc.c,v 1.3 2019/03/15 11:45:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.2 2019/03/03 12:54:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.3 2019/03/15 11:45:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -957,7 +957,7 @@ mesongx_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			cmdflags |= MESONGX_MMC_FLAGS_RESP_128;
 		if ((cmd->c_flags & SCF_RSP_CRC) == 0)
 			cmdflags |= MESONGX_MMC_FLAGS_RESP_NOCRC;
-		if (__SHIFTOUT(cmd->c_flags, SCF_RSP_MASK) == SCF_RSP_R1B)
+		if ((cmd->c_flags & SCF_RSP_MASK) == SCF_RSP_R1B)
 			cmdflags |= MESONGX_MMC_FLAGS_R1B;
 	}
 
