@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.146 2019/03/08 07:10:54 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.147 2019/03/15 04:00:29 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.148 2019/03/08 07:10:26 msaitoh Exp
+ *	NetBSD: miidevs,v 1.149 2019/03/15 04:00:06 msaitoh Exp
  */
 
 /*-
@@ -317,6 +317,14 @@
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 (AMD Am79C873) 10/100 media interface"
 #define	MII_MODEL_xxDAVICOM_DM9102	0x0004
 #define	MII_STR_xxDAVICOM_DM9102	"DM9102 10/100 media interface"
+#define	MII_MODEL_xxDAVICOM_DM9161	0x0008
+#define	MII_STR_xxDAVICOM_DM9161	"DM9161 10/100 media interface"
+#define	MII_MODEL_xxDAVICOM_DM9161A	0x000a
+#define	MII_STR_xxDAVICOM_DM9161A	"DM9161A 10/100 media interface"
+#define	MII_MODEL_xxDAVICOM_DM9161B	0x000b
+#define	MII_STR_xxDAVICOM_DM9161B	"DM9161[BC] 10/100 media interface"
+#define	MII_MODEL_xxDAVICOM_DM9601	0x000c
+#define	MII_STR_xxDAVICOM_DM9601	"DM9601 internal 10/100 media interface"
 
 /* IC Plus Corp. PHYs */
 #define	MII_MODEL_ICPLUS_IP100	0x0004
