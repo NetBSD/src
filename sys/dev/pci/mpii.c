@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.8.10.4 2019/01/07 13:49:39 martin Exp $ */
+/* $NetBSD: mpii.c,v 1.8.10.5 2019/03/15 14:50:36 martin Exp $ */
 /*	OpenBSD: mpii.c,v 1.115 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.8.10.4 2019/01/07 13:49:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.8.10.5 2019/03/15 14:50:36 martin Exp $");
 
 #include "bio.h"
 
@@ -1920,7 +1920,7 @@ mpii_event_sas(struct mpii_softc *sc, struct mpii_rcb *rcb)
 				free(dev, M_DEVBUF);
 				break;
 			}
-			printf("%s: physical disk inserted in slot %d\n",
+			printf("%s: physical device inserted in slot %d\n",
 			    DEVNAME(sc), dev->slot);
 			mutex_exit(&sc->sc_devs_mtx);
 			break;
@@ -1994,7 +1994,7 @@ mpii_event_sas_work(struct work *wq, void *xsc)
 				}
 
 				printf(
-				    "%s: physical disk removed from slot %d\n",
+				    "%s: physical device removed from slot %d\n",
 				    DEVNAME(sc), dev->slot);
 				mpii_remove_dev(sc, dev);
 				mutex_exit(&sc->sc_devs_mtx);
@@ -3021,8 +3021,8 @@ mpii_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		scsipi_done(xs);
 		return;
 	}
-	DNPRINTF(MPII_D_CMD, "%s: ccb_smid: %d xs->xs_control: 0x%x\n",
-	    DEVNAME(sc), ccb->ccb_smid, xs->xs_control);
+	DNPRINTF(MPII_D_CMD, "%s: ccb_smid: %d xs->cmd->opcode: 0x%02x xs->xs_control: 0x%x\n",
+	    DEVNAME(sc), ccb->ccb_smid, xs->cmd->opcode, xs->xs_control);
 
 	ccb->ccb_cookie = xs;
 	ccb->ccb_done = mpii_scsi_cmd_done;
@@ -3220,13 +3220,14 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 
 		bus_dmamap_unload(sc->sc_dmat, dmap);
 	}
-
-	xs->error = XS_NOERROR;
-	xs->resid = 0;
-
+	
+	KASSERT(xs->error == XS_NOERROR);
+	KASSERT(xs->resid == xs->datalen);
+	KASSERT(xs->status == SCSI_OK);
+	
 	if (ccb->ccb_rcb == NULL) {
 		/* no scsi error, we're ok so drop out early */
-		xs->status = SCSI_OK;
+		xs->resid = 0;
 		goto done;
 	}
 
@@ -3276,9 +3277,11 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	case MPII_IOCSTATUS_SCSI_RECOVERED_ERROR:
 		switch (sie->scsi_status) {
 		case MPII_SCSIIO_STATUS_GOOD:
+			xs->resid = 0;
 			break;
 
 		case MPII_SCSIIO_STATUS_CHECK_COND:
+			xs->resid = 0;
 			xs->error = XS_SENSE;
 			break;
 
@@ -3317,12 +3320,14 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	if (sie->scsi_state & MPII_SCSIIO_STATE_AUTOSENSE_VALID)
 		memcpy(&xs->sense, sense, sizeof(xs->sense));
 
-	DNPRINTF(MPII_D_CMD, "%s:  xs err: %d status: %#x\n", DEVNAME(sc),
-	    xs->error, xs->status);
-
 	mpii_push_reply(sc, ccb->ccb_rcb);
-done:
+
+ done:
 	mpii_put_ccb(sc, ccb);
+
+	DNPRINTF(MPII_D_CMD, "%s: xs err: %d status: %#x len: %d resid: %d\n",
+		 DEVNAME(sc), xs->error, xs->status, xs->datalen, xs->resid);
+
 	scsipi_done(xs);
 }
 
