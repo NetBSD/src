@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.194.6.12 2018/11/06 14:38:58 martin Exp $	*/
+/*	$NetBSD: route.c,v 1.194.6.13 2019/03/15 14:44:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.12 2018/11/06 14:38:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.13 2019/03/15 14:44:05 martin Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1504,6 +1504,8 @@ rt_update(struct rtentry *rt, struct rt_addrinfo *info, void *rtm)
 		}
 		if (new_ifa == NULL)
 			ifa_release(ifa, &psref_ifa);
+		/* To avoid ifa_release below */
+		ifa = NULL;
 	}
 	ifa_release(new_ifa, &psref_new_ifa);
 	if (new_ifp && rt->rt_ifp != new_ifp && !if_is_deactivated(new_ifp)) {
@@ -1525,6 +1527,7 @@ rt_update(struct rtentry *rt, struct rt_addrinfo *info, void *rtm)
 	(void)ifp_changed; /* XXX gcc */
 #endif
 out:
+	ifa_release(ifa, &psref_ifa);
 	if_put(new_ifp, &psref_new_ifp);
 	if_put(ifp, &psref_ifp);
 
