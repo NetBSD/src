@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.117 2019/03/13 10:53:16 msaitoh Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.118 2019/03/15 14:51:53 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2710,3 +2710,26 @@ sys/arch/mvme68k/dev/pcctwo_68k.c		1.11
 
 	Fix small (but fatal) oversight in device/softc split.
 	[martin, ticket #1213]
+
+lib/libcurses/get_wch.c				1.21
+lib/libcurses/getch.c				1.71
+
+	Rename global variable "state" to "_cursesi_state".
+	[rin, ticket #1214]
+
+sys/net/route.c					1.217
+
+	Add missing ifa_release on error paths.
+	[ozaki-r, ticket #1215]
+
+sys/net/if_ipsec.c				1.21
+
+	Fix ipsecif(4) memory leak in some ioctl cases.
+	[knakahara, ticket #1216]
+
+sys/dev/pci/mpii.c				1.22
+
+	Fix mpii(4) to adhere to physio diagnostic invariant that
+	fully processed data must not post an error.
+	[kardel, ticket #1217]
+
