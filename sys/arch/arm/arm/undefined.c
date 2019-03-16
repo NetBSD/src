@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.62 2018/05/28 21:05:00 chs Exp $	*/
+/*	$NetBSD: undefined.c,v 1.63 2019/03/16 10:13:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -55,7 +55,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.62 2018/05/28 21:05:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.63 2019/03/16 10:13:34 skrll Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -399,10 +399,13 @@ undefinedinstruction(trapframe_t *tf)
 		fault_code = 0;
 
 	/* OK this is were we do something about the instruction. */
-	LIST_FOREACH(uh, &undefined_handlers[coprocessor], uh_link)
-	    if (uh->uh_handler(fault_pc, fault_instruction, tf,
-			       fault_code) == 0)
-		    break;
+	LIST_FOREACH(uh, &undefined_handlers[coprocessor], uh_link) {
+		int ret = uh->uh_handler(fault_pc, fault_instruction, tf,
+		    fault_code);
+
+		if (ret == 0)
+			break;
+	}
 
 	if (uh == NULL) {
 		/* Fault has not been handled */
