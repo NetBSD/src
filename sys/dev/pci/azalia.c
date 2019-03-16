@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.85 2018/12/09 11:14:01 jdolecek Exp $	*/
+/*	$NetBSD: azalia.c,v 1.86 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.85 2018/12/09 11:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.86 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -233,34 +233,24 @@ CFATTACH_DECL2_NEW(azalia, sizeof(azalia_t),
     NULL, azalia_childdet);
 
 static const struct audio_hw_if azalia_hw_if = {
-	azalia_open,
-	azalia_close,
-	NULL,			/* drain */
-	azalia_query_encoding,
-	azalia_set_params,
-	azalia_round_blocksize,
-	NULL,			/* commit_settings */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* satart_inpu */
-	azalia_halt_output,
-	azalia_halt_input,
-	NULL,			/* speaker_ctl */
-	azalia_getdev,
-	NULL,			/* setfd */
-	azalia_set_port,
-	azalia_get_port,
-	azalia_query_devinfo,
-	azalia_allocm,
-	azalia_freem,
-	azalia_round_buffersize,
-	NULL,			/* mappage */
-	azalia_get_props,
-	azalia_trigger_output,
-	azalia_trigger_input,
-	NULL,			/* dev_ioctl */
-	azalia_get_locks,
+	.open			= azalia_open,
+	.close			= azalia_close,
+	.query_encoding		= azalia_query_encoding,
+	.set_params		= azalia_set_params,
+	.round_blocksize	= azalia_round_blocksize,
+	.halt_output		= azalia_halt_output,
+	.halt_input		= azalia_halt_input,
+	.getdev			= azalia_getdev,
+	.set_port		= azalia_set_port,
+	.get_port		= azalia_get_port,
+	.query_devinfo		= azalia_query_devinfo,
+	.allocm			= azalia_allocm,
+	.freem			= azalia_freem,
+	.round_buffersize	= azalia_round_buffersize,
+	.get_props		= azalia_get_props,
+	.trigger_output		= azalia_trigger_output,
+	.trigger_input		= azalia_trigger_input,
+	.get_locks		= azalia_get_locks,
 };
 
 static const char *pin_colors[16] = {

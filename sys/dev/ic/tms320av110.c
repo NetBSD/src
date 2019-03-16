@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.24 2019/03/16 11:43:40 isaki Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.25 2019/03/16 12:09:57 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.24 2019/03/16 11:43:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.25 2019/03/16 12:09:57 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,34 +75,23 @@ int tav_get_props(void *);
 void tav_get_locks(void *, kmutex_t **, kmutex_t **);
 
 const struct audio_hw_if tav_audio_if = {
-	tav_open,
-	tav_close,
-	0 /* tav_drain*/,		/* optional */
-	tav_query_encoding,
-	tav_set_params,
-	tav_round_blocksize,
-	0 /* commit_settings */,	/* optional */
-	tav_init_output,		/* optional */
-	0 /* tav_init_input */,		/* optional */
-	tav_start_output,
-	tav_start_input,
-	tav_halt_output,
-	tav_halt_input,
-	tav_speaker_ctl,		/* optional */
-	tav_getdev,
-	0 /* setfd */,			/* optional */
-	tav_set_port,
-	tav_get_port,
-	tav_query_devinfo,
-	0 /* alloc */,			/* optional */
-	0 /* free */,			/* optional */
-	0 /* round_buffersize */,	/* optional */
-	0 /* mappage */,		/* optional */
-	tav_get_props,
-	0, /* trigger_output */
-	0, /* trigger_input */
-	0, /* dev_ioctl */		/* optional */
-	tav_get_locks,
+	.open			= tav_open,
+	.close			= tav_close,
+	.query_encoding		= tav_query_encoding,
+	.set_params		= tav_set_params,
+	.round_blocksize	= tav_round_blocksize,
+	.init_output		= tav_init_output,	/* optional */
+	.start_output		= tav_start_output,
+	.start_input		= tav_start_input,
+	.halt_output		= tav_halt_output,
+	.halt_input		= tav_halt_input,
+	.speaker_ctl		= tav_speaker_ctl,	/* optional */
+	.getdev			= tav_getdev,
+	.set_port		= tav_set_port,
+	.get_port		= tav_get_port,
+	.query_devinfo		= tav_query_devinfo,
+	.get_props		= tav_get_props,
+	.get_locks		= tav_get_locks,
 };
 
 void

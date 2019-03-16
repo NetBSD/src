@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.4 2017/06/01 02:45:06 chs Exp $	*/
+/*	$NetBSD: harmony.c,v 1.5 2019/03/16 12:09:56 isaki Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -117,34 +117,25 @@ int	harmony_trigger_input(void *, void *, void *, int,
 void	harmony_get_locks(void *, kmutex_t **, kmutex_t **);
 
 const struct audio_hw_if harmony_sa_hw_if = {
-	harmony_open,
-	harmony_close,
-	NULL,
-	harmony_query_encoding,
-	harmony_set_params,
-	harmony_round_blocksize,
-	harmony_commit_settings,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	harmony_halt_output,
-	harmony_halt_input,
-	NULL,
-	harmony_getdev,
-	NULL,
-	harmony_set_port,
-	harmony_get_port,
-	harmony_query_devinfo,
-	harmony_allocm,
-	harmony_freem,
-	harmony_round_buffersize,
-	NULL,
-	harmony_get_props,
-	harmony_trigger_output,
-	harmony_trigger_input,
-	NULL,
-	harmony_get_locks,
+	.open			= harmony_open,
+	.close			= harmony_close,
+	.query_encoding		= harmony_query_encoding,
+	.set_params		= harmony_set_params,
+	.round_blocksize	= harmony_round_blocksize,
+	.commit_settings	= harmony_commit_settings,
+	.halt_output		= harmony_halt_output,
+	.halt_input		= harmony_halt_input,
+	.getdev			= harmony_getdev,
+	.set_port		= harmony_set_port,
+	.get_port		= harmony_get_port,
+	.query_devinfo		= harmony_query_devinfo,
+	.allocm			= harmony_allocm,
+	.freem			= harmony_freem,
+	.round_buffersize	= harmony_round_buffersize,
+	.get_props		= harmony_get_props,
+	.trigger_output		= harmony_trigger_output,
+	.trigger_input		= harmony_trigger_input,
+	.get_locks		= harmony_get_locks,
 };
 
 int harmony_match(device_t, struct cfdata *, void *);

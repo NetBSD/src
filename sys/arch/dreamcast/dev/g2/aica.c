@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.24 2018/03/03 23:27:51 christos Exp $	*/
+/*	$NetBSD: aica.c,v 1.25 2019/03/16 12:09:56 isaki Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.24 2018/03/03 23:27:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.25 2019/03/16 12:09:56 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,36 +165,22 @@ int aica_get_props(void *);
 void aica_get_locks(void *, kmutex_t **, kmutex_t **);
 
 const struct audio_hw_if aica_hw_if = {
-	aica_open,
-	aica_close,
-	NULL,				/* aica_drain */
-	aica_query_encoding,
-	aica_set_params,
-	aica_round_blocksize,
-	NULL,				/* aica_commit_setting */
-	NULL,				/* aica_init_output */
-	NULL,				/* aica_init_input */
-	NULL,				/* aica_start_output */
-	NULL,				/* aica_start_input */
-	aica_halt_output,
-	aica_halt_input,
-	NULL,				/* aica_speaker_ctl */
-	aica_getdev,
-	NULL,				/* aica_setfd */
-	aica_set_port,
-	aica_get_port,
-	aica_query_devinfo,
-	NULL,				/* aica_allocm */
-	NULL,				/* aica_freem */
-
-	aica_round_buffersize,		/* aica_round_buffersize */
-
-	NULL,				/* aica_mappage */
-	aica_get_props,
-	aica_trigger_output,
-	aica_trigger_input,
-	NULL,				/* aica_dev_ioctl */
-	aica_get_locks,
+	.open			= aica_open,
+	.close			= aica_close,
+	.query_encoding		= aica_query_encoding,
+	.set_params		= aica_set_params,
+	.round_blocksize	= aica_round_blocksize,
+	.halt_output		= aica_halt_output,
+	.halt_input		= aica_halt_input,
+	.getdev			= aica_getdev,
+	.set_port		= aica_set_port,
+	.get_port		= aica_get_port,
+	.query_devinfo		= aica_query_devinfo,
+	.round_buffersize	= aica_round_buffersize,
+	.get_props		= aica_get_props,
+	.trigger_output		= aica_trigger_output,
+	.trigger_input		= aica_trigger_input,
+	.get_locks		= aica_get_locks,
 };
 
 int

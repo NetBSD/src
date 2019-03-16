@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.43 2014/03/22 01:52:44 christos Exp $ */
+/*	$NetBSD: aucc.c,v 1.44 2019/03/16 12:09:56 isaki Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -53,7 +53,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.43 2014/03/22 01:52:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.44 2019/03/16 12:09:56 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,34 +231,22 @@ static void aucc_decode_slinear16sw_4ch(u_char **, u_char *, int);
 
 
 const struct audio_hw_if sa_hw_if = {
-	aucc_open,
-	aucc_close,
-	NULL,
-	aucc_query_encoding,
-	aucc_set_params,
-	aucc_round_blocksize,
-	aucc_commit_settings,
-	NULL,
-	NULL,
-	aucc_start_output,
-	aucc_start_input,
-	aucc_halt_output,
-	aucc_halt_input,
-	NULL,
-	aucc_getdev,
-	NULL,
-	aucc_set_port,
-	aucc_get_port,
-	aucc_query_devinfo,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	aucc_get_props,
-	NULL,
-	NULL,
-	NULL,
-	aucc_get_locks,
+	.open			= aucc_open,
+	.close			= aucc_close,
+	.query_encoding		= aucc_query_encoding,
+	.set_params		= aucc_set_params,
+	.round_blocksize	= aucc_round_blocksize,
+	.commit_settings	= aucc_commit_settings,
+	.start_output		= aucc_start_output,
+	.start_input		= aucc_start_input,
+	.halt_output		= aucc_halt_output,
+	.halt_input		= aucc_halt_input,
+	.getdev			= aucc_getdev,
+	.set_port		= aucc_set_port,
+	.get_port		= aucc_get_port,
+	.query_devinfo		= aucc_query_devinfo,
+	.get_props		= aucc_get_props,
+	.get_locks		= aucc_get_locks,
 };
 
 /* autoconfig routines */

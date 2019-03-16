@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.70 2018/12/09 11:14:01 jdolecek Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.71 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.70 2018/12/09 11:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.71 2019/03/16 12:09:58 isaki Exp $");
 
 #include "midi.h"
 
@@ -159,34 +159,23 @@ static const struct cs4280_card_t cs4280_cards[] = {
 #define CS4280_CARDS_SIZE (sizeof(cs4280_cards)/sizeof(cs4280_cards[0]))
 
 static const struct audio_hw_if cs4280_hw_if = {
-	NULL,			/* open */
-	NULL,			/* close */
-	NULL,
-	cs4280_query_encoding,
-	cs4280_set_params,
-	cs428x_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	cs4280_halt_output,
-	cs4280_halt_input,
-	NULL,
-	cs4280_getdev,
-	NULL,
-	cs428x_mixer_set_port,
-	cs428x_mixer_get_port,
-	cs428x_query_devinfo,
-	cs428x_malloc,
-	cs428x_free,
-	cs428x_round_buffersize,
-	cs428x_mappage,
-	cs428x_get_props,
-	cs4280_trigger_output,
-	cs4280_trigger_input,
-	NULL,
-	cs428x_get_locks,
+	.query_encoding		= cs4280_query_encoding,
+	.set_params		= cs4280_set_params,
+	.round_blocksize	= cs428x_round_blocksize,
+	.halt_output		= cs4280_halt_output,
+	.halt_input		= cs4280_halt_input,
+	.getdev			= cs4280_getdev,
+	.set_port		= cs428x_mixer_set_port,
+	.get_port		= cs428x_mixer_get_port,
+	.query_devinfo		= cs428x_query_devinfo,
+	.allocm			= cs428x_malloc,
+	.freem			= cs428x_free,
+	.round_buffersize	= cs428x_round_buffersize,
+	.mappage		= cs428x_mappage,
+	.get_props		= cs428x_get_props,
+	.trigger_output		= cs4280_trigger_output,
+	.trigger_input		= cs4280_trigger_input,
+	.get_locks		= cs428x_get_locks,
 };
 
 #if NMIDI > 0
