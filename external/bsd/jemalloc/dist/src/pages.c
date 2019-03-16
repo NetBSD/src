@@ -14,6 +14,9 @@
 #include <vm/vm_param.h>
 #endif
 #endif
+#ifdef MAP_ALIGNED
+#include <sys/bitops.h>	/* NetBSD */
+#endif
 
 /******************************************************************************/
 /* Data. */
@@ -74,9 +77,15 @@ os_pages_map(void *addr, size_t size, size_t alignment, bool *commit) {
 	 * of existing mappings, and we only want to create new mappings.
 	 */
 	{
+		int flags = mmap_flags;
+#ifdef MAP_ALIGNED
+		int a = ilog2(alignment);
+		if (a > LG_PAGE && a < ilog2(sizeof(void *)))
+			flags |= MAP_ALIGNED(a);
+#endif
 		int prot = *commit ? PAGES_PROT_COMMIT : PAGES_PROT_DECOMMIT;
 
-		ret = mmap(addr, size, prot, mmap_flags, -1, 0);
+		ret = mmap(addr, size, prot, flags, -1, 0);
 	}
 	assert(ret != NULL);
 
