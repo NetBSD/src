@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.157 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.158 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.157 2018/09/03 16:29:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.158 2019/03/16 12:09:58 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -357,34 +357,22 @@ Static int	uaudio_get_props(void *);
 Static void	uaudio_get_locks(void *, kmutex_t **, kmutex_t **);
 
 Static const struct audio_hw_if uaudio_hw_if = {
-	uaudio_open,
-	uaudio_close,
-	uaudio_drain,
-	uaudio_query_encoding,
-	uaudio_set_params,
-	uaudio_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	uaudio_halt_out_dma,
-	uaudio_halt_in_dma,
-	NULL,
-	uaudio_getdev,
-	NULL,
-	uaudio_mixer_set_port,
-	uaudio_mixer_get_port,
-	uaudio_query_devinfo,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	uaudio_get_props,
-	uaudio_trigger_output,
-	uaudio_trigger_input,
-	NULL,
-	uaudio_get_locks,
+	.open			= uaudio_open,
+	.close			= uaudio_close,
+	.drain			= uaudio_drain,
+	.query_encoding		= uaudio_query_encoding,
+	.set_params		= uaudio_set_params,
+	.round_blocksize	= uaudio_round_blocksize,
+	.halt_output		= uaudio_halt_out_dma,
+	.halt_input		= uaudio_halt_in_dma,
+	.getdev			= uaudio_getdev,
+	.set_port		= uaudio_mixer_set_port,
+	.get_port		= uaudio_mixer_get_port,
+	.query_devinfo		= uaudio_query_devinfo,
+	.get_props		= uaudio_get_props,
+	.trigger_output		= uaudio_trigger_output,
+	.trigger_input		= uaudio_trigger_input,
+	.get_locks		= uaudio_get_locks,
 };
 
 int uaudio_match(device_t, cfdata_t, void *);

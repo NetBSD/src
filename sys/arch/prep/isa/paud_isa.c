@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.16 2011/11/24 03:35:57 mrg Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.17 2019/03/16 12:09:57 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.16 2011/11/24 03:35:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.17 2019/03/16 12:09:57 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -94,34 +94,26 @@ static int paud_mixer_get_port(void *, mixer_ctrl_t *);
 static int paud_query_devinfo(void *, mixer_devinfo_t *);
 
 static const struct audio_hw_if paud_hw_if = {
-	ad1848_isa_open,
-	ad1848_isa_close,
-	NULL,
-	ad1848_query_encoding,
-	ad1848_set_params,
-	ad1848_round_blocksize,
-	ad1848_commit_settings,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	ad1848_isa_halt_output,
-	ad1848_isa_halt_input,
-	NULL,
-	paud_getdev,
-	NULL,
-	paud_mixer_set_port,
-	paud_mixer_get_port,
-	paud_query_devinfo,
-	ad1848_isa_malloc,
-	ad1848_isa_free,
-	ad1848_isa_round_buffersize,
-	ad1848_isa_mappage,
-	ad1848_isa_get_props,
-	ad1848_isa_trigger_output,
-	ad1848_isa_trigger_input,
-	NULL,
-	ad1848_get_locks,
+	.open			= ad1848_isa_open,
+	.close			= ad1848_isa_close,
+	.query_encoding		= ad1848_query_encoding,
+	.set_params		= ad1848_set_params,
+	.round_blocksize	= ad1848_round_blocksize,
+	.commit_settings	= ad1848_commit_settings,
+	.halt_output		= ad1848_isa_halt_output,
+	.halt_input		= ad1848_isa_halt_input,
+	.getdev			= paud_getdev,
+	.set_port		= paud_mixer_set_port,
+	.get_port		= paud_mixer_get_port,
+	.query_devinfo		= paud_query_devinfo,
+	.allocm			= ad1848_isa_malloc,
+	.freem			= ad1848_isa_free,
+	.round_buffersize	= ad1848_isa_round_buffersize,
+	.mappage		= ad1848_isa_mappage,
+	.get_props		= ad1848_isa_get_props,
+	.trigger_output		= ad1848_isa_trigger_output,
+	.trigger_input		= ad1848_isa_trigger_input,
+	.get_locks		= ad1848_get_locks,
 };
 
 /* autoconfig routines */

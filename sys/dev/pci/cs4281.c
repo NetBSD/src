@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.53 2018/12/09 11:14:01 jdolecek Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.54 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.53 2018/12/09 11:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.54 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,34 +110,23 @@ static bool	cs4281_suspend(device_t, const pmf_qual_t *);
 static bool	cs4281_resume(device_t, const pmf_qual_t *);
 
 static const struct audio_hw_if cs4281_hw_if = {
-	NULL,			/* open */
-	NULL,			/* close */
-	NULL,
-	cs4281_query_encoding,
-	cs4281_set_params,
-	cs428x_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	cs4281_halt_output,
-	cs4281_halt_input,
-	NULL,
-	cs4281_getdev,
-	NULL,
-	cs428x_mixer_set_port,
-	cs428x_mixer_get_port,
-	cs428x_query_devinfo,
-	cs428x_malloc,
-	cs428x_free,
-	cs428x_round_buffersize,
-	cs428x_mappage,
-	cs428x_get_props,
-	cs4281_trigger_output,
-	cs4281_trigger_input,
-	NULL,
-	cs428x_get_locks,
+	.query_encoding		= cs4281_query_encoding,
+	.set_params		= cs4281_set_params,
+	.round_blocksize	= cs428x_round_blocksize,
+	.halt_output		= cs4281_halt_output,
+	.halt_input		= cs4281_halt_input,
+	.getdev			= cs4281_getdev,
+	.set_port		= cs428x_mixer_set_port,
+	.get_port		= cs428x_mixer_get_port,
+	.query_devinfo		= cs428x_query_devinfo,
+	.allocm			= cs428x_malloc,
+	.freem			= cs428x_free,
+	.round_buffersize	= cs428x_round_buffersize,
+	.mappage		= cs428x_mappage,
+	.get_props		= cs428x_get_props,
+	.trigger_output		= cs4281_trigger_output,
+	.trigger_input		= cs4281_trigger_input,
+	.get_locks		= cs428x_get_locks,
 };
 
 #if NMIDI > 0 && 0

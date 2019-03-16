@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.38 2019/03/16 04:36:19 isaki Exp $	*/
+/*	$NetBSD: aria.c,v 1.39 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.38 2019/03/16 04:36:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.39 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,34 +201,22 @@ struct audio_device aria_device = {
  */
 
 const struct audio_hw_if aria_hw_if = {
-	ariaopen,
-	ariaclose,
-	NULL,
-	aria_query_encoding,
-	aria_set_params,
-	aria_round_blocksize,
-	aria_commit_settings,
-	NULL,
-	NULL,
-	aria_start_output,
-	aria_start_input,
-	aria_halt_output,
-	aria_halt_input,
-	NULL,
-	aria_getdev,
-	NULL,
-	aria_mixer_set_port,
-	aria_mixer_get_port,
-	aria_mixer_query_devinfo,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	aria_get_props,
-	NULL,
-	NULL,
-	NULL,
-	aria_get_locks,
+	.open			= ariaopen,
+	.close			= ariaclose,
+	.query_encoding		= aria_query_encoding,
+	.set_params		= aria_set_params,
+	.round_blocksize	= aria_round_blocksize,
+	.commit_settings	= aria_commit_settings,
+	.start_output		= aria_start_output,
+	.start_input		= aria_start_input,
+	.halt_output		= aria_halt_output,
+	.halt_input		= aria_halt_input,
+	.getdev			= aria_getdev,
+	.set_port		= aria_mixer_set_port,
+	.get_port		= aria_mixer_get_port,
+	.query_devinfo		= aria_mixer_query_devinfo,
+	.get_props		= aria_get_props,
+	.get_locks		= aria_get_locks,
 };
 
 /*

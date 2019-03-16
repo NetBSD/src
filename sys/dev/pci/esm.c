@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.60 2018/12/09 11:14:02 jdolecek Exp $      */
+/*      $NetBSD: esm.c,v 1.61 2019/03/16 12:09:58 isaki Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.60 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.61 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,34 +160,25 @@ CFATTACH_DECL2_NEW(esm, sizeof(struct esm_softc),
     esm_match, esm_attach, esm_detach, NULL, NULL, esm_childdet);
 
 const struct audio_hw_if esm_hw_if = {
-	NULL,				/* open */
-	NULL,				/* close */
-	NULL,				/* drain */
-	esm_query_encoding,
-	esm_set_params,
-	esm_round_blocksize,
-	NULL,				/* commit_settings */
-	esm_init_output,
-	esm_init_input,
-	NULL,				/* start_output */
-	NULL,				/* start_input */
-	esm_halt_output,
-	esm_halt_input,
-	NULL,				/* speaker_ctl */
-	esm_getdev,
-	NULL,				/* getfd */
-	esm_set_port,
-	esm_get_port,
-	esm_query_devinfo,
-	esm_malloc,
-	esm_free,
-	esm_round_buffersize,
-	esm_mappage,
-	esm_get_props,
-	esm_trigger_output,
-	esm_trigger_input,
-	NULL,
-	esm_get_locks,
+	.query_encoding		= esm_query_encoding,
+	.set_params		= esm_set_params,
+	.round_blocksize	= esm_round_blocksize,
+	.init_output		= esm_init_output,
+	.init_input		= esm_init_input,
+	.halt_output		= esm_halt_output,
+	.halt_input		= esm_halt_input,
+	.getdev			= esm_getdev,
+	.set_port		= esm_set_port,
+	.get_port		= esm_get_port,
+	.query_devinfo		= esm_query_devinfo,
+	.allocm			= esm_malloc,
+	.freem			= esm_free,
+	.round_buffersize	= esm_round_buffersize,
+	.mappage		= esm_mappage,
+	.get_props		= esm_get_props,
+	.trigger_output		= esm_trigger_output,
+	.trigger_input		= esm_trigger_input,
+	.get_locks		= esm_get_locks,
 };
 
 struct audio_device esm_device = {

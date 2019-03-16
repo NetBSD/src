@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.51 2018/12/09 11:14:01 jdolecek Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.52 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.51 2018/12/09 11:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.52 2019/03/16 12:09:58 isaki Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -150,34 +150,23 @@ static int cmpci_trigger_input(void *, void *, void *, int,
 static void cmpci_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if cmpci_hw_if = {
-	NULL,			/* open */
-	NULL,			/* close */
-	NULL,			/* drain */
-	cmpci_query_encoding,	/* query_encoding */
-	cmpci_set_params,	/* set_params */
-	cmpci_round_blocksize,	/* round_blocksize */
-	NULL,			/* commit_settings */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	cmpci_halt_output,	/* halt_output */
-	cmpci_halt_input,	/* halt_input */
-	NULL,			/* speaker_ctl */
-	cmpci_getdev,		/* getdev */
-	NULL,			/* setfd */
-	cmpci_set_port,		/* set_port */
-	cmpci_get_port,		/* get_port */
-	cmpci_query_devinfo,	/* query_devinfo */
-	cmpci_allocm,		/* allocm */
-	cmpci_freem,		/* freem */
-	cmpci_round_buffersize,/* round_buffersize */
-	cmpci_mappage,		/* mappage */
-	cmpci_get_props,	/* get_props */
-	cmpci_trigger_output,	/* trigger_output */
-	cmpci_trigger_input,	/* trigger_input */
-	NULL,			/* dev_ioctl */
-	cmpci_get_locks,	/* get_locks */
+	.query_encoding		= cmpci_query_encoding,
+	.set_params		= cmpci_set_params,
+	.round_blocksize	= cmpci_round_blocksize,
+	.halt_output		= cmpci_halt_output,
+	.halt_input		= cmpci_halt_input,
+	.getdev			= cmpci_getdev,	
+	.set_port		= cmpci_set_port,
+	.get_port		= cmpci_get_port,
+	.query_devinfo		= cmpci_query_devinfo,
+	.allocm			= cmpci_allocm,	
+	.freem			= cmpci_freem,
+	.round_buffersize	= cmpci_round_buffersize,
+	.mappage		= cmpci_mappage,
+	.get_props		= cmpci_get_props,
+	.trigger_output		= cmpci_trigger_output,
+	.trigger_input		= cmpci_trigger_input,
+	.get_locks		= cmpci_get_locks,
 };
 
 #define CMPCI_NFORMATS	4
