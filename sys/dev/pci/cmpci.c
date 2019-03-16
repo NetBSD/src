@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.52 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.53 2019/03/16 12:23:49 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.52 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.53 2019/03/16 12:23:49 isaki Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -155,11 +155,11 @@ static const struct audio_hw_if cmpci_hw_if = {
 	.round_blocksize	= cmpci_round_blocksize,
 	.halt_output		= cmpci_halt_output,
 	.halt_input		= cmpci_halt_input,
-	.getdev			= cmpci_getdev,	
+	.getdev			= cmpci_getdev,
 	.set_port		= cmpci_set_port,
 	.get_port		= cmpci_get_port,
 	.query_devinfo		= cmpci_query_devinfo,
-	.allocm			= cmpci_allocm,	
+	.allocm			= cmpci_allocm,
 	.freem			= cmpci_freem,
 	.round_buffersize	= cmpci_round_buffersize,
 	.mappage		= cmpci_mappage,
