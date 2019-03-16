@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.236 2019/03/13 20:56:33 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.237 2019/03/16 13:33:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.236 2019/03/13 20:56:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.237 2019/03/16 13:33:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -269,7 +269,12 @@ pr_item_bitmap_index(const struct pool *pp, const struct pool_item_header *ph,
 
 	KASSERT(pp->pr_roflags & PR_NOTOUCH);
 	idx = (cp - (char *)ph->ph_page - ph->ph_off) / pp->pr_size;
-	KASSERT(idx < pp->pr_itemsperpage);
+
+	if (__predict_false(idx >= pp->pr_itemsperpage)) {
+		panic("%s: [%s] %u >= %u", __func__, pp->pr_wchan, idx,
+		    pp->pr_itemsperpage);
+	}
+
 	return idx;
 }
 
@@ -281,7 +286,10 @@ pr_item_bitmap_put(const struct pool *pp, struct pool_item_header *ph,
 	pool_item_bitmap_t *bitmap = ph->ph_bitmap + (idx / BITMAP_SIZE);
 	pool_item_bitmap_t mask = 1U << (idx & BITMAP_MASK);
 
-	KASSERT((*bitmap & mask) == 0);
+	if (__predict_false((*bitmap & mask) != 0)) {
+		panic("%s: [%s] %p already freed", __func__, pp->pr_wchan, obj);
+	}
+
 	*bitmap |= mask;
 }
 
@@ -433,8 +441,13 @@ pr_find_pagehead(struct pool *pp, void *v)
 			ph = (struct pool_item_header *)
 			    ((char *)page + pp->pr_phoffset);
 			if (__predict_false((void *)ph->ph_page != page)) {
-				panic("%s: [%s] item not part of pool",
-				    __func__, pp->pr_wchan);
+				panic("%s: [%s] item %p not part of pool",
+				    __func__, pp->pr_wchan, v);
+			}
+			if (__predict_false((char *)v < (char *)page +
+			    ph->ph_off)) {
+				panic("%s: [%s] item %p below item space",
+				    __func__, pp->pr_wchan, v);
 			}
 		} else {
 			tmp.ph_page = page;
@@ -565,7 +578,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 {
 	struct pool *pp1;
 	size_t trysize, phsize, prsize;
-	int off, slack;
+	int itemspace, slack;
 
 #ifdef DEBUG
 	if (__predict_true(!cold))
@@ -674,11 +687,12 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	    trysize / pp->pr_size == (trysize - phsize) / pp->pr_size))) {
 		/* Use the end of the page for the page header */
 		pp->pr_roflags |= PR_PHINPAGE;
-		pp->pr_phoffset = off = palloc->pa_pagesz - phsize;
+		itemspace = palloc->pa_pagesz - phsize;
+		pp->pr_phoffset = itemspace;
 	} else {
 		/* The page header will be taken from our page header pool */
+		itemspace = palloc->pa_pagesz;
 		pp->pr_phoffset = 0;
-		off = palloc->pa_pagesz;
 		SPLAY_INIT(&pp->pr_phtree);
 	}
 
@@ -687,7 +701,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 * we must reserve up to `align - 1' bytes on the page to allow
 	 * appropriate positioning of each item.
 	 */
-	pp->pr_itemsperpage = (off - ((align - ioff) % align)) / pp->pr_size;
+	pp->pr_itemsperpage =
+	    (itemspace - ((align - ioff) % align)) / pp->pr_size;
 	KASSERT(pp->pr_itemsperpage != 0);
 	if ((pp->pr_roflags & PR_NOTOUCH)) {
 		int idx;
@@ -719,7 +734,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 * Use the slack between the chunks and the page header
 	 * for "cache coloring".
 	 */
-	slack = off - pp->pr_itemsperpage * pp->pr_size;
+	slack = itemspace - pp->pr_itemsperpage * pp->pr_size;
 	pp->pr_maxcolor = (slack / align) * align;
 	pp->pr_curcolor = 0;
 
@@ -1125,7 +1140,7 @@ static int
 pool_grow(struct pool *pp, int flags)
 {
 	struct pool_item_header *ph;
-	char *cp;
+	char *storage;
 
 	/*
 	 * If there's a pool_grow in progress, wait for it to complete
@@ -1158,19 +1173,19 @@ pool_grow(struct pool *pp, int flags)
 	else
 		pp->pr_flags |= PR_GROWINGNOWAIT;
 
-	cp = pool_allocator_alloc(pp, flags);
-	if (__predict_false(cp == NULL))
+	storage = pool_allocator_alloc(pp, flags);
+	if (__predict_false(storage == NULL))
 		goto out;
 
-	ph = pool_alloc_item_header(pp, cp, flags);
+	ph = pool_alloc_item_header(pp, storage, flags);
 	if (__predict_false(ph == NULL)) {
-		pool_allocator_free(pp, cp);
+		pool_allocator_free(pp, storage);
 		goto out;
 	}
 
 	if (flags & PR_WAITOK)
 		mutex_enter(&pp->pr_lock);
-	pool_prime_page(pp, cp, ph);
+	pool_prime_page(pp, storage, ph);
 	pp->pr_npagealloc++;
 	KASSERT(pp->pr_flags & PR_GROWING);
 	pp->pr_flags &= ~(PR_GROWING|PR_GROWINGNOWAIT);
