@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.10 2018/06/19 23:25:59 uwe Exp $ */
+/* $NetBSD: alps.c,v 1.11 2019/03/16 03:27:15 ryoon Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.10 2018/06/19 23:25:59 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.11 2019/03/16 03:27:15 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -714,8 +714,10 @@ pms_alps_probe_init(void *opaque)
 		/* V7 device in Toshiba dynabook R63/PS */
 		sc->version = ALPS_PROTO_V7;
 	} else if ((e7sig[0] == 0x73) && (e7sig[1] == 0x02) &&
-		(e7sig[2] == 0x14)) {
-		/* V2 device in NEC VJ22MF-7 (VersaPro JVF-7) */
+		((e7sig[2] == 0x14) || (e7sig[2] == 0x0a))) {
+		/* 0x14: V2 device in NEC VJ22MF-7 (VersaPro JVF-7) */
+		/* 0x0a: V2 devices in Toshiba dynabook satellite B551/D
+			 and dynabook SS RX1 */
 		sc->version = ALPS_PROTO_V2;
 	}
 
