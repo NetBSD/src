@@ -1,4 +1,4 @@
-/* $NetBSD: mesongx_mmc.c,v 1.3 2019/03/15 11:45:17 jmcneill Exp $ */
+/* $NetBSD: mesongx_mmc.c,v 1.4 2019/03/16 12:52:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.3 2019/03/15 11:45:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.4 2019/03/16 12:52:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -526,8 +526,11 @@ mesongx_mmc_attach_i(device_t self)
 	saa.saa_dmat = sc->sc_dmat;
 	saa.saa_clkmin = SDMMC_SDCLK_400K;
 	saa.saa_clkmax = sc->sc_max_frequency / 1000;
-	saa.saa_caps = SMC_CAPS_DMA |
-		       SMC_CAPS_MULTI_SEG_DMA;
+	saa.saa_caps = SMC_CAPS_DMA;
+#if notyet
+	/* XXX causes init to die when using root on eMMC with ODROID-C2 */
+	saa.saa_caps |= SMC_CAPS_MULTI_SEG_DMA;
+#endif
 
 	sc->sc_host_ocr = MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V;
 
