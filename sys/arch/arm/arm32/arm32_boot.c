@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.32 2019/01/27 02:08:37 pgoyette Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.33 2019/03/16 10:05:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.32 2019/01/27 02:08:37 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.33 2019/03/16 10:05:40 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -324,6 +324,12 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 
 #ifdef MULTIPROCESSOR
 	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	/*
+	 * Ensure BP cache is flushed to memory so that APs start cache
+	 * coherency with correct view.
+	 */
+	cpu_dcache_wbinv_all();
 #endif
 
 	VPRINTF("done.\n");
