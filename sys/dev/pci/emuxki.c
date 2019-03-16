@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.66 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.67 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.66 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -177,34 +177,25 @@ CFATTACH_DECL_NEW(emuxki, sizeof(struct emuxki_softc),
     emuxki_match, emuxki_attach, emuxki_detach, NULL);
 
 static const struct audio_hw_if emuxki_hw_if = {
-	emuxki_open,
-	emuxki_close,
-	NULL,			/* drain */
-	emuxki_query_encoding,
-	emuxki_set_params,
-	emuxki_round_blocksize,
-	NULL,			/* commit settings */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	emuxki_halt_output,
-	emuxki_halt_input,
-	NULL,			/* speaker_ctl */
-	emuxki_getdev,
-	NULL,			/* setfd */
-	emuxki_set_port,
-	emuxki_get_port,
-	emuxki_query_devinfo,
-	emuxki_allocm,
-	emuxki_freem,
-	emuxki_round_buffersize,
-	emuxki_mappage,
-	emuxki_get_props,
-	emuxki_trigger_output,
-	emuxki_trigger_input,
-	NULL,			/* dev_ioctl */
-	emuxki_get_locks,
+	.open			= emuxki_open,
+	.close			= emuxki_close,
+	.query_encoding		= emuxki_query_encoding,
+	.set_params		= emuxki_set_params,
+	.round_blocksize	= emuxki_round_blocksize,
+	.halt_output		= emuxki_halt_output,
+	.halt_input		= emuxki_halt_input,
+	.getdev			= emuxki_getdev,
+	.set_port		= emuxki_set_port,
+	.get_port		= emuxki_get_port,
+	.query_devinfo		= emuxki_query_devinfo,
+	.allocm			= emuxki_allocm,
+	.freem			= emuxki_freem,
+	.round_buffersize	= emuxki_round_buffersize,
+	.mappage		= emuxki_mappage,
+	.get_props		= emuxki_get_props,
+	.trigger_output		= emuxki_trigger_output,
+	.trigger_input		= emuxki_trigger_input,
+	.get_locks		= emuxki_get_locks,
 };
 
 #if 0
