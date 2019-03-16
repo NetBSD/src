@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_machdep.c,v 1.16 2019/03/16 10:05:40 skrll Exp $	*/
+/*	$NetBSD: nitrogen6_machdep.c,v 1.17 2019/03/16 10:45:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.16 2019/03/16 10:05:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.17 2019/03/16 10:45:06 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -387,7 +387,7 @@ initarm(void *arg)
 	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, bp, nbp);
 
 	/*
-	 * initarm_commmon flushes cache if required before AP start
+	 * initarm_common flushes cache if required before AP start
 	 */
 	VPRINTF("mpstart\n");
 	nitrogen6_mpstart();
