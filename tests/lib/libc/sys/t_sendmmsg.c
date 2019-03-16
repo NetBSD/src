@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sendmmsg.c,v 1.2 2018/10/16 09:23:29 roy Exp $	*/
+/*	$NetBSD: t_sendmmsg.c,v 1.3 2019/03/16 21:46:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sendmmsg.c,v 1.2 2018/10/16 09:23:29 roy Exp $");
+__RCSID("$NetBSD: t_sendmmsg.c,v 1.3 2019/03/16 21:46:43 christos Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>
@@ -101,7 +101,7 @@ ATF_TC_BODY(sendmmsg_basic, tc)
 //	setsock(fd[0], SO_RCVBUF);
 
 	mmsgcnt = BUFSIZE / sizeof(DGRAM);
-	mmsghdr = malloc(sizeof(*mmsghdr) * mmsgcnt);
+	mmsghdr = calloc(mmsgcnt, sizeof(*mmsghdr));
 	ATF_REQUIRE_MSG(mmsghdr != NULL, "malloc failed (%s)", strerror(errno));
 	iov = malloc(sizeof(*iov) * mmsgcnt);
 	ATF_REQUIRE_MSG(iov != NULL, "malloc failed (%s)", strerror(errno));
@@ -162,8 +162,8 @@ ATF_TC_BODY(sendmmsg_basic, tc)
 				sched_yield();
 				continue;
 			}
-			ATF_REQUIRE_MSG(cnt != -1, "sendmmsg failed (%s)",
-			    strerror(errno));
+			ATF_REQUIRE_MSG(cnt != -1, "sendmmsg %u failed (%s)",
+			    n, strerror(errno));
 			if (debug)
 				printf("sendmmsg: sent %u messages\n", cnt);
 			n += cnt;
