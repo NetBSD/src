@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.80 2018/12/09 11:14:01 jdolecek Exp $	*/
+/*	$NetBSD: auvia.c,v 1.81 2019/03/16 04:41:09 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.80 2018/12/09 11:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.81 2019/03/16 04:41:09 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ static const struct audio_format auvia_formats[AUVIA_NFORMATS] = {
 	 2, AUFMT_STEREO, 0, {8000, 48000}},
 	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
 	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
 	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
 };
 
