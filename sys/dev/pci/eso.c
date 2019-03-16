@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.68 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: eso.c,v 1.69 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.68 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.69 2019/03/16 12:09:58 isaki Exp $");
 
 #include "mpu.h"
 
@@ -154,34 +154,23 @@ static int	eso_trigger_input(void *, void *, void *, int,
 static void	eso_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if eso_hw_if = {
-	NULL,			/* open */
-	NULL,			/* close */
-	NULL,			/* drain */
-	eso_query_encoding,
-	eso_set_params,
-	eso_round_blocksize,
-	NULL,			/* commit_settings */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	eso_halt_output,
-	eso_halt_input,
-	NULL,			/* speaker_ctl */
-	eso_getdev,
-	NULL,			/* setfd */
-	eso_set_port,
-	eso_get_port,
-	eso_query_devinfo,
-	eso_allocm,
-	eso_freem,
-	eso_round_buffersize,
-	eso_mappage,
-	eso_get_props,
-	eso_trigger_output,
-	eso_trigger_input,
-	NULL,			/* dev_ioctl */
-	eso_get_locks,
+	.query_encoding		= eso_query_encoding,
+	.set_params		= eso_set_params,
+	.round_blocksize	= eso_round_blocksize,
+	.halt_output		= eso_halt_output,
+	.halt_input		= eso_halt_input,
+	.getdev			= eso_getdev,
+	.set_port		= eso_set_port,
+	.get_port		= eso_get_port,
+	.query_devinfo		= eso_query_devinfo,
+	.allocm			= eso_allocm,
+	.freem			= eso_freem,
+	.round_buffersize	= eso_round_buffersize,
+	.mappage		= eso_mappage,
+	.get_props		= eso_get_props,
+	.trigger_output		= eso_trigger_output,
+	.trigger_input		= eso_trigger_input,
+	.get_locks		= eso_get_locks,
 };
 
 static const char * const eso_rev2model[] = {

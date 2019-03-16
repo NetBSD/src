@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.11 2018/09/03 16:29:27 riastradh Exp $ */
+/* $NetBSD: mavb.c,v 1.12 2019/03/16 12:09:57 isaki Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -272,34 +272,22 @@ int mavb_trigger_input(void *, void *, void *, int, void (*)(void *),
 void mavb_get_locks(void *, kmutex_t **, kmutex_t **);
 
 struct audio_hw_if mavb_sa_hw_if = {
-	mavb_open,
-	mavb_close,
-	0,
-	mavb_query_encoding,
-	mavb_set_params,
-	mavb_round_blocksize,
-	0,
-	0,
-	0,
-	0,
-	0,
-	mavb_halt_output,
-	mavb_halt_input,
-	0,
-	mavb_getdev,
-	0,
-	mavb_set_port,
-	mavb_get_port,
-	mavb_query_devinfo,
-	0,
-	0,
-	mavb_round_buffersize,
-	0,
-	mavb_get_props,
-	mavb_trigger_output,
-	mavb_trigger_input,
-	NULL,
-	mavb_get_locks,
+	.open			= mavb_open,
+	.close			= mavb_close,
+	.query_encoding		= mavb_query_encoding,
+	.set_params		= mavb_set_params,
+	.round_blocksize	= mavb_round_blocksize,
+	.halt_output		= mavb_halt_output,
+	.halt_input		= mavb_halt_input,
+	.getdev			= mavb_getdev,
+	.set_port		= mavb_set_port,
+	.get_port		= mavb_get_port,
+	.query_devinfo		= mavb_query_devinfo,
+	.round_buffersize	= mavb_round_buffersize,
+	.get_props		= mavb_get_props,
+	.trigger_output		= mavb_trigger_output,
+	.trigger_input		= mavb_trigger_input,
+	.get_locks		= mavb_get_locks,
 };
 
 struct audio_device mavb_device = {

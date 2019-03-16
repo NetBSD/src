@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.81 2019/03/16 04:41:09 isaki Exp $	*/
+/*	$NetBSD: auvia.c,v 1.82 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.81 2019/03/16 04:41:09 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.82 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,34 +210,25 @@ CFATTACH_DECL2_NEW(auvia, sizeof (struct auvia_softc),
 #define TIMEOUT	50
 
 static const struct audio_hw_if auvia_hw_if = {
-	auvia_open,
-	auvia_close,
-	NULL, /* drain */
-	auvia_query_encoding,
-	auvia_set_params,
-	auvia_round_blocksize,
-	NULL, /* commit_settings */
-	NULL, /* init_output */
-	NULL, /* init_input */
-	NULL, /* start_output */
-	NULL, /* start_input */
-	auvia_halt_output,
-	auvia_halt_input,
-	NULL, /* speaker_ctl */
-	auvia_getdev,
-	NULL, /* setfd */
-	auvia_set_port,
-	auvia_get_port,
-	auvia_query_devinfo,
-	auvia_malloc,
-	auvia_free,
-	auvia_round_buffersize,
-	auvia_mappage,
-	auvia_get_props,
-	auvia_trigger_output,
-	auvia_trigger_input,
-	NULL, /* dev_ioctl */
-	auvia_get_locks,
+	.open			= auvia_open,
+	.close			= auvia_close,
+	.query_encoding		= auvia_query_encoding,
+	.set_params		= auvia_set_params,
+	.round_blocksize	= auvia_round_blocksize,
+	.halt_output		= auvia_halt_output,
+	.halt_input		= auvia_halt_input,
+	.getdev			= auvia_getdev,
+	.set_port		= auvia_set_port,
+	.get_port		= auvia_get_port,
+	.query_devinfo		= auvia_query_devinfo,
+	.allocm			= auvia_malloc,
+	.freem			= auvia_free,
+	.round_buffersize	= auvia_round_buffersize,
+	.mappage		= auvia_mappage,
+	.get_props		= auvia_get_props,
+	.trigger_output		= auvia_trigger_output,
+	.trigger_input		= auvia_trigger_input,
+	.get_locks		= auvia_get_locks,
 };
 
 #define AUVIA_FORMATS_4CH_16	2

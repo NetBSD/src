@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.48 2018/09/03 16:29:25 riastradh Exp $	*/
+/*	$NetBSD: snapper.c,v 1.49 2019/03/16 12:09:57 isaki Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.48 2018/09/03 16:29:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.49 2019/03/16 12:09:57 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -276,34 +276,21 @@ CFATTACH_DECL_NEW(snapper, sizeof(struct snapper_softc), snapper_match,
 	snapper_attach, NULL, NULL);
 
 const struct audio_hw_if snapper_hw_if = {
-	NULL,
-	NULL,
-	NULL,
-	snapper_query_encoding,
-	snapper_set_params,
-	snapper_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	snapper_halt_output,
-	snapper_halt_input,
-	NULL,
-	snapper_getdev,
-	NULL,
-	snapper_set_port,
-	snapper_get_port,
-	snapper_query_devinfo,
-	NULL,
-	NULL,
-	snapper_round_buffersize,
-	snapper_mappage,
-	snapper_get_props,
-	snapper_trigger_output,
-	snapper_trigger_input,
-	NULL,
-	snapper_get_locks,
+	.query_encoding		= snapper_query_encoding,
+	.set_params		= snapper_set_params,
+	.round_blocksize	= snapper_round_blocksize,
+	.halt_output		= snapper_halt_output,
+	.halt_input		= snapper_halt_input,
+	.getdev			= snapper_getdev,
+	.set_port		= snapper_set_port,
+	.get_port		= snapper_get_port,
+	.query_devinfo		= snapper_query_devinfo,
+	.round_buffersize	= snapper_round_buffersize,
+	.mappage		= snapper_mappage,
+	.get_props		= snapper_get_props,
+	.trigger_output		= snapper_trigger_output,
+	.trigger_input		= snapper_trigger_input,
+	.get_locks		= snapper_get_locks,
 };
 
 struct audio_device snapper_device = {

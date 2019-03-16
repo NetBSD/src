@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.38 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.39 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.38 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.39 2019/03/16 12:09:58 isaki Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -64,34 +64,30 @@ void	gus_isapnp_attach(device_t, device_t, void *);
 static int     gus_isapnp_open(void *, int);
 
 static const struct audio_hw_if guspnp_hw_if = {
-	gus_isapnp_open,
-	iwclose,
-	NULL,			/* drain */
-	iw_query_encoding,
-	iw_set_params,
-	iw_round_blocksize,
-	iw_commit_settings,
-	iw_init_output,
-	iw_init_input,
-	iw_start_output,
-	iw_start_input,
-	iw_halt_output,
-	iw_halt_input,
-	iw_speaker_ctl,
-	iw_getdev,
-	iw_setfd,
-	iw_set_port,
-	iw_get_port,
-	iw_query_devinfo,
-	iw_malloc,
-	iw_free,
-	iw_round_buffersize,
-	iw_mappage,
-	iw_get_props,
-	NULL,			/* trigger_output */
-	NULL,			/* trigger_input */
-	NULL,			/* dev_ioctl */
-	iw_get_locks,
+	.open			= gus_isapnp_open,
+	.close			= iwclose,
+	.query_encoding		= iw_query_encoding,
+	.set_params		= iw_set_params,
+	.round_blocksize	= iw_round_blocksize,
+	.commit_settings	= iw_commit_settings,
+	.init_output		= iw_init_output,
+	.init_input		= iw_init_input,
+	.start_output		= iw_start_output,
+	.start_input		= iw_start_input,
+	.halt_output		= iw_halt_output,
+	.halt_input		= iw_halt_input,
+	.speaker_ctl		= iw_speaker_ctl,
+	.getdev			= iw_getdev,
+	.setfd			= iw_setfd,
+	.set_port		= iw_set_port,
+	.get_port		= iw_get_port,
+	.query_devinfo		= iw_query_devinfo,
+	.allocm			= iw_malloc,
+	.freem			= iw_free,
+	.round_buffersize	= iw_round_buffersize,
+	.mappage		= iw_mappage,
+	.get_props		= iw_get_props,
+	.get_locks		= iw_get_locks,
 };
 
 CFATTACH_DECL_NEW(guspnp, sizeof(struct iw_softc),

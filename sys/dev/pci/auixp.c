@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.44 2018/12/09 11:14:01 jdolecek Exp $ */
+/* $NetBSD: auixp.c,v 1.45 2019/03/16 12:09:58 isaki Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.44 2018/12/09 11:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.45 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -207,34 +207,24 @@ static void auixp_dumpreg(void);
 
 
 static const struct audio_hw_if auixp_hw_if = {
-	NULL,			/* open */
-	NULL,			/* close */
-	NULL,			/* drain */
-	auixp_query_encoding,
-	auixp_set_params,
-	auixp_round_blocksize,
-	auixp_commit_settings,
-	NULL,			/* init_output  */
-	NULL,			/* init_input   */
-	NULL,			/* start_output */
-	NULL,			/* start_input  */
-	auixp_halt_output,
-	auixp_halt_input,
-	NULL,			/* speaker_ctl */
-	auixp_getdev,
-	NULL,			/* getfd */
-	auixp_set_port,
-	auixp_get_port,
-	auixp_query_devinfo,
-	auixp_malloc,
-	auixp_free,
-	auixp_round_buffersize,
-	auixp_mappage,
-	auixp_get_props,
-	auixp_trigger_output,
-	auixp_trigger_input,
-	NULL,			/* dev_ioctl */
-	auixp_get_locks,
+	.query_encoding		= auixp_query_encoding,
+	.set_params		= auixp_set_params,
+	.round_blocksize	= auixp_round_blocksize,
+	.commit_settings	= auixp_commit_settings,
+	.halt_output		= auixp_halt_output,
+	.halt_input		= auixp_halt_input,
+	.getdev			= auixp_getdev,
+	.set_port		= auixp_set_port,
+	.get_port		= auixp_get_port,
+	.query_devinfo		= auixp_query_devinfo,
+	.allocm			= auixp_malloc,
+	.freem			= auixp_free,
+	.round_buffersize	= auixp_round_buffersize,
+	.mappage		= auixp_mappage,
+	.get_props		= auixp_get_props,
+	.trigger_output		= auixp_trigger_output,
+	.trigger_input		= auixp_trigger_input,
+	.get_locks		= auixp_get_locks,
 };
 
 

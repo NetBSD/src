@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.15 2012/10/27 17:17:55 chs Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.16 2019/03/16 12:09:56 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.15 2012/10/27 17:17:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.16 2019/03/16 12:09:56 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,34 +120,24 @@ int vraiu_get_props(void *);
 void vraiu_get_locks(void *, kmutex_t **, kmutex_t **);
 
 const struct audio_hw_if vraiu_hw_if = {
-	vraiu_open,
-	vraiu_close,
-	NULL,
-	vraiu_query_encoding,
-	vraiu_set_params,
-	vraiu_round_blocksize,
-	vraiu_commit_settings,
-	vraiu_init_output,
-	NULL,
-	vraiu_start_output,
-	vraiu_start_input,
-	vraiu_halt_output,
-	vraiu_halt_input,
-	NULL,
-	vraiu_getdev,
-	NULL,
-	vraiu_set_port,
-	vraiu_get_port,
-	vraiu_query_devinfo,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	vraiu_get_props,
-	NULL,
-	NULL,
-	NULL,
-	vraiu_get_locks,
+	.open			= vraiu_open,
+	.close			= vraiu_close,
+	.query_encoding		= vraiu_query_encoding,
+	.set_params		= vraiu_set_params,
+	.round_blocksize	= vraiu_round_blocksize,
+	.commit_settings	= vraiu_commit_settings,
+	.init_output		= vraiu_init_output,
+	.init_input		= NULL,
+	.start_output		= vraiu_start_output,
+	.start_input		= vraiu_start_input,
+	.halt_output		= vraiu_halt_output,
+	.halt_input		= vraiu_halt_input,
+	.getdev			= vraiu_getdev,
+	.set_port		= vraiu_set_port,
+	.get_port		= vraiu_get_port,
+	.query_devinfo		= vraiu_query_devinfo,
+	.get_props		= vraiu_get_props,
+	.get_locks		= vraiu_get_locks,
 };
 
 /*

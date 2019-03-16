@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.37 2019/02/03 03:19:27 mrg Exp $	*/
+/*	$NetBSD: btsco.c,v 1.38 2019/03/16 12:09:57 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.37 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.38 2019/03/16 12:09:57 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -169,34 +169,25 @@ static int btsco_dev_ioctl(void *, u_long, void *, int, struct lwp *);
 static void btsco_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if btsco_if = {
-	btsco_open,		/* open */
-	btsco_close,		/* close */
-	NULL,			/* drain */
-	btsco_query_encoding,	/* query_encoding */
-	btsco_set_params,	/* set_params */
-	btsco_round_blocksize,	/* round_blocksize */
-	NULL,			/* commit_settings */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	btsco_start_output,	/* start_output */
-	btsco_start_input,	/* start_input */
-	btsco_halt_output,	/* halt_output */
-	btsco_halt_input,	/* halt_input */
-	NULL,			/* speaker_ctl */
-	btsco_getdev,		/* getdev */
-	btsco_setfd,		/* setfd */
-	btsco_set_port,		/* set_port */
-	btsco_get_port,		/* get_port */
-	btsco_query_devinfo,	/* query_devinfo */
-	btsco_allocm,		/* allocm */
-	btsco_freem,		/* freem */
-	NULL,			/* round_buffersize */
-	NULL,			/* mappage */
-	btsco_get_props,	/* get_props */
-	NULL,			/* trigger_output */
-	NULL,			/* trigger_input */
-	btsco_dev_ioctl,	/* dev_ioctl */
-	btsco_get_locks,	/* get_locks */
+	.open			= btsco_open,
+	.close			= btsco_close,
+	.query_encoding		= btsco_query_encoding,
+	.set_params		= btsco_set_params,
+	.round_blocksize	= btsco_round_blocksize,
+	.start_output		= btsco_start_output,
+	.start_input		= btsco_start_input,
+	.halt_output		= btsco_halt_output,
+	.halt_input		= btsco_halt_input,
+	.getdev			= btsco_getdev,
+	.setfd			= btsco_setfd,
+	.set_port		= btsco_set_port,
+	.get_port		= btsco_get_port,
+	.query_devinfo		= btsco_query_devinfo,
+	.allocm			= btsco_allocm,
+	.freem			= btsco_freem,
+	.get_props		= btsco_get_props,
+	.dev_ioctl		= btsco_dev_ioctl,
+	.get_locks		= btsco_get_locks,
 };
 
 static const struct audio_device btsco_device = {

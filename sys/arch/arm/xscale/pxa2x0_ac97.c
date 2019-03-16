@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.14 2017/06/01 02:45:06 chs Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.15 2019/03/16 12:09:56 isaki Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -156,34 +156,25 @@ static int acu_get_props(void *);
 static void acu_get_locks(void *, kmutex_t **, kmutex_t **);
 
 struct audio_hw_if acu_hw_if = {
-	acu_open,
-	acu_close,
-	NULL,
-	acu_query_encoding,
-	acu_set_params,
-	acu_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	acu_halt_output,
-	acu_halt_input,
-	NULL,
-	acu_getdev,
-	NULL,
-	acu_mixer_set_port,
-	acu_mixer_get_port,
-	acu_query_devinfo,
-	acu_malloc,
-	acu_free,
-	acu_round_buffersize,
-	acu_mappage,
-	acu_get_props,
-	acu_trigger_output,
-	acu_trigger_input,
-	NULL,
-	acu_get_locks,
+	.open			= acu_open,
+	.close			= acu_close,
+	.query_encoding		= acu_query_encoding,
+	.set_params		= acu_set_params,
+	.round_blocksize	= acu_round_blocksize,
+	.halt_output		= acu_halt_output,
+	.halt_input		= acu_halt_input,
+	.getdev			= acu_getdev,
+	.set_port		= acu_mixer_set_port,
+	.get_port		= acu_mixer_get_port,
+	.query_devinfo		= acu_query_devinfo,
+	.allocm			= acu_malloc,
+	.freem			= acu_free,
+	.round_buffersize	= acu_round_buffersize,
+	.mappage		= acu_mappage,
+	.get_props		= acu_get_props,
+	.trigger_output		= acu_trigger_output,
+	.trigger_input		= acu_trigger_input,
+	.get_locks		= acu_get_locks,
 };
 
 struct audio_device acu_device = {

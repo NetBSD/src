@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.62 2018/12/09 11:14:02 jdolecek Exp $ */
+/* $NetBSD: esa.c,v 1.63 2019/03/16 12:09:58 isaki Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.62 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.63 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -196,34 +196,24 @@ static const struct audio_format esa_formats[ESA_NFORMATS] = {
 };
 
 static const struct audio_hw_if esa_hw_if = {
-	NULL,			/* open */
-	NULL,			/* close */
-	NULL,			/* drain */
-	esa_query_encoding,
-	esa_set_params,
-	esa_round_blocksize,
-	esa_commit_settings,
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	esa_halt_output,
-	esa_halt_input,
-	NULL,			/* speaker_ctl */
-	esa_getdev,
-	NULL,			/* getfd */
-	esa_set_port,
-	esa_get_port,
-	esa_query_devinfo,
-	esa_malloc,
-	esa_free,
-	esa_round_buffersize,
-	esa_mappage,
-	esa_get_props,
-	esa_trigger_output,
-	esa_trigger_input,
-	NULL,	/* dev_ioctl */
-	esa_get_locks,
+	.query_encoding		= esa_query_encoding,
+	.set_params		= esa_set_params,
+	.round_blocksize	= esa_round_blocksize,
+	.commit_settings	= esa_commit_settings,
+	.halt_output		= esa_halt_output,
+	.halt_input		= esa_halt_input,
+	.getdev			= esa_getdev,
+	.set_port		= esa_set_port,
+	.get_port		= esa_get_port,
+	.query_devinfo		= esa_query_devinfo,
+	.allocm			= esa_malloc,
+	.freem			= esa_free,
+	.round_buffersize	= esa_round_buffersize,
+	.mappage		= esa_mappage,
+	.get_props		= esa_get_props,
+	.trigger_output		= esa_trigger_output,
+	.trigger_input		= esa_trigger_input,
+	.get_locks		= esa_get_locks,
 };
 
 CFATTACH_DECL2_NEW(esa, sizeof(struct esa_softc), esa_match, esa_attach,

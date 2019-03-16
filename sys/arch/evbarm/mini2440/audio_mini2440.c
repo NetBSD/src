@@ -89,34 +89,24 @@ int	uda_ssio_getprops(void *);
 void	uda_ssio_get_locks(void *, kmutex_t**, kmutex_t**);
 
 struct audio_hw_if uda1341_hw_if = {
-	uda_ssio_open,
-	uda_ssio_close,
-	NULL,
-	uda1341_query_encodings,
-	uda_ssio_set_params,
-	uda_ssio_round_blocksize,
-	NULL,				/* commit_settings*/
-	NULL,
-	NULL,
-	uda_ssio_start_output,
-	uda_ssio_start_input,
-	uda_ssio_halt_output,
-	uda_ssio_halt_input,
-	NULL,
-	uda_ssio_getdev,
-	NULL,
-	uda1341_set_port,
-	uda1341_get_port,
-	uda1341_query_devinfo,
-	uda_ssio_allocm,
-	uda_ssio_freem,
-	uda_ssio_round_buffersize,
-	NULL,				/* mappage */
-	uda_ssio_getprops,
-	NULL,
-	NULL,
-	NULL,
-	uda_ssio_get_locks
+	.open			= uda_ssio_open,
+	.close			= uda_ssio_close,
+	.query_encoding		= uda1341_query_encodings,
+	.set_params		= uda_ssio_set_params,
+	.round_blocksize	= uda_ssio_round_blocksize,
+	.start_output		= uda_ssio_start_output,
+	.start_input		= uda_ssio_start_input,
+	.halt_output		= uda_ssio_halt_output,
+	.halt_input		= uda_ssio_halt_input,
+	.getdev			= uda_ssio_getdev,
+	.set_port		= uda1341_set_port,
+	.get_port		= uda1341_get_port,
+	.query_devinfo		= uda1341_query_devinfo,
+	.allocm			= uda_ssio_allocm,
+	.freem			= uda_ssio_freem,
+	.round_buffersize	= uda_ssio_round_buffersize,
+	.get_props		= uda_ssio_getprops,
+	.get_locks		= uda_ssio_get_locks
 };
 
 static struct audio_device uda1341_device = {

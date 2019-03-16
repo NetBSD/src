@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.56 2018/09/03 16:29:23 riastradh Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.57 2019/03/16 12:09:56 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.56 2018/09/03 16:29:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.57 2019/03/16 12:09:56 isaki Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -172,34 +172,20 @@ static struct audio_device vidcaudio_device = {
 };
 
 static const struct audio_hw_if vidcaudio_hw_if = {
-	NULL,			/* open */
-	vidcaudio_close,
-	NULL,
-	vidcaudio_query_encoding,
-	vidcaudio_set_params,
-	vidcaudio_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	vidcaudio_halt_output,
-	vidcaudio_halt_input,
-	NULL,
-	vidcaudio_getdev,
-	NULL,
-	vidcaudio_set_port,
-	vidcaudio_get_port,
-	vidcaudio_query_devinfo,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	vidcaudio_get_props,
-	vidcaudio_trigger_output,
-	vidcaudio_trigger_input,
-	NULL,
-	vidcaudio_get_locks,
+	.close			= vidcaudio_close,
+	.query_encoding		= vidcaudio_query_encoding,
+	.set_params		= vidcaudio_set_params,
+	.round_blocksize	= vidcaudio_round_blocksize,
+	.halt_output		= vidcaudio_halt_output,
+	.halt_input		= vidcaudio_halt_input,
+	.getdev			= vidcaudio_getdev,
+	.set_port		= vidcaudio_set_port,
+	.get_port		= vidcaudio_get_port,
+	.query_devinfo		= vidcaudio_query_devinfo,
+	.get_props		= vidcaudio_get_props,
+	.trigger_output		= vidcaudio_trigger_output,
+	.trigger_input		= vidcaudio_trigger_input,
+	.get_locks		= vidcaudio_get_locks,
 };
 
 static int

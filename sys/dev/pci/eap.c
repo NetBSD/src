@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.98 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: eap.c,v 1.99 2019/03/16 12:09:58 isaki Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.98 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.99 2019/03/16 12:09:58 isaki Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -159,65 +159,45 @@ static void	eap_uart_txrdy(struct eap_softc *);
 #endif
 
 static const struct audio_hw_if eap1370_hw_if = {
-	eap_open,
-	NULL,			/* close */
-	NULL,
-	eap_query_encoding,
-	eap_set_params,
-	eap_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	eap_halt_output,
-	eap_halt_input,
-	NULL,
-	eap_getdev,
-	NULL,
-	eap1370_mixer_set_port,
-	eap1370_mixer_get_port,
-	eap1370_query_devinfo,
-	eap_malloc,
-	eap_free,
-	eap_round_buffersize,
-	eap_mappage,
-	eap_get_props,
-	eap_trigger_output,
-	eap_trigger_input,
-	NULL,
-	eap_get_locks,
+	.open			= eap_open,
+	.query_encoding		= eap_query_encoding,
+	.set_params		= eap_set_params,
+	.round_blocksize	= eap_round_blocksize,
+	.halt_output		= eap_halt_output,
+	.halt_input		= eap_halt_input,
+	.getdev			= eap_getdev,
+	.set_port		= eap1370_mixer_set_port,
+	.get_port		= eap1370_mixer_get_port,
+	.query_devinfo		= eap1370_query_devinfo,
+	.allocm			= eap_malloc,
+	.freem			= eap_free,
+	.round_buffersize	= eap_round_buffersize,
+	.mappage		= eap_mappage,
+	.get_props		= eap_get_props,
+	.trigger_output		= eap_trigger_output,
+	.trigger_input		= eap_trigger_input,
+	.get_locks		= eap_get_locks,
 };
 
 static const struct audio_hw_if eap1371_hw_if = {
-	eap_open,
-	NULL,			/* close */
-	NULL,
-	eap_query_encoding,
-	eap_set_params,
-	eap_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	eap_halt_output,
-	eap_halt_input,
-	NULL,
-	eap_getdev,
-	NULL,
-	eap1371_mixer_set_port,
-	eap1371_mixer_get_port,
-	eap1371_query_devinfo,
-	eap_malloc,
-	eap_free,
-	eap_round_buffersize,
-	eap_mappage,
-	eap_get_props,
-	eap_trigger_output,
-	eap_trigger_input,
-	NULL,
-	eap_get_locks,
+	.open			= eap_open,
+	.query_encoding		= eap_query_encoding,
+	.set_params		= eap_set_params,
+	.round_blocksize	= eap_round_blocksize,
+	.halt_output		= eap_halt_output,
+	.halt_input		= eap_halt_input,
+	.getdev			= eap_getdev,
+	.set_port		= eap1371_mixer_set_port,
+	.get_port		= eap1371_mixer_get_port,
+	.query_devinfo		= eap1371_query_devinfo,
+	.allocm			= eap_malloc,
+	.freem			= eap_free,
+	.round_buffersize	= eap_round_buffersize,
+	.mappage		= eap_mappage,
+	.get_props		= eap_get_props,
+	.trigger_output		= eap_trigger_output,
+	.trigger_input		= eap_trigger_input,
+	.get_locks		= eap_get_locks,
 };
 
 #if NMIDI > 0

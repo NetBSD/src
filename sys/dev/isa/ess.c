@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.83 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: ess.c,v 1.84 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.83 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.84 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,65 +215,51 @@ struct audio_device ess_device = {
  */
 
 const struct audio_hw_if ess_1788_hw_if = {
-	ess_open,
-	ess_close,
-	ess_drain,
-	ess_query_encoding,
-	ess_set_params,
-	ess_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	ess_audio1_halt,
-	ess_audio1_halt,
-	ess_speaker_ctl,
-	ess_getdev,
-	NULL,
-	ess_set_port,
-	ess_get_port,
-	ess_query_devinfo,
-	ess_malloc,
-	ess_free,
-	ess_round_buffersize,
-	ess_mappage,
-	ess_1788_get_props,
-	ess_audio1_trigger_output,
-	ess_audio1_trigger_input,
-	NULL,
-	ess_get_locks,
+	.open			= ess_open,
+	.close			= ess_close,
+	.drain			= ess_drain,
+	.query_encoding		= ess_query_encoding,
+	.set_params		= ess_set_params,
+	.round_blocksize	= ess_round_blocksize,
+	.halt_output		= ess_audio1_halt,
+	.halt_input		= ess_audio1_halt,
+	.speaker_ctl		= ess_speaker_ctl,
+	.getdev			= ess_getdev,
+	.set_port		= ess_set_port,
+	.get_port		= ess_get_port,
+	.query_devinfo		= ess_query_devinfo,
+	.allocm			= ess_malloc,
+	.freem			= ess_free,
+	.round_buffersize	= ess_round_buffersize,
+	.mappage		= ess_mappage,
+	.get_props		= ess_1788_get_props,
+	.trigger_output		= ess_audio1_trigger_output,
+	.trigger_input		= ess_audio1_trigger_input,
+	.get_locks		= ess_get_locks,
 };
 
 const struct audio_hw_if ess_1888_hw_if = {
-	ess_open,
-	ess_close,
-	ess_drain,
-	ess_query_encoding,
-	ess_set_params,
-	ess_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	ess_audio2_halt,
-	ess_audio1_halt,
-	ess_speaker_ctl,
-	ess_getdev,
-	NULL,
-	ess_set_port,
-	ess_get_port,
-	ess_query_devinfo,
-	ess_malloc,
-	ess_free,
-	ess_round_buffersize,
-	ess_mappage,
-	ess_1888_get_props,
-	ess_audio2_trigger_output,
-	ess_audio1_trigger_input,
-	NULL,
-	ess_get_locks,
+	.open			= ess_open,
+	.close			= ess_close,
+	.drain			= ess_drain,
+	.query_encoding		= ess_query_encoding,
+	.set_params		= ess_set_params,
+	.round_blocksize	= ess_round_blocksize,
+	.halt_output		= ess_audio2_halt,
+	.halt_input		= ess_audio1_halt,
+	.speaker_ctl		= ess_speaker_ctl,
+	.getdev			= ess_getdev,
+	.set_port		= ess_set_port,
+	.get_port		= ess_get_port,
+	.query_devinfo		= ess_query_devinfo,
+	.allocm			= ess_malloc,
+	.freem			= ess_free,
+	.round_buffersize	= ess_round_buffersize,
+	.mappage		= ess_mappage,
+	.get_props		= ess_1888_get_props,
+	.trigger_output		= ess_audio2_trigger_output,
+	.trigger_input		= ess_audio1_trigger_input,
+	.get_locks		= ess_get_locks,
 };
 
 #define ESS_NFORMATS	8

@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.20 2014/01/22 00:25:16 christos Exp $ */
+/*	$NetBSD: repulse.c,v 1.21 2019/03/16 12:09:56 isaki Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.20 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.21 2019/03/16 12:09:56 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,34 +96,21 @@ int rep_intr(void *);
 /* audio attachment */
 
 const struct audio_hw_if rep_hw_if = {
-	/* open */ 0,
-	rep_close,
-	/* drain */ 0,
-	rep_query_encoding,
-	rep_set_params,
-	rep_round_blocksize,
-	/* commit_setting */ 0,
-	/* init_output */ 0,
-	/* init_input */ 0,
-	rep_start_output,
-	rep_start_input,
-	rep_halt_output,
-	rep_halt_input,
-	/* speaker_ctl */ 0,
-	rep_getdev,
-	/* getfd */ 0,
-	rep_set_port,
-	rep_get_port,
-	rep_query_devinfo,
-	/* allocm */ 0,
-	/* freem */ 0,
-	rep_round_buffersize,
-	/* mappage */ 0,
-	rep_get_props,
-	/* trigger_output */ 0,
-	/* trigger_input */ 0,
-	/* dev_ioctl */ 0,
-	rep_get_locks,
+	.close			= rep_close,
+	.query_encoding		= rep_query_encoding,
+	.set_params		= rep_set_params,
+	.round_blocksize	= rep_round_blocksize,
+	.start_output		= rep_start_output,
+	.start_input		= rep_start_input,
+	.halt_output		= rep_halt_output,
+	.halt_input		= rep_halt_input,
+	.getdev			= rep_getdev,
+	.set_port		= rep_set_port,
+	.get_port		= rep_get_port,
+	.query_devinfo		= rep_query_devinfo,
+	.round_buffersize	= rep_round_buffersize,
+	.get_props		= rep_get_props,
+	.get_locks		= rep_get_locks,
 };
 
 /* hardware registers */

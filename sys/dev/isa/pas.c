@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.70 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: pas.c,v 1.71 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.70 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.71 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,34 +123,26 @@ void	pasconf(int, int, int, int);
  */
 
 const struct audio_hw_if pas_hw_if = {
-	sbdsp_open,
-	sbdsp_close,
-	0,
-	sbdsp_query_encoding,
-	sbdsp_set_params,
-	sbdsp_round_blocksize,
-	0,
-	0,
-	0,
-	0,
-	0,
-	sbdsp_halt_output,
-	sbdsp_halt_input,
-	sbdsp_speaker_ctl,
-	pas_getdev,
-	0,
-	sbdsp_mixer_set_port,
-	sbdsp_mixer_get_port,
-	sbdsp_mixer_query_devinfo,
-	sb_malloc,
-	sb_free,
-	sb_round_buffersize,
-	sb_mappage,
-	sbdsp_get_props,
-	sbdsp_trigger_output,
-	sbdsp_trigger_input,
-	0,
-	sbdsp_get_locks,
+	.open			= sbdsp_open,
+	.close			= sbdsp_close,
+	.query_encoding		= sbdsp_query_encoding,
+	.set_params		= sbdsp_set_params,
+	.round_blocksize	= sbdsp_round_blocksize,
+	.halt_output		= sbdsp_halt_output,
+	.halt_input		= sbdsp_halt_input,
+	.speaker_ctl		= sbdsp_speaker_ctl,
+	.getdev			= pas_getdev,
+	.set_port		= sbdsp_mixer_set_port,
+	.get_port		= sbdsp_mixer_get_port,
+	.query_devinfo		= sbdsp_mixer_query_devinfo,
+	.allocm			= sb_malloc,
+	.freem			= sb_free,
+	.round_buffersize	= sb_round_buffersize,
+	.mappage		= sb_mappage,
+	.get_props		= sbdsp_get_props,
+	.trigger_output		= sbdsp_trigger_output,
+	.trigger_input		= sbdsp_trigger_input,
+	.get_locks		= sbdsp_get_locks,
 };
 
 /* The Address Translation code is used to convert I/O register addresses to

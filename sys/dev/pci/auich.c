@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.152 2018/03/24 18:32:13 jdolecek Exp $	*/
+/*	$NetBSD: auich.c,v 1.153 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.152 2018/03/24 18:32:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.153 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,34 +305,25 @@ static enum ac97_host_flags	auich_flags_codec(void *);
 static void	auich_spdif_event(void *, bool);
 
 static const struct audio_hw_if auich_hw_if = {
-	auich_open,
-	auich_close,
-	NULL,			/* drain */
-	auich_query_encoding,
-	auich_set_params,
-	auich_round_blocksize,
-	NULL,			/* commit_setting */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	auich_halt_output,
-	auich_halt_input,
-	NULL,			/* speaker_ctl */
-	auich_getdev,
-	NULL,			/* getfd */
-	auich_set_port,
-	auich_get_port,
-	auich_query_devinfo,
-	auich_allocm,
-	auich_freem,
-	auich_round_buffersize,
-	auich_mappage,
-	auich_get_props,
-	auich_trigger_output,
-	auich_trigger_input,
-	NULL,			/* dev_ioctl */
-	auich_get_locks,
+	.open			= auich_open,
+	.close			= auich_close,
+	.query_encoding		= auich_query_encoding,
+	.set_params		= auich_set_params,
+	.round_blocksize	= auich_round_blocksize,
+	.halt_output		= auich_halt_output,
+	.halt_input		= auich_halt_input,
+	.getdev			= auich_getdev,
+	.set_port		= auich_set_port,
+	.get_port		= auich_get_port,
+	.query_devinfo		= auich_query_devinfo,
+	.allocm			= auich_allocm,
+	.freem			= auich_freem,
+	.round_buffersize	= auich_round_buffersize,
+	.mappage		= auich_mappage,
+	.get_props		= auich_get_props,
+	.trigger_output		= auich_trigger_output,
+	.trigger_input		= auich_trigger_input,
+	.get_locks		= auich_get_locks,
 };
 
 #define AUICH_FORMATS_1CH	0

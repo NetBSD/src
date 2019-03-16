@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.37 2017/05/02 08:07:37 martin Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.38 2019/03/16 12:09:57 isaki Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.37 2017/05/02 08:07:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.38 2019/03/16 12:09:57 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sparc_arch.h"
@@ -96,34 +96,24 @@ static int	cs4231_ebus_halt_output(void *);
 static int	cs4231_ebus_halt_input(void *);
 
 const struct audio_hw_if audiocs_ebus_hw_if = {
-	cs4231_open,
-	cs4231_close,
-	NULL,			/* drain */
-	ad1848_query_encoding,
-	ad1848_set_params,
-	cs4231_ebus_round_blocksize,
-	ad1848_commit_settings,
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	cs4231_ebus_halt_output,
-	cs4231_ebus_halt_input,
-	NULL,			/* speaker_ctl */
-	cs4231_getdev,
-	NULL,			/* setfd */
-	cs4231_set_port,
-	cs4231_get_port,
-	cs4231_query_devinfo,
-	cs4231_malloc,
-	cs4231_free,
-	NULL,			/* round_buffersize */
-	NULL,			/* mappage */
-	cs4231_get_props,
-	cs4231_ebus_trigger_output,
-	cs4231_ebus_trigger_input,
-	NULL,			/* dev_ioctl */
-	ad1848_get_locks,
+	.open			= cs4231_open,
+	.close			= cs4231_close,
+	.query_encoding		= ad1848_query_encoding,
+	.set_params		= ad1848_set_params,
+	.round_blocksize	= cs4231_ebus_round_blocksize,
+	.commit_settings	= ad1848_commit_settings,
+	.halt_output		= cs4231_ebus_halt_output,
+	.halt_input		= cs4231_ebus_halt_input,
+	.getdev			= cs4231_getdev,
+	.set_port		= cs4231_set_port,
+	.get_port		= cs4231_get_port,
+	.query_devinfo		= cs4231_query_devinfo,
+	.allocm			= cs4231_malloc,
+	.freem			= cs4231_free,
+	.get_props		= cs4231_get_props,
+	.trigger_output		= cs4231_ebus_trigger_output,
+	.trigger_input		= cs4231_ebus_trigger_input,
+	.get_locks		= ad1848_get_locks,
 };
 
 #ifdef AUDIO_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.49 2017/09/30 04:07:04 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.50 2019/03/16 12:09:57 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.49 2017/09/30 04:07:04 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.50 2019/03/16 12:09:57 isaki Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -110,34 +110,25 @@ CFATTACH_DECL_NEW(vs, sizeof(struct vs_softc),
 static int vs_attached;
 
 static const struct audio_hw_if vs_hw_if = {
-	vs_open,
-	vs_close,
-	NULL,			/* drain */
-	vs_query_encoding,
-	vs_set_params,
-	NULL,			/* round_blocksize */
-	NULL,			/* commit_settings */
-	vs_init_output,
-	vs_init_input,
-	vs_start_output,
-	vs_start_input,
-	vs_halt_output,
-	vs_halt_input,
-	NULL,			/* speaker_ctl */
-	vs_getdev,
-	NULL,			/* setfd */
-	vs_set_port,
-	vs_get_port,
-	vs_query_devinfo,
-	vs_allocm,
-	vs_freem,
-	vs_round_buffersize,
-	NULL,			/* mappage */
-	vs_get_props,
-	NULL,			/* trigger_output */
-	NULL,			/* trigger_input */
-	NULL,
-	vs_get_locks,
+	.open			= vs_open,
+	.close			= vs_close,
+	.query_encoding		= vs_query_encoding,
+	.set_params		= vs_set_params,
+	.init_output		= vs_init_output,
+	.init_input		= vs_init_input,
+	.start_output		= vs_start_output,
+	.start_input		= vs_start_input,
+	.halt_output		= vs_halt_output,
+	.halt_input		= vs_halt_input,
+	.getdev			= vs_getdev,
+	.set_port		= vs_set_port,
+	.get_port		= vs_get_port,
+	.query_devinfo		= vs_query_devinfo,
+	.allocm			= vs_allocm,
+	.freem			= vs_freem,
+	.round_buffersize	= vs_round_buffersize,
+	.get_props		= vs_get_props,
+	.get_locks		= vs_get_locks,
 };
 
 static struct audio_device vs_device = {
