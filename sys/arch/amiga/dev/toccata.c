@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.17 2014/01/22 00:25:16 christos Exp $ */
+/* $NetBSD: toccata.c,v 1.18 2019/03/16 12:09:56 isaki Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.17 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.18 2019/03/16 12:09:56 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -177,38 +177,31 @@ int toccata_query_devinfo(void *, mixer_devinfo_t *);
 void toccata_get_locks(void *, kmutex_t **, kmutex_t **);
 
 const struct audio_hw_if audiocs_hw_if = {
-	toccata_open,
-	toccata_close,
-	0,	/*
-		 * XXX toccata_drain could be written:
-		 * sleep for play interrupt. This loses less than 512 bytes of
-		 * sample data, otherwise up to 1024.
-		 */
-	ad1848_query_encoding,
-	ad1848_set_params,
-	toccata_round_blocksize,
-	ad1848_commit_settings,
-	0,	/* init_output */	/* XXX need this to prefill? */
-	0,	/* init_input */
-	toccata_start_output,
-	toccata_start_input,
-	toccata_halt_output,
-	toccata_halt_input,
-	0,	/* speaker */
-	toccata_getdev,
-	0,	/* setfd */
-	toccata_set_port,
-	toccata_get_port,
-	toccata_query_devinfo,
-	0,	/* alloc/free */
-	0,
-	toccata_round_buffersize, /* round_buffer */
-	0,	/* mappage */
-	toccata_get_props,
-	0,	/* trigger_output */
-	0,
-	0,
-	toccata_get_locks,
+	.open			= toccata_open,
+	.close			= toccata_close,
+	/*
+	 * XXX toccata_drain could be written:
+	 * sleep for play interrupt. This loses less than 512 bytes of
+	 * sample data, otherwise up to 1024.
+	 */
+	.drain			= NULL,
+	.query_encoding		= ad1848_query_encoding,
+	.set_params		= ad1848_set_params,
+	.round_blocksize	= toccata_round_blocksize,
+	.commit_settings	= ad1848_commit_settings,
+	.init_output		= NULL,	/* XXX need this to prefill? */
+	.init_input		= NULL,
+	.start_output		= toccata_start_output,
+	.start_input		= toccata_start_input,
+	.halt_output		= toccata_halt_output,
+	.halt_input		= toccata_halt_input,
+	.getdev			= toccata_getdev,
+	.set_port		= toccata_set_port,
+	.get_port		= toccata_get_port,
+	.query_devinfo		= toccata_query_devinfo,
+	.round_buffersize	= toccata_round_buffersize,
+	.get_props		= toccata_get_props,
+	.get_locks		= toccata_get_locks,
 };
 
 struct toccata_softc {

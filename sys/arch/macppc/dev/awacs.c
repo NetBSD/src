@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.45 2016/08/24 14:41:51 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.46 2019/03/16 12:09:57 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.45 2016/08/24 14:41:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.46 2019/03/16 12:09:57 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -163,34 +163,22 @@ CFATTACH_DECL_NEW(awacs, sizeof(struct awacs_softc),
     awacs_match, awacs_attach, NULL, NULL);
 
 const struct audio_hw_if awacs_hw_if = {
-	NULL,			/* open */
-	awacs_close,
-	NULL,
-	awacs_query_encoding,
-	awacs_set_params,
-	awacs_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	awacs_halt_output,
-	awacs_halt_input,
-	NULL,
-	awacs_getdev,
-	NULL,
-	awacs_set_port,
-	awacs_get_port,
-	awacs_query_devinfo,
-	NULL,
-	NULL,
-	awacs_round_buffersize,
-	awacs_mappage,
-	awacs_get_props,
-	awacs_trigger_output,
-	awacs_trigger_input,
-	NULL,
-	awacs_get_locks,
+	.close			= awacs_close,
+	.query_encoding		= awacs_query_encoding,
+	.set_params		= awacs_set_params,
+	.round_blocksize	= awacs_round_blocksize,
+	.halt_output		= awacs_halt_output,
+	.halt_input		= awacs_halt_input,
+	.getdev			= awacs_getdev,
+	.set_port		= awacs_set_port,
+	.get_port		= awacs_get_port,
+	.query_devinfo		= awacs_query_devinfo,
+	.round_buffersize	= awacs_round_buffersize,
+	.mappage		= awacs_mappage,
+	.get_props		= awacs_get_props,
+	.trigger_output		= awacs_trigger_output,
+	.trigger_input		= awacs_trigger_input,
+	.get_locks		= awacs_get_locks,
 };
 
 struct audio_device awacs_device = {

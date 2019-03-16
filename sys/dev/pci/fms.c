@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.44 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: fms.c,v 1.45 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.44 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.45 2019/03/16 12:09:58 isaki Exp $");
 
 #include "mpu.h"
 
@@ -110,34 +110,23 @@ static struct audio_device fms_device = {
 
 
 static const struct audio_hw_if fms_hw_if = {
-	NULL,			/* open */
-	NULL,			/* close */
-	NULL,
-	fms_query_encoding,
-	fms_set_params,
-	fms_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	fms_halt_output,
-	fms_halt_input,
-	NULL,
-	fms_getdev,
-	NULL,
-	fms_set_port,
-	fms_get_port,
-	fms_query_devinfo,
-	fms_malloc,
-	fms_free,
-	fms_round_buffersize,
-	fms_mappage,
-	fms_get_props,
-	fms_trigger_output,
-	fms_trigger_input,
-	NULL,
-	fms_get_locks,
+	.query_encoding		= fms_query_encoding,
+	.set_params		= fms_set_params,
+	.round_blocksize	= fms_round_blocksize,
+	.halt_output		= fms_halt_output,
+	.halt_input		= fms_halt_input,
+	.getdev			= fms_getdev,
+	.set_port		= fms_set_port,
+	.get_port		= fms_get_port,
+	.query_devinfo		= fms_query_devinfo,
+	.allocm			= fms_malloc,
+	.freem			= fms_free,
+	.round_buffersize	= fms_round_buffersize,
+	.mappage		= fms_mappage,
+	.get_props		= fms_get_props,
+	.trigger_output		= fms_trigger_output,
+	.trigger_input		= fms_trigger_input,
+	.get_locks		= fms_get_locks,
 };
 
 static int	fms_attach_codec(void *, struct ac97_codec_if *);

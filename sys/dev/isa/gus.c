@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.114 2019/02/03 03:19:27 mrg Exp $	*/
+/*	$NetBSD: gus.c,v 1.115 2019/03/16 12:09:58 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.114 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.115 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,65 +576,51 @@ static const unsigned short gus_log_volumes[512] = {
  */
 
 const struct audio_hw_if gus_hw_if = {
-	gusopen,
-	gusclose,
-	NULL,				/* drain */
-	gus_query_encoding,
-	gus_set_params,
-	gus_round_blocksize,
-	gus_commit_settings,
-	NULL,
-	NULL,
-	gus_dma_output,
-	gus_dma_input,
-	gus_halt_out_dma,
-	gus_halt_in_dma,
-	gus_speaker_ctl,
-	gus_getdev,
-	NULL,
-	gus_mixer_set_port,
-	gus_mixer_get_port,
-	gus_mixer_query_devinfo,
-	ad1848_isa_malloc,
-	ad1848_isa_free,
-	ad1848_isa_round_buffersize,
-	ad1848_isa_mappage,
-	gus_get_props,
-	NULL,
-	NULL,
-	NULL,
-	ad1848_get_locks,
+	.open			= gusopen,
+	.close			= gusclose,
+	.query_encoding		= gus_query_encoding,
+	.set_params		= gus_set_params,
+	.round_blocksize	= gus_round_blocksize,
+	.commit_settings	= gus_commit_settings,
+	.start_output		= gus_dma_output,
+	.start_input		= gus_dma_input,
+	.halt_output		= gus_halt_out_dma,
+	.halt_input		= gus_halt_in_dma,
+	.speaker_ctl		= gus_speaker_ctl,
+	.getdev			= gus_getdev,
+	.set_port		= gus_mixer_set_port,
+	.get_port		= gus_mixer_get_port,
+	.query_devinfo		= gus_mixer_query_devinfo,
+	.allocm			= ad1848_isa_malloc,
+	.freem			= ad1848_isa_free,
+	.round_buffersize	= ad1848_isa_round_buffersize,
+	.mappage		= ad1848_isa_mappage,
+	.get_props		= gus_get_props,
+	.get_locks		= ad1848_get_locks,
 };
 
 static const struct audio_hw_if gusmax_hw_if = {
-	gusmaxopen,
-	gusmax_close,
-	NULL,			/* drain */
-	gus_query_encoding,	/* query encoding */
-	gusmax_set_params,
-	gusmax_round_blocksize,
-	gusmax_commit_settings,
-	NULL,
-	NULL,
-	gusmax_dma_output,
-	gusmax_dma_input,
-	gusmax_halt_out_dma,
-	gusmax_halt_in_dma,
-	gusmax_speaker_ctl,
-	gus_getdev,
-	NULL,
-	gusmax_mixer_set_port,
-	gusmax_mixer_get_port,
-	gusmax_mixer_query_devinfo,
-	ad1848_isa_malloc,
-	ad1848_isa_free,
-	ad1848_isa_round_buffersize,
-	ad1848_isa_mappage,
-	gusmax_get_props,
-	NULL,
-	NULL,
-	NULL,
-	ad1848_get_locks,
+	.open			= gusmaxopen,
+	.close			= gusmax_close,
+	.query_encoding		= gus_query_encoding,
+	.set_params		= gusmax_set_params,
+	.round_blocksize	= gusmax_round_blocksize,
+	.commit_settings	= gusmax_commit_settings,
+	.start_output		= gusmax_dma_output,
+	.start_input		= gusmax_dma_input,
+	.halt_output		= gusmax_halt_out_dma,
+	.halt_input		= gusmax_halt_in_dma,
+	.speaker_ctl		= gusmax_speaker_ctl,
+	.getdev			= gus_getdev,
+	.set_port		= gusmax_mixer_set_port,
+	.get_port		= gusmax_mixer_get_port,
+	.query_devinfo		= gusmax_mixer_query_devinfo,
+	.allocm			= ad1848_isa_malloc,
+	.freem			= ad1848_isa_free,
+	.round_buffersize	= ad1848_isa_round_buffersize,
+	.mappage		= ad1848_isa_mappage,
+	.get_props		= gusmax_get_props,
+	.get_locks		= ad1848_get_locks,
 };
 
 /*

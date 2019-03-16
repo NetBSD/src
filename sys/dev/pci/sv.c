@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.53 2018/12/09 11:14:02 jdolecek Exp $ */
+/*      $NetBSD: sv.c,v 1.54 2019/03/16 12:09:58 isaki Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.53 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.54 2019/03/16 12:09:58 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,34 +168,24 @@ void    sv_dumpregs(struct sv_softc *sc);
 #endif
 
 static const struct audio_hw_if sv_hw_if = {
-	sv_open,
-	NULL,			/* close */
-	NULL,
-	sv_query_encoding,
-	sv_set_params,
-	sv_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	sv_halt_output,
-	sv_halt_input,
-	NULL,
-	sv_getdev,
-	NULL,
-	sv_mixer_set_port,
-	sv_mixer_get_port,
-	sv_query_devinfo,
-	sv_malloc,
-	sv_free,
-	sv_round_buffersize,
-	sv_mappage,
-	sv_get_props,
-	sv_trigger_output,
-	sv_trigger_input,
-	NULL,
-	sv_get_locks,
+	.open			= sv_open,
+	.query_encoding		= sv_query_encoding,
+	.set_params		= sv_set_params,
+	.round_blocksize	= sv_round_blocksize,
+	.halt_output		= sv_halt_output,
+	.halt_input		= sv_halt_input,
+	.getdev			= sv_getdev,
+	.set_port		= sv_mixer_set_port,
+	.get_port		= sv_mixer_get_port,
+	.query_devinfo		= sv_query_devinfo,
+	.allocm			= sv_malloc,
+	.freem			= sv_free,
+	.round_buffersize	= sv_round_buffersize,
+	.mappage		= sv_mappage,
+	.get_props		= sv_get_props,
+	.trigger_output		= sv_trigger_output,
+	.trigger_input		= sv_trigger_input,
+	.get_locks		= sv_get_locks,
 };
 
 #define SV_NFORMATS	4
