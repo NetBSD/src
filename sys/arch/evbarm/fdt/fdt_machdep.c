@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.58 2019/01/31 13:26:21 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.59 2019/03/16 10:05:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.58 2019/01/31 13:26:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.59 2019/03/16 10:05:40 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -545,6 +545,9 @@ initarm(void *arg)
 	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,
 	     nfdt_physmem);
 
+	/*
+	 * initarm_commmon flushes cache if required before AP start
+	 */
 	error = 0;
 	if ((boothowto & RB_MD1) == 0) {
 		VPRINTF("mpstart\n");
