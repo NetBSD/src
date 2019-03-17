@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.238 2019/03/17 06:55:06 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.239 2019/03/17 07:22:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.238 2019/03/17 06:55:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.239 2019/03/17 07:22:18 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -686,9 +686,9 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	    (pp->pr_size < MIN(palloc->pa_pagesz / 16, phsize << 3) ||
 	    trysize / pp->pr_size == (trysize - phsize) / pp->pr_size))) {
 		/* Use the end of the page for the page header */
-		pp->pr_roflags |= PR_PHINPAGE;
 		itemspace = palloc->pa_pagesz - phsize;
 		pp->pr_phoffset = itemspace;
+		pp->pr_roflags |= PR_PHINPAGE;
 	} else {
 		/* The page header will be taken from our page header pool */
 		itemspace = palloc->pa_pagesz;
@@ -729,7 +729,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 * for "cache coloring".
 	 */
 	slack = itemspace - pp->pr_itemsperpage * pp->pr_size;
-	pp->pr_maxcolor = (slack / align) * align;
+	pp->pr_maxcolor = rounddown(slack, align);
 	pp->pr_curcolor = 0;
 
 	pp->pr_nget = 0;
