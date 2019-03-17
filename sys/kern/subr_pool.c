@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.239 2019/03/17 07:22:18 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.240 2019/03/17 14:52:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.239 2019/03/17 07:22:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.240 2019/03/17 14:52:25 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -176,6 +176,8 @@ struct pool_item_header {
 };
 #define	ph_itemlist	ph_u.phu_normal.phu_itemlist
 #define	ph_bitmap	ph_u.phu_notouch.phu_bitmap
+
+#define PHSIZE	ALIGN(sizeof(struct pool_item_header))
 
 #if defined(DIAGNOSTIC) && !defined(KASAN)
 #define POOL_CHECK_MAGIC
@@ -566,6 +568,37 @@ pool_subsystem_init(void)
 	    0, 0, "pcachecpu", &pool_allocator_meta, IPL_NONE);
 }
 
+static inline bool
+pool_init_is_phinpage(const struct pool *pp)
+{
+	size_t pagesize;
+
+	if (pp->pr_roflags & PR_PHINPAGE) {
+		return true;
+	}
+	if (pp->pr_roflags & (PR_NOTOUCH | PR_NOALIGN)) {
+		return false;
+	}
+
+	pagesize = pp->pr_alloc->pa_pagesz;
+
+	/*
+	 * Threshold: the item size is below 1/16 of a page size, and below
+	 * 8 times the page header size. The latter ensures we go off-page
+	 * if the page header would make us waste a rather big item.
+	 */
+	if (pp->pr_size < MIN(pagesize / 16, PHSIZE * 8)) {
+		return true;
+	}
+
+	/* Put the header into the page if it doesn't waste any items. */
+	if (pagesize / pp->pr_size == (pagesize - PHSIZE) / pp->pr_size) {
+		return true;
+	}
+
+	return false;
+}
+
 /*
  * Initialize the given pool resource structure.
  *
@@ -577,7 +610,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
     const char *wchan, struct pool_allocator *palloc, int ipl)
 {
 	struct pool *pp1;
-	size_t trysize, phsize, prsize;
+	size_t prsize;
 	int itemspace, slack;
 
 	/* XXX ioff will be removed. */
@@ -667,26 +700,17 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_drain_hook_arg = NULL;
 	pp->pr_freecheck = NULL;
 	pool_redzone_init(pp, size);
+	pp->pr_itemoffset = 0;
 
 	/*
-	 * Decide whether to put the page header off page to avoid wasting too
-	 * large a part of the page or too big item. Off-page page headers go
-	 * on a hash table, so we can match a returned item with its header
-	 * based on the page address. We use 1/16 of the page size and about 8
-	 * times of the item size as the threshold. (XXX: tune)
-	 *
-	 * However, we'll put the header into the page if we can put it without
-	 * wasting any items.
+	 * Decide whether to put the page header off-page to avoid wasting too
+	 * large a part of the page or too big an item. Off-page page headers
+	 * go on a hash table, so we can match a returned item with its header
+	 * based on the page address.
 	 */
-	pp->pr_itemoffset = 0;
-	trysize = palloc->pa_pagesz;
-	phsize = ALIGN(sizeof(struct pool_item_header));
-	if (pp->pr_roflags & PR_PHINPAGE ||
-	    ((pp->pr_roflags & (PR_NOTOUCH | PR_NOALIGN)) == 0 &&
-	    (pp->pr_size < MIN(palloc->pa_pagesz / 16, phsize << 3) ||
-	    trysize / pp->pr_size == (trysize - phsize) / pp->pr_size))) {
+	if (pool_init_is_phinpage(pp)) {
 		/* Use the end of the page for the page header */
-		itemspace = palloc->pa_pagesz - phsize;
+		itemspace = palloc->pa_pagesz - PHSIZE;
 		pp->pr_phoffset = itemspace;
 		pp->pr_roflags |= PR_PHINPAGE;
 	} else {
