@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.2 2019/03/17 01:33:02 tnn Exp $ */
+/* $NetBSD: ssdfb.c,v 1.3 2019/03/17 04:03:17 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.2 2019/03/17 01:33:02 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.3 2019/03/17 04:03:17 tnn Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/conf.h>
 #include <uvm/uvm_page.h>
+#include <uvm/uvm_device.h>
 #include <sys/condvar.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
@@ -75,6 +77,7 @@ static int	ssdfb_set_display_on(struct ssdfb_softc *, bool, bool);
 static int	ssdfb_set_mode(struct ssdfb_softc *, u_int);
 
 /* frame buffer damage tracking and synchronization */
+static void	ssdfb_udv_attach(struct ssdfb_softc *sc);
 static bool	ssdfb_is_modified(struct ssdfb_softc *sc);
 static bool	ssdfb_clear_modify(struct ssdfb_softc *sc);
 static void	ssdfb_damage(struct ssdfb_softc *);
@@ -189,7 +192,6 @@ static const struct wsdisplay_accessops ssdfb_accessops = {
 
 #define SSDFB_CMD1(c) do { cmd[0] = (c); error = sc->sc_cmd(sc->sc_cookie, cmd, 1, usepoll); } while(0)
 #define SSDFB_CMD2(c, a) do { cmd[0] = (c); cmd[1] = (a); error = sc->sc_cmd(sc->sc_cookie, cmd, 2, usepoll); } while(0)
-#define SSDFB_CMD3(c, a, b) do { cmd[0] = (c); cmd[1] = (a); cmd[2] = (b); error = sc->sc_cmd(sc->sc_cookie, cmd, 3, usepoll); } while(0)
 
 void
 ssdfb_attach(struct ssdfb_softc *sc, int flags)
@@ -349,6 +351,11 @@ ssdfb_detach(struct ssdfb_softc *sc)
 	mutex_exit(&sc->sc_cond_mtx);
 	kthread_join(sc->sc_thread);
 
+	if (sc->sc_uobj != NULL) {
+		mutex_enter(sc->sc_uobj->vmobjlock);
+		sc->sc_uobj->uo_refs--;
+		mutex_exit(sc->sc_uobj->vmobjlock);
+	}
 	config_detach(sc->sc_wsdisplay, DETACH_FORCE);
 
 	cv_destroy(&sc->sc_cond);
@@ -441,7 +448,7 @@ ssdfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSDISPLAYIO_GETCMAP:
 		wc = (struct wsdisplay_cmap *)data;
 		if (wc->index >= __arraycount(cmap) ||
-		    wc->count >= __arraycount(cmap) - wc->index)
+		    wc->count >  __arraycount(cmap) - wc->index)
 			return EINVAL;
 		error = copyout(&cmap[wc->index], wc->red, wc->count);
 		if (error)
@@ -576,7 +583,7 @@ static int
 ssdfb_init(struct ssdfb_softc *sc)
 {
 	int error;
-	uint8_t cmd[3];
+	uint8_t cmd[2];
 	bool usepoll = true;
 
 	/*
@@ -745,6 +752,18 @@ ssdfb_damage(struct ssdfb_softc *sc)
 	}
 }
 
+static void
+ssdfb_udv_attach(struct ssdfb_softc *sc)
+{
+	extern const struct cdevsw wsdisplay_cdevsw;
+	dev_t dev;
+#define WSDISPLAYMINOR(unit, screen)	(((unit) << 8) | (screen))
+	dev = makedev(cdevsw_lookup_major(&wsdisplay_cdevsw),
+	    WSDISPLAYMINOR(device_unit(sc->sc_wsdisplay), 0));
+	sc->sc_uobj = udv_attach(dev, VM_PROT_READ|VM_PROT_WRITE, 0,
+	    sc->sc_ri_bits_len);
+}
+
 static bool
 ssdfb_is_modified(struct ssdfb_softc *sc)
 {
@@ -752,6 +771,9 @@ ssdfb_is_modified(struct ssdfb_softc *sc)
 
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
 		return sc->sc_modified;
+
+	if (sc->sc_uobj == NULL)
+		return false;
 
 	va = (vaddr_t)sc->sc_ri.ri_bits;
 	va_end = va + sc->sc_ri_bits_len;
@@ -775,6 +797,9 @@ ssdfb_clear_modify(struct ssdfb_softc *sc)
 		sc->sc_modified = false;
 		return ret;
 	}
+
+	if (sc->sc_uobj == NULL)
+		return false;
 
 	va = (vaddr_t)sc->sc_ri.ri_bits;
 	va_end = va + sc->sc_ri_bits_len;
@@ -800,6 +825,12 @@ ssdfb_thread(void *arg)
 		ssdfb_set_usepoll(sc, false);
 
 	while(!sc->sc_detaching) {
+		if (sc->sc_mode == WSDISPLAYIO_MODE_DUMBFB &&
+		    sc->sc_uobj == NULL) {
+			mutex_exit(&sc->sc_cond_mtx);
+			ssdfb_udv_attach(sc);
+			mutex_enter(&sc->sc_cond_mtx);
+		}
 		if (!ssdfb_is_modified(sc)) {
 			if (cv_timedwait(&sc->sc_cond, &sc->sc_cond_mtx,
 			    sc->sc_mode == WSDISPLAYIO_MODE_EMUL
