@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.237 2019/03/16 13:33:10 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.238 2019/03/17 06:55:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.237 2019/03/16 13:33:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.238 2019/03/17 06:55:06 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -580,6 +580,9 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	size_t trysize, phsize, prsize;
 	int itemspace, slack;
 
+	/* XXX ioff will be removed. */
+	KASSERT(ioff == 0);
+
 #ifdef DEBUG
 	if (__predict_true(!cold))
 		mutex_enter(&pool_head_lock);
@@ -665,9 +668,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_freecheck = NULL;
 	pool_redzone_init(pp, size);
 
-	/* Silently enforce '0 <= ioff < align'. */
-	ioff %= align;
-
 	/*
 	 * Decide whether to put the page header off page to avoid wasting too
 	 * large a part of the page or too big item. Off-page page headers go
@@ -678,8 +678,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 * However, we'll put the header into the page if we can put it without
 	 * wasting any items.
 	 */
-	pp->pr_itemoffset = ioff;
-	trysize = palloc->pa_pagesz - ((align - ioff) % align);
+	pp->pr_itemoffset = 0;
+	trysize = palloc->pa_pagesz;
 	phsize = ALIGN(sizeof(struct pool_item_header));
 	if (pp->pr_roflags & PR_PHINPAGE ||
 	    ((pp->pr_roflags & (PR_NOTOUCH | PR_NOALIGN)) == 0 &&
@@ -696,13 +696,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		SPLAY_INIT(&pp->pr_phtree);
 	}
 
-	/*
-	 * Alignment is to take place at `ioff' within the item. This means
-	 * we must reserve up to `align - 1' bytes on the page to allow
-	 * appropriate positioning of each item.
-	 */
-	pp->pr_itemsperpage =
-	    (itemspace - ((align - ioff) % align)) / pp->pr_size;
+	pp->pr_itemsperpage = itemspace / pp->pr_size;
 	KASSERT(pp->pr_itemsperpage != 0);
 	if ((pp->pr_roflags & PR_NOTOUCH)) {
 		int idx;
@@ -1012,7 +1006,7 @@ pool_get(struct pool *pp, int flags)
 	}
 
 	mutex_exit(&pp->pr_lock);
-	KASSERT((((vaddr_t)v + pp->pr_itemoffset) & (pp->pr_align - 1)) == 0);
+	KASSERT((((vaddr_t)v) & (pp->pr_align - 1)) == 0);
 	FREECHECK_OUT(&pp->pr_freecheck, v);
 	pool_redzone_fill(pp, v);
 	if (flags & PR_ZERO)
@@ -1243,7 +1237,6 @@ static void
 pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 {
 	const unsigned int align = pp->pr_align;
-	const unsigned int ioff = pp->pr_itemoffset;
 	struct pool_item *pi;
 	void *cp = storage;
 	int n;
@@ -1274,13 +1267,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 	if ((pp->pr_curcolor += align) > pp->pr_maxcolor)
 		pp->pr_curcolor = 0;
 
-	/*
-	 * Adjust storage to apply alignment to `pr_itemoffset' in each item.
-	 */
-	if (ioff != 0)
-		cp = (char *)cp + align - ioff;
-
-	KASSERT((((vaddr_t)cp + ioff) & (align - 1)) == 0);
+	KASSERT((((vaddr_t)cp) & (align - 1)) == 0);
 
 	/*
 	 * Insert remaining chunks on the bucket list.
@@ -1294,7 +1281,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 		while (n--) {
 			pi = (struct pool_item *)cp;
 
-			KASSERT(((((vaddr_t)pi) + ioff) & (align - 1)) == 0);
+			KASSERT((((vaddr_t)pi) & (align - 1)) == 0);
 
 			/* Insert on page list */
 			LIST_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
@@ -1303,7 +1290,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 #endif
 			cp = (char *)cp + pp->pr_size;
 
-			KASSERT((((vaddr_t)cp + ioff) & (align - 1)) == 0);
+			KASSERT((((vaddr_t)cp) & (align - 1)) == 0);
 		}
 	}
 
@@ -2323,8 +2310,7 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int s, void **objectp,
 		return false;
 	}
 
-	KASSERT((((vaddr_t)object + pc->pc_pool.pr_itemoffset) &
-	    (pc->pc_pool.pr_align - 1)) == 0);
+	KASSERT((((vaddr_t)object) & (pc->pc_pool.pr_align - 1)) == 0);
 
 	if (pap != NULL) {
 #ifdef POOL_VTOPHYS
