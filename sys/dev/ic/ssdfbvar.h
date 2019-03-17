@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfbvar.h,v 1.1 2019/03/17 00:57:15 tnn Exp $ */
+/* $NetBSD: ssdfbvar.h,v 1.2 2019/03/17 04:03:17 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -225,6 +225,7 @@ struct ssdfb_softc {
 	bool				sc_detaching;
 	int				sc_backoff;
 	bool				sc_modified;
+	struct uvm_object		*sc_uobj;
 
 	/* reference to bus-specific code */
 	void	*sc_cookie;
