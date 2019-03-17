@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1603 2019/03/12 16:59:16 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1604 2019/03/17 15:57:34 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -140,11 +140,11 @@ The libc and include parts of the resolver are now part of libbind.
 
 Package:	unbound
 Version:	1.7.3
-Current Vers:	1.8.3
-Maintainer:	Christos Zoulas
+Current Vers:	1.9.1
+Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
-Date:		2019-01-09
+Date:		2019-03-17
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
@@ -156,10 +156,10 @@ run configure and update config files in include
 Package:	nsd
 Version:	4.1.26
 Current Vers:	4.1.26
-Maintainer:	Christos Zoulas
+Maintainer:	Nlnetlabs
 Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
 Home Page:	https://www.nlnetlabs.nl/projects/nsd/
-Date:		2019-01-09
+Date:		2019-03-17
 Mailing List:	https://open.nlnetlabs.nl/mailman/listinfo/nsd-users/
 Responsible:	christos
 License:	BSD-like
@@ -602,7 +602,7 @@ sync with ipsec-tools-0_7-branch)
 Package:	jemalloc
 Version:	5.1.0
 Current Vers:	5.1.0
-Maintainer:	Christos Zoulas
+Maintainer:	Jason Evans
 Archive Site:	https://github.com/jemalloc/jemalloc
 Home Page:	https://jemalloc.net
 Date:		2019-03-04
