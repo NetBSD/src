@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.52 2019/02/06 13:28:08 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.53 2019/03/17 08:38:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.52 2019/02/06 13:28:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.53 2019/03/17 08:38:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -494,7 +494,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	pv_addr_t msgbuf;
 	pv_addr_t text;
 	pv_addr_t data;
-	pv_addr_t chunks[KERNEL_L2PT_KERNEL_NUM+KERNEL_L2PT_VMDATA_NUM+11];
+	pv_addr_t chunks[KERNEL_L2PT_KERNEL_NUM + KERNEL_L2PT_VMDATA_NUM + 11];
 #if ARM_MMU_XSCALE == 1
 	pv_addr_t minidataclean;
 #endif
@@ -753,11 +753,13 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		cur_pv.pv_cache = PTE_CACHE;
 	}
 	while (pv != NULL) {
+		if (concat_pvaddr(&cur_pv, pv)) {
+			cur_pv.pv_size += pv->pv_size;
+
+			pv = SLIST_NEXT(pv, pv_list);
+			continue;
+		}
 		if (mapallmem_p) {
-			if (concat_pvaddr(&cur_pv, pv)) {
-				pv = SLIST_NEXT(pv, pv_list);
-				continue;
-			}
 			if (cur_pv.pv_pa + cur_pv.pv_size < pv->pv_pa) {
 				/*
 				 * See if we can extend the current pv to emcompass the
