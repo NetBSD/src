@@ -1,4 +1,4 @@
-#	$NetBSD: files.osf1,v 1.20 2014/11/17 01:01:57 uebayasi Exp $
+#	$NetBSD: files.osf1,v 1.21 2019/03/17 14:11:48 christos Exp $
 #
 # Config file description for machine-independent OSF/1 compat code.
 # Included by ports that need it.
@@ -15,24 +15,24 @@ file	compat/osf1/osf1_syscalls.c	compat_osf1
 file	compat/osf1/osf1_sysent.c	compat_osf1
 
 # OSF/1 <-> NetBSD structure, flag, and value conversion files
-file	compat/osf1/osf1_cvt.c		compat_osf1
+file	compat/osf1/osf1_cvt.c		compat_osf1 | compat_linux
 file	compat/osf1/osf1_errno.c	compat_osf1
-file	compat/osf1/osf1_signo.c	compat_osf1
+file	compat/osf1/osf1_signo.c	compat_osf1 | compat_linux
 
 # functionality emulation files
 file	compat/osf1/osf1_descrip.c	compat_osf1
 file	compat/osf1/osf1_exec.c		compat_osf1
 file	compat/osf1/osf1_exec_ecoff.c	compat_osf1 & exec_ecoff
-file	compat/osf1/osf1_file.c		compat_osf1
-file	compat/osf1/osf1_generic.c	compat_osf1
+file	compat/osf1/osf1_file.c		compat_osf1 | compat_linux
+file	compat/osf1/osf1_generic.c	compat_osf1 | compat_linux
 file	compat/osf1/osf1_ioctl.c	compat_osf1
-file	compat/osf1/osf1_misc.c		compat_osf1
+file	compat/osf1/osf1_misc.c		compat_osf1 | compat_linux
 file	compat/osf1/osf1_mmap.c		compat_osf1
 file	compat/osf1/osf1_mod.c		compat_osf1
-file	compat/osf1/osf1_mount.c	compat_osf1
+file	compat/osf1/osf1_mount.c	compat_osf1 | compat_linux
 file	compat/osf1/osf1_prot.c		compat_osf1
-file	compat/osf1/osf1_resource.c	compat_osf1
+file	compat/osf1/osf1_resource.c	compat_osf1 | compat_linux
 file	compat/osf1/osf1_signal.c	compat_osf1
 file	compat/osf1/osf1_socket.c	compat_osf1
 file	compat/osf1/osf1_sysv_ipc.c	compat_osf1
-file	compat/osf1/osf1_time.c		compat_osf1
+file	compat/osf1/osf1_time.c		compat_osf1 | compat_linux
