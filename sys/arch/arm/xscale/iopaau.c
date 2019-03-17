@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.17 2012/02/12 16:31:01 matt Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.18 2019/03/17 06:36:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.17 2012/02/12 16:31:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.18 2019/03/17 06:36:22 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -647,13 +647,13 @@ iopaau_attach(struct iopaau_softc *sc)
 
 	/*
 	 * Initialize global resources.  Ok to do here, since there's
-	 * only one AAU.
+	 * only one AAU.  The structures are 32-byte aligned.
 	 */
 	iopaau_desc_4_cache = pool_cache_init(sizeof(struct aau_desc_4),
-	    8 * 4, offsetof(struct aau_desc_4, d_nda), 0, "aaud4pl",
+	    8 * 4, 0, 0, "aaud4pl",
 	    NULL, IPL_VM, iopaau_desc_ctor, NULL, NULL);
 	iopaau_desc_8_cache = pool_cache_init(sizeof(struct aau_desc_8),
-	    8 * 4, offsetof(struct aau_desc_8, d_nda), 0, "aaud8pl",
+	    8 * 4, 0, 0, "aaud8pl",
 	    NULL, IPL_VM, iopaau_desc_ctor, NULL, NULL);
 
 	/* Register us with dmover. */
