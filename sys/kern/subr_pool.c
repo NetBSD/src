@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.241 2019/03/17 15:33:50 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.242 2019/03/17 19:57:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.241 2019/03/17 15:33:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.242 2019/03/17 19:57:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -163,12 +163,12 @@ struct pool_item_header {
 	uint16_t		ph_nmissing;	/* # of chunks in use */
 	uint16_t		ph_off;		/* start offset in page */
 	union {
-		/* !PR_NOTOUCH */
+		/* !PR_USEBMAP */
 		struct {
 			LIST_HEAD(, pool_item)
 				phu_itemlist;	/* chunk list for this page */
 		} phu_normal;
-		/* PR_NOTOUCH */
+		/* PR_USEBMAP */
 		struct {
 			pool_item_bitmap_t phu_bitmap[1];
 		} phu_notouch;
@@ -269,7 +269,7 @@ pr_item_bitmap_index(const struct pool *pp, const struct pool_item_header *ph,
 	const char *cp = v;
 	unsigned int idx;
 
-	KASSERT(pp->pr_roflags & PR_NOTOUCH);
+	KASSERT(pp->pr_roflags & PR_USEBMAP);
 	idx = (cp - (char *)ph->ph_page - ph->ph_off) / pp->pr_size;
 
 	if (__predict_false(idx >= pp->pr_itemsperpage)) {
@@ -598,6 +598,16 @@ pool_init_is_phinpage(const struct pool *pp)
 	return false;
 }
 
+static inline bool
+pool_init_is_usebmap(const struct pool *pp)
+{
+	if (pp->pr_roflags & PR_NOTOUCH) {
+		return true;
+	}
+
+	return false;
+}
+
 /*
  * Initialize the given pool resource structure.
  *
@@ -718,9 +728,24 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		SPLAY_INIT(&pp->pr_phtree);
 	}
 
+	/*
+	 * Decide whether to use a bitmap or a linked list to manage freed
+	 * items.
+	 */
+	if (pool_init_is_usebmap(pp)) {
+		pp->pr_roflags |= PR_USEBMAP;
+	}
+
 	pp->pr_itemsperpage = itemspace / pp->pr_size;
 	KASSERT(pp->pr_itemsperpage != 0);
-	if ((pp->pr_roflags & PR_NOTOUCH)) {
+
+	/*
+	 * If we're off-page and use a bitmap, choose the appropriate pool to
+	 * allocate page headers, whose size varies depending on the bitmap. If
+	 * we're just off-page, take the first pool, no extra size. If we're
+	 * on-page, nothing to do.
+	 */
+	if (!(pp->pr_roflags & PR_PHINPAGE) && (pp->pr_roflags & PR_USEBMAP)) {
 		int idx;
 
 		for (idx = 0; pp->pr_itemsperpage > PHPOOL_FREELIST_NELEM(idx);
@@ -733,18 +758,15 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 			 * PHPOOL_MAX and PHPOOL_FREELIST_NELEM.
 			 */
 			panic("%s: [%s] too large itemsperpage(%d) for "
-			    "PR_NOTOUCH", __func__,
+			    "PR_USEBMAP", __func__,
 			    pp->pr_wchan, pp->pr_itemsperpage);
 		}
 		pp->pr_phpool = &phpool[idx];
-	} else if ((pp->pr_roflags & PR_PHINPAGE) == 0) {
+	} else if (!(pp->pr_roflags & PR_PHINPAGE)) {
 		pp->pr_phpool = &phpool[0];
-	}
-#if defined(DIAGNOSTIC)
-	else {
+	} else {
 		pp->pr_phpool = NULL;
 	}
-#endif
 
 	/*
 	 * Use the slack between the chunks and the page header
@@ -978,7 +1000,7 @@ pool_get(struct pool *pp, int flags)
 		/* Start the allocation process over. */
 		goto startover;
 	}
-	if (pp->pr_roflags & PR_NOTOUCH) {
+	if (pp->pr_roflags & PR_USEBMAP) {
 		KASSERTMSG((ph->ph_nmissing < pp->pr_itemsperpage),
 		    "%s: %s: page empty", __func__, pp->pr_wchan);
 		v = pr_item_bitmap_get(pp, ph);
@@ -1000,7 +1022,7 @@ pool_get(struct pool *pp, int flags)
 	}
 	ph->ph_nmissing++;
 	if (ph->ph_nmissing == pp->pr_itemsperpage) {
-		KASSERTMSG(((pp->pr_roflags & PR_NOTOUCH) ||
+		KASSERTMSG(((pp->pr_roflags & PR_USEBMAP) ||
 			LIST_EMPTY(&ph->ph_itemlist)),
 		    "%s: [%s] nmissing (%u) inconsistent", __func__,
 			pp->pr_wchan, ph->ph_nmissing);
@@ -1061,7 +1083,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 	/*
 	 * Return to item list.
 	 */
-	if (pp->pr_roflags & PR_NOTOUCH) {
+	if (pp->pr_roflags & PR_USEBMAP) {
 		pr_item_bitmap_put(pp, ph, v);
 	} else {
 		pr_item_linkedlist_put(pp, ph, v);
@@ -1302,7 +1324,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 	n = pp->pr_itemsperpage;
 	pp->pr_nitems += n;
 
-	if (pp->pr_roflags & PR_NOTOUCH) {
+	if (pp->pr_roflags & PR_USEBMAP) {
 		pr_item_bitmap_init(pp, ph);
 	} else {
 		while (n--) {
@@ -1621,7 +1643,7 @@ pool_print_pagelist(struct pool *pp, struct pool_pagelist *pl,
 		    ph->ph_page, ph->ph_nmissing, ph->ph_time);
 #ifdef POOL_CHECK_MAGIC
 		struct pool_item *pi;
-		if (!(pp->pr_roflags & PR_NOTOUCH)) {
+		if (!(pp->pr_roflags & PR_USEBMAP)) {
 			LIST_FOREACH(pi, &ph->ph_itemlist, pi_list) {
 				if (pi->pi_magic != PI_MAGIC) {
 					(*pr)("\t\t\titem %p, magic 0x%x\n",
@@ -1768,7 +1790,7 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 		}
 	}
 
-	if ((pp->pr_roflags & PR_NOTOUCH) != 0)
+	if ((pp->pr_roflags & PR_USEBMAP) != 0)
 		return 0;
 
 	for (pi = LIST_FIRST(&ph->ph_itemlist), n = 0;
@@ -3039,7 +3061,7 @@ static bool
 pool_allocated(struct pool *pp, struct pool_item_header *ph, uintptr_t addr)
 {
 
-	if ((pp->pr_roflags & PR_NOTOUCH) != 0) {
+	if ((pp->pr_roflags & PR_USEBMAP) != 0) {
 		unsigned int idx = pr_item_bitmap_index(pp, ph, (void *)addr);
 		pool_item_bitmap_t *bitmap =
 		    ph->ph_bitmap + (idx / BITMAP_SIZE);
