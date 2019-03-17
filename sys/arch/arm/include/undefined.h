@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.h,v 1.12 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: undefined.h,v 1.13 2019/03/17 08:34:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe.
@@ -64,7 +64,7 @@ enum arm_coprocs {
 	VFP_COPROC2 = 11,
 	DEBUG_COPROC = 14,
 	SYSTEM_COPROC = 15,
-	/* 
+	/*
 	 *The following are not really co-processors, but are on the end
 	 * of the unknown instruction table for each coproc.
 	 */
