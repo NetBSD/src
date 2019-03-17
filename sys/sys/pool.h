@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.84 2019/02/10 17:13:33 christos Exp $	*/
+/*	$NetBSD: pool.h,v 1.85 2019/03/17 19:57:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -150,6 +150,7 @@ struct pool {
 #define	PR_GROWING	0x2000	/* pool_grow in progress */
 #define	PR_GROWINGNOWAIT 0x4000	/* pool_grow in progress by PR_NOWAIT alloc */
 #define	PR_ZERO		0x8000	/* zero data before returning */
+#define	PR_USEBMAP	0x10000	/* use a bitmap to manage freed items */
 
 	/*
 	 * `pr_lock' protects the pool's data structures when removing
@@ -168,7 +169,7 @@ struct pool {
 
 	int		pr_maxcolor;	/* Cache colouring */
 	int		pr_curcolor;
-	int		pr_phoffset;	/* Offset in page of page header */
+	int		pr_phoffset;	/* unused */
 
 	/*
 	 * Warning message to be issued, and a per-time-delta rate cap,
