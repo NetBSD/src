@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.63 2018/09/03 16:29:34 riastradh Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.64 2019/03/17 06:09:35 tnn Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.63 2018/09/03 16:29:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.64 2019/03/17 06:09:35 tnn Exp $");
 
 #include "opt_wsfont.h"
 
@@ -145,6 +145,26 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.63 2018/09/03 16:29:34 riastradh Exp $"
 #include <dev/wsfont/Go_Mono_12x23.h>
 #endif
 
+#ifdef FONT_SPLEEN12x24
+#include <dev/wsfont/spleen12x24.h>
+#endif
+
+#ifdef FONT_SPLEEN16x32
+#include <dev/wsfont/spleen16x32.h>
+#endif
+
+#ifdef FONT_SPLEEN32x64
+#include <dev/wsfont/spleen32x64.h>
+#endif
+
+#ifdef FONT_SPLEEN5x8
+#include <dev/wsfont/spleen5x8.h>
+#endif
+
+#ifdef FONT_SPLEEN8x16
+#include <dev/wsfont/spleen8x16.h>
+#endif
+
 /* Make sure we always have at least one bitmap font. */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
@@ -245,6 +265,21 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_GO_MONO12x23
 	{ { NULL, NULL }, &Go_Mono_12x23, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN12x24
+	{ { NULL, NULL }, &spleen12x24, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN16x32
+	{ { NULL, NULL }, &spleen16x32, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN32x64
+	{ { NULL, NULL }, &spleen32x64, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN5x8
+	{ { NULL, NULL }, &spleen5x8, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN8x16
+	{ { NULL, NULL }, &spleen8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ { NULL, NULL }, NULL, 0, 0, 0 },
 };
