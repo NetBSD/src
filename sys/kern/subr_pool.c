@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.240 2019/03/17 14:52:25 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.241 2019/03/17 15:33:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.240 2019/03/17 14:52:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.241 2019/03/17 15:33:50 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -440,8 +440,7 @@ pr_find_pagehead(struct pool *pp, void *v)
 		    (void *)((uintptr_t)v & pp->pr_alloc->pa_pagemask);
 
 		if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
-			ph = (struct pool_item_header *)
-			    ((char *)page + pp->pr_phoffset);
+			ph = (struct pool_item_header *)page;
 			if (__predict_false((void *)ph->ph_page != page)) {
 				panic("%s: [%s] item %p not part of pool",
 				    __func__, pp->pr_wchan, v);
@@ -700,7 +699,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_drain_hook_arg = NULL;
 	pp->pr_freecheck = NULL;
 	pool_redzone_init(pp, size);
-	pp->pr_itemoffset = 0;
 
 	/*
 	 * Decide whether to put the page header off-page to avoid wasting too
@@ -709,14 +707,14 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 * based on the page address.
 	 */
 	if (pool_init_is_phinpage(pp)) {
-		/* Use the end of the page for the page header */
-		itemspace = palloc->pa_pagesz - PHSIZE;
-		pp->pr_phoffset = itemspace;
+		/* Use the beginning of the page for the page header */
+		itemspace = palloc->pa_pagesz - roundup(PHSIZE, align);
+		pp->pr_itemoffset = roundup(PHSIZE, align);
 		pp->pr_roflags |= PR_PHINPAGE;
 	} else {
 		/* The page header will be taken from our page header pool */
 		itemspace = palloc->pa_pagesz;
-		pp->pr_phoffset = 0;
+		pp->pr_itemoffset = 0;
 		SPLAY_INIT(&pp->pr_phtree);
 	}
 
@@ -856,7 +854,7 @@ pool_alloc_item_header(struct pool *pp, void *storage, int flags)
 	struct pool_item_header *ph;
 
 	if ((pp->pr_roflags & PR_PHINPAGE) != 0)
-		ph = (void *)((char *)storage + pp->pr_phoffset);
+		ph = storage;
 	else
 		ph = pool_get(pp->pr_phpool, flags);
 
@@ -1284,9 +1282,14 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 	pp->pr_nidle++;
 
 	/*
+	 * The item space starts after the on-page header, if any.
+	 */
+	ph->ph_off = pp->pr_itemoffset;
+
+	/*
 	 * Color this page.
 	 */
-	ph->ph_off = pp->pr_curcolor;
+	ph->ph_off += pp->pr_curcolor;
 	cp = (char *)cp + ph->ph_off;
 	if ((pp->pr_curcolor += align) > pp->pr_maxcolor)
 		pp->pr_curcolor = 0;
