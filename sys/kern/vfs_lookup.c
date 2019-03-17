@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.209 2019/03/12 14:03:35 hannken Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.210 2019/03/17 10:14:52 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.209 2019/03/12 14:03:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.210 2019/03/17 10:14:52 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -537,6 +537,13 @@ namei_getstartdir(struct namei_state *state)
 	struct lwp *self = curlwp;	/* thread doing namei() */
 	struct vnode *rootdir, *erootdir, *curdir, *startdir;
 
+	if (state->root_referenced) {
+		vrele(state->ndp->ni_rootdir);
+		if (state->ndp->ni_erootdir != NULL)
+			vrele(state->ndp->ni_erootdir);
+		state->root_referenced = 0;
+	}
+
 	cwdi = self->l_proc->p_cwdi;
 	rw_enter(&cwdi->cwdi_lock, RW_READER);
 
@@ -589,7 +596,6 @@ namei_getstartdir(struct namei_state *state)
 	 * A multithreaded process may chroot during namei.
 	 */
 	vref(startdir);
-	KASSERT(! state->root_referenced);
 	vref(state->ndp->ni_rootdir);
 	if (state->ndp->ni_erootdir != NULL)
 		vref(state->ndp->ni_erootdir);
