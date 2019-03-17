@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.64 2019/03/17 06:09:35 tnn Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.65 2019/03/17 09:54:06 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.64 2019/03/17 06:09:35 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.65 2019/03/17 09:54:06 rin Exp $");
 
 #include "opt_wsfont.h"
 
@@ -126,42 +126,52 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.64 2019/03/17 06:09:35 tnn Exp $");
 #endif
 
 #ifdef FONT_DEJAVU_SANS_MONO12x22
+#define HAVE_FONT 1
 #include <dev/wsfont/DejaVu_Sans_Mono_12x22.h>
 #endif
 
 #ifdef FONT_DROID_SANS_MONO12x22
+#define HAVE_FONT 1
 #include <dev/wsfont/Droid_Sans_Mono_12x22.h>
 #endif
 
 #ifdef FONT_DROID_SANS_MONO9x18
+#define HAVE_FONT 1
 #include <dev/wsfont/Droid_Sans_Mono_9x18.h>
 #endif
 
 #ifdef FONT_DROID_SANS_MONO19x36
+#define HAVE_FONT 1
 #include <dev/wsfont/Droid_Sans_Mono_19x36.h>
 #endif
 
 #ifdef FONT_GO_MONO12x23
+#define HAVE_FONT 1
 #include <dev/wsfont/Go_Mono_12x23.h>
 #endif
 
 #ifdef FONT_SPLEEN12x24
+#define HAVE_FONT 1
 #include <dev/wsfont/spleen12x24.h>
 #endif
 
 #ifdef FONT_SPLEEN16x32
+#define HAVE_FONT 1
 #include <dev/wsfont/spleen16x32.h>
 #endif
 
 #ifdef FONT_SPLEEN32x64
+#define HAVE_FONT 1
 #include <dev/wsfont/spleen32x64.h>
 #endif
 
 #ifdef FONT_SPLEEN5x8
+#define HAVE_FONT 1
 #include <dev/wsfont/spleen5x8.h>
 #endif
 
 #ifdef FONT_SPLEEN8x16
+#define HAVE_FONT 1
 #include <dev/wsfont/spleen8x16.h>
 #endif
 
