@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.1 2019/03/17 00:57:15 tnn Exp $ */
+/* $NetBSD: ssdfb.c,v 1.2 2019/03/17 01:33:02 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.1 2019/03/17 00:57:15 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.2 2019/03/17 01:33:02 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -789,7 +789,8 @@ ssdfb_clear_modify(struct ssdfb_softc *sc)
 }
 
 static void
-ssdfb_thread(void *arg) {
+ssdfb_thread(void *arg)
+{
 	struct ssdfb_softc *sc = (struct ssdfb_softc *)arg;
 	int error;
 
@@ -824,12 +825,14 @@ ssdfb_thread(void *arg) {
 }
 
 static void
-ssdfb_set_usepoll(struct ssdfb_softc *sc, bool enable) {
+ssdfb_set_usepoll(struct ssdfb_softc *sc, bool enable)
+{
 	sc->sc_usepoll = enable;
 }
 
 static int
-ssdfb_sync(struct ssdfb_softc *sc, bool usepoll) {
+ssdfb_sync(struct ssdfb_softc *sc, bool usepoll)
+{
 	struct rasops_info *ri = &sc->sc_ri;
 	int block_size = 8;
 	int ri_block_stride = ri->ri_stride * block_size;
@@ -933,7 +936,8 @@ ssdfb_transpose_block_8bpp(uint8_t *src, size_t src_stride)
 }
 
 static const struct ssdfb_product *
-ssdfb_lookup_product(ssdfb_product_id_t id) {
+ssdfb_lookup_product(ssdfb_product_id_t id)
+{
 	int i;
 
 	for (i = 0; i < __arraycount(ssdfb_products); i++) {
@@ -945,7 +949,8 @@ ssdfb_lookup_product(ssdfb_product_id_t id) {
 }
 
 static int
-ssdfb_pick_font(int *cookiep, struct wsdisplay_font **fontp) {
+ssdfb_pick_font(int *cookiep, struct wsdisplay_font **fontp)
+{
 	int error;
 	int c;
 	struct wsdisplay_font *f;
