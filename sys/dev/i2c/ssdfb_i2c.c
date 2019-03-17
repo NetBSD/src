@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_i2c.c,v 1.1 2019/03/17 01:03:47 tnn Exp $ */
+/* $NetBSD: ssdfb_i2c.c,v 1.2 2019/03/17 01:47:57 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_i2c.c,v 1.1 2019/03/17 01:03:47 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_i2c.c,v 1.2 2019/03/17 01:47:57 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,7 +43,6 @@ struct ssdfb_i2c_softc {
 	struct		ssdfb_softc sc;
 	i2c_tag_t	sc_i2c_tag;
 	i2c_addr_t	sc_i2c_addr;
-	bool		sc_parent_is_smbus;
 };
 
 static int	ssdfb_i2c_match(device_t, cfdata_t, void *);
@@ -156,7 +155,7 @@ ssdfb_i2c_transfer_rect(void *cookie, uint8_t fromcol, uint8_t tocol,
 	struct ssdfb_i2c_softc *sc = (struct ssdfb_i2c_softc *)cookie;
 	int flags = usepoll ? I2C_F_POLL : 0;
 	uint8_t cb = SSDFB_I2C_CTRL_BYTE_DATA_MASK;
-	uint8_t data [] = {0, 0, 0};
+	uint8_t data[] = {0, 0, 0};
 	uint8_t cmd[2];
 	int error;
 
