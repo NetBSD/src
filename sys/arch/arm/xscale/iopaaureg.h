@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaaureg.h,v 1.3 2002/08/03 21:58:56 thorpej Exp $	*/
+/*	$NetBSD: iopaaureg.h,v 1.4 2019/03/17 06:36:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@ struct aau_desc_4 {
 	uint32_t d_pa;			/* our physical address */
 
 	/* Hardware portion -- must be 32-byte aligned. */
-	uint32_t	d_nda;		/* next descriptor address */
+	uint32_t	d_nda __aligned(32); /* next descriptor address */
 	uint32_t	d_sar[4];	/* source address */
 	uint32_t	d_dar;		/* destination address */
 	uint32_t	d_bc;		/* byte count */
@@ -73,7 +73,7 @@ struct aau_desc_8 {
 	uint32_t d_pa;			/* our physical address */
 
 	/* Hardware portion -- must be 32-byte aligned. */
-	uint32_t	d_nda;		/* next descriptor address */
+	uint32_t	d_nda __aligned(32); /* next descriptor address */
 	uint32_t	d_sar[4];	/* source address */
 	uint32_t	d_dar;		/* destination address */
 	uint32_t	d_bc;		/* byte count */
@@ -87,7 +87,7 @@ struct aau_desc_16 {
 	uint32_t d_pa;			/* our physical address */
 
 	/* Hardware portion -- must be 32-byte aligned. */
-	uint32_t	d_nda;		/* next descriptor address */
+	uint32_t	d_nda __aligned(32); /* next descriptor address */
 	uint32_t	d_sar[4];	/* source address */
 	uint32_t	d_dar;		/* destination address */
 	uint32_t	d_bc;		/* byte count */
@@ -104,7 +104,7 @@ struct aau_desc_32 {
 	uint32_t d_pa;			/* our physical address */
 
 	/* Hardware portion -- must be 32-byte aligned. */
-	uint32_t	d_nda;		/* next descriptor address */
+	uint32_t	d_nda __aligned(32); /* next descriptor address */
 	uint32_t	d_sar[4];	/* source address */
 	uint32_t	d_dar;		/* destination address */
 	uint32_t	d_bc;		/* byte count */
