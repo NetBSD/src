@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.128 2019/01/27 02:08:37 pgoyette Exp $	*/
+/*	$NetBSD: cpu.c,v 1.129 2019/03/17 08:37:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.128 2019/01/27 02:08:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.129 2019/03/17 08:37:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -70,8 +70,12 @@ uint32_t cpu_mpidr[MAXCPUS] = {
 
 volatile u_int arm_cpu_hatched __cacheline_aligned = 0;
 volatile uint32_t arm_cpu_mbox __cacheline_aligned = 0;
-uint32_t arm_cpu_marker[2] __cacheline_aligned = { 0, 0 };
 u_int arm_cpu_max = 1;
+
+#ifdef MPDEBUG
+uint32_t arm_cpu_marker[2] __cacheline_aligned = { 0, 0 };
+#endif
+
 #endif
 
 /* Prototypes */
