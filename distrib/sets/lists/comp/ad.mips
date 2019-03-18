@@ -1,12 +1,4 @@
-# $NetBSD: ad.mips,v 1.79 2019/02/07 00:04:56 mrg Exp $
--./usr/lib/64/libgomp.a
--./usr/lib/64/libgomp.so
--./usr/lib/64/libgomp.so.1
--./usr/lib/64/libgomp.so.1.1
--./usr/lib/64/libgomp.so.2
--./usr/lib/64/libgomp.so.2.0
--./usr/lib/64/libgomp_p.a
--./usr/lib/64/libgomp_pic.a
+# $NetBSD: ad.mips,v 1.80 2019/03/18 09:03:08 wiz Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/clang-4.0/msa.h			comp-obsolete		obsolete
