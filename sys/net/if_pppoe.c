@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.146 2018/10/27 06:46:43 maxv Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.147 2019/03/18 11:38:03 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.146 2018/10/27 06:46:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.147 2019/03/18 11:38:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1076,7 +1076,7 @@ pppoe_data_input(struct mbuf *m)
 			static int curpps = 0;
 			/*
 			 * avoid to send wrong PADT which is response from
-			 * session stage pakcets for other hosts when parent
+			 * session stage packets for other hosts when parent
 			 * ethernet is promiscuous mode.
 			 */
 			if (pppoe_is_my_frame(dhost, rcvif) &&
