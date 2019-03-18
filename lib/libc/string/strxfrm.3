@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strxfrm.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strxfrm.3,v 1.11 2007/02/18 00:46:47 wiz Exp $
+.\"	$NetBSD: strxfrm.3,v 1.12 2019/03/18 02:15:21 mrg Exp $
 .\"
-.Dd February 18, 2007
+.Dd March 6, 2019
 .Dt STRXFRM 3
 .Os
 .Sh NAME
@@ -45,9 +45,10 @@
 .Ft size_t
 .Fn strxfrm "char * restrict dst" "const char * restrict src" "size_t n"
 .Sh DESCRIPTION
-The idea of
+The
 .Fn strxfrm
-is to
+function does something horrible.
+The idea is to
 .Dq un-localize
 a string: the function transforms
 .Ar src ,
