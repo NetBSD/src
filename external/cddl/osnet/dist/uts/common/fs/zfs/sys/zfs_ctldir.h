@@ -46,6 +46,7 @@ void zfsctl_create(zfsvfs_t *);
 void zfsctl_destroy(zfsvfs_t *);
 #ifdef __NetBSD__
 int zfsctl_loadvnode(vfs_t *, vnode_t *, const void *, size_t, const void **);
+int zfsctl_vptofh(vnode_t *, fid_t *, size_t *);
 int zfsctl_root(zfsvfs_t *, vnode_t **);
 int zfsctl_snapshot(zfsvfs_t *, vnode_t **);
 #else

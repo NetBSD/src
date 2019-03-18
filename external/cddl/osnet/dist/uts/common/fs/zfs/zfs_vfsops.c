@@ -136,7 +136,8 @@ static int zfs_umount(vfs_t *vfsp, int fflag);
 static int zfs_root(vfs_t *vfsp, int flags, vnode_t **vpp);
 static int zfs_netbsd_root(vfs_t *vfsp, vnode_t **vpp);
 static int zfs_statvfs(vfs_t *vfsp, struct statvfs *statp);
-static int zfs_fhtovp(vfs_t *vfsp, fid_t *fidp, vnode_t **vpp);
+static int zfs_netbsd_vptofh(vnode_t *vp, fid_t *fidp, size_t *fh_size);
+static int zfs_netbsd_fhtovp(vfs_t *vfsp, fid_t *fidp, vnode_t **vpp);
 static int zfs_vget(vfs_t *vfsp, ino_t ino, vnode_t **vpp);
 static int zfs_sync(vfs_t *vfsp, int waitfor);
 static int zfs_netbsd_sync(vfs_t *vfsp, int waitfor, cred_t *cr);
@@ -172,8 +173,8 @@ struct vfsops zfs_vfsops = {
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_reinit = (void *)nullop,
-	.vfs_vptofh = (void *)eopnotsupp,
-	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = zfs_netbsd_vptofh,
+	.vfs_fhtovp = zfs_netbsd_fhtovp,
 	.vfs_quotactl = (void *)eopnotsupp,
 	.vfs_extattrctl = (void *)eopnotsupp,
 	.vfs_suspendctl = genfs_suspendctl,
@@ -254,6 +255,171 @@ zfs_netbsd_root(vfs_t *vfsp, vnode_t **vpp)
 	return zfs_root(vfsp, LK_EXCLUSIVE | LK_RETRY, vpp);
 }
 
+static int
+zfs_netbsd_vptofh(vnode_t *vp, fid_t *fidp, size_t *fh_size)
+{
+	znode_t		*zp;
+	zfsvfs_t	*zfsvfs;
+	uint32_t	gen;
+	uint64_t	gen64;
+	uint64_t	object;
+	zfid_short_t	*zfid;
+	int		size, i, error;
+
+	if (zfsctl_is_node(vp))
+		return zfsctl_vptofh(vp, fidp, fh_size);
+
+	zp = VTOZ(vp);
+	zfsvfs = zp->z_zfsvfs;
+	object = zp->z_id;
+
+	ZFS_ENTER(zfsvfs);
+	ZFS_VERIFY_ZP(zp);
+
+	if ((error = sa_lookup(zp->z_sa_hdl, SA_ZPL_GEN(zfsvfs),
+	    &gen64, sizeof (uint64_t))) != 0) {
+		ZFS_EXIT(zfsvfs);
+		return (error);
+	}
+
+	gen = (uint32_t)gen64;
+
+	size = (zfsvfs->z_parent != zfsvfs) ? LONG_FID_LEN : SHORT_FID_LEN;
+
+	if (*fh_size < size) {
+		ZFS_EXIT(zfsvfs);
+		*fh_size = size;
+		return SET_ERROR(E2BIG);
+	}
+	*fh_size = size;
+
+	zfid = (zfid_short_t *)fidp;
+
+	zfid->zf_len = size;
+
+	for (i = 0; i < sizeof (zfid->zf_object); i++)
+		zfid->zf_object[i] = (uint8_t)(object >> (8 * i));
+
+	/* Must have a non-zero generation number to distinguish from .zfs */
+	if (gen == 0)
+		gen = 1;
+	for (i = 0; i < sizeof (zfid->zf_gen); i++)
+		zfid->zf_gen[i] = (uint8_t)(gen >> (8 * i));
+
+	if (size == LONG_FID_LEN) {
+		uint64_t	objsetid = dmu_objset_id(zfsvfs->z_os);
+		zfid_long_t	*zlfid;
+
+		zlfid = (zfid_long_t *)fidp;
+
+		for (i = 0; i < sizeof (zlfid->zf_setid); i++)
+			zlfid->zf_setid[i] = (uint8_t)(objsetid >> (8 * i));
+
+		/* XXX - this should be the generation number for the objset */
+		for (i = 0; i < sizeof (zlfid->zf_setgen); i++)
+			zlfid->zf_setgen[i] = 0;
+	}
+
+	ZFS_EXIT(zfsvfs);
+	return 0;
+}
+
+static int
+zfs_netbsd_fhtovp(vfs_t *vfsp, fid_t *fidp, vnode_t **vpp)
+{
+	zfsvfs_t	*zfsvfs = vfsp->vfs_data;
+	znode_t		*zp;
+	vnode_t		*dvp;
+	uint64_t	object = 0;
+	uint64_t	fid_gen = 0;
+	uint64_t	gen_mask;
+	uint64_t	zp_gen;
+	int 		i, err;
+
+	*vpp = NULL;
+
+	ZFS_ENTER(zfsvfs);
+
+	if (zfsvfs->z_parent == zfsvfs && fidp->fid_len == LONG_FID_LEN) {
+		zfid_long_t	*zlfid = (zfid_long_t *)fidp;
+		uint64_t	objsetid = 0;
+		uint64_t	setgen = 0;
+
+		for (i = 0; i < sizeof (zlfid->zf_setid); i++)
+			objsetid |= ((uint64_t)zlfid->zf_setid[i]) << (8 * i);
+
+		for (i = 0; i < sizeof (zlfid->zf_setgen); i++)
+			setgen |= ((uint64_t)zlfid->zf_setgen[i]) << (8 * i);
+
+		ZFS_EXIT(zfsvfs);
+
+		err = zfsctl_lookup_objset(vfsp, objsetid, &zfsvfs);
+		if (err)
+			return (SET_ERROR(EINVAL));
+		ZFS_ENTER(zfsvfs);
+	}
+
+	if (fidp->fid_len == SHORT_FID_LEN || fidp->fid_len == LONG_FID_LEN) {
+		zfid_short_t	*zfid = (zfid_short_t *)fidp;
+
+		for (i = 0; i < sizeof (zfid->zf_object); i++)
+			object |= ((uint64_t)zfid->zf_object[i]) << (8 * i);
+
+		for (i = 0; i < sizeof (zfid->zf_gen); i++)
+			fid_gen |= ((uint64_t)zfid->zf_gen[i]) << (8 * i);
+	} else {
+		ZFS_EXIT(zfsvfs);
+		return (SET_ERROR(EINVAL));
+	}
+
+	/* A zero fid_gen means we are in the .zfs control directories */
+	if (fid_gen == 0 &&
+	     (object == ZFSCTL_INO_ROOT || object == ZFSCTL_INO_SNAPDIR)) {
+		ZFS_EXIT(zfsvfs);
+		if (object == ZFSCTL_INO_ROOT)
+			err = zfsctl_root(zfsvfs, vpp);
+		else
+			err = zfsctl_snapshot(zfsvfs, vpp);
+		if (err)
+			return err;
+		err = vn_lock(*vpp, LK_EXCLUSIVE);
+		if (err) {
+			vrele(*vpp);
+			*vpp = NULL;
+			return err;
+		}
+		return 0;
+	}
+
+	gen_mask = -1ULL >> (64 - 8 * i);
+
+	dprintf("getting %llu [%u mask %llx]\n", object, fid_gen, gen_mask);
+	if (err = zfs_zget(zfsvfs, object, &zp)) {
+		ZFS_EXIT(zfsvfs);
+		return SET_ERROR(ESTALE);
+	}
+	(void) sa_lookup(zp->z_sa_hdl, SA_ZPL_GEN(zfsvfs), &zp_gen,
+	    sizeof (uint64_t));
+	zp_gen = zp_gen & gen_mask;
+	if (zp_gen == 0)
+		zp_gen = 1;
+	if (zp->z_unlinked || zp_gen != fid_gen) {
+		dprintf("znode gen (%u) != fid gen (%u)\n", zp_gen, fid_gen);
+		VN_RELE(ZTOV(zp));
+		ZFS_EXIT(zfsvfs);
+		return SET_ERROR(ESTALE);
+	}
+
+	*vpp = ZTOV(zp);
+	ZFS_EXIT(zfsvfs);
+	err = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (err) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return err;
+	}
+	return 0;
+}
 #endif /* __NetBSD__ */
 
 /*
@@ -2368,11 +2534,6 @@ CTASSERT(LONG_FID_LEN <= sizeof(struct fid));
 #ifdef __FreeBSD_kernel__
 static int
 zfs_fhtovp(vfs_t *vfsp, fid_t *fidp, int flags, vnode_t **vpp)
-#endif
-#ifdef __NetBSD__
-static int
-zfs_fhtovp(vfs_t *vfsp, fid_t *fidp, vnode_t **vpp)
-#endif
 {
 	struct componentname cn;
 	zfsvfs_t	*zfsvfs = vfsp->vfs_data;
@@ -2386,13 +2547,8 @@ zfs_fhtovp(vfs_t *vfsp, fid_t *fidp, vnode_t **vpp)
 
 	*vpp = NULL;
 
-#ifdef __NetBSD__
-	return (SET_ERROR(ENOTSUP));
-#endif
-
 	ZFS_ENTER(zfsvfs);
 
-#ifdef __FreeBSD_kernel__
 	/*
 	 * On FreeBSD we can get snapshot's mount point or its parent file
 	 * system mount point depending if snapshot is already mounted or not.
@@ -2465,7 +2621,7 @@ zfs_fhtovp(vfs_t *vfsp, fid_t *fidp, vnode_t **vpp)
 		}
 		return (err);
 	}
-#endif
+
 	gen_mask = -1ULL >> (64 - 8 * i);
 
 	dprintf("getting %llu [%u mask %llx]\n", object, fid_gen, gen_mask);
@@ -2487,15 +2643,14 @@ zfs_fhtovp(vfs_t *vfsp, fid_t *fidp, vnode_t **vpp)
 
 	*vpp = ZTOV(zp);
 	ZFS_EXIT(zfsvfs);
-#ifdef __FreeBSD_kernel__
 	err = vn_lock(*vpp, flags);
 	if (err == 0)
 		vnode_create_vobject(*vpp, zp->z_size, curthread);
 	else
 		*vpp = NULL;
-#endif
 	return (err);
 }
+#endif /* __FreeBSD_kernel__ */
 
 /*
  * Block out VOPs and close zfsvfs_t::z_os
