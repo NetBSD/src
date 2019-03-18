@@ -85,6 +85,7 @@
 #include <miscfs/genfs/genfs_node.h>
 #include <uvm/uvm_extern.h>
 #include <sys/fstrans.h>
+#include <sys/malloc.h>
 
 uint_t zfs_putpage_key;
 #endif
@@ -2754,7 +2755,7 @@ zfs_readdir(vnode_t *vp, uio_t *uio, cred_t *cr, int *eofp, int *ncookies, off_t
 #endif
 #ifdef __NetBSD__
 		ncooks = uio->uio_resid / _DIRENT_MINSIZE(odp);
-		cooks = kmem_alloc(ncooks * sizeof(off_t), KM_SLEEP);
+		cooks = malloc(ncooks * sizeof(off_t), M_TEMP, M_WAITOK);
 #endif
 		*cookies = cooks;
 		*ncookies = ncooks;
