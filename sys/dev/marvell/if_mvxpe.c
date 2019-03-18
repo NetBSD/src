@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.21 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.22 2019/03/18 11:38:03 msaitoh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.21 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.22 2019/03/18 11:38:03 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -568,7 +568,7 @@ mvxpe_evcnt_attach(struct mvxpe_softc *sc)
 	evcnt_attach_dynamic(&sc->sc_ev.ev_rxtx_rreq, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->sc_dev), "RxTx Rx resource erorr");
 	evcnt_attach_dynamic(&sc->sc_ev.ev_rxtx_rpq, EVCNT_TYPE_INTR,
-	    NULL, device_xname(sc->sc_dev), "RxTx Rx pakcet");
+	    NULL, device_xname(sc->sc_dev), "RxTx Rx packet");
 	evcnt_attach_dynamic(&sc->sc_ev.ev_rxtx_tbrq, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->sc_dev), "RxTx Tx complete");
 	evcnt_attach_dynamic(&sc->sc_ev.ev_rxtx_rxtxth, EVCNT_TYPE_INTR,
@@ -2538,7 +2538,7 @@ mvxpe_rx_queue_select(struct mvxpe_softc *sc, uint32_t queues, int *queue)
 			continue;
 
 		DPRINTSC(sc, 2, 
-		    "queue %d selected: prxs=%#x, %u pakcet received.\n",
+		    "queue %d selected: prxs=%#x, %u packet received.\n",
 		    q, prxs, npkt);
 		*queue = q;
 		mvxpe_rx_lockq(sc, q);

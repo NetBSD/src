@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.273 2019/02/05 04:48:47 mrg Exp $	*/
+/*	$NetBSD: in6.c,v 1.274 2019/03/18 11:38:03 msaitoh Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.273 2019/02/05 04:48:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.274 2019/03/18 11:38:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2371,7 +2371,7 @@ in6_tunnel_validate(const struct ip6_hdr *ip6, const struct in6_addr *src,
 
 	/* martian filters on outer source - done in ip6_input */
 
-	/* NOTE: the pakcet may be dropped by uRPF. */
+	/* NOTE: the packet may be dropped by uRPF. */
 
 	/* return valid bytes length */
 	return sizeof(*src) + sizeof(*dst);

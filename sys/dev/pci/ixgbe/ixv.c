@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.111 2019/03/15 02:38:20 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.112 2019/03/18 11:38:03 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -203,7 +203,7 @@ TUNABLE_INT("hw.ixv.rx_process_limit", &ixv_rx_process_limit);
 static int ixv_tx_process_limit = 256;
 TUNABLE_INT("hw.ixv.tx_process_limit", &ixv_tx_process_limit);
 
-/* Which pakcet processing uses workqueue or softint */
+/* Which packet processing uses workqueue or softint */
 static bool ixv_txrx_workqueue = false;
 
 /*

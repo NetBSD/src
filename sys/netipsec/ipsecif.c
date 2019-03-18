@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.13 2018/12/26 08:58:51 knakahara Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.14 2019/03/18 11:38:03 msaitoh Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.13 2018/12/26 08:58:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.14 2019/03/18 11:38:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -748,7 +748,7 @@ ipsecif4_input(struct mbuf *m, int off, int proto, void *eparg)
 }
 
 /*
- * validate and filter the pakcet
+ * validate and filter the packet
  */
 static int
 ipsecif4_filter4(const struct ip *ip, struct ipsec_variant *var,
