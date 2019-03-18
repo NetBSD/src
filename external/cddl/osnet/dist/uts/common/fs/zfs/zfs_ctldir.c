@@ -1946,8 +1946,23 @@ zfsctl_destroy(zfsvfs_t *zfsvfs)
 int
 zfsctl_lookup_objset(vfs_t *vfsp, uint64_t objsetid, zfsvfs_t **zfsvfsp)
 {
+	struct sfs_node_key key = {
+		.parent_id = ZFSCTL_INO_SNAPDIR,
+		.id = objsetid
+	};
+	vnode_t *vp;
+	int error;
 
-	return EINVAL;
+	*zfsvfsp = NULL;
+	error = vcache_get(vfsp, &key, sizeof(key), &vp);
+	if (error == 0) {
+		if (vp->v_mountedhere)
+			*zfsvfsp = vp->v_mountedhere->mnt_data;
+		vrele(vp);
+	}
+	if (*zfsvfsp == NULL)
+		return SET_ERROR(EINVAL);
+	return 0;
 }
 
 int
