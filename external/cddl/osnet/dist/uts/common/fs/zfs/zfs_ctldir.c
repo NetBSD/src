@@ -1335,7 +1335,9 @@ sfs_snapshot_mount(vnode_t *vp, const char *snapname)
 	if (error)
 		goto out;
 
-	vfs_getnewfsid(vfsp);
+	/* Set f_fsidx from parent to cheat NFSD. */
+	vfsp->mnt_stat.f_fsidx = vp->v_vfsp->mnt_stat.f_fsidx;
+
 	strlcpy(vfsp->mnt_stat.f_mntfromname, osname,
 	    sizeof(vfsp->mnt_stat.f_mntfromname));
 	set_statvfs_info(path, UIO_SYSSPACE, vfsp->mnt_stat.f_mntfromname,
@@ -1622,7 +1624,7 @@ sfs_getattr(void *v)
 	vap->va_nlink = 2;
 	vap->va_uid = 0;
 	vap->va_gid = 0;
-	vap->va_fsid = vp->v_vfsp->mnt_stat.f_fsidx.__fsid_val[0];
+	vap->va_fsid = vp->v_vfsp->mnt_stat.f_fsid;
 	vap->va_fileid = node->sn_id;
 	vap->va_size = 0;
 	vap->va_blocksize = 0;

@@ -3073,7 +3073,7 @@ zfs_getattr(vnode_t *vp, vattr_t *vap, int flags, cred_t *cr,
 	vap->va_nodeid = zp->z_id;
 #endif
 #ifdef __NetBSD__
-	vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
+	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid;
 	vap->va_nodeid = zp->z_id;
 	/*
 	 * If we are a snapshot mounted under .zfs, return
