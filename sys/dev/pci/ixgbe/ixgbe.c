@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.178 2019/03/15 02:38:20 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.179 2019/03/18 11:38:03 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -324,7 +324,7 @@ static int ixgbe_flow_control = ixgbe_fc_full;
 SYSCTL_INT(_hw_ix, OID_AUTO, flow_control, CTLFLAG_RDTUN,
     &ixgbe_flow_control, 0, "Default flow control used for all adapters");
 
-/* Which pakcet processing uses workqueue or softint */
+/* Which packet processing uses workqueue or softint */
 static bool ixgbe_txrx_workqueue = false;
 
 /*
