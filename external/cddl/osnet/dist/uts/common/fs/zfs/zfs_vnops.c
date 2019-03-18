@@ -5844,6 +5844,9 @@ zfs_netbsd_getpages(void *v)
 	if (async) {
 		return 0;
 	}
+	if (*ap->a_count != 1) {
+		return EBUSY;
+	}
 
 	ZFS_ENTER(zfsvfs);
 	ZFS_VERIFY_ZP(zp);
