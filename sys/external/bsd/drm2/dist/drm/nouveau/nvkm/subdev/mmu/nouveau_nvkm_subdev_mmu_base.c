@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.4 2018/09/01 04:38:22 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.5 2019/03/18 02:01:41 mrg Exp $	*/
 
 /*
  * Copyright 2010 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.4 2018/09/01 04:38:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.5 2019/03/18 02:01:41 mrg Exp $");
 
 #include "priv.h"
 
@@ -528,6 +528,11 @@ nvkm_vm_del(struct kref *kref)
 
 	nvkm_mm_fini(&vm->mm);
 	vfree(vm->pgt);
+#ifdef __NetBSD__
+	linux_mutex_destroy(&vm->mutex);
+#else
+	mutex_destroy(&vm->mutex);
+#endif
 	kfree(vm);
 }
 
