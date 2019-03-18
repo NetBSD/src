@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.242 2019/03/17 19:57:54 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.243 2019/03/18 20:34:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.242 2019/03/17 19:57:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.243 2019/03/18 20:34:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -601,7 +601,23 @@ pool_init_is_phinpage(const struct pool *pp)
 static inline bool
 pool_init_is_usebmap(const struct pool *pp)
 {
+	size_t bmapsize;
+
 	if (pp->pr_roflags & PR_NOTOUCH) {
+		return true;
+	}
+
+	/*
+	 * If we're on-page, and the page header can already contain a bitmap
+	 * big enough to cover all the items of the page, go with a bitmap.
+	 */
+	if (!(pp->pr_roflags & PR_PHINPAGE)) {
+		return false;
+	}
+	bmapsize = roundup(PHSIZE, pp->pr_align) -
+	    offsetof(struct pool_item_header, ph_bitmap[0]);
+	KASSERT(bmapsize % sizeof(pool_item_bitmap_t) == 0);
+	if (pp->pr_itemsperpage <= bmapsize * CHAR_BIT) {
 		return true;
 	}
 
@@ -728,6 +744,9 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		SPLAY_INIT(&pp->pr_phtree);
 	}
 
+	pp->pr_itemsperpage = itemspace / pp->pr_size;
+	KASSERT(pp->pr_itemsperpage != 0);
+
 	/*
 	 * Decide whether to use a bitmap or a linked list to manage freed
 	 * items.
@@ -735,9 +754,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	if (pool_init_is_usebmap(pp)) {
 		pp->pr_roflags |= PR_USEBMAP;
 	}
-
-	pp->pr_itemsperpage = itemspace / pp->pr_size;
-	KASSERT(pp->pr_itemsperpage != 0);
 
 	/*
 	 * If we're off-page and use a bitmap, choose the appropriate pool to
