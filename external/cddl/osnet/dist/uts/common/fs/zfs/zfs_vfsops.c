@@ -1374,7 +1374,9 @@ zfs_domount(vfs_t *vfsp, char *osname)
 #endif
 #ifdef __NetBSD__
 	vfsp->mnt_stat.f_fsidx.__fsid_val[0] = fsid_guid;
-	vfsp->mnt_stat.f_fsidx.__fsid_val[1] = fsid_guid >> 32;
+	vfsp->mnt_stat.f_fsidx.__fsid_val[1] = ((fsid_guid>>32) << 8) |
+	    makefstype(vfsp->mnt_op->vfs_name) & 0xFF;
+	vfsp->mnt_stat.f_fsid = fsid_guid;
 #endif
 
 	/*
@@ -1962,8 +1964,6 @@ zfs_mount(vfs_t *vfsp, const char *path, void *data, size_t *data_len)
 #endif
 
 #ifdef __NetBSD__
-	vfs_getnewfsid(vfsp);
-
 	/* setup zfs mount info */
 	strlcpy(vfsp->mnt_stat.f_mntfromname, osname,
 	    sizeof(vfsp->mnt_stat.f_mntfromname));
@@ -2036,7 +2036,8 @@ zfs_statvfs(vfs_t *vfsp, struct statvfs *statp)
 	statp->f_fsid = d32;
 #endif
 #ifdef __NetBSD__
-	statp->f_fsid = vfsp->mnt_stat.f_fsidx.__fsid_val[0];
+	statp->f_fsid = vfsp->mnt_stat.f_fsid;
+	statp->f_fsidx = vfsp->mnt_stat.f_fsidx;
 #endif
 
 	/*
