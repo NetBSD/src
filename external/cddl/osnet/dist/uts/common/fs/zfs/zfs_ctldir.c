@@ -1885,6 +1885,33 @@ zfsctl_loadvnode(vfs_t *vfsp, vnode_t *vp,
 	return 0;
 }
 
+int
+zfsctl_vptofh(vnode_t *vp, fid_t *fidp, size_t *fh_size)
+{
+	struct sfs_node *node = VTOSFS(vp);
+	uint64_t object = node->sn_id;
+	zfid_short_t *zfid = (zfid_short_t *)fidp;
+	int i;
+
+	SFS_NODE_ASSERT(vp);
+
+	if (*fh_size < SHORT_FID_LEN) {
+		*fh_size = SHORT_FID_LEN;
+		return SET_ERROR(E2BIG);
+	}
+	*fh_size = SHORT_FID_LEN;
+
+	zfid->zf_len = SHORT_FID_LEN;
+	for (i = 0; i < sizeof(zfid->zf_object); i++)
+		zfid->zf_object[i] = (uint8_t)(object >> (8 * i));
+
+	/* .zfs nodes always have a generation number of 0 */
+	for (i = 0; i < sizeof(zfid->zf_gen); i++)
+		zfid->zf_gen[i] = 0;
+
+	return 0;
+}
+
 /*
  * Return the ".zfs" vnode.
  */
