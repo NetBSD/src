@@ -1134,6 +1134,8 @@ arm*-*-netbsdelf*)
 	*)
 	    tm_file="$tm_file arm/netbsd-elf.h"
 	    tmake_file="$tmake_file arm/t-netbsd"
+	    # NetBSD/arm (non-eabi) is only old platforms
+	    with_cpu=${with_cpu:-strongarm}
 	    ;;
 	esac
 	tm_file="${tm_file} arm/aout.h arm/arm.h"
