@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_once.c,v 1.6 2009/03/15 17:14:40 cegger Exp $	*/
+/*	$NetBSD: subr_once.c,v 1.7 2019/03/19 08:16:51 ryo Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_once.c,v 1.6 2009/03/15 17:14:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_once.c,v 1.7 2019/03/19 08:16:51 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,13 +48,17 @@ once_init(void)
 }
 
 int
-_run_once(once_t *o, int (*fn)(void))
+_init_once(once_t *o, int (*fn)(void))
 {
-
 	/* Fastpath handled by RUN_ONCE() */
 
+	int error;
+
 	mutex_enter(&oncemtx);
-	if (o->o_status == ONCE_VIRGIN) {
+	while (o->o_status == ONCE_RUNNING)
+		cv_wait(&oncecv, &oncemtx);
+
+	if (o->o_refcnt++ == 0) {
 		o->o_status = ONCE_RUNNING;
 		mutex_exit(&oncemtx);
 		o->o_error = fn();
@@ -62,10 +66,32 @@ _run_once(once_t *o, int (*fn)(void))
 		o->o_status = ONCE_DONE;
 		cv_broadcast(&oncecv);
 	}
-	while (o->o_status != ONCE_DONE)
+	KASSERT(o->o_refcnt != 0);	/* detect overflow */
+
+	while (o->o_status == ONCE_RUNNING)
 		cv_wait(&oncecv, &oncemtx);
+	error = o->o_error;
 	mutex_exit(&oncemtx);
 
-	KASSERT(o->o_status == ONCE_DONE);
-	return o->o_error;
+	return error;
+}
+
+void
+_fini_once(once_t *o, void (*fn)(void))
+{
+	mutex_enter(&oncemtx);
+	while (o->o_status == ONCE_RUNNING)
+		cv_wait(&oncecv, &oncemtx);
+
+	KASSERT(o->o_refcnt != 0);	/* we need to call _init_once() once */
+	if (--o->o_refcnt == 0) {
+		o->o_status = ONCE_RUNNING;
+		mutex_exit(&oncemtx);
+		fn();
+		mutex_enter(&oncemtx);
+		o->o_status = ONCE_VIRGIN;
+		cv_broadcast(&oncecv);
+	}
+
+	mutex_exit(&oncemtx);
 }
