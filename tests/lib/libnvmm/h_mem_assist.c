@@ -1,3 +1,5 @@
+/*	$NetBSD: h_mem_assist.c,v 1.7 2019/03/19 19:23:39 maxv Exp $	*/
+
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -172,11 +174,11 @@ map_pages(struct nvmm_machine *mach)
 	memset(L2, 0, PAGE_SIZE);
 	memset(L1, 0, PAGE_SIZE);
 
-	L4[0] = PG_V | PG_RW | 0x4000;
-	L3[0] = PG_V | PG_RW | 0x5000;
-	L2[0] = PG_V | PG_RW | 0x6000;
-	L1[0x2000 / PAGE_SIZE] = PG_V | PG_RW | 0x2000;
-	L1[0x1000 / PAGE_SIZE] = PG_V | PG_RW | 0x1000;
+	L4[0] = PTE_P | PTE_W | 0x4000;
+	L3[0] = PTE_P | PTE_W | 0x5000;
+	L2[0] = PTE_P | PTE_W | 0x6000;
+	L1[0x2000 / PAGE_SIZE] = PTE_P | PTE_W | 0x2000;
+	L1[0x1000 / PAGE_SIZE] = PTE_P | PTE_W | 0x1000;
 }
 
 /* -------------------------------------------------------------------------- */
