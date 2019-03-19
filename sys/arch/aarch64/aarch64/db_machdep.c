@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.14 2019/01/27 02:08:36 pgoyette Exp $ */
+/* $NetBSD: db_machdep.c,v 1.15 2019/03/19 16:45:28 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.14 2019/01/27 02:08:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.15 2019/03/19 16:45:28 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.14 2019/01/27 02:08:36 pgoyette Exp
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
+#include <ddb/db_proc.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_run.h>
 #include <ddb/db_sym.h>
@@ -68,6 +69,7 @@ void db_md_frame_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_lwp_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_pte_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_tlbi_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_md_ttbr_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_sysreg_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_watch_cmd(db_expr_t, bool, db_expr_t, const char *);
 #if defined(_KERNEL) && defined(MULTIPROCESSOR)
@@ -87,28 +89,28 @@ const struct db_command db_machine_command_table[] = {
 	{
 		DDB_ADD_CMD(
 		    "cpuinfo", db_md_cpuinfo_cmd, 0,
-		    "Displays the cpuinfo",
+		    "Displays the current cpuinfo",
 		    NULL, NULL)
 	},
 	{
 		DDB_ADD_CMD(
 		    "frame", db_md_frame_cmd, 0,
 		    "Displays the contents of a trapframe",
-		    "<address>",
-		    "\taddress:\taddress of trapfame to display")
+		    "address",
+		    "\taddress:\taddress of trapframe to display")
 	},
 	{
 		DDB_ADD_CMD(
 		    "lwp", db_md_lwp_cmd, 0,
 		    "Displays the lwp",
-		    "<address>",
+		    "address",
 		    "\taddress:\taddress of lwp to display")
 	},
 	{
 		DDB_ADD_CMD(
 		    "pte", db_md_pte_cmd, 0,
 		    "Display information of pte",
-		    "<address>",
+		    "address",
 		    "\taddress:\tvirtual address of page")
 	},
 	{
@@ -125,16 +127,26 @@ const struct db_command db_machine_command_table[] = {
 	},
 	{
 		DDB_ADD_CMD(
+		    "ttbr", db_md_ttbr_cmd, 0,
+		    "Dump or count TTBR table",
+		    "[/apc] address | pid",
+		    "\taddress:\taddress of pmap to display\n"
+		    "\tpid:\t\tpid of pmap to display")
+	},
+	{
+		DDB_ADD_CMD(
 		    "watch", db_md_watch_cmd, 0,
 		    "set or clear watchpoint",
-		    "<param>",
-		    "\tparam: <address> | <#>")
+		    "[/12345678] [address|#]",
+		    "\taddress: watchpoint address to set\n"
+		    "\t#: watchpoint number to remove"
+		    "\t/1..8: size of data\n")
 	},
 #endif
 	{
 		DDB_ADD_CMD(NULL, NULL, 0,
 		    NULL,
-		    NULL,NULL)
+		    NULL, NULL)
 	}
 };
 
@@ -290,7 +302,7 @@ db_md_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	struct trapframe *tf;
 
 	if (!have_addr) {
-		db_printf("frame: <address>\n");
+		db_printf("frame address must be specified\n");
 		return;
 	}
 
@@ -306,7 +318,7 @@ db_md_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	struct pcb *pcb;
 
 	if (!have_addr) {
-		db_printf("lwp: <address>\n");
+		db_printf("lwp address must be specified\n");
 		return;
 	}
 	l = (lwp_t *)addr;
@@ -339,7 +351,7 @@ db_md_pte_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	if (!have_addr) {
-		db_printf("pte: <address>\n");
+		db_printf("pte address must be specified\n");
 		return;
 	}
 	pmap_db_pteinfo(addr, db_printf);
@@ -350,6 +362,48 @@ db_md_tlbi_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	aarch64_tlbi_all();
+}
+
+void
+db_md_ttbr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+	bool countmode = false, by_pid = true;
+
+	if (!have_addr) {
+		db_printf("usage: machine ttbr [/a] [/p] [/c] address|pid\n");
+		db_printf("\t/a == argument is an address of any pmap_t\n");
+		db_printf("\t/p == argument is a pid [default]\n");
+		db_printf("\t/c == count TLB entries\n");
+		return;
+	}
+
+	if (modif != NULL) {
+		for (; *modif != '\0'; modif++) {
+			switch (*modif) {
+			case 'c':
+				countmode = true;
+				break;
+			case 'a':
+				by_pid = false;
+				break;
+			case 'p':
+				by_pid = true;
+				break;
+			}
+		}
+	}
+
+	if (by_pid) {
+		proc_t *p = db_proc_find((pid_t)addr);
+		if (p == NULL) {
+			db_printf("bad address\n");
+			return;
+		}
+		addr = (db_addr_t)p->p_vmspace->vm_map.pmap;
+	}
+
+	pmap_db_ttbrdump(countmode, addr, db_printf);
 }
 
 void
