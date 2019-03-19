@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.26 2017/09/27 10:05:05 ozaki-r Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.27 2019/03/19 13:38:53 msaitoh Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ struct in6_addr;
  * argument type for the last arg of pr_ctlinput().
  * should be consulted only with AF_INET6 family.
  *
- * IPv6 ICMP IPv6 [exthdrs] finalhdr paylaod
+ * IPv6 ICMP IPv6 [exthdrs] finalhdr payload
  * ^    ^    ^              ^
  * |    |    ip6c_ip6       ip6c_off
  * |    ip6c_icmp6
@@ -93,7 +93,7 @@ struct in6_addr;
  *
  * ip6c_finaldst usually points to ip6c_ip6->ip6_dst.  if the original
  * (internal) packet carries a routing header, it may point the final
- * dstination address in the routing header.
+ * destination address in the routing header.
  *
  * ip6c_src: ip6c_ip6->ip6_src + scope info + flowlabel in ip6c_ip6
  *	(beware of flowlabel, if you try to compare it against others)
