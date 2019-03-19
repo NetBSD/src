@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.90.2.3 2018/01/02 10:20:34 snj Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.90.2.4 2019/03/19 13:42:54 martin Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.90.2.3 2018/01/02 10:20:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.90.2.4 2019/03/19 13:42:54 martin Exp $");
 
 /*
  * TODO:
@@ -410,7 +410,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 				    ifatoia(ifa), CARP_COUNT_MASTER);
 				if ((cmd == RTM_ADD && count != 1) ||
 				    (cmd == RTM_DELETE && count != 0))
-					continue;
+					goto next;
 			}
 
 			/* Remove the existing host route, if any */
@@ -485,6 +485,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 		default:
 			break;
 		}
+	next:
 		s = pserialize_read_enter();
 		ifa_release(ifa, &psref);
 	}
