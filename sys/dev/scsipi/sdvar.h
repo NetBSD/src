@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.38 2016/12/10 10:26:38 mlelstv Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.39 2019/03/19 06:59:40 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@ struct sd_softc {
 	callout_t sc_callout;
 	u_int8_t type;
 	char name[16]; /* product name, for default disklabel */
+	char typename[128+4+1]; /* stored in disk info */
 };
 
 #define	SDGP_RESULT_OK		0	/* parameters obtained */

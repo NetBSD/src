@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.326 2018/10/07 18:14:32 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.327 2019/03/19 06:59:40 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.326 2018/10/07 18:14:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.327 2019/03/19 06:59:40 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -255,6 +255,8 @@ sdattach(device_t parent, device_t self, void *aux)
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
 	strncpy(sd->name, sa->sa_inqbuf.product, sizeof(sd->name));
+
+	strncpy(sd->typename, sa->sa_inqbuf.product, sizeof(sd->typename));
 
 	if (sd->type == T_SIMPLE_DIRECT)
 		periph->periph_quirks |= PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE;
@@ -1936,5 +1938,5 @@ sd_set_geometry(struct sd_softc *sd)
 	dg->dg_ntracks = sd->params.heads;
 	dg->dg_ncylinders = sd->params.cyls;
 
-	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, NULL);
+	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, sd->typename);
 }
