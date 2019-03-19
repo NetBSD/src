@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.21 2019/02/06 05:33:41 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.22 2019/03/19 16:05:49 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ struct pmap {
 	pd_entry_t *pm_l0table;			/* L0 table: 512G*512 */
 	paddr_t pm_l0table_pa;
 
-	SLIST_HEAD(, vm_page) pm_vmlist;	/* for L[0123] tables */
+	TAILQ_HEAD(, vm_page) pm_vmlist;	/* for L[0123] tables */
 
 	struct pmap_statistics pm_stats;
 	unsigned int pm_refcnt;
@@ -83,8 +83,10 @@ struct pmap {
 struct pv_entry;
 struct vm_page_md {
 	kmutex_t mdpg_pvlock;
-	SLIST_ENTRY(vm_page) mdpg_vmlist;	/* L[0-3] table vm_page list */
+	TAILQ_ENTRY(vm_page) mdpg_vmlist;	/* L[0123] table vm_page list */
 	TAILQ_HEAD(, pv_entry) mdpg_pvhead;
+
+	pd_entry_t *mdpg_ptep_parent;	/* for page descriptor page only */
 
 	/* VM_PROT_READ means referenced, VM_PROT_WRITE means modified */
 	uint32_t mdpg_flags;
@@ -185,7 +187,7 @@ const struct pmap_devmap *pmap_devmap_find_va(vaddr_t, vsize_t);
 vaddr_t pmap_devmap_phystov(paddr_t);
 paddr_t pmap_devmap_vtophys(paddr_t);
 
-pd_entry_t *pmap_alloc_pdp(struct pmap *, paddr_t *);
+paddr_t pmap_alloc_pdp(struct pmap *, struct vm_page **, bool);
 
 #define L1_TRUNC_BLOCK(x)	((x) & L1_FRAME)
 #define L1_ROUND_BLOCK(x)	L1_TRUNC_BLOCK((x) + L1_SIZE - 1)
