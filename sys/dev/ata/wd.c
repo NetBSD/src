@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.443 2018/10/24 19:46:44 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.444 2019/03/19 06:47:12 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.443 2018/10/24 19:46:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.444 2019/03/19 06:47:12 mlelstv Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -534,11 +534,11 @@ wddetach(device_t self, int flags)
 
 	bufq_free(dksc->sc_bufq);
 
-	if (flags & DETACH_POWEROFF)
-		wd_standby(wd, AT_POLL);
-
 	/* Delete all of our wedges. */
 	dkwedge_delall(&dksc->sc_dkdev);
+
+	if (flags & DETACH_POWEROFF)
+		wd_standby(wd, AT_POLL);
 
 	/* Detach from the disk list. */
 	disk_detach(&dksc->sc_dkdev);
@@ -1729,6 +1729,7 @@ wd_standby(struct wd_softc *wd, int flags)
 	struct ata_xfer *xfer;
 	int error;
 
+	aprint_debug_dev(dksc->sc_dev, "standby immediate\n");
 	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
 
 	xfer->c_ata_c.r_command = WDCC_STANDBY_IMMED;
@@ -1745,6 +1746,8 @@ wd_standby(struct wd_softc *wd, int flags)
 	if (xfer->c_ata_c.flags & AT_ERROR) {
 		if (xfer->c_ata_c.r_error == WDCE_ABRT) {
 			/* command not supported */
+			aprint_debug_dev(dksc->sc_dev,
+				"standby immediate not supported\n");
 			error = ENODEV;
 			goto out;
 		}
