@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.22 2019/03/19 16:05:49 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.23 2019/03/19 16:45:28 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -149,6 +149,8 @@ bool pmap_fault_fixup(struct pmap *, vaddr_t, vm_prot_t, bool user);
 
 /* for ddb */
 void pmap_db_pteinfo(vaddr_t, void (*)(const char *, ...) __printflike(1, 2));
+void pmap_db_ttbrdump(bool, vaddr_t, void (*)(const char *, ...)
+    __printflike(1, 2));
 pt_entry_t *kvtopte(vaddr_t);
 pt_entry_t pmap_kvattr(vaddr_t, vm_prot_t);
 
