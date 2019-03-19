@@ -1,4 +1,4 @@
-.\"    $NetBSD: pax.1,v 1.70 2019/03/19 00:12:08 gutteridge Exp $
+.\"    $NetBSD: pax.1,v 1.71 2019/03/19 00:36:14 gutteridge Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -585,7 +585,8 @@ The
 string may also contain
 .Aq Dv newline
 characters.
-Any non-null character can be used as a delimiter (/ is shown here).
+Any non-null character except a backslash (\\) can be used as a delimiter
+(/ is shown here).
 Multiple
 .Fl s
 expressions can be specified.
