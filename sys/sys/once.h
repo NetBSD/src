@@ -1,4 +1,4 @@
-/*	$NetBSD: once.h,v 1.6 2018/03/03 19:21:59 jdolecek Exp $	*/
+/*	$NetBSD: once.h,v 1.7 2019/03/19 08:16:51 ryo Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -31,23 +31,29 @@
 #define	_SYS_ONCE_H_
 
 typedef struct {
-	unsigned o_status;
 	int o_error;
+	uint16_t o_refcnt;
+	uint16_t o_status;
 #define	ONCE_VIRGIN	0
 #define	ONCE_RUNNING	1
 #define	ONCE_DONE	2
 } once_t;
 
 void once_init(void);
-int _run_once(once_t *, int (*)(void));
+int _init_once(once_t *, int (*)(void));
+void _fini_once(once_t *, void (*)(void));
 
 #define	ONCE_DECL(o) \
-	once_t (o) __read_mostly = { \
+	once_t (o) = { \
 		.o_status = 0, \
+		.o_refcnt = 0, \
 	};
 
 #define	RUN_ONCE(o, fn) \
     (__predict_true((o)->o_status == ONCE_DONE) ? \
-      ((o)->o_error) : _run_once((o), (fn)))
+      ((o)->o_error) : _init_once((o), (fn)))
+
+#define	INIT_ONCE(o, fn)	_init_once((o), (fn))
+#define	FINI_ONCE(o, fn)	_fini_once((o), (fn))
 
 #endif /* _SYS_ONCE_H_ */
