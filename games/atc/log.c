@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.23 2017/01/10 20:40:53 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.24 2019/03/19 00:11:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: log.c,v 1.23 2017/01/10 20:40:53 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.24 2019/03/19 00:11:34 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,6 +160,12 @@ log_score(int list_em)
 	SCORE		score[100], thisscore;
 	struct utsname	lname;
 	long		offset;
+
+	if (safe_planes == 1)
+		printf("You directed 1 plane safely to its destination.\n\n");
+	else
+		printf("You directed %d planes safely to their destinations.\n\n",
+		    safe_planes);
 
 	if (score_fp == NULL) {
 		warnx("no score file available");
