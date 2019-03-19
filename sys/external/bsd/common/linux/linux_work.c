@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.43 2018/08/27 15:25:43 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.44 2019/03/19 08:17:46 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.43 2018/08/27 15:25:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.44 2019/03/19 08:17:46 ryo Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -41,6 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.43 2018/08/27 15:25:43 riastradh Ex
 #include <sys/kthread.h>
 #include <sys/lwp.h>
 #include <sys/mutex.h>
+#ifndef _MODULE
+#include <sys/once.h>
+#endif
 #include <sys/queue.h>
 #include <sys/sdt.h>
 
@@ -130,8 +133,8 @@ atomic_cas_uintptr(volatile uintptr_t *p, uintptr_t old, uintptr_t new)
  *	Initialize the Linux workqueue subsystem.  Return 0 on success,
  *	NetBSD error on failure.
  */
-int
-linux_workqueue_init(void)
+static int
+linux_workqueue_init0(void)
 {
 	int error;
 
@@ -173,14 +176,38 @@ fail0:	KASSERT(error);
  *
  *	Destroy the Linux workqueue subsystem.  Never fails.
  */
-void
-linux_workqueue_fini(void)
+static void
+linux_workqueue_fini0(void)
 {
 
 	destroy_workqueue(system_power_efficient_wq);
 	destroy_workqueue(system_long_wq);
 	destroy_workqueue(system_wq);
 	lwp_specific_key_delete(workqueue_key);
+}
+
+#ifndef _MODULE
+static ONCE_DECL(linux_workqueue_init_once);
+#endif
+
+int
+linux_workqueue_init(void)
+{
+#ifdef _MODULE
+	return linux_workqueue_init0();
+#else
+	return INIT_ONCE(&linux_workqueue_init_once, &linux_workqueue_init0);
+#endif
+}
+
+void
+linux_workqueue_fini(void)
+{
+#ifdef _MODULE
+	return linux_workqueue_fini0();
+#else
+	return FINI_ONCE(&linux_workqueue_init_once, &linux_workqueue_fini0);
+#endif
 }
 
 /*
