@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.112 2018/12/19 13:57:46 maxv Exp $	*/
+/*	$NetBSD: locore.s,v 1.113 2019/03/19 20:30:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1057,44 +1057,6 @@ Lnoflush:
  * Use common m68k support routines.
  */
 #include <m68k/m68k/support.s>
-
-/*
- * update profiling information for the user
- * addupc(pc, &u.u_prof, ticks)
- */
-ENTRY(addupc)
-	movl	%a2,%sp@-		|  scratch register
-	movl	%sp@(12),%a2		|  get &u.u_prof
-	movl	%sp@(8),%d0		|  get user pc
-	subl	%a2@(8),%d0		|  pc -= pr->pr_off
-	jlt	Lauexit			|  less than 0, skip it
-	movl	%a2@(12),%d1		|  get pr->pr_scale
-	lsrl	#1,%d0			|  pc /= 2
-	lsrl	#1,%d1			|  scale /= 2
-	mulul	%d1,%d0			|  pc /= scale
-	moveq	#14,%d1
-	lsrl	%d1,%d0			|  pc >>= 14
-	bclr	#0,%d0			|  pc &= ~1
-	cmpl	%a2@(4),%d0		|  too big for buffer?
-	jge	Lauexit			|  yes, screw it
-	addl	%a2@,%d0		|  no, add base
-	movl	%d0,%sp@-		|  push address
-	jbsr	_C_LABEL(fusword)	|  grab old value
-	movl	%sp@+,%a0		|  grab address back
-	cmpl	#-1,%d0			|  access ok
-	jeq	Lauerror		|  no, skip out
-	addw	%sp@(18),%d0		|  add tick to current value
-	movl	%d0,%sp@-		|  push value
-	movl	%a0,%sp@-		|  push address
-	jbsr	_C_LABEL(susword)	|  write back new value
-	addql	#8,%sp			|  pop params
-	tstl	%d0			|  fault?
-	jeq	Lauexit			|  no, all done
-Lauerror:
-	clrl	%a2@(12)		|  clear scale (turn off prof)
-Lauexit:
-	movl	%sp@+,%a2		|  restore scratch reg
-	rts
 
 /*
  * non-local gotos
