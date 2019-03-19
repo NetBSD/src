@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.35 2018/11/09 14:39:19 jmcneill Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.36 2019/03/19 07:08:43 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.35 2018/11/09 14:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.36 2019/03/19 07:08:43 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -92,6 +92,7 @@ struct ld_sdmmc_softc {
 	struct sdmmc_function *sc_sf;
 	struct ld_sdmmc_task sc_task[LD_SDMMC_MAXTASKCNT];
 	pcq_t *sc_freeq;
+	char *sc_typename;
 
 	struct evcnt sc_ev_discard;	/* discard counter */
 	struct evcnt sc_ev_discarderr;	/* discard error counter */
@@ -146,6 +147,9 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	    sa->sf->cid.rev, sa->sf->cid.psn, sa->sf->cid.mdt);
 	aprint_naive("\n");
 
+	sc->sc_typename = kmem_asprintf("0x%02x:0x%04x:%s",
+	    sa->sf->cid.mid, sa->sf->cid.oid, sa->sf->cid.pnm);
+
 	evcnt_attach_dynamic(&sc->sc_ev_discard, EVCNT_TYPE_MISC,
 	    NULL, device_xname(self), "sdmmc discard count");
 	evcnt_attach_dynamic(&sc->sc_ev_discarderr, EVCNT_TYPE_MISC,
@@ -176,6 +180,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	ld->sc_start = ld_sdmmc_start;
 	ld->sc_discard = ld_sdmmc_discard;
 	ld->sc_ioctl = ld_sdmmc_ioctl;
+	ld->sc_typename = sc->sc_typename;
 
 	/*
 	 * Defer attachment of ld + disk subsystem to a thread.
@@ -242,6 +247,7 @@ ld_sdmmc_detach(device_t dev, int flags)
 	evcnt_detach(&sc->sc_ev_discard);
 	evcnt_detach(&sc->sc_ev_discarderr);
 	evcnt_detach(&sc->sc_ev_discardbusy);
+	kmem_free(sc->sc_typename, strlen(sc->sc_typename) + 1);
 
 	return 0;
 }
