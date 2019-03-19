@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.37 2017/07/03 21:33:23 wiz Exp $
+.\" $NetBSD: tar.1,v 1.38 2019/03/19 00:36:14 gutteridge Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"	OpenBSD: tar.1,v 1.28 2000/11/09 23:58:56 aaron Exp
 .\"
-.Dd December 19, 2015
+.Dd March 19, 2019
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -177,7 +177,8 @@ The
 string may also contain
 .Aq Dv newline
 characters.
-Any non-null character can be used as a delimiter (/ is shown here).
+Any non-null character except a backslash (\\) can be used as a delimiter
+(/ is shown here).
 Multiple
 .Fl s
 expressions can be specified.
@@ -196,7 +197,7 @@ The optional trailing
 will cause the final result of a successful substitution to be written to
 .Dv standard error
 in the following format:
-.Dl <original pathname> >> <new pathname>
+.Dl Ao "original pathname" Ac >> Ao "new pathname" Ac
 File or archive member names that substitute to the empty string
 are not selected and will be skipped.
 The substitutions are applied by default to the destination hard and symbolic
