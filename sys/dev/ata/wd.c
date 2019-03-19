@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.445 2019/03/19 06:51:05 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.446 2019/03/19 16:56:29 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.445 2019/03/19 06:51:05 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.446 2019/03/19 16:56:29 mlelstv Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -321,6 +321,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	SLIST_INIT(&wd->sc_bslist);
 #endif
 	wd->atabus = adev->adev_bustype;
+	wd->inflight = 0;
 	wd->drvp = adev->adev_drv_data;
 
 	wd->drvp->drv_openings = 1;
@@ -729,6 +730,7 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 		xfer->c_bio.flags |= ATA_FUA;
 	}
 
+	wd->inflight++;
 	switch (wd->atabus->ata_bio(wd->drvp, xfer)) {
 	case ATACMD_TRY_AGAIN:
 		panic("wdstart1: try again");
@@ -749,10 +751,25 @@ wd_diskstart(device_t dev, struct buf *bp)
 	struct dk_softc *dksc = &wd->sc_dksc;
 #endif
 	struct ata_xfer *xfer;
+	struct ata_channel *chp;
+	unsigned openings;
 
 	mutex_enter(&wd->sc_lock);
 
-	xfer = ata_get_xfer(wd->drvp->chnl_softc, false);
+	chp = wd->drvp->chnl_softc;
+
+	ata_channel_lock(chp);
+	openings = ata_queue_openings(chp);
+	ata_channel_unlock(chp);
+
+	openings = uimin(openings, wd->drvp->drv_openings);
+
+	if (wd->inflight >= openings) {
+		mutex_exit(&wd->sc_lock);
+		return EAGAIN;
+	}
+
+	xfer = ata_get_xfer(chp, false);
 	if (xfer == NULL) {
 		ATADEBUG_PRINT(("wd_diskstart %s no xfer\n",
 		    dksc->sc_xname), DEBUG_XFERS);
@@ -952,7 +969,9 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 
+	wd->inflight--;
 	dk_done(dksc, bp);
+	dk_start(dksc, NULL);
 }
 
 static void
