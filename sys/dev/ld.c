@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.105 2018/10/13 14:24:35 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.106 2019/03/19 07:01:14 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.105 2018/10/13 14:24:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.106 2019/03/19 07:01:14 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -587,7 +587,7 @@ ld_set_geometry(struct ld_softc *sc)
 	dg->dg_ntracks = sc->sc_nheads;
 	dg->dg_ncylinders = sc->sc_ncylinders;
 
-	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, NULL);
+	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, sc->sc_typename);
 }
 
 static void
