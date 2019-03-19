@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10 2019/03/09 08:42:25 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.11 2019/03/19 19:15:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2007, 2008, 2016, 2017 The NetBSD Foundation, Inc.
@@ -193,8 +193,6 @@ LABEL(gdt64_start)
 	.quad 0x0000000000000000	/* always empty */
 	.quad 0x00af9a000000ffff	/* kernel CS */
 	.quad 0x00cf92000000ffff	/* kernel DS */
-	.quad 0x0000000000000000	/* kernel TSS [1/2] */
-	.quad 0x0000000000000000	/* kernel TSS [2/2] */
 END(gdt64_start)
 gdt64_end:
 
@@ -568,6 +566,9 @@ longmode:
 	xorw	%ax,%ax
 	movw	%ax,%gs
 	movw	%ax,%fs
+
+	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
+	movw	%ax,%ss
 
 	/* The first physical page available. */
 	leaq	(TABLESIZE)(%rsi),%rdi

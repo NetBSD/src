@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.10 2018/08/12 12:42:54 maxv Exp $	*/
+/*	$NetBSD: prekern.c,v 1.11 2019/03/19 19:15:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -46,15 +46,7 @@ struct bootinfo bootinfo;
 
 extern paddr_t kernpa_start, kernpa_end;
 
-static uint8_t idtstore[PAGE_SIZE];
-static uint8_t faultstack[PAGE_SIZE];
-static struct x86_64_tss prekern_tss;
-
-/* GDT offsets */
-#define PREKERN_GDT_NUL_OFF	(0 * 8)
-#define PREKERN_GDT_CS_OFF	(1 * 8)
-#define PREKERN_GDT_DS_OFF	(2 * 8)
-#define PREKERN_GDT_TSS_OFF	(3 * 8)
+static uint8_t idtstore[PAGE_SIZE] __aligned(PAGE_SIZE);
 
 #define IDTVEC(name) __CONCAT(X, name)
 typedef void (vector)(void);
@@ -82,14 +74,6 @@ struct smallframe {
 	uint64_t sf_rsp;
 	uint64_t sf_ss;
 };
-
-static void setregion(struct region_descriptor *, void *, uint16_t);
-static void setgate(struct gate_descriptor *, void *, int, int, int, int);
-static void set_sys_segment(struct sys_segment_descriptor *, void *,
-    size_t, int, int, int);
-static void set_sys_gdt(int, void *, size_t, int, int, int);
-static void init_tss(void);
-static void init_idt(void);
 
 void trap(struct smallframe *);
 
@@ -142,6 +126,8 @@ trap(struct smallframe *sf)
 	while (1);
 }
 
+/* -------------------------------------------------------------------------- */
+
 static void
 setregion(struct region_descriptor *rd, void *base, uint16_t limit)
 {
@@ -164,42 +150,6 @@ setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl,
 	gd->gd_xx1 = 0;
 	gd->gd_xx2 = 0;
 	gd->gd_xx3 = 0;
-}
-
-static void
-set_sys_segment(struct sys_segment_descriptor *sd, void *base, size_t limit,
-    int type, int dpl, int gran)
-{
-	memset(sd, 0, sizeof(*sd));
-	sd->sd_lolimit = (unsigned)limit;
-	sd->sd_lobase = (uint64_t)base;
-	sd->sd_type = type;
-	sd->sd_dpl = dpl;
-	sd->sd_p = 1;
-	sd->sd_hilimit = (unsigned)limit >> 16;
-	sd->sd_gran = gran;
-	sd->sd_hibase = (uint64_t)base >> 24;
-}
-
-static void
-set_sys_gdt(int slotoff, void *base, size_t limit, int type, int dpl, int gran)
-{
-	struct sys_segment_descriptor sd;
-	extern uint64_t *gdt64_start;
-
-	set_sys_segment(&sd, base, limit, type, dpl, gran);
-
-	memcpy(&gdt64_start + slotoff, &sd, sizeof(sd));
-}
-
-static void
-init_tss(void)
-{
-	memset(&prekern_tss, 0, sizeof(prekern_tss));
-	prekern_tss.tss_ist[0] = (uintptr_t)(&faultstack[PAGE_SIZE-1]) & ~0xf;
-
-	set_sys_gdt(PREKERN_GDT_TSS_OFF, &prekern_tss,
-	    sizeof(struct x86_64_tss) - 1, SDT_SYS386TSS, SEL_KPL, 0);
 }
 
 static void
@@ -331,10 +281,9 @@ init_prekern(paddr_t pa_start)
 	mm_init(pa_start);
 
 	/*
-	 * Init the TSS and IDT. We mostly don't care about this, they are just
-	 * here to properly handle traps.
+	 * Init the IDT. We mostly don't care about this, it's just here
+	 * to properly handle traps.
 	 */
-	init_tss();
 	init_idt();
 
 	print_state(true, "Prekern loaded");
