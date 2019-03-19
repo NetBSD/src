@@ -1,4 +1,4 @@
-.\"	$NetBSD: RUN_ONCE.9,v 1.10 2019/03/19 08:16:51 ryo Exp $
+.\"	$NetBSD: RUN_ONCE.9,v 1.11 2019/03/19 10:17:35 wiz Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd Mar 19, 2019
+.Dd March 19, 2019
 .Dt RUN_ONCE 9
 .Os
 .\" ------------------------------------------------------------
@@ -33,7 +33,7 @@
 .Nm RUN_ONCE ,
 .Nm INIT_ONCE ,
 .Nm FINI_ONCE
-.Nd Run a function exactly once
+.Nd run a function exactly once
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .In sys/once.h
@@ -72,7 +72,7 @@ can sleep if it's called concurrently.
 is used in pair with
 .Fn FINI_ONCE .
 .Fn INIT_ONCE
-will only be run once similar with
+will only be run once similar to
 .Fn RUN_ONCE .
 .Fn FINI_ONCE
 will only be run at last time if it is called as many times as calling
@@ -81,7 +81,8 @@ When
 .Fn FINI_ONCE
 is executed, the next call to
 .Fn INIT_ONCE
-will be executed again. That is,
+will be executed again.
+That is,
 .Fn INIT_ONCE
 and
 .Fn FINI_ONCE
