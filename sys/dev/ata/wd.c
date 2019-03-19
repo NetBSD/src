@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.444 2019/03/19 06:47:12 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.445 2019/03/19 06:51:05 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.444 2019/03/19 06:47:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.445 2019/03/19 06:51:05 mlelstv Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -309,7 +309,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	struct dk_softc *dksc = &wd->sc_dksc;
 	struct ata_device *adev= aux;
 	int i, blank;
-	char tbuf[41], pbuf[9], c, *p, *q;
+	char tbuf[41],pbuf[9], c, *p, *q;
 	const struct wd_quirk *wdq;
 	int dtype = DKTYPE_UNKNOWN;
 
@@ -359,7 +359,8 @@ wdattach(device_t parent, device_t self, void *aux)
 	}
 	*q++ = '\0';
 
-	aprint_normal_dev(self, "<%s>\n", tbuf);
+	wd->sc_typename = kmem_asprintf("%s", tbuf);
+	aprint_normal_dev(self, "<%s>\n", wd->sc_typename);
 
 	wdq = wd_lookup_quirks(tbuf);
 	if (wdq != NULL)
@@ -555,6 +556,10 @@ wddetach(device_t self, int flags)
 	}
 	wd->sc_bscount = 0;
 #endif
+	if (wd->sc_typename != NULL) {
+		kmem_free(wd->sc_typename, strlen(wd->sc_typename) + 1);
+		wd->sc_typename = NULL;
+	}
 
 	pmf_device_deregister(self);
 
@@ -1608,7 +1613,7 @@ wd_set_geometry(struct wd_softc *wd)
 	if ((wd->sc_flags & WDF_LBA) == 0)
 		dg->dg_ncylinders = wd->sc_params.atap_cylinders;
 
-	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, NULL);
+	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, wd->sc_typename);
 }
 
 int

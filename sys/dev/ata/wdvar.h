@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.47 2018/10/22 20:13:47 jdolecek Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.48 2019/03/19 06:51:05 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -86,6 +86,8 @@ struct wd_softc {
 	int drv_chaos_freq;		/* frequency of simulated bio errors */
 	int drv_chaos_cnt;		/* count of processed bio read xfers */
 #endif
+	unsigned inflight;
+	char *sc_typename;
 };
 
 #endif /* _DEV_ATA_WDVAR_H_ */
