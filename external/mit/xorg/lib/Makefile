@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2019/03/10 11:18:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.48 2019/03/19 06:19:44 mrg Exp $
 
 # build libraries for xorg
 
@@ -12,7 +12,7 @@ SUBDIR=	libfontenc freetype libFS libICE libglapi${OLD_PREFIX} \
 SUBDIR+=libdrm_intel libdrm_amdgpu
 .endif
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "evbarm"
-SUBDIR+=libdrm_nouveau libvdpau
+SUBDIR+=libdrm_nouveau
 .endif
 SUBDIR+=libdrm_radeon pixman
 .if !defined(MLIBDIR)
@@ -27,9 +27,13 @@ SUBDIR+=fontconfig libSM libX11 \
 	.WAIT \
 	libXcomposite libXdamage libXext libXfixes libXt \
 	libxkbfile libepoxy \
-	.WAIT \
-	libXi libXxf86vm \
-	.WAIT \
+	.WAIT
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "evbarm"
+# libvdpau depends upon libX11 and libXext
+SUBDIR+=libvdpau \
+	.WAIT
+.endif
+SUBDIR+=libXi libXxf86vm \
 	libGL${OLD_PREFIX} libXScrnSaver libXTrap libXevie libXfont libXfont2 \
 	libXinerama libXmu libXmuu libXpm libXrender \
 	libXres libXtst libXvMC libXvMCW libXv libXxf86dga libXxf86misc \
