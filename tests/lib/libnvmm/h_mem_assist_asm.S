@@ -1,3 +1,5 @@
+/*	$NetBSD: h_mem_assist_asm.S,v 1.6 2019/03/19 19:23:39 maxv Exp $	*/
+
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
