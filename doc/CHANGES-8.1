@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.118 2019/03/15 14:51:53 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.119 2019/03/19 13:43:42 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2732,4 +2732,10 @@ sys/dev/pci/mpii.c				1.22
 	Fix mpii(4) to adhere to physio diagnostic invariant that
 	fully processed data must not post an error.
 	[kardel, ticket #1217]
+
+sys/netinet/ip_carp.c				1.102
+
+	carp(4): fix a bug that would make it sometimes skip
+	pserialize_read_enter and ifa_release.
+	[ozaki-r, ticket #1218]
 
