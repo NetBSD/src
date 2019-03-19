@@ -1,4 +1,4 @@
-.\"	$NetBSD: RUN_ONCE.9,v 1.9 2017/07/03 21:28:48 wiz Exp $
+.\"	$NetBSD: RUN_ONCE.9,v 1.10 2019/03/19 08:16:51 ryo Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,12 +25,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd July 7, 2010
+.Dd Mar 19, 2019
 .Dt RUN_ONCE 9
 .Os
 .\" ------------------------------------------------------------
 .Sh NAME
-.Nm RUN_ONCE
+.Nm RUN_ONCE ,
+.Nm INIT_ONCE ,
+.Nm FINI_ONCE
 .Nd Run a function exactly once
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
@@ -41,6 +43,12 @@
 .Ft int
 .Fn RUN_ONCE \
 "once_t *control" "int (*init_func)(void)"
+.Ft int
+.Fn INIT_ONCE \
+"once_t *control" "int (*init_func)(void)"
+.Ft void
+.Fn FINI_ONCE \
+"once_t *control" "void (*fini_func)(void)"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn RUN_ONCE
@@ -59,6 +67,25 @@ will try again each time it is called.
 .Pp
 .Fn RUN_ONCE
 can sleep if it's called concurrently.
+.Pp
+.Fn INIT_ONCE
+is used in pair with
+.Fn FINI_ONCE .
+.Fn INIT_ONCE
+will only be run once similar with
+.Fn RUN_ONCE .
+.Fn FINI_ONCE
+will only be run at last time if it is called as many times as calling
+.Fn INIT_ONCE .
+When
+.Fn FINI_ONCE
+is executed, the next call to
+.Fn INIT_ONCE
+will be executed again. That is,
+.Fn INIT_ONCE
+and
+.Fn FINI_ONCE
+can be nested.
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
 On failure,
