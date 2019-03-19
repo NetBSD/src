@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.58 2019/02/17 04:17:52 rin Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.59 2019/03/19 08:17:46 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.58 2019/02/17 04:17:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.59 2019/03/19 08:17:46 ryo Exp $");
 
 #include "opt_usb.h"
 
@@ -1272,6 +1272,10 @@ int
 dwc2_init(struct dwc2_softc *sc)
 {
 	int err = 0;
+
+	err = linux_workqueue_init();
+	if (err)
+		return err;
 
 	sc->sc_bus.ub_hcpriv = sc;
 	sc->sc_bus.ub_revision = USBREV_2_0;
