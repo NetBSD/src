@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.100 2018/09/03 16:29:32 riastradh Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.101 2019/03/20 23:05:18 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.100 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.101 2019/03/20 23:05:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1361,6 +1361,8 @@ radeonfb_loadbios(struct radeonfb_softc *sc, const struct pci_attach_args *pa)
 	bus_space_handle_t	romh, biosh;
 	bus_size_t		romsz;
 	bus_addr_t		ptr;
+	uint32_t		busctl, crtcg, crtc2g = 0, viphctl, seprom, extc;
+	int			bios_voodoo = 0;
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_ROM, PCI_MAPREG_TYPE_ROM,
 		BUS_SPACE_MAP_PREFETCHABLE, &romt, &romh, NULL, &romsz) != 0) {
@@ -1370,21 +1372,61 @@ radeonfb_loadbios(struct radeonfb_softc *sc, const struct pci_attach_args *pa)
 
 	pci_find_rom(pa, romt, romh, romsz, PCI_ROM_CODE_TYPE_X86, &biosh,
 	    &sc->sc_biossz);
-	if (sc->sc_biossz == 0) {
-		aprint_verbose("%s: Video BIOS not present\n", XNAME(sc));
-		return;
-	}
+	if (sc->sc_biossz != 0) goto foundit;
 
+	aprint_verbose("trying to read disabled BIOS...\n");
+
+	bios_voodoo = 1;
+	seprom = radeonfb_get32(sc, RADEON_SEPROM_CNTL1);
+	radeonfb_put32(sc, RADEON_SEPROM_CNTL1,
+	    (seprom & ~RADEON_SCK_PRESCALE_MASK) |
+	    (0xc << RADEON_SCK_PRESCALE_SHIFT));
+	viphctl = radeonfb_get32(sc, RADEON_VIPH_CONTROL);
+	radeonfb_put32(sc, RADEON_VIPH_CONTROL, viphctl & ~RADEON_VIPH_EN);
+	busctl = radeonfb_get32(sc, RADEON_BUS_CNTL);
+	radeonfb_put32(sc, RADEON_BUS_CNTL, busctl & ~RADEON_BUS_BIOS_DIS_ROM);
+	crtcg = radeonfb_get32(sc, RADEON_CRTC_GEN_CNTL);
+	radeonfb_put32(sc, RADEON_CRTC_GEN_CNTL, ((crtcg & ~RADEON_CRTC_EN) |
+				      (RADEON_CRTC_DISP_REQ_EN_B |
+				       RADEON_CRTC_EXT_DISP_EN)));
+	if (HAS_CRTC2(sc)) {	
+		crtc2g = radeonfb_get32(sc, RADEON_CRTC2_GEN_CNTL);
+		radeonfb_put32(sc, RADEON_CRTC2_GEN_CNTL, 
+		    (crtc2g & ~RADEON_CRTC2_EN) |
+		    RADEON_CRTC2_DISP_REQ_EN_B);
+	}
+	extc = radeonfb_get32(sc, RADEON_CRTC_EXT_CNTL);
+	radeonfb_put32(sc, RADEON_CRTC_EXT_CNTL, (extc & ~RADEON_CRTC_CRT_ON) |
+				      (RADEON_CRTC_SYNC_TRISTAT |
+				       RADEON_CRTC_DISPLAY_DIS));
+	pci_find_rom(pa, romt, romh, romsz, PCI_ROM_CODE_TYPE_X86, &biosh,
+	    &sc->sc_biossz);
+	if (sc->sc_biossz != 0) printf("found disabled BIOS\n");
+
+foundit:
 	sc->sc_bios = malloc(sc->sc_biossz, M_DEVBUF, M_WAITOK);
 	bus_space_read_region_1(romt, biosh, 0, sc->sc_bios, sc->sc_biossz);
 
+	if (bios_voodoo != 0) {
+		radeonfb_put32(sc, RADEON_CRTC_EXT_CNTL, extc);
+		if (HAS_CRTC2(sc)) {	
+			radeonfb_put32(sc, RADEON_CRTC2_GEN_CNTL, crtc2g);
+		}
+		radeonfb_put32(sc, RADEON_CRTC_GEN_CNTL, crtcg);
+		radeonfb_put32(sc, RADEON_BUS_CNTL, busctl);
+		radeonfb_put32(sc, RADEON_VIPH_CONTROL, viphctl);
+		radeonfb_put32(sc, RADEON_SEPROM_CNTL1, seprom);
+	}
+
 	/* unmap the PCI expansion rom */
 	bus_space_unmap(romt, romh, romsz);
-
+	
 	/* turn off rom decoder now */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM,
 	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM) &
 	    ~PCI_MAPREG_ROM_ENABLE);
+
+	DPRINTF(("BIOS %08x\n", *(uint32_t *)sc->sc_bios));
 
 	ptr = GETBIOS16(sc, 0x48);
 	if ((GETBIOS32(sc, ptr + 4) == 0x41544f4d /* "ATOM" */) ||
@@ -1392,8 +1434,11 @@ radeonfb_loadbios(struct radeonfb_softc *sc, const struct pci_attach_args *pa)
 		sc->sc_flags |= RFB_ATOM;
 	}
 
-	aprint_verbose("%s: Found %d KB %s BIOS\n", XNAME(sc),
-	    (unsigned)sc->sc_biossz >> 10, IS_ATOM(sc) ? "ATOM" : "Legacy");
+	if (sc->sc_biossz > 0) {
+		aprint_verbose("%s: Found %d KB %s BIOS\n", XNAME(sc),
+		    (unsigned)sc->sc_biossz >> 10,
+		    IS_ATOM(sc) ? "ATOM" : "Legacy");
+	}
 }
 
 
@@ -1786,8 +1831,6 @@ radeonfb_getconnectors(struct radeonfb_softc *sc)
 			if (conn == RADEON_CONN_NONE)
 				continue;	/* no connector */
 
-
-
 			/* 
 			 * XXX
 			 * both Mac Mini variants have both outputs wired to 
@@ -1923,13 +1966,16 @@ nobios:
 		sc->sc_ports[i].rp_edid_valid = 0;
 		/* first look for static EDID data */
 		if ((edid_data = prop_dictionary_get(device_properties(
-		    sc->sc_dev), "EDID")) != NULL) {
+		      sc->sc_dev), "EDID")) != NULL) {
 
 			aprint_debug_dev(sc->sc_dev, "using static EDID\n");
 			memcpy(edid, prop_data_data_nocopy(edid_data), 128);
 			if (edid_parse(edid, eip) == 0) {
 
 				sc->sc_ports[i].rp_edid_valid = 1;
+#ifdef RADEONFB_DEBUG
+					edid_print(eip);
+#endif
 			}
 		}
 		/* if we didn't find any we'll try to talk to the monitor */
@@ -2016,10 +2062,10 @@ radeonfb_modelookup(const char *name)
 {
 	int	i;
 
-	for (i = 0; i < videomode_count; i++)
+	for (i = 0; i < videomode_count; i++) {
 		if (!strcmp(name, videomode_list[i].name))
 			return &videomode_list[i];
-
+	}
 	return NULL;
 }
 
