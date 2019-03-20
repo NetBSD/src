@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.860 2019/03/12 16:50:35 christos Exp $
+# $NetBSD: shl.mi,v 1.861 2019/03/20 05:09:26 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -830,9 +830,10 @@
 ./usr/lib/libssl.so.14				base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libssl.so.14.0			base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libstdc++.so				base-sys-shlib		compatfile,gcc,cxx,libstdcxx
-./usr/lib/libstdc++.so.8			base-sys-shlib		compatfile,gcc,cxx,libstdcxx
+./usr/lib/libstdc++.so.8			base-sys-shlib		compatfile,gcc=6,cxx,libstdcxx
 ./usr/lib/libstdc++.so.8.1			base-sys-shlib		compatfile,gcc=6,cxx,libstdcxx
-./usr/lib/libstdc++.so.8.2			base-sys-shlib		compatfile,gcc=7,cxx,libstdcxx
+./usr/lib/libstdc++.so.9			base-sys-shlib		compatfile,gcc=7,cxx,libstdcxx
+./usr/lib/libstdc++.so.9.0			base-sys-shlib		compatfile,gcc=7,cxx,libstdcxx
 ./usr/lib/libtelnet.so				base-obsolete		obsolete
 ./usr/lib/libtermcap.so				base-sys-shlib		compatfile
 ./usr/lib/libtermcap.so.0			base-sys-shlib		compatfile
