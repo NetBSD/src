@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.23 2019/01/30 02:02:23 jmcneill Exp $ */
+/* $NetBSD: armreg.h,v 1.24 2019/03/20 07:16:07 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -70,6 +70,16 @@ reg_##regname##_write(uint64_t __val)				\
 #define AARCH64REG_READWRITE_INLINE2(regname, regdesc)		\
 	AARCH64REG_READ_INLINE2(regname, regdesc)		\
 	AARCH64REG_WRITE_INLINE2(regname, regdesc)
+
+#define AARCH64REG_ATWRITE_INLINE2(regname, regdesc)		\
+static __inline void						\
+reg_##regname##_write(uint64_t __val)				\
+{								\
+	__asm __volatile("at " #regdesc ", %0" :: "r"(__val));	\
+}
+
+#define AARCH64REG_ATWRITE_INLINE(regname)			\
+	AARCH64REG_ATWRITE_INLINE2(regname, regname)
 
 /*
  * System registers available at EL0 (user)
@@ -536,6 +546,11 @@ AARCH64REG_WRITE_INLINE(rmr_el1)
 
 AARCH64REG_READ_INLINE(rvbar_el1)	// Reset Vector Base Address Register
 AARCH64REG_WRITE_INLINE(rvbar_el1)
+
+AARCH64REG_ATWRITE_INLINE(s1e0r);	// Address Translate Stages 1
+AARCH64REG_ATWRITE_INLINE(s1e0w);
+AARCH64REG_ATWRITE_INLINE(s1e1r);
+AARCH64REG_ATWRITE_INLINE(s1e1w);
 
 AARCH64REG_READ_INLINE(sctlr_el1)	// System Control Register
 AARCH64REG_WRITE_INLINE(sctlr_el1)
