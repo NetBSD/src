@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2263 2019/03/12 23:51:40 christos Exp $
+#	$NetBSD: mi,v 1.2264 2019/03/20 22:51:37 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -13,10 +13,10 @@
 ./usr/bin/c89					comp-c-bin
 ./usr/bin/c99					comp-c-bin
 ./usr/bin/cc					comp-c-bin		gcccmds
-./usr/bin/clang					comp-c-bin		llvm
-./usr/bin/clang++				comp-c-bin		llvm
-./usr/bin/clang-cpp				comp-c-bin		llvm
-./usr/bin/clang-tblgen				comp-c-bin		llvm
+./usr/bin/clang					comp-c-bin		llvmcmds
+./usr/bin/clang++				comp-c-bin		llvmcmds
+./usr/bin/clang-cpp				comp-c-bin		llvmcmds
+./usr/bin/clang-tblgen				comp-c-bin		llvmcmds
 ./usr/bin/config				comp-util-bin
 ./usr/bin/crunchgen				comp-c-bin
 ./usr/bin/crunchide				comp-c-bin
@@ -364,7 +364,7 @@
 ./usr/include/clang-4.0/stdatomic.h		comp-obsolete		obsolete
 ./usr/include/clang-4.0/stdnoreturn.h		comp-obsolete		obsolete
 ./usr/include/clang-5.0/stdatomic.h		comp-obsolete		obsolete
-./usr/include/clang-7.0/stdatomic.h		comp-c-include		llvm
+./usr/include/clang-7.0/stdatomic.h		comp-c-include		llvmcmds
 ./usr/include/complex.h				comp-c-include
 ./usr/include/cpio.h				comp-c-include
 ./usr/include/crypto/cryptodev.h		comp-c-include
