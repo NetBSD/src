@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.198 2019/01/02 13:29:22 christos Exp $
+#	$NetBSD: Makefile,v 1.199 2019/03/20 22:51:37 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -130,8 +130,10 @@ SUBDIR+= \
 .if ${MKLLVM} != "no" && !defined(EXTERNAL_TOOLCHAIN)
 SUBDIR+= \
 	.WAIT llvm-include .WAIT \
-	llvm-lib .WAIT \
-	llvm-clang
+	llvm-lib
+. if ${MKLLVMCMDS} != "no"
+SUBDIR+=	.WAIT llvm-clang
+. endif
 . if ${MKLLD} != "no"
 SUBDIR+=	llvm-lld
 . endif
