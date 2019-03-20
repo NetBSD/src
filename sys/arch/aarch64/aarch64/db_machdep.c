@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.15 2019/03/19 16:45:28 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.16 2019/03/20 07:16:07 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.15 2019/03/19 16:45:28 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.16 2019/03/20 07:16:07 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -346,14 +346,47 @@ db_md_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	db_printf("\tl->l_wmesg        =%s\n", SAFESTRPTR(l->l_wmesg));
 }
 
+static void
+db_par_print(uint64_t par, vaddr_t va)
+{
+	paddr_t pa = (__SHIFTOUT(par, PAR_PA) << 12) + (va & 0xfff);
+
+	db_printf("%016"PRIx64": ATTR=0x%02lx, NS=%ld, S=%ld, SHA=%ld, PTW=%ld"
+	    ", FST=%ld, F=%ld, PA=%016"PRIxPADDR"\n",
+	    par,
+	    __SHIFTOUT(par, PAR_ATTR),
+	    __SHIFTOUT(par, PAR_NS),
+	    __SHIFTOUT(par, PAR_S),
+	    __SHIFTOUT(par, PAR_SHA),
+	    __SHIFTOUT(par, PAR_PTW),
+	    __SHIFTOUT(par, PAR_FST),
+	    __SHIFTOUT(par, PAR_F),
+	    pa);
+}
+
 void
 db_md_pte_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
+	uint64_t par;
+
 	if (!have_addr) {
 		db_printf("pte address must be specified\n");
 		return;
 	}
+
+	reg_s1e0r_write(addr);
+	__asm __volatile ("isb");
+	par = reg_par_el1_read();
+	db_printf("Stage1 EL0 translation %016llx -> PAR_EL1 = ", addr);
+	db_par_print(par, addr);
+
+	reg_s1e1r_write(addr);
+	__asm __volatile ("isb");
+	par = reg_par_el1_read();
+	db_printf("Stage1 EL1 translation %016llx -> PAR_EL1 = ", addr);
+	db_par_print(par, addr);
+
 	pmap_db_pteinfo(addr, db_printf);
 }
 
