@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 2019/03/19 16:45:28 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 2019/03/20 07:05:06 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2019/03/19 16:45:28 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2019/03/20 07:05:06 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -952,7 +952,7 @@ str_vmflags(uint32_t flags)
 }
 
 static void
-pg_dump(struct vm_page *pg, void (*pr)(const char *, ...))
+pg_dump(struct vm_page *pg, void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	pr("pg=%p\n", pg);
 	pr(" pg->uanon   = %p\n", pg->uanon);
@@ -966,7 +966,7 @@ pg_dump(struct vm_page *pg, void (*pr)(const char *, ...))
 }
 
 static void
-pv_dump(struct vm_page_md *md, void (*pr)(const char *, ...))
+pv_dump(struct vm_page_md *md, void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	struct pv_entry *pv;
 	int i;
@@ -2334,7 +2334,7 @@ pmap_db_pte_print(pt_entry_t pte, int level,
 }
 
 void
-pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
+pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	struct vm_page *pg;
 	bool user;
@@ -2359,9 +2359,10 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 	/*
 	 * traverse L0 -> L1 -> L2 -> L3 table
 	 */
-	pr("TTBR%d=%016llx, pa=%016lx, va=%016lx", user ? 0 : 1, ttbr, l0);
-	pr(", input-va=%016llx,"
-	    " L0-index=%d, L1-index=%d, L2-index=%d, L3-index=%d\n",
+	pr("TTBR%d=%016"PRIx64", pa=%016"PRIxPADDR", va=%p",
+	    user ? 0 : 1, ttbr, pa, l0);
+	pr(", input-va=%016"PRIxVADDR
+	    ", L0-index=%ld, L1-index=%ld, L2-index=%ld, L3-index=%ld\n",
 	    va,
 	    (va & L0_ADDR_BITS) >> L0_SHIFT,
 	    (va & L1_ADDR_BITS) >> L1_SHIFT,
@@ -2371,7 +2372,7 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 	idx = l0pde_index(va);
 	pde = l0[idx];
 
-	pr("L0[%3d]=%016llx:", idx, pde);
+	pr("L0[%3d]=%016"PRIx64":", idx, pde);
 	pmap_db_pte_print(pde, 0, pr);
 
 	if (!l0pde_valid(pde))
@@ -2381,7 +2382,7 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 	idx = l1pde_index(va);
 	pde = l1[idx];
 
-	pr(" L1[%3d]=%016llx:", idx, pde);
+	pr(" L1[%3d]=%016"PRIx64":", idx, pde);
 	pmap_db_pte_print(pde, 1, pr);
 
 	if (!l1pde_valid(pde) || l1pde_is_block(pde))
@@ -2391,7 +2392,7 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 	idx = l2pde_index(va);
 	pde = l2[idx];
 
-	pr("  L2[%3d]=%016llx:", idx, pde);
+	pr("  L2[%3d]=%016"PRIx64":", idx, pde);
 	pmap_db_pte_print(pde, 2, pr);
 
 	if (!l2pde_valid(pde) || l2pde_is_block(pde))
@@ -2401,7 +2402,7 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 	idx = l3pte_index(va);
 	pte = l3[idx];
 
-	pr("   L3[%3d]=%016llx:", idx, pte);
+	pr("   L3[%3d]=%016"PRIx64":", idx, pte);
 	pmap_db_pte_print(pte, 3, pr);
 
 	pa = l3pte_pa(pte);
@@ -2417,7 +2418,7 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 
 static void
 dump_ln_table(bool countmode, pd_entry_t *pdp, int level, int lnindex,
-    vaddr_t va, void (*pr)(const char *, ...))
+    vaddr_t va, void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	struct vm_page *pg;
 	struct vm_page_md *md;
@@ -2490,13 +2491,14 @@ dump_ln_table(bool countmode, pd_entry_t *pdp, int level, int lnindex,
 
 static void
 pmap_db_dump_l0_table(bool countmode, pd_entry_t *pdp, vaddr_t va_base,
-    void (*pr)(const char *, ...))
+    void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	dump_ln_table(countmode, pdp, 0, 0, va_base, pr);
 }
 
 void
-pmap_db_ttbrdump(bool countmode, vaddr_t va, void (*pr)(const char *, ...))
+pmap_db_ttbrdump(bool countmode, vaddr_t va,
+    void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	struct pmap *pm, _pm;
 
