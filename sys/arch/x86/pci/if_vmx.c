@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.19.6.4 2018/04/16 14:34:43 martin Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.19.6.5 2019/03/21 14:27:02 martin Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.19.6.4 2018/04/16 14:34:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.19.6.5 2019/03/21 14:27:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -395,6 +395,29 @@ void vmxnet3_dma_free(struct vmxnet3_softc *, struct vmxnet3_dma_alloc *);
 CFATTACH_DECL3_NEW(vmx, sizeof(struct vmxnet3_softc),
     vmxnet3_match, vmxnet3_attach, vmxnet3_detach, NULL, NULL, NULL, 0);
 
+/* round down to the nearest power of 2 */
+static int
+vmxnet3_calc_queue_size(int n)
+{
+	int v, q;
+
+	v = n;
+	while (v != 0) {
+		if (powerof2(n) != 0)
+			break;
+		v /= 2;
+		q = rounddown2(n, v);
+		if (q != 0) {
+			n = q;
+			break;
+		}
+	}
+	if (n == 0)
+		n = 1;
+
+	return n;
+}
+
 static inline void
 vmxnet3_write_bar0(struct vmxnet3_softc *sc, bus_size_t r, uint32_t v)
 {
@@ -520,8 +543,10 @@ vmxnet3_attach(device_t parent, device_t self, void *aux)
 	sc->vmx_mtx = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
 	callout_init(&sc->vmx_tick, CALLOUT_MPSAFE);
 
-	sc->vmx_max_ntxqueues = ncpu;
-	sc->vmx_max_nrxqueues = ncpu;
+	sc->vmx_max_ntxqueues =
+	    vmxnet3_calc_queue_size(MIN(VMXNET3_MAX_TX_QUEUES, ncpu));
+	sc->vmx_max_nrxqueues =
+	    vmxnet3_calc_queue_size(MIN(VMXNET3_MAX_RX_QUEUES, ncpu));
 	sc->vmx_ntxdescs = 512;
 	sc->vmx_nrxdescs = 256;
 	sc->vmx_max_rxsegs = VMXNET3_MAX_RX_SEGS;
