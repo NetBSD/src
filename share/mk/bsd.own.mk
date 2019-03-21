@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1113 2019/03/20 22:51:37 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1114 2019/03/21 11:14:16 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -174,7 +174,8 @@ EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
 #
 .if ${MACHINE_CPU} == "x86_64"	|| \
     ${MACHINE_CPU} == "i386"	|| \
-    ${MACHINE_CPU} == "aarch64"	
+    ${MACHINE_CPU} == "aarch64"	|| \
+    ${MACHINE} == "sparc64"
 HAVE_JEMALLOC?=		510
 .else
 HAVE_JEMALLOC?=		100
