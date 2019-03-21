@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_ioctl.h,v 1.3 2019/01/08 07:29:46 maxv Exp $	*/
+/*	$NetBSD: nvmm_ioctl.h,v 1.4 2019/03/21 20:21:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ struct nvmm_ioc_gpa_map {
 	uintptr_t hva;
 	gpaddr_t gpa;
 	size_t size;
-	int flags;
+	int prot;
 };
 
 struct nvmm_ioc_gpa_unmap {
