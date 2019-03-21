@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.11 2019/02/05 15:03:35 wiz Exp $
+.\"	$NetBSD: libnvmm.3,v 1.12 2019/03/21 20:21:40 maxv Exp $
 .\"
 .\" Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 5, 2019
+.Dd March 19, 2019
 .Dt LIBNVMM 3
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@
 .Fn nvmm_hva_unmap "struct nvmm_machine *mach" "uintptr_t hva" "size_t size"
 .Ft int
 .Fn nvmm_gpa_map "struct nvmm_machine *mach" "uintptr_t hva" "gpaddr_t gpa" \
-    "size_t size" "int flags"
+    "size_t size" "int prot"
 .Ft int
 .Fn nvmm_gpa_unmap "struct nvmm_machine *mach" "uintptr_t hva" "gpaddr_t gpa" \
     "size_t size"

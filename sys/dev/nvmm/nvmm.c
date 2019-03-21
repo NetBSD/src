@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.10 2019/03/14 19:10:27 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.11 2019/03/21 20:21:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.10 2019/03/14 19:10:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.11 2019/03/21 20:21:40 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.10 2019/03/14 19:10:27 maxv Exp $");
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/proc.h>
+#include <sys/mman.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -493,7 +494,7 @@ nvmm_do_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		if (exit->u.mem.gpa >= mach->gpa_end) {
 			break;
 		}
-		if (uvm_fault(&vm->vm_map, exit->u.mem.gpa, VM_PROT_ALL)) {
+		if (uvm_fault(&vm->vm_map, exit->u.mem.gpa, exit->u.mem.prot)) {
 			break;
 		}
 	}
@@ -706,6 +707,11 @@ nvmm_gpa_map(struct nvmm_ioc_gpa_map *args)
 	if (error)
 		return error;
 
+	if ((args->prot & ~(PROT_READ|PROT_WRITE|PROT_EXEC)) != 0) {
+		error = EINVAL;
+		goto out;
+	}
+
 	if ((args->gpa % PAGE_SIZE) != 0 || (args->size % PAGE_SIZE) != 0 ||
 	    (args->hva % PAGE_SIZE) != 0) {
 		error = EINVAL;
@@ -740,7 +746,7 @@ nvmm_gpa_map(struct nvmm_ioc_gpa_map *args)
 
 	/* Map the uobj into the machine address space, as pageable. */
 	error = uvm_map(&mach->vm->vm_map, &gpa, args->size, uobj, off, 0,
-	    UVM_MAPFLAG(UVM_PROT_RWX, UVM_PROT_RWX, UVM_INH_NONE,
+	    UVM_MAPFLAG(args->prot, UVM_PROT_RWX, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, UVM_FLAG_FIXED|UVM_FLAG_UNMAP));
 	if (error) {
 		uao_detach(uobj);

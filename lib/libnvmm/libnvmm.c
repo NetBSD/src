@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.6 2018/12/27 07:22:31 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.7 2019/03/21 20:21:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -374,7 +374,7 @@ nvmm_vcpu_run(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 
 int
 nvmm_gpa_map(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa,
-    size_t size, int flags)
+    size_t size, int prot)
 {
 	struct nvmm_ioc_gpa_map args;
 	int ret;
@@ -391,7 +391,7 @@ nvmm_gpa_map(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa,
 	args.hva = hva;
 	args.gpa = gpa;
 	args.size = size;
-	args.flags = flags;
+	args.prot = prot;
 
 	ret = ioctl(nvmm_fd, NVMM_IOC_GPA_MAP, &args);
 	if (ret == -1) {

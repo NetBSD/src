@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.4 2019/01/26 15:12:20 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.5 2019/03/21 20:21:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -64,14 +64,8 @@ enum nvmm_exit_reason {
 	NVMM_EXIT_INVALID	= 0xFFFFFFFFFFFFFFFF
 };
 
-enum nvmm_exit_memory_perm {
-	NVMM_EXIT_MEMORY_READ,
-	NVMM_EXIT_MEMORY_WRITE,
-	NVMM_EXIT_MEMORY_EXEC
-};
-
 struct nvmm_exit_memory {
-	enum nvmm_exit_memory_perm perm;
+	int prot;
 	gpaddr_t gpa;
 	uint8_t inst_len;
 	uint8_t inst_bytes[15];
