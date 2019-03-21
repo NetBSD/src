@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.19 2019/03/14 20:29:53 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.20 2019/03/21 20:21:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.19 2019/03/14 20:29:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.20 2019/03/21 20:21:41 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.19 2019/03/14 20:29:53 maxv Exp $
 #include <sys/kmem.h>
 #include <sys/cpu.h>
 #include <sys/xcall.h>
+#include <sys/mman.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -1600,11 +1601,11 @@ vmx_exit_epf(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	exit->reason = NVMM_EXIT_MEMORY;
 	vmx_vmread(VMCS_EXIT_QUALIFICATION, &perm);
 	if (perm & VMX_EPT_VIOLATION_WRITE)
-		exit->u.mem.perm = NVMM_EXIT_MEMORY_WRITE;
+		exit->u.mem.prot = PROT_WRITE;
 	else if (perm & VMX_EPT_VIOLATION_EXECUTE)
-		exit->u.mem.perm = NVMM_EXIT_MEMORY_EXEC;
+		exit->u.mem.prot = PROT_EXEC;
 	else
-		exit->u.mem.perm = NVMM_EXIT_MEMORY_READ;
+		exit->u.mem.prot = PROT_READ;
 	exit->u.mem.gpa = gpa;
 	exit->u.mem.inst_len = 0;
 }
