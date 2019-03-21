@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.101 2019/03/20 23:05:18 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.102 2019/03/21 17:40:36 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.101 2019/03/20 23:05:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.102 2019/03/21 17:40:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1401,11 +1401,13 @@ radeonfb_loadbios(struct radeonfb_softc *sc, const struct pci_attach_args *pa)
 				       RADEON_CRTC_DISPLAY_DIS));
 	pci_find_rom(pa, romt, romh, romsz, PCI_ROM_CODE_TYPE_X86, &biosh,
 	    &sc->sc_biossz);
-	if (sc->sc_biossz != 0) printf("found disabled BIOS\n");
 
 foundit:
-	sc->sc_bios = malloc(sc->sc_biossz, M_DEVBUF, M_WAITOK);
-	bus_space_read_region_1(romt, biosh, 0, sc->sc_bios, sc->sc_biossz);
+	if (sc->sc_biossz > 0) {
+		sc->sc_bios = malloc(sc->sc_biossz, M_DEVBUF, M_WAITOK);
+		bus_space_read_region_1(romt, biosh, 0, sc->sc_bios,
+		    sc->sc_biossz);
+	}
 
 	if (bios_voodoo != 0) {
 		radeonfb_put32(sc, RADEON_CRTC_EXT_CNTL, extc);
