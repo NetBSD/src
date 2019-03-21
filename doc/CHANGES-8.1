@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.119 2019/03/19 13:43:42 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.120 2019/03/21 14:27:47 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2738,4 +2738,10 @@ sys/netinet/ip_carp.c				1.102
 	carp(4): fix a bug that would make it sometimes skip
 	pserialize_read_enter and ifa_release.
 	[ozaki-r, ticket #1218]
+
+sys/arch/x86/pci/if_vmx.c			1.27
+
+	vmx(4): Fix device enable command failure when the number of vCPUs
+	is not a power of two.
+	[nonaka, ticket #1219]
 
