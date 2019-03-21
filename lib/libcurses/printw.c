@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.24 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: printw.c,v 1.25 2019/03/21 21:28:55 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.24 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: printw.c,v 1.25 2019/03/21 21:28:55 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -114,13 +114,13 @@ mvwprintw(WINDOW * win, int y, int x, const char *fmt,...)
  * Internal write-buffer-to-window function.
  */
 static ssize_t
-winwrite(void   *cookie, const void *vbuf, size_t n)
+winwrite(void *cookie, const void *vbuf, size_t n)
 {
-	WINDOW *win;
-	size_t     c;
+	WINDOW *win = cookie;
 	const char *buf = vbuf;
+	size_t c;
 
-	for (c = 0, win = cookie; c < n; c++) {
+	for (c = 0; c < n; c++) {
 #ifdef DEBUG
 		__CTRACE(__CTRACE_MISC, "__winwrite: %c\n", *buf);
 #endif
