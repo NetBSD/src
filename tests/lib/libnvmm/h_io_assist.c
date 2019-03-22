@@ -1,4 +1,4 @@
-/*	$NetBSD: h_io_assist.c,v 1.5 2019/03/21 20:21:41 maxv Exp $	*/
+/*	$NetBSD: h_io_assist.c,v 1.6 2019/03/22 01:50:14 htodd Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -189,8 +189,8 @@ map_pages(struct nvmm_machine *mach)
 	if (ret == -1)
 		err(errno, "nvmm_gpa_map");
 	ret = nvmm_gpa_map(mach, (uintptr_t)L1, 0x6000, PAGE_SIZE,
-	if (ret == -1)
 	    PROT_READ|PROT_WRITE);
+	if (ret == -1)
 		err(errno, "nvmm_gpa_map");
 
 	memset(L4, 0, PAGE_SIZE);
