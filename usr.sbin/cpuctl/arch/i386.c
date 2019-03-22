@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.92 2019/02/05 08:07:59 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.93 2019/03/22 02:33:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.92 2019/02/05 08:07:59 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.93 2019/03/22 02:33:08 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1718,6 +1718,7 @@ cpu_probe_hv_features(struct cpu_info *ci, const char *cpuname)
 		 * ------------+--------------
 		 * KVM		"KVMKVMKVM"
 		 * Microsoft	"Microsoft Hv"
+		 * QEMU(TGC)	"TCGTCGTCGTCG"
 		 * VMware	"VMwareVMware"
 		 * Xen		"XenVMMXenVMM"
 		 * NetBSD	"___ NVMM ___"
@@ -1726,6 +1727,8 @@ cpu_probe_hv_features(struct cpu_info *ci, const char *cpuname)
 			hv_name = "KVM";
 		else if (strncmp(hv_sig, "Microsoft Hv", 12) == 0)
 			hv_name = "Hyper-V";
+		else if (strncmp(hv_sig, "TCGTCGTCGTCG", 12) == 0)
+			hv_name = "QEMU(TGC)";
 		else if (strncmp(hv_sig, "VMwareVMware", 12) == 0)
 			hv_name = "VMware";
 		else if (strncmp(hv_sig, "XenVMMXenVMM", 12) == 0)
@@ -1787,6 +1790,25 @@ print_bits(const char *cpuname, const char *hdr, const char *fmt, uint32_t val)
 	while (*bp != '\0') {
 		aprint_verbose("%s: %s %s\n", cpuname, hdr, bp);
 		bp += strlen(bp) + 1;
+	}
+}
+
+static void
+dump_descs(uint32_t leafstart, uint32_t leafend, const char *cpuname,
+    const char *blockname)
+{
+	uint32_t descs[4];
+	uint32_t leaf;
+
+	aprint_verbose("%s: highest %s info %08x\n", cpuname, blockname,
+	    leafend);
+
+	if (verbose) {
+		for (leaf = leafstart; leaf <= leafend; leaf++) {
+			x86_cpuid(leaf, descs);
+			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
+			    leaf, descs[0], descs[1], descs[2], descs[3]);
+		}
 	}
 }
 
@@ -1933,29 +1955,12 @@ identifycpu(int fd, const char *cpuname)
 
 	ci = &cistore;
 	cpu_probe_base_features(ci, cpuname);
-	aprint_verbose("%s: highest basic info %08x\n", cpuname,
-	    ci->ci_cpuid_level);
-	if (verbose) {
-		int bf;
-		
-		for (bf = 0; bf <= ci->ci_cpuid_level; bf++) {
-			x86_cpuid(bf, descs);
-			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
-			    bf, descs[0], descs[1], descs[2], descs[3]);
-		}
+	dump_descs(0x00000000, ci->ci_cpuid_level, cpuname, "basic");
+	if ((ci->ci_feat_val[1] & CPUID2_RAZ) != 0) {
+		x86_cpuid(0x40000000, descs);
+		dump_descs(0x40000000, descs[0], cpuname, "hypervisor");
 	}
-	if (ci->ci_cpuid_extlevel >=  0x80000000)
-		aprint_verbose("%s: highest extended info %08x\n", cpuname,
-		    ci->ci_cpuid_extlevel);
-	if (verbose) {
-		unsigned int ef;
-
-		for (ef = 0x80000000; ef <= ci->ci_cpuid_extlevel; ef++) {
-			x86_cpuid(ef, descs);
-			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
-			    ef, descs[0], descs[1], descs[2], descs[3]);
-		}
-	}
+	dump_descs(0x80000000, ci->ci_cpuid_extlevel, cpuname, "extended");
 
 	cpu_probe_hv_features(ci, cpuname);
 	cpu_probe_features(ci);
