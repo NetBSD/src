@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.102 2019/03/21 17:40:36 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.103 2019/03/22 07:41:41 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.102 2019/03/21 17:40:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.103 2019/03/22 07:41:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1401,6 +1401,9 @@ radeonfb_loadbios(struct radeonfb_softc *sc, const struct pci_attach_args *pa)
 				       RADEON_CRTC_DISPLAY_DIS));
 	pci_find_rom(pa, romt, romh, romsz, PCI_ROM_CODE_TYPE_X86, &biosh,
 	    &sc->sc_biossz);
+
+	if (sc->sc_biossz == 0 || sc->sc_bios == NULL)
+		return;
 
 foundit:
 	if (sc->sc_biossz > 0) {
