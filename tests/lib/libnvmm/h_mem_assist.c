@@ -1,4 +1,4 @@
-/*	$NetBSD: h_mem_assist.c,v 1.8 2019/03/21 20:21:41 maxv Exp $	*/
+/*	$NetBSD: h_mem_assist.c,v 1.9 2019/03/22 01:50:14 htodd Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@ static void
 map_pages(struct nvmm_machine *mach)
 {
 	pt_entry_t *L4, *L3, *L2, *L1;
+	int ret;
 
 	instbuf = mmap(NULL, PAGE_SIZE, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
 	    -1, 0);
