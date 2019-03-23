@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.268 2019/02/05 06:43:20 msaitoh Exp $	*/
+/*	$NetBSD: if.h,v 1.269 2019/03/23 09:48:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@
 #include <sys/pslist.h>
 #include <sys/pserialize.h>
 #include <sys/psref.h>
+#include <sys/module_hook.h>
 #endif
 
 /*
@@ -1329,6 +1330,11 @@ int	sysctl_ifq(int *name, u_int namelen, void *oldp,
 #define IFQCTL_MAXLEN	2
 #define IFQCTL_PEAK	3
 #define IFQCTL_DROPS	4
+
+/* 
+ * Hook for if_vlan - needed by if_agr
+ */
+MODULE_HOOK(if_vlan_vlan_input_hook, void, (struct ifnet *, struct mbuf *));
 
 #endif /* _KERNEL */
 

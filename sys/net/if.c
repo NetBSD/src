@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.446 2019/03/01 11:06:57 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.447 2019/03/23 09:48:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.446 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.447 2019/03/23 09:48:04 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.446 2019/03/01 11:06:57 pgoyette Exp $");
 #include <sys/xcall.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/module_hook.h>
 #include <sys/compat_stub.h>
 
 #include <net/if.h>
@@ -243,6 +244,11 @@ static void if_deferred_start_destroy(struct ifnet *);
 #if defined(INET) || defined(INET6)
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
 #endif
+
+/*
+ * Hook for if_vlan - needed by if_agr
+ */
+struct if_vlan_vlan_input_hook_t if_vlan_vlan_input_hook;
 
 static void if_sysctl_setup(struct sysctllog **);
 
