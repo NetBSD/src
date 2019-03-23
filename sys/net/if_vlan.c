@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.133 2018/10/19 00:12:56 knakahara Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.134 2019/03/23 09:48:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.133 2018/10/19 00:12:56 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.134 2019/03/23 09:48:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -293,6 +293,7 @@ vlaninit(void)
 	if_clone_attach(&vlan_cloner);
 
 	vlan_hash_init();
+	MODULE_HOOK_SET(if_vlan_vlan_input_hook, "vlan_inp", vlan_input);
 }
 
 static int
@@ -318,6 +319,7 @@ vlandetach(void)
 	mutex_destroy(&ifv_hash.lock);
 	mutex_destroy(&ifv_list.lock);
 
+	MODULE_HOOK_UNSET(if_vlan_vlan_input_hook);
 	return 0;
 }
 
