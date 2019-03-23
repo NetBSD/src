@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.24 2019/01/27 05:08:05 dholland Exp $	*/
+/*	$NetBSD: spectre.c,v 1.25 2019/03/23 10:02:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.24 2019/01/27 05:08:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.25 2019/03/23 10:02:05 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -292,31 +292,13 @@ mitigation_v2_change_cpu(void *arg1, void *arg2)
 static int
 mitigation_v2_change(bool enabled)
 {
-	struct cpu_info *ci = NULL;
-	CPU_INFO_ITERATOR cii;
 	uint64_t xc;
 
 	v2_detect_method();
 
-	mutex_enter(&cpu_lock);
-
-	/*
-	 * We expect all the CPUs to be online.
-	 */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		struct schedstate_percpu *spc = &ci->ci_schedstate;
-		if (spc->spc_flags & SPCF_OFFLINE) {
-			printf("[!] cpu%d offline, SpectreV2 not changed\n",
-			    cpu_index(ci));
-			mutex_exit(&cpu_lock);
-			return EOPNOTSUPP;
-		}
-	}
-
 	switch (v2_mitigation_method) {
 	case V2_MITIGATION_NONE:
 		printf("[!] No mitigation available\n");
-		mutex_exit(&cpu_lock);
 		return EOPNOTSUPP;
 	case V2_MITIGATION_AMD_DIS_IND:
 	case V2_MITIGATION_INTEL_IBRS:
@@ -331,7 +313,6 @@ mitigation_v2_change(bool enabled)
 		xc_wait(xc);
 		printf(" done!\n");
 		v2_mitigation_enabled = enabled;
-		mutex_exit(&cpu_lock);
 		v2_set_name();
 		return 0;
 	default:
@@ -495,31 +476,13 @@ mitigation_v4_change_cpu(void *arg1, void *arg2)
 static int
 mitigation_v4_change(bool enabled)
 {
-	struct cpu_info *ci = NULL;
-	CPU_INFO_ITERATOR cii;
 	uint64_t xc;
 
 	v4_detect_method();
 
-	mutex_enter(&cpu_lock);
-
-	/*
-	 * We expect all the CPUs to be online.
-	 */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		struct schedstate_percpu *spc = &ci->ci_schedstate;
-		if (spc->spc_flags & SPCF_OFFLINE) {
-			printf("[!] cpu%d offline, SpectreV4 not changed\n",
-			    cpu_index(ci));
-			mutex_exit(&cpu_lock);
-			return EOPNOTSUPP;
-		}
-	}
-
 	switch (v4_mitigation_method) {
 	case V4_MITIGATION_NONE:
 		printf("[!] No mitigation available\n");
-		mutex_exit(&cpu_lock);
 		return EOPNOTSUPP;
 	case V4_MITIGATION_INTEL_SSBD:
 	case V4_MITIGATION_AMD_NONARCH_F15H:
@@ -532,13 +495,11 @@ mitigation_v4_change(bool enabled)
 		xc_wait(xc);
 		printf(" done!\n");
 		v4_mitigation_enabled = enabled;
-		mutex_exit(&cpu_lock);
 		v4_set_name();
 		return 0;
 	case V4_MITIGATION_INTEL_SSB_NO:
 	case V4_MITIGATION_AMD_SSB_NO:
 		printf("[+] The CPU is not affected by SpectreV4\n");
-		mutex_exit(&cpu_lock);
 		return 0;
 	default:
 		panic("impossible");

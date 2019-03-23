@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.23 2019/03/09 08:42:26 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.24 2019/03/23 10:02:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.23 2019/03/09 08:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.24 2019/03/23 10:02:05 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -704,24 +704,7 @@ svs_disable_cpu(void *arg1, void *arg2)
 static int
 svs_disable(void)
 {
-	struct cpu_info *ci = NULL;
-	CPU_INFO_ITERATOR cii;
 	uint64_t xc;
-
-	mutex_enter(&cpu_lock);
-
-	/*
-	 * We expect all the CPUs to be online.
-	 */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		struct schedstate_percpu *spc = &ci->ci_schedstate;
-		if (spc->spc_flags & SPCF_OFFLINE) {
-			printf("[!] cpu%d offline, SVS not disabled\n",
-			    cpu_index(ci));
-			mutex_exit(&cpu_lock);
-			return EOPNOTSUPP;
-		}
-	}
 
 	svs_cpu_barrier1 = ncpu;
 	svs_cpu_barrier2 = ncpu;
@@ -730,8 +713,6 @@ svs_disable(void)
 	xc = xc_broadcast(0, svs_disable_cpu, NULL, NULL);
 	xc_wait(xc);
 	printf(" done!\n");
-
-	mutex_exit(&cpu_lock);
 
 	return 0;
 }
