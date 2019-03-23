@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.19 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.20 2019/03/23 02:19:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@ struct uhidev {
 	struct uhidev_softc *sc_parent;
 	uByte sc_report_id;
 	uint8_t sc_state;
-	int sc_in_rep_size;
 #define	UHIDEV_OPEN	0x01	/* device is open */
+	int sc_in_rep_size;
 	void (*sc_intr)(struct uhidev *, void *, u_int);
 	krndsource_t     rnd_source;
 };

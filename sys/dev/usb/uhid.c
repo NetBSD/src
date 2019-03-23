@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.106 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: uhid.c,v 1.107 2019/03/23 02:19:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.106 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.107 2019/03/23 02:19:31 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -317,21 +317,23 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sc->sc_dying)
 		return ENXIO;
 
-	mutex_enter(&sc->sc_access_lock);
+	mutex_enter(&sc->sc_lock);
 
 	/*
 	 * uhid interrupts aren't enabled yet, so setup sc_q now, as
 	 * long as they're not already allocated.
 	 */
 	if (sc->sc_hdev.sc_state & UHIDEV_OPEN) {
-		mutex_exit(&sc->sc_access_lock);
+		mutex_exit(&sc->sc_lock);
 		return EBUSY;
 	}
+	mutex_exit(&sc->sc_lock);
+
 	if (clalloc(&sc->sc_q, UHID_BSIZE, 0) == -1) {
-		mutex_exit(&sc->sc_access_lock);
 		return ENOMEM;
 	}
 
+	mutex_enter(&sc->sc_access_lock);
 	error = uhidev_open(&sc->sc_hdev);
 	if (error) {
 		clfree(&sc->sc_q);
