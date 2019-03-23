@@ -1,4 +1,4 @@
-.\"	$NetBSD: crash.8,v 1.7 2017/07/03 21:35:30 wiz Exp $
+.\"	$NetBSD: crash.8,v 1.8 2019/03/23 02:07:32 mrg Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 10, 2016
+.Dd March 22, 2019
 .Dt CRASH 8
 .Os
 .Sh NAME
@@ -82,6 +82,13 @@ For example:
 .Bd -literal -offset abcd
 crash> ps | more
 crash> ps | grep ioflush
+.Ed
+.Sh EXAMPLES
+You can obtain a full list of all kernel stack traces with a shell pipeline
+like the following:
+.Bd -literal -offset abcd
+# echo ps | crash | grep '^[0-9]' | cut -c 30-46 | \\
+  sed 's,^,bt/a ,' | crash
 .Ed
 .Sh SEE ALSO
 .Xr ps 1 ,
