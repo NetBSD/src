@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.47 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.48 2019/03/23 09:48:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.47 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.48 2019/03/23 09:48:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "vlan.h"
 #endif
 
 #include <sys/param.h>
@@ -169,11 +168,8 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 	 * provided us with the tag.
 	 */
 	if (ec->ec_nvlans && vlan_has_tag(m)) {
-#if NVLAN > 0
-		vlan_input(ifp, m);
-#else
-		m_freem(m);
-#endif
+		MODULE_HOOK_CALL_VOID(if_vlan_vlan_input_hook, (ifp, m),
+		    m_freem(m));
 		return;
 	}
 
@@ -1169,4 +1165,4 @@ agrport_config_promisc(struct agr_port *port, bool promisc)
  */
 #include <net/if_module.h>
 
-IF_MODULE(MODULE_CLASS_DRIVER, agr, "if_vlan")
+IF_MODULE(MODULE_CLASS_DRIVER, agr, "")
