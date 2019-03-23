@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.53 2015/02/18 16:47:58 macallan Exp $
+#	$NetBSD: files.sgimips,v 1.54 2019/03/23 17:44:49 sevan Exp $
 
 maxpartitions 16
 
@@ -63,6 +63,7 @@ include "arch/sgimips/gio/files.gio"
 #
 # Machine-independent IEEE 1394 device support  
 #
+include "dev/bluetooth/files.bluetooth"
 include "dev/ieee1394/files.ieee1394"
 
 include "arch/sgimips/conf/majors.sgimips"
