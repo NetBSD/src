@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.51 2016/09/05 01:00:07 sevan Exp $	*/
+/*	$NetBSD: dd.c,v 1.52 2019/03/23 09:33:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.51 2016/09/05 01:00:07 sevan Exp $");
+__RCSID("$NetBSD: dd.c,v 1.52 2019/03/23 09:33:16 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ static void dd_in(void);
 static void getfdtype(IO *);
 static void redup_clean_fd(IO *);
 static void setup(void);
+static void *buffer_alloc(size_t);
 
 IO		in, out;		/* input/output state */
 STAT		st;			/* statistics */
@@ -148,6 +149,20 @@ main(int argc, char *argv[])
 	dd_close();
 	exit(0);
 	/* NOTREACHED */
+}
+
+static void *
+buffer_alloc(size_t sz)
+{
+	size_t align = getpagesize();
+	void *res;
+
+	if (sz < align)
+		res = malloc(sz);
+	else if (posix_memalign(&res, align, sz) != 0)
+		res = NULL;
+
+	return res;
 }
 
 static void
@@ -233,14 +248,14 @@ setup(void)
 		size_t dbsz = out.dbsz;
 		if (!(ddflags & C_BS))
 			dbsz += in.dbsz - 1;
-		if ((in.db = malloc(dbsz)) == NULL) {
+		if ((in.db = buffer_alloc(dbsz)) == NULL) {
 			err(EXIT_FAILURE, NULL);
 			/* NOTREACHED */
 		}
 		out.db = in.db;
 	} else if ((in.db =
-	    malloc((u_int)(MAX(in.dbsz, cbsz) + cbsz))) == NULL ||
-	    (out.db = malloc((u_int)(out.dbsz + cbsz))) == NULL) {
+	    buffer_alloc((u_int)(MAX(in.dbsz, cbsz) + cbsz))) == NULL ||
+	    (out.db = buffer_alloc((u_int)(out.dbsz + cbsz))) == NULL) {
 		err(EXIT_FAILURE, NULL);
 		/* NOTREACHED */
 	}
