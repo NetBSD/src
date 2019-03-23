@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.234 2019/03/04 14:31:26 sevan Exp $
+$NetBSD: acronyms.comp,v 1.235 2019/03/23 17:56:23 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -250,6 +250,7 @@ COF	current operating frequency
 COFDM	coded orthogonal frequency division multiplexing
 COFF	common object file format
 COM	component object model
+COM	computer on module
 COMA	cache-only memory architecture
 CORBA	common object request broker architecture
 COS	class of service
@@ -1356,6 +1357,7 @@ SOF	start of frame
 SOH	start of header
 SOHO	small office/home office
 SOL	serial over LAN
+SOM	system on module
 SP	service pack
 SP	stack pointer
 SPA	storage pool allocator
