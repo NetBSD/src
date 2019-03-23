@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.68 2012/04/06 13:13:13 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.69 2019/03/23 13:05:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -95,7 +95,6 @@
  *	Utah $Hdr: locore.s 1.63 95/01/20$
  */
 
-#include "opt_compat_osf1.h"
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"
 
@@ -131,37 +130,12 @@ emergency_stack_end:
 gateway_page:
 	nop				/* @ 0.C0000000 (Nothing)  */
 	gate,n	bsd_syscall,%r0		/* @ 0.C0000004 (HPUX/BSD) */
-#ifdef COMPAT_OSF1
-	bl,n	osf_syscall,%r0
-	bl,n	osf_syscall,%r0
-#else
 	nop				/* @ 0.C0000008 (HPOSF UNIX) */
 	nop				/* @ 0.C000000C (HPOSF Mach) */
-#endif
 	nop
 	nop
 	nop
 	nop
-
-#ifdef COMPAT_OSF1
-osf_syscall:
-	/*
-	 * Ripped screaming from OSF/MkLinux:
-	 *
-	 * Convert HPOSF system call to a BSD one by stashing arg4 and arg5
-	 * back into the frame, and moving the system call number into r22.
-	 * Fortunately, the HPOSF compiler has a bigger stack frame, which
-	 * allows this horrible hack.
-	 *
-	 * We also need to save r29 (aka ret1) for the emulator since it may
-	 * get clobbered between here and there.
-	 */
-	stw	%r22, HPPA_FRAME_ARG(4)(%sp)
-	stw	%r21, HPPA_FRAME_ARG(5)(%sp)
-	stw	%r29, HPPA_FRAME_SL(%sp)
-	gate	bsd_syscall,%r0
-	copy	%r1, %r22
-#endif /* COMPAT_OSF1 */
 
 bsd_syscall:
 	/*

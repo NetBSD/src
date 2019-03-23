@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.18 2014/02/24 07:23:42 skrll Exp $
+#	$NetBSD: files.hppa,v 1.19 2019/03/23 13:05:24 maxv Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -21,9 +21,6 @@ defflag			USELEDS
 # Compatibility
 #
 include "compat/ossaudio/files.ossaudio"
-
-include "compat/osf1/files.osf1"
-file	arch/hppa/hppa/osf1_machdep.c		compat_osf1
 
 include	"compat/linux/files.linux"
 file	arch/hppa/hppa/linux_machdep.c		compat_linux
