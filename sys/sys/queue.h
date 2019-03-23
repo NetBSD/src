@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.73 2019/03/08 08:12:39 msaitoh Exp $	*/
+/*	$NetBSD: queue.h,v 1.74 2019/03/23 12:01:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -89,6 +89,13 @@
  */
 #ifdef __NetBSD__
 #include <sys/null.h>
+#endif
+
+#if defined(_KERNEL) && defined(_KERNEL_OPT)
+#include "opt_diagnostic.h"
+#ifdef DIAGNOSTIC
+#define QUEUEDEBUG	1
+#endif
 #endif
 
 #if defined(QUEUEDEBUG)
