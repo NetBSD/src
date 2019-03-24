@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.327 2019/03/09 08:42:25 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.328 2019/03/24 13:15:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.327 2019/03/09 08:42:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.328 2019/03/24 13:15:42 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1371,17 +1371,18 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
 	    ? __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
-	pcb->pcb_flags = 0;
 	x86_dbregs_clear(l);
 
+	kpreempt_disable();
+	pcb->pcb_flags = 0;
 	l->l_proc->p_flag &= ~PK_32;
-
 	l->l_md.md_flags = MDL_IRET;
+	cpu_segregs64_zero(l);
+	kpreempt_enable();
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	cpu_segregs64_zero(l);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
@@ -2198,12 +2199,12 @@ cpu_segregs64_zero(struct lwp *l)
 	struct pcb *pcb;
 	uint64_t zero = 0;
 
+	KASSERT(kpreempt_disabled());
 	KASSERT((l->l_proc->p_flag & PK_32) == 0);
 	KASSERT(l == curlwp);
 
 	pcb = lwp_getpcb(l);
 
-	kpreempt_disable();
 	tf->tf_fs = 0;
 	tf->tf_gs = 0;
 	setds(GSEL(GUDATA_SEL, SEL_UPL));
@@ -2223,7 +2224,6 @@ cpu_segregs64_zero(struct lwp *l)
 	pcb->pcb_gs = 0;
 	update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &zero);
 	update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &zero);
-	kpreempt_enable();
 }
 
 /*
