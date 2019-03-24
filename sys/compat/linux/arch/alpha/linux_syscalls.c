@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.108 2018/08/10 21:47:14 pgoyette Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.109 2019/03/24 16:39:47 maxv Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.108 2018/08/10 21:47:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.109 2019/03/24 16:39:47 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -29,6 +29,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.108 2018/08/10 21:47:14 pgoyett
 #include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/linux_syscallargs.h>
+#include <compat/linux/arch/alpha/linux_osf1.h>
 #else /* _KERNEL_OPT */
 #include <sys/null.h>
 #endif /* _KERNEL_OPT */
@@ -41,7 +42,7 @@ const char *const linux_syscallnames[] = {
 	/*   4 */	"write",
 	/*   5 */	"#5 (unimplemented)",
 	/*   6 */	"close",
-	/*   7 */	"wait4",
+	/*   7 */	"osf1_wait4",
 	/*   8 */	"creat",
 	/*   9 */	"link",
 	/*  10 */	"unlink",
@@ -55,7 +56,7 @@ const char *const linux_syscallnames[] = {
 	/*  18 */	"#18 (unimplemented)",
 	/*  19 */	"lseek",
 	/*  20 */	"getpid_with_ppid",
-	/*  21 */	"mount",
+	/*  21 */	"osf1_mount",
 	/*  22 */	"#22 (unimplemented umount)",
 	/*  23 */	"setuid",
 	/*  24 */	"getuid_with_euid",
@@ -77,7 +78,7 @@ const char *const linux_syscallnames[] = {
 	/*  40 */	"#40 (unimplemented)",
 	/*  41 */	"dup",
 	/*  42 */	"pipe",
-	/*  43 */	"set_program_attributes",
+	/*  43 */	"osf1_set_program_attributes",
 	/*  44 */	"#44 (unimplemented)",
 	/*  45 */	"open",
 	/*  46 */	"#46 (unimplemented)",
@@ -117,7 +118,7 @@ const char *const linux_syscallnames[] = {
 	/*  80 */	"setgroups",
 	/*  81 */	"#81 (unimplemented)",
 	/*  82 */	"#82 (unimplemented setpgrp)",
-	/*  83 */	"setitimer",
+	/*  83 */	"osf1_setitimer",
 	/*  84 */	"#84 (unimplemented)",
 	/*  85 */	"#85 (unimplemented)",
 	/*  86 */	"#86 (unimplemented osf1_sys_getitimer)",
@@ -127,7 +128,7 @@ const char *const linux_syscallnames[] = {
 	/*  90 */	"dup2",
 	/*  91 */	"fstat",
 	/*  92 */	"fcntl",
-	/*  93 */	"select",
+	/*  93 */	"osf1_select",
 	/*  94 */	"poll",
 	/*  95 */	"fsync",
 	/*  96 */	"setpriority",
@@ -150,13 +151,13 @@ const char *const linux_syscallnames[] = {
 	/* 113 */	"recvmsg",
 	/* 114 */	"sendmsg",
 	/* 115 */	"#115 (unimplemented)",
-	/* 116 */	"gettimeofday",
-	/* 117 */	"getrusage",
+	/* 116 */	"osf1_gettimeofday",
+	/* 117 */	"osf1_getrusage",
 	/* 118 */	"getsockopt",
 	/* 119 */	"#119 (unimplemented)",
 	/* 120 */	"readv",
 	/* 121 */	"writev",
-	/* 122 */	"settimeofday",
+	/* 122 */	"osf1_settimeofday",
 	/* 123 */	"__posix_fchown",
 	/* 124 */	"fchmod",
 	/* 125 */	"recvfrom",
@@ -172,7 +173,7 @@ const char *const linux_syscallnames[] = {
 	/* 135 */	"socketpair",
 	/* 136 */	"mkdir",
 	/* 137 */	"rmdir",
-	/* 138 */	"utimes",
+	/* 138 */	"osf1_utimes",
 	/* 139 */	"#139 (unimplemented)",
 	/* 140 */	"#140 (unimplemented)",
 	/* 141 */	"getpeername",
@@ -194,8 +195,8 @@ const char *const linux_syscallnames[] = {
 	/* 157 */	"#157 (unimplemented)",
 	/* 158 */	"#158 (unimplemented)",
 	/* 159 */	"getdirentries",
-	/* 160 */	"statfs",
-	/* 161 */	"fstatfs",
+	/* 160 */	"osf1_statfs",
+	/* 161 */	"osf1_fstatfs",
 	/* 162 */	"#162 (unimplemented)",
 	/* 163 */	"#163 (unimplemented)",
 	/* 164 */	"#164 (unimplemented)",
@@ -295,7 +296,7 @@ const char *const linux_syscallnames[] = {
 	/* 238 */	"#238 (unimplemented)",
 	/* 239 */	"#239 (unimplemented)",
 	/* 240 */	"#240 (unimplemented)",
-	/* 241 */	"sysinfo",
+	/* 241 */	"osf1_sysinfo",
 	/* 242 */	"#242 (unimplemented)",
 	/* 243 */	"#243 (unimplemented)",
 	/* 244 */	"#244 (unimplemented osf1_sys_proplist_syscall)",
@@ -305,13 +306,13 @@ const char *const linux_syscallnames[] = {
 	/* 248 */	"#248 (unimplemented)",
 	/* 249 */	"#249 (unimplemented)",
 	/* 250 */	"#250 (unimplemented)",
-	/* 251 */	"usleep_thread",
+	/* 251 */	"osf1_usleep_thread",
 	/* 252 */	"#252 (unimplemented)",
 	/* 253 */	"#253 (unimplemented)",
 	/* 254 */	"#254 (unimplemented)",
 	/* 255 */	"#255 (unimplemented sysfs)",
-	/* 256 */	"getsysinfo",
-	/* 257 */	"setsysinfo",
+	/* 256 */	"osf1_getsysinfo",
+	/* 257 */	"osf1_setsysinfo",
 	/* 258 */	"#258 (unimplemented)",
 	/* 259 */	"#259 (unimplemented)",
 	/* 260 */	"#260 (unimplemented)",
@@ -582,7 +583,7 @@ const char *const altlinux_syscallnames[] = {
 	/*   4 */	NULL, /* write */
 	/*   5 */	NULL, /* unimplemented */
 	/*   6 */	NULL, /* close */
-	/*   7 */	NULL, /* wait4 */
+	/*   7 */	NULL, /* osf1_wait4 */
 	/*   8 */	NULL, /* creat */
 	/*   9 */	NULL, /* link */
 	/*  10 */	NULL, /* unlink */
@@ -596,7 +597,7 @@ const char *const altlinux_syscallnames[] = {
 	/*  18 */	NULL, /* unimplemented */
 	/*  19 */	NULL, /* lseek */
 	/*  20 */	NULL, /* getpid_with_ppid */
-	/*  21 */	NULL, /* mount */
+	/*  21 */	NULL, /* osf1_mount */
 	/*  22 */	NULL, /* unimplemented umount */
 	/*  23 */	NULL, /* setuid */
 	/*  24 */	NULL, /* getuid_with_euid */
@@ -618,7 +619,7 @@ const char *const altlinux_syscallnames[] = {
 	/*  40 */	NULL, /* unimplemented */
 	/*  41 */	NULL, /* dup */
 	/*  42 */	NULL, /* pipe */
-	/*  43 */	NULL, /* set_program_attributes */
+	/*  43 */	NULL, /* osf1_set_program_attributes */
 	/*  44 */	NULL, /* unimplemented */
 	/*  45 */	NULL, /* open */
 	/*  46 */	NULL, /* unimplemented */
@@ -658,7 +659,7 @@ const char *const altlinux_syscallnames[] = {
 	/*  80 */	NULL, /* setgroups */
 	/*  81 */	NULL, /* unimplemented */
 	/*  82 */	NULL, /* unimplemented setpgrp */
-	/*  83 */	NULL, /* setitimer */
+	/*  83 */	NULL, /* osf1_setitimer */
 	/*  84 */	NULL, /* unimplemented */
 	/*  85 */	NULL, /* unimplemented */
 	/*  86 */	NULL, /* unimplemented osf1_sys_getitimer */
@@ -668,7 +669,7 @@ const char *const altlinux_syscallnames[] = {
 	/*  90 */	NULL, /* dup2 */
 	/*  91 */	NULL, /* fstat */
 	/*  92 */	NULL, /* fcntl */
-	/*  93 */	NULL, /* select */
+	/*  93 */	NULL, /* osf1_select */
 	/*  94 */	NULL, /* poll */
 	/*  95 */	NULL, /* fsync */
 	/*  96 */	NULL, /* setpriority */
@@ -691,13 +692,13 @@ const char *const altlinux_syscallnames[] = {
 	/* 113 */	NULL, /* recvmsg */
 	/* 114 */	NULL, /* sendmsg */
 	/* 115 */	NULL, /* unimplemented */
-	/* 116 */	NULL, /* gettimeofday */
-	/* 117 */	NULL, /* getrusage */
+	/* 116 */	NULL, /* osf1_gettimeofday */
+	/* 117 */	NULL, /* osf1_getrusage */
 	/* 118 */	NULL, /* getsockopt */
 	/* 119 */	NULL, /* unimplemented */
 	/* 120 */	NULL, /* readv */
 	/* 121 */	NULL, /* writev */
-	/* 122 */	NULL, /* settimeofday */
+	/* 122 */	NULL, /* osf1_settimeofday */
 	/* 123 */	NULL, /* __posix_fchown */
 	/* 124 */	NULL, /* fchmod */
 	/* 125 */	NULL, /* recvfrom */
@@ -713,7 +714,7 @@ const char *const altlinux_syscallnames[] = {
 	/* 135 */	NULL, /* socketpair */
 	/* 136 */	NULL, /* mkdir */
 	/* 137 */	NULL, /* rmdir */
-	/* 138 */	NULL, /* utimes */
+	/* 138 */	NULL, /* osf1_utimes */
 	/* 139 */	NULL, /* unimplemented */
 	/* 140 */	NULL, /* unimplemented */
 	/* 141 */	NULL, /* getpeername */
@@ -735,8 +736,8 @@ const char *const altlinux_syscallnames[] = {
 	/* 157 */	NULL, /* unimplemented */
 	/* 158 */	NULL, /* unimplemented */
 	/* 159 */	NULL, /* getdirentries */
-	/* 160 */	NULL, /* statfs */
-	/* 161 */	NULL, /* fstatfs */
+	/* 160 */	NULL, /* osf1_statfs */
+	/* 161 */	NULL, /* osf1_fstatfs */
 	/* 162 */	NULL, /* unimplemented */
 	/* 163 */	NULL, /* unimplemented */
 	/* 164 */	NULL, /* unimplemented */
@@ -836,7 +837,7 @@ const char *const altlinux_syscallnames[] = {
 	/* 238 */	NULL, /* unimplemented */
 	/* 239 */	NULL, /* unimplemented */
 	/* 240 */	NULL, /* unimplemented */
-	/* 241 */	NULL, /* sysinfo */
+	/* 241 */	NULL, /* osf1_sysinfo */
 	/* 242 */	NULL, /* unimplemented */
 	/* 243 */	NULL, /* unimplemented */
 	/* 244 */	NULL, /* unimplemented osf1_sys_proplist_syscall */
@@ -846,13 +847,13 @@ const char *const altlinux_syscallnames[] = {
 	/* 248 */	NULL, /* unimplemented */
 	/* 249 */	NULL, /* unimplemented */
 	/* 250 */	NULL, /* unimplemented */
-	/* 251 */	NULL, /* usleep_thread */
+	/* 251 */	NULL, /* osf1_usleep_thread */
 	/* 252 */	NULL, /* unimplemented */
 	/* 253 */	NULL, /* unimplemented */
 	/* 254 */	NULL, /* unimplemented */
 	/* 255 */	NULL, /* unimplemented sysfs */
-	/* 256 */	NULL, /* getsysinfo */
-	/* 257 */	NULL, /* setsysinfo */
+	/* 256 */	NULL, /* osf1_getsysinfo */
+	/* 257 */	NULL, /* osf1_setsysinfo */
 	/* 258 */	NULL, /* unimplemented */
 	/* 259 */	NULL, /* unimplemented */
 	/* 260 */	NULL, /* unimplemented */
