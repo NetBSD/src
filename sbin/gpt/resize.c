@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.23 2018/07/03 03:41:24 jnemeth Exp $");
+__RCSID("$NetBSD: resize.c,v 1.24 2019/03/24 13:31:00 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: resize.c,v 1.23 2018/07/03 03:41:24 jnemeth Exp $");
 static int cmd_resize(gpt_t, int, char *[]);
 
 static const char *resizehelp[] = {
-	"-i index [-a alignment] [-s size]",
+	"[-i index | -b blocknr] [-a alignment] [-s size]",
 };
 
 struct gpt_cmd c_resize = {
@@ -131,16 +131,31 @@ static int
 cmd_resize(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
-	off_t alignment = 0, sectors, size = 0;
+	off_t alignment = 0, sectors, start = 0, size = 0;
 	unsigned int entry = 0;
+	map_t m;
 
-	while ((ch = getopt(argc, argv, GPT_AIS)) != -1) {
-		if (gpt_add_ais(gpt, &alignment, &entry, &size, ch) == -1)
+	while ((ch = getopt(argc, argv, GPT_AIS "b:")) != -1) {
+		if (ch == 'b')
+			gpt_human_get(gpt, &start);
+		else if (gpt_add_ais(gpt, &alignment, &entry, &size, ch) == -1)
 			return usage();
 	}
 
 	if (argc != optind)
 		return usage();
+
+	if (start > 0) {
+		for (m = map_first(gpt); m != NULL; m = m->map_next) {
+			if (m->map_type != MAP_TYPE_GPT_PART ||
+			    m->map_index < 1)
+				continue;
+			if (start != m->map_start)
+				continue;
+			entry = m->map_index;
+			break;
+		}
+	}
 
 	if ((sectors = gpt_check_ais(gpt, alignment, entry, size)) == -1)
 		return -1;
