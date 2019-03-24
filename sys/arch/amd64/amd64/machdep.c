@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.328 2019/03/24 13:15:42 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.329 2019/03/24 15:58:32 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.328 2019/03/24 13:15:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.329 2019/03/24 15:58:32 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -2237,12 +2237,12 @@ cpu_segregs32_zero(struct lwp *l)
 	struct pcb *pcb;
 	uint64_t zero = 0;
 
+	KASSERT(kpreempt_disabled());
 	KASSERT(l->l_proc->p_flag & PK_32);
 	KASSERT(l == curlwp);
 
 	pcb = lwp_getpcb(l);
 
-	kpreempt_disable();
 	tf->tf_fs = 0;
 	tf->tf_gs = 0;
 	setds(GSEL(GUDATA32_SEL, SEL_UPL));
@@ -2253,7 +2253,6 @@ cpu_segregs32_zero(struct lwp *l)
 	pcb->pcb_gs = 0;
 	update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &zero);
 	update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &zero);
-	kpreempt_enable();
 }
 
 /*
