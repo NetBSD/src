@@ -301,9 +301,9 @@ bool AsanThread::GetStackFrameAccessByAddr(uptr addr,
     return true;
   }
 #ifndef STACK_ALIGNBYTES
-# define STACK_ALIGNBYTES (~(SANITIZER_WORDSIZE/8 - 1))
+# define STACK_ALIGNBYTES (SANITIZER_WORDSIZE/8 - 1)
 #endif
-  uptr aligned_addr = addr & STACK_ALIGNBYTES; // align addr.
+  uptr aligned_addr = addr & ~STACK_ALIGNBYTES; // align addr.
   u8 *shadow_ptr = (u8*)MemToShadow(aligned_addr);
   u8 *shadow_bottom = (u8*)MemToShadow(bottom);
 
