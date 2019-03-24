@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.107 2018/08/10 21:47:14 pgoyette Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.108 2019/03/24 16:39:46 maxv Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.107 2018/08/10 21:47:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.108 2019/03/24 16:39:46 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -28,6 +28,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.107 2018/08/10 21:47:14 pgoyette 
 #include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/linux_syscallargs.h>
+#include <compat/linux/arch/alpha/linux_osf1.h>
 
 #define	s(type)	sizeof(type)
 #define	n(type)	(sizeof(type)/sizeof (register_t))
@@ -62,10 +63,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = (sy_call_t *)sys_close
 	},		/* 6 = close */
 	{
-		ns(struct osf1_sys_wait4_args),
+		ns(struct linux_sys_osf1_wait4_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_wait4
-	},		/* 7 = wait4 */
+		.sy_call = (sy_call_t *)linux_sys_osf1_wait4
+	},		/* 7 = osf1_wait4 */
 	{
 		ns(struct linux_sys_creat_args),
 		.sy_flags = SYCALL_ARG_PTR,
@@ -124,10 +125,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = (sy_call_t *)sys_getpid_with_ppid
 	},		/* 20 = getpid_with_ppid */
 	{
-		ns(struct osf1_sys_mount_args),
+		ns(struct linux_sys_osf1_mount_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_mount
-	},		/* 21 = mount */
+		.sy_call = (sy_call_t *)linux_sys_osf1_mount
+	},		/* 21 = osf1_mount */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 22 = filler */
@@ -199,10 +200,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = (sy_call_t *)linux_sys_pipe
 	},		/* 42 = pipe */
 	{
-		ns(struct osf1_sys_set_program_attributes_args),
+		ns(struct linux_sys_osf1_set_program_attributes_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_set_program_attributes
-	},		/* 43 = set_program_attributes */
+		.sy_call = (sy_call_t *)linux_sys_osf1_set_program_attributes
+	},		/* 43 = osf1_set_program_attributes */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 44 = filler */
@@ -354,10 +355,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 82 = filler */
 	{
-		ns(struct osf1_sys_setitimer_args),
+		ns(struct linux_sys_osf1_setitimer_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_setitimer
-	},		/* 83 = setitimer */
+		.sy_call = (sy_call_t *)linux_sys_osf1_setitimer
+	},		/* 83 = osf1_setitimer */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 84 = filler */
@@ -395,10 +396,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = (sy_call_t *)linux_sys_fcntl
 	},		/* 92 = fcntl */
 	{
-		ns(struct osf1_sys_select_args),
+		ns(struct linux_sys_osf1_select_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_select
-	},		/* 93 = select */
+		.sy_call = (sy_call_t *)linux_sys_osf1_select
+	},		/* 93 = osf1_select */
 	{
 		ns(struct sys_poll_args),
 		.sy_flags = SYCALL_ARG_PTR,
@@ -495,15 +496,15 @@ struct sysent linux_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 115 = filler */
 	{
-		ns(struct osf1_sys_gettimeofday_args),
+		ns(struct linux_sys_osf1_gettimeofday_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_gettimeofday
-	},		/* 116 = gettimeofday */
+		.sy_call = (sy_call_t *)linux_sys_osf1_gettimeofday
+	},		/* 116 = osf1_gettimeofday */
 	{
-		ns(struct osf1_sys_getrusage_args),
+		ns(struct linux_sys_osf1_getrusage_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_getrusage
-	},		/* 117 = getrusage */
+		.sy_call = (sy_call_t *)linux_sys_osf1_getrusage
+	},		/* 117 = osf1_getrusage */
 	{
 		ns(struct linux_sys_getsockopt_args),
 		.sy_flags = SYCALL_ARG_PTR,
@@ -523,10 +524,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = (sy_call_t *)sys_writev
 	},		/* 121 = writev */
 	{
-		ns(struct osf1_sys_settimeofday_args),
+		ns(struct linux_sys_osf1_settimeofday_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_settimeofday
-	},		/* 122 = settimeofday */
+		.sy_call = (sy_call_t *)linux_sys_osf1_settimeofday
+	},		/* 122 = osf1_settimeofday */
 	{
 		ns(struct sys___posix_fchown_args),
 		.sy_call = (sy_call_t *)sys___posix_fchown
@@ -595,10 +596,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = (sy_call_t *)sys_rmdir
 	},		/* 137 = rmdir */
 	{
-		ns(struct osf1_sys_utimes_args),
+		ns(struct linux_sys_osf1_utimes_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_utimes
-	},		/* 138 = utimes */
+		.sy_call = (sy_call_t *)linux_sys_osf1_utimes
+	},		/* 138 = osf1_utimes */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 139 = filler */
@@ -675,15 +676,15 @@ struct sysent linux_sysent[] = {
 		.sy_call = (sy_call_t *)compat_43_sys_getdirentries
 	},		/* 159 = getdirentries */
 	{
-		ns(struct osf1_sys_statfs_args),
+		ns(struct linux_sys_osf1_statfs_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_statfs
-	},		/* 160 = statfs */
+		.sy_call = (sy_call_t *)linux_sys_osf1_statfs
+	},		/* 160 = osf1_statfs */
 	{
-		ns(struct osf1_sys_fstatfs_args),
+		ns(struct linux_sys_osf1_fstatfs_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_fstatfs
-	},		/* 161 = fstatfs */
+		.sy_call = (sy_call_t *)linux_sys_osf1_fstatfs
+	},		/* 161 = osf1_fstatfs */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 162 = filler */
@@ -996,9 +997,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 240 = filler */
 	{
-		ns(struct osf1_sys_sysinfo_args),
-		.sy_call = (sy_call_t *)osf1_sys_sysinfo
-	},		/* 241 = sysinfo */
+		ns(struct linux_sys_osf1_sysinfo_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_osf1_sysinfo
+	},		/* 241 = osf1_sysinfo */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 242 = filler */
@@ -1027,10 +1029,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 250 = filler */
 	{
-		ns(struct osf1_sys_usleep_thread_args),
+		ns(struct linux_sys_osf1_usleep_thread_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_usleep_thread
-	},		/* 251 = usleep_thread */
+		.sy_call = (sy_call_t *)linux_sys_osf1_usleep_thread
+	},		/* 251 = osf1_usleep_thread */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 252 = filler */
@@ -1044,15 +1046,15 @@ struct sysent linux_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 255 = filler */
 	{
-		ns(struct osf1_sys_getsysinfo_args),
+		ns(struct linux_sys_osf1_getsysinfo_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_getsysinfo
-	},		/* 256 = getsysinfo */
+		.sy_call = (sy_call_t *)linux_sys_osf1_getsysinfo
+	},		/* 256 = osf1_getsysinfo */
 	{
-		ns(struct osf1_sys_setsysinfo_args),
+		ns(struct linux_sys_osf1_setsysinfo_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)osf1_sys_setsysinfo
-	},		/* 257 = setsysinfo */
+		.sy_call = (sy_call_t *)linux_sys_osf1_setsysinfo
+	},		/* 257 = osf1_setsysinfo */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 258 = filler */

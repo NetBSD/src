@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.106 2018/08/10 21:47:14 pgoyette Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.107 2019/03/24 16:39:46 maxv Exp $ */
 
 /*
  * System call argument lists.
@@ -45,13 +45,13 @@ struct sys_write_args;
 
 struct sys_close_args;
 
-struct osf1_sys_wait4_args {
+struct linux_sys_osf1_wait4_args {
 	syscallarg(int) pid;
 	syscallarg(int *) status;
 	syscallarg(int) options;
 	syscallarg(struct osf1_rusage *) rusage;
 };
-check_syscall_args(osf1_sys_wait4)
+check_syscall_args(linux_sys_osf1_wait4)
 
 struct linux_sys_creat_args {
 	syscallarg(const char *) path;
@@ -88,13 +88,13 @@ check_syscall_args(linux_sys_brk)
 
 struct compat_43_sys_lseek_args;
 
-struct osf1_sys_mount_args {
+struct linux_sys_osf1_mount_args {
 	syscallarg(int) type;
 	syscallarg(const char *) path;
 	syscallarg(int) flags;
 	syscallarg(void *) data;
 };
-check_syscall_args(osf1_sys_mount)
+check_syscall_args(linux_sys_osf1_mount)
 
 struct sys_setuid_args;
 
@@ -118,13 +118,13 @@ struct sys_setpgid_args;
 
 struct sys_dup_args;
 
-struct osf1_sys_set_program_attributes_args {
+struct linux_sys_osf1_set_program_attributes_args {
 	syscallarg(void *) taddr;
 	syscallarg(unsigned long) tsize;
 	syscallarg(void *) daddr;
 	syscallarg(unsigned long) dsize;
 };
-check_syscall_args(osf1_sys_set_program_attributes)
+check_syscall_args(linux_sys_osf1_set_program_attributes)
 
 struct linux_sys_open_args {
 	syscallarg(const char *) path;
@@ -188,12 +188,12 @@ struct sys_getgroups_args;
 
 struct sys_setgroups_args;
 
-struct osf1_sys_setitimer_args {
+struct linux_sys_osf1_setitimer_args {
 	syscallarg(int) which;
 	syscallarg(struct osf1_itimerval *) itv;
 	syscallarg(struct osf1_itimerval *) oitv;
 };
-check_syscall_args(osf1_sys_setitimer)
+check_syscall_args(linux_sys_osf1_setitimer)
 
 struct compat_43_sys_gethostname_args;
 
@@ -214,14 +214,14 @@ struct linux_sys_fcntl_args {
 };
 check_syscall_args(linux_sys_fcntl)
 
-struct osf1_sys_select_args {
+struct linux_sys_osf1_select_args {
 	syscallarg(u_int) nd;
 	syscallarg(fd_set *) in;
 	syscallarg(fd_set *) ou;
 	syscallarg(fd_set *) ex;
 	syscallarg(struct osf1_timeval *) tv;
 };
-check_syscall_args(osf1_sys_select)
+check_syscall_args(linux_sys_osf1_select)
 
 struct sys_poll_args;
 
@@ -318,17 +318,17 @@ struct linux_sys_sendmsg_args {
 };
 check_syscall_args(linux_sys_sendmsg)
 
-struct osf1_sys_gettimeofday_args {
+struct linux_sys_osf1_gettimeofday_args {
 	syscallarg(struct osf1_timeval *) tv;
 	syscallarg(struct osf1_timezone *) tzp;
 };
-check_syscall_args(osf1_sys_gettimeofday)
+check_syscall_args(linux_sys_osf1_gettimeofday)
 
-struct osf1_sys_getrusage_args {
+struct linux_sys_osf1_getrusage_args {
 	syscallarg(int) who;
 	syscallarg(struct osf1_rusage *) rusage;
 };
-check_syscall_args(osf1_sys_getrusage)
+check_syscall_args(linux_sys_osf1_getrusage)
 
 struct linux_sys_getsockopt_args {
 	syscallarg(int) s;
@@ -343,11 +343,11 @@ struct sys_readv_args;
 
 struct sys_writev_args;
 
-struct osf1_sys_settimeofday_args {
+struct linux_sys_osf1_settimeofday_args {
 	syscallarg(struct osf1_timeval *) tv;
 	syscallarg(struct osf1_timezone *) tzp;
 };
-check_syscall_args(osf1_sys_settimeofday)
+check_syscall_args(linux_sys_osf1_settimeofday)
 
 struct sys___posix_fchown_args;
 
@@ -401,11 +401,11 @@ struct sys_mkdir_args;
 
 struct sys_rmdir_args;
 
-struct osf1_sys_utimes_args {
+struct linux_sys_osf1_utimes_args {
 	syscallarg(const char *) path;
 	syscallarg(const struct osf1_timeval *) tptr;
 };
-check_syscall_args(osf1_sys_utimes)
+check_syscall_args(linux_sys_osf1_utimes)
 
 struct linux_sys_getpeername_args {
 	syscallarg(int) fdes;
@@ -442,19 +442,19 @@ check_syscall_args(linux_sys_sigaction)
 
 struct compat_43_sys_getdirentries_args;
 
-struct osf1_sys_statfs_args {
+struct linux_sys_osf1_statfs_args {
 	syscallarg(const char *) path;
 	syscallarg(struct osf1_statfs *) buf;
 	syscallarg(int) len;
 };
-check_syscall_args(osf1_sys_statfs)
+check_syscall_args(linux_sys_osf1_statfs)
 
-struct osf1_sys_fstatfs_args {
+struct linux_sys_osf1_fstatfs_args {
 	syscallarg(int) fd;
 	syscallarg(struct osf1_statfs *) buf;
 	syscallarg(int) len;
 };
-check_syscall_args(osf1_sys_fstatfs)
+check_syscall_args(linux_sys_osf1_fstatfs)
 
 struct compat_09_sys_getdomainname_args;
 
@@ -514,36 +514,36 @@ struct sys_getpgid_args;
 
 struct sys_getsid_args;
 
-struct osf1_sys_sysinfo_args {
+struct linux_sys_osf1_sysinfo_args {
 	syscallarg(int) cmd;
-	syscallarg(char) buf;
+	syscallarg(char *) buf;
 	syscallarg(long) len;
 };
-check_syscall_args(osf1_sys_sysinfo)
+check_syscall_args(linux_sys_osf1_sysinfo)
 
-struct osf1_sys_usleep_thread_args {
+struct linux_sys_osf1_usleep_thread_args {
 	syscallarg(struct osf1_timeval *) sleep;
 	syscallarg(struct osf1_timeval *) slept;
 };
-check_syscall_args(osf1_sys_usleep_thread)
+check_syscall_args(linux_sys_osf1_usleep_thread)
 
-struct osf1_sys_getsysinfo_args {
+struct linux_sys_osf1_getsysinfo_args {
 	syscallarg(u_long) op;
 	syscallarg(void *) buffer;
 	syscallarg(u_long) nbytes;
 	syscallarg(void *) arg;
 	syscallarg(u_long) flag;
 };
-check_syscall_args(osf1_sys_getsysinfo)
+check_syscall_args(linux_sys_osf1_getsysinfo)
 
-struct osf1_sys_setsysinfo_args {
+struct linux_sys_osf1_setsysinfo_args {
 	syscallarg(u_long) op;
 	syscallarg(void *) buffer;
 	syscallarg(u_long) nbytes;
 	syscallarg(void *) arg;
 	syscallarg(u_long) flag;
 };
-check_syscall_args(osf1_sys_setsysinfo)
+check_syscall_args(linux_sys_osf1_setsysinfo)
 
 struct linux_sys_fdatasync_args {
 	syscallarg(int) fd;
@@ -1171,7 +1171,7 @@ int	sys_write(struct lwp *, const struct sys_write_args *, register_t *);
 
 int	sys_close(struct lwp *, const struct sys_close_args *, register_t *);
 
-int	osf1_sys_wait4(struct lwp *, const struct osf1_sys_wait4_args *, register_t *);
+int	linux_sys_osf1_wait4(struct lwp *, const struct linux_sys_osf1_wait4_args *, register_t *);
 
 int	linux_sys_creat(struct lwp *, const struct linux_sys_creat_args *, register_t *);
 
@@ -1195,7 +1195,7 @@ int	compat_43_sys_lseek(struct lwp *, const struct compat_43_sys_lseek_args *, r
 
 int	sys_getpid_with_ppid(struct lwp *, const void *, register_t *);
 
-int	osf1_sys_mount(struct lwp *, const struct osf1_sys_mount_args *, register_t *);
+int	linux_sys_osf1_mount(struct lwp *, const struct linux_sys_osf1_mount_args *, register_t *);
 
 int	sys_setuid(struct lwp *, const struct sys_setuid_args *, register_t *);
 
@@ -1215,7 +1215,7 @@ int	sys_dup(struct lwp *, const struct sys_dup_args *, register_t *);
 
 int	linux_sys_pipe(struct lwp *, const void *, register_t *);
 
-int	osf1_sys_set_program_attributes(struct lwp *, const struct osf1_sys_set_program_attributes_args *, register_t *);
+int	linux_sys_osf1_set_program_attributes(struct lwp *, const struct linux_sys_osf1_set_program_attributes_args *, register_t *);
 
 int	linux_sys_open(struct lwp *, const struct linux_sys_open_args *, register_t *);
 
@@ -1261,7 +1261,7 @@ int	sys_getgroups(struct lwp *, const struct sys_getgroups_args *, register_t *)
 
 int	sys_setgroups(struct lwp *, const struct sys_setgroups_args *, register_t *);
 
-int	osf1_sys_setitimer(struct lwp *, const struct osf1_sys_setitimer_args *, register_t *);
+int	linux_sys_osf1_setitimer(struct lwp *, const struct linux_sys_osf1_setitimer_args *, register_t *);
 
 int	compat_43_sys_gethostname(struct lwp *, const struct compat_43_sys_gethostname_args *, register_t *);
 
@@ -1273,7 +1273,7 @@ int	linux_sys_fstat(struct lwp *, const struct linux_sys_fstat_args *, register_
 
 int	linux_sys_fcntl(struct lwp *, const struct linux_sys_fcntl_args *, register_t *);
 
-int	osf1_sys_select(struct lwp *, const struct osf1_sys_select_args *, register_t *);
+int	linux_sys_osf1_select(struct lwp *, const struct linux_sys_osf1_select_args *, register_t *);
 
 int	sys_poll(struct lwp *, const struct sys_poll_args *, register_t *);
 
@@ -1309,9 +1309,9 @@ int	linux_sys_recvmsg(struct lwp *, const struct linux_sys_recvmsg_args *, regis
 
 int	linux_sys_sendmsg(struct lwp *, const struct linux_sys_sendmsg_args *, register_t *);
 
-int	osf1_sys_gettimeofday(struct lwp *, const struct osf1_sys_gettimeofday_args *, register_t *);
+int	linux_sys_osf1_gettimeofday(struct lwp *, const struct linux_sys_osf1_gettimeofday_args *, register_t *);
 
-int	osf1_sys_getrusage(struct lwp *, const struct osf1_sys_getrusage_args *, register_t *);
+int	linux_sys_osf1_getrusage(struct lwp *, const struct linux_sys_osf1_getrusage_args *, register_t *);
 
 int	linux_sys_getsockopt(struct lwp *, const struct linux_sys_getsockopt_args *, register_t *);
 
@@ -1319,7 +1319,7 @@ int	sys_readv(struct lwp *, const struct sys_readv_args *, register_t *);
 
 int	sys_writev(struct lwp *, const struct sys_writev_args *, register_t *);
 
-int	osf1_sys_settimeofday(struct lwp *, const struct osf1_sys_settimeofday_args *, register_t *);
+int	linux_sys_osf1_settimeofday(struct lwp *, const struct linux_sys_osf1_settimeofday_args *, register_t *);
 
 int	sys___posix_fchown(struct lwp *, const struct sys___posix_fchown_args *, register_t *);
 
@@ -1351,7 +1351,7 @@ int	sys_mkdir(struct lwp *, const struct sys_mkdir_args *, register_t *);
 
 int	sys_rmdir(struct lwp *, const struct sys_rmdir_args *, register_t *);
 
-int	osf1_sys_utimes(struct lwp *, const struct osf1_sys_utimes_args *, register_t *);
+int	linux_sys_osf1_utimes(struct lwp *, const struct linux_sys_osf1_utimes_args *, register_t *);
 
 int	linux_sys_getpeername(struct lwp *, const struct linux_sys_getpeername_args *, register_t *);
 
@@ -1367,9 +1367,9 @@ int	linux_sys_sigaction(struct lwp *, const struct linux_sys_sigaction_args *, r
 
 int	compat_43_sys_getdirentries(struct lwp *, const struct compat_43_sys_getdirentries_args *, register_t *);
 
-int	osf1_sys_statfs(struct lwp *, const struct osf1_sys_statfs_args *, register_t *);
+int	linux_sys_osf1_statfs(struct lwp *, const struct linux_sys_osf1_statfs_args *, register_t *);
 
-int	osf1_sys_fstatfs(struct lwp *, const struct osf1_sys_fstatfs_args *, register_t *);
+int	linux_sys_osf1_fstatfs(struct lwp *, const struct linux_sys_osf1_fstatfs_args *, register_t *);
 
 int	compat_09_sys_getdomainname(struct lwp *, const struct compat_09_sys_getdomainname_args *, register_t *);
 
@@ -1418,13 +1418,13 @@ int	sys_getpgid(struct lwp *, const struct sys_getpgid_args *, register_t *);
 
 int	sys_getsid(struct lwp *, const struct sys_getsid_args *, register_t *);
 
-int	osf1_sys_sysinfo(struct lwp *, const struct osf1_sys_sysinfo_args *, register_t *);
+int	linux_sys_osf1_sysinfo(struct lwp *, const struct linux_sys_osf1_sysinfo_args *, register_t *);
 
-int	osf1_sys_usleep_thread(struct lwp *, const struct osf1_sys_usleep_thread_args *, register_t *);
+int	linux_sys_osf1_usleep_thread(struct lwp *, const struct linux_sys_osf1_usleep_thread_args *, register_t *);
 
-int	osf1_sys_getsysinfo(struct lwp *, const struct osf1_sys_getsysinfo_args *, register_t *);
+int	linux_sys_osf1_getsysinfo(struct lwp *, const struct linux_sys_osf1_getsysinfo_args *, register_t *);
 
-int	osf1_sys_setsysinfo(struct lwp *, const struct osf1_sys_setsysinfo_args *, register_t *);
+int	linux_sys_osf1_setsysinfo(struct lwp *, const struct linux_sys_osf1_setsysinfo_args *, register_t *);
 
 int	linux_sys_fdatasync(struct lwp *, const struct linux_sys_fdatasync_args *, register_t *);
 

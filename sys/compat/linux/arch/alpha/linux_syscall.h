@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.107 2018/08/10 21:47:14 pgoyette Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.108 2019/03/24 16:39:46 maxv Exp $ */
 
 /*
  * System call numbers.
@@ -29,6 +29,9 @@
 
 /* syscall: "close" ret: "int" args: "int" */
 #define	LINUX_SYS_close	6
+
+/* syscall: "osf1_wait4" ret: "int" args: "int" "int *" "int" "struct osf1_rusage *" */
+#define	LINUX_SYS_osf1_wait4	7
 
 /* syscall: "creat" ret: "int" args: "const char *" "linux_umode_t" */
 #define	LINUX_SYS_creat	8
@@ -63,6 +66,9 @@
 /* syscall: "getpid_with_ppid" ret: "pid_t" args: */
 #define	LINUX_SYS_getpid_with_ppid	20
 
+/* syscall: "osf1_mount" ret: "int" args: "int" "const char *" "int" "void *" */
+#define	LINUX_SYS_osf1_mount	21
+
 /* syscall: "setuid" ret: "int" args: "uid_t" */
 #define	LINUX_SYS_setuid	23
 
@@ -89,6 +95,9 @@
 
 /* syscall: "pipe" ret: "int" args: */
 #define	LINUX_SYS_pipe	42
+
+/* syscall: "osf1_set_program_attributes" ret: "int" args: "void *" "unsigned long" "void *" "unsigned long" */
+#define	LINUX_SYS_osf1_set_program_attributes	43
 
 /* syscall: "open" ret: "int" args: "const char *" "int" "linux_umode_t" */
 #define	LINUX_SYS_open	45
@@ -156,6 +165,9 @@
 /* syscall: "setgroups" ret: "int" args: "int" "const gid_t *" */
 #define	LINUX_SYS_setgroups	80
 
+/* syscall: "osf1_setitimer" ret: "int" args: "int" "struct osf1_itimerval *" "struct osf1_itimerval *" */
+#define	LINUX_SYS_osf1_setitimer	83
+
 /* syscall: "gethostname" ret: "int" args: "char *" "u_int" */
 #define	LINUX_SYS_gethostname	87
 
@@ -170,6 +182,9 @@
 
 /* syscall: "fcntl" ret: "int" args: "int" "int" "void *" */
 #define	LINUX_SYS_fcntl	92
+
+/* syscall: "osf1_select" ret: "int" args: "u_int" "fd_set *" "fd_set *" "fd_set *" "struct osf1_timeval *" */
+#define	LINUX_SYS_osf1_select	93
 
 /* syscall: "poll" ret: "int" args: "struct pollfd *" "u_int" "int" */
 #define	LINUX_SYS_poll	94
@@ -222,6 +237,12 @@
 /* syscall: "sendmsg" ret: "ssize_t" args: "int" "const struct linux_msghdr *" "int" */
 #define	LINUX_SYS_sendmsg	114
 
+/* syscall: "osf1_gettimeofday" ret: "int" args: "struct osf1_timeval *" "struct osf1_timezone *" */
+#define	LINUX_SYS_osf1_gettimeofday	116
+
+/* syscall: "osf1_getrusage" ret: "int" args: "int" "struct osf1_rusage *" */
+#define	LINUX_SYS_osf1_getrusage	117
+
 /* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "void *" "int *" */
 #define	LINUX_SYS_getsockopt	118
 
@@ -230,6 +251,9 @@
 
 /* syscall: "writev" ret: "ssize_t" args: "int" "const struct iovec *" "int" */
 #define	LINUX_SYS_writev	121
+
+/* syscall: "osf1_settimeofday" ret: "int" args: "struct osf1_timeval *" "struct osf1_timezone *" */
+#define	LINUX_SYS_osf1_settimeofday	122
 
 /* syscall: "__posix_fchown" ret: "int" args: "int" "uid_t" "gid_t" */
 #define	LINUX_SYS___posix_fchown	123
@@ -276,6 +300,9 @@
 /* syscall: "rmdir" ret: "int" args: "const char *" */
 #define	LINUX_SYS_rmdir	137
 
+/* syscall: "osf1_utimes" ret: "int" args: "const char *" "const struct osf1_timeval *" */
+#define	LINUX_SYS_osf1_utimes	138
+
 /* syscall: "getpeername" ret: "int" args: "int" "void *" "int *" */
 #define	LINUX_SYS_getpeername	141
 
@@ -296,6 +323,12 @@
 
 /* syscall: "getdirentries" ret: "int" args: "int" "char *" "u_int" "long *" */
 #define	LINUX_SYS_getdirentries	159
+
+/* syscall: "osf1_statfs" ret: "int" args: "const char *" "struct osf1_statfs *" "int" */
+#define	LINUX_SYS_osf1_statfs	160
+
+/* syscall: "osf1_fstatfs" ret: "int" args: "int" "struct osf1_statfs *" "int" */
+#define	LINUX_SYS_osf1_fstatfs	161
 
 /* syscall: "getdomainname" ret: "int" args: "char *" "int" */
 #define	LINUX_SYS_getdomainname	165
@@ -362,6 +395,18 @@
 
 /* syscall: "getsid" ret: "pid_t" args: "pid_t" */
 #define	LINUX_SYS_getsid	234
+
+/* syscall: "osf1_sysinfo" ret: "int" args: "int" "char *" "long" */
+#define	LINUX_SYS_osf1_sysinfo	241
+
+/* syscall: "osf1_usleep_thread" ret: "int" args: "struct osf1_timeval *" "struct osf1_timeval *" */
+#define	LINUX_SYS_osf1_usleep_thread	251
+
+/* syscall: "osf1_getsysinfo" ret: "int" args: "u_long" "void *" "u_long" "void *" "u_long" */
+#define	LINUX_SYS_osf1_getsysinfo	256
+
+/* syscall: "osf1_setsysinfo" ret: "int" args: "u_long" "void *" "u_long" "void *" "u_long" */
+#define	LINUX_SYS_osf1_setsysinfo	257
 
 /* syscall: "fdatasync" ret: "int" args: "int" */
 #define	LINUX_SYS_fdatasync	261
