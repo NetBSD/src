@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.63 2018/05/01 21:16:02 kre Exp $
+.\" $NetBSD: gpt.8,v 1.64 2019/03/24 13:31:00 martin Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd May 1, 2018
+.Dd March 24, 2019
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -466,7 +466,7 @@ See above for a description of these options.
 Partitions are removed by clearing the partition type.
 No other information is changed.
 .\" ==== resize ====
-.It Nm Ic resize Fl i Ar index Oo Fl a Ar alignment Oc \
+.It Nm Ic resize [ Fl i Ar index | Fl b Ar startsec ] Oo Fl a Ar alignment Oc \
 Oo Fl s Ar size Oc
 The
 .Ic resize
