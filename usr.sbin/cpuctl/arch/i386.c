@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.94 2019/03/22 04:39:02 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.95 2019/03/24 04:43:54 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.94 2019/03/22 04:39:02 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.95 2019/03/24 04:43:54 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1716,6 +1716,7 @@ cpu_probe_hv_features(struct cpu_info *ci, const char *cpuname)
 		/*
 		 * HV vendor	ID string
 		 * ------------+--------------
+		 * HAXM		"HAXMHAXMHAXM"
 		 * KVM		"KVMKVMKVM"
 		 * Microsoft	"Microsoft Hv"
 		 * QEMU(TCG)	"TCGTCGTCGTCG"
@@ -1723,7 +1724,9 @@ cpu_probe_hv_features(struct cpu_info *ci, const char *cpuname)
 		 * Xen		"XenVMMXenVMM"
 		 * NetBSD	"___ NVMM ___"
 		 */
-		if (strncmp(hv_sig, "KVMKVMKVM", 9) == 0)
+		if (strncmp(hv_sig, "HAXMHAXMHAXM", 12) == 0)
+			hv_name = "HAXM";
+		else if (strncmp(hv_sig, "KVMKVMKVM", 9) == 0)
 			hv_name = "KVM";
 		else if (strncmp(hv_sig, "Microsoft Hv", 12) == 0)
 			hv_name = "Hyper-V";
