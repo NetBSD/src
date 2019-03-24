@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2019/03/10 02:29:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2019/03/24 00:47:16 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -154,10 +154,6 @@ PKGCONFIG_SED_FLAGS= \
 COPTS.arcsorter.cc+=	-Wno-error
 COPTS.sorter.cc+=	-Wno-error
 COPTS.tobezier.cc+=	-Wno-error
-
-.if ${MACHINE_ARCH} == "m68000" || ${MACHINE_ARCH} == "m68k"
-COPTS.sampleCompTop.cc+=	-O0
-.endif
 
 CWARNFLAGS.clang+=	-Wno-parentheses -Wno-tautological-compare
 CWARNFLAGS.clang+=	-Wno-deprecated-register
