@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.42 2019/03/03 03:20:42 jnemeth Exp $");
+__RCSID("$NetBSD: show.c,v 1.43 2019/03/24 13:45:35 martin Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -317,8 +317,10 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 	int ch;
 	int xshow = 0;
 	unsigned int entry = 0;
+	off_t start = 0;
+	map_t m;
 
-	while ((ch = getopt(argc, argv, "gi:lua")) != -1) {
+	while ((ch = getopt(argc, argv, "gi:b:lua")) != -1) {
 		switch(ch) {
 		case 'a':
 			xshow |= SHOW_ALL;
@@ -328,6 +330,10 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 			break;
 		case 'i':
 			if (gpt_uint_get(gpt, &entry) == -1)
+				return usage();
+			break;
+		case 'b':
+			if (gpt_human_get(gpt, &start) == -1)
 				return usage();
 			break;
 		case 'l':
@@ -349,6 +355,18 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 
 	if (xshow & SHOW_ALL)
 		return show_all(gpt);
+
+	if (start > 0) {
+		for (m = map_first(gpt); m != NULL; m = m->map_next) {
+			if (m->map_type != MAP_TYPE_GPT_PART ||
+			    m->map_index < 1)
+				continue;
+			if (start != m->map_start)
+				continue;
+			entry = m->map_index;
+			break;
+		}
+	}
 
 	return entry > 0 ? show_one(gpt, entry) : show(gpt, xshow);
 }

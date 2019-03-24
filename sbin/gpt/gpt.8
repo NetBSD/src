@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.64 2019/03/24 13:31:00 martin Exp $
+.\" $NetBSD: gpt.8,v 1.65 2019/03/24 13:45:35 martin Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -466,7 +466,7 @@ See above for a description of these options.
 Partitions are removed by clearing the partition type.
 No other information is changed.
 .\" ==== resize ====
-.It Nm Ic resize [ Fl i Ar index | Fl b Ar startsec ] Oo Fl a Ar alignment Oc \
+.It Nm Ic resize Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc Oo Fl a Ar alignment Oc \
 Oo Fl s Ar size Oc
 The
 .Ic resize
@@ -592,7 +592,7 @@ They may be used by
 .Nx
 in the future.
 .\" ==== show ====
-.It Nm Ic show Oo Fl aglu Oc Oo Fl i Ar index Oc
+.It Nm Ic show Oo Fl aglu Oc Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc
 The
 .Ic show
 command displays the current partitioning on the listed devices and gives
@@ -611,6 +611,8 @@ option the GPT partition type is displayed as an UUID instead of in a
 user friendly form.
 With the
 .Fl i
+or the
+.Fl b
 option, all the details of a particular GPT partition will be displayed.
 The format of this display is subject to change.
 With the
