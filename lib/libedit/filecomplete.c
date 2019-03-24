@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.51 2018/05/04 20:38:26 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.52 2019/03/24 16:42:49 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.51 2018/05/04 20:38:26 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.52 2019/03/24 16:42:49 abhinav Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -655,15 +655,19 @@ fn_complete(EditLine *el,
 				 * it, unless we do filename completion and the
 				 * object is a directory. Also do necessary escape quoting
 				 */
-				char *escaped_completion = escape_filename(el, matches[0]);
-				if (escaped_completion == NULL)
+				char *completion;
+				if (!attempted_completion_function)
+					completion = escape_filename(el, matches[0]);
+				else
+					completion = strdup(matches[0]);
+				if (completion == NULL)
 					goto out;
 				el_winsertstr(el,
-					ct_decode_string(escaped_completion, &el->el_scratch));
+					ct_decode_string(completion, &el->el_scratch));
 				el_winsertstr(el,
-						ct_decode_string((*app_func)(escaped_completion),
+						ct_decode_string((*app_func)(completion),
 							&el->el_scratch));
-				free(escaped_completion);
+				free(completion);
 			} else {
 				/*
 				 * Only replace the completed string with common part of
