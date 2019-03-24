@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2019/03/11 01:40:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.25 2019/03/24 10:39:45 kre Exp $
 
 .include <bsd.own.mk>
 
@@ -321,8 +321,8 @@ LIBUUID_DIST=	${NETBSDSRCDIR}/external/bsd/libuuid_ul/lib/libuuid_ul
 .include "${LIBUUID_DIST}/libuuid_ul-rename.mk"
 SRCS+=	${UUID_UL_SRCS}
 
-depend dependall all: uuid/uuid.h
-includes uuid/uuid.h:
+includes depend dependall all: uuid/uuid.h
+uuid/uuid.h:
 	@-mkdir -p uuid
 	ln -s ${X11SRCDIR}/external/bsd/libuuid_ul/dist/uuid.h uuid/uuid.h
 
