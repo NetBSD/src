@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.150 2019/03/25 09:46:50 msaitoh Exp $
+$NetBSD: miidevs,v 1.151 2019/03/25 11:43:50 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@ oui TRIDIUM			0x0001f0	Tridium
 oui DATATRACK			0x0002c6	Data Track Technology
 oui CICADA			0x0003f1	Cicada Semiconductor
 oui AGERE			0x00053d	Agere
+oui BANKSPEED			0x0006b8	Bankspeed Pty
+oui NETEXCELL			0x0008bb	NetExcell
 oui NETAS			0x0009c3	Netas
 oui BROADCOM2			0x000af7	Broadcom Corporation
 oui RALINK			0x000c43	Ralink Technology
