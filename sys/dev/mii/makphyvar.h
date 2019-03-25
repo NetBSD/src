@@ -1,11 +1,11 @@
-/* $NetBSD: makphyvar.h,v 1.1 2019/03/25 05:39:51 msaitoh Exp $ */
+/* $NetBSD: makphyvar.h,v 1.2 2019/03/25 06:17:56 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by Masanobu SAITOH.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
