@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_verbose.c,v 1.5 2019/03/25 07:34:13 msaitoh Exp $ */
+/*	$NetBSD: mii_verbose.c,v 1.6 2019/03/25 09:46:24 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,18 +55,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_verbose.c,v 1.5 2019/03/25 07:34:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_verbose.c,v 1.6 2019/03/25 09:46:24 msaitoh Exp $");
 
 #include <sys/module.h>
 #include <dev/mii/miidevs.h>
 #include <dev/mii/miidevs_data.h>
 #include <dev/mii/mii_verbose.h>
-
-struct mii_knowndev {
-	int oui;
-	int model;
-	const char *descr;
-};
 
 const char * mii_get_descr_real(int, int);
 
