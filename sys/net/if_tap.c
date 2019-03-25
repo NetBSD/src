@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.107 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.108 2019/03/25 09:32:25 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.107 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.108 2019/03/25 09:32:25 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -273,20 +273,32 @@ tapdetach(void)
 {
 	int error = 0;
 
-	if (tap_count != 0)
-		return EBUSY;
-
+	if_clone_detach(&tap_cloners);
 #ifdef _MODULE
-	if (error == 0)
-		error = devsw_detach(NULL, &tap_cdevsw);
+	error = devsw_detach(NULL, &tap_cdevsw);
+	if (error != 0)
+		goto out2;
 #endif
-	if (error == 0)
-		sysctl_teardown(&tap_sysctl_clog);
-	if (error == 0)
-		if_clone_detach(&tap_cloners);
 
-	if (error == 0)
-		error = config_cfattach_detach(tap_cd.cd_name, &tap_ca);
+	if (tap_count != 0) {
+		error = EBUSY;
+		goto out1;
+	}
+
+	error = config_cfattach_detach(tap_cd.cd_name, &tap_ca);
+	if (error != 0)
+		goto out1;
+
+	sysctl_teardown(&tap_sysctl_clog);
+
+	return 0;
+
+ out1:
+#ifdef _MODULE
+	devsw_attach("tap", NULL, &tap_bmajor, &tap_cdevsw, &tap_cmajor);
+#endif
+ out2:
+	if_clone_attach(&tap_cloners);
 
 	return error;
 }
