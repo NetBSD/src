@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.149 2019/03/25 00:59:04 pgoyette Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.150 2019/03/25 01:01:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.149 2019/03/25 00:59:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.150 2019/03/25 01:01:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -369,7 +369,6 @@ tunclose(dev_t dev, int flag, int mode,
 		softint_disestablish(tp->tun_osih);
 		softint_disestablish(tp->tun_isih);
 		mutex_destroy(&tp->tun_lock);
-		LIST_REMOVE(tp, tunz_list);
 		kmem_free(tp, sizeof(*tp));
 		return 0;
 	}
