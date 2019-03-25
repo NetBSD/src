@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.56 2019/03/01 16:42:11 christos Exp $	*/
+/*	$NetBSD: dump.h,v 1.57 2019/03/25 02:13:01 manu Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -115,6 +115,7 @@ const char *temp;	/* name of the file for doing rewrite of dumpdates */
 char	lastlevel;	/* dump level of previous dump */
 char	level;		/* dump level of this dump */
 int	uflag;		/* update flag */
+const char *dumpdev;	/* device name in dumpdates */
 int	eflag;		/* eject flag */
 int	lflag;		/* autoload flag */
 int	diskfd;		/* disk file descriptor */
