@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.154 2019/03/25 09:07:24 pgoyette Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.155 2019/03/25 10:04:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.154 2019/03/25 09:07:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.155 2019/03/25 10:04:48 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -142,7 +142,9 @@ tuninit(void)
 static int
 tundetach(void)
 {
-	int error = 0;
+#ifdef _MODULE
+	int error;
+#endif
 
 	if_clone_detach(&tun_cloner);
 #ifdef _MODULE
