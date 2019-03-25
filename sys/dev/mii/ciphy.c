@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.31 2019/02/24 17:22:21 christos Exp $ */
+/* $NetBSD: ciphy.c,v 1.32 2019/03/25 09:20:46 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.31 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.32 2019/03/25 09:20:46 msaitoh Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -94,9 +94,9 @@ ciphymatch(device_t parent, cfdata_t match,
 	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, ciphys) != NULL)
-		return (10);
+		return 10;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -143,11 +143,9 @@ ciphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
@@ -158,12 +156,10 @@ ciphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
 			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
-			return (0);
+			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -172,12 +168,10 @@ ciphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
 #ifdef foo
-			/*
-			 * If we're already in auto mode, just return.
-			 */
+			/* If we're already in auto mode, just return. */
 			PHY_READ(sc, MII_BMCR, &reg);
 			if (reg & BMCR_AUTOEN)
-				return (0);
+				return 0;
 #endif
 			(void) mii_phy_auto(sc, 0);
 			break;
@@ -193,9 +187,8 @@ setit:
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
 				speed |= BMCR_FDX;
 				gig = GTCR_ADV_1000TFDX;
-			} else {
+			} else
 				gig = GTCR_ADV_1000THDX;
-			}
 
 			PHY_WRITE(sc, MII_GTCR, 0);
 			PHY_WRITE(sc, MII_BMCR, speed);
@@ -220,8 +213,7 @@ setit:
 				PHY_WRITE(sc, MII_GTCR,
 				    gig | GTCR_MAN_MS | GTCR_ADV_MS);
 			} else {
-				PHY_WRITE(sc, MII_GTCR,
-				    gig | GTCR_MAN_MS);
+				PHY_WRITE(sc, MII_GTCR, gig | GTCR_MAN_MS);
 			}
 			break;
 		case IFM_NONE:
@@ -229,26 +221,20 @@ setit:
 			break;
 		case IFM_100_T4:
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
-		/*
-		 * Is the interface even up?
-		 */
+		/* Is the interface even up? */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
+			return 0;
 
-		/*
-		 * Only used for autonegotiation.
-		 */
+		/* Only used for autonegotiation. */
 		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
 		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
 			/*
@@ -284,14 +270,12 @@ setit:
 		if (sc->mii_ticks++ == 0)
 			break;
 
-		/*
-		 * Only retry autonegotiation every N seconds.
-		 */
+		/* Only retry autonegotiation every N seconds. */
 		if (sc->mii_ticks <= MII_ANEGTICKS_GIGE)
 			break;
 
 		mii_phy_auto(sc, 0);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -307,7 +291,7 @@ setit:
 		ciphy_fixup(sc);
 	}
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void
@@ -406,7 +390,7 @@ ciphy_fixup(struct mii_softc *sc)
 	speed = status & CIPHY_AUXCSR_SPEED;
 
 	if (device_is_a(device_parent(sc->mii_dev), "nfe")) {
-		/* need to set for 2.5V RGMII for NVIDIA adapters */
+		/* Need to set for 2.5V RGMII for NVIDIA adapters */
 		PHY_SETBIT(sc, CIPHY_MII_ECTL1, CIPHY_INTSEL_RGMII);
 		PHY_SETBIT(sc, CIPHY_MII_ECTL1, CIPHY_IOVOL_2500MV);
 	}
@@ -444,9 +428,8 @@ ciphy_fixup(struct mii_softc *sc)
 		if ((speed == CIPHY_SPEED10 || speed == CIPHY_SPEED100) &&
 		    (status & CIPHY_AUXCSR_FDX)) {
 			PHY_SETBIT(sc, CIPHY_MII_10BTCSR, CIPHY_10BTCSR_ECHO);
-		} else {
+		} else
 			PHY_CLRBIT(sc, CIPHY_MII_10BTCSR, CIPHY_10BTCSR_ECHO);
-		}
 
 		break;
 	case MII_MODEL_CICADA_VSC8211:

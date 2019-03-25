@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.52 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: mii.c,v 1.53 2019/03/25 09:20:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.52 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.53 2019/03/25 09:20:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,7 +109,7 @@ mii_attach(device_t parent, struct mii_data *mii, int capmask,
 		rv = (*mii->mii_readreg)(parent, ma.mii_phyno, MII_BMSR,
 		    &bmsr);
 		if ((rv != 0) || bmsr == 0 || bmsr == 0xffff ||
-		    (bmsr & (BMSR_EXTSTAT|BMSR_MEDIAMASK)) == 0) {
+		    (bmsr & (BMSR_EXTSTAT | BMSR_MEDIAMASK)) == 0) {
 			/* Assume no PHY at this address. */
 			continue;
 		}
@@ -145,9 +145,7 @@ mii_attach(device_t parent, struct mii_data *mii, int capmask,
 		child = device_private(config_found_sm_loc(parent, "mii",
 			locs, &ma, mii_print, config_stdsubmatch));
 		if (child) {
-			/*
-			 * Link it up in the parent's MII data.
-			 */
+			/* Link it up in the parent's MII data. */
 			callout_init(&child->mii_nway_ch, 0);
 			LIST_INSERT_HEAD(&mii->mii_phys, child, mii_list);
 			child->mii_offset = offset;
@@ -194,12 +192,13 @@ mii_print(void *aux, const char *pnp)
 		    MII_REV(ma->mii_id2), pnp);
 
 	aprint_normal(" phy %d", ma->mii_phyno);
-	return (UNCONF);
+	return UNCONF;
 }
 
 static inline int
 phy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
+
 	if (!device_is_active(sc->mii_dev))
 		return ENXIO;
 	return PHY_SERVICE(sc, mii, cmd);
@@ -226,9 +225,9 @@ mii_mediachg(struct mii_data *mii)
 	LIST_FOREACH(child, &mii->mii_phys, mii_list) {
 		rv = phy_service(child, mii, MII_MEDIACHG);
 		if (rv)
-			return (rv);
+			return rv;
 	}
-	return (0);
+	return 0;
 }
 
 /*

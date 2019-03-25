@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.28 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.29 2019/03/25 09:20:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.28 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.29 2019/03/25 09:20:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,22 +108,22 @@ gentbimatch(device_t parent, cfdata_t match, void *aux)
 	rv = (*mii->mii_readreg)(parent, ma->mii_phyno, MII_BMSR, &bmsr);
 	if ((rv != 0)
 	    || (bmsr & BMSR_EXTSTAT) == 0 || (bmsr & BMSR_MEDIAMASK) != 0)
-		return (0);
+		return 0;
 
 	rv = (*mii->mii_readreg)(parent, ma->mii_phyno, MII_EXTSR, &extsr);
-	if ((rv != 0) || ((extsr & (EXTSR_1000TFDX|EXTSR_1000THDX)) != 0))
-		return (0);
+	if ((rv != 0) || ((extsr & (EXTSR_1000TFDX | EXTSR_1000THDX)) != 0))
+		return 0;
 
-	if (extsr & (EXTSR_1000XFDX|EXTSR_1000XHDX)) {
+	if (extsr & (EXTSR_1000XFDX | EXTSR_1000XHDX)) {
 		/*
 		 * We think this is a generic TBI.  Return a match
 		 * priority higher than ukphy, but lower than what
 		 * specific drivers will return.
 		 */
-		return (2);
+		return 2;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -186,11 +186,9 @@ gentbi_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
@@ -201,12 +199,10 @@ gentbi_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
 			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
-			return (0);
+			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -214,19 +210,17 @@ gentbi_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -234,7 +228,7 @@ gentbi_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void

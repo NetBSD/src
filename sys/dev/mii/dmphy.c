@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.42 2019/03/25 07:34:13 msaitoh Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.43 2019/03/25 09:20:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.42 2019/03/25 07:34:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.43 2019/03/25 09:20:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,13 +236,13 @@ dmphy_status(struct mii_softc *sc)
 
 		PHY_READ(sc, MII_DMPHY_DSCSR, &dscsr);
 		if (dscsr & DSCSR_100FDX)
-			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+			mii->mii_media_active |= IFM_100_TX | IFM_FDX;
 		else if (dscsr & DSCSR_100HDX)
-			mii->mii_media_active |= IFM_100_TX|IFM_HDX;
+			mii->mii_media_active |= IFM_100_TX | IFM_HDX;
 		else if (dscsr & DSCSR_10FDX)
-			mii->mii_media_active |= IFM_10_T|IFM_FDX;
+			mii->mii_media_active |= IFM_10_T | IFM_FDX;
 		else if (dscsr & DSCSR_10HDX)
-			mii->mii_media_active |= IFM_10_T|IFM_HDX;
+			mii->mii_media_active |= IFM_10_T | IFM_HDX;
 		else
 			mii->mii_media_active |= IFM_NONE;
 	} else

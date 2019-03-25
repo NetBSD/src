@@ -1,4 +1,4 @@
-/*	$NetBSD: etphy.c,v 1.3 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: etphy.c,v 1.4 2019/03/25 09:29:08 msaitoh Exp $	*/
 /*	$OpenBSD: etphy.c,v 1.4 2008/04/02 20:12:58 brad Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.3 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.4 2019/03/25 09:29:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,9 +193,7 @@ etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 		break;
@@ -211,9 +209,7 @@ etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -239,9 +235,7 @@ etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 

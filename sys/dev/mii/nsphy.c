@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.63 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.64 2019/03/25 09:20:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.63 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.64 2019/03/25 09:20:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +103,9 @@ nsphymatch(device_t parent, cfdata_t match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, nsphys) != NULL)
-		return (10);
+		return 10;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -148,11 +148,9 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (ife != NULL && IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
@@ -163,12 +161,10 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (ife != NULL && IFM_INST(ife->ifm_media) != sc->mii_inst) {
 			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
-			return (0);
+			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -211,19 +207,17 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (ife != NULL && IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -231,7 +225,7 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void
@@ -281,15 +275,15 @@ nsphy_status(struct mii_softc *sc)
 			PHY_READ(sc, MII_ANLPAR, &anlpar);
 			result = anar & anlpar;
 			if (result & ANLPAR_TX_FD)
-				mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+				mii->mii_media_active |= IFM_100_TX | IFM_FDX;
 			else if (result & ANLPAR_T4)
-				mii->mii_media_active |= IFM_100_T4|IFM_HDX;
+				mii->mii_media_active |= IFM_100_T4 | IFM_HDX;
 			else if (result & ANLPAR_TX)
-				mii->mii_media_active |= IFM_100_TX|IFM_HDX;
+				mii->mii_media_active |= IFM_100_TX | IFM_HDX;
 			else if (result & ANLPAR_10_FD)
-				mii->mii_media_active |= IFM_10_T|IFM_FDX;
+				mii->mii_media_active |= IFM_10_T | IFM_FDX;
 			else if (result & ANLPAR_10)
-				mii->mii_media_active |= IFM_10_T|IFM_HDX;
+				mii->mii_media_active |= IFM_10_T | IFM_HDX;
 			else
 				mii->mii_media_active |= IFM_NONE;
 			return;

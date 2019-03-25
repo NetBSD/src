@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.20 2019/02/24 17:22:21 christos Exp $ */
+/*	$NetBSD: atphy.c,v 1.21 2019/03/25 09:20:46 msaitoh Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.20 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.21 2019/03/25 09:20:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,9 +174,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 		break;
@@ -192,9 +190,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -239,29 +235,21 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			PHY_WRITE(sc, MII_100T2CR, 0);
 		PHY_WRITE(sc, MII_ANAR, anar);
 
-		/*
-		 * Start autonegotiation.
-		 */
+		/* Start autonegotiation. */
 		PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_AUTOEN | BMCR_STARTNEG);
 done:
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 
-		/*
-		 * Is the interface even up?
-		 */
+		/* Is the interface even up? */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			return 0;
 
-		/*
-		 * Only used for autonegotiation.
-		 */
+		/* Only used for autonegotiation. */
 		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
 		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
 			sc->mii_ticks = 0;
@@ -283,9 +271,7 @@ done:
 		if (sc->mii_ticks++ == 0)
 			break;
 
-		/*
-		 * Only retry autonegotiation every mii_anegticks seconds.
-		 */
+		/* Only retry autonegotiation every mii_anegticks seconds. */
 		if (sc->mii_ticks <= sc->mii_anegticks)
 			break;
 

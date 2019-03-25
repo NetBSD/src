@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphy.c,v 1.51 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.52 2019/03/25 09:20:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qsphy.c,v 1.51 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qsphy.c,v 1.52 2019/03/25 09:20:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,9 +102,9 @@ qsphymatch(device_t parent, cfdata_t match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, qsphys) != NULL)
-		return (10);
+		return 10;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -151,7 +151,7 @@ qsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * If we're not polling our PHY instance, just return.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
@@ -162,7 +162,7 @@ qsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
 			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
-			return (0);
+			return 0;
 		}
 
 		/*
@@ -179,15 +179,15 @@ qsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * If we're not currently selected, just return.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -195,7 +195,7 @@ qsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void
@@ -233,19 +233,19 @@ qsphy_status(struct mii_softc *sc)
 		PHY_READ(sc, MII_QSPHY_PCTL, &pctl);
 		switch (pctl & PCTL_OPMASK) {
 		case PCTL_10_T:
-			mii->mii_media_active |= IFM_10_T|IFM_HDX;
+			mii->mii_media_active |= IFM_10_T | IFM_HDX;
 			break;
 		case PCTL_10_T_FDX:
-			mii->mii_media_active |= IFM_10_T|IFM_FDX;
+			mii->mii_media_active |= IFM_10_T | IFM_FDX;
 			break;
 		case PCTL_100_TX:
-			mii->mii_media_active |= IFM_100_TX|IFM_HDX;
+			mii->mii_media_active |= IFM_100_TX | IFM_HDX;
 			break;
 		case PCTL_100_TX_FDX:
-			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+			mii->mii_media_active |= IFM_100_TX | IFM_FDX;
 			break;
 		case PCTL_100_T4:
-			mii->mii_media_active |= IFM_100_T4|IFM_HDX;
+			mii->mii_media_active |= IFM_100_T4 | IFM_HDX;
 			break;
 		default:
 			/* Erg... this shouldn't happen. */

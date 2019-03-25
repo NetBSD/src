@@ -1,4 +1,4 @@
-/*	$NetBSD: pnaphy.c,v 1.23 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: pnaphy.c,v 1.24 2019/03/25 09:20:46 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.23 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.24 2019/03/25 09:20:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,10 +91,10 @@ pnaphymatch(device_t parent, cfdata_t match, void *aux)
 		 * Match higher than ukphy, but lower than a specific
 		 * driver would match.
 		 */
-		return (2);
+		return 2;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -114,7 +114,7 @@ pnaphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &pnaphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = ma->mii_flags | MIIF_IS_HPNA; /* force HomePNA */
+	sc->mii_flags = ma->mii_flags | MIIF_IS_HPNA; /* Force HomePNA */
 	sc->mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(sc);
@@ -137,11 +137,9 @@ pnaphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
@@ -152,12 +150,10 @@ pnaphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
 			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
-			return (0);
+			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -165,19 +161,17 @@ pnaphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -185,7 +179,7 @@ pnaphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*      $NetBSD: rdcphy.c,v 1.3 2019/02/24 17:22:21 christos Exp $        */
+/*      $NetBSD: rdcphy.c,v 1.4 2019/03/25 09:20:46 msaitoh Exp $        */
 
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -33,7 +33,7 @@
  * Driver for the RDC Semiconductor R6040 10/100 PHY.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rdcphy.c,v 1.3 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rdcphy.c,v 1.4 2019/03/25 09:20:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +84,9 @@ rdcphymatch(device_t parent, cfdata_t match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, rdcphys) != NULL)
-		return (10);
+		return 10;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -137,9 +137,7 @@ rdcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_MEDIACHG:
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -148,14 +146,13 @@ rdcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		case IFM_100_TX:
 		case IFM_10_T:
 			/*
-			 * Report fake lost link event to parent
-			 * driver.  This will stop MAC of parent
-			 * driver and make it possible to reconfigure
-			 * MAC after completion of link establishment.
-			 * Note, the parent MAC seems to require
-			 * restarting MAC when underlying any PHY
-			 * configuration was changed even if the
-			 * resolved speed/duplex was not changed at
+			 * Report fake lost link event to parent driver.  This
+			 * will stop MAC of parent driver and make it possible
+			 * to reconfigure MAC after completion of link
+			 * establishment.
+			 * Note, the parent MAC seems to require restarting MAC
+			 * when underlying any PHY configuration was changed
+			 * even if the resolved speed/duplex was not changed at
 			 * all.
 			 */
 			mii->mii_media_status = 0;
@@ -163,7 +160,7 @@ rdcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			rsc->sc_mii_link_tick = RDCPHY_MANNEG_TICK;
 			/* Immediately report link down. */
 			mii_phy_update(sc, MII_MEDIACHG);
-			return (0);
+			return 0;
 		default:
 			break;
 		}
@@ -171,23 +168,22 @@ rdcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	case MII_TICK:
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
 			/*
-			 * It seems the PHY hardware does not correctly
-			 * report link status changes when manual link
-			 * configuration is in progress.  It is also
-			 * possible for the PHY to complete establishing
-			 * a link within one second such that mii(4)
-			 * did not notice the link change.  To workaround
-			 * the issue, emulate lost link event and wait
-			 * for 3 seconds when manual link configuration
-			 * is in progress.  3 seconds would be long
-			 * enough to absorb transient link flips.
+			 * It seems the PHY hardware does not correctly report
+			 * link status changes when manual link configuration
+			 * is in progress.  It is also possible for the PHY to
+			 * complete establishing a link within one second such
+			 * that mii(4) did not notice the link change.
+			 * To workaround the issue, emulate lost link event and
+			 * wait for 3 seconds when manual link configuration
+			 * is in progress.  3 seconds would be long enough to
+			 * absorb transient link flips.
 			 */
 			if (rsc->sc_mii_link_tick > 0) {
 				rsc->sc_mii_link_tick--;
-				return (0);
+				return 0;
 			}
 		}
 		break;
@@ -198,7 +194,7 @@ rdcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void
