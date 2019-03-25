@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.352 2018/11/27 14:09:53 maxv Exp $ */
+/* $NetBSD: machdep.c,v 1.353 2019/03/25 19:24:30 maxv Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -63,12 +63,11 @@
 #include "opt_multiprocessor.h"
 #include "opt_dec_3000_300.h"
 #include "opt_dec_3000_500.h"
-#include "opt_compat_osf1.h"
 #include "opt_execfmt.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.352 2018/11/27 14:09:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.353 2019/03/25 19:24:30 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

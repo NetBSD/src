@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.390 2019/03/16 08:03:03 maxv Exp $
+# $NetBSD: GENERIC,v 1.391 2019/03/25 19:24:30 maxv Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.390 $"
+ident		"GENERIC-$Revision: 1.391 $"
 
 maxusers 32
 
@@ -128,9 +128,6 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 # Binary compatibility with previous versions of NetBSD.
 include 	"conf/compat_netbsd09.config"
-
-# OSF/1 binary compatibility
-#options 	COMPAT_OSF1
 
 # Linux binary compatibility
 options 	COMPAT_LINUX
