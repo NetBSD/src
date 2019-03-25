@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.33 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.34 2019/03/25 09:20:46 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.33 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.34 2019/03/25 09:20:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,20 +77,16 @@ urlphy_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	/*
-	 * RTL8150 reports OUI == 0, MODEL == 0
-	 */
+	/* RTL8150 reports OUI == 0, MODEL == 0 */
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 &&
 	    MII_MODEL(ma->mii_id2) != 0)
-		return (0);
+		return 0;
 
-	/*
-	 * Make sure the parent is an 'url' device.
-	 */
+	/* Make sure the parent is an 'url' device. */
 	if (!device_is_a(parent, "url"))
-		return(0);
+		return 0;
 
-	return (10);
+	return 10;
 }
 
 static void
@@ -145,19 +141,15 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
@@ -167,15 +159,13 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		/* Just bail now if the interface is down. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
+			return 0;
 
 		/*
 		 * If we're not doing autonegotiation, we don't need to do
@@ -207,23 +197,21 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (sc->mii_ticks++ == 0)
 			break;
 
-		/*
-		 * Only retry autonegotiation every N seconds.
-		 */
+		/* Only retry autonegotiation every N seconds. */
 		KASSERT(sc->mii_anegticks != 0);
 		if (sc->mii_ticks <= sc->mii_anegticks)
-			return (0);
+			return 0;
 
 		PHY_RESET(sc);
 
 		if (mii_phy_auto(sc, 0) == EJUSTRETURN)
-			return (0);
+			return 0;
 
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -232,7 +220,7 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
 
-	return (0);
+	return 0;
 }
 
 static void
