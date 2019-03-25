@@ -1,4 +1,4 @@
-/* $NetBSD: srtconfig.c,v 1.4 2017/05/04 16:26:09 sevan Exp $ */
+/* $NetBSD: srtconfig.c,v 1.5 2019/03/25 23:43:56 pgoyette Exp $ */
 /* This file is in the public domain. */
 
 #include <stdio.h>
@@ -99,7 +99,7 @@ static void open_dev(int how)
   }
  devfd = open(txt_dev,how,0);
  if (devfd < 0)
-  { fprintf(stderr,"%s; can't open %s: %s\n",__progname,txt_dev,strerror(errno));
+  { fprintf(stderr,"%s: can't open %s: %s\n",__progname,txt_dev,strerror(errno));
     exit(1);
   }
 }
