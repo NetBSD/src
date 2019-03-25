@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.631 2019/03/05 03:49:06 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.632 2019/03/25 05:32:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.631 2019/03/05 03:49:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.632 2019/03/25 05:32:01 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -10641,14 +10641,17 @@ static int
 wm_gmii_i82544_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct wm_softc *sc = device_private(dev);
+	int rv;
 
 	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 		switch (sc->sc_phytype) {
 		case WMPHY_IGP:
 		case WMPHY_IGP_2:
 		case WMPHY_IGP_3:
-			wm_gmii_mdic_writereg(dev, phy, MII_IGPHY_PAGE_SELECT,
-			    reg);
+			rv = wm_gmii_mdic_writereg(dev, phy,
+			    MII_IGPHY_PAGE_SELECT, reg);
+			if (rv != 0)
+				return rv;
 			break;
 		default:
 #ifdef WM_DEBUG
@@ -10659,9 +10662,7 @@ wm_gmii_i82544_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 		}
 	}
 	
-	wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK, val);
-
-	return 0;
+	return wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK, val);
 }
 
 /*
@@ -10690,14 +10691,17 @@ static int
 wm_gmii_i82544_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct wm_softc *sc = device_private(dev);
+	int rv;
 
 	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 		switch (sc->sc_phytype) {
 		case WMPHY_IGP:
 		case WMPHY_IGP_2:
 		case WMPHY_IGP_3:
-			wm_gmii_mdic_writereg(dev, phy, MII_IGPHY_PAGE_SELECT,
-			    reg);
+			rv = wm_gmii_mdic_writereg(dev, phy,
+			    MII_IGPHY_PAGE_SELECT, reg);
+			if (rv != 0)
+				return rv;
 			break;
 		default:
 #ifdef WM_DEBUG
@@ -10708,9 +10712,7 @@ wm_gmii_i82544_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
 		}
 	}
 			
-	wm_gmii_mdic_writereg(dev, phy, reg & MII_ADDRMASK, val);
-
-	return 0;
+	return wm_gmii_mdic_writereg(dev, phy, reg & MII_ADDRMASK, val);
 }
 
 /*
@@ -10755,8 +10757,8 @@ wm_gmii_i80003_readreg(device_t dev, int phy, int reg, uint16_t *val)
 		 * register.
 		 */
 		delay(200);
-		wm_gmii_mdic_readreg(dev, phy, page_select, &temp2);
-		if (temp2 != temp) {
+		rv = wm_gmii_mdic_readreg(dev, phy, page_select, &temp2);
+		if ((rv != 0) || (temp2 != temp)) {
 			device_printf(dev, "%s failed\n", __func__);
 			rv = -1;
 			goto out;
@@ -10813,8 +10815,8 @@ wm_gmii_i80003_writereg(device_t dev, int phy, int reg, uint16_t val)
 		 * register.
 		 */
 		delay(200);
-		wm_gmii_mdic_readreg(dev, phy, page_select, &temp2);
-		if (temp2 != temp) {
+		rv = wm_gmii_mdic_readreg(dev, phy, page_select, &temp2);
+		if ((rv != 0) || (temp2 != temp)) {
 			device_printf(dev, "%s failed\n", __func__);
 			rv = -1;
 			goto out;
