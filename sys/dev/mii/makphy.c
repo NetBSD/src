@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.57 2019/02/27 18:21:04 jakllsch Exp $	*/
+/*	$NetBSD: makphy.c,v 1.58 2019/03/25 05:39:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.57 2019/02/27 18:21:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.58 2019/03/25 05:39:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,11 +76,12 @@ __KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.57 2019/02/27 18:21:04 jakllsch Exp $")
 #include <dev/mii/miidevs.h>
 
 #include <dev/mii/makphyreg.h>
+#include <dev/mii/makphyvar.h>
 
 static int	makphymatch(device_t, cfdata_t, void *);
 static void	makphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(makphy, sizeof(struct mii_softc),
+CFATTACH_DECL_NEW(makphy, sizeof(struct makphy_softc),
     makphymatch, makphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	makphy_service(struct mii_softc *, struct mii_data *, int);
@@ -155,22 +156,24 @@ makphyattach(device_t parent, device_t self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
+	struct makphy_softc *maksc = (struct makphy_softc *)sc;
 	const char *name;
-	uint16_t reg;
+	uint16_t reg, model;
 
 	mpd = mii_phy_match(ma, makphys);
 	aprint_naive(": Media interface\n");
 	if (mpd)
 		name = mpd->mpd_name;
-	else if (makphy_isi210(parent, ma))
+	else if (makphy_isi210(parent, ma)) {
 		name = MII_STR_xxMARVELL_I210;
-	else
+		maksc->sc_flags |= MAKPHY_F_I210;
+	} else
 		panic("Unknown PHY");
 	aprint_normal(": %s, rev. %d\n", name, MII_REV(ma->mii_id2));
 
 	sc->mii_dev = self;
 	sc->mii_mpd_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
-	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
+	sc->mii_mpd_model = model = MII_MODEL(ma->mii_id2);
 	sc->mii_mpd_rev = MII_REV(ma->mii_id2);
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
@@ -179,10 +182,26 @@ makphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS;
 
-	/* Make sure page 0 is selected. */
-	PHY_WRITE(sc, MAKPHY_EADR, 0);
+	switch (model) {
+	case MII_MODEL_xxMARVELL_E1000:
+		if ((maksc->sc_flags & MAKPHY_F_I210) != 0)
+			goto page0;
+		/* FALLTHROUGH */
+	case MII_MODEL_xxMARVELL_E1000_3:
+	case MII_MODEL_xxMARVELL_E1000S:
+	case MII_MODEL_xxMARVELL_E1000_5:
+		/* 88E1000 series has no EADR */
+		break;
+	default:
+page0:
+		/* Make sure page 0 is selected. */
+		if (PHY_WRITE(sc, MAKPHY_EADR, 0) != 0)
+			aprint_verbose_dev(self,
+			    "Failed to access EADR. Are you an emulator?\n");
+		break;
+	}
 
-	switch (sc->mii_mpd_model) {
+	switch (model) {
 	case MII_MODEL_xxMARVELL_E1011:
 	case MII_MODEL_xxMARVELL_E1112:
 		PHY_READ(sc, MAKPHY_ESSR, &reg);
@@ -212,6 +231,7 @@ makphyattach(device_t parent, device_t self, void *aux)
 static void
 makphy_reset(struct mii_softc *sc)
 {
+	struct makphy_softc *maksc = (struct makphy_softc *)sc;
 	uint16_t reg;
 
 	mii_phy_reset(sc);
@@ -224,6 +244,9 @@ makphy_reset(struct mii_softc *sc)
 	/* Assert CRS on transmit. */
 	switch (sc->mii_mpd_model) {
 	case MII_MODEL_MARVELL_E1000_0:
+		if ((maksc->sc_flags & MAKPHY_F_I210) != 0)
+			break;
+		/* FALLTHROUGH */
 	case MII_MODEL_MARVELL_E1000_3:
 	case MII_MODEL_MARVELL_E1000_5:
 	case MII_MODEL_MARVELL_E1000_6:
