@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.85 2019/03/25 07:34:13 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.86 2019/03/25 09:20:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.85 2019/03/25 07:34:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.86 2019/03/25 09:20:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -88,23 +88,23 @@ static const struct mii_media mii_media_table[MII_NMEDIA] = {
 	  0, },
 
 	/* 10baseT */
-	{ BMCR_S10,		ANAR_CSMA|ANAR_10,
+	{ BMCR_S10,		ANAR_CSMA | ANAR_10,
 	  0, },
 
 	/* 10baseT-FDX */
-	{ BMCR_S10|BMCR_FDX,	ANAR_CSMA|ANAR_10_FD,
+	{ BMCR_S10|BMCR_FDX,	ANAR_CSMA | ANAR_10_FD,
 	  0, },
 
 	/* 100baseT4 */
-	{ BMCR_S100,		ANAR_CSMA|ANAR_T4,
+	{ BMCR_S100,		ANAR_CSMA | ANAR_T4,
 	  0, },
 
 	/* 100baseTX */
-	{ BMCR_S100,		ANAR_CSMA|ANAR_TX,
+	{ BMCR_S100,		ANAR_CSMA | ANAR_TX,
 	  0, },
 
 	/* 100baseTX-FDX */
-	{ BMCR_S100|BMCR_FDX,	ANAR_CSMA|ANAR_TX_FD,
+	{ BMCR_S100|BMCR_FDX,	ANAR_CSMA | ANAR_TX_FD,
 	  0, },
 
 	/* 1000baseX */
@@ -143,7 +143,7 @@ mii_phy_setmedia(struct mii_softc *sc)
 		 */
 		PHY_READ(sc, MII_BMCR, &bmcr);
 		if ((bmcr & BMCR_AUTOEN) == 0 ||
-		    (sc->mii_flags & (MIIF_FORCEANEG|MIIF_DOPAUSE)))
+		    (sc->mii_flags & (MIIF_FORCEANEG | MIIF_DOPAUSE)))
 			(void) mii_phy_auto(sc, 1);
 		return;
 	}
@@ -162,7 +162,7 @@ mii_phy_setmedia(struct mii_softc *sc)
 	if (mii->mii_media.ifm_media & IFM_ETH_MASTER) {
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_1000_T:
-			gtcr |= GTCR_MAN_MS|GTCR_ADV_MS;
+			gtcr |= GTCR_MAN_MS | GTCR_ADV_MS;
 			break;
 
 		default:
@@ -594,6 +594,7 @@ mii_phy_delete_media(struct mii_softc *sc)
 int
 mii_phy_activate(device_t self, enum devact act)
 {
+
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		/* XXX Invalidate parent's media setting? */
