@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.74 2019/03/01 16:42:11 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.75 2019/03/25 02:13:01 manu Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.74 2019/03/01 16:42:11 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.75 2019/03/25 02:13:01 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv,
-	    "0123456789aB:b:cd:eFf:h:ik:l:L:nr:s:StT:uWwx:X")) != -1)
+	    "0123456789aB:b:cd:eFf:h:ik:l:L:nr:s:StT:uU:Wwx:X")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -243,6 +243,10 @@ main(int argc, char *argv[])
 
 		case 'u':		/* update /etc/dumpdates */
 			uflag = 1;
+			break;
+
+		case 'U':		/* dump device in /etc/dumpdates */
+			dumpdev = optarg;
 			break;
 
 		case 'W':		/* what to do */
@@ -674,7 +678,7 @@ usage(void)
 "usage: %s [-0123456789aceFinStuX] [-B records] [-b blocksize]\n"
 "            [-d density] [-f file] [-h level] [-k read-blocksize]\n"
 "            [-L label] [-l timeout] [-r cachesize] [-s feet]\n"
-"            [-T date] [-x snap-backup] files-to-dump\n"
+"            [-T date] [-U dumpdev] [-x snap-backup] files-to-dump\n"
 "       %s [-W | -w]\n", prog, prog);
 	exit(X_STARTUP);
 }

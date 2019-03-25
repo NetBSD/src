@@ -1,4 +1,4 @@
-/*	$NetBSD: itime.c,v 1.21 2019/03/01 16:42:11 christos Exp $	*/
+/*	$NetBSD: itime.c,v 1.22 2019/03/25 02:13:01 manu Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: itime.c,v 1.21 2019/03/01 16:42:11 christos Exp $");
+__RCSID("$NetBSD: itime.c,v 1.22 2019/03/25 02:13:01 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,9 +129,9 @@ getdumptime(void)
 {
 	struct dumpdates *ddp;
 	int i;
-	char *fname;
+	const char *fname;
 
-	fname = disk;
+	fname = dumpdev ? dumpdev : disk;
 #ifdef FDEBUG
 	msg("Looking for name %s in dumpdates = %s for level = %c\n",
 		fname, dumpdates, level);
@@ -170,15 +170,15 @@ putdumptime(void)
 	struct dumpdates *dtwalk, *dtfound;
 	int i;
 	int fd;
-	char *fname;
+	const char *fname;
 
-	if(uflag == 0)
+	if (uflag == 0 && dumpdev == NULL)
 		return;
 	if ((df = fopen(dumpdates, "r+")) == NULL)
 		quite(errno, "cannot rewrite %s", dumpdates);
 	fd = fileno(df);
 	(void) flock(fd, LOCK_EX);
-	fname = disk;
+	fname = dumpdev ? dumpdev : disk;
 	free((char *)ddatev);
 	ddatev = 0;
 	nddates = 0;
