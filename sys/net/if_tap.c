@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.108 2019/03/25 09:32:25 pgoyette Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.109 2019/03/25 09:59:59 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.108 2019/03/25 09:32:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.109 2019/03/25 09:59:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -296,8 +296,8 @@ tapdetach(void)
  out1:
 #ifdef _MODULE
 	devsw_attach("tap", NULL, &tap_bmajor, &tap_cdevsw, &tap_cmajor);
-#endif
  out2:
+#endif
 	if_clone_attach(&tap_cloners);
 
 	return error;
