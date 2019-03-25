@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.61 2018/09/08 14:11:10 christos Exp $
+#	$NetBSD: Makefile,v 1.62 2019/03/25 22:24:54 christos Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	acpica am-utils bc byacc cron dhcpcd ekermit elftosb \
-	fetch file flex less \
+	fetch file flex jemalloc less \
 	libarchive libevent liblzf libpcap mdocml \
 	ntp openresolv tcpdump tmux top tre wpa
 
