@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.150 2019/03/25 01:01:29 pgoyette Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.151 2019/03/25 01:06:34 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.150 2019/03/25 01:01:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.151 2019/03/25 01:06:34 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -194,7 +194,7 @@ tun_find_zunit(int unit)
 		if (unit == tp->tun_unit)
 			break;
 	if (tp)
-		LIST_REMOVE(tp, tun_list);
+		LIST_REMOVE(tp, tunz_list);
 	mutex_exit(&tun_softc_lock);
 	KASSERTMSG(!tp || (tp->tun_flags & (TUN_INITED|TUN_OPEN)) == TUN_OPEN,
 	    "tun%d: inconsistent flags: %x", unit, tp->tun_flags);
