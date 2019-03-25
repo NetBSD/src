@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.8 2017/06/03 14:46:29 christos Exp $
+#	$NetBSD: devlist2h.awk,v 1.9 2019/03/25 09:46:24 msaitoh Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -142,6 +142,11 @@ NF > 0 && $1 == "model" {
 	    models[nmodels, 4]) > hfile
 
 	if (!firstdone) {
+		printf("struct mii_knowndev {\n") > dfile
+		printf("	int oui;\n") > dfile
+		printf("	int model;\n") > dfile
+		printf("	const char *descr;\n") > dfile
+		printf("};\n") > dfile
 		printf("struct mii_knowndev mii_knowndevs[] = {\n") > dfile
 		firstdone = 1
 	}
