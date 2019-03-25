@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.65 2019/03/24 13:45:35 martin Exp $
+.\" $NetBSD: gpt.8,v 1.66 2019/03/25 20:15:49 martin Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd March 24, 2019
+.Dd March 25, 2019
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -555,7 +555,8 @@ the partitions fit, as
 will automatically adjust.
 However, the new disk must use the same sector size as the old disk.
 .\" ==== set ====
-.It Nm Ic set Fl a Ar attribute Fl i Ar index
+.It Nm Ic set Oo Fl a Ar attribute Oc Oo Fl N Oc Oo Fl i Ar index Oc \
+Oo Fl b Ar startsec Oc
 .It Nm Ic set Fl l
 The
 .Ic set
@@ -567,9 +568,16 @@ The
 .Fl a
 option specifies which attributes to set and may be specified more than once,
 or the attributes can be comma-separated.
+If the
+.Fl N
+option and no
+.Fl a
+option are specified, all attributes are removed.
 The
 .Fl i
-option specifies which entry to update.
+or the
+.Fl b
+option specify which entry to update.
 The possible attributes are
 .Do biosboot Dc ,
 .Do bootme Dc ,

@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: set.c,v 1.14 2018/03/19 09:06:20 mlelstv Exp $");
+__RCSID("$NetBSD: set.c,v 1.15 2019/03/25 20:15:49 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,7 +52,8 @@ __RCSID("$NetBSD: set.c,v 1.14 2018/03/19 09:06:20 mlelstv Exp $");
 static int cmd_set(gpt_t, int, char *[]);
 
 static const char *sethelp[] = {
-	"-a attribute -i index",
+	"-a attribute [-i index] [-b startsec]",
+	"-N [-i index] [-b startsec]",
 	"-l",
 };
 
@@ -70,12 +71,18 @@ cmd_set(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
 	unsigned int entry = 0;
-	uint64_t attributes = 0;
+	uint64_t attributes = 0, clear = 0;
+	off_t start = 0;
+	map_t m;
 
-	while ((ch = getopt(argc, argv, "a:i:l")) != -1) {
+	while ((ch = getopt(argc, argv, "a:b:i:lN")) != -1) {
 		switch(ch) {
 		case 'a':
 			if (gpt == NULL || gpt_attr_get(gpt, &attributes) == -1)
+				return usage();
+			break;
+		case 'b':
+			if (gpt == NULL || gpt_human_get(gpt, &start) == -1)
 				return usage();
 			break;
 		case 'i':
@@ -85,13 +92,28 @@ cmd_set(gpt_t gpt, int argc, char *argv[])
 		case 'l':
 			gpt_attr_help("\t");
 			return 0;
+		case 'N':
+			clear = ~clear;
+			break;
 		default:
 			return usage();
 		}
 	}
 
-	if (gpt == NULL || argc != optind)
+	if (start > 0) {
+		for (m = map_first(gpt); m != NULL; m = m->map_next) {
+			if (m->map_type != MAP_TYPE_GPT_PART ||
+			    m->map_index < 1)
+				continue;
+			if (start != m->map_start)
+				continue;
+			entry = m->map_index;
+			break;
+		}
+	}
+
+	if (gpt == NULL || argc != optind || (attributes != 0 && clear != 0))
 		return usage();
 
-	return gpt_attr_update(gpt, entry, attributes, 0);
+	return gpt_attr_update(gpt, entry, attributes, clear);
 }
