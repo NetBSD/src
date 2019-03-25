@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.189 2018/02/22 07:30:43 mrg Exp $
+# $NetBSD: files.alpha,v 1.190 2019/03/25 19:24:30 maxv Exp $
 #
 # alpha-specific configuration info
 
@@ -422,13 +422,8 @@ file	arch/alpha/alpha/db_trace.c		ddb
 file	arch/alpha/alpha/kgdb_machdep.c		kgdb
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/alpha/alpha/compat_13_machdep.c	compat_13 | compat_osf1
-file	arch/alpha/alpha/compat_16_machdep.c	compat_16 | compat_osf1
-
-# OSF/1 Binary Compatibility (COMPAT_OSF1)
-include "compat/osf1/files.osf1"
-file	arch/alpha/alpha/osf1_sigcode.s		compat_osf1
-file	arch/alpha/alpha/osf1_syscall.c		compat_osf1
+file	arch/alpha/alpha/compat_13_machdep.c	compat_13
+file	arch/alpha/alpha/compat_16_machdep.c	compat_16
 
 # Linux Binary Compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"

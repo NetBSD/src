@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.22 2017/12/31 11:43:42 martin Exp $ */
+/* $NetBSD: fp_complete.c,v 1.23 2019/03/25 19:24:30 maxv Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,19 +35,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.22 2017/12/31 11:43:42 martin Exp $");
-
-#include "opt_compat_osf1.h"
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.23 2019/03/25 19:24:30 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/atomic.h>
 #include <sys/evcnt.h>
-
-#ifdef COMPAT_OSF1
-#include <compat/osf1/osf1_exec.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/fpu.h>
@@ -658,12 +652,6 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
  * interpret this one instruction in SW. If a SIGFPE is not required, back up
  * the PC until just after this instruction and restart. This will execute all
  * trap shadow instructions between the trigger pc and the trap pc twice.
- *
- * If a SIGFPE is generated from the OSF1 emulation,  back up one more
- * instruction to the trigger pc itself. Native binaries don't because it
- * is non-portable and completely defeats the intended purpose of IEEE
- * traps -- for example, to count the number of exponent wraps for a later
- * correction.
  */
 	trigger_pc = 0;
 	win_begin = pc;
@@ -712,10 +700,6 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
 done:
 	if (sig) {
 		usertrap_pc = trigger_pc + 1;
-#ifdef COMPAT_OSF1
-		if (l->l_proc->p_emul == &emul_osf1)
-			usertrap_pc = trigger_pc;
-#endif
 		l->l_md.md_tf->tf_regs[FRAME_PC] = (unsigned long)usertrap_pc;
 		return sig;
 	}

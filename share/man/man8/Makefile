@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.107 2018/12/29 11:30:11 maxv Exp $
+#	$NetBSD: Makefile,v 1.108 2019/03/25 19:24:30 maxv Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	MAKEDEV.8 MAKEDEV.local.8 afterboot.8 boot.8 compat_30.8 \
 	compat_freebsd.8 compat_linux.8 \
-	compat_netbsd32.8 compat_osf1.8 compat_sunos.8 \
+	compat_netbsd32.8 compat_sunos.8 \
 	compat_ultrix.8 diskless.8 hpcboot.8 \
 	intro.8 nis.8 pam.8 rc.8 rc.subr.8 rescue.8 \
 	sysinst.8 veriexec.8 \

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1640 2019/03/17 00:35:09 tnn Exp $
+# $NetBSD: mi,v 1.1641 2019/03/25 19:24:29 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2448,7 +2448,7 @@
 ./usr/share/man/cat8/compat_ibcs2.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_linux.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_netbsd32.0		man-sys-catman		.cat
-./usr/share/man/cat8/compat_osf1.0		man-sys-catman		.cat
+./usr/share/man/cat8/compat_osf1.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_pecoff.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_sco.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_solaris.0		man-obsolete		obsolete
@@ -5467,7 +5467,7 @@
 ./usr/share/man/html8/compat_ibcs2.html		man-obsolete		obsolete
 ./usr/share/man/html8/compat_linux.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_netbsd32.html	man-sys-htmlman		html
-./usr/share/man/html8/compat_osf1.html		man-sys-htmlman		html
+./usr/share/man/html8/compat_osf1.html		man-obsolete		obsolete
 ./usr/share/man/html8/compat_pecoff.html	man-obsolete		obsolete
 ./usr/share/man/html8/compat_sco.html		man-obsolete		obsolete
 ./usr/share/man/html8/compat_solaris.html	man-obsolete		obsolete
@@ -8539,7 +8539,7 @@
 ./usr/share/man/man8/compat_ibcs2.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_linux.8		man-sys-man		.man
 ./usr/share/man/man8/compat_netbsd32.8		man-sys-man		.man
-./usr/share/man/man8/compat_osf1.8		man-sys-man		.man
+./usr/share/man/man8/compat_osf1.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_pecoff.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_sco.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_solaris.8		man-obsolete		obsolete

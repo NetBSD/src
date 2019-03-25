@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.31 2018/12/29 18:09:32 martin Exp $	*/
+/*	$NetBSD: setemul.c,v 1.32 2019/03/25 19:24:31 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.31 2018/12/29 18:09:32 martin Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.32 2019/03/25 19:24:31 maxv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -85,7 +85,6 @@ __RCSID("$NetBSD: setemul.c,v 1.31 2018/12/29 18:09:32 martin Exp $");
 #include "../../sys/compat/freebsd/freebsd_syscall.h"
 #include "../../sys/compat/linux/linux_syscall.h"
 #include "../../sys/compat/linux32/linux32_syscall.h"
-#include "../../sys/compat/osf1/osf1_syscall.h"
 #include "../../sys/compat/sunos32/sunos32_syscall.h"
 #include "../../sys/compat/sunos/sunos_syscall.h"
 #include "../../sys/compat/ultrix/ultrix_syscall.h"
@@ -100,7 +99,6 @@ __RCSID("$NetBSD: setemul.c,v 1.31 2018/12/29 18:09:32 martin Exp $");
 #include "../../sys/compat/freebsd/freebsd_syscalls.c"
 #include "../../sys/compat/linux/linux_syscalls.c"
 #include "../../sys/compat/linux32/linux32_syscalls.c"
-#include "../../sys/compat/osf1/osf1_syscalls.c"
 #include "../../sys/compat/sunos/sunos_syscalls.c"
 #include "../../sys/compat/sunos32/sunos32_syscalls.c"
 #include "../../sys/compat/ultrix/ultrix_syscalls.c"
@@ -108,12 +106,10 @@ __RCSID("$NetBSD: setemul.c,v 1.31 2018/12/29 18:09:32 martin Exp $");
 #include "../../sys/compat/aoutm68k/aoutm68k_syscalls.c"
 #endif
 
-#include "../../sys/compat/osf1/osf1_errno.c"
 #include "../../sys/compat/linux/common/linux_errno.c"
 #undef KTRACE
 
 #define SIGRTMIN	33	/* XXX */
-#include "../../sys/compat/osf1/osf1_signo.c"
 #include "../../sys/compat/linux/common/linux_signo.c"
 
 #define NELEM(a) (sizeof(a) / sizeof(a[0]))
@@ -139,10 +135,6 @@ const struct emulation emulations[] = {
 	{ "linux32",	linux32_syscallnames,	LINUX32_SYS_MAXSYSCALL,
 	  native_to_linux_errno,	NELEM(native_to_linux_errno),
 	  linux_to_native_signo,	NSIG,	EMUL_FLAG_NETBSD32 },
-
-	{ "osf1",	osf1_syscallnames,	OSF1_SYS_MAXSYSCALL,
-	  native_to_osf1_errno,		NELEM(native_to_osf1_errno),
-	  osf1_to_native_signo,		NSIG,	0 },
 
 	{ "sunos32",	sunos32_syscallnames,	SUNOS32_SYS_MAXSYSCALL,
 	  NULL,				0,

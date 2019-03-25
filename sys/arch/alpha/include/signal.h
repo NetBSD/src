@@ -1,4 +1,4 @@
-/* $NetBSD: signal.h,v 1.16 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: signal.h,v 1.17 2019/03/25 19:24:30 maxv Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -36,7 +36,6 @@ typedef long	sig_atomic_t;
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
-#include "opt_compat_osf1.h"
 #endif
 
 /*
@@ -49,7 +48,7 @@ typedef long	sig_atomic_t;
  * Note that sc_regs[] and sc_fpregs[]+sc_fpcr are inline
  * representations of 'struct reg' and 'struct fpreg', respectively.
  */
-#if defined(_KERNEL) && (defined(COMPAT_13) || defined(COMPAT_OSF1))
+#if defined(_KERNEL) && defined(COMPAT_13)
 struct sigcontext13 {
 	long	sc_onstack;		/* sigstack state to restore */
 	long	sc_mask;		/* signal mask to restore (old style) */
@@ -64,9 +63,9 @@ struct sigcontext13 {
 	long	sc_reserved[2];		/* XXX */
 	long	sc_xxx[8];		/* XXX */
 };
-#endif /* _KERNEL && (COMPAT_13 || COMPAT_OSF1) */
+#endif /* _KERNEL && COMPAT_13 */
 
-#if defined(_LIBC) || (defined(_KERNEL) && (defined(COMPAT_16) || defined(COMPAT_OSF1)))
+#if defined(_LIBC) || (defined(_KERNEL) && defined(COMPAT_16))
 struct sigcontext {
 	long	sc_onstack;		/* sigstack state to restore */
 	long	__sc_mask13;		/* signal mask to restore (old style) */

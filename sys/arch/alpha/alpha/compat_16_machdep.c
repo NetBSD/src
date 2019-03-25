@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.21 2017/03/16 16:13:20 chs Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.22 2019/03/25 19:24:30 maxv Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@
 #include "opt_multiprocessor.h"
 #include "opt_dec_3000_300.h"
 #include "opt_dec_3000_500.h"
-#include "opt_compat_osf1.h"
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
 #endif /* _KERNEL_OPT */
@@ -78,7 +77,7 @@
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
-#if defined(COMPAT_13) || defined(COMPAT_OSF1)
+#if defined(COMPAT_13)
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
 #endif
@@ -86,7 +85,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.21 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.22 2019/03/25 19:24:30 maxv Exp $");
 
 
 #ifdef DEBUG
@@ -146,7 +145,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
 
-#if defined(COMPAT_13) || defined(COMPAT_OSF1)
+#if defined(COMPAT_13)
 	/*
 	 * XXX We always have to save an old style signal mask because
 	 * XXX we might be delivering a signal to a process which will
@@ -231,7 +230,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 #endif
 }
 
-#ifdef COMPAT_16 /* not needed if COMPAT_OSF1 only */
+#ifdef COMPAT_16
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
