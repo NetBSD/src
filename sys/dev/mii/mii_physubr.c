@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.84 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.85 2019/03/25 07:34:13 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.84 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.85 2019/03/25 07:34:13 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,7 +57,8 @@ const char *(*mii_get_descr)(int, int) = mii_get_descr_stub;
 
 int mii_verbose_loaded = 0;
 
-const char *mii_get_descr_stub(int oui, int model)
+const char *
+mii_get_descr_stub(int oui, int model)
 {
 	mii_load_verbose();
 	if (mii_verbose_loaded)
@@ -69,7 +70,8 @@ const char *mii_get_descr_stub(int oui, int model)
 /*
  * Routine to load the miiverbose kernel module as needed
  */
-void mii_load_verbose(void)
+void
+mii_load_verbose(void)
 {
 	if (mii_verbose_loaded == 0)
 		module_autoload("miiverbose", MODULE_CLASS_MISC);
@@ -146,9 +148,7 @@ mii_phy_setmedia(struct mii_softc *sc)
 		return;
 	}
 
-	/*
-	 * Table index is stored in the media entry.
-	 */
+	/* Table index is stored in the media entry. */
 
 #ifdef DIAGNOSTIC
 	if (/* ife->ifm_data < 0 || */ ife->ifm_data >= MII_NMEDIA)
@@ -189,11 +189,10 @@ mii_phy_setmedia(struct mii_softc *sc)
 	PHY_WRITE(sc, MII_ANAR, anar);
 	if (sc->mii_flags & MIIF_HAVE_GTCR)
 		PHY_WRITE(sc, MII_100T2CR, gtcr);
-	if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T) {
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T)
 		mii_phy_auto(sc, 0);
-	} else {
+	else
 		PHY_WRITE(sc, MII_BMCR, bmcr);
-	}
 }
 
 int
@@ -243,7 +242,8 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 			 * 1000-base-T with the link partner.
 			 */
 			if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T) {
-				anar &= ~(ANAR_T4|ANAR_TX_FD|ANAR_TX|ANAR_10_FD|ANAR_10);
+				anar &= ~(ANAR_T4 | ANAR_TX_FD | ANAR_TX |
+				    ANAR_10_FD | ANAR_10);
 			}
 
 			PHY_WRITE(sc, MII_ANAR, anar);
@@ -268,16 +268,15 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 
 			PHY_READ(sc, MII_BMSR, &bmsr);
 			if (bmsr & BMSR_ACOMP)
-				return (0);
+				return 0;
 			delay(1000);
 		}
 
 		/*
-		 * Don't need to worry about clearing MIIF_DOINGAUTO.
-		 * If that's set, a timeout is pending, and it will
-		 * clear the flag.
+		 * Don't need to worry about clearing MIIF_DOINGAUTO. If that's
+		 * set, a timeout is pending, and it will clear the flag.
 		 */
-		return (EIO);
+		return EIO;
 	}
 
 	/*
@@ -294,7 +293,7 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 		callout_reset(&sc->mii_nway_ch, hz >> 1,
 		    mii_phy_auto_timeout, sc);
 	}
-	return (EJUSTRETURN);
+	return EJUSTRETURN;
 }
 
 static void
@@ -323,13 +322,12 @@ mii_phy_tick(struct mii_softc *sc)
 
 	/* Just bail now if the interface is down. */
 	if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-		return (EJUSTRETURN);
+		return EJUSTRETURN;
 
 	/*
-	 * If we're not doing autonegotiation, we don't need to do
-	 * any extra work here.  However, we need to check the link
-	 * status so we can generate an announcement by returning
-	 * with 0 if the status changes.
+	 * If we're not doing autonegotiation, we don't need to do any extra
+	 * work here.  However, we need to check the link status so we can
+	 * generate an announcement by returning with 0 if the status changes.
 	 */
 	if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
 	    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
@@ -338,7 +336,7 @@ mii_phy_tick(struct mii_softc *sc)
 		 * the future autonegotiation start with 0.
 		 */
 		sc->mii_ticks = 0;
-		return (0);
+		return 0;
 	}
 
 	/* Read the status register twice; BMSR_LINK is latch-low. */
@@ -351,7 +349,7 @@ mii_phy_tick(struct mii_softc *sc)
 		 */
 		sc->mii_ticks = 0;
 		/* See above. */
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -360,25 +358,25 @@ mii_phy_tick(struct mii_softc *sc)
 	 * 0 to update the status.
 	 */
 	if (sc->mii_ticks++ == 0)
-		return (0);
+		return 0;
 
 	/*
 	 * Only retry autonegotiation every N seconds.
 	 */
 	KASSERT(sc->mii_anegticks != 0);
 	if (sc->mii_ticks <= sc->mii_anegticks)
-		return (EJUSTRETURN);
+		return EJUSTRETURN;
 
 	PHY_RESET(sc);
 
 	if (mii_phy_auto(sc, 0) == EJUSTRETURN)
-		return (EJUSTRETURN);
+		return EJUSTRETURN;
 
 	/*
 	 * Might need to generate a status message if autonegotiation
 	 * failed.
 	 */
-	return (0);
+	return 0;
 }
 
 void
@@ -621,7 +619,7 @@ mii_phy_detach(device_t self, int flags)
 	mii_phy_delete_media(sc);
 	LIST_REMOVE(sc, mii_list);
 
-	return (0);
+	return 0;
 }
 
 const struct mii_phydesc *
@@ -631,9 +629,9 @@ mii_phy_match(const struct mii_attach_args *ma, const struct mii_phydesc *mpd)
 	for (; mpd->mpd_name != NULL; mpd++) {
 		if (MII_OUI(ma->mii_id1, ma->mii_id2) == mpd->mpd_oui &&
 		    MII_MODEL(ma->mii_id2) == mpd->mpd_model)
-			return (mpd);
+			return mpd;
 	}
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -645,7 +643,7 @@ mii_phy_flowstatus(struct mii_softc *sc)
 	uint16_t anar, anlpar;
 
 	if ((sc->mii_flags & MIIF_DOPAUSE) == 0)
-		return (0);
+		return 0;
 
 	PHY_READ(sc, MII_ANAR, &anar);
 	PHY_READ(sc, MII_ANLPAR, &anlpar);
@@ -657,32 +655,32 @@ mii_phy_flowstatus(struct mii_softc *sc)
 	}
 
 	if ((anar & ANAR_PAUSE_SYM) & (anlpar & ANLPAR_PAUSE_SYM))
-		return (IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE);
+		return (IFM_FLOW | IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE);
 
 	if ((anar & ANAR_PAUSE_SYM) == 0) {
 		if ((anar & ANAR_PAUSE_ASYM) &&
 		    ((anlpar & ANLPAR_PAUSE_TOWARDS) == ANLPAR_PAUSE_TOWARDS))
-			return (IFM_FLOW|IFM_ETH_TXPAUSE);
+			return (IFM_FLOW | IFM_ETH_TXPAUSE);
 		else
-			return (0);
+			return 0;
 	}
 
 	if ((anar & ANAR_PAUSE_ASYM) == 0) {
 		if (anlpar & ANLPAR_PAUSE_SYM)
-			return (IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE);
+			return (IFM_FLOW | IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE);
 		else
-			return (0);
+			return 0;
 	}
 
 	switch ((anlpar & ANLPAR_PAUSE_TOWARDS)) {
 	case ANLPAR_PAUSE_NONE:
-		return (0);
+		return 0;
 
 	case ANLPAR_PAUSE_ASYM:
-		return (IFM_FLOW|IFM_ETH_RXPAUSE);
+		return (IFM_FLOW | IFM_ETH_RXPAUSE);
 
 	default:
-		return (IFM_FLOW|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE);
+		return (IFM_FLOW | IFM_ETH_RXPAUSE | IFM_ETH_TXPAUSE);
 	}
 	/* NOTREACHED */
 }
