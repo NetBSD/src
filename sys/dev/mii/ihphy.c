@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.13 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.14 2019/03/25 07:34:13 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.13 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.14 2019/03/25 07:34:13 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,9 +151,7 @@ ihphyattach(device_t parent, device_t self, void *aux)
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
 
-	/*
-	 * Link setup (as done by Intel's Linux driver for the 82577).
-	 */
+	/* Link setup (as done by Intel's Linux driver for the 82577). */
 	PHY_READ(sc, IHPHY_MII_CFG, &reg);
 	reg |= IHPHY_CFG_TX_CRS;
 	reg |= IHPHY_CFG_DOWN_SHIFT;
@@ -168,9 +166,7 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 		break;
@@ -186,15 +182,11 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		/*
-		 * If media is deselected, disable link (standby).
-		 */
+		/* If media is deselected, disable link (standby). */
 		PHY_READ(sc, IHPHY_MII_ECR, &reg);
 		if (IFM_SUBTYPE(ife->ifm_media) == IFM_NONE)
 			reg &= ~IHPHY_ECR_LNK_EN;
@@ -202,17 +194,13 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			reg |= IHPHY_ECR_LNK_EN;
 		PHY_WRITE(sc, IHPHY_MII_ECR, reg);
 
-		/*
-		 * XXX Adjust MDI/MDIX configuration?  Other settings?
-		 */
+		/* XXX Adjust MDI/MDIX configuration?  Other settings? */
 
 		mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 

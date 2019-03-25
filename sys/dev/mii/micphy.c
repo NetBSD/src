@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.7 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: micphy.c,v 1.8 2019/03/25 07:34:13 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.7 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.8 2019/03/25 07:34:13 msaitoh Exp $");
 
 #include "opt_mii.h"
 
@@ -157,10 +157,11 @@ micphy_reset(struct mii_softc *sc)
 	uint16_t reg;
 
 	/*
-	 * The 8081 has no "sticky bits" that survive a soft reset; several bits
-	 * in the Phy Control Register 2 must be preserved across the reset.
-	 * These bits are set up by the bootloader; they control how the phy
-	 * interfaces to the board (such as clock frequency and LED behavior).
+	 * The 8081 has no "sticky bits" that survive a soft reset; several
+	 * bits in the Phy Control Register 2 must be preserved across the
+	 * reset. These bits are set up by the bootloader; they control how the
+	 * phy interfaces to the board (such as clock frequency and LED
+	 * behavior).
 	 */
 	if (sc->mii_mpd_model == MII_MODEL_MICREL_KSZ8081)
 		PHY_READ(sc, MII_KSZ8081_PHYCTL2, &reg);
@@ -177,9 +178,7 @@ micphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 		break;
@@ -195,9 +194,7 @@ micphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -205,9 +202,7 @@ micphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 
@@ -237,7 +232,8 @@ micphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 #define REG_RGMII_CLOCK_AND_CONTROL	0x104
 #define REG_RGMII_RX_DATA		0x105
 
-static void micphy_writexreg(struct mii_softc *sc, uint32_t reg, uint32_t wval)
+static void
+micphy_writexreg(struct mii_softc *sc, uint32_t reg, uint32_t wval)
 {
 	uint16_t rval __debugused;
 
@@ -256,7 +252,8 @@ micphy_fixup(struct mii_softc *sc, int model, int rev, device_t parent)
 		if (!device_is_a(parent, "cpsw"))
 			break;
 
-		aprint_normal_dev(sc->mii_dev, "adjusting RGMII signal timing for cpsw\n");
+		aprint_normal_dev(sc->mii_dev,
+		    "adjusting RGMII signal timing for cpsw\n");
 
 		// RGMII RX Data Pad Skew
 		micphy_writexreg(sc, REG_RGMII_RX_DATA, 0x0000);
@@ -264,6 +261,8 @@ micphy_fixup(struct mii_softc *sc, int model, int rev, device_t parent)
 		// RGMII Clock and Control Pad Skew
 		micphy_writexreg(sc, REG_RGMII_CLOCK_AND_CONTROL, 0x9090);
 
+		break;
+	default:
 		break;
 	}
 

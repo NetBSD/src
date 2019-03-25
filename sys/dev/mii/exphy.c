@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.55 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: exphy.c,v 1.56 2019/03/25 07:34:13 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.55 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.56 2019/03/25 07:34:13 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,15 +97,15 @@ exphymatch(device_t parent, cfdata_t match, void *aux)
 	 */
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 &&
 	    MII_MODEL(ma->mii_id2) != 0)
-		return (0);
+		return 0;
 
 	/*
 	 * Make sure the parent is an `ex'.
 	 */
 	if (!device_is_a(parent, "ex"))
-		return (0);
+		return 0;
 
-	return (10);
+	return 10;
 }
 
 static void
@@ -155,9 +155,7 @@ exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
-	/*
-	 * We can't isolate the 3Com PHY, so it has to be the only one!
-	 */
+	/* We can't isolate the 3Com PHY, so it has to be the only one! */
 	if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 		panic("exphy_service: can't isolate 3Com PHY");
 
@@ -166,9 +164,7 @@ exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_MEDIACHG:
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -176,19 +172,17 @@ exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * Only used for autonegotiation.
-		 */
+		/* Only used for autonegotiation. */
 		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
 			break;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -196,7 +190,7 @@ exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void
@@ -209,5 +203,5 @@ exphy_reset(struct mii_softc *sc)
 	 * XXX 3Com PHY doesn't set the BMCR properly after
 	 * XXX reset, which breaks autonegotiation.
 	 */
-	PHY_WRITE(sc, MII_BMCR, BMCR_S100|BMCR_AUTOEN|BMCR_FDX);
+	PHY_WRITE(sc, MII_BMCR, BMCR_S100 | BMCR_AUTOEN | BMCR_FDX);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.30 2019/02/24 17:22:21 christos Exp $	*/
+/*	$NetBSD: igphy.c,v 1.31 2019/03/25 07:34:13 msaitoh Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.30 2019/02/24 17:22:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.31 2019/03/25 07:34:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mii.h"
@@ -135,7 +135,7 @@ igphyattach(device_t parent, device_t self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
-	struct igphy_softc *igsc = (struct igphy_softc *) sc;
+	struct igphy_softc *igsc = (struct igphy_softc *)sc;
 	prop_dictionary_t dict;
 
 	mpd = mii_phy_match(ma, igphys);
@@ -237,7 +237,7 @@ static const dspcode igp3code[] = {
 static void
 igphy_load_dspcode(struct mii_softc *sc)
 {
-	struct igphy_softc *igsc = (struct igphy_softc *) sc;
+	struct igphy_softc *igsc = (struct igphy_softc *)sc;
 	const dspcode *code;
 	uint16_t reg;
 	int i;
@@ -300,7 +300,7 @@ igphy_load_dspcode_igp3(struct mii_softc *sc)
 static void
 igphy_reset(struct mii_softc *sc)
 {
-	struct igphy_softc *igsc = (struct igphy_softc *) sc;
+	struct igphy_softc *igsc = (struct igphy_softc *)sc;
 	uint16_t fused, fine, coarse;
 
 	mii_phy_reset(sc);
@@ -357,11 +357,9 @@ igphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
@@ -372,12 +370,10 @@ igphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
 			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
-			return (0);
+			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -395,21 +391,19 @@ igphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		igphy_smartspeed_workaround(sc);
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -417,7 +411,7 @@ igphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 
@@ -449,10 +443,7 @@ igphy_status(struct mii_softc *sc)
 	PHY_READ(sc, MII_BMSR, &bmsr);
 	PHY_READ(sc, MII_BMSR, &bmsr);
 
-	/*
-	 * XXX can't check if the info is valid, no
-	 * 'negotiation done' bit?
-	 */
+	/* XXX can't check if the info is valid, no 'negotiation done' bit? */
 	if (bmcr & BMCR_AUTOEN) {
 		if ((bmsr & BMSR_ACOMP) == 0) {
 			mii->mii_media_active |= IFM_NONE;
@@ -492,7 +483,7 @@ igphy_status(struct mii_softc *sc)
 static void
 igphy_smartspeed_workaround(struct mii_softc *sc)
 {
-	struct igphy_softc *igsc = (struct igphy_softc *) sc;
+	struct igphy_softc *igsc = (struct igphy_softc *)sc;
 	uint16_t reg, gtsr, gtcr;
 
 	/* This workaround is only for 82541 and 82547 */
