@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.243 2019/03/18 20:34:48 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.244 2019/03/26 18:31:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.243 2019/03/18 20:34:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.244 2019/03/26 18:31:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -81,11 +81,6 @@ TAILQ_HEAD(, pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
 static struct pool phpool[PHPOOL_MAX];
 #define	PHPOOL_FREELIST_NELEM(idx) \
 	(((idx) == 0) ? 0 : BITMAP_SIZE * (1 << (idx)))
-
-#ifdef POOL_SUBPAGE
-/* Pool of subpages for use by normal pools. */
-static struct pool psppool;
-#endif
 
 #if defined(KASAN)
 #define POOL_REDZONE
@@ -545,10 +540,6 @@ pool_subsystem_init(void)
 		pool_init(&phpool[idx], sz, 0, 0, 0,
 		    phpool_names[idx], &pool_allocator_meta, IPL_VM);
 	}
-#ifdef POOL_SUBPAGE
-	pool_init(&psppool, POOL_SUBPAGE, POOL_SUBPAGE, 0,
-	    PR_RECURSIVE, "psppool", &pool_allocator_meta, IPL_VM);
-#endif
 
 	size = sizeof(pcg_t) +
 	    (PCG_NOBJECTS_NORMAL - 1) * sizeof(pcgpair_t);
@@ -659,14 +650,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 
 	if (palloc == NULL)
 		palloc = &pool_allocator_kmem;
-#ifdef POOL_SUBPAGE
-	if (size > palloc->pa_pagesz) {
-		if (palloc == &pool_allocator_kmem)
-			palloc = &pool_allocator_kmem_fullpage;
-		else if (palloc == &pool_allocator_nointr)
-			palloc = &pool_allocator_nointr_fullpage;
-	}
-#endif /* POOL_SUBPAGE */
+
 	if (!cold)
 		mutex_enter(&pool_allocator_lock);
 	if (palloc->pa_refcnt++ == 0) {
@@ -2692,50 +2676,17 @@ pool_cache_transfer(pool_cache_t pc)
 void	*pool_page_alloc(struct pool *, int);
 void	pool_page_free(struct pool *, void *);
 
-#ifdef POOL_SUBPAGE
-struct pool_allocator pool_allocator_kmem_fullpage = {
-	.pa_alloc = pool_page_alloc,
-	.pa_free = pool_page_free,
-	.pa_pagesz = 0
-};
-#else
 struct pool_allocator pool_allocator_kmem = {
 	.pa_alloc = pool_page_alloc,
 	.pa_free = pool_page_free,
 	.pa_pagesz = 0
 };
-#endif
 
-#ifdef POOL_SUBPAGE
-struct pool_allocator pool_allocator_nointr_fullpage = {
-	.pa_alloc = pool_page_alloc,
-	.pa_free = pool_page_free,
-	.pa_pagesz = 0
-};
-#else
 struct pool_allocator pool_allocator_nointr = {
 	.pa_alloc = pool_page_alloc,
 	.pa_free = pool_page_free,
 	.pa_pagesz = 0
 };
-#endif
-
-#ifdef POOL_SUBPAGE
-void	*pool_subpage_alloc(struct pool *, int);
-void	pool_subpage_free(struct pool *, void *);
-
-struct pool_allocator pool_allocator_kmem = {
-	.pa_alloc = pool_subpage_alloc,
-	.pa_free = pool_subpage_free,
-	.pa_pagesz = POOL_SUBPAGE
-};
-
-struct pool_allocator pool_allocator_nointr = {
-	.pa_alloc = pool_subpage_alloc,
-	.pa_free = pool_subpage_free,
-	.pa_pagesz = POOL_SUBPAGE
-};
-#endif /* POOL_SUBPAGE */
 
 struct pool_allocator pool_allocator_big[] = {
 	{
@@ -3023,23 +2974,6 @@ pool_cache_redzone_check(pool_cache_t pc, void *p)
 }
 
 #endif /* POOL_REDZONE */
-
-
-#ifdef POOL_SUBPAGE
-/* Sub-page allocator, for machines with large hardware pages. */
-void *
-pool_subpage_alloc(struct pool *pp, int flags)
-{
-	return pool_get(&psppool, flags);
-}
-
-void
-pool_subpage_free(struct pool *pp, void *v)
-{
-	pool_put(&psppool, v);
-}
-
-#endif /* POOL_SUBPAGE */
 
 #if defined(DDB)
 static bool
