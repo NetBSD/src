@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.7 2018/10/12 01:28:57 ryo Exp $	*/
+/*	$NetBSD: fault.c,v 1.8 2019/03/26 08:01:21 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.7 2018/10/12 01:28:57 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.8 2019/03/26 08:01:21 mlelstv Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
@@ -244,7 +244,7 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 			/*
 			 * fatal abort in usermode
 			 */
-			switch (esr) {
+			switch (fsc) {
 			case ESR_ISS_FSC_TLB_CONFLICT_FAULT:
 			case ESR_ISS_FSC_LOCKDOWN_ABORT:
 			case ESR_ISS_FSC_UNSUPPORTED_EXCLUSIVE:
