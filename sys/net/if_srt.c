@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.28 2019/03/26 00:23:32 pgoyette Exp $ */
+/* $NetBSD: if_srt.c,v 1.29 2019/03/26 06:59:11 pgoyette Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.28 2019/03/26 00:23:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.29 2019/03/26 06:59:11 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -401,6 +401,10 @@ srt_open(dev_t dev, int flag, int mode, struct lwp *l)
 	if (unit < 0 || unit > SRT_MAXUNIT)
 		return ENXIO;
 	sc = softcv[unit];
+	if (sc == NULL) {
+		(void)srt_clone_create(&srt_clone, minor(dev));
+		sc = softcv[unit];
+	}
 	if (! sc)
 		return ENXIO;
 	sc->kflags |= SKF_CDEVOPEN;
