@@ -1,5 +1,5 @@
 /*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.46 2016/01/23 14:24:43 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.47 2019/03/26 15:00:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.46 2016/01/23 14:24:43 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.47 2019/03/26 15:00:34 christos Exp $");
 #include <assert.h>
 #include <signal.h>
 #include <getopt.h>
@@ -228,6 +228,7 @@ main(int argc, char *argv[])
 	int c;
 	int n;
 	char *p;
+	FILE *sfp;
 
 	setprogname(argv[0]);
 
@@ -263,9 +264,16 @@ main(int argc, char *argv[])
 			fatal_warnings++;
 			break;
 		case 'e':
-			if (freopen(optarg, "w+", stderr) == NULL)
-				err(EXIT_FAILURE, "Can't redirect errors to `%s'",
-				    optarg);
+			/*
+			 * Don't use freopen here because if it fails
+			 * we lose stderr, instead trash it.
+			 */
+			if ((sfp = fopen(optarg, "w+")) == NULL) {
+				warn("Can't redirect errors to `%s'", optarg);
+				break;
+			}
+			fclose(stderr);
+			memcpy(stderr, sfp, sizeof(*sfp));
 			break;
 		case 'F':
 			freeze = optarg;
