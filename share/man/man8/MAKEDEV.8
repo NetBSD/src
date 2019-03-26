@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.53 2019/01/27 08:57:04 maxv Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.54 2019/03/26 09:13:55 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001, 2003, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 27, 2019
+.Dd March 26, 2019
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -826,8 +826,13 @@ SES/SAF-TE SCSI Devices, see
 . It Ar speaker
 PC speaker, see
 .Xr \&speaker 4
+. It Ar spi#
+SPI bus device, see
+.Xr \&spi 4
 . It Ar sram
 Battery backuped memory (x68k)
+. It Ar srt#
+Source-address based routing
 . It Ar ss#
 SCSI scanner, see
 .Xr \&ss 4
