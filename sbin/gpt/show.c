@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.43 2019/03/24 13:45:35 martin Exp $");
+__RCSID("$NetBSD: show.c,v 1.44 2019/03/26 11:23:55 martin Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -186,6 +186,24 @@ show(gpt_t gpt, int xshow)
 	return 0;
 }
 
+static void
+gpt_show_sec_num(const char *prompt, int64_t secsize, off_t num)
+{
+#ifdef HN_AUTOSCALE
+	char human_num[5];
+	if (humanize_number(human_num, sizeof(human_num),
+	    (int64_t)num*secsize,
+	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
+		human_num[0] = '\0';
+#endif
+	printf("%s: %" PRIu64, prompt, (uint64_t)num);
+#ifdef HN_AUTOSCALE
+	if (human_num[0] != '\0')
+		printf(" (%s)", human_num);
+#endif
+	printf("\n");
+}
+
 static int
 show_one(gpt_t gpt, unsigned int entry)
 {
@@ -204,8 +222,8 @@ show_one(gpt_t gpt, unsigned int entry)
 	ent = m->map_data;
 
 	printf("Details for index %d:\n", entry);
-	gpt_show_num("Start", (uintmax_t)(m->map_start * gpt->secsz));
-	gpt_show_num("Size", (uintmax_t)(m->map_size * gpt->secsz));
+	gpt_show_sec_num("Start", gpt->secsz, m->map_start);
+	gpt_show_sec_num("Size", gpt->secsz, m->map_size);
 
 	gpt_uuid_snprintf(s1, sizeof(s1), "%s", ent->ent_type);
 	gpt_uuid_snprintf(s2, sizeof(s2), "%d", ent->ent_type);
