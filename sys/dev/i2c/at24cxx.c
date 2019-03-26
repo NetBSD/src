@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.30 2018/06/26 06:34:55 thorpej Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.31 2019/03/26 09:22:17 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.30 2018/06/26 06:34:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.31 2019/03/26 09:22:17 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,16 @@ const struct cdevsw seeprom_cdevsw = {
 static int seeprom_wait_idle(struct seeprom_softc *);
 
 static const struct device_compatible_entry compat_data[] = {
+	{ "i2c-at24c01",		128 },
+	{ "i2c-at24c02",		256 },
+	{ "i2c-at24c04",		512 },
+	{ "i2c-at24c08",		1024 },
+	{ "i2c-at24c16",		2048 },
+	{ "i2c-at24c32",		4096 },
 	{ "i2c-at24c64",		8192 },
+	{ "i2c-at24c128",		16384 },
+	{ "i2c-at24c256",		32768 },
+	{ "i2c-at24c512",		65536 },
 	{ "i2c-at34c02",		256 },
 	{ "atmel,24c02",		256 },
 	{ "atmel,24c16",		2048 },
