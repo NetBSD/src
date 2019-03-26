@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_osf1.c,v 1.1 2019/03/24 16:24:19 maxv Exp $	*/
+/*	$NetBSD: linux_osf1.c,v 1.2 2019/03/26 02:05:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_osf1.c,v 1.1 2019/03/24 16:24:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_osf1.c,v 1.2 2019/03/26 02:05:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,7 +419,7 @@ linux_sys_osf1_gettimeofday(struct lwp *l, const struct linux_sys_osf1_gettimeof
 	memset(&otv, 0, sizeof otv);
 	otv.tv_sec = tv.tv_sec;
 	otv.tv_usec = tv.tv_usec;
-	error = copyout(&otv, SCARG(uap, tp), sizeof otv);
+	error = copyout(&otv, SCARG(uap, tv), sizeof otv);
 
 	if (error == 0 && SCARG(uap, tzp) != NULL) {
 		memset(&otz, 0, sizeof otz);
