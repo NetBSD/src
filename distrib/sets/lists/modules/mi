@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.120 2019/03/24 11:20:26 pgoyette Exp $
+# $NetBSD: mi,v 1.121 2019/03/26 00:36:14 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -392,6 +392,8 @@
 ./@MODULEDIR@/spkr_synch			base-obsolete		obsolete
 ./@MODULEDIR@/sppp_subr				base-kernel-modules	kmod
 ./@MODULEDIR@/sppp_subr/sppp_subr.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/srt				base-kernel-modules	kmod
+./@MODULEDIR@/srt/srt.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/suser				base-kernel-modules	kmod
 ./@MODULEDIR@/suser/suser.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/swcrypto				base-kernel-modules	kmod

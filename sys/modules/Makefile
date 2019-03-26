@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.220 2019/03/24 11:20:26 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.221 2019/03/26 00:36:14 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -84,7 +84,7 @@ SUBDIR+=	if_ppp
 SUBDIR+=	if_pppoe
 SUBDIR+=	if_sl
 SUBDIR+=	if_smsc
-SUBDIR+=	if_srt
+SUBDIR+=	if_srt srt
 SUBDIR+=	if_stf
 SUBDIR+=	if_strip
 SUBDIR+=	if_tap tap
