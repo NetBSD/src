@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.105 2019/02/09 09:31:33 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.106 2019/03/26 13:32:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.105 2019/02/09 09:31:33 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.106 2019/03/26 13:32:26 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -710,9 +710,15 @@ waitcmd(int argc, char **argv)
 		return (any || *argptr) ? 127 : 0;
 	}
 
-	/* clear stray flags left from previous waitcmd */
+	/*
+	 * clear stray flags left from previous waitcmd
+	 * or set them instead if anything will do ("wait -n")
+	 */
 	for (jp = jobtab, i = njobs ; --i >= 0 ; jp++) {
-		jp->flags &= ~JOBWANTED;
+		if (any && *argptr == NULL)
+			jp->flags |= JOBWANTED;
+		else
+			jp->flags &= ~JOBWANTED;
 		jp->ref = NULL;
 	}
 
@@ -784,20 +790,24 @@ waitcmd(int argc, char **argv)
 	fpid = NULL;
 	for (;;) {
 		VTRACE(DBG_WAIT, ("wait waiting (%d remain): ", found));
+		job = NULL;
 		for (jp = jobtab, i = njobs; --i >= 0; jp++) {
 			if (jp->used && jp->flags & JOBWANTED &&
-			    jp->state == JOBDONE)
+			    jp->state == JOBDONE) {
+				job = jp;
 				break;
+			}
 			if (jp->used && jp->state == JOBRUNNING)
-				break;
+				job = jp;
 		}
-		if (i < 0) {
+		if (i < 0 && job == NULL) {
 			CTRACE(DBG_WAIT, ("nothing running (ret: %d) fpid %s\n",
 			    retval, fpid ? fpid : "unset"));
 			if (pid && fpid)
 				setvar(pid, fpid, 0);
 			return retval;
 		}
+		jp = job;
 		VTRACE(DBG_WAIT, ("found @%d/%d state: %d\n", njobs-i, njobs,
 		    jp->state));
 
@@ -819,7 +829,7 @@ waitcmd(int argc, char **argv)
 		} else
 			job = jp;	/* we want this, and it is done */
 
-		if (job->flags & JOBWANTED || (*argptr == 0 && any)) {
+		if (job->flags & JOBWANTED) {
 			int rv;
 
 			job->flags &= ~JOBWANTED;	/* got it */
