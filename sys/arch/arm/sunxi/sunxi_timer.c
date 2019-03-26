@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_timer.c,v 1.3 2017/12/16 20:04:38 jmcneill Exp $ */
+/* $NetBSD: sunxi_timer.c,v 1.4 2019/03/26 23:26:03 tnn Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.3 2017/12/16 20:04:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.4 2019/03/26 23:26:03 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -71,6 +71,13 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.3 2017/12/16 20:04:38 jmcneill Exp
 #define	TMR2_INTV_VALUE_REG	0x34
 #define	TMR2_CURNT_VALUE_REG	0x38
 
+/* Timer 4 registers */
+#define	TMR4_CTRL_REG		0x50
+#define	 TMR4_CTRL_RELOAD	__BIT(1)
+#define	 TMR4_CTRL_EN		__BIT(0)
+#define	TMR4_INTV_VALUE_REG	0x54
+#define	TMR4_CURNT_VALUE_REG	0x58
+
 static const char * const compatible[] = {
 	"allwinner,sun4i-a10-timer",
 	NULL
@@ -84,6 +91,7 @@ struct sunxi_timer_softc {
 	struct clk *sc_clk;
 
 	struct timecounter sc_tc;
+	struct timecounter sc_tc_losc;
 };
 
 #define TIMER_READ(sc, reg) \
@@ -144,6 +152,14 @@ sunxi_timer_get_timecount(struct timecounter *tc)
 	return ~TIMER_READ(sc, TMR2_CURNT_VALUE_REG);
 }
 
+static u_int
+sunxi_timer_get_timecount_losc(struct timecounter *tc)
+{
+	struct sunxi_timer_softc * const sc = tc->tc_priv;
+
+	return ~TIMER_READ(sc, TMR4_CURNT_VALUE_REG);
+}
+
 static int
 sunxi_timer_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -158,9 +174,11 @@ sunxi_timer_attach(device_t parent, device_t self, void *aux)
 	struct sunxi_timer_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	struct timecounter *tc = &sc->sc_tc;
+	struct timecounter *tc_losc = &sc->sc_tc_losc;
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
+	u_int ticks;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -198,15 +216,32 @@ sunxi_timer_attach(device_t parent, device_t self, void *aux)
 	TIMER_WRITE(sc, TMR2_CTRL_REG,
 	    __SHIFTIN(TMR2_CTRL_CLK_SRC_OSC24M, TMR2_CTRL_CLK_SRC) |
 	    TMR2_CTRL_RELOAD | TMR2_CTRL_EN);
+	/* Enable Timer 4 (timecounter for LOSC) */
+	TIMER_WRITE(sc, TMR4_INTV_VALUE_REG, ~0u);
+	TIMER_WRITE(sc, TMR4_CTRL_REG, TMR4_CTRL_RELOAD | TMR4_CTRL_EN);
 
 	/* Timecounter setup */
 	tc->tc_get_timecount = sunxi_timer_get_timecount;
 	tc->tc_counter_mask = ~0u,
-	tc->tc_frequency = clk_get_rate(sc->sc_clk);
+	tc->tc_frequency = rate;
 	tc->tc_name = "Timer 2";
 	tc->tc_quality = 200;
 	tc->tc_priv = sc;
 	tc_init(tc);
+	tc_losc->tc_get_timecount = sunxi_timer_get_timecount_losc;
+	tc_losc->tc_counter_mask = ~0u,
+	tc_losc->tc_frequency = 32768;
+	tc_losc->tc_name = "LOSC";
+	tc_losc->tc_quality = 150;
+	tc_losc->tc_priv = sc;
+	/*
+	 * LOSC is optional to implement in hardware.
+	 * Make sure it ticks before registering it.
+	 */
+	ticks = sunxi_timer_get_timecount_losc(tc_losc);
+	delay(100);
+	if (ticks != sunxi_timer_get_timecount_losc(tc_losc))
+		tc_init(tc_losc);
 
 	/* Use this as the OS timer in UP configurations */
 	if (!arm_has_mpext_p) {
