@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.27 2019/01/21 02:28:25 pgoyette Exp $
+$NetBSD: TODO.smpnet,v 1.28 2019/03/26 05:17:17 ozaki-r Exp $
 
 MP-safe components
 ==================
@@ -203,3 +203,29 @@ Makefile:
 	CPPFLAGS+=	NET_MPSAFE
 
 Failure to do this may result in unpredictable behavior.
+
+IPv4 address initialization atomicity
+-------------------------------------
+
+An IPv4 address is referenced by several data structures: an associated
+interface, its local route, a connected route (if necessary), the global list,
+the global hash table, etc.  These data structures are not updated atomically,
+i.e., there can be inconsistent states on an IPv4 address in the kernel during
+the initialization of an IPv4 address.
+
+One known failure of the issue is that incoming packets destinating to an
+initializing address can loop in the network stack in a short period of time.
+The address initialization creates an local route first and then registers an
+initializing address to the global hash table that is used to decide if an
+incoming packet destinates to the host by checking the destination of the packet
+is registered to the hash table.  So, if the host allows forwaring, an incoming
+packet can match on a local route of an initializing address at ip_output while
+it fails the to-self check described above at ip_input.  Because a matched local
+route points a loopback interface as its destination interface, an incoming
+packet sends to the network stack (ip_input) again, which results in looping.
+The loop stops once an initializing address is registered to the hash table.
+
+One solution of the issue is to reorder the address initialization instructions,
+first register an address to the hash table then create its routes.  Another
+solution is to use the routing table for the to-self check instead of using the
+global hash table, like IPv6.
