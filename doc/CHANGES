@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2511 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2512 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -347,3 +347,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	mdocml: Import 1.14.5. [christos 20190310]
 	OpenSSL: Imported 1.1.1b. [christos 20190312]
 	ssdfb(4): Added driver for SSD1306 & SH1106 displays [tnn 20190317]
+	tzdata Updated to 2019a. [kre 20190326]
