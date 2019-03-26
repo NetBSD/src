@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.93 2015/04/21 10:54:52 pooka Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.94 2019/03/26 09:33:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,10 +71,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.93 2015/04/21 10:54:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.94 2019/03/26 09:33:58 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/once.h>
@@ -100,6 +101,7 @@ struct physio_stat {
 	int ps_error;
 	int ps_failed;
 	off_t ps_endoffset;
+	size_t ps_resid;
 	buf_t *ps_orig_bp;
 	kmutex_t ps_lock;
 	kcondvar_t ps_cv;
@@ -152,6 +154,8 @@ physio_done(struct work *wk, void *dummy)
 			ps->ps_error = bp->b_error;
 		}
 		ps->ps_failed++;
+
+		ps->ps_resid += todo - done;
 	} else {
 		KASSERT(bp->b_error == 0);
 	}
@@ -220,6 +224,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	struct buf *bp = NULL;
 	struct physio_stat *ps;
 	int concurrency = physio_concurrency - 1;
+	int isdisk;
 
 	error = RUN_ONCE(&physio_initialized, physio_init);
 	if (__predict_false(error != 0)) {
@@ -237,8 +242,14 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	/* ps->ps_failed = 0; */
 	ps->ps_orig_bp = obp;
 	ps->ps_endoffset = -1;
+	ps->ps_resid = 0;
 	mutex_init(&ps->ps_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&ps->ps_cv, "physio");
+
+	/* Allow concurrent I/O only for disks */
+	isdisk = cdev_type(dev) == D_DISK;
+	if (!isdisk)
+		concurrency = 0;
 
 	/* Make sure we have a buffer, creating one if necessary. */
 	if (obp != NULL) {
@@ -291,11 +302,30 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 
 			/* Set up the buffer for a maximum-sized transfer. */
 			bp->b_blkno = btodb(uio->uio_offset);
-			if (dbtob(bp->b_blkno) != uio->uio_offset) {
-				error = EINVAL;
-				goto done;
+			if (isdisk) {
+				/*
+				 * For disks, check that offsets are at least block
+				 * aligned, the block addresses are used to track
+				 * errors of finished requests.
+				 */
+				if (dbtob(bp->b_blkno) != uio->uio_offset) {
+					error = EINVAL;
+					goto done;
+				}
+				/*
+				 * Split request into MAXPHYS chunks
+				 */
+				bp->b_bcount = MIN(MAXPHYS, iovp->iov_len);
+			} else {
+				/*
+				 * Verify that buffer can handle size
+				 */
+				if (iovp->iov_len > MAXBSIZE) {
+					error = EINVAL;
+					goto done;
+				}
+				bp->b_bcount = iovp->iov_len;
 			}
-			bp->b_bcount = MIN(MAXPHYS, iovp->iov_len);
 			bp->b_data = iovp->iov_base;
 
 			/*
@@ -364,16 +394,25 @@ done_locked:
 	physio_wait(ps, 0);
 	mutex_exit(&ps->ps_lock);
 
-	if (ps->ps_failed != 0) {
-		off_t delta;
+	KASSERT(ps->ps_failed || ps->ps_endoffset == -1);
 
-		delta = uio->uio_offset - ps->ps_endoffset;
-		KASSERT(delta > 0);
-		uio->uio_resid += delta;
-		/* uio->uio_offset = ps->ps_endoffset; */
+	/*
+	 * Compute residual, for disks adjust for the
+	 * lowest numbered block that returned an error.
+	 */
+	if (isdisk) {
+		if (ps->ps_failed != 0) {
+			off_t delta;
+
+			delta = uio->uio_offset - ps->ps_endoffset;
+			KASSERT(delta > 0);
+			uio->uio_resid += delta;
+			/* uio->uio_offset = ps->ps_endoffset; */
+		}
 	} else {
-		KASSERT(ps->ps_endoffset == -1);
+		uio->uio_resid += ps->ps_resid;
 	}
+
 	if (bp != NULL && bp != obp) {
 		putiobuf(bp);
 	}
