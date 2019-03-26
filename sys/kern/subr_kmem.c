@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.73 2019/02/04 15:13:54 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.74 2019/03/26 20:05:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.73 2019/02/04 15:13:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.74 2019/03/26 20:05:18 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -403,7 +403,7 @@ kmem_create_caches(const struct kmem_cache_info *array,
 		const char *name = array[i].kc_name;
 		size_t cache_size = array[i].kc_size;
 		struct pool_allocator *pa;
-		int flags = PR_NOALIGN;
+		int flags = 0;
 		pool_cache_t pc;
 		size_t align;
 
