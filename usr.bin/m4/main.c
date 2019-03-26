@@ -1,5 +1,5 @@
 /*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.47 2019/03/26 15:00:34 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.48 2019/03/26 16:41:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.47 2019/03/26 15:00:34 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.48 2019/03/26 16:41:06 christos Exp $");
 #include <assert.h>
 #include <signal.h>
 #include <getopt.h>
@@ -540,8 +540,14 @@ macro(void)
 				fp = sp;	/* new frame pointer */
 		/*
 		 * now push the string arguments:
+		 * XXX: Copy the macro definition. This leaks, but too
+		 * lazy to fix properly.
+		 * The problem is that if we evaluate a pushdef'ed
+		 * macro and then popdef it while it the definition 
+		 * is still on the stack we are going to reference
+		 * free memory.
 		 */
-				pushs1(macro_getdef(p)->defn);	/* defn string */
+				pushs1(xstrdup(macro_getdef(p)->defn));	/* defn string */
 				pushs1((char *)macro_name(p));	/* macro name  */
 				pushs(ep);	      	/* start next..*/
 
