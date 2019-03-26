@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.85 2019/03/17 19:57:54 maxv Exp $	*/
+/*	$NetBSD: pool.h,v 1.86 2019/03/26 18:31:30 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -287,11 +287,6 @@ typedef struct pool_cache *pool_cache_t;
 extern struct pool_allocator pool_allocator_kmem;
 extern struct pool_allocator pool_allocator_nointr;
 extern struct pool_allocator pool_allocator_meta;
-#ifdef POOL_SUBPAGE
-/* The above are subpage allocators in this case. */
-extern struct pool_allocator pool_allocator_kmem_fullpage;
-extern struct pool_allocator pool_allocator_nointr_fullpage;
-#endif
 
 void		pool_subsystem_init(void);
 
