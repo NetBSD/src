@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.27 2017/10/23 09:32:55 msaitoh Exp $ */
+/* $NetBSD: if_srt.c,v 1.28 2019/03/26 00:23:32 pgoyette Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.27 2017/10/23 09:32:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.28 2019/03/26 00:23:32 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -63,6 +63,29 @@ static struct srt_softc *softcv[SRT_MAXUNIT+1];
 static unsigned int global_flags;
 
 static u_int srt_count;
+
+#ifdef _MODULE
+devmajor_t srt_bmajor = -1, srt_cmajor = -1;
+#endif
+
+static int srt_open(dev_t, int, int, struct lwp *);
+static int srt_close(dev_t, int, int, struct lwp *);
+static int srt_ioctl(dev_t, u_long, void *, int, struct lwp *);
+
+const struct cdevsw srt_cdevsw = {
+	.d_open = srt_open,
+	.d_close = srt_close,
+	.d_read = nullread,
+	.d_write = nullwrite,
+	.d_ioctl = srt_ioctl,
+	.d_stop = nullstop,
+	.d_tty = notty,
+	.d_poll = nullpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nullkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
+};
 
 /* Internal routines. */
 
@@ -332,6 +355,9 @@ srtinit(void)
 		softcv[i] = 0;
 	global_flags = 0;
 	if_clone_attach(&srt_clone);
+#ifdef _MODULE
+	devsw_attach("srt", NULL, &srt_bmajor, &srt_cdevsw, &srt_cmajor);
+#endif
 }
 
 static int
@@ -340,14 +366,25 @@ srtdetach(void)
 	int error = 0;
 	int i;
 
+	if_clone_detach(&srt_clone);
+#ifdef _MODULE
+	devsw_detach(NULL, &srt_cdevsw);
+	if (error != 0) {
+		if_clone_attach(&srt_clone);
+		return error;
+	}
+#endif
+
 	for (i = SRT_MAXUNIT; i >= 0; i--)
 		if(softcv[i]) {
 			error = EBUSY;
+#ifdef _MODULE
+			devsw_attach("srt", NULL, &srt_bmajor,
+			    &srt_cdevsw, &srt_cmajor);
+#endif
+			if_clone_attach(&srt_clone);
 			break;
 		}
-
-	if (error == 0)
-		if_clone_detach(&srt_clone);
 
 	return error;
 }
@@ -532,21 +569,6 @@ srt_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 	return ENOTTY;
 }
-
-const struct cdevsw srt_cdevsw = {
-	.d_open = srt_open,
-	.d_close = srt_close,
-	.d_read = nullread,
-	.d_write = nullwrite,
-	.d_ioctl = srt_ioctl,
-	.d_stop = nullstop,
-	.d_tty = notty,
-	.d_poll = nullpoll,
-	.d_mmap = nommap,
-	.d_kqfilter = nullkqfilter,
-	.d_discard = nodiscard,
-	.d_flag = D_OTHER
-};
 
 /*
  * Module infrastructure
