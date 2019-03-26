@@ -1,8 +1,8 @@
-.\" $NetBSD: srt.4,v 1.1 2019/03/26 12:21:28 pgoyette Exp $
+.\" $NetBSD: srt.4,v 1.2 2019/03/26 21:47:19 pgoyette Exp $
 .\"
 .\" This file is in the public domain.
 .\"
-.Dd March 26, 2019
+.Dd March 27, 2019
 .Dt SRT 4
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@ established for the interface using the
 .Xr srtconfig 1
 utility.
 .Pp
-To use a
+To use an
 .Nm
 device, the administrator must first create the interface.
 This can be done by using the
@@ -34,8 +34,17 @@ An
 .Xr open 2
 call on
 .Pa /dev/srt Ns Sy N
-will also create a network interface with the same unit number of
-that device if it doesn't exist yet.
+will also create a network interface with a unit number the same as the
+minor device number of that device if the interface doesn't exist yet.
+.Pp
+To be useful, the
+.Nm
+interface needs to be configured using
+.Xr srtconfig 1
+which uses the associated
+.Nm
+character device
+.Pa /dev/srt Ns Sy # .
 .Pp
 The network interfaces should be named
 .Sy srt Ns Ar 0 ,
@@ -54,7 +63,7 @@ and
 .Xr write 2
 are not supported.
 .Pp
-All common
+All standard network interface
 .Xr ioctl 2
 calls are supported by the
 .Nm
@@ -65,7 +74,7 @@ calls
 .Pq defined in Aq Pa net/if_srt.h
 are supported on the
 .Nm
-device:
+character device:
 .Bl -tag -width SRT_SGFLAGS -offset 4n
 .It Dv SRT_GETNRT
 The argument is a pointer to an integer, in which the number of
@@ -99,10 +108,12 @@ flags to be set:
 If set, do not automatically update the interface's MTU.
 .El
 .It Dv SRT_GFLAGS
-The argument is a pointer to an integer in which the current flags are
-returned.
+The argument is a pointer to an integer in which the current flags
+are returned.
 .It Dv SRT_SGFLAGS
-Manipulates some global flags, none of which are currently defined.
+This call updates the flags in the same manner as
+.Dv SRT_SFLAGS .
+The original flags are returned in the integer pointed to by the argument.
 .It Dv SRT_DEBUG
 Currently this is a no-op.
 .El
