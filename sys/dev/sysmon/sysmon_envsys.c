@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.143 2018/05/26 21:15:46 thorpej Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.144 2019/03/26 15:50:23 bad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.143 2018/05/26 21:15:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.144 2019/03/26 15:50:23 bad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -993,7 +993,7 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	LIST_REMOVE(sme, sme_list);
 	mutex_exit(&sme_global_mtx);
 
-	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
+	while ((edata = TAILQ_FIRST(&sme->sme_sensors_list)) != NULL) {
 		sysmon_envsys_sensor_detach(sme, edata);
 	}
 
