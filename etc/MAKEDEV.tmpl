@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.199 2019/02/23 10:43:25 mlelstv Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.200 2019/03/26 09:13:55 pgoyette Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -274,6 +274,7 @@
 #	speaker	PC speaker		(XXX - installed)
 #	spi*	SPI bus device
 #	sram	battery backuped memory (x68k)
+#	srt*	source-address based routing
 #	ss*	SCSI scanner
 #	stic*	PixelStamp interface chip
 #	sysmon	System Monitoring hardware
@@ -821,6 +822,7 @@ all)
 	makedev ipl pf crypto random
 	makedev lockstat clockctl cpuctl
 	makedev atabus0 atabus1 atabus2 atabus3 atabus4 atabus5 atabus6 atabus7
+	makedev srt0 srt1 srt2 srt3
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	makedev gpiopps0
@@ -2146,6 +2148,11 @@ tap|tap[0-9]*)
 		mkdev tap c %tap_chr% 0xfffff 600
 		;;
 	esac
+	;;
+
+srt[0-9]*)
+	unit=${i#srt}
+	mkdev srt$unit c %srt_chr% $unit 600
 	;;
 
 tpm)
