@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1641 2019/03/25 19:24:29 maxv Exp $
+# $NetBSD: mi,v 1.1642 2019/03/26 12:22:07 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1757,6 +1757,7 @@
 ./usr/share/man/cat4/spkr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/spp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/sqphy.0			man-sys-catman		.cat
+./usr/share/man/cat4/srt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ss.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ssdfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/st.0			man-sys-catman		.cat
@@ -4846,6 +4847,7 @@
 ./usr/share/man/html4/spif.html			man-sys-htmlman		html
 ./usr/share/man/html4/spkr.html			man-sys-htmlman		html
 ./usr/share/man/html4/sqphy.html		man-sys-htmlman		html
+./usr/share/man/html4/srt.html			man-sys-htmlman		html
 ./usr/share/man/html4/ss.html			man-sys-htmlman		html
 ./usr/share/man/html4/ssdfb.html		man-sys-htmlman		html
 ./usr/share/man/html4/st.html			man-sys-htmlman		html
@@ -7849,6 +7851,7 @@
 ./usr/share/man/man4/spkr.4			man-sys-man		.man
 ./usr/share/man/man4/spp.4			man-obsolete		obsolete
 ./usr/share/man/man4/sqphy.4			man-sys-man		.man
+./usr/share/man/man4/srt.4			man-sys-man		.man
 ./usr/share/man/man4/ss.4			man-sys-man		.man
 ./usr/share/man/man4/ssdfb.4			man-sys-man		.man
 ./usr/share/man/man4/st.4			man-sys-man		.man
