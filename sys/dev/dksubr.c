@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.106 2019/01/07 22:35:55 jdolecek Exp $ */
+/* $NetBSD: dksubr.c,v 1.107 2019/03/27 19:13:34 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.106 2019/01/07 22:35:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.107 2019/03/27 19:13:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -617,6 +617,7 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 	case DIOCDWEDGE:
 	case DIOCLWEDGES:
 	case DIOCMWEDGES:
+	case DIOCRMWEDGES:
 	case DIOCCACHESYNC:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:

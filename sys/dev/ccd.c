@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.178 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.179 2019/03/27 19:13:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.178 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.179 2019/03/27 19:13:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1126,6 +1126,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCCACHESYNC:
 	case DIOCAWEDGE:
 	case DIOCDWEDGE:
+	case DIOCRMWEDGES:
 	case DIOCMWEDGES:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCSDINFO:
