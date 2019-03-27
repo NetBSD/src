@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.244 2019/03/26 18:31:30 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.245 2019/03/27 18:27:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.244 2019/03/26 18:31:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.245 2019/03/27 18:27:46 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -143,6 +143,8 @@ static kcondvar_t pool_busy;
 /* This lock protects initialization of a potentially shared pool allocator */
 static kmutex_t pool_allocator_lock;
 
+static unsigned int poolid_counter = 0;
+
 typedef uint32_t pool_item_bitmap_t;
 #define	BITMAP_SIZE	(CHAR_BIT * sizeof(pool_item_bitmap_t))
 #define	BITMAP_MASK	(BITMAP_SIZE - 1)
@@ -151,8 +153,17 @@ struct pool_item_header {
 	/* Page headers */
 	LIST_ENTRY(pool_item_header)
 				ph_pagelist;	/* pool page list */
-	SPLAY_ENTRY(pool_item_header)
-				ph_node;	/* Off-page page headers */
+	union {
+		/* !PR_PHINPAGE */
+		struct {
+			SPLAY_ENTRY(pool_item_header)
+				phu_node;	/* off-page page headers */
+		} phu_offpage;
+		/* PR_PHINPAGE */
+		struct {
+			unsigned int phu_poolid;
+		} phu_onpage;
+	} ph_u1;
 	void *			ph_page;	/* this page's address */
 	uint32_t		ph_time;	/* last referenced */
 	uint16_t		ph_nmissing;	/* # of chunks in use */
@@ -167,10 +178,12 @@ struct pool_item_header {
 		struct {
 			pool_item_bitmap_t phu_bitmap[1];
 		} phu_notouch;
-	} ph_u;
+	} ph_u2;
 };
-#define	ph_itemlist	ph_u.phu_normal.phu_itemlist
-#define	ph_bitmap	ph_u.phu_notouch.phu_bitmap
+#define ph_node		ph_u1.phu_offpage.phu_node
+#define ph_poolid	ph_u1.phu_onpage.phu_poolid
+#define ph_itemlist	ph_u2.phu_normal.phu_itemlist
+#define ph_bitmap	ph_u2.phu_notouch.phu_bitmap
 
 #define PHSIZE	ALIGN(sizeof(struct pool_item_header))
 
@@ -445,6 +458,11 @@ pr_find_pagehead(struct pool *pp, void *v)
 				panic("%s: [%s] item %p below item space",
 				    __func__, pp->pr_wchan, v);
 			}
+			if (__predict_false(ph->ph_poolid != pp->pr_poolid)) {
+				panic("%s: [%s] item %p poolid %u != %u",
+				    __func__, pp->pr_wchan, v, ph->ph_poolid,
+				    pp->pr_poolid);
+			}
 		} else {
 			tmp.ph_page = page;
 			ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
@@ -497,8 +515,15 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 	 * Unlink the page from the pool and queue it for release.
 	 */
 	LIST_REMOVE(ph, ph_pagelist);
-	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
+	if (pp->pr_roflags & PR_PHINPAGE) {
+		if (__predict_false(ph->ph_poolid != pp->pr_poolid)) {
+			panic("%s: [%s] ph %p poolid %u != %u",
+			    __func__, pp->pr_wchan, ph, ph->ph_poolid,
+			    pp->pr_poolid);
+		}
+	} else {
 		SPLAY_REMOVE(phtree, &pp->pr_phtree, ph);
+	}
 	LIST_INSERT_HEAD(pq, ph, ph_pagelist);
 
 	pp->pr_npages--;
@@ -697,6 +722,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_align = align;
 	pp->pr_wchan = wchan;
 	pp->pr_alloc = palloc;
+	pp->pr_poolid = atomic_inc_uint_nv(&poolid_counter);
 	pp->pr_nitems = 0;
 	pp->pr_nout = 0;
 	pp->pr_hardlimit = UINT_MAX;
@@ -1298,7 +1324,9 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 	ph->ph_page = storage;
 	ph->ph_nmissing = 0;
 	ph->ph_time = time_uptime;
-	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
+	if (pp->pr_roflags & PR_PHINPAGE)
+		ph->ph_poolid = pp->pr_poolid;
+	else
 		SPLAY_INSERT(phtree, &pp->pr_phtree, ph);
 
 	pp->pr_nidle++;
