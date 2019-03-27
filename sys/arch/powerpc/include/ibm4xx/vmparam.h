@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 2017/02/13 09:46:30 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 2019/03/27 19:30:31 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,8 +31,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_VMPARAM_H_
-#define _MACHINE_VMPARAM_H_
+#ifndef _POWERPC_IBM4XX_VMPARAM_H_
+#define _POWERPC_IBM4XX_VMPARAM_H_
 
 /*
  * We use 16K pages on IBM4xx CPUs.  Override the PAGE_* definitions
@@ -101,4 +101,4 @@ struct pmap_physseg {
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 
-#endif /* _MACHINE_VMPARAM_H_ */
+#endif /* _POWERPC_IBM4XX_VMPARAM_H_ */
