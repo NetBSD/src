@@ -97,6 +97,9 @@ typedef int malloc_cpuid_t;
 #  if defined(__riscv) || defined(__riscv__)
 #    define LG_QUANTUM		4
 #  endif
+#  ifdef __sh3__
+#    define LG_QUANTUM		3
+#  endif
 #  ifdef __s390__
 #    define LG_QUANTUM		4
 #  endif
