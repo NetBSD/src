@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.86 2019/03/26 18:31:30 maxv Exp $	*/
+/*	$NetBSD: pool.h,v 1.87 2019/03/27 18:27:47 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -115,13 +115,13 @@ struct pool {
 	struct pool_cache *pr_cache;	/* Cache for this pool */
 	unsigned int	pr_size;	/* Size of item */
 	unsigned int	pr_align;	/* Requested alignment, must be 2^n */
-	unsigned int	pr_itemoffset;	/* Align this offset in item */
+	unsigned int	pr_itemoffset;	/* offset of the item space */
 	unsigned int	pr_minitems;	/* minimum # of items to keep */
 	unsigned int	pr_minpages;	/* same in page units */
 	unsigned int	pr_maxpages;	/* maximum # of pages to keep */
 	unsigned int	pr_npages;	/* # of pages allocated */
 	unsigned int	pr_itemsperpage;/* # items that fit in a page */
-	unsigned int	pr_slack;	/* unused space in a page */
+	unsigned int	pr_poolid;	/* id of the pool */
 	unsigned int	pr_nitems;	/* number of available items in pool */
 	unsigned int	pr_nout;	/* # items currently allocated */
 	unsigned int	pr_hardlimit;	/* hard limit to number of allocated
