@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.19 2019/03/01 14:53:12 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.20 2019/03/27 05:47:50 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.19 2019/03/01 14:53:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.20 2019/03/27 05:47:50 ryo Exp $");
 
 #define _INTR_PRIVATE
 
@@ -673,6 +673,14 @@ bcm2836mp_intr_init(void *priv, struct cpu_info *ci)
 
 #if defined(MULTIPROCESSOR)
 	pic->pic_cpus = ci->ci_kcpuset;
+
+	/*
+	 * Append "#n" to avoid duplication of .pic_name[]
+	 * It should be a unique id for intr_get_source()
+	 */
+	char suffix[sizeof("#00000")];
+	snprintf(suffix, sizeof(suffix), "#%lu", cpuid);
+	strlcat(pic->pic_name, suffix, sizeof(pic->pic_name));
 #endif
 	pic_add(pic, BCM2836_INT_BASECPUN(cpuid));
 
