@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.28 2019/03/26 05:17:17 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.29 2019/03/27 06:56:37 ozaki-r Exp $
 
 MP-safe components
 ==================
@@ -229,3 +229,24 @@ One solution of the issue is to reorder the address initialization instructions,
 first register an address to the hash table then create its routes.  Another
 solution is to use the routing table for the to-self check instead of using the
 global hash table, like IPv6.
+
+if_flags
+--------
+
+To avoid data race on if_flags it should be protected by a lock (currently it's
+IFNET_LOCK).  Thus, if_flags should not be accessed on packet processing to
+avoid performance degradation by lock contentions.  Traditionally IFF_RUNNING,
+IFF_UP and IFF_OACTIVE flags of if_flags are checked on packet processing.  If
+you make a driver MP-safe you must remove such checks.
+
+IFF_ALLMULTI can be set/unset via if_mcast_op.  To protect updates of the flag,
+we had added IFNET_LOCK around if_mcast_op.  However that was not a good
+approach because if_mcast_op is typically called in the middle of a call path
+and holding IFNET_LOCK such places is problematic.  Actually a deadlock is
+observed.  Probably we should remove IFNET_LOCK and manage IFF_ALLMULTI
+somewhere other than if_flags, for example ethercom or driver itself (or a
+common driver framework once it appears).  Such a change is feasible because
+IFF_ALLMULTI is only set/unset by a driver and not accessed from any common
+components such as network protocols.
+
+Also IFF_PROMISC is checked in ether_input and we should get rid of it somehow.
