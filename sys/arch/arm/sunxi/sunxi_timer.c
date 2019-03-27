@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_timer.c,v 1.4 2019/03/26 23:26:03 tnn Exp $ */
+/* $NetBSD: sunxi_timer.c,v 1.5 2019/03/27 06:56:19 tnn Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.4 2019/03/26 23:26:03 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.5 2019/03/27 06:56:19 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -229,7 +229,7 @@ sunxi_timer_attach(device_t parent, device_t self, void *aux)
 	tc->tc_priv = sc;
 	tc_init(tc);
 	tc_losc->tc_get_timecount = sunxi_timer_get_timecount_losc;
-	tc_losc->tc_counter_mask = ~0u,
+	tc_losc->tc_counter_mask = ~0u;
 	tc_losc->tc_frequency = 32768;
 	tc_losc->tc_name = "LOSC";
 	tc_losc->tc_quality = 150;
