@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.70 2019/03/27 03:29:50 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.71 2019/03/27 03:37:32 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.94 2011/04/18 04:27:31 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.70 2019/03/27 03:29:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.71 2019/03/27 03:37:32 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -5342,15 +5342,13 @@ bnx_intr(void *xsc)
 		sc->last_status_idx = status_idx;
 
 		/* Start moving packets again */
-		if (ifp->if_flags & IFF_RUNNING &&
-		    !IFQ_IS_EMPTY(&ifp->if_snd))
+		if (ifp->if_flags & IFF_RUNNING)
 			if_schedule_deferred_start(ifp);
 	}
 
 out:
 	bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0,
 	    sc->status_map->dm_mapsize, BUS_DMASYNC_PREREAD);
-
 
 	return rv;
 }
