@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_timer.c,v 1.5 2019/03/27 06:56:19 tnn Exp $ */
+/* $NetBSD: sunxi_timer.c,v 1.6 2019/03/27 16:38:49 tnn Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.5 2019/03/27 06:56:19 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.6 2019/03/27 16:38:49 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,6 +77,19 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.5 2019/03/27 06:56:19 tnn Exp $");
 #define	 TMR4_CTRL_EN		__BIT(0)
 #define	TMR4_INTV_VALUE_REG	0x54
 #define	TMR4_CURNT_VALUE_REG	0x58
+
+/* Control registers */
+#define	AVS_CNT_CTL_REG		0x80
+#define	AVS_CNT0_REG		0x84
+#define	AVS_CNT1_REG		0x88
+#define	AVS_CNT_DIV_REG		0x8c
+#define	WDOG_CTRL_REG		0x90
+#define	WDOG_MODE_REG		0x94
+#define	LOSC_CTRL_REG		0x100
+#define	 LOSC_CTRL_KEY_FIELD	__BITS(31,16)
+#define	 LOSC_CTRL_KEY_FIELD_V	0x16aa
+#define  LOSC_CTRL_OSC32K_AUTO_SWT_EN	__BIT(14)
+#define	 LOSC_CTRL_OSC32K_SEL	__BIT(0)
 
 static const char * const compatible[] = {
 	"allwinner,sun4i-a10-timer",
@@ -179,6 +192,7 @@ sunxi_timer_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	u_int ticks;
+	u_int reg;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -238,10 +252,16 @@ sunxi_timer_attach(device_t parent, device_t self, void *aux)
 	 * LOSC is optional to implement in hardware.
 	 * Make sure it ticks before registering it.
 	 */
+	reg = __SHIFTIN(LOSC_CTRL_KEY_FIELD_V, LOSC_CTRL_KEY_FIELD) |
+	    LOSC_CTRL_OSC32K_AUTO_SWT_EN |
+	    LOSC_CTRL_OSC32K_SEL;
+	TIMER_WRITE(sc, LOSC_CTRL_REG, reg);
 	ticks = sunxi_timer_get_timecount_losc(tc_losc);
 	delay(100);
 	if (ticks != sunxi_timer_get_timecount_losc(tc_losc))
 		tc_init(tc_losc);
+	else
+		TIMER_WRITE(sc, LOSC_CTRL_REG, reg & ~LOSC_CTRL_OSC32K_SEL);
 
 	/* Use this as the OS timer in UP configurations */
 	if (!arm_has_mpext_p) {
