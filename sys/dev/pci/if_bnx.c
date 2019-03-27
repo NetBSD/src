@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.68 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.69 2019/03/27 03:10:39 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.68 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.69 2019/03/27 03:10:39 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -2213,6 +2213,8 @@ bnx_dma_free(struct bnx_softc *sc)
 
 	/* Destroy the status block. */
 	if (sc->status_block != NULL && sc->status_map != NULL) {
+		bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0,
+		    sc->status_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->bnx_dmatag, sc->status_map);
 		bus_dmamem_unmap(sc->bnx_dmatag, (void *)sc->status_block,
 		    BNX_STATUS_BLK_SZ);
@@ -2354,6 +2356,9 @@ bnx_dma_alloc(struct bnx_softc *sc)
 		rc = ENOMEM;
 		goto bnx_dma_alloc_exit;
 	}
+
+	bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0,
+	    sc->status_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	sc->status_block_paddr = sc->status_map->dm_segs[0].ds_addr;
 	memset(sc->status_block, 0, BNX_STATUS_BLK_SZ);
@@ -5275,7 +5280,7 @@ bnx_intr(void *xsc)
 	DBRUNIF(1, sc->interrupts_generated++);
 
 	bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0,
-	    sc->status_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+	    sc->status_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 	/*
 	 * If the hardware status block index
@@ -5354,7 +5359,7 @@ bnx_intr(void *xsc)
 	}
 
 	bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0,
-	    sc->status_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->status_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	/* Re-enable interrupts. */
 	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
