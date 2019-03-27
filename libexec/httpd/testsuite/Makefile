@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.13 2019/03/27 04:50:30 mrg Exp $
 #	$eterna: Makefile,v 1.14 2009/05/22 21:51:39 mrg Exp $
 
 SIMPLETESTS=	t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t12 t13 t14 t15
