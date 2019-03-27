@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.46 2015/09/30 20:36:28 phx Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.47 2019/03/27 17:15:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,8 +40,6 @@
 
 #ifndef _MACHINE_VMPARAM_H_
 #define _MACHINE_VMPARAM_H_
-
-#include <machine/pte.h>
 
 /*
  * Machine dependent constants for amiga
