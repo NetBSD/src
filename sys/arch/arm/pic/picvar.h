@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.22 2018/11/16 15:06:22 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.23 2019/03/27 07:29:29 ryo Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -149,7 +149,7 @@ struct pic_softc {
 	percpu_t *pic_percpu;
 	uint8_t pic_id;
 	int pic_irqbase;
-	char pic_name[14];
+	char pic_name[16];
 };
 
 struct pic_ops {
