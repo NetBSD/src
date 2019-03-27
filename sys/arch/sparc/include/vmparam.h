@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.43 2013/01/07 16:59:18 chs Exp $ */
+/*	$NetBSD: vmparam.h,v 1.44 2019/03/27 19:01:44 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,18 +62,25 @@
 #define	PAGE_SHIFT_SUN4		13
 #define	PAGE_SHIFT_SUN4CM	12
 
-#define	MIN_PAGE_SIZE		(1 << PAGE_SHIFT_SUN4CM)
-#define	MAX_PAGE_SIZE		(1 << PAGE_SHIFT_SUN4)
+#define MAX_PAGE_SHIFT		PAGE_SHIFT_SUN4
+#define MIN_PAGE_SHIFT		PAGE_SHIFT_SUN4CM
+
+#define	MIN_PAGE_SIZE		(1 << MIN_PAGE_SHIFT)
+#define	MAX_PAGE_SIZE		(1 << MAX_PAGE_SHIFT)
 
 #if CPU_NTYPES != 0 && !defined(SUN4)
 #define	PAGE_SHIFT		PAGE_SHIFT_SUN4CM
-#define	PAGE_SIZE		(1 << PAGE_SHIFT)
-#define	PAGE_MASK		(PAGE_SIZE - 1)
 #elif CPU_NTYPES == 1 && defined(SUN4)
 #define	PAGE_SHIFT		PAGE_SHIFT_SUN4
+#elif defined(_KERNEL)
+#error "Cannot determine page size"
+#else
+/* Default to max for userland */
+#define	PAGE_SHIFT		MAX_PAGE_SHIFT
+#endif
+
 #define	PAGE_SIZE		(1 << PAGE_SHIFT)
 #define	PAGE_MASK		(PAGE_SIZE - 1)
-#endif
 
 /*
  * USRSTACK is the top (end) of the user stack.
