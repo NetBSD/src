@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2015/02/23 20:34:38 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 2019/03/27 17:15:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -31,8 +31,6 @@
 
 #ifndef	_EPOC32_VMPARAM_H_
 #define	_EPOC32_VMPARAM_H_
-
-#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <arm/arm32/vmparam.h>
 
@@ -78,7 +76,5 @@
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-
-#endif /* _KERNEL || _KMEMUSER */
 
 #endif	/* _EPOC32_VMPARAM_H_ */
