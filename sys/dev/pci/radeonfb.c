@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.103 2019/03/22 07:41:41 martin Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.104 2019/03/27 22:00:33 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.103 2019/03/22 07:41:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.104 2019/03/27 22:00:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,6 +478,8 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_family = radeonfb_devices[i].family;
 	sc->sc_flags = radeonfb_devices[i].flags;
+	sc->sc_bios = NULL;
+	sc->sc_biossz = 0;
 
 	/* enable memory and IO access */
 	screg = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
@@ -1402,9 +1404,6 @@ radeonfb_loadbios(struct radeonfb_softc *sc, const struct pci_attach_args *pa)
 	pci_find_rom(pa, romt, romh, romsz, PCI_ROM_CODE_TYPE_X86, &biosh,
 	    &sc->sc_biossz);
 
-	if (sc->sc_biossz == 0 || sc->sc_bios == NULL)
-		return;
-
 foundit:
 	if (sc->sc_biossz > 0) {
 		sc->sc_bios = malloc(sc->sc_biossz, M_DEVBUF, M_WAITOK);
@@ -1431,15 +1430,13 @@ foundit:
 	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM) &
 	    ~PCI_MAPREG_ROM_ENABLE);
 
-	DPRINTF(("BIOS %08x\n", *(uint32_t *)sc->sc_bios));
-
-	ptr = GETBIOS16(sc, 0x48);
-	if ((GETBIOS32(sc, ptr + 4) == 0x41544f4d /* "ATOM" */) ||
-	    (GETBIOS32(sc, ptr + 4) == 0x4d4f5441 /* "MOTA" */)) {
-		sc->sc_flags |= RFB_ATOM;
-	}
-
 	if (sc->sc_biossz > 0) {
+		ptr = GETBIOS16(sc, 0x48);
+		if ((GETBIOS32(sc, ptr + 4) == 0x41544f4d /* "ATOM" */) ||
+		    (GETBIOS32(sc, ptr + 4) == 0x4d4f5441 /* "MOTA" */)) {
+			sc->sc_flags |= RFB_ATOM;
+		}
+
 		aprint_verbose("%s: Found %d KB %s BIOS\n", XNAME(sc),
 		    (unsigned)sc->sc_biossz >> 10,
 		    IS_ATOM(sc) ? "ATOM" : "Legacy");
@@ -1928,14 +1925,14 @@ nobios:
 			sc->sc_ports[0].rp_dac_type = RADEON_DAC_TVDAC;
 			sc->sc_ports[0].rp_conn_type = RADEON_CONN_DVI_D;
 			sc->sc_ports[0].rp_tmds_type = RADEON_TMDS_INT;
-			sc->sc_ports[0].rp_number = 1;
+			sc->sc_ports[0].rp_number = 0;
 
 			sc->sc_ports[1].rp_mon_type = RADEON_MT_UNKNOWN;
 			sc->sc_ports[1].rp_ddc_type = RADEON_DDC_VGA;
 			sc->sc_ports[1].rp_dac_type = RADEON_DAC_PRIMARY;
 			sc->sc_ports[1].rp_conn_type = RADEON_CONN_CRT;
 			sc->sc_ports[1].rp_tmds_type = RADEON_TMDS_UNKNOWN;
-			sc->sc_ports[1].rp_number = 0;
+			sc->sc_ports[1].rp_number = 1;
 		}
 	}
 
