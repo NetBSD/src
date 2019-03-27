@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.19 2015/05/12 10:20:14 pgoyette Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.20 2019/03/27 09:52:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.19 2015/05/12 10:20:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.20 2019/03/27 09:52:16 pgoyette Exp $");
 
 /*
  *
@@ -160,11 +160,6 @@ swwdog_attach(device_t parent, device_t self, void *aux)
 {
 	struct swwdog_softc *sc = device_private(self);
 
-	if (workqueue_create(&wq, "swwreboot", doreboot, NULL,
-	    PRI_NONE, IPL_NONE, 0) != 0) {
-		aprint_error_dev(self, "failed to create reboot workqueue");
-	}
-
 	sc->sc_dev = self;
 	sc->sc_smw.smw_name = device_xname(self);
 	sc->sc_smw.smw_cookie = sc;
@@ -181,7 +176,6 @@ swwdog_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to register software "
 		    "watchdog with sysmon\n");
 		callout_destroy(&sc->sc_c);
-		workqueue_destroy(wq);
 		return;
 	}
 
