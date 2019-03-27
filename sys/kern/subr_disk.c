@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.122 2018/03/07 21:13:24 kre Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.123 2019/03/27 19:13:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.122 2018/03/07 21:13:24 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.123 2019/03/27 19:13:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -643,6 +643,13 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 			return EBADF;
 
 		dkwedge_discover(dk);
+		return 0;
+
+	case DIOCRMWEDGES:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		dkwedge_delall(dk);
 		return 0;
 
 	default:
