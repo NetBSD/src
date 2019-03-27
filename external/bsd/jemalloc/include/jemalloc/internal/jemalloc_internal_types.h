@@ -110,6 +110,9 @@ typedef int malloc_cpuid_t;
 #  ifdef __le32__
 #    define LG_QUANTUM		4
 #  endif
+#  ifdef __vax__
+#    define LG_QUANTUM		4
+#  endif
 #  ifndef LG_QUANTUM
 #    error "Unknown minimum alignment for architecture; specify via "
 	 "--with-lg-quantum"
