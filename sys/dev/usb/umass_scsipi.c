@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.60 2019/02/10 19:23:55 jdolecek Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.61 2019/03/28 10:44:29 kardel Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.60 2019/02/10 19:23:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.61 2019/03/28 10:44:29 kardel Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -212,7 +212,8 @@ umass_scsipi_setup(struct umass_softc *sc)
 	sc->bus = &scbus->base;
 
 	/* Only use big commands for USB SCSI devices. */
-	sc->sc_busquirks |= PQUIRK_ONLYBIG;
+	/* Do not ask for timeouts.  */
+	sc->sc_busquirks |= PQUIRK_ONLYBIG|PQUIRK_NOREPSUPPOPC;
 
 	/* Fill in the adapter. */
 	memset(&scbus->sc_adapter, 0, sizeof(scbus->sc_adapter));
