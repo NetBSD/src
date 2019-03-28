@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1605 2019/03/26 10:10:22 kre Exp $
+#	$NetBSD: 3RDPARTY,v 1.1606 2019/03/28 12:34:36 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -744,7 +744,7 @@ Notes:
 
 Package:	llvm
 Version:	7.0.0svn (r337282)
-Current Vers.:	7.0.0svn
+Current Vers.:	8.0.0
 Maintainer:	llvm-dev@lists.llvm.org
 Home Page:	https://llvm.org
 Date:		2019-01-09
