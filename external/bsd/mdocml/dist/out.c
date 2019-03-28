@@ -235,6 +235,9 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp_first,
 			} else
 				(*gp)->wanted -= width;
 		}
+		if (g->endcol > maxcol) {
+			maxcol = g->endcol;
+		}
 		if (done) {
 			*gp = g->next;
 			free(g);
