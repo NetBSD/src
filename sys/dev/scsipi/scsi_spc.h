@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_spc.h,v 1.5 2010/02/06 23:13:59 cegger Exp $	*/
+/*	$NetBSD: scsi_spc.h,v 1.6 2019/03/28 10:44:29 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -404,6 +404,70 @@ struct scsi_reserve_release_10_idparam {
 /*
  * REPORT LUNS
  */
+
+/*
+ * MAINTENANCE_IN[REPORT SUPPORTED OPERATION CODES]
+ */
+#define SCSI_MAINTENANCE_IN		0xA3
+
+struct scsi_repsuppopcode {
+	u_int8_t opcode;
+	u_int8_t svcaction;
+#define RSOC_REPORT_SUPPORTED_OPCODES	0x0C
+
+	u_int8_t repoption;
+#define RSOC_ALL           0x00 /* report all */
+#define RSOC_ONE           0x01 /* report one */
+#define RSOC_ONESACD       0x02 /* report one or CHECK CONDITION */
+#define RSOC_ONESA         0x03 /* report one mark presense in data */
+#define RSOC_RCTD          0x80 /* report timeouts */
+
+	u_int8_t reqopcode;
+	u_int8_t reqsvcaction[2];
+	u_int8_t alloclen[4];
+	u_int8_t _res0;
+	u_int8_t control;
+};
+
+struct scsi_repsupopcode_all_commands_descriptor {
+        u_int8_t opcode;
+        u_int8_t _res0;
+        u_int8_t serviceaction[2];
+        u_int8_t _res1;
+        u_int8_t flags;
+#define RSOC_ACD_CTDP         0x02    /* timeouts present */
+#define RSOC_ACD_SERVACTV     0x01    /* service action valid */
+        u_int8_t cdblen[2];
+};
+
+struct scsi_repsupopcode_one_command_descriptor {
+        u_int8_t _res0;
+        u_int8_t support;
+#define RSOC_OCD_CTDP              0x80 /* timeouts present */
+#define RSOC_OCD_SUP_NOT_AVAIL     0x00 /* not available */
+#define RSOC_OCD_SUP_NOT_SUPP      0x01 /* not supported */
+#define RSOC_OCD_SUP_SUPP_STD      0x03 /* supported - standard */
+#define RSOC_OCD_SUP_SUPP_VENDOR   0x05 /* supported - vendor */
+#define RSOC_OCD_SUP               0x07 /* mask for support field */
+
+        u_int8_t cdblen[2];
+        /*
+	 * u_int8_t usage[0...]- cdblen bytes
+	 * usage data
+	 */
+	/*
+	 * scsi_repsupopcode_timeouts_descriptor
+	 * if  RSOC_OCD_CTDP is set
+	 */
+};
+
+struct scsi_repsupopcode_timeouts_descriptor {
+        u_int8_t descriptor_length[2];
+        u_int8_t _res0;
+        u_int8_t cmd_specific;
+        u_int8_t nom_process_timeout[4];
+        u_int8_t cmd_process_timeout[4];
+};
 
 /*
  * REQUEST SENSE

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.283 2019/01/12 13:59:53 tsutsui Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.284 2019/03/28 10:44:29 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.283 2019/01/12 13:59:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.284 2019/03/28 10:44:29 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,9 +500,11 @@ scsibusprint(void *aux, const char *pnp)
 	strnvisx(revision, sizeof(revision), inqbuf->revision, 4,
 	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 
-	aprint_normal(" target %d lun %d: <%s, %s, %s> %s %s",
-	    target, lun, vendor, product, revision, dtype,
-	    inqbuf->removable ? "removable" : "fixed");
+	aprint_normal(" target %d lun %d: <%s, %s, %s> %s %s%s",
+		      target, lun, vendor, product, revision, dtype,
+		      inqbuf->removable ? "removable" : "fixed",
+		      (sa->sa_periph->periph_opcs != NULL)
+		        ? " timeout-info" : "");
 
 	return (UNCONF);
 }
@@ -1018,6 +1020,13 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	if ((cf = config_search_loc(config_stdsubmatch, sc->sc_dev,
 	     "scsibus", locs, &sa)) != NULL) {
 		scsipi_insert_periph(chan, periph);
+
+		/*
+		 * determine supported opcodes and
+		 * timeouts if available
+		 */
+		scsipi_get_opcodeinfo(periph);
+
 		/*
 		 * XXX Can't assign periph_dev here, because we'll
 		 * XXX need it before config_attach() returns.  Must
