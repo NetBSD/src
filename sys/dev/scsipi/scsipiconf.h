@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.129 2018/10/07 18:14:32 christos Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.130 2019/03/28 10:44:29 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -352,8 +352,27 @@ struct scsipi_channel {
  */
 #define	PERIPH_NTAGWORDS	((256 / 8) / sizeof(u_int32_t))
 
-
 #ifdef _KERNEL
+/*
+ * scsipi_opcodes:
+ *      This optionally allocated structure documents
+ *      valid opcodes and timeout values for the respective
+ *      opcodes overriding the requested timeouts.
+ *      It is created when SCSI_MAINTENANCE_IN/
+ *      RSOC_REPORT_SUPPORTED_OPCODES can provide information
+ *      at attach time.
+ */
+struct scsipi_opcodes 
+{
+	struct scsipi_opinfo
+	{
+		long          ti_timeout;	/* timeout in seconds (> 0 => VALID) */
+		unsigned long ti_flags;
+#define SCSIPI_TI_VALID  0x0001	        /* valid op code */
+#define SCSIPI_TI_LOGGED 0x8000	        /* override logged during debug */
+	} opcode_info[0x100];
+};
+
 /*
  * scsipi_periph:
  *
@@ -401,6 +420,9 @@ struct scsipi_periph {
 
 	int	periph_qfreeze;		/* queue freeze count */
 
+	/* available opcodes and timeout information */
+	struct scsipi_opcodes *periph_opcs;
+	
 	/* Bitmap of free command tags. */
 	u_int32_t periph_freetags[PERIPH_NTAGWORDS];
 
@@ -479,8 +501,9 @@ struct scsipi_periph {
 #define PQUIRK_CAP_NODT		0x00200000	/* signals DT, but can't. */
 #define PQUIRK_START		0x00400000	/* needs start before tur */
 #define	PQUIRK_NOFUA		0x00800000	/* does not grok FUA */
-
-
+#define PQUIRK_NOREPSUPPOPC     0x01000000      /* does not grok
+						   REPORT SUPPORTED OPCODES
+						   to fetch device timeouts */
 /*
  * Error values an adapter driver may return
  */
@@ -681,6 +704,8 @@ void	scsipi_user_done(struct scsipi_xfer *);
 int	scsipi_interpret_sense(struct scsipi_xfer *);
 void	scsipi_wait_drain(struct scsipi_periph *);
 void	scsipi_kill_pending(struct scsipi_periph *);
+void    scsipi_get_opcodeinfo(struct scsipi_periph *periph);
+void    scsipi_free_opcodeinfo(struct scsipi_periph *periph);
 struct scsipi_periph *scsipi_alloc_periph(int);
 void	scsipi_free_periph(struct scsipi_periph *);
 
