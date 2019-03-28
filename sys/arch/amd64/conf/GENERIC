@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.520 2019/03/01 12:25:09 nonaka Exp $
+# $NetBSD: GENERIC,v 1.521 2019/03/28 19:00:40 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.520 $"
+#ident		"GENERIC-$Revision: 1.521 $"
 
 maxusers	64		# estimated number of users
 
@@ -1169,6 +1169,7 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
 pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
+#pseudo-device	nvmm			# NetBSD Virtual Machine Monitor
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda			# coda minicache <-> venus comm.
