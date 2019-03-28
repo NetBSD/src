@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.44 2017/04/11 14:32:43 christos Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.45 2019/03/28 10:44:29 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.44 2017/04/11 14:32:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.45 2019/03/28 10:44:29 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,7 @@ scsipi_alloc_periph(int malloc_flag)
 		return NULL;
 
 	periph->periph_dev = NULL;
+	periph->periph_opcs = NULL;
 
 	/*
 	 * Start with one command opening.  The periph driver
@@ -158,6 +159,7 @@ scsipi_alloc_periph(int malloc_flag)
 void
 scsipi_free_periph(struct scsipi_periph *periph)
 {
+	scsipi_free_opcodeinfo(periph);
 	cv_destroy(&periph->periph_cv);
 	free(periph, M_DEVBUF);
 }
