@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.45 2018/07/25 20:05:35 kamil Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.46 2019/03/28 15:05:03 christos Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.45 2018/07/25 20:05:35 kamil Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.46 2019/03/28 15:05:03 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -704,7 +704,9 @@ static chunk_tree_t	huge;
  * base_pages_alloc() also uses sbrk(), but cannot lock chunks_mtx (doing so
  * could cause recursive lock acquisition).
  */
+#ifdef _REENTRANT
 static malloc_mutex_t	brk_mtx;
+#endif
 /* Result of first sbrk(0) call. */
 static void		*brk_base;
 /* Current end of brk, or ((void *)-1) if brk is exhausted. */
