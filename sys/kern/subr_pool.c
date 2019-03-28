@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.245 2019/03/27 18:27:46 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.246 2019/03/28 18:12:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.245 2019/03/27 18:27:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.246 2019/03/28 18:12:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -232,8 +232,6 @@ static struct pool pcg_normal_pool;
 static struct pool pcg_large_pool;
 static struct pool cache_pool;
 static struct pool cache_cpu_pool;
-
-pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 
 /* List of all caches. */
 TAILQ_HEAD(,pool_cache) pool_cache_head =
