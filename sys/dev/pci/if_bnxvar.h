@@ -149,6 +149,8 @@ struct bnx_softc
 	uint32_t		bnx_shared_hw_cfg;
 	uint32_t		bnx_port_hw_cfg;
 
+	int			bnx_flowflags;
+	
 	uint16_t		bus_speed_mhz;		/* PCI bus speed */
 	uint16_t		link_width;		/* PCIe link width */
 	uint16_t		link_speed;		/* PCIe link speed */
