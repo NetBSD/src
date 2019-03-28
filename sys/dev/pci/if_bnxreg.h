@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.20 2019/03/05 08:25:02 msaitoh Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.21 2019/03/28 08:56:55 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -154,7 +154,7 @@
 /* Returns FALSE in "defects" per 2^31 - 1 calls, otherwise returns TRUE. */
 #define DB_RANDOMFALSE(defects)        (random() > defects)
 #define DB_OR_RANDOMFALSE(defects)  || (random() > defects)
-#define DB_AND_RANDOMFALSE(defects) && (random() > ddfects)
+#define DB_AND_RANDOMFALSE(defects) && (random() > defects)
 
 /* Returns TRUE in "defects" per 2^31 - 1 calls, otherwise returns FALSE. */
 #define DB_RANDOMTRUE(defects)         (random() < defects)
@@ -244,7 +244,7 @@ struct bnx_type {
 	uint16_t		bnx_did;
 	uint16_t		bnx_svid;
 	uint16_t		bnx_sdid;
-	char			*bnx_name;
+	const char		*bnx_name;
 };
 
 /****************************************************************************/
@@ -1292,7 +1292,6 @@ struct l2_fhdr {
 #define BNX_MISC_COMMAND_DINTEG_ATTN_EN			 (1L<<26)
 #define BNX_MISC_COMMAND_PCIE_LINK_IN_L23		 (1L<<27)
 #define BNX_MISC_COMMAND_PCIE_DIS			 (1L<<28)
-
 
 #define BNX_MISC_CFG					0x00000804
 #define BNX_MISC_CFG_PCI_GRC_TMOUT			 (1L<<0)
@@ -3275,7 +3274,6 @@ struct l2_fhdr {
 #define BNX_MQ_CONFIG_MAX_DEPTH				 (0x7fL<<8)
 #define BNX_MQ_CONFIG_CUR_DEPTH				 (0x7fL<<20)
 
-
 #define BNX_MQ_ENQUEUE1				0x00003c0c
 #define BNX_MQ_ENQUEUE1_OFFSET				 (0x3fL<<2)
 #define BNX_MQ_ENQUEUE1_CID				 (0x3fffL<<8)
@@ -3343,6 +3341,7 @@ struct l2_fhdr {
 #define BNX_MQ_MAP_L2_5_ARM				 (0x3L<<26)
 #define BNX_MQ_MAP_L2_5_ENA				 (0x1L<<31)
 #define BNX_MQ_MAP_L2_5_DEFAULT				0x83000b08
+
 
 /*
  *  tbdr_reg definition
