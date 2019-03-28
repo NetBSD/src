@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2009/12/14 00:46:03 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2019/03/28 08:31:40 christos Exp $	*/
 
 #ifndef _EWS4800MIPS_VMPARAM_H_
 #define _EWS4800MIPS_VMPARAM_H_
@@ -18,6 +18,8 @@
 /* reserve PTEs for KSEG2 I/O space */
 #define KSEG2IOBUFSIZE		kseg2iobufsize
 #endif
+#ifdef _KERNEL
 extern vsize_t kseg2iobufsize;
+#endif
 
 #endif /* !_EWS4800MIPS_VMPARAM_H_ */
