@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 2009/12/16 23:19:06 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 2019/03/28 08:28:16 christos Exp $	*/
 /*	$OpenBSD: vmparam.h,v 1.3 1997/04/19 17:19:59 pefo Exp $	*/
 /*	NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp 	*/
 
@@ -19,6 +19,7 @@
 
 #ifndef KSEG2IOBUFSIZE
 #define KSEG2IOBUFSIZE	kseg2iobufsize	/* reserve PTEs for KSEG2 I/O space */
-
+#ifdef _KERNEL
 extern vsize_t kseg2iobufsize;
+#endif
 #endif
