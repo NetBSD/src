@@ -1,4 +1,4 @@
-.\"	$NetBSD: nvmm.4,v 1.3 2019/02/13 16:06:28 maxv Exp $
+.\"	$NetBSD: nvmm.4,v 1.4 2019/03/28 19:00:40 maxv Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 13, 2019
+.Dd March 28, 2019
 .Dt NVMM 4
 .Os
 .Sh NAME
@@ -60,9 +60,3 @@ The
 .Nm
 driver was written by
 .An Maxime Villard .
-.Sh CAVEATS
-Currently,
-.Nm
-cannot be enabled in a kernel configuration, and must rather be
-.Xr modload 8 Ns ed
-dynamically from the filesystem.
