@@ -1,11 +1,14 @@
-#	$NetBSD: files.nvmm,v 1.1 2018/11/07 07:43:08 maxv Exp $
+#	$NetBSD: files.nvmm,v 1.2 2019/03/28 19:00:40 maxv Exp $
 
 defpseudo nvmm
 
 file	dev/nvmm/nvmm.c			nvmm
 
 ifdef amd64
+file	dev/nvmm/x86/nvmm_x86.c		nvmm
 file	dev/nvmm/x86/nvmm_x86_svm.c	nvmm
 file	dev/nvmm/x86/nvmm_x86_svmfunc.S	nvmm
+file	dev/nvmm/x86/nvmm_x86_vmx.c	nvmm
+file	dev/nvmm/x86/nvmm_x86_vmxfunc.S	nvmm
 endif
 

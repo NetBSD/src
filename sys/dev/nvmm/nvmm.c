@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.11 2019/03/21 20:21:40 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.12 2019/03/28 19:00:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.11 2019/03/21 20:21:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.12 2019/03/28 19:00:40 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -933,7 +933,7 @@ nvmmattach(int nunits)
 	/* nothing */
 }
 
-MODULE(MODULE_CLASS_DRIVER, nvmm, NULL);
+MODULE(MODULE_CLASS_ANY, nvmm, NULL);
 
 static int
 nvmm_modcmd(modcmd_t cmd, void *arg)
