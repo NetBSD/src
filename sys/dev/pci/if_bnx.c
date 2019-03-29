@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.73 2019/03/29 06:31:54 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.74 2019/03/29 08:54:35 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.73 2019/03/29 06:31:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.74 2019/03/29 08:54:35 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -176,6 +176,7 @@ static const struct bnx_product {
 	},
 };
 
+
 /****************************************************************************/
 /* Supported Flash NVRAM device data.                                       */
 /****************************************************************************/
@@ -183,6 +184,7 @@ static struct flash_spec flash_table[] =
 {
 #define BUFFERED_FLAGS		(BNX_NV_BUFFERED | BNX_NV_TRANSLATE)
 #define NONBUFFERED_FLAGS	(BNX_NV_WREN)
+
 	/* Slow EEPROM */
 	{0x00000000, 0x40830380, 0x009f0081, 0xa184a053, 0xaf000400,
 	 BUFFERED_FLAGS, SEEPROM_PAGE_BITS, SEEPROM_PAGE_SIZE,
@@ -1231,9 +1233,8 @@ bnx_miibus_statchg(struct ifnet *ifp)
 	if ((mii->mii_media_active & IFM_GMASK) == IFM_HDX) {
 		DBPRINT(sc, BNX_INFO, "Setting Half-Duplex interface.\n");
 		val |= BNX_EMAC_MODE_HALF_DUPLEX;
-	} else {
+	} else
 		DBPRINT(sc, BNX_INFO, "Setting Full-Duplex interface.\n");
-	}
 
 	REG_WR(sc, BNX_EMAC_MODE, val);
 
@@ -2192,7 +2193,7 @@ bnx_get_media(struct bnx_softc *sc)
 		sc->bnx_phy_flags |= BNX_PHY_CRC_FIX_FLAG;
 
 bnx_get_media_exit:
-	DBPRINT(sc, (BNX_INFO_LOAD),
+	DBPRINT(sc, (BNX_INFO_LOAD | BNX_INFO_PHY),
 		"Using PHY address %d.\n", sc->bnx_phy_addr);
 }
 
@@ -5000,7 +5001,7 @@ void
 bnx_mgmt_init(struct bnx_softc *sc)
 {
 	struct ifnet	*ifp = &sc->bnx_ec.ec_if;
-	u_int32_t	val;
+	uint32_t	val;
 
 	/* Check if the driver is still running and bail out if it is. */
 	if (ifp->if_flags & IFF_RUNNING)
@@ -5023,7 +5024,7 @@ bnx_mgmt_init(struct bnx_softc *sc)
 	bnx_ifmedia_upd(ifp);
 
 bnx_mgmt_init_exit:
- 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
+ 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 }
 
 /****************************************************************************/
@@ -5047,6 +5048,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 	uint32_t		addr, prod_bseq;
 	int			i, error;
 	static struct work	bnx_wk; /* Dummy work. Statically allocated. */
+	bool			remap = true;
 
 	mutex_enter(&sc->tx_pkt_mtx);
 	pkt = TAILQ_FIRST(&sc->tx_free_pkts);
@@ -5089,10 +5091,21 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 	map = pkt->pkt_dmamap;
 
 	/* Map the mbuf into our DMA address space. */
+retry:
 	error = bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		aprint_error_dev(sc->bnx_dev,
-		    "Error mapping mbuf into TX chain!\n");
+	if (__predict_false(error)) {
+		if (error == EFBIG) {
+			if (remap == true) {
+				struct mbuf *newm;
+
+				remap = false;
+				newm = m_defrag(m, M_NOWAIT);
+				if (newm != NULL) {
+					m = newm;
+					goto retry;
+				}
+			}
+		}
 		sc->tx_dma_map_failures++;
 		goto maperr;
 	}
@@ -5134,6 +5147,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 			txbd->tx_bd_flags |= TX_BD_FLAGS_START;
 		prod = NEXT_TX_BD(prod);
 	}
+
 	/* Set the END flag on the last TX buffer descriptor. */
 	txbd->tx_bd_flags |= TX_BD_FLAGS_END;
 
@@ -5433,13 +5447,12 @@ bnx_intr(void *xsc)
 		if (((status_attn_bits & ~STATUS_ATTN_BITS_LINK_STATE) !=
 		    (sblk->status_attn_bits_ack &
 		    ~STATUS_ATTN_BITS_LINK_STATE))) {
-			DBRUN(1, sc->unexpected_attentions++);
+			DBRUN(sc->unexpected_attentions++);
 
 			BNX_PRINTF(sc, "Fatal attention detected: 0x%08X\n",
 			    sblk->status_attn_bits);
 
-			DBRUN(BNX_FATAL,
-			    if (bnx_debug_unexpected_attention == 0)
+			DBRUNIF((bnx_debug_unexpected_attention == 0),
 				    bnx_breakpoint(sc));
 
 			bnx_init(ifp);
@@ -5989,7 +6002,7 @@ bnx_dump_tx_chain(struct bnx_softc *sc, int tx_prod, int count)
 	    "tx_bd per page = 0x%08X, usable tx_bd per page = 0x%08X\n",
 	    (uint32_t)TOTAL_TX_BD_PER_PAGE, (uint32_t)USABLE_TX_BD_PER_PAGE);
 
-	BNX_PRINTF(sc, "total tx_bd    = 0x%08X\n", TOTAL_TX_BD);
+	BNX_PRINTF(sc, "total tx_bd    = 0x%08X\n", (uint32_t)TOTAL_TX_BD);
 
 	aprint_error_dev(sc->bnx_dev, ""
 	    "-----------------------------"
@@ -6034,7 +6047,7 @@ bnx_dump_rx_chain(struct bnx_softc *sc, int rx_prod, int count)
 	    "rx_bd per page = 0x%08X, usable rx_bd per page = 0x%08X\n",
 	    (uint32_t)TOTAL_RX_BD_PER_PAGE, (uint32_t)USABLE_RX_BD_PER_PAGE);
 
-	BNX_PRINTF(sc, "total rx_bd    = 0x%08X\n", TOTAL_RX_BD);
+	BNX_PRINTF(sc, "total rx_bd    = 0x%08X\n", (uint32_t)TOTAL_RX_BD);
 
 	aprint_error_dev(sc->bnx_dev,
 	    "----------------------------"
