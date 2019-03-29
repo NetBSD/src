@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.54 2015/11/16 17:06:47 christos Exp $	*/
+/*	$NetBSD: dump.h,v 1.54.8.1 2019/03/29 19:43:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -115,6 +115,7 @@ const char *temp;	/* name of the file for doing rewrite of dumpdates */
 char	lastlevel;	/* dump level of previous dump */
 char	level;		/* dump level of this dump */
 int	uflag;		/* update flag */
+const char *dumpdev;	/* device name in dumpdates */
 int	eflag;		/* eject flag */
 int	lflag;		/* autoload flag */
 int	diskfd;		/* disk file descriptor */
@@ -185,10 +186,11 @@ void	fs_mapinodes(ino_t, u_int64_t *, int *);
 /* operator interface functions */
 void	broadcast(const char *);
 void	lastdump(char);
-void	msg(const char *fmt, ...) __printflike(1, 2);
-void	msgtail(const char *fmt, ...) __printflike(1, 2);
+void	msg(const char *, ...) __printflike(1, 2);
+void	msgtail(const char *, ...) __printflike(1, 2);
 int	query(const char *);
-void	quit(const char *fmt, ...) __printflike(1, 2);
+void	quit(const char *, ...) __printflike(1, 2);
+void	quite(int, const char *, ...) __printflike(2, 3);
 time_t	do_stats(void);
 void	statussig(int);
 void	timeest(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.50 2013/06/15 01:27:19 christos Exp $	*/
+/*	$NetBSD: traverse.c,v 1.50.20.1 2019/03/29 19:43:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.50 2013/06/15 01:27:19 christos Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.50.20.1 2019/03/29 19:43:28 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -413,7 +413,7 @@ searchdir(ino_t dino, daddr_t blkno, long size, off_t filesize,
 
 	dblk = malloc(size);
 	if (dblk == NULL)
-		quit("searchdir: cannot allocate directory memory.\n");
+		quit("%s: cannot allocate directory memory", __func__);
 	bread(fsatoda(ufsib, blkno), dblk, (int)size);
 	if (filesize < size)
 		size = filesize;
