@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.42 2013/09/08 13:26:05 mlelstv Exp $	*/
+/*	$NetBSD: optr.c,v 1.42.18.1 2019/03/29 19:43:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.42 2013/09/08 13:26:05 mlelstv Exp $");
+__RCSID("$NetBSD: optr.c,v 1.42.18.1 2019/03/29 19:43:28 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ query(const char *question)
 	firstprompt = time((time_t *)0);
 
 	if ((mytty = fopen(_PATH_TTY, "r")) == NULL)
-		quit("fopen on %s fails: %s\n", _PATH_TTY, strerror(errno));
+		quite(errno, "fopen on %s fails", _PATH_TTY);
 	attnmessage = question;
 	timeout = 0;
 	alarmcatch(0);
@@ -104,7 +104,7 @@ query(const char *question)
 		if (fgets(replybuffer, 63, mytty) == NULL) {
 			clearerr(mytty);
 			if (++errcount > 30)	/* XXX	ugly */
-				quit("excessive operator query failures\n");
+				quit("excessive operator query failures");
 		} else if (replybuffer[0] == 'y' || replybuffer[0] == 'Y') {
 			back = 1;
 		} else if (replybuffer[0] == 'n' || replybuffer[0] == 'N') {
@@ -295,6 +295,24 @@ msgtail(const char *fmt, ...)
 }
 
 void
+quite(int e, const char *fmt, ...)
+{
+	va_list ap;
+
+	(void) fprintf(stderr,"  DUMP: ");
+#ifdef TDEBUG
+	(void) fprintf(stderr, "pid=%d ", getpid());
+#endif
+	va_start(ap, fmt);
+	(void) vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void) fprintf(stderr, ": %s\n", strerror(e));
+	(void) fflush(stdout);
+	(void) fflush(stderr);
+	dumpabort(0);
+}
+
+void
 quit(const char *fmt, ...)
 {
 	va_list ap;
@@ -306,6 +324,7 @@ quit(const char *fmt, ...)
 	va_start(ap, fmt);
 	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
+	(void) fprintf(stderr, "\n");
 	(void) fflush(stdout);
 	(void) fflush(stderr);
 	dumpabort(0);
@@ -324,10 +343,13 @@ allocfsent(const struct fstab *fs)
 	new = xmalloc(sizeof (*fs));
 	new->fs_file = xstrdup(fs->fs_file);
 	new->fs_type = xstrdup(fs->fs_type);
-	new->fs_spec = xstrdup(fs->fs_spec);
+	new->fs_spec = xmalloc(FILENAME_MAX);
+	if (getfsspecname(new->fs_spec, FILENAME_MAX, fs->fs_spec) == NULL)
+		quite(errno, "can't resolve mount point %s (%s)",
+		    fs->fs_spec, new->fs_spec);
 	new->fs_passno = fs->fs_passno;
 	new->fs_freq = fs->fs_freq;
-	return (new);
+	return new;
 }
 
 struct	pfstab {
@@ -426,7 +448,7 @@ mntinfosearch(const char *key)
 	char buf[MAXPATHLEN];
 
 	if ((mntbufc = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0)
-		quit("Can't get mount list: %s", strerror(errno));
+		quite(errno, "Can't get mount list");
 	for (fs = mntbuf, i = 0; i < mntbufc; i++, fs++) {
 #ifdef DUMP_LFS
 		if (strcmp(fs->f_fstypename, "lfs") != 0)

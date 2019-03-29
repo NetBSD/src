@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.22 2013/06/23 02:06:04 dholland Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.22.20.1 2019/03/29 19:43:28 martin Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.22 2013/06/23 02:06:04 dholland Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.22.20.1 2019/03/29 19:43:28 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ fs_read_sblock(char *superblock)
 	sblock = (struct fs *)superblock;
 	for (i = 0; ; i++) {
 		if (sblock_try[i] == -1)
-			quit("can't find superblock\n");
+			quit("can't find superblock");
 		rawread(sblock_try[i], (char *)superblock, MAXBSIZE);
 
 		switch(sblock->fs_magic) {
@@ -169,7 +169,7 @@ fs_mapinodes(ino_t maxino __unused, u_int64_t *tape_size, int *anydirskipped)
 	char *cp;
 
 	if ((cgp = malloc(sblock->fs_cgsize)) == NULL)
-		quit("fs_mapinodes: cannot allocate memory.\n");
+		quite(errno, "fs_mapinodes: cannot allocate memory.");
 
 	for (cg = 0; cg < sblock->fs_ncg; cg++) {
 		ino = cg * sblock->fs_ipg;
@@ -190,7 +190,8 @@ fs_mapinodes(ino_t maxino __unused, u_int64_t *tape_size, int *anydirskipped)
 		 */
 		if (sblock->fs_flags & FS_DOSOFTDEP) {
 			if (!cg_chkmagic(cgp, 0))
-				quit("mapfiles: cg %d: bad magic number\n", cg);
+				quit("%s: cg %d: bad magic number\n",
+				    __func__, cg);
 			cp = &cg_inosused(cgp, 0)[(inosused - 1) / CHAR_BIT];
 			for ( ; inosused > 0; inosused -= CHAR_BIT, cp--) {
 				if (*cp == 0)
@@ -225,7 +226,7 @@ getino(ino_t inum)
 	struct ufs2_dinode *dp2;
 
 	if (inoblock == NULL && (inoblock = malloc(ufsib->ufs_bsize)) == NULL)
-		quit("cannot allocate inode memory.\n");
+		quite(errno, "cannot allocate inode memory.");
 	curino = inum;
 	if (inum >= minino && inum < maxino)
 		goto gotit;

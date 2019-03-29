@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.54 2015/08/24 17:37:10 bouyer Exp $	*/
+/*	$NetBSD: tape.c,v 1.54.8.1 2019/03/29 19:43:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.54 2015/08/24 17:37:10 bouyer Exp $");
+__RCSID("$NetBSD: tape.c,v 1.54.8.1 2019/03/29 19:43:28 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ tperror(int signo __unused)
 
 	if (pipeout) {
 		msg("write error on %s\n", tape);
-		quit("Cannot recover\n");
+		quit("Cannot recover");
 		/* NOTREACHED */
 	}
 	msg("write error %ld blocks into volume %d\n", blocksthisvol, tapeno);
@@ -215,7 +215,7 @@ static void
 sigpipe(int signo __unused)
 {
 
-	quit("Broken pipe\n");
+	quit("Broken pipe");
 }
 
 /*
@@ -284,7 +284,7 @@ flushtape(void)
 	slp->req[trecno].count = 0;			/* Sentinel */
 
 	if (atomic_write(slp->fd, slp->req, siz) != siz)
-		quit("error writing command pipe: %s\n", strerror(errno));
+		quite(errno, "error writing command pipe");
 	slp->sent = 1; /* we sent a request, read the response later */
 
 	lastfirstrec = slp->firstrec;
@@ -375,7 +375,7 @@ trewind(int eject)
 			if (got != writesize) {
 				msg("EOT detected in last 2 tape records!\n");
 				msg("Use a longer tape, decrease the size estimate\n");
-				quit("or use no size estimate at all.\n");
+				quit("or use no size estimate at all");
 			}
 		}
 		(void) close(slaves[f].fd);
@@ -554,7 +554,7 @@ rollforward(void)
 		slp->sent = 0;
 
 		if (got != writesize) {
-			quit("EOT detected at start of the tape!\n");
+			quit("EOT detected at start of the tape");
 		}
 	}
 }
@@ -768,8 +768,8 @@ enslave(void)
 
 		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, cmd) < 0 ||
 		    (slaves[i].pid = fork()) < 0)
-			quit("too many slaves, %d (recompile smaller): %s\n",
-			    i, strerror(errno));
+			quite(errno, "too many slaves, %d (recompile smaller)",
+			    i);
 
 		slaves[i].fd = cmd[1];
 		slaves[i].sent = 0;
@@ -822,14 +822,15 @@ doslave(int cmd, int slave_number __unused)
 	 */
 	(void) close(diskfd);
 	if ((diskfd = open(disk_dev, O_RDONLY)) < 0)
-		quit("slave couldn't reopen disk: %s\n", strerror(errno));
+		quite(errno, "slave couldn't reopen disk");
 
 	/*
 	 * Need the pid of the next slave in the loop...
 	 */
 	if ((nread = atomic_read(cmd, &nextslave, sizeof nextslave))
 	    != sizeof nextslave) {
-		quit("master/slave protocol botched - didn't get pid of next slave.\n");
+		quit("master/slave protocol botched - didn't get pid"
+		    " of next slave");
 	}
 
 	/*
@@ -847,7 +848,7 @@ doslave(int cmd, int slave_number __unused)
 				if (p->count != 1 || atomic_read(cmd,
 				    slp->tblock[trecno],
 				    TP_BSIZE) != TP_BSIZE)
-				       quit("master/slave protocol botched.\n");
+				       quit("master/slave protocol botched");
 			}
 		}
 
@@ -924,7 +925,7 @@ doslave(int cmd, int slave_number __unused)
 	}
 	printcachestats();
 	if (nread != 0)
-		quit("error reading command pipe: %s\n", strerror(errno));
+		quite(errno, "error reading command pipe");
 }
 
 /*

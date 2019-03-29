@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump_lfs.8,v 1.16 2012/04/08 22:00:37 wiz Exp $
+.\"	$NetBSD: dump_lfs.8,v 1.16.24.1 2019/03/29 19:43:28 martin Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -51,6 +51,7 @@
 .Op Fl r Ar cachesize
 .Op Fl s Ar feet
 .Op Fl T Ar date
+.Op Fl U Ar dumpdev
 .Op Fl x Ar snap-backup
 .Ar files-to-dump
 .Nm
@@ -280,10 +281,22 @@ The file
 .Pa /etc/dumpdates
 may be edited to change any of the fields,
 if necessary.
-If a list of files or subdirectories is being dumped
+If the
+.Fl T
+option is used or if a list of files or subdirectories is being dumped
 (as opposed to an entire file system), then
 .Fl u
 is ignored.
+.It Fl U Ar dumpdev
+Same as
+.Fl u
+but specifies the device in
+.Pa /etc/dumpdates
+as
+.Ar dumpdev .
+This option can be used with subdir dumps and with the
+.Fl T
+option.
 .It Fl X
 Prevent the log from wrapping until the dump completes, guaranteeing
 a consistent backup.
