@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 2019/03/27 16:16:43 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22 2019/03/29 12:51:15 christos Exp $	*/
 
 #ifndef _POWERPC_VMPARAM_H_
 #define _POWERPC_VMPARAM_H_
@@ -70,10 +70,6 @@ extern const char __USRSTACK;		/* let the linker resolve it */
 #include <powerpc/oea/vmparam.h>
 #elif defined(_KERNEL)
 #error unknown PPC variant
-#else
-#define PAGE_SHIFT      MAX_PAGE_SHIFT
-#define PAGE_SIZE       (1 << PAGE_SHIFT)
-#define PAGE_MASK       (PAGE_SIZE - 1)
 #endif
 
 #endif /* !_MODULE */
