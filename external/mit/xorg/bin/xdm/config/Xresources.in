@@ -44,7 +44,7 @@ xlogin*innerFramesWidth: 2
 xlogin*shdColor: grey30
 xlogin*hiColor: grey90
 xlogin*background: grey
-xlogin*inpCollor: grey
+xlogin*inpColor: grey
 !xlogin*foreground: darkgreen
 xlogin*greetColor: Blue3
 xlogin*failColor: red
