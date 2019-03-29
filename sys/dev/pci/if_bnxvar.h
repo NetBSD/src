@@ -211,6 +211,7 @@ struct bnx_softc
 	uint16_t		tx_cons;
 	uint32_t		tx_prod_bseq;	/* Counts the bytes used.  */
 
+	int			bnx_link;
 	struct callout		bnx_timeout;
 	int			bnx_detaching;
 
