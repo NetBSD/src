@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.164 2018/09/23 07:24:19 maxv Exp $
+#	$NetBSD: special,v 1.165 2019/03/29 21:44:22 christos Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -400,25 +400,25 @@
 ./var/chroot/named		type=dir  mode=0755
 ./var/chroot/named/dev		type=dir  mode=0755
 ./var/chroot/named/etc		type=dir  mode=0755
-./var/chroot/named/etc/namedb	type=dir  mode=0755
+./var/chroot/named/etc/namedb	type=dir  mode=0755 uname=named gname=named
 ./var/chroot/named/etc/namedb/cache	type=dir mode=0775 uname=named gname=named
 ./var/chroot/named/etc/namedb/keys	type=dir mode=0775 uname=named gname=named
 ./var/chroot/named/usr		type=dir  mode=0755
 ./var/chroot/named/usr/libexec	type=dir  mode=0755
 ./var/chroot/named/var		type=dir  mode=0755
-./var/chroot/named/var/run	type=dir  mode=0775 gname=named
-./var/chroot/named/var/tmp	type=dir  mode=01775 gname=named
+./var/chroot/named/var/run	type=dir  mode=0775 uname=named gname=named
+./var/chroot/named/var/tmp	type=dir  mode=01775 uname=named gname=named
 ./var/chroot/ntpd		type=dir  mode=0755
 ./var/chroot/ntpd/dev		type=dir  mode=0755
 ./var/chroot/ntpd/etc		type=dir  mode=0755
 ./var/chroot/ntpd/var		type=dir  mode=0755
-./var/chroot/ntpd/var/db	type=dir  mode=0775 gname=ntpd
-./var/chroot/ntpd/var/run	type=dir  mode=0775 gname=ntpd
+./var/chroot/ntpd/var/db	type=dir  mode=0775 uname=ntpd gname=ntpd
+./var/chroot/ntpd/var/run	type=dir  mode=0775 uname=ntpd gname=ntpd
 ./var/chroot/pflogd		type=dir  mode=0755
-./var/chroot/rtadvd		type=dir  mode=0755
-./var/chroot/rtadvd/etc		type=dir  mode=0755
-./var/chroot/rtadvd/var		type=dir  mode=0755
-./var/chroot/rtadvd/var/run	type=dir  mode=0775 gname=_rtadvd
+./var/chroot/rtadvd		type=dir  mode=0755 uname=_rtadvd gname=_rtadvd
+./var/chroot/rtadvd/etc		type=dir  mode=0755 uname=_rtadvd gname=_rtadvd
+./var/chroot/rtadvd/var		type=dir  mode=0755 uname=_rtadvd gname=_rtadvd
+./var/chroot/rtadvd/var/run	type=dir  mode=0775 uname=_rtadvd gname=_rtadvd
 ./var/chroot/sshd		type=dir  mode=0755
 ./var/chroot/tcpdump		type=dir  mode=0755
 ./var/chroot/tftp-proxy		type=dir  mode=0755
