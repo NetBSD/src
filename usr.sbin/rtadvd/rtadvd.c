@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.68 2019/01/12 19:09:25 christos Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.69 2019/03/29 21:51:52 christos Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -351,8 +351,11 @@ main(int argc, char *argv[])
 		    (timeout->tv_nsec + 999999) / 1000000) : INFTIM)) == -1)
 		{
 			/* EINTR would occur upon SIGUSR1 for status dump */
-			if (errno == EINTR)
+			if (errno == EINTR) {
+				if (do_die)
+					die();
 				continue;
+			}
 
 			logit(LOG_ERR, "%s: poll: %m", __func__);
 			if (Dflag)
@@ -445,6 +448,7 @@ die(void)
 		ra_timer_update(rai, &rai->timer->tm);
 		rtadvd_set_timer(&rai->timer->tm, rai->timer);
 	}
+	exit(EXIT_SUCCESS);
 }
 
 static void
