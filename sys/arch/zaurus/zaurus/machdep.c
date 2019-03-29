@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2018/10/28 14:30:33 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2019/03/29 20:27:45 christos Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2018/10/28 14:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2019/03/29 20:27:45 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1109,9 +1109,13 @@ initarm(void *arg)
 	md_root_setconf(memory_disk, sizeof memory_disk);
 #endif
 
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	/* Firmware doesn't load symbols. */
+#if NKSYMS || defined(MODULAR)
+# ifdef DDB
 	ddb_init(0, NULL, NULL);
+# else
+	/* Firmware doesn't load symbols. */
+	ksyms_addsyms_elf(0, NULL, NULL);
+# endif
 #endif
 
 #ifdef KGDB
