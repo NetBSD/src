@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.120 2019/03/21 14:27:47 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.121 2019/03/29 19:59:40 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2744,4 +2744,35 @@ sys/arch/x86/pci/if_vmx.c			1.27
 	vmx(4): Fix device enable command failure when the number of vCPUs
 	is not a power of two.
 	[nonaka, ticket #1219]
+
+sys/arch/amd64/include/param.h			1.30
+
+	Bump STACK_ALIGNBYTES to (16 - 1) to satisfy requirement by AMD64
+	System V ABI at kernel level.
+	[rin, ticket #1220]
+
+sbin/dump/dump.8				1.69,1.71
+sbin/dump/dump.h				1.56,1.57
+sbin/dump/ffs_inode.c				1.23
+sbin/dump/itime.c				1.21,1.22
+sbin/dump/main.c				1.74,1.75
+sbin/dump/optr.c				1.43
+sbin/dump/tape.c				1.55
+sbin/dump/traverse.c				1.52
+sbin/dump_lfs/dump_lfs.8			1.18
+
+	Improve dump(8) and dump_lfs(8) selection of entries in /etc/dumpdates
+	- detect devices specified as NAME= in /etc/fstab
+	- add -U flag to manually specify the /etc/dumpdates entry
+	Miscelaneous documentation updates.
+	[manu, ticket #1221]
+
+sys/dev/mii/tlphy.c				1.65
+sys/dev/usb/if_aue.c				1.148
+sys/dev/usb/if_url.c				1.62
+
+	mii_phy_add_media() automatically install power handler,
+	but if_media_add() doesn't. When mii_phy_add_media() isn't used,
+	call pmf_device_register().
+	[msaitoh, ticket #1224]
 
