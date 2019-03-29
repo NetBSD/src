@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 2017/04/08 18:05:36 scole Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 2019/03/29 16:04:54 scole Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,9 +56,6 @@
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(1<<28)			/* max stack size (256M) */
-#endif
-#ifndef SGROWSIZ
-#define SGROWSIZ	(128UL*1024)		/* amount to grow stack */
 #endif
 
 #define	IA64_VM_MINKERN_REGION	4
