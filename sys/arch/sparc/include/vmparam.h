@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.47 2019/03/29 12:51:15 christos Exp $ */
+/*	$NetBSD: vmparam.h,v 1.48 2019/03/29 20:18:09 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,7 +74,7 @@
 #define	PAGE_SHIFT		PAGE_SHIFT_SUN4
 #endif
 
-#ifdef	PAGE_SHIFT		PAGE_SHIFT_SUN4
+#ifdef	PAGE_SHIFT
 #define	PAGE_SIZE		(1 << PAGE_SHIFT)
 #define	PAGE_MASK		(PAGE_SIZE - 1)
 #endif
