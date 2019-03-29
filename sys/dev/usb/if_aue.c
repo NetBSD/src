@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.141.8.2 2018/08/08 10:28:35 martin Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.141.8.3 2019/03/29 19:48:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.141.8.2 2018/08/08 10:28:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.141.8.3 2019/03/29 19:48:36 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -869,6 +869,9 @@ aue_attach(device_t parent, device_t self, void *aux)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->aue_udev, sc->aue_dev);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 }
 
@@ -885,6 +888,8 @@ aue_detach(device_t self, int flags)
 		/* Detached before attached finished, so just bail out. */
 		return 0;
 	}
+
+	pmf_device_deregister(self);
 
 	/*
 	 * XXX Halting callout guarantees no more tick tasks.  What
