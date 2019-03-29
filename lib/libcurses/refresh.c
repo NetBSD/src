@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.106 2019/03/29 16:56:58 roy Exp $	*/
+/*	$NetBSD: refresh.c,v 1.107 2019/03/29 18:32:45 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.106 2019/03/29 16:56:58 roy Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.107 2019/03/29 18:32:45 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1317,7 +1317,7 @@ makech(int wy)
 #ifdef HAVE_WCHAR
 			chw = WCOL(*nsp);
 			if (chw < 0)
-				chw = 1;
+				chw = 0; /* match putch() */
 #else
 			chw = 1;
 #endif /* HAVE_WCHAR */
