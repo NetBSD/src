@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.47 2019/01/17 07:46:16 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.48 2019/03/29 14:46:44 martin Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -493,6 +493,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	    (clen && *clen ? 1 : 0) +
 	    (request->hr_remotehost && *request->hr_remotehost ? 1 : 0) +
 	    (request->hr_remoteaddr && *request->hr_remoteaddr ? 1 : 0) +
+	    (cgihandler ? 1 : 0) +
 	    bozo_auth_cgi_count(request) +
 	    (request->hr_serverport && *request->hr_serverport ? 1 : 0);
 
