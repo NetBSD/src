@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2016/10/01 13:57:44 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2019/03/29 00:07:39 christos Exp $
 
 .include	<bsd.init.mk>
 
@@ -21,7 +21,7 @@ STRIPFLAG=
 USE_GENASSYM?=	no
 
 INCLUDES=	-I. -I$S/arch -I$S -I${S}/../common/include -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_LKM -D_KERNEL
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_MODULE -D_KERNEL
 
 ffs.fth.h: genfth.cf machine sparc
 	${TOOL_GENASSYM} -f -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
