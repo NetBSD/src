@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.105 2019/01/06 04:27:53 uwe Exp $	*/
+/*	$NetBSD: refresh.c,v 1.106 2019/03/29 16:56:58 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.105 2019/01/06 04:27:53 uwe Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.106 2019/03/29 16:56:58 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1042,16 +1042,14 @@ putchbr(__LDATA *nsp, __LDATA *csp, __LDATA *psp, int wy, int wx)
 		return error;
 	}
 
-	/* We need to insert characters.
-	 * To do this, work out their widths.
-	 * XXX This does not work when the bottom right corner is an ACS. */
+	/* We need to insert characters. */
 #ifdef HAVE_WCHAR
-	cw = wcwidth(nsp->ch);
-	pcw = psp == NULL ? 0 : wcwidth(psp->ch);
-	if (pcw < 1)
+	cw = WCOL(*nsp);
+	pcw = WCOL(*psp);
+	if (cw < 1 || pcw < 1)
 		return ERR; /* Nothing to insert */
 
-	/* When wide characters we need something other than
+	/* When inserting a wide character, we need something other than
 	 * insert_character. */
 	if (pcw > 1 &&
 	    !(parm_ich != NULL ||
@@ -1317,7 +1315,9 @@ makech(int wy)
 			}
 
 #ifdef HAVE_WCHAR
-			chw = wcwidth(nsp->ch);
+			chw = WCOL(*nsp);
+			if (chw < 0)
+				chw = 1;
 #else
 			chw = 1;
 #endif /* HAVE_WCHAR */
