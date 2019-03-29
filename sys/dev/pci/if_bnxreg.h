@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.21 2019/03/28 08:56:55 msaitoh Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.22 2019/03/29 08:54:35 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -63,6 +63,7 @@
 #define BNX_CP_INTR				0x00000008
 #define BNX_CP_UNLOAD			0x00000010
 #define BNX_CP_RESET			0x00000020
+#define BNX_CP_PHY			0x00000040
 #define BNX_CP_ALL				0x00FFFFFF
 
 #define BNX_CP_MASK				0x00FFFFFF
@@ -105,6 +106,12 @@
 #define BNX_VERBOSE_RESET		(BNX_CP_RESET | BNX_LEVEL_VERBOSE)
 #define BNX_EXCESSIVE_RESET		(BNX_CP_RESET | BNX_LEVEL_EXCESSIVE)
 
+#define BNX_WARN_PHY			(BNX_CP_PHY | BNX_LEVEL_WARN)
+#define BNX_INFO_PHY			(BNX_CP_PHY | BNX_LEVEL_INFO)
+#define BNX_VERBOSE_PHY			(BNX_CP_PHY | BNX_LEVEL_VERBOSE)
+#define BNX_EXTREME_PHY			(BNX_CP_PHY | BNX_LEVEL_EXTREME)
+#define BNX_INSANE_PHY			(BNX_CP_PHY | BNX_LEVEL_INSANE)
+
 #define BNX_FATAL				(BNX_CP_ALL | BNX_LEVEL_FATAL)
 #define BNX_WARN				(BNX_CP_ALL | BNX_LEVEL_WARN)
 #define BNX_INFO				(BNX_CP_ALL | BNX_LEVEL_INFO)
@@ -112,7 +119,8 @@
 #define BNX_EXCESSIVE			(BNX_CP_ALL | BNX_LEVEL_EXCESSIVE)
 
 #define BNX_CODE_PATH(cp)		((cp & BNX_CP_MASK) & bnx_debug)
-#define BNX_MSG_LEVEL(lv)		((lv & BNX_LEVEL_MASK) <= (bnx_debug & BNX_LEVEL_MASK))
+#define BNX_MSG_LEVEL(lv)	\
+    ((lv & BNX_LEVEL_MASK) <= (bnx_debug & BNX_LEVEL_MASK))
 #define BNX_LOG_MSG(m)			(BNX_CODE_PATH(m) && BNX_MSG_LEVEL(m))
 
 #ifdef BNX_DEBUG
@@ -163,17 +171,17 @@
 
 #else
 
-#define DBPRINT(level, format, ...)
-#define DBRUN(m, ...)
-#define DBRUNLV(level, ...)
-#define DBRUNCP(cp, ...)
-#define DBRUNIF(cond, ...)
-#define DB_RANDOMFALSE(defects)
-#define DB_OR_RANDOMFALSE(percent)
-#define DB_AND_RANDOMFALSE(percent)
-#define DB_RANDOMTRUE(defects)
-#define DB_OR_RANDOMTRUE(percent)
-#define DB_AND_RANDOMTRUE(percent)
+#define DBPRINT(level, format, ...)	__nothing
+#define DBRUN(m, ...)			__nothing
+#define DBRUNLV(level, ...)		__nothing
+#define DBRUNCP(cp, ...)		__nothing
+#define DBRUNIF(cond, ...)		__nothing
+#define DB_RANDOMFALSE(defects)		__nothing
+#define DB_OR_RANDOMFALSE(percent)	__nothing
+#define DB_AND_RANDOMFALSE(percent)	__nothing
+#define DB_RANDOMTRUE(defects)		__nothing
+#define DB_OR_RANDOMTRUE(percent)	__nothing
+#define DB_AND_RANDOMTRUE(percent)	__nothing
 
 #endif /* BNX_DEBUG */
 
