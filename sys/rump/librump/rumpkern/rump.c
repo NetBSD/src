@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.332 2018/12/26 22:16:27 thorpej Exp $	*/
+/*	$NetBSD: rump.c,v 1.333 2019/03/29 02:09:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.332 2018/12/26 22:16:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.333 2019/03/29 02:09:14 christos Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -111,6 +111,8 @@ static struct lwp *bootlwp;
 static  char rump_msgbuf[16*1024] __aligned(256);
 
 bool rump_ttycomponent = false;
+
+pool_cache_t pnbuf_cache;
 
 static void
 rump_aiodone_worker(struct work *wk, void *dummy)
