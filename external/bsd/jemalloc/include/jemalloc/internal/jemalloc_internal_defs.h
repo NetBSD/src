@@ -200,7 +200,13 @@
 
 /* One page is 2^LG_PAGE bytes. */
 #include <machine/vmparam.h>
+#ifdef PAGE_SHIFT
 #define LG_PAGE PAGE_SHIFT
+#elifdef MAX_PAGE_SHIFT
+#define LG_PAGE MAX_PAGE_SHIFT
+#else
+#error "PAGE_SHIFT is not defined"
+#endif
 
 /*
  * One huge page is 2^LG_HUGEPAGE bytes.  Note that this is defined even if the
