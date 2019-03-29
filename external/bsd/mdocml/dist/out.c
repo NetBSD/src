@@ -149,7 +149,7 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp_first,
 		gp = &first_group;
 		for (dp = sp->first; dp != NULL; dp = dp->next) {
 			icol = dp->layout->col;
-			while (icol > maxcol)
+			while (maxcol < icol + dp->hspans)
 				tbl->cols[++maxcol].spacing = SIZE_MAX;
 			col = tbl->cols + icol;
 			col->flags |= dp->layout->flags;
@@ -234,9 +234,6 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp_first,
 				break;
 			} else
 				(*gp)->wanted -= width;
-		}
-		if (g->endcol > maxcol) {
-			maxcol = g->endcol;
 		}
 		if (done) {
 			*gp = g->next;
