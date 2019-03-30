@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.35 2019/03/30 23:29:27 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.36 2019/03/30 23:29:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -101,7 +101,6 @@ struct wrusage {
 
 #if defined(_NETBSD_SOURCE)
 #define	RLIM_NLIMITS	12		/* number of resource limits */
-#endif
 
 #define RLIM_STRINGS { \
 	"cpu-time", \
@@ -117,6 +116,7 @@ struct wrusage {
 	"virtual-memory-size", \
 	"threads-number", \
 }
+#endif
 
 #define	RLIM_INFINITY	(~((u_quad_t)1 << 63))	/* no limit */
 #define	RLIM_SAVED_MAX	RLIM_INFINITY	/* unrepresentable hard limit */
