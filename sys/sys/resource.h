@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.34 2016/04/02 20:38:40 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.35 2019/03/30 23:29:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -102,6 +102,21 @@ struct wrusage {
 #if defined(_NETBSD_SOURCE)
 #define	RLIM_NLIMITS	12		/* number of resource limits */
 #endif
+
+#define RLIM_STRINGS { \
+	"cpu-time", \
+	"file-size", \
+	"data-size", \
+	"stack-size", \
+	"core-dump-size", \
+	"resident-memory-size", \
+	"locked-memory-size", \
+	"processes-number", \
+	"files-number", \
+	"socket-buffer-size", \
+	"virtual-memory-size", \
+	"threads-number", \
+}
 
 #define	RLIM_INFINITY	(~((u_quad_t)1 << 63))	/* no limit */
 #define	RLIM_SAVED_MAX	RLIM_INFINITY	/* unrepresentable hard limit */
