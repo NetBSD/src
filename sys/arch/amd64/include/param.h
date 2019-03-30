@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18.14.1 2017/03/26 16:05:40 snj Exp $	*/
+/*	$NetBSD: param.h,v 1.18.14.2 2019/03/30 18:47:15 bouyer Exp $	*/
 
 #ifdef __x86_64__
 
@@ -18,6 +18,13 @@
 #define MID_MACHINE	MID_X86_64
 
 #define ALIGNED_POINTER(p,t)	1
+
+/*
+ * Align stack as required by AMD64 System V ABI. This is because
+ * (1) we want to bypass libc/csu in LLDB, and
+ * (2) rtld in glibc >= 2.23 for Linux/x86_64 requires it.
+ */
+#define STACK_ALIGNBYTES	(16 - 1)
 
 #define ALIGNBYTES32		(sizeof(int) - 1)
 #define ALIGN32(p)		(((u_long)(p) + ALIGNBYTES32) &~ALIGNBYTES32)
