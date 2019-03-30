@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.102 2019/03/30 13:05:24 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.103 2019/03/30 13:53:19 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -180,7 +180,7 @@ SNAP_MD_POST_DEPS+=	smp_efibootaa64
 INSTALLATION_DIRS+=	installation/misc
 .endif
 
-.if ${TARGET_ENDIANNESS} == "1234" && !empty(MACHINE_ARCH:Mearmv7hf)
+.if !empty(MACHINE_ARCH:Mearmv7hf)
 smp_efibootarm:
 	cd ${KERNSRCDIR}/stand/efiboot/bootarm && ${MAKE} release
 SNAP_MD_POST_DEPS+=	smp_efibootarm
