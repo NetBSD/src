@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.60 2019/03/16 10:45:06 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.61 2019/03/30 13:17:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.60 2019/03/16 10:45:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.61 2019/03/30 13:17:23 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -158,8 +158,7 @@ static struct consdev earlycons = {
 #endif
 
 /*
- * ARM: Get the first physically contiguous region of memory.
- * ARM64: Get all of physical memory, including holes.
+ * Get all of physical memory, including holes.
  */
 static void
 fdt_get_memory(uint64_t *pstart, uint64_t *pend)
@@ -184,14 +183,8 @@ fdt_get_memory(uint64_t *pstart, uint64_t *pend)
 		VPRINTF("FDT /memory [%d] @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
 		    index, cur_addr, cur_size);
 
-#ifdef __aarch64__
 		if (cur_addr + cur_size > *pend)
 			*pend = cur_addr + cur_size;
-#else
-		/* If subsequent entries follow the previous, append them. */
-		if (*pend == cur_addr)
-			*pend = cur_addr + cur_size;
-#endif
 	}
 }
 
