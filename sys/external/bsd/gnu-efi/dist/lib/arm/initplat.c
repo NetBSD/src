@@ -1,4 +1,4 @@
-/*	$NetBSD: initplat.c,v 1.1.1.1 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: initplat.c,v 1.2 2019/03/30 12:46:16 jmcneill Exp $	*/
 
 /*
  * Copright (C) 2014 Linaro Ltd.
@@ -26,11 +26,3 @@ InitializeLibPlatform (
     )
 {
 }
-
-#ifdef __GNUC__
-void __div0(void)
-{
-    // TODO handle divide by zero fault
-    while (1);
-}
-#endif
