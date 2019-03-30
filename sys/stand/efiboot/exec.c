@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.8 2018/10/28 10:17:47 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.9 2019/03/30 12:47:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -80,13 +80,13 @@ load_file(char *path, EFI_PHYSICAL_ADDRESS *paddr, u_long *psize)
 #endif
 	if (EFI_ERROR(status)) {
 		printf("Failed to allocate %lu bytes for %s (error %lu)\n",
-		    *psize, path, status);
+		    *psize, path, (u_long)status);
 		close(fd);
 		return ENOMEM;
 	}
 
 	printf("boot: loading %s ", path);
-	len = read(fd, (void *)*paddr, *psize);
+	len = read(fd, (void *)(uintptr_t)*paddr, *psize);
 	close(fd);
 
 	if (len != *psize) {
@@ -139,7 +139,7 @@ exec_netbsd(const char *fname, const char *args)
 #endif
 	if (EFI_ERROR(status)) {
 		printf("Failed to allocate %lu bytes for kernel image (error %lu)\n",
-		    alloc_size, status);
+		    alloc_size, (u_long)status);
 		return ENOMEM;
 	}
 
@@ -158,7 +158,7 @@ exec_netbsd(const char *fname, const char *args)
 		efi_acpi_create_fdt();
 	} else
 #endif
-	if (dtb_addr && efi_fdt_set_data((void *)dtb_addr) != 0) {
+	if (dtb_addr && efi_fdt_set_data((void *)(uintptr_t)dtb_addr) != 0) {
 		printf("boot: invalid DTB data\n");
 		goto cleanup;
 	}
