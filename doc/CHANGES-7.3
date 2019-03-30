@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.44 2019/03/15 14:37:33 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.45 2019/03/30 18:47:57 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -499,4 +499,16 @@ lib/libcurses/getch.c				1.71
 
 	Rename global variable "state" to "_cursesi_state".
 	[rin, ticket #1686]
+
+sys/arch/amd64/include/param.h			1.30
+
+	Bump STACK_ALIGNBYTES to (16 - 1) to satisfy requirement by AMD64
+	System V ABI in kernel level. This is because
+	(1) for LLDB, we want to bypass libc/csu (and therefore manual stack
+	     alignment in _start), and
+	(2) rtld in glibc >= 2.23 for Linux/x86_64 requires it.
+
+	Fix SEGV for Linux/x86_64 binaries with glibc >= 2.23, reported as
+	PR port-amd64/54052.
+	[rin, ticket #1687]
 
