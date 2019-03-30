@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.35 2016/08/15 19:13:24 jdolecek Exp $	*/
+/*	$NetBSD: setup.c,v 1.36 2019/03/30 17:32:40 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,13 +58,14 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.35 2016/08/15 19:13:24 jdolecek Exp $");
+__RCSID("$NetBSD: setup.c,v 1.36 2019/03/30 17:32:40 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
 #define FSTYPENAMES
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/bitops.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <sys/stat.h>
@@ -320,8 +321,7 @@ readsb(int listerr)
 	sblock.e2fs_ncg =
 	    howmany(sblock.e2fs.e2fs_bcount - sblock.e2fs.e2fs_first_dblock,
 	    sblock.e2fs.e2fs_bpg);
-	/* XXX assume hw bsize = 512 */
-	sblock.e2fs_fsbtodb = sblock.e2fs.e2fs_log_bsize + 1;
+	sblock.e2fs_fsbtodb = sblock.e2fs.e2fs_log_bsize + ilog2(1024 / dev_bsize);
 	sblock.e2fs_bsize = 1024 << sblock.e2fs.e2fs_log_bsize;
 	sblock.e2fs_bshift = LOG_MINBSIZE + sblock.e2fs.e2fs_log_bsize;
 	sblock.e2fs_qbmask = sblock.e2fs_bsize - 1;
@@ -378,6 +378,8 @@ readsb(int listerr)
 	asblk.b_un.b_fs->e2fs_features_rocompat &= ~EXT2F_ROCOMPAT_LARGEFILE;
 	asblk.b_un.b_fs->e2fs_features_rocompat |=
 	    sblk.b_un.b_fs->e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE;
+	memcpy(asblk.b_un.b_fs->e2fs_fsmnt, sblk.b_un.b_fs->e2fs_fsmnt,
+	    sizeof(asblk.b_un.b_fs->e2fs_fsmnt));
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    ((sblock.e2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP_FSCK) ||
 	    (sblock.e2fs.e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP_FSCK))) {
@@ -492,7 +494,7 @@ calcsb(const char *dev, int devfd, struct m_ext2fs *fs)
 
 	cp = strchr(dev, '\0');
 	if (cp-- == dev ||
-	    ((*cp < 'a' || *cp > 'h') && !isdigit((unsigned char)*cp))) {
+	    ((*cp < 'a' || *cp > 'a' + MAXPARTITIONS - 1) && !isdigit((unsigned char)*cp))) {
 		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
 		return 0;
 	}
@@ -512,8 +514,10 @@ calcsb(const char *dev, int devfd, struct m_ext2fs *fs)
 		return 0;
 	}
 	memset(fs, 0, sizeof(struct m_ext2fs));
+printf("partition fsize = %d\n", pp->p_fsize);
 	fs->e2fs_bsize = pp->p_fsize;
-	fs->e2fs.e2fs_log_bsize = pp->p_fsize / 1024;
+	fs->e2fs.e2fs_log_bsize = ilog2(pp->p_fsize / 1024);
+printf("log_bsize = %d\n", fs->e2fs.e2fs_log_bsize);
 	fs->e2fs.e2fs_bcount = (pp->p_size * DEV_BSIZE) / fs->e2fs_bsize;
 	fs->e2fs.e2fs_first_dblock = (fs->e2fs.e2fs_log_bsize == 0) ? 1 : 0;
 	fs->e2fs.e2fs_bpg = fs->e2fs_bsize * NBBY;
