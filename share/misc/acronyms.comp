@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.235 2019/03/23 17:56:23 sevan Exp $
+$NetBSD: acronyms.comp,v 1.236 2019/03/30 14:42:21 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -90,6 +90,8 @@ ASIC	application-specific integrated circuit
 ASK	amplitude shift keying
 ASLR	address space layout randomization
 ASN	autonomous system number
+ASP	active server pages
+ASP	auxiliary storage pool
 ASPM	active state power management
 ASQ	automated software quality
 ASR	address space register
@@ -103,6 +105,7 @@ ATC	address translation cache
 ATM	asynchronous transfer mode
 ATX	advanced technology extended
 AV	anti virus
+AVB	audio video bridging
 AVL	Adelson-Velsky-Landis
 AVX	advanced vector extensions
 BA	byte align
@@ -175,6 +178,7 @@ BT	BitTorrent
 BT	Bluetooth
 BT	bit test
 BTC	bit test [and] complement
+BTM	bus transport mechanism
 BTR	bit test [and] reset
 BTS	bit test [and] set
 BTS	bug tracking system
@@ -674,12 +678,14 @@ IMSI	international mobile subscriber identity
 INCITS	InterNational Committee for Information Technology Standards
 IO	input/output
 IOCTL	input/output control
+IOM	input/output managers
 IOMMU	input/output memory management unit
 IOT	Internet of Things
 IP	Internet Protocol
 IP	intellectual property
 IPC	instructions per cycle
 IPC	interprocess communication
+IPCF	interprocess communication facility
 IPE	integrated programming environment
 IPI	intelligent peripheral interface
 IPI	interprocessor interrupt
@@ -848,6 +854,7 @@ MFC	Microsoft Foundation Classes
 MFM	modified frequency modulation
 MFU	most frequently used
 MI	machine-independent
+MI	machine interface
 MIB	management information base
 MIC	message integrity {check,code}
 MID	mobile Internet device
@@ -1324,6 +1331,7 @@ SLDRAM	synchronous-link dynamic random access memory
 SLED	single large expensive disk
 SLI	scalable link interface
 SLI	scan-line interleave
+SLIC	system license internal code
 SLOC	source lines of code
 SLRU	segmented LRU
 SMA	smart memory access
@@ -1542,6 +1550,7 @@ VCO	voltage-controlled oscillator
 VCS	version control system
 VESA	Video Electronics Standards Association
 VFO	variable-frequency oscillator
+VFS	virtual file system
 VG	volume group
 VGA	Video Graphics Array
 VHDCI	very high density cable interconnect
