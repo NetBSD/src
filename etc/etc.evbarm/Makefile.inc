@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.101 2019/01/20 10:50:06 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.102 2019/03/30 13:05:24 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -177,6 +177,13 @@ KERNEL_SETS+=		GENERIC
 smp_efibootaa64:
 	cd ${KERNSRCDIR}/stand/efiboot/bootaa64 && ${MAKE} release
 SNAP_MD_POST_DEPS+=	smp_efibootaa64
+INSTALLATION_DIRS+=	installation/misc
+.endif
+
+.if ${TARGET_ENDIANNESS} == "1234" && !empty(MACHINE_ARCH:Mearmv7hf)
+smp_efibootarm:
+	cd ${KERNSRCDIR}/stand/efiboot/bootarm && ${MAKE} release
+SNAP_MD_POST_DEPS+=	smp_efibootarm
 INSTALLATION_DIRS+=	installation/misc
 .endif
 
