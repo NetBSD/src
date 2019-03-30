@@ -1,4 +1,4 @@
-/* $NetBSD: efienv.c,v 1.2 2018/09/18 19:19:45 jmcneill Exp $ */
+/* $NetBSD: efienv.c,v 1.3 2019/03/30 12:47:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -47,7 +47,7 @@ efi_env_set(const char *key, char *val)
 	FreePool(ukey);
 
 	if (EFI_ERROR(status))
-		printf("env: failed to set variable '%s': %#lx\n", key, status);
+		printf("env: failed to set variable '%s': %#lx\n", key, (u_long)status);
 }
 
 char *

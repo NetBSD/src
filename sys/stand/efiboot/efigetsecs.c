@@ -1,4 +1,4 @@
-/*	$NetBSD: efigetsecs.c,v 1.3 2018/09/03 00:04:02 jmcneill Exp $	*/
+/*	$NetBSD: efigetsecs.c,v 1.4 2019/03/30 12:47:53 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -70,10 +70,10 @@ getsecs(void)
 		status = uefi_call_wrapper(BS->CreateEvent, 5, EVT_TIMER | EVT_NOTIFY_SIGNAL, TPL_CALLBACK,
 		    getsecs_notify_func, 0, &getsecs_ev);
 		if (EFI_ERROR(status))
-			panic("%s: couldn't create event timer: 0x%lx", __func__, status);
+			panic("%s: couldn't create event timer: 0x%lx", __func__, (u_long)status);
 		status = uefi_call_wrapper(BS->SetTimer, 3, getsecs_ev, TimerPeriodic, 10000000);	/* 1s in "100ns" units */
 		if (EFI_ERROR(status))
-			panic("%s: couldn't start event timer: 0x%lx", __func__, status);
+			panic("%s: couldn't start event timer: 0x%lx", __func__, (u_long)status);
 		getsecs_val = getsecs_rtc();
 	}
 
