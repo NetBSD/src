@@ -1,4 +1,4 @@
-#	$NetBSD: files.procfs,v 1.12 2017/08/28 00:46:07 kamil Exp $
+#	$NetBSD: files.procfs,v 1.13 2019/03/30 23:28:30 christos Exp $
 
 deffs	PROCFS:	PTRACE_HOOKS
 
@@ -7,6 +7,7 @@ file	miscfs/procfs/procfs_auxv.c	procfs
 file	miscfs/procfs/procfs_cmdline.c	procfs
 file	miscfs/procfs/procfs_fd.c	procfs
 file	miscfs/procfs/procfs_fpregs.c	procfs
+file	miscfs/procfs/procfs_limit.c	procfs
 file	miscfs/procfs/procfs_linux.c	procfs
 file	miscfs/procfs/procfs_map.c	procfs
 file	miscfs/procfs/procfs_mem.c	procfs
