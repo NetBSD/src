@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.43 2019/03/27 17:15:29 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.44 2019/03/30 21:06:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -43,6 +43,7 @@
  * Virtual Memory parameters common to all arm32 platforms.
  */
 
+#include <sys/cdefs.h>
 #include <arm/cpuconf.h>
 #include <arm/arm32/param.h>
 
