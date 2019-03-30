@@ -11,6 +11,9 @@
 #if defined(__aarch64__)
 extern u_long			load_offset;
 #define LOADADDR(a)		(((((u_long)(a)) + offset) & 0x3fffffffff) + load_offset)
+#elif defined(EFIBOOT)
+extern u_long			load_offset;
+#define LOADADDR(a)		(((((u_long)(a)) + offset) & 0x7fffffff) + load_offset)
 #else
 #define LOADADDR(a)		(((u_long)(a)))
 #endif
