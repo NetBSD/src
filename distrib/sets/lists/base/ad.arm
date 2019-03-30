@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.80 2018/08/13 09:25:22 mrg Exp $
+# $NetBSD: ad.arm,v 1.81 2019/03/30 13:02:39 jmcneill Exp $
 ./libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
 ./sbin/ldconfig					base-sysutil-root	pic,endian=1234
 ./usr/bin/fdformat				base-util-bin
@@ -17,6 +17,7 @@
 ./usr/mdec/boot26,ffa				base-obsolete		obsolete
 ./usr/mdec/boot32				base-sysutil-bin	endian=1234
 ./usr/mdec/boot32,ffa				base-sysutil-bin	endian=1234
+./usr/mdec/bootarm.efi				base-sysutil-bin	endian=1234,machine_arch=earmv7hf
 ./usr/mdec/bootimx23				base-sysutil-bin	endian=1234
 ./usr/mdec/bootmini2440				base-sysutil-bin
 ./usr/mdec/gzboot_ADI_BRH_0x00140000.bin	base-sysutil-bin
