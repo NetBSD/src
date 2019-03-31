@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.20 2019/03/31 13:03:04 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.21 2019/03/31 13:04:54 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -52,7 +52,6 @@ SMDK2410	2003/07/31	Samsung SMDK2410 S3C2410 eval board
 SMDK2800	2002/11/20	Samsung SMDK2800 S3C2800 eval board
 RPI		2012/07/26	Raspberry Pi
 RPI2		2015/03/04	Raspberry Pi 2
-SUNXI		2017/06/28	Allwinner family SoCs (FDT)
 TEAMASA_NPWR	2002/02/07	Team ASA Npwr IOP310 based server appliance
 TEAMASA_NPWR_FC	2003/12/24	Team ASA NPWR-FC i80321 server appliance
 TISDP2420	2008/04/27	TI OMAP 2420 eval board
