@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.36 2019/03/30 17:32:40 mlelstv Exp $	*/
+/*	$NetBSD: setup.c,v 1.37 2019/03/31 10:52:00 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.36 2019/03/30 17:32:40 mlelstv Exp $");
+__RCSID("$NetBSD: setup.c,v 1.37 2019/03/31 10:52:00 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -514,10 +514,8 @@ calcsb(const char *dev, int devfd, struct m_ext2fs *fs)
 		return 0;
 	}
 	memset(fs, 0, sizeof(struct m_ext2fs));
-printf("partition fsize = %d\n", pp->p_fsize);
 	fs->e2fs_bsize = pp->p_fsize;
 	fs->e2fs.e2fs_log_bsize = ilog2(pp->p_fsize / 1024);
-printf("log_bsize = %d\n", fs->e2fs.e2fs_log_bsize);
 	fs->e2fs.e2fs_bcount = (pp->p_size * DEV_BSIZE) / fs->e2fs_bsize;
 	fs->e2fs.e2fs_first_dblock = (fs->e2fs.e2fs_log_bsize == 0) ? 1 : 0;
 	fs->e2fs.e2fs_bpg = fs->e2fs_bsize * NBBY;
