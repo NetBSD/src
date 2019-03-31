@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.271 2019/03/07 12:29:14 maxv Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.272 2019/03/31 19:54:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.271 2019/03/07 12:29:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.272 2019/03/31 19:54:36 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1415,15 +1415,21 @@ dontblock:
 	moff = 0;
 	offset = 0;
 	while (m != NULL && uio->uio_resid > 0 && error == 0) {
+		/*
+		 * If the type of mbuf has changed, end the receive
+		 * operation and do a short read.
+		 */
 		if (m->m_type == MT_OOBDATA) {
 			if (type != MT_OOBDATA)
 				break;
 		} else if (type == MT_OOBDATA) {
 			break;
+		} else if (m->m_type == MT_CONTROL) {
+			break;
 		}
 #ifdef DIAGNOSTIC
 		else if (m->m_type != MT_DATA && m->m_type != MT_HEADER) {
-			panic("receive 3");
+			panic("%s: m_type=%d", __func__, m->m_type);
 		}
 #endif
 
