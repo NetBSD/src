@@ -1,4 +1,4 @@
-/* $NetBSD: ip.c,v 1.3 2018/05/09 06:49:48 maxv Exp $ */
+/* $NetBSD: ip.c,v 1.4 2019/03/31 20:08:45 christos Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -105,7 +105,7 @@ sendip(struct iodesc *d, void *pkt, size_t len, u_int8_t proto)
 	if (cc == -1)
 		return -1;
 	if ((size_t)cc != len)
-		panic("sendip: bad write (%zd != %zu)", cc, len);
+		panic("%s: bad write (%zd != %zu)", __func__, cc, len);
 	return (cc - (sizeof(*ip)));
 }
 
@@ -133,7 +133,7 @@ readip(struct iodesc *d, void *pkt, size_t len, time_t tleft, u_int8_t proto)
 
 	if (etype == ETHERTYPE_ARP) {
 		struct arphdr *ah = (void *)ip;
-		if (n < (sizeof(*ah) + 2 * (ah->ar_hln + ah->ar_pln))) {
+		if (n < (ssize_t)(sizeof(*ah) + 2 * (ah->ar_hln + ah->ar_pln))) {
 			return -1;
 		}
 		if (ah->ar_op == htons(ARPOP_REQUEST)) {
