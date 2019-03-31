@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.25 2016/08/21 08:27:57 christos Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.26 2019/03/31 20:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -182,7 +182,7 @@ read_inode(ino32_t inumber, struct open_file *f)
 	    inode_sector, fs->e2fs_bsize, buf, &rsize);
 	if (rc)
 		return rc;
-	if (rsize != fs->e2fs_bsize)
+	if (rsize != (size_t)fs->e2fs_bsize)
 		return EIO;
 
 	dip = (struct ext2fs_dinode *)(buf +
@@ -288,7 +288,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 			buf, &rsize);
 		if (rc)
 			return rc;
-		if (rsize != fs->e2fs_bsize)
+		if (rsize != (size_t)fs->e2fs_bsize)
 			return EIO;
 		ind_block_num = fs2h32(buf[file_block >> level]);
 		if (level == 0)
@@ -318,7 +318,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	long off;
 	indp_t file_block;
 	indp_t disk_block = 0;	/* XXX: gcc */
-	size_t block_size;
+	size_t block_size, tsz;
 	int rc;
 
 	off = ext2_blkoff(fs, fp->f_seekp);
@@ -357,8 +357,9 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	 * But truncate buffer at end of file.
 	 */
 	/* XXX should handle LARGEFILE */
-	if (*size_p > fp->f_di.e2di_size - fp->f_seekp)
-		*size_p = fp->f_di.e2di_size - fp->f_seekp;
+	tsz = (size_t)(fp->f_di.e2di_size - fp->f_seekp);
+	if (*size_p > tsz)
+		*size_p = tsz;
 
 	return 0;
 }
@@ -470,14 +471,14 @@ read_gdblock(struct open_file *f, struct m_ext2fs *fs)
 		    fs->e2fs_bsize, fp->f_buf, &rsize);
 		if (rc)
 			return rc;
-		if (rsize != fs->e2fs_bsize)
+		if (rsize != (size_t)fs->e2fs_bsize)
 			return EIO;
 
 		e2fs_cgload((struct ext2_gd *)fp->f_buf,
 		    &fs->e2fs_gd[i * gdpb],
 		    (i == (fs->e2fs_ngdb - 1)) ?
 		    (fs->e2fs_ncg - gdpb * i) * sizeof(struct ext2_gd):
-		    fs->e2fs_bsize);
+		    (size_t)fs->e2fs_bsize);
 	}
 
 	return 0;
@@ -615,8 +616,8 @@ ext2fs_open(const char *path, struct open_file *f)
 		 */
 		if ((fp->f_di.e2di_mode & EXT2_IFMT) == EXT2_IFLNK) {
 			/* XXX should handle LARGEFILE */
-			int link_len = fp->f_di.e2di_size;
-			int len;
+			size_t link_len = fp->f_di.e2di_size;
+			size_t len;
 
 			len = strlen(cp);
 
@@ -991,7 +992,7 @@ dump_sblock(struct m_ext2fs *fs)
 	printf("fs->e2fs.e2fs_log_bsize = %u\n", fs->e2fs.e2fs_log_bsize);
 	printf("fs->e2fs.e2fs_bpg = %u\n", fs->e2fs.e2fs_bpg);
 	printf("fs->e2fs.e2fs_ipg = %u\n", fs->e2fs.e2fs_ipg);
-	printf("fs->e2fs.e2fs_magic = 0x%x\n", fs->e2fs.e2fs_magic);
+	printf("fs->e2fs.e2fs_magic = %#x\n", fs->e2fs.e2fs_magic);
 	printf("fs->e2fs.e2fs_rev = %u\n", fs->e2fs.e2fs_rev);
 
 	if (fs->e2fs.e2fs_rev == E2FS_REV1) {

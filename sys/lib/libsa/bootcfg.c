@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.c,v 1.3 2018/04/02 09:44:19 nonaka Exp $	*/
+/*	$NetBSD: bootcfg.c,v 1.4 2019/03/31 20:08:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -98,8 +98,9 @@ int
 perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 {
 	char *bc, *c;
-	int cmenu, cbanner, len;
-	int fd, err, off;
+	int cmenu, cbanner;
+	ssize_t len, off;
+	int fd, err;
 	struct stat st;
 	char *next, *key, *value, *v2;
 
@@ -128,7 +129,7 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 		return EFBIG;
 	}
 
-	bc = alloc(st.st_size + 1);
+	bc = alloc((size_t)st.st_size + 1);
 	if (bc == NULL) {
 		printf("Could not allocate memory for boot configuration\n");
 		close(fd);
