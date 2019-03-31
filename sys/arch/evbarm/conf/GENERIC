@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.27 2019/03/09 15:25:33 skrll Exp $
+#	$NetBSD: GENERIC,v 1.28 2019/03/31 13:26:09 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -21,11 +21,6 @@ makeoptions	DTS="
 	bcm2837-rpi-3-b-plus.dts
 	bcm2837-rpi-cm3-io3.dts
 
-	exynos4412-odroidu3.dts
-	exynos4412-odroidx.dts
-	exynos4412-odroidx2.dts
-	exynos5410-odroidxu.dts
-	exynos5410-smdk5410.dts
 	exynos5422-odroidhc1.dts
 	exynos5422-odroidxu3-lite.dts
 	exynos5422-odroidxu3.dts
@@ -182,7 +177,6 @@ options 	CPU_CORTEXA53
 #options 	SOC_BCM2835
 options 	SOC_BCM2836
 
-options 	SOC_EXYNOS4412
 options 	SOC_EXYNOS5422
 
 options 	SOC_MESON8B
