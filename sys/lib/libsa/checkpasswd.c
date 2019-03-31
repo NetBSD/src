@@ -1,4 +1,4 @@
-/*	$NetBSD: checkpasswd.c,v 1.10 2016/09/05 21:11:11 dholland Exp $	*/
+/*	$NetBSD: checkpasswd.c,v 1.11 2019/03/31 20:08:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -85,7 +85,7 @@ getpass(const char *prompt)
 			break;
 		default:
 			if ((size_t)(lp - buf) < sizeof(buf) - 1) {
-				*lp++ = c;
+				*lp++ = (char)c;
 				putchar('*');
 			}
 			break;
@@ -122,7 +122,7 @@ check_password(const char *password)
 	for (i = 0; i < 3; i++) {
 		passwd = getpass("Password: ");
 		MD5Init(&md5ctx);
-		MD5Update(&md5ctx, passwd, strlen(passwd));
+		MD5Update(&md5ctx, passwd, (u_int)strlen(passwd));
 		MD5Final(pwdigest, &md5ctx);
 		if (memcmp(pwdigest, password, 16) == 0)
 			return 1;

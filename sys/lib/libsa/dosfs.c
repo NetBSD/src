@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.21 2016/03/11 18:38:25 christos Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.22 2019/03/31 20:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -282,7 +282,8 @@ dosfs_read(struct open_file *fd, void *vbuf, size_t nbyte, size_t *resid)
 	nb = (u_int) nbyte;
 	if ((size = fsize(f->fs, &f->de)) == -1)
 		return EINVAL;
-	if (nb > (n = size - f->offset))
+	n = (u_int)(size - f->offset);
+	if (nb > n)
 		nb = n;
 	off = f->offset;
 	if ((clus = stclus(f->fs->fatsz, &f->de)))
@@ -432,7 +433,7 @@ parsebs(DOS_FS *fs, DOS_BS *bs)
 	if (!(fs->spc = bs->bpb.bpbSecPerClust) || fs->spc & (fs->spc - 1))
 		return EINVAL;
 	fs->bsize = secbyt(fs->spc);
-	fs->bshift = ffs(fs->bsize) - 1;
+	fs->bshift = (u_int)ffs((int)fs->bsize) - 1;
 	if ((fs->spf = getushort(bs->bpb.bpbFATsecs))) {
 		if (bs->bpb.bpbFATs != 2)
 			return EINVAL;
@@ -483,7 +484,8 @@ namede(DOS_FS *fs, const char *path, const struct direntry **dep)
 	while (*path) {
 		if (!(s = strchr(path, '/')))
 			s = strchr(path, 0);
-		if ((n = s - path) > 255)
+		n = (size_t)(s - path);
+		if (n > 255)
 			return ENAMETOOLONG;
 		memcpy(name, path, n);
 		name[n] = 0;
@@ -571,7 +573,7 @@ lookup(DOS_FS *fs, u_int clus, const char *name, const struct direntry **dep)
 							for (x = 0, i = 0;
 							     i < 11; i++)
 								x = ((((x & 1) << 7) | (x >> 1)) +
-								    msdos_dirchar(&dir[ent].de,i)) & 0xff;
+								    (size_t)msdos_dirchar(&dir[ent].de,(size_t)i)) & 0xff;
 							ok = chk == x &&
 							    !strcasecmp(name, (const char *)lfn);
 						}
@@ -629,7 +631,7 @@ cp_xdnm(u_char *lfn, struct winentry *xde)
 		    p += 2, x--) {
 			if ((c = getushort(p)) && (c < 32 || c > 127))
 				c = '?';
-			if (!(*lfn++ = c))
+			if (!(*lfn++ = (u_char)c))
 				return;
 		}
 	if (xde->weCnt & WIN_LAST)
@@ -668,7 +670,7 @@ cp_sfn(u_char *sfn, struct direntry *de)
 static  off_t
 fsize(DOS_FS *fs, struct direntry *de)
 {
-	u_long  size;
+	size_t  size;
 	u_int   c;
 	int     n;
 
@@ -679,10 +681,10 @@ fsize(DOS_FS *fs, struct direntry *de)
 		} else {
 			if ((n = fatcnt(fs, c)) == -1)
 				return n;
-			size = blkbyt(fs, n);
+			size = (size_t)blkbyt(fs, n);
 		}
 	}
-	return size;
+	return (off_t)size;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.74 2015/09/01 06:16:58 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.75 2019/03/31 20:08:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -279,7 +279,7 @@ read_inode(ino32_t inumber, struct open_file *f)
 	    inode_sector, fs->fs_bsize, buf, &rsize);
 	if (rc)
 		return rc;
-	if (rsize != fs->fs_bsize)
+	if (rsize != (size_t)fs->fs_bsize)
 		return EIO;
 
 #ifdef LIBSA_LFS
@@ -387,7 +387,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 			buf, &rsize);
 		if (rc)
 			return rc;
-		if (rsize != fs->fs_bsize)
+		if (rsize != (size_t)fs->fs_bsize)
 			return EIO;
 		ind_block_num = buf[file_block >> level];
 		if (level == 0)
@@ -422,9 +422,9 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	off = ufs_blkoff(fs, fp->f_seekp);
 	file_block = ufs_lblkno(fs, fp->f_seekp);
 #ifdef LIBSA_LFS
-	block_size = dblksize(fs, &fp->f_di, file_block);
+	block_size = (size_t)dblksize(fs, &fp->f_di, file_block);
 #else
-	block_size = ffs_sblksize(fs, (int64_t)fp->f_di.di_size, file_block);
+	block_size = (size_t)ffs_sblksize(fs, (int64_t)fp->f_di.di_size, file_block);
 #endif
 
 	if (file_block != fp->f_buf_blkno) {

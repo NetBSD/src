@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.14 2016/08/27 06:31:42 dholland Exp $	*/
+/*	$NetBSD: gets.c,v 1.15 2019/03/31 20:08:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -48,7 +48,7 @@ kgets(char *buf, size_t size)
 	char *lp;
 
 	for (lp = buf;;) {
-		if (lp - buf == size) {
+		if ((size_t)(lp - buf) == size) {
 			lp--;
 			*lp = '\0';
 			return;
