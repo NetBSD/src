@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.38 2019/03/31 10:55:58 mlelstv Exp $	*/
+/*	$NetBSD: setup.c,v 1.39 2019/03/31 13:16:52 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.38 2019/03/31 10:55:58 mlelstv Exp $");
+__RCSID("$NetBSD: setup.c,v 1.39 2019/03/31 13:16:52 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -392,6 +392,8 @@ readsb(int listerr)
 	    sblk.b_un.b_fs->e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE;
 	memcpy(asblk.b_un.b_fs->e2fs_fsmnt, sblk.b_un.b_fs->e2fs_fsmnt,
 	    sizeof(asblk.b_un.b_fs->e2fs_fsmnt));
+	asblk.b_un.b_fs->e4fs_kbytes_written =
+	    sblk.b_un.b_fs->e4fs_kbytes_written;
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    ((sblock.e2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP_FSCK) ||
 	    (sblock.e2fs.e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP_FSCK))) {
