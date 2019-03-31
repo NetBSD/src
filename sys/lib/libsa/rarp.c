@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.32 2014/03/29 14:30:16 jakllsch Exp $	*/
+/*	$NetBSD: rarp.c,v 1.33 2019/03/31 20:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -104,15 +104,15 @@ rarp_getipaddress(int sock)
 
 #ifdef RARP_DEBUG
  	if (debug)
-		printf("rarp: socket=%d\n", sock);
+		printf("%s: socket=%d\n", __func__, sock);
 #endif
 	if (!(d = socktodesc(sock))) {
-		printf("rarp: bad socket. %d\n", sock);
+		printf("%s: bad socket. %d\n", __func__, sock);
 		return -1;
 	}
 #ifdef RARP_DEBUG
  	if (debug)
-		printf("rarp: d=%lx\n", (u_long)d);
+		printf("%s: d=%p\n", __func__, d);
 #endif
 
 	(void)memset(&wbuf.data, 0, sizeof(wbuf.data));
@@ -161,7 +161,7 @@ rarpsend(struct iodesc *d, void *pkt, size_t len)
 
 #ifdef RARP_DEBUG
  	if (debug)
-		printf("rarpsend: called\n");
+		printf("%s: called\n", __func__);
 #endif
 
 	return sendether(d, pkt, len, bcea, ETHERTYPE_REVARP);
@@ -180,7 +180,7 @@ rarprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 
 #ifdef RARP_DEBUG
  	if (debug)
-		printf("rarprecv: ");
+		printf("%s: ", __func__);
 #endif
 
 	n = readether(d, pkt, len, tleft, &etype);
@@ -196,7 +196,7 @@ rarprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	if (etype != ETHERTYPE_REVARP) {
 #ifdef RARP_DEBUG
 		if (debug)
-			printf("bad type=0x%x\n", etype);
+			printf("bad type=%#x\n", etype);
 #endif
 		return -1;
 	}
@@ -217,7 +217,7 @@ rarprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	if (ap->arp_op != htons(ARPOP_REVREPLY)) {
 #ifdef RARP_DEBUG
 		if (debug)
-			printf("bad op=0x%x\n", ntohs(ap->arp_op));
+			printf("bad op=%#x\n", ntohs(ap->arp_op));
 #endif
 		return -1;
 	}
