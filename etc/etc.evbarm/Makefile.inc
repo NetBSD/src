@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.104 2019/03/31 13:03:04 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.105 2019/03/31 13:04:54 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -24,8 +24,6 @@ EVBARM_BOARDS.armv7+=		BCM5301X
 EVBARM_BOARDS.armv7hf+=		BCM5301X
 #EVBARM_BOARDS.armv7+=		BCM56340
 #EVBARM_BOARDS.armv7hf+= 	BCM56340
-KERNEL_SETS.armv7+=		SUNXI
-KERNEL_SETS.armv7hf+=		SUNXI
 .else
 IMAGEENDIAN=	le
 # little endian boards
@@ -112,8 +110,6 @@ EVBARM_BOARDS.armv7+=		PANDABOARD
 EVBARM_BOARDS.armv7hf+= 	PANDABOARD
 EVBARM_BOARDS.armv7+=		RPI2
 EVBARM_BOARDS.armv7hf+=	 	RPI2
-#KERNEL_SETS.armv7+=		SUNXI
-#KERNEL_SETS.armv7hf+=		SUNXI
 
 KERNEL_SETS.arm64+=		GENERIC64
 .endif
