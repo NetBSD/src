@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.103 2019/03/30 13:53:19 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.104 2019/03/31 13:03:04 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -114,8 +114,6 @@ EVBARM_BOARDS.armv7+=		RPI2
 EVBARM_BOARDS.armv7hf+=	 	RPI2
 #KERNEL_SETS.armv7+=		SUNXI
 #KERNEL_SETS.armv7hf+=		SUNXI
-#KERNEL_SETS.armv7+=		TEGRA
-#KERNEL_SETS.armv7hf+=		TEGRA
 
 KERNEL_SETS.arm64+=		GENERIC64
 .endif

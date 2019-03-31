@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.19 2019/03/02 19:59:06 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.20 2019/03/31 13:03:04 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -55,7 +55,6 @@ RPI2		2015/03/04	Raspberry Pi 2
 SUNXI		2017/06/28	Allwinner family SoCs (FDT)
 TEAMASA_NPWR	2002/02/07	Team ASA Npwr IOP310 based server appliance
 TEAMASA_NPWR_FC	2003/12/24	Team ASA NPWR-FC i80321 server appliance
-TEGRA		2015/05/29	NVIDIA Tegra family SoCs (FDT)
 TISDP2420	2008/04/27	TI OMAP 2420 eval board
 TISDP2430	2008/04/27	TI OMAP 2430 eval board
 TOASTER		2005/08/14	NetBSD/toaster based on TS-7200
