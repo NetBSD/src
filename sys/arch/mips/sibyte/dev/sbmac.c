@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.55 2019/03/05 08:25:02 msaitoh Exp $ */
+/* $NetBSD: sbmac.c,v 1.56 2019/03/31 12:47:33 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.55 2019/03/05 08:25:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.56 2019/03/31 12:47:33 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.55 2019/03/05 08:25:02 msaitoh Exp $");
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -102,10 +102,9 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 
 #define	SBDMA_NEXTBUF(d, f)	((f + 1) & (d)->sbdma_dscr_mask)
 
-#define	CACHELINESIZE 32
-#define	NUMCACHEBLKS(x) (((x)+CACHELINESIZE-1)/CACHELINESIZE)
-#define	KMALLOC(x) malloc((x), M_DEVBUF, M_DONTWAIT)
-#define	KVTOPHYS(x) kvtophys((vaddr_t)(x))
+#define	CACHELINESIZE	32
+#define	NUMCACHEBLKS(x)	(((x)+CACHELINESIZE-1)/CACHELINESIZE)
+#define	KVTOPHYS(x)	kvtophys((vaddr_t)(x))
 
 #ifdef SBMACDEBUG
 #define	dprintf(x)	printf x
@@ -380,6 +379,8 @@ static void
 sbdma_initctx(sbmacdma_t *d, struct sbmac_softc *sc, int chan, int txrx,
     int maxdescr)
 {
+	uintptr_t ptr;
+
 	/*
 	 * Save away interesting stuff in the structure
 	 */
@@ -404,16 +405,15 @@ sbdma_initctx(sbmacdma_t *d, struct sbmac_softc *sc, int chan, int txrx,
 	    R_MAC_DMA_REGISTER(txrx, chan, R_MAC_DMA_CUR_DSCRADDR));
 
 	/*
-	 * Allocate memory for the ring
+	 * Allocate memory for the ring.  This must be aligned to a
+	 * 32-byte cache line boundary on pass1 or pass2 silicon.
 	 */
 
 	d->sbdma_maxdescr = maxdescr;
 	d->sbdma_dscr_mask = d->sbdma_maxdescr - 1;
-
-	d->sbdma_dscrtable = (sbdmadscr_t *)
-	    KMALLOC(d->sbdma_maxdescr * sizeof(sbdmadscr_t));
-
-	memset(d->sbdma_dscrtable, 0, d->sbdma_maxdescr*sizeof(sbdmadscr_t));
+	ptr = (uintptr_t)kmem_zalloc(d->sbdma_maxdescr * sizeof(sbdmadscr_t) +
+	    CACHELINESIZE - 1, KM_SLEEP);
+	d->sbdma_dscrtable = (sbdmadscr_t *)roundup2(ptr, CACHELINESIZE);
 
 	d->sbdma_dscrtable_phys = KVTOPHYS(d->sbdma_dscrtable);
 
@@ -422,9 +422,7 @@ sbdma_initctx(sbmacdma_t *d, struct sbmac_softc *sc, int chan, int txrx,
 	 */
 
 	d->sbdma_ctxtable = (struct mbuf **)
-	    KMALLOC(d->sbdma_maxdescr*sizeof(struct mbuf *));
-
-	memset(d->sbdma_ctxtable, 0, d->sbdma_maxdescr*sizeof(struct mbuf *));
+	    kmem_zalloc(d->sbdma_maxdescr * sizeof(struct mbuf *), KM_SLEEP);
 }
 
 /*
