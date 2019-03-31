@@ -1,4 +1,4 @@
-/* $NetBSD: sbc_encode.c,v 1.4 2019/03/31 11:33:27 nat Exp $ */
+/* $NetBSD: sbc_encode.c,v 1.5 2019/03/31 11:44:11 nat Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -609,7 +609,7 @@ sbc_decode(int32_t *samples, int16_t *pcm)
 					audioout = ((((samples[numsamples]
 					    * 2) + 1) * delta[chan][sb]) /
 					    levels[chan][sb]) -
-					    delta[chan][sb]);
+					    delta[chan][sb];
 				}
 				samples[numsamples] = (int32_t)audioout;
 				numsamples++;
