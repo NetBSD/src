@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.11 2011/05/11 16:23:40 zoltan Exp $	*/
+/*	$NetBSD: udp.c,v 1.12 2019/03/31 16:14:48 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -117,7 +117,7 @@ readudp(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 #ifdef NET_DEBUG
 		if (debug)
 			printf("readudp: bad dport %d != %d\n",
-				d->myport, ntohs(uh->uh_dport));
+				ntohs(d->myport), ntohs(uh->uh_dport));
 #endif
 		return -1;
 	}
