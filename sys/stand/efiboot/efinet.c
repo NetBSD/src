@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.5 2019/03/05 08:25:03 msaitoh Exp $	*/
+/*	$NetBSD: efinet.c,v 1.6 2019/03/31 22:24:41 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -117,6 +117,33 @@ dump_mode(EFI_SIMPLE_NETWORK_MODE *mode)
 }
 #endif
 
+static const EFI_MAC_ADDRESS *
+efinet_hwaddr(const EFI_SIMPLE_NETWORK_MODE *mode)
+{
+	int valid, n;
+
+	for (valid = 0, n = 0; n < mode->HwAddressSize; n++)
+		if (mode->CurrentAddress.Addr[n] != 0x00) {
+			valid = true;
+			break;
+		}
+	if (!valid)
+		goto use_permanent;
+
+	for (valid = 0, n = 0; n < mode->HwAddressSize; n++)
+		if (mode->CurrentAddress.Addr[n] != 0xff) {
+			valid = true;
+			break;
+		}
+	if (!valid)
+		goto use_permanent;
+
+	return &mode->CurrentAddress;
+
+use_permanent:
+	return &mode->PermanentAddress;
+}
+
 static int
 efinet_match(struct netif *nif, void *machdep_hint)
 {
@@ -143,12 +170,16 @@ efinet_put(struct iodesc *desc, void *pkt, size_t len)
 	EFI_SIMPLE_NETWORK *net;
 	EFI_STATUS status;
 	void *buf;
+	char *ptr;
 
 	if (eni == NULL)
 		return -1;
 	net = eni->net;
 
-	status = uefi_call_wrapper(net->Transmit, 7, net, 0, (UINTN)len, pkt, NULL,
+	ptr = eni->pktbuf;
+
+	memcpy(ptr, pkt, len);
+	status = uefi_call_wrapper(net->Transmit, 7, net, 0, (UINTN)len, ptr, NULL,
 	    NULL, NULL);
 	if (EFI_ERROR(status))
 		return -1;
@@ -202,6 +233,7 @@ efinet_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 		if (!EFI_ERROR(status)) {
 			rsz = uimin(rsz, len);
 			memcpy(pkt, ptr, rsz);
+
 			ret = (int)rsz;
 			break;
 		}
@@ -252,7 +284,7 @@ efinet_init(struct iodesc *desc, void *machdep_hint)
 
 	status = uefi_call_wrapper(net->ReceiveFilters, 6, net, mask, 0, FALSE,
 	    0, NULL);
-	if (EFI_ERROR(status) && status != EFI_INVALID_PARAMETER) {
+	if (EFI_ERROR(status) && status != EFI_INVALID_PARAMETER && status != EFI_UNSUPPORTED) {
 		printf("net%d: cannot set rx. filters (status=%" PRIxMAX ")\n",
 		    nif->nif_unit, (uintmax_t)status);
 		return;
@@ -272,7 +304,7 @@ efinet_init(struct iodesc *desc, void *machdep_hint)
 	dump_mode(net->Mode);
 #endif
 
-	memcpy(desc->myea, net->Mode->PermanentAddress.Addr, 6);
+	memcpy(desc->myea, efinet_hwaddr(net->Mode)->Addr, 6);
 	desc->xid = 1;
 }
 
@@ -289,44 +321,13 @@ efinet_end(struct netif *nif)
 	uefi_call_wrapper(net->Shutdown, 1, net);
 }
 
-static bool
-efi_net_pci_probe(struct efinetinfo *eni, EFI_DEVICE_PATH *dp, EFI_DEVICE_PATH *pdp)
-{
-#if notyet
-	PCI_DEVICE_PATH *pci = (PCI_DEVICE_PATH *)dp;
-#endif
-	int bus = -1;
-
-	if (pdp != NULL &&
-	    DevicePathType(pdp) == ACPI_DEVICE_PATH &&
-	    (DevicePathSubType(pdp) == ACPI_DP ||
-	     DevicePathSubType(pdp) == EXPANDED_ACPI_DP)) {
-		ACPI_HID_DEVICE_PATH *acpi = (ACPI_HID_DEVICE_PATH *)pdp;
-		/* PCI root bus */
-		if (acpi->HID == EISA_PNP_ID(0x0A08) ||
-		    acpi->HID == EISA_PNP_ID(0x0A03)) {
-			bus = acpi->UID;
-		}
-	}
-	if (bus < 0)
-		return false;
-
-#if notyet
-	eni->bus.type = BI_BUS_PCI;
-	eni->bus.tag = (bus & 0xff) << 8;
-	eni->bus.tag |= (pci->Device & 0x1f) << 3;
-	eni->bus.tag |= pci->Function & 0x7;
-#endif
-	return true;
-}
-
 void
 efi_net_probe(void)
 {
 	struct efinetinfo *enis;
 	struct netif_dif *dif;
 	struct netif_stats *stats;
-	EFI_DEVICE_PATH *dp0, *dp, *pdp;
+	EFI_DEVICE_PATH *dp0, *dp;
 	EFI_SIMPLE_NETWORK *net;
 	EFI_HANDLE *handles;
 	EFI_STATUS status;
@@ -375,45 +376,33 @@ efi_net_probe(void)
 			printf("Unable to open network interface %" PRIuMAX
 			    " for exclusive access: %" PRIxMAX "\n",
 			    (uintmax_t)i, (uintmax_t)status);
+			continue;
 		}
 
-		found = false;
-		for (pdp = NULL, dp = dp0;
-		    !IsDevicePathEnd(dp);
-		    pdp = dp, dp = NextDevicePathNode(dp)) {
-			if (DevicePathType(dp) == HARDWARE_DEVICE_PATH) {
-				if (DevicePathSubType(dp) == HW_PCI_DP)
-					found = efi_net_pci_probe(&enis[nifs],
-					    dp, pdp);
-				break;
+		enis[nifs].net = net;
+		enis[nifs].bootdev = efi_pxe_match_booted_interface(
+		    efinet_hwaddr(net->Mode), net->Mode->HwAddressSize);
+		enis[nifs].pktbufsz = net->Mode->MaxPacketSize +
+		    ETHER_EXT_LEN;
+		enis[nifs].pktbuf = alloc(enis[nifs].pktbufsz);
+		if (enis[nifs].pktbuf == NULL) {
+			while (i-- > 0) {
+				dealloc(enis[i].pktbuf, enis[i].pktbufsz);
+				if (i == 0)
+					break;
 			}
+			dealloc(enis, nhandles * sizeof(*enis));
+			FreePool(handles);
+			return;
 		}
-		if (found) {
-			enis[nifs].net = net;
-			enis[nifs].bootdev = efi_pxe_match_booted_interface(
-			    &net->Mode->PermanentAddress, net->Mode->HwAddressSize);
-			enis[nifs].pktbufsz = net->Mode->MaxPacketSize +
-			    ETHER_EXT_LEN;
-			enis[nifs].pktbuf = alloc(enis[nifs].pktbufsz);
-			if (enis[nifs].pktbuf == NULL) {
-				while (i-- > 0) {
-					dealloc(enis[i].pktbuf, enis[i].pktbufsz);
-					if (i == 0)
-						break;
-				}
-				dealloc(enis, nhandles * sizeof(*enis));
-				FreePool(handles);
-				return;
-			}
 
-			if (depth > 0 && efi_device_path_ncmp(efi_bootdp, dp0, depth) == 0) {
-				char devname[9];
-				snprintf(devname, sizeof(devname), "net%u", nifs);
-				set_default_device(devname);
-			}
-
-			nifs++;
+		if (depth > 0 && efi_device_path_ncmp(efi_bootdp, dp0, depth) == 0) {
+			char devname[9];
+			snprintf(devname, sizeof(devname), "net%u", nifs);
+			set_default_device(devname);
 		}
+
+		nifs++;
 	}
 
 	FreePool(handles);
@@ -463,17 +452,12 @@ efi_net_show(void)
 
 		printf("net%d", dif->dif_unit);
 		if (net->Mode != NULL) {
+			const EFI_MAC_ADDRESS *mac = efinet_hwaddr(net->Mode);
 			for (UINT32 x = 0; x < net->Mode->HwAddressSize; x++) {
 				printf("%c%02x", x == 0 ? ' ' : ':',
-				    net->Mode->PermanentAddress.Addr[x]);
+				    mac->Addr[x]);
 			}
 		}
-#if notyet
-		if (eni->bus.type == BI_BUS_PCI) {
-			printf(" pci%d,%d,%d", (eni->bus.tag >> 8) & 0xff,
-			    (eni->bus.tag >> 3) & 0x1f, eni->bus.tag & 0x7);
-		}
-#endif
 		if (eni->bootdev)
 			printf(" pxeboot");
 		printf("\n");
