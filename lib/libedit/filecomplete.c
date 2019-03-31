@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.52 2019/03/24 16:42:49 abhinav Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.53 2019/03/31 03:04:57 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.52 2019/03/24 16:42:49 abhinav Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.53 2019/03/31 03:04:57 abhinav Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -159,6 +159,23 @@ needs_escaping(char c)
 	}
 }
 
+
+static wchar_t *
+unescape_string(const wchar_t *string, size_t length)
+{
+	wchar_t *unescaped = el_malloc(sizeof(*string) * (length + 1));
+	if (unescaped == NULL)
+		return NULL;
+	size_t j = 0;
+	for (size_t i = 0; i < length ; i++) {
+		if (string[i] == '\\')
+			continue;
+		unescaped[j++] = string[i];
+	}
+	unescaped[j] = 0;
+	return unescaped;
+}
+
 static char *
 escape_filename(EditLine * el, const char *filename)
 {
@@ -172,6 +189,8 @@ escape_filename(EditLine * el, const char *filename)
 	size_t d_quoted = 0;	/* does the input contain a double quote */
 	char *escaped_str;
 	wchar_t *temp = el->el_line.buffer;
+	if (filename == NULL)
+		return NULL;
 
 	while (temp != el->el_line.cursor) {
 		/*
@@ -534,9 +553,7 @@ find_word_to_complete(const wchar_t * cursor, const wchar_t * buffer,
 {
 	/* We now look backwards for the start of a filename/variable word */
 	const wchar_t *ctemp = cursor;
-	int cursor_at_quote;
 	size_t len;
-	wchar_t *temp;
 
 	/* if the cursor is placed at a slash or a quote, we need to find the
 	 * word before it
@@ -546,30 +563,34 @@ find_word_to_complete(const wchar_t * cursor, const wchar_t * buffer,
 		case '\\':
 		case '\'':
 		case '"':
-			cursor_at_quote = 1;
 			ctemp--;
 			break;
 		default:
-			cursor_at_quote = 0;
+			break;
 		}
-	} else
-		cursor_at_quote = 0;
+	}
 
-	while (ctemp > buffer
-	    && !wcschr(word_break, ctemp[-1])
-	    && (!special_prefixes || !wcschr(special_prefixes, ctemp[-1])))
+	for (;;) {
+		if (ctemp <= buffer)
+			break;
+		if (wcschr(word_break, ctemp[-1])) {
+			if (ctemp - buffer >= 2 && ctemp[-2] == '\\') {
+				ctemp -= 2;
+				continue;
+			} else
+				break;
+		}
+		if (special_prefixes && wcschr(special_prefixes, ctemp[-1]))
+			break;
 		ctemp--;
+	}
 
-	len = (size_t) (cursor - ctemp - cursor_at_quote);
-	temp = el_malloc((len + 1) * sizeof(*temp));
-	if (temp == NULL)
-		return NULL;
-	(void) wcsncpy(temp, ctemp, len);
-	temp[len] = '\0';
-	if (cursor_at_quote)
-		len++;
+	len = (size_t) (cursor - ctemp);
 	*length = len;
-	return temp;
+	wchar_t *unescaped_word = unescape_string(ctemp, len);
+	if (unescaped_word == NULL)
+		return NULL;
+	return unescaped_word;
 }
 
 /*
@@ -595,6 +616,7 @@ fn_complete(EditLine *el,
 	const LineInfoW *li;
 	wchar_t *temp;
 	char **matches;
+	char *completion;
 	size_t len;
 	int what_to_do = '\t';
 	int retval = CC_NORM;
@@ -649,33 +671,32 @@ fn_complete(EditLine *el,
 
 		if (matches[0][0] != '\0') {
 			el_deletestr(el, (int) len);
+			if (!attempted_completion_function)
+				completion = escape_filename(el, matches[0]);
+			else
+				completion = strdup(matches[0]);
+			if (completion == NULL)
+				goto out;
 			if (single_match) {
 				/*
 				 * We found exact match. Add a space after
 				 * it, unless we do filename completion and the
 				 * object is a directory. Also do necessary escape quoting
 				 */
-				char *completion;
-				if (!attempted_completion_function)
-					completion = escape_filename(el, matches[0]);
-				else
-					completion = strdup(matches[0]);
-				if (completion == NULL)
-					goto out;
 				el_winsertstr(el,
 					ct_decode_string(completion, &el->el_scratch));
 				el_winsertstr(el,
 						ct_decode_string((*app_func)(completion),
 							&el->el_scratch));
-				free(completion);
 			} else {
 				/*
 				 * Only replace the completed string with common part of
 				 * possible matches if there is possible completion.
 				 */
 				el_winsertstr(el,
-					ct_decode_string(matches[0], &el->el_scratch));
+					ct_decode_string(completion, &el->el_scratch));
 			}
+			free(completion);
 		}
 
 
