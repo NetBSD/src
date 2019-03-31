@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.37 2019/03/31 10:52:00 mlelstv Exp $	*/
+/*	$NetBSD: setup.c,v 1.38 2019/03/31 10:55:58 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.37 2019/03/31 10:52:00 mlelstv Exp $");
+__RCSID("$NetBSD: setup.c,v 1.38 2019/03/31 10:55:58 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: setup.c,v 1.37 2019/03/31 10:52:00 mlelstv Exp $");
 #include <ufs/ext2fs/ext2fs.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/file.h>
 
 #include <errno.h>
@@ -84,19 +84,31 @@ __RCSID("$NetBSD: setup.c,v 1.37 2019/03/31 10:52:00 mlelstv Exp $");
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
+#include "partutil.h"
 #include "exitvalues.h"
 
 void badsb(int, const char *);
 int calcsb(const char *, int, struct m_ext2fs *);
-static struct disklabel *getdisklabel(const char *, int);
 static int readsb(int);
+
+/*    
+ * For file systems smaller than SMALL_FSSIZE we use the S_DFL_* defaults,
+ * otherwise if less than MEDIUM_FSSIZE use M_DFL_*, otherwise use 
+ * L_DFL_*.
+ */
+#define SMALL_FSSIZE    ((4 * 1024 * 1024) / secsize)        /* 4MB */  
+#define S_DFL_BSIZE     1024 
+#define MEDIUM_FSSIZE   ((512 * 1024 * 1024) / secsize)      /* 512MB */
+#define M_DFL_BSIZE     1024 
+#define L_DFL_BSIZE     4096
 
 int
 setup(const char *dev)
 {
 	long cg, asked, i;
 	long bmapsize;
-	struct disklabel *lp;
+	struct disk_geom geo;
+	struct dkwedge_info dkw;
 	off_t sizepb;
 	struct stat statb;
 	struct m_ext2fs proto;
@@ -137,8 +149,8 @@ setup(const char *dev)
 	asblk.b_un.b_buf = malloc(SBSIZE);
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL)
 		errexit("cannot allocate space for superblock");
-	if ((lp = getdisklabel(NULL, fsreadfd)) != NULL)
-		dev_bsize = secsize = lp->d_secsize;
+	if (getdiskinfo(dev, fsreadfd, NULL, &geo, &dkw) != -1)
+		dev_bsize = secsize = geo.dg_secsize;
 	else
 		dev_bsize = secsize = DEV_BSIZE;
 	/*
@@ -488,35 +500,27 @@ badsb(int listerr, const char *s)
 int
 calcsb(const char *dev, int devfd, struct m_ext2fs *fs)
 {
-	struct disklabel *lp;
-	struct partition *pp;
-	char *cp;
+	struct dkwedge_info dkw;
+	struct disk_geom geo;
 
-	cp = strchr(dev, '\0');
-	if (cp-- == dev ||
-	    ((*cp < 'a' || *cp > 'a' + MAXPARTITIONS - 1) && !isdigit((unsigned char)*cp))) {
+	if (getdiskinfo(dev, devfd, NULL, &geo, &dkw) == -1)
+		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
+	if (dkw.dkw_parent[0] == '\0') {
 		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
 		return 0;
 	}
-	lp = getdisklabel(dev, devfd);
-	if (isdigit((unsigned char)*cp))
-		pp = &lp->d_partitions[0];
-	else
-		pp = &lp->d_partitions[*cp - 'a'];
-	if (pp->p_fstype != FS_EX2FS) {
-		pfatal("%s: NOT LABELED AS A EXT2 FILE SYSTEM (%s)\n",
-		    dev, pp->p_fstype < FSMAXTYPES ?
-		    fstypenames[pp->p_fstype] : "unknown");
-		return 0;
-	}
-	if (pp->p_fsize == 0) {
-		pfatal("%s: PARTITION SIZE IS 0\n", dev);
-		return 0;
-	}
+
 	memset(fs, 0, sizeof(struct m_ext2fs));
-	fs->e2fs_bsize = pp->p_fsize;
-	fs->e2fs.e2fs_log_bsize = ilog2(pp->p_fsize / 1024);
-	fs->e2fs.e2fs_bcount = (pp->p_size * DEV_BSIZE) / fs->e2fs_bsize;
+
+	if (dkw.dkw_size < (uint64_t)SMALL_FSSIZE)
+		fs->e2fs_bsize = S_DFL_BSIZE;
+	else if (dkw.dkw_size < (uint64_t)MEDIUM_FSSIZE)
+		fs->e2fs_bsize = M_DFL_BSIZE;
+	else
+		fs->e2fs_bsize = L_DFL_BSIZE;
+
+	fs->e2fs.e2fs_log_bsize = ilog2(fs->e2fs_bsize / 1024);
+	fs->e2fs.e2fs_bcount = (fs->e2fs_bsize * DEV_BSIZE) / fs->e2fs_bsize;
 	fs->e2fs.e2fs_first_dblock = (fs->e2fs.e2fs_log_bsize == 0) ? 1 : 0;
 	fs->e2fs.e2fs_bpg = fs->e2fs_bsize * NBBY;
 	fs->e2fs_bshift = LOG_MINBSIZE + fs->e2fs.e2fs_log_bsize;
@@ -530,20 +534,6 @@ calcsb(const char *dev, int devfd, struct m_ext2fs *fs)
 	    fs->e2fs_bsize / sizeof(struct ext2_gd));
 
 	return 1;
-}
-
-static struct disklabel *
-getdisklabel(const char *s, int fd)
-{
-	static struct disklabel lab;
-
-	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
-		if (s == NULL)
-			return NULL;
-		pwarn("ioctl (GCINFO): %s\n", strerror(errno));
-		errexit("%s: can't read disk label", s);
-	}
-	return &lab;
 }
 
 daddr_t
