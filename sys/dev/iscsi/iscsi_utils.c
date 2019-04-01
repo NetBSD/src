@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.25 2019/02/01 08:33:29 mrg Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.26 2019/04/01 06:20:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -571,7 +571,7 @@ init_sernum(sernum_buffer_t *buff)
  *    Returns:
  *          0     if the received block is a duplicate
  *          1     if the number is the expected one
- *          >1    if the numer is > the expected value, in this case the
+ *          >1    if the number is > the expected value, in this case the
  *                return value is the number of unacknowledged blocks
  *          <0    if the buffer is full (i.e. an excessive number of blocks
  *                is unacknowledged)
