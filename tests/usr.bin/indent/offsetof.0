@@ -1,0 +1,6 @@
+/*	$NetBSD$	*/
+/* $FreeBSD: head/usr.bin/indent/tests/offsetof.0 313544 2017-02-10 09:31:39Z pstef $ */
+/* See r303718 */
+void t(void) {
+	int n = malloc(offsetof(struct s, f) + 1);
+}

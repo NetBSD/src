@@ -1,0 +1,10 @@
+/*	$NetBSD$	*/
+/* $FreeBSD: head/usr.bin/indent/tests/surplusbad.0.stdout 313544 2017-02-10 09:31:39Z pstef $ */
+/* See r303599 */
+#if defined(__i386__)
+int		a;
+#elif defined(__amd64__)
+int		b;
+#else
+#error "Port me"
+#endif

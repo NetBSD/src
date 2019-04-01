@@ -4,4 +4,6 @@
 PROG=	indent
 SRCS=	indent.c io.c lexi.c parse.c pr_comment.c args.c
 
+COPTS.io.c += -Wno-error=format-nonliteral
+
 .include <bsd.prog.mk>
