@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.134 2019/01/10 10:33:49 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.135 2019/04/01 06:12:51 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.134 2019/01/10 10:33:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.135 2019/04/01 06:12:51 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1083,7 +1083,7 @@ const struct db_command db_machine_command_table[] = {
 	   "pa", "   pa:\tphysical address to look up") },
 	{ DDB_ADD_CMD("phys",	db_pload_cmd,	0,
 	   "Display physical memory.", "[address][,count]",
-	   "   adddress:\tphysical address to start (8 byte aligned)\n"
+	   "   address:\tphysical address to start (8 byte aligned)\n"
 	   "   count:\tnumber of bytes to display") },
 	{ DDB_ADD_CMD("pmap",	db_pmap_cmd,	0,
 	   "Display the pmap", "[/f] [pm_addr]",

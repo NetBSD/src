@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.70 2017/07/24 09:56:45 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.71 2019/04/01 06:12:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -223,7 +223,7 @@ void	pmap_prefer(vaddr_t, vaddr_t *, vsize_t, int);
 
 #define	PMAP_ENABLE_PMAP_KMPAGE	/* enable the PMAP_KMPAGE flag */
 
-// these use register_t so we can pass XKPHYS adddresses to them on N32
+// these use register_t so we can pass XKPHYS addresses to them on N32
 bool	pmap_md_direct_mapped_vaddr_p(register_t);
 paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(register_t);
 bool	pmap_md_io_vaddr_p(vaddr_t);
