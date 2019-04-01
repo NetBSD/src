@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.11 2017/07/28 14:26:50 maxv Exp $	*/
+/*	$NetBSD: msipic.c,v 1.12 2019/04/01 06:20:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.11 2017/07/28 14:26:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.12 2019/04/01 06:20:40 msaitoh Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -94,7 +94,7 @@ static LIST_HEAD(, msipic) msipic_list =
 
 /*
  * This struct managements "devid" to use the same "devid" for the device
- * re-attached. If the device's bus number and device numer and function
+ * re-attached. If the device's bus number and device number and function
  * number are equal, it is assumed re-attached.
  */
 struct dev_last_used_seq {
