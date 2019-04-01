@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.236 2019/03/30 14:42:21 sevan Exp $
+$NetBSD: acronyms.comp,v 1.237 2019/04/01 02:15:00 uwe Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -725,6 +725,7 @@ ITSM	IT service management
 IV	initialization vector
 IVT	interrupt vector table
 JBOD	just a bunch of disks
+JCL	Jenkins Control Language
 JFET	junction [gate] field-effect transistor
 JIT	just in time
 JPEG	Joint Photographic Experts Group
