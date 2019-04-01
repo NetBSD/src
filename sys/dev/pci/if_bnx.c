@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.74 2019/03/29 08:54:35 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.75 2019/04/01 06:12:51 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.74 2019/03/29 08:54:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.75 2019/04/01 06:12:51 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -6416,7 +6416,7 @@ bnx_dump_driver_state(struct bnx_softc *sc)
 	    "address\n", sc->stats_block);
 
 	BNX_PRINTF(sc, "%p - (sc->tx_bd_chain) tx_bd chain virtual "
-	    "adddress\n", sc->tx_bd_chain);
+	    "address\n", sc->tx_bd_chain);
 
 #if 0
 	BNX_PRINTF(sc, "%p - (sc->rx_bd_chain) rx_bd chain virtual address\n",
