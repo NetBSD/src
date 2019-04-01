@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.121 2019/03/29 19:59:40 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.122 2019/04/01 12:36:44 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2775,4 +2775,26 @@ sys/dev/usb/if_url.c				1.62
 	but if_media_add() doesn't. When mii_phy_add_media() isn't used,
 	call pmf_device_register().
 	[msaitoh, ticket #1224]
+
+sys/dev/pci/ixgbe/ixgbe.c		1.175-1.178
+sys/dev/pci/ixgbe/ixv.c			1.110-1.111 via patch
+
+	- NetBSD currently uses traffic class 0 only. Other traffic classes
+	  aren't used yet. When IXGBE_TC_COUNTER_NUM is set to lower than
+	  IXGBE_DCB_MAX_TRAFFIC_CLASS (e.g. 1), other traffic classes' counters
+	  are not used. It means we don't generate evcnt for them and don't
+	  add the values in ixgbe_update_stats_counters().
+	- It's not required to calculate unused queues' statistics.
+	- Fix a bug that the VLAN HW tagging function is not correctly disabled
+	  when all vlan is detached.
+	- Fix a bug that VLAN HW tagging function is not correctly controlled
+	  on 82598.
+	- Control VLAN HW filter function correctly. Note that currently
+	  VLAN HW filter function doesn't work because NetBSD doesn't support
+	  it yet.
+	- Don't clear IXGBE_VLNCTRL_CFIEN bit When ETHERCAP_VLAN_HWFILTER is
+	  set. I think it's not required (and Linux doesn't do it). This change
+	  has no effect to NetBSD because ETHERCAP_VLAN_HWFILTER is not
+	  supported yet.
+	[msaitoh, ticket #1225]
 
