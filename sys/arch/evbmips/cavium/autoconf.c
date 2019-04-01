@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2015/06/06 22:23:31 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2019/04/01 06:12:51 msaitoh Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2015/06/06 22:23:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2019/04/01 06:12:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ prop_set_cnmac(device_t dev)
 	KASSERT(pd != NULL);
 	prop_dictionary_set_and_rel(dict, "mac-address", pd);
 
-	/* ethernet phy adddress */
+	/* ethernet phy address */
 	switch (octeon_btinfo.obt_board_type) {
 	case BOARD_TYPE_UBIQUITI_E100:
 		pn = prop_number_create_integer(0x07 - unit);
