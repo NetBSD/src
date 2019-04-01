@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.22.2.7 2018/08/07 13:33:23 martin Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.22.2.8 2019/04/01 12:35:38 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -3851,6 +3851,21 @@ struct ixgbe_fc_info {
 	enum ixgbe_fc_mode requested_mode; /* FC mode requested by caller */
 };
 
+/*
+ * NetBSD currently uses traffic class 0 only. Other traffic classes aren't
+ * used yet. When IXGBE_TC_COUNTER_NUM is set to lower than
+ * IXGBE_DCB_MAX_TRAFFIC_CLASS (e.g. 1), other traffic classes' counters are
+ * not used. It means we don't generate evcnt for them and don't add the values
+ * in ixgbe_update_stats_counters().
+ */
+#if !defined(IXGBE_TC_COUNTER_NUM)
+#define IXGBE_TC_COUNTER_NUM IXGBE_DCB_MAX_TRAFFIC_CLASS
+#endif
+#if ((IXGBE_TC_COUNTER_NUM < 1)					\
+    || (IXGBE_TC_COUNTER_NUM > IXGBE_DCB_MAX_TRAFFIC_CLASS))
+#error Wrong IXGBE_TC_COUNTER_NUM value
+#endif
+
 /* Statistics counters collected by the MAC */
 struct ixgbe_hw_stats {
 	char namebuf[32];
@@ -3865,7 +3880,7 @@ struct ixgbe_hw_stats {
 	struct evcnt mspdc;
 	struct evcnt mbsdc;
 	struct evcnt mpctotal;
-	struct evcnt mpc[8];
+	struct evcnt mpc[IXGBE_TC_COUNTER_NUM];
 	struct evcnt mlfc;
 	struct evcnt mrfc;
 	struct evcnt rlec;
@@ -3873,10 +3888,10 @@ struct ixgbe_hw_stats {
 	struct evcnt lxonrxc;
 	struct evcnt lxofftxc;
 	struct evcnt lxoffrxc;
-	struct evcnt pxontxc[8];
-	struct evcnt pxonrxc[8];
-	struct evcnt pxofftxc[8];
-	struct evcnt pxoffrxc[8];
+	struct evcnt pxontxc[IXGBE_TC_COUNTER_NUM];
+	struct evcnt pxonrxc[IXGBE_TC_COUNTER_NUM];
+	struct evcnt pxofftxc[IXGBE_TC_COUNTER_NUM];
+	struct evcnt pxoffrxc[IXGBE_TC_COUNTER_NUM];
 	struct evcnt prc64;
 	struct evcnt prc127;
 	struct evcnt prc255;
@@ -3889,7 +3904,7 @@ struct ixgbe_hw_stats {
 	struct evcnt gptc;
 	struct evcnt gorc;
 	struct evcnt gotc;
-	struct evcnt rnbc[8];
+	struct evcnt rnbc[IXGBE_TC_COUNTER_NUM];
 	struct evcnt ruc;
 	struct evcnt rfc;
 	struct evcnt roc;
@@ -3914,7 +3929,7 @@ struct ixgbe_hw_stats {
 	struct evcnt qbrc[16];
 	struct evcnt qbtc[16];
 	struct evcnt qprdc[16];
-	struct evcnt pxon2offc[8];
+	struct evcnt pxon2offc[IXGBE_TC_COUNTER_NUM];
 	u64 fdirustat_add;
 	u64 fdirustat_remove;
 	u64 fdirfstat_fadd;

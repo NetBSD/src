@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.28 2019/03/01 17:33:24 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.29 2019/04/01 12:35:38 martin Exp $ */
 
 /******************************************************************************
 
@@ -1558,8 +1558,8 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		}
 	}
 
-	/* 8 registers */
-	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
+	/* 8 registers exist */
+	for (i = 0; i < IXGBE_TC_COUNTER_NUM; i++) {
 		uint32_t mp;
 
 		/* MPC */
@@ -1739,7 +1739,7 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 
 	/* Max number of traffic class is 8 */
 	KASSERT(IXGBE_DCB_MAX_TRAFFIC_CLASS == 8);
-	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
+	for (i = 0; i < IXGBE_TC_COUNTER_NUM; i++) {
 		snprintf(adapter->tcs[i].evnamebuf,
 		    sizeof(adapter->tcs[i].evnamebuf), "%s tc%d",
 		    xname, i);
@@ -2038,7 +2038,7 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	adapter->msf_sicount.ev_count = 0;
 	adapter->phy_sicount.ev_count = 0;
 
-	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
+	for (i = 0; i < IXGBE_TC_COUNTER_NUM; i++) {
 		if (i < __arraycount(stats->mpc)) {
 			stats->mpc[i].ev_count = 0;
 			if (hw->mac.type == ixgbe_mac_82598EB)
@@ -2310,33 +2310,34 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	struct rx_ring	*rxr;
 	int             i;
 	u32		ctrl;
-
+	bool		hwtagging;
 
 	/*
-	 * We get here thru init_locked, meaning
-	 * a soft reset, this has already cleared
-	 * the VFTA and other state, so if there
-	 * have been no vlan's registered do nothing.
+	 *  This function is called from both if_init and ifflags_cb()
+	 * on NetBSD.
 	 */
-	if (!VLAN_ATTACHED(&adapter->osdep.ec))
-		return;
+
+	/* Enable HW tagging only if any vlan is attached */
+	hwtagging = (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING)
+	    && VLAN_ATTACHED(ec);
 
 	/* Setup the queues for vlans */
-	if (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING) {
-		for (i = 0; i < adapter->num_queues; i++) {
-			rxr = &adapter->rx_rings[i];
-			/* On 82599 the VLAN enable is per/queue in RXDCTL */
-			if (hw->mac.type != ixgbe_mac_82598EB) {
-				ctrl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(rxr->me));
+	for (i = 0; i < adapter->num_queues; i++) {
+		rxr = &adapter->rx_rings[i];
+		/*
+		 * On 82599 and later, the VLAN enable is per/queue in RXDCTL.
+		 */
+		if (hw->mac.type != ixgbe_mac_82598EB) {
+			ctrl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(rxr->me));
+			if (hwtagging)
 				ctrl |= IXGBE_RXDCTL_VME;
-				IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(rxr->me), ctrl);
-			}
-			rxr->vtag_strip = TRUE;
+			else
+				ctrl &= ~IXGBE_RXDCTL_VME;
+			IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(rxr->me), ctrl);
 		}
+		rxr->vtag_strip = hwtagging ? TRUE : FALSE;
 	}
 
-	if ((ec->ec_capenable & ETHERCAP_VLAN_HWFILTER) == 0)
-		return;
 	/*
 	 * A soft reset zero's out the VFTA, so
 	 * we need to repopulate it now.
@@ -2348,12 +2349,17 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 
 	ctrl = IXGBE_READ_REG(hw, IXGBE_VLNCTRL);
 	/* Enable the Filter Table if enabled */
-	if (ec->ec_capenable & ETHERCAP_VLAN_HWFILTER) {
-		ctrl &= ~IXGBE_VLNCTRL_CFIEN;
+	if (ec->ec_capenable & ETHERCAP_VLAN_HWFILTER)
 		ctrl |= IXGBE_VLNCTRL_VFE;
+	else
+		ctrl &= ~IXGBE_VLNCTRL_VFE;
+	/* VLAN hw tagging for 82598 */
+	if (hw->mac.type == ixgbe_mac_82598EB) {
+		if (hwtagging)
+			ctrl |= IXGBE_VLNCTRL_VME;
+		else
+			ctrl &= ~IXGBE_VLNCTRL_VME;
 	}
-	if (hw->mac.type == ixgbe_mac_82598EB)
-		ctrl |= IXGBE_VLNCTRL_VME;
 	IXGBE_WRITE_REG(hw, IXGBE_VLNCTRL, ctrl);
 } /* ixgbe_setup_vlan_hw_support */
 
@@ -3539,7 +3545,7 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&adapter->msf_sicount);
 	evcnt_detach(&adapter->phy_sicount);
 
-	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
+	for (i = 0; i < IXGBE_TC_COUNTER_NUM; i++) {
 		if (i < __arraycount(stats->mpc)) {
 			evcnt_detach(&stats->mpc[i]);
 			if (hw->mac.type == ixgbe_mac_82598EB)
