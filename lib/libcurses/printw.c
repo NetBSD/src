@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.26 2019/03/28 23:24:22 uwe Exp $	*/
+/*	$NetBSD: printw.c,v 1.27 2019/04/01 11:39:15 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.26 2019/03/28 23:24:22 uwe Exp $");
+__RCSID("$NetBSD: printw.c,v 1.27 2019/04/01 11:39:15 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -110,22 +110,7 @@ mvwprintw(WINDOW * win, int y, int x, const char *fmt,...)
 	va_end(ap);
 	return ret;
 }
-/*
- * Internal write-buffer-to-window function.
- */
-static ssize_t
-winwrite(void *cookie, const void *vbuf, size_t n)
-{
-	WINDOW *win = cookie;
-	const char *buf = vbuf;
-	int status;
 
-	status = waddnstr(win, buf, n);
-	if (status == ERR)
-	    return -1;
-
-	return (ssize_t)n;
-}
 /*
  * vw_printw --
  *	This routine actually executes the printf and adds it to the window.
@@ -133,14 +118,23 @@ winwrite(void *cookie, const void *vbuf, size_t n)
 int
 vw_printw(WINDOW *win, const char *fmt, va_list ap)
 {
+	int n;
+
 	if (win->fp == NULL) {
-		win->fp = funopen2(win, NULL, winwrite, NULL, NULL, NULL);
-		if (win->fp == NULL)
+		win->fp = open_memstream(&win->buf, &win->buflen);
+		if (__predict_false(win->fp == NULL))
 			return ERR;
-	}
-	vfprintf(win->fp, fmt, ap);
-	fflush(win->fp);
-	return OK;
+	} else
+		rewind(win->fp);
+
+	n = vfprintf(win->fp, fmt, ap);
+	if (__predict_false(n == 0))
+		return OK;
+	if (__predict_false(n == -1))
+		return ERR;
+	if (__predict_false(fflush(win->fp) != 0))
+		return ERR;
+	return waddnstr(win, win->buf, n);
 }
 
 __strong_alias(vwprintw, vw_printw)
