@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.240 2019/04/02 11:26:53 sevan Exp $
+$NetBSD: acronyms.comp,v 1.241 2019/04/02 11:33:15 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -207,6 +207,7 @@ CCNUMA	cache-coherent non-uniform memory access
 CD	cache disable
 CD	compact disc
 CDDA	compact disc digital audio
+CDL	compiler description language
 CDMA	code division multiple access
 CDP	Cisco Discovery Protocol
 CDRAM	cache dynamic random access memory
@@ -752,6 +753,7 @@ LAN	local area network
 LAPIC	local advanced programmable interrupt controller
 LAR	load access rights
 LBA	logical block addressing
+LBNF	labeled backus-naur form
 LBS	location-based service
 LCD	liquid crystal display
 LCP	link control protocol
@@ -1430,6 +1432,7 @@ TAOCP	The Art of Computer Programming
 TAP	Test Anything Protocol
 TAS	test and set
 TB	terabyte
+TBNF	transitional backus-naur form
 TCB	trace capture buffer
 TCB	trusted computing base
 TCC	thermal control circuit
