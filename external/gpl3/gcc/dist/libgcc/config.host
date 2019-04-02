@@ -802,7 +802,7 @@ ia64*-*-linux*)
 	;;
 ia64*-*-netbsd*)
 	extra_parts="${extra_parts} crtfastmath.o"
-	tmake_file="${tmake_file} ia64/t-ia64 ia64/t-ia64-elf t-crtfm ia64/t-softfp t-softfp ia64/t-eh-ia64"
+	tmake_file="${tmake_file} ia64/t-ia64 ia64/t-ia64-elf ia64/t-eh-ia64 t-crtfm t-softfp-tf ia64/t-softfp t-softfp ia64/t-softfp-compat"
 	;;
 ia64*-*-hpux*)
 	tmake_file="ia64/t-ia64 ia64/t-ia64-elf ia64/t-hpux t-slibgcc ia64/t-slibgcc-hpux t-slibgcc-hpux"
