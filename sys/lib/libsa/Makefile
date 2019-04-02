@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.89 2019/03/31 20:08:45 christos Exp $
+#	$NetBSD: Makefile,v 1.90 2019/04/02 22:25:10 christos Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -15,9 +15,11 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 #COPTS+= -ansi -pedantic -Wall
 
 # For testing
-# WARNS=5
-# COPTS+=-ffreestanding
-# CPPFLAGS+= -I${.CURDIR}/../../ -I${.CURDIR}
+#WARNS=6
+#NOSSP=yes
+#NOFORTIFY=yes
+#COPTS+=-ffreestanding -Wpointer-sign
+#CPPFLAGS+= -I${.CURDIR}/../../ -I${.CURDIR}
 
 .if defined(SA_EXTRADIR)
 .-include "${SA_EXTRADIR}/Makefile.inc"
