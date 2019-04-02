@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.12 2018/09/03 16:29:23 riastradh Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.13 2019/04/02 03:52:17 isaki Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.12 2018/09/03 16:29:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.13 2019/04/02 03:52:17 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -486,7 +486,7 @@ vcaudio_worker(void *priv)
 		msg.u.write.cookie = intrarg;
 		msg.u.write.silence = 0;
 
-	    	block = (uint8_t *)sc->sc_pstart + sc->sc_ppos;
+		block = (uint8_t *)sc->sc_pstart + sc->sc_ppos;
 		resid = count;
 		off = 0;
 
@@ -521,7 +521,7 @@ vcaudio_worker(void *priv)
 			sc->sc_ppos = 0;
 
 		if (!sc->sc_started) {
-        		++sc->sc_pblkcnt;
+			++sc->sc_pblkcnt;
 
 			if (sc->sc_pblkcnt == VCAUDIO_PREFILLCOUNT) {
 
