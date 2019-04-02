@@ -8,7 +8,7 @@ Another TODO list is available here:
 
 -- add more examples
 
--- modify the doc of IPF and PF to indicate they are deprecated, and that
+-- modify the doc of IPF to indicate it is deprecated, and that
    NPF should be used instead
 
 ====== NPFCTL ======
