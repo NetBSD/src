@@ -1,4 +1,4 @@
-$NetBSD: README.gcc7,v 1.13 2019/03/04 01:16:33 mrg Exp $
+$NetBSD: README.gcc7,v 1.14 2019/04/02 21:29:46 mrg Exp $
 
 new stuff (from gcc 5):
 	cc1objcplus
@@ -39,9 +39,9 @@ earmv7		y	?	y	y		?		?	?	y
 earmv7eb	y	?	y	y		?		?	?	y
 earmv7hf	y	?	y	y		?		?	?	y
 earmv7hfeb	y	?	y	y		?		?	?	y
-hppa		y	y	y	y		y		?	?	y
+hppa		y	y	y	y		y		?	?	?
 i386		y	y	y	y		y		y	y	y
-ia64		y	?	?	y		n[2]		?	?	?
+ia64		y	y	y	y		y		?	?	?
 m68000		y	y	y	y		y		?	?	y
 m68k		y	y	y	y		y		y	?	y
 mipseb		y	y	y	y		y		?	?	y
@@ -64,7 +64,6 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
-[2] - libgcc_s.so: undefined reference to `__netf2'
 [3] - vax dynamic seems busted, but /rescue works
 [9] - /usr/src6/external/gpl3/gcc/dist/libgcc/libgcc2.c:2036:1: error: unrecognizable insn:
 
