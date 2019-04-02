@@ -151,7 +151,9 @@
 /* #undef JEMALLOC_MUTEX_INIT_CB */
 
 /* Non-empty if the tls_model attribute is supported. */
+#ifndef __vax__
 #define JEMALLOC_TLS_MODEL __attribute__((tls_model("initial-exec")))
+#endif
 
 /*
  * JEMALLOC_DEBUG enables assertions and other sanity checks, and disables
@@ -233,7 +235,9 @@
 /* #undef JEMALLOC_RETAIN */
 
 /* TLS is used to map arenas and magazine caches to threads. */
+#ifndef __vax__
 #define JEMALLOC_TLS 
+#endif
 
 /*
  * Used to mark unreachable code to quiet "end of non-void" compiler warnings.
