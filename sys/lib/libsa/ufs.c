@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.75 2019/03/31 20:08:45 christos Exp $	*/
+/*	$NetBSD: ufs.c,v 1.76 2019/04/02 22:25:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -422,7 +422,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	off = ufs_blkoff(fs, fp->f_seekp);
 	file_block = ufs_lblkno(fs, fp->f_seekp);
 #ifdef LIBSA_LFS
-	block_size = (size_t)dblksize(fs, &fp->f_di, file_block);
+	block_size = (size_t)dblksize(fs, &fp->f_di, (uint64_t)file_block);
 #else
 	block_size = (size_t)ffs_sblksize(fs, (int64_t)fp->f_di.di_size, file_block);
 #endif

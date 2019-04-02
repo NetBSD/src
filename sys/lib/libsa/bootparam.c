@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparam.c,v 1.20 2019/03/31 20:08:45 christos Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.21 2019/04/02 22:25:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -61,7 +61,7 @@ n_short		bp_server_port;	/* net order */
 
 uint32_t	hostnamelen;
 char		domainname[FNAME_SIZE]; /* our DNS domain */
-int		domainnamelen;
+uint32_t	domainnamelen;
 
 /*
  * RPC definitions for bootparamd
@@ -247,7 +247,7 @@ bp_getfile(int sockfd, char *key, struct in_addr *serv_addr, char *pathname)
 	char *send_tail, *recv_head;
 	/* misc... */
 	struct iodesc *d;
-	int sn_len, path_len;
+	uint32_t sn_len, path_len;
 	ssize_t rlen;
 
 	if (!(d = socktodesc(sockfd))) {
@@ -296,7 +296,7 @@ bp_getfile(int sockfd, char *key, struct in_addr *serv_addr, char *pathname)
 	 */
 
 	/* server name */
-	sn_len = FNAME_SIZE-1;
+	sn_len = FNAME_SIZE - 1;
 	if (xdr_string_decode(&recv_head, serv_name, &sn_len)) {
 		RPC_PRINTF(("%s: bad server name\n", __func__));
 		return -1;
@@ -391,7 +391,7 @@ xdr_inaddr_encode(char **pkt, struct in_addr ia)
 	xi->atype = htonl(1);
 	uia.l = ia.s_addr;
 	cp = uia.c;
-	ip = xi->addr;
+	ip = (uint32_t *)xi->addr;
 	/*
 	 * Note: the htonl() calls below DO NOT
 	 * imply that uia.l is in host order.
@@ -427,7 +427,7 @@ xdr_inaddr_decode(char **pkt, struct in_addr *ia)
 	}
 
 	cp = uia.c;
-	ip = xi->addr;
+	ip = (uint32_t *)xi->addr;
 	/*
 	 * Note: the ntohl() calls below DO NOT
 	 * imply that uia.l is in host order.
