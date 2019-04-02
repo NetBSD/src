@@ -1840,11 +1840,8 @@ legitimate_pic_operand_p (rtx x)
 static bool
 indirectable_constant_address_p (rtx x, bool indirect)
 {
-  if (GET_CODE (x) == SYMBOL_REF) {
-    fprintf (asm_out_file, "%s: %d %d %d\n", __func__,
-    !flag_pic, SYMBOL_REF_LOCAL_P (x), !indirect);
+  if (GET_CODE (x) == SYMBOL_REF)
     return !flag_pic || SYMBOL_REF_LOCAL_P (x) || !indirect;
-}
 
   if (GET_CODE (x) == CONST)
     return !flag_pic
