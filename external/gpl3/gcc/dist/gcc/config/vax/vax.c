@@ -118,6 +118,18 @@ static bool vax_mode_dependent_address_p (const_rtx, addr_space_t);
 #undef TARGET_OPTION_OVERRIDE
 #define TARGET_OPTION_OVERRIDE vax_option_override
 
+#if TARGET_ELF
+#undef TARGET_BINDS_LOCAL_P
+#define TARGET_BINDS_LOCAL_P vax_elf_binds_local_p
+
+static bool
+vax_elf_binds_local_p (const_tree exp)
+{
+  return default_binds_local_p_3 (exp, (flag_shlib | flag_pic) != 0,
+				  true, false, false);
+}
+#endif
+
 struct gcc_target targetm = TARGET_INITIALIZER;
 
 /* Set global variables as needed for the options enabled.  */
@@ -1828,8 +1840,11 @@ legitimate_pic_operand_p (rtx x)
 static bool
 indirectable_constant_address_p (rtx x, bool indirect)
 {
-  if (GET_CODE (x) == SYMBOL_REF)
+  if (GET_CODE (x) == SYMBOL_REF) {
+    fprintf (asm_out_file, "%s: %d %d %d\n", __func__,
+    !flag_pic, SYMBOL_REF_LOCAL_P (x), !indirect);
     return !flag_pic || SYMBOL_REF_LOCAL_P (x) || !indirect;
+}
 
   if (GET_CODE (x) == CONST)
     return !flag_pic
