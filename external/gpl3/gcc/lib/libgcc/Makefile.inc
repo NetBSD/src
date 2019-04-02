@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.39 2019/01/31 06:47:21 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.40 2019/04/02 21:29:46 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
@@ -74,7 +74,9 @@ LIB2FUNCS_ALL+= \
 
 EXTRA_FUNC_SIZES=	sf df xf
 
-.if ${LIBGCC_MACHINE_ARCH} != "x86_64" && ${LIBGCC_MACHINE_ARCH} != "i386"
+.if ${LIBGCC_MACHINE_ARCH} != "x86_64" && \
+    ${LIBGCC_MACHINE_ARCH} != "i386" && \
+    ${LIBGCC_MACHINE_ARCH} != "ia64" &&
 EXTRA_FUNC_SIZES+=	tf
 .endif
 
