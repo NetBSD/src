@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.239 2019/04/02 11:25:15 sevan Exp $
+$NetBSD: acronyms.comp,v 1.240 2019/04/02 11:26:53 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1184,6 +1184,7 @@ RAS	remote access service
 RAS	restartable atomic sequence
 RAS	row address strobe
 RBF	radial basis function
+RBNF	routing backus-naur form
 RBT	red-black tree
 RC	release candidate
 RC	remote control
