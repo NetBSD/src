@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.8 2019/02/09 07:20:21 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.9 2019/04/02 20:00:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 #define START_CONSADDR	CONADDR
 #endif
 
-#if defined( VERBOSE_INIT_ARM)
+#if defined(VERBOSE_INIT_ARM)
 #define XPUTC(n)	mov r0, n; bl uartputc
 #define VPRINTF(string)	bl generic_vprint; .asciz string; .align 2
 #define VPRINTX(regno)	mov r0, regno; bl generic_printx
