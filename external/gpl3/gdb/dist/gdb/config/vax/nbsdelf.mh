@@ -1,4 +1,5 @@
 # Host: NetBSD/vax ELF
-NATDEPFILES= fork-child.o inf-ptrace.o nbsd-nat.o vax-bsd-nat.o bsd-kvm.o
+NATDEPFILES= fork-child.o inf-ptrace.o nbsd-nat.o vax-bsd-nat.o bsd-kvm.o \
+	vax-nbsd-tdep.o
 
 LOADLIBES= -lkvm
