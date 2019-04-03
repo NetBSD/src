@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2019/03/10 10:51:58 mrg Exp $
+# $NetBSD: Makefile,v 1.20 2019/04/03 15:26:34 joerg Exp $
 
 # Link the gallium mega driver.
 
@@ -13,15 +13,13 @@ LIB=		gallium_dri
 DRIDIR=		${X11USRLIBDIR}/modules/dri
 DRIDEBUGDIR=	${DEBUGDIR}${X11USRLIBDIR}/modules/dri
 
-LLVM_TOOLCONF_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm && ${PRINTOBJDIR}
-LLVM_INCLUDE_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm-include && ${PRINTOBJDIR}
+LLVM_INCLUDE_OBJDIR!=	cd ${NETBSDSRCDIR}/external/bsd/llvm/include && ${PRINTOBJDIR}
 
 CXXFLAGS+=	-std=c++11
 CFLAGS+=	-std=gnu11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm \
 		-I${NETBSDSRCDIR}/external/bsd/llvm/dist/llvm/include \
-		-I${LLVM_TOOLCONF_OBJDIR}/config/include \
-		-I${LLVM_INCLUDE_OBJDIR}
+		-I${LLVM_INCLUDE_OBJDIR} -I${NETBSDSRCDIR}/external/bsd/llvm/config
 
 GALLIUM_SUBDIRS= \
 	auxiliary \
@@ -91,7 +89,7 @@ BUILD_I915=0
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 BUILD_RADEON=1
 BUILD_I915=1
-.if ${MKLLVM} == "yes"
+.if ${MKLLVMRT} != "no"
 BUILD_LLVMPIPE=1
 .endif
 .endif
@@ -160,7 +158,7 @@ GALLIUM_SOURCES.auxiliary/draw= \
 	draw_vs_exec.c \
 	draw_vs_variant.c
 
-.if ${MKLLVM:Uno} != "no"
+.if ${MKLLVMRT} != "no"
 GALLIUM_SOURCES.auxiliary/draw+= \
 	draw_llvm.c \
 	draw_llvm_sample.c \
@@ -963,7 +961,7 @@ LIBDPLIBS+=	execinfo	${.CURDIR}/../../../../../lib/libexecinfo
 # gallium drivers requiring LLVM
 .if ${BUILD_LLVMPIPE} == 1 || ${BUILD_RADEON} == 1
 
-LLVM_LIB_DIR!=	cd ${.CURDIR}/../../../../../external/bsd/llvm/lib; ${PRINTOBJDIR}
+LLVM_LIB_DIR!=	cd ${.CURDIR}/../../../../../external/bsd/llvm/librt; ${PRINTOBJDIR}
 
 LLVM_LIBS=	\
 		TransformsCoroutines \
@@ -1023,8 +1021,8 @@ LLVM_LIBS+=	\
 		Support
 
 .for llvm_library in ${LLVM_LIBS}
-DPADD+=	${LLVM_LIB_DIR}/libLLVM${llvm_library}/libLLVM${llvm_library}.a
-LDADD+=	${LLVM_LIB_DIR}/libLLVM${llvm_library}/libLLVM${llvm_library}.a
+DPADD+=	${LLVM_LIB_DIR}/libLLVM${llvm_library}/libLLVM${llvm_library}_pic.a
+LDADD+=	${LLVM_LIB_DIR}/libLLVM${llvm_library}/libLLVM${llvm_library}_pic.a
 .endfor
 
 .endif  # ${BUILD_LLVM_PIPE} == 1 || ${BUILD_RADEON} == 1
