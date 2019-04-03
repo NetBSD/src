@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.21 2019/04/03 17:32:58 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.22 2019/04/03 18:05:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.21 2019/04/03 17:32:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.22 2019/04/03 18:05:55 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,7 @@ int vmx_vmresume(uint64_t *gprs);
 #define VMCS_VIRTUAL_EXCEPTION			0x0000202A
 #define VMCS_XSS_EXIT_BITMAP			0x0000202C
 #define VMCS_ENCLS_EXIT_BITMAP			0x0000202E
+#define VMCS_SUBPAGE_PERM_TABLE_PTR		0x00002030
 #define VMCS_TSC_MULTIPLIER			0x00002032
 /* 64-bit read-only fields */
 #define VMCS_GUEST_PHYSICAL_ADDRESS		0x00002400
@@ -229,7 +230,7 @@ int vmx_vmresume(uint64_t *gprs);
 #define		PIN_CTLS_NMI_EXITING		__BIT(3)
 #define		PIN_CTLS_VIRTUAL_NMIS		__BIT(5)
 #define		PIN_CTLS_ACTIVATE_PREEMPT_TIMER	__BIT(6)
-#define		PIN_CTLS_PROCESS_POSTEd_INTS	__BIT(7)
+#define		PIN_CTLS_PROCESS_POSTED_INTS	__BIT(7)
 #define VMCS_PROCBASED_CTLS			0x00004002
 #define		PROC_CTLS_INT_WINDOW_EXITING	__BIT(2)
 #define		PROC_CTLS_USE_TSC_OFFSETTING	__BIT(3)
@@ -319,7 +320,9 @@ int vmx_vmresume(uint64_t *gprs);
 #define		PROC_CTLS2_CONCEAL_VMX_FROM_PT	__BIT(19)
 #define		PROC_CTLS2_XSAVES_ENABLE	__BIT(20)
 #define		PROC_CTLS2_MODE_BASED_EXEC_EPT	__BIT(22)
+#define		PROC_CTLS2_SUBPAGE_PERMISSIONS	__BIT(23)
 #define		PROC_CTLS2_USE_TSC_SCALING	__BIT(25)
+#define		PROC_CTLS2_ENCLV_EXITING	__BIT(28)
 #define VMCS_PLE_GAP				0x00004020
 #define VMCS_PLE_WINDOW				0x00004022
 /* 32-bit read-only data fields */
