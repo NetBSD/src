@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.46 2015/11/09 20:26:15 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.47 2019/04/03 08:08:00 kamil Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.46 2015/11/09 20:26:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.47 2019/04/03 08:08:00 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,6 +368,18 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
+	struct proc *p = l->l_proc;
+
+	if (p->p_slflag & PSL_TRACED) {
+		mutex_enter(p->p_lock);
+		p->p_xsig = SIGTRAP;
+		p->p_sigctx.ps_faked = true; // XXX
+		p->p_sigctx.ps_info._signo = p->p_xsig;
+		p->p_sigctx.ps_info._code = TRAP_CHLD;
+		sigswitch(0, SIGTRAP, true);
+		// XXX ktrpoint(KTR_PSIG)
+		mutex_exit(p->p_lock);
+	}
 
 	/*
 	 * Return values in the frame set by cpu_lwp_fork().

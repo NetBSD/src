@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.51 2018/12/19 13:57:48 maxv Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.52 2019/04/03 08:07:59 kamil Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.51 2018/12/19 13:57:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.52 2019/04/03 08:07:59 kamil Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -394,6 +394,19 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
+	struct proc *p = l->l_proc;
+
+	if (p->p_slflag & PSL_TRACED) {
+		mutex_enter(p->p_lock);
+		p->p_xsig = SIGTRAP;
+		p->p_sigctx.ps_faked = true; // XXX
+		p->p_sigctx.ps_info._signo = p->p_xsig;
+		p->p_sigctx.ps_info._code = TRAP_CHLD;
+		sigswitch(0, SIGTRAP, true);
+		// XXX ktrpoint(KTR_PSIG)
+		mutex_exit(p->p_lock);
+	}
+
 	/* See cpu_lwp_fork() */
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 

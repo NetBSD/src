@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.205 2018/05/01 16:37:23 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.206 2019/04/03 08:08:00 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.205 2018/05/01 16:37:23 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.206 2019/04/03 08:08:00 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -501,17 +501,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	(*p2->p_emul->e_syscall_intern)(p2);
 #endif
 
-	/* if we are being traced, give the owner a chance to interfere */
-	if (p2->p_slflag & PSL_TRACED) {
-		ksiginfo_t ksi;
-
-		KSI_INIT_EMPTY(&ksi);
-		ksi.ksi_signo = SIGTRAP;
-		ksi.ksi_code = TRAP_CHLD;
-		ksi.ksi_lid = l2->l_lid;
-		kpsignal(p2, &ksi, NULL);
-	}
-
 	/*
 	 * Update stats now that we know the fork was successful.
 	 */
@@ -606,17 +595,18 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Let the parent know that we are tracing its child.
 	 */
 	if (tracevforkdone) {
-		ksiginfo_t ksi;
-
-		KSI_INIT_EMPTY(&ksi);
-		ksi.ksi_signo = SIGTRAP;
-		ksi.ksi_code = TRAP_CHLD;
-		ksi.ksi_lid = l1->l_lid;
-		kpsignal(p1, &ksi, NULL);
-
+		mutex_enter(p1->p_lock);
+		p1->p_xsig = SIGTRAP;
+		p1->p_sigctx.ps_faked = true; // XXX
+		p1->p_sigctx.ps_info._signo = p1->p_xsig;
+		p1->p_sigctx.ps_info._code = TRAP_CHLD;
 		p1->p_vfpid_done = retval[0];
-	}
-	mutex_exit(proc_lock);
+		sigswitch(0, SIGTRAP, false);
+		// XXX ktrpoint(KTR_PSIG)
+		mutex_exit(p1->p_lock);
+		// proc_lock unlocked
+	} else
+		mutex_exit(proc_lock);
 
 	return 0;
 }

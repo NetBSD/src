@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.65 2018/05/25 15:37:57 martin Exp $	*/
+/*	$NetBSD: syscall.c,v 1.66 2019/04/03 08:07:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.65 2018/05/25 15:37:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.66 2019/04/03 08:07:59 kamil Exp $");
 
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -287,6 +287,19 @@ void
 child_return(void *arg)
 {
 	lwp_t * const l = arg;
+	struct proc *p = l->l_proc;
+
+	if (p->p_slflag & PSL_TRACED) {
+		mutex_enter(p->p_lock);
+		p->p_xsig = SIGTRAP;
+		p->p_sigctx.ps_faked = true; // XXX
+		p->p_sigctx.ps_info._signo = p->p_xsig;
+		p->p_sigctx.ps_info._code = TRAP_CHLD;
+		sigswitch(0, SIGTRAP, true);
+		// XXX ktrpoint(KTR_PSIG)
+		mutex_exit(p->p_lock);
+	}
+
 	struct trapframe * const tf = lwp_trapframe(l);
 
 	tf->tf_r0 = 0;
@@ -305,4 +318,3 @@ cpu_spawn_return(struct lwp *l)
 
 	userret(l);
 }
-

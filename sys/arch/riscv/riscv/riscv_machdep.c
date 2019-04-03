@@ -31,7 +31,7 @@
 
 #include "opt_modular.h"
 
-__RCSID("$NetBSD: riscv_machdep.c,v 1.2 2017/03/16 16:13:21 chs Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.3 2019/04/03 08:08:00 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,18 @@ child_return(void *arg)
 {
 	struct lwp * const l = arg;
 	struct trapframe * const tf = l->l_md.md_utf;
+	struct proc *p = l->l_proc;
+
+	if (p->p_slflag & PSL_TRACED) {
+		mutex_enter(p->p_lock);
+		p->p_xsig = SIGTRAP;
+		p->p_sigctx.ps_faked = true; // XXX
+		p->p_sigctx.ps_info._signo = p->p_xsig;
+		p->p_sigctx.ps_info._code = TRAP_CHLD;
+		sigswitch(0, SIGTRAP, true);
+		// XXX ktrpoint(KTR_PSIG)
+		mutex_exit(p->p_lock);
+	}
 
 	tf->tf_a0 = 0;
 	tf->tf_a1 = 1;

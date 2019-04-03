@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.246 2018/02/08 19:16:24 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.247 2019/04/03 08:08:00 kamil Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.246 2018/02/08 19:16:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.247 2019/04/03 08:08:00 kamil Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -129,6 +129,18 @@ child_return(void *arg)
 {
 	struct lwp *l = arg;
 	struct trapframe *utf = l->l_md.md_utf;
+	struct proc *p = l->l_proc;
+
+	if (p->p_slflag & PSL_TRACED) {
+		mutex_enter(p->p_lock);
+		p->p_xsig = SIGTRAP;
+		p->p_sigctx.ps_faked = true; // XXX
+		p->p_sigctx.ps_info._signo = p->p_xsig;
+		p->p_sigctx.ps_info._code = TRAP_CHLD;
+		sigswitch(0, SIGTRAP, true);
+		// XXX ktrpoint(KTR_PSIG)
+		mutex_exit(p->p_lock);
+	}
 
 	utf->tf_regs[_R_V0] = 0;
 	utf->tf_regs[_R_V1] = 1;

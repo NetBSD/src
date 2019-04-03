@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.77 2016/12/23 07:15:28 cherry Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.78 2019/04/03 08:08:00 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.77 2016/12/23 07:15:28 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.78 2019/04/03 08:08:00 kamil Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -244,6 +244,18 @@ child_return(void *arg)
 {
 	struct lwp *l = arg;
 	struct trapframe *tf = l->l_md.md_regs;
+	struct proc *p = l->l_proc;
+
+	if (p->p_slflag & PSL_TRACED) {
+		mutex_enter(p->p_lock);
+		p->p_xsig = SIGTRAP;
+		p->p_sigctx.ps_faked = true; // XXX
+		p->p_sigctx.ps_info._signo = p->p_xsig;
+		p->p_sigctx.ps_info._code = TRAP_CHLD;
+		sigswitch(0, SIGTRAP, true);
+		// XXX ktrpoint(KTR_PSIG)
+		mutex_exit(p->p_lock);
+	}
 
 	tf->tf_r0 = 0;		/* fork(2) returns 0 in child */
 	tf->tf_ssr |= PSL_TBIT; /* syscall succeeded */
