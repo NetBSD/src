@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.217 2019/02/04 10:48:46 mrg Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.218 2019/04/03 19:23:38 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.217 2019/02/04 10:48:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.218 2019/04/03 19:23:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2772,7 +2772,7 @@ ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
 			return (EINVAL);
 
 		cm = mtod(control, struct cmsghdr *);
-		if (cm->cmsg_len == 0 || cm->cmsg_len > control->m_len)
+		if (cm->cmsg_len < CMSG_LEN(0) || cm->cmsg_len > control->m_len)
 			return (EINVAL);
 		if (cm->cmsg_level != IPPROTO_IPV6)
 			continue;
