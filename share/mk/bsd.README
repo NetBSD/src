@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.388 2019/04/03 15:17:23 joerg Exp $
+#	$NetBSD: bsd.README,v 1.389 2019/04/03 15:26:35 joerg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -321,6 +321,11 @@ MKLLVM		If "yes", build and install clang as host tool and target
 		compiler.  Use as system compiler is enabled with HAVE_LLVM
 		(see below for details).
 		Default: no
+
+MKLLVMRT	If "yes", build the LLVM PIC libraries necessary for the
+		AMDGPU backend and the native JIT of the target architecture,
+		if supported.
+		Default: no, enabled automatically with HAVE_MESA_VER=18.
 
 MKLVM		If "no", don't build or install the logical volume manager
 		and device mapper tools and libraries

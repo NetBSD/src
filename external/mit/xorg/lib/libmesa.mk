@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.5 2019/03/15 03:10:25 mrg Exp $
+#	$NetBSD: libmesa.mk,v 1.6 2019/04/03 15:26:34 joerg Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -527,7 +527,7 @@ CPPFLAGS+=	\
 	-DENABLE_SHADER_CACHE \
 	-DHAVE_MINCORE
 
-.if ${MKLLVM} == "yes"
+.if ${MKLLVMRT} != "no"
 CPPFLAGS+=	\
 	-DHAVE_LLVM=0x0700 \
 	-DMESA_LLVM_VERSION_PATCH=0
