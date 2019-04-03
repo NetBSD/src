@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.3 2019/03/03 07:01:09 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.4 2019/04/03 17:32:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.3 2019/03/03 07:01:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.4 2019/04/03 17:32:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,6 +210,7 @@ const struct nvmm_x64_state nvmm_x86_reset_state = {
 		    PATENTRY(2, PAT_UCMINUS) | PATENTRY(3, PAT_UC) |
 		    PATENTRY(4, PAT_WB) | PATENTRY(5, PAT_WT) |
 		    PATENTRY(6, PAT_UCMINUS) | PATENTRY(7, PAT_UC),
+		[NVMM_X64_MSR_TSC] = 0,
 	},
 
 	.misc = {

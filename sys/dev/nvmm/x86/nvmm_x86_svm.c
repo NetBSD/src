@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.35 2019/03/21 20:21:41 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.36 2019/04/03 17:32:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.35 2019/03/21 20:21:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.36 2019/04/03 17:32:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -505,6 +505,7 @@ struct svm_cpudata {
 	/* General */
 	bool shared_asid;
 	bool gtlb_want_flush;
+	bool gtsc_want_update;
 	uint64_t vcpu_htlb_gen;
 
 	/* VMCB */
@@ -538,7 +539,7 @@ struct svm_cpudata {
 	uint64_t gxcr0;
 	uint64_t gprs[NVMM_X64_NGPR];
 	uint64_t drs[NVMM_X64_NDR];
-	uint64_t tsc_offset;
+	uint64_t gtsc;
 	struct xsave_header gfpu __aligned(64);
 };
 
@@ -1000,10 +1001,8 @@ svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			goto handled;
 		}
 		if (exit->u.msr.msr == MSR_TSC) {
-			cpudata->tsc_offset = exit->u.msr.val - cpu_counter();
-			vmcb->ctrl.tsc_offset = cpudata->tsc_offset +
-			    curcpu()->ci_data.cpu_cc_skew;
-			svm_vmcb_cache_flush(vmcb, VMCB_CTRL_VMCB_CLEAN_I);
+			cpudata->gtsc = exit->u.msr.val;
+			cpudata->gtsc_want_update = true;
 			goto handled;
 		}
 		for (i = 0; i < __arraycount(msr_ignore_list); i++) {
@@ -1268,9 +1267,8 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	svm_htlb_catchup(vcpu, hcpu);
 
 	if (vcpu->hcpu_last != hcpu) {
-		vmcb->ctrl.tsc_offset = cpudata->tsc_offset +
-		    curcpu()->ci_data.cpu_cc_skew;
 		svm_vmcb_cache_flush_all(vmcb);
+		cpudata->gtsc_want_update = true;
 	}
 
 	svm_vcpu_guest_dbregs_enter(vcpu);
@@ -1281,6 +1279,11 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			vmcb->ctrl.tlb_ctrl = svm_ctrl_tlb_flush;
 		} else {
 			vmcb->ctrl.tlb_ctrl = 0;
+		}
+
+		if (__predict_false(cpudata->gtsc_want_update)) {
+			vmcb->ctrl.tsc_offset = cpudata->gtsc - rdtsc();
+			svm_vmcb_cache_flush(vmcb, VMCB_CTRL_VMCB_CLEAN_I);
 		}
 
 		s = splhigh();
@@ -1295,6 +1298,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 		if (vmcb->ctrl.exitcode != VMCB_EXITCODE_INVALID) {
 			cpudata->gtlb_want_flush = false;
+			cpudata->gtsc_want_update = false;
 			vcpu->hcpu_last = hcpu;
 		}
 
@@ -1375,6 +1379,8 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			break;
 		}
 	}
+
+	cpudata->gtsc = rdtsc() + vmcb->ctrl.tsc_offset;
 
 	svm_vcpu_guest_misc_leave(vcpu);
 	svm_vcpu_guest_dbregs_leave(vcpu);
@@ -1644,6 +1650,9 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu, const void *data, uint64_t flags)
 		vmcb->state.sysenter_eip =
 		    state->msrs[NVMM_X64_MSR_SYSENTER_EIP];
 		vmcb->state.g_pat = state->msrs[NVMM_X64_MSR_PAT];
+
+		cpudata->gtsc = state->msrs[NVMM_X64_MSR_TSC];
+		cpudata->gtsc_want_update = true;
 	}
 
 	if (flags & NVMM_X64_STATE_MISC) {
@@ -1759,6 +1768,7 @@ svm_vcpu_getstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 		state->msrs[NVMM_X64_MSR_SYSENTER_EIP] =
 		    vmcb->state.sysenter_eip;
 		state->msrs[NVMM_X64_MSR_PAT] = vmcb->state.g_pat;
+		state->msrs[NVMM_X64_MSR_TSC] = cpudata->gtsc;
 
 		/* Hide SVME. */
 		state->msrs[NVMM_X64_MSR_EFER] &= ~EFER_SVME;
@@ -1942,9 +1952,6 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	/* Init XSAVE header. */
 	cpudata->gfpu.xsh_xstate_bv = svm_xcr0_mask;
 	cpudata->gfpu.xsh_xcomp_bv = 0;
-
-	/* Set guest TSC to zero, more or less. */
-	cpudata->tsc_offset = -cpu_counter();
 
 	/* These MSRs are static. */
 	cpudata->star = rdmsr(MSR_STAR);
