@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK64,v 1.5 2019/03/31 16:11:57 christos Exp $
+# 	$NetBSD: RAMDISK64,v 1.6 2019/04/03 11:30:28 christos Exp $
 #
 # Install kernel with ramdisk added.
 # The ramdisk is be too big to netboot directly via ECOFF on some machines,
@@ -13,7 +13,7 @@ include	"arch/pmax/conf/INSTALL64"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=8000	# size of memory disk, in blocks (4000kB)
+options 	MEMORY_DISK_ROOT_SIZE=8200	# size of memory disk, in blocks (4100kB)
 
 # File systems: need MFS
 file-system 	MFS		# memory file system
