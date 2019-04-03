@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.41 2012/02/06 02:14:11 matt Exp $ */
+/* $NetBSD: disksubr.c,v 1.42 2019/04/03 22:10:49 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.41 2012/02/06 02:14:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.42 2019/04/03 22:10:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,59 +138,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 done:
 	brelse(bp, 0);
 	return (msg);
-}
-
-/*
- * Check new disk label for sensibility before setting it.
- */
-int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, struct cpu_disklabel *clp)
-{
-	int i;
-	struct partition *opp, *npp;
-
-	/* sanity clause */
-	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
-	    (nlp->d_secsize % DEV_BSIZE) != 0)
-		return(EINVAL);
-
-#ifdef notdef
-	/* XXX WHY WAS THIS HERE?! */
-	/* special case to allow disklabel to be invalidated */
-	if (nlp->d_magic == 0xffffffff) {
-		*olp = *nlp;
-		return (0);
-	}
-#endif
-
-	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
-		dkcksum(nlp) != 0)
-		return (EINVAL);
-
-	while ((i = ffs(openmask)) != 0) {
-		i--;
-		openmask &= ~(1 << i);
-		if (nlp->d_npartitions <= i)
-			return (EBUSY);
-		opp = &olp->d_partitions[i];
-		npp = &nlp->d_partitions[i];
-		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
-			return (EBUSY);
-		/*
-		* Copy internally-set partition information
-		* if new label doesn't include it.             XXX
-		*/
-		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
-			npp->p_fstype = opp->p_fstype;
-			npp->p_fsize = opp->p_fsize;
-			npp->p_frag = opp->p_frag;
-			npp->p_cpg = opp->p_cpg;
-		}
-	}
-	nlp->d_checksum = 0;
-	nlp->d_checksum = dkcksum(nlp);
-	*olp = *nlp;
-	return (0);
 }
 
 /*

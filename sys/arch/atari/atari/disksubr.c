@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.43 2010/04/13 11:22:22 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.44 2019/04/03 22:10:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.43 2010/04/13 11:22:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.44 2019/04/03 22:10:49 christos Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -132,58 +132,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	lp->d_checksum = dkcksum(lp);
 
 	return NULL;
-}
-
-/*
- * Check new disk label for sensibility before setting it.
- */
-int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
-    struct cpu_disklabel *clp)
-{
-
-	/* special case to allow disklabel to be invalidated */
-	if (nlp->d_magic == 0xffffffff) {
-		*olp = *nlp;
-		return 0;
-	}
-
-	/* sanity clause */
-	if (nlp->d_secpercyl == 0 || nlp->d_npartitions > MAXPARTITIONS ||
-	    nlp->d_secsize  == 0 || (nlp->d_secsize % DEV_BSIZE) != 0 ||
-	    nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
-	    dkcksum(nlp) != 0)
-		return EINVAL;
-
-#ifdef DISKLABEL_AHDI
-	if (clp && clp->cd_bblock)
-		ck_label(nlp, clp);
-#endif
-	while (openmask) {
-		struct partition *op, *np;
-		int i = ffs(openmask) - 1;
-		openmask &= ~(1 << i);
-		if (i >= nlp->d_npartitions)
-			return EBUSY;
-		op = &olp->d_partitions[i];
-		np = &nlp->d_partitions[i];
-		if (np->p_offset != op->p_offset || np->p_size < op->p_size)
-			return EBUSY;
-		/*
-		 * Copy internally-set partition information
-		 * if new label doesn't include it.		XXX
-		 */
-		if (np->p_fstype == FS_UNUSED && op->p_fstype != FS_UNUSED) {
-			np->p_fstype = op->p_fstype;
-			np->p_fsize  = op->p_fsize;
-			np->p_frag   = op->p_frag;
-			np->p_cpg    = op->p_cpg;
-		}
-	}
- 	nlp->d_checksum = 0;
- 	nlp->d_checksum = dkcksum(nlp);
-	*olp = *nlp;
-	return 0;
 }
 
 /*
