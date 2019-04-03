@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1121 2019/04/03 15:23:29 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1122 2019/04/03 15:26:35 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1288,6 +1288,17 @@ _NEEDS_LIBCXX.x86_64=		yes
 MKLIBCXX:=	yes
 .endif
 
+# MesaLib.old and MesaLib7 go together, and MesaLib is alone.
+HAVE_MESA_VER?=	10
+.if ${HAVE_MESA_VER} == "10"
+EXTERNAL_MESALIB_DIR?=	MesaLib.old
+.elif ${HAVE_MESA_VER} == "18"
+EXTERNAL_MESALIB_DIR?=	MesaLib
+.  if ${MKX11} != "no"
+MKLLVMRT:=		yes
+.  endif
+.endif
+
 #
 # install(1) parameters.
 #
@@ -1458,14 +1469,6 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 HAVE_XORG_SERVER_VER?=110
 .else
 HAVE_XORG_SERVER_VER?=120
-.endif
-
-# MesaLib.old and MesaLib7 go together, and MesaLib is alone.
-HAVE_MESA_VER?=	10
-.if ${HAVE_MESA_VER} == "10"
-EXTERNAL_MESALIB_DIR?=	MesaLib.old
-.else
-EXTERNAL_MESALIB_DIR?=	MesaLib
 .endif
 
 .if ${HAVE_XORG_SERVER_VER} == "120"
