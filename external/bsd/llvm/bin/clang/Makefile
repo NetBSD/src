@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2018/07/17 18:55:25 joerg Exp $
+#	$NetBSD: Makefile,v 1.38 2019/04/03 15:21:58 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -52,7 +52,19 @@ LLVM_LIBS+= \
 	IRReader \
 	AsmParser \
 	BitReader \
-	BitWriter \
+	BitWriter
+
+.if !defined(HOSTPROG)
+LLVM_LIBS+= \
+	AMDGPUCodeGen \
+	AMDGPUTargetInfo \
+	AMDGPUAsmParser \
+	AMDGPUMCTargetDesc \
+	AMDGPUAsmPrinter \
+	AMDGPUUtils
+.endif
+
+LLVM_LIBS+= \
 	AArch64CodeGen \
 	AArch64TargetInfo \
 	AArch64AsmParser \
