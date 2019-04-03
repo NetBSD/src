@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4 2011/08/30 12:39:54 bouyer Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5 2019/04/03 22:10:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@ void disklabel_to_vtoc(struct cpu_disklabel *, struct disklabel *);
 void vtoc_to_disklabel(struct cpu_disklabel *, struct disklabel *);
 void disklabel_set_default(struct disklabel *);
 bool disklabel_sanity(struct disklabel *);
+
+#define __HAVE_SETDISKLABEL
 #endif
+
 
 #endif /* _EWS4800MIPS_DISKLABEL_H_ */
