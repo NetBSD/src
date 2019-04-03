@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.22 2019/04/03 18:05:55 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.23 2019/04/03 19:10:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.22 2019/04/03 18:05:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.23 2019/04/03 19:10:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1502,7 +1502,11 @@ vmx_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			goto handled;
 		}
 		if (exit->u.msr.msr == MSR_CR_PAT) {
-			vmx_vmwrite(VMCS_GUEST_IA32_PAT, exit->u.msr.val);
+			val = exit->u.msr.val;
+			if (__predict_false(!nvmm_x86_pat_validate(val))) {
+				goto error;
+			}
+			vmx_vmwrite(VMCS_GUEST_IA32_PAT, val);
 			goto handled;
 		}
 		if (exit->u.msr.msr == MSR_MISC_ENABLE) {
@@ -1521,6 +1525,10 @@ vmx_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 handled:
 	vmx_inkernel_advance();
+	return true;
+
+error:
+	vmx_inject_gp(mach, vcpu);
 	return true;
 }
 
