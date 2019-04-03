@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.101 2019/03/28 08:13:40 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.102 2019/04/03 08:19:46 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.101 2019/03/28 08:13:40 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.102 2019/04/03 08:19:46 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5221,9 +5221,6 @@ fork2_body(bool trackfork, bool trackvfork, bool trackvforkdone, bool masked,
 	ki_sigset_t kp_sigmask;
 	ki_sigset_t kp_sigignore;
 
-	if (masked)
-		atf_tc_expect_fail("Masked signal invisible to tracer");
-
 	if (trackfork)
 		fn = fork;
 	if (trackvfork || trackvforkdone)
@@ -5446,6 +5443,12 @@ fork2_body(bool trackfork, bool trackvfork, bool trackvforkdone, bool masked,
 
 		name[3] = child;
 		ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+
+		/*
+		 * SIGCHLD is now pending in the signal queue and
+		 * the kernel presents it to userland as a masked signal.
+		 */
+		sigdelset((sigset_t *)&kp.p_sigmask, SIGCHLD);
 
 		if (masked) {
 			DPRINTF("kp_sigmask="
