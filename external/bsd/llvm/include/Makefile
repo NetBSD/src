@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.47 2019/03/20 22:51:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.48 2019/04/03 15:12:45 joerg Exp $
 
 .include <bsd.init.mk>
 
 .PATH:	${CLANG_SRCDIR}/lib/Headers
 
-.if ${MKLLVMCMDS} != "no"
+
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 INCS=	adxintrin.h \
 	ammintrin.h \
@@ -101,10 +101,21 @@ INCS=	msa.h
 .endif
 INCS+=	stdatomic.h
 INCSDIR=	/usr/include/clang-${CLANG_VERSION:R}
-.PATH:	${CLANG_SRCDIR}/include/clang/AST \
+
+.PATH:	${LLVM_SRCDIR}/include/llvm/IR \
+	${CLANG_SRCDIR}/include/clang/AST \
 	${CLANG_SRCDIR}/include/clang/Basic \
 	${CLANG_SRCDIR}/include/clang/Driver \
 	${CLANG_SRCDIR}/include/clang/StaticAnalyzer/Checkers
+
+TABLEGEN_SRC=	Attributes.td Intrinsics.td Options.td
+
+TABLEGEN_OUTPUT.Attributes.td= \
+	llvm/IR/Attributes.inc|-gen-attrs
+
+TABLEGEN_OUTPUT.Intrinsics.td= \
+	llvm/IR/IntrinsicEnums.inc|-gen-intrinsic-enums \
+	llvm/IR/IntrinsicImpl.inc|-gen-intrinsic-impl
 
 CLANG_TABLEGEN_SRC=	\
 	arm_fp16.td \
@@ -195,23 +206,9 @@ CLANG_TABLEGEN_INCLUDES.Checkers.td=	\
 CLANG_TABLEGEN_OUTPUT.Checkers.td= \
 	clang/StaticAnalyzer/Checkers/Checkers.inc|-gen-clang-sa-checkers
 
-TABLEGEN_SRC+=	Options.td
-
 TABLEGEN_INCLUDES.Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
 TABLEGEN_OUTPUT.Options.td= \
 	clang/Driver/Options.inc|-gen-opt-parser-defs
-
-.endif
-
-.PATH:	${LLVM_SRCDIR}/include/llvm/IR
-TABLEGEN_SRC+=	Attributes.td Intrinsics.td #Options.td
-
-TABLEGEN_OUTPUT.Attributes.td= \
-	llvm/IR/Attributes.inc|-gen-attrs
-
-TABLEGEN_OUTPUT.Intrinsics.td= \
-	llvm/IR/IntrinsicEnums.inc|-gen-intrinsic-enums \
-	llvm/IR/IntrinsicImpl.inc|-gen-intrinsic-impl
 
 .include "${.PARSEDIR}/../tablegen.mk"
 
