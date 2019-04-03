@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.48 2019/03/20 22:51:38 mrg Exp $
+# $NetBSD: Makefile,v 1.49 2019/04/03 15:12:45 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -121,7 +121,6 @@ SUBDIR+= \
 	libLLVMXRay
 .endif
 
-.if ${MKLLVMCMDS} != "no"
 SUBDIR+= \
 	libclangAnalysis \
 	libclangARCMigrate \
@@ -145,7 +144,6 @@ SUBDIR+= \
 	libclangStaticAnalyzerCore \
 	.WAIT \
 	libclangStaticAnalyzerFrontend
-.endif
 
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \

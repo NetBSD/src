@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.280 2019/03/20 22:51:37 mrg Exp $
+# $NetBSD: mi,v 1.281 2019/04/03 15:12:45 joerg Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -487,8 +487,8 @@
 ./usr/libdata/debug/usr/bin/chpass.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ci.debug		comp-rcs-debug		debug
 ./usr/libdata/debug/usr/bin/cksum.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/clang-tblgen.debug	comp-c-debug		llvmcmds,debug
-./usr/libdata/debug/usr/bin/clang.debug		comp-c-debug		llvmcmds,debug
+./usr/libdata/debug/usr/bin/clang-tblgen.debug	comp-c-debug		llvm,debug
+./usr/libdata/debug/usr/bin/clang.debug		comp-c-debug		llvm,debug
 ./usr/libdata/debug/usr/bin/cmp.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/co.debug		comp-rcs-debug		debug
 ./usr/libdata/debug/usr/bin/col.debug		comp-util-debug		debug
