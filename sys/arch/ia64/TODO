@@ -15,6 +15,10 @@ What works:
 
 Tasks remaining, first couple seem most important:
 
+- pmap.c is getting compilation warnings (for gcc6 & gcc7) like
+  /var/tmp//cckQKcKn.s:7614: Warning: Use of 'st8' may violate RAW dependency 'RR#' (data)
+  ...
+  how to change compile flags for specific kernel file like "CFLAGS.pmap.c+= -O0" ?
 - context switching and forking appear unfinished,
   vm_machdep.c::cpu_lwp_fork() appears incomplete
 - pmap module, imported from freebsd but still needs more work and
