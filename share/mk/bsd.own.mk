@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1122 2019/04/03 15:26:35 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1123 2019/04/03 21:41:21 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -61,8 +61,7 @@ TOOLCHAIN_MISSING?=	no
 .if \
     ${MACHINE_CPU} == "hppa"	|| \
     ${MACHINE_CPU} == "ia64"	|| \
-    ${MACHINE_ARCH} == "powerpc64"	|| \
-    ${MACHINE_CPU} == "vax"
+    ${MACHINE_ARCH} == "powerpc64"
 HAVE_GCC?=	6
 .endif
 HAVE_GCC?=	7
