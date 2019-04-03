@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.49 2019/04/03 15:12:45 joerg Exp $
+# $NetBSD: Makefile,v 1.50 2019/04/03 15:21:58 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -46,7 +46,21 @@ SUBDIR=	\
 	libLLVMSparcCodeGen \
 	libLLVMX86CodeGen
 
+.if !defined(HOSTLIB) && !defined(_BSD_HOSTINIT_MK_)
+SUBDIR+= \
+	libLLVMAMDGPUCodeGen
+.endif
+
 SUBDIR+= .WAIT
+
+.if !defined(HOSTLIB) && !defined(_BSD_HOSTINIT_MK_)
+SUBDIR+= \
+	libLLVMAMDGPUMCTargetDesc \
+	libLLVMAMDGPUAsmPrinter \
+	libLLVMAMDGPUTargetInfo \
+	libLLVMAMDGPUAsmParser \
+	libLLVMAMDGPUUtils
+.endif
 
 SUBDIR+= \
 	libLLVMAArch64AsmParser \

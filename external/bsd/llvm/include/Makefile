@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.48 2019/04/03 15:12:45 joerg Exp $
+#	$NetBSD: Makefile,v 1.49 2019/04/03 15:21:58 joerg Exp $
 
 .include <bsd.init.mk>
 
+.if ${MKLLVM} != "no"
 .PATH:	${CLANG_SRCDIR}/lib/Headers
-
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 INCS=	adxintrin.h \
@@ -101,12 +101,9 @@ INCS=	msa.h
 .endif
 INCS+=	stdatomic.h
 INCSDIR=	/usr/include/clang-${CLANG_VERSION:R}
+.endif # MKLLVM
 
 .PATH:	${LLVM_SRCDIR}/include/llvm/IR \
-	${CLANG_SRCDIR}/include/clang/AST \
-	${CLANG_SRCDIR}/include/clang/Basic \
-	${CLANG_SRCDIR}/include/clang/Driver \
-	${CLANG_SRCDIR}/include/clang/StaticAnalyzer/Checkers
 
 TABLEGEN_SRC=	Attributes.td Intrinsics.td Options.td
 
@@ -117,6 +114,11 @@ TABLEGEN_OUTPUT.Intrinsics.td= \
 	llvm/IR/IntrinsicEnums.inc|-gen-intrinsic-enums \
 	llvm/IR/IntrinsicImpl.inc|-gen-intrinsic-impl
 
+.if ${MKLLVM} != "no"
+.PATH:	${CLANG_SRCDIR}/include/clang/AST \
+	${CLANG_SRCDIR}/include/clang/Basic \
+	${CLANG_SRCDIR}/include/clang/Driver \
+	${CLANG_SRCDIR}/include/clang/StaticAnalyzer/Checkers
 CLANG_TABLEGEN_SRC=	\
 	arm_fp16.td \
 	arm_neon.td \
@@ -209,11 +211,22 @@ CLANG_TABLEGEN_OUTPUT.Checkers.td= \
 TABLEGEN_INCLUDES.Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
 TABLEGEN_OUTPUT.Options.td= \
 	clang/Driver/Options.inc|-gen-opt-parser-defs
+.endif # MKLLVM
 
 .include "${.PARSEDIR}/../tablegen.mk"
 
-DPSRCS+=	clang/Basic/Version.inc llvm/Support/VCSRevision.h
-CLEANFILES+=	clang/Basic/Version.inc llvm/Support/VCSRevision.h
+DPSRCS+=	llvm/Support/VCSRevision.h
+DPSRC+=		llvm/Support/VCSRevision.h
+
+llvm/Support/VCSRevision.h: ${LLVM_TOPLEVEL}/Makefile.inc
+	mkdir -p ${.TARGET:H}
+	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_REVISION "svn-r${LLVM_REVISION}"\n' >> ${.TARGET}.tmp
+	mv ${.TARGET}.tmp ${.TARGET}
+
+.if ${MKLLVM} != "no"
+DPSRCS+=	clang/Basic/Version.inc
+CLEANFILES+=	clang/Basic/Version.inc
 
 clang/Basic/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
 	mkdir -p ${.TARGET:H}
@@ -223,12 +236,7 @@ clang/Basic/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
 	printf '#define CLANG_VERSION_MINOR ${CLANG_VERSION:R:E}\n' >> ${.TARGET}.tmp
 	printf '#define CLANG_VERSION_PATCHLEVEL ${CLANG_VERSION:R:R}\n' >> ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
-
-llvm/Support/VCSRevision.h: ${LLVM_TOPLEVEL}/Makefile.inc
-	mkdir -p ${.TARGET:H}
-	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
-	printf '#define LLVM_REVISION "svn-r${LLVM_REVISION}"\n' >> ${.TARGET}.tmp
-	mv ${.TARGET}.tmp ${.TARGET}
+.endif # MKLLVM
 
 .if ${MKLLD} != "no"
 DPSRCS+=	lld/Config/Version.inc
@@ -251,6 +259,39 @@ CLEANFILES+=	llvm/Config/config.h llvm/Config/llvm-config.h
 
 NATIVE_LIBS=	-lm -lexecinfo
 
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+NATIVE_LLVM_ARCH=		X86
+.endif
+
+.if ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "aarch64eb"
+NATIVE_LLVM_ARCH=		AArch64
+.endif
+
+.if !empty(MACHINE_ARCH:Mearm*) || !empty(MACHINE_ARCH:Marm*)
+NATIVE_LLVM_ARCH=		ARM
+.endif
+
+.if !empty(MACHINE_ARCH:Mmips*)
+NATIVE_LLVM_ARCH=		Mips
+.endif
+
+.if ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
+NATIVE_LLVM_ARCH=		PowerPC
+.endif
+
+.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
+NATIVE_LLVM_ARCH=		Sparc
+.endif
+
+.if defined(NATIVE_LLVM_ARCH)
+NATIVE_LLVM_ASMPARSER=		LLVMInitialize${NATIVE_LLVM_ARCH}AsmParser
+NATIVE_LLVM_ASMPRINTER=		LLVMInitialize${NATIVE_LLVM_ARCH}AsmPrinter
+NATIVE_LLVM_DISASSEMBLER=	LLVMInitialize${NATIVE_LLVM_ARCH}Disassembler
+NATIVE_LLVM_TARGET=		LLVMInitialize${NATIVE_LLVM_ARCH}Target
+NATIVE_LLVM_TARGETINFO=		LLVMInitialize${NATIVE_LLVM_ARCH}TargetInfo
+NATIVE_LLVM_TARGETMC=		LLVMInitialize${NATIVE_LLVM_ARCH}TargetMC
+.endif
+
 llvm/Config/config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in
 	mkdir -p ${.TARGET:H}
 	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d -e /LLVM_NATIVE_/d \
@@ -258,6 +299,15 @@ llvm/Config/config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm
 	    < ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in \
 	    > ${.TARGET}.tmp
 	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+.if defined(NATIVE_LLVM_ARCH)
+	printf '#define LLVM_NATIVE_ARCH ${NATIVE_LLVM_ARCH}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_ASMPARSER ${NATIVE_LLVM_ASMPARSER}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_ASMPRINTER ${NATIVE_LLVM_ASMPRINTER}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_DISASSEMBLER ${NATIVE_LLVM_DISASSEMBLER}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_TARGET ${NATIVE_LLVM_TARGET}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_TARGETINFO ${NATIVE_LLVM_TARGETINFO}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_TARGETMC ${NATIVE_LLVM_TARGETMC}\n' >> ${.TARGET}.tmp
+.endif
 	printf '#define PACKAGE_VERSION "${LLVM_VERSION} (trunk ${LLVM_REVISION})"\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:R:R}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:R:E}\n' >> ${.TARGET}.tmp
@@ -273,6 +323,15 @@ llvm/Config/llvm-config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config
 	    < ${LLVM_TOPLEVEL}/config/llvm/Config/llvm-config.h.in \
 	    > ${.TARGET}.tmp
 	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+.if defined(NATIVE_LLVM_ARCH)
+	printf '#define LLVM_NATIVE_ARCH ${NATIVE_LLVM_ARCH}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_ASMPARSER ${NATIVE_LLVM_ASMPARSER}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_ASMPRINTER ${NATIVE_LLVM_ASMPRINTER}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_DISASSEMBLER ${NATIVE_LLVM_DISASSEMBLER}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_TARGET ${NATIVE_LLVM_TARGET}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_TARGETINFO ${NATIVE_LLVM_TARGETINFO}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_NATIVE_TARGETMC ${NATIVE_LLVM_TARGETMC}\n' >> ${.TARGET}.tmp
+.endif
 	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:R:R}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:R:E}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_PATCH ${LLVM_VERSION:E}\n' >> ${.TARGET}.tmp

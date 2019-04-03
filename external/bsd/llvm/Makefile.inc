@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.86 2018/07/17 18:55:24 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.87 2019/04/03 15:21:58 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -47,11 +47,13 @@ LLVM_TOOLCONF_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm && ${PRINTOBJDIR}
 HOST_CPPFLAGS+=	${CPPFLAGS}
 HOST_CXXFLAGS+=	-O2 -fno-rtti -fno-exceptions
 HOST_CPPFLAGS+=	-std=c++11
+LLVM_TARGETS=	x86,powerpc,sparc,aarch64,arm,mips
 .else
 LLVM_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config
 CLANG_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config
 MCLINKER_INCLUDE_CONFIG= ${LLVM_TOPLEVEL}/config/mclinker
 LLVM_INCLUDE_OBJDIR!=	cd ${LLVM_TOPLEVEL}/include && ${PRINTOBJDIR}
+LLVM_TARGETS=	x86,powerpc,sparc,aarch64,arm,mips,amdgpu
 
 .if ${MKLLDB:Uno} == "yes"
 CPPFLAGS+=	-DLLDB_DISABLE_PYTHON
@@ -69,7 +71,7 @@ CPPFLAGS+=	-I${LLVM_INCLUDE_OBJDIR} -I${LLVM_INCLUDE_CONFIG} \
 LLVM_PLATFORM=${MACHINE_GNU_ARCH}--netbsd
 
 LLVM_CONFIGURE_ARGS=	\
-	--enable-targets=x86,powerpc,sparc,aarch64,arm,mips \
+	--enable-targets=${LLVM_TARGETS} \
 	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION:R}:/usr/include \
 	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
 	--with-clang-default-openmp-runtime=libomp \
