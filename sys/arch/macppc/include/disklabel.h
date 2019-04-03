@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.15 2011/08/30 12:39:56 bouyer Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.16 2019/04/03 22:10:49 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -223,5 +223,7 @@ struct blockzeroblock {
 #define BZB_ROOTFS	0x8000
 #define BZB_USRFS	0x4000
 #define BZB_USRFS_NEW	0x0004
+
+#define __HAVE_SETDISKLABEL
 
 #endif	/* _MACHINE_DISKLABEL_H_ */
