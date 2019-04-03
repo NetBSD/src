@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.140 2018/12/27 18:58:14 christos Exp $
+#	$NetBSD: Makefile,v 1.141 2019/04/03 21:37:58 christos Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -123,6 +123,10 @@ CPPFLAGS+=	-DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
 # rtld.c and symbol.c use alloca, so disable SSP warnings.
 COPTS.rtld.c+=	-Wno-stack-protector
 COPTS.symbol.c+=-Wno-stack-protector
+
+.if ${MACHINE_CPU} == "vax"
+COPTS.rtld.c+=	-O0
+.endif
 
 LDADD+=		-Wl,--version-script=${.CURDIR}/symbols.map
 LDADD+=		-L${CLIBOBJ} -L${DESTDIR}${LIBDIR}
