@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.351 2019/03/08 23:32:30 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.352 2019/04/03 08:34:33 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.351 2019/03/08 23:32:30 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.352 2019/04/03 08:34:33 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1260,7 +1260,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	ksiginfo_t *kp;
 	lwpid_t lid;
 	sig_t action;
-	bool toall, debtrap = false;
+	bool toall;
 	int error = 0;
 
 	KASSERT(!cpu_intr_p());
@@ -1273,13 +1273,8 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * If the process is being created by fork, is a zombie or is
 	 * exiting, then just drop the signal here and bail out.
 	 */
-	if (p->p_stat == SIDL && signo == SIGTRAP
-	    && (p->p_slflag & PSL_TRACED)) {
-		/* allow an initial SIGTRAP for traced processes */
-		debtrap = true;
-	} else if (p->p_stat != SACTIVE && p->p_stat != SSTOP) {
+	if (p->p_stat != SACTIVE && p->p_stat != SSTOP)
 		return 0;
-	}
 
 	/* XXX for core dump/debugger */
 	p->p_sigctx.ps_lwp = ksi->ksi_lid;
@@ -1380,13 +1375,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * the signal to it.
 	 */
 	if (lid != 0) {
-		if (__predict_false(debtrap)) {
-			l = LIST_FIRST(&p->p_lwps);
-			if (l->l_lid != lid)
-				l = NULL;
-		} else {
-			l = lwp_find(p, lid);
-		}
+		l = lwp_find(p, lid);
 		if (l != NULL) {
 			if ((error = sigput(&l->l_sigpend, p, kp)) != 0)
 				goto out;
