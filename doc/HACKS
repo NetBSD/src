@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.188 2019/04/03 20:34:18 scole Exp $
+# $NetBSD: HACKS,v 1.189 2019/04/03 21:40:24 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -910,4 +910,13 @@ desc
 	ski emulator crashes during acpi detection.  Added a check for
 	uninitialized index.  Submitted a request for change with upstream
 	mailing list, but never got a response
+kcah
+
+port	vax
+hack	compile rtld.c with -O0
+cdate	Wed Apr  3 17:38:38 EDT 2019
+who	christos
+file	src/libexec/ld.elf_so/Makefile: 1.141
+descr	Disable optimization for rtld.c on the vax with gcc-7. Crashes on the
+	second pass loop with elm == 0xffffffff
 kcah
