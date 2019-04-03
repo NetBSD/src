@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.9 2019/04/02 20:00:36 jmcneill Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.10 2019/04/03 17:55:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -118,13 +118,13 @@ ENTRY_NP(generic_start)
 
 	// We can now call functions
 
-	VPRINTF("\n\rpc   :")
+	VPRINTF("\n\rpc    : ")
 	VPRINTX(pc)
 
-	VPRINTF("\n\roff  :")
+	VPRINTF("\n\roff   : ")
 	VPRINTX(R_VTOPDIFF)
 
-	VPRINTF("\n\rsp   :")
+	VPRINTF("\n\rsp    : ")
 	VPRINTX(sp)
 
 	ldr	R_TMP1, =kern_vtopdiff
@@ -150,7 +150,7 @@ ENTRY_NP(generic_start)
 	/*
 	 * ARM boot protocol has FDT address in r2 which is now in r6
 	 */
-	VPRINTF("\n\rfdt  :")
+	VPRINTF("\n\rfdt   : ")
 	ldr	R_TMP1, =fdt_addr_r
 	sub	R_TMP1, R_TMP1, R_VTOPDIFF
 	str	r6, [R_TMP1]
@@ -160,22 +160,22 @@ ENTRY_NP(generic_start)
 #endif
 
 #ifdef VERBOSE_INIT_ARM
-	VPRINTF("\n\rmidr :")
+	VPRINTF("\n\rmidr  : ")
 	mrc	p15, 0, r0, c0, c0, 0	// MIDR
 	VPRINTX(r0)
 	VPRINTF("\n\rrevidr: ")
 	mrc	p15, 0, r0, c0, c0, 6	// REVIDR
 	VPRINTX(r0)
-	VPRINTF("\n\rmpidr:")
+	VPRINTF("\n\rmpidr : ")
 	mrc	p15, 0, r0, c0, c0, 5	// MPIDR
 	VPRINTX(r0)
-	VPRINTF("\n\rttb0 :")
+	VPRINTF("\n\rttb0  : ")
 	mrc	p15, 0, r0, c2, c0, 0	// TTBR0 read
 	VPRINTX(r0)
-	VPRINTF("\n\rttb1 :")
+	VPRINTF("\n\rttb1  : ")
 	mrc	p15, 0, r0, c2, c0, 1	// TTBR1 read
 	VPRINTX(r0)
-	VPRINTF("\n\rttcr :")
+	VPRINTF("\n\rttcr  : ")
 	mrc	p15, 0, r0, c2, c0, 2	// TTBCR read
 	VPRINTX(r0)
 	VPRINTF("\n\r")
