@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.55 2018/07/09 00:46:19 christos Exp $	*/
+/*	$NetBSD: mman.h,v 1.56 2019/04/04 07:51:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -168,7 +168,7 @@ F\30\010\
 #define	MCL_FUTURE	0x02	/* lock all pages mapped in the future */
 
 /*
- * POSIX memory avissory values.
+ * POSIX memory advisory values.
  * Note: keep consistent with the original definitions below.
  */
 #define	POSIX_MADV_NORMAL	0	/* No further special treatment */
