@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.157 2019/04/04 15:10:58 kamil Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.158 2019/04/04 19:50:47 kamil Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -402,6 +402,7 @@
 ./usr/tests/usr.bin/grep
 ./usr/tests/usr.bin/gzip
 ./usr/tests/usr.bin/id
+./usr/tests/usr.bin/indent
 ./usr/tests/usr.bin/infocmp
 ./usr/tests/usr.bin/jot
 ./usr/tests/usr.bin/ld
