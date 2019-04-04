@@ -1,4 +1,6 @@
-/*
+/*-
+ * SPDX-License-Identifier: BSD-4-Clause
+ *
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,26 +35,35 @@
  * SUCH DAMAGE.
  */
 
+#if 0
 #ifndef lint
 static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
+#endif
+
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 
 /*
  * Argument scanning and profile reading code.  Default parameters are set
  * here as well.
  */
 
-#include <stdio.h>
 #include <ctype.h>
+#include <err.h>
+#include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "indent_globs.h"
+#include "indent.h"
+
+#define INDENT_VERSION	"2.0"
 
 /* profile types */
 #define	PRO_SPECIAL	1	/* special case */
 #define	PRO_BOOL	2	/* boolean */
 #define	PRO_INT		3	/* integer */
-#define PRO_FONT	4	/* troff font */
 
 /* profile specials for booleans */
 #define	ON		1	/* turn it on */
@@ -64,7 +75,14 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #define	STDIN		3	/* use stdin */
 #define	KEY		4	/* type (keyword) */
 
-char *option_source = "?";
+static void scan_profile(FILE *);
+
+#define	KEY_FILE		5	/* only used for args */
+#define VERSION			6	/* only used for args */
+
+const char *option_source = "?";
+
+void add_typedefs_from_file(const char *str);
 
 /*
  * N.B.: because of the way the table here is scanned, options whose names are
@@ -73,91 +91,102 @@ char *option_source = "?";
  * default value is the one actually assigned.
  */
 struct pro {
-    char       *p_name;		/* name, eg -bl, -cli */
+    const char *p_name;		/* name, e.g. -bl, -cli */
     int         p_type;		/* type (int, bool, special) */
     int         p_default;	/* the default value (if int) */
     int         p_special;	/* depends on type */
     int        *p_obj;		/* the associated variable */
 }           pro[] = {
 
-    "T", PRO_SPECIAL, 0, KEY, 0,
-    "bacc", PRO_BOOL, false, ON, &blanklines_around_conditional_compilation,
-    "badp", PRO_BOOL, false, ON, &blanklines_after_declarations_at_proctop,
-    "bad", PRO_BOOL, false, ON, &blanklines_after_declarations,
-    "bap", PRO_BOOL, false, ON, &blanklines_after_procs,
-    "bbb", PRO_BOOL, false, ON, &blanklines_before_blockcomments,
-    "bc", PRO_BOOL, true, OFF, &ps.leave_comma,
-    "bl", PRO_BOOL, true, OFF, &btype_2,
-    "br", PRO_BOOL, true, ON, &btype_2,
-    "bs", PRO_BOOL, false, ON, &Bill_Shannon,
-    "cdb", PRO_BOOL, true, ON, &comment_delimiter_on_blankline,
-    "cd", PRO_INT, 0, 0, &ps.decl_com_ind,
-    "ce", PRO_BOOL, true, ON, &cuddle_else,
-    "ci", PRO_INT, 0, 0, &continuation_indent,
-    "cli", PRO_SPECIAL, 0, CLI, 0,
-    "c", PRO_INT, 33, 0, &ps.com_ind,
-    "di", PRO_INT, 16, 0, &ps.decl_indent,
-    "dj", PRO_BOOL, false, ON, &ps.ljust_decl,
-    "d", PRO_INT, 0, 0, &ps.unindent_displace,
-    "eei", PRO_BOOL, false, ON, &extra_expression_indent,
-    "ei", PRO_BOOL, true, ON, &ps.else_if,
-    "fbc", PRO_FONT, 0, 0, (int *) &blkcomf,
-    "fbx", PRO_FONT, 0, 0, (int *) &boxcomf,
-    "fb", PRO_FONT, 0, 0, (int *) &bodyf,
-    "fc1", PRO_BOOL, true, ON, &format_col1_comments,
-    "fc", PRO_FONT, 0, 0, (int *) &scomf,
-    "fk", PRO_FONT, 0, 0, (int *) &keywordf,
-    "fs", PRO_FONT, 0, 0, (int *) &stringf,
-    "ip", PRO_BOOL, true, ON, &ps.indent_parameters,
-    "i", PRO_INT, 8, 0, &ps.ind_size,
-    "lc", PRO_INT, 0, 0, &block_comment_max_col,
-    "lp", PRO_BOOL, true, ON, &lineup_to_parens,
-    "l", PRO_INT, 78, 0, &max_col,
-    "nbacc", PRO_BOOL, false, OFF, &blanklines_around_conditional_compilation,
-    "nbadp", PRO_BOOL, false, OFF, &blanklines_after_declarations_at_proctop,
-    "nbad", PRO_BOOL, false, OFF, &blanklines_after_declarations,
-    "nbap", PRO_BOOL, false, OFF, &blanklines_after_procs,
-    "nbbb", PRO_BOOL, false, OFF, &blanklines_before_blockcomments,
-    "nbc", PRO_BOOL, true, ON, &ps.leave_comma,
-    "nbs", PRO_BOOL, false, OFF, &Bill_Shannon,
-    "ncdb", PRO_BOOL, true, OFF, &comment_delimiter_on_blankline,
-    "nce", PRO_BOOL, true, OFF, &cuddle_else,
-    "ndj", PRO_BOOL, false, OFF, &ps.ljust_decl,
-    "neei", PRO_BOOL, false, OFF, &extra_expression_indent,
-    "nei", PRO_BOOL, true, OFF, &ps.else_if,
-    "nfc1", PRO_BOOL, true, OFF, &format_col1_comments,
-    "nip", PRO_BOOL, true, OFF, &ps.indent_parameters,
-    "nlp", PRO_BOOL, true, OFF, &lineup_to_parens,
-    "npcs", PRO_BOOL, false, OFF, &proc_calls_space,
-    "npro", PRO_SPECIAL, 0, IGN, 0,
-    "npsl", PRO_BOOL, true, OFF, &procnames_start_line,
-    "nps", PRO_BOOL, false, OFF, &pointer_as_binop,
-    "nsc", PRO_BOOL, true, OFF, &star_comment_cont,
-    "nsob", PRO_BOOL, false, OFF, &swallow_optional_blanklines,
-    "nv", PRO_BOOL, false, OFF, &verbose,
-    "pcs", PRO_BOOL, false, ON, &proc_calls_space,
-    "psl", PRO_BOOL, true, ON, &procnames_start_line,
-    "ps", PRO_BOOL, false, ON, &pointer_as_binop,
-    "sc", PRO_BOOL, true, ON, &star_comment_cont,
-    "sob", PRO_BOOL, false, ON, &swallow_optional_blanklines,
-    "st", PRO_SPECIAL, 0, STDIN, 0,
-    "troff", PRO_BOOL, false, ON, &troff,
-    "v", PRO_BOOL, false, ON, &verbose,
+    {"T", PRO_SPECIAL, 0, KEY, 0},
+    {"U", PRO_SPECIAL, 0, KEY_FILE, 0},
+    {"-version", PRO_SPECIAL, 0, VERSION, 0},
+    {"P", PRO_SPECIAL, 0, IGN, 0},
+    {"bacc", PRO_BOOL, false, ON, &opt.blanklines_around_conditional_compilation},
+    {"badp", PRO_BOOL, false, ON, &opt.blanklines_after_declarations_at_proctop},
+    {"bad", PRO_BOOL, false, ON, &opt.blanklines_after_declarations},
+    {"bap", PRO_BOOL, false, ON, &opt.blanklines_after_procs},
+    {"bbb", PRO_BOOL, false, ON, &opt.blanklines_before_blockcomments},
+    {"bc", PRO_BOOL, true, OFF, &opt.leave_comma},
+    {"bl", PRO_BOOL, true, OFF, &opt.btype_2},
+    {"br", PRO_BOOL, true, ON, &opt.btype_2},
+    {"bs", PRO_BOOL, false, ON, &opt.Bill_Shannon},
+    {"cdb", PRO_BOOL, true, ON, &opt.comment_delimiter_on_blankline},
+    {"cd", PRO_INT, 0, 0, &opt.decl_com_ind},
+    {"ce", PRO_BOOL, true, ON, &opt.cuddle_else},
+    {"ci", PRO_INT, 0, 0, &opt.continuation_indent},
+    {"cli", PRO_SPECIAL, 0, CLI, 0},
+    {"cs", PRO_BOOL, false, ON, &opt.space_after_cast},
+    {"c", PRO_INT, 33, 0, &opt.com_ind},
+    {"di", PRO_INT, 16, 0, &opt.decl_indent},
+    {"dj", PRO_BOOL, false, ON, &opt.ljust_decl},
+    {"d", PRO_INT, 0, 0, &opt.unindent_displace},
+    {"eei", PRO_BOOL, false, ON, &opt.extra_expression_indent},
+    {"ei", PRO_BOOL, true, ON, &opt.else_if},
+    {"fbs", PRO_BOOL, true, ON, &opt.function_brace_split},
+    {"fc1", PRO_BOOL, true, ON, &opt.format_col1_comments},
+    {"fcb", PRO_BOOL, true, ON, &opt.format_block_comments},
+    {"ip", PRO_BOOL, true, ON, &opt.indent_parameters},
+    {"i", PRO_INT, 8, 0, &opt.ind_size},
+    {"lc", PRO_INT, 0, 0, &opt.block_comment_max_col},
+    {"ldi", PRO_INT, -1, 0, &opt.local_decl_indent},
+    {"lpl", PRO_BOOL, false, ON, &opt.lineup_to_parens_always},
+    {"lp", PRO_BOOL, true, ON, &opt.lineup_to_parens},
+    {"l", PRO_INT, 78, 0, &opt.max_col},
+    {"nbacc", PRO_BOOL, false, OFF, &opt.blanklines_around_conditional_compilation},
+    {"nbadp", PRO_BOOL, false, OFF, &opt.blanklines_after_declarations_at_proctop},
+    {"nbad", PRO_BOOL, false, OFF, &opt.blanklines_after_declarations},
+    {"nbap", PRO_BOOL, false, OFF, &opt.blanklines_after_procs},
+    {"nbbb", PRO_BOOL, false, OFF, &opt.blanklines_before_blockcomments},
+    {"nbc", PRO_BOOL, true, ON, &opt.leave_comma},
+    {"nbs", PRO_BOOL, false, OFF, &opt.Bill_Shannon},
+    {"ncdb", PRO_BOOL, true, OFF, &opt.comment_delimiter_on_blankline},
+    {"nce", PRO_BOOL, true, OFF, &opt.cuddle_else},
+    {"ncs", PRO_BOOL, false, OFF, &opt.space_after_cast},
+    {"ndj", PRO_BOOL, false, OFF, &opt.ljust_decl},
+    {"neei", PRO_BOOL, false, OFF, &opt.extra_expression_indent},
+    {"nei", PRO_BOOL, true, OFF, &opt.else_if},
+    {"nfbs", PRO_BOOL, true, OFF, &opt.function_brace_split},
+    {"nfc1", PRO_BOOL, true, OFF, &opt.format_col1_comments},
+    {"nfcb", PRO_BOOL, true, OFF, &opt.format_block_comments},
+    {"nip", PRO_BOOL, true, OFF, &opt.indent_parameters},
+    {"nlpl", PRO_BOOL, false, OFF, &opt.lineup_to_parens_always},
+    {"nlp", PRO_BOOL, true, OFF, &opt.lineup_to_parens},
+    {"npcs", PRO_BOOL, false, OFF, &opt.proc_calls_space},
+    {"npro", PRO_SPECIAL, 0, IGN, 0},
+    {"npsl", PRO_BOOL, true, OFF, &opt.procnames_start_line},
+    {"nsc", PRO_BOOL, true, OFF, &opt.star_comment_cont},
+    {"nsob", PRO_BOOL, false, OFF, &opt.swallow_optional_blanklines},
+    {"nut", PRO_BOOL, true, OFF, &opt.use_tabs},
+    {"nv", PRO_BOOL, false, OFF, &opt.verbose},
+    {"pcs", PRO_BOOL, false, ON, &opt.proc_calls_space},
+    {"psl", PRO_BOOL, true, ON, &opt.procnames_start_line},
+    {"sc", PRO_BOOL, true, ON, &opt.star_comment_cont},
+    {"sob", PRO_BOOL, false, ON, &opt.swallow_optional_blanklines},
+    {"st", PRO_SPECIAL, 0, STDIN, 0},
+    {"ta", PRO_BOOL, false, ON, &opt.auto_typedefs},
+    {"ts", PRO_INT, 8, 0, &opt.tabsize},
+    {"ut", PRO_BOOL, true, ON, &opt.use_tabs},
+    {"v", PRO_BOOL, false, ON, &opt.verbose},
     /* whew! */
-    0, 0, 0, 0, 0
+    {0, 0, 0, 0, 0}
 };
 
 /*
  * set_profile reads $HOME/.indent.pro and ./.indent.pro and handles arguments
  * given in these files.
  */
-set_profile()
+void
+set_profile(const char *profile_name)
 {
-    register FILE *f;
-    char        fname[BUFSIZ];
+    FILE *f;
+    char fname[PATH_MAX];
     static char prof[] = ".indent.pro";
 
-    sprintf(fname, "%s/%s", getenv("HOME"), prof);
+    if (profile_name == NULL)
+	snprintf(fname, sizeof(fname), "%s/%s", getenv("HOME"), prof);
+    else
+	snprintf(fname, sizeof(fname), "%s", profile_name + 2);
     if ((f = fopen(option_source = fname, "r")) != NULL) {
 	scan_profile(f);
 	(void) fclose(f);
@@ -169,18 +198,33 @@ set_profile()
     option_source = "Command line";
 }
 
-scan_profile(f)
-    register FILE *f;
+static void
+scan_profile(FILE *f)
 {
-    register int i;
-    register char *p;
+    int		comment, i;
+    char	*p;
     char        buf[BUFSIZ];
 
     while (1) {
-	for (p = buf; (i = getc(f)) != EOF && (*p = i) > ' '; ++p);
+	p = buf;
+	comment = 0;
+	while ((i = getc(f)) != EOF) {
+	    if (i == '*' && !comment && p > buf && p[-1] == '/') {
+		comment = p - buf;
+		*p++ = i;
+	    } else if (i == '/' && comment && p > buf && p[-1] == '*') {
+		p = buf + comment - 1;
+		comment = 0;
+	    } else if (isspace((unsigned char)i)) {
+		if (p > buf && !comment)
+		    break;
+	    } else {
+		*p++ = i;
+	    }
+	}
 	if (p != buf) {
 	    *p++ = 0;
-	    if (verbose)
+	    if (opt.verbose)
 		printf("profile: %s\n", buf);
 	    set_option(buf);
 	}
@@ -189,49 +233,45 @@ scan_profile(f)
     }
 }
 
-char       *param_start;
-
-eqin(s1, s2)
-    register char *s1;
-    register char *s2;
+static const char *
+eqin(const char *s1, const char *s2)
 {
     while (*s1) {
 	if (*s1++ != *s2++)
-	    return (false);
+	    return (NULL);
     }
-    param_start = s2;
-    return (true);
+    return (s2);
 }
 
 /*
  * Set the defaults.
  */
-set_defaults()
+void
+set_defaults(void)
 {
-    register struct pro *p;
+    struct pro *p;
 
     /*
      * Because ps.case_indent is a float, we can't initialize it from the
      * table:
      */
-    ps.case_indent = 0.0;	/* -cli0.0 */
+    opt.case_indent = 0.0;	/* -cli0.0 */
     for (p = pro; p->p_name; p++)
-	if (p->p_type != PRO_SPECIAL && p->p_type != PRO_FONT)
+	if (p->p_type != PRO_SPECIAL)
 	    *p->p_obj = p->p_default;
 }
 
-set_option(arg)
-    register char *arg;
+void
+set_option(char *arg)
 {
-    register struct pro *p;
-    extern double atof();
+    struct	pro *p;
+    const char	*param_start;
 
     arg++;			/* ignore leading "-" */
     for (p = pro; p->p_name; p++)
-	if (*p->p_name == *arg && eqin(p->p_name, arg))
+	if (*p->p_name == *arg && (param_start = eqin(p->p_name, arg)) != NULL)
 	    goto found;
-    fprintf(stderr, "indent: %s: unknown parameter \"%s\"\n", option_source, arg - 1);
-    exit(1);
+    errx(1, "%s: unknown parameter \"%s\"", option_source, arg - 1);
 found:
     switch (p->p_type) {
 
@@ -244,30 +284,34 @@ found:
 	case CLI:
 	    if (*param_start == 0)
 		goto need_param;
-	    ps.case_indent = atof(param_start);
+	    opt.case_indent = atof(param_start);
 	    break;
 
 	case STDIN:
-	    if (input == 0)
+	    if (input == NULL)
 		input = stdin;
-	    if (output == 0)
+	    if (output == NULL)
 		output = stdout;
 	    break;
 
 	case KEY:
 	    if (*param_start == 0)
 		goto need_param;
-	    {
-		register char *str = (char *) malloc(strlen(param_start) + 1);
-		strcpy(str, param_start);
-		addkey(str, 4);
-	    }
+	    add_typename(param_start);
 	    break;
 
+	case KEY_FILE:
+	    if (*param_start == 0)
+		goto need_param;
+	    add_typedefs_from_file(param_start);
+	    break;
+
+	case VERSION:
+	    printf("FreeBSD indent %s\n", INDENT_VERSION);
+	    exit(0);
+
 	default:
-	    fprintf(stderr, "\
-indent: set_option: internal error: p_special %d\n", p->p_special);
-	    exit(1);
+	    errx(1, "set_option: internal error: p_special %d", p->p_special);
 	}
 	break;
 
@@ -279,22 +323,32 @@ indent: set_option: internal error: p_special %d\n", p->p_special);
 	break;
 
     case PRO_INT:
-	if (!isdigit(*param_start)) {
+	if (!isdigit((unsigned char)*param_start)) {
     need_param:
-	    fprintf(stderr, "indent: %s: ``%s'' requires a parameter\n",
-		    option_source, arg - 1);
-	    exit(1);
+	    errx(1, "%s: ``%s'' requires a parameter", option_source, p->p_name);
 	}
 	*p->p_obj = atoi(param_start);
 	break;
 
-    case PRO_FONT:
-	parsefont((struct fstate *) p->p_obj, param_start);
-	break;
-
     default:
-	fprintf(stderr, "indent: set_option: internal error: p_type %d\n",
-		p->p_type);
+	errx(1, "set_option: internal error: p_type %d", p->p_type);
+    }
+}
+
+void
+add_typedefs_from_file(const char *str)
+{
+    FILE *file;
+    char line[BUFSIZ];
+
+    if ((file = fopen(str, "r")) == NULL) {
+	fprintf(stderr, "indent: cannot open file %s\n", str);
 	exit(1);
     }
+    while ((fgets(line, BUFSIZ, file)) != NULL) {
+	/* Remove trailing whitespace */
+	line[strcspn(line, " \t\n\r")] = '\0';
+	add_typename(line);
+    }
+    fclose(file);
 }
