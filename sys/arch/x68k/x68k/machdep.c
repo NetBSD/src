@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.198 2019/03/14 16:59:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.199 2019/04/04 03:36:15 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.198 2019/03/14 16:59:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199 2019/04/04 03:36:15 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -329,6 +329,8 @@ identifycpu(void)
 	const char *cpu_type, *mach, *mmu, *fpu;
 	char clock[16];
 	char emubuf[20];
+	char cpubuf[16];
+	uint32_t pcr;
 
 	/*
 	 * check machine type constant
@@ -367,7 +369,12 @@ identifycpu(void)
 	snprintf(clock, sizeof(clock), "%dMHz", cpuspeed);
 	switch (cputype) {
 	case CPU_68060:
-		cpu_type = "m68060";
+		/* from amiga */
+		__asm(".word 0x4e7a,0x0808; movl %%d0,%0"
+		    : "=d"(pcr) : : "d0");
+		snprintf(cpubuf, sizeof(cpubuf), "m68%s060 rev.%d",
+		    (pcr & 0x10000) ? "LC/EC" : "", (pcr >> 8) & 0xff);
+		cpu_type = cpubuf;
 		mmu = "/MMU";
 		cpuspeed = 128 / delay_divisor;
 		snprintf(clock, sizeof(clock), "%d/%dMHz", cpuspeed*2, cpuspeed);
