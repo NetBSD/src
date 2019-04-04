@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.126 2019/04/04 11:49:06 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.127 2019/04/04 20:19:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.126 2019/04/04 11:49:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.127 2019/04/04 20:19:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -740,75 +740,3 @@ disk_set_info(device_t dev, struct disk *dk, const char *type)
 	if (odisk_info)
 		prop_object_release(odisk_info);
 }
-
-#ifndef __HAVE_SETDISKLABEL
-
-#ifdef DEBUG
-#define DPRINTF(a, ...) printf(a, ##__VA_ARGS__)
-#else
-#define DPRINTF(a, ...) __nothing
-#endif
-
-/*
- * Check new disk label for sensibility
- * before setting it.
- */
-int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
-    struct cpu_disklabel *osdep)
-{
-	int i;
-	struct partition *opp, *npp;
-
-	/* sanity clause */
-	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0
-		|| (nlp->d_secsize % DEV_BSIZE) != 0) {
-		DPRINTF("%s: secpercyl/secsize %u/%u\n", __func__,
-		    nlp->d_secpercyl, nlp->d_secsize);
-		return EINVAL;
-	}
-
-	/* special case to allow disklabel to be invalidated */
-	if (nlp->d_magic == 0xffffffff) {
-		*olp = *nlp;
-		return 0;
-	}
-
-	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
-	    nlp->d_npartitions > MAXPARTITIONS || dkcksum(nlp) != 0) {
-		DPRINTF("%s: bad magic %#x/%#x != %#x, partitions %u != %u"
-		    ", bad sum=%#x\n", __func__,
-		    nlp->d_magic, nlp->d_magic2, DISKMAGIC,
-		    nlp->d_npartitions, MAXPARTITIONS, dkcksum(nlp));
-		return EINVAL;
-	}
-
-	while (openmask != 0) {
-		i = ffs(openmask) - 1;
-		openmask &= ~(1 << i);
-		if (i >= nlp->d_npartitions) {
-			DPRINTF("%s: partition not found\n", __func__);
-			return EBUSY;
-		}
-		opp = &olp->d_partitions[i];
-		npp = &nlp->d_partitions[i];
-		/*
-		 * Copy internally-set partition information
-		 * if new label doesn't include it.		XXX
-		 */
-		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
-			*npp = *opp;
-			continue;
-		}
-		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
-		{
-			DPRINTF("%s: mismatched offset/size", __func__);
-			return EBUSY;
-		}
-	}
- 	nlp->d_checksum = 0;
- 	nlp->d_checksum = dkcksum(nlp);
-	*olp = *nlp;
-	return 0;
-}
-#endif
