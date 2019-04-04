@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.27 2019/03/07 15:47:34 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.28 2019/04/04 17:33:47 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -123,13 +123,14 @@ x86_gva_to_gpa_32bit(struct nvmm_machine *mach, uint64_t cr3,
 	gpaddr_t L2gpa, L1gpa;
 	uintptr_t L2hva, L1hva;
 	pte_32bit_t *pdir, pte;
+	nvmm_prot_t pageprot;
 
 	/* We begin with an RWXU access. */
 	*prot = NVMM_PROT_ALL;
 
 	/* Parse L2. */
 	L2gpa = (cr3 & CR3_FRAME_32BIT);
-	if (nvmm_gpa_to_hva(mach, L2gpa, &L2hva) == -1)
+	if (nvmm_gpa_to_hva(mach, L2gpa, &L2hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_32bit_t *)L2hva;
 	pte = pdir[pte32_l2idx(gva)];
@@ -149,7 +150,7 @@ x86_gva_to_gpa_32bit(struct nvmm_machine *mach, uint64_t cr3,
 
 	/* Parse L1. */
 	L1gpa = (pte & PG_FRAME);
-	if (nvmm_gpa_to_hva(mach, L1gpa, &L1hva) == -1)
+	if (nvmm_gpa_to_hva(mach, L1gpa, &L1hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_32bit_t *)L1hva;
 	pte = pdir[pte32_l1idx(gva)];
@@ -195,13 +196,14 @@ x86_gva_to_gpa_32bit_pae(struct nvmm_machine *mach, uint64_t cr3,
 	gpaddr_t L3gpa, L2gpa, L1gpa;
 	uintptr_t L3hva, L2hva, L1hva;
 	pte_32bit_pae_t *pdir, pte;
+	nvmm_prot_t pageprot;
 
 	/* We begin with an RWXU access. */
 	*prot = NVMM_PROT_ALL;
 
 	/* Parse L3. */
 	L3gpa = (cr3 & CR3_FRAME_32BIT_PAE);
-	if (nvmm_gpa_to_hva(mach, L3gpa, &L3hva) == -1)
+	if (nvmm_gpa_to_hva(mach, L3gpa, &L3hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_32bit_pae_t *)L3hva;
 	pte = pdir[pte32_pae_l3idx(gva)];
@@ -214,7 +216,7 @@ x86_gva_to_gpa_32bit_pae(struct nvmm_machine *mach, uint64_t cr3,
 
 	/* Parse L2. */
 	L2gpa = (pte & PG_FRAME);
-	if (nvmm_gpa_to_hva(mach, L2gpa, &L2hva) == -1)
+	if (nvmm_gpa_to_hva(mach, L2gpa, &L2hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_32bit_pae_t *)L2hva;
 	pte = pdir[pte32_pae_l2idx(gva)];
@@ -234,7 +236,7 @@ x86_gva_to_gpa_32bit_pae(struct nvmm_machine *mach, uint64_t cr3,
 
 	/* Parse L1. */
 	L1gpa = (pte & PG_FRAME);
-	if (nvmm_gpa_to_hva(mach, L1gpa, &L1hva) == -1)
+	if (nvmm_gpa_to_hva(mach, L1gpa, &L1hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_32bit_pae_t *)L1hva;
 	pte = pdir[pte32_pae_l1idx(gva)];
@@ -294,6 +296,7 @@ x86_gva_to_gpa_64bit(struct nvmm_machine *mach, uint64_t cr3,
 	gpaddr_t L4gpa, L3gpa, L2gpa, L1gpa;
 	uintptr_t L4hva, L3hva, L2hva, L1hva;
 	pte_64bit_t *pdir, pte;
+	nvmm_prot_t pageprot;
 
 	/* We begin with an RWXU access. */
 	*prot = NVMM_PROT_ALL;
@@ -303,7 +306,7 @@ x86_gva_to_gpa_64bit(struct nvmm_machine *mach, uint64_t cr3,
 
 	/* Parse L4. */
 	L4gpa = (cr3 & CR3_FRAME_64BIT);
-	if (nvmm_gpa_to_hva(mach, L4gpa, &L4hva) == -1)
+	if (nvmm_gpa_to_hva(mach, L4gpa, &L4hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_64bit_t *)L4hva;
 	pte = pdir[pte64_l4idx(gva)];
@@ -320,7 +323,7 @@ x86_gva_to_gpa_64bit(struct nvmm_machine *mach, uint64_t cr3,
 
 	/* Parse L3. */
 	L3gpa = (pte & PG_FRAME);
-	if (nvmm_gpa_to_hva(mach, L3gpa, &L3hva) == -1)
+	if (nvmm_gpa_to_hva(mach, L3gpa, &L3hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_64bit_t *)L3hva;
 	pte = pdir[pte64_l3idx(gva)];
@@ -340,7 +343,7 @@ x86_gva_to_gpa_64bit(struct nvmm_machine *mach, uint64_t cr3,
 
 	/* Parse L2. */
 	L2gpa = (pte & PG_FRAME);
-	if (nvmm_gpa_to_hva(mach, L2gpa, &L2hva) == -1)
+	if (nvmm_gpa_to_hva(mach, L2gpa, &L2hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_64bit_t *)L2hva;
 	pte = pdir[pte64_l2idx(gva)];
@@ -360,7 +363,7 @@ x86_gva_to_gpa_64bit(struct nvmm_machine *mach, uint64_t cr3,
 
 	/* Parse L1. */
 	L1gpa = (pte & PG_FRAME);
-	if (nvmm_gpa_to_hva(mach, L1gpa, &L1hva) == -1)
+	if (nvmm_gpa_to_hva(mach, L1gpa, &L1hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_64bit_t *)L1hva;
 	pte = pdir[pte64_l1idx(gva)];
@@ -568,7 +571,7 @@ read_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	}
 	size -= remain;
 
-	ret = nvmm_gpa_to_hva(mach, gpa, &hva);
+	ret = nvmm_gpa_to_hva(mach, gpa, &hva, &prot);
 	is_mmio = (ret == -1);
 
 	if (is_mmio) {
@@ -578,6 +581,10 @@ read_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 		mem.size = size;
 		(*__callbacks.mem)(&mem);
 	} else {
+		if (__predict_false(!(prot & NVMM_PROT_READ))) {
+			errno = EFAULT;
+			return -1;
+		}
 		memcpy(data, (uint8_t *)hva, size);
 	}
 
@@ -618,7 +625,7 @@ write_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	}
 	size -= remain;
 
-	ret = nvmm_gpa_to_hva(mach, gpa, &hva);
+	ret = nvmm_gpa_to_hva(mach, gpa, &hva, &prot);
 	is_mmio = (ret == -1);
 
 	if (is_mmio) {
@@ -628,6 +635,10 @@ write_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 		mem.size = size;
 		(*__callbacks.mem)(&mem);
 	} else {
+		if (__predict_false(!(prot & NVMM_PROT_WRITE))) {
+			errno = EFAULT;
+			return -1;
+		}
 		memcpy((uint8_t *)hva, data, size);
 	}
 
