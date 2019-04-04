@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.3 2008/04/30 13:10:49 martin Exp $
+#	$NetBSD: install.md,v 1.4 2019/04/04 21:00:19 christos Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ md_set_term() {
 
 __mount_kernfs() {
 	# Make sure kernfs is mounted.
-	if [ ! -d /kern -o ! -e /kern/msgbuf ]; then
+	if [ ! -d /kern ] || [ ! -e /kern/msgbuf ]; then
 		mkdir /kern > /dev/null 2>&1
 		/sbin/mount_kernfs /kern /kern
 	fi
@@ -149,7 +149,7 @@ __md_prep_disklabel_1
 
 md_copy_kernel() {
 	if [ ! -f /mnt/netbsd ]; then
-		set -- `sysctl -n hw.model`
+		set -- $(sysctl -n hw.model)
 		echo -n "No kernel set extracted. Copying $1 miniroot kernel..."
 		cp -p /netbsd.$1 /mnt/netbsd
 		echo "done."
@@ -176,9 +176,9 @@ __welcome_banner_1
 This program is designed to help you upgrade your NetBSD system in a
 simple and rational way.
 
-As a reminder, installing the `etc' binary set is NOT recommended.
+As a reminder, installing the 'etc' binary set is NOT recommended.
 Once the rest of your system has been upgraded, you should manually
-merge any changes to files in the `etc' set into those files which
+merge any changes to files in the 'etc' set into those files which
 already exist on your system.
 __welcome_banner_2
 	fi
@@ -201,7 +201,7 @@ __welcome_banner_3
 md_not_going_to_install() {
 	cat << \__not_going_to_install_1
 
-OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
+OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the
 machine has halted, power-cycle the system to load new boot code.
 
 __not_going_to_install_1
