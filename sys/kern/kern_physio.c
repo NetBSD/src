@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.94 2019/03/26 09:33:58 mlelstv Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.95 2019/04/04 12:26:45 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.94 2019/03/26 09:33:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.95 2019/04/04 12:26:45 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,13 +317,6 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 				 */
 				bp->b_bcount = MIN(MAXPHYS, iovp->iov_len);
 			} else {
-				/*
-				 * Verify that buffer can handle size
-				 */
-				if (iovp->iov_len > MAXBSIZE) {
-					error = EINVAL;
-					goto done;
-				}
 				bp->b_bcount = iovp->iov_len;
 			}
 			bp->b_data = iovp->iov_base;
