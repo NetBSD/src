@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.156 2019/02/18 00:42:54 rin Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.157 2019/04/04 15:10:58 kamil Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -402,7 +402,6 @@
 ./usr/tests/usr.bin/grep
 ./usr/tests/usr.bin/gzip
 ./usr/tests/usr.bin/id
-./usr/tests/usr.bin/netpgpverify
 ./usr/tests/usr.bin/infocmp
 ./usr/tests/usr.bin/jot
 ./usr/tests/usr.bin/ld
@@ -412,6 +411,7 @@
 ./usr/tests/usr.bin/mixerctl
 ./usr/tests/usr.bin/mkdep
 ./usr/tests/usr.bin/nbperf
+./usr/tests/usr.bin/netpgpverify
 ./usr/tests/usr.bin/pkill
 ./usr/tests/usr.bin/pr
 ./usr/tests/usr.bin/printf
