@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.10 2019/04/03 17:55:27 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.11 2019/04/04 14:24:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
 	R_TMP2		.req r9
 	R_VTOPDIFF	.req r10
 	R_FDTADDR	.req r11
+	R_INDEX		.req r11
 
 	.text
 
@@ -127,33 +128,15 @@ ENTRY_NP(generic_start)
 	VPRINTF("\n\rsp    : ")
 	VPRINTX(sp)
 
-	ldr	R_TMP1, =kern_vtopdiff
-	sub	R_TMP1, R_TMP1, R_VTOPDIFF
-	str	R_VTOPDIFF, [R_TMP1]
-
 	ldr	R_TMP1, =(L1_S_SIZE - 1)
 	ands	R_TMP2, R_VTOPDIFF, R_TMP1
 	bne	arm_bad_vtopdiff
-
-	/*
-	 * store uboot arguments to uboot_args[4]
-	 */
-	ldr	R_TMP1, =uboot_args
-	sub	R_TMP1, R_TMP1, R_VTOPDIFF
-
-	str	r4, [R_TMP1, #(4*0)]
-	str	r5, [R_TMP1, #(4*1)]
-	str	r6, [R_TMP1, #(4*2)]
-	str	r7, [R_TMP1, #(4*3)]
 
 #if defined(FDTBASE)
 	/*
 	 * ARM boot protocol has FDT address in r2 which is now in r6
 	 */
 	VPRINTF("\n\rfdt   : ")
-	ldr	R_TMP1, =fdt_addr_r
-	sub	R_TMP1, R_TMP1, R_VTOPDIFF
-	str	r6, [R_TMP1]
 	mov	R_FDTADDR, r6		// Save fdt_addr_r for mapping later
 
 	VPRINTX(r6)
@@ -194,6 +177,58 @@ arm_bad_vtopdiff:
 	VPRINTF(")\n\r")
 1:	b	 1b
 ASEND(generic_start)
+
+generic_vstart:
+	VPRINTF("go\n\r")
+
+	/*
+	 * Jump to start in locore.S, which in turn will call initarm and main.
+	 */
+	b	start
+
+/*
+ * Save the u-boot arguments (including FDT address) and the virtual to physical
+ * offset.
+ *
+ * Uses the following callee saved registers:
+ *
+ * 	r8 (R_TMP1), r9 (R_TMP2)
+ */
+generic_savevars:
+	mov	R_TMP1, lr
+	/*
+	 * Store virtual to physical address difference
+	 */
+	ldr	R_TMP2, =kern_vtopdiff
+	sub	R_TMP2, R_TMP2, R_VTOPDIFF
+	str	R_VTOPDIFF, [R_TMP2]
+
+	/*
+	 * store uboot arguments to uboot_args[4]
+	 */
+	ldr	R_TMP2, =uboot_args
+	sub	R_TMP2, R_VTOPDIFF
+
+	VPRINTF("\n\ruboot : @")
+	VPRINTX(R_TMP2)
+	str	r4, [R_TMP2, #(4*0)]
+	str	r5, [R_TMP2, #(4*1)]
+	str	r6, [R_TMP2, #(4*2)]
+	str	r7, [R_TMP2, #(4*3)]
+
+#if defined(FDTBASE)
+	/*
+	 * ARM boot protocol has FDT address in r2 which is now in r6
+	 */
+	VPRINTF("\n\rfdt   : ")
+	ldr	R_TMP2, =fdt_addr_r
+	sub	R_TMP2, R_VTOPDIFF
+	str	r6, [R_TMP2]
+
+	VPRINTX(r6)
+#endif
+
+	RETr(R_TMP1)
 
 	.ltorg
 
@@ -413,40 +448,34 @@ generic_startv7:
 	.arch_extension	sec
 	.arch_extension	virt
 
-	VPRINTF("v7   :")
+	VPRINTF("v7    : ")
 
 	bl	armv7_init
+	bl	generic_savevars
 
 	mov	R_DEVATTR, #L1_S_V6_XN
 	bl	arm_build_translation_table
 
 	/*
-	 * Turn on the MMU.  Return to new enabled address space.
+	 * Turn on the MMU.  Return to virtual address space.
 	 */
 	movw	r0, #:lower16:TEMP_L1_TABLE
 	movt	r0, #:upper16:TEMP_L1_TABLE
 	sub	r0, R_VTOPDIFF
 
 	// Return to virtual addess after the call to armv7_mmuinit
-	movw	lr, #:lower16:1f
-	movt	lr, #:upper16:1f
+	movw	lr, #:lower16:generic_vstart
+	movt	lr, #:upper16:generic_vstart
 	b	armv7_mmuinit
-1:
-
-	VPRINTF("go\n\r")
-
-	/*
-	 * Jump to start in locore.S, which in turn will call initarm and main.
-	 */
-	b	start
 
 	/* NOTREACHED */
 	.ltorg
 #elif defined(_ARM_ARCH_6)
 generic_startv6:
-	VPRINTF("v6: ")
+	VPRINTF("v6    : ")
 
 	bl	armv6_init
+	bl	generic_savevars
 
 #ifdef ARM_MMU_EXTENDED
 	mov	R_DEVATTR, #L1_S_V6_XN
@@ -462,15 +491,8 @@ generic_startv6:
 	ldr	r0, =TEMP_L1_TABLE
 	sub	r0, R_VTOPDIFF
 
-	ldr	lr, =1f
+	ldr	lr, =generic_vstart
 	b	armv6_mmuinit
-1:
-	VPRINTF("go\n\r")
-
-	/*
-	 * Jump to start in locore.S, which in turn will call initarm and main.
-	 */
-	b	start
 
 	/* NOTREACHED */
 	.ltorg
@@ -530,8 +552,7 @@ generic_startv6:
  *
  * Uses the following callee saved registers:
  *
- * Callee saved:
- * 	r4, r5, r6, r7
+ * 	r8 (R_TMP1), r9 (R_TMP2)
  */
 armv7_init:
 
@@ -539,8 +560,8 @@ armv7_init:
 	.arch_extension	sec
 	.arch_extension	virt
 
-	mov	r4, lr
-	mov	r5, sp
+	mov	R_TMP1, lr
+	mov	R_TMP2, sp
 
 	/*
 	 * Leave HYP mode and move into supervisor mode with IRQs/FIQs
@@ -577,7 +598,7 @@ armv7_init:
 	mov	r0, #0
 	msr	spsr_sxc, r0			// set SPSR[23:8] to known value
 
-	mov	sp, r5
+	mov	sp, R_TMP2
 
 	XPUTC('A')
 
@@ -606,11 +627,11 @@ armv7_init:
 	movw	r2, #:lower16:ARMV7_SCTLR_SET
 	movt	r2, #:upper16:ARMV7_SCTLR_SET
 
-	mov	r7, r0				// save for printing
-	bic	r6, r0, r1			// disable icache/dcache/mmu
-	orr	r6, r6, r2			//
+	mov	R_TMP2, r0			// save for printing
+	bic	r0, r0, r1			// disable icache/dcache/mmu
+	orr	r0, r0, r2			// enable unaligned access
 
-	mcr	p15, 0, r6, c1, c0, 0		// SCTLR write
+	mcr	p15, 0, r0, c1, c0, 0		// SCTLR write
 	dsb
 	isb
 
@@ -619,17 +640,20 @@ armv7_init:
 	dsb
 	isb
 
+#ifdef VERBOSE_INIT_ARM
 	XPUTC(#'B')
 
 	VPRINTF(" sctlr:")
-	VPRINTX(r7)
+	VPRINTX(R_TMP2)
 	VPRINTF("/")
-	VPRINTX(r6)
+	mrc     p15, 0, r0, c1, c0, 0
+	VPRINTX(r0)
 	VPRINTF(" ")
 
 	XPUTC(#'C')
+#endif
 
-	bx	r4				// return
+	bx	R_TMP1				// return
 
 	.ltorg
 
@@ -778,12 +802,12 @@ ENTRY_NP(cpu_mpstart)
 	// Not found our mpidr in the list - use Aff0 for cpuindex
 	and	r0, r4, #7
 2:
-	mov	R_TMP2, r0			// save cpu_index for later
+	mov	R_INDEX, r0			// save cpu_index for later
 
 	ldr	R_TMP1, =start_stacks_top
 	sub	sp, R_TMP1, R_VTOPDIFF
 
-	mov	r5, R_TMP2
+	mov	r5, R_INDEX
 	lsl	r5, #INIT_ARM_STACK_SHIFT
 	sub	sp, sp, r5
 
@@ -799,7 +823,7 @@ ENTRY_NP(cpu_mpstart)
 	VPRINTX(r0)
 #endif
 	VPRINTF("\n\rindex : ")
-	VPRINTX(R_TMP2)
+	VPRINTX(R_INDEX)
 	VPRINTF("\n\rsp    : ")
 	VPRINTX(sp)
 	XPUTC('\n')
@@ -827,7 +851,7 @@ armv7_mpcontinuation:
 
 	VPRINTF("go\n\r")
 
-	mov	r0, R_TMP2			// index into cpu_mpidr[] or cpu_number if not found
+	mov	r0, R_INDEX			// index into cpu_mpidr[] or cpu_number if not found
 	bl	cpu_init_secondary_processor
 
 	/* Wait for cpu_boot_secondary_processors the when cpu_info is allocated, etc */
@@ -836,7 +860,7 @@ armv7_mpcontinuation:
 	movt	r6, #:upper16:arm_cpu_mbox
 
 	mov	r5, #1				// bitmask...
-	lsl	r5, R_TMP2			// ... for our cpu
+	lsl	r5, R_INDEX			// ... for our cpu
 
 1:	dmb					// data memory barrier
 	ldr	r2, [r6]			// load mbox
@@ -846,7 +870,7 @@ armv7_mpcontinuation:
 
 	movw	r0, #:lower16:cpu_info
 	movt	r0, #:upper16:cpu_info		// get pointer to cpu_infos
-	ldr	r5, [r0, R_TMP2, lsl #2]	// load our cpu_info
+	ldr	r5, [r0, R_INDEX, lsl #2]	// load our cpu_info
 	ldr	r6, [r5, #CI_IDLELWP]		// get the idlelwp
 	ldr	r7, [r6, #L_PCB]		// now get its pcb
 	ldr	sp, [r7, #PCB_KSP]		// finally, we can load our SP
@@ -860,7 +884,7 @@ armv7_mpcontinuation:
 	str	r6, [r5, #CI_CURLWP]		// and note we are running on it
 
 	mov	r0, r5				// pass cpu_info
-	mov	r1, R_TMP2			// pass cpu_index
+	mov	r1, R_INDEX			// pass cpu_index
 	movw	r2, #:lower16:MD_CPU_HATCH	// pass md_cpu_hatch
 	movt	r2, #:upper16:MD_CPU_HATCH	// pass md_cpu_hatch
 	bl	_C_LABEL(cpu_hatch)
@@ -894,7 +918,7 @@ ENTRY_NP(armv6_init)
 	nop;									\
 	nop;
 
-	mov	r4, lr
+	mov	R_TMP1, lr
 	mov	r0, #0			/* SBZ */
 	Invalidate_I_cache(r0)
 
@@ -903,24 +927,26 @@ ENTRY_NP(armv6_init)
 	ldr     r2, =(CPU_CONTROL_IC_ENABLE|CPU_CONTROL_DC_ENABLE)
 					/* Disable I+D caches */
 	mrc	p15, 0, r1, c1, c0, 0	/*  "       "   "     */
-	mov	r7, r1
+	mov	R_TMP2, r1
 	bic	r1, r1, r2		/*  "       "   "     */
-	mov	r6, r1
 	mcr	p15, 0, r1, c1, c0, 0	/*  "       "   "     */
 
 	mcr	p15, 0, r0, c7, c10, 4	/* Drain the write buffers. */
 
+#ifdef VERBOSE_INIT_ARM
 	XPUTC(#'B')
 
 	VPRINTF(" sctlr:")
-	VPRINTX(r7)
+	VPRINTX(R_TMP2)
 	VPRINTF("/")
-	VPRINTX(r6)
+	mrc	p15, 0, r0, c1, c0, 0
+	VPRINTX(r0)
 	VPRINTF(" ")
 
 	XPUTC(#'C')
+#endif
 
-	bx	r4
+	bx	R_TMP1
 
 	.ltorg
 
@@ -962,10 +988,12 @@ armv6_mmuinit:
 	 * Enable the MMU, etc.
 	 */
 
+#ifdef VERBOSE_INIT_ARM
 	VPRINTF(" sctlr:")
 	mrc     p15, 0, r0, c1, c0, 0
 	VPRINTX(r0)
 	VPRINTF("/")
+#endif
 
 	mrc     p15, 0, r0, c1, c0, 0
 
