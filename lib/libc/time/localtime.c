@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.116 2019/01/27 04:38:38 dholland Exp $	*/
+/*	$NetBSD: localtime.c,v 1.117 2019/04/04 19:27:28 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.116 2019/01/27 04:38:38 dholland Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.117 2019/04/04 19:27:28 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -30,7 +30,6 @@ __RCSID("$NetBSD: localtime.c,v 1.116 2019/01/27 04:38:38 dholland Exp $");
 
 #include "tzfile.h"
 #include <fcntl.h>
-#include "reentrant.h"
 
 #if NETBSD_INSPIRED
 # define NETBSD_INSPIRED_EXTERN
@@ -172,7 +171,6 @@ static struct tm *timesub(time_t const *, int_fast32_t, struct state const *,
 static bool typesequiv(struct state const *, int, int);
 static bool tzparse(char const *, struct state *, bool);
 
-static timezone_t lclptr;
 static timezone_t gmtptr;
 
 #ifndef TZ_STRLEN_MAX
@@ -183,8 +181,11 @@ static char		lcl_TZname[TZ_STRLEN_MAX + 1];
 static int		lcl_is_set;
 
 
+#if !defined(__LIBC12_SOURCE__)
+timezone_t __lclptr;
 #ifdef _REENTRANT
-static rwlock_t lcl_lock = RWLOCK_INITIALIZER;
+rwlock_t __lcl_lock = RWLOCK_INITIALIZER;
+#endif
 #endif
 
 /*
@@ -359,7 +360,7 @@ update_tzname_etc(const struct state *sp, const struct ttinfo *ttisp)
 static void
 settzname(void)
 {
-	timezone_t const	sp = lclptr;
+	timezone_t const	sp = __lclptr;
 	int			i;
 
 #if HAVE_TZNAME
@@ -475,7 +476,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 		/* Set doaccess if NAME contains a ".." file name
 		   component, as such a name could read a file outside
 		   the TZDIR virtual subtree.  */
-		for (dot = name; (dot = strchr(dot, '.')); dot++)
+		for (dot = name; (dot = strchr(dot, '.')) != NULL; dot++)
 		  if ((dot == name || dot[-1] == '/') && dot[1] == '.'
 		      && (dot[2] == '/' || !dot[2])) {
 		    doaccess = true;
@@ -1412,14 +1413,14 @@ zoneinit(struct state *sp, char const *name)
 static void
 tzsetlcl(char const *name)
 {
-	struct state *sp = lclptr;
+	struct state *sp = __lclptr;
 	int lcl = name ? strlen(name) < sizeof lcl_TZname : -1;
 	if (lcl < 0 ? lcl_is_set < 0
 	    : 0 < lcl_is_set && strcmp(lcl_TZname, name) == 0)
 		return;
 
 	if (! sp)
-		lclptr = sp = malloc(sizeof *lclptr);
+		__lclptr = sp = malloc(sizeof *__lclptr);
 	if (sp) {
 		if (zoneinit(sp, name) != 0)
 			zoneinit(sp, "");
@@ -1434,13 +1435,13 @@ tzsetlcl(char const *name)
 void
 tzsetwall(void)
 {
-	rwlock_wrlock(&lcl_lock);
+	rwlock_wrlock(&__lcl_lock);
 	tzsetlcl(NULL);
-	rwlock_unlock(&lcl_lock);
+	rwlock_unlock(&__lcl_lock);
 }
 #endif
 
-static void
+void
 tzset_unlocked(void)
 {
 	tzsetlcl(getenv("TZ"));
@@ -1449,23 +1450,23 @@ tzset_unlocked(void)
 void
 tzset(void)
 {
-	rwlock_wrlock(&lcl_lock);
+	rwlock_wrlock(&__lcl_lock);
 	tzset_unlocked();
-	rwlock_unlock(&lcl_lock);
+	rwlock_unlock(&__lcl_lock);
 }
 
 static void
 gmtcheck(void)
 {
 	static bool gmt_is_set;
-	rwlock_wrlock(&lcl_lock);
+	rwlock_wrlock(&__lcl_lock);
 	if (! gmt_is_set) {
 		gmtptr = malloc(sizeof *gmtptr);
 		if (gmtptr)
 			gmtload(gmtptr);
 		gmt_is_set = true;
 	}
-	rwlock_unlock(&lcl_lock);
+	rwlock_unlock(&__lcl_lock);
 }
 
 #if NETBSD_INSPIRED
@@ -1614,11 +1615,11 @@ localtime_rz(timezone_t sp, time_t const *timep, struct tm *tmp)
 static struct tm *
 localtime_tzset(time_t const *timep, struct tm *tmp, bool setname)
 {
-	rwlock_wrlock(&lcl_lock);
+	rwlock_wrlock(&__lcl_lock);
 	if (setname || !lcl_is_set)
 		tzset_unlocked();
-	tmp = localsub(lclptr, timep, setname, tmp);
-	rwlock_unlock(&lcl_lock);
+	tmp = localsub(__lclptr, timep, setname, tmp);
+	rwlock_unlock(&__lcl_lock);
 	return tmp;
 }
 
@@ -2354,10 +2355,10 @@ mktime(struct tm *tmp)
 {
 	time_t t;
 
-	rwlock_wrlock(&lcl_lock);
+	rwlock_wrlock(&__lcl_lock);
 	tzset_unlocked();
-	t = mktime_tzname(lclptr, tmp, true);
-	rwlock_unlock(&lcl_lock);
+	t = mktime_tzname(__lclptr, tmp, true);
+	rwlock_unlock(&__lcl_lock);
 	return t;
 }
 
@@ -2435,12 +2436,12 @@ time2posix_z(timezone_t sp, time_t t)
 time_t
 time2posix(time_t t)
 {
-	rwlock_wrlock(&lcl_lock);
+	rwlock_wrlock(&__lcl_lock);
 	if (!lcl_is_set)
 		tzset_unlocked();
-	if (lclptr)
-		t = (time_t)(t - leapcorr(lclptr, t));
-	rwlock_unlock(&lcl_lock);
+	if (__lclptr)
+		t = (time_t)(t - leapcorr(__lclptr, t));
+	rwlock_unlock(&__lcl_lock);
 	return t;
 }
 
@@ -2477,12 +2478,12 @@ posix2time_z(timezone_t sp, time_t t)
 time_t
 posix2time(time_t t)
 {
-	rwlock_wrlock(&lcl_lock);
+	rwlock_wrlock(&__lcl_lock);
 	if (!lcl_is_set)
 		tzset_unlocked();
-	if (lclptr)
-		t = posix2time_z(lclptr, t);
-	rwlock_unlock(&lcl_lock);
+	if (__lclptr)
+		t = posix2time_z(__lclptr, t);
+	rwlock_unlock(&__lcl_lock);
 	return t;
 }
 
