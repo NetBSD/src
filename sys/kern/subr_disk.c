@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.124 2019/04/03 22:10:52 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.125 2019/04/04 07:09:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.124 2019/04/03 22:10:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.125 2019/04/04 07:09:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -744,7 +744,7 @@ disk_set_info(device_t dev, struct disk *dk, const char *type)
 #ifndef __HAVE_SETDISKLABEL
 
 #ifdef DEBUG
-#define DPRINTF(a, ...) printf(a, __VA_ARGS__)
+#define DPRINTF(a, ...) printf(a, ##__VA_ARGS__)
 #else
 #define DPRINTF(a, ...) __nothing
 #endif
