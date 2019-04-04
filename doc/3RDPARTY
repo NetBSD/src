@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1607 2019/04/04 18:19:41 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1608 2019/04/04 20:21:45 kamil Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2160,3 +2160,15 @@ Notes:
 Use src/external/gpl2/texinfo/texinfo2netbsd for preparing the source tree
 for the import.
 
+Package:	indent
+Version:	FreeBSD-2018-11-04 r340138
+Current Vers:	FreeBSD-2018-11-04 r340138
+Maintainer:	The FreeBSD Project
+Archive Site:	none
+Home Page:	https://svnweb.freebsd.org/base/head/usr.bin/indent/
+Mailing List:	none
+Responsible:
+License:	BSD-like (4-clause)
+Location:	usr.bin/indent
+Notes:
+Tests are stored in tests/usr.bin/indent.
