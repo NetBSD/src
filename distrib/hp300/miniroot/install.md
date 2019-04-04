@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.15 2011/02/06 18:26:51 tsutsui Exp $
+#	$NetBSD: install.md,v 1.16 2019/04/04 21:00:19 christos Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -120,10 +120,10 @@ hp300_init_label_scsi_disk() {
 	# $1 is the disk to label
 
 	# Name the disks we install in the temporary fstab.
-	if [ "X${_disk_instance}" = "X" ]; then
+	if [ -z "${_disk_instance}" ]; then
 		_disk_instance="0"
 	else
-		_disk_instance=`expr $_disk_instance + 1`
+		_disk_instance=$(expr $_disk_instance + 1)
 	fi
 	_cur_disk_name="install-disk-${_disk_instance}"
 
@@ -168,35 +168,35 @@ __scsi_label_1
 	_secsize="$resp"
 
 	resp=""		# force one iteration
-	while [ "X${resp}" = "X" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n	"Number of cylinders? "
 		getresp ""
 	done
 	_cylinders="$resp"
-	_fudge_cyl=`expr $_cylinders + 1`
+	_fudge_cyl=$(expr $_cylinders + 1)
 
 	resp=""		# force one iteration
-	while [ "X${resp}" = "X" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n	"Number of tracks (heads)? "
 		getresp ""
 	done
 	_tracks_per_cyl="$resp"
 
 	resp=""		# force one iteration
-	while [ "X${resp}" = "X" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n	"Number of disk sectors (blocks)? "
 		getresp ""
 	done
 	_nsectors="$resp"
 
 	# Calculate some values we need.
-	_sec_per_cyl=`expr $_nsectors / $_cylinders`
-	_sec_per_track=`expr $_sec_per_cyl / $_tracks_per_cyl`
-	_new_c_size=`expr $_sec_per_track \* $_tracks_per_cyl \* $_cylinders`
+	_sec_per_cyl=$(expr $_nsectors / $_cylinders)
+	_sec_per_track=$(expr $_sec_per_cyl / $_tracks_per_cyl)
+	_new_c_size=$(expr $_sec_per_track \* $_tracks_per_cyl \* $_cylinders)
 
 	# Emit a disktab entry, suitable for getting started.
-	# What we have is a `c' partition with the total number of
-	# blocks, and an `a' partition with 1 sector; just large enough
+	# What we have is a 'c' partition with the total number of
+	# blocks, and an 'a' partition with 1 sector; just large enough
 	# to open.  Don't ask.
 	echo	"" >> /etc/disktab
 	echo	"# Created by install" >> /etc/disktab
@@ -207,18 +207,18 @@ __scsi_label_1
 	echo	"	:pc#${_nsectors}:" >> /etc/disktab
 
 	# Ok, here's what we need to do.  First of all, we install
-	# this initial label by opening the `c' partition of the disk
-	# and using the `-r' flag for disklabel(8).  However, because
+	# this initial label by opening the 'c' partition of the disk
+	# and using the '-r' flag for disklabel(8).  However, because
 	# of limitations in disklabel(8), we've had to fudge the number
 	# of cylinders up 1 so that disklabel(8) doesn't complain about
-	# `c' running past the end of the disk, which can be quite
+	# 'c' running past the end of the disk, which can be quite
 	# common even with OEM HP drives!  So, we've given ourselves
-	# an `a' partition, which is the minimum needed to open the disk
+	# an 'a' partition, which is the minimum needed to open the disk
 	# so that we can perform the DIOCWDLABEL ioctl.  So, once the
-	# initial label is installed, we open the `a' partition so that
+	# initial label is installed, we open the 'a' partition so that
 	# we can fix up the number of cylinders and make the size of
-	# `c' come out to (ncyl * ntracks_per_cyl * nsec_per_track).
-	# After that's done, we re-open `c' and let the user actually
+	# 'c' come out to (ncyl * ntracks_per_cyl * nsec_per_track).
+	# After that's done, we re-open 'c' and let the user actually
 	# edit the partition table.  It's horrible, I know.  Bleh.
 
 	disklabel -W ${1}
@@ -273,10 +273,10 @@ hp300_init_label_hpib_disk() {
 	# the model number for the provided disk.
 	_hpib_disktype=""
 	if dmesg | grep_check_q "${1}: "; then
-		_hpib_disktype=HP`dmesg | plain_grep "${1}: " | sort -u | \
-		    awk '{print $2}'`
+		_hpib_disktype=HP$(dmesg | plain_grep "${1}: " | sort -u | \
+		    awk '{print $2}')
 	fi
-	if [ "X${_hpib_disktype}" = "X" ]; then
+	if [ -z "${_hpib_disktype}" ]; then
 		echo ""
 		echo "ERROR: $1 doesn't appear to exist?!"
 		rval="1"
@@ -361,7 +361,7 @@ md_labeldisk() {
 			# Check to see if installing the default was
 			# successful.  If so, go ahead and pop into the
 			# disklabel editor.
-			if [ "X${rval}" != X"0" ]; then
+			if [ "${rval}" != "0" ]; then
 				echo "Sorry, can't label this disk."
 				echo ""
 				return;
@@ -437,9 +437,9 @@ You will now be given the opportunity to place disklabels on any additional
 disks on your system.
 __md_prep_disklabel_4
 
-	_DKDEVS=`rmel ${ROOTDISK} ${_DKDEVS}`
-	resp="X"	# force at least one iteration
-	while [ "X$resp" != X"done" ]; do
+	_DKDEVS=$(rmel ${ROOTDISK} ${_DKDEVS})
+	resp="not-done"	# force at least one iteration
+	while [ "$resp" != "done" ]; do
 		labelmoredisks
 	done
 }

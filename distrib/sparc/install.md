@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.22 2010/09/25 14:29:13 tsutsui Exp $
+#	$NetBSD: install.md,v 1.23 2019/04/04 21:00:19 christos Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -107,10 +107,10 @@ md_checkfordisklabel() {
 	local rval
 	local cfdl
 
-	cfdl=`disklabel $1 2>&1 > /dev/null | \
+	cfdl=$(disklabel $1 2>&1 > /dev/null | \
 	    sed -n -e '/no disk label/{s/.*/ndl/p;q;}; \
 		 /disk label corrupted/{s/.*/dlc/p;q;}; \
-		 $s/.*/no/p'`
+		 $s/.*/no/p')
 	if [ x$cfdl = xndl ]; then
 		rval=1
 	elif [ x$cfdl = xdlc ]; then
@@ -155,10 +155,10 @@ Here is an example of what the partition information will look like once
 you have entered the disklabel editor. Disk partition sizes and offsets
 are in sector (most likely 512 bytes) units. Make sure these size/offset
 pairs are on cylinder boundaries (the number of sector per cylinder is
-given in the `sectors/cylinder' entry, which is not shown here).
+given in the 'sectors/cylinder' entry, which is not shown here).
 
 Do not change any parameters except the partition layout and the label name.
-It's probably also wisest not to touch the `8 partitions:' line, even
+It's probably also wisest not to touch the '8 partitions:' line, even
 in case you have defined less than eight partitions.
 
 [Example]
@@ -215,9 +215,9 @@ __welcome_banner_1
 This program is designed to help you upgrade your NetBSD system in a
 simple and rational way.
 
-As a reminder, installing the `etc' binary set is NOT recommended.
+As a reminder, installing the 'etc' binary set is NOT recommended.
 Once the rest of your system has been upgraded, you should manually
-merge any changes to files in the `etc' set into those files which
+merge any changes to files in the 'etc' set into those files which
 already exist on your system.
 __welcome_banner_2
 	fi
@@ -241,7 +241,7 @@ __welcome_banner_3
 md_not_going_to_install() {
 	cat << \__not_going_to_install_1
 
-OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
+OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the
 machine has halted, power-cycle the system to load new boot code.
 
 __not_going_to_install_1
@@ -268,7 +268,7 @@ md_lib_is_aout() {
 	test -h $1 && return 1
 	test -f $1 || return 1
 
-	[ "`dd if=$1 bs=1 skip=1 count=3 2> /dev/null`" = "ELF" ] && return 1
+	[ "$(dd if=$1 bs=1 skip=1 count=3 2> /dev/null)" = "ELF" ] && return 1
 	return 0
 }
 
