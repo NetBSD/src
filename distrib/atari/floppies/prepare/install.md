@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.4 2017/11/25 09:41:45 tsutsui Exp $
+#	$NetBSD: install.md,v 1.5 2019/04/04 21:00:19 christos Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ md_set_term() {
 
 __mount_kernfs() {
 	# Make sure kernfs is mounted.
-	if [ ! -d /kern -o ! -e /kern/msgbuf ]; then
+	if [ ! -d /kern ] || [ ! -e /kern/msgbuf ]; then
 		mkdir /kern > /dev/null 2>&1
 		/sbin/mount_kernfs /kern /kern
 	fi
@@ -125,9 +125,9 @@ You will now be given the opportunity to place disklabels on any additional
 disks on your system.
 __md_prep_disklabel_4
 
-	_DKDEVS=`rmel ${1} ${_DKDEVS}`
-	resp="X"	# force at least one iteration
-	while [ "X$resp" != X"done" ]; do
+	_DKDEVS=$(rmel ${1} ${_DKDEVS})
+	resp="not-done"	# force at least one iteration
+	while [ "$resp" != "done" ]; do
 		labelmoredisks
 	done
 }
@@ -162,7 +162,7 @@ __welcome_banner_1
 md_not_going_to_install() {
 	cat << \__not_going_to_install_1
 
-OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
+OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the
 machine has halted, power-cycle the system to load new boot code.
 
 Note: If you wish to have another try. Just type '^D' at the prompt. After
