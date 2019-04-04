@@ -1,5 +1,5 @@
-.\"	$NetBSD: zic.8,v 1.31 2018/10/27 22:29:24 christos Exp $
-.Dd October 19, 2018
+.\"	$NetBSD: zic.8,v 1.32 2019/04/04 18:18:31 christos Exp $
+.Dd April 4, 2019
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -52,14 +52,41 @@ will act as if the input contained a link line of the form
 Use
 .Ar timezone's
 rules when handling POSIX-format
-timezone environment variables.
+TZ strings like 
+.Dq CST6CDT
+that lack transition rules.
 .Nm
 will act as if the input contained a link line of the form
 .Dl Link	timezone	posixrules
-.It Fl s
-Limit time values stored in output files to values that are the same
-whether they're taken to be signed or unsigned.
-You can use this option to generate SVVS-compatible files.
+.It Fl r Op Ar @lo / Op Ar @hi
+Reduce the size of output files by limiting their applicability
+to timestamps in the range from
+.Ar lo
+(inclusive) to
+.Ar hi
+(exclusive), where
+.Ar lo
+and
+.Ar hi
+are possibly-signed decimal counts of seconds since the Epoch
+(1970-01-01 00:00:00 UTC).
+Omitted counts default to extreme values.
+For example,
+.Bd literal
+zic -r @0
+.Ed
+omits data intended for negative timestamps (i.e., before the Epoch), and
+.Bd literal
+zic -r @0/@2147483648
+.Ed
+outputs data intended only for nonnegative timestamps that fit into
+31-bit signed integers.
+Or using 
+.Xr date 1 ,
+.Bd literal
+zic -r @$(date +%s)
+.Ed
+omits data intended for past timestamps.
 .It Fl t Ar file
 When creating local time information, put the configuration link in
 the named file rather than in the standard location.
@@ -87,7 +114,7 @@ prohibit this.
 The output file does not contain all the information about the
 long-term future of a timezone, because the future cannot be summarized as
 an extended POSIX TZ string.
-For example, as of 2013 this problem
+For example, as of 2019 this problem
 occurs for Iran's daylight-saving rules for the predicted future, as
 these rules are based on the Iranian calendar, which cannot be
 represented.
@@ -439,6 +466,16 @@ continuation.
 .Pp
 If a zone changes at the same instant that a rule would otherwise take
 effect in the earlier zone or continuation line, the rule is ignored.
+A zone or continuation line
+.I L
+with a named rule set starts with standard time by default:
+that is, any of
+.IR L 's
+timestamps preceding
+.IR L 's
+earliest rule use the rule in effect after
+.IR L 's
+first transition into standard time.
 In a single zone it is an error if two rules take effect at the same
 instant, or if two zone changes take effect at the same instant.
 .Pp
@@ -568,6 +605,9 @@ Swiss rules and later EU rules were applied, the time zone abbreviation
 has been CET for standard time and CEST for daylight saving
 time.
 .Sh FILES
+Input files use the format described in this section; output files use
+.Xr tzfile 5
+format.
 .Bl -tag -width /usr/share/zoneinfo -compact
 .It Pa /etc/localtime
 Default local timezone file    
