@@ -1,8 +1,8 @@
-.\"	$NetBSD: tzfile.5,v 1.27 2018/10/27 22:29:24 christos Exp $
+.\"	$NetBSD: tzfile.5,v 1.28 2019/04/04 18:18:31 christos Exp $
 .\"
 .\" This file is in the public domain, so clarified as of
 .\" 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
-.Dd October 27, 2018
+.Dd April 4, 2019
 .Dt TZFILE 5
 .Os
 .Sh NAME
@@ -13,7 +13,10 @@ The timezone information files used by
 .Xr tzset 3
 are typically found under a directory with a name like
 .Pa /usr/share/zoneinfo .
-These files beging with a 44-byte header containing the following fields:
+These files use the format described in Internet 
+.Rs
+.%R RFC 8536
+.Re
 .Bl -bullet
 .It
 The magic four-byte ASCII sequence begin with the magic characters
@@ -375,8 +378,16 @@ Future changes to the format may append more data.
 .Xr localtime 3 ,
 .Xr time 3 ,
 .Xr tzset 3 ,
-.Xr zdump 8
-.Xr zic 8
+.Xr zdump 8 ,
+.Xr zic 8 .
+.Rs
+.%A Olson A, Eggert P, Murchison K.
+.%T The Time Zone Information Format (TZif).
+.%D Feb 2019.
+.%U https://www.rfc-editor.org/info/rfc8536
+.%U https://doi.org/10.17487/RFC8536
+.%R RFC 8536
+.Re
 .\" @(#)tzfile.5	8.3
 .\" This file is in the public domain, so clarified as of
 .\" 1996-06-05 by Arthur David Olson.
