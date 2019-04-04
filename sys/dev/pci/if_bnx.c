@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.75 2019/04/01 06:12:51 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.76 2019/04/04 08:16:24 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.75 2019/04/01 06:12:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.76 2019/04/04 08:16:24 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -1892,7 +1892,7 @@ bnx_nvram_write(struct bnx_softc *sc, uint32_t offset, uint8_t *data_buf,
 
 	if (align_start || align_end) {
 		buf = malloc(len32, M_DEVBUF, M_NOWAIT);
-		if (buf == 0)
+		if (buf == NULL)
 			return ENOMEM;
 
 		if (align_start)
