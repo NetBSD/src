@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)indent_codes.h	8.1 (Berkeley) 6/6/93
- * $FreeBSD$
+ * $FreeBSD: head/usr.bin/indent/indent_codes.h 334564 2018-06-03 16:21:15Z pstef $
  */
 
 #define newline		1
