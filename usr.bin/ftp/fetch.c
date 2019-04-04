@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.230 2018/02/11 02:51:58 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.231 2019/04/04 00:36:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.230 2018/02/11 02:51:58 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.231 2019/04/04 00:36:09 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1640,10 +1640,14 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			if (ischunked)
 				bufrem = MIN(chunksize, bufrem);
 			while (bufrem > 0) {
+				size_t nr = MIN((off_t)bufsize, bufrem);
 				flen = fetch_read(xferbuf, sizeof(char),
-				    MIN((off_t)bufsize, bufrem), fin);
-				if (flen <= 0)
+				    nr, fin);
+				if (flen == 0) {
+					if (fetch_error(fin))
+						goto chunkerror;
 					goto chunkdone;
+				}
 				bytes += flen;
 				bufrem -= flen;
 				if (fwrite(xferbuf, sizeof(char), flen, fout)
@@ -1694,7 +1698,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	} while (ischunked);
 
 /* XXX: deal with optional trailer & CRLF here? */
-
+chunkerror:
 	if (hash && !progress && bytes > 0) {
 		if (bytes < mark)
 			(void)putc('#', ttyout);

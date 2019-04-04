@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.c,v 1.6 2018/02/06 19:26:02 christos Exp $	*/
+/*	$NetBSD: ssl.c,v 1.7 2019/04/04 00:36:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssl.c,v 1.6 2018/02/06 19:26:02 christos Exp $");
+__RCSID("$NetBSD: ssl.c,v 1.7 2019/04/04 00:36:09 christos Exp $");
 #endif
 
 #include <time.h>
@@ -348,7 +348,7 @@ fetch_cache_data(struct fetch_connect *conn, char *src, size_t nbytes)
 	return 0;
 }
 
-ssize_t
+size_t
 fetch_read(void *ptr, size_t size, size_t nmemb, struct fetch_connect *conn)
 {
 	struct timeval now, timeout, delta;
@@ -408,6 +408,7 @@ fetch_read(void *ptr, size_t size, size_t nmemb, struct fetch_connect *conn)
 		else
 			rlen = fetch_nonssl_read(conn->sd, buf, len);
 		if (rlen == 0) {
+			conn->iseof = 1;
 			break;
 		} else if (rlen > 0) {
 			len -= rlen;
@@ -415,9 +416,10 @@ fetch_read(void *ptr, size_t size, size_t nmemb, struct fetch_connect *conn)
 			total += rlen;
 			continue;
 		} else if (rlen == FETCH_READ_ERROR) {
+			conn->iserr = errno;
 			if (errno == EINTR)
 				fetch_cache_data(conn, start, total);
-			return -1;
+			return 0;
 		}
 		FD_ZERO(&readfds);
 		while (!FD_ISSET(conn->sd, &readfds)) {
@@ -425,8 +427,8 @@ fetch_read(void *ptr, size_t size, size_t nmemb, struct fetch_connect *conn)
 			if (quit_time > 0) {
 				gettimeofday(&now, NULL);
 				if (!timercmp(&timeout, &now, >)) {
-					errno = ETIMEDOUT;
-					return -1;
+					conn->iserr = ETIMEDOUT;
+					return 0;
 				}
 				timersub(&timeout, &now, &delta);
 			}
@@ -435,7 +437,8 @@ fetch_read(void *ptr, size_t size, size_t nmemb, struct fetch_connect *conn)
 				quit_time > 0 ? &delta : NULL) < 0) {
 				if (errno == EINTR)
 					continue;
-				return -1;
+				conn->iserr = errno;
+				return 0;
 			}
 		}
 	}
@@ -451,7 +454,7 @@ char *
 fetch_getln(char *str, int size, struct fetch_connect *conn)
 {
 	size_t tmpsize;
-	ssize_t len;
+	size_t len;
 	char c;
 
 	if (conn->buf == NULL) {
@@ -474,13 +477,12 @@ fetch_getln(char *str, int size, struct fetch_connect *conn)
 	conn->buflen = 0;
 	do {
 		len = fetch_read(&c, sizeof(c), 1, conn);
-		if (len == -1) {
-			conn->iserr = 1;
-			return NULL;
-		}
 		if (len == 0) {
-			conn->iseof = 1;
-			break;
+			if (conn->iserr)
+				return NULL;
+			if (conn->iseof)
+				break;
+			abort();
 		}
 		conn->buf[conn->buflen++] = c;
 		if (conn->buflen == conn->bufsize) {
@@ -532,8 +534,8 @@ fetch_getline(struct fetch_connect *conn, char *buf, size_t buflen,
 	} else if (len == buflen - 1) {	/* line too long */
 		while (1) {
 			char c;
-			ssize_t rlen = fetch_read(&c, sizeof(c), 1, conn);
-			if (rlen <= 0 || c == '\n')
+			size_t rlen = fetch_read(&c, sizeof(c), 1, conn);
+			if (rlen == 0 || c == '\n')
 				break;
 		}
 		if (errormsg)
