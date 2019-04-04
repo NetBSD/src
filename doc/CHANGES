@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2514 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2515 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -350,3 +350,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	tzdata Updated to 2019a. [kre 20190326]
 	arm: Add UEFI bootloader support (bootarm.efi). [jmcneill 20190330]
 	indent(1): Upraded to the FreeBSD HEAD checkout [kamil 20190404]
+	tzcode: Updated to 2019a. [christos 20190404]
