@@ -514,6 +514,14 @@ kcov_multiple_threads(size_t N)
 {
 	pthread_t thread[32];
 	size_t i;
+	int fd;
+
+	/*
+	 * Check if /dev/kcov is available, if not bail out.
+	 * Verifying it on a per-thread basis is flaky.
+	 */
+	fd = open_kcov();
+	ATF_REQUIRE(close(fd) == 0);
 
 	ATF_REQUIRE(__arraycount(thread) >= N);
 
