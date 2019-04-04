@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.67 2019/03/26 14:55:02 martin Exp $
+.\" $NetBSD: gpt.8,v 1.68 2019/04/04 13:55:40 martin Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd March 26, 2019
+.Dd April 4, 2019
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -249,8 +249,8 @@ command.
 The format is a plist.
 It should not be modified.
 .\" ==== biosboot ====
-.It Nm Ic biosboot Oo Fl A Oc Oo Fl c Ar bootcode Oc Oo Fl i Ar index Oc \
-Oo Fl L Ar label Oc
+.It Nm Ic biosboot Oo Fl A Oc Oo Fl c Ar bootcode Oc Oo Fl b Ar startsec Oc \
+Oo Fl i Ar index Oc Oo Fl L Ar label Oc
 The
 .Ic biosboot
 command allows the user to configure the partition that contains the
@@ -279,6 +279,9 @@ The
 option selects the partition by label.
 If there are multiple partitions with the same label, the
 first one found will be used.
+The
+.Fl b
+options selects the partition by start block.
 .\" ==== create ====
 .It Nm Ic create Oo Fl AfP Oc Oo Fl p Ar partitions Oc
 The
