@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.42 2018/10/19 23:05:35 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.43 2019/04/04 19:27:28 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.42 2018/10/19 23:05:35 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.43 2019/04/04 19:27:28 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -304,7 +304,7 @@ label:
 					time_t		mkt;
 
 					tm = *t;
-					mkt = mktime(&tm);
+					mkt = mktime_z(sp, &tm);
 					/* CONSTCOND */
 					if (TYPE_SIGNED(time_t))
 						(void)snprintf(buf, sizeof(buf),
@@ -478,9 +478,7 @@ label:
 				pt = _add(t->TM_ZONE, pt, ptlim);
 #elif HAVE_TZNAME
 				if (t->tm_isdst >= 0)
-					pt = _add((sp ?
-					    tzgetname(sp, t->tm_isdst) :
-					    tzname[t->tm_isdst != 0]),
+					pt = _add(tzgetname(sp, t->tm_isdst),
 					    pt, ptlim);
 #endif
 				/*
@@ -544,7 +542,7 @@ label:
 					** being treated as local.
 					*/
 					tmp = *t; /* mktime discards const */
-					lct = mktime(&tmp);
+					lct = mktime_z(sp, &tmp);
 
 					if (lct == (time_t)-1)
 						continue;
@@ -615,16 +613,28 @@ label:
 size_t
 strftime(char *s, size_t maxsize, const char *format, const struct tm *t)
 {
-	tzset();
-	return strftime_z(NULL, s, maxsize, format, t);
+	size_t r;
+	
+	rwlock_wrlock(&__lcl_lock);
+	tzset_unlocked();
+	r = strftime_z(__lclptr, s, maxsize, format, t);
+	rwlock_unlock(&__lcl_lock);
+
+	return r;
 }
 
 size_t
 strftime_l(char * __restrict s, size_t maxsize, const char * __restrict format,
     const struct tm * __restrict t, locale_t loc)
 {
-	tzset();
-	return strftime_lz(NULL, s, maxsize, format, t, loc);
+	size_t r;
+
+	rwlock_wrlock(&__lcl_lock);
+	tzset_unlocked();
+	r = strftime_lz(__lclptr, s, maxsize, format, t, loc);
+	rwlock_unlock(&__lcl_lock);
+
+	return r;
 }
 
 static char *
