@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.6 2019/01/07 16:30:25 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.7 2019/04/04 17:33:47 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -92,7 +92,8 @@ int nvmm_hva_unmap(struct nvmm_machine *, uintptr_t, size_t);
 
 int nvmm_gva_to_gpa(struct nvmm_machine *, nvmm_cpuid_t, gvaddr_t, gpaddr_t *,
     nvmm_prot_t *);
-int nvmm_gpa_to_hva(struct nvmm_machine *, gpaddr_t, uintptr_t *);
+int nvmm_gpa_to_hva(struct nvmm_machine *, gpaddr_t, uintptr_t *,
+    nvmm_prot_t *);
 
 int nvmm_assist_io(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *);
 int nvmm_assist_mem(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *);
