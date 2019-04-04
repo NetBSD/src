@@ -1,4 +1,4 @@
-.\"	$NetBSD: indent.1,v 1.27 2019/04/04 15:22:13 kamil Exp $
+.\"	$NetBSD: indent.1,v 1.28 2019/04/04 22:02:06 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -124,7 +124,8 @@ is named
 .Sq Pa /blah/blah/file ,
 the backup file is named
 .Sq Pa file.BAK
-by default. The extension used for the backup file may be overridden using the
+by default.
+The extension used for the backup file may be overridden using the
 .Ev SIMPLE_BACKUP_SUFFIX
 environment variable.
 .Pp
@@ -161,7 +162,7 @@ except that it only applies to the first set of declarations
 in a procedure (just after the first `{') and it causes a blank
 line to be generated even if there are no declarations.
 The default is
-.Fl nbadp.
+.Fl nbadp .
 .It Fl bap , nbap
 If
 .Fl bap
@@ -204,7 +205,7 @@ if (...) {
 .It Fl bs , nbs
 Whether a blank should always be inserted after sizeof.
 The default is
-.Fl nbs.
+.Fl nbs .
 .It Fl c Ns Ar n
 The column in which comments on code start.
 The default is 33.
@@ -355,7 +356,7 @@ The default is 78.
 .It Fl lc Ns Ar n
 Maximum length of an output line in a block comment.
 The default is 0, which means to limit block comment lines in accordance with
-.Fl l.
+.Fl l .
 .It Fl \&ldi Ns Ar n
 Specifies the indentation, in character positions,
 of local variable names
@@ -515,7 +516,6 @@ defaults.
 Switches on the command line, though, always override profile
 switches.
 The switches should be separated by spaces, tabs or newlines.
-.Pp
 .Ss Comments
 .Sq Em Box
 .Em comments .
