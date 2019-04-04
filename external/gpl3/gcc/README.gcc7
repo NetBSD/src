@@ -1,4 +1,4 @@
-$NetBSD: README.gcc7,v 1.14 2019/04/02 21:29:46 mrg Exp $
+$NetBSD: README.gcc7,v 1.15 2019/04/04 21:31:28 mrg Exp $
 
 new stuff (from gcc 5):
 	cc1objcplus
@@ -39,9 +39,9 @@ earmv7		y	?	y	y		?		?	?	y
 earmv7eb	y	?	y	y		?		?	?	y
 earmv7hf	y	?	y	y		?		?	?	y
 earmv7hfeb	y	?	y	y		?		?	?	y
-hppa		y	y	y	y		y		?	?	?
+hppa		y	y	y	y		y		y	y	y
 i386		y	y	y	y		y		y	y	y
-ia64		y	y	y	y		y		?	?	?
+ia64		y	y	y	y		y		[2]	?	?
 m68000		y	y	y	y		y		?	?	y
 m68k		y	y	y	y		y		y	?	y
 mipseb		y	y	y	y		y		?	?	y
@@ -54,7 +54,7 @@ sh3eb		y	y	y	y		y		?	?	y
 sh3el		y	y	y	y		y		y	?	y
 sparc		y	y	y	y		y		y	?	y
 sparc64		y	y	y	y		y		y	?	y
-vax		y	y	y	y		y		n[3]	?	?
+vax		y	y	y	y		y		y	n[1]	y
 x86_64		y	y	y	y		y		y	y	y
 --
 or1k		
@@ -64,7 +64,8 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
-[3] - vax dynamic seems busted, but /rescue works
+[1] - vax atf is busted due to c++ exceptions not working
+[2] - kernel fails earlier than gcc6 kernel.
 [9] - /usr/src6/external/gpl3/gcc/dist/libgcc/libgcc2.c:2036:1: error: unrecognizable insn:
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
