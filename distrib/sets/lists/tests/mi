@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.809 2019/02/26 10:01:40 isaki Exp $
+# $NetBSD: mi,v 1.810 2019/04/04 15:22:13 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3822,6 +3822,54 @@
 ./usr/tests/usr.bin/id/t_groups			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/id/t_id			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/id/t_whoami			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/Atffile		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/indent/t_indent		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/binary.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/binary.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/comments.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/comments.0.pro	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/comments.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/cs.0			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/cs.0.pro		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/cs.0.stdout		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/declarations.0	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/declarations.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/elsecomment.0	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/elsecomment.0.pro	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/elsecomment.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/f_decls.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/f_decls.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/float.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/float.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/label.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/label.0.pro		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/label.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/list_head.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/list_head.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/ncs.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/ncs.0.pro		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/ncs.0.stdout		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/offsetof.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/offsetof.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/parens.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/parens.0.pro		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/parens.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/pcs.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/pcs.0.pro		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/pcs.0.stdout		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/struct.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/struct.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/surplusbad.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/surplusbad.0.pro	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/surplusbad.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/types_from_file.0	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/types_from_file.0.list	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/types_from_file.0.pro	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/types_from_file.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/wchar.0		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/wchar.0.stdout	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/infocmp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/infocmp/Atffile		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/infocmp/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
