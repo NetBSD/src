@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.46 2017/08/15 09:49:38 mlelstv Exp $
+#	$NetBSD: install.sub,v 1.47 2019/04/04 20:51:35 christos Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -53,7 +53,7 @@ fi
 
 getresp() {
 	read resp
-	if [ "X$resp" = "X" ]; then
+	if [ -z "$resp" ]; then
 		resp=$1
 	fi
 }
@@ -243,7 +243,7 @@ program.
 Available disks are:
 
 __getrootdisk_1
-	_DKDEVS=`md_get_diskdevs`
+	_DKDEVS=$(md_get_diskdevs)
 	echo	"$_DKDEVS"
 	echo	""
 	echo -n	"Which disk is the root disk? "
@@ -323,16 +323,16 @@ configurenetwork() {
 	local _ifsdone
 	local _ifs
 
-#	_IFS=`md_get_ifdevs`
-	_IFS=`ifconfig -l | sed '
+#	_IFS=$(md_get_ifdevs)
+	_IFS=$(ifconfig -l | sed '
 		s/lo0//
 		s/ppp[0-9]//g
 		s/sl[0-9]//g
-		s/tun[0-9]//g'`
+		s/tun[0-9]//g')
 
 	_ifsdone=""
 	resp=""		# force at least one iteration
-	while [ "X${resp}" != X"done" ]; do
+	while [ "${resp}" != "done" ]; do
 	cat << \__configurenetwork_1
 
 You may configure the following network interfaces (the interfaces
@@ -383,37 +383,37 @@ configure_ifs() {
 
 	_interface_name=$1
 	_up=DOWN
-	if isin $_interface_name `ifconfig -l -u` ; then
+	if isin $_interface_name $(ifconfig -l -u); then
 		_up=UP
 	fi
 
-	_interface_supported_media=`ifconfig -m $_interface_name | sed -n '
+	_interface_supported_media=$(ifconfig -m $_interface_name | sed -n '
 		/^[ 	]*media autoselect/d
-		4,$s/[ 	]*media //p'`
+		4,$s/[ 	]*media //p')
 
 	# get current "media" "ip" and "netmask" ("broadcast")
-	_t=`ifconfig $_interface_name | sed -n '
-		s/^[ 	]*media: [^ 	]* \([^ ][^ ]*\).*/\1/p'`
+	_t=$(ifconfig $_interface_name | sed -n '
+		s/^[ 	]*media: [^ 	]* \([^ ][^ ]*\).*/\1/p')
 
-	if [ "$_t" != "manual" -a "$_t" != "media:" -a "$_t" != "autoselect" ];
+	if [ "$_t" != "manual" ] && [ "$_t" != "media:" ] && [ "$_t" != "autoselect" ];
 	then
 		_interface_mediumtype=$1
 	fi
 
-	set -- `ifconfig $_interface_name | sed -n '
+	set -- $(ifconfig $_interface_name | sed -n '
 		/^[ 	]*inet/{
 		s/inet//
 		s/--> [0-9.][0-9.]*//
 		s/netmask//
 		s/broadcast//
-		p;}'`
+		p;}')
 
 	_interface_ip=$1
 	_interface_mask=$2
 
 	# Get IP address
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "IP address? [$_interface_ip] "
 		getresp "$_interface_ip"
 		_interface_ip=$resp
@@ -421,7 +421,7 @@ configure_ifs() {
 
 	# Get symbolic name
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Symbolic (host) name? "
 		getresp ""
 		_interface_symname=$resp
@@ -429,7 +429,7 @@ configure_ifs() {
 
 	# Get netmask
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -n "${resp}" ]; do
 		echo -n "Netmask? [$_interface_mask] "
 		getresp "$_interface_mask"
 		_interface_mask=$resp
@@ -441,19 +441,19 @@ configure_ifs() {
 	echo -n "Additional media type arguments (none)? [$_interface_mediumtype] "
 	getresp "$_interface_mediumtype"
 	_m=""
-	if [ "X${resp}" != X"" -a "X${resp}" != Xnone ]; then
+	if [ "${resp:-none}" != "none" ]; then
 		_interface_mediumtype=$resp
 		_m="media ${resp}"
 	fi
 
 
 	echo "Your network interface might require additional link-layer"
-	echo "directives (like \`link0'). If this is the case you can enter"
+	echo "directives (like 'link0'). If this is the case you can enter"
 	echo "these at the next prompt."
 	echo ""
 	echo -n "Additional link-layer arguments (none)? [$_interface_extra] "
 	getresp "$_interface_extra"
-	if [ "X${resp}" != X"" -a "X${resp}" != Xnone ]; then
+	if [ "${resp:-none}" != "none" ]; then
 		_interface_extra=$resp
 	fi
 
@@ -494,9 +494,9 @@ enable_network() {
 
 	# Set up the hostname.
 	if [ -f /mnt/etc/myname ]; then
-		hostname=`cat /mnt/etc/myname`
+		hostname=$(cat /mnt/etc/myname)
 	elif [ -f /mnt/etc/rc.conf ];then
-		hostname=`sh -c '. /mnt/etc/rc.conf ; echo $hostname'`
+		hostname=$(sh -c '. /mnt/etc/rc.conf ; echo $hostname')
 	else
 		echo "ERROR: no /etc/myname!"
 		return 1
@@ -518,13 +518,13 @@ if [ -f /mnt/etc/rc.conf ]; then
 
 	if [ "$net_interfaces" != NO ]; then
 		if [ "$auto_ifconfig" = YES ]; then
-			tmp="`ifconfig -l`"
+			tmp="$(ifconfig -l)"
 		else
 			tmp="$net_interfaces"
 		fi
 		echo -n "configuring network interfaces:"
 		for i in $tmp; do
-			eval `echo 'args=$ifconfig_'$i`
+			eval $(echo 'args=$ifconfig_'$i)
 			if [ ! -z "$args" ]; then
 				echo -n " $i"
 				ifconfig $i $args
@@ -547,7 +547,7 @@ else
 (
 	tmp="$IFS"
 	IFS="$IFS."
-	set -- `echo /mnt/etc/hostname*`
+	set -- $(echo /mnt/etc/hostname*)
 	IFS=$tmp
 	unset tmp
 
@@ -565,7 +565,7 @@ else
 			cmd="ifconfig $1 $af $name "
 			if [ "${dt}" = "dest" ]; then cmd="$cmd $dtaddr"; fi
 			if [ -n "$mask" ]; then cmd="$cmd netmask $mask"; fi
-			if [ -n "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
+			if [ "${bcaddr:-NONE}" != "NONE" ]; then
 				cmd="$cmd broadcast $bcaddr";
 			fi
 			cmd="$cmd $extras"
@@ -587,7 +587,7 @@ fi
 	# that name must be in /etc/hosts.
 	if [ -f /mnt/etc/mygate ]; then
 		route delete default > /dev/null 2>&1
-		route add default `cat /mnt/etc/mygate`
+		route add default $(cat /mnt/etc/mygate)
 	fi
 
 	# enable the resolver, if appropriate.
@@ -602,7 +602,7 @@ fi
 
 	echo	""
 
-	if [ "X${_resolver_enabled}" = X"TRUE" ]; then
+	if [ "${_resolver_enabled:-FALSE}" = "TRUE" ]; then
 		netstat -r
 		echo	""
 		echo	"Resolver enabled."
@@ -649,7 +649,7 @@ that will be fed to ftp(1).
 __install_ftp_1
 	# Get server IP address
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Server IP? [${_ftp_server_ip}] "
 		getresp "${_ftp_server_ip}"
 		_ftp_server_ip=$resp
@@ -657,7 +657,7 @@ __install_ftp_1
 
 	# Get login name
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Login? [${_ftp_server_login}] "
 		getresp "${_ftp_server_login}"
 		_ftp_server_login=$resp 
@@ -665,7 +665,7 @@ __install_ftp_1
 
 	# Get password
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Password? "
 		stty -echo
 		getresp ""
@@ -684,10 +684,10 @@ __install_ftp_2
 	while [ -z "$_sets" ]
 	do
 		resp=""		# force one iteration
-		while [ "X${resp}" = X"" ]; do
+		while [ -z "${resp}" ]; do
 			echo -n "Server directory? [${_ftp_server_dir}] "
 		    getresp "${_ftp_server_dir}"
-		    if [ "X$resp" = 'X?' -a -z "$_ftp_server_dir" ]; then
+		    if [ -z "$resp" ] && [ -z "$_ftp_server_dir" ]; then
 			resp=""
 		    fi
 		done
@@ -715,7 +715,7 @@ __install_ftp_2
 		if [ $resp = '?' ]; then
 			sh /tmp/ftp-dir.sh
 		else
-			_sets=`sh /tmp/ftp-dir.sh | sh /tmp/fname_filter.sh`
+			_sets=$(sh /tmp/ftp-dir.sh | sh /tmp/fname_filter.sh)
 		fi
 	done
 	rm -f /tmp/ftp-dir.sh /tmp/fname_filter.sh
@@ -740,7 +740,7 @@ __install_ftp_2
 
 		# Get name of the file and add extraction command
 		# to the ftp-script.
-		if [ "X$_next" = "X" ]; then resp=n; else resp=y; fi
+		if [ -z "$_next" ]; then resp=n; else resp=y; fi
 		echo -n "Continue to add filenames [$resp]? "
 		getresp "$resp"
 		if [ "$resp" = "n" ]; then
@@ -790,7 +790,7 @@ install_from_mounted_fs() {
 		echo    "Enter the subdirectory relative to the mountpoint, that"
 		echo -n "contains the savesets: [try this directory] "
 		getresp ""
-		if [ "X${resp}" != "X" ]; then
+		if [ -n "${resp}" ]; then
 			_dirname=${_dirname}/$resp
 		fi
 
@@ -804,7 +804,7 @@ install_from_mounted_fs() {
 			echo ""
 			echo -n "Enter subdirectory: [try other install media] "
 			getresp ""
-			if [ "X${resp}" = "X" ]; then
+			if [ -z "${resp}" ]; then
 				return
 			fi
 			if [ ! -d ${_dirname}/${resp} ]; then
@@ -850,7 +850,7 @@ install_from_mounted_fs() {
 		echo ""
 
 		# Get the name of the file.
-		if [ "X$_next" = "X" ]; then
+		if [ -z "$_next" ]; then
 			resp=n
 		else
 			resp=y
@@ -913,7 +913,7 @@ The following CD-ROM devices are installed on your system; please select
 the CD-ROM device containing the partition with the installation sets:
 
 __install_cdrom_1
-	_CDDEVS=`md_get_cddevs`
+	_CDDEVS=$(md_get_cddevs)
 	echo    "$_CDDEVS"
 	echo	""
 	echo -n	"Which is the CD-ROM with the installation media? [abort] "
@@ -937,9 +937,9 @@ __install_cdrom_1
 	esac
 
 	# Get partition
-	_partition_range=`md_get_partition_range`
+	_partition_range=$(md_get_partition_range)
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Partition? [a] "
 		getresp "a"
 		case "$resp" in
@@ -963,7 +963,7 @@ There are two CD-ROM filesystem types currently supported by this program:
 
 __install_cdrom_2
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Which filesystem type? [cd9660] "
 		getresp "cd9660"
 		case "$resp" in
@@ -1023,9 +1023,9 @@ mount_a_disk() {
 	esac
 
 	# Get partition
-	_partition_range=`md_get_partition_range`
+	_partition_range=$(md_get_partition_range)
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Partition? [d] "
 		getresp "d"
 		case "$resp" in
@@ -1047,15 +1047,15 @@ The following filesystem types are supported:
 	1) ffs
 	2) cd9660
 __mount_a_disk_2
-	_md_fstype=`md_native_fstype`
-	_md_fsopts=`md_native_fsopts`
+	_md_fstype=$(md_native_fstype)
+	_md_fsopts=$(md_native_fsopts)
 	if [ ! -z "$_md_fstype" ]; then
 		echo "	3) $_md_fstype"
 	else
 		_md_fstype="_undefined_"
 	fi
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Which filesystem type? [ffs] "
 		getresp "ffs"
 		case "$resp" in
@@ -1116,7 +1116,7 @@ The following disk devices are installed on your system; please select
 the disk device containing the partition with the installation sets:
 
 __install_disk_2
-	_DKDEVS=`md_get_diskdevs`
+	_DKDEVS=$(md_get_diskdevs)
 	echo    "$_DKDEVS"
 	echo	""
 	echo -n	"Which is the disk with the installation sets? [abort] "
@@ -1132,7 +1132,7 @@ __install_disk_2
 install_nfs() {
 	# Get the IP address of the server
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Server IP address? [${_nfs_server_ip}] "
 		getresp "${_nfs_server_ip}"
 	done
@@ -1140,7 +1140,7 @@ install_nfs() {
 
 	# Get server path to mount
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Filesystem on server to mount? [${_nfs_server_path}] "
 		getresp "${_nfs_server_path}"
 	done
@@ -1193,13 +1193,13 @@ The installation program needs to know which tape device to use.  Make
 sure you use a "no rewind on close" device.
 
 __install_tape_1
-	_tape=`basename $TAPE`
+	_tape=$(basename $TAPE)
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Name of tape device? [${_tape}]"
 		getresp "${_tape}"
 	done
-	_tape=`basename $resp`
+	_tape=$(basename $resp)
 	TAPE="/dev/${_tape}"
 	if [ ! -c $TAPE ]; then
 		echo "$TAPE does not exist or is not a character special file."
@@ -1219,12 +1219,12 @@ __install_tape_1
 
 	# Get the file number
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "File number? "
 		getresp ""
 		case "$resp" in
 			[1-9]*)
-				_nskip=`expr $resp - 1`
+				_nskip=$(expr $resp - 1)
 				;;
 
 			*)
@@ -1236,7 +1236,7 @@ __install_tape_1
 
 	# Skip to correct file.
 	echo -n "Skipping to source file..."
-	if [ "X${_nskip}" != X"0" ]; then
+	if [ "${_nskip}" != "0" ]; then
 		if ! mt fsf $_nskip ; then
 			echo "Could not skip $_nskip files.  Aborting."
 			return
@@ -1253,7 +1253,7 @@ There are 2 different ways the file can be stored on tape:
 
 __install_tape_2
 	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Which way is it? [1] "
 		getresp "1"
 		case "$resp" in
@@ -1283,7 +1283,7 @@ get_timezone() {
 	# If the zoneinfo is not on the installation medium or on the
 	# installed filesystem, set TZ to GMT and return immediatly.
 	#
-	if [ ! -e /usr/share/zoneinfo -a ! -e /mnt/usr/share/zoneinfo ]; then
+	if [ ! -e /usr/share/zoneinfo ] && [ ! -e /mnt/usr/share/zoneinfo ]; then
 		TZ=GMT
 		return
 	fi
@@ -1306,11 +1306,11 @@ at the prompts below.
 
 __get_timezone_1
 	if [ X$TZ = X ]; then
-		TZ=`ls -l /mnt/etc/localtime 2>/dev/null | cutlast`
+		TZ=$(ls -l /mnt/etc/localtime 2>/dev/null | cutlast)
 		TZ=${TZ#/usr/share/zoneinfo/}
 	fi
 	while :; do
-		echo -n	"What timezone are you in [\`?' for list] [$TZ]? "
+		echo -n	"What timezone are you in ['?' for list] [$TZ]? "
 		getresp "$TZ"
 		case "$resp" in
 		"")
@@ -1326,7 +1326,7 @@ __get_timezone_1
 			while [ -d ${_zonepath}/usr/share/zoneinfo/$_a ]; do
 				echo -n "There are several timezones available"
 				echo " within zone '$_a'"
-				echo -n "Select a sub-timezone [\`?' for list]: "
+				echo -n "Select a sub-timezone ['?' for list]: "
 				getresp ""
 				case "$resp" in
 				"?") ls ${_zonepath}/usr/share/zoneinfo/$_a ;;
@@ -1383,7 +1383,7 @@ __install_sets_1
 			local_sets_dir=$Default_sets_dir
 		fi
 	fi
-	if [ "X$local_sets_dir" != "X" ]; then
+	if [ -n "${local_sets_dir}" ]; then
 		install_from_mounted_fs ${local_sets_dir}
 		if [ X"$_setsdone" != X ]; then
 			_yup="TRUE"
@@ -1492,7 +1492,7 @@ mount_fs()
 
 		# If not the root filesystem, make sure the mount
 		# point is present.
-		if [ "X{$_mp}" != X"/mnt" ]; then
+		if [ "$_mp" != "/mnt" ]; then
 			mkdir -p $_mp
 		fi
 
@@ -1505,7 +1505,7 @@ mount_fs()
 		fi
 	done ) < $_fstab
 
-	if [ "X${?}" != X"0" ]; then
+	if [ "$?" != "0" ]; then
 		cat << \__mount_filesystems_1
 
 FATAL ERROR:  Cannot mount filesystems.  Double-check your configuration
@@ -1538,7 +1538,7 @@ unmount_fs()
 
 	if [ $_fast = 0 ]; then
 		echo -n	"Syncing disks..."
-		_pid=`twiddle`
+		_pid=$(twiddle)
 		sync; sleep 4; sync; sleep 2; sync; sleep 2
 		kill $_pid
 		echo	"done."
