@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.23 2018/09/16 21:32:29 kre Exp $
+#	$NetBSD: upgrade.sh,v 1.24 2019/04/04 20:51:35 christos Exp $
 #
 # Copyright (c) 1996-2000,2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,8 +62,8 @@ MODE="upgrade"
 
 # we need to make sure .'s below work if this directory is not in $PATH
 # dirname may not be available but expr is
-Mydir=`expr $0 : '^\(.*\)/[^/]*$'`
-Mydir=`cd ${Mydir:-.}; pwd`
+Mydir=$(expr $0 : '^\(.*\)/[^/]*$')
+Mydir=$(cd ${Mydir:-.}; pwd)
 
 # this is the most likely place to find the binary sets
 # so save them having to type it in
@@ -149,17 +149,17 @@ md_makerootwritable
 
 test "$md_view_labels_possible" && md_view_labels
 
-while [ "X${ROOTDISK}" = "X" ]; do
+while [ -z "${ROOTDISK}" ]; do
 	getrootdisk
 done
 
 # Assume partition 'a' of $ROOTDISK is for the root filesystem.  Confirm
 # this with the user.  Check and mount the root filesystem.
 resp=""			# force one iteration
-while [ "X${resp}" = "X" ]; do
+while [ -z "${resp}" ]; do
 	echo -n	"Root filesystem? [${ROOTDISK}a] "
 	getresp "${ROOTDISK}a"
-	_root_filesystem="/dev/`basename $resp`"
+	_root_filesystem="/dev/$(basename $resp)"
 	if [ ! -b ${_root_filesystem} ]; then
 		echo "Sorry, ${resp} is not a block device."
 		resp=""	# force loop to repeat
@@ -238,9 +238,9 @@ esac
 (
 	> /tmp/fstab
 	while read _dev _mp _fstype _rest ; do
-		if [ "X${_fstype}" = X"ufs" ] ||
-		   [ "X${_fstype}" = X"ffs" ]; then
-			if [ "X${_fstype}" = X"ufs" ]; then
+		if [ "${_fstype}" = "ufs" ] ||
+		   [ "${_fstype}" = "ffs" ]; then
+			if [ "${_fstype}" = "ufs" ]; then
 				# Convert ufs to ffs.
 				_fstype=ffs
 			fi
@@ -320,7 +320,7 @@ install_sets
 
 # Remove files that have just been installed in a new location
 # from the old location
-rm_relocated_files `eval echo \\$RELOCATED_FILES_${VERSION}`
+rm_relocated_files $(eval echo \\$RELOCATED_FILES_${VERSION})
 
 # Get timezone info
 get_timezone
@@ -330,7 +330,7 @@ echo -n	"Converting ufs to ffs in /etc/fstab..."
 (
 	> /tmp/fstab
 	while read _dev _mp _fstype _rest ; do
-		if [ "X${_fstype}" = X"ufs" ]; then
+		if [ "${_fstype}" = "ufs" ]; then
 			# Convert ufs to ffs.
 			_fstype=ffs
 		fi
@@ -366,7 +366,7 @@ esac
 	echo "done."
 
 	echo -n "Making devices..."
-	_pid=`twiddle`
+	_pid=$(twiddle)
 	cd /mnt/dev
 	sh MAKEDEV all
 	kill $_pid

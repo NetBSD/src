@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.26 2018/09/16 21:32:29 kre Exp $
+#	$NetBSD: install.sh,v 1.27 2019/04/04 20:51:35 christos Exp $
 #
 # Copyright (c) 1996,1997,1999,2000,2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -64,8 +64,8 @@ MODE="install"
 
 # we need to make sure .'s below work if this directory is not in $PATH
 # dirname may not be available but expr is
-Mydir=`expr $0 : '^\(.*\)/[^/]*$'`
-Mydir=`cd ${Mydir:-.}; pwd`
+Mydir=$(expr $0 : '^\(.*\)/[^/]*$')
+Mydir=$(cd ${Mydir:-.}; pwd)
 
 # this is the most likely place to find the binary sets
 # so save them having to type it in
@@ -114,7 +114,7 @@ echo "# disktab" > /tmp/disktab.shadow
 
 test "$md_view_labels_possible" && md_view_labels
 
-while [ "X${ROOTDISK}" = "X" ]; do
+while [ -z "${ROOTDISK}" ]; do
 	getrootdisk
 done
 
@@ -144,8 +144,8 @@ echo	"	${ROOTDISK}a	/"
 
 echo	"${ROOTDISK}a	/" > ${FILESYSTEMS}
 
-resp="X"	# force at least one iteration
-while [ "X$resp" != X"done" ]; do
+resp="not-done"	# force at least one iteration
+while [ "$resp" != "done" ]; do
 	echo	""
 	echo -n	"Device name? [RETURN if you already entered all devices] "
 	getresp "done"
@@ -154,19 +154,19 @@ while [ "X$resp" != X"done" ]; do
 		;;
 
 	*)
-		_device_name=`basename $resp`
+		_device_name=$(basename $resp)
 
 		# force at least one iteration
 		_first_char="X"
-		while [ "X${_first_char}" != X"/" ]; do
+		while [ "${_first_char}" != "/" ]; do
 			echo -n "Mount point? "
 			getresp ""
 			_mount_point=$resp
-			if [ "X${_mount_point}" = X"/" ]; then
+			if [ "${_mount_point}" = "/" ]; then
 				# Invalid response; no multiple roots
 				_first_char="X"
 			else
-				_first_char=`firstchar ${_mount_point}`
+				_first_char=$(firstchar ${_mount_point})
 			fi
 		done
 		echo "${_device_name}	${_mount_point}" >> ${FILESYSTEMS}
@@ -177,7 +177,7 @@ done
 
 # configure swap
 resp=""		# force at least one iteration
-while [ "X${resp}" = X"" ]; do
+while [ -z "${resp}" ]; do
 	echo -n	"Ok to configure ${ROOTDISK}b as a swap device? [] "
 	getresp ""
 	case "$resp" in
@@ -236,10 +236,10 @@ case "$resp" in
 	y*|Y*)
 		resp=""		# force at least one iteration
 		if [ -f /etc/myname ]; then
-			resp=`cat /etc/myname`
+			resp=$(cat /etc/myname)
 		fi
 		echo -n "Enter system hostname: [$resp] "
-		while [ "X${resp}" = X"" ]; do
+		while [ -z "${resp}" ]; do
 			getresp "$resp"
 		done
 		hostname $resp
@@ -247,7 +247,7 @@ case "$resp" in
 
 		echo -n "Enter DNS domain name: "
 		getresp "none"
-		if [ "X${resp}" != X"none" ]; then
+		if [ "${resp:-none}" != "none" ]; then
 			FQDN=$resp
 		fi
 
@@ -255,7 +255,7 @@ case "$resp" in
 
 		echo -n "Enter IP address of default route: [none] "
 		getresp "none"
-		if [ "X${resp}" != X"none" ]; then
+		if [ "${resp:-none}" != "none" ]; then
 			route delete default > /dev/null 2>&1
 			if route add default $resp > /dev/null ; then
 				echo $resp > /tmp/mygate
@@ -263,11 +263,11 @@ case "$resp" in
 		fi
 
 		resp="none"
-		if [ X${FQDN} != X ]; then
+		if [ -n "${FQDN}" ]; then
 			echo -n	"Enter IP address of primary nameserver: [none] "
 			getresp "none"
 		fi
-		if [ "X${resp}" != X"none" ]; then
+		if [ "${resp:-none}" != "none" ]; then
 			echo "domain $FQDN" > /tmp/resolv.conf
 			echo "nameserver $resp" >> /tmp/resolv.conf
 			echo "search $FQDN" >> /tmp/resolv.conf
@@ -427,7 +427,7 @@ install_sets
 		echo "No /dev/MAKEDEV installed, something is wrong here..."
 	else
 		echo -n "Making devices..."
-		pid=`twiddle`
+		pid=$(twiddle)
 		cd /mnt/dev
 		sh MAKEDEV all
 		kill $pid
