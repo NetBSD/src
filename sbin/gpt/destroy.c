@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/destroy.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: destroy.c,v 1.11 2019/04/04 13:58:20 martin Exp $");
+__RCSID("$NetBSD: destroy.c,v 1.12 2019/04/04 14:03:40 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,10 +68,11 @@ struct gpt_cmd c_destroy = {
 static int
 destroy(gpt_t gpt, int force, int recoverable)
 {
-	map_t pri_hdr, sec_hdr;
+	map_t pri_hdr, sec_hdr, pmbr;
 
 	pri_hdr = map_find(gpt, MAP_TYPE_PRI_GPT_HDR);
 	sec_hdr = map_find(gpt, MAP_TYPE_SEC_GPT_HDR);
+	pmbr = map_find(gpt, MAP_TYPE_PMBR);
 
 	if (pri_hdr == NULL && sec_hdr == NULL) {
 		gpt_warnx(gpt, "Device doesn't contain a GPT");
@@ -95,6 +96,14 @@ destroy(gpt_t gpt, int force, int recoverable)
 		memset(sec_hdr->map_data, 0, gpt->secsz);
 		if (gpt_write(gpt, sec_hdr) == -1) {
 			gpt_warnx(gpt, "Error writing backup header");
+			return -1;
+		}
+	}
+
+	if (!recoverable && pmbr != NULL) {
+		memset(pmbr->map_data, 0, gpt->secsz);
+		if (gpt_write(gpt, pmbr) == -1) {
+			gpt_warnx(gpt, "Error deleting PMBR");
 			return -1;
 		}
 	}
