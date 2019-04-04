@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.30 2017/09/07 10:23:33 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.31 2019/04/04 13:55:40 martin Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.30 2017/09/07 10:23:33 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.31 2019/04/04 13:55:40 martin Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -72,7 +72,7 @@ __RCSID("$NetBSD: biosboot.c,v 1.30 2017/09/07 10:23:33 christos Exp $");
 static int cmd_biosboot(gpt_t, int, char *[]);
 
 static const char *biosboothelp[] = {
-	"[-A] [-c bootcode] [-i index] [-L label]",
+	"[-A] [-c bootcode] [-i index] [-L label] [-b startsec]",
 #if notyet
 	"[-a alignment] [-b blocknr] [-i index] [-l label]",
 	"[-s size] [-t type]",
@@ -230,6 +230,10 @@ biosboot(gpt_t gpt, daddr_t start, uint64_t size, u_int entry, uint8_t *label,
 		if (entry < 1 && label == NULL && size > 0 &&
 		    m->map_start == start && m->map_size == (off_t)size)
 			break;
+		/* next could be start sector specified by -b option */
+		if (entry < 1 && label == NULL && size == 0 &&
+		    m->map_start == start)
+			break;
 	}
 
 	if (m == NULL) {
@@ -270,7 +274,7 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 	uint8_t *label = NULL;
 	char *bootpath = NULL;
 
-	while ((ch = getopt(argc, argv, "Ac:i:L:")) != -1) {
+	while ((ch = getopt(argc, argv, "Ac:i:L:b:")) != -1) {
 		switch(ch) {
 		case 'A':
 			active = 1;
@@ -285,6 +289,10 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 			break;
 		case 'L':
 			if (gpt_name_get(gpt, &label) == -1)
+				goto usage;
+			break;
+		case 'b':
+			if (gpt_human_get(gpt, &start) == -1)
 				goto usage;
 			break;
 		default:
