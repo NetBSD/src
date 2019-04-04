@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.87 2019/04/03 15:21:58 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.88 2019/04/04 12:34:31 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -38,7 +38,7 @@ CPPFLAGS+=	-I. -I${CLANG_SRCDIR}/include -I${LLD_SRCDIR}/include \
 		-DCLANG_OPENMP_NVPTX_DEFAULT_ARCH=\"sm_35\" \
 		-DCLANG_DEFAULT_OBJCOPY=\"objcopy\"
 
-.if defined(HOSTLIB) || defined(HOSTPROG)
+.if defined(HOSTLIB) || defined(HOSTPROG) || defined(_BSD_HOSTINIT_MK_)
 LLVM_INCLUDE_CONFIG=	${LLVM_TOOLCONF_OBJDIR}/config/include
 CLANG_INCLUDE_CONFIG=	${LLVM_TOOLCONF_OBJDIR}/config/tools/clang/include
 MCLINKER_INCLUDE_CONFIG= ${LLVM_TOPLEVEL}/config/mclinker
