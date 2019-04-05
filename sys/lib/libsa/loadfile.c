@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.31 2019/03/31 20:08:45 christos Exp $ */
+/* $NetBSD: loadfile.c,v 1.32 2019/04/05 20:09:29 christos Exp $ */
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ fdloadfile(int fd, u_long *marks, int flags)
 
 	if (rval == 0) {
 		if ((flags & LOAD_ALL) != 0)
-			PROGRESS(("=%#lx\n",
+			PROGRESS(("=0x%lx\n",
 				  marks[MARK_END] - marks[MARK_START]));
 		return 0;
 	}
