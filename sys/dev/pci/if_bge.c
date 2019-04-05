@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.327 2019/02/20 17:00:20 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.328 2019/04/05 18:14:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.327 2019/02/20 17:00:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.328 2019/04/05 18:14:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4767,8 +4767,8 @@ bge_stats_update_regs(struct bge_softc *sc)
 	 * ignore the counter
 	 */
 	if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
-	    BGE_ASICREV(sc->bge_chipid) != BGE_CHIPID_BCM5719_A0 &&
-	    BGE_ASICREV(sc->bge_chipid) != BGE_CHIPID_BCM5720_A0) {
+	    sc->bge_chipid != BGE_CHIPID_BCM5719_A0 &&
+	    sc->bge_chipid != BGE_CHIPID_BCM5720_A0) {
 		ifp->if_ierrors += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_DROPS);
 	}
 	ifp->if_ierrors += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_ERRORS);
