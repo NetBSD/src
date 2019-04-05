@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.42 2019/03/31 20:08:45 christos Exp $	*/
+/*	$NetBSD: bootp.c,v 1.43 2019/04/05 20:09:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -323,7 +323,7 @@ bootprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	if (bp->bp_xid != htonl(d->xid)) {
 #ifdef BOOTP_DEBUG
 		if (debug) {
-			printf("%s: expected xid %#lx, got %#x\n", __func__,
+			printf("%s: expected xid 0x%lx, got 0x%x\n", __func__,
 			    d->xid, ntohl(bp->bp_xid));
 		}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.33 2019/03/31 20:08:45 christos Exp $	*/
+/*	$NetBSD: rarp.c,v 1.34 2019/04/05 20:09:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -196,7 +196,7 @@ rarprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	if (etype != ETHERTYPE_REVARP) {
 #ifdef RARP_DEBUG
 		if (debug)
-			printf("bad type=%#x\n", etype);
+			printf("bad type=0x%x\n", etype);
 #endif
 		return -1;
 	}
@@ -217,7 +217,7 @@ rarprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	if (ap->arp_op != htons(ARPOP_REVREPLY)) {
 #ifdef RARP_DEBUG
 		if (debug)
-			printf("bad op=%#x\n", ntohs(ap->arp_op));
+			printf("bad op=0x%x\n", ntohs(ap->arp_op));
 #endif
 		return -1;
 	}

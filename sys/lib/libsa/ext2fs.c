@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.26 2019/03/31 20:08:45 christos Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.27 2019/04/05 20:09:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -992,7 +992,7 @@ dump_sblock(struct m_ext2fs *fs)
 	printf("fs->e2fs.e2fs_log_bsize = %u\n", fs->e2fs.e2fs_log_bsize);
 	printf("fs->e2fs.e2fs_bpg = %u\n", fs->e2fs.e2fs_bpg);
 	printf("fs->e2fs.e2fs_ipg = %u\n", fs->e2fs.e2fs_ipg);
-	printf("fs->e2fs.e2fs_magic = %#x\n", fs->e2fs.e2fs_magic);
+	printf("fs->e2fs.e2fs_magic = 0x%x\n", fs->e2fs.e2fs_magic);
 	printf("fs->e2fs.e2fs_rev = %u\n", fs->e2fs.e2fs_rev);
 
 	if (fs->e2fs.e2fs_rev == E2FS_REV1) {
