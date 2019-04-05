@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1608 2019/04/04 20:21:45 kamil Exp $
+#	$NetBSD: 3RDPARTY,v 1.1609 2019/04/05 16:14:07 maya Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -917,12 +917,12 @@ Location:	sys/external/bsd/drm/dist
 Notes:
 
 Package:	MesaLib
-Version:	10.3.5
-Current Vers:	18.3.1
+Version:	18.3.4
+Current Vers:	19.0.1
 Maintainer:	mesa-git@?
 Archive Site:	ftp://ftp.freedesktop.org/pub/mesa/
 Home Page:	http://www.mesa3d.org/
-Date:		2019-01-09
+Date:		2019-04-05
 Mailing List:
 Responsible:	riastradh, mrg
 License:	ISC
