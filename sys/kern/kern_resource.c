@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.181 2018/05/13 14:45:23 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.182 2019/04/05 00:33:21 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.181 2018/05/13 14:45:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.182 2019/04/05 00:33:21 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,7 +488,7 @@ void
 calcru(struct proc *p, struct timeval *up, struct timeval *sp,
     struct timeval *ip, struct timeval *rp)
 {
-	uint64_t u, st, ut, it, tot;
+	uint64_t u, st, ut, it, tot, dt;
 	struct lwp *l;
 	struct bintime tm;
 	struct timeval tv;
@@ -549,10 +549,12 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 	 * which must have increased.
 	 */
 	if (p->p_xutime > ut) {
-		st -= p->p_xutime - ut;
+		dt = p->p_xutime - ut;
+		st -= uimin(dt, st);
 		ut = p->p_xutime;
 	} else if (p->p_xstime > st) {
-		ut -= p->p_xstime - st;
+		dt = p->p_xstime - st;
+		ut -= uimin(dt, ut);
 		st = p->p_xstime;
 	}
 
