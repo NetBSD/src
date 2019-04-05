@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.101 2018/10/24 19:38:00 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.102 2019/04/05 20:44:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -103,20 +103,21 @@ struct ata_command {
 				   command */
 	volatile uint16_t flags;
 
-#define AT_READ     0x0001 /* There is data to read */
-#define AT_WRITE    0x0002 /* There is data to write (excl. with AT_READ) */
-#define AT_WAIT     0x0008 /* wait in controller code for command completion */
-#define AT_POLL     0x0010 /* poll for command completion (no interrupts) */
-#define AT_DONE     0x0020 /* command is done */
-#define AT_XFDONE   0x0040 /* data xfer is done */
-#define AT_ERROR    0x0080 /* command is done with error */
-#define AT_TIMEOU   0x0100 /* command timed out */
-#define AT_DF       0x0200 /* Drive fault */
-#define AT_RESET    0x0400 /* command terminated by channel reset */
-#define AT_GONE     0x0800 /* command terminated because device is gone */
-#define AT_READREG  0x1000 /* Read registers on completion */
-#define AT_LBA      0x2000 /* LBA28 */
-#define AT_LBA48    0x4000 /* LBA48 */
+#define AT_READ     	0x0001 /* There is data to read */
+#define AT_WRITE    	0x0002 /* There is data to write (excl. with AT_READ) */
+#define AT_WAIT     	0x0008 /* wait in controller for command completion */
+#define AT_POLL     	0x0010 /* poll for command completion (no interrupts) */
+#define AT_DONE     	0x0020 /* command is done */
+#define AT_XFDONE   	0x0040 /* data xfer is done */
+#define AT_ERROR    	0x0080 /* command is done with error */
+#define AT_TIMEOU   	0x0100 /* command timed out */
+#define AT_DF       	0x0200 /* Drive fault */
+#define AT_RESET    	0x0400 /* command terminated by channel reset */
+#define AT_GONE     	0x0800 /* command terminated because device is gone */
+#define AT_READREG  	0x1000 /* Read registers on completion */
+#define AT_LBA      	0x2000 /* LBA28 */
+#define AT_LBA48   	0x4000 /* LBA48 */
+#define AT_RST_NOCMD	0x8000 /* ??? */
 
 	int timeout;		/* timeout (in ms) */
 	void *data;		/* Data buffer address */
