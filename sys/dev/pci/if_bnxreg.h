@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.24 2019/04/05 07:15:26 msaitoh Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.25 2019/04/05 07:29:24 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -1111,6 +1111,9 @@ struct l2_fhdr {
 #define BNX_PCICFG_STATUS_BIT_CLEAR_CMD		0x0000008c
 #define BNX_PCICFG_MAILBOX_QUEUE_ADDR		0x00000090
 #define BNX_PCICFG_MAILBOX_QUEUE_DATA		0x00000094
+
+/* From NetXtremeII-PG203-R.pdf page 182 */
+#define BNX_PCICFG_DEVICE_CONTROL			0x000000b4
 
 
 /*
