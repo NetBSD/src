@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.353 2019/03/25 19:24:30 maxv Exp $ */
+/* $NetBSD: machdep.c,v 1.354 2019/04/05 14:12:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.353 2019/03/25 19:24:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.354 2019/04/05 14:12:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.353 2019/03/25 19:24:30 maxv Exp $");
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/mman.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
@@ -793,6 +794,15 @@ nobootinfo:
 			hwrpb->rpb_intr_freq, hz);
 #endif
 }
+
+#ifdef MODULAR
+/* Push any modules loaded by the boot loader */
+void
+module_init_md(void)
+{
+	/* nada. */
+}
+#endif /* MODULAR */
 
 void
 consinit(void)
