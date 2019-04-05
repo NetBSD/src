@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.6 2019/04/05 11:58:02 jmcneill Exp $ */
+/* $NetBSD: meson_platform.c,v 1.7 2019/04/05 12:07:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.6 2019/04/05 11:58:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.7 2019/04/05 12:07:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.6 2019/04/05 11:58:02 jmcneill 
 #define	MESON8B_AOBUS_VBASE	(MESON8B_ARM_VBASE + MESON8B_ARM_SIZE)
 #define	MESON8B_AOBUS_PBASE	0xc8000000
 #define	MESON8B_AOBUS_SIZE	0x00200000
+#define	MESON8B_AOBUS_RTI_OFFSET 0x00100000
 
 #define	MESON_AOBUS_PWR_CTRL0_REG	0xe0
 #define	MESON_AOBUS_PWR_CTRL1_REG	0xe4
@@ -332,7 +333,7 @@ cpu_enable_meson8b(int phandle)
 	const bus_space_handle_t cpuconf_bsh =
 	    MESON8B_SRAM_VBASE + MESON8B_SRAM_CPUCONF_OFFSET;
 	const bus_space_handle_t ao_bsh =
-	    MESON8B_AOBUS_VBASE;
+	    MESON8B_AOBUS_VBASE + MESON8B_AOBUS_RTI_OFFSET;
 	const bus_space_handle_t cbus_bsh =
 	    MESON_CORE_APB3_VBASE + MESON_CBUS_OFFSET;
 	uint32_t pwr_sts, pwr_cntl0, pwr_cntl1, cpuclk, mempd0;
