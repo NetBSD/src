@@ -160,7 +160,10 @@ struct bnx_softc
 	char *			bnx_name;		/* Name string */
 
 	/* Tracks the version of bootcode firmware. */
-	uint32_t		bnx_fw_ver;
+	char			bnx_bc_ver[32];
+
+	/* Tracks the version of management firmware. */
+	char			bnx_mfw_ver[32];
 
 	/* Tracks the state of the firmware.  0 = Running while any     */
 	/* other value indicates that the firmware is not responding.   */
