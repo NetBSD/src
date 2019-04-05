@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2015/10/19 16:16:32 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2019/04/05 01:09:33 christos Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../kern					\
@@ -17,7 +17,7 @@ SRCS=	disk_component.c
 SRCS+=	subr_disk_mbr.c
 
 # sys/kern
-SRCS+=	subr_disk.c subr_disk_open.c
+SRCS+=	subr_disk.c subr_disk_open.c subr_disklabel.c
 # sys/dev
 SRCS+=	dksubr.c dk.c
 
