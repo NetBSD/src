@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1124 2019/04/04 21:31:28 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1125 2019/04/05 15:07:39 maya Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1287,7 +1287,7 @@ MKLIBCXX:=	yes
 .endif
 
 # MesaLib.old and MesaLib7 go together, and MesaLib is alone.
-HAVE_MESA_VER?=	10
+HAVE_MESA_VER?=	18
 .if ${HAVE_MESA_VER} == "10"
 EXTERNAL_MESALIB_DIR?=	MesaLib.old
 .elif ${HAVE_MESA_VER} == "18"
