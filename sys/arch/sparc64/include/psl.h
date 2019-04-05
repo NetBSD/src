@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.58 2019/02/08 20:09:24 palle Exp $ */
+/*	$NetBSD: psl.h,v 1.59 2019/04/05 12:15:41 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -292,8 +292,9 @@
  * Put "memory" to asm inline on sun4v to avoid issuing rdpr %ver
  * before checking cputyp as a result of code moving by compiler
  * optimization.
+ * For clang, to prevent it from being removed by optimization.
  */
-#ifdef SUN4V
+#if defined(SUN4V) || defined(__clang__)
 #define constasm_clobbers "memory"
 #else
 #define constasm_clobbers
