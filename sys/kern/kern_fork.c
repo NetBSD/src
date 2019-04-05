@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.206 2019/04/03 08:08:00 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.207 2019/04/05 21:41:18 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.206 2019/04/03 08:08:00 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.207 2019/04/05 21:41:18 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -477,11 +477,11 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Trace fork(2) and vfork(2)-like events on demand in a debugger.
 	 */
 	tracefork = (p1->p_slflag & (PSL_TRACEFORK|PSL_TRACED)) ==
-	    (PSL_TRACEFORK|PSL_TRACED) && (flags && FORK_PPWAIT) == 0;
+	    (PSL_TRACEFORK|PSL_TRACED) && (flags & FORK_PPWAIT) == 0;
 	tracevfork = (p1->p_slflag & (PSL_TRACEVFORK|PSL_TRACED)) ==
-	    (PSL_TRACEVFORK|PSL_TRACED) && (flags && FORK_PPWAIT) != 0;
+	    (PSL_TRACEVFORK|PSL_TRACED) && (flags & FORK_PPWAIT) != 0;
 	tracevforkdone = (p1->p_slflag & (PSL_TRACEVFORK_DONE|PSL_TRACED)) ==
-	    (PSL_TRACEVFORK_DONE|PSL_TRACED) && (flags && FORK_PPWAIT);
+	    (PSL_TRACEVFORK_DONE|PSL_TRACED) && (flags & FORK_PPWAIT);
 	if (tracefork || tracevfork)
 		proc_changeparent(p2, p1->p_pptr);
 	if (tracefork) {
