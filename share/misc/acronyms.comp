@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.241 2019/04/02 11:33:15 sevan Exp $
+$NetBSD: acronyms.comp,v 1.242 2019/04/05 15:07:42 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1584,6 +1584,7 @@ VSTP	VLAN Spanning Tree Protocol
 VTP	VLAN Trunking Protocol
 W	watt
 W3C	World Wide Web Consortium
+WAFL	write anywhere file layout
 WAMP	Web Application Messaging Protocol
 WAN	wide area network
 WAP	Wireless Application Protocol
