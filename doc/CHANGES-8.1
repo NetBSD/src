@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.123 2019/04/05 07:51:01 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.124 2019/04/05 08:42:48 msaitoh Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2808,3 +2808,11 @@ sys/compat/linux32/arch/amd64/linux32_machdep.c	1.44 (patch)
 	switch before cpu_fsgs_reload() finishes.
 	[maxv, ticket #1226]
 
+sys/dev/ccd.c					1.179
+sys/dev/dksubr.c				1.107
+sys/dev/ofw/ofdisk.c				1.53
+sys/kern/subr_disk.c				1.123
+sys/sys/dkio.h					1.25
+
+	Add a disk ioctl DIOCRMWEDGES to remove all wedges of a given disk
+	(if not busy). [martin, ticket #1223]
