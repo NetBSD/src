@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.52 2017/03/25 09:21:21 martin Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.52.6.1 2019/04/05 08:40:19 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.52 2017/03/25 09:21:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.52.6.1 2019/04/05 08:40:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -367,6 +367,7 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCDWEDGE:
 	case DIOCAWEDGE:
 	case DIOCLWEDGES:
+	case DIOCRMWEDGES:
 	case DIOCMWEDGES:
 		if (OFDISK_FLOPPY_P(of))
 			return ENOTTY;
