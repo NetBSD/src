@@ -1,4 +1,4 @@
-#	$NetBSD: asm.mk,v 1.1 2014/12/18 06:24:28 mrg Exp $
+#	$NetBSD: asm.mk,v 1.2 2019/04/05 10:31:53 maya Exp $
 
 # Shared with libmesa.mk / libGL / libglapi
 
@@ -11,6 +11,7 @@ CPPFLAGS+=	\
 	-DUSE_X86_ASM \
 	-DUSE_MMX_ASM \
 	-DUSE_3DNOW_ASM \
-	-DUSE_SSE_ASM
+	-DUSE_SSE_ASM \
+	-DGLX_X86_READONLY_TEXT
 .elif ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
 .endif
