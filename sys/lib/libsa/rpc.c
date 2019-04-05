@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.30 2019/03/31 20:08:45 christos Exp $	*/
+/*	$NetBSD: rpc.c,v 1.31 2019/04/05 20:09:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -127,7 +127,7 @@ rpc_call(struct iodesc *d, n_long prog, n_long vers, n_long proc,
 
 #ifdef RPC_DEBUG
 	if (debug)
-		printf("%s: prog=%#x vers=%d proc=%d\n", __func__,
+		printf("%s: prog=0x%x vers=%d proc=%d\n", __func__,
 		    prog, vers, proc);
 #endif
 
@@ -408,7 +408,7 @@ rpc_getport(struct iodesc *d, n_long prog, n_long vers)
 
 #ifdef RPC_DEBUG
 	if (debug)
-		printf("%s: prog=%#x vers=%d\n", __func__, prog, vers);
+		printf("%s: prog=0x%x vers=%d\n", __func__, prog, vers);
 #endif
 
 	/* This one is fixed forever. */
