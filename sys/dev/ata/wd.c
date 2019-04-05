@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.446 2019/03/19 16:56:29 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.447 2019/04/05 18:23:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.446 2019/03/19 16:56:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.447 2019/04/05 18:23:45 bouyer Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -1638,11 +1638,20 @@ wd_set_geometry(struct wd_softc *wd)
 int
 wd_get_params(struct wd_softc *wd, uint8_t flags, struct ataparams *params)
 {
+	int retry = 0;
 
+again:
 	switch (wd->atabus->ata_get_params(wd->drvp, flags, params)) {
 	case CMD_AGAIN:
 		return 1;
 	case CMD_ERR:
+		if (retry == 0) {
+			retry++;
+			(*wd->atabus->ata_reset_drive)(wd->drvp,
+			    flags | AT_RST_NOCMD, NULL);
+			goto again;
+		}
+
 		if (wd->drvp->drive_type != ATA_DRIVET_OLD)
 			return 1;
 		/*
@@ -2227,6 +2236,7 @@ wddebug(void)
 
 		atachannel_debug(wd->drvp->chnl_softc);
 	}
+	wd->sc_flags &= ~WDF_DIRTY;
 	return 0;
 }
 #endif /* ATADEBUG */
