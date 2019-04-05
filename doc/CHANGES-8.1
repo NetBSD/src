@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.122 2019/04/01 12:36:44 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.123 2019/04/05 07:51:01 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2797,4 +2797,14 @@ sys/dev/pci/ixgbe/ixv.c			1.110-1.111 via patch
 	  has no effect to NetBSD because ETHERCAP_VLAN_HWFILTER is not
 	  supported yet.
 	[msaitoh, ticket #1225]
+
+sys/arch/amd64/amd64/machdep.c			1.328,1.329 (patch)
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.120 (patch)
+sys/compat/linux/arch/amd64/linux_machdep.c	1.57 (patch)
+sys/compat/linux32/arch/amd64/linux32_machdep.c	1.44 (patch)
+
+	Fix a tiny race in setregs and linux_setregs.
+	Disable preemption when setting PCB_COMPAT32, to prevent a context
+	switch before cpu_fsgs_reload() finishes.
+	[maxv, ticket #1226]
 
