@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.65 2019/04/05 12:16:13 nakayama Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.66 2019/04/05 23:09:18 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -681,10 +681,10 @@ SPARC64_LD_DEF64(ldxa, uint64_t)
 /* 64-bit kernel, non-constant */
 #define SPARC64_ST_NONCONST(st, type)	\
 	__asm volatile(							\
-		"wr %2,%%g0,%%asi;	"				\
-		#st " %0,[%1]%%asi	"				\
-		: : "r" (value), "r" ((__uintptr_t)(loc)),		\
-		    "r" (asi), "m" (*(type *)(__uintptr_t)(loc)))
+		"wr %3,%%g0,%%asi;	"				\
+		#st " %1,[%2]%%asi	"				\
+		: "=m" (*(type *)(__uintptr_t)(loc))			\
+		: "r" (value), "r" ((__uintptr_t)(loc)), "r" (asi))
 
 #if defined(__GNUC__) && defined(__OPTIMIZE__)
 #define SPARC64_ST_DEF(st, type)	\
@@ -692,9 +692,10 @@ static __inline void st(paddr_t loc, int asi, type value)		\
 {									\
 	if (__builtin_constant_p(asi))					\
 		__asm volatile(						\
-			#st " %0,[%1]%2		"			\
-			: : "r" (value), "r" ((__uintptr_t)(loc)),	\
-			    "n" (asi), "m" (*(type *)(__uintptr_t)(loc))); \
+			#st " %1,[%2]%3		"			\
+			: "=m" (*(type *)(__uintptr_t)(loc))		\
+			: "r" (value), "r" ((__uintptr_t)(loc)),	\
+			  "n" (asi));					\
 	else								\
 		SPARC64_ST_NONCONST(st, type);				\
 }
