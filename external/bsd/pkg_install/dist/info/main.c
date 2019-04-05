@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.9 2013/04/20 15:26:53 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.10 2019/04/05 23:41:59 sevan Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.9 2013/04/20 15:26:53 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.10 2019/04/05 23:41:59 sevan Exp $");
 
 /*
  *
@@ -299,12 +299,16 @@ main(int argc, char **argv)
 					errx(EXIT_FAILURE, "Error during search in pkgdb for %s", *argv);
 				}
 			} else {
-				const char   *dbdir;
+				const char *dbdir;
+				size_t dbdirlen;
 
 				dbdir = pkgdb_get_dir();
-				if (**argv == '/' && strncmp(*argv, dbdir, strlen(dbdir)) == 0) {
-					*argv += strlen(dbdir) + 1;
-					if ((*argv)[strlen(*argv) - 1] == '/') {
+				dbdirlen = strlen(dbdir);
+				if (**argv == '/' &&
+				    strncmp(*argv, dbdir, dbdirlen) == 0 &&
+				    (*argv)[dbdirlen] == '/') {
+					*argv += dbdirlen + 1;
+					if (**argv && (*argv)[strlen(*argv) - 1] == '/') {
 						(*argv)[strlen(*argv) - 1] = 0;
 					}
 				}

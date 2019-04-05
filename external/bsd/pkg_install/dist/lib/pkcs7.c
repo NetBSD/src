@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs7.c,v 1.1.1.5 2018/02/04 08:20:47 maya Exp $	*/
+/*	$NetBSD: pkcs7.c,v 1.1.1.6 2019/04/05 23:42:00 sevan Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkcs7.c,v 1.1.1.5 2018/02/04 08:20:47 maya Exp $");
+__RCSID("$NetBSD: pkcs7.c,v 1.1.1.6 2019/04/05 23:42:00 sevan Exp $");
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,8 @@ __RCSID("$NetBSD: pkcs7.c,v 1.1.1.5 2018/02/04 08:20:47 maya Exp $");
 #define NS_ANY_CA		(NS_SSL_CA|NS_SMIME_CA|NS_OBJSIGN_CA)
 #endif
 
-#if !defined(OPENSSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#if !defined(OPENSSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x10100000L) || \
+    defined(LIBRESSL_VERSION_NUMBER)
 #define X509_get_extended_key_usage(x) x->ex_xkusage
 #define X509_get_extension_flags(x) x->ex_flags
 #endif
