@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.78 2019/04/05 07:15:26 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.79 2019/04/05 07:25:06 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.78 2019/04/05 07:15:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.79 2019/04/05 07:25:06 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -3525,19 +3525,28 @@ bnx_reset(struct bnx_softc *sc, uint32_t reset_code)
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
 
 	/* Wait for pending PCI transactions to complete. */
-	REG_WR(sc, BNX_MISC_ENABLE_CLR_BITS,
-	    BNX_MISC_ENABLE_CLR_BITS_TX_DMA_ENABLE |
-	    BNX_MISC_ENABLE_CLR_BITS_DMA_ENGINE_ENABLE |
-	    BNX_MISC_ENABLE_CLR_BITS_RX_DMA_ENABLE |
-	    BNX_MISC_ENABLE_CLR_BITS_HOST_COALESCE_ENABLE);
-	val = REG_RD(sc, BNX_MISC_ENABLE_CLR_BITS);
-	DELAY(5);
-
-	/* Disable DMA */
-	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+	if ((BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5706) ||
+	    (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5708)) {
+		REG_WR(sc, BNX_MISC_ENABLE_CLR_BITS,
+		    BNX_MISC_ENABLE_CLR_BITS_TX_DMA_ENABLE |
+		    BNX_MISC_ENABLE_CLR_BITS_DMA_ENGINE_ENABLE |
+		    BNX_MISC_ENABLE_CLR_BITS_RX_DMA_ENABLE |
+		    BNX_MISC_ENABLE_CLR_BITS_HOST_COALESCE_ENABLE);
+		val = REG_RD(sc, BNX_MISC_ENABLE_CLR_BITS);
+		DELAY(5);
+	} else {
+		/* Disable DMA */
 		val = REG_RD(sc, BNX_MISC_NEW_CORE_CTL);
 		val &= ~BNX_MISC_NEW_CORE_CTL_DMA_ENABLE;
 		REG_WR(sc, BNX_MISC_NEW_CORE_CTL, val);
+		REG_RD(sc, BNX_MISC_NEW_CORE_CTL); /* barrier */
+
+		for (i = 0; i < 100; i++) {
+			delay(1 * 1000);
+			val = REG_RD(sc, BNX_PCICFG_DEVICE_CONTROL);
+			if ((val & PCIE_DCSR_TRANSACTION_PND) == 0)
+				break;
+		}
 	}
 
 	/* Assume bootcode is running. */
