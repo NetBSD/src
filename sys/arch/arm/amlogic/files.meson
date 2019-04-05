@@ -1,4 +1,4 @@
-#	$NetBSD: files.meson,v 1.5 2019/02/25 19:30:17 jmcneill Exp $
+#	$NetBSD: files.meson,v 1.6 2019/04/05 12:11:26 jmcneill Exp $
 #
 # Configuration info for Amlogic Meson family SoCs
 #
@@ -43,7 +43,7 @@ attach	mesonuart at fdt with meson_uart
 file	arch/arm/amlogic/meson_uart.c		meson_uart
 
 # Framebuffer console
-device	mesonfb
+device	mesonfb: genfb, wsemuldisplaydev
 attach	mesonfb at fdt with meson_genfb
 file	arch/arm/amlogic/meson_genfb.c		meson_genfb & soc_meson
 
