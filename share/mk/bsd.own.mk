@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1126 2019/04/05 15:11:31 maya Exp $
+#	$NetBSD: bsd.own.mk,v 1.1127 2019/04/05 15:22:35 maya Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1292,7 +1292,8 @@ HAVE_MESA_VER?=	10
 EXTERNAL_MESALIB_DIR?=	MesaLib.old
 .elif ${HAVE_MESA_VER} == "18"
 EXTERNAL_MESALIB_DIR?=	MesaLib
-.  if ${MKX11} != "no"
+.  if ${MKX11} != "no" && \
+    (${MACHINE} == "amd64" || ${MACHINE} == "i386")
 MKLLVMRT:=		yes
 .  endif
 .endif
