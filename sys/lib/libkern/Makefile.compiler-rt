@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.compiler-rt,v 1.8 2019/02/07 10:44:54 mrg Exp $
+# $NetBSD: Makefile.compiler-rt,v 1.9 2019/04/05 14:00:16 thorpej Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -72,7 +72,7 @@ GENERIC_SRCS+= \
 	umodsi3.c
 .endif
 
-.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
+.if ${MACHINE_CPU} != "aarch64"
 GENERIC_SRCS+= \
 	clzdi2.c \
 	ctzdi2.c \
