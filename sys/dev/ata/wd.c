@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.447 2019/04/05 18:23:45 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.448 2019/04/05 21:31:44 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.447 2019/04/05 18:23:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.448 2019/04/05 21:31:44 bouyer Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -1647,8 +1647,7 @@ again:
 	case CMD_ERR:
 		if (retry == 0) {
 			retry++;
-			(*wd->atabus->ata_reset_drive)(wd->drvp,
-			    flags | AT_RST_NOCMD, NULL);
+			(*wd->atabus->ata_reset_drive)(wd->drvp, flags, NULL);
 			goto again;
 		}
 
