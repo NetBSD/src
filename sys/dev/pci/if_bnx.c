@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.76 2019/04/04 08:16:24 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.77 2019/04/05 07:04:51 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.76 2019/04/04 08:16:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.77 2019/04/05 07:04:51 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -3748,15 +3748,13 @@ bnx_blockinit(struct bnx_softc *sc)
 	/* Allow bootcode to apply any additional fixes before enabling MAC. */
 	rc = bnx_fw_sync(sc, BNX_DRV_MSG_DATA_WAIT2 | BNX_DRV_MSG_CODE_RESET);
 
-	/* Enable link state change interrupt generation. */
+	/* Enable all remaining blocks in the MAC. */
 	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
 		REG_WR(sc, BNX_MISC_ENABLE_SET_BITS,
 		    BNX_MISC_ENABLE_DEFAULT_XI);
 	} else
 		REG_WR(sc, BNX_MISC_ENABLE_SET_BITS, BNX_MISC_ENABLE_DEFAULT);
 
-	/* Enable all remaining blocks in the MAC. */
-	REG_WR(sc, BNX_MISC_ENABLE_SET_BITS, 0x5ffffff);
 	REG_RD(sc, BNX_MISC_ENABLE_SET_BITS);
 	DELAY(20);
 
