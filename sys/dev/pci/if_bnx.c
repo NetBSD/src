@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.77 2019/04/05 07:04:51 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.78 2019/04/05 07:15:26 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.77 2019/04/05 07:04:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.78 2019/04/05 07:15:26 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -462,30 +462,46 @@ bnx_probe(device_t parent, cfdata_t match, void *aux)
 static void
 bnx_print_adapter_info(struct bnx_softc *sc)
 {
+	device_t dev = sc->bnx_dev;
+	int i = 0;
 
-	aprint_normal_dev(sc->bnx_dev, "ASIC BCM%x %c%d %s(0x%08x)\n",
+	aprint_normal_dev(dev, "ASIC BCM%x %c%d %s(0x%08x)\n",
 	    BNXNUM(sc), 'A' + BNXREV(sc), BNXMETAL(sc),
 	    (BNX_CHIP_BOND_ID(sc) == BNX_CHIP_BOND_ID_SERDES_BIT)
 	    ? "Serdes " : "", sc->bnx_chipid);
 
 	/* Bus info. */
 	if (sc->bnx_flags & BNX_PCIE_FLAG) {
-		aprint_normal_dev(sc->bnx_dev, "PCIe x%d ",
-		    sc->link_width);
+		aprint_normal_dev(dev, "PCIe x%d ", sc->link_width);
 		switch (sc->link_speed) {
-		case 1: aprint_normal("2.5Gbps\n"); break;
-		case 2:	aprint_normal("5Gbps\n"); break;
+		case 1: aprint_normal("2.5GT/s\n"); break;
+		case 2:	aprint_normal("5GT/s\n"); break;
 		default: aprint_normal("Unknown link speed\n");
 		}
 	} else {
-		aprint_normal_dev(sc->bnx_dev, "PCI%s %dbit %dMHz\n",
+		aprint_normal_dev(dev, "PCI%s %dbit %dMHz\n",
 		    ((sc->bnx_flags & BNX_PCIX_FLAG) ? "-X" : ""),
 		    (sc->bnx_flags & BNX_PCI_32BIT_FLAG) ? 32 : 64,
 		    sc->bus_speed_mhz);
 	}
 
-	aprint_normal_dev(sc->bnx_dev,
-	    "Coal (RX:%d,%d,%d,%d; TX:%d,%d,%d,%d)\n",
+	/* Firmware version and device features. */
+	aprint_normal_dev(dev, "B/C (%s); Bufs (RX:%d;TX:%d); Flags (",
+	    sc->bnx_bc_ver, RX_PAGES, TX_PAGES);
+
+	if (sc->bnx_phy_flags & BNX_PHY_2_5G_CAPABLE_FLAG) {
+		if (i > 0) aprint_normal("|");
+		aprint_normal("2.5G"); i++;
+	}
+
+	if (sc->bnx_flags & BNX_MFW_ENABLE_FLAG) {
+		if (i > 0) aprint_normal("|");
+		aprint_normal("MFW); MFW (%s)\n", sc->bnx_mfw_ver);
+	} else {
+		aprint_normal(")\n");
+	}
+
+	aprint_normal_dev(dev, "Coal (RX:%d,%d,%d,%d; TX:%d,%d,%d,%d)\n",
 	    sc->bnx_rx_quick_cons_trip_int,
 	    sc->bnx_rx_quick_cons_trip,
 	    sc->bnx_rx_ticks_int,
@@ -569,6 +585,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	int			mii_flags = MIIF_FORCEANEG;
 	pcireg_t		memtype;
 	char intrbuf[PCI_INTRSTR_LEN];
+	int i, j;
 
 	if (bnx_tx_pool == NULL) {
 		bnx_tx_pool = malloc(sizeof(*bnx_tx_pool), M_DEVBUF, M_NOWAIT);
@@ -649,6 +666,64 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	/* Set initial device and PHY flags */
 	sc->bnx_flags = 0;
 	sc->bnx_phy_flags = 0;
+
+	/* Fetch the bootcode revision. */
+	val = REG_RD_IND(sc, sc->bnx_shmem_base + BNX_DEV_INFO_BC_REV);
+	for (i = 0, j = 0; i < 3; i++) {
+		uint8_t num;
+		int k, skip0;
+
+		num = (uint8_t)(val >> (24 - (i * 8)));
+		for (k = 100, skip0 = 1; k >= 1; num %= k, k /= 10) {
+			if (num >= k || !skip0 || k == 1) {
+				sc->bnx_bc_ver[j++] = (num / k) + '0';
+				skip0 = 0;
+			}
+		}
+		if (i != 2)
+			sc->bnx_bc_ver[j++] = '.';
+	}
+
+	/* Check if any management firmware is enabled. */
+	val = REG_RD_IND(sc, sc->bnx_shmem_base + BNX_PORT_FEATURE);
+	if (val & BNX_PORT_FEATURE_ASF_ENABLED) {
+		DBPRINT(sc, BNX_INFO, "Management F/W Enabled.\n");
+		sc->bnx_flags |= BNX_MFW_ENABLE_FLAG;
+
+		/* Allow time for firmware to enter the running state. */
+		for (i = 0; i < 30; i++) {
+			val = REG_RD_IND(sc, sc->bnx_shmem_base +
+			    BNX_BC_STATE_CONDITION);
+			if (val & BNX_CONDITION_MFW_RUN_MASK)
+				break;
+			DELAY(10000);
+		}
+
+		/* Check if management firmware is running. */
+		val = REG_RD_IND(sc, sc->bnx_shmem_base +
+		    BNX_BC_STATE_CONDITION);
+		val &= BNX_CONDITION_MFW_RUN_MASK;
+		if ((val != BNX_CONDITION_MFW_RUN_UNKNOWN) &&
+		    (val != BNX_CONDITION_MFW_RUN_NONE)) {
+			uint32_t addr = REG_RD_IND(sc, sc->bnx_shmem_base +
+			    BNX_MFW_VER_PTR);
+
+			/* Read the management firmware version string. */
+			for (j = 0; j < 3; j++) {
+				val = bnx_reg_rd_ind(sc, addr + j * 4);
+				val = bswap32(val);
+				memcpy(&sc->bnx_mfw_ver[i], &val, 4);
+				i += 4;
+			}
+		} else {
+			/* May cause firmware synchronization timeouts. */
+			BNX_PRINTF(sc, "%s(%d): Management firmware enabled "
+			    "but not running!\n", __FILE__, __LINE__);
+			strcpy(sc->bnx_mfw_ver, "NOT RUNNING!");
+
+			/* ToDo: Any action the driver should take? */
+		}
+	}
 
 	bnx_probe_pci_caps(sc);
 
@@ -1548,7 +1623,7 @@ bnx_nvram_read_dword(struct bnx_softc *sc, uint32_t offset,
 		if (val & BNX_NVM_COMMAND_DONE) {
 			val = REG_RD(sc, BNX_NVM_READ);
 
-			val = bnx_be32toh(val);
+			val = be32toh(val);
 			memcpy(ret_val, &val, 4);
 			break;
 		}
@@ -2059,7 +2134,7 @@ bnx_nvram_test(struct bnx_softc *sc)
 	if ((rc = bnx_nvram_read(sc, 0, data, 4)) != 0)
 		goto bnx_nvram_test_done;
 
-	magic = bnx_be32toh(buf[0]);
+	magic = be32toh(buf[0]);
 	if (magic != BNX_NVRAM_MAGIC) {
 		rc = ENODEV;
 		BNX_PRINTF(sc, "%s(%d): Invalid NVRAM magic value! "
@@ -2841,7 +2916,7 @@ bnx_init_cpus(struct bnx_softc *sc)
 	struct cpu_reg cpu_reg;
 	struct fw_info fw;
 
-	switch(BNX_CHIP_NUM(sc)) {
+	switch (BNX_CHIP_NUM(sc)) {
 	case BNX_CHIP_NUM_5709:
 		/* Initialize the RV2P processor. */
 		if (BNX_CHIP_REV(sc) == BNX_CHIP_REV_Ax) {
@@ -3600,6 +3675,13 @@ bnx_chipinit(struct bnx_softc *sc)
 	/* Initialize the on-boards CPUs */
 	bnx_init_cpus(sc);
 
+	/* Enable management frames (NC-SI) to flow to the MCP. */
+	if (sc->bnx_flags & BNX_MFW_ENABLE_FLAG) {
+		val = REG_RD(sc, BNX_RPM_MGMT_PKT_CTRL) |
+		    BNX_RPM_MGMT_PKT_CTRL_MGMT_EN;
+		REG_WR(sc, BNX_RPM_MGMT_PKT_CTRL, val);
+	}
+
 	/* Prepare NVRAM for access. */
 	if (bnx_init_nvram(sc)) {
 		rc = ENODEV;
@@ -3725,19 +3807,6 @@ bnx_blockinit(struct bnx_softc *sc)
 		goto bnx_blockinit_exit;
 	}
 
-	/* Check if any management firmware is running. */
-	reg = REG_RD_IND(sc, sc->bnx_shmem_base + BNX_PORT_FEATURE);
-	if (reg & (BNX_PORT_FEATURE_ASF_ENABLED |
-	    BNX_PORT_FEATURE_IMD_ENABLED)) {
-		DBPRINT(sc, BNX_INFO, "Management F/W Enabled.\n");
-		sc->bnx_flags |= BNX_MFW_ENABLE_FLAG;
-	}
-
-	sc->bnx_fw_ver = REG_RD_IND(sc, sc->bnx_shmem_base +
-	    BNX_DEV_INFO_BC_REV);
-
-	DBPRINT(sc, BNX_INFO, "bootcode rev = 0x%08X\n", sc->bnx_fw_ver);
-
 	/* Enable DMA */
 	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
 		val = REG_RD(sc, BNX_MISC_NEW_CORE_CTL);
@@ -3747,6 +3816,13 @@ bnx_blockinit(struct bnx_softc *sc)
 
 	/* Allow bootcode to apply any additional fixes before enabling MAC. */
 	rc = bnx_fw_sync(sc, BNX_DRV_MSG_DATA_WAIT2 | BNX_DRV_MSG_CODE_RESET);
+
+	/* Disable management frames (NC-SI) from flowing to the MCP. */
+	if (sc->bnx_flags & BNX_MFW_ENABLE_FLAG) {
+		val = REG_RD(sc, BNX_RPM_MGMT_PKT_CTRL) &
+		    ~BNX_RPM_MGMT_PKT_CTRL_MGMT_EN;
+		REG_WR(sc, BNX_RPM_MGMT_PKT_CTRL, val);
+	}
 
 	/* Enable all remaining blocks in the MAC. */
 	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {

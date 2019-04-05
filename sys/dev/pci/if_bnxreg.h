@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.23 2019/04/04 12:38:27 msaitoh Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.24 2019/04/05 07:15:26 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -118,17 +118,17 @@
 #define BNX_VERBOSE		(BNX_CP_ALL | BNX_LEVEL_VERBOSE)
 #define BNX_EXCESSIVE		(BNX_CP_ALL | BNX_LEVEL_EXCESSIVE)
 
-#define BNX_CODE_PATH(cp)	((cp & BNX_CP_MASK) & bnx_debug)
+#define BNX_CODE_PATH(cp)	(((cp) & BNX_CP_MASK) & bnx_debug)
 #define BNX_MSG_LEVEL(lv)	\
-    ((lv & BNX_LEVEL_MASK) <= (bnx_debug & BNX_LEVEL_MASK))
+	(((lv) & BNX_LEVEL_MASK) <= (bnx_debug & BNX_LEVEL_MASK))
 #define BNX_LOG_MSG(m)		(BNX_CODE_PATH(m) && BNX_MSG_LEVEL(m))
 
 #ifdef BNX_DEBUG
 
 /* Print a message based on the logging level and code path. */
-#define DBPRINT(sc, level, format, args...)			\
-	if (BNX_LOG_MSG(level)) {				\
-		aprint_debug_dev(sc->bnx_dev, format, ## args);	\
+#define DBPRINT(sc, level, format, args...)				\
+	if (BNX_LOG_MSG(level)) {					\
+		aprint_debug_dev((sc)->bnx_dev, format, ## args);	\
 	}
 
 /* Runs a particular command based on the logging level and code path. */
@@ -160,14 +160,14 @@
 #endif
 
 /* Returns FALSE in "defects" per 2^31 - 1 calls, otherwise returns TRUE. */
-#define DB_RANDOMFALSE(defects)	       (random() > defects)
-#define DB_OR_RANDOMFALSE(defects)  || (random() > defects)
-#define DB_AND_RANDOMFALSE(defects) && (random() > defects)
+#define DB_RANDOMFALSE(defects)	       (random() > (defects))
+#define DB_OR_RANDOMFALSE(defects)  || (random() > (defects))
+#define DB_AND_RANDOMFALSE(defects) && (random() > (defects))
 
 /* Returns TRUE in "defects" per 2^31 - 1 calls, otherwise returns FALSE. */
-#define DB_RANDOMTRUE(defects)	       (random() < defects)
-#define DB_OR_RANDOMTRUE(defects)   || (random() < defects)
-#define DB_AND_RANDOMTRUE(defects)  && (random() < defects)
+#define DB_RANDOMTRUE(defects)	       (random() < (defects))
+#define DB_OR_RANDOMTRUE(defects)   || (random() < (defects))
+#define DB_AND_RANDOMTRUE(defects)  && (random() < (defects))
 
 #else
 
@@ -254,25 +254,6 @@ struct bnx_type {
 	uint16_t	bnx_sdid;
 	const char	*bnx_name;
 };
-
-/****************************************************************************/
-/* Byte order conversions.						    */
-/****************************************************************************/
-#define betoh32(x) be32toh(x)
-#define bnx_htobe16(x) htobe16(x)
-#define bnx_htobe32(x) htobe32(x)
-#define bnx_htobe64(x) htobe64(x)
-#define bnx_htole16(x) htole16(x)
-#define bnx_htole32(x) htole32(x)
-#define bnx_htole64(x) htole64(x)
-
-#define bnx_be16toh(x) betoh16(x)
-#define bnx_be32toh(x) betoh32(x)
-#define bnx_be64toh(x) betoh64(x)
-#define bnx_le16toh(x) letoh16(x)
-#define bnx_le32toh(x) letoh32(x)
-#define bnx_le64toh(x) letoh64(x)
-
 
 /****************************************************************************/
 /* NVRAM Access								    */
@@ -592,6 +573,8 @@ struct flash_spec {
 #define BNX_PORT_FEATURE_MBA_VLAN_TAG_MASK	 0xffff
 #define BNX_PORT_FEATURE_MBA_VLAN_ENABLE	 0x10000
 
+#define BNX_MFW_VER_PTR				0x00000014c
+
 #define BNX_BC_STATE_RESET_TYPE			0x000001c0
 #define BNX_BC_STATE_RESET_TYPE_SIG		 0x00005254
 #define BNX_BC_STATE_RESET_TYPE_SIG_MASK	 0x0000ffff
@@ -645,6 +628,39 @@ struct flash_spec {
 #define BNX_BC_STATE_ERR_NO_RXP			 (BNX_BC_STATE_SIGN | 0x0600)
 #define BNX_BC_STATE_ERR_TOO_MANY_RBUF		 (BNX_BC_STATE_SIGN | 0x0700)
 
+#define BNX_BC_STATE_CONDITION			0x000001c8
+#define BNX_CONDITION_INIT_POR			 0x00000001
+#define BNX_CONDITION_INIT_VAUX_AVAIL		 0x00000002
+#define BNX_CONDITION_INIT_PCI_AVAIL		 0x00000004
+#define BNX_CONDITION_INIT_PCI_RESET		 0x00000008
+#define BNX_CONDITION_INIT_HD_RESET		 0x00000010 /* 5709/16 only */
+#define BNX_CONDITION_DRV_PRESENT		 0x00000100
+#define BNX_CONDITION_LOW_POWER_LINK		 0x00000200
+#define BNX_CONDITION_CORE_RST_OCCURRED		 0x00000400 /* 5709/16 only */
+#define BNX_CONDITION_UNUSED			 0x00000800
+#define BNX_CONDITION_BUSY_EXPROM		 0x00001000 /* 5706/08 only */
+
+#define BNX_CONDITION_MFW_RUN_UNKNOWN		 0x00000000
+#define BNX_CONDITION_MFW_RUN_IPMI		 0x00002000
+#define BNX_CONDITION_MFW_RUN_UMP		 0x00004000
+#define BNX_CONDITION_MFW_RUN_NCSI		 0x00006000
+#define BNX_CONDITION_MFW_RUN_NONE		 0x0000e000
+#define BNX_CONDITION_MFW_RUN_MASK		 0x0000e000
+
+/* 5709/16 only */
+#define BNX_CONDITION_PM_STATE_MASK		 0x00030000
+#define BNX_CONDITION_PM_STATE_FULL		 0x00030000
+#define BNX_CONDITION_PM_STATE_PREP		 0x00020000
+#define BNX_CONDITION_PM_STATE_UNPREP		 0x00010000
+#define BNX_CONDITION_PM_RESERVED		 0x00000000
+
+/* 5709/16 only */
+#define BNX_CONDITION_RXMODE_KEEP_VLAN		 0x00040000
+#define BNX_CONDITION_DRV_WOL_ENABLED		 0x00080000
+#define BNX_CONDITION_PORT_DISABLED		 0x00100000
+#define BNX_CONDITION_DRV_MAYBE_OUT		 0x00200000
+#define BNX_CONDITION_DPFW_DEAD			 0x00400000
+
 #define BNX_BC_STATE_DEBUG_CMD			0x1dc
 #define BNX_BC_STATE_BC_DBG_CMD_SIGNATURE	 0x42440000
 #define BNX_BC_STATE_BC_DBG_CMD_SIGNATURE_MASK	 0xffff0000
@@ -656,7 +672,8 @@ struct flash_spec {
 /****************************************************************************/
 /* Convenience definitions.						    */
 /****************************************************************************/
-#define	BNX_PRINTF(sc, fmt, ...)	aprint_error_dev(sc->bnx_dev, fmt, __VA_ARGS__)
+#define	BNX_PRINTF(sc, fmt, ...)	\
+	aprint_error_dev((sc)->bnx_dev, fmt, __VA_ARGS__)
 #define BNX_STATS(x)			(u_long) stats->stat_ ## x ## _lo
 
 /*
@@ -1727,6 +1744,8 @@ struct l2_fhdr {
 #define BNX_MISC_FINAL_CLK_CTL_VAL			0x000008b8
 #define BNX_MISC_FINAL_CLK_CTL_VAL_MISC_FINAL_CLK_CTL_VAL (0x3ffffffL<<6)
 
+#define BNX_MISC_UNUSED0			0x000008bc
+
 #define BNX_MISC_NEW_CORE_CTL				0x000008c8
 #define BNX_MISC_NEW_CORE_CTL_LINK_HOLDOFF_SUCCESS	 (1L<<0)
 #define BNX_MISC_NEW_CORE_CTL_LINK_HOLDOFF_REQ		 (1L<<1)
@@ -1758,8 +1777,6 @@ struct l2_fhdr {
 #define BNX_MISC_DUAL_MEDIA_CTRL_PHY_SERDES_IDDQ_SER0_IDDQ	 (2L<<26)
 #define BNX_MISC_DUAL_MEDIA_CTRL_PHY_SERDES_IDDQ_PHY1_IDDQ	 (4L<<26)
 #define BNX_MISC_DUAL_MEDIA_CTRL_PHY_SERDES_IDDQ_PHY0_IDDQ	 (8L<<26)
-
-#define BNX_MISC_UNUSED0			0x000008bc
 
 
 /*
@@ -2700,6 +2717,10 @@ struct l2_fhdr {
 #define BNX_RPM_CONFIG_MP_KEEP			 (1L<<3)
 #define BNX_RPM_CONFIG_SORT_VECT_VAL		 (0xfL<<4)
 #define BNX_RPM_CONFIG_IGNORE_VLAN		 (1L<<31)
+
+#define BNX_RPM_MGMT_PKT_CTRL			0x0000180c
+#define BNX_RPM_MGMT_PKT_CTRL_MGMT_DISCARD_EN	 (1L<<30)
+#define BNX_RPM_MGMT_PKT_CTRL_MGMT_EN		 (1L<<31)
 
 #define BNX_RPM_VLAN_MATCH0			0x00001810
 #define BNX_RPM_VLAN_MATCH0_RPM_VLAN_MTCH0_VALUE (0xfffL<<0)
@@ -4699,8 +4720,8 @@ struct bnx_rv2p_header {
 #define RV2P_PROC1			0
 #define RV2P_PROC2			1
 
-#define BNX_MIREG(x)			((x & 0x1F) << 16)
-#define BNX_MIPHY(x)			((x & 0x1F) << 21)
+#define BNX_MIREG(x)			(((x) & 0x1F) << 16)
+#define BNX_MIPHY(x)			(((x) & 0x1F) << 21)
 #define BNX_PHY_TIMEOUT			50
 
 #define BNX_NVRAM_SIZE			0x200
