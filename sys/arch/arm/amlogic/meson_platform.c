@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.5 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: meson_platform.c,v 1.6 2019/04/05 11:58:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.5 2019/02/25 19:30:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.6 2019/04/05 11:58:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.5 2019/02/25 19:30:17 jmcneill 
 #define	MESON_CORE_APB3_PBASE	0xc0000000
 #define	MESON_CORE_APB3_SIZE	0x01400000
 
-#define MESON_CBUS_OFFSET	0x01100000
+#define	MESON_CBUS_OFFSET	0x01100000
 
 #define	MESON_WATCHDOG_BASE	0xc1109900
 #define	MESON_WATCHDOG_SIZE	0x8
@@ -78,30 +78,30 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.5 2019/02/25 19:30:17 jmcneill 
 #define	 MESON_WATCHDOG_RESET	0x04
 #define	  WATCHDOG_RESET_COUNT	__BITS(15,0)
 
-#define MESON8B_ARM_VBASE	(MESON_CORE_APB3_VBASE + MESON_CORE_APB3_SIZE)
+#define	MESON8B_ARM_VBASE	(MESON_CORE_APB3_VBASE + MESON_CORE_APB3_SIZE)
 #define	MESON8B_ARM_PBASE	0xc4200000
-#define MESON8B_ARM_SIZE	0x00200000
-#define MESON8B_ARM_PL310_BASE	0x00000000
-#define MESON8B_ARM_SCU_BASE	0x00100000
+#define	MESON8B_ARM_SIZE	0x00200000
+#define	MESON8B_ARM_PL310_BASE	0x00000000
+#define	MESON8B_ARM_SCU_BASE	0x00100000
 
-#define MESON8B_AOBUS_VBASE	(MESON8B_ARM_VBASE + MESON8B_ARM_SIZE)
+#define	MESON8B_AOBUS_VBASE	(MESON8B_ARM_VBASE + MESON8B_ARM_SIZE)
 #define	MESON8B_AOBUS_PBASE	0xc8000000
-#define MESON8B_AOBUS_SIZE	0x00200000
+#define	MESON8B_AOBUS_SIZE	0x00200000
 
-#define MESON_AOBUS_PWR_CTRL0_REG	0xe0
-#define MESON_AOBUS_PWR_CTRL1_REG	0xe4
-#define MESON_AOBUS_PWR_MEM_PD0_REG	0xf4
+#define	MESON_AOBUS_PWR_CTRL0_REG	0xe0
+#define	MESON_AOBUS_PWR_CTRL1_REG	0xe4
+#define	MESON_AOBUS_PWR_MEM_PD0_REG	0xf4
 
-#define MESON_CBUS_CPU_CLK_CNTL_REG	0x419c
+#define	MESON_CBUS_CPU_CLK_CNTL_REG	0x419c
 
 
-#define MESON8B_SRAM_VBASE	(MESON8B_AOBUS_VBASE + MESON8B_AOBUS_SIZE)
-#define MESON8B_SRAM_PBASE	0xd9000000
-#define MESON8B_SRAM_SIZE	0x00200000	/* 0x10000 rounded up */
+#define	MESON8B_SRAM_VBASE	(MESON8B_AOBUS_VBASE + MESON8B_AOBUS_SIZE)
+#define	MESON8B_SRAM_PBASE	0xd9000000
+#define	MESON8B_SRAM_SIZE	0x00200000	/* 0x10000 rounded up */
 
-#define MESON8B_SRAM_CPUCONF_OFFSET		0x1ff80
-#define MESON8B_SRAM_CPUCONF_CTRL_REG		0x00
-#define MESON8B_SRAM_CPUCONF_CPU_ADDR_REG(n)	(0x04 * (n))
+#define	MESON8B_SRAM_CPUCONF_OFFSET		0x1ff80
+#define	MESON8B_SRAM_CPUCONF_CTRL_REG		0x00
+#define	MESON8B_SRAM_CPUCONF_CPU_ADDR_REG(n)	(0x04 * (n))
 
 
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
@@ -148,7 +148,7 @@ void
 meson_platform_early_putchar(char c)
 {
 #ifdef CONSADDR
-#define CONSADDR_VA	((CONSADDR - MESON8B_AOBUS_PBASE) + MESON8B_AOBUS_VBASE)
+#define	CONSADDR_VA	((CONSADDR - MESON8B_AOBUS_PBASE) + MESON8B_AOBUS_VBASE)
 	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
 	    (volatile uint32_t *)CONSADDR_VA :
 	    (volatile uint32_t *)CONSADDR;
