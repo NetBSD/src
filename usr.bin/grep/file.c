@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.10 2018/08/12 09:03:21 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.11 2019/04/05 13:34:41 christos Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/file.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: file.c,v 1.11 2010/07/02 20:48:48 nicm Exp $	*/
 
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: file.c,v 1.10 2018/08/12 09:03:21 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.11 2019/04/05 13:34:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -63,7 +63,7 @@ static gzFile gzbufdesc;
 static BZFILE* bzbufdesc;
 #endif
 
-static unsigned char buffer[MAXBUFSIZ];
+static unsigned char buffer[MAXBUFSIZ + 1];
 static unsigned char *bufpos;
 static size_t bufrem;
 
@@ -128,7 +128,7 @@ grep_refill(struct file *f)
 	return (0);
 }
 
-static inline int
+static inline void
 grep_lnbufgrow(size_t newlen)
 {
 
@@ -136,15 +136,19 @@ grep_lnbufgrow(size_t newlen)
 		lnbuf = grep_realloc(lnbuf, newlen);
 		lnbuflen = newlen;
 	}
+}
 
-	return (0);
+static void
+grep_copyline(size_t off, size_t len)
+{
+	memcpy(lnbuf + off, bufpos, len);
+	lnbuf[off + len] = '\0';
 }
 
 char *
 grep_fgetln(struct file *f, size_t *lenp)
 {
 	unsigned char *p;
-	char *ret;
 	size_t len;
 	size_t off;
 	ptrdiff_t diff;
@@ -162,20 +166,20 @@ grep_fgetln(struct file *f, size_t *lenp)
 	/* Look for a newline in the remaining part of the buffer */
 	if ((p = memchr(bufpos, line_sep, bufrem)) != NULL) {
 		++p; /* advance over newline */
-		ret = (char *)bufpos;
 		len = p - bufpos;
+		grep_lnbufgrow(len + 1);
+		grep_copyline(0, len);
+		*lenp = len;
 		bufrem -= len;
 		bufpos = p;
-		*lenp = len;
-		return (ret);
+		return (char *)lnbuf;
 	}
 
 	/* We have to copy the current buffered data to the line buffer */
 	for (len = bufrem, off = 0; ; len += bufrem) {
 		/* Make sure there is room for more data */
-		if (grep_lnbufgrow(len + LNBUFBUMP))
-			goto error;
-		memcpy(lnbuf + off, bufpos, len - off);
+		grep_lnbufgrow(len + LNBUFBUMP);
+		grep_copyline(off, len - off);
 		off = len;
 		if (grep_refill(f) != 0)
 			goto error;
@@ -188,9 +192,8 @@ grep_fgetln(struct file *f, size_t *lenp)
 		++p;
 		diff = p - bufpos;
 		len += diff;
-		if (grep_lnbufgrow(len))
-		    goto error;
-		memcpy(lnbuf + off, bufpos, diff);
+		grep_lnbufgrow(len + 1);
+		grep_copyline(off, diff);
 		bufrem -= diff;
 		bufpos = p;
 		break;
