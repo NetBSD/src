@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.102 2019/04/05 20:44:09 christos Exp $	*/
+/*	$NetBSD: atavar.h,v 1.103 2019/04/05 21:31:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -117,7 +117,6 @@ struct ata_command {
 #define AT_READREG  	0x1000 /* Read registers on completion */
 #define AT_LBA      	0x2000 /* LBA28 */
 #define AT_LBA48   	0x4000 /* LBA48 */
-#define AT_RST_NOCMD	0x8000 /* ??? */
 
 	int timeout;		/* timeout (in ms) */
 	void *data;		/* Data buffer address */
