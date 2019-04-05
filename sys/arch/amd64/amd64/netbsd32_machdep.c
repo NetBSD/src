@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.105.2.2 2019/01/27 18:43:08 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.105.2.3 2019/04/05 07:48:05 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.105.2.2 2019/01/27 18:43:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.105.2.3 2019/04/05 07:48:05 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -132,9 +132,6 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	netbsd32_adjust_limits(p);
 
-	l->l_md.md_flags |= MDL_COMPAT32;	/* Force iret not sysret */
-	pcb->pcb_flags = PCB_COMPAT32;
-
 	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
 	    ?  __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 
@@ -143,13 +140,18 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		pcb->pcb_dbregs = NULL;
 	}
 
+	kpreempt_disable();
+	pcb->pcb_flags = PCB_COMPAT32;
 	p->p_flag |= PK_32;
+	l->l_md.md_flags = MDL_COMPAT32;	/* force iret not sysret */
+	cpu_fsgs_zero(l);
+	cpu_fsgs_reload(l, LSEL(LUDATA32_SEL, SEL_UPL),
+	    LSEL(LUDATA32_SEL, SEL_UPL));
+	kpreempt_enable();
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA32_SEL, SEL_UPL);
-	cpu_fsgs_zero(l);
-	cpu_fsgs_reload(l, tf->tf_ds, tf->tf_es);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.38.6.1 2017/09/09 17:01:23 snj Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.38.6.2 2019/04/05 07:48:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.38.6.1 2017/09/09 17:01:23 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.38.6.2 2019/04/05 07:48:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -283,10 +283,14 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	fpu_save_area_clear(l, __Linux_NPXCW__);
 
-	l->l_md.md_flags |= MDL_COMPAT32;	/* Forces iret not sysret */
+	kpreempt_disable();
 	pcb->pcb_flags = PCB_COMPAT32;
-
 	p->p_flag |= PK_32;
+	l->l_md.md_flags = MDL_COMPAT32;	/* force iret not sysret */
+	cpu_fsgs_zero(l);
+	cpu_fsgs_reload(l, GSEL(GUDATA32_SEL, SEL_UPL),
+	    GSEL(GUDATA32_SEL, SEL_UPL));
+	kpreempt_enable();
 
 	tf = l->l_md.md_regs;
 	tf->tf_rax = 0;
@@ -311,8 +315,6 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
-	cpu_fsgs_zero(l);
-	cpu_fsgs_reload(l, GSEL(GUDATA32_SEL, SEL_UPL), GSEL(GUDATA32_SEL, SEL_UPL));
 }
 
 static void

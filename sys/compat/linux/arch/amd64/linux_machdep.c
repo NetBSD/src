@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.51.6.1 2017/09/04 20:41:28 snj Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.51.6.2 2019/04/05 07:48:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.51.6.1 2017/09/04 20:41:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.51.6.2 2019/04/05 07:48:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -89,11 +89,13 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 #endif
 
 	fpu_save_area_clear(l, __NetBSD_NPXCW__);
+
+	kpreempt_disable();
 	pcb->pcb_flags = 0;
-
 	l->l_proc->p_flag &= ~PK_32;
-
 	l->l_md.md_flags = MDL_IRET;
+	cpu_fsgs_zero(l);
+	kpreempt_enable();
 
 	tf = l->l_md.md_regs;
 	tf->tf_rax = 0;
@@ -118,7 +120,6 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = 0;
-	cpu_fsgs_zero(l);
 
 	return;
 }
