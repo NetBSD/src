@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.56 2018/02/08 09:05:18 dholland Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.57 2019/04/06 03:06:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.56 2018/02/08 09:05:18 dholland Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.57 2019/04/06 03:06:27 thorpej Exp $")
 
 
 /*
@@ -706,318 +706,83 @@ ENTRY(copyinstr)
 	.long	_C_LABEL(curpcb)
 	SET_ENTRY_SIZE(copyinstr)
 
+/**************************************************************************/
 
+#define	UFETCHSTORE_PROLOGUE(func)					 \
+	mov.l	.L ## func ## _VM_MAXUSER_ADDRESS, r1			;\
+	cmp/hi	r1,	r4	/* bomb if uaddr isn't in user space */	;\
+	bt/s	2f							;\
+	 mov	#EFAULT,r0						;\
+	mov.l	.L ## func ## _curpcb, r1				;\
+	mov.l	@r1,	r2	/* r2 = curpcb */			;\
+	mov.l	.L ## func ## _onfault, r1				;\
+	mov.l	r1,	@(PCB_ONFAULT,r2)	/* set pcb_onfault */
 
-/*
- * LINTSTUB: Func: long	fuword(const void *uaddr)
- *	Fetch an int from the user address space.
- */
-ENTRY(fuword)
-	mov.l	.L_fuword_VM_MAXUSER_ADDRESS, r1
-	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
-	bt/s	2f
-	 mov	#-1,	r0
-	mov.l	.L_fuword_curpcb, r1	/* set fault handler */
-	mov.l	@r1,	r2
-	mov.l	.L_fuword_onfault, r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov.l	@r4,	r0		/* fetch the value */
-1:
-	mov.l	.L_fuword_curpcb, r1	/* clear fault handler */
-	mov.l	@r1,	r2
-	mov	#0,	r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-2:
-	rts
-	 nop
-
-3:
-	bra	1b
-	 mov	#-1,	r0
-
-	.align 2
-.L_fuword_onfault:
-	.long	3b
-.L_fuword_VM_MAXUSER_ADDRESS:
-	.long	VM_MAXUSER_ADDRESS - 4 /*sizeof(long)*/
-.L_fuword_curpcb:
+#define	UFETCHSTORE_EPILOGUE(func)					 \
+	mov	#0,	r0	/* return "success!" */			;\
+1:									;\
+	mov.l	.L ## func ## _curpcb, r1				;\
+	mov.l	@r1,	r2	/* r2 = curpcb */			;\
+	mov	#0,	r1						;\
+	mov.l	r1,	@(PCB_ONFAULT,r2)				;\
+2:									;\
+	rts								;\
+	 nop								;\
+									 \
+	.align 2							;\
+.L ## func ## _onfault:							;\
+	.long	1b							;\
+.L ## func ## _VM_MAXUSER_ADDRESS:					;\
+	.long	VM_MAXUSER_ADDRESS - 4	/* sizeof(long) */		;\
+.L ## func ## _curpcb:							;\
 	.long	_C_LABEL(curpcb)
-	SET_ENTRY_SIZE(fuword)
 
+/* LINTSTUB: int _ufetch_8(const uint8_t *uaddr, uint8_t *valp); */
+ENTRY(_ufetch_8)
+	UFETCHSTORE_PROLOGUE(_ufetch_8)
+	mov.b	@r4,	r1	/* r1 = *uaddr */
+	mov.b	r1,	@r5	/* *valp = r1 */
+	UFETCHSTORE_EPILOGUE(_ufetch_8)
+	SET_ENTRY_SIZE(_ufetch_8)
 
-/*
- * LINTSTUB: Func: int fusword(const void *uaddr)
- *	Fetch a short from the user address space.
- */
-ENTRY(fusword)
-	mov.l	.L_fusword_VM_MAXUSER_ADDRESS, r1
-	cmp/hi	r1,	r4		/* bomb if uaddr isn't user space */
-	bt/s	2f
-	 mov	#-1,	r0
-	mov.l	.L_fusword_curpcb, r1	/* set fault handler */
-	mov.l	@r1,	r2
-	mov.l	.L_fusword_onfault, r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov.w	@r4,	r1		/* fetch the value */
-	extu.w	r1,	r0
-1:
-	mov.l	.L_fusword_curpcb, r1	/* clear fault handler */
-	mov.l	@r1,	r2
-	mov	#0,	r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-2:
-	rts
-	 nop
+/* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
+ENTRY(_ufetch_16)
+	UFETCHSTORE_PROLOGUE(_ufetch_16)
+	mov.w	@r4,	r1	/* r1 = *uaddr */
+	mov.w	r1	@r5	/* *valp = r1 */
+	UFETCHSTORE_EPILOGUE(_ufetch_16)
+	SET_ENTRY_SIZE(_ufetch_16)
 
-3:
-	bra	1b
-	 mov	#-1,	r0
+/* LINTSTUB: int _ufetch_32(const uint32_t *uaddr, uint32_t *valp); */
+ENTRY(_ufetch_32)
+	UFETCHSTORE_PROLOGUE(_ufetch_32)
+	mov.l	@r4,	r1	/* r1 = *uaddr */
+	mov.l	r1,	@r5	/* *valp = r1 */
+	UFETCHSTORE_EPILOGUE(_ufetch_32)
+	SET_ENTRY_SIZE(_ufetch_32)
 
-	.align 2
-.L_fusword_onfault:
-	.long	3b
-.L_fusword_VM_MAXUSER_ADDRESS:
-	.long	VM_MAXUSER_ADDRESS - 2 /*sizeof(short)*/
-.L_fusword_curpcb:
-	.long	_C_LABEL(curpcb)
-	SET_ENTRY_SIZE(fusword)
+/* LINTSTUB: int _ustore_8(uint8_t *uaddr, uint8_t val); */
+ENTRY(_ustore_8)
+	UFETCHSTORE_PROLOGUE(_ustore_8)
+	mov.b	r5,	@r4	/* *uaddr = val */
+	UFETCHSTORE_EPILOGUE(_ustore_8)
+	SET_ENTRY_SIZE(_ustore_8)
 
+/* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
+ENTRY(_ustore_16)
+	UFETCHSTORE_PROLOGUE(_ustore_16)
+	mov.w	r5,	@r4	/* *uaddr = val */
+	UFETCHSTORE_EPILOGUE(_ustore_16)
+	SET_ENTRY_SIZE(_ustore_16)
 
-/*
- * LINTSTUB: Func: int fuswintr(const void *uaddr)
- *	Fetch a short from the user address space.
- *	Can be called during an interrupt.
- */
-ENTRY(fuswintr)
-	mov.l	.L_fuswintr_VM_MAXUSER_ADDRESS, r1
-	cmp/hi	r1,	r4		/* bomb if uaddr isn't user space */
-	bt/s	2f
-	 mov	#-1,	r0
-	mov.l	.L_fuswintr_curpcb, r1	/* set fault handler */
-	mov.l	@r1,	r2
-	mov.l	.L_fuswintr_onfault, r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov	#1,	r1		/* set faultbail */
-	mov.l	r1,	@(PCB_FAULTBAIL,r2)
-	mov.w	@r4,	r1		/* fetch the value */
-	extu.w	r1,	r0
-1:
-	mov.l	.L_fuswintr_curpcb, r1	/* clear fault handler and faultbail */
-	mov.l	@r1,	r2
-	mov	#0,	r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov.l	r1,	@(PCB_FAULTBAIL,r2)
-2:
-	rts
-	 nop
+/* LINTSTUB: int _ustore_32(uint32_t *uaddr, uint32_t val); */
+ENTRY(_ustore_32)
+	UFETCHSTORE_PROLOGUE(_ustore_32)
+	mov.l	r5,	@r4	/* *uaddr = val */
+	UFETCHSTORE_EPILOGUE(_ustore_32)
+	SET_ENTRY_SIZE(_ustore_32)
 
-3:
-	bra	1b
-	 mov	#-1,	r0
-
-	.align 2
-.L_fuswintr_onfault:
-	.long	3b
-.L_fuswintr_VM_MAXUSER_ADDRESS:
-	.long	VM_MAXUSER_ADDRESS - 2 /*sizeof(short)*/
-.L_fuswintr_curpcb:
-	.long	_C_LABEL(curpcb)
-	SET_ENTRY_SIZE(fuswintr)
-
-
-/*
- * LINTSTUB: Func: int fubyte(const void *uaddr)
- *	Fetch a byte from the user address space.
- */
-ENTRY(fubyte)
-	mov.l	.L_fubyte_VM_MAXUSER_ADDRESS, r1
-	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
-	bt/s	2f
-	 mov	#-1,	r0
-	mov.l	.L_fubyte_curpcb, r1	/* set fault handler */
-	mov.l	@r1,	r2
-	mov.l	.L_fubyte_onfault, r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov.b	@r4,	r1		/* fetch the value */
-	extu.b	r1,	r0
-1:
-	mov.l	.L_fubyte_curpcb, r1		/* clear fault handler */
-	mov.l	@r1,	r2
-	mov	#0,	r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-2:
-	rts
-	 nop
-
-3:
-	bra	1b
-	 mov	#-1,	r0
-
-	.align 2
-.L_fubyte_onfault:
-	.long	3b
-.L_fubyte_VM_MAXUSER_ADDRESS:
-	.long	VM_MAXUSER_ADDRESS - 1 /*sizeof(char)*/
-.L_fubyte_curpcb:
-	.long	_C_LABEL(curpcb)
-	SET_ENTRY_SIZE(fubyte)
-
-
-/*
- * LINTSTUB: Func: int suword(void *uaddr, long x)
- *	Store an int in the user address space.
- */
-ENTRY(suword)
-	mov.l	.L_suword_VM_MAXUSER_ADDRESS, r1
-	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
-	bt/s	2f
-	 mov	#-1,	r0
-	mov.l	.L_suword_curpcb, r1	/* set fault handler */
-	mov.l	@r1,	r2
-	mov.l	.L_suword_onfault, r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov.l	r5,	@r4		/* store the value */
-	mov	#0,	r0
-1:
-	mov.l	.L_suword_curpcb, r1	/* clear fault handler */
-	mov.l	@r1,	r2
-	mov	#0,	r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-2:
-	rts
-	 nop
-
-3:
-	bra	1b
-	 mov	#-1,	r0
-
-	.align 2
-.L_suword_onfault:
-	.long	3b
-.L_suword_VM_MAXUSER_ADDRESS:
-	.long	VM_MAXUSER_ADDRESS - 4 /*sizeof(long)*/
-.L_suword_curpcb:
-	.long	_C_LABEL(curpcb)
-	SET_ENTRY_SIZE(suword)
-
-
-/*
- * LINTSTUB: Func: int susword(void *uaddr, short x)
- *	Store a short in the user address space.
- */
-ENTRY(susword)
-	mov.l	.L_susword_VM_MAXUSER_ADDRESS, r1
-	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
-	bt/s	2f
-	 mov	#-1,	r0
-	mov.l	.L_susword_curpcb, r1	/* set fault handler */
-	mov.l	@r1,	r2
-	mov.l	.L_susword_onfault, r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov.w	r5,	@r4		/* store the value */
-	mov	#0,	r0
-1:
-	mov.l	.L_susword_curpcb, r1	/* clear fault handler */
-	mov.l	@r1,	r2
-	mov	#0,	r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-2:
-	rts
-	 nop
-
-3:
-	bra	1b
-	 mov	#-1,	r0
-
-	.align 2
-.L_susword_onfault:
-	.long	3b
-.L_susword_VM_MAXUSER_ADDRESS:
-	.long	VM_MAXUSER_ADDRESS - 2 /*sizeof(short)*/
-.L_susword_curpcb:
-	.long	_C_LABEL(curpcb)
-	SET_ENTRY_SIZE(susword)
-
-
-/*
- * LINTSTUB: Func: int suswintr(void *uaddr, short x)
- *	Store a short in the user address space.
- *	Can be called during an interrupt.
- */
-ENTRY(suswintr)
-	mov.l	.L_suswintr_VM_MAXUSER_ADDRESS, r1
-	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
-	bt/s	2f
-	 mov	#-1,	r0
-	mov.l	.L_suswintr_curpcb, r1	/* set fault handler */
-	mov.l	@r1,	r2
-	mov.l	.L_suswintr_onfault, r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov	#1,	r1		/* set faultbail */
-	mov.l	r1,	@(PCB_FAULTBAIL,r2)
-	mov.w	r5,	@r4		/* store the value */
-	mov	#0,	r0
-1:
-	mov.l	.L_suswintr_curpcb, r1	/* clear fault handler and faultbail */
-	mov.l	@r1,	r2
-	mov	#0,	r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov.l	r1,	@(PCB_FAULTBAIL,r2)
-2:
-	rts
-	 nop
-
-3:
-	bra	1b
-	 mov	#-1,	r0
-
-	.align 2
-.L_suswintr_onfault:
-	.long	3b
-.L_suswintr_VM_MAXUSER_ADDRESS:
-	.long	VM_MAXUSER_ADDRESS - 2 /*sizeof(short)*/
-.L_suswintr_curpcb:
-	.long	_C_LABEL(curpcb)
-	SET_ENTRY_SIZE(suswintr)
-
-
-/*
- * LINTSTUB: Func: int subyte(void *uaddr, int x);
- *	Store a byte in the user address space.
- */
-ENTRY(subyte)
-	mov.l	.L_subyte_VM_MAXUSER_ADDRESS, r1
-	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
-	bt/s	2f
-	 mov	#-1,	r0
-	mov.l	.L_subyte_curpcb, r1	/* set fault handler */
-	mov.l	@r1,	r2
-	mov.l	.L_subyte_onfault, r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-	mov.b	r5,	@r4		/* store the value */
-	mov	#0,	r0
-1:
-	mov.l	.L_subyte_curpcb, r1	/* clear fault handler */
-	mov.l	@r1,	r2
-	mov	#0,	r1
-	mov.l	r1,	@(PCB_ONFAULT,r2)
-2:
-	rts
-	 nop
-
-3:
-	bra	1b
-	 mov	#-1,	r0
-
-	.align 2
-.L_subyte_onfault:
-	.long	3b
-.L_subyte_VM_MAXUSER_ADDRESS:
-	.long	VM_MAXUSER_ADDRESS - 1 /*sizeof(char)*/
-.L_subyte_curpcb:
-	.long	_C_LABEL(curpcb)
-	SET_ENTRY_SIZE(subyte)
-
+/**************************************************************************/
 
 /*
  * LINTSTUB: Func: int kcopy(const void *src, void *dst, size_t len)

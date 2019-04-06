@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.26 2011/07/18 14:11:27 isaki Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.27 2019/04/06 03:06:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -34,7 +34,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.26 2011/07/18 14:11:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.27 2019/04/06 03:06:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -212,15 +212,14 @@ static int
 decode_ea6(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 	int modreg)
 {
-	int extword, idx;
+	int idx;
 	int basedisp, outerdisp;
 	int bd_size, od_size;
 	int sig;
+	unsigned short extword;
 
-	extword = fusword((void *)(insn->is_pc + insn->is_advance));
-	if (extword < 0) {
+	if (ufetch_short((void *)(insn->is_pc + insn->is_advance), &extword))
 		return SIGSEGV;
-	}
 	insn->is_advance += 2;
 
 	/* get register index */
@@ -554,13 +553,15 @@ static int
 fetch_immed(struct frame *frame, struct instruction *insn, int *dst)
 {
 	int data, ext_bytes;
+	unsigned short sval;
 
 	ext_bytes = insn->is_datasize;
 
 	if (0 < ext_bytes) {
-		data = fusword((void *)(insn->is_pc + insn->is_advance));
-		if (data < 0)
+		if (ufetch_short((void *)(insn->is_pc + insn->is_advance),
+				  &sval))
 			return SIGSEGV;
+		data = sval;
 		if (ext_bytes == 1) {
 			/* sign-extend byte to long */
 			data &= 0xff;
@@ -576,34 +577,36 @@ fetch_immed(struct frame *frame, struct instruction *insn, int *dst)
 		dst[0] = data;
 	}
 	if (2 < ext_bytes) {
-		data = fusword((void *)(insn->is_pc + insn->is_advance));
-		if (data < 0)
+		if (ufetch_short((void *)(insn->is_pc + insn->is_advance),
+				  &sval))
 			return SIGSEGV;
 		insn->is_advance += 2;
 		dst[0] <<= 16;
-		dst[0] |= data;
+		dst[0] |= sval;
 	}
 	if (4 < ext_bytes) {
-		data = fusword((void *)(insn->is_pc + insn->is_advance));
-		if (data < 0)
+		if (ufetch_short((void *)(insn->is_pc + insn->is_advance),
+				  &sval))
 			return SIGSEGV;
+		data = sval;
 		dst[1] = data << 16;
-		data = fusword((void *)(insn->is_pc + insn->is_advance + 2));
-		if (data < 0)
+		if (ufetch_short((void *)(insn->is_pc + insn->is_advance + 2),
+				  &sval))
 			return SIGSEGV;
 		insn->is_advance += 4;
-		dst[1] |= data;
+		dst[1] |= sval;
 	}
 	if (8 < ext_bytes) {
-		data = fusword((void *)(insn->is_pc + insn->is_advance));
-		if (data < 0)
+		if (ufetch_short((void *)(insn->is_pc + insn->is_advance),
+				  &sval))
 			return SIGSEGV;
+		data = sval;
 		dst[2] = data << 16;
-		data = fusword((void *)(insn->is_pc + insn->is_advance + 2));
-		if (data < 0)
+		if (ufetch_short((void *)(insn->is_pc + insn->is_advance + 2),
+				  &sval))
 			return SIGSEGV;
 		insn->is_advance += 4;
-		dst[2] |= data;
+		dst[2] |= sval;
 	}
 
 	return 0;
@@ -616,26 +619,28 @@ static int
 fetch_disp(struct frame *frame, struct instruction *insn, int size, int *res)
 {
 	int disp, word;
+	unsigned short sval;
 
 	if (size == 1) {
-		word = fusword((void *)(insn->is_pc + insn->is_advance));
-		if (word < 0)
+		if (ufetch_short((void *)(insn->is_pc + insn->is_advance),
+				  &sval))
 			return SIGSEGV;
-		disp = word & 0xffff;
+		disp = sval;
 		if (disp & 0x8000) {
 			/* sign-extend */
 			disp |= 0xffff0000;
 		}
 		insn->is_advance += 2;
 	} else if (size == 2) {
-		word = fusword((void *)(insn->is_pc + insn->is_advance));
-		if (word < 0)
+		if (ufetch_short((void *)(insn->is_pc + insn->is_advance),
+				  &sval))
 			return SIGSEGV;
+		word = sval;
 		disp = word << 16;
-		word = fusword((void *)(insn->is_pc + insn->is_advance + 2));
-		if (word < 0)
+		if (ufetch_short((void *)(insn->is_pc + insn->is_advance + 2),
+				  &sval))
 			return SIGSEGV;
-		disp |= (word & 0xffff);
+		disp |= sval;
 		insn->is_advance += 4;
 	} else {
 		disp = 0;
@@ -655,7 +660,8 @@ calc_ea(struct insn_ea *ea, char *ptr, char **eaddr)
 	/* ptr:		 base address (usually a register content) */
 	/* eaddr:	 pointer to result pointer */
 {
-	int data, word;
+	int word;
+	unsigned short sval;
 
 	DPRINTF(("%s: reg indirect (reg) = %p\n", __func__, ptr));
 
@@ -679,14 +685,13 @@ calc_ea(struct insn_ea *ea, char *ptr, char **eaddr)
 			    __func__, ea->ea_basedisp, ea->ea_outerdisp));
 			DPRINTF(("%s: addr fetched from %p\n", __func__, ptr));
 			/* memory indirect modes */
-			word = fusword(ptr);
-			if (word < 0)
+			if (ufetch_short((u_short *)ptr, &sval))
 				return SIGSEGV;
+			word = sval;
 			word <<= 16;
-			data = fusword(ptr + 2);
-			if (data < 0)
+			if (ufetch_short((u_short *)(ptr + 2), &sval))
 				return SIGSEGV;
-			word |= data;
+			word |= sval;
 			DPRINTF(("%s: fetched ptr 0x%08x\n", __func__, word));
 			ptr = (char *)word + ea->ea_outerdisp;
 		}

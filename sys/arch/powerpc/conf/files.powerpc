@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.91 2018/07/15 05:16:43 maxv Exp $
+#	$NetBSD: files.powerpc,v 1.92 2019/04/06 03:06:26 thorpej Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC_DISTRIBUTE
@@ -11,8 +11,6 @@ defparam opt_pmap.h	PTEGCOUNT PMAP_MEMLIMIT
 file	arch/powerpc/powerpc/copystr.c
 file	arch/powerpc/powerpc/core_machdep.c		coredump
 file	arch/powerpc/powerpc/fixup.c
-file	arch/powerpc/powerpc/fubyte.c
-file	arch/powerpc/powerpc/fuswintr.c
 file	arch/powerpc/powerpc/kgdb_machdep.c		kgdb
 file	arch/powerpc/powerpc/kobj_machdep.c		modular
 file	arch/powerpc/powerpc/lock_stubs.S
@@ -24,9 +22,6 @@ file	arch/powerpc/powerpc/setfault.S
 file	arch/powerpc/powerpc/sig_machdep.c
 file	arch/powerpc/powerpc/sigcode.S			compat_16
 file	arch/powerpc/powerpc/softint_machdep.c
-file	arch/powerpc/powerpc/subyte.c
-file	arch/powerpc/powerpc/suword.c
-file	arch/powerpc/powerpc/suswintr.c
 file	arch/powerpc/powerpc/sys_machdep.c
 file	arch/powerpc/powerpc/syscall.c
 file	arch/powerpc/powerpc/vm_machdep.c

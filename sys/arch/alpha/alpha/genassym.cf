@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.20 2011/06/07 00:48:30 matt Exp $
+# $NetBSD: genassym.cf,v 1.21 2019/04/06 03:06:24 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -161,7 +161,6 @@ define	UPAGES			UPAGES
 define	PCB_HWPCB_KSP		offsetof(struct pcb, pcb_hw.apcb_ksp)
 define	PCB_CONTEXT		offsetof(struct pcb, pcb_context[0])
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
-define	PCB_ACCESSADDR		offsetof(struct pcb, pcb_accessaddr)
 
 # Offsets into struct fpstate, for save, restore
 define	FPREG_FPR_REGS		offsetof(struct fpreg, fpr_regs[0])

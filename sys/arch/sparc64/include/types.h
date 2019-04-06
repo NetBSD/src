@@ -1,4 +1,4 @@
-/*       $NetBSD: types.h,v 1.27 2017/01/26 15:55:10 christos Exp $        */
+/*       $NetBSD: types.h,v 1.28 2019/04/06 03:06:27 thorpej Exp $        */
 
 #ifndef _SPARC64_TYPES_H_
 #define	_SPARC64_TYPES_H_
@@ -10,5 +10,6 @@
 #endif
 
 #define	__HAVE_COMPAT_NETBSD32
+#define	__HAVE_UCAS_FULL
 
 #endif

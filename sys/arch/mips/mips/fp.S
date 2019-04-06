@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.49 2018/12/19 15:10:46 riastradh Exp $	*/
+/*	$NetBSD: fp.S,v 1.50 2019/04/06 03:06:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -846,7 +846,7 @@ bcemul_branch:
 	REG_L	a0, TF_REG_EPC(a1)
 	REG_EPILOGUE
 	PTR_ADDU a0, 4
-	jal	_C_LABEL(ufetch_uint32)
+	jal	_C_LABEL(mips_ufetch32)
 
 	move	a0, v0
 	REG_L	a1, CALLFRAME_FRAME(sp)

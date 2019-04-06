@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.12 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.13 2019/04/06 03:06:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,7 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_multiprocessor.h"
 #include "opt_arm_debug.h"
 
 #include "assym.h"
@@ -37,10 +36,6 @@
 #include <machine/asm.h>
 
 #include <arm/locore.h>
-
-#if defined(MULTIPROCESSOR) && !defined(_ARM_ARCH_6)
-#error need to write MP support for ucas_* functions
-#endif
 
 	.text
 	.align	0
@@ -112,19 +107,18 @@ STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas)
 #define SAVE_REGS	push	{r4-r5}
 #define RESTORE_REGS	pop	{r4-r5}
 
+#ifdef _ARM_ARCH_6
 /*
- * int ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ * int _ucas_32_mp(volatile uint32_t *uptr, uint32_t old, uint32_t new,
+ *     uint32_t *ret);
  */
-ENTRY(ucas_32)
+ENTRY(_ucas_32_mp)
 	SAVE_REGS
 	GET_CURPCB(r4)
 	adr	r5, .Lucasfault
 	str	r5, [r4, #PCB_ONFAULT]
+	mov	ip, r0			/* ip = uptr */
 
-	.globl	_C_LABEL(ucas_32_ras_start)
-	mov	ip, r0
-_C_LABEL(ucas_32_ras_start):
-#if defined(MULTIPROCESSOR) || defined(_ARM_ARCH_6)
 1:	ldrex	r5, [ip]		/* we should have access */
 	cmp	r1, r5
 	bne	2f
@@ -132,22 +126,12 @@ _C_LABEL(ucas_32_ras_start):
 	cmp	r0, #0
 	bne	1b
 2:
-#else
-	ldrt	r5, [ip]
-	cmp	r1, r5
-	strteq	r2, [ip]
-	mov	r0, #0
-#endif
-	.size _C_LABEL(ucas_32_ras_start), . - _C_LABEL(ucas_32_ras_start)
-	.globl _C_LABEL(ucas_32_ras_end)
-_C_LABEL(ucas_32_ras_end):
-
 	str	r5, [r3]
+	mov	r0, #0			/* return value in case if miscompare */
 .Lucasfault:
 	movs	r3, #0
 	str	r3, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
 	RET
-END(ucas_32)
-STRONG_ALIAS(ucas_int,ucas_32)
-STRONG_ALIAS(ucas_ptr,ucas_32)
+END(_ucas_32_mp)
+#endif /* _ARM_ARCH_6 */

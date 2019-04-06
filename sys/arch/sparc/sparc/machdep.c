@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.329 2019/02/04 03:32:27 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.330 2019/04/06 03:06:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.329 2019/02/04 03:32:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.330 2019/04/06 03:06:27 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -542,7 +542,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	ucsz = (int)&uc.__uc_pad - (int)&uc;
 	error = (copyout(&ksi->ksi_info, &fp->sf_si, sizeof ksi->ksi_info) ||
 	    copyout(&uc, &fp->sf_uc, ucsz) ||
-	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp));
+	    ustore_int((u_int *)&((struct rwindow *)newsp)->rw_in[6], oldsp));
 	mutex_enter(p->p_lock);
 
 	if (error) {

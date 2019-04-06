@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.133 2017/03/16 16:13:20 chs Exp $ */
+/* $NetBSD: trap.c,v 1.134 2019/04/06 03:06:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134 2019/04/06 03:06:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,38 @@ trap_init(void)
 	 */
 	alpha_pal_wrmces(alpha_pal_rdmces() &
 	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
+}
+
+static void
+onfault_restore(struct trapframe *framep, vaddr_t onfault, int error)
+{
+	framep->tf_regs[FRAME_PC] = onfault;
+	framep->tf_regs[FRAME_V0] = error;
+}
+
+static vaddr_t
+onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
+{
+	struct onfault_table {
+		vaddr_t start;
+		vaddr_t end;
+		vaddr_t handler;
+	};
+	extern const struct onfault_table onfault_table[];
+	const struct onfault_table *p;
+	vaddr_t pc;
+
+	if (pcb->pcb_onfault != 0) {
+		return pcb->pcb_onfault;
+	}
+
+	pc = tf->tf_regs[FRAME_PC];
+	for (p = onfault_table; p->start; p++) {
+		if (p->start <= pc && pc < p->end) {
+			return p->handler;
+		}
+	}
+	return 0;
 }
 
 static void
@@ -366,7 +398,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 
 	case ALPHA_KENTRY_MM:
 		pcb = lwp_getpcb(l);
-		onfault = pcb->pcb_onfault;
+		onfault = onfault_handler(pcb, framep);
 
 		switch (a1) {
 		case ALPHA_MMCSR_FOR:
@@ -381,6 +413,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		case ALPHA_MMCSR_INVALTRANS:
 		case ALPHA_MMCSR_ACCESS:
 	    	{
+			vaddr_t save_onfault;
 			vaddr_t va;
 			struct vmspace *vm = NULL;
 			struct vm_map *map;
@@ -419,21 +452,6 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				}
 
 				/*
-				 * If it was caused by fuswintr or suswintr,
-				 * just punt.  Note that we check the faulting
-				 * address against the address accessed by
-				 * [fs]uswintr, in case another fault happens
-				 * when they are running.
-				 */
-
-				if (onfault == (vaddr_t)fswintrberr &&
-				    pcb->pcb_accessaddr == a0) {
-					framep->tf_regs[FRAME_PC] = onfault;
-					pcb->pcb_onfault = 0;
-					goto out;
-				}
-
-				/*
 				 * If we're in interrupt context at this
 				 * point, this is an error.
 				 */
@@ -444,8 +462,8 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			/*
 			 * It is only a kernel address space fault iff:
 			 *	1. !user and
-			 *	2. pcb_onfault not set or
-			 *	3. pcb_onfault set but kernel space data fault
+			 *	2. onfault not set or
+			 *	3. onfault set but kernel space data fault
 			 * The last can occur during an exec() copyin where the
 			 * argument space is lazy-allocated.
 			 */
@@ -460,9 +478,10 @@ do_fault:
 			}
 
 			va = trunc_page((vaddr_t)a0);
+			save_onfault = pcb->pcb_onfault;
 			pcb->pcb_onfault = 0;
 			rv = uvm_fault(map, va, ftype);
-			pcb->pcb_onfault = onfault;
+			pcb->pcb_onfault = save_onfault;
 
 			/*
 			 * If this was a stack access we keep track of the
@@ -487,8 +506,7 @@ do_fault:
 			if (user == 0) {
 				/* Check for copyin/copyout fault */
 				if (onfault != 0) {
-					framep->tf_regs[FRAME_PC] = onfault;
-					framep->tf_regs[FRAME_V0] = rv;
+					onfault_restore(framep, onfault, rv);
 					goto out;
 				}
 				goto dopanic;

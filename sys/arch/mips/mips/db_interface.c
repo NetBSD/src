@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.81 2019/04/04 22:49:46 simonb Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.82 2019/04/06 03:06:26 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.81 2019/04/04 22:49:46 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.82 2019/04/06 03:06:26 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -980,15 +980,15 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 db_addr_t
 next_instr_address(db_addr_t pc, bool bd)
 {
-	unsigned ins;
+	uint32_t ins;
 
 	if (bd == false)
 		return (pc + 4);
 	
 	if (pc < MIPS_KSEG0_START)
-		ins = ufetch_uint32((void *)pc);
+		ins = mips_ufetch32((void *)pc);
 	else
-		ins = *(unsigned *)pc;
+		ins = *(uint32_t *)pc;
 
 	if (inst_branch(ins) || inst_call(ins) || inst_return(ins))
 		return (pc + 4);

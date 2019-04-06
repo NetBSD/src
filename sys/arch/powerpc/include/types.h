@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.57 2019/01/08 07:46:11 mrg Exp $	*/
+/*	$NetBSD: types.h,v 1.58 2019/04/06 03:06:27 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -98,6 +98,7 @@ int __openfirmio_open_check_broken(void);
 
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_MM_MD_KERNACC
+#define	__HAVE_UCAS_FULL
 #if defined(_KERNEL)
 #define	__HAVE_RAS
 #endif

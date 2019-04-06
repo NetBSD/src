@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154 2018/06/15 22:07:14 uwe Exp $	*/
+/*	$NetBSD: trap.c,v 1.155 2019/04/06 03:06:27 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,11 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154 2018/06/15 22:07:14 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.155 2019/04/06 03:06:27 thorpej Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+
+#define	__UFETCHSTORE_PRIVATE
+#define	__UCAS_PRIVATE
 
 #include <sys/param.h>
 
@@ -70,7 +73,6 @@ static inline vaddr_t setusr(vaddr_t, size_t *);
 static inline void unsetusr(void);
 
 extern int do_ucas_32(volatile int32_t *, int32_t, int32_t, int32_t *);
-int ucas_32(volatile int32_t *, int32_t, int32_t, int32_t *);
 
 void trap(struct trapframe *);	/* Called from locore / trap_subr */
 /* Why are these not defined in a header? */
@@ -537,6 +539,64 @@ unsetusr(void)
 }
 #endif
 
+#define	UFETCH(sz)							\
+int									\
+_ufetch_ ## sz(const uint ## sz ## _t *uaddr, uint ## sz ## _t *valp)	\
+{									\
+	struct faultbuf env;						\
+	vaddr_t p;							\
+	size_t seglen;							\
+	int rv;								\
+									\
+	if ((rv = setfault(&env)) != 0) {				\
+		goto out;						\
+	}								\
+	p = setusr((vaddr_t)uaddr, &seglen);				\
+	*valp = *(const volatile uint ## sz ## _t *)p;			\
+ out:									\
+	unsetusr();							\
+	curpcb->pcb_onfault = 0;					\
+	return rv;							\
+}
+
+UFETCH(8)
+UFETCH(16)
+UFETCH(32)
+#ifdef _LP64
+UFETCH(64)
+#endif
+
+#undef UFETCH
+
+#define	USTORE(sz)							\
+int									\
+_ustore_ ## sz(uint ## sz ## _t *uaddr, uint ## sz ## _t val)		\
+{									\
+	struct faultbuf env;						\
+	vaddr_t p;							\
+	size_t seglen;							\
+	int rv;								\
+									\
+	if ((rv = setfault(&env)) != 0) {				\
+		goto out;						\
+	}								\
+	p = setusr((vaddr_t)uaddr, &seglen);				\
+	*(volatile uint ## sz ## _t *)p = val;				\
+ out:									\
+	unsetusr();							\
+	curpcb->pcb_onfault = 0;					\
+	return rv;							\
+}
+
+USTORE(8)
+USTORE(16)
+USTORE(32)
+#ifdef _LP64
+USTORE(64)
+#endif
+
+#undef USTORE
+
 int
 copyin(const void *udaddr, void *kaddr, size_t len)
 {
@@ -623,7 +683,7 @@ kcopy(const void *src, void *dst, size_t len)
 }
 
 int
-ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret)
+_ucas_32(volatile uint32_t *uptr, uint32_t old, uint32_t new, uint32_t *ret)
 {
 	vaddr_t uva = (vaddr_t)uptr;
 	vaddr_t p;
@@ -631,9 +691,6 @@ ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret)
 	size_t seglen;
 	int rv;
 
-	if (uva & 3) {
-		return EFAULT;
-	}
 	if ((rv = setfault(&env)) != 0) {
 		unsetusr();
 		goto out;
@@ -647,8 +704,6 @@ out:
 	curpcb->pcb_onfault = 0;
 	return rv;
 }
-__strong_alias(ucas_ptr,ucas_32);
-__strong_alias(ucas_int,ucas_32);
 
 int
 badaddr(void *addr, size_t size)

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.54 2018/08/15 05:57:01 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.55 2019/04/06 03:06:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.54 2018/08/15 05:57:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.55 2019/04/06 03:06:24 thorpej Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -295,18 +295,6 @@ cpu_intr_p(void)
 		return false;
 #endif
 	return ci->ci_intr_depth != 0;
-}
-
-void
-ucas_ras_check(trapframe_t *tf)
-{
-	extern char ucas_32_ras_start[];
-	extern char ucas_32_ras_end[];
-
-	if (tf->tf_pc > (vaddr_t)ucas_32_ras_start &&
-	    tf->tf_pc < (vaddr_t)ucas_32_ras_end) {
-		tf->tf_pc = (vaddr_t)ucas_32_ras_start;
-	}
 }
 
 #ifdef MODULAR

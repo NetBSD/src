@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.107 2018/08/10 16:17:30 maxv Exp $	*/
+/*	$NetBSD: fault.c,v 1.108 2019/04/06 03:06:25 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.107 2018/08/10 16:17:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.108 2019/04/06 03:06:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.107 2018/08/10 16:17:30 maxv Exp $");
 
 #include <arch/arm/arm/disassem.h>
 #include <arm/arm32/machdep.h>
-
-extern char fusubailout[];
 
 #ifdef DEBUG
 int last_fault_code;	/* For the benefit of pmap_fault_fixup() */
@@ -302,13 +300,6 @@ data_abort_handler(trapframe_t *tf)
 	 * the MMU.
 	 */
 
-	/* fusubailout is used by [fs]uswintr to avoid page faulting */
-	if (__predict_false(pcb->pcb_onfault == fusubailout)) {
-		tf->tf_r0 = EFAULT;
-		tf->tf_pc = (intptr_t) pcb->pcb_onfault;
-		return;
-	}
-
 	KASSERTMSG(!user || tf == lwp_trapframe(l), "tf %p vs %p", tf,
 	    lwp_trapframe(l));
 
@@ -485,8 +476,6 @@ data_abort_handler(trapframe_t *tf)
 	if (__predict_true(error == 0)) {
 		if (user)
 			uvm_grow(l->l_proc, va); /* Record any stack growth */
-		else
-			ucas_ras_check(tf);
 		UVMHIST_LOG(maphist, " <- uvm", 0, 0, 0, 0);
 		goto out;
 	}

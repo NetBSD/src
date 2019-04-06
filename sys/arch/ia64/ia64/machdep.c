@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 2019/01/18 18:47:16 scole Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 2019/04/06 03:06:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -755,16 +755,17 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		 */
 
 		/* in0 = *cleanup */
-		suword((char *)tf->tf_special.bspstore - 32, 0);
+		ustore_long((u_long *)(tf->tf_special.bspstore - 32), 0);
 
 		/* in1 == *obj */
-		suword((char *)tf->tf_special.bspstore -  24, 0);
+		ustore_long((u_long *)(tf->tf_special.bspstore -  24), 0);
 
 		/* in2 == ps_strings */
-		suword((char *)tf->tf_special.bspstore -  16, l->l_proc->p_psstrp);
+		ustore_long((u_long *)(tf->tf_special.bspstore -  16),
+		    l->l_proc->p_psstrp);
 
 		/* in3 = sp */
-		suword((char *)tf->tf_special.bspstore - 8,
+		ustore_long((u_long *)(tf->tf_special.bspstore - 8),
 		    stack);
 
 	}

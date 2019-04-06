@@ -1,11 +1,11 @@
-/*	$NetBSD: pcb.h,v 1.10 2019/04/06 03:06:27 thorpej Exp $	*/
+/*	$NetBSD: common.h,v 1.1 2019/04/06 03:06:29 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by UCHIYAMA Yasushi.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,15 +29,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SH3_PCB_H_
-#define	_SH3_PCB_H_
+#ifndef _UFETCHSTORE_TESTER_COMMON_H_
+#define	_UFETCHSTORE_TESTER_COMMON_H_
 
-#include <sh3/frame.h>
+#define	OP_LOAD		0
+#define	OP_STORE	1
+#define	OP_CAS		2
 
-struct pcb {
-	struct switchframe pcb_sf;	/* kernel context for resume */
-	void *	pcb_onfault;		/* for copyin/out fault */
+struct ufetchstore_test_args {
+	int		pointer_size;
+	int		test_op;
+	int		size;
+	int		fetchstore_error;
+	uint64_t	uaddr64;
+	union {
+		uint8_t  val8;
+		uint16_t val16;
+		uint32_t val32;
+		uint64_t val64;
+	};
+	union {
+		uint8_t  ea_val8;
+		uint16_t ea_val16;
+		uint32_t ea_val32;
+		uint64_t ea_val64;
+	};
 };
 
-extern struct pcb *curpcb;
-#endif /* !_SH3_PCB_H_ */
+#endif /* _UFETCHSTORE_TESTER_COMMON_H_ */

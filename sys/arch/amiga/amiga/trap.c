@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.136 2017/07/02 14:10:53 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.137 2019/04/06 03:06:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2017/07/02 14:10:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2019/04/06 03:06:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,6 @@ int mmudebug = 0;
 #endif
 
 extern struct pcb *curpcb;
-extern char fubail[], subail[];
 int _write_back(u_int, u_int, u_int, u_int, struct vm_map *);
 static void userret(struct lwp *, int, u_quad_t);
 void panictrap(int, u_int, u_int, struct frame *);
@@ -382,9 +381,6 @@ trapmmufault(int type, u_int code, u_int v, struct frame *fp, struct lwp *l, u_q
 		printf("vmfault %s %lx returned %d\n",
 		    map == kernel_map ? "kernel" : "user", va, rv);
 #endif
-	if (map == kernel_map && rv == 0 && ucas_ras_check(&fp->F_t)) {
-		return;
-	}
 
 #ifdef M68060
 	if ((machineid & AMIGA_68060) == 0 && mmutype == MMU_68040) {
@@ -510,7 +506,6 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 	struct lwp *l;
 	struct proc *p;
 	struct pcb *pcb;
-	void *onfault;
 	ksiginfo_t ksi;
 	u_quad_t sticks = 0;
 
@@ -705,12 +700,6 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 	 * Kernel/User page fault
 	 */
 	case T_MMUFLT:
-		onfault = pcb->pcb_onfault;
-		if (onfault == (void *)fubail || onfault == (void *)subail) {
-			trapcpfault(l, fp, EFAULT);
-			return;
-		}
-		/*FALLTHROUGH*/
 	case T_MMUFLT|T_USER:	/* page fault */
 		trapmmufault(type, code, v, fp, l, sticks);
 		return;

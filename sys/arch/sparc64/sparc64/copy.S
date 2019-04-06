@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.7 2016/08/07 19:35:43 palle Exp $	*/
+/*	$NetBSD: copy.S,v 1.8 2019/04/06 03:06:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -613,20 +613,13 @@ Lcopyfault:
 	retl
 	 wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore ASI
 
-
-STRONG_ALIAS(ucas_int,ucas_32)
-#ifdef _LP64
-STRONG_ALIAS(ucas_ptr,ucas_64)
-#else
-STRONG_ALIAS(ucas_ptr,ucas_32)
-#endif
-
 /*
  * Compare-and-swap the pointer in the user-space.
  *
- * int	ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ * int	_ucas_32(volatile uint32_t *uptr, uint32_t old, uint32_t new,
+ *		 uint32_t *ret);
  */
-ENTRY(ucas_32)
+ENTRY(_ucas_32)
 	sethi	%hi(CPCB), %o4
 	wr	%g0, ASI_AIUS, %asi
 	LDPTR	[%o4 + %lo(CPCB)], %o4
@@ -646,17 +639,14 @@ ENTRY(ucas_32)
 	retl
 	 clr	%o0			! return 0
 
+#ifdef _LP64
 /*
  * Compare-and-swap the 64-bit integer in the user-space.
  *
- * int	ucas_64(volatile int64_t *uptr, int64_t old, int64_t new, int64_t *ret);
+ * int	_ucas_64(volatile uint64_t *uptr, uint64_t old, uint64_t new,
+ *		 uint64_t *ret);
  */
-ENTRY(ucas_64)
-#ifndef _LP64
-	COMBINE(%o1, %o2, %o1)
-	COMBINE(%o3, %o4, %o2)
-	mov	%o5, %o3
-#endif
+ENTRY(_ucas_64)
 	sethi	%hi(CPCB), %o4
 	wr	%g0, ASI_AIUS, %asi
 	LDPTR	[%o4 + %lo(CPCB)], %o4
@@ -675,111 +665,99 @@ ENTRY(ucas_64)
 	stx	%o2, [%o3]		! store the cas result in *result
 	retl
 	 clr	%o0			! return 0
+#endif /* _LP64 */
 
-/*
- * {fu,su}{,i}{byte,word}
- */
-Lfserr:
-	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+/**************************************************************************/
+
+#define	UFETCHSTORE_PROLOGUE						 \
+	sethi	%hi(CPCB), %o2		/* cpcb->pcb_onfault =   */ 	;\
+	LDPTR	[%o2 + %lo(CPCB)], %o2	/*    Lufetchstore_fault */ 	;\
+	set	Lufetchstore_fault, %o3				 	;\
+	STPTR	%o3, [%o2 + PCB_ONFAULT]			 	;\
+	membar	#Sync
+
+#define	_UFETCHSTORE_EPILOGUE						 \
+	STPTR	%g0, [%o2 + PCB_ONFAULT] /* cpcb->pcb_onfault = NULL */	;\
 	membar	#StoreStore|#StoreLoad
-Lfsbadaddr:
-#ifndef _LP64
-	mov	-1, %o1
-#endif
-	retl				! and return error indicator
-	 mov	-1, %o0
 
-	/*
-	 * This is just like Lfserr, but it's a global label that allows
-	 * mem_access_fault() to check to see that we don't want to try to
-	 * page in the fault.  It's used by fuswintr() etc.
-	 */
-	.globl	_C_LABEL(Lfsbail)
-_C_LABEL(Lfsbail):
-	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
-	membar	#StoreStore|#StoreLoad
-	retl				! and return error indicator
-	 mov	-1, %o0
+#define	UFETCHSTORE_EPILOGUE						 \
+	membar	#Sync							;\
+	_UFETCHSTORE_EPILOGUE
 
-	/*
-	 * Like fusword but callable from interrupt context.
-	 * Fails if data isn't resident.
-	 */
-ENTRY(fuswintr)
-	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = _Lfsbail;
-	LDPTR	[%o2 + %lo(CPCB)], %o2
-	set	_C_LABEL(Lfsbail), %o3
-	STPTR	%o3, [%o2 + PCB_ONFAULT]
-	membar	#Sync
-	lduha	[%o0] ASI_AIUS, %o0	! fetch the halfword
-	membar	#Sync
-	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
-	retl				! made it
-	 membar	#StoreStore|#StoreLoad
-
-ENTRY(fusword)
-	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
-	LDPTR	[%o2 + %lo(CPCB)], %o2
-	set	Lfserr, %o3
-	STPTR	%o3, [%o2 + PCB_ONFAULT]
-	membar	#Sync
-	lduha	[%o0] ASI_AIUS, %o0		! fetch the halfword
-	membar	#Sync
-	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
-	retl				! made it
-	 membar	#StoreStore|#StoreLoad
-
-ALTENTRY(fuibyte)
-ENTRY(fubyte)
-	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
-	LDPTR	[%o2 + %lo(CPCB)], %o2
-	set	Lfserr, %o3
-	STPTR	%o3, [%o2 + PCB_ONFAULT]
-	membar	#Sync
-	lduba	[%o0] ASI_AIUS, %o0	! fetch the byte
-	membar	#Sync
-	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
-	retl				! made it
-	 membar	#StoreStore|#StoreLoad
-
-ENTRY(suswintr)
-	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = _Lfsbail;
-	LDPTR	[%o2 + %lo(CPCB)], %o2
-	set	_C_LABEL(Lfsbail), %o3
-	STPTR	%o3, [%o2 + PCB_ONFAULT]
-	membar	#Sync
-	stha	%o1, [%o0] ASI_AIUS	! store the halfword
-	membar	#Sync
-	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
-	membar	#StoreStore|#StoreLoad
-	retl				! and return 0
+#define	UFETCHSTORE_RETURN_SUCCESS					 \
+	retl								;\
 	 clr	%o0
 
-ENTRY(susword)
-	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
-	LDPTR	[%o2 + %lo(CPCB)], %o2
-	set	Lfserr, %o3
-	STPTR	%o3, [%o2 + PCB_ONFAULT]
-	membar	#Sync
-	stha	%o1, [%o0] ASI_AIUS	! store the halfword
-	membar	#Sync
-	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
-	membar	#StoreStore|#StoreLoad
-	retl				! and return 0
-	 clr	%o0
+/* LINTSTUB: int _ufetch_8(const uint8_t *uaddr, uint8_t *valp); */
+ENTRY(_ufetch_8)
+	UFETCHSTORE_PROLOGUE
+	lduba	[%o0] ASI_AIUS, %o0	! %o0 = *uaddr
+	UFETCHSTORE_EPILOGUE
+	stb	%o0, [%o1]		! *valp = %o0
+	UFETCHSTORE_RETURN_SUCCESS
 
-ENTRY(subyte)
-	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
-	LDPTR	[%o2 + %lo(CPCB)], %o2
-	set	Lfserr, %o3
-	STPTR	%o3, [%o2 + PCB_ONFAULT]
-	membar	#Sync
-	stba	%o1, [%o0] ASI_AIUS	! store the byte
-	membar	#Sync
-	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
-	membar	#StoreStore|#StoreLoad
-	retl				! and return 0
-	 clr	%o0
+/* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
+ENTRY(_ufetch_16)
+	UFETCHSTORE_PROLOGUE
+	lduha	[%o0] ASI_AIUS, %o0	! %o0 = *uaddr
+	UFETCHSTORE_EPILOGUE
+	sth	%o0, [%o1]		! *valp = %o0
+	UFETCHSTORE_RETURN_SUCCESS
+
+/* LINTSTUB: int _ufetch_32(const uint32_t *uaddr, uint32_t *valp); */
+ENTRY(_ufetch_32)
+	UFETCHSTORE_PROLOGUE
+	lduwa	[%o0] ASI_AIUS, %o0	! %o0 = *uaddr
+	UFETCHSTORE_EPILOGUE
+	stw	%o0, [%o1]		! *valp = %o0
+	UFETCHSTORE_RETURN_SUCCESS
+
+#ifdef _LP64
+/* LINTSTUB: int _ufetch_64(const uint64_t *uaddr, uint64_t *valp); */
+ENTRY(_ufetch_64)
+	UFETCHSTORE_PROLOGUE
+	ldxa	[%o0] ASI_AIUS, %o0	! %o0 = *uaddr
+	UFETCHSTORE_EPILOGUE
+	stx	%o0, [%o1]		! *valp = %o0
+	UFETCHSTORE_RETURN_SUCCESS
+#endif /* _LP64 */
+
+/* LINTSTUB: int _ustore_8(uint8_t *uaddr, uint8_t val); */
+ENTRY(_ustore_8)
+	UFETCHSTORE_PROLOGUE
+	stba	%o1, [%o0] ASI_AIUS 	! *uaddr = val
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN_SUCCESS
+
+/* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
+ENTRY(_ustore_16)
+	UFETCHSTORE_PROLOGUE
+	stha	%o1, [%o0] ASI_AIUS	! *uaddr = val
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN_SUCCESS
+
+/* LINTSTUB: int _ustore_32(uint32_t *uaddr, uint32_t val); */
+ENTRY(_ustore_32)
+	UFETCHSTORE_PROLOGUE
+	stwa	%o1, [%o0] ASI_AIUS	! *uaddr = val
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN_SUCCESS
+
+#ifdef _LP64
+/* LINTSTUB: int _ustore_64(uint64_t *uaddr, uint64_t val); */
+ENTRY(_ustore_64)
+	UFETCHSTORE_PROLOGUE
+	stxa	%o1, [%o0] ASI_AIUS	! *uaddr = val
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN_SUCCESS
+#endif /* _LP64 */
+
+Lufetchstore_fault:
+	_UFETCHSTORE_EPILOGUE		! (won't fit in delay slot)
+	retl
+	 nop				! error already in %o0
+
+/**************************************************************************/
 
 /* probeget and probeset are meant to be used during autoconfiguration */
 /*
@@ -809,7 +787,7 @@ ENTRY(probeget)
 	mov	%o2, %o4
 	! %o0 = addr, %o1 = asi, %o4 = (1,2,4)
 	sethi	%hi(CPCB), %o2
-	LDPTR	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfserr;
+	LDPTR	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfsbail;
 #ifdef _LP64
 	set	_C_LABEL(Lfsbail), %o5
 #else
@@ -864,7 +842,7 @@ ENTRY(probeget)
 	 membar	#StoreStore|#StoreLoad
 
 	/*
-	 * Fault handler for probeget
+	 * Fault handlers for probeget
 	 */
 _C_LABEL(Lfsprobe):
 #ifndef _LP64
@@ -874,6 +852,16 @@ _C_LABEL(Lfsprobe):
 	mov	-1, %o1
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI	
 	membar	#StoreStore|#StoreLoad
+	retl				! and return error indicator
+	 mov	-1, %o0
+
+	.globl	_C_LABEL(Lfsbail)
+_C_LABEL(Lfsbail):
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+	membar	#StoreStore|#StoreLoad
+#ifndef _LP64
+	mov	-1, %o1
+#endif
 	retl				! and return error indicator
 	 mov	-1, %o0
 
@@ -896,8 +884,8 @@ ENTRY(probeset)
 #endif
 	mov	%o2, %o4
 	! %o0 = addr, %o1 = asi, %o4 = (1,2,4), %o3 = val
-	sethi	%hi(CPCB), %o2		! Lfserr requires CPCB in %o2
-	LDPTR	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfserr;
+	sethi	%hi(CPCB), %o2		! Lfsbail requires CPCB in %o2
+	LDPTR	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfsbail;
 	set	_C_LABEL(Lfsbail), %o5
 	STPTR	%o5, [%o2 + PCB_ONFAULT]
 	btst	1, %o4
@@ -918,7 +906,7 @@ ENTRY(probeset)
 	ba,pt	%icc, 1f
 	 sta	%o3, [%o0] %asi		!	*(int *)addr = value;
 0:
-	bz	Lfserr			! if (len & 8)
+	bz	Lfsbail			! if (len & 8)
 	ba,pt	%icc, 1f
 	 sta	%o3, [%o0] %asi		!	*(int *)addr = value;
 1:	membar	#Sync

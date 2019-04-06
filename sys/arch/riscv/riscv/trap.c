@@ -31,7 +31,7 @@
 
 #define __PMAP_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
+__RCSID("$NetBSD: trap.c,v 1.2 2019/04/06 03:06:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,99 +450,125 @@ cpu_ast(struct trapframe *tf)
 	}
 }
 
-union xubuf {
-	uint8_t b[4];
-	uint16_t w[2];
-	uint32_t l[1];
-};
-
-static bool
-fetch_user_data(union xubuf *xu, const void *base, size_t len)
-{
-	struct faultbuf fb;
-	if (cpu_set_onfault(&fb, 1) == 0) {
-		memcpy(xu->b, base, len);
-		cpu_unset_onfault();
-		return true;
-	}
-	return false;
-}
-
-int
-fubyte(const void *base)
-{
-	union xubuf xu;
-	if (fetch_user_data(&xu, base, sizeof(xu.b[0])))
-		return xu.b[0];
-	return -1;
-}
-
-int
-fusword(const void *base)
-{
-	union xubuf xu;
-	if (fetch_user_data(&xu, base, sizeof(xu.w[0])))
-		return xu.w[0];
-	return -1;
-}
-
-int
-fuswintr(const void *base)
-{
-	return -1;
-}
-
-long
-fuword(const void *base)
-{
-	union xubuf xu;
-	if (fetch_user_data(&xu, base, sizeof(xu.l[0])))
-		return xu.l[0];
-	return -1;
-}
-
-static bool
-store_user_data(void *base, const union xubuf *xu, size_t len)
-{
-	struct faultbuf fb;
-	if (cpu_set_onfault(&fb, 1) == 0) {
-		memcpy(base, xu->b, len);
-		cpu_unset_onfault();
-		return true;
-	}
-	return false;
-}
-
-int
-subyte(void *base, int c)
-{
-	union xubuf xu = { .b[0] = c, .b[1 ... 3] = 0 };
-	return store_user_data(base, &xu, sizeof(xu.b[0])) ? 0 : -1;
-}
-
-int
-susword(void *base, short c)
-{
-	union xubuf xu = { .w[0] = c, .w[1] = 0 };
-	return store_user_data(base, &xu, sizeof(xu.w[0])) ? 0 : -1;
-}
-
-int
-suswintr(void *base, short c)
-{
-	return -1;
-}
-
-int
-suword(void *base, long c)
-{
-	union xubuf xu = { .l[0] = c };
-	return store_user_data(base, &xu, sizeof(xu.l[0])) ? 0 : -1;
-}
-
 void
 cpu_intr(struct trapframe *tf, register_t epc, register_t status,
     register_t cause)
 {
 	/* XXX */
 }
+
+static int
+fetch_user_data(const void *uaddr, void *valp, size_t size)
+{
+	struct faultbuf fb;
+	int error;
+
+	if ((error = cpu_set_onfault(&fb, 1)) != 0)
+		return error;
+	
+	switch (size) {
+	case 1:
+		*(uint8_t *)valp = *(volatile const uint8_t *)uaddr;
+		break;
+	case 2:
+		*(uint16_t *)valp = *(volatile const uint16_t *)uaddr;
+		break;
+	case 4:
+		*(uint32_t *)valp = *(volatile const uint32_t *)uaddr;
+		break;
+#ifdef _LP64
+	case 8:
+		*(uint64_t *)valp = *(volatile const uint64_t *)uaddr;
+		break;
+#endif /* _LP64 */
+	default:
+		error = EINVAL;
+	}
+
+	cpu_unset_onfault();
+	return error;
+}
+
+int
+_ufetch_8(const uint8_t *uaddr, uint8_t *valp)
+{
+	return fetch_user_data(uaddr, valp, sizeof(*valp));
+}
+
+int
+_ufetch_16(const uint16_t *uaddr, uint16_t *valp)
+{
+	return fetch_user_data(uaddr, valp, sizeof(*valp));
+}
+
+int
+_ufetch_32(const uint32_t *uaddr, uint32_t *valp)
+{
+	return fetch_user_data(uaddr, valp, sizeof(*valp));
+}
+
+#ifdef _LP64
+int
+_ufetch_64(const uint64_t *uaddr, uint64_t *valp)
+{
+	return fetch_user_data(uaddr, valp, sizeof(*valp));
+}
+#endif /* _LP64 */
+
+static int
+store_user_data(void *uaddr, const void *valp, size_t size)
+{
+	struct faultbuf fb;
+	int error;
+
+	if ((error = cpu_set_onfault(&fb, 1)) != 0)
+		return error;
+	
+	switch (size) {
+	case 1:
+		*(volatile uint8_t *)uaddr = *(const uint8_t *)valp;
+		break;
+	case 2:
+		*(volatile uint16_t *)uaddr = *(const uint8_t *)valp;
+		break;
+	case 4:
+		*(volatile uint32_t *)uaddr = *(const uint32_t *)valp;
+		break;
+#ifdef _LP64
+	case 8:
+		*(volatile uint64_t *)uaddr = *(const uint64_t *)valp;
+		break;
+#endif /* _LP64 */
+	default:
+		error = EINVAL;
+	}
+
+	cpu_unset_onfault();
+	return error;
+}
+
+int
+_ustore_8(uint8_t *uaddr, uint8_t val)
+{
+	return store_user_data(uaddr, &val, sizeof(val));
+}
+
+int
+_ustore_16(uint16_t *uaddr, uint16_t val)
+{
+	return store_user_data(uaddr, &val, sizeof(val));
+}
+
+int
+_ustore_32(uint32_t *uaddr, uint32_t val)
+{
+	return store_user_data(uaddr, &val, sizeof(val));
+}
+
+#ifdef _LP64
+int
+_ustore_64(uint64_t *uaddr, uint64_t val)
+{
+	return store_user_data(uaddr, &val, sizeof(val));
+}
+#endif /* _LP64 */

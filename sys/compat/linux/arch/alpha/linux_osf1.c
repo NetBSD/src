@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_osf1.c,v 1.2 2019/03/26 02:05:28 christos Exp $	*/
+/*	$NetBSD: linux_osf1.c,v 1.3 2019/04/06 03:06:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_osf1.c,v 1.2 2019/03/26 02:05:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_osf1.c,v 1.3 2019/04/06 03:06:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,7 +627,8 @@ dont_care:
 		error = copyout(string, SCARG(uap, buf),
 				uimin(slen, SCARG(uap, len)));
 		if (!error && (SCARG(uap, len) > 0) && (SCARG(uap, len) < slen))
-			subyte(SCARG(uap, buf) + SCARG(uap, len) - 1, 0);
+			error = ustore_char(SCARG(uap, buf)
+					    + SCARG(uap, len) - 1, 0);
 	}
 	if (!error)
 		retval[0] = slen;

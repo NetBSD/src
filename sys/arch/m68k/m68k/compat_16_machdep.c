@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.16 2011/12/22 15:47:15 tsutsui Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.17 2019/04/06 03:06:26 thorpej Exp $   */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16 2011/12/22 15:47:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.17 2019/04/06 03:06:26 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -254,7 +254,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	struct frame *frame;
 	struct sigcontext tsigc;
 	struct sigstate tstate;
-	int rf, flags;
+	int rf, flags, error;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -291,14 +291,14 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	 * See if there is anything to do before we go to the
 	 * expense of copying in close to 1/2K of data
 	 */
-	flags = fuword((void *)rf);
+	error = ufetch_int((void *)rf, (u_int *)&flags);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn(%d): sc_ap %x flags %x\n",
-		    p->p_pid, rf, flags);
+		    p->p_pid, rf, error ? -1 : flags);
 #endif
-	/* fuword failed (bogus sc_ap value). */
-	if (flags == -1)
+	/* ufetch_int() failed (bogus sc_ap value). */
+	if (error)
 		return EINVAL;
 
 	if (flags == 0 || copyin((void *)rf, &tstate, sizeof(tstate)) != 0)

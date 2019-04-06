@@ -1,11 +1,11 @@
-/*	$NetBSD: fusu.S,v 1.5 2018/07/17 18:08:36 christos Exp $	*/
+/*	$NetBSD: fusu.S,v 1.6 2019/04/06 03:06:24 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas of 3am Software Foundry.
+ * by Matt Thomas of 3am Software Foundry, and by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,137 +32,114 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: fusu.S,v 1.5 2018/07/17 18:08:36 christos Exp $");
+RCSID("$NetBSD: fusu.S,v 1.6 2019/04/06 03:06:24 thorpej Exp $");
 
 	.macro enter_cpu_onfault
 	stp	fp, lr, [sp, #-16]!	/* save fp, lr */
 	mov	fp, sp			/* link frame pointer */
+
 	stp	x19, x20, [sp, #-16]!	/* save x19, x20 */
 	mov	x19, x0			/* x19 = arg0 */
 	mov	x20, x1			/* x20 = arg1 */
 
-	/* if (cpu_set_onfault(fb) != 0) return -1 */
+	/* if (cpu_set_onfault(fb) != 0) return error */
 	sub	sp, sp, #FB_T_SIZE	/* allocate struct faultbuf */
-	mov	x0, sp
-	bl	cpu_set_onfault
-	mvn	x8, xzr			/* temporary return value = -1 */
-	cbnz	w0, 9f			/* return if error */
+	mov	x0, sp			/* x0 = faultbuf */
+	bl	cpu_set_onfault		/* x0 = cpu_set_onfault() */
+	cbnz	x0, 9f			/* return if error */
 	.endm
 
 	.macro exit_cpu_onfault
 	/* curlwp->l_md.md_onfault = NULL */
-	mrs	x0, tpidr_el1			/* curcpu */
-	ldr	x0, [x0, #CI_CURLWP]		/* x0 = curlwp */
-	str	xzr, [x0, #L_MD_ONFAULT]	/* lwp->l_md_onfault = NULL */
+	mrs	x1, tpidr_el1			/* curcpu */
+	ldr	x1, [x1, #CI_CURLWP]		/* x1 = curlwp */
+	str	xzr, [x1, #L_MD_ONFAULT]	/* lwp->l_md_onfault = NULL */
 9:
 	add	sp, sp, #FB_T_SIZE		/* pop stack */
 	ldp	x19, x20, [sp], #16		/* restore x19, x20 */
 	ldp	fp, lr, [sp], #16		/* restore fp, lr */
-	mov	x0, x8				/* x0 = return value */
 	.endm
 
-/* LINTSTUB: int fubyte(const void *base); */
-ENTRY(fubyte)
+/* LINTSTUB: int _ufetch_8(const uint8_t *uaddr, uint8_t *valp); */
+ENTRY(_ufetch_8)
 	enter_cpu_onfault
 
 	ldtrb	w8, [x19]
+	strb	w8, [x20]
 
 	exit_cpu_onfault
 	ret
-END(fubyte)
+END(_ufetch_8)
 
-/* LINTSTUB: int fusword(const void *base); */
-ENTRY(fusword)
+/* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
+ENTRY(_ufetch_16)
 	enter_cpu_onfault
 
 	ldtrh	w8, [x19]
+	strh	w8, [x20]
 
 	exit_cpu_onfault
 	ret
-END(fusword)
+END(_ufetch_16)
 
-/* LINTSTUB: int fuswintr(const void *base); */
-ENTRY(fuswintr)
-	enter_cpu_onfault
-
-	ldtrh	w8, [x19]
-
-	exit_cpu_onfault
-	ret
-END(fuswintr)
-
-/* LINTSTUB: int fuword32(const void *base); */
-ENTRY(fuword32)
+/* LINTSTUB: int _ufetch_32(const uint32_t *uaddr, uint32_t *valp); */
+ENTRY(_ufetch_32)
 	enter_cpu_onfault
 
 	ldtr	w8, [x19]
+	str	w8, [x20]
 
 	exit_cpu_onfault
 	ret
-END(fuword32)
+END(_ufetch_32)
 
-/* LINTSTUB: long fuword(const void *base); */
-ENTRY(fuword)
+/* LINTSTUB: int _ufetch_64(const uint64_t *uaddr, uint64_t *valp); */
+ENTRY(_ufetch_64)
 	enter_cpu_onfault
 
 	ldtr	x8, [x19]
+	str	x8, [x20]
 
 	exit_cpu_onfault
 	ret
-END(fuword)
+END(_ufetch_64)
 
-/* LINTSTUB: int subyte(void *base, int c); */
-ENTRY(subyte)
+/* LINTSTUB: int _ustore_8(uint8_t *uaddr, uint8_t val); */
+ENTRY(_ustore_8)
 	enter_cpu_onfault
 
 	sttrb	w20, [x19]
-	mov	x8, #0
 
 	exit_cpu_onfault
 	ret
-END(subyte)
+END(_ustore_8)
 
-/* LINTSTUB: int suword(void *base, short c); */
-ENTRY(susword)
+/* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
+ENTRY(_ustore_16)
 	enter_cpu_onfault
 
 	sttrh	w20, [x19]
-	mov	x8, #0
 
 	exit_cpu_onfault
 	ret
-END(susword)
+END(_ustore_16)
 
-/* LINTSTUB: int suswintr(void *base, short c); */
-ENTRY(suswintr)
-	enter_cpu_onfault
-
-	sttrh	w20, [x19]
-	mov	x8, #0
-
-	exit_cpu_onfault
-	ret
-END(suswintr)
-
-/* LINTSTUB: int suword32(void *base, int c); */
-ENTRY(suword32)
+/* LINTSTUB: int _ustore_32(uint32_t *uaddr, uint32_t val); */
+ENTRY(_ustore_32)
 	enter_cpu_onfault
 
 	sttr	w20, [x19]
-	mov	x8, #0
 
 	exit_cpu_onfault
 	ret
-END(suword32)
+END(_ustore_32)
 
-/* LINTSTUB: int suword(void *base, long c); */
-ENTRY(suword)
+/* LINTSTUB: int _ustore_64(uint64_t *uaddr, uint64_t val); */
+ENTRY(_ustore_64)
 	enter_cpu_onfault
 
 	sttr	x20, [x19]
-	mov	x8, #0
 
 	exit_cpu_onfault
 	ret
-END(suword)
-
+END(_ustore_64)

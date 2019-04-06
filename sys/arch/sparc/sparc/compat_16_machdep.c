@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.4 2009/11/21 04:16:51 rmind Exp $ */
+/*	$NetBSD: compat_16_machdep.c,v 1.5 2019/04/06 03:06:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4 2009/11/21 04:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.5 2019/04/06 03:06:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -192,7 +192,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	newsp = (int)fp - sizeof(struct rwindow);
 	write_user_windows();
 	error = (rwindow_save(l) || copyout((void *)&sf, (void *)fp, sizeof sf) ||
-	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp));
+	    ustore_int((u_int *)&((struct rwindow *)newsp)->rw_in[6], oldsp));
 	mutex_enter(p->p_lock);
 
 	if (error) {

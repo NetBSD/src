@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.16 2019/01/27 04:49:12 dholland Exp $ */
+/* $NetBSD: trap.c,v 1.17 2019/04/06 03:06:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.16 2019/01/27 04:49:12 dholland Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.17 2019/04/06 03:06:24 thorpej Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -430,25 +430,6 @@ cpu_jump_onfault(struct trapframe *tf, const struct faultbuf *fb, int val)
 	tf->tf_sp = fb->fb_reg[FB_SP];
 	tf->tf_pc = fb->fb_reg[FB_LR];
 	tf->tf_reg[0] = val;
-}
-
-void
-ucas_ras_check(struct trapframe *tf)
-{
-#if 0 /* XXX notyet */
-	extern char ucas_32_ras_start[];
-	extern char ucas_32_ras_end[];
-	extern char ucas_64_ras_start[];
-	extern char ucas_64_ras_end[];
-
-	if (tf->tf_pc > (vaddr_t)ucas_32_ras_start &&
-	    tf->tf_pc < (vaddr_t)ucas_32_ras_end) {
-		tf->tf_pc = (vaddr_t)ucas_32_ras_start;
-	} else if (tf->tf_pc > (vaddr_t)ucas_64_ras_start &&
-	    tf->tf_pc < (vaddr_t)ucas_64_ras_end) {
-		tf->tf_pc = (vaddr_t)ucas_64_ras_start;
-	}
-#endif
 }
 
 #ifdef TRAP_SIGDEBUG

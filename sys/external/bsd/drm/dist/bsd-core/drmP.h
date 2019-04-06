@@ -366,7 +366,10 @@ typedef uint8_t u8;
 	copyin(arg2, arg1, arg3)
 #define DRM_COPY_TO_USER_UNCHECKED(arg1, arg2, arg3)	\
 	copyout(arg2, arg1, arg3)
-#if defined(__FreeBSD__)
+#if defined(__NetBSD__)
+#define DRM_GET_USER_UNCHECKED(val, uaddr)		\
+	(ufetch_32((uint32_t *)(uaddr), &(val)), 0)
+#elif defined(__FreeBSD__)
 #define DRM_GET_USER_UNCHECKED(val, uaddr)		\
 	((val) = fuword32(uaddr), 0)
 #else

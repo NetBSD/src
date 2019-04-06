@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.197 2018/12/19 13:57:50 maxv Exp $ */
+/*	$NetBSD: trap.c,v 1.198 2019/04/06 03:06:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.197 2018/12/19 13:57:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198 2019/04/06 03:06:27 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_sunos.h"
@@ -819,7 +819,9 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 		 * instructions as read faults, so if the faulting instruction
 		 * is one of those, relabel this fault as both read and write.
 		 */
-		if ((fuword((void *)pc) & 0xc1680000) == 0xc0680000) {
+		u_int insn;
+		if (ufetch_int((void *)pc, &insn) == 0 &&
+		    (insn & 0xc1680000) == 0xc0680000) {
 			atype = VM_PROT_READ | VM_PROT_WRITE;
 		}
 	}

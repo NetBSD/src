@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.19 2016/10/08 08:19:22 skrll Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.20 2019/04/06 03:06:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.19 2016/10/08 08:19:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.20 2019/04/06 03:06:26 thorpej Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -670,26 +670,22 @@ __strong_alias(_atomic_cas_64, _atomic_cas_ulong)
 __strong_alias(_atomic_cas_64_ni, _atomic_cas_ulong)
 #endif
 
-int	ucas_uint(volatile u_int *, u_int, u_int, u_int *)	__stub;
-int	ucas_ulong(volatile u_long *, u_long, u_long, u_long *)	__stub;
-
+int	__ucas_32(volatile uint32_t *, uint32_t, uint32_t, uint32_t *) __stub;
 int
-ucas_uint(volatile u_int *ptr, u_int old, u_int new, u_int *retp)
+__ucas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new, uint32_t *retp)
 {
 
-	return (*mips_locore_atomicvec.lav_ucas_uint)(ptr, old, new, retp);
+	return (*mips_locore_atomicvec.lav_ucas_32)(ptr, old, new, retp);
 }
-__strong_alias(ucas_32, ucas_uint);
-__strong_alias(ucas_int, ucas_uint);
+__strong_alias(_ucas_32,__ucas_32);
 
-int
-ucas_ulong(volatile u_long *ptr, u_long old, u_long new, u_long *retp)
-{
-
-	return (*mips_locore_atomicvec.lav_ucas_ulong)(ptr, old, new, retp);
-}
-__strong_alias(ucas_ptr, ucas_ulong);
-__strong_alias(ucas_long, ucas_ulong);
 #ifdef _LP64
-__strong_alias(ucas_64, ucas_ulong);
-#endif
+int	__ucas_64(volatile uint64_t *, uint64_t, uint64_t, uint64_t *) __stub;
+int
+__ucas_64(volatile uint64_t *ptr, uint64_t old, uint64_t new, uint64_t *retp)
+{
+
+	return (*mips_locore_atomicvec.lav_ucas_64)(ptr, old, new, retp);
+}
+__strong_alias(_ucas_64,__ucas_64);
+#endif /* _LP64 */

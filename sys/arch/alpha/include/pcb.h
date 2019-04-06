@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.21 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: pcb.h,v 1.22 2019/04/06 03:06:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -59,7 +59,6 @@ struct pcb {
 	unsigned long	pcb_context[8];		/* s[0-6], ra		[SW] */
 	struct fpreg	pcb_fp;			/* FP registers		[SW] */
 	unsigned long	pcb_onfault;		/* for copy faults	[SW] */
-	unsigned long	pcb_accessaddr;		/* for [fs]uswintr	[SW] */
 };
 
 #define	FPCPU_LOCK(pcb)		mutex_enter(&(pcb)->pcb_fpcpu_lock)

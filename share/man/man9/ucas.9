@@ -1,6 +1,7 @@
-.\"	$NetBSD: ucas.9,v 1.2 2011/10/27 07:23:23 wiz Exp $
+.\"	$NetBSD: ucas.9,v 1.3 2019/04/06 03:06:24 thorpej Exp $
 .\"
-.\" Copyright (c)2011 YAMAMOTO Takashi,
+.\" Copyright (c) 2019 Jason R. Thorpe.
+.\" Copyright (c) 2011 YAMAMOTO Takashi,
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -25,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd October 24, 2011
+.Dd March 31, 2019
 .Dt UCAS 9
 .Os
 .\" ------------------------------------------------------------
@@ -73,6 +74,86 @@ Otherwise, these functions return an appropriate
 .Xr errno 9
 error code, typically
 .Dv EFAULT .
+.\" ------------------------------------------------------------
+.Sh IMPLEMENTATION NOTES
+The
+.Nm ucas
+functions are implemented in machine-independent code, but rely on
+machine-dependent code to implement optimized primitives, if possible.
+.Pp
+The basic
+.Nm ucas
+primitives have the following signatures and are considered private to
+the implementation and are not to be called by consumers of the
+.Nm ucas
+API:
+.Pp
+.Bl -tag -width _ucas_32
+.It Ft int Fn _ucas_32 \
+"volatile uint32_t *uptr" "uint32_t old" "uint32_t new" "uint32_t *retp" ;
+.It Ft int Fn _ucas_64 \
+"volatile uint64_t *uptr" "uint64_t old" "uint64_t new" "uint64_t *retp" ;
+.El
+.Pp
+If a platform is able to provide a CAS operation that meets the following
+criteria, it should define
+.Dv __HAVE_UCAS_FULL
+in
+.In machine/types.h
+and provide complete machine-dependent implementations of
+.Fn _ucas_32
+.Po
+and
+.Fn _ucas_64 ,
+if an
+.Dv _LP64
+platform
+.Pc :
+.Pp
+.Bl -hyphen -compact
+.It
+Can be implemented using either native compare-and-swap operations or
+load-locked / store-conditional code sequences.
+.It
+Can be used on uniprocessor and multiprocessor systems.
+.It
+Can operate across the kernel-userpsace boundary.
+.El
+.Pp
+If
+.Dv __HAVE_UCAS_FULL
+is not defined, than a generic implementation will be provided by
+machine-dependent code.
+This generic implementation is suitable for uniprocessor and multiprocessor
+systems, but works on a
+.Dq least-common denominator
+principle.
+In particular, kernel preemption is disabled during the critical section
+.Po
+which is comprised of
+.Xr ufetch 9
+and
+.Xr ustore 9
+operations
+.Pc ,
+and the multiprocessor implementation synchronizes with other CPUs using
+interprocessor interrupts.
+.Pp
+If a particular platform wishes ro use the generic implementation on
+uniprocessors but an optimized implementation on multiprocessors, the
+the platform should define
+.Dv __HAVE_UCAS_MP
+in
+.In machine/types.h
+and provide
+.Fn _ucas_32_mp
+.Po
+and
+.Fn _ucas_64_mp ,
+if an
+.Dv _LP64
+platform
+.Pc .
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr atomic_cas 3 ,

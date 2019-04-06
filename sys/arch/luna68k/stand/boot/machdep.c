@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2015/02/14 13:07:39 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2019/04/06 03:06:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -169,7 +169,7 @@ dumpmem(int *ptr, int sz, int ustack)
 			printf(" ");
 #if 0
 		if (ustack == 1) {
-			if ((val = fuword(ptr++)) == -1)
+			if (ufetch_int((void *)(ptr++), (u_int *)&val) != 0)
 				break;
 		} else {
 			if (ustack == 0 &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.272 2018/12/19 13:57:50 maxv Exp $	*/
+/*	$NetBSD: locore.s,v 1.273 2019/04/06 03:06:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5036,149 +5036,88 @@ ENTRY(lwp_trampoline)
 	b	return_from_syscall
 	 add	%l1, 4, %l2		! npc = pc+4
 
-/*
- * {fu,su}{,i}{byte,word}
- */
-_ENTRY(fuiword)
-ENTRY(fuword)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE...
-	bgeu	Lfsbadaddr
-	 .empty
-	btst	3, %o0			! or has low bits set...
-	bnz	Lfsbadaddr		!	go return -1
-	 .empty
-	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(cpcb)], %o2
-	set	Lfserr, %o3
+/**************************************************************************/
+
+#define	UFETCHSTORE_PROLOGUE						 \
+	set	KERNBASE, %o2					 	;\
+	cmp	%o0, %o2		/* if addr >= KERNBASE... */	;\
+	bgeu	Lufetchstore_badaddr				 	;\
+	 .empty							 	;\
+	sethi	%hi(cpcb), %o2		/* cpcb->pcb_onfault =	  */ 	;\
+	ld	[%o2 + %lo(cpcb)], %o2	/*    Lufetchstore_fault  */	;\
+	set	Lufetchstore_fault, %o3				 	;\
 	st	%o3, [%o2 + PCB_ONFAULT]
-	ld	[%o0], %o0		! fetch the word
-	retl				! phew, made it, return the word
-	 st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 
-Lfserr:
-	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
-Lfsbadaddr:
-	retl				! and return error indicator
-	 mov	-1, %o0
+	/* keep to a single insn; it's used in a branch delay slot */
+#define	UFETCHSTORE_EPILOGUE						\
+	st	%g0, [%o2 + PCB_ONFAULT]! cpcb->pcb_onfault = NULL
 
-	/*
-	 * This is just like Lfserr, but it's a global label that allows
-	 * mem_access_fault() to check to see that we don't want to try to
-	 * page in the fault.  It's used by fuswintr() etc.
-	 */
+#define	UFETCHSTORE_RETURN_SUCCESS					\
+	retl							;	\
+	 clr	%o0
+
+/* LINTSTUB: int _ufetch_8(const uint8_t *uaddr, uint8_t *valp); */
+ENTRY(_ufetch_8)
+	UFETCHSTORE_PROLOGUE
+	ldub	[%o0], %o0		! %o0 = *uaddr
+	UFETCHSTORE_EPILOGUE
+	stb	%o0, [%o1]		! *valp = %o0
+	UFETCHSTORE_RETURN_SUCCESS
+
+/* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
+ENTRY(_ufetch_16)
+	UFETCHSTORE_PROLOGUE
+	lduh	[%o0], %o0		! %o0 = *uaddr
+	UFETCHSTORE_EPILOGUE
+	sth	%o0, [%o1]		! *valp = %o0
+	UFETCHSTORE_RETURN_SUCCESS
+
+/* LINTSTUB: int _ufetch_32(const uint32_t *uaddr, uint32_t *valp); */
+ENTRY(_ufetch_32)
+	UFETCHSTORE_PROLOGUE
+	ld	[%o0], %o0		! %o0 = *uaddr
+	UFETCHSTORE_EPILOGUE
+	st	%o0, [%o1]		! *valp = %o0
+	UFETCHSTORE_RETURN_SUCCESS
+
+/* LINTSTUB: int _ustore_8(uint8_t *uaddr, uint8_t val); */
+ENTRY(_ustore_8)
+	UFETCHSTORE_PROLOGUE
+	stb	%o1, [%o0]		! *uaddr = val
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN_SUCCESS
+
+/* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
+ENTRY(_ustore_16)
+	UFETCHSTORE_PROLOGUE
+	sth	%o1, [%o0]		! *uaddr = val
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN_SUCCESS
+
+/* LINTSTUB: int _ustore_32(uint32_t *uaddr, uint32_t val); */
+ENTRY(_ustore_32)
+	UFETCHSTORE_PROLOGUE
+	st	%o1, [%o0]		! *uaddr = val
+	UFETCHSTORE_EPILOGUE
+	UFETCHSTORE_RETURN_SUCCESS
+
+Lufetchstore_badaddr:
+	retl				! return EFAULT
+	 mov	EFAULT, %o0
+
+Lufetchstore_fault:
+	retl
+	 UFETCHSTORE_EPILOGUE		! error already in %o0
+
+/**************************************************************************/
+
+/* probeget and probeset are meant to be used during autoconfiguration */
+
 	.globl	_C_LABEL(Lfsbail)
 _C_LABEL(Lfsbail):
 	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 	retl				! and return error indicator
 	 mov	-1, %o0
-
-	/*
-	 * Like fusword but callable from interrupt context.
-	 * Fails if data isn't resident.
-	 */
-ENTRY(fuswintr)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE
-	bgeu	Lfsbadaddr		!	return error
-	 .empty
-	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfsbail;
-	ld	[%o2 + %lo(cpcb)], %o2
-	set	_C_LABEL(Lfsbail), %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	lduh	[%o0], %o0		! fetch the halfword
-	retl				! made it
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
-
-ENTRY(fusword)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE
-	bgeu	Lfsbadaddr		!	return error
-	 .empty
-	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(cpcb)], %o2
-	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	lduh	[%o0], %o0		! fetch the halfword
-	retl				! made it
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
-
-_ENTRY(fuibyte)
-ENTRY(fubyte)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE
-	bgeu	Lfsbadaddr		!	return error
-	 .empty
-	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(cpcb)], %o2
-	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	ldub	[%o0], %o0		! fetch the byte
-	retl				! made it
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
-
-_ENTRY(suiword)
-ENTRY(suword)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE ...
-	bgeu	Lfsbadaddr
-	 .empty
-	btst	3, %o0			! or has low bits set ...
-	bnz	Lfsbadaddr		!	go return error
-	 .empty
-	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(cpcb)], %o2
-	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	st	%o1, [%o0]		! store the word
-	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
-	retl				! and return 0
-	clr	%o0
-
-ENTRY(suswintr)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE
-	bgeu	Lfsbadaddr		!	go return error
-	 .empty
-	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfsbail;
-	ld	[%o2 + %lo(cpcb)], %o2
-	set	_C_LABEL(Lfsbail), %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	sth	%o1, [%o0]		! store the halfword
-	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
-	retl				! and return 0
-	clr	%o0
-
-ENTRY(susword)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE
-	bgeu	Lfsbadaddr		!	go return error
-	 .empty
-	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(cpcb)], %o2
-	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	sth	%o1, [%o0]		! store the halfword
-	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
-	retl				! and return 0
-	clr	%o0
-
-_ENTRY(suibyte)
-ENTRY(subyte)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE
-	bgeu	Lfsbadaddr		!	go return error
-	 .empty
-	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(cpcb)], %o2
-	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	stb	%o1, [%o0]		! store the byte
-	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
-	retl				! and return 0
-	clr	%o0
-
-/* probeget and probeset are meant to be used during autoconfiguration */
 
 /*
  * probeget(addr, size) void *addr; int size;
@@ -5192,8 +5131,8 @@ ENTRY(subyte)
 ENTRY(probeget)
 	! %o0 = addr, %o1 = (1,2,4)
 	sethi	%hi(cpcb), %o2
-	ld	[%o2 + %lo(cpcb)], %o2	! cpcb->pcb_onfault = Lfserr;
-	set	Lfserr, %o5
+	ld	[%o2 + %lo(cpcb)], %o2	! cpcb->pcb_onfault = Lfsbail;
+	set	Lfsbail, %o5
 	st	%o5, [%o2 + PCB_ONFAULT]
 	btst	1, %o1
 	bnz,a	0f			! if (len & 1)
@@ -5215,8 +5154,8 @@ ENTRY(probeget)
 ENTRY(probeset)
 	! %o0 = addr, %o1 = (1,2,4), %o2 = val
 	sethi	%hi(cpcb), %o3
-	ld	[%o3 + %lo(cpcb)], %o3	! cpcb->pcb_onfault = Lfserr;
-	set	Lfserr, %o5
+	ld	[%o3 + %lo(cpcb)], %o3	! cpcb->pcb_onfault = Lfsbail;
+	set	Lfsbail, %o5
 	st	%o5, [%o3 + PCB_ONFAULT]
 	btst	1, %o1
 	bnz,a	0f			! if (len & 1)

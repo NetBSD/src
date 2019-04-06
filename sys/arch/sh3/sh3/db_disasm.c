@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.22 2014/03/20 18:01:19 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.23 2019/04/06 03:06:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.22 2014/03/20 18:01:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.23 2019/04/06 03:06:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,11 +159,9 @@ get_insn(const void *pc)
 	if (addr >= SH3_P4SEG_BASE) /* p4: on-chip i/o registers */
 		db_error("Instruction address in P4 area\n");
 
-	if ((int)addr >= 0) {	/* p0: user-space */
-		retval = fusword(pc);
-		if (retval < 0)
+	if ((intptr_t)addr >= 0) {	/* p0: user-space */
+		if (ufetch_16(pc, &insn))
 			db_error("Instruction fetch fault (user)\n");
-		insn = (uint16_t)retval;
 	}
 	else {			/* kernel p1/p2/p3 */
 		retval = kcopy(pc, &insn, sizeof(insn));

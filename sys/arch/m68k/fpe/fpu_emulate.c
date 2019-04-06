@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.38 2013/10/25 21:32:45 martin Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.39 2019/04/06 03:06:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.38 2013/10/25 21:32:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.39 2019/04/06 03:06:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -88,8 +88,8 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 {
 	static struct instruction insn;
 	static struct fpemu fe;
-	int word, optype, sig;
-
+	int optype, sig;
+	unsigned short sval;
 
 	/* initialize insn.is_datasize to tell it is *not* initialized */
 	insn.is_datasize = -1;
@@ -125,32 +125,30 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 		frame->f_pc = insn.is_pc;
 	}
 
-	word = fusword((void *)(insn.is_pc));
-	if (word < 0) {
+	if (ufetch_short((void *)(insn.is_pc), &sval)) {
 		DPRINTF(("%s: fault reading opcode\n", __func__));
 		fpe_abort(frame, ksi, SIGSEGV, SEGV_ACCERR);
 	}
 
-	if ((word & 0xf000) != 0xf000) {
+	if ((sval & 0xf000) != 0xf000) {
 		DPRINTF(("%s: not coproc. insn.: opcode=0x%x\n",
 		    __func__, word));
 		fpe_abort(frame, ksi, SIGILL, ILL_ILLOPC);
 	}
 
-	if ((word & 0x0E00) != 0x0200) {
+	if ((sval & 0x0E00) != 0x0200) {
 		DPRINTF(("%s: bad coproc. id: opcode=0x%x\n", __func__, word));
 		fpe_abort(frame, ksi, SIGILL, ILL_ILLOPC);
 	}
 
-	insn.is_opcode = word;
-	optype = (word & 0x01C0);
+	insn.is_opcode = sval;
+	optype = (sval & 0x01C0);
 
-	word = fusword((void *)(insn.is_pc + 2));
-	if (word < 0) {
+	if (ufetch_short((void *)(insn.is_pc + 2), &sval)) {
 		DPRINTF(("%s: fault reading word1\n", __func__));
 		fpe_abort(frame, ksi, SIGSEGV, SEGV_ACCERR);
 	}
-	insn.is_word1 = word;
+	insn.is_word1 = sval;
 	/* all FPU instructions are at least 4-byte long */
 	insn.is_advance = 4;
 
@@ -163,21 +161,21 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 	 */
 	if (optype == 0x0000) {
 		/* type=0: generic */
-		if ((word & 0xc000) == 0xc000) {
+		if ((sval & 0xc000) == 0xc000) {
 			DPRINTF(("%s: fmovm FPr\n", __func__));
 			sig = fpu_emul_fmovm(&fe, &insn);
-		} else if ((word & 0xc000) == 0x8000) {
+		} else if ((sval & 0xc000) == 0x8000) {
 			DPRINTF(("%s: fmovm FPcr\n", __func__));
 			sig = fpu_emul_fmovmcr(&fe, &insn);
-		} else if ((word & 0xe000) == 0x6000) {
+		} else if ((sval & 0xe000) == 0x6000) {
 			/* fstore = fmove FPn,mem */
 			DPRINTF(("%s: fmove to mem\n", __func__));
 			sig = fpu_emul_fstore(&fe, &insn);
-		} else if ((word & 0xfc00) == 0x5c00) {
+		} else if ((sval & 0xfc00) == 0x5c00) {
 			/* fmovecr */
 			DPRINTF(("%s: fmovecr\n", __func__));
 			sig = fpu_emul_fmovecr(&fe, &insn);
-		} else if ((word & 0xa07f) == 0x26) {
+		} else if ((sval & 0xa07f) == 0x26) {
 			/* fscale */
 			DPRINTF(("%s: fscale\n", __func__));
 			sig = fpu_emul_fscale(&fe, &insn);
@@ -998,6 +996,7 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 {
 	struct frame *frame = fe->fe_frame;
 	int advance, sig, branch, displ;
+	unsigned short sval;
 
 	branch = test_cc(fe, insn->is_word1);
 	fe->fe_fpframe->fpf_fpsr = fe->fe_fpsr;
@@ -1015,13 +1014,14 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 			uint16_t count = frame->f_regs[insn->is_opcode & 7];
 
 			if (count-- != 0) {
-				displ = fusword((void *)(insn->is_pc +
-				    insn->is_advance));
-				if (displ < 0) {
+				if (ufetch_short((void *)(insn->is_pc +
+							   insn->is_advance),
+						  &sval)) {
 					DPRINTF(("%s: fault reading "
 					    "displacement\n", __func__));
 					return SIGSEGV;
 				}
+				displ = sval;
 				/* sign-extend the displacement */
 				displ &= 0xffff;
 				if (displ & 0x8000) {
@@ -1100,6 +1100,7 @@ fpu_emul_brcc(struct fpemu *fe, struct instruction *insn)
 {
 	int displ, word2;
 	int sig;
+	unsigned short sval;
 
 	/*
 	 * Get branch displacement.
@@ -1108,11 +1109,12 @@ fpu_emul_brcc(struct fpemu *fe, struct instruction *insn)
 	displ = insn->is_word1;
 
 	if (insn->is_opcode & 0x40) {
-		word2 = fusword((void *)(insn->is_pc + insn->is_advance));
-		if (word2 < 0) {
+		if (ufetch_short((void *)(insn->is_pc + insn->is_advance),
+				  &sval)) {
 			DPRINTF(("%s: fault reading word2\n", __func__));
 			return SIGSEGV;
 		}
+		word2 = sval;
 		displ <<= 16;
 		displ |= word2;
 		insn->is_advance += 2;

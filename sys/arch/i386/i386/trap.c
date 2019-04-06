@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.299 2019/03/08 08:12:39 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.300 2019/04/06 03:06:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.299 2019/03/08 08:12:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.300 2019/04/06 03:06:25 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -275,7 +275,7 @@ trap(struct trapframe *frame)
 	struct lwp *l = curlwp;
 	struct proc *p;
 	struct pcb *pcb;
-	extern char fusubail[], kcopy_fault[], return_address_fault[];
+	extern char kcopy_fault[], return_address_fault[];
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
 	void *onfault;
@@ -568,12 +568,8 @@ kernelfault:
 		if (__predict_false(l == NULL))
 			goto we_re_toast;
 
-		/*
-		 * fusubail is used by [fs]uswintr() to prevent page faulting
-		 * from inside the profiling interrupt.
-		 */
 		onfault = pcb->pcb_onfault;
-		if (onfault == fusubail || onfault == return_address_fault) {
+		if (onfault == return_address_fault) {
 			goto copyefault;
 		}
 		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {

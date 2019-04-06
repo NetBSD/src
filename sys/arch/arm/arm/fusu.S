@@ -1,4 +1,33 @@
-/*	$NetBSD: fusu.S,v 1.4 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: fusu.S,v 1.5 2019/04/06 03:06:24 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -41,278 +70,149 @@
 
 #include <arm/locore.h>
 
-#define FUSU_RET	mov	pc, lr
-	
-/*
- * fuword(void *uaddr);
- * Fetch an int from the user's address space.
- */
+#define	RETURN_SUCCESS							\
+	mov	r0, #0x00000000					;	\
+	mov	pc, lr
 
-ENTRY(fuword)
-	GET_CURPCB(r2)
+#define	RETURN_ERROR_ALREADY_IN_R0					\
+	mov	pc, lr
 
-#ifdef DIAGNOSTIC
-	teq	r2, #0x00000000
-	beq	.Lfusupcbfault
-#endif
+#define	UFETCHSTORE_PROLOGUE						\
+	GET_CURPCB(r2)						;	\
+	adr	r3, _C_LABEL(ufetchstore_fault)			;	\
+	str	r3, [r2, #PCB_ONFAULT]
 
-	adr	r1, .Lfusufault
-	str	r1, [r2, #PCB_ONFAULT]
+#define	UFETCHSTORE_EPILOGUE						\
+	mov	r3, #0x00000000					;	\
+	str	r3, [r2, #PCB_ONFAULT]
 
-	ldrt	r3, [r0]
 
-	mov	r1, #0x00000000
-	str	r1, [r2, #PCB_ONFAULT]
-	mov	r0, r3
-	FUSU_RET
-END(fuword)
+/* LINTSTUB: int _ufetch_8(const uint8_t *uaddr, uint8_t *valp); */
 
-/*
- * fusword(void *uaddr);
- * Fetch a short from the user's address space.
- */
-
-ENTRY(fusword)
-	GET_CURPCB(r2)
-
-#ifdef DIAGNOSTIC
-	teq	r2, #0x00000000
-	beq	.Lfusupcbfault
-#endif
-
-	adr	r1, .Lfusufault
-	str	r1, [r2, #PCB_ONFAULT]
-
-	ldrbt	r3, [r0], #1
-	ldrbt	r1, [r0]
-#ifdef __ARMEB__
-	orr	r0, r1, r3, asl #8
-#else
-	orr	r0, r3, r1, asl #8
-#endif
-	mov	r1, #0x00000000
-	str	r1, [r2, #PCB_ONFAULT]
-	FUSU_RET
-END(fusword)
-
-/*
- * fuswintr(void *uaddr);
- * Fetch a short from the user's address space.  Can be called during an
- * interrupt.
- */
-
-ENTRY(fuswintr)
-	ldr	r2, .Lblock_userspace_access
-	ldr	r2, [r2]
-	teq	r2, #0
-	mvnne	r0, #0x00000000
-	movne	pc, lr
-
-	GET_CURPCB(r2)
-
-#ifdef DIAGNOSTIC
-	teq	r2, #0x00000000
-	beq	.Lfusupcbfault
-#endif
-
-	adr	r1, _C_LABEL(fusubailout)
-	str	r1, [r2, #PCB_ONFAULT]
-
-	ldrbt	r3, [r0], #1
-	ldrbt	r1, [r0]
-#ifdef __ARMEB__
-	orr	r0, ip, r1, asl #8
-#else
-	orr	r0, r1, ip, asl #8
-#endif
-
-	mov	r1, #0x00000000
-	str	r1, [r2, #PCB_ONFAULT]
-	FUSU_RET
-END(fuswintr)
-
-.Lblock_userspace_access:
-	.word	_C_LABEL(block_userspace_access)
-
-	.data
-	.align	0
-	.global	_C_LABEL(block_userspace_access)
-_C_LABEL(block_userspace_access):
-	.word	0
-	.text
-
-/*
- * fubyte(void *uaddr);
- * Fetch a byte from the user's address space.
- */
-
-ENTRY(fubyte)
-	GET_CURPCB(r2)
-
-#ifdef DIAGNOSTIC
-	teq	r2, #0x00000000
-	beq	.Lfusupcbfault
-#endif
-
-	adr	r1, .Lfusufault
-	str	r1, [r2, #PCB_ONFAULT]
+ENTRY(_ufetch_8)
+	UFETCHSTORE_PROLOGUE
 
 	ldrbt	r3, [r0]
+	strb	r3, [r1]
 
-	mov	r1, #0x00000000
-	str	r1, [r2, #PCB_ONFAULT]
-	mov	r0, r3
-	FUSU_RET
+	UFETCHSTORE_EPILOGUE
+	RETURN_SUCCESS
+END(_ufetch_8)
 
-/*
- * Handle faults from [fs]u*().  Clean up and return -1.
- */
+#if (ARM_ARCH_2 + ARM_ARCH_3) > 0
+/* LINTSTUB: int _ufetch_16_armv2(const uint16_t *uaddr, uint16_t *valp); */
+ENTRY(_ufetch_16_armv2)
+	UFETCHSTORE_PROLOGUE
 
-.Lfusufault:
-	mov	r0, #0x00000000
-	str	r0, [r2, #PCB_ONFAULT]
-	mvn	r0, #0x00000000
-	FUSU_RET
-END(fubyte)
+	ldrbt	r3, [r0], #1
+	strb	r3, [r1], #1
 
-/*
- * Handle faults from [fs]u*().  Clean up and return -1.  This differs from
- * fusufault() in that trap() will recognise it and return immediately rather
- * than trying to page fault.
- */
+	ldrbt	r3, [r0]
+	strb	r3, [r1]
 
-/* label must be global as fault.c references it */
-_ENTRY(fusubailout)
-	mov	r0, #0x00000000
-	str	r0, [r2, #PCB_ONFAULT]
-	mvn	r0, #0x00000000
-	FUSU_RET
-END(fusubailout)
+	UFETCHSTORE_EPILOGUE
+	RETURN_SUCCESS
+END(_ufetch_16_armv2)
 
-#ifdef DIAGNOSTIC
-/*
- * Handle earlier faults from [fs]u*(), due to no pcb
- */
+#else /* XXX */
 
-.Lfusupcbfault:
-	mov	r1, r0
-	adr	r0, .Lfusupcbfaulttext
-	b	_C_LABEL(panic)
+/* LINTSTUB: int _ufetch_16_armv4(const uint16_t *uaddr, uint16_t *valp); */
+ENTRY(_ufetch_16_armv4)
+	UFETCHSTORE_PROLOGUE
 
-.Lfusupcbfaulttext:
-	.asciz	"Yikes - no valid PCB during fusuxxx() addr=%08x\n"
-	.align	0
+	ldrht	r3, [r0]
+	strh	r3, [r1]
+
+	UFETCHSTORE_EPILOGUE
+	RETURN_SUCCESS
+END(_ufetch_16_armv4)
+#endif /* (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0 */
+
+/* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
+#if (ARM_ARCH_2 + ARM_ARCH_3) > 0
+STRONG_ALIAS(_ufetch_16,_ufetch_16_armv2)
+#else
+STRONG_ALIAS(_ufetch_16,_ufetch_16_armv4)
+#endif /* #if (ARM_ARCH_2 + ARM_ARCH_3) > 0 */
+
+/* LINTSTUB: int _ufetch_32(const uint32_t *uaddr, uint32_t *valp); */
+ENTRY(_ufetch_32)
+	UFETCHSTORE_PROLOGUE
+
+	ldrt	r3, [r0]
+	str	r3, [r1]
+
+	UFETCHSTORE_EPILOGUE
+	RETURN_SUCCESS
+END(_ufetch_32)
+
+/* LINTSTUB: int _ustore_8(uint8_t *uaddr, uint8_t val); */
+ENTRY(_ustore_8)
+	UFETCHSTORE_PROLOGUE
+
+	strbt	r1, [r0]
+
+	UFETCHSTORE_EPILOGUE
+	RETURN_SUCCESS
+END(_ustore_8)
+
+#if (ARM_ARCH_2 + ARM_ARCH_3) > 0
+/* LINTSTUB: int _ustore_16_armv2(uint16_t *uaddr, uint16_t val); */
+ENTRY(_ustore_16_armv2)
+	UFETCHSTORE_PROLOGUE
+
+#ifdef __ARMEB__
+	mov	r3, r1, lsr #8
+	strbt	r3, [r0], #1
+#else
+	strbt	r1, [r0], #1
+	mov	r1, r1, lsr #8
 #endif
+	strbt	r1, [r0]
 
-/*
- * suword(void *uaddr, int x);
- * Store an int in the user's address space.
- */
+	UFETCHSTORE_EPILOGUE
+	RETURN_SUCCESS
+END(_ustore_16_armv2)
 
-ENTRY(suword)
-	GET_CURPCB(r2)
+#else /* XXX */
 
-#ifdef DIAGNOSTIC
-	teq	r2, #0x00000000
-	beq	.Lfusupcbfault
-#endif
+/* LINTSTUB: int _ustore_16_armv4(uint16_t *uaddr, uint16_t val); */
+ENTRY(_ustore_16_armv4)
+	UFETCHSTORE_PROLOGUE
 
-	adr	r3, .Lfusufault
-	str	r3, [r2, #PCB_ONFAULT]
+	strht	r1, [r0]
+
+	UFETCHSTORE_EPILOGUE
+	RETURN_SUCCESS
+END(_ustore_16_armv4)
+#endif /* (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0 */
+
+/* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
+/* XXXJRT Run-time upgrade to armv4 version would be nice. */
+#if (ARM_ARCH_2 + ARM_ARCH_3) > 0
+STRONG_ALIAS(_ustore_16,_ustore_16_armv2)
+#else
+STRONG_ALIAS(_ustore_16,_ustore_16_armv4)
+#endif /* #if (ARM_ARCH_2 + ARM_ARCH_3) > 0 */
+
+/* LINTSTUB: int _ustore_32(uint32_t *uaddr, uint32_t val); */
+ENTRY(_ustore_32)
+	UFETCHSTORE_PROLOGUE
 
 	strt	r1, [r0]
 
-	mov	r0, #0x00000000
-	str	r0, [r2, #PCB_ONFAULT]
-	FUSU_RET
-END(suword)
+	UFETCHSTORE_EPILOGUE
+	RETURN_SUCCESS
+END(_ustore_32)
 
-/*
- * suswintr(void *uaddr, short x);
- * Store a short in the user's address space.  Can be called during an
- * interrupt.
- */
+ENTRY_NP(ufetchstore_fault)
+	UFETCHSTORE_EPILOGUE
+	RETURN_ERROR_ALREADY_IN_R0
+END(ufetchstore_fault)
 
-ENTRY(suswintr)
-	ldr	r2, .Lblock_userspace_access
-	ldr	r2, [r2]
-	teq	r2, #0
-	mvnne	r0, #0x00000000
-	movne	pc, lr
-
-	GET_CURPCB(r2)
-
-#ifdef DIAGNOSTIC
-	teq	r2, #0x00000000
-	beq	.Lfusupcbfault
-#endif
-
-	adr	r3, _C_LABEL(fusubailout)
-	str	r3, [r2, #PCB_ONFAULT]
-
-#ifdef __ARMEB__
-	mov	r3, r1, lsr #8
-	strbt	r3, [r0], #1
-#else
-	strbt	r1, [r0], #1
-	mov	r1, r1, lsr #8
-#endif
-	strbt	r1, [r0]
-
-	mov	r0, #0x00000000
-	str	r0, [r2, #PCB_ONFAULT]
-	FUSU_RET
-END(suswintr)
-
-/*
- * susword(void *uaddr, short x);
- * Store a short in the user's address space.
- */
-
-ENTRY(susword)
-	GET_CURPCB(r2)
-
-#ifdef DIAGNOSTIC
-	teq	r2, #0x00000000
-	beq	.Lfusupcbfault
-#endif
-
-	adr	r3, .Lfusufault
-	str	r3, [r2, #PCB_ONFAULT]
-
-#ifdef __ARMEB__
-	mov	r3, r1, lsr #8
-	strbt	r3, [r0], #1
-#else
-	strbt	r1, [r0], #1
-	mov	r1, r1, lsr #8
-#endif
-	strbt	r1, [r0]
-
-	mov	r0, #0x00000000
-	str	r0, [r2, #PCB_ONFAULT]
-	FUSU_RET
-END(susword)
-
-/*
- * subyte(void *uaddr, char x);
- * Store a byte in the user's address space.
- */
-
-ENTRY(subyte)
-	GET_CURPCB(r2)
-
-#ifdef DIAGNOSTIC
-	teq	r2, #0x00000000
-	beq	.Lfusupcbfault
-#endif
-
-	adr	r3, .Lfusufault
-	str	r3, [r2, #PCB_ONFAULT]
-
-	strbt	r1, [r0]
-
-	mov	r0, #0x00000000
-	str	r0, [r2, #PCB_ONFAULT]
-	FUSU_RET
-END(subyte)
+/* XXXJRT Can we G/C this? */
+	.data
+	.align	0
+	.global _C_LABEL(block_userspace_access)
+_C_LABEL(block_userspace_access):
+	.word	0

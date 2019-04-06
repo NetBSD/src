@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.1 2019/02/18 01:12:23 thorpej Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.2 2019/04/06 03:06:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.1 2019/02/18 01:12:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.2 2019/04/06 03:06:26 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -146,8 +146,12 @@ dumpwb(int num, u_short s, u_int a, u_int d)
 	printf("               PA ");
 	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a, &pa) == false)
 		printf("<invalid address>");
-	else
-		printf("%lx, current value %lx", pa, fuword((void *)a));
+	else {
+		u_long val;
+		if (ufetch_long((void *)a, &val) != 0)
+			val = (u_long)-1;
+		printf("%lx, current value %lx", pa, val);
+	}
 	printf("\n");
 }
 #endif /* DEBUG  */
@@ -273,7 +277,7 @@ m68040_writeback(struct frame *fp, int docachepush)
 			if (KDFAULT(f->f_wb1s))
 				*(long *)f->f_wb1a = wb1d;
 			else
-				err = suword((void *)f->f_wb1a, wb1d);
+				err = ustore_long((void *)f->f_wb1a, wb1d);
 			break;
 		case SSW4_SZB:
 			off = 24 - off;
@@ -282,7 +286,7 @@ m68040_writeback(struct frame *fp, int docachepush)
 			if (KDFAULT(f->f_wb1s))
 				*(char *)f->f_wb1a = wb1d;
 			else
-				err = subyte((void *)f->f_wb1a, wb1d);
+				err = ustore_char((void *)f->f_wb1a, wb1d);
 			break;
 		case SSW4_SZW:
 			off = (off + 16) % 32;
@@ -291,7 +295,7 @@ m68040_writeback(struct frame *fp, int docachepush)
 			if (KDFAULT(f->f_wb1s))
 				*(short *)f->f_wb1a = wb1d;
 			else
-				err = susword((void *)f->f_wb1a, wb1d);
+				err = ustore_short((void *)f->f_wb1a, wb1d);
 			break;
 		}
 		if (err) {
@@ -323,19 +327,19 @@ m68040_writeback(struct frame *fp, int docachepush)
 			if (KDFAULT(f->f_wb2s))
 				*(long *)f->f_wb2a = f->f_wb2d;
 			else
-				err = suword((void *)f->f_wb2a, f->f_wb2d);
+				err = ustore_long((void *)f->f_wb2a, f->f_wb2d);
 			break;
 		case SSW4_SZB:
 			if (KDFAULT(f->f_wb2s))
 				*(char *)f->f_wb2a = f->f_wb2d;
 			else
-				err = subyte((void *)f->f_wb2a, f->f_wb2d);
+				err = ustore_char((void *)f->f_wb2a, f->f_wb2d);
 			break;
 		case SSW4_SZW:
 			if (KDFAULT(f->f_wb2s))
 				*(short *)f->f_wb2a = f->f_wb2d;
 			else
-				err = susword((void *)f->f_wb2a, f->f_wb2d);
+				err = ustore_short((void *)f->f_wb2a, f->f_wb2d);
 			break;
 		}
 		if (err) {
@@ -363,19 +367,19 @@ m68040_writeback(struct frame *fp, int docachepush)
 			if (KDFAULT(f->f_wb3s))
 				*(long *)f->f_wb3a = f->f_wb3d;
 			else
-				err = suword((void *)f->f_wb3a, f->f_wb3d);
+				err = ustore_long((void *)f->f_wb3a, f->f_wb3d);
 			break;
 		case SSW4_SZB:
 			if (KDFAULT(f->f_wb3s))
 				*(char *)f->f_wb3a = f->f_wb3d;
 			else
-				err = subyte((void *)f->f_wb3a, f->f_wb3d);
+				err = ustore_char((void *)f->f_wb3a, f->f_wb3d);
 			break;
 		case SSW4_SZW:
 			if (KDFAULT(f->f_wb3s))
 				*(short *)f->f_wb3a = f->f_wb3d;
 			else
-				err = susword((void *)f->f_wb3a, f->f_wb3d);
+				err = ustore_short((void *)f->f_wb3a, f->f_wb3d);
 			break;
 #ifdef DEBUG
 		case SSW4_SZLN:

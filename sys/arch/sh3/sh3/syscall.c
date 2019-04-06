@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.15 2013/06/26 16:28:51 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.16 2019/04/06 03:06:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -128,7 +128,7 @@ syscall(struct lwp *l, struct trapframe *tf)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-	        code = tf->tf_r4;  /* fuword(params); */
+	        code = tf->tf_r4;  /* ufetch_int(params); */
 		/* params += sizeof(int); */
 		break;
 	case SYS___syscall:
@@ -138,7 +138,7 @@ syscall(struct lwp *l, struct trapframe *tf)
 		 */
 		if (callp != sysent)
 			break;
-		/* fuword(params + _QUAD_LOWWORD * sizeof(int)); */
+		/* ufetch_int(params + _QUAD_LOWWORD * sizeof(int)); */
 #if _BYTE_ORDER == BIG_ENDIAN
 		code = tf->tf_r5;
 #else

@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.54 2016/01/24 16:47:50 christos Exp $ */
+/* $NetBSD: types.h,v 1.55 2019/04/06 03:06:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -83,6 +83,7 @@ typedef __register_t	register_t;
 #define	__HAVE___LWP_GETPRIVATE_FAST
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE_TLS_VARIANT_I
+#define	__HAVE_UCAS_FULL
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

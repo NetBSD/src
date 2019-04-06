@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.22 2014/03/06 17:48:09 skrll Exp $	*/
+/*	$NetBSD: copy.S,v 1.23 2019/04/06 03:06:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 /*
  * This file contains the functions for user-space access:
- * copyin/copyout, fuword/suword, etc.
+ * copyin/copyout, ufetch/ustore, etc.
  */
 
 	.align	NBPG	/* let's fit 'em on a single page */
@@ -97,45 +97,50 @@
 #define	FUSUX(name)				  \
 LEAF_ENTRY_NOPROFILE(name)			! \
 	ldil	L%VM_MAXUSER_ADDRESS, %t1	! \
-	comb,>>= %arg0, %t1, fusubadaddr	! \
+	comb,>>= %arg0, %t1, ufetchstore_efault	! \
 	GET_CURLWP(%t1)				! \
 	ldw	L_PCB(%t1), %t1			! \
-	ldil	L%fusufault, %t2		! \
-	ldo	R%fusufault(%t2), %t2		! \
+	ldil	L%ufetchstore_fault, %t2	! \
+	ldo	R%ufetchstore_fault(%t2), %t2	! \
 	ldw	PCB_ONFAULT(%t1), %t3		! \
 	stw	%t2, PCB_ONFAULT(%t1)		! \
 	ldw	PCB_SPACE(%t1), %t2		! \
 	mtsp	%t2, %sr1
 
-#define	FUX(name,insn)				  \
+#define	FUX(name,linsn,sinsn)			  \
 	FUSUX(name)				! \
-	insn	0(%sr1, %arg0), %ret0		! \
-	bv	%r0(%rp)			! \
+	linsn	0(%sr1, %arg0), %t2		! \
 	stw	%r0, PCB_ONFAULT(%t1)		! \
+	sinsn	%t2, 0(%arg1)			! \
+	bv	%r0(%rp)			! \
+	 ldi	0, %ret0			! \
 EXIT(name)
 
 #define	SUX(name,insn)				  \
 	FUSUX(name)				! \
 	insn	%arg1, 0(%sr1, %arg0)		! \
-	bv	%r0(%rp)			! \
 	stw	%r0, PCB_ONFAULT(%t1)		! \
+	bv	%r0(%rp)			! \
+	 ldi	0, %ret0			! \
 EXIT(name)
 
-LEAF_ENTRY_NOPROFILE(fusufault)
-	stw	%r0, PCB_ONFAULT(%t1)
-ALTENTRY(fusubadaddr)
+LEAF_ENTRY_NOPROFILE(ufetchstore_fault)
 	bv	0(%rp)
-	ldi	-1, %ret0
-EXIT(fusufault)
+	 stw	%r0, PCB_ONFAULT(%t1)
+EXIT(ufetchstore_fault)
 
-FUX(fubyte,   ldb)
-FUX(fusword,  ldh)
-FUX(fuword,   ldw)
-FUX(fuswintr, ldh)
-SUX(subyte,   stb)
-SUX(susword,  sth)
-SUX(suword,   stw)
-SUX(suswintr, sth)
+LEAF_ENTRY_NOPROFILE(ufetchstore_efault)
+	bv	0(%rp)
+	 ldi	EFAULT, %ret0
+EXIT(ufetchstore_efault)
+
+FUX(_ufetch_8,  ldb, stb)
+FUX(_ufetch_16, ldh, sth)
+FUX(_ufetch_32, ldw, stw)
+
+SUX(_ustore_8,  stb)
+SUX(_ustore_16, sth)
+SUX(_ustore_32, stw)
 
 	.align	64
 
@@ -333,45 +338,3 @@ ENTRY(hppa_ktext_stb, HPPA_FRAME_SIZE)
 	b	hppa_ktext_stw
 	copy	%t2, %arg1
 EXIT(hppa_ktext_stb)
-
-STRONG_ALIAS(ucas_int,ucas_32)
-STRONG_ALIAS(ucas_ptr,ucas_32)
-
-	.global ucas_ras_start
-	.global ucas_ras_end
-
-/*
- * Compare-and-swap the pointer in the user-space.
- *
- * int	ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
- */
-LEAF_ENTRY(ucas_32)
-	ldil	L%VM_MAXUSER_ADDRESS, %t1
-	comb,>>= %arg0, %t1, 1f
-
-	/* setup fault handler */
-	GET_CURLWP(%r31)
-	ldw	L_PCB(%r31), %r31
-	ldil	L%L$ucas_32_fault, %t2
-	ldo	R%L$ucas_32_fault(%t2), %t2
-	stw	%t2, PCB_ONFAULT(%r31)
-
-	ldw	PCB_SPACE(%r31), %t1
-	mtsp	%t1, %sr1
-
-ucas_ras_start:
-	ldw	0(%sr1, %arg0), %t1
-	comb,<>	%arg1, %t1, ucas_ras_end
-	 copy	%r0, %ret0
-	stw	%arg2, 0(%sr1, %arg0)
-ucas_ras_end:
-	stw	%t1, 0(%arg3)
-
-L$ucas_32_fault:
-	bv	0(%rp)
-	 stw	%r0, PCB_ONFAULT(%r31)
-
-1:
-	bv	0(%rp)
-	 ldi	EFAULT, %ret0
-EXIT(ucas_32)

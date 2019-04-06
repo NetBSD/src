@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.78 2019/04/03 08:08:00 kamil Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.79 2019/04/06 03:06:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.78 2019/04/03 08:08:00 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.79 2019/04/06 03:06:27 thorpej Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -174,7 +174,6 @@ sh3_setup_uarea(struct lwp *l)
 
 	pcb = lwp_getpcb(l);
 	pcb->pcb_onfault = NULL;
-	pcb->pcb_faultbail = 0;
 #ifdef SH3
 	/*
 	 * Accessing context store space must not cause exceptions.
@@ -244,18 +243,6 @@ child_return(void *arg)
 {
 	struct lwp *l = arg;
 	struct trapframe *tf = l->l_md.md_regs;
-	struct proc *p = l->l_proc;
-
-	if (p->p_slflag & PSL_TRACED) {
-		mutex_enter(p->p_lock);
-		p->p_xsig = SIGTRAP;
-		p->p_sigctx.ps_faked = true; // XXX
-		p->p_sigctx.ps_info._signo = p->p_xsig;
-		p->p_sigctx.ps_info._code = TRAP_CHLD;
-		sigswitch(0, SIGTRAP, true);
-		// XXX ktrpoint(KTR_PSIG)
-		mutex_exit(p->p_lock);
-	}
 
 	tf->tf_r0 = 0;		/* fork(2) returns 0 in child */
 	tf->tf_ssr |= PSL_TBIT; /* syscall succeeded */

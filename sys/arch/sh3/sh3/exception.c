@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.66 2017/10/22 03:29:23 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.67 2019/04/06 03:06:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.66 2017/10/22 03:29:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.67 2019/04/06 03:06:27 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -378,14 +378,6 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	}
 
 	/* Page not found. call fault handler */
-	if (!usermode && pmap != pmap_kernel() && pcb->pcb_faultbail) {
-		TLB_ASSERT(onfault != NULL,
-		    "no copyin/out fault handler (interrupt context)");
-		tf->tf_spc = (int)onfault;
-		tf->tf_r0 = EFAULT;
-		return;
-	}
-
 	pcb->pcb_onfault = NULL;
 	err = uvm_fault(map, va, ftype);
 	pcb->pcb_onfault = onfault;

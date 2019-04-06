@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.281 2019/01/07 13:09:47 martin Exp $	*/
+/*	$NetBSD: systm.h,v 1.282 2019/04/06 03:06:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -300,24 +300,75 @@ int	copyout_vmspace(struct vmspace *, const void *, void *, size_t);
 int	ioctl_copyin(int ioctlflags, const void *src, void *dst, size_t len);
 int	ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len);
 
+int	ucas_32(volatile uint32_t *uaddr, uint32_t old, uint32_t new,
+		uint32_t *ret);
+#ifdef _LP64
+int	ucas_64(volatile uint64_t *uaddr, uint64_t old, uint64_t new,
+		uint64_t *ret);
+#endif /* _LP64 */
+
 int	ucas_ptr(volatile void *, void *, void *, void *);
-int	ucas_int(volatile int *, int, int, int *);
+int	ucas_int(volatile unsigned int *, unsigned int, unsigned int,
+		 unsigned int *);
 
-int	subyte(void *, int);
-int	suibyte(void *, int);
-int	susword(void *, short);
-int	suisword(void *, short);
-int	suswintr(void *, short);
-int	suword(void *, long);
-int	suiword(void *, long);
+#ifdef __UCAS_PRIVATE
+int	_ucas_32(volatile uint32_t *uaddr, uint32_t old, uint32_t new,
+		 uint32_t *ret);
+#ifdef __HAVE_UCAS_MP
+int	_ucas_32_mp(volatile uint32_t *uaddr, uint32_t old, uint32_t new,
+		    uint32_t *ret);
+#endif /* __HAVE_UCAS_MP */
+#ifdef _LP64
+int	_ucas_64(volatile uint64_t *uaddr, uint64_t old, uint64_t new,
+		 uint64_t *ret);
+#ifdef __HAVE_UCAS_MP
+int	_ucas_64_mp(volatile uint64_t *uaddr, uint64_t old, uint64_t new,
+		    uint64_t *ret);
+#endif /* __HAVE_UCAS_MP */
+#endif /* _LP64 */
+#endif /* __UCAS_PRIVATE */
 
-int	fubyte(const void *);
-int	fuibyte(const void *);
-int	fusword(const void *);
-int	fuisword(const void *);
-int	fuswintr(const void *);
-long	fuword(const void *);
-long	fuiword(const void *);
+int	ufetch_8(const uint8_t *uaddr, uint8_t *valp);
+int	ufetch_16(const uint16_t *uaddr, uint16_t *valp);
+int	ufetch_32(const uint32_t *uaddr, uint32_t *valp);
+#ifdef _LP64
+int	ufetch_64(const uint64_t *uaddr, uint64_t *valp);
+#endif
+
+int	ufetch_char(const unsigned char *uaddr, unsigned char *valp);
+int	ufetch_short(const unsigned short *uaddr, unsigned short *valp);
+int	ufetch_int(const unsigned int *uaddr, unsigned int *valp);
+int	ufetch_long(const unsigned long *uaddr, unsigned long *valp);
+int	ufetch_ptr(const void **uaddr, void **valp);
+
+int	ustore_8(uint8_t *uaddr, uint8_t val);
+int	ustore_16(uint16_t *uaddr, uint16_t val);
+int	ustore_32(uint32_t *uaddr, uint32_t val);
+#ifdef _LP64
+int	ustore_64(uint64_t *uaddr, uint64_t val);
+#endif
+
+int	ustore_char(unsigned char *uaddr, unsigned char val);
+int	ustore_short(unsigned short *uaddr, unsigned short val);
+int	ustore_int(unsigned int *uaddr, unsigned int val);
+int	ustore_long(unsigned long *uaddr, unsigned long val);
+int	ustore_ptr(void **uaddr, void *val);
+
+#ifdef __UFETCHSTORE_PRIVATE
+int	_ufetch_8(const uint8_t *uaddr, uint8_t *valp);
+int	_ufetch_16(const uint16_t *uaddr, uint16_t *valp);
+int	_ufetch_32(const uint32_t *uaddr, uint32_t *valp);
+#ifdef _LP64
+int	_ufetch_64(const uint64_t *uaddr, uint64_t *valp);
+#endif
+
+int	_ustore_8(uint8_t *uaddr, uint8_t val);
+int	_ustore_16(uint16_t *uaddr, uint16_t val);
+int	_ustore_32(uint32_t *uaddr, uint32_t val);
+#ifdef _LP64
+int	_ustore_64(uint64_t *uaddr, uint64_t val);
+#endif
+#endif /* __UFETCHSTORE_PRIVATE */
 
 void	hardclock(struct clockframe *);
 void	softclock(void *);
