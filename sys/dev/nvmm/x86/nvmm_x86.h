@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.10 2019/04/03 19:10:58 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.11 2019/04/06 11:49:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -98,12 +98,6 @@
 #define NVMM_X64_MSR_TSC		10
 #define NVMM_X64_NMSR			11
 
-/* Misc. */
-#define NVMM_X64_MISC_INT_SHADOW	0
-#define NVMM_X64_MISC_INT_WINDOW_EXIT	1
-#define NVMM_X64_MISC_NMI_WINDOW_EXIT	2
-#define NVMM_X64_NMISC			3
-
 #ifndef ASM_NVMM
 
 #include <sys/types.h>
@@ -126,12 +120,21 @@ struct nvmm_x64_state_seg {
 	uint64_t base;		/* hidden */
 };
 
+struct nvmm_x64_state_intr {
+	uint64_t int_shadow:1;
+	uint64_t int_window_exiting:1;
+	uint64_t nmi_window_exiting:1;
+	uint64_t evt_pending:1;
+	uint64_t rsvd:60;
+};
+
 /* VM exit state indexes. */
 #define NVMM_X64_EXITSTATE_CR8			0
 #define NVMM_X64_EXITSTATE_RFLAGS		1
 #define NVMM_X64_EXITSTATE_INT_SHADOW		2
 #define NVMM_X64_EXITSTATE_INT_WINDOW_EXIT	3
 #define NVMM_X64_EXITSTATE_NMI_WINDOW_EXIT	4
+#define NVMM_X64_EXITSTATE_EVT_PENDING		5
 
 /* Flags. */
 #define NVMM_X64_STATE_SEGS	0x01
@@ -139,11 +142,11 @@ struct nvmm_x64_state_seg {
 #define NVMM_X64_STATE_CRS	0x04
 #define NVMM_X64_STATE_DRS	0x08
 #define NVMM_X64_STATE_MSRS	0x10
-#define NVMM_X64_STATE_MISC	0x20
+#define NVMM_X64_STATE_INTR	0x20
 #define NVMM_X64_STATE_FPU	0x40
 #define NVMM_X64_STATE_ALL	\
 	(NVMM_X64_STATE_SEGS | NVMM_X64_STATE_GPRS | NVMM_X64_STATE_CRS | \
-	 NVMM_X64_STATE_DRS | NVMM_X64_STATE_MSRS | NVMM_X64_STATE_MISC | \
+	 NVMM_X64_STATE_DRS | NVMM_X64_STATE_MSRS | NVMM_X64_STATE_INTR | \
 	 NVMM_X64_STATE_FPU)
 
 struct nvmm_x64_state {
@@ -152,7 +155,7 @@ struct nvmm_x64_state {
 	uint64_t crs[NVMM_X64_NCR];
 	uint64_t drs[NVMM_X64_NDR];
 	uint64_t msrs[NVMM_X64_NMSR];
-	uint64_t misc[NVMM_X64_NMISC];
+	struct nvmm_x64_state_intr intr;
 	struct fxsave fpu;
 };
 
