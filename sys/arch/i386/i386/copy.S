@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.29 2019/04/06 03:06:25 thorpej Exp $	*/
+/*	$NetBSD: copy.S,v 1.30 2019/04/06 20:25:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.29 2019/04/06 03:06:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.30 2019/04/06 20:25:27 thorpej Exp $");
 
 #include "assym.h"
 
@@ -500,15 +500,15 @@ END(copystr)
 
 /**************************************************************************/
 
-#define	UFETCHSTORE_PROLOGUE						\
+#define	UFETCHSTORE_PROLOGUE(x)						\
 	movl	4(%esp),%edx					;	\
-	cmpl	$VM_MAXUSER_ADDRESS-4,%edx			;	\
+	cmpl	$VM_MAXUSER_ADDRESS-x,%edx			;	\
 	ja	_C_LABEL(ufetchstore_efault)
 
 /* LINTSTUB: int _ufetch_8(const uint8_t *uaddr, uint8_t *valp); */
 ENTRY(_ufetch_8)
 	DEFERRED_SWITCH_CHECK
-	UFETCHSTORE_PROLOGUE
+	UFETCHSTORE_PROLOGUE(1)
 
 	SMAP_DISABLE
 .L_ufetch_8_start:
@@ -526,7 +526,7 @@ END(_ufetch_8)
 /* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
 ENTRY(_ufetch_16)
 	DEFERRED_SWITCH_CHECK
-	UFETCHSTORE_PROLOGUE
+	UFETCHSTORE_PROLOGUE(2)
 
 	SMAP_DISABLE
 .L_ufetch_16_start:
@@ -544,7 +544,7 @@ END(_ufetch_16)
 /* LINTSTUB: int _ufetch_32(const uint32_t *uaddr, uint32_t *valp); */
 ENTRY(_ufetch_32)
 	DEFERRED_SWITCH_CHECK
-	UFETCHSTORE_PROLOGUE
+	UFETCHSTORE_PROLOGUE(4)
 
 	SMAP_DISABLE
 .L_ufetch_32_start:
@@ -562,7 +562,7 @@ END(_ufetch_32)
 /* LINTSTUB: int _ustore_8(uint8_t *uaddr, uint8_t val); */
 ENTRY(_ustore_8)
 	DEFERRED_SWITCH_CHECK
-	UFETCHSTORE_PROLOGUE
+	UFETCHSTORE_PROLOGUE(1)
 	movb	8(%esp),%al
 
 	SMAP_DISABLE
@@ -579,7 +579,7 @@ END(_ustore_8)
 /* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
 ENTRY(_ustore_16)
 	DEFERRED_SWITCH_CHECK
-	UFETCHSTORE_PROLOGUE
+	UFETCHSTORE_PROLOGUE(2)
 	movw	8(%esp),%ax
 
 	SMAP_DISABLE
@@ -596,7 +596,7 @@ END(_ustore_16)
 /* LINTSTUB: int _ustore_32(uint32_t *uaddr, uint32_t val); */
 ENTRY(_ustore_32)
 	DEFERRED_SWITCH_CHECK
-	UFETCHSTORE_PROLOGUE
+	UFETCHSTORE_PROLOGUE(4)
 	movl	8(%esp),%eax
 
 	SMAP_DISABLE
