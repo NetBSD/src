@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.5 2019/04/03 19:10:58 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.6 2019/04/06 11:49:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.5 2019/04/03 19:10:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.6 2019/04/06 11:49:53 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,10 +213,11 @@ const struct nvmm_x64_state nvmm_x86_reset_state = {
 		[NVMM_X64_MSR_TSC] = 0,
 	},
 
-	.misc = {
-		[NVMM_X64_MISC_INT_SHADOW] = 0,
-		[NVMM_X64_MISC_INT_WINDOW_EXIT] = 0,
-		[NVMM_X64_MISC_NMI_WINDOW_EXIT] = 0,
+	.intr = {
+		.int_shadow = 0,
+		.int_window_exiting = 0,
+		.nmi_window_exiting = 0,
+		.evt_pending = 0,
 	},
 
 	.fpu = {
