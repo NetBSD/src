@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2267 2019/04/06 09:33:07 kamil Exp $
+#	$NetBSD: mi,v 1.2268 2019/04/06 12:33:18 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11916,7 +11916,7 @@
 ./usr/share/man/cat9/usbdi.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/useracc.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/userret.0			comp-sys-catman		.cat
-./usr/share/man/cat9/ustore.9			comp-sys-catman		.cat
+./usr/share/man/cat9/ustore.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ustore_16.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ustore_32.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ustore_64.0		comp-sys-catman		.cat
