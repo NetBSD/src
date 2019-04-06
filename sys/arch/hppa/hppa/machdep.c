@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2018/11/14 10:58:04 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2019/04/06 03:06:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2018/11/14 10:58:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2019/04/06 03:06:25 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1928,9 +1928,9 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	/* setup terminal stack frame */
 	stack = (u_long)STACK_ALIGN(stack, 63);
 	tf->tf_r3 = stack;
-	suword((void *)(stack), 0);
+	ustore_long((void *)(stack), 0);
 	stack += HPPA_FRAME_SIZE;
-	suword((void *)(stack + HPPA_FRAME_PSP), 0);
+	ustore_long((void *)(stack + HPPA_FRAME_PSP), 0);
 	tf->tf_sp = stack;
 }
 

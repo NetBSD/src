@@ -1,4 +1,4 @@
-/*	$NetBSD: regdump.c,v 1.13 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: regdump.c,v 1.14 2019/04/06 03:06:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: regdump.c,v 1.13 2011/02/08 20:20:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: regdump.c,v 1.14 2019/04/06 03:06:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ dumpmem(int *ptr, int sz, int ustack)
 		else
 			printf(" ");
 		if (ustack == 1) {
-			if ((val = fuword(ptr++)) == -1)
+			if (ufetch_int((void *)(ptr++), (u_int *)&val) != 0)
 				break;
 		} else {
 			if (((int) ptr) >= limit)

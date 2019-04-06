@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.30 2018/07/14 14:29:40 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.31 2019/04/06 03:06:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -384,110 +384,154 @@ ENTRY(copystr)
 7:	ret
 END(copystr)
 
-ENTRY(fuswintr)
-	cmpl	$TLBSTATE_VALID,CPUVAR(TLBSTATE)
-	jnz	_C_LABEL(fusuaddrfault)
-	movq	$VM_MAXUSER_ADDRESS-2,%r11
-	cmpq	%r11,%rdi
-	ja	_C_LABEL(fusuaddrfault)
-	GET_CURPCB(%rcx)
-	leaq	_C_LABEL(fusuintrfailure)(%rip),%r11
-	movq	%r11,PCB_ONFAULT(%rcx)
+/**************************************************************************/
 
-	SMAP_DISABLE
-	movzwl	(%rdi),%eax
-	SMAP_ENABLE
+#define	UFETCHSTORE_PROLOGUE						\
+	movq	$VM_MAXUSER_ADDRESS-1,%r11			;	\
+	cmpq	%r11,%rdi					;	\
+	ja	_C_LABEL(copy_efault)
 
-	movq	$0,PCB_ONFAULT(%rcx)
-	ret
-END(fuswintr)
-
-ENTRY(fubyte)
+/* LINTSTUB: int _ufetch_8(const uint8_t *uaddr, uint8_t *valp); */
+ENTRY(_ufetch_8)
 	DEFERRED_SWITCH_CHECK
-	movq	$VM_MAXUSER_ADDRESS-1,%r11
-	cmpq	%r11,%rdi
-	ja	_C_LABEL(fusuaddrfault)
-	GET_CURPCB(%rcx)
-	leaq	_C_LABEL(fusufailure)(%rip),%r11
-	movq	%r11,PCB_ONFAULT(%rcx)
+	UFETCHSTORE_PROLOGUE
 
 	SMAP_DISABLE
-	movzbl	(%rdi),%eax
+.L_ufetch_8_start:
+	movb	(%rdi),%al
+.L_ufetch_8_end:
 	SMAP_ENABLE
 
-	movq	$0,PCB_ONFAULT(%rcx)
+	movb	%al,(%rsi)
+	xorq	%rax,%rax
 	ret
 	DEFERRED_SWITCH_CALL
-END(fubyte)
+END(_ufetch_8)
 
-ENTRY(suswintr)
-	cmpl	$TLBSTATE_VALID,CPUVAR(TLBSTATE)
-	jnz	_C_LABEL(fusuaddrfault)
-	movq	$VM_MAXUSER_ADDRESS-2,%r11
-	cmpq	%r11,%rdi
-	ja	_C_LABEL(fusuaddrfault)
-	GET_CURPCB(%rcx)
-	leaq	_C_LABEL(fusuintrfailure)(%rip),%r11
-	movq	%r11,PCB_ONFAULT(%rcx)
+/* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
+ENTRY(_ufetch_16)
+	DEFERRED_SWITCH_CHECK
+	UFETCHSTORE_PROLOGUE
 
 	SMAP_DISABLE
-	movw	%si,(%rdi)
+.L_ufetch_16_start:
+	movw	(%rdi),%ax
+.L_ufetch_16_end:
 	SMAP_ENABLE
 
+	movw	%ax,(%rsi)
 	xorq	%rax,%rax
-	movq	%rax,PCB_ONFAULT(%rcx)
 	ret
-END(suswintr)
+	DEFERRED_SWITCH_CALL
+END(_ufetch_16)
 
-ENTRY(subyte)
+/* LINTSTUB: int _ufetch_32(const uint32_t *uaddr, uint32_t *valp); */
+ENTRY(_ufetch_32)
 	DEFERRED_SWITCH_CHECK
-	movq	$VM_MAXUSER_ADDRESS-1,%r11
-	cmpq	%r11,%rdi
-	ja	_C_LABEL(fusuaddrfault)
-
-	GET_CURPCB(%rcx)
-	leaq	_C_LABEL(fusufailure)(%rip),%r11
-	movq	%r11,PCB_ONFAULT(%rcx)
+	UFETCHSTORE_PROLOGUE
 
 	SMAP_DISABLE
+.L_ufetch_32_start:
+	movl	(%rdi),%eax
+.L_ufetch_32_end:
+	SMAP_ENABLE
+
+	movl	%eax,(%rsi)
+	xorq	%rax,%rax
+	ret
+	DEFERRED_SWITCH_CALL
+END(_ufetch_32)
+
+/* LINTSTUB: int _ufetch_64(const uint64_t *uaddr, uint64_t *valp); */
+ENTRY(_ufetch_64)
+	DEFERRED_SWITCH_CHECK
+	UFETCHSTORE_PROLOGUE
+
+	SMAP_DISABLE
+.L_ufetch_64_start:
+	movq	(%rdi),%rax
+.L_ufetch_64_end:
+	SMAP_ENABLE
+
+	movq	%rax,(%rsi)
+	xorq	%rax,%rax
+	ret
+	DEFERRED_SWITCH_CALL
+END(_ufetch_64)
+
+/* LINTSTUB: int _ustore_8(uint8_t *uaddr, uint8_t val); */
+ENTRY(_ustore_8)
+	DEFERRED_SWITCH_CHECK
+	UFETCHSTORE_PROLOGUE
+
+	SMAP_DISABLE
+.L_ustore_8_start:
 	movb	%sil,(%rdi)
+.L_ustore_8_end:
 	SMAP_ENABLE
 
 	xorq	%rax,%rax
-	movq	%rax,PCB_ONFAULT(%rcx)
 	ret
 	DEFERRED_SWITCH_CALL
-END(subyte)
+END(_ustore_8)
 
-/*
- * These are the same, but must reside at different addresses,
- * because trap.c checks for them.
- */
-ENTRY(fusuintrfailure)
+/* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
+ENTRY(_ustore_16)
+	DEFERRED_SWITCH_CHECK
+	UFETCHSTORE_PROLOGUE
+
+	SMAP_DISABLE
+.L_ustore_16_start:
+	movw	%si,(%rdi)
+.L_ustore_16_end:
 	SMAP_ENABLE
-	movq	$0,PCB_ONFAULT(%rcx)
-	movl	$-1,%eax
-	ret
-END(fusuintrfailure)
 
-ENTRY(fusufailure)
+	xorq	%rax,%rax
+	ret
+	DEFERRED_SWITCH_CALL
+END(_ustore_16)
+
+/* LINTSTUB: int _ustore_32(uint32_t *uaddr, uint32_t val); */
+ENTRY(_ustore_32)
+	DEFERRED_SWITCH_CHECK
+	UFETCHSTORE_PROLOGUE
+
+	SMAP_DISABLE
+.L_ustore_32_start:
+	movl	%esi,(%rdi)
+.L_ustore_32_end:
 	SMAP_ENABLE
-	movq	$0,PCB_ONFAULT(%rcx)
-	movl	$-1,%eax
-	ret
-END(fusufailure)
 
-ENTRY(fusuaddrfault)
-	movl	$-1,%eax
+	xorq	%rax,%rax
 	ret
-END(fusuaddrfault)
+	DEFERRED_SWITCH_CALL
+END(_ustore_32)
+
+/* LINTSTUB: int _ustore_64(uint64_t *uaddr, uint64_t val); */
+ENTRY(_ustore_64)
+	DEFERRED_SWITCH_CHECK
+	UFETCHSTORE_PROLOGUE
+
+	SMAP_DISABLE
+.L_ustore_64_start:
+	movq	%rsi,(%rdi)
+.L_ustore_64_end:
+	SMAP_ENABLE
+
+	xorq	%rax,%rax
+	ret
+	DEFERRED_SWITCH_CALL
+END(_ustore_64)
+
+/**************************************************************************/
 
 /*
  * Compare-and-swap the 64-bit integer in the user-space.
  *
- * int	ucas_64(volatile int64_t *uptr, int64_t old, int64_t new, int64_t *ret);
+ * int	_ucas_64(volatile uint64_t *uptr, uint64_t old, uint64_t new,
+ *		 uint64_t *ret);
  */
-ENTRY(ucas_64)
+ENTRY(_ucas_64)
 	DEFERRED_SWITCH_CHECK
 	/* Fail if kernel-space */
 	movq	$VM_MAXUSER_ADDRESS-8,%r8
@@ -511,12 +555,13 @@ ENTRY(ucas_64)
 	xorq	%rax,%rax
 	ret
 	DEFERRED_SWITCH_CALL
-END(ucas_64)
+END(_ucas_64)
 
 /*
- * int	ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ * int	_ucas_32(volatile uint32_t *uptr, uint32_t old, uint32_t new,
+ *		 uint32_t *ret);
  */
-ENTRY(ucas_32)
+ENTRY(_ucas_32)
 	DEFERRED_SWITCH_CHECK
 	/* Fail if kernel-space */
 	movq	$VM_MAXUSER_ADDRESS-4,%r8
@@ -540,7 +585,7 @@ ENTRY(ucas_32)
 	xorq	%rax,%rax
 	ret
 	DEFERRED_SWITCH_CALL
-END(ucas_32)
+END(_ucas_32)
 
 ENTRY(ucas_efault)
 	movq	$EFAULT,%rax
@@ -551,13 +596,6 @@ ENTRY(ucas_fault)
 	SMAP_ENABLE
 	ret
 END(ucas_fault)
-
-/*
- * int	ucas_ptr(volatile void **uptr, void *old, void *new, void **ret);
- * int	ucas_int(volatile int *uptr, int old, intnew, int *ret);
- */
-STRONG_ALIAS(ucas_ptr, ucas_64)
-STRONG_ALIAS(ucas_int, ucas_32)
 
 /*
  * Label must be after all copy functions.
@@ -598,6 +636,38 @@ _C_LABEL(onfault_table):
 	.quad .Lucas32_start
 	.quad .Lucas32_end
 	.quad _C_LABEL(ucas_fault)
+
+	.quad .L_ufetch_8_start
+	.quad .L_ufetch_8_end
+	.quad _C_LABEL(copy_fault)
+
+	.quad .L_ufetch_16_start
+	.quad .L_ufetch_16_end
+	.quad _C_LABEL(copy_fault)
+
+	.quad .L_ufetch_32_start
+	.quad .L_ufetch_32_end
+	.quad _C_LABEL(copy_fault)
+
+	.quad .L_ufetch_64_start
+	.quad .L_ufetch_64_end
+	.quad _C_LABEL(copy_fault)
+
+	.quad .L_ustore_8_start
+	.quad .L_ustore_8_end
+	.quad _C_LABEL(copy_fault)
+
+	.quad .L_ustore_16_start
+	.quad .L_ustore_16_end
+	.quad _C_LABEL(copy_fault)
+
+	.quad .L_ustore_32_start
+	.quad .L_ustore_32_end
+	.quad _C_LABEL(copy_fault)
+
+	.quad .L_ustore_64_start
+	.quad .L_ustore_64_end
+	.quad _C_LABEL(copy_fault)
 
 	.quad 0	/* terminate */
 

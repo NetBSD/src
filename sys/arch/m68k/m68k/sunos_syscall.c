@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscall.c,v 1.23 2015/03/07 18:54:57 christos Exp $	*/
+/*	$NetBSD: sunos_syscall.c,v 1.24 2019/04/06 03:06:26 thorpej Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.23 2015/03/07 18:54:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.24 2019/04/06 03:06:26 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -123,7 +123,9 @@ sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 	 * code assumes the kernel pops the syscall argument the
 	 * glue pushed on the stack. Sigh...
 	 */
-	code = fuword((void *)frame->f_regs[SP]);
+	error = ufetch_long((void *)frame->f_regs[SP], (u_long *)&code);
+	if (error)
+		goto bad;
 
 	/*
 	 * XXX
@@ -149,7 +151,9 @@ sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-		code = fuword(params);
+		error = ufetch_long((void *)params, (u_long *)&code);
+		if (error)
+			goto bad;
 		params += sizeof(int);
 		break;
 	default:
@@ -228,7 +232,9 @@ sunos_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 	 * code assumes the kernel pops the syscall argument the
 	 * glue pushed on the stack. Sigh...
 	 */
-	code = fuword((void *)frame->f_regs[SP]);
+	error = ufetch_long((void *)frame->f_regs[SP], (u_long *)&code);
+	if (error)
+		goto bad;
 
 	/*
 	 * XXX
@@ -254,7 +260,9 @@ sunos_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-		code = fuword(params);
+		error = ufetch_long((void *)params, (u_long *)&code);
+		if (error)
+			goto bad;
 		params += sizeof(int);
 		break;
 	default:
