@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.66 2019/04/03 08:07:59 kamil Exp $	*/
+/*	$NetBSD: syscall.c,v 1.67 2019/04/06 11:54:20 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.66 2019/04/03 08:07:59 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.67 2019/04/06 11:54:20 kamil Exp $");
 
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -284,29 +284,14 @@ syscall(struct trapframe *tf, lwp_t *l, uint32_t insn)
 }
 
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	lwp_t * const l = arg;
-	struct proc *p = l->l_proc;
-
-	if (p->p_slflag & PSL_TRACED) {
-		mutex_enter(p->p_lock);
-		p->p_xsig = SIGTRAP;
-		p->p_sigctx.ps_faked = true; // XXX
-		p->p_sigctx.ps_info._signo = p->p_xsig;
-		p->p_sigctx.ps_info._code = TRAP_CHLD;
-		sigswitch(0, SIGTRAP, true);
-		// XXX ktrpoint(KTR_PSIG)
-		mutex_exit(p->p_lock);
-	}
-
 	struct trapframe * const tf = lwp_trapframe(l);
 
 	tf->tf_r0 = 0;
 	tf->tf_spsr &= ~PSR_C_bit;	/* carry bit */
 
 	userret(l);
-	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*
