@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ipi.c,v 1.3 2015/01/18 23:16:35 rmind Exp $	*/
+/*	$NetBSD: subr_ipi.c,v 1.4 2019/04/06 02:59:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.3 2015/01/18 23:16:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.4 2019/04/06 02:59:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -162,10 +162,31 @@ ipi_unregister(u_int ipi_id)
 
 	/* Ensure that there are no IPIs in flight. */
 	kpreempt_disable();
-	ipi_broadcast(&ipimsg);
+	ipi_broadcast(&ipimsg, false);
 	ipi_wait(&ipimsg);
 	kpreempt_enable();
 	mutex_exit(&ipi_mngmt_lock);
+}
+
+/*
+ * ipi_mark_pending: internal routine to mark an IPI pending on the
+ * specified CPU (which might be curcpu()).
+ */
+static bool
+ipi_mark_pending(u_int ipi_id, struct cpu_info *ci)
+{
+	const u_int i = ipi_id >> IPI_BITW_SHIFT;
+	const uint32_t bitm = 1U << (ipi_id & IPI_BITW_MASK);
+
+	KASSERT(ipi_id < IPI_MAXREG);
+	KASSERT(kpreempt_disabled());
+
+	/* Mark as pending and send an IPI. */
+	if (membar_consumer(), (ci->ci_ipipend[i] & bitm) == 0) {
+		atomic_or_32(&ci->ci_ipipend[i], bitm);
+		return true;
+	}
+	return false;
 }
 
 /*
@@ -174,26 +195,20 @@ ipi_unregister(u_int ipi_id)
 void
 ipi_trigger(u_int ipi_id, struct cpu_info *ci)
 {
-	const u_int i = ipi_id >> IPI_BITW_SHIFT;
-	const uint32_t bitm = 1U << (ipi_id & IPI_BITW_MASK);
 
-	KASSERT(ipi_id < IPI_MAXREG);
-	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
-
-	/* Mark as pending and send an IPI. */
-	if (membar_consumer(), (ci->ci_ipipend[i] & bitm) == 0) {
-		atomic_or_32(&ci->ci_ipipend[i], bitm);
+	if (ipi_mark_pending(ipi_id, ci)) {
 		cpu_ipi(ci);
 	}
 }
 
 /*
- * ipi_trigger_multi: same as ipi_trigger() but sends to the multiple
- * CPUs given the target CPU set.
+ * ipi_trigger_multi_internal: the guts of ipi_trigger_multi() and
+ * ipi_trigger_broadcast().
  */
-void
-ipi_trigger_multi(u_int ipi_id, const kcpuset_t *target)
+static void
+ipi_trigger_multi_internal(u_int ipi_id, const kcpuset_t *target,
+    bool skip_self)
 {
 	const cpuid_t selfid = cpu_index(curcpu());
 	CPU_INFO_ITERATOR cii;
@@ -210,11 +225,32 @@ ipi_trigger_multi(u_int ipi_id, const kcpuset_t *target)
 		}
 		ipi_trigger(ipi_id, ci);
 	}
-	if (kcpuset_isset(target, selfid)) {
+	if (!skip_self && kcpuset_isset(target, selfid)) {
+		ipi_mark_pending(ipi_id, curcpu());
 		int s = splhigh();
 		ipi_cpu_handler();
 		splx(s);
 	}
+}
+
+/*
+ * ipi_trigger_multi: same as ipi_trigger() but sends to the multiple
+ * CPUs given the target CPU set.
+ */
+void
+ipi_trigger_multi(u_int ipi_id, const kcpuset_t *target)
+{
+	ipi_trigger_multi_internal(ipi_id, target, false);
+}
+
+/*
+ * ipi_trigger_broadcast: same as ipi_trigger_multi() to kcpuset_attached,
+ * optionally skipping the sending CPU.
+ */
+void
+ipi_trigger_broadcast(u_int ipi_id, bool skip_self)
+{
+	ipi_trigger_multi_internal(ipi_id, kcpuset_attached, skip_self);
 }
 
 /*
@@ -365,7 +401,7 @@ ipi_multicast(ipi_msg_t *msg, const kcpuset_t *target)
  * => The caller must ipi_wait() on the message for completion.
  */
 void
-ipi_broadcast(ipi_msg_t *msg)
+ipi_broadcast(ipi_msg_t *msg, bool skip_self)
 {
 	const struct cpu_info * const self = curcpu();
 	CPU_INFO_ITERATOR cii;
@@ -389,8 +425,10 @@ ipi_broadcast(ipi_msg_t *msg)
 		ipi_trigger(IPI_SYNCH_ID, ci);
 	}
 
-	/* Finally, execute locally. */
-	msg->func(msg->arg);
+	if (!skip_self) {
+		/* Finally, execute locally. */
+		msg->func(msg->arg);
+	}
 }
 
 /*
