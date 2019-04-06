@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.144 2015/03/04 20:30:00 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.145 2019/04/06 03:06:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.144 2015/03/04 20:30:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145 2019/04/06 03:06:28 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -137,9 +137,6 @@ extern struct emul emul_netbsd_aoutm68k;
 # define _pmap_fault(map, va, ftype) \
 	uvm_fault(map, va, ftype)
 #endif	/* SUN3X */
-
-/* Special labels in m68k/copy.s */
-extern char fubail[], subail[];
 
 /* These are called from locore.s */
 void trap(struct trapframe *, int type, u_int code, u_int v);
@@ -480,20 +477,6 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 		if (kgdb_recover != 0)
 			goto dopanic;
 #endif
-		/*
-		 * If we were doing profiling ticks or other user mode
-		 * stuff from interrupt code, Just Say No.
-		 */
-		if (onfault == (void *)fubail || onfault == (void *)subail) {
-#ifdef	DEBUG
-			if (mmudebug & MDB_CPFAULT) {
-				printf("trap: copyfault fu/su bail\n");
-				Debugger();
-			}
-#endif
-			rv = EFAULT;
-			goto copyfault;
-		}
 		/*FALLTHROUGH*/
 
 	case T_MMUFLT|T_USER: {		/* page fault */
@@ -565,9 +548,6 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
 
-			if ((type & T_USER) == 0 && ucas_ras_check(tf)) {
-				return;
-			}
 			goto finish;
 		}
 		if (rv == EACCES) {

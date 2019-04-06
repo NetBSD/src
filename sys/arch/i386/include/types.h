@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.88 2018/07/12 10:46:44 maxv Exp $	*/
+/*	$NetBSD: types.h,v 1.89 2019/04/06 03:06:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -129,6 +129,7 @@ typedef __register_t	register_t;
 #define	__HAVE___LWP_GETPRIVATE_FAST
 #define	__HAVE_TLS_VARIANT_II
 #define	__HAVE_COMMON___TLS_GET_ADDR
+#define	__HAVE_UCAS_FULL
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

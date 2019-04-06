@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.171 2019/03/14 21:09:03 christos Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.172 2019/04/06 03:06:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.171 2019/03/14 21:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.172 2019/04/06 03:06:29 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -190,7 +190,7 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
 			if (UVM_OBJ_IS_DEVICE(entry->object.uvm_obj)) {
 				for (/* nothing */; start < lim;
 				     start += PAGE_SIZE, vec++)
-					subyte(vec, 1);
+					ustore_char(vec, 1);
 				continue;
 			}
 		}
@@ -234,7 +234,7 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
 					pgi = 1;
 				}
 			}
-			(void) subyte(vec, pgi);
+			(void) ustore_char(vec, pgi);
 		}
 		if (uobj != NULL)
 			mutex_exit(uobj->vmobjlock);

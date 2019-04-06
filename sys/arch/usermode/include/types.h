@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.14 2018/06/01 07:19:50 reinoud Exp $ */
+/* $NetBSD: types.h,v 1.15 2019/04/06 03:06:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -94,5 +94,6 @@ typedef register_t	__register_t;
 #define __HAVE_CPU_LWP_SETPRIVATE
 #define __HAVE_MM_MD_KERNACC
 #define	__HAVE_COMPAT_NETBSD32
+#define	__HAVE_UCAS_FULL
 
 #endif /* !_USERMODE_TYPES_H_ */
