@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucas.9,v 1.3 2019/04/06 03:06:24 thorpej Exp $
+.\"	$NetBSD: ucas.9,v 1.4 2019/04/06 07:56:49 wiz Exp $
 .\"
 .\" Copyright (c) 2019 Jason R. Thorpe.
 .\" Copyright (c) 2011 YAMAMOTO Takashi,
@@ -52,7 +52,6 @@ user-space address.
 Except that they can be safely used for the kernel to access user-space
 address, they are semantically equivalents of
 .Xr atomic_cas 3 .
-.Pp
 .Bl -tag -width uptr
 .It Fa uptr
 The pointer to the variable.
@@ -64,16 +63,6 @@ The value to store to the variable.
 .It Fa retp
 The pointer to the memory to store the old value of the variable.
 .El
-.\" ------------------------------------------------------------
-.Sh RETURN VALUES
-On success, these functions return 0.
-In that case, the caller can consult the value returned via
-.Fa retp
-to check the result of the CAS operation.
-Otherwise, these functions return an appropriate
-.Xr errno 9
-error code, typically
-.Dv EFAULT .
 .\" ------------------------------------------------------------
 .Sh IMPLEMENTATION NOTES
 The
@@ -87,7 +76,6 @@ primitives have the following signatures and are considered private to
 the implementation and are not to be called by consumers of the
 .Nm ucas
 API:
-.Pp
 .Bl -tag -width _ucas_32
 .It Ft int Fn _ucas_32 \
 "volatile uint32_t *uptr" "uint32_t old" "uint32_t new" "uint32_t *retp" ;
@@ -139,7 +127,7 @@ operations
 and the multiprocessor implementation synchronizes with other CPUs using
 interprocessor interrupts.
 .Pp
-If a particular platform wishes ro use the generic implementation on
+If a particular platform wishes to use the generic implementation on
 uniprocessors but an optimized implementation on multiprocessors, the
 the platform should define
 .Dv __HAVE_UCAS_MP
@@ -154,6 +142,16 @@ if an
 .Dv _LP64
 platform
 .Pc .
+.\" ------------------------------------------------------------
+.Sh RETURN VALUES
+On success, these functions return 0.
+In that case, the caller can consult the value returned via
+.Fa retp
+to check the result of the CAS operation.
+Otherwise, these functions return an appropriate
+.Xr errno 9
+error code, typically
+.Dv EFAULT .
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr atomic_cas 3 ,
