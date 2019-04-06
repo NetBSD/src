@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2012/10/27 17:17:58 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2019/04/06 00:09:09 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2012/10/27 17:17:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2019/04/06 00:09:09 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 		 */
 		if (error != ENXIO && error != ENODEV)
 #endif
-			printf("match_bootdisk: can't open dev %s (%d)\n",
+			aprint_error("match_bootdisk: can't open dev %s (%d)\n",
 			    device_xname(dv), error);
 		vput(tmpvn);
 		return (0);
@@ -127,7 +127,7 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 		 * XXX Can't happen -- open() would have errored out
 		 * or faked one up.
 		 */
-		printf("match_bootdisk: can't get label for dev %s (%d)\n",
+		aprint_error("match_bootdisk: can't get label for dev %s (%d)\n",
 		    device_xname(dv), error);
 		goto closeout;
 	}
@@ -182,7 +182,7 @@ findroot(void)
 
 bootdisk_found:
 			if (booted_device) {
-				printf("WARNING: double match for boot "
+				aprint_error("WARNING: double match for boot "
 				    "device (%s, %s)\n",
 				    device_xname(booted_device), device_xname(dv));
 				continue;
@@ -203,7 +203,7 @@ cpu_rootconf(void)
 
 	findroot();
 
-	printf("boot device: %s\n",
+	aprint_normal("boot device: %s\n",
 	    booted_device ? device_xname(booted_device) : "<unknown>");
 	rootconf();
 }
