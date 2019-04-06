@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.7 2018/03/25 04:04:36 sevan Exp $	*/
+/*	$NetBSD: license.c,v 1.8 2019/04/06 00:05:47 sevan Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -51,6 +51,8 @@ const char *default_acceptable_licenses =
     "artistic artistic-2.0 "
     "boost-license "
     "cc-by-sa-v3.0 "
+    "cc-by-sa-v4.0 "
+    "cc-by-v4.0 "
     "cc0-1.0-universal "
     "cddl-1.0 "
     "cecill-2.1 "
@@ -77,6 +79,7 @@ const char *default_acceptable_licenses =
     "ofl-v1.0 ofl-v1.1 "
     "openssl "
     "original-bsd modified-bsd 2-clause-bsd "
+    "osl "
     "paratype "
     "php "
     "png-license "
