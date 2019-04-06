@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.5 2019/04/06 17:27:58 kre Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.6 2019/04/06 17:42:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.5 2019/04/06 17:27:58 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.6 2019/04/06 17:42:28 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ freebsd_syscall(struct trapframe *frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-		error = ufetch_int((void *)params, &code);
+		error = ufetch_long((void *)params, (u_long *)&code);
 		if (error)
 			goto bad;
 		params += sizeof(int);
@@ -98,9 +98,9 @@ freebsd_syscall(struct trapframe *frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		error = ufetch_int((void *)(params +
+		error = ufetch_long((void *)(params +
 					     _QUAD_LOWWORD * sizeof(int)),
-				    &code);
+				    (u_long *)&code);
 		if (error)
 			goto bad;
 		params += sizeof(quad_t);
