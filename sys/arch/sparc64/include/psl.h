@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.59 2019/04/05 12:15:41 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.60 2019/04/06 21:40:15 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -292,9 +292,8 @@
  * Put "memory" to asm inline on sun4v to avoid issuing rdpr %ver
  * before checking cputyp as a result of code moving by compiler
  * optimization.
- * For clang, to prevent it from being removed by optimization.
  */
-#if defined(SUN4V) || defined(__clang__)
+#ifdef SUN4V
 #define constasm_clobbers "memory"
 #else
 #define constasm_clobbers
@@ -323,11 +322,13 @@ static __inline void set##name(type _val)				\
 	__asm volatile(#wr " %0,0,%" #reg : : "r" (_val) : "memory");	\
 }
 
-#ifdef __arch64__
+/*
+ * XXX: clang's "r" constraint cannot handle 64-bit,
+ * so use 32-bit kernel code as a workaround.
+ */
+#if defined(__arch64__) && !defined(__clang__)
 #define SPARC64_RDCONST64_DEF(rd, name, reg) \
 	SPARC64_RDCONST_DEF(rd, name, reg, uint64_t)
-#define SPARC64_RD64_DEF(rd, name, reg) SPARC64_RD_DEF(rd, name, reg, uint64_t)
-#define SPARC64_WR64_DEF(wr, name, reg) SPARC64_WR_DEF(wr, name, reg, uint64_t)
 #else
 #define SPARC64_RDCONST64_DEF(rd, name, reg)				\
 static __inline __constfunc uint64_t get##name(void)			\
@@ -337,6 +338,12 @@ static __inline __constfunc uint64_t get##name(void)			\
 		: "=r" (_hi), "=r" (_lo) : : constasm_clobbers);	\
 	return ((uint64_t)_hi << 32) | _lo;				\
 }
+#endif
+
+#ifdef __arch64__
+#define SPARC64_RD64_DEF(rd, name, reg) SPARC64_RD_DEF(rd, name, reg, uint64_t)
+#define SPARC64_WR64_DEF(wr, name, reg) SPARC64_WR_DEF(wr, name, reg, uint64_t)
+#else
 #define SPARC64_RD64_DEF(rd, name, reg)					\
 static __inline uint64_t get##name(void)				\
 {									\
