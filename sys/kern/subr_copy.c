@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.9 2019/04/06 03:06:28 thorpej Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.10 2019/04/06 15:52:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008, 2019
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.9 2019/04/06 03:06:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.10 2019/04/06 15:52:35 thorpej Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 #define	__UCAS_PRIVATE
@@ -375,7 +375,15 @@ do {									\
 } while (/*CONSTCOND*/0)
 #endif /* __NO_STRICT_ALIGNMENT */
 
-#ifndef __HAVE_UCAS_FULL
+/*
+ * __HAVE_UCAS_FULL platforms provide _ucas_32() and _ucas_64() themselves.
+ * _RUMPKERNEL also provides it's own _ucas_32() and _ucas_64().
+ *
+ * In all other cases, we provide generic implementations that work on
+ * all platforms.
+ */
+
+#if !defined(__HAVE_UCAS_FULL) && !defined(_RUMPKERNEL)
 #if !defined(__HAVE_UCAS_MP) && defined(MULTIPROCESSOR)
 #include <sys/atomic.h>
 #include <sys/cpu.h>
@@ -522,7 +530,7 @@ _ucas_64(volatile uint64_t *uaddr, uint64_t old, uint64_t new, uint64_t *ret)
 	return error;
 }
 #endif /* _LP64 */
-#endif /* ! __HAVE_UCAS_FULL */
+#endif /* ! __HAVE_UCAS_FULL && ! _RUMPKERNEL */
 
 int
 ucas_32(volatile uint32_t *uaddr, uint32_t old, uint32_t new, uint32_t *ret)
