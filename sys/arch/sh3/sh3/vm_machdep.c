@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.79 2019/04/06 03:06:27 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.80 2019/04/06 11:54:20 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.79 2019/04/06 03:06:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80 2019/04/06 11:54:20 kamil Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -239,16 +239,14 @@ sh3_setup_uarea(struct lwp *l)
  * When this function returns, new lwp returns to user mode.
  */
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp *l = arg;
 	struct trapframe *tf = l->l_md.md_regs;
 
 	tf->tf_r0 = 0;		/* fork(2) returns 0 in child */
 	tf->tf_ssr |= PSL_TBIT; /* syscall succeeded */
 
 	userret(l);
-	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*

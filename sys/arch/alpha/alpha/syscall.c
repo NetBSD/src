@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.43 2019/04/03 08:07:59 kamil Exp $ */
+/* $NetBSD: syscall.c,v 1.44 2019/04/06 11:54:19 kamil Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.43 2019/04/03 08:07:59 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2019/04/06 11:54:19 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,28 +218,13 @@ syscall(struct lwp *l, uint64_t code, struct trapframe *tf)
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp * const l = arg;
-	struct proc *p = l->l_proc;
-
-	if (p->p_slflag & PSL_TRACED) {
-		mutex_enter(p->p_lock);
-		p->p_xsig = SIGTRAP;
-		p->p_sigctx.ps_faked = true; // XXX
-		p->p_sigctx.ps_info._signo = p->p_xsig;
-		p->p_sigctx.ps_info._code = TRAP_CHLD;
-		sigswitch(0, SIGTRAP, true);
-		// XXX ktrpoint(KTR_PSIG)
-		mutex_exit(p->p_lock);
-	}
 
 	/*
 	 * Return values in the frame set by cpu_lwp_fork().
 	 */
-
 	userret(l);
-	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*
