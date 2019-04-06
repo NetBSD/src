@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.104 2019/04/05 23:01:09 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.105 2019/04/06 15:35:09 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.104 2019/04/05 23:01:09 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.105 2019/04/06 15:35:09 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2946,7 +2946,7 @@ EVENTMASK_PRESERVED(eventmask_preserved_lwp_exit, PTRACE_LWP_EXIT)
 
 static void
 fork_body(pid_t (*fn)(void), bool trackfork, bool trackvfork,
-    bool trackvforkdone, bool detachchild, bool detachparent)
+    bool trackvforkdone)
 {
 	const int exitval = 5;
 	const int exitval2 = 15;
@@ -3118,61 +3118,47 @@ fork_body(pid_t (*fn)(void), bool trackfork, bool trackvfork,
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-#define FORK_TEST(name,descr,fun,tfork,tvfork,tvforkdone,detchild,detparent) \
+#define FORK_TEST(name,fun,tfork,tvfork,tvforkdone)			\
 ATF_TC(name);								\
 ATF_TC_HEAD(name, tc)							\
 {									\
-	atf_tc_set_md_var(tc, "descr", descr);				\
+	atf_tc_set_md_var(tc, "descr", "Verify " #fun "(2) "		\
+	    "called with 0%s%s%s in EVENT_MASK",			\
+	    tfork ? "|PTRACE_FORK" : "",				\
+	    tvfork ? "|PTRACE_VFORK" : "",				\
+	    tvforkdone ? "|PTRACE_VFORK_DONE" : "");			\
 }									\
 									\
 ATF_TC_BODY(name, tc)							\
 {									\
 									\
-	fork_body(fun, tfork, tvfork, tvforkdone, detchild, detparent);	\
+	fork_body(fun, tfork, tvfork, tvforkdone);			\
 }
 
-#define F false
-#define T true
-
-#define F_IF__0(x)
-#define F_IF__1(x) x
-#define F_IF__(x,y) F_IF__ ## x (y)
-#define F_IF_(x,y) F_IF__(x,y)
-#define F_IF(x,y) F_IF_(x,y)
-
-#define DSCR(function,forkbit,vforkbit,vforkdonebit,dchildbit,dparentbit) \
-	"Verify " #function "(2) called with 0"				\
-	F_IF(forkbit,"|PTRACE_FORK")					\
-	F_IF(vforkbit,"|PTRACE_VFORK")					\
-	F_IF(vforkdonebit,"|PTRACE_VFORK_DONE")				\
-	" in EVENT_MASK."						\
-	F_IF(dchildbit," Detach child in this test.")			\
-	F_IF(dparentbit," Detach parent in this test.")
-
-FORK_TEST(fork1, DSCR(fork,0,0,0,0,0), fork, F, F, F, F, F)
+FORK_TEST(fork1, fork, false, false, false)
 #if defined(TWAIT_HAVE_PID)
-FORK_TEST(fork2, DSCR(fork,1,0,0,0,0), fork, T, F, F, F, F)
-FORK_TEST(fork3, DSCR(fork,0,1,0,0,0), fork, F, T, F, F, F)
-FORK_TEST(fork4, DSCR(fork,1,1,0,0,0), fork, T, T, F, F, F)
+FORK_TEST(fork2, fork, true, false, false)
+FORK_TEST(fork3, fork, false, true, false)
+FORK_TEST(fork4, fork, true, true, false)
 #endif
-FORK_TEST(fork5, DSCR(fork,0,0,1,0,0), fork, F, F, T, F, F)
+FORK_TEST(fork5, fork, false, false, true)
 #if defined(TWAIT_HAVE_PID)
-FORK_TEST(fork6, DSCR(fork,1,0,1,0,0), fork, T, F, T, F, F)
-FORK_TEST(fork7, DSCR(fork,0,1,1,0,0), fork, F, T, T, F, F)
-FORK_TEST(fork8, DSCR(fork,1,1,1,0,0), fork, T, T, T, F, F)
+FORK_TEST(fork6, fork, true, false, true)
+FORK_TEST(fork7, fork, false, true, true)
+FORK_TEST(fork8, fork, true, true, true)
 #endif
 
-FORK_TEST(vfork1, DSCR(vfork,0,0,0,0,0), vfork, F, F, F, F, F)
+FORK_TEST(vfork1, vfork, false, false, false)
 #if defined(TWAIT_HAVE_PID)
-FORK_TEST(vfork2, DSCR(vfork,1,0,0,0,0), vfork, T, F, F, F, F)
-FORK_TEST(vfork3, DSCR(vfork,0,1,0,0,0), vfork, F, T, F, F, F)
-FORK_TEST(vfork4, DSCR(vfork,1,1,0,0,0), vfork, T, T, F, F, F)
+FORK_TEST(vfork2, vfork, true, false, false)
+FORK_TEST(vfork3, vfork, false, true, false)
+FORK_TEST(vfork4, vfork, true, true, false)
 #endif
-FORK_TEST(vfork5, DSCR(vfork,0,0,1,0,0), vfork, F, F, T, F, F)
+FORK_TEST(vfork5, vfork, false, false, true)
 #if defined(TWAIT_HAVE_PID)
-FORK_TEST(vfork6, DSCR(vfork,1,0,1,0,0), vfork, T, F, T, F, F)
-FORK_TEST(vfork7, DSCR(vfork,0,1,1,0,0), vfork, F, T, T, F, F)
-FORK_TEST(vfork8, DSCR(vfork,1,1,1,0,0), vfork, T, T, T, F, F)
+FORK_TEST(vfork6, vfork, true, false, true)
+FORK_TEST(vfork7, vfork, false, true, true)
+FORK_TEST(vfork8, vfork, true, true, true)
 #endif
 
 /// ----------------------------------------------------------------------------
