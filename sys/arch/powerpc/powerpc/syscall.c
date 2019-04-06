@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.54 2019/04/03 08:08:00 kamil Exp $	*/
+/*	$NetBSD: syscall.c,v 1.55 2019/04/06 11:54:20 kamil Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -61,25 +61,11 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.54 2019/04/03 08:08:00 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.55 2019/04/06 11:54:20 kamil Exp $");
 
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp * const l = arg;
-	struct proc *p = l->l_proc;
-
-	if (p->p_slflag & PSL_TRACED) {
-		mutex_enter(p->p_lock);
-		p->p_xsig = SIGTRAP;
-		p->p_sigctx.ps_faked = true; // XXX
-		p->p_sigctx.ps_info._signo = p->p_xsig;
-		p->p_sigctx.ps_info._code = TRAP_CHLD;
-		sigswitch(0, SIGTRAP, true);
-		// XXX ktrpoint(KTR_PSIG)
-		mutex_exit(p->p_lock);
-	}
-
 	struct trapframe * const tf = l->l_md.md_utf;
 
 	tf->tf_fixreg[FIRSTARG] = 0;
@@ -87,8 +73,6 @@ child_return(void *arg)
 	tf->tf_cr &= ~0x10000000;
 	tf->tf_srr1 &= ~(PSL_FP|PSL_VEC); /* Disable FP & AltiVec, as we can't
 					   be them. */
-	ktrsysret(SYS_fork, 0, 0);
-	/* Profiling?							XXX */
 }
 #endif
 

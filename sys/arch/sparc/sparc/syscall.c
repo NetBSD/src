@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.30 2019/04/03 08:08:00 kamil Exp $ */
+/*	$NetBSD: syscall.c,v 1.31 2019/04/06 11:54:20 kamil Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30 2019/04/03 08:08:00 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.31 2019/04/06 11:54:20 kamil Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -283,28 +283,13 @@ syscall(register_t code, struct trapframe *tf, register_t pc)
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp *l = arg;
-	struct proc *p = l->l_proc;
-
-	if (p->p_slflag & PSL_TRACED) {
-		mutex_enter(p->p_lock);
-		p->p_xsig = SIGTRAP;
-		p->p_sigctx.ps_faked = true; // XXX
-		p->p_sigctx.ps_info._signo = p->p_xsig;
-		p->p_sigctx.ps_info._code = TRAP_CHLD;
-		sigswitch(0, SIGTRAP, true);
-		// XXX ktrpoint(KTR_PSIG)
-		mutex_exit(p->p_lock);
-	}
 
 	/*
 	 * Return values in the frame set by cpu_lwp_fork().
 	 */
 	userret(l, l->l_md.md_tf->tf_pc, 0);
-	ktrsysret((l->l_proc->p_lflag & PL_PPWAIT) ? SYS_vfork : SYS_fork,
-	    0, 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4 2019/03/01 02:40:01 mrg Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5 2019/04/06 11:54:19 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2019/03/01 02:40:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2019/04/06 11:54:19 kamil Exp $");
 
 void
 cpu_spawn_return(struct lwp *l)
@@ -71,18 +71,14 @@ cpu_spawn_return(struct lwp *l)
 }
 
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp * const l = arg;
 	struct trapframe * const tf = l->l_md.md_utf;
 
 	tf->tf_reg[0] = 0;
 	tf->tf_reg[1] = 1;
 	tf->tf_spsr &= ~NZCV_C;
 	l->l_md.md_cpacr = CPACR_FPEN_NONE;
-
-	ktrsysret(SYS_fork, 0, 0);
-	/* Profiling? XXX */
 }
 #endif
 

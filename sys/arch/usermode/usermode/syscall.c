@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.24 2013/06/26 15:11:30 matt Exp $ */
+/* $NetBSD: syscall.c,v 1.25 2019/04/06 11:54:21 kamil Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2013/06/26 15:11:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25 2019/04/06 11:54:21 kamil Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,9 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2013/06/26 15:11:30 matt Exp $");
 #include <machine/machdep.h>
 
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	lwp_t *l = arg;
 	register_t rval[2];
 	struct pcb *pcb = lwp_getpcb(l);
 	ucontext_t *ucp = &pcb->pcb_userret_ucp;
@@ -60,7 +59,6 @@ child_return(void *arg)
 
 	aprint_debug("child return! lwp %p\n", l);
 	userret(l);
-	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*
@@ -235,4 +233,3 @@ return;
 		thunk_printf("=> %s: %d, (%"PRIx32", %"PRIx32")\n",
 			errstr, error, (uint) (rval[0]), (uint) (rval[1]));
 }
-

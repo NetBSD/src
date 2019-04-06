@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.248 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.249 2019/04/06 11:54:20 kamil Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.248 2019/04/06 03:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.249 2019/04/06 11:54:20 kamil Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -125,16 +125,14 @@ void ast(void);
  * which will be called the very first time when child gets running.
  */
 void
-child_return(void *arg)
+md_child_return(struct lwp *l)
 {
-	struct lwp *l = arg;
 	struct trapframe *utf = l->l_md.md_utf;
 
 	utf->tf_regs[_R_V0] = 0;
 	utf->tf_regs[_R_V1] = 1;
 	utf->tf_regs[_R_A3] = 0;
 	userret(l);
-	ktrsysret(SYS_fork, 0, 0);
 }
 
 #ifdef MIPS3_PLUS
