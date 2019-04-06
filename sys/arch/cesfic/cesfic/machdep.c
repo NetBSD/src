@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2016/12/22 16:05:14 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2019/04/06 03:06:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2016/12/22 16:05:14 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2019/04/06 03:06:25 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -119,7 +119,6 @@ void fic_init(void);
 
 /* prototypes for local functions */
 void    identifycpu(void);
-void	dumpmem(int *, int, int);
 char	*hexstr(int, int);
 
 /* functions called from locore.s */

@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.64 2019/03/17 08:25:10 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.65 2019/04/06 03:06:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -55,7 +55,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.64 2019/03/17 08:25:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.65 2019/04/06 03:06:24 thorpej Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -343,7 +343,7 @@ undefinedinstruction(trapframe_t *tf)
 			return;
 		}
 	 	/*
-		 * Should use fuword() here .. but in the interests of
+		 * Should use ufetch_32() here .. but in the interests of
 		 * squeezing every bit of speed we will just use
 		 * read_insn(). We know the instruction can be read
 		 * as was just executed so this will never fail unless

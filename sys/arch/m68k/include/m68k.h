@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.23 2019/03/14 16:59:10 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.24 2019/04/06 03:06:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,9 +131,6 @@ int	dma_cachectl(void *, int);
 int	kvtop(void *);
 void	physaccess(void *, void *, int, int);
 void	physunaccess(void *, int);
-
-/* m68k_machdep.c */
-bool	ucas_ras_check(struct trapframe *);
 
 #endif /* _KERNEL */
 #endif /* _M68K_M68K_H_ */

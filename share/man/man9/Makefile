@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.435 2019/02/24 02:29:56 rin Exp $
+#       $NetBSD: Makefile,v 1.436 2019/04/06 03:06:24 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -19,7 +19,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	delay.9 devsw_attach.9 disk.9 ddc.9 disklabel.9 dksubr.9 dofileread.9 \
 	dopowerhooks.9 do_setresuid.9 doshutdownhooks.9 driver.9 \
 	edid.9 errno.9 ethersubr.9 evcnt.9 extattr.9 extent.9 \
-	fetch.9 file.9 fileassoc.9 filedesc.9 firmload.9 flash.9 \
+	file.9 fileassoc.9 filedesc.9 firmload.9 flash.9 \
 	fork1.9 fsetown.9 fstrans.9 \
 	genfs.9 genfs_rename.9 \
 	hash.9 hashinit.9 hardclock.9 humanize_number.9 hz.9 \
@@ -53,7 +53,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	SET.9 setbit.9 setjmp.9 shutdownhook_establish.9 \
 	signal.9 skpc.9 sockopt.9 softintr.9 spl.9 specificdata.9 \
 	spi.9 splraiseipl.9 \
-	store.9 suspendsched.9 \
+	suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 sysmon_pswitch.9 sysmon_taskq.9 tc.9 \
 	tcp_congctl.9 threadpool.9 timecounter.9 time_second.9 todr.9 \
 	ts2timo.9 tvtohz.9 \
@@ -61,7 +61,8 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
 	video.9 vme.9 \
 	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
-	ubc.9 usbd_status.9 usbdi.9 uvm.9 uvm_hotplug.9 uvm_km.9 uvm_map.9 \
+	ubc.9 ufetch.9 usbd_status.9 usbdi.9 ustore.9 uvm.9 uvm_hotplug.9 \
+	uvm_km.9 uvm_map.9 \
 	vmem.9 wapbl.9 wdc.9 workqueue.9 \
 	wsbell.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
 	xcall.9
@@ -321,8 +322,6 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
 	extent.9 extent_print.9 extent.9 extent_alloc1.9 \
 	extent.9 extent_alloc_subregion1.9
-MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
-	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
 MLINKS+=file.9 closef.9 \
 	file.9 ffree.9 \
 	file.9 FILE_IS_USABLE.9 \
@@ -873,8 +872,6 @@ MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 	spl.9 splsoftclock.9 spl.9 splsoftnet.9 spl.9 splsoftserial.9 \
 	spl.9 splstatclock.9 spl.9 spltty.9 spl.9 splvm.9 spl.9 splx.9 \
 	spl.9 splsoftbio.9
-MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
-	store.9 suswintr.9 store.9 suword.9 store.9 suiword.9
 MLINKS+=sysctl.9 old_sysctl.9 \
 	sysctl.9 sysctl_create.9 \
 	sysctl.9 sysctl_createv.9 \
@@ -932,6 +929,15 @@ MLINKS+=todr.9 todr_gettime.9 todr.9 todr_settime.9 \
 	todr.9 clock_ymdhms_to_secs.9 todr.9 clock_secs_to_ymdhms.9
 
 MLINKS+=ubc.9 ubc_uiomove.9 ubc.9 ubc_zerorange.9 ubc.9 ubc_purge.9
+
+MLINKS+=ufetch.9 ufetch_8.9 ufetch.9 ufetch_16.9 ufetch.9 ufetch_32.9 \
+	ufetch.9 ufetch_64.9 ufetch.9 ufetch_char.9 ufetch.9 ufetch_short.9 \
+	ufetch.9 ufetch_int.9 ufetch.9 ufetch_long.9 ufetch.9 ufetch_ptr.9
+
+MLINKS+=ustore.9 ustore_8.9 ustore.9 ustore_16.9 ustore.9 ustore_32.9 \
+	ustore.9 ustore_64.9 ustore.9 ustore_char.9 ustore.9 ustore_short.9 \
+	ustore.9 ustore_int.9 ustore.9 ustore_long.9 ustore.9 ustore_ptr.9
+
 MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_swap_init.9 uvm.9 uvm_fault.9 \
 	uvm.9 uvm_vnp_setsize.9 \

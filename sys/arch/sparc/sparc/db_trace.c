@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.35 2016/12/10 10:41:07 mrg Exp $ */
+/*	$NetBSD: db_trace.c,v 1.36 2019/04/06 03:06:27 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35 2016/12/10 10:41:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.36 2019/04/06 03:06:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -50,6 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35 2016/12/10 10:41:07 mrg Exp $");
 #else
 #define ONINTSTACK(fr)	(0)
 #endif
+
+static db_addr_t
+db_fetch_word(const void *uaddr)
+{
+	u_int val;
+
+	if (ufetch_int(uaddr, &val) != 0)
+		val = (u_int)-1;
+	return val;
+}
 
 void
 db_stack_trace_print(db_expr_t addr, bool have_addr,
@@ -127,7 +137,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 #ifdef _KERNEL
 #define FR(framep,field) (INKERNEL(framep)			\
 				? (u_int)(framep)->field	\
-				: fuword(&(framep)->field))
+				: db_fetch_word(&(framep)->field))
 #else
 /* XXX fix me, this is probably wrong */
 #define FR(framep,field) ((u_int)(framep)->field)
