@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.36 2019/04/06 03:06:27 thorpej Exp $ */
+/*	$NetBSD: db_trace.c,v 1.37 2019/04/06 16:22:01 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.36 2019/04/06 03:06:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.37 2019/04/06 16:22:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
+#include <sys/systm.h>
 
 #include <machine/db_machdep.h>
 
@@ -51,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.36 2019/04/06 03:06:27 thorpej Exp $"
 #define ONINTSTACK(fr)	(0)
 #endif
 
+#ifdef _KERNEL
 static db_addr_t
 db_fetch_word(const void *uaddr)
 {
@@ -60,6 +62,7 @@ db_fetch_word(const void *uaddr)
 		val = (u_int)-1;
 	return val;
 }
+#endif /* _KERNEL */
 
 void
 db_stack_trace_print(db_expr_t addr, bool have_addr,
