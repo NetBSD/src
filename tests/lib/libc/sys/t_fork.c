@@ -1,7 +1,7 @@
-/*	$NetBSD: t_fork.c,v 1.3 2018/05/19 05:10:16 kamil Exp $	*/
+/*	$NetBSD: t_fork.c,v 1.4 2019/04/06 15:41:54 kamil Exp $	*/
 
 /*-
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,15 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2018\
+__COPYRIGHT("@(#) Copyright (c) 2018, 2019\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_fork.c,v 1.3 2018/05/19 05:10:16 kamil Exp $");
+__RCSID("$NetBSD: t_fork.c,v 1.4 2019/04/06 15:41:54 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
+#include <sched.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <err.h>
@@ -242,7 +244,7 @@ ATF_TC_HEAD(test, tc)								\
 {										\
 										\
 	atf_tc_set_md_var(tc, "descr",						\
-	    "raise " #sig " in vfork(2)ed child");				\
+	    "raise " #sig " in a child");					\
 }										\
 										\
 ATF_TC_BODY(test, tc)								\
@@ -260,6 +262,97 @@ RAISE(raise6, SIGABRT) /* regular abort trap */
 RAISE(raise7, SIGHUP)  /* hangup */
 RAISE(raise8, SIGCONT) /* continued? */
 
+/// ----------------------------------------------------------------------------
+
+static int
+clone_func(void *arg __unused)
+{
+
+	return 0;
+}
+
+static void
+nested_raw(const char *fn, volatile int flags)
+{
+	int status;
+	pid_t child, child2, wpid;
+	const size_t stack_size = 1024 * 1024;
+	void *stack, *stack_base;
+                
+	stack = malloc(stack_size);
+	ATF_REQUIRE(stack != NULL);
+
+#ifdef __MACHINE_STACK_GROWS_UP
+	stack_base = stack;
+#else
+	stack_base = (char *)stack + stack_size;
+#endif
+
+	flags |= SIGCHLD;
+
+	child = FORK();
+	ATF_REQUIRE(child != 1);
+	if (child == 0) {
+		if (strcmp(fn, "fork") == 0)
+			child2 = fork();
+		else if (strcmp(fn, "vfork") == 0)
+			child2 = vfork();
+		else if (strcmp(fn, "clone") == 0)
+			child2 = __clone(clone_func, stack_base, flags, NULL);
+		else
+			__unreachable();
+
+		ASSERT_NEQ(child2, -1);
+
+		if ((strcmp(fn, "fork") == 0) || (strcmp(fn, "vfork") == 0)) {
+			if (child2 == 0)
+				_exit(0);
+		}
+
+		wpid = waitpid(child2, &status, 0);
+		ASSERT_EQ(child2, wpid);
+		ASSERT_EQ(!!WIFEXITED(status), true);
+		ASSERT_EQ(!!WIFCONTINUED(status), false);
+		ASSERT_EQ(!!WIFSIGNALED(status), false);
+		ASSERT_EQ(!!WIFSTOPPED(status), false);
+		ASSERT_EQ(WEXITSTATUS(status), 0);
+
+		_exit(0);
+	}
+	wpid = waitpid(child, &status, 0);
+
+	ATF_REQUIRE_EQ(wpid, child);
+	ATF_REQUIRE_EQ(!!WIFEXITED(status), true);
+	ATF_REQUIRE_EQ(!!WIFCONTINUED(status), false);
+	ATF_REQUIRE_EQ(!!WIFSIGNALED(status), false);
+	ATF_REQUIRE_EQ(!!WIFSTOPPED(status), false);
+	ATF_REQUIRE_EQ(WEXITSTATUS(status), 0);
+}
+
+#define NESTED(test, fn, flags)							\
+ATF_TC(test);									\
+ATF_TC_HEAD(test, tc)								\
+{										\
+										\
+	atf_tc_set_md_var(tc, "descr",						\
+	    "Test nested " #fn " in a child");					\
+}										\
+										\
+ATF_TC_BODY(test, tc)								\
+{										\
+										\
+	nested_raw(#fn, flags);							\
+}
+
+NESTED(nested_fork, fork, 0)
+NESTED(nested_vfork, vfork, 0)
+NESTED(nested_clone, clone, 0)
+NESTED(nested_clone_vm, clone, CLONE_VM)
+NESTED(nested_clone_fs, clone, CLONE_FS)
+NESTED(nested_clone_files, clone, CLONE_FILES)
+//NESTED(nested_clone_sighand, clone, CLONE_SIGHAND) // XXX
+NESTED(nested_clone_vfork, clone, CLONE_VFORK)
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, raise1);
@@ -270,6 +363,15 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, raise6);
 	ATF_TP_ADD_TC(tp, raise7);
 	ATF_TP_ADD_TC(tp, raise8);
+
+	ATF_TP_ADD_TC(tp, nested_fork);
+	ATF_TP_ADD_TC(tp, nested_vfork);
+	ATF_TP_ADD_TC(tp, nested_clone);
+	ATF_TP_ADD_TC(tp, nested_clone_vm);
+	ATF_TP_ADD_TC(tp, nested_clone_fs);
+	ATF_TP_ADD_TC(tp, nested_clone_files);
+//	ATF_TP_ADD_TC(tp, nested_clone_sighand); // XXX
+	ATF_TP_ADD_TC(tp, nested_clone_vfork);
 
 	return atf_no_error();
 }
