@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.351 2019/03/01 03:03:19 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.352 2019/04/06 11:54:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -536,6 +536,7 @@ void	cpu_spawn_return(struct lwp*);
 void	syscall_intern(struct proc *);
 #endif
 
+void	md_child_return(struct lwp *);
 void	child_return(void *);
 
 int	proc_isunder(struct proc *, struct lwp *);
