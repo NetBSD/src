@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.148 2019/02/18 01:12:23 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.149 2019/04/06 03:06:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.148 2019/02/18 01:12:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.149 2019/04/06 03:06:26 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -233,7 +233,6 @@ machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 void
 trap(struct frame *fp, int type, u_int code, u_int v)
 {
-	extern char fubail[], subail[];
 	struct lwp *l;
 	struct proc *p;
 	struct pcb *pcb;
@@ -496,17 +495,6 @@ copyfault:
 		goto out;
 
 	case T_MMUFLT:		/* Kernel mode page fault */
-		/*
-		 * If we were doing profiling ticks or other user mode
-		 * stuff from interrupt code, Just Say No.
-		 */
-		onfault = pcb->pcb_onfault;
-		if (onfault == fubail || onfault == subail) {
-			rv = EFAULT;
-			goto copyfault;
-		}
-		/* fall into... */
-
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
 		vaddr_t va;
@@ -566,9 +554,6 @@ copyfault:
 				uvm_grow(p, va);
 
 			if (type == T_MMUFLT) {
-				if (ucas_ras_check(&fp->F_t)) {
-					return;
-				}
 #if defined(M68040)
 				if (mmutype == MMU_68040)
 					(void)m68040_writeback(fp, 1);
