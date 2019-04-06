@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.9 2011/05/16 13:22:53 tsutsui Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.10 2019/04/06 03:06:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.9 2011/05/16 13:22:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.10 2019/04/06 03:06:26 thorpej Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -82,24 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.9 2011/05/16 13:22:53 tsutsui Exp
 /* the following is used externally (sysctl_hw) */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
-extern char ucas_32_ras_start[];
-extern char ucas_32_ras_end[];
 extern short exframesize[];
-
-bool
-ucas_ras_check(struct trapframe *v)
-{
-	struct frame *f = (void *)v;
-
-	if (f->f_pc <= (vaddr_t)ucas_32_ras_start ||
-	    f->f_pc >= (vaddr_t)ucas_32_ras_end) {
-		return false;
-	}
-	f->f_pc = (vaddr_t)ucas_32_ras_start;
-	f->f_stackadj = exframesize[f->f_format];
-	f->f_format = f->f_vector = 0;
-	return true;
-}
 
 /*
  * Set registers on exec.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.22 2016/05/25 17:43:58 christos Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.23 2019/04/06 03:06:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.22 2016/05/25 17:43:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.23 2019/04/06 03:06:28 thorpej Exp $");
+
+#define	__UFETCHSTORE_PRIVATE
+#define	__UCAS_PRIVATE
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -71,20 +74,6 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		error = rump_sysproxy_copyout(RUMP_SPVM2CTL(curproc->p_vmspace),
 		    kaddr, uaddr, len);
 	}
-	return error;
-}
-
-int
-subyte(void *uaddr, int byte)
-{
-	int error = 0;
-
-	if (RUMP_LOCALPROC_P(curproc))
-		*(char *)uaddr = byte;
-	else
-		error = rump_sysproxy_copyout(RUMP_SPVM2CTL(curproc->p_vmspace),
-		    &byte, uaddr, 1);
-
 	return error;
 }
 
@@ -215,18 +204,90 @@ uvm_io(struct vm_map *vm, struct uio *uio, int flag)
 	return error;
 }
 
-/*
- * Copy one byte from userspace to kernel.
- */
 int
-fubyte(const void *base)
+_ucas_32(volatile uint32_t *uaddr, uint32_t old, uint32_t new, uint32_t *ret)
 {
-	unsigned char val;
+	uint32_t *uva = ((void *)(uintptr_t)uaddr);
 	int error;
 
-	error = copyin(base, &val, sizeof(char));
-	if (error != 0)
-		return -1;
+	/* XXXXJRT do we need a MP CPU gate? */
 
-	return (int)val;
+	kpreempt_disable();
+	error = _ufetch_32(uva, ret);
+	if (error == 0 && *ret == old) {
+		error = _ustore_32(uva, new);
+	}
+	kpreempt_enable();
+
+	return error;
 }
+
+#ifdef _LP64
+int
+_ucas_64(volatile uint64_t *uaddr, uint64_t old, uint64_t new, uint64_t *ret)
+{
+	uint64_t *uva = ((void *)(uintptr_t)uaddr);
+	int error;
+
+	/* XXXXJRT do we need a MP CPU gate? */
+
+	kpreempt_disable();
+	error = _ufetch_64(uva, ret);
+	if (error == 0 && *ret == old) {
+		error = _ustore_64(uva, new);
+	}
+	kpreempt_enable();
+
+	return error;
+}
+#endif /* _LP64 */
+
+#define	UFETCH(sz)							\
+int									\
+_ufetch_ ## sz(const uint ## sz ##_t *uaddr, uint ## sz ## _t *valp)	\
+{									\
+	int error = 0;							\
+									\
+	if (RUMP_LOCALPROC_P(curproc)) {				\
+		*valp = *uaddr;						\
+	} else {							\
+		error = rump_sysproxy_copyin(				\
+		    RUMP_SPVM2CTL(curproc->p_vmspace),			\
+		    uaddr, valp, sizeof(*valp));			\
+	}								\
+	return error;							\
+}
+
+UFETCH(8)
+UFETCH(16)
+UFETCH(32)
+#ifdef _LP64
+UFETCH(64)
+#endif
+
+#undef UFETCH
+
+#define	USTORE(sz)							\
+int									\
+_ustore_ ## sz(uint ## sz ## _t *uaddr, uint ## sz ## _t val)		\
+{									\
+	int error = 0;							\
+									\
+	if (RUMP_LOCALPROC_P(curproc)) {				\
+		*uaddr = val;						\
+	} else {							\
+		error = rump_sysproxy_copyout(				\
+		    RUMP_SPVM2CTL(curproc->p_vmspace),			\
+		    &val, uaddr, sizeof(val));				\
+	}								\
+	return error;							\
+}
+
+USTORE(8)
+USTORE(16)
+USTORE(32)
+#ifdef _LP64
+USTORE(64)
+#endif
+
+#undef USTORE

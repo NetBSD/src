@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.37 2018/10/18 09:01:52 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.38 2019/04/06 03:06:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,6 +89,9 @@ typedef	int		__register_t;
 #define	__HAVE_OLD_DISKLABEL
 #if defined(__ARM_EABI__) && defined(_ARM_ARCH_6)
 #define	__HAVE_ATOMIC64_OPS
+#endif
+#if defined(_ARM_ARCH_6)
+#define	__HAVE_UCAS_MP
 #endif
 
 #if defined(_KERNEL) || defined(_KMEMUSER)

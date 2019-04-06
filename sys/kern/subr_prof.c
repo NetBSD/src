@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.48 2018/02/04 17:31:51 maxv Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.49 2019/04/06 03:06:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.48 2018/02/04 17:31:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.49 2019/04/06 03:06:28 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gprof.h"
@@ -258,10 +258,12 @@ sys_profil(struct lwp *l, const struct sys_profil_args *uap, register_t *retval)
 /*
  * Collect user-level profiling statistics; called on a profiling tick,
  * when a process is running in user-mode.  This routine may be called
- * from an interrupt context.  We try to update the user profiling buffers
- * cheaply with fuswintr() and suswintr().  If that fails, we revert to
- * an AST that will vector us to trap() with a context in which copyin
- * and copyout will work.  Trap will then call addupc_task().
+ * from an interrupt context.  We schedule an AST that will vector us
+ * to trap() with a context in which copyin and copyout will work.
+ * Trap will then call addupc_task().
+ *
+ * XXX We could use ufetch/ustore here if the profile buffers were
+ * wired.
  *
  * Note that we may (rarely) not get around to the AST soon enough, and
  * lose profile ticks when the next tick overwrites this one, but in this
@@ -273,9 +275,7 @@ addupc_intr(struct lwp *l, u_long pc)
 {
 	struct uprof *prof;
 	struct proc *p;
-	void *addr;
 	u_int i;
-	int v;
 
 	p = l->l_proc;
 
@@ -286,14 +286,13 @@ addupc_intr(struct lwp *l, u_long pc)
 	    (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size)
 		return;			/* out of range; ignore */
 
-	addr = prof->pr_base + i;
 	mutex_spin_exit(&p->p_stmutex);
-	if ((v = fuswintr(addr)) == -1 || suswintr(addr, v + 1) == -1) {
-		/* XXXSMP */
-		prof->pr_addr = pc;
-		prof->pr_ticks++;
-		cpu_need_proftick(l);
-	}
+
+	/* XXXSMP */
+	prof->pr_addr = pc;
+	prof->pr_ticks++;
+	cpu_need_proftick(l);
+
 	mutex_spin_enter(&p->p_stmutex);
 }
 

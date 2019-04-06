@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.7 2016/08/05 16:53:36 scole Exp $	*/
+/*	$NetBSD: support.S,v 1.8 2019/04/06 03:06:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -245,414 +245,135 @@ ENTRY(casuptr, 3)
 }
 END(casuptr)
 
-/*
- * subyte(void *addr, int byte)
- * suword16(void *addr, int word)
- * suword32(void *addr, int word)
- * suword64|suword(void *addr, long word)
- *	Store in user space
- */
+/**************************************************************************/
 
-ENTRY(subyte, 2)
-{	.mlx
-	add		r15=PC_CURLWP,r13
-	movl		r14=VM_MAX_ADDRESS
-	;;
-}
-{	.mib
-	ld8		r15=[r15]		// r15 = curthread
-	cmp.geu		p6,p0=in0,r14
-(p6)	br.dpnt.few	1f
-	;;
-}
-{	.mlx
-	add		r15=L_PCB,r15
-	movl		r14=fusufault
-	;;
-}
-{	.mmi
-	ld8		r15=[r15]		// r15 = PCB
-	;;
-	nop		0
-	add		r15=PCB_ONFAULT,r15
-	;;
-}
-{	.mmi
-	st8		[r15]=r14		// Set onfault
-	;;
-	st1.rel		[in0]=in1
-	nop		0
-	;;
-}
-{	.mib
-	st8.rel		[r15]=r0		// Clear onfault
-	mov		ret0=r0
-	br.ret.sptk	rp
-	;;
-}
-1:
+ENTRY(ufetchstore_fault, 0)
 {	.mfb
-	add		ret0=-1,r0
-	nop		0
+	st8.rel		[r15]=r0	/* curpcb->pcb_onfault = NULL */
+	nop		0		/* ret0 already has error */
 	br.ret.sptk	rp
 	;;
 }
-END(subyte)
+END(ufetchstore_fault)
 
-ENTRY(suword16, 2)
-{	.mlx
-	add		r15=PC_CURLWP,r13
-	movl		r14=VM_MAX_ADDRESS
-	;;
+#define	UFETCH(load_insn, store_insn)					  \
+{	.mlx								 ;\
+	add		r15=PC_CURLWP,r13				 ;\
+	movl		r14=VM_MAX_ADDRESS				;;\
+}									 ;\
+{	.mib								 ;\
+	ld8		r15=[r15]	/* r15 = curlwp */		 ;\
+	cmp.geu		p6,p0=in0,r14					 ;\
+(p6)	br.dpnt.few	1f						;;\
+}									 ;\
+{	.mlx								 ;\
+	add		r15=L_PCB,r15					 ;\
+	movl		r14=ufetchstore_fault				;;\
+}									 ;\
+{	.mmi								 ;\
+	ld8		r15=[r15]	/*r15 = curlwp->l_pcb */	;;\
+	nop		0						 ;\
+	add		r15=PCB_ONFAULT,r15				;;\
+}									 ;\
+{	.mmi								 ;\
+	st8		[r15]=r14	/* curpcb->pcb_onfault = */	;;\
+					/*     ufetchstore_fault */	  \
+	mf								 ;\
+	nop		0						;;\
+}									 ;\
+{	.mmi								 ;\
+	load_insn	r14=[in0]	/* r14 = *uaddr */		;;\
+	st8.rel		[r15]=r0	/* curpcb->pcb_onfault = NULL */ ;\
+	nop		0						;;\
+}									 ;\
+{	.mib								 ;\
+	store_insn	[in1]=r14	/* *valp = r14 */		 ;\
+	mov		ret0=r0		/* ret0 = 0 (success!) */	 ;\
+	br.ret.sptk	rp						;;\
+}									 ;\
+1:									  \
+{	.mfb								 ;\
+	mov		ret0=EFAULT	/* return EFAULT */		 ;\
+	nop		0						 ;\
+	br.ret.sptk	rp						;;\
 }
-{	.mib
-	ld8		r15=[r15]		// r15 = curthread
-	cmp.geu		p6,p0=in0,r14
-(p6)	br.dpnt.few	1f
-	;;
-}
-{	.mlx
-	add		r15=L_PCB,r15
-	movl		r14=fusufault
-	;;
-}
-{	.mmi
-	ld8		r15=[r15]		// r15 = PCB
-	;;
-	nop		0
-	add		r15=PCB_ONFAULT,r15
-	;;
-}
-{	.mmi
-	st8		[r15]=r14		// Set onfault
-	;;
-	st2.rel		[in0]=in1
-	nop		0
-	;;
-}
-{	.mib
-	st8.rel		[r15]=r0		// Clear onfault
-	mov		ret0=r0
-	br.ret.sptk	rp
-	;;
-}
-1:
-{	.mfb
-	add		ret0=-1,r0
-	nop		0
-	br.ret.sptk	rp
-	;;
-}
-END(suword16)
 
-ENTRY(suword32, 2)
-{	.mlx
-	add		r15=PC_CURLWP,r13
-	movl		r14=VM_MAX_ADDRESS
-	;;
-}
-{	.mib
-	ld8		r15=[r15]		// r15 = curthread
-	cmp.geu		p6,p0=in0,r14
-(p6)	br.dpnt.few	1f
-	;;
-}
-{	.mlx
-	add		r15=L_PCB,r15
-	movl		r14=fusufault
-	;;
-}
-{	.mmi
-	ld8		r15=[r15]		// r15 = PCB
-	;;
-	nop		0
-	add		r15=PCB_ONFAULT,r15
-	;;
-}
-{	.mmi
-	st8		[r15]=r14		// Set onfault
-	;;
-	st4.rel		[in0]=in1
-	nop		0
-	;;
-}
-{	.mib
-	st8.rel		[r15]=r0		// Clear onfault
-	mov		ret0=r0
-	br.ret.sptk	rp
-	;;
-}
-1:
-{	.mfb
-	add		ret0=-1,r0
-	nop		0
-	br.ret.sptk	rp
-	;;
-}
-END(suword32)
+/* LINTSTUB: int _ufetch_8(const uint8_t *uaddr, uint8_t *valp); */
+ENTRY(_ufetch_8, 2)
+	UFETCH(ld1, st1)
+END(_ufetch_8)
 
-ENTRY(suword64, 2)
-XENTRY(suword)
-{	.mlx
-	add		r15=PC_CURLWP,r13
-	movl		r14=VM_MAX_ADDRESS
-	;;
-}
-{	.mib
-	ld8		r15=[r15]		// r15 = curthread
-	cmp.geu		p6,p0=in0,r14
-(p6)	br.dpnt.few	1f
-	;;
-}
-{	.mlx
-	add		r15=L_PCB,r15
-	movl		r14=fusufault
-	;;
-}
-{	.mmi
-	ld8		r15=[r15]		// r15 = PCB
-	;;
-	nop		0
-	add		r15=PCB_ONFAULT,r15
-	;;
-}
-{	.mmi
-	st8		[r15]=r14		// Set onfault
-	;;
-	st8.rel		[in0]=in1
-	nop		0
-	;;
-}
-{	.mib
-	st8.rel		[r15]=r0		// Clear onfault
-	mov		ret0=r0
-	br.ret.sptk	rp
-	;;
-}
-1:
-{	.mfb
-	add		ret0=-1,r0
-	nop		0
-	br.ret.sptk	rp
-	;;
-}
-END(suword64)
+/* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
+ENTRY(_ufetch_16, 2)
+	UFETCH(ld2, st2)
+END(_ufetch_16)
 
-/*
- * fubyte(void *addr, int byte)
- * fuword16(void *addr, int word)
- * fuword32(void *addr, int word)
- * fuword64|fuword(void *addr, long word)
- *	Fetch from user space
- */
+/* LINTSTUB: int _ufetch_32(const uint32_t *uaddr, uint32_t *valp); */
+ENTRY(_ufetch_32, 2)
+	UFETCH(ld4, st4)
+END(_ufetch_32)
 
-ENTRY(fubyte, 1)
-{	.mlx
-	add		r15=PC_CURLWP,r13
-	movl		r14=VM_MAX_ADDRESS
-	;;
-}
-{	.mib
-	ld8		r15=[r15]		// r15 = curthread
-	cmp.geu		p6,p0=in0,r14
-(p6)	br.dpnt.few	1f
-	;;
-}
-{	.mlx
-	add		r15=L_PCB,r15
-	movl		r14=fusufault
-	;;
-}
-{	.mmi
-	ld8		r15=[r15]		// r15 = PCB
-	;;
-	nop		0
-	add		r15=PCB_ONFAULT,r15
-	;;
-}
-{	.mmi
-	st8		[r15]=r14		// Set onfault
-	;;
-	mf
-	nop		0
-	;;
-}
-{	.mmb
-	ld1		ret0=[in0]
-	st8.rel		[r15]=r0		// Clear onfault
-	br.ret.sptk	rp
-	;;
-}
-1:
-{	.mfb
-	add		ret0=-1,r0
-	nop		0
-	br.ret.sptk	rp
-	;;
-}
-END(fubyte)
+/* LINTSTUB: int _ufetch_64(const uint64_t *uaddr, uint64_t *valp); */
+ENTRY(_ufetch_64, 2)
+	UFETCH(ld8, st8)
+END(_ufetch_64)
 
-ENTRY(fuword16, 2)
-{	.mlx
-	add		r15=PC_CURLWP,r13
-	movl		r14=VM_MAX_ADDRESS
-	;;
+#define	USTORE(store_insn)						  \
+{	.mlx								 ;\
+	add		r15=PC_CURLWP,r13				 ;\
+	movl		r14=VM_MAX_ADDRESS				;;\
+}									 ;\
+{	.mib								 ;\
+	ld8		r15=[r15]	/* r15 = curlwp */		 ;\
+	cmp.geu		p6,p0=in0,r14					 ;\
+(p6)	br.dpnt.few	1f						;;\
+}									 ;\
+{	.mlx								 ;\
+	add		r15=L_PCB,r15					 ;\
+	movl		r14=ufetchstore_fault				;;\
+}									 ;\
+{	.mmi								 ;\
+	ld8		r15=[r15]	/*r15 = curlwp->l_pcb */	;;\
+	nop		0						 ;\
+	add		r15=PCB_ONFAULT,r15				;;\
+}									 ;\
+{	.mmi								 ;\
+	st8		[r15]=r14	/* curpcb->pcb_onfault = */	;;\
+					/*     ufetchstore_fault */	  \
+	store_insn	[in0]=in1	/* *uaddr = val */		 ;\
+	nop		0						;;\
+}									 ;\
+{	.mib								 ;\
+	st8.rel		[r15]=r0	/* curpcb->pcb_onfault = NULL */ ;\
+	mov		ret0=r0		/* ret0 = 0 (success!) */	 ;\
+	br.ret.sptk	rp						;;\
+}									 ;\
+1:									  \
+{	.mfb								 ;\
+	mov		ret0=EFAULT	/* return EFAULT */		 ;\
+	nop		0						 ;\
+	br.ret.sptk	rp						;;\
 }
-{	.mib
-	ld8		r15=[r15]		// r15 = curthread
-	cmp.geu		p6,p0=in0,r14
-(p6)	br.dpnt.few	1f
-	;;
-}
-{	.mlx
-	add		r15=L_PCB,r15
-	movl		r14=fusufault
-	;;
-}
-{	.mmi
-	ld8		r15=[r15]		// r15 = PCB
-	;;
-	nop		0
-	add		r15=PCB_ONFAULT,r15
-	;;
-}
-{	.mmi
-	st8		[r15]=r14		// Set onfault
-	;;
-	mf
-	nop		0
-	;;
-}
-{	.mmb
-	ld2		ret0=[in0]
-	st8.rel		[r15]=r0		// Clear onfault
-	br.ret.sptk	rp
-	;;
-}
-1:
-{	.mfb
-	add		ret0=-1,r0
-	nop		0
-	br.ret.sptk	rp
-	;;
-}
-END(fuword16)
 
-ENTRY(fuword32, 2)
-{	.mlx
-	add		r15=PC_CURLWP,r13
-	movl		r14=VM_MAX_ADDRESS
-	;;
-}
-{	.mib
-	ld8		r15=[r15]		// r15 = curthread
-	cmp.geu		p6,p0=in0,r14
-(p6)	br.dpnt.few	1f
-	;;
-}
-{	.mlx
-	add		r15=L_PCB,r15
-	movl		r14=fusufault
-	;;
-}
-{	.mmi
-	ld8		r15=[r15]		// r15 = PCB
-	;;
-	nop		0
-	add		r15=PCB_ONFAULT,r15
-	;;
-}
-{	.mmi
-	st8		[r15]=r14		// Set onfault
-	;;
-	mf
-	nop		0
-	;;
-}
-{	.mmb
-	ld4		ret0=[in0]
-	st8.rel		[r15]=r0		// Clear onfault
-	br.ret.sptk	rp
-	;;
-}
-1:
-{	.mfb
-	add		ret0=-1,r0
-	nop		0
-	br.ret.sptk	rp
-	;;
-}
-END(fuword32)
+/* LINTSTUB: int _ustore_8(uint8_t *uaddr, uint8_t val); */
+ENTRY(_ustore_8, 2)
+	USTORE(st1.rel)
+END(_ustore_8)
 
-ENTRY(fuword64, 2)
-XENTRY(fuword)
-{	.mlx
-	add		r15=PC_CURLWP,r13
-	movl		r14=VM_MAX_ADDRESS
-	;;
-}
-{	.mib
-	ld8		r15=[r15]		// r15 = curthread
-	cmp.geu		p6,p0=in0,r14
-(p6)	br.dpnt.few	1f
-	;;
-}
-{	.mlx
-	add		r15=L_PCB,r15
-	movl		r14=fusufault
-	;;
-}
-{	.mmi
-	ld8		r15=[r15]		// r15 = PCB
-	;;
-	nop		0
-	add		r15=PCB_ONFAULT,r15
-	;;
-}
-{	.mmi
-	st8		[r15]=r14		// Set onfault
-	;;
-	mf
-	nop		0
-	;;
-}
-{	.mmb
-	ld8		ret0=[in0]
-	st8.rel		[r15]=r0		// Clear onfault
-	br.ret.sptk	rp
-	;;
-}
-1:
-{	.mfb
-	add		ret0=-1,r0
-	nop		0
-	br.ret.sptk	rp
-	;;
-}
-END(fuword64)
+/* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
+ENTRY(_ustore_16, 2)
+	USTORE(st2.rel)
+END(_ustore_16)
 
-/*
- * fuswintr(void *addr)
- * suswintr(void *addr)
- */
+/* LINTSTUB: int _ustore_32(uint32_t *uaddr, uint32_t val); */
+ENTRY(_ustore_32, 2)
+	USTORE(st4.rel)
+END(_ustore_32)
 
-ENTRY(fuswintr, 1)
-{	.mfb
-	add		ret0=-1,r0
-	nop		0
-	br.ret.sptk	rp
-	;;
-}
-END(fuswintr)
-
-ENTRY(suswintr, 0)
-{	.mfb
-	add		ret0=-1,r0
-	nop		0
-	br.ret.sptk	rp
-	;;
-}
-END(suswintr)
+/* LINTSTUB: int _ustore_64(uint64_t *uaddr, uint64_t val); */
+ENTRY(_ustore_64, 2)
+	USTORE(st8.rel)
+END(_ustore_64)
 
 /**************************************************************************/
 

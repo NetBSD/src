@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.56 2018/05/04 17:13:08 macallan Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.57 2019/04/06 03:06:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -580,7 +580,7 @@ ENTRY(cpu_spinstart)
 #endif /*MULTIPROCESSOR + OEA*/
 
 /*
- * int do_ucas_32(int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ * int do_ucas_32(uint32_t *uptr, uint32_t old, uint32_t new, uint32_t *ret);
  */
 ENTRY(do_ucas_32)
 1:
