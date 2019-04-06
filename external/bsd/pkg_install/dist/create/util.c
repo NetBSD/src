@@ -147,8 +147,8 @@ void
 free_memory_file(struct memory_file *file)
 {
 	if (file != NULL) {
-		free((char *)file->owner);
-		free((char *)file->group);
+		free(__UNCONST(file->owner));
+		free(__UNCONST(file->group));
 		free(file->data);
 		free(file);
 	}
