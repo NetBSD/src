@@ -1,5 +1,6 @@
-# $NetBSD: module.mi,v 1.2 2019/02/23 11:23:07 mlelstv Exp $
+# $NetBSD: module.mi,v 1.3 2019/04/06 12:34:30 kamil Exp $
 ./usr/libdata/debug/usr/tests/modules/k_helper3.debug	tests-sys-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/modules/t_builtin.debug	tests-sys-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/modules/t_kcov.debug	tests-sys-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/modules/t_modctl.debug	tests-sys-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/modules/t_ufetchstore.debug	tests-sys-debug		debug,atf,rump
