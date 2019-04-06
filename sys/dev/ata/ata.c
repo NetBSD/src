@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.147 2018/12/11 23:06:30 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.148 2019/04/06 00:35:25 uwe Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.147 2018/12/11 23:06:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.148 2019/04/06 00:35:25 uwe Exp $");
 
 #include "opt_ata.h"
 
@@ -2040,6 +2040,8 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 #if NATA_DMA
 	if ((atac->atac_cap & ATAC_CAP_DMA) == 0) {
 		/* don't care about DMA modes */
+		if (*sep != '\0')
+			aprint_verbose("\n");
 		return;
 	}
 	if (cf_flags & ATA_CONFIG_DMA_SET) {
@@ -2086,7 +2088,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	}
 	ata_channel_unlock(chp);
 
-	if (printed)
+	if (*sep != '\0')
 		aprint_verbose("\n");
 
 #if NATA_UDMA
