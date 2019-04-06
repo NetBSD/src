@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.40 2016/08/05 08:56:36 pgoyette Exp $   */
+/*	$NetBSD: slcompress.c,v 1.41 2019/04/06 08:38:23 msaitoh Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.40 2016/08/05 08:56:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.41 2019/04/06 08:38:23 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -118,9 +118,9 @@ sl_compress_setup(struct slcompress *comp, int max_state)
 }
 
 
-/* ENCODE encodes a number that is known to be non-zero.  ENCODEZ
- * checks for zero (since zero has to be encoded in the long, 3 byte
- * form).
+/*
+ * ENCODE encodes a number that is known to be non-zero.  ENCODEZ checks for
+ * zero (since zero has to be encoded in the long, 3 byte form).
  */
 #define ENCODE(n) { \
 	if ((uint16_t)(n) >= 256) { \
@@ -190,11 +190,11 @@ sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
 	 * packet is IP proto TCP).
 	 */
 	if ((ip->ip_off & htons(0x3fff)) || m->m_len < 40)
-		return (TYPE_IP);
+		return TYPE_IP;
 
 	th = (struct tcphdr *)&((int32_t *)ip)[hlen];
 	if ((th->th_flags & (TH_SYN|TH_FIN|TH_RST|TH_ACK)) != TH_ACK)
-		return (TYPE_IP);
+		return TYPE_IP;
 	/*
 	 * Packet is compressible -- we're going to send either a
 	 * COMPRESSED_TCP or UNCOMPRESSED_TCP packet.  Either way we need
@@ -209,13 +209,12 @@ sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
 		/*
 		 * Wasn't the first -- search for it.
 		 *
-		 * States are kept in a circularly linked list with
-		 * last_cs pointing to the end of the list.  The
-		 * list is kept in lru order by moving a state to the
-		 * head of the list whenever it is referenced.  Since
-		 * the list is short and, empirically, the connection
-		 * we want is almost always near the front, we locate
-		 * states via linear search.  If we don't find a state
+		 * States are kept in a circularly linked list with last_cs
+		 * pointing to the end of the list.  The list is kept in lru
+		 * order by moving a state to the head of the list whenever it
+		 * is referenced.  Since the list is short and, empirically,
+		 * the connection we want is almost always near the front, we
+		 * locate states via linear search.  If we don't find a state
 		 * for the datagram, the oldest state is (re-)used.
 		 */
 		struct cstate *lcs;
@@ -244,13 +243,11 @@ sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
 		hlen += th->th_off;
 		hlen <<= 2;
 		if (hlen > m->m_len)
-			return (TYPE_IP);
+			return TYPE_IP;
 		goto uncompressed;
 
 	found:
-		/*
-		 * Found it -- move to the front on the connection list.
-		 */
+		/* Found it -- move to the front on the connection list. */
 		if (cs == lastcs)
 			comp->last_cs = lcs;
 		else {
@@ -276,7 +273,7 @@ sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
 	hlen += th->th_off;
 	hlen <<= 2;
 	if (hlen > m->m_len)
-		return (TYPE_IP);
+		return TYPE_IP;
 
 	if (((uint16_t *)ip)[0] != ((uint16_t *)&cs->cs_ip)[0] ||
 	    ((uint16_t *)ip)[3] != ((uint16_t *)&cs->cs_ip)[3] ||
@@ -289,20 +286,20 @@ sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
 		goto uncompressed;
 
 	/*
-	 * Figure out which of the changing fields changed.  The
-	 * receiver expects changes in the order: urgent, window,
-	 * ack, seq (the order minimizes the number of temporaries
-	 * needed in this section of code).
+	 * Figure out which of the changing fields changed.  The receiver
+	 * expects changes in the order: urgent, window, ack, seq (the order
+	 * minimizes the number of temporaries needed in this section of code).
 	 */
 	if (th->th_flags & TH_URG) {
 		deltaS = ntohs(th->th_urp);
 		ENCODEZ(deltaS);
 		changes |= NEW_U;
 	} else if (th->th_urp != oth->th_urp)
-		/* argh! URG not set but urp changed -- a sensible
-		 * implementation should never do this but RFC793
-		 * doesn't prohibit the change so we have to deal
-		 * with it. */
+		/*
+		 * argh! URG not set but urp changed -- a sensible
+		 * implementation should never do this but RFC793 doesn't
+		 * prohibit the change so we have to deal with it.
+		 */
 		 goto uncompressed;
 
 	deltaS = (uint16_t)(ntohs(th->th_win) - ntohs(oth->th_win));
@@ -328,7 +325,6 @@ sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
 	}
 
 	switch (changes) {
-
 	case 0:
 		/*
 		 * Nothing changed. If this packet contains data and the
@@ -342,7 +338,7 @@ sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
 		    ntohs(cs->cs_ip.ip_len) == hlen)
 			break;
 
-		/* (fall through) */
+		/* FALLTHROUGH */
 
 	case SPECIAL_I:
 	case SPECIAL_D:
@@ -412,18 +408,19 @@ sl_compress_tcp(struct mbuf *m, struct ip *ip, struct slcompress *comp,
 	*cp++ = deltaA;
 	memcpy(cp, new_seq, deltaS);
 	INCR(sls_compressed)
-	return (TYPE_COMPRESSED_TCP);
+	return TYPE_COMPRESSED_TCP;
 
 	/*
-	 * Update connection state cs & send uncompressed packet ('uncompressed'
-	 * means a regular ip/tcp packet but with the 'conversation id' we hope
-	 * to use on future compressed packets in the protocol field).
+	 * Update connection state cs & send uncompressed packet
+	 * ('uncompressed' means a regular ip/tcp packet but with the
+	 * 'conversation id' we hope to use on future compressed packets in the
+	 * protocol field).
 	 */
 uncompressed:
 	memcpy(&cs->cs_ip, ip, hlen);
 	ip->ip_p = cs->cs_id;
 	comp->last_xmit = cs->cs_id;
-	return (TYPE_UNCOMPRESSED_TCP);
+	return TYPE_UNCOMPRESSED_TCP;
 }
 
 
@@ -437,9 +434,9 @@ sl_uncompress_tcp(u_char **bufp, int len, u_int type, struct slcompress *comp)
 	cp = bufp ? *bufp : NULL;
 	vjlen = sl_uncompress_tcp_core(cp, len, len, type, comp, &hdr, &hlen);
 	if (vjlen < 0)
-		return (0);	/* error */
+		return 0;	/* error */
 	if (vjlen == 0)
-		return (len);	/* was uncompressed already */
+		return len;	/* was uncompressed already */
 
 	cp += vjlen;
 	len -= vjlen;
@@ -462,15 +459,14 @@ sl_uncompress_tcp(u_char **bufp, int len, u_int type, struct slcompress *comp)
 	memcpy(cp, hdr, hlen);
 
 	*bufp = cp;
-	return (len);
+	return len;
 }
 
 /*
- * Uncompress a packet of total length total_len.  The first buflen
- * bytes are at buf; this must include the entire (compressed or
- * uncompressed) TCP/IP header.  This procedure returns the length
- * of the VJ header, with a pointer to the uncompressed IP header
- * in *hdrp and its length in *hlenp.
+ * Uncompress a packet of total length total_len.  The first buflen bytes are
+ * at buf; this must include the entire (compressed or uncompressed) TCP/IP
+ * header.  This procedure returns the length of the VJ header, with a pointer
+ * to the uncompressed IP header in *hdrp and its length in *hlenp.
  */
 int
 sl_uncompress_tcp_core(u_char *buf, int buflen, int total_len, u_int type,
@@ -508,9 +504,9 @@ sl_uncompress_tcp_core(u_char *buf, int buflen, int total_len, u_int type,
 		memcpy(&cs->cs_ip, ip, hlen);
 		cs->cs_hlen = hlen;
 		INCR(sls_uncompressedin)
-		*hdrp = (u_char *) &cs->cs_ip;
+		*hdrp = (u_char *)&cs->cs_ip;
 		*hlenp = hlen;
-		return (0);
+		return 0;
 
 	default:
 		goto bad;
@@ -525,20 +521,24 @@ sl_uncompress_tcp_core(u_char *buf, int buflen, int total_len, u_int type,
 	cp = buf;
 	changes = *cp++;
 	if (changes & NEW_C) {
-		/* Make sure the state index is in range, then grab the state.
-		 * If we have a good state index, clear the 'discard' flag. */
+		/*
+		 * Make sure the state index is in range, then grab the state.
+		 * If we have a good state index, clear the 'discard' flag.
+		 */
 		if (*cp >= MAX_STATES)
 			goto bad;
 
 		comp->flags &=~ SLF_TOSS;
 		comp->last_recv = *cp++;
 	} else {
-		/* this packet has an implicit state index.  If we've
-		 * had a line error since the last time we got an
-		 * explicit state index, we have to toss the packet. */
+		/*
+		 * this packet has an implicit state index.  If we've had a
+		 * line error since the last time we got an explicit state
+		 * index, we have to toss the packet.
+		 */
 		if (comp->flags & SLF_TOSS) {
 			INCR(sls_tossed)
-			return (-1);
+			return -1;
 		}
 	}
 	cs = &comp->rstate[comp->last_recv];
@@ -585,22 +585,23 @@ sl_uncompress_tcp_core(u_char *buf, int buflen, int total_len, u_int type,
 		cs->cs_ip.ip_id = htons(ntohs(cs->cs_ip.ip_id) + 1);
 
 	/*
-	 * At this point, cp points to the first byte of data in the
-	 * packet.  Fill in the IP total length and update the IP
-	 * header checksum.
+	 * At this point, cp points to the first byte of data in the packet.
+	 * Fill in the IP total length and update the IP header checksum.
 	 */
 	vjlen = cp - buf;
 	buflen -= vjlen;
 	if (buflen < 0)
-		/* we must have dropped some characters (crc should detect
-		 * this but the old slip framing won't) */
+		/*
+		 * We must have dropped some characters (crc should detect
+		 * this but the old slip framing won't)
+		 */
 		goto bad;
 
 	total_len += cs->cs_hlen - vjlen;
 	cs->cs_ip.ip_len = htons(total_len);
 
-	/* recompute the ip header checksum */
-	bp = (uint16_t *) &cs->cs_ip;
+	/* Recompute the ip header checksum */
+	bp = (uint16_t *)&cs->cs_ip;
 	cs->cs_ip.ip_sum = 0;
 	for (changes = 0; hlen > 0; hlen -= 2)
 		changes += *bp++;
@@ -608,14 +609,14 @@ sl_uncompress_tcp_core(u_char *buf, int buflen, int total_len, u_int type,
 	changes = (changes & 0xffff) + (changes >> 16);
 	cs->cs_ip.ip_sum = ~ changes;
 
-	*hdrp = (u_char *) &cs->cs_ip;
+	*hdrp = (u_char *)&cs->cs_ip;
 	*hlenp = cs->cs_hlen;
 	return vjlen;
 
 bad:
 	comp->flags |= SLF_TOSS;
 	INCR(sls_errorin)
-	return (-1);
+	return -1;
 }
 #endif
 
