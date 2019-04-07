@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.5 2019/04/06 03:06:24 thorpej Exp $	*/
+/*	$NetBSD: fusu.S,v 1.6 2019/04/07 04:11:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ ENTRY(_ufetch_8)
 	RETURN_SUCCESS
 END(_ufetch_8)
 
-#if (ARM_ARCH_2 + ARM_ARCH_3) > 0
+#if (ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + ARM_ARCH_5) > 0
 /* LINTSTUB: int _ufetch_16_armv2(const uint16_t *uaddr, uint16_t *valp); */
 ENTRY(_ufetch_16_armv2)
 	UFETCHSTORE_PROLOGUE
@@ -114,10 +114,13 @@ ENTRY(_ufetch_16_armv2)
 	RETURN_SUCCESS
 END(_ufetch_16_armv2)
 
+/* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
+STRONG_ALIAS(_ufetch_16,_ufetch_16_armv2)
+
 #else /* XXX */
 
-/* LINTSTUB: int _ufetch_16_armv4(const uint16_t *uaddr, uint16_t *valp); */
-ENTRY(_ufetch_16_armv4)
+/* LINTSTUB: int _ufetch_16_armv6(const uint16_t *uaddr, uint16_t *valp); */
+ENTRY(_ufetch_16_armv6)
 	UFETCHSTORE_PROLOGUE
 
 	ldrht	r3, [r0]
@@ -125,15 +128,11 @@ ENTRY(_ufetch_16_armv4)
 
 	UFETCHSTORE_EPILOGUE
 	RETURN_SUCCESS
-END(_ufetch_16_armv4)
-#endif /* (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0 */
+END(_ufetch_16_armv6)
 
 /* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
-#if (ARM_ARCH_2 + ARM_ARCH_3) > 0
-STRONG_ALIAS(_ufetch_16,_ufetch_16_armv2)
-#else
-STRONG_ALIAS(_ufetch_16,_ufetch_16_armv4)
-#endif /* #if (ARM_ARCH_2 + ARM_ARCH_3) > 0 */
+STRONG_ALIAS(_ufetch_16,_ufetch_16_armv6)
+#endif /* (ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + ARM_ARCH_5) > 0 */
 
 /* LINTSTUB: int _ufetch_32(const uint32_t *uaddr, uint32_t *valp); */
 ENTRY(_ufetch_32)
@@ -156,7 +155,7 @@ ENTRY(_ustore_8)
 	RETURN_SUCCESS
 END(_ustore_8)
 
-#if (ARM_ARCH_2 + ARM_ARCH_3) > 0
+#if (ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + ARM_ARCH_5) > 0
 /* LINTSTUB: int _ustore_16_armv2(uint16_t *uaddr, uint16_t val); */
 ENTRY(_ustore_16_armv2)
 	UFETCHSTORE_PROLOGUE
@@ -174,26 +173,24 @@ ENTRY(_ustore_16_armv2)
 	RETURN_SUCCESS
 END(_ustore_16_armv2)
 
+/* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
+STRONG_ALIAS(_ustore_16,_ustore_16_armv2)
+
 #else /* XXX */
 
 /* LINTSTUB: int _ustore_16_armv4(uint16_t *uaddr, uint16_t val); */
-ENTRY(_ustore_16_armv4)
+ENTRY(_ustore_16_armv6)
 	UFETCHSTORE_PROLOGUE
 
 	strht	r1, [r0]
 
 	UFETCHSTORE_EPILOGUE
 	RETURN_SUCCESS
-END(_ustore_16_armv4)
-#endif /* (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0 */
+END(_ustore_16_armv6)
 
 /* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
-/* XXXJRT Run-time upgrade to armv4 version would be nice. */
-#if (ARM_ARCH_2 + ARM_ARCH_3) > 0
-STRONG_ALIAS(_ustore_16,_ustore_16_armv2)
-#else
-STRONG_ALIAS(_ustore_16,_ustore_16_armv4)
-#endif /* #if (ARM_ARCH_2 + ARM_ARCH_3) > 0 */
+STRONG_ALIAS(_ustore_16,_ustore_16_armv6)
+#endif /* (ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + ARM_ARCH_5) > 0 */
 
 /* LINTSTUB: int _ustore_32(uint32_t *uaddr, uint32_t val); */
 ENTRY(_ustore_32)
