@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.24 2019/04/06 11:49:53 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.25 2019/04/07 14:28:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.24 2019/04/06 11:49:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.25 2019/04/07 14:28:50 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1169,6 +1169,8 @@ vmx_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	cpudata->gprs[NVMM_X64_GPR_RCX] = descs[2];
 	cpudata->gprs[NVMM_X64_GPR_RDX] = descs[3];
 
+	vmx_inkernel_handle_cpuid(vcpu, eax, ecx);
+
 	for (i = 0; i < VMX_NCPUIDS; i++) {
 		cpuid = &machdata->cpuid[i];
 		if (!machdata->cpuidpresent[i]) {
@@ -1192,9 +1194,6 @@ vmx_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 		break;
 	}
-
-	/* Overwrite non-tunable leaves. */
-	vmx_inkernel_handle_cpuid(vcpu, eax, ecx);
 
 	vmx_inkernel_advance();
 	exit->reason = NVMM_EXIT_NONE;
