@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.84 2019/03/17 08:17:56 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.85 2019/04/07 13:50:29 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -414,6 +414,8 @@ options 	WSDISPLAY_MULTICONS
 options 	WSDISPLAY_SCROLLSUPPORT
 pseudo-device	wsmux
 pseudo-device	wsfont
+options 	FONT_BOLD8x16
+options 	FONT_BOLD16x32
 
 # GPU
 #nouveau*	at fdt?			# NVIDIA GPU
