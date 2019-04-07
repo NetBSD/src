@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.117 2019/04/04 19:27:28 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.118 2019/04/07 14:44:51 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.117 2019/04/04 19:27:28 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.118 2019/04/07 14:44:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -290,7 +290,6 @@ tzgetname(const timezone_t sp, int isdst)
 	int i;
 	for (i = 0; i < sp->typecnt; ++i) {
 		const struct ttinfo *const ttisp = &sp->ttis[sp->types[i]];
-
 		if (ttisp->tt_isdst == isdst)
 			return &sp->chars[ttisp->tt_abbrind];
 	}
@@ -1392,9 +1391,10 @@ zoneinit(struct state *sp, char const *name)
 		*/
 		sp->leapcnt = 0;		/* so, we're off a little */
 		sp->timecnt = 0;
-		sp->typecnt = 0;
+		sp->typecnt = 1;
 		sp->charcnt = 0;
 		sp->goback = sp->goahead = false;
+		sp->types[0] = sp->types[1] = 0;
 		init_ttinfo(&sp->ttis[0], 0, false, 0);
 		strcpy(sp->chars, gmt);
 		sp->defaulttype = 0;
