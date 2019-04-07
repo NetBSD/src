@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.74 2019/01/18 19:16:50 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.75 2019/04/07 17:46:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.74 2019/01/18 19:16:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.75 2019/04/07 17:46:49 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -808,9 +808,11 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	struct ahci_cmd_header *cmd_h;
 	int i, error = 0;
 	uint32_t sig;
+	int noclo_retry = 0;
 
 	ata_channel_lock_owned(chp);
 
+again:
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	/* clear SErrors and start operations */
@@ -848,6 +850,17 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	switch (ahci_exec_fis(chp, 100, flags, c_slot)) {
 	case ERR_DF:
 	case TIMEOUT:
+		/*
+		 * without CLO we can't make sure a software reset will
+		 * success, as the drive may still have BSY or DRQ set.
+		 * in this case, reset the whole channel and retry the
+		 * drive reset. The channel reset should clear BSY and DRQ
+		 */
+		if ((sc->sc_ahci_cap & AHCI_CAP_CLO) == 0 && noclo_retry == 0) {
+			noclo_retry++;
+			ahci_reset_channel(chp, flags);
+			goto again;
+		}
 		aprint_error("%s port %d: setting WDCTL_RST failed "
 		    "for drive %d\n", AHCINAME(sc), chp->ch_channel, drive);
 		error = EBUSY;
