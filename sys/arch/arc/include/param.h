@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.32 2019/02/07 04:31:49 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.33 2019/04/07 03:42:31 thorpej Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -58,15 +58,6 @@
  */
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
-
-#if defined(_LOCORE) && defined(notyet)
-#define	UADDR		0xffffffffffffc000	/* address of u */
-#else
-#define	UADDR		0xffffc000	/* address of u */
-#endif
-#define USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
-#define	UVPN		(UADDR>>PGSHIFT)/* virtual page number of u */
-#define	KERNELSTACK	(UADDR+UPAGES*NBPG)	/* top of kernel stack */
 
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)
