@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69 2016/12/26 21:54:00 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.70 2019/04/07 05:25:55 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,11 +67,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69 2016/12/26 21:54:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.70 2019/04/07 05:25:55 thorpej Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+
+#define	__UFETCHSTORE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -677,3 +679,30 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 
 	return -1;
 }
+
+/*
+ * XXX Extremely lame implementations of _ufetch_* / _ustore_*.  IBM 4xx
+ * experts should make versions that are good.
+ */
+
+#define UFETCH(sz)							\
+int									\
+_ufetch_ ## sz(const uint ## sz ## _t *uaddr, uint ## sz ## _t *valp)	\
+{									\
+	return copyin(uaddr, valp, sizeof(*valp));			\
+}
+
+UFETCH(8)
+UFETCH(16)
+UFETCH(32)
+
+#define USTORE(sz)							\
+int									\
+_ustore_ ## sz(uint ## sz ## _t *uaddr, uint ## sz ## _t val)		\
+{									\
+	return copyout(&val, uaddr, sizeof(val));			\
+}
+
+USTORE(8)
+USTORE(16)
+USTORE(32)

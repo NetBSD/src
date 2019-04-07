@@ -1,4 +1,4 @@
-/*	$NetBSD: copyin.c,v 1.6 2014/07/24 23:27:25 joerg Exp $	*/
+/*	$NetBSD: copyin.c,v 1.7 2019/04/07 05:25:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -36,10 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyin.c,v 1.6 2014/07/24 23:27:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyin.c,v 1.7 2019/04/07 05:25:55 thorpej Exp $");
+
+#define	__UFETCHSTORE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/lwp.h>
+#include <sys/systm.h>
 
 #include <powerpc/pcb.h>
 
@@ -60,7 +63,6 @@ copyin_byte(const uint8_t * const usaddr8, register_t ds_msr)
 	return data;
 }
 
-#if 0
 static inline uint16_t
 copyin_halfword(const uint16_t * const usaddr16, register_t ds_msr)
 {
@@ -75,7 +77,6 @@ copyin_halfword(const uint16_t * const usaddr16, register_t ds_msr)
 	    : [ds_msr] "r" (ds_msr), [usaddr16] "b" (usaddr16));
 	return data;
 }
-#endif
 
 static inline uint32_t
 copyin_word(const uint32_t * const usaddr32, register_t ds_msr)
@@ -199,22 +200,58 @@ copyin_words(vaddr_t usaddr, vaddr_t kdaddr, size_t len, register_t ds_msr)
 	}
 }
 
-uint32_t
-ufetch_32(const void *vusaddr)
+int
+_ufetch_8(const uint8_t *vusaddr, uint8_t *valp)
 {
 	struct pcb * const pcb = lwp_getpcb(curlwp);
 	struct faultbuf env;
 
 	if (setfault(&env) != 0) {
 		pcb->pcb_onfault = NULL;
-		return -1;
+		return EFAULT;
 	}
 
-	uint32_t rv = copyin_word(vusaddr, mfmsr() | PSL_DS);
+	*valp = copyin_byte(vusaddr, mfmsr() | PSL_DS);
 
 	pcb->pcb_onfault = NULL;
 
-	return rv;
+	return 0;
+}
+
+int
+_ufetch_16(const uint16_t *vusaddr, uint16_t *valp)
+{
+	struct pcb * const pcb = lwp_getpcb(curlwp);
+	struct faultbuf env;
+
+	if (setfault(&env) != 0) {
+		pcb->pcb_onfault = NULL;
+		return EFAULT;
+	}
+
+	*valp = copyin_halfword(vusaddr, mfmsr() | PSL_DS);
+
+	pcb->pcb_onfault = NULL;
+
+	return 0;
+}
+
+int
+_ufetch_32(const uint32_t *vusaddr, uint32_t *valp)
+{
+	struct pcb * const pcb = lwp_getpcb(curlwp);
+	struct faultbuf env;
+
+	if (setfault(&env) != 0) {
+		pcb->pcb_onfault = NULL;
+		return EFAULT;
+	}
+
+	*valp = copyin_word(vusaddr, mfmsr() | PSL_DS);
+
+	pcb->pcb_onfault = NULL;
+
+	return 0;
 }
 
 int
