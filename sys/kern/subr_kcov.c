@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.6 2019/03/10 22:34:14 kamil Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.7 2019/04/07 21:01:43 kamil Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -547,7 +547,7 @@ __sanitizer_cov_trace_switch(uint64_t val, uint64_t *cases)
 
 /* -------------------------------------------------------------------------- */
 
-MODULE(MODULE_CLASS_ANY, kcov, NULL);
+MODULE(MODULE_CLASS_MISC, kcov, NULL);
 
 static void
 kcov_init(void)
