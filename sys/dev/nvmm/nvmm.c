@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.12 2019/03/28 19:00:40 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.13 2019/04/07 14:05:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.12 2019/03/28 19:00:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.13 2019/04/07 14:05:15 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.12 2019/03/28 19:00:40 maxv Exp $");
 #include <dev/nvmm/nvmm_ioctl.h>
 
 static struct nvmm_machine machines[NVMM_MAX_MACHINES];
+static volatile unsigned int nmachines __cacheline_aligned;
 
 static const struct nvmm_impl *nvmm_impl_list[] = {
 	&nvmm_x86_svm,	/* x86 AMD SVM */
@@ -80,6 +81,7 @@ nvmm_machine_alloc(struct nvmm_machine **ret)
 
 		mach->present = true;
 		*ret = mach;
+		atomic_inc_uint(&nmachines);
 		return 0;
 	}
 
@@ -92,6 +94,7 @@ nvmm_machine_free(struct nvmm_machine *mach)
 	KASSERT(rw_write_held(&mach->lock));
 	KASSERT(mach->present);
 	mach->present = false;
+	atomic_dec_uint(&nmachines);
 }
 
 static int
@@ -845,7 +848,6 @@ nvmm_fini(void)
 		for (n = 0; n < NVMM_MAX_VCPUS; n++) {
 			mutex_destroy(&machines[i].cpus[n].lock);
 		}
-		/* TODO need to free stuff, etc */
 	}
 
 	(*nvmm_impl->fini)();
@@ -963,6 +965,9 @@ nvmm_modcmd(modcmd_t cmd, void *arg)
 		return 0;
 
 	case MODULE_CMD_FINI:
+		if (nmachines > 0) {
+			return EBUSY;
+		}
 #if defined(_MODULE)
 		{
 			error = devsw_detach(NULL, &nvmm_cdevsw);
@@ -973,6 +978,9 @@ nvmm_modcmd(modcmd_t cmd, void *arg)
 #endif
 		nvmm_fini();
 		return 0;
+
+	case MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
 
 	default:
 		return ENOTTY;
