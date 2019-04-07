@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.71 2019/02/02 12:32:55 cherry Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.72 2019/04/07 12:21:20 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.71 2019/02/02 12:32:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.72 2019/04/07 12:21:20 bouyer Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -1501,8 +1501,8 @@ xbdback_co_io_gotfrag2(struct xbdback_instance *xbdi, void *obj)
 	}
 
 	xbd_io->xio_buf.b_bcount += (daddr_t)(seg_size * VBD_BSIZE);
-	XENPRINTF(("xbdback_io domain %d: start sect %d size %d\n",
-	    xbdi->xbdi_domid, (int)xbdi->xbdi_next_sector, seg_size));
+	XENPRINTF(("xbdback_io domain %d: start sect %ld size %d\n",
+	    xbdi->xbdi_domid, (long)xbdi->xbdi_next_sector, seg_size));
 	
 	/* Finally, the end of the segment loop! */
 	xbdi->xbdi_next_sector += seg_size;
@@ -1663,7 +1663,7 @@ xbdback_iodone(struct buf *bp)
 		    : BLKIF_RSP_OKAY;
 
 		XENPRINTF(("xbdback_io domain %d: end request %"PRIu64
-		    "error=%d\n",
+		    " error=%d\n",
 		    xbdi->xbdi_domid, xbd_req->rq_id, error));
 		xbdback_send_reply(xbdi, xbd_req->rq_id,
 		    xbd_req->rq_operation, error);
