@@ -1,4 +1,4 @@
-/* $NetBSD: com_eumb.c,v 1.9 2018/12/08 17:46:12 thorpej Exp $ */
+/* $NetBSD: com_eumb.c,v 1.10 2019/04/07 15:44:44 jdc Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.9 2018/12/08 17:46:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.10 2019/04/07 15:44:44 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -111,6 +111,9 @@ eumbcnattach(bus_space_tag_t tag,
     int conaddr, int conspeed, int confreq, int contype, int conmode)
 {
 	static int attached = 0;
+	bus_space_handle_t dummy_bsh; /* XXX see com.c:comcnattach() */
+
+	memset(&dummy_bsh, 0, sizeof(dummy_bsh));
 
 	if (attached)
 		return 0;
@@ -119,5 +122,6 @@ eumbcnattach(bus_space_tag_t tag,
 	cnregs.cr_iot = tag;
 	cnregs.cr_iobase = conaddr;
 	cnregs.cr_nports = COM_NPORTS;
+	com_init_regs(&cnregs, tag, dummy_bsh, conaddr);
 	return comcnattach1(&cnregs, conspeed, confreq, contype, conmode);
 }
