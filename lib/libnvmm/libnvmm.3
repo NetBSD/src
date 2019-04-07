@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.13 2019/04/04 17:33:47 maxv Exp $
+.\"	$NetBSD: libnvmm.3,v 1.14 2019/04/07 14:13:03 maxv Exp $
 .\"
 .\" Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 4, 2019
+.Dd April 7, 2019
 .Dt LIBNVMM 3
 .Os
 .Sh NAME
@@ -361,7 +361,7 @@ struct nvmm_x64_state {
 	uint64_t crs[NVMM_X64_NCR];
 	uint64_t drs[NVMM_X64_NDR];
 	uint64_t msrs[NVMM_X64_NMSR];
-	uint64_t misc[NVMM_X64_NMISC];
+	struct nvmm_x64_state_intr intr;
 	struct fxsave fpu;
 };
 .Ed
@@ -466,7 +466,7 @@ event, if:
 the event is a hardware interrupt, and the VCPU runs with interrupts disabled,
 or
 .It
-the event is a non-maskable interrupt (NMI), and the VCPU is already in a
+the event is a non-maskable interrupt (NMI), and the VCPU is already in an
 in-NMI context.
 .El
 .Pp
