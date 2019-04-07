@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.44 2019/04/05 21:27:44 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.45 2019/04/07 14:51:14 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.44 2019/04/05 21:27:44 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.45 2019/04/07 14:51:14 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -544,9 +544,15 @@ label:
 #ifdef TM_ZONE
 				pt = _add(t->TM_ZONE, pt, ptlim);
 #elif HAVE_TZNAME
-				if (t->tm_isdst >= 0)
-					pt = _add(tzgetname(sp, t->tm_isdst),
-					    pt, ptlim);
+				if (t->tm_isdst >= 0) {
+					int oerrno = errno, dst = t->tm_isdst;
+					const char *z =
+					    tzgetname(sp, dst);
+					if (z == NULL)
+						z = tzgetname(sp, !dst);
+					pt = _add(z ? z : "???", pt, ptlim);
+					errno = oerrno;
+				}
 #endif
 				/*
 				** C99 and later say that %Z must be
