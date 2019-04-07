@@ -800,7 +800,7 @@ case ${target} in
   case ${enable_threads} in
     "" | yes | posix) thread_file='posix' ;;
   esac
-  nbsd_tm_file="${nbsd_tm_file} netbsd.h netbsd-stdint.h netbsd-elf.h"
+  nbsd_tm_file="netbsd.h netbsd-stdint.h netbsd-elf.h"
   default_use_cxa_atexit=yes
   ;;
 *-*-openbsd*)
