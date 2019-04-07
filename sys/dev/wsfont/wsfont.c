@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.65 2019/03/17 09:54:06 rin Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.66 2019/04/07 13:48:27 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.65 2019/03/17 09:54:06 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.66 2019/04/07 13:48:27 jmcneill Exp $");
 
 #include "opt_wsfont.h"
 
@@ -175,6 +175,11 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.65 2019/03/17 09:54:06 rin Exp $");
 #include <dev/wsfont/spleen8x16.h>
 #endif
 
+#ifdef FONT_BOLD16x32
+#define HAVE_FONT 1
+#include <dev/wsfont/bold16x32.h>
+#endif
+
 /* Make sure we always have at least one bitmap font. */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
@@ -209,6 +214,9 @@ struct font {
 static struct font builtin_fonts[] = {
 #ifdef FONT_BOLD8x16
 	{ { NULL, NULL }, &bold8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN  },
+#endif
+#ifdef FONT_BOLD16x32
+	{ { NULL, NULL }, &bold16x32, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN  },
 #endif
 #ifdef FONT_ISO8x16
 	{ { NULL, NULL }, &iso8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
