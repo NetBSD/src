@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2019/04/07 05:28:09 rin Exp $
+# $NetBSD: Makefile,v 1.22 2019/04/07 17:31:32 christos Exp $
 
 # Link the gallium mega driver.
 
@@ -1125,6 +1125,23 @@ SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.${SHL
 .if ${MACHINE_ARCH} == "sparc" || ${COMMON_MACHINE_ARCH:U} == "sparc"
 COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
 .endif
+
+.for f in \
+	dd_context.c \
+	draw.c \
+	nir_from_ssa.c \
+	nir_inline_functions.c \
+	nir_instr_set.c \
+	nir_instr_set.c \
+	nir_liveness.c \
+	nir_lower_registers_to_ssa.c \
+	nir_lower_regs_to_ssa.c \
+	nir_phi_builder.c \
+	shaderapi.c \
+	spirv_to_nir.c \
+	vtn_cfg.c
+COPTS.${f}+=-Wno-error=stack-protector
+.endfor
 
 .include <bsd.lib.mk>
 # Don't regenerate c files
