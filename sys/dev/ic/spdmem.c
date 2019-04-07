@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.30 2018/12/27 02:54:00 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.31 2019/04/07 01:39:12 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.30 2018/12/27 02:54:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.31 2019/04/07 01:39:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -942,7 +942,7 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 	    "%d rows, %d cols, %d ranks%s, %d banks/group, %d bank groups\n",
 	    s->sm_ddr4.ddr4_rows + 12, s->sm_ddr4.ddr4_cols + 9,
 	    ranks, (ranks > 1) ? ((s->sm_ddr4.ddr4_rank_mix == 1)
-		? " (asymmetric)" : " (symmetiric)") : "",
+		? " (asymmetric)" : " (symmetric)") : "",
 	    1 << (2 + s->sm_ddr4.ddr4_logbanks),
 	    1 << s->sm_ddr4.ddr4_bankgroups);
 
