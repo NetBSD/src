@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.10 2019/04/06 15:52:35 thorpej Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.11 2019/04/07 16:27:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008, 2019
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.10 2019/04/06 15:52:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.11 2019/04/07 16:27:41 thorpej Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 #define	__UCAS_PRIVATE
@@ -538,7 +538,8 @@ ucas_32(volatile uint32_t *uaddr, uint32_t old, uint32_t new, uint32_t *ret)
 
 	ASSERT_SLEEPABLE();
 	CHECK_ALIGNMENT();
-#if defined(__HAVE_UCAS_MP) && defined(MULTIPROCESSOR)
+#if (defined(__HAVE_UCAS_MP) && defined(MULTIPROCESSOR)) && \
+    !defined(_RUMPKERNEL)
 	if (ncpu > 1) {
 		return _ucas_32_mp(uaddr, old, new, ret);
 	}
@@ -553,7 +554,8 @@ ucas_64(volatile uint64_t *uaddr, uint64_t old, uint64_t new, uint64_t *ret)
 
 	ASSERT_SLEEPABLE();
 	CHECK_ALIGNMENT();
-#if defined(__HAVE_UCAS_MP) && defined(MULTIPROCESSOR)
+#if (defined(__HAVE_UCAS_MP) && defined(MULTIPROCESSOR)) && \
+    !defined(_RUMPKERNEL)
 	if (ncpu > 1) {
 		return _ucas_64_mp(uaddr, old, new, ret);
 	}
