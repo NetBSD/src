@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.419 2019/02/08 20:34:23 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.420 2019/04/07 19:31:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -763,7 +763,8 @@ ufast_DMMU_protection:			! 06c = fast data access MMU protection
 #endif
 	nop
 	TA32
-	UTRAP(0x070)			! Implementation dependent traps
+	TRAP(0x070)			! 0x070 fast_ECC_error
+					! Implementation dependent traps
 	UTRAP(0x071); UTRAP(0x072); UTRAP(0x073); UTRAP(0x074); UTRAP(0x075); UTRAP(0x076)
 	UTRAP(0x077); UTRAP(0x078); UTRAP(0x079); UTRAP(0x07a); UTRAP(0x07b); UTRAP(0x07c)
 	UTRAP(0x07d); UTRAP(0x07e); UTRAP(0x07f)
@@ -973,7 +974,8 @@ kfast_DMMU_protection:			! 06c = fast data access MMU protection
 #endif
 	nop
 	TA32
-	UTRAP(0x070)			! Implementation dependent traps
+	TRAP(0x070)			! 0x070 fast_ECC_error
+					! Implementation dependent traps
 	UTRAP(0x071); UTRAP(0x072); UTRAP(0x073); UTRAP(0x074); UTRAP(0x075); UTRAP(0x076)
 	UTRAP(0x077); UTRAP(0x078); UTRAP(0x079); UTRAP(0x07a); UTRAP(0x07b); UTRAP(0x07c)
 	UTRAP(0x07d); UTRAP(0x07e); UTRAP(0x07f)
