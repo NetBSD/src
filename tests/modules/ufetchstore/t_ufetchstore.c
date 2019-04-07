@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ufetchstore.c,v 1.3 2019/04/07 03:43:55 rin Exp $	*/
+/*	$NetBSD: t_ufetchstore.c,v 1.4 2019/04/07 15:50:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ufetchstore.c,v 1.3 2019/04/07 03:43:55 rin Exp $");
+__RCSID("$NetBSD: t_ufetchstore.c,v 1.4 2019/04/07 15:50:12 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -101,8 +101,8 @@ unload_module(void)
 #endif /* ! SKIP_MODULE */
 }
 
-static void *
-vm_max_address(void)
+static unsigned long
+vm_max_address_raw(void)
 {
 	static unsigned long max_addr = 0;
 	int rv;
@@ -114,7 +114,19 @@ vm_max_address(void)
 		if (rv != 0)
 	                err(1, "sysctlbyname('vm.maxaddress')");
         }
-	return (void *)max_addr;
+	return max_addr;
+}
+
+static void *
+vm_max_address(void)
+{
+	return (void *)vm_max_address_raw();
+}
+
+static void *
+vm_max_address_minus(unsigned int adj)
+{
+	return (void *)(vm_max_address_raw() - adj);
 }
 
 static int
@@ -604,6 +616,87 @@ ATF_TC_CLEANUP(ufetch_64_max, tc)
 }
 #endif /* _LP64 */
 
+ATF_TC_WITH_CLEANUP(ufetch_16_nearmax_overflow);
+ATF_TC_HEAD(ufetch_16_nearmax_overflow, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "test for correct ufetch_16 near-VM_MAX_ADDRESS pointer behavior");
+}
+ATF_TC_BODY(ufetch_16_nearmax_overflow, tc)
+{
+	uint16_t res;
+
+	CHECK_MODULE();
+
+	/*
+	 * For no-strict-alignment platforms: address checks must return
+	 * EFAULT.
+	 *
+	 * For strict-alignment platforms: alignment checks must return
+	 * EFAULT.
+	 */
+	ATF_REQUIRE_EQ(do_ufetch_16(vm_max_address_minus(1), &res), EFAULT);
+}
+ATF_TC_CLEANUP(ufetch_16_nearmax_overflow, tc)
+{
+	unload_module();
+}
+
+ATF_TC_WITH_CLEANUP(ufetch_32_nearmax_overflow);
+ATF_TC_HEAD(ufetch_32_nearmax_overflow, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "test for correct ufetch_32 near-VM_MAX_ADDRESS pointer behavior");
+}
+ATF_TC_BODY(ufetch_32_nearmax_overflow, tc)
+{
+	uint32_t res;
+
+	CHECK_MODULE();
+
+	/*
+	 * For no-strict-alignment platforms: address checks must return
+	 * EFAULT.
+	 *
+	 * For strict-alignment platforms: alignment checks must return
+	 * EFAULT.
+	 */
+	ATF_REQUIRE_EQ(do_ufetch_32(vm_max_address_minus(3), &res), EFAULT);
+}
+ATF_TC_CLEANUP(ufetch_32_nearmax_overflow, tc)
+{
+	unload_module();
+}
+
+#ifdef _LP64
+ATF_TC_WITH_CLEANUP(ufetch_64_nearmax_overflow);
+ATF_TC_HEAD(ufetch_64_nearmax_overflow, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "test for correct ufetch_64 near-VM_MAX_ADDRESS pointer behavior");
+}
+ATF_TC_BODY(ufetch_64_nearmax_overflow, tc)
+{
+	uint64_t res;
+
+	CHECK_MODULE();
+
+	/*
+	 * For no-strict-alignment platforms: address checks must return
+	 * EFAULT.
+	 *
+	 * For strict-alignment platforms: alignment checks must return
+	 * EFAULT.
+	 */
+	ATF_REQUIRE_EQ(do_ufetch_64(vm_max_address_minus(7), &res), EFAULT);
+}
+ATF_TC_CLEANUP(ufetch_64_nearmax_overflow, tc)
+{
+	unload_module();
+}
+#endif /* _LP64 */
+
+
 ATF_TC_WITH_CLEANUP(ustore_8);
 ATF_TC_HEAD(ustore_8, tc)
 {
@@ -830,6 +923,81 @@ ATF_TC_CLEANUP(ustore_64_max, tc)
 }
 #endif /* _LP64 */
 
+ATF_TC_WITH_CLEANUP(ustore_16_nearmax_overflow);
+ATF_TC_HEAD(ustore_16_nearmax_overflow, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "test for correct ustore_16 VM_MAX_ADDRESS pointer behavior");
+}
+ATF_TC_BODY(ustore_16_nearmax_overflow, tc)
+{
+	CHECK_MODULE();
+
+	/*
+	 * For no-strict-alignment platforms: address checks must return
+	 * EFAULT.
+	 *
+	 * For strict-alignment platforms: alignment checks must return
+	 * EFAULT.
+	 */
+	ATF_REQUIRE_EQ(do_ustore_16(vm_max_address_minus(1), 0), EFAULT);
+}
+ATF_TC_CLEANUP(ustore_16_nearmax_overflow, tc)
+{
+	unload_module();
+}
+
+ATF_TC_WITH_CLEANUP(ustore_32_nearmax_overflow);
+ATF_TC_HEAD(ustore_32_nearmax_overflow, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "test for correct ustore_32 VM_MAX_ADDRESS pointer behavior");
+}
+ATF_TC_BODY(ustore_32_nearmax_overflow, tc)
+{
+	CHECK_MODULE();
+
+	/*
+	 * For no-strict-alignment platforms: address checks must return
+	 * EFAULT.
+	 *
+	 * For strict-alignment platforms: alignment checks must return
+	 * EFAULT.
+	 */
+	ATF_REQUIRE_EQ(do_ustore_32(vm_max_address_minus(3), 0), EFAULT);
+}
+ATF_TC_CLEANUP(ustore_32_nearmax_overflow, tc)
+{
+	unload_module();
+}
+
+#ifdef _LP64
+ATF_TC_WITH_CLEANUP(ustore_64_nearmax_overflow);
+ATF_TC_HEAD(ustore_64_nearmax_overflow, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "test for correct ustore_64 VM_MAX_ADDRESS pointer behavior");
+}
+ATF_TC_BODY(ustore_64_nearmax_overflow, tc)
+{
+	CHECK_MODULE();
+
+	/*
+	 * For no-strict-alignment platforms: address checks must return
+	 * EFAULT.
+	 *
+	 * For strict-alignment platforms: alignment checks must return
+	 * EFAULT.
+	 */
+	ATF_REQUIRE_EQ(do_ustore_64(vm_max_address_minus(7), 0), EFAULT);
+}
+ATF_TC_CLEANUP(ustore_64_nearmax_overflow, tc)
+{
+	unload_module();
+}
+#endif /* _LP64 */
+
+
 ATF_TC_WITH_CLEANUP(ucas_32);
 ATF_TC_HEAD(ucas_32, tc)
 {
@@ -1006,6 +1174,62 @@ ATF_TC_CLEANUP(ucas_64_max, tc)
 }
 #endif /* _LP64 */
 
+ATF_TC_WITH_CLEANUP(ucas_32_nearmax_overflow);
+ATF_TC_HEAD(ucas_32_nearmax_overflow, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "test for correct ucas_32 near-VM_MAX_ADDRESS pointer behavior");
+}
+ATF_TC_BODY(ucas_32_nearmax_overflow, tc)
+{
+	uint32_t actual = 0;
+
+	CHECK_MODULE();
+
+	/*
+	 * For no-strict-alignment platforms: address checks must return
+	 * EFAULT.
+	 *
+	 * For strict-alignment platforms: alignment checks must return
+	 * EFAULT.
+	 */
+	ATF_REQUIRE_EQ(do_ucas_32(vm_max_address_minus(3), 0xdeadbeef,
+	    0xbeefdead, &actual), EFAULT);
+}
+ATF_TC_CLEANUP(ucas_32_nearmax_overflow, tc)
+{
+	unload_module();
+}
+
+#ifdef _LP64
+ATF_TC_WITH_CLEANUP(ucas_64_nearmax_overflow);
+ATF_TC_HEAD(ucas_64_nearmax_overflow, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "test for correct ucas_64 near-VM_MAX_ADDRESS pointer behavior");
+}
+ATF_TC_BODY(ucas_64_nearmax_overflow, tc)
+{
+	uint64_t actual = 0;
+
+	CHECK_MODULE();
+
+	/*
+	 * For no-strict-alignment platforms: address checks must return
+	 * EFAULT.
+	 *
+	 * For strict-alignment platforms: alignment checks must return
+	 * EFAULT.
+	 */
+	ATF_REQUIRE_EQ(do_ucas_64(vm_max_address_minus(7), 0xdeadbeef,
+	    0xbeefdead, &actual), EFAULT);
+}
+ATF_TC_CLEANUP(ucas_64_nearmax_overflow, tc)
+{
+	unload_module();
+}
+#endif /* _LP64 */
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, ufetch_8);
@@ -1029,6 +1253,12 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, ufetch_64_max);
 #endif
 
+	ATF_TP_ADD_TC(tp, ufetch_16_nearmax_overflow);
+	ATF_TP_ADD_TC(tp, ufetch_32_nearmax_overflow);
+#ifdef _LP64
+	ATF_TP_ADD_TC(tp, ufetch_64_nearmax_overflow);
+#endif
+
 	ATF_TP_ADD_TC(tp, ustore_8);
 	ATF_TP_ADD_TC(tp, ustore_16);
 	ATF_TP_ADD_TC(tp, ustore_32);
@@ -1050,6 +1280,12 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, ustore_64_max);
 #endif
 
+	ATF_TP_ADD_TC(tp, ustore_16_nearmax_overflow);
+	ATF_TP_ADD_TC(tp, ustore_32_nearmax_overflow);
+#ifdef _LP64
+	ATF_TP_ADD_TC(tp, ustore_64_nearmax_overflow);
+#endif
+
 	ATF_TP_ADD_TC(tp, ucas_32);
 #ifdef _LP64
 	ATF_TP_ADD_TC(tp, ucas_64);
@@ -1068,6 +1304,11 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, ucas_32_max);
 #ifdef _LP64
 	ATF_TP_ADD_TC(tp, ucas_64_max);
+#endif
+
+	ATF_TP_ADD_TC(tp, ucas_32_nearmax_overflow);
+#ifdef _LP64
+	ATF_TP_ADD_TC(tp, ucas_64_nearmax_overflow);
 #endif
 
 	return atf_no_error();
