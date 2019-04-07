@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.19 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.20 2019/04/07 05:25:55 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -153,8 +153,6 @@ wrtee(register_t msr)
 	}
 	return old_msr;
 }
-
-uint32_t ufetch_32(const void *);
 
 struct trapframe;
 void	booke_sstep(struct trapframe *);
