@@ -107,16 +107,12 @@ along with GCC; see the file COPYING3.  If not see
    FIXME: Could eliminate the duplication here if we were allowed to
    use string concatenation.  */
 
-#ifdef NETBSD_ENABLE_PTHREADS
 #define NETBSD_LIB_SPEC_PTHREAD \
   "%{pthread:			\
      %{!p:			\
        %{!pg:-lpthread}}	\
      %{p:-lpthread_p}		\
      %{pg:-lpthread_p}}"
-#else
-#define NETBSD_LIB_SPEC_PTHREAD
-#endif
 
 #define NETBSD_LIB_SPEC		\
   NETBSD_LIB_SPEC_PTHREAD       \
