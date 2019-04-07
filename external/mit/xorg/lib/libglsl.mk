@@ -1,4 +1,4 @@
-#	$NetBSD: libglsl.mk,v 1.4 2019/03/10 10:51:58 mrg Exp $
+#	$NetBSD: libglsl.mk,v 1.5 2019/04/07 08:14:20 maya Exp $
 
 LIBGLSL_GENERATED_CXX_FILES = \
 	glsl_lexer.cpp \
@@ -126,6 +126,13 @@ LIBGLSL_FILES = \
 	glsl_types.cpp \
 	nir_types.cpp \
 	shader_enums.c
+
+# XXX
+.if ${MACHINE} == "vax"
+COPTS.ir_constant_expression.cpp+=	-O0
+COPTS.ir.cpp+=	-O0
+COPTS.nir_constant_expressions.c+=	-O0
+.endif
 
 LIBGLCPP_GENERATED_FILES = \
 	glcpp-lex.c \
