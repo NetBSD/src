@@ -798,10 +798,7 @@ case ${target} in
   gnu_ld=yes
   use_gcc_stdint=wrap
   case ${enable_threads} in
-    "" | yes | posix)
-      thread_file='posix'
-      tm_defines="${tm_defines} NETBSD_ENABLE_PTHREADS"
-      ;;
+    "" | yes | posix) thread_file='posix' ;;
   esac
   nbsd_tm_file="${nbsd_tm_file} netbsd.h netbsd-stdint.h netbsd-elf.h"
   default_use_cxa_atexit=yes
