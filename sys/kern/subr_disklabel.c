@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disklabel.c,v 1.2 2019/04/05 01:10:32 christos Exp $	*/
+/*	$NetBSD: subr_disklabel.c,v 1.3 2019/04/07 02:58:02 rin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,13 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disklabel.c,v 1.2 2019/04/05 01:10:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disklabel.c,v 1.3 2019/04/07 02:58:02 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/disklabel.h>
 
-#if !defined(__HAVE_SETDISKLABEL) || !defined(_KERNEL)
+#if !defined(__HAVE_SETDISKLABEL) || defined(_RUMPKERNEL)
 
 #ifdef DEBUG
 #define DPRINTF(a, ...) printf(a, ##__VA_ARGS__)
