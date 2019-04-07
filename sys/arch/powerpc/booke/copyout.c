@@ -1,4 +1,4 @@
-/*	$NetBSD: copyout.c,v 1.4 2014/07/24 23:29:02 joerg Exp $	*/
+/*	$NetBSD: copyout.c,v 1.5 2019/04/07 05:25:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -36,10 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.4 2014/07/24 23:29:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.5 2019/04/07 05:25:55 thorpej Exp $");
+
+#define	__UFETCHSTORE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/lwp.h>
+#include <sys/systm.h>
 
 #include <powerpc/pcb.h>
 
@@ -58,20 +61,18 @@ copyout_uint8(uint8_t *udaddr, uint8_t data, register_t ds_msr)
 	    : [ds_msr] "r" (ds_msr), [data] "r" (data), [udaddr] "b" (udaddr));
 }
 
-#if 0
 static inline void
-copyout_uint16(uint8_t *udaddr, uint8_t data, register_t ds_msr)
+copyout_uint16(uint16_t *udaddr, uint8_t data, register_t ds_msr)
 {
 	register_t msr;
 	__asm volatile(
 		"mfmsr	%[msr]"				/* Save MSR */
 	"\n\t"	"mtmsr	%[ds_msr]; sync; isync"		/* DS on */
-	"\n\t"	"stb	%[data],0(%[udaddr])"		/* store user byte */
+	"\n\t"	"sth	%[data],0(%[udaddr])"		/* store user half */
 	"\n\t"	"mtmsr	%[msr]; sync; isync"		/* DS off */
 	    : [msr] "=&r" (msr)
 	    : [ds_msr] "r" (ds_msr), [data] "r" (data), [udaddr] "b" (udaddr));
 }
-#endif
 
 static inline void
 copyout_uint32(uint32_t * const udaddr, uint32_t data, register_t ds_msr)
@@ -295,6 +296,60 @@ copyout_uint32s(vaddr_t ksaddr, vaddr_t udaddr, size_t len, register_t ds_msr)
 	while (len-- > 0) {
 		copyout_uint32(udaddr32++, *ksaddr32++, ds_msr);
 	}
+}
+
+int
+_ustore_8(uint8_t *vusaddr, uint8_t val)
+{
+	struct pcb * const pcb = lwp_getpcb(curlwp);
+	struct faultbuf env;
+
+	if (setfault(&env) != 0) {
+		pcb->pcb_onfault = NULL;
+		return EFAULT;
+	}
+
+	copyout_uint8(vusaddr, val, mfmsr() | PSL_DS);
+
+	pcb->pcb_onfault = NULL;
+
+	return 0;
+}
+
+int
+_ustore_16(uint16_t *vusaddr, uint16_t val)
+{
+	struct pcb * const pcb = lwp_getpcb(curlwp);
+	struct faultbuf env;
+
+	if (setfault(&env) != 0) {
+		pcb->pcb_onfault = NULL;
+		return EFAULT;
+	}
+
+	copyout_uint16(vusaddr, val, mfmsr() | PSL_DS);
+
+	pcb->pcb_onfault = NULL;
+
+	return 0;
+}
+
+int
+_ustore_32(uint32_t *vusaddr, uint32_t val)
+{
+	struct pcb * const pcb = lwp_getpcb(curlwp);
+	struct faultbuf env;
+
+	if (setfault(&env) != 0) {
+		pcb->pcb_onfault = NULL;
+		return EFAULT;
+	}
+
+	copyout_uint32(vusaddr, val, mfmsr() | PSL_DS);
+
+	pcb->pcb_onfault = NULL;
+
+	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.25 2016/12/06 07:34:22 rin Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.26 2019/04/07 05:25:55 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.25 2016/12/06 07:34:22 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.26 2019/04/07 05:25:55 thorpej Exp $");
 
 #include "opt_modular.h"
 
@@ -566,8 +566,12 @@ cpu_write_1(bus_addr_t a, uint8_t v)
 void
 booke_sstep(struct trapframe *tf)
 {
+	uint32_t insn;
+
 	KASSERT(tf->tf_srr1 & PSL_DE);
-	const uint32_t insn = ufetch_32((const void *)tf->tf_srr0);
+	if (ufetch_32((const void *)tf->tf_srr0, &insn) != 0)
+		return;
+
 	register_t dbcr0 = DBCR0_IAC1 | DBCR0_IDM;
 	register_t dbcr1 = DBCR1_IAC1US_USER | DBCR1_IAC1ER_DS1;
 	if ((insn >> 28) == 4) {
