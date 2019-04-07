@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.389 2019/04/03 15:26:35 joerg Exp $
+#	$NetBSD: bsd.README,v 1.390 2019/04/07 19:32:24 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -2041,7 +2041,7 @@ LDFLAGS		Options to ${CC} during the link process.  []
 
 LINT		C program verifier.  [lint]
 
-LINTFLAGS	Options to ${LINT}.  [-chapbxzgFS]
+LINTFLAGS	Options to ${LINT}.  [-chapbrxzgFS]
 
 LORDER		List dependencies for object files.  [lorder]
 
