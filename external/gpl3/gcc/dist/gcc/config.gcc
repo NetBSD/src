@@ -797,32 +797,14 @@ case ${target} in
   gas=yes
   gnu_ld=yes
   use_gcc_stdint=wrap
-
-  # NetBSD 2.0 and later get POSIX threads enabled by default.
-  # Allow them to be explicitly enabled on any other version.
   case ${enable_threads} in
-    "")
-      case ${target} in
-        *-*-netbsd[2-9]* | *-*-netbsdelf[2-9]*)
-          thread_file='posix'
-          tm_defines="${tm_defines} NETBSD_ENABLE_PTHREADS"
-          ;;
-      esac
-      ;;
-    yes | posix)
+    "" | yes | posix)
       thread_file='posix'
       tm_defines="${tm_defines} NETBSD_ENABLE_PTHREADS"
       ;;
   esac
-
-  # NetBSD 2.0 and later provide __cxa_atexit(), which we use by
-  # default (unless overridden by --disable-__cxa_atexit).
-  case ${target} in
-    *-*-netbsd[2-9]* | *-*-netbsdelf[2-9]*)
-      default_use_cxa_atexit=yes
-      ;;
-  esac
   nbsd_tm_file="${nbsd_tm_file} netbsd.h netbsd-stdint.h netbsd-elf.h"
+  default_use_cxa_atexit=yes
   ;;
 *-*-openbsd*)
   tmake_file="t-openbsd"
