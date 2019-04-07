@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.45 2019/04/07 14:51:14 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.46 2019/04/07 22:31:54 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.45 2019/04/07 14:51:14 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.46 2019/04/07 22:31:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -550,7 +550,8 @@ label:
 					    tzgetname(sp, dst);
 					if (z == NULL)
 						z = tzgetname(sp, !dst);
-					pt = _add(z ? z : "???", pt, ptlim);
+					if (z != NULL)
+						pt = _add(z, pt, ptlim);
 					errno = oerrno;
 				}
 #endif
