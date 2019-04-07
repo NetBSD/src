@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.5 2019/02/24 10:44:41 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.6 2019/04/07 09:20:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.5 2019/02/24 10:44:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.6 2019/04/07 09:20:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,17 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.5 2019/02/24 10:44:41 maxv Exp $");
 
 /* The MD code. */
 #include <machine/asan.h>
-
-/* Our redzone values. */
-#define KASAN_MEMORY_FREED	0xFA
-#define KASAN_MEMORY_REDZONE	0xFB
-
-/* Stack redzone values. Part of the compiler ABI. */
-#define KASAN_STACK_LEFT	0xF1
-#define KASAN_STACK_MID		0xF2
-#define KASAN_STACK_RIGHT	0xF3
-#define KASAN_STACK_PARTIAL	0xF4
-#define KASAN_USE_AFTER_SCOPE	0xF8
 
 /* ASAN ABI version. */
 #if defined(__clang__) && (__clang_major__ - 0 >= 6)
@@ -167,10 +156,16 @@ static inline const char *
 kasan_code_name(uint8_t code)
 {
 	switch (code) {
-	case KASAN_MEMORY_FREED:
-		return "UseAfterFree";
-	case KASAN_MEMORY_REDZONE:
-		return "RedZone";
+	case KASAN_GENERIC_REDZONE:
+		return "GenericRedZone";
+	case KASAN_MALLOC_REDZONE:
+		return "MallocRedZone";
+	case KASAN_KMEM_REDZONE:
+		return "KmemRedZone";
+	case KASAN_POOL_REDZONE:
+		return "PoolRedZone";
+	case KASAN_POOL_FREED:
+		return "PoolUseAfterFree";
 	case 1 ... 7:
 		return "RedZonePartial";
 	case KASAN_STACK_LEFT:
@@ -217,7 +212,7 @@ kasan_shadow_Nbyte_markvalid(const void *addr, size_t size)
 }
 
 static __always_inline void
-kasan_shadow_Nbyte_fill(const void *addr, size_t size, uint8_t val)
+kasan_shadow_Nbyte_fill(const void *addr, size_t size, uint8_t code)
 {
 	void *shad;
 
@@ -232,7 +227,7 @@ kasan_shadow_Nbyte_fill(const void *addr, size_t size, uint8_t val)
 	shad = (void *)kasan_md_addr_to_shad(addr);
 	size = size >> KASAN_SHADOW_SCALE_SHIFT;
 
-	__builtin_memset(shad, val, size);
+	__builtin_memset(shad, code, size);
 }
 
 void
@@ -243,13 +238,13 @@ kasan_add_redzone(size_t *size)
 }
 
 static void
-kasan_markmem(const void *addr, size_t size, bool valid)
+kasan_markmem(const void *addr, size_t size, bool valid, uint8_t code)
 {
 	KASSERT((vaddr_t)addr % KASAN_SHADOW_SCALE_SIZE == 0);
 	if (valid) {
 		kasan_shadow_Nbyte_markvalid(addr, size);
 	} else {
-		kasan_shadow_Nbyte_fill(addr, size, KASAN_MEMORY_REDZONE);
+		kasan_shadow_Nbyte_fill(addr, size, code);
 	}
 }
 
@@ -265,16 +260,16 @@ kasan_softint(struct lwp *l)
  * In an area of size 'sz_with_redz', mark the 'size' first bytes as valid,
  * and the rest as invalid. There are generally two use cases:
  *
- *  o kasan_mark(addr, origsize, size), with origsize < size. This marks the
- *    redzone at the end of the buffer as invalid.
+ *  o kasan_mark(addr, origsize, size, code), with origsize < size. This marks
+ *    the redzone at the end of the buffer as invalid.
  *
- *  o kasan_mark(addr, size, size). This marks the entire buffer as valid.
+ *  o kasan_mark(addr, size, size, 0). This marks the entire buffer as valid.
  */
 void
-kasan_mark(const void *addr, size_t size, size_t sz_with_redz)
+kasan_mark(const void *addr, size_t size, size_t sz_with_redz, uint8_t code)
 {
-	kasan_markmem(addr, sz_with_redz, false);
-	kasan_markmem(addr, size, true);
+	kasan_markmem(addr, sz_with_redz, false, code);
+	kasan_markmem(addr, size, true, code);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -496,7 +491,7 @@ __asan_register_globals(struct __asan_global *globals, size_t n)
 
 	for (i = 0; i < n; i++) {
 		kasan_mark(globals[i].beg, globals[i].size,
-		    globals[i].size_with_redzone);
+		    globals[i].size_with_redzone, KASAN_GENERIC_REDZONE);
 	}
 }
 
