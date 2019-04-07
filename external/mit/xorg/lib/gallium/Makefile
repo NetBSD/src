@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2019/04/03 15:26:34 joerg Exp $
+# $NetBSD: Makefile,v 1.21 2019/04/07 05:28:09 rin Exp $
 
 # Link the gallium mega driver.
 
@@ -1021,8 +1021,10 @@ LLVM_LIBS+=	\
 		Support
 
 .for llvm_library in ${LLVM_LIBS}
-DPADD+=	${LLVM_LIB_DIR}/libLLVM${llvm_library}/libLLVM${llvm_library}_pic.a
-LDADD+=	${LLVM_LIB_DIR}/libLLVM${llvm_library}/libLLVM${llvm_library}_pic.a
+dir!=	cd ${LLVM_LIB_DIR}/libLLVM${llvm_library}; ${PRINTOBJDIR}
+lib=	${dir}/libLLVM${llvm_library}_pic.a
+DPADD+=	${lib}
+LDADD+=	${lib}
 .endfor
 
 .endif  # ${BUILD_LLVM_PIPE} == 1 || ${BUILD_RADEON} == 1
