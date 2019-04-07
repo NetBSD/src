@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.448 2019/04/05 21:31:44 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.449 2019/04/07 13:00:00 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.448 2019/04/05 21:31:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.449 2019/04/07 13:00:00 bouyer Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -719,8 +719,12 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 
 	if (wd->sc_flags & WDF_LBA)
 		xfer->c_bio.flags |= ATA_LBA;
-	if (bp->b_flags & B_READ)
+	if (bp->b_flags & B_READ) {
 		xfer->c_bio.flags |= ATA_READ;
+	} else {
+		/* it's a write */
+		wd->sc_flags |= WDF_DIRTY;
+	}
 	if (bp->b_flags & B_MEDIA_FUA) {
 		/* If not using NCQ, the command WRITE DMA FUA EXT is LBA48 */
 		KASSERT((wd->sc_flags & WDF_LBA48) != 0);
@@ -1144,7 +1148,8 @@ wd_lastclose(device_t self)
 
 	KASSERTMSG(bufq_peek(wd->sc_dksc.sc_bufq) == NULL, "bufq not empty");
 
-	wd_flushcache(wd, AT_WAIT, false);
+	if (wd->sc_flags & WDF_DIRTY)
+		wd_flushcache(wd, AT_WAIT, false);
 
 	wd->atabus->ata_delref(wd->drvp);
 	wd->sc_flags &= ~WDF_OPEN;
@@ -1847,6 +1852,7 @@ wd_flushcache(struct wd_softc *wd, int flags, bool start_self)
 		error = EIO;
 		goto out_xfer;
 	}
+	wd->sc_flags &= ~WDF_DIRTY;
 	error = 0;
 
 out_xfer:
@@ -2235,7 +2241,6 @@ wddebug(void)
 
 		atachannel_debug(wd->drvp->chnl_softc);
 	}
-	wd->sc_flags &= ~WDF_DIRTY;
 	return 0;
 }
 #endif /* ATADEBUG */
