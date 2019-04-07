@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.246 2019/03/28 18:12:24 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.247 2019/04/07 08:37:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.246 2019/03/28 18:12:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.247 2019/04/07 08:37:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2129,16 +2129,6 @@ pool_cache_reclaim(pool_cache_t pc)
 static void
 pool_cache_destruct_object1(pool_cache_t pc, void *object)
 {
-	if (pc->pc_pool.pr_redzone) {
-		/*
-		 * The object is marked as invalid. Temporarily mark it as
-		 * valid for the destructor. pool_put below will re-mark it
-		 * as invalid.
-		 */
-		kasan_mark(object, pc->pc_pool.pr_reqsize,
-		    pc->pc_pool.pr_reqsize_with_redzone);
-	}
-
 	(*pc->pc_dtor)(pc->pc_arg, object);
 	pool_put(&pc->pc_pool, object);
 }
@@ -2396,7 +2386,6 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int s, void **objectp,
 	}
 
 	FREECHECK_OUT(&pc->pc_freecheck, object);
-	pool_redzone_fill(&pc->pc_pool, object);
 	pool_cache_kleak_fill(pc, object);
 	return false;
 }
