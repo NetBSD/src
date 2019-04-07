@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.58 2019/04/06 03:06:27 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.59 2019/04/07 05:25:55 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -98,7 +98,9 @@ int __openfirmio_open_check_broken(void);
 
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_MM_MD_KERNACC
+#if 0	/* XXX CPU configuration spaghetti */
 #define	__HAVE_UCAS_FULL
+#endif
 #if defined(_KERNEL)
 #define	__HAVE_RAS
 #endif

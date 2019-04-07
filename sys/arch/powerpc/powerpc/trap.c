@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.155 2019/04/06 03:06:27 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.156 2019/04/07 05:25:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.155 2019/04/06 03:06:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.156 2019/04/07 05:25:56 thorpej Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -682,6 +682,7 @@ kcopy(const void *src, void *dst, size_t len)
 	return rv;
 }
 
+#if 0 /* XXX CPU configuration spaghetti */
 int
 _ucas_32(volatile uint32_t *uptr, uint32_t old, uint32_t new, uint32_t *ret)
 {
@@ -704,6 +705,7 @@ out:
 	curpcb->pcb_onfault = 0;
 	return rv;
 }
+#endif
 
 int
 badaddr(void *addr, size_t size)
