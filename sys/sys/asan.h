@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.9 2018/12/23 12:15:01 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.10 2019/04/07 09:20:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,6 +38,20 @@
 
 #include <sys/types.h>
 
+/* Stack redzone values. Part of the compiler ABI. */
+#define KASAN_STACK_LEFT	0xF1
+#define KASAN_STACK_MID		0xF2
+#define KASAN_STACK_RIGHT	0xF3
+#define KASAN_STACK_PARTIAL	0xF4
+#define KASAN_USE_AFTER_SCOPE	0xF8
+
+/* Our redzone values. */
+#define KASAN_GENERIC_REDZONE	0xFA
+#define KASAN_MALLOC_REDZONE	0xFB
+#define KASAN_KMEM_REDZONE	0xFC
+#define KASAN_POOL_REDZONE	0xFD
+#define KASAN_POOL_FREED	0xFE
+
 #ifdef KASAN
 void kasan_shadow_map(void *, size_t);
 void kasan_early_init(void *);
@@ -45,10 +59,10 @@ void kasan_init(void);
 void kasan_softint(struct lwp *);
 
 void kasan_add_redzone(size_t *);
-void kasan_mark(const void *, size_t, size_t);
+void kasan_mark(const void *, size_t, size_t, uint8_t);
 #else
 #define kasan_add_redzone(s)	__nothing
-#define kasan_mark(p, s, l)	__nothing
+#define kasan_mark(p, s, l, c)	__nothing
 #endif
 
 #endif /* !_SYS_ASAN_H_ */

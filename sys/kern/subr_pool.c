@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.247 2019/04/07 08:37:38 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.248 2019/04/07 09:20:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.247 2019/04/07 08:37:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.248 2019/04/07 09:20:04 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -357,7 +357,7 @@ pr_item_linkedlist_put(const struct pool *pp, struct pool_item_header *ph,
 		 * Mark the pool_item as valid. The rest is already
 		 * invalid.
 		 */
-		kasan_mark(pi, sizeof(*pi), sizeof(*pi));
+		kasan_mark(pi, sizeof(*pi), sizeof(*pi), 0);
 	}
 
 	LIST_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
@@ -2785,7 +2785,7 @@ pool_allocator_free(struct pool *pp, void *v)
 	struct pool_allocator *pa = pp->pr_alloc;
 
 	if (pp->pr_redzone) {
-		kasan_mark(v, pa->pa_pagesz, pa->pa_pagesz);
+		kasan_mark(v, pa->pa_pagesz, pa->pa_pagesz, 0);
 	}
 	(*pa->pa_free)(pp, v);
 }
@@ -2920,7 +2920,8 @@ pool_redzone_fill(struct pool *pp, void *p)
 	if (!pp->pr_redzone)
 		return;
 #ifdef KASAN
-	kasan_mark(p, pp->pr_reqsize, pp->pr_reqsize_with_redzone);
+	kasan_mark(p, pp->pr_reqsize, pp->pr_reqsize_with_redzone,
+	    KASAN_POOL_REDZONE);
 #else
 	uint8_t *cp, pat;
 	const uint8_t *ep;
@@ -2949,7 +2950,7 @@ pool_redzone_check(struct pool *pp, void *p)
 	if (!pp->pr_redzone)
 		return;
 #ifdef KASAN
-	kasan_mark(p, 0, pp->pr_reqsize_with_redzone);
+	kasan_mark(p, 0, pp->pr_reqsize_with_redzone, KASAN_POOL_FREED);
 #else
 	uint8_t *cp, pat, expected;
 	const uint8_t *ep;
