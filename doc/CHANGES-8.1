@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.124 2019/04/05 08:42:48 msaitoh Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.125 2019/04/07 11:02:13 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2816,3 +2816,9 @@ sys/sys/dkio.h					1.25
 
 	Add a disk ioctl DIOCRMWEDGES to remove all wedges of a given disk
 	(if not busy). [martin, ticket #1223]
+
+sys/dev/ic/msm6242b.c				1.4
+
+	Remove misplaced semicolon.
+	[rin, ticket #1227]
+
