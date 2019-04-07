@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ufetchstore.c,v 1.2 2019/04/07 03:35:25 rin Exp $	*/
+/*	$NetBSD: t_ufetchstore.c,v 1.3 2019/04/07 03:43:55 rin Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ufetchstore.c,v 1.2 2019/04/07 03:35:25 rin Exp $");
+__RCSID("$NetBSD: t_ufetchstore.c,v 1.3 2019/04/07 03:43:55 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -85,7 +85,7 @@ load_module(void)
 #endif /* ! SKIP_MODULE */
 }
 
-#define	UADDR64(x)	((uintptr_t)(x))
+#define	UADDR(x)	((uintptr_t)(x))
 
 static void
 unload_module(void)
@@ -144,7 +144,7 @@ static int
 do_ufetch_8(const uint8_t *uaddr, uint8_t *res)
 {
 	struct ufetchstore_test_args args = {
-		.uaddr64 = UADDR64(uaddr),
+		.uaddr64 = UADDR(uaddr),
 		.test_op = OP_LOAD,
 		.size = 8,
 	};
@@ -158,7 +158,7 @@ static int
 do_ufetch_16(const uint16_t *uaddr, uint16_t *res)
 {
 	struct ufetchstore_test_args args = {
-		.uaddr64 = UADDR64(uaddr),
+		.uaddr64 = UADDR(uaddr),
 		.test_op = OP_LOAD,
 		.size = 16,
 	};
@@ -172,7 +172,7 @@ static int
 do_ufetch_32(const uint32_t *uaddr, uint32_t *res)
 {
 	struct ufetchstore_test_args args = {
-		.uaddr64 = UADDR64(uaddr),
+		.uaddr64 = UADDR(uaddr),
 		.test_op = OP_LOAD,
 		.size = 32,
 	};
@@ -187,7 +187,7 @@ static int
 do_ufetch_64(const uint64_t *uaddr, uint64_t *res)
 {
 	struct ufetchstore_test_args args = {
-		.uaddr64 = UADDR64(uaddr),
+		.uaddr64 = UADDR(uaddr),
 		.test_op = OP_LOAD,
 		.size = 64,
 	};
@@ -202,7 +202,7 @@ static int
 do_ustore_8(uint8_t *uaddr, uint8_t val)
 {
 	struct ufetchstore_test_args args = {
-		.uaddr64 = UADDR64(uaddr),
+		.uaddr64 = UADDR(uaddr),
 		.test_op = OP_STORE,
 		.size = 8,
 		.val8 = val,
@@ -216,7 +216,7 @@ static int
 do_ustore_16(uint16_t *uaddr, uint16_t val)
 {
 	struct ufetchstore_test_args args = {
-		.uaddr64 = UADDR64(uaddr),
+		.uaddr64 = UADDR(uaddr),
 		.test_op = OP_STORE,
 		.size = 16,
 		.val16 = val,
@@ -230,7 +230,7 @@ static int
 do_ustore_32(uint32_t *uaddr, uint32_t val)
 {
 	struct ufetchstore_test_args args = {
-		.uaddr64 = UADDR64(uaddr),
+		.uaddr64 = UADDR(uaddr),
 		.test_op = OP_STORE,
 		.size = 32,
 		.val32 = val,
@@ -245,7 +245,7 @@ static int
 do_ustore_64(uint64_t *uaddr, uint64_t val)
 {
 	struct ufetchstore_test_args args = {
-		.uaddr64 = UADDR64(uaddr),
+		.uaddr64 = UADDR(uaddr),
 		.test_op = OP_STORE,
 		.size = 64,
 		.val64 = val,
@@ -260,7 +260,7 @@ static int
 do_ucas_32(uint32_t *uaddr, uint32_t expected, uint32_t new, uint32_t *actualp)
 {
 	struct ufetchstore_test_args args = {
-		.uaddr64 = UADDR64(uaddr),
+		.uaddr64 = UADDR(uaddr),
 		.test_op = OP_CAS,
 		.size = 32,
 		.val32 = new,
@@ -277,7 +277,7 @@ static int
 do_ucas_64(uint64_t *uaddr, uint64_t expected, uint64_t new, uint64_t *actualp)
 {
 	struct ufetchstore_test_args args = {
-		.uaddr64 = UADDR64(uaddr),
+		.uaddr64 = UADDR(uaddr),
 		.test_op = OP_CAS,
 		.size = 64,
 		.val64 = new,
