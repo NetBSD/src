@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.118 2019/04/07 14:44:51 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.119 2019/04/07 14:58:25 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.118 2019/04/07 14:44:51 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.119 2019/04/07 14:58:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1394,7 +1394,7 @@ zoneinit(struct state *sp, char const *name)
 		sp->typecnt = 1;
 		sp->charcnt = 0;
 		sp->goback = sp->goahead = false;
-		sp->types[0] = sp->types[1] = 0;
+		sp->types[0] = 0;
 		init_ttinfo(&sp->ttis[0], 0, false, 0);
 		strcpy(sp->chars, gmt);
 		sp->defaulttype = 0;
