@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.6 2019/04/07 04:11:56 thorpej Exp $	*/
+/*	$NetBSD: fusu.S,v 1.7 2019/04/07 14:14:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -70,6 +70,10 @@
 
 #include <arm/locore.h>
 
+#if (ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6) > 0
+#define	NO_LDRHT_STRHT
+#endif
+
 #define	RETURN_SUCCESS							\
 	mov	r0, #0x00000000					;	\
 	mov	pc, lr
@@ -99,9 +103,9 @@ ENTRY(_ufetch_8)
 	RETURN_SUCCESS
 END(_ufetch_8)
 
-#if (ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + ARM_ARCH_5) > 0
-/* LINTSTUB: int _ufetch_16_armv2(const uint16_t *uaddr, uint16_t *valp); */
-ENTRY(_ufetch_16_armv2)
+#ifdef NO_LDRHT_STRHT
+/* LINTSTUB: int _ufetch_16_no_ldrht(const uint16_t *uaddr, uint16_t *valp); */
+ENTRY(_ufetch_16_no_ldrht)
 	UFETCHSTORE_PROLOGUE
 
 	ldrbt	r3, [r0], #1
@@ -112,15 +116,15 @@ ENTRY(_ufetch_16_armv2)
 
 	UFETCHSTORE_EPILOGUE
 	RETURN_SUCCESS
-END(_ufetch_16_armv2)
+END(_ufetch_16_no_ldrht)
 
 /* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
-STRONG_ALIAS(_ufetch_16,_ufetch_16_armv2)
+STRONG_ALIAS(_ufetch_16,_ufetch_16_no_ldrht)
 
 #else /* XXX */
 
-/* LINTSTUB: int _ufetch_16_armv6(const uint16_t *uaddr, uint16_t *valp); */
-ENTRY(_ufetch_16_armv6)
+/* LINTSTUB: int _ufetch_16_ldrht(const uint16_t *uaddr, uint16_t *valp); */
+ENTRY(_ufetch_16_ldrht)
 	UFETCHSTORE_PROLOGUE
 
 	ldrht	r3, [r0]
@@ -128,11 +132,11 @@ ENTRY(_ufetch_16_armv6)
 
 	UFETCHSTORE_EPILOGUE
 	RETURN_SUCCESS
-END(_ufetch_16_armv6)
+END(_ufetch_16_ldrht)
 
 /* LINTSTUB: int _ufetch_16(const uint16_t *uaddr, uint16_t *valp); */
-STRONG_ALIAS(_ufetch_16,_ufetch_16_armv6)
-#endif /* (ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + ARM_ARCH_5) > 0 */
+STRONG_ALIAS(_ufetch_16,_ufetch_16_ldrht)
+#endif /* NO_LDRHT_STRHT */
 
 /* LINTSTUB: int _ufetch_32(const uint32_t *uaddr, uint32_t *valp); */
 ENTRY(_ufetch_32)
@@ -155,9 +159,9 @@ ENTRY(_ustore_8)
 	RETURN_SUCCESS
 END(_ustore_8)
 
-#if (ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + ARM_ARCH_5) > 0
-/* LINTSTUB: int _ustore_16_armv2(uint16_t *uaddr, uint16_t val); */
-ENTRY(_ustore_16_armv2)
+#ifdef NO_LDRHT_STRHT
+/* LINTSTUB: int _ustore_16_no_strht(uint16_t *uaddr, uint16_t val); */
+ENTRY(_ustore_16_no_strht)
 	UFETCHSTORE_PROLOGUE
 
 #ifdef __ARMEB__
@@ -171,26 +175,26 @@ ENTRY(_ustore_16_armv2)
 
 	UFETCHSTORE_EPILOGUE
 	RETURN_SUCCESS
-END(_ustore_16_armv2)
+END(_ustore_16_no_strht)
 
 /* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
-STRONG_ALIAS(_ustore_16,_ustore_16_armv2)
+STRONG_ALIAS(_ustore_16,_ustore_16_no_strht)
 
 #else /* XXX */
 
-/* LINTSTUB: int _ustore_16_armv4(uint16_t *uaddr, uint16_t val); */
-ENTRY(_ustore_16_armv6)
+/* LINTSTUB: int _ustore_16_strht(uint16_t *uaddr, uint16_t val); */
+ENTRY(_ustore_16_strht)
 	UFETCHSTORE_PROLOGUE
 
 	strht	r1, [r0]
 
 	UFETCHSTORE_EPILOGUE
 	RETURN_SUCCESS
-END(_ustore_16_armv6)
+END(_ustore_16_strht)
 
 /* LINTSTUB: int _ustore_16(uint16_t *uaddr, uint16_t val); */
-STRONG_ALIAS(_ustore_16,_ustore_16_armv6)
-#endif /* (ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + ARM_ARCH_5) > 0 */
+STRONG_ALIAS(_ustore_16,_ustore_16_strht)
+#endif /* NO_LDRHT_STRHT */
 
 /* LINTSTUB: int _ustore_32(uint32_t *uaddr, uint32_t val); */
 ENTRY(_ustore_32)
