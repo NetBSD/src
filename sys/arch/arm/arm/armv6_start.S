@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.11 2019/04/04 14:24:20 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.12 2019/04/08 07:35:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -854,7 +854,10 @@ armv7_mpcontinuation:
 	mov	r0, R_INDEX			// index into cpu_mpidr[] or cpu_number if not found
 	bl	cpu_init_secondary_processor
 
-	/* Wait for cpu_boot_secondary_processors the when cpu_info is allocated, etc */
+	/*
+	 * Wait for cpu_boot_secondary_processors when cpu_info has
+	 * been allocated, etc
+	 */
 
 	movw	r6, #:lower16:arm_cpu_mbox
 	movt	r6, #:upper16:arm_cpu_mbox
