@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.14 2019/04/08 18:21:42 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.15 2019/04/08 18:23:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.14 2019/04/08 18:21:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.15 2019/04/08 18:23:46 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,6 +222,7 @@ nvmm_kill_machines(struct nvmm_owner *owner)
 			nvmm_vcpu_free(mach, vcpu);
 			nvmm_vcpu_put(vcpu);
 		}
+		(*nvmm_impl->machine_destroy)(mach);
 		uvmspace_free(mach->vm);
 
 		/* Drop the kernel UOBJ refs. */
