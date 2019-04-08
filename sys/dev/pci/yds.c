@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.60 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: yds.c,v 1.61 2019/04/08 15:35:57 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.60 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.61 2019/04/08 15:35:57 isaki Exp $");
 
 #include "mpu.h"
 
@@ -771,7 +771,7 @@ yds_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_AUDIO); /* XXX IPL_NONE? */
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
@@ -1284,7 +1284,7 @@ yds_round_blocksize(void *addr, int blk, int mode,
 	if (blk < 1024)
 		blk = 1024;
 
-	return blk & ~4;
+	return blk & ~3;
 }
 
 static uint32_t
@@ -1455,7 +1455,7 @@ yds_trigger_output(void *addr, void *start, void *end, int blksize,
 	/* Now the play slot for the next frame is set up!! */
 	/* Sync play slot control data for both directions */
 	bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
-			sc->ptbloff,
+			sc->pbankoff,
 			sizeof(struct play_slot_ctrl_bank) *
 			    channels * N_PLAY_SLOT_CTRL_BANK,
 			BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
@@ -1613,11 +1613,10 @@ yds_halt_input(void *addr)
 
 	DPRINTF(("yds: yds_halt_input\n"));
 	sc = addr;
-	sc->sc_rec.intr = NULL;
 	if (sc->sc_rec.intr) {
+		sc->sc_rec.intr = NULL;
 		/* Stop the rec slot operation */
 		YWRITE4(sc, YDS_MAPOF_REC, 0);
-		sc->sc_rec.intr = 0;
 		/* Sync rec slot control data */
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
 				sc->rbankoff,
