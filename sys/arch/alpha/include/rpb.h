@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.42 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: rpb.h,v 1.43 2019/04/08 00:47:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -71,10 +71,12 @@ struct rpb {
 #define	ST_DEC_4100		22		/* "Rawhide" (PCI/EISA) */
 #define	ST_DEC_EV45_PBP		23		/* "Lego" K2 Passive SBC */
 #define	ST_DEC_2100A_A500	24		/* "Lynx" */
+#define	ST_DEC_XL		25		/* Alpha XL */
 #define	ST_EB164		26		/* EB164 (PCI/ISA) */
 #define	ST_DEC_1000A		27		/* "Noritake" (PCI/EISA)*/
 #define	ST_DEC_ALPHAVME_224	28		/* "Cortex" */
 #define	ST_DEC_550		30		/* "Miata" (PCI/ISA) */
+#define	ST_DEC_XXM		31		/* XXM */
 #define	ST_DEC_EV56_PBP		32		/* "Takara" */
 #define	ST_DEC_ALPHAVME_320	33		/* "Yukon" (VME) */
 #define	ST_DEC_6600		34		/* EV6-Tsunami based systems */
@@ -82,6 +84,10 @@ struct rpb {
 #define	ST_DEC_CUSCO		36		/* "CUSCO" */
 #define	ST_DEC_EIGER		37		/* "Eiger" */
 #define	ST_DEC_TITAN		38		/* "Titan" */
+#define	ST_DEC_MARVEL		39		/* "Marvel" */
+
+	/* DTI systypes */
+#define	ST_DTI_RUFFIAN		101		/* EV56-Pyxis + ARC? */
 
 	/* Alpha Processor, Inc. systypes */
 #define	ST_API_NAUTILUS		201		/* EV6-AMD 751 UP1000 */
@@ -284,6 +290,9 @@ struct pcs {
 #define	PCS_PROC_EV68CB		12			/* EV68CB: 21264C */
 #define	PCS_PROC_EV68AL		13			/* EV68AL: 21264B */
 #define	PCS_PROC_EV68CX		14			/* EV68CX: 21264D */
+#define	PCS_PROC_EV7		15			/* EV7: 21364 */
+#define	PCS_PROC_EV79		16			/* EV79: 21364?? */
+#define	PCS_PROC_EV69		17			/* EV69: 21264/EV69A */
 
 #define	PCS_CPU_MAJORTYPE(p) ((p)->pcs_proc_type & 0xffffffff)
 #define	PCS_CPU_MINORTYPE(p) ((p)->pcs_proc_type >> 32)
