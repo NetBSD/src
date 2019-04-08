@@ -1,4 +1,4 @@
-/* $NetBSD: cpuconf.c,v 1.36 2013/09/23 16:41:56 tsutsui Exp $ */
+/* $NetBSD: cpuconf.c,v 1.37 2019/04/08 00:47:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.36 2013/09/23 16:41:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.37 2019/04/08 00:47:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -226,14 +226,18 @@ static const struct cpuinit cpuinit[] = {
 	cpu_init(ST_DEC_4100, dec_kn300_init, "DEC_KN300"),
 	cpu_notsupp(ST_DEC_EV45_PBP, "EV45 Passive Backplane Board"),
 	cpu_init(ST_DEC_2100A_A500, dec_2100a_a500_init, "DEC_2100A_A500"),
+	cpu_notsupp(ST_DEC_XL, "Alpha XL"),
 	cpu_init(ST_EB164, dec_eb164_init, "DEC_EB164"),
 	cpu_init(ST_DEC_1000A, dec_1000a_init, "DEC_1000A"),
 	cpu_notsupp(ST_DEC_ALPHAVME_224, "AlphaVME 224"),
 	cpu_init(ST_DEC_550, dec_550_init, "DEC_550"),
+	cpu_notsupp(ST_DEC_XXM, "DEC XXM"),
 	cpu_notsupp(ST_DEC_EV56_PBP, "EV56 Passive Backplane Board"),
 	cpu_notsupp(ST_DEC_ALPHAVME_320, "AlphaVME 320"),
 	cpu_init(ST_DEC_6600, dec_6600_init, "DEC_6600"),
 	cpu_init(ST_DEC_TITAN, dec_6600_init, "DEC_6600"), 
+	cpu_notsupp(ST_DEC_MARVEL, "DEC_MARVEL"),
+	cpu_notsupp(ST_DTI_RUFFIAN, "DTI_RUFFIAN"),
 	cpu_init(ST_API_NAUTILUS, api_up1000_init, "API_UP1000"),
 };
 static const int ncpuinit = (sizeof(cpuinit) / sizeof(cpuinit[0]));
