@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.13 2017/11/06 03:47:45 christos Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.14 2019/04/08 14:08:16 thorpej Exp $ */
 
 #ifndef	_ALPHA_ELF_MACHDEP_H_
 #define	_ALPHA_ELF_MACHDEP_H_
@@ -55,6 +55,7 @@
 #define	R_ALPHA_GLOB_DAT	25	/* Create GOT entry */
 #define	R_ALPHA_JMP_SLOT	26	/* Create PLT entry */
 #define	R_ALPHA_RELATIVE	27	/* Adjust by program base */
+#define	R_ALPHA_BRSGP		28
 
 /* TLS relocations */
 #define	R_ALPHA_TLS_GD		29
