@@ -1,4 +1,4 @@
-.\"     $NetBSD: filedesc.9,v 1.17 2019/04/08 13:04:54 maya Exp $
+.\"     $NetBSD: filedesc.9,v 1.18 2019/04/08 13:30:46 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Nm fd_init ,
 .Nm fd_getfile ,
 .Nm fd_share ,
-.Nm fd_tryexpand ,
+.Nm fd_tryexpand
 .Nd file descriptor tables and operations
 .Sh SYNOPSIS
 .In sys/file.h
@@ -129,10 +129,9 @@ allocate a file descriptor for the process
 .Fa p .
 The credential on the file entry are inherited from process
 .Fa p .
-The caller to the
+Calling the
 .Fn fd_alloc
-function is responsible for expanding the file descriptor table when
-necessary.
+function expands the file descriptor table when necessary.
 .Pp
 The index of the file entry is returned in
 .Fa *result .
@@ -190,7 +189,6 @@ fills
 with the given parameters.
 It always returns the in-kernel errno
 .Er EMOVEFD .
-This special value is meant to be returned from the device open routine;
 This special return value is interpreted by the caller of the device
 open routine.
 .It Fn fd_closeexec "void"
