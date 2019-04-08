@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.7 2019/03/07 15:22:21 maxv Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.8 2019/04/08 18:21:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,6 +37,10 @@
 #define NVMM_MAX_HMAPPINGS	32
 #define NVMM_MAX_RAM		(128ULL * (1 << 30))
 
+struct nvmm_owner {
+	pid_t pid;
+};
+
 struct nvmm_cpu {
 	/* Shared. */
 	bool present;
@@ -63,7 +67,7 @@ struct nvmm_hmapping {
 struct nvmm_machine {
 	bool present;
 	nvmm_machid_t machid;
-	pid_t procid;
+	struct nvmm_owner *owner;
 	krwlock_t lock;
 
 	/* Kernel */
