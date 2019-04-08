@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.272 2019/03/31 19:54:36 maxv Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.273 2019/04/08 18:38:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.272 2019/03/31 19:54:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.273 2019/04/08 18:38:45 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -749,6 +749,7 @@ soclose(struct socket *so)
  discard:
 	KASSERT((so->so_state & SS_NOFDREF) == 0);
 	kauth_cred_free(so->so_cred);
+	so->so_cred = NULL;
 	so->so_state |= SS_NOFDREF;
 	sofree(so);
 	return error;
