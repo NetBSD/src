@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.7 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.8 2019/04/08 13:05:23 maya Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.7 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.8 2019/04/08 13:05:23 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -69,7 +69,7 @@ fd_ktrexecfd(void)
 /*
  * It is unsafe for set[ug]id processes to be started with file
  * descriptors 0..2 closed, as these descriptors are given implicit
- * significance in the Standard C library.  fdcheckstd() will create a
+ * significance in the Standard C library.  fd_checkstd() will create a
  * descriptor referencing /dev/null for each of stdin, stdout, and
  * stderr that is not already open.
  */
