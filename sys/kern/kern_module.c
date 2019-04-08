@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.133 2019/01/27 02:08:43 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.134 2019/04/08 11:32:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.133 2019/01/27 02:08:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.134 2019/04/08 11:32:49 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1090,11 +1090,18 @@ module_do_load(const char *name, bool isdep, int flags,
 	 * Check compatibility.
 	 */
 	mi = mod->mod_info;
-	if (strlen(mi->mi_name) >= MAXMODNAME) {
+	if (strnlen(mi->mi_name, MAXMODNAME) >= MAXMODNAME) {
 		error = EINVAL;
 		module_error("module name `%s' longer than %d", mi->mi_name,
 		    MAXMODNAME);
 		goto fail;
+	}
+	if (mi->mi_class <= MODULE_CLASS_ANY ||
+	    mi->mi_class >= MODULE_CLASS_MAX) {
+		error = EINVAL;
+		module_error("module `%s' has invalid class %d",
+		    mi->mi_name, mi->mi_class);
+		    goto fail;
 	}
 	if (!module_compatible(mi->mi_version, __NetBSD_Version__)) {
 		module_error("module `%s' built for `%d', system `%d'",
