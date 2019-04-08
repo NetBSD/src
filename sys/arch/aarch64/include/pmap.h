@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.23 2019/03/19 16:45:28 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.24 2019/04/08 21:18:22 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ struct pmap {
 
 	struct pmap_statistics pm_stats;
 	unsigned int pm_refcnt;
+	unsigned int pm_idlepdp;
 	int pm_asid;
 	bool pm_activated;
 };
@@ -189,7 +190,7 @@ const struct pmap_devmap *pmap_devmap_find_va(vaddr_t, vsize_t);
 vaddr_t pmap_devmap_phystov(paddr_t);
 paddr_t pmap_devmap_vtophys(paddr_t);
 
-paddr_t pmap_alloc_pdp(struct pmap *, struct vm_page **, bool);
+paddr_t pmap_alloc_pdp(struct pmap *, struct vm_page **, int, bool);
 
 #define L1_TRUNC_BLOCK(x)	((x) & L1_FRAME)
 #define L1_ROUND_BLOCK(x)	L1_TRUNC_BLOCK((x) + L1_SIZE - 1)
