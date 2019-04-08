@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 2019/04/06 18:30:20 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 2019/04/08 21:18:22 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2019/04/06 18:30:20 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2019/04/08 21:18:22 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -194,6 +194,7 @@ struct pv_entry {
 #define pv_next	pv_link.tqe_next
 
 #define L3INDEXMASK	(L3_SIZE * Ln_ENTRIES - 1)
+#define PDPSWEEP_TRIGGER	512
 
 void atomic_add_16(volatile uint16_t *, int16_t);
 uint16_t atomic_add_16_nv(volatile uint16_t *, int16_t);
@@ -439,6 +440,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	kpm = pmap_kernel();
 	kpm->pm_asid = 0;
 	kpm->pm_refcnt = 1;
+	kpm->pm_idlepdp = 0;
 	kpm->pm_l0table = l0;
 	kpm->pm_l0table_pa = l0pa;
 	kpm->pm_activated = true;
@@ -564,7 +566,7 @@ pmap_reference(struct pmap *pm)
 }
 
 paddr_t
-pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, bool waitok)
+pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 {
 	paddr_t pa;
 	struct vm_page *pg;
@@ -573,9 +575,10 @@ pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, bool waitok)
 	UVMHIST_CALLED(pmaphist);
 
 	if (uvm.page_init_done) {
+		int aflags = ((flags & PMAP_CANFAIL) ? 0 : UVM_PGA_USERESERVE) |
+		    UVM_PGA_ZERO;
  retry:
-		pg = uvm_pagealloc(NULL, 0, NULL,
-		    UVM_PGA_USERESERVE | UVM_PGA_ZERO);
+		pg = uvm_pagealloc(NULL, 0, NULL, aflags);
 		if (pg == NULL) {
 			if (waitok) {
 				uvm_wait("pmap_alloc_pdp");
@@ -618,6 +621,61 @@ pmap_free_pdp(struct pmap *pm, struct vm_page *pg)
 
 	uvm_pagefree(pg);
 	PMAP_COUNT(pdp_free);
+}
+
+/* free empty page table pages */
+static int
+_pmap_sweep_pdp(struct pmap *pm)
+{
+	struct vm_page *pg, *tmp;
+	pd_entry_t *ptep_in_parent, opte;
+	paddr_t pa, pdppa;
+	int nsweep;
+	uint16_t wirecount;
+
+	nsweep = 0;
+	TAILQ_FOREACH_SAFE(pg, &pm->pm_vmlist, mdpage.mdpg_vmlist, tmp) {
+		if (pg->wire_count != 1)
+			continue;
+
+		pa = VM_PAGE_TO_PHYS(pg);
+		if (pa == pm->pm_l0table_pa)
+			continue;
+
+		ptep_in_parent = VM_PAGE_TO_MD(pg)->mdpg_ptep_parent;
+		if (ptep_in_parent == NULL) {
+			/* no parent */
+			pmap_free_pdp(pm, pg);
+			nsweep++;
+			continue;
+		}
+
+		/* unlink from parent */
+		opte = atomic_swap_64(ptep_in_parent, 0);
+		KASSERT(lxpde_valid(opte));
+		wirecount = atomic_add_16_nv(&pg->wire_count, -1); /* 1 -> 0 */
+		KASSERT(wirecount == 0);
+		pmap_free_pdp(pm, pg);
+		nsweep++;
+
+		/* L3->L2->L1. no need for L0 */
+		pdppa = AARCH64_KVA_TO_PA(trunc_page((vaddr_t)ptep_in_parent));
+		if (pdppa == pm->pm_l0table_pa)
+			continue;
+
+		pg = PHYS_TO_VM_PAGE(pdppa);
+		KASSERT(pg != NULL);
+		KASSERTMSG(pg->wire_count >= 1,
+		    "wire_count=%d", pg->wire_count);
+		/* decrement wire_count of parent */
+		wirecount = atomic_add_16_nv(&pg->wire_count, -1);
+		KASSERTMSG(pg->wire_count <= (Ln_ENTRIES + 1),
+		    "pm=%p[%d], pg=%p, wire_count=%d",
+		    pm, pm->pm_asid, pg, pg->wire_count);
+	}
+	atomic_swap_uint(&pm->pm_idlepdp, 0);
+
+	return nsweep;
 }
 
 static void
@@ -1270,11 +1328,12 @@ pmap_create(void)
 	pm = pool_cache_get(&_pmap_cache, PR_WAITOK);
 	memset(pm, 0, sizeof(*pm));
 	pm->pm_refcnt = 1;
+	pm->pm_idlepdp = 0;
 	pm->pm_asid = -1;
 	TAILQ_INIT(&pm->pm_vmlist);
 	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_VM);
 
-	pm->pm_l0table_pa = pmap_alloc_pdp(pm, NULL, true);
+	pm->pm_l0table_pa = pmap_alloc_pdp(pm, NULL, 0, true);
 	KASSERT(pm->pm_l0table_pa != POOL_PADDR_INVALID);
 	pm->pm_l0table = (pd_entry_t *)AARCH64_PA_TO_KVA(pm->pm_l0table_pa);
 	KASSERT(((vaddr_t)pm->pm_l0table & (PAGE_SIZE - 1)) == 0);
@@ -1379,14 +1438,21 @@ _pmap_pdp_delref(struct pmap *pm, paddr_t pdppa, bool do_free_pdp)
 
 	wirecount = atomic_add_16_nv(&pg->wire_count, -1);
 
-	if (!do_free_pdp)
+	if (!do_free_pdp) {
+		/*
+		 * pm_idlepdp is counted by only pmap_page_protect() with
+		 * VM_PROT_NONE. it is not correct because without considering
+		 * pmap_enter(), but useful hint to just sweep.
+		 */
+		if (wirecount == 1)
+			atomic_inc_uint(&pm->pm_idlepdp);
 		return false;
+	}
 
 	/* if no reference, free pdp */
 	removed = false;
 	while (wirecount == 1) {
 		pd_entry_t *ptep_in_parent, opte;;
-
 		ptep_in_parent = VM_PAGE_TO_MD(pg)->mdpg_ptep_parent;
 		if (ptep_in_parent == NULL) {
 			/* no parent */
@@ -1426,7 +1492,7 @@ static int
 _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
     u_int flags, bool kenter)
 {
-	struct vm_page *pg, *pdppg, *pdppg0;
+	struct vm_page *pg, *pgs[2], *pdppg, *pdppg0;
 	struct pv_entry *spv, *opv = NULL;
 	pd_entry_t pde;
 	pt_entry_t attr, pte, opte, *ptep;
@@ -1493,6 +1559,13 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	pm_lock(pm);
 
+	if (pm->pm_idlepdp >= PDPSWEEP_TRIGGER) {
+		if (_pmap_sweep_pdp(pm) != 0) {
+			/* several L1-L3 page table pages have been freed */
+			aarch64_tlbi_by_asid(pm->pm_asid);
+		}
+	}
+
 	/*
 	 * traverse L0 -> L1 -> L2 -> L3 table with growing pdp if needed.
 	 */
@@ -1502,7 +1575,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	pde = l0[idx];
 	if (!l0pde_valid(pde)) {
 		/* no need to increment L0 occupancy. L0 page never freed */
-		pdppa = pmap_alloc_pdp(pm, &pdppg, flags);	/* L1 pdp */
+		pdppa = pmap_alloc_pdp(pm, &pdppg, flags, false);  /* L1 pdp */
 		if (pdppa == POOL_PADDR_INVALID) {
 			if (flags & PMAP_CANFAIL) {
 				error = ENOMEM;
@@ -1525,7 +1598,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	if (!l1pde_valid(pde)) {
 		pdppa0 = pdppa;
 		pdppg0 = pdppg;
-		pdppa = pmap_alloc_pdp(pm, &pdppg, flags);	/* L2 pdp */
+		pdppa = pmap_alloc_pdp(pm, &pdppg, flags, false);  /* L2 pdp */
 		if (pdppa == POOL_PADDR_INVALID) {
 			if (flags & PMAP_CANFAIL) {
 				error = ENOMEM;
@@ -1549,7 +1622,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	if (!l2pde_valid(pde)) {
 		pdppa0 = pdppa;
 		pdppg0 = pdppg;
-		pdppa = pmap_alloc_pdp(pm, &pdppg, flags);	/* L3 pdp */
+		pdppa = pmap_alloc_pdp(pm, &pdppg, flags, false);  /* L3 pdp */
 		if (pdppa == POOL_PADDR_INVALID) {
 			if (flags & PMAP_CANFAIL) {
 				error = ENOMEM;
@@ -1580,8 +1653,9 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	}
 #endif
 
-	if (pg != NULL)
-		pmap_pv_lock(VM_PAGE_TO_MD(pg));
+	/* for lock ordering for pg and opg */
+	pgs[0] = pg;
+	pgs[1] = NULL;
 
 	/* remap? */
 	if (l3pte_valid(opte)) {
@@ -1615,13 +1689,31 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		} else {
 			need_remove_pv = true;
 		}
-		if (need_remove_pv) {
-			opg = PHYS_TO_VM_PAGE(l3pte_pa(opte));
-			if (opg != NULL) {
-				opv = _pmap_remove_pv(opg, pm, va, opte);
+
+		if (need_remove_pv &&
+		    ((opg = PHYS_TO_VM_PAGE(l3pte_pa(opte))) != NULL)) {
+			/* need to lock both pg and opg against deadlock */
+			if (pg < opg) {
+				pgs[0] = pg;
+				pgs[1] = opg;
+			} else {
+				pgs[0] = opg;
+				pgs[1] = pg;
 			}
+			pmap_pv_lock(VM_PAGE_TO_MD(pgs[0]));
+			pmap_pv_lock(VM_PAGE_TO_MD(pgs[1]));
+			opv = _pmap_remove_pv(opg, pm, va, opte);
+		} else {
+			if (pg != NULL)
+				pmap_pv_lock(VM_PAGE_TO_MD(pg));
 		}
+	} else {
+		if (pg != NULL)
+			pmap_pv_lock(VM_PAGE_TO_MD(pg));
 	}
+
+	if (!l3pte_valid(opte))
+		_pmap_pdp_addref(pm, pdppa, pdppg);	/* L3 occupancy++ */
 
 	/*
 	 * read permission is treated as an access permission internally.
@@ -1700,17 +1792,16 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, l3only);
 	}
 
-	if (!l3pte_valid(opte))
-		_pmap_pdp_addref(pm, pdppa, pdppg);	/* L3 occupancy++ */
-
 	if (pte & LX_BLKPAG_OS_WIRED) {
 		PMSTAT_INC_WIRED_COUNT(pm);
 	}
 	PMSTAT_INC_RESIDENT_COUNT(pm);
 
  fail1:
-	if (pg != NULL)
-		pmap_pv_unlock(VM_PAGE_TO_MD(pg));
+	if (pgs[1] != NULL)
+		pmap_pv_unlock(VM_PAGE_TO_MD(pgs[1]));
+	if (pgs[0] != NULL)
+		pmap_pv_unlock(VM_PAGE_TO_MD(pgs[0]));
  fail0:
 	pm_unlock(pm);
 
