@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.36 2019/04/09 06:15:21 msaitoh Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.37 2019/04/09 06:19:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.36 2019/04/09 06:15:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.37 2019/04/09 06:19:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,8 +497,9 @@ ix_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr,
-			  IX_IOSIZE, 0, &ioh) != 0) {
-		DPRINTF(("Can't map io space at 0x%x\n", ia->ia_iobase));
+	    IX_IOSIZE, 0, &ioh) != 0) {
+		DPRINTF(("Can't map io space at 0x%x\n",
+			ia->ia_io[0].ir_addr));
 		return 0;
 	}
 
@@ -578,7 +579,7 @@ ix_match(device_t parent, cfdata_t cf, void *aux)
 	    ia->ia_iomem[0].ir_addr != maddr) {
 		DPRINTF((
 		  "ix_match: memaddr of board @ 0x%x doesn't match config\n",
-		  ia->ia_iobase));
+		  ia->ia_iomem[0].ir_addr));
 		goto out;
 	}
 
@@ -586,7 +587,7 @@ ix_match(device_t parent, cfdata_t cf, void *aux)
 	    ia->ia_iomem[0].ir_size != msiz) {
 		DPRINTF((
 		   "ix_match: memsize of board @ 0x%x doesn't match config\n",
-		   ia->ia_iobase));
+		   ia->ia_iomem[0].ir_addr));
 		goto out;
 	}
 
@@ -662,7 +663,7 @@ ix_match(device_t parent, cfdata_t cf, void *aux)
 	ia->ia_nirq = 1;
 	ia->ia_irq[0].ir_irq = irq;
 
-	DPRINTF(("ix_match: found board @ 0x%x\n", ia->ia_iobase));
+	DPRINTF(("ix_match: found board @ 0x%x\n", ia->ia_iomem[0].ir_addr));
 
 out:
 	bus_space_unmap(iot, ioh, IX_IOSIZE);
@@ -700,7 +701,7 @@ ix_attach(device_t parent, device_t self, void *aux)
 	    ia->ia_io[0].ir_size, 0, &ioh) != 0) {
 
 		DPRINTF(("\n%s: can't map i/o space 0x%x-0x%x\n",
-			  device_xname(self), ia->ia_[0].ir_addr,
+			  device_xname(self), ia->ia_io[0].ir_addr,
 			  ia->ia_io[0].ir_addr + ia->ia_io[0].ir_size - 1));
 		return;
 	}
