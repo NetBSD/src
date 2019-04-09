@@ -204,8 +204,8 @@
 #include <machine/vmparam.h>
 #if defined(PAGE_SHIFT)
 #define LG_PAGE PAGE_SHIFT
-#elif defined(MAX_PAGE_SHIFT)
-#define LG_PAGE MAX_PAGE_SHIFT
+#elif defined(MIN_PAGE_SHIFT)
+#define LG_PAGE MIN_PAGE_SHIFT
 #else
 #error "PAGE_SHIFT is not defined"
 #endif
