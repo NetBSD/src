@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.53 2019/03/25 09:20:46 msaitoh Exp $	*/
+/*	$NetBSD: mii.c,v 1.54 2019/04/09 11:28:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.53 2019/03/25 09:20:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.54 2019/04/09 11:28:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -280,7 +280,7 @@ bitreverse(unsigned char x)
 }
 
 u_int
-mii_oui(u_int id1, u_int id2)
+mii_oui(uint16_t id1, uint16_t id2)
 {
 	u_int h;
 
