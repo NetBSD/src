@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.20 2019/04/09 03:56:08 msaitoh Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.21 2019/04/09 04:04:04 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.20 2019/04/09 03:56:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.21 2019/04/09 04:04:04 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ CFATTACH_DECL_NEW(le_mca, sizeof(struct le_mca_softc),
 static const uint8_t sknet_mcp_irq[] = {
 	3, 5, 10, 11
 };
-static const uint8_t sknet_mcp_media[] = {
+static const int sknet_mcp_media[] = {
 	IFM_ETHER | IFM_10_2,
 	IFM_ETHER | IFM_10_T,
 	IFM_ETHER | IFM_10_5,
@@ -131,7 +131,8 @@ le_mca_attach(device_t parent, device_t self, void *aux)
 	struct le_mca_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct mca_attach_args *ma = aux;
-	int i, pos2, pos3, pos4, irq, membase, supmedia=0;
+	int i, pos2, pos3, pos4, irq, membase;
+	const int *supmedia = NULL;
 	const char *typestr;
 
 	sc->sc_dev = self;
@@ -205,7 +206,7 @@ le_mca_attach(device_t parent, device_t self, void *aux)
 		membase = 0xc0000 + ((pos3 & 0x0f) * 0x4000);
 
 		/* Get configured media type */
-		supmedia = sknet_mcp_media[(pos4 & 0xc0) >> 6];
+		supmedia = &sknet_mcp_media[(pos4 & 0xc0) >> 6];
 		break;
 	default:
 		aprint_error(": unknown product %d\n", ma->ma_id);
@@ -250,10 +251,10 @@ le_mca_attach(device_t parent, device_t self, void *aux)
 	 * This is merely cosmetic since it's not possible to switch
 	 * the media anyway, even for MC2+.
 	 */
-	if (supmedia != 0) {
-		sc->sc_supmedia = &supmedia;
+	if (supmedia != NULL) {
+		sc->sc_supmedia = supmedia;
 		sc->sc_nsupmedia = 1;
-		sc->sc_defaultmedia = supmedia;
+		sc->sc_defaultmedia = *supmedia;
 	}
 
 	lesc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET,
