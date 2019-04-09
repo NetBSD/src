@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.19 2010/11/13 13:52:04 uebayasi Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.20 2019/04/09 03:56:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.19 2010/11/13 13:52:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.20 2019/04/09 03:56:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,9 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.19 2010/11/13 13:52:04 uebayasi Exp 
 
 #include <dev/mca/if_lereg.h>
 
-int 	le_mca_match(device_t, cfdata_t, void *);
-void	le_mca_attach(device_t, device_t, void *);
-
 struct le_mca_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
 
@@ -84,10 +81,13 @@ struct le_mca_softc {
 	bus_space_handle_t sc_memh;
 };
 
-static void le_mca_wrcsr(struct lance_softc *, uint16_t, uint16_t);
-static uint16_t le_mca_rdcsr(struct lance_softc *, uint16_t);
-static void le_mca_hwreset(struct lance_softc *);
-static int le_mca_intredge(void *);
+static int 	le_mca_match(device_t, cfdata_t, void *);
+static void	le_mca_attach(device_t, device_t, void *);
+
+static void	le_mca_wrcsr(struct lance_softc *, uint16_t, uint16_t);
+static uint16_t	le_mca_rdcsr(struct lance_softc *, uint16_t);
+static void	le_mca_hwreset(struct lance_softc *);
+static int	le_mca_intredge(void *);
 
 static void	le_mca_copytobuf(struct lance_softc *, void *, int, int);
 static void	le_mca_copyfrombuf(struct lance_softc *, void *, int, int);
@@ -101,13 +101,13 @@ CFATTACH_DECL_NEW(le_mca, sizeof(struct le_mca_softc),
     le_mca_match, le_mca_attach, NULL, NULL);
 
 /* SKNET MC+ POS mapping */
-static const u_int8_t sknet_mcp_irq[] = {
+static const uint8_t sknet_mcp_irq[] = {
 	3, 5, 10, 11
 };
-static const u_int8_t sknet_mcp_media[] = {
-	IFM_ETHER|IFM_10_2,
-	IFM_ETHER|IFM_10_T,
-	IFM_ETHER|IFM_10_5,
+static const uint8_t sknet_mcp_media[] = {
+	IFM_ETHER | IFM_10_2,
+	IFM_ETHER | IFM_10_T,
+	IFM_ETHER | IFM_10_5,
 	0
 };
 
@@ -119,10 +119,10 @@ le_mca_match(device_t parent, cfdata_t cf, void *aux)
 	switch(ma->ma_id) {
 	case MCA_PRODUCT_SKNETPER:
 	case MCA_PRODUCT_SKNETG:
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -281,10 +281,10 @@ le_mca_intredge(void *arg)
 	 */
 
 	if (am7990_intr(arg) == 0)
-		return (0);
+		return 0;
 	for(;;)
 		if (am7990_intr(arg) == 0)
-			return (1);
+			return 1;
 }
 
 /*
@@ -348,8 +348,7 @@ le_mca_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 {
 	struct le_mca_softc *lsc = (struct le_mca_softc *)sc;
 
-	bus_space_write_region_1(lsc->sc_memt, lsc->sc_memh, boff,
-	    from, len);
+	bus_space_write_region_1(lsc->sc_memt, lsc->sc_memh, boff, from, len);
 }
 
 static void
@@ -357,8 +356,7 @@ le_mca_copyfrombuf(struct lance_softc *sc, void *to, int boff, int len)
 {
 	struct le_mca_softc *lsc = (struct le_mca_softc *)sc;
 
-	bus_space_read_region_1(lsc->sc_memt, lsc->sc_memh, boff,
-	    to, len);
+	bus_space_read_region_1(lsc->sc_memt, lsc->sc_memh, boff, to, len);
 }
 
 static void
@@ -366,6 +364,5 @@ le_mca_zerobuf(struct lance_softc *sc, int boff, int len)
 {
 	struct le_mca_softc *lsc = (struct le_mca_softc *)sc;
 
-	bus_space_set_region_1(lsc->sc_memt, lsc->sc_memh, boff,
-	    0x00, len);
+	bus_space_set_region_1(lsc->sc_memt, lsc->sc_memh, boff, 0x00, len);
 }
