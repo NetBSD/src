@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.87 2017/01/27 10:12:05 abhinav Exp $
+.\"	$NetBSD: fdisk.8,v 1.88 2019/04/09 09:03:41 tnn Exp $
 .\"
-.Dd September 11, 2016
+.Dd April 9, 2019
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -172,6 +172,7 @@ In interactive mode this question will be asked after the partitions
 have been processed.
 .It Fl B
 On an i386 or amd64 system, interactively update the boot selector settings.
+These include the default boot partition and the timeout value for the prompt.
 (The boot selector permits the user to interactively select the boot
 partition, and thus which operating system is run, at system boot time; see
 .Xr mbr 8
