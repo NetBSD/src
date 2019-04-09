@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.34 2019/04/09 05:24:07 msaitoh Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.35 2019/04/09 05:25:14 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.34 2019/04/09 05:24:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.35 2019/04/09 05:25:14 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ ai_match(device_t parent, cfdata_t cf, void *aux)
 			  AI_IOSIZE, 0, &ioh) != 0) {
 
 		DPRINTF(("ai_match: cannot map %d IO ports @ 0x%x\n",
-			 AI_IOSIZE, ia->ia_iobase));
+			 AI_IOSIZE, ia->ia_io[0].ir_addr));
 		return 0;
 	}
 
@@ -259,7 +259,7 @@ ai_match(device_t parent, cfdata_t cf, void *aux)
 	if (type != SL10_BOARD && type != EN100_BOARD &&
 	    type != SLFIBER_BOARD) {
 		DPRINTF(("ai_match: unknown board code 0x%02x @ 0x%x\n",
-			 type, ia->ia_iobase));
+			 type, ia->ia_io[0].ir_addr));
 		goto out;
 	}
 
@@ -282,7 +282,7 @@ ai_match(device_t parent, cfdata_t cf, void *aux)
 	    ia->ia_iomem[0].ir_size != memsize) {
 		DPRINTF((
 		   "ai_match: memsize of board @ 0x%x doesn't match config\n",
-		   ia->ia_iobase));
+		   ia->ia_io[0].ir_addr));
 		goto out;
 	}
 
@@ -298,7 +298,7 @@ ai_match(device_t parent, cfdata_t cf, void *aux)
 
 	ia->ia_ndrq = 0;
 
-	DPRINTF(("ai_match: found board @ 0x%x\n", ia->ia_iobase));
+	DPRINTF(("ai_match: found board @ 0x%x\n", ia->ia_io[0].ir_addr));
 
 out:
 	bus_space_unmap(iot, ioh, AI_IOSIZE);
