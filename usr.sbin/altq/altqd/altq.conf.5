@@ -1,4 +1,4 @@
-.\"	$NetBSD: altq.conf.5,v 1.16 2017/07/03 21:35:29 wiz Exp $
+.\"	$NetBSD: altq.conf.5,v 1.17 2019/04/09 18:22:33 sevan Exp $
 .\"	$KAME: altq.conf.5,v 1.15 2002/11/17 02:51:49 kjc Exp $
 .\"
 .\" Copyright (C) 2000
@@ -282,7 +282,6 @@ excess bandwidth is available.
 .Op Ar sched_type
 .Op Cm efficient
 .El
-.Pp
 .Bl -tag -width 8n -offset indent
 .It Ar if_name
 specifies the name of a network interface (e.g., fxp0).
@@ -312,7 +311,6 @@ By adding the keyword
 .Cm efficient
 to the interface specification line, enables this mode.
 .El
-.Pp
 .Bl -tag -width class -offset indent
 .It Cm class
 .Ar sched_type
@@ -465,7 +463,6 @@ link-sharing to set the upper limit allowed for the class.
 .Op Cm tbrsize Ar bytes
 .Op Ar sched_type
 .El
-.Pp
 .Bl -tag -width 8n -offset indent
 .It Ar if_name
 specifies the name of a network interface (e.g., fxp0).
@@ -478,7 +475,6 @@ must be
 .Cm hfsc
 for HFSC.
 .El
-.Pp
 .Bl -tag -width class -offset indent
 .It Cm class
 .Ar sched_type
@@ -611,7 +607,6 @@ Up to 16 priorities can be used with PRIQ.
 .Op Cm tbrsize Ar bytes
 .Op Ar sched_type
 .El
-.Pp
 .Bl -tag -width 8n -offset indent
 .It Ar if_name
 specifies the name of a network interface (e.g., fxp0).
@@ -624,7 +619,6 @@ must be
 .Cm priq
 for PRIQ.
 .El
-.Pp
 .Bl -tag -width class -offset indent
 .It Cm class
 .Ar sched_type
@@ -638,7 +632,6 @@ for PRIQ.
 .Op Cm ecn
 .Op Cm cleardscp
 .El
-.Pp
 .Bl -tag -width 8n -offset indent
 .It Ar sched_type
 must be
@@ -696,7 +689,6 @@ queue.
 .Op Cm qsize Ar bytes
 .Op Cm hash Ar policy
 .El
-.Pp
 .Bl -tag -width 8n -offset indent
 .It Cm if_name
 specifies the name of a network interface (e.g., fxp0).
@@ -741,7 +733,6 @@ own queueing disciplines.
 .Op Ar sched_type
 .Op Cm qlimit Ar count
 .El
-.Pp
 .Bl -tag -width 8n -offset indent
 .It Ar if_name
 specifies the name of a network interface (e.g., fxp0).
@@ -795,7 +786,6 @@ For example, 10 means the maximum drop probability of 1/10.
 .Op Cm ecn
 .Op Cm flowvalve
 .El
-.Pp
 .Bl -tag -width 8n -offset indent
 .It Ar if_name
 specifies the name of a network interface (e.g., fxp0).
@@ -886,7 +876,6 @@ precedence.
 .Op Cm hi_invpmax Ar n
 .Op Cm ecn
 .El
-.Pp
 .Bl -tag -width 8n -offset indent
 .It Ar if_name
 specifies the name of a network interface (e.g., fxp0).
@@ -941,7 +930,6 @@ enables ECN.
 .Op Cm holdtime Ar usec
 .Op Cm ecn
 .El
-.Pp
 .Bl -tag -width 8n -offset indent
 .It Ar if_name
 specifies the name of a network interface (e.g., fxp0).
@@ -994,7 +982,6 @@ command has the following syntax.
 .Ar cdnr_name
 .Aq action
 .El
-.Pp
 .Bl -tag -width 10n -offset indent
 .It Ar if_name
 Interface name.
@@ -1015,7 +1002,6 @@ The following actions are defined.
 allows the packet to go through without any modification to the packet.
 .El
 .El
-.Pp
 .Bl -tag -width drop -offset indent
 .It Cm drop
 .Bl -inset -offset indent
@@ -1024,7 +1010,6 @@ rejects the packet.
 The packet is immediately discarded.
 .El
 .El
-.Pp
 .Bl -tag -width mark -offset indent
 .It Cm mark
 .Ar value
@@ -1034,13 +1019,11 @@ sets the specified value to the ds field in the IP header.
 Then, the packet is allowed to go through.
 .El
 .El
-.Pp
 .Bl -tag -width tbmeter -offset indent
 .It Cm tbmeter
 .Ar rate depth
 .Aq in_action
 .Aq out_action
-.Pp
 .Bl -inset -offset indent
 .It Cm tbmeter
 is a token bucket meter configured with rate and depth parameters.
@@ -1051,7 +1034,6 @@ the packet size), tbmeter takes in_action.
 Otherwise, tbmeter takes out_action.
 .El
 .El
-.Pp
 .Bl -tag -width trtcm -offset indent
 .It Cm trtcm
 .Ar cmtd_rate cmtd_depth peak_rate peak_depth
@@ -1075,7 +1057,6 @@ a yellow packet can be yellow or red but can not be blue.
 Default is color-blind.
 .El
 .El
-.Pp
 .Bl -tag -width tswtcm -offset indent
 .It Cm tswtcm
 .Ar cmtd_rate peak_rate avg_interval
@@ -1117,7 +1098,6 @@ relaxed.
 .Op Cm tbrsize Ar bytes
 .Op Ar sched_type
 .El
-.Pp
 .Bl -tag -width 8n -offset indent
 .It Ar if_name
 specifies the name of a network interface (e.g., fxp0).
@@ -1137,7 +1117,6 @@ must be
 .Cm jobs
 for JoBS.
 .El
-.Pp
 .Bl -tag -width class -offset indent
 .It Cm class
 .Ar sched_type
@@ -1152,7 +1131,6 @@ for JoBS.
 .Op Cm rdc Ar prop
 .Op Cm rlc Ar prop
 .El
-.Pp
 .Bl -tag -width 8n -offset indent
 .It Ar sched_type
 must be
