@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.114 2019/02/05 06:17:02 msaitoh Exp $ */
+/*	$NetBSD: gem.c,v 1.115 2019/04/09 07:23:41 msaitoh Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.114 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.115 2019/04/09 07:23:41 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1044,12 +1044,12 @@ gem_pcs_start(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MII_CONFIG, 0);
 	v = bus_space_read_4(t, h, GEM_MII_ANAR);
 	v |= (GEM_MII_ANEG_SYM_PAUSE | GEM_MII_ANEG_ASYM_PAUSE);
-	if (sc->sc_mii_media == IFM_AUTO)
+	if (IFM_SUBTYPE(sc->sc_mii_media) == IFM_AUTO)
 		v |= (GEM_MII_ANEG_FUL_DUPLX | GEM_MII_ANEG_HLF_DUPLX);
-	else if (sc->sc_mii_media == IFM_FDX) {
+	else if ((IFM_OPTIONS(sc->sc_mii_media) & IFM_FDX) != 0) {
 		v |= GEM_MII_ANEG_FUL_DUPLX;
 		v &= ~GEM_MII_ANEG_HLF_DUPLX;
-	} else if (sc->sc_mii_media == IFM_HDX) {
+	} else if ((IFM_OPTIONS(sc->sc_mii_media) & IFM_HDX) != 0) {
 		v &= ~GEM_MII_ANEG_FUL_DUPLX;
 		v |= GEM_MII_ANEG_HLF_DUPLX;
 	}
