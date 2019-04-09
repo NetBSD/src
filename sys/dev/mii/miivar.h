@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.66 2019/02/26 05:26:10 msaitoh Exp $	*/
+/*	$NetBSD: miivar.h,v 1.67 2019/04/09 11:28:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -196,9 +196,9 @@ struct mii_phydesc {
  * An array of these structures map MII media types to BMCR/ANAR settings.
  */
 struct mii_media {
-	int	mm_bmcr;		/* BMCR settings for this media */
-	int	mm_anar;		/* ANAR settings for this media */
-	int	mm_gtcr;		/* 100base-T2 or 1000base-T CR */
+	uint16_t mm_bmcr;		/* BMCR settings for this media */
+	uint16_t mm_anar;		/* ANAR settings for this media */
+	uint16_t mm_gtcr;		/* 100base-T2 or 1000base-T CR */
 };
 
 #define	MII_MEDIA_NONE		0
@@ -291,9 +291,9 @@ int	mii_mediachg(struct mii_data *);
 void	mii_tick(struct mii_data *);
 void	mii_pollstat(struct mii_data *);
 void	mii_down(struct mii_data *);
-int	mii_anar(int);
+uint16_t mii_anar(int);
 
-int mii_ifmedia_change(struct mii_data *);
+int	mii_ifmedia_change(struct mii_data *);
 
 int	mii_phy_activate(device_t, enum devact);
 int	mii_phy_detach(device_t, int);
@@ -317,7 +317,7 @@ u_int	mii_phy_flowstatus(struct mii_softc *);
 
 void	ukphy_status(struct mii_softc *);
 
-u_int	mii_oui(u_int, u_int);
+u_int	mii_oui(uint16_t, uint16_t);
 #define	MII_OUI(id1, id2)	mii_oui(id1, id2)
 #define	MII_MODEL(id2)		(((id2) & IDR2_MODEL) >> 4)
 #define	MII_REV(id2)		((id2) & IDR2_REV)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.86 2019/03/25 09:20:46 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.87 2019/04/09 11:28:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.86 2019/03/25 09:20:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.87 2019/04/09 11:28:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -699,7 +699,7 @@ mii_phy_resume(device_t dv, const pmf_qual_t *qual)
 /*
  * Given an ifmedia word, return the corresponding ANAR value.
  */
-int
+uint16_t
 mii_anar(int media)
 {
 	int rv;
