@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.5 2017/11/03 09:59:08 maxv Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.6 2019/04/09 00:16:30 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.5 2017/11/03 09:59:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.6 2019/04/09 00:16:30 uwe Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -64,11 +64,14 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 
 	case R_TYPE(DIR32):
+	case R_TYPE(REL32):
 		error = kobj_sym_lookup(ko, symidx, &addr);
 		if (error)
 			return -1;
 
 		tmp = (Elf_Addr)(addr + *where + rela->r_addend);
+		if (rtype == R_TYPE(REL32))
+			tmp -= rela->r_offset;
 		*where = tmp;
 		break;
 
