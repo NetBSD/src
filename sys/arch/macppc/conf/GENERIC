@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.351 2019/02/06 11:58:31 rin Exp $
+# $NetBSD: GENERIC,v 1.352 2019/04/09 22:38:25 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.351 $"
+#ident 		"GENERIC-$Revision: 1.352 $"
 
 maxusers	32
 
@@ -643,6 +643,7 @@ pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	npf			# NPF packet filter
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
