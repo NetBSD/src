@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.37 2019/03/01 11:06:57 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.38 2019/04/09 22:05:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.37 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.38 2019/04/09 22:05:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
+#include "opt_sysvparam.h"
 #include "opt_compat_netbsd.h"
 #endif
 
