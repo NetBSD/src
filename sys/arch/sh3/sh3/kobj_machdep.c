@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.6 2019/04/09 00:16:30 uwe Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.7 2019/04/09 00:36:55 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.6 2019/04/09 00:16:30 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7 2019/04/09 00:36:55 uwe Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -71,7 +71,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 		tmp = (Elf_Addr)(addr + *where + rela->r_addend);
 		if (rtype == R_TYPE(REL32))
-			tmp -= rela->r_offset;
+			tmp -= (uintptr_t)where;
 		*where = tmp;
 		break;
 
