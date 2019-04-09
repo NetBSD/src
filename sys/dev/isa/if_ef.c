@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.32 2019/04/09 05:59:14 msaitoh Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.33 2019/04/09 06:00:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.32 2019/04/09 05:59:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.33 2019/04/09 06:00:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ ef_card_add(struct ef_isabus *bus, bus_addr_t iobase, bus_addr_t maddr,
 {
 	int idx;
 
-	DPRINTF(("Adding 3c507 at 0x%x, IRQ %d, Mem 0x%lx/%ld\n",
+	DPRINTF(("Adding 3c507 at 0x%x, IRQ %d, Mem 0x%lx/%zu\n",
 		 (u_int) iobase, irq, (u_long) maddr, msiz));
 
 	for (idx = 0; idx < MAXCARDS_PER_ISABUS; idx++) {
@@ -546,8 +546,9 @@ ef_attach(device_t parent, device_t self, void *aux)
 	    ia->ia_iomem[0].ir_size, 0, &memh) != 0) {
 
 		DPRINTF(("\n%s: can't map iomem space 0x%x-0x%x\n",
-			device_xname(self), ia->ia_maddr,
-			ia->ia_maddr + ia->ia_msize - 1));
+			device_xname(self), ia->ia_iomem[0].ir_addr,
+			ia->ia_iomem[0].ir_addr + ia->ia_iomem[0].ir_size
+			- 1));
 		bus_space_unmap(ia->ia_iot, ioh, ia->ia_io[0].ir_size);
 		return;
 	}
