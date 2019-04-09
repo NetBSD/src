@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.33 2011/06/03 16:28:40 tsutsui Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.34 2019/04/09 05:24:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.33 2011/06/03 16:28:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.34 2019/04/09 05:24:07 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,13 +69,13 @@ struct ai_softc {
 	bus_space_tag_t sc_regt;	/* space tag for registers */
 	bus_space_handle_t sc_regh;	/* space handle for registers */
 
-	u_int8_t	card_rev;
-	u_int8_t	card_type;
+	uint8_t	card_rev;
+	uint8_t	card_type;
 
 	void		*sc_ih;		/* interrupt handle */
 };
 
-const char *ai_names[] = {
+static const char *ai_names[] = {
         "StarLAN 10",
         "EN100",
         "StarLAN Fiber",
@@ -88,8 +88,8 @@ static void 	ai_atten(struct ie_softc *, int);
 static void	ai_copyin(struct ie_softc *, void *, int, size_t);
 static void	ai_copyout(struct ie_softc *, const void *, int, size_t);
 
-static u_int16_t ai_read_16(struct ie_softc *, int);
-static void	ai_write_16(struct ie_softc *, int, u_int16_t);
+static uint16_t ai_read_16(struct ie_softc *, int);
+static void	ai_write_16(struct ie_softc *, int, uint16_t);
 static void	ai_write_24(struct ie_softc *, int, int);
 
 /* Local support functions */
@@ -98,8 +98,8 @@ static int 	check_ie_present(struct ie_softc*, bus_space_tag_t,
 static int	ai_find_mem_size(struct ai_softc*, bus_space_tag_t,
 					bus_size_t);
 
-int ai_match(device_t, cfdata_t, void *);
-void ai_attach(device_t, device_t, void *);
+static int	ai_match(device_t, cfdata_t, void *);
+static void	ai_attach(device_t, device_t, void *);
 
 /*
  * AT&T StarLan support routines
@@ -107,18 +107,18 @@ void ai_attach(device_t, device_t, void *);
 static void
 ai_reset(struct ie_softc *sc, int why)
 {
-	struct ai_softc* asc = (struct ai_softc *) sc;
+	struct ai_softc *asc = (struct ai_softc *)sc;
 
 	switch (why) {
 	case CHIP_PROBE:
-		/* reset to chip to see if it responds */
+		/* Reset to chip to see if it responds */
 		bus_space_write_1(asc->sc_regt, asc->sc_regh, AI_RESET, 0);
 		DELAY(100);
 		break;
 
 	case CARD_RESET:
 		/*
-		 * this takes around 10sec, and we can get
+		 * This takes around 10sec, and we can get
 		 * by quite well w/out it...
 		 */
 		break;
@@ -128,18 +128,19 @@ ai_reset(struct ie_softc *sc, int why)
 static void
 ai_atten(struct ie_softc *sc, int why)
 {
-    struct ai_softc* asc = (struct ai_softc *) sc;
-    bus_space_write_1(asc->sc_regt, asc->sc_regh, AI_ATTN, 0);
+	struct ai_softc *asc = (struct ai_softc *)sc;
+
+	bus_space_write_1(asc->sc_regt, asc->sc_regh, AI_ATTN, 0);
 }
 
 static void
-ai_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
+ai_copyin(struct ie_softc *sc, void *dst, int offset, size_t size)
 {
 	int dribble;
-	u_int8_t* bptr = dst;
+	uint8_t *bptr = dst;
 
 	bus_space_barrier(sc->bt, sc->bh, offset, size,
-			  BUS_SPACE_BARRIER_READ);
+	    BUS_SPACE_BARRIER_READ);
 
 	if (offset % 2) {
 		*bptr = bus_space_read_1(sc->bt, sc->bh, offset);
@@ -147,8 +148,8 @@ ai_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 	}
 
 	dribble = size % 2;
-	bus_space_read_region_2(sc->bt, sc->bh, offset, (u_int16_t *) bptr,
-				size >> 1);
+	bus_space_read_region_2(sc->bt, sc->bh, offset, (uint16_t *)bptr,
+	    size >> 1);
 
 	if (dribble) {
 		bptr += size - 1;
@@ -158,12 +159,12 @@ ai_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 }
 
 static void
-ai_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
+ai_copyout(struct ie_softc *sc, const void *src, int offset, size_t size)
 {
 	int dribble;
 	int osize = size;
 	int ooffset = offset;
-	const u_int8_t* bptr = src;
+	const uint8_t *bptr = src;
 
 	if (offset % 2) {
 		bus_space_write_1(sc->bt, sc->bh, offset, *bptr);
@@ -172,7 +173,7 @@ ai_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
 
 	dribble = size % 2;
 	bus_space_write_region_2(sc->bt, sc->bh, offset,
-	    (const u_int16_t *)bptr, size >> 1);
+	    (const uint16_t *)bptr, size >> 1);
 	if (dribble) {
 		bptr += size - 1;
 		offset += size - 1;
@@ -180,28 +181,31 @@ ai_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
 	}
 
 	bus_space_barrier(sc->bt, sc->bh, ooffset, osize,
-			  BUS_SPACE_BARRIER_WRITE);
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
-static u_int16_t
-ai_read_16 (struct ie_softc *sc, int offset)
+static uint16_t
+ai_read_16(struct ie_softc *sc, int offset)
 {
+
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
         return bus_space_read_2(sc->bt, sc->bh, offset);
 }
 
 static void
-ai_write_16 (struct ie_softc *sc, int offset, u_int16_t value)
+ai_write_16(struct ie_softc *sc, int offset, uint16_t value)
 {
+
         bus_space_write_2(sc->bt, sc->bh, offset, value);
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
 }
 
 static void
-ai_write_24 (struct ie_softc *sc, int offset, int addr)
+ai_write_24(struct ie_softc *sc, int offset, int addr)
 {
+
         bus_space_write_4(sc->bt, sc->bh, offset, addr +
-                                (u_long) sc->sc_maddr - (u_long) sc->sc_iobase);
+	    (u_long)sc->sc_maddr - (u_long)sc->sc_iobase);
 	bus_space_barrier(sc->bt, sc->bh, offset, 4, BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -209,7 +213,7 @@ int
 ai_match(device_t parent, cfdata_t cf, void *aux)
 {
 	int rv = 0;
-	u_int8_t val, type;
+	uint8_t val, type;
 	bus_size_t memsize;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -217,14 +221,14 @@ ai_match(device_t parent, cfdata_t cf, void *aux)
 	struct ai_softc asc;
 
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_niomem < 1)
-		return (0);
+		return 0;
 	if (ia->ia_nirq < 1)
-		return (0);
+		return 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	/* Punt if wildcarded port, IRQ or memory address */
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT ||
@@ -232,7 +236,7 @@ ai_match(device_t parent, cfdata_t cf, void *aux)
 	    ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ) {
 		DPRINTF((
 		 "ai_match: wildcarded IRQ, IOAddr, or memAddr, skipping\n"));
-		return (0);
+		return 0;
 	}
 
 	iot = ia->ia_iot;
@@ -246,7 +250,7 @@ ai_match(device_t parent, cfdata_t cf, void *aux)
 
 		DPRINTF(("ai_match: cannot map %d IO ports @ 0x%x\n",
 			 AI_IOSIZE, ia->ia_iobase));
-		return (0);
+		return 0;
 	}
 
 	val = bus_space_read_1(iot, ioh, AI_REVISION);
@@ -307,10 +311,9 @@ ai_attach(device_t parent, device_t self, void *aux)
 	struct ai_softc *asc = device_private(self);
 	struct ie_softc *sc = &asc->sc_ie;
 	struct isa_attach_args *ia = aux;
-
-	u_int8_t val = 0;
+	uint8_t val = 0;
 	bus_space_handle_t ioh, memh;
-	u_int8_t ethaddr[ETHER_ADDR_LEN];
+	uint8_t ethaddr[ETHER_ADDR_LEN];
 	char name[80];
 
 	sc->sc_dev = self;
@@ -363,7 +366,7 @@ ai_attach(device_t parent, device_t self, void *aux)
 	sc->sc_maddr = (void *)memh;
 	sc->sc_iobase = (char *)sc->sc_maddr + sc->sc_msize - (1 << 24);
 
-	/* set up pointers to important on-card control structures */
+	/* Set up pointers to important on-card control structures */
 	sc->iscp = 0;
 	sc->scb = IE_ISCP_SZ;
 	sc->scp = sc->sc_msize + IE_SCP_ADDR - (1 << 24);
@@ -371,21 +374,21 @@ ai_attach(device_t parent, device_t self, void *aux)
 	sc->buf_area = sc->scb + IE_SCB_SZ;
 	sc->buf_area_sz = sc->sc_msize - IE_ISCP_SZ - IE_SCB_SZ - IE_SCP_SZ;
 
-	/* zero card memory */
+	/* Zero card memory */
 	bus_space_set_region_1(sc->bt, sc->bh, 0, 0, sc->sc_msize);
 
-	/* set card to 16-bit bus mode */
+	/* Set card to 16-bit bus mode */
 	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp),
-			  IE_SYSBUS_16BIT);
+	    IE_SYSBUS_16BIT);
 
-	/* set up pointers to key structures */
-	ai_write_24(sc, IE_SCP_ISCP((u_long)sc->scp), (u_long) sc->iscp);
-	ai_write_16(sc, IE_ISCP_SCB((u_long)sc->iscp), (u_long) sc->scb);
-	ai_write_24(sc, IE_ISCP_BASE((u_long)sc->iscp), (u_long) sc->iscp);
+	/* Set up pointers to key structures */
+	ai_write_24(sc, IE_SCP_ISCP((u_long)sc->scp), (u_long)sc->iscp);
+	ai_write_16(sc, IE_ISCP_SCB((u_long)sc->iscp), (u_long)sc->scb);
+	ai_write_24(sc, IE_ISCP_BASE((u_long)sc->iscp), (u_long)sc->iscp);
 
-	/* flush setup of pointers, check if chip answers */
+	/* Flush setup of pointers, check if chip answers */
 	bus_space_barrier(sc->bt, sc->bh, 0, sc->sc_msize,
-			  BUS_SPACE_BARRIER_WRITE);
+	    BUS_SPACE_BARRIER_WRITE);
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: can't talk to i82586!\n",
 			device_xname(self)));
@@ -419,7 +422,7 @@ ai_find_mem_size(struct ai_softc* asc, bus_space_tag_t memt, bus_size_t maddr)
 {
 	int size;
 	bus_space_handle_t memh;
-	struct ie_softc* sc = &asc->sc_ie;
+	struct ie_softc *sc = &asc->sc_ie;
 
 	for (size = 65536; size >= 16384; size -= 16384) {
 		if (bus_space_map(memt, maddr, size, 0, &memh) == 0) {
@@ -431,15 +434,17 @@ ai_find_mem_size(struct ai_softc* asc, bus_space_tag_t memt, bus_size_t maddr)
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
  * Check to see if there's an 82586 out there.
  */
 static int
-check_ie_present(struct ie_softc* sc, bus_space_tag_t memt, bus_space_handle_t memh, bus_size_t size)
+check_ie_present(struct ie_softc* sc, bus_space_tag_t memt,
+    bus_space_handle_t memh, bus_size_t size)
 {
+
 	sc->hwreset = ai_reset;
 	sc->chan_attn = ai_atten;
 	sc->ie_bus_read16 = ai_read_16;
@@ -450,31 +455,31 @@ check_ie_present(struct ie_softc* sc, bus_space_tag_t memt, bus_space_handle_t m
 	sc->sc_iobase = (char *)memh + size - (1 << 24);
 
 	sc->scp = size + IE_SCP_ADDR - (1 << 24);
-	bus_space_set_region_1(memt, memh, (u_long) sc->scp, 0, IE_SCP_SZ);
+	bus_space_set_region_1(memt, memh, (u_long)sc->scp, 0, IE_SCP_SZ);
 
 	sc->iscp = 0;
-	bus_space_set_region_1(memt, memh, (u_long) sc->iscp, 0, IE_ISCP_SZ);
+	bus_space_set_region_1(memt, memh, (u_long)sc->iscp, 0, IE_ISCP_SZ);
 
 	sc->scb = IE_ISCP_SZ;
 	bus_space_set_region_1(memt, memh, sc->scb, 0, IE_SCB_SZ);
 
-	/* set card to 16-bit bus mode */
+	/* Set card to 16-bit bus mode */
 	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp),
-			  IE_SYSBUS_16BIT);
+	    IE_SYSBUS_16BIT);
 
-	/* set up pointers to key structures */
-	ai_write_24(sc, IE_SCP_ISCP((u_long)sc->scp), (u_long) sc->iscp);
-	ai_write_16(sc, IE_ISCP_SCB((u_long)sc->iscp), (u_long) sc->scb);
-	ai_write_24(sc, IE_ISCP_BASE((u_long)sc->iscp), (u_long) sc->iscp);
+	/* Set up pointers to key structures */
+	ai_write_24(sc, IE_SCP_ISCP((u_long)sc->scp), (u_long)sc->iscp);
+	ai_write_16(sc, IE_ISCP_SCB((u_long)sc->iscp), (u_long)sc->scb);
+	ai_write_24(sc, IE_ISCP_BASE((u_long)sc->iscp), (u_long)sc->iscp);
 
-	/* flush setup of pointers, check if chip answers */
+	/* Flush setup of pointers, check if chip answers */
 	bus_space_barrier(sc->bt, sc->bh, 0, sc->sc_msize,
-			  BUS_SPACE_BARRIER_WRITE);
+	    BUS_SPACE_BARRIER_WRITE);
 
 	if (!i82586_proberam(sc))
-		return (0);
+		return 0;
 
-	return (size);
+	return size;
 }
 
 CFATTACH_DECL_NEW(ai, sizeof(struct ai_softc),
