@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.81 2018/10/05 22:12:37 christos Exp $ */
+/* $NetBSD: kauth.h,v 1.82 2019/04/10 18:49:04 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -347,6 +347,7 @@ enum {
 	KAUTH_DEVICE_TTY_VIRTUAL,
 	KAUTH_DEVICE_WSCONS_KEYBOARD_BELL,
 	KAUTH_DEVICE_WSCONS_KEYBOARD_KEYREPEAT,
+	KAUTH_DEVICE_NVMM_CTL,
 };
 
 /*

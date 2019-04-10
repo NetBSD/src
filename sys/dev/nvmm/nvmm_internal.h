@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.8 2019/04/08 18:21:42 maxv Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.9 2019/04/10 18:49:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ struct nvmm_hmapping {
 struct nvmm_machine {
 	bool present;
 	nvmm_machid_t machid;
+	time_t time;
 	struct nvmm_owner *owner;
 	krwlock_t lock;
 
