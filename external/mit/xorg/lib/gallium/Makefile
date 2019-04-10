@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2019/04/07 17:31:32 christos Exp $
+# $NetBSD: Makefile,v 1.23 2019/04/10 20:32:56 joerg Exp $
 
 # Link the gallium mega driver.
 
@@ -961,9 +961,7 @@ LIBDPLIBS+=	execinfo	${.CURDIR}/../../../../../lib/libexecinfo
 # gallium drivers requiring LLVM
 .if ${BUILD_LLVMPIPE} == 1 || ${BUILD_RADEON} == 1
 
-LLVM_LIB_DIR!=	cd ${.CURDIR}/../../../../../external/bsd/llvm/librt; ${PRINTOBJDIR}
-
-LLVM_LIBS=	\
+LLVMRT_LIBS=	\
 		TransformsCoroutines \
 		Passes \
 		MCJIT \
@@ -971,7 +969,7 @@ LLVM_LIBS=	\
 		RuntimeDyld
 
 .if ${BUILD_RADEON} == 1
-LLVM_LIBS+=	\
+LLVMRT_LIBS+=	\
 		AMDGPUCodeGen \
 		AMDGPUMCTargetDesc \
 		AMDGPUAsmPrinter \
@@ -982,7 +980,7 @@ LLVM_LIBS+=	\
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 # XXX duplicates
-LLVM_LIBS+=	\
+LLVMRT_LIBS+=	\
 		X86Disassembler \
 		X86CodeGen \
 		X86MCTargetDesc \
@@ -992,7 +990,7 @@ LLVM_LIBS+=	\
 		X86TargetInfo \
 		X86Utils
 .endif
-LLVM_LIBS+=	\
+LLVMRT_LIBS+=	\
 		GlobalISel \
 		MCDisassembler \
 		SelectionDAG \
@@ -1020,12 +1018,7 @@ LLVM_LIBS+=	\
 		TransformsUtils \
 		Support
 
-.for llvm_library in ${LLVM_LIBS}
-dir!=	cd ${LLVM_LIB_DIR}/libLLVM${llvm_library}; ${PRINTOBJDIR}
-lib=	${dir}/libLLVM${llvm_library}_pic.a
-DPADD+=	${lib}
-LDADD+=	${lib}
-.endfor
+.include "${NETBSDSRCDIR}/external/bsd/llvm/link.mk"
 
 .endif  # ${BUILD_LLVM_PIPE} == 1 || ${BUILD_RADEON} == 1
 
