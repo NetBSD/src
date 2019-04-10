@@ -153,16 +153,6 @@ along with GCC; see the file COPYING3.  If not see
 #define NETBSD_LIBGCC_SPEC "-lgcc"
 #endif
 
-/* Pass -cxx-isystem to cc1/cc1plus.  */
-#define NETBSD_CC1_AND_CC1PLUS_SPEC		\
-  "%{cxx-isystem}"
-
-#undef CC1_SPEC
-#define CC1_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC
-
-#undef CC1PLUS_SPEC
-#define CC1PLUS_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC
-
 #if defined(HAVE_LD_EH_FRAME_HDR)
 #define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
 #endif
