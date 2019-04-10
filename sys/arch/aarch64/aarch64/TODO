@@ -1,15 +1,8 @@
-$NetBSD: TODO,v 1.4 2019/04/06 03:06:24 thorpej Exp $
+$NetBSD: TODO,v 1.5 2019/04/10 06:58:12 ryo Exp $
 
 TODO list for NetBSD/aarch64
-
-- known bugs
-  - __thread attributed variables fail to work (ld_elf.so issue?)
-  - C++ stack unwinding (libunwind?)
-
-- not yet
   - kernel preemption
   - Implement __HAVE_UCAS_FULL or __HAVE_UCAS_MP (don't use full generic impl)
-  - crash(8), savecore(8) and libkvm (cpu_kcore_hdr_t)
-  - pmap should be work even if PID_MAX >= 65536
+  - pmap should be work even if PID_MAX >= 65536 (don't depend 16bit ASID)
   - TLB ASID in pmap should be randomized
-  - COMPAT_NETBSD32
+  - COMPAT_NETBSD32 for thumb mode
