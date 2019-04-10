@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.38 2019/04/09 22:05:27 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.39 2019/04/10 10:03:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.38 2019/04/09 22:05:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.39 2019/04/10 10:03:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -180,13 +180,30 @@ sysv_ipc_modcmd(modcmd_t cmd, void *arg)
 		 * sysctl data
 		 */
 #ifdef SYSVSHM
-		shminit(&sysctl_sysvipc_clog);
+		error = shminit(&sysctl_sysvipc_clog);
+		if (error != 0)
+			return error;
 #endif
 #ifdef SYSVSEM
-		seminit(&sysctl_sysvipc_clog);
+		error = seminit(&sysctl_sysvipc_clog);
+		if (error != 0) {
+#ifdef SYSVSHM
+			shmfini();
+#endif
+			return error;
+		}
 #endif
 #ifdef SYSVMSG
-		msginit(&sysctl_sysvipc_clog);
+		error = msginit(&sysctl_sysvipc_clog);
+		if (error != 0) {
+#ifdef SYSVSEM
+			semfini();
+#endif
+#ifdef SYSVSHM
+			shmfini();
+#endif
+			return error;
+		}
 #endif
 
 #ifdef _MODULE

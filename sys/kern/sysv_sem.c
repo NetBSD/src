@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.96 2019/02/21 03:37:19 mrg Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.97 2019/04/10 10:03:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.96 2019/02/21 03:37:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.97 2019/04/10 10:03:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -101,7 +101,7 @@ void semundo_clear(int, int);
 static ONCE_DECL(exithook_control);
 static int seminit_exithook(void);
 
-void
+int
 seminit(struct sysctllog **clog)
 {
 	int i, sz;
@@ -120,8 +120,10 @@ seminit(struct sysctllog **clog)
 	    ALIGN(seminfo.semmnu * seminfo.semusz);
 	sz = round_page(sz);
 	v = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
-	if (v == 0)
-		panic("sysv_sem: cannot allocate memory");
+	if (v == 0) {
+		printf("sysv_sem: cannot allocate memory");
+		return ENOMEM;
+	}
 	sema = (void *)v;
 	sem = (void *)((uintptr_t)sema +
 	    ALIGN(seminfo.semmni * sizeof(struct semid_ds)));
@@ -147,6 +149,7 @@ seminit(struct sysctllog **clog)
 	if (clog)
 		sysctl_ipc_sem_setup(clog);
 #endif
+	return 0;
 }
 
 static int
