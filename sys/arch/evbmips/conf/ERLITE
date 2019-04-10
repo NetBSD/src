@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.21 2018/12/30 14:51:36 sevan Exp $
+#	$NetBSD: ERLITE,v 1.22 2019/04/10 15:19:09 roy Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.21 $"
+#ident 		"ERLITE-$Revision: 1.22 $"
 
 maxusers	32
 
@@ -159,7 +159,7 @@ pseudo-device	tun				# network tunneling over tty
 pseudo-device	tap				# virtual Ethernet
 #pseudo-device	gre				# generic L3 over IP tunnel
 #pseudo-device	ipip				# RFC 2003 IP Encapsulation
-#pseudo-device	gif				# RFC1933 tunnel
+pseudo-device	gif				# RFC1933 tunnel
 #pseudo-device	faith				# IPv[46] tcp relay translation
 #pseudo-device	stf				# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan				# IEEE 802.1q encapsulation
