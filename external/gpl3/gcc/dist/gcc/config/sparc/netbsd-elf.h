@@ -142,8 +142,7 @@ along with GCC; see the file COPYING3.  If not see
     %{!mcpu*:%{!mv8plus:-mcpu=ultrasparc}} \
     %{!mno-vis:%{!mcpu=v9:-mvis}} \
     %{p:-mcmodel=medlow} \
-    %{pg:-mcmodel=medlow}} " \
-  NETBSD_CC1_AND_CC1PLUS_SPEC
+    %{pg:-mcmodel=medlow}} "
 
 #define CC1_SPEC64 \
  "%{m32:%{m64:%emay not use both -m32 and -m64}} \
@@ -153,8 +152,7 @@ along with GCC; see the file COPYING3.  If not see
     %{!mcpu*:%{!mv8plus:-mcpu=cypress}}} \
   %{!m32: \
       %{p:-mcmodel=medlow} \
-      %{pg:-mcmodel=medlow}} " \
-  NETBSD_CC1_AND_CC1PLUS_SPEC
+      %{pg:-mcmodel=medlow}} "
 
 #if defined(SPARC_BI_ARCH) || defined(__arch64__)
 /* add code model specific object to the link line for 64bit */
