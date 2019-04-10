@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.133 2019/02/21 03:37:19 mrg Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.134 2019/04/10 10:03:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.133 2019/02/21 03:37:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.134 2019/04/10 10:03:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -962,7 +962,7 @@ shmrealloc(int newshmni)
 	return 0;
 }
 
-void
+int
 shminit(struct sysctllog **clog)
 {
 	vaddr_t v;
@@ -977,8 +977,10 @@ shminit(struct sysctllog **clog)
 	    ALIGN(shminfo.shmmni * sizeof(kcondvar_t));
 	sz = round_page(sz);
 	v = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
-	if (v == 0)
-		panic("sysv_shm: cannot allocate memory");
+	if (v == 0) {
+		printf("sysv_shm: cannot allocate memory");
+		return ENOMEM;
+	}
 	shmsegs = (void *)v;
 	shm_cv = (void *)((uintptr_t)shmsegs +
 	    ALIGN(shminfo.shmmni * sizeof(struct shmid_ds)));
@@ -1010,6 +1012,7 @@ shminit(struct sysctllog **clog)
 	if (clog)
 		sysctl_ipc_shm_setup(clog);
 #endif
+	return 0;
 }
 
 int
