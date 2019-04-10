@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.47 2019/04/04 20:51:35 christos Exp $
+#	$NetBSD: install.sub,v 1.48 2019/04/10 14:52:53 christos Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,7 +32,7 @@
 #	NetBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
-VERSION=				# filled in automatically (see list)
+VERSION=89936
 export VERSION
 
 ALLSETS="base comp etc games man misc text"	# default install sets
@@ -43,7 +43,7 @@ local_sets_dir=""			# Path searched for sets by install_sets
 					# on the local filesystems
 
 # decide upon an editor
-if [ X$EDITOR = X ]; then
+if [ -z "$EDITOR" ]; then
 	if [ -x /usr/bin/vi ]; then
 		EDITOR=vi
 	else
@@ -184,7 +184,7 @@ get_localdir() {
 	_mp=$1
 	_dir=
 	while : ; do
-	    if [ X$_mp != X ]; then
+	    if [ -n "$_mp" ]; then
 		cat << __get_localdir_1
 Note: your filesystems are mounted under the temporary mount point \"$_mp\".
 The pathname you are requested to enter below should NOT include the \"$_mp\"
@@ -298,7 +298,7 @@ addhostent() {
 	sed "/^$1 /d" < /tmp/hosts > /tmp/hosts.new
 	mv /tmp/hosts.new /tmp/hosts
 
-	if [ X${FQDN} != X ]; then
+	if [ -n "${FQDN}" ]; then
 		fqdn=$2.$FQDN
 	fi
 	echo "$1 $2 $fqdn" >> /tmp/hosts
@@ -1305,7 +1305,7 @@ To get a listing of what's available in /usr/share/zoneinfo, enter "?"
 at the prompts below.
 
 __get_timezone_1
-	if [ X$TZ = X ]; then
+	if [ -z "$TZ" ]; then
 		TZ=$(ls -l /mnt/etc/localtime 2>/dev/null | cutlast)
 		TZ=${TZ#/usr/share/zoneinfo/}
 	fi
@@ -1385,17 +1385,17 @@ __install_sets_1
 	fi
 	if [ -n "${local_sets_dir}" ]; then
 		install_from_mounted_fs ${local_sets_dir}
-		if [ X"$_setsdone" != X ]; then
+		if [ -n "$_setsdone" ]; then
 			_yup="TRUE"
 		fi
 	fi
 
 	# Go on prodding for alternate locations
 	resp=""		# force at least one iteration
-	while [ X"${resp}" = X ]; do
+	while [ -z "${resp}" ]; do
 		# If _yup is not FALSE, it means that we extracted sets above.
 		# If that's the case, bypass the menu the first time.
-		if [ X"$_yup" = X"FALSE" ]; then
+		if [ "${_yup}" = "FALSE" ]; then
 			echo -n	"Install from (f)tp, (t)ape, (C)D-ROM, (N)FS"
 			echo -n " or local (d)isk? "
 			getresp ""
@@ -1596,4 +1596,23 @@ check_fs()
 		done
 		echo "Done."
 	) < $_fstab
+}
+
+mi_mount_kernfs() {
+	# Make sure kernfs is mounted.
+	if [ ! -d /kern ] || [ ! -e /kern/msgbuf ]; then
+		mkdir /kern > /dev/null 2>&1
+		/sbin/mount_kernfs /kern /kern
+	fi
+}
+
+mi_filter_msgbuf() {
+	# Remove timestemps, sort.
+	sed -e 's/^\[[0-9. ]*\] //' < /kern/msgbuf | sort -u
+}
+
+mi_filter_dmesg() {
+	# Remove timestemps, sort.
+	dmesg | awk '{ h=$0; gsub("^\[[0-9. ]*\] ", "", h); print h; }' \
+	    | sort -u
 }

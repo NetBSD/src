@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.16 2019/04/04 21:00:19 christos Exp $
+#	$NetBSD: install.md,v 1.17 2019/04/10 14:52:53 christos Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -69,18 +69,18 @@ __mfs_failed_1
 
 md_get_diskdevs() {
 	# return available disk devices
-	dmesg | awk -F : '/^rd[0-9]*:./ { print $1; }' | sort -u
-	dmesg | awk -F : '/^sd[0-9]*:.*sectors/ { print $1; }' | sort -u
+	mi_filter_dmesg | awk -F : '/^rd[0-9]*:./ { print $1; }' | sort -u
+	mi_filter_dmesg | awk -F : '/^sd[0-9]*:.*sectors/ { print $1; }' | sort -u
 }
 
 md_get_cddevs() {
 	# return available CD-ROM devices
-	dmesg | awk -F : '/^cd[0-9]*:/ { print $1; }' | sort -u
+	mi_filter_dmesg | awk -F : '/^cd[0-9]*:/ { print $1; }' | sort -u
 }
 
 md_get_ifdevs() {
 	# return available network interfaces
-	dmesg | awk -F : '/^le[0-9]*:/ { print $1; }' | sort -u
+	mi_filter_dmesg | awk -F : '/^le[0-9]*:/ { print $1; }' | sort -u
 }
 
 md_installboot() {
