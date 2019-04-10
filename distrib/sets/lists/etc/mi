@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.255 2019/04/10 00:32:15 sevan Exp $
+# $NetBSD: mi,v 1.256 2019/04/10 00:35:25 sevan Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -46,8 +46,8 @@
 ./etc/default/security.conf			etc-obsolete		obsolete
 ./etc/default/weekly.conf			etc-obsolete		obsolete
 ./etc/defaults/daily.conf			etc-sys-defaults
-./etc/defaults/monthly.conf			etc-sys-defaults	npf
-./etc/defaults/npf.boot.conf			etc-pf-defaults		pf
+./etc/defaults/monthly.conf			etc-sys-defaults
+./etc/defaults/npf.boot.conf			etc-pf-defaults		npf
 ./etc/defaults/pf.boot.conf			etc-pf-defaults		pf
 ./etc/defaults/pkgpath.conf			etc-sys-defaults
 ./etc/defaults/rc.conf				etc-sys-defaults
