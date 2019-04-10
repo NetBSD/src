@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.126 2019/04/07 13:48:23 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.127 2019/04/10 07:40:36 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2826,4 +2826,11 @@ sys/dev/pci/if_bge.c				1.328
 
 	Fix ASIC revision check.
 	[bouyer, ticket #1228]
+
+sys/conf/files					1.1233
+sys/conf/param.c				1.68
+sys/kern/sysv_ipc.c				1.38
+
+	defparam all of the config variables associated with SYSV IPC stuff.
+	[pgoyette, ticket #1229]
 
