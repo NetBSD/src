@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.14 2019/04/10 04:28:03 msaitoh Exp $	*/
+/*	$NetBSD: sockio.h,v 1.15 2019/04/10 04:37:00 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -141,43 +141,41 @@ struct oifdatareq {
 							     zero ctrs*/
 
 
-
-
 #define	OBIOCGETIF	 _IOR('B', 107, struct oifreq)
 #define	OBIOCSETIF	 _IOW('B', 108, struct oifreq)
 #define	OTAPGIFNAME	 _IOR('e', 0, struct oifreq)
 
-#define ifreqn2o(oi, ni) \
-	do { \
-		(void)memcpy((oi)->ifr_name, (ni)->ifr_name, \
-		    sizeof((oi)->ifr_name)); \
-		(void)memcpy(&(oi)->ifr_ifru, &(ni)->ifr_ifru, \
-		    sizeof((oi)->ifr_ifru)); \
+#define ifreqn2o(oi, ni)					\
+	do {							\
+		(void)memcpy((oi)->ifr_name, (ni)->ifr_name,	\
+		    sizeof((oi)->ifr_name));			\
+		(void)memcpy(&(oi)->ifr_ifru, &(ni)->ifr_ifru,	\
+		    sizeof((oi)->ifr_ifru));			\
 	} while (/*CONSTCOND*/0)
 
-#define ifreqo2n(oi, ni) \
-	do { \
-		(void)memcpy((ni)->ifr_name, (oi)->ifr_name, \
-		    sizeof((oi)->ifr_name)); \
-		(void)memcpy(&(ni)->ifr_ifru, &(oi)->ifr_ifru, \
-		    sizeof((oi)->ifr_ifru)); \
+#define ifreqo2n(oi, ni)					\
+	do {							\
+		(void)memcpy((ni)->ifr_name, (oi)->ifr_name,	\
+		    sizeof((oi)->ifr_name));			\
+		(void)memcpy(&(ni)->ifr_ifru, &(oi)->ifr_ifru,	\
+		    sizeof((oi)->ifr_ifru));			\
 	} while (/*CONSTCOND*/0)
 
-#define ifdatan2o(oi, ni) \
-	do { \
-		(void)memcpy((oi), (ni),  sizeof(*(oi))); \
-		(oi)->ifi_lastchange.tv_sec = \
-		    (int32_t)(ni)->ifi_lastchange.tv_sec; \
-		(oi)->ifi_lastchange.tv_usec = \
-		    (ni)->ifi_lastchange.tv_nsec / 1000; \
+#define ifdatan2o(oi, ni)					\
+	do {							\
+		(void)memcpy((oi), (ni),  sizeof(*(oi)));	\
+		(oi)->ifi_lastchange.tv_sec =			\
+		    (int32_t)(ni)->ifi_lastchange.tv_sec;	\
+		(oi)->ifi_lastchange.tv_usec =			\
+		    (ni)->ifi_lastchange.tv_nsec / 1000;	\
 	} while (/*CONSTCOND*/0)
 
-#define ifdatao2n(oi, ni) \
-	do { \
-		(void)memcpy((ni), (oi),  sizeof(*(oi))); \
+#define ifdatao2n(oi, ni)						   \
+	do {								   \
+		(void)memcpy((ni), (oi),  sizeof(*(oi)));		   \
 		(ni)->ifi_lastchange.tv_sec = (oi)->ifi_lastchange.tv_sec; \
-		(ni)->ifi_lastchange.tv_nsec = \
-		    (oi)->ifi_lastchange.tv_usec * 1000; \
+		(ni)->ifi_lastchange.tv_nsec =				   \
+		    (oi)->ifi_lastchange.tv_usec * 1000;		   \
 	} while (/*CONSTCOND*/0)
 
 #endif /* _COMPAT_SYS_SOCKIO_H_ */
