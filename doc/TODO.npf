@@ -19,8 +19,6 @@ Another TODO list is available here:
    this is what it does. It does not "start" because like an engine with
    no fuel, an npf with no configuration does not do much.
 
--- npf starts up too late (after traffic can go through)
-
 -- although the framework checks the file for consistency, returning EINVAL
    for system failures is probably not good enough. For example if a module
    failed to autoload, it is probably an error and it should be reported
