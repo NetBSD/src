@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.29 2019/04/04 21:00:19 christos Exp $
+#	$NetBSD: install.md,v 1.30 2019/04/10 14:52:53 christos Exp $
 #
 #
 # Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -46,20 +46,10 @@ md_set_term() {
 	export TERM
 }
 
-__mount_kernfs() {
-	#
-	# Force kern_fs to be mounted
-	#
-	if [ ! -d /kern ] || [ ! -e /kern/msgbuf ]; then
-		mkdir /kern > /dev/null 2>&1
-		/sbin/mount_kernfs /kern /kern >/dev/null 2>&1
-	fi
-}
-
 md_makerootwritable() {
 	# Mount root rw for convenience of the tester ;-)
 	if ! cp /dev/null /tmp/.root_writable >/dev/null 2>&1; then
-		__mount_kernfs
+		mi_mount_kernfs
 		# XXX: Use /kern/rootdev instead?
 		mount -t ffs -u /kern/rootdev / > /dev/null 2>&1
 	fi
@@ -67,16 +57,14 @@ md_makerootwritable() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	__mount_kernfs
-	sed -n -e '/^[sw]d[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed  -ne '/^[sw]d[0-9] /s/ .*//p'
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	__mount_kernfs
-	sed -n -e '/^cd[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed -ne '/^cd[0-9] /s/ .*//p'
 }
 
 md_get_partition_range() {

@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.4 2019/04/04 21:00:19 christos Exp $
+#	$NetBSD: install.md,v 1.5 2019/04/10 14:52:53 christos Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,19 +47,11 @@ md_set_term() {
 	export TERM
 }
 
-__mount_kernfs() {
-	# Make sure kernfs is mounted.
-	if [ ! -d /kern ] || [ ! -e /kern/msgbuf ]; then
-		mkdir /kern > /dev/null 2>&1
-		/sbin/mount_kernfs /kern /kern
-	fi
-}
-
 md_makerootwritable() {
 	# Just remount the root device read-write.
 	if [ ! -e /tmp/root_writable ]; then
 		echo "Remounting root read-write..."
-		__mount_kernfs
+		mi_mount_kernfs
 		mount -u -t ffs /kern/rootdev /
 		swapctl -a /kern/rootdev
 		cp /dev/null /tmp/root_writable
@@ -68,26 +60,21 @@ md_makerootwritable() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	__mount_kernfs
-	sed -n -e '/^sd[0-9] /s/ .*//p' \
-	       -e '/^xd[0-9] /s/ .*//p' \
-	       -e '/^xy[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed -ne '/^[xs]d[0-9] /s/ .*//p' \
+	       -e '/^xy[0-9] /s/ .*//p'
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	__mount_kernfs
-	sed -n -e '/^cd[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed -ne '/^cd[0-9] /s/ .*//p'
 }
 
 md_get_ifdevs() {
 	# return available network devices
-	__mount_kernfs
-	sed -n -e '/^ie[0-9] /s/ .*//p' \
-	       -e '/^le[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
+	mi_mount_kernfs
+	mi_filter_msgbuf | sed -ne '/^[il]e[0-9] /s/ .*//p'
 }
 
 md_get_partition_range() {

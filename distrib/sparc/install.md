@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.23 2019/04/04 21:00:19 christos Exp $
+#	$NetBSD: install.md,v 1.24 2019/04/10 14:52:53 christos Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,17 +71,17 @@ __mfs_failed_1
 
 md_get_diskdevs() {
 	# return available disk devices
-	dmesg | sed -n -e 's/^\(sd[0-9]\) .*/\1/p' -e 's/^\(x[dy][0-9]\) .*/\1/p' | sort -u
+	mi_filter_dmesg | sed -n -e 's/^\(sd[0-9]\) .*/\1/p' -e 's/^\(x[dy][0-9]\) .*/\1/p' | sort -u
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	dmesg | sed -n -e 's/^\(cd[0-9]\) .*/\1/p' | sort -u
+	mi_filter_dmesg | sed -n -e 's/^\(cd[0-9]\) .*/\1/p' | sort -u
 }
 
 md_get_ifdevs() {
 	# return available network devices
-	dmesg | sed -n -e 's/^\(le[0-9]\) .*/\1/p' -e 's/^\(ie[0-9]\) .*/\1/p' | sort -u
+	mi_filter_dmesg | sed -n -e 's/^\(le[0-9]\) .*/\1/p' -e 's/^\(ie[0-9]\) .*/\1/p' | sort -u
 }
 
 md_get_partition_range() {
