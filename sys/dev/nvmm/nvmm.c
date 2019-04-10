@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.16 2019/04/08 18:30:54 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.17 2019/04/10 18:49:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.16 2019/04/08 18:30:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.17 2019/04/10 18:49:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.16 2019/04/08 18:30:54 maxv Exp $");
 #include <sys/mman.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -64,6 +65,8 @@ static const struct nvmm_impl *nvmm_impl_list[] = {
 
 static const struct nvmm_impl *nvmm_impl = NULL;
 
+static struct nvmm_owner root_owner;
+
 /* -------------------------------------------------------------------------- */
 
 static int
@@ -82,6 +85,7 @@ nvmm_machine_alloc(struct nvmm_machine **ret)
 		}
 
 		mach->present = true;
+		mach->time = time_second;
 		*ret = mach;
 		atomic_inc_uint(&nmachines);
 		return 0;
@@ -116,7 +120,7 @@ nvmm_machine_get(struct nvmm_owner *owner, nvmm_machid_t machid,
 		rw_exit(&mach->lock);
 		return ENOENT;
 	}
-	if (mach->owner != owner) {
+	if (owner != &root_owner && mach->owner != owner) {
 		rw_exit(&mach->lock);
 		return EPERM;
 	}
@@ -816,6 +820,65 @@ out:
 /* -------------------------------------------------------------------------- */
 
 static int
+nvmm_ctl_mach_info(struct nvmm_ioc_ctl *args)
+{
+	struct nvmm_ctl_mach_info ctl;
+	struct nvmm_machine *mach;
+	struct nvmm_cpu *vcpu;
+	int error;
+	size_t i;
+
+	if (args->size != sizeof(ctl))
+		return EINVAL;
+	error = copyin(args->data, &ctl, sizeof(ctl));
+	if (error)
+		return error;
+
+	error = nvmm_machine_get(&root_owner, ctl.machid, &mach, true);
+	if (error)
+		return error;
+
+	ctl.nvcpus = 0;
+	for (i = 0; i < NVMM_MAX_VCPUS; i++) {
+		error = nvmm_vcpu_get(mach, i, &vcpu);
+		if (error)
+			continue;
+		ctl.nvcpus++;
+		nvmm_vcpu_put(vcpu);
+	}
+	ctl.pid = mach->owner->pid;
+	ctl.time = mach->time;
+
+	nvmm_machine_put(mach);
+
+	error = copyout(&ctl, args->data, sizeof(ctl));
+	if (error)
+		return error;
+
+	return 0;
+}
+
+static int
+nvmm_ctl(struct nvmm_owner *owner, struct nvmm_ioc_ctl *args)
+{
+	int error;
+
+	error = kauth_authorize_device(curlwp->l_cred, KAUTH_DEVICE_NVMM_CTL,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return error;
+
+	switch (args->op) {
+	case NVMM_CTL_MACH_INFO:
+		return nvmm_ctl_mach_info(args);
+	default:
+		return EINVAL;
+	}
+}
+
+/* -------------------------------------------------------------------------- */
+
+static int
 nvmm_init(void)
 {
 	size_t i, n;
@@ -965,6 +1028,8 @@ nvmm_ioctl(file_t *fp, u_long cmd, void *data)
 		return nvmm_hva_map(owner, data);
 	case NVMM_IOC_HVA_UNMAP:
 		return nvmm_hva_unmap(owner, data);
+	case NVMM_IOC_CTL:
+		return nvmm_ctl(owner, data);
 	default:
 		return EINVAL;
 	}

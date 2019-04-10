@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_ioctl.h,v 1.4 2019/03/21 20:21:40 maxv Exp $	*/
+/*	$NetBSD: nvmm_ioctl.h,v 1.5 2019/04/10 18:49:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -118,6 +118,21 @@ struct nvmm_ioc_gpa_unmap {
 	size_t size;
 };
 
+struct nvmm_ctl_mach_info {
+	nvmm_machid_t machid;
+	size_t nvcpus;
+	pid_t pid;
+	time_t time;
+};
+
+struct nvmm_ioc_ctl {
+	int op;
+#define NVMM_CTL_MACH_INFO	0
+
+	void *data;
+	size_t size;
+};
+
 #define NVMM_IOC_CAPABILITY		_IOR ('N',  0, struct nvmm_ioc_capability)
 #define NVMM_IOC_MACHINE_CREATE		_IOWR('N',  1, struct nvmm_ioc_machine_create)
 #define NVMM_IOC_MACHINE_DESTROY	_IOW ('N',  2, struct nvmm_ioc_machine_destroy)
@@ -132,5 +147,7 @@ struct nvmm_ioc_gpa_unmap {
 #define NVMM_IOC_GPA_UNMAP		_IOW ('N', 11, struct nvmm_ioc_gpa_unmap)
 #define NVMM_IOC_HVA_MAP		_IOW ('N', 12, struct nvmm_ioc_hva_map)
 #define NVMM_IOC_HVA_UNMAP		_IOW ('N', 13, struct nvmm_ioc_hva_unmap)
+
+#define NVMM_IOC_CTL			_IOW ('N', 20, struct nvmm_ioc_ctl)
 
 #endif /* _NVMM_IOCTL_H_ */
