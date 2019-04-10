@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.99 2018/09/23 07:24:19 maxv Exp $
+# $NetBSD: Makefile,v 1.100 2019/04/10 00:32:15 sevan Exp $
 
 .include <bsd.own.mk>
 
@@ -30,8 +30,8 @@ CONFIGFILES=\
 		ldconfig ldpd local lpd lvm \
 		makemandb mdnsd mixerctl modules mopd motd mountall \
 		mountcritlocal mountcritremote mountd moused mrouted \
-		named ndbootd network newsyslog nfsd nfslocking npf npfd ntpd \
-		ntpdate \
+		named ndbootd network newsyslog nfsd nfslocking npf npf_boot \
+		npfd ntpd ntpdate \
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity random_seed rarpd \
