@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.48 2018/05/09 19:38:46 alnsn Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.49 2019/04/10 06:09:39 kre Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.48 2018/05/09 19:38:46 alnsn Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.49 2019/04/10 06:09:39 kre Exp $");
 #endif
 
 #include <err.h>
@@ -625,8 +625,10 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 			goto bail_err;
 
 		ret = verify(p, fd);
-		if (ret == -1)
+		if (ret == -1) {
+			(void)unconfigure_fd(fd);
 			goto bail_err;
+		}
 		if (!ret)
 			break;
 
@@ -830,7 +832,7 @@ verify_mbr(int fd)
 
 	memcpy(&mbr, buf, sizeof(mbr));
 	if (le16toh(mbr.mbr_magic) != MBR_MAGIC)
-		return -1;
+		return 1;
 
 	return 0;
 }
@@ -916,7 +918,7 @@ verify_gpt(int fd)
 		return -1;
 	}
 
-	ret = -1;
+	ret = 1;
 	for (blksize=DEV_BSIZE;
              (off = blksize * GPT_HDR_BLKNO) <= SCANSIZE - sizeof(hdr);
              blksize <<= 1) {
