@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1173.2.6 2018/10/31 09:30:10 martin Exp $
+#	$NetBSD: files,v 1.1173.2.7 2019/04/10 07:39:31 martin Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20170615
@@ -69,7 +69,10 @@ defflag				CPU_IN_CKSUM
 defflag opt_dtrace.h		KDTRACE_HOOKS
 
 defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
-defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
+defparam opt_sysvparam.h	MSGMAX MSGMNI MSGMNB MSGTQL MSGSSZ MSGSEG
+defparam opt_sysvparam.h	SEMMAP SEMMNI SEMMNS SEMMNU SEMMSL SEMOPM
+defparam opt_sysvparam.h	SEMUME SEMUSZ SEMVMX SEMAEM
+defparam opt_sysvparam.h	SHMMAX SHMMIN SHMMNI SHMSEG SHMMAXPGS
 
 defflag	opt_ntp.h		PPS_SYNC PPS_DEBUG NTP
 
