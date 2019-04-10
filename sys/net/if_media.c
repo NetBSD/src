@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.38 2019/02/28 05:40:58 msaitoh Exp $	*/
+/*	$NetBSD: if_media.c,v 1.39 2019/04/10 08:22:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.38 2019/02/28 05:40:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.39 2019/04/10 08:22:18 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.38 2019/02/28 05:40:58 msaitoh Exp $"
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/netisr.h>
+
+#include <compat/sys/sockio.h>
 
 static void	ifmedia_status(struct ifmedia *, struct ifnet *, struct ifmediareq *);
 static int	_ifmedia_ioctl(struct ifnet *, struct ifreq *, struct ifmedia *, u_long);
@@ -260,8 +262,8 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 #ifdef OSIOCSIFMEDIA
 	case OSIOCSIFMEDIA:
 		ifr->ifr_media = oifr->ifr_media;
-		/*FALLTHROUGH*/
 #endif
+		/* FALLTHROUGH */
 	/*
 	 * Set the current media.
 	 */
