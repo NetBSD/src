@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgd.sh,v 1.11 2013/02/19 21:08:24 joerg Exp $
+#	$NetBSD: t_cgd.sh,v 1.12 2019/04/10 06:09:39 kre Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -150,10 +150,53 @@ unaligned_write_cleanup()
 	env RUMP_SERVER=unix://csock rump.halt || true
 }
 
+vmeth_failure_body()
+{
+
+	local vmeth="$1"
+	local d=$(atf_get_srcdir)
+
+	atf_check -s exit:0 \
+	    ${cgdserver} -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
+	export RUMP_SERVER=unix://csock
+	atf_check -s not-exit:0 -e ignore -x "echo 12345 | \
+	    rump.cgdconfig -V "${vmeth}" -p cgd0 /dev/dk ${d}/paramsfile"
+	atf_check -s exit:0 -o not-match:"(^| )cgd0( |$)" rump.sysctl -n hw.disknames
+}
+
+test_case_vmeth_failure()
+{
+
+	local vmeth="${1}"
+	local name="vmeth_failure_${vmeth}"
+
+	atf_test_case "${name}" cleanup
+	eval "${name}_head() { \
+		atf_set "descr" "Tests verification method \"${vmeth}\" failure" ; \
+		atf_set "require.progs" "rump_server" ; \
+	}"
+	eval "${name}_body() { \
+		vmeth_failure_body "${vmeth}" ; \
+	}"
+	eval "${name}_cleanup() { \
+		rump.cgdconfig -u cgd0 2>/dev/null ; \
+		env RUMP_SERVER=unix://csock rump.halt || true ; \
+	}"
+}
+
+test_case_vmeth_failure disklabel
+test_case_vmeth_failure ffs
+test_case_vmeth_failure gpt
+test_case_vmeth_failure mbr
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case basic
 	atf_add_test_case wrongpass
 	atf_add_test_case unaligned_write
+	atf_add_test_case vmeth_failure_disklabel
+	atf_add_test_case vmeth_failure_ffs
+	atf_add_test_case vmeth_failure_gpt
+	atf_add_test_case vmeth_failure_mbr
 }
