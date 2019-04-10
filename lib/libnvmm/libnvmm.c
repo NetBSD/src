@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.8 2019/04/04 17:33:47 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.9 2019/04/10 18:49:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -519,4 +519,25 @@ void
 nvmm_callbacks_register(const struct nvmm_callbacks *cbs)
 {
 	memcpy(&__callbacks, cbs, sizeof(__callbacks));
+}
+
+int
+nvmm_ctl(int op, void *data, size_t size)
+{
+	struct nvmm_ioc_ctl args;
+	int ret;
+
+	if (nvmm_init() == -1) {
+		return -1;
+	}
+
+	args.op = op;
+	args.data = data;
+	args.size = size;
+
+	ret = ioctl(nvmm_fd, NVMM_IOC_CTL, &args);
+	if (ret == -1)
+		return -1;
+
+	return 0;
 }
