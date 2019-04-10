@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.242 2019/04/05 15:07:42 sevan Exp $
+$NetBSD: acronyms.comp,v 1.243 2019/04/10 10:57:51 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -785,6 +785,8 @@ LKML	Linux kernel mailing list
 LL	load linked
 LL/SC	load linked/store conditional
 LLC	logical link control
+LLD	low-level design
+LLDD	low-level design document
 LLDP	link layer discovery protocol
 LLF	low level format
 LLMNR	link-local multicast name resolution
