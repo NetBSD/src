@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.22 2016/11/20 13:28:32 pho Exp $ */
+/* $NetBSD: fuse.h,v 1.23 2019/04/10 21:38:02 maya Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -163,6 +163,7 @@ int fuse_loop(struct fuse *);
 struct fuse_context *fuse_get_context(void);
 void fuse_exit(struct fuse *);
 void fuse_destroy(struct fuse *);
+int fuse_version(void);
 
 #if FUSE_USE_VERSION == 22
 #define fuse_unmount fuse_unmount_compat22
