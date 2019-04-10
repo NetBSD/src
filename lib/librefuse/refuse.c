@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.98 2016/11/20 13:28:32 pho Exp $	*/
+/*	$NetBSD: refuse.c,v 1.99 2019/04/10 21:38:02 maya Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.98 2016/11/20 13:28:32 pho Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.99 2019/04/10 21:38:02 maya Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1372,4 +1372,10 @@ fuse_unmount_compat22(const char *mp)
 {
 
 	return;
+}
+
+int
+fuse_version(void)
+{
+	return FUSE_USE_VERSION;
 }
