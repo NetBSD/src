@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.4 2019/03/01 11:06:57 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.5 2019/04/10 04:06:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.4 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.5 2019/04/10 04:06:52 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -546,7 +546,7 @@ static int
 route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
     struct rt_xmsghdr *rtm, struct rt_xmsghdr **new_rtm)
 {
-	int len;
+	int len, error;
 
 	if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) {
 		const struct ifaddr *rtifa;
@@ -580,7 +580,9 @@ route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
 			info->rti_info[RTAX_BRD] = NULL;
 		rtm->rtm_index = ifp->if_index;
 	}
-	(void)rt_msg2(rtm->rtm_type, info, NULL, NULL, &len);
+	error = rt_msg2(rtm->rtm_type, info, NULL, NULL, &len);
+	if (error)
+		return error;
 	if (len > rtm->rtm_msglen) {
 		struct rt_xmsghdr *old_rtm = rtm;
 		R_Malloc(*new_rtm, struct rt_xmsghdr *, len);
