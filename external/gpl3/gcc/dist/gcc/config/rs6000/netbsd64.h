@@ -89,6 +89,7 @@ extern int dot_symbols;
 
 #undef CC1_OS_NETBSD_SPEC
 #define CC1_OS_NETBSD_SPEC \
+  NETBSD_CC1_AND_CC1PLUS_SPEC \
   "%{!m32: %{!mrelocatable: %{!fno-pie: %{!fno-pic: \
      %{!fpie: %{!fpic: \
        %{!fPIE: %{!fPIC:-fPIC}}}}}}}}"
