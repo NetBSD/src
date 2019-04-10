@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.13 2019/01/27 02:08:41 pgoyette Exp $	*/
+/*	$NetBSD: sockio.h,v 1.14 2019/04/10 04:28:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -175,7 +175,6 @@ struct oifdatareq {
 #define ifdatao2n(oi, ni) \
 	do { \
 		(void)memcpy((ni), (oi),  sizeof(*(oi))); \
-		    sizeof((oi)->ifr_name)); \
 		(ni)->ifi_lastchange.tv_sec = (oi)->ifi_lastchange.tv_sec; \
 		(ni)->ifi_lastchange.tv_nsec = \
 		    (oi)->ifi_lastchange.tv_usec * 1000; \
