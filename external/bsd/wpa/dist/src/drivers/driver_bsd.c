@@ -334,6 +334,8 @@ bsd_send_mlme_param(void *priv, const u8 op, const u16 reason, const u8 *addr)
 	mlme.im_op = op;
 	mlme.im_reason = reason;
 	os_memcpy(mlme.im_macaddr, addr, IEEE80211_ADDR_LEN);
+	wpa_printf(MSG_DEBUG, "%s: op=%d reason=%d addr=" MACSTR, __func__,
+	    op, reason, MAC2STR(addr));
 	return set80211var(priv, IEEE80211_IOC_MLME, &mlme, sizeof(mlme));
 }
 
