@@ -1,4 +1,4 @@
-/* $NetBSD: copy.c,v 1.10 2019/04/10 03:39:34 msaitoh Exp $ */
+/* $NetBSD: copy.c,v 1.11 2019/04/10 04:10:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.10 2019/04/10 03:39:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.11 2019/04/10 04:10:54 thorpej Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 #define	__UCAS_PRIVATE
@@ -95,20 +95,6 @@ kcopy(const void *src, void *dst, size_t len)
 #endif
 	return 0;
 }
-
-int
-_ucas_32(volatile uint32_t *uaddr, uint32_t old, uint32_t new, uint32_t *ret)
-{
-	*ret = atomic_cas_32(uaddr, old, new);
-}
-
-#ifdef _LP64
-int
-_ucas_64(volatile uint64_t *uaddr, uint64_t old, uint64_t new, uint64_t *ret)
-{
-	*ret = atomic_cas_64(uaddr, old, new);
-}
-#endif /* _LP64 */
 
 int
 _ufetch_8(const uint8_t *uaddr, uint8_t *valp)
