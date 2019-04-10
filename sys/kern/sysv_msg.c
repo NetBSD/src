@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.73 2019/02/21 03:37:19 mrg Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.74 2019/04/10 10:03:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.73 2019/02/21 03:37:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.74 2019/04/10 10:03:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -93,7 +93,7 @@ extern int kern_has_sysvmsg;
 
 SYSCTL_SETUP_PROTO(sysctl_ipc_msg_setup);
 
-void
+int
 msginit(struct sysctllog **clog)
 {
 	int i, sz;
@@ -109,12 +109,14 @@ msginit(struct sysctllog **clog)
 	while (i < 1024 && i != msginfo.msgssz)
 		i <<= 1;
 	if (i != msginfo.msgssz) {
-		panic("msginfo.msgssz = %d, not a small power of 2",
+		printf("msginfo.msgssz = %d, not a small power of 2",
 		    msginfo.msgssz);
+		return EINVAL;
 	}
 
 	if (msginfo.msgseg > 32767) {
-		panic("msginfo.msgseg = %d > 32767", msginfo.msgseg);
+		printf("msginfo.msgseg = %d > 32767", msginfo.msgseg);
+		return EINVAL;
 	}
 
 	/* Allocate the wired memory for our structures */
@@ -124,8 +126,10 @@ msginit(struct sysctllog **clog)
 	    ALIGN(msginfo.msgmni * sizeof(kmsq_t));
 	sz = round_page(sz);
 	v = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
-	if (v == 0)
-		panic("sysv_msg: cannot allocate memory");
+	if (v == 0) {
+		printf("sysv_msg: cannot allocate memory");
+		return ENOMEM;
+	}
 	msgpool = (void *)v;
 	msgmaps = (void *)((uintptr_t)msgpool + ALIGN(msginfo.msgmax));
 	msghdrs = (void *)((uintptr_t)msgmaps +
@@ -167,6 +171,7 @@ msginit(struct sysctllog **clog)
 	if (clog)
 		sysctl_ipc_msg_setup(clog);
 #endif
+	return 0;
 }
 
 int
