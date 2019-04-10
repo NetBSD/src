@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.32 2015/11/06 02:26:42 pgoyette Exp $	*/
+/*	$NetBSD: sem.h,v 1.33 2019/04/10 10:03:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@ int	semconfig(int);
 #endif
 __END_DECLS
 #else
-void	seminit(struct sysctllog **);
+int	seminit(struct sysctllog **);
 int	semfini(void);
 void	semexit(struct proc *, void *);
 
