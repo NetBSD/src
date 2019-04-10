@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.131 2019/02/27 04:10:56 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.132 2019/04/10 08:13:11 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.131 2019/02/27 04:10:56 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.132 2019/04/10 08:13:11 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,8 @@ struct nodelist *argbackq;	/* list of back quote expressions */
 struct ifsregion ifsfirst;	/* first struct in list of ifs regions */
 struct ifsregion *ifslastp;	/* last struct in list */
 struct arglist exparg;		/* holds expanded arg list */
+
+static int empty_dollar_at;	/* have expanded "$@" to nothing */
 
 STATIC const char *argstr(const char *, int);
 STATIC const char *exptilde(const char *, int);
@@ -180,6 +182,7 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 	if (fflag)		/* no filename expandsion */
 		flag &= ~EXP_GLOB;
 
+	empty_dollar_at = 0;
 	argbackq = arg->narg.backquote;
 	STARTSTACKSTR(expdest);
 	ifsfirst.next = NULL;
@@ -243,6 +246,8 @@ argstr(const char *p, int flag)
 	char c;
 	const int quotes = flag & EXP_QNEEDED;		/* do CTLESC */
 	int firsteq = 1;
+	int had_dol_at = 0;
+	int startoff;
 	const char *ifs = NULL;
 	int ifs_split = EXP_IFS_SPLIT;
 
@@ -251,6 +256,7 @@ argstr(const char *p, int flag)
 
 	CTRACE(DBG_EXPAND, ("argstr(\"%s\", %#x) quotes=%#x\n", p,flag,quotes));
 
+	startoff = expdest - stackblock();
 	if (*p == '~' && (flag & (EXP_TILDE | EXP_VARTILDE)))
 		p = exptilde(p, flag);
 	for (;;) {
@@ -262,6 +268,8 @@ argstr(const char *p, int flag)
 			return p - 1;
 		case CTLENDVAR: /* end of expanding yyy in ${xxx-yyy} */
 		case CTLENDARI: /* end of a $(( )) string */
+			if (had_dol_at && (*p&0xFF) == CTLQUOTEEND)
+				p++;
 			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr returning at \"%.6s\"..."
 			    " after %2.2X; added \"%s\" to expdest\n",
@@ -270,8 +278,12 @@ argstr(const char *p, int flag)
 		case CTLQUOTEMARK:
 			/* "$@" syntax adherence hack */
 			if (p[0] == CTLVAR && p[1] & VSQUOTE &&
-			    p[2] == '@' && p[3] == '=')
+			    p[2] == '@' && p[3] == '=') {
+				had_dol_at = 1;
 				break;
+			}
+			had_dol_at = 0;
+			empty_dollar_at = 0;
 			if ((flag & EXP_SPLIT) != 0)
 				STPUTC(c, expdest);
 			ifs_split = 0;
@@ -285,9 +297,14 @@ argstr(const char *p, int flag)
 			STPUTC('\n', expdest);	/* no line_number++ */
 			break;
 		case CTLQUOTEEND:
-			if ((flag & EXP_SPLIT) != 0)
+			if (empty_dollar_at &&
+			    expdest - stackblock() > startoff &&
+			    expdest[-1] == CTLQUOTEMARK)
+				expdest--;
+			else if (!had_dol_at && (flag & EXP_SPLIT) != 0)
 				STPUTC(c, expdest);
 			ifs_split = EXP_IFS_SPLIT;
+			had_dol_at = 0;
 			break;
 		case CTLESC:
 			if (quotes || ISCTL(*p))
@@ -890,6 +907,8 @@ evalvar(const char *p, int flag)
 	} else if (special) {
 		set = varisset(var, varflags & VSNUL);
 		val = NULL;
+		if (!set && *var == '@')
+			empty_dollar_at = 1;
 	} else {
 		val = lookupvar(var);
 		if (val == NULL || ((varflags & VSNUL) && val[0] == '\0')) {
@@ -916,9 +935,11 @@ evalvar(const char *p, int flag)
 		}
 	}
 
+#if 0		/* no longer need this $@ evil ... */
 	if (!set && subtype != VSPLUS && special && *var == '@')
 		if (startloc > 0 && expdest[-1] == CTLQUOTEMARK)
 			expdest--, startloc--;
+#endif
 
 	if (set && subtype != VSPLUS) {
 		/* insert the value of the variable */
@@ -1202,13 +1223,23 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 		if (flag & EXP_SPLIT && quoted) {
 			VTRACE(DBG_EXPAND, (": $@ split (%d)\n",
 			    shellparam.nparam));
+#if 0
 		/* GROSS HACK */
 			if (shellparam.nparam == 0 &&
 				expdest[-1] == CTLQUOTEMARK)
 					expdest--;
 		/* KCAH SSORG */
+#endif
+			if (shellparam.nparam == 0)
+				empty_dollar_at = 1;
+
 			for (ap = shellparam.p ; (p = *ap++) != NULL ; ) {
-				STRTODEST(p);
+				if (*p == '\0') {
+					/* retain an explicit null string */
+					STPUTC(CTLQUOTEMARK, expdest);
+					STPUTC(CTLQUOTEEND, expdest);
+				} else
+					STRTODEST(p);
 				if (*ap)
 					/* A NUL separates args inside "" */
 					STPUTC('\0', expdest);
@@ -1396,8 +1427,10 @@ ifsbreakup(char *string, struct arglist *arglist)
 		}
 	}
 
+/*
 	while (*start == CTLQUOTEEND)
 		start++;
+*/
 
 	/*
 	 * Save anything left as an argument.

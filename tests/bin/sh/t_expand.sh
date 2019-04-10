@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.20 2018/11/27 09:59:30 kre Exp $
+# $NetBSD: t_expand.sh,v 1.21 2019/04/10 08:13:11 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,7 +46,7 @@ delim_argv() {
 
 atf_test_case dollar_at
 dollar_at_head() {
-	atf_set "descr" "Somewhere between 2.0.2 and 3.0 the expansion" \
+	atf_set descr "Somewhere between 2.0.2 and 3.0 the expansion" \
 	                "of the \$@ variable had been broken.  Check for" \
 			"this behavior."
 }
@@ -65,7 +65,7 @@ dollar_at_body() {
 
 atf_test_case dollar_at_unquoted_or_conditional
 dollar_at_unquoted_or_conditional_head() {
-	atf_set "descr" 'Sometime during 2013 the expansion of "${1+$@}"' \
+	atf_set descr 'Sometime during 2013 the expansion of "${1+$@}"' \
 			' (where $1 and $2 (and maybe more) are set)' \
 			' seems to have broken.  Check for this bug.'
 }
@@ -87,7 +87,7 @@ dollar_at_unquoted_or_conditional_body() {
 
 atf_test_case dollar_at_with_text
 dollar_at_with_text_head() {
-	atf_set "descr" "Test \$@ expansion when it is surrounded by text" \
+	atf_set descr "Test \$@ expansion when it is surrounded by text" \
 	                "within the quotes.  PR bin/33956."
 }
 dollar_at_with_text_body() {
@@ -160,7 +160,7 @@ EOF
 
 atf_test_case dollar_at_empty_and_conditional
 dollar_at_empty_and_conditional_head() {
-	atf_set "descr" 'Test $@ expansion when there are no args, and ' \
+	atf_set descr 'Test $@ expansion when there are no args, and ' \
 	                'when conditionally expanded.'
 }
 dollar_at_empty_and_conditional_body() {
@@ -355,7 +355,7 @@ EOF
 
 atf_test_case strip
 strip_head() {
-	atf_set "descr" "Checks that the %% operator works and strips" \
+	atf_set descr "Checks that the %% operator works and strips" \
 	                "the contents of a variable from the given point" \
 			"to the end"
 }
@@ -385,7 +385,7 @@ strip_body() {
 
 atf_test_case wrap_strip
 wrap_strip_head() {
-	atf_set "descr" "Checks that the %% operator works and strips" \
+	atf_set descr "Checks that the %% operator works and strips" \
 	                "the contents of a variable from the given point" \
 			'to the end, and that \ \n sequences do not break it'
 }
@@ -429,7 +429,7 @@ ne%\
 
 atf_test_case tilde
 tilde_head() {
-	atf_set "descr" "Checks that the ~ expansions work"
+	atf_set descr "Checks that the ~ expansions work"
 }
 tilde_body() {
 	for HOME in '' / /home/foo \
@@ -489,7 +489,7 @@ ${U4:=~/:~/}\t'"${HOME}"'/:'"${HOME}"'/\n' \
 
 atf_test_case varpattern_backslashes
 varpattern_backslashes_head() {
-	atf_set "descr" "Tests that protecting wildcards with backslashes" \
+	atf_set descr "Tests that protecting wildcards with backslashes" \
 	                "works in variable patterns."
 }
 varpattern_backslashes_body() {
@@ -501,7 +501,7 @@ varpattern_backslashes_body() {
 
 atf_test_case arithmetic
 arithmetic_head() {
-	atf_set "descr" "POSIX requires shell arithmetic to use signed" \
+	atf_set descr "POSIX requires shell arithmetic to use signed" \
 	                "long or a wider type.  We use intmax_t, so at" \
 			"least 64 bits should be available.  Make sure" \
 			"this is true."
@@ -518,7 +518,7 @@ arithmetic_body() {
 
 atf_test_case iteration_on_null_parameter
 iteration_on_null_parameter_head() {
-	atf_set "descr" "Check iteration of \$@ in for loop when set to null;" \
+	atf_set descr "Check iteration of \$@ in for loop when set to null;" \
 	                "the error \"sh: @: parameter not set\" is incorrect." \
 	                "PR bin/48202."
 }
@@ -529,7 +529,7 @@ iteration_on_null_parameter_body() {
 
 atf_test_case iteration_on_quoted_null_parameter
 iteration_on_quoted_null_parameter_head() {
-	atf_set "descr" \
+	atf_set descr \
 		'Check iteration of "$@" in for loop when set to null;'
 }
 iteration_on_quoted_null_parameter_body() {
@@ -539,7 +539,7 @@ iteration_on_quoted_null_parameter_body() {
 
 atf_test_case iteration_on_null_or_null_parameter
 iteration_on_null_or_null_parameter_head() {
-	atf_set "descr" \
+	atf_set descr \
 		'Check expansion of null parameter as default for another null'
 }
 iteration_on_null_or_null_parameter_body() {
@@ -549,7 +549,7 @@ iteration_on_null_or_null_parameter_body() {
 
 atf_test_case iteration_on_null_or_missing_parameter
 iteration_on_null_or_missing_parameter_head() {
-	atf_set "descr" \
+	atf_set descr \
 	    'Check expansion of missing parameter as default for another null'
 }
 iteration_on_null_or_missing_parameter_body() {
@@ -666,7 +666,7 @@ results()
 
 atf_test_case shell_params
 shell_params_head() {
-	atf_set "descr" "Test correct operation of the numeric parameters"
+	atf_set descr "Test correct operation of the numeric parameters"
 }
 shell_params_body() {
 	atf_require_prog mktemp
@@ -725,7 +725,7 @@ shell_params_body() {
 
 atf_test_case var_with_embedded_cmdsub
 var_with_embedded_cmdsub_head() {
-	atf_set "descr" "Test expansion of vars with embedded cmdsub"
+	atf_set descr "Test expansion of vars with embedded cmdsub"
 }
 var_with_embedded_cmdsub_body() {
 
@@ -782,7 +782,7 @@ var_with_embedded_cmdsub_body() {
 
 atf_test_case dollar_hash
 dollar_hash_head() {
-	atf_set "descr" 'Test expansion of various aspects of $#'
+	atf_set descr 'Test expansion of various aspects of $#'
 }
 dollar_hash_body() {
 
@@ -994,7 +994,7 @@ dollar_hash_body() {
 
 atf_test_case dollar_star
 dollar_star_head() {
-	atf_set "descr" 'Test expansion of various aspects of $*'
+	atf_set descr 'Test expansion of various aspects of $*'
 }
 dollar_star_body() {
 
@@ -1038,7 +1038,7 @@ dollar_star_body() {
 
 atf_test_case dollar_star_in_word
 dollar_star_in_word_head() {
-	atf_set "descr" 'Test expansion $* occurring in word of ${var:-word}'
+	atf_set descr 'Test expansion $* occurring in word of ${var:-word}'
 }
 dollar_star_in_word_body() {
 
@@ -1090,7 +1090,7 @@ dollar_star_in_word_body() {
 
 atf_test_case dollar_star_with_empty_ifs
 dollar_star_with_empty_ifs_head() {
-	atf_set "descr" 'Test expansion of $* with IFS=""'
+	atf_set descr 'Test expansion of $* with IFS=""'
 }
 dollar_star_with_empty_ifs_body() {
 
@@ -1124,7 +1124,7 @@ dollar_star_with_empty_ifs_body() {
 
 atf_test_case dollar_star_in_word_empty_ifs
 dollar_star_in_word_empty_ifs_head() {
-	atf_set "descr" 'Test expansion of ${unset:-$*} with IFS=""'
+	atf_set descr 'Test expansion of ${unset:-$*} with IFS=""'
 }
 dollar_star_in_word_empty_ifs_body() {
 
@@ -1166,7 +1166,7 @@ dollar_star_in_word_empty_ifs_body() {
 
 atf_test_case dollar_star_in_quoted_word
 dollar_star_in_quoted_word_head() {
-	atf_set "descr" 'Test expansion $* occurring in word of ${var:-"word"}'
+	atf_set descr 'Test expansion $* occurring in word of ${var:-"word"}'
 }
 dollar_star_in_quoted_word_body() {
 
@@ -1224,9 +1224,65 @@ dollar_star_in_quoted_word_body() {
 	results	  # FIXED: 'PR bin/52090 - 2 of 26 subtests expected to fail'
 }
 
+atf_test_case dollar_at_in_field_split_context
+dollar_at_in_field_split_context_head() {
+	atf_set descr 'Test "$@" wth field splitting -- PR bin/54112'
+}
+dollar_at_in_field_split_context_body() {
+	reset dollar_at_in_field_split_context
+
+		# the simple case (no field split) which always worked
+	check 'set -- ""; set -- ${0+"$@"}; echo $#'		1	0   #1
+
+		# The original failure case from the bash-bug list
+	check 'set -- ""; set -- ${0+"$@" "$@"}; echo $#'	2	0   #2
+
+		# slightly simpler cases that triggered the same issue
+	check 'set -- ""; set -- ${0+"$@" }; echo $#'		1	0   #3
+	check 'set -- ""; set -- ${0+ "$@"}; echo $#'		1	0   #4
+	check 'set -- ""; set -- ${0+ "$@" }; echo $#'		1	0   #5
+
+		# and the bizarre
+	check 'set -- ""; set -- ${0+"$@" "$@" "$@"}; echo $#'	3	0   #6
+
+	# repeat tests when there is more than one set empty numeric param
+
+	check 'set -- "" ""; set -- ${0+"$@"}; echo $#'		2	0   #7
+	check 'set -- "" ""; set -- ${0+"$@" "$@"}; echo $#'	4	0   #8
+	check 'set -- "" ""; set -- ${0+"$@" }; echo $#'	2	0   #9
+	check 'set -- "" ""; set -- ${0+ "$@"}; echo $#'	2	0   #10
+	check 'set -- "" ""; set -- ${0+ "$@" }; echo $#'	2	0   #11
+	check 'set -- "" ""; set -- ${0+"$@" "$@" "$@"}; echo $#' \
+								6	0   #12
+
+		# Next some checks of the way the NetBSD shell
+		# interprets some expressions that are POSIX unspecified.
+		# Other shells might fail these tests, without that
+		# being a problem.   We retain these tests so accidental
+		# changes in our behaviour can be detected.
+
+	check 'set --; X=; set -- "$X$@"; echo $#'		0	0   #13
+	check 'set --; X=; set -- "$@$X"; echo $#'		0	0   #14
+	check 'set --; X=; set -- "$X$@$X"; echo $#'		0	0   #15
+	check 'set --; X=; set -- "$@$@"; echo $#'		0	0   #16
+
+	check 'set -- ""; X=; set -- "$X$@"; echo $#'		1	0   #17
+	check 'set -- ""; X=; set -- "$@$X"; echo $#'		1	0   #19
+	check 'set -- ""; X=; set -- "$X$@$X"; echo $#'		1	0   #19
+	check 'set -- ""; X=; set -- "$@$@"; echo $#'		1	0   #20
+
+	check 'set -- "" ""; X=; set -- "$X$@"; echo $#'	2	0   #21
+	check 'set -- "" ""; X=; set -- "$@$X"; echo $#'	2	0   #22
+	check 'set -- "" ""; X=; set -- "$X$@$X"; echo $#'	2	0   #23
+		# Yes, this next one really is (and should be) 3...
+	check 'set -- "" ""; X=; set -- "$@$@"; echo $#'	3	0   #24
+
+	results
+}
+
 atf_test_case embedded_nl
 embedded_nl_head() {
-	atf_set "descr" 'Test literal \n in xxx string in ${var-xxx}'
+	atf_set descr 'Test literal \n in xxx string in ${var-xxx}'
 }
 embedded_nl_body() {
 
@@ -1281,9 +1337,10 @@ atf_init_test_cases() {
 
 	atf_add_test_case arithmetic
 	atf_add_test_case dollar_at
+	atf_add_test_case dollar_at_empty_and_conditional
+	atf_add_test_case dollar_at_in_field_split_context
 	atf_add_test_case dollar_at_unquoted_or_conditional
 	atf_add_test_case dollar_at_with_text
-	atf_add_test_case dollar_at_empty_and_conditional
 	atf_add_test_case dollar_hash
 	atf_add_test_case dollar_star
 	atf_add_test_case dollar_star_in_quoted_word
