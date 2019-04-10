@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.15 2019/01/18 19:41:03 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.16 2019/04/10 19:36:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -136,6 +136,9 @@ command_boot(char *arg)
 
 	if (!kernel || !*kernel)
 		kernel = DEFFILENAME;
+
+	if (!*bootargs)
+		bootargs = netbsd_args;
 
 	exec_netbsd(kernel, bootargs);
 }
@@ -415,7 +418,8 @@ boot(void)
 	for (; currname < (int)NUMNAMES; currname++) {
 		if (currname >= 0)
 			set_bootfile(names[currname]);
-		printf("booting %s - starting in ", netbsd_path);
+		printf("booting %s%s%s - starting in ", netbsd_path,
+		    netbsd_args[0] != '\0' ? " " : "", netbsd_args);
 
 		c = awaitkey(DEFTIMEOUT, 1);
 		if (c != '\r' && c != '\n' && c != '\0')
