@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.2 2017/07/24 09:56:45 mrg Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.3 2019/04/11 01:53:41 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.2 2017/07/24 09:56:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.3 2019/04/11 01:53:41 simonb Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -338,6 +338,16 @@ sb1250_intr_establish(u_int num, u_int ipl,
 	struct cpu_softc * const cpu = curcpu()->ci_softc;
 	struct sb1250_ihand * const ih = &sb1250_ihands[num];
 	const int s = splhigh();
+
+	/*
+	 * XXX simonb 
+	 * The swarm wedges hard on first serial interrupt when
+	 * we try to map IPL_SERIAL at a higher priority than
+	 * other device interrupts.  For now, just force all
+	 * devices to interrupt at IPL_VM.
+	 *
+	 */
+	ipl = IPL_VM;	/* XXX */
 
 	if (num >= K_INT_SOURCES)
 		panic("%s: invalid interrupt number (0x%x)", __func__, num);
