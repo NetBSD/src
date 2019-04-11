@@ -41,6 +41,16 @@ along with GCC; see the file COPYING3.  If not see
 #define CPP_SPEC "%(netbsd_cpp_spec)"
 
 
+/* Provide C11_SPEC/CC1PLUS_SPEC appropriate for NetBSD/i386.  */
+#define NETBSD_CC1_CPU_SPEC " %(cc1_cpu) "
+
+#undef CC1_SPEC
+#define CC1_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC NETBSD_CC1_CPU_SPEC
+
+#undef CC1PLUS_SPEC
+#define CC1PLUS_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC NETBSD_CC1_CPU_SPEC
+
+
 /* Make gcc agree with <machine/ansi.h> */
 
 #undef SIZE_TYPE

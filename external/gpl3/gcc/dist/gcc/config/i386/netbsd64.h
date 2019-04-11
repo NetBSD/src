@@ -44,6 +44,16 @@ along with GCC; see the file COPYING3.  If not see
 #define CPP_SPEC "%(netbsd_cpp_spec)"
 
 
+/* Provide C11_SPEC/CC1PLUS_SPEC appropriate for NetBSD/x86-64.  */
+#define NETBSD_CC1_CPU_SPEC " %(cc1_cpu) "
+
+#undef CC1_SPEC
+#define CC1_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC NETBSD_CC1_CPU_SPEC
+
+#undef CC1PLUS_SPEC
+#define CC1PLUS_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC NETBSD_CC1_CPU_SPEC
+
+
 /* Output assembler code to FILE to call the profiler.  */
 
 #undef FUNCTION_PROFILER
