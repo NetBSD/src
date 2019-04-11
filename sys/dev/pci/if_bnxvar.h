@@ -1,4 +1,4 @@
-/* $NetBSD */
+/*	$NetBSD: if_bnxvar.h,v 1.11 2019/04/11 14:38:06 kamil Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
