@@ -1,4 +1,4 @@
-/*	$NetBSD: mc6854reg.h,v 1.1 2001/09/10 23:41:49 bjh21 Exp $	*/
+/*	$NetBSD: mc6854reg.h,v 1.2 2019/04/11 11:25:33 kamil Exp $	*/
 
 /*
  * Ben Harris, 2001
@@ -23,7 +23,7 @@
 #define MC6854_SR2	1 /* Status Register #2 (R) */
 #define MC6854_RXFIFO	2 /* Receiver FIFO (R) */
 
-/* Control Regsiter #1 bits */
+/* Control Register #1 bits */
 #define MC6854_CR1_AC		0x01 /* Address Control */
 #define MC6854_CR1_RIE		0x02 /* Receiver Interrupt Enable */
 #define MC6854_CR1_TIE		0x04 /* Transmitter Interrupt Enable */
@@ -100,4 +100,3 @@
 #define MC6854_SR2_RDA		0x80 /* Receiver Data Available */
 
 #define MC6854_SR2_BITS "\20\1AP\2FV\3RX_IDLE\4RXABT\5ERR\6NDCD\7OVRN\10RDA"
-

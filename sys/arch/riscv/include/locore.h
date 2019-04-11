@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.3 2017/03/16 16:13:21 chs Exp $ */
+/* $NetBSD: locore.h,v 1.4 2019/04/11 11:23:51 kamil Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -77,7 +77,7 @@ struct trapframe {
 #define tf_t6		tf_reg[_X_T6]
 };
 
-// For COMPAT_NETBDS32 coredumps
+// For COMPAT_NETBSD32 coredumps
 struct trapframe32 {
 	struct reg32 tf_regs;
 	register32_t tf_badaddr;	
