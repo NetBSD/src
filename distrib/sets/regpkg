@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.22 2014/05/30 08:37:35 uebayasi Exp $
+# $NetBSD: regpkg,v 1.23 2019/04/11 08:34:19 uki Exp $
 #
 # Copyright (c) 2003,2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -628,7 +628,7 @@ EOF
 	# "@name" line and a lot of "@comment MD5:" lines.
 	#
 	{
-		rcsid='$NetBSD: regpkg,v 1.22 2014/05/30 08:37:35 uebayasi Exp $'
+		rcsid='$NetBSD: regpkg,v 1.23 2019/04/11 08:34:19 uki Exp $'
 		utcdate="$(${ENV_CMD} TZ=UTC LOCALE=C \
 			${DATE} '+%Y-%m-%d %H:%M')"
 		user="${USER:-root}"
@@ -836,8 +836,11 @@ EOF
 		if [ -n "${metalog}" ]; then
 			names1="${SCRATCH}/names1"
 			names2="${SCRATCH}/names2"
-			${AWK} '{print $1}' <"${spec1}" | ${SORT} >"${names1}"
-			${AWK} '{print $1}' <"${spec2}" | ${SORT} >"${names2}"
+			# There is different format between spec1 and spec2 for test(1).
+			# spec1's format is "./bin/\133" but spec2's format is "./bin/["
+			# XXX filtering for only '[' now
+			${AWK} '{print $1}' <"${spec1}" | ${SORT} | sed -e 's,\\133,\[,g' >"${names1}"
+			${AWK} '{print $1}' <"${spec2}" | ${SORT} | sed -e 's,\[,\\133,g' >"${names2}"
 			if ${FGREP} -v -f "${names2}" "${spec1}" >/dev/null
 			then
 				cat >&2 <<EOM
