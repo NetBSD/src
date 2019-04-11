@@ -1,4 +1,4 @@
-/*      $NetBSD: kcov.h,v 1.4 2019/03/10 17:51:00 kamil Exp $        */
+/*      $NetBSD: kcov.h,v 1.5 2019/04/11 11:20:46 kamil Exp $        */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -47,19 +47,7 @@
 typedef volatile uint64_t kcov_int_t;
 #define KCOV_ENTRY_SIZE sizeof(kcov_int_t)
 
-/*
- * Always prefer 64-bit atomic operations whenever accessible.
- *
- * As a fallback keep regular volatile move operation that it's not known
- * to have negative effect in KCOV even if interrupted in the middle of
- * operation.
- */
-#ifdef __HAVE_ATOMIC64_OPS
-#define KCOV_STORE(x,v)	__atomic_store_n(&(x), (v), __ATOMIC_RELAXED)
-#define KCOV_LOAD(x)	__atomic_load_n(&(x), __ATOMIC_RELAXED)
-#else
 #define KCOV_STORE(x,v)	(x) = (v)
 #define KCOV_LOAD(x)	(x)
-#endif
 
 #endif /* !_SYS_KCOV_H_ */
