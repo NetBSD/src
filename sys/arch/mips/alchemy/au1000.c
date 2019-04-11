@@ -1,4 +1,4 @@
-/* $NetBSD: au1000.c,v 1.11 2015/06/09 22:50:50 matt Exp $ */
+/* $NetBSD: au1000.c,v 1.12 2019/04/11 14:38:06 kamil Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: au1000.c,v 1.12 2019/04/11 14:38:06 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

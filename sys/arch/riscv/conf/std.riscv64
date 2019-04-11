@@ -1,5 +1,5 @@
 #
-# $NetBSD
+# $NetBSD: std.riscv64,v 1.2 2019/04/11 14:38:06 kamil Exp $
 #
 include 	"arch/riscv/conf/std.riscv"
 makeoptions	LP64="yes"

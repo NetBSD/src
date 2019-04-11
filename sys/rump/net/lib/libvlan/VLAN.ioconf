@@ -1,4 +1,4 @@
-#	$NetBSD $
+#	$NetBSD: VLAN.ioconf,v 1.2 2019/04/11 14:38:06 kamil Exp $
 
 ioconf		vlan
 
