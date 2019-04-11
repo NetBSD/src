@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.26 2019/02/25 07:36:16 msaitoh Exp $	*/
+/*	$NetBSD: mii.h,v 1.27 2019/04/11 09:14:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -64,7 +64,7 @@
 #define	BMCR_S100	BMCR_SPEED0	/* 100 Mb/s */
 #define	BMCR_S1000	BMCR_SPEED1	/* 1000 Mb/s */
 
-#define	BMCR_SPEED(x)	((x) & (BMCR_SPEED0|BMCR_SPEED1))
+#define	BMCR_SPEED(x)	((x) & (BMCR_SPEED0 | BMCR_SPEED1))
 
 #define	MII_BMSR	0x01	/* Basic mode status register (ro) */
 #define	BMSR_100T4	0x8000	/* 100 base T4 capable */
@@ -90,8 +90,8 @@
  * states that all 1000 Mb/s capable PHYs will set this bit to 1.
  */
 
-#define	BMSR_MEDIAMASK	(BMSR_100T4|BMSR_100TXFDX|BMSR_100TXHDX| \
-			 BMSR_10TFDX|BMSR_10THDX|BMSR_100T2FDX|BMSR_100T2HDX)
+#define	BMSR_MEDIAMASK	(BMSR_100T4 | BMSR_100TXFDX | BMSR_100TXHDX | \
+	    BMSR_10TFDX | BMSR_10THDX | BMSR_100T2FDX | BMSR_100T2HDX)
 
 /*
  * Convert BMSR media capabilities to ANAR bits for autonegotiation.
@@ -304,7 +304,7 @@
 #define	EXTSR_1000TFDX	0x2000	/* 1000T full-duplex capable */
 #define	EXTSR_1000THDX	0x1000	/* 1000T half-duplex capable */
 
-#define	EXTSR_MEDIAMASK	(EXTSR_1000XFDX|EXTSR_1000XHDX| \
-			 EXTSR_1000TFDX|EXTSR_1000THDX)
+#define	EXTSR_MEDIAMASK	(EXTSR_1000XFDX | EXTSR_1000XHDX | \
+	    EXTSR_1000TFDX | EXTSR_1000THDX)
 
 #endif /* _DEV_MII_MII_H_ */
