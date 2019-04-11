@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.14 2019/02/10 02:13:45 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.15 2019/04/11 20:20:54 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -511,6 +511,16 @@ infinite_thread(void *arg __unused)
                 continue;
 
         __unreachable();
+}
+
+static int __used
+clone_func(void *arg)
+{
+	int ret;
+
+	ret = (int)(intptr_t)arg;
+
+	return ret;
 }
 
 #if defined(HAVE_DBREGS)
