@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphyreg.h,v 1.10 2019/01/16 07:32:13 msaitoh Exp $	*/
+/*	$NetBSD: brgphyreg.h,v 1.11 2019/04/11 09:14:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -323,6 +323,6 @@
 /*******************************************************/
 
 #define BRGPHY_INTRS	\
-	~(BRGPHY_IMR_LNK_CHG|BRGPHY_IMR_LSP_CHG|BRGPHY_IMR_DUP_CHG)
+	~(BRGPHY_IMR_LNK_CHG | BRGPHY_IMR_LSP_CHG | BRGPHY_IMR_DUP_CHG)
 
 #endif /* _DEV_BRGPHY_MIIREG_H_ */
