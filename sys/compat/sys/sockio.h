@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.15 2019/04/10 04:37:00 msaitoh Exp $	*/
+/*	$NetBSD: sockio.h,v 1.16 2019/04/11 04:42:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -31,30 +31,6 @@
 
 #ifndef _COMPAT_SYS_SOCKIO_H_
 #define	_COMPAT_SYS_SOCKIO_H_
-
-#ifdef _KERNEL_OPT
-
-#include "opt_compat_netbsd.h"
-#include "opt_modular.h"
-
-#include <sys/ioccom.h>
-
-#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
-    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
-    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40) || defined(MODULAR)
-#define COMPAT_OIFREQ
-#endif
-
-#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
-    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
-    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40) || defined(COMPAT_50) || \
-    defined(MODULAR)
-#define COMPAT_OIFDATA
-#endif
-
-#endif /* _KERNEL_OPT */
 
 #define OIFNAMSIZ	16
 
