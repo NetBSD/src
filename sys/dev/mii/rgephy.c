@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.53 2019/04/11 08:50:20 msaitoh Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.54 2019/04/11 09:14:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.53 2019/04/11 08:50:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.54 2019/04/11 09:14:07 msaitoh Exp $");
 
 
 /*
@@ -259,9 +259,8 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			if ((mii->mii_ifp->if_flags & IFF_LINK0)) {
 				PHY_WRITE(sc, MII_100T2CR,
 				    gig | GTCR_MAN_MS | GTCR_ADV_MS);
-			} else {
+			} else
 				PHY_WRITE(sc, MII_100T2CR, gig | GTCR_MAN_MS);
-			}
 			PHY_WRITE(sc, MII_BMCR,
 			    speed | BMCR_AUTOEN | BMCR_STARTNEG);
 			break;
@@ -339,7 +338,6 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	/*
 	 * Callback if something changed. Note that we need to poke
 	 * the DSP on the RealTek PHYs if the media changes.
-	 *
 	 */
 	if (sc->mii_media_active != mii->mii_media_active ||
 	    sc->mii_media_status != mii->mii_media_status ||
