@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2018/01/27 10:07:41 flxd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 2019/04/11 14:47:06 kamil Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetSBD$");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2019/04/11 14:47:06 kamil Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
