@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.282 2019/04/06 03:06:28 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.283 2019/04/11 17:43:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -269,9 +269,18 @@ int	kcopy(const void *, void *, size_t);
 #endif /* KERNEL */
 
 int	copystr(const void *, void *, size_t, size_t *);
+#if defined(_KERNEL) && defined(KASAN)
+int	kasan_copyinstr(const void *, void *, size_t, size_t *);
+int	kasan_copyoutstr(const void *, void *, size_t, size_t *);
+int	kasan_copyin(const void *, void *, size_t);
+#define copyinstr	kasan_copyinstr
+#define copyoutstr	kasan_copyoutstr
+#define copyin		kasan_copyin
+#else
 int	copyinstr(const void *, void *, size_t, size_t *);
 int	copyoutstr(const void *, void *, size_t, size_t *);
 int	copyin(const void *, void *, size_t);
+#endif
 int	copyout(const void *, void *, size_t);
 
 #ifdef KLEAK
