@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.20 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.21 2019/04/11 08:50:59 msaitoh Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.20 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.21 2019/04/11 08:50:59 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -654,7 +654,7 @@ lii_mii_statchg(struct ifnet *ifp)
 
 	val = AT_READ_4(sc, ATL2_MACC);
 
-	if ((sc->sc_mii.mii_media_active & IFM_GMASK) == IFM_FDX)
+	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
 		val |= MACC_FDX;
 	else
 		val &= ~MACC_FDX;

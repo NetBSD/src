@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.328 2019/04/05 18:14:54 bouyer Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.329 2019/04/11 08:50:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.328 2019/04/05 18:14:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.329 2019/04/11 08:50:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -5677,7 +5677,7 @@ bge_ifmedia_upd(struct ifnet *ifp)
 			}
 			break;
 		case IFM_1000_SX:
-			if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX) {
+			if ((ifm->ifm_media & IFM_FDX) != 0) {
 				BGE_CLRBIT(sc, BGE_MAC_MODE,
 				    BGE_MACMODE_HALF_DUPLEX);
 			} else {

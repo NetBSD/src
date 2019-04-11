@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.106 2018/12/09 11:14:02 jdolecek Exp $ */
+/* $NetBSD: if_ti.c,v 1.107 2019/04/11 08:50:59 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.106 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.107 2019/04/11 08:50:59 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -2582,7 +2582,7 @@ ti_ifmedia_upd(struct ifnet *ifp)
 		break;
 	case IFM_1000_SX:
 	case IFM_1000_T:
-		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX) {
+		if ((ifm->ifm_media & IFM_FDX) != 0) {
 			CSR_WRITE_4(sc, TI_GCR_GLINK,
 			    TI_GLNK_PREF|TI_GLNK_1000MB|TI_GLNK_FULL_DUPLEX|
 			    TI_GLNK_RX_FLOWCTL_Y|TI_GLNK_ENB);
@@ -2607,7 +2607,7 @@ ti_ifmedia_upd(struct ifnet *ifp)
 		} else {
 			TI_SETBIT(sc, TI_GCR_LINK, TI_LNK_10MB);
 		}
-		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX) {
+		if ((ifm->ifm_media & IFM_FDX) != 0) {
 			TI_SETBIT(sc, TI_GCR_LINK, TI_LNK_FULL_DUPLEX);
 		} else {
 			TI_SETBIT(sc, TI_GCR_LINK, TI_LNK_HALF_DUPLEX);

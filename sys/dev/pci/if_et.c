@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.20 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_et.c,v 1.21 2019/04/11 08:50:59 msaitoh Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.20 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.21 2019/04/11 08:50:59 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -468,7 +468,7 @@ et_miibus_statchg(struct ifnet *ifp)
 		ctrl |= ET_MAC_CTRL_MODE_MII;
 	}
 
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
+	if ((mii->mii_media_active & IFM_FDX) != 0)
 		cfg2 |= ET_MAC_CFG2_FDX;
 	else
 		ctrl |= ET_MAC_CTRL_GHDX;
