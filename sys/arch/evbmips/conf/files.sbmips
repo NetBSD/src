@@ -1,20 +1,20 @@
-# $NetBSD: files.sbmips,v 1.2 2017/07/24 09:56:45 mrg Exp $
+# $NetBSD: files.sbmips,v 1.3 2019/04/11 02:01:53 simonb Exp $
 
 maxpartitions 8
 
 #maxusers 1 8 64
 
-file arch/evbmips/sbmips/autoconf.c
-file arch/evbmips/sbmips/machdep.c
-file arch/evbmips/sbmips/console.c
-file arch/evbmips/sbmips/disksubr.c
-file arch/evbmips/sbmips/systemsw.c
+file	arch/evbmips/sbmips/autoconf.c
+file	arch/evbmips/sbmips/machdep.c
+file	arch/evbmips/sbmips/console.c
+file	arch/evbmips/sbmips/disksubr.c
+file	arch/evbmips/sbmips/systemsw.c
 
-file arch/evbmips/sbmips/sb1250_icu.c
+file	arch/evbmips/sbmips/sb1250_icu.c
 
-file arch/mips/cfe/cfe_api.c
-file arch/mips/mips/mips3_clock.c
-file arch/mips/mips/bus_dma.c
+file	arch/mips/cfe/cfe_api.c
+file	arch/mips/mips/mips3_clock.c
+file	arch/mips/mips/bus_dma.c
 
 ###
 ### MI device inclusion
@@ -24,24 +24,24 @@ file arch/mips/mips/bus_dma.c
 include	"external/bsd/sljit/conf/files.sljit"
 
 # Machine-independent I2O drivers.
-include "dev/i2o/files.i2o"
+include	"dev/i2o/files.i2o"
 
 # Machine-independent SCSI drivers
-include "dev/scsipi/files.scsipi"
+include	"dev/scsipi/files.scsipi"
 
 # Machine-independent ATA drivers
-include "dev/ata/files.ata"
+include	"dev/ata/files.ata"
 
 # Memory Disk
 file	dev/md_root.c			memory_disk_hooks
 
 # ISA Bus support
-include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
-include "dev/isa/files.isa"
+include	"dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
+include	"dev/isa/files.isa"
 # XXXCGD machdep isa files
 
 # PC Keyboard Controller support
-include "dev/pckbport/files.pckbport"
+include	"dev/pckbport/files.pckbport"
 
 # XXXCGD lots of junk isa devices, e.g. fd
 
@@ -78,7 +78,7 @@ attach	pcic at pci with pcic_pci
 file	dev/pci/i82365_pci.c		pcic_pci
 
 # PCIC pcmcia controller on PnP board
-attach pcic at isapnp with pcic_isapnp
+attach	pcic at isapnp with pcic_isapnp
 file	dev/isapnp/i82365_isapnp.c	pcic_isapnp
 
 # Code common to ISA and ISAPnP attachments
@@ -93,7 +93,7 @@ file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp | pcic_pci
 #
 # Machine-independent USB device support
 #
-include "dev/usb/files.usb"
+include	"dev/usb/files.usb"
 
 ###
 ### SBMIPS DEVICES
