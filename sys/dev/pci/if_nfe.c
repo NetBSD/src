@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.67 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.68 2019/04/11 08:50:59 msaitoh Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.67 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.68 2019/04/11 08:50:59 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -494,7 +494,7 @@ nfe_miibus_statchg(struct ifnet *ifp)
 	seed = NFE_READ(sc, NFE_RNDSEED);
 	seed &= ~NFE_SEED_MASK;
 
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_HDX) {
+	if ((mii->mii_media_active & IFM_HDX) != 0) {
 		phy  |= NFE_PHY_HDX;	/* half-duplex */
 		misc |= NFE_MISC1_HDX;
 	}
