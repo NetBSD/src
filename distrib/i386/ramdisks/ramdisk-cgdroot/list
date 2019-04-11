@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2013/07/16 02:10:43 khorben Exp $
+#	$NetBSD: list,v 1.2 2019/04/11 23:50:01 alnsn Exp $
 
 PROG	bin/chio
 PROG	bin/dd
@@ -30,3 +30,5 @@ PROG	usr/bin/tip
 PROG	usr/sbin/installboot
 
 PROG	usr/sbin/wiconfig
+
+SYMLINK	/altroot/stand	stand
