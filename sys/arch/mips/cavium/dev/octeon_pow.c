@@ -1,4 +1,4 @@
-/*	$NetbBSD$	*/
+/*	$NetBSD: octeon_pow.c,v 1.3 2019/04/11 11:40:58 kamil Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.3 2019/04/11 11:40:58 kamil Exp $");
 
 #include "opt_octeon.h"	/* OCTEON_ETH_DEBUG */
 
