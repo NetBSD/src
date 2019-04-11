@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461videoreg.h,v 1.4 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: hd64461videoreg.h,v 1.5 2019/04/11 11:26:13 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@
 #define HD64461_LCDLNAXLR_REG16			0xb000104a
 #define HD64461_LCDLNAXLR_MASK		0x07ff
 
-/* Diagonal Regsiter */
+/* Diagonal Register */
 #define HD64461_LCDLNDGR_REG16			0xb000104c
 #define HD64461_LCDLNDGR_LNDGR_SIGN		0x8000
 #define HD64461_LCDLNDGR_LNDGR_MASK	0x07ff
