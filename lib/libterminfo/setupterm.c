@@ -1,4 +1,4 @@
-/* $NetBSD: setupterm.c,v 1.8 2017/05/04 09:42:23 roy Exp $ */
+/* $NetBSD: setupterm.c,v 1.9 2019/04/11 23:52:08 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: setupterm.c,v 1.8 2017/05/04 09:42:23 roy Exp $");
+__RCSID("$NetBSD: setupterm.c,v 1.9 2019/04/11 23:52:08 jakllsch Exp $");
 
 #include <sys/ioctl.h>
 #include <assert.h>
@@ -107,7 +107,7 @@ ti_setupterm(TERMINAL **nterm, const char *term, int fildes, int *errret)
 			/* NOTREACHED */
 		case 0:
 			reterrarg(error,
-			    "%s: terminal not listed in terminfo datase",
+			    "%s: terminal not listed in terminfo database",
 			    term);
 			/* NOTREACHED */
 		default:
