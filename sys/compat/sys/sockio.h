@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.16 2019/04/11 04:42:08 msaitoh Exp $	*/
+/*	$NetBSD: sockio.h,v 1.17 2019/04/11 04:43:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -31,6 +31,8 @@
 
 #ifndef _COMPAT_SYS_SOCKIO_H_
 #define	_COMPAT_SYS_SOCKIO_H_
+
+#include <sys/ioccom.h>
 
 #define OIFNAMSIZ	16
 
