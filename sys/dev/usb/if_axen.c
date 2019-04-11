@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.37 2019/02/17 09:33:19 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.38 2019/04/11 08:50:59 msaitoh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.37 2019/02/17 09:33:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.38 2019/04/11 08:50:59 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -269,7 +269,7 @@ axen_miibus_statchg(struct ifnet *ifp)
 		return;
 
 	val = 0;
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
+	if ((mii->mii_media_active & IFM_FDX) != 0)
 		val |= AXEN_MEDIUM_FDX;
 
 	val |= AXEN_MEDIUM_RXFLOW_CTRL_EN | AXEN_MEDIUM_TXFLOW_CTRL_EN |

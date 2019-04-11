@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.51 2018/12/09 11:14:02 jdolecek Exp $ */
+/* $NetBSD: if_txp.c,v 1.52 2019/04/11 08:50:59 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.51 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.52 2019/04/11 08:50:59 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1783,13 +1783,13 @@ txp_ifmedia_upd(struct ifnet *ifp)
 		return (EINVAL);
 
 	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_10_T) {
-		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
+		if ((ifm->ifm_media & IFM_FDX) != 0)
 			new_xcvr = TXP_XCVR_10_FDX;
 		else
 			new_xcvr = TXP_XCVR_10_HDX;
 	} else if ((IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX) ||
 		   (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_FX)) {
-		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
+		if ((ifm->ifm_media & IFM_FDX) != 0)
 			new_xcvr = TXP_XCVR_100_FDX;
 		else
 			new_xcvr = TXP_XCVR_100_HDX;
