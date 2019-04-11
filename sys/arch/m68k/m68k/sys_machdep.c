@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.15 2010/06/06 04:50:07 mrg Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.16 2019/04/11 14:38:06 kamil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,7 +34,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16 2019/04/11 14:38:06 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

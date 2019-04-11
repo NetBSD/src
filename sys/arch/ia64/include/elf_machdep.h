@@ -1,4 +1,4 @@
-/*        $NetBSD */
+/*        $NetBSD: elf_machdep.h,v 1.4 2019/04/11 14:38:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1996-1997 John D. Polstra.

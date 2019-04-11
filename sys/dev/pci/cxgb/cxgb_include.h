@@ -1,5 +1,5 @@
 /*
- *  $NetBSD
+ *  $NetBSD: cxgb_include.h,v 1.2 2019/04/11 14:38:06 kamil Exp $
  */
 
 #ifndef __CHELSIO_INCLUDE_H
