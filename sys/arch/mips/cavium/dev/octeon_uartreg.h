@@ -1,4 +1,4 @@
-/*	$NetbSD$	*/
+/*	$NetBSD: octeon_uartreg.h,v 1.2 2019/04/11 11:40:58 kamil Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
