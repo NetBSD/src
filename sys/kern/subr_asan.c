@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.6 2019/04/07 09:20:04 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.7 2019/04/11 17:43:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.6 2019/04/07 09:20:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.7 2019/04/11 17:43:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -477,6 +477,38 @@ kasan_strlen(const char *str)
 	}
 
 	return (s - str);
+}
+
+#undef copyinstr
+#undef copyoutstr
+#undef copyin
+
+int	kasan_copyinstr(const void *, void *, size_t, size_t *);
+int	kasan_copyoutstr(const void *, void *, size_t, size_t *);
+int	kasan_copyin(const void *, void *, size_t);
+int	copyinstr(const void *, void *, size_t, size_t *);
+int	copyoutstr(const void *, void *, size_t, size_t *);
+int	copyin(const void *, void *, size_t);
+
+int
+kasan_copyin(const void *uaddr, void *kaddr, size_t len)
+{
+	kasan_shadow_check((unsigned long)kaddr, len, true, __RET_ADDR);
+	return copyin(uaddr, kaddr, len);
+}
+
+int
+kasan_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
+{
+	kasan_shadow_check((unsigned long)kaddr, len, true, __RET_ADDR);
+	return copyinstr(uaddr, kaddr, len, done);
+}
+
+int
+kasan_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
+{
+	kasan_shadow_check((unsigned long)kaddr, len, false, __RET_ADDR);
+	return copyoutstr(kaddr, uaddr, len, done);
 }
 
 /* -------------------------------------------------------------------------- */
