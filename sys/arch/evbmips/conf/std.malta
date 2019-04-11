@@ -1,4 +1,4 @@
-# $NetBSD: std.malta,v 1.8 2011/02/20 07:48:34 matt Exp $
+# $NetBSD: std.malta,v 1.9 2019/04/11 04:28:17 simonb Exp $
 
 machine evbmips mips
 include		"conf/std"	# MI standard options
@@ -15,6 +15,7 @@ makeoptions	CFLAGS+="-mips64"
 makeoptions	AFLAGS+="-mips64"
 makeoptions	DEFTEXTADDR="0x80100000"
 makeoptions	BOARDTYPE="malta"
+makeoptions	NEED_SREC=yes
 
 include "arch/evbmips/conf/files.malta"
 
