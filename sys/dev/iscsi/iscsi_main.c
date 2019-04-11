@@ -1,4 +1,4 @@
-/*	$netBSD: iscsi_main.c,v 1.1.1.1 2011/05/02 07:01:11 agc Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.28 2019/04/11 11:40:58 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
