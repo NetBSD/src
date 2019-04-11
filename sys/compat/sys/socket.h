@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.17 2019/01/27 02:08:41 pgoyette Exp $	*/
+/*	$NetBSD: socket.h,v 1.18 2019/04/11 04:42:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -44,10 +44,6 @@
 
 #if defined(COMPAT_43) || defined(MODULAR)
 #define COMPAT_OSOCK
-#endif
-
-#ifdef COMPAT_70
-#define COMPAT_SOCKCRED70
 #endif
 
 #else
