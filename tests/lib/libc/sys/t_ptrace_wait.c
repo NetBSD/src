@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.106 2019/04/11 19:25:31 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.107 2019/04/11 23:00:01 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.106 2019/04/11 19:25:31 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.107 2019/04/11 23:00:01 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6936,6 +6936,89 @@ CLONE_TEST2(clone_vfork_signalmasked, CLONE_VFORK, false, true)
 
 /// ----------------------------------------------------------------------------
 
+#if defined(TWAIT_HAVE_PID)
+static void
+traceme_vfork_clone_body(int flags)
+{
+	const int exitval = 5;
+	const int exitval2 = 15;
+	pid_t child, child2 = 0, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	const size_t stack_size = 1024 * 1024;
+	void *stack, *stack_base;
+
+	stack = malloc(stack_size);
+	ATF_REQUIRE(stack != NULL);
+
+#ifdef __MACHINE_STACK_GROWS_UP
+	stack_base = stack;
+#else
+	stack_base = (char *)stack + stack_size;
+#endif
+
+	SYSCALL_REQUIRE((child = vfork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before forking process PID=%d flags=%#x\n", getpid(),
+		    flags);
+		SYSCALL_REQUIRE((child2 = __clone(clone_func, stack_base,
+		    flags|SIGCHLD, (void *)(intptr_t)exitval2)) != -1);
+
+		DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(),
+		    child2);
+
+		// XXX WALLSIG?
+		FORKEE_REQUIRE_SUCCESS
+		    (wpid = TWAIT_GENERIC(child2, &status, WALLSIG), child2);
+
+		forkee_status_exited(status, exitval2);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child - expected exited\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the child - expected no process\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+#define TRACEME_VFORK_CLONE_TEST(name,flags)				\
+ATF_TC(name);								\
+ATF_TC_HEAD(name, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr", "Verify that clone(%s) is "	\
+	    "handled correctly with vfork(2)ed tracer", 		\
+	    #flags);							\
+}									\
+									\
+ATF_TC_BODY(name, tc)							\
+{									\
+									\
+	traceme_vfork_clone_body(flags);				\
+}
+
+TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone, 0)
+TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_vm, CLONE_VM)
+TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_fs, CLONE_FS)
+TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_files, CLONE_FILES)
+//TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_sighand, CLONE_SIGHAND)  // XXX
+TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_vfork, CLONE_VFORK)
+#endif
+
+/// ----------------------------------------------------------------------------
+
 #include "t_ptrace_amd64_wait.h"
 #include "t_ptrace_i386_wait.h"
 #include "t_ptrace_x86_wait.h"
@@ -7341,6 +7424,13 @@ ATF_TP_ADD_TCS(tp)
 //	ATF_TP_ADD_TC_HAVE_PID(tp, clone_sighand_signalmasked); // XXX
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork_signalignored);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork_signalmasked);
+
+	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone);
+	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_vm);
+	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_fs);
+	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_files);
+//	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_sighand); // XXX
+	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_vfork);
 
 	ATF_TP_ADD_TCS_PTRACE_WAIT_AMD64();
 	ATF_TP_ADD_TCS_PTRACE_WAIT_I386();
