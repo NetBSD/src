@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.107 2019/04/11 23:00:01 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.108 2019/04/11 23:23:53 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.107 2019/04/11 23:00:01 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.108 2019/04/11 23:23:53 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3160,6 +3160,67 @@ FORK_TEST(vfork6, vfork, true, false, true)
 FORK_TEST(vfork7, vfork, false, true, true)
 FORK_TEST(vfork8, vfork, true, true, true)
 #endif
+
+/// ----------------------------------------------------------------------------
+
+static void
+traceme_vfork_fork_body(pid_t (*fn)(void))
+{
+	const int exitval = 5;
+	const int exitval2 = 15;
+	pid_t child, child2 = 0, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = vfork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		FORKEE_ASSERT((child2 = (fn)()) != -1);
+
+		if (child2 == 0)
+			_exit(exitval2);
+
+		FORKEE_REQUIRE_SUCCESS
+		    (wpid = TWAIT_GENERIC(child2, &status, 0), child2);
+
+		forkee_status_exited(status, exitval2);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child - expected exited\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the child - expected no process\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+#define TRACEME_VFORK_FORK_TEST(name,fun)				\
+ATF_TC(name);								\
+ATF_TC_HEAD(name, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr", "Verify " #fun "(2) "		\
+	    "called from vfork(2)ed child");				\
+}									\
+									\
+ATF_TC_BODY(name, tc)							\
+{									\
+									\
+	traceme_vfork_fork_body(fun);					\
+}
+
+TRACEME_VFORK_FORK_TEST(traceme_vfork_fork, fork)
+TRACEME_VFORK_FORK_TEST(traceme_vfork_vfork, vfork)
 
 /// ----------------------------------------------------------------------------
 
@@ -7223,6 +7284,9 @@ ATF_TP_ADD_TCS(tp)
 // thes tests hang on SMP machines, disable them for now // still true?
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork7);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork8);
+
+	ATF_TP_ADD_TC(tp, traceme_vfork_fork);
+	ATF_TP_ADD_TC(tp, traceme_vfork_vfork);
 
 	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_8);
 	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_16);
