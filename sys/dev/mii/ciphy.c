@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.33 2019/04/11 08:50:20 msaitoh Exp $ */
+/* $NetBSD: ciphy.c,v 1.34 2019/04/11 09:14:07 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.33 2019/04/11 08:50:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.34 2019/04/11 09:14:07 msaitoh Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -212,9 +212,8 @@ setit:
 			if ((mii->mii_ifp->if_flags & IFF_LINK0)) {
 				PHY_WRITE(sc, MII_GTCR,
 				    gig | GTCR_MAN_MS | GTCR_ADV_MS);
-			} else {
+			} else
 				PHY_WRITE(sc, MII_GTCR, gig | GTCR_MAN_MS);
-			}
 			break;
 		case IFM_NONE:
 			PHY_WRITE(sc, MII_BMCR, BMCR_ISO | BMCR_PDOWN);
@@ -398,7 +397,6 @@ ciphy_fixup(struct mii_softc *sc)
 	switch (model) {
 	case MII_MODEL_CICADA_CS8201:
 	case MII_MODEL_CICADA_CS8204:
-
 		/* Turn off "aux mode" (whatever that means) */
 		PHY_SETBIT(sc, CIPHY_MII_AUXCSR, CIPHY_AUXCSR_MDPPS);
 
@@ -407,11 +405,10 @@ ciphy_fixup(struct mii_softc *sc)
 		 * when using MII in full duplex mode.
 		 */
 		if ((speed == CIPHY_SPEED10 || speed == CIPHY_SPEED100) &&
-		    (status & CIPHY_AUXCSR_FDX)) {
+		    (status & CIPHY_AUXCSR_FDX))
 			PHY_SETBIT(sc, CIPHY_MII_10BTCSR, CIPHY_10BTCSR_ECHO);
-		} else {
+		else
 			PHY_CLRBIT(sc, CIPHY_MII_10BTCSR, CIPHY_10BTCSR_ECHO);
-		}
 
 		/* Enable link/activity LED blink. */
 		PHY_SETBIT(sc, CIPHY_MII_LED, CIPHY_LED_LINKACTBLINK);
@@ -420,15 +417,14 @@ ciphy_fixup(struct mii_softc *sc)
 
 	case MII_MODEL_CICADA_CS8201A:
 	case MII_MODEL_CICADA_CS8201B:
-
 		/*
 		 * Work around speed polling bug in VT3119/VT3216
 		 * when using MII in full duplex mode.
 		 */
 		if ((speed == CIPHY_SPEED10 || speed == CIPHY_SPEED100) &&
-		    (status & CIPHY_AUXCSR_FDX)) {
+		    (status & CIPHY_AUXCSR_FDX))
 			PHY_SETBIT(sc, CIPHY_MII_10BTCSR, CIPHY_10BTCSR_ECHO);
-		} else
+		else
 			PHY_CLRBIT(sc, CIPHY_MII_10BTCSR, CIPHY_10BTCSR_ECHO);
 
 		break;

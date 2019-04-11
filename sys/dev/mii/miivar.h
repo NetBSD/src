@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.67 2019/04/09 11:28:45 msaitoh Exp $	*/
+/*	$NetBSD: miivar.h,v 1.68 2019/04/11 09:14:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,15 +72,11 @@ struct mii_data {
 	LIST_HEAD(mii_listhead, mii_softc) mii_phys;
 	u_int mii_instance;
 
-	/*
-	 * PHY driver fills this in with active media status.
-	 */
+	/* PHY driver fills this in with active media status. */
 	int mii_media_status;
 	u_int mii_media_active;
 
-	/*
-	 * Calls from MII layer into network interface driver.
-	 */
+	/* Calls from MII layer into network interface driver. */
 	mii_readreg_t mii_readreg;
 	mii_writereg_t mii_writereg;
 	mii_statchg_t mii_statchg;
@@ -156,7 +152,7 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_IS_HPNA	0x0200		/* is a HomePNA device */
 #define	MIIF_FORCEANEG	0x0400		/* force auto-negotiation */
 
-#define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP|MIIF_AUTOTSLEEP)
+#define	MIIF_INHERIT_MASK (MIIF_NOISOLATE | MIIF_NOLOOP | MIIF_AUTOTSLEEP)
 
 /*
  * Special `locators' passed to mii_attach().  If one of these is not
