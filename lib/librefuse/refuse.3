@@ -1,4 +1,4 @@
-.\"	$NetBSD: refuse.3,v 1.14 2019/04/10 21:38:02 maya Exp $
+.\"	$NetBSD: refuse.3,v 1.15 2019/04/11 06:18:43 wiz Exp $
 .\"
 .\" Copyright © 2007 Alistair Crooks.  All rights reserved.
 .\"
@@ -48,11 +48,11 @@
 .Fo FUSE_OPT_KEY
 .Fa "const char* templ" "int32_t key"
 .Fc
-.Vt struct fuse_opt Dv FUSE_OPT_END;
-.Vt int32_t Dv FUSE_OPT_KEY_OPT;
-.Vt int32_t Dv FUSE_OPT_KEY_NONOPT;
-.Vt int32_t Dv FUSE_OPT_KEY_KEEP;
-.Vt int32_t Dv FUSE_OPT_KEY_DISCARD;
+.Vt struct fuse_opt Dv FUSE_OPT_END ;
+.Vt int32_t Dv FUSE_OPT_KEY_OPT ;
+.Vt int32_t Dv FUSE_OPT_KEY_NONOPT ;
+.Vt int32_t Dv FUSE_OPT_KEY_KEEP ;
+.Vt int32_t Dv FUSE_OPT_KEY_DISCARD ;
 .Ft int
 .Fo fuse_opt_add_arg
 .Fa "struct fuse_args *args" "const char *arg"
