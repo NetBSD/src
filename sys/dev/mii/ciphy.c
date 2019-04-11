@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.32 2019/03/25 09:20:46 msaitoh Exp $ */
+/* $NetBSD: ciphy.c,v 1.33 2019/04/11 08:50:20 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.32 2019/03/25 09:20:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.33 2019/04/11 08:50:20 msaitoh Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -184,7 +184,7 @@ ciphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		case IFM_10_T:
 			speed = BMCR_S10;
 setit:
-			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
+			if ((ife->ifm_media & IFM_FDX) != 0) {
 				speed |= BMCR_FDX;
 				gig = GTCR_ADV_1000TFDX;
 			} else
