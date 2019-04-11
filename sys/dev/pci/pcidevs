@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1368 2019/04/11 04:56:54 mrg Exp $
+$NetBSD: pcidevs,v 1.1369 2019/04/11 04:59:49 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1755,7 +1755,7 @@ product ATI RADEON_RX_460_HDA	0xaae0	Radeon RX 460/550/640SP, RX 560/560X HD Aud
 product ATI RADEON_RX_550_HDA	0xaae8	Radeon R9 Nano, FURY HD Audio Controller
 product ATI RADEON_RX_470_HDA	0xaaf0	Radeon RX 470/480/570/580/590 HD Audio Controller
 product ATI RADEON_VEGA56_HDA	0xaaf8	Radeon Vega 56/64
-product ATI RADEON_RX_550_HDA	0xab00	Radeon RX 550/640SP/560/560X HD Audio Controller  
+product ATI RADEON_RX_550_HDA2	0xab00	Radeon RX 550/640SP/560/560X HD Audio Controller  
 
 /* Auravision products */
 product AURAVISION VXP524	0x01f7	VxP524 PCI Video Processor
@@ -2789,7 +2789,7 @@ product MARVELL2 88SE9172_2	0x917a	88SE9170 SATA Controller
 product MARVELL2 88SE9182	0x9182	88SE9182 SATA Controller
 product MARVELL2 88SE9183	0x9183	88SE9183 SATA Controller
 product MARVELL2 88SE91XX	0x91a3	88SE91XX SATA Controller
-product MARVELL2 88SE912X	0x91a4	88SE912X IDE Controller
+product MARVELL2 88SE912X_2	0x91a4	88SE912X IDE Controller
 product MARVELL2 88SE9215	0x9215	88SE9215 SATA Controller
 product MARVELL2 88SE9220	0x9220	88SE9220 SATA Controller
 product MARVELL2 88SE9230	0x9230	88SE9230 SATA Controller
@@ -4401,7 +4401,7 @@ product INTEL XE5_V3_RQPI_PM_2	0x2f37	Xeon E5 v3/Core i7-6xxxK QPI Ring Interfac
 product INTEL XE7_V4_QPI_LINK2	0x2f40	Xeon E7 v4 QPI Link 2
 product INTEL XE7_V4_RQPI_RING	0x2f41	Xeon E7 v4 QPI Ring Interface
 product INTEL XE5_V3_IMC1_MAIN	0x2f68	Xeon E5 v3 IMC Main
-product INTEL XE5_V3_HA0	0x2f60  Xeon E7 v3/Xeon E5 v3/Core i7 Home Agent 1
+product INTEL XE5_V3_HA1	0x2f60  Xeon E7 v3/Xeon E5 v3/Core i7 Home Agent 1
 product INTEL XE5_V3_ICM1_TATRR	0x2f68  Xeon E7 v3/Xeon E5 v3/Core i7 Integrated Memory Controller 1 Target Address, Thermal & RAS Registers
 product INTEL XE5_V3_IMC1_TADR1	0x2f6a	Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers
 product INTEL XE5_V3_IMC1_TADR2	0x2f6b	Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers
@@ -4470,7 +4470,7 @@ product INTEL XE5_V3_UC_REG3	0x2fe2  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Regis
 product INTEL XE5_V3_UC_REG4	0x2fe3  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
 product INTEL XE5_V3_UC_REG5	0x2fe4  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
 product INTEL XE5_V3_UC_REG6	0x2fe5  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
-product INTEL XE5_V3_UC_REG8	0x2fe6  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
+product INTEL XE5_V3_UC_REG7	0x2fe6  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
 product INTEL XE5_V3_UC_REG8	0x2fe7  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
 product INTEL XE5_V3_UC_REG9	0x2fe8  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
 product INTEL XE5_V3_UC_REG10	0x2fe9  Xeon E7 v3/Xeon E5 v3/Core i7 Unicast Registers
