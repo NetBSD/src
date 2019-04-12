@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.47 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: copy.s,v 1.48 2019/04/12 03:29:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
@@ -364,8 +364,8 @@ ENTRY(kcopy)
 
 #define	UFETCH_PROLOGUE							\
 	CHECK_SFC						;	\
-	movl	4(%sp),%a0		| address to read	;	\
-	GETCURPCB(%a1)			| a1 = curpcb		;	\
+	movl	4(%sp),%a0		/* address to read */	;	\
+	GETCURPCB(%a1)			/* a1 = curpcb */	;	\
 	movl	#.Lufetchstore_fault,PCB_ONFAULT(%a1)
 
 /* LINTSTUB: _ufetch_8(const uint8_t *uaddr, uint8_t *valp); */
@@ -394,8 +394,8 @@ ENTRY(_ufetch_32)
 
 #define	USTORE_PROLOGUE							\
 	CHECK_DFC						;	\
-	movl	4(%sp),%a0		| address to write	;	\
-	GETCURPCB(%a1)			| a1 = curpcb		;	\
+	movl	4(%sp),%a0		/* address to write */	;	\
+	GETCURPCB(%a1)			/* a1 = curpcb */	;	\
 	movl	#.Lufetchstore_fault,PCB_ONFAULT(%a1)
 
 /* LINTSTUB: _ustore_8(uint8_t *uaddr, uint8_t val); */
