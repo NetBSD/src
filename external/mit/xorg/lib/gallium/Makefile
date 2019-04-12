@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2019/04/10 20:32:56 joerg Exp $
+# $NetBSD: Makefile,v 1.24 2019/04/12 17:43:25 christos Exp $
 
 # Link the gallium mega driver.
 
@@ -1120,6 +1120,7 @@ COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
 .endif
 
 .for f in \
+	decode.c \
 	dd_context.c \
 	draw.c \
 	nir_from_ssa.c \
@@ -1129,6 +1130,7 @@ COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
 	nir_liveness.c \
 	nir_lower_registers_to_ssa.c \
 	nir_lower_regs_to_ssa.c \
+	nir_lower_vars_to_ssa.c \
 	nir_phi_builder.c \
 	shaderapi.c \
 	spirv_to_nir.c \
