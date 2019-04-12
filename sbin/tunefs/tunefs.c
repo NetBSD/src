@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.49 2015/08/26 05:41:20 mlelstv Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.50 2019/04/12 01:14:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.49 2015/08/26 05:41:20 mlelstv Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.50 2019/04/12 01:14:37 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -352,7 +352,7 @@ main(int argc, char *argv[])
 				printf(" group");
 			printf(" enabled\n");
 		} else {
-			printf("disabled\n");
+			printf(" disabled\n");
 		}
 		printf("tunefs: no changes made\n");
 		exit(0);
