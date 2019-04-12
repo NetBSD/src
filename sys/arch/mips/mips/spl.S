@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.16 2016/11/18 16:23:40 skrll Exp $	*/
+/*	$NetBSD: spl.S,v 1.17 2019/04/12 21:12:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.16 2016/11/18 16:23:40 skrll Exp $")
+RCSID("$NetBSD: spl.S,v 1.17 2019/04/12 21:12:21 skrll Exp $")
 
 #include "assym.h"
 
@@ -172,7 +172,7 @@ END(_splsw_splx)
 STATIC_LEAF(_splsw_spl0)
 	INT_L	v1, _C_LABEL(ipl_sr_map) + 4*IPL_NONE
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
-	or	v1, MIPS_SR_INT_IE		# mask sure interrupts are on
+	or	v1, MIPS_SR_INT_IE		# make sure interrupts are on
 	xor	v1, MIPS_INT_MASK		# invert
 	mfc0	a0, MIPS_COP_0_STATUS
 	MFC0_HAZARD				# load delay
