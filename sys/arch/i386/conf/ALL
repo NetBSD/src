@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.465 2019/03/16 04:31:25 isaki Exp $
+# $NetBSD: ALL,v 1.466 2019/04/12 04:46:48 msaitoh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.465 $"
+#ident		"ALL-$Revision: 1.466 $"
 
 maxusers	64		# estimated number of users
 
@@ -1879,6 +1879,7 @@ options AHD_DEBUG
 options AHD_DEBUG_OPTS=1
 options AH_DEBUG_ALQ
 options AIC_DEBUG
+options AI_DEBUG
 options ALTQ_DEBUG
 options AMD756_DEBUG
 options AMRR_DEBUG
@@ -1893,8 +1894,10 @@ options ATAPI_DEBUG_PROBE
 options ATA_DEBUG
 options ATA_RAID_DEBUG
 options ATE_DEBUG
+options ATHN_DEBUG
 options ATMEL_DEBUG
 options ATPPC_DEBUG
+options ATU_DEBUG
 options ATW_BBPDEBUG
 options ATW_DEBUG
 options ATW_SYNDEBUG
@@ -1910,11 +1913,13 @@ options AUSMBUS_PSC_DEBUG
 options AWACS_DEBUG
 options AWI_DEBUG
 options AXE_DEBUG
+options AXEN_DEBUG
 options AZALIA_DEBUG
 options BAH_DEBUG
 options BCACHE_DEBUG
 options BDEBUG
 options BEDEBUG
+options BGE_DEBUG
 options BHADEBUG
 options BIOS_MEMORY_DEBUG
 options BIT3DEBUG
@@ -1922,6 +1927,7 @@ options BKTR_RADIO_DEBUG
 options BLUETOOTH_DEBUG
 options BMAC_DEBUG
 options BMD_DEBUG
+options BNX_DEBUG
 options BOOTP_DEBUG
 options BOOTP_DEBUGx
 options BOOTXX_DEBUG
@@ -1933,8 +1939,10 @@ options BTLBDEBUG
 options BTNMGRDEBUG
 options BUS_DMA_DEBUG
 options BUS_SPACE_DEBUG
+options BWFM_DEBUG
 options CACHE_DEBUG
 options CARDBUS_DEBUG
+options CAS_DEBUG
 options CD18XXDEBUG
 options CGSIX_DEBUG
 options CHANGER_DEBUG
@@ -1942,6 +1950,7 @@ options CISS_DEBUG
 options CKSUMDEBUG
 options CLOCKDEBUG
 options CLOCK_DEBUG
+options CMALO_DEBUG
 options CNW_DEBUG
 options COMDEBUG
 options COMVRIPDEBUG
@@ -2034,6 +2043,7 @@ options EDC_DEBUG
 options EDEBUG
 options ED_DEBUG
 options EFINET_DEBUG
+options EF_DEBUG
 options EGAFONTDEBUG
 options EGDEBUG
 options EHCI_DEBUG
@@ -2120,6 +2130,8 @@ options ITE8181DEBUG
 options ITK_PROBE_DEBUG
 options IWI_DEBUG
 options IWM_DEBUG
+options IWN_DEBUG
+options IX_DEBUG
 options IYDEBUG
 options IYMEMDEBUG
 options J6X0TP_DEBUG
@@ -2136,6 +2148,7 @@ options LCD_DEBUG
 options LEDEBUG
 options LE_DEBUG
 options LIFDEBUG
+options LII_DEBUG
 options LINUX_SG_DEBUG
 options LLCDEBUG
 options LLC_DEBUG
@@ -2162,6 +2175,7 @@ options MQ200_DEBUG
 options MRT6DEBUG
 options MSDOSFS_DEBUG
 options MSG_DEBUG_OK
+options MSK_DEBUG
 options MULAW_DEBUG
 options MYDEV_DEBUG
 options NB_DEBUG
@@ -2194,6 +2208,7 @@ options ONOE_DEBUG
 options OPTPOINTDEBUG
 options OSIOP_DEBUG
 options OST_DEBUG
+options OTUS_DEBUG
 options P1212_DEBUG
 options PARDEBUG
 options PBMS_DEBUG
@@ -2253,6 +2268,8 @@ options RQDEBUG
 options RTC_DEBUG
 options RTSOCK_DEBUG
 options RTW_DEBUG
+options RUM_DEBUG
+options RUN_DEBUG
 options SACKBCDEBUG
 options SBC_DEBUG
 options SBJCN_DEBUG
@@ -2377,16 +2394,22 @@ options UKYOPON_DEBUG
 options ULPT_DEBUG
 options UL_DEBUG
 options UMASS_DEBUG
+options UMB_DEBUG
 options UMCT_DEBUG
 options UMIDIQUIRK_DEBUG
 options UMIDI_DEBUG
 options UMODEM_DEBUG
 options UNIV_DEBUG
+options UPGT_DEBUG
 options UPLCOM_DEBUG
 options UPL_DEBUG
+options URAL_DEBUG
 options URIO_DEBUG
 options URLPHY_DEBUG
 options URL_DEBUG
+options URNDIS_DEBUG
+options URTW_DEBUG
+options URTWN_DEBUG
 options USB_DEBUG
 options USCANNER_DEBUG
 options USEFULL_DEBUG
@@ -2431,6 +2454,7 @@ options WFQ_DEBUG
 options WI_DEBUG
 options WI_RING_DEBUG
 options WM_DEBUG
+options WPI_DEBUG
 options WSKBD_DEBUG
 options WSMUX_DEBUG
 options XBD_DEBUG
@@ -2448,5 +2472,6 @@ options XHCI_DEBUG
 options XYC_DEBUG
 options ZSKBD_DEBUG
 options ZSMACDEBUG
+options ZYD_DEBUG
 options xSCSI_DEBUG
 options xSD_DEBUG
