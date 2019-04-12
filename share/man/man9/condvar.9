@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.19 2017/11/13 09:09:28 wiz Exp $
+.\"	$NetBSD: condvar.9,v 1.20 2019/04/12 11:02:22 abhinav Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -263,9 +263,8 @@ be called while holding the interlocking mutex passed to
 .Fn cv_wait .
 .El
 .Sh EXAMPLES
-.Bd -literal
 Consuming a resource:
-
+.Bd -literal
 	/*
 	 * Lock the resource.  Its mutex will also serve as the
 	 * interlock.
@@ -298,9 +297,10 @@ Consuming a resource:
 	res->state = BUSY;
 	mutex_exit(&res->mutex);
 	consume(res);
-
+.Ed
+.Pp
 Releasing a resource for the next consumer to use:
-
+.Bd -literal
 	mutex_enter(&res->mutex);
 	res->state = IDLE;
 	cv_signal(&res->condvar);
