@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.14 2019/03/18 11:38:03 msaitoh Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.15 2019/04/12 07:12:12 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.14 2019/03/18 11:38:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.15 2019/04/12 07:12:12 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -921,16 +921,10 @@ ipsecif4_detach(struct ipsec_variant *var)
 int
 ipsecif6_attach(struct ipsec_variant *var)
 {
-	struct sockaddr_in6 mask6;
 	struct ipsec_softc *sc = var->iv_softc;
 
 	KASSERT(if_ipsec_variant_is_configured(var));
 	KASSERT(var->iv_encap_cookie6 == NULL);
-
-	memset(&mask6, 0, sizeof(mask6));
-	mask6.sin6_len = sizeof(struct sockaddr_in6);
-	mask6.sin6_addr.s6_addr32[0] = mask6.sin6_addr.s6_addr32[1] =
-	mask6.sin6_addr.s6_addr32[2] = mask6.sin6_addr.s6_addr32[3] = ~0;
 
 	var->iv_encap_cookie6 = encap_attach_func(AF_INET6, -1, if_ipsec_encap_func,
 	    &ipsecif6_encapsw, sc);
