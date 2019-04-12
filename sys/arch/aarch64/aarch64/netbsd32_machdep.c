@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.5 2019/01/27 19:13:04 alnsn Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.6 2019/04/12 09:29:26 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.5 2019/01/27 19:13:04 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.6 2019/04/12 09:29:26 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -88,10 +88,9 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_spsr = SPSR_M_USR32;
 #endif
 
-#ifdef THUMB_CODE
+	/* THUMB CODE? */
 	if (pack->ep_entry & 1)
 		tf->tf_spsr |= SPSR_A32_T;
-#endif
 }
 
 /* aarch32 fpscr register is assigned to two registers fpsr/fpcr on aarch64 */
@@ -118,6 +117,10 @@ netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 	regs->r_lr = tf->tf_reg[14];		/* r14 = lr */
 	regs->r_pc = tf->tf_pc;			/* r15 = pc */
 	regs->r_cpsr = tf->tf_spsr;
+
+	/* THUMB CODE? */
+	if (tf->tf_spsr & SPSR_A32_T)
+		regs->r_pc |= 1;
 
 	return 0;
 }
@@ -258,12 +261,13 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* the trampoline uses r5 as the uc address */
 	tf->tf_reg[5] = (uint32_t)(uintptr_t)&fp->sf_uc;
 	tf->tf_pc = (uint32_t)(uintptr_t)handler;
-#ifdef THUMB_CODE
-	if (((int)handler) & 1)
+
+	/* THUMB CODE? */
+	if (((uintptr_t)handler) & 1)
 		tf->tf_spsr |= SPSR_A32_T;
 	else
 		tf->tf_spsr &= ~SPSR_A32_T;
-#endif
+
 	tf->tf_reg[13] = (uint32_t)(uintptr_t)fp;		/* sp */
 	tf->tf_reg[14] = (uint32_t)(uintptr_t)sdesc->sd_tramp;	/* lr */
 

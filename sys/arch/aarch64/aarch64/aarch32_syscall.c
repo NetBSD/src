@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch32_syscall.c,v 1.2 2019/03/01 02:40:01 mrg Exp $	*/
+/*	$NetBSD: aarch32_syscall.c,v 1.3 2019/04/12 09:29:26 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarch32_syscall.c,v 1.2 2019/03/01 02:40:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarch32_syscall.c,v 1.3 2019/04/12 09:29:26 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/ktrace.h>
@@ -35,9 +35,10 @@ __KERNEL_RCSID(0, "$NetBSD: aarch32_syscall.c,v 1.2 2019/03/01 02:40:01 mrg Exp 
 #include <sys/syscallvar.h>
 #include <uvm/uvm_extern.h>
 
-#include <aarch64/userret.h>
-#include <aarch64/frame.h>
 #include <aarch64/armreg.h>
+#include <aarch64/frame.h>
+#include <aarch64/machdep.h>
+#include <aarch64/userret.h>
 
 #ifndef EMULNAME
 #error EMULNAME is not defined
@@ -64,28 +65,28 @@ EMULNAME(syscall)(struct trapframe *tf)
 	register_t rval[2];
 	register32_t *args32 = args32buf.a32;
 	int error, i;
-	bool do_trace;
+	bool do_trace, thumbmode;
 
 	LWP_CACHE_CREDS(l, p);
 
 	curcpu()->ci_data.cpu_nsyscall++;
 
 	uint32_t code = tf->tf_esr & 0xffff;	/* XXX: 16-23bits are omitted */
-
-	/*
-	 * XXX: for netbsd32 emulation, SWI_OS_NETBSD should be checked?
-	 * 16-23bits of imm of swi is omitted. need to read insn?
-	 */
-#ifdef THUMB_CODE
-#error notyet
-	if (tf->tf_spsr & SPSR_A32_T) {
-		code |= tf->tf_reg[0];
-		tf->tf_reg[0] = tf->tf_reg[12];	/* r0 = ip(r12) */
+	thumbmode = (tf->tf_spsr & SPSR_A32_T) ? true : false;
+	if (thumbmode) {
+		if (code != 255) {
+			do_trapsignal(l, SIGILL, ILL_ILLTRP,
+			    (void *)(tf->tf_pc - 2), tf->tf_esr);
+			error = EINVAL;
+			goto bad;
+		}
+		code = tf->tf_reg[0];
+		tf->tf_reg[0] = tf->tf_reg[12];	/* orig $r0 is saved to $ip */
 	}
-#endif
 
 	int nargs_reg = NARGREG;	/* number of argument in registers */
 	int regstart = 0;		/* args start from r0 */
+
 
 	code %= EMULNAMEU(SYS_NSYSENT);
 	callp = p->p_emul->e_sysent + code;
@@ -160,7 +161,10 @@ EMULNAME(syscall)(struct trapframe *tf)
 		switch (error) {
 		case ERESTART:
 			/* redo system call insn */
-			tf->tf_pc -= 4;
+			if (thumbmode)
+				tf->tf_pc -= 2;
+			else
+				tf->tf_pc -= 4;
 			break;
 		case EJUSTRETURN:
 			/* nothing to do */
