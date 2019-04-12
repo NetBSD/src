@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.68 2019/04/12 15:47:41 martin Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.69 2019/04/12 15:59:34 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -879,10 +879,6 @@ new_menu(const char *title, menu_ent *opts, int numopts,
 #endif
 	m->opts = opts;
 	m->numopts = numopts;
-	m->cursel = 0;
-	m->topline = 0;
-	m->mw = NULL;
-	m->sv_mw = NULL;
 	m->x = x;
 	m->y = y;
 	m->h = h;
