@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.53 2019/03/31 03:04:57 abhinav Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.54 2019/04/12 15:12:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.53 2019/03/31 03:04:57 abhinav Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.54 2019/04/12 15:12:29 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -159,6 +159,20 @@ needs_escaping(char c)
 	}
 }
 
+static int
+needs_dquote_escaping(char c)
+{
+	switch (c) {
+	case '"':
+	case '\\':
+	case '`':
+	case '$':
+		return 1;
+	default:
+		return 0;
+	}
+}
+
 
 static wchar_t *
 unescape_string(const wchar_t *string, size_t length)
@@ -189,13 +203,14 @@ escape_filename(EditLine * el, const char *filename)
 	size_t d_quoted = 0;	/* does the input contain a double quote */
 	char *escaped_str;
 	wchar_t *temp = el->el_line.buffer;
+
 	if (filename == NULL)
 		return NULL;
 
 	while (temp != el->el_line.cursor) {
 		/*
-		 * If we see a single quote but have not seen a double quote so far
-		 * set/unset s_quote
+		 * If we see a single quote but have not seen a double quote
+		 * so far set/unset s_quote
 		 */
 		if (temp[0] == '\'' && !d_quoted)
 			s_quoted = !s_quoted;
@@ -218,7 +233,7 @@ escape_filename(EditLine * el, const char *filename)
 			continue;
 		}
 		/* Inside double quotes only ", \, ` and $ need escaping */
-		if (d_quoted && (c == '"' || c == '\\' || c == '`' || c == '$')) {
+		if (d_quoted && needs_dquote_escaping(c)) {
 			escaped_character_count++;
 			continue;
 		}
@@ -227,6 +242,9 @@ escape_filename(EditLine * el, const char *filename)
 	}
 
 	newlen = original_len + escaped_character_count + 1;
+	if (s_quoted || d_quoted)
+		newlen++;
+
 	if ((escaped_str = el_malloc(newlen)) == NULL)
 		return NULL;
 
@@ -256,7 +274,7 @@ escape_filename(EditLine * el, const char *filename)
 		/* No escaping needed inside a double quoted string either
 		 * unless we see a '$', '\', '`', or '"' (itself)
 		 */
-		if (d_quoted && c != '"' && c != '$' && c != '\\' && c != '`') {
+		if (d_quoted && !needs_dquote_escaping(c)) {
 			escaped_str[offset++] = c;
 			continue;
 		}
