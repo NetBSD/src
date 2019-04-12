@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.35 2019/02/15 23:20:35 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.36 2019/04/12 17:30:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.35 2019/02/15 23:20:35 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.36 2019/04/12 17:30:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -966,9 +966,10 @@ terminal_get_size(EditLine *el, int *lins, int *cols)
 libedit_private int
 terminal_change_size(EditLine *el, int lins, int cols)
 {
+	coord_t cur = el->el_cursor;
 	/*
-         * Just in case
-         */
+	 * Just in case
+	 */
 	Val(T_co) = (cols < 2) ? 80 : cols;
 	Val(T_li) = (lins < 1) ? 24 : lins;
 
@@ -976,6 +977,7 @@ terminal_change_size(EditLine *el, int lins, int cols)
 	if (terminal_rebuffer_display(el) == -1)
 		return -1;
 	re_clear_display(el);
+	el->el_cursor = cur;
 	return 0;
 }
 
