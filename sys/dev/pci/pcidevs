@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1369 2019/04/11 04:59:49 mrg Exp $
+$NetBSD: pcidevs,v 1.1370 2019/04/12 04:49:48 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4434,7 +4434,6 @@ product INTEL XE5_V3_IMC0_TADR3 0x2fac	Xeon E5 v3 IMC Ch 2-3 Target Address Deco
 product INTEL XE5_V3_IMC0_TADR4 0x2fad	Xeon E5 v3 IMC Ch 2-3 Target Address Decode Registers
 product INTEL XE5_V3_DDRIO_CHAN	0x2fae  Xeon E7 v3/Xeon E5 v3/Core i7 DDRIO Channel 0/1 Broadcast
 product INTEL XE5_V3_DDRIO_BROAD 0x2faf Xeon E7 v3/Xeon E5 v3/Core i7 DDRIO Global Broadcast
-
 product INTEL XE5_V3_IMC0_REG1	0x2fb0	Xeon E5 v3 IMC Ch 0-1 Registers
 product INTEL XE5_V3_IMC0_REG2	0x2fb1	Xeon E5 v3 IMC Ch 0-1 Registers
 product INTEL XE5_V3_IMC0_REG3	0x2fb2	Xeon E5 v3 IMC Ch 2-3 Registers
@@ -4495,7 +4494,6 @@ product INTEL XE5_V3_BRA4	0x2ffb  Xeon E7 v3/Xeon E5 v3/Core i7 Buffered Ring Ag
 product INTEL XE5_V3_SADBR1	0x2ffc  Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers
 product INTEL XE5_V3_SADBR2	0x2ffd  Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers
 product INTEL XE5_V3_SADBR3	0x2ffe  Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers
-
 product INTEL WIFI_LINK_3165_1	0x3165	Dual Band Wireless AC 3165
 product INTEL WIFI_LINK_3165_2	0x3166	Dual Band Wireless AC 3165
 product INTEL GLK_IGD_1		0x3184	UHD Graphics 605
@@ -5436,6 +5434,9 @@ product INTEL C620_LPC_5	0xa1c5	C626 LPC or eSPI
 product INTEL C620_LPC_6	0xa1c6	C627 LPC or eSPI
 product INTEL C620_LPC_7	0xa1c7	C628 LPC or eSPI
 product INTEL C620_LPC_8	0xa1ca	C629 LPC or eSPI
+product INTEL C620_LPC_9	0xa1cb	C621A LPC or eSPI
+product INTEL C620_LPC_10	0xa1cc	C627A LPC or eSPI
+product INTEL C620_LPC_11	0xa1cd	C629A LPC or eSPI
 product INTEL C620_SSATA_AHCI	0xa1d2	C620 sSATA AHCI
 product INTEL C620_SSATA_RAID	0xa1d6	C620 sSATA 3rd Party RAID
 product INTEL C620_PCIE_16	0xa1e7	C620 PCIe Root Port
@@ -5485,6 +5486,9 @@ product INTEL C620_LPC_S_2	0xa243	C627 LPC or eSPI
 product INTEL C620_LPC_S_3	0xa244	C621 LPC or eSPI
 product INTEL C620_LPC_S_4	0xa245	C627 LPC or eSPI
 product INTEL C620_LPC_S_5	0xa246	C628 LPC or eSPI
+product INTEL C620_LPC_S_6	0xa24a	C621A LPC or eSPI
+product INTEL C620_LPC_12	0xa24b	C627A LPC or eSPI
+product INTEL C620_LPC_13	0xa24c	C629A LPC or eSPI
 product INTEL C620_SSATA_AHCI_S	0xa252	C620 sSATA AHCI
 product INTEL C620_SSATA_RAID_S	0xa256	C620 sSATA 3rd Party RAID
 product INTEL C620_PCIE_S_16	0xa267	C620 PCIe Root Port
