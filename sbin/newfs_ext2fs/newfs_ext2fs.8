@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_ext2fs.8,v 1.13 2019/03/06 05:11:13 mrg Exp $
+.\"	$NetBSD: newfs_ext2fs.8,v 1.14 2019/04/13 19:29:27 maya Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd March 5, 2019
+.Dd April 13, 2019
 .Dt NEWFS_EXT2FS 8
 .Os
 .Sh NAME
@@ -208,10 +208,6 @@ This specifies a volume name for the file system.
 .It Fl Z
 Pre-zeros the file system image created with
 .Fl F .
-This is necessary if the image is to be used by
-.Xr vnd 4
-(which doesn't support file systems with
-.Sq holes ) .
 .El
 .Pp
 The following option overrides the standard sizes for the disk geometry.
