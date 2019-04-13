@@ -227,6 +227,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	nsmb			# SMB requester
 #pseudo-device	npf			# NPF packet filter

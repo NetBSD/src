@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.105 2018/12/14 23:01:53 macallan Exp $
+#	$NetBSD: GENERIC,v 1.106 2019/04/13 08:23:00 isaki Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.105 $"
+#ident 		"GENERIC-$Revision: 1.106 $"
 
 maxusers	32		# estimated number of users
 
@@ -400,6 +400,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 pseudo-device	pty			# pseudo-terminals
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 
 # wscons pseudo-devices
