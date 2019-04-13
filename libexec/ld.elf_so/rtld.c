@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.195 2018/12/30 01:48:37 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.196 2019/04/13 03:15:25 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.195 2018/12/30 01:48:37 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.196 2019/04/13 03:15:25 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1462,7 +1462,9 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *), void *pa
 		phdr_info.dlpi_subs = _rtld_objloads - _rtld_objcount;
 
 		/* XXXlocking: exit point */
+		_rtld_shared_exit();
 		error = callback(&phdr_info, sizeof(phdr_info), param);
+		_rtld_shared_enter();
 		if (error)
 			break;
 	}
