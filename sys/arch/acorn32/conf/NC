@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.74 2018/08/01 20:04:09 maxv Exp $
+#	$NetBSD: NC,v 1.75 2019/04/13 08:22:58 isaki Exp $
 #
 #	NC - with wscons
 #
@@ -257,6 +257,7 @@ pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# Ramdisk driver
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 
 # a pseudo device needed for SMBFS
 #pseudo-device	nsmb			# experimental - SMB requester

@@ -1,4 +1,4 @@
-# $NetBSD: MMEYE_WLF,v 1.26 2018/08/01 20:04:12 maxv Exp $
+# $NetBSD: MMEYE_WLF,v 1.27 2019/04/13 08:23:00 isaki Exp $
 #
 # MMEYE_WLF -- Brains Inc. MMEYE-WLF platforms kernel
 #
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 maxusers	16		# estimated number of users
 
@@ -250,6 +250,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	vcoda			# coda minicache <-> venus comm.
 #pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud
 pseudo-device	bcsp			# BlueCore Serial Protocol
