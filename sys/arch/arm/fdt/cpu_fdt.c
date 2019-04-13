@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.22 2019/01/31 13:06:10 skrll Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.23 2019/04/13 17:21:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.22 2019/01/31 13:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.23 2019/04/13 17:21:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -166,33 +166,6 @@ cpu_fdt_mpstart_pa(void)
 	return pa;
 }
 
-static int
-spintable_cpu_on(u_int cpuindex, paddr_t entry_point_address, paddr_t cpu_release_addr)
-{
-	/*
-	 * we need devmap for cpu-release-addr in advance.
-	 * __HAVE_MM_MD_DIRECT_MAPPED_PHYS nor pmap didn't work at this point.
-	 */
-	if (pmap_devmap_find_pa(cpu_release_addr, sizeof(paddr_t)) == NULL) {
-		aprint_error("%s: devmap for cpu-release-addr"
-		    " 0x%08"PRIxPADDR" required\n", __func__, cpu_release_addr);
-		return -1;
-	} else {
-		extern struct bus_space arm_generic_bs_tag;
-		bus_space_handle_t ioh;
-
-		bus_space_map(&arm_generic_bs_tag, cpu_release_addr,
-		    sizeof(paddr_t), 0, &ioh);
-		bus_space_write_4(&arm_generic_bs_tag, ioh, 0,
-		    entry_point_address);
-		bus_space_unmap(&arm_generic_bs_tag, ioh, sizeof(paddr_t));
-	}
-
-	return 0;
-}
-#endif /* MULTIPROCESSOR */
-
-#ifdef MULTIPROCESSOR
 static bool
 arm_fdt_cpu_okay(const int child)
 {
@@ -369,7 +342,32 @@ cpu_enable_psci(int phandle)
 ARM_CPU_METHOD(psci, "psci", cpu_enable_psci);
 #endif
 
-#if defined(MULTIPROCESSOR)
+#if defined(MULTIPROCESSOR) && defined(__aarch64__)
+static int
+spintable_cpu_on(u_int cpuindex, paddr_t entry_point_address, paddr_t cpu_release_addr)
+{
+	/*
+	 * we need devmap for cpu-release-addr in advance.
+	 * __HAVE_MM_MD_DIRECT_MAPPED_PHYS nor pmap didn't work at this point.
+	 */
+	if (pmap_devmap_find_pa(cpu_release_addr, sizeof(paddr_t)) == NULL) {
+		aprint_error("%s: devmap for cpu-release-addr"
+		    " 0x%08"PRIxPADDR" required\n", __func__, cpu_release_addr);
+		return -1;
+	} else {
+		extern struct bus_space arm_generic_bs_tag;
+		bus_space_handle_t ioh;
+
+		bus_space_map(&arm_generic_bs_tag, cpu_release_addr,
+		    sizeof(paddr_t), 0, &ioh);
+		bus_space_write_4(&arm_generic_bs_tag, ioh, 0,
+		    entry_point_address);
+		bus_space_unmap(&arm_generic_bs_tag, ioh, sizeof(paddr_t));
+	}
+
+	return 0;
+}
+
 static int
 cpu_enable_spin_table(int phandle)
 {
