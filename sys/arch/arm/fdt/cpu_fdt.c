@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.24 2019/04/13 17:34:38 jmcneill Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.25 2019/04/13 19:15:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.24 2019/04/13 17:34:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.25 2019/04/13 19:15:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -234,16 +234,29 @@ arm_fdt_cpu_bootstrap(void)
 }
 
 #ifdef MULTIPROCESSOR
-static int
-arm_fdt_cpu_enable(int phandle, const char *method)
+static struct arm_cpu_method *
+arm_fdt_cpu_enable_method(int phandle)
 {
+	const char *method;
+
+ 	method = fdtbus_get_string(phandle, "enable-method");
+	if (method == NULL)
+		return NULL;
+
 	__link_set_decl(arm_cpu_methods, struct arm_cpu_method);
-	struct arm_cpu_method * const *acm;
-	__link_set_foreach(acm, arm_cpu_methods) {
-		if (strcmp(method, (*acm)->acm_compat) == 0)
-			return (*acm)->acm_enable(phandle);
+	struct arm_cpu_method * const *acmp;
+	__link_set_foreach(acmp, arm_cpu_methods) {
+		if (strcmp(method, (*acmp)->acm_compat) == 0)
+			return *acmp;
 	}
-	return ENOSYS;
+
+	return NULL;
+}
+
+static int
+arm_fdt_cpu_enable(int phandle, struct arm_cpu_method *acm)
+{
+	return acm->acm_enable(phandle);
 }
 #endif
 
@@ -255,7 +268,7 @@ arm_fdt_cpu_mpstart(void)
 	uint64_t mpidr, bp_mpidr;
 	u_int cpuindex, i;
 	int child, error;
-	const char *method;
+	struct arm_cpu_method *acm;
 
 	const int cpus = OF_finddevice("/cpus");
 	if (cpus == -1) {
@@ -278,15 +291,15 @@ arm_fdt_cpu_mpstart(void)
 		if (mpidr == bp_mpidr)
 			continue; 	/* BP already started */
 
-		method = fdtbus_get_string(child, "enable-method");
-		if (method == NULL)
-			method = fdtbus_get_string(cpus, "enable-method");
-		if (method == NULL)
+		acm = arm_fdt_cpu_enable_method(child);
+		if (acm == NULL)
+			acm = arm_fdt_cpu_enable_method(cpus);
+		if (acm == NULL)
 			continue;
 
-		error = arm_fdt_cpu_enable(child, method);
+		error = arm_fdt_cpu_enable(child, acm);
 		if (error != 0) {
-			aprint_error("%s: %s: unsupported enable-method\n", __func__, method);
+			aprint_error("%s: failed to enable CPU %#" PRIx64 "\n", __func__, mpidr);
 			continue;
 		}
 
