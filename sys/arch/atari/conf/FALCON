@@ -1,11 +1,11 @@
 #
-# $NetBSD: FALCON,v 1.116 2018/03/31 04:17:27 tsutsui Exp $
+# $NetBSD: FALCON,v 1.117 2019/04/13 08:26:14 isaki Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.115 2018/01/23 14:47:54 sevan Exp $
+#		NetBSD: GENERIC.in,v 1.118 2019/04/13 08:22:59 isaki Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 makeoptions COPTS="-O2 -fno-reorder-blocks" # see share/mk/sys.mk
@@ -69,6 +69,7 @@ pseudo-device bpfilter # berkeley packet filters
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
 pseudo-device clockctl # user control of clock subsystem
+pseudo-device drvctl # user control of drive subsystem
 pseudo-device ksyms # /dev/ksyms
 pseudo-device view 4 # View (graphics mapping)
 pseudo-device mouse 1 # mouse
