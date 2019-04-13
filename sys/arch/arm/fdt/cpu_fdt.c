@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.23 2019/04/13 17:21:49 jmcneill Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.24 2019/04/13 17:34:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.23 2019/04/13 17:21:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.24 2019/04/13 17:34:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -153,7 +153,7 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 	config_found(self, faa, NULL);
 }
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && (NPSCI_FDT > 0 || defined(__aarch64__))
 static register_t
 cpu_fdt_mpstart_pa(void)
 {
@@ -165,7 +165,9 @@ cpu_fdt_mpstart_pa(void)
 
 	return pa;
 }
+#endif
 
+#ifdef MULTIPROCESSOR
 static bool
 arm_fdt_cpu_okay(const int child)
 {
