@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.197 2018/08/01 20:04:13 maxv Exp $
+# $NetBSD: GENERIC,v 1.198 2019/04/13 08:23:00 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.197 $"
+#ident		"GENERIC-$Revision: 1.198 $"
 
 maxusers	64
 
@@ -301,6 +301,7 @@ pseudo-device	fss		 	# file system snapshot device
 pseudo-device	putter			# for puffs and pud
 
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsfont			# wsfont control device
 pseudo-device	wsmux			# wsmux control device
