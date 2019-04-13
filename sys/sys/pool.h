@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.87 2019/03/27 18:27:47 maxv Exp $	*/
+/*	$NetBSD: pool.h,v 1.88 2019/04/13 08:41:37 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -81,6 +81,10 @@ struct pool_sysctl {
 #include <sys/tree.h>
 #include <sys/callback.h>
 
+#ifdef _KERNEL_OPT
+#include "opt_pool.h"
+#endif
+
 #define	POOL_PADDR_INVALID	((paddr_t) -1)
 
 struct pool;
@@ -100,6 +104,12 @@ struct pool_allocator {
 
 LIST_HEAD(pool_pagelist,pool_item_header);
 SPLAY_HEAD(phtree, pool_item_header);
+
+#define POOL_QUARANTINE_DEPTH	128
+typedef struct {
+	size_t rotor;
+	intptr_t list[POOL_QUARANTINE_DEPTH];
+} pool_quar_t;
 
 struct pool {
 	TAILQ_ENTRY(pool)
@@ -198,6 +208,9 @@ struct pool {
 	bool		pr_redzone;
 	size_t		pr_reqsize;
 	size_t		pr_reqsize_with_redzone;
+#ifdef POOL_QUARANTINE
+	pool_quar_t	pr_quar;
+#endif
 };
 
 /*
