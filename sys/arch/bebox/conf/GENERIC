@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.158 2018/08/01 20:04:10 maxv Exp $
+# $NetBSD: GENERIC,v 1.159 2019/04/13 08:22:59 isaki Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.158 $"
+#ident 		"GENERIC-$Revision: 1.159 $"
 
 maxusers	32
 
@@ -322,7 +322,7 @@ pseudo-device	wsfont
 #pseudo-device	pad
 
 # userland interface to drivers, including autoconf and properties retrieval
-#pseudo-device	drvctl
+pseudo-device	drvctl
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 					# and PAX_SEGVGUARD

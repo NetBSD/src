@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.52 2017/09/14 07:58:41 mrg Exp $
+#	$NetBSD: GENERIC,v 1.53 2019/04/13 08:23:00 isaki Exp $
 #
 #
 
@@ -292,6 +292,7 @@ pseudo-device	pty			# pseudo-terminals
 #options 	RND_COM			# use "com" randomness as well
 pseudo-device	ksyms
 pseudo-device	clockctl
+pseudo-device	drvctl			# user control of drive subsystem
 
 # Veriexec
 #

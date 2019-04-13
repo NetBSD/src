@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.35 2018/08/01 20:04:10 maxv Exp $
+# $NetBSD: GENERIC,v 1.36 2019/04/13 08:22:58 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.35 $"
+#ident          "GENERIC-$Revision: 1.36 $"
 
 maxusers	8
 
@@ -406,6 +406,7 @@ pseudo-device	fss			# file system snapshot device
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 
 #pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 #pseudo-device	wsmux			# mouse & keyboard multiplexor

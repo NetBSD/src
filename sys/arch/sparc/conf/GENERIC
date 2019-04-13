@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.264 2019/02/12 07:15:58 mrg Exp $
+# $NetBSD: GENERIC,v 1.265 2019/04/13 08:23:00 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.264 $"
+#ident 		"GENERIC-$Revision: 1.265 $"
 
 maxusers	32
 
@@ -707,6 +707,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	fss			# file system snapshot device
 pseudo-device	wsmux			# mouse and keyboard multiplexor

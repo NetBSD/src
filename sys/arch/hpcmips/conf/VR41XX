@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.72 2019/02/06 11:58:31 rin Exp $
+# $NetBSD: VR41XX,v 1.73 2019/04/13 08:22:59 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.72 $"
+#ident 		"GENERIC-$Revision: 1.73 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -525,6 +525,7 @@ pseudo-device	npf			# NPF packet filter
 pseudo-device	vnd			# virtual disk ick
 #pseudo-device	ccd			# concatenated disks
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 
 pseudo-device	biconsdev	1	# build-in console device
 pseudo-device	wsmux			# mouse & keyboard multiplexor

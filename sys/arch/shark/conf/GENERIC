@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.131 2018/08/01 20:04:14 maxv Exp $
+#	$NetBSD: GENERIC,v 1.132 2019/04/13 08:23:00 isaki Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.131 $"
+#ident		"GENERIC-$Revision: 1.132 $"
 
 # estimated number of users
 maxusers	32
@@ -297,6 +297,7 @@ pseudo-device	sequencer		# MIDI sequencer
 pseudo-device	openfirm		# /dev/openfirm
 #pseudo-device	vcoda			# coda kernel <-> cachemanager
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms

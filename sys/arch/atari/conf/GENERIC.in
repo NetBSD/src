@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.117 2018/12/19 13:57:46 maxv Exp $
+#	$NetBSD: GENERIC.in,v 1.118 2019/04/13 08:22:59 isaki Exp $
 #
 # Generic atari
 #
@@ -279,6 +279,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	npf			# NPF packet filter
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #endif /* !SMALL030_KERNEL */
 

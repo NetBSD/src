@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.65 2018/12/30 14:51:36 sevan Exp $
+#	$NetBSD: ALCHEMY,v 1.66 2019/04/13 08:22:59 isaki Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.65 $"
+#ident 		"ALCHEMY-$Revision: 1.66 $"
 
 maxusers	32
 
@@ -251,6 +251,7 @@ pseudo-device	bridge				# simple inter-network bridging
 pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer			# MIDI sequencer
 pseudo-device	clockctl			# user control of clock subsystem
+pseudo-device	drvctl				# user control of drive subsystem
 pseudo-device	ksyms				# /dev/ksyms
 
 # A pseudo device needed for Coda		# also needs CODA (above)

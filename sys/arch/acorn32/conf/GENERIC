@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.127 2018/08/01 20:04:09 maxv Exp $
+# 	$NetBSD: GENERIC,v 1.128 2019/04/13 08:22:58 isaki Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include 	"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.127 $"
+#ident		"GENERIC-$Revision: 1.128 $"
 
 # estimated number of users
 maxusers	32
@@ -319,6 +319,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# Ramdisk driver
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud
 

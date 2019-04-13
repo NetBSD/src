@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.26 2019/02/06 11:58:31 rin Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.27 2019/04/13 08:22:59 isaki Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -354,6 +354,7 @@ btsco*	at bthub?
 # miscellaneous pseudo-devices
 pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
+pseudo-device	drvctl			# user control of drive subsystem
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

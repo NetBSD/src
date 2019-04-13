@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.57 2018/12/19 13:57:49 maxv Exp $
+# $NetBSD: MRCOFFEE,v 1.58 2019/04/13 08:23:00 isaki Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.57 $"
+#ident 		"MRCOFFEE-$Revision: 1.58 $"
 
 maxusers	32
 
@@ -313,6 +313,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.140 2018/12/19 13:57:45 maxv Exp $
+# $NetBSD: GENERIC.in,v 1.141 2019/04/13 08:22:58 isaki Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.140 $"
+#ident 		"GENERIC-$Revision: 1.141 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -672,6 +672,9 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	pty			# pseudo-terminals
 ')m4_dnl
 pseudo-device	clockctl		# user control of clock subsystem
+m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
+pseudo-device	drvctl			# user control of drive subsystem
+')m4_dnl
 
 #pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 #pseudo-device	wsmux			# mouse & keyboard multiplexor

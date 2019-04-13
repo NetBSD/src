@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.201 2019/03/14 16:59:09 thorpej Exp $
+# $NetBSD: GENERIC,v 1.202 2019/04/13 08:22:59 isaki Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.201 $"
+#ident 		"GENERIC-$Revision: 1.202 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -312,6 +312,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vcoda			# coda minicache <-> venus comm.
 pseudo-device	ksyms			# /dev/ksyms

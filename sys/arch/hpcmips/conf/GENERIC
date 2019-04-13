@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.238 2019/02/06 11:58:31 rin Exp $
+# $NetBSD: GENERIC,v 1.239 2019/04/13 08:22:59 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include 	"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.238 $"
+#ident 		"GENERIC-$Revision: 1.239 $"
 
 maxusers	16
 
@@ -669,6 +669,7 @@ pseudo-device	vnd			# virtual disk ick
 pseudo-device	fss			# file system snapshot device
 #pseudo-device	cgd			# cryptographic disks
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 
 pseudo-device	biconsdev	1	# build-in console device
 pseudo-device	wsmux			# mouse & keyboard multiplexor
