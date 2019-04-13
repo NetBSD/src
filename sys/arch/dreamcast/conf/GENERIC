@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.130 2018/08/01 20:04:10 maxv Exp $
+# $NetBSD: GENERIC,v 1.131 2019/04/13 08:22:59 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -215,6 +215,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	ksyms			# /dev/ksyms
 
