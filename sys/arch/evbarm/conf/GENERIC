@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.29 2019/04/07 13:50:29 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.30 2019/04/13 10:58:11 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -136,24 +136,6 @@ makeoptions	DTS="
 	sun9i-a80-cubieboard4.dts
 	sun9i-a80-optimus.dts
 
-	sun50i-a64-bananapi-m64.dts
-	sun50i-a64-nanopi-a64.dts
-	sun50i-a64-olinuxino.dts
-	sun50i-a64-orangepi-win.dts
-	sun50i-a64-pine64-plus.dts
-	sun50i-a64-pine64.dts
-	sun50i-a64-pinebook.dts
-	sun50i-a64-sopine-baseboard.dts
-	sun50i-a64-teres-i.dts
-
-	sun50i-h5-libretech-all-h3-cc.dts
-	sun50i-h5-nanopi-neo-plus2.dts
-	sun50i-h5-nanopi-neo2.dts
-	sun50i-h5-orangepi-pc2.dts
-	sun50i-h5-orangepi-prime.dts
-	sun50i-h5-orangepi-zero-plus.dts
-	sun50i-h5-orangepi-zero-plus2.dts
-
 	tegra124-apalis-eval.dts
 	tegra124-apalis-v1.2-eval.dts
 	tegra124-jetson-tk1.dts
@@ -188,9 +170,6 @@ options 	SOC_SUN7I_A20
 options 	SOC_SUN8I_A83T
 options 	SOC_SUN8I_H3
 options 	SOC_SUN9I_A80
-options 	SOC_SUN50I_A64
-options 	SOC_SUN50I_H5
-options 	SOC_SUN50I_H6
 
 options 	SOC_TEGRA124
 
@@ -267,10 +246,6 @@ sun8ia83tccu*	at fdt? pass 2		# Allwinner A83T CCU
 sun8ih3ccu*	at fdt? pass 2		# Allwinner H3 CCU
 sun8ih3rccu*	at fdt? pass 2		# Allwinner H3 CCU (PRCM)
 sun9ia80ccu*	at fdt? pass 2		# Allwinner A80 CCU
-sun50ia64ccu*	at fdt? pass 2		# Allwinner A64 CCU
-sun50ia64rccu*  at fdt? pass 2          # Allwinner A64 CCU (PRCM)
-sun50ih6ccu*    at fdt? pass 2          # Allwinner H6 CCU
-sun50ih6rccu*   at fdt? pass 2          # Allwinner H6 CCU (PRCM)
 sunxiresets*	at fdt? pass 1		# Allwinner Misc. clock resets
 sunxigates*	at fdt? pass 1		# Allwinner Misc. clock gates
 sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
@@ -501,7 +476,7 @@ options 	HDAUDIOVERBOSE
 options 	HDAUDIO_32BIT_ACCESS
 options 	HDAUDIO_ENABLE_HDMI
 options 	HDAUDIO_ENABLE_DISPLAYPORT
-sun8icodec*	at fdt?			# Audio codec (sun8i/sun50i)
+sun8icodec*	at fdt?			# Audio codec (sun8i)
 sunxicodec*	at fdt?			# Allwinner audio codec
 sunxii2s*	at fdt?			# I2S/PCM
 audio*		at audiobus?
