@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.248 2019/04/07 09:20:04 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.249 2019/04/13 08:41:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,11 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.248 2019/04/07 09:20:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.249 2019/04/13 08:41:36 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
+#include "opt_pool.h"
 #include "opt_kleak.h"
 #endif
 
@@ -109,6 +110,19 @@ static void pool_cache_kleak_fill(pool_cache_t, void *);
 #else
 #define pool_kleak_fill(pp, ptr)	__nothing
 #define pool_cache_kleak_fill(pc, ptr)	__nothing
+#endif
+
+#ifdef POOL_QUARANTINE
+static void pool_quarantine_init(struct pool *);
+static void pool_quarantine_flush(struct pool *);
+static bool pool_put_quarantine(struct pool *, void *,
+    struct pool_pagelist *);
+static bool pool_cache_put_quarantine(pool_cache_t, void *, paddr_t);
+#else
+#define pool_quarantine_init(a)			__nothing
+#define pool_quarantine_flush(a)		__nothing
+#define pool_put_quarantine(a, b, c)		false
+#define pool_cache_put_quarantine(a, b, c)	false
 #endif
 
 #define pc_has_ctor(pc) \
@@ -733,6 +747,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_drain_hook_arg = NULL;
 	pp->pr_freecheck = NULL;
 	pool_redzone_init(pp, size);
+	pool_quarantine_init(pp);
 
 	/*
 	 * Decide whether to put the page header off-page to avoid wasting too
@@ -843,6 +858,8 @@ pool_destroy(struct pool *pp)
 {
 	struct pool_pagelist pq;
 	struct pool_item_header *ph;
+
+	pool_quarantine_flush(pp);
 
 	/* Remove from global pool list */
 	mutex_enter(&pool_head_lock);
@@ -1184,7 +1201,9 @@ pool_put(struct pool *pp, void *v)
 	LIST_INIT(&pq);
 
 	mutex_enter(&pp->pr_lock);
-	pool_do_put(pp, v, &pq);
+	if (!pool_put_quarantine(pp, v, &pq)) {
+		pool_do_put(pp, v, &pq);
+	}
 	mutex_exit(&pp->pr_lock);
 
 	pr_pagelist_free(pp, &pq);
@@ -2586,6 +2605,10 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 	pool_cache_redzone_check(pc, object);
 	FREECHECK_IN(&pc->pc_freecheck, object);
 
+	if (pool_cache_put_quarantine(pc, object, pa)) {
+		return;
+	}
+
 	/* Lock out interrupts and disable preemption. */
 	s = splvm();
 	while (/* CONSTCOND */ true) {
@@ -2847,6 +2870,64 @@ pool_cache_kleak_fill(pool_cache_t pc, void *p)
 		return;
 	}
 	pool_kleak_fill(&pc->pc_pool, p);
+}
+#endif
+
+#ifdef POOL_QUARANTINE
+static void
+pool_quarantine_init(struct pool *pp)
+{
+	pp->pr_quar.rotor = 0;
+	memset(&pp->pr_quar, 0, sizeof(pp->pr_quar));
+}
+
+static void
+pool_quarantine_flush(struct pool *pp)
+{
+	pool_quar_t *quar = &pp->pr_quar;
+	struct pool_pagelist pq;
+	size_t i;
+
+	LIST_INIT(&pq);
+
+	mutex_enter(&pp->pr_lock);
+	for (i = 0; i < POOL_QUARANTINE_DEPTH; i++) {
+		if (quar->list[i] == 0)
+			continue;
+		pool_do_put(pp, (void *)quar->list[i], &pq);
+	}
+	mutex_exit(&pp->pr_lock);
+
+	pr_pagelist_free(pp, &pq);
+}
+
+static bool
+pool_put_quarantine(struct pool *pp, void *v, struct pool_pagelist *pq)
+{
+	pool_quar_t *quar = &pp->pr_quar;
+	uintptr_t old;
+
+	if (pp->pr_roflags & PR_NOTOUCH) {
+		return false;
+	}
+
+	pool_redzone_check(pp, v);
+
+	old = quar->list[quar->rotor];
+	quar->list[quar->rotor] = (uintptr_t)v;
+	quar->rotor = (quar->rotor + 1) % POOL_QUARANTINE_DEPTH;
+	if (old != 0) {
+		pool_do_put(pp, (void *)old, pq);
+	}
+
+	return true;
+}
+
+static bool
+pool_cache_put_quarantine(pool_cache_t pc, void *p, paddr_t pa)
+{
+	pool_cache_destruct_object(pc, p);
+	return true;
 }
 #endif
 
