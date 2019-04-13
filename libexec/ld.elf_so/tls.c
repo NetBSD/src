@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.11 2017/07/13 14:10:38 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.12 2019/04/13 00:23:32 rin Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.11 2017/07/13 14:10:38 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.12 2019/04/13 00:23:32 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -276,7 +276,7 @@ _rtld_tls_offset_free(Obj_Entry *obj)
 	return;
 }
 
-#ifdef __HAVE_COMMON___TLS_GET_ADDR
+#if defined(__HAVE_COMMON___TLS_GET_ADDR) && defined(RTLD_LOADER)
 /*
  * The fast path is access to an already allocated DTV entry.
  * This checks the current limit and the entry without needing any
