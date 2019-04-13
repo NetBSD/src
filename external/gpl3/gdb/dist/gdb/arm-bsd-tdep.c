@@ -83,7 +83,7 @@ armbsd_supply_gregset (const struct regset *regset,
     }
 
   if (regnum == ARM_PS_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, i, regs + 16 * 4);
+    regcache_raw_supply (regcache, ARM_PS_REGNUM, regs + 16 * 4);
 
   if (len >= ARMBSD_SIZEOF_GREGS + ARMBSD_SIZEOF_FPREGS)
     {
