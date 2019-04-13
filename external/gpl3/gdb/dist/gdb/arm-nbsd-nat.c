@@ -303,7 +303,6 @@ fetch_fp_regs (struct regcache *regcache)
 {
   struct fpreg inferior_fp_registers;
   int ret;
-  int regno;
 
   ret = ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
 		(PTRACE_TYPE_ARG3) &inferior_fp_registers, ptid_get_lwp(inferior_ptid));
@@ -599,7 +598,7 @@ fetch_elfcore_registers (struct regcache *regcache,
 
 static struct core_fns arm_netbsd_core_fns =
 {
-  bfd_target_unknown_flavour,		/* core_flovour.  */
+  bfd_target_unknown_flavour,		/* core_flavour.  */
   default_check_format,			/* check_format.  */
   default_core_sniffer,			/* core_sniffer.  */
   fetch_core_registers,			/* core_read_registers.  */
@@ -608,7 +607,7 @@ static struct core_fns arm_netbsd_core_fns =
 
 static struct core_fns arm_netbsd_elfcore_fns =
 {
-  bfd_target_elf_flavour,		/* core_flovour.  */
+  bfd_target_elf_flavour,		/* core_flavour.  */
   default_check_format,			/* check_format.  */
   default_core_sniffer,			/* core_sniffer.  */
   fetch_elfcore_registers,		/* core_read_registers.  */
