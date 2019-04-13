@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.322 2018/12/19 13:57:45 maxv Exp $
+# $NetBSD: GENERIC,v 1.323 2019/04/13 08:26:14 isaki Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.135 2017/09/13 22:24:42 sevan Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.141 2019/04/13 08:22:58 isaki Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.322 $"
+#ident 		"GENERIC-$Revision: 1.323 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -567,6 +567,7 @@ pseudo-device	putter			# for puffs and pud
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 
 #pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
