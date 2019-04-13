@@ -1,7 +1,7 @@
-/*	$NetBSD: cache_octeon.c,v 1.2 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: cache_octeon.c,v 1.3 2019/04/13 21:39:46 maya Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_octeon.c,v 1.2 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_octeon.c,v 1.3 2019/04/13 21:39:46 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,16 +97,6 @@ octeon_pdcache_inv_range_index(vaddr_t va, vsize_t size)
 /* ---- debug dump */
 
 #ifdef OCTEON_ICACHE_DEBUG
-
-#ifndef __BIT
-/* __BIT(n): nth bit, where __BIT(0) == 0x1. */
-#define __BIT(__n)	\
-	(((__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (__n)))
-
-/* __BITS(m, n): bits m through n, m < n. */
-#define __BITS(__m, __n)	\
-	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
-#endif
 
 /* icache: 16KB, 2ways */
 
