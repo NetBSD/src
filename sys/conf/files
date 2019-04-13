@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1233 2019/04/09 22:05:27 pgoyette Exp $
+#	$NetBSD: files,v 1.1234 2019/04/13 08:41:36 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -32,6 +32,7 @@ defflag				GPROF
 defflag				KASAN
 defflag				KLEAK
 defflag				KCOV
+defflag opt_pool.h		POOL_QUARANTINE
 
 defparam opt_copy_symtab.h	makeoptions_COPY_SYMTAB
 
