@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.109 2019/02/06 11:58:31 rin Exp $
+#	$NetBSD: TX3922,v 1.110 2019/04/13 08:22:59 isaki Exp $
 #
 include 	"arch/hpcmips/conf/std.hpcmips"
 
@@ -362,6 +362,7 @@ pseudo-device	wsmux
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.

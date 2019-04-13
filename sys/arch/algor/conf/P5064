@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.89 2019/02/06 11:58:30 rin Exp $
+#	$NetBSD: P5064,v 1.90 2019/04/13 08:22:58 isaki Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.89 $"
+#ident 		"P5064-$Revision: 1.90 $"
 
 maxusers 32
 
@@ -390,3 +390,4 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM			# use "com" randomness too
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem

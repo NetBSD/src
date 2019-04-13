@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.171 2019/02/06 11:58:30 rin Exp $
+# $NetBSD: GENERIC,v 1.172 2019/04/13 08:22:59 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -564,6 +564,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.

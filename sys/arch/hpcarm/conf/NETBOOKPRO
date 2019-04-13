@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.26 2018/10/23 19:58:52 jdolecek Exp $
+#	$NetBSD: NETBOOKPRO,v 1.27 2019/04/13 08:22:59 isaki Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 # estimated number of users
 maxusers	32
@@ -304,6 +304,7 @@ pseudo-device	biconsdev 1		# build-in console device
 
 pseudo-device	md			# Ramdisk driver
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)

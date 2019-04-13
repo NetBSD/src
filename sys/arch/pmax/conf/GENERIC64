@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.29 2018/08/01 20:04:13 maxv Exp $
+# $NetBSD: GENERIC64,v 1.30 2019/04/13 08:23:00 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/pmax/conf/std.pmax64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.29 $"
+#ident		"GENERIC-$Revision: 1.30 $"
 
 maxusers	64
 
@@ -283,6 +283,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss		 	# file system snapshot device
 
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsfont			# wsfont control device
 pseudo-device	wsmux			# wsmux control device
