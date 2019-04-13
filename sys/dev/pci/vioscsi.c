@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.20 2018/06/10 14:59:23 jakllsch Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.21 2019/04/13 06:17:33 maxv Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.20 2018/06/10 14:59:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.21 2019/04/13 06:17:33 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,6 +270,7 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	struct virtio_scsi_req_hdr *req;
 	struct virtqueue *vq = &sc->sc_vqs[VIOSCSI_VQ_REQUEST];
 	int slot, error;
+	bool dopoll;
 
 	DPRINTF(("%s: enter\n", __func__));
 
@@ -418,9 +419,10 @@ stuffup:
             sizeof(struct virtio_scsi_res_hdr), 0);
 	if (xs->xs_control & XS_CTL_DATA_IN)
 		virtio_enqueue(vsc, vq, slot, vr->vr_data, 0);
+	dopoll = (xs->xs_control & XS_CTL_POLL) != 0;
 	virtio_enqueue_commit(vsc, vq, slot, 1);
 
-	if ((xs->xs_control & XS_CTL_POLL) == 0)
+	if (!dopoll)
 		return;
 
 	DPRINTF(("%s: polling...\n", __func__));
