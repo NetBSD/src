@@ -57,8 +57,8 @@ Boston, MA 02111-1307, USA.  */
 #undef LINK_SPEC
 #define LINK_SPEC \
   "%{m64:-m elf64lriscv} \
-   %{m32:-m elf32lriscv} \
-   %(netbsd_link_spec)"
+   %{m32:-m elf32lriscv}" \
+   NETBSD_LINK_SPEC_ELF
 
 #undef NETBSD_ENTRY_POINT
 #define NETBSD_ENTRY_POINT	"_start"
