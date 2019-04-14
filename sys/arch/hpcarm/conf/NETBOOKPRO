@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.27 2019/04/13 08:22:59 isaki Exp $
+#	$NetBSD: NETBOOKPRO,v 1.28 2019/04/14 04:16:32 isaki Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.28 $"
 
 # estimated number of users
 maxusers	32
@@ -177,7 +177,7 @@ iic*	at nbpiic?
 
 nbppcon* at iic? addr 0x13			# PCon
 r2025rtc* at iic? addr 0x32			# R2025S RTC
-seeprom* at iic? addr 0x53 size 128
+seeprom* at iic? addr 0x53
 
 nbppm* at nbppcon? tag 0x05
 hpcapm* at nbppm?
