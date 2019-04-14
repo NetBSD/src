@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.163 2018/12/10 20:48:34 jdolecek Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.164 2019/04/14 15:55:24 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.163 2018/12/10 20:48:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.164 2019/04/14 15:55:24 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1259,7 +1259,7 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode, int realsize,
 	struct buf *bp, *ibp;
 	u_int8_t *inosused;
 	int error, start, len, loc, map, i;
-	int32_t initediblk;
+	int32_t initediblk, maxiblk, irotor;
 	daddr_t nalloc;
 	struct ufs2_dinode *dp2;
 	const int needswap = UFS_FSNEEDSWAP(fs);
@@ -1271,7 +1271,13 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode, int realsize,
 		return (0);
 	mutex_exit(&ump->um_lock);
 	ibp = NULL;
-	initediblk = -1;
+	if (fs->fs_magic == FS_UFS2_MAGIC) {
+		initediblk = -1;
+	} else {
+		initediblk = fs->fs_ipg;
+	}
+	maxiblk = initediblk;
+
 retry:
 	error = bread(ip->i_devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, B_MODIFY, &bp);
@@ -1291,7 +1297,8 @@ retry:
 	 * Check to see if we need to initialize more inodes.
 	 */
 	if (fs->fs_magic == FS_UFS2_MAGIC && ibp == NULL) {
-		initediblk = ufs_rw32(cgp->cg_initediblk, needswap);
+	        initediblk = ufs_rw32(cgp->cg_initediblk, needswap);
+		maxiblk = initediblk;
 		nalloc = fs->fs_ipg - ufs_rw32(cgp->cg_cs.cs_nifree, needswap);
 		if (nalloc + FFS_INOPB(fs) > initediblk &&
 		    initediblk < ufs_rw32(cgp->cg_niblk, needswap)) {
@@ -1307,6 +1314,9 @@ retry:
 			    FFS_NOBLK, fs->fs_bsize, false, &ibp);
 			if (error)
 				goto fail;
+
+			maxiblk += FFS_INOPB(fs);
+			
 			goto retry;
 		}
 	}
@@ -1316,14 +1326,22 @@ retry:
 	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
 		cgp->cg_time = ufs_rw64(time_second, needswap);
 	inosused = cg_inosused(cgp, needswap);
+	
 	if (ipref) {
 		ipref %= fs->fs_ipg;
-		if (isclr(inosused, ipref))
+		/* safeguard to stay in (to be) allocated range */
+		if (ipref < maxiblk && isclr(inosused, ipref))
 			goto gotit;
 	}
-	start = ufs_rw32(cgp->cg_irotor, needswap) / NBBY;
-	len = howmany(fs->fs_ipg - ufs_rw32(cgp->cg_irotor, needswap),
-		NBBY);
+
+	irotor = ufs_rw32(cgp->cg_irotor, needswap); 
+
+	KASSERTMSG(irotor < initediblk, "%s: allocation botch: cg=%d, irotor %d"
+		   " out of bounds, initediblk=%d",
+		   __func__, cg, irotor, initediblk);
+
+	start = irotor / NBBY;
+	len = howmany(maxiblk - irotor, NBBY);
 	loc = skpc(0xff, len, &inosused[start]);
 	if (loc == 0) {
 		len = start + 1;
@@ -1341,9 +1359,17 @@ retry:
 	if (map == 0) {
 		panic("%s: block not in map: fs=%s", __func__, fs->fs_fsmnt);
 	}
+	
 	ipref = i * NBBY + ffs(map) - 1;
+
 	cgp->cg_irotor = ufs_rw32(ipref, needswap);
+
 gotit:
+	KASSERTMSG(ipref < maxiblk, "%s: allocation botch: cg=%d attempt to "
+		   "allocate inode index %d beyond max allocated index %d"
+		   " of %d inodes/cg",
+		   __func__, cg, (int)ipref, maxiblk, cgp->cg_niblk);
+
 	UFS_WAPBL_REGISTER_INODE(ip->i_ump->um_mountp, cg * fs->fs_ipg + ipref,
 	    mode);
 	/*
