@@ -3,7 +3,7 @@
 #endif
 #define JEMALLOC_INTERNAL_TSD_TLS_H
 
-extern __thread tsd_t tsd_tls;
+extern __thread tsd_t JEMALLOC_TLS_MODEL tsd_tls;
 extern pthread_key_t tsd_tsd;
 extern bool tsd_booted;
 
