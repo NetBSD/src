@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.17 2018/02/17 20:16:18 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.18 2019/04/14 01:45:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.17 2018/02/17 20:16:18 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.18 2019/04/14 01:45:30 christos Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -140,6 +140,7 @@ peercred(int s, uid_t *euid, gid_t *egid, pid_t *pid)
 	*pid = cred.unp_pid;
 	return 0;
 #else
+	*pid = -1;
 	return getpeereid(s, euid, egid);
 #endif
 }
