@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.273 2019/04/08 18:38:45 maxv Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.274 2019/04/14 09:09:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.273 2019/04/08 18:38:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.274 2019/04/14 09:09:55 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1841,6 +1841,10 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 		if (error)
 			break;
 
+		if (tv.tv_sec < 0 || tv.tv_usec < 0 || tv.tv_usec >= 1000000) {
+			error = EDOM;
+			break;
+		}
 		if (tv.tv_sec > (INT_MAX - tv.tv_usec / tick) / hz) {
 			error = EDOM;
 			break;
