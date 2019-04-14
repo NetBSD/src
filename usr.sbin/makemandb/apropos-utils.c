@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.41 2019/03/07 22:08:59 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.42 2019/04/14 07:59:56 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.41 2019/03/07 22:08:59 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.42 2019/04/14 07:59:56 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -699,10 +699,13 @@ execute_search_query(sqlite3 *db, char *query, query_args *args)
 		name_temp = (const char *) sqlite3_column_text(stmt, 1);
 		callback_args.name_desc = (const char *) sqlite3_column_text(stmt, 2);
 		callback_args.machine = (const char *) sqlite3_column_text(stmt, 3);
-		if (!args->legacy)
+		if (!args->legacy) {
 			callback_args.snippet = (const char *) sqlite3_column_text(stmt, 4);
-		else
+			callback_args.snippet_length = strlen(callback_args.snippet);
+		} else {
 			callback_args.snippet = "";
+			callback_args.snippet_length = 1;
+		}
 		if ((slash_ptr = strrchr(name_temp, '/')) != NULL)
 			name_temp = slash_ptr + 1;
 		if (callback_args.machine && callback_args.machine[0]) {
