@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.elf_so.1,v 1.18 2019/04/14 20:27:02 maya Exp $
+.\"	$NetBSD: ld.elf_so.1,v 1.19 2019/04/14 22:09:50 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,9 +67,12 @@ Each
 .Xr elf 5
 object file may contain information in its dynamic (PT_DYNAMIC) section
 about which shared objects it requires (often referred to as dependencies).
-These dependencies are specified in the optional DT_NEEDED entry within
-the dynamic section.
-Each DT_NEEDED entry refers to a filename string of
+These dependencies are specified in the optional
+.Dv DT_NEEDED
+entry within the dynamic section.
+Each
+.Dv DT_NEEDED
+entry refers to a filename string of
 the shared object that is to be searched for.
 .Pp
 The linker will search for libraries in three lists of paths:
@@ -81,8 +84,11 @@ A user defined list of paths as specified in LD_LIBRARY_PATH and
 The use of ld.so.conf should be avoided as the setting of a global search
 path can present a security risk.
 .It
-A list of paths specified within a shared object using the DT_RPATH and
-DT_RUNPATH entries in the dynamic section.
+A list of paths specified within a shared object using the
+.Dv DT_RPATH
+and
+.Dv DT_RUNPATH
+entries in the dynamic section.
 This is defined at shared object link time.
 .It
 The list of default paths which is set to
@@ -91,7 +97,11 @@ The list of default paths which is set to
 .Pp
 Dynamic loading via
 .Xr dlopen 3
-uses the DT_RPATH and DT_RUNPATH entries of the main binary, independently of
+uses the
+.Dv DT_RPATH
+and
+.Dv DT_RUNPATH
+entries of the main binary, independently of
 which object the call came from.
 .Pp
 .Nm
@@ -157,7 +167,11 @@ begins or after the program has completed.
 This gives a shared object an opportunity to perform
 any extra set-up or completion work.
 .Pp
-The DT_INIT and DT_FINI entries in the dynamic section specify the addresses
+The
+.Dv DT_INIT
+and
+.Dv DT_FINI
+entries in the dynamic section specify the addresses
 of the initialization and termination functions, respectively, for
 the shared object.
 .Nm
