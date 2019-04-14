@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.69 2019/03/23 13:05:24 maxv Exp $	*/
+/*	$NetBSD: trap.S,v 1.70 2019/04/14 08:23:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"
 
-/* 
+/*
  * NOTICE: This is not a standalone file.  To use it, #include it in
  * your port's locore.S, like so:
  *
@@ -220,7 +220,7 @@ syscall_entry:
 	ldw	CI_PSW(%sr1, %t1), %t1
 	stw	%r1, TF_CR15-TRAPFRAME_SIZEOF(%sr1, %t3)	/* eiem ,bc (block copy cache control hint) */
 	stw	%t1, TF_CR22-TRAPFRAME_SIZEOF(%sr1, %t3)	/* ipsw */
- 
+
 	mfsp	%sr3, %t1
 	stw	%t1, TF_SR3-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%ret0, TF_CR8-TRAPFRAME_SIZEOF(%sr1, %t3)	/* pidr1 */
@@ -741,7 +741,7 @@ EXIT(os_toc)
 ENTRY_NOPROFILE(TLABEL(hpmc),0)
 ALTENTRY(os_hpmc_cont)
 	ldi	T_HPMC, %arg0
-	
+
 	/* Disable interrupts. */
 	mtctl	%r0, %eiem
 
@@ -865,7 +865,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 	 */
 	mtctl	%arg0, %tr2
 	mfctl	%iir, %arg0
-	
+
 	/*
 	 * If the opcode field in the instruction is 4, indicating a special
 	 * function unit SPOP instruction, branch to emulate an sfu.  If the
@@ -912,7 +912,7 @@ hppa_fpu_emulate:
 	 * need to swap out the FPU state of any LWP whose uspace physical
 	 * address is in curcpu()->ci_fpu_state.
 	 */
-	
+
 	/*
 	 * So far, the CTRAP() macro has saved %r1 in %tr7, and the dispatching
 	 * above has saved %arg0 in tr2.  Save the other registers that we want
@@ -929,7 +929,7 @@ hppa_fpu_emulate:
 	blr	0, %rp
 	b	hppa_fpu_swap
 	nop
-	
+
 	/* Restore registers and rfi. */
 	mfctl	%tr5, %rp
 	mfctl	%tr4, %arg1
@@ -1015,7 +1015,7 @@ ALTENTRY(hppa_fpu_swap)
 	/*
 	 * Assuming that out and in aren't both NULL, we will have to run co-
 	 * processor instructions, so we'd better enable it.
-	 * 
+	 *
 	 * Also, branch if there's no FPU state to swap out.
 	 */
 	mfctl	CR_CCR, %r1
@@ -1775,7 +1775,7 @@ EXIT(hpti_l)
 LEAF_ENTRY_NOPROFILE(pbtlb_l)
 	; DR_PAGE0
 	rsm	(PSW_R|PSW_I), %t4
-	nop ! nop ! nop ! nop 
+	nop ! nop ! nop ! nop
 	ldil	L%0xc041, %t1
 	ldo	R%0xc041(%t1), %t1
 	dep	%arg0, 30, 3, %t1
