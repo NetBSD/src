@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd_50.c,v 1.3 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: vnd_50.c,v 1.4 2019/04/14 11:35:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd_50.c,v 1.3 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd_50.c,v 1.4 2019/04/14 11:35:54 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: vnd_50.c,v 1.3 2019/03/01 11:06:56 pgoyette Exp $");
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
-#include <sys/vnode.h>
 #include <sys/compat_stub.h>
 
 #include <net/zlib.h>
