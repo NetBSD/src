@@ -3,8 +3,8 @@
 #endif
 #define JEMALLOC_INTERNAL_TSD_MALLOC_THREAD_CLEANUP_H
 
-extern __thread tsd_t tsd_tls;
-extern __thread bool tsd_initialized;
+extern __thread tsd_t JEMALLOC_TLS_MODEL tsd_tls;
+extern __thread bool JEMALLOC_TLS_MODEL tsd_initialized;
 extern bool tsd_booted;
 
 /* Initialization/cleanup. */
