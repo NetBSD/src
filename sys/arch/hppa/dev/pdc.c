@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.3 2014/07/27 02:56:09 dholland Exp $	*/
+/*	$NetBSD: pdc.c,v 1.4 2019/04/15 20:40:37 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.3 2014/07/27 02:56:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.4 2019/04/15 20:40:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,7 +567,7 @@ pdcproc_chassis_display(unsigned long disp)
 	int err;
 
 	err = pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_DISP, disp);
-	
+
 	return err;
 }
 
@@ -583,7 +583,7 @@ pdcproc_chassis_info(struct pdc_chassis_info *pci, struct pdc_chassis_lcd *pcl)
 
 	memcpy(pci, &pdcret1, sizeof(*pci));
 	memcpy(pcl, &pdcret2, sizeof(*pcl));
-	
+
 	return err;
 }
 
@@ -747,7 +747,7 @@ pdcproc_instr(unsigned int *mem)
 
 	return err;
 }
- 
+
 int
 pdcproc_block_tlb(struct pdc_btlb *pb)
 {
@@ -852,7 +852,7 @@ pdcproc_system_map_find_addr(struct pdc_system_map_find_addr *psm, int mod,
 	memcpy(psm, &pdcret1, sizeof(*psm));
 
 	return err;
-	
+
 }
 
 int
@@ -876,7 +876,7 @@ int
 pdcproc_soft_power_info(struct pdc_power_info *pspi)
 {
 	int err;
-	
+
 	err = pdc_call((iodcio_t)pdc, 0, PDC_SOFT_POWER, PDC_SOFT_POWER_INFO,
 	    &pdcret1, 0);
 	if (err < 0)
@@ -993,7 +993,7 @@ pdcproc_pci_gettable(int nentries, size_t size, void *table)
 	    &pdcret1, 0, &int_tbl);
 	if (err < 0)
 		return err;
-	    
+
 	memcpy(table, int_tbl, size);
 
 	return err;
