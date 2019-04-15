@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.29 2012/04/29 20:27:31 dsl Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.30 2019/04/15 21:00:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.29 2012/04/29 20:27:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.30 2019/04/15 21:00:33 christos Exp $");
 
 /*
  * Connection engine.
@@ -553,7 +553,8 @@ smb_vc_create(struct smb_vcspec *vcspec,
 	if ((vcp->vc_paddr = dup_sockaddr(vcspec->sap, 1)) == NULL)
 		goto fail;
 
-	if ((vcp->vc_laddr = dup_sockaddr(vcspec->lap, 1)) == NULL)
+	if (vcspec->lap && 
+	    (vcp->vc_laddr = dup_sockaddr(vcspec->lap, 1)) == NULL)
 		goto fail;
 
 	if ((vcp->vc_pass = smb_strdup(vcspec->pass)) == NULL)
