@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2019/04/15 20:46:10 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2019/04/15 20:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2019/04/15 20:46:10 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -631,7 +631,6 @@ pdc_scanbus(device_t self, struct confargs *ca,
 
 		if (dev)
 			hm->hm_registered = true;
-
 	}
 }
 
