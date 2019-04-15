@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.17 2014/03/06 19:02:58 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.18 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 /*
- * Definitions for the hppa that are completely private 
+ * Definitions for the hppa that are completely private
  * to the machine-dependent code.  Anything needed by
  * machine-independent code is covered in cpu.h or in
  * other headers.
  */
 
 /*
- * XXX there is a lot of stuff in various headers under 
+ * XXX there is a lot of stuff in various headers under
  * hppa/include, and a lot of one-off `extern's in C files
  * that could probably be moved here.
  */
@@ -103,7 +103,7 @@ extern u_int os_toc_end;
 void hppa_machine_check(int);
 
 /* BTLB handling. */
-int hppa_btlb_insert(pa_space_t, vaddr_t, paddr_t, vsize_t *, u_int); 
+int hppa_btlb_insert(pa_space_t, vaddr_t, paddr_t, vsize_t *, u_int);
 int hppa_btlb_reload(void);
 int hppa_btlb_purge(pa_space_t, vaddr_t, vsize_t *);
 
