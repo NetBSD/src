@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.448 2019/04/11 03:07:11 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.449 2019/04/15 20:51:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.448 2019/04/11 03:07:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.449 2019/04/15 20:51:46 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3328,6 +3328,7 @@ ifconf(u_long cmd, void *data)
 	int bound;
 	struct psref psref;
 
+	memset(&ifr, 0, sizeof(ifr));
 	if (docopy) {
 		space = ifc->ifc_len;
 		ifrp = ifc->ifc_req;
