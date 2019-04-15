@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2019/04/06 11:54:25 maya Exp $
+# $NetBSD: Makefile,v 1.2 2019/04/15 20:21:35 christos Exp $
 
 .include <bsd.own.mk>
 
-TESTSDIR=	${TESTSBASE}/modules
+TESTSDIR=	${TESTSBASE}/modules/ufetchstore
 CPPFLAGS+=	-D_KERNTYPES -I${.CURDIR}/module
 
 # Ideally this test could be in the parent Makefile, which could not descend
