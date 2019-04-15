@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.277 2019/04/15 03:58:29 pgoyette Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.278 2019/04/15 10:53:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.277 2019/04/15 03:58:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.278 2019/04/15 10:53:17 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1713,15 +1713,6 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 
 	opt = sopt->sopt_name;
 
-	MODULE_HOOK_CALL(uipc_socket_50_setopt1_hook, (opt, so, sopt, &tv),
-	    enosys(), error);
-	if (error == EPASSTHROUGH)
-		error = EINVAL;
-	else if (error && error != ENOSYS) {
-		KASSERT(solocked(so));
-		return error;
-	}
-
 	switch (opt) {
 
 	case SO_ACCEPTFILTER:
@@ -1822,19 +1813,10 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 		}
 		break;
 
-	case SO_OSNDTIMEO:
-	case SO_ORCVTIMEO:
-		if (error == ENOSYS) {
-			error = EINVAL;
-			solock(so);
-			break;
-		}
-		/* FALLTHROUGH */
 	case SO_SNDTIMEO:
 	case SO_RCVTIMEO:
-		if (error)
-			error = sockopt_get(sopt, &tv, sizeof(tv));
 		solock(so);
+		error = sockopt_get(sopt, &tv, sizeof(tv));
 		if (error)
 			break;
 
@@ -1852,11 +1834,9 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 			optval = 1;
 
 		switch (opt) {
-		case SO_OSNDTIMEO:
 		case SO_SNDTIMEO:
 			so->so_snd.sb_timeo = optval;
 			break;
-		case SO_ORCVTIMEO:
 		case SO_RCVTIMEO:
 			so->so_rcv.sb_timeo = optval;
 			break;
@@ -1864,10 +1844,12 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 		break;
 
 	default:
-		if (error == 0)
-			break;
-		solock(so);
-		error = ENOPROTOOPT;
+		MODULE_HOOK_CALL(uipc_socket_50_setopt1_hook,
+		    (opt, so, sopt), enosys(), error);
+		if (error == ENOSYS || error == EPASSTHROUGH) {
+			solock(so);
+			error = ENOPROTOOPT;
+		}
 		break;
 	}
 	KASSERT(solocked(so));
@@ -2006,7 +1988,7 @@ sogetopt1(struct socket *so, struct sockopt *sopt)
 
 	default:
 		MODULE_HOOK_CALL(uipc_socket_50_getopt1_hook,
-		    (opt, so, sopt, &tv), enosys(), error);
+		    (opt, so, sopt), enosys(), error);
 		if (error)
 			error = ENOPROTOOPT;
 		break;

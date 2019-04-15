@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.12 2019/04/15 02:07:11 pgoyette Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.13 2019/04/15 10:53:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -224,13 +224,12 @@ MODULE_HOOK(uipc_syscalls_40_hook, int, (u_long, void *));
  * uipc_socket_50 compatibility
  */
 struct sockopt;
-struct timeval;
 struct mbuf;
 
 MODULE_HOOK(uipc_socket_50_setopt1_hook, int,
-    (int, struct socket *, const struct sockopt *, struct timeval *));
+    (int, struct socket *, const struct sockopt *));
 MODULE_HOOK(uipc_socket_50_getopt1_hook, int,
-    (int, struct socket *, struct sockopt *, struct timeval *));
+    (int, struct socket *, struct sockopt *));
 MODULE_HOOK(uipc_socket_50_sbts_hook, int, (int, struct mbuf **));
 
 /*

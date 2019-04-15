@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uipc_socket_50.c,v 1.1 2019/04/15 02:07:11 pgoyette Exp $	*/
+/*	$NetBSD: kern_uipc_socket_50.c,v 1.2 2019/04/15 10:53:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uipc_socket_50.c,v 1.1 2019/04/15 02:07:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uipc_socket_50.c,v 1.2 2019/04/15 10:53:17 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -121,8 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_uipc_socket_50.c,v 1.1 2019/04/15 02:07:11 pgoy
 #include <compat/common/compat_mod.h>
 
 static int
-uipc_socket_50_getopt1(int opt, struct socket *so, struct sockopt *sopt,
-    struct timeval *tv)
+uipc_socket_50_getopt1(int opt, struct socket *so, struct sockopt *sopt)
 {
 	int optval, error;
 	struct timeval50 otv;
@@ -151,27 +150,46 @@ uipc_socket_50_getopt1(int opt, struct socket *so, struct sockopt *sopt,
 }
 
 static int
-uipc_socket_50_setopt1(int opt, struct socket *so, const struct sockopt *sopt,
-    struct timeval *tv)
+uipc_socket_50_setopt1(int opt, struct socket *so, const struct sockopt *sopt)
 {
 	int optval, error;
 	struct timeval50 otv;
+	struct timeval tv;
 
 	switch (opt) {
 
 	case SO_OSNDTIMEO:
 	case SO_ORCVTIMEO:
+		solock(so);
+
 		error = sockopt_get(sopt, &otv, sizeof(otv));
-		if (error) {
-			solock(so);
+		if (error)
+			break;
+
+		timeval50_to_timeval(&otv, &tv);
+
+		/* Code duplicated from sys/kern/uipc_socket.c */
+		if (tv.tv_sec < 0 || tv.tv_usec < 0 || tv.tv_usec >= 1000000) {
+			error = EDOM;
 			break;
 		}
-		timeval50_to_timeval(&otv, tv);
-		opt = opt == SO_OSNDTIMEO ? SO_SNDTIMEO : SO_RCVTIMEO;
-		/*
-		 * Processing will continue as for SO_SNDTIMEO
-		 * and SO_RCVTIMEO, using the new-format tv
-		 */
+		if (tv.tv_sec > (INT_MAX - tv.tv_usec / tick) / hz) {
+			error = EDOM;
+			break;
+		}
+
+		optval = tv.tv_sec * hz + tv.tv_usec / tick;
+		if (optval == 0 && tv.tv_usec != 0)
+			optval = 1;
+
+		switch (opt) {
+		case SO_OSNDTIMEO:
+			so->so_snd.sb_timeo = optval;
+			break;
+		case SO_ORCVTIMEO:
+			so->so_rcv.sb_timeo = optval;
+			break;
+		}	
 		break;
 
 	case SO_OTIMESTAMP:
