@@ -77,9 +77,9 @@ com_dino_match(device_t parent, cfdata_t match, void *aux)
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO ||
 	    ca->ca_type.iodc_sv_model != HPPA_FIO_GRS232)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 	/* HOZER comprobe1(ca->ca_iot, ca->ca_hpa + IOMOD_DEVOFFSET); */
 }
 
