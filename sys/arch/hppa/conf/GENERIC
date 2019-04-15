@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.25 2019/03/23 13:05:24 maxv Exp $
+# $NetBSD: GENERIC,v 1.26 2019/04/15 20:38:18 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.25 $"
+#ident 		"GENERIC-$Revision: 1.26 $"
 
 maxusers	32		# estimated number of users
 
@@ -248,7 +248,7 @@ dino*	at uturn?		# PCI bus bridge
 #dino*	at gecko?		# PCI bus bridge
 #wax*	at gecko?		# Wax GSC to GSC Bus Adapter
 
-# Astro memory & I/O controller 
+# Astro memory & I/O controller
 astro*	at mainbus0		# Astro memory & I/O controller
 elroy*	at astro?
 
