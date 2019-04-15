@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.2 2019/04/15 20:40:37 skrll Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.38 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.1 2014/02/24 07:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.2 2019/04/15 20:40:37 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -126,7 +126,7 @@ sti_sgc_getrom(struct confargs *ca)
 		if (i < 0)
 			rom = 0;
 	}
-	
+
 	if (rom < HPPA_IOBEGIN) {
 		if (ca->ca_naddrs > 0)
 			rom = ca->ca_addrs[0].addr;
@@ -235,7 +235,7 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 	pagezero_cookie = hppa_pagezero_map();
 	consaddr = (hppa_hpa_t)PAGE0->mem_cons.pz_hpa;
 	hppa_pagezero_unmap(pagezero_cookie);
-	
+
 	sc->sc_dev = self;
 	sc->sc_enable_rom = NULL;
 	sc->sc_disable_rom = NULL;
@@ -280,6 +280,6 @@ void
 sti_sgc_end_attach(device_t dev)
 {
 	struct sti_softc *sc = device_private(dev);
-	
+
 	sti_end_attach(sc);
 }
