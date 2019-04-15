@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.4 2014/05/23 08:17:08 skrll Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.5 2019/04/15 20:45:08 skrll Exp $	*/
 /*	$OpenBSD: ipi.c,v 1.4 2011/01/14 13:20:06 jsing Exp $	*/
 
 /*
@@ -128,8 +128,8 @@ hppa_ipi_broadcast(u_long ipi)
 			if (hppa_ipi_send(ci, ipi))
 				count++;
 	}
-	
-	return count;	
+
+	return count;
 }
 
 static void

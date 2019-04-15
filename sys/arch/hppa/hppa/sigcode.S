@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.7 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.8 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -71,7 +71,7 @@
 ENTRY_NOPROFILE(sigcode,0)
 	.call
 	/*
-	 * Our sendsig() places the address of the signal handler 
+	 * Our sendsig() places the address of the signal handler
 	 * in %arg3.  It may actually be a PLABEL.
 	 */
 	bb,>=,n	%arg3, 30, L$sigcode_bounce	; branch if not a PLABEL
@@ -83,7 +83,7 @@ L$sigcode_bounce:
 	 * This blr puts the address of the following nop in rp.
 	 * It also schedules the nop for execution, which is why
 	 * that instruction has to be a nop, or, rather, not any
-	 * instruction only meant to execute once the signal handler 
+	 * instruction only meant to execute once the signal handler
 	 * returns.
 	 */
 	blr	%r0, %rp
@@ -97,7 +97,7 @@ L$sigcode_bounce:
 	/*
 	 * The signal handler has returned.  Since %r3 is on the list
 	 * of callee-saved registers, it's whatever the sendsig
-	 * code wanted it set to.  Since we copy it into arg0, 
+	 * code wanted it set to.  Since we copy it into arg0,
 	 * it looks like sendsig leaves %r3 holding the desired
 	 * single argument to sys___sigreturn14, i.e., the
 	 * struct sigcontext *.
