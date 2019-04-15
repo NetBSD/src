@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.108 2019/04/11 23:23:53 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.109 2019/04/15 16:47:47 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.108 2019/04/11 23:23:53 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.109 2019/04/15 16:47:47 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -86,6 +86,8 @@ static int debug = 0;
 #define DPRINTF(a, ...)	do  \
 	if (debug) printf(a,  ##__VA_ARGS__); \
     while (/*CONSTCOND*/0)
+
+#define TEST_VFORK_ENABLED 0
 
 /// ----------------------------------------------------------------------------
 
@@ -7275,18 +7277,19 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork7);
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork8);
 
+#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC(tp, vfork1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork2);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork3);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork4);
 	ATF_TP_ADD_TC(tp, vfork5);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork6);
-// thes tests hang on SMP machines, disable them for now // still true?
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork7);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork8);
 
 	ATF_TP_ADD_TC(tp, traceme_vfork_fork);
 	ATF_TP_ADD_TC(tp, traceme_vfork_vfork);
+#endif
 
 	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_8);
 	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_16);
@@ -7405,10 +7408,12 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork_singalmasked);
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork_singalignored);
+#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_singalmasked);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_singalignored);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vforkdone_singalmasked);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vforkdone_singalignored);
+#endif
 
 	ATF_TP_ADD_TC(tp, signal9);
 	ATF_TP_ADD_TC(tp, signal10);
@@ -7467,6 +7472,7 @@ ATF_TP_ADD_TCS(tp)
 //	ATF_TP_ADD_TC_HAVE_PID(tp, clone_sighand7); // XXX
 //	ATF_TP_ADD_TC_HAVE_PID(tp, clone_sighand8); // XXX
 
+#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC(tp, clone_vfork1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork2);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork3);
@@ -7475,6 +7481,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork6);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork7);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork8);
+#endif
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_signalignored);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_signalmasked);
@@ -7486,15 +7493,19 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_files_signalmasked);
 //	ATF_TP_ADD_TC_HAVE_PID(tp, clone_sighand_signalignored); // XXX
 //	ATF_TP_ADD_TC_HAVE_PID(tp, clone_sighand_signalmasked); // XXX
+#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork_signalignored);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork_signalmasked);
+#endif
 
+#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone);
 	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_vm);
 	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_fs);
 	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_files);
 //	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_sighand); // XXX
 	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_vfork);
+#endif
 
 	ATF_TP_ADD_TCS_PTRACE_WAIT_AMD64();
 	ATF_TP_ADD_TCS_PTRACE_WAIT_I386();
