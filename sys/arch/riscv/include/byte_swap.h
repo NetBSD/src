@@ -1,4 +1,4 @@
-/* $NetBSD: byte_swap.h,v 1.3 2014/10/28 20:25:36 dennis Exp $ */
+/* $NetBSD: byte_swap.h,v 1.4 2019/04/15 14:03:32 maya Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -88,10 +88,8 @@ __byte_swap_u32_variable(uint32_t v)
 static __inline uint16_t
 __byte_swap_u16_variable(uint16_t v)
 {
-	v &= 0xffff;
-	v = (v >> 8) | (v << 8);
 
-	return v;
+	return (uint16_t)((v >> 8) | (v << 8));
 }
 
 __END_DECLS
