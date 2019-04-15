@@ -1,4 +1,4 @@
-/*	$NetBSD: ufetchstore_tester.c,v 1.1 2019/04/06 03:06:29 thorpej Exp $	*/
+/*	$NetBSD: ufetchstore_tester.c,v 1.1 2019/04/15 23:41:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
