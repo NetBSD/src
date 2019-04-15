@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.276 2019/04/15 02:35:28 pgoyette Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.277 2019/04/15 03:58:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.276 2019/04/15 02:35:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.277 2019/04/15 03:58:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1864,6 +1864,8 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 		break;
 
 	default:
+		if (error == 0)
+			break;
 		solock(so);
 		error = ENOPROTOOPT;
 		break;
