@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.4 2017/08/10 19:03:26 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.5 2019/04/15 19:13:03 maya Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.4 2017/08/10 19:03:26 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.5 2019/04/15 19:13:03 maya Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -131,7 +131,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(RELATIVE): {
-			def = obj->symtab + r_symndx;
+			symnum = ELF_R_SYM(rela->r_info);
+			def = obj->symtab + symnum;
 
 			Elf_Addr val = (Elf_Addr)obj->relocbase + rela->r_addend;
 
