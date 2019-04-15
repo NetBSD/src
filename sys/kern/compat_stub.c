@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.8 2019/02/05 23:28:02 christos Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.9 2019/04/15 02:07:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -173,9 +173,16 @@ struct if43_cvtcmd_20_hook_t if43_cvtcmd_20_hook;
 struct tty_ttioctl_43_hook_t tty_ttioctl_43_hook;
 
 /*
- * uipc_syscalls_40 compatability
+ * uipc_syscalls_40 compatibility
  */
 struct uipc_syscalls_40_hook_t uipc_syscalls_40_hook;
+
+/*
+ * uipc_socket_50 compatibility
+ */
+struct uipc_socket_50_setopt1_hook_t uipc_socket_50_setopt1_hook;
+struct uipc_socket_50_getopt1_hook_t uipc_socket_50_getopt1_hook;
+struct uipc_socket_50_sbts_hook_t uipc_socket_50_sbts_hook;
 
 /*
  * uipc_syscalls_50 compatability

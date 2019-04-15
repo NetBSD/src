@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.3 2019/01/28 15:46:49 christos Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.4 2019/04/15 02:07:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -76,6 +76,8 @@ void rndpseudo_50_init(void);
 void rndpseudo_50_fini(void);
 void rtsock_50_init(void);
 void rtsock_50_fini(void);
+void kern_uipc_socket_50_init(void);
+void kern_uipc_socket_50_fini(void);
 #endif
 
 #ifdef COMPAT_40
