@@ -62,12 +62,3 @@ Boston, MA 02111-1307, USA.  */
 
 #undef NETBSD_ENTRY_POINT
 #define NETBSD_ENTRY_POINT	"_start"
-
-#undef SIZE_TYPE
-#define SIZE_TYPE "long unsigned int"
-
-#undef INTMAX_TYPE
-#define INTMAX_TYPE "long long int"
-
-#undef UINTMAX_TYPE
-#define UINTMAX_TYPE "long long unsigned int"
