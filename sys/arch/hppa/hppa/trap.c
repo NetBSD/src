@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.110 2019/04/06 11:54:20 kamil Exp $	*/
+/*	$NetBSD: trap.c,v 1.111 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110 2019/04/06 11:54:20 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2019/04/15 20:45:08 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -118,7 +118,7 @@ int ss_get_value(struct lwp *, vaddr_t, u_int *);
  * 0x6fc1000 is a stwm r1, d(sr0, sp), which is the last
  * instruction in the function prologue that gcc -O0 uses.
  * When we have this instruction we know the relationship
- * between the stack pointer and the gcc -O0 frame pointer 
+ * between the stack pointer and the gcc -O0 frame pointer
  * (in r3, loaded with the initial sp) for the body of a
  * function.
  *
@@ -301,7 +301,7 @@ trap_kdebug(int type, int code, struct trapframe *frame)
 			}
 			frame->tf_rctr = 0;
 		}
-	
+
 		/* We handled this trap. */
 		return (1);
 	}
@@ -325,11 +325,11 @@ user_backtrace_raw(u_int pc, u_int fp)
 	int arg_number;
 	uint32_t val;
 
-	for (frame_number = 0; 
+	for (frame_number = 0;
 	     frame_number < 100 && pc > HPPA_PC_PRIV_MASK && fp;
 	     frame_number++) {
 
-		printf("%3d: pc=%08x%s fp=0x%08x", frame_number, 
+		printf("%3d: pc=%08x%s fp=0x%08x", frame_number,
 		    pc & ~HPPA_PC_PRIV_MASK, USERMODE(pc) ? "  " : "**", fp);
 		for (arg_number = 0; arg_number < 4; arg_number++) {
 			if (ufetch_32(HPPA_FRAME_CARG(arg_number, fp),
@@ -362,7 +362,7 @@ user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 	 * Display any trap type that we have.
 	 */
 	if (type >= 0)
-		printf("pid %d (%s) trap #%d\n", 
+		printf("pid %d (%s) trap #%d\n",
 		    p->p_pid, p->p_comm, type & ~T_USER);
 
 	/*
@@ -527,7 +527,7 @@ trap(int type, struct trapframe *frame)
 	/*
 	 * If we are on the emergency stack, then we either got
 	 * a fault on the kernel stack, or we're just handling
-	 * a trap for the machine check handler (which also 
+	 * a trap for the machine check handler (which also
 	 * runs on the emergency stack).
 	 *
 	 * We *very crudely* differentiate between the two cases
@@ -539,7 +539,7 @@ trap(int type, struct trapframe *frame)
 	 * In this case, not completing that instruction will
 	 * probably confuse backtraces in kgdb/ddb.  Completing
 	 * it would be difficult, because we already faulted on
-	 * that part of the stack, so instead we fix up the 
+	 * that part of the stack, so instead we fix up the
 	 * frame as if the function called has just returned.
 	 * This has peculiar knowledge about what values are in
 	 * what registers during the "normal gcc -g" prologue.
@@ -555,7 +555,7 @@ trap(int type, struct trapframe *frame)
 		goto dead_end;
 	}
 #endif /* DIAGNOSTIC */
-		
+
 #ifdef DEBUG
 	frame_sanity_check(__func__, __LINE__, type, frame, l);
 #endif /* DEBUG */
@@ -750,7 +750,7 @@ do_onfault:
 		ksi.ksi_addr = (void *)va;
 		trapsignal(l, &ksi);
 		break;
-		
+
 	case T_CONDITION | T_USER:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGFPE;
@@ -895,7 +895,7 @@ do_onfault:
 					printf("UVM: pid %d (%s), uid %d "
 					    "killed: out of swap\n",
 					    p->p_pid, p->p_comm,
-					    l->l_cred ? 
+					    l->l_cred ?
 						kauth_cred_geteuid(l->l_cred)
 						: -1);
 					break;
@@ -1161,7 +1161,7 @@ syscall(struct trapframe *frame, int *args)
 	frame->tf_arg3 = args[3];
 
 	/*
-	 * Some special handling for the syscall(2) and 
+	 * Some special handling for the syscall(2) and
 	 * __syscall(2) system calls.
 	 */
 	switch (code) {
@@ -1284,7 +1284,7 @@ syscall(struct trapframe *frame, int *args)
 #endif /* DEBUG */
 }
 
-/* 
+/*
  * Start a new LWP
  */
 void

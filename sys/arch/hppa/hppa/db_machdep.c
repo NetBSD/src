@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.7 2012/04/02 13:18:04 skrll Exp $	*/
+ /*	$NetBSD: db_machdep.c,v 1.8 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.7 2012/04/02 13:18:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.8 2019/04/15 20:45:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -192,7 +192,7 @@ db_dump_trap(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	db_printf("\n");
 	db_printf("Other state\n");
 	db_printf("eiem:   %08x\n", tf->tf_eiem);
-	
+
 	snprintb(buf, sizeof(buf), PSW_BITS, tf->tf_ipsw);
 	db_printf("ipsw:   %s\n", buf);
 	db_printf("flags:  %08x\n", tf->tf_flags);

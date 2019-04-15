@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.26 2018/11/27 14:09:53 maxv Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.27 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.26 2018/11/27 14:09:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.27 2019/04/15 20:45:08 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -100,7 +100,7 @@ getframe(struct lwp *l, int sig, int *onstack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
- 
+
 	/* Do we need to jump onto the signal stack? */
 	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;

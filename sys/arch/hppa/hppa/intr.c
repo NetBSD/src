@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.2 2019/04/15 20:45:08 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1 2014/02/24 07:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2019/04/15 20:45:08 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -71,7 +71,7 @@ struct hppa_interrupt_register *hppa_interrupt_registers[HPPA_INTERRUPT_BITS];
  * This establishes a new interrupt register.
  */
 void
-hppa_interrupt_register_establish(struct cpu_info *ci, 
+hppa_interrupt_register_establish(struct cpu_info *ci,
     struct hppa_interrupt_register *ir)
 {
 	int idx;
@@ -145,7 +145,7 @@ hppa_intr_establish(int ipl, int (*handler)(void *), void *arg,
 		if (IR_BIT_USED_P(ir->ir_bits_map[31 ^ bit_pos]))
 			panic("%s: interrupt already handled", __func__);
 	}
-	
+
 	/*
 	 * If this interrupt bit leads us to another interrupt register,
 	 * simply note that in the mapping for the bit.
@@ -156,7 +156,7 @@ hppa_intr_establish(int ipl, int (*handler)(void *), void *arg,
 				break;
 		if (idx == HPPA_INTERRUPT_BITS)
 			panic("%s: unknown int reg", __func__);
-		
+
 		ir->ir_bits_map[31 ^ bit_pos] = IR_BIT_REG(idx);
 
 		return NULL;
@@ -173,7 +173,7 @@ hppa_intr_establish(int ipl, int (*handler)(void *), void *arg,
 		ir->ir_bits_map[31 ^ bit_pos] = 1 << idx;
 	} else {
 		int j;
-		
+
 		ir->ir_bits_map[31 ^ bit_pos] |= 1 << idx;
 		j = (ir - hppa_interrupt_registers[0]);
 		ci->ci_ishared |= (1 << j);
@@ -373,7 +373,7 @@ hppa_intr(struct trapframe *frame)
 	/* If we have interrupts to dispatch, do so. */
 	while (ci->ci_ipending & ~ci->ci_cpl) {
 		int shared;
-		
+
 		hppa_intr_dispatch(ci->ci_cpl, frame->tf_eiem, frame);
 
 		shared = ci->ci_ishared;
@@ -435,7 +435,7 @@ hppa_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 		ib->ib_evcnt.ev_count++;
 		arg = ib->ib_arg;
 		if (arg == NULL) {
-			clkframe.cf_flags = (ci->ci_intr_depth ? 
+			clkframe.cf_flags = (ci->ci_intr_depth ?
 			    TFF_INTR : 0);
 			clkframe.cf_spl = ncpl;
 			if (frame != NULL) {
@@ -471,7 +471,7 @@ hppa_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 			KERNEL_UNLOCK_ONE(NULL);
 			locked = false;
 		}
-		
+
 		/* Disable interrupts and loop. */
 		mtctl(0, CR_EIEM);
 	}
@@ -502,7 +502,7 @@ hppa_intr_ipending(struct hppa_interrupt_register *ir, int eirr)
 		}
 	}
 
-	
+
 	return pending;
 }
 

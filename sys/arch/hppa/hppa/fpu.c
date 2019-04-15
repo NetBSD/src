@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.25 2018/11/14 10:58:04 skrll Exp $	*/
+/*	$NetBSD: fpu.c,v 1.26 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.25 2018/11/14 10:58:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26 2019/04/15 20:45:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,13 +85,13 @@ void hppa_fpu_swap(struct fpreg *, struct fpreg *);
 static int hppa_fpu_ls(struct trapframe *, struct lwp *);
 
 /*
- * Given a trapframe and a general register number, the 
+ * Given a trapframe and a general register number, the
  * FRAME_REG macro returns a pointer to that general
- * register.  The _frame_reg_positions array is a lookup 
- * table, since the general registers aren't in order 
+ * register.  The _frame_reg_positions array is a lookup
+ * table, since the general registers aren't in order
  * in a trapframe.
- * 
- * NB: this more or less assumes that all members of 
+ *
+ * NB: this more or less assumes that all members of
  * struct trapframe are u_ints.
  */
 #define FRAME_REG(f, reg, r0)	\
@@ -161,9 +161,9 @@ hppa_fpu_bootstrap(u_int ccr_enable)
 	 */
 
 	/*
-	 * The PA-RISC 1.1 Architecture manual is 
-	 * pretty clear that the copr,0,0 must be 
-	 * wrapped in double word stores of fr0, 
+	 * The PA-RISC 1.1 Architecture manual is
+	 * pretty clear that the copr,0,0 must be
+	 * wrapped in double word stores of fr0,
 	 * otherwise its operation is undefined.
 	 */
 	__asm volatile(
@@ -182,7 +182,7 @@ hppa_fpu_bootstrap(u_int ccr_enable)
 	 */
 	fpu_csw = 0;
 	curcpu()->ci_fpu_state = 0;
-	mtctl(ccr_enable & (CCR_MASK ^ HPPA_FPUS), CR_CCR);	
+	mtctl(ccr_enable & (CCR_MASK ^ HPPA_FPUS), CR_CCR);
 
 	fpu_version = vers[0];
 }
@@ -203,7 +203,7 @@ hppa_fpu_flush(struct lwp *l)
 	/*
 	 * If this process' state is currently in hardware, swap it out.
 	 */
-	
+
 	if (ci->ci_fpu_state == 0 ||
 	    ci->ci_fpu_state != tf->tf_cr30) {
 		return;
@@ -216,7 +216,7 @@ hppa_fpu_flush(struct lwp *l)
 /*
  * This emulates a coprocessor load/store instruction.
  */
-static int 
+static int
 hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 {
 	struct pcb *pcb = lwp_getpcb(l);
@@ -231,9 +231,9 @@ hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 	/*
 	 * Get the instruction that we're emulating,
 	 * and break it down.  Using HP bit notation,
-	 * b is a five-bit field starting at bit 10, 
+	 * b is a five-bit field starting at bit 10,
 	 * x is a five-bit field starting at bit 15,
-	 * s is a two-bit field starting at bit 17, 
+	 * s is a two-bit field starting at bit 17,
 	 * and t is a five-bit field starting at bit 31.
 	 */
 	inst = frame->tf_iir;
@@ -260,13 +260,13 @@ hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 
 	/* Get the base register. */
 	base = FRAME_REG(frame, inst_b, r0);
-	
+
 	/* Dispatch on whether or not this is an indexed load/store. */
 	if (inst & OPCODE_INDEXED) {
-		
+
 		/* Get the index register value. */
 		index = *FRAME_REG(frame, inst_x, r0);
-		
+
 		/* Dispatch on the completer. */
 		switch (inst & OPCODE_CMPLT) {
 		case OPCODE_CMPLT_S:
@@ -323,7 +323,7 @@ hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 /*
  * This is called to emulate an instruction.
  */
-void 
+void
 hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 {
 	struct pcb *pcb = lwp_getpcb(l);
@@ -333,7 +333,7 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 	ksiginfo_t ksi;
 
 	/*
-	 * If the process' state is in any hardware FPU, 
+	 * If the process' state is in any hardware FPU,
 	 * flush it out - we need to operate on it.
 	 */
 	hppa_fpu_flush(l);
@@ -391,10 +391,10 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 	case 0x06:
 		exception = decode_06(inst, fpregs);
 		break;
-	case 0x26:  
+	case 0x26:
 		exception = decode_26(inst, fpregs);
 		break;
-	default: 
+	default:
 		exception = UNIMPLEMENTEDEXCEPTION;
 		break;
         }

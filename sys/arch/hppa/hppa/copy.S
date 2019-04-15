@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.23 2019/04/06 03:06:25 thorpej Exp $	*/
+/*	$NetBSD: copy.S,v 1.24 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -310,7 +310,7 @@ ENTRY(hppa_ktext_stw, HPPA_FRAME_SIZE)
 	nop
 	nop
 	nop
-	
+
 	/* End stack calling convention. */
 	ldw	HPPA_FRAME_CRP(%r3), %rp
 	ldo	HPPA_FRAME_SIZE(%r3), %sp

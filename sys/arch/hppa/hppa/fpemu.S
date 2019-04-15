@@ -1,4 +1,4 @@
-/*	$NetBSD: fpemu.S,v 1.6 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: fpemu.S,v 1.7 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*	$OpenBSD: fpemu.S,v 1.4 2001/03/29 02:18:45 mickey Exp $	*/
 
@@ -88,7 +88,7 @@ LEAF_ENTRY_NOPROFILE(fpu_emulate)
 	comib,=	1, %arg3, L$fpu_cln1
 	nop
 	extru	%arg0, 16, 2, %r31
-	
+
 L$fpu_cln1:
 	/*
 	 * theoreticaly we would need to determine the fpu instruction
@@ -179,7 +179,7 @@ L$fpemu0c_0_3:	/* fabs */
 L$fpemu0c_0_4:	/* fsqrt */
 	/* quad not implemented */
 	FP_TABLE2(fsqrt,sgl,dbl,invalid,invalid)
-	
+
 L$fpemu0c_0_5:	/* frnd */
 	/* quad not implemented */
 	FP_TABLE2(frnd,sgl,dbl,invalid,quad)

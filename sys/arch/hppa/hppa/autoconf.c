@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2014/03/26 17:57:17 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2014/03/26 17:57:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2019/04/15 20:45:08 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -271,12 +271,12 @@ hppa_led_blinker(void *arg)
 
 	/* Set the LEDs. */
 	hppa_led_ctl(-1, leds, 0);
-	
+
 	/* NB: this assumes _HPPA_LED_FREQ is a power of two. */
 	led_cycle = (led_cycle + 1) & (_HPPA_LED_FREQ - 1);
 	callout_reset(&hppa_led_callout, hz / _HPPA_LED_FREQ,
 		hppa_led_blinker, (void *) led_cycle);
-	
+
 }
 #endif /* USELEDS */
 
@@ -405,7 +405,7 @@ device_register(device_t dev, void *aux)
 		 * a ppb.
 		 */
 		struct pci_attach_args *paa = (struct pci_attach_args*)aux;
-		
+
 		if (paa->pa_device == PAGE0->mem_boot.pz_dp.dp_bc[3] &&
 		    paa->pa_function == PAGE0->mem_boot.pz_dp.dp_bc[4]) {
 			/*
@@ -436,7 +436,7 @@ device_register(device_t dev, void *aux)
 	    boot_device == device_parent(pdev)) {
 		struct scsipibus_attach_args *saa = aux;
 		struct scsipi_periph *p = saa->sa_periph;
-		
+
 		if (p->periph_target == PAGE0->mem_boot.pz_dp.dp_layers[0] &&
 		    p->periph_lun == PAGE0->mem_boot.pz_dp.dp_layers[1]) {
 			/* This is the boot device. */
@@ -489,7 +489,7 @@ hppa_walkbus(struct confargs *ca)
 
 	if (ca->ca_hpabase == 0)
 		return;
-	
+
 	aprint_debug(">> Walking bus at HPA 0x%lx\n", ca->ca_hpabase);
 
 	for (i = 0; i < ca->ca_nmodules; i++) {
@@ -631,7 +631,7 @@ pdc_scanbus(device_t self, struct confargs *ca,
 
 		if (dev)
 			hm->hm_registered = true;
-		
+
 	}
 }
 
@@ -668,7 +668,7 @@ hppa_pdcmodule_create(struct hppa_pdcmodule *hm, const char *who)
 {
 	struct hppa_pdcmodule *nhm, *ahm;
 	int i;
-	
+
 	nhm = kmem_zalloc(sizeof(*nhm), KM_SLEEP);
 
 	nhm->hm_registered = false;
@@ -696,7 +696,7 @@ hppa_pdcmodule_create(struct hppa_pdcmodule *hm, const char *who)
 	    hm_link) {
 		int check;
 		int j, k;
-		
+
 		for (j = 0; j < 6; j++) {
 			if (ahm->hm_dp.dp_bc[j] != -1)
 				break;
@@ -749,7 +749,7 @@ hppa_memmap_query(struct device_path *devp)
 	int error;
 
 	error = pdcproc_memmap(&pdc_memmap, devp);
-	
+
 	if (error < 0)
 		return NULL;
 

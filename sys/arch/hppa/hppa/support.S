@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.6 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: support.S,v 1.7 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -58,10 +58,10 @@
  *  suitability of this software for any purpose.
  */
 
-/* 
+/*
  * NOTICE: This is not a standalone file.  To use it, #include it in
  * your port's locore.S, like so:
- * 
+ *
  *      #include <hppa/hppa/support.S>
  */
 
