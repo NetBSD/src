@@ -1542,6 +1542,11 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   *pc = _UC_MACHINE_PC(ucontext);
   *sp = _UC_MACHINE_SP(ucontext);
   *bp = ucontext->uc_mcontext.__gregs[1];	/* XXX */
+#elif defined(__riscv) && SANITIZER_NETBSD
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = _UC_MACHINE_PC(ucontext);
+  *sp = _UC_MACHINE_SP(ucontext);
+  *bp = _UC_MACHINE_FP(ucontext);
 #elif defined(__s390__)
   ucontext_t *ucontext = (ucontext_t*)context;
 # if defined(__s390x__)
