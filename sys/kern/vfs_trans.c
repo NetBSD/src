@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.58 2019/03/07 11:09:10 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.59 2019/04/15 13:01:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.58 2019/03/07 11:09:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.59 2019/04/15 13:01:08 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -71,6 +71,7 @@ struct fstrans_lwp_info {
 	struct fstrans_lwp_info *fli_alias;
 	struct fstrans_mount_info *fli_mountinfo;
 	int fli_trans_cnt;
+	int fli_alias_cnt;
 	int fli_cow_cnt;
 	enum fstrans_lock_type fli_lock_type;
 	LIST_ENTRY(fstrans_lwp_info) fli_list;
@@ -203,6 +204,7 @@ fstrans_lwp_dtor(lwp_t *l)
 		if (fli->fli_mount != NULL)
 			fstrans_mount_dtor(fli->fli_mountinfo);
 		fli_next = fli->fli_succ;
+		fli->fli_alias_cnt = 0;
 		fli->fli_mount = NULL;
 		fli->fli_alias = NULL;
 		fli->fli_mountinfo = NULL;
@@ -300,14 +302,21 @@ fstrans_clear_lwp_info(void)
 		fli = *p;
 		if (fli->fli_mount != NULL &&
 		    fli->fli_mountinfo->fmi_gone &&
-		    fli->fli_trans_cnt == 0 && fli->fli_cow_cnt == 0) {
+		    fli->fli_trans_cnt == 0 &&
+		    fli->fli_cow_cnt == 0 &&
+		    fli->fli_alias_cnt == 0) {
 			*p = (*p)->fli_succ;
 			fstrans_mount_dtor(fli->fli_mountinfo);
+			if (fli->fli_alias) {
+				KASSERT(fli->fli_alias->fli_alias_cnt > 0);
+				fli->fli_alias->fli_alias_cnt--;
+			}
 			fli->fli_mount = NULL;
 			fli->fli_alias = NULL;
 			fli->fli_mountinfo = NULL;
 			membar_sync();
 			fli->fli_self = NULL;
+			p = &curlwp->l_fstrans;
 		} else {
 			p = &(*p)->fli_succ;
 		}
@@ -343,6 +352,7 @@ fstrans_alloc_lwp_info(struct mount *mp)
 			KASSERT(fli->fli_mount == NULL);
 			KASSERT(fli->fli_trans_cnt == 0);
 			KASSERT(fli->fli_cow_cnt == 0);
+			KASSERT(fli->fli_alias_cnt == 0);
 			fli->fli_self = curlwp;
 			fli->fli_succ = curlwp->l_fstrans;
 			curlwp->l_fstrans = fli;
@@ -378,6 +388,7 @@ fstrans_alloc_lwp_info(struct mount *mp)
 
 	if (mp) {
 		fli->fli_alias = fstrans_alloc_lwp_info(mp);
+		fli->fli_alias->fli_alias_cnt++;
 		fli = fli->fli_alias;
 	}
 
@@ -971,7 +982,8 @@ fstrans_print_lwp(struct proc *p, struct lwp *l, int verbose)
 				break;
 			}
 		}
-		printf(" %d cow %d\n", fli->fli_trans_cnt, fli->fli_cow_cnt);
+		printf(" %d cow %d alias %d\n",
+		    fli->fli_trans_cnt, fli->fli_cow_cnt, fli->fli_alias_cnt);
 		prefix[0] = '\0';
 	}
 }
