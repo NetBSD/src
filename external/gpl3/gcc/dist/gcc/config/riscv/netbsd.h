@@ -48,17 +48,20 @@ Boston, MA 02111-1307, USA.  */
 #undef LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
 
-#undef LINK_SPEC
-#define LINK_SPEC NETBSD_LINK_SPEC_ELF
-/* Provide a LINK_SPEC appropriate for a NetBSD/mips target.
-   This is a copy of LINK_SPEC from <netbsd-elf.h> tweaked for
-   the MIPS target.  */
+#define EXTRA_SPECS NETBSD_SUBTARGET_EXTRA_SPECS
+
+#define LD_EMUL_SUFFIX \
+  "%{mabi=lp64d:}" \
+  "%{mabi=lp64f:_lp64f}" \
+  "%{mabi=lp64:_lp64}" \
+  "%{mabi=ilp32d:}" \
+  "%{mabi=ilp32f:_ilp32f}" \
+  "%{mabi=ilp32:_ilp32}"
 
 #undef LINK_SPEC
-#define LINK_SPEC \
-  "%{m64:-m elf64lriscv} \
-   %{m32:-m elf32lriscv}" \
-   NETBSD_LINK_SPEC_ELF
+#define LINK_SPEC "\
+-melf" XLEN_SPEC "lriscv" LD_EMUL_SUFFIX " \
+%(netbsd_link_spec)"
 
 #undef NETBSD_ENTRY_POINT
 #define NETBSD_ENTRY_POINT	"_start"
