@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.2 2019/01/27 02:08:39 pgoyette Exp $
+#	$NetBSD: files.common,v 1.3 2019/04/15 02:07:11 pgoyette Exp $
 
 #
 # Generic utility files, used by various compat options.
@@ -85,6 +85,7 @@ file	compat/common/vnd_50.c			compat_50
 file	compat/common/clockctl_50.c		compat_50
 file	compat/common/if_spppsubr50.c		compat_50
 file	compat/common/uvm_50.c			compat_50
+file	compat/common/kern_uipc_socket_50.c	compat_50
 
 # Compatibility code for NetBSD 6.0
 file	compat/common/compat_60_mod.c		compat_60

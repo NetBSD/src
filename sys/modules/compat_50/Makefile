@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2019/02/17 04:05:45 rin Exp $
+#	$NetBSD: Makefile,v 1.4 2019/04/15 02:07:11 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -12,6 +12,7 @@ SRCS+=	compat_50_mod.c
 SRCS+=	kern_50.c kern_time_50.c kern_select_50.c
 SRCS+=	vfs_syscalls_50.c uipc_syscalls_50.c uvm_50.c
 SRCS+=	rndpseudo_50.c clockctl_50.c if_spppsubr50.c
+SRCS+=	kern_uipc_socket_50.c
 
 CPPFLAGS+=	-DINET -DINET6
 # XXX someday we'll need to add

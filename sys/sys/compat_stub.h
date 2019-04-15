@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.11 2019/02/05 23:28:02 christos Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.12 2019/04/15 02:07:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -221,6 +221,19 @@ MODULE_HOOK(tty_ttioctl_43_hook, int,
 MODULE_HOOK(uipc_syscalls_40_hook, int, (u_long, void *));
 
 /*
+ * uipc_socket_50 compatibility
+ */
+struct sockopt;
+struct timeval;
+struct mbuf;
+
+MODULE_HOOK(uipc_socket_50_setopt1_hook, int,
+    (int, struct socket *, const struct sockopt *, struct timeval *));
+MODULE_HOOK(uipc_socket_50_getopt1_hook, int,
+    (int, struct socket *, struct sockopt *, struct timeval *));
+MODULE_HOOK(uipc_socket_50_sbts_hook, int, (int, struct mbuf **));
+
+/*
  * uipc_syscalls_50 compatibility
  */
 
@@ -311,7 +324,6 @@ MODULE_HOOK(vfs_openat_10_hook, int, (struct pathbuf **));
 /*
  * Hook for compat_70_unp_addsockcred
  */
-struct mbuf;
 MODULE_HOOK(uipc_unp_70_hook, struct mbuf *,
     (struct lwp *, struct mbuf *));
 
