@@ -727,6 +727,7 @@ zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz,
 #ifdef illumos
 			vp->v_rdev = zfs_cmpldev(rdev);
 #else
+			vp->v_op = zfs_specop_p;
 	        	spec_node_init(vp, zfs_cmpldev(rdev));
 #endif
 		}
@@ -734,7 +735,7 @@ zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz,
 #endif
 	case VFIFO:
 #ifdef __NetBSD__
-		/* XXX NetBSD vp->v_op = zfs_fifoop_p; */
+		vp->v_op = zfs_fifoop_p;
 		break;
 #else /* __NetBSD__ */
 #ifdef illumos
