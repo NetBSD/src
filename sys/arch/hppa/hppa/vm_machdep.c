@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.54 2014/03/06 19:02:58 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.55 2019/04/15 06:16:42 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.54 2014/03/06 19:02:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2019/04/15 06:16:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ void
 cpu_lwp_free(struct lwp *l, int proc)
 {
 	struct pcb *pcb = lwp_getpcb(l);
-	
+
 	/*
 	 * If this thread was using the FPU, disable the FPU and record
 	 * that it's unused.
