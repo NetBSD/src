@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.2 2019/04/15 20:40:37 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -391,7 +391,7 @@ uturn_callback(device_t self, struct confargs *ca)
  * | PPN   | Virtual Index  |         Physical Page Number (PPN)           |
  * | [0:3] |    [0:11]      |                 [4:19]                       |
  * +-------+----------------+----------------------------------------------+
- * 
+ *
  * +-----------------------+-----------------------------------------------+
  * |0           19|20    24|   25   |       |       |      |  30   |   31  |
  * |     PPN      |  Rsvd  | PH     |Update | Rsvd  |Lock  | Safe  | Valid |
@@ -433,7 +433,7 @@ uturn_iommu_enter(struct uturn_softc *sc, bus_addr_t iova, pa_space_t sp,
 
 	/* mask off top PPN bits */
 	pdir_entry &= 0x0000ffffffffffffUL;
-	
+
 	/* insert the virtual index bits */
 	pdir_entry |= (((uint64_t)ci >> 12) << 48);
 
