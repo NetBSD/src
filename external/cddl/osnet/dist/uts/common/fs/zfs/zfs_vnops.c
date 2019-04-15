@@ -81,6 +81,7 @@
 
 #ifdef __NetBSD__
 #include <dev/mm.h>
+#include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
 #include <uvm/uvm_extern.h>
@@ -5072,16 +5073,39 @@ static int
 zfs_netbsd_read(void *v)
 {
 	struct vop_read_args *ap = v;
+	vnode_t *vp = ap->a_vp;
+	znode_t *zp = VTOZ(vp);
 
-	return (zfs_read(ap->a_vp, ap->a_uio, ioflags(ap->a_ioflag), ap->a_cred, NULL));
+	switch (vp->v_type) {
+	case VBLK:
+	case VCHR:
+		ZFS_ACCESSTIME_STAMP(zp->z_zfsvfs, zp);
+		return (VOCALL(spec_vnodeop_p, VOFFSET(vop_read), ap));
+	case VFIFO:
+		ZFS_ACCESSTIME_STAMP(zp->z_zfsvfs, zp);
+		return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_read), ap));
+	}
+
+	return (zfs_read(vp, ap->a_uio, ioflags(ap->a_ioflag), ap->a_cred, NULL));
 }
 
 static int
 zfs_netbsd_write(void *v)
 {
 	struct vop_write_args *ap = v;
+	vnode_t *vp = ap->a_vp;
 
-	return (zfs_write(ap->a_vp, ap->a_uio, ioflags(ap->a_ioflag), ap->a_cred, NULL));
+	switch (vp->v_type) {
+	case VBLK:
+	case VCHR:
+		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
+		return (VOCALL(spec_vnodeop_p, VOFFSET(vop_write), ap));
+	case VFIFO:
+		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
+		return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), ap));
+	}
+
+	return (zfs_write(vp, ap->a_uio, ioflags(ap->a_ioflag), ap->a_cred, NULL));
 }
 
 static int
@@ -5243,6 +5267,44 @@ static int
 zfs_netbsd_create(void *v)
 {
 	struct vop_create_v3_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+	} */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode **vpp = ap->a_vpp;
+	struct componentname *cnp = ap->a_cnp;
+	struct vattr *vap = ap->a_vap;
+	char *nm;
+	int mode;
+	int error;
+
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
+	vattr_init_mask(vap);
+	mode = vap->va_mode & ALLPERMS;
+
+	/* ZFS wants a null-terminated name. */
+	nm = PNBUF_GET();
+	(void)strlcpy(nm, cnp->cn_nameptr, cnp->cn_namelen + 1);
+
+	/* XXX !EXCL is wrong here...  */
+	error = zfs_create(dvp, nm, vap, !EXCL, mode, vpp, cnp->cn_cred, NULL);
+
+	PNBUF_PUT(nm);
+
+	KASSERT((error == 0) == (*vpp != NULL));
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	VOP_UNLOCK(*vpp, 0);
+
+	return (error);
+}
+
+static int
+zfs_netbsd_mknod(void *v)
+{
+	struct vop_mknod_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -6149,6 +6211,7 @@ const struct vnodeopv_entry_desc zfs_vnodeop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
 	{ &vop_lookup_desc,		zfs_netbsd_lookup },
 	{ &vop_create_desc,		zfs_netbsd_create },
+	{ &vop_mknod_desc,		zfs_netbsd_mknod },
 	{ &vop_open_desc,		zfs_netbsd_open },
 	{ &vop_close_desc,		zfs_netbsd_close },
 	{ &vop_access_desc,		zfs_netbsd_access },
@@ -6184,5 +6247,88 @@ const struct vnodeopv_entry_desc zfs_vnodeop_entries[] = {
 
 const struct vnodeopv_desc zfs_vnodeop_opv_desc =
 	{ &zfs_vnodeop_p, zfs_vnodeop_entries };
+
+int (**zfs_specop_p)(void *);
+const struct vnodeopv_entry_desc zfs_specop_entries[] = {
+	{ &vop_default_desc,		vn_default_error },
+	{ &vop_lookup_desc,		spec_lookup },
+	{ &vop_create_desc,		spec_create },
+	{ &vop_mknod_desc,		spec_mknod },
+	{ &vop_open_desc,		spec_open },
+	{ &vop_close_desc,		spec_close },
+	{ &vop_access_desc,		zfs_netbsd_access },
+	{ &vop_getattr_desc,		zfs_netbsd_getattr },
+	{ &vop_setattr_desc,		zfs_netbsd_setattr },
+	{ &vop_read_desc,		/**/zfs_netbsd_read },
+	{ &vop_write_desc,		/**/zfs_netbsd_write },
+	{ &vop_ioctl_desc,		spec_ioctl },
+	{ &vop_fsync_desc,		zfs_netbsd_fsync },
+	{ &vop_remove_desc,		spec_remove },
+	{ &vop_link_desc,		spec_link },
+	{ &vop_lock_desc,		zfs_netbsd_lock },
+	{ &vop_unlock_desc,		zfs_netbsd_unlock },
+	{ &vop_rename_desc,		spec_rename },
+	{ &vop_mkdir_desc,		spec_mkdir },
+	{ &vop_rmdir_desc,		spec_rmdir },
+	{ &vop_symlink_desc,		spec_symlink },
+	{ &vop_readdir_desc,		spec_readdir },
+	{ &vop_readlink_desc,		spec_readlink },
+	{ &vop_inactive_desc,		zfs_netbsd_inactive },
+	{ &vop_reclaim_desc,		zfs_netbsd_reclaim },
+	{ &vop_pathconf_desc,		spec_pathconf },
+	{ &vop_seek_desc,		spec_seek },
+	{ &vop_getpages_desc,		spec_getpages },
+	{ &vop_putpages_desc,		spec_putpages },
+	{ &vop_mmap_desc,		spec_mmap },
+	{ &vop_islocked_desc,		zfs_netbsd_islocked },
+	{ &vop_advlock_desc,		spec_advlock },
+	{ &vop_print_desc,		zfs_netbsd_print },
+	{ &vop_fcntl_desc,		zfs_netbsd_fcntl },
+	{ NULL, NULL }
+};
+
+const struct vnodeopv_desc zfs_specop_opv_desc =
+	{ &zfs_specop_p, zfs_specop_entries };
+
+int (**zfs_fifoop_p)(void *);
+const struct vnodeopv_entry_desc zfs_fifoop_entries[] = {
+	{ &vop_default_desc,		vn_default_error },
+	{ &vop_lookup_desc,		vn_fifo_bypass },
+	{ &vop_create_desc,		vn_fifo_bypass },
+	{ &vop_mknod_desc,		vn_fifo_bypass },
+	{ &vop_open_desc,		vn_fifo_bypass },
+	{ &vop_close_desc,		vn_fifo_bypass },
+	{ &vop_access_desc,		zfs_netbsd_access },
+	{ &vop_getattr_desc,		zfs_netbsd_getattr },
+	{ &vop_setattr_desc,		zfs_netbsd_setattr },
+	{ &vop_read_desc,		/**/zfs_netbsd_read },
+	{ &vop_write_desc,		/**/zfs_netbsd_write },
+	{ &vop_ioctl_desc,		vn_fifo_bypass },
+	{ &vop_fsync_desc,		zfs_netbsd_fsync },
+	{ &vop_remove_desc,		vn_fifo_bypass },
+	{ &vop_link_desc,		vn_fifo_bypass },
+	{ &vop_lock_desc,		zfs_netbsd_lock },
+	{ &vop_unlock_desc,		zfs_netbsd_unlock },
+	{ &vop_rename_desc,		vn_fifo_bypass },
+	{ &vop_mkdir_desc,		vn_fifo_bypass },
+	{ &vop_rmdir_desc,		vn_fifo_bypass },
+	{ &vop_symlink_desc,		vn_fifo_bypass },
+	{ &vop_readdir_desc,		vn_fifo_bypass },
+	{ &vop_readlink_desc,		vn_fifo_bypass },
+	{ &vop_inactive_desc,		zfs_netbsd_inactive },
+	{ &vop_reclaim_desc,		zfs_netbsd_reclaim },
+	{ &vop_pathconf_desc,		vn_fifo_bypass },
+	{ &vop_seek_desc,		vn_fifo_bypass },
+	{ &vop_putpages_desc,		vn_fifo_bypass },
+	{ &vop_mmap_desc,		vn_fifo_bypass },
+	{ &vop_islocked_desc,		zfs_netbsd_islocked },
+	{ &vop_advlock_desc,		vn_fifo_bypass },
+	{ &vop_print_desc,		zfs_netbsd_print },
+	{ &vop_fcntl_desc,		zfs_netbsd_fcntl },
+	{ NULL, NULL }
+};
+
+const struct vnodeopv_desc zfs_fifoop_opv_desc =
+	{ &zfs_fifoop_p, zfs_fifoop_entries };
 
 #endif /* __NetBSD__ */

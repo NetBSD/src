@@ -147,10 +147,14 @@ void zfs_init(void);
 void zfs_fini(void);
 
 extern const struct vnodeopv_desc zfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc zfs_specop_opv_desc;
+extern const struct vnodeopv_desc zfs_fifoop_opv_desc;
 extern const struct vnodeopv_desc zfs_sfsop_opv_desc;
 
 static const struct vnodeopv_desc * const zfs_vnodeop_descs[] = {
 	&zfs_vnodeop_opv_desc,
+	&zfs_specop_opv_desc,
+	&zfs_fifoop_opv_desc,
 	&zfs_sfsop_opv_desc,
 	NULL,
 };
