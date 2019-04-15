@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.58 2019/03/07 14:02:16 msaitoh Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.59 2019/04/15 06:00:04 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.58 2019/03/07 14:02:16 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.59 2019/04/15 06:00:04 ozaki-r Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1343,6 +1343,7 @@ dwc_gmac_setmulti(struct dwc_gmac_softc *sc)
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
+	struct ethercom *ec = &sc->sc_ec;
 	uint32_t hashes[2] = { 0, 0 };
 	uint32_t ffilt, h;
 	int mcnt;
@@ -1362,11 +1363,13 @@ dwc_gmac_setmulti(struct dwc_gmac_softc *sc)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTLOW, 0);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTHIGH, 0);
 
-	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	mcnt = 0;
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			ffilt |= AWIN_GMAC_MAC_FFILT_PM;
 			ifp->if_flags |= IFF_ALLMULTI;
 			goto special_filter;
@@ -1380,6 +1383,7 @@ dwc_gmac_setmulti(struct dwc_gmac_softc *sc)
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	if (mcnt)
 		ffilt |= AWIN_GMAC_MAC_FFILT_HMC;
