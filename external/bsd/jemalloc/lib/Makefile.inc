@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2019/03/29 15:13:44 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2019/04/15 20:40:53 christos Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -39,7 +39,8 @@ witness.c
 .PATH.3: ${JEMALLOC}/dist/doc
 .for i in ${JEMALLOC_SRCS}
 CPPFLAGS.${i}+=-I${JEMALLOC}/include -DJEMALLOC_PROTECT_NOSTD -DJEMALLOC_DEBUG
-COPTS.${i}+= -fvisibility=hidden -funroll-loops 
+COPTS.${i}+= -fvisibility=hidden -funroll-loops
+COPTS.${i}+= ${${ACTIVE_CC} == "clang":? -Wno-atomic-alignment :}
 .endfor
 
 COPTS.background_thread.c+=-Wno-error=stack-protector
