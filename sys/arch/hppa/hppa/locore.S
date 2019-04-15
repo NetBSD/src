@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2019/04/15 20:45:08 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -662,7 +662,7 @@ LEAF_ENTRY(splraise)
 	bv	%r0(%rp)
 	stw	%arg0, CI_CPL(%t1)
 EXIT(splraise)
-	
+
 /*
  * int spllower(int ncpl);
  */
@@ -688,7 +688,7 @@ ENTRY(spllower,HPPA_FRAME_SIZE)
 	ldw	CI_IPENDING(%t1), %r1	; load ipending
 	andcm,<> %r1, %arg0, %r1	; and with complement of new cpl
 	b,n	spllower_out		; branch if we got beaten
-	
+
 spllower_dispatch:
 	/* start stack calling convention */
 	stw	%rp, HPPA_FRAME_CRP(%sp)
@@ -707,7 +707,7 @@ spllower_dispatch:
 	.call
 	bv	%r0(%r1)
 	copy	%r0, %arg2		; call with a NULL frame
-	
+
 	/* restore %eiem, we don't need ncpl */
 	ldw	HPPA_FRAME_ARG(1)(%r3), %arg1
 
@@ -715,7 +715,7 @@ spllower_dispatch:
 	ldw	HPPA_FRAME_CRP(%r3), %rp
 	ldo	HPPA_FRAME_SIZE(%r3), %sp
 	ldw,mb	-HPPA_FRAME_SIZE(%sp), %r3
-	
+
 spllower_out:
 	/*
 	 * Now return, storing %eiem in the delay slot.

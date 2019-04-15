@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.26 2012/04/03 14:18:14 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.27 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas)
 	.word	__SIMPLELOCK_RAW_UNLOCKED ! \
 
 #define I8	\
-	IL IL IL IL IL IL IL IL 
+	IL IL IL IL IL IL IL IL
 
 #define I64	\
 	I8 I8 I8 I8 I8 I8 I8 I8

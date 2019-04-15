@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2018/09/03 16:29:24 riastradh Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2018/09/03 16:29:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2019/04/15 20:45:08 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1000,7 +1000,7 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
 	if ((offset + len) > map->dm_mapsize)
 		panic("mbus_dmamap_sync: bad length");
 #endif
-	
+
 	/*
 	 * For a virtually-indexed write-back cache, we need to do the
 	 * following things:
@@ -1135,7 +1135,7 @@ mbus_dmamem_free(void *v, bus_dma_segment_t *segs, int nsegs)
 	mlist = segs[0]._ds_mlist;
 	if (mlist == NULL)
 		return;
-	
+
 	uvm_pglistfree(mlist);
 	free(mlist, M_DEVBUF);
 }
@@ -1408,7 +1408,7 @@ mbattach(device_t parent, device_t self, void *aux)
 	err = pdcproc_chassis_info(&pdc_chassis_info, &nca.ca_pcl);
 	if (!err && nca.ca_pcl.enabled) {
 		nca.ca_name = "lcd";
-		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] = 
+		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] =
 		nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 		nca.ca_dp.dp_mod = -1;
 		nca.ca_irq = HPPACF_IRQ_UNDEF;
@@ -1417,7 +1417,7 @@ mbattach(device_t parent, device_t self, void *aux)
 
 		config_found(self, &nca, mbprint);
 	}
-#endif	
+#endif
 
 	hppa_modules_scan();
 

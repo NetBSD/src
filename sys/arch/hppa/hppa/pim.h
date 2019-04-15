@@ -1,4 +1,4 @@
-/*	$NetBSD: pim.h,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: pim.h,v 1.2 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -394,7 +394,7 @@ struct hppa_pim64_regs {
 };
 
 struct hppa_pim64_checks {
-	/* The Check Type. */	
+	/* The Check Type. */
 	uint32_t	pim_check_type;
 
 	/*

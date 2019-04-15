@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_hppa.c,v 1.8 2011/01/22 19:35:48 skrll Exp $	*/
+/*	$NetBSD: kgdb_hppa.c,v 1.9 2019/04/15 20:45:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.8 2011/01/22 19:35:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.9 2019/04/15 20:45:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kgdb.h>
@@ -68,7 +68,7 @@ kgdb_acc(vaddr_t va, size_t ulen)
  * Translate a trap number into a unix compatible signal value.
  * (gdb only understands unix signal numbers).
  */
-int 
+int
 kgdb_signal(int type)
 {
 	int sigval;
@@ -119,7 +119,7 @@ kgdb_signal(int type)
 	case T_OVERFLOW:	/* overflow */
 	case T_CONDITION:	/* conditional */
 	case T_EXCEPTION:	/* assist exception */
-	case T_TLB_DIRTY:	/* TLB dirty bit */ 
+	case T_TLB_DIRTY:	/* TLB dirty bit */
 	case T_PAGEREF:		/* page reference */
 	case T_HIGHERPL:	/* higher-privelege transfer */
 	case T_LOWERPL:		/* lower-privilege transfer */
@@ -139,11 +139,11 @@ kgdb_signal(int type)
  * Translate the values stored in the kernel regs struct to/from
  * the format understood by gdb.
  *
- * When configured for the PA, GDB is set up to expect a buffer 
+ * When configured for the PA, GDB is set up to expect a buffer
  * of registers in the HP/UX struct save_state format, described
- * in HP/UX's machine/save_state.h header.  The register order is 
+ * in HP/UX's machine/save_state.h header.  The register order is
  * very different from our struct trapframe, so we have to do some
- * moving around of values.  
+ * moving around of values.
  *
  * The constants in the macro below should correspond to the
  * register numbers in gdb's config/pa/tm-pa.h register macros.
@@ -253,13 +253,13 @@ kgdb_connect(int verbose)
 	kgdb_debug_panic = 1;
 }
 
-/* 
+/*
  * Decide what to do on panic.
  * (This is called by panic, like Debugger())
  */
 void
 kgdb_panic(void)
-{ 
+{
 	if (kgdb_dev >= 0 && kgdb_debug_panic) {
 		printf("entering kgdb\n");
 		kgdb_connect(kgdb_active == 0);
