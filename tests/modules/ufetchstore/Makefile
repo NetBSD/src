@@ -1,17 +1,14 @@
-# $NetBSD: Makefile,v 1.2 2019/04/15 20:21:35 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2019/04/15 23:41:23 christos Exp $
 
 .include <bsd.own.mk>
 
-TESTSDIR=	${TESTSBASE}/modules/ufetchstore
-CPPFLAGS+=	-D_KERNTYPES -I${.CURDIR}/module
+KMOD=		ufetchstore_tester
+KMODULEDIR=	${DESTDIR}/${TESTSBASE}/modules/${KMOD}
 
-# Ideally this test could be in the parent Makefile, which could not descend
-# into this directory at all.  Unfortunately, the etc/mtree/NetBSD.dist file
-# creates the 'modules' subdirectory unconditionally, which if left empty
-# will confuse atf-run.  Therefore we must install, at the very least, the
-# Atffile into it.
-TESTS_C=	t_ufetchstore
+SRCS=		ufetchstore_tester.c
 
-SUBDIR+=	module
+ATFFILE=	no
+NOMAN=		# defined
 
 .include <bsd.test.mk>
+.include <bsd.kmodule.mk>
