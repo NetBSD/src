@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.17 2019/04/11 04:43:40 msaitoh Exp $	*/
+/*	$NetBSD: sockio.h,v 1.18 2019/04/16 04:31:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -123,7 +123,7 @@ struct oifdatareq {
 #define	OBIOCSETIF	 _IOW('B', 108, struct oifreq)
 #define	OTAPGIFNAME	 _IOR('e', 0, struct oifreq)
 
-#define ifreqn2o(oi, ni)					\
+#define IFREQN2O_43(oi, ni)					\
 	do {							\
 		(void)memcpy((oi)->ifr_name, (ni)->ifr_name,	\
 		    sizeof((oi)->ifr_name));			\
@@ -131,7 +131,7 @@ struct oifdatareq {
 		    sizeof((oi)->ifr_ifru));			\
 	} while (/*CONSTCOND*/0)
 
-#define ifreqo2n(oi, ni)					\
+#define IFREQO2N_43(oi, ni)					\
 	do {							\
 		(void)memcpy((ni)->ifr_name, (oi)->ifr_name,	\
 		    sizeof((oi)->ifr_name));			\
