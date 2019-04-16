@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.3 2015/10/02 05:22:51 msaitoh Exp $ */
+/*	$NetBSD: dino.c,v 1.4 2019/04/16 06:45:04 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.3 2015/10/02 05:22:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.4 2019/04/16 06:45:04 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -121,15 +121,19 @@ struct dino_softc {
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
 	bus_dma_tag_t sc_dmat;
+
+	struct hppa_bus_dma_tag sc_dmatag;
+	struct hppa_bus_space_tag sc_memt;
+
 	volatile struct dino_regs *sc_regs;
 
 	struct hppa_pci_chipset_tag sc_pc;
 	struct hppa_bus_space_tag sc_iot;
-	char sc_ioexname[20];
+
 	struct extent *sc_ioex;
-	struct hppa_bus_space_tag sc_memt;
 	int sc_memrefcount[30];
-	struct hppa_bus_dma_tag sc_dmatag;
+
+	char sc_ioexname[20];
 };
 
 int	dinomatch(device_t, struct cfdata *, void *);
@@ -1735,6 +1739,5 @@ dinoattach(device_t parent, device_t self, void *aux)
 static device_t
 dino_callback(device_t self, struct confargs *ca)
 {
-
-	return config_found_sm_loc(self, "dino", NULL, ca, mbprint, mbsubmatch);
+	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
 }
