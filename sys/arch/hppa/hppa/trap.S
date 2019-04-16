@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.70 2019/04/14 08:23:20 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.71 2019/04/16 06:13:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -899,7 +899,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 hppa_fpu_emulate:
 
 	/*
-	 * We have a hardware FPU.  If it is enabled,  branch to emulate the
+	 * We have a hardware FPU.  If it is enabled, branch to emulate the
 	 * instruction.
 	 */
 	mfctl	CR_CCR, %arg0
