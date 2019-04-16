@@ -1,10 +1,15 @@
-#	 $NetBSD: mi,v 1.207 2019/03/12 03:37:23 mrg Exp $
+#	 $NetBSD: mi,v 1.208 2019/04/16 21:20:51 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/mtree/set.xcomp					xcomp-sys-root
 ./usr/X11R7/bin/freetype-config				-unknown-	xorg
 ./usr/X11R7/bin/xft-config				-unknown-	obsolete
+./usr/X11R7/include/EGL/egl.h				-unknown-	xorg,xorg_glamor
+./usr/X11R7/include/EGL/eglext.h			-unknown-	xorg,xorg_glamor
+./usr/X11R7/include/EGL/eglextchromium.h		-unknown-	xorg,xorg_glamor
+./usr/X11R7/include/EGL/eglmesaext.h			-unknown-	xorg,xorg_glamor
+./usr/X11R7/include/EGL/eglplatform.h			-unknown-	xorg,xorg_glamor
 ./usr/X11R7/include/GL/GLwDrawA.h			-unknown-	xorg
 ./usr/X11R7/include/GL/GLwDrawAP.h			-unknown-	xorg
 ./usr/X11R7/include/GL/GLwMDrawA.h			-unknown-	xorg
@@ -1103,6 +1108,8 @@
 ./usr/X11R7/lib/X11/config/xorg.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/xorgsite.def			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/xorgversion.def		-unknown-	xorg
+./usr/X11R7/lib/libEGL.a				-unknown-	xorg,compatx11file,xorg_glamor
+./usr/X11R7/lib/libEGL_p.a				-unknown-	profile,xorg,compatx11file,xorg_glamor
 ./usr/X11R7/lib/libFS.a					-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libFS_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libGL.a					-unknown-	xorg,compatx11file
