@@ -1,8 +1,8 @@
-/*	$NetBSD: param.h,v 1.22 2019/01/07 22:00:31 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.23 2019/04/16 12:25:17 skrll Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1988-1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
@@ -80,7 +80,7 @@
  * Size of kernel malloc arena in logical pages
  */
 #define NKMEMPAGES_MIN_DEFAULT  ((16 * 1024 * 1024) >> PAGE_SHIFT)
-#define NKMEMPAGES_MAX_DEFAULT  ((256 * 1024 * 1024) >> PAGE_SHIFT) 
+#define NKMEMPAGES_MAX_DEFAULT  ((256 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * Mach derived conversion macros
