@@ -1,7 +1,10 @@
-#	$NetBSD: shl.mi,v 1.50 2018/03/11 09:43:39 mrg Exp $
+#	$NetBSD: shl.mi,v 1.51 2019/04/16 21:20:51 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
+./usr/X11R7/lib/libEGL.a				-unknown-	xorg,xorg_glamor
+./usr/X11R7/lib/libEGL_p.a				-unknown-	profile,xorg,xorg_glamor
+./usr/X11R7/lib/libEGL_pic.a				-unknown-	xorg,picinstall,compatx11file,xorg_glamor
 ./usr/X11R7/lib/libFS_pic.a				-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libGLU_pic.a				-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libGL_pic.a				-unknown-	xorg,picinstall,compatx11file
