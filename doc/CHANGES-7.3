@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.46 2019/04/16 03:56:53 msaitoh Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.47 2019/04/16 08:12:58 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -517,3 +517,9 @@ sys/kern/sys_mqueue.c				1.44
 	mq_send1: fix argument validation and reject too large lengths early.
 	Discovered by Andy Nguyen.
 	[martin, ticket #1688]
+
+sys/external/bsd/drm2/pci/drm_pci.c		1.32 (patch)
+
+	Don't try to interpret the second half of a 64-bit BAR as another one.
+	[dholland, ticket #1673]
+
