@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.19 2019/03/23 13:05:24 maxv Exp $
+#	$NetBSD: files.hppa,v 1.20 2019/04/16 06:44:17 skrll Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -154,7 +154,7 @@ file	arch/hppa/dev/mongoose.c	mongoose
 
 # Dino, GSC-PCI bridge. Includes ps/2, serial, and flying toaster interfaces
 # Cujo is a 64-bit data path Dino
-device	dino { }: pcibus
+device	dino { } : pcibus, gedoens
 attach	dino at gedoens
 file	arch/hppa/dev/dino.c		dino
 
