@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2019/04/12 17:43:25 christos Exp $
+# $NetBSD: Makefile,v 1.25 2019/04/16 17:29:09 christos Exp $
 
 # Link the gallium mega driver.
 
@@ -1104,6 +1104,8 @@ CWARNFLAGS.clang+=	-Wno-error=constant-conversion \
 			-Wno-error=typedef-redefinition \
 			-Wno-error=enum-conversion # https://bugs.freedesktop.org/show_bug.cgi?id=109761
 
+CWARNFLAGS+=		-Wno-error=stack-protector
+
 .include <bsd.x11.mk>
 LIBDIR=		${X11USRLIBDIR}/modules/dri
 
@@ -1119,24 +1121,6 @@ SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.${SHL
 COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
 .endif
 
-.for f in \
-	decode.c \
-	dd_context.c \
-	draw.c \
-	nir_from_ssa.c \
-	nir_inline_functions.c \
-	nir_instr_set.c \
-	nir_instr_set.c \
-	nir_liveness.c \
-	nir_lower_registers_to_ssa.c \
-	nir_lower_regs_to_ssa.c \
-	nir_lower_vars_to_ssa.c \
-	nir_phi_builder.c \
-	shaderapi.c \
-	spirv_to_nir.c \
-	vtn_cfg.c
-COPTS.${f}+=-Wno-error=stack-protector
-.endfor
 
 .include <bsd.lib.mk>
 # Don't regenerate c files
