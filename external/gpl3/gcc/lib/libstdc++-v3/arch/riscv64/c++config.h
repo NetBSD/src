@@ -828,7 +828,7 @@ namespace std
 #define _GLIBCXX_HAVE_FREXPF 1
 
 /* Define to 1 if you have the `frexpl' function. */
-/* #undef _GLIBCXX_HAVE_FREXPL */
+#define _GLIBCXX_HAVE_FREXPL 1
 
 /* Define if _Unwind_GetIPInfo is available. */
 #define _GLIBCXX_HAVE_GETIPINFO 1
