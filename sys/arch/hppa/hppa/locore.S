@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 2019/04/16 20:33:36 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -174,6 +174,14 @@ ENTRY_NOPROFILE(start,0)
 	stw	%arg1,R%boothowto(%r1)
 	ldil	L%bootdev,%r1
 	stw	%arg2,R%bootdev(%r1)
+
+	comb,<>	%r0, %arg3, 1f
+	 nop
+
+	ldil	L%end, %arg3
+	ldo	R%end(%arg3), %arg3
+
+1:
 	ldil	L%esym,%r1
 	stw	%arg3,R%esym(%r1)
 
