@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.185 2019/03/10 11:04:08 mrg Exp $
+#	$NetBSD: sets.subr,v 1.186 2019/04/16 21:20:51 mrg Exp $
 #
 
 #
@@ -180,7 +180,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.185 2019/03/10 11:04:08 mrg Exp $
+# 	# $NetBSD: sets.subr,v 1.186 2019/04/16 21:20:51 mrg Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -215,6 +215,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	gdb=<n>			<n> = value of ${HAVE_GDB}
 #	openssl=<n>		<n> = value of ${HAVE_OPENSSL}
 #	xorg_server_ver=<n>	<n> = value of ${HAVE_XORG_SERVER_VER}
+#	xorg_glamor		${HAVE_XORG_GLAMOR} != no
 #	mesa_ver=<n>		<n> = value of ${HAVE_MESA_VER}
 #
 #    2. The USE_<name>:
