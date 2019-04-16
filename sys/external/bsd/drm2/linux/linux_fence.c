@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.14 2019/01/05 22:24:24 tnn Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.15 2019/04/16 10:00:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.14 2019/01/05 22:24:24 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.15 2019/04/16 10:00:04 mrg Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -565,8 +565,11 @@ fence_wait_any_timeout(struct fence **fences, uint32_t nfences, bool intr,
 		}
 		end = hardclock_ticks;
 		__insn_barrier();
-		if (ret)
+		if (ret) {
+			if (ret == -ERESTART)
+				ret = -ERESTARTSYS;
 			break;
+		}
 		timeout -= MIN(timeout, (unsigned)end - (unsigned)start);
 	}
 	mutex_exit(&common.lock);
@@ -709,8 +712,11 @@ fence_default_wait(struct fence *fence, bool intr, long timeout)
 			}
 		}
 		/* If the wait failed, give up.  */
-		if (ret)
+		if (ret) {
+			if (ret == -ERESTART)
+				ret = -ERESTARTSYS;
 			break;
+		}
 	}
 
 out:
