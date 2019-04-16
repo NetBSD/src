@@ -1182,7 +1182,7 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                        : "x30", "memory");
   return res;
 }
-#elif defined(__powerpc64__)
+#elif defined(__powerpc64__) && SANITIZER_LINUX
 uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                    int *parent_tidptr, void *newtls, int *child_tidptr) {
   long long res;
