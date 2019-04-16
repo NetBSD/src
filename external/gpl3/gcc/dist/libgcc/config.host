@@ -1157,7 +1157,7 @@ riscv*-*-linux*)
 	md_unwind_header=riscv/linux-unwind.h
 	;;
 riscv*-*-netbsd*)
-	# nothing needed for NetBSD
+	tmake_file="${tmake_file} riscv/t-netbsd"
 	;;
 riscv*-*-*)
 	tmake_file="${tmake_file} riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address}"
