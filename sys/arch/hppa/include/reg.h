@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.12 2010/06/06 12:13:36 skrll Exp $	*/
+/*	$NetBSD: reg.h,v 1.13 2019/04/16 12:25:17 skrll Exp $	*/
 
 /*	$OpenBSD: reg.h,v 1.7 2000/06/15 17:00:37 mickey Exp $	*/
 
@@ -27,7 +27,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* 
+/*
  * Copyright (c) 1990,1994 The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
@@ -56,7 +56,7 @@
 
 /*
  * constants for registers for use with the following routines:
- * 
+ *
  *     void mtctl(reg, value)	- move to control register
  *     int mfctl(reg)		- move from control register
  *     int mtsp(sreg, value)	- move to space register
@@ -195,7 +195,7 @@ struct reg {
 	uint32_t r_pcsqt;
 	uint32_t r_pcoqh;
 	uint32_t r_pcoqt;
-	
+
 	uint32_t r_sr0;
 	uint32_t r_sr1;
 	uint32_t r_sr2;
