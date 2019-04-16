@@ -186,7 +186,7 @@
 #define HAVE_FREXPF 1
 
 /* Define to 1 if you have the `frexpl' function. */
-/* #undef HAVE_FREXPL */
+#define HAVE_FREXPL 1
 
 /* Define if _Unwind_GetIPInfo is available. */
 #define HAVE_GETIPINFO 1
@@ -803,7 +803,7 @@
 #define _GLIBCXX98_USE_C99_WCHAR 1
 
 /* Define if the compiler supports C++11 atomics. */
-#define _GLIBCXX_ATOMIC_BUILTINS 1
+/* #undef _GLIBCXX_ATOMIC_BUILTINS */
 
 /* Define to use concept checking code from the boost libraries. */
 /* #undef _GLIBCXX_CONCEPT_CHECKS */
@@ -879,7 +879,7 @@
 
 /* Define if C99 functions in <fenv.h> should be imported in <tr1/cfenv> in
    namespace std::tr1. */
-#define _GLIBCXX_USE_C99_FENV_TR1 1
+/* #undef _GLIBCXX_USE_C99_FENV_TR1 */
 
 /* Define if C99 functions in <inttypes.h> should be imported in
    <tr1/cinttypes> in namespace std::tr1. */
