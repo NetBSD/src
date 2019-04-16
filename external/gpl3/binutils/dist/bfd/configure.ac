@@ -581,8 +581,6 @@ do
     ns32k_aout_pc532mach_vec)	 tb="$tb pc532-mach.lo aout-ns32k.lo" ;;
     ns32k_aout_pc532nbsd_vec)	 tb="$tb ns32knetbsd.lo aout-ns32k.lo" ;;
     or1k_elf32_vec)		 tb="$tb elf32-or1k.lo elf32.lo $elf" ;;
-    riscv_elf32_vec)		 tb="$tb elf32-riskv.lo elffxx-riscv.lo elf32.lo $elf" ;;
-    riscv_elf64_vec)		 tb="$tb elf64-riskv.lo elf64.lo elffxx-riscv.lo $elf" target_size=64 ;;
     pdp11_aout_vec)		 tb="$tb pdp11.lo" ;;
     pef_vec)			 tb="$tb pef.lo" ;;
     pef_xlib_vec)		 tb="$tb pef.lo" ;;
