@@ -1157,51 +1157,39 @@ void internal_join_thread(void *th) {}
 #endif
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
-#if defined(__arm__)
-  ucontext_t *ucontext = (ucontext_t*)context;
-# if SANITIZER_NETBSD
+#if SANITIZER_NETBSD
+  // This covers all NetBSD architectures
+  ucontext_t *ucontext = (ucontext_t *)context;
   *pc = _UC_MACHINE_PC(ucontext);
+  *bp = _UC_MACHINE_FP(ucontext);
   *sp = _UC_MACHINE_SP(ucontext);
-  *bp = ucontext->uc_mcontext.__gregs[_REG_R11];
-# else
+#elif defined(__arm__)
+  ucontext_t *ucontext = (ucontext_t*)context;
   *pc = ucontext->uc_mcontext.arm_pc;
   *bp = ucontext->uc_mcontext.arm_fp;
   *sp = ucontext->uc_mcontext.arm_sp;
-# endif
 #elif defined(__aarch64__)
   ucontext_t *ucontext = (ucontext_t*)context;
-# if SANITIZER_NETBSD
-  *pc = _UC_MACHINE_PC(ucontext);
-  *sp = _UC_MACHINE_SP(ucontext);
-  *bp = ucontext->uc_mcontext.__gregs[29]; /* XXX */
-# else
   *pc = ucontext->uc_mcontext.pc;
   *bp = ucontext->uc_mcontext.regs[29];
   *sp = ucontext->uc_mcontext.sp;
-# endif
 #elif defined(__hppa__)
   ucontext_t *ucontext = (ucontext_t*)context;
-# if SANITIZER_NETBSD
-  *pc = _UC_MACHINE_PC(ucontext);
-  *sp = _UC_MACHINE_SP(ucontext);
-  *bp = ucontext->uc_mcontext.__gregs[3]; /* XXX */
-#else
   *pc = ucontext->uc_mcontext.sc_iaoq[0];
   /* GCC uses %r3 whenever a frame pointer is needed.  */
   *bp = ucontext->uc_mcontext.sc_gr[3];
   *sp = ucontext->uc_mcontext.sc_gr[30];
-# endif
 #elif defined(__x86_64__)
 # if SANITIZER_FREEBSD
   ucontext_t *ucontext = (ucontext_t*)context;
   *pc = ucontext->uc_mcontext.mc_rip;
   *bp = ucontext->uc_mcontext.mc_rbp;
   *sp = ucontext->uc_mcontext.mc_rsp;
-# elif SANITIZER_NETBSD
-  ucontext_t *ucontext = (ucontext_t*)context;
-  *pc = ucontext->uc_mcontext.__gregs[_REG_RIP];
-  *bp = ucontext->uc_mcontext.__gregs[_REG_RBP];
-  *sp = ucontext->uc_mcontext.__gregs[_REG_RSP];
+#elif SANITIZER_OPENBSD
+  sigcontext *ucontext = (sigcontext *)context;
+  *pc = ucontext->sc_rip;
+  *bp = ucontext->sc_rbp;
+  *sp = ucontext->sc_rsp;
 # else
   ucontext_t *ucontext = (ucontext_t*)context;
   *pc = ucontext->uc_mcontext.gregs[REG_RIP];
@@ -1214,89 +1202,73 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   *pc = ucontext->uc_mcontext.mc_eip;
   *bp = ucontext->uc_mcontext.mc_ebp;
   *sp = ucontext->uc_mcontext.mc_esp;
-# elif SANITIZER_NETBSD
-  ucontext_t *ucontext = (ucontext_t*)context;
-  *pc = ucontext->uc_mcontext.__gregs[_REG_EIP];
-  *bp = ucontext->uc_mcontext.__gregs[_REG_EBP];
-  *sp = ucontext->uc_mcontext.__gregs[_REG_ESP];
+#elif SANITIZER_OPENBSD
+  sigcontext *ucontext = (sigcontext *)context;
+  *pc = ucontext->sc_eip;
+  *bp = ucontext->sc_ebp;
+  *sp = ucontext->sc_esp;
 # else
   ucontext_t *ucontext = (ucontext_t*)context;
+# if SANITIZER_SOLARIS
+  /* Use the numeric values: the symbolic ones are undefined by llvm
+     include/llvm/Support/Solaris.h.  */
+# ifndef REG_EIP
+#  define REG_EIP 14 // REG_PC
+# endif
+# ifndef REG_EBP
+#  define REG_EBP  6 // REG_FP
+# endif
+# ifndef REG_ESP
+#  define REG_ESP 17 // REG_SP
+# endif
+# endif
   *pc = ucontext->uc_mcontext.gregs[REG_EIP];
   *bp = ucontext->uc_mcontext.gregs[REG_EBP];
   *sp = ucontext->uc_mcontext.gregs[REG_ESP];
 # endif
 #elif defined(__powerpc__) || defined(__powerpc64__)
   ucontext_t *ucontext = (ucontext_t*)context;
-# if SANITIZER_NETBSD
-  *pc = _UC_MACHINE_PC(ucontext);
-  *sp = _UC_MACHINE_SP(ucontext);
-  *bp = ucontext->uc_mcontext.__gregs[_REG_R31];
-#  else
   *pc = ucontext->uc_mcontext.regs->nip;
   *sp = ucontext->uc_mcontext.regs->gpr[PT_R1];
   // The powerpc{,64}-linux ABIs do not specify r31 as the frame
   // pointer, but GCC always uses r31 when we need a frame pointer.
   *bp = ucontext->uc_mcontext.regs->gpr[PT_R31];
-# endif
 #elif defined(__sparc__)
-  ucontext_t *ucontext = (ucontext_t*)context;
-  uptr *stk_ptr;
-# if SANITIZER_NETBSD
-  *pc = _UC_MACHINE_PC(ucontext);
-  *sp = _UC_MACHINE_SP(ucontext);
-#  if defined (__arch64__)
-  stk_ptr = (uptr *) (*sp + 2047);
-#  else
-  stk_ptr = (uptr *) *sp;
-#  endif
-  *bp = stk_ptr[15];
-# elif defined (__arch64__)
-  *pc = ucontext->uc_mcontext.mc_gregs[MC_PC];
-  *sp = ucontext->uc_mcontext.mc_gregs[MC_O6];
-  stk_ptr = (uptr *) (*sp + 2047);
-  *bp = stk_ptr[15];
+# if defined(__arch64__) || defined(__sparcv9)
+#  define STACK_BIAS 2047
 # else
-  *pc = ucontext->uc_mcontext.gregs[REG_PC];
-  *sp = ucontext->uc_mcontext.gregs[REG_O6];
-  stk_ptr = (uptr *) *sp;
-  *bp = stk_ptr[15];
+#  define STACK_BIAS 0
 # endif
+# if SANITIZER_SOLARIS
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.gregs[REG_PC];
+  *sp = ucontext->uc_mcontext.gregs[REG_O6] + STACK_BIAS;
+# else
+  // Historical BSDism here.
+  struct sigcontext *scontext = (struct sigcontext *)context;
+#  if defined(__arch64__)
+  *pc = scontext->sigc_regs.tpc;
+  *sp = scontext->sigc_regs.u_regs[14] + STACK_BIAS;
+#  else
+  *pc = scontext->si_regs.pc;
+  *sp = scontext->si_regs.u_regs[14];
+#  endif
+# endif
+  *bp = (uptr) ((uhwptr *) *sp)[14] + STACK_BIAS;
 #elif defined(__mips__)
   ucontext_t *ucontext = (ucontext_t*)context;
-# if SANITIZER_NETBSD
-  *pc = _UC_MACHINE_PC(ucontext);
-  *sp = _UC_MACHINE_SP(ucontext);
-  *bp = ucontext->uc_mcontext.__gregs[_REG_S8];
-# else
   *pc = ucontext->uc_mcontext.pc;
   *bp = ucontext->uc_mcontext.gregs[30];
   *sp = ucontext->uc_mcontext.gregs[29];
+#elif defined(__s390__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+# if defined(__s390x__)
+  *pc = ucontext->uc_mcontext.psw.addr;
+# else
+  *pc = ucontext->uc_mcontext.psw.addr & 0x7fffffff;
 # endif
-#elif defined(__alpha__) && SANITIZER_NETBSD
-  ucontext_t *ucontext = (ucontext_t*)context;
-  *pc = _UC_MACHINE_PC(ucontext);
-  *sp = _UC_MACHINE_SP(ucontext);
-  *bp = ucontext->uc_mcontext.__gregs[_REG_S6];
-#elif (defined(__m68k__) || defined(__mc68010__)) && SANITIZER_NETBSD
-  ucontext_t *ucontext = (ucontext_t*)context;
-  *pc = _UC_MACHINE_PC(ucontext);
-  *sp = _UC_MACHINE_SP(ucontext);
-  *bp = ucontext->uc_mcontext.__gregs[_REG_A6];
-#elif defined(__vax__) && SANITIZER_NETBSD
-  ucontext_t *ucontext = (ucontext_t*)context;
-  *pc = _UC_MACHINE_PC(ucontext);
-  *sp = _UC_MACHINE_SP(ucontext);
-  *bp = ucontext->uc_mcontext.__gregs[_REG_FP];
-#elif defined(__sh3__) && SANITIZER_NETBSD
-  ucontext_t *ucontext = (ucontext_t*)context;
-  *pc = _UC_MACHINE_PC(ucontext);
-  *sp = _UC_MACHINE_SP(ucontext);
-  *bp = ucontext->uc_mcontext.__gregs[_REG_R14];
-#elif defined(__ia64__) && SANITIZER_NETBSD
-  ucontext_t *ucontext = (ucontext_t*)context;
-  *pc = _UC_MACHINE_PC(ucontext);
-  *sp = _UC_MACHINE_SP(ucontext);
-  *bp = ucontext->uc_mcontext.__gregs[1];	/* XXX */
+  *bp = ucontext->uc_mcontext.gregs[11];
+  *sp = ucontext->uc_mcontext.gregs[15];
 #else
 # error "Unsupported arch"
 #endif
