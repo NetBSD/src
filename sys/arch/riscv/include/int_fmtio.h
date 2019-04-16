@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.2 2019/04/13 15:56:18 maya Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.3 2019/04/16 07:08:52 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,11 @@
 #define	PRIo8		"hho"	/* uint8_t		*/
 #define	PRIo16		"ho"	/* uint16_t		*/
 #define	PRIo32		"o"	/* uint32_t		*/
+#ifdef _LP64
+#define	PRIo64		"lo"	/* uint64_t		*/
+#else
 #define	PRIo64		"llo"	/* uint64_t		*/
+#endif
 #define	PRIoLEAST8	"o"	/* uint_least8_t	*/
 #define	PRIoLEAST16	"hho"	/* uint_least16_t	*/
 #define	PRIoLEAST32	"ho"	/* uint_least32_t	*/
@@ -224,8 +228,8 @@
 #else
 #define	SCNdLEAST64	"lld"	/* int_least64_t	*/
 #endif
-#define	SCNdFAST8	"hhd"	/* int_fast8_t		*/
-#define	SCNdFAST16	"hd"	/* int_fast16_t		*/
+#define	SCNdFAST8	"d"	/* int_fast8_t		*/
+#define	SCNdFAST16	"d"	/* int_fast16_t		*/
 #define	SCNdFAST32	"d"	/* int_fast32_t		*/
 #ifdef _LP64
 #define	SCNdFAST64	"ld"	/* int_fast64_t		*/
@@ -252,8 +256,8 @@
 #else
 #define	SCNiLEAST64	"lli"	/* int_least64_t	*/
 #endif
-#define	SCNiFAST8	"hhi"	/* int_fast8_t		*/
-#define	SCNiFAST16	"hi"	/* int_fast16_t		*/
+#define	SCNiFAST8	"i"	/* int_fast8_t		*/
+#define	SCNiFAST16	"i"	/* int_fast16_t		*/
 #define	SCNiFAST32	"i"	/* int_fast32_t		*/
 #ifdef _LP64
 #define	SCNiFAST64	"li"	/* int_fast64_t		*/
@@ -282,8 +286,8 @@
 #else
 #define	SCNoLEAST64	"llo"	/* uint_least64_t	*/
 #endif
-#define	SCNoFAST8	"hho"	/* uint_fast8_t		*/
-#define	SCNoFAST16	"ho"	/* uint_fast16_t	*/
+#define	SCNoFAST8	"o"	/* uint_fast8_t		*/
+#define	SCNoFAST16	"o"	/* uint_fast16_t	*/
 #define	SCNoFAST32	"o"	/* uint_fast32_t	*/
 #ifdef _LP64
 #define	SCNoFAST64	"lo"	/* uint_fast64_t	*/
@@ -310,8 +314,8 @@
 #else
 #define	SCNuLEAST64	"llu"	/* uint_least64_t	*/
 #endif
-#define	SCNuFAST8	"hhu"	/* uint_fast8_t		*/
-#define	SCNuFAST16	"hu"	/* uint_fast16_t	*/
+#define	SCNuFAST8	"u"	/* uint_fast8_t		*/
+#define	SCNuFAST16	"u"	/* uint_fast16_t	*/
 #define	SCNuFAST32	"u"	/* uint_fast32_t	*/
 #ifdef _LP64
 #define	SCNuFAST64	"lu"	/* uint_fast64_t	*/
@@ -338,8 +342,8 @@
 #else
 #define	SCNxLEAST64	"llx"	/* uint_least64_t	*/
 #endif
-#define	SCNxFAST8	"hhx"	/* uint_fast8_t		*/
-#define	SCNxFAST16	"hx"	/* uint_fast16_t	*/
+#define	SCNxFAST8	"x"	/* uint_fast8_t		*/
+#define	SCNxFAST16	"x"	/* uint_fast16_t	*/
 #define	SCNxFAST32	"x"	/* uint_fast32_t	*/
 #ifdef _LP64
 #define	SCNxFAST64	"lx"	/* uint_fast64_t	*/
