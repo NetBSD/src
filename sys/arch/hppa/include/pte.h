@@ -1,8 +1,8 @@
-/*	$NetBSD: pte.h,v 1.4 2010/01/16 13:59:42 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.5 2019/04/16 12:25:17 skrll Exp $	*/
 
 /*	$OpenBSD: pte.h,v 1.11 2002/09/05 18:41:19 mickey Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1990,1993,1994 The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.

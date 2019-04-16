@@ -1,8 +1,8 @@
-/*	$NetBSD: limits.h,v 1.16 2019/01/21 20:28:17 dholland Exp $	*/
+/*	$NetBSD: limits.h,v 1.17 2019/04/16 12:25:17 skrll Exp $	*/
 
 /*	$OpenBSD: limits.h,v 1.2 2000/07/31 20:06:02 millert Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992-1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
@@ -151,7 +151,7 @@
 #ifdef __FLT_MAX__
 #define FLT_MAX		__FLT_MAX__
 #else
-#define FLT_MAX		3.40282347E+38F 
+#define FLT_MAX		3.40282347E+38F
 #endif
 #endif
 
@@ -159,7 +159,7 @@
 #ifdef __FLT_MIN__
 #define FLT_MIN		__FLT_MIN__
 #else
-#define FLT_MIN		1.17549435E-38F 
+#define FLT_MIN		1.17549435E-38F
 #endif
 #endif
 
