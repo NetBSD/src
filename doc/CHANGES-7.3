@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.45 2019/03/30 18:47:57 bouyer Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.46 2019/04/16 03:56:53 msaitoh Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -512,3 +512,8 @@ sys/arch/amd64/include/param.h			1.30
 	PR port-amd64/54052.
 	[rin, ticket #1687]
 
+sys/kern/sys_mqueue.c				1.44
+
+	mq_send1: fix argument validation and reject too large lengths early.
+	Discovered by Andy Nguyen.
+	[martin, ticket #1688]
