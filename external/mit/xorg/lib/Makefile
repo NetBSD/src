@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2019/03/19 06:19:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.49 2019/04/16 21:20:51 mrg Exp $
 
 # build libraries for xorg
 
@@ -53,6 +53,10 @@ SUBDIR+=libGLU libGLw libXaw6 libXaw libXcursor \
 	libXdmGreet \
 	xcb-util
 SUBDIR+=libgbm${OLD_PREFIX}
+.if ${HAVE_XORG_GLAMOR} != "no"
+# libEGL depends upon libgbm
+SUBDIR+=.WAIT libEGL
+.endif
 
 .include <bsd.buildinstall.mk>
 .include <bsd.subdir.mk>
