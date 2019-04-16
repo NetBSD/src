@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.3,v 1.1.2.45 2019/03/13 12:35:45 msaitoh Exp $
+# $NetBSD: CHANGES-7.1.3,v 1.1.2.46 2019/04/16 03:57:33 msaitoh Exp $
 
 A complete list of changes from the NetBSD 7.1.2 release to the NetBSD 7.1.3
 release:
@@ -464,3 +464,9 @@ external/bsd/bzip2/dist/bzip2recover.c		1.4
 
 	Apply fix for CVE-2016-3189 bzip2: heap use after free in bzip2recover
 	[martin, ticket #1684]
+
+sys/kern/sys_mqueue.c				1.44
+
+	mq_send1: fix argument validation and reject too large lengths early.
+	Discovered by Andy Nguyen.
+	[martin, ticket #1688]
