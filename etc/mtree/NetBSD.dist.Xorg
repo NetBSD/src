@@ -1,8 +1,9 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.24 2019/03/10 11:18:02 mrg Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.25 2019/04/16 21:20:50 mrg Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
 ./usr/X11R7/include/DPS
+./usr/X11R7/include/EGL
 ./usr/X11R7/include/GL
 ./usr/X11R7/include/GL/internal
 ./usr/X11R7/include/KHR
