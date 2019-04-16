@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.3 2014/07/16 20:56:24 riastradh Exp $	*/
+/*	$NetBSD: errno.h,v 1.4 2019/04/16 10:00:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,10 @@
  * - Linux consistently passes around negative errno values.  NetBSD
  *   consistently passes around positive ones, except the special magic
  *   in-kernel ones (EJUSTRETURN, ERESTART, &c.) which should not be
- *   exposed to userland.  Be careful!
+ *   exposed to userland *or* linux-only code using the negative pointer
+ *   means error return pattern.  Be careful!  If Using ERESTARTSYS from
+ *   Linux code, be sure it is remapped back to ERESTART before NetBSD
+ *   code sees it.
  */
 
 #ifndef _LINUX_ERRNO_H_
@@ -43,7 +46,7 @@
 
 #include <sys/errno.h>
 
-#define	ERESTARTSYS	ERESTART
+#define	ERESTARTSYS	(ELAST+1)	/* XXX */
 #define	ENOTSUPP	ENOTSUP	/* XXX ???  */
 #define	EREMOTEIO	EIO	/* XXX Urk...  */
 #define	ECHRNG		ERANGE	/* XXX ??? */
