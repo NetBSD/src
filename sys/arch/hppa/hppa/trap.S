@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.71 2019/04/16 06:13:53 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.72 2019/04/16 07:08:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -908,7 +908,7 @@ hppa_fpu_emulate:
 
 	/*
 	 * The hardware FPU is disabled, so we need to swap in the FPU state of
-	 * the LWP whose uspace physical address in CR_UPADDR.  We may also
+	 * the LWP whose uspace physical address in CR_FPPADDR.  We may also
 	 * need to swap out the FPU state of any LWP whose uspace physical
 	 * address is in curcpu()->ci_fpu_state.
 	 */
