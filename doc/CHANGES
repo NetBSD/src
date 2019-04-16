@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2521 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2522 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -33,7 +33,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	amd64: Support 16TB of PA, and 32TB of kernel VA on the architecture
 		side. [maxv 20170617]
 	expat: Import 2.2.1 (security fixes). [christos 20170617]
-	arm: Add support for Allwinner H3 SoC. [jmcneill 20170628]
+	evbarm: Add support for Allwinner H3 SoC. [jmcneill 20170628]
 	bind: Import version 9.10.5-P2. [christos 20170630]
 	sunxiemac(4): Add support for Allwinner Gigabit Ethernet (EMAC).
 		[jmcneill 20170701]
@@ -41,14 +41,14 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	wbsio(4): Add support for Winbond W83627DHG-P, W83627SF, W83627UHG,
 		W83667HGB, W83687THF, W83697UG,	Nuvoton NCT5104D, NCT6775,
 		NCT6779, NCT6791, NCT6792 and NCT6793. [msaitoh 20170707]
-	arm: Add support for Allwinner A83T SoC. [jmcneill 20170707]
+	evbarm: Add support for Allwinner A83T SoC. [jmcneill 20170707]
 	MAKEDEV(8): Regenerate, documenting lua, dk, plcom, wmcom, hdmicec, mfi,
 		nvme, nvme ns, tpm, and dtrace devices. [sevan 20170710]
 	wbsio(4): Add support for NCT6795. [msaitoh 20170711]
 	lm(4): Add support for NCT5174D, NCT6775F, NCT6779D and NCT679[1235]D.
 		[msaitoh 20170711]
-	arm: Add support for NVIDIA Tegra X1 SoC. [jmcneill 20170720]
-	arm: Add support for Allwinner A64 SoC. [jmcneill 20170723]
+	evbarm64: Add support for NVIDIA Tegra X1 SoC. [jmcneill 20170720]
+	evbarm64: Add support for Allwinner A64 SoC. [jmcneill 20170723]
 	gzip(1): Add SIGINFO support. [mrg 20170804]
 	i386: Remove vm86. [maxv 20170812]
 	itesio(4): Add support IT8628E. [hauke 20170814]
@@ -62,7 +62,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	tcpdump(8): Import 4.9.2. [christos 20170908]
 	veriexecgen(8): Drop support for MD5, SHA1, RMD160. [sevan 20170909]
 	itesio(4): Add support IT8728GF and IT877[12]E [hauke 20170814]
-	arm: Add support for Allwinner A13 and R8 SoCs. [jmcneill 20170825]
+	evbarm: Add support for Allwinner A13 and R8 SoCs. [jmcneill 20170825]
 	veriexec(4): Drop support for VERIFIED_EXEC_FP_MD5,
 		VERIFIED_EXEC_FP_SHA1, and VERIFIED_EXEC_FP_RMD160 options.
 		[sevan 20170913]
@@ -75,7 +75,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[jdolecek 20171007]
 	OpenSSH: Imported 7.6. [christos 20171007]
 	amd64: Add support for Kernel ASLR [maxv 20171010]
-	arm: Add support for Allwinner H5 SoC. [jmcneill 20171011]
+	evbarm64: Add support for Allwinner H5 SoC. [jmcneill 20171011]
 	tmux(1): Imported 2.6. [christos 20171012]
 	amd64: Add support for SMAP. [maxv 20171017]
 	amd64: Add support for USER_LDT. [maxv 20171021]
@@ -86,7 +86,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernhist(9): Reworked the export-via-sysctl code to use uintptr_t
 		arguments, PR kern/52639.  Requires contemporaneous update
 		of vmstat(1). [pgoyette 20171028]
-	arm: Add support for NextThing GR8 SoC. [jmcneill 20171106]
+	evbarm: Add support for NextThing GR8 SoC. [jmcneill 20171106]
 	acpi(4): Updated ACPICA to 20171110. [christos 20171111]
 	sunxinand(4): Add driver for Allwinner NAND Flash Controller.
 		[jmcneill 20171113]
@@ -155,7 +155,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	puc(4): Add Intel 300 series chipset support. [msaitoh 20180413]
 	file(1): Upgraded to 5.33. [christos 20180415]
 	netpgp(3lua): Add Lua binding for libnetpgp(3). [sevan 20180429]
-	arm: Add support for Allwinner H6 SoC. [jmcneill 20180501]
+	evbarm64: Add support for Allwinner H6 SoC. [jmcneill 20180501]
 	dhcpcd(8): Import 7.0.4. [roy 20180502]
 	midiplay: Add -s option to send all sounds off. [mrg 20180503]
 	libbozohttpd(3): Add the embeddable version of bozohttpd [sevan 20180503]
@@ -171,8 +171,8 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		default. [sevan 20180602]
 	dhcpcd(8): Import 7.0.5b. [roy 20180604]
 	virtio(4): Add MMIO transport and fdt(4) attachment. [jakllsch 20180606]
-	arm: Add support for QEMU ARM Virtual Machine ("virt"). [jmcneill 20180614]
-	arm: Add support for Rockchip RK3328 SoC. [jmcneill 20180615]
+	evbarm: Add support for QEMU ARM Virtual Machine ("virt"). [jmcneill 20180614]
+	evbarm64: Add support for Rockchip RK3328 SoC. [jmcneill 20180615]
 	dhcpcd(8): Import 7.0.6. [roy 20180621]
 	bpf(4): Add the BPF direction filter (BIOC[GS]DIRECTION).
 		[msaitoh 20180626]
@@ -185,9 +185,9 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernel: Remove pmc(9) and X86PMC. [maxv 20180714]
 	tprof(4): Revamped. tpfmt(1) merged into tprof(8). [maxv 20180714]
 	kernel: Remove ipkdb(4). [maxv 20180714]
-	arm: Add support for ARMv8 performance event monitoring with tprof(4).
+	evbarm64: Add support for ARMv8 performance event monitoring with tprof(4).
 		[jmcneill 20180715]
-	arm: Add support for ARMv7 performance event monitoring with tprof(4).
+	evbarm: Add support for ARMv7 performance event monitoring with tprof(4).
 		[jmcneill 20180715]
 	dhcpcd(8): Import 7.0.7. [roy 20180724]
 	i386: Remove the XEN3_DOM0 and XEN3_DOMU configurations, and drop
@@ -202,13 +202,13 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kUBSan: Added support for micro-UBSan (kernel-UBSan) as KUBSAN.
 		[kamil 20180803]
 	lua: Import version 5.3.5. [alnsn 20180804]
-	arm: Add driver for ARM GICv3 interrupt controllers. [jmcneill 20180808]
+	evbarm64: Add driver for ARM GICv3 interrupt controllers. [jmcneill 20180808]
 	kernel: Remove the n8 driver. [maya 20180808]
 	usb(4): Many fixes to abort issues fixed for all USB controllers.
 		[mrg/skrll/riastradh 20180809]
 	nullfs(4): Add 32-bit support. [mrg 20180811]
 	bind: Import version 9.12.2-P1. [christos 20180812]
-	arm: Add support for Rockchip RK3399 SoC. [jmcneill 20180812]
+	evbarm64: Add support for Rockchip RK3399 SoC. [jmcneill 20180812]
 	amd64: Randomize by default all the randomizable VM areas in the kernel.
 		[maxv 20180812]
 	mdocml: Import 1.14.4. [christos 20180814]
@@ -219,7 +219,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	dhcpcd(8): Import 7.0.8. [roy 20180820]
 	amd64: Add support for kASan - Kernel Address Sanitizer.
 		[maxv 20180820]
-	arm: Add UEFI boot loader for ARM64 platforms. [jmcneill 20180824]
+	evbarm64: Add UEFI boot loader for ARM64 platforms. [jmcneill 20180824]
 	kernel: Remove NDIS. [maxv 20180825]
 	mue(4): Add driver for Microchip LAN75xx/LAN78xx (Raspberry Pi 3 B+)
 		from OpenBSD. [rin 20180825]
@@ -247,7 +247,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	newsmips: Add support for NWS-4000.  Based on nonaka@'s porting effort
 		back in 2002.  [tsutsui 20181014]
 	file(1): Upgraded to 5.35. [christos 20181013]
-	arm: Provide generic start code that allows a GENERIC kernel to be used
+	evbarm: Provide generic start code that allows a GENERIC kernel to be used
 		on FDTised boards. [skrll 20181018]
 	tzdata: Updated to 2018f. [kre 20181019]
 	amdccp(4): Add driver for AMD Cryptographic Coprocessor RNG.
@@ -278,7 +278,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	sh(1): Many bug fixes and enhancements.  [kre 20181212]
 	amdtemp(4): Add support for AMD family 16h temperature sensors.
 		[is 20181213]
-	arm: Add support for NVIDIA Tegra X1 SoC SATA. [skrll 20181214]
+	evbarm64: Add support for NVIDIA Tegra X1 SoC SATA. [skrll 20181214]
 	httpd(8): Update to bozohttpd-20181215. [mrg 20181215]
 	kernel: Remove COMPAT_SVR4 and COMPAT_SVR4_32. [maxv 20181219]
 	sqlite3(1): Import 3.26.0. [christos 20181219]
@@ -302,7 +302,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	binutils: Updated to FSF binutils 2.31.1.  [christos 20181231]
 	services(5), protocols(5): Pull iana-generated services and protocols.
 		[christos 20190103]
-	arm: Add SMP support for Allwinner multi-cluster SoCs (A83T, A80).
+	evbarm64: Add SMP support for Allwinner multi-cluster SoCs (A83T, A80).
 		[jmcneill 20190103]
 	wpa: Import wpa_supplicant and hostapd 2.7. [christos 20190104]
 	acpi(4): Updated ACPICA to 20181213. [christos 20190104]
@@ -320,7 +320,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		tables, lock-free state lookup, incremental state G/C, etc).
 		[rmind 20190119]
 	gcc(1): Import GCC 7.4.  [mrg 20190119]
-	arm: Update Amlogic S805 SoC support to use FDT based configuration.
+	evbarm: Update Amlogic S805 SoC support to use FDT based configuration.
 		[jmcneill 20190119]
 	dhcpcd(8): Import dhcpcd-7.1.0. [roy 20190122]
 	kernel: Remove the satlink driver. [maxv 20190127]
@@ -341,14 +341,14 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	bge(4): Add support for BCM5762, BCM5725, BCM5727, BCM57764, BCM57767
 		and BCM57787 [msaitoh 20190220]
 	bind: Import version 9.13.7. [christos 20190224]
-	arm: Add support for Amlogic S905 SoC. [jmcneill 20190225]
+	evbarm64: Add support for Amlogic S905 SoC. [jmcneill 20190225]
 	jemalloc(3): Import 5.1.0 [christos 20190304]
 	kcov(4): Added driver for kernel coverage tracing [kamil 20190310]
 	mdocml: Import 1.14.5. [christos 20190310]
 	OpenSSL: Imported 1.1.1b. [christos 20190312]
 	ssdfb(4): Added driver for SSD1306 & SH1106 displays [tnn 20190317]
 	tzdata Updated to 2019a. [kre 20190326]
-	arm: Add UEFI bootloader support (bootarm.efi). [jmcneill 20190330]
+	evbarm: Add UEFI bootloader support (bootarm.efi). [jmcneill 20190330]
 	indent(1): Upgraded to the FreeBSD HEAD checkout [kamil 20190404]
 	tzcode: Updated to 2019a. [christos 20190404]
 	pkg_install: Updated to 20190405. [sevan 20190406]
