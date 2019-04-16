@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.16 2018/12/21 07:51:17 maya Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.17 2019/04/16 10:00:04 mrg Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.16 2018/12/21 07:51:17 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.17 2019/04/16 10:00:04 mrg Exp $");
 
 #include <linux/console.h>
 #include <linux/delay.h>
@@ -966,11 +966,12 @@ nouveau_ioctl_override(struct file *fp, unsigned long cmd, void *data)
 
 	ret = pm_runtime_get_sync(dev->dev);
 	if (ret < 0 && ret != -EACCES)
-		return ret;
+		/* XXX errno Linux->NetBSD */
+		return -ret;
 
 	switch (DRM_IOCTL_NR(cmd) - DRM_COMMAND_BASE) {
 	case DRM_NOUVEAU_NVIF:
-		/* XXX errno NetBSD->Linux */
+		/* XXX errno Linux->NetBSD */
 		ret = -usif_ioctl(file, data, IOCPARM_LEN(cmd));
 		break;
 	default:

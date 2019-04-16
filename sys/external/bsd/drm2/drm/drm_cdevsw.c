@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.13 2018/12/21 07:51:18 maya Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.14 2019/04/16 10:00:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.13 2018/12/21 07:51:18 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.14 2019/04/16 10:00:04 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -184,6 +184,8 @@ fail2:	mutex_lock(&drm_global_mutex);
 		(void)drm_lastclose(dev);
 fail1:	drm_minor_release(dminor);
 fail0:	KASSERT(error);
+	if (error == ERESTARTSYS)
+		error = ERESTART;
 	return error;
 }
 
@@ -299,6 +301,8 @@ drm_read(struct file *fp, off_t *off, struct uio *uio, kauth_cred_t cred,
 	}
 
 	/* Success!  */
+	if (error == ERESTARTSYS)
+		error = ERESTART;
 	return error;
 }
 
@@ -345,11 +349,16 @@ drm_ioctl_shim(struct file *fp, unsigned long cmd, void *data)
 {
 	struct drm_file *file = fp->f_data;
 	struct drm_driver *driver = file->minor->dev->driver;
+	int error;
 
 	if (driver->ioctl_override)
-		return driver->ioctl_override(fp, cmd, data);
+		error = driver->ioctl_override(fp, cmd, data);
 	else
-		return drm_ioctl(fp, cmd, data);
+		error = drm_ioctl(fp, cmd, data);
+	if (error == ERESTARTSYS)
+		error = ERESTART;
+
+	return error;
 }
 
 static int
@@ -475,11 +484,14 @@ drm_fop_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 	int error;
 
 	KASSERT(fp == file->filp);
-	error = (*dev->driver->mmap_object)(dev, *offp, len, prot, uobjp,
+	/* XXX errno Linux->NetBSD */
+	error = -(*dev->driver->mmap_object)(dev, *offp, len, prot, uobjp,
 	    offp, file->filp);
 	*maxprotp = prot;
 	*advicep = UVM_ADV_RANDOM;
-	return -error;
+	if (error == ERESTARTSYS)
+		error = ERESTART;
+	return error;
 }
 
 static paddr_t
