@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.40 2019/03/15 07:03:36 mrg Exp $
+# $NetBSD: mi,v 1.41 2019/04/16 21:20:51 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -21,6 +21,8 @@
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	xorg,machine=i386,mesa_ver=10
 ./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/libglamoregl.so			-unknown-	xorg,xorg_glamor
+./usr/X11R7/lib/modules/libglamoregl.so.0		-unknown-	xorg,xorg_glamor
 ./usr/X11R7/man/cat1/Xmark.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xnest.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xserver.0				-unknown-	.cat,xorg

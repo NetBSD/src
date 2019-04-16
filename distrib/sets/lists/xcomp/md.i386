@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.60 2019/03/12 23:50:56 christos Exp $
+# $NetBSD: md.i386,v 1.61 2019/04/16 21:20:51 mrg Exp $
 #./usr/libdata/lint/llib-lIntelXvMC.ln			-unknown-	lint,xorg
 ./usr/X11R7/include/intel_bufmgr.h			-unknown-	obsolete
 ./usr/X11R7/include/libdrm/nouveau/nvif/cl0080.h	-unknown-	xorg
@@ -22,18 +22,19 @@
 ./usr/X11R7/lib/libchromeXvMCPro_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libchromeXvMC_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libchromeXvMC_pic.a			-unknown-	xorg,picinstall
-./usr/X11R7/lib/libdrm_amdgpu.a				-unknown-	xorg,compatx11file
-./usr/X11R7/lib/libdrm_amdgpu_p.a			-unknown-	profile,xorg,compatx11file
-./usr/X11R7/lib/libdrm_amdgpu_pic.a			-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libdrm_amdgpu.a				-unknown-	xorg
+./usr/X11R7/lib/libdrm_amdgpu_p.a			-unknown-	profile,xorg
+./usr/X11R7/lib/libdrm_amdgpu_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libdrm_intel.a				-unknown-	xorg
 ./usr/X11R7/lib/libdrm_intel_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libdrm_intel_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libdrm_nouveau.a			-unknown-	xorg
 ./usr/X11R7/lib/libdrm_nouveau_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libdrm_nouveau_pic.a			-unknown-	xorg,picinstall
-./usr/X11R7/lib/libvdpau.a				-unknown-	xorg,compatx11file
-./usr/X11R7/lib/libvdpau_p.a				-unknown-	profile,xorg,compatx11file
-./usr/X11R7/lib/libvdpau_pic.a				-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libvdpau.a				-unknown-	xorg
+./usr/X11R7/lib/libvdpau_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libvdpau_pic.a				-unknown-	xorg,picinstall
+./usr/X11R7/lib/pkgconfig/egl.pc			-unknown-	xorg,xorg_glamor
 ./usr/X11R7/lib/pkgconfig/libdrm_amdgpu.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/libdrm_intel.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/libdrm_nouveau.pc		-unknown-	xorg

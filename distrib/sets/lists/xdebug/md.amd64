@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.45 2019/03/11 17:50:19 kamil Exp $
+# $NetBSD: md.amd64,v 1.46 2019/04/16 21:20:51 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg,compatx11file
@@ -41,7 +41,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_intel.so.0.2.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.2.0.debug	-unknown-		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.3.0.debug	-unknown-		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libvdpau.so.1.0.debug		-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libvdpau.so.1.0.debug		-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i810_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i915_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i965_dri.so.0.debug	-unknown-		xorg,debug

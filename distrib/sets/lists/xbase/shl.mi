@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.82 2018/06/06 03:09:12 snj Exp $
+# $NetBSD: shl.mi,v 1.83 2019/04/16 21:20:51 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -20,6 +20,9 @@
 ./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so	-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so.2	-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so.2.0	-unknown-	xorg
+./usr/X11R7/lib/libEGL.so			-unknown-		xorg,compatx11file,xorg_glamor
+./usr/X11R7/lib/libEGL.so.0			-unknown-		xorg,compatx11file,xorg_glamor
+./usr/X11R7/lib/libEGL.so.0.0			-unknown-		xorg,compatx11file,xorg_glamor
 ./usr/X11R7/lib/libFS.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libFS.so.7			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libFS.so.7.0			-unknown-		xorg,compatx11file
@@ -311,3 +314,4 @@
 ./usr/X11R7/lib/libxshmfence.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxshmfence.so.1		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxshmfence.so.1.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/pkgconfig/egl.pc		-unknown-		xorg,xorg_glamor

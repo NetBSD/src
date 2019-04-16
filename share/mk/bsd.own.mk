@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1129 2019/04/15 15:56:40 maya Exp $
+#	$NetBSD: bsd.own.mk,v 1.1130 2019/04/16 21:20:51 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1472,7 +1472,7 @@ HAVE_XORG_SERVER_VER?=120
 
 .if ${HAVE_XORG_SERVER_VER} == "120"
 XORG_SERVER_SUBDIR?=xorg-server
-. if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
+. if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || ${MACHINE} == "evbarm"
 HAVE_XORG_GLAMOR?=	yes
 . endif
 .else

@@ -1,6 +1,7 @@
-# $NetBSD: mi,v 1.30 2019/03/11 09:20:13 mrg Exp $
+# $NetBSD: mi,v 1.31 2019/04/16 21:20:51 mrg Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						-unknown-	debuglib,xorg,compatx11dir
+./usr/X11R7/lib/libEGL_g.a				-unknown-	debuglib,xorg,compatx11file,xorg_glamor
 ./usr/X11R7/lib/libFS_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libGLU_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libGL_g.a				-unknown-	debuglib,xorg,compatx11file
