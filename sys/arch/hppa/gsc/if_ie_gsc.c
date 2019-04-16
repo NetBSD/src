@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.2 2018/02/08 09:05:18 dholland Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.3 2019/04/16 12:22:13 skrll Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.2 2018/02/08 09:05:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.3 2019/04/16 12:22:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ struct ie_gsc_regs {
 
 struct ie_gsc_softc {
 	struct ie_softc ie;
-	
+
 	/* tag and handle to hppa-specific adapter registers. */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -139,7 +139,7 @@ ie_gsc_reset(struct ie_softc *sc, int what)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
 	int i;
-	
+
 	switch (what) {
 	case CHIP_PROBE:
 		bus_space_write_4(gsc->iot, gsc->ioh, IE_GSC_REG_RESET, 0);
@@ -496,7 +496,7 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 	 * SCP can go after that.
 	 */
 	sc->scp = IE_GSC_ALIGN(8);
-	
+
 	/* ISCP follows SCP */
 	sc->iscp = IE_GSC_ALIGN(sc->scp + IE_SCP_SZ);
 
