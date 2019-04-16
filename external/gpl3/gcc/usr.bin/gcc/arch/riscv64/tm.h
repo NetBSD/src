@@ -16,9 +16,6 @@
 #ifndef LIBC_MUSL
 # define LIBC_MUSL 4
 #endif
-#ifndef NETBSD_ENABLE_PTHREADS
-# define NETBSD_ENABLE_PTHREADS
-#endif
 #ifndef CHAR_FAST8
 # define CHAR_FAST8 1
 #endif
