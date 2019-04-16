@@ -87,19 +87,13 @@ do {									\
   else if (!strcmp (rs6000_abi_name, "aixdesc"))			\
     rs6000_current_abi = ABI_AIX;					\
   else if (!strcmp (rs6000_abi_name, "freebsd")				\
+	   || !strcmp (rs6000_abi_name, "netbsd")			\
 	   || !strcmp (rs6000_abi_name, "linux"))			\
     {									\
       if (TARGET_64BIT)							\
 	rs6000_current_abi = ABI_AIX;					\
       else								\
 	rs6000_current_abi = ABI_V4;					\
-    }									\
-  else if (!strcmp (rs6000_abi_name, "netbsd"))				\
-    {									\
-      if (TARGET_64BIT)							\
-	rs6000_current_abi = ABI_AIX;					\
-      else								\
-  	rs6000_current_abi = ABI_V4;					\
     }									\
   else if (!strcmp (rs6000_abi_name, "openbsd"))			\
     rs6000_current_abi = ABI_V4;					\
