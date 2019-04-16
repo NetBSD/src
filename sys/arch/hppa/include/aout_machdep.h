@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.2 2002/12/10 17:14:10 thorpej Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.3 2019/04/16 12:25:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -34,7 +34,7 @@
  * XXX fredette - the definitions in this file (with
  * the possible exception of AOUT_LDPGSZ) are bogus,
  * and they exist only to let certain userland programs
- * compile.  I don't think any SunOS-style a.out HPPA 
+ * compile.  I don't think any SunOS-style a.out HPPA
  * binaries exist.
  */
 
@@ -44,7 +44,7 @@
 struct relocation_info_hppa {
 		int r_address;    /* offset in text or data segment */
   unsigned int r_symbolnum : 24,  /* ordinal number of add symbol */
-		   r_pcrel :  1,  /* 1 if value should be pc-relative */ 
+		   r_pcrel :  1,  /* 1 if value should be pc-relative */
 		  r_length :  2,  /* log base 2 of value's width */
 		  r_extern :  1,  /* 1 if need to add symbol to value */
 		 r_baserel :  1,  /* linkage table relative */

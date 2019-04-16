@@ -1,8 +1,8 @@
-/*	$NetBSD: signal.h,v 1.7 2017/11/29 17:36:03 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.8 2019/04/16 12:25:17 skrll Exp $	*/
 
 /*	$OpenBSD: signal.h,v 1.1 1998/06/23 19:45:27 mickey Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.

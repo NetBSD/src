@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2018/08/22 01:05:22 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2019/04/16 12:25:17 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -79,7 +79,7 @@ enum hppa_cpu_type {
 	hpcxtp,	/* PA7200 (t')		PA 1.1d */
 	hpcxl2,	/* PA7300LC (l2)	PA 1.1e */
 	hpcxu,	/* PA8000 (u)		PA 2.0 */
-	hpcxup,	/* PA8200 (u+)		PA 2.0 */	
+	hpcxup,	/* PA8200 (u+)		PA 2.0 */
 	hpcxw,	/* PA8500 (w)		PA 2.0 */
 	hpcxwp,	/* PA8600 (w+)		PA 2.0 */
 	hpcxw2, /* PA8700 (piranha)	PA 2.0 */
@@ -287,7 +287,7 @@ struct cpu_info {
 
 	struct hppa_interrupt_register	ci_ir;
 	struct hppa_interrupt_bit	ci_ib[HPPA_INTERRUPT_BITS];
-	
+
 #if defined(MULTIPROCESSOR)
 	struct lwp	*ci_curlwp;	/* CPU owner */
 	paddr_t		ci_stack;	/* stack for spin up */

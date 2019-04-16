@@ -1,8 +1,8 @@
-/*	$NetBSD: asm.h,v 1.15 2013/09/12 15:36:17 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.16 2019/04/16 12:25:17 skrll Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1990,1991,1994 The University of Utah and
  * the Computer Systems Laboratory (CSL).  All rights reserved.
  *

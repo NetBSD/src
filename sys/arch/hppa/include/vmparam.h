@@ -1,8 +1,8 @@
-/*	$NetBSD: vmparam.h,v 1.20 2013/01/07 16:57:28 chs Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21 2019/04/16 12:25:17 skrll Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.33 2006/06/04 17:21:24 miod Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1988-1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
