@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.2 2019/04/15 18:41:06 maya Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2019/04/16 07:32:30 mrg Exp $
 
-SRCS+=	strtof.c strtold_pQ.c
+SRCS+=	strtof.c
 SRCS+=	strtopQ.c
 
+.if ${MACHINE_ARCH} == "riscv64"
+SRCS+=	strtold_pQ.c
+.endif
