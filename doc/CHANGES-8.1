@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.127 2019/04/10 07:40:36 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.128 2019/04/16 03:48:02 msaitoh Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2834,3 +2834,8 @@ sys/kern/sysv_ipc.c				1.38
 	defparam all of the config variables associated with SYSV IPC stuff.
 	[pgoyette, ticket #1229]
 
+sys/kern/sys_mqueue.c				1.44
+
+	mq_send1: fix argument validation and reject too large lengths early.
+	Discovered by Andy Nguyen.
+	[martin, ticket #1230]
