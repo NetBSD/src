@@ -87,17 +87,6 @@ extern int dot_symbols;
 
 #define ELFv2_ABI_CHECK (rs6000_elf_abi == 2)                   
 
-#undef CC1_OS_NETBSD_SPEC
-#define CC1_OS_NETBSD_SPEC \
-  NETBSD_CC1_AND_CC1PLUS_SPEC \
-  "%{!m32: %{!mrelocatable: %{!fno-pie: %{!fno-pic: \
-     %{!fpie: %{!fpic: \
-       %{!fPIE: %{!fPIC:-fPIC}}}}}}}}"
-/* %{!m32: %{!mcmodel*: -mcmodel=medium}}" */
-
-#undef CC1PLUS_SPEC
-#define CC1PLUS_SPEC CC1_OS_NETBSD_SPEC
-
 #undef	SUBSUBTARGET_OVERRIDE_OPTIONS
 #define	SUBSUBTARGET_OVERRIDE_OPTIONS				\
   do								\
@@ -181,17 +170,6 @@ extern int dot_symbols;
     }								\
   while (0)
 
-#ifdef	RS6000_BI_ARCH
-
-#if 0
-#undef	OVERRIDE_OPTIONS
-#define	OVERRIDE_OPTIONS \
-  rs6000_override_options (((TARGET_DEFAULT ^ target_flags) & MASK_64BIT) \
-			   ? (char *) 0 : TARGET_CPU_DEFAULT)
-#endif
-
-#endif
-
 #undef	ASM_DEFAULT_SPEC
 #undef	ASM_SPEC
 #undef	LINK_OS_NETBSD_SPEC
@@ -263,6 +241,22 @@ extern int dot_symbols;
 
 #endif
 
+/* We use NetBSD libc _mcount for profiling.  */
+#define NO_PROFILE_COUNTERS 1
+#define PROFILE_HOOK(LABEL) \
+  do { if (TARGET_64BIT) output_profile_hook (LABEL); } while (0)
+
+/* PowerPC64 NetBSD word-aligns FP doubles when -malign-power is given.  */
+#undef  ADJUST_FIELD_ALIGN
+#define ADJUST_FIELD_ALIGN(FIELD, TYPE, COMPUTED) \
+  (rs6000_special_adjust_field_align_p ((TYPE), (COMPUTED))		\
+   ? 128								\
+   : (TARGET_64BIT							\
+      && TARGET_ALIGN_NATURAL == 0					\
+      && TYPE_MODE (strip_array_types (TYPE)) == DFmode)		\
+   ? MIN ((COMPUTED), 32)						\
+   : (COMPUTED))
+
 /* PowerPC64 NetBSD increases natural record alignment to doubleword if
    the first field is an FP double, only if in power alignment mode.  */
 #undef  ROUND_TYPE_ALIGN
@@ -305,8 +299,8 @@ extern int dot_symbols;
   (!(FIRST) ? upward : FUNCTION_ARG_PADDING (MODE, TYPE))
 
 /* NetBSD doesn't support saving and restoring 64-bit regs in a 32-bit
-   process.  XXXMRG?  */
-#define OS_MISSING_POWERPC64 !TARGET_64BIT
+   process.  */
+#define OS_MISSING_POWERPC64 (!TARGET_64BIT)
 
 #undef  TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()			\
@@ -350,6 +344,17 @@ extern int dot_symbols;
     }						\
   while (0)
 
+#undef CC1_OS_NETBSD_SPEC
+#define CC1_OS_NETBSD_SPEC \
+  NETBSD_CC1_AND_CC1PLUS_SPEC \
+  "%{!m32: %{!mrelocatable: %{!fno-pie: %{!fno-pic: \
+     %{!fpie: %{!fpic: \
+       %{!fPIE: %{!fPIC:-fPIC}}}}}}}}"
+/* %{!m32: %{!mcmodel*: -mcmodel=medium}}" */
+
+#undef CC1PLUS_SPEC
+#define CC1PLUS_SPEC CC1_OS_NETBSD_SPEC
+
 #undef  CPP_OS_DEFAULT_SPEC
 #define CPP_OS_DEFAULT_SPEC "%(cpp_os_netbsd)"
 
@@ -381,17 +386,6 @@ extern int dot_symbols;
 
 /* Use standard DWARF numbering for DWARF debugging information.  */
 #define RS6000_USE_DWARF_NUMBERING
-
-/* PowerPC64 NetBSD word-aligns FP doubles when -malign-power is given.  */
-#undef  ADJUST_FIELD_ALIGN
-#define ADJUST_FIELD_ALIGN(FIELD, TYPE, COMPUTED) \
-  (rs6000_special_adjust_field_align_p ((TYPE), (COMPUTED))		\
-   ? 128                                                                \
-   : (TARGET_64BIT                                                      \
-      && TARGET_ALIGN_NATURAL == 0                                      \
-      && TYPE_MODE (strip_array_types (TYPE)) == DFmode)   		\
-   ? MIN ((COMPUTED), 32)                                               \
-   : (COMPUTED))
 
 #undef  TOC_SECTION_ASM_OP
 #define TOC_SECTION_ASM_OP \
@@ -601,4 +595,11 @@ extern int dot_symbols;
 /* NetBSD ppc64 has 128-bit long double support.  */
 #undef	RS6000_DEFAULT_LONG_DOUBLE_SIZE
 #define RS6000_DEFAULT_LONG_DOUBLE_SIZE 128
+
 #define POWERPC_NETBSD
+
+/* The IEEE 128-bit emulator is only built on Linux systems.  Flag that we
+   should enable the type handling for KFmode on VSX systems even if we are not
+   enabling the __float128 keyword.  */
+#undef	TARGET_FLOAT128_ENABLE_TYPE
+#define TARGET_FLOAT128_ENABLE_TYPE 1
