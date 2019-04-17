@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.173 2018/06/26 06:48:02 msaitoh Exp $ */
+/*	$NetBSD: if_gre.c,v 1.174 2019/04/17 07:47:56 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.173 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.174 2019/04/17 07:47:56 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -118,9 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.173 2018/06/26 06:48:02 msaitoh Exp $")
 #include <net/bpf.h>
 
 #include <net/if_gre.h>
-
-#include <compat/sys/socket.h>
-#include <compat/sys/sockio.h>
 
 #include "ioconf.h"
 
