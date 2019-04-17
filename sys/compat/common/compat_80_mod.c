@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_80_mod.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: compat_80_mod.c,v 1.3 2019/04/17 09:21:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.3 2019/04/17 09:21:57 msaitoh Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -46,7 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.2 2019/01/27 02:08:39 pgoyette E
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 
-int compat_80_init(void)
+int
+compat_80_init(void)
 {
 
 	kern_mod_80_init();
@@ -54,7 +55,8 @@ int compat_80_init(void)
 	return 0;
 }
 
-int compat_80_fini(void)
+int
+compat_80_fini(void)
 {
 
 	kern_mod_80_fini();
