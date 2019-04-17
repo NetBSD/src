@@ -1802,7 +1802,7 @@
 
 
 /* Define if your target C library provides sys/sdt.h */
-/* #undef HAVE_SYS_SDT_H */
+#define HAVE_SYS_SDT_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #ifndef USED_FOR_TARGET
