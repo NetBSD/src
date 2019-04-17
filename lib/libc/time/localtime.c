@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.120 2019/04/08 18:50:52 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.121 2019/04/17 17:37:29 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.120 2019/04/08 18:50:52 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.121 2019/04/17 17:37:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -284,15 +284,20 @@ detzcode64(const char *const codep)
  	return result;
 }
 
+#include <stdio.h>
+
 const char *
 tzgetname(const timezone_t sp, int isdst)
 {
 	int i;
+	const char *name = NULL;
 	for (i = 0; i < sp->typecnt; ++i) {
 		const struct ttinfo *const ttisp = &sp->ttis[i];
 		if (ttisp->tt_isdst == isdst)
-			return &sp->chars[ttisp->tt_abbrind];
+			name = &sp->chars[ttisp->tt_abbrind];
 	}
+	if (name != NULL)
+		return name;
 	errno = ESRCH;
 	return NULL;
 }
