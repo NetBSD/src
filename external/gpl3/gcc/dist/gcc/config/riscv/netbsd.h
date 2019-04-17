@@ -32,6 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_OS_CPP_BUILTINS()				\
   do {								\
     NETBSD_OS_CPP_BUILTINS_ELF();				\
+    builtin_define ("__riscv__");				\
     /* The GNU C++ standard library requires this.  */		\
     if (c_dialect_cxx ())					\
       builtin_define ("_GNU_SOURCE");				\
@@ -62,3 +63,9 @@ Boston, MA 02111-1307, USA.  */
 
 #undef NETBSD_ENTRY_POINT
 #define NETBSD_ENTRY_POINT	"_start"
+
+#undef UINTPTR_TYPE
+#define UINTPTR_TYPE "long unsigned int"
+
+#undef INTPTR_TYPE
+#define INTPTR_TYPE "long int"
