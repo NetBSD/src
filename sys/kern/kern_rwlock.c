@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.52 2018/08/31 01:23:57 ozaki-r Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.53 2019/04/17 02:29:43 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.52 2018/08/31 01:23:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.53 2019/04/17 02:29:43 ozaki-r Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -290,9 +290,9 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	RW_ASSERT(rw, !cpu_intr_p());
 	RW_ASSERT(rw, curthread != 0);
 	RW_WANTLOCK(rw, op);
-	KDASSERT(pserialize_not_in_read_section());
 
 	if (panicstr == NULL) {
+		KDASSERT(pserialize_not_in_read_section());
 		LOCKDEBUG_BARRIER(&kernel_lock, 1);
 	}
 
