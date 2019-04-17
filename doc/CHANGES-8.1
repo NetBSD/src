@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.128 2019/04/16 03:48:02 msaitoh Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.129 2019/04/17 15:58:12 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2839,3 +2839,9 @@ sys/kern/sys_mqueue.c				1.44
 	mq_send1: fix argument validation and reject too large lengths early.
 	Discovered by Andy Nguyen.
 	[martin, ticket #1230]
+
+sys/arch/i386/stand/efiboot/efidisk.c		1.7
+
+	efiboot: Don't panic when BLOCK_IO_PROTOCOL is not found.
+	[nonaka, ticket #1231]
+
