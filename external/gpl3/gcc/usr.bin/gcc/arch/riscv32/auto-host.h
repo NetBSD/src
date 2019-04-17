@@ -183,7 +183,7 @@
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #ifndef USED_FOR_TARGET
-/* #undef ENABLE_NLS */
+#define ENABLE_NLS 1
 #endif
 
 
@@ -1872,7 +1872,7 @@
 
 /* Define to 1 if you have the <unordered_map> header file. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_UNORDERED_MAP */
+#define HAVE_UNORDERED_MAP 1
 #endif
 
 
@@ -1890,7 +1890,7 @@
 
 /* Define to 1 if you have the `vfork' function. */
 #ifndef USED_FOR_TARGET
-#define HAVE_VFORK 1
+/* #undef HAVE_VFORK */
 #endif
 
 
@@ -1927,7 +1927,7 @@
 
 /* Define to 1 if `vfork' works. */
 #ifndef USED_FOR_TARGET
-#define HAVE_WORKING_VFORK 1
+/* #undef HAVE_WORKING_VFORK */
 #endif
 
 
@@ -1958,7 +1958,7 @@
 
 /* Define if int64_t uses long as underlying type. */
 #ifndef USED_FOR_TARGET
-#define INT64_T_IS_LONG 1
+/* #undef INT64_T_IS_LONG */
 #endif
 
 
@@ -2098,7 +2098,7 @@
 
 /* The size of `long', as computed by sizeof. */
 #ifndef USED_FOR_TARGET
-#define SIZEOF_LONG 8
+#define SIZEOF_LONG 4
 #endif
 
 
@@ -2116,7 +2116,7 @@
 
 /* The size of `void *', as computed by sizeof. */
 #ifndef USED_FOR_TARGET
-#define SIZEOF_VOID_P 8
+#define SIZEOF_VOID_P 4
 #endif
 
 
@@ -2418,6 +2418,6 @@
 
 /* Define as `fork' if `vfork' does not work. */
 #ifndef USED_FOR_TARGET
-/* #undef vfork */
+#define vfork fork
 #endif
 
