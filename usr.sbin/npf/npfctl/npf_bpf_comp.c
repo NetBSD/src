@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.11 2018/09/29 14:41:36 rmind Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.12 2019/04/17 20:41:58 tih Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -565,10 +565,8 @@ npfctl_bpf_tcpfl(npf_bpf_t *ctx, uint8_t tf, uint8_t tf_mask, bool checktcp)
 	};
 	add_insns(ctx, insns_cmp, __arraycount(insns_cmp));
 
-	if (!checktcp) {
-		uint32_t mwords[] = { BM_TCPFL, 2, tf, tf_mask};
-		done_block(ctx, mwords, sizeof(mwords));
-	}
+	uint32_t mwords[] = { BM_TCPFL, 2, tf, tf_mask};
+	done_block(ctx, mwords, sizeof(mwords));
 }
 
 /*
