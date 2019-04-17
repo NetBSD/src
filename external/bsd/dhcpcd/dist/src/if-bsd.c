@@ -99,12 +99,18 @@
 #endif
 
 #ifdef INET6
-static void
-ifa_scope(struct sockaddr_in6 *, unsigned int);
+static void ifa_setscope(struct sockaddr_in6 *, unsigned int);
+static unsigned int ifa_getscope(const struct sockaddr_in6 *);
 #endif
 
 struct priv {
 	int pf_inet6_fd;
+};
+
+struct rtm
+{
+	struct rt_msghdr hdr;
+	char buffer[sizeof(struct sockaddr_storage) * RTAX_MAX];
 };
 
 int
@@ -418,9 +424,13 @@ if_findsa(struct dhcpcd_ctx *ctx, const struct sockaddr *sa)
 	case AF_INET6:
 	{
 		const struct sockaddr_in6 *sin;
+		unsigned int scope;
 		struct ipv6_addr *ia;
 
 		sin = (const void *)sa;
+		scope = ifa_getscope(sin);
+		if (scope != 0)
+			return if_findindex(ctx->ifaces, scope);
 		if ((ia = ipv6_findmaskaddr(ctx, &sin->sin6_addr)))
 			return ia->iface;
 		break;
@@ -458,11 +468,7 @@ int
 if_route(unsigned char cmd, const struct rt *rt)
 {
 	struct dhcpcd_ctx *ctx;
-	struct rtm
-	{
-		struct rt_msghdr hdr;
-		char buffer[sizeof(struct sockaddr_storage) * RTAX_MAX];
-	} rtmsg;
+	struct rtm rtmsg;
 	struct rt_msghdr *rtm = &rtmsg.hdr;
 	char *bp = rtmsg.buffer;
 	struct sockaddr_dl sdl;
@@ -577,7 +583,7 @@ if_route(unsigned char cmd, const struct rt *rt)
 			if_copysa(&gateway.sa, &rt->rt_gateway);
 #ifdef INET6
 			if (gateway.sa.sa_family == AF_INET6)
-				ifa_scope(&gateway.sin6, rt->rt_ifp->index);
+				ifa_setscope(&gateway.sin6, rt->rt_ifp->index);
 #endif
 			ADDSA(&gateway.sa);
 		}
@@ -605,19 +611,27 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, const struct rt_msghdr *rtm)
 {
 	const struct sockaddr *rti_info[RTAX_MAX];
 
-	if (~rtm->rtm_addrs & (RTA_DST | RTA_GATEWAY))
+	if (~rtm->rtm_addrs & (RTA_DST | RTA_GATEWAY)) {
+		errno = EINVAL;
 		return -1;
+	}
 #ifdef RTF_CLONED
-	if (rtm->rtm_flags & RTF_CLONED)
+	if (rtm->rtm_flags & RTF_CLONED) {
+		errno = ENOTSUP;
 		return -1;
+	}
 #endif
 #ifdef RTF_LOCAL
-	if (rtm->rtm_flags & RTF_LOCAL)
+	if (rtm->rtm_flags & RTF_LOCAL) {
+		errno = ENOTSUP;
 		return -1;
+	}
 #endif
 #ifdef RTF_BROADCAST
-	if (rtm->rtm_flags & RTF_BROADCAST)
+	if (rtm->rtm_flags & RTF_BROADCAST) {
+		errno = ENOTSUP;
 		return -1;
+	}
 #endif
 
 	get_addrs(rtm->rtm_addrs, rtm + 1, rti_info);
@@ -688,7 +702,7 @@ if_initrt(struct dhcpcd_ctx *ctx, int af)
 		rtm = (void *)p;
 		if (if_copyrt(ctx, &rt, rtm) == 0) {
 			rt.rt_dflags |= RTDF_INIT;
-			rt_recvrt(RTM_ADD, &rt);
+			rt_recvrt(RTM_ADD, &rt, rtm->rtm_pid);
 		}
 	}
 	free(buf);
@@ -751,7 +765,7 @@ if_addrflags(const struct interface *ifp, const struct in_addr *addr,
 
 #ifdef INET6
 static void
-ifa_scope(struct sockaddr_in6 *sin, unsigned int ifindex)
+ifa_setscope(struct sockaddr_in6 *sin, unsigned int ifindex)
 {
 
 #ifdef __KAME__
@@ -768,6 +782,23 @@ ifa_scope(struct sockaddr_in6 *sin, unsigned int ifindex)
 		sin->sin6_scope_id = ifindex;
 	else
 		sin->sin6_scope_id = 0;
+#endif
+}
+
+static unsigned int
+ifa_getscope(const struct sockaddr_in6 *sin)
+{
+#ifdef __KAME__
+	uint16_t scope;
+#endif
+
+	if (!IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr))
+		return 0;
+#ifdef __KAME__
+	memcpy(&scope, &sin->sin6_addr.s6_addr[2], sizeof(scope));
+	return (unsigned int)ntohs(scope);
+#else
+	return (unsigned int)sin->sin6_scope_id;
 #endif
 }
 
@@ -810,7 +841,7 @@ if_address6(unsigned char cmd, const struct ipv6_addr *ia)
 	}
 
 	ADDADDR(&ifa.ifra_addr, &ia->addr);
-	ifa_scope(&ifa.ifra_addr, ia->iface->index);
+	ifa_setscope(&ifa.ifra_addr, ia->iface->index);
 	ipv6_mask(&mask, ia->prefix_len);
 	ADDADDR(&ifa.ifra_prefixmask, &mask);
 
@@ -887,7 +918,7 @@ if_addrflags6(const struct interface *ifp, const struct in6_addr *addr,
 	strlcpy(ifr6.ifr_name, ifp->name, sizeof(ifr6.ifr_name));
 	ifr6.ifr_addr.sin6_family = AF_INET6;
 	ifr6.ifr_addr.sin6_addr = *addr;
-	ifa_scope(&ifr6.ifr_addr, ifp->index);
+	ifa_setscope(&ifr6.ifr_addr, ifp->index);
 	priv = (struct priv *)ifp->ctx->priv;
 	if (ioctl(priv->pf_inet6_fd, SIOCGIFAFLAG_IN6, &ifr6) != -1)
 		flags = ifr6.ifr_ifru.ifru_flags6;
@@ -908,7 +939,7 @@ if_getlifetime6(struct ipv6_addr *ia)
 	strlcpy(ifr6.ifr_name, ia->iface->name, sizeof(ifr6.ifr_name));
 	ifr6.ifr_addr.sin6_family = AF_INET6;
 	ifr6.ifr_addr.sin6_addr = ia->addr;
-	ifa_scope(&ifr6.ifr_addr, ia->iface->index);
+	ifa_setscope(&ifr6.ifr_addr, ia->iface->index);
 	priv = (struct priv *)ia->iface->ctx->priv;
 	if (ioctl(priv->pf_inet6_fd, SIOCGIFALIFETIME_IN6, &ifr6) == -1)
 		return -1;
@@ -1010,7 +1041,7 @@ if_rtm(struct dhcpcd_ctx *ctx, const struct rt_msghdr *rtm)
 	}
 #endif
 
-	rt_recvrt(rtm->rtm_type, &rt);
+	rt_recvrt(rtm->rtm_type, &rt, rtm->rtm_pid);
 }
 
 static void
@@ -1095,7 +1126,7 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 			ifra.ifra_addr.sin_len = sizeof(ifra.ifra_addr);
 			ifra.ifra_addr.sin_addr = addr;
 			if (ioctl(ctx->pf_inet_fd, SIOCGIFALIAS, &ifra) == -1) {
-				if (errno != EADDRNOTAVAIL)
+				if (errno != ENXIO && errno != EADDRNOTAVAIL)
 					logerr("%s: SIOCGIFALIAS", __func__);
 				if (ifam->ifam_type != RTM_DELADDR)
 					break;
@@ -1229,18 +1260,16 @@ if_dispatch(struct dhcpcd_ctx *ctx, const struct rt_msghdr *rtm)
 int
 if_handlelink(struct dhcpcd_ctx *ctx)
 {
-	struct msghdr msg;
+	struct rtm rtm;
+	struct iovec iov = { .iov_base = &rtm, .iov_len = sizeof(rtm) };
+	struct msghdr msg = { .msg_iov = &iov, .msg_iovlen = 1 };
 	ssize_t len;
 
-	memset(&msg, 0, sizeof(msg));
-	msg.msg_iov = ctx->iov;
-	msg.msg_iovlen = 1;
-
-	len = recvmsg_realloc(ctx->link_fd, &msg, 0);
+	len = recvmsg(ctx->link_fd, &msg, 0);
 	if (len == -1)
 		return -1;
 	if (len != 0)
-		if_dispatch(ctx, ctx->iov[0].iov_base);
+		if_dispatch(ctx, &rtm.hdr);
 	return 0;
 }
 
