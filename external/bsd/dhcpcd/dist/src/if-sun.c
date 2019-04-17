@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <ifaddrs.h>
 #include <libdlpi.h>
+#include <kstat.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stropts.h>
@@ -45,6 +46,7 @@
 #include <netinet/udp.h>
 
 #include <sys/ioctl.h>
+#include <sys/mac.h>
 #include <sys/pfmod.h>
 #include <sys/tihdr.h>
 #include <sys/utsname.h>
@@ -63,6 +65,7 @@ extern int getallifaddrs(sa_family_t, struct ifaddrs **, int64_t);
 #include "ipv4.h"
 #include "ipv6.h"
 #include "ipv6nd.h"
+#include "logerr.h"
 #include "route.h"
 #include "sa.h"
 
@@ -94,6 +97,12 @@ struct priv {
 #ifdef INET6
 	int pf_inet6_fd;
 #endif
+};
+
+struct rtm
+{
+	struct rt_msghdr hdr;
+	char buffer[sizeof(struct sockaddr_storage) * RTAX_MAX];
 };
 
 int
@@ -159,6 +168,63 @@ if_closesockets_os(struct dhcpcd_ctx *ctx)
 
 	/* each interface should have closed itself */
 	free(ctx->priv);
+}
+
+int
+if_carrier_os(struct interface *ifp)
+{
+	kstat_ctl_t		*kcp;
+	kstat_t			*ksp;
+	kstat_named_t		*knp;
+	link_state_t		linkstate;
+
+	kcp = kstat_open();
+	if (kcp == NULL)
+		goto err;
+	ksp = kstat_lookup(kcp, UNCONST("link"), 0, ifp->name);
+	if (ksp == NULL)
+		goto err;
+	if (kstat_read(kcp, ksp, NULL) == -1)
+		goto err;
+	knp = kstat_data_lookup(ksp, UNCONST("link_state"));
+	if (knp == NULL)
+		goto err;
+	if (knp->data_type != KSTAT_DATA_UINT32)
+		goto err;
+	linkstate = (link_state_t)knp->value.ui32;
+	kstat_close(kcp);
+
+	switch (linkstate) {
+	case LINK_STATE_UP:
+		ifp->flags |= IFF_UP;
+		return LINK_UP;
+	case LINK_STATE_DOWN:
+		return LINK_DOWN;
+	default:
+		return LINK_UNKNOWN;
+	}
+
+err:
+	if (kcp != NULL)
+		kstat_close(kcp);
+	return LINK_UNKNOWN;
+}
+
+int
+if_mtu_os(const struct interface *ifp)
+{
+	dlpi_handle_t		dh;
+	dlpi_info_t		dlinfo;
+	int			mtu;
+
+	if (dlpi_open(ifp->name, &dh, 0) != DLPI_SUCCESS)
+		return -1;
+	if (dlpi_info(dh, &dlinfo, 0) == DLPI_SUCCESS)
+		mtu = dlinfo.di_max_sdu;
+	else
+		mtu = -1;
+	dlpi_close(dh);
+	return mtu;
 }
 
 int
@@ -448,46 +514,105 @@ if_findsa(struct dhcpcd_ctx *ctx, const struct sockaddr *sa)
 }
 
 static void
-if_finishrt(struct rt *rt)
+if_route0(struct dhcpcd_ctx *ctx, struct rtm *rtmsg,
+    unsigned char cmd, const struct rt *rt)
 {
+	struct rt_msghdr *rtm;
+	char *bp = rtmsg->buffer;
+	socklen_t sl;
 
-	/* Solaris has a subnet route with the gateway
-	 * of the owning address.
-	 * dhcpcd has a blank gateway here to indicate a
-	 * subnet route. */
-	if (!sa_is_unspecified(&rt->rt_gateway)) {
-		switch(rt->rt_gateway.sa_family) {
-#ifdef INET
-		case AF_INET:
+	/* WARNING: Solaris will not allow you to delete RTF_KERNEL routes.
+	 * This includes subnet/prefix routes. */
+
+#define ADDSA(sa) do {							\
+		sl = salen((sa));					\
+		memcpy(bp, (sa), sl);					\
+		bp += RT_ROUNDUP(sl);					\
+	} while (/* CONSTCOND */ 0)
+
+	memset(rtmsg, 0, sizeof(*rtmsg));
+	rtm = &rtmsg->hdr;
+	rtm->rtm_version = RTM_VERSION;
+	rtm->rtm_type = cmd;
+	rtm->rtm_seq = ++ctx->seq;
+	rtm->rtm_flags = rt->rt_flags;
+	rtm->rtm_addrs = RTA_DST | RTA_GATEWAY;
+
+	if (cmd == RTM_ADD || cmd == RTM_CHANGE) {
+		bool netmask_bcast = sa_is_allones(&rt->rt_netmask);
+
+		rtm->rtm_flags |= RTF_UP;
+		if (!(rtm->rtm_flags & RTF_REJECT) &&
+		    !sa_is_loopback(&rt->rt_gateway) &&
+		    /* Solaris doesn't like interfaces on default routes. */
+		    !sa_is_unspecified(&rt->rt_dest))
 		{
-			struct in_addr *in;
-
-			in = &satosin(&rt->rt_gateway)->sin_addr;
-			if (ipv4_iffindaddr(rt->rt_ifp, in, NULL))
-				in->s_addr = INADDR_ANY;
-			break;
-		}
+			rtm->rtm_addrs |= RTA_IFP;
+#if 0
+			if (!sa_is_unspecified(&rt->rt_ifa))
+				rtm->rtm_addrs |= RTA_IFA;
 #endif
-#ifdef INET6
-		case AF_INET6:
-		{
-			struct in6_addr *in6;
-
-			in6 = &satosin6(&rt->rt_gateway)->sin6_addr;
-			if (ipv6_iffindaddr(rt->rt_ifp, in6, 0))
-				*in6 = in6addr_any;
-			break;
 		}
-#endif
+
+		if (netmask_bcast)
+			rtm->rtm_flags |= RTF_HOST;
+		else
+			rtm->rtm_flags |= RTF_GATEWAY;
+
+		/* Emulate the kernel by marking address generated
+		 * network routes non-static. */
+		if (!(rt->rt_dflags & RTDF_IFA_ROUTE))
+			rtm->rtm_flags |= RTF_STATIC;
+
+		if (rt->rt_mtu != 0) {
+			rtm->rtm_inits |= RTV_MTU;
+			rtm->rtm_rmx.rmx_mtu = rt->rt_mtu;
 		}
 	}
 
-	/* Solaris likes to set route MTU to match
-	 * interface MTU when adding routes.
-	 * This confuses dhcpcd as it expects MTU to be 0
-	 * when no explicit MTU has been set. */
-	if (rt->rt_mtu == (unsigned int)if_getmtu(rt->rt_ifp))
-		rt->rt_mtu = 0;
+	if (!(rtm->rtm_flags & RTF_HOST))
+		rtm->rtm_addrs |= RTA_NETMASK;
+
+	ADDSA(&rt->rt_dest);
+
+	if (sa_is_unspecified(&rt->rt_gateway))
+		ADDSA(&rt->rt_ifa);
+	else
+		ADDSA(&rt->rt_gateway);
+
+	if (rtm->rtm_addrs & RTA_NETMASK)
+		ADDSA(&rt->rt_netmask);
+
+	if (rtm->rtm_addrs & RTA_IFP) {
+		struct sockaddr_dl sdl;
+
+		if_linkaddr(&sdl, rt->rt_ifp);
+		ADDSA((struct sockaddr *)&sdl);
+	}
+
+	if (rtm->rtm_addrs & RTA_IFA) {
+		ADDSA(&rt->rt_ifa);
+		rtm->rtm_addrs |= RTA_SRC;
+	}
+	if (rtm->rtm_addrs & RTA_SRC)
+		ADDSA(&rt->rt_ifa);
+
+#undef ADDSA
+
+	rtm->rtm_msglen = (unsigned short)(bp - (char *)rtm);
+}
+
+int
+if_route(unsigned char cmd, const struct rt *rt)
+{
+	struct rtm rtm;
+	struct dhcpcd_ctx *ctx = rt->rt_ifp->ctx;
+
+	if_route0(ctx, &rtm, cmd, rt);
+
+	if (write(ctx->link_fd, &rtm, rtm.hdr.rtm_msglen) == -1)
+		return -1;
+	return 0;
 }
 
 static int
@@ -509,7 +634,8 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, const struct rt_msghdr *rtm)
 	if (rt->rt_flags & RTF_GATEWAY &&
 	    rti_info[RTAX_GATEWAY]->sa_family != AF_LINK)
 		COPYSA(&rt->rt_gateway, rti_info[RTAX_GATEWAY]);
-	COPYSA(&rt->rt_ifa, rti_info[RTAX_SRC]);
+	if (rtm->rtm_addrs & RTA_SRC)
+		COPYSA(&rt->rt_ifa, rti_info[RTAX_SRC]);
 	rt->rt_mtu = (unsigned int)rtm->rtm_rmx.rmx_mtu;
 
 	if (rtm->rtm_index)
@@ -527,6 +653,98 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, const struct rt_msghdr *rtm)
 	}
 
 	return 0;
+}
+
+static struct rt *
+if_route_get(struct dhcpcd_ctx *ctx, struct rt *rt)
+{
+	struct rtm rtm;
+	int s;
+	struct iovec iov = { .iov_base = &rtm, .iov_len = sizeof(rtm) };
+	struct msghdr msg = { .msg_iov = &iov, .msg_iovlen = 1 };
+	ssize_t len;
+	struct rt *rtw = rt;
+
+	if_route0(ctx, &rtm, RTM_GET, rt);
+	rt = NULL;
+	s = socket(PF_ROUTE, SOCK_RAW | SOCK_CLOEXEC, 0);
+	if (s == -1)
+		return NULL;
+	if (write(s, &rtm, rtm.hdr.rtm_msglen) == -1)
+		goto out;
+	if ((len = recvmsg(s, &msg, 0)) == -1)
+		goto out;
+	if ((size_t)len < sizeof(rtm.hdr) || len < rtm.hdr.rtm_msglen) {
+		errno = EINVAL;
+		goto out;
+	}
+	if (if_copyrt(ctx, rtw, &rtm.hdr) == -1)
+		goto out;
+	rt = rtw;
+
+out:
+	close(s);
+	return rt;
+}
+
+static void
+if_finishrt(struct dhcpcd_ctx *ctx, struct rt *rt)
+{
+	int mtu;
+
+	/* Solaris has a subnet route with the gateway
+	 * of the owning address.
+	 * dhcpcd has a blank gateway here to indicate a
+	 * subnet route. */
+	if (!sa_is_unspecified(&rt->rt_dest) &&
+	    !sa_is_unspecified(&rt->rt_gateway))
+	{
+		switch(rt->rt_gateway.sa_family) {
+#ifdef INET
+		case AF_INET:
+		{
+			struct in_addr *in;
+
+			in = &satosin(&rt->rt_gateway)->sin_addr;
+			if (ipv4_findaddr(ctx, in))
+				in->s_addr = INADDR_ANY;
+			break;
+		}
+#endif
+#ifdef INET6
+		case AF_INET6:
+		{
+			struct in6_addr *in6;
+
+			in6 = &satosin6(&rt->rt_gateway)->sin6_addr;
+			if (ipv6_findaddr(ctx, in6, 0))
+				*in6 = in6addr_any;
+			break;
+		}
+#endif
+		}
+	}
+
+	/* Solaris doesn't set interfaces for some routes.
+	 * This sucks, so we need to call RTM_GET to
+	 * work out the interface. */
+	if (rt->rt_ifp == NULL) {
+		if (if_route_get(ctx, rt) == NULL) {
+			rt->rt_ifp = if_loopback(ctx);
+			if (rt->rt_ifp == NULL) {
+				logerr(__func__);
+				return;
+			}
+		}
+	}
+
+	/* Solaris likes to set route MTU to match
+	 * interface MTU when adding routes.
+	 * This confuses dhcpcd as it expects MTU to be 0
+	 * when no explicit MTU has been set. */
+	mtu = if_getmtu(rt->rt_ifp);
+	if (rt->rt_mtu == (unsigned int)mtu)
+		rt->rt_mtu = 0;
 }
 
 static int
@@ -581,8 +799,8 @@ if_rtm(struct dhcpcd_ctx *ctx, const struct rt_msghdr *rtm)
 #endif
 
 	if (if_copyrt(ctx, &rt, rtm) == 0) {
-		if_finishrt(&rt);
-		rt_recvrt(rtm->rtm_type, &rt);
+		if_finishrt(ctx, &rt);
+		rt_recvrt(rtm->rtm_type, &rt, rtm->rtm_pid);
 	}
 }
 
@@ -714,15 +932,18 @@ if_ifinfo(struct dhcpcd_ctx *ctx, const struct if_msghdr *ifm)
 {
 	struct interface *ifp;
 	int state;
+	unsigned int flags;
 
 	if ((ifp = if_findindex(ctx->ifaces, ifm->ifm_index)) == NULL)
 		return;
-	if (ifm->ifm_flags & IFF_OFFLINE || !(ifm->ifm_flags & IFF_UP))
+	flags = (unsigned int)ifm->ifm_flags;
+	if (ifm->ifm_flags & IFF_OFFLINE)
 		state = LINK_DOWN;
-	else
+	else {
 		state = LINK_UP;
-	dhcpcd_handlecarrier(ctx, state,
-	    (unsigned int)ifm->ifm_flags, ifp->name);
+		flags |= IFF_UP;
+	}
+	dhcpcd_handlecarrier(ctx, state, flags, ifp->name);
 }
 
 static void
@@ -752,17 +973,15 @@ if_dispatch(struct dhcpcd_ctx *ctx, const struct rt_msghdr *rtm)
 int
 if_handlelink(struct dhcpcd_ctx *ctx)
 {
-	struct msghdr msg;
+	struct rtm rtm;
+	struct iovec iov = { .iov_base = &rtm, .iov_len = sizeof(rtm) };
+	struct msghdr msg = { .msg_iov = &iov, .msg_iovlen = 1 };
 	ssize_t len;
 
-	memset(&msg, 0, sizeof(msg));
-	msg.msg_iov = ctx->iov;
-	msg.msg_iovlen = 1;
-
-	if ((len = recvmsg_realloc(ctx->link_fd, &msg, 0)) == -1)
+	if ((len = recvmsg(ctx->link_fd, &msg, 0)) == -1)
 		return -1;
 	if (len != 0)
-		if_dispatch(ctx, ctx->iov[0].iov_base);
+		if_dispatch(ctx, &rtm.hdr);
 	return 0;
 }
 
@@ -809,6 +1028,7 @@ if_addaddr(int fd, const char *ifname,
 		if (ioctl(fd, SIOCSLIFFLAGS, &lifr) == -1)
 			return -1;
 	}
+
 	return 0;
 }
 
@@ -837,15 +1057,20 @@ if_plumblif(int cmd, const struct dhcpcd_ctx *ctx, int af, const char *ifname)
 static int
 if_plumbif(const struct dhcpcd_ctx *ctx, int af, const char *ifname)
 {
-	dlpi_handle_t		dh;
-	int			fd, af_fd, mux_fd, retval;
+	dlpi_handle_t		dh, dh_arp = NULL;
+	int			fd, af_fd, mux_fd, arp_fd = -1, mux_id, retval;
+	uint64_t		flags;
 	struct lifreq		lifr;
 	const char		*udp_dev;
+	struct strioctl		ioc;
+	struct if_spec		spec;
 
-	memset(&lifr, 0, sizeof(lifr));
+	if (if_nametospec(ifname, &spec) == -1)
+		return -1;
+
 	switch (af) {
 	case AF_INET:
-		lifr.lifr_flags = IFF_IPV4;
+		flags = IFF_IPV4;
 		af_fd = ctx->pf_inet_fd;
 		udp_dev = UDP_DEV_NAME;
 		break;
@@ -854,7 +1079,7 @@ if_plumbif(const struct dhcpcd_ctx *ctx, int af, const char *ifname)
 		struct priv *priv;
 
 		/* We will take care of setting the link local address. */
-		lifr.lifr_flags = IFF_IPV6 | IFF_NOLINKLOCAL;
+		flags = IFF_IPV6 | IFF_NOLINKLOCAL;
 		priv = (struct priv *)ctx->priv;
 		af_fd = priv->pf_inet6_fd;
 		udp_dev = UDP6_DEV_NAME;
@@ -875,13 +1100,17 @@ if_plumbif(const struct dhcpcd_ctx *ctx, int af, const char *ifname)
 	mux_fd = -1;
 	if (ioctl(fd, I_PUSH, IP_MOD_NAME) == -1)
 		goto out;
+	memset(&lifr, 0, sizeof(lifr));
 	strlcpy(lifr.lifr_name, ifname, sizeof(lifr.lifr_name));
+	lifr.lifr_ppa = spec.ppa;
+	lifr.lifr_flags = flags;
 	if (ioctl(fd, SIOCSLIFNAME, &lifr) == -1)
 		goto out;
 
 	/* Get full flags. */
 	if (ioctl(af_fd, SIOCGLIFFLAGS, &lifr) == -1)
 		goto out;
+	flags = lifr.lifr_flags;
 
 	/* Open UDP as a multiplexor to PLINK the interface stream.
 	 * UDP is used because STREAMS will not let you PLINK a driver
@@ -893,20 +1122,49 @@ if_plumbif(const struct dhcpcd_ctx *ctx, int af, const char *ifname)
 		;
 	if (errno != EINVAL)
 		goto out;
-
-	if (lifr.lifr_flags & IFF_IPV4 && !(lifr.lifr_flags & IFF_NOARP)) {
-		if (ioctl(mux_fd, I_PUSH, ARP_MOD_NAME) == -1)
-			goto out;
-	}
-
-	/* PLINK the interface stream so it persists. */
-	if (ioctl(mux_fd, I_PLINK, fd) == -1)
+	if(ioctl(mux_fd, I_PUSH, ARP_MOD_NAME) == -1)
 		goto out;
 
+	if (flags & (IFF_NOARP | IFF_IPV6)) {
+		/* PLINK the interface stream so it persists. */
+		if (ioctl(mux_fd, I_PLINK, fd) == -1)
+			goto out;
+		goto done;
+	}
+
+	if (dlpi_open(ifname, &dh_arp, DLPI_NOATTACH) != DLPI_SUCCESS)
+		goto out;
+	arp_fd = dlpi_fd(dh_arp);
+	if (ioctl(arp_fd, I_PUSH, ARP_MOD_NAME) == -1)
+		goto out;
+
+	memset(&lifr, 0, sizeof(lifr));
+	strlcpy(lifr.lifr_name, ifname, sizeof(lifr.lifr_name));
+	lifr.lifr_ppa = spec.ppa;
+	lifr.lifr_flags = flags;
+	memset(&ioc, 0, sizeof(ioc));
+	ioc.ic_cmd = SIOCSLIFNAME;
+	ioc.ic_dp = (char *)&lifr;
+	ioc.ic_len = sizeof(lifr);
+	if (ioctl(arp_fd, I_STR, &ioc) == -1)
+		goto out;
+
+	/* PLINK the interface stream so it persists. */
+	mux_id = ioctl(mux_fd, I_PLINK, fd);
+	if (mux_id == -1)
+		goto out;
+	if (ioctl(mux_fd, I_PLINK, arp_fd) == -1) {
+		ioctl(mux_fd, I_PUNLINK, mux_id);
+		goto out;
+	}
+
+done:
 	retval = 0;
 
 out:
 	dlpi_close(dh);
+	if (dh_arp != NULL)
+		dlpi_close(dh_arp);
 	if (mux_fd != -1)
 		close(mux_fd);
 	return retval;
@@ -962,102 +1220,6 @@ if_plumb(int cmd, const struct dhcpcd_ctx *ctx, int af, const char *ifname)
 		return if_unplumbif(ctx, af, ifname);
 }
 
-int
-if_route(unsigned char cmd, const struct rt *rt)
-{
-	struct dhcpcd_ctx *ctx;
-	struct rtm
-	{
-		struct rt_msghdr hdr;
-		char buffer[sizeof(struct sockaddr_storage) * RTAX_MAX];
-	} rtmsg;
-	struct rt_msghdr *rtm;
-	char *bp = rtmsg.buffer;
-	size_t l;
-
-	/* WARNING: Solaris will not allow you to delete RTF_KERNEL routes.
-	 * This includes subnet/prefix routes. */
-
-	ctx = rt->rt_ifp->ctx;
-
-#define ADDSA(sa) do {							      \
-		l = RT_ROUNDUP(salen((sa)));				      \
-		memcpy(bp, (sa), l);					      \
-		bp += l;						      \
-	} while (/* CONSTCOND */ 0)
-
-	memset(&rtmsg, 0, sizeof(rtmsg));
-	rtm = &rtmsg.hdr;
-	rtm->rtm_version = RTM_VERSION;
-	rtm->rtm_type = cmd;
-	rtm->rtm_seq = ++ctx->seq;
-	rtm->rtm_flags = rt->rt_flags;
-	rtm->rtm_addrs = RTA_DST | RTA_GATEWAY;
-
-	if (cmd == RTM_ADD || cmd == RTM_CHANGE) {
-		bool netmask_bcast = sa_is_allones(&rt->rt_netmask);
-
-		rtm->rtm_flags |= RTF_UP;
-		if (!(rtm->rtm_flags & RTF_REJECT) &&
-		    !sa_is_loopback(&rt->rt_gateway))
-		{
-			rtm->rtm_addrs |= RTA_IFP;
-			if (!sa_is_unspecified(&rt->rt_ifa))
-				rtm->rtm_addrs |= RTA_IFA;
-		}
-		if (netmask_bcast)
-			rtm->rtm_flags |= RTF_HOST;
-		else
-			rtm->rtm_flags |= RTF_GATEWAY;
-
-		/* Emulate the kernel by marking address generated
-		 * network routes non-static. */
-		if (!(rt->rt_dflags & RTDF_IFA_ROUTE))
-			rtm->rtm_flags |= RTF_STATIC;
-
-		if (rt->rt_mtu != 0) {
-			rtm->rtm_inits |= RTV_MTU;
-			rtm->rtm_rmx.rmx_mtu = rt->rt_mtu;
-		}
-	}
-
-	ADDSA(&rt->rt_dest);
-
-	if (sa_is_unspecified(&rt->rt_gateway))
-		ADDSA(&rt->rt_ifa);
-	else
-		ADDSA(&rt->rt_gateway);
-
-	if (rtm->rtm_addrs & RTA_NETMASK)
-		ADDSA(&rt->rt_netmask);
-
-	if (rtm->rtm_addrs & RTA_IFP) {
-		struct sockaddr_dl sdl;
-
-		if_linkaddr(&sdl, rt->rt_ifp);
-		ADDSA((struct sockaddr *)&sdl);
-	}
-
-/* This no workie :/ */
-#if 1
-	/* route(1M) says RTA_IFA is accepted but ignored
-	 * it's unclear how RTA_SRC is different. */
-	if (rtm->rtm_addrs & RTA_IFA) {
-		rtm->rtm_addrs &= ~RTA_IFA;
-		rtm->rtm_addrs |= RTA_SRC;
-	}
-	if (rtm->rtm_addrs & RTA_SRC)
-		ADDSA(&rt->rt_ifa);
-#endif
-
-#undef ADDSA
-
-	rtm->rtm_msglen = (unsigned short)(bp - (char *)rtm);
-	if (write(ctx->link_fd, rtm, rtm->rtm_msglen) == -1)
-		return -1;
-	return 0;
-}
-
 #ifdef INET
 static int
 if_walkrt(struct dhcpcd_ctx *ctx, char *data, size_t len)
@@ -1086,6 +1248,7 @@ if_walkrt(struct dhcpcd_ctx *ctx, char *data, size_t len)
 		default:
 			break;
 		}
+
 		memset(&rt, 0, sizeof(rt));
 		rt.rt_dflags |= RTDF_INIT;
 		in.s_addr = re->ipRouteDest;
@@ -1098,13 +1261,10 @@ if_walkrt(struct dhcpcd_ctx *ctx, char *data, size_t len)
 		in.s_addr = re->ipRouteInfo.re_src_addr;
 		sa_in_init(&rt.rt_ifa, &in);
 		rt.rt_mtu = re->ipRouteInfo.re_max_frag;
-
 		if_octetstr(ifname, &re->ipRouteIfIndex, sizeof(ifname));
 		rt.rt_ifp = if_find(ctx->ifaces, ifname);
-		if (rt.rt_ifp != NULL) {
-			if_finishrt(&rt);
-			rt_recvrt(RTM_ADD, &rt);
-		}
+		if_finishrt(ctx, &rt);
+		rt_recvrt(RTM_ADD, &rt, 0);
 	} while (++re < e);
 	return 0;
 }
@@ -1139,6 +1299,7 @@ if_walkrt6(struct dhcpcd_ctx *ctx, char *data, size_t len)
 		default:
 			break;
 		}
+
 		memset(&rt, 0, sizeof(rt));
 		rt.rt_dflags |= RTDF_INIT;
 		sa_in6_init(&rt.rt_dest, &re->ipv6RouteDest);
@@ -1146,13 +1307,10 @@ if_walkrt6(struct dhcpcd_ctx *ctx, char *data, size_t len)
 		sa_in6_init(&rt.rt_netmask, &in6);
 		sa_in6_init(&rt.rt_gateway, &re->ipv6RouteNextHop);
 		rt.rt_mtu = re->ipv6RouteInfo.re_max_frag;
-
 		if_octetstr(ifname, &re->ipv6RouteIfIndex, sizeof(ifname));
 		rt.rt_ifp = if_find(ctx->ifaces, ifname);
-		if (rt.rt_ifp != NULL) {
-			if_finishrt(&rt);
-			rt_recvrt(RTM_ADD, &rt);
-		}
+		if_finishrt(ctx, &rt);
+		rt_recvrt(RTM_ADD, &rt, 0);
 	} while (++re < e);
 	return 0;
 }
@@ -1313,6 +1471,9 @@ if_address(unsigned char cmd, const struct ipv4_addr *ia)
 		return -1;
 	}
 
+	/* We need to update the index now */
+	ia->iface->index = if_nametoindex(ia->alias);
+
 	sin_addr = (struct sockaddr_in *)&ss_addr;
 	sin_addr->sin_family = AF_INET;
 	sin_addr->sin_addr = ia->addr;
@@ -1403,5 +1564,12 @@ void
 if_setup_inet6(__unused const struct interface *ifp)
 {
 
+}
+
+int
+ip6_forwarding(__unused const char *ifname)
+{
+
+	return 1;
 }
 #endif

@@ -206,7 +206,7 @@ struct dhcp6_state {
 	/* The +3 is for the possible .pd extension for prefix delegation */
 	char leasefile[sizeof(LEASEFILE6) + IF_NAMESIZE + (IF_SSIDLEN * 4) +3];
 	const char *reason;
-
+	uint16_t lerror; /* Last error received from DHCPv6 reply. */
 	struct authstate auth;
 };
 

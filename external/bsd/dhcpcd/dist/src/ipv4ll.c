@@ -305,6 +305,8 @@ ipv4ll_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 		ipv4_deladdr(state->addr, 1);
 		state->down = 1;
 		state->addr = NULL;
+		if_initrt(ifp->ctx, AF_INET);
+		rt_build(ifp->ctx, AF_INET);
 		script_runreason(ifp, "IPV4LL");
 	}
 

@@ -92,6 +92,11 @@ int if_getssid_wext(const char *ifname, uint8_t *ssid);
 #define IFF_LOWER_UP	0x10000		/* driver signals L1 up		*/
 #endif
 
+/* Buggy CentOS and RedHat */
+#ifndef SOL_NETLINK
+#define	SOL_NETLINK	270
+#endif
+
 #define bpf_insn		sock_filter
 #define BPF_SKIPTYPE
 #define BPF_ETHCOOK		-ETH_HLEN
@@ -100,7 +105,6 @@ int if_getssid_wext(const char *ifname, uint8_t *ssid);
 struct priv {
 	int route_fd;
 	uint32_t route_pid;
-	struct iovec sndrcv_iov[1];
 };
 
 /* We need this to send a broadcast for InfiniBand.
@@ -341,7 +345,6 @@ if_closesockets_os(struct dhcpcd_ctx *ctx)
 
 	if (ctx->priv != NULL) {
 		priv = (struct priv *)ctx->priv;
-		free(priv->sndrcv_iov[0].iov_base);
 		close(priv->route_fd);
 	}
 }
@@ -351,21 +354,18 @@ get_netlink(struct dhcpcd_ctx *ctx, struct iovec *iov,
     struct interface *ifp, int fd, int flags,
     int (*callback)(struct dhcpcd_ctx *, struct interface *, struct nlmsghdr *))
 {
-	struct msghdr msg;
-	struct sockaddr_nl nladdr;
+	struct sockaddr_nl nladdr = { .nl_pid = 0 };
+	struct msghdr msg = {
+	    .msg_name = &nladdr, .msg_namelen = sizeof(nladdr),
+	    .msg_iov = iov, .msg_iovlen = 1,
+	};
 	ssize_t len;
 	struct nlmsghdr *nlm;
 	int r;
 	unsigned int again;
 
-	memset(&msg, 0, sizeof(msg));
-	msg.msg_name = &nladdr;
-	msg.msg_namelen = sizeof(nladdr);
-	memset(&nladdr, 0, sizeof(nladdr));
-	msg.msg_iov = iov;
-	msg.msg_iovlen = 1;
 recv_again:
-	if ((len = recvmsg_realloc(fd, &msg, flags)) == -1)
+	if ((len = recvmsg(fd, &msg, flags)) == -1)
 		return -1;
 	if (len == 0)
 		return 0;
@@ -550,7 +550,7 @@ link_route(struct dhcpcd_ctx *ctx, __unused struct interface *ifp,
 		return 0;
 
 	if (if_copyrt(ctx, &rt, nlm) == 0)
-		rt_recvrt(cmd, &rt);
+		rt_recvrt(cmd, &rt, (pid_t)nlm->nlmsg_pid);
 
 	return 0;
 }
@@ -811,8 +811,13 @@ link_netlink(struct dhcpcd_ctx *ctx, struct interface *ifp,
 int
 if_handlelink(struct dhcpcd_ctx *ctx)
 {
+	unsigned char buf[16 * 1024];
+	struct iovec iov = {
+		.iov_base = buf,
+		.iov_len = sizeof(buf),
+	};
 
-	return get_netlink(ctx, ctx->iov, NULL,
+	return get_netlink(ctx, &iov, NULL,
 	    ctx->link_fd, MSG_DONTWAIT, &link_netlink);
 }
 
@@ -822,12 +827,12 @@ send_netlink(struct dhcpcd_ctx *ctx, struct interface *ifp,
     int (*callback)(struct dhcpcd_ctx *, struct interface *, struct nlmsghdr *))
 {
 	int s, r;
-	struct sockaddr_nl snl;
-	struct iovec iov[1];
-	struct msghdr msg;
-
-	memset(&snl, 0, sizeof(snl));
-	snl.nl_family = AF_NETLINK;
+	struct sockaddr_nl snl = { .nl_family = AF_NETLINK };
+	struct iovec iov = { .iov_base = hdr, .iov_len = hdr->nlmsg_len };
+	struct msghdr msg = {
+	    .msg_name = &snl, .msg_namelen = sizeof(snl),
+	    .msg_iov = &iov, .msg_iovlen = 1
+	};
 
 	if (protocol == NETLINK_ROUTE) {
 		struct priv *priv;
@@ -839,22 +844,17 @@ send_netlink(struct dhcpcd_ctx *ctx, struct interface *ifp,
 			return -1;
 	}
 
-	memset(&msg, 0, sizeof(msg));
-	msg.msg_name = &snl;
-	msg.msg_namelen = sizeof(snl);
-	memset(&iov, 0, sizeof(iov));
-	iov[0].iov_base = hdr;
-	iov[0].iov_len = hdr->nlmsg_len;
-	msg.msg_iov = iov;
-	msg.msg_iovlen = 1;
 	/* Request a reply */
 	hdr->nlmsg_flags |= NLM_F_ACK;
 	hdr->nlmsg_seq = (uint32_t)++ctx->seq;
 	if (sendmsg(s, &msg, 0) != -1) {
-		struct priv *priv;
+		unsigned char buf[16 * 1024];
+		struct iovec riov = {
+			.iov_base = buf,
+			.iov_len = sizeof(buf),
+		};
 
-		priv = (struct priv *)ctx->priv;
-		r = get_netlink(ctx, priv->sndrcv_iov, ifp, s, 0, callback);
+		r = get_netlink(ctx, &riov, ifp, s, 0, callback);
 	} else
 		r = -1;
 	if (protocol != NETLINK_ROUTE)
@@ -1291,7 +1291,7 @@ _if_initrt(struct dhcpcd_ctx *ctx, __unused struct interface *ifp,
 
 	if (if_copyrt(ctx, &rt, nlm) == 0) {
 		rt.rt_dflags |= RTDF_INIT;
-		rt_recvrt(RTM_ADD, &rt);
+		rt_recvrt(RTM_ADD, &rt, (pid_t)nlm->nlmsg_pid);
 	}
 	return 0;
 }
@@ -1299,17 +1299,15 @@ _if_initrt(struct dhcpcd_ctx *ctx, __unused struct interface *ifp,
 int
 if_initrt(struct dhcpcd_ctx *ctx, int af)
 {
-	struct nlmr nlm;
+	struct nlmr nlm = {
+	    .hdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg)),
+	    .hdr.nlmsg_type = RTM_GETROUTE,
+	    .hdr.nlmsg_flags = NLM_F_REQUEST | NLM_F_MATCH,
+	    .rt.rtm_table = RT_TABLE_MAIN,
+	    .rt.rtm_family = (unsigned char)af,
+	};
 
 	rt_headclear(&ctx->kroutes, af);
-
-	memset(&nlm, 0, sizeof(nlm));
-	nlm.hdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
-	nlm.hdr.nlmsg_type = RTM_GETROUTE;
-	nlm.hdr.nlmsg_flags = NLM_F_REQUEST | NLM_F_MATCH;
-	nlm.rt.rtm_table = RT_TABLE_MAIN;
-	nlm.rt.rtm_family = (unsigned char)af;
-
 	return send_netlink(ctx, NULL, NETLINK_ROUTE, &nlm.hdr, &_if_initrt);
 }
 
@@ -1396,7 +1394,7 @@ bpf_read(struct interface *ifp, int s, void *data, size_t len,
 	};
 	struct msghdr msg = { .msg_iov = &iov, .msg_iovlen = 1 };
 #ifdef PACKET_AUXDATA
-	unsigned char cmsgbuf[CMSG_LEN(sizeof(struct tpacket_auxdata))];
+	unsigned char cmsgbuf[CMSG_LEN(sizeof(struct tpacket_auxdata))] = { 0 };
 	struct cmsghdr *cmsg;
 	struct tpacket_auxdata *aux;
 #endif

@@ -454,7 +454,7 @@ sunos*)
 	echo "CPPFLAGS+=	-D_XPG4_2 -D__EXTENSIONS__ -DBSD_COMP" \
 	    >>$CONFIG_MK
 	echo "DHCPCD_SRCS+=	if-sun.c" >>$CONFIG_MK
-	echo "LDADD+=		-ldlpi" >>$CONFIG_MK
+	echo "LDADD+=		-ldlpi -lkstat" >>$CONFIG_MK
 	;;
 *)
 	echo "DHCPCD_SRCS+=	if-bsd.c" >>$CONFIG_MK

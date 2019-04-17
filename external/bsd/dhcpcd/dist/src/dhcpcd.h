@@ -142,14 +142,10 @@ struct dhcpcd_ctx {
 	struct rt_head froutes;	/* free routes for re-use */
 
 	int pf_inet_fd;
-#ifdef IFLR_ACTIVE
-	int pf_link_fd;
-#endif
 	void *priv;
 	int link_fd;
 	int seq;	/* route message sequence no */
 	int sseq;	/* successful seq no sent */
-	struct iovec iov[1];	/* generic iovec buffer */
 
 #ifdef USE_SIGNALS
 	sigset_t sigset;
@@ -183,15 +179,6 @@ struct dhcpcd_ctx {
 #ifdef INET6
 	uint8_t *secret;
 	size_t secret_len;
-
-	unsigned char ctlbuf[IP6BUFLEN];
-	struct sockaddr_in6 from;
-	struct msghdr sndhdr;
-	struct iovec sndiov[1];
-	unsigned char sndbuf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
-	struct msghdr rcvhdr;
-	char ntopbuf[INET6_ADDRSTRLEN];
-	const char *sfrom;
 
 	int nd_fd;
 	struct ra_head *ra_routers;

@@ -129,28 +129,13 @@ int
 ipv6_init(struct dhcpcd_ctx *ctx)
 {
 
-	if (ctx->sndhdr.msg_iovlen == 1)
+	if (ctx->ra_routers != NULL)
 		return 0;
 
-	if (ctx->ra_routers == NULL) {
-		ctx->ra_routers = malloc(sizeof(*ctx->ra_routers));
-		if (ctx->ra_routers == NULL)
-			return -1;
-	}
+	ctx->ra_routers = malloc(sizeof(*ctx->ra_routers));
+	if (ctx->ra_routers == NULL)
+		return -1;
 	TAILQ_INIT(ctx->ra_routers);
-
-	ctx->sndhdr.msg_namelen = sizeof(struct sockaddr_in6);
-	ctx->sndhdr.msg_iov = ctx->sndiov;
-	ctx->sndhdr.msg_iovlen = 1;
-	ctx->sndhdr.msg_control = ctx->sndbuf;
-	ctx->sndhdr.msg_controllen = sizeof(ctx->sndbuf);
-	ctx->rcvhdr.msg_name = &ctx->from;
-	ctx->rcvhdr.msg_namelen = sizeof(ctx->from);
-	ctx->rcvhdr.msg_iov = ctx->iov;
-	ctx->rcvhdr.msg_iovlen = 1;
-	ctx->rcvhdr.msg_control = ctx->ctlbuf;
-	// controllen is set at recieve
-	//ctx->rcvhdr.msg_controllen = sizeof(ctx->rcvbuf);
 
 	ctx->nd_fd = -1;
 	ctx->dhcp6_fd = -1;
@@ -639,6 +624,10 @@ ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 	uint32_t pltime, vltime;
 	bool vltime_was_zero;
 	__printflike(1, 2) void (*logfunc)(const char *, ...);
+#ifdef __sun
+	struct ipv6_state *state;
+	struct ipv6_addr *ia2;
+#endif
 
 	/* Remember the interface of the address. */
 	ifp = ia->iface;
@@ -774,13 +763,13 @@ ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 }
 
 #ifdef ALIAS_ADDR
-/* Find the next logical aliase address we can use. */
+/* Find the next logical alias address we can use. */
 static int
 ipv6_aliasaddr(struct ipv6_addr *ia, struct ipv6_addr **repl)
 {
 	struct ipv6_state *state;
 	struct ipv6_addr *iap;
-	unsigned int unit;
+	unsigned int lun;
 	char alias[IF_NAMESIZE];
 
 	if (ia->alias[0] != '\0')
@@ -799,12 +788,14 @@ ipv6_aliasaddr(struct ipv6_addr *ia, struct ipv6_addr **repl)
 		}
 	}
 
-	unit = 0;
+	lun = 0;
 find_unit:
-	if (unit == 0)
-		strlcpy(alias, ia->iface->name, sizeof(alias));
-	else
-		snprintf(alias, sizeof(alias), "%s:%u", ia->iface->name, unit);
+	if (if_makealias(alias, IF_NAMESIZE, ia->iface->name, lun) >=
+	    IF_NAMESIZE)
+	{
+		errno = ENOMEM;
+		return -1;
+	}
 	TAILQ_FOREACH(iap, &state->addrs, next) {
 		if (iap->alias[0] == '\0')
 			continue;
@@ -820,11 +811,11 @@ find_unit:
 	}
 
 	if (iap != NULL) {
-		if (unit == UINT_MAX) {
+		if (lun == UINT_MAX) {
 			errno = ERANGE;
 			return -1;
 		}
-		unit++;
+		lun++;
 		goto find_unit;
 	}
 

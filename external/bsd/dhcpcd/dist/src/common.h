@@ -181,6 +181,4 @@ ssize_t addvard(char ***, const char *, const char *, size_t);
 const char *hwaddr_ntoa(const void *, size_t, char *, size_t);
 size_t hwaddr_aton(uint8_t *, const char *);
 size_t read_hwaddr_aton(uint8_t **, const char *);
-
-ssize_t recvmsg_realloc(int, struct msghdr *, int);
 #endif
