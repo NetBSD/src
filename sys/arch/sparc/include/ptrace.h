@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.12 2019/04/16 11:38:21 martin Exp $ */
+/*	$NetBSD: ptrace.h,v 1.13 2019/04/17 15:42:02 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #define PTRACE_REG_SP(r)	((register_t)(r)->r_out[6])
 #define PTRACE_REG_INTRV(r)	((register_t)(r)->r_out[0])
 
-#define PTRACE_ILLEGAL_ASM	__asm __volatile ("illtrap 0" : : : "memory")
+#define PTRACE_ILLEGAL_ASM	__asm __volatile (".word 0" : : : "memory")
 
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x91, 0xd0, 0x20, 0x01 })
 #define PTRACE_BREAKPOINT_ASM	__asm __volatile("ta 1")
