@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.243 2019/04/10 10:57:51 sevan Exp $
+$NetBSD: acronyms.comp,v 1.244 2019/04/17 14:06:48 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -827,6 +827,7 @@ LVM	logical volume management
 LVT	local vector table
 LVDS	Low-Voltage Differential Signaling
 LWP	light-weight process
+LZSS	Lempel Ziv Storer Szymanski
 LZW	Lempel Ziv Welch
 MAC	mandatory access control
 MAC	{media,medium} access control
@@ -941,8 +942,10 @@ NAS	network attached storage
 NAT	network address translation
 NAV	network allocation vector
 NC	numerical control
+NC-SI	network controller sideband interface
 NCO	numerically-controlled oscillator
 NCP	Network Control Protocol
+NCSI	network connectivity status indicator
 NCQ	native command queuing
 ND	neighbor discovery
 NDFA	nondeterministic finite automaton
@@ -985,6 +988,7 @@ OBO	off by one
 OBOE	off by one error
 OCL	object constraint language
 OCR	optical character recognition
+ODM	object data manager
 ODCM	on-demand clock modulation
 ODT	on-die termination
 OEM	original equipment manufacturer
@@ -1576,6 +1580,7 @@ VME	virtual mode extension
 VMX	vector multimedia extensions
 VMX	virtual machine extensions
 VOD	video on demand
+VPD	vital product data
 VPN	virtual private network
 VR	virtual reality
 VRAM	video random access memory
