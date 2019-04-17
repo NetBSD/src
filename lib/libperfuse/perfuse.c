@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.41 2018/11/16 02:39:02 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.42 2019/04/17 12:30:51 maya Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -199,7 +199,7 @@ perfuse_open(const char *path, int flags, mode_t mode)
 	}
 
 	/*
-	 * Set a buffer lentgh large enough so that enough FUSE packets
+	 * Set a buffer length large enough so that enough FUSE packets
 	 * will fit.
 	 */
 	opt = perfuse_bufvar_from_env("PERFUSE_BUFSIZE",
@@ -231,7 +231,7 @@ perfuse_open(const char *path, int flags, mode_t mode)
 	}
 
 	/*
-	 * Set a buffer lentgh large enough so that enough FUSE packets
+	 * Set a buffer length large enough so that enough FUSE packets
 	 * will fit.
 	 */
 	opt = perfuse_bufvar_from_env("PERFUSE_BUFSIZE",
