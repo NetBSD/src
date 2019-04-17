@@ -584,7 +584,7 @@ This has no effect on DHCPv6 other than skipping the reboot phase.
 .Nm
 will try to do as much as it can by default.
 However, there are sometimes situations where you don't want the things to be
-configured exactly how the the DHCP server wants.
+configured exactly how the DHCP server wants.
 Here are some options that deal with turning these bits off.
 .Pp
 Note that when
