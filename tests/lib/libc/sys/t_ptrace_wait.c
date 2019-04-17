@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.109 2019/04/15 16:47:47 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.110 2019/04/17 15:54:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.109 2019/04/15 16:47:47 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.110 2019/04/17 15:54:55 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -87,7 +87,9 @@ static int debug = 0;
 	if (debug) printf(a,  ##__VA_ARGS__); \
     while (/*CONSTCOND*/0)
 
+#ifndef TEST_VFORK_ENABLED
 #define TEST_VFORK_ENABLED 0
+#endif
 
 /// ----------------------------------------------------------------------------
 
@@ -3150,6 +3152,7 @@ FORK_TEST(fork7, fork, false, true, true)
 FORK_TEST(fork8, fork, true, true, true)
 #endif
 
+#if TEST_VFORK_ENABLED
 FORK_TEST(vfork1, vfork, false, false, false)
 #if defined(TWAIT_HAVE_PID)
 FORK_TEST(vfork2, vfork, true, false, false)
@@ -3162,9 +3165,11 @@ FORK_TEST(vfork6, vfork, true, false, true)
 FORK_TEST(vfork7, vfork, false, true, true)
 FORK_TEST(vfork8, vfork, true, true, true)
 #endif
+#endif
 
 /// ----------------------------------------------------------------------------
 
+#if TEST_VFORK_ENABLED
 static void
 traceme_vfork_fork_body(pid_t (*fn)(void))
 {
@@ -3223,6 +3228,7 @@ ATF_TC_BODY(name, tc)							\
 
 TRACEME_VFORK_FORK_TEST(traceme_vfork_fork, fork)
 TRACEME_VFORK_FORK_TEST(traceme_vfork_vfork, vfork)
+#endif
 
 /// ----------------------------------------------------------------------------
 
@@ -5603,10 +5609,12 @@ ATF_TC_BODY(name, tc)							\
 
 FORK2_TEST(fork_singalmasked, true, false, false, true, false)
 FORK2_TEST(fork_singalignored, true, false, false, false, true)
+#if TEST_VFORK_ENABLED
 FORK2_TEST(vfork_singalmasked, false, true, false, true, false)
 FORK2_TEST(vfork_singalignored, false, true, false, false, true)
 FORK2_TEST(vforkdone_singalmasked, false, false, true, true, false)
 FORK2_TEST(vforkdone_singalignored, false, false, true, false, true)
+#endif
 #endif
 
 /// ----------------------------------------------------------------------------
@@ -6619,6 +6627,7 @@ CLONE_TEST(clone_files8, CLONE_FILES, true, true, true)
 //CLONE_TEST(clone_sighand8, CLONE_SIGHAND, true, true, true)
 #endif
 
+#if TEST_VFORK_ENABLED
 CLONE_TEST(clone_vfork1, CLONE_VFORK, false, false, false)
 #if defined(TWAIT_HAVE_PID)
 CLONE_TEST(clone_vfork2, CLONE_VFORK, true, false, false)
@@ -6630,6 +6639,7 @@ CLONE_TEST(clone_vfork5, CLONE_VFORK, false, false, true)
 CLONE_TEST(clone_vfork6, CLONE_VFORK, true, false, true)
 CLONE_TEST(clone_vfork7, CLONE_VFORK, false, true, true)
 CLONE_TEST(clone_vfork8, CLONE_VFORK, true, true, true)
+#endif
 #endif
 
 /// ----------------------------------------------------------------------------
@@ -6993,12 +7003,15 @@ CLONE_TEST2(clone_files_signalignored, CLONE_FILES, true, false)
 CLONE_TEST2(clone_files_signalmasked, CLONE_FILES, false, true)
 //CLONE_TEST2(clone_sighand_signalignored, CLONE_SIGHAND, true, false) // XXX
 //CLONE_TEST2(clone_sighand_signalmasked, CLONE_SIGHAND, false, true)  // XXX
+#if TEST_VFORK_ENABLED
 CLONE_TEST2(clone_vfork_signalignored, CLONE_VFORK, true, false)
 CLONE_TEST2(clone_vfork_signalmasked, CLONE_VFORK, false, true)
+#endif
 #endif
 
 /// ----------------------------------------------------------------------------
 
+#if TEST_VFORK_ENABLE
 #if defined(TWAIT_HAVE_PID)
 static void
 traceme_vfork_clone_body(int flags)
@@ -7078,6 +7091,7 @@ TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_fs, CLONE_FS)
 TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_files, CLONE_FILES)
 //TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_sighand, CLONE_SIGHAND)  // XXX
 TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_vfork, CLONE_VFORK)
+#endif
 #endif
 
 /// ----------------------------------------------------------------------------
