@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.244 2019/04/17 14:06:48 sevan Exp $
+$NetBSD: acronyms.comp,v 1.245 2019/04/17 16:45:38 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -115,6 +115,7 @@ BAR	base address register
 BBS	bulletin board system
 BCC	blind carbon copy
 BCD	binary coded decimal
+BCH	boot console handler
 BCR	byte count register
 BCS	base configuration space
 BD	baud
@@ -408,6 +409,7 @@ DSA	digital signature algorithm
 DSAP	destination service access point
 DSB	double-sideband modulation
 DSDT	differentiated system descriptor table
+DSF	device special file
 DSL	dataset and snapshot layer
 DSL	digital subscriber line
 DSL	domain specific language
@@ -607,6 +609,7 @@ HECI	host embedded controller interface
 HEST	hardware error source table
 HF	high frequency
 HFM	highest frequency mode
+HFS	hierarchical file system
 HID	human interface device
 HKP	HTTP Keyserver Protocol
 HLL	high-level language
@@ -711,6 +714,7 @@ ISA	industry standard architecture
 ISA	instruction set architecture
 ISDN	integrated services digital network
 ISI	inter-symbol interference
+ISL	initial system load
 ISM	industrial, scientific, [and] medical
 ISN	initial serial number
 ISO	International Standards Organization
@@ -773,6 +777,7 @@ LFO	low-frequency oscillation
 LFS	log-structured file system
 LFU	least frequently used
 LHP	loop heat pipe
+LIF	logical interchange format
 LIFO	last in, first out
 LILO	LInux LOader
 LILO	last in, last out
@@ -988,6 +993,7 @@ OBO	off by one
 OBOE	off by one error
 OCL	object constraint language
 OCR	optical character recognition
+ODE	offline device environment
 ODM	object data manager
 ODCM	on-demand clock modulation
 ODT	on-die termination
@@ -1589,6 +1595,8 @@ VRM	voltage regulator module
 VRRP	Virtual Router Redundancy Protocol
 VSTP	VLAN Spanning Tree Protocol
 VTP	VLAN Trunking Protocol
+VXFS	Veritas file sytem
+VXVM	Veritas volume manager
 W	watt
 W3C	World Wide Web Consortium
 WAFL	write anywhere file layout
