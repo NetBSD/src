@@ -704,9 +704,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 	int status = 0;
 	struct fd_list *fd;
 
-	if (ifp->options->script &&
-	    (ifp->options->script[0] == '\0' ||
-	    strcmp(ifp->options->script, "/dev/null") == 0) &&
+	if (ifp->options->script == NULL &&
 	    TAILQ_FIRST(&ifp->ctx->control_fds) == NULL)
 		return 0;
 
@@ -717,12 +715,10 @@ script_runreason(const struct interface *ifp, const char *reason)
 		return -1;
 	}
 
-	if (ifp->options->script &&
-	    (ifp->options->script[0] == '\0' ||
-	    strcmp(ifp->options->script, "/dev/null") == 0))
+	if (ifp->options->script == NULL)
 		goto send_listeners;
 
-	argv[0] = ifp->options->script ? ifp->options->script : UNCONST(SCRIPT);
+	argv[0] = ifp->options->script;
 	argv[1] = NULL;
 	logdebugx("%s: executing `%s' %s", ifp->name, argv[0], reason);
 
