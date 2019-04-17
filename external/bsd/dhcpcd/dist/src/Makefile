@@ -45,7 +45,7 @@ CLEANFILES+=	*.tar.xz
 		$< > $@
 
 all: ${TOP}/config.h ${PROG} ${SCRIPTS} ${MAN5} ${MAN8}
-	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@; cd ..; done
+	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@ || exit $$?; cd ..; done
 
 dev:
 	cd dev && ${MAKE}
@@ -84,7 +84,7 @@ _proginstall: ${PROG}
 	${INSTALL} -d ${DESTDIR}${DBDIR}
 
 proginstall: _proginstall ${EMBEDDEDINSTALL}
-	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@; cd ..; done
+	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@ || exit $$?; cd ..; done
 
 _maninstall: ${MAN5} ${MAN8}
 	${INSTALL} -d ${DESTDIR}${MANDIR}/man5
@@ -130,7 +130,7 @@ install: proginstall _maninstall _confinstall eginstall
 
 clean:
 	rm -f ${OBJS} ${PROG} ${PROG}.core ${CLEANFILES}
-	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@; cd ..; done
+	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@ || exit $$?; cd ..; done
 
 distclean: clean
 	rm -f .depend

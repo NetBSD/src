@@ -207,11 +207,12 @@ const struct option cf_options[] = {
 	{NULL,              0,                 NULL, '\0'}
 };
 
+static const char *default_script = SCRIPT;
+
 static char *
-add_environ(struct if_options *ifo, const char *value, int uniq)
+add_environ(char ***array, const char *value, int uniq)
 {
-	char **newlist;
-	char **lst = ifo->environ;
+	char **newlist, **list = *array;
 	size_t i = 0, l, lv;
 	char *match = NULL, *p, *n;
 
@@ -229,8 +230,8 @@ add_environ(struct if_options *ifo, const char *value, int uniq)
 	*p++ = '\0';
 	l = strlen(match);
 
-	while (lst && lst[i]) {
-		if (match && strncmp(lst[i], match, l) == 0) {
+	while (list && list[i]) {
+		if (match && strncmp(list[i], match, l) == 0) {
 			if (uniq) {
 				n = strdup(value);
 				if (n == NULL) {
@@ -238,25 +239,25 @@ add_environ(struct if_options *ifo, const char *value, int uniq)
 					free(match);
 					return NULL;
 				}
-				free(lst[i]);
-				lst[i] = n;
+				free(list[i]);
+				list[i] = n;
 			} else {
 				/* Append a space and the value to it */
-				l = strlen(lst[i]);
+				l = strlen(list[i]);
 				lv = strlen(p);
-				n = realloc(lst[i], l + lv + 2);
+				n = realloc(list[i], l + lv + 2);
 				if (n == NULL) {
 					logerr(__func__);
 					free(match);
 					return NULL;
 				}
-				lst[i] = n;
-				lst[i][l] = ' ';
-				memcpy(lst[i] + l + 1, p, lv);
-				lst[i][l + lv + 1] = '\0';
+				list[i] = n;
+				list[i][l] = ' ';
+				memcpy(list[i] + l + 1, p, lv);
+				list[i][l + lv + 1] = '\0';
 			}
 			free(match);
-			return lst[i];
+			return list[i];
 		}
 		i++;
 	}
@@ -267,7 +268,7 @@ add_environ(struct if_options *ifo, const char *value, int uniq)
 		logerr(__func__);
 		return NULL;
 	}
-	newlist = reallocarray(lst, i + 2, sizeof(char *));
+	newlist = reallocarray(list, i + 2, sizeof(char *));
 	if (newlist == NULL) {
 		logerr(__func__);
 		free(n);
@@ -275,26 +276,31 @@ add_environ(struct if_options *ifo, const char *value, int uniq)
 	}
 	newlist[i] = n;
 	newlist[i + 1] = NULL;
-	ifo->environ = newlist;
+	*array = newlist;
 	return newlist[i];
 }
 
-#define parse_string(buf, len, arg) parse_string_hwaddr(buf, len, arg, 0)
+#define PARSE_STRING		0
+#define PARSE_STRING_NULL	1
+#define PARSE_HWADDR		2
+#define parse_string(a, b, c) parse_str((a), (b), (c), PARSE_STRING)
+#define parse_hwaddr(a, b, c) parse_str((a), (b), (c), PARSE_HWADDR)
 static ssize_t
-parse_string_hwaddr(char *sbuf, size_t slen, const char *str, int clid)
+parse_str(char *sbuf, size_t slen, const char *str, int flags)
 {
 	size_t l;
-	const char *p;
-	int i, punt_last = 0;
+	const char *p, *end;
+	int i;
 	char c[4], cmd;
 
+	end = str + strlen(str);
 	/* If surrounded by quotes then it's a string */
 	if (*str == '"') {
-		str++;
-		l = strlen(str);
-		p = str + l - 1;
-		if (*p == '"')
-			punt_last = 1;
+		p = end - 1;
+		if (*p == '"') {
+			str++;
+			end = p;
+		}
 	} else {
 		l = (size_t)hwaddr_aton(NULL, str);
 		if ((ssize_t) l != -1 && l > 1) {
@@ -311,13 +317,13 @@ parse_string_hwaddr(char *sbuf, size_t slen, const char *str, int clid)
 	l = 0;
 	/* If processing a string on the clientid, first byte should be
 	 * 0 to indicate a non hardware type */
-	if (clid && *str) {
+	if (flags == PARSE_HWADDR && *str) {
 		if (sbuf)
 			*sbuf++ = 0;
 		l++;
 	}
 	c[3] = '\0';
-	while (*str) {
+	while (str < end) {
 		if (++l > slen && sbuf) {
 			errno = ENOBUFS;
 			return -1;
@@ -385,11 +391,8 @@ parse_string_hwaddr(char *sbuf, size_t slen, const char *str, int clid)
 			str++;
 		}
 	}
-	if (punt_last) {
-		if (sbuf)
-			*--sbuf = '\0';
-		l--;
-	}
+	if (flags == PARSE_STRING_NULL && sbuf)
+		*sbuf = '\0';
 	return (ssize_t)l;
 }
 
@@ -654,7 +657,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	int e, i, t;
 	long l;
 	unsigned long u;
-	char *p = NULL, *bp, *fp, *np, **nconf;
+	char *p = NULL, *bp, *fp, *np;
 	ssize_t s;
 	struct in_addr addr, addr2;
 	in_addr_t *naddr;
@@ -708,17 +711,33 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'c':
 		ARG_REQUIRED;
-		free(ifo->script);
-		ifo->script = strdup(arg);
-		if (ifo->script == NULL)
+		if (ifo->script != default_script)
+			free(ifo->script);
+		s = parse_str(NULL, 0, arg, PARSE_STRING_NULL);
+		if (s == 0) {
+			ifo->script = NULL;
+			break;
+		}
+		dl = (size_t)s;
+		if (s == -1 || (ifo->script = malloc(dl)) == NULL) {
+			ifo->script = NULL;
 			logerr(__func__);
+			return -1;
+		}
+		parse_str(ifo->script, dl, arg, PARSE_STRING_NULL);
+		if (ifo->script[0] == '\0' ||
+		    strcmp(ifo->script, "/dev/null") == 0)
+		{
+			free(ifo->script);
+			ifo->script = NULL;
+		}
 		break;
 	case 'd':
 		ifo->options |= DHCPCD_DEBUG;
 		break;
 	case 'e':
 		ARG_REQUIRED;
-		add_environ(ifo, arg, 1);
+		add_environ(&ifo->environ, arg, 1);
 		break;
 	case 'h':
 		if (!arg) {
@@ -969,7 +988,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			return -1;
 		}
 		snprintf(p, dl, "skip_hooks=%s", arg);
-		add_environ(ifo, p, 0);
+		add_environ(&ifo->environ, p, 0);
 		free(p);
 		break;
 	case 'D':
@@ -1006,8 +1025,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		/* Strings have a type of 0 */;
 		ifo->clientid[1] = 0;
 		if (arg)
-			s = parse_string_hwaddr((char *)ifo->clientid + 1,
-			    CLIENTID_MAX_LEN, arg, 1);
+			s = parse_hwaddr((char *)ifo->clientid + 1,
+			    CLIENTID_MAX_LEN, arg);
 		else
 			s = 0;
 		if (s == -1) {
@@ -1112,6 +1131,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			sa_in_init(&rt->rt_gateway, &addr3);
 			TAILQ_INSERT_TAIL(&ifo->routes, rt, rt_next);
 			*fp = ' ';
+			add_environ(&ifo->config, arg, 0);
 		} else if (strncmp(arg, "routers=", strlen("routers=")) == 0) {
 			if (parse_addr(&addr, NULL, p) == -1)
 				return -1;
@@ -1122,6 +1142,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			sa_in_init(&rt->rt_netmask, &addr2);
 			sa_in_init(&rt->rt_gateway, &addr);
 			TAILQ_INSERT_TAIL(&ifo->routes, rt, rt_next);
+			add_environ(&ifo->config, arg, 0);
 		} else if (strncmp(arg, "interface_mtu=",
 		    strlen("interface_mtu=")) == 0 ||
 		    strncmp(arg, "mtu=", strlen("mtu=")) == 0)
@@ -1149,40 +1170,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				} else
 					ifo->req_prefix_len = 128;
 			}
-		} else {
-			dl = 0;
-			if (ifo->config != NULL) {
-				while (ifo->config[dl] != NULL) {
-					if (strncmp(ifo->config[dl], arg,
-						(size_t)(p - arg)) == 0)
-					{
-						p = strdup(arg);
-						if (p == NULL) {
-							logerr(__func__);
-							return -1;
-						}
-						free(ifo->config[dl]);
-						ifo->config[dl] = p;
-						return 1;
-					}
-					dl++;
-				}
-			}
-			p = strdup(arg);
-			if (p == NULL) {
-				logerr(__func__);
-				return -1;
-			}
-			nconf = reallocarray(ifo->config, dl+2, sizeof(char *));
-			if (nconf == NULL) {
-				logerr(__func__);
-				free(p);
-				return -1;
-			}
-			ifo->config = nconf;
-			ifo->config[dl] = p;
-			ifo->config[dl + 1] = NULL;
-		}
+		} else
+			add_environ(&ifo->config, arg, 1);
 		break;
 	case 'W':
 		if (parse_addr(&addr, &addr2, arg) != 0)
@@ -2277,6 +2266,7 @@ default_config(struct dhcpcd_ctx *ctx)
 	ifo->options |= DHCPCD_IF_UP | DHCPCD_LINK | DHCPCD_INITIAL_DELAY;
 	ifo->timeout = DEFAULT_TIMEOUT;
 	ifo->reboot = DEFAULT_REBOOT;
+	ifo->script = UNCONST(default_script);
 	ifo->metric = -1;
 	ifo->auth.options |= DHCPCD_AUTH_REQUIRE;
 	TAILQ_INIT(&ifo->routes);
@@ -2626,7 +2616,8 @@ free_options(struct dhcpcd_ctx *ctx, struct if_options *ifo)
 			free(ifo->config);
 		}
 		rt_headclear0(ctx, &ifo->routes, AF_UNSPEC);
-		free(ifo->script);
+		if (ifo->script != default_script)
+			free(ifo->script);
 		free(ifo->arping);
 		free(ifo->blacklist);
 		free(ifo->fallback);
