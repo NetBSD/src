@@ -563,10 +563,12 @@ ipv4_aliasaddr(struct ipv4_addr *ia, struct ipv4_addr **repl)
 	lun = 0;
 	state = IPV4_STATE(ia->iface);
 find_lun:
-	if (lun == 0)
-		strlcpy(alias, ia->iface->name, sizeof(alias));
-	else
-		snprintf(alias, sizeof(alias), "%s:%u", ia->iface->name, lun);
+	if (if_makealias(alias, IF_NAMESIZE, ia->iface->name, lun) >=
+	    IF_NAMESIZE)
+	{
+		errno = ENOMEM;
+		return -1;
+	}
 	TAILQ_FOREACH(iap, &state->addrs, next) {
 		if (iap->alias[0] != '\0' && iap->addr.s_addr == INADDR_ANY) {
 			/* No address assigned? Lets use it. */
