@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.245 2019/04/17 16:45:38 sevan Exp $
+$NetBSD: acronyms.comp,v 1.246 2019/04/17 17:44:51 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -984,6 +984,8 @@ NSA	National Security Agency
 NTM	non-deterministic Turing machine
 NTP	Network Time Protocol
 NUMA	non-uniform memory access
+NVMM	NetBSD Virtual Machine Monitor
+NVMM	non-volatile main memory
 NVRAM	non-volatile random access memory
 NW	not write-through
 NX	no execute
