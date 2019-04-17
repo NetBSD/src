@@ -3,9 +3,6 @@
 This attempts to document various ways of building dhcpcd for your
 platform.
 
-Building for distribution (ie making a dhcpcd source tarball) now requires
-gmake-4 or any BSD make.
-
 ## Size is an issue
 To compile small dhcpcd, maybe to be used for installation media where
 size is a concern, you can use the `--small` configure option to enable

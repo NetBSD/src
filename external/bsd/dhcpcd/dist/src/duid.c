@@ -90,6 +90,7 @@ duid_machineuuid(char *uuid, size_t uuid_len)
 	fclose(fp);
 	r = len == 1 ? -1 : 0;
 #else
+	UNUSED(uuid);
 	r = -1;
 	errno = ENOSYS;
 #endif
