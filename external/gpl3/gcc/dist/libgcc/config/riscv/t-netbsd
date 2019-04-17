@@ -11,10 +11,6 @@ LIB2ADD += $(srcdir)/soft-fp/addtf3.c \
 	   $(srcdir)/soft-fp/fixunstfsi.c \
 	   $(srcdir)/soft-fp/floatsitf.c \
 	   $(srcdir)/soft-fp/floatunsitf.c \
-	   $(srcdir)/soft-fp/fixtfdi.c \
-	   $(srcdir)/soft-fp/fixunstfdi.c \
-	   $(srcdir)/soft-fp/floatditf.c \
-	   $(srcdir)/soft-fp/floatunditf.c \
 	   $(srcdir)/soft-fp/extendsftf2.c \
 	   $(srcdir)/soft-fp/extenddftf2.c \
 	   $(srcdir)/soft-fp/trunctfsf2.c \
