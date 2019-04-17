@@ -168,9 +168,6 @@ or1k-*-* | or1knd-*-*)
 powerpc*-*-*)
 	cpu_type=rs6000
 	;;
-riscv*-*-*)
-	cpu_type=riscv
-	;;
 rs6000*-*-*)
 	;;
 riscv*-*-*)
@@ -1158,6 +1155,11 @@ riscv*-*-linux*)
 	;;
 riscv*-*-netbsd*)
 	tmake_file="${tmake_file} riscv/t-netbsd"
+	case ${host} in
+	riscv64*)
+		tmake_file="${tmake_file} riscv/t-netbsd64"
+		;;
+	esac
 	;;
 riscv*-*-*)
 	tmake_file="${tmake_file} riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address}"
