@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.195 2019/03/29 21:44:22 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.196 2019/04/18 03:50:12 rin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1306,6 +1306,7 @@
 ./var/cron
 ./var/cron/tabs			mode=0700
 ./var/db
+./var/db/dhcpcd
 ./var/db/ns
 ./var/db/obsolete
 ./var/db/postfix		uname=postfix gname=postfix mode=0755
