@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2019/02/25 19:55:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.31 2019/04/18 10:07:24 mrg Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -74,6 +74,7 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 
 . if ${BINUTILS_MACHINE_ARCH} == "x86_64" || \
     ${BINUTILS_MACHINE_ARCH} == "sparc64" || \
+    ${BINUTILS_MACHINE_ARCH} == "riscv64" || \
     !empty(BINUTILS_MACHINE_ARCH:Maarch64*) || \
     !empty(BINUTILS_MACHINE_ARCH:Mearm*) || \
     !empty(BINUTILS_MACHINE_ARCH:Marm*) || \

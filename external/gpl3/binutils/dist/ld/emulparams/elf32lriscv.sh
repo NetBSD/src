@@ -12,4 +12,13 @@ case "$target" in
 	LIBPATH_SUFFIX="/ilp32d" ;;
     esac
     ;;
+  # NetBSD puts IPL32 libraries in rv32 subdirectory.
+  # XXX d vs f vs ""
+  riscv64-*-netbsd*)
+    case "$EMULATION_NAME" in
+      *32*)
+	LIB_PATH='=/usr/lib/rv32'
+	;;
+    esac
+    ;;
 esac
