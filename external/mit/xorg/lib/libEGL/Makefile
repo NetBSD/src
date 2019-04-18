@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/04/16 21:21:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2019/04/18 10:42:25 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -104,7 +104,8 @@ LIBDPLIBS=	Xext		${.CURDIR}/../libXext \
 		xcb-sync	${.CURDIR}/../libxcb/sync \
 		xcb		${.CURDIR}/../libxcb/libxcb \
 		expat		${NETBSDSRCDIR}/external/mit/expat/lib/libexpat \
-		m		${NETBSDSRCDIR}/lib/libm
+		m		${NETBSDSRCDIR}/lib/libm \
+		pthread		${NETBSDSRCDIR}/lib/libpthread
 
 MKLINT=no
 
