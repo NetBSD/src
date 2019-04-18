@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1130 2019/04/16 21:20:51 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1131 2019/04/18 20:11:57 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -962,7 +962,7 @@ MK${var}:=	yes
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" \
     || ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" \
     || ${MACHINE_ARCH} == "powerpc64" || ${MACHINE_ARCH} == "aarch64" \
-    || !empty(MACHINE_ARCH:Mearm*)
+    || ${MACHINE_ARCH} == "riscv64" || !empty(MACHINE_ARCH:Mearm*)
 MKCOMPAT?=	yes
 .else
 # Don't let this build where it really isn't supported.
