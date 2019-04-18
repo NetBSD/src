@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.29 2019/01/17 02:49:11 knakahara Exp $
+#	$NetBSD: net_common.sh,v 1.30 2019/04/18 07:56:04 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -384,29 +384,42 @@ rump_server_halt_servers()
 	return 0
 }
 
+extract_rump_server_core()
+{
+
+	if [ -f rump_server.core ]; then
+		gdb -ex bt /usr/bin/rump_server rump_server.core
+		strings rump_server.core |grep panic
+	fi
+}
+
+dump_kernel_stats()
+{
+	local sock=$1
+
+	echo "### Dumping $sock"
+	export RUMP_SERVER=$sock
+	rump.ifconfig -av
+	rump.netstat -nr
+	# XXX still need hijacking
+	$HIJACKING rump.netstat -nai
+	rump.arp -na
+	rump.ndp -na
+	$HIJACKING ifmcstat
+	$HIJACKING dmesg
+}
+
 rump_server_dump_servers()
 {
 	local backup=$RUMP_SERVER
 
 	$DEBUG && cat $_rump_server_socks
 	for sock in $(cat $_rump_server_socks); do
-		echo "### Dumping $sock"
-		export RUMP_SERVER=$sock
-		rump.ifconfig -av
-		rump.netstat -nr
-		# XXX still need hijacking
-		$HIJACKING rump.netstat -nai
-		rump.arp -na
-		rump.ndp -na
-		$HIJACKING ifmcstat
-		$HIJACKING dmesg
+		dump_kernel_stats $sock
 	done
 	export RUMP_SERVER=$backup
 
-	if [ -f rump_server.core ]; then
-		gdb -ex bt /usr/bin/rump_server rump_server.core
-		strings rump_server.core |grep panic
-	fi
+	extract_rump_server_core
 	return 0
 }
 
