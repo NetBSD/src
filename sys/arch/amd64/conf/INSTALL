@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.94 2018/12/11 16:52:49 maya Exp $
+# $NetBSD: INSTALL,v 1.95 2019/04/18 17:13:00 maya Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -8,9 +8,11 @@
 include	"arch/amd64/conf/GENERIC"
 
 options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=115200
-#ident 		"INSTALL-$Revision: 1.94 $"
+#ident 		"INSTALL-$Revision: 1.95 $"
 
 no options	MEMORY_DISK_DYNAMIC
+no options	FONT_BOLD16x32
+no options 	FONT_BOLD8x16
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks

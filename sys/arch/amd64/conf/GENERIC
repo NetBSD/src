@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.523 2019/04/18 16:46:11 christos Exp $
+# $NetBSD: GENERIC,v 1.524 2019/04/18 17:13:00 maya Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.523 $"
+#ident		"GENERIC-$Revision: 1.524 $"
 
 maxusers	64		# estimated number of users
 
@@ -1185,6 +1185,9 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+# Give us a choice of fonts based on monitor size
+options 	FONT_BOLD8x16
+options 	FONT_BOLD16x32
 
 # pseudo audio device driver
 pseudo-device	pad
