@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.18 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.19 2019/04/18 17:45:12 christos Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.18 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.19 2019/04/18 17:45:12 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -56,6 +56,7 @@ compat_ifconf(u_long cmd, void *data)
 		return ENOSYS;
 	}
 
+	memset(&ifr, 0, sizeof(ifr));
 	if (docopy) {
 		space = ifc->ifc_len;
 		ifrp = ifc->ifc_req;
