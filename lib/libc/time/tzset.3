@@ -1,5 +1,5 @@
-.\"	$NetBSD: tzset.3,v 1.39 2018/10/19 23:05:35 christos Exp $
-.Dd October 19, 2018
+.\"	$NetBSD: tzset.3,v 1.40 2019/04/18 11:20:17 pgoyette Exp $
+.Dd April 18, 2019
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -89,6 +89,12 @@ is set to
 .Va 1
 the call is equivalent to
 .Va tzname[1] .
+The return values for both
+.Fn tzgetname
+and
+.Fn tzgmtoff
+correspond to the latest time for which data is available, even if that
+refers to a future time.
 Finally, the
 .Fn tzgetgmtoff
 function acts like
@@ -424,6 +430,13 @@ The
 .Fn tzset
 function conforms to
 .St -p1003.1-88 .
+.Sh BUGS
+Neither the
+.Fn tzgetname
+nor
+.Fn tzgmtoff
+functions have the ability to specify the point in time for which the
+requested data should be returned.
 .\" @(#)newtzset.3	8.2
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
