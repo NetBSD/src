@@ -151,7 +151,7 @@
 /* #undef JEMALLOC_MUTEX_INIT_CB */
 
 /* Non-empty if the tls_model attribute is supported. */
-#ifndef __vax__
+#if !defined(__vax__) && !defined(__mc68010__)
 #define JEMALLOC_TLS_MODEL __attribute__((tls_model("initial-exec")))
 #endif
 
@@ -235,7 +235,7 @@
 /* #undef JEMALLOC_RETAIN */
 
 /* TLS is used to map arenas and magazine caches to threads. */
-#ifndef __vax__
+#if !defined(__vax__) && !defined(__mc68010__)
 #define JEMALLOC_TLS 
 #endif
 
