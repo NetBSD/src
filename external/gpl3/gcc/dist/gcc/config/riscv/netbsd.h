@@ -48,6 +48,8 @@ Boston, MA 02111-1307, USA.  */
 
 #define EXTRA_SPECS NETBSD_SUBTARGET_EXTRA_SPECS
 
+#undef STARTFILE_PREFIX_SPEC
+
 #define LD_EMUL_SUFFIX \
   "%{mabi=lp64d:}" \
   "%{mabi=lp64f:_lp64f}" \
@@ -57,13 +59,14 @@ Boston, MA 02111-1307, USA.  */
   "%{mabi=ilp32:_ilp32}"
 
 #undef LINK_SPEC
-#define LINK_SPEC "\
--melf" XLEN_SPEC "lriscv" LD_EMUL_SUFFIX " \
-%(netbsd_link_spec)"
+#define LINK_SPEC \
+  "-melf" XLEN_SPEC "lriscv" LD_EMUL_SUFFIX \
+  "%(netbsd_link_spec)"
 
 #undef NETBSD_ENTRY_POINT
 #define NETBSD_ENTRY_POINT	"_start"
 
+/* Override netbsd-stdint.h uintptr_t and inptr_t. */
 #undef UINTPTR_TYPE
 #define UINTPTR_TYPE "long unsigned int"
 
