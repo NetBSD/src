@@ -1,4 +1,4 @@
-/* $NetBSD: wsbell.c,v 1.10 2019/04/18 13:01:38 isaki Exp $ */
+/* $NetBSD: wsbell.c,v 1.11 2019/04/18 14:01:28 isaki Exp $ */
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.10 2019/04/18 13:01:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.11 2019/04/18 14:01:28 isaki Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -424,7 +424,11 @@ bell_thread(void *arg)
 		}
 
 		tone.frequency = vb->pitch;
-		tone.duration = vb->period;
+		/*
+		 * period (derived from wskbd) is in msec.
+		 * duration (derived from spkr) is in units of 10msec.
+		 */
+		tone.duration = vb->period / 10;
 		vol = vb->volume;
 		mutex_exit(&sc->sc_bellock);
 
@@ -442,7 +446,7 @@ spkr_audio_play(struct wsbell_softc *sc, u_int pitch, u_int period, u_int volume
 
 	mutex_enter(&sc->sc_bellock);
 	sc->sc_bell_args.pitch = pitch;
-	sc->sc_bell_args.period = period / 5;
+	sc->sc_bell_args.period = period;
 	sc->sc_bell_args.volume = volume;
 
 	cv_broadcast(&sc->sc_bellcv);
