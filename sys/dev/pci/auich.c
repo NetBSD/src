@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.153 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: auich.c,v 1.154 2019/04/18 13:01:38 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.153 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.154 2019/04/18 13:01:38 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1040,7 +1040,7 @@ auich_set_params(void *v, int setmode, int usemode,
 		    sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
 			control = bus_space_read_4(sc->iot, sc->aud_ioh,
 			    ICH_GCTRL + sc->sc_modem_offset);
-				control &= ~sc->sc_pcm246_mask;
+			control &= ~sc->sc_pcm246_mask;
 			if (p->channels == 4) {
 				control |= sc->sc_pcm4;
 			} else if (p->channels == 6) {
