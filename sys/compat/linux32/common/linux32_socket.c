@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.29 2018/05/10 01:32:24 ozaki-r Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.30 2019/04/18 17:45:12 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.29 2018/05/10 01:32:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.30 2019/04/18 17:45:12 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -431,6 +431,7 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 	if (error)
 		return error;
 
+	memset(&ifr, 0, sizeof(ifr));
 	docopy = NETBSD32PTR64(ifc.ifc_req) != NULL;
 	if (docopy) {
 		space = ifc.ifc_len;
