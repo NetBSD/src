@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1202 2019/02/26 07:31:49 rin Exp $
+# $NetBSD: mi,v 1.1203 2019/04/18 03:50:12 rin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -6020,6 +6020,7 @@
 ./var/cron					base-cron-root
 ./var/cron/tabs					base-cron-root
 ./var/db					base-sys-root
+./var/db/dhcpcd					base-dhcpcd-root
 ./var/db/ns					base-sys-root
 ./var/db/obsolete				base-sys-root
 ./var/db/obsolete/base				base-sys-root
