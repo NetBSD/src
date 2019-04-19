@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.44 2017/01/19 20:18:17 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.44.4.1 2019/04/19 09:10:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.44 2017/01/19 20:18:17 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.44.4.1 2019/04/19 09:10:49 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -317,7 +317,7 @@ static bool
 npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
     const filt_opts_t *fopts)
 {
-	bool noproto, noaddrs, noports, need_tcpudp = false;
+	bool noproto, noaddrs, noports, nostate, need_tcpudp = false;
 	const addr_port_t *apfrom = &fopts->fo_from;
 	const addr_port_t *apto = &fopts->fo_to;
 	const int proto = op->op_proto;
@@ -329,7 +329,8 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	noproto = family == AF_UNSPEC && proto == -1 && !op->op_opts;
 	noaddrs = !apfrom->ap_netaddr && !apto->ap_netaddr;
 	noports = !apfrom->ap_portrange && !apto->ap_portrange;
-	if (noproto && noaddrs && noports) {
+	nostate = !(npf_rule_getattr(rl) & NPF_RULE_STATEFUL);
+	if (noproto && noaddrs && noports && nostate) {
 		return false;
 	}
 
