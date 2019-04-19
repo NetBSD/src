@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.138.6.3 2018/12/08 12:24:18 martin Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.138.6.4 2019/04/19 09:12:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.138.6.3 2018/12/08 12:24:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.138.6.4 2019/04/19 09:12:58 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1152,6 +1152,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	if (error)
 		return error;
 
+	memset(&ifr, 0, sizeof(ifr));
 	docopy = ifc.ifc_req != NULL;
 	if (docopy) {
 		space = ifc.ifc_len;
