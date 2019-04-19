@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.390 2019/04/07 19:32:24 christos Exp $
+#	$NetBSD: bsd.README,v 1.391 2019/04/19 22:06:03 kamil Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -2126,7 +2126,7 @@ HOST_COMPILE.cc		The host c++ compiler line with flags
 
 HOST_CPP		The host c pre-processor
 
-HOST_CPPFLAGS		The cost c pre-processor flags
+HOST_CPPFLAGS		The host c pre-processor flags
 
 HOST_CXX		The host c++ compiler
 
