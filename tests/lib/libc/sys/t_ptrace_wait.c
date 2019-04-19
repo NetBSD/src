@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.110 2019/04/17 15:54:55 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.111 2019/04/19 21:54:32 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.110 2019/04/17 15:54:55 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.111 2019/04/19 21:54:32 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7011,7 +7011,7 @@ CLONE_TEST2(clone_vfork_signalmasked, CLONE_VFORK, false, true)
 
 /// ----------------------------------------------------------------------------
 
-#if TEST_VFORK_ENABLE
+#if TEST_VFORK_ENABLED
 #if defined(TWAIT_HAVE_PID)
 static void
 traceme_vfork_clone_body(int flags)
