@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy.c,v 1.5 2019/04/18 08:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: sysproxy.c,v 1.6 2019/04/19 01:52:55 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.5 2019/04/18 08:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.6 2019/04/19 01:52:55 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/filedesc.h>
@@ -77,6 +77,7 @@ hyp_syscall(int num, void *arg, long *retval)
 	/* Sanity checks (from mi_userret) */
 	LOCKDEBUG_BARRIER(NULL, 0);
 	KASSERT(l->l_nopreempt == 0);
+	KASSERT(l->l_psrefs == 0);
 
 	return rv;
 }
