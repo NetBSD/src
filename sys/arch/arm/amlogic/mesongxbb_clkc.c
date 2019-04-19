@@ -1,4 +1,4 @@
-/* $NetBSD: mesongxbb_clkc.c,v 1.1 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: mesongxbb_clkc.c,v 1.2 2019/04/19 19:07:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mesongxbb_clkc.c,v 1.1 2019/02/25 19:30:17 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mesongxbb_clkc.c,v 1.2 2019/04/19 19:07:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,9 +66,22 @@ __KERNEL_RCSID(1, "$NetBSD: mesongxbb_clkc.c,v 1.1 2019/02/25 19:30:17 jmcneill 
 static int mesongxbb_clkc_match(device_t, cfdata_t, void *);
 static void mesongxbb_clkc_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"amlogic,gxbb-clkc",
-	NULL
+struct mesongxbb_clkc_config {
+	const char *name;
+};
+
+static const struct mesongxbb_clkc_config gxbb_config = {
+	.name = "Meson GXBB",
+};
+
+static const struct mesongxbb_clkc_config gxl_config = {
+	.name = "Meson GXL",
+};
+
+static const struct of_compat_data compat_data[] = {
+	{ "amlogic,gxbb-clkc",		(uintptr_t)&gxbb_config },
+	{ "amlogic,gxl-clkc",		(uintptr_t)&gxl_config },
+	{ NULL }
 };
 
 CFATTACH_DECL_NEW(mesongxbb_clkc, sizeof(struct meson_clk_softc),
@@ -215,7 +228,7 @@ mesongxbb_clkc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -223,6 +236,8 @@ mesongxbb_clkc_attach(device_t parent, device_t self, void *aux)
 {
 	struct meson_clk_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const struct mesongxbb_clkc_config *conf;
+	const int phandle = faa->faa_phandle;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
@@ -237,8 +252,10 @@ mesongxbb_clkc_attach(device_t parent, device_t self, void *aux)
 
 	meson_clk_attach(sc);
 
+	conf = (const void *)of_search_compatible(phandle, compat_data)->data;
+
 	aprint_naive("\n");
-	aprint_normal(": Meson GXBB clock controller\n");
+	aprint_normal(": %s clock controller\n", conf->name);
 
 	meson_clk_print(sc);
 }
