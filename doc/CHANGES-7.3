@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.47 2019/04/16 08:12:58 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.48 2019/04/19 16:02:01 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -522,4 +522,13 @@ sys/external/bsd/drm2/pci/drm_pci.c		1.32 (patch)
 
 	Don't try to interpret the second half of a 64-bit BAR as another one.
 	[dholland, ticket #1673]
+
+sys/compat/common/uipc_syscalls_40.c		1.19 (patch)
+sys/compat/linux/common/linux_socket.c		1.145 (patch)
+sys/compat/linux32/common/linux32_socket.c	1.30 (patch)
+sys/net/if.c					1.449 (patch)
+
+	Zero out the ifreq struct for SIOCGIFCONF to avoid up to 127 bytes
+	of stack disclosure.
+	[christos, ticket #1689]
 
