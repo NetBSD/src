@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.86 2019/04/19 19:07:55 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.87 2019/04/19 19:36:26 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -286,7 +286,6 @@ makphy*		at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
 nsphy*		at mii? phy ?		# NS83840 PHYs
 nsphyter*	at mii? phy ? 		# NS83843 PHYs
 pnaphy*		at mii? phy ?		# generic HomePNA PHYs
-qsphy*		at mii? phy ?		# Quality Semiconductor QS6612 PHYs
 rdcphy*		at mii? phy ?		# RDC R6040 10/100 PHY
 rgephy*		at mii? phy ?		# Realtek 8169S/8110S internal PHYs
 rlphy*		at mii? phy ?		# Realtek 8139/8201L PHYs
