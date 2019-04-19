@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.90 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.91 2019/04/19 19:37:31 gutteridge Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.90 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.91 2019/04/19 19:37:31 gutteridge Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -523,9 +523,11 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
 
-	/* Set device capabilities. */
-	/* XXX OpenBSD has IEEE80211_C_WEP, IEEE80211_C_RSN,
-	 * and IEEE80211_C_PMGT too. */
+	/*
+	 * Set device capabilities.
+	 * XXX OpenBSD has IEEE80211_C_WEP, IEEE80211_C_RSN, and
+	 * IEEE80211_C_PMGT too.
+	 */
 	ic->ic_caps =
 	    IEEE80211_C_IBSS |		/* IBSS mode support */
 	    IEEE80211_C_WPA |		/* 802.11i */
@@ -622,7 +624,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	/*
 	 * XXX for NetBSD, OpenBSD timeout_set replaced by
 	 * callout_init and callout_setfunc, above.
-	*/
+	 */
 
 	if (pmf_device_register(self, NULL, iwn_resume))
 		pmf_class_network_register(self, ifp);
@@ -780,6 +782,11 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 			sc->fwname = "iwlwifi-6000g2b-6.ucode";
 			ops->config_bt_coex = iwn_config_bt_coex_adv1;
 		}
+		/*
+		 * This covers:
+		 * PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_1
+		 * PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_2
+		 */
 		else
 			sc->fwname = "iwlwifi-6000g2a-5.ucode";
 		break;
