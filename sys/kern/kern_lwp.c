@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.196 2019/03/01 09:02:03 hannken Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.197 2019/04/19 01:52:55 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.196 2019/03/01 09:02:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.197 2019/04/19 01:52:55 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -836,6 +836,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	l2->l_flag = 0;
 	l2->l_pflag = LP_MPSAFE;
 	TAILQ_INIT(&l2->l_ld_locks);
+	l2->l_psrefs = 0;
 
 	/*
 	 * For vfork, borrow parent's lwpctl context if it exists.
