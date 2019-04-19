@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.181 2019/03/01 09:02:03 hannken Exp $	*/
+/*	$NetBSD: lwp.h,v 1.182 2019/04/19 01:52:55 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -184,7 +184,7 @@ struct lwp {
 	u_int		l_cv_signalled;	/* c: restarted by cv_signal() */
 	u_short		l_shlocks;	/* !: lockdebug: shared locks held */
 	u_short		l_exlocks;	/* !: lockdebug: excl. locks held */
-	u_short		l_unused;	/* !: unused */
+	u_short		l_psrefs;	/* !: count of psref held */
 	u_short		l_blcnt;	/* !: count of kernel_lock held */
 	int		l_nopreempt;	/* !: don't preempt me! */
 	u_int		l_dopreempt;	/* s: kernel preemption pending */
