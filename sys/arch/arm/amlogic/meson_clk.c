@@ -1,4 +1,4 @@
-/* $NetBSD: meson_clk.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: meson_clk.c,v 1.3 2019/04/19 19:07:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_clk.c,v 1.2 2019/02/25 19:30:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_clk.c,v 1.3 2019/04/19 19:07:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -157,7 +157,7 @@ meson_clk_clock_get_rate(void *priv, struct clk *clkp)
 
 	clkp_parent = clk_get_parent(clkp);
 	if (clkp_parent == NULL) {
-		aprint_error("%s: no parent for %s\n", __func__, clk->base.name);
+		aprint_debug("%s: no parent for %s\n", __func__, clk->base.name);
 		return 0;
 	}
 
@@ -174,7 +174,7 @@ meson_clk_clock_set_rate(void *priv, struct clk *clkp, u_int rate)
 	if (clkp->flags & CLK_SET_RATE_PARENT) {
 		clkp_parent = clk_get_parent(clkp);
 		if (clkp_parent == NULL) {
-			aprint_error("%s: no parent for %s\n", __func__, clk->base.name);
+			aprint_debug("%s: no parent for %s\n", __func__, clk->base.name);
 			return ENXIO;
 		}
 		return clk_set_rate(clkp_parent, rate);
@@ -196,7 +196,7 @@ meson_clk_clock_round_rate(void *priv, struct clk *clkp, u_int rate)
 	if (clkp->flags & CLK_SET_RATE_PARENT) {
 		clkp_parent = clk_get_parent(clkp);
 		if (clkp_parent == NULL) {
-			aprint_error("%s: no parent for %s\n", __func__, clk->base.name);
+			aprint_debug("%s: no parent for %s\n", __func__, clk->base.name);
 			return 0;
 		}
 		return clk_round_rate(clkp_parent, rate);
