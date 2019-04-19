@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.42 2019/04/14 07:59:56 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.43 2019/04/19 20:35:13 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.42 2019/04/14 07:59:56 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.43 2019/04/19 20:35:13 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -580,7 +580,7 @@ generate_search_query(query_args *args, const char *snippet_args[3])
 			if ((temp = sqlite3_mprintf("%Q%c", args->sections[i], c)) == NULL)
 				goto RETURN;
 			concat(&section_clause, temp);
-			free(temp);
+			sqlite3_free(temp);
 		}
 	}
 
@@ -648,9 +648,9 @@ generate_search_query(query_args *args, const char *snippet_args[3])
 	}
 
 RETURN:
-	free(machine_clause);
-	free(section_clause);
-	free(limit_clause);
+	sqlite3_free(machine_clause);
+	sqlite3_free(section_clause);
+	sqlite3_free(limit_clause);
 	return query;
 }
 
