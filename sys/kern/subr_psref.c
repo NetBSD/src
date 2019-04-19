@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_psref.c,v 1.11 2018/02/01 03:17:00 ozaki-r Exp $	*/
+/*	$NetBSD: subr_psref.c,v 1.12 2019/04/19 01:52:55 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.11 2018/02/01 03:17:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.12 2019/04/19 01:52:55 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -278,6 +278,10 @@ psref_acquire(struct psref *psref, const struct psref_target *target,
 	/* Release the CPU list and restore interrupts.  */
 	percpu_putref(class->prc_percpu);
 	splx(s);
+
+#ifdef DIAGNOSTIC
+	curlwp->l_psrefs++;
+#endif
 }
 
 /*
@@ -331,6 +335,11 @@ psref_release(struct psref *psref, const struct psref_target *target,
 	SLIST_REMOVE(&pcpu->pcpu_head, psref, psref, psref_entry);
 	percpu_putref(class->prc_percpu);
 	splx(s);
+
+#ifdef DIAGNOSTIC
+	KASSERT(curlwp->l_psrefs > 0);
+	curlwp->l_psrefs--;
+#endif
 
 	/* If someone is waiting for users to drain, notify 'em.  */
 	if (__predict_false(target->prt_draining))
@@ -388,6 +397,10 @@ psref_copy(struct psref *pto, const struct psref *pfrom,
 	/* Release the CPU list and restore interrupts.  */
 	percpu_putref(class->prc_percpu);
 	splx(s);
+
+#ifdef DIAGNOSTIC
+	curlwp->l_psrefs++;
+#endif
 }
 
 /*

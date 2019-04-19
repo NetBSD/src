@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.26 2013/04/07 07:54:53 kiyohara Exp $	*/
+/*	$NetBSD: userret.h,v 1.27 2019/04/19 01:52:55 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@ mi_userret(struct lwp *l)
 
 	LOCKDEBUG_BARRIER(NULL, 0);
 	KASSERT(l->l_nopreempt == 0);
+	KASSERT(l->l_psrefs == 0);
 }
 
 #endif	/* !_SYS_USERRET_H_ */
