@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: npf,v 1.3 2012/11/01 06:06:14 mrg Exp $
+# $NetBSD: npf,v 1.4 2019/04/19 18:36:25 leot Exp $
 #
 # Public Domain.
 #
@@ -36,7 +36,11 @@ npf_start()
 	echo "Enabling NPF."
 	npf_cfg_check
 	/sbin/npfctl reload
-	/sbin/npfctl start
+
+	# The npf_boot script has enabled npf already.
+	if [ "$autoboot" != "yes" ]; then
+		/sbin/npfctl start
+	fi
 }
 
 npf_stop()
