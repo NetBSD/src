@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pinctrl.h,v 1.2 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: meson_pinctrl.h,v 1.3 2019/04/19 19:07:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -81,6 +81,11 @@ extern const struct meson_pinctrl_config meson8b_cbus_pinctrl_config;
 #ifdef SOC_MESONGXBB
 extern const struct meson_pinctrl_config mesongxbb_aobus_pinctrl_config;
 extern const struct meson_pinctrl_config mesongxbb_periphs_pinctrl_config;
+#endif
+
+#ifdef SOC_MESONGXL
+extern const struct meson_pinctrl_config mesongxl_aobus_pinctrl_config;
+extern const struct meson_pinctrl_config mesongxl_periphs_pinctrl_config;
 #endif
 
 #endif /* !_MESON_PINCTRL_H */
