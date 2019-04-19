@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.129 2019/04/17 15:58:12 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.130 2019/04/19 09:14:40 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2844,4 +2844,19 @@ sys/arch/i386/stand/efiboot/efidisk.c		1.7
 
 	efiboot: Don't panic when BLOCK_IO_PROTOCOL is not found.
 	[nonaka, ticket #1231]
+
+usr.sbin/npf/npfctl/npf_bpf_comp.c		1.12
+usr.sbin/npf/npfctl/npf_build.c			1.48
+
+	Ensure default TCP flags are applied to rules like 'pass stateful all'.
+	[tih, ticket #1232]
+
+sys/compat/common/uipc_syscalls_40.c		1.19
+sys/compat/linux/common/linux_socket.c		1.145
+sys/compat/linux32/common/linux32_socket.c	1.30
+sys/net/if.c					1.449
+
+	Zero out the ifreq struct for SIOCGIFCONF to avoid up to 127 bytes
+	of stack disclosure.
+	[christos, ticket #1233]
 
