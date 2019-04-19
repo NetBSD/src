@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2524 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2525 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -341,7 +341,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	bge(4): Add support for BCM5762, BCM5725, BCM5727, BCM57764, BCM57767
 		and BCM57787 [msaitoh 20190220]
 	bind: Import version 9.13.7. [christos 20190224]
-	evbarm: Add support for Amlogic S905 SoC. [jmcneill 20190225]
+	evbarm: Add support for Amlogic GXBB family SoCs. [jmcneill 20190225]
 	jemalloc(3): Import 5.1.0 [christos 20190304]
 	kcov(4): Added driver for kernel coverage tracing [kamil 20190310]
 	mdocml: Import 1.14.5. [christos 20190310]
@@ -355,3 +355,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	npf(7): Include npf_boot rc script which loads npf.boot.conf to protect
 		host during early stages of startup. [sevan 20190410]
 	dhcpcd(8): Import dhcpcd-7.2.0 [roy 20190418]
+	evbarm: Add support for Amlogic GXL family SoCs. [jmcneill 20190419]
