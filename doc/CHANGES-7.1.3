@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.3,v 1.1.2.46 2019/04/16 03:57:33 msaitoh Exp $
+# $NetBSD: CHANGES-7.1.3,v 1.1.2.47 2019/04/19 16:02:50 martin Exp $
 
 A complete list of changes from the NetBSD 7.1.2 release to the NetBSD 7.1.3
 release:
@@ -470,3 +470,13 @@ sys/kern/sys_mqueue.c				1.44
 	mq_send1: fix argument validation and reject too large lengths early.
 	Discovered by Andy Nguyen.
 	[martin, ticket #1688]
+
+sys/compat/common/uipc_syscalls_40.c		1.19 (patch)
+sys/compat/linux/common/linux_socket.c		1.145 (patch)
+sys/compat/linux32/common/linux32_socket.c	1.30 (patch)
+sys/net/if.c					1.449 (patch)
+
+	Zero out the ifreq struct for SIOCGIFCONF to avoid up to 127 bytes
+	of stack disclosure.
+	[christos, ticket #1689]
+
