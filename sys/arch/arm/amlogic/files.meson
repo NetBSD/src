@@ -1,4 +1,4 @@
-#	$NetBSD: files.meson,v 1.6 2019/04/05 12:11:26 jmcneill Exp $
+#	$NetBSD: files.meson,v 1.7 2019/04/19 19:07:56 jmcneill Exp $
 #
 # Configuration info for Amlogic Meson family SoCs
 #
@@ -53,6 +53,7 @@ attach	mesonpinctrl at fdt with meson_pinctrl
 file	arch/arm/amlogic/meson_pinctrl.c	meson_pinctrl
 file	arch/arm/amlogic/meson8b_pinctrl.c	meson_pinctrl & soc_meson8b
 file	arch/arm/amlogic/mesongxbb_pinctrl.c	meson_pinctrl & soc_mesongxbb
+file	arch/arm/amlogic/mesongxl_pinctrl.c	meson_pinctrl & soc_mesongxl
 
 # Meson8b SDHC
 device	mesonsdhc: sdmmcbus
@@ -73,6 +74,16 @@ file	arch/arm/amlogic/mesongx_mmc.c		mesongx_mmc
 device	mesonusbphy
 attach	mesonusbphy at fdt with meson_usbphy
 file	arch/arm/amlogic/meson_usbphy.c		meson_usbphy
+
+# Meson GXL USB2 PHY
+device	mesongxlu2phy
+attach	mesongxlu2phy at fdt with mesongxl_usb2phy
+file	arch/arm/amlogic/mesongxl_usb2phy.c	mesongxl_usb2phy
+
+# Meson GXL USB3 PHY
+device	mesongxlu3phy
+attach	mesongxlu3phy at fdt with mesongxl_usb3phy
+file	arch/arm/amlogic/mesongxl_usb3phy.c	mesongxl_usb3phy
 
 # RTC
 device	mesonrtc
@@ -96,4 +107,6 @@ file	arch/arm/amlogic/meson_wdt.c		meson_wdt
 # SOC parameters
 defflag	opt_soc.h			SOC_MESON
 defflag	opt_soc.h			SOC_MESON8B: SOC_MESON
-defflag	opt_soc.h			SOC_MESONGXBB: SOC_MESON
+defflag	opt_soc.h			SOC_MESONGX: SOC_MESON
+defflag	opt_soc.h			SOC_MESONGXBB: SOC_MESONGX
+defflag	opt_soc.h			SOC_MESONGXL: SOC_MESONGX

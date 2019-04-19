@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pinctrl.c,v 1.4 2019/03/02 11:15:55 jmcneill Exp $ */
+/* $NetBSD: meson_pinctrl.c,v 1.5 2019/04/19 19:07:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.4 2019/03/02 11:15:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.5 2019/04/19 19:07:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,6 +79,10 @@ static const struct of_compat_data compat_data[] = {
 #ifdef SOC_MESONGXBB
 	{ "amlogic,meson-gxbb-aobus-pinctrl",	(uintptr_t)&mesongxbb_aobus_pinctrl_config },
 	{ "amlogic,meson-gxbb-periphs-pinctrl",	(uintptr_t)&mesongxbb_periphs_pinctrl_config },
+#endif
+#ifdef SOC_MESONGXL
+	{ "amlogic,meson-gxl-aobus-pinctrl",	(uintptr_t)&mesongxl_aobus_pinctrl_config },
+	{ "amlogic,meson-gxl-periphs-pinctrl",	(uintptr_t)&mesongxl_periphs_pinctrl_config },
 #endif
 	{ NULL, 0 }
 };

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.85 2019/04/07 13:50:29 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.86 2019/04/19 19:07:55 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -30,6 +30,17 @@ makeoptions	DTS="
 	meson-gxbb-vega-s95-telos.dts
 	meson-gxbb-wetek-hub.dts
 	meson-gxbb-wetek-play2.dts
+
+	meson-gxl-s805x-p241.dts
+	meson-gxl-s905d-p230.dts
+	meson-gxl-s905d-p231.dts
+	meson-gxl-s905w-p281.dts
+	meson-gxl-s905w-tx3-mini.dts
+	meson-gxl-s905x-hwacom-amazetv.dts
+	meson-gxl-s905x-khadas-vim.dts
+	meson-gxl-s905x-libretech-cc.dts
+	meson-gxl-s905x-nexbox-a95x.dts
+	meson-gxl-s905x-p212.dts
 
 	rk3328-evb.dts
 	rk3328-roc-cc.dts
@@ -80,6 +91,7 @@ options 	CPU_CORTEXA57
 options 	CPU_THUNDERX
 options 	SOC_BCM2837
 options 	SOC_MESONGXBB
+options 	SOC_MESONGXL
 options 	SOC_RK3328
 options 	SOC_RK3399
 options 	SOC_SUN50I_A64
@@ -206,7 +218,7 @@ tegrapmc*	at fdt? pass 4		# NVIDIA Tegra PMC
 bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
 bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 gxbbaoclkc*	at fdt? pass 2		# Amlogic Meson GXBB AO clock controller
-gxbbclkc*	at fdt? pass 2		# Amlogic Meson GXBB EE clock controller
+gxbbclkc*	at fdt? pass 2		# Amlogic Meson GXBB/GXL EE clock controller
 mesonresets*	at fdt? pass 2		# Amlogic Meson misc. clock resets
 rkcru*		at fdt? pass 2		# Rockchip RK3328 CRU
 sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
@@ -429,6 +441,8 @@ tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 
 # USB
 mesonusbphy*	at fdt? pass 9		# Amlogic Meson USB2 PHY
+mesongxlu2phy*	at fdt? pass 9		# Amlogic Meson GXL USB2 PHY
+mesongxlu3phy*	at fdt? pass 9		# Amlogic Meson GXL USB3 PHY
 rkusb*		at fdt? pass 9		# Rockchip USB PHY
 rkusbphy*	at rkusb?
 sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY

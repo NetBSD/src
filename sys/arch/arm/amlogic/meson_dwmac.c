@@ -1,4 +1,4 @@
-/* $NetBSD: meson_dwmac.c,v 1.4 2019/03/02 12:24:44 jmcneill Exp $ */
+/* $NetBSD: meson_dwmac.c,v 1.5 2019/04/19 19:07:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.4 2019/03/02 12:24:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.5 2019/04/19 19:07:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.4 2019/03/02 12:24:44 jmcneill Exp
 
 #define	PRG_ETHERNET_ADDR0		0x00
 #define	 CLKGEN_ENABLE			__BIT(12)
+#define	 RMII_CLK_I_INVERTED		__BIT(11)
 #define	 PHY_CLK_ENABLE			__BIT(10)
 #define	 MP2_CLK_OUT_DIV		__BITS(9,7)
 #define	 TX_CLK_DELAY			__BITS(6,5)
@@ -110,6 +111,20 @@ meson_dwmac_set_mode_rgmii(int phandle, bus_space_tag_t bst,
 	val &= ~MP2_CLK_OUT_DIV;
 	val |= __SHIFTIN(div, MP2_CLK_OUT_DIV);
 	val |= PHY_CLK_ENABLE;
+	val |= CLKGEN_ENABLE;
+	bus_space_write_4(bst, bsh, PRG_ETHERNET_ADDR0, val);
+}
+
+static void
+meson_dwmac_set_mode_rmii(int phandle, bus_space_tag_t bst,
+    bus_space_handle_t bsh)
+{
+	uint32_t val;
+
+	val = bus_space_read_4(bst, bsh, PRG_ETHERNET_ADDR0);
+	val &= ~PHY_INTERFACE_SEL;
+	val |= RMII_CLK_I_INVERTED;
+	val &= ~TX_CLK_DELAY;
 	val |= CLKGEN_ENABLE;
 	bus_space_write_4(bst, bsh, PRG_ETHERNET_ADDR0, val);
 }
@@ -182,6 +197,8 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 
 	if (strcmp(phy_mode, "rgmii") == 0) {
 		meson_dwmac_set_mode_rgmii(phandle, sc->sc_bst, prgeth_bsh, clk_in[0]);
+	} else if (strcmp(phy_mode, "rmii") == 0) {
+		meson_dwmac_set_mode_rmii(phandle, sc->sc_bst, prgeth_bsh);
 	} else {
 		aprint_error(": unsupported phy-mode '%s'\n", phy_mode);
 		return;

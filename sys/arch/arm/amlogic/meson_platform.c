@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.7 2019/04/05 12:07:02 jmcneill Exp $ */
+/* $NetBSD: meson_platform.c,v 1.8 2019/04/19 19:07:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.7 2019/04/05 12:07:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.8 2019/04/19 19:07:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -446,8 +446,8 @@ static const struct arm_platform meson8b_platform = {
 ARM_PLATFORM(meson8b, "amlogic,meson8b", &meson8b_platform);
 #endif	/* SOC_MESON8B */
 
-#if defined(SOC_MESONGXBB)
-static const struct arm_platform mesongxbb_platform = {
+#if defined(SOC_MESONGX)
+static const struct arm_platform mesongx_platform = {
 	.ap_devmap = meson_platform_devmap,
 	.ap_bootstrap = meson_platform_bootstrap,
 	.ap_init_attach_args = meson_platform_init_attach_args,
@@ -458,5 +458,10 @@ static const struct arm_platform mesongxbb_platform = {
 	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(mesongxbb, "amlogic,meson-gxbb", &mesongxbb_platform);
-#endif
+#if defined(SOC_MESONGXBB)
+ARM_PLATFORM(mesongxbb, "amlogic,meson-gxbb", &mesongx_platform);
+#endif	/* SOC_MESONGXBB */
+#if defined(SOC_MESONGXL)
+ARM_PLATFORM(mesongxl, "amlogic,meson-gxl", &mesongx_platform);
+#endif	/* SOC_MESONGXL */
+#endif	/* SOC_MESONGX */

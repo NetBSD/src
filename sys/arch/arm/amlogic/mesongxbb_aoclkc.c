@@ -1,4 +1,4 @@
-/* $NetBSD: mesongxbb_aoclkc.c,v 1.1 2019/02/25 19:30:17 jmcneill Exp $ */
+/* $NetBSD: mesongxbb_aoclkc.c,v 1.2 2019/04/19 19:07:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mesongxbb_aoclkc.c,v 1.1 2019/02/25 19:30:17 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mesongxbb_aoclkc.c,v 1.2 2019/04/19 19:07:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,7 @@ static void mesongxbb_aoclkc_attach(device_t, device_t, void *);
 
 static const char * const compatible[] = {
 	"amlogic,meson-gxbb-aoclkc",
+	"amlogic,meson-gxl-aoclkc",
 	NULL
 };
 
@@ -104,7 +105,7 @@ mesongxbb_aoclkc_attach(device_t parent, device_t self, void *aux)
 	meson_clk_attach(sc);
 
 	aprint_naive("\n");
-	aprint_normal(": Meson GXBB AO clock controller\n");
+	aprint_normal(": Meson GX AO clock controller\n");
 
 	meson_clk_print(sc);
 }
