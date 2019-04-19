@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.6 2018/08/12 19:10:14 jmcneill Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.7 2019/04/19 19:05:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.6 2018/08/12 19:10:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.7 2019/04/19 19:05:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -197,6 +197,7 @@ dwc3_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const char * const compatible[] = {
 		"allwinner,sun50i-h6-dwc3",
+		"amlogic,meson-gxl-dwc3",
 		"rockchip,rk3328-dwc3",
 		"rockchip,rk3399-dwc3",
 		"samsung,exynos5250-dwusb3",
@@ -272,12 +273,10 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(" (rev. %d.%03x)\n", rev >> 12, rev & 0xfff);
 
 	/* Enable PHY devices */
-	phy = fdtbus_phy_get(dwc3_phandle, "usb2-phy");
-	if (phy && fdtbus_phy_enable(phy, true) != 0)
-		aprint_error_dev(self, "couldn't enable usb2-phy\n");
-	phy = fdtbus_phy_get(dwc3_phandle, "usb3-phy");
-	if (phy && fdtbus_phy_enable(phy, true) != 0)
-		aprint_error_dev(self, "couldn't enable usb3-phy\n");
+	for (n = 0; (phy = fdtbus_phy_get_index(dwc3_phandle, n)) != NULL; n++) {
+		if (fdtbus_phy_enable(phy, true) != 0)
+			aprint_error_dev(self, "couldn't enable phy #%d\n", n);
+	}
 
 	dwc3_fdt_soft_reset(sc);
 	dwc3_fdt_enable_phy(sc, dwc3_phandle);
