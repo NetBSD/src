@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.13.6.2 2017/12/04 13:55:00 martin Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.13.6.3 2019/04/19 09:12:58 martin Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.13.6.2 2017/12/04 13:55:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.13.6.3 2019/04/19 09:12:58 martin Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -42,6 +42,7 @@ compat_ifconf(u_long cmd, void *data)
 	int bound;
 	struct psref psref;
 
+	memset(&ifr, 0, sizeof(ifr));
 	if (docopy) {
 		space = ifc->ifc_len;
 		ifrp = ifc->ifc_req;
