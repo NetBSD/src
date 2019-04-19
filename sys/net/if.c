@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.290.2.1 2014/11/11 12:20:28 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.290.2.1.6.1 2019/04/19 16:02:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.290.2.1 2014/11/11 12:20:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.290.2.1.6.1 2019/04/19 16:02:24 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -2092,6 +2092,7 @@ ifconf(u_long cmd, void *data)
 	int space, error = 0;
 	const int sz = (int)sizeof(struct ifreq);
 
+	memset(&ifr, 0, sizeof(ifr));
 	if ((ifrp = ifc->ifc_req) == NULL)
 		space = 0;
 	else
