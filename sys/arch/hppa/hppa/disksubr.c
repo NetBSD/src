@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 2014/10/18 08:33:25 snj Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2.12.1 2019/04/20 13:51:47 martin Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.2 2014/10/18 08:33:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.2.12.1 2019/04/20 13:51:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		struct buf *dbp;
 		struct hppa_lifdir *p;
 
-		dbp = geteblk(HPPA_LIF_DIRSIZE);
+		dbp = geteblk(lp->d_secsize);
 		dbp->b_dev = bp->b_dev;
 
 		/* read LIF directory */
