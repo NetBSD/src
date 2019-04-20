@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.16 2019/04/10 19:36:04 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.17 2019/04/20 11:28:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -257,9 +257,8 @@ command_version(char *arg)
 	ufirmware = NULL;
 	rv = ucs2_to_utf8(ST->FirmwareVendor, &ufirmware);
 	if (rv == 0) {
-		printf("EFI Firmware: %s (rev %d.%02d)\n", ufirmware,
-		    ST->FirmwareRevision >> 16,
-		    ST->FirmwareRevision & 0xffff);
+		printf("EFI Firmware: %s (rev 0x%x)\n", ufirmware,
+		    ST->FirmwareRevision);
 		FreePool(ufirmware);
 	}
 
