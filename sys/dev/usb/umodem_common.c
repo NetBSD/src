@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.26 2019/01/04 17:09:26 tih Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.27 2019/04/20 05:53:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.26 2019/01/04 17:09:26 tih Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.27 2019/04/20 05:53:18 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -94,16 +94,16 @@ int	umodemdebug = 0;
 #define UMODEMIBUFSIZE 4096
 #define UMODEMOBUFSIZE 4096
 
-Static usbd_status umodem_set_comm_feature(struct umodem_softc *,
+static usbd_status umodem_set_comm_feature(struct umodem_softc *,
 					   int, int);
-Static usbd_status umodem_set_line_coding(struct umodem_softc *,
+static usbd_status umodem_set_line_coding(struct umodem_softc *,
 					  usb_cdc_line_state_t *);
 
-Static void	umodem_dtr(struct umodem_softc *, int);
-Static void	umodem_rts(struct umodem_softc *, int);
-Static void	umodem_break(struct umodem_softc *, int);
-Static void	umodem_set_line_state(struct umodem_softc *);
-Static void	umodem_intr(struct usbd_xfer *, void *, usbd_status);
+static void	umodem_dtr(struct umodem_softc *, int);
+static void	umodem_rts(struct umodem_softc *, int);
+static void	umodem_break(struct umodem_softc *, int);
+static void	umodem_set_line_state(struct umodem_softc *);
+static void	umodem_intr(struct usbd_xfer *, void *, usbd_status);
 
 int
 umodem_common_attach(device_t self, struct umodem_softc *sc,
@@ -120,9 +120,14 @@ umodem_common_attach(device_t self, struct umodem_softc *sc,
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
 	sc->sc_ctl_iface = uiaa->uiaa_iface;
+	sc->sc_refcnt = 0;
+	sc->sc_dying = false;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	cv_init(&sc->sc_detach_cv, "umodemdet");
 
 	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);
 	devinfop = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
@@ -256,7 +261,7 @@ umodem_common_attach(device_t self, struct umodem_softc *sc,
 	return 0;
 
  bad:
-	sc->sc_dying = 1;
+	sc->sc_dying = true;
 	return 1;
 }
 
@@ -265,6 +270,15 @@ umodem_open(void *addr, int portno)
 {
 	struct umodem_softc *sc = addr;
 	int err;
+
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_dying) {
+		mutex_exit(&sc->sc_lock);
+		return EIO;
+	}
+
+	sc->sc_refcnt++;
+	mutex_exit(&sc->sc_lock);
 
 	DPRINTF(("umodem_open: sc=%p\n", sc));
 
@@ -277,6 +291,10 @@ umodem_open(void *addr, int portno)
 		if (err) {
 			DPRINTF(("Failed to establish notify pipe: %s\n",
 				usbd_errstr(err)));
+			mutex_enter(&sc->sc_lock);
+			if (--sc->sc_refcnt < 0)
+				cv_broadcast(&sc->sc_detach_cv);
+			mutex_exit(&sc->sc_lock);
 			return EIO;
 		}
 	}
@@ -289,6 +307,11 @@ umodem_close(void *addr, int portno)
 {
 	struct umodem_softc *sc = addr;
 	int err;
+
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_dying)
+		goto out;
+	mutex_exit(&sc->sc_lock);
 
 	DPRINTF(("umodem_close: sc=%p\n", sc));
 
@@ -303,9 +326,15 @@ umodem_close(void *addr, int portno)
 			    device_xname(sc->sc_dev), usbd_errstr(err));
 		sc->sc_notify_pipe = NULL;
 	}
+
+	mutex_enter(&sc->sc_lock);
+out:
+	if (--sc->sc_refcnt < 0)
+		cv_broadcast(&sc->sc_detach_cv);
+	mutex_exit(&sc->sc_lock);
 }
 
-Static void
+static void
 umodem_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
@@ -438,6 +467,11 @@ umodem_param(void *addr, int portno, struct termios *t)
 	usbd_status err;
 	usb_cdc_line_state_t ls;
 
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_dying)
+		return EIO;
+	mutex_exit(&sc->sc_lock);
+
 	DPRINTF(("umodem_param: sc=%p\n", sc));
 
 	USETDW(ls.dwDTERate, t->c_ospeed);
@@ -482,8 +516,10 @@ umodem_ioctl(void *addr, int portno, u_long cmd, void *data,
 	struct umodem_softc *sc = addr;
 	int error = 0;
 
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_dying)
 		return EIO;
+	mutex_exit(&sc->sc_lock);
 
 	DPRINTF(("umodem_ioctl: cmd=0x%08lx\n", cmd));
 
@@ -507,7 +543,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, void *data,
 	return error;
 }
 
-void
+static void
 umodem_dtr(struct umodem_softc *sc, int onoff)
 {
 	DPRINTF(("umodem_dtr: onoff=%d\n", onoff));
@@ -519,7 +555,7 @@ umodem_dtr(struct umodem_softc *sc, int onoff)
 	umodem_set_line_state(sc);
 }
 
-void
+static void
 umodem_rts(struct umodem_softc *sc, int onoff)
 {
 	DPRINTF(("umodem_rts: onoff=%d\n", onoff));
@@ -531,7 +567,7 @@ umodem_rts(struct umodem_softc *sc, int onoff)
 	umodem_set_line_state(sc);
 }
 
-void
+static void
 umodem_set_line_state(struct umodem_softc *sc)
 {
 	usb_device_request_t req;
@@ -549,7 +585,7 @@ umodem_set_line_state(struct umodem_softc *sc)
 
 }
 
-void
+static void
 umodem_break(struct umodem_softc *sc, int onoff)
 {
 	usb_device_request_t req;
@@ -573,6 +609,11 @@ umodem_set(void *addr, int portno, int reg, int onoff)
 {
 	struct umodem_softc *sc = addr;
 
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_dying)
+		return;
+	mutex_exit(&sc->sc_lock);
+
 	switch (reg) {
 	case UCOM_SET_DTR:
 		umodem_dtr(sc, onoff);
@@ -588,7 +629,7 @@ umodem_set(void *addr, int portno, int reg, int onoff)
 	}
 }
 
-usbd_status
+static usbd_status
 umodem_set_line_coding(struct umodem_softc *sc, usb_cdc_line_state_t *state)
 {
 	usb_device_request_t req;
@@ -621,7 +662,7 @@ umodem_set_line_coding(struct umodem_softc *sc, usb_cdc_line_state_t *state)
 	return USBD_NORMAL_COMPLETION;
 }
 
-usbd_status
+static usbd_status
 umodem_set_comm_feature(struct umodem_softc *sc, int feature, int state)
 {
 	usb_device_request_t req;
@@ -653,7 +694,9 @@ umodem_common_activate(struct umodem_softc *sc, enum devact act)
 {
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		mutex_enter(&sc->sc_lock);
+		sc->sc_dying = true;
+		mutex_exit(&sc->sc_lock);
 		return 0;
 	default:
 		return EOPNOTSUPP;
@@ -674,12 +717,23 @@ umodem_common_detach(struct umodem_softc *sc, int flags)
 
 	DPRINTF(("umodem_common_detach: sc=%p flags=%d\n", sc, flags));
 
-	sc->sc_dying = 1;
+	mutex_enter(&sc->sc_lock);
+	sc->sc_dying = true;
+
+	sc->sc_refcnt--;
+	while (sc->sc_refcnt > 0) {
+		if (cv_timedwait(&sc->sc_detach_cv, &sc->sc_lock, hz * 60))
+			aprint_error_dev(sc->sc_dev, ": didn't detach\n");
+	}
+	mutex_exit(&sc->sc_lock);
 
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
+
+	mutex_destroy(&sc->sc_lock);
+	cv_destroy(&sc->sc_detach_cv);
 
 	return rv;
 }
