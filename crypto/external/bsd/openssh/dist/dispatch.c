@@ -1,5 +1,5 @@
-/*	$NetBSD: dispatch.c,v 1.9 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: dispatch.c,v 1.31 2017/05/31 07:00:13 markus Exp $ */
+/*	$NetBSD: dispatch.c,v 1.10 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: dispatch.c,v 1.32 2019/01/19 21:33:13 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dispatch.c,v 1.9 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.10 2019/04/20 17:16:40 christos Exp $");
 #include <sys/types.h>
 
 #include <signal.h>
@@ -48,7 +48,7 @@ dispatch_protocol_error(int type, u_int32_t seq, struct ssh *ssh)
 	    (r = sshpkt_put_u32(ssh, seq)) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0 ||
 	    (r = ssh_packet_write_wait(ssh)) < 0)
-		sshpkt_fatal(ssh, __func__, r);
+		sshpkt_fatal(ssh, r, "%s", __func__);
 	return 0;
 }
 
@@ -132,5 +132,5 @@ ssh_dispatch_run_fatal(struct ssh *ssh, int mode, volatile sig_atomic_t *done)
 	int r;
 
 	if ((r = ssh_dispatch_run(ssh, mode, done)) != 0)
-		sshpkt_fatal(ssh, __func__, r);
+		sshpkt_fatal(ssh, r, "%s", __func__);
 }

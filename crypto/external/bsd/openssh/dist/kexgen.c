@@ -1,3 +1,4 @@
+/*	$NetBSD: kexgen.c,v 1.2 2019/04/20 17:16:40 christos Exp $	*/
 /* $OpenBSD: kexgen.c,v 1.2 2019/01/23 00:30:41 djm Exp $ */
 /*
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
@@ -22,6 +23,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "includes.h"
+__RCSID("$NetBSD");
 
 #include <sys/types.h>
 

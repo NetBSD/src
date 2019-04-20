@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.23 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: ssh-keyscan.c,v 1.120 2018/06/06 18:29:18 markus Exp $ */
-
+/*	$NetBSD: ssh-keyscan.c,v 1.24 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: ssh-keyscan.c,v 1.126 2019/01/26 22:35:01 djm Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -10,7 +9,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.23 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.24 2019/04/20 17:16:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -69,6 +68,8 @@ int get_keytypes = KT_RSA|KT_ECDSA|KT_ED25519;
 int hash_hosts = 0;		/* Hash hostname on output */
 
 int print_sshfp = 0;		/* Print SSHFP records instead of known_hosts */
+
+int found_one = 0;		/* Successfully found a key */
 
 #define MAXMAXFD 256
 
@@ -250,16 +251,17 @@ keygrab_ssh2(con *c)
 		exit(1);
 	}
 #ifdef WITH_OPENSSL
-	c->c_ssh->kex->kex[KEX_DH_GRP1_SHA1] = kexdh_client;
-	c->c_ssh->kex->kex[KEX_DH_GRP14_SHA1] = kexdh_client;
-	c->c_ssh->kex->kex[KEX_DH_GRP14_SHA256] = kexdh_client;
-	c->c_ssh->kex->kex[KEX_DH_GRP16_SHA512] = kexdh_client;
-	c->c_ssh->kex->kex[KEX_DH_GRP18_SHA512] = kexdh_client;
+	c->c_ssh->kex->kex[KEX_DH_GRP1_SHA1] = kex_gen_client;
+	c->c_ssh->kex->kex[KEX_DH_GRP14_SHA1] = kex_gen_client;
+	c->c_ssh->kex->kex[KEX_DH_GRP14_SHA256] = kex_gen_client;
+	c->c_ssh->kex->kex[KEX_DH_GRP16_SHA512] = kex_gen_client;
+	c->c_ssh->kex->kex[KEX_DH_GRP18_SHA512] = kex_gen_client;
 	c->c_ssh->kex->kex[KEX_DH_GEX_SHA1] = kexgex_client;
 	c->c_ssh->kex->kex[KEX_DH_GEX_SHA256] = kexgex_client;
-	c->c_ssh->kex->kex[KEX_ECDH_SHA2] = kexecdh_client;
+	c->c_ssh->kex->kex[KEX_ECDH_SHA2] = kex_gen_client;
 #endif
-	c->c_ssh->kex->kex[KEX_C25519_SHA256] = kexc25519_client;
+	c->c_ssh->kex->kex[KEX_C25519_SHA256] = kex_gen_client;
+	c->c_ssh->kex->kex[KEX_KEM_SNTRUP4591761X25519_SHA512] = kex_gen_client;
 	ssh_set_verify_host_key_callback(c->c_ssh, key_print_wrapper);
 	/*
 	 * do the key-exchange until an error occurs or until
@@ -273,6 +275,8 @@ keyprint_one(const char *host, struct sshkey *key)
 {
 	char *hostport;
 	const char *known_host, *hashed;
+
+	found_one = 1;
 
 	if (print_sshfp) {
 		export_dns_rr(host, key, stdout, 0);
@@ -787,5 +791,5 @@ main(int argc, char **argv)
 	while (ncon > 0)
 		conloop();
 
-	return (0);
+	return found_one ? 0 : 1;
 }

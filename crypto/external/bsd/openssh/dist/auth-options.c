@@ -1,6 +1,5 @@
-/*	$NetBSD: auth-options.c,v 1.19 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: auth-options.c,v 1.83 2018/06/19 02:59:41 djm Exp $ */
-
+/*	$NetBSD: auth-options.c,v 1.20 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: auth-options.c,v 1.84 2018/10/03 06:38:35 djm Exp $ */
 /*
  * Copyright (c) 2018 Damien Miller <djm@mindrot.org>
  *
@@ -18,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.19 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.20 2019/04/20 17:16:40 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -471,13 +470,16 @@ sshauthopt_parse(const char *opts, const char **errstrp)
 				errstr = "invalid environment string";
 				goto fail;
 			}
-			for (cp = opt; cp < tmp; cp++) {
-				if (!isalnum((u_char)*cp) && *cp != '_') {
-					free(opt);
-					errstr = "invalid environment string";
-					goto fail;
-				}
+			if ((cp = strdup(opt)) == NULL)
+				goto alloc_fail;
+			cp[tmp - opt] = '\0'; /* truncate at '=' */
+			if (!valid_env_name(cp)) {
+				free(cp);
+				free(opt);
+				errstr = "invalid environment string";
+				goto fail;
 			}
+			free(cp);
 			/* Append it. */
 			oarray = ret->env;
 			if ((ret->env = recallocarray(ret->env, ret->nenv,

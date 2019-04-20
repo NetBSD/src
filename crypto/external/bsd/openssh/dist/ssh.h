@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.h,v 1.11 2018/08/26 07:46:36 christos Exp $	*/
-/* $OpenBSD: ssh.h,v 1.88 2018/06/06 18:29:18 markus Exp $ */
+/*	$NetBSD: ssh.h,v 1.12 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: ssh.h,v 1.89 2018/12/27 03:25:25 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -95,3 +95,7 @@
 
 /* Listen backlog for sshd, ssh-agent and forwarding sockets */
 #define SSH_LISTEN_BACKLOG		128
+
+/* Limits for banner exchange */
+#define SSH_MAX_BANNER_LEN		8192
+#define SSH_MAX_PRE_BANNER_LINES	1024

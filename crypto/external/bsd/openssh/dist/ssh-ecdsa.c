@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-ecdsa.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: ssh-ecdsa.c,v 1.14 2018/02/07 02:06:51 jsing Exp $ */
+/*	$NetBSD: ssh-ecdsa.c,v 1.14 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: ssh-ecdsa.c,v 1.16 2019/01/21 09:54:11 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-ecdsa.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: ssh-ecdsa.c,v 1.14 2019/04/20 17:16:40 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -48,6 +48,7 @@ ssh_ecdsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
     const u_char *data, size_t datalen, u_int compat)
 {
 	ECDSA_SIG *sig = NULL;
+	const BIGNUM *sig_r, *sig_s;
 	int hash_alg;
 	u_char digest[SSH_DIGEST_MAX_LENGTH];
 	size_t len, dlen;
@@ -79,14 +80,10 @@ ssh_ecdsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	{
-	const BIGNUM *r, *s;
-	ECDSA_SIG_get0(sig, &r, &s);
-	if ((ret = sshbuf_put_bignum2(bb, r)) != 0 ||
-	    (ret = sshbuf_put_bignum2(bb, s)) != 0) {
+	ECDSA_SIG_get0(sig, &sig_r, &sig_s);
+	if ((ret = sshbuf_put_bignum2(bb, sig_r)) != 0 ||
+	    (ret = sshbuf_put_bignum2(bb, sig_s)) != 0)
 		goto out;
-	}
-	}
 	if ((ret = sshbuf_put_cstring(b, sshkey_ssh_name_plain(key))) != 0 ||
 	    (ret = sshbuf_put_stringb(b, bb)) != 0)
 		goto out;
@@ -116,6 +113,7 @@ ssh_ecdsa_verify(const struct sshkey *key,
     const u_char *data, size_t datalen, u_int compat)
 {
 	ECDSA_SIG *sig = NULL;
+	BIGNUM *sig_r = NULL, *sig_s = NULL;
 	int hash_alg;
 	u_char digest[SSH_DIGEST_MAX_LENGTH];
 	size_t dlen;
@@ -150,31 +148,21 @@ ssh_ecdsa_verify(const struct sshkey *key,
 	}
 
 	/* parse signature */
+	if (sshbuf_get_bignum2(sigbuf, &sig_r) != 0 ||
+	    sshbuf_get_bignum2(sigbuf, &sig_s) != 0) {
+		ret = SSH_ERR_INVALID_FORMAT;
+		goto out;
+	}
 	if ((sig = ECDSA_SIG_new()) == NULL) {
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	{
-	BIGNUM *r=NULL, *s=NULL;
-	if ((r = BN_new()) == NULL ||
-	    (s = BN_new()) == NULL) {
-		ret = SSH_ERR_ALLOC_FAIL;
-		goto out_rs;
-	}
-	if (sshbuf_get_bignum2(sigbuf, r) != 0 ||
-	    sshbuf_get_bignum2(sigbuf, s) != 0) {
-		ret = SSH_ERR_INVALID_FORMAT;
-		goto out_rs;
-	}
-	if (ECDSA_SIG_set0(sig, r, s) == 0) {
+	if (!ECDSA_SIG_set0(sig, sig_r, sig_s)) {
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
-out_rs:
-		BN_free(r);
-		BN_free(s);
 		goto out;
 	}
-	r = s = NULL;
-	}
+	sig_r = sig_s = NULL; /* transferred */
+
 	if (sshbuf_len(sigbuf) != 0) {
 		ret = SSH_ERR_UNEXPECTED_TRAILING_DATA;
 		goto out;
@@ -200,6 +188,8 @@ out_rs:
 	sshbuf_free(sigbuf);
 	sshbuf_free(b);
 	ECDSA_SIG_free(sig);
+	BN_clear_free(sig_r);
+	BN_clear_free(sig_s);
 	free(ktype);
 	return ret;
 }
