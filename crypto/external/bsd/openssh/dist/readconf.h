@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.21 2018/08/26 07:46:36 christos Exp $	*/
-/* $OpenBSD: readconf.h,v 1.127 2018/07/19 10:28:47 dtucker Exp $ */
+/*	$NetBSD: readconf.h,v 1.22 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: readconf.h,v 1.129 2018/11/23 05:08:07 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -82,6 +82,7 @@ typedef struct {
 	char   *macs;		/* SSH2 macs in order of preference. */
 	char   *hostkeyalgorithms;	/* SSH2 server key types in order of preference. */
 	char   *kex_algorithms;	/* SSH2 kex methods in order of preference. */
+	char   *ca_sign_algorithms;	/* Allowed CA signature algorithms */
 	char   *hostname;	/* Real host to connect. */
 	char   *host_key_alias;	/* hostname alias for .ssh/known_hosts */
 	char   *proxy_command;	/* Proxy command for connecting the host. */
@@ -202,7 +203,7 @@ typedef struct {
 
 #define SSHCONF_CHECKPERM	1  /* check permissions on config file */
 #define SSHCONF_USERCONF	2  /* user provided config file not system */
-#define SSHCONF_POSTCANON	4  /* After hostname canonicalisation */
+#define SSHCONF_FINAL		4  /* Final pass over config, after canon. */
 #define SSHCONF_NEVERMATCH	8  /* Match/Host never matches; internal only */
 
 #define SSH_UPDATE_HOSTKEYS_NO	0
@@ -220,7 +221,7 @@ void	 fill_default_options_for_canonicalization(Options *);
 int	 process_config_line(Options *, struct passwd *, const char *,
     const char *, char *, const char *, int, int *, int);
 int	 read_config_file(const char *, struct passwd *, const char *,
-    const char *, Options *, int);
+    const char *, Options *, int, int *);
 int	 parse_forward(struct Forward *, const char *, int, int);
 int	 parse_jump(const char *, Options *, int);
 int	 parse_ssh_uri(const char *, char **, char **, int *);
