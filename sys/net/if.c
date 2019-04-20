@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.450 2019/04/16 04:31:43 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.451 2019/04/20 22:16:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.450 2019/04/16 04:31:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.451 2019/04/20 22:16:47 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3158,7 +3158,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 
 	ifr = data;
-	/* Pre-convesion */
+	/* Pre-conversion */
 	MODULE_HOOK_CALL(if_cvtcmd_43_hook, (&cmd, ocmd), enosys(), hook);
 	if (hook != ENOSYS) {
 		if (cmd != ocmd) {
@@ -3276,7 +3276,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		}
 	}
 
-	/* Post-convesion */
+	/* Post-conversion */
 	if (cmd != ocmd)
 		IFREQN2O_43(oifr, ifr);
 
