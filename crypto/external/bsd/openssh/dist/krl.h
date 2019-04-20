@@ -1,4 +1,4 @@
-/*	$NetBSD: krl.h,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: krl.h,v 1.3 2019/04/20 17:16:40 christos Exp $	*/
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: krl.h,v 1.5 2015/12/30 23:46:14 djm Exp $ */
+/* $OpenBSD: krl.h,v 1.6 2018/09/12 01:21:34 djm Exp $ */
 
 #ifndef _KRL_H
 #define _KRL_H
@@ -30,6 +30,7 @@
 #define KRL_SECTION_EXPLICIT_KEY	2
 #define KRL_SECTION_FINGERPRINT_SHA1	3
 #define KRL_SECTION_SIGNATURE		4
+#define KRL_SECTION_FINGERPRINT_SHA256	5
 
 /* KRL_SECTION_CERTIFICATES subsection types */
 #define KRL_SECTION_CERT_SERIAL_LIST	0x20
@@ -52,7 +53,8 @@ int ssh_krl_revoke_cert_by_serial_range(struct ssh_krl *krl,
 int ssh_krl_revoke_cert_by_key_id(struct ssh_krl *krl,
     const struct sshkey *ca_key, const char *key_id);
 int ssh_krl_revoke_key_explicit(struct ssh_krl *krl, const struct sshkey *key);
-int ssh_krl_revoke_key_sha1(struct ssh_krl *krl, const struct sshkey *key);
+int ssh_krl_revoke_key_sha1(struct ssh_krl *krl, const u_char *p, size_t len);
+int ssh_krl_revoke_key_sha256(struct ssh_krl *krl, const u_char *p, size_t len);
 int ssh_krl_revoke_key(struct ssh_krl *krl, const struct sshkey *key);
 int ssh_krl_to_blob(struct ssh_krl *krl, struct sshbuf *buf,
     const struct sshkey **sign_keys, u_int nsign_keys);

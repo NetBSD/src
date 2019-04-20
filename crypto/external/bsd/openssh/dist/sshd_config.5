@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.27 2018/08/26 07:46:37 christos Exp $
+.\"	$NetBSD: sshd_config.5,v 1.28 2019/04/20 17:16:40 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,8 +35,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd_config.5,v 1.281 2018/07/20 05:01:10 djm Exp $
-.Dd July 20 2018
+.\" $OpenBSD: sshd_config.5,v 1.284 2019/03/22 20:58:34 jmc Exp $
+.Dd March 22 2019
 .Dt SSHD_CONFIG 5
 .Os
 .Sh NAME
@@ -385,6 +385,17 @@ If the argument is
 .Cm none
 then no banner is displayed.
 By default, no banner is displayed.
+.It Cm CASignatureAlgorithms
+Specifies which algorithms are allowed for signing of certificates
+by certificate authorities (CAs).
+The default is:
+.Bd -literal -offset indent
+ecdsa-sha2-nistp256.ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
+ssh-ed25519,rsa-sha2-512,rsa-sha2-256,ssh-rsa
+.Ed
+.Pp
+Certificates signed using other algorithms will not be accepted for
+public key or host-based authentication.
 .It Cm ChallengeResponseAuthentication
 Specifies whether challenge-response authentication is allowed.
 All authentication styles from
@@ -1079,7 +1090,7 @@ and
 .Cm RDomain
 representing the
 .Xr rdomain 4
-on which the connection was received.)
+on which the connection was received).
 .Pp
 The match patterns may consist of single entries or comma-separated
 lists and may use the wildcard and negation operators described in the
@@ -1232,7 +1243,7 @@ Note also that
 .Xr ssh 1
 will request a listen host of
 .Dq localhost
-if no listen host was specifically requested, and this this name is
+if no listen host was specifically requested, and this name is
 treated differently to explicit localhost addresses of
 .Dq 127.0.0.1
 and

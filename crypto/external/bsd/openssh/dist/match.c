@@ -1,6 +1,5 @@
-/*	$NetBSD: match.c,v 1.10 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: match.c,v 1.38 2018/07/04 13:49:31 djm Exp $ */
-
+/*	$NetBSD: match.c,v 1.11 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: match.c,v 1.39 2019/03/06 22:14:23 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: match.c,v 1.10 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: match.c,v 1.11 2019/04/20 17:16:40 christos Exp $");
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -170,6 +169,14 @@ match_pattern_list(const char *string, const char *pattern, int dolower)
 	 * match, we have already returned -1 and never get here.
 	 */
 	return got_positive;
+}
+
+/* Match a list representing users or groups. */
+int
+match_usergroup_pattern_list(const char *string, const char *pattern)
+{
+	/* Case sensitive match */
+	return match_pattern_list(string, pattern, 0);
 }
 
 /*

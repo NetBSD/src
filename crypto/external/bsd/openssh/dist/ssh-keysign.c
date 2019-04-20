@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.16 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.55 2018/07/27 05:34:42 dtucker Exp $ */
-
+/*	$NetBSD: ssh-keysign.c,v 1.17 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.56 2018/11/23 05:08:07 djm Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.16 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.17 2019/04/20 17:16:40 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
@@ -203,7 +202,8 @@ main(int argc, char **argv)
 
 	/* verify that ssh-keysign is enabled by the admin */
 	initialize_options(&options);
-	(void)read_config_file(_PATH_HOST_CONFIG_FILE, pw, "", "", &options, 0);
+	(void)read_config_file(_PATH_HOST_CONFIG_FILE, pw, "", "",
+	    &options, 0, NULL);
 	fill_default_options(&options);
 	if (options.enable_ssh_keysign != 1)
 		fatal("ssh-keysign not enabled in %s",
