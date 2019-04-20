@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2019/04/18 10:42:25 maya Exp $
+#	$NetBSD: Makefile,v 1.3 2019/04/20 17:31:22 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -38,13 +38,18 @@ SRCS.drivers/dri2= \
 #SRCS.drivers/dri2+= \
 #	platform_x11_dri3.c
 
+.PATH:		${X11SRCDIR.Mesa}/src/util
 BUILDSYMLINKS+= ${X11SRCDIR.Mesa}/src/util/debug.c UTILdebug.c
 SRCS.util=      \
-	UTILdebug.c
-CPPFLAGS.UTILdebug.c+=          -I${X11SRCDIR.Mesa}/src/util \
+	UTILdebug.c \
+	u_process.c
+
+.for file in ${SRCS.util}
+CPPFLAGS.${file}+=		-I${X11SRCDIR.Mesa}/src/util \
 				-I${X11SRCDIR.Mesa}/src/mesa \
 				-I${X11SRCDIR.Mesa}/src \
 				-I${X11SRCDIR.Mesa}/src/gallium/include
+.endfor
 
 .PATH:		${X11SRCDIR.Mesa}/include/EGL
 INCS=	\
