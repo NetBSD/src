@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.130 2019/04/19 09:14:40 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.131 2019/04/20 13:58:18 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2859,4 +2859,16 @@ sys/net/if.c					1.449
 	Zero out the ifreq struct for SIOCGIFCONF to avoid up to 127 bytes
 	of stack disclosure.
 	[christos, ticket #1233]
+
+sys/arch/hppa/hppa/disksubr.c			1.4
+
+	Get a large enough buffer for the LIF DIR.
+	[skrll, ticket #1234]
+
+sys/arch/hppa/conf/files.hppa			1.20
+sys/arch/hppa/dev/dino.c			1.4
+
+	dino(4) depends on gedoens.
+	Re-arrange dino_softc members to improve alignment
+	[skrll, ticket #1235]
 
