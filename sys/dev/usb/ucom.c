@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.121 2018/12/11 14:49:27 jakllsch Exp $	*/
+/*	$NetBSD: ucom.c,v 1.122 2019/04/20 05:53:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.121 2018/12/11 14:49:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.122 2019/04/20 05:53:18 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -441,10 +441,8 @@ ucom_detach(device_t self, int flags)
 			mutex_spin_exit(&tty_lock);
 		}
 		/* Wait for processes to go away. */
-		if (cv_timedwait(&sc->sc_detachcv, &sc->sc_lock, hz * 60)) {
-			printf("%s: %s didn't detach\n", __func__,
-			    device_xname(sc->sc_dev));
-		}
+		if (cv_timedwait(&sc->sc_detachcv, &sc->sc_lock, hz * 60))
+			aprint_error_dev(self, ": didn't detach\n");
 	}
 
 	softint_disestablish(sc->sc_si);
@@ -1271,7 +1269,9 @@ ucomhwiflow(struct tty *tp, int block)
 
 	if (old && !block) {
 		sc->sc_rx_unblock = 1;
+		kpreempt_disable();
 		softint_schedule(sc->sc_si);
+		kpreempt_enable();
 	}
 	mutex_exit(&sc->sc_lock);
 
@@ -1339,7 +1339,9 @@ ucomstart(struct tty *tp)
 
 	SIMPLEQ_INSERT_TAIL(&sc->sc_obuff_full, ub, ub_link);
 
+	kpreempt_disable();
 	softint_schedule(sc->sc_si);
+	kpreempt_enable();
 
  out:
 	DPRINTF("... done", 0, 0, 0, 0);
@@ -1381,7 +1383,9 @@ ucom_write_status(struct ucom_softc *sc, struct ucom_buffer *ub,
 		break;
 	case USBD_STALLED:
 		ub->ub_index = 0;
+		kpreempt_disable();
 		softint_schedule(sc->sc_si);
+		kpreempt_enable();
 		break;
 	case USBD_NORMAL_COMPLETION:
 		usbd_get_xfer_status(ub->ub_xfer, NULL, NULL, &cc, NULL);
