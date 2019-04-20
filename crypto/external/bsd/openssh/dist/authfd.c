@@ -1,6 +1,5 @@
-/*	$NetBSD: authfd.c,v 1.17 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: authfd.c,v 1.111 2018/07/09 21:59:10 markus Exp $ */
-
+/*	$NetBSD: authfd.c,v 1.18 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: authfd.c,v 1.113 2018/12/27 23:02:11 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfd.c,v 1.17 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: authfd.c,v 1.18 2019/04/20 17:16:40 christos Exp $");
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -95,7 +94,7 @@ ssh_get_authentication_socket(int *fdp)
 		*fdp = -1;
 
 	authsocket = getenv(SSH_AUTHSOCKET_ENV_NAME);
-	if (!authsocket)
+	if (authsocket == NULL || *authsocket == '\0')
 		return SSH_ERR_AGENT_NOT_PRESENT;
 
 	memset(&sunaddr, 0, sizeof(sunaddr));
@@ -328,10 +327,12 @@ ssh_free_identitylist(struct ssh_identitylist *idl)
 static u_int
 agent_encode_alg(const struct sshkey *key, const char *alg)
 {
-	if (alg != NULL && key->type == KEY_RSA) {
-		if (strcmp(alg, "rsa-sha2-256") == 0)
+	if (alg != NULL && sshkey_type_plain(key->type) == KEY_RSA) {
+		if (strcmp(alg, "rsa-sha2-256") == 0 ||
+		    strcmp(alg, "rsa-sha2-256-cert-v01@openssh.com") == 0)
 			return SSH_AGENT_RSA_SHA2_256;
-		else if (strcmp(alg, "rsa-sha2-512") == 0)
+		if (strcmp(alg, "rsa-sha2-512") == 0 ||
+		    strcmp(alg, "rsa-sha2-512-cert-v01@openssh.com") == 0)
 			return SSH_AGENT_RSA_SHA2_512;
 	}
 	return 0;

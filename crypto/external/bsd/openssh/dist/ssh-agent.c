@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.25 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.231 2018/05/11 03:38:51 djm Exp $ */
-
+/*	$NetBSD: ssh-agent.c,v 1.26 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.233 2019/01/22 22:58:50 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.25 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.26 2019/04/20 17:16:40 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -88,6 +87,8 @@ __RCSID("$NetBSD: ssh-agent.c,v 1.25 2019/01/27 02:08:33 pgoyette Exp $");
 
 /* Maximum accepted message length */
 #define AGENT_MAX_LEN	(256*1024)
+/* Maximum bytes to read from client socket */
+#define AGENT_RBUF_LEN	(4096)
 
 typedef enum {
 	AUTH_UNUSED,
@@ -831,7 +832,7 @@ handle_socket_read(u_int socknum)
 static int
 handle_conn_read(u_int socknum)
 {
-	char buf[1024];
+	char buf[AGENT_RBUF_LEN];
 	ssize_t len;
 	int r;
 
@@ -938,6 +939,7 @@ prepare_poll(struct pollfd **pfdp, size_t *npfdp, int *timeoutp, u_int maxfds)
 	struct pollfd *pfd = *pfdp;
 	size_t i, j, npfd = 0;
 	time_t deadline;
+	int r;
 
 	/* Count active sockets */
 	for (i = 0; i < sockets_alloc; i++) {
@@ -975,8 +977,19 @@ prepare_poll(struct pollfd **pfdp, size_t *npfdp, int *timeoutp, u_int maxfds)
 		case AUTH_CONNECTION:
 			pfd[j].fd = sockets[i].fd;
 			pfd[j].revents = 0;
-			/* XXX backoff when input buffer full */
-			pfd[j].events = POLLIN;
+			/*
+			 * Only prepare to read if we can handle a full-size
+			 * input read buffer and enqueue a max size reply..
+			 */
+			if ((r = sshbuf_check_reserve(sockets[i].input,
+			    AGENT_RBUF_LEN)) == 0 &&
+			    (r = sshbuf_check_reserve(sockets[i].output,
+			     AGENT_MAX_LEN)) == 0)
+				pfd[j].events = POLLIN;
+			else if (r != SSH_ERR_NO_BUFFER_SPACE) {
+				fatal("%s: buffer error: %s",
+				    __func__, ssh_err(r));
+			}
 			if (sshbuf_len(sockets[i].output) > 0)
 				pfd[j].events |= POLLOUT;
 			j++;
@@ -1215,7 +1228,7 @@ main(int ac, char **av)
 	 */
 #define SSH_AGENT_MIN_FDS (3+1+1+1+4)
 	if (rlim.rlim_cur < SSH_AGENT_MIN_FDS)
-		fatal("%s: file descriptior rlimit %lld too low (minimum %u)",
+		fatal("%s: file descriptor rlimit %lld too low (minimum %u)",
 		    __progname, (long long)rlim.rlim_cur, SSH_AGENT_MIN_FDS);
 	maxfds = rlim.rlim_cur - SSH_AGENT_MIN_FDS;
 

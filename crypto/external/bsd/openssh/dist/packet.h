@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.18 2018/08/26 07:46:36 christos Exp $	*/
-/* $OpenBSD: packet.h,v 1.86 2018/07/09 21:20:26 markus Exp $ */
+/*	$NetBSD: packet.h,v 1.19 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: packet.h,v 1.90 2019/01/21 10:35:09 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -108,7 +108,7 @@ int	 ssh_packet_log_type(u_char);
 
 int	 ssh_packet_send2_wrapped(struct ssh *);
 int	 ssh_packet_send2(struct ssh *);
-int	 ssh_packet_authentication_state(void);
+int	 ssh_packet_authentication_state(struct ssh *);
 void	 ssh_packet_request_rekeying(void);
 
 int      ssh_packet_read(struct ssh *);
@@ -166,7 +166,8 @@ int	sshpkt_sendx(struct ssh *ssh);
 int     sshpkt_disconnect(struct ssh *, const char *fmt, ...)
 	    __attribute__((format(printf, 2, 3)));
 int	sshpkt_add_padding(struct ssh *, u_char);
-void	sshpkt_fatal(struct ssh *ssh, const char *tag, int r) __dead;
+void	sshpkt_fatal(struct ssh *ssh, int r, const char *fmt, ...)
+	    __attribute__((format(printf, 3, 4)));
 int	sshpkt_msg_ignore(struct ssh *, u_int);
 
 int	sshpkt_put(struct ssh *ssh, const void *v, size_t len);
@@ -188,14 +189,11 @@ int	sshpkt_get_string(struct ssh *ssh, u_char **valp, size_t *lenp);
 int	sshpkt_get_string_direct(struct ssh *ssh, const u_char **valp, size_t *lenp);
 int	sshpkt_peek_string_direct(struct ssh *ssh, const u_char **valp, size_t *lenp);
 int	sshpkt_get_cstring(struct ssh *ssh, char **valp, size_t *lenp);
+int	sshpkt_getb_froms(struct ssh *ssh, struct sshbuf **valp);
 int	sshpkt_get_ec(struct ssh *ssh, EC_POINT *v, const EC_GROUP *g);
-int	sshpkt_get_bignum2(struct ssh *ssh, BIGNUM *v);
+int	sshpkt_get_bignum2(struct ssh *ssh, BIGNUM **valp);
 int	sshpkt_get_end(struct ssh *ssh);
 void	sshpkt_fmt_connection_id(struct ssh *ssh, char *s, size_t l);
 const u_char	*sshpkt_ptr(struct ssh *, size_t *lenp);
-
-/* OLD API */
-extern struct ssh *active_state;
-#include "opacket.h"
 
 #endif				/* PACKET_H */

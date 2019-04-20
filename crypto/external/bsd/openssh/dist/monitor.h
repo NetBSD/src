@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.h,v 1.10 2018/08/26 07:46:36 christos Exp $	*/
-/* $OpenBSD: monitor.h,v 1.21 2018/07/09 21:53:45 markus Exp $ */
+/*	$NetBSD: monitor.h,v 1.11 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: monitor.h,v 1.23 2019/01/19 21:43:56 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -76,6 +76,8 @@ enum monitor_reqtype {
 
 };
 
+struct ssh;
+
 struct monitor {
 	int			 m_recvfd;
 	int			 m_sendfd;
@@ -89,15 +91,16 @@ struct monitor *monitor_init(void);
 void monitor_reinit(struct monitor *);
 
 struct Authctxt;
-void monitor_child_preauth(struct Authctxt *, struct monitor *);
-__dead void monitor_child_postauth(struct monitor *);
+void monitor_child_preauth(struct ssh *, struct monitor *);
+void monitor_child_postauth(struct ssh *, struct monitor *);
 
-struct mon_table;
-int monitor_read(struct monitor*, struct mon_table *, struct mon_table **);
+void monitor_clear_keystate(struct ssh *, struct monitor *);
+void monitor_apply_keystate(struct ssh *, struct monitor *);
 
 /* Prototypes for request sending and receiving */
 void mm_request_send(int, enum monitor_reqtype, struct sshbuf *);
 void mm_request_receive(int, struct sshbuf *);
 void mm_request_receive_expect(int, enum monitor_reqtype, struct sshbuf *);
+void mm_get_keystate(struct ssh *, struct monitor *);
 
 #endif /* _MONITOR_H_ */

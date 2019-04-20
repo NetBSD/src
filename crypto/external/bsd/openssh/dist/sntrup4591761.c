@@ -1,3 +1,4 @@
+/*	$NetBSD: sntrup4591761.c,v 1.2 2019/04/20 17:16:40 christos Exp $	*/
 /*  $OpenBSD: sntrup4591761.c,v 1.3 2019/01/30 19:51:15 markus Exp $ */
 
 /*
@@ -7,6 +8,8 @@
  * - Tanja Lange
  * - Christine van Vredendaal
  */
+#include "includes.h"
+__RCSID("$NetBSD: sntrup4591761.c,v 1.2 2019/04/20 17:16:40 christos Exp $");
 
 #include <string.h>
 #include "crypto_api.h"

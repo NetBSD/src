@@ -1,6 +1,5 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.22 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: auth2-pubkey.c,v 1.84 2018/08/23 03:01:08 djm Exp $ */
-
+/*	$NetBSD: auth2-pubkey.c,v 1.23 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: auth2-pubkey.c,v 1.87 2019/01/22 11:26:16 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.22 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.23 2019/04/20 17:16:40 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -108,6 +107,22 @@ userauth_pubkey(struct ssh *ssh)
 	    (r = sshpkt_get_cstring(ssh, &pkalg, NULL)) != 0 ||
 	    (r = sshpkt_get_string(ssh, &pkblob, &blen)) != 0)
 		fatal("%s: parse request failed: %s", __func__, ssh_err(r));
+
+	if (log_level_get() >= SYSLOG_LEVEL_DEBUG2) {
+		char *keystring;
+		struct sshbuf *pkbuf;
+
+		if ((pkbuf = sshbuf_from(pkblob, blen)) == NULL)
+			fatal("%s: sshbuf_from failed", __func__);
+		if ((keystring = sshbuf_dtob64(pkbuf)) == NULL)
+			fatal("%s: sshbuf_dtob64 failed", __func__);
+		debug2("%s: %s user %s %s public key %s %s", __func__,
+		    authctxt->valid ? "valid" : "invalid", authctxt->user,
+		    have_sig ? "attempting" : "querying", pkalg, keystring);
+		sshbuf_free(pkbuf);
+		free(keystring);
+	}
+
 	pktype = sshkey_type_from_name(pkalg);
 	if (pktype == KEY_UNSPEC) {
 		/* this is perfectly legal */
@@ -143,7 +158,13 @@ userauth_pubkey(struct ssh *ssh)
 		    __func__, sshkey_ssh_name(key));
 		goto done;
 	}
-
+	if ((r = sshkey_check_cert_sigtype(key,
+	    options.ca_sign_algorithms)) != 0) {
+		logit("%s: certificate signature algorithm %s: %s", __func__,
+		    (key->cert == NULL || key->cert->signature_type == NULL) ?
+		    "(null)" : key->cert->signature_type, ssh_err(r));
+		goto done;
+	}
 	key_s = format_key(key);
 	if (sshkey_is_cert(key))
 		ca_s = format_key(key->cert->signature_key);
@@ -183,7 +204,7 @@ userauth_pubkey(struct ssh *ssh)
 		    (r = sshbuf_put_cstring(b, authctxt->service)) != 0 ||
 		    (r = sshbuf_put_cstring(b, "publickey")) != 0 ||
 		    (r = sshbuf_put_u8(b, have_sig)) != 0 ||
-		    (r = sshbuf_put_cstring(b, pkalg) != 0) ||
+		    (r = sshbuf_put_cstring(b, pkalg)) != 0 ||
 		    (r = sshbuf_put_string(b, pkblob, blen)) != 0)
 			fatal("%s: build packet failed: %s",
 			    __func__, ssh_err(r));
