@@ -1,4 +1,4 @@
-.\"	$NetBSD: tzset.3,v 1.40 2019/04/18 11:20:17 pgoyette Exp $
+.\"	$NetBSD: tzset.3,v 1.41 2019/04/20 07:27:39 wiz Exp $
 .Dd April 18, 2019
 .Dt TZSET 3
 .Os
@@ -169,10 +169,7 @@ is used directly as a specification of the time conversion information,
 it must have the following syntax (spaces inserted for clarity):
 .Sm off
 .Bd -literal -offset indent
-.Cm std Cm offset Oo
-.Cm dst Oo
-.Cm offset Oc Oo
-.No , Cm rule Oc Oc
+.Cm std Cm offset Oo Cm dst Oo Cm offset Oc Oo , Cm rule Oc Oc
 .Ed
 .Sm on
 .Pp
@@ -182,7 +179,7 @@ where:
 Three or more bytes that are the designation for the standard
 .Cm ( std )
 or the alternative
-.Cm ( dst 
+.Cm ( dst
 such as daylight saving time)
 timezone.
 Only
@@ -199,7 +196,7 @@ and
 .Dv > ;
 in this case, the designation can contain any characters other than
 .Dv >
-and 
+and
 .Dv NUL .
 .It Cm offset
 Indicates the value one must add to the local time to arrive at
@@ -236,7 +233,7 @@ daylight saving time is assumed to be one hour ahead of standard time.
 One or more digits may be used; the value is always interpreted as a
 decimal number.
 The hour must be between zero and 24, and the minutes (and
-seconds) \*(en if present \*(en between zero and 59.
+seconds) \(en if present \(en between zero and 59.
 If preceded by a
 .Dq -
 the timezone shall be east of the Prime Meridian; otherwise it shall be
@@ -251,7 +248,7 @@ has the form:
 .Bd -literal -offset indent
 .Xo
 .Cm date No /
-.Cm time No ,
+.Cm time ,
 .Cm date No /
 .Cm time
 .Xc
@@ -282,8 +279,8 @@ The Julian day
 (1 \*[Le]
 .Ar n
 \*[Le] 365).
-Leap days are not counted; that is, in all years \*(en including leap
-years \*(en February 28 is day 59 and March 1 is day 60.
+Leap days are not counted; that is, in all years \(en including leap
+years \(en February 28 is day 59 and March 1 is day 60.
 It is impossible to explicitly refer to the occasional February 29.
 .It Ar n
 The zero-based Julian day (0\ \*[Le]
@@ -292,7 +289,7 @@ The zero-based Julian day (0\ \*[Le]
 Leap days are counted, and it is possible to refer to
 February 29.
 .Sm off
-.It Cm M Ns Ar m No . Ar n No . Ar d
+.It Cm M Ns Ar m . Ar n . Ar d
 .Sm on
 The
 .Ar d Ns 'th
@@ -339,7 +336,7 @@ Here are some examples of
 .Va TZ
 values that directly specify the timezone rules; they use some of the
 extensions to POSIX.
-.Bl -tag
+.Bl -tag -width 6n
 .It EST5
 stands for US Eastern Standard
 Time (EST), 5 hours behind UT, without daylight saving.
