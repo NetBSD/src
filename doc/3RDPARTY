@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1612 2019/04/18 00:52:54 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1613 2019/04/20 17:25:13 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1058,12 +1058,12 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	7.8
+Version:	8.0
 Current Vers:	8.0 / portable 8.0p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
-Date:		2019-01-09
+Date:		2019-04-20
 Mailing List:	openssh-unix-announce@mindrot.org
 Responsible:	thorpej, christos, elric
 License:	BSD. See src/crypto/external/bsd/openssh/dist/LICENSE
