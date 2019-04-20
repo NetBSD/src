@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11.h,v 1.6 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11.h,v 1.3 2014/04/29 18:01:49 markus Exp $ */
+/*	$NetBSD: ssh-pkcs11.h,v 1.7 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11.h,v 1.5 2019/01/20 22:51:37 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -15,10 +15,26 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* Errors for pkcs11_add_provider() */
+#define	SSH_PKCS11_ERR_GENERIC			1
+#define	SSH_PKCS11_ERR_LOGIN_FAIL		2
+#define	SSH_PKCS11_ERR_NO_SLOTS			3
+#define	SSH_PKCS11_ERR_PIN_REQUIRED		4
+#define	SSH_PKCS11_ERR_PIN_LOCKED		5
+
 int	pkcs11_init(int);
 void	pkcs11_terminate(void);
 int	pkcs11_add_provider(char *, char *, struct sshkey ***);
 int	pkcs11_del_provider(char *);
+#ifdef WITH_PKCS11_KEYGEN
+struct sshkey *
+	pkcs11_gakp(char *, char *, unsigned int, char *, unsigned int,
+	    unsigned int, unsigned char, u_int32_t *);
+struct sshkey *
+	pkcs11_destroy_keypair(char *, char *, unsigned long, unsigned char,
+	    u_int32_t *);
+#endif
 
 #if !defined(WITH_OPENSSL) && defined(ENABLE_PKCS11)
 #undef ENABLE_PKCS11

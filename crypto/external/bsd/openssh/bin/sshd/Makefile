@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2018/02/25 00:16:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2019/04/20 17:16:40 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c \
 	auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
 	monitor.c monitor_wrap.c \
-	kexdhs.c kexgexs.c kexecdhs.c sftp-server.c sftp-common.c \
+	kexgexs.c sftp-server.c sftp-common.c \
 	sandbox-rlimit.c pfilter.c
 
 COPTS.auth-options.c+=	-Wno-pointer-sign

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-pam.h,v 1.8 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: auth-pam.h,v 1.9 2019/04/20 17:16:40 christos Exp $	*/
 /*
  * Copyright (c) 2000 Damien Miller.  All rights reserved.
  *
@@ -28,7 +28,7 @@
 
 struct ssh;
 
-void start_pam(Authctxt *);
+void start_pam(struct ssh *);
 void finish_pam(void);
 u_int do_pam_account(void);
 void do_pam_session(struct ssh *);

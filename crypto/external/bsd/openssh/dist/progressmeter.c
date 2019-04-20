@@ -1,5 +1,5 @@
-/*	$NetBSD: progressmeter.c,v 1.10 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: progressmeter.c,v 1.45 2016/06/30 05:17:05 dtucker Exp $ */
+/*	$NetBSD: progressmeter.c,v 1.11 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: progressmeter.c,v 1.47 2019/01/24 16:52:17 dtucker Exp $ */
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
  *
@@ -25,13 +25,14 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: progressmeter.c,v 1.10 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.11 2019/04/20 17:16:40 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 
 #include <errno.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -40,6 +41,7 @@ __RCSID("$NetBSD: progressmeter.c,v 1.10 2017/04/18 18:41:46 christos Exp $");
 #include "progressmeter.h"
 #include "atomicio.h"
 #include "misc.h"
+#include "utf8.h"
 
 #define DEFAULT_WINSIZE 80
 #define MAX_WINSIZE 512
@@ -58,11 +60,8 @@ static void format_rate(char *, int, off_t);
 static void sig_winch(int);
 static void setscreensize(void);
 
-/* updates the progressmeter to reflect the current state of the transfer */
-void refresh_progress_meter(void);
-
 /* signal handler for updating the progress meter */
-static void update_progress_meter(int);
+static void sig_alarm(int);
 
 static double start;		/* start progress */
 static double last_update;	/* last progress update */
@@ -77,6 +76,7 @@ static long stalled;		/* how long we have been stalled */
 static int bytes_per_second;	/* current speed in bytes per second */
 static int win_size;		/* terminal window size */
 static volatile sig_atomic_t win_resized; /* for window resizing */
+static volatile sig_atomic_t alarm_fired;
 
 /* units for format_size */
 static const char unit[] = " KMGT";
@@ -120,7 +120,7 @@ format_size(char *buf, int size, off_t bytes)
 }
 
 void
-refresh_progress_meter(void)
+refresh_progress_meter(int force_update)
 {
 	char buf[MAX_WINSIZE + 1];
 	off_t transferred;
@@ -129,9 +129,17 @@ refresh_progress_meter(void)
 	off_t bytes_left;
 	int cur_speed;
 	int hours, minutes, seconds;
-	int i, len;
 	int file_len;
 	off_t delta_pos;
+
+	if ((!force_update && !alarm_fired && !win_resized) || !can_output())
+		return;
+	alarm_fired = 0;
+
+	if (win_resized) {
+		setscreensize();
+		win_resized = 0;
+	}
 
 	transferred = *counter - (cur_pos ? cur_pos : start_pos);
 	cur_pos = *counter;
@@ -166,16 +174,11 @@ refresh_progress_meter(void)
 
 	/* filename */
 	buf[0] = '\0';
-	file_len = win_size - 45;
+	file_len = win_size - 36;
 	if (file_len > 0) {
-		len = snprintf(buf, file_len + 1, "\r%s", file);
-		if (len < 0)
-			len = 0;
-		if (len >= file_len + 1)
-			len = file_len;
-		for (i = len; i < file_len; i++)
-			buf[i] = ' ';
-		buf[file_len] = '\0';
+		buf[0] = '\r';
+		snmprintf(buf+1, sizeof(buf)-1 , &file_len, "%*s",
+		    file_len * -1, file);
 	}
 
 	/* percent of transfer done */
@@ -246,22 +249,11 @@ refresh_progress_meter(void)
 
 /*ARGSUSED*/
 static void
-update_progress_meter(int ignore)
+sig_alarm(int ignore)
 {
-	int save_errno;
-
-	save_errno = errno;
-
-	if (win_resized) {
-		setscreensize();
-		win_resized = 0;
-	}
-	if (can_output())
-		refresh_progress_meter();
-
-	signal(SIGALRM, update_progress_meter);
+	signal(SIGALRM, sig_alarm);
+	alarm_fired = 1;
 	alarm(UPDATE_INTERVAL);
-	errno = save_errno;
 }
 
 void
@@ -277,10 +269,9 @@ start_progress_meter(const char *f, off_t filesize, off_t *ctr)
 	bytes_per_second = 0;
 
 	setscreensize();
-	if (can_output())
-		refresh_progress_meter();
+	refresh_progress_meter(1);
 
-	signal(SIGALRM, update_progress_meter);
+	signal(SIGALRM, sig_alarm);
 	signal(SIGWINCH, sig_winch);
 	alarm(UPDATE_INTERVAL);
 }
@@ -295,7 +286,7 @@ stop_progress_meter(void)
 
 	/* Ensure we complete the progress */
 	if (cur_pos != end_pos)
-		refresh_progress_meter();
+		refresh_progress_meter(1);
 
 	atomicio(vwrite, STDOUT_FILENO, __UNCONST("\n"), 1);
 }
@@ -304,6 +295,7 @@ stop_progress_meter(void)
 static void
 sig_winch(int sig)
 {
+	signal(SIGWINCH, sig_winch);
 	win_resized = 1;
 }
 

@@ -1,6 +1,5 @@
-/*	$NetBSD: atomicio.c,v 1.8 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: atomicio.c,v 1.28 2016/07/27 23:18:12 djm Exp $ */
-
+/*	$NetBSD: atomicio.c,v 1.9 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: atomicio.c,v 1.30 2019/01/24 02:42:23 dtucker Exp $ */
 /*
  * Copyright (c) 2006 Damien Miller. All rights reserved.
  * Copyright (c) 2005 Anil Madhavapeddy. All rights reserved.
@@ -29,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: atomicio.c,v 1.8 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: atomicio.c,v 1.9 2019/04/20 17:16:40 christos Exp $");
 #include <sys/param.h>
 #include <sys/uio.h>
 
@@ -63,9 +62,14 @@ atomicio6(ssize_t (*f) (int, void *, size_t), int fd, void *_s, size_t n,
 		res = (f) (fd, s + pos, n - pos);
 		switch (res) {
 		case -1:
-			if (errno == EINTR)
+			if (errno == EINTR) {
+				/* possible SIGALARM, update callback */
+				if (cb != NULL && cb(cb_arg, 0) == -1) {
+					errno = EINTR;
+					return pos;
+				}
 				continue;
-			if (errno == EAGAIN) {
+			} else if (errno == EAGAIN || errno == EWOULDBLOCK) {
 				(void)poll(&pfd, 1, -1);
 				continue;
 			}
@@ -116,9 +120,14 @@ atomiciov6(ssize_t (*f) (int, const struct iovec *, int), int fd,
 		res = (f) (fd, iov, iovcnt);
 		switch (res) {
 		case -1:
-			if (errno == EINTR)
+			if (errno == EINTR) {
+				/* possible SIGALARM, update callback */
+				if (cb != NULL && cb(cb_arg, 0) == -1) {
+					errno = EINTR;
+					return pos;
+				}
 				continue;
-			if (errno == EAGAIN) {
+			} else if (errno == EAGAIN || errno == EWOULDBLOCK) {
 				(void)poll(&pfd, 1, -1);
 				continue;
 			}

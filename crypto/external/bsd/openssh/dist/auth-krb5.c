@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-krb5.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $	*/
+/*	$NetBSD: auth-krb5.c,v 1.14 2019/04/20 17:16:40 christos Exp $	*/
 /* $OpenBSD: auth-krb5.c,v 1.23 2018/07/09 21:35:50 markus Exp $ */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-krb5.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: auth-krb5.c,v 1.14 2019/04/20 17:16:40 christos Exp $");
 #include <sys/types.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -75,13 +75,14 @@ krb5_init(void *context)
  * from the ticket
  */
 int
-auth_krb5(Authctxt *authctxt, krb5_data *auth, char **client, krb5_data *reply)
+auth_krb5(struct ssh *ssh, krb5_data *auth, char **client, krb5_data *reply)
 {
 	krb5_error_code problem;
 	krb5_principal server;
 	krb5_ticket *ticket;
 	int fd, ret;
 	const char *errtxt;
+	Authctxt *authctxt = ssh->authctxt;
 
 	ret = 0;
 	server = NULL;
@@ -97,7 +98,7 @@ auth_krb5(Authctxt *authctxt, krb5_data *auth, char **client, krb5_data *reply)
 	if (problem)
 		goto err;
 
-	fd = packet_get_connection_in();
+	fd = ssh_packet_get_connection_in(ssh);
 	problem = krb5_auth_con_setaddrs_from_fd(authctxt->krb5_ctx,
 	    authctxt->krb5_auth_ctx, &fd);
 	if (problem)

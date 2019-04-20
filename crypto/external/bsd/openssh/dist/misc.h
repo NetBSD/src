@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.15 2018/08/26 07:46:36 christos Exp $	*/
-/* $OpenBSD: misc.h,v 1.74 2018/07/27 05:13:02 dtucker Exp $ */
+/*	$NetBSD: misc.h,v 1.16 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: misc.h,v 1.79 2019/01/23 21:50:56 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -18,6 +18,7 @@
 
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 
 /* Data structure for representing a forwarding request. */
 struct Forward {
@@ -52,9 +53,12 @@ void	 set_nodelay(int);
 int	 set_reuseaddr(int);
 char	*get_rdomain(int);
 int	 set_rdomain(int, const char *);
+int	 waitrfd(int, int *);
+int	 timeout_connect(int, const struct sockaddr *, socklen_t, int *);
 int	 a2port(const char *);
 int	 a2tun(const char *, int *);
 char	*put_host_port(const char *, u_short);
+char	*hpdelim2(char **, char *);
 char	*hpdelim(char **);
 char	*cleanhostname(char *);
 char	*colon(char *);
@@ -80,9 +84,11 @@ double	 monotime_double(void);
 void	 lowercase(char *s);
 int	 unix_listener(const char *, int, int);
 int	 valid_domain(char *, int, const char **);
+int	 valid_env_name(const char *);
 const char *atoi_err(const char *, int *);
 int	 parse_absolute_time(const char *, uint64_t *);
 void	 format_absolute_time(uint64_t, char *, size_t);
+int	 path_absolute(const char *);
 
 int	bcrypt_pbkdf(const char *, size_t, const u_int8_t *, size_t,
     u_int8_t *, size_t, unsigned int);
@@ -140,7 +146,9 @@ void		put_u32_le(void *, u_int32_t)
 
 struct bwlimit {
 	size_t buflen;
-	u_int64_t rate, thresh, lamt;
+	u_int64_t rate;		/* desired rate in kbit/s */
+	u_int64_t thresh;	/* threshold after which we'll check timers */
+	u_int64_t lamt;		/* amount written in last timer interval */
 	struct timeval bwstart, bwend;
 };
 

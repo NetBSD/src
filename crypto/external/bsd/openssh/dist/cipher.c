@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher.c,v 1.14 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: cipher.c,v 1.111 2018/02/23 15:58:37 markus Exp $ */
+/*	$NetBSD: cipher.c,v 1.15 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: cipher.c,v 1.112 2018/09/13 02:08:33 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.14 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.15 2019/04/20 17:16:40 christos Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -443,7 +443,7 @@ cipher_get_keyiv_len(const struct sshcipher_ctx *cc)
 }
 
 int
-cipher_get_keyiv(struct sshcipher_ctx *cc, u_char *iv, u_int len)
+cipher_get_keyiv(struct sshcipher_ctx *cc, u_char *iv, size_t len)
 {
 #ifdef WITH_OPENSSL
 	const struct sshcipher *c = cc->cipher;
@@ -470,7 +470,7 @@ cipher_get_keyiv(struct sshcipher_ctx *cc, u_char *iv, u_int len)
 		return 0;
 	else if (evplen < 0)
 		return SSH_ERR_LIBCRYPTO_ERROR;
-	if ((u_int)evplen != len)
+	if ((size_t)evplen != len)
 		return SSH_ERR_INVALID_ARGUMENT;
 	if (cipher_authlen(c)) {
 		if (!EVP_CIPHER_CTX_ctrl(cc->evp, EVP_CTRL_GCM_IV_GEN,
@@ -483,7 +483,7 @@ cipher_get_keyiv(struct sshcipher_ctx *cc, u_char *iv, u_int len)
 }
 
 int
-cipher_set_keyiv(struct sshcipher_ctx *cc, const u_char *iv)
+cipher_set_keyiv(struct sshcipher_ctx *cc, const u_char *iv, size_t len)
 {
 #ifdef WITH_OPENSSL
 	const struct sshcipher *c = cc->cipher;
@@ -499,11 +499,13 @@ cipher_set_keyiv(struct sshcipher_ctx *cc, const u_char *iv)
 	evplen = EVP_CIPHER_CTX_iv_length(cc->evp);
 	if (evplen <= 0)
 		return SSH_ERR_LIBCRYPTO_ERROR;
+	if ((size_t)evplen != len)
+		return SSH_ERR_INVALID_ARGUMENT;
 	if (cipher_authlen(c)) {
 		/* XXX iv arg is const, but EVP_CIPHER_CTX_ctrl isn't */
 		if (!EVP_CIPHER_CTX_ctrl(cc->evp,
 		    EVP_CTRL_GCM_SET_IV_FIXED, -1, __UNCONST(iv)))
-		     return SSH_ERR_LIBCRYPTO_ERROR;
+			return SSH_ERR_LIBCRYPTO_ERROR;
 	} else
 		memcpy(EVP_CIPHER_CTX_iv_noconst(cc->evp), iv, evplen);
 #endif

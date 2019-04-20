@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.h,v 1.18 2018/08/26 07:46:36 christos Exp $	*/
-/* $OpenBSD: servconf.h,v 1.136 2018/07/09 21:26:02 markus Exp $ */
+/*	$NetBSD: servconf.h,v 1.19 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: servconf.h,v 1.139 2019/01/19 21:37:48 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -80,6 +80,7 @@ typedef struct {
 	char	*routing_domain;	/* Bind session to routing domain */
 
 	char   **host_key_files;	/* Files containing host keys. */
+	int	*host_key_file_userprovided; /* Key was specified by user. */
 	u_int	num_host_key_files;     /* Number of files for host keys. */
 	char   **host_cert_files;	/* Files containing host certs. */
 	u_int	num_host_cert_files;	/* Number of files for host certs. */
@@ -118,6 +119,7 @@ typedef struct {
 	int     hostbased_uses_name_from_packet_only; /* experimental */
 	char   *hostbased_key_types;	/* Key types allowed for hostbased */
 	char   *hostkeyalgorithms;	/* SSH2 server key types */
+	char   *ca_sign_algorithms;	/* Allowed CA signature algorithms */
 	int     pubkey_authentication;	/* If true, permit ssh2 pubkey authentication. */
 	char   *pubkey_key_types;	/* Key types allowed for public key */
 	int     kerberos_authentication;	/* If true, permit Kerberos
@@ -262,6 +264,7 @@ struct connection_info {
 		M_CP_STROPT(authorized_principals_command_user); \
 		M_CP_STROPT(hostbased_key_types); \
 		M_CP_STROPT(pubkey_key_types); \
+		M_CP_STROPT(ca_sign_algorithms); \
 		M_CP_STROPT(routing_domain); \
 		M_CP_STROPT(permit_user_env_whitelist); \
 		M_CP_STRARRAYOPT(authorized_keys_files, num_authkeys_files); \
@@ -275,7 +278,7 @@ struct connection_info {
 		M_CP_STRARRAYOPT(permitted_listens, num_permitted_listens); \
 	} while (0)
 
-struct connection_info *get_connection_info(int, int);
+struct connection_info *get_connection_info(struct ssh *, int, int);
 void	 initialize_server_options(ServerOptions *);
 void	 fill_default_server_options(ServerOptions *);
 int	 process_server_config_line(ServerOptions *, char *, const char *, int,
@@ -291,7 +294,7 @@ void	 copy_set_server_options(ServerOptions *, ServerOptions *, int);
 void	 dump_config(ServerOptions *);
 char	*derelativise_path(const char *);
 void	 servconf_add_hostkey(const char *, const int,
-	    ServerOptions *, const char *path);
+	    ServerOptions *, const char *path, int);
 void	 servconf_add_hostcert(const char *, const int,
 	    ServerOptions *, const char *path);
 

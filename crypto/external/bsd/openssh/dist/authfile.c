@@ -1,6 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.20 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: authfile.c,v 1.130 2018/07/09 21:59:10 markus Exp $ */
-
+/*	$NetBSD: authfile.c,v 1.21 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: authfile.c,v 1.131 2018/09/21 12:20:12 djm Exp $ */
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.20 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.21 2019/04/20 17:16:40 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -457,6 +456,8 @@ sshkey_in_file(struct sshkey *key, const char *filename, int strict_type,
 		return SSH_ERR_SYSTEM_ERROR;
 
 	while (getline(&line, &linesize, f) != -1) {
+		sshkey_free(pub);
+		pub = NULL;
 		cp = line;
 
 		/* Skip leading whitespace. */
@@ -475,16 +476,20 @@ sshkey_in_file(struct sshkey *key, const char *filename, int strict_type,
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
-		if ((r = sshkey_read(pub, &cp)) != 0)
+		switch (r = sshkey_read(pub, &cp)) {
+		case 0:
+			break;
+		case SSH_ERR_KEY_LENGTH:
+			continue;
+		default:
 			goto out;
+		}
 		if (sshkey_compare(key, pub) ||
 		    (check_ca && sshkey_is_cert(key) &&
 		    sshkey_compare(key->cert->signature_key, pub))) {
 			r = 0;
 			goto out;
 		}
-		sshkey_free(pub);
-		pub = NULL;
 	}
 	r = SSH_ERR_KEY_NOT_FOUND;
  out:

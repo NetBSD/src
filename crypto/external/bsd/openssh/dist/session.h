@@ -1,5 +1,5 @@
-/*	$NetBSD: session.h,v 1.8 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: session.h,v 1.35 2017/09/12 06:32:07 djm Exp $ */
+/*	$NetBSD: session.h,v 1.9 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: session.h,v 1.36 2018/10/02 12:40:07 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -38,6 +38,7 @@ struct Session {
 	struct passwd *pw;
 	Authctxt *authctxt;
 	pid_t	pid;
+	int	forced;
 
 	/* tty */
 	char	*term;

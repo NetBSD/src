@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.h,v 1.15 2018/08/26 07:46:36 christos Exp $	*/
-/* $OpenBSD: channels.h,v 1.131 2018/06/06 18:22:41 djm Exp $ */
+/*	$NetBSD: channels.h,v 1.16 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: channels.h,v 1.132 2018/10/04 00:10:11 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -288,6 +288,7 @@ void     channel_output_poll(struct ssh *);
 int      channel_not_very_much_buffered_data(struct ssh *);
 void     channel_close_all(struct ssh *);
 int      channel_still_open(struct ssh *);
+const char *channel_format_extended_usage(const Channel *);
 char	*channel_open_message(struct ssh *);
 int	 channel_find_open(struct ssh *);
 

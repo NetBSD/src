@@ -1,4 +1,5 @@
-/* $OpenBSD: digest-openssl.c,v 1.7 2017/05/08 22:57:38 djm Exp $ */
+/*	$NetBSD: digest-openssl.c,v 1.8 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: digest-openssl.c,v 1.8 2018/09/13 02:08:33 djm Exp $ */
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>
  *
@@ -15,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: digest-openssl.c,v 1.7 2018/02/05 00:13:50 christos Exp $");
+__RCSID("$NetBSD: digest-openssl.c,v 1.8 2019/04/20 17:16:40 christos Exp $");
 
 #include <sys/types.h>
 #include <limits.h>
@@ -103,10 +104,12 @@ ssh_digest_start(int alg)
 	if (digest == NULL || ((ret = calloc(1, sizeof(*ret))) == NULL))
 		return NULL;
 	ret->alg = alg;
-	if ((ret->mdctx = EVP_MD_CTX_new()) == NULL ||
-	    EVP_DigestInit_ex(ret->mdctx, digest->mdfunc(), NULL) != 1) {
-		EVP_MD_CTX_free(ret->mdctx);
+	if ((ret->mdctx = EVP_MD_CTX_new()) == NULL) {
 		free(ret);
+		return NULL;
+	}
+	if (EVP_DigestInit_ex(ret->mdctx, digest->mdfunc(), NULL) != 1) {
+		ssh_digest_free(ret);
 		return NULL;
 	}
 	return ret;
@@ -157,11 +160,10 @@ ssh_digest_final(struct ssh_digest_ctx *ctx, u_char *d, size_t dlen)
 void
 ssh_digest_free(struct ssh_digest_ctx *ctx)
 {
-	if (ctx != NULL) {
-		EVP_MD_CTX_free(ctx->mdctx);
-		explicit_bzero(ctx, sizeof(*ctx));
-		free(ctx);
-	}
+	if (ctx == NULL)
+		return;
+	EVP_MD_CTX_free(ctx->mdctx);
+	freezero(ctx, sizeof(*ctx));
 }
 
 int
