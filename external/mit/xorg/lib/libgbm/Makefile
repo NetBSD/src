@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/04/16 21:20:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2019/04/20 17:31:22 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,8 @@ SRCS.dri=	\
 
 BUILDSYMLINKS+= ${X11SRCDIR.Mesa}/src/util/debug.c UTILdebug.c
 SRCS.util=      \
-	UTILdebug.c
+	UTILdebug.c \
+	u_process.c
 CPPFLAGS.UTILdebug.c+=          -I${X11SRCDIR.Mesa}/src/util \
 				-I${X11SRCDIR.Mesa}/src/mesa \
 				-I${X11SRCDIR.Mesa}/src \
