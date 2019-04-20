@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-common.c,v 1.10 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: sftp-common.c,v 1.30 2017/06/10 06:36:46 djm Exp $ */
+/*	$NetBSD: sftp-common.c,v 1.11 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: sftp-common.c,v 1.31 2018/09/13 15:23:32 millert Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-common.c,v 1.10 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: sftp-common.c,v 1.11 2019/04/20 17:16:40 christos Exp $");
 
 #include <sys/param.h>	/* MAX */
 #include <sys/types.h>

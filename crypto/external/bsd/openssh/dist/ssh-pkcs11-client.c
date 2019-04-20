@@ -1,8 +1,8 @@
-/*	$NetBSD: ssh-pkcs11-client.c,v 1.14 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: ssh-pkcs11-client.c,v 1.10 2018/07/09 21:59:10 markus Exp $ */
-
+/*	$NetBSD: ssh-pkcs11-client.c,v 1.15 2019/04/20 17:16:40 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11-client.c,v 1.15 2019/01/21 12:53:35 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2014 Pedro Martelletto. All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.14 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.15 2019/04/20 17:16:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -28,6 +28,7 @@ __RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.14 2019/01/27 02:08:33 pgoyette Exp $"
 #include <unistd.h>
 #include <errno.h>
 
+#include <openssl/ecdsa.h>
 #include <openssl/rsa.h>
 
 #include "pathnames.h"
@@ -43,8 +44,8 @@ __RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.14 2019/01/27 02:08:33 pgoyette Exp $"
 
 /* borrows code from sftp-server and ssh-agent */
 
-int fd = -1;
-pid_t pid = -1;
+static int fd = -1;
+static pid_t pid = -1;
 
 static void
 send_msg(struct sshbuf *m)
@@ -109,22 +110,27 @@ pkcs11_terminate(void)
 }
 
 static int
-pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
-    int padding)
+rsa_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa, int padding)
 {
-	struct sshkey key;	/* XXX */
-	u_char *blob, *signature = NULL;
+	struct sshkey *key = NULL;
+	struct sshbuf *msg = NULL;
+	u_char *blob = NULL, *signature = NULL;
 	size_t blen, slen = 0;
 	int r, ret = -1;
-	struct sshbuf *msg;
 
 	if (padding != RSA_PKCS1_PADDING)
-		return (-1);
-	key.type = KEY_RSA;
-	key.rsa = rsa;
-	if ((r = sshkey_to_blob(&key, &blob, &blen)) != 0) {
+		goto fail;
+	key = sshkey_new(KEY_UNSPEC);
+	if (key == NULL) {
+		error("%s: sshkey_new failed", __func__);
+		goto fail;
+	}
+	key->type = KEY_RSA;
+	RSA_up_ref(rsa);
+	key->rsa = rsa;
+	if ((r = sshkey_to_blob(key, &blob, &blen)) != 0) {
 		error("%s: sshkey_to_blob: %s", __func__, ssh_err(r));
-		return -1;
+		goto fail;
 	}
 	if ((msg = sshbuf_new()) == NULL)
 		fatal("%s: sshbuf_new failed", __func__);
@@ -133,7 +139,6 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 	    (r = sshbuf_put_string(msg, from, flen)) != 0 ||
 	    (r = sshbuf_put_u32(msg, 0)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
-	free(blob);
 	send_msg(msg);
 	sshbuf_reset(msg);
 
@@ -146,21 +151,107 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 		}
 		free(signature);
 	}
+ fail:
+	free(blob);
+	sshkey_free(key);
 	sshbuf_free(msg);
 	return (ret);
 }
 
-/* redirect the private key encrypt operation to the ssh-pkcs11-helper */
-static int
-wrap_key(RSA *rsa)
+static ECDSA_SIG *
+ecdsa_do_sign(const unsigned char *dgst, int dgst_len, const BIGNUM *inv,
+    const BIGNUM *rp, EC_KEY *ec)
 {
-	static RSA_METHOD *helper_rsa;
+	struct sshkey *key = NULL;
+	struct sshbuf *msg = NULL;
+	ECDSA_SIG *ret = NULL;
+	const u_char *cp;
+	u_char *blob = NULL, *signature = NULL;
+	size_t blen, slen = 0;
+	int r, nid;
+
+	nid = sshkey_ecdsa_key_to_nid(ec);
+	if (nid < 0) {
+		error("%s: couldn't get curve nid", __func__);
+		goto fail;
+	}
+
+	key = sshkey_new(KEY_UNSPEC);
+	if (key == NULL) {
+		error("%s: sshkey_new failed", __func__);
+		goto fail;
+	}
+	key->ecdsa = ec;
+	key->ecdsa_nid = nid;
+	key->type = KEY_ECDSA;
+	EC_KEY_up_ref(ec);
+
+	if ((r = sshkey_to_blob(key, &blob, &blen)) != 0) {
+		error("%s: sshkey_to_blob: %s", __func__, ssh_err(r));
+		goto fail;
+	}
+	if ((msg = sshbuf_new()) == NULL)
+		fatal("%s: sshbuf_new failed", __func__);
+	if ((r = sshbuf_put_u8(msg, SSH2_AGENTC_SIGN_REQUEST)) != 0 ||
+	    (r = sshbuf_put_string(msg, blob, blen)) != 0 ||
+	    (r = sshbuf_put_string(msg, dgst, dgst_len)) != 0 ||
+	    (r = sshbuf_put_u32(msg, 0)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	send_msg(msg);
+	sshbuf_reset(msg);
+
+	if (recv_msg(msg) == SSH2_AGENT_SIGN_RESPONSE) {
+		if ((r = sshbuf_get_string(msg, &signature, &slen)) != 0)
+			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		cp = signature;
+		ret = d2i_ECDSA_SIG(NULL, &cp, slen);
+		free(signature);
+	}
+
+ fail:
+	free(blob);
+	sshkey_free(key);
+	sshbuf_free(msg);
+	return (ret);
+}
+
+static RSA_METHOD	*helper_rsa;
+static EC_KEY_METHOD	*helper_ecdsa;
+
+/* redirect private key crypto operations to the ssh-pkcs11-helper */
+static void
+wrap_key(struct sshkey *k)
+{
+	if (k->type == KEY_RSA)
+		RSA_set_method(k->rsa, helper_rsa);
+	else if (k->type == KEY_ECDSA)
+		EC_KEY_set_method(k->ecdsa, helper_ecdsa);
+	else
+		fatal("%s: unknown key type", __func__);
+}
+
+static int
+pkcs11_start_helper_methods(void)
+{
+	if (helper_ecdsa != NULL)
+		return (0);
+
+	int (*orig_sign)(int, const unsigned char *, int, unsigned char *,
+	    unsigned int *, const BIGNUM *, const BIGNUM *, EC_KEY *) = NULL;
+	if (helper_ecdsa != NULL)
+		return (0);
+	helper_ecdsa = EC_KEY_METHOD_new(EC_KEY_OpenSSL());
+	if (helper_ecdsa == NULL)
+		return (-1);
+	EC_KEY_METHOD_get_sign(helper_ecdsa, &orig_sign, NULL, NULL);
+	EC_KEY_METHOD_set_sign(helper_ecdsa, orig_sign, NULL, ecdsa_do_sign);
 
 	if ((helper_rsa = RSA_meth_dup(RSA_get_default_method())) == NULL)
-		return (-1); /* XXX but caller isn't checking */
-	RSA_meth_set1_name(helper_rsa, "ssh-pkcs11-helper");
-	RSA_meth_set_priv_enc(helper_rsa, pkcs11_rsa_private_encrypt);
-	RSA_set_method(rsa, helper_rsa);
+		fatal("%s: RSA_meth_dup failed", __func__);
+	if (!RSA_meth_set1_name(helper_rsa, "ssh-pkcs11-helper") ||
+	    !RSA_meth_set_priv_enc(helper_rsa, rsa_encrypt))
+		fatal("%s: failed to prepare method", __func__);
+
 	return (0);
 }
 
@@ -168,6 +259,15 @@ static int
 pkcs11_start_helper(void)
 {
 	int pair[2];
+	const char *helper, *verbosity = NULL;
+
+	if (log_level_get() >= SYSLOG_LEVEL_DEBUG1)
+		verbosity = "-vvv";
+
+	if (pkcs11_start_helper_methods() == -1) {
+		error("pkcs11_start_helper_methods failed");
+		return (-1);
+	}
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1) {
 		error("socketpair: %s", strerror(errno));
@@ -184,10 +284,13 @@ pkcs11_start_helper(void)
 		}
 		close(pair[0]);
 		close(pair[1]);
-		execlp(_PATH_SSH_PKCS11_HELPER, _PATH_SSH_PKCS11_HELPER,
-		    (char *)NULL);
-		fprintf(stderr, "exec: %s: %s\n", _PATH_SSH_PKCS11_HELPER,
-		    strerror(errno));
+		helper = getenv("SSH_PKCS11_HELPER");
+		if (helper == NULL || strlen(helper) == 0)
+			helper = _PATH_SSH_PKCS11_HELPER;
+		debug("%s: starting %s %s", __func__, helper,
+		    verbosity == NULL ? "" : verbosity);
+		execlp(helper, helper, verbosity, (char *)NULL);
+		fprintf(stderr, "exec: %s: %s\n", helper, strerror(errno));
 		_exit(1);
 	}
 	close(pair[1]);
@@ -199,7 +302,7 @@ int
 pkcs11_add_provider(char *name, char *pin, struct sshkey ***keysp)
 {
 	struct sshkey *k;
-	int r;
+	int r, type;
 	u_char *blob;
 	size_t blen;
 	u_int nkeys, i;
@@ -217,7 +320,8 @@ pkcs11_add_provider(char *name, char *pin, struct sshkey ***keysp)
 	send_msg(msg);
 	sshbuf_reset(msg);
 
-	if (recv_msg(msg) == SSH2_AGENT_IDENTITIES_ANSWER) {
+	type = recv_msg(msg);
+	if (type == SSH2_AGENT_IDENTITIES_ANSWER) {
 		if ((r = sshbuf_get_u32(msg, &nkeys)) != 0)
 			fatal("%s: buffer error: %s", __func__, ssh_err(r));
 		*keysp = xcalloc(nkeys, sizeof(struct sshkey *));
@@ -229,10 +333,13 @@ pkcs11_add_provider(char *name, char *pin, struct sshkey ***keysp)
 				    __func__, ssh_err(r));
 			if ((r = sshkey_from_blob(blob, blen, &k)) != 0)
 				fatal("%s: bad key: %s", __func__, ssh_err(r));
-			wrap_key(k->rsa);
+			wrap_key(k);
 			(*keysp)[i] = k;
 			free(blob);
 		}
+	} else if (type == SSH2_AGENT_FAILURE) {
+		if ((r = sshbuf_get_u32(msg, &nkeys)) != 0)
+			nkeys = -1;
 	} else {
 		nkeys = -1;
 	}
