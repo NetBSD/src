@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.54 2019/04/12 15:12:29 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.55 2019/04/20 08:44:10 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.54 2019/04/12 15:12:29 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.55 2019/04/20 08:44:10 abhinav Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -177,11 +177,12 @@ needs_dquote_escaping(char c)
 static wchar_t *
 unescape_string(const wchar_t *string, size_t length)
 {
+	size_t i;
+	size_t j = 0;
 	wchar_t *unescaped = el_malloc(sizeof(*string) * (length + 1));
 	if (unescaped == NULL)
 		return NULL;
-	size_t j = 0;
-	for (size_t i = 0; i < length ; i++) {
+	for (i = 0; i < length ; i++) {
 		if (string[i] == '\\')
 			continue;
 		unescaped[j++] = string[i];
