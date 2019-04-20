@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor_wrap.c,v 1.107 2018/07/20 03:46:34 djm Exp $ */
+/* $OpenBSD: monitor_wrap.c,v 1.112 2019/01/21 09:54:11 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -197,12 +197,8 @@ mm_choose_dh(int min, int nbits, int max)
 	if (success == 0)
 		fatal("%s: MONITOR_ANS_MODULI failed", __func__);
 
-	if ((p = BN_new()) == NULL)
-		fatal("%s: BN_new failed", __func__);
-	if ((g = BN_new()) == NULL)
-		fatal("%s: BN_new failed", __func__);
-	if ((r = sshbuf_get_bignum2(m, p)) != 0 ||
-	    (r = sshbuf_get_bignum2(m, g)) != 0)
+	if ((r = sshbuf_get_bignum2(m, &p)) != 0 ||
+	    (r = sshbuf_get_bignum2(m, &g)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 
 	debug3("%s: remaining %zu", __func__, sshbuf_len(m));
@@ -213,12 +209,12 @@ mm_choose_dh(int min, int nbits, int max)
 #endif
 
 int
-mm_sshkey_sign(struct sshkey *key, u_char **sigp, size_t *lenp,
+mm_sshkey_sign(struct ssh *ssh, struct sshkey *key, u_char **sigp, size_t *lenp,
     const u_char *data, size_t datalen, const char *hostkey_alg, u_int compat)
 {
 	struct kex *kex = *pmonitor->m_pkex;
 	struct sshbuf *m;
-	u_int ndx = kex->host_key_index(key, 0, active_state);
+	u_int ndx = kex->host_key_index(key, 0, ssh);
 	int r;
 
 	debug3("%s entering", __func__);
@@ -243,9 +239,8 @@ mm_sshkey_sign(struct sshkey *key, u_char **sigp, size_t *lenp,
 }
 
 struct passwd *
-mm_getpwnamallow(const char *username)
+mm_getpwnamallow(struct ssh *ssh, const char *username)
 {
-	struct ssh *ssh = active_state;		/* XXX */
 	struct sshbuf *m;
 	struct passwd *pw;
 	size_t len;
@@ -419,8 +414,8 @@ mm_user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 }
 
 int
-mm_hostbased_key_allowed(struct passwd *pw, const char *user, const char *host,
-    struct sshkey *key)
+mm_hostbased_key_allowed(struct ssh *ssh, struct passwd *pw,
+    const char *user, const char *host, struct sshkey *key)
 {
 	return (mm_key_allowed(MM_HOSTKEY, user, host, key, 0, NULL));
 }
@@ -513,9 +508,8 @@ mm_sshkey_verify(const struct sshkey *key, const u_char *sig, size_t siglen,
 }
 
 void
-mm_send_keystate(struct monitor *monitor)
+mm_send_keystate(struct ssh *ssh, struct monitor *monitor)
 {
-	struct ssh *ssh = active_state;		/* XXX */
 	struct sshbuf *m;
 	int r;
 

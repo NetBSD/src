@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2-hostbased.c,v 1.36 2018/07/31 03:10:27 djm Exp $ */
+/* $OpenBSD: auth2-hostbased.c,v 1.40 2019/01/19 21:43:56 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -78,7 +78,7 @@ userauth_hostbased(struct ssh *ssh)
 	    cuser, chost, pkalg, slen);
 #ifdef DEBUG_PK
 	debug("signature:");
-	sshbuf_dump_data(sig, siglen, stderr);
+	sshbuf_dump_data(sig, slen, stderr);
 #endif
 	pktype = sshkey_type_from_name(pkalg);
 	if (pktype == KEY_UNSPEC) {
@@ -111,6 +111,13 @@ userauth_hostbased(struct ssh *ssh)
 		    __func__, sshkey_type(key));
 		goto done;
 	}
+	if ((r = sshkey_check_cert_sigtype(key,
+	    options.ca_sign_algorithms)) != 0) {
+		logit("%s: certificate signature algorithm %s: %s", __func__,
+		    (key->cert == NULL || key->cert->signature_type == NULL) ?
+		    "(null)" : key->cert->signature_type, ssh_err(r));
+		goto done;
+	}
 
 	if (!authctxt->valid || authctxt->user == NULL) {
 		debug2("%s: disabled because of invalid user", __func__);
@@ -139,7 +146,8 @@ userauth_hostbased(struct ssh *ssh)
 
 	/* test for allowed key and correct signature */
 	authenticated = 0;
-	if (PRIVSEP(hostbased_key_allowed(authctxt->pw, cuser, chost, key)) &&
+	if (PRIVSEP(hostbased_key_allowed(ssh, authctxt->pw, cuser,
+	    chost, key)) &&
 	    PRIVSEP(sshkey_verify(key, sig, slen,
 	    sshbuf_ptr(b), sshbuf_len(b), pkalg, ssh->compat)) == 0)
 		authenticated = 1;
@@ -159,10 +167,9 @@ done:
 
 /* return 1 if given hostkey is allowed */
 int
-hostbased_key_allowed(struct passwd *pw, const char *cuser, char *chost,
-    struct sshkey *key)
+hostbased_key_allowed(struct ssh *ssh, struct passwd *pw,
+    const char *cuser, char *chost, struct sshkey *key)
 {
-	struct ssh *ssh = active_state; /* XXX */
 	const char *resolvedname, *ipaddr, *lookup, *reason;
 	HostStatus host_status;
 	int len;

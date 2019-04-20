@@ -1,4 +1,4 @@
-/* $OpenBSD: myproposal.h,v 1.56 2018/07/03 11:39:54 djm Exp $ */
+/* $OpenBSD: myproposal.h,v 1.58 2019/02/23 08:20:43 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifdef WITH_OPENSSL
 
-#define KEX_COMMON_KEX		\
+#define KEX_SERVER_KEX	\
 	"curve25519-sha256," \
 	"curve25519-sha256@libssh.org," \
 	"ecdh-sha2-nistp256," \
@@ -34,16 +34,11 @@
 	"ecdh-sha2-nistp521," \
 	"diffie-hellman-group-exchange-sha256," \
 	"diffie-hellman-group16-sha512," \
-	"diffie-hellman-group18-sha512" \
-
-#define KEX_SERVER_KEX KEX_COMMON_KEX "," \
+	"diffie-hellman-group18-sha512," \
 	"diffie-hellman-group14-sha256," \
 	"diffie-hellman-group14-sha1"
 
-#define KEX_CLIENT_KEX KEX_COMMON_KEX "," \
-	"diffie-hellman-group-exchange-sha1," \
-	"diffie-hellman-group14-sha256," \
-	"diffie-hellman-group14-sha1"
+#define KEX_CLIENT_KEX KEX_SERVER_KEX
 
 #define	KEX_DEFAULT_PK_ALG	\
 	"ecdsa-sha2-nistp256-cert-v01@openssh.com," \
@@ -82,6 +77,16 @@
 
 #define KEX_CLIENT_MAC KEX_SERVER_MAC
 
+/* Not a KEX value, but here so all the algorithm defaults are together */
+#define	SSH_ALLOWED_CA_SIGALGS	\
+	"ecdsa-sha2-nistp256," \
+	"ecdsa-sha2-nistp384," \
+	"ecdsa-sha2-nistp521," \
+	"ssh-ed25519," \
+	"rsa-sha2-512," \
+	"rsa-sha2-256," \
+	"ssh-rsa"
+
 #else /* WITH_OPENSSL */
 
 #define KEX_SERVER_KEX		\
@@ -108,6 +113,8 @@
 #define KEX_CLIENT_KEX KEX_SERVER_KEX
 #define	KEX_CLIENT_ENCRYPT KEX_SERVER_ENCRYPT
 #define KEX_CLIENT_MAC KEX_SERVER_MAC
+
+#define	SSH_ALLOWED_CA_SIGALGS	"ssh-ed25519"
 
 #endif /* WITH_OPENSSL */
 
