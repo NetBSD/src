@@ -1,4 +1,4 @@
-/*	$NetBSD: interwavevar.h,v 1.18 2012/10/27 17:18:21 chs Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.18.42.1 2019/04/21 06:00:00 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -198,11 +198,11 @@ void	iwattach(struct iw_softc *);
 int	iwopen(struct iw_softc *, int);	/* open hardware */
 void	iwclose(void *);		/* close hardware */
 
-	/* Encoding. */
-	/* XXX should we have separate in/out? */
-int	iw_query_encoding(void *, struct audio_encoding *);
-int	iw_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-	    stream_filter_list_t *, stream_filter_list_t *);
+	/* Format. */
+int	iw_query_format(void *, audio_format_query_t *);
+int	iw_audio_set_format(void *, int,
+	    const audio_params_t *, const audio_params_t *,
+	    audio_filter_reg_t *, audio_filter_reg_t *);
 
 	/* Hardware may have some say in the blocksize to choose */
 int	iw_round_blocksize(void *, int, int, const audio_params_t *);

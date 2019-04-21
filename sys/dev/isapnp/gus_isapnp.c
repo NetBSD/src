@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.39 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.39.2.1 2019/04/21 06:00:00 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.39 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.39.2.1 2019/04/21 06:00:00 isaki Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -66,8 +66,8 @@ static int     gus_isapnp_open(void *, int);
 static const struct audio_hw_if guspnp_hw_if = {
 	.open			= gus_isapnp_open,
 	.close			= iwclose,
-	.query_encoding		= iw_query_encoding,
-	.set_params		= iw_set_params,
+	.query_format		= iw_query_format,
+	.set_format		= iw_audio_set_format,
 	.round_blocksize	= iw_round_blocksize,
 	.commit_settings	= iw_commit_settings,
 	.init_output		= iw_init_output,

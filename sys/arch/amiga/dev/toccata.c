@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.18 2019/03/16 12:09:56 isaki Exp $ */
+/* $NetBSD: toccata.c,v 1.18.2.1 2019/04/21 05:59:59 isaki Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.18 2019/03/16 12:09:56 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.18.2.1 2019/04/21 05:59:59 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -185,8 +185,8 @@ const struct audio_hw_if audiocs_hw_if = {
 	 * sample data, otherwise up to 1024.
 	 */
 	.drain			= NULL,
-	.query_encoding		= ad1848_query_encoding,
-	.set_params		= ad1848_set_params,
+	.query_format		= ad1848_query_format,
+	.set_format		= ad1848_set_format,
 	.round_blocksize	= toccata_round_blocksize,
 	.commit_settings	= ad1848_commit_settings,
 	.init_output		= NULL,	/* XXX need this to prefill? */
