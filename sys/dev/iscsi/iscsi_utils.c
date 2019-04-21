@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.26 2019/04/01 06:20:40 msaitoh Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.27 2019/04/21 11:45:08 maya Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -686,7 +686,7 @@ get_sernum(session_t *sess, pdu_t *pdu)
 
 /*
  * sernum_in_window:
- *   Check wether serial number is in send window
+ *   Check whether serial number is in send window
  *
  */
 int
