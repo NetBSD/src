@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.10 2019/04/21 13:49:47 jmcneill Exp $ */
+/* $NetBSD: meson_platform.c,v 1.11 2019/04/21 15:57:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.10 2019/04/21 13:49:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.11 2019/04/21 15:57:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -442,11 +442,11 @@ meson8b_mpstart(void)
 }
 
 static const struct arm_platform meson8b_platform = {
-	.ap_devmap = meson8b_platform_devmap,
+	.ap_devmap = meson_platform_devmap,
 	.ap_bootstrap = meson8b_platform_bootstrap,
 	.ap_init_attach_args = meson_platform_init_attach_args,
 	.ap_device_register = meson8b_platform_device_register,
-	.ap_reset = meson_platform_reset,
+	.ap_reset = meson8b_platform_reset,
 	.ap_delay = a9tmr_delay,
 	.ap_uart_freq = meson_platform_uart_freq,
 	.ap_mpstart = meson8b_mpstart,
