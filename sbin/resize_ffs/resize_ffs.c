@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.53 2017/10/09 05:24:26 mlelstv Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.54 2019/04/21 11:45:08 maya Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.53 2017/10/09 05:24:26 mlelstv Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.54 2019/04/21 11:45:08 maya Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -2086,7 +2086,7 @@ write_sbs(void)
 }
 
 /*
- * Check to see wether new size changes the filesystem
+ * Check to see whether new size changes the filesystem
  *  return exit code
  */
 static int

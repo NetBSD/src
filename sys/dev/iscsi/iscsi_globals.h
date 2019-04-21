@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.24 2019/04/21 11:26:46 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.25 2019/04/21 11:45:08 maya Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -532,7 +532,7 @@ extern login_isid_t iscsi_InitiatorISID;
 #ifdef ISCSI_DEBUG
 
 extern int iscsi_debug_level;	/* How much debug info to display */
-extern bool iscsi_hex_bignums;	/* Wether to encode parameters in hex or base64 */
+extern bool iscsi_hex_bignums;	/* Whether to encode parameters in hex or base64 */
 
 #define DEBOUT(x) printf x
 #define DEB(lev,x) { if (iscsi_debug_level >= lev) printf x ;}

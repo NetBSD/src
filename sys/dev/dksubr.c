@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.107 2019/03/27 19:13:34 martin Exp $ */
+/* $NetBSD: dksubr.c,v 1.108 2019/04/21 11:45:08 maya Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.107 2019/03/27 19:13:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.108 2019/04/21 11:45:08 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -812,7 +812,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 			    p->p_fstype));
 			return ENXIO;
 		}
-		/* Check wether dump goes to a wedge */
+		/* Check whether dump goes to a wedge */
 		if (dksc->sc_dkdev.dk_nwedges == 0) {
 			DPRINTF(DKDB_DUMP, ("%s: dump to raw\n", __func__));
 			return ENXIO;
