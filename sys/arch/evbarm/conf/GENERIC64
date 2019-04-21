@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.89 2019/04/21 13:51:04 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.90 2019/04/21 14:14:14 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -337,9 +337,10 @@ rkreg*		at rkpmic?
 tcagpio*	at iic?
 
 # Random number generators
-bcmrng*		at fdt?			# Broadcom BCM283x RNG
 amdccp*		at fdt?			# AMD Cryptograhic Coprocessor RNG
 amdccp*		at acpi?
+bcmrng*		at fdt?			# Broadcom BCM283x RNG
+mesonrng*	at fdt?			# Amlogic Meson RNG
 
 # RTC
 plrtc*		at fdt?			# ARM PrimeCell RTC
