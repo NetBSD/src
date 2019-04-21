@@ -1,6 +1,7 @@
-/* $NetBSD: efienv.c,v 1.3 2019/03/30 12:47:53 jmcneill Exp $ */
+/* $NetBSD: efienv.c,v 1.4 2019/04/21 22:30:41 thorpej Exp $ */
 
 /*-
+ * Copyright (c) 2019 Jason R. Thorpe
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
@@ -33,6 +34,69 @@
 	{ 0x97cde9bd, 0xac88, 0x4cf9, { 0x84, 0x86, 0x01, 0x33, 0x0f, 0xe1, 0x95, 0xd4 } }
 
 static EFI_GUID EfibootVendorGuid = EFIBOOT_VENDOR_GUID;
+
+void
+efi_env_from_efibootplist(void)
+{
+	/*
+	 * We support pre-loading the EFI environment from efiboot.plist
+	 * using the following schema:
+	 *
+	 *	<key>environment-variables</key>
+	 *	<dict>
+	 *		<key>varname1</key>
+	 *		<string>value_for_varname1</string>
+	 *		<key>varname2</key>
+	 *		<string>value_for_varname2</string>
+	 *	</dict>
+	 *
+	 * Only string values are supported.
+	 */
+	prop_dictionary_t environment;
+	prop_dictionary_keysym_t key;
+	prop_string_t value;
+	prop_object_iterator_t iter;
+
+	const char *env_key;
+	char *env_value;
+
+	environment = prop_dictionary_get(efibootplist,
+	    "environment-variables");
+	if (environment == NULL)
+		return;
+
+	iter = prop_dictionary_iterator(environment);
+	if (iter == NULL)
+		goto failed;
+
+	while ((key = prop_object_iterator_next(iter)) != NULL) {
+		value = prop_dictionary_get_keysym(environment, key);
+		if (value == NULL) {
+			printf("boot: env: failed to get value for '%s'\n",
+			    prop_dictionary_keysym_cstring_nocopy(key));
+			continue;
+		}
+		if (prop_object_type(value) != PROP_TYPE_STRING) {
+			printf("boot: env: value for '%s' is not a string\n",
+			    prop_dictionary_keysym_cstring_nocopy(key));
+			continue;
+		}
+		/* XXX __UNCONST because gnuefi */
+		env_key = prop_dictionary_keysym_cstring_nocopy(key);;
+		env_value = __UNCONST(prop_string_cstring_nocopy(value));;
+#ifdef EFIBOOT_DEBUG
+		printf(">> efiboot.plist env: '%s' = '%s'\n", env_key,
+		    env_value);
+#endif
+		efi_env_set(env_key, env_value);
+	}
+	prop_object_iterator_release(iter);
+
+	return;
+
+ failed:
+	printf("boot: failed to load environment from efiboot.plist");
+}
 
 void
 efi_env_set(const char *key, char *val)
