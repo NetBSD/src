@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modctl.c,v 1.13 2019/01/27 02:08:50 pgoyette Exp $	*/
+/*	$NetBSD: t_modctl.c,v 1.14 2019/04/21 11:45:09 maya Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.13 2019/01/27 02:08:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.14 2019/04/21 11:45:09 maya Exp $");
 
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -61,7 +61,7 @@ static void	unload_cleanup(const char *);
 /* --------------------------------------------------------------------- */
 
 /*
- * A function checking wether we are allowed to load modules currently
+ * A function checking whether we are allowed to load modules currently
  * (either the kernel is not modular, or securelevel may prevent it)
  */
 static void

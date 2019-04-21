@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.13 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: voyager.c,v 1.14 2019/04/21 11:45:08 maya Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.13 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.14 2019/04/21 11:45:08 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	strcpy(vaa.vaa_name, "vac");
 	config_found_ia(sc->sc_dev, "voyagerbus", &vaa, voyager_print);
 #endif
-	/* we use this mutex wether there's an i2c bus or not */
+	/* we use this mutex whether there's an i2c bus or not */
 	mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
