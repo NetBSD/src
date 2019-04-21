@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bus_dma.c,v 1.7 2017/03/09 08:27:18 maya Exp $	*/
+/*	$NetBSD: ttm_bus_dma.c,v 1.8 2019/04/21 15:49:50 chs Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.7 2017/03/09 08:27:18 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.8 2019/04/21 15:49:50 chs Exp $");
 
 #include <sys/bus.h>
 
@@ -70,6 +70,9 @@ ttm_bus_dma_populate(struct ttm_dma_tt *ttm_dma)
 	/* Mark it populated but unbound.  */
 	ttm_dma->ttm.state = tt_unbound;
 
+	/* Mark it wired.  */
+	ttm_dma->ttm.page_flags &= ~TTM_PAGE_FLAG_SWAPPED;
+
 	/* Load the DMA map.  */
 	/* XXX errno NetBSD->Linux */
 	ret = -bus_dmamap_load_pglist(ttm_dma->ttm.bdev->dmat,
@@ -77,9 +80,6 @@ ttm_bus_dma_populate(struct ttm_dma_tt *ttm_dma)
 	    (ttm_dma->ttm.num_pages << PAGE_SHIFT), BUS_DMA_NOWAIT);
 	if (ret)
 		goto fail1;
-
-	/* Mark it wired.  */
-	ttm_dma->ttm.page_flags &= ~TTM_PAGE_FLAG_SWAPPED;
 
 	/* Success!  */
 	return 0;
