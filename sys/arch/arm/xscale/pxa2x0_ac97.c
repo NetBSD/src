@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.15 2019/03/16 12:09:56 isaki Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.15.2.1 2019/04/21 05:11:21 isaki Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -184,8 +184,16 @@ struct audio_device acu_device = {
 };
 
 static const struct audio_format acu_formats[] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {4000, 48000}}
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 0,
+		.frequency	= { 4000, 48000 },
+	},
 };
 #define	ACU_NFORMATS	(sizeof(acu_formats) / sizeof(struct audio_format))
 

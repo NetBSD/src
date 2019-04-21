@@ -47,20 +47,23 @@
 #define DPRINTF(s) do {} while (/*CONSTCOND*/0)
 #endif
 
+#define UDA1341_FORMAT(enc, prec) \
+	{ \
+		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
+		.encoding	= (enc), \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= 2, \
+		.channel_mask	= AUFMT_STEREO, \
+		.frequency_type	= 0, \
+		.frequency	= { 8000, 48000 }, \
+	}
 const struct audio_format uda1341_formats[UDA1341_NFORMATS] =
 {
-	{NULL, AUMODE_PLAY|AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8, 2,
-	 AUFMT_STEREO, 0, {8000, 48000}
-	},
-	{NULL, AUMODE_PLAY|AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16, 2,
-	 AUFMT_STEREO, 0, {8000, 48000}
-	},
-	{NULL, AUMODE_PLAY|AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8, 2,
-	 AUFMT_STEREO, 0, {8000, 48000}
-	},
-	{NULL, AUMODE_PLAY|AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 16, 16, 2,
-	 AUFMT_STEREO, 0, {8000, 48000}
-	},
+	UDA1341_FORMAT(AUDIO_ENCODING_SLINEAR_LE,  8),
+	UDA1341_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16),
+	UDA1341_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8),
+	UDA1341_FORMAT(AUDIO_ENCODING_ULINEAR_LE, 16),
 };
 
 static void uda1341_update_sound_settings(struct uda1341_softc *sc);

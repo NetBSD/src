@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.61 2019/04/08 15:35:57 isaki Exp $	*/
+/*	$NetBSD: yds.c,v 1.61.2.1 2019/04/21 05:11:22 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.61 2019/04/08 15:35:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.61.2.1 2019/04/21 05:11:22 isaki Exp $");
 
 #include "mpu.h"
 
@@ -267,15 +267,22 @@ static const struct {
 #define YDS_CAP_BITS	"\020\005P44\004LEGFLEX\003LEGSEL\002MCODE1E\001MCODE1"
 #endif
 
+#define YDS_FORMAT(enc, prec, ch, chmask) \
+	{ \
+		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
+		.encoding	= (enc), \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 0, \
+		.frequency	= { 4000, 48000 }, \
+	}
 static const struct audio_format yds_formats[] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	YDS_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 2, AUFMT_STEREO),
+	YDS_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 1, AUFMT_MONAURAL),
+	YDS_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 2, AUFMT_STEREO),
+	YDS_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 1, AUFMT_MONAURAL),
 };
 #define	YDS_NFORMATS	(sizeof(yds_formats) / sizeof(struct audio_format))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.45 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: fms.c,v 1.45.2.1 2019/04/21 05:11:22 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.45 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.45.2.1 2019/04/21 05:11:22 isaki Exp $");
 
 #include "mpu.h"
 
@@ -543,19 +543,23 @@ static struct {
 };
 
 #define FMS_NFORMATS	4
+#define FMS_FORMAT(enc, prec, ch, chmask) \
+	{ \
+		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
+		.encoding	= (enc), \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 11, \
+		.frequency	= { 5500, 8000, 9600, 11025, 16000, 19200, \
+		                    22050, 32000, 38400, 44100, 48000}, \
+	}
 static const struct audio_format fms_formats[FMS_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 11, {5500, 8000, 9600, 11025, 16000, 19200, 22050,
-			       32000, 38400, 44100, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 11, {5500, 8000, 9600, 11025, 16000, 19200, 22050,
-				 32000, 38400, 44100, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 11, {5500, 8000, 9600, 11025, 16000, 19200, 22050,
-			       32000, 38400, 44100, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 11, {5500, 8000, 9600, 11025, 16000, 19200, 22050,
-				 32000, 38400, 44100, 48000}},
+	FMS_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 2, AUFMT_STEREO),
+	FMS_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 1, AUFMT_MONAURAL),
+	FMS_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 2, AUFMT_STEREO),
+	FMS_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 1, AUFMT_MONAURAL),
 };
 
 static int

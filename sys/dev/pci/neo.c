@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.52 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: neo.c,v 1.52.2.1 2019/04/21 05:11:22 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.52 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.52.2.1 2019/04/21 05:11:22 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,15 +229,23 @@ static const int samplerates[9] = {
 };
 
 #define NEO_NFORMATS	4
+#define NEO_FORMAT(enc, prec, ch, chmask) \
+	{ \
+		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
+		.encoding	= (enc), \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 8, \
+		.frequency	= \
+		    { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000 }, \
+	}
 static const struct audio_format neo_formats[NEO_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 8, {8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 8, {8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 8, {8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 8, {8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000}},
+	NEO_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 2, AUFMT_STEREO),
+	NEO_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 1, AUFMT_MONAURAL),
+	NEO_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 2, AUFMT_STEREO),
+	NEO_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 1, AUFMT_MONAURAL),
 };
 
 /* -------------------------------------------------------------------- */

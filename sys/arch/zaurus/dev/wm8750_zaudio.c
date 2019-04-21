@@ -1,4 +1,4 @@
-/*	$NetBSD: wm8750_zaudio.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: wm8750_zaudio.c,v 1.2.4.1 2019/04/21 05:11:22 isaki Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wm8750_zaudio.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wm8750_zaudio.c,v 1.2.4.1 2019/04/21 05:11:22 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,51 +112,22 @@ static struct audio_device wm8750_device = {
 	"wm"
 };
 
+#define WM8750_FORMAT(enc, prec, ch, chmask) \
+	{ \
+		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
+		.encoding	= (enc), \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 0, \
+		.frequency	= { 4000, 48000 }, \
+	}
 static const struct audio_format wm8750_formats[] = {
-	{
-		.driver_data	= NULL,
-		.mode		= AUMODE_PLAY | AUMODE_RECORD,
-		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
-		.validbits	= 16,
-		.precision	= 16,
-		.channels	= 2,
-		.channel_mask	= AUFMT_STEREO,
-		.frequency_type	= 0,
-		.frequency	= { 4000, 48000 }
-	},
-	{
-		.driver_data	= NULL,
-		.mode		= AUMODE_PLAY | AUMODE_RECORD,
-		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
-		.validbits	= 16,
-		.precision	= 16,
-		.channels	= 1,
-		.channel_mask	= AUFMT_MONAURAL,
-		.frequency_type	= 0,
-		.frequency	= { 4000, 48000 }
-	},
-	{
-		.driver_data	= NULL,
-		.mode		= AUMODE_PLAY | AUMODE_RECORD,
-		.encoding	= AUDIO_ENCODING_ULINEAR_LE,
-		.validbits	= 8,
-		.precision	= 8,
-		.channels	= 2,
-		.channel_mask	= AUFMT_STEREO,
-		.frequency_type	= 0,
-		.frequency	= { 4000, 48000 }
-	},
-	{
-		.driver_data	= NULL,
-		.mode		= AUMODE_PLAY | AUMODE_RECORD,
-		.encoding	= AUDIO_ENCODING_ULINEAR_LE,
-		.validbits	= 8,
-		.precision	= 8,
-		.channels	= 1,
-		.channel_mask	= AUFMT_MONAURAL,
-		.frequency_type	= 0,
-		.frequency	= { 4000, 48000 }
-	},
+	WM8750_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 2, AUFMT_STEREO),
+	WM8750_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 1, AUFMT_MONAURAL),
+	WM8750_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 2, AUFMT_STEREO),
+	WM8750_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 1, AUFMT_MONAURAL),
 };
 static const int wm8750_nformats = (int)__arraycount(wm8750_formats);
 
