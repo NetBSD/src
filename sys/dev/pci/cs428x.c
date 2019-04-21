@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.18 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.18.14.1 2019/04/21 07:49:16 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.18 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.18.14.1 2019/04/21 07:49:16 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,29 +163,6 @@ cs428x_round_buffersize(void *addr, int direction,
 	 * (originally suggested by Lennart Augustsson.)
 	 */
 	return size;
-}
-
-paddr_t
-cs428x_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct cs428x_softc *sc;
-	struct cs428x_dma *p;
-
-	sc = addr;
-
-	if (off < 0)
-		return -1;
-
-	for (p = sc->sc_dmas; p && BUFADDR(p) != mem; p = p->next)
-		continue;
-
-	if (p == NULL) {
-		DPRINTF(("cs428x_mappage: bad buffer address\n"));
-		return -1;
-	}
-
-	return (bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
-	    off, prot, BUS_DMA_WAITOK));
 }
 
 int

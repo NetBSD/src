@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.16 2012/10/27 17:18:31 chs Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.16.42.1 2019/04/21 07:49:16 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -184,7 +184,6 @@ int  cs428x_query_devinfo(void *, mixer_devinfo_t *);
 void *cs428x_malloc(void *, int, size_t);
 size_t cs428x_round_buffersize(void *, int, size_t);
 void cs428x_free(void *, void *, size_t);
-paddr_t cs428x_mappage(void *, void *, off_t, int);
 void cs428x_get_locks(void *, kmutex_t **, kmutex_t **);
 
 /* internal functions */
