@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.6 2018/10/12 22:08:04 jmcneill Exp $
+# $NetBSD: Makefile.efiboot,v 1.7 2019/04/21 22:30:41 thorpej Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -26,7 +26,7 @@ SOURCES+=	efiboot.c efichar.c efidev.c efienv.c efigetsecs.c efifdt.c efifile.c 
 
 .PATH: ${S}/external/bsd/libfdt/dist
 CPPFLAGS+=	-I${S}/external/bsd/libfdt/dist
-SOURCES+=	fdt.c fdt_addresses.c fdt_empty_tree.c
+SOURCES+=	fdt.c fdt_addresses.c fdt_empty_tree.c fdt_overlay.c
 SOURCES+=	fdt_ro.c fdt_rw.c fdt_strerror.c fdt_sw.c fdt_wip.c
 
 SRCS= ${SOURCES} ${EXTRA_SOURCES}
@@ -51,6 +51,7 @@ LDFLAGS+= -nostdlib -T${LDSCRIPT} -Bsymbolic -shared
 CPPFLAGS+= -I$S -I${.CURDIR} -I${.CURDIR}/../common -I$S/lib/libsa
 CPPFLAGS+= -I${.OBJDIR}
 CPPFLAGS+= -I${.CURDIR}/../../lib
+CPPFLAGS+= -I${S}/../common/include
 
 COPTS+=	-fpic -g -O2
 COPTS+=	-fshort-wchar -fno-strict-aliasing
@@ -77,6 +78,7 @@ CPPFLAGS+= -DSUPPORT_DHCP
 CPPFLAGS+= -DSUPPORT_TFTP
 CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
 
+#CPPFLAGS+= -DEFIBOOT_DEBUG
 #CPPFLAGS+= -DARP_DEBUG
 #CPPFLAGS+= -DBOOTP_DEBUG
 #CPPFLAGS+= -DNET_DEBUG
