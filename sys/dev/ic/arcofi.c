@@ -1,4 +1,4 @@
-/*	$NetBSD: arcofi.c,v 1.1.28.2 2019/04/21 06:55:34 isaki Exp $	*/
+/*	$NetBSD: arcofi.c,v 1.1.28.3 2019/04/21 07:09:13 isaki Exp $	*/
 /*	$OpenBSD: arcofi.c,v 1.6 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
@@ -195,6 +195,8 @@ static int	arcofi_cr3_to_portmask(uint, int);
 static int	arcofi_gain_to_mi(uint);
 static uint	arcofi_mi_to_gain(int);
 static uint	arcofi_portmask_to_cr3(int);
+static int	arcofi_recv_data(struct arcofi_softc *);
+static int	arcofi_xmit_data(struct arcofi_softc *);
 
 static int	arcofi_open(void *, int);
 static void	arcofi_close(void *);
@@ -567,6 +569,9 @@ arcofi_start_output(void *v, void *wbuf, int wsz, void (*cb)(void *),
 	sc->sc_xmit.past = (uint8_t *)wbuf + wsz;
 	sc->sc_xmit.cb = cb;
 	sc->sc_xmit.cbarg = cbarg;
+
+	/* Fill FIFO */
+	arcofi_xmit_data(sc);
 
 	/* enable output FIFO interrupts */
 	arcofi_write(sc, ARCOFI_FIFO_IR, arcofi_read(sc, ARCOFI_FIFO_IR) |
