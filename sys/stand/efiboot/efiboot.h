@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.9 2018/11/15 23:52:33 jmcneill Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.10 2019/04/21 22:30:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -35,6 +35,8 @@
 #include <loadfile.h>
 #include <net.h>
 
+#include <prop/proplib.h>
+
 #include "efiboot_machdep.h"
 
 struct boot_command {
@@ -60,6 +62,8 @@ int set_initrd_path(const char *);
 char *get_initrd_path(void);
 int set_dtb_path(const char *);
 char *get_dtb_path(void);
+int set_efibootplist_path(const char *);
+char *get_efibootplist_path(void);
 
 /* console.c */
 int ischar(void);
@@ -73,6 +77,7 @@ void efi_exit(void);
 void efi_delay(int);
 void efi_reboot(void);
 extern int howto;
+extern prop_dictionary_t efibootplist;
 
 /* efichar.c */
 size_t ucs2len(const CHAR16 *);
@@ -101,6 +106,7 @@ bool efi_pxe_match_booted_interface(const EFI_MAC_ADDRESS *, UINT32);
 
 /* exec.c */
 int exec_netbsd(const char *, const char *);
+void load_efibootplist(bool);
 
 /* panic.c */
 __dead VOID Panic(IN CHAR16 *, ...);

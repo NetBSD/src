@@ -1,6 +1,7 @@
-/* $NetBSD: exec.c,v 1.9 2019/03/30 12:47:53 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.10 2019/04/21 22:30:41 thorpej Exp $ */
 
 /*-
+ * Copyright (c) 2019 Jason R. Thorpe
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
@@ -27,6 +28,7 @@
  */
 
 #include "efiboot.h"
+#include "efienv.h"
 #include "efifdt.h"
 #include "efiacpi.h"
 
@@ -41,11 +43,13 @@ static EFI_PHYSICAL_ADDRESS initrd_addr, dtb_addr;
 static u_long initrd_size = 0, dtb_size = 0;
 
 static int
-load_file(char *path, EFI_PHYSICAL_ADDRESS *paddr, u_long *psize)
+load_file(const char *path, u_long extra, bool quiet_errors,
+    EFI_PHYSICAL_ADDRESS *paddr, u_long *psize)
 {
 	EFI_STATUS status;
 	struct stat st;
 	ssize_t len;
+	ssize_t expectedlen;
 	int fd;
 
 	if (strlen(path) == 0)
@@ -53,7 +57,10 @@ load_file(char *path, EFI_PHYSICAL_ADDRESS *paddr, u_long *psize)
 
 	fd = open(path, 0);
 	if (fd < 0) {
-		printf("boot: failed to open %s: %s\n", path, strerror(errno));
+		if (!quiet_errors) {
+			printf("boot: failed to open %s: %s\n", path,
+			    strerror(errno));
+		}
 		return errno;
 	}
 	if (fstat(fd, &st) < 0) {
@@ -62,12 +69,15 @@ load_file(char *path, EFI_PHYSICAL_ADDRESS *paddr, u_long *psize)
 		return errno;
 	}
 	if (st.st_size == 0) {
-		printf("boot: empty file %s\n", path);
+		if (!quiet_errors) {
+			printf("boot: empty file %s\n", path);
+		}
 		close(fd);
 		return EINVAL;
 	}
 
-	*psize = st.st_size;
+	expectedlen = st.st_size;
+	*psize = st.st_size + extra;
 
 #ifdef EFIBOOT_ALLOCATE_MAX_ADDRESS
 	*paddr = EFIBOOT_ALLOCATE_MAX_ADDRESS;
@@ -82,18 +92,21 @@ load_file(char *path, EFI_PHYSICAL_ADDRESS *paddr, u_long *psize)
 		printf("Failed to allocate %lu bytes for %s (error %lu)\n",
 		    *psize, path, (u_long)status);
 		close(fd);
+		*paddr = 0;
 		return ENOMEM;
 	}
 
 	printf("boot: loading %s ", path);
-	len = read(fd, (void *)(uintptr_t)*paddr, *psize);
+	len = read(fd, (void *)(uintptr_t)*paddr, expectedlen);
 	close(fd);
 
-	if (len != *psize) {
-		if (len < 0)
+	if (len != expectedlen) {
+		if (len < 0) {
 			printf(": %s\n", strerror(errno));
-		else
-			printf(": returned %ld (expected %ld)\n", len, *psize);
+		} else {
+			printf(": returned %ld (expected %ld)\n", len,
+			    expectedlen);
+		}
 		return EIO;
 	}
 
@@ -104,6 +117,155 @@ load_file(char *path, EFI_PHYSICAL_ADDRESS *paddr, u_long *psize)
 	return 0;
 }
 
+static const char default_efibootplist_path[] = "/etc/efiboot.plist";
+
+/* This is here because load_file() is here. */
+void
+load_efibootplist(bool default_fallback)
+{
+	EFI_PHYSICAL_ADDRESS plist_addr = 0;
+	u_long plist_size = 0;
+	prop_dictionary_t plist = NULL, oplist = NULL;
+	bool load_quietly = false;
+
+	const char *path = get_efibootplist_path();
+	if (path == NULL || strlen(path) == 0) {
+		if (!default_fallback)
+			return;
+		path = default_efibootplist_path;
+		load_quietly = true;
+	}
+
+	/*
+	 * Fudge the size so we can ensure the resulting buffer
+	 * is NUL-terminated for convenience.
+	 */
+	if (load_file(path, 1, load_quietly, &plist_addr, &plist_size) != 0 ||
+	    plist_addr == 0) {
+		/* Error messages have already been displayed. */
+		goto out;
+	}
+	char *plist_buf = (char *)((uintptr_t)plist_addr);
+	plist_buf[plist_size - 1] = '\0';
+
+	plist = prop_dictionary_internalize(plist_buf);
+	if (plist == NULL) {
+		printf("boot: unable to parse plist '%s'\n", path);
+		goto out;
+	}
+
+out:
+	oplist = efibootplist;
+
+	/*
+	 * If we had a failure, create an empty one for
+	 * convenience.  But a failure should not clobber
+	 * an in-memory plist we already have.
+	 */
+	if (plist == NULL &&
+	    (oplist == NULL || prop_dictionary_count(oplist) == 0))
+		plist = prop_dictionary_create();
+
+#ifdef EFIBOOT_DEBUG
+	printf(">> load_efibootplist: oplist = 0x%lx, plist = 0x%lx\n",
+	    (u_long)oplist, (u_long)plist);
+#endif
+
+	if (plist_addr) {
+		uefi_call_wrapper(BS->FreePages, 2, plist_addr,
+		    EFI_SIZE_TO_PAGES(plist_size));
+	}
+
+	if (plist) {
+		efibootplist = plist;
+		efi_env_from_efibootplist();
+
+		if (oplist)
+			prop_object_release(oplist);
+	}
+}
+
+static void
+apply_overlay(void *dtbo)
+{
+
+	if (!efi_fdt_overlay_is_compatible(dtbo)) {
+		printf("boot: incompatible overlay\n");
+	}
+
+	int fdterr;
+
+	if (efi_fdt_overlay_apply(dtbo, &fdterr) != 0) {
+		printf("boot: error %d applying overlay\n", fdterr);
+	}
+}
+
+static void
+apply_overlay_file(const char *path)
+{
+	EFI_PHYSICAL_ADDRESS dtbo_addr;
+	u_long dtbo_size;
+
+	if (strlen(path) == 0)
+		return;
+
+	if (load_file(path, 0, false, &dtbo_addr, &dtbo_size) != 0 ||
+	    dtbo_addr == 0) {
+		/* Error messages have already been displayed. */
+		goto out;
+	}
+
+	apply_overlay((void *)(uintptr_t)dtbo_addr);
+
+out:
+	if (dtbo_addr) {
+		uefi_call_wrapper(BS->FreePages, 2, dtbo_addr,
+		    EFI_SIZE_TO_PAGES(dtbo_size));
+	}
+}
+
+#define	DT_OVERLAYS_PROP	"device-tree-overlays"
+
+static void
+load_fdt_overlays(void)
+{
+	/*
+	 * We support loading device tree overlays specified in efiboot.plist
+	 * using the following schema:
+	 *
+	 *	<key>device-tree-overlays</key>
+	 *	<array>
+	 *		<string>/path/to/some/overlay.dtbo</string>
+	 *		<string>hd0e:/some/other/overlay.dtbo</string>
+	 *	</array>
+	 *
+	 * The overlays are loaded in array order.
+	 */
+	prop_array_t overlays = prop_dictionary_get(efibootplist,
+	    DT_OVERLAYS_PROP);
+	if (overlays == NULL) {
+#ifdef EFIBOOT_DEBUG
+		printf("boot: no device-tree-overlays\n");
+#endif
+		return;
+	}
+	if (prop_object_type(overlays) != PROP_TYPE_ARRAY) {
+		printf("boot: invalid %s\n", DT_OVERLAYS_PROP);
+		return;
+	}
+
+	prop_object_iterator_t iter = prop_array_iterator(overlays);
+	prop_string_t pathobj;
+	while ((pathobj = prop_object_iterator_next(iter)) != NULL) {
+		if (prop_object_type(pathobj) != PROP_TYPE_STRING) {
+			printf("boot: invalid %s entry\n", DT_OVERLAYS_PROP);
+			continue;
+		}
+		apply_overlay_file(prop_string_cstring_nocopy(pathobj));
+	}
+	prop_object_iterator_release(iter);
+}
+
 int
 exec_netbsd(const char *fname, const char *args)
 {
@@ -112,8 +274,8 @@ exec_netbsd(const char *fname, const char *args)
 	EFI_STATUS status;
 	int fd, ohowto;
 
-	load_file(get_initrd_path(), &initrd_addr, &initrd_size);
-	load_file(get_dtb_path(), &dtb_addr, &dtb_size);
+	load_file(get_initrd_path(), 0, false, &initrd_addr, &initrd_size);
+	load_file(get_dtb_path(), 0, false, &dtb_addr, &dtb_size);
 
 	memset(marks, 0, sizeof(marks));
 	ohowto = howto;
@@ -165,6 +327,7 @@ exec_netbsd(const char *fname, const char *args)
 
 	if (efi_fdt_size() > 0) {
 		efi_fdt_init((marks[MARK_END] + FDT_ALIGN) & ~FDT_ALIGN, FDT_ALIGN + 1);
+		load_fdt_overlays();
 		efi_fdt_initrd(initrd_addr, initrd_size);
 		efi_fdt_bootargs(args);
 		efi_fdt_memory_map();

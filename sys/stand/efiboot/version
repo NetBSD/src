@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.9 2019/01/18 19:41:03 skrll Exp $
+$NetBSD: version,v 1.10 2019/04/21 22:30:41 thorpej Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -13,3 +13,4 @@ is taken as the current.
 1.6:	Add GPT support.
 1.7:	Add NFS support.
 1.8:	Add support for "bootargs" environment variable.
+1.9:	Add support for efiboot.plist and loading device tree overlays.

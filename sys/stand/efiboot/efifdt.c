@@ -1,6 +1,7 @@
-/* $NetBSD: efifdt.c,v 1.14 2018/11/15 23:52:33 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.15 2019/04/21 22:30:41 thorpej Exp $ */
 
 /*-
+ * Copyright (c) 2019 Jason R. Thorpe
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
@@ -85,6 +86,53 @@ int
 efi_fdt_size(void)
 {
 	return fdt_data == NULL ? 0 : fdt_totalsize(fdt_data);
+}
+
+bool
+efi_fdt_overlay_is_compatible(void *dtbo)
+{
+	const int system_root = fdt_path_offset(fdt_data, "/");
+	const int overlay_root = fdt_path_offset(dtbo, "/");
+
+	if (system_root < 0 || overlay_root < 0)
+		return false;
+
+	const int system_ncompat = fdt_stringlist_count(fdt_data, system_root,
+	    "compatible");
+	const int overlay_ncompat = fdt_stringlist_count(dtbo, overlay_root,
+	    "compatible");
+
+	if (system_ncompat <= 0 || overlay_ncompat <= 0)
+		return false;
+
+	const char *system_compatible, *overlay_compatible;
+	int si, oi;
+
+	for (si = 0; si < system_ncompat; si++) {
+		system_compatible = fdt_stringlist_get(fdt_data,
+		    system_root, "compatible", si, NULL);
+		if (system_compatible == NULL)
+			continue;
+		for (oi = 0; oi < overlay_ncompat; oi++) {
+			overlay_compatible = fdt_stringlist_get(dtbo,
+			    overlay_root, "compatible", oi, NULL);
+			if (overlay_compatible == NULL)
+				continue;
+			if (strcmp(system_compatible, overlay_compatible) == 0)
+				return true;
+		}
+	}
+
+	return false;
+}
+
+int
+efi_fdt_overlay_apply(void *dtbo, int *fdterr)
+{
+	int err = fdt_overlay_apply(fdt_data, dtbo);
+	if (fdterr)
+		*fdterr = err;
+	return err == 0 ? 0 : EIO;
 }
 
 void
