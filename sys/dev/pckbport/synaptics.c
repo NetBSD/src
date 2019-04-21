@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.46 2018/12/04 10:10:15 blymn Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.47 2019/04/21 02:40:35 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.46 2018/12/04 10:10:15 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.47 2019/04/21 02:40:35 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
  *					for noise.
  * 1	0x08	image sensor		image sensor tracks 5 fingers, but only
  *					reports 2.
- * 1	0x01	uniform clickpad	whole clickpad moves instead of being
+ * 1	0x10	uniform clickpad	whole clickpad moves instead of being
  *					hinged at the top.
  * 1	0x20	report min		query 0x0f gives min coord reported
  */
