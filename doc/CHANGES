@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2527 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2528 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -358,3 +358,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	dhcpcd(8): Import dhcpcd-7.2.0 [roy 20190418]
 	evbarm: Add support for Amlogic GXL family SoCs. [jmcneill 20190419]
 	OpenSSH: Import 8.0 [christos 20180420]
+	evbarm: Add support for boot configuration (efiboot.plist) and
+		applying device tree overlays to efiboot. [thorpej 20190421]
