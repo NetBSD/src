@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.8 2019/04/19 19:07:56 jmcneill Exp $ */
+/* $NetBSD: meson_platform.c,v 1.9 2019/04/21 12:36:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.8 2019/04/19 19:07:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.9 2019/04/21 12:36:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,14 +69,23 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.8 2019/04/19 19:07:56 jmcneill 
 
 #define	MESON_CBUS_OFFSET	0x01100000
 
-#define	MESON_WATCHDOG_BASE	0xc1109900
-#define	MESON_WATCHDOG_SIZE	0x8
-#define	 MESON_WATCHDOG_TC	0x00
-#define	  WATCHDOG_TC_CPUS	__BITS(27,24)
-#define	  WATCHDOG_TC_ENABLE	__BIT(19)
-#define	  WATCHDOG_TC_TCNT	__BITS(15,0)
-#define	 MESON_WATCHDOG_RESET	0x04
-#define	  WATCHDOG_RESET_COUNT	__BITS(15,0)
+#define	MESON8B_WATCHDOG_BASE	0xc1109900
+#define	MESON8B_WATCHDOG_SIZE	0x8
+#define	 MESON8B_WATCHDOG_TC	0x00
+#define	  MESON8B_WATCHDOG_TC_CPUS	__BITS(27,24)
+#define	  MESON8B_WATCHDOG_TC_ENABLE	__BIT(19)
+#define	  MESON8B_WATCHDOG_TC_TCNT	__BITS(15,0)
+#define	 MESON8B_WATCHDOG_RESET	0x04
+#define	  MESON8B_WATCHDOG_RESET_COUNT	__BITS(15,0)
+
+#define	MESONGX_WATCHDOG_BASE	0xc11098d0
+#define	MESONGX_WATCHDOG_SIZE	0x10
+#define	 MESONGX_WATCHDOG_CNTL	0x00
+#define	  MESONGX_WATCHDOG_CNTL_WDOG_EN	__BIT(18)
+#define	 MESONGX_WATCHDOG_CNTL1	0x04
+#define	 MESONGX_WATCHDOG_TCNT	0x08
+#define	  MESONGX_WATCHDOG_TCNT_COUNT	__BITS(15,0)
+#define	 MESONGX_WATCHDOG_RESET	0x0c
 
 #define	MESON8B_ARM_VBASE	(MESON_CORE_APB3_VBASE + MESON_CORE_APB3_SIZE)
 #define	MESON8B_ARM_PBASE	0xc4200000
@@ -295,26 +304,24 @@ meson8b_platform_bootstrap(void)
 
 	meson_platform_bootstrap();
 }
-#endif
 
 static void
-meson_platform_reset(void)
+meson8b_platform_reset(void)
 {
 	bus_space_tag_t bst = &meson_bs_tag;
 	bus_space_handle_t bsh;
 
-	bus_space_map(bst, MESON_WATCHDOG_BASE, MESON_WATCHDOG_SIZE, 0, &bsh);
+	bus_space_map(bst, MESON8B_WATCHDOG_BASE, MESON8B_WATCHDOG_SIZE, 0, &bsh);
 
-	bus_space_write_4(bst, bsh, MESON_WATCHDOG_TC,
-	    WATCHDOG_TC_CPUS | WATCHDOG_TC_ENABLE | __SHIFTIN(0xfff, WATCHDOG_TC_TCNT));
-	bus_space_write_4(bst, bsh, MESON_WATCHDOG_RESET, 0);
+	bus_space_write_4(bst, bsh, MESON8B_WATCHDOG_TC,
+	    MESON8B_WATCHDOG_TC_CPUS | MESON8B_WATCHDOG_TC_ENABLE | __SHIFTIN(0xfff, MESON8B_WATCHDOG_TC_TCNT));
+	bus_space_write_4(bst, bsh, MESON8B_WATCHDOG_RESET, 0);
 
 	for (;;) {
 		__asm("wfi");
 	}
 }
 
-#if defined(SOC_MESON8B)
 static void
 meson8b_mpinit_delay(u_int n)
 {
@@ -433,7 +440,7 @@ meson8b_mpstart(void)
 }
 
 static const struct arm_platform meson8b_platform = {
-	.ap_devmap = meson_platform_devmap,
+	.ap_devmap = meson8b_platform_devmap,
 	.ap_bootstrap = meson8b_platform_bootstrap,
 	.ap_init_attach_args = meson_platform_init_attach_args,
 	.ap_device_register = meson8b_platform_device_register,
@@ -447,12 +454,34 @@ ARM_PLATFORM(meson8b, "amlogic,meson8b", &meson8b_platform);
 #endif	/* SOC_MESON8B */
 
 #if defined(SOC_MESONGX)
+static void
+mesongx_platform_reset(void)
+{
+	bus_space_tag_t bst = &meson_bs_tag;
+	bus_space_handle_t bsh;
+	uint32_t val;
+
+	bus_space_map(bst, MESONGX_WATCHDOG_BASE, MESONGX_WATCHDOG_SIZE, 0, &bsh);
+
+	val = bus_space_read_4(bst, bsh, MESONGX_WATCHDOG_CNTL);
+	val |= MESONGX_WATCHDOG_CNTL_WDOG_EN;
+	bus_space_write_4(bst, bsh, MESONGX_WATCHDOG_CNTL, val);
+
+	bus_space_write_4(bst, bsh, MESONGX_WATCHDOG_TCNT, 1);
+
+	bus_space_write_4(bst, bsh, MESONGX_WATCHDOG_RESET, 0);
+
+	for (;;) {
+		__asm("wfi");
+	}
+}
+
 static const struct arm_platform mesongx_platform = {
 	.ap_devmap = meson_platform_devmap,
 	.ap_bootstrap = meson_platform_bootstrap,
 	.ap_init_attach_args = meson_platform_init_attach_args,
 	.ap_device_register = meson_platform_device_register,
-	.ap_reset = meson_platform_reset,
+	.ap_reset = mesongx_platform_reset,
 	.ap_delay = gtmr_delay,
 	.ap_uart_freq = meson_platform_uart_freq,
 	.ap_mpstart = arm_fdt_cpu_mpstart,
