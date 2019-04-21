@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.9 2019/04/21 12:36:39 jmcneill Exp $ */
+/* $NetBSD: meson_platform.c,v 1.10 2019/04/21 13:49:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.9 2019/04/21 12:36:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.10 2019/04/21 13:49:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,7 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.9 2019/04/21 12:36:39 jmcneill 
 #define	MESONGX_WATCHDOG_BASE	0xc11098d0
 #define	MESONGX_WATCHDOG_SIZE	0x10
 #define	 MESONGX_WATCHDOG_CNTL	0x00
-#define	  MESONGX_WATCHDOG_CNTL_WDOG_EN	__BIT(18)
+#define	  MESONGX_WATCHDOG_CNTL_CLK_EN		__BIT(24)
+#define	  MESONGX_WATCHDOG_CNTL_SYS_RESET_N_EN	__BIT(21)
+#define	  MESONGX_WATCHDOG_CNTL_WDOG_EN		__BIT(18)
 #define	 MESONGX_WATCHDOG_CNTL1	0x04
 #define	 MESONGX_WATCHDOG_TCNT	0x08
 #define	  MESONGX_WATCHDOG_TCNT_COUNT	__BITS(15,0)
@@ -463,8 +465,9 @@ mesongx_platform_reset(void)
 
 	bus_space_map(bst, MESONGX_WATCHDOG_BASE, MESONGX_WATCHDOG_SIZE, 0, &bsh);
 
-	val = bus_space_read_4(bst, bsh, MESONGX_WATCHDOG_CNTL);
-	val |= MESONGX_WATCHDOG_CNTL_WDOG_EN;
+	val = MESONGX_WATCHDOG_CNTL_SYS_RESET_N_EN |
+	      MESONGX_WATCHDOG_CNTL_WDOG_EN |
+	      MESONGX_WATCHDOG_CNTL_CLK_EN;
 	bus_space_write_4(bst, bsh, MESONGX_WATCHDOG_CNTL, val);
 
 	bus_space_write_4(bst, bsh, MESONGX_WATCHDOG_TCNT, 1);
