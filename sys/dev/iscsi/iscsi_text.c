@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_text.c,v 1.12 2019/04/21 11:26:46 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_text.c,v 1.13 2019/04/21 11:45:08 maya Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ typedef struct
 {
 	text_key_t key;				/* the key */
 	int list_num;				/* number of elements in list, doubles as */
-	bool hex_bignums;			/* wether to encode in hex or base64 */
+	bool hex_bignums;			/* whether to encode in hex or base64 */
 	/* data size for large numeric values */
 	union
 	{
