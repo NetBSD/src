@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.154 2019/04/18 13:01:38 isaki Exp $	*/
+/*	$NetBSD: auich.c,v 1.154.2.1 2019/04/21 05:11:22 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.154 2019/04/18 13:01:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.154.2.1 2019/04/21 05:11:22 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,24 +329,30 @@ static const struct audio_hw_if auich_hw_if = {
 #define AUICH_FORMATS_1CH	0
 #define AUICH_FORMATS_4CH	1
 #define AUICH_FORMATS_6CH	2
+#define AUICH_FORMAT(aumode, ch, chmask) \
+	{ \
+		.mode		= (aumode), \
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE, \
+		.validbits	= 16, \
+		.precision	= 16, \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 0, \
+		.frequency	= { 8000, 48000 }, \
+	}
 static const struct audio_format auich_audio_formats[AUICH_AUDIO_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
+	AUICH_FORMAT(AUMODE_PLAY | AUMODE_RECORD, 2, AUFMT_STEREO),
+	AUICH_FORMAT(AUMODE_PLAY                , 4, AUFMT_SURROUND4),
+	AUICH_FORMAT(AUMODE_PLAY                , 6, AUFMT_DOLBY_5_1),
 };
 
 #define AUICH_SPDIF_NFORMATS	1
 static const struct audio_format auich_spdif_formats[AUICH_SPDIF_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 1, {48000}},
+	AUICH_FORMAT(AUMODE_PLAY | AUMODE_RECORD, 2, AUFMT_STEREO),
 };
 
 static const struct audio_format auich_modem_formats[AUICH_MODEM_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {8000, 16000}},
+	AUICH_FORMAT(AUMODE_PLAY | AUMODE_RECORD, 1, AUFMT_MONAURAL),
 };
 
 #define PCI_ID_CODE0(v, p)	PCI_ID_CODE(PCI_VENDOR_##v, PCI_PRODUCT_##v##_##p)

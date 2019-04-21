@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.16 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.16.2.1 2019/04/21 05:11:22 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.16 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.16.2.1 2019/04/21 05:11:22 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,20 +215,25 @@ static const struct audio_hw_if gcscaudio_hw_if = {
 	.get_locks		= gcscaudio_get_locks,
 };
 
-static const struct audio_format gcscaudio_formats_2ch = {
-	NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	2, AUFMT_STEREO, 0, {8000, 48000}
-};
+#define GCSCAUDIO_FORMAT(aumode, ch, chmask) \
+	{ \
+		.mode		= (aumode), \
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE, \
+		.validbits	= 16, \
+		.precision	= 16, \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 0, \
+		.frequency	= { 8000, 48000 }, \
+	}
+static const struct audio_format gcscaudio_formats_2ch =
+	GCSCAUDIO_FORMAT(AUMODE_PLAY | AUMODE_RECORD, 2, AUFMT_STEREO);
 
-static const struct audio_format gcscaudio_formats_4ch = {
-	NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	4, AUFMT_SURROUND4, 0, {8000, 48000}
-};
+static const struct audio_format gcscaudio_formats_4ch =
+	GCSCAUDIO_FORMAT(AUMODE_PLAY                , 4, AUFMT_SURROUND4);
 
-static const struct audio_format gcscaudio_formats_6ch = {
-	NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	6, AUFMT_DOLBY_5_1, 0, {8000, 48000}
-};
+static const struct audio_format gcscaudio_formats_6ch =
+	GCSCAUDIO_FORMAT(AUMODE_PLAY                , 6, AUFMT_DOLBY_5_1);
 
 static int
 gcscaudio_match(device_t parent, cfdata_t match, void *aux)

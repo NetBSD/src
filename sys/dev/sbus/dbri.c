@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.39 2018/09/03 16:29:33 riastradh Exp $	*/
+/*	$NetBSD: dbri.c,v 1.39.2.1 2019/04/21 05:11:22 isaki Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.39 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.39.2.1 2019/04/21 05:11:22 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -202,30 +202,30 @@ struct audio_hw_if dbri_hw_if = {
 CFATTACH_DECL_NEW(dbri, sizeof(struct dbri_softc),
     dbri_match_sbus, dbri_attach_sbus, NULL, NULL);
 
-#define DBRI_NFORMATS		4
-static const struct audio_format dbri_formats[DBRI_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	 2, AUFMT_STEREO, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},
-/*	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULAW, 8, 8,
-	 2, AUFMT_STEREO, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ALAW, 8, 8,
-	 2, AUFMT_STEREO, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR, 8, 8,
-	 2, AUFMT_STEREO, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},*/
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULAW, 8, 8,
-	 1, AUFMT_MONAURAL, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ALAW, 8, 8,
-	 1, AUFMT_MONAURAL, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR, 8, 8,
-	 1, AUFMT_MONAURAL, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},
+#define DBRI_FORMAT(enc, prec, ch, chmask) \
+	{ \
+		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
+		.encoding	= (enc), \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 8, \
+		.frequency	= \
+		    { 8000, 9600, 11025, 16000, 22050, 32000, 44100, 48000 },\
+	}
+static const struct audio_format dbri_formats[] = {
+	DBRI_FORMAT(AUDIO_ENCODING_SLINEAR_BE, 16, 2, AUFMT_STEREO),
+/*
+	DBRI_FORMAT(AUDIO_ENCODING_ULAW,        8, 2, AUFMT_STEREO),
+	DBRI_FORMAT(AUDIO_ENCODING_ALAW,        8, 2, AUFMT_STEREO),
+	DBRI_FORMAT(AUDIO_ENCODING_ULINEAR,     8, 2, AUFMT_STEREO),
+*/
+	DBRI_FORMAT(AUDIO_ENCODING_ULAW,        8, 1, AUFMT_MONAURAL),
+	DBRI_FORMAT(AUDIO_ENCODING_ALAW,        8, 1, AUFMT_MONAURAL),
+	DBRI_FORMAT(AUDIO_ENCODING_ULINEAR,     8, 1, AUFMT_MONAURAL),
 };
+#define DBRI_NFORMATS	__arraycount(dbri_formats)
 
 enum {
 	DBRI_OUTPUT_CLASS,

@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.38 2019/03/16 12:09:57 isaki Exp $	*/
+/*	$NetBSD: btsco.c,v 1.38.2.1 2019/04/21 05:11:22 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.38 2019/03/16 12:09:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.38.2.1 2019/04/21 05:11:22 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -198,15 +198,14 @@ static const struct audio_device btsco_device = {
 
 /* Voice_Setting == 0x0060: 8000Hz, mono, 16-bit, slinear_le */
 static const struct audio_format btsco_format = {
-	NULL,				/* driver_data */
-	(AUMODE_PLAY | AUMODE_RECORD),	/* mode */
-	AUDIO_ENCODING_SLINEAR_LE,	/* encoding */
-	16,				/* validbits */
-	16,				/* precision */
-	1,				/* channels */
-	AUFMT_MONAURAL,			/* channel_mask */
-	1,				/* frequency_type */
-	{ 8000 }			/* frequency */
+	.mode		= AUMODE_PLAY | AUMODE_RECORD,
+	.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+	.validbits	= 16,
+	.precision	= 16,
+	.channels	= 1,
+	.channel_mask	= AUFMT_MONAURAL,
+	.frequency_type	= 1,
+	.frequency	= { 8000 },
 };
 
 /* bluetooth(9) glue for SCO */

@@ -1,4 +1,4 @@
-/* $NetBSD: auixpvar.h,v 1.8 2012/10/27 17:18:28 chs Exp $*/
+/* $NetBSD: auixpvar.h,v 1.8.42.1 2019/04/21 05:11:22 isaki Exp $*/
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,13 +50,24 @@
 
 
 /* current AC'97 driver only supports SPDIF outputting channel 3&4 i.e. STEREO */
+#define AUIXP_FORMAT(aumode, prec, ch, chmask) \
+	{ \
+		.mode		= (aumode), \
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE, \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 0, \
+		.frequency	= { 7000, 48000 }, \
+	}
 static const struct audio_format auixp_formats[AUIXP_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16, 2, AUFMT_STEREO, 0, {7000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 32, 32, 2, AUFMT_STEREO, 0, {7000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16, 4, AUFMT_SURROUND4, 0, {7000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 32, 32, 4, AUFMT_SURROUND4, 0, {7000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16, 6, AUFMT_DOLBY_5_1, 0, {7000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 32, 32, 6, AUFMT_DOLBY_5_1, 0, {7000, 48000}},
+	AUIXP_FORMAT(AUMODE_PLAY | AUMODE_RECORD, 16, 2, AUFMT_STEREO),
+	AUIXP_FORMAT(AUMODE_PLAY | AUMODE_RECORD, 32, 2, AUFMT_STEREO),
+	AUIXP_FORMAT(AUMODE_PLAY                , 16, 4, AUFMT_SURROUND4),
+	AUIXP_FORMAT(AUMODE_PLAY                , 32, 4, AUFMT_SURROUND4),
+	AUIXP_FORMAT(AUMODE_PLAY                , 16, 6, AUFMT_DOLBY_5_1),
+	AUIXP_FORMAT(AUMODE_PLAY                , 32, 6, AUFMT_DOLBY_5_1),
 };
 
 

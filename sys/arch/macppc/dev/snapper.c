@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.49 2019/03/16 12:09:57 isaki Exp $	*/
+/*	$NetBSD: snapper.c,v 1.49.2.1 2019/04/21 05:11:21 isaki Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.49 2019/03/16 12:09:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.49.2.1 2019/04/21 05:11:21 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -523,17 +523,34 @@ const uint8_t snapper_mixer_gain[178][3] = {
 };
 
 #define SNAPPER_NFORMATS	2
+#define SNAPPER_FORMAT(prec) \
+	{ \
+		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
+		.encoding	= AUDIO_ENCODING_SLINEAR_BE, \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= 2, \
+		.channel_mask	= AUFMT_STEREO, \
+		.frequency_type	= 3, \
+		.frequency	= { 32000, 44100, 48000 }, \
+	}
 static const struct audio_format snapper_formats[SNAPPER_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	 2, AUFMT_STEREO, 3, {32000, 44100, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 24, 24,
-	 2, AUFMT_STEREO, 3, {32000, 44100, 48000}},
+	SNAPPER_FORMAT(16),
+	SNAPPER_FORMAT(24),
 };
 
 #define TUMBLER_NFORMATS	1
 static const struct audio_format tumbler_formats[TUMBLER_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	 2, AUFMT_STEREO, 4, {32000, 44100, 48000, 96000}},
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_BE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 4,
+		.frequency	= { 32000, 44100, 48000, 96000 },
+	},
 };
 
 static bus_size_t amp_mute;

@@ -1,4 +1,4 @@
-/*	$NetBSD: arcofi.c,v 1.1 2014/08/24 08:17:44 tsutsui Exp $	*/
+/*	$NetBSD: arcofi.c,v 1.1.28.1 2019/04/21 05:11:22 isaki Exp $	*/
 /*	$OpenBSD: arcofi.c,v 1.6 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
@@ -250,23 +250,31 @@ static const struct audio_hw_if arcofi_hw_if = {
 	.get_locks	  = arcofi_get_locks,
 };
 
+#define ARCOFI_FORMAT(enc, prec) \
+	{ \
+		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
+		.encoding	= (enc), \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= 1, \
+		.channel_mask	= AUFMT_MONAURAL, \
+		.frequency_type	= 1, \
+		.frequency	= { 8000 }, \
+	}
 static const struct audio_format arcofi_formats[] = {
 	/*
 	 * 8-bit encodings:
 	 *  - u-Law and A-Law are native
 	 *  - linear are converted to 16-bit by auconv
 	 */
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULAW, 8, 8,
-	 1, AUFMT_MONAURAL, 1, {8000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ALAW, 8, 8,
-	 1, AUFMT_MONAURAL, 1, {8000}},
+	ARCOFI_FORMAT(AUDIO_ENCODING_ULAW,        8),
+	ARCOFI_FORMAT(AUDIO_ENCODING_ALAW,        8),
 	/*
 	 * 16-bit encodings:
 	 *  - slinear big-endian is native
 	 *  - unsigned or little-endian are converted by auconv
 	 */
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	 1, AUFMT_MONAURAL, 1, {8000}},
+	ARCOFI_FORMAT(AUDIO_ENCODING_SLINEAR_BE, 16),
 };
 #define ARCOFI_NFORMATS  __arraycount(arcofi_formats)
 

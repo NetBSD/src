@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.82 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: auvia.c,v 1.82.2.1 2019/04/21 05:11:22 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.82 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.82.2.1 2019/04/21 05:11:22 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,29 +235,51 @@ static const struct audio_hw_if auvia_hw_if = {
 #define AUVIA_FORMATS_6CH_16	3
 #define AUVIA_FORMATS_4CH_8	6
 #define AUVIA_FORMATS_6CH_8	7
+#define AUVIA_FORMAT_S16(aumode, ch, chmask) \
+	{ \
+		.mode		= (aumode), \
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE, \
+		.validbits	= 16, \
+		.precision	= 16, \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 0, \
+		.frequency	= { 4000, 48000 }, \
+	}
+#define AUVIA_FORMAT_U8(aumode, ch, chmask) \
+	{ \
+		.mode		= (aumode), \
+		.encoding	= AUDIO_ENCODING_ULINEAR_LE, \
+		.validbits	= 8, \
+		.precision	= 8, \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 0, \
+		.frequency	= { 4000, 48000 }, \
+	}
 static const struct audio_format auvia_formats[AUVIA_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
+	AUVIA_FORMAT_S16(AUMODE_PLAY | AUMODE_RECORD, 1, AUFMT_MONAURAL),
+	AUVIA_FORMAT_S16(AUMODE_PLAY | AUMODE_RECORD, 2, AUFMT_STEREO),
+	AUVIA_FORMAT_S16(AUMODE_PLAY                , 4, AUFMT_SURROUND4),
+	AUVIA_FORMAT_S16(AUMODE_PLAY                , 6, AUFMT_DOLBY_5_1),
+	AUVIA_FORMAT_U8 (AUMODE_PLAY | AUMODE_RECORD, 1, AUFMT_MONAURAL),
+	AUVIA_FORMAT_U8 (AUMODE_PLAY | AUMODE_RECORD, 2, AUFMT_STEREO),
+	AUVIA_FORMAT_U8 (AUMODE_PLAY                , 4, AUFMT_SURROUND4),
+	AUVIA_FORMAT_U8 (AUMODE_PLAY                , 6, AUFMT_DOLBY_5_1),
 };
 
 #define	AUVIA_SPDIF_NFORMATS	1
 static const struct audio_format auvia_spdif_formats[AUVIA_SPDIF_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 1, {48000}},
+	{
+		.mode		= AUMODE_PLAY,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 1,
+		.frequency	= { 48000 },
+	},
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.25 2019/03/16 12:09:56 isaki Exp $	*/
+/*	$NetBSD: aica.c,v 1.25.2.1 2019/04/21 05:11:21 isaki Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.25 2019/03/16 12:09:56 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.25.2.1 2019/04/21 05:11:21 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,17 +102,23 @@ const struct {
 };
 
 #define AICA_NFORMATS	5
+#define AICA_FORMAT(enc, prec, ch, chmask) \
+	{ \
+		.mode		= AUMODE_PLAY, \
+		.encoding	= (enc), \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 0, \
+		.frequency	= { 1, 65536 }, \
+	}
 static const struct audio_format aica_formats[AICA_NFORMATS] = {
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ADPCM, 4, 4,
-	 1, AUFMT_MONAURAL, 0, {1, 65536}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {1, 65536}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {1, 65536}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 0, {1, 65536}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 0, {1, 65536}},
+	AICA_FORMAT(AUDIO_ENCODING_ADPCM,       4, 1, AUFMT_MONAURAL),
+	AICA_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 1, AUFMT_MONAURAL),
+	AICA_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 2, AUFMT_STEREO),
+	AICA_FORMAT(AUDIO_ENCODING_SLINEAR_LE,  8, 1, AUFMT_MONAURAL),
+	AICA_FORMAT(AUDIO_ENCODING_SLINEAR_LE,  8, 2, AUFMT_STEREO),
 };
 
 int aica_match(device_t, cfdata_t, void *);

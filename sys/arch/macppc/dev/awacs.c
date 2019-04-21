@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.46 2019/03/16 12:09:57 isaki Exp $	*/
+/*	$NetBSD: awacs.c,v 1.46.2.1 2019/04/21 05:11:21 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.46 2019/03/16 12:09:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.46.2.1 2019/04/21 05:11:21 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -189,13 +189,21 @@ struct audio_device awacs_device = {
 
 #define AWACS_NFORMATS		2
 #define AWACS_FORMATS_LE	0
+#define AWACS_FORMAT(enc) \
+	{ \
+		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
+		.encoding	= (enc), \
+		.validbits	= 16, \
+		.precision	= 16, \
+		.channels	= 2, \
+		.channel_mask	= AUFMT_STEREO, \
+		.frequency_type	= 8, \
+		.frequency	= \
+		    { 7350, 8820, 11025, 14700, 17640, 22050, 29400, 44100 }, \
+	}
 static const struct audio_format awacs_formats[AWACS_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 8, 
-	 {7350, 8820, 11025, 14700, 17640, 22050, 29400, 44100}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	 2, AUFMT_STEREO, 8, 
-	 {7350, 8820, 11025, 14700, 17640, 22050, 29400, 44100}},
+	AWACS_FORMAT(AUDIO_ENCODING_SLINEAR_LE),
+	AWACS_FORMAT(AUDIO_ENCODING_SLINEAR_BE),
 };
 
 /* register offset */
