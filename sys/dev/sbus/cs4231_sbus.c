@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.51 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.51.2.1 2019/04/21 06:00:00 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.51 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.51.2.1 2019/04/21 06:00:00 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -99,8 +99,8 @@ static int	cs4231_sbus_halt_input(void *);
 const struct audio_hw_if audiocs_sbus_hw_if = {
 	.open			= cs4231_open,
 	.close			= cs4231_close,
-	.query_encoding		= ad1848_query_encoding,
-	.set_params		= ad1848_set_params,
+	.query_format		= ad1848_query_format,
+	.set_format		= ad1848_set_format,
 	.commit_settings	= ad1848_commit_settings,
 	.halt_output		= cs4231_sbus_halt_output,
 	.halt_input		= cs4231_sbus_halt_input,
