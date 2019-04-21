@@ -1,4 +1,4 @@
-/* $NetBSD: meson_rng.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_rng.c,v 1.2 2019/04/21 14:13:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_rng.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_rng.c,v 1.2 2019/04/21 14:13:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,7 +55,7 @@ struct meson_rng_softc {
 };
 
 static const char * const compatible[] = {
-	"amlogic,meson8b-rng",
+	"amlogic,meson-rng",
 	NULL
 };
 
@@ -94,12 +94,9 @@ meson_rng_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 
+	/* Core clock is optional */
 	clk = fdtbus_clock_get(phandle, "core");
-	if (clk == NULL) {
-		aprint_error(": couldn't get core clock\n");
-		return;
-	}
-	if (clk_enable(clk) != 0) {
+	if (clk != NULL && clk_enable(clk) != 0) {
 		aprint_error(": couldn't enable core clock\n");
 		return;
 	}
@@ -118,15 +115,15 @@ static void
 meson_rng_get(size_t bytes_wanted, void *priv)
 {
 	struct meson_rng_softc * const sc = priv;
-	uint32_t data[2];
+	uint32_t data;
 
 	mutex_spin_enter(&sc->sc_lock);
 	while (bytes_wanted) {
-		bus_space_read_region_4(sc->sc_bst, sc->sc_bsh, 0, data, 2);
-		rnd_add_data_sync(&sc->sc_rndsource, data, sizeof(data),
+		data = bus_space_read_4(sc->sc_bst, sc->sc_bsh, 0);
+		rnd_add_data_sync(&sc->sc_rndsource, &data, sizeof(data),
 		    sizeof(data) * NBBY);
 		bytes_wanted -= MIN(bytes_wanted, sizeof(data));
 	}
-	explicit_memset(data, 0, sizeof(data));
+	explicit_memset(&data, 0, sizeof(data));
 	mutex_spin_exit(&sc->sc_lock);
 }
