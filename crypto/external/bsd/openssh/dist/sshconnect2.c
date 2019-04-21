@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.33 2019/04/20 17:16:40 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.34 2019/04/21 01:32:04 kre Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.303 2019/02/12 23:53:10 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.33 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.34 2019/04/21 01:32:04 kre Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -79,7 +79,9 @@ const char     *auth_get_canonical_hostname(struct ssh *, int);
 #ifdef GSSAPI
 #include "ssh-gss.h"
 #endif
+#ifdef KRB5
 static int userauth_kerberos(struct ssh *);
+#endif
 
 /* import */
 extern char *client_version_string;
