@@ -1,4 +1,4 @@
-#	$NetBSD: files.meson,v 1.7 2019/04/19 19:07:56 jmcneill Exp $
+#	$NetBSD: files.meson,v 1.8 2019/04/21 11:02:32 jmcneill Exp $
 #
 # Configuration info for Amlogic Meson family SoCs
 #
@@ -98,6 +98,11 @@ file	arch/arm/amlogic/meson_rng.c		meson_rng
 # GMAC
 attach	awge at fdt with meson_dwmac
 file	arch/arm/amlogic/meson_dwmac.c		meson_dwmac
+
+# Meson GXL internal PHY
+device	gxlphy: mii_phy
+attach  gxlphy at mii
+file    arch/arm/amlogic/gxlphy.c		gxlphy
 
 # Watchdog
 device	mesonwdt: sysmon_wdog
