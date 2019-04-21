@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.6 2019/02/21 12:17:52 maxv Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.7 2019/04/21 06:37:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008-2012 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.6 2019/02/21 12:17:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.7 2019/04/21 06:37:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -199,7 +199,7 @@ pmap_tlb_invalidate(const pmap_tlb_packet_t *tp)
 
 	/* Find out what we need to invalidate. */
 	if (tp->tp_count == (uint16_t)-1) {
-		if (tp->tp_pte & PG_G) {
+		if (tp->tp_pte & PTE_G) {
 			/* Invalidating user and kernel TLB entries. */
 			tlbflushg();
 		} else {
@@ -224,7 +224,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 	int s;
 
 #ifndef XENPV
-	KASSERT((pte & PG_G) == 0 || pm == pmap_kernel());
+	KASSERT((pte & PTE_G) == 0 || pm == pmap_kernel());
 #endif
 
 	if (__predict_false(pm->pm_tlb_flush != NULL)) {
@@ -240,8 +240,8 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 		return;
 	}
 
-	if ((pte & PG_PS) != 0) {
-		va &= PG_LGFRAME;
+	if ((pte & PTE_PS) != 0) {
+		va &= PTE_LGFRAME;
 	}
 
 	/*
@@ -250,8 +250,8 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 	s = splvm();
 	tp = (pmap_tlb_packet_t *)curcpu()->ci_pmap_data;
 
-	/* Whole address flush will be needed if PG_G is set. */
-	CTASSERT(PG_G == (uint16_t)PG_G);
+	/* Whole address flush will be needed if PTE_G is set. */
+	CTASSERT(PTE_G == (uint16_t)PTE_G);
 	tp->tp_pte |= (uint16_t)pte;
 
 	if (tp->tp_count == (uint16_t)-1) {

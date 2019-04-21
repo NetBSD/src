@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.10 2019/03/09 08:42:26 maxv Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.11 2019/04/21 06:37:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.10 2019/03/09 08:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.11 2019/04/21 06:37:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -159,7 +159,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		 * with this mapping and subtract it from the
 		 * total size.
 		 */
-		if (pte & PG_PS)
+		if (pte & PTE_PS)
 			limit = NBPD_L2 - (addr & (NBPD_L2 - 1));
 		else
 			limit = PAGE_SIZE - (addr & PGOFSET);

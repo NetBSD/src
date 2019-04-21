@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.77 2017/07/31 19:29:19 jdolecek Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.78 2019/04/21 06:37:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.77 2017/07/31 19:29:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.78 2019/04/21 06:37:21 maxv Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1176,8 +1176,8 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		pte = kvtopte(va);
 		opte = *pte;
-		if ((opte & PG_N) != 0)
-			pmap_pte_clearbits(pte, PG_N);
+		if ((opte & PTE_PCD) != 0)
+			pmap_pte_clearbits(pte, PTE_PCD);
 	}
 	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
 	pmap_update(pmap_kernel());
