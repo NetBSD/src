@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.24 2019/03/23 10:02:05 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.25 2019/04/21 06:37:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.24 2019/03/23 10:02:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.25 2019/04/21 06:37:21 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -259,7 +259,7 @@ svs_tree_add(struct cpu_info *ci, vaddr_t va)
 			dstpde[pidx] = PTE_P | PTE_W | pa;
 		}
 
-		pa = (paddr_t)(dstpde[pidx] & PG_FRAME);
+		pa = (paddr_t)(dstpde[pidx] & PTE_FRAME);
 		dstpde = (pd_entry_t *)PMAP_DIRECT_MAP(pa);
 	}
 
@@ -287,10 +287,10 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 	if (!pmap_valid_entry(srcpde[idx])) {
 		panic("%s: L2 page not mapped", __func__);
 	}
-	if (srcpde[idx] & PG_PS) {
-		pa = srcpde[idx] & PG_2MFRAME;
+	if (srcpde[idx] & PTE_PS) {
+		pa = srcpde[idx] & PTE_2MFRAME;
 		pa += (paddr_t)(va % NBPD_L2);
-		pde = (srcpde[idx] & ~(PG_G|PG_PS|PG_2MFRAME)) | pa;
+		pde = (srcpde[idx] & ~(PTE_G|PTE_PS|PTE_2MFRAME)) | pa;
 
 		if (pmap_valid_entry(dstpde[pidx])) {
 			panic("%s: L1 page already mapped", __func__);
@@ -310,7 +310,7 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 	if (pmap_valid_entry(dstpde[pidx])) {
 		panic("%s: L1 page already mapped", __func__);
 	}
-	dstpde[pidx] = srcpde[idx] & ~(PG_G);
+	dstpde[pidx] = srcpde[idx] & ~(PTE_G);
 }
 
 static void
