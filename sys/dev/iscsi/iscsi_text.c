@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_text.c,v 1.11 2017/12/03 19:07:10 christos Exp $	*/
+/*	$NetBSD: iscsi_text.c,v 1.12 2019/04/21 11:26:46 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -33,9 +33,6 @@
 #include "base64.h"
 #include <sys/md5.h>
 #include <sys/cprng.h>
-
-/* define to send T_BIGNUM in hex format instead of base64 */
-/* #define ISCSI_HEXBIGNUMS */
 
 #define isdigit(x) ((x) >= '0' && (x) <= '9')
 #define toupper(x) ((x) & ~0x20)
@@ -175,6 +172,7 @@ typedef struct
 {
 	text_key_t key;				/* the key */
 	int list_num;				/* number of elements in list, doubles as */
+	bool hex_bignums;			/* wether to encode in hex or base64 */
 	/* data size for large numeric values */
 	union
 	{
@@ -633,22 +631,21 @@ my_strcpy(uint8_t *dest, const uint8_t *src)
 STATIC unsigned
 put_bignumval(negotiation_parameter_t *par, uint8_t *buf)
 {
-#ifdef ISCSI_HEXBIGNUMS
 	int k, c;
 
-	my_strcpy(buf, "0x");
-	for (k=0; k<par->list_num; ++k) {
-		c = par->val.sval[k] >> 4;
-		buf[2+2*k] = c < 10 ? '0' + c : 'a' + (c-10);
-		c = par->val.sval[k] & 0xf;
-		buf[2+2*k+1] = c < 10 ? '0' + c : 'a' + (c-10);
-	}
-	buf[2+2*k] = '\0';
+	if (par->hex_bignums) {
+		my_strcpy(buf, "0x");
+		for (k=0; k<par->list_num; ++k) {
+			c = par->val.sval[k] >> 4;
+			buf[2+2*k] = c < 10 ? '0' + c : 'a' + (c-10);
+			c = par->val.sval[k] & 0xf;
+			buf[2+2*k+1] = c < 10 ? '0' + c : 'a' + (c-10);
+		}
+		buf[2+2*k] = '\0';
 
-	return 2+2*par->list_num;
-#else
+		return 2+2*par->list_num;
+	}
 	return base64_encode(par->val.sval, par->list_num, buf);
-#endif
 }
 
 /*
@@ -829,11 +826,10 @@ parameter_size(negotiation_parameter_t *par)
 
 		case T_BIGNUM:
 			/* list_num holds value size */
-#ifdef ISCSI_HEXBIGNUMS
-			size += 2 + 2*par->list_num;
-#else
-			size += base64_enclen(par->list_num);
-#endif
+			if (par->hex_bignums)
+				size += 2 + 2*par->list_num;
+			else
+				size += base64_enclen(par->list_num);
 			i = par->list_num;
 			break;
 
@@ -1002,6 +998,7 @@ set_key_s(negotiation_state_t *state, text_key_t key, uint8_t *val)
 	par->key = key;
 	par->list_num = 1;
 	par->val.sval = val;
+	par->hex_bignums = iscsi_hex_bignums;
 	state->num_pars++;
 	state->kflags[key] |= NS_SENT;
 
