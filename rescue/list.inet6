@@ -1,3 +1,0 @@
-#	$NetBSD: list.inet6,v 1.2 2014/09/11 13:10:03 roy Exp $
-
-PROG	ping6

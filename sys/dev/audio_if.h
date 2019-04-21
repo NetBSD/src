@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.70 2014/11/18 01:50:12 jmcneill Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.70.24.1 2019/04/21 04:28:59 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -68,8 +68,9 @@ typedef struct audio_params {
 	u_int	channels;	/* mono(1), stereo(2) */
 } audio_params_t;
 
-/* The default audio mode: 8 kHz mono mu-law */
-extern const struct audio_params audio_default;
+#define	AUFMT_INVALIDATE(fmt)	(fmt)->mode |= 0x80000000
+#define	AUFMT_VALIDATE(fmt)	(fmt)->mode &= 0x7fffffff
+#define	AUFMT_IS_VALID(fmt)	(((fmt)->mode & 0x80000000) == 0)
 
 /**
  * audio stream buffer
@@ -172,13 +173,17 @@ typedef struct stream_filter_list {
 	} filters[AUDIO_MAX_FILTERS];
 } stream_filter_list_t;
 
+#include <dev/audio/audiofil.h>
+
 struct audio_hw_if {
 	int	(*open)(void *, int);	/* open hardware */
 	void	(*close)(void *);	/* close hardware */
+
+	/* Obsoleted in AUDIO2. */
 	int	(*drain)(void *);	/* Optional: drain buffers */
 
 	/* Encoding. */
-	/* XXX should we have separate in/out? */
+	/* Obsoleted in AUDIO2. */
 	int	(*query_encoding)(void *, audio_encoding_t *);
 
 	/* Set the audio encoding parameters (record and play).
@@ -187,6 +192,7 @@ struct audio_hw_if {
 	 * The values in the params struct may be changed (e.g. rounding
 	 * to the nearest sample rate.)
 	 */
+	/* Obsoleted in AUDIO2. */
 	int	(*set_params)(void *, int, int, audio_params_t *,
 		    audio_params_t *, stream_filter_list_t *,
 		    stream_filter_list_t *);
@@ -219,6 +225,8 @@ struct audio_hw_if {
 #define SPKR_OFF	0
 
 	int	(*getdev)(void *, struct audio_device *);
+
+	/* Obsoleted in AUDIO2. */
 	int	(*setfd)(void *, int);
 
 	/* Mixer (in/out ports) */
@@ -231,6 +239,8 @@ struct audio_hw_if {
 	void	*(*allocm)(void *, int, size_t);
 	void	(*freem)(void *, void *, size_t);
 	size_t	(*round_buffersize)(void *, int, size_t);
+
+	/* Obsoleted in AUDIO2. */
 	paddr_t	(*mappage)(void *, void *, off_t, int);
 
 	int	(*get_props)(void *); /* device properties */
@@ -241,6 +251,11 @@ struct audio_hw_if {
 		    void (*)(void *), void *, const audio_params_t *);
 	int	(*dev_ioctl)(void *, u_long, void *, int, struct lwp *);
 	void	(*get_locks)(void *, kmutex_t **, kmutex_t **);
+
+	int	(*query_format)(void *, audio_format_query_t *);
+	int	(*set_format)(void *, int,
+		    const audio_params_t *, const audio_params_t *,
+		    audio_filter_reg_t *, audio_filter_reg_t *);
 };
 
 struct audio_attach_args {
@@ -258,8 +273,9 @@ struct audio_attach_args {
 device_t audio_attach_mi(const struct audio_hw_if *, void *, device_t);
 int	audioprint(void *, const char *);
 
-/* Get the hw device from an audio softc */
-device_t audio_get_device(struct audio_softc *);
+extern int audio_query_format(const struct audio_format *, int,
+	audio_format_query_t *);
+extern const char *audio_encoding_name(int);
 
 /* Device identity flags */
 #define SOUND_DEVICE		0

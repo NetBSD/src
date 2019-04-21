@@ -1,5 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.26 2018/09/03 16:29:30 riastradh Exp $	*/
-
+/*	$NetBSD: audiobell.c,v 1.26.2.1 2019/04/21 04:28:59 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999 Richard Earnshaw
@@ -32,154 +31,119 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.26 2018/09/03 16:29:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.26.2.1 2019/04/21 04:28:59 isaki Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/fcntl.h>
-#include <sys/file.h>
-#include <sys/filedesc.h>
-#include <sys/ioctl.h>
 #include <sys/malloc.h>
-#include <sys/null.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
-#include <sys/unistd.h>
 
 #include <dev/audio_if.h>
-#include <dev/audiovar.h>
+#include <dev/audio/audiovar.h>
+#include <dev/audio/audiodef.h>
 #include <dev/audiobellvar.h>
-#include <dev/audiobelldata.h>
 
 /* 44.1 kHz should reduce hum at higher pitches. */
 #define BELL_SAMPLE_RATE	44100
-#define BELL_SHIFT		3
-
-static inline void
-audiobell_expandwave(int16_t *buf)
-{
-	u_int i;
-
-	for (i = 0; i < __arraycount(sinewave); i++)
-		buf[i] = sinewave[i];
-	for (i = __arraycount(sinewave); i < __arraycount(sinewave) * 2; i++)
-		 buf[i] = buf[__arraycount(sinewave) * 2 - i - 1];
-	for (i = __arraycount(sinewave) * 2; i < __arraycount(sinewave) * 4; i++)
-		buf[i] = -buf[__arraycount(sinewave) * 4 - i - 1];
-}
 
 /*
- * The algorithm here is based on that described in the RISC OS Programmer's
- * Reference Manual (pp1624--1628).
+ * dev is a device_t for the audio device to use.
+ * pitch is the pitch of the bell in Hz,
+ * period is the length in ms,
+ * volume is the amplitude in % of max,
+ * poll is no longer used.
  */
-static inline int
-audiobell_synthesize(int16_t *buf, u_int pitch, u_int period, u_int volume,
-    uint16_t *phase)
-{
-	int16_t *wave;
-
-	wave = malloc(sizeof(sinewave) * 4, M_TEMP, M_WAITOK);
-	if (wave == NULL)
-		return -1;
-	audiobell_expandwave(wave);
-	pitch = pitch * ((sizeof(sinewave) * 4) << BELL_SHIFT) /
-	    BELL_SAMPLE_RATE / 2;
-	period = period * BELL_SAMPLE_RATE / 1000 / 2;
-
-	for (; period != 0; period--) {
-		*buf++ = wave[*phase >> BELL_SHIFT];
-		*phase += pitch;
-	}
-
-	free(wave, M_TEMP);
-	return 0;
-}
-
 void
-audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
+audiobell(void *dev, u_int pitch, u_int period, u_int volume, int poll)
 {
 	dev_t audio;
 	int16_t *buf;
-	uint16_t phase;
-	struct audio_info ai;
+	struct audiobell_arg bellarg;
+	audio_file_t *file;
+	audio_track_t *ptrack;
 	struct uio auio;
 	struct iovec aiov;
-	struct file *fp;
-	int size, len, fd;
+	int i;
+	int remaincount;
+	int remainlen;
+	int wave1count;
+	int wave1len;
+	int len;
+	int16_t vol;
 
 	KASSERT(volume <= 100);
-
-	fd = -1;
-	fp = NULL;
-	buf = NULL;
-	audio = AUDIO_DEVICE | device_unit((device_t)v);
 
 	/* The audio system isn't built for polling. */
 	if (poll)
 		return;
 
+	/* Limit the pitch from 20Hz to Nyquist frequency. */
+	if (pitch > BELL_SAMPLE_RATE / 2)
+		pitch = BELL_SAMPLE_RATE;
+	if (pitch < 20)
+		pitch = 20;
+
+	buf = NULL;
+	audio = AUDIO_DEVICE | device_unit((device_t)dev);
+
+	memset(&bellarg, 0, sizeof(bellarg));
+	bellarg.encoding = AUDIO_ENCODING_SLINEAR_NE;
+	bellarg.precision = 16;
+	bellarg.channels = 1;
+	bellarg.sample_rate = BELL_SAMPLE_RATE;
+
 	/* If not configured, we can't beep. */
-	if (audiobellopen(audio, FWRITE, 0, NULL, &fp) != EMOVEFD || fp == NULL)
+	if (audiobellopen(audio, &bellarg) != 0)
 		return;
-	fd = curlwp->l_dupfd;	/* save the fd for closing when done */
 
-	if (audiobellioctl(fp, AUDIO_GETINFO, &ai) != 0)
-		goto out;
+	file = bellarg.file;
+	ptrack = file->ptrack;
 
-	AUDIO_INITINFO(&ai);
-	ai.mode = AUMODE_PLAY;
-	ai.play.sample_rate = BELL_SAMPLE_RATE;
-	ai.play.precision = 16;
-	ai.play.channels = 1;
-	ai.play.gain = 255 * volume / 100;
+	/* msec to sample count. */
+	remaincount = period * BELL_SAMPLE_RATE / 1000;
+	remainlen = remaincount * sizeof(int16_t);
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-	ai.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
-#else
-	ai.play.encoding = AUDIO_ENCODING_SLINEAR_BE;
-#endif
+	wave1count = BELL_SAMPLE_RATE / pitch;
+	wave1len = wave1count * sizeof(int16_t);
 
-	if (audiobellioctl(fp, AUDIO_SETINFO, &ai) != 0)
-		goto out;
-
-	if (ai.blocksize < BELL_SAMPLE_RATE)
-		ai.blocksize = BELL_SAMPLE_RATE;
-
-	len = period * BELL_SAMPLE_RATE / 1000 * 2;
-	size = uimin(len, ai.blocksize);
-	if (size == 0)
-		goto out;
-
-	buf = malloc(size, M_TEMP, M_WAITOK);
+	buf = malloc(wave1len, M_TEMP, M_WAITOK);
 	if (buf == NULL)
 		goto out;
- 
-	phase = 0;
-	while (len > 0) {
-		size = uimin(len, ai.blocksize);
-		if (audiobell_synthesize(buf, pitch, size *
-				1000 / BELL_SAMPLE_RATE, volume, &phase) != 0)
-			goto out;
+
+	/* Generate single square wave.  It's enough to beep. */
+	vol = 32767 * volume / 100;
+	for (i = 0; i < wave1count / 2; i++) {
+		buf[i] = vol;
+	}
+	vol = -vol;
+	for (; i < wave1count; i++) {
+		buf[i] = vol;
+	}
+
+	/* Write while paused to avoid begin inserted silence. */
+	ptrack->is_pause = true;
+	for (; remainlen > 0; remainlen -= wave1len) {
+		len = uimin(remainlen, wave1len);
 		aiov.iov_base = (void *)buf;
-		aiov.iov_len = size;
+		aiov.iov_len = len;
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
-		auio.uio_resid = size;
+		auio.uio_resid = len;
 		auio.uio_rw = UIO_WRITE;
 		UIO_SETUP_SYSSPACE(&auio);
+		if (audiobellwrite(file, &auio) != 0)
+			goto out;
 
-		if (audiobellwrite(fp, NULL, &auio, NULL, 0) != 0)
-			break;
-		len -= size;
+		if (ptrack->usrbuf.used >= ptrack->usrbuf_blksize * NBLKHW)
+			ptrack->is_pause = false;
 	}
+	/* Here we go! */
+	ptrack->is_pause = false;
 out:
 	if (buf != NULL)
 		free(buf, M_TEMP);
-	if (fd >= 0) {
-		fd_getfile(fd);
-		fd_close(fd);
-	}
-	audiobellclose(fp);
+	audiobellclose(file);
 }

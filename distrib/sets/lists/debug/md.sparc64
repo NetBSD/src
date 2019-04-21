@@ -1,9 +1,0 @@
-# $NetBSD: md.sparc64,v 1.89 2017/01/05 13:45:51 wiz Exp $
-./usr/libdata/debug/libexec/ld.elf_so-sparc.debug	comp-sys-debug		debug,compat
-./usr/libdata/debug/sbin/edlabel.debug		comp-obsolete	obsolete
-./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/lib/sparc/librtld_db.so.0.0.debug	comp-compat-shlib	compat,pic,debug,dtrace
-./usr/libdata/debug/usr/libexec/ld.elf_so-sparc.debug	comp-sys-debug		debug,compat
-./usr/libdata/debug/usr/libexec/ld.elf_so.sparc	comp-obsolete		obsolete
-./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug

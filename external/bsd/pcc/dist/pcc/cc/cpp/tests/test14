@@ -1,9 +1,0 @@
-#define A(x) A ## x
-#define AB A(B)
-
-AB 
-
-#define i1(w) i2(w) p
-#define i2(x) i1(x) q
-i1(c)
-

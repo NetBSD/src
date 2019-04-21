@@ -1,5 +1,0 @@
-./resolve_local example.com example.com
-./resolve_local example.net example.com
-./resolve_local fail:1_resolve_local example.com
-./resolve_local fail:1_resolve_local example.com..
-./resolve_local fail:1_resolve_local ''

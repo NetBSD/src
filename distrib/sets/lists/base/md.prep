@@ -1,7 +1,0 @@
-# $NetBSD: md.prep,v 1.18 2014/08/06 12:15:01 martin Exp $
-./usr/mdec/boot					base-sysutil-bin
-./usr/mdec/boot_com0				base-sysutil-bin
-./usr/mdec/boot_com0_vreset				base-sysutil-bin
-./usr/mdec/installboot			base-obsolete		obsolete
-./usr/mdec/mkbootimage				base-sysutil-bin
-./usr/sbin/eeprom				base-sysutil-bin

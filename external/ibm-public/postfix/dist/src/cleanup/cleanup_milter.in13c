@@ -1,9 +1,0 @@
-#verbose on
-open test-queue-file13c.tmp
-
-# Change the sender.
-
-chg_from m@porcupine.org esmtpstuff
-chg_from n@porcupine.org esmtpstuff
-
-close

@@ -1,4 +1,0 @@
-#	$NetBSD: NetBSD.compat.sparc64,v 1.1 2019/02/09 21:43:23 mrg Exp $
-
-./usr/include/g++/bits/sparc
-./usr/include/g++/bits/sparc64

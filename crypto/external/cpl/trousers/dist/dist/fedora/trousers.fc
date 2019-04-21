@@ -1,4 +1,0 @@
-/usr/sbin/tcsd system_u:object_r:tcsd_exec_t
-/etc/tcsd.conf system_u:object_r:tcsd_config_t
-/var/lib/tpm(/.*)?  system_u:object_r:tcsd_readwrite_t
-/dev/tpm(.*) system_u:object_r:tcsd_device_t

@@ -1,5 +1,0 @@
-DROP TABLE IF EXISTS persons;
-DROP TABLE IF EXISTS institutes;
-DROP TABLE IF EXISTS documents;
-DROP TABLE IF EXISTS authors_docs;
-DROP TABLE IF EXISTS phones;
