@@ -1,4 +1,4 @@
-/*	$NetBSD: arcofivar.h,v 1.1 2014/08/24 08:17:44 tsutsui Exp $	*/
+/*	$NetBSD: arcofivar.h,v 1.1.28.1 2019/04/21 06:55:34 isaki Exp $	*/
 /*	$OpenBSD: arcofivar.h,v 1.2 2011/12/25 00:07:27 miod Exp $	*/
 
 /*
@@ -26,7 +26,6 @@ struct arcofi_softc {
 	bus_space_handle_t	sc_ioh;
 
 	struct audio_device	sc_audio_device;
-	void			*sc_sih;
 
 	int			sc_open;
 	int			sc_mode;
@@ -47,10 +46,7 @@ struct arcofi_softc {
 				sc_xmit;
 	kmutex_t		sc_lock;
 	kmutex_t		sc_intr_lock;
-	kcondvar_t		sc_cv;
-	struct audio_encoding_set *sc_encodings;
 };
 
 void	arcofi_attach(struct arcofi_softc *, const char *);
 int	arcofi_hwintr(void *);
-void	arcofi_swintr(void *);
