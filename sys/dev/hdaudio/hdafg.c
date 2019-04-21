@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.16 2018/09/27 01:18:11 manu Exp $ */
+/* $NetBSD: hdafg.c,v 1.16.2.1 2019/04/21 05:22:57 isaki Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.16 2018/09/27 01:18:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.16.2.1 2019/04/21 05:22:57 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -357,7 +357,7 @@ CFATTACH_DECL2_NEW(
     hdafg_childdet
 );
 
-static int	hdafg_query_encoding(void *, struct audio_encoding *);
+static int	hdafg_query_format(void *, audio_format_query_t *);
 static int	hdafg_set_params(void *, int, int,
 				   audio_params_t *,
 				   audio_params_t *,
@@ -374,8 +374,6 @@ static int	hdafg_query_devinfo(void *, mixer_devinfo_t *);
 static void *	hdafg_allocm(void *, int, size_t);
 static void	hdafg_freem(void *, void *, size_t);
 static int	hdafg_getdev(void *, struct audio_device *);
-static size_t	hdafg_round_buffersize(void *, int, size_t);
-static paddr_t	hdafg_mappage(void *, void *, off_t, int);
 static int	hdafg_get_props(void *);
 static int	hdafg_trigger_output(void *, void *, void *, int,
 				       void (*)(void *), void *,
@@ -386,7 +384,7 @@ static int	hdafg_trigger_input(void *, void *, void *, int,
 static void	hdafg_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if hdafg_hw_if = {
-	.query_encoding		= hdafg_query_encoding,
+	.query_format	= hdafg_query_format,
 	.set_params		= hdafg_set_params,
 	.round_blocksize	= hdafg_round_blocksize,
 	.commit_settings	= hdafg_commit_settings,
@@ -398,8 +396,6 @@ static const struct audio_hw_if hdafg_hw_if = {
 	.query_devinfo		= hdafg_query_devinfo,
 	.allocm			= hdafg_allocm,
 	.freem			= hdafg_freem,
-	.round_buffersize	= hdafg_round_buffersize,
-	.mappage		= hdafg_mappage,
 	.get_props		= hdafg_get_props,
 	.trigger_output		= hdafg_trigger_output,
 	.trigger_input		= hdafg_trigger_input,
@@ -3380,6 +3376,9 @@ hdafg_probe_encoding(struct hdafg_softc *sc,
 		if (hdafg_rate_supported(sc, rate))
 			f.frequency[f.frequency_type++] = rate;
 	}
+	/* XXX ad hoc.. */
+	if (encoding == AUDIO_ENCODING_AC3)
+		f.priority = -1;
 
 #define HDAUDIO_INITFMT(ch, chmask)			\
 	do {						\
@@ -3920,10 +3919,11 @@ hdafg_resume(device_t self, const pmf_qual_t *qual)
 }
 
 static int
-hdafg_query_encoding(void *opaque, struct audio_encoding *ae)
+hdafg_query_format(void *opaque, audio_format_query_t *afp)
 {
 	struct hdaudio_audiodev *ad = opaque;
-	return auconv_query_encoding(ad->ad_encodings, ae);
+
+	return audio_query_format(ad->ad_formats, ad->ad_nformats, afp);
 }
 
 static int
@@ -3961,7 +3961,7 @@ hdafg_round_blocksize(void *opaque, int blksize, int mode,
 {
 	struct hdaudio_audiodev *ad = opaque;
 	struct hdaudio_stream *st;
-	int bufsize, nblksize;
+	int bufsize;
 
 	st = (mode == AUMODE_PLAY) ? ad->ad_playback : ad->ad_capture;
 	if (st == NULL) {
@@ -3970,24 +3970,21 @@ hdafg_round_blocksize(void *opaque, int blksize, int mode,
 		return 128;
 	}
 
-	if (blksize > 8192)
-		blksize = 8192;
-	else if (blksize < 0)
-		blksize = 128;
-
-	/* HD audio wants a multiple of 128, and OSS wants a power of 2 */
-	for (nblksize = 128; nblksize < blksize; nblksize <<= 1)
-		;
+	/*
+	 * HD audio's buffer constraint looks like following:
+	 * - The buffer MUST start on a 128bytes boundary.
+	 * - The buffer size MUST be one sample or more.
+	 * - The buffer size is preferred multiple of 128bytes for efficiency.
+	 *
+	 * https://www.intel.co.jp/content/www/jp/ja/standards/high-definition-audio-specification.html , p70.
+	 */
 
 	/* Make sure there are enough BDL descriptors */
 	bufsize = st->st_data.dma_size;
-	if (bufsize > HDAUDIO_BDL_MAX * nblksize) {
+	if (bufsize > HDAUDIO_BDL_MAX * blksize) {
 		blksize = bufsize / HDAUDIO_BDL_MAX;
-		for (nblksize = 128; nblksize < blksize; nblksize <<= 1)
-			;
 	}
-
-	return nblksize;
+	return blksize;
 }
 
 static int
@@ -4228,36 +4225,6 @@ hdafg_freem(void *opaque, void *addr, size_t size)
 		return;
 
 	hdaudio_dma_free(st->st_host, &st->st_data);
-}
-
-static size_t
-hdafg_round_buffersize(void *opaque, int direction, size_t bufsize)
-{
-	/* Multiple of 128 */
-	bufsize &= ~127;
-	if (bufsize <= 0)
-		bufsize = 128;
-	return bufsize;
-}
-
-static paddr_t
-hdafg_mappage(void *opaque, void *addr, off_t off, int prot)
-{
-	struct hdaudio_audiodev *ad = opaque;
-	struct hdaudio_stream *st;
-
-	if (addr == DMA_KERNADDR(&ad->ad_playback->st_data))
-		st = ad->ad_playback;
-	else if (addr == DMA_KERNADDR(&ad->ad_capture->st_data))
-		st = ad->ad_capture;
-	else
-		return -1;
-
-	if (st->st_data.dma_valid == false)
-		return -1;
-
-	return bus_dmamem_mmap(st->st_host->sc_dmat, st->st_data.dma_segs,
-	    st->st_data.dma_nsegs, off, prot, BUS_DMA_WAITOK);
 }
 
 static int
