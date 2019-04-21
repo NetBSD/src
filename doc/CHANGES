@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2526 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2527 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -347,6 +347,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	mdocml: Import 1.14.5. [christos 20190310]
 	OpenSSL: Imported 1.1.1b. [christos 20190312]
 	ssdfb(4): Added driver for SSD1306 & SH1106 displays [tnn 20190317]
+	kernel: Remove COMPAT_OSF1. [maxv 20190325]
 	tzdata Updated to 2019a. [kre 20190326]
 	evbarm: Add UEFI bootloader support (bootarm.efi). [jmcneill 20190330]
 	indent(1): Upgraded to the FreeBSD HEAD checkout [kamil 20190404]
