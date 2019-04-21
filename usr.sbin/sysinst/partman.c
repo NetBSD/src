@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.30 2019/02/12 18:32:15 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.31 2019/04/21 07:50:59 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -1998,9 +1998,9 @@ static int
 pm_clean(void)
 {
 	int count = 0;
-	pm_devs_t *pm_i;
+	pm_devs_t *pm_i, *tmp;
 
-	SLIST_FOREACH(pm_i, &pm_head, l)
+	SLIST_FOREACH_SAFE(pm_i, &pm_head, l, tmp)
 		if (! pm_i->found) {
 			count++;
 			SLIST_REMOVE(&pm_head, pm_i, pm_devs_t, l);
