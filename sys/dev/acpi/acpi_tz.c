@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.89 2017/06/01 02:45:09 chs Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.90 2019/04/21 21:52:09 mrg Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.89 2017/06/01 02:45:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.90 2019/04/21 21:52:09 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.89 2017/06/01 02:45:09 chs Exp $");
 #include <sys/module.h>
 #include <sys/systm.h>
 #include <sys/kmem.h>
+#include <sys/cpu.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -748,7 +749,7 @@ acpitz_print_processor_list(device_t dv)
 		if (cnt == 0)
 			aprint_normal(":");
 
-		aprint_normal(" %s", device_xname(ci->ci_dev));
+		aprint_normal(" %s", cpu_name(ci));
 
 		sc->sc_psl[cnt] = ci;
 		++cnt;
