@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.99.2.1 2019/04/21 05:11:22 isaki Exp $	*/
+/*	$NetBSD: eap.c,v 1.99.2.2 2019/04/21 07:55:25 isaki Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.99.2.1 2019/04/21 05:11:22 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.99.2.2 2019/04/21 07:55:25 isaki Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -69,10 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.99.2.1 2019/04/21 05:11:22 isaki Exp $");
 #include <sys/audioio.h>
 
 #include <dev/audio_if.h>
-#include <dev/midi_if.h>
-#include <dev/audiovar.h>
-#include <dev/mulaw.h>
 #include <dev/auconv.h>
+#include <dev/midi_if.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/eapreg.h>
@@ -110,11 +108,10 @@ CFATTACH_DECL_NEW(eap, sizeof(struct eap_softc),
     eap_match, eap_attach, eap_detach, NULL);
 
 static int	eap_open(void *, int);
-static int	eap_query_encoding(void *, struct audio_encoding *);
+static int	eap_query_format(void *, struct audio_format_query *);
 static int	eap_set_params(void *, int, int, audio_params_t *,
 			       audio_params_t *, stream_filter_list_t *,
 			       stream_filter_list_t *);
-static int	eap_round_blocksize(void *, int, int, const audio_params_t *);
 static int	eap_trigger_output(void *, void *, void *, int,
 				   void (*)(void *), void *,
 				   const audio_params_t *);
@@ -133,7 +130,6 @@ static int	eap1370_query_devinfo(void *, mixer_devinfo_t *);
 static void	*eap_malloc(void *, int, size_t);
 static void	eap_free(void *, void *, size_t);
 static size_t	eap_round_buffersize(void *, int, size_t);
-static paddr_t	eap_mappage(void *, void *, off_t, int);
 static int	eap_get_props(void *);
 static void	eap1370_set_mixer(struct eap_softc *, int, int);
 static uint32_t eap1371_src_wait(struct eap_softc *);
@@ -160,9 +156,8 @@ static void	eap_uart_txrdy(struct eap_softc *);
 
 static const struct audio_hw_if eap1370_hw_if = {
 	.open			= eap_open,
-	.query_encoding		= eap_query_encoding,
+	.query_format		= eap_query_format,
 	.set_params		= eap_set_params,
-	.round_blocksize	= eap_round_blocksize,
 	.halt_output		= eap_halt_output,
 	.halt_input		= eap_halt_input,
 	.getdev			= eap_getdev,
@@ -172,7 +167,6 @@ static const struct audio_hw_if eap1370_hw_if = {
 	.allocm			= eap_malloc,
 	.freem			= eap_free,
 	.round_buffersize	= eap_round_buffersize,
-	.mappage		= eap_mappage,
 	.get_props		= eap_get_props,
 	.trigger_output		= eap_trigger_output,
 	.trigger_input		= eap_trigger_input,
@@ -181,9 +175,8 @@ static const struct audio_hw_if eap1370_hw_if = {
 
 static const struct audio_hw_if eap1371_hw_if = {
 	.open			= eap_open,
-	.query_encoding		= eap_query_encoding,
+	.query_format		= eap_query_format,
 	.set_params		= eap_set_params,
-	.round_blocksize	= eap_round_blocksize,
 	.halt_output		= eap_halt_output,
 	.halt_input		= eap_halt_input,
 	.getdev			= eap_getdev,
@@ -193,7 +186,6 @@ static const struct audio_hw_if eap1371_hw_if = {
 	.allocm			= eap_malloc,
 	.freem			= eap_free,
 	.round_buffersize	= eap_round_buffersize,
-	.mappage		= eap_mappage,
 	.get_props		= eap_get_props,
 	.trigger_output		= eap_trigger_output,
 	.trigger_input		= eap_trigger_input,
@@ -945,61 +937,10 @@ eap_open(void *addr, int flags)
 }
 
 static int
-eap_query_encoding(void *addr, struct audio_encoding *fp)
+eap_query_format(void *addr, struct audio_format_query *afp)
 {
 
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		return 0;
-	case 1:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 2:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 3:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 4:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		return 0;
-	case 5:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 6:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 7:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	default:
-		return EINVAL;
-	}
+	return audio_query_format(eap_formats, EAP_NFORMATS, afp);
 }
 
 static int
@@ -1016,23 +957,6 @@ eap_set_params(void *addr, int setmode, int usemode,
 
 	ei = addr;
 	sc = device_private(ei->parent);
-	/*
-	 * The es1370 only has one clock, so make the sample rates match.
-	 * This only applies for ADC/DAC2. The FM DAC is handled below.
-	 */
-	if (!sc->sc_1371 && ei->index == EAP_DAC2) {
-		if (play->sample_rate != rec->sample_rate &&
-		    usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
-			if (setmode == AUMODE_PLAY) {
-				rec->sample_rate = play->sample_rate;
-				setmode |= AUMODE_RECORD;
-			} else if (setmode == AUMODE_RECORD) {
-				play->sample_rate = rec->sample_rate;
-				setmode |= AUMODE_PLAY;
-			} else
-				return EINVAL;
-		}
-	}
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
@@ -1040,11 +964,6 @@ eap_set_params(void *addr, int setmode, int usemode,
 			continue;
 
 		p = mode == AUMODE_PLAY ? play : rec;
-
-		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return EINVAL;
 
 		fil = mode == AUMODE_PLAY ? pfil : rfil;
 		i = auconv_set_converter(eap_formats, EAP_NFORMATS,
@@ -1106,14 +1025,6 @@ eap_set_params(void *addr, int setmode, int usemode,
 	}
 
 	return 0;
-}
-
-static int
-eap_round_blocksize(void *addr, int blk, int mode,
-    const audio_params_t *param)
-{
-
-	return blk & -32;	/* keep good alignment */
 }
 
 static int
@@ -1755,32 +1666,22 @@ eap_round_buffersize(void *addr, int direction, size_t size)
 	return size;
 }
 
-static paddr_t
-eap_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct eap_instance *ei;
-	struct eap_softc *sc;
-	struct eap_dma *p;
-
-	if (off < 0)
-		return -1;
-	ei = addr;
-	sc = device_private(ei->parent);
-	for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
-		continue;
-	if (!p)
-		return -1;
-
-	return bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
-			       off, prot, BUS_DMA_WAITOK);
-}
-
 static int
 eap_get_props(void *addr)
 {
+	struct eap_instance *ei;
+	struct eap_softc *sc;
+	int prop;
 
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-	    AUDIO_PROP_FULLDUPLEX;
+	ei = addr;
+	sc = device_private(ei->parent);
+	prop = AUDIO_PROP_MMAP | AUDIO_PROP_FULLDUPLEX |
+	    AUDIO_PROP_INDEPENDENT;
+	/* The es1370 only has one clock, so it's not independent */
+	if (!sc->sc_1371 && ei->index == EAP_DAC2)
+		prop &= ~AUDIO_PROP_INDEPENDENT;
+
+	return prop;
 }
 
 static void
