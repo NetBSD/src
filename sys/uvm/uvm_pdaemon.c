@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.109 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.110 2019/04/21 15:32:18 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.109 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.110 2019/04/21 15:32:18 chs Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.109 2017/10/28 00:37:13 pgoyette E
 #include <sys/buf.h>
 #include <sys/module.h>
 #include <sys/atomic.h>
+#include <sys/kthread.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
@@ -105,8 +106,15 @@ UVMHIST_DEFINE(pdhist);
 static void	uvmpd_scan(void);
 static void	uvmpd_scan_queue(void);
 static void	uvmpd_tune(void);
+static void	uvmpd_pool_drain_thread(void *);
+static void	uvmpd_pool_drain_wakeup(void);
 
 static unsigned int uvm_pagedaemon_waiters;
+
+/* State for the pool drainer thread */
+static kmutex_t uvmpd_pool_drain_lock;
+static kcondvar_t uvmpd_pool_drain_cv;
+static bool uvmpd_pool_drain_run = false;
 
 /*
  * XXX hack to avoid hangs when large processes fork.
@@ -229,13 +237,20 @@ uvmpd_tune(void)
 void
 uvm_pageout(void *arg)
 {
-	int bufcnt, npages = 0;
+	int npages = 0;
 	int extrapages = 0;
-	struct pool *pp;
 	
 	UVMHIST_FUNC("uvm_pageout"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist,"<starting uvm pagedaemon>", 0, 0, 0, 0);
+
+	mutex_init(&uvmpd_pool_drain_lock, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&uvmpd_pool_drain_cv, "pooldrain");
+
+	/* Create the pool drainer kernel thread. */
+	if (kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL,
+	    uvmpd_pool_drain_thread, NULL, NULL, "pooldrain"))
+		panic("fork pooldrain");
 
 	/*
 	 * ensure correct priority and set paging parameters...
@@ -288,9 +303,6 @@ uvm_pageout(void *arg)
 		 * system only when entire pool page is empty.
 		 */
 		mutex_spin_enter(&uvm_fpageqlock);
-		bufcnt = uvmexp.freetarg - uvmexp.free;
-		if (bufcnt < 0)
-			bufcnt = 0;
 
 		UVMHIST_LOG(pdhist,"  free/ftarg=%jd/%jd",
 		    uvmexp.free, uvmexp.freetarg, 0,0);
@@ -331,16 +343,10 @@ uvm_pageout(void *arg)
 			continue;
 
 		/*
-		 * kill unused metadata buffers.
+		 * kick the pool drainer thread.
 		 */
-		mutex_enter(&bufcache_lock);
-		buf_drain(bufcnt << PAGE_SHIFT);
-		mutex_exit(&bufcache_lock);
 
-		/*
-		 * drain the pools.
-		 */
-		pool_drain(&pp);
+		uvmpd_pool_drain_wakeup();
 	}
 	/*NOTREACHED*/
 }
@@ -1022,3 +1028,53 @@ uvm_estimatepageable(int *active, int *inactive)
 	uvmpdpol_estimatepageable(active, inactive);
 }
 
+
+/*
+ * Use a separate thread for draining pools.
+ * This work can't done from the main pagedaemon thread because
+ * some pool allocators need to take vm_map locks.
+ */
+
+static void
+uvmpd_pool_drain_thread(void *arg)
+{
+	int bufcnt;
+
+	for (;;) {
+		mutex_enter(&uvmpd_pool_drain_lock);
+		if (!uvmpd_pool_drain_run) {
+			cv_wait(&uvmpd_pool_drain_cv, &uvmpd_pool_drain_lock);
+		}
+		uvmpd_pool_drain_run = false;
+		mutex_exit(&uvmpd_pool_drain_lock);
+
+		/*
+		 * kill unused metadata buffers.
+		 */
+		mutex_spin_enter(&uvm_fpageqlock);
+		bufcnt = uvmexp.freetarg - uvmexp.free;
+		mutex_spin_exit(&uvm_fpageqlock);
+		if (bufcnt < 0)
+			bufcnt = 0;
+
+		mutex_enter(&bufcache_lock);
+		buf_drain(bufcnt << PAGE_SHIFT);
+		mutex_exit(&bufcache_lock);
+
+		/*
+		 * drain a pool.
+		 */
+		pool_drain(NULL);
+	}
+	/*NOTREACHED*/
+}
+
+static void
+uvmpd_pool_drain_wakeup(void)
+{
+
+	mutex_enter(&uvmpd_pool_drain_lock);
+	uvmpd_pool_drain_run = true;
+	cv_signal(&uvmpd_pool_drain_cv);
+	mutex_exit(&uvmpd_pool_drain_lock);
+}
