@@ -1,6 +1,0 @@
-.PATH.S: ${.PARSEDIR}
-
-POLY1305_SRCS = poly1305-armv8.S
-POLY1305_CPPFLAGS+=-DPOLY1305_ASM
-
-.include "../../poly1305.inc"

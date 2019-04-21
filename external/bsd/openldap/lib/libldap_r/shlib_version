@@ -1,4 +1,0 @@
-#	$NetBSD: shlib_version,v 1.6 2014/05/28 11:32:19 tron Exp $
-#
-major=4
-minor=3

@@ -1,8 +1,0 @@
-# $NetBSD: treetablefile,v 1.1 2012/08/22 06:45:17 spz Exp $
-#
-# tree tables can have address blocks
-#
-# entry comment 1 (optional)
-198.51.100.40/30
-# entry comment 2 (optional)
-192.0.2.7

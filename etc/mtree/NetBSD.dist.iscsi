@@ -1,3 +1,0 @@
-#	$NetBSD: NetBSD.dist.iscsi,v 1.1 2019/02/09 02:04:19 mrg Exp $
-
-./usr/include/dev/iscsi
