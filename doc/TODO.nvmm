@@ -2,8 +2,9 @@ Known issues in NVMM, low priority in most cases.
 
 ====== KERNEL NVMM DRIVER ======
 
- * Currently you can't modunload NVMM while a VM is running, otherwise you hit
-   a panic. See TODO in nvmm_fini().
+ * 32bit-PAE guests can misbehave on Intel, because we need to manually
+   install the PDPTEs, and currently we don't do it. In practice they don't
+   misbehave because the emulator never has to interfere with CR3.
 
  * Maybe we will want a way to return to userland when the guest TPR changes.
    On Intel that's not complicated, but on old AMD CPUs, we need to disassemble
