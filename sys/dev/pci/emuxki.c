@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.67.2.1 2019/04/21 05:11:22 isaki Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.67.2.2 2019/04/21 07:59:01 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67.2.1 2019/04/21 05:11:22 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67.2.2 2019/04/21 07:59:01 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67.2.1 2019/04/21 05:11:22 isaki Exp $"
 #include <sys/mutex.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
+#include <sys/fcntl.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
@@ -2043,7 +2044,7 @@ emuxki_open(void *addr, int flags)
 	 * recording source(s) which is necessary when setting recording
 	 * params This will be addressed very soon
 	 */
-	if (flags & AUOPEN_READ) {
+	if (flags & FREAD) {
 		sc->rvoice = emuxki_voice_new(sc, 0 /* EMU_VOICE_USE_RECORD */);
 		if (sc->rvoice == NULL)
 			return EBUSY;
@@ -2052,7 +2053,7 @@ emuxki_open(void *addr, int flags)
 		sc->rvoice->dataloc.source = EMU_RECSRC_ADC;
 	}
 
-	if (flags & AUOPEN_WRITE) {
+	if (flags & FWRITE) {
 		sc->pvoice = emuxki_voice_new(sc, EMU_VOICE_USE_PLAY);
 		if (sc->pvoice == NULL) {
 			if (sc->rvoice) {
