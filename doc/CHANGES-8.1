@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.131 2019/04/20 13:58:18 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.132 2019/04/22 08:19:01 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2871,4 +2871,40 @@ sys/arch/hppa/dev/dino.c			1.4
 	dino(4) depends on gedoens.
 	Re-arrange dino_softc members to improve alignment
 	[skrll, ticket #1235]
+
+sys/uvm/uvm_fault.c				1.205
+
+	If a pager fault method returns ENOMEM but some memory appears to be
+	reclaimable, wake up the pagedaemon and retry the fault.
+	[chs, ticket #1236]
+
+sys/external/bsd/drm2/ttm/ttm_bus_dma.c		1.8
+
+	In ttm_bus_dma_populate(), move the clearing of TTM_PAGE_FLAG_SWAPPED
+	to be earlier to avoid wrongly asserting if bus_dmamap_load_pglist()
+	fails.
+	[chs, ticket #1237]
+
+sys/uvm/uvm_pdaemon.c				1.110
+
+	Draining pools from the pagedaemon thread can deadlock, because
+	draining a pool can involve taking a lock which can be held by a
+	thread which is blocked waiting for memory.
+	Avoid this by moving the pool-draining work to a separate worker
+	thread.
+	[chs, ticket #1238]
+
+sys/external/bsd/drm2/ttm/ttm_bo_vm.c		1.12
+
+	ttm_bo_uvm_fault() is a netbsd API function and thus should return
+	netbsd errnos.
+	[mrg, ticket #1239]
+
+sys/dev/usb/ucom.c				1.122
+sys/dev/usb/umodem_common.c			1.27
+sys/dev/usb/umodemvar.h				1.10
+
+	Fix umodem(4) detach when unpluging a device while it is still
+	open.
+	[mrg, ticket #1240]
 
