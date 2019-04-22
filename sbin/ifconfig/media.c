@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: media.c,v 1.7 2016/09/14 11:46:43 roy Exp $");
+__RCSID("$NetBSD: media.c,v 1.8 2019/04/22 10:44:55 msaitoh Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -374,7 +374,7 @@ media_status(prop_dictionary_t env, prop_dictionary_t oenv)
 	/* Interface link status is queried through SIOCGIFMEDIA.
 	 * Not all interfaces have actual media. */
 	if (ifmr.ifm_count != 0) {
-		media_list = (int *)malloc(ifmr.ifm_count * sizeof(int));
+		media_list = calloc(ifmr.ifm_count, sizeof(int));
 		if (media_list == NULL)
 			err(EXIT_FAILURE, "malloc");
 		ifmr.ifm_ulist = media_list;
