@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.199.6.3 2018/02/27 09:07:33 martin Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.199.6.4 2019/04/22 08:05:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.199.6.3 2018/02/27 09:07:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.199.6.4 2019/04/22 08:05:51 martin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -876,6 +876,16 @@ norng:
 				 * object fault routine responsible for
 				 * pmap_update().
 				 */
+
+				/*
+				 * Wake up the pagedaemon if the fault method
+				 * failed for lack of memory but some can be
+				 * reclaimed.
+				 */
+				if (error == ENOMEM && uvm_reclaimable()) {
+					uvm_wait("pgo_fault");
+					error = ERESTART;
+				}
 			} else {
 				error = uvm_fault_lower(&ufi, &flt, pages);
 			}
