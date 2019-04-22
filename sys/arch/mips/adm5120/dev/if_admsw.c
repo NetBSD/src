@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.20 2019/04/12 05:19:24 msaitoh Exp $ */
+/* $NetBSD: if_admsw.c,v 1.21 2019/04/22 06:09:19 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.20 2019/04/12 05:19:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.21 2019/04/22 06:09:19 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -103,9 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.20 2019/04/12 05:19:24 msaitoh Exp $"
 #include <net/if_ether.h>
 
 #include <net/bpf.h>
-
-#include <dev/mii/mii.h>
-#include <dev/mii/miivar.h>
 
 #include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>
