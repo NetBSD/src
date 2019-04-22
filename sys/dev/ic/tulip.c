@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.192 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: tulip.c,v 1.193 2019/04/22 08:05:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.192 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.193 2019/04/22 08:05:01 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -983,16 +983,11 @@ static int
 tlp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct tulip_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
@@ -4374,6 +4369,7 @@ tlp_21040_tmsw_init(struct tulip_softc *sc)
 	};
 	struct tulip_21x4x_media *tm;
 
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 
@@ -4409,6 +4405,7 @@ tlp_21040_tp_tmsw_init(struct tulip_softc *sc)
 		TULIP_ROM_MB_MEDIA_TP_FDX,
 	};
 
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 
@@ -4426,6 +4423,7 @@ tlp_21040_auibnc_tmsw_init(struct tulip_softc *sc)
 		TULIP_ROM_MB_MEDIA_AUI,
 	};
 
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 
@@ -4451,6 +4449,7 @@ tlp_21041_tmsw_init(struct tulip_softc *sc)
 	uint16_t romdef;
 	uint8_t mb;
 
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 
@@ -4616,6 +4615,7 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
 	sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 
 	/*
 	 * Ignore `instance'; we may get a mixture of SIA and MII
@@ -5441,6 +5441,7 @@ tlp_sio_mii_tmsw_init(struct tulip_softc *sc)
 	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
 	sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
@@ -5488,6 +5489,7 @@ tlp_pnic_tmsw_init(struct tulip_softc *sc)
 	sc->sc_mii.mii_readreg = tlp_pnic_mii_readreg;
 	sc->sc_mii.mii_writereg = tlp_pnic_mii_writereg;
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
@@ -5885,6 +5887,7 @@ tlp_pmac_tmsw_init(struct tulip_softc *sc)
 	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
 	sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 	if (sc->sc_chip == TULIP_CHIP_MX98713 ||
@@ -5960,6 +5963,7 @@ tlp_al981_tmsw_init(struct tulip_softc *sc)
 	sc->sc_mii.mii_readreg = tlp_al981_mii_readreg;
 	sc->sc_mii.mii_writereg = tlp_al981_mii_writereg;
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
@@ -5995,6 +5999,7 @@ tlp_an985_tmsw_init(struct tulip_softc *sc)
 	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
 	sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
@@ -6032,6 +6037,7 @@ tlp_dm9102_tmsw_init(struct tulip_softc *sc)
 	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
 	sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 
@@ -6115,6 +6121,7 @@ tlp_asix_tmsw_init(struct tulip_softc *sc)
         sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
         sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
             tlp_mediastatus);
 
@@ -6194,6 +6201,7 @@ tlp_rs7112_tmsw_init(struct tulip_softc *sc)
 	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
 	sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 

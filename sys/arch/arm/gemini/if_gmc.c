@@ -1,4 +1,4 @@
-/* $NetBSD: if_gmc.c,v 1.7 2017/02/20 08:25:57 ozaki-r Exp $ */
+/* $NetBSD: if_gmc.c,v 1.8 2019/04/22 08:05:00 msaitoh Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,7 +47,7 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.7 2017/02/20 08:25:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.8 2019/04/22 08:05:00 msaitoh Exp $");
 
 #define	MAX_TXSEG	32
 
@@ -353,16 +353,11 @@ static int
 gmc_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct gmc_softc * const sc = ifp->if_softc;
-	struct ifreq * const ifr = data;
 	int s;
 	int error;
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {

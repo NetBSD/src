@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.29 2019/01/22 15:34:04 jmcneill Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.30 2019/04/22 08:05:01 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.29 2019/01/22 15:34:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.30 2019/04/22 08:05:01 msaitoh Exp $");
 
 /*
  * The LAN9118 Family
@@ -232,6 +232,7 @@ lan9118_attach(struct lan9118_softc *sc)
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 #endif
 
+	sc->sc_ec.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0,
 	    lan9118_ifm_change, lan9118_ifm_status);
 	sc->sc_mii.mii_ifp = ifp;
@@ -503,12 +504,6 @@ lan9118_ioctl(struct ifnet *ifp, u_long command, void *data)
 			break;
 		}
 		error = 0;
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		DPRINTFN(2, ("%s: MEDIA\n", __func__));
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
 		break;
 
 	default:

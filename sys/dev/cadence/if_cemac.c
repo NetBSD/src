@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.16 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.17 2019/04/22 08:05:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.16 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.17 2019/04/22 08:05:01 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -740,15 +740,10 @@ static int
 cemac_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct cemac_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
 	switch(cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error != ENETRESET)
