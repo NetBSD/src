@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1642 2019/03/26 12:22:07 pgoyette Exp $
+# $NetBSD: mi,v 1.1643 2019/04/22 21:58:56 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1076,6 +1076,7 @@
 ./usr/share/man/cat4/et.0			man-sys-catman		.cat
 ./usr/share/man/cat4/etherip.0			man-obsolete		obsolete
 ./usr/share/man/cat4/etphy.0			man-sys-catman		.cat
+./usr/share/man/cat4/evbarm/awge.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/bcmgpio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/cpsw.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/epgpio.0		man-sys-catman		.cat
@@ -4237,6 +4238,7 @@
 ./usr/share/man/html4/et.html			man-sys-htmlman		html
 ./usr/share/man/html4/etherip.html		man-obsolete		obsolete
 ./usr/share/man/html4/etphy.html		man-sys-htmlman		html
+./usr/share/man/html4/evbarm/awge.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/bcmgpio.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/cpsw.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/epgpio.html	man-sys-htmlman		html
@@ -7170,6 +7172,7 @@
 ./usr/share/man/man4/et.4			man-sys-man		.man
 ./usr/share/man/man4/etherip.4			man-obsolete		obsolete
 ./usr/share/man/man4/etphy.4			man-sys-man		.man
+./usr/share/man/man4/evbarm/awge.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/bcmgpio.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/cpsw.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/epgpio.4		man-sys-man		.man
