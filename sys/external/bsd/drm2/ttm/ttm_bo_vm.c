@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.10 2015/07/28 01:25:00 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.10.10.1 2019/04/22 09:03:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.10 2015/07/28 01:25:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.10.10.1 2019/04/22 09:03:55 martin Exp $");
 
 #include <sys/types.h>
 
@@ -112,7 +112,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		 */
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 		(void)ttm_bo_wait_unreserved(bo);
-		return -ERESTART;
+		return ERESTART;
 	}
 
 	/* drm prime buffers are not mappable.  XXX Catch this earlier?  */
