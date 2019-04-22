@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.145 2018/11/12 03:37:33 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.146 2019/04/22 08:09:59 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.145 2018/11/12 03:37:33 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.146 2019/04/22 08:09:59 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1029,7 +1029,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
 		if (sc2 == sc)
 			continue;
-		var2 = gif_getref_variant(sc, &psref);
+		var2 = gif_getref_variant(sc2, &psref);
 		if (!var2->gv_pdst || !var2->gv_psrc) {
 			gif_putref_variant(var2, &psref);
 			continue;
