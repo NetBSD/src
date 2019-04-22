@@ -1,4 +1,4 @@
-/*	$NetBSD: vsaudio.c,v 1.4 2019/04/08 14:48:33 isaki Exp $	*/
+/*	$NetBSD: vsaudio.c,v 1.4.2.1 2019/04/22 13:29:34 isaki Exp $	*/
 /*	$OpenBSD: vsaudio.c,v 1.4 2013/05/15 21:21:11 ratchov Exp $	*/
 
 /*
@@ -78,7 +78,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/auconv.h>
 
 #include <dev/ic/am7930reg.h>
 #include <dev/ic/am7930var.h>
@@ -170,9 +169,6 @@ struct am7930_glue vsaudio_glue = {
 	vsaudio_codec_iwrite16,
 	vsaudio_onopen,
 	vsaudio_onclose,
-	0,
-	/*vsaudio_input_conv*/0,
-	/*vsaudio_output_conv*/0,
 };
 
 /*
@@ -186,9 +182,8 @@ void	vsaudio_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread);
 struct audio_hw_if vsaudio_hw_if = {
 	.open			= am7930_open,
 	.close			= am7930_close,
-	.query_encoding		= am7930_query_encoding,
-	.set_params		= am7930_set_params,
-	.round_blocksize	= am7930_round_blocksize,
+	.query_format		= am7930_query_format,
+	.set_format		= am7930_set_format,
 	.commit_settings	= am7930_commit_settings,
 	.start_output		= vsaudio_start_output,
 	.start_input		= vsaudio_start_input,
