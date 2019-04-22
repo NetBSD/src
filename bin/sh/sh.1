@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.221 2019/04/15 20:35:25 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.222 2019/04/22 04:04:35 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -907,17 +907,42 @@ The overall format used for redirection is:
 where
 .Va redir-op
 is one of the redirection operators mentioned previously.
-The following is a list of the possible redirections.
+A list of the possible redirections, and their meanings, follows.
+.Pp
 The
 .Op Ar n
 is an optional number, as in
 .Sq Li 3
 (not
-.Li [3] ) ,
+.Sq Li [3] ) ,
 that refers to a file descriptor.
-If present it must occur immediately before the redirection
+If present it must occur unquoted, immediately before the redirection
 operator, with no intervening white space, and becomes a
 part of that operator.
+If file descriptor
+.Ar n
+was open prior to the redirection, its previous use is closed.
+.Pp
+All redirections have a single word
+.Ar file
+argument following the operator
+(white space is allowed between the redirection operator and
+.Ar file ) ,
+though it is sometimes expressed as
+.Ar n2 .
+That argument is expanded
+(see
+.Sx "Word Expansions"
+below) using tilde expansion, parameter expansion,
+arithmetic expansion, command substitution and quote removal
+to produce the path name (or file descriptor) to be used.
+No field splitting or pathname expansion takes place.
+In the list below, where the
+.Ar file
+is given as
+.Ar n2
+the result of the expansions must be a number which
+refers to a suitable open file descriptor.
 .Bl -tag -width aaabsfiles -offset indent
 .It Oo Ar n Oc Ns Ic > Ar file
 Redirect standard output (or
@@ -938,22 +963,32 @@ Redirect standard input (or
 .Ar n )
 from
 .Ar file .
-.It Oo Ar n1 Oc Ns Ic <& Ns Ar n2
-Duplicate standard input (or
+.It Oo Ar n1 Oc Ns Ic <& Ar n2
+Redirect standard input (or
 .Ar n1 )
-from file descriptor
+from a duplicate of file descriptor
 .Ar n2 .
-.Ar n2
-is expanded if not a digit string, the result must be a number.
-.It Oo Ar n Oc Ns Ic <&-
+.It Oo Ar n Oc Ns Ic <& \(mi
 Close standard input (or
 .Ar n ) .
-.It Oo Ar n1 Oc Ns Ic >& Ns Ar n2
-Duplicate standard output (or
+Note that the
+.Sq \&\(mi
+is minus sign (or hyphen) given literally or resulting
+from the expansion of
+.Ar file
+(or
+.Ar n2 )
+for this format.
+When given literally there is usually no space between
+the redirection operator and the
+.Sq \&\(mi ,
+though that is just a convention.
+.It Oo Ar n1 Oc Ns Ic >& Ar n2
+Redirect standard output (or
 .Ar n1 )
-to
+to be a duplicate of
 .Ar n2 .
-.It Oo Ar n Oc Ns Ic >&-
+.It Oo Ar n Oc Ns Ic >& \(mi
 Close standard output (or
 .Ar n ) .
 .It Oo Ar n Oc Ns Ic <> Ar file
