@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.132 2019/04/22 08:19:01 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.133 2019/04/22 09:07:40 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2907,4 +2907,9 @@ sys/dev/usb/umodemvar.h				1.10
 	Fix umodem(4) detach when unpluging a device while it is still
 	open.
 	[mrg, ticket #1240]
+
+sys/net/if_gif.c				1.146
+
+	gif(4): prevent duplicate tunnels early.
+	[knakahara, ticket #1241]
 
