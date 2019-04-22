@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.127 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.128 2019/04/22 08:05:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.127 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.128 2019/04/22 08:05:01 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,6 +375,7 @@ ex_config(struct ex_softc *sc)
 	sc->ex_mii.mii_readreg = ex_mii_readreg;
 	sc->ex_mii.mii_writereg = ex_mii_writereg;
 	sc->ex_mii.mii_statchg = ex_mii_statchg;
+	sc->sc_ethercom.ec_mii = &sc->ex_mii;
 	ifmedia_init(&sc->ex_mii.mii_media, IFM_IMASK, ex_media_chg,
 	    ex_media_stat);
 
@@ -1439,16 +1440,11 @@ int
 ex_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ex_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->ex_mii.mii_media, cmd);
-		break;
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;

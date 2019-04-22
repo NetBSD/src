@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.24 2019/02/05 06:17:00 msaitoh Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.24 2019/02/05 06:17:00 msaitoh Exp $	*/
+/*	$Id: at91emac.c,v 1.25 2019/04/22 08:05:00 msaitoh Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.25 2019/04/22 08:05:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.24 2019/02/05 06:17:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.25 2019/04/22 08:05:00 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -454,6 +454,7 @@ emac_init(struct emac_softc *sc)
 	sc->sc_mii.mii_readreg = emac_mii_readreg;
 	sc->sc_mii.mii_writereg = emac_mii_writereg;
 	sc->sc_mii.mii_statchg = emac_statchg;
+	sc->sc_ec.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, emac_mediachange,
 		emac_mediastatus);
 	mii_attach((device_t )sc, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
@@ -594,15 +595,10 @@ static int
 emac_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct emac_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
 	switch(cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {

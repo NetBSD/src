@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.21 2019/04/11 08:50:59 msaitoh Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.22 2019/04/22 08:05:01 msaitoh Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.21 2019/04/11 08:50:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.22 2019/04/22 08:05:01 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -314,6 +314,7 @@ lii_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mii.mii_readreg = lii_mii_readreg;
 	sc->sc_mii.mii_writereg = lii_mii_writereg;
 	sc->sc_mii.mii_statchg = lii_mii_statchg;
+	sc->sc_ec.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, lii_media_change,
 	    lii_media_status);
 	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
@@ -1143,23 +1144,9 @@ lii_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	switch(cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				lii_setmulti(sc);
-			error = 0;
-		}
-		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, (struct ifreq *)data,
-		    &sc->sc_mii.mii_media, cmd);
-		break;
+	switch (cmd) {
 	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				lii_setmulti(sc);
 			error = 0;

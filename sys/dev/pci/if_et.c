@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.21 2019/04/11 08:50:59 msaitoh Exp $	*/
+/*	$NetBSD: if_et.c,v 1.22 2019/04/22 08:05:01 msaitoh Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.21 2019/04/11 08:50:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.22 2019/04/22 08:05:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -1032,7 +1032,6 @@ int
 et_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct et_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1058,10 +1057,6 @@ et_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				et_stop(sc);
 		}
 		sc->sc_if_flags = ifp->if_flags;
-		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_miibus.mii_media, cmd);
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
