@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.50 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.51 2019/04/22 08:36:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.50 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.51 2019/04/22 08:36:03 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -656,18 +656,6 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				error = gfe_whack(sc, GE_WHACK_CHANGE);
-			else
-				error = 0;
-		}
-		break;
-
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
 			error = EINVAL;
@@ -678,7 +666,12 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = ether_ioctl(ifp, cmd, data);
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
+			if (ifp->if_flags & IFF_RUNNING)
+				error = gfe_whack(sc, GE_WHACK_CHANGE);
+			else
+				error = 0;
+		}
 		break;
 	}
 	splx(s);

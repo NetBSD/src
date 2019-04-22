@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.149 2019/04/11 09:16:56 msaitoh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.150 2019/04/22 08:36:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.149 2019/04/11 09:16:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.150 2019/04/22 08:36:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1585,19 +1585,13 @@ aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		sc->aue_if_flags = ifp->if_flags;
 		error = 0;
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
+	default:
 		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 				cv_signal(&sc->aue_domc);
 			}
 			error = 0;
 		}
-		break;
-	default:
-		error = ether_ioctl(ifp, command, data);
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.86 2019/02/05 06:17:03 msaitoh Exp $ */
+/*	$NetBSD: if_xi.c,v 1.87 2019/04/22 08:36:03 msaitoh Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.86 2019/02/05 06:17:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.87 2019/04/22 08:36:03 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -923,8 +923,7 @@ xi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 		/*FALLTHROUGH*/
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
+	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
@@ -934,10 +933,6 @@ xi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				xi_set_address(sc);
 			error = 0;
 		}
-		break;
-
-	default:
-		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 
