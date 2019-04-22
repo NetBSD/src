@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.67 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.68 2019/04/22 07:51:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.67 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.68 2019/04/22 07:51:16 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1181,18 +1181,11 @@ pcn_watchdog(struct ifnet *ifp)
 static int
 pcn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct pcn_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *) data;
 	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {

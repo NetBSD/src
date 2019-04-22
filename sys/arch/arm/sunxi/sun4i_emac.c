@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.6 2019/01/22 03:42:25 msaitoh Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.7 2019/04/22 07:51:16 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.6 2019/01/22 03:42:25 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.7 2019/04/22 07:51:16 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -710,14 +710,9 @@ static int
 sun4i_emac_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct sun4i_emac_softc * const sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int error;
 
 	switch (cmd) {
-	case SIOCGIFMEDIA: 
-	case SIOCSIFMEDIA:     
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
