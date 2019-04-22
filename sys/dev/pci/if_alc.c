@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.31 2019/03/05 08:25:02 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.32 2019/04/22 09:08:14 msaitoh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2050,8 +2050,6 @@ static int
 alc_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct alc_softc *sc = ifp->if_softc;
-	struct mii_data *mii = &sc->sc_miibus;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -2074,11 +2072,6 @@ alc_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			if (ifp->if_flags & IFF_RUNNING)
 				alc_stop(ifp, 0);
 		}
-		break;
- 
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
 		break;
  
 	default:
