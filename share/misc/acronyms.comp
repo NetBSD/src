@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.247 2019/04/17 22:38:14 sevan Exp $
+$NetBSD: acronyms.comp,v 1.248 2019/04/22 12:27:50 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1666,5 +1666,7 @@ ZIF	zero insertion force
 ZIFS	zero insertion force socket
 ZIL	ZFS intent log
 ZMA	zone multicast address
+ZOI	zero one infinity
+ZOI	zone of influence
 ZPL	ZFS Posix layer
 ZVOL	ZFS Volume
