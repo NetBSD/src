@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.151 2019/03/25 11:43:50 msaitoh Exp $
+$NetBSD: miidevs,v 1.152 2019/04/22 09:29:55 jmcneill Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ oui LEVEL1			0x00207b	Level 1
 oui VIA				0x004063	VIA Technologies
 oui MARVELL			0x005043	Marvell Semiconductor
 oui QUALSEMI			0x006051	Quality Semiconductor
+oui AMLOGIC			0x006051	Amlogic
 oui DAVICOM			0x00606e	Davicom Semiconductor
 oui SMSC			0x00800f	SMSC
 oui ICPLUS			0x0090c3	IC Plus Corp.
@@ -100,6 +101,7 @@ oui xxMYSON			0x00032d	Myson Technology
 oui xxTSC			0x00039c	TDK Semiconductor
 oui xxASIX			0x000674	Asix Semiconductor
 oui xxDAVICOM			0x000676	Davicom Semiconductor
+oui xxAMLOGIC			0x00068a	Amlogic
 oui xxQUALSEMI			0x00068a	Quality Semiconductor
 oui xxREALTEK			0x000732	Realtek
 oui xxBROADCOM			0x000818	Broadcom Corporation
@@ -138,6 +140,10 @@ model ALTIMA AC101		0x0021 AC101 10/100 media interface
 /* AMD Am79C87[45] have ALTIMA OUI */
 model ALTIMA Am79C875		0x0014 Am79C875 10/100 media interface
 model ALTIMA Am79C874		0x0021 Am79C874 10/100 media interface
+
+/* Amlogic PHYs */
+model AMLOGIC GXL		0x0000 Meson GXL internal PHY
+model xxAMLOGIC GXL		0x0000 Meson GXL internal PHY
 
 /* Atheros PHYs */
 model ATHEROS F1		0x0001 F1 10/100/1000 PHY
