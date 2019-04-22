@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.146 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: elink3.c,v 1.147 2019/04/22 07:51:16 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.146 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.147 2019/04/22 07:51:16 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -430,6 +430,7 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	sc->sc_mii.mii_readreg = ep_mii_readreg;
 	sc->sc_mii.mii_writereg = ep_mii_writereg;
 	sc->sc_mii.mii_statchg = ep_statchg;
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ep_media_change,
 	    ep_media_status);
 
@@ -1663,18 +1664,11 @@ int
 epioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ep_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
-
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		if (sc->enabled == 0) {

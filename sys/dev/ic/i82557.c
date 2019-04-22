@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.150 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: i82557.c,v 1.151 2019/04/22 07:51:16 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.150 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.151 2019/04/22 07:51:16 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2155,17 +2155,11 @@ int
 fxp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct fxp_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
