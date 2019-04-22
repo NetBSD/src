@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.53 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.54 2019/04/22 08:05:01 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.53 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.54 2019/04/22 08:05:01 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1125,17 +1125,11 @@ static int
 mvgbe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mvgbe_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = data;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		DPRINTFN(2, ("mvgbe_ioctl MEDIA\n"));
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
 	default:
 		DPRINTFN(2, ("mvgbe_ioctl ETHER\n"));
 		error = ether_ioctl(ifp, cmd, data);
