@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.99 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.100 2019/04/22 09:00:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.99 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.100 2019/04/22 09:00:12 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -316,6 +316,7 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 	sc->sc_mii.mii_readreg = smc91cxx_mii_readreg;
 	sc->sc_mii.mii_writereg = smc91cxx_mii_writereg;
 	sc->sc_mii.mii_statchg = smc91cxx_statchg;
+	sc->sc_ec.ec_mii = &sc->sc_mii;
 	ifmedia_init(ifm, IFM_IMASK, smc91cxx_mediachange,
 	    smc91cxx_mediastatus);
 
@@ -1259,7 +1260,6 @@ smc91cxx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1324,6 +1324,8 @@ smc91cxx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 
+		/* FALLTHROUGH */
+	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
@@ -1333,15 +1335,6 @@ smc91cxx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				smc91cxx_reset(sc);
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
-	default:
-		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 
