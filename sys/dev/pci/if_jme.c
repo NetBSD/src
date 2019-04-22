@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.38 2019/02/05 06:17:03 msaitoh Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.39 2019/04/22 06:35:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.38 2019/02/05 06:17:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.39 2019/04/22 06:35:39 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -76,9 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.38 2019/02/05 06:17:03 msaitoh Exp $");
 #include <sys/sysctl.h>
 
 #include <net/if.h>
-#if defined(SIOCSIFMEDIA)
 #include <net/if_media.h>
-#endif
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/route.h>
