@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.56 2019/03/31 12:47:33 simonb Exp $ */
+/* $NetBSD: sbmac.c,v 1.57 2019/04/22 08:39:10 msaitoh Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.56 2019/03/31 12:47:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.57 2019/04/22 08:39:10 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -2026,18 +2026,12 @@ sbmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = 0;
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
+	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			error = 0;
 			if (ifp->if_flags & IFF_RUNNING)
 				sbmac_setmulti(sc);
 		}
-		break;
-	default:
-		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 
