@@ -1,4 +1,4 @@
-/*	$NetBSD: umodemvar.h,v 1.9 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: umodemvar.h,v 1.9.10.1 2019/04/22 08:17:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,8 +51,11 @@ struct umodem_softc {
 
 	device_t		sc_subdev;	/* ucom device */
 
-	u_char			sc_opening;	/* lock during open */
-	u_char			sc_dying;	/* disconnecting */
+	bool			sc_dying;	/* disconnecting */
+
+	kmutex_t		sc_lock;
+	kcondvar_t		sc_detach_cv;
+	int			sc_refcnt;
 
 	int			sc_ctl_notify;	/* Notification endpoint */
 	struct usbd_pipe *	sc_notify_pipe; /* Notification pipe */
