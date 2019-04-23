@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.42 2019/04/22 11:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_media.c,v 1.43 2019/04/23 07:29:04 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.42 2019/04/22 11:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.43 2019/04/23 07:29:04 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,8 @@ static int	_ifmedia_ioctl(struct ifnet *, struct ifreq *,
 /*
  * Compile-time options:
  * IFMEDIA_DEBUG:
- *	turn on implementation-level debug printfs.
- * 	Useful for debugging newly-ported  drivers.
+ *	Turn on implementation-level debug printfs.
+ * 	Useful for debugging newly-ported drivers.
  */
 
 #ifdef IFMEDIA_DEBUG
@@ -252,13 +252,10 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	int error = 0;
 
 	if (ifp == NULL || ifr == NULL || ifm == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	switch (cmd) {
-	/*
-	 * Set the current media.
-	 */
-	case SIOCSIFMEDIA:
+	case SIOCSIFMEDIA:	/* Set the current media. */
 	{
 		struct ifmedia_entry *oldentry;
 		u_int oldmedia;
@@ -310,9 +307,7 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		break;
 	}
 
-	/*
-	 * Get list of available media and current media on interface.
-	 */
+	/* Get list of available media and current media on interface. */
 	case SIOCGIFMEDIA:
 	{
 		struct ifmedia_entry *ep;
@@ -455,7 +450,7 @@ ifmedia_baudrate(int mword)
 	for (i = 0; ifmedia_baudrate_descriptions[i].ifmb_word != 0; i++) {
 		if ((mword & (IFM_NMASK|IFM_TMASK)) ==
 		    ifmedia_baudrate_descriptions[i].ifmb_word)
-			return (ifmedia_baudrate_descriptions[i].ifmb_baudrate);
+			return ifmedia_baudrate_descriptions[i].ifmb_baudrate;
 	}
 
 	/* Not known. */
