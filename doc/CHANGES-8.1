@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.133 2019/04/22 09:07:40 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.134 2019/04/23 10:40:16 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2912,4 +2912,35 @@ sys/net/if_gif.c				1.146
 
 	gif(4): prevent duplicate tunnels early.
 	[knakahara, ticket #1241]
+
+sys/external/bsd/common/include/linux/err.h	1.3 (patch)
+sys/external/bsd/common/include/linux/errno.h	1.4 (patch)
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_drm.c 1.17 (patch)
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_fence.c 1.14 (patch)
+sys/external/bsd/drm2/drm/drm_drv.c		(patch)
+sys/external/bsd/drm2/include/drm/drm_wait_netbsd.h 1.15 (patch)
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.6 (patch)
+
+	Fix various issues with handling of ERESTART and
+	positive/negative error returns.
+	[mrg, ticket #1242]
+
+external/mit/xorg/bin/proxymngr/Makefile	1.4 (patch)
+external/mit/xorg/bin/sessreg/Makefile		1.7 (patch)
+external/mit/xorg/bin/xinit/Makefile		1.7 (patch)
+external/mit/xorg/lib/libXaw/Makefile		1.12 (patch)
+external/mit/xorg/lib/xkeyboard-config/Makefile	1.13 (patch)
+external/mit/xorg/server/xorg-server.old/hw/xfree86/doc/Makefile 1.2 (patch)
+external/mit/xorg/server/xorg-server/hw/xfree86/doc/Makefile (patch)
+share/mk/bsd.x11.mk				1.130 (patch)
+
+	Fix a bunch of man page transforms.
+	[mrg, ticket #1243]
+
+etc/mtree/Makefile				1.38 (patch)
+etc/mtree/NetBSD.dist.base			1.186-1.193 (patch)
+etc/mtree/NetBSD.dist.iscsi			1.1 (patch)
+
+	Fix various conditionals and add missing mtree directory specs.
+	[mrg, ticket #1244]
 
