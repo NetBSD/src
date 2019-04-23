@@ -1,4 +1,4 @@
-/*	$NetBSD: err.h,v 1.1 2015/08/18 21:10:56 skrll Exp $	*/
+/*	$NetBSD: err.h,v 1.1.16.1 2019/04/23 10:16:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 #include <sys/systm.h>
 
-#define	MAX_ERRNO	ELAST
+#define	MAX_ERRNO	4095
 
 static inline bool
 IS_ERR_VALUE(uintptr_t n)

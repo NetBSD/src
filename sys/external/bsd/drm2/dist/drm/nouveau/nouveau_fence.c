@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.4.10.1 2018/08/31 17:35:51 martin Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.4.10.2 2019/04/23 10:16:52 martin Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.4.10.1 2018/08/31 17:35:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.4.10.2 2019/04/23 10:16:52 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/xcall.h>
@@ -567,6 +567,8 @@ nouveau_fence_wait(struct nouveau_fence *fence, bool lazy, bool intr)
 		if (lazy && delay_usec >= 1000*hztoms(1)) {
 			/* XXX errno NetBSD->Linux */
 			ret = -kpause("nvfencew", intr, 1, NULL);
+			if (ret == -ERESTART)
+				ret = -ERESTARTSYS;
 			if (ret != -EWOULDBLOCK)
 				break;
 		} else {

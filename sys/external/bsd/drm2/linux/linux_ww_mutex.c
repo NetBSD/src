@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.2.10.2 2018/09/27 14:38:56 martin Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.2.10.3 2019/04/23 10:16:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.2.10.2 2018/09/27 14:38:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.2.10.3 2019/04/23 10:16:52 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.2.10.2 2018/09/27 14:38:56 mart
 #include <sys/rbtree.h>
 
 #include <linux/ww_mutex.h>
+#include <linux/errno.h>
 
 #define	WW_WANTLOCK(WW)							      \
 	LOCKDEBUG_WANTLOCK((WW)->wwm_debug, (WW),			      \
@@ -250,6 +251,8 @@ ww_mutex_state_wait_sig(struct ww_mutex *mutex, enum ww_mutex_state state)
 	do {
 		/* XXX errno NetBSD->Linux */
 		ret = -cv_wait_sig(&mutex->wwm_cv, &mutex->wwm_lock);
+		if (ret == -ERESTART)
+			ret = -ERESTARTSYS;
 		if (ret)
 			break;
 	} while (mutex->wwm_state == state);
@@ -315,6 +318,8 @@ ww_mutex_lock_wait_sig(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 	do {
 		/* XXX errno NetBSD->Linux */
 		ret = -cv_wait_sig(&mutex->wwm_cv, &mutex->wwm_lock);
+		if (ret == -ERESTART)
+			ret = -ERESTARTSYS;
 		if (ret)
 			goto out;
 	} while (!(((mutex->wwm_state == WW_CTX) ||
