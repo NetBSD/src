@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.30 2019/04/22 08:05:01 msaitoh Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.31 2019/04/23 03:36:45 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.30 2019/04/22 08:05:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.31 2019/04/23 03:36:45 msaitoh Exp $");
 
 /*
  * The LAN9118 Family
@@ -479,8 +479,6 @@ static int
 lan9118_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct lan9118_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = data;
-	struct mii_data *mii = &sc->sc_mii;
 	int s, error = 0;
 
 	s = splnet();
