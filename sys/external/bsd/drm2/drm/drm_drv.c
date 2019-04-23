@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.17.10.1 2017/12/08 05:43:51 msaitoh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.17.10.2 2019/04/23 10:16:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.17.10.1 2017/12/08 05:43:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.17.10.2 2019/04/23 10:16:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -326,6 +326,8 @@ fail2:	spin_lock(&dev->count_lock);
 		(void)drm_lastclose(dev);
 fail1:	drm_minor_release(dminor);
 fail0:	KASSERT(error);
+	if (error == ERESTARTSYS)
+		error = ERESTART;
 	return error;
 }
 
@@ -445,6 +447,8 @@ drm_read(struct file *fp, off_t *off, struct uio *uio, kauth_cred_t cred,
 	}
 
 	/* Success!  */
+	if (error == ERESTARTSYS)
+		error = ERESTART;
 	return error;
 }
 
@@ -678,6 +682,8 @@ drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 	if (!ISSET(ioctl->flags, DRM_UNLOCKED))
 		mutex_unlock(&drm_global_mutex);
 
+	if (error == ERESTARTSYS)
+		error = ERESTART;
 	return error;
 }
 
@@ -690,11 +696,14 @@ drm_fop_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 	int error;
 
 	KASSERT(fp == file->filp);
-	error = (*dev->driver->mmap_object)(dev, *offp, len, prot, uobjp,
+	/* XXX errno Linux->NetBSD */
+	error = -(*dev->driver->mmap_object)(dev, *offp, len, prot, uobjp,
 	    offp, file->filp);
 	*maxprotp = prot;
 	*advicep = UVM_ADV_RANDOM;
-	return -error;
+	if (error == ERESTARTSYS)
+		error = ERESTART;
+	return error;
 }
 
 static int

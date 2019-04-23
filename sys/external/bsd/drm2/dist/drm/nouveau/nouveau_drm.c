@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.8 2016/02/11 04:51:44 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.8.10.1 2019/04/23 10:16:52 martin Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.8 2016/02/11 04:51:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.8.10.1 2019/04/23 10:16:52 martin Exp $");
 
 #include <linux/console.h>
 #include <linux/module.h>
@@ -759,7 +759,8 @@ nouveau_drm_open(struct drm_device *dev, struct drm_file *fpriv)
 	/* need to bring up power immediately if opening device */
 	ret = pm_runtime_get_sync(dev->dev);
 	if (ret < 0 && ret != -EACCES)
-		return ret;
+		/* XXX errno Linux->NetBSD */
+		return -ret;
 
 #ifndef __NetBSD__
 	get_task_comm(tmpname, current);
