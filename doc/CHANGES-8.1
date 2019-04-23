@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.134 2019/04/23 10:40:16 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.135 2019/04/23 18:27:38 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2943,4 +2943,15 @@ etc/mtree/NetBSD.dist.iscsi			1.1 (patch)
 
 	Fix various conditionals and add missing mtree directory specs.
 	[mrg, ticket #1244]
+
+sys/arch/arm/arm32/pmap.c			1.372
+
+	Don't try to aquire/release the pmap lock when in ddb, it
+	may cause a deadlock.
+	[bouyer, ticket #1245]
+
+sys/arch/arm/arm32/pmap.c			1.373 (patch)
+
+	Fix a deadlock between the pool and pmap codes.
+	[bouyer, ticket #1246]
 
