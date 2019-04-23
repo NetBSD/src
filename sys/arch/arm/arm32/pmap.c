@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.371 2018/10/28 14:59:17 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.372 2019/04/23 11:05:14 bouyer Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,11 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.371 2018/10/28 14:59:17 skrll Exp $");
+#ifdef DDB
+#include <arm/db_machdep.h>
+#endif
+
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.372 2019/04/23 11:05:14 bouyer Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -538,6 +542,11 @@ vaddr_t pmap_directlimit;
 static inline void
 pmap_acquire_pmap_lock(pmap_t pm)
 {
+#if defined(MULTIPROCESSOR) && defined(DDB)
+	if (db_onproc != NULL)
+		return;
+#endif
+	
 	if (pm == pmap_kernel()) {
 #ifdef MULTIPROCESSOR
 		KERNEL_LOCK(1, NULL);
@@ -550,6 +559,10 @@ pmap_acquire_pmap_lock(pmap_t pm)
 static inline void
 pmap_release_pmap_lock(pmap_t pm)
 {
+#if defined(MULTIPROCESSOR) && defined(DDB)
+	if (db_onproc != NULL)
+		return;
+#endif
 	if (pm == pmap_kernel()) {
 #ifdef MULTIPROCESSOR
 		KERNEL_UNLOCK_ONE(NULL);
