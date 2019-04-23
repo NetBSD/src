@@ -365,6 +365,7 @@ _GLIBCXX_END_NAMESPACE_VERSION
 // In the future, GLIBCXX_ABI > 6 should remove all uses of
 // _GLIBCXX_*_SYMVER macros in this file.
 
+#ifdef _GLIBCXX_COMPAT_
 #define _GLIBCXX_3_4_SYMVER(XXname, name) \
    extern "C" void \
    _X##name() \
@@ -379,6 +380,11 @@ _GLIBCXX_END_NAMESPACE_VERSION
 
 #define _GLIBCXX_ASM_SYMVER(cur, old, version) \
    asm (".symver " #cur "," #old "@@" #version);
+#else
+#define _GLIBCXX_3_4_SYMVER(XXname, name)
+#define _GLIBCXX_3_4_5_SYMVER(XXname, name)
+#define _GLIBCXX_ASM_SYMVER(cur, old, version)
+#endif
 
 #define _GLIBCXX_APPLY_SYMVER _GLIBCXX_3_4_SYMVER
 #include <abi/compatibility.h>

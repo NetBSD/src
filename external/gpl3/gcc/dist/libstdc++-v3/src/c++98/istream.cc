@@ -112,8 +112,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     basic_istream<char>::
     ignore(streamsize __n, int_type __delim)
     {
+#ifdef _GLIBCXX_COMPAT_
       if (traits_type::eq_int_type(__delim, traits_type::eof()))
 	return ignore(__n);
+#endif
 
       _M_gcount = 0;
       sentry __cerb(*this, true);
@@ -354,8 +356,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     basic_istream<wchar_t>::
     ignore(streamsize __n, int_type __delim)
     {
+#ifdef _GLIBCXX_COMPAT_
       if (traits_type::eq_int_type(__delim, traits_type::eof()))
 	return ignore(__n);
+#endif
 
       _M_gcount = 0;
       sentry __cerb(*this, true);
