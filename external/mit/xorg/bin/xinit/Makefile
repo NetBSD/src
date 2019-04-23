@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/08/03 02:56:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.6.34.1 2019/04/23 10:24:54 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -27,8 +27,10 @@ FILESDIR=	${XINITDIR}
 LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11
 DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 
-X11EXTRAMANDEFS=-D__xinitdir__=${XINITDIR}
-X11MANCPP=	yes
+X11EXTRAMANTRANSFORMS+= \
+	__xinitdir__		${XINITDIR} \
+	__configdir__		${X11LIBDIR}/xinit \
+	__SCOMAN__		1
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man
