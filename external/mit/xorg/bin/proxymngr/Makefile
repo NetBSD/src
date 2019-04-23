@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/14 23:37:19 cube Exp $
+#	$NetBSD: Makefile,v 1.2.54.1 2019/04/23 10:24:54 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,9 @@ FILESDIR=	${PROXYMANAGERDIR}
 
 LDADD+=	-lXt -lSM -lICE -lXext -lX11
 DPADD+=	${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+
+X11EXTRAMANTRANSFORMS+= \
+	__configdir__		${X11ETCDIR}/proxymngr
 
 .PATH:	${X11SRCDIR.${PROG}}
 
