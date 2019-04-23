@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.18 2017/09/09 21:27:23 sevan Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.19 2019/04/23 22:35:42 sevan Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: veriexecgen.c,v 1.18 2017/09/09 21:27:23 sevan Exp $");
+__RCSID("$NetBSD: veriexecgen.c,v 1.19 2019/04/23 22:35:42 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,7 +208,7 @@ add_new_entry(veriexecgen_t *vp, FTSENT *file, hash_t *hash)
 	} else
 		sb = *file->fts_statp;
 
-	if (!vp->all_files && !vp->scan_system_dirs && !IS_EXEC(sb.st_mode))
+	if (!vp->all_files && !IS_EXEC(sb.st_mode))
 		return;
 
 	e = ecalloc(1UL, sizeof(*e));
