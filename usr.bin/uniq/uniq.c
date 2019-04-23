@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.21 2019/04/23 14:40:12 uwe Exp $	*/
+/*	$NetBSD: uniq.c,v 1.22 2019/04/23 17:35:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: uniq.c,v 1.21 2019/04/23 14:40:12 uwe Exp $");
+__RCSID("$NetBSD: uniq.c,v 1.22 2019/04/23 17:35:10 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -102,7 +102,7 @@ main (int argc, char *argv[])
 			usage();
 	}
 
-done:	argc -= optind;
+	argc -= optind;
 	argv +=optind;
 
 	switch(argc) {
