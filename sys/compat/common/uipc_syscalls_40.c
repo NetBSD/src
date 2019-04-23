@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.19 2019/04/18 17:45:12 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.20 2019/04/23 07:45:06 msaitoh Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.19 2019/04/18 17:45:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.20 2019/04/23 07:45:06 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -29,10 +29,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.19 2019/04/18 17:45:12 christ
 #include <compat/common/compat_mod.h>
 
 /*
- * Return interface configuration
- * of system.  List may be used
- * in later ioctl's (above) to get
- * other information.
+ * Return interface configuration of system.  List may be used in later
+ * ioctl's (above) to get other information.
  */
 /*ARGSUSED*/
 static int
@@ -158,7 +156,7 @@ compat_ifconf(u_long cmd, void *data)
 		ifc->ifc_len -= space;
 	else
 		ifc->ifc_len = -space;
-	return (0);
+	return 0;
 
 release_exit:
 	if_release(ifp, &psref);
