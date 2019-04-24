@@ -1,4 +1,4 @@
-/*	$NetBSD: security.c,v 1.12 2017/08/16 08:44:40 christos Exp $	*/
+/*	$NetBSD: security.c,v 1.13 2019/04/24 10:27:49 roy Exp $	*/
 /*	$FreeBSD: head/usr.sbin/rpcbind/security.c 262860 2014-03-06 17:33:27Z mav $ */
 
 #include <sys/types.h>
@@ -24,9 +24,22 @@
 #include <rpcsvc/mount.h>
 #include <rpcsvc/rquota.h>
 #include <rpcsvc/nfs_prot.h>
+
+#ifdef YP
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 #include <rpcsvc/yppasswd.h>
+#else
+/* Define enough to compile. */
+#define	YPBINDPROG		((unsigned long)100007)
+#define	YPBINDPROC_SETDOM	((unsigned long)2)
+#define	YPPROG			((unsigned long)100004)
+#define	YPPROC_FIRST		((unsigned long)4)
+#define	YPPROC_NEXT		((unsigned long)5)
+#define	YPPROC_MATCH		((unsigned long)3)
+#define	YPPROC_ALL		((unsigned long)8)
+#define	YPPASSWDPROG		((unsigned long)100009)
+#endif
 
 #include "rpcbind.h"
 
