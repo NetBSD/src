@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2012/03/21 10:08:30 matt Exp $
+#	$NetBSD: Makefile,v 1.41 2019/04/24 10:26:43 roy Exp $
 
 WARNS=	4
 
@@ -8,7 +8,14 @@ NOMAN=		# defined
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
 		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x\
-		sm_inter.x spray.x yp.x yppasswd.x
+		sm_inter.x spray.x
+
+.include <bsd.own.mk>
+
+.if (${MKYP} != "no")
+RPCSRCS+=	yp.x yppasswd.x
+.endif
+
 RPC_INCS=	${RPCSRCS:.x=.h}
 RPC_XDRFILES=	${RPCSRCS:.x=_xdr.c}	
 
