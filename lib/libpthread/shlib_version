@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.18 2018/09/09 07:24:59 maya Exp $
+#	$NetBSD: shlib_version,v 1.19 2019/04/24 13:01:52 kamil Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # Things to do when bumping major version:
@@ -18,5 +18,7 @@
 #	use reserved identifiers for things that shouldn't be visible,
 #	e.g. rename pthread__pagesize to __pthread_pagesize,
 #
+#	remove remnants of libpthread_dbg: pthread__dbg
+#
 major=1
-minor=3
+minor=4
