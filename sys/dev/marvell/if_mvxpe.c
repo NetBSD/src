@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.22 2019/03/18 11:38:03 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.23 2019/04/24 10:56:24 msaitoh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.22 2019/03/18 11:38:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.23 2019/04/24 10:56:24 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1727,18 +1727,9 @@ STATIC int
 mvxpe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mvxpe_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = data;
 	int error = 0;
-	int s;
 
 	switch (cmd) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		DPRINTIFNET(ifp, 2, "mvxpe_ioctl MEDIA\n");
-		s = splnet(); /* XXX: is there suitable mutex? */
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		splx(s);
-		break;
 	default:
 		DPRINTIFNET(ifp, 2, "mvxpe_ioctl ETHER\n");
 		error = ether_ioctl(ifp, cmd, data);
