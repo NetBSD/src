@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.37 2019/03/05 08:25:02 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.38 2019/04/24 10:40:18 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.37 2019/03/05 08:25:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.38 2019/04/24 10:40:18 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -1421,7 +1421,6 @@ npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
 #if 0 /* not yet */
 		/* Flow control requires full-duplex mode. */
 		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
