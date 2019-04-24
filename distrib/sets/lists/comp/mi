@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2269 2019/04/24 10:26:08 roy Exp $
+#	$NetBSD: mi,v 1.2270 2019/04/24 11:43:20 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3172,6 +3172,7 @@
 ./usr/include/termcap.h				comp-c-include
 ./usr/include/termios.h				comp-c-include
 ./usr/include/threadlib.h			comp-obsolete		obsolete
+./usr/include/threads.h				comp-c-include
 ./usr/include/time.h				comp-c-include
 ./usr/include/trousers/trousers.h		comp-c-include		tpm
 ./usr/include/trousers/tss.h			comp-c-include		tpm
@@ -4850,6 +4851,7 @@
 ./usr/share/man/cat3/MDC2_Init.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/MIN.0			comp-c-catman		.cat
 ./usr/share/man/cat3/OBJ_nid2obj.0		comp-c-catman		.cat
+./usr/share/man/cat3/ONCE_FLAG_INIT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/OCSP_REQUEST_new.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/OCSP_cert_to_id.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/OCSP_request_add1_nonce.0	comp-c-catman		.cat,openssl=11
@@ -5276,6 +5278,7 @@
 ./usr/share/man/cat3/TAILQ_REPLACE.0		comp-c-catman		.cat
 ./usr/share/man/cat3/TIMESPEC_TO_TIMEVAL.0		comp-c-catman	.cat
 ./usr/share/man/cat3/TIMEVAL_TO_TIMESPEC.0		comp-c-catman	.cat
+./usr/share/man/cat3/TSS_DTOR_ITERATIONS.0		comp-c-catman	.cat
 ./usr/share/man/cat3/Tspi_ChangeAuth.0			comp-c-catman	tpm,.cat
 ./usr/share/man/cat3/Tspi_ChangeAuthAsym.0		comp-c-catman	tpm,.cat
 ./usr/share/man/cat3/Tspi_Context_Close.0		comp-c-catman	tpm,.cat
@@ -6049,6 +6052,7 @@
 ./usr/share/man/cat3/cabsf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cabsl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cacos.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/call_once.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cacosf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cacosh.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cacoshf.0			comp-c-catman		complex,.cat
@@ -6206,6 +6210,13 @@
 ./usr/share/man/cat3/clrtobot.0			comp-c-catman		.cat
 ./usr/share/man/cat3/clrtoeol.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cmsg.0			comp-c-catman		.cat
+./usr/share/man/cat3/cnd.0			comp-c-catman		.cat
+./usr/share/man/cat3/cnd_broadcast.0		comp-c-catman		.cat
+./usr/share/man/cat3/cnd_destroy.0		comp-c-catman		.cat
+./usr/share/man/cat3/cnd_init.0			comp-c-catman		.cat
+./usr/share/man/cat3/cnd_signal.0		comp-c-catman		.cat
+./usr/share/man/cat3/cnd_timedwait.0		comp-c-catman		.cat
+./usr/share/man/cat3/cnd_wait.0			comp-c-catman		.cat
 ./usr/share/man/cat3/color_content.0		comp-c-catman		.cat
 ./usr/share/man/cat3/color_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/com_err.0			comp-krb5-catman	kerberos,.cat
@@ -8490,6 +8501,13 @@
 ./usr/share/man/cat3/mvwinstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvwprintw.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwvline.0			comp-c-catman		.cat
+./usr/share/man/cat3/mtx.0			comp-c-catman		.cat
+./usr/share/man/cat3/mtx_destroy.0		comp-c-catman		.cat
+./usr/share/man/cat3/mtx_init.0			comp-c-catman		.cat
+./usr/share/man/cat3/mtx_lock.0			comp-c-catman		.cat
+./usr/share/man/cat3/mtx_timedlock.0		comp-c-catman		.cat
+./usr/share/man/cat3/mtx_trylock.0		comp-c-catman		.cat
+./usr/share/man/cat3/mtx_unlock.0		comp-c-catman		.cat
 ./usr/share/man/cat3/nan.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nanl.0			comp-c-catman		.cat
@@ -8543,6 +8561,7 @@
 ./usr/share/man/cat3/offsetof.0			comp-c-catman		.cat
 ./usr/share/man/cat3/offtime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/offtime_r.0		comp-c-catman		.cat
+./usr/share/man/cat3/once_flag.0		comp-c-catman		.cat
 ./usr/share/man/cat3/open_memstream.0		comp-c-catman		.cat
 ./usr/share/man/cat3/open_wmemstream.0		comp-c-catman		.cat
 ./usr/share/man/cat3/opendir.0			comp-c-catman		.cat
@@ -10048,7 +10067,16 @@
 ./usr/share/man/cat3/tgetstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgmath.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgoto.0			comp-c-catman		.cat
-./usr/share/man/cat3/threads.0			comp-obsolete		obsolete
+./usr/share/man/cat3/threads.0			comp-c-catman		.cat
+./usr/share/man/cat3/thrd.0			comp-c-catman		.cat
+./usr/share/man/cat3/thrd_create.0		comp-c-catman		.cat
+./usr/share/man/cat3/thrd_current.0		comp-c-catman		.cat
+./usr/share/man/cat3/thrd_detach.0		comp-c-catman		.cat
+./usr/share/man/cat3/thrd_equal.0		comp-c-catman		.cat
+./usr/share/man/cat3/thrd_exit.0		comp-c-catman		.cat
+./usr/share/man/cat3/thrd_join.0		comp-c-catman		.cat
+./usr/share/man/cat3/thrd_sleep.0		comp-c-catman		.cat
+./usr/share/man/cat3/thrd_yield.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ti_getflag.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ti_getnum.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ti_getstr.0		comp-c-catman		.cat
@@ -10113,6 +10141,11 @@
 ./usr/share/man/cat3/truncf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/truncl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tsearch.0			comp-c-catman		.cat
+./usr/share/man/cat3/tss.0			comp-c-catman		.cat
+./usr/share/man/cat3/tss_create.0		comp-c-catman		.cat
+./usr/share/man/cat3/tss_delete.0		comp-c-catman		.cat
+./usr/share/man/cat3/tss_get.0			comp-c-catman		.cat
+./usr/share/man/cat3/tss_set.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ttyaction.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ttylock.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ttymsg.0			comp-c-catman		.cat
@@ -12864,6 +12897,7 @@
 ./usr/share/man/html3/MDC2_Init.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/MIN.html			comp-c-htmlman		html
 ./usr/share/man/html3/OBJ_nid2obj.html		comp-c-htmlman		html
+./usr/share/man/html3/ONCE_FLAG_INIT.html	comp-c-htmlman		html
 ./usr/share/man/html3/OCSP_REQUEST_new.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/OCSP_cert_to_id.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/OCSP_request_add1_nonce.html	comp-c-htmlman	html,openssl=11
@@ -13296,6 +13330,7 @@
 ./usr/share/man/html3/TAILQ_REPLACE.html	comp-c-htmlman		html
 ./usr/share/man/html3/TIMESPEC_TO_TIMEVAL.html	comp-c-htmlman		html
 ./usr/share/man/html3/TIMEVAL_TO_TIMESPEC.html	comp-c-htmlman		html
+./usr/share/man/html3/TSS_DTOR_ITERATIONS.html	comp-c-htmlman		html
 ./usr/share/man/html3/Tspi_ChangeAuth.html	comp-c-htmlman		tpm,html
 ./usr/share/man/html3/Tspi_ChangeAuthAsym.html	comp-c-htmlman		tpm,html
 ./usr/share/man/html3/Tspi_Context_Close.html	comp-c-htmlman		tpm,html
@@ -14065,6 +14100,7 @@
 ./usr/share/man/html3/cacoshf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cacoshl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cacosl.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/call_once.html		comp-c-htmlman		html
 ./usr/share/man/html3/calloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/callrpc.html		comp-c-htmlman		html
 ./usr/share/man/html3/can_change_color.html	comp-c-htmlman		html
@@ -14174,6 +14210,13 @@
 ./usr/share/man/html3/clrtobot.html		comp-c-htmlman		html
 ./usr/share/man/html3/clrtoeol.html		comp-c-htmlman		html
 ./usr/share/man/html3/cmsg.html			comp-c-htmlman		html
+./usr/share/man/html3/cnd.html			comp-c-htmlman		html
+./usr/share/man/html3/cnd_broadcast.html	comp-c-htmlman		html
+./usr/share/man/html3/cnd_destroy.html		comp-c-htmlman		html
+./usr/share/man/html3/cnd_init.html		comp-c-htmlman		html
+./usr/share/man/html3/cnd_signal.html		comp-c-htmlman		html
+./usr/share/man/html3/cnd_timedwait.html	comp-c-htmlman		html
+./usr/share/man/html3/cnd_wait.html		comp-c-htmlman		html
 ./usr/share/man/html3/color_content.html	comp-c-htmlman		html
 ./usr/share/man/html3/color_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/com_err.html		comp-krb5-htmlman	kerberos,html
@@ -16432,6 +16475,13 @@
 ./usr/share/man/html3/mvwinstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwprintw.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwvline.html		comp-c-htmlman		html
+./usr/share/man/html3/mtx.html			comp-c-htmlman		html
+./usr/share/man/html3/mtx_destroy.html		comp-c-htmlman		html
+./usr/share/man/html3/mtx_init.html		comp-c-htmlman		html
+./usr/share/man/html3/mtx_lock.html		comp-c-htmlman		html
+./usr/share/man/html3/mtx_timedlock.html	comp-c-htmlman		html
+./usr/share/man/html3/mtx_trylock.html		comp-c-htmlman		html
+./usr/share/man/html3/mtx_unlock.html		comp-c-htmlman		html
 ./usr/share/man/html3/nan.html			comp-c-htmlman		html
 ./usr/share/man/html3/nanf.html			comp-c-htmlman		html
 ./usr/share/man/html3/nanl.html			comp-c-htmlman		html
@@ -16482,6 +16532,7 @@
 ./usr/share/man/html3/offsetof.html		comp-c-htmlman		html
 ./usr/share/man/html3/offtime.html		comp-c-htmlman		html
 ./usr/share/man/html3/offtime_r.html		comp-c-htmlman		html
+./usr/share/man/html3/once_flag.html		comp-c-htmlman		html
 ./usr/share/man/html3/open_memstream.html	comp-c-htmlman		html
 ./usr/share/man/html3/open_wmemstream.html	comp-c-htmlman		html
 ./usr/share/man/html3/opendir.html		comp-c-htmlman		html
@@ -17972,6 +18023,16 @@
 ./usr/share/man/html3/tgetstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgmath.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgoto.html		comp-c-htmlman		html
+./usr/share/man/html3/threads.html		comp-c-htmlman		html
+./usr/share/man/html3/thrd.html			comp-c-htmlman		html
+./usr/share/man/html3/thrd_create.html		comp-c-htmlman		html
+./usr/share/man/html3/thrd_current.html		comp-c-htmlman		html
+./usr/share/man/html3/thrd_detach.html		comp-c-htmlman		html
+./usr/share/man/html3/thrd_equal.html		comp-c-htmlman		html
+./usr/share/man/html3/thrd_exit.html		comp-c-htmlman		html
+./usr/share/man/html3/thrd_join.html		comp-c-htmlman		html
+./usr/share/man/html3/thrd_sleep.html		comp-c-htmlman		html
+./usr/share/man/html3/thrd_yield.html		comp-c-htmlman		html
 ./usr/share/man/html3/ti_getflag.html		comp-c-htmlman		html
 ./usr/share/man/html3/ti_getnum.html		comp-c-htmlman		html
 ./usr/share/man/html3/ti_getstr.html		comp-c-htmlman		html
@@ -18036,6 +18097,11 @@
 ./usr/share/man/html3/truncf.html		comp-c-htmlman		html
 ./usr/share/man/html3/truncl.html		comp-c-htmlman		html
 ./usr/share/man/html3/tsearch.html		comp-c-htmlman		html
+./usr/share/man/html3/tss.html			comp-c-htmlman		html
+./usr/share/man/html3/tss_create.html		comp-c-htmlman		html
+./usr/share/man/html3/tss_delete.html		comp-c-htmlman		html
+./usr/share/man/html3/tss_get.html		comp-c-htmlman		html
+./usr/share/man/html3/tss_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/ttyaction.html		comp-c-htmlman		html
 ./usr/share/man/html3/ttylock.html		comp-c-htmlman		html
 ./usr/share/man/html3/ttymsg.html		comp-c-htmlman		html
@@ -20720,6 +20786,7 @@
 ./usr/share/man/man3/MDC2_Init.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/MIN.3			comp-c-man		.man
 ./usr/share/man/man3/OBJ_nid2obj.3		comp-c-man		.man
+./usr/share/man/man3/ONCE_FLAG_INIT.3		comp-c-man		.man
 ./usr/share/man/man3/OCSP_REQUEST_new.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/OCSP_cert_to_id.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/OCSP_request_add1_nonce.3	comp-c-man	.man,openssl=11
@@ -21153,6 +21220,7 @@
 ./usr/share/man/man3/TAILQ_REPLACE.3		comp-c-man		.man
 ./usr/share/man/man3/TIMESPEC_TO_TIMEVAL.3	comp-c-man		.man
 ./usr/share/man/man3/TIMEVAL_TO_TIMESPEC.3	comp-c-man		.man
+./usr/share/man/man3/TSS_DTOR_ITERATIONS.3	comp-c-man		.man
 ./usr/share/man/man3/Tspi_ChangeAuth.3		comp-c-man	tpm,.man
 ./usr/share/man/man3/Tspi_ChangeAuthAsym.3	comp-c-man	tpm,.man
 ./usr/share/man/man3/Tspi_Context_Close.3	comp-c-man	tpm,.man
@@ -21927,6 +21995,7 @@
 ./usr/share/man/man3/cabsf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cabsl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacos.3			comp-c-man		complex,.man
+./usr/share/man/man3/call_once.3		comp-c-man		.man
 ./usr/share/man/man3/cacosf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacosh.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacoshf.3			comp-c-man		complex,.man
@@ -22084,6 +22153,13 @@
 ./usr/share/man/man3/clrtobot.3			comp-c-man		.man
 ./usr/share/man/man3/clrtoeol.3			comp-c-man		.man
 ./usr/share/man/man3/cmsg.3			comp-c-man		.man
+./usr/share/man/man3/cnd.3			comp-c-man		.man
+./usr/share/man/man3/cnd_broadcast.3		comp-c-man		.man
+./usr/share/man/man3/cnd_destroy.3		comp-c-man		.man
+./usr/share/man/man3/cnd_init.3			comp-c-man		.man
+./usr/share/man/man3/cnd_signal.3		comp-c-man		.man
+./usr/share/man/man3/cnd_timedwait.3		comp-c-man		.man
+./usr/share/man/man3/cnd_wait.3			comp-c-man		.man
 ./usr/share/man/man3/color_content.3		comp-c-man		.man
 ./usr/share/man/man3/color_set.3		comp-c-man		.man
 ./usr/share/man/man3/com_err.3			comp-krb5-man		kerberos,.man
@@ -24380,6 +24456,13 @@
 ./usr/share/man/man3/mvwinstr.3			comp-c-man		.man
 ./usr/share/man/man3/mvwprintw.3		comp-c-man		.man
 ./usr/share/man/man3/mvwvline.3			comp-c-man		.man
+./usr/share/man/man3/mtx.3			comp-c-man		.man
+./usr/share/man/man3/mtx_destroy.3		comp-c-man		.man
+./usr/share/man/man3/mtx_init.3			comp-c-man		.man
+./usr/share/man/man3/mtx_lock.3			comp-c-man		.man
+./usr/share/man/man3/mtx_timedlock.3		comp-c-man		.man
+./usr/share/man/man3/mtx_trylock.3		comp-c-man		.man
+./usr/share/man/man3/mtx_unlock.3		comp-c-man		.man
 ./usr/share/man/man3/nan.3			comp-c-man		.man
 ./usr/share/man/man3/nanf.3			comp-c-man		.man
 ./usr/share/man/man3/nanl.3			comp-c-man		.man
@@ -24432,6 +24515,7 @@
 ./usr/share/man/man3/o2i_SCT_LIST.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/offsetof.3			comp-c-man		.man
 ./usr/share/man/man3/offtime.3			comp-c-man		.man
+./usr/share/man/man3/once_flag.3		comp-c-man		.man
 ./usr/share/man/man3/offtime_r.3		comp-c-man		.man
 ./usr/share/man/man3/open_memstream.3		comp-c-man		.man
 ./usr/share/man/man3/open_wmemstream.3		comp-c-man		.man
@@ -25957,7 +26041,16 @@
 ./usr/share/man/man3/tgetstr.3			comp-c-man		.man
 ./usr/share/man/man3/tgmath.3			comp-c-man		.man
 ./usr/share/man/man3/tgoto.3			comp-c-man		.man
-./usr/share/man/man3/threads.3			comp-obsolete		obsolete
+./usr/share/man/man3/threads.3			comp-c-man		.man
+./usr/share/man/man3/thrd.3			comp-c-man		.man
+./usr/share/man/man3/thrd_create.3		comp-c-man		.man
+./usr/share/man/man3/thrd_current.3		comp-c-man		.man
+./usr/share/man/man3/thrd_detach.3		comp-c-man		.man
+./usr/share/man/man3/thrd_equal.3		comp-c-man		.man
+./usr/share/man/man3/thrd_exit.3		comp-c-man		.man
+./usr/share/man/man3/thrd_join.3		comp-c-man		.man
+./usr/share/man/man3/thrd_sleep.3		comp-c-man		.man
+./usr/share/man/man3/thrd_yield.3		comp-c-man		.man
 ./usr/share/man/man3/ti_getflag.3		comp-c-man		.man
 ./usr/share/man/man3/ti_getnum.3		comp-c-man		.man
 ./usr/share/man/man3/ti_getstr.3		comp-c-man		.man
@@ -26022,6 +26115,11 @@
 ./usr/share/man/man3/truncf.3			comp-c-man		.man
 ./usr/share/man/man3/truncl.3			comp-c-man		.man
 ./usr/share/man/man3/tsearch.3			comp-c-man		.man
+./usr/share/man/man3/tss.3			comp-c-man		.man
+./usr/share/man/man3/tss_create.3		comp-c-man		.man
+./usr/share/man/man3/tss_delete.3		comp-c-man		.man
+./usr/share/man/man3/tss_get.3			comp-c-man		.man
+./usr/share/man/man3/tss_set.3			comp-c-man		.man
 ./usr/share/man/man3/ttyaction.3		comp-c-man		.man
 ./usr/share/man/man3/ttylock.3			comp-c-man		.man
 ./usr/share/man/man3/ttymsg.3			comp-c-man		.man

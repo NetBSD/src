@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.281 2019/04/03 15:12:45 joerg Exp $
+# $NetBSD: mi,v 1.282 2019/04/24 11:43:20 kamil Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2243,11 +2243,13 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_dso_pthread_create.debug 	tests-lib-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_main_pthread_create.debug 	tests-lib-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_atexit.debug		tests-lib-tests		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libpthread/h_cancel.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_exit.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_resolv.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_thread_local_dtor.debug	tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_barrier.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_call_once.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_cnd.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/h_cancel.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_cond.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_condwait.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_detach.debug		tests-lib-tests		debug,atf,compattestfile
@@ -2256,6 +2258,7 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_fpu.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_join.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_kill.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_mtx.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_mutex.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_name.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_once.debug		tests-lib-tests		debug,atf,compattestfile
@@ -2269,6 +2272,8 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_status.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_swapcontext.debug	tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_timedmutex.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_tss.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_thrd.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread_dbg/t_dummy.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libpthread_dbg/t_threads.debug	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/librefuse/t_refuse_opt.debug		tests-lib-debug		debug,atf,compattestfile

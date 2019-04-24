@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2017/07/11 15:21:36 joerg Exp $
+# $NetBSD: Makefile,v 1.14 2019/04/24 11:43:19 kamil Exp $
 
 NOMAN=		# defined
 
@@ -49,6 +49,8 @@ PROGS+=		h_cancel
 PROGS+=		h_exit
 PROGS+=		h_resolv
 PROGS_CXX+=	h_thread_local_dtor
+
+TESTS_C+=	t_call_once t_cnd t_mtx t_thrd t_tss # C11 threads(3)
 
 COPTS.h_thread_local_dtor.cpp+=	-std=c++11
 # Deal with questionable warning and header quality in libstdc++.
