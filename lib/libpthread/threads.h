@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.h,v 1.1 2019/04/24 11:43:19 kamil Exp $	*/
+/*	$NetBSD: threads.h,v 1.2 2019/04/24 18:47:54 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 /* ISO/IEC 9899:201x 7.26.1/4 */
 typedef pthread_cond_t	  cnd_t;
 typedef pthread_t	  thrd_t;
-typedef int		  tss_t;
+typedef pthread_key_t	  tss_t;
 typedef pthread_mutex_t	  mtx_t;
 typedef void		(*tss_dtor_t)	(void *);
 typedef int		(*thrd_start_t)	(void *);
@@ -106,7 +106,7 @@ int	thrd_create(thrd_t *, thrd_start_t, void *);
 thrd_t	thrd_current(void);
 int	thrd_detach(thrd_t);
 int	thrd_equal(thrd_t, thrd_t);
-void	thrd_exit(int) __dead;
+_Noreturn void	thrd_exit(int);
 int	thrd_join(thrd_t, int *);
 int	thrd_sleep(const struct timespec *, struct timespec *);
 void	thrd_yield(void);
