@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.158 2019/02/05 06:17:03 msaitoh Exp $	*/
+/*	$NetBSD: if_de.c,v 1.159 2019/04/24 08:54:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.158 2019/02/05 06:17:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.159 2019/04/24 08:54:35 msaitoh Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.158 2019/02/05 06:17:03 msaitoh Exp $");
 #endif
 
 #include <net/if.h>
-#if defined(SIOCSIFMEDIA) && !defined(TULIP_NOIFMEDIA)
+#if !defined(TULIP_NOIFMEDIA)
 #include <net/if_media.h>
 #endif
 #include <net/if_types.h>
@@ -4796,12 +4796,10 @@ tulip_ifioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 #endif
 		tulip_init(sc);
 		break;
-#if defined(SIOCSIFMEDIA)
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->tulip_ifmedia, cmd);
 		break;
-#endif
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
