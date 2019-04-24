@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.20 2018/12/24 02:58:39 christos Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.21 2019/04/24 11:55:05 maya Exp $	*/
 
 /* ntp_config.c
  *
@@ -5252,7 +5252,7 @@ ntp_rlimit(
 			}
 			rl.rlim_cur = rl_value;
 			if (-1 == setrlimit(RLIMIT_STACK, &rl)) {
-				msyslog(LOG_ERR,
+				msyslog(LOG_DEBUG,
 					"ntp_rlimit: Cannot set RLIMIT_STACK: %m");
 			}
 		}
