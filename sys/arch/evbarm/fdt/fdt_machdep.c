@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.61 2019/03/30 13:17:23 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.62 2019/04/24 06:37:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.61 2019/03/30 13:17:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.62 2019/04/24 06:37:31 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -251,14 +251,22 @@ static struct boot_physmem fdt_physmem[MAX_PHYSMEM];
 static void
 fdt_add_boot_physmem(const struct fdt_memory *m, void *arg)
 {
-	struct boot_physmem *bp = &fdt_physmem[nfdt_physmem++];
+	const paddr_t saddr = round_page(m->start);
+	const paddr_t eaddr = trunc_page(m->end);
 
-	VPRINTF("  %" PRIx64 " - %" PRIx64 "\n", m->start, m->end - 1);
+	VPRINTF("  %" PRIx64 " - %" PRIx64, m->start, m->end - 1);
+	if (saddr >= eaddr) {
+		VPRINTF(" skipped\n");
+		return;
+	}
+	VPRINTF("\n");
+
+	struct boot_physmem *bp = &fdt_physmem[nfdt_physmem++];
 
 	KASSERT(nfdt_physmem <= MAX_PHYSMEM);
 
-	bp->bp_start = atop(round_page(m->start));
-	bp->bp_pages = atop(trunc_page(m->end)) - bp->bp_start;
+	bp->bp_start = atop(saddr);
+	bp->bp_pages = atop(eaddr) - bp->bp_start;
 	bp->bp_freelist = VM_FREELIST_DEFAULT;
 
 #ifdef _LP64
