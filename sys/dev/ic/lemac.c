@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.50 2019/02/05 06:17:02 msaitoh Exp $ */
+/* $NetBSD: lemac.c,v 1.51 2019/04/24 08:03:07 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.50 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.51 2019/04/24 08:03:07 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.50 2019/02/05 06:17:02 msaitoh Exp $");
 #include <net/route.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -73,8 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.50 2019/02/05 06:17:02 msaitoh Exp $");
 #include <i386/isa/decether.h>
 #endif
 
-#include <net/bpf.h>
-
 static void lemac_init(lemac_softc_t *sc);
 static void lemac_ifstart(struct ifnet *ifp);
 static void lemac_reset(lemac_softc_t *sc);
@@ -86,14 +85,14 @@ static int  lemac_read_eeprom(lemac_softc_t *sc);
 static void lemac_init_adapmem(lemac_softc_t *sc);
 
 static const u_int16_t lemac_allmulti_mctbl[LEMAC_MCTBL_SIZE/sizeof(u_int16_t)] =  {
-    0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
-    0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
-    0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
-    0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
-    0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
-    0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
-    0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
-    0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
+	0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
+	0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
+	0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
+	0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
+	0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
+	0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
+	0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
+	0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
 };
 
 /*
@@ -102,248 +101,232 @@ static const u_int16_t lemac_allmulti_mctbl[LEMAC_MCTBL_SIZE/sizeof(u_int16_t)] 
 unsigned lemac_txmax = 16;
 
 static void
-lemac_rxd_intr(
-    lemac_softc_t *sc,
-    unsigned cs_value)
+lemac_rxd_intr(lemac_softc_t *sc, unsigned cs_value)
 {
-    /*
-     * Handle CS_RXD (Receiver disabled) here.
-     *
-     * Check Free Memory Queue Count. If not equal to zero
-     * then just turn Receiver back on. If it is equal to
-     * zero then check to see if transmitter is disabled.
-     * Process transmit TXD loop once more.  If all else
-     * fails then do software init (0xC0 to EEPROM Init)
-     * and rebuild Free Memory Queue.
-     */
+	/*
+	 * Handle CS_RXD (Receiver disabled) here.
+	 *
+	 * Check Free Memory Queue Count. If not equal to zero
+	 * then just turn Receiver back on. If it is equal to
+	 * zero then check to see if transmitter is disabled.
+	 * Process transmit TXD loop once more.  If all else
+	 * fails then do software init (0xC0 to EEPROM Init)
+	 * and rebuild Free Memory Queue.
+	 */
 
-    sc->sc_cntrs.cntr_rxd_intrs++;
+	sc->sc_cntrs.cntr_rxd_intrs++;
 
-    /*
-     *  Re-enable Receiver.
-     */
+	/* Re-enable Receiver. */
 
-    cs_value &= ~LEMAC_CS_RXD;
-    LEMAC_OUTB(sc, LEMAC_REG_CS, cs_value);
+	cs_value &= ~LEMAC_CS_RXD;
+	LEMAC_OUTB(sc, LEMAC_REG_CS, cs_value);
 
-    if (LEMAC_INB(sc, LEMAC_REG_FMC) > 0)
-	return;
+	if (LEMAC_INB(sc, LEMAC_REG_FMC) > 0)
+		return;
 
-    if (cs_value & LEMAC_CS_TXD)
-	lemac_txd_intr(sc, cs_value);
+	if (cs_value & LEMAC_CS_TXD)
+		lemac_txd_intr(sc, cs_value);
 
-    if ((LEMAC_INB(sc, LEMAC_REG_CS) & LEMAC_CS_RXD) == 0)
-	return;
+	if ((LEMAC_INB(sc, LEMAC_REG_CS) & LEMAC_CS_RXD) == 0)
+		return;
 
-    printf("%s: fatal RXD error, attempting recovery\n", sc->sc_if.if_xname);
+	printf("%s: fatal RXD error, attempting recovery\n",
+	    sc->sc_if.if_xname);
 
-    lemac_reset(sc);
-    if (sc->sc_if.if_flags & IFF_UP) {
-	lemac_init(sc);
-	return;
-    }
+	lemac_reset(sc);
+	if (sc->sc_if.if_flags & IFF_UP) {
+		lemac_init(sc);
+		return;
+	}
 
-    /*
-     *  Error during initialization.  Mark card as disabled.
-     */
-    printf("%s: recovery failed -- board disabled\n", sc->sc_if.if_xname);
+	/* Error during initialization.  Mark card as disabled. */
+	printf("%s: recovery failed -- board disabled\n", sc->sc_if.if_xname);
 }
 
 static void
-lemac_tne_intr(
-    lemac_softc_t *sc)
+lemac_tne_intr(lemac_softc_t *sc)
 {
-    unsigned txcount = LEMAC_INB(sc, LEMAC_REG_TDC);
+	unsigned txcount = LEMAC_INB(sc, LEMAC_REG_TDC);
 
-    sc->sc_cntrs.cntr_tne_intrs++;
-    while (txcount-- > 0) {
-	unsigned txsts = LEMAC_INB(sc, LEMAC_REG_TDQ);
-	sc->sc_if.if_opackets++;		/* another one done */
-	if ((txsts & (LEMAC_TDQ_LCL|LEMAC_TDQ_NCL))
-	        || (txsts & LEMAC_TDQ_COL) == LEMAC_TDQ_EXCCOL) {
-	    if (txsts & LEMAC_TDQ_NCL)
-		sc->sc_flags &= ~LEMAC_LINKUP;
-	    sc->sc_if.if_oerrors++;
-	} else {
-	    sc->sc_flags |= LEMAC_LINKUP;
-	    if ((txsts & LEMAC_TDQ_COL) != LEMAC_TDQ_NOCOL)
-		sc->sc_if.if_collisions++;
+	sc->sc_cntrs.cntr_tne_intrs++;
+	while (txcount-- > 0) {
+		unsigned txsts = LEMAC_INB(sc, LEMAC_REG_TDQ);
+		sc->sc_if.if_opackets++;		/* another one done */
+		if ((txsts & (LEMAC_TDQ_LCL|LEMAC_TDQ_NCL))
+		    || (txsts & LEMAC_TDQ_COL) == LEMAC_TDQ_EXCCOL) {
+			if (txsts & LEMAC_TDQ_NCL)
+				sc->sc_flags &= ~LEMAC_LINKUP;
+			sc->sc_if.if_oerrors++;
+		} else {
+			sc->sc_flags |= LEMAC_LINKUP;
+			if ((txsts & LEMAC_TDQ_COL) != LEMAC_TDQ_NOCOL)
+				sc->sc_if.if_collisions++;
+		}
 	}
-    }
-    sc->sc_if.if_flags &= ~IFF_OACTIVE;
-    if_schedule_deferred_start(&sc->sc_if);
+	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	if_schedule_deferred_start(&sc->sc_if);
 }
 
 static void
-lemac_txd_intr(
-    lemac_softc_t *sc,
-    unsigned cs_value)
+lemac_txd_intr(lemac_softc_t *sc, unsigned cs_value)
 {
-    /*
-     * Read transmit status, remove transmit buffer from
-     * transmit queue and place on free memory queue,
-     * then reset transmitter.
-     * Increment appropriate counters.
-     */
+	/*
+	 * Read transmit status, remove transmit buffer from
+	 * transmit queue and place on free memory queue,
+	 * then reset transmitter.
+	 * Increment appropriate counters.
+	 */
 
-    sc->sc_cntrs.cntr_txd_intrs++;
-    if (sc->sc_txctl & LEMAC_TX_STP) {
-	sc->sc_if.if_oerrors++;
-	/* return page to free queue */
-	LEMAC_OUTB(sc, LEMAC_REG_FMQ, LEMAC_INB(sc, LEMAC_REG_TDQ));
-    }
+	sc->sc_cntrs.cntr_txd_intrs++;
+	if (sc->sc_txctl & LEMAC_TX_STP) {
+		sc->sc_if.if_oerrors++;
+		/* return page to free queue */
+		LEMAC_OUTB(sc, LEMAC_REG_FMQ, LEMAC_INB(sc, LEMAC_REG_TDQ));
+	}
 
-    /* Turn back on transmitter if disabled */
-    LEMAC_OUTB(sc, LEMAC_REG_CS, cs_value & ~LEMAC_CS_TXD);
-    sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	/* Turn back on transmitter if disabled */
+	LEMAC_OUTB(sc, LEMAC_REG_CS, cs_value & ~LEMAC_CS_TXD);
+	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 }
 
 static int
-lemac_read_eeprom(
-    lemac_softc_t *sc)
+lemac_read_eeprom(lemac_softc_t *sc)
 {
-    int	word_off, cksum;
+	int	word_off, cksum;
+	u_char *ep;
 
-    u_char *ep;
+	cksum = 0;
+	ep = sc->sc_eeprom;
+	for (word_off = 0; word_off < LEMAC_EEP_SIZE / 2; word_off++) {
+		LEMAC_OUTB(sc, LEMAC_REG_PI1, word_off);
+		LEMAC_OUTB(sc, LEMAC_REG_IOP, LEMAC_IOP_EEREAD);
 
-    cksum = 0;
-    ep = sc->sc_eeprom;
-    for (word_off = 0; word_off < LEMAC_EEP_SIZE / 2; word_off++) {
-	LEMAC_OUTB(sc, LEMAC_REG_PI1, word_off);
-	LEMAC_OUTB(sc, LEMAC_REG_IOP, LEMAC_IOP_EEREAD);
+		DELAY(LEMAC_EEP_DELAY);
 
-	DELAY(LEMAC_EEP_DELAY);
-
-	*ep = LEMAC_INB(sc, LEMAC_REG_EE1);	cksum += *ep++;
-	*ep = LEMAC_INB(sc, LEMAC_REG_EE2);	cksum += *ep++;
-    }
-
-    /*
-     *  Set up Transmit Control Byte for use later during transmit.
-     */
-
-    sc->sc_txctl |= LEMAC_TX_FLAGS;
-
-    if ((sc->sc_eeprom[LEMAC_EEP_SWFLAGS] & LEMAC_EEP_SW_SQE) == 0)
-	sc->sc_txctl &= ~LEMAC_TX_SQE;
-
-    if (sc->sc_eeprom[LEMAC_EEP_SWFLAGS] & LEMAC_EEP_SW_LAB)
-	sc->sc_txctl |= LEMAC_TX_LAB;
-
-    memcpy(sc->sc_prodname, &sc->sc_eeprom[LEMAC_EEP_PRDNM], LEMAC_EEP_PRDNMSZ);
-    sc->sc_prodname[LEMAC_EEP_PRDNMSZ] = '\0';
-
-    return cksum % 256;
-}
-
-static void
-lemac_init_adapmem(
-    lemac_softc_t *sc)
-{
-    int pg, conf;
-
-    conf = LEMAC_INB(sc, LEMAC_REG_CNF);
-
-    if ((sc->sc_eeprom[LEMAC_EEP_SETUP] & LEMAC_EEP_ST_DRAM) == 0) {
-	sc->sc_lastpage = 63;
-	conf &= ~LEMAC_CNF_DRAM;
-    } else {
-	sc->sc_lastpage = 127;
-	conf |= LEMAC_CNF_DRAM;
-    }
-
-    LEMAC_OUTB(sc, LEMAC_REG_CNF, conf);
-
-    for (pg = 1; pg <= sc->sc_lastpage; pg++)
-	LEMAC_OUTB(sc, LEMAC_REG_FMQ, pg);
-}
-
-static void
-lemac_input(
-    lemac_softc_t *sc,
-    bus_addr_t offset,
-    size_t length)
-{
-    struct ether_header eh;
-    struct mbuf *m;
-
-    if (length - sizeof(eh) > ETHERMTU
-	    || length - sizeof(eh) < ETHERMIN) {
-	sc->sc_if.if_ierrors++;
-	return;
-    }
-    if (LEMAC_USE_PIO_MODE(sc)) {
-	LEMAC_INSB(sc, LEMAC_REG_DAT, sizeof(eh), (void *) &eh);
-    } else {
-	LEMAC_GETBUF16(sc, offset, sizeof(eh) / 2, (void *) &eh);
-    }
-
-    MGETHDR(m, M_DONTWAIT, MT_DATA);
-    if (m == NULL) {
-	sc->sc_if.if_ierrors++;
-	return;
-    }
-    if (length + 2 > MHLEN) {
-	MCLGET(m, M_DONTWAIT);
-	if ((m->m_flags & M_EXT) == 0) {
-	    m_free(m);
-	    sc->sc_if.if_ierrors++;
-	    return;
+		*ep = LEMAC_INB(sc, LEMAC_REG_EE1);	cksum += *ep++;
+		*ep = LEMAC_INB(sc, LEMAC_REG_EE2);	cksum += *ep++;
 	}
-    }
-    m->m_data += 2;
-    memcpy(m->m_data, (void *)&eh, sizeof(eh));
-    if (LEMAC_USE_PIO_MODE(sc)) {
-	LEMAC_INSB(sc, LEMAC_REG_DAT, length - sizeof(eh),
-		   mtod(m, char *) + sizeof(eh));
-    } else {
-	LEMAC_GETBUF16(sc, offset + sizeof(eh), (length - sizeof(eh)) / 2,
-		      (void *)(mtod(m, char *) + sizeof(eh)));
-	if (length & 1)
-	    m->m_data[length - 1] = LEMAC_GET8(sc, offset + length - 1);
-    }
 
-    m->m_pkthdr.len = m->m_len = length;
-    m_set_rcvif(m, &sc->sc_if);
+	/* Set up Transmit Control Byte for use later during transmit. */
 
-    if_percpuq_enqueue((&sc->sc_if)->if_percpuq, m);
+	sc->sc_txctl |= LEMAC_TX_FLAGS;
+
+	if ((sc->sc_eeprom[LEMAC_EEP_SWFLAGS] & LEMAC_EEP_SW_SQE) == 0)
+		sc->sc_txctl &= ~LEMAC_TX_SQE;
+
+	if (sc->sc_eeprom[LEMAC_EEP_SWFLAGS] & LEMAC_EEP_SW_LAB)
+		sc->sc_txctl |= LEMAC_TX_LAB;
+
+	memcpy(sc->sc_prodname, &sc->sc_eeprom[LEMAC_EEP_PRDNM],
+	    LEMAC_EEP_PRDNMSZ);
+	sc->sc_prodname[LEMAC_EEP_PRDNMSZ] = '\0';
+
+	return cksum % 256;
 }
 
 static void
-lemac_rne_intr(
-    lemac_softc_t *sc)
+lemac_init_adapmem(lemac_softc_t *sc)
 {
-    int rxcount;
+	int pg, conf;
 
-    sc->sc_cntrs.cntr_rne_intrs++;
-    rxcount = LEMAC_INB(sc, LEMAC_REG_RQC);
-    while (rxcount--) {
-	unsigned rxpg = LEMAC_INB(sc, LEMAC_REG_RQ);
-	u_int32_t rxlen;
+	conf = LEMAC_INB(sc, LEMAC_REG_CNF);
 
+	if ((sc->sc_eeprom[LEMAC_EEP_SETUP] & LEMAC_EEP_ST_DRAM) == 0) {
+		sc->sc_lastpage = 63;
+		conf &= ~LEMAC_CNF_DRAM;
+	} else {
+		sc->sc_lastpage = 127;
+		conf |= LEMAC_CNF_DRAM;
+	}
+
+	LEMAC_OUTB(sc, LEMAC_REG_CNF, conf);
+
+	for (pg = 1; pg <= sc->sc_lastpage; pg++)
+		LEMAC_OUTB(sc, LEMAC_REG_FMQ, pg);
+}
+
+static void
+lemac_input(lemac_softc_t *sc, bus_addr_t offset, size_t length)
+{
+	struct ether_header eh;
+	struct mbuf *m;
+
+	if (length - sizeof(eh) > ETHERMTU || length - sizeof(eh) < ETHERMIN) {
+		sc->sc_if.if_ierrors++;
+		return;
+	}
+	if (LEMAC_USE_PIO_MODE(sc))
+		LEMAC_INSB(sc, LEMAC_REG_DAT, sizeof(eh), (void *)&eh);
+	else
+		LEMAC_GETBUF16(sc, offset, sizeof(eh) / 2, (void *)&eh);
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL) {
+		sc->sc_if.if_ierrors++;
+		return;
+	}
+	if (length + 2 > MHLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			sc->sc_if.if_ierrors++;
+			return;
+		}
+	}
+	m->m_data += 2;
+	memcpy(m->m_data, (void *)&eh, sizeof(eh));
 	if (LEMAC_USE_PIO_MODE(sc)) {
-	    LEMAC_OUTB(sc, LEMAC_REG_IOP, rxpg);
-	    LEMAC_OUTB(sc, LEMAC_REG_PI1, 0);
-	    LEMAC_OUTB(sc, LEMAC_REG_PI2, 0);
-	    LEMAC_INSB(sc, LEMAC_REG_DAT, sizeof(rxlen), (void *) &rxlen);
+		LEMAC_INSB(sc, LEMAC_REG_DAT, length - sizeof(eh),
+		    mtod(m, char *) + sizeof(eh));
 	} else {
-	    LEMAC_OUTB(sc, LEMAC_REG_MPN, rxpg);
-	    rxlen = LEMAC_GET32(sc, 0);
+		LEMAC_GETBUF16(sc, offset + sizeof(eh),
+		    (length - sizeof(eh)) / 2,
+		    (void *)(mtod(m, char *) + sizeof(eh)));
+		if (length & 1)
+			m->m_data[length - 1]
+			    = LEMAC_GET8(sc, offset + length - 1);
 	}
-	if (rxlen & LEMAC_RX_OK) {
-	    sc->sc_flags |= LEMAC_LINKUP;
-	    /*
-	     * Get receive length - subtract out checksum.
-	     */
-	    rxlen = ((rxlen >> 8) & 0x7FF) - 4;
-	    lemac_input(sc, sizeof(rxlen), rxlen);
-	} else {
-	    sc->sc_if.if_ierrors++;
-	}
-	LEMAC_OUTB(sc, LEMAC_REG_FMQ, rxpg);  /* Return this page to Free Memory Queue */
-    }  /* end while (recv_count--) */
 
-    return;
+	m->m_pkthdr.len = m->m_len = length;
+	m_set_rcvif(m, &sc->sc_if);
+
+	if_percpuq_enqueue((&sc->sc_if)->if_percpuq, m);
+}
+
+static void
+lemac_rne_intr(lemac_softc_t *sc)
+{
+	int rxcount;
+
+	sc->sc_cntrs.cntr_rne_intrs++;
+	rxcount = LEMAC_INB(sc, LEMAC_REG_RQC);
+	while (rxcount--) {
+		unsigned rxpg = LEMAC_INB(sc, LEMAC_REG_RQ);
+		u_int32_t rxlen;
+
+		if (LEMAC_USE_PIO_MODE(sc)) {
+			LEMAC_OUTB(sc, LEMAC_REG_IOP, rxpg);
+			LEMAC_OUTB(sc, LEMAC_REG_PI1, 0);
+			LEMAC_OUTB(sc, LEMAC_REG_PI2, 0);
+			LEMAC_INSB(sc, LEMAC_REG_DAT, sizeof(rxlen),
+			    (void *)&rxlen);
+		} else {
+			LEMAC_OUTB(sc, LEMAC_REG_MPN, rxpg);
+			rxlen = LEMAC_GET32(sc, 0);
+		}
+		if (rxlen & LEMAC_RX_OK) {
+			sc->sc_flags |= LEMAC_LINKUP;
+			/* Get receive length - subtract out checksum. */
+			rxlen = ((rxlen >> 8) & 0x7FF) - 4;
+			lemac_input(sc, sizeof(rxlen), rxlen);
+		} else {
+			sc->sc_if.if_ierrors++;
+		}
+		/* Return this page to Free Memory Queue */
+		LEMAC_OUTB(sc, LEMAC_REG_FMQ, rxpg);
+	}  /* end while (recv_count--) */
+
+	return;
 }
 
 /*
@@ -351,670 +334,667 @@ lemac_rne_intr(
  *  I don't understand it but it does work.
  */
 static int
-lemac_read_macaddr(
-    unsigned char *hwaddr,
-    const bus_space_tag_t iot,
-    const bus_space_handle_t ioh,
-    const bus_addr_t ioreg,
-    int skippat)
+lemac_read_macaddr(unsigned char *hwaddr, const bus_space_tag_t iot,
+	const bus_space_handle_t ioh, const bus_addr_t ioreg, int skippat)
 {
-    int cksum, rom_cksum;
-    unsigned char addrbuf[6];
+	int cksum, rom_cksum;
+	unsigned char addrbuf[6];
 
-    if (!skippat) {
-	int idx, idx2, found, octet;
-	static u_char testpat[] = { 0xFF, 0, 0x55, 0xAA, 0xFF, 0, 0x55, 0xAA };
-	idx2 = found = 0;
+	if (!skippat) {
+		int idx, idx2, found, octet;
+		static u_char testpat[]
+		    = { 0xFF, 0, 0x55, 0xAA, 0xFF, 0, 0x55, 0xAA };
 
-	for (idx = 0; idx < 32; idx++) {
-	    octet = bus_space_read_1(iot, ioh, ioreg);
+		idx2 = found = 0;
 
-	    if (octet == testpat[idx2]) {
-		if (++idx2 == sizeof(testpat)) {
-		    ++found;
-		    break;
+		for (idx = 0; idx < 32; idx++) {
+			octet = bus_space_read_1(iot, ioh, ioreg);
+
+			if (octet == testpat[idx2]) {
+				if (++idx2 == sizeof(testpat)) {
+					++found;
+					break;
+				}
+			} else
+				idx2 = 0;
 		}
-	    } else {
-		idx2 = 0;
-	    }
+
+		if (!found)
+			return -1;
 	}
 
-	if (!found)
-	    return -1;
-    }
+	if (hwaddr == NULL)
+		hwaddr = addrbuf;
 
-    if (hwaddr == NULL)
-	hwaddr = addrbuf;
+	cksum = 0;
+	hwaddr[0] = bus_space_read_1(iot, ioh, ioreg);
+	hwaddr[1] = bus_space_read_1(iot, ioh, ioreg);
 
-    cksum = 0;
-    hwaddr[0] = bus_space_read_1(iot, ioh, ioreg);
-    hwaddr[1] = bus_space_read_1(iot, ioh, ioreg);
+	/* hardware address can't be multicast */
+	if (hwaddr[0] & 1)
+		return -1;
 
-    /* hardware address can't be multicast */
-    if (hwaddr[0] & 1)
-	return -1;
+	cksum = *(u_short *)&hwaddr[0];
 
-    cksum = *(u_short *) &hwaddr[0];
+	hwaddr[2] = bus_space_read_1(iot, ioh, ioreg);
+	hwaddr[3] = bus_space_read_1(iot, ioh, ioreg);
+	cksum *= 2;
+	if (cksum > 65535) cksum -= 65535;
+	cksum += *(u_short *) &hwaddr[2];
+	if (cksum > 65535) cksum -= 65535;
 
-    hwaddr[2] = bus_space_read_1(iot, ioh, ioreg);
-    hwaddr[3] = bus_space_read_1(iot, ioh, ioreg);
-    cksum *= 2;
-    if (cksum > 65535) cksum -= 65535;
-    cksum += *(u_short *) &hwaddr[2];
-    if (cksum > 65535) cksum -= 65535;
+	hwaddr[4] = bus_space_read_1(iot, ioh, ioreg);
+	hwaddr[5] = bus_space_read_1(iot, ioh, ioreg);
+	cksum *= 2;
+	if (cksum > 65535) cksum -= 65535;
+	cksum += *(u_short *)&hwaddr[4];
+	if (cksum >= 65535) cksum -= 65535;
 
-    hwaddr[4] = bus_space_read_1(iot, ioh, ioreg);
-    hwaddr[5] = bus_space_read_1(iot, ioh, ioreg);
-    cksum *= 2;
-    if (cksum > 65535) cksum -= 65535;
-    cksum += *(u_short *) &hwaddr[4];
-    if (cksum >= 65535) cksum -= 65535;
+	/* 00-00-00 is an illegal OUI */
+	if (hwaddr[0] == 0 && hwaddr[1] == 0 && hwaddr[2] == 0)
+		return -1;
 
-    /* 00-00-00 is an illegal OUI */
-    if (hwaddr[0] == 0 && hwaddr[1] == 0 && hwaddr[2] == 0)
-	return -1;
+	rom_cksum = bus_space_read_1(iot, ioh, ioreg);
+	rom_cksum |= bus_space_read_1(iot, ioh, ioreg) << 8;
 
-    rom_cksum = bus_space_read_1(iot, ioh, ioreg);
-    rom_cksum |= bus_space_read_1(iot, ioh, ioreg) << 8;
-
-    if (cksum != rom_cksum)
-	return -1;
-    return 0;
+	if (cksum != rom_cksum)
+		return -1;
+	return 0;
 }
 
 static void
 lemac_multicast_op(
-    u_int16_t *mctbl,
-    const u_char *mca,
-    int enable)
+	u_int16_t *mctbl,
+	const u_char *mca,
+	int enable)
 {
-    u_int idx, bit, crc;
+	u_int idx, bit, crc;
 
-    crc = ether_crc32_le(mca, ETHER_ADDR_LEN);
+	crc = ether_crc32_le(mca, ETHER_ADDR_LEN);
 
-    /*
-     * The following two lines convert the N bit index into a longword index
-     * and a longword mask.
-     */
+	/*
+	 * The following two lines convert the N bit index into a longword
+	 * index and a longword mask.
+	 */
 #if LEMAC_MCTBL_BITS < 0
-    crc >>= (32 + LEMAC_MCTBL_BITS);
-    crc &= (1 << -LEMAC_MCTBL_BITS) - 1;
+	crc >>= (32 + LEMAC_MCTBL_BITS);
+	crc &= (1 << -LEMAC_MCTBL_BITS) - 1;
 #else
-    crc &= (1 << LEMAC_MCTBL_BITS) - 1;
+	crc &= (1 << LEMAC_MCTBL_BITS) - 1;
 #endif
-    bit = 1 << (crc & 0x0F);
-    idx = crc >> 4;
+	bit = 1 << (crc & 0x0F);
+	idx = crc >> 4;
 
-    /*
-     * Set or clear hash filter bit in our table.
-     */
-    if (enable) {
-	mctbl[idx] |= bit;		/* Set Bit */
-    } else {
-	mctbl[idx] &= ~bit;		/* Clear Bit */
-    }
+	/* Set or clear hash filter bit in our table. */
+	if (enable)
+		mctbl[idx] |= bit;		/* Set Bit */
+	else
+		mctbl[idx] &= ~bit;		/* Clear Bit */
 }
 
 static void
-lemac_multicast_filter(
-    lemac_softc_t *sc)
+lemac_multicast_filter(lemac_softc_t *sc)
 {
-    struct ether_multistep step;
-    struct ether_multi *enm;
+	struct ether_multistep step;
+	struct ether_multi *enm;
 
-    memset(sc->sc_mctbl, 0, LEMAC_MCTBL_BITS / 8);
+	memset(sc->sc_mctbl, 0, LEMAC_MCTBL_BITS / 8);
 
-    lemac_multicast_op(sc->sc_mctbl, etherbroadcastaddr, TRUE);
+	lemac_multicast_op(sc->sc_mctbl, etherbroadcastaddr, TRUE);
 
-    ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
-    while (enm != NULL) {
-	if (!LEMAC_ADDREQUAL(enm->enm_addrlo, enm->enm_addrhi)) {
-	    sc->sc_flags |= LEMAC_ALLMULTI;
-	    sc->sc_if.if_flags |= IFF_ALLMULTI;
-	    return;
+	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	while (enm != NULL) {
+		if (!LEMAC_ADDREQUAL(enm->enm_addrlo, enm->enm_addrhi)) {
+			sc->sc_flags |= LEMAC_ALLMULTI;
+			sc->sc_if.if_flags |= IFF_ALLMULTI;
+			return;
+		}
+		lemac_multicast_op(sc->sc_mctbl, enm->enm_addrlo, TRUE);
+		ETHER_NEXT_MULTI(step, enm);
 	}
-	lemac_multicast_op(sc->sc_mctbl, enm->enm_addrlo, TRUE);
-	ETHER_NEXT_MULTI(step, enm);
-    }
-    sc->sc_flags &= ~LEMAC_ALLMULTI;
-    sc->sc_if.if_flags &= ~IFF_ALLMULTI;
+	sc->sc_flags &= ~LEMAC_ALLMULTI;
+	sc->sc_if.if_flags &= ~IFF_ALLMULTI;
 }
 
 /*
  * Do a hard reset of the board;
  */
 static void
-lemac_reset(
-    lemac_softc_t * const sc)
+lemac_reset(lemac_softc_t * const sc)
 {
-    unsigned data;
+	unsigned data;
 
-    /*
-     * Initialize board..
-     */
-    sc->sc_flags &= ~LEMAC_LINKUP;
-    sc->sc_if.if_flags &= ~IFF_OACTIVE;
-    LEMAC_INTR_DISABLE(sc);
+	/*
+	 * Initialize board..
+	 */
+	sc->sc_flags &= ~LEMAC_LINKUP;
+	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	LEMAC_INTR_DISABLE(sc);
 
-    LEMAC_OUTB(sc, LEMAC_REG_IOP, LEMAC_IOP_EEINIT);
-    DELAY(LEMAC_EEP_DELAY);
+	LEMAC_OUTB(sc, LEMAC_REG_IOP, LEMAC_IOP_EEINIT);
+	DELAY(LEMAC_EEP_DELAY);
 
-    /*
-     * Read EEPROM information.  NOTE - the placement of this function
-     * is important because functions hereafter may rely on information
-     * read from the EEPROM.
-     */
-    if ((data = lemac_read_eeprom(sc)) != LEMAC_EEP_CKSUM) {
-	printf("%s: reset: EEPROM checksum failed (0x%x)\n",
-	       sc->sc_if.if_xname, data);
-	return;
-    }
+	/*
+	 * Read EEPROM information.  NOTE - the placement of this function
+	 * is important because functions hereafter may rely on information
+	 * read from the EEPROM.
+	 */
+	if ((data = lemac_read_eeprom(sc)) != LEMAC_EEP_CKSUM) {
+		printf("%s: reset: EEPROM checksum failed (0x%x)\n",
+		    sc->sc_if.if_xname, data);
+		return;
+	}
 
-    /*
-     * Update the control register to reflect the media choice
-     */
-    data = LEMAC_INB(sc, LEMAC_REG_CTL);
-    if ((data & (LEMAC_CTL_APD|LEMAC_CTL_PSL)) != sc->sc_ctlmode) {
-	data &= ~(LEMAC_CTL_APD|LEMAC_CTL_PSL);
-	data |= sc->sc_ctlmode;
-	LEMAC_OUTB(sc, LEMAC_REG_CTL, data);
-    }
+	/* Update the control register to reflect the media choice */
+	data = LEMAC_INB(sc, LEMAC_REG_CTL);
+	if ((data & (LEMAC_CTL_APD|LEMAC_CTL_PSL)) != sc->sc_ctlmode) {
+		data &= ~(LEMAC_CTL_APD|LEMAC_CTL_PSL);
+		data |= sc->sc_ctlmode;
+		LEMAC_OUTB(sc, LEMAC_REG_CTL, data);
+	}
 
-    /*
-     *  Force to 2K mode if not already configured.
-     */
+	/* Force to 2K mode if not already configured. */
 
-    data = LEMAC_INB(sc, LEMAC_REG_MBR);
-    if (LEMAC_IS_2K_MODE(data)) {
-	sc->sc_flags |= LEMAC_2K_MODE;
-    } else if (LEMAC_IS_64K_MODE(data)) {
-	data = (((data * 2) & 0xF) << 4);
-	sc->sc_flags |= LEMAC_WAS_64K_MODE;
-	LEMAC_OUTB(sc, LEMAC_REG_MBR, data);
-    } else if (LEMAC_IS_32K_MODE(data)) {
-	data = ((data & 0xF) << 4);
-	sc->sc_flags |= LEMAC_WAS_32K_MODE;
-	LEMAC_OUTB(sc, LEMAC_REG_MBR, data);
-    } else {
-	sc->sc_flags |= LEMAC_PIO_MODE;
-	/* PIO mode */
-    }
+	data = LEMAC_INB(sc, LEMAC_REG_MBR);
+	if (LEMAC_IS_2K_MODE(data)) {
+		sc->sc_flags |= LEMAC_2K_MODE;
+	} else if (LEMAC_IS_64K_MODE(data)) {
+		data = (((data * 2) & 0xF) << 4);
+		sc->sc_flags |= LEMAC_WAS_64K_MODE;
+		LEMAC_OUTB(sc, LEMAC_REG_MBR, data);
+	} else if (LEMAC_IS_32K_MODE(data)) {
+		data = ((data & 0xF) << 4);
+		sc->sc_flags |= LEMAC_WAS_32K_MODE;
+		LEMAC_OUTB(sc, LEMAC_REG_MBR, data);
+	} else {
+		sc->sc_flags |= LEMAC_PIO_MODE;
+		/* PIO mode */
+	}
 
-    /*
-     *  Initialize Free Memory Queue, Init mcast table with broadcast.
-     */
+	/* Initialize Free Memory Queue, Init mcast table with broadcast. */
 
-    lemac_init_adapmem(sc);
-    sc->sc_flags |= LEMAC_ALIVE;
+	lemac_init_adapmem(sc);
+	sc->sc_flags |= LEMAC_ALIVE;
 }
 
 static void
-lemac_init(
-    lemac_softc_t * const sc)
+lemac_init(lemac_softc_t * const sc)
 {
-    if ((sc->sc_flags & LEMAC_ALIVE) == 0)
-	return;
+	if ((sc->sc_flags & LEMAC_ALIVE) == 0)
+		return;
 
-    /*
-     * If the interface has the up flag
-     */
-    if (sc->sc_if.if_flags & IFF_UP) {
-	int saved_cs = LEMAC_INB(sc, LEMAC_REG_CS);
-	LEMAC_OUTB(sc, LEMAC_REG_CS, saved_cs | (LEMAC_CS_TXD | LEMAC_CS_RXD));
-	LEMAC_OUTB(sc, LEMAC_REG_PA0, sc->sc_enaddr[0]);
-	LEMAC_OUTB(sc, LEMAC_REG_PA1, sc->sc_enaddr[1]);
-	LEMAC_OUTB(sc, LEMAC_REG_PA2, sc->sc_enaddr[2]);
-	LEMAC_OUTB(sc, LEMAC_REG_PA3, sc->sc_enaddr[3]);
-	LEMAC_OUTB(sc, LEMAC_REG_PA4, sc->sc_enaddr[4]);
-	LEMAC_OUTB(sc, LEMAC_REG_PA5, sc->sc_enaddr[5]);
+	/*
+	 * If the interface has the up flag
+	 */
+	if (sc->sc_if.if_flags & IFF_UP) {
+		int saved_cs = LEMAC_INB(sc, LEMAC_REG_CS);
+		LEMAC_OUTB(sc, LEMAC_REG_CS,
+		    saved_cs | (LEMAC_CS_TXD | LEMAC_CS_RXD));
+		LEMAC_OUTB(sc, LEMAC_REG_PA0, sc->sc_enaddr[0]);
+		LEMAC_OUTB(sc, LEMAC_REG_PA1, sc->sc_enaddr[1]);
+		LEMAC_OUTB(sc, LEMAC_REG_PA2, sc->sc_enaddr[2]);
+		LEMAC_OUTB(sc, LEMAC_REG_PA3, sc->sc_enaddr[3]);
+		LEMAC_OUTB(sc, LEMAC_REG_PA4, sc->sc_enaddr[4]);
+		LEMAC_OUTB(sc, LEMAC_REG_PA5, sc->sc_enaddr[5]);
 
-	LEMAC_OUTB(sc, LEMAC_REG_IC, LEMAC_INB(sc, LEMAC_REG_IC) | LEMAC_IC_IE);
+		LEMAC_OUTB(sc, LEMAC_REG_IC,
+		    LEMAC_INB(sc, LEMAC_REG_IC) | LEMAC_IC_IE);
 
-	if (sc->sc_if.if_flags & IFF_PROMISC) {
-	    LEMAC_OUTB(sc, LEMAC_REG_CS, LEMAC_CS_MCE | LEMAC_CS_PME);
+		if (sc->sc_if.if_flags & IFF_PROMISC) {
+			LEMAC_OUTB(sc, LEMAC_REG_CS,
+			    LEMAC_CS_MCE | LEMAC_CS_PME);
+		} else {
+			LEMAC_INTR_DISABLE(sc);
+			lemac_multicast_filter(sc);
+			if (sc->sc_flags & LEMAC_ALLMULTI)
+				memcpy(sc->sc_mctbl, lemac_allmulti_mctbl,
+				    sizeof(sc->sc_mctbl));
+			if (LEMAC_USE_PIO_MODE(sc)) {
+				LEMAC_OUTB(sc, LEMAC_REG_IOP, 0);
+				LEMAC_OUTB(sc, LEMAC_REG_PI1,
+				    LEMAC_MCTBL_OFF & 0xFF);
+				LEMAC_OUTB(sc, LEMAC_REG_PI2,
+				    LEMAC_MCTBL_OFF >> 8);
+				LEMAC_OUTSB(sc, LEMAC_REG_DAT,
+				    sizeof(sc->sc_mctbl),
+				    (void *)sc->sc_mctbl);
+			} else {
+				LEMAC_OUTB(sc, LEMAC_REG_MPN, 0);
+				LEMAC_PUTBUF8(sc, LEMAC_MCTBL_OFF,
+				    sizeof(sc->sc_mctbl),
+				    (void *)sc->sc_mctbl);
+			}
+
+			LEMAC_OUTB(sc, LEMAC_REG_CS, LEMAC_CS_MCE);
+		}
+
+		LEMAC_OUTB(sc, LEMAC_REG_CTL,
+		    LEMAC_INB(sc, LEMAC_REG_CTL) ^ LEMAC_CTL_LED);
+
+		LEMAC_INTR_ENABLE(sc);
+		sc->sc_if.if_flags |= IFF_RUNNING;
+		lemac_ifstart(&sc->sc_if);
 	} else {
-	    LEMAC_INTR_DISABLE(sc);
-	    lemac_multicast_filter(sc);
-	    if (sc->sc_flags & LEMAC_ALLMULTI)
-		memcpy(sc->sc_mctbl, lemac_allmulti_mctbl,
-		       sizeof(sc->sc_mctbl));
-	    if (LEMAC_USE_PIO_MODE(sc)) {
-		LEMAC_OUTB(sc, LEMAC_REG_IOP, 0);
-		LEMAC_OUTB(sc, LEMAC_REG_PI1, LEMAC_MCTBL_OFF & 0xFF);
-		LEMAC_OUTB(sc, LEMAC_REG_PI2, LEMAC_MCTBL_OFF >> 8);
-		LEMAC_OUTSB(sc, LEMAC_REG_DAT, sizeof(sc->sc_mctbl), (void *) sc->sc_mctbl);
-	    } else {
-		LEMAC_OUTB(sc, LEMAC_REG_MPN, 0);
-		LEMAC_PUTBUF8(sc, LEMAC_MCTBL_OFF, sizeof(sc->sc_mctbl), (void *) sc->sc_mctbl);
-	    }
+		LEMAC_OUTB(sc, LEMAC_REG_CS, LEMAC_CS_RXD|LEMAC_CS_TXD);
 
-	    LEMAC_OUTB(sc, LEMAC_REG_CS, LEMAC_CS_MCE);
+		LEMAC_INTR_DISABLE(sc);
+		sc->sc_if.if_flags &= ~IFF_RUNNING;
 	}
-
-	LEMAC_OUTB(sc, LEMAC_REG_CTL, LEMAC_INB(sc, LEMAC_REG_CTL) ^ LEMAC_CTL_LED);
-
-	LEMAC_INTR_ENABLE(sc);
-	sc->sc_if.if_flags |= IFF_RUNNING;
-	lemac_ifstart(&sc->sc_if);
-    } else {
-	LEMAC_OUTB(sc, LEMAC_REG_CS, LEMAC_CS_RXD|LEMAC_CS_TXD);
-
-	LEMAC_INTR_DISABLE(sc);
-	sc->sc_if.if_flags &= ~IFF_RUNNING;
-    }
 }
 
 static void
 lemac_ifstart(
-    struct ifnet *ifp)
+	struct ifnet *ifp)
 {
-    lemac_softc_t * const sc = LEMAC_IFP_TO_SOFTC(ifp);
+	lemac_softc_t * const sc = LEMAC_IFP_TO_SOFTC(ifp);
 
-    if ((ifp->if_flags & IFF_RUNNING) == 0)
-	return;
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
 
-    LEMAC_INTR_DISABLE(sc);
+	LEMAC_INTR_DISABLE(sc);
 
-    for (;;) {
-	struct mbuf *m;
-	struct mbuf *m0;
-	int tx_pg;
+	for (;;) {
+		struct mbuf *m;
+		struct mbuf *m0;
+		int tx_pg;
 
-	IFQ_POLL(&ifp->if_snd, m);
-	if (m == NULL)
-	    break;
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
 
-	if ((sc->sc_csr.csr_tqc = LEMAC_INB(sc, LEMAC_REG_TQC)) >= lemac_txmax) {
-	    sc->sc_cntrs.cntr_txfull++;
-	    ifp->if_flags |= IFF_OACTIVE;
-	    break;
-	}
+		if ((sc->sc_csr.csr_tqc = LEMAC_INB(sc, LEMAC_REG_TQC))
+		    >= lemac_txmax) {
+			sc->sc_cntrs.cntr_txfull++;
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 
-	/*
-	 * get free memory page
-	 */
-	tx_pg = sc->sc_csr.csr_fmq = LEMAC_INB(sc, LEMAC_REG_FMQ);
-	/*
-	 * Check for good transmit page.
-	 */
-	if (tx_pg == 0 || tx_pg > sc->sc_lastpage) {
-	    sc->sc_cntrs.cntr_txnospc++;
-	    ifp->if_flags |= IFF_OACTIVE;
-	    break;
-	}
+		/* Get free memory page */
+		tx_pg = sc->sc_csr.csr_fmq = LEMAC_INB(sc, LEMAC_REG_FMQ);
 
-	IFQ_DEQUEUE(&ifp->if_snd, m);
+		/* Check for good transmit page. */
+		if (tx_pg == 0 || tx_pg > sc->sc_lastpage) {
+			sc->sc_cntrs.cntr_txnospc++;
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 
-	/*
-	 * The first four bytes of each transmit buffer are for
-	 * control information.  The first byte is the control
-	 * byte, then the length (why not word aligned?), then
-	 * the offset to the buffer.
-	 */
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 
-	if (LEMAC_USE_PIO_MODE(sc)) {
-	    LEMAC_OUTB(sc, LEMAC_REG_IOP, tx_pg);	/* Shift 2K window. */
-	    LEMAC_OUTB(sc, LEMAC_REG_PI1, 0);
-	    LEMAC_OUTB(sc, LEMAC_REG_PI2, 0);
-	    LEMAC_OUTB(sc, LEMAC_REG_DAT, sc->sc_txctl);
-	    LEMAC_OUTB(sc, LEMAC_REG_DAT, (m->m_pkthdr.len >> 0) & 0xFF);
-	    LEMAC_OUTB(sc, LEMAC_REG_DAT, (m->m_pkthdr.len >> 8) & 0xFF);
-	    LEMAC_OUTB(sc, LEMAC_REG_DAT, LEMAC_TX_HDRSZ);
-	    for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		LEMAC_OUTSB(sc, LEMAC_REG_DAT, m0->m_len, m0->m_data);
-	} else {
-	    bus_size_t txoff = /* (mtod(m, u_int32_t) & (sizeof(u_int32_t) - 1)) + */ LEMAC_TX_HDRSZ;
-	    LEMAC_OUTB(sc, LEMAC_REG_MPN, tx_pg);	/* Shift 2K window. */
-	    LEMAC_PUT8(sc, 0, sc->sc_txctl);
-	    LEMAC_PUT8(sc, 1, (m->m_pkthdr.len >> 0) & 0xFF);
-	    LEMAC_PUT8(sc, 2, (m->m_pkthdr.len >> 8) & 0xFF);
-	    LEMAC_PUT8(sc, 3, txoff);
+		/*
+		 * The first four bytes of each transmit buffer are for
+		 * control information.  The first byte is the control
+		 * byte, then the length (why not word aligned?), then
+		 * the offset to the buffer.
+		 */
 
-	    /*
-	     * Copy the packet to the board
-	     */
-	    for (m0 = m; m0 != NULL; m0 = m0->m_next) {
+		if (LEMAC_USE_PIO_MODE(sc)) {
+			/* Shift 2K window. */
+			LEMAC_OUTB(sc, LEMAC_REG_IOP, tx_pg);
+
+			LEMAC_OUTB(sc, LEMAC_REG_PI1, 0);
+			LEMAC_OUTB(sc, LEMAC_REG_PI2, 0);
+			LEMAC_OUTB(sc, LEMAC_REG_DAT, sc->sc_txctl);
+			LEMAC_OUTB(sc, LEMAC_REG_DAT,
+			    (m->m_pkthdr.len >> 0) & 0xFF);
+			LEMAC_OUTB(sc, LEMAC_REG_DAT,
+			    (m->m_pkthdr.len >> 8) & 0xFF);
+			LEMAC_OUTB(sc, LEMAC_REG_DAT, LEMAC_TX_HDRSZ);
+			for (m0 = m; m0 != NULL; m0 = m0->m_next)
+				LEMAC_OUTSB(sc, LEMAC_REG_DAT,
+				    m0->m_len, m0->m_data);
+		} else {
+			bus_size_t txoff = /* (mtod(m, u_int32_t) & (sizeof(u_int32_t) - 1)) + */ LEMAC_TX_HDRSZ;
+
+			/* Shift 2K window. */
+			LEMAC_OUTB(sc, LEMAC_REG_MPN, tx_pg);
+
+			LEMAC_PUT8(sc, 0, sc->sc_txctl);
+			LEMAC_PUT8(sc, 1, (m->m_pkthdr.len >> 0) & 0xFF);
+			LEMAC_PUT8(sc, 2, (m->m_pkthdr.len >> 8) & 0xFF);
+			LEMAC_PUT8(sc, 3, txoff);
+
+			/* Copy the packet to the board */
+			for (m0 = m; m0 != NULL; m0 = m0->m_next) {
 #if 0
-		LEMAC_PUTBUF8(sc, txoff, m0->m_len, m0->m_data);
-		txoff += m0->m_len;
+				LEMAC_PUTBUF8(sc, txoff, m0->m_len, m0->m_data);
+				txoff += m0->m_len;
 #else
-		const u_int8_t *cp = m0->m_data;
-		int len = m0->m_len;
+				const u_int8_t *cp = m0->m_data;
+				int len = m0->m_len;
 #if 0
-		if ((txoff & 3) == (((long)cp) & 3) && len >= 4) {
-		    if (txoff & 3) {
-			int alen = (~txoff & 3);
-			LEMAC_PUTBUF8(sc, txoff, alen, cp);
-			cp += alen; txoff += alen; len -= alen;
-		    }
-		    if (len >= 4) {
-			LEMAC_PUTBUF32(sc, txoff, len / 4, cp);
-			cp += len & ~3; txoff += len & ~3; len &= 3;
-		    }
-		}
+				if ((txoff & 3) == (((long)cp) & 3)
+				    && len >= 4) {
+					if (txoff & 3) {
+						int alen = (~txoff & 3);
+						LEMAC_PUTBUF8(sc, txoff, alen,
+						    cp);
+						cp += alen;
+						txoff += alen;
+						len -= alen;
+					}
+					if (len >= 4) {
+						LEMAC_PUTBUF32(sc, txoff,
+						    len / 4, cp);
+						cp += len & ~3;
+						txoff += len & ~3;
+						len &= 3;
+					}
+				}
 #endif
-		if ((txoff & 1) == (((long)cp) & 1) && len >= 2) {
-		    if (txoff & 1) {
-			int alen = (~txoff & 1);
-			LEMAC_PUTBUF8(sc, txoff, alen, cp);
-			cp += alen; txoff += alen; len -= alen;
-		    }
-		    if (len >= 2) {
-			LEMAC_PUTBUF16(sc, txoff, len / 2, (const void *) cp);
-			cp += len & ~1; txoff += len & ~1; len &= 1;
-		    }
-		}
-		if (len > 0) {
-		    LEMAC_PUTBUF8(sc, txoff, len, cp);
-		    txoff += len;
-		}
+				if ((txoff & 1) == (((long)cp) & 1)
+				    && len >= 2) {
+					if (txoff & 1) {
+						int alen = (~txoff & 1);
+						LEMAC_PUTBUF8(sc, txoff, alen,
+						    cp);
+						cp += alen;
+						txoff += alen;
+						len -= alen;
+					}
+					if (len >= 2) {
+						LEMAC_PUTBUF16(sc, txoff,
+						    len / 2, (const void *)cp);
+						cp += len & ~1;
+						txoff += len & ~1;
+						len &= 1;
+					}
+				}
+				if (len > 0) {
+					LEMAC_PUTBUF8(sc, txoff, len, cp);
+					txoff += len;
+				}
 #endif
-	    }
-	}
+			}
+		}
 
-	LEMAC_OUTB(sc, LEMAC_REG_TQ, tx_pg);	/* tell chip to transmit this packet */
-	bpf_mtap(&sc->sc_if, m, BPF_D_OUT);
-	m_freem(m);			/* free the mbuf */
-    }
-    LEMAC_INTR_ENABLE(sc);
+		/* Tell chip to transmit this packet */
+		LEMAC_OUTB(sc, LEMAC_REG_TQ, tx_pg);
+		bpf_mtap(&sc->sc_if, m, BPF_D_OUT);
+		m_freem(m);			/* Free the mbuf */
+	}
+	LEMAC_INTR_ENABLE(sc);
 }
 
 static int
 lemac_ifioctl(
-    struct ifnet *ifp,
-    u_long cmd,
-    void *data)
+	struct ifnet *ifp,
+	u_long cmd,
+	void *data)
 {
-    lemac_softc_t * const sc = LEMAC_IFP_TO_SOFTC(ifp);
-    int s;
-    int error = 0;
+	lemac_softc_t * const sc = LEMAC_IFP_TO_SOFTC(ifp);
+	int s;
+	int error = 0;
 
-    s = splnet();
+	s = splnet();
 
-    switch (cmd) {
+	switch (cmd) {
 	case SIOCINITIFADDR: {
-	    struct ifaddr *ifa = (struct ifaddr *)data;
+		struct ifaddr *ifa = (struct ifaddr *)data;
 
-	    ifp->if_flags |= IFF_UP;
-	    lemac_init(sc);
-	    switch (ifa->ifa_addr->sa_family) {
+		ifp->if_flags |= IFF_UP;
+		lemac_init(sc);
+		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
-		case AF_INET: {
-		    arp_ifinit(&sc->sc_if, ifa);
-		    break;
-		}
+		case AF_INET:
+			arp_ifinit(&sc->sc_if, ifa);
+			break;
 #endif /* INET */
 
 
-		default: {
-		    break;
+		default:
+			break;
 		}
-	    }
-	    break;
+		break;
 	}
 
-	case SIOCSIFFLAGS: {
-	    if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		lemac_init(sc);
 		break;
-	    lemac_init(sc);
-	    break;
-	}
 
 	case SIOCADDMULTI:
-	case SIOCDELMULTI: {
-	    /*
-	     * Update multicast listeners
-	     */
-	    if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
-		/* reset multicast filtering */
-		if (ifp->if_flags & IFF_RUNNING)
-		    lemac_init(sc);
-		error = 0;
-	    }
-	    break;
-	}
+	case SIOCDELMULTI:
+		/*
+		 * Update multicast listeners
+		 */
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
+			/* reset multicast filtering */
+			if (ifp->if_flags & IFF_RUNNING)
+				lemac_init(sc);
+			error = 0;
+		}
+		break;
 
 	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA: {
-	    error = ifmedia_ioctl(ifp, (struct ifreq *)data,
-				  &sc->sc_ifmedia, cmd);
-	    break;
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, (struct ifreq *)data,
+		    &sc->sc_ifmedia, cmd);
+		break;
+
+	default:
+		error = ether_ioctl(ifp, cmd, data);
+		break;
 	}
 
-	default: {
-	    error = ether_ioctl(ifp, cmd, data);
-	    break;
-	}
-    }
-
-    splx(s);
-    return error;
+	splx(s);
+	return error;
 }
 
 static int
-lemac_ifmedia_change(
-    struct ifnet * const ifp)
+lemac_ifmedia_change(struct ifnet * const ifp)
 {
-    lemac_softc_t * const sc = LEMAC_IFP_TO_SOFTC(ifp);
-    unsigned new_ctl;
+	lemac_softc_t * const sc = LEMAC_IFP_TO_SOFTC(ifp);
+	unsigned new_ctl;
 
-    switch (IFM_SUBTYPE(sc->sc_ifmedia.ifm_media)) {
+	switch (IFM_SUBTYPE(sc->sc_ifmedia.ifm_media)) {
 	case IFM_10_T: new_ctl = LEMAC_CTL_APD; break;
 	case IFM_10_2:
 	case IFM_10_5: new_ctl = LEMAC_CTL_APD|LEMAC_CTL_PSL; break;
 	case IFM_AUTO: new_ctl = 0; break;
 	default:       return EINVAL;
-    }
-    if (sc->sc_ctlmode != new_ctl) {
-	sc->sc_ctlmode = new_ctl;
-	lemac_reset(sc);
-	if (sc->sc_if.if_flags & IFF_UP)
-	    lemac_init(sc);
-    }
-    return 0;
+	}
+	if (sc->sc_ctlmode != new_ctl) {
+		sc->sc_ctlmode = new_ctl;
+		lemac_reset(sc);
+		if (sc->sc_if.if_flags & IFF_UP)
+			lemac_init(sc);
+	}
+	return 0;
 }
 
 /*
  * Media status callback
  */
 static void
-lemac_ifmedia_status(
-    struct ifnet * const ifp,
-    struct ifmediareq *req)
+lemac_ifmedia_status(struct ifnet * const ifp, struct ifmediareq *req)
 {
-    lemac_softc_t *sc = LEMAC_IFP_TO_SOFTC(ifp);
-    unsigned data = LEMAC_INB(sc, LEMAC_REG_CNF);
+	lemac_softc_t *sc = LEMAC_IFP_TO_SOFTC(ifp);
+	unsigned data = LEMAC_INB(sc, LEMAC_REG_CNF);
 
-    req->ifm_status = IFM_AVALID;
-    if (sc->sc_flags & LEMAC_LINKUP)
-	req->ifm_status |= IFM_ACTIVE;
+	req->ifm_status = IFM_AVALID;
+	if (sc->sc_flags & LEMAC_LINKUP)
+		req->ifm_status |= IFM_ACTIVE;
 
-    if (sc->sc_ctlmode & LEMAC_CTL_APD) {
-	if (sc->sc_ctlmode & LEMAC_CTL_PSL) {
-	    req->ifm_active = IFM_10_5;
+	if (sc->sc_ctlmode & LEMAC_CTL_APD) {
+		if (sc->sc_ctlmode & LEMAC_CTL_PSL)
+			req->ifm_active = IFM_10_5;
+		else
+			req->ifm_active = IFM_10_T;
 	} else {
-	    req->ifm_active = IFM_10_T;
+		/*
+		 * The link bit of the configuration register reflects the
+		 * current media choice when auto-port is enabled.
+		 */
+		if (data & LEMAC_CNF_NOLINK)
+			req->ifm_active = IFM_10_5;
+		else
+			req->ifm_active = IFM_10_T;
 	}
-    } else {
-	/*
-	 * The link bit of the configuration register reflects the
-	 * current media choice when auto-port is enabled.
-	 */
-	if (data & LEMAC_CNF_NOLINK) {
-	    req->ifm_active = IFM_10_5;
-	} else {
-	    req->ifm_active = IFM_10_T;
-	}
-    }
 
-    req->ifm_active |= IFM_ETHER;
+	req->ifm_active |= IFM_ETHER;
 }
 
 int
-lemac_port_check(
-    const bus_space_tag_t iot,
-    const bus_space_handle_t ioh)
+lemac_port_check(const bus_space_tag_t iot, const bus_space_handle_t ioh)
 {
-    unsigned char hwaddr[6];
+	unsigned char hwaddr[6];
 
-    if (lemac_read_macaddr(hwaddr, iot, ioh, LEMAC_REG_APD, 0) == 0)
-	return 1;
-    if (lemac_read_macaddr(hwaddr, iot, ioh, LEMAC_REG_APD, 1) == 0)
-	return 1;
-    return 0;
+	if (lemac_read_macaddr(hwaddr, iot, ioh, LEMAC_REG_APD, 0) == 0)
+		return 1;
+	if (lemac_read_macaddr(hwaddr, iot, ioh, LEMAC_REG_APD, 1) == 0)
+		return 1;
+	return 0;
 }
 
 void
-lemac_info_get(
-    const bus_space_tag_t iot,
-    const bus_space_handle_t ioh,
-    bus_addr_t *maddr_p,
-    bus_size_t *msize_p,
-    int *irq_p)
+lemac_info_get(const bus_space_tag_t iot, const bus_space_handle_t ioh,
+	bus_addr_t *maddr_p, bus_size_t *msize_p, int *irq_p)
 {
-    unsigned data;
+	unsigned data;
 
-    *irq_p = LEMAC_DECODEIRQ(bus_space_read_1(iot, ioh, LEMAC_REG_IC) & LEMAC_IC_IRQMSK);
+	*irq_p = LEMAC_DECODEIRQ(bus_space_read_1(iot, ioh, LEMAC_REG_IC)
+	    & LEMAC_IC_IRQMSK);
 
-    data = bus_space_read_1(iot, ioh, LEMAC_REG_MBR);
-    if (LEMAC_IS_2K_MODE(data)) {
-	*maddr_p = data * (2 * 1024) + (512 * 1024);
-	*msize_p =  2 * 1024;
-    } else if (LEMAC_IS_64K_MODE(data)) {
-	*maddr_p = data * 64 * 1024;
-	*msize_p = 64 * 1024;
-    } else if (LEMAC_IS_32K_MODE(data)) {
-	*maddr_p = data * 32 * 1024;
-	*msize_p = 32* 1024;
-    } else {
-	*maddr_p = 0;
-	*msize_p = 0;
-    }
+	data = bus_space_read_1(iot, ioh, LEMAC_REG_MBR);
+	if (LEMAC_IS_2K_MODE(data)) {
+		*maddr_p = data * (2 * 1024) + (512 * 1024);
+		*msize_p =  2 * 1024;
+	} else if (LEMAC_IS_64K_MODE(data)) {
+		*maddr_p = data * 64 * 1024;
+		*msize_p = 64 * 1024;
+	} else if (LEMAC_IS_32K_MODE(data)) {
+		*maddr_p = data * 32 * 1024;
+		*msize_p = 32* 1024;
+	} else {
+		*maddr_p = 0;
+		*msize_p = 0;
+	}
 }
 
 /*
  * What to do upon receipt of an interrupt.
  */
 int
-lemac_intr(
-    void *arg)
+lemac_intr(void *arg)
 {
-    lemac_softc_t * const sc = arg;
-    int cs_value;
+	lemac_softc_t * const sc = arg;
+	int cs_value;
 
-    LEMAC_INTR_DISABLE(sc);	/* Mask interrupts */
+	LEMAC_INTR_DISABLE(sc);	/* Mask interrupts */
 
-    /*
-     * Determine cause of interrupt.  Receive events take
-     * priority over Transmit.
-     */
+	/*
+	 * Determine cause of interrupt.  Receive events take
+	 * priority over Transmit.
+	 */
 
-    cs_value = LEMAC_INB(sc, LEMAC_REG_CS);
+	cs_value = LEMAC_INB(sc, LEMAC_REG_CS);
 
-    /*
-     * Check for Receive Queue not being empty.
-     * Check for Transmit Done Queue not being empty.
-     */
+	/*
+	 * Check for Receive Queue not being empty.
+	 * Check for Transmit Done Queue not being empty.
+	 */
 
-    if (cs_value & LEMAC_CS_RNE)
-	lemac_rne_intr(sc);
-    if (cs_value & LEMAC_CS_TNE)
-	lemac_tne_intr(sc);
+	if (cs_value & LEMAC_CS_RNE)
+		lemac_rne_intr(sc);
+	if (cs_value & LEMAC_CS_TNE)
+		lemac_tne_intr(sc);
 
-    /*
-     * Check for Transmitter Disabled.
-     * Check for Receiver Disabled.
-     */
+	/*
+	 * Check for Transmitter Disabled.
+	 * Check for Receiver Disabled.
+	 */
 
-    if (cs_value & LEMAC_CS_TXD)
-	lemac_txd_intr(sc, cs_value);
-    if (cs_value & LEMAC_CS_RXD)
-	lemac_rxd_intr(sc, cs_value);
+	if (cs_value & LEMAC_CS_TXD)
+		lemac_txd_intr(sc, cs_value);
+	if (cs_value & LEMAC_CS_RXD)
+		lemac_rxd_intr(sc, cs_value);
 
-    /*
-     * Toggle LED and unmask interrupts.
-     */
+	/* Toggle LED and unmask interrupts. */
 
-    sc->sc_csr.csr_cs = LEMAC_INB(sc, LEMAC_REG_CS);
+	sc->sc_csr.csr_cs = LEMAC_INB(sc, LEMAC_REG_CS);
 
-    LEMAC_OUTB(sc, LEMAC_REG_CTL, LEMAC_INB(sc, LEMAC_REG_CTL) ^ LEMAC_CTL_LED);
-    LEMAC_INTR_ENABLE(sc);		/* Unmask interrupts */
+	LEMAC_OUTB(sc, LEMAC_REG_CTL,
+	    LEMAC_INB(sc, LEMAC_REG_CTL) ^ LEMAC_CTL_LED);
+	LEMAC_INTR_ENABLE(sc);		/* Unmask interrupts */
 
-    if (cs_value)
-        rnd_add_uint32(&sc->rnd_source, cs_value);
+	if (cs_value)
+		rnd_add_uint32(&sc->rnd_source, cs_value);
 
-    return 1;
+	return 1;
 }
 
 void
-lemac_shutdown(
-    void *arg)
+lemac_shutdown(void *arg)
 {
-    lemac_reset((lemac_softc_t *) arg);
+
+	lemac_reset((lemac_softc_t *) arg);
 }
 
 static const char * const lemac_modes[4] = {
-    "PIO mode (internal 2KB window)",
-    "2KB window",
-    "changed 32KB window to 2KB",
-    "changed 64KB window to 2KB",
+	"PIO mode (internal 2KB window)",
+	"2KB window",
+	"changed 32KB window to 2KB",
+	"changed 64KB window to 2KB",
 };
 
 void
-lemac_ifattach(
-    lemac_softc_t *sc)
+lemac_ifattach(lemac_softc_t *sc)
 {
-    struct ifnet * const ifp = &sc->sc_if;
+	struct ifnet * const ifp = &sc->sc_if;
 
-    strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
-    lemac_reset(sc);
+	lemac_reset(sc);
 
-    (void) lemac_read_macaddr(sc->sc_enaddr, sc->sc_iot, sc->sc_ioh,
-			      LEMAC_REG_APD, 0);
+	(void)lemac_read_macaddr(sc->sc_enaddr, sc->sc_iot, sc->sc_ioh,
+	    LEMAC_REG_APD, 0);
 
-    printf(": %s\n", sc->sc_prodname);
+	printf(": %s\n", sc->sc_prodname);
 
-    printf("%s: address %s, %dKB RAM, %s\n",
-	   ifp->if_xname,
-	   ether_sprintf(sc->sc_enaddr),
-	   sc->sc_lastpage * 2 + 2,
-	   lemac_modes[sc->sc_flags & LEMAC_MODE_MASK]);
+	printf("%s: address %s, %dKB RAM, %s\n",
+	    ifp->if_xname,
+	    ether_sprintf(sc->sc_enaddr),
+	    sc->sc_lastpage * 2 + 2,
+	    lemac_modes[sc->sc_flags & LEMAC_MODE_MASK]);
 
-    ifp->if_softc = (void *) sc;
-    ifp->if_start = lemac_ifstart;
-    ifp->if_ioctl = lemac_ifioctl;
+	ifp->if_softc = (void *)sc;
+	ifp->if_start = lemac_ifstart;
+	ifp->if_ioctl = lemac_ifioctl;
 
-    ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 
-    if (sc->sc_flags & LEMAC_ALIVE) {
-	int media;
+	if (sc->sc_flags & LEMAC_ALIVE) {
+		int media;
 
-	IFQ_SET_READY(&ifp->if_snd);
+		IFQ_SET_READY(&ifp->if_snd);
 
-	if_attach(ifp);
-	if_deferred_start_init(ifp, NULL);
-	ether_ifattach(ifp, sc->sc_enaddr);
+		if_attach(ifp);
+		if_deferred_start_init(ifp, NULL);
+		ether_ifattach(ifp, sc->sc_enaddr);
 
-	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, RND_FLAG_DEFAULT);
+		rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
+		    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
-	ifmedia_init(&sc->sc_ifmedia, 0,
-		     lemac_ifmedia_change,
-		     lemac_ifmedia_status);
-	if (sc->sc_prodname[4] == '5')	/* DE205 is UTP/AUI */
-	    ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO, 0, 0);
-	if (sc->sc_prodname[4] != '3')	/* DE204 & 205 have UTP */
-	    ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T, 0, 0);
-	if (sc->sc_prodname[4] != '4')	/* DE203 & 205 have BNC */
-	    ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5, 0, 0);
-	switch (sc->sc_prodname[4]) {
-	    case '3': media = IFM_10_5; break;
-	    case '4': media = IFM_10_T; break;
-	    default:  media = IFM_AUTO; break;
-	}
-	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | media);
-    } else {
-	printf("%s: disabled due to error\n", ifp->if_xname);
-    }
+		ifmedia_init(&sc->sc_ifmedia, 0,
+		    lemac_ifmedia_change,
+		    lemac_ifmedia_status);
+		if (sc->sc_prodname[4] == '5')	/* DE205 is UTP/AUI */
+			ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO,
+			    0, 0);
+		if (sc->sc_prodname[4] != '3')	/* DE204 & 205 have UTP */
+			ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T,
+			    0, 0);
+		if (sc->sc_prodname[4] != '4')	/* DE203 & 205 have BNC */
+			ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5,
+			    0, 0);
+		switch (sc->sc_prodname[4]) {
+		case '3': media = IFM_10_5; break;
+		case '4': media = IFM_10_T; break;
+		default:  media = IFM_AUTO; break;
+		}
+		ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | media);
+	} else
+		printf("%s: disabled due to error\n", ifp->if_xname);
 }
