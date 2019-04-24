@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.107 2019/03/29 18:32:45 roy Exp $	*/
+/*	$NetBSD: refresh.c,v 1.108 2019/04/24 07:09:44 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.107 2019/03/29 18:32:45 roy Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.108 2019/04/24 07:09:44 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -251,14 +251,19 @@ _wnoutrefresh(WINDOW *win, int begy, int begx, int wbegy, int wbegx,
 		    "_wnoutrefresh: wy %d\tf %d\tl %d\tflags %x\n",
 		    wy, *wlp->firstchp, *wlp->lastchp, wlp->flags);
 
-		if ((dwin->flags & __ISDERWIN) != 0) {
-			__CTRACE(__CTRACE_REFRESH,
-			"_wnoutrefresh: derwin wy %d\tf %d\tl %d\tflags %x\n",
-			dy_off, *dwlp->firstchp, *dwlp->lastchp, dwlp->flags);
-			__CTRACE(__CTRACE_REFRESH,
-			"_wnoutrefresh: derwin maxx %d\tch_off %d\n",
-			dwin->maxx, dwin->ch_off);
-		}
+		char *_wintype;
+
+		if ((dwin->flags & __ISDERWIN) != 0)
+			_wintype = "derwin";
+		else
+			_wintype = "dwin";
+
+		__CTRACE(__CTRACE_REFRESH,
+		"_wnoutrefresh: %s wy %d\tf %d\tl %d\tflags %x\n",
+		_wintype, dy_off, *dwlp->firstchp, *dwlp->lastchp, dwlp->flags);
+		__CTRACE(__CTRACE_REFRESH,
+		"_wnoutrefresh: %s maxx %d\tch_off %d\n",
+		_wintype, dwin->maxx, dwin->ch_off);
 #endif
 		if (((wlp->flags & (__ISDIRTY | __ISFORCED)) == 0) &&
 		    ((dwlp->flags & (__ISDIRTY | __ISFORCED)) == 0))
