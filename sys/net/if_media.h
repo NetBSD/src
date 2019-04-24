@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.62 2019/04/17 07:04:03 msaitoh Exp $	*/
+/*	$NetBSD: if_media.h,v 1.63 2019/04/24 05:07:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -84,6 +84,12 @@
 #endif /*_KERNEL */
 
 /*
+ * Status bits. THIS IS NOT A MEDIA WORD.
+ */
+#define	IFM_AVALID	0x00000001	/* Active bit valid */
+#define	IFM_ACTIVE	0x00000002	/* Interface attached to working net */
+
+/*
  * if_media Options word:
  *	Bits	Use
  *	----	-------
@@ -91,16 +97,16 @@
  *	5-7	Media type
  *	8-15	Type specific options
  *	16-18	Mode (for multi-mode devices)
- *	19	RFU			(not used)
+ *	19	(Reserved for Future Use)
  *	20-27	Shared (global) options
  *	28-31	Instance
  *
  *   3                     2                   1
  *   1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
  *  +-------+---------------+-+-----+---------------+-----+---------+
- *  |       |               |R|     |               |     |     |STA|
- *  | IMASK |     GMASK     |F|MMASK|     OMASK     |NMASK|     +---|
- *  |       |               |U|     |               |     |  TMASK  |
+ *  |       |               |R|     |               |     |         |
+ *  | IMASK |     GMASK     |F|MMASK|     OMASK     |NMASK|  TMASK  |
+ *  |       |               |U|     |               |     |         |
  *  +-------+---------------+-+-----+---------------+-----+---------+
  *   <----->                   <--->                 <--->
  *  IFM_INST()               IFM_MODE()            IFM_TYPE()
@@ -172,12 +178,6 @@
 #define	IFM_AUTO	0		/* Autoselect best media */
 #define	IFM_MANUAL	1		/* Jumper/dipswitch selects media */
 #define	IFM_NONE	2		/* Deselect all media */
-
-/*
- * Status bits (IFM_TMASK)
- */
-#define	IFM_AVALID	0x00000001	/* Active bit valid */
-#define	IFM_ACTIVE	0x00000002	/* Interface attached to working net */
 
 /*
  * Shared (global) options (IFM_GMASK)
