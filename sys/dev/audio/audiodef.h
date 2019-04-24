@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.1.2.1 2019/04/21 04:28:59 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.1.2.2 2019/04/24 12:14:56 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -220,7 +220,6 @@ struct audio_trackmixer {
 	audio_ring_t	codecbuf;	/* also used for wide->int conversion */
 
 	audio_ring_t	hwbuf;		/* HW I/O buf */
-	int		hwblks;		/* number of blocks in hwbuf */
 
 	void		*sih;		/* softint cookie */
 
