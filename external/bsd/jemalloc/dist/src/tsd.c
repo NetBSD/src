@@ -39,7 +39,10 @@ struct tsd_init_head_s {
 pthread_key_t tsd_tsd;
 tsd_init_head_t	tsd_init_head = {
 	ql_head_initializer(blocks),
+#ifndef __lint__
+	// XXX: broken lint
 	MALLOC_MUTEX_INITIALIZER
+#endif
 };
 tsd_wrapper_t tsd_boot_wrapper = {
 	false,
