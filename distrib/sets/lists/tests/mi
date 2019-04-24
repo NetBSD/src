@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.810 2019/04/04 15:22:13 kamil Exp $
+# $NetBSD: mi,v 1.811 2019/04/24 11:43:20 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3117,7 +3117,9 @@
 ./usr/tests/lib/libpthread/h_thread_local_dtor	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_atexit		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_barrier		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/t_call_once		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_cancel		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/t_cnd		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_cond		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_condwait		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_detach		tests-lib-tests		compattestfile,atf
@@ -3127,6 +3129,7 @@
 ./usr/tests/lib/libpthread/t_fpu		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_join		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_kill		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/t_mtx		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_mutex		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_name		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_once		tests-lib-tests		compattestfile,atf
@@ -3140,7 +3143,9 @@
 ./usr/tests/lib/libpthread/t_sleep		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_status		tests-obsolete		obsolete
 ./usr/tests/lib/libpthread/t_swapcontext	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/t_tss		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_thread_local_dtor	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/t_thrd		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_timedmutex		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread_dbg			tests-obsolete		obsolete
 ./usr/tests/lib/libpthread_dbg/Atffile		tests-obsolete		obsolete

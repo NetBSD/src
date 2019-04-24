@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 2019/02/03 03:20:24 thorpej Exp $
+#	$NetBSD: Makefile,v 1.92 2019/04/24 11:43:19 kamil Exp $
 #
 
 NOSANITIZER=	# defined
@@ -229,6 +229,45 @@ MLINKS+=	pthread_schedparam.3 pthread_getschedparam.3
 MLINKS+=	pthread_suspend_np.3 pthread_resume_np.3
 MLINKS+=	pthread_testcancel.3 pthread_setcancelstate.3
 MLINKS+=	pthread_testcancel.3 pthread_setcanceltype.3
+
+# ISO C threads (ISO/IEC 9899:2011)
+
+SRCS+=		call_once.c cnd.c mtx.c thrd.c tss.c
+MAN+=		threads.3 call_once.3 cnd.3 mtx.3 thrd.3 tss.3
+
+MLINKS+=	call_once.3 ONCE_FLAG_INIT.3
+MLINKS+=	call_once.3 once_flag.3
+
+MLINKS+=	cnd.3 cnd_broadcast.3
+MLINKS+=	cnd.3 cnd_destroy.3
+MLINKS+=	cnd.3 cnd_init.3
+MLINKS+=	cnd.3 cnd_signal.3
+MLINKS+=	cnd.3 cnd_timedwait.3
+MLINKS+=	cnd.3 cnd_wait.3
+
+MLINKS+=	mtx.3 mtx_destroy.3
+MLINKS+=	mtx.3 mtx_init.3
+MLINKS+=	mtx.3 mtx_lock.3
+MLINKS+=	mtx.3 mtx_timedlock.3
+MLINKS+=	mtx.3 mtx_trylock.3
+MLINKS+=	mtx.3 mtx_unlock.3
+
+MLINKS+=	thrd.3 thrd_create.3
+MLINKS+=	thrd.3 thrd_current.3
+MLINKS+=	thrd.3 thrd_detach.3
+MLINKS+=	thrd.3 thrd_equal.3
+MLINKS+=	thrd.3 thrd_exit.3
+MLINKS+=	thrd.3 thrd_join.3
+MLINKS+=	thrd.3 thrd_sleep.3
+MLINKS+=	thrd.3 thrd_yield.3
+
+MLINKS+=	tss.3 TSS_DTOR_ITERATIONS.3
+MLINKS+=	tss.3 tss_create.3
+MLINKS+=	tss.3 tss_delete.3
+MLINKS+=	tss.3 tss_get.3
+MLINKS+=	tss.3 tss_set.3
+
+INCS+=		threads.h
 
 .include <bsd.lib.mk>
 
