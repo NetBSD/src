@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.26 2019/04/20 08:45:30 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.27 2019/04/24 18:19:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.26 2019/04/20 08:45:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.27 2019/04/24 18:19:28 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1623,6 +1623,13 @@ vmx_exit_epf(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	exit->u.mem.inst_len = 0;
 }
 
+static void
+vmx_exit_invalid(struct nvmm_exit *exit, uint64_t code)
+{
+	exit->u.inv.hwcode = code;
+	exit->reason = NVMM_EXIT_INVALID;
+}
+
 /* -------------------------------------------------------------------------- */
 
 static void
@@ -1917,7 +1924,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			exit->reason = NVMM_EXIT_NMI_READY;
 			break;
 		default:
-			exit->reason = NVMM_EXIT_INVALID;
+			vmx_exit_invalid(exit, exitcode);
 			break;
 		}
 
