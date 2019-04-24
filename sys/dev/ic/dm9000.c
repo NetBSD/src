@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.16 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.17 2019/04/24 08:21:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -240,7 +240,8 @@ dme_phy_write(struct dme_softc *sc, int reg, uint16_t value)
 	dme_write(sc, DM9000_EPCR, DM9000_EPCR_ERPRW + DM9000_EPCR_EPOS_PHY);
 
 	/* Wait until access to PHY has completed */
-	while(dme_read(sc, DM9000_EPCR) & DM9000_EPCR_ERRE);
+	while (dme_read(sc, DM9000_EPCR) & DM9000_EPCR_ERRE)
+		;
 
 	/* Reset ERPRR-bit */
 	dme_write(sc, DM9000_EPCR, DM9000_EPCR_EPOS_PHY);
@@ -287,11 +288,10 @@ dme_phy_init(struct dme_softc *sc)
 		break;
 	}
 
-	if(ifm_media & IFM_FDX) {
+	if (ifm_media & IFM_FDX)
 		bmcr |= DM9000_PHY_BMCR_DUPLEX_MODE;
-	} else {
+	else
 		bmcr &= ~DM9000_PHY_BMCR_DUPLEX_MODE;
-	}
 
 	dme_phy_write(sc, DM9000_PHY_BMCR, bmcr);
 	dme_phy_write(sc, DM9000_PHY_ANAR, anar);
@@ -349,15 +349,13 @@ dme_phy_update_media(struct dme_softc *sc)
 	sc->sc_media_active = IFM_ETHER;
 	reg = dme_phy_read(sc, DM9000_PHY_BMCR);
 
-	if (reg & DM9000_PHY_BMCR_SPEED_SELECT) {
+	if (reg & DM9000_PHY_BMCR_SPEED_SELECT)
 		sc->sc_media_active |= IFM_100_TX;
-	} else {
+	else
 		sc->sc_media_active |= IFM_10_T;
-	}
 
-	if (reg & DM9000_PHY_BMCR_DUPLEX_MODE) {
+	if (reg & DM9000_PHY_BMCR_DUPLEX_MODE)
 		sc->sc_media_active |= IFM_FDX;
-	}
 }
 
 void
@@ -371,16 +369,15 @@ dme_phy_check_link(void *arg)
 
 	reg = dme_read(sc, DM9000_NSR) & DM9000_NSR_LINKST;
 
-	if( reg )
+	if (reg)
 		reg = IFM_ETHER | IFM_AVALID | IFM_ACTIVE;
 	else {
 		reg = IFM_ETHER | IFM_AVALID;
 		sc->sc_media_active = IFM_NONE;
 	}
 
-	if ( (sc->sc_media_status != reg) && (reg & IFM_ACTIVE)) {
+	if ((sc->sc_media_status != reg) && (reg & IFM_ACTIVE))
 		dme_phy_reset(sc);
-	}
 
 	sc->sc_media_status = reg;
 
@@ -440,11 +437,11 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->sc_media, 0, dme_mediachange, dme_mediastatus);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_AUTO, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_100_TX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10_T, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_100_TX, 0, NULL);
 
 	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
 
@@ -465,9 +462,8 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 		uint8_t macAddr[6];
 		dme_read_c(sc, DM9000_PAB0, macAddr, 6);
 		printf("DM9000 configured with MAC address: ");
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 6; i++)
 			printf("%02X:", macAddr[i]);
-		}
 		printf("\n");
 	}
 #endif
@@ -485,9 +481,8 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 				printf("10Mbps");
 			else
 				printf("100Mbps");
-		} else {
+		} else
 			printf("Down");
-		}
 		printf("\n");
 	}
 #endif
@@ -569,9 +564,8 @@ int dme_intr(void *arg)
 		}
 
 		/* If we have nothing ready to transmit, prepare something */
-		if (!sc->txready) {
+		if (!sc->txready)
 			dme_prepare(sc, ifp);
-		}
 
 		if (sc->txready)
 			dme_transmit(sc);
@@ -586,8 +580,8 @@ int dme_intr(void *arg)
 #endif
 
 	/* Enable interrupts again */
-	dme_write(sc, DM9000_IMR, DM9000_IMR_PAR | DM9000_IMR_PRM |
-		 DM9000_IMR_PTM);
+	dme_write(sc, DM9000_IMR,
+	    DM9000_IMR_PAR | DM9000_IMR_PRM | DM9000_IMR_PTM);
 
 	DPRINTF(("dme_intr: End\n"));
 
@@ -608,10 +602,9 @@ dme_start_output(struct ifnet *ifp)
 		return;
 	}
 
-	if (sc->txbusy && sc->txready) {
+	if (sc->txbusy && sc->txready)
 		panic("DM9000: Internal error, trying to send without"
 		    " any empty queue\n");
-	}
 
 	dme_prepare(sc, ifp);
 
@@ -659,9 +652,8 @@ dme_prepare(struct dme_softc *sc, struct ifnet *ifp)
 	length = sc->sc_pkt_write(sc, bufChain);
 	TX_DATA_DPRINTF(("\n"));
 
-	if (length % sc->sc_data_width != 0) {
+	if (length % sc->sc_data_width != 0)
 		panic("dme_prepare: length is not compatible with IO_MODE");
-	}
 
 	sc->txready_length = length;
 	sc->txready = 1;
@@ -840,7 +832,7 @@ dme_reset(struct dme_softc *sc)
 
 	/* We only re-initialized the PHY in this function the first time it is
 	   called. */
-	if( !sc->sc_phy_initialized) {
+	if (!sc->sc_phy_initialized) {
 		/* PHY Reset */
 		dme_phy_write(sc, DM9000_PHY_BMCR, DM9000_PHY_BMCR_RESET);
 
@@ -860,7 +852,7 @@ dme_reset(struct dme_softc *sc)
 	delay(20);
 	dme_write(sc, DM9000_NCR, 0x0);
 
-	if( !sc->sc_phy_initialized) {
+	if (!sc->sc_phy_initialized) {
 		/* PHY Initialization */
 		dme_phy_init(sc);
 
@@ -871,7 +863,7 @@ dme_reset(struct dme_softc *sc)
 		dme_write(sc, DM9000_GPCR, var | DM9000_GPCR_GPIO0_OUT);
 
 		dme_write(sc, DM9000_NCR,
-			  DM9000_NCR_RST | DM9000_NCR_LBK_MAC_INTERNAL);
+		    DM9000_NCR_RST | DM9000_NCR_LBK_MAC_INTERNAL);
 		delay(20);
 		dme_write(sc, DM9000_NCR, 0x0);
 	}
@@ -949,7 +941,7 @@ dme_set_addr_filter(struct dme_softc *sc)
 	}
 
 	/* Write the multicast address filter */
-	for(i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		dme_write(sc, DM9000_MAB0+i*2, af[i] & 0xFF);
 		dme_write(sc, DM9000_MAB0+i*2+1, (af[i] >> 8) & 0xFF);
 	}
@@ -978,8 +970,7 @@ dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
 
 		write_ptr = buf->m_data;
 		while (to_write > 0 ||
-		       (buf->m_next == NULL && left_over_count > 0)
-		       ) {
+		    (buf->m_next == NULL && left_over_count > 0)) {
 			if (left_over_count > 0) {
 				uint8_t b = 0;
 				DPRINTF(("dme_pkt_write_16: "
@@ -1016,7 +1007,7 @@ dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
 				uint16_t *dptr = (uint16_t *)write_ptr;
 
 				/* A block of aligned data. */
-				for(i = 0; i < to_write / 2; i++) {
+				for (i = 0; i < to_write / 2; i++) {
 					/* buf will be half-word aligned
 					 * all the time
 					 */
@@ -1074,9 +1065,8 @@ dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
 		printf("ETHER_MAX_LEN is: %d\n", ETHER_MAX_LEN);
 		panic("Something is rotten");
 	}
-	RX_DPRINTF(("dme_receive: "
-		    "rx_statux: 0x%x, frame_length: %d\n",
-		    rx_status, frame_length));
+	RX_DPRINTF(("dme_receive: rx_statux: 0x%x, frame_length: %d\n",
+		rx_status, frame_length));
 
 
 	m = dme_alloc_receive_buffer(ifp, frame_length);
@@ -1125,8 +1115,10 @@ dme_pkt_write_1(struct dme_softc *sc, struct mbuf *bufChain)
 	struct mbuf *buf;
 	uint8_t *write_ptr;
 
-	/* We expect that the DM9000 has been setup to accept writes before
-	   this function is called. */
+	/*
+	 * We expect that the DM9000 has been setup to accept writes before
+	 * this function is called.
+	 */
 
 	for (buf = bufChain; buf != NULL; buf = buf->m_next) {
 		int to_write = buf->m_len;
