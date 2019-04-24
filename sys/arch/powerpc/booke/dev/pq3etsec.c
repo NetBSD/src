@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.41 2019/03/08 08:12:39 msaitoh Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.42 2019/04/24 11:12:12 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.41 2019/03/08 08:12:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.42 2019/04/24 11:12:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1200,7 +1200,6 @@ pq3etsec_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
 		/* Flow control requires full-duplex mode. */
 		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
 		    (ifr->ifr_media & IFM_FDX) == 0)
