@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.81 2019/04/11 08:50:59 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.82 2019/04/24 10:38:09 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.81 2019/04/11 08:50:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.82 2019/04/24 10:38:09 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -5415,8 +5415,6 @@ bnx_ioctl(struct ifnet *ifp, u_long command, void *data)
 			}
 			sc->bnx_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
 		}
-		/* FALLTHROUGH */
-	case SIOCGIFMEDIA:
 		DBPRINT(sc, BNX_VERBOSE, "bnx_phy_flags = 0x%08X\n",
 		    sc->bnx_phy_flags);
 
