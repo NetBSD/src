@@ -251,6 +251,7 @@ comp-krb5-lib base-sys-usr
 comp-krb5-man base-man-share
 comp-krb5-proflib base-sys-usr
 comp-krb5c-catman base-man-share
+comp-nis-include comp-c-include
 comp-objc-bin base-sys-usr
 comp-objc-lib base-sys-usr
 comp-objc-piclib base-sys-usr

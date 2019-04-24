@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.144 2017/10/16 11:38:25 maya Exp $
+#	$NetBSD: Makefile,v 1.145 2019/04/24 10:26:08 roy Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -30,16 +30,17 @@ INCS+=	protocols/dumprestore.h protocols/routed.h protocols/rwhod.h \
 
 INCS+=	hesiod.h
 
+.include <bsd.own.mk>
+
+.if (${MKYP} != "no")
 INCS+=	rpcsvc/yp_prot.h rpcsvc/ypclnt.h
+.endif
 
 INCS+=  ssp/ssp.h ssp/stdio.h ssp/string.h ssp/strings.h ssp/unistd.h
 
 .if (${MACHINE_ARCH} != "vax")
 INCS+=	ieeefp.h
 .endif
-
-.include <bsd.own.mk>
-
 
 INCSDIR=	/usr/include
 

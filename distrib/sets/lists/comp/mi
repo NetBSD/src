@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2268 2019/04/06 12:33:18 kamil Exp $
+#	$NetBSD: mi,v 1.2269 2019/04/24 10:26:08 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2846,12 +2846,12 @@
 ./usr/include/rpcsvc/sm_inter.x			comp-c-include
 ./usr/include/rpcsvc/spray.h			comp-c-include
 ./usr/include/rpcsvc/spray.x			comp-c-include
-./usr/include/rpcsvc/yp.h			comp-c-include
-./usr/include/rpcsvc/yp.x			comp-c-include
-./usr/include/rpcsvc/yp_prot.h			comp-c-include
-./usr/include/rpcsvc/ypclnt.h			comp-c-include
-./usr/include/rpcsvc/yppasswd.h			comp-c-include
-./usr/include/rpcsvc/yppasswd.x			comp-c-include
+./usr/include/rpcsvc/yp.h			comp-nis-include	yp
+./usr/include/rpcsvc/yp.x			comp-nis-include	yp
+./usr/include/rpcsvc/yp_prot.h			comp-nis-include	yp
+./usr/include/rpcsvc/ypclnt.h			comp-nis-include	yp
+./usr/include/rpcsvc/yppasswd.h			comp-nis-include	yp
+./usr/include/rpcsvc/yppasswd.x			comp-nis-include	yp
 ./usr/include/rtld_db.h				comp-c-include	dtrace
 ./usr/include/rump/p2k.h			comp-puffs-include	rump
 ./usr/include/rump/rump.h			comp-c-include	rump
