@@ -1,4 +1,4 @@
-/*	$NetBSD: call_once.c,v 1.1 2019/04/24 11:43:19 kamil Exp $	*/
+/*	$NetBSD: call_once.c,v 1.2 2019/04/24 21:41:15 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,12 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: call_once.c,v 1.1 2019/04/24 11:43:19 kamil Exp $");
+__RCSID("$NetBSD: call_once.c,v 1.2 2019/04/24 21:41:15 kamil Exp $");
 
 #include <assert.h>
-#include <err.h>
 #include <pthread.h>
-#include <stdlib.h>
 #include <threads.h>
 
 void
@@ -45,8 +43,8 @@ call_once(once_flag *flag, void (*func)(void))
 	_DIAGASSERT(flag != NULL);
 	_DIAGASSERT(func != NULL);
 
-	/* The call_once(3) function returns no value, this forces this code to
-	 * break as there is nothing better available. */
-	if (pthread_once(flag, func) != 0)
-		errx(EXIT_FAILURE, "pthread_once failed");
+	/*
+	 * The call_once(3) function that conforms to C11 returns no value.
+	 */
+	(void)pthread_once(flag, func);
 }
