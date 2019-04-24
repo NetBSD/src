@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.5 2019/03/21 20:21:40 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.6 2019/04/24 18:19:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -103,6 +103,10 @@ struct nvmm_exit_insn {
 	uint64_t npc;
 };
 
+struct nvmm_exit_invalid {
+	uint64_t hwcode;
+};
+
 struct nvmm_exit {
 	enum nvmm_exit_reason reason;
 	union {
@@ -110,6 +114,7 @@ struct nvmm_exit {
 		struct nvmm_exit_io io;
 		struct nvmm_exit_msr msr;
 		struct nvmm_exit_insn insn;
+		struct nvmm_exit_invalid inv;
 	} u;
 	uint64_t exitstate[8];
 };
