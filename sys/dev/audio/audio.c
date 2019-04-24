@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.1.2.1 2019/04/21 04:28:59 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.1.2.2 2019/04/24 12:14:56 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.1 2019/04/21 04:28:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.2 2019/04/24 12:14:56 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4759,6 +4759,7 @@ audio_mixer_init(struct audio_softc *sc, int mode,
 	int blksize;
 	int capacity;
 	size_t bufsize;
+	int hwblks;
 	int blkms;
 	int error;
 
@@ -4779,8 +4780,8 @@ audio_mixer_init(struct audio_softc *sc, int mode,
 	mixer->volume = 256;
 	mixer->blktime_d = 1000;
 	mixer->blktime_n = audio_mixer_calc_blktime(sc, mixer);
-	mixer->hwblks = NBLKHW;
 	sc->sc_blk_ms = mixer->blktime_n;
+	hwblks = NBLKHW;
 
 	mixer->frames_per_block = frame_per_block(mixer, &mixer->hwbuf.fmt);
 	blksize = frametobyte(&mixer->hwbuf.fmt, mixer->frames_per_block);
@@ -4799,7 +4800,8 @@ audio_mixer_init(struct audio_softc *sc, int mode,
 				return EINVAL;
 			}
 			/* Recalculation */
-			mixer->frames_per_block = rounded * NBBY /
+			blksize = rounded;
+			mixer->frames_per_block = blksize * NBBY /
 			    (mixer->hwbuf.fmt.stride *
 			     mixer->hwbuf.fmt.channels);
 		}
@@ -4807,19 +4809,33 @@ audio_mixer_init(struct audio_softc *sc, int mode,
 	mixer->blktime_n = mixer->frames_per_block;
 	mixer->blktime_d = mixer->hwbuf.fmt.sample_rate;
 
-	capacity = mixer->frames_per_block * mixer->hwblks;
+	capacity = mixer->frames_per_block * hwblks;
 	bufsize = frametobyte(&mixer->hwbuf.fmt, capacity);
 	if (sc->hw_if->round_buffersize) {
 		size_t rounded;
 		rounded = sc->hw_if->round_buffersize(sc->hw_hdl, mode,
 		    bufsize);
 		TRACE(2, "round_buffersize %zd -> %zd", bufsize, rounded);
-		if (rounded != bufsize) {
-			/* XXX what should I do? */
+		if (rounded < bufsize) {
+			/* buffersize needs NBLKHW blocks at least. */
 			device_printf(sc->sc_dev,
-			    "buffer size not configured %zu -> %zu\n",
-			    bufsize, rounded);
+			    "buffersize too small: buffersize=%zd blksize=%d\n",
+			    rounded, blksize);
 			return EINVAL;
+		}
+		if (rounded % blksize != 0) {
+			/* buffersize/blksize constraint mismatch? */
+			device_printf(sc->sc_dev,
+			    "buffersize must be multiple of blksize: "
+			    "buffersize=%zu blksize=%d\n",
+			    rounded, blksize);
+			return EINVAL;
+		}
+		if (rounded != bufsize) {
+			/* Recalcuration */
+			bufsize = rounded;
+			hwblks = bufsize / blksize;
+			capacity = mixer->frames_per_block * hwblks;
 		}
 	}
 	TRACE(2, "buffersize for %s = %zu",
