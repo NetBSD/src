@@ -1,4 +1,4 @@
-.\"	$NetBSD: thrd.3,v 1.1 2019/04/24 11:43:19 kamil Exp $
+.\"	$NetBSD: thrd.3,v 1.2 2019/04/24 18:47:54 kamil Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 .Fn thrd_detach "thrd_t thr"
 .Ft int
 .Fn thrd_equal "thrd_t t1" "thrd_t t2"
-.Ft __dead void
+.Ft _Noreturn void
 .Fn thrd_exit "int res"
 .Ft int
 .Fn thrd_join "thrd_t thr" "int *res"
@@ -191,14 +191,6 @@ otherwise it will return non-zero.
 The
 .Fn thrd_exit
 function does not return.
-The standard attributes this function with the
-.Dv _Noreturn
-keyword,
-however in the
-.Nx
-version it is attributed with the traditional and functionally equivalent
-.Dv __dead
-keyword.
 .Pp
 The
 .Fn thrd_join
