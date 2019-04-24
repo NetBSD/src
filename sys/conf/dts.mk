@@ -1,4 +1,4 @@
-# $NetBSD: dts.mk,v 1.11 2019/04/23 13:36:42 christos Exp $
+# $NetBSD: dts.mk,v 1.12 2019/04/24 20:53:10 christos Exp $
 
 DTSARCH?=${MACHINE_CPU}
 DTSGNUARCH?=${DTSARCH}
@@ -8,7 +8,7 @@ DTSPADDING?=1024
 .BEGIN::
 	-@mkdir -p dts
 .for _arch in ${DTSGNUARCH}
-	-@ln -shf ${S:S@^../@../../@}/external/gpl2/dts/dist/arch/${_arch}/boot/dts dts/${_arch}
+	-@ln -snf ${S:S@^../@../../@}/external/gpl2/dts/dist/arch/${_arch}/boot/dts dts/${_arch}
 .endfor
 .endif
 
