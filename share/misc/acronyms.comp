@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.248 2019/04/22 12:27:50 sevan Exp $
+$NetBSD: acronyms.comp,v 1.249 2019/04/24 14:15:35 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1220,6 +1220,7 @@ REST	representational state transfer
 RF	radio frequency
 RFI	radio frequency interference
 RFO	request for ownership
+RFU	reserved for future use
 RGB	red green blue
 RGBA	red green blue alpha
 RGMII	reduced gigabit media independent interface
