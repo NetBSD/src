@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.41 2018/12/01 15:07:58 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.42 2019/04/24 23:39:23 mlelstv Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.41 2018/12/01 15:07:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.42 2019/04/24 23:39:23 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,6 +479,7 @@ nvme_rescan(device_t self, const char *attr, const int *flags)
 		naa.naa_nsid = i + 1;
 		naa.naa_qentries = (ioq_entries - 1) * sc->sc_nq;
 		naa.naa_maxphys = sc->sc_mdts;
+		naa.naa_typename = sc->sc_modelname;
 		sc->sc_namespaces[i].dev = config_found(sc->sc_dev, &naa,
 		    nvme_print);
 	}
@@ -1448,6 +1449,8 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 	    sizeof(sc->sc_identify.fr), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 	aprint_normal_dev(sc->sc_dev, "%s, firmware %s, serial %s\n", mn, fr,
 	    sn);
+
+	strlcpy(sc->sc_modelname, mn, sizeof(sc->sc_modelname));
 
 	if (sc->sc_identify.mdts > 0) {
 		mdts = (1 << sc->sc_identify.mdts) * (1 << mps);
