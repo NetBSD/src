@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2017/08/17 00:06:00 ginsbach Exp $
+#	$NetBSD: Makefile,v 1.15 2019/04/24 10:27:49 roy Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,10 @@ CPPFLAGS+=	-I${LIBCRPCDIR} -DPORTMAP -DLIBWRAP
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
+.endif
+
+.if (${USE_YP} != "no")
+CPPFLAGS+=	-DYP
 .endif
 
 # Uncomment these to get any useful output from 'rpcbind -d'
