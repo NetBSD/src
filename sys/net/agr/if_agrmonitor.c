@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrmonitor.c,v 1.5 2017/01/28 22:56:09 maya Exp $	*/
+/*	$NetBSD: if_agrmonitor.c,v 1.6 2019/04/24 05:31:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrmonitor.c,v 1.5 2017/01/28 22:56:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrmonitor.c,v 1.6 2019/04/24 05:31:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -48,8 +48,7 @@ agrport_monitor(struct agr_port *port)
 
 	media = IFM_ETHER | IFM_NONE;
 	status = IFM_AVALID;
-	if ((~port->port_ifp->if_flags & (IFF_RUNNING | IFF_UP))
-	    == 0) {
+	if ((~port->port_ifp->if_flags & (IFF_RUNNING | IFF_UP)) == 0) {
 		int error;
 
 		error = agr_port_getmedia(port, &media, &status);
@@ -60,26 +59,21 @@ agrport_monitor(struct agr_port *port)
 		}
 	}
 
-	if ((status & (IFM_AVALID | IFM_ACTIVE)) == IFM_AVALID) {
+	if ((status & (IFM_AVALID | IFM_ACTIVE)) == IFM_AVALID)
 		media = IFM_ETHER | IFM_NONE; /* XXX ether */
-	}
 
 	if (media == IFM_NONE) {
-		/*
-		 * possible eg. when the phy is not configured.
-		 */
+		/* possible eg. when the phy is not configured. */
 #if defined(DEBUG)
 		printf("%s: IFM_NONE\n", __func__);
 #endif /* defined(DEBUG) */
 		media = IFM_ETHER | IFM_NONE; /* XXX ether */
 	}
 
-	if (port->port_media == media) {
+	if (port->port_media == media)
 		return;
-	}
 
 	port->port_media = media;
-	if (sc->sc_iftop->iftop_portstate) {
+	if (sc->sc_iftop->iftop_portstate)
 		(*sc->sc_iftop->iftop_portstate)(port);
-	}
 }
