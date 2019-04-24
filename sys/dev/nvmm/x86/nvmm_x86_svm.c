@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.39 2019/04/20 08:45:30 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.40 2019/04/24 18:19:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.39 2019/04/20 08:45:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.40 2019/04/24 18:19:28 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1118,6 +1118,13 @@ error:
 	svm_inject_gp(mach, vcpu);
 }
 
+static void
+svm_exit_invalid(struct nvmm_exit *exit, uint64_t code)
+{
+	exit->u.inv.hwcode = code;
+	exit->reason = NVMM_EXIT_INVALID;
+}
+
 /* -------------------------------------------------------------------------- */
 
 static void
@@ -1364,7 +1371,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			break;
 		case VMCB_EXITCODE_FERR_FREEZE: /* ? */
 		default:
-			exit->reason = NVMM_EXIT_INVALID;
+			svm_exit_invalid(exit, vmcb->ctrl.exitcode);
 			break;
 		}
 
