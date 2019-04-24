@@ -232,6 +232,7 @@ comp-objc-bin compilers and tools for the Objective C programming language
 comp-objc-lib static libraries and shared library links for the Objective C programming language
 comp-objc-piclib PIC libraries for Objective C language shared library generation
 comp-objc-proflib profiling libraries for the Objective C programming language
+comp-nis-include Headers for bulding NIS applications
 comp-sys-catman formatted manual pages for kernel programming
 comp-sys-man manual pages source for kernel programming
 comp-sys-shlib	shared library support for basic i386 math and utility libs
