@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.278 2018/12/22 14:28:57 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.279 2019/04/24 10:20:36 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.278 2018/12/22 14:28:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.279 2019/04/24 10:20:36 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1171,14 +1171,13 @@ in_arpinput(struct mbuf *m)
 	 * Collision on sender address is always a duplicate.
 	 * Collision on target address is only a duplicate IF
 	 * the sender address is the null host (ie a DAD probe) AND
-	 * our address is in the TENTATIVE state.
-	 * DUPLICATED state is also checked so that processing stops here
-	 * and an error can be logged.
+	 * the message was broadcast - if it's unicast then it's
+	 * a valid Unicast Poll from RFC 1122.
 	 */
 	if (do_dad &&
 	    (in_hosteq(isaddr, myaddr) ||
-	    (in_nullhost(isaddr) && in_hosteq(itaddr, myaddr)
-	    && ia->ia4_flags & (IN_IFF_TENTATIVE | IN_IFF_DUPLICATED))))
+	    (in_nullhost(isaddr) && in_hosteq(itaddr, myaddr) &&
+	     m->m_flags & M_BCAST)))
 	{
 		arp_dad_duplicated((struct ifaddr *)ia,
 		    lla_snprintf(llabuf, ar_sha(ah), ah->ar_hln));
