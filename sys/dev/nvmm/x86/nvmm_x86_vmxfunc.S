@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmxfunc.S,v 1.1 2019/02/13 16:03:16 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmxfunc.S,v 1.2 2019/04/24 18:45:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -225,9 +225,12 @@ END(_vmx_vmclear)
  */
 
 #define GUEST_SAVE_GPRS(reg)				\
-	movq	%rbx,(NVMM_X64_GPR_RBX * 8)(reg)	;\
 	movq	%rcx,(NVMM_X64_GPR_RCX * 8)(reg)	;\
 	movq	%rdx,(NVMM_X64_GPR_RDX * 8)(reg)	;\
+	movq	%rbx,(NVMM_X64_GPR_RBX * 8)(reg)	;\
+	movq	%rbp,(NVMM_X64_GPR_RBP * 8)(reg)	;\
+	movq	%rsi,(NVMM_X64_GPR_RSI * 8)(reg)	;\
+	movq	%rdi,(NVMM_X64_GPR_RDI * 8)(reg)	;\
 	movq	%r8,(NVMM_X64_GPR_R8 * 8)(reg)		;\
 	movq	%r9,(NVMM_X64_GPR_R9 * 8)(reg)		;\
 	movq	%r10,(NVMM_X64_GPR_R10 * 8)(reg)	;\
@@ -235,15 +238,15 @@ END(_vmx_vmclear)
 	movq	%r12,(NVMM_X64_GPR_R12 * 8)(reg)	;\
 	movq	%r13,(NVMM_X64_GPR_R13 * 8)(reg)	;\
 	movq	%r14,(NVMM_X64_GPR_R14 * 8)(reg)	;\
-	movq	%r15,(NVMM_X64_GPR_R15 * 8)(reg)	;\
-	movq	%rbp,(NVMM_X64_GPR_RBP * 8)(reg)	;\
-	movq	%rdi,(NVMM_X64_GPR_RDI * 8)(reg)	;\
-	movq	%rsi,(NVMM_X64_GPR_RSI * 8)(reg)
+	movq	%r15,(NVMM_X64_GPR_R15 * 8)(reg)
 
 #define GUEST_RESTORE_GPRS(reg)				\
-	movq	(NVMM_X64_GPR_RBX * 8)(reg),%rbx	;\
 	movq	(NVMM_X64_GPR_RCX * 8)(reg),%rcx	;\
 	movq	(NVMM_X64_GPR_RDX * 8)(reg),%rdx	;\
+	movq	(NVMM_X64_GPR_RBX * 8)(reg),%rbx	;\
+	movq	(NVMM_X64_GPR_RBP * 8)(reg),%rbp	;\
+	movq	(NVMM_X64_GPR_RSI * 8)(reg),%rsi	;\
+	movq	(NVMM_X64_GPR_RDI * 8)(reg),%rdi	;\
 	movq	(NVMM_X64_GPR_R8 * 8)(reg),%r8		;\
 	movq	(NVMM_X64_GPR_R9 * 8)(reg),%r9		;\
 	movq	(NVMM_X64_GPR_R10 * 8)(reg),%r10	;\
@@ -252,9 +255,6 @@ END(_vmx_vmclear)
 	movq	(NVMM_X64_GPR_R13 * 8)(reg),%r13	;\
 	movq	(NVMM_X64_GPR_R14 * 8)(reg),%r14	;\
 	movq	(NVMM_X64_GPR_R15 * 8)(reg),%r15	;\
-	movq	(NVMM_X64_GPR_RBP * 8)(reg),%rbp	;\
-	movq	(NVMM_X64_GPR_RDI * 8)(reg),%rdi	;\
-	movq	(NVMM_X64_GPR_RSI * 8)(reg),%rsi	;\
 	movq	(NVMM_X64_GPR_RAX * 8)(reg),%rax
 
 /*
