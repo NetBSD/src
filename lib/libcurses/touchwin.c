@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.30 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.31 2019/04/24 07:09:44 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.30 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.31 2019/04/24 07:09:44 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -67,6 +67,10 @@ is_linetouched(WINDOW *win, int line)
 	if (line > win->maxy)
 		return FALSE;
 
+#ifdef DEBUG
+	__CTRACE(__CTRACE_LINE, "is_linetouched: (%p, line %d, dirty %d)\n",
+	    win, line, (win->alines[line]->flags & __ISDIRTY));
+#endif
 	return (win->alines[line]->flags & __ISDIRTY) != 0;
 }
 
@@ -106,6 +110,10 @@ is_wintouched(WINDOW *win)
 {
 	int y, maxy;
 
+#ifdef DEBUG
+	__CTRACE(__CTRACE_LINE, "is_wintouched: (%p, maxy %d)\n", win,
+	    win->maxy);
+#endif
 	maxy = win->maxy;
 	for (y = 0; y < maxy; y++) {
 		if (is_linetouched(win, y) == TRUE)
