@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2528 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2529 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -360,3 +360,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	OpenSSH: Import 8.0 [christos 20180420]
 	evbarm: Add support for boot configuration (efiboot.plist) and
 		applying device tree overlays to efiboot. [thorpej 20190421]
+	libpthread(3): Import C11 thread support library [kamil 20190424]
