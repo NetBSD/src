@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.862 2019/04/20 17:24:06 christos Exp $
+# $NetBSD: shl.mi,v 1.863 2019/04/24 13:01:52 kamil Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -476,7 +476,7 @@
 ./usr/lib/libprop.so.1.1			base-sys-shlib		compatfile
 ./usr/lib/libpthread.so				base-sys-shlib		compatfile
 ./usr/lib/libpthread.so.1			base-sys-shlib		compatfile
-./usr/lib/libpthread.so.1.3			base-sys-shlib		compatfile
+./usr/lib/libpthread.so.1.4			base-sys-shlib		compatfile
 ./usr/lib/libpthread_dbg.so			base-obsolete		obsolete
 ./usr/lib/libpthread_dbg.so.2			base-obsolete		obsolete
 ./usr/lib/libpthread_dbg.so.2.0			base-obsolete		obsolete
