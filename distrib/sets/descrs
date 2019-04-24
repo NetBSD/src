@@ -207,6 +207,7 @@ comp-c-catman	the C programming language:
 comp-c-include	This package contains header files for the C programming language,
 comp-c-include	including standard C and UNIX APIs, and APIs specific to the NetBSD
 comp-c-include	operating system.
+comp-nis-inlcude	Header files for building NIS applications
 comp-c-lib	This contains library archives to build statically linked versions of C
 comp-c-lib	libraries.
 comp-c-lib	programs and simbolic links for use in linking software against shared
