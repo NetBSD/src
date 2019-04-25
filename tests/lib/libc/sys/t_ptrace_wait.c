@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.113 2019/04/25 11:47:59 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.114 2019/04/25 19:15:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.113 2019/04/25 11:47:59 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.114 2019/04/25 19:15:23 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,6 +52,11 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.113 2019/04/25 11:47:59 kamil Exp $");
 #include <strings.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <fenv.h>
+#if (__arm__ && !__SOFTFP__) || __aarch64__
+#include <ieeefp.h> /* only need for ARM Cortex/Neon hack */
+#endif
 
 #include <atf-c.h>
 
@@ -413,6 +418,9 @@ traceme_crash(int sig)
 		atf_tc_skip("PTRACE_ILLEGAL_ASM not defined");
 #endif
 
+	if (sig == SIGFPE && !are_fpu_exceptions_supported())
+		atf_tc_skip("FP exceptions are not supported");
+
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
@@ -536,6 +544,9 @@ traceme_signalmasked_crash(int sig)
 	if (sig == SIGILL)
 		atf_tc_skip("PTRACE_ILLEGAL_ASM not defined");
 #endif
+
+	if (sig == SIGFPE && !are_fpu_exceptions_supported())
+		atf_tc_skip("FP exceptions are not supported");
 
 	memset(&info, 0, sizeof(info));
 
@@ -714,6 +725,9 @@ traceme_signalignored_crash(int sig)
 	if (sig == SIGILL)
 		atf_tc_skip("PTRACE_ILLEGAL_ASM not defined");
 #endif
+
+	if (sig == SIGFPE && !are_fpu_exceptions_supported())
+		atf_tc_skip("FP exceptions are not supported");
 
 	memset(&info, 0, sizeof(info));
 
@@ -1523,6 +1537,9 @@ traceme_vfork_crash(int sig)
 		atf_tc_skip("PTRACE_ILLEGAL_ASM not defined");
 #endif
 
+	if (sig == SIGFPE && !are_fpu_exceptions_supported())
+		atf_tc_skip("FP exceptions are not supported");
+
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = vfork()) != -1);
 	if (child == 0) {
@@ -1601,6 +1618,9 @@ traceme_vfork_signalmasked_crash(int sig)
 	if (sig == SIGILL)
 		atf_tc_skip("PTRACE_ILLEGAL_ASM not defined");
 #endif
+
+	if (sig == SIGFPE && !are_fpu_exceptions_supported())
+		atf_tc_skip("FP exceptions are not supported");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = vfork()) != -1);
@@ -1684,6 +1704,9 @@ traceme_vfork_signalignored_crash(int sig)
 	if (sig == SIGILL)
 		atf_tc_skip("PTRACE_ILLEGAL_ASM not defined");
 #endif
+
+	if (sig == SIGFPE && !are_fpu_exceptions_supported())
+		atf_tc_skip("FP exceptions are not supported");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = vfork()) != -1);
@@ -1935,6 +1958,9 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 	if (sig == SIGILL)
 		atf_tc_skip("PTRACE_ILLEGAL_ASM not defined");
 #endif
+
+	if (sig == SIGFPE && !are_fpu_exceptions_supported())
+		atf_tc_skip("FP exceptions are not supported");
 
 	memset(&info, 0, sizeof(info));
 
