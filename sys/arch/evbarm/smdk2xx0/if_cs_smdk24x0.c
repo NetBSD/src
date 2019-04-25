@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_smdk24x0.c,v 1.7 2015/04/13 21:18:41 riastradh Exp $ */
+/*	$NetBSD: if_cs_smdk24x0.c,v 1.8 2019/04/25 05:42:43 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_smdk24x0.c,v 1.7 2015/04/13 21:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_smdk24x0.c,v 1.8 2019/04/25 05:42:43 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,9 +122,7 @@ cs_ssextio_probe(device_t parent, cfdata_t cf, void *aux)
 	if (sa->sa_addr == SSEXTIOCF_ADDR_DEFAULT)
 		sa->sa_addr = S3C2410_BANK_START(3);
 
-	/*
-	 * Map the I/O space.
-	 */
+	/* Map the I/O space. */
 	ioaddr = IOADDR(sa->sa_addr);
 	if (bus_space_map(iot, ioaddr, CS8900_IOSIZE, 0, &ioh))
 		goto out;
@@ -137,7 +135,7 @@ cs_ssextio_probe(device_t parent, cfdata_t cf, void *aux)
 	if (0) {
 		int i;
 
-		for (i=0; i <=PKTPG_IND_ADDR; i += 2) {
+		for (i = 0; i <= PKTPG_IND_ADDR; i += 2) {
 			if (i % 16 == 0)
 				printf( "\n%04x: ", i);
 			printf("%04x ", CS_READ_PACKET_PAGE_IO(&sc, i));
@@ -149,9 +147,7 @@ cs_ssextio_probe(device_t parent, cfdata_t cf, void *aux)
 	if (CS_READ_PACKET_PAGE_IO(&sc, PKTPG_EISA_NUM) != EISA_NUM_CRYSTAL)
 		goto out;
 
-	/*
-	 * Verify that it's a supported chip.
-	 */
+	/* Verify that it's a supported chip. */
 	switch (CS_READ_PACKET_PAGE_IO(&sc, PKTPG_PRODUCT_ID) & PROD_ID_MASK) {
 	case PROD_ID_CS8900:
 #ifdef notyet
@@ -165,14 +161,14 @@ cs_ssextio_probe(device_t parent, cfdata_t cf, void *aux)
 	if (have_io)
 		bus_space_unmap(iot, ioh, CS8900_IOSIZE);
 
-	return (rv);
+	return rv;
 }
 
 /* media selection: UTP only */
 static int cs_media[] = {
-	IFM_ETHER|IFM_10_T,
+	IFM_ETHER | IFM_10_T,
 #if 0
-	IFM_ETHER|IFM_10_T|IFM_FDX,
+	IFM_ETHER | IFM_10_T | IFM_FDX,
 #endif
 };
 
@@ -190,12 +186,12 @@ cs_ssextio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_iot = sc->sc_memt = sa->sa_iot;
-	/* sc_irq is an IRQ number in ISA world. set 10 for INTRQ0 of CS8900A */
+	/*
+	 * sc_irq is an IRQ number in ISA world. Set 10 for INTRQ0 of CS8900A.
+	 */
 	sc->sc_irq = 10;
 
-	/*
-	 * Map the device.
-	 */
+	/* Map the device. */
 	ioaddr = IOADDR(sa->sa_addr);
 	if (bus_space_map(sc->sc_iot, ioaddr, CS8900_IOSIZE, 0, &sc->sc_ioh)) {
 		aprint_error(": unable to map i/o space\n");
@@ -210,12 +206,14 @@ cs_ssextio_attach(device_t parent, device_t self, void *aux)
 		sc->sc_pktpgaddr = sa->sa_addr;
 	}
 
-	/* CS8900A is very slow. (nOE->Data valid: 135ns max.)
-	   We need to use IOCHRDY signal */
+	/*
+	 * CS8900A is very slow. (nOE->Data valid: 135ns max.)
+	 * We need to use IOCHRDY signal.
+	 */
 	sc->sc_cfgflags |= CFGFLG_IOCHRDY;
 
-	sc->sc_ih = s3c2410_extint_establish(sa->sa_intr, IPL_NET, IST_EDGE_RISING,
-	    cs_intr, sc);
+	sc->sc_ih = s3c2410_extint_establish(sa->sa_intr, IPL_NET,
+	    IST_EDGE_RISING, cs_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error(": unable to establish interrupt\n");
 		return;
@@ -226,6 +224,6 @@ cs_ssextio_attach(device_t parent, device_t self, void *aux)
 	/* SMDK24X0 doesn't have EEPRMO hooked to CS8900A */
 	sc->sc_cfgflags |= CFGFLG_NOT_EEPROM;
 
-	cs_attach(sc, enaddr, cs_media, 
-	    sizeof(cs_media) / sizeof(cs_media[0]), IFM_ETHER|IFM_10_T);
+	cs_attach(sc, enaddr, cs_media, __arraycount(cs_media),
+	    IFM_ETHER | IFM_10_T);
 }
