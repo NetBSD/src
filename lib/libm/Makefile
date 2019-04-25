@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.208 2019/04/17 07:45:23 mrg Exp $
+#  $NetBSD: Makefile,v 1.209 2019/04/25 23:17:24 maya Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -383,6 +383,7 @@ MLINKS+=ceil.3 ceilf.3 \
 MLINKS+=copysign.3 copysignf.3 \
 	copysign.3 copysignl.3
 MLINKS+=cos.3 cosf.3
+MLINKS+=cos.3 cosl.3
 MLINKS+=cosh.3 coshf.3
 MLINKS+=erf.3 erff.3 \
 	erf.3 erfl.3 \
