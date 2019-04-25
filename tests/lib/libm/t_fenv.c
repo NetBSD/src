@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.5 2019/01/30 12:16:28 martin Exp $ */
+/* $NetBSD: t_fenv.c,v 1.6 2019/04/25 20:48:54 kamil Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.5 2019/01/30 12:16:28 martin Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.6 2019/04/25 20:48:54 kamil Exp $");
 
 #include <atf-c.h>
 
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: t_fenv.c,v 1.5 2019/01/30 12:16:28 martin Exp $");
 
 #if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
-	 * Some NEON fpus  do not trap on IEEE 754 FP excpeptions.
+	 * Some NEON fpus  do not trap on IEEE 754 FP exceptions.
 	 * Skip these tests if running on them and compiled for
 	 * hard float.
 	 */
