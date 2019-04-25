@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.330 2019/02/08 02:05:32 mrg Exp $
+#	$NetBSD: build.sh,v 1.331 2019/04/25 05:12:49 pgoyette Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1291,7 +1291,7 @@ parseoptions()
 				safe_setmakeenv "${OPTARG}" ""
 				;;
 			*)
-				usage "-V argument must be of the form 'var=[value]'"
+				usage "-V argument must be of the form 'var[=value]'"
 				;;
 			esac
 			;;
@@ -1936,7 +1936,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.330 2019/02/08 02:05:32 mrg Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.331 2019/04/25 05:12:49 pgoyette Exp $
 # with these arguments: ${_args}
 #
 
