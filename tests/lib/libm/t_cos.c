@@ -1,4 +1,4 @@
-/* $NetBSD: t_cos.c,v 1.7 2018/11/10 23:04:16 riastradh Exp $ */
+/* $NetBSD: t_cos.c,v 1.8 2019/04/25 22:58:23 maya Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,6 +59,107 @@ static const struct {
 	{  270,  4.712388980384690, -1.8369701987210297e-16, 1.1924881e-08 },
 	{  360,  6.283185307179586,  1.0000000000000000, 999 },
 };
+
+#ifdef __HAVE_LONG_DOUBLE
+/*
+ * cosl(3)
+ */
+ATF_TC(cosl_angles);
+ATF_TC_HEAD(cosl_angles, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test some selected angles");
+}
+
+ATF_TC_BODY(cosl_angles, tc)
+{
+	/*
+	 * XXX The given data is for double, so take that
+	 * into account and expect less precise results..
+	 */
+	const long double eps = DBL_EPSILON;
+	size_t i;
+
+	for (i = 0; i < __arraycount(angles); i++) {
+		int deg = angles[i].angle;
+		long double theta = angles[i].x;
+		long double cos_theta = angles[i].y;
+
+		assert(cos_theta != 0);
+		if (!(fabsl((cosl(theta) - cos_theta)/cos_theta) <= eps)) {
+			atf_tc_fail_nonfatal("cos(%d deg = %.17Lg) = %.17Lg"
+			    " != %.17Lg",
+			    deg, theta, cosl(theta), cos_theta);
+		}
+	}
+}
+
+ATF_TC(cosl_nan);
+ATF_TC_HEAD(cosl_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test cosl(NaN) == NaN");
+}
+
+ATF_TC_BODY(cosl_nan, tc)
+{
+	const long double x = 0.0L / 0.0L;
+
+	ATF_CHECK(isnan(x) != 0);
+	ATF_CHECK(isnan(cosl(x)) != 0);
+}
+
+ATF_TC(cosl_inf_neg);
+ATF_TC_HEAD(cosl_inf_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test cosl(-Inf) == NaN");
+}
+
+ATF_TC_BODY(cosl_inf_neg, tc)
+{
+	const long double x = -1.0L / 0.0L;
+
+	ATF_CHECK(isnan(cosl(x)) != 0);
+}
+
+ATF_TC(cosl_inf_pos);
+ATF_TC_HEAD(cosl_inf_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test cosl(+Inf) == NaN");
+}
+
+ATF_TC_BODY(cosl_inf_pos, tc)
+{
+	const long double x = 1.0L / 0.0L;
+
+	ATF_CHECK(isnan(cosl(x)) != 0);
+}
+
+
+ATF_TC(cosl_zero_neg);
+ATF_TC_HEAD(cosl_zero_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test cosl(-0.0) == 1.0");
+}
+
+ATF_TC_BODY(cosl_zero_neg, tc)
+{
+	const long double x = -0.0L;
+
+	ATF_CHECK(cosl(x) == 1.0);
+}
+
+ATF_TC(cosl_zero_pos);
+ATF_TC_HEAD(cosl_zero_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test cosl(+0.0) == 1.0");
+}
+
+ATF_TC_BODY(cosl_zero_pos, tc)
+{
+	const long double x = 0.0L;
+
+	ATF_CHECK(cosl(x) == 1.0);
+}
+#endif
 
 /*
  * cos(3)
@@ -260,6 +361,14 @@ ATF_TC_BODY(cosf_zero_pos, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
+#ifdef __HAVE_LONG_DOUBLE
+	ATF_TP_ADD_TC(tp, cosl_angles);
+	ATF_TP_ADD_TC(tp, cosl_nan);
+	ATF_TP_ADD_TC(tp, cosl_inf_neg);
+	ATF_TP_ADD_TC(tp, cosl_inf_pos);
+	ATF_TP_ADD_TC(tp, cosl_zero_neg);
+	ATF_TP_ADD_TC(tp, cosl_zero_pos);
+#endif
 
 	ATF_TP_ADD_TC(tp, cos_angles);
 	ATF_TP_ADD_TC(tp, cos_nan);
