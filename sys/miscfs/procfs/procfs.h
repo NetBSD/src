@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.75 2019/03/30 23:28:30 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.76 2019/04/25 22:48:42 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -115,6 +115,7 @@ typedef enum {
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODE_TYPES
 #endif
+	PFSlast,	/* track number of types */
 } pfstype;
 
 /*
@@ -133,7 +134,7 @@ struct pfsnode {
 #define pfs_fd pfs_key.pk_fd
 	mode_t		pfs_mode;	/* mode bits for stat() */
 	u_long		pfs_flags;	/* open flags */
-	u_long		pfs_fileno;	/* unique file id */
+	uint64_t	pfs_fileno;	/* unique file id */
 };
 
 #define PROCFS_NOTELEN	64	/* max length of a note (/proc/$pid/note) */
@@ -164,10 +165,12 @@ struct procfs_args {
 #define UIO_MX 32
 
 #define PROCFS_FILENO(pid, type, fd) \
-    (((type) < PFSproc) ? ((type) + 2) : \
-	(((fd) == -1) ? ((((pid)+1) << 5) + ((int) (type))) : \
-	((((pid)+1) << 16) | ((fd) << 5) | ((int) (type)))))
-#define PROCFS_TYPE(type)	((type) & 0x1f)
+	(  (type) == PFSroot ? 2 \
+	 : (type) == PFScurproc ? 3 \
+	 : (type) == PFSself ? 4 \
+         : (fd) == -1 ? ((pid)+1) * PFSlast + (type) \
+         : ((uint64_t)((pid)+1) << 32 | (fd)) * PFSlast + (type))
+#define PROCFS_TYPE(type)	((type) % PFSlast)
 
 struct procfsmount {
 	void *pmnt_exechook;
