@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs.c,v 1.10 2015/04/13 21:18:40 riastradh Exp $	*/
+/*	$NetBSD: if_cs.c,v 1.11 2019/04/25 10:08:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.10 2015/04/13 21:18:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.11 2019/04/25 10:08:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,14 +86,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.10 2015/04/13 21:18:40 riastradh Exp $")
  *
  * IRQ is mapped as:
  * CS8920 IRQ 3 	INT5
- * 
+ *
  * It must be configured as the following:
  * The CS8920 PNP address should be configured for ISA base at 0x300
- * to achieve the default register mapping as specified. 
+ * to achieve the default register mapping as specified.
  * Note memory addresses are all have bit 23 tied high in hardware.
  * This only effects the value programmed into the CS8920 memory offset
- * registers. 
- * 
+ * registers.
+ *
  * Just to add to the fun the I/O registers are layed out as:
  * xxxxR1R0
  * xxxxR3R2
@@ -102,8 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.10 2015/04/13 21:18:40 riastradh Exp $")
  * This works fine for 16bit accesses, but it makes access to single
  * register hard (which does happen on a reset, as we've got to toggle
  * the chip into 16bit mode)
- * 
- * Network DRQ is connected to DRQ5 
+ *
+ * Network DRQ is connected to DRQ5
  */
 
 /*
@@ -121,18 +121,18 @@ CFATTACH_DECL_NEW(cs_rsbus, sizeof(struct cs_softc),
 
 /* Available media */
 int cs_rbus_media [] = {
-	IFM_ETHER|IFM_10_T|IFM_FDX,
-	IFM_ETHER|IFM_10_T
+	IFM_ETHER | IFM_10_T | IFM_FDX,
+	IFM_ETHER | IFM_10_T
 };
 
-int 
+int
 cs_rsbus_probe(device_t parent, cfdata_t cf, void *aux)
 {
-	/* for now it'll always attach */
+	/* For now it'll always attach */
 	return 1;
 }
 
-void 
+void
 cs_rsbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct cs_softc *sc = device_private(self);
@@ -141,12 +141,12 @@ cs_rsbus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	/* member copy */
+	/* Member copy */
 	cs_rsbus_bs_tag = *rs->sa_iot;
-	
-	/* registers are normally accessed in pairs, on a 4 byte aligned */
+
+	/* Registers are normally accessed in pairs, on a 4 byte aligned */
 	cs_rsbus_bs_tag.bs_cookie = (void *) 1;
-	
+
 	sc->sc_iot = sc->sc_memt = &cs_rsbus_bs_tag;
 
 #if 0	/* Do DMA later */
@@ -156,14 +156,12 @@ cs_rsbus_attach(device_t parent, device_t self, void *aux)
 		isc->sc_drq = -1;
 #endif
 
-	/* device always interrupts on 3 but that routes to IRQ 5 */
+	/* Device always interrupts on 3 but that routes to IRQ 5 */
 	sc->sc_irq = 3;
 
 	printf("\n");
 
-	/*
-	 * Map the device.
-	 */
+	/* Map the device. */
 	iobase = 0x03010600;
 	if (bus_space_map(sc->sc_iot, iobase, CS8900_IOSIZE * 4,
 	    0, &sc->sc_ioh)) {
@@ -178,7 +176,7 @@ cs_rsbus_attach(device_t parent, device_t self, void *aux)
 	} else {
 		sc->sc_cfgflags |= CFGFLG_MEM_MODE | CFGFLG_USE_SA;
 		sc->sc_pktpgaddr = 1<<23;
-		//(0x4000 >> 1)  |  (1<<23);
+		//(0x4000 >> 1)	 |  (1<<23);
 	}
 #endif
 	sc->sc_ih = intr_claim(IRQ_INT5, IPL_NET, "cs", cs_intr, sc);
@@ -196,12 +194,12 @@ cs_rsbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cfgflags |= CFGFLG_PARSE_EEPROM;
 	sc->sc_io_read_1 = cs_rbus_read_1;
 
-	/* 
+	/*
 	 * also provide media, otherwise it attempts to read the media from
 	 * the EEPROM, which again fails
 	 */
-	cs_attach(sc, NULL, cs_rbus_media, sizeof(cs_rbus_media) / sizeof(cs_rbus_media[0]),
-			IFM_ETHER|IFM_10_T|IFM_FDX);
+	cs_attach(sc, NULL, cs_rbus_media, __arraycount(cs_rbus_media),
+	    IFM_ETHER |IFM_10_T | IFM_FDX);
 }
 
 /*
@@ -212,14 +210,14 @@ static uint8_t
 cs_rbus_read_1(struct cs_softc *sc, bus_size_t a)
 {
 	bus_size_t offset;
-	/* 
+	/*
 	 * if it's an even address then just use the bus_space_read_1
 	 */
 	if ((a & 1) == 0)
 	{
 		return bus_space_read_1(sc->sc_iot, sc->sc_ioh, a);
 	}
-	/* 
+	/*
 	 * otherwise we've get to work out the aligned address and then add
 	 * one
 	 */

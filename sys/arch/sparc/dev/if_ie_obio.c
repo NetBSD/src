@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.41 2013/10/19 19:40:23 mrg Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.42 2019/04/25 10:08:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.41 2013/10/19 19:40:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.42 2019/04/25 10:08:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ CFATTACH_DECL_NEW(ie_obio, sizeof(struct ie_softc),
 static int media[] = {
 	IFM_ETHER | IFM_10_2,
 };
-#define NMEDIA	(sizeof(media) / sizeof(media[0]))
+#define NMEDIA	__arraycount(media)
 
 
 /*
@@ -188,9 +188,9 @@ ie_obio_memcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 	wcopy(p, addr, size);
 }
 
-/* read a 16-bit value at BH offset */
+/* Read a 16-bit value at BH offset */
 uint16_t ie_obio_read16(struct ie_softc *, int);
-/* write a 16-bit value at BH offset */
+/* Write a 16-bit value at BH offset */
 void ie_obio_write16(struct ie_softc *, int, uint16_t);
 void ie_obio_write24(struct ie_softc *, int, int);
 
@@ -205,6 +205,7 @@ ie_obio_read16(struct ie_softc *sc, int offset)
 void
 ie_obio_write16(struct ie_softc *sc, int offset, uint16_t v)
 {
+
 	v = (((v&0xff)<<8) | ((v>>8)&0xff));
 	bus_space_write_2(sc->bt, sc->bh, offset, v);
 }
@@ -232,14 +233,14 @@ ie_obio_match(device_t parent, cfdata_t cf, void *aux)
 	struct obio4_attach_args *oba;
 
 	if (uoba->uoba_isobio4 == 0)
-		return (0);
+		return 0;
 
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
+	return bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				1,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
-				NULL, NULL));
+				NULL, NULL);
 }
 
 void
@@ -274,27 +275,21 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_msize = memsize = 65536; /* XXX */
 
 	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
-			  sizeof(struct ieob),
-			  BUS_SPACE_MAP_LINEAR,
-			  &bh) != 0) {
+	    sizeof(struct ieob), BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("%s: cannot map registers\n", device_xname(self));
 		return;
 	}
 	sc->sc_reg = (void *)bh;
 
-	/*
-	 * Allocate control & buffer memory.
-	 */
+	/* Allocate control & buffer memory. */
 	if ((error = bus_dmamap_create(dmatag, memsize, 1, memsize, 0,
-					BUS_DMA_NOWAIT|BUS_DMA_24BIT,
-					&sc->sc_dmamap)) != 0) {
+	    BUS_DMA_NOWAIT|BUS_DMA_24BIT, &sc->sc_dmamap)) != 0) {
 		printf("%s: DMA map create error %d\n",
 		    device_xname(self), error);
 		return;
 	}
-	if ((error = bus_dmamem_alloc(dmatag, memsize, 64*1024, 0,
-			     &seg, 1, &rseg,
-			     BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
+	if ((error = bus_dmamem_alloc(dmatag, memsize, 64*1024, 0, &seg, 1,
+	    &rseg, BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
 		printf("%s: DMA memory allocation error %d\n",
 		    device_xname(self), error);
 		return;
@@ -302,8 +297,7 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 
 	/* Map DMA buffer in CPU addressable space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, memsize,
-				    (void **)&sc->sc_maddr,
-				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    (void **)&sc->sc_maddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map error %d\n",
 		    device_xname(self), error);
 		bus_dmamem_free(dmatag, &seg, rseg);
@@ -311,9 +305,8 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Load the segment */
-	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
-				     sc->sc_maddr, memsize, NULL,
-				     BUS_DMA_NOWAIT)) != 0) {
+	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap, sc->sc_maddr,
+	    memsize, NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer map load error %d\n",
 		    device_xname(self), error);
 		bus_dmamem_unmap(dmatag, sc->sc_maddr, memsize);
@@ -337,7 +330,7 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 	 * SCP; the actual buffers start at maddr+PAGE_SIZE.
 	 *
 	 * In a picture:
-
+	
 	|---//--- ISCP-SCB-----scp-|--//- buffers -//-|... |iscp-scb-----SCP-|
 	|         |                |                  |    |             |   |
 	|         |<---PAGE_SIZE-->|                  |    |<--PAGE_SIZE-+-->|
@@ -391,7 +384,6 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 	i82586_attach(sc, "onboard", myaddr, media, NMEDIA, media[0]);
 
 	/* Establish interrupt channel */
-	(void)bus_intr_establish(oba->oba_bustag,
-				 oba->oba_pri, IPL_NET,
-				 i82586_intr, sc);
+	(void)bus_intr_establish(oba->oba_bustag, oba->oba_pri, IPL_NET,
+	    i82586_intr, sc);
 }
