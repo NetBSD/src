@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.112 2019/04/25 11:45:12 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.113 2019/04/25 11:47:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.112 2019/04/25 11:45:12 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.113 2019/04/25 11:47:59 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -471,7 +471,7 @@ traceme_crash(int sig)
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 		break;
 	case SIGILL:
-		ATF_REQUIRE(info.psi_siginfo.si_code >= 0 &&
+		ATF_REQUIRE(info.psi_siginfo.si_code >= ILL_ILLOPC &&
 		            info.psi_siginfo.si_code <= ILL_BADSTK);
 		break;
 	case SIGFPE:
@@ -648,7 +648,7 @@ traceme_signalmasked_crash(int sig)
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 		break;
 	case SIGILL:
-		ATF_REQUIRE(info.psi_siginfo.si_code >= 0 &&
+		ATF_REQUIRE(info.psi_siginfo.si_code >= ILL_ILLOPC &&
 		            info.psi_siginfo.si_code <= ILL_BADSTK);
 		break;
 	case SIGFPE:
@@ -828,7 +828,7 @@ traceme_signalignored_crash(int sig)
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 		break;
 	case SIGILL:
-		ATF_REQUIRE(info.psi_siginfo.si_code >= 0 &&
+		ATF_REQUIRE(info.psi_siginfo.si_code >= ILL_ILLOPC &&
 		            info.psi_siginfo.si_code <= ILL_BADSTK);
 		break;
 	case SIGFPE:
@@ -2126,7 +2126,7 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 			FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 			break;
 		case SIGILL:
-			FORKEE_ASSERT(info.psi_siginfo.si_code >= 0 &&
+			FORKEE_ASSERT(info.psi_siginfo.si_code >= ILL_ILLOPC &&
 			            info.psi_siginfo.si_code <= ILL_BADSTK);
 			break;
 		case SIGFPE:
