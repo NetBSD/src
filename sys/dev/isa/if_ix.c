@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.37 2019/04/09 06:19:34 msaitoh Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.38 2019/04/25 10:08:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.37 2019/04/09 06:19:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.38 2019/04/25 10:08:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ static int ix_media[] = {
 	IFM_ETHER | IFM_10_2,
 	IFM_ETHER | IFM_10_T,
 };
-#define NIX_MEDIA       (sizeof(ix_media) / sizeof(ix_media[0]))
+#define NIX_MEDIA	__arraycount(ix_media)
 
 struct ix_softc {
 	struct ie_softc sc_ie;
@@ -81,12 +81,12 @@ struct ix_softc {
 	void		*sc_ih;		/* interrupt handle */
 };
 
-static void 	ix_reset(struct ie_softc *, int);
-static void 	ix_atten(struct ie_softc *, int);
-static int 	ix_intrhook(struct ie_softc *, int);
+static void	ix_reset(struct ie_softc *, int);
+static void	ix_atten(struct ie_softc *, int);
+static int	ix_intrhook(struct ie_softc *, int);
 
-static void     ix_copyin(struct ie_softc *, void *, int, size_t);
-static void     ix_copyout(struct ie_softc *, const void *, int, size_t);
+static void	ix_copyin(struct ie_softc *, void *, int, size_t);
+static void	ix_copyout(struct ie_softc *, const void *, int, size_t);
 
 static void	ix_bus_barrier(struct ie_softc *, int, int, int);
 
@@ -220,15 +220,15 @@ ix_intrhook(struct ie_softc *sc, int where)
 
 	switch (where) {
 	case INTR_ENTER:
-		/* entering ISR: disable card interrupts */
+		/* Entering ISR: disable card interrupts */
 		bus_space_write_1(isc->sc_regt, isc->sc_regh,
 				  IX_IRQ, isc->irq_encoded);
 		break;
 
 	case INTR_EXIT:
-		/* exiting ISR: re-enable card interrupts */
+		/* Exiting ISR: re-enable card interrupts */
 		bus_space_write_1(isc->sc_regt, isc->sc_regh, IX_IRQ,
-    				  isc->irq_encoded | IX_IRQ_ENABLE);
+				  isc->irq_encoded | IX_IRQ_ENABLE);
 	break;
     }
 
@@ -267,7 +267,7 @@ ix_copyin(struct ie_softc *sc, void *dst, int offset, size_t size)
 	wptr = (uint16_t*)bptr;
 
 	if (isc->use_pio) {
-		for (i = 0; i <  size / 2; i++) {
+		for (i = 0; i <	 size / 2; i++) {
 			*wptr = bus_space_read_2(sc->bt, sc->bh, IX_DATAPORT);
 			wptr++;
 		}
@@ -416,7 +416,7 @@ ix_write_24 (struct ie_softc *sc, int offset, int addr)
 		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
 		    BUS_SPACE_BARRIER_WRITE);
 	} else {
-        	bus_space_write_4(sc->bt, sc->bh, offset, val);
+		bus_space_write_4(sc->bt, sc->bh, offset, val);
 		bus_space_barrier(sc->bt, sc->bh, offset, 4,
 		    BUS_SPACE_BARRIER_WRITE);
 	}
@@ -440,7 +440,7 @@ ix_zeromem(struct ie_softc *sc, int offset, int count)
 			count--;
 		}
 
-	        dribble = count % 2;
+		dribble = count % 2;
 		for (i = 0; i < count / 2; i++)
 			bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT, 0);
 
@@ -459,10 +459,10 @@ ix_zeromem(struct ie_softc *sc, int offset, int count)
 static void
 ix_mediastatus(struct ie_softc *sc, struct ifmediareq *ifmr)
 {
-        struct ifmedia *ifm = &sc->sc_media;
+	struct ifmedia *ifm = &sc->sc_media;
 
-        /* The currently selected media is always the active media. */
-        ifmr->ifm_active = ifm->ifm_cur->ifm_media;
+	/* The currently selected media is always the active media. */
+	ifmr->ifm_active = ifm->ifm_cur->ifm_media;
 }
 
 int
