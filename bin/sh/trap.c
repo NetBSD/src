@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.51 2019/01/18 06:28:09 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.52 2019/04/25 03:54:10 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.51 2019/01/18 06:28:09 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.52 2019/04/25 03:54:10 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: trap.c,v 1.51 2019/01/18 06:28:09 kre Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <limits.h>
 #include <termios.h>
 
 #undef	CEOF	/* from <termios.h> but concflicts with sh use */
@@ -269,7 +270,9 @@ trapcmd(int argc, char **argv)
 
 		CTRACE(DBG_TRAP, ("*all*\n"));
 		if (printonly) {
-			for (count = 0, signo = 0 ; signo < NSIG ; signo++)
+			for (count = 0, signo = 0 ; signo < NSIG ; signo++) {
+				if (signo == SIGKILL || signo == SIGSTOP)
+					continue;
 				if (trap[signo] == NULL) {
 					if (count == 0)
 						out1str("trap -- -");
@@ -280,10 +283,16 @@ trapcmd(int argc, char **argv)
 						count = 0;
 					}
 				}
+			}
 			if (count)
 				out1str("\n");
 		}
 
+		/*
+		 * We don't need do deal with SIGSTOP or SIGKILL as a
+		 * special case anywhere here, as they cannot be
+		 * ignored or caught - the only possibility is default
+		 */
 		for (count = 0, signo = 0 ; signo < NSIG ; signo++)
 			if (trap[signo] != NULL && trap[signo][0] == '\0') {
 				if (count == 0)
@@ -351,12 +360,38 @@ trapcmd(int argc, char **argv)
 		ap++;
 
 		if (printonly) {
+			/*
+			 * we allow SIGSTOP and SIGKILL to be obtained
+			 * (action will always be "-") here, if someone
+			 * really wants to get that particular output
+			 */
 			out1str("trap -- ");
 			if (trap[signo] == NULL)
 				out1str("-");
 			else
 				print_quoted(trap[signo]);
 			out1fmt(" %s\n", trap_signame(signo));
+			continue;
+		}
+
+		if ((signo == SIGKILL || signo == SIGSTOP) && action != NULL) {
+#ifndef SMALL
+			/*
+			 * Don't bother with the error message in a SMALL shell
+			 * just ignore req and  return error status silently
+			 * (POSIX says this is an "undefined" operation so
+			 * whatever we do is OK!)
+			 *
+			 * When we do generate an error, make it attempt match
+			 * the user's operand, as best we can reasonably.
+			 */
+			outfmt(out2, "trap: '%s%s' cannot be %s\n",
+			    (!is_alpha(ap[-1][0]) ||
+				strncasecmp(ap[-1], "sig", 3) == 0) ? "" :
+				is_upper(ap[-1][0]) ? "SIG" : "sig",
+			    ap[-1], *action ? "caught" : "ignored");
+#endif
+			errs = 1;
 			continue;
 		}
 
@@ -647,15 +682,23 @@ SHELLPROC {
 void
 onsig(int signo)
 {
-	CTRACE(DBG_SIG, ("Signal %d, had: pending %d, gotsig[%d]=%d\n",
-	    signo, pendingsigs, signo, gotsig[signo]));
+	int sav_err = errno;
+
+	CTRACE(DBG_SIG, ("onsig(%d), had: pendingsigs %d%s, gotsig[%d]=%d\n",
+	    signo, pendingsigs, intpending ? " (SIGINT-pending)" : "",
+	    signo, gotsig[signo]));
 
 	/*			This should not be needed.
 	signal(signo, onsig);
 	*/
 
 	if (signo == SIGINT && (traps_invalid || trap[SIGINT] == NULL)) {
-		onint();
+		VTRACE(DBG_SIG, ("onsig(SIGINT), doing it now\n"));
+		if (suppressint && !in_dotrap)	
+			intpending = 1;
+		else
+			onint();
+		errno = sav_err;
 		return;
 	}
 
@@ -666,7 +709,22 @@ onsig(int signo)
 	    signo != SIGCHLD) {
 		gotsig[signo] = 1;
 		pendingsigs++;
+		if (iflag && signo == SIGINT) {
+			if (!suppressint) {
+				VTRACE(DBG_SIG,
+			   ("onsig: -i gotsig[INT]->%d pendingsigs->%d  BANG\n",
+				    gotsig[SIGINT], pendingsigs));
+				onint();
+				errno = sav_err;
+				return;
+			}
+			intpending = 1;
+		}
+		VTRACE(DBG_SIG, ("onsig: gotsig[%d]->%d pendingsigs->%d%s\n",
+		    signo, gotsig[signo], pendingsigs,
+		    intpending ? " (SIGINT pending)":""));
 	}
+	errno = sav_err;
 }
 
 
@@ -684,15 +742,19 @@ dotrap(void)
 	int savestatus;
 	struct skipsave saveskip;
 
-	in_dotrap++;
-
-	CTRACE(DBG_TRAP, ("dotrap[%d]: %d pending, traps %sinvalid\n",
+	CTRACE(DBG_TRAP|DBG_SIG, ("dotrap[%d]: %d pending, traps %sinvalid\n",
 	    in_dotrap, pendingsigs, traps_invalid ? "" : "not "));
+
+	in_dotrap++;
 	for (;;) {
 		pendingsigs = 0;
 		for (i = 1 ; ; i++) {
-			if (i >= NSIG)
+			if (i >= NSIG) {
+				in_dotrap--;
+				VTRACE(DBG_TRAP|DBG_SIG, ("dotrap[%d] done\n",
+				    in_dotrap));
 				return;
+			}
 			if (gotsig[i])
 				break;
 		}
@@ -722,8 +784,6 @@ dotrap(void)
 			}
 		}
 	}
-
-	in_dotrap--;
 }
 
 int
