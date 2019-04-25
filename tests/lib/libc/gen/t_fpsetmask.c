@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.19 2019/01/30 12:16:28 martin Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.20 2019/04/25 20:48:54 kamil Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ ATF_TC_BODY(no_test, tc)
 
 #if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
-	 * Some NEON fpus do not trap on IEEE 754 FP excpeptions.
+	 * Some NEON fpus do not trap on IEEE 754 FP exceptions.
 	 * skip these tests if running on them and compiled for
 	 * hard float.
 	 */
