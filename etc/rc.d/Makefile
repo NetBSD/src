@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.100 2019/04/10 00:32:15 sevan Exp $
+# $NetBSD: Makefile,v 1.101 2019/04/25 08:56:21 roy Exp $
 
 .include <bsd.own.mk>
 
@@ -40,10 +40,13 @@ CONFIGFILES=\
 		savecore screenblank securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
-		veriexec virecover wdogctl wpa_supplicant wscons wsmoused \
-		ypbind yppasswdd ypserv
+		veriexec virecover wdogctl wpa_supplicant wscons wsmouse
 FILESDIR=	/etc/rc.d
 FILESMODE=	${BINMODE}
+
+.if ${MKYP} != "no"
+CONFIGFILES+=	ypbind yppasswdd ypserv
+.endif
 
 .if ${MKX11} != "no"
 CONFIGFILES+=	xdm xfs fccache
