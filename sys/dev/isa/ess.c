@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.84.2.1 2019/04/21 05:11:22 isaki Exp $	*/
+/*	$NetBSD: ess.c,v 1.84.2.2 2019/04/25 14:00:20 isaki Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.84.2.1 2019/04/21 05:11:22 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.84.2.2 2019/04/25 14:00:20 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,8 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.84.2.1 2019/04/21 05:11:22 isaki Exp $");
 #include <sys/malloc.h>
 
 #include <dev/audio_if.h>
-#include <dev/auconv.h>
-#include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -115,15 +113,14 @@ unsigned uuu;
 
 int	ess_setup_sc(struct ess_softc *, int);
 
-int	ess_open(void *, int);
 void	ess_close(void *);
 int	ess_getdev(void *, struct audio_device *);
-int	ess_drain(void *);
 
-int	ess_query_encoding(void *, struct audio_encoding *);
+int	ess_query_format(void *, audio_format_query_t *);
 
-int	ess_set_params(void *, int, int, audio_params_t *,
-	    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
+int	ess_set_format(void *, int,
+	    const audio_params_t *, const audio_params_t *,
+	    audio_filter_reg_t *, audio_filter_reg_t *);
 
 int	ess_round_blocksize(void *, int, int, const audio_params_t *);
 
@@ -215,11 +212,9 @@ struct audio_device ess_device = {
  */
 
 const struct audio_hw_if ess_1788_hw_if = {
-	.open			= ess_open,
 	.close			= ess_close,
-	.drain			= ess_drain,
-	.query_encoding		= ess_query_encoding,
-	.set_params		= ess_set_params,
+	.query_format		= ess_query_format,
+	.set_format		= ess_set_format,
 	.round_blocksize	= ess_round_blocksize,
 	.halt_output		= ess_audio1_halt,
 	.halt_input		= ess_audio1_halt,
@@ -231,7 +226,6 @@ const struct audio_hw_if ess_1788_hw_if = {
 	.allocm			= ess_malloc,
 	.freem			= ess_free,
 	.round_buffersize	= ess_round_buffersize,
-	.mappage		= ess_mappage,
 	.get_props		= ess_1788_get_props,
 	.trigger_output		= ess_audio1_trigger_output,
 	.trigger_input		= ess_audio1_trigger_input,
@@ -239,11 +233,9 @@ const struct audio_hw_if ess_1788_hw_if = {
 };
 
 const struct audio_hw_if ess_1888_hw_if = {
-	.open			= ess_open,
 	.close			= ess_close,
-	.drain			= ess_drain,
-	.query_encoding		= ess_query_encoding,
-	.set_params		= ess_set_params,
+	.query_format		= ess_query_format,
+	.set_format		= ess_set_format,
 	.round_blocksize	= ess_round_blocksize,
 	.halt_output		= ess_audio2_halt,
 	.halt_input		= ess_audio1_halt,
@@ -255,35 +247,25 @@ const struct audio_hw_if ess_1888_hw_if = {
 	.allocm			= ess_malloc,
 	.freem			= ess_free,
 	.round_buffersize	= ess_round_buffersize,
-	.mappage		= ess_mappage,
 	.get_props		= ess_1888_get_props,
 	.trigger_output		= ess_audio2_trigger_output,
 	.trigger_input		= ess_audio1_trigger_input,
 	.get_locks		= ess_get_locks,
 };
 
-#define ESS_NFORMATS	8
-#define ESS_FORMAT(enc, prec, ch, chmask) \
-	{ \
-		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
-		.encoding	= (enc), \
-		.validbits	= (prec), \
-		.precision	= (prec), \
-		.channels	= (ch), \
-		.channel_mask	= (chmask), \
-		.frequency_type	= 0, \
-		.frequency	= { ESS_MINRATE, ESS_MAXRATE }, \
-	}
-static const struct audio_format ess_formats[ESS_NFORMATS] = {
-	ESS_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 2, AUFMT_STEREO),
-	ESS_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 1, AUFMT_STEREO),
-	ESS_FORMAT(AUDIO_ENCODING_ULINEAR_LE, 16, 2, AUFMT_STEREO),
-	ESS_FORMAT(AUDIO_ENCODING_ULINEAR_LE, 16, 1, AUFMT_STEREO),
-	ESS_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 2, AUFMT_STEREO),
-	ESS_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 1, AUFMT_STEREO),
-	ESS_FORMAT(AUDIO_ENCODING_SLINEAR_LE,  8, 2, AUFMT_STEREO),
-	ESS_FORMAT(AUDIO_ENCODING_SLINEAR_LE,  8, 1, AUFMT_STEREO),
+static const struct audio_format ess_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 0,
+		.frequency	= { ESS_MINRATE, ESS_MAXRATE },
+	},
 };
+#define ESS_NFORMATS __arraycount(ess_formats)
 
 #ifdef AUDIO_DEBUG
 void ess_printsc(struct ess_softc *);
@@ -1097,13 +1079,6 @@ skip:
  * Various routines to interface to higher level audio driver
  */
 
-int
-ess_open(void *addr, int flags)
-{
-
-	return 0;
-}
-
 void
 ess_close(void *addr)
 {
@@ -1116,27 +1091,6 @@ ess_close(void *addr)
 	sc->spkr_state = SPKR_OFF;
 
 	DPRINTF(("ess_close: closed\n"));
-}
-
-/*
- * Wait for FIFO to drain, and analog section to settle.
- * XXX should check FIFO empty bit.
- */
-int
-ess_drain(void *addr)
-{
-	struct ess_softc *sc;
-
-	sc = addr;
-	mutex_exit(&sc->sc_lock);
-	kpause("essdr", FALSE, hz/20, &sc->sc_intr_lock); /* XXX */
-	if (!mutex_tryenter(&sc->sc_lock)) {
-		mutex_spin_exit(&sc->sc_intr_lock);
-		mutex_enter(&sc->sc_lock);
-		mutex_spin_enter(&sc->sc_intr_lock);
-	}
-
-	return 0;
 }
 
 /* XXX should use reference count */
@@ -1166,112 +1120,26 @@ ess_getdev(void *addr, struct audio_device *retp)
 }
 
 int
-ess_query_encoding(void *addr, struct audio_encoding *fp)
+ess_query_format(void *addr, audio_format_query_t *afp)
 {
-	/*struct ess_softc *sc = addr;*/
 
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		return 0;
-	case 1:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 2:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 3:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		return 0;
-	case 4:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		return 0;
-	case 5:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		return 0;
-	case 6:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 7:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	default:
-		return EINVAL;
-	}
-	return 0;
+	return audio_query_format(ess_formats, ESS_NFORMATS, afp);
 }
 
 int
-ess_set_params(
-	void *addr,
-	int setmode, int usemode,
-	audio_params_t *play, audio_params_t *rec,
-	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+ess_set_format(void *addr, int setmode,
+	const audio_params_t *play, const audio_params_t *rec,
+	audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct ess_softc *sc;
 	int rate;
 
-	DPRINTF(("ess_set_params: set=%d use=%d\n", setmode, usemode));
+	DPRINTF(("%s: set=%d\n", __func__, setmode));
 	sc = addr;
-	/*
-	 * The ES1887 manual (page 39, `Full-Duplex DMA Mode') claims that in
-	 * full-duplex operation the sample rates must be the same for both
-	 * channels.  This appears to be false; the only bit in common is the
-	 * clock source selection.  However, we'll be conservative here.
-	 * - mycroft
-	 */
-	if (play->sample_rate != rec->sample_rate &&
-	    usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
-		if (setmode == AUMODE_PLAY) {
-			rec->sample_rate = play->sample_rate;
-			setmode |= AUMODE_RECORD;
-		} else if (setmode == AUMODE_RECORD) {
-			play->sample_rate = rec->sample_rate;
-			setmode |= AUMODE_PLAY;
-		} else
-			return EINVAL;
-	}
 
-	if (setmode & AUMODE_RECORD) {
-		if (auconv_set_converter(ess_formats, ESS_NFORMATS,
-					 AUMODE_RECORD, rec, FALSE, rfil) < 0)
-			return EINVAL;
-	}
-	if (setmode & AUMODE_PLAY) {
-		if (auconv_set_converter(ess_formats, ESS_NFORMATS,
-					 AUMODE_PLAY, play, FALSE, pfil) < 0)
-			return EINVAL;
-	}
+	/* *play and *rec are the identical because !AUDIO_PROP_INDEPENDENT. */
 
-	if (usemode == AUMODE_RECORD)
-		rate = rec->sample_rate;
-	else
-		rate = play->sample_rate;
-
+	rate = play->sample_rate;
 	ess_write_x_reg(sc, ESS_XCMD_SAMPLE_RATE, ess_srtotc(sc, rate));
 	ess_write_x_reg(sc, ESS_XCMD_FILTER_CLOCK, ess_srtofc(rate));
 
@@ -2306,25 +2174,18 @@ ess_round_buffersize(void *addr, int direction, size_t size)
 	return size;
 }
 
-paddr_t
-ess_mappage(void *addr, void *mem, off_t off, int prot)
-{
-
-	return isa_mappage(mem, off, prot);
-}
-
 int
 ess_1788_get_props(void *addr)
 {
 
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT;
+	return AUDIO_PROP_MMAP;
 }
 
 int
 ess_1888_get_props(void *addr)
 {
 
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_MMAP | AUDIO_PROP_FULLDUPLEX;
 }
 
 void
