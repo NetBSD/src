@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.23 2016/07/15 22:10:47 macallan Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.24 2019/04/25 10:08:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.23 2016/07/15 22:10:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.24 2019/04/25 10:08:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,15 +61,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.23 2016/07/15 22:10:47 macallan Exp $");
 
 hide int	mc_match(device_t, cfdata_t, void *);
 hide void	mc_attach(device_t, device_t, void *);
-hide void	mc_init(struct mc_softc *sc);
-hide void	mc_putpacket(struct mc_softc *sc, u_int len);
-hide int	mc_dmaintr(void *arg);
-hide void	mc_reset_rxdma(struct mc_softc *sc);
-hide void	mc_reset_txdma(struct mc_softc *sc);
-hide void	mc_select_utp(struct mc_softc *sc);
-hide void	mc_select_aui(struct mc_softc *sc);
-hide int	mc_mediachange(struct mc_softc *sc);
-hide void	mc_mediastatus(struct mc_softc *sc, struct ifmediareq *);
+hide void	mc_init(struct mc_softc *);
+hide void	mc_putpacket(struct mc_softc *, u_int);
+hide int	mc_dmaintr(void *);
+hide void	mc_reset_rxdma(struct mc_softc *);
+hide void	mc_reset_txdma(struct mc_softc *);
+hide void	mc_select_utp(struct mc_softc *);
+hide void	mc_select_aui(struct mc_softc *);
+hide int	mc_mediachange(struct mc_softc *);
+hide void	mc_mediastatus(struct mc_softc *, struct ifmediareq *);
 
 int mc_supmedia[] = {
 	IFM_ETHER | IFM_10_T,
@@ -77,7 +77,7 @@ int mc_supmedia[] = {
 	/*IFM_ETHER | IFM_AUTO,*/
 };
 
-#define N_SUPMEDIA (sizeof(mc_supmedia) / sizeof(int));
+#define N_SUPMEDIA __arraycount(mc_supmedia)
 
 CFATTACH_DECL_NEW(mc, sizeof(struct mc_softc),
     mc_match, mc_attach, NULL, NULL);
@@ -106,7 +106,7 @@ mc_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct mc_softc *sc = device_private(self);
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+	uint8_t myaddr[ETHER_ADDR_LEN];
 	u_int *reg;
 
 	sc->sc_dev = self;
@@ -137,13 +137,13 @@ mc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* allocate memory for transmit buffer and mark it non-cacheable */
+	/* Allocate memory for transmit buffer and mark it non-cacheable */
 	sc->sc_txbuf = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK);
 	sc->sc_txbuf_phys = kvtop(sc->sc_txbuf);
 	memset(sc->sc_txbuf, 0, PAGE_SIZE);
 
 	/*
-	 * allocate memory for receive buffer and mark it non-cacheable
+	 * Allocate memory for receive buffer and mark it non-cacheable
 	 * XXX This should use the bus_dma interface, since the buffer
 	 * needs to be physically contiguous. However, it seems that
 	 * at least on my system, malloc() does allocate contiguous
@@ -162,14 +162,13 @@ mc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus_init = mc_init;
 	sc->sc_putpacket = mc_putpacket;
 
-
-	/* disable receive DMA */
+	/* Disable receive DMA */
 	dbdma_reset(sc->sc_rxdma);
 
-	/* disable transmit DMA */
+	/* Disable transmit DMA */
 	dbdma_reset(sc->sc_txdma);
 
-	/* install interrupt handlers */
+	/* Install interrupt handlers */
 	/*intr_establish(ca->ca_intr[1], IST_EDGE, IPL_NET, mc_dmaintr, sc);*/
 	intr_establish(ca->ca_intr[2], IST_EDGE, IPL_NET, mc_dmaintr, sc);
 	intr_establish(ca->ca_intr[0], IST_EDGE, IPL_NET, mcintr, sc);
@@ -266,9 +265,9 @@ mc_dmaintr(void *arg)
 
 		sc->sc_rxframe.rx_rcvcnt = sc->sc_rxbuf[statoff + 0];
 		sc->sc_rxframe.rx_rcvsts = sc->sc_rxbuf[statoff + 1];
-		sc->sc_rxframe.rx_rntpc  = sc->sc_rxbuf[statoff + 2];
-		sc->sc_rxframe.rx_rcvcc  = sc->sc_rxbuf[statoff + 3];
-		sc->sc_rxframe.rx_frame  = sc->sc_rxbuf + offset;
+		sc->sc_rxframe.rx_rntpc	 = sc->sc_rxbuf[statoff + 2];
+		sc->sc_rxframe.rx_rcvcc	 = sc->sc_rxbuf[statoff + 3];
+		sc->sc_rxframe.rx_frame	 = sc->sc_rxbuf + offset;
 
 		mc_rint(sc);
 
@@ -292,7 +291,7 @@ mc_reset_rxdma(struct mc_softc *sc)
 	dbdma_command_t *cmd = sc->sc_rxdmacmd;
 	dbdma_regmap_t *dmareg = sc->sc_rxdma;
 	int i;
-	u_int8_t maccc;
+	uint8_t maccc;
 
 	/* Disable receiver, reset the DMA channels */
 	maccc = NIC_GET(sc, MACE_MACCC);
@@ -325,9 +324,9 @@ mc_reset_txdma(struct mc_softc *sc)
 {
 	dbdma_command_t *cmd = sc->sc_txdmacmd;
 	dbdma_regmap_t *dmareg = sc->sc_txdma;
-	u_int8_t maccc;
+	uint8_t maccc;
 
-	/* disable transmitter */
+	/* Disable transmitter */
 	maccc = NIC_GET(sc, MACE_MACCC);
 	NIC_PUT(sc, MACE_MACCC, maccc & ~ENXMT);
 
@@ -342,19 +341,21 @@ mc_reset_txdma(struct mc_softc *sc)
 	out32rb(&dmareg->d_cmdptrhi, 0);
 	out32rb(&dmareg->d_cmdptrlo, kvtop((void *)sc->sc_txdmacmd));
 
-	/* restore old value */
+	/* Restore old value */
 	NIC_PUT(sc, MACE_MACCC, maccc);
 }
 
 void
 mc_select_utp(struct mc_softc *sc)
 {
+
 	sc->sc_plscc = PORTSEL_GPSI | ENPLSIO;
 }
 
 void
 mc_select_aui(struct mc_softc *sc)
 {
+
 	sc->sc_plscc = PORTSEL_AUI;
 }
 
@@ -386,6 +387,7 @@ mc_mediachange(struct mc_softc *sc)
 void
 mc_mediastatus(struct mc_softc *sc, struct ifmediareq *ifmr)
 {
+
 	if (sc->sc_plscc == PORTSEL_AUI)
 		ifmr->ifm_active = IFM_ETHER | IFM_10_5;
 	else

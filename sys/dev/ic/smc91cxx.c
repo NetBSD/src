@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.100 2019/04/22 09:00:12 msaitoh Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.101 2019/04/25 10:08:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.100 2019/04/22 09:00:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.101 2019/04/25 10:08:45 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -118,7 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.100 2019/04/22 09:00:12 msaitoh Exp $
 #define bus_space_read_multi_stream_4  bus_space_read_multi_4
 
 #define bus_space_write_stream_4 bus_space_write_4
-#define bus_space_read_stream_4  bus_space_read_4
+#define bus_space_read_stream_4	 bus_space_read_4
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 /* XXX Hardware padding doesn't work yet(?) */
@@ -145,16 +145,16 @@ const char *smc91cxx_idstrs[] = {
 
 /* Supported media types. */
 static const int smc91cxx_media[] = {
-	IFM_ETHER|IFM_10_T,
-	IFM_ETHER|IFM_10_5,
+	IFM_ETHER | IFM_10_T,
+	IFM_ETHER | IFM_10_5,
 };
-#define	NSMC91CxxMEDIA	(sizeof(smc91cxx_media) / sizeof(smc91cxx_media[0]))
+#define	NSMC91CxxMEDIA	__arraycount(smc91cxx_media)
 
 /*
  * MII bit-bang glue.
  */
-u_int32_t smc91cxx_mii_bitbang_read(device_t);
-void smc91cxx_mii_bitbang_write(device_t, u_int32_t);
+uint32_t smc91cxx_mii_bitbang_read(device_t);
+void smc91cxx_mii_bitbang_write(device_t, uint32_t);
 
 static const struct mii_bitbang_ops smc91cxx_mii_bitbang_ops = {
 	smc91cxx_mii_bitbang_read,
@@ -193,8 +193,8 @@ static inline int ether_cmp(const void *, const void *);
 static inline int
 ether_cmp(const void *va, const void *vb)
 {
-	const u_int8_t *a = va;
-	const u_int8_t *b = vb;
+	const uint8_t *a = va;
+	const uint8_t *b = vb;
 
 	return ((a[5] != b[5]) || (a[4] != b[4]) || (a[3] != b[3]) ||
 		(a[2] != b[2]) || (a[1] != b[1]) || (a[0] != b[0]));
@@ -226,16 +226,16 @@ smc91cxx_intr_ack_write(bus_space_tag_t bst, bus_space_handle_t bsh,
 }
 
 void
-smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
+smc91cxx_attach(struct smc91cxx_softc *sc, uint8_t *myea)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	struct ifmedia *ifm = &sc->sc_mii.mii_media;
 	const char *idstr;
-	u_int32_t miicapabilities;
-	u_int16_t tmp;
-	u_int8_t enaddr[ETHER_ADDR_LEN];
+	uint32_t miicapabilities;
+	uint16_t tmp;
+	uint8_t enaddr[ETHER_ADDR_LEN];
 	int i, aui, mult, scale, memsize;
 	char pbuf[9];
 
@@ -347,20 +347,18 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 				ifmedia_add(&sc->sc_mii.mii_media,
-				    IFM_ETHER|IFM_NONE, 0, NULL);
+				    IFM_ETHER | IFM_NONE, 0, NULL);
 				ifmedia_set(&sc->sc_mii.mii_media,
-				    IFM_ETHER|IFM_NONE);
+				    IFM_ETHER | IFM_NONE);
 			} else {
 				ifmedia_set(&sc->sc_mii.mii_media,
-				    IFM_ETHER|IFM_AUTO);
+				    IFM_ETHER | IFM_AUTO);
 			}
 			sc->sc_flags |= SMC_FLAGS_HAS_MII;
 			break;
 		} else
 		if (sc->sc_chipid == CHIP_91C111) {
-			/*
-			 * XXX: Should bring it out of low-power mode
-			 */
+			/* XXX: Should bring it out of low-power mode */
 			aprint_normal("EPH interface in low power mode\n");
 			sc->sc_internal_phy = 0;
 			return;
@@ -393,7 +391,7 @@ smc91cxx_mediachange(struct ifnet *ifp)
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
 
-	return (smc91cxx_set_media(sc, sc->sc_mii.mii_media.ifm_media));
+	return smc91cxx_set_media(sc, sc->sc_mii.mii_media.ifm_media);
 }
 
 int
@@ -401,7 +399,7 @@ smc91cxx_set_media(struct smc91cxx_softc *sc, int media)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	u_int16_t tmp;
+	uint16_t tmp;
 	int rc;
 
 	/*
@@ -410,10 +408,10 @@ smc91cxx_set_media(struct smc91cxx_softc *sc, int media)
 	 * up the media for us.
 	 */
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0)
-		return (0);
+		return 0;
 
 	if (IFM_TYPE(media) != IFM_ETHER)
-		return (EINVAL);
+		return EINVAL;
 
 	if ((sc->sc_flags & SMC_FLAGS_HAS_MII) == 0 ||
 	    (rc = mii_mediachg(&sc->sc_mii)) == ENXIO)
@@ -433,7 +431,7 @@ smc91cxx_set_media(struct smc91cxx_softc *sc, int media)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	return rc;
@@ -448,7 +446,7 @@ smc91cxx_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct smc91cxx_softc *sc = ifp->if_softc;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	u_int16_t tmp;
+	uint16_t tmp;
 
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0) {
 		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
@@ -456,9 +454,7 @@ smc91cxx_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 		return;
 	}
 
-	/*
-	 * If we have MII, go ask the PHY what's going on.
-	 */
+	/* If we have MII, go ask the PHY what's going on. */
 	if (sc->sc_flags & SMC_FLAGS_HAS_MII) {
 		mii_pollstat(&sc->sc_mii);
 		ifmr->ifm_active = sc->sc_mii.mii_media_active;
@@ -481,8 +477,8 @@ smc91cxx_init(struct smc91cxx_softc *sc)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	u_int16_t tmp;
-	const u_int8_t *enaddr;
+	uint16_t tmp;
+	const uint8_t *enaddr;
 	int s, i;
 
 	s = splnet();
@@ -502,7 +498,7 @@ smc91cxx_init(struct smc91cxx_softc *sc)
 
 	/* Set the Ethernet address. */
 	SMC_SELECT_BANK(sc, 1);
-	enaddr = (const u_int8_t *)CLLADDR(ifp->if_sadl);
+	enaddr = (const uint8_t *)CLLADDR(ifp->if_sadl);
 	for (i = 0; i < ETHER_ADDR_LEN; i += 2) {
 		tmp = enaddr[i + 1] << 8 | enaddr[i];
 		bus_space_write_2(bst, bsh, IAR_ADDR0_REG_W + i, tmp);
@@ -516,16 +512,14 @@ smc91cxx_init(struct smc91cxx_softc *sc)
 	bus_space_write_2(bst, bsh, CONTROL_REG_W, (CTR_AUTO_RELEASE |
 	    CTR_TE_ENABLE | CTR_CR_ENABLE | CTR_LE_ENABLE));
 
-	/*
-	 * Reset the MMU and wait for it to be un-busy.
-	 */
+	/* Reset the MMU and wait for it to be un-busy. */
 	SMC_SELECT_BANK(sc, 2);
 	bus_space_write_2(bst, bsh, MMU_CMD_REG_W, MMUCR_RESET);
 	sc->sc_txpacketno = ARR_FAILED;
 	for (;;) {
 		tmp = bus_space_read_2(bst, bsh, MMU_CMD_REG_W);
 		if (tmp == 0xffff) {
-			/* card went away! */
+			/* Card went away! */
 			splx(s);
 			return;
 		}
@@ -533,9 +527,7 @@ smc91cxx_init(struct smc91cxx_softc *sc)
 			break;
 	}
 
-	/*
-	 * Disable all interrupts.
-	 */
+	/* Disable all interrupts. */
 	smc91cxx_intr_mask_write(bst, bsh, 0);
 
 	/*
@@ -551,9 +543,7 @@ smc91cxx_init(struct smc91cxx_softc *sc)
 		    (RPC_LS_TXRX << RPC_LSB_SHIFT));
 	}
 
-	/*
-	 * Set current media.
-	 */
+	/* Set current media. */
 	smc91cxx_set_media(sc, sc->sc_mii.mii_media.ifm_cur->ifm_media);
 
 	/*
@@ -572,9 +562,7 @@ smc91cxx_init(struct smc91cxx_softc *sc)
 
 	bus_space_write_2(bst, bsh, RECV_CONTROL_REG_W, tmp);
 
-	/*
-	 * Set transmitter control to "enabled".
-	 */
+	/* Set transmitter control to "enabled". */
 	tmp = TCR_ENABLE;
 
 #ifndef SMC91CXX_SW_PAD
@@ -587,9 +575,7 @@ smc91cxx_init(struct smc91cxx_softc *sc)
 
 	bus_space_write_2(bst, bsh, TXMIT_CONTROL_REG_W, tmp);
 
-	/*
-	 * Now, enable interrupts.
-	 */
+	/* Now, enable interrupts. */
 	SMC_SELECT_BANK(sc, 2);
 
 	sc->sc_intmask = IM_EPH_INT | IM_RX_OVRN_INT | IM_RCV_INT;
@@ -607,9 +593,7 @@ smc91cxx_init(struct smc91cxx_softc *sc)
 		callout_reset(&sc->sc_mii_callout, hz, smc91cxx_tick, sc);
 	}
 
-	/*
-	 * Attempt to start any pending transmission.
-	 */
+	/* Attempt to start any pending transmission. */
 	smc91cxx_start(ifp);
 
 	splx(s);
@@ -627,18 +611,16 @@ smc91cxx_start(struct ifnet *ifp)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int len;
 	struct mbuf *m;
-	u_int16_t length, npages;
-	u_int16_t oddbyte;
-	u_int8_t packetno;
+	uint16_t length, npages;
+	uint16_t oddbyte;
+	uint8_t packetno;
 	int timo, pad;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
  again:
-	/*
-	 * Peek at the next packet.
-	 */
+	/* Peek at the next packet. */
 	IFQ_POLL(&ifp->if_snd, m);
 	if (m == NULL)
 		return;
@@ -652,7 +634,7 @@ smc91cxx_start(struct ifnet *ifp)
 		len += m->m_len;
 
 	/*
-	 * We drop packets that are too large.  Perhaps we should
+	 * We drop packets that are too large.	Perhaps we should
 	 * truncate them instead?
 	 */
 	if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
@@ -666,9 +648,7 @@ smc91cxx_start(struct ifnet *ifp)
 
 	pad = 0;
 #ifdef SMC91CXX_SW_PAD
-	/*
-	 * Not using hardware padding; pad to ETHER_MIN_LEN.
-	 */
+	/* Not using hardware padding; pad to ETHER_MIN_LEN. */
 	if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
 		pad = ETHER_MIN_LEN - ETHER_CRC_LEN - len;
 #endif
@@ -682,9 +662,7 @@ smc91cxx_start(struct ifnet *ifp)
 	 */
 	npages = ((length & ~1) + 6) >> 8;
 
-	/*
-	 * Now allocate the memory.
-	 */
+	/* Now allocate the memory. */
 	SMC_SELECT_BANK(sc, 2);
 	bus_space_write_2(bst, bsh, MMU_CMD_REG_W, MMUCR_ALLOC | npages);
 
@@ -695,7 +673,7 @@ smc91cxx_start(struct ifnet *ifp)
 	} else {
 		do {
 			if (bus_space_read_1(bst, bsh,
-			    		     INTR_STAT_REG_B) & IM_ALLOC_INT)
+					     INTR_STAT_REG_B) & IM_ALLOC_INT)
 				break;
 			delay(1);
 		} while (--timo);
@@ -720,14 +698,10 @@ smc91cxx_start(struct ifnet *ifp)
 		return;
 	}
 
-	/*
-	 * We have a packet number - set the data window.
-	 */
+	/* We have a packet number - set the data window. */
 	bus_space_write_2(bst, bsh, PACKET_NUM_REG_B, packetno);
 
-	/*
-	 * Point to the beginning of the packet.
-	 */
+	/* Point to the beginning of the packet. */
 	bus_space_write_2(bst, bsh, POINTER_REG_W, PTR_AUTOINC /* | 0x0000 */);
 
 	/*
@@ -756,9 +730,7 @@ smc91cxx_start(struct ifnet *ifp)
 		pad -= 1;
 	}
 
-	/*
-	 * Push out padding.
-	 */
+	/* Push out padding. */
 	while (pad > 1) {
 		bus_space_write_2(bst, bsh, DATA_REG_W, 0);
 		pad -= 2;
@@ -810,22 +782,20 @@ smc91cxx_copy_tx_frame(struct smc91cxx_softc *sc, struct mbuf *m0)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	struct mbuf *m;
 	int len, leftover;
-	u_int16_t dbuf;
-	u_int8_t *p;
+	uint16_t dbuf;
+	uint8_t *p;
 #ifdef DIAGNOSTIC
-	u_int8_t *lim;
+	uint8_t *lim;
 #endif
 
-	/* start out with no leftover data */
+	/* Start out with no leftover data */
 	leftover = 0;
 	dbuf = 0;
 
 	/* Process the chain of mbufs */
 	for (m = m0; m != NULL; m = m->m_next) {
-		/*
-		 * Process all of the data in a single mbuf.
-		 */
-		p = mtod(m, u_int8_t *);
+		/* Process all of the data in a single mbuf. */
+		p = mtod(m, uint8_t *);
 		len = m->m_len;
 #ifdef DIAGNOSTIC
 		lim = p + len;
@@ -843,9 +813,7 @@ smc91cxx_copy_tx_frame(struct smc91cxx_softc *sc, struct mbuf *m0)
 				bus_space_write_2(bst, bsh, DATA_REG_W, dbuf);
 				leftover = 0;
 			} else if ((long) p & 1) {
-				/*
-				 * Misaligned data.  Buffer the next byte.
-				 */
+				/* Misaligned data.  Buffer the next byte. */
 				dbuf = *p++;
 				len--;
 				leftover = 1;
@@ -859,7 +827,7 @@ smc91cxx_copy_tx_frame(struct smc91cxx_softc *sc, struct mbuf *m0)
 				leftover = len & 1;
 				len &= ~1;
 				bus_space_write_multi_stream_2(bst, bsh,
-				    DATA_REG_W, (u_int16_t *)p, len >> 1);
+				    DATA_REG_W, (uint16_t *)p, len >> 1);
 				p += len;
 
 				if (leftover)
@@ -888,19 +856,17 @@ smc91cxx_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	u_int8_t mask, interrupts, status;
-	u_int16_t packetno, tx_status, card_stats;
-	u_int16_t v;
+	uint8_t mask, interrupts, status;
+	uint16_t packetno, tx_status, card_stats;
+	uint16_t v;
 
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0 ||
 	    !device_is_active(sc->sc_dev))
-		return (0);
+		return 0;
 
 	SMC_SELECT_BANK(sc, 2);
 
-	/*
-	 * Obtain the current interrupt status and mask.
-	 */
+	/* Obtain the current interrupt status and mask. */
 	v = bus_space_read_2(bst, bsh, INTR_STAT_REG_B);
 
 	/*
@@ -914,46 +880,34 @@ smc91cxx_intr(void *arg)
 
 	/* Ours? */
 	if (status == 0)
-		return (0);
+		return 0;
 
-	/*
-	 * It's ours; disable all interrupts while we process them.
-	 */
+	/* It's ours; disable all interrupts while we process them. */
 	smc91cxx_intr_mask_write(bst, bsh, 0);
 
-	/*
-	 * Receive overrun interrupts.
-	 */
+	/* Receive overrun interrupts. */
 	if (status & IM_RX_OVRN_INT) {
 		smc91cxx_intr_ack_write(bst, bsh, IM_RX_OVRN_INT, 0);
 		ifp->if_ierrors++;
 	}
 
-	/*
-	 * Receive interrupts.
-	 */
+	/* Receive interrupts. */
 	if (status & IM_RCV_INT) {
 		smc91cxx_read(sc);
 	}
 
-	/*
-	 * Memory allocation interrupts.
-	 */
+	/* Memory allocation interrupts. */
 	if (status & IM_ALLOC_INT) {
 		/* Disable this interrupt. */
 		mask &= ~IM_ALLOC_INT;
 		sc->sc_intmask &= ~IM_ALLOC_INT;
 
-		/*
-		 * Save allocated packet number for use in start
-		 */
+		/* Save allocated packet number for use in start */
 		packetno = bus_space_read_1(bst, bsh, ALLOC_RESULT_REG_B);
 		KASSERT(sc->sc_txpacketno & ARR_FAILED);
 		sc->sc_txpacketno = packetno;
 
-		/*
-		 * We can transmit again!
-		 */
+		/* We can transmit again! */
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_timer = 0;
 	}
@@ -969,9 +923,7 @@ smc91cxx_intr(void *arg)
 		packetno = bus_space_read_2(bst, bsh, FIFO_PORTS_REG_W) &
 		    FIFO_TX_MASK;
 
-		/*
-		 * Select this as the packet to read from.
-		 */
+		/* Select this as the packet to read from. */
 		bus_space_write_2(bst, bsh, PACKET_NUM_REG_B, packetno);
 
 		/*
@@ -1016,9 +968,7 @@ smc91cxx_intr(void *arg)
 		    TCR_ENABLE | TCR_PAD_ENABLE);
 #endif
 
-		/*
-		 * Kill the failed packet and wait for the MMU to unbusy.
-		 */
+		/* Kill the failed packet and wait for the MMU to unbusy. */
 		SMC_SELECT_BANK(sc, 2);
 		while (bus_space_read_2(bst, bsh, MMU_CMD_REG_W) & MMUCR_BUSY)
 			/* XXX bound this loop! */ ;
@@ -1052,30 +1002,22 @@ smc91cxx_intr(void *arg)
 		ifp->if_timer = 0;
 	}
 
-	/*
-	 * Internal PHY status change
-	 */
+	/* Internal PHY status change */
 	if (sc->sc_chipid == CHIP_91C111 && sc->sc_internal_phy &&
 	    (status & IM_MD_INT)) {
 
-		/*
-		 * Internal PHY status change
-		 */
+		/* Internal PHY status change */
 		smc91cxx_intr_ack_write(bst, bsh, IM_MD_INT, 0);
 		mii_pollstat(&sc->sc_mii);
 	}
 
-	/*
-	 * Other errors.  Reset the interface.
-	 */
+	/* Other errors.  Reset the interface. */
 	if (status & IM_EPH_INT) {
 		smc91cxx_stop(sc);
 		smc91cxx_init(sc);
 	}
 
-	/*
-	 * Attempt to queue more packets for transmission.
-	 */
+	/* Attempt to queue more packets for transmission. */
 	if_schedule_deferred_start(ifp);
 
 	/*
@@ -1088,7 +1030,7 @@ smc91cxx_intr(void *arg)
 	if (status)
 		rnd_add_uint32(&sc->rnd_source, status);
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -1103,9 +1045,9 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	struct ether_header *eh;
 	struct mbuf *m;
-	u_int16_t status, packetno, packetlen;
-	u_int8_t *data;
-	u_int32_t dr;
+	uint16_t status, packetno, packetlen;
+	uint8_t *data;
+	uint32_t dr;
 	bool first = true;
 
  again:
@@ -1128,12 +1070,10 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	    PTR_READ | PTR_RCV | PTR_AUTOINC /* | 0x0000 */);
 	delay(1);
 
-	/*
-	 * First two words are status and packet length.
-	 */
+	/* First two words are status and packet length. */
 	dr = bus_space_read_4(bst, bsh, DATA_REG_W);
-	status = (u_int16_t)dr;
-	packetlen = (u_int16_t)(dr >> 16);
+	status = (uint16_t)dr;
+	packetlen = (uint16_t)(dr >> 16);
 
 	packetlen &= RLEN_MASK;
 	if (packetlen < ETHER_MIN_LEN - ETHER_CRC_LEN + 6 || packetlen > 1534) {
@@ -1147,23 +1087,17 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	 */
 	packetlen -= 6;
 
-	/*
-	 * Account for receive errors and discard.
-	 */
+	/* Account for receive errors and discard. */
 	if (status & RS_ERRORS) {
 		ifp->if_ierrors++;
 		goto out;
 	}
 
-	/*
-	 * Adjust for odd-length packet.
-	 */
+	/* Adjust for odd-length packet. */
 	if (status & RS_ODDFRAME)
 		packetlen++;
 
-	/*
-	 * Allocate a header mbuf.
-	 */
+	/* Allocate a header mbuf. */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		goto out;
@@ -1188,32 +1122,32 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	 * is aligned.
 	 */
 	if ((sc->sc_flags & SMC_FLAGS_32BIT_READ) == 0) {
-		m->m_data = (char *) ALIGN(mtod(m, char *) +
+		m->m_data = (char *)ALIGN(mtod(m, char *) +
 		    sizeof(struct ether_header)) - sizeof(struct ether_header);
 
 		eh = mtod(m, struct ether_header *);
-		data = mtod(m, u_int8_t *);
+		data = mtod(m, uint8_t *);
 		KASSERT(trunc_page((uintptr_t)data) ==
 			trunc_page((uintptr_t)data + packetlen - 1));
 		if (packetlen > 1)
 			bus_space_read_multi_stream_2(bst, bsh, DATA_REG_W,
-			    (u_int16_t *)data, packetlen >> 1);
+			    (uint16_t *)data, packetlen >> 1);
 		if (packetlen & 1) {
 			data += packetlen & ~1;
 			*data = bus_space_read_1(bst, bsh, DATA_REG_B);
 		}
 	} else {
-		m->m_data = (void *) ALIGN(mtod(m, void *));
+		m->m_data = (void *)ALIGN(mtod(m, void *));
 		eh = mtod(m, struct ether_header *);
-		data = mtod(m, u_int8_t *);
+		data = mtod(m, uint8_t *);
 		KASSERT(trunc_page((uintptr_t)data) ==
 			trunc_page((uintptr_t)data + packetlen - 1));
 		if (packetlen > 3)
 			bus_space_read_multi_stream_4(bst, bsh, DATA_REG_W,
-			    (u_int32_t *)data, packetlen >> 2);
+			    (uint32_t *)data, packetlen >> 2);
 		if (packetlen & 3) {
 			data += packetlen & ~3;
-			*((u_int32_t *)data) =
+			*((uint32_t *)data) =
 			    bus_space_read_stream_4(bst, bsh, DATA_REG_W);
 		}
 	}
@@ -1225,9 +1159,7 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	 * (should be ensured by chipset configuration)
 	 */
 	if ((ifp->if_flags & IFF_PROMISC) != 0) {
-		/*
-		 * Drop packet looped back from myself.
-		 */
+		/* Drop packet looped back from myself. */
 		if (ether_cmp(eh->ether_shost, CLLADDR(ifp->if_sadl)) == 0) {
 			m_freem(m);
 			goto out;
@@ -1239,16 +1171,12 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 
  out:
-	/*
-	 * Tell the card to free the memory occupied by this packet.
-	 */
+	/* Tell the card to free the memory occupied by this packet. */
 	while (bus_space_read_2(bst, bsh, MMU_CMD_REG_W) & MMUCR_BUSY)
 		/* XXX bound this loop! */ ;
 	bus_space_write_2(bst, bsh, MMU_CMD_REG_W, MMUCR_RELEASE);
 
-	/*
-	 * Check for another packet.
-	 */
+	/* Check for another packet. */
 	goto again;
 }
 
@@ -1339,7 +1267,7 @@ smc91cxx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 /*
@@ -1378,22 +1306,16 @@ smc91cxx_stop(struct smc91cxx_softc *sc)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 
-	/*
-	 * Clear interrupt mask; disable all interrupts.
-	 */
+	/* Clear interrupt mask; disable all interrupts. */
 	SMC_SELECT_BANK(sc, 2);
 	smc91cxx_intr_mask_write(bst, bsh, 0);
 
-	/*
-	 * Disable transmitter and receiver.
-	 */
+	/* Disable transmitter and receiver. */
 	SMC_SELECT_BANK(sc, 0);
 	bus_space_write_2(bst, bsh, RECV_CONTROL_REG_W, 0);
 	bus_space_write_2(bst, bsh, TXMIT_CONTROL_REG_W, 0);
 
-	/*
-	 * Cancel watchdog timer.
-	 */
+	/* Cancel watchdog timer. */
 	sc->sc_ec.ec_if.if_timer = 0;
 }
 
@@ -1407,12 +1329,12 @@ smc91cxx_enable(struct smc91cxx_softc *sc)
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
 			aprint_error_dev(sc->sc_dev, "device enable failed\n");
-			return (EIO);
+			return EIO;
 		}
 	}
 
 	sc->sc_flags |= SMC_FLAGS_ENABLED;
-	return (0);
+	return 0;
 }
 
 /*
@@ -1450,7 +1372,7 @@ smc91cxx_detach(device_t self, int flags)
 
 	/* Succeed now if there's no work to do. */
 	if ((sc->sc_flags & SMC_FLAGS_ATTACHED) == 0)
-		return (0);
+		return 0;
 
 	/* smc91cxx_disable() checks SMC_FLAGS_ENABLED */
 	smc91cxx_disable(sc);
@@ -1465,20 +1387,20 @@ smc91cxx_detach(device_t self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	return (0);
+	return 0;
 }
 
-u_int32_t
+uint32_t
 smc91cxx_mii_bitbang_read(device_t self)
 {
 	struct smc91cxx_softc *sc = device_private(self);
 
 	/* We're already in bank 3. */
-	return (bus_space_read_2(sc->sc_bst, sc->sc_bsh, MGMT_REG_W));
+	return bus_space_read_2(sc->sc_bst, sc->sc_bsh, MGMT_REG_W);
 }
 
 void
-smc91cxx_mii_bitbang_write(device_t self, u_int32_t val)
+smc91cxx_mii_bitbang_write(device_t self, uint32_t val)
 {
 	struct smc91cxx_softc *sc = device_private(self);
 
@@ -1533,7 +1455,7 @@ smc91cxx_statchg(struct ifnet *ifp)
 	else
 		mctl &= ~TCR_SWFDUP;
 	bus_space_write_2(bst, bsh, TXMIT_CONTROL_REG_W, mctl);
-	SMC_SELECT_BANK(sc, 2);	/* back to operating window */
+	SMC_SELECT_BANK(sc, 2);	/* Back to operating window */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.27 2011/07/01 18:50:41 dyoung Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.28 2019/04/25 10:08:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.27 2011/07/01 18:50:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.28 2019/04/25 10:08:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,9 @@ struct	le_softc {
  * Media types supported.
  */
 static int lemedia[] = {
-	IFM_ETHER|IFM_10_T,
+	IFM_ETHER | IFM_10_T,
 };
-#define NLEMEDIA	(sizeof(lemedia) / sizeof(lemedia[0]))
+#define NLEMEDIA	__arraycount(lemedia)
 
 static int	lematch_obio(device_t, cfdata_t, void *);
 static void	leattach_obio(device_t, device_t, void *);
@@ -105,7 +105,7 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 	bus_space_handle_t h = lesc->sc_reg;
 
 	bus_space_write_2(t, h, LEREG1_RAP, port);
-	return (bus_space_read_2(t, h, LEREG1_RDP));
+	return bus_space_read_2(t, h, LEREG1_RDP);
 }
 
 static int
@@ -115,14 +115,14 @@ lematch_obio(device_t parent, cfdata_t cf, void *aux)
 	struct obio4_attach_args *oba;
 
 	if (uoba->uoba_isobio4 == 0)
-		return (0);
+		return 0;
 
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
+	return bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				2,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
-				NULL, NULL));
+				NULL, NULL);
 }
 
 static void
@@ -142,39 +142,34 @@ leattach_obio(device_t parent, device_t self, void *aux)
 	lesc->sc_dmatag = dmatag = oba->oba_dmatag;
 
 	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
-			  2 * sizeof(uint16_t),
-			  0, &lesc->sc_reg) != 0) {
+	    2 * sizeof(uint16_t), 0, &lesc->sc_reg) != 0) {
 		aprint_error(": cannot map registers\n");
 		return;
 	}
 
 	/* Get a DMA handle */
 	if ((error = bus_dmamap_create(dmatag, MEMSIZE, 1, MEMSIZE, 0,
-					BUS_DMA_NOWAIT|BUS_DMA_24BIT,
-					&lesc->sc_dmamap)) != 0) {
+	    BUS_DMA_NOWAIT|BUS_DMA_24BIT, &lesc->sc_dmamap)) != 0) {
 		aprint_error(": DMA map create error %d\n", error);
 		return;
 	}
 
 	/* Allocate DMA buffer */
 	if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, PAGE_SIZE, 0,
-			     &seg, 1, &rseg,
-			     BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
 		aprint_error(": DMA memory allocation error %d\n", error);
 		return;
 	}
 	/* Map DMA buffer into kernel space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
-			   (void **)&sc->sc_mem,
-			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    (void **)&sc->sc_mem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		aprint_error(": DMA memory map error %d\n", error);
 		bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
 		return;
 	}
 	/* Load DMA buffer */
 	if ((error = bus_dmamap_load(dmatag, lesc->sc_dmamap,
-				     sc->sc_mem, MEMSIZE, NULL,
-				     BUS_DMA_NOWAIT)) != 0) {
+	    sc->sc_mem, MEMSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error(": DMA buffer map load error %d\n", error);
 		bus_dmamem_unmap(dmatag, (void *)sc->sc_mem, MEMSIZE);
 		bus_dmamem_free(dmatag, &seg, rseg);
@@ -204,5 +199,5 @@ leattach_obio(device_t parent, device_t self, void *aux)
 
 	/* Install interrupt */
 	(void)bus_intr_establish(lesc->sc_bustag, oba->oba_pri, IPL_NET,
-				 am7990_intr, sc);
+	    am7990_intr, sc);
 }

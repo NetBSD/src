@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.3 2019/04/16 12:22:13 skrll Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.4 2019/04/25 10:08:45 msaitoh Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.3 2019/04/16 12:22:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.4 2019/04/25 10:08:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ CFATTACH_DECL_NEW(ie_gsc, sizeof(struct ie_gsc_softc),
 static int ie_gsc_media[] = {
 	IFM_ETHER | IFM_10_2,
 };
-#define	IE_NMEDIA	(sizeof(ie_gsc_media) / sizeof(ie_gsc_media[0]))
+#define	IE_NMEDIA	__arraycount(ie_gsc_media)
 
 void ie_gsc_reset(struct ie_softc *, int);
 void ie_gsc_attend(struct ie_softc *, int);
@@ -137,7 +137,7 @@ void ie_gsc_memcopyout(struct ie_softc *, const void *, int, size_t);
 void
 ie_gsc_reset(struct ie_softc *sc, int what)
 {
-	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
+	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *)sc;
 	int i;
 
 	switch (what) {
@@ -149,14 +149,14 @@ ie_gsc_reset(struct ie_softc *sc, int what)
 		bus_space_write_4(gsc->iot, gsc->ioh, IE_GSC_REG_RESET, 0);
 
 		/*
-		 * per [2] 4.6.2.1
+		 * Per [2] 4.6.2.1
 		 * delay for 10 system clocks + 5 transmit clocks,
 		 * NB: works for system clocks over 10MHz
 		 */
 		DELAY(1000);
 
 		/*
-		 * after the hardware reset:
+		 * After the hardware reset:
 		 * inform i825[89]6 about new SCP address,
 		 * which must be at least 16-byte aligned
 		 */
@@ -165,7 +165,8 @@ ie_gsc_reset(struct ie_softc *sc, int what)
 
 		for (i = 9000; i-- && ie_gsc_read16(sc, IE_ISCP_BUSY(sc->iscp));
 		     DELAY(100))
-			pdcache(0, (vaddr_t)sc->sc_maddr + sc->iscp, IE_ISCP_SZ);
+			pdcache(0, (vaddr_t)sc->sc_maddr + sc->iscp,
+			    IE_ISCP_SZ);
 
 #if I82596_DEBUG
 		if (i < 0) {
@@ -183,7 +184,7 @@ ie_gsc_reset(struct ie_softc *sc, int what)
 void
 ie_gsc_attend(struct ie_softc *sc, int why)
 {
-	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
+	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *)sc;
 
 	bus_space_write_4(gsc->iot, gsc->ioh, IE_GSC_REG_ATTN, 0);
 }
@@ -198,7 +199,7 @@ ie_gsc_run(struct ie_softc *sc)
 void
 ie_gsc_port(struct ie_softc *sc, u_int cmd)
 {
-	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
+	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *)sc;
 
 	switch (cmd) {
 	case IE_PORT_RESET:
@@ -239,7 +240,7 @@ ie_gsc_read16(struct ie_softc *sc, int offset)
 	"	fdc	%%r0(%1)	\n"
 	: "=&r" (val)
 	: "r" ((char *)sc->sc_maddr + offset));
-	return (val);
+	return val;
 }
 
 void
@@ -277,7 +278,7 @@ ie_gsc_write24(struct ie_softc *sc, int offset, int addr)
 void
 ie_gsc_memcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 {
-	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
+	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *)sc;
 
 	if (size == 0)
 		return;
@@ -291,7 +292,7 @@ ie_gsc_memcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 void
 ie_gsc_memcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 {
-	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
+	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *)sc;
 
 	if (size == 0)
 		return;
@@ -309,7 +310,7 @@ int i82596_probe(struct ie_softc *);
 int
 i82596_probe(struct ie_softc *sc)
 {
-	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
+	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *)sc;
 	int i;
 
 	/* Set up the SCP. */
@@ -342,9 +343,7 @@ i82596_probe(struct ie_softc *sc)
 	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, 0, sc->sc_msize,
 			BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	ie_gsc_port(sc, IE_PORT_SELF_TEST);
-	for (i = 9000; i-- &&
-		     sc->ie_bus_read16(sc, 4);
-	     DELAY(100))
+	for (i = 9000; i-- && sc->ie_bus_read16(sc, 4); DELAY(100))
 		pdcache(0, (vaddr_t)sc->sc_maddr, sc->sc_msize);
 
 #if I82596_DEBUG
@@ -388,9 +387,7 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 	if (ga->ga_type.iodc_sv_model == HPPA_FIO_GLAN)
 		gsc->flags |= IEGSC_GECKO;
 
-	/*
-	 * Map the GSC registers.
-	 */
+	/* Map the GSC registers. */
 	if (bus_space_map(ga->ga_iot, ga->ga_hpa,
 			  IE_GSC_BANK_SZ, 0, &gsc->ioh)) {
 		printf(": can't map i/o space\n");
@@ -417,9 +414,7 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/*
-	 * Map that physical memory into kernel virtual space.
-	 */
+	/* Map that physical memory into kernel virtual space. */
 	if (bus_dmamem_map(gsc->iemt, &seg, rseg, sc->sc_msize,
 			   (void **)&sc->sc_maddr, BUS_DMA_NOWAIT)) {
 		printf (": can't map DMA memory\n");
@@ -427,9 +422,7 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/*
-	 * Create a DMA map for the memory.
-	 */
+	/* Create a DMA map for the memory. */
 	if (bus_dmamap_create(gsc->iemt, sc->sc_msize, rseg, sc->sc_msize,
 			      0, BUS_DMA_NOWAIT, &sc->sc_dmamap)) {
 		printf(": can't create DMA map\n");
@@ -439,12 +432,9 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/*
-	 * Load the mapped DMA memory into the DMA map.
-	 */
-	if (bus_dmamap_load(gsc->iemt, sc->sc_dmamap,
-			    sc->sc_maddr, sc->sc_msize,
-			    NULL, BUS_DMA_NOWAIT)) {
+	/* Load the mapped DMA memory into the DMA map. */
+	if (bus_dmamap_load(gsc->iemt, sc->sc_dmamap, sc->sc_maddr,
+	    sc->sc_msize, NULL, BUS_DMA_NOWAIT)) {
 		printf(": can't load DMA map\n");
 		bus_dmamap_destroy(gsc->iemt, sc->sc_dmamap);
 		bus_dmamem_unmap(gsc->iemt,
@@ -455,7 +445,7 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 
 #if 1
 	/* XXX - this should go away. */
-	sc->bh = (bus_space_handle_t) sc->sc_maddr;
+	sc->bh = (bus_space_handle_t)sc->sc_maddr;
 #endif
 
 #if I82596_DEBUG
