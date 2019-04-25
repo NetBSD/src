@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.31 2014/08/18 04:26:38 riastradh Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.32 2019/04/25 10:08:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.31 2014/08/18 04:26:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.32 2019/04/25 10:08:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,12 +184,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.31 2014/08/18 04:26:38 riastradh Exp
 #define IEVME_PGMASK 0x0fff	/* gives the physical page frame number */
 
 struct ievme {
-	u_int16_t	pgmap[IEVME_MAPSZ];
-	u_int16_t	xxx[32];	/* prom */
-	u_int16_t	status;		/* see below for bits */
-	u_int16_t	xxx2;		/* filler */
-	u_int16_t	pectrl;		/* parity control (see below) */
-	u_int16_t	peaddr;		/* low 16 bits of address */
+	uint16_t	pgmap[IEVME_MAPSZ];
+	uint16_t	xxx[32];	/* prom */
+	uint16_t	status;		/* see below for bits */
+	uint16_t	xxx2;		/* filler */
+	uint16_t	pectrl;		/* parity control (see below) */
+	uint16_t	peaddr;		/* low 16 bits of address */
 };
 
 /*
@@ -218,7 +218,7 @@ struct ievme {
 static int media[] = {
 	IFM_ETHER | IFM_10_2,
 };
-#define NMEDIA	(sizeof(media) / sizeof(media[0]))
+#define NMEDIA	__arraycount(media)
 
 /*
  * the 3E board not supported (yet?)
@@ -254,6 +254,7 @@ void
 ie_vmereset(struct ie_softc *sc, int what)
 {
 	struct ie_vme_softc *vsc = (struct ie_vme_softc *)sc;
+
 	write_iev(vsc, status, IEVME_RESET);
 	delay(100);		/* XXX could be shorter? */
 	write_iev(vsc, status, 0);
@@ -264,9 +265,9 @@ ie_vmeattend(struct ie_softc *sc, int why)
 {
 	struct ie_vme_softc *vsc = (struct ie_vme_softc *)sc;
 
-	/* flag! */
+	/* Flag! */
 	write_iev(vsc, status, read_iev(vsc, status) | IEVME_ATTEN);
-	/* down. */
+	/* Down. */
 	write_iev(vsc, status, read_iev(vsc, status) & ~IEVME_ATTEN);
 }
 
@@ -285,19 +286,20 @@ ie_vmeintr(struct ie_softc *sc, int where)
 	struct ie_vme_softc *vsc = (struct ie_vme_softc *)sc;
 
 	if (where != INTR_ENTER)
-		return (0);
+		return 0;
 
-        /*
-         * check for parity error
-         */
+	/*
+	 * check for parity error
+	 */
 	if (read_iev(vsc, status) & IEVME_PERR) {
-		aprint_error_dev(sc->sc_dev, "parity error (ctrl 0x%x @ 0x%02x%04x)\n",
-		       read_iev(vsc, pectrl),
-		       read_iev(vsc, pectrl) & IEVME_HADDR,
-		       read_iev(vsc, peaddr));
+		aprint_error_dev(sc->sc_dev,
+		    "parity error (ctrl 0x%x @ 0x%02x%04x)\n",
+		    read_iev(vsc, pectrl),
+		    read_iev(vsc, pectrl) & IEVME_HADDR,
+		    read_iev(vsc, peaddr));
 		write_iev(vsc, pectrl, read_iev(vsc, pectrl) | IEVME_PARACK);
 	}
-	return (0);
+	return 0;
 }
 
 void ie_memcopyin(struct ie_softc *, void *, int, size_t);
@@ -312,9 +314,9 @@ ie_memcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 	size_t help;
 
 	if ((offset & 1) && ((u_long)p & 1) && size > 0) {
-		*(u_int8_t *)p = bus_space_read_1(sc->bt, sc->bh, offset);
+		*(uint8_t *)p = bus_space_read_1(sc->bt, sc->bh, offset);
 		offset++;
-		p = (u_int8_t *)p + 1;
+		p = (uint8_t *)p + 1;
 		size--;
 	}
 
@@ -329,8 +331,8 @@ ie_memcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 		return;
 
 	offset += 2 * help;
-	p = (u_int16_t *)p + help;
-	*(u_int8_t *)p = bus_space_read_1(sc->bt, sc->bh, offset);
+	p = (uint16_t *)p + help;
+	*(uint8_t *)p = bus_space_read_1(sc->bt, sc->bh, offset);
 }
 
 /*
@@ -342,9 +344,9 @@ ie_memcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 	size_t help;
 
 	if ((offset & 1) && ((u_long)p & 1) && size > 0) {
-		bus_space_write_1(sc->bt, sc->bh, offset, *(const u_int8_t *)p);
+		bus_space_write_1(sc->bt, sc->bh, offset, *(const uint8_t *)p);
 		offset++;
-		p = (const u_int8_t *)p + 1;
+		p = (const uint8_t *)p + 1;
 		size--;
 	}
 
@@ -359,20 +361,20 @@ ie_memcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 		return;
 
 	offset += 2 * help;
-	p = (const u_int16_t *)p + help;
-	bus_space_write_1(sc->bt, sc->bh, offset, *(const u_int8_t *)p);
+	p = (const uint16_t *)p + help;
+	bus_space_write_1(sc->bt, sc->bh, offset, *(const uint8_t *)p);
 }
 
 /* read a 16-bit value at BH offset */
-u_int16_t ie_vme_read16(struct ie_softc *, int offset);
+uint16_t ie_vme_read16(struct ie_softc *, int offset);
 /* write a 16-bit value at BH offset */
-void ie_vme_write16(struct ie_softc *, int offset, u_int16_t value);
+void ie_vme_write16(struct ie_softc *, int offset, uint16_t value);
 void ie_vme_write24(struct ie_softc *, int offset, int addr);
 
-u_int16_t
+uint16_t
 ie_vme_read16(struct ie_softc *sc, int offset)
 {
-	u_int16_t v;
+	uint16_t v;
 
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
 	v = bus_space_read_2(sc->bt, sc->bh, offset);
@@ -380,7 +382,7 @@ ie_vme_read16(struct ie_softc *sc, int offset)
 }
 
 void
-ie_vme_write16(struct ie_softc *sc, int offset, u_int16_t v)
+ie_vme_write16(struct ie_softc *sc, int offset, uint16_t v)
 {
 	int v0 = ((((v)&0xff)<<8) | (((v)>>8)&0xff));
 	bus_space_write_2(sc->bt, sc->bh, offset, v0);
@@ -391,7 +393,7 @@ void
 ie_vme_write24(struct ie_softc *sc, int offset, int addr)
 {
 	u_char *f = (u_char *)&addr;
-	u_int16_t v0, v1;
+	uint16_t v0, v1;
 	u_char *t;
 
 	t = (u_char *)&v0;
@@ -415,38 +417,37 @@ ie_vme_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (va->numcfranges < 2) {
 		printf("ie_vme_match: need 2 ranges\n");
-		return (0);
+		return 0;
 	}
 	if ((va->r[1].offset & 0xff0fffff) ||
 	    ((va->r[0].offset & 0xfff00000)
 	     != (va->r[1].offset & 0xfff00000))) {
 		printf("ie_vme_match: base address mismatch\n");
-		return (0);
+		return 0;
 	}
 	if (va->r[0].size != VMECF_LEN_DEFAULT &&
 	    va->r[0].size != sizeof(struct ievme)) {
 		printf("ie_vme_match: bad csr size\n");
-		return (0);
+		return 0;
 	}
 	if (va->r[1].size == VMECF_LEN_DEFAULT) {
 		printf("ie_vme_match: must specify memory size\n");
-		return (0);
+		return 0;
 	}
 
 	mod = 0x3d; /* VME_AM_A24|VME_AM_MBO|VME_AM_SUPER|VME_AM_DATA */
 
 	if (va->r[0].am != VMECF_AM_DEFAULT &&
 	    va->r[0].am != mod)
-		return (0);
+		return 0;
 
 	if (vme_space_alloc(va->va_vct, va->r[0].offset,
 			    sizeof(struct ievme), mod))
-		return (0);
-	if (vme_space_alloc(va->va_vct, va->r[1].offset,
-			    va->r[1].size, mod)) {
+		return 0;
+	if (vme_space_alloc(va->va_vct, va->r[1].offset, va->r[1].size, mod)) {
 		vme_space_free(va->va_vct, va->r[0].offset,
 			       sizeof(struct ievme), mod);
-		return (0);
+		return 0;
 	}
 	error = vme_probe(ct, va->r[0].offset, 2, mod, VME_D16, 0, 0);
 	vme_space_free(va->va_vct, va->r[0].offset, sizeof(struct ievme), mod);
@@ -458,7 +459,7 @@ ie_vme_match(device_t parent, cfdata_t cf, void *aux)
 void
 ie_vme_attach(device_t parent, device_t self, void *aux)
 {
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+	uint8_t myaddr[ETHER_ADDR_LEN];
 	struct ie_vme_softc *vsc = device_private(self);
 	struct vme_attach_args *va = aux;
 	vme_chipset_tag_t ct = va->va_vct;
@@ -472,9 +473,8 @@ ie_vme_attach(device_t parent, device_t self, void *aux)
 	vme_am_t mod;
 
 	/*
-	 * *note*: we don't detect the difference between a VME3E and
-	 * a multibus/vme card.   if you want to use a 3E you'll have
-	 * to fix this.
+	 * *note*: We don't detect the difference between a VME3E and a
+	 * multibus/vme card.  If you want to use a 3E you'll have to fix this.
 	 */
 	mod = 0x3d; /* VME_AM_A24|VME_AM_MBO|VME_AM_SUPER|VME_AM_DATA */
 	if (vme_space_alloc(va->va_vct, va->r[0].offset,
@@ -501,8 +501,7 @@ ie_vme_attach(device_t parent, device_t self, void *aux)
 	memsize = va->r[1].size;
 
 	if (vme_space_map(ct, va->r[0].offset, sizeof(struct ievme), mod,
-			  VME_D16 | VME_D8, 0,
-			  &vsc->ievt, &vsc->ievh, &resc) != 0)
+	    VME_D16 | VME_D8, 0, &vsc->ievt, &vsc->ievh, &resc) != 0)
 		panic("if_ie: vme map csr");
 
 	rampaddr = va->r[1].offset;
@@ -550,9 +549,7 @@ ie_vme_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/*
-	 * Rest of first page is unused; rest of ram for buffers.
-	 */
+	/* Rest of first page is unused; rest of ram for buffers. */
 	sc->buf_area = IEVME_PAGESIZE;
 	sc->buf_area_sz = memsize - IEVME_PAGESIZE;
 

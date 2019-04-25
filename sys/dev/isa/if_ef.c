@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.33 2019/04/09 06:00:08 msaitoh Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.34 2019/04/25 10:08:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.33 2019/04/09 06:00:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.34 2019/04/25 10:08:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,18 +80,18 @@ static int ef_media[] = {
 	IFM_ETHER | IFM_10_5,
 	IFM_ETHER | IFM_10_2,
 };
-#define NEF_MEDIA       (sizeof(ef_media) / sizeof(ef_media[0]))
+#define NEF_MEDIA	__arraycount(ef_media)
 
 static int eftp_media[] = {
 	IFM_ETHER | IFM_10_T,
 };
-#define NEFTP_MEDIA       (sizeof(eftp_media) / sizeof(eftp_media[0]))
+#define NEFTP_MEDIA	__arraycount(eftp_media)
 
 /* Routines required by the MI i82586 driver API */
-static void 	ef_reset(struct ie_softc *, int);
-static void 	ef_hwinit(struct ie_softc *);
-static void 	ef_atten(struct ie_softc *, int);
-static int 	ef_intrhook(struct ie_softc *, int);
+static void	ef_reset(struct ie_softc *, int);
+static void	ef_hwinit(struct ie_softc *);
+static void	ef_atten(struct ie_softc *, int);
+static int	ef_intrhook(struct ie_softc *, int);
 
 static void	ef_copyin(struct ie_softc *, void *, int, size_t);
 static void	ef_copyout(struct ie_softc *, const void *, int, size_t);
@@ -103,7 +103,7 @@ static void	ef_write_24(struct ie_softc *, int, int);
 static void	ef_mediastatus(struct ie_softc *, struct ifmediareq *);
 
 /* Local routines */
-static int 	ef_port_check(bus_space_tag_t, bus_space_handle_t);
+static int	ef_port_check(bus_space_tag_t, bus_space_handle_t);
 
 static int	ef_match(device_t, cfdata_t, void *);
 static void	ef_attach(device_t, device_t, void *);
@@ -117,7 +117,7 @@ static void	ef_attach(device_t, device_t, void *);
  * which will unique per ISA bus.
  */
 
-#define MAXCARDS_PER_ISABUS     8       /* If you have more than 8, you lose */
+#define MAXCARDS_PER_ISABUS	8	/* If you have more than 8, you lose */
 
 struct ef_isabus {
 	LIST_ENTRY(ef_isabus) isa_link;
@@ -312,10 +312,10 @@ ef_write_24(struct ie_softc *sc, int offset, int addr)
 static void
 ef_mediastatus(struct ie_softc *sc, struct ifmediareq *ifmr)
 {
-        struct ifmedia *ifm = &sc->sc_media;
+	struct ifmedia *ifm = &sc->sc_media;
 
-        /* The currently selected media is always the active media. */
-        ifmr->ifm_active = ifm->ifm_cur->ifm_media;
+	/* The currently selected media is always the active media. */
+	ifmr->ifm_active = ifm->ifm_cur->ifm_media;
 }
 
 static int
@@ -645,7 +645,7 @@ static int
 ef_port_check(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int i;
-        u_char ch;
+	u_char ch;
 	const u_char *signature = EF_SIGNATURE;
 
 	for (i = 0; i < strlen(signature); i++) {
