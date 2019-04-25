@@ -32,11 +32,6 @@
 #include <sys/device.h>
 #include <sys/audioio.h>
 
-#include <dev/auconv.h>
-
-#define UDA1341_NFORMATS 4
-extern const struct audio_format uda1341_formats[UDA1341_NFORMATS];
-
 struct uda1341_softc {
 	/* Pointer to the driver that holds this sc */
 	void		*parent;
@@ -85,10 +80,11 @@ struct uda1341_softc {
 };
 
 int uda1341_attach(struct uda1341_softc *);
-int uda1341_query_encodings(void *, audio_encoding_t *);
 int uda1341_open(void *, int );
 void uda1341_close(void *);
-int uda1341_set_params(void *, int, int, audio_params_t*, audio_params_t*, stream_filter_list_t *, stream_filter_list_t*);
+int uda1341_set_format(void *, int,
+    const audio_params_t *, const audio_params_t *,
+    audio_filter_reg_t *, audio_filter_reg_t *);
 int uda1341_query_devinfo(void *, mixer_devinfo_t *);
 int uda1341_get_port(void *, mixer_ctrl_t *);
 int uda1341_set_port(void *, mixer_ctrl_t *);
