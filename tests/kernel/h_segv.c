@@ -1,4 +1,4 @@
-/*	$NetBSD: h_segv.c,v 1.13 2019/01/30 12:16:28 martin Exp $	*/
+/*	$NetBSD: h_segv.c,v 1.14 2019/04/25 19:37:09 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_segv.c,v 1.13 2019/01/30 12:16:28 martin Exp $");
+__RCSID("$NetBSD: h_segv.c,v 1.14 2019/04/25 19:37:09 kamil Exp $");
 
 #define	__TEST_FENV
 
@@ -113,7 +113,7 @@ check_fpe(void)
 {
 #if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
-	 * Some NEON fpus do not trap on IEEE 754 FP excpeptions.
+	 * Some NEON fpus do not trap on IEEE 754 FP exceptions.
 	 * Skip these tests if running on them and compiled for
 	 * hard float.
 	 */
