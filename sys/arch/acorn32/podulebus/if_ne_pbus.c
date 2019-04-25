@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.18 2014/01/21 19:30:46 christos Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.19 2019/04/25 10:08:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.18 2014/01/21 19:30:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.19 2019/04/25 10:08:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -211,16 +211,16 @@ struct ne_clone {
 static int
 ne_pbus_probe(device_t parent, cfdata_t cf, void *aux)
 {
-	struct podule_attach_args *pa = (void *) aux;
+	struct podule_attach_args *pa = (void *)aux;
 	int loop;
 
 	/* Scan the list of known interfaces looking for a match */
 	for (loop = 0; loop < sizeof(ne_clones) / sizeof(struct ne_clone);
 	    ++loop) {
 		if (pa->pa_product == ne_clones[loop].product)
-			return(1);
+			return 1;
 	}
-	return(0);
+	return 0;
 }
 
 /*
@@ -358,7 +358,7 @@ ne_pbus_attach(device_t parent, device_t self, void *aux)
 	if (ne->preattach)
 		ne->preattach(npsc);
 
-	/* if the interface has media support initialise it */
+	/* If the interface has media support initialise it */
 	if (ne->init_media) {
 		dsc->sc_mediachange = ne->mediachange;
 		dsc->sc_mediastatus = ne->mediastatus;
@@ -389,7 +389,7 @@ ne_pbus_attach(device_t parent, device_t self, void *aux)
 	case NE2000_TYPE_DL10019:
 		aprint_normal("DL10019");
 		break;
-        case NE2000_TYPE_DL10022:
+	case NE2000_TYPE_DL10022:
 		aprint_normal("DL10022");
 		break;
 	default:
@@ -409,7 +409,7 @@ ne_pbus_attach(device_t parent, device_t self, void *aux)
 	if (npsc->sc_ih == NULL)
 		panic("%s: Cannot install interrupt handler",
 		   device_xname(self));
-	/* this feels wrong to do this here */
+	/* This feels wrong to do this here */
 	npsc->sc_ih->ih_maskaddr = npsc->sc_podule->irq_addr;
 	npsc->sc_ih->ih_maskbits = npsc->sc_podule->irq_mask;
 }
@@ -430,7 +430,7 @@ em_ea(struct ne_pbus_softc *sc, uint8_t *buffer)
 	 */
 
 	netslot_ea(buffer);
-	return(buffer);
+	return buffer;
 }
 
 /*
@@ -479,8 +479,8 @@ em_postattach(struct ne_pbus_softc *sc)
 /*
  * eh600_preattach()
  *
- * pre-initialise the AT/Lantic chipset so that the card probes and 
- * detects properly. 
+ * pre-initialise the AT/Lantic chipset so that the card probes and
+ * detects properly.
  */
 static void
 eh600_preattach(struct ne_pbus_softc *sc)
@@ -490,22 +490,22 @@ eh600_preattach(struct ne_pbus_softc *sc)
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	bus_space_tag_t nict = dsc->sc_regt;
 	bus_space_handle_t nich = dsc->sc_regh;
-	
-	/* initialise EH600 config register */
+
+	/* Initialise EH600 config register */
 	bus_space_read_1(nict, nich, DP83905_MCRA);
 	bus_space_write_1(nict, nich, DP83905_MCRA, DP83905_MCRA_INT3);
 
-	/* enable interrupts for the card */
-	tmp = bus_space_read_1(&sc->sc_tag,sc->sc_extrah,0); 
+	/* Enable interrupts for the card */
+	tmp = bus_space_read_1(&sc->sc_tag,sc->sc_extrah,0);
 	tmp |= EH_INTR_MASK;
-	bus_space_write_1(&sc->sc_tag,sc->sc_extrah,0,tmp); 
+	bus_space_write_1(&sc->sc_tag,sc->sc_extrah,0,tmp);
 }
 
 /*
  * eh600_postattach()
  *
- * Etherlan 600 has 32k of buffer memory as it runs the AT/Lantic 
- * DP8390 clone in IO non-compatible mode. We need to adjust the memory 
+ * Etherlan 600 has 32k of buffer memory as it runs the AT/Lantic
+ * DP8390 clone in IO non-compatible mode. We need to adjust the memory
  * description set up by dp8390.c and ne2000.c to reflect this.
  */
 static void
@@ -513,24 +513,25 @@ eh600_postattach(struct ne_pbus_softc *sc)
 {
 	struct ne2000_softc *nsc = &sc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
-	/* first page is mapped to the PROM. so start at 2nd page */
+
+	/* First page is mapped to the PROM. so start at 2nd page */
 	dsc->mem_start = EH600_MEM_START;
 	dsc->mem_size = EH600_MEM_END - EH600_MEM_START;
 	dsc->mem_end = EH600_MEM_END;
 	dsc->txb_cnt = 3; /* >16k of ram setup 3 tx buffers */
-	/* recompute the mem ring (taken straight from the ne2000 init code) */
-	dsc->mem_ring = 
-		dsc->mem_start + 
+	/* Recompute the mem ring (taken straight from the ne2000 init code) */
+	dsc->mem_ring =
+		dsc->mem_start +
 		(((dsc->txb_cnt + 1) * ED_TXBUF_SIZE ) <<
 		 ED_PAGE_SHIFT);
 
-	/* recompute the dp8390 register values. (from dp8390 init code) */
+	/* Recompute the dp8390 register values. (from dp8390 init code) */
 	dsc->tx_page_start = dsc->mem_start >> ED_PAGE_SHIFT;
 
-	dsc->rec_page_start = dsc->tx_page_start + 
+	dsc->rec_page_start = dsc->tx_page_start +
 		(dsc->txb_cnt + 1) * ED_TXBUF_SIZE;
 
-	dsc->rec_page_stop = dsc->tx_page_start + 
+	dsc->rec_page_stop = dsc->tx_page_start +
 		(dsc->mem_size >> ED_PAGE_SHIFT);
 	aprint_normal_dev(dsc->sc_dev, "32KB buffer memory\n");
 }
@@ -540,13 +541,12 @@ eh600_postattach(struct ne_pbus_softc *sc)
 void eh600_init_media(struct dp8390_softc *sc)
 {
 	static int eh600_media[] = {
-		IFM_ETHER|IFM_AUTO,
-		IFM_ETHER|IFM_10_T,
-		IFM_ETHER|IFM_10_2,
+		IFM_ETHER | IFM_AUTO,
+		IFM_ETHER | IFM_10_T,
+		IFM_ETHER | IFM_10_2,
 	};
-	int i, defmedia = IFM_ETHER|IFM_AUTO;
-	static const int eh600_nmedia =
-	    sizeof(eh600_media) / sizeof(eh600_media[0]);
+	int i, defmedia = IFM_ETHER | IFM_AUTO;
+	static const int eh600_nmedia = __arraycount(eh600_media);
 
 	aprint_normal_dev(sc->sc_dev,
 	    "10base2, 10baseT, auto, default auto\n");
@@ -555,7 +555,6 @@ void eh600_init_media(struct dp8390_softc *sc)
 	for (i = 0; i < eh600_nmedia; i++)
 		ifmedia_add(&sc->sc_media, eh600_media[i], 0, NULL);
 	ifmedia_set(&sc->sc_media, defmedia);
-
 }
 
 
@@ -575,6 +574,7 @@ en_init_media(struct dp8390_softc *sc)
 	static int en_media[] = {
 		IFM_ETHER|IFM_10_T
 	};
+
 	aprint_normal_dev(sc->sc_dev, "10baseT, default 10baseT\n");
 
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
@@ -583,12 +583,12 @@ en_init_media(struct dp8390_softc *sc)
 }
 
 
-/* 
+/*
  * extracts the station address from the Podule description string.
- * The description has to be re-read here since the podule description 
+ * The description has to be re-read here since the podule description
  * string is not always long enough to contain the full address.
  *
- * If for any reason we cannot extract the address this routine will 
+ * If for any reason we cannot extract the address this routine will
  * use netslot_ea() to return the generic address for the network slot.
  */
 
@@ -605,21 +605,21 @@ eh600_ea(struct ne_pbus_softc *sc, uint8_t *buffer)
 	address = 0x40;
 	memset(buffer, 0, 6);
 
-	/* read chunks from the podule  */
+	/* Read chunks from the podule	*/
 	do {
 		id = POD_READ(address);
-		/* check for description chunk. */
+		/* Check for description chunk. */
 		if (id == 0xf5) {
 			u_int size;
 			u_int pod_addr;
 			int loop;
 
-			/* read the size */
+			/* Read the size */
 			size = POD_READ(address + 4);
 			size |= (POD_READ(address + 8) << 8);
 			size |= (POD_READ(address + 12) << 16);
 
-			/* read address of description */
+			/* Read address of description */
 			pod_addr = POD_READ(address + 16);
 			pod_addr |= (POD_READ(address + 20) << 8);
 			pod_addr |= (POD_READ(address + 24) << 16);
@@ -631,33 +631,33 @@ eh600_ea(struct ne_pbus_softc *sc, uint8_t *buffer)
 				int found_ether = 0;
 
 				/*
-				 * start scanning for ethernet address
+				 * Start scanning for ethernet address
 				 * which starts with a '('
 				 */
 				for (loop = 0; loop < size; ++loop) {
 					if (found_ether) {
-					        /* we have found a '(' so start decoding the address */
+						/* We have found a '(' so start decoding the address */
 						tmp = POD_READ((pod_addr + loop) * 4);
 						if (tmp >= '0' &&  tmp <= '9') {
 							buffer[addr_index >> 1] |= (tmp - '0') << ((addr_index & 1) ? 0 : 4);
 							++addr_index;
 						}
-						else if (tmp >= 'a' &&  tmp <= 'f'){
+						else if (tmp >= 'a' &&	tmp <= 'f'){
 							buffer[addr_index >> 1] |= (10 + (tmp - 'a')) << ((addr_index & 1) ? 0 : 4);
 							++addr_index;
 						}
-						else if (tmp >= 'A' &&  tmp <= 'F'){
+						else if (tmp >= 'A' &&	tmp <= 'F'){
 							buffer[addr_index >> 1] |= (10 + (tmp - 'A')) << ((addr_index & 1) ? 0 : 4);
 							++addr_index;
 						}
 						else if (tmp == ')') {
-							/* we have read the whole address so we can stop scanning 
+							/* We have read the whole address so we can stop scanning
 							 * the podule description */
 							break;
 						}
 					}
 					/*
-					 * we have found the start of the ethernet address (decode begins 
+					 * We have found the start of the ethernet address (decode begins
 					 * on the next run round the loop. */
 					if (POD_READ((pod_addr + loop) * 4) == '(') {
 						found_ether = 1;
@@ -669,7 +669,7 @@ eh600_ea(struct ne_pbus_softc *sc, uint8_t *buffer)
 				 */
 				if (!found_ether)
 					netslot_ea(buffer);
-				return(buffer);
+				return buffer;
 			}
 		}
 		address += 32;
@@ -680,5 +680,5 @@ eh600_ea(struct ne_pbus_softc *sc, uint8_t *buffer)
 	 * In this case the best solution is to go with the netslot addrness
 	 */
 	netslot_ea(buffer);
-	return(buffer);
+	return buffer;
 }
