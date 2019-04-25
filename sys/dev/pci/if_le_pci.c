@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.53 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.54 2019/04/25 10:08:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.53 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.54 2019/04/25 10:08:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,12 +109,12 @@ CFATTACH_DECL_NEW(le_pci, sizeof(struct le_softc),
 #define	LE_PCI_MEMSIZE	16384
 
 static int le_pci_supmedia[] = {
-	IFM_ETHER|IFM_AUTO,
-	IFM_ETHER|IFM_AUTO|IFM_FDX,
-	IFM_ETHER|IFM_10_T,
-	IFM_ETHER|IFM_10_T|IFM_FDX,
-	IFM_ETHER|IFM_10_5,
-	IFM_ETHER|IFM_10_5|IFM_FDX,
+	IFM_ETHER | IFM_AUTO,
+	IFM_ETHER | IFM_AUTO | IFM_FDX,
+	IFM_ETHER | IFM_10_T,
+	IFM_ETHER | IFM_10_T | IFM_FDX,
+	IFM_ETHER | IFM_10_5,
+	IFM_ETHER | IFM_10_5 | IFM_FDX,
 };
 
 static void
@@ -138,7 +138,7 @@ le_pci_rdcsr(struct lance_softc *sc, uint16_t port)
 
 	bus_space_write_2(iot, ioh, lesc->sc_rap, port);
 	val = bus_space_read_2(iot, ioh, lesc->sc_rdp);
-	return (val);
+	return val;
 }
 
 static int
@@ -153,14 +153,14 @@ le_pci_mediachange(struct lance_softc *sc)
 	if (IFM_SUBTYPE(newmedia) !=
 	    IFM_SUBTYPE(lesc->sc_currentmedia)) {
 		if (IFM_SUBTYPE(newmedia) == IFM_AUTO) {
-			/* switch to autoselect - BCR2 bit 1 */
+			/* Switch to autoselect - BCR2 bit 1 */
 			bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 2);
 			reg = bus_space_read_2(iot, ioh, PCNET_PCI_BDP);
 			reg |= 2;
 			bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 2);
 			bus_space_write_2(iot, ioh, PCNET_PCI_BDP, reg);
 		} else {
-			/* force media type (in init block) */
+			/* Force media type (in init block) */
 			lance_reset(sc);
 			if (IFM_SUBTYPE(newmedia) == IFM_10_T)
 				sc->sc_initmodemedia = 1; /* UTP */
@@ -169,7 +169,7 @@ le_pci_mediachange(struct lance_softc *sc)
 			lance_init(&sc->sc_ethercom.ec_if);
 
 			if (IFM_SUBTYPE(lesc->sc_currentmedia) == IFM_AUTO) {
-				/* take away autoselect - BCR2 bit 1 */
+				/* Take away autoselect - BCR2 bit 1 */
 				bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 2);
 				reg = bus_space_read_2(iot, ioh, PCNET_PCI_BDP);
 				reg &= ~2;
@@ -182,13 +182,15 @@ le_pci_mediachange(struct lance_softc *sc)
 
 	if ((IFM_OPTIONS(newmedia) ^ IFM_OPTIONS(lesc->sc_currentmedia))
 	    & IFM_FDX) {
-		/* toggle full duplex - BCR9 */
+		/* Toggle full duplex - BCR9 */
 		bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 9);
 		reg = bus_space_read_2(iot, ioh, PCNET_PCI_BDP);
 		if (IFM_OPTIONS(newmedia) & IFM_FDX) {
 			reg |= 1; /* FDEN */
-			/* allow FDX on AUI only if explicitly chosen,
-			 not in autoselect mode */
+			/*
+			 * Allow FDX on AUI only if explicitly chosen, not in
+			 * autoselect mode
+			 */
 			if (IFM_SUBTYPE(newmedia) == IFM_10_5)
 				reg |= 2; /* AUIFD */
 			else
@@ -200,7 +202,7 @@ le_pci_mediachange(struct lance_softc *sc)
 	}
 
 	lesc->sc_currentmedia = newmedia;
-	return (0);
+	return 0;
 }
 
 static int
@@ -209,14 +211,14 @@ le_pci_match(device_t parent, cfdata_t cf, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_AMD)
-		return (0);
+		return 0;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_PCNET_PCI:
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -257,9 +259,7 @@ le_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/*
-	 * Extract the physical MAC address from the ROM.
-	 */
+	/* Extract the physical MAC address from the ROM. */
 	for (i = 0; i < sizeof(sc->sc_enaddr); i++)
 		sc->sc_enaddr[i] = bus_space_read_1(iot, ioh, i);
 
@@ -267,9 +267,7 @@ le_pci_attach(device_t parent, device_t self, void *aux)
 	lesc->sc_ioh = ioh;
 	lesc->sc_dmat = dmat;
 
-	/*
-	 * Allocate a DMA area for the card.
-	 */
+	/* Allocate a DMA area for the card. */
 	if (bus_dmamem_alloc(dmat, LE_PCI_MEMSIZE, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT)) {
 		aprint_error_dev(self, "couldn't allocate memory for card\n");
@@ -282,9 +280,7 @@ le_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/*
-	 * Create and load the DMA map for the DMA area.
-	 */
+	/* Create and load the DMA map for the DMA area. */
 	if (bus_dmamap_create(dmat, LE_PCI_MEMSIZE, 1,
 	    LE_PCI_MEMSIZE, 0, BUS_DMA_NOWAIT, &lesc->sc_dmam)) {
 		aprint_error_dev(self, "couldn't create DMA map\n");
@@ -313,7 +309,7 @@ le_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hwinit = NULL;
 
 	sc->sc_supmedia = le_pci_supmedia;
-	sc->sc_nsupmedia = sizeof(le_pci_supmedia) / sizeof(int);
+	sc->sc_nsupmedia = __arraycount(le_pci_supmedia);
 	sc->sc_defaultmedia = le_pci_supmedia[0];
 	sc->sc_mediachange = le_pci_mediachange;
 	lesc->sc_currentmedia = le_pci_supmedia[0];

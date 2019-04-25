@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.16 2014/03/24 18:50:31 christos Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.17 2019/04/25 10:08:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.16 2014/03/24 18:50:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.17 2019/04/25 10:08:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.16 2014/03/24 18:50:31 christos Exp
  * the on-board interface
  */
 struct ieob {
-	u_char  obctrl;
+	u_char	obctrl;
 };
 #define IEOB_NORSET 0x80	/* don't reset the board */
 #define IEOB_ONAIR  0x40	/* put us on the air */
@@ -130,14 +130,14 @@ CFATTACH_DECL_NEW(ie_obio, sizeof(struct ie_softc),
 /* Supported media */
 static int media[] = {
 	IFM_ETHER | IFM_10_2,
-};      
-#define NMEDIA	(sizeof(media) / sizeof(media[0]))
+};
+#define NMEDIA	__arraycount(media)
 
 
 /*
  * OBIO ie support routines
  */
-void 
+void
 ie_obreset(struct ie_softc *sc, int what)
 {
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
@@ -145,7 +145,7 @@ ie_obreset(struct ie_softc *sc, int what)
 	delay(100);			/* XXX could be shorter? */
 	ieo->obctrl = IEOB_NORSET;
 }
-void 
+void
 ie_obattend(struct ie_softc *sc, int why)
 {
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
@@ -154,7 +154,7 @@ ie_obattend(struct ie_softc *sc, int why)
 	ieo->obctrl &= ~IEOB_ATTEN;	/* down. */
 }
 
-void 
+void
 ie_obrun(struct ie_softc *sc)
 {
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
@@ -168,18 +168,20 @@ void ie_obio_memcopyout(struct ie_softc *, const void *, int, size_t);
 /*
  * Copy board memory to kernel.
  */
-void 
+void
 ie_obio_memcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 {
+
 	bus_space_copyin(sc->bt, sc->bh, offset, p, size);
 }
 
 /*
  * Copy from kernel space to naord memory.
  */
-void 
+void
 ie_obio_memcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 {
+
 	bus_space_copyout(sc->bt, sc->bh, offset, p, size);
 }
 
@@ -189,21 +191,23 @@ uint16_t ie_obio_read16(struct ie_softc *, int);
 void ie_obio_write16(struct ie_softc *, int, uint16_t);
 void ie_obio_write24(struct ie_softc *, int, int);
 
-uint16_t 
+uint16_t
 ie_obio_read16(struct ie_softc *sc, int offset)
 {
 	uint16_t v = bus_space_read_2(sc->bt, sc->bh, offset);
+
 	return (((v&0xff)<<8) | ((v>>8)&0xff));
 }
 
-void 
+void
 ie_obio_write16(struct ie_softc *sc, int offset, uint16_t v)
 {
+
 	v = (((v&0xff)<<8) | ((v>>8)&0xff));
 	bus_space_write_2(sc->bt, sc->bh, offset, v);
 }
 
-void 
+void
 ie_obio_write24(struct ie_softc *sc, int offset, int addr)
 {
 	u_char *f = (u_char *)&addr;
@@ -219,7 +223,7 @@ ie_obio_write24(struct ie_softc *sc, int offset, int addr)
 	bus_space_write_2(sc->bt, sc->bh, offset+2, v1);
 }
 
-int 
+int
 ie_obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obio_attach_args *oba = aux;
@@ -229,27 +233,27 @@ ie_obio_match(device_t parent, cfdata_t cf, void *aux)
 
 	/* No default obio address. */
 	if (oba->oba_paddr == -1)
-		return(0);
-        
+		return 0;
+
 	/* Make sure there is something there... */
-	if (bus_space_map(oba->oba_bustag, oba->oba_paddr, sizeof(struct ieob), 
-			  0, &bh))
-		return (0);
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
+	    sizeof(struct ieob), 0, &bh))
+		return 0;
 	matched = (!bus_space_poke_1(oba->oba_bustag, bh, 0, IEOB_NORSET) &&
 		!bus_space_peek_1(oba->oba_bustag, bh, 0, &ctrl) &&
 		(ctrl & (IEOB_ONAIR|IEOB_IENAB)) == 0);
 	bus_space_unmap(oba->oba_bustag, bh, sizeof(struct ieob));
 	if (!matched)
-		return (0);
+		return 0;
 
 	/* Default interrupt priority. */
 	if (oba->oba_pri == -1)
 		oba->oba_pri = 3;
 
-	return (1);
+	return 1;
 }
 
-void 
+void
 ie_obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct obio_attach_args *oba = aux;
@@ -280,7 +284,7 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_msize = memsize = 65536; /* XXX */
 
 	if (bus_space_map(oba->oba_bustag, oba->oba_paddr, sizeof(struct ieob),
-  			0, &bh))
+			0, &bh))
 		panic("ie_obio_attach: can't map regs");
 	sc->sc_reg = (void *)bh;
 
@@ -288,15 +292,13 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 	 * Allocate control & buffer memory.
 	 */
 	if ((error = bus_dmamap_create(dmatag, memsize, 1, memsize, 0,
-					BUS_DMA_NOWAIT|BUS_DMA_24BIT,
-					&sc->sc_dmamap)) != 0) {
+	    BUS_DMA_NOWAIT|BUS_DMA_24BIT, &sc->sc_dmamap)) != 0) {
 		printf("%s: DMA map create error %d\n",
 			device_xname(self), error);
 		return;
 	}
 	if ((error = bus_dmamem_alloc(dmatag, memsize, 64*1024, 0,
-			     &seg, 1, &rseg,
-			     BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
 		printf("%s: DMA memory allocation error %d\n",
 			device_xname(self), error);
 		return;
@@ -304,8 +306,7 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 
 	/* Map DMA buffer in CPU addressable space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, memsize,
-				    (void **)&sc->sc_maddr,
-				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    (void **)&sc->sc_maddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map error %d\n",
 			device_xname(self), error);
 		bus_dmamem_free(dmatag, &seg, rseg);
@@ -314,8 +315,7 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 
 	/* Load the segment */
 	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
-				     sc->sc_maddr, memsize, NULL,
-				     BUS_DMA_NOWAIT)) != 0) {
+	    sc->sc_maddr, memsize, NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer map load error %d\n",
 			device_xname(self), error);
 		bus_dmamem_unmap(dmatag, sc->sc_maddr, memsize);

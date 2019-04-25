@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.16 2014/06/16 16:48:16 msaitoh Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.17 2019/04/25 10:08:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.16 2014/06/16 16:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.17 2019/04/25 10:08:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,14 +66,14 @@ rtl80x9_mediachange(struct dp8390_softc *dsc)
 	 * set up in ne_pci_rtl8029_init_card() called via dp8390_init().
 	 */
 	dp8390_reset(dsc);
-	return (0);
+	return 0;
 }
 
 void
 rtl80x9_mediastatus(struct dp8390_softc *sc, struct ifmediareq *ifmr)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	u_int8_t cr_proto = sc->cr_proto |
+	uint8_t cr_proto = sc->cr_proto |
 	    ((ifp->if_flags & IFF_RUNNING) ? ED_CR_STA : ED_CR_STP);
 
 	/*
@@ -86,9 +86,9 @@ rtl80x9_mediastatus(struct dp8390_softc *sc, struct ifmediareq *ifmr)
 
 	if (NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG0) &
 	    RTL3_CONFIG0_BNC)
-		ifmr->ifm_active = IFM_ETHER|IFM_10_2;
+		ifmr->ifm_active = IFM_ETHER | IFM_10_2;
 	else {
-		ifmr->ifm_active = IFM_ETHER|IFM_10_T;
+		ifmr->ifm_active = IFM_ETHER | IFM_10_T;
 		if (NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3) &
 		    RTL3_CONFIG3_FUDUP)
 			ifmr->ifm_active |= IFM_FDX;
@@ -105,14 +105,14 @@ rtl80x9_init_card(struct dp8390_softc *sc)
 {
 	struct ifmedia *ifm = &sc->sc_media;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	u_int8_t cr_proto = sc->cr_proto |
+	uint8_t cr_proto = sc->cr_proto |
 	    ((ifp->if_flags & IFF_RUNNING) ? ED_CR_STA : ED_CR_STP);
-	u_int8_t reg;
+	uint8_t reg;
 
 	/* Set NIC to page 3 registers. */
 	NIC_PUT(sc->sc_regt, sc->sc_regh, ED_P0_CR, cr_proto | ED_CR_PAGE_3);
 
-	/* write enable config1-3. */
+	/* Write enable config1-3. */
 	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_EECR,
 	    RTL3_EECR_EEM1|RTL3_EECR_EEM0);
 
@@ -146,7 +146,7 @@ rtl80x9_init_card(struct dp8390_softc *sc)
 		reg &= ~RTL3_CONFIG3_FUDUP;
 	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3, reg);
 
-	/* write disable config1-3 */
+	/* Write disable config1-3 */
 	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_EECR, 0);
 
 	/* Set NIC to page 0 registers. */
@@ -157,16 +157,15 @@ void
 rtl80x9_media_init(struct dp8390_softc *sc)
 {
 	static int rtl80x9_media[] = {
-		IFM_ETHER|IFM_AUTO,
-		IFM_ETHER|IFM_10_T,
-		IFM_ETHER|IFM_10_T|IFM_FDX,
-		IFM_ETHER|IFM_10_2,
+		IFM_ETHER | IFM_AUTO,
+		IFM_ETHER | IFM_10_T,
+		IFM_ETHER | IFM_10_T|IFM_FDX,
+		IFM_ETHER | IFM_10_2,
 	};
-	static const int rtl80x9_nmedia =
-	    sizeof(rtl80x9_media) / sizeof(rtl80x9_media[0]);
+	static const int rtl80x9_nmedia = __arraycount(rtl80x9_media);
 
 	int i, defmedia;
-	u_int8_t conf2, conf3;
+	uint8_t conf2, conf3;
 
 	aprint_normal_dev(sc->sc_dev,
 	    "10base2, 10baseT, 10baseT-FDX, auto, default ");

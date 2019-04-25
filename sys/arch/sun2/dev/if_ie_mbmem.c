@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mbmem.c,v 1.11 2011/06/03 16:28:40 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_mbmem.c,v 1.12 2019/04/25 10:08:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -111,7 +111,7 @@
  *
  *	The page map to control where ram appears in the address space.
  *	We choose to have RAM start at 0 in the 24 bit address space.
- * 
+ *
  *	to get the phyiscal address of the board's RAM you must take the
  *	top 12 bits of the physical address of the register address and
  *	or in the 4 bits from the status word as bits 17-20 (remember that
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mbmem.c,v 1.11 2011/06/03 16:28:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mbmem.c,v 1.12 2019/04/25 10:08:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,8 +171,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_mbmem.c,v 1.11 2011/06/03 16:28:40 tsutsui Exp
  */
 #define IEMBMEM_PAGESIZE 1024	/* bytes */
 #define IEMBMEM_PAGSHIFT 10	/* bits */
-#define IEMBMEM_NPAGES   256	/* number of pages on chip */
-#define IEMBMEM_MAPSZ    1024	/* number of entries in the map */
+#define IEMBMEM_NPAGES	 256	/* number of pages on chip */
+#define IEMBMEM_MAPSZ	 1024	/* number of entries in the map */
 
 /*
  * PTE for the page map
@@ -219,8 +219,8 @@ struct iembmem {
 /* Supported media */
 static int media[] = {
 	IFM_ETHER | IFM_10_2,
-};      
-#define NMEDIA	(sizeof(media) / sizeof(media[0]))
+};
+#define NMEDIA	__arraycount(media)
 
 /*
  * the 3E board not supported (yet?)
@@ -252,7 +252,7 @@ CFATTACH_DECL_NEW(ie_mbmem, sizeof(struct ie_mbmem_softc),
 /*
  * MULTIBUS support routines
  */
-void 
+void
 ie_mbmemreset(struct ie_softc *sc, int what)
 {
 	struct ie_mbmem_softc *vsc = (struct ie_mbmem_softc *)sc;
@@ -261,18 +261,18 @@ ie_mbmemreset(struct ie_softc *sc, int what)
 	write_iev(vsc, status, 0);
 }
 
-void 
+void
 ie_mbmemattend(struct ie_softc *sc, int why)
 {
 	struct ie_mbmem_softc *vsc = (struct ie_mbmem_softc *)sc;
 
-	/* flag! */
+	/* Flag! */
 	write_iev(vsc, status, read_iev(vsc, status) | IEMBMEM_ATTEN);
-	/* down. */
+	/* Down. */
 	write_iev(vsc, status, read_iev(vsc, status) & ~IEMBMEM_ATTEN);
 }
 
-void 
+void
 ie_mbmemrun(struct ie_softc *sc)
 {
 	struct ie_mbmem_softc *vsc = (struct ie_mbmem_softc *)sc;
@@ -281,17 +281,15 @@ ie_mbmemrun(struct ie_softc *sc)
 		  | IEMBMEM_ONAIR | IEMBMEM_IENAB | IEMBMEM_PEINT);
 }
 
-int 
+int
 ie_mbmemintr(struct ie_softc *sc, int where)
 {
 	struct ie_mbmem_softc *vsc = (struct ie_mbmem_softc *)sc;
 
 	if (where != INTR_ENTER)
-		return (0);
+		return 0;
 
-        /*
-         * check for parity error
-         */
+	/* check for parity error */
 	if (read_iev(vsc, status) & IEMBMEM_PERR) {
 		printf("%s: parity error (ctrl 0x%x @ 0x%02x%04x)\n",
 		       device_xname(sc->sc_dev), read_iev(vsc, pectrl),
@@ -299,7 +297,7 @@ ie_mbmemintr(struct ie_softc *sc, int where)
 		       read_iev(vsc, peaddr));
 		write_iev(vsc, pectrl, read_iev(vsc, pectrl) | IEMBMEM_PARACK);
 	}
-	return (0);
+	return 0;
 }
 
 void ie_mbmemcopyin(struct ie_softc *, void *, int, size_t);
@@ -308,28 +306,30 @@ void ie_mbmemcopyout(struct ie_softc *, const void *, int, size_t);
 /*
  * Copy board memory to kernel.
  */
-void 
+void
 ie_mbmemcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 {
+
 	bus_space_copyin(sc->bt, sc->bh, offset, p, size);
 }
 
 /*
  * Copy from kernel space to board memory.
  */
-void 
+void
 ie_mbmemcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 {
+
 	bus_space_copyout(sc->bt, sc->bh, offset, p, size);
 }
 
-/* read a 16-bit value at BH offset */
+/* Read a 16-bit value at BH offset */
 uint16_t ie_mbmem_read16(struct ie_softc *, int offset);
-/* write a 16-bit value at BH offset */
+/* Write a 16-bit value at BH offset */
 void ie_mbmem_write16(struct ie_softc *, int offset, uint16_t value);
 void ie_mbmem_write24(struct ie_softc *, int offset, int addr);
 
-uint16_t 
+uint16_t
 ie_mbmem_read16(struct ie_softc *sc, int offset)
 {
 	uint16_t v;
@@ -339,7 +339,7 @@ ie_mbmem_read16(struct ie_softc *sc, int offset)
 	return (((v&0xff)<<8) | ((v>>8)&0xff));
 }
 
-void 
+void
 ie_mbmem_write16(struct ie_softc *sc, int offset, uint16_t v)
 {
 	int v0 = ((((v)&0xff)<<8) | (((v)>>8)&0xff));
@@ -348,7 +348,7 @@ ie_mbmem_write16(struct ie_softc *sc, int offset, uint16_t v)
 	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
 }
 
-void 
+void
 ie_mbmem_write24(struct ie_softc *sc, int offset, int addr)
 {
 	u_char *f = (u_char *)&addr;
@@ -366,7 +366,7 @@ ie_mbmem_write24(struct ie_softc *sc, int offset, int addr)
 	bus_space_barrier(sc->bt, sc->bh, offset, 4, BUS_SPACE_BARRIER_WRITE);
 }
 
-int 
+int
 ie_mbmem_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mbmem_attach_args *mbma = aux;
@@ -375,25 +375,25 @@ ie_mbmem_match(device_t parent, cfdata_t cf, void *aux)
 
 	/* No default Multibus address. */
 	if (mbma->mbma_paddr == -1)
-		return(0);
+		return 0;
 
 	/* Make sure there is something there... */
-	if (bus_space_map(mbma->mbma_bustag, mbma->mbma_paddr, sizeof(struct iembmem), 
-			  0, &bh))
-		return (0);
+	if (bus_space_map(mbma->mbma_bustag, mbma->mbma_paddr,
+	    sizeof(struct iembmem), 0, &bh))
+		return 0;
 	matched = (bus_space_peek_2(mbma->mbma_bustag, bh, 0, NULL) == 0);
 	bus_space_unmap(mbma->mbma_bustag, bh, sizeof(struct iembmem));
 	if (!matched)
-		return (0);
+		return 0;
 
 	/* Default interrupt priority. */
 	if (mbma->mbma_pri == -1)
 		mbma->mbma_pri = 3;
 
-	return (1);
+	return 1;
 }
 
-void 
+void
 ie_mbmem_attach(device_t parent, device_t self, void *aux)
 {
 	uint8_t myaddr[ETHER_ADDR_LEN];
@@ -427,8 +427,8 @@ ie_mbmem_attach(device_t parent, device_t self, void *aux)
 
 	/* Map in the board control regs. */
 	vsc->ievt = mbma->mbma_bustag;
-	if (bus_space_map(mbma->mbma_bustag, mbma->mbma_paddr, sizeof(struct iembmem), 
-			  0, &vsc->ievh))
+	if (bus_space_map(mbma->mbma_bustag, mbma->mbma_paddr,
+	    sizeof(struct iembmem), 0, &vsc->ievh))
 		panic("ie_mbmem_attach: can't map regs");
 
 	/*
@@ -449,8 +449,10 @@ ie_mbmem_attach(device_t parent, device_t self, void *aux)
 	 * which is mapped at zero and at high address (for scp)
 	 */
 	for (lcv = 0; lcv < IEMBMEM_MAPSZ - 1; lcv++)
-		write_iev(vsc, pgmap[lcv], IEMBMEM_SBORDR | IEMBMEM_OBMEM | lcv);
-	write_iev(vsc, pgmap[IEMBMEM_MAPSZ - 1], IEMBMEM_SBORDR | IEMBMEM_OBMEM | 0);
+		write_iev(vsc, pgmap[lcv],
+		    IEMBMEM_SBORDR | IEMBMEM_OBMEM | lcv);
+	write_iev(vsc, pgmap[IEMBMEM_MAPSZ - 1],
+	    IEMBMEM_SBORDR | IEMBMEM_OBMEM | 0);
 
 	/* Clear all ram */
 	bus_space_set_region_2(sc->bt, sc->bh, 0, 0, memsize/2);
@@ -479,9 +481,7 @@ ie_mbmem_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/*
-	 * Rest of first page is unused; rest of ram for buffers.
-	 */
+	/* Rest of first page is unused; rest of ram for buffers. */
 	sc->buf_area = IEMBMEM_PAGESIZE;
 	sc->buf_area_sz = memsize - IEMBMEM_PAGESIZE;
 
@@ -495,5 +495,5 @@ ie_mbmem_attach(device_t parent, device_t self, void *aux)
 	i82586_attach(sc, "multibus", myaddr, media, NMEDIA, media[0]);
 
 	bus_intr_establish(mbma->mbma_bustag, mbma->mbma_pri, IPL_NET, 0,
-			   i82586_intr, sc);
+	    i82586_intr, sc);
 }

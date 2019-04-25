@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.42 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.43 2019/04/25 10:08:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -147,7 +147,7 @@
 **
 **     Revision 1.13  1997/05/22  21:06:54  cgd
 **     redo cs_copy_tx_frame() from scratch.  It had a fatal flaw: it was blindly
-**     casting from u_int8_t * to u_int16_t * without worrying about alignment
+**     casting from uint8_t * to uint16_t * without worrying about alignment
 **     issues.  This would cause bogus data to be spit out for mbufs with
 **     misaligned data.  For instance, it caused the following bits to appear
 **     on the wire:
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.42 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.43 2019/04/25 10:08:45 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -263,16 +263,16 @@ static int	cs_reset_chip(struct cs_softc *);
 static void	cs_reset(struct cs_softc *);
 static int	cs_ioctl(struct ifnet *, u_long, void *);
 static void	cs_initChip(struct cs_softc *);
-static void	cs_buffer_event(struct cs_softc *, u_int16_t);
-static void	cs_transmit_event(struct cs_softc *, u_int16_t);
-static void	cs_receive_event(struct cs_softc *, u_int16_t);
+static void	cs_buffer_event(struct cs_softc *, uint16_t);
+static void	cs_transmit_event(struct cs_softc *, uint16_t);
+static void	cs_receive_event(struct cs_softc *, uint16_t);
 static void	cs_process_receive(struct cs_softc *);
 static void	cs_process_rx_early(struct cs_softc *);
 static void	cs_start_output(struct ifnet *);
 static void	cs_copy_tx_frame(struct cs_softc *, struct mbuf *);
 static void	cs_set_ladr_filt(struct cs_softc *, struct ethercom *);
-static u_int16_t cs_hash_index(char *);
-static void	cs_counter_event(struct cs_softc *, u_int16_t);
+static uint16_t cs_hash_index(char *);
+static void	cs_counter_event(struct cs_softc *, uint16_t);
 
 static int	cs_mediachange(struct ifnet *);
 static void	cs_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -282,7 +282,7 @@ static int cs_enable(struct cs_softc *);
 static void cs_disable(struct cs_softc *);
 static void cs_stop(struct ifnet *, int);
 static int cs_scan_eeprom(struct cs_softc *);
-static int cs_read_pktpg_from_eeprom(struct cs_softc *, int, u_int16_t *);
+static int cs_read_pktpg_from_eeprom(struct cs_softc *, int, uint16_t *);
 
 
 /*
@@ -307,10 +307,10 @@ static int cs_read_pktpg_from_eeprom(struct cs_softc *, int, u_int16_t *);
  * transmittion underrun occurs.
  */
 struct cs_xmit_early {
-	u_int16_t       txcmd;
-	int             better;
-	int             better_count;
-	int             worse;
+	uint16_t	txcmd;
+	int		better;
+	int		better_count;
+	int		worse;
 } cs_xmit_early_table[3] = {
 	{ TX_CMD_START_381,	0,	INT_MAX,	1, },
 	{ TX_CMD_START_1021,	0,	50000,		2, },
@@ -318,31 +318,30 @@ struct cs_xmit_early {
 };
 
 int cs_default_media[] = {
-	IFM_ETHER|IFM_10_2,
-	IFM_ETHER|IFM_10_5,
-	IFM_ETHER|IFM_10_T,
-	IFM_ETHER|IFM_10_T|IFM_FDX,
+	IFM_ETHER | IFM_10_2,
+	IFM_ETHER | IFM_10_5,
+	IFM_ETHER | IFM_10_T,
+	IFM_ETHER | IFM_10_T | IFM_FDX,
 };
-int cs_default_nmedia = sizeof(cs_default_media) / sizeof(cs_default_media[0]);
+int cs_default_nmedia = __arraycount(cs_default_media);
 
 int
-cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
+cs_attach(struct cs_softc *sc, uint8_t *enaddr, int *media,
 	  int nmedia, int defmedia)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	const char *chipname, *medname;
-	u_int16_t reg;
+	uint16_t reg;
 	int i;
 
 	/* Start out in IO mode */
 	sc->sc_memorymode = FALSE;
 
-	/* make sure we're right */
+	/* Make sure we're right */
 	for (i = 0; i < 10000; i++) {
 		reg = CS_READ_PACKET_PAGE(sc, PKTPG_EISA_NUM);
-		if (reg == EISA_NUM_CRYSTAL) {
+		if (reg == EISA_NUM_CRYSTAL)
 			break;
-		}
 	}
 	if (i == 10000) {
 		aprint_error_dev(sc->sc_dev, "wrong id(0x%x)\n", reg);
@@ -368,17 +367,16 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	}
 
 	/*
-	 * the first thing to do is check that the mbuf cluster size is
+	 * The first thing to do is check that the mbuf cluster size is
 	 * greater than the MTU for an ethernet frame. The code depends on
 	 * this and to port this to a OS where this was not the case would
 	 * not be straightforward.
 	 *
-	 * we need 1 byte spare because our
-	 * packet read loop can overrun.
+	 * We need 1 byte spare because our packet read loop can overrun.
 	 * and we may need pad bytes to align ip header.
 	 */
-	if (MCLBYTES < ETHER_MAX_LEN + 1 +
-		ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header)) {
+	if (MCLBYTES < ETHER_MAX_LEN + 1 + ALIGN(sizeof(struct ether_header))
+	    - sizeof(struct ether_header)) {
 		printf("%s: MCLBYTES too small for Ethernet frame\n",
 		    device_xname(sc->sc_dev));
 		return 1;
@@ -398,7 +396,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	ifp->if_init = cs_init;
 	ifp->if_ioctl = cs_ioctl;
 	ifp->if_stop = cs_stop;
-	ifp->if_watchdog = NULL;	/* no watchdog at this stage */
+	ifp->if_watchdog = NULL;	/* No watchdog at this stage */
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -418,8 +416,12 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 
 	if (sc->sc_cfgflags & CFGFLG_PARSE_EEPROM) {
 		if (cs_scan_eeprom(sc) == CS_ERROR) {
-			/* failed to scan the eeprom, pretend there isn't an eeprom */
-			aprint_error_dev(sc->sc_dev, "unable to scan EEPROM\n");
+			/*
+			 * Failed to scan the eeprom, pretend there isn't an
+			 * eeprom
+			 */
+			aprint_error_dev(sc->sc_dev,
+			    "unable to scan EEPROM\n");
 			sc->sc_cfgflags |= CFGFLG_NOT_EEPROM;
 		}
 	}
@@ -520,12 +522,12 @@ cs_detach(struct cs_softc *sc)
 	}
 
 #if 0
-	/*
-	 * XXX not necessary
-	 */
+	/* XXX not necessary */
 	if (sc->sc_cfgflags & CFGFLG_DMA_MODE) {
-		isa_dmamem_unmap(sc->sc_ic, sc->sc_drq, sc->sc_dmabase, sc->sc_dmasize);
-		isa_dmamem_free(sc->sc_ic, sc->sc_drq, sc->sc_dmaaddr, sc->sc_dmasize);
+		isa_dmamem_unmap(sc->sc_ic, sc->sc_drq, sc->sc_dmabase,
+		    sc->sc_dmasize);
+		isa_dmamem_free(sc->sc_ic, sc->sc_drq, sc->sc_dmaaddr,
+		    sc->sc_dmasize);
 		isa_dmamap_destroy(sc->sc_ic, sc->sc_drq);
 		sc->sc_cfgflags &= ~CFGFLG_DMA_MODE;
 	}
@@ -550,7 +552,7 @@ cs_shutdown(device_t self, int howto)
 void
 cs_get_default_media(struct cs_softc *sc)
 {
-	u_int16_t adp_cfg, xmit_ctl;
+	uint16_t adp_cfg, xmit_ctl;
 
 	if (cs_verify_eeprom(sc) == CS_ERROR) {
 		aprint_error_dev(sc->sc_dev,
@@ -606,44 +608,44 @@ cs_get_default_media(struct cs_softc *sc)
 int
 cs_scan_eeprom(struct cs_softc *sc)
 {
-	u_int16_t result;
+	uint16_t result;
 	int	i;
 	int	eeprom_size;
-	u_int8_t checksum = 0;
+	uint8_t checksum = 0;
 
 	if (cs_verify_eeprom(sc) == CS_ERROR) {
 		aprint_error_dev(sc->sc_dev,
 		    "cs_scan_params: EEPROM missing or bad\n");
-		return (CS_ERROR);
+		return CS_ERROR;
 	}
 
 	/*
-	 * read the 0th word from the eeprom, it will tell us the length
+	 * Read the 0th word from the eeprom, it will tell us the length
 	 * and if the eeprom is valid
 	 */
 	cs_read_eeprom(sc, 0, &result);
 
-	/* check the eeprom signature */
+	/* Check the eeprom signature */
 	if ((result & 0xE000) != 0xA000) {
-		/* empty eeprom */
-		return (CS_ERROR);
+		/* Empty eeprom */
+		return CS_ERROR;
 	}
 
 	/*
-	 * take the eeprom size (note the read value doesn't include the header
+	 * Take the eeprom size (note the read value doesn't include the header
 	 * word)
 	 */
 	eeprom_size = (result & 0xff) + 2;
 
 	sc->eeprom_data = malloc(eeprom_size, M_DEVBUF, M_WAITOK);
 	if (sc->eeprom_data == NULL) {
-		/* no memory, treat this as if there's no eeprom */
-		return (CS_ERROR);
+		/* No memory, treat this as if there's no eeprom */
+		return CS_ERROR;
 	}
 
 	sc->eeprom_size = eeprom_size;
 
-	/* read the eeprom into the buffer, also calculate the checksum  */
+	/* Read the eeprom into the buffer, also calculate the checksum	 */
 	for (i = 0; i < (eeprom_size >> 1); i++) {
 		cs_read_eeprom(sc, i, &(sc->eeprom_data[i]));
 		checksum += (sc->eeprom_data[i] & 0xff00) >> 8;
@@ -651,26 +653,26 @@ cs_scan_eeprom(struct cs_softc *sc)
 	}
 
 	/*
-	 * validate checksum calculation, the sum of all the bytes should be 0,
+	 * Validate checksum calculation, the sum of all the bytes should be 0,
 	 * as the high byte of the last word is the 2's complement of the
 	 * sum to that point.
 	 */
 	if (checksum != 0) {
 		aprint_error_dev(sc->sc_dev, "eeprom checksum failure\n");
-		return (CS_ERROR);
+		return CS_ERROR;
 	}
 
-	return (CS_OK);
+	return CS_OK;
 }
 
 static int
-cs_read_pktpg_from_eeprom(struct cs_softc *sc, int pktpg, u_int16_t *pValue)
+cs_read_pktpg_from_eeprom(struct cs_softc *sc, int pktpg, uint16_t *pValue)
 {
 	int x, maxword;
 
 	/* Check that we have eeprom data */
 	if ((sc->eeprom_data == NULL) || (sc->eeprom_size < 2))
-		return (CS_ERROR);
+		return CS_ERROR;
 
 	/*
 	 * We only want to read the data words, the last word contains the
@@ -678,21 +680,21 @@ cs_read_pktpg_from_eeprom(struct cs_softc *sc, int pktpg, u_int16_t *pValue)
 	 */
 	maxword = (sc->eeprom_size - 2) >> 1;
 
-	/* start 1 word in, as the first word is the length and signature */
+	/* Start 1 word in, as the first word is the length and signature */
 	x = 1;
 
 	while ( x < (maxword)) {
-		u_int16_t header;
+		uint16_t header;
 		int group_size;
 		int offset;
 		int offset_max;
 
-		/* read in the group header word */
+		/* Read in the group header word */
 		header = sc->eeprom_data[x];
-		x++;	/* skip group header */
+		x++;	/* Skip group header */
 
 		/*
-		 * size of group in words is in the top 4 bits, note that it
+		 * Size of group in words is in the top 4 bits, note that it
 		 * is one less than the number of words
 		 */
 		group_size = header & 0xF000;
@@ -703,56 +705,62 @@ cs_read_pktpg_from_eeprom(struct cs_softc *sc, int pktpg, u_int16_t *pValue)
 		 * perhaps the 8920 allows higher offsets, otherwise
 		 * it's writing to places that it shouldn't
 		 */
-		/* work out the offsets this group covers */
+		/* Work out the offsets this group covers */
 		offset = header & 0x0FFF;
 		offset_max = offset + (group_size << 1);
 
-		/* check if the pkgpg we're after is in this group */
+		/* Check if the pkgpg we're after is in this group */
 		if ((offset <= pktpg) && (pktpg <= offset_max)) {
-			/* the pkgpg value we want is in here */
+			/* The pkgpg value we want is in here */
 			int eeprom_location;
 
 			eeprom_location = ((pktpg - offset) >> 1) ;
 
 			*pValue = sc->eeprom_data[x + eeprom_location];
-			return (CS_OK);
+			return CS_OK;
 		} else {
-			/* skip this group (+ 1 for first entry) */
+			/* Skip this group (+ 1 for first entry) */
 			x += group_size + 1;
 		}
 	}
 
 	/*
-	 * if we've fallen out here then we don't have a value in the EEPROM
+	 * If we've fallen out here then we don't have a value in the EEPROM
 	 * for this pktpg so return an error
 	 */
-	return (CS_ERROR);
+	return CS_ERROR;
 }
 
 int
 cs_get_params(struct cs_softc *sc)
 {
-	u_int16_t isaConfig;
-	u_int16_t adapterConfig;
+	uint16_t isaConfig;
+	uint16_t adapterConfig;
 
 	if (cs_verify_eeprom(sc) == CS_ERROR) {
 		aprint_error_dev(sc->sc_dev,
 		    "cs_get_params: EEPROM missing or bad\n");
-		return (CS_ERROR);
+		return CS_ERROR;
 	}
 
 	if (sc->sc_cfgflags & CFGFLG_PARSE_EEPROM) {
 		/* Get ISA configuration from the EEPROM */
 		if (cs_read_pktpg_from_eeprom(sc, PKTPG_BUS_CTL, &isaConfig)
-			       	== CS_ERROR) {
-			/* eeprom doesn't have this value, use data sheet default */
+		    == CS_ERROR) {
+			/*
+			 * Eeprom doesn't have this value, use data sheet
+			 * default
+			 */
 			isaConfig = 0x0017;
 		}
 
 		/* Get adapter configuration from the EEPROM */
-		if (cs_read_pktpg_from_eeprom(sc, PKTPG_SELF_CTL, &adapterConfig)
-				== CS_ERROR) {
-			/* eeprom doesn't have this value, use data sheet default */
+		if (cs_read_pktpg_from_eeprom(sc, PKTPG_SELF_CTL,
+		    &adapterConfig) == CS_ERROR) {
+			/*
+			 * Eeprom doesn't have this value, use data sheet
+			 * default
+			 */
 			adapterConfig = 0x0015;
 		}
 
@@ -773,7 +781,8 @@ cs_get_params(struct cs_softc *sc)
 			goto eeprom_bad;
 
 		/* Get adapter configuration from the EEPROM */
-		if (cs_read_eeprom(sc, EEPROM_ADPTR_CFG, &adapterConfig) == CS_ERROR)
+		if (cs_read_eeprom(sc, EEPROM_ADPTR_CFG, &adapterConfig)
+		    == CS_ERROR)
 			goto eeprom_bad;
 
 		/* Copy the USE_SA flag */
@@ -789,11 +798,11 @@ cs_get_params(struct cs_softc *sc)
 			sc->sc_cfgflags |= CFGFLG_DCDC_POL;
 	}
 
-	return (CS_OK);
+	return CS_OK;
 eeprom_bad:
 	aprint_error_dev(sc->sc_dev,
 	    "cs_get_params: unable to read from EEPROM\n");
-	return (CS_ERROR);
+	return CS_ERROR;
 }
 
 int
@@ -805,7 +814,7 @@ cs_get_enaddr(struct cs_softc *sc)
 	if (cs_verify_eeprom(sc) == CS_ERROR) {
 		aprint_error_dev(sc->sc_dev,
 		    "cs_get_enaddr: EEPROM missing or bad\n");
-		return (CS_ERROR);
+		return CS_ERROR;
 	}
 
 	/* Get Ethernet address from the EEPROM */
@@ -833,12 +842,12 @@ cs_get_enaddr(struct cs_softc *sc)
 		sc->sc_enaddr[i * 2 + 1] = myea[i] >> 8;
 	}
 
-	return (CS_OK);
+	return CS_OK;
 
  eeprom_bad:
 	aprint_error_dev(sc->sc_dev,
 	    "cs_get_enaddr: unable to read from EEPROM\n");
-	return (CS_ERROR);
+	return CS_ERROR;
 }
 
 int
@@ -871,7 +880,7 @@ cs_reset_chip(struct cs_softc *sc)
 	sc->sc_txbusy = FALSE;
 
 	/*
-	 * there was a delay(125); here, but it seems uneccesary 125 usec is
+	 * There was a delay(125); here, but it seems uneccesary 125 usec is
 	 * 1/8000 of a second, not 1/8 of a second. the data sheet advises
 	 * 1/10 of a second here, but the SI_BUSY and INIT_DONE loops below
 	 * should be sufficient.
@@ -910,19 +919,19 @@ cs_reset_chip(struct cs_softc *sc)
 int
 cs_verify_eeprom(struct cs_softc *sc)
 {
-	u_int16_t self_status;
+	uint16_t self_status;
 
 	/* Verify that the EEPROM is present and OK */
 	self_status = CS_READ_PACKET_PAGE_IO(sc, PKTPG_SELF_ST);
 	if (((self_status & SELF_ST_EEP_PRES) &&
 	     (self_status & SELF_ST_EEP_OK)) == 0)
-		return (CS_ERROR);
+		return CS_ERROR;
 
-	return (CS_OK);
+	return CS_OK;
 }
 
 int
-cs_read_eeprom(struct cs_softc *sc, int offset, u_int16_t *pValue)
+cs_read_eeprom(struct cs_softc *sc, int offset, uint16_t *pValue)
 {
 	int x;
 
@@ -934,7 +943,7 @@ cs_read_eeprom(struct cs_softc *sc, int offset, u_int16_t *pValue)
 	}
 
 	if (x == MAXLOOP)
-		return (CS_ERROR);
+		return CS_ERROR;
 
 	/* Issue the command to read the offset within the EEPROM */
 	CS_WRITE_PACKET_PAGE_IO(sc, PKTPG_EEPROM_CMD,
@@ -948,21 +957,21 @@ cs_read_eeprom(struct cs_softc *sc, int offset, u_int16_t *pValue)
 	}
 
 	if (x == MAXLOOP)
-		return (CS_ERROR);
+		return CS_ERROR;
 
 	/* Get the EEPROM data from the EEPROM Data register */
 	*pValue = CS_READ_PACKET_PAGE_IO(sc, PKTPG_EEPROM_DATA);
 
-	return (CS_OK);
+	return CS_OK;
 }
 
 void
 cs_initChip(struct cs_softc *sc)
 {
-	u_int16_t busCtl;
-	u_int16_t selfCtl;
-	u_int16_t v;
-	u_int16_t isaId;
+	uint16_t busCtl;
+	uint16_t selfCtl;
+	uint16_t v;
+	uint16_t isaId;
 	int i;
 	int media = IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media);
 
@@ -999,9 +1008,7 @@ cs_initChip(struct cs_softc *sc)
 
 	/* If the media type is 10Base2 */
 	if (media == IFM_10_2) {
-		/*
-		 * Enable the DC/DC converter if it has a low enable.
-		 */
+		/* Enable the DC/DC converter if it has a low enable. */
 		if ((sc->sc_cfgflags & CFGFLG_DCDC_POL) == 0)
 			/*
 			 * Set the HCB1 bit, which causes the HC1 pin to go
@@ -1009,9 +1016,7 @@ cs_initChip(struct cs_softc *sc)
 			 */
 			selfCtl |= SELF_CTL_HCB1;
 	} else { /* Media type is 10BaseT or AUI */
-		/*
-		 * Disable the DC/DC converter if it has a high enable.
-		 */
+		/* Disable the DC/DC converter if it has a high enable. */
 		if ((sc->sc_cfgflags & CFGFLG_DCDC_POL) != 0) {
 			/*
 			 * Set the HCB1 bit, which causes the HC1 pin to go
@@ -1022,7 +1027,7 @@ cs_initChip(struct cs_softc *sc)
 	}
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_SELF_CTL, selfCtl);
 
-	/* enable normal link pulse */
+	/* Enable normal link pulse */
 	if (sc->sc_prodid == PROD_ID_CS8920 || sc->sc_prodid == PROD_ID_CS8920M)
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_AUTONEG_CTL, AUTOCTL_NLP_ENABLE);
 
@@ -1032,7 +1037,7 @@ cs_initChip(struct cs_softc *sc)
 
 	/* RX_CTL set in cs_set_ladr_filt(), below */
 
-	/* enable all transmission interrupts */
+	/* Enable all transmission interrupts */
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_TX_CFG, TX_CFG_ALL_IE);
 
 	/* Accept all receive interrupts */
@@ -1041,8 +1046,8 @@ cs_initChip(struct cs_softc *sc)
 	/*
 	 * Configure Operational Modes
 	 *
-	 * I have turned off the BUF_CFG_RX_MISS_IE, to speed things up, this is
-	 * a better way to do it because the card has a counter which can be
+	 * I have turned off the BUF_CFG_RX_MISS_IE, to speed things up, this
+	 * is a better way to do it because the card has a counter which can be
 	 * read to update the RX_MISS counter. This saves many interrupts.
 	 *
 	 * I have turned on the tx and rx overflow interrupts to counter using
@@ -1078,7 +1083,7 @@ cs_initChip(struct cs_softc *sc)
 		    sc->sc_pktpgaddr >> 16);
 		busCtl = BUS_CTL_MEM_MODE;
 
-		/* tell the chip to read the addresses off the SA pins */
+		/* Tell the chip to read the addresses off the SA pins */
 		if (sc->sc_cfgflags & CFGFLG_USE_SA) {
 			busCtl |= BUS_CTL_USE_SA;
 		}
@@ -1089,7 +1094,7 @@ cs_initChip(struct cs_softc *sc)
 		sc->sc_memorymode = TRUE;
 
 		/*
-		 * wait here (10ms) for the chip to swap over. this is the
+		 * Wait here (10ms) for the chip to swap over. this is the
 		 * maximum time that this could take.
 		 */
 		delay(10000);
@@ -1108,7 +1113,7 @@ cs_initChip(struct cs_softc *sc)
 			sc->sc_memorymode = FALSE;
 		} else {
 			/*
-			 * we are in memory mode so if we aren't using DMA,
+			 * We are in memory mode so if we aren't using DMA,
 			 * then program the chip to interrupt early.
 			 */
 			if ((sc->sc_cfgflags & CFGFLG_DMA_MODE) == 0) {
@@ -1130,18 +1135,18 @@ cs_initChip(struct cs_softc *sc)
 	if (sc->sc_irq != -1) {
 		/* Set the interrupt level in the chip */
 		if (sc->sc_prodid == PROD_ID_CS8900) {
-			if (sc->sc_irq == 5) {
+			if (sc->sc_irq == 5)
 				CS_WRITE_PACKET_PAGE(sc, PKTPG_INT_NUM, 3);
-			} else {
-				CS_WRITE_PACKET_PAGE(sc, PKTPG_INT_NUM, (sc->sc_irq) - 10);
-			}
-		}
-		else { /* CS8920 */
-			CS_WRITE_PACKET_PAGE(sc, PKTPG_8920_INT_NUM, sc->sc_irq);
+			else
+				CS_WRITE_PACKET_PAGE(sc, PKTPG_INT_NUM,
+				    (sc->sc_irq) - 10);
+		} else { /* CS8920 */
+			CS_WRITE_PACKET_PAGE(sc, PKTPG_8920_INT_NUM,
+			    sc->sc_irq);
 		}
 	}
 
-	/* write the multicast mask to the address filter register */
+	/* Write the multicast mask to the address filter register */
 	cs_set_ladr_filt(sc, &sc->sc_ethercom);
 
 	/* Enable reception and transmission of frames */
@@ -1190,9 +1195,8 @@ cs_init(struct ifnet *ifp)
 
 		/* Assume we have carrier until we are told otherwise. */
 		sc->sc_carrier = 1;
-	} else {
+	} else
 		aprint_error_dev(sc->sc_dev, "unable to reset chip\n");
-	}
 
 	splx(intState);
 out:
@@ -1207,18 +1211,18 @@ cs_set_ladr_filt(struct cs_softc *sc, struct ethercom *ec)
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	u_int16_t af[4];
-	u_int16_t port, mask, index;
+	uint16_t af[4];
+	uint16_t port, mask, index;
 
 	/*
-         * Set up multicast address filter by passing all multicast addresses
-         * through a crc generator, and then using the high order 6 bits as an
-         * index into the 64 bit logical address filter.  The high order bit
-         * selects the word, while the rest of the bits select the bit within
-         * the word.
-         */
+	 * Set up multicast address filter by passing all multicast addresses
+	 * through a crc generator, and then using the high order 6 bits as an
+	 * index into the 64 bit logical address filter.  The high order bit
+	 * selects the word, while the rest of the bits select the bit within
+	 * the word.
+	 */
 	if (ifp->if_flags & IFF_PROMISC) {
-		/* accept all valid frames. */
+		/* Accept all valid frames. */
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CTL,
 		    RX_CTL_PROMISC_A | RX_CTL_RX_OK_A |
 		    RX_CTL_IND_A | RX_CTL_BCAST_A | RX_CTL_MCAST_A);
@@ -1227,7 +1231,7 @@ cs_set_ladr_filt(struct cs_softc *sc, struct ethercom *ec)
 	}
 
 	/*
-	 * accept frames if a. crc valid, b. individual address match c.
+	 * Accept frames if a. crc valid, b. individual address match c.
 	 * broadcast address,and d. multicast addresses matched in the hash
 	 * filter
 	 */
@@ -1236,7 +1240,7 @@ cs_set_ladr_filt(struct cs_softc *sc, struct ethercom *ec)
 
 
 	/*
-	 * start off with all multicast flag clear, set it if we need to
+	 * Start off with all multicast flag clear, set it if we need to
 	 * later, otherwise we will leave it.
 	 */
 	ifp->if_flags &= ~IFF_ALLMULTI;
@@ -1252,33 +1256,33 @@ cs_set_ladr_filt(struct cs_softc *sc, struct ethercom *ec)
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof enm->enm_addrlo)) {
 			/*
-	                 * We must listen to a range of multicast addresses.
-	                 * For now, just accept all multicasts, rather than
-	                 * trying to set only those filter bits needed to match
-	                 * the range.  (At this time, the only use of address
-	                 * ranges is for IP multicast routing, for which the
-	                 * range is big enough to require all bits set.)
-	                 */
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
 			ifp->if_flags |= IFF_ALLMULTI;
 			af[0] = af[1] = af[2] = af[3] = 0xffff;
 			break;
 		} else {
 			/*
-	                 * we have got an individual address so just set that
-	                 * bit.
-	                 */
+			 * We have got an individual address so just set that
+			 * bit.
+			 */
 			index = cs_hash_index(enm->enm_addrlo);
 
 			/* Set the bit the Logical address filter. */
-			port = (u_int16_t) (index >> 4);
-			mask = (u_int16_t) (1 << (index & 0xf));
+			port = (uint16_t) (index >> 4);
+			mask = (uint16_t) (1 << (index & 0xf));
 			af[port] |= mask;
 
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}
 
-	/* now program the chip with the addresses */
+	/* Now program the chip with the addresses */
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_LOG_ADDR + 0, af[0]);
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_LOG_ADDR + 2, af[1]);
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_LOG_ADDR + 4, af[2]);
@@ -1286,7 +1290,7 @@ cs_set_ladr_filt(struct cs_softc *sc, struct ethercom *ec)
 	return;
 }
 
-u_int16_t
+uint16_t
 cs_hash_index(char *addr)
 {
 	uint32_t crc;
@@ -1295,7 +1299,7 @@ cs_hash_index(char *addr)
 	crc = ether_crc32_le(addr, ETHER_ADDR_LEN);
 
 	hash_code = crc >> 26;
-	return (hash_code);
+	return hash_code;
 }
 
 void
@@ -1319,7 +1323,7 @@ cs_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	state = splnet();
 
-	result = 0;		/* only set if something goes wrong */
+	result = 0;		/* Only set if something goes wrong */
 
 	switch (cmd) {
 	case SIOCGIFMEDIA:
@@ -1356,7 +1360,7 @@ cs_mediachange(struct ifnet *ifp)
 	 * to let the new value take hold.
 	 */
 	cs_init(ifp);
-	return (0);
+	return 0;
 }
 
 void
@@ -1364,9 +1368,7 @@ cs_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct cs_softc *sc = ifp->if_softc;
 
-	/*
-	 * The currently selected media is always the active media.
-	 */
+	/* The currently selected media is always the active media. */
 	ifmr->ifm_active = sc->sc_media.ifm_cur->ifm_media;
 
 	if (ifp->if_flags & IFF_UP) {
@@ -1381,8 +1383,8 @@ int
 cs_intr(void *arg)
 {
 	struct cs_softc *sc = arg;
-	u_int16_t Event;
-	u_int16_t rndEvent;
+	uint16_t Event;
+	uint16_t rndEvent;
 
 /*printf("cs_intr %p\n", sc);*/
 	/* Ignore any interrupts that happen while the chip is being reset */
@@ -1399,7 +1401,7 @@ cs_intr(void *arg)
 		Event = CS_READ_PORT(sc, PORT_ISQ);
 
 	if ((Event & REG_NUM_MASK) == 0 || Event == 0xffff)
-		return 0;	/* not ours */
+		return 0;	/* Not ours */
 
 	rndEvent = Event;
 
@@ -1439,21 +1441,19 @@ cs_intr(void *arg)
 }
 
 void
-cs_counter_event(struct cs_softc *sc, u_int16_t cntEvent)
+cs_counter_event(struct cs_softc *sc, uint16_t cntEvent)
 {
 	struct ifnet *ifp;
-	u_int16_t errorCount;
+	uint16_t errorCount;
 
 	ifp = &sc->sc_ethercom.ec_if;
 
 	switch (cntEvent & REG_NUM_MASK) {
 	case REG_NUM_TX_COL:
-		/*
-		 * the count should be read before an overflow occurs.
-		 */
+		/* The count should be read before an overflow occurs. */
 		errorCount = CS_READ_PACKET_PAGE(sc, PKTPG_TX_COL);
 		/*
-		 * the tramsit event routine always checks the number of
+		 * The tramsit event routine always checks the number of
 		 * collisions for any packet so we don't increment any
 		 * counters here, as they should already have been
 		 * considered.
@@ -1477,29 +1477,28 @@ cs_counter_event(struct cs_softc *sc, u_int16_t cntEvent)
 }
 
 void
-cs_buffer_event(struct cs_softc *sc, u_int16_t bufEvent)
+cs_buffer_event(struct cs_softc *sc, uint16_t bufEvent)
 {
 
 	/*
-	 * multiple events can be in the buffer event register at one time so
+	 * Multiple events can be in the buffer event register at one time so
 	 * a standard switch statement will not suffice, here every event
 	 * must be checked.
 	 */
 
 	/*
-	 * if 128 bits have been rxed by the time we get here, the dest event
+	 * If 128 bits have been rxed by the time we get here, the dest event
 	 * will be cleared and 128 event will be set.
 	 */
-	if ((bufEvent & (BUF_EVENT_RX_DEST | BUF_EVENT_RX_128)) != 0) {
+	if ((bufEvent & (BUF_EVENT_RX_DEST | BUF_EVENT_RX_128)) != 0)
 		cs_process_rx_early(sc);
-	}
 
 	if (bufEvent & BUF_EVENT_RX_DMA) {
-		/* process the receive data */
+		/* Process the receive data */
 		if (sc->sc_dma_process_rx)
 			(*sc->sc_dma_process_rx)(sc);
 		else
-			/* should panic? */
+			/* Should panic? */
 			aprint_error_dev(sc->sc_dev, "unexpected DMA event\n");
 	}
 
@@ -1521,20 +1520,19 @@ cs_buffer_event(struct cs_softc *sc, u_int16_t bufEvent)
 		sc->sc_txbusy = FALSE;
 	}
 
-	if (bufEvent & BUF_EVENT_SW_INT) {
+	if (bufEvent & BUF_EVENT_SW_INT)
 		printf("%s: software initiated interrupt\n",
 		    device_xname(sc->sc_dev));
-	}
 }
 
 void
-cs_transmit_event(struct cs_softc *sc, u_int16_t txEvent)
+cs_transmit_event(struct cs_softc *sc, uint16_t txEvent)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/* If there were any errors transmitting this frame */
-	if (txEvent & (TX_EVENT_LOSS_CRS | TX_EVENT_SQE_ERR | TX_EVENT_OUT_WIN |
-		       TX_EVENT_JABBER | TX_EVENT_16_COLL)) {
+	if (txEvent & (TX_EVENT_LOSS_CRS | TX_EVENT_SQE_ERR |
+	    TX_EVENT_OUT_WIN | TX_EVENT_JABBER | TX_EVENT_16_COLL)) {
 		/* Increment the output error count */
 		ifp->if_oerrors++;
 
@@ -1544,25 +1542,24 @@ cs_transmit_event(struct cs_softc *sc, u_int16_t txEvent)
 
 		/* If debugging is enabled then log error messages */
 		if (ifp->if_flags & IFF_DEBUG) {
-			if (txEvent & TX_EVENT_LOSS_CRS) {
+			if (txEvent & TX_EVENT_LOSS_CRS)
 				aprint_error_dev(sc->sc_dev, "lost carrier\n");
-			}
-			if (txEvent & TX_EVENT_SQE_ERR) {
+
+			if (txEvent & TX_EVENT_SQE_ERR)
 				aprint_error_dev(sc->sc_dev, "SQE error\n");
-			}
-			if (txEvent & TX_EVENT_OUT_WIN) {
+
+			if (txEvent & TX_EVENT_OUT_WIN)
 				aprint_error_dev(sc->sc_dev,
 				    "out-of-window collision\n");
-			}
-			if (txEvent & TX_EVENT_JABBER) {
+
+			if (txEvent & TX_EVENT_JABBER)
 				aprint_error_dev(sc->sc_dev, "jabber\n");
-			}
-			if (txEvent & TX_EVENT_16_COLL) {
-				aprint_error_dev(sc->sc_dev, "16 collisions\n");
-			}
+
+			if (txEvent & TX_EVENT_16_COLL)
+				aprint_error_dev(sc->sc_dev,
+				    "16 collisions\n");
 		}
-	}
-	else {
+	} else {
 		/* Transmission successful, carrier is up. */
 		sc->sc_carrier = 1;
 #ifdef SHARK
@@ -1571,11 +1568,10 @@ cs_transmit_event(struct cs_softc *sc, u_int16_t txEvent)
 	}
 
 	/* Add the number of collisions for this frame */
-	if (txEvent & TX_EVENT_16_COLL) {
+	if (txEvent & TX_EVENT_16_COLL)
 		ifp->if_collisions += 16;
-	} else {
+	else
 		ifp->if_collisions += ((txEvent & TX_EVENT_COLL_MASK) >> 11);
-	}
 
 	ifp->if_opackets++;
 
@@ -1587,7 +1583,7 @@ cs_transmit_event(struct cs_softc *sc, u_int16_t txEvent)
 }
 
 void
-cs_print_rx_errors(struct cs_softc *sc, u_int16_t rxEvent)
+cs_print_rx_errors(struct cs_softc *sc, uint16_t rxEvent)
 {
 
 	if (rxEvent & RX_EVENT_RUNT)
@@ -1608,7 +1604,7 @@ cs_print_rx_errors(struct cs_softc *sc, u_int16_t rxEvent)
 }
 
 void
-cs_receive_event(struct cs_softc *sc, u_int16_t rxEvent)
+cs_receive_event(struct cs_softc *sc, uint16_t rxEvent)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -1617,9 +1613,7 @@ cs_receive_event(struct cs_softc *sc, u_int16_t rxEvent)
 		/* Increment the input error count */
 		ifp->if_ierrors++;
 
-		/*
-		 * If debugging is enabled then log error messages.
-		 */
+		/* If debugging is enabled then log error messages. */
 		if (ifp->if_flags & IFF_DEBUG) {
 			if (rxEvent != REG_NUM_RX_EVENT) {
 				cs_print_rx_errors(sc, rxEvent);
@@ -1634,9 +1628,8 @@ cs_receive_event(struct cs_softc *sc, u_int16_t rxEvent)
 				CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG,
 					CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) |
 						  RX_CFG_SKIP);
-			} else {
+			} else
 				aprint_error_dev(sc->sc_dev, "implied skip\n");
-			}
 		}
 	} else {
 		/*
@@ -1662,7 +1655,7 @@ cs_process_receive(struct cs_softc *sc)
 	struct ifnet *ifp;
 	struct mbuf *m;
 	int totlen;
-	u_int16_t *pBuff, *pBuffLimit;
+	uint16_t *pBuff, *pBuffLimit;
 	int pad;
 	unsigned int frameOffset = 0;	/* XXX: gcc */
 
@@ -1682,9 +1675,8 @@ cs_process_receive(struct cs_softc *sc)
 		/* Get the length of the received frame */
 		totlen = CS_READ_PACKET_PAGE(sc, frameOffset);
 		frameOffset += 2;
-	}
-	else {
-		/* drop status */
+	} else {
+		/* Drop status */
 		CS_READ_PORT(sc, PORT_RXTX_DATA);
 
 		/* Get the length of the received frame */
@@ -1695,7 +1687,7 @@ cs_process_receive(struct cs_softc *sc)
 		aprint_error_dev(sc->sc_dev, "invalid packet length %d\n",
 		    totlen);
 
-		/* skip the received frame */
+		/* Skip the received frame */
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG,
 			CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) | RX_CFG_SKIP);
 		return;
@@ -1707,7 +1699,7 @@ cs_process_receive(struct cs_softc *sc)
 		    "cs_process_receive: unable to allocate mbuf\n");
 		ifp->if_ierrors++;
 		/*
-		 * couldn't allocate an mbuf so things are not good, may as
+		 * Couldn't allocate an mbuf so things are not good, may as
 		 * well drop the packet I think.
 		 *
 		 * have already read the length so we should be right to skip
@@ -1720,47 +1712,47 @@ cs_process_receive(struct cs_softc *sc)
 	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = totlen;
 
-	/* number of bytes to align ip header on word boundary for ipintr */
+	/* Number of bytes to align ip header on word boundary for ipintr */
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 
 	/*
-	 * alloc mbuf cluster if we need.
-	 * we need 1 byte spare because following
-	 * packet read loop can overrun.
+	 * Alloc mbuf cluster if we need.
+	 * We need 1 byte spare because following packet read loop can overrun.
 	 */
 	if (totlen + pad + 1 > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
-			/* couldn't allocate an mbuf cluster */
+			/* Couldn't allocate an mbuf cluster */
 			aprint_error_dev(sc->sc_dev,
 			    "cs_process_receive: "
 			    "unable to allocate a cluster\n");
 			m_freem(m);
 
-			/* skip the received frame */
+			/* Skip the received frame */
 			CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG,
-				CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) | RX_CFG_SKIP);
+			    CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG)
+			    | RX_CFG_SKIP);
 			return;
 		}
 	}
 
-	/* align ip header on word boundary for ipintr */
+	/* Align ip header on word boundary for ipintr */
 	m->m_data += pad;
 
 	m->m_len = totlen;
-	pBuff = mtod(m, u_int16_t *);
+	pBuff = mtod(m, uint16_t *);
 
-	/* now read the data from the chip */
+	/* Now read the data from the chip */
 	if (sc->sc_memorymode) {
-		pBuffLimit = pBuff + (totlen + 1) / 2;	/* don't want to go over */
+		/* don't want to go over */
+		pBuffLimit = pBuff + (totlen + 1) / 2;
+
 		while (pBuff < pBuffLimit) {
 			*pBuff++ = CS_READ_PACKET_PAGE(sc, frameOffset);
 			frameOffset += 2;
 		}
-	}
-	else {
+	} else
 		IO_READ_MULTI_2(sc, PORT_RXTX_DATA, pBuff, (totlen + 1)>>1);
-	}
 
 	cs_ether_input(sc, m);
 }
@@ -1770,9 +1762,9 @@ cs_process_rx_early(struct cs_softc *sc)
 {
 	struct ifnet *ifp;
 	struct mbuf *m;
-	u_int16_t frameCount, oldFrameCount;
-	u_int16_t rxEvent;
-	u_int16_t *pBuff;
+	uint16_t frameCount, oldFrameCount;
+	uint16_t rxEvent;
+	uint16_t *pBuff;
 	int pad;
 	unsigned int frameOffset;
 
@@ -1789,7 +1781,7 @@ cs_process_rx_early(struct cs_softc *sc)
 		    "cs_process_rx_early: unable to allocate mbuf\n");
 		ifp->if_ierrors++;
 		/*
-		 * couldn't allocate an mbuf so things are not good, may as
+		 * Couldn't allocate an mbuf so things are not good, may as
 		 * well drop the packet I think.
 		 *
 		 * have already read the length so we should be right to skip
@@ -1801,30 +1793,30 @@ cs_process_rx_early(struct cs_softc *sc)
 	}
 	m_set_rcvif(m, ifp);
 	/*
-	 * save processing by always using a mbuf cluster, guaranteed to fit
+	 * Save processing by always using a mbuf cluster, guaranteed to fit
 	 * packet
 	 */
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
-		/* couldn't allocate an mbuf cluster */
+		/* Couldn't allocate an mbuf cluster */
 		aprint_error_dev(sc->sc_dev,
 		    "cs_process_rx_early: unable to allocate a cluster\n");
 		m_freem(m);
-		/* skip the frame */
+		/* Skip the frame */
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG,
 		    CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) | RX_CFG_SKIP);
 		return;
 	}
 
-	/* align ip header on word boundary for ipintr */
+	/* Align ip header on word boundary for ipintr */
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 	m->m_data += pad;
 
-	/* set up the buffer pointer to point to the data area */
-	pBuff = mtod(m, u_int16_t *);
+	/* Set up the buffer pointer to point to the data area */
+	pBuff = mtod(m, uint16_t *);
 
 	/*
-	 * now read the frame byte counter until we have finished reading the
+	 * Now read the frame byte counter until we have finished reading the
 	 * frame
 	 */
 	oldFrameCount = 0;
@@ -1835,27 +1827,27 @@ cs_process_rx_early(struct cs_softc *sc)
 			frameOffset += 2;
 		}
 
-		/* read the new count from the chip */
+		/* Read the new count from the chip */
 		frameCount = CS_READ_PACKET_PAGE(sc, PKTPG_FRAME_BYTE_COUNT);
 	}
 
-	/* update the mbuf counts */
+	/* Update the mbuf counts */
 	m->m_len = oldFrameCount;
 	m->m_pkthdr.len = oldFrameCount;
 
-	/* now check the Rx Event register */
+	/* Now check the Rx Event register */
 	rxEvent = CS_READ_PACKET_PAGE(sc, PKTPG_RX_EVENT);
 
 	if ((rxEvent & RX_EVENT_RX_OK) != 0) {
 		/*
-		 * do an implied skip, it seems to be more reliable than a
+		 * Do an implied skip, it seems to be more reliable than a
 		 * forced skip.
 		 */
 		rxEvent = CS_READ_PACKET_PAGE(sc, PKTPG_RX_STATUS);
 		rxEvent = CS_READ_PACKET_PAGE(sc, PKTPG_RX_LENGTH);
 
 		/*
-		 * now read the RX_EVENT register to perform an implied skip.
+		 * Now read the RX_EVENT register to perform an implied skip.
 		 */
 		rxEvent = CS_READ_PACKET_PAGE(sc, PKTPG_RX_EVENT);
 
@@ -1872,24 +1864,22 @@ cs_start_output(struct ifnet *ifp)
 	struct cs_softc *sc;
 	struct mbuf *pMbuf;
 	struct mbuf *pMbufChain;
-	u_int16_t BusStatus;
-	u_int16_t Length;
+	uint16_t BusStatus;
+	uint16_t Length;
 	int txLoop = 0;
 	int dropout = 0;
 
 	sc = ifp->if_softc;
 
-	/* check that the interface is up and running */
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) {
+	/* Check that the interface is up and running */
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
-	}
 
 	/* Don't interrupt a transmission in progress */
-	if (sc->sc_txbusy) {
+	if (sc->sc_txbusy)
 		return;
-	}
 
-	/* this loop will only run through once if transmission is successful */
+	/* This loop will only run through once if transmission is successful */
 	/*
 	 * While there are packets to transmit and a transmit is not in
 	 * progress
@@ -1900,9 +1890,9 @@ cs_start_output(struct ifnet *ifp)
 			break;
 
 		/*
-	         * If BPF is listening on this interface, let it see the packet
-	         * before we commit it to the wire.
-	         */
+		 * If BPF is listening on this interface, let it see the packet
+		 * before we commit it to the wire.
+		 */
 		bpf_mtap(ifp, pMbufChain, BPF_D_OUT);
 
 		/* Find the total length of the data to transmit */
@@ -1926,18 +1916,15 @@ cs_start_output(struct ifnet *ifp)
 			 */
 			if (sc->sc_memorymode) {
 				CS_WRITE_PACKET_PAGE(sc, PKTPG_TX_CMD,
-					cs_xmit_early_table[sc->sc_xe_ent].txcmd);
+				    cs_xmit_early_table[sc->sc_xe_ent].txcmd);
 				CS_WRITE_PACKET_PAGE(sc, PKTPG_TX_LENGTH, Length);
-			}
-			else {
+			} else {
 				CS_WRITE_PORT(sc, PORT_TX_CMD,
-					cs_xmit_early_table[sc->sc_xe_ent].txcmd);
+				    cs_xmit_early_table[sc->sc_xe_ent].txcmd);
 				CS_WRITE_PORT(sc, PORT_TX_LENGTH, Length);
 			}
 
-			/*
-			 * Adjust early-transmit machinery.
-			 */
+			/* Adjust early-transmit machinery. */
 			if (--sc->sc_xe_togo == 0) {
 				sc->sc_xe_ent =
 				    cs_xmit_early_table[sc->sc_xe_ent].better;
@@ -1985,7 +1972,7 @@ cs_start_output(struct ifnet *ifp)
 					txLoop = 0;
 				} else {
 					/*
-					 * if we get here we want to try
+					 * If we get here we want to try
 					 * again with the same mbuf, until
 					 * the chip lets us transmit.
 					 */
@@ -2021,25 +2008,23 @@ cs_copy_tx_frame(struct cs_softc *sc, struct mbuf *m0)
 {
 	struct mbuf *m;
 	int len, leftover, frameoff;
-	u_int16_t dbuf;
-	u_int8_t *p;
+	uint16_t dbuf;
+	uint8_t *p;
 #ifdef DIAGNOSTIC
-	u_int8_t *lim;
+	uint8_t *lim;
 #endif
 
 	/* Initialize frame pointer and data port address */
 	frameoff = PKTPG_TX_FRAME;
 
-	/* start out with no leftover data */
+	/* Start out with no leftover data */
 	leftover = 0;
 	dbuf = 0;
 
 	/* Process the chain of mbufs */
 	for (m = m0; m != NULL; m = m->m_next) {
-		/*
-		 * Process all of the data in a single mbuf.
-		 */
-		p = mtod(m, u_int8_t *);
+		/* Process all of the data in a single mbuf. */
+		p = mtod(m, uint8_t *);
 		len = m->m_len;
 #ifdef DIAGNOSTIC
 		lim = p + len;
@@ -2063,9 +2048,7 @@ cs_copy_tx_frame(struct cs_softc *sc, struct mbuf *m0)
 				}
 				leftover = 0;
 			} else if ((long) p & 1) {
-				/*
-				 * Misaligned data.  Buffer the next byte.
-				 */
+				/* Misaligned data.  Buffer the next byte. */
 				dbuf = *p++;
 				len--;
 				leftover = 1;
@@ -2080,13 +2063,11 @@ cs_copy_tx_frame(struct cs_softc *sc, struct mbuf *m0)
 				len &= ~1;
 				if (sc->sc_memorymode) {
 					MEM_WRITE_REGION_2(sc, frameoff,
-						(u_int16_t *) p, len >> 1);
+					    (uint16_t *) p, len >> 1);
 					frameoff += len;
-				}
-				else {
-					IO_WRITE_MULTI_2(sc,
-						PORT_RXTX_DATA, (u_int16_t *)p, len >> 1);
-				}
+				} else
+					IO_WRITE_MULTI_2(sc, PORT_RXTX_DATA,
+					    (uint16_t *)p, len >> 1);
 				p += len;
 
 				if (leftover)
@@ -2102,12 +2083,10 @@ cs_copy_tx_frame(struct cs_softc *sc, struct mbuf *m0)
 #endif
 	}
 	if (leftover) {
-		if (sc->sc_memorymode) {
+		if (sc->sc_memorymode)
 			CS_WRITE_PACKET_PAGE(sc, frameoff, dbuf);
-		}
-		else {
+		else
 			CS_WRITE_PORT(sc, PORT_RXTX_DATA, dbuf);
-		}
 	}
 }
 
@@ -2121,12 +2100,12 @@ cs_enable(struct cs_softc *sc)
 
 			error = (*sc->sc_enable)(sc);
 			if (error)
-				return (error);
+				return error;
 		}
 		sc->sc_cfgflags |= CFGFLG_ENABLED;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -2151,9 +2130,8 @@ cs_stop(struct ifnet *ifp, int disable)
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_BUF_CFG, 0);
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_BUS_CTL, 0);
 
-	if (disable) {
+	if (disable)
 		cs_disable(sc);
-	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
