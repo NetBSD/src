@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.101 2019/04/25 08:56:21 roy Exp $
+# $NetBSD: Makefile,v 1.102 2019/04/25 11:21:34 roy Exp $
 
 .include <bsd.own.mk>
 
@@ -40,7 +40,7 @@ CONFIGFILES=\
 		savecore screenblank securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
-		veriexec virecover wdogctl wpa_supplicant wscons wsmouse
+		veriexec virecover wdogctl wpa_supplicant wscons wsmoused
 FILESDIR=	/etc/rc.d
 FILESMODE=	${BINMODE}
 
