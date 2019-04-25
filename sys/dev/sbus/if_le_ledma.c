@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.35 2010/01/19 22:07:43 pooka Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.36 2019/04/25 10:44:53 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.35 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.36 2019/04/25 10:44:53 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -95,9 +95,9 @@ void	leattach_ledma(device_t, device_t, void *);
  * Media types supported by the Sun4m.
  */
 static int lemedia[] = {
-	IFM_ETHER|IFM_10_T,
-	IFM_ETHER|IFM_10_5,
-	IFM_ETHER|IFM_AUTO,
+	IFM_ETHER | IFM_10_T,
+	IFM_ETHER | IFM_10_5,
+	IFM_ETHER | IFM_AUTO,
 };
 #define NLEMEDIA	__arraycount(lemedia)
 
@@ -148,7 +148,7 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 	bus_space_handle_t h = lesc->sc_reg;
 
 	bus_space_write_2(t, h, LEREG1_RAP, port);
-	return (bus_space_read_2(t, h, LEREG1_RDP));
+	return bus_space_read_2(t, h, LEREG1_RDP);
 }
 
 void
@@ -181,7 +181,7 @@ lemediachange(struct lance_softc *sc)
 	struct ifmedia *ifm = &sc->sc_media;
 
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * Switch to the selected media.  If autoselect is
@@ -202,10 +202,10 @@ lemediachange(struct lance_softc *sc)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -217,9 +217,9 @@ lemediastatus(struct lance_softc *sc, struct ifmediareq *ifmr)
 	 * Notify the world which media we're currently using.
 	 */
 	if (L64854_GCSR(dma) & E_TP_AUI)
-		ifmr->ifm_active = IFM_ETHER|IFM_10_T;
+		ifmr->ifm_active = IFM_ETHER | IFM_10_T;
 	else
-		ifmr->ifm_active = IFM_ETHER|IFM_10_5;
+		ifmr->ifm_active = IFM_ETHER | IFM_10_5;
 }
 
 static void
@@ -351,23 +351,21 @@ leattach_ledma(device_t parent, device_t self, void *aux)
 
 	/* Get a DMA handle */
 	if ((error = bus_dmamap_create(dmatag, MEMSIZE, 1, MEMSIZE,
-					LEDMA_BOUNDARY, BUS_DMA_NOWAIT,
-					&lesc->sc_dmamap)) != 0) {
+	    LEDMA_BOUNDARY, BUS_DMA_NOWAIT, &lesc->sc_dmamap)) != 0) {
 		aprint_error(": DMA map create error %d\n", error);
 		return;
 	}
 
 	/* Allocate DMA buffer */
 	if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, 0, LEDMA_BOUNDARY,
-				 &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error(": DMA buffer alloc error %d\n",error);
 		return;
 	}
 
 	/* Map DMA buffer into kernel space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
-			       (void **)&sc->sc_mem,
-			       BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    (void **)&sc->sc_mem, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error(": DMA buffer map error %d\n", error);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
@@ -375,7 +373,7 @@ leattach_ledma(device_t parent, device_t self, void *aux)
 
 	/* Load DMA buffer */
 	if ((error = bus_dmamap_load(dmatag, lesc->sc_dmamap, sc->sc_mem,
-			MEMSIZE, NULL, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    MEMSIZE, NULL, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error(": DMA buffer map load error %d\n", error);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		bus_dmamem_unmap(dmatag, sc->sc_mem, MEMSIZE);
@@ -391,7 +389,7 @@ leattach_ledma(device_t parent, device_t self, void *aux)
 	sc->sc_mediastatus = lemediastatus;
 	sc->sc_supmedia = lemedia;
 	sc->sc_nsupmedia = NLEMEDIA;
-	sc->sc_defaultmedia = IFM_ETHER|IFM_AUTO;
+	sc->sc_defaultmedia = IFM_ETHER | IFM_AUTO;
 
 	prom_getether(sa->sa_node, sc->sc_enaddr);
 

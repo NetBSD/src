@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs.c,v 1.11 2019/04/25 10:08:45 msaitoh Exp $	*/
+/*	$NetBSD: if_cs.c,v 1.12 2019/04/25 10:44:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.11 2019/04/25 10:08:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.12 2019/04/25 10:44:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ cs_rsbus_attach(device_t parent, device_t self, void *aux)
 	cs_rsbus_bs_tag = *rs->sa_iot;
 
 	/* Registers are normally accessed in pairs, on a 4 byte aligned */
-	cs_rsbus_bs_tag.bs_cookie = (void *) 1;
+	cs_rsbus_bs_tag.bs_cookie = (void *)1;
 
 	sc->sc_iot = sc->sc_memt = &cs_rsbus_bs_tag;
 
@@ -195,11 +195,11 @@ cs_rsbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_io_read_1 = cs_rbus_read_1;
 
 	/*
-	 * also provide media, otherwise it attempts to read the media from
+	 * Also provide media, otherwise it attempts to read the media from
 	 * the EEPROM, which again fails
 	 */
 	cs_attach(sc, NULL, cs_rbus_media, __arraycount(cs_rbus_media),
-	    IFM_ETHER |IFM_10_T | IFM_FDX);
+	    IFM_ETHER | IFM_10_T | IFM_FDX);
 }
 
 /*
@@ -210,20 +210,18 @@ static uint8_t
 cs_rbus_read_1(struct cs_softc *sc, bus_size_t a)
 {
 	bus_size_t offset;
-	/*
-	 * if it's an even address then just use the bus_space_read_1
-	 */
+
+	/* If it's an even address then just use the bus_space_read_1 */
 	if ((a & 1) == 0)
-	{
 		return bus_space_read_1(sc->sc_iot, sc->sc_ioh, a);
-	}
+
 	/*
-	 * otherwise we've get to work out the aligned address and then add
+	 * Otherwise we've get to work out the aligned address and then add
 	 * one
 	 */
 	offset = (a & ~1) << 1;
 	offset++;
 
-	/* and read it, with no shift (cookie is 0) */
+	/* And read it, with no shift (cookie is 0) */
 	return sc->sc_iot->bs_r_1(0, (sc)->sc_ioh, offset);
 }
