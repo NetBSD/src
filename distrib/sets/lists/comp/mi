@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2270 2019/04/24 11:43:20 kamil Exp $
+#	$NetBSD: mi,v 1.2271 2019/04/25 23:17:24 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6235,6 +6235,7 @@
 ./usr/share/man/cat3/cosf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cosh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/coshf.0			comp-c-catman		.cat
+./usr/share/man/cat3/cosl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cpow.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cpowf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cpowl.0			comp-c-catman		complex,.cat
@@ -14235,6 +14236,7 @@
 ./usr/share/man/html3/cosf.html			comp-c-htmlman		html
 ./usr/share/man/html3/cosh.html			comp-c-htmlman		html
 ./usr/share/man/html3/coshf.html		comp-c-htmlman		html
+./usr/share/man/html3/cosl.html			comp-c-htmlman		html
 ./usr/share/man/html3/cpow.html			comp-c-htmlman		complex,html
 ./usr/share/man/html3/cpowf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cpowl.html		comp-c-htmlman		complex,html
@@ -22178,6 +22180,7 @@
 ./usr/share/man/man3/cosf.3			comp-c-man		.man
 ./usr/share/man/man3/cosh.3			comp-c-man		.man
 ./usr/share/man/man3/coshf.3			comp-c-man		.man
+./usr/share/man/man3/cosl.3			comp-c-man		.man
 ./usr/share/man/man3/cpow.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cpowf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cpowl.3			comp-c-man		complex,.man
