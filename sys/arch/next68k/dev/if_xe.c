@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.24 2016/06/10 13:27:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.25 2019/04/25 08:31:33 msaitoh Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.24 2016/06/10 13:27:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.25 2019/04/25 08:31:33 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -82,26 +82,26 @@ void	xe_attach(device_t, device_t, void *);
 int	xe_tint(void *);
 int	xe_rint(void *);
 
-struct mbuf * xe_dma_rxmap_load(struct mb8795_softc *, bus_dmamap_t);
+struct mbuf *xe_dma_rxmap_load(struct mb8795_softc *, bus_dmamap_t);
 
 bus_dmamap_t xe_dma_rx_continue(void *);
-void xe_dma_rx_completed(bus_dmamap_t, void *);
+void	xe_dma_rx_completed(bus_dmamap_t, void *);
 bus_dmamap_t xe_dma_tx_continue(void *);
-void xe_dma_tx_completed(bus_dmamap_t, void *);
-void xe_dma_rx_shutdown(void *);
-void xe_dma_tx_shutdown(void *);
+void	xe_dma_tx_completed(bus_dmamap_t, void *);
+void	xe_dma_rx_shutdown(void *);
+void	xe_dma_tx_shutdown(void *);
 
-static void	findchannel_defer(device_t);
+static void findchannel_defer(device_t);
 
 CFATTACH_DECL_NEW(xe, sizeof(struct xe_softc),
     xe_match, xe_attach, NULL, NULL);
 
 static int xe_dma_medias[] = {
-	IFM_ETHER|IFM_AUTO,
-	IFM_ETHER|IFM_10_T,
-	IFM_ETHER|IFM_10_2,
+	IFM_ETHER | IFM_AUTO,
+	IFM_ETHER | IFM_10_T,
+	IFM_ETHER | IFM_10_2,
 };
-static int nxe_dma_medias = (sizeof(xe_dma_medias)/sizeof(xe_dma_medias[0]));
+static int nxe_dma_medias = __arraycount(xe_dma_medias);
 
 static int attached = 0;
 
@@ -138,11 +138,11 @@ xe_match(device_t parent, cfdata_t match, void *aux)
 	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
 
 	if (attached)
-		return (0);
+		return 0;
 
 	ia->ia_addr = (void *)NEXT_P_ENET;
 
-	return (1);
+	return 1;
 }
 
 static void
@@ -180,17 +180,17 @@ findchannel_defer(device_t self)
 
 	/* Initialize the DMA maps */
 	error = bus_dmamap_create(xsc->sc_txdma->sc_dmat, MCLBYTES,
-				  (MCLBYTES/MSIZE), MCLBYTES, 0, BUS_DMA_ALLOCNOW,
-				  &xsc->sc_tx_dmamap);
+	    (MCLBYTES/MSIZE), MCLBYTES, 0, BUS_DMA_ALLOCNOW,
+	    &xsc->sc_tx_dmamap);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "can't create tx DMA map, error = %d",
-		      error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't create tx DMA map, error = %d", error);
 	}
 
 	for(i = 0; i < MB8795_NRXBUFS; i++) {
 		error = bus_dmamap_create(xsc->sc_rxdma->sc_dmat, MCLBYTES,
-					  (MCLBYTES/MSIZE), MCLBYTES, 0, BUS_DMA_ALLOCNOW,
-					  &xsc->sc_rx_dmamap[i]);
+		    (MCLBYTES/MSIZE), MCLBYTES, 0, BUS_DMA_ALLOCNOW,
+		    &xsc->sc_rx_dmamap[i]);
 		if (error) {
 			panic("%s: can't create rx DMA map, error = %d",
 			      device_xname(sc->sc_dev), error);
@@ -207,7 +207,8 @@ findchannel_defer(device_t self)
 	 */
 	xsc->sc_txbuf = malloc(2000, M_DEVBUF, M_NOWAIT);
 	if (!xsc->sc_txbuf)
-		panic("%s: can't malloc tx DMA buffer", device_xname(sc->sc_dev));
+		panic("%s: can't malloc tx DMA buffer",
+		    device_xname(sc->sc_dev));
 	
 	xsc->sc_tx_mb_head = NULL;
 	xsc->sc_tx_loaded = 0;
@@ -231,11 +232,12 @@ xe_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("%s: xe_attach()\n", device_xname(self)));
 
 	{
-		extern u_char rom_enetaddr[6];     /* kludge from machdep.c:next68k_bootargs() */
+		/* kludge from machdep.c:next68k_bootargs() */
+		extern u_char rom_enetaddr[6];
 		int i;
-		for(i=0;i<6;i++) {
+
+		for (i = 0; i < 6; i++)
 			sc->sc_enaddr[i] = rom_enetaddr[i];
-		}
 	}
 
 	printf("\n%s: MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
@@ -252,23 +254,18 @@ xe_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_bmap_bst = ia->ia_bst;
 	if (bus_space_map(sc->sc_bmap_bst, NEXT_P_BMAP,
-			  BMAP_SIZE, 0, &sc->sc_bmap_bsh)) {
-		panic("\n%s: can't map bmap registers",
-		      device_xname(self));
-	}
+	    BMAP_SIZE, 0, &sc->sc_bmap_bsh))
+		panic("\n%s: can't map bmap registers", device_xname(self));
 
-	/*
-	 * Set up glue for MI code.
-	 */
+	/* Set up glue for MI code. */
 	sc->sc_glue = &xe_glue;
 
 	xsc->sc_txdma = nextdma_findchannel("enetx");
 	xsc->sc_rxdma = nextdma_findchannel("enetr");
-	if (xsc->sc_rxdma && xsc->sc_txdma) {
+	if (xsc->sc_rxdma && xsc->sc_txdma)
 		findchannel_defer(self);
-	} else {
+	else
 		config_defer(self, findchannel_defer);
-	}
 
 	attached = 1;
 }
@@ -279,16 +276,16 @@ xe_tint(void *arg)
 	if (!INTR_OCCURRED(NEXT_I_ENETX))
 		return 0;
 	mb8795_tint((struct mb8795_softc *)arg);
-	return(1);
+	return 1;
 }
 
 int
 xe_rint(void *arg)
 {
 	if (!INTR_OCCURRED(NEXT_I_ENETR))
-		return(0);
+		return 0;
 	mb8795_rint((struct mb8795_softc *)arg);
-	return(1);
+	return 1;
 }
 
 /*
@@ -300,7 +297,7 @@ xe_read_reg(struct mb8795_softc *sc, int reg)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 
-	return(bus_space_read_1(xsc->sc_bst, xsc->sc_bsh, reg));
+	return bus_space_read_1(xsc->sc_bst, xsc->sc_bsh, reg);
 }
 
 void
@@ -324,8 +321,7 @@ xe_dma_reset(struct mb8795_softc *sc)
 
 	if (xsc->sc_tx_loaded) {
 		bus_dmamap_sync(xsc->sc_txdma->sc_dmat, xsc->sc_tx_dmamap,
-				0, xsc->sc_tx_dmamap->dm_mapsize,
-				BUS_DMASYNC_POSTWRITE);
+		    0, xsc->sc_tx_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(xsc->sc_txdma->sc_dmat, xsc->sc_tx_dmamap);
 		xsc->sc_tx_loaded = 0;
 	}
@@ -336,7 +332,8 @@ xe_dma_reset(struct mb8795_softc *sc)
 
 	for(i = 0; i < MB8795_NRXBUFS; i++) {
 		if (xsc->sc_rx_mb_head[i]) {
-			bus_dmamap_unload(xsc->sc_rxdma->sc_dmat, xsc->sc_rx_dmamap[i]);
+			bus_dmamap_unload(xsc->sc_rxdma->sc_dmat,
+			    xsc->sc_rx_dmamap[i]);
 			m_freem(xsc->sc_rx_mb_head[i]);
 			xsc->sc_rx_mb_head[i] = NULL;
 		}
@@ -351,10 +348,10 @@ xe_dma_rx_setup(struct mb8795_softc *sc)
 
 	DPRINTF(("xe DMA rx setup\n"));
 
-	for(i = 0; i < MB8795_NRXBUFS; i++) {
+	for(i = 0; i < MB8795_NRXBUFS; i++)
 		xsc->sc_rx_mb_head[i] = 
 			xe_dma_rxmap_load(sc, xsc->sc_rx_dmamap[i]);
-	}
+
 	xsc->sc_rx_loaded_idx = 0;
 	xsc->sc_rx_completed_idx = 0;
 	xsc->sc_rx_handled_idx = 0;
@@ -407,7 +404,7 @@ xe_dma_rx_mbuf(struct mb8795_softc *sc)
 			m = NULL;
 		}
 	}
-	return (m);
+	return m;
 }
 
 void
@@ -451,7 +448,7 @@ xe_dma_tx_mbuf(struct mb8795_softc *sc, struct mbuf *m)
 
 #if 0
 	error = bus_dmamap_load_mbuf(xsc->sc_txdma->sc_dmat,
-				     xsc->sc_tx_dmamap, xsc->sc_tx_mb_head, BUS_DMA_NOWAIT);
+	    xsc->sc_tx_dmamap, xsc->sc_tx_mb_head, BUS_DMA_NOWAIT);
 #else
 	{
 		u_char *buf = xsc->sc_txbuf;
@@ -474,16 +471,16 @@ xe_dma_tx_mbuf(struct mb8795_softc *sc, struct mbuf *m)
 			}
 		}
 		
-		error = bus_dmamap_load(xsc->sc_txdma->sc_dmat, xsc->sc_tx_dmamap,
-					buf,buflen,NULL,BUS_DMA_NOWAIT);
+		error = bus_dmamap_load(xsc->sc_txdma->sc_dmat,
+		    xsc->sc_tx_dmamap, buf, buflen, NULL, BUS_DMA_NOWAIT);
 	}
 #endif
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "can't load mbuf chain, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't load mbuf chain, error = %d\n", error);
 		m_freem(xsc->sc_tx_mb_head);
 		xsc->sc_tx_mb_head = NULL;
-		return (error);
+		return error;
 	}
 
 #ifdef DIAGNOSTIC
@@ -496,7 +493,7 @@ xe_dma_tx_mbuf(struct mb8795_softc *sc, struct mbuf *m)
 	bus_dmamap_sync(xsc->sc_txdma->sc_dmat, xsc->sc_tx_dmamap, 0,
 			xsc->sc_tx_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -522,12 +519,13 @@ xe_dma_tx_completed(bus_dmamap_t map, void *arg)
 	DPRINTF(("%s: xe_dma_tx_completed()\n", device_xname(sc->sc_dev)));
 
 #ifdef DIAGNOSTIC
-	if (!xsc->sc_tx_loaded) {
-		panic("%s: tx completed never loaded", device_xname(sc->sc_dev));
-	}
-	if (map != xsc->sc_tx_dmamap) {
-		panic("%s: unexpected tx completed map", device_xname(sc->sc_dev));
-	}
+	if (!xsc->sc_tx_loaded)
+		panic("%s: tx completed never loaded",
+		    device_xname(sc->sc_dev));
+
+	if (map != xsc->sc_tx_dmamap)
+		panic("%s: unexpected tx completed map",
+		    device_xname(sc->sc_dev));
 
 #endif
 }
@@ -542,17 +540,16 @@ xe_dma_tx_shutdown(void *arg)
 	DPRINTF(("%s: xe_dma_tx_shutdown()\n", device_xname(sc->sc_dev)));
 
 #ifdef DIAGNOSTIC
-	if (!xsc->sc_tx_loaded) {
-		panic("%s: tx shutdown never loaded", device_xname(sc->sc_dev));
-	}
+	if (!xsc->sc_tx_loaded)
+		panic("%s: tx shutdown never loaded",
+		    device_xname(sc->sc_dev));
 #endif
 
 	if (turbo)
 		MB_WRITE_REG(sc, MB8795_TXMODE, MB8795_TXMODE_TURBO1);
 	if (xsc->sc_tx_loaded) {
 		bus_dmamap_sync(xsc->sc_txdma->sc_dmat, xsc->sc_tx_dmamap,
-				0, xsc->sc_tx_dmamap->dm_mapsize,
-				BUS_DMASYNC_POSTWRITE);
+		    0, xsc->sc_tx_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(xsc->sc_txdma->sc_dmat, xsc->sc_tx_dmamap);
 		m_freem(xsc->sc_tx_mb_head);
 		xsc->sc_tx_mb_head = NULL;
@@ -561,10 +558,9 @@ xe_dma_tx_shutdown(void *arg)
 	}
 
 #ifdef DIAGNOSTIC
-	if (xsc->sc_tx_loaded != 0) {
+	if (xsc->sc_tx_loaded != 0)
 		panic("%s: sc->sc_tx_loaded is %d", device_xname(sc->sc_dev),
 		      xsc->sc_tx_loaded);
-	}
 #endif
 
 	ifp->if_timer = 0;
@@ -596,20 +592,20 @@ xe_dma_rx_completed(bus_dmamap_t map, void *arg)
 		xsc->sc_rx_completed_idx++;
 		xsc->sc_rx_completed_idx %= MB8795_NRXBUFS;
 		
-		DPRINTF(("%s: xe_dma_rx_completed(), sc->sc_rx_completed_idx = %d\n",
+		DPRINTF(("%s: xe_dma_rx_completed(), "
+			"sc->sc_rx_completed_idx = %d\n",
 			 device_xname(sc->sc_dev), xsc->sc_rx_completed_idx));
 		
 #if (defined(DIAGNOSTIC))
-		if (map != xsc->sc_rx_dmamap[xsc->sc_rx_completed_idx]) {
+		if (map != xsc->sc_rx_dmamap[xsc->sc_rx_completed_idx])
 			panic("%s: Unexpected rx dmamap completed",
 			      device_xname(sc->sc_dev));
-		}
 #endif
 	}
 #ifdef DIAGNOSTIC
 	else
-		DPRINTF(("%s: Unexpected rx dmamap completed while if not running\n",
-			 device_xname(sc->sc_dev)));
+		DPRINTF(("%s: Unexpected rx dmamap completed while if not "
+			"running\n", device_xname(sc->sc_dev)));
 #endif
 }
 
@@ -626,12 +622,13 @@ xe_dma_rx_shutdown(void *arg)
 		
 		nextdma_start(xsc->sc_rxdma, DMACSR_SETREAD);
 		if (turbo)
-			MB_WRITE_REG(sc, MB8795_RXMODE, MB8795_RXMODE_TEST | MB8795_RXMODE_MULTICAST);
+			MB_WRITE_REG(sc, MB8795_RXMODE,
+			    MB8795_RXMODE_TEST | MB8795_RXMODE_MULTICAST);
 	}
 #ifdef DIAGNOSTIC
 	else
-		DPRINTF(("%s: Unexpected rx DMA shutdown while if not running\n",
-			 device_xname(sc->sc_dev)));
+		DPRINTF(("%s: Unexpected rx DMA shutdown while if not "
+			"running\n", device_xname(sc->sc_dev)));
 #endif
 }
 
@@ -652,18 +649,19 @@ xe_dma_rxmap_load(struct mb8795_softc *sc, bus_dmamap_t map)
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
 			m = NULL;
-		} else {
+		} else
 			m->m_len = MCLBYTES;
-		}
 	}
 	if (!m) {
-		/* @@@ Handle this gracefully by reusing a scratch buffer
+		/*
+		 * @@@ Handle this gracefully by reusing a scratch buffer
 		 * or something.
 		 */
 		panic("Unable to get memory for incoming ethernet");
 	}
 
-	/* Align buffer, @@@ next specific.
+	/*
+	 * Align buffer, @@@ next specific.
 	 * perhaps should be using M_ALIGN here instead? 
 	 * First we give us a little room to align with.
 	 */
@@ -697,7 +695,7 @@ xe_dma_rxmap_load(struct mb8795_softc *sc, bus_dmamap_t map)
 		m = NULL;
 	}
 
-	return(m);
+	return m;
 }
 
 bus_dmamap_t 
@@ -709,22 +707,25 @@ xe_dma_rx_continue(void *arg)
 	bus_dmamap_t map = NULL;
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		if (((xsc->sc_rx_loaded_idx+1)%MB8795_NRXBUFS) == xsc->sc_rx_handled_idx) {
-			/* make space for one packet by dropping one */
+		if (((xsc->sc_rx_loaded_idx+1)%MB8795_NRXBUFS)
+		    == xsc->sc_rx_handled_idx) {
+			/* Make space for one packet by dropping one */
 			struct mbuf *m;
 			m = xe_dma_rx_mbuf (sc);
 			if (m)
 				m_freem(m);
 #if (defined(DIAGNOSTIC))
-			DPRINTF(("%s: out of receive DMA buffers\n", device_xname(sc->sc_dev)));
+			DPRINTF(("%s: out of receive DMA buffers\n",
+				device_xname(sc->sc_dev)));
 #endif
 		}
 		xsc->sc_rx_loaded_idx++;
 		xsc->sc_rx_loaded_idx %= MB8795_NRXBUFS;
 		map = xsc->sc_rx_dmamap[xsc->sc_rx_loaded_idx];
 		
-		DPRINTF(("%s: xe_dma_rx_continue() xsc->sc_rx_loaded_idx = %d\nn",
-			 device_xname(sc->sc_dev), xsc->sc_rx_loaded_idx));
+		DPRINTF(("%s: xe_dma_rx_continue() xsc->sc_rx_loaded_idx "
+			"= %d\n", device_xname(sc->sc_dev),
+			xsc->sc_rx_loaded_idx));
 	}
 #ifdef DIAGNOSTIC
 	else
@@ -732,7 +733,7 @@ xe_dma_rx_continue(void *arg)
 		      device_xname(sc->sc_dev));
 #endif
 	
-	return(map);
+	return map;
 }
 
 bus_dmamap_t 
@@ -744,19 +745,18 @@ xe_dma_tx_continue(void *arg)
 
 	DPRINTF(("%s: xe_dma_tx_continue()\n", device_xname(sc->sc_dev)));
 
-	if (xsc->sc_tx_loaded) {
+	if (xsc->sc_tx_loaded)
 		map = NULL;
-	} else {
+	else {
 		map = xsc->sc_tx_dmamap;
 		xsc->sc_tx_loaded++;
 	}
 
 #ifdef DIAGNOSTIC
-	if (xsc->sc_tx_loaded != 1) {
+	if (xsc->sc_tx_loaded != 1)
 		panic("%s: sc->sc_tx_loaded is %d", device_xname(sc->sc_dev),
 				xsc->sc_tx_loaded);
-	}
 #endif
 
-	return(map);
+	return map;
 }
