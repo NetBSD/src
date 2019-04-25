@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.15 2019/04/11 20:20:54 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.16 2019/04/25 19:15:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -602,11 +602,30 @@ trigger_ill(void)
 #endif
 }
 
+static bool __used
+are_fpu_exceptions_supported(void)
+{
+#if (__arm__ && !__SOFTFP__) || __aarch64__
+	/*
+	 * Some NEON fpus do not trap on IEEE 754 FP exceptions.
+	 * Skip these tests if running on them and compiled for
+	 * hard float.
+	 */
+	if (0 == fpsetmask(fpsetmask(FP_X_INV)))
+		return false;
+#endif
+	return true;
+}
+
 static void __used
 trigger_fpe(void)
 {
 	volatile int a = getpid();
 	volatile int b = atoi("0");
+
+#ifdef __HAVE_FENV
+	feenableexcept(FE_ALL_EXCEPT);
+#endif
 
 	/* Division by zero causes CPU trap, translated to SIGFPE */
 	usleep(a / b);

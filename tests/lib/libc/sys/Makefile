@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.54 2019/02/10 02:13:45 kamil Exp $
+# $NetBSD: Makefile,v 1.55 2019/04/25 19:15:23 kamil Exp $
 
 MKMAN=	no
 
@@ -88,12 +88,12 @@ SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT}
 
 LDADD.t_getpid+=        -lpthread
 
-LDFLAGS.t_ptrace_wait+=		-pthread
-LDFLAGS.t_ptrace_wait3+=	-pthread
-LDFLAGS.t_ptrace_wait4+=	-pthread
-LDFLAGS.t_ptrace_wait6+=	-pthread
-LDFLAGS.t_ptrace_waitid+=	-pthread
-LDFLAGS.t_ptrace_waitpid+=	-pthread
+LDFLAGS.t_ptrace_wait+=		-pthread -lm
+LDFLAGS.t_ptrace_wait3+=	-pthread -lm
+LDFLAGS.t_ptrace_wait4+=	-pthread -lm
+LDFLAGS.t_ptrace_wait6+=	-pthread -lm
+LDFLAGS.t_ptrace_waitid+=	-pthread -lm
+LDFLAGS.t_ptrace_waitpid+=	-pthread -lm
 
 .if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 CPPFLAGS.t_posix_fadvise.c += -D_KERNTYPES
@@ -102,12 +102,12 @@ LDADD.t_posix_fadvise+= -lrumpvfs -lrump -lrumpuser -lrump -lpthread
 .endif
 
 CPPFLAGS.t_lwp_create.c		+= -D_KERNTYPES
-CPPFLAGS.t_ptrace_wait.c	+= -D_KERNTYPES
-CPPFLAGS.t_ptrace_wait3.c	+= -D_KERNTYPES
-CPPFLAGS.t_ptrace_wait4.c	+= -D_KERNTYPES
-CPPFLAGS.t_ptrace_wait6.c	+= -D_KERNTYPES
-CPPFLAGS.t_ptrace_waitid.c	+= -D_KERNTYPES
-CPPFLAGS.t_ptrace_waitpid.c	+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_wait.c	+= -D_KERNTYPES -D__TEST_FENV
+CPPFLAGS.t_ptrace_wait3.c	+= -D_KERNTYPES -D__TEST_FENV
+CPPFLAGS.t_ptrace_wait4.c	+= -D_KERNTYPES -D__TEST_FENV
+CPPFLAGS.t_ptrace_wait6.c	+= -D_KERNTYPES -D__TEST_FENV
+CPPFLAGS.t_ptrace_waitid.c	+= -D_KERNTYPES -D__TEST_FENV
+CPPFLAGS.t_ptrace_waitpid.c	+= -D_KERNTYPES -D__TEST_FENV
 CPPFLAGS.t_ucontext.c		+= -D_KERNTYPES
 
 FILES=		truncate_test.root_owned
