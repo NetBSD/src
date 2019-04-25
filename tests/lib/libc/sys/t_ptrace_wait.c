@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.111 2019/04/19 21:54:32 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.112 2019/04/25 11:45:12 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.111 2019/04/19 21:54:32 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.112 2019/04/25 11:45:12 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -471,7 +471,8 @@ traceme_crash(int sig)
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 		break;
 	case SIGILL:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, ILL_PRVOPC);
+		ATF_REQUIRE(info.psi_siginfo.si_code >= 0 &&
+		            info.psi_siginfo.si_code <= ILL_BADSTK);
 		break;
 	case SIGFPE:
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_INTDIV);
@@ -647,7 +648,8 @@ traceme_signalmasked_crash(int sig)
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 		break;
 	case SIGILL:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, ILL_PRVOPC);
+		ATF_REQUIRE(info.psi_siginfo.si_code >= 0 &&
+		            info.psi_siginfo.si_code <= ILL_BADSTK);
 		break;
 	case SIGFPE:
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_INTDIV);
@@ -826,7 +828,8 @@ traceme_signalignored_crash(int sig)
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 		break;
 	case SIGILL:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, ILL_PRVOPC);
+		ATF_REQUIRE(info.psi_siginfo.si_code >= 0 &&
+		            info.psi_siginfo.si_code <= ILL_BADSTK);
 		break;
 	case SIGFPE:
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_INTDIV);
@@ -2123,7 +2126,8 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 			FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 			break;
 		case SIGILL:
-			FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, ILL_PRVOPC);
+			FORKEE_ASSERT(info.psi_siginfo.si_code >= 0 &&
+			            info.psi_siginfo.si_code <= ILL_BADSTK);
 			break;
 		case SIGFPE:
 			FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, FPE_INTDIV);
