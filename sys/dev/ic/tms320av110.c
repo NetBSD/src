@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.25.2.1 2019/04/25 13:20:11 isaki Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.25.2.2 2019/04/25 13:24:11 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.25.2.1 2019/04/25 13:20:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.25.2.2 2019/04/25 13:24:11 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,8 +166,10 @@ tms320av110_intr(void *p)
 	intlist = tav_read_short(sc->sc_iot, sc->sc_ioh, TAV_INTR)
 	    /* & tav_read_short(sc->sc_iot, sc->sc_ioh, TAV_INTR_EN)*/;
 
-	if (!intlist)
+	if (!intlist) {
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
+	}
 
 	/* ack now, so that we don't miss later interrupts */
 	if (sc->sc_intack)
