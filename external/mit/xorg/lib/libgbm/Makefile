@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/04/20 17:31:22 maya Exp $
+#	$NetBSD: Makefile,v 1.6 2019/04/25 09:03:54 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -47,6 +47,7 @@ INCSDIR=	${X11INCDIR}
 
 LIBDPLIBS=	glapi	${.CURDIR}/../libglapi
 LIBDPLIBS+=	drm     ${.CURDIR}/../libdrm
+LIBDPLIBS+=	expat	${NETBSDSRCDIR}/external/mit/expat/lib/libexpat
 
 PKGCONFIG=	gbm
 PKGDIST.gbm=	${X11SRCDIR.Mesa}/src/gbm/main
