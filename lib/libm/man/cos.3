@@ -26,14 +26,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)cos.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: cos.3,v 1.15 2003/08/07 16:44:47 agc Exp $
+.\"	$NetBSD: cos.3,v 1.16 2019/04/25 23:17:24 maya Exp $
 .\"
-.Dd May 2, 1991
+.Dd April 26, 2019
 .Dt COS 3
 .Os
 .Sh NAME
 .Nm cos ,
-.Nm cosf
+.Nm cosf ,
+.Nm cosl
 .Nd cosine function
 .Sh LIBRARY
 .Lb libm
@@ -43,11 +44,14 @@
 .Fn cos "double x"
 .Ft float
 .Fn cosf "float x"
+.Ft long double
+.Fn cosl "long double x"
 .Sh DESCRIPTION
 The
-.Fn cos
+.Fn cos ,
+.Fn cosf ,
 and
-.Fn cosf
+.Fn cosl
 functions compute the cosine of
 .Fa x
 (measured in radians).
