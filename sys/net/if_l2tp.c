@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.33 2018/12/27 07:56:11 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.34 2019/04/26 11:51:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.33 2018/12/27 07:56:11 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.34 2019/04/26 11:51:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1370,7 +1370,7 @@ l2tp_check_nesting(struct ifnet *ifp, struct mbuf *m)
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, l2tp, "")
+IF_MODULE(MODULE_CLASS_DRIVER, l2tp, NULL)
 
 
 /* TODO: IP_TCPMSS support */

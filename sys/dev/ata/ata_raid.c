@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.41 2018/10/22 19:38:06 jdolecek Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.42 2019/04/26 11:51:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.41 2018/10/22 19:38:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.42 2019/04/26 11:51:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -320,7 +320,7 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *tbuf,
 	return (error);
 }
 
-MODULE(MODULE_CLASS_DRIVER, ataraid, "");
+MODULE(MODULE_CLASS_DRIVER, ataraid, NULL);
  
 #ifdef _MODULE
 CFDRIVER_DECL(ataraid, DV_DISK, NULL);
