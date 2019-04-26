@@ -79,9 +79,10 @@ os_pages_map(void *addr, size_t size, size_t alignment, bool *commit) {
 	{
 		int flags = mmap_flags;
 #ifdef MAP_ALIGNED
-		int a = ilog2(alignment);
-		if (a > LG_PAGE && a < ilog2(sizeof(void *)))
+		if (alignment > os_page || PAGE > os_page) {
+			int a = ilog2(MAX(alignment, PAGE));
 			flags |= MAP_ALIGNED(a);
+		}
 #endif
 		int prot = *commit ? PAGES_PROT_COMMIT : PAGES_PROT_DECOMMIT;
 
