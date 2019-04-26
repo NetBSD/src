@@ -1,6 +1,6 @@
 /*
  * dhcpcd - ARP handler
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -175,17 +175,18 @@ arp_packet(struct interface *ifp, uint8_t *data, size_t len)
 	}
 }
 
-void
+static void
 arp_close(struct interface *ifp)
 {
 	struct iarp_state *state;
 
-	if ((state = ARP_STATE(ifp)) != NULL && state->bpf_fd != -1) {
-		eloop_event_delete(ifp->ctx->eloop, state->bpf_fd);
-		bpf_close(ifp, state->bpf_fd);
-		state->bpf_fd = -1;
-		state->bpf_flags |= BPF_EOF;
-	}
+	if ((state = ARP_STATE(ifp)) == NULL || state->bpf_fd == -1)
+		return;
+
+	eloop_event_delete(ifp->ctx->eloop, state->bpf_fd);
+	bpf_close(ifp, state->bpf_fd);
+	state->bpf_fd = -1;
+	state->bpf_flags |= BPF_EOF;
 }
 
 static void
@@ -400,7 +401,7 @@ arp_announce(struct arp_state *astate)
 }
 
 void
-arp_announceaddr(struct dhcpcd_ctx *ctx, struct in_addr *ia)
+arp_announceaddr(struct dhcpcd_ctx *ctx, const struct in_addr *ia)
 {
 	struct interface *ifp;
 	struct ipv4_addr *iaf;
@@ -424,7 +425,7 @@ arp_announceaddr(struct dhcpcd_ctx *ctx, struct in_addr *ia)
 }
 
 void
-arp_ifannounceaddr(struct interface *ifp, struct in_addr *ia)
+arp_ifannounceaddr(struct interface *ifp, const struct in_addr *ia)
 {
 	struct arp_state *astate;
 
