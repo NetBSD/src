@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1234 2019/04/13 08:41:36 maxv Exp $
+#	$NetBSD: files,v 1.1235 2019/04/26 10:11:03 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1148,10 +1148,6 @@ file	dev/ic/acpipmtimer.c	acpipmtimer
 
 device 	hpet
 file 	dev/ic/hpet.c		hpet			needs-flag
-
-# DesignWare timer
-device	dwctmr
-file	dev/ic/dwc_tmr.c	dwctmr
 
 # SMSC LAN9118 Family Ethernet Controller
 #
