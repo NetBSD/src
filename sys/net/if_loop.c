@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.106 2018/11/15 10:06:07 maxv Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.107 2019/04/26 08:38:25 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.106 2018/11/15 10:06:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.107 2019/04/26 08:38:25 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -530,4 +530,4 @@ loioctl(struct ifnet *ifp, u_long cmd, void *data)
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, loop, "")
+IF_MODULE(MODULE_CLASS_DRIVER, loop, NULL)

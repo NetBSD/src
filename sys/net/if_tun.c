@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.155 2019/03/25 10:04:48 pgoyette Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.156 2019/04/26 08:38:25 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.155 2019/03/25 10:04:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.156 2019/04/26 08:38:25 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1142,4 +1142,4 @@ out_nolock:
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, tun, "")
+IF_MODULE(MODULE_CLASS_DRIVER, tun, NULL)
