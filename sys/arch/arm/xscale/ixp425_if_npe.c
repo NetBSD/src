@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.38 2019/04/24 10:40:18 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.39 2019/04/26 06:33:33 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.38 2019/04/24 10:40:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.39 2019/04/26 06:33:33 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -58,17 +58,14 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.38 2019/04/24 10:40:18 msaitoh E
 #include <sys/endian.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
-
 #include <sys/bus.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
 #include <net/bpf.h>
-
-#include <sys/rndsource.h>
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>
@@ -103,7 +100,7 @@ struct npe_softc {
 	struct ethercom	sc_ethercom;
 	uint8_t		sc_enaddr[ETHER_ADDR_LEN];
 	struct mii_data	sc_mii;
-	bus_space_tag_t	sc_iot;		
+	bus_space_tag_t	sc_iot;
 	bus_dma_tag_t	sc_dt;
 	bus_space_handle_t sc_ioh;	/* MAC register window */
 	bus_space_handle_t sc_miih;	/* MII register window */
@@ -373,7 +370,8 @@ npe_setmcast(struct npe_softc *sc)
 
 		ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
 		while (enm != NULL) {
-			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto all_multi;
 			}
@@ -469,7 +467,8 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 	}
 
 	/* XXX M_TEMP */
-	dma->buf = malloc(nbuf * sizeof(struct npebuf), M_TEMP, M_NOWAIT | M_ZERO);
+	dma->buf = malloc(nbuf * sizeof(struct npebuf), M_TEMP,
+	    M_NOWAIT | M_ZERO);
 	if (dma->buf == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to %s for %s %s buffers, error %u\n",
@@ -484,7 +483,7 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 		struct npebuf *npe = &dma->buf[i];
 		struct npehwbuf *hw = &dma->hwbuf[i];
 
-		/* calculate offset to shared area */
+		/* Calculate offset to shared area */
 		npe->ix_neaddr = dma->buf_phys +
 			((uintptr_t)hw - (uintptr_t)dma->hwbuf);
 		KASSERT((npe->ix_neaddr & 0x1f) == 0);
@@ -750,7 +749,7 @@ npe_tick(void *xsc)
 	npe_updatestats(sc);
 	mii_tick(&sc->sc_mii);
 
-	/* schedule next poll */
+	/* Schedule next poll */
 	callout_reset(&sc->sc_tick_ch, hz, npe_tick, sc);
 #undef ACK
 }
@@ -869,7 +868,7 @@ npe_getcl(void)
 			m = NULL;
 		}
 	}
-	return (m);
+	return m;
 }
 
 static int
@@ -956,7 +955,8 @@ npe_rxdone(int qid, void *arg)
 #if 1
 			if (mrx->m_pkthdr.len < sizeof(struct ether_header)) {
 				log(LOG_INFO, "%s: too short frame (len=%d)\n",
-				    device_xname(sc->sc_dev), mrx->m_pkthdr.len);
+				    device_xname(sc->sc_dev),
+				    mrx->m_pkthdr.len);
 				/* Back out "newly allocated" mbuf. */
 				m_freem(m);
 				ifp->if_ierrors++;
@@ -973,10 +973,10 @@ npe_rxdone(int qid, void *arg)
 				 */
 				eh = mtod(mrx, struct ether_header *);
 				if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0) {
-					/* unicast */
+					/* Unicast */
 
 					if (sc->sc_enaddr[5] != eh->ether_dhost[5]) {
-						/* discard it */
+						/* Discard it */
 #if 0
 						printf("discard it\n");
 #endif
@@ -996,7 +996,7 @@ npe_rxdone(int qid, void *arg)
 					struct ether_multistep step;
 					int match = 0;
 
-					/* multicast */
+					/* Multicast */
 
 					ETHER_FIRST_MULTI(step, ec, enm);
 					while (enm != NULL) {
@@ -1017,7 +1017,7 @@ npe_rxdone(int qid, void *arg)
 						ETHER_NEXT_MULTI(step, enm);
 					}
 					if (match == 0) {
-						/* discard it */
+						/* Discard it */
 #if 0
 						printf("discard it(M)\n");
 #endif
@@ -1098,7 +1098,7 @@ npe_startrecv(struct npe_softc *sc)
 	for (i = 0; i < dma->nbuf; i++) {
 		npe = &dma->buf[i];
 		npe_rxbuf_init(sc, npe, npe->ix_m);
-		/* set npe buf on rx free list */
+		/* Set npe buf on rx free list */
 		ixpqmgr_qwrite(sc->rx_freeqid, npe->ix_neaddr);
 	}
 }
@@ -1112,13 +1112,13 @@ npeinit_macreg(struct npe_softc *sc)
 	 */
 	WR4(sc, NPE_MAC_CORE_CNTRL, NPE_CORE_RESET);
 	DELAY(NPE_MAC_RESET_DELAY);
-	/* configure MAC to generate MDC clock */
+	/* Configure MAC to generate MDC clock */
 	WR4(sc, NPE_MAC_CORE_CNTRL, NPE_CORE_MDC_EN);
 
-	/* disable transmitter and reciver in the MAC */
- 	WR4(sc, NPE_MAC_RX_CNTRL1,
+	/* Disable transmitter and reciver in the MAC */
+	WR4(sc, NPE_MAC_RX_CNTRL1,
 	    RD4(sc, NPE_MAC_RX_CNTRL1) &~ NPE_RX_CNTRL1_RX_EN);
- 	WR4(sc, NPE_MAC_TX_CNTRL1,
+	WR4(sc, NPE_MAC_TX_CNTRL1,
 	    RD4(sc, NPE_MAC_TX_CNTRL1) &~ NPE_TX_CNTRL1_TX_EN);
 
 	/*
@@ -1127,7 +1127,7 @@ npeinit_macreg(struct npe_softc *sc)
 	WR4(sc, NPE_MAC_INT_CLK_THRESH, 0x1);	/* clock ratio: for ipx4xx */
 	WR4(sc, NPE_MAC_TX_CNTRL2,	0xf);	/* max retries */
 	WR4(sc, NPE_MAC_RANDOM_SEED,	0x8);	/* LFSR back-off seed */
-	/* thresholds determined by NPE firmware FS */
+	/* Thresholds determined by NPE firmware FS */
 	WR4(sc, NPE_MAC_THRESH_P_EMPTY,	0x12);
 	WR4(sc, NPE_MAC_THRESH_P_FULL,	0x30);
 	WR4(sc, NPE_MAC_BUF_SIZE_TX, NPE_MAC_BUF_SIZE_TX_DEFAULT);
@@ -1191,10 +1191,10 @@ npeinit_locked(void *xsc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;		/* just in case */
 
-	/* enable transmitter and reciver in the MAC */
- 	WR4(sc, NPE_MAC_RX_CNTRL1,
+	/* Enable transmitter and reciver in the MAC */
+	WR4(sc, NPE_MAC_RX_CNTRL1,
 	    RD4(sc, NPE_MAC_RX_CNTRL1) | NPE_RX_CNTRL1_RX_EN);
- 	WR4(sc, NPE_MAC_TX_CNTRL1,
+	WR4(sc, NPE_MAC_TX_CNTRL1,
 	    RD4(sc, NPE_MAC_TX_CNTRL1) | NPE_TX_CNTRL1_TX_EN);
 
 	callout_reset(&sc->sc_tick_ch, hz, npe_tick, sc);
@@ -1210,7 +1210,7 @@ npeinit(struct ifnet *ifp)
 	npeinit_locked(sc);
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1227,21 +1227,21 @@ npe_defrag(struct mbuf *m0)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		return (NULL);
+		return NULL;
 	m_copy_pkthdr(m, m0);
 
 	if ((m->m_len = m0->m_pkthdr.len) > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
-			return (NULL);
+			return NULL;
 		}
 	}
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 	m_freem(m0);
 
-	return (m);
+	return m;
 }
 
 /*
@@ -1370,10 +1370,10 @@ npestop(struct ifnet *ifp, int disable)
 {
 	struct npe_softc *sc = ifp->if_softc;
 
-	/*  disable transmitter and reciver in the MAC  */
- 	WR4(sc, NPE_MAC_RX_CNTRL1,
+	/* Disable transmitter and reciver in the MAC */
+	WR4(sc, NPE_MAC_RX_CNTRL1,
 	    RD4(sc, NPE_MAC_RX_CNTRL1) &~ NPE_RX_CNTRL1_RX_EN);
- 	WR4(sc, NPE_MAC_TX_CNTRL1,
+	WR4(sc, NPE_MAC_TX_CNTRL1,
 	    RD4(sc, NPE_MAC_TX_CNTRL1) &~ NPE_TX_CNTRL1_TX_EN);
 
 	callout_stop(&sc->sc_tick_ch);
@@ -1385,7 +1385,7 @@ npestop(struct ifnet *ifp, int disable)
 
 	/*
 	 * The MAC core rx/tx disable may leave the MAC hardware in an
-	 * unpredictable state. A hw reset is executed before resetting 
+	 * unpredictable state. A hw reset is executed before resetting
 	 * all the MAC parameters to a known value.
 	 */
 	WR4(sc, NPE_MAC_CORE_CNTRL, NPE_CORE_RESET);
@@ -1660,7 +1660,7 @@ npe_miibus_statchg(struct ifnet *ifp)
 	uint32_t tx1, rx1;
 	uint32_t randoff;
 
-	/* sync MAC duplex state */
+	/* Sync MAC duplex state */
 	tx1 = RD4(sc, NPE_MAC_TX_CNTRL1);
 	rx1 = RD4(sc, NPE_MAC_RX_CNTRL1);
 	if (sc->sc_mii.mii_media_active & IFM_FDX) {

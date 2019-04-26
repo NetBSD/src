@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.95 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: awi.c,v 1.96 2019/04/26 06:33:33 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.95 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.96 2019/04/26 06:33:33 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -93,20 +93,18 @@ __KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.95 2019/02/05 06:17:02 msaitoh Exp $");
 #include <sys/errno.h>
 #include <sys/endian.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_llc.h>
+#include <net/bpf.h>
 
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
-
-#include <net/bpf.h>
-
-#include <sys/cpu.h>
-#include <sys/bus.h>
 
 #include <dev/ic/am79c930reg.h>
 #include <dev/ic/am79c930var.h>
@@ -124,40 +122,40 @@ static void awi_media_status(struct ifnet *, struct ifmediareq *);
 static int  awi_mode_init(struct awi_softc *);
 static void awi_rx_int(struct awi_softc *);
 static void awi_tx_int(struct awi_softc *);
-static struct mbuf *awi_devget(struct awi_softc *, u_int32_t, u_int16_t);
+static struct mbuf *awi_devget(struct awi_softc *, uint32_t, uint16_t);
 static int  awi_hw_init(struct awi_softc *);
 static int  awi_init_mibs(struct awi_softc *);
-static int  awi_mib(struct awi_softc *, u_int8_t, u_int8_t, int);
-static int  awi_cmd(struct awi_softc *, u_int8_t, int);
+static int  awi_mib(struct awi_softc *, uint8_t, uint8_t, int);
+static int  awi_cmd(struct awi_softc *, uint8_t, int);
 static int  awi_cmd_wait(struct awi_softc *);
 static void awi_cmd_done(struct awi_softc *);
-static int  awi_next_txd(struct awi_softc *, int, u_int32_t *, u_int32_t *);
+static int  awi_next_txd(struct awi_softc *, int, uint32_t *, uint32_t *);
 static int  awi_lock(struct awi_softc *);
 static void awi_unlock(struct awi_softc *);
 static int  awi_intr_lock(struct awi_softc *);
 static void awi_intr_unlock(struct awi_softc *);
 static int  awi_newstate(struct ieee80211com *, enum ieee80211_state, int);
 static void awi_recv_mgmt(struct ieee80211com *, struct mbuf *,
-    struct ieee80211_node *, int, int, u_int32_t);
+    struct ieee80211_node *, int, int, uint32_t);
 static int  awi_send_mgmt(struct ieee80211com *, struct ieee80211_node *, int,
     int);
 static struct mbuf *awi_ether_encap(struct awi_softc *, struct mbuf *);
 static struct mbuf *awi_ether_modcap(struct awi_softc *, struct mbuf *);
 
-/* unaligned little endian access */
+/* Unaligned little endian access */
 #define LE_READ_2(p)							\
-	((((u_int8_t *)(p))[0]      ) | (((u_int8_t *)(p))[1] <<  8))
+	((((uint8_t *)(p))[0]      ) | (((uint8_t *)(p))[1] <<  8))
 #define LE_READ_4(p)							\
-	((((u_int8_t *)(p))[0]      ) | (((u_int8_t *)(p))[1] <<  8) |	\
-	 (((u_int8_t *)(p))[2] << 16) | (((u_int8_t *)(p))[3] << 24))
+	((((uint8_t *)(p))[0]      ) | (((uint8_t *)(p))[1] <<  8) |	\
+	 (((uint8_t *)(p))[2] << 16) | (((uint8_t *)(p))[3] << 24))
 #define LE_WRITE_2(p, v)						\
-	((((u_int8_t *)(p))[0] = (((u_int32_t)(v)      ) & 0xff)),	\
-	 (((u_int8_t *)(p))[1] = (((u_int32_t)(v) >>  8) & 0xff)))
+	((((uint8_t *)(p))[0] = (((uint32_t)(v)      ) & 0xff)),	\
+	 (((uint8_t *)(p))[1] = (((uint32_t)(v) >>  8) & 0xff)))
 #define LE_WRITE_4(p, v)						\
-	((((u_int8_t *)(p))[0] = (((u_int32_t)(v)      ) & 0xff)),	\
-	 (((u_int8_t *)(p))[1] = (((u_int32_t)(v) >>  8) & 0xff)),	\
-	 (((u_int8_t *)(p))[2] = (((u_int32_t)(v) >> 16) & 0xff)),	\
-	 (((u_int8_t *)(p))[3] = (((u_int32_t)(v) >> 24) & 0xff)))
+	((((uint8_t *)(p))[0] = (((uint32_t)(v)      ) & 0xff)),	\
+	 (((uint8_t *)(p))[1] = (((uint32_t)(v) >>  8) & 0xff)),	\
+	 (((uint8_t *)(p))[2] = (((uint32_t)(v) >> 16) & 0xff)),	\
+	 (((uint8_t *)(p))[3] = (((uint32_t)(v) >> 24) & 0xff)))
 
 static const struct awi_chanset awi_chanset[] = {
     /* PHY type        domain            min max def */
@@ -286,7 +284,7 @@ awi_attach(struct awi_softc *sc)
 	sc->sc_attached = 1;
 	splx(s);
 
-	/* ready to accept ioctl */
+	/* Ready to accept ioctl */
 	awi_unlock(sc);
 
 	return 0;
@@ -397,7 +395,7 @@ static void
 awi_softintr(void *arg)
 {
 	struct awi_softc *sc = arg;
-	u_int16_t status;
+	uint16_t status;
 	int ocansleep;
 	int s;
 #ifdef AWI_DEBUG
@@ -517,7 +515,7 @@ awi_init(struct ifnet *ifp)
 	memcpy(&sc->sc_mib_mac.aDesired_ESS_ID[2], ic->ic_des_essid,
 	    ic->ic_des_esslen);
 
-	/* configure basic rate */
+	/* Configure basic rate */
 	if (ic->ic_phytype == IEEE80211_T_FH)
 		rs = &ic->ic_sup_rates[IEEE80211_MODE_FH];
 	else
@@ -541,7 +539,7 @@ awi_init(struct ifnet *ifp)
 		return error;
 	}
 
-	/* start transmitter */
+	/* Start transmitter */
 	sc->sc_txdone = sc->sc_txnext = sc->sc_txbase;
 	awi_write_4(sc, sc->sc_txbase + AWI_TXD_START, 0);
 	awi_write_4(sc, sc->sc_txbase + AWI_TXD_NEXT, 0);
@@ -561,7 +559,7 @@ awi_init(struct ifnet *ifp)
 		return error;
 	}
 
-	/* start receiver */
+	/* Start receiver */
 	if ((error = awi_cmd(sc, AWI_CMD_INIT_RX, AWI_WAIT)) != 0) {
 		DPRINTF(("awi_init: failed to start receiver: %d\n", error));
 		awi_stop(ifp, 1);
@@ -590,7 +588,7 @@ awi_init(struct ifnet *ifp)
 			memcpy(ni->ni_essid, ic->ic_des_essid, ni->ni_esslen);
 			ni->ni_capinfo = IEEE80211_CAPINFO_ESS;
 			if (ic->ic_phytype == IEEE80211_T_FH) {
-				ni->ni_fhdwell = 200;   /* XXX */
+				ni->ni_fhdwell = 200;	/* XXX */
 				ni->ni_fhindex = 1;
 			}
 		} else {
@@ -666,8 +664,8 @@ awi_start(struct ifnet *ifp)
 	struct ieee80211_frame *wh;
 	struct mbuf *m, *m0;
 	int len, dowep;
-	u_int32_t txd, frame, ntxd;
-	u_int8_t rate;
+	uint32_t txd, frame, ntxd;
+	uint8_t rate;
 
 	if (!sc->sc_enabled || !device_is_active(sc->sc_dev))
 		return;
@@ -763,11 +761,11 @@ awi_start(struct ifnet *ifp)
 		if ((ifp->if_flags & IFF_DEBUG) && (ifp->if_flags & IFF_LINK2))
 			ieee80211_dump_pkt(m0->m_data, m0->m_len,
 			    ic->ic_bss->ni_rates.
-			        rs_rates[ic->ic_bss->ni_txrate] &
+				rs_rates[ic->ic_bss->ni_txrate] &
 			    IEEE80211_RATE_VAL, -1);
 
 		for (m = m0, len = 0; m != NULL; m = m->m_next) {
-			awi_write_bytes(sc, frame + len, mtod(m, u_int8_t *),
+			awi_write_bytes(sc, frame + len, mtod(m, uint8_t *),
 			    m->m_len);
 			len += m->m_len;
 		}
@@ -793,7 +791,7 @@ static void
 awi_watchdog(struct ifnet *ifp)
 {
 	struct awi_softc *sc = ifp->if_softc;
-	u_int32_t prevdone;
+	uint32_t prevdone;
 	int ocansleep;
 
 	ifp->if_timer = 0;
@@ -839,7 +837,7 @@ awi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int s, error;
 
 	s = splnet();
-	/* serialize ioctl, since we may sleep */
+	/* Serialize ioctl, since we may sleep */
 	if ((error = awi_lock(sc)) != 0)
 		goto cantlock;
 
@@ -868,7 +866,7 @@ awi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCDELMULTI:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
-			/* do not rescan */
+			/* Do not rescan */
 			if (ifp->if_flags & IFF_RUNNING)
 				error = awi_mode_init(sc);
 			else
@@ -928,7 +926,7 @@ awi_media_change(struct ifnet *ifp)
 	}
 
 	/*
-	 * combination of mediaopt
+	 * Combination of mediaopt
 	 *
 	 * hostap adhoc flag0	opmode  adhoc_ap	comment
 	 *   +      -     -	HOSTAP      0		HostAP
@@ -995,7 +993,7 @@ awi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	}
 	imr->ifm_active |= ieee80211_rate2media(ic, rate, mode);
 	switch (ic->ic_opmode) {
-	case IEEE80211_M_MONITOR: /* we should never reach here */
+	case IEEE80211_M_MONITOR: /* We should never reach here */
 		break;
 	case IEEE80211_M_STA:
 		break;
@@ -1022,7 +1020,7 @@ awi_mode_init(struct awi_softc *sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 
-	/* reinitialize muticast filter */
+	/* Reinitialize muticast filter */
 	n = 0;
 	sc->sc_mib_local.Accept_All_Multicast_Dis = 0;
 	if (sc->sc_ic.ic_opmode != IEEE80211_M_HOSTAP &&
@@ -1072,9 +1070,9 @@ awi_rx_int(struct awi_softc *sc)
 	struct ifnet *ifp = &sc->sc_if;
 	struct ieee80211_frame_min *wh;
 	struct ieee80211_node *ni;
-	u_int8_t state, rate, rssi;
-	u_int16_t len;
-	u_int32_t frame, next, rstamp, rxoff;
+	uint8_t state, rate, rssi;
+	uint16_t len;
+	uint32_t frame, next, rstamp, rxoff;
 	struct mbuf *m;
 
 	rxoff = sc->sc_rxdoff;
@@ -1140,7 +1138,7 @@ awi_rx_int(struct awi_softc *sc)
 		next = awi_read_4(sc, rxoff + AWI_RXD_NEXT);
 		if (next & AWI_RXD_NEXT_LAST)
 			break;
-		/* make sure the next pointer is correct */
+		/* Make sure the next pointer is correct */
 		if (next != awi_read_4(sc, rxoff + AWI_RXD_NEXT))
 			break;
 		state |= AWI_RXD_ST_OWN;
@@ -1154,7 +1152,7 @@ static void
 awi_tx_int(struct awi_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
-	u_int8_t flags;
+	uint8_t flags;
 
 	while (sc->sc_txdone != sc->sc_txnext) {
 		flags = awi_read_1(sc, sc->sc_txdone + AWI_TXD_STATE);
@@ -1173,7 +1171,7 @@ awi_tx_int(struct awi_softc *sc)
 }
 
 static struct mbuf *
-awi_devget(struct awi_softc *sc, u_int32_t off, u_int16_t len)
+awi_devget(struct awi_softc *sc, uint32_t off, uint16_t len)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct mbuf *m;
@@ -1199,7 +1197,7 @@ awi_devget(struct awi_softc *sc, u_int32_t off, u_int16_t len)
 		tlen -= m->m_len;
 		if (tlen > len)
 			tlen = len;
-		awi_read_bytes(sc, off, mtod(m, u_int8_t *) + m->m_len, tlen);
+		awi_read_bytes(sc, off, mtod(m, uint8_t *) + m->m_len, tlen);
 		off += tlen;
 		len -= tlen;
 	}
@@ -1236,7 +1234,7 @@ awi_devget(struct awi_softc *sc, u_int32_t off, u_int16_t len)
 		}
 		if (m->m_len > len)
 			m->m_len = len;
-		awi_read_bytes(sc, off, mtod(m, u_int8_t *), m->m_len);
+		awi_read_bytes(sc, off, mtod(m, uint8_t *), m->m_len);
 		off += m->m_len;
 		len -= m->m_len;
 		*mp = m;
@@ -1253,14 +1251,14 @@ awi_devget(struct awi_softc *sc, u_int32_t off, u_int16_t len)
 static int
 awi_hw_init(struct awi_softc *sc)
 {
-	u_int8_t status;
-	u_int16_t intmask;
+	uint8_t status;
+	uint16_t intmask;
 	int i, error;
 
 	sc->sc_enab_intr = 0;
 	awi_drvstate(sc, AWI_DRV_RESET);
 
-	/* reset firmware */
+	/* Reset firmware */
 	am79c930_gcr_setbits(&sc->sc_chip, AM79C930_GCR_CORESET);
 	DELAY(100);
 	awi_write_1(sc, AWI_SELFTEST, 0);
@@ -1269,7 +1267,7 @@ awi_hw_init(struct awi_softc *sc)
 	am79c930_gcr_clearbits(&sc->sc_chip, AM79C930_GCR_CORESET);
 	DELAY(100);
 
-	/* wait for selftest completion */
+	/* Wait for selftest completion */
 	for (i = 0; ; i++) {
 		if (!device_is_active(sc->sc_dev))
 			return ENXIO;
@@ -1295,7 +1293,7 @@ awi_hw_init(struct awi_softc *sc)
 		return ENXIO;
 	}
 
-	/* check banner to confirm firmware write it */
+	/* Check banner to confirm firmware write it */
 	awi_read_bytes(sc, AWI_BANNER, sc->sc_banner, AWI_BANNER_LEN);
 	if (memcmp(sc->sc_banner, "PCnetMobile:", 12) != 0) {
 		printf("%s: failed to complete selftest (bad banner)\n",
@@ -1306,7 +1304,7 @@ awi_hw_init(struct awi_softc *sc)
 		return ENXIO;
 	}
 
-	/* initializing interrupt */
+	/* Initializing interrupt */
 	sc->sc_enab_intr = 1;
 	error = awi_intr_lock(sc);
 	if (error)
@@ -1320,7 +1318,7 @@ awi_hw_init(struct awi_softc *sc)
 	awi_intr_unlock(sc);
 	am79c930_gcr_setbits(&sc->sc_chip, AM79C930_GCR_ENECINT);
 
-	/* issuing interface test command */
+	/* Issuing interface test command */
 	error = awi_cmd(sc, AWI_CMD_NOP, AWI_WAIT);
 	if (error) {
 		printf("%s: failed to complete selftest",
@@ -1424,7 +1422,7 @@ awi_init_mibs(struct awi_softc *sc)
 	sc->sc_mib_local.PWD_Lvl = 0;
 	sc->sc_mib_local.CFP_Mode = 0;
 
-	/* allocate buffers */
+	/* Allocate buffers */
 	sc->sc_txbase = AWI_BUFFERS;
 	sc->sc_txend = sc->sc_txbase +
 	    (AWI_TXD_SIZE + sizeof(struct ieee80211_frame) +
@@ -1448,34 +1446,34 @@ awi_init_mibs(struct awi_softc *sc)
 }
 
 static int
-awi_mib(struct awi_softc *sc, u_int8_t cmd, u_int8_t mib, int wflag)
+awi_mib(struct awi_softc *sc, uint8_t cmd, uint8_t mib, int wflag)
 {
 	int error;
-	u_int8_t size, *ptr;
+	uint8_t size, *ptr;
 
 	switch (mib) {
 	case AWI_MIB_LOCAL:
-		ptr = (u_int8_t *)&sc->sc_mib_local;
+		ptr = (uint8_t *)&sc->sc_mib_local;
 		size = sizeof(sc->sc_mib_local);
 		break;
 	case AWI_MIB_ADDR:
-		ptr = (u_int8_t *)&sc->sc_mib_addr;
+		ptr = (uint8_t *)&sc->sc_mib_addr;
 		size = sizeof(sc->sc_mib_addr);
 		break;
 	case AWI_MIB_MAC:
-		ptr = (u_int8_t *)&sc->sc_mib_mac;
+		ptr = (uint8_t *)&sc->sc_mib_mac;
 		size = sizeof(sc->sc_mib_mac);
 		break;
 	case AWI_MIB_STAT:
-		ptr = (u_int8_t *)&sc->sc_mib_stat;
+		ptr = (uint8_t *)&sc->sc_mib_stat;
 		size = sizeof(sc->sc_mib_stat);
 		break;
 	case AWI_MIB_MGT:
-		ptr = (u_int8_t *)&sc->sc_mib_mgt;
+		ptr = (uint8_t *)&sc->sc_mib_mgt;
 		size = sizeof(sc->sc_mib_mgt);
 		break;
 	case AWI_MIB_PHY:
-		ptr = (u_int8_t *)&sc->sc_mib_phy;
+		ptr = (uint8_t *)&sc->sc_mib_phy;
 		size = sizeof(sc->sc_mib_phy);
 		break;
 	default:
@@ -1515,9 +1513,9 @@ awi_mib(struct awi_softc *sc, u_int8_t cmd, u_int8_t mib, int wflag)
 }
 
 static int
-awi_cmd(struct awi_softc *sc, u_int8_t cmd, int wflag)
+awi_cmd(struct awi_softc *sc, uint8_t cmd, int wflag)
 {
-	u_int8_t status;
+	uint8_t status;
 	int error = 0;
 #ifdef AWI_DEBUG
 	static const char *cmdname[] = {
@@ -1600,7 +1598,7 @@ awi_cmd_wait(struct awi_softc *sc)
 static void
 awi_cmd_done(struct awi_softc *sc)
 {
-	u_int8_t cmd, status;
+	uint8_t cmd, status;
 
 	status = awi_read_1(sc, AWI_CMD_STATUS);
 	if (status == AWI_STAT_IDLE)
@@ -1622,9 +1620,9 @@ awi_cmd_done(struct awi_softc *sc)
 }
 
 static int
-awi_next_txd(struct awi_softc *sc, int len, u_int32_t *framep, u_int32_t *ntxdp)
+awi_next_txd(struct awi_softc *sc, int len, uint32_t *framep, uint32_t *ntxdp)
 {
-	u_int32_t txd, ntxd, frame;
+	uint32_t txd, ntxd, frame;
 
 	txd = sc->sc_txnext;
 	frame = txd + AWI_TXD_SIZE;
@@ -1661,8 +1659,7 @@ awi_lock(struct awi_softc *sc)
 {
 	int error = 0;
 
-	if (curlwp == NULL)
-	{
+	if (curlwp == NULL) {
 		/*
 		 * XXX
 		 * Though driver ioctl should be called with context,
@@ -1705,7 +1702,7 @@ awi_unlock(struct awi_softc *sc)
 static int
 awi_intr_lock(struct awi_softc *sc)
 {
-	u_int8_t status;
+	uint8_t status;
 	int i, retry;
 
 	status = 1;
@@ -1744,7 +1741,7 @@ awi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct awi_softc *sc = ifp->if_softc;
 	struct ieee80211_node *ni;
 	int error;
-	u_int8_t newmode;
+	uint8_t newmode;
 	enum ieee80211_state ostate;
 #ifdef AWI_DEBUG
 	static const char *stname[] =
@@ -1758,7 +1755,7 @@ awi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	DPRINTF(("awi_newstate: %s (%s/%s) -> %s\n", stname[ostate],
 	    stname[sc->sc_nstate], substname[sc->sc_substate], stname[nstate]));
 
-	/* set LED */
+	/* Set LED */
 	switch (nstate) {
 	case IEEE80211_S_INIT:
 		awi_drvstate(sc, AWI_DRV_RESET);
@@ -1791,7 +1788,7 @@ awi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		return (*sc->sc_newstate)(ic, nstate, arg);
 	}
 
-	/* state transition */
+	/* State transition */
 	if (nstate == IEEE80211_S_SCAN) {
 		/* SCAN substate */
 		if (sc->sc_substate == AWI_ST_NONE) {
@@ -1803,7 +1800,7 @@ awi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			sc->sc_substate = AWI_ST_SCAN_SETMIB;
 			switch (ostate) {
 			case IEEE80211_S_RUN:
-				/* beacon miss */
+				/* Beacon miss */
 				if (ifp->if_flags & IFF_DEBUG)
 					printf("%s: no recent beacons from %s;"
 					    " rescanning\n",
@@ -1816,7 +1813,7 @@ awi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 				ieee80211_begin_scan(ic, 1);
 				/* FALLTHRU */
 			case IEEE80211_S_SCAN:
-				/* scan next */
+				/* Scan next */
 				break;
 			}
 			if (ic->ic_flags & IEEE80211_F_ASCAN)
@@ -1844,10 +1841,10 @@ awi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH) {
 				awi_write_1(sc, AWI_CA_SCAN_SET,
 				    IEEE80211_FH_CHANSET(
-				        ieee80211_chan2ieee(ic, ni->ni_chan)));
+					ieee80211_chan2ieee(ic, ni->ni_chan)));
 				awi_write_1(sc, AWI_CA_SCAN_PATTERN,
 				    IEEE80211_FH_CHANPAT(
-				        ieee80211_chan2ieee(ic, ni->ni_chan)));
+					ieee80211_chan2ieee(ic, ni->ni_chan)));
 				awi_write_1(sc, AWI_CA_SCAN_IDX, 1);
 			} else {
 				awi_write_1(sc, AWI_CA_SCAN_SET,
@@ -1877,10 +1874,10 @@ awi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	}
 
 	if (ostate == IEEE80211_S_SCAN) {
-		/* set SSID and channel */
+		/* Set SSID and channel */
 		/* substate */
 		if (sc->sc_substate == AWI_ST_NONE) {
-			sc->sc_nstate = nstate;	/* next state in transition */
+			sc->sc_nstate = nstate;	/* Next state in transition */
 			sc->sc_substate = AWI_ST_SUB_INIT;
 		}
 		ni = ic->ic_bss;
@@ -1912,10 +1909,10 @@ awi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH) {
 				awi_write_1(sc, AWI_CA_SYNC_SET,
 				    IEEE80211_FH_CHANSET(
-				        ieee80211_chan2ieee(ic, ni->ni_chan)));
+					ieee80211_chan2ieee(ic, ni->ni_chan)));
 				awi_write_1(sc, AWI_CA_SYNC_PATTERN,
 				    IEEE80211_FH_CHANPAT(
-				        ieee80211_chan2ieee(ic, ni->ni_chan)));
+					ieee80211_chan2ieee(ic, ni->ni_chan)));
 				awi_write_1(sc, AWI_CA_SYNC_IDX,
 				    ni->ni_fhindex);
 				awi_write_2(sc, AWI_CA_SYNC_DWELL,
@@ -1984,7 +1981,7 @@ out:
 static void
 awi_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	struct ieee80211_node *ni,
-	int subtype, int rssi, u_int32_t rstamp)
+	int subtype, int rssi, uint32_t rstamp)
 {
 	struct awi_softc *sc = ic->ic_ifp->if_softc;
 
@@ -2000,7 +1997,7 @@ awi_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 {
 	struct awi_softc *sc = ic->ic_ifp->if_softc;
 
-	/* probe request is handled by hardware */
+	/* Probe request is handled by hardware */
 	if (type == IEEE80211_FC0_SUBTYPE_PROBE_REQ)
 		return 0;
 	return (*sc->sc_send_mgmt)(ic, ni, type, arg);
@@ -2025,8 +2022,8 @@ awi_ether_encap(struct awi_softc *sc, struct mbuf *m)
 		return NULL;
 	wh = mtod(m, struct ieee80211_frame *);
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA;
-	*(u_int16_t *)wh->i_dur = 0;
-	*(u_int16_t *)wh->i_seq =
+	*(uint16_t *)wh->i_dur = 0;
+	*(uint16_t *)wh->i_seq =
 	    htole16(ni->ni_txseqs[0] << IEEE80211_SEQ_SEQ_SHIFT);
 	ni->ni_txseqs[0]++;
 	if (ic->ic_opmode == IEEE80211_M_IBSS ||

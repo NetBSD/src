@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.52 2019/04/11 08:50:59 msaitoh Exp $ */
+/* $NetBSD: if_txp.c,v 1.53 2019/04/26 06:33:34 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.52 2019/04/11 08:50:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.53 2019/04/26 06:33:34 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -45,12 +45,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.52 2019/04/11 08:50:59 msaitoh Exp $");
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/callout.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/if_ether.h>
 #include <net/if_arp.h>
+#include <net/if_media.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -59,12 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.52 2019/04/11 08:50:59 msaitoh Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <net/if_media.h>
-
-#include <net/bpf.h>
-
-#include <sys/bus.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -106,12 +103,12 @@ int txp_dma_malloc(struct txp_softc *, bus_size_t, struct txp_dma_alloc *, int);
 void txp_set_filter(struct txp_softc *);
 
 int txp_cmd_desc_numfree(struct txp_softc *);
-int txp_command(struct txp_softc *, u_int16_t, u_int16_t, u_int32_t,
-    u_int32_t, u_int16_t *, u_int32_t *, u_int32_t *, int);
-int txp_command2(struct txp_softc *, u_int16_t, u_int16_t,
-    u_int32_t, u_int32_t, struct txp_ext_desc *, u_int8_t,
+int txp_command(struct txp_softc *, uint16_t, uint16_t, uint32_t,
+    uint32_t, uint16_t *, uint32_t *, uint32_t *, int);
+int txp_command2(struct txp_softc *, uint16_t, uint16_t,
+    uint32_t, uint32_t, struct txp_ext_desc *, uint8_t,
     struct txp_rsp_desc **, int);
-int txp_response(struct txp_softc *, u_int32_t, u_int16_t, u_int16_t,
+int txp_response(struct txp_softc *, uint32_t, uint16_t, uint16_t,
     struct txp_rsp_desc **);
 void txp_rsp_fixup(struct txp_softc *, struct txp_rsp_desc *,
     struct txp_rsp_desc *);
@@ -145,7 +142,7 @@ const struct txp_pci_match {
 static const struct txp_pci_match *txp_pcilookup(pcireg_t);
 
 static const struct {
-	u_int16_t mask, value;
+	uint16_t mask, value;
 	int flags;
 } txp_subsysinfo[] = {
 	{0xf000, 0x2000, TXP_SERVERVERSION},
@@ -189,12 +186,12 @@ txp_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	struct ifnet *ifp = &sc->sc_arpcom.ec_if;
-	u_int32_t command;
-	u_int16_t p1;
-	u_int32_t p2;
+	uint32_t command;
+	uint16_t p1;
+	uint32_t p2;
 	u_char enaddr[6];
 	const struct txp_pci_match *match;
-	u_int16_t subsys;
+	uint16_t subsys;
 	int i, flags;
 	char devinfo[256];
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -218,8 +215,8 @@ txp_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	pci_devinfo(pa->pa_id, 0, 0, devinfo, sizeof(devinfo));
-#define TXP_EXTRAINFO ((flags & (TXP_USESUBSYSTEM|TXP_SERVERVERSION)) == \
-  (TXP_USESUBSYSTEM|TXP_SERVERVERSION) ? " (SVR)" : "")
+#define TXP_EXTRAINFO ((flags & (TXP_USESUBSYSTEM | TXP_SERVERVERSION)) == \
+  (TXP_USESUBSYSTEM | TXP_SERVERVERSION) ? " (SVR)" : "")
 	aprint_normal(": %s%s\n%s", devinfo, TXP_EXTRAINFO,
 	    device_xname(sc->sc_dev));
 
@@ -282,13 +279,13 @@ txp_attach(device_t parent, device_t self, void *aux)
 	txp_set_filter(sc);
 
 	p1 = htole16(p1);
-	enaddr[0] = ((u_int8_t *)&p1)[1];
-	enaddr[1] = ((u_int8_t *)&p1)[0];
+	enaddr[0] = ((uint8_t *)&p1)[1];
+	enaddr[1] = ((uint8_t *)&p1)[0];
 	p2 = htole32(p2);
-	enaddr[2] = ((u_int8_t *)&p2)[3];
-	enaddr[3] = ((u_int8_t *)&p2)[2];
-	enaddr[4] = ((u_int8_t *)&p2)[1];
-	enaddr[5] = ((u_int8_t *)&p2)[0];
+	enaddr[2] = ((uint8_t *)&p2)[3];
+	enaddr[3] = ((uint8_t *)&p2)[2];
+	enaddr[4] = ((uint8_t *)&p2)[1];
+	enaddr[5] = ((uint8_t *)&p2)[0];
 
 	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(enaddr));
@@ -296,24 +293,24 @@ txp_attach(device_t parent, device_t self, void *aux)
 
 	ifmedia_init(&sc->sc_ifmedia, 0, txp_ifmedia_upd, txp_ifmedia_sts);
 	if (flags & TXP_FIBER) {
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_FX,
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_FX,
 			    0, NULL);
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_FX|IFM_HDX,
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_FX | IFM_HDX,
 			    0, NULL);
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_FX|IFM_FDX,
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_FX | IFM_FDX,
 			    0, NULL);
 	} else {
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T,
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T,
 			    0, NULL);
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX,
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T | IFM_HDX,
 			    0, NULL);
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T|IFM_FDX,
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T | IFM_FDX,
 			    0, NULL);
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX,
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX,
 			    0, NULL);
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_HDX,
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX | IFM_HDX,
 			    0, NULL);
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_FDX,
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX | IFM_FDX,
 			    0, NULL);
 	}
 	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
@@ -321,7 +318,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_xcvr = TXP_XCVR_AUTO;
 	txp_command(sc, TXP_CMD_XCVR_SELECT, TXP_XCVR_AUTO, 0, 0,
 	    NULL, NULL, NULL, 0);
-	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO);
+	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO);
 
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
@@ -401,7 +398,7 @@ txp_chip_init(struct txp_softc *sc)
 int
 txp_reset_adapter(struct txp_softc *sc)
 {
-	u_int32_t r;
+	uint32_t r;
 	int i;
 
 	WRITE_REG(sc, TXP_SRR, TXP_SRR_ALL);
@@ -430,7 +427,7 @@ txp_download_fw(struct txp_softc *sc)
 	const struct txp_fw_file_header *fileheader;
 	const struct txp_fw_section_header *secthead;
 	int sect;
-	u_int32_t r, i, ier, imr;
+	uint32_t r, i, ier, imr;
 
 	ier = READ_REG(sc, TXP_IER);
 	WRITE_REG(sc, TXP_IER, ier | TXP_INT_A2H_0);
@@ -470,14 +467,14 @@ txp_download_fw(struct txp_softc *sc)
 	}
 
 	secthead = (const struct txp_fw_section_header *)
-		(((const u_int8_t *)tc990image) +
+		(((const uint8_t *)tc990image) +
 		 sizeof(struct txp_fw_file_header));
 
 	for (sect = 0; sect < le32toh(fileheader->nsections); sect++) {
 		if (txp_download_fw_section(sc, secthead, sect))
 			return (-1);
 		secthead = (const struct txp_fw_section_header *)
-		    (((const u_int8_t *)secthead) + le32toh(secthead->nbytes) +
+		    (((const uint8_t *)secthead) + le32toh(secthead->nbytes) +
 			sizeof(*secthead));
 	}
 
@@ -503,7 +500,7 @@ txp_download_fw(struct txp_softc *sc)
 int
 txp_download_fw_wait(struct txp_softc *sc)
 {
-	u_int32_t i, r;
+	uint32_t i, r;
 
 	for (i = 0; i < 10000; i++) {
 		r = READ_REG(sc, TXP_ISR);
@@ -535,7 +532,7 @@ txp_download_fw_section(struct txp_softc *sc,
 	int rseg, err = 0;
 	struct mbuf m;
 #ifdef INET
-	u_int16_t csum;
+	uint16_t csum;
 #endif
 
 	/* Skip zero length sections */
@@ -543,7 +540,7 @@ txp_download_fw_section(struct txp_softc *sc,
 		return (0);
 
 	/* Make sure we aren't past the end of the image */
-	rseg = ((const u_int8_t *)sect) - ((const u_int8_t *)tc990image);
+	rseg = ((const uint8_t *)sect) - ((const uint8_t *)tc990image);
 	if (rseg >= sizeof(tc990image)) {
 		printf(": fw invalid section address, section %d\n", sectnum);
 		return (-1);
@@ -562,7 +559,7 @@ txp_download_fw_section(struct txp_softc *sc,
 		return (-1);
 	}
 
-	memcpy(dma.dma_vaddr, ((const u_int8_t *)sect) + sizeof(*sect),
+	memcpy(dma.dma_vaddr, ((const uint8_t *)sect) + sizeof(*sect),
 	    le32toh(sect->nbytes));
 
 	/*
@@ -612,7 +609,7 @@ txp_intr(void *vsc)
 {
 	struct txp_softc *sc = vsc;
 	struct txp_hostvar *hv = sc->sc_hostvar;
-	u_int32_t isr;
+	uint32_t isr;
 	int claimed = 0;
 
 	/* mask all interrupts */
@@ -623,7 +620,8 @@ txp_intr(void *vsc)
 	    TXP_INT_PCI_TABORT | TXP_INT_PCI_MABORT |  TXP_INT_LATCH);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_host_dma.dma_map, 0,
-	    sizeof(struct txp_hostvar), BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
+	    sizeof(struct txp_hostvar),
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 	isr = READ_REG(sc, TXP_ISR);
 	while (isr) {
@@ -650,7 +648,8 @@ txp_intr(void *vsc)
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_host_dma.dma_map, 0,
-	    sizeof(struct txp_hostvar), BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
+	    sizeof(struct txp_hostvar),
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 	/* unmask all interrupts */
 	WRITE_REG(sc, TXP_IMR, TXP_INT_A2H_3);
@@ -668,7 +667,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 	struct txp_rx_desc *rxd;
 	struct mbuf *m;
 	struct txp_swdesc *sd;
-	u_int32_t roff, woff;
+	uint32_t roff, woff;
 	int sumflags = 0;
 	int idx;
 
@@ -734,17 +733,17 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 #endif
 
 		if (rxd->rx_stat & htole32(RX_STAT_IPCKSUMBAD))
-			sumflags |= (M_CSUM_IPv4|M_CSUM_IPv4_BAD);
+			sumflags |= (M_CSUM_IPv4 | M_CSUM_IPv4_BAD);
 		else if (rxd->rx_stat & htole32(RX_STAT_IPCKSUMGOOD))
 			sumflags |= M_CSUM_IPv4;
 
 		if (rxd->rx_stat & htole32(RX_STAT_TCPCKSUMBAD))
-			sumflags |= (M_CSUM_TCPv4|M_CSUM_TCP_UDP_BAD);
+			sumflags |= (M_CSUM_TCPv4 | M_CSUM_TCP_UDP_BAD);
 		else if (rxd->rx_stat & htole32(RX_STAT_TCPCKSUMGOOD))
 			sumflags |= M_CSUM_TCPv4;
 
 		if (rxd->rx_stat & htole32(RX_STAT_UDPCKSUMBAD))
-			sumflags |= (M_CSUM_UDPv4|M_CSUM_TCP_UDP_BAD);
+			sumflags |= (M_CSUM_UDPv4 | M_CSUM_TCP_UDP_BAD);
 		else if (rxd->rx_stat & htole32(RX_STAT_UDPCKSUMGOOD))
 			sumflags |= M_CSUM_UDPv4;
 
@@ -783,7 +782,7 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 	struct txp_hostvar *hv = sc->sc_hostvar;
 	struct txp_rxbuf_desc *rbd;
 	struct txp_swdesc *sd;
-	u_int32_t i, end;
+	uint32_t i, end;
 
 	end = TXP_OFFSET2IDX(le32toh(hv->hv_rx_buf_read_idx));
 	i = TXP_OFFSET2IDX(le32toh(hv->hv_rx_buf_write_idx));
@@ -824,9 +823,9 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 		/* stash away pointer */
 		memcpy(__UNVOLATILE(&rbd->rb_vaddrlo), &sd, sizeof(sd));
 
-		rbd->rb_paddrlo = ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr)
+		rbd->rb_paddrlo = ((uint64_t)sd->sd_map->dm_segs[0].ds_addr)
 		    & 0xffffffff;
-		rbd->rb_paddrhi = ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr)
+		rbd->rb_paddrhi = ((uint64_t)sd->sd_map->dm_segs[0].ds_addr)
 		    >> 32;
 
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
@@ -860,8 +859,8 @@ txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r,
     struct txp_dma_alloc *dma)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ec_if;
-	u_int32_t idx = TXP_OFFSET2IDX(le32toh(*(r->r_off)));
-	u_int32_t cons = r->r_cons, cnt = r->r_cnt;
+	uint32_t idx = TXP_OFFSET2IDX(le32toh(*(r->r_off)));
+	uint32_t cons = r->r_cons, cnt = r->r_cnt;
 	struct txp_tx_desc *txd = r->r_desc + cons;
 	struct txp_swdesc *sd = sc->sc_txd + cons;
 	struct mbuf *m;
@@ -934,7 +933,7 @@ txp_alloc_rings(struct txp_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ec_if;
 	struct txp_boot_record *boot;
 	struct txp_swdesc *sd;
-	u_int32_t r;
+	uint32_t r;
 	int i, j, nb;
 
 	/* boot record */
@@ -1114,9 +1113,9 @@ txp_alloc_rings(struct txp_softc *sc)
 
 
 		sc->sc_rxbufs[nb].rb_paddrlo =
-		    ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr) & 0xffffffff;
+		    ((uint64_t)sd->sd_map->dm_segs[0].ds_addr) & 0xffffffff;
 		sc->sc_rxbufs[nb].rb_paddrhi =
-		    ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr) >> 32;
+		    ((uint64_t)sd->sd_map->dm_segs[0].ds_addr) >> 32;
 	}
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxbufring_dma.dma_map,
 	    0, sc->sc_rxbufring_dma.dma_map->dm_mapsize,
@@ -1125,12 +1124,12 @@ txp_alloc_rings(struct txp_softc *sc)
 	    sizeof(struct txp_rxbuf_desc));
 
 	/* zero dma */
-	if (txp_dma_malloc(sc, sizeof(u_int32_t), &sc->sc_zero_dma,
+	if (txp_dma_malloc(sc, sizeof(uint32_t), &sc->sc_zero_dma,
 	    BUS_DMA_COHERENT)) {
 		printf(": can't allocate response ring\n");
 		goto bail_rxbufring;
 	}
-	memset(sc->sc_zero_dma.dma_vaddr, 0, sizeof(u_int32_t));
+	memset(sc->sc_zero_dma.dma_vaddr, 0, sizeof(uint32_t));
 	boot->br_zero_lo = htole32(sc->sc_zero_dma.dma_paddr & 0xffffffff);
 	boot->br_zero_hi = htole32(sc->sc_zero_dma.dma_paddr >> 32);
 
@@ -1397,7 +1396,7 @@ txp_start(struct ifnet *ifp)
 	struct txp_frag_desc *fxd;
 	struct mbuf *m, *mnew;
 	struct txp_swdesc *sd;
-	u_int32_t firstprod, firstcnt, prod, cnt, i;
+	uint32_t firstprod, firstcnt, prod, cnt, i;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1490,10 +1489,10 @@ txp_start(struct ifnet *ifp)
 			fxd->frag_rsvd1 = 0;
 			fxd->frag_len = sd->sd_map->dm_segs[i].ds_len;
 			fxd->frag_addrlo =
-			    ((u_int64_t)sd->sd_map->dm_segs[i].ds_addr) &
+			    ((uint64_t)sd->sd_map->dm_segs[i].ds_addr) &
 			    0xffffffff;
 			fxd->frag_addrhi =
-			    ((u_int64_t)sd->sd_map->dm_segs[i].ds_addr) >>
+			    ((uint64_t)sd->sd_map->dm_segs[i].ds_addr) >>
 			    32;
 			fxd->frag_rsvd2 = 0;
 
@@ -1537,7 +1536,7 @@ txp_start(struct ifnet *ifp)
 			for (mx = m; mx != NULL; mx = mx->m_next) {
 				for (i = 0; i < mx->m_len; i++) {
 					printf(":%02x",
-					    (u_int8_t)m->m_data[i]);
+					    (uint8_t)m->m_data[i]);
 				}
 			}
 			printf("\n");
@@ -1563,8 +1562,8 @@ oactive1:
  * Handle simple commands sent to the typhoon
  */
 int
-txp_command(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2,
-    u_int32_t in3, u_int16_t *out1, u_int32_t *out2, u_int32_t *out3, int wait)
+txp_command(struct txp_softc *sc, uint16_t id, uint16_t in1, uint32_t in2,
+    uint32_t in3, uint16_t *out1, uint32_t *out2, uint32_t *out3, int wait)
 {
 	struct txp_rsp_desc *rsp = NULL;
 
@@ -1585,15 +1584,15 @@ txp_command(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2,
 }
 
 int
-txp_command2(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2,
-    u_int32_t in3, struct txp_ext_desc *in_extp, u_int8_t in_extn,
+txp_command2(struct txp_softc *sc, uint16_t id, uint16_t in1, uint32_t in2,
+    uint32_t in3, struct txp_ext_desc *in_extp, uint8_t in_extn,
     struct txp_rsp_desc **rspp, int wait)
 {
 	struct txp_hostvar *hv = sc->sc_hostvar;
 	struct txp_cmd_desc *cmd;
 	struct txp_ext_desc *ext;
-	u_int32_t idx, i;
-	u_int16_t seq;
+	uint32_t idx, i;
+	uint16_t seq;
 
 	if (txp_cmd_desc_numfree(sc) < (in_extn + 1)) {
 		printf("%s: no free cmd descriptors\n", TXP_DEVNAME(sc));
@@ -1601,7 +1600,7 @@ txp_command2(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2,
 	}
 
 	idx = sc->sc_cmdring.lastwrite;
-	cmd = (struct txp_cmd_desc *)(((u_int8_t *)sc->sc_cmdring.base) + idx);
+	cmd = (struct txp_cmd_desc *)(((uint8_t *)sc->sc_cmdring.base) + idx);
 	memset(cmd, 0, sizeof(*cmd));
 
 	cmd->cmd_numdesc = in_extn;
@@ -1619,7 +1618,7 @@ txp_command2(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2,
 		idx = 0;
 
 	for (i = 0; i < in_extn; i++) {
-		ext = (struct txp_ext_desc *)(((u_int8_t *)sc->sc_cmdring.base) + idx);
+		ext = (struct txp_ext_desc *)(((uint8_t *)sc->sc_cmdring.base) + idx);
 		memcpy(ext, in_extp, sizeof(struct txp_ext_desc));
 		in_extp++;
 		idx += sizeof(struct txp_cmd_desc);
@@ -1660,14 +1659,14 @@ txp_command2(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2,
 }
 
 int
-txp_response(struct txp_softc *sc, u_int32_t ridx, u_int16_t id, u_int16_t seq,
+txp_response(struct txp_softc *sc, uint32_t ridx, uint16_t id, uint16_t seq,
     struct txp_rsp_desc **rspp)
 {
 	struct txp_hostvar *hv = sc->sc_hostvar;
 	struct txp_rsp_desc *rsp;
 
 	while (ridx != le32toh(hv->hv_resp_write_idx)) {
-		rsp = (struct txp_rsp_desc *)(((u_int8_t *)sc->sc_rspring.base) + ridx);
+		rsp = (struct txp_rsp_desc *)(((uint8_t *)sc->sc_rspring.base) + ridx);
 
 		if (id == le16toh(rsp->rsp_id) && le16toh(rsp->rsp_seq) == seq) {
 			*rspp = (struct txp_rsp_desc *)malloc(
@@ -1713,7 +1712,7 @@ txp_rsp_fixup(struct txp_softc *sc, struct txp_rsp_desc *rsp,
 {
 	struct txp_rsp_desc *src = rsp;
 	struct txp_hostvar *hv = sc->sc_hostvar;
-	u_int32_t i, ridx;
+	uint32_t i, ridx;
 
 	ridx = le32toh(hv->hv_resp_read_idx);
 
@@ -1738,7 +1737,7 @@ txp_cmd_desc_numfree(struct txp_softc *sc)
 {
 	struct txp_hostvar *hv = sc->sc_hostvar;
 	struct txp_boot_record *br = sc->sc_boot;
-	u_int32_t widx, ridx, nfree;
+	uint32_t widx, ridx, nfree;
 
 	widx = sc->sc_cmdring.lastwrite;
 	ridx = le32toh(hv->hv_cmd_read_idx);
@@ -1777,7 +1776,7 @@ txp_ifmedia_upd(struct ifnet *ifp)
 {
 	struct txp_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_ifmedia;
-	u_int16_t new_xcvr;
+	uint16_t new_xcvr;
 
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 		return (EINVAL);
@@ -1814,7 +1813,7 @@ txp_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct txp_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_ifmedia;
-	u_int16_t bmsr, bmcr, anlpar;
+	uint16_t bmsr, bmcr, anlpar;
 
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
@@ -1853,15 +1852,15 @@ txp_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 		}
 
 		if (anlpar & ANLPAR_TX_FD)
-			ifmr->ifm_active |= IFM_100_TX|IFM_FDX;
+			ifmr->ifm_active |= IFM_100_TX | IFM_FDX;
 		else if (anlpar & ANLPAR_T4)
-			ifmr->ifm_active |= IFM_100_T4|IFM_HDX;
+			ifmr->ifm_active |= IFM_100_T4 | IFM_HDX;
 		else if (anlpar & ANLPAR_TX)
-			ifmr->ifm_active |= IFM_100_TX|IFM_HDX;
+			ifmr->ifm_active |= IFM_100_TX | IFM_HDX;
 		else if (anlpar & ANLPAR_10_FD)
-			ifmr->ifm_active |= IFM_10_T|IFM_FDX;
+			ifmr->ifm_active |= IFM_10_T | IFM_FDX;
 		else if (anlpar & ANLPAR_10)
-			ifmr->ifm_active |= IFM_10_T|IFM_HDX;
+			ifmr->ifm_active |= IFM_10_T | IFM_HDX;
 		else
 			ifmr->ifm_active |= IFM_NONE;
 	} else
@@ -1884,32 +1883,37 @@ txp_show_descriptor(void *d)
 	switch (cmd->cmd_flags & CMD_FLAGS_TYPE_M) {
 	case CMD_FLAGS_TYPE_CMD:
 		/* command descriptor */
-		printf("[cmd flags 0x%x num %d id %d seq %d par1 0x%x par2 0x%x par3 0x%x]\n",
+		printf("[cmd flags 0x%x num %d id %d seq %d par1 0x%x par2 "
+		    "0x%x par3 0x%x]\n",
 		    cmd->cmd_flags, cmd->cmd_numdesc, le16toh(cmd->cmd_id),
 		    le16toh(cmd->cmd_seq), le16toh(cmd->cmd_par1),
 		    le32toh(cmd->cmd_par2), le32toh(cmd->cmd_par3));
 		break;
 	case CMD_FLAGS_TYPE_RESP:
 		/* response descriptor */
-		printf("[rsp flags 0x%x num %d id %d seq %d par1 0x%x par2 0x%x par3 0x%x]\n",
+		printf("[rsp flags 0x%x num %d id %d seq %d par1 0x%x par2 "
+		    "0x%x par3 0x%x]\n",
 		    rsp->rsp_flags, rsp->rsp_numdesc, le16toh(rsp->rsp_id),
 		    le16toh(rsp->rsp_seq), le16toh(rsp->rsp_par1),
 		    le32toh(rsp->rsp_par2), le32toh(rsp->rsp_par3));
 		break;
 	case CMD_FLAGS_TYPE_DATA:
 		/* data header (assuming tx for now) */
-		printf("[data flags 0x%x num %d totlen %d addr 0x%x/0x%x pflags 0x%x]",
+		printf("[data flags 0x%x num %d totlen %d addr 0x%x/0x%x "
+		    "pflags 0x%x]",
 		    txd->tx_flags, txd->tx_numdesc, txd->tx_totlen,
 		    txd->tx_addrlo, txd->tx_addrhi, txd->tx_pflags);
 		break;
 	case CMD_FLAGS_TYPE_FRAG:
 		/* fragment descriptor */
-		printf("[frag flags 0x%x rsvd1 0x%x len %d addr 0x%x/0x%x rsvd2 0x%x]",
+		printf("[frag flags 0x%x rsvd1 0x%x len %d addr 0x%x/0x%x "
+		    "rsvd2 0x%x]",
 		    frgd->frag_flags, frgd->frag_rsvd1, frgd->frag_len,
 		    frgd->frag_addrlo, frgd->frag_addrhi, frgd->frag_rsvd2);
 		break;
 	default:
-		printf("[unknown(%x) flags 0x%x num %d id %d seq %d par1 0x%x par2 0x%x par3 0x%x]\n",
+		printf("[unknown(%x) flags 0x%x num %d id %d seq %d par1 "
+		    "0x%x par2 0x%x par3 0x%x]\n",
 		    cmd->cmd_flags & CMD_FLAGS_TYPE_M,
 		    cmd->cmd_flags, cmd->cmd_numdesc, le16toh(cmd->cmd_id),
 		    le16toh(cmd->cmd_seq), le16toh(cmd->cmd_par1),
@@ -1923,9 +1927,9 @@ txp_set_filter(struct txp_softc *sc)
 {
 	struct ethercom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &sc->sc_arpcom.ec_if;
-	u_int32_t crc, carry, hashbit, hash[2];
-	u_int16_t filter;
-	u_int8_t octet;
+	uint32_t crc, carry, hashbit, hash[2];
+	uint16_t filter;
+	uint8_t octet;
 	int i, j, mcnt = 0;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -1979,7 +1983,7 @@ again:
 						    carry;
 				}
 			}
-			hashbit = (u_int16_t)(crc & (64 - 1));
+			hashbit = (uint16_t)(crc & (64 - 1));
 			hash[hashbit / 32] |= (1 << hashbit % 32);
 			ETHER_NEXT_MULTI(step, enm);
 		}

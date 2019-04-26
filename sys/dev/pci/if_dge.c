@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.51 2019/02/03 03:19:27 mrg Exp $ */
+/*	$NetBSD: if_dge.c,v 1.52 2019/04/26 06:33:34 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.51 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.52 2019/04/26 06:33:34 msaitoh Exp $");
 
 
 
@@ -95,14 +95,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.51 2019/02/03 03:19:27 mrg Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-
 #include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
 #include <net/bpf.h>
 
 #include <netinet/in.h>			/* XXX for struct ip */
@@ -490,8 +488,8 @@ dge_alloc_rcvmem(struct dge_softc *sc)
 	state = 1;
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, DGE_RXMEM, (void **)&kva,
 	    BUS_DMA_NOWAIT)) {
-		aprint_error_dev(sc->sc_dev, "can't map DMA buffers (%d bytes)\n",
-		    (int)DGE_RXMEM);
+		aprint_error_dev(sc->sc_dev,
+		    "can't map DMA buffers (%d bytes)\n", (int)DGE_RXMEM);
 		error = ENOBUFS;
 		goto out;
 	}
@@ -565,7 +563,7 @@ dge_getbuf(struct dge_softc *sc)
 
 	if (entry == NULL) {
 		printf("%s: no free RX buffers\n", device_xname(sc->sc_dev));
-		return(NULL);
+		return NULL;
 	}
 
 	SLIST_REMOVE_HEAD(&sc->sc_buglist, rb_entry);
@@ -651,24 +649,24 @@ static char (*dge_txseg_evcnt_names)[DGE_NTXSEGS][8 /* "txseg00" + \0 */];
  * Devices supported by this driver.
  */
 static const struct dge_product {
-  pci_vendor_id_t      dgep_vendor;
-  pci_product_id_t  dgep_product;
-  const char     *dgep_name;
-  int         dgep_flags;
-#define DGEP_F_10G_LR     0x01
-#define DGEP_F_10G_SR     0x02
+	pci_vendor_id_t dgep_vendor;
+	pci_product_id_t dgep_product;
+	const char *dgep_name;
+	int dgep_flags;
+#define DGEP_F_10G_LR	  0x01
+#define DGEP_F_10G_SR	  0x02
 } dge_products[] = {
-  { PCI_VENDOR_INTEL,  PCI_PRODUCT_INTEL_82597EX,
-    "Intel i82597EX 10GbE-LR Ethernet",
-    DGEP_F_10G_LR },
+	{ PCI_VENDOR_INTEL,  PCI_PRODUCT_INTEL_82597EX,
+	  "Intel i82597EX 10GbE-LR Ethernet",
+	  DGEP_F_10G_LR },
 
-  { PCI_VENDOR_INTEL,  PCI_PRODUCT_INTEL_82597EX_SR,
-    "Intel i82597EX 10GbE-SR Ethernet",
-    DGEP_F_10G_SR },
+	{ PCI_VENDOR_INTEL,  PCI_PRODUCT_INTEL_82597EX_SR,
+	  "Intel i82597EX 10GbE-SR Ethernet",
+	  DGEP_F_10G_SR },
 
-  { 0,        0,
-    NULL,
-    0 },
+	{ 0,	    0,
+	  NULL,
+	  0 },
 };
 
 static const struct dge_product *
@@ -690,9 +688,9 @@ dge_match(device_t parent, cfdata_t cf, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	if (dge_lookup(pa) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -727,12 +725,12 @@ dge_attach(device_t parent, device_t self, void *aux)
 		dgep->dgep_name, 1);
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, DGE_PCI_BAR);
-        if (pci_mapreg_map(pa, DGE_PCI_BAR, memtype, 0,
-            &sc->sc_st, &sc->sc_sh, NULL, NULL)) {
-                aprint_error_dev(sc->sc_dev,
+	if (pci_mapreg_map(pa, DGE_PCI_BAR, memtype, 0,
+	    &sc->sc_st, &sc->sc_sh, NULL, NULL)) {
+		aprint_error_dev(sc->sc_dev,
 		    "unable to map device registers\n");
-                return;
-        }
+		return;
+	}
 
 	/* Enable bus mastering */
 	preg = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -811,16 +809,16 @@ dge_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct dge_control_data), (void **)&sc->sc_control_data,
 	    0)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to map control data, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct dge_control_data), 1,
 	    sizeof(struct dge_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to create control data DMA map, "
-		    "error = %d\n", error);
+		aprint_error_dev(sc->sc_dev, "unable to create control data "
+		    "DMA map, error = %d\n", error);
 		goto fail_2;
 	}
 
@@ -861,8 +859,8 @@ dge_attach(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 #endif
-			aprint_error_dev(sc->sc_dev, "unable to create Rx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(sc->sc_dev, "unable to create Rx DMA "
+			    "map %d, error = %d\n", i, error);
 			goto fail_5;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
@@ -910,8 +908,8 @@ dge_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Setup media stuff.
 	 */
-        ifmedia_init(&sc->sc_media, IFM_IMASK, dge_xgmii_mediachange,
-            dge_xgmii_mediastatus);
+	ifmedia_init(&sc->sc_media, IFM_IMASK, dge_xgmii_mediachange,
+	    dge_xgmii_mediastatus);
 	if (dgep->dgep_flags & DGEP_F_10G_SR) {
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10G_SR, 0, NULL);
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10G_SR);
@@ -1093,7 +1091,7 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 		 * Don't support this protocol or encapsulation.
 		 */
 		*fieldsp = 0;
-		return (0);
+		return 0;
 	}
 
 	iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
@@ -1174,7 +1172,7 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 
 	*fieldsp = fields;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1472,7 +1470,7 @@ dge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		break;
 
-        case SIOCSIFFLAGS:
+	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
 		/* extract link flags */
@@ -1494,7 +1492,7 @@ dge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			pci_conf_write(sc->sc_pc, sc->sc_pt,DGE_PCIX_CMD, preg);
 			sc->sc_mmrbc = mmrbc;
 		}
-                /* FALLTHROUGH */
+		/* FALLTHROUGH */
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
@@ -1519,7 +1517,7 @@ dge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	dge_start(ifp);
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 /*
@@ -1573,7 +1571,8 @@ dge_intr(void *arg)
 		}
 
 		if (icr & ICR_RXO) {
-			printf("%s: Receive overrun\n", device_xname(sc->sc_dev));
+			printf("%s: Receive overrun\n",
+			    device_xname(sc->sc_dev));
 			wantinit = 1;
 		}
 	}
@@ -1586,7 +1585,7 @@ dge_intr(void *arg)
 		if_schedule_deferred_start(ifp);
 	}
 
-	return (handled);
+	return handled;
 }
 
 /*
@@ -1681,9 +1680,7 @@ dge_rxintr(struct dge_softc *sc)
 		len = le16toh(sc->sc_rxdescs[i].dr_len);
 
 		if ((status & RDESC_STS_DD) == 0) {
-			/*
-			 * We have processed all of the receive descriptors.
-			 */
+			/* We have processed all of the receive descriptors. */
 			DGE_CDRXSYNC(sc, i, BUS_DMASYNC_PREREAD);
 			break;
 		}
@@ -1876,13 +1873,13 @@ dge_reset(struct dge_softc *sc)
 	if (CSR_READ(sc, DGE_CTRL0) & CTRL0_RST)
 		printf("%s: WARNING: reset failed to complete\n",
 		    device_xname(sc->sc_dev));
-        /*
-         * Reset the EEPROM logic.
-         * This will cause the chip to reread its default values,
+	/*
+	 * Reset the EEPROM logic.
+	 * This will cause the chip to reread its default values,
 	 * which doesn't happen otherwise (errata).
-         */
-        CSR_WRITE(sc, DGE_CTRL1, CTRL1_EE_RST);
-        delay(10000);
+	 */
+	CSR_WRITE(sc, DGE_CTRL1, CTRL1_EE_RST);
+	delay(10000);
 }
 
 /*
@@ -2073,7 +2070,7 @@ dge_init(struct ifnet *ifp)
  out:
 	if (error)
 		printf("%s: interface not running\n", device_xname(sc->sc_dev));
-	return (error);
+	return error;
 }
 
 /*
@@ -2148,7 +2145,7 @@ dge_add_rxbuf(struct dge_softc *sc, int idx)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		return (ENOBUFS);
+		return ENOBUFS;
 
 #ifdef DGE_OFFBYONE_RXBUG
 	if ((buf = dge_getbuf(sc)) == NULL)
@@ -2168,7 +2165,7 @@ dge_add_rxbuf(struct dge_softc *sc, int idx)
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 
 	if (rxs->rxs_mbuf != NULL)
@@ -2188,7 +2185,7 @@ dge_add_rxbuf(struct dge_softc *sc, int idx)
 	bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 	    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -2421,16 +2418,16 @@ dge_xgmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 static inline int
 phwait(struct dge_softc *sc, int p, int r, int d, int type)
 {
-        int i, mdic;
+	int i, mdic;
 
-        CSR_WRITE(sc, DGE_MDIO,
+	CSR_WRITE(sc, DGE_MDIO,
 	    MDIO_PHY(p) | MDIO_REG(r) | MDIO_DEV(d) | type | MDIO_CMD);
-        for (i = 0; i < 10; i++) {
-                delay(10);
-                if (((mdic = CSR_READ(sc, DGE_MDIO)) & MDIO_CMD) == 0)
-                        break;
-        }
-        return mdic;
+	for (i = 0; i < 10; i++) {
+		delay(10);
+		if (((mdic = CSR_READ(sc, DGE_MDIO)) & MDIO_CMD) == 0)
+			break;
+	}
+	return mdic;
 }
 
 static void
