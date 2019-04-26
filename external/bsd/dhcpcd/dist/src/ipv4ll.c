@@ -232,7 +232,7 @@ static void
 ipv4ll_probe(void *arg)
 {
 
-#ifdef IN_IFF_TENTATIVE
+#ifdef IN_IFF_DUPLICATED
 	ipv4ll_probed(arg);
 #else
 	arp_probe(arg);
@@ -404,7 +404,7 @@ ipv4ll_start(void *arg)
 	if (ia == NULL)
 		ia = ipv4_iffindlladdr(ifp);
 
-#ifdef IN_IFF_TENTATIVE
+#ifdef IN_IFF_DUPLICATED
 	if (ia != NULL && ia->addr_flags & IN_IFF_DUPLICATED) {
 		ipv4_deladdr(ia, 0);
 		ia = NULL;
@@ -419,6 +419,8 @@ ipv4ll_start(void *arg)
 			    ifp->name, inet_ntoa(ia->addr));
 			return;
 		}
+#endif
+#ifdef IN_IFF_DUPLICATED
 		loginfox("%s: using IPv4LL address %s", ifp->name, ia->saddr);
 #endif
 		ipv4ll_probed(astate);
@@ -429,7 +431,7 @@ ipv4ll_start(void *arg)
 	if (state->pickedaddr.s_addr == INADDR_ANY)
 		state->pickedaddr.s_addr = ipv4ll_pickaddr(astate);
 	astate->addr = state->pickedaddr;
-#ifdef IN_IFF_TENTATIVE
+#ifdef IN_IFF_DUPLICATED
 	ipv4ll_probed(astate);
 #else
 	arp_probe(astate);
