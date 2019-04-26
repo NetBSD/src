@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.34 2015/02/18 16:47:58 macallan Exp $	*/
+/*	$NetBSD: imc.c,v 1.35 2019/04/26 21:02:42 macallan Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.34 2015/02/18 16:47:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.35 2019/04/26 21:02:42 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -106,7 +106,7 @@ imc_attach(device_t parent, device_t self, void *aux)
 	isc.iot = normal_memt;
 	if (bus_space_map(isc.iot, ma->ma_addr, 0x100,
 	    BUS_SPACE_MAP_LINEAR, &isc.ioh))
-		panic("imc_attach: could not allocate memory\n");
+		panic("imc_attach: could not map registers\n");
 
 	platform.bus_reset = imc_bus_reset;
 	platform.watchdog_reset = imc_watchdog_reset;
