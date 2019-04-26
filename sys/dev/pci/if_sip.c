@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.169 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.170 2019/04/26 04:58:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.169 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.170 2019/04/26 04:58:40 msaitoh Exp $");
 
 
 
@@ -3295,7 +3295,8 @@ sipcom_dp83820_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 			 * register itself seems read back 0 on some
 			 * boards.  Just hard-code the result.
 			 */
-			return (EXTSR_1000XFDX|EXTSR_1000XHDX);
+			*val = (EXTSR_1000XFDX | EXTSR_1000XHDX);
+			return 0;
 
 		default:
 			return (0);
