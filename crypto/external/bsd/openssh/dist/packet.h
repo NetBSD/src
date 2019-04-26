@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.h,v 1.19 2019/04/20 17:16:40 christos Exp $	*/
+/*	$NetBSD: packet.h,v 1.20 2019/04/26 01:51:55 christos Exp $	*/
 /* $OpenBSD: packet.h,v 1.90 2019/01/21 10:35:09 djm Exp $ */
 
 /*
@@ -167,7 +167,7 @@ int     sshpkt_disconnect(struct ssh *, const char *fmt, ...)
 	    __attribute__((format(printf, 2, 3)));
 int	sshpkt_add_padding(struct ssh *, u_char);
 void	sshpkt_fatal(struct ssh *ssh, int r, const char *fmt, ...)
-	    __attribute__((format(printf, 3, 4)));
+	    __attribute__((format(printf, 3, 4))) __attribute__((__noreturn__));
 int	sshpkt_msg_ignore(struct ssh *, u_int);
 
 int	sshpkt_put(struct ssh *ssh, const void *v, size_t len);
