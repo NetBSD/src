@@ -180,7 +180,9 @@ struct dhcpcd_ctx {
 	uint8_t *secret;
 	size_t secret_len;
 
+#ifndef __sun
 	int nd_fd;
+#endif
 	struct ra_head *ra_routers;
 
 	int dhcp6_fd;
