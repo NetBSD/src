@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2014/02/24 07:23:38 skrll Exp $
+#	$NetBSD: list,v 1.2 2019/04/26 18:25:08 skrll Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -31,6 +31,7 @@ PROG	sbin/ifconfig
 PROG	sbin/init
 PROG	sbin/mknod
 PROG	sbin/mount
+PROG	sbin/mount_cd9660
 PROG	sbin/mount_ffs
 PROG	sbin/mount_kernfs
 PROG	sbin/mount_nfs
@@ -41,6 +42,7 @@ PROG	sbin/restore	sbin/rrestore
 PROG	sbin/route
 PROG	sbin/shutdown
 PROG	sbin/swapctl
+PROG	sbin/sysctl
 PROG	sbin/umount
 
 PROG	usr/bin/ftp
