@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.13 2019/01/23 11:15:11 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.14 2019/04/26 04:33:00 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.13 2019/01/23 11:15:11 ryoon Exp $");
 #include <sys/callout.h>
 #include <sys/interrupt.h>
 #include <sys/cpu.h>
-
-#include <sys/bus.h>
 
 #include <net/if_ether.h>
 #include <net/if_vlanvar.h>
