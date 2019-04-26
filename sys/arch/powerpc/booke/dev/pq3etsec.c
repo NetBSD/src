@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.42 2019/04/24 11:12:12 msaitoh Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.43 2019/04/26 06:33:33 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.42 2019/04/24 11:12:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.43 2019/04/26 06:33:33 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -61,10 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.42 2019/04/24 11:12:12 msaitoh Exp $"
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
 
 #include <dev/mii/miivar.h>
-
-#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -80,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.42 2019/04/24 11:12:12 msaitoh Exp $"
 
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
-
 #include <powerpc/booke/cpuvar.h>
 #include <powerpc/booke/e500var.h>
 #include <powerpc/booke/e500reg.h>
@@ -230,8 +228,8 @@ struct pq3etsec_softc {
 	uint64_t sc_mii_last_tick;
 
 	struct ifqueue sc_rx_bufcache;
-	struct pq3etsec_mapcache *sc_rx_mapcache; 
-	struct pq3etsec_mapcache *sc_tx_mapcache; 
+	struct pq3etsec_mapcache *sc_rx_mapcache;
+	struct pq3etsec_mapcache *sc_tx_mapcache;
 
 	/* Interrupt Coalescing parameters */
 	int sc_ic_rx_time;
@@ -537,8 +535,8 @@ pq3etsec_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	mii_pollstat(&sc->sc_mii);
 	ether_mediastatus(ifp, ifmr);
-        ifmr->ifm_status = sc->sc_mii.mii_media_status;
-        ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+	ifmr->ifm_active = sc->sc_mii.mii_media_active;
 }
 
 static int
@@ -659,14 +657,14 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 		goto fail_2;
 	}
 
-	error = pq3etsec_mapcache_create(sc, &sc->sc_rx_mapcache, 
+	error = pq3etsec_mapcache_create(sc, &sc->sc_rx_mapcache,
 	    ETSEC_MAXRXMBUFS, MCLBYTES, ETSEC_NRXSEGS);
 	if (error) {
 		aprint_error(": failed to allocate rx dmamaps: %d\n", error);
 		goto fail_3;
 	}
 
-	error = pq3etsec_mapcache_create(sc, &sc->sc_tx_mapcache, 
+	error = pq3etsec_mapcache_create(sc, &sc->sc_tx_mapcache,
 	    ETSEC_MAXTXMBUFS, MCLBYTES, ETSEC_NTXSEGS);
 	if (error) {
 		aprint_error(": failed to allocate tx dmamaps: %d\n", error);
@@ -713,7 +711,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (mdio == CPUNODECF_MDIO_DEFAULT) {
 		aprint_normal("\n");
-		cfdata_t mdio_cf = config_search_ia(pq3mdio_find, self, NULL, cna); 
+		cfdata_t mdio_cf = config_search_ia(pq3mdio_find, self, NULL, cna);
 		if (mdio_cf != NULL) {
 			sc->sc_mdio_dev = config_attach(self, mdio_cf, cna, NULL);
 		}
@@ -740,8 +738,8 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	char enaddr[ETHER_ADDR_LEN] = {
 	    [0] = sc->sc_macstnaddr2 >> 16,
 	    [1] = sc->sc_macstnaddr2 >> 24,
-	    [2] = sc->sc_macstnaddr1 >>  0,
-	    [3] = sc->sc_macstnaddr1 >>  8,
+	    [2] = sc->sc_macstnaddr1 >>	 0,
+	    [3] = sc->sc_macstnaddr1 >>	 8,
 	    [4] = sc->sc_macstnaddr1 >> 16,
 	    [5] = sc->sc_macstnaddr1 >> 24,
 	};
@@ -1240,7 +1238,7 @@ pq3etsec_rxq_desc_presync(
 	volatile struct rxbd *rxbd,
 	size_t count)
 {
-	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_descmap, 
+	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_descmap,
 	    (rxbd - rxq->rxq_first) * sizeof(*rxbd), count * sizeof(*rxbd),
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 }
@@ -1252,7 +1250,7 @@ pq3etsec_rxq_desc_postsync(
 	volatile struct rxbd *rxbd,
 	size_t count)
 {
-	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_descmap, 
+	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_descmap,
 	    (rxbd - rxq->rxq_first) * sizeof(*rxbd), count * sizeof(*rxbd),
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 }
@@ -1264,7 +1262,7 @@ pq3etsec_txq_desc_presync(
 	volatile struct txbd *txbd,
 	size_t count)
 {
-	bus_dmamap_sync(sc->sc_dmat, txq->txq_descmap, 
+	bus_dmamap_sync(sc->sc_dmat, txq->txq_descmap,
 	    (txbd - txq->txq_first) * sizeof(*txbd), count * sizeof(*txbd),
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 }
@@ -1276,7 +1274,7 @@ pq3etsec_txq_desc_postsync(
 	volatile struct txbd *txbd,
 	size_t count)
 {
-	bus_dmamap_sync(sc->sc_dmat, txq->txq_descmap, 
+	bus_dmamap_sync(sc->sc_dmat, txq->txq_descmap,
 	    (txbd - txq->txq_first) * sizeof(*txbd), count * sizeof(*txbd),
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 }
@@ -1737,7 +1735,6 @@ pq3etsec_rxq_purge(
 				m = m0;
 			}
 		}
-			
 	}
 
 	rxq->rxq_mconsumer = NULL;
@@ -2379,7 +2376,7 @@ pq3etsec_tx_intr(void *arg)
 	etsec_write(sc, IEVENT, ievent);	/* write 1 to clear */
 
 #if 0
-	aprint_normal_dev(sc->sc_dev, "%s: ievent=%#x imask=%#x\n", 
+	aprint_normal_dev(sc->sc_dev, "%s: ievent=%#x imask=%#x\n",
 	    __func__, ievent, etsec_read(sc, IMASK));
 #endif
 
@@ -2451,7 +2448,7 @@ pq3etsec_error_intr(void *arg)
 			return rv;
 		}
 #if 0
-		aprint_normal_dev(sc->sc_dev, "%s: ievent=%#x imask=%#x\n", 
+		aprint_normal_dev(sc->sc_dev, "%s: ievent=%#x imask=%#x\n",
 		    __func__, ievent, etsec_read(sc, IMASK));
 #endif
 
@@ -2540,9 +2537,7 @@ pq3etsec_soft_intr(void *arg)
 	}
 
 	if (soft_flags & (SOFT_RXINTR|SOFT_RXBSY)) {
-		/*
-		 * Let's consume 
-		 */
+		/* Let's consume */
 		pq3etsec_rxq_consume(sc, &sc->sc_rxq);
 		imask |= IEVENT_RXF;
 	}
