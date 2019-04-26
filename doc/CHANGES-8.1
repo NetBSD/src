@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.135 2019/04/23 18:27:38 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.136 2019/04/26 19:20:57 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2954,4 +2954,95 @@ sys/arch/arm/arm32/pmap.c			1.373 (patch)
 
 	Fix a deadlock between the pool and pmap codes.
 	[bouyer, ticket #1246]
+
+sys/dev/pci/mfii.c				1.4
+
+	Clean up timeout logic.
+	[bouyer, ticket #1247]
+
+sys/arch/hppa/hppa/fpu.c			1.25
+sys/arch/hppa/hppa/machdep.c			1.9
+
+	Some fixes for QEMU/hppa.
+	[skrll, ticket #1248]
+
+sys/arch/cats/cats/cats_machdep.c		1.87
+
+	The free block after the kernel from arm32_bootmem_init doesn't
+	account for bt_memavail.  Adjust for this.
+	[skrl, ticket #1249]
+
+external/bsd/dhcpcd/dist/compat/consttime_memequal.h up to 1.1.1.1
+external/bsd/dhcpcd/dist/.arcconfig             delete
+external/bsd/dhcpcd/dist/BUILDING.md            up to 1.1.1.3
+external/bsd/dhcpcd/dist/LICENSE                up to 1.1.1.3
+external/bsd/dhcpcd/dist/Makefile               up to 1.1.1.6
+external/bsd/dhcpcd/dist/configure              up to 1.1.1.11
+external/bsd/dhcpcd/dist/iconfig.mk             up to 1.1.1.2
+external/bsd/dhcpcd/dist/hooks/20-resolv.conf   up to 1.2
+external/bsd/dhcpcd/dist/hooks/29-lookup-hostname up to 1.2
+external/bsd/dhcpcd/dist/hooks/30-hostname      up to 1.2
+external/bsd/dhcpcd/dist/hooks/50-ntp.conf      up to 1.2
+external/bsd/dhcpcd/dist/hooks/50-yp.conf       up to 1.2
+external/bsd/dhcpcd/dist/hooks/50-ypbind.in     up to 1.2
+external/bsd/dhcpcd/dist/hooks/dhcpcd-run-hooks.in up to 1.3
+external/bsd/dhcpcd/dist/src/Makefile           up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/arp.c              up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/arp.h              up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/auth.c             up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/auth.h             up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/bpf.c              up to 1.8
+external/bsd/dhcpcd/dist/src/bpf.h              up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/common.c           up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/common.h           up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/control.c          up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/control.h          up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/defs.h             up to 1.1.1.20
+external/bsd/dhcpcd/dist/src/dev.c              up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/dev.h              up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/dhcp-common.c      up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/dhcp-common.h      up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/dhcp.c             up to 1.18
+external/bsd/dhcpcd/dist/src/dhcp.h             up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/dhcp6.c            up to 1.6
+external/bsd/dhcpcd/dist/src/dhcp6.h            up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/dhcpcd-embedded.c.in up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/dhcpcd-embedded.h.in up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/dhcpcd.8.in        up to 1.1.1.12
+external/bsd/dhcpcd/dist/src/dhcpcd.c           up to 1.18
+external/bsd/dhcpcd/dist/src/dhcpcd.conf.5.in   up to 1.1.1.12
+external/bsd/dhcpcd/dist/src/dhcpcd.h           up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/duid.c             up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/eloop.c            up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/eloop.h            up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/if-bsd.c           up to 1.6
+external/bsd/dhcpcd/dist/src/if-linux-wext.c    up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/if-linux.c         up to 1.1.1.12
+external/bsd/dhcpcd/dist/src/if-options.c       up to 1.13
+external/bsd/dhcpcd/dist/src/if-options.h       up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/if-sun.c           up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/if.c               up to 1.1.1.12
+external/bsd/dhcpcd/dist/src/if.h               up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/ipv4.c             up to 1.1.1.13
+external/bsd/dhcpcd/dist/src/ipv4.h             up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/ipv4ll.c           up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/ipv4ll.h           up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/ipv6.c             up to 1.1.1.16
+external/bsd/dhcpcd/dist/src/ipv6.h             up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/ipv6nd.c           up to 1.6
+external/bsd/dhcpcd/dist/src/ipv6nd.h           up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/logerr.c           up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/logerr.h           up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/route.c            up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/route.h            up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/sa.c               up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/sa.h               up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/script.c           up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/script.h           up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/dev/udev.c         up to 1.1.1.3
+external/bsd/dhcpcd/dist/tests/Makefile         up to 1.1.1.2
+external/bsd/dhcpcd/sbin/dhcpcd/Makefile        up to 1.45
+
+	Import dhcpcd-7.2.1.
+	[roy, ticket #1250]
 
