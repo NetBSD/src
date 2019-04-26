@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.52 2019/04/24 15:12:09 christos Exp $
+# $NetBSD: Makefile,v 1.53 2019/04/26 19:17:05 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -40,7 +40,7 @@ TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
 
 CPPFLAGS.t_siginfo.c+=-D__TEST_FENV
-COPTS.t_fpsetround.c+=-frounding-math
+COPTS.t_fpsetround.c+=${${ACTIVE_CC} == "gcc":? -frounding-math :}
 
 LDADD.t_siginfo+=	-lm
 DPADD.t_siginfo+=	${LIBM}
