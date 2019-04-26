@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.239 2019/04/13 08:22:59 isaki Exp $
+# $NetBSD: GENERIC,v 1.240 2019/04/26 21:40:30 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include 	"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.239 $"
+#ident 		"GENERIC-$Revision: 1.240 $"
 
 maxusers	16
 
@@ -36,6 +36,11 @@ options 	VR4122			# NEC VR4122
 options 	VR4131			# NEC VR4131
 options 	TX392X			# Toshiba TX3922
 options 	KLOADER
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Standard system options
 options 	DDB			# in-kernel debugger
@@ -660,7 +665,7 @@ pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	npf			# NPF packet filter
 
 pseudo-device	vnd			# virtual disk ick
@@ -700,15 +705,4 @@ pseudo-device	bridge
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	ksyms			# /dev/ksyms
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"

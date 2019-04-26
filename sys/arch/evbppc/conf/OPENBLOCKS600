@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS600,v 1.26 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: OPENBLOCKS600,v 1.27 2019/04/26 21:40:29 sevan Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.obs600"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS600-$Revision: 1.26 $"
+#ident 		"OPENBLOCKS600-$Revision: 1.27 $"
 
 maxusers	32
 
@@ -31,6 +31,10 @@ options 	SYSVSHM			# System V shared memory
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
 
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 #
 # Diagnostic/debugging support options
@@ -179,6 +183,7 @@ brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
 # network pseudo-devices
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	npf			# NPF packet filter
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -202,3 +207,5 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud
+
+include "dev/veriexec.config"

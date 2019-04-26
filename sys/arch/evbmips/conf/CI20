@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.27 2018/12/30 14:51:36 sevan Exp $
+#	$NetBSD: CI20,v 1.28 2019/04/26 21:40:29 sevan Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.27 $"
+#ident 		"CI20-$Revision: 1.28 $"
 
 maxusers	32
 
@@ -247,6 +247,7 @@ jzrng0	at apbus0
 
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter
+pseudo-device 	carp				# Common Address Redundancy Protocol
 #pseudo-device	npf			# NPF packet filter
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
@@ -270,6 +271,7 @@ pseudo-device	ksyms				# /dev/ksyms
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda				# coda minicache <-> venus comm.
 
+include "dev/veriexec.config"
 
 cinclude 	"arch/evbmips/conf/CI20.local"
 

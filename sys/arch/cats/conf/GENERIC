@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.172 2019/04/13 08:22:59 isaki Exp $
+# $NetBSD: GENERIC,v 1.173 2019/04/26 21:40:29 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -40,7 +40,7 @@ options 	NTP		# NTP phase/frequency locked loop
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 # CPU options
 
@@ -536,7 +536,7 @@ pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
@@ -574,15 +574,4 @@ pseudo-device	wsmux
 pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"

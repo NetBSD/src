@@ -1,4 +1,4 @@
-#	$NetBSD: RB800,v 1.36 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: RB800,v 1.37 2019/04/26 21:40:29 sevan Exp $
 #
 #	RB800 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB800-$Revision: 1.36 $"
+ident 		"RB800-$Revision: 1.37 $"
 
 maxusers	32
 
@@ -36,6 +36,11 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	VERBOSE_INITPPC
@@ -211,8 +216,11 @@ ukphy*		at mii? phy ?			# generic unknown PHYs
 pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	kttcp			# kernel ttcp
+
+include "dev/veriexec.config"

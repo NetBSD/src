@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.63 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: EXPLORA451,v 1.64 2019/04/26 21:40:29 sevan Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -41,7 +41,7 @@ options 	USERCONF	# userconf(4) support
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -152,6 +152,7 @@ pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
@@ -184,3 +185,5 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+include "dev/veriexec.config"
