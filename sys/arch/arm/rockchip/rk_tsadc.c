@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_tsadc.c,v 1.1 2019/04/26 08:28:11 mrg Exp $	*/
+/*	$NetBSD: rk_tsadc.c,v 1.2 2019/04/26 10:20:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -30,14 +30,13 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.1 2019/04/26 08:28:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.2 2019/04/26 10:20:09 mrg Exp $");
 
 /*
  * Driver for the TSADC temperature sensor monitor in RK3328 and RK3399.
  *
  * TODO:
  * - handle setting various temp values
- * - add interpolation between the 5degC intervals in sample data
  * - handle DT trips/temp value defaults
  * - interrupts aren't triggered (test by lowering warn/crit values), and
  *   once they work, make the interrupt do something
@@ -202,6 +201,7 @@ static const struct {
 	ENTRY(668, 115),
 	ENTRY(677, 120),
 	ENTRY(685, 125),
+	ENTRY(TSADC_DATA_MAX, 125),
 #undef ENTRY
 };
 
@@ -213,6 +213,7 @@ struct rk_tsadc_sensor {
 	unsigned	s_data_reg;
 	unsigned	s_comp_tshut;
 	unsigned	s_comp_int;
+	/* enable bit in AUTO_CON register */
 	unsigned	s_comp_int_en;
 	/* warn/crit values in micro Kelvin */
 	int		s_warn;
@@ -335,7 +336,7 @@ rk_tsadc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = rk_tsadc_refresh;
 	sc->sc_sme->sme_get_limits = rk_tsadc_get_limits;
-	sc->sc_data_mask = 0xfff;
+	sc->sc_data_mask = TSADC_DATA_MAX;
 
 	pmf_device_register(self, NULL, NULL);
 
@@ -375,10 +376,10 @@ rk_tsadc_attach(device_t parent, device_t self, void *aux)
 			goto fail;
 		rks->s_attached = true;
 		rks->s_tshut = tshut_temp;
-#if 0
+#if 1
 		// testing
-		rks->s_tshut = 65000000;
-		rks->s_warn = 60000000;
+		rks->s_tshut = 68000000;
+		rks->s_warn = 61000000;
 #endif
 	}
 
@@ -605,8 +606,7 @@ rk_tsadc_init_enable(struct rk_tsadc_softc *sc)
 
 	val = TSADC_READ(sc, TSADC_AUTO_CON);
 	val |= TSADC_AUTO_CON_AUTO_STATUS | 
-	       TSADC_AUTO_CON_SRC1_LT_EN | TSADC_AUTO_CON_SRC0_LT_EN |
-	       TSADC_AUTO_CON_SRC1_EN | TSADC_AUTO_CON_SRC0_EN;
+	       TSADC_AUTO_CON_SRC1_LT_EN | TSADC_AUTO_CON_SRC0_LT_EN;
 	TSADC_WRITE(sc, TSADC_AUTO_CON, val);
 
 	/* Finally, register & enable the controller */
@@ -698,24 +698,33 @@ rk_tsadc_intr(void *arg)
  * and temperature values in 5 degC intervals, but says that interpolation
  * can be done to achieve better resolution between these values, and that
  * the spacing is linear.
- *
- * XXX The sub-entry interpolation is not yet done.
  */
 static int
 rk_tsadc_data_to_temp(struct rk_tsadc_softc *sc, uint32_t data)
 {
 	unsigned i;
 
-	for (i = 1; i < __arraycount(rk3399_data_table); i++) {
+	for (i = 1; i < __arraycount(rk3399_data_table) - 1; i++) {
 		if (rk3399_data_table[i].data >= data) {
+			int temprange, offset;
+			uint32_t datarange, datadiff;
+
 			if (rk3399_data_table[i].data == data)
 				return rk3399_data_table[i].temp;
-			/* XXX interpolate */
-			return rk3399_data_table[i-1].temp;
+
+			/* must interpolate */
+			temprange = rk3399_data_table[i].temp -
+				    rk3399_data_table[i-1].temp;
+			datarange = rk3399_data_table[i].data -
+				    rk3399_data_table[i-1].data;
+			datadiff = data - rk3399_data_table[i-1].data;
+
+			offset = (temprange * datadiff) / datarange;
+			return rk3399_data_table[i-1].temp + offset;
 		}
 	}
 
-	return rk3399_data_table[i-1].temp;
+	return rk3399_data_table[i].temp;
 }
 
 static uint32_t
@@ -725,10 +734,21 @@ rk_tsadc_temp_to_data(struct rk_tsadc_softc *sc, int temp)
 
 	for (i = 1; i < __arraycount(rk3399_data_table); i++) {
 		if (rk3399_data_table[i].temp >= temp) {
+			int temprange, tempdiff;
+			uint32_t datarange, offset;
+
 			if (rk3399_data_table[i].temp == temp)
 				return rk3399_data_table[i].data;
-			/* XXX interpolate */
-			return rk3399_data_table[i-1].data;
+
+			/* must interpolate */
+			datarange = rk3399_data_table[i].data -
+				    rk3399_data_table[i-1].data;
+			temprange = rk3399_data_table[i].temp -
+				    rk3399_data_table[i-1].temp;
+			tempdiff = temp - rk3399_data_table[i-1].temp;
+
+			offset = (datarange * tempdiff) / temprange;
+			return rk3399_data_table[i-1].data + offset;
 		}
 	}
 
