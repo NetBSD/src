@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.54 2018/10/23 19:58:52 jdolecek Exp $
+#	$NetBSD: OVERO,v 1.55 2019/04/26 22:46:03 sevan Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo COMS platforms kernel
 #
@@ -352,19 +352,8 @@ pseudo-device	wsfont
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
 
-#options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-					# and PAX_SEGVGUARD
-
 # Veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options 	VERIFIED_EXEC_FP_SHA256
-#options 	VERIFIED_EXEC_FP_SHA384
-#options 	VERIFIED_EXEC_FP_SHA512
+# include "dev/veriexec.config"
 
 #options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 #options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
