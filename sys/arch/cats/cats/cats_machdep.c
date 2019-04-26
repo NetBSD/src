@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.83.6.1 2017/07/05 15:48:01 martin Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.83.6.2 2019/04/26 20:44:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.83.6.1 2017/07/05 15:48:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.83.6.2 2019/04/26 20:44:07 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -334,6 +334,24 @@ initarm(void *arm_bootargs)
 	arm32_bootmem_init(ebsabootinfo.bt_memstart, ram_size,
 	    ebsabootinfo.bt_memstart);
 
+	/*
+	 * The free block after the kernel from arm32_bootmem_init doesn't
+	 * account for bt_memavail.  Adjust for this.
+	 */
+	extern struct bootmem_info bootmem_info;
+	struct bootmem_info * const bmi = &bootmem_info;
+
+	pv_addr_t *pv0 = &bmi->bmi_freeblocks[0];
+	KASSERTMSG(pv0->pv_pa == bmi->bmi_kernelend,
+	    "pv_pa %#lx kernelend %#lx", pv0->pv_pa, bmi->bmi_kernelend);
+
+	pv0->pv_pa = ebsabootinfo.bt_memavail;
+	pv0->pv_va = KERN_PHYSTOV(pv0->pv_pa);
+	pv0->pv_size = bmi->bmi_end - pv0->pv_pa;
+
+	printf("First freeblock adjusted to: %lx -> %lx\n", pv0->pv_pa,
+	    pv0->pv_pa + pv0->pv_size - 1);
+
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0, cats_devmap,
 	    mapallmem_p);
 
@@ -364,9 +382,6 @@ initarm(void *arm_bootargs)
 		pmap_map_entry(kernel_l1pt.pv_va, ebsabootinfo.bt_vargp,
 		    ebsabootinfo.bt_pargp, VM_PROT_READ, PTE_CACHE);
 	}
-
-	extern struct bootmem_info bootmem_info;
-	struct bootmem_info * const bmi = &bootmem_info;
 
 	printf("Doing freeblocks: %d\n", bmi->bmi_nfreeblocks);
 
