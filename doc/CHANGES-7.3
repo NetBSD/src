@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.48 2019/04/19 16:02:01 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.49 2019/04/26 19:48:00 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -532,3 +532,14 @@ sys/net/if.c					1.449 (patch)
 	of stack disclosure.
 	[christos, ticket #1689]
 
+external/bsd/dhcpcd/dist/configure			(apply patch)
+external/bsd/dhcpcd/dist/src/auth.c			(apply patch)
+external/bsd/dhcpcd/dist/src/dhcp.c			(apply patch)
+external/bsd/dhcpcd/dist/src/dhcp6.c	 		(apply patch)
+external/bsd/dhcpcd/dist/compat/consttime_memequal.h 	(apply patch)
+
+	Security fixes for dhcpcd:
+	Fix a potential buffer overflow reading NA/TA addresses.
+	Fix a potential 1 byte read overflow with DHO_OPTSOVERLOADED.
+	Use consttime_memequal(3) to compare hashes.
+	[roy, ticket #1690]
