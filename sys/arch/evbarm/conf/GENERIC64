@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.90 2019/04/21 14:14:14 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.91 2019/04/26 08:28:11 mrg Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -440,6 +440,7 @@ pwmbacklight*	at fdt?			# PWM Backlight controls
 # Thermal throttling controller
 sunxithermal*	at fdt?			# Allwinner thermal sensor controller
 tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
+rktsadc*	at fdt?			# RockChip TSASC
 
 # USB
 mesonusbphy*	at fdt? pass 9		# Amlogic Meson USB2 PHY
