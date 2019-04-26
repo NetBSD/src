@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.17 2019/03/10 11:10:21 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.18 2019/04/26 08:28:11 mrg Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -67,6 +67,11 @@ file	arch/arm/rockchip/rk3399_pcie.c		rkpcie
 device	rkemmcphy
 attach	rkemmcphy at fdt
 file	arch/arm/rockchip/rk_emmcphy.c		rkemmcphy
+
+# TSADC temperature sensors
+device	rktsadc: sysmon_envsys
+attach	rktsadc at fdt with rk_tsadc
+file	arch/arm/rockchip/rk_tsadc.c		rk_tsadc
 
 # SOC parameters
 defflag	opt_soc.h			SOC_ROCKCHIP
