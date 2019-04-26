@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.159 2019/04/13 08:22:59 isaki Exp $
+# $NetBSD: GENERIC,v 1.160 2019/04/26 21:40:29 sevan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.159 $"
+#ident 		"GENERIC-$Revision: 1.160 $"
 
 maxusers	32
 
@@ -44,7 +44,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -272,7 +272,7 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
@@ -324,22 +324,7 @@ pseudo-device	wsfont
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
 
-#options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-					# and PAX_SEGVGUARD
-
-
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options 	VERIFIED_EXEC_FP_SHA256
-#options 	VERIFIED_EXEC_FP_SHA384
-#options 	VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 #options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 #options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

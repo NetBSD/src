@@ -1,4 +1,4 @@
-#	$NetBSD: CPMBR1400,v 1.30 2018/12/30 14:51:36 sevan Exp $
+#	$NetBSD: CPMBR1400,v 1.31 2019/04/26 21:40:29 sevan Exp $
 
 include 	"arch/evbmips/conf/std.rasoc"
 
@@ -221,6 +221,7 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	loop			# network loopback
 pseudo-device	tap			# virtual Ethernet
@@ -232,3 +233,5 @@ pseudo-device	vlan			# 802.1q
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# /dev/clockctl - user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms - kernel symbols
+
+include "dev/veriexec.config"

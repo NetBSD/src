@@ -1,4 +1,4 @@
-#	$NetBSD: TWRP1025,v 1.26 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: TWRP1025,v 1.27 2019/04/26 21:40:29 sevan Exp $
 #
 #	TWRP1025 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"TWRP1025-$Revision: 1.26 $"
+ident 		"TWRP1025-$Revision: 1.27 $"
 
 maxusers	32
 
@@ -34,6 +34,11 @@ options 	SYSVSHM		# System V shared memory
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -206,6 +211,7 @@ ld*		at sdmmc?
 
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
@@ -213,5 +219,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	kttcp			# kernel ttcp
 pseudo-device	vlan			# 802.1Q VLANs
 pseudo-device	lockstat		# lock profiling
+
+include "dev/veriexec.config"
 
 cinclude 	"arch/evbppc/conf/TWRP1025.local"

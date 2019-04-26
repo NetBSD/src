@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-USB,v 1.27 2018/12/30 14:51:36 sevan Exp $
+#	$NetBSD: ADM5120-USB,v 1.28 2019/04/26 21:40:29 sevan Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.28 $"
 
 maxusers	32
 
@@ -109,6 +109,7 @@ cpu0 		at mainbus?
 
 # Network pseudo-devices
 #pseudo-device	bpfilter			# Berkeley packet filter
+pseudo-device 	carp				# Common Address Redundancy Protocol
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	sl				# Serial Line IP
@@ -151,3 +152,4 @@ options       MSGBUFSIZE=65536
 scsibus* at scsi?
 sd*     at scsibus? target ? lun ?      # SCSI disk drives
 
+include "dev/veriexec.config"

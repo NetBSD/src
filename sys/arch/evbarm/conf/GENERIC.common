@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.32 2018/12/26 19:54:09 skrll Exp $
+#	$NetBSD: GENERIC.common,v 1.33 2019/04/26 21:40:29 sevan Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -133,6 +133,7 @@ pseudo-device	drvctl			# driver control
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	loop			# network loopback
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	vlan			# IEEE 802.1q encapsulation
@@ -152,21 +153,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
 
-options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-					# and PAX_SEGVGUARD
-
-# Veriexec
-#
-# a pseudo device needed for veriexec
-pseudo-device   veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-options VERIFIED_EXEC_FP_SHA256
-options VERIFIED_EXEC_FP_SHA384
-options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
 options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard

@@ -1,4 +1,4 @@
-#	$NetBSD: RB850GX2,v 1.5 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: RB850GX2,v 1.6 2019/04/26 21:40:29 sevan Exp $
 #
 #	RouterBOARD RB850Gx2
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB850GX2-$Revision: 1.5 $"
+ident 		"RB850GX2-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -34,6 +34,11 @@ options 	SYSVSHM		# System V shared memory
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -141,6 +146,7 @@ iic*		at diic?
 
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
@@ -148,3 +154,5 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
 pseudo-device	putter			# for puffs and pud
 pseudo-device	lockstat		# lock profiling
+
+include "dev/veriexec.config"

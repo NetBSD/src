@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.132 2018/12/19 13:57:49 maxv Exp $
+# $NetBSD: GENERIC,v 1.133 2019/04/26 21:40:31 sevan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.132 $"
+#ident 		"GENERIC-$Revision: 1.133 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -50,7 +50,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 # Debugging options
 #options 	DIAGNOSTIC		# extra kernel sanity checking
@@ -235,7 +235,7 @@ pseudo-device	tun			# Network "tunnel" device
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	bpfilter		# Berkeley Packet Filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	npf			# NPF packet filter
 pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
@@ -250,15 +250,4 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options 	VERIFIED_EXEC_FP_SHA256
-#options 	VERIFIED_EXEC_FP_SHA384
-#options 	VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"

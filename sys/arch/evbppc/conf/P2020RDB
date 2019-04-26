@@ -1,4 +1,4 @@
-#	$NetBSD: P2020RDB,v 1.30 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: P2020RDB,v 1.31 2019/04/26 21:40:29 sevan Exp $
 #
 #	P2020RBD -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020RBD-$Revision: 1.30 $"
+ident 		"P2020RBD-$Revision: 1.31 $"
 
 maxusers	32
 
@@ -34,6 +34,11 @@ options 	SYSVSHM		# System V shared memory
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -206,6 +211,7 @@ sd*		at scsibus? target ? lun ?
 
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of disk subsystem
 pseudo-device	ksyms			# /dev/ksyms
@@ -214,3 +220,5 @@ pseudo-device	kttcp			# kernel ttcp
 pseudo-device	vlan			# 802.1Q VLANs
 pseudo-device	vnd			# disk-like interface to files
 pseudo-device	putter			# for puffs and pud
+
+include "dev/veriexec.config"

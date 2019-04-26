@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.111 2018/08/01 20:04:11 maxv Exp $
+# $NetBSD: GENERIC,v 1.112 2019/04/26 21:40:30 sevan Exp $
 #
 # GENERIC machine description file
 #
@@ -83,6 +83,11 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -341,7 +346,7 @@ pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# serial-line IP ports
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	npf			# NPF packet filter
 
 #
@@ -369,15 +374,4 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	hpf1275a		# HP F1275A external keyboard
 #wskbd* at hpf1275a? mux 1
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"

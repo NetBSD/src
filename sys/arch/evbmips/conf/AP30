@@ -1,10 +1,10 @@
-#	$NetBSD: AP30,v 1.38 2018/12/30 14:51:36 sevan Exp $
+#	$NetBSD: AP30,v 1.39 2019/04/26 21:40:29 sevan Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.38 $"
+#ident 		"AP30-$Revision: 1.39 $"
 
 maxusers	32
 
@@ -165,6 +165,7 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter
+pseudo-device 	carp				# Common Address Redundancy Protocol
 #pseudo-device	npf			# NPF packet filter
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
@@ -187,3 +188,5 @@ pseudo-device	ksyms				# /dev/ksyms
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda				# coda minicache <-> venus comm.
+
+include "dev/veriexec.config"

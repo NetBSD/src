@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.132 2019/04/13 08:23:00 isaki Exp $
+#	$NetBSD: GENERIC,v 1.133 2019/04/26 21:40:32 sevan Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.132 $"
+#ident		"GENERIC-$Revision: 1.133 $"
 
 # estimated number of users
 maxusers	32
@@ -133,6 +133,11 @@ options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MODULAR		# new style module(7) framework
 options 	MODULAR_DEFAULT_AUTOLOAD
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
@@ -275,7 +280,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
 #pseudo-device	tun			# network tunneling over tty
@@ -303,18 +308,7 @@ pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
 options PAX_ASLR=0			# PaX Address Space Layout Randomization
