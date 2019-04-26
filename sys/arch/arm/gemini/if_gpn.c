@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.9 2018/06/26 06:47:57 msaitoh Exp $ */
+/* $NetBSD: if_gpn.c,v 1.10 2019/04/26 06:33:33 msaitoh Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.9 2018/06/26 06:47:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.10 2019/04/26 06:33:33 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.9 2018/06/26 06:47:57 msaitoh Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/if_dl.h>
-
 #include <net/bpf.h>
 
 #include <sys/bus.h>
@@ -112,7 +111,7 @@ struct gpn_softc {
 	struct mbuf *sc_rxmbuf;
 	struct gpn_txinfo sc_txinfo[MAX_TXACTIVE];
 	uint8_t sc_lastid;
-	bool sc_remoteup;		/* remote side up? */ 
+	bool sc_remoteup;		/* remote side up? */
 };
 
 CTASSERT((GPN_SOF | GPN_EOF) == GPN_FRAME);
@@ -145,7 +144,7 @@ m_crc32_le(struct mbuf *m)
 		}
 	}
 
-	return (crc);
+	return crc;
 }
 #endif
 
@@ -174,7 +173,7 @@ gpn_alloc_dmamaps(struct gpn_softc *sc)
 		if (ti->ti_map != NULL)
 			continue;
 		error = bus_dmamap_create(sc->sc_dmat,
-		    10000, 2, 8192, 0, 
+		    10000, 2, 8192, 0,
 		    BUS_DMA_ALLOCNOW|BUS_DMA_WAITOK,
 		    &ti->ti_map);
 		if (error)
@@ -333,7 +332,6 @@ gpn_free_txid(struct gpn_softc *sc, size_t txid)
 		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 		gpn_ifstart(&sc->sc_if);
 	}
-	
 }
 
 static void
@@ -625,12 +623,12 @@ gpn_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCSIFPHYADDR: {
 		const struct sockaddr_dl *sdl = satosdl(&ifra->ifra_addr);
-                
+
 		if (sdl->sdl_family != AF_LINK) {
 			error = EINVAL;
 			break;
 		}
-                
+
 		if_set_sadl(ifp, CLLADDR(sdl), ETHER_ADDR_LEN, false);
 		error = 0;
 		break;
@@ -671,7 +669,7 @@ gpn_attach(device_t parent, device_t self, void *aux)
 	struct gpn_softc * const sc = device_private(self);
 	struct ifnet * const ifp = &sc->sc_if;
 	char enaddr[6];
-	
+
 	enaddr[0] = 2;
 	enaddr[1] = 0;
 	enaddr[2] = 0;

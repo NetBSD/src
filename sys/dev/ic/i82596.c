@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.39 2019/04/09 13:25:07 msaitoh Exp $ */
+/* $NetBSD: i82596.c,v 1.40 2019/04/26 06:33:34 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.39 2019/04/09 13:25:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.40 2019/04/26 06:33:34 msaitoh Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -70,10 +70,9 @@ __KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.39 2019/04/09 13:25:07 msaitoh Exp $");
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+#include <net/bpf.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
-
-#include <net/bpf.h>
 
 #include <dev/ic/i82596reg.h>
 #include <dev/ic/i82596var.h>
@@ -336,11 +335,11 @@ iee_intr(void *intarg)
 					bus_dmamap_unload(sc->sc_dmat,
 					    sc->sc_tx_map[n]);
 					IEE_CBSYNC(sc, n,
-				    	    BUS_DMASYNC_POSTREAD |
+					    BUS_DMASYNC_POSTREAD |
 					    BUS_DMASYNC_POSTWRITE);
 					status = SC_CB(sc, n)->cb_status;
 					IEE_CBSYNC(sc, n,
-				    	    BUS_DMASYNC_PREREAD);
+					    BUS_DMASYNC_PREREAD);
 					if ((status & IEE_CB_COL) != 0 &&
 					    (status & IEE_CB_MAXCOL) == 0)
 						col = 16;
@@ -572,20 +571,20 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	 * Calculate DMA descriptor offsets and sizes in shmem
 	 * which should be cache line aligned.
 	 */
-	sc->sc_scp_off  = 0;
-	sc->sc_scp_sz   = roundup2(sizeof(struct iee_scp), sc->sc_cl_align);
+	sc->sc_scp_off	= 0;
+	sc->sc_scp_sz	= roundup2(sizeof(struct iee_scp), sc->sc_cl_align);
 	sc->sc_iscp_off = sc->sc_scp_sz;
-	sc->sc_iscp_sz  = roundup2(sizeof(struct iee_iscp), sc->sc_cl_align);
-	sc->sc_scb_off  = sc->sc_iscp_off + sc->sc_iscp_sz;
-	sc->sc_scb_sz   = roundup2(sizeof(struct iee_scb), sc->sc_cl_align);
-	sc->sc_rfd_off  = sc->sc_scb_off + sc->sc_scb_sz;
-	sc->sc_rfd_sz   = roundup2(sizeof(struct iee_rfd), sc->sc_cl_align);
-	sc->sc_rbd_off  = sc->sc_rfd_off + sc->sc_rfd_sz * IEE_NRFD;
-	sc->sc_rbd_sz   = roundup2(sizeof(struct iee_rbd), sc->sc_cl_align);
-	sc->sc_cb_off   = sc->sc_rbd_off + sc->sc_rbd_sz * IEE_NRFD;
-	sc->sc_cb_sz    = roundup2(sizeof(struct iee_cb), sc->sc_cl_align);
-	sc->sc_tbd_off  = sc->sc_cb_off + sc->sc_cb_sz * IEE_NCB;
-	sc->sc_tbd_sz   = roundup2(sizeof(struct iee_tbd), sc->sc_cl_align);
+	sc->sc_iscp_sz	= roundup2(sizeof(struct iee_iscp), sc->sc_cl_align);
+	sc->sc_scb_off	= sc->sc_iscp_off + sc->sc_iscp_sz;
+	sc->sc_scb_sz	= roundup2(sizeof(struct iee_scb), sc->sc_cl_align);
+	sc->sc_rfd_off	= sc->sc_scb_off + sc->sc_scb_sz;
+	sc->sc_rfd_sz	= roundup2(sizeof(struct iee_rfd), sc->sc_cl_align);
+	sc->sc_rbd_off	= sc->sc_rfd_off + sc->sc_rfd_sz * IEE_NRFD;
+	sc->sc_rbd_sz	= roundup2(sizeof(struct iee_rbd), sc->sc_cl_align);
+	sc->sc_cb_off	= sc->sc_rbd_off + sc->sc_rbd_sz * IEE_NRFD;
+	sc->sc_cb_sz	= roundup2(sizeof(struct iee_cb), sc->sc_cl_align);
+	sc->sc_tbd_off	= sc->sc_cb_off + sc->sc_cb_sz * IEE_NCB;
+	sc->sc_tbd_sz	= roundup2(sizeof(struct iee_tbd), sc->sc_cl_align);
 	sc->sc_shmem_sz = sc->sc_tbd_off + sc->sc_tbd_sz * IEE_NTBD * IEE_NCB;
 
 	/* allocate memory for shared DMA descriptors */
@@ -775,7 +774,7 @@ iee_start(struct ifnet *ifp)
 			m_freem(sc->sc_tx_mbuf[t]);
 			sc->sc_tx_mbuf[t] = m;
 			if (bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_tx_map[t],
-		    	    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
+			    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 				printf("%s: iee_start: can't load TX DMA map\n",
 				    device_xname(sc->sc_dev));
 				m_freem(sc->sc_tx_mbuf[t]);

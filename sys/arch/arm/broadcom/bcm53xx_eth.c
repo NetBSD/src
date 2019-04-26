@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.34 2019/03/08 08:12:39 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.35 2019/04/26 06:33:33 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -52,9 +52,7 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.34 2019/03/08 08:12:39 msaitoh Exp
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
 #include <net/if_dl.h>
-
 #include <net/bpf.h>
 
 #include <dev/mii/miivar.h>
@@ -169,7 +167,7 @@ struct bcmeth_softc {
 #endif
 
 	struct ifqueue sc_rx_bufcache;
-	struct bcmeth_mapcache *sc_rx_mapcache;     
+	struct bcmeth_mapcache *sc_rx_mapcache;
 	struct bcmeth_mapcache *sc_tx_mapcache;
 
 	struct workqueue *sc_workq;
@@ -290,7 +288,7 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	prop_data_t eaprop = prop_dictionary_get(dict, "mac-address");
-        if (eaprop == NULL) {
+	if (eaprop == NULL) {
 		uint32_t mac0 = bcmeth_read_4(sc, UNIMAC_MAC_0);
 		uint32_t mac1 = bcmeth_read_4(sc, UNIMAC_MAC_1);
 		if ((mac0 == 0 && mac1 == 0) || (mac1 & 1)) {
@@ -330,14 +328,14 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 		goto fail_1;
 	}
 
-	error = bcmeth_mapcache_create(sc, &sc->sc_rx_mapcache, 
+	error = bcmeth_mapcache_create(sc, &sc->sc_rx_mapcache,
 	    BCMETH_MAXRXMBUFS, MCLBYTES, BCMETH_NRXSEGS);
 	if (error) {
 		aprint_error(": failed to allocate rx dmamaps: %d\n", error);
 		goto fail_1;
 	}
 
-	error = bcmeth_mapcache_create(sc, &sc->sc_tx_mapcache, 
+	error = bcmeth_mapcache_create(sc, &sc->sc_tx_mapcache,
 	    BCMETH_MAXTXMBUFS, MCLBYTES, BCMETH_NTXSEGS);
 	if (error) {
 		aprint_error(": failed to allocate tx dmamaps: %d\n", error);
@@ -440,9 +438,9 @@ fail_4:
 	intr_disestablish(sc->sc_ih);
 fail_3:
 	softint_disestablish(sc->sc_soft_ih);
-fail_2:	
+fail_2:
 	workqueue_destroy(sc->sc_workq);
-fail_1:	
+fail_1:
 	mutex_obj_free(sc->sc_lock);
 	mutex_obj_free(sc->sc_hwlock);
 }
@@ -687,7 +685,7 @@ bcmeth_ifwatchdog(struct ifnet *ifp)
 static int
 bcmeth_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct bcmeth_softc *sc  = ifp->if_softc;
+	struct bcmeth_softc *sc	 = ifp->if_softc;
 	struct ifreq * const ifr = data;
 	const int s = splnet();
 	int error;
@@ -722,7 +720,7 @@ bcmeth_rxq_desc_presync(
 	struct gmac_rxdb *rxdb,
 	size_t count)
 {
-	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_descmap, 
+	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_descmap,
 	    (rxdb - rxq->rxq_first) * sizeof(*rxdb), count * sizeof(*rxdb),
 	    BUS_DMASYNC_PREWRITE);
 }
@@ -734,7 +732,7 @@ bcmeth_rxq_desc_postsync(
 	struct gmac_rxdb *rxdb,
 	size_t count)
 {
-	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_descmap, 
+	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_descmap,
 	    (rxdb - rxq->rxq_first) * sizeof(*rxdb), count * sizeof(*rxdb),
 	    BUS_DMASYNC_POSTWRITE);
 }
@@ -746,7 +744,7 @@ bcmeth_txq_desc_presync(
 	struct gmac_txdb *txdb,
 	size_t count)
 {
-	bus_dmamap_sync(sc->sc_dmat, txq->txq_descmap, 
+	bus_dmamap_sync(sc->sc_dmat, txq->txq_descmap,
 	    (txdb - txq->txq_first) * sizeof(*txdb), count * sizeof(*txdb),
 	    BUS_DMASYNC_PREWRITE);
 }
@@ -758,7 +756,7 @@ bcmeth_txq_desc_postsync(
 	struct gmac_txdb *txdb,
 	size_t count)
 {
-	bus_dmamap_sync(sc->sc_dmat, txq->txq_descmap, 
+	bus_dmamap_sync(sc->sc_dmat, txq->txq_descmap,
 	    (txdb - txq->txq_first) * sizeof(*txdb), count * sizeof(*txdb),
 	    BUS_DMASYNC_POSTWRITE);
 }
@@ -977,7 +975,8 @@ bcmeth_rxq_produce(
 		if (m == NULL) {
 			m = bcmeth_rx_buf_alloc(sc);
 			if (m == NULL) {
-				printf("%s: bcmeth_rx_buf_alloc failed\n", __func__);
+				printf("%s: bcmeth_rx_buf_alloc failed\n",
+				    __func__);
 				break;
 			}
 		}
@@ -1071,7 +1070,7 @@ bcmeth_rxq_consume(
 			KASSERT(rxq->rxq_inuse == 0);
 			break;
 		}
-		
+
 		uint32_t rcvsts0 = bcmeth_read_4(sc, rxq->rxq_reg_rcvsts0);
 		uint32_t currdscr = __SHIFTOUT(rcvsts0, RCV_CURRDSCR);
 		if (consumer == rxq->rxq_first + currdscr) {
@@ -1101,7 +1100,8 @@ bcmeth_rxq_consume(
 		 * of mbufs.
 		 */
 #ifdef BCMETH_RCVMAGIC
-		size_t desc_count = rxsts != BCMETH_RCVMAGIC ? __SHIFTOUT(rxsts, RXSTS_DESC_COUNT) + 1 : 1;
+		size_t desc_count = rxsts != BCMETH_RCVMAGIC
+		    ? __SHIFTOUT(rxsts, RXSTS_DESC_COUNT) + 1 : 1;
 #else
 		size_t desc_count = __SHIFTOUT(rxsts, RXSTS_DESC_COUNT) + 1;
 #endif
@@ -1112,8 +1112,8 @@ bcmeth_rxq_consume(
 				consumer = rxq->rxq_first;
 			}
 			KASSERTMSG(consumer != rxq->rxq_first + currdscr,
-			    "i=%zu rxsts=%#x desc_count=%zu currdscr=%u consumer=%zd",
-			    i, rxsts, desc_count, currdscr,
+			    "i=%zu rxsts=%#x desc_count=%zu currdscr=%u "
+			    "consumer=%zd", i, rxsts, desc_count, currdscr,
 			    consumer - rxq->rxq_first);
 			m_last = m_last->m_next;
 		}
@@ -1126,7 +1126,7 @@ bcmeth_rxq_consume(
 		m_last->m_next = NULL;
 
 #ifdef BCMETH_RCVMAGIC
-		if (rxsts == BCMETH_RCVMAGIC) {	
+		if (rxsts == BCMETH_RCVMAGIC) {
 			ifp->if_ierrors++;
 			if ((m->m_ext.ext_paddr >> 28) == 8) {
 				BCMETH_EVCNT_INCR(sc->sc_ev_rx_badmagic_lo);
@@ -1136,8 +1136,10 @@ bcmeth_rxq_consume(
 			IF_ENQUEUE(&sc->sc_rx_bufcache, m);
 		} else
 #endif /* BCMETH_RCVMAGIC */
-		if (rxsts & (RXSTS_CRC_ERROR|RXSTS_OVERSIZED|RXSTS_PKT_OVERFLOW)) {
-			aprint_error_dev(sc->sc_dev, "[%zu]: count=%zu rxsts=%#x\n",
+		if (rxsts
+		    & (RXSTS_CRC_ERROR|RXSTS_OVERSIZED|RXSTS_PKT_OVERFLOW)) {
+			aprint_error_dev(sc->sc_dev,
+			    "[%zu]: count=%zu rxsts=%#x\n",
 			    consumer - rxq->rxq_first, desc_count, rxsts);
 			/*
 			 * We encountered an error, take the mbufs and add them
@@ -1166,7 +1168,8 @@ bcmeth_rxq_consume(
 			 * Wrap at the last entry!
 			 */
 			if (++consumer == rxq->rxq_last) {
-				KASSERT(consumer[-1].rxdb_flags & htole32(RXDB_FLAG_ET));
+				KASSERT(consumer[-1].rxdb_flags
+				    & htole32(RXDB_FLAG_ET));
 				rxq->rxq_consumer = rxq->rxq_first;
 			} else {
 				rxq->rxq_consumer = consumer;
@@ -1231,7 +1234,6 @@ bcmeth_rxq_purge(
 				m = m0;
 			}
 		}
-			
 	}
 
 	rxq->rxq_mhead = NULL;
@@ -1478,12 +1480,13 @@ bcmeth_txq_produce(
 	 */
 	txq->txq_free -= map->dm_nsegs;
 	KASSERT(map->dm_nsegs == 1 || txq->txq_producer != producer);
-	KASSERT(map->dm_nsegs == 1 || (txq->txq_producer->txdb_flags & htole32(TXDB_FLAG_EF)) == 0);
+	KASSERT(map->dm_nsegs == 1
+	    || (txq->txq_producer->txdb_flags & htole32(TXDB_FLAG_EF)) == 0);
 	KASSERT(producer->txdb_flags & htole32(TXDB_FLAG_EF));
 
 #if 0
-	printf("%s: mbuf %p: produced a %u byte packet in %u segments (%zd..%zd)\n",
-	    __func__, m, m->m_pkthdr.len, map->dm_nsegs,
+	printf("%s: mbuf %p: produced a %u byte packet in %u segments "
+	    "(%zd..%zd)\n", __func__, m, m->m_pkthdr.len, map->dm_nsegs,
 	    txq->txq_producer - txq->txq_first, producer - txq->txq_first);
 #endif
 
@@ -1520,7 +1523,8 @@ bcmeth_copy_packet(struct mbuf *m)
 
 	struct mbuf *n = m->m_next;
 	if (m != mext && hlen + misalignment <= MHLEN && false) {
-		KASSERT(m->m_pktdat <= m->m_data && m->m_data <= &m->m_pktdat[MHLEN - m->m_len]);
+		KASSERT(m->m_pktdat <= m->m_data
+		    && m->m_data <= &m->m_pktdat[MHLEN - m->m_len]);
 		size_t oldoff = m->m_data - m->m_pktdat;
 		size_t off;
 		if (mext == NULL) {
@@ -1628,11 +1632,13 @@ bcmeth_txq_consume(
 			txq->txq_free += txfree;
 			txq->txq_lastintr -= uimin(txq->txq_lastintr, txfree);
 #if 0
-			printf("%s: empty: freed %zu descriptors going from %zu to %zu\n",
-			    __func__, txfree, txq->txq_free - txfree, txq->txq_free);
+			printf("%s: empty: freed %zu descriptors going from "
+			    "%zu to %zu\n", __func__, txfree,
+			    txq->txq_free - txfree, txq->txq_free);
 #endif
 			KASSERT(txq->txq_lastintr == 0);
-			KASSERT(txq->txq_free == txq->txq_last - txq->txq_first - 1);
+			KASSERT(txq->txq_free
+			    == txq->txq_last - txq->txq_first - 1);
 			return true;
 		}
 		bcmeth_txq_desc_postsync(sc, txq, consumer, 1);
@@ -1805,7 +1811,7 @@ bcmeth_intr(void *arg)
 			break;
 		}
 #if 0
-		aprint_normal_dev(sc->sc_dev, "%s: intstatus=%#x intmask=%#x\n", 
+		aprint_normal_dev(sc->sc_dev, "%s: intstatus=%#x intmask=%#x\n",
 		    __func__, intstatus, bcmeth_read_4(sc, GMAC_INTMASK));
 #endif
 		if (intstatus & RCVINT) {
@@ -1828,7 +1834,8 @@ bcmeth_intr(void *arg)
 			 * softints.  If we exceeded then we might hogging
 			 * so let the workqueue deal with them.
 			 */
-			const uint32_t framecount = __SHIFTOUT(sc->sc_rcvlazy, INTRCVLAZY_FRAMECOUNT);
+			const uint32_t framecount = __SHIFTOUT(sc->sc_rcvlazy,
+			    INTRCVLAZY_FRAMECOUNT);
 			if (descs < framecount
 			    || (curcpu()->ci_curlwp->l_flag & LW_IDLE)) {
 				soft_flags |= SOFT_RXINTR;
@@ -1953,7 +1960,7 @@ bcmeth_soft_intr(void *arg)
 
 	if (soft_flags & SOFT_RXINTR) {
 		/*
-		 * Let's consume 
+		 * Let's consume
 		 */
 		while (bcmeth_rxq_consume(sc, &sc->sc_rxq,
 		    sc->sc_rxq.rxq_threshold / 4)) {
@@ -2013,7 +2020,7 @@ bcmeth_worker(struct work *wk, void *arg)
 
 	if (work_flags & WORK_RXINTR) {
 		/*
-		 * Let's consume 
+		 * Let's consume
 		 */
 		while (bcmeth_rxq_consume(sc, &sc->sc_rxq,
 		    sc->sc_rxq.rxq_threshold / 4)) {

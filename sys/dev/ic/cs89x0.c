@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.43 2019/04/25 10:08:45 msaitoh Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.44 2019/04/26 06:33:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.43 2019/04/25 10:08:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.44 2019/04/26 06:33:33 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -225,7 +225,8 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.43 2019/04/25 10:08:45 msaitoh Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <sys/rndsource.h>
 
 #include <net/if.h>
@@ -237,9 +238,6 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.43 2019/04/25 10:08:45 msaitoh Exp $");
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <sys/bus.h>
-#include <sys/intr.h>
 
 #include <dev/ic/cs89x0reg.h>
 #include <dev/ic/cs89x0var.h>
@@ -1460,9 +1458,7 @@ cs_counter_event(struct cs_softc *sc, uint16_t cntEvent)
 		 */
 		break;
 	case REG_NUM_RX_MISS:
-		/*
-		 * the count should be read before an overflow occurs.
-		 */
+		/* The count should be read before an overflow occurs. */
 		errorCount = CS_READ_PACKET_PAGE(sc, PKTPG_RX_MISS);
 		/*
 		 * Increment the input error count, the first 6bits are the
@@ -1471,7 +1467,7 @@ cs_counter_event(struct cs_softc *sc, uint16_t cntEvent)
 		ifp->if_ierrors += ((errorCount & 0xffC0) >> 6);
 		break;
 	default:
-		/* do nothing */
+		/* Do nothing */
 		break;
 	}
 }
@@ -1633,7 +1629,7 @@ cs_receive_event(struct cs_softc *sc, uint16_t rxEvent)
 		}
 	} else {
 		/*
-		 * process the received frame and pass it up to the upper
+		 * Process the received frame and pass it up to the upper
 		 * layers.
 		 */
 		cs_process_receive(sc);
@@ -1744,7 +1740,7 @@ cs_process_receive(struct cs_softc *sc)
 
 	/* Now read the data from the chip */
 	if (sc->sc_memorymode) {
-		/* don't want to go over */
+		/* Don't want to go over */
 		pBuffLimit = pBuff + (totlen + 1) / 2;
 
 		while (pBuff < pBuffLimit) {

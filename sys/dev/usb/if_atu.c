@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.63 2018/08/02 06:09:04 riastradh Exp $ */
+/*	$NetBSD: if_atu.c,v 1.64 2019/04/26 06:33:34 msaitoh Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.63 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.64 2019/04/26 06:33:34 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -63,14 +63,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.63 2018/08/02 06:09:04 riastradh Exp $"
 #include <sys/kthread.h>
 #include <sys/queue.h>
 #include <sys/device.h>
-
 #include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
-
 #include <dev/usb/usbdevs.h>
 
 #include <dev/microcode/atmel/atmel_intersil_fw.h>
@@ -344,7 +342,7 @@ atu_usb_request(struct atu_softc *sc, uint8_t type,
 	usbd_destroy_xfer(xfer);
 
 	splx(s);
-	return(err);
+	return err;
 }
 
 int
@@ -731,8 +729,8 @@ atu_initial_config(struct atu_softc *sc)
 
 #ifdef ATU_DEBUG
 	if (atudebug) {
-		DPRINTFN(20, ("%s: configlen=%02zx\n", device_xname(sc->atu_dev),
-		    sizeof(cmd)));
+		DPRINTFN(20, ("%s: configlen=%02zx\n",
+			device_xname(sc->atu_dev), sizeof(cmd)));
 	}
 #endif /* ATU_DEBUG */
 
@@ -784,9 +782,9 @@ atu_initial_config(struct atu_softc *sc)
 int
 atu_join(struct atu_softc *sc, struct ieee80211_node *node)
 {
-	struct atu_cmd_join		join;
-	uint8_t				status = 0;	/* XXX: GCC */
-	usbd_status			err;
+	struct atu_cmd_join	join;
+	uint8_t			status = 0;	/* XXX: GCC */
+	usbd_status		err;
 
 	memset(&join, 0, sizeof(join));
 
@@ -1103,10 +1101,10 @@ atu_match(device_t parent, cfdata_t match, void *aux)
 
 		if (uaa->uaa_vendor == t->atu_vid &&
 		    uaa->uaa_product == t->atu_pid) {
-			return(UMATCH_VENDOR_PRODUCT);
+			return UMATCH_VENDOR_PRODUCT;
 		}
 	}
-	return(UMATCH_NONE);
+	return UMATCH_NONE;
 }
 
 int
@@ -1241,9 +1239,9 @@ atu_attach(device_t parent, device_t self, void *aux)
 {
 	struct atu_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	char				*devinfop;
-	usbd_status			err;
-	struct usbd_device		*dev = uaa->uaa_device;
+	char			*devinfop;
+	usbd_status		err;
+	struct usbd_device	*dev = uaa->uaa_device;
 	uint8_t			mode, channel;
 	int i;
 
@@ -1399,8 +1397,8 @@ atu_complete_attach(struct atu_softc *sc)
 	err = atu_get_mib(sc, MIB_FW_VERSION, sizeof(fw), 0, (uint8_t *)&fw);
 	if (!err) {
 		DPRINTFN(15, ("%s: firmware: maj:%d min:%d patch:%d "
-		    "build:%d\n", device_xname(sc->atu_dev), fw.major, fw.minor,
-		    fw.patch, fw.build));
+		    "build:%d\n", device_xname(sc->atu_dev), fw.major,
+			fw.minor, fw.patch, fw.build));
 	} else {
 		DPRINTF(("%s: get firmware version failed\n",
 		    device_xname(sc->atu_dev)));
@@ -1485,7 +1483,7 @@ atu_detach(device_t self, int flags)
 		if_detach(ifp);
 	}
 
-	return(0);
+	return 0;
 }
 
 int
@@ -1518,7 +1516,7 @@ atu_newbuf(struct atu_softc *sc, struct atu_chain *c, struct mbuf *m)
 		if (m_new == NULL) {
 			DPRINTF(("%s: no memory for rx list\n",
 			    device_xname(sc->atu_dev)));
-			return(ENOBUFS);
+			return ENOBUFS;
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
@@ -1526,7 +1524,7 @@ atu_newbuf(struct atu_softc *sc, struct atu_chain *c, struct mbuf *m)
 			DPRINTF(("%s: no memory for rx list\n",
 			    device_xname(sc->atu_dev)));
 			m_freem(m_new);
-			return(ENOBUFS);
+			return ENOBUFS;
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 	} else {
@@ -1535,7 +1533,7 @@ atu_newbuf(struct atu_softc *sc, struct atu_chain *c, struct mbuf *m)
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
 	c->atu_mbuf = m_new;
-	return(0);
+	return 0;
 }
 
 int
@@ -1559,7 +1557,7 @@ atu_rx_list_init(struct atu_softc *sc)
 				return err;
 			c->atu_buf = usbd_get_buffer(c->atu_xfer);
 			if (atu_newbuf(sc, c, NULL) == ENOBUFS) /* XXX free? */
-				return(ENOBUFS);
+				return ENOBUFS;
 		}
 	}
 	return 0;
@@ -1592,12 +1590,11 @@ atu_tx_list_init(struct atu_softc *sc)
 			SLIST_INSERT_HEAD(&cd->atu_tx_free, c, atu_list);
 		}
 	}
-	return(0);
+	return 0;
 }
 
 void
-atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
-    int listlen)
+atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch, int listlen)
 {
 	int			i;
 
@@ -1730,8 +1727,7 @@ done:
  * the list buffers.
  */
 void
-atu_txeof(struct usbd_xfer *xfer, void *priv,
-    usbd_status status)
+atu_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct atu_chain	*c = (struct atu_chain *)priv;
 	struct atu_softc	*sc = c->atu_sc;
@@ -1751,10 +1747,11 @@ atu_txeof(struct usbd_xfer *xfer, void *priv,
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
 
-		DPRINTF(("%s: usb error on tx: %s\n", device_xname(sc->atu_dev),
-		    usbd_errstr(status)));
+		DPRINTF(("%s: usb error on tx: %s\n",
+			device_xname(sc->atu_dev), usbd_errstr(status)));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall_async(sc->atu_ep[ATU_ENDPT_TX]);
+			usbd_clear_endpoint_stall_async(
+				sc->atu_ep[ATU_ENDPT_TX]);
 		return;
 	}
 
@@ -1802,7 +1799,7 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	/* Don't try to send when we're shutting down the driver */
 	if (sc->sc_state != ATU_S_OK) {
 		m_freem(m);
-		return(EIO);
+		return EIO;
 	}
 
 	/*
@@ -1837,7 +1834,7 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 		    device_xname(sc->atu_dev), err));
 		c->atu_mbuf = NULL;
 		m_freem(m);
-		return(EIO);
+		return EIO;
 	}
 
 	return 0;
@@ -1976,7 +1973,7 @@ atu_init(struct ifnet *ifp)
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		splx(s);
-		return(0);
+		return 0;
 	}
 
 	/* Load the multicast filter. */
@@ -1989,7 +1986,7 @@ atu_init(struct ifnet *ifp)
 		DPRINTF(("%s: open rx pipe failed: %s\n",
 		    device_xname(sc->atu_dev), usbd_errstr(err)));
 		splx(s);
-		return(EIO);
+		return EIO;
 	}
 
 	err = usbd_open_pipe(sc->atu_iface, sc->atu_ed[ATU_ENDPT_TX],
@@ -1998,7 +1995,7 @@ atu_init(struct ifnet *ifp)
 		DPRINTF(("%s: open tx pipe failed: %s\n",
 		    device_xname(sc->atu_dev), usbd_errstr(err)));
 		splx(s);
-		return(EIO);
+		return EIO;
 	}
 
 	/* Init TX ring */
@@ -2027,7 +2024,7 @@ atu_init(struct ifnet *ifp)
 		DPRINTF(("%s: initial config failed!\n",
 		    device_xname(sc->atu_dev)));
 		splx(s);
-		return(EIO);
+		return EIO;
 	}
 	DPRINTFN(10, ("%s: initialised transceiver\n",
 	    device_xname(sc->atu_dev)));

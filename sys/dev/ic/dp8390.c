@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.92 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.93 2019/04/26 06:33:33 msaitoh Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.92 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.93 2019/04/26 06:33:33 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -26,8 +26,8 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.92 2019/02/05 06:17:02 msaitoh Exp $");
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
-
 #include <sys/rndsource.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -43,9 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.92 2019/02/05 06:17:02 msaitoh Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-
-#include <sys/bus.h>
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
@@ -70,8 +67,8 @@ dp8390_media_init(struct dp8390_softc *sc)
 {
 
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 }
 
 /*
@@ -136,9 +133,7 @@ dp8390_config(struct dp8390_softc *sc)
 	/* Initialize media goo. */
 	(*sc->sc_media_init)(sc);
 
-	/*
-	 * We can support 802.1Q VLAN-sized frames.
-	 */
+	/* We can support 802.1Q VLAN-sized frames. */
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/* Attach the interface. */
@@ -617,14 +612,12 @@ dp8390_intr(void *arg)
 	uint8_t isr;
 	uint8_t rndisr;
 
-	if (sc->sc_enabled == 0 ||
-	    !device_is_active(sc->sc_dev))
+	if (sc->sc_enabled == 0 || !device_is_active(sc->sc_dev))
 		return 0;
 
 	/* Set NIC to page 0 registers. */
 	NIC_BARRIER(regt, regh);
-	NIC_PUT(regt, regh, ED_P0_CR,
-	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
+	NIC_PUT(regt, regh, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
 	NIC_BARRIER(regt, regh);
 
 	isr = NIC_GET(regt, regh, ED_P0_ISR);
@@ -672,9 +665,7 @@ dp8390_intr(void *arg)
 			 * when a network is heavily loaded.
 			 */
 			if ((isr & ED_ISR_TXE) != 0) {
-				/*
-				 * Excessive collisions (16).
-				 */
+				/* Excessive collisions (16). */
 				if ((NIC_GET(regt, regh, ED_P0_TSR)
 				    & ED_TSR_ABT) && (collisions == 0)) {
 					/*
@@ -716,8 +707,8 @@ dp8390_intr(void *arg)
 
 			/*
 			 * Decrement buffer in-use count if not zero (can only
-			 * be zero if a transmitter interrupt occurred while not
-			 * actually transmitting).
+			 * be zero if a transmitter interrupt occurred while
+			 * not actually transmitting).
 			 * If data is ready to transmit, start it transmitting,
 			 * otherwise defer until after handling receiver.
 			 */
@@ -848,7 +839,7 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
@@ -867,7 +858,7 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				break;
 			dp8390_init(sc);
 			break;
-		case IFF_UP|IFF_RUNNING:
+		case IFF_UP | IFF_RUNNING:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
@@ -1030,9 +1021,7 @@ dp8390_get(struct dp8390_softc *sc, int src, u_short total_len)
 			len = MCLBYTES;
 		}
 
-		/*
-		 * Make sure the data after the Ethernet header is aligned.
-		 */
+		/* Make sure the data after the Ethernet header is aligned. */
 		if (m == m0) {
 			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
