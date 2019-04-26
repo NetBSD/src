@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.466 2019/04/12 04:46:48 msaitoh Exp $
+# $NetBSD: ALL,v 1.467 2019/04/26 22:46:03 sevan Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.466 $"
+#ident		"ALL-$Revision: 1.467 $"
 
 maxusers	64		# estimated number of users
 
@@ -1834,19 +1834,8 @@ pseudo-device	dmoverio
 
 pseudo-device	nandemulator
 
-options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-					# and PAX_SEGVGUARD
-
 # Veriexec
-pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-options 	VERIFIED_EXEC_FP_SHA256
-options 	VERIFIED_EXEC_FP_SHA384
-options 	VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
