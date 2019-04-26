@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.19 2016/03/07 22:16:38 martin Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.20 2019/04/26 07:35:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -272,8 +272,8 @@ usage:
 	default:
 		mid = MID_ZERO;
 	}
-	aex.a_midmag = (u_long)htonl(((u_long)symflag << 26) 
-	    | ((u_long)mid << 16) | OMAGIC);
+	aex.a_midmag = (u_long)htonl(((u_long)symflag << 26)
+	    | ((u_long)mid << 16) | ZMAGIC);
 
 	aex.a_text = text.len;
 	aex.a_data = data.len;
@@ -364,7 +364,8 @@ translate_syms(int out, int in, off_t symoff, off_t symsize,
 	ssize_t i, remaining, cur;
 	char   *oldstrings;
 	char   *newstrings, *nsp;
-	size_t  newstringsize, stringsizebuf;
+	size_t  newstringsize;
+	uint32_t stringsizebuf;
 
 	/* Zero the unused fields in the output buffer.. */
 	memset(outbuf, 0, sizeof outbuf);
@@ -375,10 +376,10 @@ translate_syms(int out, int in, off_t symoff, off_t symsize,
 	/* Suck in the old string table... */
 	oldstrings = saveRead(in, stroff, (size_t)strsize, "string table");
 
-	/* Allocate space for the new one.   XXX We make the wild assumption
-	 * that no two symbol table entries will point at the same place in
-	 * the string table - if that assumption is bad, this could easily
-	 * blow up. */
+	/*
+	 * Allocate space for the new one.  We will increase the space if
+	 * this is too small
+	 */
 	newstringsize = (size_t)(strsize + remaining);
 	newstrings = malloc(newstringsize);
 	if (newstrings == NULL)
@@ -390,11 +391,10 @@ translate_syms(int out, int in, off_t symoff, off_t symsize,
 	if (lseek(in, symoff, SEEK_SET) < 0)
 		err(EXIT_FAILURE, "Can't seek");
 	/* Translate and copy symbols... */
-	while (remaining) {
+	for (; remaining; remaining -= cur) {
 		cur = remaining;
 		if (cur > SYMS_PER_PASS)
 			cur = SYMS_PER_PASS;
-		remaining -= cur;
 		if ((i = read(in, inbuf, (size_t)cur * sizeof(Elf32_Sym)))
 		    != cur * (ssize_t)sizeof(Elf32_Sym)) {
 			if (i < 0)
@@ -406,6 +406,7 @@ translate_syms(int out, int in, off_t symoff, off_t symsize,
 		/* Do the translation... */
 		for (i = 0; i < cur; i++) {
 			int     binding, type;
+			size_t off, len;
 
 #if TARGET_BYTE_ORDER != BYTE_ORDER
 			inbuf[i].st_name  = bswap32(inbuf[i].st_name);
@@ -413,12 +414,28 @@ translate_syms(int out, int in, off_t symoff, off_t symsize,
 			inbuf[i].st_size  = bswap32(inbuf[i].st_size);
 			inbuf[i].st_shndx = bswap16(inbuf[i].st_shndx);
 #endif
+			off = (size_t)(nsp - newstrings);
+
+			/* length of this symbol with leading '_' and trailing '\0' */
+			len = strlen(oldstrings + inbuf[i].st_name) + 1 + 1;
+
+			/* Does it fit? If not make more space */
+			if (newstringsize - off < len) {
+				char *nns;
+
+				newstringsize += (size_t)(remaining) * len;
+				nns = realloc(newstrings, newstringsize);
+				if (nns == NULL)
+					err(EXIT_FAILURE, "No memory for new string table!");
+				newstrings = nns;
+				nsp = newstrings + off;
+			}
 			/* Copy the symbol into the new table, but prepend an
 			 * underscore. */
 			*nsp = '_';
 			strcpy(nsp + 1, oldstrings + inbuf[i].st_name);
 			outbuf[i].n_un.n_strx = nsp - newstrings + 4;
-			nsp += strlen(nsp) + 1;
+			nsp += len;
 
 			type = ELF32_ST_TYPE(inbuf[i].st_info);
 			binding = ELF32_ST_BIND(inbuf[i].st_info);
@@ -475,7 +492,7 @@ copy(int out, int in, off_t offset, off_t size)
 	char    ibuf[4096];
 	ssize_t remaining, cur, count;
 
-	/* Go to the start of the ELF symbol table... */
+	/* Go to the start of the segment... */
 	if (lseek(in, offset, SEEK_SET) < 0)
 		err(EXIT_FAILURE, "%s: lseek failed", __func__);
 	if (size > SSIZE_MAX)
