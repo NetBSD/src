@@ -943,10 +943,15 @@ if_getlifetime6(struct ipv6_addr *ia)
 	priv = (struct priv *)ia->iface->ctx->priv;
 	if (ioctl(priv->pf_inet6_fd, SIOCGIFALIFETIME_IN6, &ifr6) == -1)
 		return -1;
+	clock_gettime(CLOCK_MONOTONIC, &ia->created);
 
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+	t = ia->created.tv_sec;
+#else
 	t = time(NULL);
-	lifetime = &ifr6.ifr_ifru.ifru_lifetime;
+#endif
 
+	lifetime = &ifr6.ifr_ifru.ifru_lifetime;
 	if (lifetime->ia6t_preferred)
 		ia->prefix_pltime = (uint32_t)(lifetime->ia6t_preferred -
 		    MIN(t, lifetime->ia6t_preferred));
@@ -956,7 +961,6 @@ if_getlifetime6(struct ipv6_addr *ia)
 		ia->prefix_vltime = (uint32_t)(lifetime->ia6t_expire -
 		    MIN(t, lifetime->ia6t_expire));
 		/* Calculate the created time */
-		clock_gettime(CLOCK_MONOTONIC, &ia->created);
 		ia->created.tv_sec -= lifetime->ia6t_vltime - ia->prefix_vltime;
 	} else
 		ia->prefix_vltime = ND6_INFINITE_LIFETIME;

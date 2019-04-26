@@ -2029,12 +2029,12 @@ dhcp6_findna(struct interface *ifp, uint16_t ot, const uint8_t *iaid,
 		nd = o + ol;
 		l -= (size_t)(nd - d);
 		d = nd;
-		if (ol < 24) {
+		if (ol < sizeof(ia)) {
 			errno = EINVAL;
 			logerrx("%s: IA Address option truncated", ifp->name);
 			continue;
 		}
-		memcpy(&ia, o, ol);
+		memcpy(&ia, o, sizeof(ia));
 		ia.pltime = ntohl(ia.pltime);
 		ia.vltime = ntohl(ia.vltime);
 		/* RFC 3315 22.6 */
@@ -3035,7 +3035,7 @@ dhcp6_bind(struct interface *ifp, const char *op, const char *sfrom)
 				 * unless those values in those fields are 0.
 				 */
 				logwarnx("%s: ignoring T1 %"PRIu32
-				    " to due address expiry",
+				    " due to address expiry",
 				    ifp->name, state->renew);
 				state->renew = state->rebind = 0;
 			}
