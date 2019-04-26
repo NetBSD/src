@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.29 2015/07/15 14:27:49 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.30 2019/04/26 09:03:46 maya Exp $
 
 # objects built from assembler sources (need lint stubs)
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S fabs.S \
@@ -21,10 +21,10 @@ SRCS+=	fpclassifyf_ieee754.c fpclassifyd_ieee754.c
 SRCS+=	isinff_ieee754.c isinfd_ieee754.c
 SRCS+=	isnanf_ieee754.c isnand_ieee754.c
 SRCS+=	isfinitef_ieee754.c isfinited_ieee754.c
-SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
+SRCS+=	signbitf_ieee754.c signbitd_ieee754.c signbitl_ieee754.c
 
 SRCS+=	nanf.c infinityl.c
-SRCS+=	fpclassifyl.c isfinitel.c isinfl.c isnanl.c signbitl.c
+SRCS+=	fpclassifyl.c isfinitel.c isinfl.c isnanl.c
 
 # "internal" objects (don't provide part of the user-visible API)
 SRCS+=	divsi3.S fixdfsi.S fixunsdfsi.S udivsi3.S
