@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.21 2018/12/01 15:07:58 jdolecek Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.22 2019/04/26 14:28:40 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.21 2018/12/01 15:07:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.22 2019/04/26 14:28:40 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,7 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	ld->sc_dump = ld_nvme_dump;
 	ld->sc_ioctl = ld_nvme_ioctl;
 	ld->sc_flags = LDF_ENABLED | LDF_NO_RND | LDF_MPSAFE;
+	ld->sc_typename = kmem_asprintf("%s", naa->naa_typename);
 	ldattach(ld, "fcfs");
 }
 
@@ -126,6 +127,8 @@ ld_nvme_detach(device_t self, int flags)
 	if ((rv = ldbegindetach(ld, flags)) != 0)
 		return rv;
 	ldenddetach(ld);
+
+	kmem_free(ld->sc_typename, strlen(ld->sc_typename) + 1);
 
 	nvme_ns_free(sc->sc_nvme, sc->sc_nsid);
 
