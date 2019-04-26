@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.48 2019/02/06 11:58:31 rin Exp $
+#	$NetBSD: WZERO3,v 1.49 2019/04/26 21:40:30 sevan Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.48 $"
+#ident 		"GENERIC-$Revision: 1.49 $"
 
 # estimated number of users
 maxusers	32
@@ -121,6 +121,11 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_MONOATTR=""
 
 options 	FONT_VT220L8x16
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
@@ -273,6 +278,7 @@ ugen*	at uhub? port ?
 # Pseudo-devices
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter 		# packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
 pseudo-device	tun			# network tunneling over tty
@@ -305,3 +311,5 @@ pseudo-device	putter			# for puffs and pud
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+include "dev/veriexec.config"

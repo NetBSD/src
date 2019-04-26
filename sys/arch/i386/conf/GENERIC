@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1204 2019/03/01 12:23:10 nonaka Exp $
+# $NetBSD: GENERIC,v 1.1205 2019/04/26 21:40:30 sevan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1204 $"
+#ident		"GENERIC-$Revision: 1.1205 $"
 
 maxusers	64		# estimated number of users
 
@@ -1471,7 +1471,7 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	loop			# network loopback
 #pseudo-device	mpls			# MPLS pseudo-interface
 pseudo-device	ppp			# Point-to-Point Protocol
@@ -1530,19 +1530,7 @@ pseudo-device	cmos
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
 
-options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-					# and PAX_SEGVGUARD
-
-# Veriexec
-pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-options 	VERIFIED_EXEC_FP_SHA256
-options 	VERIFIED_EXEC_FP_SHA384
-options 	VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
 options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard

@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.49 2019/04/13 08:22:59 isaki Exp $
+#	$NetBSD: PMPPC,v 1.50 2019/04/26 21:40:29 sevan Exp $
 #
 #	PMPPC
 #
@@ -26,6 +26,11 @@ options 	SYSVSHM		# System V shared memory
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -422,6 +427,7 @@ pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	npf			# NPF packet filter
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
@@ -441,3 +447,4 @@ pseudo-device	ksyms
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
+include "dev/veriexec.config"
