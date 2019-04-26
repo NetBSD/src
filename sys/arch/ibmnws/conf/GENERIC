@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.53 2019/04/13 08:23:00 isaki Exp $
+#	$NetBSD: GENERIC,v 1.54 2019/04/26 21:40:30 sevan Exp $
 #
 #
 
@@ -19,6 +19,11 @@ options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 maxusers	8
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 options 	DDB
 
@@ -279,7 +284,7 @@ pseudo-device	md			# memory disk device (ramdisk)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# network tap
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	loop			# network loopback
 
 #
@@ -294,15 +299,4 @@ pseudo-device	ksyms
 pseudo-device	clockctl
 pseudo-device	drvctl			# user control of drive subsystem
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"

@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.47 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.48 2019/04/26 21:40:29 sevan Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -32,6 +32,11 @@ options 	SYSVSHM		# System V shared memory
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -198,6 +203,7 @@ pseudo-device	ccd			# concatenated/striped disk devices
 pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	npf			# NPF packet filter
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
@@ -213,3 +219,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	kttcp			# kernel ttcp
 pseudo-device	putter			# for puffs and pud
+
+include "dev/veriexec.config"
