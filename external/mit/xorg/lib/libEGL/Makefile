@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2019/04/20 17:31:22 maya Exp $
+#	$NetBSD: Makefile,v 1.4 2019/04/26 19:42:27 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -120,6 +120,7 @@ PKGDIST.egl=	${X11SRCDIR.Mesa}/src/egl/main
 PKGCONFIG_VERSION.egl=	${MESA_VER}
 
 CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-format -Wno-constant-conversion
+COPTS.platform_drm.c+=	-Wno-error=stack-protector
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
