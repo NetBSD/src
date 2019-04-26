@@ -318,7 +318,7 @@ control_open(const char *ifname)
 
 	if ((fd = make_sock(&sa, ifname, 0)) != -1) {
 		socklen_t len;
-		
+
 		len = (socklen_t)SUN_LEN(&sa);
 		if (connect(fd, (struct sockaddr *)&sa, len) == -1) {
 			close(fd);

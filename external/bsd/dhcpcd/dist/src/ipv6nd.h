@@ -61,6 +61,9 @@ struct rs_state {
 	size_t rslen;
 	int rsprobes;
 	uint32_t retrans;
+#ifdef __sun
+	int nd_fd;
+#endif
 };
 
 #define	RS_STATE(a) ((struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])

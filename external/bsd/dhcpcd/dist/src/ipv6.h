@@ -44,9 +44,6 @@
 #  endif
 #endif
 
-#define	ALLNODES		"ff02::1"
-#define	ALLROUTERS		"ff02::2"
-
 #define EUI64_GBIT		0x01
 #define EUI64_UBIT		0x02
 #define EUI64_TO_IFID(in6)	do {(in6)->s6_addr[8] ^= EUI64_UBIT; } while (0)
@@ -75,6 +72,17 @@
 	(((d)->s6_addr32[1] ^ (a)->s6_addr32[1]) & (m)->s6_addr32[1]) == 0 && \
 	(((d)->s6_addr32[2] ^ (a)->s6_addr32[2]) & (m)->s6_addr32[2]) == 0 && \
 	(((d)->s6_addr32[3] ^ (a)->s6_addr32[3]) & (m)->s6_addr32[3]) == 0 )
+#endif
+
+#ifndef IN6ADDR_LINKLOCAL_ALLNODES_INIT
+#define	IN6ADDR_LINKLOCAL_ALLNODES_INIT				\
+	{{{ 0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	\
+	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 }}}
+#endif
+#ifndef IN6ADDR_LINKLOCAL_ALLROUTERS_INIT
+#define	IN6ADDR_LINKLOCAL_ALLROUTERS_INIT			\
+	{{{ 0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	\
+	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02 }}}
 #endif
 
 /*

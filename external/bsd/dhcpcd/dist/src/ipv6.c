@@ -137,7 +137,9 @@ ipv6_init(struct dhcpcd_ctx *ctx)
 		return -1;
 	TAILQ_INIT(ctx->ra_routers);
 
+#ifndef __sun
 	ctx->nd_fd = -1;
+#endif
 	ctx->dhcp6_fd = -1;
 	return 0;
 }
