@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.6 2019/03/13 10:29:56 jmcneill Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.7 2019/04/26 08:28:11 mrg Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.6 2019/03/13 10:29:56 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.7 2019/04/26 08:28:11 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -345,6 +345,7 @@ rk3399_cru_pll_set_rate(struct rk_cru_softc *sc,
 static const char * pll_parents[] = { "xin24m", "xin32k" };
 static const char * armclkl_parents[] = { "clk_core_l_lpll_src", "clk_core_l_bpll_src", "clk_core_l_dpll_src", "clk_core_l_gpll_src" };
 static const char * armclkb_parents[] = { "clk_core_b_lpll_src", "clk_core_b_bpll_src", "clk_core_b_dpll_src", "clk_core_b_gpll_src" };
+static const char * mux_clk_tsadc_parents[] = { "xin24m", "xin32k" };
 static const char * mux_pll_src_cpll_gpll_parents[] = { "cpll", "gpll" };
 static const char * mux_pll_src_cpll_gpll_npll_parents[] = { "cpll", "gpll", "npll" };
 static const char * mux_pll_src_cpll_gpll_upll_parents[] = { "cpll", "gpll", "upll" };
@@ -785,6 +786,16 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     __BIT(3),		/* gate_mask */
 		     0),
 	RK_MUX(RK3399_SCLK_PCIE_CORE, "clk_pcie_core", mux_pciecore_cru_phy_parents, CLKSEL_CON(18), __BIT(7)),
+
+	/* TSADC */
+	RK_COMPOSITE(RK3399_SCLK_TSADC, "clk_tsadc", mux_clk_tsadc_parents,
+		     CLKSEL_CON(27),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(9,0),	/* div_mask */
+		     CLKGATE_CON(9),	/* gate_reg */
+		     __BIT(1),		/* gate_mask */
+		     RK_COMPOSITE_ROUND_DOWN),
+	RK_GATE(RK3399_PCLK_TSADC, "pclk_tsadc", "pclk_perilp1", CLKGATE_CON(22), 13),
 };
 
 static int
