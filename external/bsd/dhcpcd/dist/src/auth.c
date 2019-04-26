@@ -354,7 +354,7 @@ gottoken:
 	}
 
 	free(mm);
-	if (memcmp(d, &hmac_code, dlen)) {
+	if (!consttime_memequal(d, &hmac_code, dlen)) {
 		errno = EPERM;
 		return NULL;
 	}
