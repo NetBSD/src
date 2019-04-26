@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.124 2019/03/23 17:44:49 sevan Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.125 2019/04/26 21:40:32 sevan Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.124 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.125 $"
 
 maxusers	32
 
@@ -324,7 +324,7 @@ pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
@@ -360,15 +360,4 @@ pseudo-device	drvctl
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda			# coda minicache <-> venus comm.
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"

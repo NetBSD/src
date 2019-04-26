@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.35 2018/12/30 14:51:36 sevan Exp $
+# $NetBSD: GDIUM,v 1.36 2019/04/26 21:40:29 sevan Exp $
 #
 # GDIUM machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.35 $"
+#ident 		"GDIUM-$Revision: 1.36 $"
 
 maxusers	16
 
@@ -227,7 +227,7 @@ pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	npf			# NPF packet filter
 
 pseudo-device	vnd			# virtual disk ick
@@ -265,15 +265,4 @@ pseudo-device	bridge
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	ksyms			# /dev/ksyms
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"

@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.22 2019/04/10 15:19:09 roy Exp $
+#	$NetBSD: ERLITE,v 1.23 2019/04/26 21:40:29 sevan Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.22 $"
+#ident 		"ERLITE-$Revision: 1.23 $"
 
 maxusers	32
 
@@ -149,6 +149,7 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter
+pseudo-device 	carp				# Common Address Redundancy Protocol
 pseudo-device	npf				# NPF packet filter
 pseudo-device	loop				# network loopback
 pseudo-device	ppp				# Point-to-Point Protocol
@@ -173,6 +174,8 @@ pseudo-device	drvctl				# driver control
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda				# coda minicache <-> venus comm.
+
+include "dev/veriexec.config"
 
 cinclude 	"arch/evbmips/conf/ERLITE.local"
 

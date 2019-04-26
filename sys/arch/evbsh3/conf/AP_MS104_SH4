@@ -1,4 +1,4 @@
-#	$NetBSD: AP_MS104_SH4,v 1.11 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: AP_MS104_SH4,v 1.12 2019/04/26 21:40:29 sevan Exp $
 #
 #	Alpha project AP-MS104-SH4 config file
 #
@@ -34,6 +34,11 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -109,6 +114,7 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
@@ -118,3 +124,5 @@ pseudo-device	ksyms			# /dev/ksyms
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
+
+include "dev/veriexec.config"

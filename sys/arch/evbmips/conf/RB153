@@ -1,10 +1,10 @@
-#	$NetBSD: RB153,v 1.22 2018/12/30 14:51:36 sevan Exp $
+#	$NetBSD: RB153,v 1.23 2019/04/26 21:40:29 sevan Exp $
 #
 # Example kernel config for the RouterBOARD 153.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"RB153-$Revision: 1.22 $"
+#ident 		"RB153-$Revision: 1.23 $"
 
 maxusers	32
 
@@ -105,6 +105,7 @@ cpu0 		at mainbus?
 
 # Network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device 	carp			# Common Address Redundancy Protocol
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	sl			# Serial Line IP
@@ -159,3 +160,5 @@ options	IPSELSRC
 #options	WDC_EXTIO_DEBUG
 #options	EXTIO_DEBUG
 #options	ATADEBUG
+
+include "dev/veriexec.config"
