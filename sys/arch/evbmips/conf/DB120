@@ -1,4 +1,4 @@
-#	$NetBSD: DB120,v 1.21 2018/12/30 14:51:36 sevan Exp $
+#	$NetBSD: DB120,v 1.22 2019/04/26 21:40:29 sevan Exp $
 #
 # Qualcomm Atheros AR9344 DB120 evaluation board.
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DB120-$Revision: 1.21 $"
+#ident 		"DB120-$Revision: 1.22 $"
 
 maxusers	32
 
@@ -185,6 +185,7 @@ sd*		at scsibus? target ? lun ?
 
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter
+pseudo-device 	carp				# Common Address Redundancy Protocol
 #pseudo-device	npf			# NPF packet filter
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
@@ -207,3 +208,5 @@ pseudo-device	ksyms				# /dev/ksyms
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda				# coda minicache <-> venus comm.
+
+include "dev/veriexec.config"

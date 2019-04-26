@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.36 2019/04/13 08:22:58 isaki Exp $
+# $NetBSD: GENERIC,v 1.37 2019/04/26 21:40:28 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.36 $"
+#ident          "GENERIC-$Revision: 1.37 $"
 
 maxusers	8
 
@@ -58,7 +58,7 @@ options 	SYSVSEM		# System V-like semaphores
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 #
 # Diagnostic/debugging support options
@@ -392,7 +392,7 @@ pseudo-device	tun			# network tunnel line discipline
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	npf			# NPF packet filter
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
@@ -431,18 +431,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
 pseudo-device	nsmb			# experimental - SMB requester
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 # Kernel root file system and dump configuration
 config		netbsd	root on ? type ?

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.198 2019/04/13 08:23:00 isaki Exp $
+# $NetBSD: GENERIC,v 1.199 2019/04/26 21:40:31 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.198 $"
+#ident		"GENERIC-$Revision: 1.199 $"
 
 maxusers	64
 
@@ -65,7 +65,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
@@ -272,7 +272,7 @@ pseudo-device	ppp		 	# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	npf			# NPF packet filter
 #pseudo-device	gre		 	# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
@@ -306,19 +306,7 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsfont			# wsfont control device
 pseudo-device	wsmux			# wsmux control device
 
-options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-					# and PAX_SEGVGUARD
-
-# Veriexec
-pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-options 	VERIFIED_EXEC_FP_SHA256
-options 	VERIFIED_EXEC_FP_SHA384
-options 	VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
 options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard

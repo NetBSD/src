@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.128 2019/04/13 08:22:58 isaki Exp $
+# 	$NetBSD: GENERIC,v 1.129 2019/04/26 21:40:28 sevan Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include 	"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.128 $"
+#ident		"GENERIC-$Revision: 1.129 $"
 
 # estimated number of users
 maxusers	32
@@ -131,7 +131,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
@@ -285,7 +285,7 @@ ne*	at podulebus?			# NE2000 clone cards
 
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -328,18 +328,7 @@ pseudo-device	putter			# for puffs and pud
 pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 
-# Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 # If the standard modes don't work for your monitor, you can specify
 # a RISC-OS-format monitor definition file and a list of modes here.
