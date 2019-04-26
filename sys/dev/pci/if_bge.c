@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.329 2019/04/11 08:50:59 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.330 2019/04/26 06:33:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.329 2019/04/11 08:50:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.330 2019/04/26 06:33:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,13 +91,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.329 2019/04/11 08:50:59 msaitoh Exp $")
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
-#include <sys/rndsource.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -111,9 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.329 2019/04/11 08:50:59 msaitoh Exp $")
 #include <netinet/in.h>			/* ip_{src,dst}, for <netinet/ip.h> */
 #include <netinet/ip.h>			/* for struct ip */
 #include <netinet/tcp.h>		/* for struct tcphdr */
-
-
-#include <net/bpf.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -164,10 +161,10 @@ static const struct bge_load_rx_thresh {
 	int rx_ticks;
 	int rx_max_bds; }
 bge_rx_threshes[] = {
-	{ 16,   1 },	/* rx_max_bds = 1 disables interrupt mitigation */
-	{ 32,   2 },
-	{ 50,   4 },
-	{ 100,  8 },
+	{ 16,	1 },	/* rx_max_bds = 1 disables interrupt mitigation */
+	{ 32,	2 },
+	{ 50,	4 },
+	{ 100,	8 },
 	{ 192, 16 },
 	{ 416, 32 },
 	{ 598, 46 }
@@ -1310,7 +1307,7 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 	char *ptr, *kva;
 	bus_dma_segment_t	seg;
 	int		i, rseg, state, error;
-	struct bge_jpool_entry   *entry;
+	struct bge_jpool_entry	 *entry;
 
 	state = error = 0;
 
@@ -1404,7 +1401,7 @@ out:
 static void *
 bge_jalloc(struct bge_softc *sc)
 {
-	struct bge_jpool_entry   *entry;
+	struct bge_jpool_entry	 *entry;
 
 	entry = SLIST_FIRST(&sc->bge_jfree_listhead);
 
@@ -1451,7 +1448,7 @@ bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	SLIST_INSERT_HEAD(&sc->bge_jfree_listhead, entry, jpool_entries);
 
 	if (__predict_true(m != NULL))
-  		pool_cache_put(mb_cache, m);
+		pool_cache_put(mb_cache, m);
 	splx(s);
 }
 
@@ -1800,7 +1797,7 @@ bge_setmulti(struct bge_softc *sc)
 	struct ethercom		*ac = &sc->ethercom;
 	struct ifnet		*ifp = &ac->ec_if;
 	struct ether_multi	*enm;
-	struct ether_multistep  step;
+	struct ether_multistep	step;
 	uint32_t		hashes[4] = { 0, 0, 0, 0 };
 	uint32_t		h;
 	int			i;
@@ -2001,21 +1998,21 @@ bge_phy_addr(struct bge_softc *sc)
 	/*
 	 * PHY address mapping for various devices.
 	 *
-	 *          | F0 Cu | F0 Sr | F1 Cu | F1 Sr |
+	 *	    | F0 Cu | F0 Sr | F1 Cu | F1 Sr |
 	 * ---------+-------+-------+-------+-------+
-	 * BCM57XX  |   1   |   X   |   X   |   X   |
-	 * BCM5704  |   1   |   X   |   1   |   X   |
-	 * BCM5717  |   1   |   8   |   2   |   9   |
-	 * BCM5719  |   1   |   8   |   2   |   9   |
-	 * BCM5720  |   1   |   8   |   2   |   9   |
+	 * BCM57XX  |	1   |	X   |	X   |	X   |
+	 * BCM5704  |	1   |	X   |	1   |	X   |
+	 * BCM5717  |	1   |	8   |	2   |	9   |
+	 * BCM5719  |	1   |	8   |	2   |	9   |
+	 * BCM5720  |	1   |	8   |	2   |	9   |
 	 *
-	 *          | F2 Cu | F2 Sr | F3 Cu | F3 Sr |
+	 *	    | F2 Cu | F2 Sr | F3 Cu | F3 Sr |
 	 * ---------+-------+-------+-------+-------+
-	 * BCM57XX  |   X   |   X   |   X   |   X   |
-	 * BCM5704  |   X   |   X   |   X   |   X   |
-	 * BCM5717  |   X   |   X   |   X   |   X   |
-	 * BCM5719  |   3   |   10  |   4   |   11  |
-	 * BCM5720  |   X   |   X   |   X   |   X   |
+	 * BCM57XX  |	X   |	X   |	X   |	X   |
+	 * BCM5704  |	X   |	X   |	X   |	X   |
+	 * BCM5717  |	X   |	X   |	X   |	X   |
+	 * BCM5719  |	3   |	10  |	4   |	11  |
+	 * BCM5720  |	X   |	X   |	X   |	X   |
 	 *
 	 * Other addresses may respond but they are not
 	 * IEEE compliant PHYs and should be ignored.
@@ -2084,7 +2081,7 @@ bge_chipinit(struct bge_softc *sc)
 		/* Restore */
 		CSR_WRITE_4(sc, BGE_MODE_CTL, mode_ctl);
 	}
-	
+
 	if (BGE_IS_57765_FAMILY(sc)) {
 		if (sc->bge_chipid == BGE_CHIPID_BCM57765_A0) {
 			/* Save */
@@ -2094,7 +2091,7 @@ bge_chipinit(struct bge_softc *sc)
 			reg = mode_ctl & ~BGE_MODECTL_PCIE_TLPADDRMASK;
 			CSR_WRITE_4(sc, BGE_MODE_CTL,
 			    reg | BGE_MODECTL_PCIE_TLPADDR1);
-		
+
 			/* Control TLP */
 			reg = CSR_READ_4(sc, BGE_TLP_CONTROL_REG +
 			    BGE_TLP_PHYCTL5);
@@ -2150,7 +2147,7 @@ bge_chipinit(struct bge_softc *sc)
 		else
 			dma_rw_ctl |= BGE_PCIDMARWCTL_WR_WAT_SHIFT(3);
 	} else if (sc->bge_flags & BGEF_PCIX) {
-	  	DPRINTFN(4, ("(:%s: PCI-X DMA setting)\n",
+		DPRINTFN(4, ("(:%s: PCI-X DMA setting)\n",
 		    device_xname(sc->bge_dev)));
 		/* PCI-X bus */
 		if (BGE_IS_5714_FAMILY(sc)) {
@@ -2197,7 +2194,7 @@ bge_chipinit(struct bge_softc *sc)
 		}
 	} else {
 		/* Conventional PCI bus: 256 bytes for read and write. */
-	  	DPRINTFN(4, ("(%s: PCI 2.2 DMA setting)\n",
+		DPRINTFN(4, ("(%s: PCI 2.2 DMA setting)\n",
 		    device_xname(sc->bge_dev)));
 		dma_rw_ctl |= BGE_PCIDMARWCTL_RD_WAT_SHIFT(7) |
 		    BGE_PCIDMARWCTL_WR_WAT_SHIFT(7);
@@ -3179,7 +3176,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	const struct bge_revision *br;
 	pci_chipset_tag_t	pc;
 	const char		*intrstr = NULL;
-	uint32_t 		hwcfg, hwcfg2, hwcfg3, hwcfg4, hwcfg5;
+	uint32_t		hwcfg, hwcfg2, hwcfg3, hwcfg4, hwcfg5;
 	uint32_t		command;
 	struct ifnet		*ifp;
 	uint32_t		misccfg, mimode;
@@ -3554,7 +3551,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (prop_dictionary_get_bool(device_properties(self),
 	     "without-seeprom", &no_seeprom) && no_seeprom)
-	 	sc->bge_flags |= BGEF_NO_EEPROM;
+		sc->bge_flags |= BGEF_NO_EEPROM;
 
 	else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
 		sc->bge_flags |= BGEF_NO_EEPROM;
@@ -4060,10 +4057,10 @@ bge_reset(struct bge_softc *sc)
 		mac_mode_mask |= BGE_MACMODE_APE_RX_EN | BGE_MACMODE_APE_TX_EN;
 	/* Keep mac_mode_mask's bits of BGE_MAC_MODE register into mac_mode */
 	mac_mode = CSR_READ_4(sc, BGE_MAC_MODE) & mac_mode_mask;
-	
+
 	if (BGE_IS_575X_PLUS(sc) && !BGE_IS_5714_FAMILY(sc) &&
 	    (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906)) {
-	    	if (sc->bge_flags & BGEF_PCIE)
+		if (sc->bge_flags & BGEF_PCIE)
 			write_op = bge_writemem_direct;
 		else
 			write_op = bge_writemem_ind;
@@ -4270,7 +4267,7 @@ bge_reset(struct bge_softc *sc)
 	/* 57XX step 21 */
 	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX) {
 		pcireg_t msidata;
-	
+
 		msidata = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 		    BGE_PCI_MSI_DATA);
 		msidata |= ((1 << 13 | 1 << 12 | 1 << 10) << 16);
@@ -4823,12 +4820,12 @@ bge_stats_update(struct bge_softc *sc)
 		      READ_STAT(sc, stats, outXonSent.bge_addr_lo));
 	BGE_EVCNT_UPD(sc->bge_ev_rx_xoff,
 		      READ_STAT(sc, stats,
-		      		xoffPauseFramesReceived.bge_addr_lo));
+				xoffPauseFramesReceived.bge_addr_lo));
 	BGE_EVCNT_UPD(sc->bge_ev_rx_xon,
 		      READ_STAT(sc, stats, xonPauseFramesReceived.bge_addr_lo));
 	BGE_EVCNT_UPD(sc->bge_ev_rx_macctl,
 		      READ_STAT(sc, stats,
-		      		macControlFramesReceived.bge_addr_lo));
+				macControlFramesReceived.bge_addr_lo));
 	BGE_EVCNT_UPD(sc->bge_ev_xoffentered,
 		      READ_STAT(sc, stats, xoffStateEntered.bge_addr_lo));
 
@@ -4871,7 +4868,7 @@ bge_cksum_pad(struct mbuf *pkt)
 		 * (thus perhaps avoiding the bcm5700 dma-min bug).
 		 */
 		for (last = pkt; last->m_next != NULL; last = last->m_next) {
-	      	       continue; /* do nothing */
+		       continue; /* do nothing */
 		}
 
 		/* `last' now points to last in chain. */
@@ -4904,7 +4901,7 @@ static inline int
 bge_compact_dma_runt(struct mbuf *pkt)
 {
 	struct mbuf	*m, *prev;
-	int 		totlen;
+	int		totlen;
 
 	prev = NULL;
 	totlen = 0;
@@ -4926,7 +4923,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 
 		/* Internal frag. If fits in prev, copy it there. */
 		if (prev && M_TRAILINGSPACE(prev) >= m->m_len) {
-		  	memcpy(prev->m_data + prev->m_len, m->m_data, mlen);
+			memcpy(prev->m_data + prev->m_len, m->m_data, mlen);
 			prev->m_len += mlen;
 			m->m_len = 0;
 			/* XXX stitch chain */
@@ -4939,14 +4936,14 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			     m->m_next->m_len >= (8 + shortfall)) {
 		    /* m is writable and have enough data in next, pull up. */
 
-		  	memcpy(m->m_data + m->m_len, m->m_next->m_data,
+			memcpy(m->m_data + m->m_len, m->m_next->m_data,
 			    shortfall);
 			m->m_len += shortfall;
 			m->m_next->m_len -= shortfall;
 			m->m_next->m_data += shortfall;
 		}
 		else if (m->m_next == NULL || 1) {
-		  	/* Got a runt at the very end of the packet.
+			/* Got a runt at the very end of the packet.
 			 * borrow data from the tail of the preceding mbuf and
 			 * update its length in-place. (The original data is still
 			 * valid, so we can do this even if prev is not writable.)
@@ -5027,7 +5024,7 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, uint32_t *txidx)
 	int			use_tso, maxsegsize, error;
 	bool			have_vtag;
 	uint16_t		vtag;
-	bool 			remap;
+	bool			remap;
 
 	if (m_head->m_pkthdr.csum_flags) {
 		if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
@@ -5129,7 +5126,7 @@ doit:
 #ifdef NOTYET
 			/*
 			 * XXX jonathan@NetBSD.org: untested.
-			 * how to force  this branch to be taken?
+			 * how to force this branch to be taken?
 			 */
 			BGE_EVCNT_INCR(sc->bge_ev_txtsopain);
 
@@ -5408,7 +5405,7 @@ bge_start(struct ifnet *ifp)
 			m_freem(m_head);
 			continue;
 		}
-				
+
 		/* now we are committed to transmit the packet */
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		KASSERT(m == m_head);
@@ -5810,7 +5807,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 		/* Flow control requires full-duplex mode. */
 		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
 		    (ifr->ifr_media & IFM_FDX) == 0) {
-		    	ifr->ifr_media &= ~IFM_ETH_FMASK;
+			ifr->ifr_media &= ~IFM_ETH_FMASK;
 		}
 		if (IFM_SUBTYPE(ifr->ifr_media) != IFM_AUTO) {
 			if ((ifr->ifr_media & IFM_ETH_FMASK) == IFM_FLOW) {
@@ -5857,7 +5854,7 @@ bge_watchdog(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-        /* If pause frames are active then don't reset the hardware. */
+	/* If pause frames are active then don't reset the hardware. */
 	if ((CSR_READ_4(sc, BGE_RX_MODE) & BGE_RXMODE_FLOWCTL_ENABLE) != 0) {
 		status = CSR_READ_4(sc, BGE_RX_STS);
 		if ((status & BGE_RXSTAT_REMOTE_XOFFED) != 0) {
@@ -5866,7 +5863,7 @@ bge_watchdog(struct ifnet *ifp)
 			 * the condition to clear.
 			 */
 			CSR_WRITE_4(sc, BGE_RX_STS, status);
-			ifp->if_timer = 5; 
+			ifp->if_timer = 5;
 			return;
 		} else if ((status & BGE_RXSTAT_RCVD_XOFF) != 0 &&
 		    (status & BGE_RXSTAT_RCVD_XON) != 0) {
@@ -5875,12 +5872,12 @@ bge_watchdog(struct ifnet *ifp)
 			 * the condition to clear.
 			 */
 			CSR_WRITE_4(sc, BGE_RX_STS, status);
-			ifp->if_timer = 5; 
-			return;       
+			ifp->if_timer = 5;
+			return;
 		}
 		/*
-		 * Any other condition is unexpected and the controller 
-		 * should be reset.  
+		 * Any other condition is unexpected and the controller
+		 * should be reset.
 		 */
 	}
 
