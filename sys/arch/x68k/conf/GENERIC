@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.195 2019/04/13 08:23:01 isaki Exp $
+# $NetBSD: GENERIC,v 1.196 2019/04/26 22:46:04 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.195 $"
+#ident 		"GENERIC-$Revision: 1.196 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -505,14 +505,4 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	fss			# file system snapshot device
 
 # Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+# include "dev/veriexec.config"
