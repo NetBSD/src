@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2019/04/09 14:47:14 maya Exp $
+# $NetBSD: Makefile,v 1.32 2019/04/26 18:49:35 christos Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -465,17 +465,7 @@ CWARNFLAGS.clang+=	-Wno-error=initializer-overrides -Wno-error=switch \
 			-Wno-error=tautological-constant-out-of-range-compare \
 			-Wno-error=enum-conversion
 
-COPTS.brw_state_batch.c += -Wno-stack-protector
-COPTS.brw_eu_compact.c += -Wno-stack-protector
-COPTS.brw_fs.cpp += -Wno-stack-protector
-COPTS.brw_fs_copy_propagation.cpp += -Wno-stack-protector
-COPTS.brw_fs_reg_allocate.cpp += -Wno-stack-protector
-COPTS.brw_program.c += -Wno-stack-protector
-COPTS.brw_schedule_instructions.cpp += -Wno-stack-protector
-COPTS.brw_vec4.cpp += -Wno-stack-protector
-COPTS.brw_vec4_copy_propagation.cpp += -Wno-stack-protector
-COPTS.brw_vec4_reg_allocate.cpp += -Wno-stack-protector
-COPTS.brw_vec4_visitor.cpp += -Wno-stack-protector
+COPTS+= -Wno-error=stack-protector
 
 .include <bsd.lib.mk>
 .else
