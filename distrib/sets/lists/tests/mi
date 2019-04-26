@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.811 2019/04/24 11:43:20 kamil Exp $
+# $NetBSD: mi,v 1.812 2019/04/26 08:52:16 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3036,6 +3036,7 @@
 ./usr/tests/lib/libm/t_acos			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_asin			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_atan			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libm/t_bit			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_cabsl			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_casinh			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_cbrt			tests-lib-tests		compattestfile,atf
