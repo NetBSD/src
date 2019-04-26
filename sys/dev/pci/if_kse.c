@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.34 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.35 2019/04/26 06:33:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.34 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.35 2019/04/26 06:33:34 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.34 2018/12/09 11:14:02 jdolecek Exp $")
 #include <net/if_media.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
-
 #include <net/bpf.h>
 
 #include <dev/pci/pcivar.h>
@@ -286,7 +285,7 @@ do {									\
 	__rxd->r2 = __rxs->rxs_dmamap->dm_segs[0].ds_addr;		\
 	__rxd->r1 = R1_RBS_MASK /* __m->m_ext.ext_size */;		\
 	__rxd->r0 = R0_OWN;						\
-	KSE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+	KSE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE); \
 } while (/*CONSTCOND*/0)
 
 u_int kse_burstsize = 8;	/* DMA burst length tuning knob */
@@ -438,28 +437,32 @@ kse_attach(device_t parent, device_t self, void *aux)
 	error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct kse_control_data), PAGE_SIZE, 0, &seg, 1, &nseg, 0);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate control data, error = %d\n", error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate control data, error = %d\n", error);
 		goto fail_0;
 	}
 	error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
 	    sizeof(struct kse_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to map control data, error = %d\n", error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 	error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct kse_control_data), 1,
 	    sizeof(struct kse_control_data), 0, 0, &sc->sc_cddmamap);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to create control data DMA map, "
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create control data DMA map, "
 		    "error = %d\n", error);
 		goto fail_2;
 	}
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct kse_control_data), NULL, 0);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to load control data DMA map, error = %d\n",
+		aprint_error_dev(sc->sc_dev,
+		    "unable to load control data DMA map, error = %d\n",
 		    error);
 		goto fail_3;
 	}
@@ -467,16 +470,18 @@ kse_attach(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    KSE_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to create tx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create tx DMA map %d, error = %d\n",
+			    i, error);
 			goto fail_4;
 		}
 	}
 	for (i = 0; i < KSE_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    1, MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to create rx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create rx DMA map %d, error = %d\n",
+			    i, error);
 			goto fail_5;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
@@ -488,17 +493,16 @@ kse_attach(device_t parent, device_t self, void *aux)
 	ifm = &sc->sc_media;
 	if (sc->sc_chip == 0x8841) {
 		ifmedia_init(ifm, 0, ifmedia_upd, ifmedia_sts);
-		ifmedia_add(ifm, IFM_ETHER|IFM_10_T, 0, NULL);
-		ifmedia_add(ifm, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-		ifmedia_add(ifm, IFM_ETHER|IFM_100_TX, 0, NULL);
-		ifmedia_add(ifm, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-		ifmedia_add(ifm, IFM_ETHER|IFM_AUTO, 0, NULL);
-		ifmedia_set(ifm, IFM_ETHER|IFM_AUTO);
-	}
-	else {
+		ifmedia_add(ifm, IFM_ETHER | IFM_10_T, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER | IFM_100_TX, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER | IFM_AUTO, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER | IFM_AUTO);
+	} else {
 		ifmedia_init(ifm, 0, ifmedia2_upd, ifmedia2_sts);
-		ifmedia_add(ifm, IFM_ETHER|IFM_AUTO, 0, NULL);
-		ifmedia_set(ifm, IFM_ETHER|IFM_AUTO);
+		ifmedia_add(ifm, IFM_ETHER | IFM_AUTO, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER | IFM_AUTO);
 	}
 
 	printf("%s: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto\n",
@@ -774,7 +778,7 @@ kse_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, MDRSC, 1);
 
 	/* enable interrupts */
-	sc->sc_inten = INT_DMTS|INT_DMRS|INT_DMRBUS;
+	sc->sc_inten = INT_DMTS | INT_DMRS | INT_DMRBUS;
 	if (sc->sc_chip == 0x8841)
 		sc->sc_inten |= INT_DMLCS;
 	CSR_WRITE_4(sc, INTST, ~0);
@@ -883,12 +887,10 @@ kse_start(struct ifnet *ifp)
 	int error, nexttx, lasttx, ofree, seg;
 	uint32_t tdes0;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	/*
-	 * Remember the previous number of free descriptors.
-	 */
+	/* Remember the previous number of free descriptors. */
 	ofree = sc->sc_txfree;
 
 	/*
@@ -910,7 +912,7 @@ kse_start(struct ifnet *ifp)
 		dmamap = txs->txs_dmamap;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error) {
 			if (error == EFBIG) {
 				printf("%s: Tx packet consumes too many "
@@ -981,14 +983,14 @@ kse_start(struct ifnet *ifp)
 			}
 		} while ((m = m->m_next) != NULL);
 
-		/* write last T0_OWN bit of the 1st segment */
+		/* Write last T0_OWN bit of the 1st segment */
 		sc->sc_txdescs[lasttx].t1 |= T1_LS;
 		sc->sc_txdescs[sc->sc_txnext].t1 |= T1_FS;
 		sc->sc_txdescs[sc->sc_txnext].t0 = T0_OWN;
 		KSE_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		/* tell DMA start transmit */
+		/* Tell DMA start transmit */
 		CSR_WRITE_4(sc, MDTSC, 1);
 
 		txs->txs_mbuf = m0;
@@ -1147,14 +1149,14 @@ rxintr(struct kse_softc *sc)
 		rxs = &sc->sc_rxsoft[i];
 
 		KSE_CDRXSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		rxstat = sc->sc_rxdescs[i].r0;
-	
+
 		if (rxstat & R0_OWN) /* desc is left empty */
 			break;
 
-		/* R0_FS|R0_LS must have been marked for this desc */
+		/* R0_FS | R0_LS must have been marked for this desc */
 
 		if (rxstat & R0_ES) {
 			ifp->if_ierrors++;
@@ -1176,7 +1178,7 @@ rxintr(struct kse_softc *sc)
 		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 		len = rxstat & R0_FL_MASK;
-		len -= ETHER_CRC_LEN;	/* trim CRC off */
+		len -= ETHER_CRC_LEN;	/* Trim CRC off */
 		m = rxs->rxs_mbuf;
 
 		if (add_rxbuf(sc, i) != 0) {
@@ -1225,14 +1227,14 @@ txreap(struct kse_softc *sc)
 		txs = &sc->sc_txsoft[i];
 
 		KSE_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndesc,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		txstat = sc->sc_txdescs[txs->txs_lastdesc].t0;
 
 		if (txstat & T0_OWN) /* desc is still in use */
 			break;
 
-		/* there is no way to tell transmission status per frame */
+		/* There is no way to tell transmission status per frame */
 
 		ifp->if_opackets++;
 
@@ -1269,9 +1271,9 @@ ifmedia_upd(struct ifnet *ifp)
 
 	ctl = 0;
 	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
-		ctl |= (1U << 13); /* restart AN */
-		ctl |= (1U << 7);  /* enable AN */
-		ctl |= (1U << 4);  /* advertise flow control pause */
+		ctl |= (1U << 13); /* Restart AN */
+		ctl |= (1U << 7);  /* Enable AN */
+		ctl |= (1U << 4);  /* Advertise flow control pause */
 		ctl |= (1U << 3) | (1U << 2) | (1U << 1) | (1U << 0);
 	}
 	else {
@@ -1302,23 +1304,23 @@ ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	sts = CSR_READ_2(sc, P1SR);
 	if ((sts & (1U << 5)) == 0) {
 		ifmr->ifm_active |= IFM_NONE;
-		goto out; /* link is down */
+		goto out; /* Link is down */
 	}
 	ifmr->ifm_status |= IFM_ACTIVE;
 	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
 		if ((sts & (1U << 6)) == 0) {
 			ifmr->ifm_active |= IFM_NONE;
-			goto out; /* negotiation in progress */
+			goto out; /* Negotiation in progress */
 		}
 		result = ctl & sts & 017;
 		if (result & (1U << 3))
-			ifmr->ifm_active |= IFM_100_TX|IFM_FDX;
+			ifmr->ifm_active |= IFM_100_TX | IFM_FDX;
 		else if (result & (1U << 2))
-			ifmr->ifm_active |= IFM_100_TX|IFM_HDX;
+			ifmr->ifm_active |= IFM_100_TX | IFM_HDX;
 		else if (result & (1U << 1))
-			ifmr->ifm_active |= IFM_10_T|IFM_FDX;
+			ifmr->ifm_active |= IFM_10_T | IFM_FDX;
 		else if (result & (1U << 0))
-			ifmr->ifm_active |= IFM_10_T|IFM_HDX;
+			ifmr->ifm_active |= IFM_10_T | IFM_HDX;
 		else
 			ifmr->ifm_active |= IFM_NONE;
 		if (ctl & (1U << 4))
@@ -1379,8 +1381,9 @@ ifmedia2_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 		ifmr->ifm_active |= IFM_NONE;
 	else {
 		ifmr->ifm_status |= IFM_ACTIVE;
-		ifmr->ifm_active |= IFM_100_TX|IFM_FDX;
-		ifmr->ifm_active |= IFM_FLOW|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE;
+		ifmr->ifm_active |= IFM_100_TX | IFM_FDX;
+		ifmr->ifm_active |= IFM_FLOW
+		    | IFM_ETH_RXPAUSE | IFM_ETH_TXPAUSE;
 	}
 	sc->sc_media_status = ifmr->ifm_status;
 	sc->sc_media_active = ifmr->ifm_active;
@@ -1426,7 +1429,7 @@ zerostats(struct kse_softc *sc)
 	struct ksext *ee = &sc->sc_ext;
 	int nport, p, i, val;
 
-	/* make sure all the HW counters get zero */
+	/* Make sure all the HW counters get zero */
 	nport = (sc->sc_chip == 0x8842) ? 3 : 1;
 	for (p = 0; p < nport; p++) {
 		for (i = 0; i < 31; i++) {

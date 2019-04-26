@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.89 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.90 2019/04/26 06:33:34 msaitoh Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.89 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.90 2019/04/26 06:33:34 msaitoh Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.89 2019/02/05 06:17:02 msaitoh Exp $")
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/rndsource.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -73,8 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.89 2019/02/05 06:17:02 msaitoh Exp $")
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <sys/bus.h>
 
 #include <dev/ic/mb86960reg.h>
 #include <dev/ic/mb86960var.h>
@@ -1371,7 +1370,7 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m->m_flags & M_PKTHDR) == 0)
-	  	panic("mb86960_write_mbufs: no header mbuf");
+		panic("mb86960_write_mbufs: no header mbuf");
 
 #if FE_DEBUG >= 2
 	/* First, count up the total number of bytes to copy. */
@@ -1492,8 +1491,8 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 					 */
 					leftover = len & 1;
 					len &= ~1;
-					bus_space_write_multi_stream_2(bst, bsh,
-					    FE_BMPR8, (uint16_t *)data,
+					bus_space_write_multi_stream_2(bst,
+					    bsh, FE_BMPR8, (uint16_t *)data,
 					    len >> 1);
 					data += len;
 					if (leftover)
@@ -1863,7 +1862,7 @@ mb86965_read_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t *data)
 			bus_space_write_1(iot, ioh,
 			    FE_BMPR16, FE_B16_SELECT);
 		}
-		data[addr * 2]     = val >> 8;
+		data[addr * 2]	   = val >> 8;
 		data[addr * 2 + 1] = val & 0xff;
 	}
 
@@ -1950,4 +1949,3 @@ mb86960_dump(int level, struct mb86960_softc *sc)
 	bus_space_write_1(bst, bsh, FE_DLCR7, save_dlcr7);
 }
 #endif
-

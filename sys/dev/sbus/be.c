@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.91 2019/02/05 06:17:03 msaitoh Exp $	*/
+/*	$NetBSD: be.c,v 1.92 2019/04/26 06:33:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.91 2019/02/05 06:17:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.92 2019/04/26 06:33:34 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -94,11 +94,10 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.91 2019/02/05 06:17:03 msaitoh Exp $");
 #include <sys/intr.h>
 #include <machine/autoconf.h>
 
-#include <dev/sbus/sbusvar.h>
-
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
+#include <dev/sbus/sbusvar.h>
 #include <dev/sbus/qecreg.h>
 #include <dev/sbus/qecvar.h>
 #include <dev/sbus/bereg.h>
@@ -139,7 +138,7 @@ struct be_softc {
 	int	sc_channel;		/* channel number */
 	int	sc_burst;
 
-	struct  qec_ring	sc_rb;	/* Packet Ring Buffer */
+	struct	qec_ring	sc_rb;	/* Packet Ring Buffer */
 
 	/* MAC address */
 	uint8_t sc_enaddr[ETHER_ADDR_LEN];
@@ -314,7 +313,7 @@ beattach(device_t parent, device_t self, void *aux)
 
 	/* Map DMA memory in CPU addressable space */
 	if ((error = bus_dmamem_map(sa->sa_dmatag, &seg, rseg, size,
-	    &sc->sc_rb.rb_membase, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    &sc->sc_rb.rb_membase, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(self, "DMA buffer map error %d\n", error);
 		bus_dmamem_free(sa->sa_dmatag, &seg, rseg);
 		return;
@@ -959,7 +958,7 @@ beioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
 		/* XXX re-use ether_ioctl() */
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
@@ -1629,7 +1628,7 @@ be_intphy_status(struct be_softc *sc)
 	be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR, &bmsr);
 	be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR, &bmsr);
 	if (bmsr & BMSR_LINK)
-		media_status |=  IFM_ACTIVE;
+		media_status |= IFM_ACTIVE;
 
 	mii->mii_media_status = media_status;
 	mii->mii_media_active = media_active;
