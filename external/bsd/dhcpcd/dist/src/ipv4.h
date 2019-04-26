@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -62,9 +62,8 @@
     * While it supports DaD, to seems to only expose IFF_DUPLICATE
     * so we have no way of knowing if it's tentative or not.
     * I don't even know if Solaris has any special treatment for tentative. */
-#  define IN_IFF_TENTATIVE	0
 #  define IN_IFF_DUPLICATED	0x02
-#  define IN_IFF_DETACHED	0
+#  define IN_IFF_NOTUSEABLE	IN_IFF_DUPLICATED
 #endif
 
 #ifdef IN_IFF_TENTATIVE
@@ -139,11 +138,6 @@ void ipv4_handleifa(struct dhcpcd_ctx *, int, struct if_head *, const char *,
     int, pid_t);
 
 void ipv4_free(struct interface *);
-#else
-#define ipv4_sortinterfaces(a) {}
-#define ipv4_applyaddr(a) {}
-#define ipv4_free(a) {}
-#define ipv4_hasaddr(a) (0)
-#endif
+#endif /* INET */
 
-#endif
+#endif /* IPV4_H */

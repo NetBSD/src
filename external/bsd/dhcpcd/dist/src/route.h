@@ -1,6 +1,6 @@
 /*
  * dhcpcd - route management
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * rEDISTRIBUTION AND USE IN SOURCE AND BINARY FORMS, WITH OR WITHOUT
@@ -92,7 +92,7 @@ void rt_headfreeif(struct rt_head *);
 struct rt * rt_new0(struct dhcpcd_ctx *);
 void rt_setif(struct rt *, struct interface *);
 struct rt * rt_new(struct interface *);
-void rt_recvrt(int, const struct rt *);
+void rt_recvrt(int, const struct rt *, pid_t);
 void rt_build(struct dhcpcd_ctx *, int);
 
 #endif

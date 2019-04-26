@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -318,7 +318,7 @@ control_open(const char *ifname)
 
 	if ((fd = make_sock(&sa, ifname, 0)) != -1) {
 		socklen_t len;
-		
+
 		len = (socklen_t)SUN_LEN(&sa);
 		if (connect(fd, (struct sockaddr *)&sa, len) == -1) {
 			close(fd);

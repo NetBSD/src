@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-const char dhcpcd_copyright[] = "Copyright (c) 2006-2018 Roy Marples";
+const char dhcpcd_copyright[] = "Copyright (c) 2006-2019 Roy Marples";
 
 #include <sys/file.h>
 #include <sys/socket.h>
@@ -52,7 +52,9 @@ const char dhcpcd_copyright[] = "Copyright (c) 2006-2018 Roy Marples";
 #include "common.h"
 #include "control.h"
 #include "dev.h"
+#include "dhcp-common.h"
 #include "dhcpcd.h"
+#include "dhcp.h"
 #include "dhcp6.h"
 #include "duid.h"
 #include "eloop.h"
@@ -86,19 +88,22 @@ static void
 usage(void)
 {
 
-printf("usage: "PACKAGE"\t[-46ABbDdEGgHJKkLnPpqTVw]\n"
+printf("usage: "PACKAGE"\t[-146ABbDdEGgHJKLMNPpqTV]\n"
 	"\t\t[-C, --nohook hook] [-c, --script script]\n"
 	"\t\t[-e, --env value] [-F, --fqdn FQDN] [-f, --config file]\n"
 	"\t\t[-h, --hostname hostname] [-I, --clientid clientid]\n"
-	"\t\t[-i, --vendorclassid vendorclassid] [-l, --leasetime seconds]\n"
-	"\t\t[-m, --metric metric] [-O, --nooption option]\n"
-	"\t\t[-o, --option option] [-Q, --require option]\n"
-	"\t\t[-r, --request address] [-S, --static value]\n"
-	"\t\t[-s, --inform address[/cidr]] [-t, --timeout seconds]\n"
-	"\t\t[-u, --userclass class] [-v, --vendor code, value]\n"
-	"\t\t[-W, --whitelist address[/cidr]] [-y, --reboot seconds]\n"
+	"\t\t[-i, --vendorclassid vendorclassid] [-j, --logfile logfile]\n" 
+	"\t\t[-l, --leasetime seconds] [-m, --metric metric]\n"
+	"\t\t[-O, --nooption option] [-o, --option option]\n"
+	"\t\t[-Q, --require option] [-r, --request address]\n"
+	"\t\t[-S, --static value]\n"
+	"\t\t[-s, --inform address[/cidr[/broadcast_address]]]\n [--inform6]"
+	"\t\t[-t, --timeout seconds] [-u, --userclass class]\n"
+	"\t\t[-v, --vendor code, value] [-W, --whitelist address[/cidr]] [-w]\n"
+	"\t\t[--waitip [4 | 6]] [-y, --reboot seconds]\n"
 	"\t\t[-X, --blacklist address[/cidr]] [-Z, --denyinterfaces pattern]\n"
-	"\t\t[-z, --allowinterfaces pattern] [interface] [...]\n"
+	"\t\t[-z, --allowinterfaces pattern] [--inactive] [interface] [...]\n"
+	"       "PACKAGE"\t-n, --rebind [interface]\n"
 	"       "PACKAGE"\t-k, --release [interface]\n"
 	"       "PACKAGE"\t-U, --dumplease interface\n"
 	"       "PACKAGE"\t--version\n"
@@ -148,6 +153,7 @@ free_globals(struct dhcpcd_ctx *ctx)
 		free(ctx->nd_opts);
 		ctx->nd_opts = NULL;
 	}
+#ifdef DHCP6
 	if (ctx->dhcp6_opts) {
 		for (opt = ctx->dhcp6_opts;
 		    ctx->dhcp6_opts_len > 0;
@@ -156,6 +162,7 @@ free_globals(struct dhcpcd_ctx *ctx)
 		free(ctx->dhcp6_opts);
 		ctx->dhcp6_opts = NULL;
 	}
+#endif
 #endif
 	if (ctx->vivso) {
 		for (opt = ctx->vivso;
@@ -202,18 +209,39 @@ int
 dhcpcd_ifafwaiting(const struct interface *ifp)
 {
 	unsigned long long opts;
+	bool foundany = false;
 
 	if (ifp->active != IF_ACTIVE_USER)
 		return AF_MAX;
 
+#define DHCPCD_WAITALL	(DHCPCD_WAITIP4 | DHCPCD_WAITIP6)
 	opts = ifp->options->options;
-	if (opts & DHCPCD_WAITIP4 && !ipv4_hasaddr(ifp))
-		return AF_INET;
-	if (opts & DHCPCD_WAITIP6 && !ipv6_hasaddr(ifp))
-		return AF_INET6;
-	if (opts & DHCPCD_WAITIP &&
-	    !(opts & (DHCPCD_WAITIP4 | DHCPCD_WAITIP6)) &&
-	    !ipv4_hasaddr(ifp) && !ipv6_hasaddr(ifp))
+#ifdef INET
+	if (opts & DHCPCD_WAITIP4 ||
+	    (opts & DHCPCD_WAITIP && !(opts & DHCPCD_WAITALL)))
+	{
+		bool foundaddr = ipv4_hasaddr(ifp);
+
+		if (opts & DHCPCD_WAITIP4 && !foundaddr)
+			return AF_INET;
+		if (foundaddr)
+			foundany = true;
+	}
+#endif
+#ifdef INET6
+	if (opts & DHCPCD_WAITIP6 ||
+	    (opts & DHCPCD_WAITIP && !(opts & DHCPCD_WAITALL)))
+	{
+		bool foundaddr = ipv6_hasaddr(ifp);
+
+		if (opts & DHCPCD_WAITIP6 && !foundaddr)
+			return AF_INET;
+		if (foundaddr)
+			foundany = true;
+	}
+#endif
+
+	if (opts & DHCPCD_WAITIP && !(opts & DHCPCD_WAITALL) && !foundany)
 		return AF_UNSPEC;
 	return AF_MAX;
 }
@@ -230,12 +258,16 @@ dhcpcd_afwaiting(const struct dhcpcd_ctx *ctx)
 
 	opts = ctx->options;
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+#ifdef INET
 		if (opts & (DHCPCD_WAITIP | DHCPCD_WAITIP4) &&
 		    ipv4_hasaddr(ifp))
 			opts &= ~(DHCPCD_WAITIP | DHCPCD_WAITIP4);
+#endif
+#ifdef INET6
 		if (opts & (DHCPCD_WAITIP | DHCPCD_WAITIP6) &&
 		    ipv6_hasaddr(ifp))
 			opts &= ~(DHCPCD_WAITIP | DHCPCD_WAITIP6);
+#endif
 		if (!(opts & DHCPCD_WAITOPTS))
 			break;
 	}
@@ -310,13 +342,6 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 		logerr("%s: pipe", __func__);
 		return 0;
 	}
-
-	/* Store the pid and routing message seq number so we can identify
-	 * the last message successfully sent to the kernel.
-	 * This allows us to ignore all messages we sent after forking
-	 * and detaching. */
-	ctx->ppid = getpid();
-	ctx->pseq = ctx->sseq;
 
 	switch (pid = fork()) {
 	case -1:
@@ -448,6 +473,10 @@ configure_interface1(struct interface *ifp)
 		ifo->options &=
 		    ~(DHCPCD_IPV6RS | DHCPCD_DHCP6 | DHCPCD_WAITIP6);
 
+	if (!(ifo->options & DHCPCD_IPV6RS))
+		ifo->options &=
+		    ~(DHCPCD_IPV6RA_AUTOCONF | DHCPCD_IPV6RA_REQRDNSS);
+
 	/* We want to setup INET6 on the interface as soon as possible. */
 	if (ifp->active == IF_ACTIVE_USER &&
 	    ifo->options & DHCPCD_IPV6 &&
@@ -529,7 +558,7 @@ configure_interface1(struct interface *ifp)
 		ifo->options |= DHCPCD_IAID;
 	}
 
-#ifdef INET6
+#ifdef DHCP6
 	if (ifo->ia_len == 0 && ifo->options & DHCPCD_IPV6 &&
 	    ifp->name[0] != '\0')
 	{
@@ -727,17 +756,30 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 		if (ifp->carrier != LINK_DOWN) {
 			if (ifp->carrier == LINK_UP)
 				loginfox("%s: carrier lost", ifp->name);
-			ifp->carrier = LINK_DOWN;
+#ifdef NOCARRIER_PRESERVE_IP
+			if (ifp->flags & IFF_UP)
+				ifp->carrier = LINK_DOWN_IFFUP;
+			else
+#endif
+				ifp->carrier = LINK_DOWN;
 			script_runreason(ifp, "NOCARRIER");
 #ifdef NOCARRIER_PRESERVE_IP
+			if (ifp->flags & IFF_UP) {
 #ifdef ARP
-			arp_drop(ifp);
+				arp_drop(ifp);
 #endif
-			dhcp_abort(ifp);
-			ipv6nd_expire(ifp, 0);
-#else
-			dhcpcd_drop(ifp, 0);
+#ifdef INET
+				dhcp_abort(ifp);
 #endif
+#ifdef INET6
+				ipv6nd_expire(ifp, 0);
+#endif
+#ifdef DHCP6
+				dhcp6_abort(ifp);
+#endif
+			} else
+#endif
+				dhcpcd_drop(ifp, 0);
 		}
 	} else if (carrier == LINK_UP && ifp->flags & IFF_UP) {
 		if (ifp->carrier != LINK_UP) {
@@ -751,22 +793,27 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 #endif
 			if (ifp->wireless) {
 				uint8_t ossid[IF_SSIDLEN];
-#ifdef NOCARRIER_PRESERVE_IP
 				size_t olen;
 
 				olen = ifp->ssid_len;
-#endif
 				memcpy(ossid, ifp->ssid, ifp->ssid_len);
 				if_getssid(ifp);
-#ifdef NOCARRIER_PRESERVE_IP
+
 				/* If we changed SSID network, drop leases */
 				if (ifp->ssid_len != olen ||
 				    memcmp(ifp->ssid, ossid, ifp->ssid_len))
+				{
+#ifdef NOCARRIER_PRESERVE_IP
 					dhcpcd_drop(ifp, 0);
 #endif
+#ifdef IPV4LL
+					ipv4ll_reset(ifp);
+#endif
+				}
 			}
 			dhcpcd_initstate(ifp, 0);
 			script_runreason(ifp, "CARRIER");
+#ifdef INET6
 #ifdef NOCARRIER_PRESERVE_IP
 			/* Set any IPv6 Routers we remembered to expire
 			 * faster than they would normally as we
@@ -775,6 +822,7 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 #endif
 			/* RFC4941 Section 3.5 */
 			ipv6_gentempifid(ifp);
+#endif
 			dhcpcd_startinterface(ifp);
 		}
 	}
@@ -880,10 +928,12 @@ dhcpcd_startinterface(void *arg)
 #endif
 	}
 
+#ifdef INET6
 	if (ifo->options & DHCPCD_IPV6 && ipv6_start(ifp) == -1) {
 		logerr("%s: ipv6_start", ifp->name);
 		ifo->options &= ~DHCPCD_IPV6;
 	}
+
 	if (ifo->options & DHCPCD_IPV6) {
 		if (ifp->active == IF_ACTIVE_USER) {
 			ipv6_startstatic(ifp);
@@ -892,7 +942,7 @@ dhcpcd_startinterface(void *arg)
 				ipv6nd_startrs(ifp);
 		}
 
-
+#ifdef DHCP6
 		if (ifo->options & DHCPCD_DHCP6) {
 			dhcp6_find_delegates(ifp);
 
@@ -909,7 +959,9 @@ dhcpcd_startinterface(void *arg)
 					logerr("%s: dhcp6_start", ifp->name);
 			}
 		}
+#endif
 	}
+#endif
 
 #ifdef INET
 	if (ifo->options & DHCPCD_IPV4 && ifp->active == IF_ACTIVE_USER) {
@@ -927,7 +979,12 @@ dhcpcd_prestartinterface(void *arg)
 
 	if ((!(ifp->ctx->options & DHCPCD_MASTER) ||
 	    ifp->options->options & DHCPCD_IF_UP) &&
-	    if_up(ifp) == -1)
+	    if_up(ifp) == -1
+#ifdef __sun
+	    /* Interface could not yet be plumbed. */
+	    && errno != ENXIO
+#endif
+	    )
 		logerr("%s: %s", __func__, ifp->name);
 
 	if (ifp->options->options & DHCPCD_LINK &&
@@ -1168,8 +1225,12 @@ if_reboot(struct interface *ifp, int argc, char **argv)
 	oldopts = ifp->options->options;
 	script_runreason(ifp, "RECONFIGURE");
 	dhcpcd_initstate1(ifp, argc, argv, 0);
+#ifdef INET
 	dhcp_reboot_newopts(ifp, oldopts);
+#endif
+#ifdef DHCP6
 	dhcp6_reboot(ifp);
+#endif
 	dhcpcd_prestartinterface(ifp);
 }
 
@@ -1207,8 +1268,10 @@ reconf_reboot(struct dhcpcd_ctx *ctx, int action, int argc, char **argv, int oi)
 		if (ifp->active == IF_ACTIVE_USER) {
 			if (action)
 				if_reboot(ifp, argc, argv);
+#ifdef INET
 			else
 				ipv4_applyaddr(ifp);
+#endif
 		} else if (i != argc) {
 			ifp->active = IF_ACTIVE_USER;
 			dhcpcd_initstate1(ifp, argc, argv, 0);
@@ -1247,11 +1310,17 @@ dhcpcd_ifrenew(struct interface *ifp)
 	    ifp->carrier == LINK_DOWN)
 		return;
 
+#ifdef INET
 	dhcp_renew(ifp);
+#endif
+#ifdef INET6
 #define DHCPCD_RARENEW (DHCPCD_IPV6 | DHCPCD_IPV6RS)
 	if ((ifp->options->options & DHCPCD_RARENEW) == DHCPCD_RARENEW)
 		ipv6nd_startrs(ifp);
+#endif
+#ifdef DHCP6
 	dhcp6_renew(ifp);
+#endif
 }
 
 static void
@@ -1333,16 +1402,24 @@ dhcpcd_getinterfaces(void *arg)
 		if (!ifp->active)
 			continue;
 		len++;
+#ifdef INET
 		if (D_STATE_RUNNING(ifp))
 			len++;
+#endif
+#ifdef IPV4LL
 		if (IPV4LL_STATE_RUNNING(ifp))
 			len++;
+#endif
+#ifdef INET6
 		if (IPV6_STATE_RUNNING(ifp))
 			len++;
 		if (RS_STATE_RUNNING(ifp))
 			len++;
+#endif
+#ifdef DHCP6
 		if (D6_STATE_RUNNING(ifp))
 			len++;
+#endif
 	}
 	if (write(fd->fd, &len, sizeof(len)) != sizeof(len))
 		return;
@@ -1535,9 +1612,6 @@ main(int argc, char **argv)
 	ctx.cffile = CONFIG;
 	ctx.control_fd = ctx.control_unpriv_fd = ctx.link_fd = -1;
 	ctx.pf_inet_fd = -1;
-#ifdef IFLR_ACTIVE
-	ctx.pf_link_fd = -1;
-#endif
 
 	TAILQ_INIT(&ctx.control_fds);
 #ifdef PLUGIN_DEV
@@ -1661,9 +1735,11 @@ main(int argc, char **argv)
 			printf("\nND options:\n");
 			ipv6nd_printoptions(&ctx,
 			    ifo->nd_override, ifo->nd_override_len);
+#ifdef DHCP6
 			printf("\nDHCPv6 options:\n");
 			dhcp6_printoptions(&ctx,
 			    ifo->dhcp6_override, ifo->dhcp6_override_len);
+#endif
 		}
 #endif
 		goto exit_success;
@@ -1790,12 +1866,22 @@ printpidfile:
 		configure_interface(ifp, ctx.argc, ctx.argv, 0);
 		i = 0;
 		if (family == 0 || family == AF_INET) {
+#ifdef INET
 			if (dhcp_dump(ifp) == -1)
 				i = -1;
+#else
+			if (family == AF_INET)
+				logerrx("No INET support");
+#endif
 		}
 		if (family == 0 || family == AF_INET6) {
+#ifdef DHCP6
 			if (dhcp6_dump(ifp) == -1)
 				i = -1;
+#else
+			if (family == AF_INET6)
+				logerrx("No DHCP6 support");
+#endif
 		}
 		if (i == -1)
 			goto exit_failure;
@@ -2054,10 +2140,11 @@ exit1:
 	}
 	if_closesockets(&ctx);
 	free_globals(&ctx);
+#ifdef INET6
 	ipv6_ctxfree(&ctx);
+#endif
 	dev_stop(&ctx);
 	eloop_free(ctx.eloop);
-	free(ctx.iov[0].iov_base);
 
 	if (ctx.options & DHCPCD_STARTED && !(ctx.options & DHCPCD_FORKED))
 		loginfox(PACKAGE " exited");

@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -44,8 +44,6 @@
 #  endif
 #endif
 
-#define ALLROUTERS "ff02::2"
-
 #define EUI64_GBIT		0x01
 #define EUI64_UBIT		0x02
 #define EUI64_TO_IFID(in6)	do {(in6)->s6_addr[8] ^= EUI64_UBIT; } while (0)
@@ -74,6 +72,17 @@
 	(((d)->s6_addr32[1] ^ (a)->s6_addr32[1]) & (m)->s6_addr32[1]) == 0 && \
 	(((d)->s6_addr32[2] ^ (a)->s6_addr32[2]) & (m)->s6_addr32[2]) == 0 && \
 	(((d)->s6_addr32[3] ^ (a)->s6_addr32[3]) & (m)->s6_addr32[3]) == 0 )
+#endif
+
+#ifndef IN6ADDR_LINKLOCAL_ALLNODES_INIT
+#define	IN6ADDR_LINKLOCAL_ALLNODES_INIT				\
+	{{{ 0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	\
+	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 }}}
+#endif
+#ifndef IN6ADDR_LINKLOCAL_ALLROUTERS_INIT
+#define	IN6ADDR_LINKLOCAL_ALLROUTERS_INIT			\
+	{{{ 0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	\
+	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02 }}}
 #endif
 
 /*
@@ -139,6 +148,7 @@
 #  define IN6_IFF_DETACHED	0
 #endif
 
+#ifdef INET6
 TAILQ_HEAD(ipv6_addrhead, ipv6_addr);
 struct ipv6_addr {
 	TAILQ_ENTRY(ipv6_addr) next;
@@ -168,6 +178,10 @@ struct ipv6_addr {
 
 	void (*dadcallback)(void *);
 	int dadcounter;
+
+	struct nd_neighbor_advert *na;
+	size_t na_len;
+	int na_count;
 
 #ifdef ALIAS_ADDR
 	char alias[IF_NAMESIZE];
@@ -218,7 +232,6 @@ struct ipv6_state {
 	((const struct ipv6_state *)(ifp)->if_data[IF_DATA_IPV6])
 #define IPV6_STATE_RUNNING(ifp) ipv6_staticdadcompleted((ifp))
 
-#ifdef INET6
 
 int ipv6_init(struct dhcpcd_ctx *);
 int ipv6_makestableprivate(struct in6_addr *addr,
@@ -277,16 +290,6 @@ int ipv6_startstatic(struct interface *);
 ssize_t ipv6_env(char **, const char *, const struct interface *);
 void ipv6_ctxfree(struct dhcpcd_ctx *);
 bool inet6_getroutes(struct dhcpcd_ctx *, struct rt_head *);
+#endif /* INET6 */
 
-#else
-#define ipv6_start(a) (-1)
-#define ipv6_startstatic(a)
-#define ipv6_staticdadcompleted(a) (0)
-#define ipv6_hasaddr(a) (0)
-#define ipv6_free_ll_callbacks(a) {}
-#define ipv6_free(a) {}
-#define ipv6_ctxfree(a) {}
-#define ipv6_gentempifid(a) {}
-#endif
-
-#endif
+#endif /* INET6_H */
