@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.110 2019/04/16 04:26:02 msaitoh Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.111 2019/04/26 11:51:56 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.110 2019/04/16 04:26:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.111 2019/04/26 11:51:56 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -1426,4 +1426,4 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, tap, "")
+IF_MODULE(MODULE_CLASS_DRIVER, tap, NULL)

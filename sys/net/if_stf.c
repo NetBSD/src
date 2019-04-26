@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.105 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.106 2019/04/26 11:51:56 pgoyette Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.105 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.106 2019/04/26 11:51:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -744,4 +744,4 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, stf, "")
+IF_MODULE(MODULE_CLASS_DRIVER, stf, NULL)
