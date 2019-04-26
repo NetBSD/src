@@ -13,6 +13,7 @@ IPV4LL=
 INET6=
 ARC4RANDOM=
 CLOSEFROM=
+CONSTTIME_MEMEQUAL=
 STRLCPY=
 UDEV=
 OS=
@@ -844,6 +845,27 @@ fi
 if [ "$STRTOI" = no ]; then
 	echo "COMPAT_SRCS+=	compat/strtoi.c compat/strtou.c" >>$CONFIG_MK
 	echo "#include			\"compat/strtoi.h\"" >>$CONFIG_H
+fi
+
+if [ -z "$CONSTTIME_MEMEQUAL" ]; then
+	printf "Testing for consttime_memequal ... "
+	cat <<EOF >_consttime_memequal.c
+#include <string.h>
+int main(void) {
+	return consttime_memequal("deadbeef", "deadbeef", 8);
+}
+EOF
+	if $XCC _consttime_memequal.c -o _consttime_memequal 2>&3; then
+		CONSTTIME_MEMEQUAL=yes
+	else
+		CONSTTIME_MEMEQUAL=no
+	fi
+	echo "$CONSTTIME_MEMEQUAL"
+	rm -f _consttime_memequal.c _consttime_memequal
+fi
+if [ "$CONSTTIME_MEMEQUAL" = no ]; then
+	echo "#include			\"compat/consttime_memequal.h\"" \
+	    >>$CONFIG_H
 fi
 
 if [ -z "$DPRINTF" ]; then
