@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.146 2018/06/10 17:54:51 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.147 2019/04/26 17:20:49 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.146 2018/06/10 17:54:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.147 2019/04/26 17:20:49 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1331,6 +1331,8 @@ pipeclose(struct pipe *pipe)
     free_resources:
 	pipe->pipe_pgid = 0;
 	pipe->pipe_state = PIPE_SIGNALR;
+	pipe->pipe_peer = NULL;
+	pipe->pipe_lock = NULL;
 	pipe_free_kmem(pipe);
 	if (pipe->pipe_kmem != 0) {
 		pool_cache_put(pipe_rd_cache, pipe);
