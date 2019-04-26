@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.48 2019/03/23 09:48:04 pgoyette Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.49 2019/04/26 11:51:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.48 2019/03/23 09:48:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.49 2019/04/26 11:51:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1165,4 +1165,4 @@ agrport_config_promisc(struct agr_port *port, bool promisc)
  */
 #include <net/if_module.h>
 
-IF_MODULE(MODULE_CLASS_DRIVER, agr, "")
+IF_MODULE(MODULE_CLASS_DRIVER, agr, NULL)
