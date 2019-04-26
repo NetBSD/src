@@ -1,4 +1,4 @@
-#	$NetBSD: IMX6UL-STARTER,v 1.11 2018/12/19 16:56:17 skrll Exp $
+#	$NetBSD: IMX6UL-STARTER,v 1.12 2019/04/26 22:46:03 sevan Exp $
 #
 #	IMX6UL-STARTER - Freescale i.MX6UL Evaluation Board
 #
@@ -384,21 +384,8 @@ pseudo-device	wsfont
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
 
-options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-					# and PAX_SEGVGUARD
-
 # Veriexec
-#
-# a pseudo device needed for veriexec
-pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-options VERIFIED_EXEC_FP_SHA256
-options VERIFIED_EXEC_FP_SHA384
-options VERIFIED_EXEC_FP_SHA512
+include "dev/veriexec.config"
 
 options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions

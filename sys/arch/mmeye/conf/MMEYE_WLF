@@ -1,4 +1,4 @@
-# $NetBSD: MMEYE_WLF,v 1.27 2019/04/13 08:23:00 isaki Exp $
+# $NetBSD: MMEYE_WLF,v 1.28 2019/04/26 22:46:03 sevan Exp $
 #
 # MMEYE_WLF -- Brains Inc. MMEYE-WLF platforms kernel
 #
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.28 $"
 
 maxusers	16		# estimated number of users
 
@@ -263,14 +263,4 @@ pseudo-device	btuart			# Bluetooth HCI UART (H4)
 #options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 
 # Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+# include "dev/veriexec.config"

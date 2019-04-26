@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.55 2018/08/01 20:04:10 maxv Exp $
+# $NetBSD: NULL,v 1.56 2019/04/26 22:46:03 sevan Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.55 $"
+#ident          "GENERIC-$Revision: 1.56 $"
 
 maxusers	8
 
@@ -413,17 +413,7 @@ pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
 #pseudo-device	nsmb			# experimental - SMB requester
 
 # Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
+# include "dev/veriexec.config"
 
 # Kernel root file system and dump configuration
 config		netbsd	root on ? type ?

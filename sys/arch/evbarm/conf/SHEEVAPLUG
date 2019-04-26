@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.63 2019/02/06 11:58:30 rin Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.64 2019/04/26 22:46:03 sevan Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -490,19 +490,8 @@ pseudo-device	drvctl			# device control
 pseudo-device	swdmover		# software dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
-#options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-					# and PAX_SEGVGUARD
-
 # Veriexec
-#pseudo-device	veriexec
-#
-# Uncomment the fingerprint methods below that are desired. Note that
-# removing fingerprint methods will have almost no impact on the kernel
-# code size.
-#
-#options 	VERIFIED_EXEC_FP_SHA256
-#options 	VERIFIED_EXEC_FP_SHA384
-#options 	VERIFIED_EXEC_FP_SHA512
+# include "dev/veriexec.config"
 
 #options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 #options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
