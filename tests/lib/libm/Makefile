@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.45 2018/11/07 03:56:18 riastradh Exp $
+# $NetBSD: Makefile,v 1.46 2019/04/26 08:52:16 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ CPPFLAGS.t_fmod.c+=	-I${.CURDIR}/../libc/gen
 TESTS_C+=	t_acos
 TESTS_C+=	t_asin
 TESTS_C+=	t_atan
+TESTS_C+=	t_bit
 TESTS_C+=	t_casinh
 TESTS_C+=	t_cbrt
 TESTS_C+=	t_ceil
