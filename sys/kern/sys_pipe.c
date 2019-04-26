@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.147 2019/04/26 17:20:49 mlelstv Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.148 2019/04/26 17:24:23 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.147 2019/04/26 17:20:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.148 2019/04/26 17:24:23 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1096,10 +1096,12 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 
 	case FIONWRITE:
 		/* Look at other side */
-		pipe = pipe->pipe_peer;
 		mutex_enter(lock);
+		pipe = pipe->pipe_peer;
+		if (pipe == NULL)
+			*(int *)data = 0;
 #ifndef PIPE_NODIRECT
-		if (pipe->pipe_state & PIPE_DIRECTW)
+		else if (pipe->pipe_state & PIPE_DIRECTW)
 			*(int *)data = pipe->pipe_map.cnt;
 		else
 #endif
@@ -1109,8 +1111,11 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 
 	case FIONSPACE:
 		/* Look at other side */
-		pipe = pipe->pipe_peer;
 		mutex_enter(lock);
+		pipe = pipe->pipe_peer;
+		if (pipe == NULL)
+			*(int *)data = 0;
+		else
 #ifndef PIPE_NODIRECT
 		/*
 		 * If we're in direct-mode, we don't really have a
