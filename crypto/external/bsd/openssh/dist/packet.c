@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.37 2019/04/20 17:16:40 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.38 2019/04/26 01:51:55 christos Exp $	*/
 /* $OpenBSD: packet.c,v 1.283 2019/03/01 03:29:32 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.37 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.38 2019/04/26 01:51:55 christos Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
@@ -1767,7 +1767,7 @@ ssh_packet_remaining(struct ssh *ssh)
  * authentication problems.   The length of the formatted message must not
  * exceed 1024 bytes.  This will automatically call ssh_packet_write_wait.
  */
-void
+void __attribute__((__format__ (__printf__, 2, 3)))
 ssh_packet_send_debug(struct ssh *ssh, const char *fmt,...)
 {
 	char buf[1024];
@@ -1804,7 +1804,8 @@ sshpkt_fmt_connection_id(struct ssh *ssh, char *s, size_t l)
 /*
  * Pretty-print connection-terminating errors and exit.
  */
-static void
+static void __attribute__((__format__ (__printf__, 3, 0)))
+__attribute__((__noreturn__))
 sshpkt_vfatal(struct ssh *ssh, int r, const char *fmt, va_list ap)
 {
 	char *tag = NULL, remote_id[512];
@@ -1854,7 +1855,8 @@ sshpkt_vfatal(struct ssh *ssh, int r, const char *fmt, va_list ap)
 	}
 }
 
-void
+void __attribute__((__format__ (__printf__, 3, 4)))
+__attribute__((__noreturn__))
 sshpkt_fatal(struct ssh *ssh, int r, const char *fmt, ...)
 {
 	va_list ap;
