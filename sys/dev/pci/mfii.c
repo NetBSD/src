@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.3.2.3 2018/12/08 12:17:13 martin Exp $ */
+/* $NetBSD: mfii.c,v 1.3.2.4 2019/04/26 19:04:19 martin Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.3.2.3 2018/12/08 12:17:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.3.2.4 2019/04/26 19:04:19 martin Exp $");
 
 #include "bio.h"
 
@@ -264,7 +264,6 @@ struct mfii_ccb {
 	u_int32_t		ccb_flags;
 #define MFI_CCB_F_ERR			(1<<0)
 	u_int			ccb_smid;
-	u_int			ccb_refcnt;
 	SIMPLEQ_ENTRY(mfii_ccb)	ccb_link;
 };
 SIMPLEQ_HEAD(mfii_ccb_list, mfii_ccb);
@@ -2159,7 +2158,6 @@ mfii_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		return;
 	}
 
-	ccb->ccb_refcnt = 2; /* one for the chip, one for the timeout */
 	mfii_start(sc, ccb);
 
 	return;
@@ -2176,10 +2174,9 @@ mfii_scsi_cmd_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	struct scsipi_xfer *xs = ccb->ccb_cookie;
 	struct mpii_msg_scsi_io *io = ccb->ccb_request;
 	struct mfii_raid_context *ctx = (struct mfii_raid_context *)(io + 1);
-	u_int refs = 2;
 
 	if (callout_stop(&xs->xs_callout) != 0)
-		refs = 1;
+		return;
 
 	switch (ctx->status) {
 	case MFI_STAT_OK:
@@ -2201,10 +2198,8 @@ mfii_scsi_cmd_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 		break;
 	}
 
-	if (atomic_add_int_nv(&ccb->ccb_refcnt, -refs) == 0) {
-		scsipi_done(xs);
-		mfii_put_ccb(sc, ccb);
-	}
+	scsipi_done(xs);
+	mfii_put_ccb(sc, ccb);
 }
 
 int
@@ -2343,7 +2338,6 @@ mfii_pd_scsi_cmd(struct scsipi_xfer *xs)
 		return;
 	}
 
-	ccb->ccb_refcnt = 2; /* one for the chip, one for the timeout */
 	// XXX timeout_add_msec(&xs->stimeout, xs->timeout);
 	mfii_start(sc, ccb);
 
@@ -2543,10 +2537,9 @@ mfii_abort_task(struct work *wk, void *scp)
 
 		if (!sc->sc_ld[periph->periph_target].ld_present) {
 			/* device is gone */
-			if (atomic_dec_uint_nv(&ccb->ccb_refcnt) == 0) {
-				scsipi_done(xs);
-				mfii_put_ccb(sc, ccb);
-			}
+			xs->error = XS_SELTIMEOUT;
+			scsipi_done(xs);
+			mfii_put_ccb(sc, ccb);
 			continue;
 		}
 
@@ -2591,12 +2584,11 @@ mfii_scsi_cmd_abort_done(struct mfii_softc *sc, struct mfii_ccb *accb)
 	/* XXX check accb completion? */
 
 	mfii_put_ccb(sc, accb);
+	printf("%s: cmd aborted ccb %p\n", DEVNAME(sc), ccb);
 
-	if (atomic_dec_uint_nv(&ccb->ccb_refcnt) == 0) {
-		xs->error = XS_TIMEOUT;
-		scsipi_done(xs);
-		mfii_put_ccb(sc, ccb);
-	}
+	xs->error = XS_TIMEOUT;
+	scsipi_done(xs);
+	mfii_put_ccb(sc, ccb);
 }
 
 struct mfii_ccb *
@@ -2627,8 +2619,6 @@ mfii_scrub_ccb(struct mfii_ccb *ccb)
 	ccb->ccb_dma64 = false;
 	ccb->ccb_len = 0;
 	ccb->ccb_sgl_len = 0;
-	ccb->ccb_refcnt = 1;
-
 	memset(&ccb->ccb_req, 0, sizeof(ccb->ccb_req));
 	memset(ccb->ccb_request, 0, MFII_REQUEST_SIZE);
 	memset(ccb->ccb_mfi, 0, MFI_FRAME_SIZE);
