@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.31 2018/10/03 10:02:08 martin Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.32 2019/04/27 01:55:05 sevan Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.31 2018/10/03 10:02:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.32 2019/04/27 01:55:05 sevan Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -1422,7 +1422,7 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 	struct athn_softc *sc = &usc->usc_sc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	enum ieee80211_state ostate, nstate;
-	uint32_t reg, imask;
+	uint32_t reg, intr_mask;
 	int s;
 
 	DPRINTFN(DBG_FN, sc, "\n");
@@ -1479,13 +1479,13 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			athn_set_hostap_timers(sc);
 			/* Enable software beacon alert interrupts. */
-			imask = htobe32(AR_IMR_SWBA);
+			intr_mask = htobe32(AR_IMR_SWBA);
 		} else
 #endif
 		{
 			athn_set_sta_timers(sc);
 			/* Enable beacon miss interrupts. */
-			imask = htobe32(AR_IMR_BMISS);
+			intr_mask = htobe32(AR_IMR_BMISS);
 
 			/* Stop receiving beacons from other BSS. */
 			reg = AR_READ(sc, AR_RX_FILTER);
@@ -1495,7 +1495,7 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 			AR_WRITE_BARRIER(sc);
 		}
 		athn_usb_wmi_xcmd(usc, AR_WMI_CMD_ENABLE_INTR,
-		    &imask, sizeof(imask), NULL);
+		    &intr_mask, sizeof(intr_mask), NULL);
 		break;
 	}
 	if (!usc->usc_dying)
