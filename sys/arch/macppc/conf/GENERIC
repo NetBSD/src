@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.355 2019/04/27 00:56:19 sevan Exp $
+# $NetBSD: GENERIC,v 1.356 2019/04/27 02:00:12 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.355 $"
+#ident 		"GENERIC-$Revision: 1.356 $"
 
 maxusers	32
 
@@ -437,92 +437,10 @@ slhci*	at pcmcia? function ?	# ScanLogic SL811HS
 usb*	at ehci?					# USB bus support
 usb*	at ohci?					# USB bus support
 usb*	at slhci?					# USB bus support
-uhub*	at usb?						# USB Hubs
-uhub*	at uhub? port ?
 
-uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
+include "dev/usb/usbdevices.config"
 
 pbms*	at uhidev? reportid ?				# PowerBook 15" mouse
-
-ums*	at uhidev? reportid ?				# USB Mice
-
-ukbd*	at uhidev? reportid ?				# USB Keyboards
-
-uthum*	at uhidev? reportid ?				# TEMPerHUM sensors
-
-ucycom*	at uhidev? reportid ?				# USB serial adapter
-
-uhid*	at uhidev? reportid ?				# USB Generic HID
-
-ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
-
-umodem*	at uhub? port ? configuration ?			# USB Modem
-ucom*	at umodem?
-
-ubsa*	at uhub? port ?					# Belkin serial adapter
-ucom*	at ubsa? portno ?
-
-uplcom* at uhub? port ?					# Prolific serial
-ucom* at uplcom? portno ?
-
-uftdi* at uhub? port ?					# FTDI FT8U100AX serial adapter
-ucom* at uftdi? portno ?
-
-uhso*	at uhub? port ? configuration ?			# Option N.V. Wireless WAN modems
-
-umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
-
-uaudio*	at uhub? port ? configuration ?			# USB audio
-
-# D-Link DSB-R100 USB FM radio tuner
-udsbr* at uhub? port ?
-radio* at udsbr?
-
-# USB Ethernet adapters
-aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
-axe*	at uhub? port ?		# ASIX AX88172 based adapters
-axen*	at uhub? port ?		# ASIX AX88178a/AX88179 based adapters
-cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
-cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
-kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
-mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
-udav*	at uhub? port ?		# Davicom DM9601 based adapters
-ure*	at uhub? port ?		# Realtek RTL8152/RTL8153 based adapters
-url*	at uhub? port ?		# Realtek RTL8150L based adapters
-
-ukyopon* at uhub? port ?				# Kyocera AIR-EDGE PHONE
-ucom*	at ukyopon? portno ?
-
-#uscanner* at uhub? port ?				# USB scanners
-uyap* at uhub? port ?					# Y@P firmware loader
-ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
-
-# USB 802.11 adapters
-atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-otus*	at uhub? port ?		# Atheros AR9001U
-ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
-rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
-run*	at uhub? port ?		# Ralink Technology RT(2[78]|30)00 802.11a/b/g/n
-upgt*	at uhub? port ?		# Intersil PrismGT
-urtw*	at uhub? port ?		# Realtek RTL8187/RTL8187B 802.11b/g
-urtwn*	at uhub? port ?		# Realtek RTL8188CU/RTL8192CU 802.11b/g/n
-#zyd*	at uhub? port ?		# Zydas ZD1211
-
-# Serial adapters
-uchcom* at uhub? port ?         # WinChipHead CH341/CH340 serial adapter
-ucom*   at uchcom? portno ?
-
-uslsa*  at uhub? port ?         # Silicon Labs USB-RS232 serial adapter
-ucom*   at uslsa? portno ?
-
-# USB 3G datacards
-umodeswitch* at uhub? port ?
-u3g*    at uhub? port ?
-ucom*   at u3g?
-
-# USB generic serial port (e.g., data over cellular)
-ugensa* at uhub? port ?
-ucom*   at ugensa?
 
 # Bluetooth Controller and Device support
 
@@ -541,23 +459,7 @@ bthub* at btbc?
 bthub* at btuart?
 bthub* at ubt?
 
-# Bluetooth HID support
-bthidev* at bthub?
-
-# Bluetooth Mouse
-btms* at bthidev? reportid ?
-wsmouse* at btms? mux 0
-
-# Bluetooth Keyboard
-btkbd* at bthidev? reportid ?
-wskbd* at btkbd? console ? mux 1
-
-# Bluetooth Apple Magic Mouse
-btmagic* at bthub?
-wsmouse* at btmagic? mux 0
-
-# Bluetooth Audio support
-btsco* at bthub?
+include "dev/bluetooth/bluetoothdevices.config"
 
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
@@ -647,8 +549,6 @@ pseudo-device 	wsfont
 pseudo-device	swwdog			# software watchdog driver - swwdog(4)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	bcsp			# BlueCore Serial Protocol
-pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device   drvctl
