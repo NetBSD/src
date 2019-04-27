@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.56.2.2 2019/04/27 13:25:33 isaki Exp $	*/
+/*	$NetBSD: autri.c,v 1.56.2.3 2019/04/27 13:44:32 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.56.2.2 2019/04/27 13:25:33 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.56.2.3 2019/04/27 13:44:32 isaki Exp $");
 
 #include "midi.h"
 
@@ -127,8 +127,6 @@ static int	autri_mixer_set_port(void *, mixer_ctrl_t *);
 static int	autri_mixer_get_port(void *, mixer_ctrl_t *);
 static void*	autri_malloc(void *, int, size_t);
 static void	autri_free(void *, void *, size_t);
-static size_t	autri_round_buffersize(void *, int, size_t);
-static paddr_t autri_mappage(void *, void *, off_t, int);
 static int	autri_get_props(void *);
 static int	autri_query_devinfo(void *, mixer_devinfo_t *);
 static void	autri_get_locks(void *, kmutex_t **, kmutex_t **);
@@ -146,8 +144,6 @@ static const struct audio_hw_if autri_hw_if = {
 	.query_devinfo		= autri_query_devinfo,
 	.allocm			= autri_malloc,
 	.freem			= autri_free,
-	.round_buffersize	= autri_round_buffersize,
-	.mappage		= autri_mappage,
 	.get_props		= autri_get_props,
 	.trigger_output		= autri_trigger_output,
 	.trigger_input		= autri_trigger_input,
@@ -171,28 +167,23 @@ static const struct midi_hw_if autri_midi_hw_if = {
 };
 #endif
 
-#define AUTRI_NFORMATS	8
-#define AUTRI_FORMAT(enc, prec, ch, chmask) \
-	{ \
-		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
-		.encoding	= (enc), \
-		.validbits	= (prec), \
-		.precision	= (prec), \
-		.channels	= (ch), \
-		.channel_mask	= (chmask), \
-		.frequency_type	= 0, \
-		.frequency	= { 4000, 48000 }, \
-	}
-static const struct audio_format autri_formats[AUTRI_NFORMATS] = {
-	AUTRI_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 2, AUFMT_STEREO),
-	AUTRI_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 1, AUFMT_MONAURAL),
-	AUTRI_FORMAT(AUDIO_ENCODING_ULINEAR_LE, 16, 2, AUFMT_STEREO),
-	AUTRI_FORMAT(AUDIO_ENCODING_ULINEAR_LE, 16, 1, AUFMT_MONAURAL),
-	AUTRI_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 2, AUFMT_STEREO),
-	AUTRI_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 1, AUFMT_MONAURAL),
-	AUTRI_FORMAT(AUDIO_ENCODING_SLINEAR_LE,  8, 2, AUFMT_STEREO),
-	AUTRI_FORMAT(AUDIO_ENCODING_SLINEAR_LE,  8, 1, AUFMT_MONAURAL),
+/*
+ * The hardware actually supports frequencies other than 48kHz.  But
+ * 48kHz is the basis frequency of this hardware and it's enough.
+ */
+static const struct audio_format autri_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 1,
+		.frequency	= { 48000 },
+	},
 };
+#define AUTRI_NFORMATS __arraycount(autri_formats)
 
 /*
  * register set/clear bit
@@ -1065,30 +1056,6 @@ autri_find_dma(struct autri_softc *sc, void *addr)
 		continue;
 
 	return p;
-}
-
-static size_t
-autri_round_buffersize(void *addr, int direction, size_t size)
-{
-
-	return size;
-}
-
-static paddr_t
-autri_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct autri_softc *sc;
-	struct autri_dma *p;
-
-	if (off < 0)
-		return -1;
-	sc = addr;
-	p = autri_find_dma(sc, mem);
-	if (!p)
-		return -1;
-
-	return bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
-	    off, prot, BUS_DMA_WAITOK);
 }
 
 static int
