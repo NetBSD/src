@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmxfunc.S,v 1.2 2019/04/24 18:45:15 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmxfunc.S,v 1.3 2019/04/27 08:16:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -72,120 +72,6 @@ ENTRY(_vmx_vmxoff)
 	movq	$-1,%rax
 	retq
 END(_vmx_vmxoff)
-
-/*
- * %rdi = op
- * %rsi = *descriptor
- */
-ENTRY(_vmx_invept)
-	invept	(%rsi),%rdi
-	jz	.Linvept_failvalid
-	jc	.Linvept_failinvalid
-	xorq	%rax,%rax
-	retq
-.Linvept_failvalid:
-	movq	$-1,%rax
-	retq
-.Linvept_failinvalid:
-	movq	$-2,%rax
-	retq
-END(_vmx_invept)
-
-/*
- * %rdi = op
- * %rsi = *descriptor
- */
-ENTRY(_vmx_invvpid)
-	invvpid	(%rsi),%rdi
-	jz	.Linvvpid_failvalid
-	jc	.Linvvpid_failinvalid
-	xorq	%rax,%rax
-	retq
-.Linvvpid_failvalid:
-	movq	$-1,%rax
-	retq
-.Linvvpid_failinvalid:
-	movq	$-2,%rax
-	retq
-END(_vmx_invvpid)
-
-/*
- * %rdi = op
- * %rsi = *val
- */
-ENTRY(_vmx_vmread)
-	vmread	%rdi,(%rsi)
-	jz	.Lvmread_failvalid
-	jc	.Lvmread_failinvalid
-	xorq	%rax,%rax
-	retq
-.Lvmread_failvalid:
-	movq	$-1,%rax
-	retq
-.Lvmread_failinvalid:
-	movq	$-2,%rax
-	retq
-END(_vmx_vmread)
-
-/*
- * %rdi = op
- * %rsi = val
- */
-ENTRY(_vmx_vmwrite)
-	vmwrite	%rsi,%rdi
-	jz	.Lvmwrite_failvalid
-	jc	.Lvmwrite_failinvalid
-	xorq	%rax,%rax
-	retq
-.Lvmwrite_failvalid:
-	movq	$-1,%rax
-	retq
-.Lvmwrite_failinvalid:
-	movq	$-2,%rax
-	retq
-END(_vmx_vmwrite)
-
-/*
- * %rdi = *pa
- */
-ENTRY(_vmx_vmptrld)
-	vmptrld	(%rdi)
-	jz	.Lfail_vmptrld
-	jc	.Lfail_vmptrld
-	xorq	%rax,%rax
-	retq
-.Lfail_vmptrld:
-	movq	$-1,%rax
-	retq
-END(_vmx_vmptrld)
-
-/*
- * %rdi = *pa
- */
-ENTRY(_vmx_vmptrst)
-	vmptrst	(%rdi)
-	jz	.Lfail_vmptrst
-	jc	.Lfail_vmptrst
-	xorq	%rax,%rax
-	retq
-.Lfail_vmptrst:
-	movq	$-1,%rax
-	retq
-END(_vmx_vmptrst)
-
-/*
- * %rdi = pa
- */
-ENTRY(_vmx_vmclear)
-	vmclear	(%rdi)
-	jz	.Lfail_vmclear
-	jc	.Lfail_vmclear
-	xorq	%rax,%rax
-	retq
-.Lfail_vmclear:
-	movq	$-1,%rax
-	retq
-END(_vmx_vmclear)
 
 /* redef */
 #define VMCS_HOST_RSP				0x00006C14
@@ -355,3 +241,20 @@ ENTRY(vmx_resume_rip)
 	xorq	%rax,%rax
 	retq
 END(vmx_resume_rip)
+
+ENTRY(vmx_insn_failvalid)
+	movq	$.Lvmx_validstr,%rdi
+	call	_C_LABEL(panic)
+END(vmx_insn_failvalid)
+
+ENTRY(vmx_insn_failinvalid)
+	movq	$.Lvmx_invalidstr,%rdi
+	call	_C_LABEL(panic)
+END(vmx_insn_failinvalid)
+
+	.section ".rodata"
+
+.Lvmx_validstr:
+	.string	"VMX fail valid\0"
+.Lvmx_invalidstr:
+	.string "VMX fail invalid\0"
