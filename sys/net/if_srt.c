@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.29 2019/03/26 06:59:11 pgoyette Exp $ */
+/* $NetBSD: if_srt.c,v 1.30 2019/04/27 06:18:15 pgoyette Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.29 2019/03/26 06:59:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.30 2019/04/27 06:18:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -579,4 +579,4 @@ srt_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, srt, "")
+IF_MODULE(MODULE_CLASS_DRIVER, srt, NULL)
