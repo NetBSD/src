@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.28 2019/04/27 08:16:19 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.29 2019/04/27 09:06:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.28 2019/04/27 08:16:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.29 2019/04/27 09:06:18 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1844,6 +1844,25 @@ vmx_htlb_flush_ack(struct vmx_cpudata *cpudata, uint64_t machgen)
 	kcpuset_clear(cpudata->htlb_want_flush, cpu_number());
 }
 
+static inline void
+vmx_exit_evt(struct vmx_cpudata *cpudata)
+{
+	uint64_t info, err;
+
+	cpudata->evt_pending = false;
+
+	info = vmx_vmread(VMCS_IDT_VECTORING_INFO);
+	if (__predict_true((info & INTR_INFO_VALID) == 0)) {
+		return;
+	}
+	err = vmx_vmread(VMCS_IDT_VECTORING_ERROR);
+
+	vmx_vmwrite(VMCS_ENTRY_INTR_INFO, info);
+	vmx_vmwrite(VMCS_ENTRY_EXCEPTION_ERROR, err);
+
+	cpudata->evt_pending = true;
+}
+
 static int
 vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
@@ -1909,7 +1928,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			exit->reason = NVMM_EXIT_INVALID;
 			break;
 		}
-		cpudata->evt_pending = false;
+		vmx_exit_evt(cpudata);
 
 		launched = true;
 
