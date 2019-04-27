@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.20 2019/04/26 07:35:21 skrll Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.21 2019/04/27 15:43:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -472,7 +472,7 @@ translate_syms(int out, int in, off_t symoff, off_t symsize,
 			err(EXIT_FAILURE, "%s: write failed", __func__);
 	}
 	/* Write out the string table length... */
-	stringsizebuf = newstringsize;
+	stringsizebuf = (uint32_t)newstringsize;
 #if TARGET_BYTE_ORDER != BYTE_ORDER
 	stringsizebuf = bswap32(stringsizebuf);
 #endif
