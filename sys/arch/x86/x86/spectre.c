@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.25 2019/03/23 10:02:05 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.26 2019/04/27 10:40:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.25 2019/03/23 10:02:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.26 2019/04/27 10:40:17 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -54,7 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.25 2019/03/23 10:02:05 maxv Exp $");
 enum v2_mitigation {
 	V2_MITIGATION_NONE,
 	V2_MITIGATION_AMD_DIS_IND,
-	V2_MITIGATION_INTEL_IBRS
+	V2_MITIGATION_INTEL_IBRS,
+	V2_MITIGATION_INTEL_ENHANCED_IBRS
 };
 
 enum v4_mitigation {
@@ -102,6 +103,9 @@ v2_set_name(void)
 		case V2_MITIGATION_INTEL_IBRS:
 			strlcat(name, "[Intel IBRS]", sizeof(name));
 			break;
+		case V2_MITIGATION_INTEL_ENHANCED_IBRS:
+			strlcat(name, "[Intel Enhanced IBRS]", sizeof(name));
+			break;
 		default:
 			panic("%s: impossible", __func__);
 		}
@@ -116,20 +120,26 @@ v2_detect_method(void)
 {
 	struct cpu_info *ci = curcpu();
 	u_int descs[4];
+	uint64_t msr;
 
 	if (cpu_vendor == CPUVENDOR_INTEL) {
 		if (cpuid_level >= 7) {
 			x86_cpuid(7, descs);
-			if (descs[3] & CPUID_SEF_IBRS) {
-				/* descs[3] = %edx */
+
+			if (descs[3] & CPUID_SEF_ARCH_CAP) {
+				msr = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
+				if (msr & IA32_ARCH_IBRS_ALL) {
+					v2_mitigation_method =
+					    V2_MITIGATION_INTEL_ENHANCED_IBRS;
+					return;
+				}
+			}
 #ifdef __x86_64__
+			if (descs[3] & CPUID_SEF_IBRS) {
 				v2_mitigation_method = V2_MITIGATION_INTEL_IBRS;
-#else
-				/* IBRS not supported on i386. */
-				v2_mitigation_method = V2_MITIGATION_NONE;
-#endif
 				return;
 			}
+#endif
 		}
 		v2_mitigation_method = V2_MITIGATION_NONE;
 	} else if (cpu_vendor == CPUVENDOR_AMD) {
@@ -239,6 +249,15 @@ mitigation_v2_apply_cpu(struct cpu_info *ci, bool enabled)
 			wrmsr(MSR_IA32_SPEC_CTRL, 0);
 		}
 		break;
+	case V2_MITIGATION_INTEL_ENHANCED_IBRS:
+		msr = rdmsr(MSR_IA32_SPEC_CTRL);
+		if (enabled) {
+			msr |= IA32_SPEC_CTRL_IBRS;
+		} else {
+			msr &= ~IA32_SPEC_CTRL_IBRS;
+		}
+		wrmsr(MSR_IA32_SPEC_CTRL, msr);
+		break;
 	case V2_MITIGATION_AMD_DIS_IND:
 		msr = rdmsr(MSR_IC_CFG);
 		if (enabled) {
@@ -302,6 +321,7 @@ mitigation_v2_change(bool enabled)
 		return EOPNOTSUPP;
 	case V2_MITIGATION_AMD_DIS_IND:
 	case V2_MITIGATION_INTEL_IBRS:
+	case V2_MITIGATION_INTEL_ENHANCED_IBRS:
 		/* Initialize the barriers */
 		ibrs_cpu_barrier1 = ncpu;
 		ibrs_cpu_barrier2 = ncpu;
