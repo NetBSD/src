@@ -1,4 +1,4 @@
-/*	$NetBSD: if_canloop.c,v 1.7 2019/04/27 08:48:31 pgoyette Exp $	*/
+/*	$NetBSD: if_canloop.c,v 1.8 2019/04/27 08:49:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.7 2019/04/27 08:48:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.8 2019/04/27 08:49:19 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_can.h"
@@ -222,4 +222,4 @@ canloop_ioctl(struct ifnet *ifp, u_long cmd, void *data)
  */
 #include "../net/if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, canloop, NULL);
+IF_MODULE(MODULE_CLASS_DRIVER, canloop, NULL)
