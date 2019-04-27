@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.16.2.1 2019/04/21 05:22:57 isaki Exp $ */
+/* $NetBSD: hdafg.c,v 1.16.2.2 2019/04/27 12:28:40 isaki Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.16.2.1 2019/04/21 05:22:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.16.2.2 2019/04/27 12:28:40 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.16.2.1 2019/04/21 05:22:57 isaki Exp $")
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/auconv.h>
 
 #ifdef _KERNEL_OPT
 #include "opt_hdaudio.h"
@@ -271,7 +270,6 @@ struct hdaudio_mixer {
 struct hdaudio_audiodev {
 	struct hdafg_softc	*ad_sc;
 	device_t			ad_audiodev;
-	struct audio_encoding_set	*ad_encodings;
 	int				ad_nformats;
 	struct audio_format		ad_formats[HDAUDIO_MAXFORMATS];
 
@@ -358,11 +356,11 @@ CFATTACH_DECL2_NEW(
 );
 
 static int	hdafg_query_format(void *, audio_format_query_t *);
-static int	hdafg_set_params(void *, int, int,
-				   audio_params_t *,
-				   audio_params_t *,
-				   stream_filter_list_t *,
-				   stream_filter_list_t *);
+static int	hdafg_set_format(void *, int,
+				   const audio_params_t *,
+				   const audio_params_t *,
+				   audio_filter_reg_t *,
+				   audio_filter_reg_t *);
 static int	hdafg_round_blocksize(void *, int, int,
 					const audio_params_t *);
 static int	hdafg_commit_settings(void *);
@@ -384,8 +382,8 @@ static int	hdafg_trigger_input(void *, void *, void *, int,
 static void	hdafg_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if hdafg_hw_if = {
-	.query_format	= hdafg_query_format,
-	.set_params		= hdafg_set_params,
+	.query_format		= hdafg_query_format,
+	.set_format		= hdafg_set_format,
 	.round_blocksize	= hdafg_round_blocksize,
 	.commit_settings	= hdafg_commit_settings,
 	.halt_output		= hdafg_halt_output,
@@ -3662,7 +3660,7 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 	uint64_t fgptr = 0;
 	uint32_t astype = 0;
 	uint8_t nid = 0;
-	int err, i;
+	int i;
 	bool rv;
 
 	aprint_naive("\n");
@@ -3776,12 +3774,6 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 	hda_debug(sc, "configuring encodings\n");
 	sc->sc_audiodev.ad_sc = sc;
 	hdafg_configure_encodings(sc);
-	err = auconv_create_encodings(sc->sc_audiodev.ad_formats,
-	    sc->sc_audiodev.ad_nformats, &sc->sc_audiodev.ad_encodings);
-	if (err) {
-		hda_error(sc, "couldn't create encodings\n");
-		return;
-	}
 
 	hda_debug(sc, "reserving streams\n");
 	sc->sc_audiodev.ad_capture = hdaudio_stream_establish(sc->sc_host,
@@ -3835,8 +3827,6 @@ hdafg_detach(device_t self, int flags)
 		prop_object_release(sc->sc_config);
 	if (sc->sc_audiodev.ad_audiodev)
 		config_detach(sc->sc_audiodev.ad_audiodev, flags);
-	if (sc->sc_audiodev.ad_encodings)
-		auconv_delete_encodings(sc->sc_audiodev.ad_encodings);
 	if (sc->sc_audiodev.ad_playback)
 		hdaudio_stream_disestablish(sc->sc_audiodev.ad_playback);
 	if (sc->sc_audiodev.ad_capture)
@@ -3927,29 +3917,18 @@ hdafg_query_format(void *opaque, audio_format_query_t *afp)
 }
 
 static int
-hdafg_set_params(void *opaque, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+hdafg_set_format(void *opaque, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct hdaudio_audiodev *ad = opaque;
-	int index;
 
 	if (play && (setmode & AUMODE_PLAY)) {
-		index = auconv_set_converter(ad->ad_formats, ad->ad_nformats,
-		    AUMODE_PLAY, play, TRUE, pfil);
-		if (index < 0)
-			return EINVAL;
-		ad->ad_sc->sc_pparam = pfil->req_size > 0 ?
-		    pfil->filters[0].param : *play;
+		ad->ad_sc->sc_pparam = *play;
 		hdafg_stream_connect(ad->ad_sc, AUMODE_PLAY);
 	}
 	if (rec && (setmode & AUMODE_RECORD)) {
-		index = auconv_set_converter(ad->ad_formats, ad->ad_nformats,
-		    AUMODE_RECORD, rec, TRUE, rfil);
-		if (index < 0)
-			return EINVAL;
-		ad->ad_sc->sc_rparam = rfil->req_size > 0 ?
-		    rfil->filters[0].param : *rec;
+		ad->ad_sc->sc_rparam = *rec;
 		hdafg_stream_connect(ad->ad_sc, AUMODE_RECORD);
 	}
 	return 0;
