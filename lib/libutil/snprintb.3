@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.17 2017/10/22 16:59:18 abhinav Exp $
+.\"     $NetBSD: snprintb.3,v 1.18 2019/04/27 17:46:08 christos Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 7, 2009
+.Dd April 27, 2019
 .Dt SNPRINTB 3
 .Os
 .Sh NAME
@@ -177,6 +177,21 @@ Operates like the
 .Sq \&=
 operator, but omits the leading
 .Sq \&= .
+.It Cm *FMT
+This provides a
+.Dq default
+case that prints
+.Ar FMT
+using
+.Xr printf 3 
+when other
+.Sq \&:
+or
+.Sq \&=
+have not matched.
+.Ar FMT
+may contain an integer format specification that prints the value that
+did not match.
 .El
 .Pp
 Finally, each field is delimited by a NUL
@@ -244,6 +259,61 @@ snprintb(buf, buflen,
        "b\ex1fMSB\e0\e0",
        0x800f0701)
 \(rA "0x800f0701<LSB,NIBBLE2=0x0,BURST=0xf=SIXTEEN,MSB>"
+.Ed
+.Pp
+A more complex example from
+.In sys/mman.h
+that uses the both bit position
+.Sq b
+formatting as well as the
+.Sq F
+multi-field formatting with a default case:
+.Bd -literal -offset indent
+#define MAP_FMT	"\e177\e020\e
+b\e0SHARED\e0\e
+b\e0SHARED\e0\e
+b\e1PRIVATE\e0\e
+b\e2COPY\e0\e
+b\e4FIXED\e0\e
+b\e5RENAME\e0\e
+b\e6NORESERVE\e0\e
+b\e7INHERIT\e0\e
+b\e11HASSEMAPHORE\e0\e
+b\e12TRYFIXED\e0\e
+b\e13WIRED\e0\e
+F\e14\e1\e
+:\e0FILE\e0\e
+:\e1ANONYMOUS\e0\e
+b\e15STACK\e0\e
+F\e30\e010\e
+:\e000ALIGN=NONE\e0\e
+:\e012ALIGN=1KB\e0\e
+:\e013ALIGN=2KB\e0\e
+:\e014ALIGN=4KB\e0\e
+:\e015ALIGN=8KB\e0\e
+:\e016ALIGN=16KB\e0\e
+:\e017ALIGN=32KB\e0\e
+:\e020ALIGN=64KB\e0\e
+:\e021ALIGN=128KB\e0\e
+:\e022ALIGN=256KB\e0\e
+:\e023ALIGN=512KB\e0\e
+:\e024ALIGN=1MB\e0\e
+:\e030ALIGN=16MB\e0\e
+:\e034ALIGN=256MB\e0\e
+:\e040ALIGN=4GB\e0\e
+:\e044ALIGN=64GB\e0\e
+:\e050ALIGN=1TB\e0\e
+:\e054ALIGN=16TB\e0\e
+:\e060ALIGN=256TB\e0\e
+:\e064ALIGN=4PB\e0\e
+:\e070ALIGN=64PB\e0\e
+:\e074ALIGN=256PB\e0\e
+*ALIGN=2^%d\e0\e
+"
+snprintb(buf, buflen, MAP_FMT, 0x0d001234)
+\(rA "0xd001234<COPY,FIXED,RENAME,HASSEMAPHORE,ANONYMOUS,ALIGN=8KB>"
+snprintb(buf, buflen, MAP_FMT, 0x2e000000)
+\(rA "0xd001234<0x2e000000<FILE,ALIGN=2^46>
 .Ed
 .Pp
 An example using snprintb_m:
