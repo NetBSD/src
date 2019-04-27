@@ -1399,6 +1399,19 @@ n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
 
+get_rsasha1_key_ids_from_sigs() {
+	awk '
+		NF < 8 { next }
+		$(NF-5) != "RRSIG" { next }
+		$(NF-3) != "5" { next }
+		$NF != "(" { next }
+		{
+			getline;
+			print $3;
+		}
+	' signer/example.db.signed | sort -u
+}
+
 echo_i "checking that we can sign a zone with out-of-zone records ($n)"
 ret=0
 zone=example
@@ -1499,8 +1512,8 @@ cat example.db.in "$key1.key" "$key3.key" > example.db
 echo "\$INCLUDE \"example.db.signed\"" >> example.db
 $SIGNER -D -o example example.db > /dev/null 2>&1
 ) || ret=1
-grep " $keyid2 " signer/example.db.signed > /dev/null 2>&1 || ret=1
-grep " $keyid3 " signer/example.db.signed > /dev/null 2>&1 || ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid2$" > /dev/null || ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid3$" > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -1511,8 +1524,8 @@ ret=0
 cd signer || exit 1
 $SIGNER -RD -o example example.db > /dev/null 2>&1
 ) || ret=1
-grep " $keyid2 " signer/example.db.signed > /dev/null 2>&1 && ret=1
-grep " $keyid3 " signer/example.db.signed > /dev/null 2>&1 || ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid2$" > /dev/null && ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid3$" > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -1529,8 +1542,8 @@ echo "\$INCLUDE \"example.db.signed\"" >> example.db
 $SETTIME -I now "$key2" > /dev/null 2>&1
 $SIGNER -SD -o example example.db > /dev/null 2>&1
 ) || ret=1
-grep " $keyid2 " signer/example.db.signed > /dev/null 2>&1 || ret=1
-grep " $keyid3 " signer/example.db.signed > /dev/null 2>&1 || ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid2$" > /dev/null || ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid3$" > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -1541,8 +1554,8 @@ ret=0
 cd signer || exit 1
 $SIGNER -SDQ -o example example.db > /dev/null 2>&1
 ) || ret=1
-grep " $keyid2 " signer/example.db.signed > /dev/null 2>&1 && ret=1
-grep " $keyid3 " signer/example.db.signed > /dev/null 2>&1 || ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid2$" > /dev/null && ret=1
+get_rsasha1_key_ids_from_sigs | grep "^$keyid3$" > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -1864,8 +1877,8 @@ echo_i "waiting for NTA rechecks/expirations"
 
 #
 # secure.example and badds.example used default nta-duration
-# (configured as 10s in ns4/named1.conf), but nta recheck interval
-# is configured to 7s, so at t=8 the NTAs for secure.example and
+# (configured as 12s in ns4/named1.conf), but nta recheck interval
+# is configured to 9s, so at t=10 the NTAs for secure.example and
 # fakenode.secure.example should both be lifted, but badds.example
 # should still be going.
 #
@@ -1886,9 +1899,9 @@ status=$((status+ret))
 ret=0
 
 #
-# bogus.example was set to expire in 20s, so at t=11
+# bogus.example was set to expire in 20s, so at t=13
 # it should still be NTA'd, but badds.example used the default
-# lifetime of 10s, so it should revert to SERVFAIL now.
+# lifetime of 12s, so it should revert to SERVFAIL now.
 #
 # shellcheck disable=SC2016
 $PERL -e 'my $delay = '"$start"' + 13 - time(); select(undef, undef, undef, $delay) if ($delay > 0);'
@@ -2087,11 +2100,11 @@ else
     exit 1
 fi
 
-# nta-recheck is configured as 7s, so at t=10 the NTAs for
+# nta-recheck is configured as 9s, so at t=12 the NTAs for
 # secure.example. should be lifted as it is not a forced NTA.
-echo_i "waiting till 10s have passed after ns4 was restarted"
+echo_i "waiting till 12s have passed after ns4 was restarted"
 # shellcheck disable=SC2016
-$PERL -e 'my $delay = '"$start"' + 10 - time(); select(undef, undef, undef, $delay) if ($delay > 0);'
+$PERL -e 'my $delay = '"$start"' + 12 - time(); select(undef, undef, undef, $delay) if ($delay > 0);'
 
 # secure.example. should now return an AD=1 answer (still validates) as
 # the NTA has been lifted.
@@ -2143,11 +2156,11 @@ else
     exit 1
 fi
 
-# nta-recheck is configured as 7s, but even at t=10 the NTAs for
+# nta-recheck is configured as 9s, but even at t=12 the NTAs for
 # secure.example. should not be lifted as it is a forced NTA.
-echo_i "waiting till 10s have passed after ns4 was restarted"
+echo_i "waiting till 12s have passed after ns4 was restarted"
 # shellcheck disable=SC2016
-$PERL -e 'my $delay = '"$start"' + 10 - time(); select(undef, undef, undef, $delay) if ($delay > 0);'
+$PERL -e 'my $delay = '"$start"' + 12 - time(); select(undef, undef, undef, $delay) if ($delay > 0);'
 
 # secure.example. should now return an AD=0 answer (non-authenticated)
 # as the NTA is still there.
@@ -2795,10 +2808,10 @@ dig_with_answeropts expiring.example soa @10.53.0.4 > dig.out.ns4.2.$n
 ttls=$(awk '$1 != ";;" {print $2}' dig.out.ns4.1.$n)
 ttls2=$(awk '$1 != ";;" {print $2}' dig.out.ns4.2.$n)
 for ttl in ${ttls:-0}; do
-    [ "${ttl:-0}" -eq 300 ] || ret=1
+    [ "${ttl}" -eq 300 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
-    [ "${ttl:-0}" -le 60 ] || ret=1
+    [ "${ttl}" -le 60 ] || ret=1
 done
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
@@ -2813,7 +2826,7 @@ dig_with_additionalopts expiring.example ns @10.53.0.4 > dig.out.ns4.2.$n
 ttls=$(awk '$1 != ";;" {print $2}' dig.out.ns4.1.$n)
 ttls2=$(awk '$1 != ";;" {print $2}' dig.out.ns4.2.$n)
 for ttl in ${ttls:-300}; do
-    [ "$ttl" -eq 300 ] || ret=1
+    [ "$ttl" -le 300 ] && [ "$ttl" -gt 240 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
     [ "$ttl" -le 60 ] || ret=1
@@ -2831,7 +2844,7 @@ dig_with_additionalopts expiring.example mx @10.53.0.4 > dig.out.ns4.2.$n
 ttls=$(awk '$1 != ";;" {print $2}' dig.out.ns4.1.$n)
 ttls2=$(awk '$1 != ";;" {print $2}' dig.out.ns4.2.$n)
 for ttl in ${ttls:-300}; do
-    [ "$ttl" -eq 300 ] || ret=1
+    [ "$ttl" -le 300 ] && [ "$ttl" -gt 240 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
     [ "$ttl" -le 60 ] || ret=1
@@ -2855,7 +2868,7 @@ for ttl in ${ttls:-0}; do
     [ "$ttl" -eq 300 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
-    [ "$ttl" -le 120 ] && [ "$ttl" -gt 60 ] || ret=1
+    [ "$ttl" -eq 120 ] || ret=1
 done
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
@@ -2871,7 +2884,7 @@ for ttl in ${ttls:-0}; do
     [ "$ttl" -eq 300 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
-    [ "$ttl" -le 120 ] && [ "$ttl" -gt 60 ] || ret=1
+    [ "$ttl" -eq 120 ] || ret=1
 done
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
@@ -2880,12 +2893,12 @@ status=$((status+ret))
 echo_i "testing TTL is capped at RRSIG expiry time for records in the additional section with dnssec-accept-expired yes; ($n)"
 ret=0
 rndccmd 10.53.0.4 flush 2>&1 | sed 's/^/ns4 /' | cat_i
-dig_with_answeropts +cd expiring.example mx @10.53.0.4 > dig.out.ns4.1.$n
-dig_with_answeropts expiring.example mx @10.53.0.4 > dig.out.ns4.2.$n
+dig_with_additionalopts +cd expiring.example mx @10.53.0.4 > dig.out.ns4.1.$n
+dig_with_additionalopts expiring.example mx @10.53.0.4 > dig.out.ns4.2.$n
 ttls=$(awk '$1 != ";;" {print $2}' dig.out.ns4.1.$n)
 ttls2=$(awk '$1 != ";;" {print $2}' dig.out.ns4.2.$n)
 for ttl in ${ttls:-300}; do
-    [ "$ttl" -eq 300 ] || ret=1
+    [ "$ttl" -le 300 ] && [ "$ttl" -gt 240 ] || ret=1
 done
 for ttl in ${ttls2:-0}; do
     [ "$ttl" -le 120 ] && [ "$ttl" -gt 60 ] || ret=1
@@ -3631,6 +3644,19 @@ dig_with_opts axfr occluded.example @10.53.0.3 > dig.out.ns3.test$n || ret=1
 grep "^delegation.occluded.example..*NSEC.*NS KEY DS RRSIG NSEC$" dig.out.ns3.test$n > /dev/null || ret=1
 grep "^delegation.occluded.example..*DNSKEY.*" dig.out.ns3.test$n > /dev/null || ret=1
 grep "^delegation.occluded.example..*AAAA.*" dig.out.ns3.test$n > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking DNSSEC records are occluded from ANY in an insecure zone ($n)"
+ret=0
+dig_with_opts any x.insecure.example. @10.53.0.3 > dig.out.ns3.1.test$n || ret=1
+grep "status: NOERROR" dig.out.ns3.1.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.ns3.1.test$n > /dev/null || ret=1
+dig_with_opts any zz.secure.example. @10.53.0.3 > dig.out.ns3.2.test$n || ret=1
+grep "status: NOERROR" dig.out.ns3.2.test$n > /dev/null || ret=1
+# DNSKEY+RRSIG, NSEC+RRSIG
+grep "ANSWER: 4," dig.out.ns3.2.test$n > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))

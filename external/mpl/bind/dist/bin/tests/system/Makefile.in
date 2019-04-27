@@ -19,7 +19,7 @@ SUBDIRS =	dlzexternal dyndb pipelined rndc rpz rsabigexponent tkey
 
 CINCLUDES =	${ISC_INCLUDES} ${DNS_INCLUDES}
 
-CDEFINES =	@USE_GSSAPI@
+CDEFINES =	@USE_GSSAPI@ @CONTRIB_DLZ@
 CWARNINGS =
 
 DNSLIBS =

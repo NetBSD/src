@@ -16,7 +16,7 @@ controls { /* empty */ };
 acl rfc1918 { 10/8; 192.168/16; 172.16/12; };
 
 options {
-	query-source address 10.53.0.2;	/* note this is not 10.53.0.3 */
+	query-source address 10.53.0.2;	/* note this is not 10.53.0.4 */
 	notify-source 10.53.0.4;
 	transfer-source 10.53.0.4;
 	port @PORT@;
@@ -28,7 +28,6 @@ options {
 	dnssec-enable yes;
 	dnssec-validation yes;
 	nxdomain-redirect "redirect";
-
 };
 
 key rndc_key {

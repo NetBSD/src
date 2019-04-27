@@ -517,5 +517,21 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+echo_i "checking tld nxdomain-redirect against signed root zone ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.5 asdfasdfasdf > dig.out.ns5.test$n || ret=1
+grep "status: NXDOMAIN" dig.out.ns5.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "checking tld nxdomain-redirect against unsigned root zone ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.6 asdfasdfasdf > dig.out.ns6.test$n || ret=1
+grep "status: NXDOMAIN" dig.out.ns6.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1
