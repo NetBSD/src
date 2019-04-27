@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: key_25.h,v 1.1.1.3 2019/04/27 23:47:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,8 +22,8 @@ typedef struct dns_rdata_key {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
 	uint16_t		flags;
-	uint8_t		protocol;
-	uint8_t		algorithm;
+	dns_secproto_t		protocol;
+	dns_secalg_t		algorithm;
 	uint16_t		datalen;
 	unsigned char *		data;
 } dns_rdata_key_t;

@@ -75,6 +75,7 @@ ns_log_init
 ns_log_setcontext
 ns_notify_start
 ns_plugin_check
+ns_plugin_expandpath
 ns_plugin_register
 ns_plugins_create
 ns_plugins_free

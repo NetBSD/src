@@ -1,4 +1,4 @@
-/*	$NetBSD: ecs.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: ecs.h,v 1.1.1.3 2019/04/27 23:47:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,10 @@
 
 #include <inttypes.h>
 
+#include <isc/lang.h>
 #include <isc/netaddr.h>
 #include <isc/types.h>
+
 #include <dns/types.h>
 
 struct dns_ecs {

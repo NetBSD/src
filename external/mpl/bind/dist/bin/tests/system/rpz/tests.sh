@@ -25,6 +25,7 @@ ns4=$ns.4		# another authoritative server that is rewritten
 ns5=$ns.5		# another rewriting resolver
 ns6=$ns.6		# a forwarding server
 ns7=$ns.7		# another rewriting resolver
+ns8=$ns.8		# another rewriting resolver
 
 HAVE_CORE=
 
@@ -106,7 +107,8 @@ setret () {
 }
 
 # set $SN to the SOA serial number of a zone
-# $1=domain  $2=DNS server and client IP address
+# $1=domain
+# $2=DNS server and client IP address
 get_sn() {
     SOA=`$DIG -p ${PORT} +short +norecurse soa "$1" "@$2" "-b$2"`
     SN=`expr "$SOA" : '[^ ]* [^ ]* \([^ ]*\) .*'`
@@ -125,7 +127,8 @@ get_sn_fast () {
 }
 
 # check that dnsrpzd has loaded its zones
-# $1=domain  $2=DNS server IP address
+# $1=domain
+# $2=DNS server IP address
 FZONES=`sed -n -e 's/^zone "\(.*\)".*\(10.53.0..\).*/Z=\1;M=\2/p' dnsrpzd.conf`
 dnsrps_loaded() {
     test "$mode" = dnsrps || return
@@ -150,8 +153,10 @@ dnsrps_loaded() {
 }
 
 # check the serial number in an SOA to ensure that a policy zone has
-#	been (re)loaded
-# $1=serial number  $2=domain  $3=DNS server
+#   been (re)loaded
+# $1=serial number
+# $2=domain
+# $3=DNS server
 ck_soa() {
     n=0
     while true; do
@@ -186,6 +191,9 @@ load_db () {
     fi
 }
 
+# restart name server
+# $1 ns number
+# $2 rebuild bl rpz zones if "rebuild-bl-rpz"
 restart () {
     # try to ensure that the server really has stopped
     # and won't mess with ns$1/name.pid
@@ -201,17 +209,20 @@ restart () {
 	fi
     fi
     rm -f ns$1/*.jnl
-    if test -f ns$1/base.db; then
-	for NM in ns$1/bl*.db; do
-	    cp -f ns$1/base.db $NM
-	done
+    if [ "$2" == "rebuild-bl-rpz" ]; then
+        if test -f ns$1/base.db; then
+	    for NM in ns$1/bl*.db; do
+	        cp -f ns$1/base.db $NM
+            done
+        fi
     fi
     $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} rpz ns$1
     load_db
     dnsrps_loaded
 }
 
-# $1=server and irrelevant args  $2=error message
+# $1=server and irrelevant args
+# $2=error message
 ckalive () {
     CKALIVE_NS=`expr "$1" : '.*@ns\([1-9]\).*'`
     if test -z "$CKALIVE_NS"; then
@@ -222,7 +233,7 @@ ckalive () {
     HAVE_CORE=yes
     setret "$2"
     # restart the server to avoid stalling waiting for it to stop
-    restart $CKALIVE_NS
+    restart $CKALIVE_NS "rebuild-bl-rpz"
     return 1
 }
 
@@ -264,7 +275,8 @@ ckstatsrange () {
     eval "${NSDIR}_CNT=$NEW_CNT"
 }
 
-# $1=message  $2=optional test file name
+# $1=message
+# $2=optional test file name
 start_group () {
     ret=0
     t=`expr $t + 1`
@@ -299,7 +311,8 @@ clean_result () {
     fi
 }
 
-# $1=dig args $2=other dig output file
+# $1=dig args
+# $2=other dig output file
 ckresult () {
     #ckalive "$1" "server crashed by 'dig $1'" || return 1
     if grep "flags:.* aa .*ad;" $DIGNM; then
@@ -322,7 +335,8 @@ ckresult () {
 }
 
 # check only that the server does not crash
-# $1=target domain  $2=optional query type
+# $1=target domain
+# $2=optional query type
 nocrash () {
     digcmd $* >/dev/null
     ckalive "$*" "server crashed by 'dig $*'"
@@ -330,7 +344,8 @@ nocrash () {
 
 
 # check rewrite to NXDOMAIN
-# $1=target domain  $2=optional query type
+# $1=target domain
+# $2=optional query type
 nxdomain () {
     make_dignm
     digcmd $*								\
@@ -341,7 +356,8 @@ nxdomain () {
 }
 
 # check rewrite to NODATA
-# $1=target domain  $2=optional query type
+# $1=target domain
+# $2=optional query type
 nodata () {
     make_dignm
     digcmd $*								\
@@ -351,7 +367,9 @@ nodata () {
 
 # check rewrite to an address
 #   modify the output so that it is easily compared, but save the original line
-# $1=IPv4 address  $2=digcmd args  $3=optional TTL
+# $1=IPv4 address
+# $2=digcmd args
+# $3=optional TTL
 addr () {
     ADDR=$1
     make_dignm
@@ -373,7 +391,8 @@ addr () {
 # Check that a response is not rewritten
 #   Use $ns1 instead of the authority for most test domains, $ns2 to prevent
 #   spurious differences for `dig +norecurse`
-# $1=optional "TCP"  remaining args for dig
+# $1=optional "TCP"
+# remaining args for dig
 nochange () {
     make_dignm
     digcmd $* >$DIGNM
@@ -455,102 +474,104 @@ for mode in native dnsrps; do
   digcmd txt-only.tld2 @$ns2 >proto.nodata
 
   start_group "QNAME rewrites" test1
-  nochange .				# 1 do not crash or rewrite root
-  nxdomain a0-1.tld2			# 2
-  nodata a3-1.tld2			# 3
-  nodata a3-2.tld2			# 4 nodata at DNAME itself
-  nochange sub.a3-2.tld2		# 5 miss where DNAME might work
-  nxdomain a4-2.tld2			# 6 rewrite based on CNAME target
-  nxdomain a4-2-cname.tld2		# 7
-  nodata a4-3-cname.tld2		# 8
-  addr 12.12.12.12  a4-1.sub1.tld2	# 9 A replacement
-  addr 12.12.12.12  a4-1.sub2.tld2	# 10 A replacement with wildcard
-  addr 12.12.12.12  nxc1.sub1.tld2	# 11 replace NXDOMAIN with CNAME
-  addr 12.12.12.12  nxc2.sub1.tld2	# 12 replace NXDOMAIN with CNAME chain
-  addr 127.4.4.1	  a4-4.tld2	# 13 prefer 1st conflicting QNAME zone
-  nochange a6-1.tld2			# 14
-  addr 127.6.2.1	  a6-2.tld2	# 15
-  addr 56.56.56.56  a3-6.tld2		# 16 wildcard CNAME
-  addr 57.57.57.57  a3-7.sub1.tld2	# 17 wildcard CNAME
-  addr 127.0.0.16	  a4-5-cname3.tld2	# 18 CNAME chain
-  addr 127.0.0.17	  a4-6-cname3.tld2	# 19 stop short in CNAME chain
-  nochange a5-2.tld2	    +norecurse	# 20 check that RD=1 is required
-  nochange a5-3.tld2	    +norecurse	# 21
-  nochange a5-4.tld2	    +norecurse	# 22
-  nochange sub.a5-4.tld2	    +norecurse	# 23
-  nxdomain c1.crash2.tld3		# 24 assert in rbtdb.c
-  nxdomain a0-1.tld2	    +dnssec	# 25 simple DO=1 without signatures
-  nxdomain a0-1.tld2s	    +nodnssec	# 26 simple DO=0 with signatures
-  nochange a0-1.tld2s	    +dnssec	# 27 simple DO=1 with signatures
-  nxdomain a0-1s-cname.tld2s  +dnssec	# 28 DNSSEC too early in CNAME chain
-  nochange a0-1-scname.tld2   +dnssec	# 29 DNSSEC on target in CNAME chain
-  nochange a0-1.tld2s srv +auth +dnssec	# 30 no write for DNSSEC and no record
-  nxdomain a0-1.tld2s srv	    +nodnssec	# 31
-  drop a3-8.tld2 any			# 32 drop
-  nochange tcp a3-9.tld2		# 33 tcp-only
-  here x.servfail <<'EOF'		# 34 qname-wait-recurse yes
+  nochange .					# 1 do not crash or rewrite root
+  nxdomain a0-1.tld2				# 2
+  nodata a3-1.tld2				# 3
+  nodata a3-2.tld2				# 4 nodata at DNAME itself
+  nochange sub.a3-2.tld2			# 5 miss where DNAME might work
+  nxdomain a4-2.tld2				# 6 rewrite based on CNAME target
+  nxdomain a4-2-cname.tld2			# 7
+  nodata a4-3-cname.tld2			# 8
+  addr 12.12.12.12  a4-1.sub1.tld2		# 9 A replacement
+  addr 12.12.12.12  a4-1.sub2.tld2		# 10 A replacement with wildcard
+  addr 12.12.12.12  nxc1.sub1.tld2		# 11 replace NXDOMAIN with CNAME
+  addr 12.12.12.12  nxc2.sub1.tld2		# 12 replace NXDOMAIN with CNAME chain
+  addr 127.4.4.1    a4-4.tld2			# 13 prefer 1st conflicting QNAME zone
+  nochange a6-1.tld2				# 14
+  addr 127.6.2.1    a6-2.tld2			# 15
+  addr 56.56.56.56  a3-6.tld2			# 16 wildcard CNAME
+  addr 57.57.57.57  a3-7.sub1.tld2		# 17 wildcard CNAME
+  addr 127.0.0.16   a4-5-cname3.tld2		# 18 CNAME chain
+  addr 127.0.0.17   a4-6-cname3.tld2		# 19 stop short in CNAME chain
+  nochange a5-2.tld2 +norecurse			# 20 check that RD=1 is required
+  nochange a5-3.tld2 +norecurse			# 21
+  nochange a5-4.tld2 +norecurse			# 22
+  nochange sub.a5-4.tld2 +norecurse		# 23
+  nxdomain c1.crash2.tld3			# 24 assert in rbtdb.c
+  nxdomain a0-1.tld2  +dnssec			# 25 simple DO=1 without signatures
+  nxdomain a0-1.tld2s +nodnssec			# 26 simple DO=0 with signatures
+  nochange a0-1.tld2s +dnssec			# 27 simple DO=1 with signatures
+  nxdomain a0-1s-cname.tld2s +dnssec		# 28 DNSSEC too early in CNAME chain
+  nochange a0-1-scname.tld2  +dnssec		# 29 DNSSEC on target in CNAME chain
+  nochange a0-1.tld2s srv +auth +dnssec		# 30 no write for DNSSEC and no record
+  nxdomain a0-1.tld2s srv +nodnssec		# 31
+  drop a3-8.tld2 any				# 32 drop
+  nochange tcp a3-9.tld2			# 33 tcp-only
+  here x.servfail <<'EOF'			# 34 qname-wait-recurse yes
     ;; status: SERVFAIL, x
 EOF
-  addr 35.35.35.35 "x.servfail @$ns5"	# 35 qname-wait-recurse no
+  addr 35.35.35.35 "x.servfail @$ns5"		# 35 qname-wait-recurse no
   end_group
   ckstats $ns3 test1 ns3 22
   ckstats $ns5 test1 ns5 1
   ckstats $ns6 test1 ns6 0
 
   start_group "NXDOMAIN/NODATA action on QNAME trigger" test1
-  nxdomain a0-1.tld2 @$ns6		   # 1
-  nodata a3-1.tld2 @$ns6			   # 2
-  nodata a3-2.tld2 @$ns6			   # 3 nodata at DNAME itself
-  nxdomain a4-2.tld2 @$ns6		   # 4 rewrite based on CNAME target
-  nxdomain a4-2-cname.tld2 @$ns6		   # 5
-  nodata a4-3-cname.tld2 @$ns6		   # 6
-  addr 12.12.12.12  "a4-1.sub1.tld2 @$ns6"   # 7 A replacement
-  addr 12.12.12.12  "a4-1.sub2.tld2 @$ns6"   # 8 A replacement with wildcard
-  addr 127.4.4.1    "a4-4.tld2 @$ns6"	   # 9 prefer 1st conflicting QNAME zone
-  addr 12.12.12.12  "nxc1.sub1.tld2 @$ns6"   # 10 replace NXDOMAIN w/ CNAME
-  addr 12.12.12.12  "nxc2.sub1.tld2 @$ns6"   # 11 replace NXDOMAIN w/ CNAME chain
-  addr 127.6.2.1    "a6-2.tld2 @$ns6"	   # 12
-  addr 56.56.56.56  "a3-6.tld2 @$ns6"	   # 13 wildcard CNAME
-  addr 57.57.57.57  "a3-7.sub1.tld2 @$ns6"   # 14 wildcard CNAME
-  addr 127.0.0.16   "a4-5-cname3.tld2 @$ns6" # 15 CNAME chain
-  addr 127.0.0.17   "a4-6-cname3.tld2 @$ns6" # 16 stop short in CNAME chain
-  nxdomain c1.crash2.tld3 @$ns6		   # 17 assert in rbtdb.c
-  nxdomain a0-1.tld2 +dnssec @$ns6	   # 18 simple DO=1 without sigs
-  nxdomain a0-1s-cname.tld2s  +dnssec @$ns6  # 19
-  drop a3-8.tld2 any @$ns6		   # 20 drop
+  nxdomain a0-1.tld2 @$ns6			# 1
+  nodata a3-1.tld2 @$ns6			# 2
+  nodata a3-2.tld2 @$ns6			# 3 nodata at DNAME itself
+  nxdomain a4-2.tld2 @$ns6			# 4 rewrite based on CNAME target
+  nxdomain a4-2-cname.tld2 @$ns6		# 5
+  nodata a4-3-cname.tld2 @$ns6			# 6
+  addr 12.12.12.12  "a4-1.sub1.tld2 @$ns6"	# 7 A replacement
+  addr 12.12.12.12  "a4-1.sub2.tld2 @$ns6"	# 8 A replacement with wildcard
+  addr 127.4.4.1    "a4-4.tld2 @$ns6"		# 9 prefer 1st conflicting QNAME zone
+  addr 12.12.12.12  "nxc1.sub1.tld2 @$ns6"	# 10 replace NXDOMAIN w/ CNAME
+  addr 12.12.12.12  "nxc2.sub1.tld2 @$ns6"	# 11 replace NXDOMAIN w/ CNAME chain
+  addr 127.6.2.1    "a6-2.tld2 @$ns6"		# 12
+  addr 56.56.56.56  "a3-6.tld2 @$ns6"		# 13 wildcard CNAME
+  addr 57.57.57.57  "a3-7.sub1.tld2 @$ns6"	# 14 wildcard CNAME
+  addr 127.0.0.16   "a4-5-cname3.tld2 @$ns6"	# 15 CNAME chain
+  addr 127.0.0.17   "a4-6-cname3.tld2 @$ns6"	# 16 stop short in CNAME chain
+  nxdomain c1.crash2.tld3 @$ns6			# 17 assert in rbtdb.c
+  nxdomain a0-1.tld2 +dnssec @$ns6		# 18 simple DO=1 without sigs
+  nxdomain a0-1s-cname.tld2s  +dnssec @$ns6	# 19
+  drop a3-8.tld2 any @$ns6			# 20 drop
   end_group
   ckstatsrange $ns3 test1 ns3 22 30
   ckstats $ns5 test1 ns5 0
   ckstats $ns6 test1 ns6 0
 
   start_group "IP rewrites" test2
-  nodata a3-1.tld2			# 1 NODATA
-  nochange a3-2.tld2			# 2 no policy record so no change
-  nochange a4-1.tld2			# 3 obsolete PASSTHRU record style
-  nxdomain a4-2.tld2			# 4
-  nochange a4-2.tld2 -taaaa		# 5 no A => no policy rewrite
-  nochange a4-2.tld2 -ttxt		# 6 no A => no policy rewrite
-  nxdomain a4-2.tld2 -tany		# 7 no A => no policy rewrite
-  nodata a4-3.tld2			# 8
-  nxdomain a3-1.tld2 -taaaa		# 9 IPv6 policy
-  nochange a4-1-aaaa.tld2 -taaaa	# 10
-  addr 127.0.0.1	 a5-1-2.tld2	# 11 prefer smallest policy address
-  addr 127.0.0.1	 a5-3.tld2	# 12 prefer first conflicting IP zone
-  nochange a5-4.tld2	    +norecurse	# 13 check that RD=1 is required for #14
-  addr 14.14.14.14 a5-4.tld2		# 14 prefer QNAME to IP
-  nochange a4-4.tld2			# 15 PASSTHRU
-  nxdomain c2.crash2.tld3		# 16 assert in rbtdb.c
-  addr 127.0.0.17 "a4-4.tld2 -b $ns1"	# 17 client-IP address trigger
-  nxdomain a7-1.tld2			# 18 slave policy zone (RT34450)
+  nodata a3-1.tld2				# 1 NODATA
+  nochange a3-2.tld2				# 2 no policy record so no change
+  nochange a4-1.tld2				# 3 obsolete PASSTHRU record style
+  nxdomain a4-2.tld2				# 4
+  nochange a4-2.tld2 -taaaa			# 5 no A => no policy rewrite
+  nochange a4-2.tld2 -ttxt			# 6 no A => no policy rewrite
+  nxdomain a4-2.tld2 -tany			# 7 no A => no policy rewrite
+  nodata a4-3.tld2				# 8
+  nxdomain a3-1.tld2 -taaaa			# 9 IPv6 policy
+  nochange a4-1-aaaa.tld2 -taaaa		# 10
+  addr 127.0.0.1 a5-1-2.tld2			# 11 prefer smallest policy address
+  addr 127.0.0.1 a5-3.tld2			# 12 prefer first conflicting IP zone
+  nochange a5-4.tld2 +norecurse			# 13 check that RD=1 is required for #14
+  addr 14.14.14.14 a5-4.tld2			# 14 prefer QNAME to IP
+  nochange a4-4.tld2				# 15 PASSTHRU
+  nxdomain c2.crash2.tld3			# 16 assert in rbtdb.c
+  addr 127.0.0.17 "a4-4.tld2 -b $ns1"		# 17 client-IP address trigger
+  nxdomain a7-1.tld2				# 18 slave policy zone (RT34450)
+  # updating an response zone policy
   cp ns2/blv2.tld2.db.in ns2/bl.tld2.db
   rndc_reload ns2 $ns2 bl.tld2
   ck_soa 2 bl.tld2 $ns3
-  nochange a7-1.tld2			# 19 PASSTHRU
-  sleep 1	# ensure that a clock tick has occured so that named will do the reload
+  nochange a7-1.tld2				# 19 PASSTHRU
+  # ensure that a clock tick has occured so that named will do the reload
+  sleep 1
   cp ns2/blv3.tld2.db.in ns2/bl.tld2.db
   rndc_reload ns2 $ns2 bl.tld2
   ck_soa 3 bl.tld2 $ns3
-  nxdomain a7-1.tld2			# 20 slave policy zone (RT34450)
+  nxdomain a7-1.tld2				# 20 slave policy zone (RT34450)
   end_group
   ckstats $ns3 test2 ns3 12
 
@@ -572,20 +593,20 @@ EOF
 
   # these tests assume "min-ns-dots 0"
   start_group "NSDNAME rewrites" test3
-  nochange a3-1.tld2			# 1
-  nochange a3-1.tld2	    +dnssec	# 2 this once caused problems
+  nochange a3-1.tld2				# 1
+  nochange a3-1.tld2 +dnssec			# 2 this once caused problems
   nxdomain a3-1.sub1.tld2			# 3 NXDOMAIN *.sub1.tld2 by NSDNAME
-  nxdomain a3-1.subsub.sub1.tld2
-  nxdomain a3-1.subsub.sub1.tld2 -tany
+  nxdomain a3-1.subsub.sub1.tld2		# 4
+  nxdomain a3-1.subsub.sub1.tld2 -tany		# 5
   addr 12.12.12.12 a4-2.subsub.sub2.tld2	# 6 walled garden for *.sub2.tld2
-  nochange a3-2.tld2.			# 7 exempt rewrite by name
-  nochange a0-1.tld2.			# 8 exempt rewrite by address block
-  addr 12.12.12.12 a4-1.tld2		# 9 prefer QNAME policy to NSDNAME
-  addr 127.0.0.1 a3-1.sub3.tld2		# 10 prefer policy for largest NSDNAME
-  addr 127.0.0.2 a3-1.subsub.sub3.tld2
-  nxdomain xxx.crash1.tld2		# 12 dns_db_detachnode() crash
+  nochange a3-2.tld2.				# 7 exempt rewrite by name
+  nochange a0-1.tld2.				# 8 exempt rewrite by address block
+  addr 12.12.12.12 a4-1.tld2			# 9 prefer QNAME policy to NSDNAME
+  addr 127.0.0.1 a3-1.sub3.tld2			# 10 prefer policy for largest NSDNAME
+  addr 127.0.0.2 a3-1.subsub.sub3.tld2		# 11
+  nxdomain xxx.crash1.tld2			# 12 dns_db_detachnode() crash
   if [ "$mode" = dnsrps ]; then
-    addr 12.12.12.12 as-ns.tld5.	# 13 qname-as-ns
+    addr 12.12.12.12 as-ns.tld5.		# 13 qname-as-ns
   fi
   end_group
   if [ "$mode" = dnsrps ]; then
@@ -596,19 +617,19 @@ EOF
 
   # these tests assume "min-ns-dots 0"
   start_group "NSIP rewrites" test4
-  nxdomain a3-1.tld2			# 1 NXDOMAIN for all of tld2
-  nochange a3-2.tld2.			# 2 exempt rewrite by name
-  nochange a0-1.tld2.			# 3 exempt rewrite by address block
-  nochange a3-1.tld4			# 4 different NS IP address
+  nxdomain a3-1.tld2				# 1 NXDOMAIN for all of tld2
+  nochange a3-2.tld2.				# 2 exempt rewrite by name
+  nochange a0-1.tld2.				# 3 exempt rewrite by address block
+  nochange a3-1.tld4				# 4 different NS IP address
   if [ "$mode" = dnsrps ]; then
-      addr 12.12.12.12 as-ns.tld5.	# 5 ip-as-ns
+      addr 12.12.12.12 as-ns.tld5.		# 5 ip-as-ns
   fi
   end_group
 
   start_group "walled garden NSIP rewrites" test4a
-  addr 41.41.41.41 a3-1.tld2		# 1 walled garden for all of tld2
-  addr 2041::41   'a3-1.tld2 AAAA'	# 2 walled garden for all of tld2
-  here a3-1.tld2 TXT <<'EOF'		# 3 text message for all of tld2
+  addr 41.41.41.41 a3-1.tld2			# 1 walled garden for all of tld2
+  addr 2041::41   'a3-1.tld2 AAAA'		# 2 walled garden for all of tld2
+  here a3-1.tld2 TXT <<'EOF'			# 3 text message for all of tld2
     ;; status: NOERROR, x
     a3-1.tld2.	    x	IN	TXT   "NSIP walled garden"
 EOF
@@ -620,30 +641,30 @@ EOF
   fi
 
   # policies in ./test5 overridden by response-policy{} in ns3/named.conf
-  #   and in ns5/named.conf
+  # and in ns5/named.conf
   start_group "policy overrides" test5
-  addr 127.0.0.1 a3-1.tld2		# 1 bl-given
-  nochange a3-2.tld2			# 2 bl-passthru
-  nochange a3-3.tld2			# 3 bl-no-op	obsolete for passthru
-  nochange a3-4.tld2			# 4 bl-disabled
-  nodata a3-5.tld2			# 5 bl-nodata	zone recursive-only no
-  nodata a3-5.tld2    +norecurse		# 6 bl-nodata	zone recursive-only no
-  nodata a3-5.tld2			# 7 bl-nodata		not needed
-  nxdomain a3-5.tld2  +norecurse	@$ns5	# 8 bl-nodata	global recursive-only no
-  nxdomain a3-5.tld2s		@$ns5	# 9 bl-nodata	global break-dnssec
-  nxdomain a3-5.tld2s +dnssec	@$ns5	# 10 bl-nodata	global break-dnssec
-  nxdomain a3-6.tld2			# 11 bl-nxdomain
-  here a3-7.tld2 -tany <<'EOF'
+  addr 127.0.0.1 a3-1.tld2			# 1 bl-given
+  nochange a3-2.tld2				# 2 bl-passthru
+  nochange a3-3.tld2				# 3 bl-no-op (obsolete for passthru)
+  nochange a3-4.tld2				# 4 bl-disabled
+  nodata a3-5.tld2				# 5 bl-nodata zone recursive-only no
+  nodata a3-5.tld2 +norecurse			# 6 bl-nodata zone recursive-only no
+  nodata a3-5.tld2				# 7 bl-nodata not needed
+  nxdomain a3-5.tld2 +norecurse @$ns5		# 8 bl-nodata global recursive-only no
+  nxdomain a3-5.tld2s @$ns5			# 9 bl-nodata global break-dnssec
+  nxdomain a3-5.tld2s +dnssec @$ns5		# 10 bl-nodata global break-dnssec
+  nxdomain a3-6.tld2				# 11 bl-nxdomain
+  here a3-7.tld2 -tany <<'EOF'			# 12
     ;; status: NOERROR, x
     a3-7.tld2.	    x	IN	CNAME   txt-only.tld2.
     txt-only.tld2.  x	IN	TXT     "txt-only-tld2"
 EOF
-  addr 58.58.58.58 a3-8.tld2		# 13 bl_wildcname
+  addr 58.58.58.58 a3-8.tld2			# 13 bl_wildcname
   addr 59.59.59.59 a3-9.sub9.tld2		# 14 bl_wildcname
-  addr 12.12.12.12 a3-15.tld2		# 15 bl-garden	via CNAME to a12.tld2
-  addr 127.0.0.16 a3-16.tld2	    100	# 16 bl		    max-policy-ttl 100
-  addr 17.17.17.17 "a3-17.tld2 @$ns5" 90	# 17 ns5 bl	    max-policy-ttl 90
-  drop a3-18.tld2 any			# 18 bl-drop
+  addr 12.12.12.12 a3-15.tld2			# 15 bl-garden via CNAME to a12.tld2
+  addr 127.0.0.16 a3-16.tld2 100		# 16 bl	max-policy-ttl 100
+  addr 17.17.17.17 "a3-17.tld2 @$ns5" 90	# 17 ns5 bl max-policy-ttl 90
+  drop a3-18.tld2 any				# 18 bl-drop
   nxdomain TCP a3-19.tld2			# 19 bl-tcp-only
   end_group
   ckstats $ns3 test5 ns3 12
@@ -665,7 +686,6 @@ EOF
   # nxdomain 32.3.2.1.127.rpz-ip
   end_group
   ckstats $ns3 bugs ns3 8
-
 
   # superficial test for major performance bugs
   QPERF=`sh qperf.sh`
@@ -742,7 +762,7 @@ EOF
   # restart the main test RPZ server to see if that creates a core file
   if test -z "$HAVE_CORE"; then
     $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpz ns3
-    restart 3
+    restart 3 "rebuild-bl-rpz"
     HAVE_CORE=`find ns* -name '*core*' -print`
     test -z "$HAVE_CORE" || setret "found $HAVE_CORE; memory leak?"
   fi
@@ -756,6 +776,30 @@ EOF
               sed -e '10,$d' -e 's/^//' | cat_i
     fi
   done
+
+  if [ native = "$mode" ]; then
+    # restart the main test RPZ server with a bad zone.
+    t=`expr $t + 1`
+    echo_i "checking that ns3 with broken rpz does not crash (${t})"
+    $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpz ns3
+    cp ns3/broken.db.in ns3/bl.db
+    restart 3 # do not rebuild rpz zones
+    nocrash a3-1.tld2 -tA
+    $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpz ns3
+    restart 3 "rebuild-bl-rpz"
+
+    # reload a RPZ zone that is now deliberately broken.
+    t=`expr $t + 1`
+    echo_i "checking rpz failed update will keep previous rpz rules (${t})"
+    $DIG -p ${PORT} @$ns3 walled.tld2 > dig.out.$t.before
+    grep "walled\.tld2\..*IN.*A.*10\.0\.0\.1" dig.out.$t.before > /dev/null || setret "failed"
+    cp ns3/broken.db.in ns3/manual-update-rpz.db
+    rndc_reload ns3 $ns3 manual-update-rpz
+    sleep 1
+    # ensure previous RPZ rules still apply.
+    $DIG -p ${PORT} @$ns3 walled.tld2 > dig.out.$t.after
+    grep "walled\.tld2\..*IN.*A.*10\.0\.0\.1" dig.out.$t.after > /dev/null || setret "failed"
+  fi
 
   t=`expr $t + 1`
   echo_i "checking that ttl values are not zeroed when qtype is '*' (${t})"
@@ -784,9 +828,28 @@ EOF
   $DIG z.x.servfail -p ${PORT} @$ns7 > dig.out.${t}
   grep NXDOMAIN dig.out.${t} > /dev/null || setret "failed"
 
+  t=`expr $t + 1`
+  echo_i "checking that "add-soa no" at rpz zone level works (${t})"
+  $DIG z.x.servfail -p ${PORT} @$ns7 > dig.out.${t}
+  grep SOA dig.out.${t} > /dev/null && setret "failed"
+
+  if [ native = "$mode" ]; then
+    t=`expr $t + 1`
+    echo_i "checking that "add-soa yes" at response-policy level works (${t})"
+    $DIG walled.tld2 -p ${PORT} +noall +add @$ns3 > dig.out.${t}
+    grep "^manual-update-rpz\..*SOA" dig.out.${t} > /dev/null || setret "failed"
+  fi
+
+  if [ native = "$mode" ]; then
+    t=`expr $t + 1`
+    echo_i "checking that "add-soa unset" works (${t})"
+    $DIG walled.tld2 -p ${PORT} +noall +add @$ns8 > dig.out.${t}
+    grep "^manual-update-rpz\..*SOA" dig.out.${t} > /dev/null || setret "failed"
+  fi
+
   # dnsrps does not allow NS RRs in policy zones, so this check
   # with dnsrps results in no rewriting.
-  if [ "$mode" = native ]; then
+  if [ native = "$mode" ]; then
     t=`expr $t + 1`
     echo_i "checking rpz with delegation fails correctly (${t})"
     $DIG -p ${PORT} @$ns3 ns example.com > dig.out.$t

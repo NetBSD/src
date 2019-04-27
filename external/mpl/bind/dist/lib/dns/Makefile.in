@@ -189,7 +189,7 @@ clean distclean::
 	rm -f libdns.@A@ timestamp
 	rm -f gen code.h include/dns/enumtype.h include/dns/enumclass.h
 	rm -f include/dns/rdatastruct.h
-	rm -f dnstap.pb-c.c dnstap.pb-c.h include/dns/dnstap.pb-c.h
+	rm -f dnstap.pb-c.c dnstap.pb-c.h
 
 newrr::
 	rm -f code.h include/dns/enumtype.h include/dns/enumclass.h
@@ -204,9 +204,8 @@ ${OBJS}: include
 # dnstap
 dnstap.@O@: dnstap.c dnstap.pb-c.c
 
-dnstap.pb-c.c dnstap.pb-c.h include/dns/dnstap.pb-c.h: dnstap.proto
+dnstap.pb-c.c dnstap.pb-c.h: dnstap.proto
 	$(PROTOC_C) --c_out=. --proto_path ${srcdir} dnstap.proto
-	cp -f dnstap.pb-c.h include/dns
 
 dnstap.pb-c.@O@: dnstap.pb-c.c
 

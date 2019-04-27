@@ -1,4 +1,4 @@
-/*	$NetBSD: errno2result.c,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
+/*	$NetBSD: errno2result.c,v 1.1.1.3 2019/04/27 23:47:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,6 +65,8 @@ isc__errno2resultx(int posixerrno, bool dolog,
 	case EMFILE:
 	case WSAEMFILE:
 		return (ISC_R_TOOMANYOPENFILES);
+	case ENOSPC:
+		return (ISC_R_DISCFULL);
 	case ERROR_CANCELLED:
 		return (ISC_R_CANCELED);
 	case ERROR_CONNECTION_REFUSED:

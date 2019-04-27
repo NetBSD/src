@@ -9,6 +9,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+# shellcheck source=conf.sh
+. "$SYSTEMTESTTOP/conf.sh"
+
+$SHELL clean.sh
+
 #
 # Set up test data for zone transfer quota tests.
 #

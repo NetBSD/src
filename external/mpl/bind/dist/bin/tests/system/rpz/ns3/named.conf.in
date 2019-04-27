@@ -44,7 +44,9 @@ options {
 	    zone "bl-drop"	policy drop;
 	    zone "bl-tcp-only"	policy tcp-only;
 	    zone "bl.tld2";
+	    zone "manual-update-rpz";
 	}
+	add-soa yes
 	min-ns-dots 0
 	qname-wait-recurse yes
 	min-update-interval 0
@@ -102,3 +104,9 @@ zone "bl.tld2."		{type slave; file "bl.tld2.db"; masters {10.53.0.2;};
 
 zone "crash1.tld2"	{type master; file "crash1"; notify no;};
 zone "crash2.tld3."	{type master; file "crash2"; notify no;};
+
+zone "manual-update-rpz." {
+	type master;
+	file "manual-update-rpz.db";
+	notify no;
+};

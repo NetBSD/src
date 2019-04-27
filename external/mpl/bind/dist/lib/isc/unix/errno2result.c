@@ -1,4 +1,4 @@
-/*	$NetBSD: errno2result.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
+/*	$NetBSD: errno2result.c,v 1.1.1.3 2019/04/27 23:47:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -59,6 +59,12 @@ isc___errno2result(int posixerrno, bool dolog,
 	case ENFILE:
 	case EMFILE:
 		return (ISC_R_TOOMANYOPENFILES);
+#ifdef EDQUOT
+	case EDQUOT:
+		return (ISC_R_DISCQUOTA);
+#endif
+	case ENOSPC:
+		return (ISC_R_DISCFULL);
 #ifdef EOVERFLOW
 	case EOVERFLOW:
 		return (ISC_R_RANGE);

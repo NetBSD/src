@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.3 2019/02/24 18:56:47 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.4 2019/04/27 23:47:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2818,6 +2818,11 @@ internal_accept(isc__socket_t *sock) {
 	INSIST(VALID_SOCKET(sock));
 
 	LOCK(&sock->lock);
+	if (sock->fd < 0) {
+		/* Socket is gone */
+		UNLOCK(&sock->lock);
+		return;
+	}
 	socket_log(sock, NULL, TRACE,
 		   "internal_accept called, locked socket");
 
@@ -3053,6 +3058,11 @@ internal_recv(isc__socket_t *sock) {
 	INSIST(VALID_SOCKET(sock));
 
 	LOCK(&sock->lock);
+	if (sock->fd < 0) {
+		/* Socket is gone */
+		UNLOCK(&sock->lock);
+		return;
+	}
 	dev = ISC_LIST_HEAD(sock->recv_list);
 	if (dev == NULL) {
 		goto finish;
@@ -3107,6 +3117,11 @@ internal_send(isc__socket_t *sock) {
 	INSIST(VALID_SOCKET(sock));
 
 	LOCK(&sock->lock);
+	if (sock->fd < 0) {
+		/* Socket is gone */
+		UNLOCK(&sock->lock);
+		return;
+	}
 	dev = ISC_LIST_HEAD(sock->send_list);
 	if (dev == NULL) {
 		goto finish;

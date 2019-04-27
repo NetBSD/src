@@ -107,6 +107,8 @@ def check(zone, args):
         fp, _ = Popen(cmd, stdout=PIPE).communicate()
 
     for line in fp.splitlines():
+        if type(line) is not str:
+            line = line.decode('ascii')
         rrlist.append(SECRR(line, args.lookaside))
     rrlist = sorted(rrlist, key=lambda rr: (rr.keyid, rr.keyalg, rr.hashalg))
 
@@ -128,6 +130,8 @@ def check(zone, args):
         fp, _ = Popen(cmd, stdin=PIPE, stdout=PIPE).communicate(intods)
 
     for line in fp.splitlines():
+        if type(line) is not str:
+            line = line.decode('ascii')
         klist.append(SECRR(line, args.lookaside))
 
     if len(klist) < 1:
