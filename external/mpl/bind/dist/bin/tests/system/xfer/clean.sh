@@ -21,7 +21,7 @@ rm -f ns1/edns-expire.db
 rm -f ns2/example.db ns2/tsigzone.db ns2/example.db.jnl
 rm -f ns3/example.bk ns3/xfer-stats.bk ns3/tsigzone.bk ns3/example.bk.jnl
 rm -f ns3/master.bk ns3/master.bk.jnl
-rm -f ns4/nil.db ns4/root.db
+rm -f ns4/*.db ns4/*.jnl
 rm -f ns6/*.db ns6/*.bk ns6/*.jnl
 rm -f ns7/*.db ns7/*.bk ns7/*.jnl
 rm -f ns8/large.db ns8/small.db

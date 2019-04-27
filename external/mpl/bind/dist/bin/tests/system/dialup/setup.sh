@@ -7,5 +7,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-rm -f ns2/example.bk
-rm -f ns3/example.bk
+# shellcheck source=conf.sh
+. "$SYSTEMTESTTOP/conf.sh"
+
+$SHELL clean.sh

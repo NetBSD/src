@@ -28,7 +28,7 @@ CINCLUDES =	-I. -I${top_srcdir}/lib/ns -Iinclude \
 		${NS_INCLUDES} ${DNS_INCLUDES} ${ISC_INCLUDES} \
 		@OPENSSL_INCLUDES@ @DST_GSSAPI_INC@
 
-CDEFINES =
+CDEFINES =	-DNAMED_PLUGINDIR=\"${plugindir}\"
 
 CWARNINGS =
 

@@ -32,6 +32,6 @@ cat $infile $keyname1.key $keyname2.key >$zonefile
 $SIGNER -l $dlvzone -g -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 
 $CHECKZONE -q -D -i none druz druz.pre |
-sed '/IN DNSKEY/s/\([a-z0-9A-Z/]\{10\}\)[a-z0-9A-Z/]\{16\}/\1XXXXXXXXXXXXXXXX/'> druz.signed
+sed '/IN DNSKEY/s/\([a-z0-9A-Z+/]\{10\}\)[a-z0-9A-Z+/]\{16\}/\1XXXXXXXXXXXXXXXX/'> druz.signed
 
 echo_i "signed $zone"

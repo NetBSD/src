@@ -23,7 +23,7 @@ offer support on a "best effort" basis for some.
 
 ### Regularly tested platforms
 
-As of Jan 2019, BIND 9.13 is fully supported and regularly tested on the
+As of Feb 2019, BIND 9.14 is fully supported and regularly tested on the
 following systems:
 
 * Debian 8, 9, 10
@@ -60,7 +60,7 @@ Server 2012 R2, none of these are tested regularly by ISC.
 
 ## Unsupported platforms
 
-These are platforms on which BIND 9.13 is known *not* to build or run:
+These are platforms on which BIND 9.14 is known *not* to build or run:
 
 * Platforms without at least OpenSSL 1.0.2
 * Windows 10 / x86
@@ -95,8 +95,18 @@ armhf documentation):
   the processors to support here, therefore the recommended build option is
   `-mfpu=vfpv3-d16`.
 
-The configure command should look like this:
+The `configure` command should look like this:
 
 ```
 CFLAGS="-march=armv7-a -mfpu=vfpv3-d16 -Os -g" ./configure
+```
+
+### NetBSD 6 i386
+
+The i386 build of NetBSD requires the `libatomic` library, available from
+the `gcc5-libs` package.  Because this library is in a non-standard path,
+its location must be specified in the `configure` command line:
+
+```
+LDFLAGS="-L/usr/pkg/gcc5/i486--netbsdelf/lib/ -Wl,-R/usr/pkg/gcc5/i486--netbsdelf/lib/" ./configure
 ```

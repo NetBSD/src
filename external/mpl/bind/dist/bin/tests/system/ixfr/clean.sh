@@ -10,7 +10,7 @@
 # information regarding copyright ownership.
 
 rm -f stats.*
-rm -f ns1/myftp.db
+rm -f ns1/*.db ns1/*.jnl
 rm -f ns3/*.jnl ns3/mytest.db ns3/subtest.db
 rm -f ns4/*.jnl ns4/*.db
 rm -f */named.memstats

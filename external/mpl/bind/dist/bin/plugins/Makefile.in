@@ -25,6 +25,7 @@ NSLIBS =	../../lib/ns/libns.@A@
 LIBS =
 
 SO_TARGETS =	lib/filter-aaaa.@SO@
+SO_INSTALL =	filter-aaaa.@SO@
 TARGETS =	@SO_TARGETS@
 
 SO_OBJS =	filter-aaaa.@O@
@@ -59,14 +60,20 @@ clean distclean::
 	rm -f ${TARGETS} ${OBJS}
 
 installdirs:
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${libdir}
+	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${plugindir}
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
-install:: filter-aaaa.@SO@ installdirs
-	${LIBTOOL_MODE_INSTALL} ${INSTALL_LIBRARY} filter-aaaa.@SO@ \
-		${DESTDIR}${libdir}
+install:: @SO_TARGETS@ installdirs
+	for i in ${SO_INSTALL} ; \
+	do \
+		if test -f $$i ; \
+		then \
+			${LIBTOOL_MODE_INSTALL} ${INSTALL_LIBRARY} $$i \
+				 ${DESTDIR}${plugindir}; \
+		fi \
+	done
 	${INSTALL_DATA} ${srcdir}/filter-aaaa.8 ${DESTDIR}${mandir}/man8
 
 uninstall::
-	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${libdir}/filter-aaaa.@SO@
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${plugindir}/filter-aaaa.@SO@
 	rm -f ${DESTDIR}${mandir}/man8/filter-aaaa.8
