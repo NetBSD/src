@@ -12,11 +12,12 @@
 # shellcheck source=conf.sh
 . "$SYSTEMTESTTOP/conf.sh"
 
+$SHELL clean.sh
+
 copy_setports ns1/named.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf
 copy_setports ns3/named.conf.in ns3/named.conf
 
-rm -f ns1/example.db.raw
 cp ns1/example.db ns2/
 cp ns2/formerly-text.db.in ns2/formerly-text.db
 cp ns1/large.db.in ns1/large.db

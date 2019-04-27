@@ -29,6 +29,7 @@ options {
 	response-policy {
 	    zone "policy1" min-update-interval 0;
 	} qname-wait-recurse yes
+	// add-soa yes # leave add-soa as default for unset test
 	nsip-enable yes
 	nsdname-enable yes;
 

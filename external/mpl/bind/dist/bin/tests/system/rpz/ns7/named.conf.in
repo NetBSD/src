@@ -24,7 +24,7 @@ options {
 	dnssec-validation yes;
 
 	response-policy {
-	    zone "policy2";
+	    zone "policy2" add-soa no;
 	} qname-wait-recurse no
 	nsip-enable yes
 	nsdname-enable yes

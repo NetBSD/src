@@ -43,6 +43,8 @@ class keyzone:
         fp, _ = Popen([czpath, "-o", "-", name, filename],
                       stdout=PIPE, stderr=PIPE).communicate()
         for line in fp.splitlines():
+            if type(line) is not str:
+                line = line.decode('ascii')
             if re.search('^[:space:]*;', line):
                 continue
             fields = line.split()

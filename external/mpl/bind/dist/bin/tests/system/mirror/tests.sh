@@ -12,7 +12,7 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-DIGOPTS="-p ${PORT} -b 10.53.0.1 +dnssec +time=1 +tries=1 +multi"
+DIGOPTS="-p ${PORT} -b 10.53.0.1 +dnssec +time=2 +tries=1 +multi"
 RNDCCMD="$RNDC -c $SYSTEMTESTTOP/common/rndc.conf -p ${CONTROLPORT} -s"
 
 # Wait until the transfer of the given zone to ns3 either completes successfully
@@ -210,6 +210,14 @@ grep "ANSWER: 0" dig.out.ns3.test$n > /dev/null || ret=1
 grep "${UPDATED_SERIAL_BAD}.*; serial" dig.out.ns3.test$n > /dev/null && ret=1
 nextpartpeek ns3/named.run | grep "No correct RSASHA256 signature for verify-load SOA" > /dev/null || ret=1
 nextpartpeek ns3/named.run | grep "verify-load.*mirror zone is now in use" > /dev/null && ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "ensuring trust anchor telemetry queries are sent upstream for a mirror zone ($n)"
+ret=0
+# ns3 is started with "-T tat=3", so TAT queries should have already been sent.
+grep "_ta-[-0-9a-f]*/NULL" ns1/named.run > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -538,14 +546,6 @@ $DIG $DIGOPTS @10.53.0.3 +norec verify-addzone SOA > dig.out.ns3.test$n 2>&1 || 
 grep "NXDOMAIN" dig.out.ns3.test$n > /dev/null || ret=1
 grep "flags:.* aa" dig.out.ns3.test$n > /dev/null && ret=1
 grep "flags:.* ad" dig.out.ns3.test$n > /dev/null || ret=1
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
-
-n=`expr $n + 1`
-echo_i "ensuring trust anchor telemetry queries are sent upstream for a mirror zone ($n)"
-ret=0
-# ns3 is started with "-T tat=1", so TAT queries should have already been sent.
-grep "_ta-[-0-9a-f]*/NULL" ns1/named.run > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

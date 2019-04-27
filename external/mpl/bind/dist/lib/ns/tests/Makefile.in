@@ -17,7 +17,7 @@ VERSION=@BIND9_VERSION@
 
 CINCLUDES =	-I. -Iinclude ${NS_INCLUDES} ${DNS_INCLUDES} ${ISC_INCLUDES} \
 		@OPENSSL_INCLUDES@ @CMOCKA_CFLAGS@
-CDEFINES =	-DTESTS="\"${top_builddir}/lib/ns/tests/\""
+CDEFINES =	-DTESTS="\"${top_builddir}/lib/ns/tests/\"" -DNAMED_PLUGINDIR=\"${plugindir}\"
 
 ISCLIBS =	../../isc/libisc.@A@ @OPENSSL_LIBS@
 ISCDEPLIBS =	../../isc/libisc.@A@
@@ -33,12 +33,14 @@ OBJS =		nstest.@O@
 SRCS =		nstest.c \
 		listenlist_test.c \
 		notify_test.c \
+		plugin_test.c \
 		query_test.c
 
 SUBDIRS =
 TARGETS =	listenlist_test@EXEEXT@ \
 		notify_test@EXEEXT@ \
-		query_test
+		plugin_test@EXEEXT@ \
+		query_test@EXEEXT@
 
 @BIND9_MAKE_RULES@
 
@@ -50,6 +52,11 @@ listenlist_test@EXEEXT@: listenlist_test.@O@ nstest.@O@ ${NSDEPLIBS} ${ISCDEPLIB
 notify_test@EXEEXT@: notify_test.@O@ nstest.@O@ ${NSDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ notify_test.@O@ nstest.@O@ \
+		${NSLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
+
+plugin_test@EXEEXT@: plugin_test.@O@ nstest.@O@ ${NSDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
+		${LDFLAGS} -o $@ plugin_test.@O@ nstest.@O@ \
 		${NSLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 query_test@EXEEXT@: query_test.@O@ nstest.@O@ ${NSDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}

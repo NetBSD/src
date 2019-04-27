@@ -33,7 +33,7 @@ HEADERS =	acl.h adb.h badcache.h bit.h byaddr.h \
 		update.h validator.h version.h view.h xfrin.h \
 		zone.h zonekey.h zoneverify.h zt.h
 
-GENHEADERS =	@DNSTAP_PB_C_H@ enumclass.h enumtype.h rdatastruct.h
+GENHEADERS =	enumclass.h enumtype.h rdatastruct.h
 
 SUBDIRS =
 TARGETS =

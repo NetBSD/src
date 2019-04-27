@@ -1,4 +1,4 @@
-/*	$NetBSD: zonemd_63.c,v 1.1.1.1 2019/02/24 18:56:52 christos Exp $	*/
+/*	$NetBSD: zonemd_63.c,v 1.1.1.2 2019/04/27 23:47:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -72,7 +72,7 @@ totext_zonemd(ARGS_TOTEXT) {
 	char buf[sizeof("0123456789")];
 	unsigned long num;
 
-	REQUIRE(rdata->length != 0);
+	REQUIRE(rdata->length > 6);
 
 	UNUSED(tctx);
 
@@ -138,9 +138,13 @@ fromwire_zonemd(ARGS_FROMWIRE) {
 	isc_buffer_activeregion(source, &sr);
 
 	/*
-	 * Check digest lengths if we know them.
+	 * If we do not recognize the digest type, only ensure that the digest
+	 * is present at all.
+	 *
+	 * If we do recognize the digest type, ensure that the digest is of the
+	 * correct length.
 	 */
-	if (sr.length < 6 ||
+	if (sr.length < 7 ||
 	    (sr.base[4] == DNS_ZONEMD_DIGEST_SHA384 &&
 	     sr.length < 6 + ISC_SHA384_DIGESTLENGTH))
 	{
@@ -148,9 +152,10 @@ fromwire_zonemd(ARGS_FROMWIRE) {
 	}
 
 	/*
-	 * Only copy digest lengths if we know them.
-	 * If there is extra data dns_rdata_fromwire() will
-	 * detect that.
+	 * Only specify the number of octets to consume if we recognize the
+	 * digest type.
+	 *
+	 * If there is extra data, dns_rdata_fromwire() will detect that.
 	 */
 	if (sr.base[4] == DNS_ZONEMD_DIGEST_SHA384) {
 		sr.length = 6 + ISC_SHA384_DIGESTLENGTH;

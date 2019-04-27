@@ -51,11 +51,10 @@
 <h2>Synopsis</h2>
     <div class="cmdsynopsis"><p>
       <code class="command">dnssec-keygen</code> 
-       [<code class="option">-a <em class="replaceable"><code>algorithm</code></em></code>]
-       [<code class="option">-b <em class="replaceable"><code>keysize</code></em></code>]
-       [<code class="option">-n <em class="replaceable"><code>nametype</code></em></code>]
        [<code class="option">-3</code>]
        [<code class="option">-A <em class="replaceable"><code>date/offset</code></em></code>]
+       [<code class="option">-a <em class="replaceable"><code>algorithm</code></em></code>]
+       [<code class="option">-b <em class="replaceable"><code>keysize</code></em></code>]
        [<code class="option">-C</code>]
        [<code class="option">-c <em class="replaceable"><code>class</code></em></code>]
        [<code class="option">-D <em class="replaceable"><code>date/offset</code></em></code>]
@@ -70,6 +69,7 @@
        [<code class="option">-K <em class="replaceable"><code>directory</code></em></code>]
        [<code class="option">-k</code>]
        [<code class="option">-L <em class="replaceable"><code>ttl</code></em></code>]
+       [<code class="option">-n <em class="replaceable"><code>nametype</code></em></code>]
        [<code class="option">-P <em class="replaceable"><code>date/offset</code></em></code>]
        [<code class="option">-P sync <em class="replaceable"><code>date/offset</code></em></code>]
        [<code class="option">-p <em class="replaceable"><code>protocol</code></em></code>]
@@ -80,7 +80,6 @@
        [<code class="option">-t <em class="replaceable"><code>type</code></em></code>]
        [<code class="option">-V</code>]
        [<code class="option">-v <em class="replaceable"><code>level</code></em></code>]
-       [<code class="option">-z</code>]
        {name}
     </p></div>
   </div>
@@ -113,6 +112,16 @@
 
 
     <div class="variablelist"><dl class="variablelist">
+<dt><span class="term">-3</span></dt>
+<dd>
+	  <p>
+	    Use an NSEC3-capable algorithm to generate a DNSSEC key.
+	    If this option is used with an algorithm that has both
+	    NSEC and NSEC3 versions, then the NSEC3 version will be
+	    used; for example, <span class="command"><strong>dnssec-keygen -3a RSASHA1</strong></span>
+	    specifies the NSEC3RSASHA1 algorithm.
+	  </p>
+	</dd>
 <dt><span class="term">-a <em class="replaceable"><code>algorithm</code></em></span></dt>
 <dd>
 	  <p>
@@ -148,11 +157,9 @@
 	  <p>
 	    Specifies the number of bits in the key.  The choice of key
 	    size depends on the algorithm used.  RSA keys must be
-	    between 1024 and 2048 bits.  Diffie Hellman keys must be between
-	    128 and 4096 bits.  DSA keys must be between 512 and 1024
-	    bits and an exact multiple of 64.  HMAC keys must be
-	    between 1 and 512 bits. Elliptic curve algorithms don't need
-	    this parameter.
+	    between 1024 and 4096 bits.  Diffie Hellman keys must be between
+	    128 and 4096 bits.  Elliptic curve algorithms don't need this
+	    parameter.
 	  </p>
 	  <p>
 	    If the key size is not specified, some algorithms have
@@ -162,36 +169,15 @@
 	    <code class="option">-f KSK</code>) default to 2048 bits.
 	  </p>
 	</dd>
-<dt><span class="term">-n <em class="replaceable"><code>nametype</code></em></span></dt>
-<dd>
-	  <p>
-	    Specifies the owner type of the key.  The value of
-	    <code class="option">nametype</code> must either be ZONE (for a DNSSEC
-	    zone key (KEY/DNSKEY)), HOST or ENTITY (for a key associated
-	    with a host (KEY)), USER (for a key associated with a
-	    user(KEY)) or OTHER (DNSKEY).  These values are case
-	    insensitive.  Defaults to ZONE for DNSKEY generation.
-	  </p>
-	</dd>
-<dt><span class="term">-3</span></dt>
-<dd>
-	  <p>
-	    Use an NSEC3-capable algorithm to generate a DNSSEC key.
-	    If this option is used with an algorithm that has both
-	    NSEC and NSEC3 versions, then the NSEC3 version will be
-	    used; for example, <span class="command"><strong>dnssec-keygen -3a RSASHA1</strong></span>
-	    specifies the NSEC3RSASHA1 algorithm.
-	  </p>
-	</dd>
 <dt><span class="term">-C</span></dt>
 <dd>
 	  <p>
-	    Compatibility mode:  generates an old-style key, without
-	    any metadata.  By default, <span class="command"><strong>dnssec-keygen</strong></span>
-	    will include the key's creation date in the metadata stored
-	    with the private key, and other dates may be set there as well
-	    (publication date, activation date, etc).  Keys that include
-	    this data may be incompatible with older versions of BIND; the
+	    Compatibility mode: generates an old-style key, without any
+	    timing metadata. By default, <span class="command"><strong>dnssec-keygen</strong></span>
+	    will include the key's creation date in the metadata stored with
+	    the private key, and other dates may be set there as well
+	    (publication date, activation date, etc). Keys that include this
+	    data may be incompatible with older versions of BIND; the
 	    <code class="option">-C</code> option suppresses them.
 	  </p>
 	</dd>
@@ -252,12 +238,6 @@
 	    Sets the directory in which the key files are to be written.
 	  </p>
 	</dd>
-<dt><span class="term">-k</span></dt>
-<dd>
-	  <p>
-	    Deprecated in favor of -T KEY.
-	  </p>
-	</dd>
 <dt><span class="term">-L <em class="replaceable"><code>ttl</code></em></span></dt>
 <dd>
 	  <p>
@@ -271,13 +251,24 @@
 	    or <code class="literal">none</code> is the same as leaving it unset.
 	  </p>
 	</dd>
+<dt><span class="term">-n <em class="replaceable"><code>nametype</code></em></span></dt>
+<dd>
+	  <p>
+	    Specifies the owner type of the key.  The value of
+	    <code class="option">nametype</code> must either be ZONE (for a DNSSEC
+	    zone key (KEY/DNSKEY)), HOST or ENTITY (for a key associated
+	    with a host (KEY)), USER (for a key associated with a
+	    user(KEY)) or OTHER (DNSKEY).  These values are case
+	    insensitive.  Defaults to ZONE for DNSKEY generation.
+	  </p>
+	</dd>
 <dt><span class="term">-p <em class="replaceable"><code>protocol</code></em></span></dt>
 <dd>
 	  <p>
-	    Sets the protocol value for the generated key.  The protocol
-	    is a number between 0 and 255.  The default is 3 (DNSSEC).
-	    Other possible values for this argument are listed in
-	    RFC 2535 and its successors.
+	    Sets the protocol value for the generated key, for use
+	    with <code class="option">-T KEY</code>. The protocol is a number between 0
+	    and 255. The default is 3 (DNSSEC). Other possible values for
+	    this argument are listed in RFC 2535 and its successors.
 	  </p>
 	</dd>
 <dt><span class="term">-q</span></dt>
@@ -324,32 +315,27 @@
 	    default is DNSKEY when using a DNSSEC algorithm, but it can be
 	    overridden to KEY for use with SIG(0).
 	  </p>
-<p>
-	  </p>
-<p>
-	    Specifying any TSIG algorithm (HMAC-* or DH) with
-	    <code class="option">-a</code> forces this option to KEY.
-	  </p>
 	</dd>
 <dt><span class="term">-t <em class="replaceable"><code>type</code></em></span></dt>
 <dd>
 	  <p>
-	    Indicates the use of the key.  <code class="option">type</code> must be
-	    one of AUTHCONF, NOAUTHCONF, NOAUTH, or NOCONF.  The default
-	    is AUTHCONF.  AUTH refers to the ability to authenticate
-	    data, and CONF the ability to encrypt data.
-	  </p>
-	</dd>
-<dt><span class="term">-v <em class="replaceable"><code>level</code></em></span></dt>
-<dd>
-	  <p>
-	    Sets the debugging level.
+	    Indicates the use of the key, for use with <code class="option">-T
+	    KEY</code>. <code class="option">type</code> must be one of AUTHCONF,
+	    NOAUTHCONF, NOAUTH, or NOCONF. The default is AUTHCONF. AUTH
+	    refers to the ability to authenticate data, and CONF the ability
+	    to encrypt data.
 	  </p>
 	</dd>
 <dt><span class="term">-V</span></dt>
 <dd>
 	  <p>
 	    Prints version information.
+	  </p>
+	</dd>
+<dt><span class="term">-v <em class="replaceable"><code>level</code></em></span></dt>
+<dd>
+	  <p>
+	    Sets the debugging level.
 	  </p>
 	</dd>
 </dl></div>
@@ -494,10 +480,12 @@
       key.
     </p>
     <p>
-      The <code class="filename">.key</code> file contains a DNS KEY record
-      that
-      can be inserted into a zone file (directly or with a $INCLUDE
-      statement).
+      The <code class="filename">.key</code> file contains a DNSKEY or KEY record.
+      When a zone is being signed by <span class="command"><strong>named</strong></span>
+      or <span class="command"><strong>dnssec-signzone</strong></span> <code class="option">-S</code>, DNSKEY
+      records are included automatically. In other cases,
+      the <code class="filename">.key</code> file can be inserted into a zone file
+      manually or with a <strong class="userinput"><code>$INCLUDE</code></strong> statement.
     </p>
     <p>
       The <code class="filename">.private</code> file contains
@@ -505,22 +493,17 @@
       fields.  For obvious security reasons, this file does not have
       general read permission.
     </p>
-    <p>
-      Both <code class="filename">.key</code> and <code class="filename">.private</code>
-      files are generated for symmetric cryptography algorithms such as
-      HMAC-MD5, even though the public and private key are equivalent.
-    </p>
   </div>
 
   <div class="refsection">
 <a name="id-1.13.12.11"></a><h2>EXAMPLE</h2>
 
     <p>
-      To generate an ECDSAP256SHA256 key for the domain
-      <strong class="userinput"><code>example.com</code></strong>, the following command would be
-      issued:
+      To generate an ECDSAP256SHA256 zone-signing key for the zone
+      <strong class="userinput"><code>example.com</code></strong>, issue the command:
     </p>
-    <p><strong class="userinput"><code>dnssec-keygen -a ECDSAP256SHA256 -n ZONE example.com</code></strong>
+    <p>
+      <strong class="userinput"><code>dnssec-keygen -a ECDSAP256SHA256 example.com</code></strong>
     </p>
     <p>
       The command would print a string of the form:
@@ -532,6 +515,12 @@
       the files <code class="filename">Kexample.com.+013+26160.key</code>
       and
       <code class="filename">Kexample.com.+013+26160.private</code>.
+    </p>
+    <p>
+      To generate a matching key-signing key, issue the command:
+    </p>
+    <p>
+      <strong class="userinput"><code>dnssec-keygen -a ECDSAP256SHA256 -f KSK example.com</code></strong>
     </p>
   </div>
 
@@ -568,6 +557,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.7 (Development Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.1 (Stable Release)</p>
 </body>
 </html>

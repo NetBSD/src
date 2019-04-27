@@ -449,6 +449,7 @@ isc_portset_removerange
 isc_quota_attach
 isc_quota_destroy
 isc_quota_detach
+isc_quota_force
 isc_quota_getmax
 isc_quota_getsoft
 isc_quota_getused

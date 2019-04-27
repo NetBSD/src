@@ -24,6 +24,7 @@ options {
 	dnssec-enable yes;
 	dnssec-validation auto;
 	bindkeys-file "managed.conf";
+	servfail-ttl 0;
 };
 
 key rndc_key {

@@ -21,7 +21,6 @@ $SHELL ../genzone.sh 2 3 >ns2/tsigzone.db
 $SHELL ../genzone.sh 6 3 >ns6/master.db
 $SHELL ../genzone.sh 7 >ns7/master2.db
 
-rm -f ns4/*.db ns4/*.jnl
 cp -f ns4/root.db.in ns4/root.db
 $PERL -e 'for ($i=0;$i<10000;$i++){ printf("x%u 0 in a 10.53.0.1\n", $i);}' >> ns4/root.db
 

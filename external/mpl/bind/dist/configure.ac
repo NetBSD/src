@@ -7,7 +7,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-AC_INIT(BIND, [9.13], [info@isc.org], [], [https://www.isc.org/downloads/BIND/])
+AC_INIT(BIND, [9.14], [info@isc.org], [], [https://www.isc.org/downloads/BIND/])
 AC_PREREQ([2.60])
 
 AC_CONFIG_HEADER(config.h)
@@ -664,6 +664,11 @@ AC_CHECK_FUNCS([pthread_setaffinity_np cpuset_setaffinity processor_bind sched_s
 # Look for functions relating to thread naming
 AC_CHECK_FUNCS([pthread_setname_np pthread_set_name_np])
 AC_CHECK_HEADERS([pthread_np.h], [], [], [#include <pthread.h>])
+
+#
+# flockfile is usually provided by pthreads
+#
+AC_CHECK_FUNCS([flockfile getc_unlocked])
 
 #
 # Look for sysconf to allow detection of the number of processors.
@@ -1939,11 +1944,20 @@ AC_CHECK_HEADERS(
 	   [[atomic_int_fast64_t val = 0; atomic_fetch_add_explicit(&val, 1, memory_order_relaxed);]]
 	 )],
 	[AC_MSG_RESULT([no])],
-	[AC_MSG_RESULT([yes])
-	 ISC_ATOMIC_LIBS="-latomic"
+	[ISC_ATOMIC_LIBS="-latomic"
+	 save_LIBS="$LIBS"
+	 LIBS="$LIBS $ISC_ATOMIC_LIBS"
+	 AC_LINK_IFELSE(
+	   [AC_LANG_PROGRAM(
+	      [[#include <stdatomic.h>]],
+	      [[atomic_int_fast64_t val = 0; atomic_fetch_add_explicit(&val, 1, memory_order_relaxed);]]
+	    )],
+	   [AC_MSG_RESULT([yes])],
+	   [AC_MSG_FAILURE([libatomic needed, but linking with -latomic failed, please fix your toolchain.])])
+	 LIBS="$save_LIBS"
 	])
      ],
-     [AC_MSG_FAILURE([stdatomic.h header found, but compilation failed, fix your toolchaing.])]
+     [AC_MSG_FAILURE([stdatomic.h header found, but compilation failed, please fix your toolchain.])]
    )],
   [AC_MSG_CHECKING([for memory model aware atomic operations])
    AC_COMPILE_IFELSE(
@@ -1960,8 +1974,17 @@ AC_CHECK_HEADERS(
 	   [[int64_t val = 0; __atomic_fetch_add(&val, 1, __ATOMIC_RELAXED);]]
 	 )],
 	[AC_MSG_RESULT([no])],
-	[AC_MSG_RESULT([yes])
-	 ISC_ATOMIC_LIBS="-latomic"
+	[ISC_ATOMIC_LIBS="-latomic"
+	 save_LIBS="$LIBS"
+	 LIBS="$LIBS $ISC_ATOMIC_LIBS"
+	 AC_LINK_IFELSE(
+	   [AC_LANG_PROGRAM(
+	      [[#include <inttypes.h>]],
+	      [[int64_t val = 0; __atomic_fetch_add(&val, 1, __ATOMIC_RELAXED);]]
+	    )],
+	   [AC_MSG_RESULT([yes])],
+	   [AC_MSG_FAILURE([libatomic needed, but linking with -latomic failed, please fix your toolchain.])])
+	 LIBS="$save_LIBS"
 	])
      ],
      [AC_MSG_RESULT([__sync builtins])
@@ -2051,7 +2074,6 @@ DNSTAP=
 DNSTAPSRCS=
 DNSTAPOBJS=
 DNSTAPTARGETS=
-DNSTAP_PB_C_H=
 if test "x$use_dnstap" != "xno"; then
 	AC_ARG_WITH([protobuf-c],
 		    AS_HELP_STRING([--with-protobuf-c=path],
@@ -2104,13 +2126,11 @@ if test "x$use_dnstap" != "xno"; then
 	DNSTAPSRCS='${DNSTAPSRCS}'
 	DNSTAPOBJS='${DNSTAPOBJS}'
 	DNSTAPTARGETS='${DNSTAPTARGETS}'
-	DNSTAP_PB_C_H="dnstap.pb-c.h"
 fi
 AC_SUBST(DNSTAP)
 AC_SUBST(DNSTAPSRCS)
 AC_SUBST(DNSTAPOBJS)
 AC_SUBST(DNSTAPTARGETS)
-AC_SUBST(DNSTAP_PB_C_H)
 
 #
 #  The following sets up how non-blocking i/o is established.
@@ -2949,7 +2969,6 @@ AC_CONFIG_FILES([
 	bin/tests/pkcs11/benchmarks/Makefile
 	bin/tests/system/Makefile
 	bin/tests/system/conf.sh
-	bin/tests/system/dlz/prereq.sh
 	bin/tests/system/dlzexternal/Makefile
 	bin/tests/system/dlzexternal/ns1/dlzs.conf
 	bin/tests/system/dyndb/Makefile

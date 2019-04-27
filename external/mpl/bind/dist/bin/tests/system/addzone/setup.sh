@@ -23,7 +23,4 @@ copy_setports ns2/named1.conf.in ns2/named.conf
 copy_setports ns3/named1.conf.in ns3/named.conf
 
 cp -f ns2/default.nzf.in ns2/3bf305731dd26307.nzf
-rm -f ns3/*.nzf ns3/*.nzf~
-rm -f ns3/*.nzd ns3/*.nzd-lock
-rm -f ns3/inlineslave.db
 mkdir ns2/new-zones

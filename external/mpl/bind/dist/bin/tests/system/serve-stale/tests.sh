@@ -97,6 +97,10 @@ grep "data\.example\..*2.*IN.*TXT.*A text record with a 1 second ttl" dig.out.te
 # The max-stale-ttl is 3600 seconds, so the comment should say the data is
 # stale for somewhere between 3500-3599 seconds.
 $RNDCCMD 10.53.0.1 dumpdb > rndc.out.test$n 2>&1 || ret=1
+for i in 0 1 2 3 4 5 6 7 8 9; do
+	grep '^; Dump complete$' ns1/named_dump1.db > /dev/null 2>&1 && break
+	sleep 1
+done
 awk '/; stale/ { x=$0; getline; print x, $0}' ns1/named_dump1.db |
     grep "; stale (will be retained for 35.. more seconds) data\.example.*A text record with a 1 second ttl" > /dev/null 2>&1 || ret=1
 # Also make sure the not expired data does not have a stale comment.

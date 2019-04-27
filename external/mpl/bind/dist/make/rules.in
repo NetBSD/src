@@ -28,6 +28,8 @@ localstatedir =	@localstatedir@
 mandir =	@mandir@
 datarootdir =   @datarootdir@
 
+plugindir =	${libdir}/named
+
 DESTDIR =
 
 @SET_MAKE@

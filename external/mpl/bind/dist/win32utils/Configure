@@ -44,7 +44,6 @@ my @filelist = ("..\\bin\\python\\dnssec-checkds.py",
                 "..\\bin\\python\\isc\\tests\\dnskey_test.py",
                 "..\\bin\\python\\isc\\tests\\policy_test.py",
                 "..\\bin\\python\\isc\\utils.py",
-                "..\\bin\\tests\\system\\dlz\\prereq.sh",
                 "..\\lib\\dns\\win32\\libdns.def",
                 "..\\lib\\isc\\win32\\libisc.def");
 
@@ -202,12 +201,12 @@ my @substdefh = ("AES_CC",
                  "HAVE_LIBXML2",
                  "HAVE_OPENSSL_ED25519",
                  "HAVE_OPENSSL_ED448",
-		 "HAVE_DH_GET0_KEY",
-		 "HAVE_ECDSA_SIG_GET0",
-		 "HAVE_RSA_SET0_KEY",
-		 "USE_BACKTRACE",
-		 "USE_OPENSSL",
-		 "USE_PKCS11",
+                 "HAVE_DH_GET0_KEY",
+                 "HAVE_ECDSA_SIG_GET0",
+                 "HAVE_RSA_SET0_KEY",
+                 "USE_BACKTRACE",
+                 "USE_OPENSSL",
+                 "USE_PKCS11",
                  "HAVE_PKCS11_ED25519",
                  "HAVE_PKCS11_ED448",
                  "HAVE_READLINE",
@@ -218,18 +217,18 @@ my @substdefh = ("AES_CC",
                  "TUNE_LARGE",
                  "WANT_QUERYTRACE",
                  "WITH_IDN",
-		 "CPU_RELAX",
+                 "CPU_RELAX",
                  "VALIDATION_DEFAULT",
-		 "HAVE_CRYPTO_ZALLOC",
-		 "HAVE_EVP_CIPHER_CTX_FREE",
-		 "HAVE_EVP_CIPHER_CTX_NEW",
-		 "HAVE_EVP_MD_CTX_FREE",
-		 "HAVE_EVP_MD_CTX_NEW",
-		 "HAVE_EVP_MD_CTX_RESET",
-		 "HAVE_HMAC_CTX_FREE",
-		 "HAVE_HMAC_CTX_GET_MD",
-		 "HAVE_HMAC_CTX_NEW",
-		 "HAVE_HMAC_CTX_RESET",
+                 "HAVE_CRYPTO_ZALLOC",
+                 "HAVE_EVP_CIPHER_CTX_FREE",
+                 "HAVE_EVP_CIPHER_CTX_NEW",
+                 "HAVE_EVP_MD_CTX_FREE",
+                 "HAVE_EVP_MD_CTX_NEW",
+                 "HAVE_EVP_MD_CTX_RESET",
+                 "HAVE_HMAC_CTX_FREE",
+                 "HAVE_HMAC_CTX_GET_MD",
+                 "HAVE_HMAC_CTX_NEW",
+                 "HAVE_HMAC_CTX_RESET",
     );
 
 # for platform.h
@@ -550,19 +549,26 @@ if ($legacy_only) {
 }
 
 if ($want_checkfiles eq "yes") {
+        my $status=0;
         foreach (@filelist) {
+                my $name = $_;
+                $name =~ s/\\/\\\\/g;
                 next if -r $_ . ".in";
                 s/\\/\//g;
                 next if -r $_ . ".in";
-                print "missing $_.in from filelist\n";
+                print "remove '$name' from filelist in win32utils/Configure or add to repository\n";
+                $status = 1;
         }
         foreach (@projectlist) {
+                my $name = $_;
+                $name =~ s/\\/\\\\/g;
                 next if -r $_ . ".in";
                 s/\\/\//g;
                 next if -r $_ . ".in";
-                print "missing $_.in from projectlist\n";
+                print "remove '$name' from projectlist in win32utils/Configure or add to repository\n";
+                $status = 1;
         }
-        exit(0);
+        exit($status);
 }
 
 # configure the platform
@@ -674,9 +680,9 @@ sub myenable {
             $enable_querytrace = "yes";
         }
     } elsif ($key =~ /^auto-validation$/i) {
-	if ($val =~ /^no$/i) {
-	    $validation_default = "yes";
-	}
+        if ($val =~ /^no$/i) {
+            $validation_default = "yes";
+        }
     } else {
         $want_unknown = "yes";
         if ($val eq "no") {
@@ -727,7 +733,7 @@ sub mywith {
         }
     } elsif ($key =~ /^openssl$/i) {
         if ($val =~ /^no$/i) {
-	    die "OpenSSL support is now mandatory\n";
+            die "OpenSSL support is now mandatory\n";
         } elsif ($val !~ /^yes$/i) {
             $use_openssl = "yes";
             $openssl_path = $val;
@@ -807,12 +813,12 @@ sub mywith {
             }
         }
     } elsif ($key =~ /^pssuspend$/i) {
-	if ($val =~ /^no$/i) {
-	    $with_pssuspend = "no";
-	} else {
-	    if ($val !~ /^yes$/i) {
-	        $pssuspend_command = $val;
-	    }
+        if ($val =~ /^no$/i) {
+            $with_pssuspend = "no";
+        } else {
+            if ($val !~ /^yes$/i) {
+                $pssuspend_command = $val;
+            }
         }
     } elsif ($key =~ /^python$/i) {
         if ($val =~ /^no$/i) {
@@ -1447,7 +1453,7 @@ EOF
 # check OpenSSL built-in support for DH/ECDSA/RSA/CRYPTO_ZALLOC/EVP_CIPHER_CTX/EVP_MD_CTX/HMAC_CTX functions
 if ($use_openssl eq "yes") {
     if ($verbose) {
-	printf "checking OpenSSL built-in support for DH/ECDSA/RSA/CRYPTO_ZALLOC/EVP_CIPHER_CTX/EVP_MD_CTX/HMAC_CTX functions\n";
+        printf "checking OpenSSL built-in support for DH/ECDSA/RSA/CRYPTO_ZALLOC/EVP_CIPHER_CTX/EVP_MD_CTX/HMAC_CTX functions\n";
     }
     open F, ">testosslfunc.c" || die $!;
     print F << 'EOF';
@@ -1460,7 +1466,7 @@ int main() {
         }
         printf("\n\nFound   OPENSSL_VERSION_NUMBER %#010x\n",
                OPENSSL_VERSION_NUMBER);
-	printf("This version has no built-in support for DH/ECDSA/RSA/CRYPTO_ZALLOC/EVP_CIPHER_CTX/EVP_MD_CTX/HMAC_CTX functions.\n\n");
+        printf("This version has no built-in support for DH/ECDSA/RSA/CRYPTO_ZALLOC/EVP_CIPHER_CTX/EVP_MD_CTX/HMAC_CTX functions.\n\n");
         return (1);
 }
 EOF
@@ -1474,15 +1480,15 @@ EOF
             $configdefh{"HAVE_DH_GET0_KEY"} = 1;
             $configdefh{"HAVE_ECDSA_SIG_GET0"} = 1;
             $configdefh{"HAVE_RSA_SET0_KEY"} = 1;
-	    $configdefh{"HAVE_EVP_CIPHER_CTX_FREE"} = 1;
-	    $configdefh{"HAVE_EVP_CIPHER_CTX_NEW"} = 1;
-	    $configdefh{"HAVE_EVP_MD_CTX_FREE"} = 1;
-	    $configdefh{"HAVE_EVP_MD_CTX_NEW"} = 1;
-	    $configdefh{"HAVE_EVP_MD_CTX_RESET"} = 1;
-	    $configdefh{"HAVE_HMAC_CTX_FREE"} = 1;
-	    $configdefh{"HAVE_HMAC_CTX_GET_MD"} = 1;
-	    $configdefh{"HAVE_HMAC_CTX_NEW"} = 1;
-	    $configdefh{"HAVE_HMAC_CTX_RESET"} = 1;
+            $configdefh{"HAVE_EVP_CIPHER_CTX_FREE"} = 1;
+            $configdefh{"HAVE_EVP_CIPHER_CTX_NEW"} = 1;
+            $configdefh{"HAVE_EVP_MD_CTX_FREE"} = 1;
+            $configdefh{"HAVE_EVP_MD_CTX_NEW"} = 1;
+            $configdefh{"HAVE_EVP_MD_CTX_RESET"} = 1;
+            $configdefh{"HAVE_HMAC_CTX_FREE"} = 1;
+            $configdefh{"HAVE_HMAC_CTX_GET_MD"} = 1;
+            $configdefh{"HAVE_HMAC_CTX_NEW"} = 1;
+            $configdefh{"HAVE_HMAC_CTX_RESET"} = 1;
         }
     }
 }

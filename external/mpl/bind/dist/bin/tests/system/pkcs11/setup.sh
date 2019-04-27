@@ -12,6 +12,8 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
+$SHELL clean.sh
+
 infile=ns1/example.db.in
 
 /bin/echo -n ${HSMPIN:-1234}> pin

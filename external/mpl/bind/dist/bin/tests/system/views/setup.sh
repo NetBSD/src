@@ -15,12 +15,6 @@ SYSTEMTESTTOP=..
 $SHELL clean.sh
 
 cp -f ns2/example1.db ns2/example.db
-rm -f ns2/external/K*
-rm -f ns2/external/inline.db.signed
-rm -f ns2/external/inline.db.signed.jnl
-rm -f ns2/internal/K*
-rm -f ns2/internal/inline.db.signed
-rm -f ns2/internal/inline.db.signed.jnl
 
 copy_setports ns1/named.conf.in ns1/named.conf
 copy_setports ns2/named1.conf.in ns2/named.conf

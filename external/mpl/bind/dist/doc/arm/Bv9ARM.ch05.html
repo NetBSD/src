@@ -5192,14 +5192,20 @@ options {
                   When set in the <span class="command"><strong>zone</strong></span> statement for
                   a master zone, specifies which hosts are allowed to
                   submit Dynamic DNS updates to that zone.  The default
-                  is to deny updates from all hosts.  This can only
-                  be set at the <span class="command"><strong>zone</strong></span> level, not in
-                  <span class="command"><strong>options</strong></span> or <span class="command"><strong>view</strong></span>.
+                  is to deny updates from all hosts.
                 </p>
                 <p>
                   Note that allowing updates based on the
                   requestor's IP address is insecure; see
                   <a class="xref" href="Bv9ARM.ch06.html#dynamic_update_security" title="Dynamic Update Security">the section called &#8220;Dynamic Update Security&#8221;</a> for details.
+                </p>
+                <p>
+                  In general this option should only be set at the
+                  <span class="command"><strong>zone</strong></span> level. While a default
+                  value can be set at the <span class="command"><strong>options</strong></span> or
+                  <span class="command"><strong>view</strong></span> level and inherited by zones,
+                  this could lead to some zones unintentionally allowing
+                  updates.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>allow-update-forwarding</strong></span></span></dt>
@@ -5210,9 +5216,7 @@ options {
                   submit Dynamic DNS updates and have them be forwarded
                   to the master.  The default is
                   <strong class="userinput"><code>{ none; }</code></strong>, which means that no
-                  update forwarding will be performed.  This can only be
-                  set at the <span class="command"><strong>zone</strong></span> level, not in
-                  <span class="command"><strong>options</strong></span> or <span class="command"><strong>view</strong></span>.
+                  update forwarding will be performed.
                 </p>
                 <p>
                   To enable update forwarding, specify
@@ -5229,6 +5233,14 @@ options {
                   server may expose master servers to attacks if they rely
                   on insecure IP-address-based access control; see
                   <a class="xref" href="Bv9ARM.ch06.html#dynamic_update_security" title="Dynamic Update Security">the section called &#8220;Dynamic Update Security&#8221;</a> for more details.
+                </p>
+                <p>
+                  In general this option should only be set at the
+                  <span class="command"><strong>zone</strong></span> level. While a default
+                  value can be set at the <span class="command"><strong>options</strong></span> or
+                  <span class="command"><strong>view</strong></span> level and inherited by zones,
+                  this can lead to some zones unintentionally forwarding
+                  updates.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>allow-v6-synthesis</strong></span></span></dt>
@@ -6281,7 +6293,8 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                 <p>
                   The number of file descriptors reserved for TCP, stdio,
                   etc.  This needs to be big enough to cover the number of
-                  interfaces <span class="command"><strong>named</strong></span> listens on, <span class="command"><strong>tcp-clients</strong></span> as well as
+                  interfaces <span class="command"><strong>named</strong></span> listens on plus
+                  <span class="command"><strong>tcp-clients</strong></span>, as well as
                   to provide room for outgoing TCP queries and incoming zone
                   transfers.  The default is <code class="literal">512</code>.
                   The minimum value is <code class="literal">128</code> and the
@@ -8043,6 +8056,14 @@ example.com                 CNAME   rpz-tcp-only.
             The <span class="command"><strong>log</strong></span> clause can be used to optionally
             turn off rewrite logging for a particular response policy
             zone. By default, all rewrites are logged.
+          </p>
+
+          <p>
+            The <span class="command"><strong>add-soa</strong></span> option controls whether the RPZ's
+            SOA record is added to the additional section for traceback
+            of changes from this zone or not.  This can be set at the
+            individual policy zone level or at the response-policy level.
+            The default is <code class="literal">yes</code>.
           </p>
 
           <p>
@@ -14831,6 +14852,6 @@ HOST-127.EXAMPLE. MX 0 .
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.7 (Development Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.1 (Stable Release)</p>
 </body>
 </html>
