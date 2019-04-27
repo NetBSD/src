@@ -1,4 +1,107 @@
-	--- 9.13.7 released ---
+	--- 9.14.1 released ---
+
+5201.	[bug]		Fix a possible deadlock in RPZ update code. [GL #973]
+
+5200.	[security]	tcp-clients settings could be exceeded in some cases,
+			which could lead to exhaustion of file descriptors.
+			(CVE-2018-5743) [GL #615]
+
+5199.	[security]	In certain configurations, named could crash
+			if nxdomain-redirect was in use and a redirected
+			query resulted in an NXDOMAIN from the cache.
+			(CVE-2019-6467) [GL #880]
+
+5198.	[bug]		If a fetch context was being shut down and, at the same
+			time, we returned from qname minimization, an INSIST
+			could be hit. [GL #966]
+
+5197.	[bug]		dig could die in best effort mode on multiple SIG(0)
+			records. Similarly on multiple OPT and multiple TSIG
+			records. [GL #920]
+
+5196.	[bug]		make install failed with --with-dlopen=no. [GL #955]
+
+5195.	[bug]		"allow-update" and "allow-update-forwarding" were
+			treated as configuration errors if used at the
+			options or view level. [GL #913]
+
+5194.	[bug]		Enforce non empty ZOMEMD hash. [GL #899]
+
+5193.	[bug]		EID and NIMLOC failed to do multi-line output
+			correctly. [GL #899]
+
+5189.	[cleanup]	Remove revoked root DNSKEY from bind.keys. [GL #945]
+
+5187.	[test]		Set time zone before running any tests in dnstap_test.
+			[GL #940]
+
+5186.	[cleanup]	More dnssec-keygen manual tidying. [GL !1678]
+
+5184.	[bug]		Missing unlocks in sdlz.c. [GL #936]
+
+5183.	[bug]		Reinitialize ECS data before reusing client
+			structures. [GL #881]
+
+	--- 9.14.0 released ---
+
+	--- 9.14.0rc3 released ---
+
+5182.	[bug]		Fix a high-load race/crash in handling of
+			isc_socket_close() in resolver. [GL #834]
+
+5180.	[bug]		delv now honors the operating system's preferred
+			ephemeral port range. [GL #925]
+
+5179.	[cleanup]	Replace some vague type declarations with the more
+			specific dns_secalg_t and dns_dsdigest_t.
+			Thanks to Tony Finch. [GL !1498]
+
+5178.	[bug]		Handle EDQUOT (disk quota) and ENOSPC (disk full)
+			errors when writing files. [GL #902]
+
+5177.	[func]		Add the ability to specify in named.conf whether a
+			response-policy zone's SOA record should be added
+			to the additional section (add-soa yes/no). [GL #865]
+
+5167.	[bug]		nxdomain-redirect could sometimes lookup the wrong
+			redirect name. [GL #892]
+
+	--- 9.14.0rc2 released ---
+
+5176.	[tests]		Remove a dependency on libxml in statschannel system
+			test. [GL #926]
+
+5175.	[bug]		Fixed a problem with file input in dnssec-keymgr,
+			dnssec-coverage and dnssec-checkds when using
+			python3. [GL #882]
+
+5174.	[doc]		Tidy dnssec-keygen manual. [GL !1557]
+
+5173.	[bug]		Fixed a race in socket code that could occur when
+			accept, send, or recv were called from an event
+			loop but the socket had been closed by another
+			thread. [RT #874]
+
+5172.	[bug]		nsupdate now honors the operating system's preferred
+			ephemeral port range. [GL #905]
+
+5171.	[func]		named plugins are now installed into a separate
+			directory.  Supplying a filename (a string without path
+			separators) in a "plugin" configuration stanza now
+			causes named to look for that plugin in that directory.
+			[GL #878]
+
+5170.	[test]		Added --with-dlz-filesystem to feature-test. [GL !1587]
+
+5169.	[bug]		The presence of certain types in an otherwise
+			empty node could cause a crash while processing a
+			type ANY query. [GL #901]
+
+	--- 9.14.0rc1 released ---
+
+5168.	[bug]		Do not crash on shutdown when RPZ fails to load.  Also,
+			keep previous version of the database if RPZ fails to
+			load. [GL #813]
 
 5165.	[contrib]	Removed SDB drivers from contrib; they're obsolete.
 			[GL #428]
@@ -62,7 +165,7 @@
 			- Zone signing and DNSKEY maintenance events are
 			  now logged to the "dnssec" category
 			- Messages are now logged when DNSSEC keys are
-			  pubished, activated, inactivated, deleted,
+			  published, activated, inactivated, deleted,
 			  or revoked.
 			[GL #714]
 
@@ -267,8 +370,8 @@
 5091.	[func]		Two new global and per-view options min-cache-ttl
 			and min-ncache-ttl [GL #613]
 
-5090.	[bug]		dig and mdig failed to properly preparse dash value
-			pairs when value was a seperate argument and started
+5090.	[bug]		dig and mdig failed to properly pre-parse dash value
+			pairs when value was a separate argument and started
 			with a dash. [GL #584]
 
 5089.	[bug]		Restore localhost fallback in dig and host which is
@@ -334,7 +437,7 @@
 5072.	[bug]		Add unit tests for isc_buffer_copyregion() and fix its
 			behavior for auto-reallocated buffers. [GL #644]
 
-5071.	[bug]		Comparision of NXT records was broken. [GL #631]
+5071.	[bug]		Comparison of NXT records was broken. [GL #631]
 
 5070.	[bug]		Record types which support a empty rdata field were
 			not handling the empty rdata field case. [GL #638]
@@ -353,7 +456,7 @@
 
 5065.	[bug]		Only set IPV6_USE_MIN_MTU on IPv6. [GL #553]
 
-5064.	[test]		Initalize TZ environment variable before calling
+5064.	[test]		Initialize TZ environment variable before calling
 			dns_test_begin in dnstap_test. [GL #624]
 
 5063.	[test]		In statschannel test try a few times before failing
@@ -579,7 +682,7 @@
 5001.	[bug]		Fix refcount errors on error paths. [GL !563]
 
 5000.	[bug]		named_server_servestale() could leave the server in
-			exclusive mode if an error occured. [GL #441]
+			exclusive mode if an error occurred. [GL #441]
 
 4999.	[cleanup]	Remove custom printf implementation in lib/isc/print.c.
 			[GL #261]

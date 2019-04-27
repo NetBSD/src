@@ -12,7 +12,7 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-DIGOPTS="-p ${PORT}"
+DIGOPTS="-p ${PORT} +tries=3 +time=5"
 
 status=0
 n=0
