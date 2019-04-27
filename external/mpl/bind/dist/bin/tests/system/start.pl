@@ -204,6 +204,7 @@ sub start_server {
 			print "I:$test:Couldn't start server $command (pid=$child)\n";
 			print "I:$test:failed\n";
 			system "kill -9 $child" if ("$child" ne "");
+			chdir "$testdir";
 			system "$PERL $topdir/stop.pl $test";
 			exit 1;
 		}

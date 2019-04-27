@@ -12,6 +12,8 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
+$SHELL clean.sh
+
 cp ns4/tld1.db ns4/tld.db
 cp ns6/to-be-removed.tld.db.in ns6/to-be-removed.tld.db
 cp ns7/server.db.in ns7/server.db

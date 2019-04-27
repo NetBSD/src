@@ -12,7 +12,7 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL ./clean.sh
+$SHELL clean.sh
 
 pzone=parent.nil
 czone=child.parent.nil

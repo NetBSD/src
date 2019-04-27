@@ -31,5 +31,4 @@ then
 	echo $keyname > keyname
 else
 	cat ns1/example1.db > ns1/example2.db
-	rm -f keyname
 fi
