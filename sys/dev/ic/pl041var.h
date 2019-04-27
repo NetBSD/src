@@ -1,4 +1,4 @@
-/* $NetBSD: pl041var.h,v 1.1 2017/06/08 10:02:39 jmcneill Exp $ */
+/* $NetBSD: pl041var.h,v 1.1.16.1 2019/04/27 11:52:53 isaki Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -50,8 +50,6 @@ struct aaci_softc {
 
 	uint32_t		*sc_pcur;
 	int			sc_pblkresid;
-
-	struct audio_encoding_set *sc_encodings;
 };
 
 void	aaci_attach(struct aaci_softc *);
