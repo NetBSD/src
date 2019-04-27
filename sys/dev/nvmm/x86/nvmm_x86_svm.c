@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.40 2019/04/24 18:19:28 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.41 2019/04/27 09:06:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.40 2019/04/24 18:19:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.41 2019/04/27 09:06:18 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1259,6 +1259,17 @@ svm_htlb_flush_ack(struct svm_cpudata *cpudata, uint64_t machgen)
 	}
 }
 
+static inline void
+svm_exit_evt(struct svm_cpudata *cpudata, struct vmcb *vmcb)
+{
+	cpudata->evt_pending = false;
+
+	if (__predict_false(vmcb->ctrl.exitintinfo & VMCB_CTRL_EXITINTINFO_V)) {
+		vmcb->ctrl.eventinj = vmcb->ctrl.exitintinfo;
+		cpudata->evt_pending = true;
+	}
+}
+
 static int
 svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
@@ -1310,7 +1321,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			cpudata->gtsc_want_update = false;
 			vcpu->hcpu_last = hcpu;
 		}
-		cpudata->evt_pending = false;
+		svm_exit_evt(cpudata, vmcb);
 
 		switch (vmcb->ctrl.exitcode) {
 		case VMCB_EXITCODE_INTR:
