@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.28 2019/01/31 18:21:21 jakllsch Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.29 2019/04/27 01:23:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.28 2019/01/31 18:21:21 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.29 2019/04/27 01:23:26 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -127,7 +127,10 @@ struct uchcom_softc
 	struct usbd_device *	sc_udev;
 	device_t		sc_subdev;
 	struct usbd_interface *	sc_iface;
-	int			sc_dying;
+	bool			sc_dying;
+	kmutex_t		sc_lock;
+	kcondvar_t		sc_detach_cv;
+	int			sc_refcnt;
 	/* */
 	int			sc_intr_endpoint;
 	int			sc_intr_size;
@@ -170,12 +173,12 @@ static const struct usb_devno uchcom_devs[] = {
 };
 #define uchcom_lookup(v, p)	usb_lookup(uchcom_devs, v, p)
 
-Static void	uchcom_get_status(void *, int, u_char *, u_char *);
-Static void	uchcom_set(void *, int, int, int);
-Static int	uchcom_param(void *, int, struct termios *);
-Static int	uchcom_open(void *, int);
-Static void	uchcom_close(void *, int);
-Static void	uchcom_intr(struct usbd_xfer *, void *,
+static void	uchcom_get_status(void *, int, u_char *, u_char *);
+static void	uchcom_set(void *, int, int, int);
+static int	uchcom_param(void *, int, struct termios *);
+static int	uchcom_open(void *, int);
+static void	uchcom_close(void *, int);
+static void	uchcom_intr(struct usbd_xfer *, void *,
 			    usbd_status);
 
 static int	set_config(struct uchcom_softc *);
@@ -245,9 +248,13 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
         sc->sc_udev = dev;
-	sc->sc_dying = 0;
+	sc->sc_dying = false;
+	sc->sc_refcnt = 0;
 	sc->sc_dtr = sc->sc_rts = -1;
 	sc->sc_lsr = sc->sc_msr = 0;
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	cv_init(&sc->sc_detach_cv, "uchcomdet");
 
 	DPRINTF(("\n\nuchcom attach: sc=%p\n", sc));
 
@@ -285,7 +292,9 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 	return;
 
 failed:
-	sc->sc_dying = 1;
+	mutex_enter(&sc->sc_lock);
+	sc->sc_dying = true;
+	mutex_exit(&sc->sc_lock);
 	return;
 }
 
@@ -308,12 +317,23 @@ uchcom_detach(device_t self, int flags)
 
 	close_intr_pipe(sc);
 
-	sc->sc_dying = 1;
+	mutex_enter(&sc->sc_lock);
+	sc->sc_dying = true;
+
+	sc->sc_refcnt--;
+	while (sc->sc_refcnt > 0) {
+		if (cv_timedwait(&sc->sc_detach_cv, &sc->sc_lock, hz * 60))
+			aprint_error_dev(sc->sc_dev, ": didn't detach\n");
+	}
+	mutex_exit(&sc->sc_lock);
 
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
+
+	mutex_destroy(&sc->sc_lock);
+	cv_destroy(&sc->sc_detach_cv);
 
 	return rv;
 }
@@ -326,7 +346,9 @@ uchcom_activate(device_t self, enum devact act)
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		close_intr_pipe(sc);
-		sc->sc_dying = 1;
+		mutex_enter(&sc->sc_lock);
+		sc->sc_dying = true;
+		mutex_exit(&sc->sc_lock);
 		return 0;
 	default:
 		return EOPNOTSUPP;
@@ -850,8 +872,10 @@ close_intr_pipe(struct uchcom_softc *sc)
 {
 	usbd_status err;
 
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_dying)
 		return;
+	mutex_exit(&sc->sc_lock);
 
 	if (sc->sc_intr_pipe != NULL) {
 		err = usbd_abort_pipe(sc->sc_intr_pipe);
@@ -873,25 +897,29 @@ close_intr_pipe(struct uchcom_softc *sc)
 /* ----------------------------------------------------------------------
  * methods for ucom
  */
-void
+static void
 uchcom_get_status(void *arg, int portno, u_char *rlsr, u_char *rmsr)
 {
 	struct uchcom_softc *sc = arg;
 
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_dying)
 		return;
+	mutex_exit(&sc->sc_lock);
 
 	*rlsr = sc->sc_lsr;
 	*rmsr = sc->sc_msr;
 }
 
-void
+static void
 uchcom_set(void *arg, int portno, int reg, int onoff)
 {
 	struct uchcom_softc *sc = arg;
 
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_dying)
 		return;
+	mutex_exit(&sc->sc_lock);
 
 	switch (reg) {
 	case UCOM_SET_DTR:
@@ -908,14 +936,16 @@ uchcom_set(void *arg, int portno, int reg, int onoff)
 	}
 }
 
-int
+static int
 uchcom_param(void *arg, int portno, struct termios *t)
 {
 	struct uchcom_softc *sc = arg;
 	int ret;
 
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_dying)
 		return 0;
+	mutex_exit(&sc->sc_lock);
 
 	ret = set_line_control(sc, t->c_cflag);
 	if (ret)
@@ -928,50 +958,65 @@ uchcom_param(void *arg, int portno, struct termios *t)
 	return 0;
 }
 
-int
+static int
 uchcom_open(void *arg, int portno)
 {
 	int ret;
 	struct uchcom_softc *sc = arg;
 
-	if (sc->sc_dying)
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_dying) {
+		mutex_exit(&sc->sc_lock);
 		return EIO;
+	}
+
+	sc->sc_refcnt++;
+	mutex_exit(&sc->sc_lock);
 
 	ret = setup_intr_pipe(sc);
-	if (ret)
-		return ret;
+	if (ret == 0)
+		ret = setup_comm(sc);
 
-	ret = setup_comm(sc);
-	if (ret)
-		return ret;
-
-	return 0;
+	if (ret) {
+		mutex_enter(&sc->sc_lock);
+		if (--sc->sc_refcnt < 0)
+			cv_broadcast(&sc->sc_detach_cv);
+		mutex_exit(&sc->sc_lock);
+	}
+	return ret;
 }
 
-void
+static void
 uchcom_close(void *arg, int portno)
 {
 	struct uchcom_softc *sc = arg;
 
-	if (sc->sc_dying)
-		return;
-
-	close_intr_pipe(sc);
+	mutex_enter(&sc->sc_lock);
+	if (!sc->sc_dying) {
+		mutex_exit(&sc->sc_lock);
+		close_intr_pipe(sc);
+		mutex_enter(&sc->sc_lock);
+	}
+	if (--sc->sc_refcnt < 0)
+		cv_broadcast(&sc->sc_detach_cv);
+	mutex_exit(&sc->sc_lock);
 }
 
 
 /* ----------------------------------------------------------------------
  * callback when the modem status is changed.
  */
-void
+static void
 uchcom_intr(struct usbd_xfer *xfer, void * priv,
 	    usbd_status status)
 {
 	struct uchcom_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;
 
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_dying)
 		return;
+	mutex_exit(&sc->sc_lock);
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
