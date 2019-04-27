@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.8 2019/04/10 18:49:04 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.9 2019/04/27 15:45:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,9 +37,6 @@
 
 #include <dev/nvmm/nvmm.h>
 #include <dev/nvmm/nvmm_ioctl.h>
-#ifdef __x86_64__
-#include <dev/nvmm/x86/nvmm_x86.h>
-#endif
 
 struct nvmm_machine {
 	nvmm_machid_t machid;
