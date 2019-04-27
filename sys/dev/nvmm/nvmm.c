@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.17 2019/04/10 18:49:04 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.18 2019/04/27 17:30:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.17 2019/04/10 18:49:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.18 2019/04/27 17:30:38 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,28 +138,27 @@ nvmm_machine_put(struct nvmm_machine *mach)
 /* -------------------------------------------------------------------------- */
 
 static int
-nvmm_vcpu_alloc(struct nvmm_machine *mach, struct nvmm_cpu **ret)
+nvmm_vcpu_alloc(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
+    struct nvmm_cpu **ret)
 {
 	struct nvmm_cpu *vcpu;
-	size_t i;
 
-	for (i = 0; i < NVMM_MAX_VCPUS; i++) {
-		vcpu = &mach->cpus[i];
+	if (cpuid >= NVMM_MAX_VCPUS) {
+		return EINVAL;
+	}
+	vcpu = &mach->cpus[cpuid];
 
-		mutex_enter(&vcpu->lock);
-		if (vcpu->present) {
-			mutex_exit(&vcpu->lock);
-			continue;
-		}
-
-		vcpu->present = true;
-		vcpu->cpuid = i;
-		vcpu->state = kmem_zalloc(nvmm_impl->state_size, KM_SLEEP);
-		*ret = vcpu;
-		return 0;
+	mutex_enter(&vcpu->lock);
+	if (vcpu->present) {
+		mutex_exit(&vcpu->lock);
+		return EBUSY;
 	}
 
-	return ENOBUFS;
+	vcpu->present = true;
+	vcpu->state = kmem_zalloc(nvmm_impl->state_size, KM_SLEEP);
+	vcpu->hcpu_last = -1;
+	*ret = vcpu;
+	return 0;
 }
 
 static void
@@ -168,7 +167,6 @@ nvmm_vcpu_free(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	KASSERT(mutex_owned(&vcpu->lock));
 	vcpu->present = false;
 	kmem_free(vcpu->state, nvmm_impl->state_size);
-	vcpu->hcpu_last = -1;
 }
 
 int
@@ -375,7 +373,7 @@ nvmm_vcpu_create(struct nvmm_owner *owner, struct nvmm_ioc_vcpu_create *args)
 	if (error)
 		return error;
 
-	error = nvmm_vcpu_alloc(mach, &vcpu);
+	error = nvmm_vcpu_alloc(mach, args->cpuid, &vcpu);
 	if (error)
 		goto out;
 
@@ -899,9 +897,10 @@ nvmm_init(void)
 		machines[i].machid = i;
 		rw_init(&machines[i].lock);
 		for (n = 0; n < NVMM_MAX_VCPUS; n++) {
+			machines[i].cpus[n].present = false;
+			machines[i].cpus[n].cpuid = n;
 			mutex_init(&machines[i].cpus[n].lock, MUTEX_DEFAULT,
 			    IPL_NONE);
-			machines[i].cpus[n].hcpu_last = -1;
 		}
 	}
 
