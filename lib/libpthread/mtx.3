@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtx.3,v 1.1 2019/04/24 11:43:19 kamil Exp $
+.\"	$NetBSD: mtx.3,v 1.2 2019/04/27 10:57:11 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,13 +72,13 @@ The allowed values of
 are as follows:
 .Bl -column "mtx_plain | mtx_recursive"
 .It Sy "Type"                    Ta Sy "Description"
-.It Xr mtx_plain                 Ta basic mutex
-.It Xr mtx_timed                 Ta mutex with timeout support
-.It Xr mtx_plain | mtx_recursive Ta basic recursive mutex
-.It Xr mtx_timed | mtx_recursive Ta recursive mutex with timeout support
+.It Dv mtx_plain                 Ta basic mutex
+.It Dv mtx_timed                 Ta mutex with timeout support
+.It Dv mtx_plain | Dv mtx_recursive Ta basic recursive mutex
+.It Dv mtx_timed | Dv mtx_recursive Ta recursive mutex with timeout support
 .El
 .Pp
-The underlaying
+The underlying
 .Nx
 implementation of mutex types does not distinguish between
 .Dv mtx_plain
@@ -91,17 +91,17 @@ The
 function locks the
 .Fa mtx
 object.
-It is required the never lock multiple times the same
+It is required to never lock the same
 .Fa mtx
 object without the
 .Dv mtx_recursive
-property.
+property multiple times.
 If the
 .Fa mtx
 object is already locked by another thread,
-caller of
+the caller of
 .Fa mtx_lock
-blocks until lock becomes available.
+blocks until the lock becomes available.
 .Pp
 The
 .Fn mtx_timedlock
@@ -109,7 +109,7 @@ function tries to lock the
 .Fa mtx
 object.
 In case of blocked resource by another thread,
-this call blocks with specified timeout in the
+this call blocks for the specified timeout in the
 .Fa ts
 argument.
 The timeout argument is
@@ -117,16 +117,16 @@ The timeout argument is
 based time of
 .Dv timespec
 type.
-It is required the never lock multiple times the same
+It is required to never lock the same
 .Fa mtx
 object without the
 .Dv mtx_recursive
-property.
-In portable code there must be used
+property multiple times.
+In portable code, a
 .Fa mtx
 object with the
 .Dv mtx_recursive
-property.
+property must be used in such a case.
 .Pp
 The
 .Fn mtx_trylock
@@ -142,7 +142,9 @@ The
 function unlocks the
 .Fa mtx
 object.
-This call must be proceded with lock by the calling thread.
+This call must be preceded with a matching
+.Fn mtx_lock
+call in the same thread.
 .Sh RETURN VALUES
 The
 .Fn mtx_destroy
@@ -172,7 +174,7 @@ on success,
 otherwise
 .Dv thrd_timedout
 to indicate that system time has reached or exceeded the time specified in
-.Dv ts
+.Dv ts ,
 or
 .Dv thrd_error
 on failure.
@@ -186,7 +188,7 @@ otherwise
 .Dv thrd_timedout
 to indicate that
 .Fa mtx
-object is already locked or
+object is already locked, or
 .Dv thrd_error
 on failure.
 .Pp
@@ -199,7 +201,7 @@ otherwise
 .Dv thrd_timedout
 to indicate that
 .Fa mtx
-object is already locked or
+object is already locked, or
 .Dv thrd_error
 on failure.
 .Sh SEE ALSO

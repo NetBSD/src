@@ -1,4 +1,4 @@
-.\"	$NetBSD: threads.3,v 1.1 2019/04/24 11:43:19 kamil Exp $
+.\"	$NetBSD: threads.3,v 1.2 2019/04/27 10:57:11 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd October 16, 2016
-.Dt THREDS 3
+.Dt THREADS 3
 .Os
 .Sh NAME
 .Nm threads
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .In threads.h
 .Sh DESCRIPTION
-Portable Threads library provides an implementation of portable threading
+The C11 thread support library provides an implementation of a portable threading
 interface, built on top of the
 .Xr pthread 3
 native interfaces.
@@ -72,12 +72,12 @@ Thread-specifig storage functions.
 .It Xr mtx_unlock 3    Ta unlocks a mutex
 .It Xr thrd_create 3   Ta creates a thread executing a function with a parameter
 .It Xr thrd_current 3  Ta identifies the thread that called this function
-.It Xr thrd_detach 3   Ta dispose of resources allocatd to a thread on exit
-.It Xr thrd_equal 3    Ta determines whether two threads reffer the same thread
+.It Xr thrd_detach 3   Ta dispose of resources allocated to a thread on exit
+.It Xr thrd_equal 3    Ta determines whether two threads refer the same thread
 .It Xr thrd_exit 3     Ta terminates a calling thread and sets its result code
 .It Xr thrd_join 3     Ta joins a thread with the current one and blocks
 .It Xr thrd_sleep 3    Ta suspends a calling thread until a signal or timeout
-.It Xr tss_create 3    Ta crates a thread-specific storage pointer with a dtor
+.It Xr tss_create 3    Ta creates a thread-specific storage pointer with a destructor
 .It Xr tss_delete 3    Ta releases resources used by a thread-specific storage
 .It Xr tss_get 3       Ta gets a value of thread-specific storage from a key
 .It Xr tss_set 3       Ta sets a value of thread-specific storage to a key

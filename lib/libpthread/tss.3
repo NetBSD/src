@@ -1,4 +1,4 @@
-.\"	$NetBSD: tss.3,v 1.1 2019/04/24 11:43:19 kamil Exp $
+.\"	$NetBSD: tss.3,v 1.2 2019/04/27 10:57:11 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ global storage.
 .Pp
 Multithreaded programs in C add the third group
 .Sy thread-specific storage .
-This data is private to thread and every entry of this type has associated
+This data is private to thread and every entry of this type has an associated
 .Dv tss_t
 opaque key that is global to all threads in the process.
 A thread using the
@@ -74,34 +74,30 @@ handler with optional destructor
 If the
 .Fa dtor
 parameter is not
-.Dv NULL
+.Dv NULL ,
 then specified appropriate destructor will be called on thread termination.
-Destructor is not called if a thread called the
+The destructor is not called if a thread called the
 .Fn tss_delete
 function for the specified
 .Fa key .
-If,
-after all the destructors have been called for all
-.Dv non-NULL
+If, after all the destructors have been called for all
+.Pf non- Dv NULL
 values with associated destructors,
-ther are still some
-.Dv non-NULL values with
-associated destructors,
+there are still some
+.Pf non- Dv NULL
+values with associated destructors,
 then the process is repeated.
-If,
-after at least
+If, after at least
 .Dv TSS_DTOR_ITERATIONS
 iterations of destructor calls for outstanding
-.Dv non-NULL
-values,
-there are still some
-.Dv non-NULL
-values with associated destructors,
-the
+.Pf non- Dv NULL
+values, there are still some
+.Pf non- Dv NULL
+values with associated destructors, the
 .Nx
-implementation stops further calling destructors.
+implementation stops calling further destructors.
 The
-.Xr thrd_exit
+.Xr thrd_exit 3
 function must not be called from a destructor.
 .Pp
 The
@@ -111,8 +107,7 @@ function frees resources used by the thread-specific storage identified by the
 object.
 This function can be called inside the
 .Fa dtor
-destructor,
-however the destructor is not called by
+destructor, however the destructor is not called by
 .Fn tss_delete .
 .Pp
 The
