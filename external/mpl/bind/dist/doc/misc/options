@@ -310,11 +310,12 @@ options {
         resolver-retry-interval <integer>;
         response-padding { <address_match_element>; ... } block-size
             <integer>;
-        response-policy { zone <string> [ log <boolean> ] [ max-policy-ttl
-            <ttlval> ] [ min-update-interval <ttlval> ] [ policy ( cname |
-            disabled | drop | given | no-op | nodata | nxdomain | passthru
-            | tcp-only <quoted_string> ) ] [ recursive-only <boolean> ] [
-            nsip-enable <boolean> ] [ nsdname-enable <boolean> ]; ... } [
+        response-policy { zone <string> [ add-soa <boolean> ] [ log
+            <boolean> ] [ max-policy-ttl <ttlval> ] [ min-update-interval
+            <ttlval> ] [ policy ( cname | disabled | drop | given | no-op |
+            nodata | nxdomain | passthru | tcp-only <quoted_string> ) ] [
+            recursive-only <boolean> ] [ nsip-enable <boolean> ] [
+            nsdname-enable <boolean> ]; ... } [ add-soa <boolean> ] [
             break-dnssec <boolean> ] [ max-policy-ttl <ttlval> ] [
             min-update-interval <ttlval> ] [ min-ns-dots <integer> ] [
             nsip-wait-recurse <boolean> ] [ qname-wait-recurse <boolean> ]
@@ -647,11 +648,12 @@ view <string> [ <class> ] {
         resolver-retry-interval <integer>;
         response-padding { <address_match_element>; ... } block-size
             <integer>;
-        response-policy { zone <string> [ log <boolean> ] [ max-policy-ttl
-            <ttlval> ] [ min-update-interval <ttlval> ] [ policy ( cname |
-            disabled | drop | given | no-op | nodata | nxdomain | passthru
-            | tcp-only <quoted_string> ) ] [ recursive-only <boolean> ] [
-            nsip-enable <boolean> ] [ nsdname-enable <boolean> ]; ... } [
+        response-policy { zone <string> [ add-soa <boolean> ] [ log
+            <boolean> ] [ max-policy-ttl <ttlval> ] [ min-update-interval
+            <ttlval> ] [ policy ( cname | disabled | drop | given | no-op |
+            nodata | nxdomain | passthru | tcp-only <quoted_string> ) ] [
+            recursive-only <boolean> ] [ nsip-enable <boolean> ] [
+            nsdname-enable <boolean> ]; ... } [ add-soa <boolean> ] [
             break-dnssec <boolean> ] [ max-policy-ttl <ttlval> ] [
             min-update-interval <ttlval> ] [ min-ns-dots <integer> ] [
             nsip-wait-recurse <boolean> ] [ qname-wait-recurse <boolean> ]

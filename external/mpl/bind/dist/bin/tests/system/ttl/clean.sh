@@ -1,7 +1,5 @@
 #!/bin/sh
 
-. $SYSTEMTESTTOP/conf.sh
-
 rm -f ./dig.out.*
 rm -f ./*/named.conf
 rm -f ./*/named.memstats

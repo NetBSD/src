@@ -12,7 +12,11 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
+#
+# jnl and database files MUST be removed before we start
+#
 $SHELL clean.sh
+
 copy_setports ns1/named.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf
 copy_setports ns3/named.conf.in ns3/named.conf
@@ -24,15 +28,6 @@ copy_setports ns9/named.conf.in ns9/named.conf
 copy_setports ns10/named.conf.in ns10/named.conf
 
 copy_setports verylarge.in verylarge
-
-#
-# jnl and database files MUST be removed before we start
-#
-
-rm -f ns1/*.jnl ns1/example.db ns2/*.jnl ns2/example.bk
-rm -f ns2/update.bk ns2/update.alt.bk
-rm -f ns3/example.db.jnl
-rm -f ns3/too-big.test.db.jnl
 
 cp -f ns1/example1.db ns1/example.db
 sed 's/example.nil/other.nil/g' ns1/example1.db > ns1/other.db
@@ -71,13 +66,11 @@ $DDNSCONFGEN -q -a hmac-sha512 -k sha512-key -z keytests.nil > ns1/sha512.key
 (cd ns3; $SHELL -e sign.sh)
 
 cp -f ns1/many.test.db.in ns1/many.test.db
-rm -f ns1/many.test.db.jnl
 
 cp ns1/sample.db.in ns1/sample.db
 cp ns2/sample.db.in ns2/sample.db
 
 cp -f ns1/maxjournal.db.in ns1/maxjournal.db
-rm -f ns1/maxjournal.db.jnl
 
 cp -f ns5/local.db.in ns5/local.db
 cp -f ns6/in-addr.db.in ns6/in-addr.db
