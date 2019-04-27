@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.h,v 1.4 2017/10/07 21:53:16 jmcneill Exp $ */
+/* $NetBSD: sunxi_codec.h,v 1.4.8.1 2019/04/27 05:30:37 isaki Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -112,7 +112,6 @@ struct sunxi_codec_softc {
 	kmutex_t		sc_intr_lock;
 
 	struct audio_format	sc_format;
-	struct audio_encoding_set *sc_encodings;
 
 	struct sunxi_codec_chan	sc_pchan;
 	struct sunxi_codec_chan	sc_rchan;
