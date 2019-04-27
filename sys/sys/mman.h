@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.57 2019/04/27 17:47:48 christos Exp $	*/
+/*	$NetBSD: mman.h,v 1.58 2019/04/27 17:53:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -145,6 +145,9 @@ F\30\010\
 :\022ALIGN=256KB\0\
 :\023ALIGN=512KB\0\
 :\024ALIGN=1MB\0\
+:\025ALIGN=2MB\0\
+:\026ALIGN=4MB\0\
+:\027ALIGN=8MB\0\
 :\030ALIGN=16MB\0\
 :\034ALIGN=256MB\0\
 :\040ALIGN=4GB\0\
