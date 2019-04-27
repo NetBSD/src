@@ -1,4 +1,4 @@
-/* $NetBSD: audio_dai.h,v 1.4 2018/11/19 10:14:40 maya Exp $ */
+/* $NetBSD: audio_dai.h,v 1.4.2.1 2019/04/27 10:17:59 isaki Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -146,22 +146,22 @@ audio_dai_drain(audio_dai_tag_t dai)
 }
 
 static inline int
-audio_dai_query_encoding(audio_dai_tag_t dai, audio_encoding_t *ae)
+audio_dai_query_format(audio_dai_tag_t dai, audio_format_query_t *afp)
 {
-	if (!dai->dai_hw_if->query_encoding)
+	if (!dai->dai_hw_if->query_format)
 		return 0;
-	return dai->dai_hw_if->query_encoding(dai->dai_priv, ae);
+	return dai->dai_hw_if->query_format(dai->dai_priv, afp);
 }
 
 static inline int
-audio_dai_set_params(audio_dai_tag_t dai, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+audio_dai_mi_set_format(audio_dai_tag_t dai, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	if (!dai->dai_hw_if->set_params)
+	if (!dai->dai_hw_if->set_format)
 		return 0;
-	return dai->dai_hw_if->set_params(dai->dai_priv, setmode,
-	    usemode, play, rec, pfil, rfil);
+	return dai->dai_hw_if->set_format(dai->dai_priv, setmode,
+	    play, rec, pfil, rfil);
 }
 
 static inline int
@@ -242,14 +242,6 @@ audio_dai_round_buffersize(audio_dai_tag_t dai, int dir, size_t bufsize)
 	if (!dai->dai_hw_if->round_buffersize)
 		return bufsize;
 	return dai->dai_hw_if->round_buffersize(dai->dai_priv, dir, bufsize);
-}
-
-static inline paddr_t
-audio_dai_mappage(audio_dai_tag_t dai, void *addr, off_t off, int prot)
-{
-	if (!dai->dai_hw_if->mappage)
-		return -1;
-	return dai->dai_hw_if->mappage(dai->dai_priv, addr, off, prot);
 }
 
 static inline int

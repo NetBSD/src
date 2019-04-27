@@ -1,4 +1,4 @@
-/* $NetBSD: ausoc.c,v 1.3 2018/05/12 23:51:06 jmcneill Exp $ */
+/* $NetBSD: ausoc.c,v 1.3.8.1 2019/04/27 10:17:59 isaki Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.3 2018/05/12 23:51:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.3.8.1 2019/04/27 10:17:59 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -116,28 +116,28 @@ ausoc_drain(void *priv)
 }
 
 static int
-ausoc_query_encoding(void *priv, struct audio_encoding *ae)
+ausoc_query_format(void *priv, audio_format_query_t *afp)
 {
 	struct ausoc_link * const link = priv;
 
-	return audio_dai_query_encoding(link->link_cpu, ae);
+	return audio_dai_query_format(link->link_cpu, afp);
 }
 
 static int
-ausoc_set_params(void *priv, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+ausoc_set_format(void *priv, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct ausoc_link * const link = priv;
 	int error;
 
-	error = audio_dai_set_params(link->link_cpu, setmode,
-	    usemode, play, rec, pfil, rfil);
+	error = audio_dai_mi_set_format(link->link_cpu, setmode,
+	    play, rec, pfil, rfil);
 	if (error)
 		return error;
 
-	return audio_dai_set_params(link->link_codec, setmode,
-	    usemode, play, rec, pfil, rfil);
+	return audio_dai_mi_set_format(link->link_codec, setmode,
+	    play, rec, pfil, rfil);
 }
 
 static int
@@ -178,14 +178,6 @@ ausoc_freem(void *priv, void *addr, size_t size)
 	struct ausoc_link * const link = priv;
 
 	return audio_dai_freem(link->link_cpu, addr, size);
-}
-
-static paddr_t
-ausoc_mappage(void *priv, void *addr, off_t off, int prot)
-{
-	struct ausoc_link * const link = priv;
-
-	return audio_dai_mappage(link->link_cpu, addr, off, prot);
 }
 
 static int
@@ -347,11 +339,10 @@ static const struct audio_hw_if ausoc_hw_if = {
 	.open = ausoc_open,
 	.close = ausoc_close,
 	.drain = ausoc_drain,
-	.query_encoding = ausoc_query_encoding,
-	.set_params = ausoc_set_params,
+	.query_format = ausoc_query_format,
+	.set_format = ausoc_set_format,
 	.allocm = ausoc_allocm,
 	.freem = ausoc_freem,
-	.mappage = ausoc_mappage,
 	.getdev = ausoc_getdev,
 	.set_port = ausoc_set_port,
 	.get_port = ausoc_get_port,
