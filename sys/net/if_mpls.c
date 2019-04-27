@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.34 2018/06/26 06:48:02 msaitoh Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.35 2019/04/27 06:18:15 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.34 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.35 2019/04/27 06:18:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -733,4 +733,4 @@ mpls_prepend_shim(struct mbuf *m, union mpls_shim *ms)
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, mpls, "")
+IF_MODULE(MODULE_CLASS_DRIVER, mpls, NULL)
