@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.22 2017/12/24 16:16:30 christos Exp $
+# 	$NetBSD: RAMDISK,v 1.23 2019/04/27 12:08:11 sevan Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -90,3 +90,5 @@ no pseudo-device	accf_http
 no pseudo-device	clockctl
 no pseudo-device	ksyms
 no pseudo-device	wsmux
+no pseudo-device 	carp
+no pseudo-device 	veriexec
