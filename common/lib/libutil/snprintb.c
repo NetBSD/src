@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.18 2018/07/26 00:33:26 kamil Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.19 2019/04/27 17:45:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.18 2018/07/26 00:33:26 kamil Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.19 2019/04/27 17:45:28 christos Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.18 2018/07/26 00:33:26 kamil Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.18 2018/07/26 00:33:26 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.19 2019/04/27 17:45:28 christos Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -67,7 +67,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 	const char *c_fmt, *s_fmt = NULL, *cur_fmt;
 	const char *sbase;
 	int bit, ch, t_len, s_len = 0, l_len, f_len, v_len, sep;
-	int restart = 0;
+	int restart = 0, matched = 1;
 	uint64_t field;
 
 #ifdef _KERNEL
@@ -166,6 +166,16 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 			if (restart)					\
 				break;					\
 		}
+#define FMTSTR(sb, f) 							\
+	do { 								\
+		f_len = snprintf(bp, buflen - t_len, sb, (int)f);	\
+		if (f_len < 0) 						\
+			goto internal; 					\
+		t_len += f_len; 					\
+		l_len += f_len; 					\
+		if ((size_t)t_len < buflen) 				\
+			bp += f_len; 					\
+	} while (/*CONSTCOND*/0)
 
 	/*
 	 * Chris Torek's new bitmask format is identified by a leading \177
@@ -208,6 +218,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 				break;
 			case 'f':
 			case 'F':
+				matched = 0;
 				cur_fmt = c_fmt;
 				f_len = *bitfmt++;	/* field length */
 				field = (val >> bit) &
@@ -215,23 +226,14 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 				PUTSEP;
 				if (restart == 0)
 					sep = ',';
-				if (ch == 'F') {	/* just extract */
-					bitfmt--;
+				if (ch == 'F') 		/* just extract */
 					break;
-				}
 				if (restart == 0)
 					PUTS(bitfmt);
 				if (restart == 0)
 					PUTCHR('=');
 				if (restart == 0) {
-					f_len = snprintf(bp, buflen - t_len,
-							 sbase, field);
-					if (f_len < 0)
-						goto internal;
-					t_len += f_len;
-					l_len += f_len;
-					if ((size_t)t_len < buflen)
-						bp += f_len;
+					FMTSTR(sbase, field);
 					if (l_max > 0 && (size_t)l_len > l_max)
 						PUTCHR('#');
 				}
@@ -246,10 +248,19 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 				 */
 				if ((int)field != bit)
 					goto skip;
+				matched = 1;
 				if (ch == '=')
 					PUTCHR('=');
 				PUTS(bitfmt);
 				break;
+			case '*':
+				bitfmt--;
+				if (!matched) {
+					matched = 1;
+					FMTSTR(bitfmt, field);
+					break;
+				}
+				/*FALLTHROUGH*/
 			default:
 			skip:
 				while (*bitfmt++ != '\0')
