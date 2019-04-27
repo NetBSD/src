@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.11 2019/04/06 11:49:53 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.12 2019/04/27 15:45:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,6 +31,76 @@
 
 #ifndef _NVMM_X86_H_
 #define _NVMM_X86_H_
+
+/* --------------------------------------------------------------------- */
+
+#ifndef ASM_NVMM
+
+struct nvmm_exit_memory {
+	int prot;
+	gpaddr_t gpa;
+	uint8_t inst_len;
+	uint8_t inst_bytes[15];
+};
+
+enum nvmm_exit_io_type {
+	NVMM_EXIT_IO_IN,
+	NVMM_EXIT_IO_OUT
+};
+
+struct nvmm_exit_io {
+	enum nvmm_exit_io_type type;
+	uint16_t port;
+	int seg;
+	uint8_t address_size;
+	uint8_t operand_size;
+	bool rep;
+	bool str;
+	uint64_t npc;
+};
+
+enum nvmm_exit_msr_type {
+	NVMM_EXIT_MSR_RDMSR,
+	NVMM_EXIT_MSR_WRMSR
+};
+
+struct nvmm_exit_msr {
+	enum nvmm_exit_msr_type type;
+	uint64_t msr;
+	uint64_t val;
+	uint64_t npc;
+};
+
+struct nvmm_exit_insn {
+	uint64_t npc;
+};
+
+struct nvmm_exit_invalid {
+	uint64_t hwcode;
+};
+
+union nvmm_exit_md {
+	struct nvmm_exit_memory mem;
+	struct nvmm_exit_io io;
+	struct nvmm_exit_msr msr;
+	struct nvmm_exit_insn insn;
+	struct nvmm_exit_invalid inv;
+};
+
+#define NVMM_EXIT_MONITOR	0x0000000000001000ULL
+#define NVMM_EXIT_MWAIT		0x0000000000001001ULL
+#define NVMM_EXIT_MWAIT_COND	0x0000000000001002ULL
+
+struct nvmm_cap_md {
+	uint64_t xcr0_mask;
+	uint64_t mxcsr_mask;
+	uint64_t conf_cpuid_maxops;
+	uint64_t rsvd[5];
+};
+
+#endif
+
+/* --------------------------------------------------------------------- */
 
 /* Segments. */
 #define NVMM_X64_SEG_ES			0

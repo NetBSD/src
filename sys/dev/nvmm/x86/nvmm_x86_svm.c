@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.41 2019/04/27 09:06:18 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.42 2019/04/27 15:45:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.41 2019/04/27 09:06:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.42 2019/04/27 15:45:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2288,9 +2288,9 @@ svm_fini(void)
 static void
 svm_capability(struct nvmm_capability *cap)
 {
-	cap->u.x86.xcr0_mask = svm_xcr0_mask;
-	cap->u.x86.mxcsr_mask = x86_fpu_mxcsr_mask;
-	cap->u.x86.conf_cpuid_maxops = SVM_NCPUIDS;
+	cap->arch.xcr0_mask = svm_xcr0_mask;
+	cap->arch.mxcsr_mask = x86_fpu_mxcsr_mask;
+	cap->arch.conf_cpuid_maxops = SVM_NCPUIDS;
 }
 
 const struct nvmm_impl nvmm_x86_svm = {

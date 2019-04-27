@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.6 2019/04/24 18:19:28 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.7 2019/04/27 15:45:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -44,78 +44,24 @@ typedef uint64_t	gvaddr_t;
 typedef uint32_t	nvmm_machid_t;
 typedef uint32_t	nvmm_cpuid_t;
 
-enum nvmm_exit_reason {
-	NVMM_EXIT_NONE		= 0x0000000000000000,
+#ifdef __x86_64__
+#include <dev/nvmm/x86/nvmm_x86.h>
+#endif
 
-	/* General. */
-	NVMM_EXIT_MEMORY	= 0x0000000000000001,
-	NVMM_EXIT_IO		= 0x0000000000000002,
-	NVMM_EXIT_MSR		= 0x0000000000000003,
-	NVMM_EXIT_INT_READY	= 0x0000000000000004,
-	NVMM_EXIT_NMI_READY	= 0x0000000000000005,
-	NVMM_EXIT_HALTED	= 0x0000000000000006,
-	NVMM_EXIT_SHUTDOWN	= 0x0000000000000007,
-
-	/* Instructions (x86). */
-	NVMM_EXIT_MONITOR	= 0x0000000000001000,
-	NVMM_EXIT_MWAIT		= 0x0000000000001001,
-	NVMM_EXIT_MWAIT_COND	= 0x0000000000001002,
-
-	NVMM_EXIT_INVALID	= 0xFFFFFFFFFFFFFFFF
-};
-
-struct nvmm_exit_memory {
-	int prot;
-	gpaddr_t gpa;
-	uint8_t inst_len;
-	uint8_t inst_bytes[15];
-};
-
-enum nvmm_exit_io_type {
-	NVMM_EXIT_IO_IN,
-	NVMM_EXIT_IO_OUT
-};
-
-struct nvmm_exit_io {
-	enum nvmm_exit_io_type type;
-	uint16_t port;
-	int seg;
-	uint8_t address_size;
-	uint8_t operand_size;
-	bool rep;
-	bool str;
-	uint64_t npc;
-};
-
-enum nvmm_exit_msr_type {
-	NVMM_EXIT_MSR_RDMSR,
-	NVMM_EXIT_MSR_WRMSR
-};
-
-struct nvmm_exit_msr {
-	enum nvmm_exit_msr_type type;
-	uint64_t msr;
-	uint64_t val;
-	uint64_t npc;
-};
-
-struct nvmm_exit_insn {
-	uint64_t npc;
-};
-
-struct nvmm_exit_invalid {
-	uint64_t hwcode;
-};
+#define NVMM_EXIT_NONE		0x0000000000000000ULL
+#define NVMM_EXIT_MEMORY	0x0000000000000001ULL
+#define NVMM_EXIT_IO		0x0000000000000002ULL
+#define NVMM_EXIT_MSR		0x0000000000000003ULL /* x86 only? */
+#define NVMM_EXIT_INT_READY	0x0000000000000004ULL
+#define NVMM_EXIT_NMI_READY	0x0000000000000005ULL
+#define NVMM_EXIT_HALTED	0x0000000000000006ULL
+#define NVMM_EXIT_SHUTDOWN	0x0000000000000007ULL
+/* Range 0x1000-0x10000 is MD. */
+#define NVMM_EXIT_INVALID	0xFFFFFFFFFFFFFFFFULL
 
 struct nvmm_exit {
-	enum nvmm_exit_reason reason;
-	union {
-		struct nvmm_exit_memory mem;
-		struct nvmm_exit_io io;
-		struct nvmm_exit_msr msr;
-		struct nvmm_exit_insn insn;
-		struct nvmm_exit_invalid inv;
-	} u;
+	uint64_t reason;
+	union nvmm_exit_md u;
 	uint64_t exitstate[8];
 };
 
@@ -145,14 +91,7 @@ struct nvmm_capability {
 	uint64_t max_machines;
 	uint64_t max_vcpus;
 	uint64_t max_ram;
-	union {
-		struct {
-			uint64_t xcr0_mask;
-			uint64_t mxcsr_mask;
-			uint64_t conf_cpuid_maxops;
-		} x86;
-		uint64_t rsvd[8];
-	} u;
+	struct nvmm_cap_md arch;
 };
 
 #endif
