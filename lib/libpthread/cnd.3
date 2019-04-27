@@ -1,4 +1,4 @@
-.\"	$NetBSD: cnd.3,v 1.1 2019/04/24 11:43:19 kamil Exp $
+.\"	$NetBSD: cnd.3,v 1.2 2019/04/27 10:57:11 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,7 +72,7 @@ condition variable.
 .Pp
 The
 .Fn cnd_init
-function initializes new
+function initializes a new
 .Fa cond
 variable.
 .Pp
@@ -81,13 +81,13 @@ The
 function unblock one thread that currently waits on the
 .Fa cond
 variable.
-If there are no threads blocked
+If there are no threads blocked,
 .Fn cnd_signal
 does nothing and returns success.
 .Pp
 The
 .Fn cnd_timedwait
-function atomicalyl unlocks the mutex
+function atomically unlocks the mutex
 .Fa mtx
 and blocks on the condition variable
 .Fa cond
@@ -109,7 +109,7 @@ The
 .Fn cnd_wait
 function atomically unlocks the mutex
 .Fa mtx
-and tries to blocks on on the conditional variable
+and tries to block on the conditional variable
 .Fa cond
 until a thread is signalled by a call to
 .Fn cnd_signal
@@ -121,7 +121,7 @@ mutex is locked again before the function returns.
 If the mutex is not locked by the calling thread then behavior is undefined.
 .Sh RETURN VALUES
 The
-.Fn cnd_broadcast ,
+.Fn cnd_broadcast
 function returns
 .Dv thrd_success
 on success or
@@ -131,6 +131,8 @@ on failure.
 The
 .Fn cnd_destroy
 function returns no value.
+.Pp
+The
 .Fn cnd_init
 function returns
 .Dv thrd_success
@@ -153,7 +155,7 @@ function returns
 on success, otherwise
 .Dv thrd_timedout
 to indicate that system time has reached or exceeded the time specified in
-.Dv ts
+.Dv ts ,
 or
 .Dv thrd_error
 on failure.
@@ -162,7 +164,7 @@ The
 .Fn cnd_wait
 function returns
 .Dv thrd_success
-on success, otherwise
+on success or
 .Dv thrd_error
 on failure.
 .Sh SEE ALSO
