@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.70.24.1 2019/04/21 04:28:59 isaki Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.70.24.2 2019/04/27 12:05:28 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -275,6 +275,8 @@ int	audioprint(void *, const char *);
 
 extern int audio_query_format(const struct audio_format *, int,
 	audio_format_query_t *);
+extern int audio_indexof_format(const struct audio_format *, int, int,
+	const audio_params_t *);
 extern const char *audio_encoding_name(int);
 
 /* Device identity flags */
