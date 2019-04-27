@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.22 2019/04/26 19:39:19 christos Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.23 2019/04/27 14:10:01 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.22 2019/04/26 19:39:19 christos Exp $
+ * $Id: m_netbsd.c,v 1.23 2019/04/27 14:10:01 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.22 2019/04/26 19:39:19 christos Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.23 2019/04/27 14:10:01 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -882,19 +882,18 @@ static char *
 countable(char *p, size_t l)
 {
 	static const char digits[] = "0123456789";
-	size_t first = strcspn(p, digits);
-	size_t last = strspn(p + first, digits);
-	size_t len = first + last;
-	if (p[len] || last == 0)
+	size_t first = strcspn(p, digits);		// non digits
+	size_t last = strspn(p + first, digits);	// trailing digits
+	size_t len = first + last;			
+	if (p[len] || last == 0)	// should be total and must have digits
 		return p;
-	if (len < l)
+	if (len < l)			// if shorter, done
 		return p;
-	if (l < last + 1)
+	if (l < last + 1)		// if not enough for digits, done
 		return p;
-	size_t start = l - last - 1;
-	p[start] = '*';
-	memmove(p + start + 1, p + first, len - first);
-	p[l] = '\0';
+	size_t start = l - last - 1;	// compute starting point
+	p[start] = '*';			// put a star
+	memmove(p + start + 1, p + first, last + 1);	// move digits and NUL
 	return p;
 }
 
