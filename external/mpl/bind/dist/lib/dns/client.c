@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <isc/buffer.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
+#include <isc/portset.h>
 #include <isc/safe.h>
 #include <isc/sockaddr.h>
 #include <isc/socket.h>
@@ -252,6 +253,48 @@ static isc_result_t request_soa(updatectx_t *uctx);
 static void client_resfind(resctx_t *rctx, dns_fetchevent_t *event);
 static isc_result_t send_update(updatectx_t *uctx);
 
+/*
+ * Try honoring the operating system's preferred ephemeral port range.
+ */
+static isc_result_t
+setsourceports(isc_mem_t *mctx, dns_dispatchmgr_t *manager) {
+	isc_portset_t *v4portset = NULL, *v6portset = NULL;
+	in_port_t udpport_low, udpport_high;
+	isc_result_t result;
+
+	result = isc_portset_create(mctx, &v4portset);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+	result = isc_net_getudpportrange(AF_INET, &udpport_low, &udpport_high);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+	isc_portset_addrange(v4portset, udpport_low, udpport_high);
+
+	result = isc_portset_create(mctx, &v6portset);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+	result = isc_net_getudpportrange(AF_INET6, &udpport_low, &udpport_high);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+	isc_portset_addrange(v6portset, udpport_low, udpport_high);
+
+	result = dns_dispatchmgr_setavailports(manager, v4portset, v6portset);
+
+ cleanup:
+	if (v4portset != NULL) {
+		isc_portset_destroy(mctx, &v4portset);
+	}
+	if (v6portset != NULL) {
+		isc_portset_destroy(mctx, &v6portset);
+	}
+
+	return (result);
+}
+
 static isc_result_t
 getudpdispatch(int family, dns_dispatchmgr_t *dispatchmgr,
 	       isc_socketmgr_t *socketmgr, isc_taskmgr_t *taskmgr,
@@ -468,6 +511,7 @@ dns_client_createx(isc_mem_t *mctx, isc_appctx_t *actx,
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 	client->dispatchmgr = dispatchmgr;
+	(void)setsourceports(mctx, dispatchmgr);
 
 	/*
 	 * If only one address family is specified, use it.

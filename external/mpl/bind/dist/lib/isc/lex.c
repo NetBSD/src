@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.5 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -435,7 +435,7 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 			if (source->is_file) {
 				stream = source->input;
 
-#if defined(HAVE_FLOCKFILE) && defined(HAVE_GETCUNLOCKED)
+#if defined(HAVE_FLOCKFILE) && defined(HAVE_GETC_UNLOCKED)
 				c = getc_unlocked(stream);
 #else
 				c = getc(stream);

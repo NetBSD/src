@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: quota.h,v 1.5 2019/04/28 00:01:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -115,6 +115,13 @@ isc_quota_attach(isc_quota_t *quota, isc_quota_t **p);
 /*%<
  * Like isc_quota_reserve, and also attaches '*p' to the
  * quota if successful (ISC_R_SUCCESS or ISC_R_SOFTQUOTA).
+ */
+
+isc_result_t
+isc_quota_force(isc_quota_t *quota, isc_quota_t **p);
+/*%<
+ * Like isc_quota_attach, but will attach '*p' to the quota
+ * even if the hard quota has been exceeded.
  */
 
 void

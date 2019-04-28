@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.5 2019/04/28 00:01:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -237,7 +237,7 @@ logkey(dns_rdata_t *rdata)
 }
 
 static void
-emit(unsigned int dtype, bool showall, char *lookaside,
+emit(dns_dsdigest_t dtype, bool showall, char *lookaside,
      bool cds, dns_rdata_t *rdata)
 {
 	isc_result_t result;
@@ -352,7 +352,7 @@ main(int argc, char **argv) {
 	char		*lookaside = NULL;
 	char		*endp;
 	int		ch;
-	unsigned int	dtype = DNS_DSDIGEST_SHA1;
+	dns_dsdigest_t	dtype = DNS_DSDIGEST_SHA1;
 	bool	cds = false;
 	bool	both = true;
 	bool	usekeyset = false;

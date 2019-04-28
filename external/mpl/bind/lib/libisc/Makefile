@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2019/02/28 22:18:21 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2019/04/28 00:01:16 christos Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -16,8 +16,8 @@ DIST=	${IDIST}/lib/isc
 .PATH.c:	${DIST}/unix ${DIST}/nls ${DIST}/nothreads ${DIST}
 .endif
 
-UNIX_SRCS=	app.c backtrace.c dir.c entropy.c errno2result.c file.c \
-		fsaccess.c interfaceiter.c net.c os.c resource.c \
+UNIX_SRCS=	app.c backtrace.c dir.c entropy.c errno.c errno2result.c \
+		file.c fsaccess.c interfaceiter.c net.c os.c resource.c \
 		socket.c stdio.c stdtime.c syslog.c time.c \
 		backtrace-emptytbl.c meminfo.c
 PTHREAD_SRCS=	condition.c mutex.c thread.c
