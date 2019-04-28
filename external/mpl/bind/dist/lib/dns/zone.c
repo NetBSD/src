@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.5 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1785,14 +1785,25 @@ dns_zone_get_rpz_num(dns_zone_t *zone) {
 void
 dns_zone_rpz_enable_db(dns_zone_t *zone, dns_db_t *db) {
 	isc_result_t result;
-	if (zone->rpz_num == DNS_RPZ_INVALID_NUM)
+	if (zone->rpz_num == DNS_RPZ_INVALID_NUM) {
 		return;
+	}
 	REQUIRE(zone->rpzs != NULL);
-	zone->rpzs->zones[zone->rpz_num]->db_registered = true;
 	result = dns_db_updatenotify_register(db,
 					      dns_rpz_dbupdate_callback,
 					      zone->rpzs->zones[zone->rpz_num]);
 	REQUIRE(result == ISC_R_SUCCESS);
+}
+
+static void
+dns_zone_rpz_disable_db(dns_zone_t *zone, dns_db_t *db) {
+	if (zone->rpz_num == DNS_RPZ_INVALID_NUM) {
+		return;
+	}
+	REQUIRE(zone->rpzs != NULL);
+	(void) dns_db_updatenotify_unregister(db,
+					      dns_rpz_dbupdate_callback,
+					      zone->rpzs->zones[zone->rpz_num]);
 }
 
 void
@@ -1803,8 +1814,9 @@ dns_zone_catz_enable(dns_zone_t *zone, dns_catz_zones_t *catzs) {
 	LOCK_ZONE(zone);
 	INSIST(zone->catzs == NULL || zone->catzs == catzs);
 	dns_catz_catzs_set_view(catzs, zone->view);
-	if (zone->catzs == NULL)
+	if (zone->catzs == NULL) {
 		dns_catz_catzs_attach(catzs, &zone->catzs);
+	}
 	UNLOCK_ZONE(zone);
 }
 
@@ -1819,6 +1831,17 @@ dns_zone_catz_enable_db(dns_zone_t *zone, dns_db_t *db) {
 	if (zone->catzs != NULL) {
 		dns_db_updatenotify_register(db, dns_catz_dbupdate_callback,
 					     zone->catzs);
+	}
+}
+
+static void
+dns_zone_catz_disable_db(dns_zone_t *zone, dns_db_t *db) {
+	REQUIRE(DNS_ZONE_VALID(zone));
+	REQUIRE(db != NULL);
+
+	if (zone->catzs != NULL) {
+		dns_db_updatenotify_unregister(db, dns_catz_dbupdate_callback,
+					       zone->catzs);
 	}
 }
 
@@ -2122,7 +2145,7 @@ zone_load(dns_zone_t *zone, unsigned int flags, bool locked) {
 		}
 	}
 
-	if (! dns_db_ispersistent(db)) {
+	if (!dns_db_ispersistent(db)) {
 		if (zone->masterfile != NULL) {
 			result = zone_startload(db, zone, loadtime);
 		} else {
@@ -2489,16 +2512,21 @@ dns_zone_setrawdata(dns_zone_t *zone, dns_masterrawheader_t *header) {
 
 static isc_result_t
 zone_startload(dns_db_t *db, dns_zone_t *zone, isc_time_t loadtime) {
+	const char me[] = "zone_startload";
 	dns_load_t *load;
 	isc_result_t result;
 	isc_result_t tresult;
 	unsigned int options;
 
+	ENTER;
+
 	dns_zone_rpz_enable_db(zone, db);
 	dns_zone_catz_enable_db(zone, db);
+
 	options = get_master_options(zone);
-	if (DNS_ZONE_OPTION(zone, DNS_ZONEOPT_MANYERRORS))
+	if (DNS_ZONE_OPTION(zone, DNS_ZONEOPT_MANYERRORS)) {
 		options |= DNS_MASTER_MANYERRORS;
+	}
 
 	if (zone->zmgr != NULL && zone->db != NULL && zone->loadtask != NULL) {
 		load = isc_mem_get(zone->mctx, sizeof(*load));
@@ -2518,8 +2546,9 @@ zone_startload(dns_db_t *db, dns_zone_t *zone, isc_time_t loadtime) {
 		load->callbacks.rawdata = zone_setrawdata;
 		zone_iattach(zone, &load->callbacks.zone);
 		result = dns_db_beginload(db, &load->callbacks);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
+		}
 		result = zonemgr_getio(zone->zmgr, true, zone->loadtask,
 				       zone_gotreadhandle, load,
 				       &zone->readio);
@@ -2530,8 +2559,9 @@ zone_startload(dns_db_t *db, dns_zone_t *zone, isc_time_t loadtime) {
 			 */
 			(void)dns_db_endload(load->db, &load->callbacks);
 			goto cleanup;
-		} else
+		} else {
 			result = DNS_R_CONTINUE;
+		}
 	} else {
 		dns_rdatacallbacks_t callbacks;
 
@@ -2552,8 +2582,9 @@ zone_startload(dns_db_t *db, dns_zone_t *zone, isc_time_t loadtime) {
 					     zone->masterformat,
 					     zone->maxttl);
 		tresult = dns_db_endload(db, &callbacks);
-		if (result == ISC_R_SUCCESS)
+		if (result == ISC_R_SUCCESS) {
 			result = tresult;
+		}
 		zone_idetach(&callbacks.zone);
 	}
 
@@ -15802,6 +15833,15 @@ zone_loaddone(void *arg, isc_result_t result) {
 	zone = load->zone;
 
 	ENTER;
+
+	/*
+	 * If zone loading failed, remove the update db callbacks prior
+	 * to calling the list of callbacks in the zone load structure.
+	 */
+	if (result != ISC_R_SUCCESS) {
+		dns_zone_rpz_disable_db(zone, load->db);
+		dns_zone_catz_disable_db(zone, load->db);
+	}
 
 	tresult = dns_db_endload(load->db, &load->callbacks);
 	if (tresult != ISC_R_SUCCESS &&

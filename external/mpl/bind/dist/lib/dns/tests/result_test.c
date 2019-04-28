@@ -1,4 +1,4 @@
-/*	$NetBSD: result_test.c,v 1.2 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: result_test.c,v 1.3 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,7 @@
 
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <setjmp.h>
 #include <string.h>
 

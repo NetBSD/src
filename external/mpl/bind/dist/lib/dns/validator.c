@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.5 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1760,7 +1760,7 @@ checkkey(dns_validator_t *val, dns_rdata_t *keyrdata, uint16_t keyid,
  */
 static isc_result_t
 keyfromds(dns_validator_t *val, dns_rdataset_t *rdataset, dns_rdata_t *dsrdata,
-	  uint8_t digest, uint16_t keyid, dns_secalg_t algorithm,
+	  dns_dsdigest_t digest, uint16_t keyid, dns_secalg_t algorithm,
 	  dns_rdata_t *keyrdata)
 {
 	dns_keytag_t keytag;
