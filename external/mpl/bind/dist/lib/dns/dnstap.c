@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: dnstap.c,v 1.5 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -80,8 +80,8 @@
 #include <dns/types.h>
 #include <dns/view.h>
 
-#include <dns/dnstap.pb-c.h>
 #include <protobuf-c/protobuf-c.h>
+#include "dnstap.pb-c.h"
 
 #define DTENV_MAGIC			ISC_MAGIC('D', 't', 'n', 'v')
 #define VALID_DTENV(env)		ISC_MAGIC_VALID(env, DTENV_MAGIC)
@@ -1103,6 +1103,7 @@ dns_dt_close(dns_dthandle_t **handlep) {
 isc_result_t
 dns_dt_parse(isc_mem_t *mctx, isc_region_t *src, dns_dtdata_t **destp) {
 	isc_result_t result;
+	Dnstap__Dnstap *frame;
 	Dnstap__Message *m;
 	dns_dtdata_t *d = NULL;
 	isc_buffer_t b;
@@ -1121,10 +1122,12 @@ dns_dt_parse(isc_mem_t *mctx, isc_region_t *src, dns_dtdata_t **destp) {
 	if (d->frame == NULL)
 		CHECK(ISC_R_NOMEMORY);
 
-	if (d->frame->type != DNSTAP__DNSTAP__TYPE__MESSAGE)
+	frame = (Dnstap__Dnstap *)d->frame;
+
+	if (frame->type != DNSTAP__DNSTAP__TYPE__MESSAGE)
 		CHECK(DNS_R_BADDNSTAP);
 
-	m = d->frame->message;
+	m = frame->message;
 
 	/* Message type */
 	switch (m->type) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.5 2019/04/28 00:01:13 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -243,7 +243,7 @@ main(int argc, char **argv) {
 	/*
 	 * Process memory debugging argument first.
 	 */
-#define CMDLINE_FLAGS "3A:a:b:Cc:D:d:E:eFf:Gg:hI:i:K:kL:m:n:P:p:qR:r:S:s:T:t:" \
+#define CMDLINE_FLAGS "3A:a:b:Cc:D:d:E:eFf:Gg:hI:i:K:L:m:n:P:p:qR:r:S:s:T:t:" \
 		      "v:V"
 	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 		switch (ch) {
@@ -323,11 +323,6 @@ main(int argc, char **argv) {
 			if (ret != ISC_R_SUCCESS)
 				fatal("cannot open directory %s: %s",
 				      directory, isc_result_totext(ret));
-			break;
-		case 'k':
-			fatal("The -k option has been deprecated.\n"
-			      "To generate a key-signing key, use -f KSK.\n"
-			      "To generate a key with TYPE=KEY, use -T KEY.\n");
 			break;
 		case 'L':
 			ttl = strtottl(isc_commandline_argument);
