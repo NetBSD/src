@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.19 2019/02/04 09:54:47 mrg Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.20 2019/04/28 21:36:19 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.19 2019/02/04 09:54:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.20 2019/04/28 21:36:19 alnsn Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1029,7 +1029,8 @@ veriexec_table_add(struct lwp *l, struct mount *mp)
 /*
  * Add a file to be monitored by Veriexec.
  *
- * Expected elements in dict: file, fp, fp-type, entry-type.
+ * Expected elements in dict:
+ *     file, fp, fp-type, entry-type, keep-filename, eval-on-load.
  */
 int
 veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
