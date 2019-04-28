@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.28 2019/04/04 17:33:47 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.29 2019/04/28 14:22:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -43,14 +43,41 @@
 #include <machine/pte.h>
 #include <machine/psl.h>
 
-#include "nvmm.h"
-
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define __cacheline_aligned __attribute__((__aligned__(64)))
 
 #include <x86/specialreg.h>
 
-extern struct nvmm_callbacks __callbacks;
+/* -------------------------------------------------------------------------- */
+
+static void
+nvmm_arch_copystate(void *_dst, void *_src, uint64_t flags)
+{
+	struct nvmm_x64_state *src = _src;
+	struct nvmm_x64_state *dst = _dst;
+
+	if (flags & NVMM_X64_STATE_GPRS) {
+		memcpy(dst->gprs, src->gprs, sizeof(dst->gprs));
+	}
+	if (flags & NVMM_X64_STATE_SEGS) {
+		memcpy(dst->segs, src->segs, sizeof(dst->segs));
+	}
+	if (flags & NVMM_X64_STATE_CRS) {
+		memcpy(dst->crs, src->crs, sizeof(dst->crs));
+	}
+	if (flags & NVMM_X64_STATE_DRS) {
+		memcpy(dst->drs, src->drs, sizeof(dst->drs));
+	}
+	if (flags & NVMM_X64_STATE_MSRS) {
+		memcpy(dst->msrs, src->msrs, sizeof(dst->msrs));
+	}
+	if (flags & NVMM_X64_STATE_INTR) {
+		memcpy(&dst->intr, &src->intr, sizeof(dst->intr));
+	}
+	if (flags & NVMM_X64_STATE_FPU) {
+		memcpy(&dst->fpu, &src->fpu, sizeof(dst->fpu));
+	}
+}
 
 /* -------------------------------------------------------------------------- */
 

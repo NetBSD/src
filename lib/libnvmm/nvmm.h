@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.9 2019/04/27 15:45:21 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.10 2019/04/28 14:22:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 
 struct nvmm_machine {
 	nvmm_machid_t machid;
+	struct nvmm_comm_page **pages;
+	size_t npages;
 	void *areas; /* opaque */
 };
 

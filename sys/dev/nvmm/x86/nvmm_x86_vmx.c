@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.30 2019/04/27 15:45:21 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.31 2019/04/28 14:22:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.30 2019/04/27 15:45:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.31 2019/04/28 14:22:13 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -553,6 +553,9 @@ vmx_vmclear(paddr_t *pa)
 #define VMCS_EXITCODE_XRSTORS			64
 
 /* -------------------------------------------------------------------------- */
+
+static void vmx_vcpu_state_provide(struct nvmm_cpu *, uint64_t);
+static void vmx_vcpu_state_commit(struct nvmm_cpu *);
 
 #define VMX_MSRLIST_STAR		0
 #define VMX_MSRLIST_LSTAR		1
@@ -1517,6 +1520,10 @@ vmx_exit_io(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	inslen = vmx_vmread(VMCS_EXIT_INSTRUCTION_LENGTH);
 	rip = vmx_vmread(VMCS_GUEST_RIP);
 	exit->u.io.npc = rip + inslen;
+
+	vmx_vcpu_state_provide(vcpu,
+	    NVMM_X64_STATE_GPRS | NVMM_X64_STATE_SEGS |
+	    NVMM_X64_STATE_CRS | NVMM_X64_STATE_MSRS);
 }
 
 static const uint64_t msr_ignore_list[] = {
@@ -1625,6 +1632,8 @@ vmx_exit_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	inslen = vmx_vmread(VMCS_EXIT_INSTRUCTION_LENGTH);
 	rip = vmx_vmread(VMCS_GUEST_RIP);
 	exit->u.msr.npc = rip + inslen;
+
+	vmx_vcpu_state_provide(vcpu, NVMM_X64_STATE_GPRS);
 }
 
 static void
@@ -1679,6 +1688,10 @@ vmx_exit_epf(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		exit->u.mem.prot = PROT_READ;
 	exit->u.mem.gpa = gpa;
 	exit->u.mem.inst_len = 0;
+
+	vmx_vcpu_state_provide(vcpu,
+	    NVMM_X64_STATE_GPRS | NVMM_X64_STATE_SEGS |
+	    NVMM_X64_STATE_CRS | NVMM_X64_STATE_MSRS);
 }
 
 static void
@@ -1867,6 +1880,7 @@ static int
 vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
 {
+	struct nvmm_comm_page *comm = vcpu->comm;
 	struct vmx_machdata *machdata = mach->machdata;
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	struct vpid_desc vpid_desc;
@@ -1878,6 +1892,10 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	bool launched;
 
 	vmx_vmcs_enter(vcpu);
+
+	vmx_vcpu_state_commit(vcpu);
+	comm->state_cached = 0;
+
 	ci = curcpu();
 	hcpu = cpu_number();
 	launched = cpudata->vmcs_launched;
@@ -2220,12 +2238,16 @@ vmx_state_tlb_flush(const struct nvmm_x64_state *state, uint64_t flags)
 }
 
 static void
-vmx_vcpu_setstate(struct nvmm_cpu *vcpu, const void *data, uint64_t flags)
+vmx_vcpu_setstate(struct nvmm_cpu *vcpu)
 {
-	const struct nvmm_x64_state *state = data;
+	struct nvmm_comm_page *comm = vcpu->comm;
+	const struct nvmm_x64_state *state = &comm->state;
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	struct fxsave *fpustate;
 	uint64_t ctls1, intstate;
+	uint64_t flags;
+
+	flags = comm->state_wanted;
 
 	vmx_vmcs_enter(vcpu);
 
@@ -2356,14 +2378,20 @@ vmx_vcpu_setstate(struct nvmm_cpu *vcpu, const void *data, uint64_t flags)
 	}
 
 	vmx_vmcs_leave(vcpu);
+
+	comm->state_wanted = 0;
+	comm->state_cached |= flags;
 }
 
 static void
-vmx_vcpu_getstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
+vmx_vcpu_getstate(struct nvmm_cpu *vcpu)
 {
-	struct nvmm_x64_state *state = (struct nvmm_x64_state *)data;
+	struct nvmm_comm_page *comm = vcpu->comm;
+	struct nvmm_x64_state *state = &comm->state;
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	uint64_t intstate;
+	uint64_t intstate, flags;
+
+	flags = comm->state_wanted;
 
 	vmx_vmcs_enter(vcpu);
 
@@ -2448,6 +2476,24 @@ vmx_vcpu_getstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 	}
 
 	vmx_vmcs_leave(vcpu);
+
+	comm->state_wanted = 0;
+	comm->state_cached |= flags;
+}
+
+static void
+vmx_vcpu_state_provide(struct nvmm_cpu *vcpu, uint64_t flags)
+{
+	vcpu->comm->state_wanted = flags;
+	vmx_vcpu_getstate(vcpu);
+}
+
+static void
+vmx_vcpu_state_commit(struct nvmm_cpu *vcpu)
+{
+	vcpu->comm->state_wanted = vcpu->comm->state_commit;
+	vcpu->comm->state_commit = 0;
+	vmx_vcpu_setstate(vcpu);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2614,7 +2660,11 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	cpudata->sfmask = rdmsr(MSR_SFMASK);
 
 	/* Install the RESET state. */
-	vmx_vcpu_setstate(vcpu, &nvmm_x86_reset_state, NVMM_X64_STATE_ALL);
+	memcpy(&vcpu->comm->state, &nvmm_x86_reset_state,
+	    sizeof(nvmm_x86_reset_state));
+	vcpu->comm->state_wanted = NVMM_X64_STATE_ALL;
+	vcpu->comm->state_cached = 0;
+	vmx_vcpu_setstate(vcpu);
 
 	vmx_vmcs_leave(vcpu);
 }

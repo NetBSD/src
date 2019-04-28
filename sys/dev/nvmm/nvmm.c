@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.18 2019/04/27 17:30:38 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.19 2019/04/28 14:22:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.18 2019/04/27 17:30:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.19 2019/04/28 14:22:13 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ nvmm_vcpu_alloc(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 	}
 
 	vcpu->present = true;
-	vcpu->state = kmem_zalloc(nvmm_impl->state_size, KM_SLEEP);
+	vcpu->comm = NULL;
 	vcpu->hcpu_last = -1;
 	*ret = vcpu;
 	return 0;
@@ -166,7 +166,9 @@ nvmm_vcpu_free(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 {
 	KASSERT(mutex_owned(&vcpu->lock));
 	vcpu->present = false;
-	kmem_free(vcpu->state, nvmm_impl->state_size);
+	if (vcpu->comm != NULL) {
+		uvm_deallocate(kernel_map, (vaddr_t)vcpu->comm, PAGE_SIZE);
+	}
 }
 
 int
@@ -278,6 +280,9 @@ nvmm_machine_create(struct nvmm_owner *owner,
 	mach->gpa_end = NVMM_MAX_RAM;
 	mach->vm = uvmspace_alloc(0, mach->gpa_end - mach->gpa_begin, false);
 
+	/* Create the comm uobj. */
+	mach->commuobj = uao_create(NVMM_MAX_VCPUS * PAGE_SIZE, 0);
+
 	(*nvmm_impl->machine_create)(mach);
 
 	args->machid = mach->machid;
@@ -377,6 +382,26 @@ nvmm_vcpu_create(struct nvmm_owner *owner, struct nvmm_ioc_vcpu_create *args)
 	if (error)
 		goto out;
 
+	/* Allocate the comm page. */
+	uao_reference(mach->commuobj);
+	error = uvm_map(kernel_map, (vaddr_t *)&vcpu->comm, PAGE_SIZE,
+	    mach->commuobj, args->cpuid * PAGE_SIZE, 0, UVM_MAPFLAG(UVM_PROT_RW,
+	    UVM_PROT_RW, UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+	if (error) {
+		uao_detach(mach->commuobj);
+		nvmm_vcpu_free(mach, vcpu);
+		nvmm_vcpu_put(vcpu);
+		goto out;
+	}
+	error = uvm_map_pageable(kernel_map, (vaddr_t)vcpu->comm,
+	    (vaddr_t)vcpu->comm + PAGE_SIZE, false, 0);
+	if (error) {
+		nvmm_vcpu_free(mach, vcpu);
+		nvmm_vcpu_put(vcpu);
+		goto out;
+	}
+	memset(vcpu->comm, 0, PAGE_SIZE);
+
 	error = (*nvmm_impl->vcpu_create)(mach, vcpu);
 	if (error) {
 		nvmm_vcpu_free(mach, vcpu);
@@ -431,13 +456,7 @@ nvmm_vcpu_setstate(struct nvmm_owner *owner,
 	if (error)
 		goto out;
 
-	error = copyin(args->state, vcpu->state, nvmm_impl->state_size);
-	if (error) {
-		nvmm_vcpu_put(vcpu);
-		goto out;
-	}
-
-	(*nvmm_impl->vcpu_setstate)(vcpu, vcpu->state, args->flags);
+	(*nvmm_impl->vcpu_setstate)(vcpu);
 	nvmm_vcpu_put(vcpu);
 
 out:
@@ -461,9 +480,8 @@ nvmm_vcpu_getstate(struct nvmm_owner *owner,
 	if (error)
 		goto out;
 
-	(*nvmm_impl->vcpu_getstate)(vcpu, vcpu->state, args->flags);
+	(*nvmm_impl->vcpu_getstate)(vcpu);
 	nvmm_vcpu_put(vcpu);
-	error = copyout(vcpu->state, args->state, nvmm_impl->state_size);
 
 out:
 	nvmm_machine_put(mach);
@@ -945,6 +963,8 @@ const struct cdevsw nvmm_cdevsw = {
 
 static int nvmm_ioctl(file_t *, u_long, void *);
 static int nvmm_close(file_t *);
+static int nvmm_mmap(file_t *, off_t *, size_t, int, int *, int *,
+    struct uvm_object **, int *);
 
 const struct fileops nvmm_fileops = {
 	.fo_read = fbadop_read,
@@ -956,7 +976,7 @@ const struct fileops nvmm_fileops = {
 	.fo_close = nvmm_close,
 	.fo_kqfilter = fnullop_kqfilter,
 	.fo_restart = fnullop_restart,
-	.fo_mmap = NULL,
+	.fo_mmap = nvmm_mmap,
 };
 
 static int
@@ -989,6 +1009,40 @@ nvmm_close(file_t *fp)
 	fp->f_data = NULL;
 
    	return 0;
+}
+
+static int
+nvmm_mmap(file_t *fp, off_t *offp, size_t size, int prot, int *flagsp,
+    int *advicep, struct uvm_object **uobjp, int *maxprotp)
+{
+	struct nvmm_owner *owner = fp->f_data;
+	struct nvmm_machine *mach;
+	nvmm_machid_t machid;
+	nvmm_cpuid_t cpuid;
+	int error;
+
+	if (prot & PROT_EXEC)
+		return EACCES;
+	if (size != PAGE_SIZE)
+		return EINVAL;
+
+	cpuid = NVMM_COMM_CPUID(*offp);
+	if (__predict_false(cpuid >= NVMM_MAX_VCPUS))
+		return EINVAL;
+
+	machid = NVMM_COMM_MACHID(*offp);
+	error = nvmm_machine_get(owner, machid, &mach, false);
+	if (error)
+		return error;
+
+	uao_reference(mach->commuobj);
+	*uobjp = mach->commuobj;
+	*offp = cpuid * PAGE_SIZE;
+	*maxprotp = prot;
+	*advicep = UVM_ADV_RANDOM;
+
+	nvmm_machine_put(mach);
+	return 0;
 }
 
 static int

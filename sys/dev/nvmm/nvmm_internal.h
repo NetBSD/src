@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.9 2019/04/10 18:49:04 maxv Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.10 2019/04/28 14:22:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@ struct nvmm_cpu {
 	nvmm_cpuid_t cpuid;
 	kmutex_t lock;
 
-	/* State buffer. */
-	void *state;
+	/* Comm page. */
+	struct nvmm_comm_page *comm;
 
 	/* Last host CPU on which the VCPU ran. */
 	int hcpu_last;
@@ -70,6 +70,9 @@ struct nvmm_machine {
 	time_t time;
 	struct nvmm_owner *owner;
 	krwlock_t lock;
+
+	/* Comm */
+	struct uvm_object *commuobj;
 
 	/* Kernel */
 	struct vmspace *vm;
@@ -102,8 +105,8 @@ struct nvmm_impl {
 
 	int (*vcpu_create)(struct nvmm_machine *, struct nvmm_cpu *);
 	void (*vcpu_destroy)(struct nvmm_machine *, struct nvmm_cpu *);
-	void (*vcpu_setstate)(struct nvmm_cpu *, const void *, uint64_t);
-	void (*vcpu_getstate)(struct nvmm_cpu *, void *, uint64_t);
+	void (*vcpu_setstate)(struct nvmm_cpu *);
+	void (*vcpu_getstate)(struct nvmm_cpu *);
 	int (*vcpu_inject)(struct nvmm_machine *, struct nvmm_cpu *,
 	    struct nvmm_event *);
 	int (*vcpu_run)(struct nvmm_machine *, struct nvmm_cpu *,
