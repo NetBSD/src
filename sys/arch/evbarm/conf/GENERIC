@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.30 2019/04/13 10:58:11 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.31 2019/04/28 19:26:48 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -304,6 +304,7 @@ tegramc*	at fdt?	pass 4		# NVIDIA Tegra MC
 
 # Firmware devices
 bcmmbox*	at fdt?			# Broadcom VideoCore IV mailbox
+qemufwcfg*	at fdt?			# QEMU Firmware Configuration device
 vcmbox*		at bcmmbox?
 
 # DMA controller
@@ -357,8 +358,9 @@ tegra210xpad*	at fdt?			# NVIDIA Tegra XUSB PADCTL (T210)
 tegra210xphy*	at tegra210xpad?
 
 # PCIE
+pcihost*	at fdt?			# Generic PCI host controller
 tegrapcie0	at fdt?			# NVIDIA Tegra PCIE
-pci*		at tegrapcie0
+pci*		at pcibus?
 ppb*		at pci? dev ? function ?
 pci*		at ppb?
 
@@ -511,6 +513,10 @@ atapibus*	at atapi?
 wd*		at atabus? drive ?
 cd*		at atapibus? drive ?
 
+# NVMe
+nvme*		at pci? dev ? function ?
+ld*		at nvme? nsid ?
+
 # SPI controllers
 bcmspi*		at fdt?			# Broadcom BCM283x SPI
 spi*		at spibus?
@@ -586,6 +592,7 @@ usb*		at usbus?
 
 # Virtio devices
 virtio*	at fdt?				# Virtio MMIO device
+virtio*	at pci? dev ? function ?	# Virtio PCI device
 # the balloon driver cannot work on machines with non-4k pages
 #viomb*	at virtio?			# Virtio memory balloon device
 ld*	at virtio?			# Virtio disk device
