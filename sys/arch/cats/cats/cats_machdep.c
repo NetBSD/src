@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.83.6.2 2019/04/26 20:44:07 martin Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.83.6.3 2019/04/28 08:45:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.83.6.2 2019/04/26 20:44:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.83.6.3 2019/04/28 08:45:31 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -232,6 +232,9 @@ void footbridge_pci_bs_tag_init(void);
  *   Relocating the kernel to the bottom of physical memory
  */
 
+#define KERN_PHYSTOV(bmi, pa) \
+	((vaddr_t)((paddr_t)(pa) - (bmi)->bmi_start + KERNEL_BASE))
+
 u_int
 initarm(void *arm_bootargs)
 {
@@ -335,7 +338,7 @@ initarm(void *arm_bootargs)
 	    ebsabootinfo.bt_memstart);
 
 	/*
-	 * The free block after the kernel from arm32_bootmem_init doesn't
+	 * The free blocks after the kernel from arm32_bootmem_init doesn't
 	 * account for bt_memavail.  Adjust for this.
 	 */
 	extern struct bootmem_info bootmem_info;
@@ -346,7 +349,7 @@ initarm(void *arm_bootargs)
 	    "pv_pa %#lx kernelend %#lx", pv0->pv_pa, bmi->bmi_kernelend);
 
 	pv0->pv_pa = ebsabootinfo.bt_memavail;
-	pv0->pv_va = KERN_PHYSTOV(pv0->pv_pa);
+	pv0->pv_va = KERN_PHYSTOV(bmi, pv0->pv_pa);
 	pv0->pv_size = bmi->bmi_end - pv0->pv_pa;
 
 	printf("First freeblock adjusted to: %lx -> %lx\n", pv0->pv_pa,
