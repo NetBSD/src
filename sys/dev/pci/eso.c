@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.69.2.2 2019/04/28 04:45:34 isaki Exp $	*/
+/*	$NetBSD: eso.c,v 1.69.2.3 2019/04/28 05:07:00 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.69.2.2 2019/04/28 04:45:34 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.69.2.3 2019/04/28 05:07:00 isaki Exp $");
 
 #include "mpu.h"
 
@@ -784,13 +784,7 @@ eso_halt_output(void *hdl)
 	    ESO_IO_A2DMAM_DMAENB);
 
 	sc->sc_pintr = NULL;
-	mutex_exit(&sc->sc_lock);
 	error = cv_timedwait_sig(&sc->sc_pcv, &sc->sc_intr_lock, sc->sc_pdrain);
-	if (!mutex_tryenter(&sc->sc_lock)) {
-		mutex_spin_exit(&sc->sc_intr_lock);
-		mutex_enter(&sc->sc_lock);
-		mutex_spin_enter(&sc->sc_intr_lock);
-	}
 
 	/* Shut down DMA completely. */
 	eso_write_mixreg(sc, ESO_MIXREG_A2C1, 0);
@@ -816,13 +810,7 @@ eso_halt_input(void *hdl)
 	    DMA37MD_WRITE | DMA37MD_DEMAND);
 
 	sc->sc_rintr = NULL;
-	mutex_exit(&sc->sc_lock);
 	error = cv_timedwait_sig(&sc->sc_rcv, &sc->sc_intr_lock, sc->sc_rdrain);
-	if (!mutex_tryenter(&sc->sc_lock)) {
-		mutex_spin_exit(&sc->sc_intr_lock);
-		mutex_enter(&sc->sc_lock);
-		mutex_spin_enter(&sc->sc_intr_lock);
-	}
 
 	/* Shut down DMA completely. */
 	eso_write_ctlreg(sc, ESO_CTLREG_A1C2,
