@@ -2779,7 +2779,7 @@ export
 .IP "" 2
 \fBT\fR
 .IP "" 4
-rtag
+tag and rtag
 .SP
 One of five record types may result from an update:
 .SP
@@ -3924,6 +3924,154 @@ Load configuration from \fIpath\fR rather than the default location
 \fB$CVSROOT/CVSROOT/config\fR (see node `config\(aq in the CVS manual).  \fIpath\fR must be
 \fB/etc/cvs.conf\fR or prefixed by \fB/etc/cvs/\fR.  This option is
 supported beginning with \fBcvs\fR release 1.12.13.
+.SP
+.SH "tag & rtag"
+.SS "Mark project snapshot for later retrieval."
+.IX "tag (subcommand)"
+.IX "freeze (subcommand)"
+.IX "rtag (subcommand)"
+.IX "rfreeze (subcommand)"
+.SP
+.IP "\(bu" 2
+tag [-bBcdFflR] [-r tag] [-D date] new_tag [files\&...]
+.IP "\(bu" 2
+Requires: working directory, repository.
+.IP "\(bu" 2
+Changes: repository.
+.IP "\(bu" 2
+Synonym: ta, freeze
+.SP
+and
+.SP
+.IP "\(bu" 2
+rtag [-abBdFflnR] [-r tag | -D date] new_tag module\&...
+.IP "\(bu" 2
+Requires: repository.
+.IP "\(bu" 2
+Changes: repository.
+.IP "\(bu" 2
+Synonym: rt, rfreeze
+.SP
+Use \fBtag\fR to assign symbolic tags to the revisions of files
+checked out into your sandbox.  The tags are applied immediately
+to the repository, with the revision numbers to attach the tag
+to supplied implicitly by the \fBcvs\fR records of your working files.
+.SP
+\fBrtag\fR works similarly, but does not need a sandbox to operate
+in, requiring an explicitly supplied tag or date instead (or assuming
+the tip of the trunk when one is not supplied explicitly).  \fBcvs\fR
+uses this preexisting tag or date to determine which revisions of
+files in the repository to attach the new symbolic tag to.
+.SP
+The symbolic tags are meant to permanently record which
+revisions of which files were used for some purpose.  The \fBcheckout\fR
+and \fBupdate\fR commands allow you to extract an exact
+copy of a tagged release at any time in the future,
+regardless of whether files have been changed, added,
+or removed on the trunk or other branches since the release was tagged.
+For more, see node `Branching and merging\(aq in the CVS manual.
+.SP
+These commands may also be used to delete a symbolic tag,
+or to create a branch.  See the options section below.
+.SP
+Note if you wish to run destructive commands such as tag deletion, you may
+need to be a member of the group \fBcvsadmin\fR to do this.
+.SP
+If you attempt to create a tag that already exists,
+CVS will complain and not overwrite that tag.  Use
+the \fB-F\fR option to move the tag to a new set of
+revisions.
+.SP
+These standard options are supported by \fBtag\fR or \fBrtag\fR
+(see node `Common options\(aq in the CVS manual, for a complete description of them):
+.SP
+.IP "" 0
+\fB-D \fIdate\fB\fR
+.IP "" 2
+Tag the most recent revision no later than \fIdate\fR.  This option is
+not valid when deleting tags (see \fB-d\fR option, below).
+.SP
+.IP "" 0
+\fB-l\fR
+.IP "" 2
+Local; run only in current working directory.  see node `Recursive behavior\(aq in the CVS manual.
+.SP
+.IP "" 0
+\fB-R\fR
+.IP "" 2
+Update directories recursively (default).  see node `Recursive behavior\(aq in the CVS manual.
+.SP
+.IP "" 0
+\fB-r \fItag\fB[:\fIdate\fB]\fR
+.IP "" 2
+Tag the revisions specified by \fItag\fR or, when \fIdate\fR is specified
+and \fItag\fR is a branch tag, the version from the branch \fItag\fR as it
+existed on \fIdate\fR.  This option is not valid when deleting tags
+(see \fB-d\fR option, below).
+.SP
+Several tag specific options are also available.  When an option is only
+available with one of \fBtag\fR or \fBrtag\fR, it is noted below:
+.SP
+.IP "" 0
+\fB-a\fR
+.IP "" 2
+Clear \fInew_tag\fR from removed files that would not otherwise be tagged
+(\fBrtag\fR only).
+.SP
+.IP "" 0
+\fB-B\fR
+.IP "" 2
+Allows \fB-d\fR or \fB-F\fR to delete or move branch tags.
+.SP
+\fBWARNING: Recovering the information stored by branch tags is
+a very hard problem, more so than regular tags.  Be absolutely sure you
+understand what you are doing before using this option.\fR
+.SP
+.IP "" 0
+\fB-b\fR
+.IP "" 2
+The \fB-b\fR option makes the new tag a branch tag (see node `Branching and
+merging\(aq in the CVS manual), allowing concurrent, isolated development.  This is commonly used
+to create patches to a previously released software distribution.
+.SP
+.IP "" 0
+\fB-c\fR
+.IP "" 2
+Abort if any tagged files are locally modified (\fBtag\fR only).
+.SP
+.IP "" 0
+\fB-d\fR
+.IP "" 2
+Delete \fInew_tag\fR, instead of creating it.
+.SP
+\fBWARNING: Be very certain of your ground before you delete a tag; doing
+this permanently discards some historical information, which could later turn
+out to be valuable.\fR
+.SP
+.IP "" 0
+\fB-F\fR
+.IP "" 2
+When a tag already exists, move it to the new revision.  When the tag
+does not exist, create it as normal.  This option is new in \fBcvs\fR 1.4.
+The pre-1.4 behavior is identical to \fBcvs tag -F\fR.
+.SP
+\fBWARNING: Be very certain of your ground before you delete a tag; doing
+this permanently discards some historical information, which could later turn
+out to be valuable.\fR
+.SP
+.IP "" 0
+\fB-f\fR
+.IP "" 2
+With \fB-r \fItag\fB\fR or \fB-d \fIdate\fB\fR, force a head revision match
+if \fItag\fR and \fIdate\fR are not found (in other words, attach \fInew_tag\fR
+to the most recent trunk revision when \fItag\fR and \fIdate\fR do not
+resolve to an existing revision).
+.SP
+.IP "" 0
+\fB-n\fR
+.IP "" 2
+Do not execute the tag program specified in the \fBmodules\fR file
+(\fBrtag\fR only).  see node `modules\(aq in the CVS manual, for more.
 .SP
 .SH "update"
 .SS "Bring work tree in sync with repository"
