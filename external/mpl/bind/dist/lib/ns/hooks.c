@@ -1,4 +1,4 @@
-/*	$NetBSD: hooks.c,v 1.3 2019/02/24 20:01:32 christos Exp $	*/
+/*	$NetBSD: hooks.c,v 1.4 2019/04/28 00:01:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 
 #include <config.h>
 
+#include <errno.h>
+#include <stdio.h>
 #include <string.h>
 
 #if HAVE_DLFCN_H
@@ -23,10 +25,12 @@
 #include <windows.h>
 #endif
 
+#include <isc/errno.h>
 #include <isc/list.h>
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/platform.h>
 #include <isc/util.h>
@@ -59,6 +63,41 @@ struct ns_plugin {
 
 static ns_hooklist_t default_hooktable[NS_HOOKPOINTS_COUNT];
 LIBNS_EXTERNAL_DATA ns_hooktable_t *ns__hook_table = &default_hooktable;
+
+isc_result_t
+ns_plugin_expandpath(const char *src, char *dst, size_t dstsize) {
+	int result;
+
+#ifndef WIN32
+	/*
+	 * On Unix systems, differentiate between paths and filenames.
+	 */
+	if (strchr(src, '/') != NULL) {
+		/*
+		 * 'src' is an absolute or relative path.  Copy it verbatim.
+		 */
+		result = snprintf(dst, dstsize, "%s", src);
+	} else {
+		/*
+		 * 'src' is a filename.  Prepend default plugin directory path.
+		 */
+		result = snprintf(dst, dstsize, "%s/%s", NAMED_PLUGINDIR, src);
+	}
+#else
+	/*
+	 * On Windows, always copy 'src' do 'dst'.
+	 */
+	result = snprintf(dst, dstsize, "%s", src);
+#endif
+
+	if (result < 0) {
+		return (isc_errno_toresult(errno));
+	} else if ((size_t)result >= dstsize) {
+		return (ISC_R_NOSPACE);
+	} else {
+		return (ISC_R_SUCCESS);
+	}
+}
 
 #if HAVE_DLFCN_H && HAVE_DLOPEN
 static isc_result_t
@@ -194,7 +233,7 @@ unload_plugin(ns_plugin_t **pluginp) {
 	*pluginp = NULL;
 
 	isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
-		      NS_LOGMODULE_HOOKS, ISC_LOG_INFO,
+		      NS_LOGMODULE_HOOKS, ISC_LOG_DEBUG(1),
 		      "unloading plugin '%s'", plugin->modpath);
 
 	if (plugin->inst != NULL) {
@@ -255,7 +294,7 @@ load_plugin(isc_mem_t *mctx, const char *modpath, ns_plugin_t **pluginp) {
 	CHECK(load_symbol(handle, modpath, "plugin_version",
 			  (void **)&version_func));
 
-	version = version_func(NULL);
+	version = version_func();
 	if (version < (NS_PLUGIN_VERSION - NS_PLUGIN_AGE) ||
 	    version > NS_PLUGIN_VERSION)
 	{
@@ -315,7 +354,7 @@ unload_plugin(ns_plugin_t **pluginp) {
 	*pluginp = NULL;
 
 	isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
-		      NS_LOGMODULE_HOOKS, ISC_LOG_INFO,
+		      NS_LOGMODULE_HOOKS, ISC_LOG_DEBUG(1),
 		      "unloading plugin '%s'", plugin->modpath);
 
 	if (plugin->inst != NULL) {

@@ -747,8 +747,8 @@ typedef struct dns_rdata_key {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
 	uint16_t		flags;
-	uint8_t		protocol;
-	uint8_t		algorithm;
+	dns_secproto_t		protocol;
+	dns_secalg_t		algorithm;
 	uint16_t		datalen;
 	unsigned char *		data;
 } dns_rdata_key_t;
@@ -1291,8 +1291,8 @@ typedef struct dns_rdata_ds {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	uint16_t		key_tag;
-	uint8_t		algorithm;
-	uint8_t		digest_type;
+	dns_secalg_t		algorithm;
+	dns_dsdigest_t		digest_type;
 	uint16_t		length;
 	unsigned char		*digest;
 } dns_rdata_ds_t;
@@ -2336,8 +2336,8 @@ typedef struct dns_rdata_keydata {
 	uint32_t		addhd;	      /* Hold-down timer for adding */
 	uint32_t		removehd;     /* Hold-down timer for removing */
 	uint16_t		flags;	      /* Copy of DNSKEY_48 */
-	uint8_t		protocol;
-	uint8_t		algorithm;
+	dns_secproto_t		protocol;
+	dns_secalg_t		algorithm;
 	uint16_t		datalen;
 	unsigned char *		data;
 } dns_rdata_keydata_t;
