@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.5 2019/04/28 00:01:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -87,9 +87,11 @@
 #define ISC_R_WOULDBLOCK		63	/*%< would block */
 #define ISC_R_COMPLETE			64	/*%< complete */
 #define ISC_R_CRYPTOFAILURE		65	/*%< cryptography library failure */
+#define ISC_R_DISCQUOTA			66	/*%< disc quota */
+#define ISC_R_DISCFULL			67	/*%< disc full */
 
 /*% Not a result code: the number of results. */
-#define ISC_R_NRESULTS 			66
+#define ISC_R_NRESULTS 			68
 
 ISC_LANG_BEGINDECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: dnstap.h,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,6 @@
 #ifdef HAVE_DNSTAP
 #include <fstrm.h>
 #include <protobuf-c/protobuf-c.h>
-#include <dns/dnstap.pb-c.h>
 #else
 struct fstrm_iothr_options;
 #endif /* HAVE_DNSTAP */
@@ -101,7 +100,7 @@ typedef struct dns_dthandle dns_dthandle_t;
 struct dns_dtdata {
 	isc_mem_t *mctx;
 
-	Dnstap__Dnstap *frame;
+	void *frame;
 
 	bool query;
 	bool tcp;

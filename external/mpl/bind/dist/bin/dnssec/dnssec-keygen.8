@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnssec-keygen.8,v 1.4 2019/02/24 20:01:27 christos Exp $
+.\"	$NetBSD: dnssec-keygen.8,v 1.5 2019/04/28 00:01:13 christos Exp $
 .\"
 .\" Copyright (C) 2000-2005, 2007-2012, 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -41,7 +41,7 @@
 dnssec-keygen \- DNSSEC key generation tool
 .SH "SYNOPSIS"
 .HP \w'\fBdnssec\-keygen\fR\ 'u
-\fBdnssec\-keygen\fR [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-b\ \fR\fB\fIkeysize\fR\fR] [\fB\-n\ \fR\fB\fInametype\fR\fR] [\fB\-3\fR] [\fB\-A\ \fR\fB\fIdate/offset\fR\fR] [\fB\-C\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-D\ \fR\fB\fIdate/offset\fR\fR] [\fB\-D\ sync\ \fR\fB\fIdate/offset\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-f\ \fR\fB\fIflag\fR\fR] [\fB\-G\fR] [\fB\-g\ \fR\fB\fIgenerator\fR\fR] [\fB\-h\fR] [\fB\-I\ \fR\fB\fIdate/offset\fR\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-k\fR] [\fB\-L\ \fR\fB\fIttl\fR\fR] [\fB\-P\ \fR\fB\fIdate/offset\fR\fR] [\fB\-P\ sync\ \fR\fB\fIdate/offset\fR\fR] [\fB\-p\ \fR\fB\fIprotocol\fR\fR] [\fB\-q\fR] [\fB\-R\ \fR\fB\fIdate/offset\fR\fR] [\fB\-S\ \fR\fB\fIkey\fR\fR] [\fB\-s\ \fR\fB\fIstrength\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-V\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-z\fR] {name}
+\fBdnssec\-keygen\fR [\fB\-3\fR] [\fB\-A\ \fR\fB\fIdate/offset\fR\fR] [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-b\ \fR\fB\fIkeysize\fR\fR] [\fB\-C\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-D\ \fR\fB\fIdate/offset\fR\fR] [\fB\-D\ sync\ \fR\fB\fIdate/offset\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-f\ \fR\fB\fIflag\fR\fR] [\fB\-G\fR] [\fB\-g\ \fR\fB\fIgenerator\fR\fR] [\fB\-h\fR] [\fB\-I\ \fR\fB\fIdate/offset\fR\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-k\fR] [\fB\-L\ \fR\fB\fIttl\fR\fR] [\fB\-n\ \fR\fB\fInametype\fR\fR] [\fB\-P\ \fR\fB\fIdate/offset\fR\fR] [\fB\-P\ sync\ \fR\fB\fIdate/offset\fR\fR] [\fB\-p\ \fR\fB\fIprotocol\fR\fR] [\fB\-q\fR] [\fB\-R\ \fR\fB\fIdate/offset\fR\fR] [\fB\-S\ \fR\fB\fIkey\fR\fR] [\fB\-s\ \fR\fB\fIstrength\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-V\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] {name}
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-keygen\fR
@@ -59,6 +59,13 @@ command acts as a wrapper around
 may be preferable to direct use of
 \fBdnssec\-keygen\fR\&.
 .SH "OPTIONS"
+.PP
+\-3
+.RS 4
+Use an NSEC3\-capable algorithm to generate a DNSSEC key\&. If this option is used with an algorithm that has both NSEC and NSEC3 versions, then the NSEC3 version will be used; for example,
+\fBdnssec\-keygen \-3a RSASHA1\fR
+specifies the NSEC3RSASHA1 algorithm\&.
+.RE
 .PP
 \-a \fIalgorithm\fR
 .RS 4
@@ -85,29 +92,15 @@ to generate TSIG keys\&.
 .PP
 \-b \fIkeysize\fR
 .RS 4
-Specifies the number of bits in the key\&. The choice of key size depends on the algorithm used\&. RSA keys must be between 1024 and 2048 bits\&. Diffie Hellman keys must be between 128 and 4096 bits\&. DSA keys must be between 512 and 1024 bits and an exact multiple of 64\&. HMAC keys must be between 1 and 512 bits\&. Elliptic curve algorithms don\*(Aqt need this parameter\&.
+Specifies the number of bits in the key\&. The choice of key size depends on the algorithm used\&. RSA keys must be between 1024 and 4096 bits\&. Diffie Hellman keys must be between 128 and 4096 bits\&. Elliptic curve algorithms don\*(Aqt need this parameter\&.
 .sp
 If the key size is not specified, some algorithms have pre\-defined defaults\&. For example, RSA keys for use as DNSSEC zone signing keys have a default size of 1024 bits; RSA keys for use as key signing keys (KSKs, generated with
 \fB\-f KSK\fR) default to 2048 bits\&.
 .RE
 .PP
-\-n \fInametype\fR
-.RS 4
-Specifies the owner type of the key\&. The value of
-\fBnametype\fR
-must either be ZONE (for a DNSSEC zone key (KEY/DNSKEY)), HOST or ENTITY (for a key associated with a host (KEY)), USER (for a key associated with a user(KEY)) or OTHER (DNSKEY)\&. These values are case insensitive\&. Defaults to ZONE for DNSKEY generation\&.
-.RE
-.PP
-\-3
-.RS 4
-Use an NSEC3\-capable algorithm to generate a DNSSEC key\&. If this option is used with an algorithm that has both NSEC and NSEC3 versions, then the NSEC3 version will be used; for example,
-\fBdnssec\-keygen \-3a RSASHA1\fR
-specifies the NSEC3RSASHA1 algorithm\&.
-.RE
-.PP
 \-C
 .RS 4
-Compatibility mode: generates an old\-style key, without any metadata\&. By default,
+Compatibility mode: generates an old\-style key, without any timing metadata\&. By default,
 \fBdnssec\-keygen\fR
 will include the key\*(Aqs creation date in the metadata stored with the private key, and other dates may be set there as well (publication date, activation date, etc)\&. Keys that include this data may be incompatible with older versions of BIND; the
 \fB\-C\fR
@@ -152,11 +145,6 @@ Prints a short summary of the options and arguments to
 Sets the directory in which the key files are to be written\&.
 .RE
 .PP
-\-k
-.RS 4
-Deprecated in favor of \-T KEY\&.
-.RE
-.PP
 \-L \fIttl\fR
 .RS 4
 Sets the default TTL to use for this key when it is converted into a DNSKEY RR\&. If the key is imported into a zone, this is the TTL that will be used for it, unless there was already a DNSKEY RRset in place, in which case the existing TTL would take precedence\&. If this value is not set and there is no existing DNSKEY RRset, the TTL will default to the SOA TTL\&. Setting the default TTL to
@@ -166,9 +154,17 @@ none
 is the same as leaving it unset\&.
 .RE
 .PP
+\-n \fInametype\fR
+.RS 4
+Specifies the owner type of the key\&. The value of
+\fBnametype\fR
+must either be ZONE (for a DNSSEC zone key (KEY/DNSKEY)), HOST or ENTITY (for a key associated with a host (KEY)), USER (for a key associated with a user(KEY)) or OTHER (DNSKEY)\&. These values are case insensitive\&. Defaults to ZONE for DNSKEY generation\&.
+.RE
+.PP
 \-p \fIprotocol\fR
 .RS 4
-Sets the protocol value for the generated key\&. The protocol is a number between 0 and 255\&. The default is 3 (DNSSEC)\&. Other possible values for this argument are listed in RFC 2535 and its successors\&.
+Sets the protocol value for the generated key, for use with
+\fB\-T KEY\fR\&. The protocol is a number between 0 and 255\&. The default is 3 (DNSSEC)\&. Other possible values for this argument are listed in RFC 2535 and its successors\&.
 .RE
 .PP
 \-q
@@ -195,26 +191,24 @@ Specifies the strength value of the key\&. The strength is a number between 0 an
 Specifies the resource record type to use for the key\&.
 \fBrrtype\fR
 must be either DNSKEY or KEY\&. The default is DNSKEY when using a DNSSEC algorithm, but it can be overridden to KEY for use with SIG(0)\&.
-Specifying any TSIG algorithm (HMAC\-* or DH) with
-\fB\-a\fR
-forces this option to KEY\&.
 .RE
 .PP
 \-t \fItype\fR
 .RS 4
-Indicates the use of the key\&.
+Indicates the use of the key, for use with
+\fB\-T KEY\fR\&.
 \fBtype\fR
 must be one of AUTHCONF, NOAUTHCONF, NOAUTH, or NOCONF\&. The default is AUTHCONF\&. AUTH refers to the ability to authenticate data, and CONF the ability to encrypt data\&.
-.RE
-.PP
-\-v \fIlevel\fR
-.RS 4
-Sets the debugging level\&.
 .RE
 .PP
 \-V
 .RS 4
 Prints version information\&.
+.RE
+.PP
+\-v \fIlevel\fR
+.RS 4
+Sets the debugging level\&.
 .RE
 .SH "TIMING OPTIONS"
 .PP
@@ -316,23 +310,24 @@ contains the private key\&.
 .PP
 The
 \&.key
-file contains a DNS KEY record that can be inserted into a zone file (directly or with a $INCLUDE statement)\&.
+file contains a DNSKEY or KEY record\&. When a zone is being signed by
+\fBnamed\fR
+or
+\fBdnssec\-signzone\fR\fB\-S\fR, DNSKEY records are included automatically\&. In other cases, the
+\&.key
+file can be inserted into a zone file manually or with a
+\fB$INCLUDE\fR
+statement\&.
 .PP
 The
 \&.private
 file contains algorithm\-specific fields\&. For obvious security reasons, this file does not have general read permission\&.
-.PP
-Both
-\&.key
-and
-\&.private
-files are generated for symmetric cryptography algorithms such as HMAC\-MD5, even though the public and private key are equivalent\&.
 .SH "EXAMPLE"
 .PP
-To generate an ECDSAP256SHA256 key for the domain
-\fBexample\&.com\fR, the following command would be issued:
+To generate an ECDSAP256SHA256 zone\-signing key for the zone
+\fBexample\&.com\fR, issue the command:
 .PP
-\fBdnssec\-keygen \-a ECDSAP256SHA256 \-n ZONE example\&.com\fR
+\fBdnssec\-keygen \-a ECDSAP256SHA256 example\&.com\fR
 .PP
 The command would print a string of the form:
 .PP
@@ -344,6 +339,10 @@ creates the files
 Kexample\&.com\&.+013+26160\&.key
 and
 Kexample\&.com\&.+013+26160\&.private\&.
+.PP
+To generate a matching key\-signing key, issue the command:
+.PP
+\fBdnssec\-keygen \-a ECDSAP256SHA256 \-f KSK example\&.com\fR
 .SH "SEE ALSO"
 .PP
 \fBdnssec-signzone\fR(8),

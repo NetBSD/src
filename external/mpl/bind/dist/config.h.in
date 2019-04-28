@@ -159,6 +159,9 @@
 /* Define to 1 if you have the `FIPS_mode' function. */
 #undef HAVE_FIPS_MODE
 
+/* Define to 1 if you have the `flockfile' function. */
+#undef HAVE_FLOCKFILE
+
 /* Build with GeoIP support */
 #undef HAVE_GEOIP
 
@@ -167,6 +170,9 @@
 
 /* Build with GeoIP Country IPv6 support */
 #undef HAVE_GEOIP_V6
+
+/* Define to 1 if you have the `getc_unlocked' function. */
+#undef HAVE_GETC_UNLOCKED
 
 /* Define to 1 if you have the `getpassphrase' function. */
 #undef HAVE_GETPASSPHRASE

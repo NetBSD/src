@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: rpz.c,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1552,6 +1552,7 @@ dns_rpz_new_zone(dns_rpz_zones_t *rpzs, dns_rpz_zone_t **rpzp) {
 	zone->updbit = NULL;
 	zone->rpzs = rpzs;
 	zone->db_registered = false;
+	zone->addsoa = true;
 	ISC_EVENT_INIT(&zone->updateevent, sizeof(zone->updateevent),
 		       0, NULL, 0, NULL, NULL, NULL, NULL, NULL);
 
@@ -1586,8 +1587,6 @@ dns_rpz_dbupdate_callback(dns_db_t *db, void *fn_arg) {
 	REQUIRE(zone != NULL);
 
 	LOCK(&zone->rpzs->maint_lock);
-	REQUIRE(zone->db_registered);
-
 
 	/* New zone came as AXFR */
 	if (zone->db != NULL && zone->db != db) {
@@ -1736,6 +1735,16 @@ setup_update(dns_rpz_zone_t *rpz) {
 			      domain, isc_result_totext(result));
 		goto cleanup;
 	}
+
+	result = dns_dbiterator_pause(rpz->updbit);
+	if (result != ISC_R_SUCCESS) {
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
+			      DNS_LOGMODULE_MASTER, ISC_LOG_ERROR,
+			      "rpz: %s: failed to pause db iterator - %s",
+			      domain, isc_result_totext(result));
+		goto cleanup;
+	}
+
 
  cleanup:
 	if (result != ISC_R_SUCCESS) {
@@ -2099,14 +2108,12 @@ rpz_detach(dns_rpz_zone_t **rpzp, dns_rpz_zones_t *rpzs) {
 	if (dns_name_dynamic(&rpz->cname)) {
 		dns_name_free(&rpz->cname, rpzs->mctx);
 	}
-	if (rpz->db_registered) {
-		dns_db_updatenotify_unregister(rpz->db,
-					       dns_rpz_dbupdate_callback, rpz);
-	}
 	if (rpz->dbversion != NULL) {
 		dns_db_closeversion(rpz->db, &rpz->dbversion, false);
 	}
 	if (rpz->db != NULL) {
+		dns_db_updatenotify_unregister(
+			rpz->db, dns_rpz_dbupdate_callback, rpz);
 		dns_db_detach(&rpz->db);
 	}
 	if (rpz->updaterunning) {

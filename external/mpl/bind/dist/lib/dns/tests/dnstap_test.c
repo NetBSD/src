@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap_test.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: dnstap_test.c,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,7 @@
 #include "dnstest.h"
 
 #ifdef HAVE_DNSTAP
-#include <dns/dnstap.pb-c.h>
+
 #include <protobuf-c/protobuf-c.h>
 
 #define TAPFILE "testdata/dnstap/dnstap.file"
@@ -314,9 +314,6 @@ totext_test(void **state) {
 
 	UNUSED(state);
 
-	/* make sure text conversion gets the right local time */
-	setenv("TZ", "PST8", 1);
-
 	result = dns_dt_open(TAPSAVED, dns_dtmode_file, mctx, &handle);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
@@ -382,6 +379,9 @@ main(void) {
 		cmocka_unit_test_setup_teardown(send_test, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(totext_test, _setup, _teardown),
 	};
+
+	/* make sure text conversion gets the right local time */
+	setenv("TZ", "PST8", 1);
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
 #else

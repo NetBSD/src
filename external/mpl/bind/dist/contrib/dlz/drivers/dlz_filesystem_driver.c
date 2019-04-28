@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_filesystem_driver.c,v 1.3 2019/01/09 16:55:05 christos Exp $	*/
+/*	$NetBSD: dlz_filesystem_driver.c,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -115,10 +115,10 @@ is_safe(const char *input) {
 			if (i == 0)
 				return (false);
 			/* '..', two dots together is not allowed. */
-			else if (input[i-1] == '.')
+			if (input[i-1] == '.')
 				return (false);
 			/* '.' is not allowed as last char */
-			if (i == len)
+			if (i == len - 1)
 				return (false);
 			/* only 1 dot in ok location, continue at next char */
 			continue;

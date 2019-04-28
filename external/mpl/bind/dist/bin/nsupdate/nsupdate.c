@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.4 2019/04/28 00:01:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,6 +35,7 @@
 #include <isc/mem.h>
 #include <isc/nonce.h>
 #include <isc/parseint.h>
+#include <isc/portset.h>
 #include <isc/print.h>
 #include <isc/platform.h>
 #include <isc/random.h>
@@ -748,6 +749,34 @@ shutdown_program(isc_task_t *task, isc_event_t *event) {
 	maybeshutdown();
 }
 
+/*
+ * Try honoring the operating system's preferred ephemeral port range.
+ */
+static void
+set_source_ports(dns_dispatchmgr_t *manager) {
+	isc_portset_t *v4portset = NULL, *v6portset = NULL;
+	in_port_t udpport_low, udpport_high;
+	isc_result_t result;
+
+	result = isc_portset_create(gmctx, &v4portset);
+	check_result(result, "isc_portset_create (v4)");
+	result = isc_net_getudpportrange(AF_INET, &udpport_low, &udpport_high);
+	check_result(result, "isc_net_getudpportrange (v4)");
+	isc_portset_addrange(v4portset, udpport_low, udpport_high);
+
+	result = isc_portset_create(gmctx, &v6portset);
+	check_result(result, "isc_portset_create (v6)");
+	result = isc_net_getudpportrange(AF_INET6, &udpport_low, &udpport_high);
+	check_result(result, "isc_net_getudpportrange (v6)");
+	isc_portset_addrange(v6portset, udpport_low, udpport_high);
+
+	result = dns_dispatchmgr_setavailports(manager, v4portset, v6portset);
+	check_result(result, "dns_dispatchmgr_setavailports");
+
+	isc_portset_destroy(gmctx, &v4portset);
+	isc_portset_destroy(gmctx, &v6portset);
+}
+
 static void
 setup_system(void) {
 	isc_result_t result;
@@ -897,6 +926,8 @@ setup_system(void) {
 	result = dst_lib_init(gmctx, NULL);
 	check_result(result, "dst_lib_init");
 	is_dst_up = true;
+
+	set_source_ports(dispatchmgr);
 
 	attrmask = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_TCP;
 	attrmask |= DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_IPV6;

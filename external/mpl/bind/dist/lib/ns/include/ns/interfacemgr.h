@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: interfacemgr.h,v 1.4 2019/04/28 00:01:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -78,9 +78,14 @@ struct ns_interface {
 						/*%< UDP dispatchers. */
 	isc_socket_t *		tcpsocket;	/*%< TCP socket. */
 	isc_dscp_t		dscp;		/*%< "listen-on" DSCP value */
-	int			ntcptarget;	/*%< Desired number of concurrent
-						     TCP accepts */
-	int			ntcpcurrent;	/*%< Current ditto, locked */
+	atomic_uint_fast32_t	ntcpaccepting;	/*%< Number of clients
+						     ready to accept new
+						     TCP connections on this
+						     interface */
+	atomic_uint_fast32_t	ntcpactive;	/*%< Number of clients
+						     servicing TCP queries
+						     (whether accepting or
+						     connected) */
 	int			nudpdispatch;	/*%< Number of UDP dispatches */
 	ns_clientmgr_t *	clientmgr;	/*%< Client manager. */
 	ISC_LINK(ns_interface_t) link;

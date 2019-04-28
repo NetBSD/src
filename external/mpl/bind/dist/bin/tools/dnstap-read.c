@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap-read.c,v 1.3 2019/01/09 16:55:05 christos Exp $	*/
+/*	$NetBSD: dnstap-read.c,v 1.4 2019/04/28 00:01:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -49,6 +49,9 @@
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/result.h>
+
+#include <protobuf-c/protobuf-c.h>
+#include "lib/dns/dnstap.pb-c.h"
 
 isc_mem_t *mctx = NULL;
 bool memrecord = false;

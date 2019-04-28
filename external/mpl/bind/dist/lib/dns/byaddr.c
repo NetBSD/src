@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: byaddr.c,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -69,10 +69,10 @@ dns_byaddr_createptrname(const isc_netaddr_t *address, unsigned int options,
 	if (address->family == AF_INET) {
 		(void)snprintf(textname, sizeof(textname),
 			       "%u.%u.%u.%u.in-addr.arpa.",
-			       (bytes[3] & 0xffU),
-			       (bytes[2] & 0xffU),
-			       (bytes[1] & 0xffU),
-			       (bytes[0] & 0xffU));
+			       ((unsigned int)bytes[3] & 0xffU),
+			       ((unsigned int)bytes[2] & 0xffU),
+			       ((unsigned int)bytes[1] & 0xffU),
+			       ((unsigned int)bytes[0] & 0xffU));
 	} else if (address->family == AF_INET6) {
 		size_t remaining;
 

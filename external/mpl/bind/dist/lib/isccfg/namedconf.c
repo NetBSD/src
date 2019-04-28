@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.4 2019/02/24 20:01:32 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.5 2019/04/28 00:01:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1606,6 +1606,7 @@ static cfg_type_t cfg_type_rpz_policy = {
 };
 static cfg_tuplefielddef_t rpz_zone_fields[] = {
 	{ "zone name", &cfg_type_rpz_zone, 0 },
+	{ "add-soa", &cfg_type_boolean, 0 },
 	{ "log", &cfg_type_boolean, 0 },
 	{ "max-policy-ttl", &cfg_type_ttlval, 0 },
 	{ "min-update-interval", &cfg_type_ttlval, 0 },
@@ -1627,6 +1628,7 @@ static cfg_type_t cfg_type_rpz_list = {
 };
 static cfg_tuplefielddef_t rpz_fields[] = {
 	{ "zone list", &cfg_type_rpz_list, 0 },
+	{ "add-soa", &cfg_type_boolean, 0 },
 	{ "break-dnssec", &cfg_type_boolean, 0 },
 	{ "max-policy-ttl", &cfg_type_ttlval, 0 },
 	{ "min-update-interval", &cfg_type_ttlval, 0 },

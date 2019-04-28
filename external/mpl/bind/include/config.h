@@ -70,7 +70,7 @@
 /* Define if clock_gettime is available. */
 #define HAVE_CLOCK_GETTIME 1
 
-/* Use cmocka */
+/* Use CMocka */
 /* #undef HAVE_CMOCKA */
 
 /* Define to 1 if you have the <cmocka.h> header file. */
@@ -172,6 +172,9 @@
 /* Define to 1 if you have the `FIPS_mode' function. */
 /* #undef HAVE_FIPS_MODE */
 
+/* Define to 1 if you have the `flockfile' function. */
+#define HAVE_FLOCKFILE 1
+
 /* Build with GeoIP support */
 /* #undef HAVE_GEOIP */
 
@@ -180,6 +183,9 @@
 
 /* Build with GeoIP Country IPv6 support */
 /* #undef HAVE_GEOIP_V6 */
+
+/* Define to 1 if you have the `getc_unlocked' function. */
+#define HAVE_GETC_UNLOCKED 1
 
 /* Define to 1 if you have the `getpassphrase' function. */
 /* #undef HAVE_GETPASSPHRASE */
@@ -514,7 +520,7 @@
 #define PACKAGE_NAME "BIND"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "BIND 9.13"
+#define PACKAGE_STRING "BIND 9.14"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "bind"
@@ -523,7 +529,7 @@
 #define PACKAGE_URL "https://www.isc.org/downloads/BIND/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "9.13"
+#define PACKAGE_VERSION "9.14"
 
 /* define the default PKCS11 library path */
 #define PK11_LIB_LOCATION "undefined"

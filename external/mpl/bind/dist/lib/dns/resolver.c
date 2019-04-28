@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.5 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1325,7 +1325,8 @@ fctx_cancelquery(resquery_t **queryp, dns_dispatchevent_t **deventp,
 				isc_socket_cancel(sock, NULL,
 						  ISC_SOCKCANCEL_CONNECT);
 		}
-	} else if (RESQUERY_SENDING(query)) {
+	}
+	if (RESQUERY_SENDING(query)) {
 		/*
 		 * Cancel the pending send.
 		 */
@@ -4105,7 +4106,6 @@ resume_qmin(isc_task_t *task, isc_event_t *event) {
 	fetchctx_t *fctx;
 	isc_result_t result;
 	bool bucket_empty;
-	bool locked = false;
 	unsigned int bucketnum;
 	unsigned int findoptions = 0;
 	dns_name_t *fname, *dcname;
@@ -4137,6 +4137,11 @@ resume_qmin(isc_task_t *task, isc_event_t *event) {
 	isc_event_free(&event);
 
 	dns_resolver_destroyfetch(&fctx->qminfetch);
+
+	if (SHUTTINGDOWN(fctx)) {
+		maybe_destroy(fctx, false);
+		goto cleanup;
+	}
 
 	/*
 	 * Note: fevent->rdataset must be disassociated and
@@ -4220,8 +4225,7 @@ resume_qmin(isc_task_t *task, isc_event_t *event) {
  cleanup:
 	INSIST(event == NULL);
 	INSIST(fevent == NULL);
-	if (!locked)
-		LOCK(&res->buckets[bucketnum].lock);
+	LOCK(&res->buckets[bucketnum].lock);
 	bucket_empty = fctx_decreference(fctx);
 	UNLOCK(&res->buckets[bucketnum].lock);
 	if (bucket_empty)
@@ -5707,6 +5711,7 @@ validated(isc_task_t *task, isc_event_t *event) {
 		/*
 		 * Negative results must be indicated in event->result.
 		 */
+		INSIST(hevent->rdataset != NULL);
 		if (dns_rdataset_isassociated(hevent->rdataset) &&
 		    NEGATIVE(hevent->rdataset)) {
 			INSIST(eresult == DNS_R_NCACHENXDOMAIN ||

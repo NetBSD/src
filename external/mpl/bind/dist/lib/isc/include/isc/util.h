@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.5 2019/04/28 00:01:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -199,15 +199,26 @@
 #ifdef UNIT_TESTING
 extern void mock_assert(const int result, const char* const expression,
 			const char * const file, const int line);
+/*
+ *	Allow clang to determine that the following code is not reached
+ *	by calling abort() if the condition fails.  The abort() will
+ *	never be executed as mock_assert() and _assert_true() longjmp
+ *	or exit if the condition is false.
+ */
 #define REQUIRE(expression)						\
-	mock_assert((int)(expression), #expression, __FILE__, __LINE__)
+	((!(expression)) ?						\
+	(mock_assert(0, #expression, __FILE__, __LINE__), abort()) : (void)0)
 #define ENSURE(expression)						\
-	mock_assert((int)(expression), #expression, __FILE__, __LINE__)
+	((!(int)(expression)) ?						\
+	(mock_assert(0, #expression, __FILE__, __LINE__), abort()) : (void)0)
 #define INSIST(expression)						\
-	mock_assert((int)(expression), #expression, __FILE__, __LINE__)
+	((!(expression)) ?						\
+	(mock_assert(0, #expression, __FILE__, __LINE__), abort()) : (void)0)
 #define INVARIANT(expression)						\
-	mock_assert((int)(expression), #expression, __FILE__, __LINE__)
-
+	((!(expression)) ?						\
+	(mock_assert(0, #expression, __FILE__, __LINE__), abort()) : (void)0)
+#define _assert_true(c, e, f, l) \
+	((c) ? (void)0 : (_assert_true(0, e, f, l), abort()))
 #else /* UNIT_TESTING */
 /*
  * Assertions

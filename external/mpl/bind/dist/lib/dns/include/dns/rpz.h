@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: rpz.h,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -146,15 +146,16 @@ struct dns_rpz_zone {
 	isc_ht_t	 *nodes;	/* entries in zone */
 	dns_rpz_zones_t	 *rpzs;		/* owner */
 	isc_time_t	 lastupdated;	/* last time the zone was processed */
-	bool	 updatepending;	/* there is an update pending/waiting */
-	bool	 updaterunning;	/* there is an update running */
+	bool		 updatepending;	/* there is an update pending/waiting */
+	bool		 updaterunning;	/* there is an update running */
 	dns_db_t	 *db;		/* zones database */
 	dns_dbversion_t	 *dbversion;	/* version we will be updating to */
 	dns_db_t	 *updb;		/* zones database we're working on */
 	dns_dbversion_t	 *updbversion;	/* version we're currently working on */
 	dns_dbiterator_t *updbit;	/* iterator to use when updating */
 	isc_ht_t	 *newnodes;	/* entries in zone being updated */
-	bool	 db_registered;	/* is the notify event registered? */
+	bool		 db_registered;	/* is the notify event registered? */
+	bool		 addsoa;	/* add soa to the additional section */
 	isc_timer_t	 *updatetimer;
 	isc_event_t	 updateevent;
 };
@@ -193,10 +194,10 @@ struct dns_rpz_popt {
 	dns_rpz_zbits_t	    no_log;
 	dns_rpz_zbits_t	    nsip_on;
 	dns_rpz_zbits_t	    nsdname_on;
-	bool	    dnsrps_enabled;
-	bool	    break_dnssec;
-	bool	    qname_wait_recurse;
-	bool	    nsip_wait_recurse;
+	bool		    dnsrps_enabled;
+	bool		    break_dnssec;
+	bool		    qname_wait_recurse;
+	bool		    nsip_wait_recurse;
 	unsigned int	    min_ns_labels;
 	dns_rpz_num_t	    num_zones;
 };
@@ -314,8 +315,8 @@ typedef struct {
 	 */
 	struct {
 		isc_result_t		result;
-		bool		is_zone;
-		bool		authoritative;
+		bool			is_zone;
+		bool			authoritative;
 		dns_zone_t		*zone;
 		dns_db_t		*db;
 		dns_dbnode_t		*node;
@@ -426,4 +427,3 @@ dns_rpz_find_name(dns_rpz_zones_t *rpzs, dns_rpz_type_t rpz_type,
 ISC_LANG_ENDDECLS
 
 #endif /* DNS_RPZ_H */
-

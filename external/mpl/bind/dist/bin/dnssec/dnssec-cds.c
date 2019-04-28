@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-cds.c,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
+/*	$NetBSD: dnssec-cds.c,v 1.5 2019/04/28 00:01:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -88,7 +88,7 @@ static dns_rdataclass_t rdclass = dns_rdataclass_in;
  * List of digest types used by ds_from_cdnskey(), filled in by add_dtype()
  * from -a arguments. The size of the array is an arbitrary limit.
  */
-static uint8_t dtype[8];
+static dns_dsdigest_t dtype[8];
 
 static const char *startstr  = NULL;	/* from which we derive notbefore */
 static isc_stdtime_t notbefore = 0;	/* restrict sig inception times */
@@ -131,7 +131,7 @@ static int nkey; /* number of child zone DNSKEY records */
 typedef struct keyinfo {
 	dns_rdata_t rdata;
 	dst_key_t *dst;
-	uint8_t algo;
+	dns_secalg_t algo;
 	dns_keytag_t tag;
 } keyinfo_t;
 
@@ -616,12 +616,12 @@ free_keytable(keyinfo_t **keytable_p) {
  * otherwise the key algorithm. This is used by the signature coverage
  * check functions below.
  */
-static uint8_t *
+static dns_secalg_t *
 matching_sigs(keyinfo_t *keytbl, dns_rdataset_t *rdataset,
 	      dns_rdataset_t *sigset)
 {
 	isc_result_t result;
-	uint8_t *algo;
+	dns_secalg_t *algo;
 	int i;
 
 	algo = isc_mem_get(mctx, nkey);
@@ -704,7 +704,7 @@ matching_sigs(keyinfo_t *keytbl, dns_rdataset_t *rdataset,
  * fetched from the child zone, any working signature is enough.
  */
 static bool
-signed_loose(uint8_t *algo) {
+signed_loose(dns_secalg_t *algo) {
 	bool ok = false;
 	int i;
 	for (i = 0; i < nkey; i++) {
@@ -723,7 +723,7 @@ signed_loose(uint8_t *algo) {
  * RRset.
  */
 static bool
-signed_strict(dns_rdataset_t *dsset, uint8_t *algo) {
+signed_strict(dns_rdataset_t *dsset, dns_secalg_t *algo) {
 	isc_result_t result;
 	bool all_ok = true;
 
@@ -846,14 +846,14 @@ ds_from_cdnskey(dns_rdatalist_t *dslist, isc_buffer_t *buf,
  */
 static int
 cmp_dtype(const void *ap, const void *bp) {
-	int a = *(const uint8_t *)ap;
-	int b = *(const uint8_t *)bp;
+	int a = *(const dns_dsdigest_t *)ap;
+	int b = *(const dns_dsdigest_t *)bp;
 	return (a - b);
 }
 
 static void
 add_dtype(const char *dn) {
-	uint8_t dt;
+	dns_dsdigest_t dt;
 	unsigned i, n;
 
 	dt = strtodsdigest(dn);
@@ -938,7 +938,7 @@ consistent_digests(dns_rdataset_t *dsset) {
 	dns_rdata_t *arrdata;
 	dns_rdata_ds_t *ds;
 	dns_keytag_t key_tag;
-	uint8_t algorithm;
+	dns_secalg_t algorithm;
 	bool match;
 	int i, j, n, d;
 

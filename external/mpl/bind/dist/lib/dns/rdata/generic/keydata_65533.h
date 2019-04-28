@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: keydata_65533.h,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,8 +22,8 @@ typedef struct dns_rdata_keydata {
 	uint32_t		addhd;	      /* Hold-down timer for adding */
 	uint32_t		removehd;     /* Hold-down timer for removing */
 	uint16_t		flags;	      /* Copy of DNSKEY_48 */
-	uint8_t		protocol;
-	uint8_t		algorithm;
+	dns_secproto_t		protocol;
+	dns_secalg_t		algorithm;
 	uint16_t		datalen;
 	unsigned char *		data;
 } dns_rdata_keydata_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: ds.c,v 1.5 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,7 +34,7 @@
 
 isc_result_t
 dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
-		  unsigned int digest_type, unsigned char *buffer,
+		  dns_dsdigest_t digest_type, unsigned char *buffer,
 		  dns_rdata_t *rdata)
 {
 	dns_fixedname_t fname;
@@ -56,17 +56,6 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 		return (ISC_R_NOTIMPLEMENTED);
 	}
 
-	name = dns_fixedname_initname(&fname);
-	(void)dns_name_downcase(owner, name, NULL);
-
-	memset(buffer, 0, DNS_DS_BUFFERSIZE);
-	isc_buffer_init(&b, buffer, DNS_DS_BUFFERSIZE);
-
-	md = isc_md_new();
-	if (md == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-
 	switch (digest_type) {
 	case DNS_DSDIGEST_SHA1:
 		md_type = ISC_MD_SHA1;
@@ -77,9 +66,23 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 		break;
 
 	case DNS_DSDIGEST_SHA256:
-	default:
 		md_type = ISC_MD_SHA256;
 		break;
+
+	default:
+		INSIST(0);
+		ISC_UNREACHABLE();
+	}
+
+	name = dns_fixedname_initname(&fname);
+	(void)dns_name_downcase(owner, name, NULL);
+
+	memset(buffer, 0, DNS_DS_BUFFERSIZE);
+	isc_buffer_init(&b, buffer, DNS_DS_BUFFERSIZE);
+
+	md = isc_md_new();
+	if (md == NULL) {
+		return (ISC_R_NOMEMORY);
 	}
 
 	ret = isc_md_init(md, md_type);
