@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.5 2018/11/13 09:24:37 martin Exp $
+# $NetBSD: Makefile,v 1.6 2019/04/28 14:22:13 maxv Exp $
 
 .include <bsd.own.mk>
 
 LIB=		nvmm
 MAN=		libnvmm.3
 
-SRCS=		libnvmm.c libnvmm_x86.c
+SRCS=		libnvmm.c
 
 INCS=		nvmm.h
 INCSDIR=	/usr/include
