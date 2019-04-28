@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.7 2019/04/27 15:45:21 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.8 2019/04/28 14:22:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -93,5 +93,18 @@ struct nvmm_capability {
 	uint64_t max_ram;
 	struct nvmm_cap_md arch;
 };
+
+/*
+ * Bits 20:27 -> machid
+ * Bits 12:19 -> cpuid
+ */
+#define NVMM_COMM_OFF(machid, cpuid)	\
+	((((uint64_t)machid & 0xFFULL) << 20) | (((uint64_t)cpuid & 0xFFULL) << 12))
+
+#define NVMM_COMM_MACHID(off)		\
+	((off >> 20) & 0xFF)
+
+#define NVMM_COMM_CPUID(off)		\
+	((off >> 12) & 0xFF)
 
 #endif
