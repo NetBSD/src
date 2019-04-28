@@ -1,4 +1,4 @@
-.\" $NetBSD: nextafter.3,v 1.6 2019/04/27 23:04:32 kamil Exp $
+.\" $NetBSD: nextafter.3,v 1.7 2019/04/28 07:33:02 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -104,10 +104,10 @@ If
 .Fa x
 is finite but an overflow would occur,
 a range error follows and the functions return
-.Dv \*(Pm\*HHUGE_VAL ,
-.Dv  \*(Pm\*HHUGE_VALF ,
+.Dv \*(PmHUGE_VAL ,
+.Dv \*(PmHUGE_VALF ,
 or
-.Dv  \*(Pm\*HHUGE_VALL
+.Dv \*(PmHUGE_VALL
 with the same sign as
 .Fa x .
 When either
