@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.h,v 1.11 2019/04/20 17:16:40 christos Exp $	*/
+/*	$NetBSD: monitor.h,v 1.12 2019/04/28 14:45:13 christos Exp $	*/
 /* $OpenBSD: monitor.h,v 1.23 2019/01/19 21:43:56 djm Exp $ */
 
 /*
@@ -92,7 +92,8 @@ void monitor_reinit(struct monitor *);
 
 struct Authctxt;
 void monitor_child_preauth(struct ssh *, struct monitor *);
-void monitor_child_postauth(struct ssh *, struct monitor *);
+void monitor_child_postauth(struct ssh *, struct monitor *)
+    __attribute__((__noreturn__));
 
 void monitor_clear_keystate(struct ssh *, struct monitor *);
 void monitor_apply_keystate(struct ssh *, struct monitor *);
