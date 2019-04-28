@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.9 2019/04/10 18:49:04 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.10 2019/04/28 14:22:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -40,10 +40,16 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
+#include <machine/vmparam.h>
 
 #include "nvmm.h"
 
-struct nvmm_callbacks __callbacks;
+static struct nvmm_callbacks __callbacks;
+static struct nvmm_capability __capability;
+
+#ifdef __x86_64__
+#include "libnvmm_x86.c"
+#endif
 
 typedef struct __area {
 	LIST_ENTRY(__area) list;
@@ -159,6 +165,11 @@ nvmm_init(void)
 	nvmm_fd = open("/dev/nvmm", O_RDWR);
 	if (nvmm_fd == -1)
 		return -1;
+	if (nvmm_capability(&__capability) == -1) {
+		close(nvmm_fd);
+		nvmm_fd = -1;
+		return -1;
+	}
 	return 0;
 }
 
@@ -185,6 +196,7 @@ int
 nvmm_machine_create(struct nvmm_machine *mach)
 {
 	struct nvmm_ioc_machine_create args;
+	struct nvmm_comm_page **pages;
 	area_list_t *areas;
 	int ret;
 
@@ -196,16 +208,25 @@ nvmm_machine_create(struct nvmm_machine *mach)
 	if (areas == NULL)
 		return -1;
 
+	pages = calloc(__capability.max_vcpus, sizeof(*pages));
+	if (pages == NULL) {
+		free(areas);
+		return -1;
+	}
+
 	ret = ioctl(nvmm_fd, NVMM_IOC_MACHINE_CREATE, &args);
 	if (ret == -1) {
 		free(areas);
 		return -1;
 	}
 
-	memset(mach, 0, sizeof(*mach));
 	LIST_INIT(areas);
-	mach->areas = areas;
+
+	memset(mach, 0, sizeof(*mach));
 	mach->machid = args.machid;
+	mach->pages = pages;
+	mach->npages = __capability.max_vcpus;
+	mach->areas = areas;
 
 	return 0;
 }
@@ -227,6 +248,7 @@ nvmm_machine_destroy(struct nvmm_machine *mach)
 		return -1;
 
 	__area_remove_all(mach);
+	free(mach->pages);
 
 	return 0;
 }
@@ -256,6 +278,7 @@ int
 nvmm_vcpu_create(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
 {
 	struct nvmm_ioc_vcpu_create args;
+	struct nvmm_comm_page *comm;
 	int ret;
 
 	if (nvmm_init() == -1) {
@@ -269,6 +292,13 @@ nvmm_vcpu_create(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
 	if (ret == -1)
 		return -1;
 
+	comm = mmap(NULL, PAGE_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_FILE,
+	    nvmm_fd, NVMM_COMM_OFF(mach->machid, cpuid));
+	if (comm == MAP_FAILED)
+		return -1;
+
+	mach->pages[cpuid] = comm;
+
 	return 0;
 }
 
@@ -276,6 +306,7 @@ int
 nvmm_vcpu_destroy(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
 {
 	struct nvmm_ioc_vcpu_destroy args;
+	struct nvmm_comm_page *comm;
 	int ret;
 
 	if (nvmm_init() == -1) {
@@ -289,6 +320,9 @@ nvmm_vcpu_destroy(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
 	if (ret == -1)
 		return -1;
 
+	comm = mach->pages[cpuid];
+	munmap(comm, PAGE_SIZE);
+
 	return 0;
 }
 
@@ -296,21 +330,20 @@ int
 nvmm_vcpu_setstate(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
     void *state, uint64_t flags)
 {
-	struct nvmm_ioc_vcpu_setstate args;
-	int ret;
+	struct nvmm_comm_page *comm;
 
 	if (nvmm_init() == -1) {
 		return -1;
 	}
 
-	args.machid = mach->machid;
-	args.cpuid = cpuid;
-	args.state = state;
-	args.flags = flags;
-
-	ret = ioctl(nvmm_fd, NVMM_IOC_VCPU_SETSTATE, &args);
-	if (ret == -1)
+	if (__predict_false(cpuid >= mach->npages)) {
 		return -1;
+	}
+	comm = mach->pages[cpuid];
+
+	nvmm_arch_copystate(&comm->state, state, flags);
+	comm->state_commit |= flags;
+	comm->state_cached |= flags;
 
 	return 0;
 }
@@ -320,21 +353,32 @@ nvmm_vcpu_getstate(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
     void *state, uint64_t flags)
 {
 	struct nvmm_ioc_vcpu_getstate args;
+	struct nvmm_comm_page *comm;
 	int ret;
 
 	if (nvmm_init() == -1) {
 		return -1;
 	}
 
+	if (__predict_false(cpuid >= mach->npages)) {
+		return -1;
+	}
+	comm = mach->pages[cpuid];
+
+	if (__predict_true((flags & ~comm->state_cached) == 0)) {
+		goto out;
+	}
+	comm->state_wanted = flags & ~comm->state_cached;
+
 	args.machid = mach->machid;
 	args.cpuid = cpuid;
-	args.state = state;
-	args.flags = flags;
 
 	ret = ioctl(nvmm_fd, NVMM_IOC_VCPU_GETSTATE, &args);
 	if (ret == -1)
 		return -1;
 
+out:
+	nvmm_arch_copystate(state, &comm->state, flags);
 	return 0;
 }
 
