@@ -8117,6 +8117,7 @@ reference to @sc{cvs} commands, @pxref{Invoking CVS}).
 * release::                     Indicate that a directory is no longer in use
 * remove::                      Remove files from active development
 * server & pserver::            Act as a server for a client on stdin/stdout
+* tag & rtag::                  Mark project snapshot for later retrieval
 * update::                      Bring work tree in sync with repository
 @end menu
 
@@ -10557,7 +10558,7 @@ checkout
 @item E
 export
 @item T
-rtag
+tag and rtag
 @end table
 
 @noindent
@@ -11612,6 +11613,140 @@ Load configuration from @var{path} rather than the default location
 @file{$CVSROOT/CVSROOT/config} (@pxref{config}).  @var{path} must be
 @file{/etc/cvs.conf} or prefixed by @file{/etc/cvs/}.  This option is
 supported beginning with @sc{cvs} release 1.12.13.
+@end table
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node tag & rtag
+@appendixsec tag & rtag---Mark project snapshot for later retrieval.
+@cindex tag (subcommand)
+@cindex freeze (subcommand)
+@cindex rtag (subcommand)
+@cindex rfreeze (subcommand)
+
+@itemize @bullet
+@item
+tag [-bBcdFflR] [-r tag] [-D date] new_tag [files@dots{}]
+@item
+Requires: working directory, repository.
+@item
+Changes: repository.
+@item
+Synonym: ta, freeze
+@end itemize
+
+@noindent
+and
+
+@itemize @bullet
+@item
+rtag [-abBdFflnR] [-r tag | -D date] new_tag module@dots{}
+@item
+Requires: repository.
+@item
+Changes: repository.
+@item
+Synonym: rt, rfreeze
+@end itemize
+
+Use @code{tag} to assign symbolic tags to the revisions of files
+checked out into your sandbox.  The tags are applied immediately
+to the repository, with the revision numbers to attach the tag
+to supplied implicitly by the @sc{cvs} records of your working files.
+
+@code{rtag} works similarly, but does not need a sandbox to operate
+in, requiring an explicitly supplied tag or date instead (or assuming
+the tip of the trunk when one is not supplied explicitly).  @sc{cvs}
+uses this preexisting tag or date to determine which revisions of
+files in the repository to attach the new symbolic tag to.
+
+The symbolic tags are meant to permanently record which
+revisions of which files were used for some purpose.  The @code{checkout}
+and @code{update} commands allow you to extract an exact
+copy of a tagged release at any time in the future,
+regardless of whether files have been changed, added,
+or removed on the trunk or other branches since the release was tagged.
+For more, @xref{Branching and merging}.
+
+These commands may also be used to delete a symbolic tag,
+or to create a branch.  See the options section below.
+
+Note if you wish to run destructive commands such as tag deletion, you may
+need to be a member of the group @code{cvsadmin} to do this.
+
+If you attempt to create a tag that already exists,
+CVS will complain and not overwrite that tag.  Use
+the @samp{-F} option to move the tag to a new set of
+revisions.
+
+These standard options are supported by @code{tag} or @code{rtag}
+(@pxref{Common options}, for a complete description of them):
+
+@table @code
+@item -D @var{date}
+Tag the most recent revision no later than @var{date}.  This option is
+not valid when deleting tags (see @samp{-d} option, below).
+
+@item -l
+Local; run only in current working directory.  @xref{Recursive behavior}.
+
+@item -R
+Update directories recursively (default).  @xref{Recursive behavior}.
+
+@item -r @var{tag}[:@var{date}]
+Tag the revisions specified by @var{tag} or, when @var{date} is specified
+and @var{tag} is a branch tag, the version from the branch @var{tag} as it
+existed on @var{date}.  This option is not valid when deleting tags
+(see @samp{-d} option, below).
+@end table
+
+Several tag specific options are also available.  When an option is only
+available with one of @code{tag} or @code{rtag}, it is noted below:
+
+@table @code
+@item -a
+Clear @var{new_tag} from removed files that would not otherwise be tagged
+(@code{rtag} only).
+
+@item -B
+Allows @code{-d} or @code{-F} to delete or move branch tags.
+
+@strong{WARNING: Recovering the information stored by branch tags is
+a very hard problem, more so than regular tags.  Be absolutely sure you
+understand what you are doing before using this option.}
+
+@item -b
+The @code{-b} option makes the new tag a branch tag (@pxref{Branching and
+merging}), allowing concurrent, isolated development.  This is commonly used
+to create patches to a previously released software distribution.
+
+@item -c
+Abort if any tagged files are locally modified (@code{tag} only).
+
+@item -d
+Delete @var{new_tag}, instead of creating it.
+
+@strong{WARNING: Be very certain of your ground before you delete a tag; doing
+this permanently discards some historical information, which could later turn
+out to be valuable.}
+
+@item -F
+When a tag already exists, move it to the new revision.  When the tag
+does not exist, create it as normal.  This option is new in @sc{cvs} 1.4.
+The pre-1.4 behavior is identical to @samp{cvs tag -F}.
+
+@strong{WARNING: Be very certain of your ground before you delete a tag; doing
+this permanently discards some historical information, which could later turn
+out to be valuable.}
+
+@item -f
+With @code{-r @var{tag}} or @code{-d @var{date}}, force a head revision match
+if @var{tag} and @var{date} are not found (in other words, attach @var{new_tag}
+to the most recent trunk revision when @var{tag} and @var{date} do not
+resolve to an existing revision).
+
+@item -n
+Do not execute the tag program specified in the @file{modules} file
+(@code{rtag} only).  @xref{modules}, for more.
 @end table
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
