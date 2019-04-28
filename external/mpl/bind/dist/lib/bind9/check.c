@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.5 2019/04/28 00:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -484,43 +484,6 @@ check_viewacls(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 			result = tresult;
 	}
 	return (result);
-}
-
-static isc_result_t
-check_non_viewacls(const cfg_obj_t *voptions, const cfg_obj_t *config,
-		   isc_log_t *logctx)
-{
-	const cfg_obj_t *aclobj = NULL;
-	const cfg_obj_t *options;
-	const char *where = NULL;
-	int i;
-
-	static const char *acls[] = {
-		"allow-update", "allow-update-forwarding", NULL
-	};
-
-	for (i = 0; acls[i] != NULL; i++) {
-		if (voptions != NULL && aclobj == NULL) {
-			cfg_map_get(voptions, acls[i], &aclobj);
-			where = "view";
-		}
-		if (config != NULL && aclobj == NULL) {
-			options = NULL;
-			cfg_map_get(config, "options", &options);
-			if (options != NULL) {
-				cfg_map_get(options, acls[i], &aclobj);
-				where = "options";
-			}
-		}
-		if (aclobj != NULL) {
-			cfg_obj_log(aclobj, logctx, ISC_LOG_ERROR,
-				    "'%s' can only be set per-zone, "
-				    "not in '%s'", acls[i], where);
-			return (ISC_R_FAILURE);
-		}
-	}
-
-	return (ISC_R_SUCCESS);
 }
 
 static const unsigned char zeros[16];
@@ -3411,15 +3374,26 @@ check_one_plugin(const cfg_obj_t *config, const cfg_obj_t *obj,
 		 void *callback_data)
 {
 	struct check_one_plugin_data *data = callback_data;
+	char full_path[PATH_MAX];
 	isc_result_t result;
 
-	result = ns_plugin_check(plugin_path, parameters, config,
+	result = ns_plugin_expandpath(plugin_path,
+				      full_path, sizeof(full_path));
+	if (result != ISC_R_SUCCESS) {
+		cfg_obj_log(obj, data->lctx, ISC_LOG_ERROR,
+			    "%s: plugin check failed: "
+			    "unable to get full plugin path: %s",
+			    plugin_path, isc_result_totext(result));
+		return (result);
+	}
+
+	result = ns_plugin_check(full_path, parameters, config,
 				 cfg_obj_file(obj), cfg_obj_line(obj),
 				 data->mctx, data->lctx, data->actx);
 	if (result != ISC_R_SUCCESS) {
 		cfg_obj_log(obj, data->lctx, ISC_LOG_ERROR,
 			    "%s: plugin check failed: %s",
-			    plugin_path, isc_result_totext(result));
+			    full_path, isc_result_totext(result));
 		*data->check_result = result;
 	}
 
@@ -3730,11 +3704,6 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	tresult = check_viewacls(actx, voptions, config, logctx, mctx);
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
-
-	tresult = check_non_viewacls(voptions, config, logctx);
-	if (tresult != ISC_R_SUCCESS) {
-		result = tresult;
-	}
 
 	tresult = check_recursionacls(actx, voptions, viewname,
 				      config, logctx, mctx);

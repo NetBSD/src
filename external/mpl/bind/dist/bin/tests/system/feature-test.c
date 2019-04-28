@@ -1,4 +1,4 @@
-/*	$NetBSD: feature-test.c,v 1.4 2019/02/24 20:01:28 christos Exp $	*/
+/*	$NetBSD: feature-test.c,v 1.5 2019/04/28 00:01:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -49,6 +49,7 @@ usage() {
 	fprintf(stderr, "	--ipv6only=no\n");
 	fprintf(stderr, "	--with-idn\n");
 	fprintf(stderr, "	--with-lmdb\n");
+	fprintf(stderr, "	--with-dlz-filesystem\n");
 }
 
 int
@@ -146,6 +147,14 @@ main(int argc, char **argv) {
 
 	if (strcmp(argv[1], "--with-lmdb") == 0) {
 #ifdef HAVE_LMDB
+		return (0);
+#else
+		return (1);
+#endif
+	}
+
+	if (strcmp(argv[1], "--with-dlz-filesystem") == 0) {
+#ifdef DLZ_FILESYSTEM
 		return (0);
 #else
 		return (1);

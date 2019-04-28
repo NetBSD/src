@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkconf.c,v 1.3 2019/01/09 16:54:58 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.4 2019/04/28 00:01:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,7 +65,7 @@ usage(void) ISC_PLATFORM_NORETURN_POST;
 
 static void
 usage(void) {
-	fprintf(stderr, "usage: %s [-hjlvz] [-p [-x]] [-t directory] "
+	fprintf(stderr, "usage: %s [-chjlvz] [-p [-x]] [-t directory] "
 		"[named.conf]\n", program);
 	exit(1);
 }
