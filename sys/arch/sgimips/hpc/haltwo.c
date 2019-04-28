@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.24.2.1 2019/04/21 12:54:25 isaki Exp $ */
+/* $NetBSD: haltwo.c,v 1.24.2.2 2019/04/28 02:07:42 isaki Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.24.2.1 2019/04/21 12:54:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.24.2.2 2019/04/28 02:07:42 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,7 @@ haltwo_set_format(void *v, int setmode,
 	    (1 << HAL2_C1_CLKID_SHIFT) |
 	    (play->channels << HAL2_C1_DATAT_SHIFT), 0);
 
-	DPRINTF(("haltwo_set_params: hw_encoding = %d hw_channels = %d\n",
+	DPRINTF(("%s: hw_encoding = %d hw_channels = %d\n", __func__,
 	    play->encoding, play->channels));
 
 	return 0;
