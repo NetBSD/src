@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.59 2019/04/29 07:55:38 kre Exp $	*/
+/*	$NetBSD: mman.h,v 1.60 2019/04/29 23:12:12 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -117,49 +117,48 @@ typedef	__off_t		off_t;		/* file offset */
 #define	MAP_ALIGNMENT_64PB	MAP_ALIGNED(56)	/* 2^56 */
 
 #ifdef _NETBSD_SOURCE
-#define MAP_FMT	"\177\020\
-b\0SHARED\0\
-b\1PRIVATE\0\
-b\2COPY\0\
-b\4FIXED\0\
-b\5RENAME\0\
-b\6NORESERVE\0\
-b\7INHERIT\0\
-b\11HASSEMAPHORE\0\
-b\12TRYFIXED\0\
-b\13WIRED\0\
-F\14\1\0\
-:\0FILE\0\
-:\1ANONYMOUS\0\
-b\15STACK\0\
-F\30\010\0\
-:\000ALIGN=NONE\0\
-:\012ALIGN=1KB\0\
-:\013ALIGN=2KB\0\
-:\014ALIGN=4KB\0\
-:\015ALIGN=8KB\0\
-:\016ALIGN=16KB\0\
-:\017ALIGN=32KB\0\
-:\020ALIGN=64KB\0\
-:\021ALIGN=128KB\0\
-:\022ALIGN=256KB\0\
-:\023ALIGN=512KB\0\
-:\024ALIGN=1MB\0\
-:\025ALIGN=2MB\0\
-:\026ALIGN=4MB\0\
-:\027ALIGN=8MB\0\
-:\030ALIGN=16MB\0\
-:\034ALIGN=256MB\0\
-:\040ALIGN=4GB\0\
-:\044ALIGN=64GB\0\
-:\050ALIGN=1TB\0\
-:\054ALIGN=16TB\0\
-:\060ALIGN=256TB\0\
-:\064ALIGN=4PB\0\
-:\070ALIGN=64PB\0\
-:\074ALIGN=256PB\0\
-*ALIGN=2^%d\0\
-"
+#define MAP_FMT	"\177\020"			\
+	"b\0"  "SHARED\0"			\
+	"b\1"  "PRIVATE\0"			\
+	"b\2"  "COPY\0"				\
+	"b\4"  "FIXED\0"			\
+	"b\5"  "RENAME\0"			\
+	"b\6"  "NORESERVE\0"			\
+	"b\7"  "INHERIT\0"			\
+	"b\11" "HASSEMAPHORE\0"			\
+	"b\12" "TRYFIXED\0"			\
+	"b\13" "WIRED\0"			\
+	"F\14\1\0"				\
+		":\0" "FILE\0"			\
+		":\1" "ANONYMOUS\0"		\
+	"b\15STACK\0"				\
+	"F\30\010\0"				\
+		":\000" "ALIGN=NONE\0"		\
+		":\012" "ALIGN=1KB\0"		\
+		":\013" "ALIGN=2KB\0"		\
+		":\014" "ALIGN=4KB\0"		\
+		":\015" "ALIGN=8KB\0"		\
+		":\016" "ALIGN=16KB\0"		\
+		":\017" "ALIGN=32KB\0"		\
+		":\020" "ALIGN=64KB\0"		\
+		":\021" "ALIGN=128KB\0"		\
+		":\022" "ALIGN=256KB\0"		\
+		":\023" "ALIGN=512KB\0"		\
+		":\024" "ALIGN=1MB\0"		\
+		":\025" "ALIGN=2MB\0"		\
+		":\026" "ALIGN=4MB\0"		\
+		":\027" "ALIGN=8MB\0"		\
+		":\030" "ALIGN=16MB\0"		\
+		":\034" "ALIGN=256MB\0"		\
+		":\040" "ALIGN=4GB\0"		\
+		":\044" "ALIGN=64GB\0"		\
+		":\050" "ALIGN=1TB\0"		\
+		":\054" "ALIGN=16TB\0"		\
+		":\060" "ALIGN=256TB\0"		\
+		":\064" "ALIGN=4PB\0"		\
+		":\070" "ALIGN=64PB\0"		\
+		":\074" "ALIGN=256PB\0"		\
+		"*"	"ALIGN=2^%d\0"
 #endif
 
 /*
