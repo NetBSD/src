@@ -1,4 +1,4 @@
-/*	$NetBSD: madt.c,v 1.3 2013/04/07 07:37:51 kiyohara Exp $	*/
+/*	$NetBSD: madt.c,v 1.4 2019/04/29 16:39:58 scole Exp $	*/
 /*-
  * Copyright (c) 2001 Doug Rabson
  * All rights reserved.
@@ -148,7 +148,7 @@ ia64_probe_sapics(void)
 			    table->Header.Signature[3], table);
 
 		if (strncmp(table->Header.Signature, ACPI_SIG_MADT,
-		    ACPI_NAME_SIZE) != 0 ||
+		    ACPI_NAMESEG_SIZE) != 0 ||
 		    ACPI_FAILURE(AcpiTbChecksum((void *)table,
 		    table->Header.Length)))
 			continue;
@@ -242,7 +242,7 @@ ia64_count_cpus(void)
 		    IA64_PHYS_TO_RR7(xsdt->TableOffsetEntry[t]);
 
 		if (strncmp(table->Header.Signature, ACPI_SIG_MADT,
-		    ACPI_NAME_SIZE) != 0 ||
+		    ACPI_NAMESEG_SIZE) != 0 ||
 		    ACPI_FAILURE(AcpiTbChecksum((void *)table,
 			table->Header.Length)))
 			continue;
