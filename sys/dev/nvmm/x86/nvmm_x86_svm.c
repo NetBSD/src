@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.43 2019/04/28 14:22:13 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.44 2019/04/29 18:54:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.43 2019/04/28 14:22:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.44 2019/04/29 18:54:25 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -677,18 +677,7 @@ svm_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		type = SVM_EVENT_TYPE_HW_INT;
 		if (event->vector == 2) {
 			type = SVM_EVENT_TYPE_NMI;
-		}
-		if (type == SVM_EVENT_TYPE_NMI) {
-			if (cpudata->nmi_window_exit) {
-				return EAGAIN;
-			}
 			svm_event_waitexit_enable(vcpu, true);
-		} else {
-			if (((vmcb->state.rflags & PSL_I) == 0) ||
-			    ((vmcb->ctrl.intr & VMCB_CTRL_INTR_SHADOW) != 0)) {
-				svm_event_waitexit_enable(vcpu, false);
-				return EAGAIN;
-			}
 		}
 		err = 0;
 		break;

@@ -10,10 +10,6 @@ Known issues in NVMM, low priority in most cases.
    On Intel that's not complicated, but on old AMD CPUs, we need to disassemble
    the instruction, and I don't like that.
 
- * Maybe we shouldn't modify the INT/NMI windows during event injection. The
-   virtualizer is supposed to inject the event only when these windows allow
-   it. (Eg Qemu does.)
-
  * We need a cleaner way to handle CPUID exits. It is not complicated to solve,
    but I'm still not sure which design is the cleanest.
 

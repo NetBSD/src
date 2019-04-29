@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.31 2019/04/28 14:22:13 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.32 2019/04/29 18:54:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.31 2019/04/28 14:22:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.32 2019/04/29 18:54:26 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -996,8 +996,8 @@ vmx_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_event *event)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	int type = 0, err = 0, ret = 0;
-	uint64_t info, intstate, rflags;
+	int type = 0, err = 0, ret = EINVAL;
+	uint64_t info;
 
 	if (event->vector >= 256) {
 		return EINVAL;
@@ -1010,42 +1010,21 @@ vmx_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		type = INTR_TYPE_EXT_INT;
 		if (event->vector == 2) {
 			type = INTR_TYPE_NMI;
-		}
-		intstate = vmx_vmread(VMCS_GUEST_INTERRUPTIBILITY);
-		if (type == INTR_TYPE_NMI) {
-			if (cpudata->nmi_window_exit) {
-				ret = EAGAIN;
-				goto out;
-			}
 			vmx_event_waitexit_enable(vcpu, true);
-		} else {
-			rflags = vmx_vmread(VMCS_GUEST_RFLAGS);
-			if ((rflags & PSL_I) == 0 ||
-			    (intstate & (INT_STATE_STI|INT_STATE_MOVSS)) != 0) {
-				vmx_event_waitexit_enable(vcpu, false);
-				ret = EAGAIN;
-				goto out;
-			}
 		}
 		err = 0;
 		break;
 	case NVMM_EVENT_INTERRUPT_SW:
-		ret = EINVAL;
 		goto out;
 	case NVMM_EVENT_EXCEPTION:
-		if (event->vector == 2 || event->vector >= 32) {
-			ret = EINVAL;
+		if (event->vector == 2 || event->vector >= 32)
 			goto out;
-		}
-		if (event->vector == 3 || event->vector == 0) {
-			ret = EINVAL;
+		if (event->vector == 3 || event->vector == 0)
 			goto out;
-		}
 		type = INTR_TYPE_HW_EXC;
 		err = vmx_event_has_error(event->vector);
 		break;
 	default:
-		ret = EAGAIN;
 		goto out;
 	}
 
@@ -1058,6 +1037,7 @@ vmx_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	vmx_vmwrite(VMCS_ENTRY_EXCEPTION_ERROR, event->u.error);
 
 	cpudata->evt_pending = true;
+	ret = 0;
 
 out:
 	vmx_vmcs_leave(vcpu);
