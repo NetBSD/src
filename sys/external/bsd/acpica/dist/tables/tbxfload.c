@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -111,25 +111,19 @@ AcpiLoadTables (
             "While loading namespace from ACPI tables"));
     }
 
-    if (AcpiGbl_ExecuteTablesAsMethods)
+    /*
+     * Initialize the objects in the namespace that remain uninitialized.
+     * This runs the executable AML that may be part of the declaration of
+     * these name objects:
+     *     OperationRegions, BufferFields, Buffers, and Packages.
+     *
+     */
+    Status = AcpiNsInitializeObjects ();
+    if (ACPI_SUCCESS (Status))
     {
-        /*
-         * If the module-level code support is enabled, initialize the objects
-         * in the namespace that remain uninitialized. This runs the executable
-         * AML that may be part of the declaration of these name objects:
-         *     OperationRegions, BufferFields, Buffers, and Packages.
-         *
-         * Note: The module-level code is optional at this time, but will
-         * become the default in the future.
-         */
-        Status = AcpiNsInitializeObjects ();
-        if (ACPI_FAILURE (Status))
-        {
-            return_ACPI_STATUS (Status);
-        }
+        AcpiGbl_NamespaceInitialized = TRUE;
     }
 
-    AcpiGbl_NamespaceInitialized = TRUE;
     return_ACPI_STATUS (Status);
 }
 
@@ -184,7 +178,7 @@ AcpiTbLoadNamespace (
     Table = &AcpiGbl_RootTableList.Tables[AcpiGbl_DsdtIndex];
 
     if (!AcpiGbl_RootTableList.CurrentTableCount ||
-        !ACPI_COMPARE_NAME (Table->Signature.Ascii, ACPI_SIG_DSDT) ||
+        !ACPI_COMPARE_NAMESEG (Table->Signature.Ascii, ACPI_SIG_DSDT) ||
          ACPI_FAILURE (AcpiTbValidateTable (Table)))
     {
         Status = AE_NO_ACPI_TABLES;
@@ -243,9 +237,9 @@ AcpiTbLoadNamespace (
         Table = &AcpiGbl_RootTableList.Tables[i];
 
         if (!Table->Address ||
-            (!ACPI_COMPARE_NAME (Table->Signature.Ascii, ACPI_SIG_SSDT) &&
-             !ACPI_COMPARE_NAME (Table->Signature.Ascii, ACPI_SIG_PSDT) &&
-             !ACPI_COMPARE_NAME (Table->Signature.Ascii, ACPI_SIG_OSDT)) ||
+            (!ACPI_COMPARE_NAMESEG (Table->Signature.Ascii, ACPI_SIG_SSDT) &&
+             !ACPI_COMPARE_NAMESEG (Table->Signature.Ascii, ACPI_SIG_PSDT) &&
+             !ACPI_COMPARE_NAMESEG (Table->Signature.Ascii, ACPI_SIG_OSDT)) ||
             ACPI_FAILURE (AcpiTbValidateTable (Table)))
         {
             continue;
@@ -465,7 +459,7 @@ AcpiUnloadParentTable (
          * only these types can contain AML and thus are the only types
          * that can create namespace objects.
          */
-        if (ACPI_COMPARE_NAME (
+        if (ACPI_COMPARE_NAMESEG (
                 AcpiGbl_RootTableList.Tables[i].Signature.Ascii,
                 ACPI_SIG_DSDT))
         {
