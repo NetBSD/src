@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -572,12 +572,12 @@ AcpiPsParseAml (
             if (Status == AE_ABORT_METHOD)
             {
                 AcpiNsPrintNodePathname (
-                    WalkState->MethodNode, "Method aborted:");
+                    WalkState->MethodNode, "Aborting method");
                 AcpiOsPrintf ("\n");
             }
             else
             {
-                ACPI_ERROR_METHOD ("Method parse/execution failed",
+                ACPI_ERROR_METHOD ("Aborting method",
                     WalkState->MethodNode, NULL, Status);
             }
             AcpiExEnterInterpreter ();

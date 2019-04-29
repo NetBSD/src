@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -422,7 +422,7 @@ AxCountTableInstances (
         }
 
         AxNormalizeSignature (Gbl_InstanceBuffer);
-        if (ACPI_COMPARE_NAME (Gbl_InstanceBuffer, Signature))
+        if (ACPI_COMPARE_NAMESEG (Gbl_InstanceBuffer, Signature))
         {
             Instances++;
         }
@@ -595,7 +595,7 @@ AxDumpTableHeader (
 
     /* FACS has only signature and length */
 
-    if (ACPI_COMPARE_NAME (TableHeader->Signature, "FACS"))
+    if (ACPI_COMPARE_NAMESEG (TableHeader->Signature, "FACS"))
     {
         printf ("  0x%2.2X\n", Facs->Version);
         return;
@@ -637,7 +637,7 @@ AxCheckTableLengths (
     }
 
     if ((ByteCount < sizeof (ACPI_TABLE_HEADER)) &&
-        (ByteCount >= ACPI_NAME_SIZE))
+        (ByteCount >= ACPI_NAMESEG_SIZE))
     {
         printf ("  : (Table too short for an ACPI table)");
     }

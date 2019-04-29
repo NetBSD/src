@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -147,8 +147,6 @@ usage (
     ACPI_OPTION ("-df",                 "Disable Local fault handler");
     ACPI_OPTION ("-di",                 "Disable execution of STA/INI methods during init");
     ACPI_OPTION ("-do",                 "Disable Operation Region address simulation");
-    ACPI_OPTION ("-dp",                 "Disable loading DSDT/SSDT as a control method\n"
-                  "                      (enable legacy grouping of module-level code)");
     ACPI_OPTION ("-dr",                 "Disable repair of method return values");
     ACPI_OPTION ("-ds",                 "Disable method auto-serialization");
     ACPI_OPTION ("-dt",                 "Disable allocation tracking (performance)");
@@ -174,6 +172,7 @@ usage (
     printf ("\n");
 
     ACPI_OPTION ("-v",                  "Display version information");
+    ACPI_OPTION ("-va",                 "Display verbose dump of any memory leaks");
     ACPI_OPTION ("-vd",                 "Display build date and time");
     ACPI_OPTION ("-vh",                 "Verbose exception handler output");
     ACPI_OPTION ("-vi",                 "Verbose initialization output");
@@ -242,11 +241,6 @@ AeDoOptions (
         case 'o':
 
             AcpiGbl_DbOpt_NoRegionSupport = TRUE;
-            break;
-
-        case 'p':
-
-            AcpiGbl_ExecuteTablesAsMethods = FALSE;
             break;
 
         case 'r':
@@ -440,6 +434,11 @@ AeDoOptions (
 
             return (1);
 
+        case 'a':
+
+            AcpiGbl_VerboseLeakDump = TRUE;
+            break;
+
         case 'd':
 
             printf (ACPI_COMMON_BUILD_TIME);
@@ -515,10 +514,6 @@ main (
 
     AcpiDbgLevel = ACPI_NORMAL_DEFAULT;
     AcpiDbgLayer = 0xFFFFFFFF;
-
-    /* Module-level code. Use new architecture */
-
-    AcpiGbl_ExecuteTablesAsMethods = TRUE;
 
     /*
      * Initialize ACPICA and start debugger thread.
@@ -737,6 +732,7 @@ NormalExit:
     ExitCode = 0;
 
 ErrorExit:
+    AeLateTest ();
     (void) AcpiTerminate ();
     AcDeleteTableList (ListHead);
     AcpiOsFree (AcpiGbl_InitEntries);

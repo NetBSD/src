@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -549,6 +549,7 @@ OpnDoRegion (
     ACPI_PARSE_OBJECT       *Op)
 {
     ACPI_PARSE_OBJECT       *Next;
+    ACPI_ADR_SPACE_TYPE     SpaceId;
 
 
     /* Opcode is parent node */
@@ -556,9 +557,10 @@ OpnDoRegion (
 
     Next = Op->Asl.Child;
 
-    /* Second child is the space ID*/
+    /* Second child is the space ID */
 
     Next = Next->Asl.Next;
+    SpaceId = (ACPI_ADR_SPACE_TYPE) Next->Common.Value.Integer;
 
     /* Third child is the region offset */
 
@@ -569,7 +571,13 @@ OpnDoRegion (
     Next = Next->Asl.Next;
     if (Next->Asl.ParseOpcode == PARSEOP_INTEGER)
     {
+        /* Check for zero length */
+
         Op->Asl.Value.Integer = Next->Asl.Value.Integer;
+        if (!Op->Asl.Value.Integer && (SpaceId < ACPI_NUM_PREDEFINED_REGIONS))
+        {
+            AslError (ASL_ERROR, ASL_MSG_REGION_LENGTH, Op, NULL);
+        }
     }
     else
     {
@@ -929,6 +937,7 @@ OpnDoDefinitionBlock (
     ACPI_SIZE               Length;
     UINT32                  i;
     char                    *Filename;
+    ACPI_STATUS             Status;
 
 
     /*
@@ -947,6 +956,12 @@ OpnDoDefinitionBlock (
         (AslGbl_UseDefaultAmlFilename))
     {
         /*
+         * The walk may traverse multiple definition blocks. Switch files
+         * to ensure that the correct files are manipulated.
+         */
+        FlSwitchFileSet (Op->Asl.Filename);
+
+        /*
          * We will use the AML filename that is embedded in the source file
          * for the output filename.
          */
@@ -960,6 +975,22 @@ OpnDoDefinitionBlock (
 
         AslGbl_OutputFilenamePrefix = Filename;
         UtConvertBackslashes (AslGbl_OutputFilenamePrefix);
+
+        /*
+         * Use the definition block file parameter instead of the input
+         * filename. Since all files were opened previously, remove the
+         * existing file and open a new file with the name of this
+         * definiton block parameter. Since AML code generation has yet
+         * to happen, the previous file can be removed without any impacts.
+         */
+        FlCloseFile (ASL_FILE_AML_OUTPUT);
+        FlDeleteFile (ASL_FILE_AML_OUTPUT);
+        Status = FlOpenAmlOutputFile (AslGbl_OutputFilenamePrefix);
+        if (ACPI_FAILURE (Status))
+        {
+            AslError (ASL_ERROR, ASL_MSG_OUTPUT_FILE_OPEN, NULL, NULL);
+            return;
+        }
     }
 
     Child->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
@@ -970,14 +1001,15 @@ OpnDoDefinitionBlock (
     Child->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
     if (Child->Asl.Value.String)
     {
+        AslGbl_FilesList->TableSignature = Child->Asl.Value.String;
         AslGbl_TableSignature = Child->Asl.Value.String;
-        if (strlen (AslGbl_TableSignature) != ACPI_NAME_SIZE)
+        if (strlen (AslGbl_TableSignature) != ACPI_NAMESEG_SIZE)
         {
             AslError (ASL_ERROR, ASL_MSG_TABLE_SIGNATURE, Child,
                 "Length must be exactly 4 characters");
         }
 
-        for (i = 0; i < ACPI_NAME_SIZE; i++)
+        for (i = 0; i < ACPI_NAMESEG_SIZE; i++)
         {
             if (!isalnum ((int) AslGbl_TableSignature[i]))
             {
@@ -1022,6 +1054,7 @@ OpnDoDefinitionBlock (
 
         AslGbl_TableId = UtLocalCacheCalloc (Length + 1);
         strcpy (AslGbl_TableId, Child->Asl.Value.String);
+        AslGbl_FilesList->TableId = AslGbl_TableId;
 
         /*
          * Convert anything non-alphanumeric to an underscore. This
