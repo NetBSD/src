@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2531 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2532 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -363,3 +363,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	libpthread(3): Import C11 thread support library [kamil 20190424]
 	dhcpcd(8): Import dhcpcd-7.2.1 [roy 20190426]
 	bind: Import version 9.14.1. [christos 20190427]
+	acpi(4): Updated ACPICA to 20190405. [christos 20190428]
