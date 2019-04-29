@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.44 2019/02/09 16:00:41 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.45 2019/04/29 02:49:35 dogcow Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.44 2019/02/09 16:00:41 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.45 2019/04/29 02:49:35 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -3855,7 +3855,7 @@ static void
 acpi_print_sdt(ACPI_TABLE_HEADER *sdp)
 {
 	printf("  ");
-	acpi_print_string(sdp->Signature, ACPI_NAME_SIZE);
+	acpi_print_string(sdp->Signature, ACPI_NAMESEG_SIZE);
 	printf(": Length=%d, Revision=%d, Checksum=%d",
 	       sdp->Length, sdp->Revision, sdp->Checksum);
 	if (acpi_checksum(sdp, sdp->Length))
@@ -3866,7 +3866,7 @@ acpi_print_sdt(ACPI_TABLE_HEADER *sdp)
 	acpi_print_string(sdp->OemTableId, ACPI_OEM_TABLE_ID_SIZE);
 	printf(", OEM Revision=0x%x,\n", sdp->OemRevision);
 	printf("\tCreator ID=");
-	acpi_print_string(sdp->AslCompilerId, ACPI_NAME_SIZE);
+	acpi_print_string(sdp->AslCompilerId, ACPI_NAMESEG_SIZE);
 	printf(", Creator Revision=0x%x\n", sdp->AslCompilerRevision);
 }
 
