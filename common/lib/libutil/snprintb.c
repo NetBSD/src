@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.19 2019/04/27 17:45:28 christos Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.20 2019/04/29 07:55:38 kre Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.19 2019/04/27 17:45:28 christos Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.20 2019/04/29 07:55:38 kre Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.19 2019/04/27 17:45:28 christos Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.19 2019/04/27 17:45:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.20 2019/04/29 07:55:38 kre Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -226,8 +226,12 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 				PUTSEP;
 				if (restart == 0)
 					sep = ',';
-				if (ch == 'F') 		/* just extract */
+				if (ch == 'F') {	/* just extract */
+					/* duplicate PUTS() effect on bitfmt */
+					while (*bitfmt++ != '\0')
+						continue;
 					break;
+				}
 				if (restart == 0)
 					PUTS(bitfmt);
 				if (restart == 0)
@@ -258,7 +262,6 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 				if (!matched) {
 					matched = 1;
 					FMTSTR(bitfmt, field);
-					break;
 				}
 				/*FALLTHROUGH*/
 			default:

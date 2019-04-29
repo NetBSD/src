@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.58 2019/04/27 17:53:26 christos Exp $	*/
+/*	$NetBSD: mman.h,v 1.59 2019/04/29 07:55:38 kre Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -128,11 +128,11 @@ b\7INHERIT\0\
 b\11HASSEMAPHORE\0\
 b\12TRYFIXED\0\
 b\13WIRED\0\
-F\14\1\
+F\14\1\0\
 :\0FILE\0\
 :\1ANONYMOUS\0\
 b\15STACK\0\
-F\30\010\
+F\30\010\0\
 :\000ALIGN=NONE\0\
 :\012ALIGN=1KB\0\
 :\013ALIGN=2KB\0\
