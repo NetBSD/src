@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.121 2019/04/29 05:42:09 pgoyette Exp $	*/
+/*	$NetBSD: route.h,v 1.122 2019/04/29 11:57:22 roy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -515,7 +515,8 @@ void	rt_missmsg(int, const struct rt_addrinfo *, int, int);
 struct mbuf *
 	rt_msg1(int, struct rt_addrinfo *, void *, int);
 int	rt_msg3(int, struct rt_addrinfo *, void *, struct rt_walkarg *, int *);
-void	rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
+void	rt_addrmsg(int, struct ifaddr *);
+void	rt_addrmsg_rt(int, struct ifaddr *, int, struct rtentry *);
 void	route_enqueue(struct mbuf *, int);
 
 struct llentry;
