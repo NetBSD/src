@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -178,7 +178,7 @@
 
 /*
  * Maximal number of elements the Result Stack can contain,
- * it may be an arbitray value not exceeding the types of
+ * it may be an arbitrary value not exceeding the types of
  * ResultSize and ResultCount (now UINT8).
  */
 #define ACPI_RESULTS_OBJ_NUM_MAX        255

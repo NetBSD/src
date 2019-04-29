@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@
 
 /* Current ACPICA subsystem version in YYYYMMDD format */
 
-#define ACPI_CA_VERSION                 0x20181213
+#define ACPI_CA_VERSION                 0x20190405
 
 #include "acconfig.h"
 #include "actypes.h"
@@ -191,14 +191,6 @@ ACPI_INIT_GLOBAL (UINT8,            AcpiGbl_CopyDsdtLocally, FALSE);
  * some machines. Default behavior is to use the XSDT if present.
  */
 ACPI_INIT_GLOBAL (UINT8,            AcpiGbl_DoNotUseXsdt, FALSE);
-
-/*
- * Optionally support module level code by parsing an entire table as
- * a method as it is loaded. Default is TRUE.
- * NOTE, this is essentially obsolete and will be removed soon
- * (01/2018).
- */
-ACPI_INIT_GLOBAL (UINT8,            AcpiGbl_ExecuteTablesAsMethods, TRUE);
 
 /*
  * Optionally use 32-bit FADT addresses if and when there is a conflict
@@ -1226,6 +1218,16 @@ void ACPI_INTERNAL_VAR_XFACE
 AcpiBiosError (
     const char              *ModuleName,
     UINT32                  LineNumber,
+    const char              *Format,
+    ...))
+
+ACPI_MSG_DEPENDENT_RETURN_VOID (
+ACPI_PRINTF_LIKE(4)
+void  ACPI_INTERNAL_VAR_XFACE
+AcpiBiosException (
+    const char              *ModuleName,
+    UINT32                  LineNumber,
+    ACPI_STATUS             Status,
     const char              *Format,
     ...))
 

@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -628,7 +628,7 @@ AcpiDmIsPldBuffer (
     {
         Node = ParentOp->Common.Node;
 
-        if (ACPI_COMPARE_NAME (Node->Name.Ascii, METHOD_NAME__PLD))
+        if (ACPI_COMPARE_NAMESEG (Node->Name.Ascii, METHOD_NAME__PLD))
         {
             /* Ignore the Size argument in the disassembly of this buffer op */
 
@@ -662,7 +662,7 @@ AcpiDmIsPldBuffer (
         {
             Node = ParentOp->Common.Node;
 
-            if (ACPI_COMPARE_NAME (Node->Name.Ascii, METHOD_NAME__PLD))
+            if (ACPI_COMPARE_NAMESEG (Node->Name.Ascii, METHOD_NAME__PLD))
             {
                 /* Ignore the Size argument in the disassembly of this buffer op */
 
@@ -945,7 +945,7 @@ AcpiDmGetHardwareIdType (
             }
         }
 
-        /* Mark this node as convertable to an EISA ID string */
+        /* Mark this node as convertible to an EISA ID string */
 
         Op->Common.DisasmOpcode = ACPI_DASM_EISAID;
         break;
@@ -992,7 +992,7 @@ AcpiDmCheckForHardwareId (
 
     /* Check for _HID - has one argument */
 
-    if (ACPI_COMPARE_NAME (&Name, METHOD_NAME__HID))
+    if (ACPI_COMPARE_NAMESEG (&Name, METHOD_NAME__HID))
     {
         AcpiDmGetHardwareIdType (NextOp);
         return;
@@ -1000,7 +1000,7 @@ AcpiDmCheckForHardwareId (
 
     /* Exit if not _CID */
 
-    if (!ACPI_COMPARE_NAME (&Name, METHOD_NAME__CID))
+    if (!ACPI_COMPARE_NAMESEG (&Name, METHOD_NAME__CID))
     {
         return;
     }
