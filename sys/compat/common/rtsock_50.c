@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.10 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.11 2019/04/29 08:31:29 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.10 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.11 2019/04/29 08:31:29 pgoyette Exp $");
 
 #define	COMPAT_RTSOCK	/* Use the COMPATNAME/COMPATCALL macros and the
 			 * various other compat definitions - see
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.10 2019/03/01 11:06:56 pgoyette Exp 
 
 #include <net/rtsock_shared.c>
 #include <compat/net/route_50.h>
+
+struct sysctllog *clog;
 
 void
 compat_50_rt_oifmsg(struct ifnet *ifp)
@@ -164,12 +166,14 @@ rtsock_50_init(void)
 	    compat_50_rt_ifannouncemsg);
 	MODULE_HOOK_SET(rtsock_rt_ieee80211msg_50_hook, "rts_50",
 	    compat_50_rt_ieee80211msg);
+	sysctl_net_route_setup(&clog, PF_OROUTE, "ortable");
 }
  
 void
 rtsock_50_fini(void)
 {  
 
+	sysctl_teardown(&clog);
 	MODULE_HOOK_UNSET(rtsock_iflist_50_hook); 
 	MODULE_HOOK_UNSET(rtsock_oifmsg_50_hook); 
 	MODULE_HOOK_UNSET(rtsock_rt_missmsg_50_hook); 
