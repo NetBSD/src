@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.10 2019/04/28 14:22:13 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.11 2019/04/29 17:27:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -237,10 +237,6 @@ nvmm_machine_destroy(struct nvmm_machine *mach)
 	struct nvmm_ioc_machine_destroy args;
 	int ret;
 
-	if (nvmm_init() == -1) {
-		return -1;
-	}
-
 	args.machid = mach->machid;
 
 	ret = ioctl(nvmm_fd, NVMM_IOC_MACHINE_DESTROY, &args);
@@ -259,10 +255,6 @@ nvmm_machine_configure(struct nvmm_machine *mach, uint64_t op, void *conf)
 	struct nvmm_ioc_machine_configure args;
 	int ret;
 
-	if (nvmm_init() == -1) {
-		return -1;
-	}
-
 	args.machid = mach->machid;
 	args.op = op;
 	args.conf = conf;
@@ -280,10 +272,6 @@ nvmm_vcpu_create(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
 	struct nvmm_ioc_vcpu_create args;
 	struct nvmm_comm_page *comm;
 	int ret;
-
-	if (nvmm_init() == -1) {
-		return -1;
-	}
 
 	args.machid = mach->machid;
 	args.cpuid = cpuid;
@@ -309,10 +297,6 @@ nvmm_vcpu_destroy(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
 	struct nvmm_comm_page *comm;
 	int ret;
 
-	if (nvmm_init() == -1) {
-		return -1;
-	}
-
 	args.machid = mach->machid;
 	args.cpuid = cpuid;
 
@@ -331,10 +315,6 @@ nvmm_vcpu_setstate(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
     void *state, uint64_t flags)
 {
 	struct nvmm_comm_page *comm;
-
-	if (nvmm_init() == -1) {
-		return -1;
-	}
 
 	if (__predict_false(cpuid >= mach->npages)) {
 		return -1;
@@ -355,10 +335,6 @@ nvmm_vcpu_getstate(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 	struct nvmm_ioc_vcpu_getstate args;
 	struct nvmm_comm_page *comm;
 	int ret;
-
-	if (nvmm_init() == -1) {
-		return -1;
-	}
 
 	if (__predict_false(cpuid >= mach->npages)) {
 		return -1;
@@ -389,10 +365,6 @@ nvmm_vcpu_inject(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 	struct nvmm_ioc_vcpu_inject args;
 	int ret;
 
-	if (nvmm_init() == -1) {
-		return -1;
-	}
-
 	args.machid = mach->machid;
 	args.cpuid = cpuid;
 	memcpy(&args.event, event, sizeof(args.event));
@@ -410,10 +382,6 @@ nvmm_vcpu_run(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 {
 	struct nvmm_ioc_vcpu_run args;
 	int ret;
-
-	if (nvmm_init() == -1) {
-		return -1;
-	}
 
 	args.machid = mach->machid;
 	args.cpuid = cpuid;
@@ -434,10 +402,6 @@ nvmm_gpa_map(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa,
 {
 	struct nvmm_ioc_gpa_map args;
 	int ret;
-
-	if (nvmm_init() == -1) {
-		return -1;
-	}
 
 	ret = __area_add(mach, hva, gpa, size, prot);
 	if (ret == -1)
@@ -465,10 +429,6 @@ nvmm_gpa_unmap(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa,
 	struct nvmm_ioc_gpa_unmap args;
 	int ret;
 
-	if (nvmm_init() == -1) {
-		return -1;
-	}
-
 	ret = __area_delete(mach, hva, gpa, size);
 	if (ret == -1)
 		return -1;
@@ -492,10 +452,6 @@ nvmm_hva_map(struct nvmm_machine *mach, uintptr_t hva, size_t size)
 	struct nvmm_ioc_hva_map args;
 	int ret;
 
-	if (nvmm_init() == -1) {
-		return -1;
-	}
-
 	args.machid = mach->machid;
 	args.hva = hva;
 	args.size = size;
@@ -512,10 +468,6 @@ nvmm_hva_unmap(struct nvmm_machine *mach, uintptr_t hva, size_t size)
 {
 	struct nvmm_ioc_hva_unmap args;
 	int ret;
-
-	if (nvmm_init() == -1) {
-		return -1;
-	}
 
 	args.machid = mach->machid;
 	args.hva = hva;
