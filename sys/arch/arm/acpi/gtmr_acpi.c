@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_acpi.c,v 1.2 2018/11/16 23:24:28 jmcneill Exp $ */
+/* $NetBSD: gtmr_acpi.c,v 1.3 2019/04/29 12:53:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_acpi.c,v 1.2 2018/11/16 23:24:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_acpi.c,v 1.3 2019/04/29 12:53:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,7 +61,7 @@ gtmr_acpi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	ACPI_TABLE_HEADER *hdrp = aux;
 
-	return memcmp(hdrp->Signature, ACPI_SIG_GTDT, ACPI_NAME_SIZE) == 0;
+	return memcmp(hdrp->Signature, ACPI_SIG_GTDT, ACPI_NAMESEG_SIZE) == 0;
 }
 
 static void
