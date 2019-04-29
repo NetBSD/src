@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -130,8 +130,6 @@ main (
     AcpiDbgLayer = 0xFFFFFFFF;
 
     /* Set flags so that the interpreter is not used */
-
-    AcpiGbl_ExecuteTablesAsMethods = FALSE;
 
     Status = AcpiInitializeSubsystem ();
     ACPI_CHECK_OK (AcpiInitializeSubsystem, Status);
