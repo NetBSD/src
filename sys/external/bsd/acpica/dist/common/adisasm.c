@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -351,7 +351,7 @@ AdDisassembleOneTable (
      */
     if (AcpiGbl_CaptureComments)
     {
-        strncpy (Table->Signature, AcpiGbl_TableSig, ACPI_NAME_SIZE);
+        strncpy (Table->Signature, AcpiGbl_TableSig, ACPI_NAMESEG_SIZE);
     }
 #endif
 
@@ -471,7 +471,7 @@ AdDisassembleOneTable (
         if (AslGbl_MapfileFlag)
         {
             fprintf (stderr, "%14s %s - %u bytes\n",
-                AslGbl_Files[ASL_FILE_MAP_OUTPUT].ShortDescription,
+                AslGbl_FileDescs[ASL_FILE_MAP_OUTPUT].ShortDescription,
                 AslGbl_Files[ASL_FILE_MAP_OUTPUT].Filename,
                 FlGetFileSize (ASL_FILE_MAP_OUTPUT));
         }

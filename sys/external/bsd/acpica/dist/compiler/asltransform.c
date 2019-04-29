@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -445,7 +445,7 @@ TrDoDefinitionBlock (
              * to be at the root of the namespace;  Therefore, namepath
              * optimization can only be performed on the DSDT.
              */
-            if (!ACPI_COMPARE_NAME (Next->Asl.Value.String, ACPI_SIG_DSDT))
+            if (!ACPI_COMPARE_NAMESEG (Next->Asl.Value.String, ACPI_SIG_DSDT))
             {
                 AslGbl_ReferenceOptimizationFlag = FALSE;
             }

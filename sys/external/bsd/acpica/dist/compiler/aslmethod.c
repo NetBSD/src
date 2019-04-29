@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -120,7 +120,7 @@ MtMethodAnalysisWalkBegin (
          * 1) _PS0 - One of these must exist: _PS1, _PS2, _PS3
          * 2) _PS1/_PS2/_PS3: A _PS0 must exist
          */
-        if (ACPI_COMPARE_NAME (METHOD_NAME__PS0, Op->Asl.NameSeg))
+        if (ACPI_COMPARE_NAMESEG (METHOD_NAME__PS0, Op->Asl.NameSeg))
         {
             /* For _PS0, one of _PS1/_PS2/_PS3 must exist */
 
@@ -133,9 +133,9 @@ MtMethodAnalysisWalkBegin (
             }
         }
         else if (
-            ACPI_COMPARE_NAME (METHOD_NAME__PS1, Op->Asl.NameSeg) ||
-            ACPI_COMPARE_NAME (METHOD_NAME__PS2, Op->Asl.NameSeg) ||
-            ACPI_COMPARE_NAME (METHOD_NAME__PS3, Op->Asl.NameSeg))
+            ACPI_COMPARE_NAMESEG (METHOD_NAME__PS1, Op->Asl.NameSeg) ||
+            ACPI_COMPARE_NAMESEG (METHOD_NAME__PS2, Op->Asl.NameSeg) ||
+            ACPI_COMPARE_NAMESEG (METHOD_NAME__PS3, Op->Asl.NameSeg))
         {
             /* For _PS1/_PS2/_PS3, a _PS0 must exist */
 

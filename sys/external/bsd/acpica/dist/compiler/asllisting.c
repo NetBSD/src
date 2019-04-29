@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -146,6 +146,7 @@ static void
 LsGenerateListing (
     UINT32                  FileId)
 {
+    UINT32                  WalkMode = ASL_WALK_VISIT_DOWNWARD | ASL_WALK_VISIT_DB_SEPARATELY;
 
     /* Start at the beginning of both the source and AML files */
 
@@ -163,7 +164,7 @@ LsGenerateListing (
 
         LsDoOffsetTableHeader (FileId);
 
-        TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_DOWNWARD,
+        TrWalkParseTree (AslGbl_CurrentDB, WalkMode,
             LsAmlOffsetWalk, NULL, (void *) ACPI_TO_POINTER (FileId));
         LsDoOffsetTableFooter (FileId);
         return;
@@ -171,7 +172,7 @@ LsGenerateListing (
 
     /* Process all parse nodes */
 
-    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_DOWNWARD,
+    TrWalkParseTree (AslGbl_CurrentDB, WalkMode,
         LsAmlListingWalk, NULL, (void *) ACPI_TO_POINTER (FileId));
 
     /* Final processing */
@@ -739,7 +740,7 @@ LsFinishSourceListing (
         FlPrintFile (FileId, "\n\nSummary of errors and warnings\n\n");
         AePrintErrorLog (FileId);
         FlPrintFile (FileId, "\n");
-        UtDisplaySummary (FileId);
+        UtDisplayOneSummary (FileId, TRUE);
         FlPrintFile (FileId, "\n");
     }
 }

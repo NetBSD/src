@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1623,6 +1623,11 @@ DtCompileSrat (
         case ACPI_SRAT_TYPE_GIC_ITS_AFFINITY:
 
             InfoTable = AcpiDmTableInfoSrat4;
+            break;
+
+        case ACPI_SRAT_TYPE_GENERIC_AFFINITY:
+
+            InfoTable = AcpiDmTableInfoSrat5;
             break;
 
         default:

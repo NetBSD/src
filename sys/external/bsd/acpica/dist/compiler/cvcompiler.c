@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,7 @@
  *
  * DESCRIPTION: Process a single line comment of a c Style comment. This
  *              function captures a line of a c style comment in a char* and
- *              places the comment in the approperiate global buffer.
+ *              places the comment in the appropriate global buffer.
  *
  ******************************************************************************/
 
@@ -186,7 +186,7 @@ CvProcessComment (
  * RETURN:      none
  *
  * DESCRIPTION: Process a single line comment. This function captures a comment
- *              in a char* and places the comment in the approperiate global
+ *              in a char* and places the comment in the appropriate global
  *              buffer through CvPlaceComment
  *
  ******************************************************************************/
@@ -225,7 +225,7 @@ CvProcessCommentType2 (
          *
          * would be lexically analyzed as a single comment.
          *
-         * Create a new string with the approperiate spaces. Since we need
+         * Create a new string with the appropriate spaces. Since we need
          * to account for the proper spacing, the actual comment,
          * extra 2 spaces so that this comment can be converted to the "/ *"
          * style and the null terminator, the string would look something
@@ -272,7 +272,7 @@ CvProcessCommentType2 (
  * RETURN:      TotalCommentLength - Length of all comments within this op.
  *
  * DESCRIPTION: Calculate the length that the each comment takes up within Op.
- *              Comments look like the follwoing: [0xA9 OptionBtye comment 0x00]
+ *              Comments look like the following: [0xA9 OptionBtye comment 0x00]
  *              therefore, we add 1 + 1 + strlen (comment) + 1 to get the actual
  *              length of this comment.
  *
@@ -855,7 +855,7 @@ CvAppendInlineComment (
  * RETURN:      None
  *
  * DESCRIPTION: Given type and CommentString, this function places the
- *              CommentString in the approperiate global comment list or char*
+ *              CommentString in the appropriate global comment list or char*
  *
  ******************************************************************************/
 

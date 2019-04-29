@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -477,7 +477,7 @@ AcValidateTableHeader (
      * These fields must be ASCII: OemId, OemTableId, AslCompilerId.
      * We allow a NULL terminator in OemId and OemTableId.
      */
-    for (i = 0; i < ACPI_NAME_SIZE; i++)
+    for (i = 0; i < ACPI_NAMESEG_SIZE; i++)
     {
         if (!ACPI_IS_ASCII ((UINT8) TableHeader.AslCompilerId[i]))
         {

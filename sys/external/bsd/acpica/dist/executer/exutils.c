@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -217,7 +217,7 @@ AcpiExTruncateFor32bitTable (
  * RETURN:      None
  *
  * DESCRIPTION: Obtain the ACPI hardware Global Lock, only if the field
- *              flags specifiy that it is to be obtained before field access.
+ *              flags specify that it is to be obtained before field access.
  *
  ******************************************************************************/
 
@@ -505,4 +505,3 @@ AcpiIsValidSpaceId (
 
     return (TRUE);
 }
-

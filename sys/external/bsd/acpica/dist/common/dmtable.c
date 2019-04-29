@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -212,7 +212,7 @@ static const char           *AcpiDmHestNotifySubnames[] =
 
 static const char           *AcpiDmHmatSubnames[] =
 {
-    "Memory Subystem Address Range",
+    "Memory Proximity Domain Attributes",
     "System Locality Latency and Bandwidth Information",
     "Memory Side Cache Information",
     "Unknown Structure Type"         /* Reserved */
@@ -292,6 +292,7 @@ static const char           *AcpiDmSratSubnames[] =
     "Processor Local x2APIC Affinity",
     "GICC Affinity",
     "GIC ITS Affinity",             /* Acpi 6.2 */
+    "Generic Initiator Affinity",   /* Acpi 6.3 */
     "Unknown Subtable Type"         /* Reserved */
 };
 
@@ -493,7 +494,7 @@ AcpiDmGetTableData (
 
     for (Info = AcpiDmTableData; Info->Signature; Info++)
     {
-        if (ACPI_COMPARE_NAME (Signature, Info->Signature))
+        if (ACPI_COMPARE_NAMESEG (Signature, Info->Signature))
         {
             return (Info);
         }
@@ -548,7 +549,7 @@ AcpiDmDumpDataTable (
      * Handle tables that don't use the common ACPI table header structure.
      * Currently, these are the FACS, RSDP, and S3PT.
      */
-    if (ACPI_COMPARE_NAME (Table->Signature, ACPI_SIG_FACS))
+    if (ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_FACS))
     {
         Length = Table->Length;
         Status = AcpiDmDumpTable (Length, 0, Table, 0, AcpiDmTableInfoFacs);
@@ -561,7 +562,7 @@ AcpiDmDumpDataTable (
     {
         Length = AcpiDmDumpRsdp (Table);
     }
-    else if (ACPI_COMPARE_NAME (Table->Signature, ACPI_SIG_S3PT))
+    else if (ACPI_COMPARE_NAMESEG (Table->Signature, ACPI_SIG_S3PT))
     {
         Length = AcpiDmDumpS3pt (Table);
     }

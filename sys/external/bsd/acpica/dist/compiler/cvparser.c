@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -168,7 +168,7 @@ CvInitFileTree (
     AcpiGbl_FileTreeRoot->File = AcpiGbl_OutputFile;
 
     /*
-     * Set this to true because we dont need to output
+     * Set this to true because we don't need to output
      * an include statement for the topmost file
      */
     AcpiGbl_FileTreeRoot->IncludeWritten = TRUE;
@@ -406,7 +406,7 @@ CvFileAddressLookup(
  * RETURN:      None
  *
  * DESCRIPTION: Takes a given parse op, looks up its Op->Common.Aml field
- *              within the file tree and fills in approperiate file information
+ *              within the file tree and fills in appropriate file information
  *              from a matching node within the tree.
  *              This is referred as ASL_CV_LABEL_FILENODE.
  *
@@ -897,7 +897,7 @@ CvCaptureComments (
  *
  * RETURN:      None
  *
- * DESCRIPTION: Transfer all of the commments stored in global containers to the
+ * DESCRIPTION: Transfer all of the comments stored in global containers to the
  *              given Op. This will be invoked shortly after the parser creates
  *              a ParseOp.
  *              This is referred as ASL_CV_TRANSFER_COMMENTS.

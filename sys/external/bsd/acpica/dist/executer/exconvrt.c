@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -600,7 +600,7 @@ AcpiExConvertToString (
         {
             if (Base == 16)
             {
-                /* Emit 0x prefix for explict/implicit hex conversion */
+                /* Emit 0x prefix for explicit/implicit hex conversion */
 
                 *NewBuf++ = '0';
                 *NewBuf++ = 'x';
