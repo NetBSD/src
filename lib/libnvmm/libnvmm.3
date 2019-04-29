@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.14 2019/04/07 14:13:03 maxv Exp $
+.\"	$NetBSD: libnvmm.3,v 1.15 2019/04/29 18:54:25 maxv Exp $
 .\"
 .\" Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -470,15 +470,15 @@ the event is a non-maskable interrupt (NMI), and the VCPU is already in an
 in-NMI context.
 .El
 .Pp
-In this case,
-.Fn nvmm_vcpu_inject
-will return
-.Er EAGAIN ,
-and NVMM will cause a VM exit with reason
+VMM software can manage interrupt and NMI window-exiting via the
+.Va intr
+component of the VCPU state.
+When such window-exiting is enabled, NVMM will cause a VM exit with reason
 .Cd NVMM_EXIT_INT_READY
 or
 .Cd NVMM_EXIT_NMI_READY
-to indicate that VMM software can now reinject the desired event.
+to indicate that the guest is now able to handle the corresponding class
+of interrupts.
 .Ss Assist Callbacks
 In order to assist emulation of certain operations,
 .Nm
@@ -632,14 +632,6 @@ The maximum number of machines or VCPUs was reached.
 A query was made on a machine or a VCPU that does not exist.
 .It Bq Er EPERM
 An attempt was made to access a machine that does not belong to the process.
-.El
-.Pp
-In addition,
-.Fn nvmm_vcpu_inject
-uses the following error codes:
-.Bl -tag -width [ENOBUFS]
-.It Bq Er EAGAIN
-The VCPU cannot receive the event immediately.
 .El
 .Sh SEE ALSO
 .Xr nvmm 4
