@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.274 2019/03/18 11:38:03 msaitoh Exp $	*/
+/*	$NetBSD: in6.c,v 1.275 2019/04/29 11:57:22 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.274 2019/03/18 11:38:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.275 2019/04/29 11:57:22 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -179,7 +179,7 @@ in6_ifaddlocal(struct ifaddr *ifa)
 	    (ifa->ifa_ifp->if_flags & IFF_POINTOPOINT &&
 	    IN6_ARE_ADDR_EQUAL(IFA_IN6(ifa), IFA_DSTIN6(ifa))))
 	{
-		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, ifa);
 		return;
 	}
 
@@ -1840,7 +1840,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 		in6_ifaddlocal(&ia->ia_ifa);
 	} else {
 		/* Inform the routing socket of new flags/timings */
-		rt_newaddrmsg(RTM_NEWADDR, &ia->ia_ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, &ia->ia_ifa);
 	}
 
 	/* Add the network prefix route. */
@@ -2211,7 +2211,7 @@ in6_if_link_up(struct ifnet *ifp)
 				    IN6_PRINT(ip6buf,
 				    &ia->ia_addr.sin6_addr));
 			} else if ((ia->ia6_flags & IN6_IFF_TENTATIVE) == 0)
-				rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+				rt_addrmsg(RTM_NEWADDR, ifa);
 		}
 
 		if (ia->ia6_flags & IN6_IFF_TENTATIVE) {
@@ -2302,7 +2302,7 @@ in6_if_link_down(struct ifnet *ifp)
 			ia->ia6_flags |= IN6_IFF_DETACHED;
 			ia->ia6_flags &=
 			    ~(IN6_IFF_TENTATIVE | IN6_IFF_DUPLICATED);
-			rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+			rt_addrmsg(RTM_NEWADDR, ifa);
 		}
 
 		s = pserialize_read_enter();
