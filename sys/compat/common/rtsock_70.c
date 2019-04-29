@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_70.c,v 1.6 2019/04/29 05:42:09 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_70.c,v 1.7 2019/04/29 08:31:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.6 2019/04/29 05:42:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.7 2019/04/29 08:31:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.6 2019/04/29 05:42:09 pgoyette Exp $
 #include <compat/net/if.h>
 #include <compat/net/route.h>
 #include <compat/net/route_70.h>
-
-struct sysctllog *clog;
 
 void
 compat_70_rt_newaddrmsg1(int cmd, struct ifaddr *ifa)
@@ -124,14 +122,12 @@ rtsock_70_init(void)
 	MODULE_HOOK_SET(rtsock_newaddr_70_hook, "rts_70",
 	    compat_70_rt_newaddrmsg1);
 	MODULE_HOOK_SET(rtsock_iflist_70_hook, "rts_70", compat_70_iflist_addr);
-	sysctl_net_route_setup(&clog, PF_OROUTE, "ortable");
 }
 
 void
 rtsock_70_fini(void)
 {
 
-	sysctl_teardown(&clog);
 	MODULE_HOOK_UNSET(rtsock_newaddr_70_hook);
 	MODULE_HOOK_UNSET(rtsock_iflist_70_hook);
 }
