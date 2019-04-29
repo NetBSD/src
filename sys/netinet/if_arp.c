@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.281 2019/04/29 16:05:46 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.282 2019/04/29 16:12:30 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.281 2019/04/29 16:05:46 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.282 2019/04/29 16:12:30 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -176,7 +176,7 @@ struct dadq;
 static void arp_dad_timer(struct dadq *);
 static void arp_dad_start(struct ifaddr *);
 static void arp_dad_stop(struct ifaddr *);
-static void arp_dad_duplicated(struct ifaddr *, const char *);
+static void arp_dad_duplicated(struct ifaddr *, const struct sockaddr_dl *);
 
 static void arp_init_llentry(struct ifnet *, struct llentry *);
 #if NTOKEN > 0
@@ -1005,7 +1005,6 @@ in_arpinput(struct mbuf *m)
 	uint64_t *arps;
 	struct psref psref, psref_ia;
 	int s;
-	char llabuf[LLA_ADDRSTRLEN], *llastr;
 	char ipbuf[INET_ADDRSTRLEN];
 	bool do_dad;
 
@@ -1149,9 +1148,12 @@ in_arpinput(struct mbuf *m)
 	    (in_nullhost(isaddr) && in_hosteq(itaddr, myaddr) &&
 	     m->m_flags & M_BCAST)))
 	{
-		llastr = lla_snprintf(llabuf, sizeof(llabuf),
-		    ar_sha(ah), ah->ar_hln);
-		arp_dad_duplicated((struct ifaddr *)ia, llastr);
+		struct sockaddr_dl sdl, *sdlp;
+
+		sdlp = sockaddr_dl_init(&sdl, sizeof(sdl),
+		    ifp->if_index, ifp->if_type,
+		    NULL, 0, ar_sha(ah), ah->ar_hln);
+		arp_dad_duplicated((struct ifaddr *)ia, sdlp);
 		goto out;
 	}
 
@@ -1176,6 +1178,8 @@ in_arpinput(struct mbuf *m)
 	if ((la->la_flags & LLE_VALID) &&
 	    memcmp(ar_sha(ah), &la->ll_addr, ifp->if_addrlen))
 	{
+		char llabuf[LLA_ADDRSTRLEN], *llastr;
+
 		llastr = lla_snprintf(llabuf, sizeof(llabuf),
 		    ar_sha(ah), ah->ar_hln);
 
@@ -1753,38 +1757,43 @@ done:
 }
 
 static void
-arp_dad_duplicated(struct ifaddr *ifa, const char *sha)
+arp_dad_duplicated(struct ifaddr *ifa, const struct sockaddr_dl *from)
 {
 	struct in_ifaddr *ia = (struct in_ifaddr *)ifa;
 	struct ifnet *ifp = ifa->ifa_ifp;
-	char ipbuf[INET_ADDRSTRLEN];
-	const char *iastr;
+	char ipbuf[INET_ADDRSTRLEN], llabuf[LLA_ADDRSTRLEN];
+	const char *iastr, *llastr;
 
 	iastr = IN_PRINT(ipbuf, &ia->ia_addr.sin_addr);
+	if (__predict_false(from == NULL))
+		llastr = NULL;
+	else
+		llastr = lla_snprintf(llabuf, sizeof(llabuf),
+		    CLLADDR(from), from->sdl_alen);
 
 	if (ia->ia4_flags & (IN_IFF_TENTATIVE|IN_IFF_DUPLICATED)) {
 		log(LOG_ERR,
 		    "%s: DAD duplicate address %s from %s\n",
-		    if_name(ifp), iastr, sha);
+		    if_name(ifp), iastr, llastr);
 	} else if (ia->ia_dad_defended == 0 ||
 		   ia->ia_dad_defended < time_uptime - DEFEND_INTERVAL) {
 		ia->ia_dad_defended = time_uptime;
 		arpannounce1(ifa);
 		log(LOG_ERR,
 		    "%s: DAD defended address %s from %s\n",
-		    if_name(ifp), iastr, sha);
+		    if_name(ifp), iastr, llastr);
 		return;
 	} else {
 		/* If DAD is disabled, just report the duplicate. */
 		if (!ip_dad_enabled()) {
 			log(LOG_ERR,
 			    "%s: DAD ignoring duplicate address %s from %s\n",
-			    if_name(ifp), iastr, sha);
+			    if_name(ifp), iastr, llastr);
 			return;
 		}
 		log(LOG_ERR,
 		    "%s: DAD defence failed for %s from %s\n",
-		    if_name(ifp), iastr, sha);
+		    if_name(ifp), iastr, llastr);
 	}
 
 	arp_dad_stop(ifa);
@@ -1793,7 +1802,7 @@ arp_dad_duplicated(struct ifaddr *ifa, const char *sha)
 	if ((ia->ia4_flags & IN_IFF_DUPLICATED) == 0) {
 		ia->ia4_flags |= IN_IFF_DUPLICATED;
 		/* Inform the routing socket of the duplicate address */
-		rt_addrmsg(RTM_NEWADDR, ifa);
+		rt_addrmsg_src(RTM_NEWADDR, ifa, (const struct sockaddr *)from);
 	}
 }
 

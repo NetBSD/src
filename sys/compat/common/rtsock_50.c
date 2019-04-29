@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.12 2019/04/29 11:57:22 roy Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.13 2019/04/29 16:12:30 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.12 2019/04/29 11:57:22 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.13 2019/04/29 16:12:30 roy Exp $");
 
 #define	COMPAT_RTSOCK	/* Use the COMPATNAME/COMPATCALL macros and the
 			 * various other compat definitions - see
@@ -162,6 +162,8 @@ rtsock_50_init(void)
 	MODULE_HOOK_SET(rtsock_rt_ifmsg_50_hook, "rts_50", compat_50_rt_ifmsg);
 	MODULE_HOOK_SET(rtsock_rt_addrmsg_rt_50_hook, "rts_50",
 	    compat_50_rt_addrmsg_rt);
+	MODULE_HOOK_SET(rtsock_rt_addrmsg_src_50_hook, "rts_50",
+	    compat_50_rt_addrmsg_src);
 	MODULE_HOOK_SET(rtsock_rt_addrmsg_50_hook, "rts_50",
 	    compat_50_rt_addrmsg);
 	MODULE_HOOK_SET(rtsock_rt_ifannouncemsg_50_hook, "rts_50",
@@ -181,6 +183,7 @@ rtsock_50_fini(void)
 	MODULE_HOOK_UNSET(rtsock_rt_missmsg_50_hook); 
 	MODULE_HOOK_UNSET(rtsock_rt_ifmsg_50_hook); 
 	MODULE_HOOK_UNSET(rtsock_rt_addrmsg_rt_50_hook); 
+	MODULE_HOOK_UNSET(rtsock_rt_addrmsg_src_50_hook); 
 	MODULE_HOOK_UNSET(rtsock_rt_addrmsg_50_hook); 
 	MODULE_HOOK_UNSET(rtsock_rt_ifannouncemsg_50_hook); 
 	MODULE_HOOK_UNSET(rtsock_rt_ieee80211msg_50_hook); 

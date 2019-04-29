@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.165 2019/04/29 11:57:22 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.166 2019/04/29 16:12:30 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.165 2019/04/29 11:57:22 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.166 2019/04/29 16:12:30 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -82,8 +82,10 @@ static void nd6_dad_starttimer(struct dadq *, int);
 static void nd6_dad_destroytimer(struct dadq *);
 static void nd6_dad_timer(struct dadq *);
 static void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
-static void nd6_dad_input(struct ifaddr *, struct nd_opt_nonce *);
-static void nd6_dad_duplicated(struct ifaddr *, struct dadq *);
+static void nd6_dad_input(struct ifaddr *, struct nd_opt_nonce *,
+    const struct sockaddr_dl *);
+static void nd6_dad_duplicated(struct ifaddr *, struct dadq *,
+    const struct sockaddr_dl *);
 
 static int dad_maxtry = 15;	/* max # of *tries* to transmit DAD packet */
 
@@ -305,8 +307,17 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		 * If not, the packet is for addess resolution;
 		 * silently ignore it.
 		 */
-		if (IN6_IS_ADDR_UNSPECIFIED(&saddr6))
-			nd6_dad_input(ifa, ndopts.nd_opts_nonce);
+		if (IN6_IS_ADDR_UNSPECIFIED(&saddr6)) {
+			struct sockaddr_dl sdl, *sdlp;
+
+			if (lladdr != NULL)
+				sdlp = sockaddr_dl_init(&sdl, sizeof(sdl),
+				    ifp->if_index, ifp->if_type,
+				    NULL, 0, lladdr, lladdrlen);
+			else
+				sdlp = NULL;
+			nd6_dad_input(ifa, ndopts.nd_opts_nonce, sdlp);
+		}
 		goto freeit;
 	}
 
@@ -687,9 +698,17 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	 * Otherwise, process as defined in RFC 2461.
 	 */
 	if (ifa) {
-		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_TENTATIVE)
-			nd6_dad_input(ifa, NULL);
-		else
+		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_TENTATIVE) {
+			struct sockaddr_dl sdl, *sdlp;
+
+			if (lladdr != NULL)
+				sdlp = sockaddr_dl_init(&sdl, sizeof(sdl),
+				    ifp->if_index, ifp->if_type,
+				    NULL, 0, lladdr, lladdrlen);
+			else
+				sdlp = NULL;
+			nd6_dad_input(ifa, NULL, sdlp);
+		} else
 			log(LOG_ERR,
 			    "nd6_na_input: duplicate IP6 address %s\n",
 			    IN6_PRINT(ip6buf, &taddr6));
@@ -1400,34 +1419,33 @@ done:
 }
 
 static void
-nd6_dad_duplicated(struct ifaddr *ifa, struct dadq *dp)
+nd6_dad_duplicated(struct ifaddr *ifa, struct dadq *dp,
+    const struct sockaddr_dl *from)
 {
 	struct in6_ifaddr *ia;
 	struct ifnet *ifp;
-	char ip6buf[INET6_ADDRSTRLEN];
+	char ip6buf[INET6_ADDRSTRLEN], llabuf[LLA_ADDRSTRLEN], *llastr;
 
 	KASSERT(mutex_owned(&nd6_dad_lock));
 	KASSERT(ifa != NULL);
 
 	ifp = ifa->ifa_ifp;
 	ia = (struct in6_ifaddr *)ifa;
-#if 0
-	log(LOG_ERR, "%s: DAD detected duplicate IPv6 address %s: "
-	    "NS in/out/loopback=%d/%d\n",
-	    if_name(ifp), IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr),
-	    dp->dad_ns_ocount, dp->dad_ns_lcount)
-#endif
 
 	ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 	ia->ia6_flags |= IN6_IFF_DUPLICATED;
 
-	log(LOG_ERR, "%s: DAD complete for %s - duplicate found\n",
-	    if_name(ifp), IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr));
-	log(LOG_ERR, "%s: manual intervention required\n",
-	    if_name(ifp));
+	if (__predict_false(from == NULL))
+		llastr = NULL;
+	else
+		llastr = lla_snprintf(llabuf, sizeof(llabuf),
+		    CLLADDR(from), from->sdl_alen);
+
+	log(LOG_ERR, "%s: DAD duplicate address %s from %s\n",
+	    if_name(ifp), IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr), llastr);
 
 	/* Inform the routing socket that DAD has completed */
-	rt_addrmsg(RTM_NEWADDR, ifa);
+	rt_addrmsg_src(RTM_NEWADDR, ifa, (const struct sockaddr *)from);
 
 	/*
 	 * If the address is a link-local address formed from an interface
@@ -1492,7 +1510,8 @@ nd6_dad_ns_output(struct dadq *dp, struct ifaddr *ifa)
 }
 
 static void
-nd6_dad_input(struct ifaddr *ifa, struct nd_opt_nonce *nonce)
+nd6_dad_input(struct ifaddr *ifa, struct nd_opt_nonce *nonce,
+    const struct sockaddr_dl *from)
 {
 	struct dadq *dp;
 	bool found_nonce = false;
@@ -1502,7 +1521,7 @@ nd6_dad_input(struct ifaddr *ifa, struct nd_opt_nonce *nonce)
 	mutex_enter(&nd6_dad_lock);
 	dp = nd6_dad_find(ifa, nonce, &found_nonce);
 	if (!found_nonce) {
-		nd6_dad_duplicated(ifa, dp);
+		nd6_dad_duplicated(ifa, dp, from);
 		if (dp != NULL)
 			nd6_dad_stoptimer(dp);
 	}

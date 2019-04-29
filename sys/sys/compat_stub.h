@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.14 2019/04/29 11:57:22 roy Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.15 2019/04/29 16:12:30 roy Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/module_hook.h>
 #include <sys/param.h>
+#include <sys/socket.h>
 
 /*
  * NOTE: If you make changes here, please remember to update the
@@ -262,6 +263,8 @@ MODULE_HOOK(rtsock_rt_missmsg_50_hook, void,
 MODULE_HOOK(rtsock_rt_ifmsg_50_hook, void, (struct ifnet *));
 MODULE_HOOK(rtsock_rt_addrmsg_rt_50_hook, void,
     (int, struct ifaddr *, int, struct rtentry *));
+MODULE_HOOK(rtsock_rt_addrmsg_src_50_hook, void,
+    (int, struct ifaddr *, const struct sockaddr *));
 MODULE_HOOK(rtsock_rt_addrmsg_50_hook, void, (int, struct ifaddr *));
 MODULE_HOOK(rtsock_rt_ifannouncemsg_50_hook, void, (struct ifnet *, int));
 MODULE_HOOK(rtsock_rt_ieee80211msg_50_hook, void,

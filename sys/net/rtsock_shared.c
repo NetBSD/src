@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.7 2019/04/29 11:57:22 roy Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.8 2019/04/29 16:12:30 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.7 2019/04/29 11:57:22 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.8 2019/04/29 16:12:30 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1364,9 +1364,9 @@ COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
  * be unnecessary as the routing socket will automatically generate
  * copies of it.
  */
-void
-COMPATNAME(rt_addrmsg_rt)(int cmd, struct ifaddr *ifa, int error,
-    struct rtentry *rt)
+static void
+COMPATNAME(rt_addrmsg0)(int cmd, struct ifaddr *ifa, int error,
+    struct rtentry *rt, const struct sockaddr *src)
 {
 #define	cmdpass(__cmd, __pass)	(((__cmd) << 2) | (__pass))
 	struct rt_addrinfo info;
@@ -1428,6 +1428,7 @@ COMPATNAME(rt_addrmsg_rt)(int cmd, struct ifaddr *ifa, int error,
 			info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
+			info.rti_info[RTAX_AUTHOR] = src;
 			memset(&ifam, 0, sizeof(ifam));
 			ifam.ifam_index = ifp->if_index;
 			ifam.ifam_metric = ifa->ifa_metric;
@@ -1473,7 +1474,23 @@ void
 COMPATNAME(rt_addrmsg)(int cmd, struct ifaddr *ifa)
 {
 
-	COMPATNAME(rt_addrmsg_rt)(cmd, ifa, 0, NULL);
+	COMPATNAME(rt_addrmsg0)(cmd, ifa, 0, NULL, NULL);
+}
+
+void
+COMPATNAME(rt_addrmsg_rt)(int cmd, struct ifaddr *ifa, int error,
+    struct rtentry *rt)
+{
+
+	COMPATNAME(rt_addrmsg0)(cmd, ifa, error, rt, NULL);
+}
+
+void
+COMPATNAME(rt_addrmsg_src)(int cmd, struct ifaddr *ifa,
+    const struct sockaddr *src)
+{
+
+	COMPATNAME(rt_addrmsg0)(cmd, ifa, 0, NULL, src);
 }
 
 static struct mbuf *
