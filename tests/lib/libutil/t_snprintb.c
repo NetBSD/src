@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.5 2017/10/14 18:41:44 ryo Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.6 2019/04/29 07:55:38 kre Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.5 2017/10/14 18:41:44 ryo Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.6 2019/04/29 07:55:38 kre Exp $");
 
 #include <string.h>
 #include <util.h>
@@ -70,11 +70,33 @@ ATF_TC_BODY(snprintb, tc)
 	    "0x1<FOO=0x1=ONE>");
 	h_snprintb("\177\20f\0\4X\0=\1ONE\0=\2TWO\0\0", 1,
 	    "0x1<X=0x1=ONE>");
+	h_snprintb("\177\020F\0\4\0:\1ONE\0:\2TWO\0\0", 1,
+	    "0x1<ONE>");
 
-	h_snprintb("\177\020F\0\4FOO\0:\1ONE\0:\2TWO\0\0", 1,
-	    "0x1<ONE>");
-	h_snprintb("\177\020F\0\4X\0:\1ONE\0:\2TWO\0\0", 1,
-	    "0x1<ONE>");
+	h_snprintb("\177\20f\0\4FOO\0=\1ONE\0=\2TWO\0\0", 2,
+	    "0x2<FOO=0x2=TWO>");
+	h_snprintb("\177\20f\0\4X\0=\1ONE\0=\2TWO\0\0", 2,
+	    "0x2<X=0x2=TWO>");
+	h_snprintb("\177\020F\0\4\0:\1ONE\0:\2TWO\0\0", 2,
+	    "0x2<TWO>");
+
+	h_snprintb("\177\20f\0\4FOO\0=\1ONE\0=\2TWO\0*=OTHER\0\0", 3,
+	    "0x3<FOO=0x3=OTHER>");
+	h_snprintb("\177\20f\0\4X\0=\1ONE\0=\2TWO\0*=Other(%d)\0\0", 3,
+	    "0x3<X=0x3=Other(3)>");
+	h_snprintb("\177\20f\0\x8X\0=\1ONE\0=\2TWO\0*=other(%o)\0\0", 0x20,
+	    "0x20<X=0x20=other(40)>");
+	h_snprintb("\177\020F\0\4\0:\1ONE\0:\2TWO\0\0", 3,
+	    "0x3<>");
+
+	h_snprintb("\177\20f\0\4Field_1\0=\1ONE\0=\2TWO\0"
+		   "f\4\4Field_2\0=\1ONE\0=\2TWO\0\0", 0x12,
+	    "0x12<Field_1=0x2=TWO,Field_2=0x1=ONE>");
+
+	h_snprintb("\177\20f\0\4Field_1\0=\1ONE\0=\2TWO\0"
+		   "F\x8\4\0*Field_3=%d\0"
+		   "f\4\4Field_2\0:\1:ONE\0:\2:TWO\0\0", 0xD12,
+	    "0xd12<Field_1=0x2=TWO,Field_3=13,Field_2=0x1:ONE>");
 }
 
 static void
