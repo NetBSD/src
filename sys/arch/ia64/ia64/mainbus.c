@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2016/06/21 11:33:33 nonaka Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 2019/04/29 16:39:58 scole Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2016/06/21 11:33:33 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2019/04/29 16:39:58 scole Exp $");
 
 #include "acpica.h"
 
@@ -95,7 +95,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		    IA64_PHYS_TO_RR7(xsdt->TableOffsetEntry[i]);
 
 		sig = table->Header.Signature;
-		if (strncmp(sig, ACPI_SIG_MADT, ACPI_NAME_SIZE) != 0)
+		if (strncmp(sig, ACPI_SIG_MADT, ACPI_NAMESEG_SIZE) != 0)
 			continue;
 		len = table->Header.Length;
 		if (ACPI_FAILURE(AcpiTbChecksum((void *)table, len)))
