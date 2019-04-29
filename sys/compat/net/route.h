@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.2 2016/09/21 10:50:23 roy Exp $	*/
+/*	$NetBSD: route.h,v 1.3 2019/04/29 11:57:22 roy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -87,7 +87,8 @@ void	compat_50_rt_ifmsg(struct ifnet *);
 void	compat_50_rt_missmsg(int, const struct rt_addrinfo *, int, int);
 struct mbuf *
 	compat_50_rt_msg1(int, struct rt_addrinfo *, void *, int);
-void	compat_50_rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
+void	compat_50_rt_addrmsg_rt(int, struct ifaddr *, int, struct rtentry *);
+void	compat_50_rt_addrmsg(int, struct ifaddr *);
 void	compat_70_rt_newaddrmsg1(int, struct ifaddr *);
 #endif
 
