@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -341,7 +341,7 @@ ApCheckPredefinedReturnValue (
  * DESCRIPTION: Check for a predefined name for a static object (created via
  *              the ASL Name operator). If it is a predefined ACPI name, ensure
  *              that the name does not require any arguments (which would
- *              require a control method implemenation of the name), and that
+ *              require a control method implementation of the name), and that
  *              the type of the object is one of the expected types for the
  *              predefined name.
  *
@@ -470,7 +470,7 @@ ApCheckForPredefinedName (
     ThisName = AcpiGbl_PredefinedMethods;
     for (i = 0; ThisName->Info.Name[0]; i++)
     {
-        if (ACPI_COMPARE_NAME (Name, ThisName->Info.Name))
+        if (ACPI_COMPARE_NAMESEG (Name, ThisName->Info.Name))
         {
             /* Return index into predefined array */
             return (i);
@@ -484,7 +484,7 @@ ApCheckForPredefinedName (
     ThisName = AcpiGbl_ResourceNames;
     while (ThisName->Info.Name[0])
     {
-        if (ACPI_COMPARE_NAME (Name, ThisName->Info.Name))
+        if (ACPI_COMPARE_NAMESEG (Name, ThisName->Info.Name))
         {
             return (ACPI_PREDEFINED_NAME);
         }
@@ -495,7 +495,7 @@ ApCheckForPredefinedName (
     ThisName = AcpiGbl_ScopeNames;
     while (ThisName->Info.Name[0])
     {
-        if (ACPI_COMPARE_NAME (Name, ThisName->Info.Name))
+        if (ACPI_COMPARE_NAMESEG (Name, ThisName->Info.Name))
         {
             return (ACPI_PREDEFINED_NAME);
         }
