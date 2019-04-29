@@ -1,4 +1,4 @@
-/*	$NetBSD: thrd.c,v 1.2 2019/04/24 18:47:54 kamil Exp $	*/
+/*	$NetBSD: thrd.c,v 1.3 2019/04/29 20:11:43 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,30 +30,67 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thrd.c,v 1.2 2019/04/24 18:47:54 kamil Exp $");
+__RCSID("$NetBSD: thrd.c,v 1.3 2019/04/29 20:11:43 kamil Exp $");
 
 #include <assert.h>
 #include <errno.h>
 #include <pthread.h>
 #include <sched.h>
+#include <stdlib.h>
 #include <time.h>
 #include <threads.h>
+
+struct __thrd_tramp_data {
+	thrd_start_t func;
+	void *arg;
+};
+
+static void *
+__thrd_create_tramp(void *arg)
+{
+	struct __thrd_tramp_data *cookie;
+	int ret;
+
+	_DIAGASSERT(arg != NULL);
+
+	cookie = (struct __thrd_tramp_data *)arg;
+
+	ret = (cookie->func)(cookie->arg);
+
+	free(cookie);
+
+	return (void *)(intptr_t)ret;
+}
 
 int
 thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
 {
+	struct __thrd_tramp_data *cookie;
+	int error;
 
 	_DIAGASSERT(thr != NULL);
 	_DIAGASSERT(func != NULL);
 
-	switch(pthread_create(thr, NULL, (void *(*)(void *))func, arg)) {
+	cookie = malloc(sizeof(*cookie));
+	if (cookie == NULL)
+		return thrd_nomem;
+
+	cookie->func = func;
+	cookie->arg = arg;
+
+	switch(pthread_create(thr, NULL, __thrd_create_tramp, cookie)) {
 	case 0:
 		return thrd_success;
-	case EAGAIN:
-		return thrd_nomem;
+	case ENOMEM:
+		error = thrd_nomem;
+		break;
 	default:
-		return thrd_error;
+		error = thrd_error;
 	}
+
+	free(cookie);
+
+	return error;
 }
 
 thrd_t
