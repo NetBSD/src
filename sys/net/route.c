@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.217 2019/03/11 03:00:41 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.218 2019/04/29 11:57:22 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.217 2019/03/11 03:00:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.218 2019/04/29 11:57:22 roy Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1678,7 +1678,7 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 		info.rti_ifa = ifa;
 		nrt = NULL;
 		e = rtrequest1(RTM_ADD, &info, &nrt);
-		rt_newaddrmsg(RTM_ADD, ifa, e, nrt);
+		rt_addrmsg_rt(RTM_ADD, ifa, e, nrt);
 		if (nrt != NULL) {
 			KASSERT(nrt->rt_ifa == ifa);
 #ifdef RT_DEBUG
@@ -1689,7 +1689,7 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 		}
 	} else {
 		e = 0;
-		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, ifa);
 	}
 	if (rt != NULL)
 		rt_unref(rt);
@@ -1731,7 +1731,7 @@ rt_ifa_remlocal(struct ifaddr *ifa, struct ifaddr *alt_ifa)
 				rt_free(rt);
 				rt = NULL;
 			}
-			rt_newaddrmsg(RTM_DELADDR, ifa, 0, NULL);
+			rt_addrmsg(RTM_DELADDR, ifa);
 		} else {
 #ifdef NET_MPSAFE
 			int error = rt_update_prepare(rt);
@@ -1751,7 +1751,7 @@ rt_ifa_remlocal(struct ifaddr *ifa, struct ifaddr *alt_ifa)
 			rt_newmsg(RTM_CHANGE, rt);
 		}
 	} else
-		rt_newaddrmsg(RTM_DELADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_DELADDR, ifa);
 	if (rt != NULL)
 		rt_unref(rt);
 	return e;

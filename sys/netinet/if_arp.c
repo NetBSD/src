@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.279 2019/04/24 10:20:36 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.280 2019/04/29 11:57:22 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.279 2019/04/24 10:20:36 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.280 2019/04/29 11:57:22 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1607,7 +1607,7 @@ arp_dad_start(struct ifaddr *ifa)
 	}
 	if (!ip_dad_enabled()) {
 		ia->ia4_flags &= ~IN_IFF_TENTATIVE;
-		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, ifa);
 		arpannounce1(ifa);
 		return;
 	}
@@ -1745,7 +1745,7 @@ arp_dad_timer(struct dadq *dp)
 		 * No duplicate address found.
 		 */
 		ia->ia4_flags &= ~IN_IFF_TENTATIVE;
-		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, ifa);
 		ARPLOG(LOG_DEBUG,
 		    "%s: DAD complete for %s - no duplicates found\n",
 		    if_name(ifa->ifa_ifp), ARPLOGADDR(&ia->ia_addr.sin_addr));
@@ -1822,7 +1822,7 @@ arp_dad_duplicated(struct ifaddr *ifa, const char *sha)
 	if ((ia->ia4_flags & IN_IFF_DUPLICATED) == 0) {
 		ia->ia4_flags |= IN_IFF_DUPLICATED;
 		/* Inform the routing socket of the duplicate address */
-		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, ifa);
 	}
 }
 

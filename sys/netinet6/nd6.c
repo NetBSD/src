@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.252 2018/12/16 08:54:58 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.253 2019/04/29 11:57:22 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.252 2018/12/16 08:54:58 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.253 2019/04/29 11:57:22 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -653,8 +653,7 @@ nd6_timer_work(struct work *wk, void *arg)
 
 			if ((oldflags & IN6_IFF_DEPRECATED) == 0) {
 				ia6->ia6_flags |= IN6_IFF_DEPRECATED;
-				rt_newaddrmsg(RTM_NEWADDR,
-				    (struct ifaddr *)ia6, 0, NULL);
+				rt_addrmsg(RTM_NEWADDR, (struct ifaddr *)ia6);
 			}
 
 			/*
@@ -689,8 +688,7 @@ nd6_timer_work(struct work *wk, void *arg)
 			 */
 			if (ia6->ia6_flags & IN6_IFF_DEPRECATED) {
 				ia6->ia6_flags &= ~IN6_IFF_DEPRECATED;
-				rt_newaddrmsg(RTM_NEWADDR,
-				    (struct ifaddr *)ia6, 0, NULL);
+				rt_addrmsg(RTM_NEWADDR, (struct ifaddr *)ia6);
 			}
 		}
 		s = pserialize_read_enter();

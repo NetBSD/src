@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.6 2019/04/29 05:42:09 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.7 2019/04/29 11:57:22 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.6 2019/04/29 05:42:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.7 2019/04/29 11:57:22 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1365,7 +1365,7 @@ COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
  * copies of it.
  */
 void
-COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
+COMPATNAME(rt_addrmsg_rt)(int cmd, struct ifaddr *ifa, int error,
     struct rtentry *rt)
 {
 #define	cmdpass(__cmd, __pass)	(((__cmd) << 2) | (__pass))
@@ -1387,7 +1387,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 		(*vec_sctp_delete_ip_address)(ifa);
 	}
 
-	COMPATCALL(rt_newaddrmsg, (cmd, ifa, error, rt));
+	COMPATCALL(rt_addrmsg_rt, (cmd, ifa, error, rt));
 	if (COMPATNAME(route_info).ri_cb.any_count == 0)
 		return;
 	for (pass = 1; pass < 3; pass++) {
@@ -1467,6 +1467,13 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 		COMPATNAME(route_enqueue)(m, sa ? sa->sa_family : 0);
 	}
 #undef cmdpass
+}
+
+void
+COMPATNAME(rt_addrmsg)(int cmd, struct ifaddr *ifa)
+{
+
+	COMPATNAME(rt_addrmsg_rt)(cmd, ifa, 0, NULL);
 }
 
 static struct mbuf *
