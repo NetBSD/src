@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.248 2019/03/01 11:06:57 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.249 2019/04/29 05:42:09 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.248 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.249 2019/04/29 05:42:09 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -101,7 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.248 2019/03/01 11:06:57 pgoyette Exp $"
 #endif
 
 static int if_addrflags(struct ifaddr *);
-static void sysctl_net_route_setup(struct sysctllog **);
 
 #include <net/rtsock_shared.c>
 
@@ -498,24 +497,24 @@ again:
 	return error;
 }
 
-static void
-sysctl_net_route_setup(struct sysctllog **clog)
+void
+sysctl_net_route_setup(struct sysctllog **clog, int pf, const char *name)
 {
 	const struct sysctlnode *rnode = NULL;
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, DOMAINNAME,
+		       CTLTYPE_NODE, name,
 		       SYSCTL_DESCR("PF_ROUTE information"),
 		       NULL, 0, NULL, 0,
-		       CTL_NET, PF_XROUTE, CTL_EOL);
+		       CTL_NET, pf, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "rtable",
 		       SYSCTL_DESCR("Routing table information"),
 		       sysctl_rtable, 0, NULL, 0,
-		       CTL_NET, PF_XROUTE, 0 /* any protocol */, CTL_EOL);
+		       CTL_NET, pf, 0 /* any protocol */, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, NULL,
 		       CTLFLAG_PERMANENT,
