@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.120 2018/10/30 05:54:42 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.121 2019/04/29 05:42:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -543,6 +543,8 @@ struct rtentry *
 	rtbl_search_matched_entry(sa_family_t,
 	    int (*)(struct rtentry *, void *), void *);
 void	rtbl_init(void);
+
+void sysctl_net_route_setup(struct sysctllog **, int, const char *);
 
 #endif /* _KERNEL */
 

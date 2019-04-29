@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.5 2019/04/10 04:06:52 thorpej Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.6 2019/04/29 05:42:09 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.5 2019/04/10 04:06:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.6 2019/04/29 05:42:09 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1618,7 +1618,7 @@ COMPATNAME(route_init)(void)
 #endif
 
 #ifndef COMPAT_RTSOCK
-	sysctl_net_route_setup(NULL);
+	sysctl_net_route_setup(NULL, PF_ROUTE, "rtable");
 #endif
 	ri->ri_intrq.ifq_maxlen = ri->ri_maxqlen;
 	ri->ri_sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
