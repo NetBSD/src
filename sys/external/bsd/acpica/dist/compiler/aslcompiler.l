@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -584,7 +584,7 @@ NamePathTail                [.]{NameSeg}
 "IPMI"                      { count (0); return (PARSEOP_REGIONSPACE_IPMI); }
 "GeneralPurposeIo"          { count (0); return (PARSEOP_REGIONSPACE_GPIO); }       /* ACPI 5.0 */
 "GenericSerialBus"          { count (0); return (PARSEOP_REGIONSPACE_GSBUS); }      /* ACPI 5.0 */
-"PCC"                       { count (0); return (PARSEOP_REGIONSPACE_PCC); }        /* ACPI 5.0 */
+"PlatformCommChannel"       { count (0); return (PARSEOP_REGIONSPACE_PCC); }        /* ACPI 5.0 */
 "FFixedHW"                  { count (0); return (PARSEOP_REGIONSPACE_FFIXEDHW); }
 
     /* ResourceTypeKeyword: Resource Usage - Resource Descriptors */
@@ -705,9 +705,16 @@ NamePathTail                [.]{NameSeg}
 
 {NameSeg}                   { char *s;
                                 count (0);
-                                s=UtLocalCacheCalloc (ACPI_NAME_SIZE + 1);
+                                s=UtLocalCacheCalloc (ACPI_NAMESEG_SIZE + 1);
                                 if (strcmp (AslCompilertext, "\\"))
                                 {
+                                    /*
+                                     * According to the ACPI specification,
+                                     * NameSegments must have length of 4. If
+                                     * the NameSegment has length less than 4,
+                                     * they are padded with underscores to meet
+                                     * the required length.
+                                     */
                                     strcpy (s, "____");
                                     AcpiUtStrupr (AslCompilertext);
                                 }
