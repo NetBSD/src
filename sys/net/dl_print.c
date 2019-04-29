@@ -1,4 +1,4 @@
-/*	$NetBSD: dl_print.c,v 1.3 2016/04/06 18:04:58 christos Exp $	*/
+/*	$NetBSD: dl_print.c,v 1.4 2019/04/29 16:05:46 roy Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,50 +29,46 @@
 #include <sys/types.h>
 
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: dl_print.c,v 1.3 2016/04/06 18:04:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl_print.c,v 1.4 2019/04/29 16:05:46 roy Exp $");
 #include <sys/systm.h>
 #else
-__RCSID("$NetBSD: dl_print.c,v 1.3 2016/04/06 18:04:58 christos Exp $");
+__RCSID("$NetBSD: dl_print.c,v 1.4 2019/04/29 16:05:46 roy Exp $");
 #include <stdio.h>
 static const uint8_t hexdigits[] = "0123456789abcdef";
 #endif
 #include <net/if_dl.h>
 
+char *
+lla_snprintf(char *dst, size_t dst_len, const void *src, size_t src_len)
+{
+	char *dp;
+	const uint8_t *sp, *ep;
+
+	if (src_len == 0 || dst_len < 3)
+		return NULL;
+
+	dp = dst;
+	sp = (const uint8_t *)src;
+	ep = sp + src_len;
+	while (sp < ep) {
+		if (dst_len < 3)
+			break;
+		dst_len -= 3;
+		*dp++ = hexdigits[(*sp) >> 4];
+		*dp++ = hexdigits[(*sp++) & 0xf];
+		*dp++ = ':';
+	}
+	*--dp = 0;
+
+	return dst;
+}
+
 int
 dl_print(char *buf, size_t len, const struct dl_addr *dl)
 {
-	const uint8_t *ap = (const uint8_t *)dl->dl_data;
-	char abuf[256 * 3], *cp, *ecp;
+	char abuf[256 * 3];
 
-	ap += dl->dl_nlen;
-	cp = abuf;
-	ecp = abuf + sizeof(abuf);
-
-#define ADDC(c) do { \
-		if (cp >= ecp) {\
-			cp++; \
-		} else \
-			*cp++ = (char)(c); \
-	} while (/*CONSTCOND*/0)
-
-#define ADDX(v) do { \
-		uint8_t n = hexdigits[(v)]; \
-		ADDC(n); \
-	} while (/*CONSTCOND*/0)
-
-	for (size_t i = 0; i < dl->dl_alen; i++) {
-		ADDX((u_int)ap[i] >> 4);
-		ADDX(ap[i] & 0xf);
-		ADDC(':');
-	}
-	if (cp > abuf)
-		--cp;
-	if (ecp > abuf) {
-		if (cp < ecp)
-			*cp = '\0';
-		else
-			*--ecp = '\0';
-	}
+	lla_snprintf(abuf, sizeof(abuf), dl->dl_data, dl->dl_alen);
 	return snprintf(buf, len, "%.*s/%hhu#%s",
 	    (int)dl->dl_nlen, dl->dl_data, dl->dl_type, abuf);
 }

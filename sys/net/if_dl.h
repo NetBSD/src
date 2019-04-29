@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.26 2014/12/03 01:31:37 christos Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.27 2019/04/29 16:05:46 roy Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -119,7 +119,9 @@ __END_DECLS
 #if defined(_KERNEL) || defined(_TEST)
 // 255 xx: + 255 'a' + / + # + 3 digits + NUL
 #define LINK_ADDRSTRLEN	((255 * 4) + 5)
+#define	LLA_ADDRSTRLEN	(16 * 3)
 
+char	*lla_snprintf(char *, size_t, const void *, size_t);
 int	dl_print(char *, size_t, const struct dl_addr *);
 #define DL_PRINT(b, a) (dl_print((b), sizeof(b), (a)), (b))
 int	sdl_print(char *, size_t, const void *);

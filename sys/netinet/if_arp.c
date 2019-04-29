@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.280 2019/04/29 11:57:22 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.281 2019/04/29 16:05:46 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.280 2019/04/29 11:57:22 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.281 2019/04/29 16:05:46 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -213,36 +213,6 @@ static int log_movements = 1;
 static int log_permanent_modify = 1;
 static int log_wrong_iface = 1;
 static int log_unknown_network = 1;
-
-/*
- * this should be elsewhere.
- */
-
-#define	LLA_ADDRSTRLEN	(16 * 3)
-
-static char *
-lla_snprintf(char *, const u_int8_t *, int);
-
-static char *
-lla_snprintf(char *dst, const u_int8_t *adrp, int len)
-{
-	int i;
-	char *p;
-
-	p = dst;
-
-	*p++ = hexdigits[(*adrp) >> 4];
-	*p++ = hexdigits[(*adrp++) & 0xf];
-
-	for (i = 1; i < len && i < 16; i++) {
-		*p++ = ':';
-		*p++ = hexdigits[(*adrp) >> 4];
-		*p++ = hexdigits[(*adrp++) & 0xf];
-	}
-
-	*p = 0;
-	return dst;
-}
 
 DOMAIN_DEFINE(arpdomain);	/* forward declare and add to link set */
 
@@ -1035,7 +1005,7 @@ in_arpinput(struct mbuf *m)
 	uint64_t *arps;
 	struct psref psref, psref_ia;
 	int s;
-	char llabuf[LLA_ADDRSTRLEN];
+	char llabuf[LLA_ADDRSTRLEN], *llastr;
 	char ipbuf[INET_ADDRSTRLEN];
 	bool do_dad;
 
@@ -1179,8 +1149,9 @@ in_arpinput(struct mbuf *m)
 	    (in_nullhost(isaddr) && in_hosteq(itaddr, myaddr) &&
 	     m->m_flags & M_BCAST)))
 	{
-		arp_dad_duplicated((struct ifaddr *)ia,
-		    lla_snprintf(llabuf, ar_sha(ah), ah->ar_hln));
+		llastr = lla_snprintf(llabuf, sizeof(llabuf),
+		    ar_sha(ah), ah->ar_hln);
+		arp_dad_duplicated((struct ifaddr *)ia, llastr);
 		goto out;
 	}
 
@@ -1203,16 +1174,18 @@ in_arpinput(struct mbuf *m)
 		goto reply;
 
 	if ((la->la_flags & LLE_VALID) &&
-	    memcmp(ar_sha(ah), &la->ll_addr, ifp->if_addrlen)) {
+	    memcmp(ar_sha(ah), &la->ll_addr, ifp->if_addrlen))
+	{
+		llastr = lla_snprintf(llabuf, sizeof(llabuf),
+		    ar_sha(ah), ah->ar_hln);
+
 		if (la->la_flags & LLE_STATIC) {
 			ARP_STATINC(ARP_STAT_RCVOVERPERM);
 			if (!log_permanent_modify)
 				goto out;
 			log(LOG_INFO,
 			    "%s tried to overwrite permanent arp info"
-			    " for %s\n",
-			    lla_snprintf(llabuf, ar_sha(ah), ah->ar_hln),
-			    IN_PRINT(ipbuf, &isaddr));
+			    " for %s\n", llastr, IN_PRINT(ipbuf, &isaddr));
 			goto out;
 		} else if (la->lle_tbl->llt_ifp != ifp) {
 			/* XXX should not happen? */
@@ -1222,7 +1195,7 @@ in_arpinput(struct mbuf *m)
 			log(LOG_INFO,
 			    "%s on %s tried to overwrite "
 			    "arp info for %s on %s\n",
-			    lla_snprintf(llabuf, ar_sha(ah), ah->ar_hln),
+			    llastr,
 			    ifp->if_xname, IN_PRINT(ipbuf, &isaddr),
 			    la->lle_tbl->llt_ifp->if_xname);
 				goto out;
@@ -1231,9 +1204,7 @@ in_arpinput(struct mbuf *m)
 			if (log_movements)
 				log(LOG_INFO, "arp info overwritten "
 				    "for %s by %s\n",
-				    IN_PRINT(ipbuf, &isaddr),
-				    lla_snprintf(llabuf, ar_sha(ah),
-				    ah->ar_hln));
+				    IN_PRINT(ipbuf, &isaddr), llastr);
 		}
 	}
 
