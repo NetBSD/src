@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.9 2019/04/15 02:07:11 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.10 2019/04/29 11:57:22 roy Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -203,7 +203,8 @@ struct rtsock_oifmsg_50_hook_t rtsock_oifmsg_50_hook;
 struct rtsock_rt_missmsg_50_hook_t rtsock_rt_missmsg_50_hook;
 struct rtsock_rt_ifmsg_50_hook_t rtsock_rt_ifmsg_50_hook;
 struct rtsock_rt_ifannouncemsg_50_hook_t rtsock_rt_ifannouncemsg_50_hook;
-struct rtsock_rt_newaddrmsg_50_hook_t rtsock_rt_newaddrmsg_50_hook;
+struct rtsock_rt_addrmsg_rt_50_hook_t rtsock_rt_addrmsg_rt_50_hook;
+struct rtsock_rt_addrmsg_50_hook_t rtsock_rt_addrmsg_50_hook;
 struct rtsock_rt_ieee80211msg_50_hook_t rtsock_rt_ieee80211msg_50_hook;
 
 /*
