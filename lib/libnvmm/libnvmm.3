@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.15 2019/04/29 18:54:25 maxv Exp $
+.\"	$NetBSD: libnvmm.3,v 1.16 2019/04/29 19:03:17 maxv Exp $
 .\"
 .\" Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 7, 2019
+.Dd April 29, 2019
 .Dt LIBNVMM 3
 .Os
 .Sh NAME
@@ -284,12 +284,9 @@ struct nvmm_capability {
 	uint64_t max_machines;
 	uint64_t max_vcpus;
 	uint64_t max_ram;
-	union {
-		struct {
-			...
-		} x86;
-		uint64_t rsvd[8];
-	} u;
+	struct {
+		...
+	} arch;
 };
 .Ed
 .Pp
@@ -384,26 +381,20 @@ The
 .Cd nvmm_exit
 structure is used to handle VM exits:
 .Bd -literal
-enum nvmm_exit_reason {
-	NVMM_EXIT_NONE		= 0x0000000000000000,
-
-	/* General. */
-	NVMM_EXIT_MEMORY	= 0x0000000000000001,
-	NVMM_EXIT_IO		= 0x0000000000000002,
-	NVMM_EXIT_MSR		= 0x0000000000000003,
-	NVMM_EXIT_INT_READY	= 0x0000000000000004,
-	NVMM_EXIT_NMI_READY	= 0x0000000000000005,
-	NVMM_EXIT_HALTED	= 0x0000000000000006,
-	NVMM_EXIT_SHUTDOWN	= 0x0000000000000007,
-
-	/* Instructions (x86). */
+/* Exit Reasons */
+#define NVMM_EXIT_NONE		0x0000000000000000ULL
+#define NVMM_EXIT_MEMORY	0x0000000000000001ULL
+#define NVMM_EXIT_IO		0x0000000000000002ULL
+#define NVMM_EXIT_MSR		0x0000000000000003ULL
+#define NVMM_EXIT_INT_READY	0x0000000000000004ULL
+#define NVMM_EXIT_NMI_READY	0x0000000000000005ULL
+#define NVMM_EXIT_HALTED	0x0000000000000006ULL
+#define NVMM_EXIT_SHUTDOWN	0x0000000000000007ULL
 	...
-
-	NVMM_EXIT_INVALID	= 0xFFFFFFFFFFFFFFFF
-};
+#define NVMM_EXIT_INVALID	0xFFFFFFFFFFFFFFFFULL
 
 struct nvmm_exit {
-	enum nvmm_exit_reason reason;
+	uint64_t reason;
 	union {
 		...
 	} u;
