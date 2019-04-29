@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.233 2018/11/29 09:54:22 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.234 2019/04/29 11:57:22 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.233 2018/11/29 09:54:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.234 2019/04/29 11:57:22 roy Exp $");
 
 #include "arp.h"
 
@@ -775,7 +775,7 @@ in_ifaddlocal(struct ifaddr *ifa)
 	    (ia->ia_ifp->if_flags & IFF_POINTOPOINT &&
 	    in_hosteq(ia->ia_dstaddr.sin_addr, ia->ia_addr.sin_addr)))
 	{
-		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, ifa);
 		return;
 	}
 
@@ -1474,7 +1474,7 @@ in_if_link_up(struct ifnet *ifp)
 			    ia->ia_dad_start != NULL)
 				ia->ia4_flags |= IN_IFF_TENTATIVE;
 			else if ((ia->ia4_flags & IN_IFF_TENTATIVE) == 0)
-				rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+				rt_addrmsg(RTM_NEWADDR, ifa);
 		}
 
 		if (ia->ia4_flags & IN_IFF_TENTATIVE) {
@@ -1531,7 +1531,7 @@ in_if_link_down(struct ifnet *ifp)
 			ia->ia4_flags |= IN_IFF_DETACHED;
 			ia->ia4_flags &=
 			    ~(IN_IFF_TENTATIVE | IN_IFF_DUPLICATED);
-			rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+			rt_addrmsg(RTM_NEWADDR, ifa);
 		}
 
 		s = pserialize_read_enter();

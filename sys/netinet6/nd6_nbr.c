@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.164 2018/12/22 14:28:57 maxv Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.165 2019/04/29 11:57:22 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.164 2018/12/22 14:28:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.165 2019/04/29 11:57:22 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1239,7 +1239,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	}
 	if (ia->ia6_flags & IN6_IFF_ANYCAST || !ip6_dad_enabled()) {
 		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
-		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, ifa);
 		return;
 	}
 	KASSERT(ifa->ifa_ifp != NULL);
@@ -1377,7 +1377,7 @@ nd6_dad_timer(struct dadq *dp)
 		 * No duplicate address found.
 		 */
 		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
-		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		rt_addrmsg(RTM_NEWADDR, ifa);
 
 		nd6log(LOG_DEBUG,
 		    "%s: DAD complete for %s - no duplicates found\n",
@@ -1427,7 +1427,7 @@ nd6_dad_duplicated(struct ifaddr *ifa, struct dadq *dp)
 	    if_name(ifp));
 
 	/* Inform the routing socket that DAD has completed */
-	rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+	rt_addrmsg(RTM_NEWADDR, ifa);
 
 	/*
 	 * If the address is a link-local address formed from an interface
