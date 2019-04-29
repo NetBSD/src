@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -366,10 +366,12 @@ AePrintErrorSourceLine (
          * Use the merged header/source file if present, otherwise
          * use input file
          */
-        SourceFile = AslGbl_Files[ASL_FILE_SOURCE_OUTPUT].Handle;
+        SourceFile = FlGetFileHandle (ASL_FILE_SOURCE_OUTPUT,
+            ASL_FILE_SOURCE_OUTPUT, Enode->SourceFilename);
         if (!SourceFile)
         {
-            SourceFile = AslGbl_Files[ASL_FILE_INPUT].Handle;
+            SourceFile = FlGetFileHandle (ASL_FILE_INPUT,
+                ASL_FILE_INPUT, Enode->Filename);
         }
 
         if (SourceFile)
@@ -710,6 +712,7 @@ static void AslInitEnode (
     ASL_ERROR_MSG           *SubError)
 {
     ASL_ERROR_MSG           *Enode;
+    ASL_GLOBAL_FILE_NODE    *FileNode;
 
 
     *InputEnode = UtLocalCalloc (sizeof (ASL_ERROR_MSG));
@@ -751,6 +754,23 @@ static void AslInitEnode (
         {
             Enode->FilenameLength = 6;
         }
+
+        FileNode = FlGetCurrentFileNode ();
+        if (!FileNode)
+        {
+            return;
+        }
+
+	if (!FlInputFileExists (Filename))
+	{
+            /*
+             * This means that this file is an include file. Record the .src
+             * file as the error message source because this file is not in
+             * the global file list.
+             */
+            Enode->SourceFilename =
+                FileNode->Files[ASL_FILE_SOURCE_OUTPUT].Filename;
+	}
     }
 }
 
@@ -884,7 +904,7 @@ AslLogNewError (
     }
 
     AslGbl_ExceptionCount[ModifiedLevel]++;
-    if (AslGbl_ExceptionCount[ASL_ERROR] > ASL_MAX_ERROR_COUNT)
+    if (!AslGbl_IgnoreErrors && AslGbl_ExceptionCount[ASL_ERROR] > ASL_MAX_ERROR_COUNT)
     {
         printf ("\nMaximum error count (%u) exceeded\n", ASL_MAX_ERROR_COUNT);
 
@@ -1131,7 +1151,7 @@ AslElevateException (
         return (AE_LIMIT);
     }
 
-    AslGbl_ElevatedMessages[AslGbl_ExpectedMessagesIndex] = MessageId;
+    AslGbl_ElevatedMessages[AslGbl_ElevatedMessagesIndex] = MessageId;
     AslGbl_ElevatedMessagesIndex++;
     return (AE_OK);
 }

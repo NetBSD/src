@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -967,7 +967,7 @@ AcpiDmIsValidTarget (
  *
  * DESCRIPTION: Determine if the Target duplicates the operand, in order to
  *              detect if the expression can be converted to a compound
- *              assigment. (+=, *=, etc.)
+ *              assignment. (+=, *=, etc.)
  *
  ******************************************************************************/
 
@@ -1023,7 +1023,7 @@ AcpiDmIsTargetAnOperand (
         }
     }
 
-    /* Supress the duplicate operand at the top-level */
+    /* Suppress the duplicate operand at the top-level */
 
     if (TopLevel)
     {

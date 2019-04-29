@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,7 @@ FlFileError (
 {
 
     snprintf (AslGbl_MsgBuffer, sizeof(AslGbl_MsgBuffer), "\"%s\" (%s) - %s", AslGbl_Files[FileId].Filename,
-        AslGbl_Files[FileId].Description, strerror (errno));
+        AslGbl_FileDescs[FileId].Description, strerror (errno));
 
     AslCommonError (ASL_ERROR, ErrorId, 0, 0, 0, 0, NULL, AslGbl_MsgBuffer);
 }
@@ -392,7 +392,7 @@ FlDeleteFile (
     if (remove (Info->Filename))
     {
         printf ("%s (%s file) ",
-            Info->Filename, Info->Description);
+            Info->Filename, AslGbl_FileDescs[FileId].Description);
         perror ("Could not delete");
     }
 
