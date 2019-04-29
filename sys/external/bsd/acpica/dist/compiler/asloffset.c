@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2018, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -150,7 +150,7 @@ LsAmlOffsetWalk (
         /* Get offset of last nameseg and the actual data */
 
         NamepathOffset = AslGbl_CurrentAmlOffset + Length +
-            (Op->Asl.FinalAmlLength - ACPI_NAME_SIZE);
+            (Op->Asl.FinalAmlLength - ACPI_NAMESEG_SIZE);
 
         DataOffset = AslGbl_CurrentAmlOffset + Length +
             Op->Asl.FinalAmlLength;
@@ -215,7 +215,7 @@ LsAmlOffsetWalk (
         /* Get offset of last nameseg and the actual data */
 
         NamepathOffset = AslGbl_CurrentAmlOffset + Length +
-            (NextOp->Asl.FinalAmlLength - ACPI_NAME_SIZE);
+            (NextOp->Asl.FinalAmlLength - ACPI_NAMESEG_SIZE);
 
         DataOffset = AslGbl_CurrentAmlOffset + Length +
             (NextOp->Asl.FinalAmlLength + 1);
@@ -262,7 +262,7 @@ LsAmlOffsetWalk (
         /* Get offset of last nameseg and the actual data (flags byte) */
 
         NamepathOffset = AslGbl_CurrentAmlOffset + Length +
-            (NextOp->Asl.FinalAmlLength - ACPI_NAME_SIZE);
+            (NextOp->Asl.FinalAmlLength - ACPI_NAMESEG_SIZE);
 
         DataOffset = AslGbl_CurrentAmlOffset + Length +
             NextOp->Asl.FinalAmlLength;
@@ -286,7 +286,7 @@ LsAmlOffsetWalk (
         /* Get offset of last nameseg and the actual data (PBlock address) */
 
         NamepathOffset = AslGbl_CurrentAmlOffset + Length +
-            (NextOp->Asl.FinalAmlLength - ACPI_NAME_SIZE);
+            (NextOp->Asl.FinalAmlLength - ACPI_NAMESEG_SIZE);
 
         DataOffset = AslGbl_CurrentAmlOffset + Length +
             (NextOp->Asl.FinalAmlLength + 1);
@@ -311,7 +311,7 @@ LsAmlOffsetWalk (
         /* Get offset of last nameseg */
 
         NamepathOffset = AslGbl_CurrentAmlOffset + Length +
-            (NextOp->Asl.FinalAmlLength - ACPI_NAME_SIZE);
+            (NextOp->Asl.FinalAmlLength - ACPI_NAMESEG_SIZE);
 
         LsEmitOffsetTableEntry (FileId, Node, NamepathOffset, 0,
             Op->Asl.ParseOpName, 0, (UINT8) 0, Op->Asl.AmlOpcode);
