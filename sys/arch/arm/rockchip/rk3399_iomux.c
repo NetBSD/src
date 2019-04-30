@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_iomux.c,v 1.3 2019/04/30 22:24:27 jmcneill Exp $ */
+/* $NetBSD: rk3399_iomux.c,v 1.4 2019/04/30 22:42:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 //#define RK3399_IOMUX_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.3 2019/04/30 22:24:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.4 2019/04/30 22:42:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -367,7 +367,7 @@ rk3399_iomux_set_mux(struct rk3399_iomux_softc *sc, u_int bank, u_int idx, u_int
 	} else {
 		reg = 0x0e000 + (0x10 * (bank - 2));
 	}
-	reg += 0x4 * (idx / 4);
+	reg += 0x4 * (idx / 8);
 	mask = 3 << ((idx & 7) * 2);
 
 #ifdef RK3399_IOMUX_DEBUG
