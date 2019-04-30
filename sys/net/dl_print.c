@@ -1,4 +1,4 @@
-/*	$NetBSD: dl_print.c,v 1.5 2019/04/29 19:08:11 christos Exp $	*/
+/*	$NetBSD: dl_print.c,v 1.6 2019/04/30 20:56:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,10 +29,10 @@
 #include <sys/types.h>
 
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: dl_print.c,v 1.5 2019/04/29 19:08:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl_print.c,v 1.6 2019/04/30 20:56:32 kre Exp $");
 #include <sys/systm.h>
 #else
-__RCSID("$NetBSD: dl_print.c,v 1.5 2019/04/29 19:08:11 christos Exp $");
+__RCSID("$NetBSD: dl_print.c,v 1.6 2019/04/30 20:56:32 kre Exp $");
 #include <stdio.h>
 static const char hexdigits[] = "0123456789abcdef";
 #endif
@@ -44,8 +44,11 @@ lla_snprintf(char *dst, size_t dst_len, const void *src, size_t src_len)
 	char *dp;
 	const uint8_t *sp, *ep;
 
-	if (src_len == 0 || dst_len < 3)
+	if (src_len == 0 || dst_len < 3) {
+		if (dst_len != 0)
+			dst[0] = '\0';
 		return NULL;
+	}
 
 	dp = dst;
 	sp = (const uint8_t *)src;
@@ -68,7 +71,7 @@ dl_print(char *buf, size_t len, const struct dl_addr *dl)
 {
 	char abuf[256 * 3];
 
-	lla_snprintf(abuf, sizeof(abuf), dl->dl_data, dl->dl_alen);
+	lla_snprintf(abuf, sizeof(abuf), dl->dl_data+dl->dl_nlen, dl->dl_alen);
 	return snprintf(buf, len, "%.*s/%hhu#%s",
 	    (int)dl->dl_nlen, dl->dl_data, dl->dl_type, abuf);
 }
