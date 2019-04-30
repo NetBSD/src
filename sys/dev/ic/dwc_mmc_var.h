@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_var.h,v 1.7 2018/06/19 22:44:33 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_var.h,v 1.8 2019/04/30 23:19:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -49,7 +49,6 @@ struct dwc_mmc_softc {
 	kcondvar_t sc_idst_cv;
 
 	int sc_mmc_width;
-	int sc_mmc_present;
 	int sc_mmc_port;
 
 	device_t sc_sdmmc_dev;
