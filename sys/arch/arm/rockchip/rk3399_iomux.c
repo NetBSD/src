@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_iomux.c,v 1.2 2019/01/23 04:21:54 thorpej Exp $ */
+/* $NetBSD: rk3399_iomux.c,v 1.3 2019/04/30 22:24:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 //#define RK3399_IOMUX_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.2 2019/01/23 04:21:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.3 2019/04/30 22:24:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,15 +47,15 @@ __KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.2 2019/01/23 04:21:54 thorpej Exp
 /* PU/PD control */
 #define	 GRF_GPIO_P_CTL(_idx)		(0x3 << (((_idx) & 7) * 2))
 #define	 GRF_GPIO_P_WRITE_EN(_idx)	(0x3 << (((_idx) & 7) * 2 + 16))
-/* Different bias value mapping for GRF and PMU registers */
-#define	  GRF_GPIO_P_CTL_Z		0
-#define	  GRF_GPIO_P_CTL_PULLDOWN	1
-#define	  GRF_GPIO_P_CTL_Z_ALT		2
-#define	  GRF_GPIO_P_CTL_PULLUP		3
-#define	  PMU_GPIO_P_CTL_Z		0
-#define	  PMU_GPIO_P_CTL_PULLUP		1
-#define	  PMU_GPIO_P_CTL_PULLDOWN	2
-#define	  PMU_GPIO_P_CTL_RESERVED	3
+/* Different bias value mapping based on pull type of pin */
+#define	  IO_DEF_GPIO_P_CTL_Z		0
+#define	  IO_DEF_GPIO_P_CTL_PULLUP	1
+#define	  IO_DEF_GPIO_P_CTL_PULLDOWN	2
+#define	  IO_DEF_GPIO_P_CTL_RESERVED	3
+#define	  IO_1V8_GPIO_P_CTL_Z		0
+#define	  IO_1V8_GPIO_P_CTL_PULLDOWN	1
+#define	  IO_1V8_GPIO_P_CTL_Z_ALT	2
+#define	  IO_1V8_GPIO_P_CTL_PULLUP	3
 
 /* Drive strength control */
 /* Different drive strength value mapping for GRF and PMU registers */
@@ -84,8 +84,14 @@ static int rk3399_drv_strength[5][9] = {
 	[RK3399_DRV_TYPE_IO_3V3] =		{ 4, 7, 10, 13, 16, 19, 22, 26, -1 },
 };
 
+enum rk3399_pull_type {
+	RK3399_PULL_TYPE_IO_DEFAULT,
+	RK3399_PULL_TYPE_IO_1V8_ONLY,
+};
+
 struct rk3399_iomux {
 	enum rk3399_drv_type	drv_type;
+	enum rk3399_pull_type	pull_type;
 };
 
 struct rk3399_iomux_bank {
@@ -99,46 +105,66 @@ static const struct rk3399_iomux_bank rk3399_iomux_banks[] = {
 	[0] = {
 		.regs = RK_IOMUX_REGS_PMU,
 		.iomux = {
-			[0] = { .drv_type = RK3399_DRV_TYPE_IO_1V8 },
-			[1] = { .drv_type = RK3399_DRV_TYPE_IO_1V8 },
-			[2] = { .drv_type = RK3399_DRV_TYPE_IO_DEFAULT },
-			[3] = { .drv_type = RK3399_DRV_TYPE_IO_DEFAULT },
+			[0] = { .drv_type = RK3399_DRV_TYPE_IO_1V8,
+				.pull_type = RK3399_PULL_TYPE_IO_1V8_ONLY },
+			[1] = { .drv_type = RK3399_DRV_TYPE_IO_1V8,
+				.pull_type = RK3399_PULL_TYPE_IO_1V8_ONLY },
+			[2] = { .drv_type = RK3399_DRV_TYPE_IO_DEFAULT,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
+			[3] = { .drv_type = RK3399_DRV_TYPE_IO_DEFAULT,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
 		},
 	},
 	[1] = {
 		.regs = RK_IOMUX_REGS_PMU,
 		.iomux = {
-			[0] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0 },
-			[1] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0 },
-			[2] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0 },
-			[3] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0 },
+			[0] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
+			[1] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
+			[2] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
+			[3] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
 		}
 	},
 	[2] = {
 		.regs = RK_IOMUX_REGS_GRF,
 		.iomux = {
-			[0] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0 },
-			[1] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0 },
-			[2] = { .drv_type = RK3399_DRV_TYPE_IO_1V8 },
-			[3] = { .drv_type = RK3399_DRV_TYPE_IO_1V8 },
+			[0] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
+			[1] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
+			[2] = { .drv_type = RK3399_DRV_TYPE_IO_1V8,
+				.pull_type = RK3399_PULL_TYPE_IO_1V8_ONLY },
+			[3] = { .drv_type = RK3399_DRV_TYPE_IO_1V8,
+				.pull_type = RK3399_PULL_TYPE_IO_1V8_ONLY },
 		},
 	},
 	[3] = {
 		.regs = RK_IOMUX_REGS_GRF,
 		.iomux = {
-			[0] = { .drv_type = RK3399_DRV_TYPE_IO_3V3 },
-			[1] = { .drv_type = RK3399_DRV_TYPE_IO_3V3 },
-			[2] = { .drv_type = RK3399_DRV_TYPE_IO_3V3 },
-			[3] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0 },
+			[0] = { .drv_type = RK3399_DRV_TYPE_IO_3V3,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
+			[1] = { .drv_type = RK3399_DRV_TYPE_IO_3V3,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
+			[2] = { .drv_type = RK3399_DRV_TYPE_IO_3V3,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
+			[3] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
 		},
 	},
 	[4] = {
 		.regs = RK_IOMUX_REGS_GRF,
 		.iomux = {
-			[0] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0 },
-			[1] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0_AUTO },
-			[2] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0 },
-			[3] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0 },
+			[0] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
+			[1] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0_AUTO,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
+			[2] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
+			[3] = { .drv_type = RK3399_DRV_TYPE_IO_1V8_3V0,
+				.pull_type = RK3399_PULL_TYPE_IO_DEFAULT },
 		},
 	},
 };
@@ -199,12 +225,20 @@ rk3399_iomux_set_bias(struct rk3399_iomux_softc *sc, u_int bank, u_int idx, int 
 	}
 	reg += 0x4 * (idx / 8);
 
+	const int pull_type = banks[bank].iomux[idx / 8].pull_type;
+
 	if (flags == GPIO_PIN_PULLUP) {
-		bias = RK3399_IOMUX_BANK_IS_PMU(bank) ? PMU_GPIO_P_CTL_PULLUP : GRF_GPIO_P_CTL_PULLUP;
+		bias = pull_type == RK3399_PULL_TYPE_IO_DEFAULT ?
+		    IO_DEF_GPIO_P_CTL_PULLUP :
+		    IO_1V8_GPIO_P_CTL_PULLUP;
 	} else if (flags == GPIO_PIN_PULLDOWN) {
-		bias = RK3399_IOMUX_BANK_IS_PMU(bank) ? PMU_GPIO_P_CTL_PULLDOWN : GRF_GPIO_P_CTL_PULLDOWN;
+		bias = pull_type == RK3399_PULL_TYPE_IO_DEFAULT ?
+		    IO_DEF_GPIO_P_CTL_PULLDOWN :
+		    IO_1V8_GPIO_P_CTL_PULLDOWN;
 	} else {
-		bias = RK3399_IOMUX_BANK_IS_PMU(bank) ? PMU_GPIO_P_CTL_Z : GRF_GPIO_P_CTL_Z;
+		bias = pull_type == RK3399_PULL_TYPE_IO_DEFAULT ?
+		    IO_DEF_GPIO_P_CTL_Z :
+		    IO_1V8_GPIO_P_CTL_Z;
 	}
 
 	const uint32_t bias_val = __SHIFTIN(bias, GRF_GPIO_P_CTL(idx));
