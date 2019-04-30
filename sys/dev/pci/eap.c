@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.99.2.2 2019/04/21 07:55:25 isaki Exp $	*/
+/*	$NetBSD: eap.c,v 1.99.2.3 2019/04/30 06:05:02 isaki Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -50,8 +50,13 @@
  * ftp://download.intel.com/ial/scalableplatforms/audio/ac97r21.pdf
  */
 
+/*
+ * TODO:
+ * - Remove DAC1 and secondary audio device support.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.99.2.2 2019/04/21 07:55:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.99.2.3 2019/04/30 06:05:02 isaki Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -69,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.99.2.2 2019/04/21 07:55:25 isaki Exp $");
 #include <sys/audioio.h>
 
 #include <dev/audio_if.h>
-#include <dev/auconv.h>
 #include <dev/midi_if.h>
 
 #include <dev/pci/pcidevs.h>
@@ -109,9 +113,9 @@ CFATTACH_DECL_NEW(eap, sizeof(struct eap_softc),
 
 static int	eap_open(void *, int);
 static int	eap_query_format(void *, struct audio_format_query *);
-static int	eap_set_params(void *, int, int, audio_params_t *,
-			       audio_params_t *, stream_filter_list_t *,
-			       stream_filter_list_t *);
+static int	eap_set_format(void *, int,
+			       const audio_params_t *, const audio_params_t *,
+			       audio_filter_reg_t *, audio_filter_reg_t *);
 static int	eap_trigger_output(void *, void *, void *, int,
 				   void (*)(void *), void *,
 				   const audio_params_t *);
@@ -129,7 +133,6 @@ static int	eap1371_mixer_get_port(void *, mixer_ctrl_t *);
 static int	eap1370_query_devinfo(void *, mixer_devinfo_t *);
 static void	*eap_malloc(void *, int, size_t);
 static void	eap_free(void *, void *, size_t);
-static size_t	eap_round_buffersize(void *, int, size_t);
 static int	eap_get_props(void *);
 static void	eap1370_set_mixer(struct eap_softc *, int, int);
 static uint32_t eap1371_src_wait(struct eap_softc *);
@@ -157,7 +160,7 @@ static void	eap_uart_txrdy(struct eap_softc *);
 static const struct audio_hw_if eap1370_hw_if = {
 	.open			= eap_open,
 	.query_format		= eap_query_format,
-	.set_params		= eap_set_params,
+	.set_format		= eap_set_format,
 	.halt_output		= eap_halt_output,
 	.halt_input		= eap_halt_input,
 	.getdev			= eap_getdev,
@@ -166,7 +169,6 @@ static const struct audio_hw_if eap1370_hw_if = {
 	.query_devinfo		= eap1370_query_devinfo,
 	.allocm			= eap_malloc,
 	.freem			= eap_free,
-	.round_buffersize	= eap_round_buffersize,
 	.get_props		= eap_get_props,
 	.trigger_output		= eap_trigger_output,
 	.trigger_input		= eap_trigger_input,
@@ -176,7 +178,7 @@ static const struct audio_hw_if eap1370_hw_if = {
 static const struct audio_hw_if eap1371_hw_if = {
 	.open			= eap_open,
 	.query_format		= eap_query_format,
-	.set_params		= eap_set_params,
+	.set_format		= eap_set_format,
 	.halt_output		= eap_halt_output,
 	.halt_input		= eap_halt_input,
 	.getdev			= eap_getdev,
@@ -185,7 +187,6 @@ static const struct audio_hw_if eap1371_hw_if = {
 	.query_devinfo		= eap1371_query_devinfo,
 	.allocm			= eap_malloc,
 	.freem			= eap_free,
-	.round_buffersize	= eap_round_buffersize,
 	.get_props		= eap_get_props,
 	.trigger_output		= eap_trigger_output,
 	.trigger_input		= eap_trigger_input,
@@ -209,24 +210,19 @@ static struct audio_device eap_device = {
 	"eap"
 };
 
-#define EAP_NFORMATS	4
-#define EAP_FORMAT(enc, prec, ch, chmask) \
-	{ \
-		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
-		.encoding	= (enc), \
-		.validbits	= (prec), \
-		.precision	= (prec), \
-		.channels	= (ch), \
-		.channel_mask	= (chmask), \
-		.frequency_type	= 0, \
-		.frequency	= { 4000, 48000 }, \
-	}
-static const struct audio_format eap_formats[EAP_NFORMATS] = {
-	EAP_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 2, AUFMT_STEREO),
-	EAP_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16, 1, AUFMT_MONAURAL),
-	EAP_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 2, AUFMT_STEREO),
-	EAP_FORMAT(AUDIO_ENCODING_ULINEAR_LE,  8, 1, AUFMT_MONAURAL),
+static const struct audio_format eap_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 2,
+		.frequency	= { 4000, 48000 },
+	},
 };
+#define EAP_NFORMATS	__arraycount(eap_formats)
 
 static int
 eap_match(device_t parent, cfdata_t match, void *aux)
@@ -944,54 +940,37 @@ eap_query_format(void *addr, struct audio_format_query *afp)
 }
 
 static int
-eap_set_params(void *addr, int setmode, int usemode,
-	       audio_params_t *play, audio_params_t *rec,
-	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+eap_set_format(void *addr, int setmode,
+	       const audio_params_t *play, const audio_params_t *rec,
+	       audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct eap_instance *ei;
 	struct eap_softc *sc;
-	struct audio_params *p;
-	stream_filter_list_t *fil;
-	int mode, i;
 	uint32_t div;
 
 	ei = addr;
 	sc = device_private(ei->parent);
-
-	for (mode = AUMODE_RECORD; mode != -1;
-	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
-			continue;
-
-		p = mode == AUMODE_PLAY ? play : rec;
-
-		fil = mode == AUMODE_PLAY ? pfil : rfil;
-		i = auconv_set_converter(eap_formats, EAP_NFORMATS,
-					 mode, p, FALSE, fil);
-		if (i < 0)
-			return EINVAL;
-	}
 
 	if (sc->sc_1371) {
 		eap1371_set_dac_rate(ei, play->sample_rate);
 		eap1371_set_adc_rate(sc, rec->sample_rate);
 	} else if (ei->index == EAP_DAC2) {
 		/* Set the speed */
-		DPRINTFN(2, ("eap_set_params: old ICSC = 0x%08x\n",
+		DPRINTFN(2, ("%s: old ICSC = 0x%08x\n", __func__,
 			     EREAD4(sc, EAP_ICSC)));
 		div = EREAD4(sc, EAP_ICSC) & ~EAP_PCLKBITS;
+		/*
+		 * *play and *rec are the identical on es1370 because
+		 * !AUDIO_PROP_INDEPENDENT.
+		 */
+
 		/*
 		 * XXX
 		 * The -2 isn't documented, but seemed to make the wall
 		 * time match
 		 * what I expect.  - mycroft
 		 */
-		if (usemode == AUMODE_RECORD)
-			div |= EAP_SET_PCLKDIV(EAP_XTAL_FREQ /
-				rec->sample_rate - 2);
-		else
-			div |= EAP_SET_PCLKDIV(EAP_XTAL_FREQ /
-				play->sample_rate - 2);
+		div |= EAP_SET_PCLKDIV(EAP_XTAL_FREQ / play->sample_rate - 2);
 #if 0
 		div |= EAP_CCB_INTRM;
 #else
@@ -1001,27 +980,27 @@ eap_set_params(void *addr, int setmode, int usemode,
 		 */
 #endif
 		EWRITE4(sc, EAP_ICSC, div);
-		DPRINTFN(2, ("eap_set_params: set ICSC = 0x%08x\n", div));
+		DPRINTFN(2, ("%s: set ICSC = 0x%08x\n", __func__, div));
 	} else {
 		/*
 		 * The FM DAC has only a few fixed-frequency choises, so
 		 * pick out the best candidate.
 		 */
 		div = EREAD4(sc, EAP_ICSC);
-		DPRINTFN(2, ("eap_set_params: old ICSC = 0x%08x\n", div));
+		DPRINTFN(2, ("%s: old ICSC = 0x%08x\n", __func__, div));
 
 		div &= ~EAP_WTSRSEL;
-		if (play->sample_rate < 8268)
+		if (play->sample_rate == 5512)
 			div |= EAP_WTSRSEL_5;
-		else if (play->sample_rate < 16537)
+		else if (play->sample_rate == 11025)
 			div |= EAP_WTSRSEL_11;
-		else if (play->sample_rate < 33075)
+		else if (play->sample_rate == 22050)
 			div |= EAP_WTSRSEL_22;
 		else
 			div |= EAP_WTSRSEL_44;
 
 		EWRITE4(sc, EAP_ICSC, div);
-		DPRINTFN(2, ("eap_set_params: set ICSC = 0x%08x\n", div));
+		DPRINTFN(2, ("%s: set ICSC = 0x%08x\n", __func__, div));
 	}
 
 	return 0;
@@ -1659,13 +1638,6 @@ eap_free(void *addr, void *ptr, size_t size)
 	}
 }
 
-static size_t
-eap_round_buffersize(void *addr, int direction, size_t size)
-{
-
-	return size;
-}
-
 static int
 eap_get_props(void *addr)
 {
@@ -1675,8 +1647,8 @@ eap_get_props(void *addr)
 
 	ei = addr;
 	sc = device_private(ei->parent);
-	prop = AUDIO_PROP_MMAP | AUDIO_PROP_FULLDUPLEX |
-	    AUDIO_PROP_INDEPENDENT;
+	prop = AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
+	    AUDIO_PROP_FULLDUPLEX;
 	/* The es1370 only has one clock, so it's not independent */
 	if (!sc->sc_1371 && ei->index == EAP_DAC2)
 		prop &= ~AUDIO_PROP_INDEPENDENT;
