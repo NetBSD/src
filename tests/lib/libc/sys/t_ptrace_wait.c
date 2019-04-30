@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.114 2019/04/25 19:15:23 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.115 2019/04/30 22:39:31 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.114 2019/04/25 19:15:23 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.115 2019/04/30 22:39:31 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3931,6 +3931,157 @@ BYTES_TRANSFER_ALIGNMENT(bytes_transfer_alignment_piod_read_auxv, "PIOD_READ_AUX
 
 /// ----------------------------------------------------------------------------
 
+static void
+bytes_transfer_eof(const char *operation)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	FILE *fp;
+	char *p;
+	int vector;
+	int op;
+
+	struct ptrace_io_desc io;
+	struct ptrace_siginfo info;
+
+	memset(&io, 0, sizeof(io));
+	memset(&info, 0, sizeof(info));
+
+	vector = 0;
+
+	fp = tmpfile();
+	ATF_REQUIRE(fp != NULL);
+
+	p = mmap(0, 1, PROT_READ|PROT_WRITE, MAP_PRIVATE, fileno(fp), 0);
+	ATF_REQUIRE(p != MAP_FAILED);
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info))
+		!= -1);
+
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x "
+		"si_errno=%#x\n",
+		info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+		info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+
+	if (strcmp(operation, "PT_READ_I") == 0 ||
+	    strcmp(operation, "PT_READ_D") == 0) {
+		if (strcmp(operation, "PT_READ_I"))
+			op = PT_READ_I;
+		else
+			op = PT_READ_D;
+
+		errno = 0;
+		SYSCALL_REQUIRE(ptrace(op, child, p, 0) == -1);
+		ATF_REQUIRE_EQ(errno, EINVAL);
+	} else if (strcmp(operation, "PT_WRITE_I") == 0 ||
+	           strcmp(operation, "PT_WRITE_D") == 0) {
+		if (strcmp(operation, "PT_WRITE_I"))
+			op = PT_WRITE_I;
+		else
+			op = PT_WRITE_D;
+
+		errno = 0;
+		SYSCALL_REQUIRE(ptrace(op, child, p, vector) == -1);
+		ATF_REQUIRE_EQ(errno, EINVAL);
+	} else if (strcmp(operation, "PIOD_READ_I") == 0 ||
+	           strcmp(operation, "PIOD_READ_D") == 0) {
+		if (strcmp(operation, "PIOD_READ_I"))
+			op = PIOD_READ_I;
+		else
+			op = PIOD_READ_D;
+
+		io.piod_op = op;
+		io.piod_addr = &vector;
+		io.piod_len = sizeof(int);
+		io.piod_offs = p;
+
+		errno = 0;
+		SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, sizeof(io)) == -1);
+		ATF_REQUIRE_EQ(errno, EINVAL);
+	} else if (strcmp(operation, "PIOD_WRITE_I") == 0 ||
+	           strcmp(operation, "PIOD_WRITE_D") == 0) {
+		if (strcmp(operation, "PIOD_WRITE_I"))
+			op = PIOD_WRITE_I;
+		else
+			op = PIOD_WRITE_D;
+
+		io.piod_op = op;
+		io.piod_addr = &vector;
+		io.piod_len = sizeof(int);
+		io.piod_offs = p;
+
+		errno = 0;
+		SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, sizeof(io)) == -1);
+		ATF_REQUIRE_EQ(errno, EINVAL);
+	}
+
+	DPRINTF("Before resuming the child process where it left off "
+	    "and without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
+	    child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+#define BYTES_TRANSFER_EOF(test, operation)				\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr",					\
+	    "Verify bytes EOF byte transfer for the " operation		\
+	    " operation");						\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+	bytes_transfer_eof(operation);					\
+}
+
+BYTES_TRANSFER_EOF(bytes_transfer_eof_pt_read_i, "PT_READ_I")
+BYTES_TRANSFER_EOF(bytes_transfer_eof_pt_read_d, "PT_READ_D")
+BYTES_TRANSFER_EOF(bytes_transfer_eof_pt_write_i, "PT_WRITE_I")
+BYTES_TRANSFER_EOF(bytes_transfer_eof_pt_write_d, "PT_WRITE_D")
+
+BYTES_TRANSFER_EOF(bytes_transfer_eof_piod_read_i, "PIOD_READ_I")
+BYTES_TRANSFER_EOF(bytes_transfer_eof_piod_read_d, "PIOD_READ_D")
+BYTES_TRANSFER_EOF(bytes_transfer_eof_piod_write_i, "PIOD_WRITE_I")
+BYTES_TRANSFER_EOF(bytes_transfer_eof_piod_write_d, "PIOD_WRITE_D")
+
+/// ----------------------------------------------------------------------------
+
 #if defined(HAVE_GPREGS) || defined(HAVE_FPREGS)
 static void
 access_regs(const char *regset, const char *aux)
@@ -7398,6 +7549,16 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, bytes_transfer_alignment_piod_write_d);
 
 	ATF_TP_ADD_TC(tp, bytes_transfer_alignment_piod_read_auxv);
+
+	ATF_TP_ADD_TC(tp, bytes_transfer_eof_pt_read_i);
+	ATF_TP_ADD_TC(tp, bytes_transfer_eof_pt_read_d);
+	ATF_TP_ADD_TC(tp, bytes_transfer_eof_pt_write_i);
+	ATF_TP_ADD_TC(tp, bytes_transfer_eof_pt_write_d);
+
+	ATF_TP_ADD_TC(tp, bytes_transfer_eof_piod_read_i);
+	ATF_TP_ADD_TC(tp, bytes_transfer_eof_piod_read_d);
+	ATF_TP_ADD_TC(tp, bytes_transfer_eof_piod_write_i);
+	ATF_TP_ADD_TC(tp, bytes_transfer_eof_piod_write_d);
 
 	ATF_TP_ADD_TC_HAVE_GPREGS(tp, access_regs1);
 	ATF_TP_ADD_TC_HAVE_GPREGS(tp, access_regs2);
