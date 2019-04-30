@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.35 2019/02/03 15:43:57 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.36 2019/04/30 10:10:45 mrg Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.35 2019/02/03 15:43:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.36 2019/04/30 10:10:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -219,6 +219,8 @@ sunxi_platform_device_register(device_t self, void *aux)
 		/* Allwinner A64 has an unstable architectural timer */
 		const char * compat[] = {
 			"allwinner,sun50i-a64",
+			/* Cubietruck Plus triggers this problem as well. */
+			"allwinner,sun8i-a83t",
 			NULL
 		};
 		if (of_match_compatible(OF_finddevice("/"), compat)) {
