@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.15 2018/09/03 16:29:31 riastradh Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.16 2019/04/30 23:19:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.15 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.16 2019/04/30 23:19:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -266,20 +266,11 @@ static int
 dwc_mmc_card_detect(sdmmc_chipset_handle_t sch)
 {
 	struct dwc_mmc_softc *sc = sch;
-	int v = 0, i;
 
 	if (!sc->sc_card_detect)
 		return 1;	/* no card detect pin, assume present */
 
-	for (i = 0; i < 5; i++) {
-		v += sc->sc_card_detect(sc);
-		delay(1000);
-	}
-	if (v == 5)
-		sc->sc_mmc_present = 0;
-	else if (v == 0)
-		sc->sc_mmc_present = 1;
-	return sc->sc_mmc_present;
+	return sc->sc_card_detect(sc);
 }
 
 static int
