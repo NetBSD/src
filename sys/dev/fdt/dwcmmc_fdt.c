@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.7 2018/08/12 16:34:28 jmcneill Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.8 2019/04/30 23:10:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.7 2018/08/12 16:34:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.8 2019/04/30 23:10:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,7 +70,7 @@ struct dwcmmc_fdt_softc {
 	u_int			sc_ciu_div;
 };
 
-CFATTACH_DECL_NEW(dwcmmc_fdt, sizeof(struct dwc_mmc_softc),
+CFATTACH_DECL_NEW(dwcmmc_fdt, sizeof(struct dwcmmc_fdt_softc),
 	dwcmmc_fdt_match, dwcmmc_fdt_attach, NULL, NULL);
 
 static int
