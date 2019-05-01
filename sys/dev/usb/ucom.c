@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.122 2019/04/20 05:53:18 mrg Exp $	*/
+/*	$NetBSD: ucom.c,v 1.123 2019/05/01 06:01:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.122 2019/04/20 05:53:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.123 2019/05/01 06:01:01 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -413,10 +413,14 @@ ucom_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	if (sc->sc_bulkin_pipe != NULL)
+	if (sc->sc_bulkin_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
-	if (sc->sc_bulkout_pipe != NULL)
+		sc->sc_bulkin_pipe = NULL;
+	}
+	if (sc->sc_bulkout_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_bulkout_pipe);
+		sc->sc_bulkout_pipe = NULL;
+	}
 
 	mutex_enter(&sc->sc_lock);
 
@@ -1263,7 +1267,9 @@ ucomhwiflow(struct tty *tp, int block)
 	if (sc == NULL)
 		return 0;
 
-	mutex_enter(&sc->sc_lock);
+	KASSERT(&sc->sc_lock);
+	KASSERT(mutex_owned(&tty_lock));
+
 	old = sc->sc_rx_stopped;
 	sc->sc_rx_stopped = (u_char)block;
 
@@ -1273,7 +1279,6 @@ ucomhwiflow(struct tty *tp, int block)
 		softint_schedule(sc->sc_si);
 		kpreempt_enable();
 	}
-	mutex_exit(&sc->sc_lock);
 
 	return 1;
 }
