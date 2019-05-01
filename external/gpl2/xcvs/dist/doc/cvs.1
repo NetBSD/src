@@ -1098,7 +1098,7 @@ acceptable for \fIstate\fR.  A useful set of states is
 stable), and \fBRel\fR (for released).  By default,
 the state of a new revision is set to \fBExp\fR when
 it is created.  The state is visible in the output from
-\fIcvs log\fR (see node `log\(aq in the CVS manual), and in the
+\fIcvs log\fR (see node `log & rlog\(aq in the CVS manual), and in the
 \fB$\fP\fPLog$\fR and \fB$\fP\fPState$\fR keywords
 (see node `Keyword substitution\(aq in the CVS manual).  Note that \fBcvs\fR
 uses the \fBdead\fR state for its own purposes (see node `Attic\(aq in the CVS manual); to
@@ -1113,7 +1113,7 @@ Useful with \fBcvs\fR.  Write descriptive text from the
 contents of the named \fIfile\fR into the RCS file,
 deleting the existing text.  The \fIfile\fR pathname
 may not begin with \fB-\fR.  The descriptive text can be seen in the
-output from \fBcvs log\fR (see node `log\(aq in the CVS manual).
+output from \fBcvs log\fR (see node `log & rlog\(aq in the CVS manual).
 There can be no space between \fB-t\fR and its argument.
 .SP
 If \fIfile\fR is omitted,
@@ -1171,9 +1171,10 @@ files.  However, \fBcvs\fR has always required that the
 this option has never done anything useful.
 .SP
 .SP
-.SH "annotate"
+.SH "annotate & rannotate"
 .SS "What revision modified each line of a file?"
 .IX "annotate (subcommand)"
+.IX "rannotate (subcommand)"
 .SP
 .IP "\(bu" 2
 Synopsis: annotate [options] files\&...
@@ -1225,6 +1226,8 @@ existed on \fIdate\fR.  See see node `Common options\(aq in the CVS manual.
 Annotate file as of specified date.
 .SP
 .SH "annotate example"
+.IX "annotate (subcommand)"
+.IX "rannotate (subcommand)"
 .SP
 For example:
 .SP
@@ -1511,6 +1514,7 @@ $ cvs checkout -D yesterday tc
 .SH "commit"
 .SS "Check files into the repository"
 .IX "commit (subcommand)"
+.IX "ci (subcommand)"
 .SP
 .IP "\(bu" 2
 Synopsis: commit [-lnRf] [-m \(aqlog_message\(aq |
@@ -1550,7 +1554,7 @@ enter a log message that will be written to one or more
 logging programs (see node `modules\(aq in the CVS manual, and see node `loginfo\(aq in the CVS manual)
 and placed in the \fBrcs\fR file inside the
 repository.  This log message can be retrieved with the
-\fBlog\fR command; see see node `log\(aq in the CVS manual.  You can specify the
+\fBlog\fR command (see node `log & rlog\(aq in the CVS manual).  You can specify the
 log message on the command line with the \fB-m
 \fImessage\fB\fR option, and thus avoid the editor invocation,
 or use the \fB-F \fIfile\fB\fR option to specify
@@ -1559,8 +1563,8 @@ that the argument file contains the log message.
 At \fBcommit\fR, a unique commitid is placed in the \fBrcs\fR
 file inside the repository. All files committed at once
 get the same commitid. The commitid can be retrieved with
-the \fBlog\fR and \fBstatus\fR command; see see node `log\(aq in the CVS manual,
-see node `File status\(aq in the CVS manual.
+the \fBlog\fR and \fBstatus\fR command (see node `log & rlog\(aq in the CVS manual,
+see node `File status\(aq in the CVS manual).
 .SP
 .SH "commit options"
 .SP
@@ -2821,6 +2825,12 @@ A file was modified.
 .IP "" 4
 A file was removed.
 .SP
+One record type results from the admin command:
+.IP "" 2
+\fBX\fR
+.IP "" 4
+The admin command.
+.SP
 The options shown as \fB-flags\fR constrain or expand
 the report without requiring option arguments:
 .SP
@@ -3117,9 +3127,10 @@ $ cvs -d /usr/local/cvsroot init
 .PD
 .IP "" 0
 .SP
-.SH "log"
+.SH "log & rlog"
 .SS "Print out log information for files"
 .IX "log (subcommand)"
+.IX "rlog (subcommand)"
 .SP
 .IP "\(bu" 2
 Synopsis: log [options] [files\&...]
@@ -3488,7 +3499,7 @@ verifymsg
 .IX "rdiff (subcommand)"
 .SP
 .IP "\(bu" 2
-rdiff [-flags] [-V vn] (-r tag1[:date1] | -D date1) [-r tag2[:date2] | -D date2] modules\&...
+rdiff [options] {-r tag1[:date1] | -D date1} [-r tag2[:date2] | -D date2] modules\&...
 .IP "\(bu" 2
 Requires: repository.
 .IP "\(bu" 2
@@ -3499,10 +3510,7 @@ Synonym: patch
 Builds a Larry Wall format patch(1) file between two
 releases, that can be fed directly into the \fBpatch\fR
 program to bring an old release up-to-date with the new
-release.  (This is one of the few \fBcvs\fR commands that
-operates directly from the repository, and doesn\(aqt
-require a prior checkout.) The diff output is sent to
-the standard output device.
+release.  The diff output is sent to the standard output device.
 .SP
 You can specify (using the standard \fB-r\fR and
 \fB-D\fR options) any combination of one or two
@@ -3511,11 +3519,11 @@ specified, the patch file reflects differences between
 that revision or date and the current head revisions in
 the \fBrcs\fR file.
 .SP
-Note that if the software release affected is contained
-in more than one directory, then it may be necessary to
-specify the \fB-p\fR option to the \fBpatch\fR command when
-patching the old sources, so that \fBpatch\fR is able to find
-the files that are located in other directories.
+Note that if the patch created by rdiff spans multiple directories,
+then it may be necessary to specify the \fB-p\fR option when feeding
+the patch back to the \fBpatch\fR command, so that \fBpatch\fR is able
+to update files that are located in directories other than the one
+patch is run in.
 .SP
 .SH "rdiff options"
 .SP
@@ -3594,15 +3602,6 @@ Remember that old versions
 of the \fBpatch\fR program can\(aqt handle the unidiff
 format, so if you plan to post this patch to the net
 you should probably not use \fB-u\fR.
-.SP
-.IP "" 0
-\fB-V \fIvn\fB\fR
-.IP "" 2
-Expand keywords according to the rules current in
-\fBrcs\fR version \fIvn\fR (the expansion format changed with
-\fBrcs\fR version 5).  Note that this option is no
-longer accepted.  \fBcvs\fR will always expand keywords the
-way that \fBrcs\fR version 5 does.
 .SP
 .SH "rdiff examples"
 .SP
@@ -4078,7 +4077,7 @@ Do not execute the tag program specified in the \fBmodules\fR file
 .IX "update (subcommand)"
 .SP
 .IP "\(bu" 2
-update [-ACdflPpRt] [-I name] [-j rev [-j rev]] [-k kflag] [-r tag[:date] | -D date] [-W spec] files\&...
+update [-ACdflPpRt] [-I name] [-j rev [-j rev]] [-k kflag] [-r tag[:date] | -D date] [-W spec] [files\&...]
 .IP "\(bu" 2
 Requires: repository, working directory.
 .IP "\(bu" 2
