@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.18 2019/04/26 08:28:11 mrg Exp $
+#	$NetBSD: files.rockchip,v 1.19 2019/05/01 10:41:33 jmcneill Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -72,6 +72,11 @@ file	arch/arm/rockchip/rk_emmcphy.c		rkemmcphy
 device	rktsadc: sysmon_envsys
 attach	rktsadc at fdt with rk_tsadc
 file	arch/arm/rockchip/rk_tsadc.c		rk_tsadc
+
+# PWM
+device	rkpwm: pwm
+attach	rkpwm at fdt with rk_pwm
+file	arch/arm/rockchip/rk_pwm.c		rk_pwm
 
 # SOC parameters
 defflag	opt_soc.h			SOC_ROCKCHIP
