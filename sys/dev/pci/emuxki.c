@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.67.2.2 2019/04/21 07:59:01 isaki Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.67.2.3 2019/05/01 06:03:14 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67.2.2 2019/04/21 07:59:01 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67.2.3 2019/05/01 06:03:14 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67.2.2 2019/04/21 07:59:01 isaki Exp $"
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
-#include <dev/auconv.h>
-#include <dev/mulaw.h>
 
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
@@ -134,10 +132,10 @@ static void	emuxki_stream_halt(struct emuxki_stream *);
 static int	emuxki_open(void *, int);
 static void	emuxki_close(void *);
 
-static int	emuxki_query_encoding(void *, struct audio_encoding *);
-static int	emuxki_set_params(void *, int, int, audio_params_t *,
-		audio_params_t *, stream_filter_list_t *,
-		stream_filter_list_t *);
+static int	emuxki_query_format(void *, audio_format_query_t *);
+static int	emuxki_set_format(void *, int,
+		    const audio_params_t *, const audio_params_t *,
+		    audio_filter_reg_t *, audio_filter_reg_t *);
 
 static int	emuxki_round_blocksize(void *, int, int, const audio_params_t *);
 static size_t	emuxki_round_buffersize(void *, int, size_t);
@@ -157,7 +155,6 @@ static int	emuxki_query_devinfo(void *, mixer_devinfo_t *);
 static void    *emuxki_allocm(void *, int, size_t);
 static void	emuxki_freem(void *, void *, size_t);
 
-static paddr_t	emuxki_mappage(void *, void *, off_t, int);
 static int	emuxki_get_props(void *);
 static void	emuxki_get_locks(void *, kmutex_t **, kmutex_t **);
 
@@ -180,8 +177,8 @@ CFATTACH_DECL_NEW(emuxki, sizeof(struct emuxki_softc),
 static const struct audio_hw_if emuxki_hw_if = {
 	.open			= emuxki_open,
 	.close			= emuxki_close,
-	.query_encoding		= emuxki_query_encoding,
-	.set_params		= emuxki_set_params,
+	.query_format		= emuxki_query_format,
+	.set_format		= emuxki_set_format,
 	.round_blocksize	= emuxki_round_blocksize,
 	.halt_output		= emuxki_halt_output,
 	.halt_input		= emuxki_halt_input,
@@ -192,7 +189,6 @@ static const struct audio_hw_if emuxki_hw_if = {
 	.allocm			= emuxki_allocm,
 	.freem			= emuxki_freem,
 	.round_buffersize	= emuxki_round_buffersize,
-	.mappage		= emuxki_mappage,
 	.get_props		= emuxki_get_props,
 	.trigger_output		= emuxki_trigger_output,
 	.trigger_input		= emuxki_trigger_input,
@@ -2089,124 +2085,20 @@ emuxki_close(void *addr)
 }
 
 static int
-emuxki_query_encoding(void *addr, struct audio_encoding *fp)
+emuxki_query_format(void *addr, audio_format_query_t *afp)
 {
-#ifdef EMUXKI_DEBUG
-	struct emuxki_softc *sc;
 
-	sc = addr;
-	printf("%s: emuxki_query_encoding called\n", device_xname(sc->sc_dev));
-#endif
-
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 4:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 5:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	default:
-		return EINVAL;
-	}
-	return 0;
+	return audio_query_format(emuxki_formats, EMUXKI_NFORMATS, afp);
 }
 
 static int
-emuxki_set_vparms(struct emuxki_softc *sc, struct emuxki_voice *voice,
-    const audio_params_t *p, stream_filter_list_t *fil)
+emuxki_set_format(void *addr, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	int mode, i;
 
-	mode = (voice->use & EMU_VOICE_USE_PLAY) ?
-		AUMODE_PLAY : AUMODE_RECORD;
-	i = auconv_set_converter(emuxki_formats, EMUXKI_NFORMATS,
-				 mode, p, FALSE, fil);
-	if (i < 0)
-		return EINVAL;
-	if (fil->req_size > 0)
-		p = &fil->filters[0].param;
-	return emuxki_voice_set_audioparms(sc, voice, p->channels == 2,
-	    p->precision == 16, p->sample_rate);
-}
-
-static int
-emuxki_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
-    audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
-{
-	struct emuxki_softc *sc;
-	struct audio_params *p;
-	struct emuxki_voice *v;
-	stream_filter_list_t *fil;
-	int mode, error;
-
-	sc = addr;
-	for (mode = AUMODE_RECORD; mode != -1;
-	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
-		if ((usemode & setmode & mode) == 0)
-			continue;
-
-		if (mode == AUMODE_PLAY) {
-			p = play;
-			fil = pfil;
-			v = sc->pvoice;
-		} else {
-			p = rec;
-			fil = rfil;
-			v = sc->rvoice;
-		}
-
-		if (v == NULL) {
-			continue;
-		}
-
-		/* No multiple voice support for now */
-		if ((error = emuxki_set_vparms(sc, v, p, fil)))
-			return error;
-	}
-
-	return 0;
+	/* XXX impossible to use this driver as is */
+	return ENXIO;
 }
 
 static int
@@ -2382,28 +2274,6 @@ emuxki_round_buffersize(void *addr, int direction, size_t bsize)
 	}
 
 	return bsize;
-}
-
-static paddr_t
-emuxki_mappage(void *addr, void *ptr, off_t off, int prot)
-{
-	struct emuxki_softc *sc;
-	struct emuxki_mem *mem;
-
-	sc = addr;
-
-	mutex_exit(&sc->sc_lock);
-	LIST_FOREACH(mem, &sc->mem, next) {
-		if (KERNADDR(mem->dmamem) == ptr) {
-			struct dmamem *dm = mem->dmamem;
-
-			return bus_dmamem_mmap(dm->dmat, dm->segs, dm->nsegs,
-			       off, prot, BUS_DMA_WAITOK);
-		}
-	}
-	mutex_enter(&sc->sc_lock);
-
-	return -1;
 }
 
 static int
