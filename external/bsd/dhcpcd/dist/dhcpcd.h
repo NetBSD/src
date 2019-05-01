@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.1.1.19.2.2 2015/02/05 15:13:12 martin Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.1.1.19.2.2.6.1 2019/05/01 09:25:16 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -131,6 +131,7 @@ struct dhcpcd_ctx {
 	 * We ONLY use this when options are split, which for most purposes is
 	 * practically never. See RFC3396 for details. */
 	uint8_t *opt_buffer;
+	size_t opt_buffer_len;
 #endif
 #ifdef INET6
 	unsigned char secret[SECRET_LEN];
