@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.91 2019/04/26 08:28:11 mrg Exp $
+#	$NetBSD: GENERIC64,v 1.92 2019/05/01 10:41:54 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -245,6 +245,7 @@ rkgpio*		at rkiomux?		# Rockchip GPIO
 gpio*		at gpiobus?
 
 # PWM controller
+rkpwm*		at fdt? pass 3		# Rockchip PWM
 sunxipwm*	at fdt? pass 3		# Allwinner PWM
 
 # MPIO / Pinmux
@@ -436,6 +437,9 @@ options 	FONT_BOLD16x32
 
 # Backlight
 pwmbacklight*	at fdt?			# PWM Backlight controls
+
+# Fan
+pwmfan*		at fdt?			# PWM Fan controls
 
 # Thermal throttling controller
 sunxithermal*	at fdt?			# Allwinner thermal sensor controller
