@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.140 2019/04/19 16:05:05 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.141 2019/05/01 09:43:37 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5787,4 +5787,13 @@ sys/net/if.c					1.449 (patch)
 	Zero out the ifreq struct for SIOCGIFCONF to avoid up to 127 bytes
 	of stack disclosure.
 	[christos, ticket #1689]
+
+external/bsd/dhcpcd/dist/src/auth.c			(apply patch)
+external/bsd/dhcpcd/dist/src/dhcp.c			(apply patch)   
+external/bsd/dhcpcd/dist/src/dhcpcd.h			(apply patch)
+
+	Security fixes for dhcpcd:
+	Fix a potential 1 byte read overflow with DHO_OPTSOVERLOADED.
+	Use consttime_memequal(3) to compare hashes.
+	[roy, ticket #1690]
 
