@@ -3300,7 +3300,7 @@ be done in a couple of different ways.
 @c -- The contributed scripts
 @menu
 * From files::                  This method is useful with old projects
-                                where files already exists.
+                                where files already exist.
 * From other version control systems::  Old projects where you want to
                                         preserve history from another system.
 * From scratch::                Creating a directory tree from scratch.
@@ -5036,7 +5036,7 @@ directory.
 @c changing right away.
 
 Unlike most other commands, the @code{add} command is
-not recursive.  You have to expcicitly name files and
+not recursive.  You have to explicitly name files and
 directories that you wish to add to the repository.
 However, each directory will need to be added
 separately before you will be able to add new files
@@ -5615,7 +5615,7 @@ Whenever you commit a file you specify a log message.
 @c greatly shrink the "log" node.
 To look through the log messages which have been
 specified for every revision which has been committed,
-use the @code{cvs log} command (@pxref{log}).
+use the @code{cvs log} command (@pxref{log & rlog}).
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node history database
@@ -8103,7 +8103,7 @@ reference to @sc{cvs} commands, @pxref{Invoking CVS}).
 * Date input formats::		Acceptable formats for date specifications
 * add::                         Add files and directories to the repository
 * admin::                       Administration
-* annotate::                    What revision modified each line of a file?
+* annotate & rannotate::        What revision modified each line of a file?
 * checkout::                    Checkout sources for editing
 * commit::                      Check files into the repository
 * diff::                        Show differences between revisions
@@ -8111,7 +8111,7 @@ reference to @sc{cvs} commands, @pxref{Invoking CVS}).
 * history::                     Show status of files and users
 * import::                      Import sources into CVS, using vendor branches
 * init::                        Initialize a repository
-* log::                         Show log messages for files
+* log & rlog::                  Show log messages for files
 * ls & rls::                    List files in the repository
 * rdiff::                       'patch' format diffs between releases
 * release::                     Indicate that a directory is no longer in use
@@ -9138,7 +9138,7 @@ acceptable for @var{state}.  A useful set of states is
 stable), and @samp{Rel} (for released).  By default,
 the state of a new revision is set to @samp{Exp} when
 it is created.  The state is visible in the output from
-@var{cvs log} (@pxref{log}), and in the
+@var{cvs log} (@pxref{log & rlog}), and in the
 @samp{$@splitrcskeyword{Log}$} and @samp{$@splitrcskeyword{State}$} keywords
 (@pxref{Keyword substitution}).  Note that @sc{cvs}
 uses the @code{dead} state for its own purposes (@pxref{Attic}); to
@@ -9151,7 +9151,7 @@ Useful with @sc{cvs}.  Write descriptive text from the
 contents of the named @var{file} into the RCS file,
 deleting the existing text.  The @var{file} pathname
 may not begin with @samp{-}.  The descriptive text can be seen in the
-output from @samp{cvs log} (@pxref{log}).
+output from @samp{cvs log} (@pxref{log & rlog}).
 There can be no space between @samp{-t} and its argument.
 
 If @var{file} is omitted,
@@ -9209,9 +9209,10 @@ this option has never done anything useful.
 @end table
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-@node annotate
-@appendixsec annotate---What revision modified each line of a file?
+@node annotate & rannotate
+@appendixsec annotate & rannotate---What revision modified each line of a file?
 @cindex annotate (subcommand)
+@cindex rannotate (subcommand)
 
 @itemize @bullet
 @item
@@ -9264,6 +9265,8 @@ Annotate file as of specified date.
 @c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 @node annotate example
 @appendixsubsec annotate example
+@cindex annotate (subcommand)
+@cindex rannotate (subcommand)
 
 For example:
 
@@ -9532,6 +9535,7 @@ $ cvs checkout -D yesterday tc
 @node commit
 @appendixsec commit---Check files into the repository
 @cindex commit (subcommand)
+@cindex ci (subcommand)
 
 @itemize @bullet
 @item
@@ -9573,7 +9577,7 @@ enter a log message that will be written to one or more
 logging programs (@pxref{modules}, and @pxref{loginfo})
 and placed in the @sc{rcs} file inside the
 repository.  This log message can be retrieved with the
-@code{log} command; see @ref{log}.  You can specify the
+@code{log} command (@pxref{log & rlog}).  You can specify the
 log message on the command line with the @samp{-m
 @var{message}} option, and thus avoid the editor invocation,
 or use the @samp{-F @var{file}} option to specify
@@ -9582,8 +9586,8 @@ that the argument file contains the log message.
 At @code{commit}, a unique commitid is placed in the @sc{rcs}
 file inside the repository. All files committed at once
 get the same commitid. The commitid can be retrieved with
-the @code{log} and @code{status} command; see @ref{log},
-@ref{File status}.
+the @code{log} and @code{status} command (@pxref{log & rlog},
+@pxref{File status}).
 
 @menu
 * commit options::              commit options
@@ -10590,6 +10594,13 @@ A file was modified.
 @item R
 A file was removed.
 @end table
+
+@noindent
+One record type results from the admin command:
+@table @code
+@item X
+The admin command.
+@end table
 @end table
 
 The options shown as @samp{-flags} constrain or expand
@@ -10894,9 +10905,10 @@ $ cvs -d /usr/local/cvsroot init
 @end example
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-@node log
-@appendixsec log---Print out log information for files
+@node log & rlog
+@appendixsec log & rlog---Print out log information for files
 @cindex log (subcommand)
+@cindex rlog (subcommand)
 
 @itemize @bullet
 @item
@@ -11221,7 +11233,7 @@ verifymsg
 
 @itemize @bullet
 @item
-rdiff [-flags] [-V vn] (-r tag1[:date1] | -D date1) [-r tag2[:date2] | -D date2] modules@dots{}
+rdiff [options] @{-r tag1[:date1] | -D date1@} [-r tag2[:date2] | -D date2] modules@dots{}
 @item
 Requires: repository.
 @item
@@ -11233,10 +11245,7 @@ Synonym: patch
 Builds a Larry Wall format patch(1) file between two
 releases, that can be fed directly into the @code{patch}
 program to bring an old release up-to-date with the new
-release.  (This is one of the few @sc{cvs} commands that
-operates directly from the repository, and doesn't
-require a prior checkout.) The diff output is sent to
-the standard output device.
+release.  The diff output is sent to the standard output device.
 
 You can specify (using the standard @samp{-r} and
 @samp{-D} options) any combination of one or two
@@ -11245,11 +11254,11 @@ specified, the patch file reflects differences between
 that revision or date and the current head revisions in
 the @sc{rcs} file.
 
-Note that if the software release affected is contained
-in more than one directory, then it may be necessary to
-specify the @samp{-p} option to the @code{patch} command when
-patching the old sources, so that @code{patch} is able to find
-the files that are located in other directories.
+Note that if the patch created by rdiff spans multiple directories,
+then it may be necessary to specify the @samp{-p} option when feeding
+the patch back to the @code{patch} command, so that @code{patch} is able
+to update files that are located in directories other than the one
+patch is run in.
 
 @menu
 * rdiff options::               rdiff options
@@ -11316,13 +11325,6 @@ Remember that old versions
 of the @code{patch} program can't handle the unidiff
 format, so if you plan to post this patch to the net
 you should probably not use @samp{-u}.
-
-@item -V @var{vn}
-Expand keywords according to the rules current in
-@sc{rcs} version @var{vn} (the expansion format changed with
-@sc{rcs} version 5).  Note that this option is no
-longer accepted.  @sc{cvs} will always expand keywords the
-way that @sc{rcs} version 5 does.
 @end table
 
 @c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -11756,7 +11758,7 @@ Do not execute the tag program specified in the @file{modules} file
 
 @itemize @bullet
 @item
-update [-ACdflPpRt] [-I name] [-j rev [-j rev]] [-k kflag] [-r tag[:date] | -D date] [-W spec] files@dots{}
+update [-ACdflPpRt] [-I name] [-j rev [-j rev]] [-k kflag] [-r tag[:date] | -D date] [-W spec] [files@dots{}]
 @item
 Requires: repository, working directory.
 @item
@@ -12195,7 +12197,7 @@ Unlock revision @var{rev}, or latest revision.
 @c ------------------------------------------------------------
 @item annotate [@var{options}] [@var{files}@dots{}]
 Show last revision where each line was modified.  See
-@ref{annotate}.
+@ref{annotate & rannotate}.
 
 @table @code
 @item -D @var{date}
@@ -12548,7 +12550,7 @@ See @ref{Kerberos authenticated}.
 
 @c ------------------------------------------------------------
 @item log [@var{options}] [@var{files}@dots{}]
-Print out history information for files.  See @ref{log}.
+Print out history information for files.  See @ref{log & rlog}.
 
 @table @code
 @item -b
@@ -12602,7 +12604,7 @@ See @ref{Password authentication server}.
 @c ------------------------------------------------------------
 @item rannotate [@var{options}] [@var{modules}@dots{}]
 Show last revision where each line was modified.  See
-@ref{annotate}.
+@ref{annotate & rannotate}.
 
 @table @code
 @item -D @var{date}
@@ -12699,7 +12701,7 @@ behavior}.
 
 @c ------------------------------------------------------------
 @item rlog [@var{options}] [@var{files}@dots{}]
-Print out history information for modules.  See @ref{log}.
+Print out history information for modules.  See @ref{log & rlog}.
 
 @table @code
 @item -b
@@ -15028,7 +15030,7 @@ repository with LockDir enabled.
 @cindex LogHistory, in CVSROOT/config
 @item LogHistory=@var{value}
 Control what is logged to the @file{CVSROOT/history} file (@pxref{history}).
-Default of @samp{TOEFWUPCGMAR} (or simply @samp{all}) will log
+Default of @samp{TOEFWUPCGMARX} (or simply @samp{all}) will log
 all transactions.  Any subset of the default is
 legal.  (For example, to only log transactions that modify the
 @file{*,v} files, use @samp{LogHistory=TMAR}.)  To disable history logging
