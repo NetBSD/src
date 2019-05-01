@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.25 2019/05/01 14:29:15 maxv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.26 2019/05/01 15:17:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -44,7 +44,12 @@
 
 #ifdef _KERNEL
 
-void	x86_pause(void);
+static inline void
+x86_pause(void)
+{
+	asm volatile ("pause");
+}
+
 void	x86_lfence(void);
 void	x86_sfence(void);
 void	x86_mfence(void);
@@ -56,7 +61,21 @@ void	tlbflushg(void);
 void	invlpg(vaddr_t);
 void	wbinvd(void);
 void	breakpoint(void);
-uint64_t rdtsc(void);
+
+static inline uint64_t
+rdtsc(void)
+{
+	uint32_t low, high;
+
+	asm volatile (
+		"rdtsc"
+		: "=a" (low), "=d" (high)
+		:
+	);
+
+	return (low | ((uint64_t)high << 32));
+}
+
 #ifndef XEN
 void	x86_hotpatch(uint32_t, const uint8_t *, size_t);
 void	x86_patch_window_open(u_long *, u_long *);
@@ -125,8 +144,33 @@ void	x86_ldmxcsr(const uint32_t *);
 void	x86_stmxcsr(uint32_t *);
 void	fldummy(void);
 
-uint64_t rdxcr(uint32_t);
-void	wrxcr(uint32_t, uint64_t);
+static inline uint64_t
+rdxcr(uint32_t xcr)
+{
+	uint32_t low, high;
+
+	asm volatile (
+		"xgetbv"
+		: "=a" (low), "=d" (high)
+		: "c" (xcr)
+	);
+
+	return (low | ((uint64_t)high << 32));
+}
+
+static inline void
+wrxcr(uint32_t xcr, uint64_t val)
+{
+	uint32_t low, high;
+
+	low = val;
+	high = val >> 32;
+	asm volatile (
+		"xsetbv"
+		:
+		: "a" (low), "d" (high), "c" (xcr)
+	);
+}
 
 void	xrstor(const union savefpu *, uint64_t);
 void	xsave(union savefpu *, uint64_t);
@@ -156,10 +200,37 @@ void	x86_reset(void);
 
 #define	OPTERON_MSR_PASSCODE	0x9c5a203aU
 
-uint64_t	rdmsr(u_int);
+static inline uint64_t
+rdmsr(u_int msr)
+{
+	uint32_t low, high;
+
+	asm volatile (
+		"rdmsr"
+		: "=a" (low), "=d" (high)
+		: "c" (msr)
+	);
+
+	return (low | ((uint64_t)high << 32));
+}
+
 uint64_t	rdmsr_locked(u_int);
 int		rdmsr_safe(u_int, uint64_t *);
-void		wrmsr(u_int, uint64_t);
+
+static inline void
+wrmsr(u_int msr, uint64_t val)
+{
+	uint32_t low, high;
+
+	low = val;
+	high = val >> 32;
+	asm volatile (
+		"wrmsr"
+		:
+		: "a" (low), "d" (high), "c" (msr)
+	);
+}
+
 void		wrmsr_locked(u_int, uint64_t);
 
 #endif /* _KERNEL */
