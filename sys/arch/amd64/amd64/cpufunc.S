@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.36 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.37 2019/05/01 14:29:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -374,15 +374,6 @@ ENTRY(cpu_counter32)
 	ret
 END(cpu_counter32)
 
-ENTRY(rdpmc)
-	movq	%rdi, %rcx
-	xorq	%rax, %rax
-	rdpmc
-	shlq	$32, %rdx
-	orq	%rdx, %rax
-	ret
-END(rdpmc)
-
 ENTRY(rdtsc)
 	xorq	%rax,%rax
 	rdtsc
@@ -531,11 +522,6 @@ ENTRY(x86_getss)
 	ret
 END(x86_getss)
 
-ENTRY(fldcw)
-	fldcw	(%rdi)
-	ret
-END(fldcw)
-
 ENTRY(fnclex)
 	fnclex
 	ret
@@ -566,23 +552,10 @@ ENTRY(fnstsw)
 	ret
 END(fnstsw)
 
-ENTRY(fp_divide_by_0)
-	fldz
-	fld1
-	fdiv	%st, %st(1)
-	fwait
-	ret
-END(fp_divide_by_0)
-
 ENTRY(frstor)
 	frstor	(%rdi)
 	ret
 END(frstor)
-
-ENTRY(fwait)
-	fwait
-	ret
-END(fwait)
 
 ENTRY(clts)
 	clts
