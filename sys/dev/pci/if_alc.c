@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.32 2019/04/22 09:08:14 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.33 2019/05/01 12:31:51 msaitoh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2054,7 +2054,6 @@ alc_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	error = ether_ioctl(ifp, cmd, data);
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
