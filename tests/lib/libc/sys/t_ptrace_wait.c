@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.116 2019/05/01 18:20:23 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.117 2019/05/01 21:59:32 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.116 2019/05/01 18:20:23 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.117 2019/05/01 21:59:32 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6017,8 +6017,6 @@ ATF_TC_BODY(signal9, tc)
 	static const size_t ssize = 16*1024;
 	void *stack;
 
-	atf_tc_expect_fail("PR kern/51918");
-
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -6120,8 +6118,6 @@ ATF_TC_BODY(signal10, tc)
 	lwpid_t lid;
 	static const size_t ssize = 16*1024;
 	void *stack;
-
-	atf_tc_expect_fail("PR kern/51918");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
