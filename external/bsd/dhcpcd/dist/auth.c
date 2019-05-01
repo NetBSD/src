@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: auth.c,v 1.1.1.4.2.2 2015/02/05 15:13:12 martin Exp $");
+ __RCSID("$NetBSD: auth.c,v 1.1.1.4.2.2.6.1 2019/05/01 09:25:16 martin Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -340,7 +340,7 @@ gottoken:
 	}
 
 	free(mm);
-	if (memcmp(d, &hmac, dlen)) {
+	if (!consttime_memequal(d, &hmac, dlen)) {
 		errno = EPERM;
 		return NULL;
 	}
