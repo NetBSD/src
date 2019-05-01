@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.25 2019/03/09 10:04:41 kre Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.26 2019/05/01 07:26:28 mlelstv Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.25 2019/03/09 10:04:41 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.26 2019/05/01 07:26:28 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,11 +174,12 @@ acpi_md_intr_establish(uint32_t InterruptNumber, int ipl, int type,
 {
 	void *ih;
 	struct pic *pic;
-	int irq, pin;
+	int irq = InterruptNumber, pin;
 #if NIOAPIC > 0
-	struct ioapic_softc *sc;
+	struct ioapic_softc *ioapic;
 	struct acpi_md_override ovr;
 	struct mp_intr_map tmpmap, *mip, **mipp = NULL;
+	intr_handle_t mpih;
 	int redir, mpflags;
 
 	/*
@@ -188,12 +189,11 @@ acpi_md_intr_establish(uint32_t InterruptNumber, int ipl, int type,
 	mpflags = (MPS_INTTR_LEVEL << 2) | MPS_INTPO_ACTLO;
 	redir = IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 
-
 	/*
 	 * Apply any MADT override setting.
 	 */
 
-	ovr.irq = InterruptNumber;
+	ovr.irq = irq;
 	ovr.pin = -1;
 	if (acpi_madt_map() == AE_OK) {
 		acpi_madt_walk(acpi_md_findoverride, &ovr);
@@ -203,11 +203,11 @@ acpi_md_intr_establish(uint32_t InterruptNumber, int ipl, int type,
 	}
 
 	if (ovr.pin != -1) {
-		bool sci = InterruptNumber == AcpiGbl_FADT.SciInterrupt;
+		bool sci = irq == AcpiGbl_FADT.SciInterrupt;
 		int polarity = ovr.flags & ACPI_MADT_POLARITY_MASK;
 		int trigger = ovr.flags & ACPI_MADT_TRIGGER_MASK;
 
-		InterruptNumber = ovr.pin;
+		irq = ovr.pin;
 		if (polarity == ACPI_MADT_POLARITY_ACTIVE_HIGH ||
 		    (!sci && polarity == ACPI_MADT_POLARITY_CONFORMS)) {
 			mpflags &= ~MPS_INTPO_ACTLO;
@@ -223,40 +223,63 @@ acpi_md_intr_establish(uint32_t InterruptNumber, int ipl, int type,
 		}
 	}
 
+	pic = NULL;
+	pin = irq;
+
 	/*
 	 * If the interrupt is handled via IOAPIC, update the map.
 	 * If the map isn't set up yet, install a temporary one.
+	 * Identify ISA & EISA interrupts
 	 */
-
-	sc = ioapic_find_bybase(InterruptNumber);
-	if (sc != NULL) {
-		pic = &sc->sc_pic;
-
-		if (pic->pic_type == PIC_IOAPIC) {
-			pin = (int)InterruptNumber - pic->pic_vecbase;
-			irq = -1;
-		} else {
-			irq = pin = (int)InterruptNumber;
+	if (mp_busses != NULL) {
+		if (intr_find_mpmapping(mp_isa_bus, irq, &mpih) == 0 ||
+		    intr_find_mpmapping(mp_eisa_bus, irq, &mpih) == 0) {
+			if (!APIC_IRQ_ISLEGACY(mpih)) {
+				pin = APIC_IRQ_PIN(mpih);
+				ioapic = ioapic_find(APIC_IRQ_APIC(mpih));
+				if (ioapic != NULL)
+					pic = &ioapic->sc_pic;
+			}
 		}
+	}
 
-		mip = sc->sc_pins[pin].ip_map;
-		if (mip) {
-			mip->flags &= ~0xf;
-			mip->flags |= mpflags;
-			mip->redir &= ~(IOAPIC_REDLO_LEVEL |
-					IOAPIC_REDLO_ACTLO);
-			mip->redir |= redir;
-		} else {
-			mipp = &sc->sc_pins[pin].ip_map;
-			*mipp = &tmpmap;
-			tmpmap.redir = redir;
-			tmpmap.flags = mpflags;
+	if (pic == NULL) {
+		/*
+		 * If the interrupt is handled via IOAPIC, update the map.
+		 * If the map isn't set up yet, install a temporary one.
+		 */
+		ioapic = ioapic_find_bybase(irq);
+		if (ioapic != NULL) {
+			pic = &ioapic->sc_pic;
+ 
+			if (pic->pic_type == PIC_IOAPIC) {
+				pin = irq - pic->pic_vecbase;
+				irq = -1;
+			} else {
+				pin = irq;
+			}
+ 
+			mip = ioapic->sc_pins[pin].ip_map;
+			if (mip) {
+				mip->flags &= ~0xf;
+				mip->flags |= mpflags;
+				mip->redir &= ~(IOAPIC_REDLO_LEVEL |
+						IOAPIC_REDLO_ACTLO);
+				mip->redir |= redir;
+			} else {
+				mipp = &ioapic->sc_pins[pin].ip_map;
+				*mipp = &tmpmap;
+				tmpmap.redir = redir;
+				tmpmap.flags = mpflags;
+			}
 		}
-	} else
+	}
+ 
+	if (pic == NULL)
 #endif
 	{
 		pic = &i8259_pic;
-		irq = pin = (int)InterruptNumber;
+		pin = irq;
 	}
 
 	ih = intr_establish_xname(irq, pic, pin, type, ipl,
