@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.209 2019/04/07 14:50:41 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.210 2019/05/01 17:21:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.209 2019/04/07 14:50:41 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.210 2019/05/01 17:21:55 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -575,11 +575,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	if (tracefork || tracevfork) {
 		mutex_enter(p1->p_lock);
-		p1->p_xsig = SIGTRAP;
-		p1->p_sigctx.ps_faked = true; // XXX
-		p1->p_sigctx.ps_info._signo = p1->p_xsig;
-		p1->p_sigctx.ps_info._code = TRAP_CHLD;
-		sigswitch(0, SIGTRAP, false);
+		eventswitch(SIGTRAP, TRAP_CHLD);
 		// XXX ktrpoint(KTR_PSIG)
 		mutex_exit(p1->p_lock);
 		mutex_enter(proc_lock);
@@ -597,12 +593,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	if (tracevforkdone) {
 		mutex_enter(p1->p_lock);
-		p1->p_xsig = SIGTRAP;
-		p1->p_sigctx.ps_faked = true; // XXX
-		p1->p_sigctx.ps_info._signo = p1->p_xsig;
-		p1->p_sigctx.ps_info._code = TRAP_CHLD;
 		p1->p_vfpid_done = retval[0];
-		sigswitch(0, SIGTRAP, false);
+		eventswitch(SIGTRAP, TRAP_CHLD);
 		// XXX ktrpoint(KTR_PSIG)
 		mutex_exit(p1->p_lock);
 		// proc_lock unlocked
@@ -627,11 +619,7 @@ child_return(void *arg)
 		}
 
 		mutex_enter(p->p_lock);
-		p->p_xsig = SIGTRAP;
-		p->p_sigctx.ps_faked = true; // XXX
-		p->p_sigctx.ps_info._signo = p->p_xsig;
-		p->p_sigctx.ps_info._code = TRAP_CHLD;
-		sigswitch(0, SIGTRAP, false);
+		eventswitch(SIGTRAP, TRAP_CHLD);
 		// XXX ktrpoint(KTR_PSIG)
 		mutex_exit(p->p_lock);
 	}

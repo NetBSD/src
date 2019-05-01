@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.462 2018/11/11 10:55:58 maxv Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.463 2019/05/01 17:21:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.462 2018/11/11 10:55:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.463 2019/05/01 17:21:55 kamil Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1271,11 +1271,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	if ((p->p_slflag & (PSL_TRACED|PSL_SYSCALL)) == PSL_TRACED) {
 		mutex_enter(p->p_lock);
-		p->p_xsig = SIGTRAP;
-		p->p_sigctx.ps_faked = true; // XXX
-		p->p_sigctx.ps_info._signo = p->p_xsig;
-		p->p_sigctx.ps_info._code = TRAP_EXEC;
-		sigswitch(0, SIGTRAP, false);
+		eventswitch(SIGTRAP, TRAP_EXEC);
 		// XXX ktrpoint(KTR_PSIG)
 		mutex_exit(p->p_lock);
 		mutex_enter(proc_lock);
