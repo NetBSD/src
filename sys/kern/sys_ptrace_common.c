@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.50 2019/04/30 22:32:01 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.51 2019/05/01 17:02:40 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.50 2019/04/30 22:32:01 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.51 2019/05/01 17:02:40 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1244,6 +1244,21 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 				error = EDEADLK;
 				break;
 			}
+		}
+
+		/*
+		 * If the address parameter is 0, report error.
+		 *
+		 * It's a popular mistake to set Program Counter to 0x0.
+		 * In certain kernels this is allowable parameter and causes
+		 * portability issue.
+		 *
+		 * Disallow explicitly zeroed PC, instead of triggering
+		 * a harder to debug crash later.
+		 */
+		if (addr == 0) {
+			error = EINVAL;
+			break;
 		}
 
 		/* If the address parameter is not (int *)1, set the pc. */
