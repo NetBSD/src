@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.354 2019/05/01 18:01:54 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.355 2019/05/01 21:52:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.354 2019/05/01 18:01:54 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.355 2019/05/01 21:52:35 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1542,6 +1542,7 @@ eventswitch(int signo, int code)
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_stat == LSONPROC);
+	KASSERT((l->l_flag & LW_SYSTEM) == 0);
 	KASSERT(p->p_nrlwps > 0);
 
 	/*
