@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.28 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.29 2019/05/01 14:29:15 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.28 2019/02/11 14:59:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.29 2019/05/01 14:29:15 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -205,12 +205,6 @@ ENTRY(cpu_counter32)
 	ret
 END(cpu_counter32)
 
-ENTRY(rdpmc)
-	movl	4(%esp), %ecx
-	rdpmc
-	ret
-END(rdpmc)
-
 ENTRY(rdtsc)
 	rdtsc
 	ret
@@ -328,12 +322,6 @@ ENTRY(x86_getss)
 	ret
 END(x86_getss)
 
-ENTRY(fldcw)
-	movl	4(%esp), %eax
-	fldcw	(%eax)
-	ret
-END(fldcw)
-
 ENTRY(fnclex)	
 	fnclex
 	ret
@@ -367,24 +355,11 @@ ENTRY(fnstsw)
 	ret
 END(fnstsw)
 
-ENTRY(fp_divide_by_0)
-	fldz
-	fld1
-	fdiv	%st, %st(1)
-	fwait
-	ret
-END(fp_divide_by_0)
-
 ENTRY(frstor)
 	movl	4(%esp), %eax
 	frstor	(%eax)
 	ret
 END(frstor)
-
-ENTRY(fwait)
-	fwait
-	ret
-END(fwait)
 
 ENTRY(clts)
 	clts
