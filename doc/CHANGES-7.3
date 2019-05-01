@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.49 2019/04/26 19:48:00 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.50 2019/05/01 09:50:53 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -543,3 +543,17 @@ external/bsd/dhcpcd/dist/compat/consttime_memequal.h 	(apply patch)
 	Fix a potential 1 byte read overflow with DHO_OPTSOVERLOADED.
 	Use consttime_memequal(3) to compare hashes.
 	[roy, ticket #1690]
+
+sys/dev/veriexec.config				1.1 (patch)
+
+	Add a configuration file for enabling Veriexec in kernel config(5)
+	files.
+	[sevan, ticket #1691]
+
+sys/kern/sys_pipe.c				1.147,1.148
+
+	Clean up pipe structure before recycling it.
+	Handle half-closed pipes in FIONWRITE and FIONSPACE.
+	[mlelstv, ticket #1692]
+
+
