@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.265 2019/04/13 08:23:00 isaki Exp $
+# $NetBSD: GENERIC,v 1.265.2.1 2019/05/01 12:18:59 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.265 $"
+#ident 		"GENERIC-$Revision: 1.265.2.1 $"
 
 maxusers	32
 
@@ -609,7 +609,6 @@ audioamd0	at sbus0 slot ? offset ?		# sun4m
 audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
 
 #options 	DBRI_DEBUG	# noisy debug output from the dbri driver
-#options 	DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
 dbri*		at sbus? slot ? offset ?		# SUNW,DBRI[s3|e]
 
 audio*		at audiobus?
