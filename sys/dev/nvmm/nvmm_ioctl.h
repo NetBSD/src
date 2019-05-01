@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_ioctl.h,v 1.6 2019/04/28 14:22:13 maxv Exp $	*/
+/*	$NetBSD: nvmm_ioctl.h,v 1.7 2019/05/01 09:20:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -75,7 +75,6 @@ struct nvmm_ioc_vcpu_getstate {
 struct nvmm_ioc_vcpu_inject {
 	nvmm_machid_t machid;
 	nvmm_cpuid_t cpuid;
-	struct nvmm_event event;
 };
 
 struct nvmm_ioc_vcpu_run {

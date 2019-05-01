@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.13 2019/04/28 14:22:13 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.14 2019/05/01 09:20:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -229,6 +229,8 @@ struct nvmm_x64_state {
 	struct fxsave fpu;
 };
 
+#define nvmm_vcpu_state nvmm_x64_state
+
 #define NVMM_X86_CONF_CPUID	0
 #define NVMM_X86_NCONF		1
 
@@ -246,13 +248,6 @@ struct nvmm_x86_conf_cpuid {
 		uint32_t ecx;
 		uint32_t edx;
 	} del;
-};
-
-struct nvmm_comm_page {
-	uint64_t state_wanted;
-	uint64_t state_cached;
-	uint64_t state_commit;
-	struct nvmm_x64_state state;
 };
 
 #ifdef _KERNEL

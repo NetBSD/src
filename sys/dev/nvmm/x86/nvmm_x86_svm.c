@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.44 2019/04/29 18:54:25 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.45 2019/05/01 09:20:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.44 2019/04/29 18:54:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.45 2019/05/01 09:20:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -661,46 +661,51 @@ svm_event_has_error(uint64_t vector)
 }
 
 static int
-svm_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_event *event)
+svm_vcpu_inject(struct nvmm_cpu *vcpu)
 {
+	struct nvmm_comm_page *comm = vcpu->comm;
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 	struct vmcb *vmcb = cpudata->vmcb;
+	enum nvmm_event_type evtype;
+	uint64_t vector, error;
 	int type = 0, err = 0;
 
-	if (event->vector >= 256) {
+	evtype = comm->event.type;
+	vector = comm->event.vector;
+	error = comm->event.u.error;
+	__insn_barrier();
+
+	if (__predict_false(vector >= 256)) {
 		return EINVAL;
 	}
 
-	switch (event->type) {
+	switch (evtype) {
 	case NVMM_EVENT_INTERRUPT_HW:
 		type = SVM_EVENT_TYPE_HW_INT;
-		if (event->vector == 2) {
+		if (vector == 2) {
 			type = SVM_EVENT_TYPE_NMI;
 			svm_event_waitexit_enable(vcpu, true);
 		}
 		err = 0;
 		break;
-	case NVMM_EVENT_INTERRUPT_SW:
-		return EINVAL;
 	case NVMM_EVENT_EXCEPTION:
 		type = SVM_EVENT_TYPE_EXC;
-		if (event->vector == 2 || event->vector >= 32)
+		if (vector == 2 || vector >= 32)
 			return EINVAL;
-		if (event->vector == 3 || event->vector == 0)
+		if (vector == 3 || vector == 0)
 			return EINVAL;
-		err = svm_event_has_error(event->vector);
+		err = svm_event_has_error(vector);
 		break;
 	default:
 		return EINVAL;
 	}
 
 	vmcb->ctrl.eventinj =
-	    __SHIFTIN(event->vector, VMCB_CTRL_EVENTINJ_VECTOR) |
+	    __SHIFTIN(vector, VMCB_CTRL_EVENTINJ_VECTOR) |
 	    __SHIFTIN(type, VMCB_CTRL_EVENTINJ_TYPE) |
 	    __SHIFTIN(err, VMCB_CTRL_EVENTINJ_EV) |
 	    __SHIFTIN(1, VMCB_CTRL_EVENTINJ_V) |
-	    __SHIFTIN(event->u.error, VMCB_CTRL_EVENTINJ_ERRORCODE);
+	    __SHIFTIN(error, VMCB_CTRL_EVENTINJ_ERRORCODE);
 
 	cpudata->evt_pending = true;
 
@@ -708,31 +713,41 @@ svm_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 }
 
 static void
-svm_inject_ud(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
+svm_inject_ud(struct nvmm_cpu *vcpu)
 {
-	struct nvmm_event event;
+	struct nvmm_comm_page *comm = vcpu->comm;
 	int ret __diagused;
 
-	event.type = NVMM_EVENT_EXCEPTION;
-	event.vector = 6;
-	event.u.error = 0;
+	comm->event.type = NVMM_EVENT_EXCEPTION;
+	comm->event.vector = 6;
+	comm->event.u.error = 0;
 
-	ret = svm_vcpu_inject(mach, vcpu, &event);
+	ret = svm_vcpu_inject(vcpu);
 	KASSERT(ret == 0);
 }
 
 static void
-svm_inject_gp(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
+svm_inject_gp(struct nvmm_cpu *vcpu)
 {
-	struct nvmm_event event;
+	struct nvmm_comm_page *comm = vcpu->comm;
 	int ret __diagused;
 
-	event.type = NVMM_EVENT_EXCEPTION;
-	event.vector = 13;
-	event.u.error = 0;
+	comm->event.type = NVMM_EVENT_EXCEPTION;
+	comm->event.vector = 13;
+	comm->event.u.error = 0;
 
-	ret = svm_vcpu_inject(mach, vcpu, &event);
+	ret = svm_vcpu_inject(vcpu);
 	KASSERT(ret == 0);
+}
+
+static inline int 
+svm_vcpu_event_commit(struct nvmm_cpu *vcpu)
+{
+	if (__predict_true(!vcpu->comm->event_commit)) {
+		return 0;
+	}
+	vcpu->comm->event_commit = false;
+	return svm_vcpu_inject(vcpu);
 }
 
 static inline void
@@ -1018,7 +1033,7 @@ handled:
 	return true;
 
 error:
-	svm_inject_gp(mach, vcpu);
+	svm_inject_gp(vcpu);
 	return true;
 }
 
@@ -1117,7 +1132,7 @@ svm_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	return;
 
 error:
-	svm_inject_gp(mach, vcpu);
+	svm_inject_gp(vcpu);
 }
 
 static void
@@ -1283,6 +1298,9 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	uint64_t machgen;
 	int hcpu, s;
 
+	if (__predict_false(svm_vcpu_event_commit(vcpu) != 0)) {
+		return EINVAL;
+	}
 	svm_vcpu_state_commit(vcpu);
 	comm->state_cached = 0;
 
@@ -1368,7 +1386,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		case VMCB_EXITCODE_CLGI:
 		case VMCB_EXITCODE_SKINIT:
 		case VMCB_EXITCODE_RDTSCP:
-			svm_inject_ud(mach, vcpu);
+			svm_inject_ud(vcpu);
 			exit->reason = NVMM_EXIT_NONE;
 			break;
 		case VMCB_EXITCODE_MONITOR:
