@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.59 2016/07/14 10:19:06 msaitoh Exp $ */
+/* $NetBSD: pckbc.c,v 1.60 2019/05/01 07:23:22 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.59 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.60 2019/05/01 07:23:22 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -608,7 +608,8 @@ pckbcintr(void *vsc)
 		KBD_DELAY;
 		data = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
 
-		rnd_add_uint32(&q->rnd_source, (stat<<8)|data);
+		if (q != NULL)
+			rnd_add_uint32(&q->rnd_source, (stat<<8)|data);
 
 		pckbportintr(t->t_pt, slot, data);
 	}
