@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.158.2.2 2019/05/01 13:09:33 isaki Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.158.2.3 2019/05/01 13:45:52 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.158.2.2 2019/05/01 13:09:33 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.158.2.3 2019/05/01 13:45:52 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2240,7 +2240,7 @@ uaudio_round_blocksize(void *addr, int blk,
 	} else {
 		/*
 		 * use wMaxPacketSize in bytes_per_frame.
-		 * See uaudio_set_params() and uaudio_chan_init()
+		 * See uaudio_set_format() and uaudio_chan_init()
 		 */
 		b = sc->sc_recchan.bytes_per_frame
 		    * UAUDIO_NFRAMES * UAUDIO_NCHANBUFS;
