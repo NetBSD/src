@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.11 2019/04/29 17:27:57 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.12 2019/05/01 09:20:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -362,16 +362,15 @@ int
 nvmm_vcpu_inject(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
     struct nvmm_event *event)
 {
-	struct nvmm_ioc_vcpu_inject args;
-	int ret;
+	struct nvmm_comm_page *comm;
 
-	args.machid = mach->machid;
-	args.cpuid = cpuid;
-	memcpy(&args.event, event, sizeof(args.event));
-
-	ret = ioctl(nvmm_fd, NVMM_IOC_VCPU_INJECT, &args);
-	if (ret == -1)
+	if (__predict_false(cpuid >= mach->npages)) {
 		return -1;
+	}
+	comm = mach->pages[cpuid];
+
+	memcpy(&comm->event, event, sizeof(comm->event));
+	comm->event_commit = true;
 
 	return 0;
 }

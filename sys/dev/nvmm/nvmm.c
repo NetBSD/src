@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.19 2019/04/28 14:22:13 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.20 2019/05/01 09:20:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.19 2019/04/28 14:22:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.20 2019/05/01 09:20:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,7 +503,7 @@ nvmm_vcpu_inject(struct nvmm_owner *owner, struct nvmm_ioc_vcpu_inject *args)
 	if (error)
 		goto out;
 
-	error = (*nvmm_impl->vcpu_inject)(mach, vcpu, &args->event);
+	error = (*nvmm_impl->vcpu_inject)(vcpu);
 	nvmm_vcpu_put(vcpu);
 
 out:

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.8 2019/04/28 14:22:13 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.9 2019/05/01 09:20:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -92,6 +92,18 @@ struct nvmm_capability {
 	uint64_t max_vcpus;
 	uint64_t max_ram;
 	struct nvmm_cap_md arch;
+};
+
+struct nvmm_comm_page {
+	/* State. */
+	uint64_t state_wanted;
+	uint64_t state_cached;
+	uint64_t state_commit;
+	struct nvmm_vcpu_state state;
+
+	/* Event. */
+	bool event_commit;
+	struct nvmm_event event;
 };
 
 /*
