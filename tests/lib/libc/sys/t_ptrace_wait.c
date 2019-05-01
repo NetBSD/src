@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.115 2019/04/30 22:39:31 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.116 2019/05/01 18:20:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.115 2019/04/30 22:39:31 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.116 2019/05/01 18:20:23 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3194,6 +3194,187 @@ FORK_TEST(vfork5, vfork, false, false, true)
 FORK_TEST(vfork6, vfork, true, false, true)
 FORK_TEST(vfork7, vfork, false, true, true)
 FORK_TEST(vfork8, vfork, true, true, true)
+#endif
+#endif
+
+/// ----------------------------------------------------------------------------
+
+#if defined(TWAIT_HAVE_PID)
+static void
+fork_detach_forker_body(bool detachfork, bool detachvfork,
+    bool detachvforkdone, bool kill_process)
+{
+	const int exitval = 5;
+	const int exitval2 = 15;
+	const int sigval = SIGSTOP;
+	pid_t child, child2 = 0, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	ptrace_state_t state;
+	const int slen = sizeof(state);
+	ptrace_event_t event;
+	const int elen = sizeof(event);
+
+	pid_t (*fn)(void);
+	int op;
+
+	ATF_REQUIRE((detachfork && !detachvfork && !detachvforkdone) ||
+	            (!detachfork && detachvfork && !detachvforkdone) ||
+	            (!detachfork && !detachvfork && detachvforkdone));
+
+	if (detachfork)
+		fn = fork;
+	else
+		fn = vfork;
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		FORKEE_ASSERT((child2 = (fn)()) != -1);
+
+		if (child2 == 0)
+			_exit(exitval2);
+
+		FORKEE_REQUIRE_SUCCESS
+		    (wpid = TWAIT_GENERIC(child2, &status, 0), child2);
+
+		forkee_status_exited(status, exitval2);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	DPRINTF("Set EVENT_MASK for the child %d\n", child);
+	event.pe_set_event = PTRACE_FORK | PTRACE_VFORK | PTRACE_VFORK_DONE;
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, SIGTRAP);
+
+	SYSCALL_REQUIRE(
+	    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	op = (fn == fork) ? PTRACE_FORK : PTRACE_VFORK;
+	ATF_REQUIRE_EQ(state.pe_report_event & op, op);
+
+	child2 = state.pe_other_pid;
+	DPRINTF("Reported ptrace event with forkee %d\n", child2);
+
+	if (detachfork || detachvfork)
+		op = kill_process ? PT_KILL : PT_DETACH;
+	else
+		op = PT_CONTINUE;
+	SYSCALL_REQUIRE(ptrace(op, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the forkee %d of the child %d\n",
+	    TWAIT_FNAME, child2, child);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0), child2);
+
+	validate_status_stopped(status, SIGTRAP);
+
+	SYSCALL_REQUIRE(
+	    ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
+	op = (fn == fork) ? PTRACE_FORK : PTRACE_VFORK;
+	ATF_REQUIRE_EQ(state.pe_report_event & op, op);
+	ATF_REQUIRE_EQ(state.pe_other_pid, child);
+
+	DPRINTF("Before resuming the forkee process where it left off "
+	    "and without signal to be sent\n");
+ 	SYSCALL_REQUIRE(
+	    ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
+
+	if (detachvforkdone && fn == vfork) {
+		DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME,
+		    child);
+		TWAIT_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+		validate_status_stopped(status, SIGTRAP);
+
+		SYSCALL_REQUIRE(
+		    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+		ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK_DONE);
+
+		child2 = state.pe_other_pid;
+		DPRINTF("Reported PTRACE_VFORK_DONE event with forkee %d\n",
+		    child2);
+
+		op = kill_process ? PT_KILL : PT_DETACH;
+		DPRINTF("Before resuming the child process where it left off "
+		    "and without signal to be sent\n");
+		SYSCALL_REQUIRE(ptrace(op, child, (void *)1, 0) != -1);
+	}
+
+	DPRINTF("Before calling %s() for the forkee - expected exited\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0), child2);
+
+	validate_status_exited(status, exitval2);
+
+	DPRINTF("Before calling %s() for the forkee - expected no process\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child2, &status, 0));
+
+	DPRINTF("Before calling %s() for the forkee - expected exited\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	if (kill_process) {
+		validate_status_signaled(status, SIGKILL, 0);
+	} else {
+		validate_status_exited(status, exitval);
+	}
+
+	DPRINTF("Before calling %s() for the child - expected no process\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+#define FORK_DETACH_FORKER(name,detfork,detvfork,detvforkdone,kprocess)	\
+ATF_TC(name);								\
+ATF_TC_HEAD(name, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr", "Verify %s %s%s%s",		\
+	    kprocess ? "killed" : "detached",				\
+	    detfork ? "forker" : "",					\
+	    detvfork ? "vforker" : "",					\
+	    detvforkdone ? "vforker done" : "");			\
+}									\
+									\
+ATF_TC_BODY(name, tc)							\
+{									\
+									\
+	fork_detach_forker_body(detfork, detvfork, detvforkdone,	\
+	                        kprocess);				\
+}
+
+FORK_DETACH_FORKER(fork_detach_forker, true, false, false, false)
+#if TEST_VFORK_ENABLED
+FORK_DETACH_FORKER(vfork_detach_vforker, false, true, false, false)
+FORK_DETACH_FORKER(vfork_detach_vforkerdone, false, false, true, false)
+#endif
+FORK_DETACH_FORKER(fork_kill_forker, true, false, false, true)
+#if TEST_VFORK_ENABLED
+FORK_DETACH_FORKER(vfork_kill_vforker, false, true, false, true)
+FORK_DETACH_FORKER(vfork_kill_vforkerdone, false, false, true, true)
 #endif
 #endif
 
@@ -7481,7 +7662,20 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork6);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork7);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork8);
+#endif
 
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork_detach_forker);
+#if TEST_VFORK_ENABLED
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_detach_vforker);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_detach_vforkerdone);
+#endif
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork_kill_forker);
+#if TEST_VFORK_ENABLED
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_kill_vforker);
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_kill_vforkerdone);
+#endif
+
+#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC(tp, traceme_vfork_fork);
 	ATF_TP_ADD_TC(tp, traceme_vfork_vfork);
 #endif
