@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.158.2.1 2019/05/01 12:42:14 isaki Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.158.2.2 2019/05/01 13:09:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.158.2.1 2019/05/01 12:42:14 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.158.2.2 2019/05/01 13:09:33 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2535,20 +2535,14 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 		    "fraction=0.%03d\n", ch->sample_size, ch->bytes_per_frame,
 		    ch->fraction);
 
-	mutex_exit(&sc->sc_intr_lock);
-	mutex_exit(&sc->sc_lock);
 	err = uaudio_chan_open(sc, ch);
 	if (err) {
-		mutex_enter(&sc->sc_lock);
-		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
 	err = uaudio_chan_alloc_buffers(sc, ch);
 	if (err) {
 		uaudio_chan_close(sc, ch);
-		mutex_enter(&sc->sc_lock);
-		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
@@ -2563,9 +2557,6 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	for (i = 0; i < UAUDIO_NCHANBUFS / 2; i++) {
 		uaudio_chan_rtransfer(ch);
 	}
-
-	mutex_enter(&sc->sc_lock);
-	mutex_enter(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -2592,20 +2583,14 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 		    "fraction=0.%03d\n", ch->sample_size, ch->bytes_per_frame,
 		    ch->fraction);
 
-	mutex_exit(&sc->sc_intr_lock);
-	mutex_exit(&sc->sc_lock);
 	err = uaudio_chan_open(sc, ch);
 	if (err) {
-		mutex_enter(&sc->sc_lock);
-		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
 	err = uaudio_chan_alloc_buffers(sc, ch);
 	if (err) {
 		uaudio_chan_close(sc, ch);
-		mutex_enter(&sc->sc_lock);
-		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
@@ -2614,8 +2599,6 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 
 	for (i = 0; i < UAUDIO_NCHANBUFS; i++)
 		uaudio_chan_ptransfer(ch);
-	mutex_enter(&sc->sc_lock);
-	mutex_enter(&sc->sc_intr_lock);
 
 	return 0;
 }
