@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.117 2019/05/01 21:59:32 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.118 2019/05/01 23:44:16 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.117 2019/05/01 21:59:32 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.118 2019/05/01 23:44:16 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6228,12 +6228,6 @@ ATF_TC_BODY(suspend1, tc)
 	struct ptrace_siginfo psi;
 	volatile int go = 0;
 
-	// Feature pending for refactoring
-	atf_tc_expect_fail("PR kern/51995");
-
-	// Hangs with qemu
-	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
-
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -6355,12 +6349,6 @@ ATF_TC_BODY(suspend2, tc)
 #endif
 	struct ptrace_siginfo psi;
 
-	// Feature pending for refactoring
-	atf_tc_expect_fail("PR kern/51995");
-
-	// Hangs with qemu
-	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
-
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -6412,7 +6400,6 @@ ATF_TC_BODY(suspend2, tc)
 ATF_TC(resume1);
 ATF_TC_HEAD(resume1, tc)
 {
-	atf_tc_set_md_var(tc, "timeout", "5");
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify that a thread can be suspended by a debugger and later "
 	    "resumed by the debugger");
@@ -6434,12 +6421,6 @@ ATF_TC_BODY(resume1, tc)
 	void *stack;
 	struct ptrace_lwpinfo pl;
 	struct ptrace_siginfo psi;
-
-	// Feature pending for refactoring
-	atf_tc_expect_fail("PR kern/51995");
-
-	// Hangs with qemu
-	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 
 	SYSCALL_REQUIRE(msg_open(&fds) == 0);
 
@@ -6543,9 +6524,6 @@ ATF_TC_BODY(resume1, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 
 	msg_close(&fds);
-
-	DPRINTF("XXX: Test worked this time but for consistency timeout it\n");
-	sleep(10);
 }
 
 ATF_TC(syscall1);
