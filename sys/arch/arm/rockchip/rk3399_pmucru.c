@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pmucru.c,v 1.2 2018/08/12 19:28:41 jmcneill Exp $ */
+/* $NetBSD: rk3399_pmucru.c,v 1.3 2019/05/01 10:41:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pmucru.c,v 1.2 2018/08/12 19:28:41 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pmucru.c,v 1.3 2019/05/01 10:41:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -320,6 +320,7 @@ static struct rk_cru_clk rk3399_pmucru_clks[] = {
 	RK_GATE(RK3399_PCLK_I2C0_PMU, "pclk_i2c0_pmu", "pclk_pmu_src", CLKGATE_CON(1), 7),
 	RK_GATE(RK3399_PCLK_I2C4_PMU, "pclk_i2c4_pmu", "pclk_pmu_src", CLKGATE_CON(1), 8),
 	RK_GATE(RK3399_PCLK_I2C8_PMU, "pclk_i2c8_pmu", "pclk_pmu_src", CLKGATE_CON(1), 9),
+	RK_GATE(RK3399_PCLK_RKPWM_PMU, "pclk_rkpwm_pmu", "pclk_pmu_src", CLKGATE_CON(1), 10),
 };
 
 static int
