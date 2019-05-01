@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.197 2019/04/19 01:52:55 ozaki-r Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.198 2019/05/01 21:57:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.197 2019/04/19 01:52:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.198 2019/05/01 21:57:34 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -969,24 +969,6 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	if (p2->p_emul->e_lwp_fork)
 		(*p2->p_emul->e_lwp_fork)(l1, l2);
 
-	/* If the process is traced, report lwp creation to a debugger */
-	if ((p2->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE|PSL_SYSCALL)) ==
-	    (PSL_TRACED|PSL_TRACELWP_CREATE)) {
-		ksiginfo_t ksi;
-
-		/* Tracing */
-		KASSERT((l2->l_flag & LW_SYSTEM) == 0);
-
-		p2->p_lwp_created = l2->l_lid;
-
-		KSI_INIT_EMPTY(&ksi);
-		ksi.ksi_signo = SIGTRAP;
-		ksi.ksi_code = TRAP_LWP;
-		mutex_enter(proc_lock);
-		kpsignal(p2, &ksi, NULL);
-		mutex_exit(proc_lock);
-	}
-
 	return (0);
 }
 
@@ -1050,24 +1032,6 @@ lwp_exit(struct lwp *l)
 	 */
 	LOCKDEBUG_BARRIER(&kernel_lock, 0);
 
-	/* If the process is traced, report lwp termination to a debugger */
-	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_EXIT|PSL_SYSCALL)) ==
-	    (PSL_TRACED|PSL_TRACELWP_EXIT)) {
-		ksiginfo_t ksi;
-
-		/* Tracing */
-		KASSERT((l->l_flag & LW_SYSTEM) == 0);
-
-		p->p_lwp_exited = l->l_lid;
-
-		KSI_INIT_EMPTY(&ksi);
-		ksi.ksi_signo = SIGTRAP;
-		ksi.ksi_code = TRAP_LWP;
-		mutex_enter(proc_lock);
-		kpsignal(p, &ksi, NULL);
-		mutex_exit(proc_lock);
-	}
-
 	/*
 	 * If we are the last live LWP in a process, we need to exit the
 	 * entire process.  We do so with an exit status of zero, because
@@ -1108,10 +1072,23 @@ lwp_exit(struct lwp *l)
 	callout_destroy(&l->l_timeout_ch);
 
 	/*
+	 * If traced, report LWP exit event to the debugger.
+	 *
 	 * Remove the LWP from the global list.
 	 * Free its LID from the PID namespace if needed.
 	 */
 	mutex_enter(proc_lock);
+
+	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_EXIT|PSL_SYSCALL)) ==
+	    (PSL_TRACED|PSL_TRACELWP_EXIT)) {
+		mutex_enter(p->p_lock);
+		p->p_lwp_exited = l->l_lid;
+		eventswitch(SIGTRAP, TRAP_LWP);
+		// XXX ktrpoint(KTR_PSIG)
+		mutex_exit(p->p_lock);
+		mutex_enter(proc_lock);
+	}
+
 	LIST_REMOVE(l, l_list);
 	if ((l->l_pflag & LP_PIDLID) != 0 && l->l_lid != p->p_pid) {
 		proc_free_pid(l->l_lid);
