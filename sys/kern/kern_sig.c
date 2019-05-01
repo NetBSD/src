@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.353 2019/05/01 17:21:55 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.354 2019/05/01 18:01:54 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.353 2019/05/01 17:21:55 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.354 2019/05/01 18:01:54 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1543,6 +1543,15 @@ eventswitch(int signo, int code)
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_stat == LSONPROC);
 	KASSERT(p->p_nrlwps > 0);
+
+	/*
+	 * If there's a pending SIGKILL process it immediately.
+	 */
+	if (p->p_xsig == SIGKILL ||
+	    sigismember(&p->p_sigpend.sp_set, SIGKILL)) {
+		mutex_exit(proc_lock);
+		return;
+	}
 
 	p->p_xsig = signo;
 	p->p_sigctx.ps_faked = true;
