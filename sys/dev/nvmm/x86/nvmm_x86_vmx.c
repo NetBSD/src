@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.32 2019/04/29 18:54:26 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.33 2019/05/01 09:20:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.32 2019/04/29 18:54:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.33 2019/05/01 09:20:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -992,49 +992,53 @@ vmx_event_has_error(uint64_t vector)
 }
 
 static int
-vmx_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_event *event)
+vmx_vcpu_inject(struct nvmm_cpu *vcpu)
 {
+	struct nvmm_comm_page *comm = vcpu->comm;
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	int type = 0, err = 0, ret = EINVAL;
-	uint64_t info;
+	enum nvmm_event_type evtype;
+	uint64_t info, vector, error;
 
-	if (event->vector >= 256) {
+	evtype = comm->event.type;
+	vector = comm->event.vector;
+	error = comm->event.u.error;
+	__insn_barrier();
+
+	if (__predict_false(vector >= 256)) {
 		return EINVAL;
 	}
 
 	vmx_vmcs_enter(vcpu);
 
-	switch (event->type) {
+	switch (evtype) {
 	case NVMM_EVENT_INTERRUPT_HW:
 		type = INTR_TYPE_EXT_INT;
-		if (event->vector == 2) {
+		if (vector == 2) {
 			type = INTR_TYPE_NMI;
 			vmx_event_waitexit_enable(vcpu, true);
 		}
 		err = 0;
 		break;
-	case NVMM_EVENT_INTERRUPT_SW:
-		goto out;
 	case NVMM_EVENT_EXCEPTION:
-		if (event->vector == 2 || event->vector >= 32)
+		if (vector == 2 || vector >= 32)
 			goto out;
-		if (event->vector == 3 || event->vector == 0)
+		if (vector == 3 || vector == 0)
 			goto out;
 		type = INTR_TYPE_HW_EXC;
-		err = vmx_event_has_error(event->vector);
+		err = vmx_event_has_error(vector);
 		break;
 	default:
 		goto out;
 	}
 
 	info =
-	    __SHIFTIN(event->vector, INTR_INFO_VECTOR) |
+	    __SHIFTIN(vector, INTR_INFO_VECTOR) |
 	    __SHIFTIN(type, INTR_INFO_TYPE) |
 	    __SHIFTIN(err, INTR_INFO_ERROR) |
 	    __SHIFTIN(1, INTR_INFO_VALID);
 	vmx_vmwrite(VMCS_ENTRY_INTR_INFO, info);
-	vmx_vmwrite(VMCS_ENTRY_EXCEPTION_ERROR, event->u.error);
+	vmx_vmwrite(VMCS_ENTRY_EXCEPTION_ERROR, error);
 
 	cpudata->evt_pending = true;
 	ret = 0;
@@ -1045,31 +1049,41 @@ out:
 }
 
 static void
-vmx_inject_ud(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
+vmx_inject_ud(struct nvmm_cpu *vcpu)
 {
-	struct nvmm_event event;
+	struct nvmm_comm_page *comm = vcpu->comm;
 	int ret __diagused;
 
-	event.type = NVMM_EVENT_EXCEPTION;
-	event.vector = 6;
-	event.u.error = 0;
+	comm->event.type = NVMM_EVENT_EXCEPTION;
+	comm->event.vector = 6;
+	comm->event.u.error = 0;
 
-	ret = vmx_vcpu_inject(mach, vcpu, &event);
+	ret = vmx_vcpu_inject(vcpu);
 	KASSERT(ret == 0);
 }
 
 static void
-vmx_inject_gp(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
+vmx_inject_gp(struct nvmm_cpu *vcpu)
 {
-	struct nvmm_event event;
+	struct nvmm_comm_page *comm = vcpu->comm;
 	int ret __diagused;
 
-	event.type = NVMM_EVENT_EXCEPTION;
-	event.vector = 13;
-	event.u.error = 0;
+	comm->event.type = NVMM_EVENT_EXCEPTION;
+	comm->event.vector = 13;
+	comm->event.u.error = 0;
 
-	ret = vmx_vcpu_inject(mach, vcpu, &event);
+	ret = vmx_vcpu_inject(vcpu);
 	KASSERT(ret == 0);
+}
+
+static inline int
+vmx_vcpu_event_commit(struct nvmm_cpu *vcpu)
+{
+	if (__predict_true(!vcpu->comm->event_commit)) {
+		return 0;
+	}
+	vcpu->comm->event_commit = false;
+	return vmx_vcpu_inject(vcpu);
 }
 
 static inline void
@@ -1430,7 +1444,7 @@ vmx_exit_cr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	}
 
 	if (ret == -1) {
-		vmx_inject_gp(mach, vcpu);
+		vmx_inject_gp(vcpu);
 	}
 
 	exit->reason = NVMM_EXIT_NONE;
@@ -1575,7 +1589,7 @@ handled:
 	return true;
 
 error:
-	vmx_inject_gp(mach, vcpu);
+	vmx_inject_gp(vcpu);
 	return true;
 }
 
@@ -1642,7 +1656,7 @@ vmx_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	return;
 
 error:
-	vmx_inject_gp(mach, vcpu);
+	vmx_inject_gp(vcpu);
 }
 
 #define VMX_EPT_VIOLATION_READ		__BIT(0)
@@ -1873,6 +1887,10 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	vmx_vmcs_enter(vcpu);
 
+	if (__predict_false(vmx_vcpu_event_commit(vcpu) != 0)) {
+		vmx_vmcs_leave(vcpu);
+		return EINVAL;
+	}
 	vmx_vcpu_state_commit(vcpu);
 	comm->state_cached = 0;
 
@@ -1984,7 +2002,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		case VMCS_EXITCODE_VMWRITE:
 		case VMCS_EXITCODE_VMXOFF:
 		case VMCS_EXITCODE_VMXON:
-			vmx_inject_ud(mach, vcpu);
+			vmx_inject_ud(vcpu);
 			exit->reason = NVMM_EXIT_NONE;
 			break;
 		case VMCS_EXITCODE_EPT_VIOLATION:
