@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.63 2018/01/30 07:52:23 ozaki-r Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.64 2019/05/01 21:57:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.63 2018/01/30 07:52:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.64 2019/05/01 21:57:34 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,34 @@ lwp_sys_init(void)
 	sleeptab_init(&lwp_park_tab);
 }
 
+static void
+mi_startlwp(void *arg)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+
+	/* If the process is traced, report lwp creation to a debugger */
+	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE|PSL_SYSCALL)) ==
+	    (PSL_TRACED|PSL_TRACELWP_CREATE)) {
+		/* Paranoid check */
+		mutex_enter(proc_lock);
+		if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE|PSL_SYSCALL)) !=
+		    (PSL_TRACED|PSL_TRACELWP_CREATE)) {
+			mutex_exit(proc_lock);
+			goto my_tracer_is_gone;
+		}
+
+		mutex_enter(p->p_lock);
+		p->p_lwp_created = l->l_lid;
+		eventswitch(SIGTRAP, TRAP_LWP);
+		// XXX ktrpoint(KTR_PSIG)
+		mutex_exit(p->p_lock);
+	}
+
+my_tracer_is_gone:
+	(p->p_emul->e_startlwp)(arg);
+}
+
 int
 do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp,
     const sigset_t *sigmask, const stack_t *sigstk)
@@ -86,7 +114,7 @@ do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp,
 		return ENOMEM;
 
 	error = lwp_create(l, p, uaddr, flags & LWP_DETACHED, NULL, 0,
-	    p->p_emul->e_startlwp, arg, &l2, l->l_class, sigmask, &SS_INIT);
+	    mi_startlwp, arg, &l2, l->l_class, sigmask, &SS_INIT);
 	if (__predict_false(error)) {
 		uvm_uarea_free(uaddr);
 		return error;
