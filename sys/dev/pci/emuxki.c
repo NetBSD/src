@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.67.2.4 2019/05/01 06:34:46 isaki Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.67.2.5 2019/05/01 09:41:50 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67.2.4 2019/05/01 06:34:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67.2.5 2019/05/01 09:41:50 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67.2.4 2019/05/01 06:34:46 isaki Exp $"
 # define DPRINTF(fmt...)	do { if (emudebug) printf(fmt); } while (0)
 # define DPRINTFN(n,fmt...)	do { if (emudebug>=(n)) printf(fmt); } while (0)
 #else
-# define DPRINTF(fmt...)	do { } while (0)
-# define DPRINTFN(n,fmt...)	do { } while (0)
+# define DPRINTF(fmt...)	__nothing
+# define DPRINTFN(n,fmt...)	__nothing
 #endif
 
 /*
