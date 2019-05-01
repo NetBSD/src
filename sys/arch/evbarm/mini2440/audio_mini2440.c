@@ -285,7 +285,7 @@ uda_ssio_set_format(void *handle, int setmode,
 	s3c2440_i2s_set_sample_width(sc->sc_i2s_handle, 16);
 
 	/* It is vital that sc_system_clock is set PRIOR to calling
-	   uda1341_set_params. */
+	   uda1341_set_format. */
 	switch (s3c2440_i2s_get_master_clock(sc->sc_i2s_handle)) {
 	case 384:
 		uc->sc_system_clock = UDA1341_CLOCK_384;
