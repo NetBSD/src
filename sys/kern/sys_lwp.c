@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.64 2019/05/01 21:57:34 kamil Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.65 2019/05/01 22:55:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.64 2019/05/01 21:57:34 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.65 2019/05/01 22:55:55 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,8 @@ mi_startlwp(void *arg)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 
+	(p->p_emul->e_startlwp)(arg);
+
 	/* If the process is traced, report lwp creation to a debugger */
 	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE|PSL_SYSCALL)) ==
 	    (PSL_TRACED|PSL_TRACELWP_CREATE)) {
@@ -83,7 +85,7 @@ mi_startlwp(void *arg)
 		if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE|PSL_SYSCALL)) !=
 		    (PSL_TRACED|PSL_TRACELWP_CREATE)) {
 			mutex_exit(proc_lock);
-			goto my_tracer_is_gone;
+			return;
 		}
 
 		mutex_enter(p->p_lock);
@@ -92,9 +94,6 @@ mi_startlwp(void *arg)
 		// XXX ktrpoint(KTR_PSIG)
 		mutex_exit(p->p_lock);
 	}
-
-my_tracer_is_gone:
-	(p->p_emul->e_startlwp)(arg);
 }
 
 int
