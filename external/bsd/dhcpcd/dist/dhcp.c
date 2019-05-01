@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.15.2.2 2015/02/05 15:13:12 martin Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.15.2.2.2.1 2019/05/01 09:26:23 martin Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -166,28 +166,6 @@ get_option(struct dhcpcd_ctx *ctx,
 
 	while (p < e) {
 		o = *p++;
-		if (o == opt) {
-			if (op) {
-				if (!ctx->opt_buffer) {
-					ctx->opt_buffer =
-					    malloc(DHCP_OPTION_LEN +
-					    BOOTFILE_LEN + SERVERNAME_LEN);
-					if (ctx->opt_buffer == NULL)
-						return NULL;
-				}
-				if (!bp)
-					bp = ctx->opt_buffer;
-				memcpy(bp, op, ol);
-				bp += ol;
-			}
-			ol = *p;
-			if (p + ol > e) {
-				errno = EINVAL;
-				return NULL;
-			}
-			op = p + 1;
-			bl += ol;
-		}
 		switch (o) {
 		case DHO_PAD:
 			continue;
@@ -205,16 +183,58 @@ get_option(struct dhcpcd_ctx *ctx,
 			} else
 				goto exit;
 			break;
-		case DHO_OPTIONSOVERLOADED:
+		}
+
+		/* Check we can read the length */
+		if (p == e) {
+			errno = EINVAL;
+			return NULL;
+		}
+		l = *p++;
+
+		/* Check we can read the option data, if present */
+		if (p + l > e) {
+			errno = EINVAL;
+			return NULL;
+		}
+
+		if (o == DHO_OPTIONSOVERLOADED) {
 			/* Ensure we only get this option once by setting
 			 * the last bit as well as the value.
 			 * This is valid because only the first two bits
 			 * actually mean anything in RFC2132 Section 9.3 */
-			if (!overl)
-				overl = 0x80 | p[1];
-			break;
+			if (l == 1 && !overl)
+				overl = 0x80 | p[0];
 		}
-		l = *p++;
+
+		if (o == opt) {
+			if (op) {
+				/* We must concatonate the options. */
+				if (bl + l > ctx->opt_buffer_len) {
+					size_t pos;
+					uint8_t *nb;
+
+					if (bp)
+						pos = (size_t)
+						    (bp - ctx->opt_buffer);
+					else
+						pos = 0;
+					nb = realloc(ctx->opt_buffer, bl + l);
+					if (nb == NULL)
+						return NULL;
+					ctx->opt_buffer = nb;
+					ctx->opt_buffer_len = bl + l;
+					bp = ctx->opt_buffer + pos;
+				}
+				if (bp == NULL)
+					bp = ctx->opt_buffer;
+				memcpy(bp, op, ol);
+				bp += ol;
+			}
+			ol = l;
+			op = p;
+			bl += ol;
+		}
 		p += l;
 	}
 
