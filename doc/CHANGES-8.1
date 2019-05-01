@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.137 2019/04/28 08:46:17 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.138 2019/05/01 09:13:31 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -3045,4 +3045,22 @@ external/bsd/dhcpcd/sbin/dhcpcd/Makefile        up to 1.45
 
 	Import dhcpcd-7.2.1.
 	[roy, ticket #1250]
+
+sys/dev/veriexec.config				1.1 (patch)
+
+	Add a configuration file for enabling Veriexec in kernel config(5)
+	files.
+	[sevan, ticket #1251]
+
+distrib/amd64/ramdisks/ramdisk-cgdroot/list	1.2
+distrib/i386/ramdisks/ramdisk-cgdroot/list	1.2
+
+	Add a symlink to /altroot/stand to help the kernel find modules.
+	[alnsn, ticket #1252]
+
+sys/kern/sys_pipe.c				1.147,1.148
+
+	Clean up pipe structure before recycling it.
+	Handle half-closed pipes in FIONWRITE and FIONSPACE.
+	[mlelstv, ticket #1253]
 
