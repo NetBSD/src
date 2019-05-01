@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.352 2019/04/03 08:34:33 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.353 2019/05/01 17:21:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.352 2019/04/03 08:34:33 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.353 2019/05/01 17:21:55 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -914,11 +914,7 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 
 	if (ISSET(p->p_slflag, PSL_TRACED) &&
 	    !(p->p_pptr == p->p_opptr && ISSET(p->p_lflag, PL_PPWAIT))) {
-		p->p_xsig = signo;
-		p->p_sigctx.ps_faked = true; // XXX
-		p->p_sigctx.ps_info._signo = signo;
-		p->p_sigctx.ps_info._code = ksi->ksi_code;
-		sigswitch(0, signo, false);
+		eventswitch(signo, ksi->ksi_code);
 		// XXX ktrpoint(KTR_PSIG)
 		mutex_exit(p->p_lock);
 		return;
@@ -1535,6 +1531,25 @@ proc_stop_done(struct proc *p, int ppmask)
 		child_psignal(p, ppmask);
 		cv_broadcast(&p->p_pptr->p_waitcv);
 	}
+}
+
+void
+eventswitch(int signo, int code)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+
+	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(p->p_lock));
+	KASSERT(l->l_stat == LSONPROC);
+	KASSERT(p->p_nrlwps > 0);
+
+	p->p_xsig = signo;
+	p->p_sigctx.ps_faked = true;
+	p->p_sigctx.ps_info._signo = signo;
+	p->p_sigctx.ps_info._code = code;
+
+	sigswitch(0, signo, false);
 }
 
 /*
