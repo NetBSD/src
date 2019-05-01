@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.140 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.140.12.1 2019/05/01 14:51:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.140 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.140.12.1 2019/05/01 14:51:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1107,10 +1107,12 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 
 	case FIONWRITE:
 		/* Look at other side */
-		pipe = pipe->pipe_peer;
 		mutex_enter(lock);
+		pipe = pipe->pipe_peer;
+		if (pipe == NULL)
+			*(int *)data = 0;
 #ifndef PIPE_NODIRECT
-		if (pipe->pipe_state & PIPE_DIRECTW)
+		else if (pipe->pipe_state & PIPE_DIRECTW)
 			*(int *)data = pipe->pipe_map.cnt;
 		else
 #endif
@@ -1120,8 +1122,11 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 
 	case FIONSPACE:
 		/* Look at other side */
-		pipe = pipe->pipe_peer;
 		mutex_enter(lock);
+		pipe = pipe->pipe_peer;
+		if (pipe == NULL)
+			*(int *)data = 0;
+		else
 #ifndef PIPE_NODIRECT
 		/*
 		 * If we're in direct-mode, we don't really have a
@@ -1346,6 +1351,8 @@ pipeclose(struct pipe *pipe)
     free_resources:
 	pipe->pipe_pgid = 0;
 	pipe->pipe_state = PIPE_SIGNALR;
+	pipe->pipe_peer = NULL;
+	pipe->pipe_lock = NULL;
 	pipe_free_kmem(pipe);
 	if (pipe->pipe_kmem != 0) {
 		pool_cache_put(pipe_rd_cache, pipe);
