@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.331 2019/04/25 05:12:49 pgoyette Exp $
+#	$NetBSD: build.sh,v 1.332 2019/05/02 02:51:01 mrg Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1416,6 +1416,7 @@ parseoptions()
 		[ "${uname_s}" = "NetBSD" ] ||
 		    bomb "MACHINE must be set, or -m must be used, for cross builds."
 		MACHINE=${uname_m}
+		MACHINE_ARCH=${uname_p}
 	fi
 	if $opt_m && ! $opt_a; then
 		# Settings implied by the command line -m option
@@ -1936,7 +1937,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.331 2019/04/25 05:12:49 pgoyette Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.332 2019/05/02 02:51:01 mrg Exp $
 # with these arguments: ${_args}
 #
 
