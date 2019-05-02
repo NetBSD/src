@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.65 2019/05/01 22:55:55 kamil Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.66 2019/05/02 22:23:49 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.65 2019/05/01 22:55:55 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.66 2019/05/02 22:23:49 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,12 +78,12 @@ mi_startlwp(void *arg)
 	(p->p_emul->e_startlwp)(arg);
 
 	/* If the process is traced, report lwp creation to a debugger */
-	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE|PSL_SYSCALL)) ==
+	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE)) ==
 	    (PSL_TRACED|PSL_TRACELWP_CREATE)) {
 		/* Paranoid check */
 		mutex_enter(proc_lock);
-		if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE|PSL_SYSCALL)) !=
-		    (PSL_TRACED|PSL_TRACELWP_CREATE)) {
+		if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE)) !=
+		    (PSL_TRACED|PSL_TRACELWP_CREATE)) { 
 			mutex_exit(proc_lock);
 			return;
 		}
