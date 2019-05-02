@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.198 2019/05/01 21:57:34 kamil Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.199 2019/05/02 22:23:49 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.198 2019/05/01 21:57:34 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.199 2019/05/02 22:23:49 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1079,7 +1079,7 @@ lwp_exit(struct lwp *l)
 	 */
 	mutex_enter(proc_lock);
 
-	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_EXIT|PSL_SYSCALL)) ==
+	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_EXIT)) ==
 	    (PSL_TRACED|PSL_TRACELWP_EXIT)) {
 		mutex_enter(p->p_lock);
 		p->p_lwp_exited = l->l_lid;
