@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.355 2019/05/01 21:52:35 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.356 2019/05/02 22:23:49 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.355 2019/05/01 21:52:35 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.356 2019/05/02 22:23:49 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -913,8 +913,14 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	mutex_enter(p->p_lock);
 
 	if (ISSET(p->p_slflag, PSL_TRACED) &&
-	    !(p->p_pptr == p->p_opptr && ISSET(p->p_lflag, PL_PPWAIT))) {
-		eventswitch(signo, ksi->ksi_code);
+	    !(p->p_pptr == p->p_opptr && ISSET(p->p_lflag, PL_PPWAIT)) &&
+	    p->p_xsig != SIGKILL &&
+	    !sigismember(&p->p_sigpend.sp_set, SIGKILL)) {
+		p->p_xsig = signo;
+		p->p_sigctx.ps_faked = true;
+		p->p_sigctx.ps_lwp = ksi->ksi_lid;
+		p->p_sigctx.ps_info = ksi->ksi_info;
+		sigswitch(0, signo, false);
 		// XXX ktrpoint(KTR_PSIG)
 		mutex_exit(p->p_lock);
 		return;
@@ -1556,6 +1562,8 @@ eventswitch(int signo, int code)
 
 	p->p_xsig = signo;
 	p->p_sigctx.ps_faked = true;
+	p->p_sigctx.ps_lwp = l->l_lid;
+	memset(&p->p_sigctx.ps_info, 0, sizeof(p->p_sigctx.ps_info));
 	p->p_sigctx.ps_info._signo = signo;
 	p->p_sigctx.ps_info._code = code;
 
