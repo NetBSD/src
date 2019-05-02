@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15 2019/05/02 16:55:50 scole Exp $
+#	$NetBSD: genassym.cf,v 1.16 2019/05/02 17:31:56 scole Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,8 +85,8 @@ define	KSTACK_PAGES		KSTACK_PAGES
 
 define	IA64_VM_MINKERN_REGION	IA64_VM_MINKERN_REGION
 define	IA64_PBVM_RR		IA64_PBVM_RR
-define  IA64_PBVM_PAGE_SHIFT	IA64_PBVM_PAGE_SHIFT
-define  IA64_PSR_I		IA64_PSR_I
+define	IA64_PBVM_PAGE_SHIFT	IA64_PBVM_PAGE_SHIFT
+define	IA64_PSR_I		IA64_PSR_I
 define	IA64_PSR_DT		IA64_PSR_DT
 define	IA64_PSR_DFL		IA64_PSR_DFL
 define	IA64_PSR_DFH		IA64_PSR_DFH
@@ -95,7 +95,7 @@ define	IA64_PSR_RT		IA64_PSR_RT
 define	IA64_PSR_BN		IA64_PSR_BN
 define	IA64_PBVM_BASE		IA64_PBVM_BASE
 define	IA64_PBVM_PGTBL		IA64_PBVM_PGTBL
-define  IA64_DCR_DEFAULT	IA64_DCR_DEFAULT
+define	IA64_DCR_DEFAULT	IA64_DCR_DEFAULT
 
 define	PTE_PRESENT		PTE_PRESENT
 define	PTE_ACCESSED		PTE_ACCESSED
@@ -112,9 +112,12 @@ define	EFAULT			EFAULT
 # Important offsets into the lwp and proc structs & associated constants
 define	L_PCB			offsetof(struct lwp, l_addr)
 
-define  SIZEOF_PCB		sizeof(struct pcb)
-define  SIZEOF_TRAPFRAME	sizeof(struct trapframe)
+define	SIZEOF_PCB		sizeof(struct pcb)
+define	SIZEOF_TRAPFRAME	sizeof(struct trapframe)
 define	SIZEOF_SPECIAL		sizeof(struct _special)
+
+define	MC_SPECIAL		offsetof(struct __mcontext, mc_special)
+define	UC_MCONTEXT		offsetof(struct __ucontext, uc_mcontext)
 
 # general constants 
 define	VM_MAX_ADDRESS		VM_MAX_ADDRESS
@@ -122,7 +125,7 @@ define	VM_MAX_ADDRESS		VM_MAX_ADDRESS
 # Important offsets into the user struct & associated constants
 define	UPAGES			UPAGES
 
-define 	FRAME_SYSCALL		FRAME_SYSCALL
+define	FRAME_SYSCALL		FRAME_SYSCALL
 
 define	PC_CURLWP		offsetof(struct cpu_info, ci_curlwp) 
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault) 
