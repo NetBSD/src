@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.51 2019/05/01 17:02:40 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.52 2019/05/02 00:23:01 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.51 2019/05/01 17:02:40 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.52 2019/05/02 00:23:01 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1106,10 +1106,12 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		piod.piod_op = write ? PIOD_WRITE_D : PIOD_READ_D;
 		if ((error = ptrace_doio(l, t, lt, &piod, addr, true)) != 0)
 			break;
+#if 0 // XXX: GDB depends on it
 		if (piod.piod_len < sizeof(tmp)) {
 			error = EIO;
 			break;
 		}
+#endif
 		if (!write)
 			*retval = tmp;
 		break;
@@ -1123,10 +1125,12 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		}
 		if ((error = ptrace_doio(l, t, lt, &piod, addr, false)) != 0)
 			break;
+#if 0 // XXX: GDB depends on it
 		if (piod.piod_len < 1) {
 			error = EIO;
 			break;
 		}
+#endif
 		error = ptm->ptm_copyout_piod(&piod, addr, data);
 		break;
 
