@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_reg.h,v 1.10 2018/11/24 15:40:57 skrll Exp $	*/
+/*	$NetBSD: gic_reg.h,v 1.11 2019/05/02 23:07:40 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -138,7 +138,7 @@
 #define	GICD_SGIR		0xF00 // Software Generated Interrupt Register
 #define	GICD_CPENDSGIR(n)	(0xF10+4*(n)) // SGI Clear-Pending Registers
 #define	GICD_SPENDSGIR(n)	(0xF20+4*(n)) // SGI Set-Pending Registers
-#define	GICD_IROUTER(n)		(0x6100+8*(n)) // Interrupt Routing Registers
+#define	GICD_IROUTER(n)		(0x6000+8*(n)) // Interrupt Routing Registers
 
 #define	GICD_CTRL_RWP			__BIT(31)	// GICv3
 #define	GICD_CTRL_E1NWF			__BIT(7)	// GICv3
