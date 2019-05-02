@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.118 2019/05/01 23:44:16 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.119 2019/05/02 00:34:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.118 2019/05/01 23:44:16 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.119 2019/05/02 00:34:06 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5359,7 +5359,8 @@ trace_threads(bool trace_create, bool trace_exit)
 	/* Track created and exited threads */
 	bool traced_lwps[__arraycount(t)];
 
-	atf_tc_skip("PR kern/51995");
+	if (trace_exit)
+		atf_tc_skip("PR kern/51995");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -5532,10 +5533,10 @@ ATF_TC_BODY(test, tc)							\
         trace_threads(trace_create, trace_exit);			\
 }
 
-TRACE_THREADS(trace_thread1, false, false)
-TRACE_THREADS(trace_thread2, false, true)
-TRACE_THREADS(trace_thread3, true, false)
-TRACE_THREADS(trace_thread4, true, true)
+TRACE_THREADS(trace_thread_nolwpevents, false, false)
+TRACE_THREADS(trace_thread_lwpexit, false, true)
+TRACE_THREADS(trace_thread_lwpcreate, true, false)
+TRACE_THREADS(trace_thread_lwpcreate_and_exit, true, true)
 
 /// ----------------------------------------------------------------------------
 
@@ -7772,10 +7773,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_signalmasked_exec);
 	ATF_TP_ADD_TC(tp, traceme_signalignored_exec);
 
-	ATF_TP_ADD_TC(tp, trace_thread1);
-	ATF_TP_ADD_TC(tp, trace_thread2);
-	ATF_TP_ADD_TC(tp, trace_thread3);
-	ATF_TP_ADD_TC(tp, trace_thread4);
+	ATF_TP_ADD_TC(tp, trace_thread_nolwpevents);
+	ATF_TP_ADD_TC(tp, trace_thread_lwpexit);
+	ATF_TP_ADD_TC(tp, trace_thread_lwpcreate);
+	ATF_TP_ADD_TC(tp, trace_thread_lwpcreate_and_exit);
 
 	ATF_TP_ADD_TC(tp, signal_mask_unrelated);
 
