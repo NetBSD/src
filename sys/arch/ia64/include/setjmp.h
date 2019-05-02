@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.2 2006/09/10 21:16:56 cherry Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.3 2019/05/02 16:55:51 scole Exp $	*/
 
 /*-
  * Copyright (c) 2000
@@ -44,10 +44,6 @@
 #ifndef _MACHINE_SETJMP_H_
 #define	_MACHINE_SETJMP_H_
 
-#include <sys/cdefs.h>
-
-#define	JMPBUF_ADDR_OF(buf, item)	((unsigned long)((char *)buf + item))
-
 #define	J_UNAT		0
 #define	J_NATS		0x8
 #define	J_PFS		0x10
@@ -91,11 +87,5 @@
 #define	J_SIGSET	0x1e0
 
 #define	_JBLEN		0x200			/* Size in long XXX: Set to sizeof(mcontext_t)/sizeof(long) */
-
-#ifdef _KERNEL
-#ifdef CTASSERT
-CTASSERT(sizeof(struct _jmp_buf) == 512);
-#endif
-#endif
 
 #endif /* !_MACHINE_SETJMP_H_ */
