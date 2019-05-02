@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.5 2019/04/28 00:01:13 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.6 2019/05/02 14:57:01 taca Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -6466,6 +6466,7 @@ directory_callback(const char *clausename, const cfg_obj_t *obj, void *arg) {
 			    "option 'directory' contains relative path '%s'",
 			    directory);
 
+#if 0
 	if (!isc_file_isdirwritable(directory)) {
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 			      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
@@ -6473,6 +6474,7 @@ directory_callback(const char *clausename, const cfg_obj_t *obj, void *arg) {
 			      directory);
 		return (ISC_R_NOPERM);
 	}
+#endif
 
 	result = isc_dir_chdir(directory);
 	if (result != ISC_R_SUCCESS) {
