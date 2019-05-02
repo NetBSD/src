@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.119 2019/05/02 00:34:06 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.120 2019/05/02 22:52:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.119 2019/05/02 00:34:06 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.120 2019/05/02 22:52:21 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4063,10 +4063,10 @@ bytes_transfer_alignment(const char *operation)
 		errno = 0;
 		i = 0;
 		/* Read the whole AUXV vector, it has no clear length */
-		while (errno != EIO) {
+		while (io.piod_len > 0) {
 			io.piod_offs = (void *)(intptr_t)i;
 			SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, sizeof(io))
-			                != -1 || (errno == EIO && i > 0));
+			                != -1 || (io.piod_len == 0 && i > 0));
 			++i;
 		}
 	}
@@ -5359,7 +5359,7 @@ trace_threads(bool trace_create, bool trace_exit)
 	/* Track created and exited threads */
 	bool traced_lwps[__arraycount(t)];
 
-	if (trace_exit)
+	if (trace_create || trace_exit)
 		atf_tc_skip("PR kern/51995");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
