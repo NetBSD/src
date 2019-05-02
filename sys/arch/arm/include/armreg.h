@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.126 2019/05/02 11:49:04 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.127 2019/05/02 15:37:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -870,8 +870,8 @@ ARMREG_READ_INLINE(l2ctrl, "p15,1,%0,c9,c0,2") /* A7/A15 L2 Control Register */
 /* cp10 c10 registers */
 ARMREG_READ_INLINE(prrr, "p15,0,%0,c10,c2,0") /* Primary Region Remap Register */
 ARMREG_WRITE_INLINE(prrr, "p15,0,%0,c10,c2,0") /* Primary Region Remap Register */
-ARMREG_READ_INLINE(nmrr, "p15,0,%0,c10,c2,1") /* Normal Region Remap Register */
-ARMREG_WRITE_INLINE(nmrr, "p15,0,%0,c10,c2,1") /* Normal Region Remap Register */
+ARMREG_READ_INLINE(nmrr, "p15,0,%0,c10,c2,1") /* Normal Memory Remap Register */
+ARMREG_WRITE_INLINE(nmrr, "p15,0,%0,c10,c2,1") /* Normal Memory Remap Register */
 /* cp15 c13 registers */
 ARMREG_READ_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
 ARMREG_WRITE_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
