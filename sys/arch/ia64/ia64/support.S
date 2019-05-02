@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.8 2019/04/06 03:06:25 thorpej Exp $	*/
+/*	$NetBSD: support.S,v 1.9 2019/05/02 16:55:50 scole Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -56,7 +56,6 @@
  */
 
 #include <machine/asm.h>
-#include <machine/ia64_cpu.h>
 
 #include "assym.h"
 
