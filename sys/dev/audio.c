@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.459 2019/02/27 02:27:38 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.460 2019/05/02 09:19:28 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.459 2019/02/27 02:27:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.460 2019/05/02 09:19:28 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2366,8 +2366,11 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 bad:
 	audio_destroy_pfilters(vc);
 	audio_destroy_rfilters(vc);
-	if (hw->close != NULL && sc->sc_opens == 0 && sc->sc_recopens == 0)
+	if (hw->close != NULL && sc->sc_opens == 0 && sc->sc_recopens == 0) {
+		mutex_enter(sc->sc_intr_lock);
 		hw->close(sc->hw_hdl);
+		mutex_exit(sc->sc_intr_lock);
+	}
 	mutex_exit(sc->sc_lock);
 	if (sc->sc_usemixer) {
 		audio_free_ring(sc, &vc->sc_mpr);
