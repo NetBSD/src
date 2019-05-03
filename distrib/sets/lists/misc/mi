@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.210 2018/12/19 13:57:44 maxv Exp $
+# $NetBSD: mi,v 1.211 2019/05/03 11:29:06 sevan Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1610,7 +1610,7 @@
 ./usr/share/examples/supfiles/sup.au.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.de.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.jp.netbsd.org	misc-sup-examples	share
-./usr/share/examples/supfiles/sup.netbsd.org	misc-sup-examples	share
+./usr/share/examples/supfiles/sup.netbsd.org	misc-sup-examples	obsolete
 ./usr/share/examples/supfiles/sup.no.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.uk.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-sup-examples	share
