@@ -360,6 +360,17 @@ nbsd_wait (struct target_ops *ops,
 {
   ptid_t wptid;
 
+  /*
+   * Always perform polling on exact PID, overwrite the default polling on
+   * WAIT_ANY.
+   *
+   * This avoids events reported in random order reported for FORK / VFORK
+   * when child and parent events are otherwise reported in random order.
+   *
+   * Polling on traced parent always simplifies the code.
+   */
+  ptid = inferior_ptid;
+
   if (debug_nbsd_lwp)
     fprintf_unfiltered (gdb_stdlog, "NLWP: calling super_wait (%d, %ld, %ld) target_options=%#x\n",
                         ptid_get_pid (ptid), ptid_get_lwp (ptid),
