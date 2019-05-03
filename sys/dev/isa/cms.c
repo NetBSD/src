@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.22 2016/12/10 17:41:44 maya Exp $ */
+/* $NetBSD: cms.c,v 1.22.20.1 2019/05/03 06:19:42 isaki Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.22 2016/12/10 17:41:44 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.22.20.1 2019/05/03 06:19:42 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.22 2016/12/10 17:41:44 maya Exp $");
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/audiovar.h>
 
 #include <sys/midiio.h>
 #include <dev/midi_if.h>

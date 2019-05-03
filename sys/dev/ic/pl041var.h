@@ -1,4 +1,4 @@
-/* $NetBSD: pl041var.h,v 1.1.16.1 2019/04/27 11:52:53 isaki Exp $ */
+/* $NetBSD: pl041var.h,v 1.1.16.2 2019/05/03 06:19:42 isaki Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,6 @@
 #ifndef _PL041VAR_H
 #define _PL041VAR_H
 
-#include <dev/audiovar.h>
 #include <dev/ic/ac97var.h>
 
 struct aaci_softc {

@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.25.2.1 2019/04/21 14:00:19 isaki Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.25.2.2 2019/05/03 06:19:42 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.25.2.1 2019/04/21 14:00:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.25.2.2 2019/05/03 06:19:42 isaki Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.25.2.1 2019/04/21 14:00:19 isaki Exp $
 #include <sys/audioio.h>
 
 #include <dev/audio_if.h>
-#include <dev/audiovar.h>
 #include <dev/ic/msm6258var.h>
 
 static inline uint8_t	pcm2adpcm_step(struct msm6258_codecvar *, int16_t);
