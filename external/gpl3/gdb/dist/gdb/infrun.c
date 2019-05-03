@@ -3874,7 +3874,11 @@ fetch_inferior_event (void *client_data)
   struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
   struct cleanup *ts_old_chain;
   int cmd_done = 0;
+#if defined(__NetBSD__)
+  ptid_t waiton_ptid = inferior_ptid;
+#else
   ptid_t waiton_ptid = minus_one_ptid;
+#endif
 
   memset (ecs, 0, sizeof (*ecs));
 
