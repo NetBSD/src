@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.65 2014/03/24 18:39:57 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.66 2019/05/03 01:08:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65 2014/03/24 18:39:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66 2019/05/03 01:08:28 tsutsui Exp $");
 
 #include "opt_md.h"
 
@@ -73,10 +73,14 @@ cpu_configure(void)
 
 	atari_realconfig = 1;
 
+	(void)splhigh();
+
 	init_sicallback();
 
 	if (config_rootfound("mainbus", __UNCONST("mainbus")) == NULL)
 		panic("no mainbus found");
+
+	(void)spl0();
 }
 
 void
