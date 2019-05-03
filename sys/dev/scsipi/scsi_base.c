@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.92 2017/06/17 22:35:50 mlelstv Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.93 2019/05/03 16:06:56 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.92 2017/06/17 22:35:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.93 2019/05/03 16:06:56 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,9 +136,17 @@ scsi_kill_pending(struct scsipi_periph *periph)
 static void
 scsi_print_xfer_mode(struct scsipi_periph *periph)
 {
+	struct scsipi_channel *chan = periph->periph_channel;
+	struct scsipi_adapter *adapt = chan->chan_adapter;
 	int period, freq, speed, mbs;
 
-	aprint_normal_dev(periph->periph_dev, "");
+	if (periph->periph_dev)
+		aprint_normal_dev(periph->periph_dev, "");
+	else
+		aprint_normal("probe(%s:%d:%d:%d): ",
+			device_xname(adapt->adapt_dev),
+			chan->chan_channel, periph->periph_target,
+			periph->periph_lun);
 	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
 		period = scsipi_sync_factor_to_period(periph->periph_period);
 		aprint_normal("sync (%d.%02dns offset %d)",
