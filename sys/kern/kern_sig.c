@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.356 2019/05/02 22:23:49 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.357 2019/05/03 22:34:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.356 2019/05/02 22:23:49 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.357 2019/05/03 22:34:21 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -902,6 +902,7 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	struct sigacts	*ps;
 	int signo = ksi->ksi_signo;
 	sigset_t *mask;
+	sig_t action;
 
 	KASSERT(KSI_TRAP_P(ksi));
 
@@ -912,6 +913,10 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	mutex_enter(proc_lock);
 	mutex_enter(p->p_lock);
 
+	mask = &l->l_sigmask;
+	ps = p->p_sigacts;
+	action = SIGACTION_PS(ps, signo).sa_handler;
+
 	if (ISSET(p->p_slflag, PSL_TRACED) &&
 	    !(p->p_pptr == p->p_opptr && ISSET(p->p_lflag, PL_PPWAIT)) &&
 	    p->p_xsig != SIGKILL &&
@@ -921,13 +926,15 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 		p->p_sigctx.ps_lwp = ksi->ksi_lid;
 		p->p_sigctx.ps_info = ksi->ksi_info;
 		sigswitch(0, signo, false);
-		// XXX ktrpoint(KTR_PSIG)
-		mutex_exit(p->p_lock);
+
+		if (ktrpoint(KTR_PSIG)) {
+			if (p->p_emul->e_ktrpsig)
+				p->p_emul->e_ktrpsig(signo, action, mask, ksi);
+			else
+				ktrpsig(signo, action, mask, ksi);
+		}
 		return;
 	}
-
-	mask = &l->l_sigmask;
-	ps = p->p_sigacts;
 
 	const bool caught = sigismember(&p->p_sigctx.ps_sigcatch, signo);
 	const bool masked = sigismember(mask, signo);
@@ -936,15 +943,12 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 		l->l_ru.ru_nsignals++;
 		kpsendsig(l, ksi, mask);
 		mutex_exit(p->p_lock);
+
 		if (ktrpoint(KTR_PSIG)) {
 			if (p->p_emul->e_ktrpsig)
-				p->p_emul->e_ktrpsig(signo,
-				    SIGACTION_PS(ps, signo).sa_handler,
-				    mask, ksi);
+				p->p_emul->e_ktrpsig(signo, action, mask, ksi);
 			else
-				ktrpsig(signo, 
-				    SIGACTION_PS(ps, signo).sa_handler,
-				    mask, ksi);
+				ktrpsig(signo, action, mask, ksi);
 		}
 		return;
 	}
@@ -954,7 +958,7 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	 * reset it to the default action so that the process or
 	 * its tracer will be notified.
 	 */
-	const bool ignored = SIGACTION_PS(ps, signo).sa_handler == SIG_IGN;
+	const bool ignored = action == SIG_IGN;
 	if (masked || ignored) {
 		mutex_enter(&ps->sa_mutex);
 		sigdelset(mask, signo);	
@@ -1539,35 +1543,68 @@ proc_stop_done(struct proc *p, int ppmask)
 	}
 }
 
+/*
+ * Stop the current process and switch away to the debugger notifying
+ * an event specific to a traced process only.
+ */
 void
-eventswitch(int signo, int code)
+eventswitch(int code)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct sigacts *ps;
+	sigset_t *mask;
+	sig_t action;
+	ksiginfo_t ksi;
+	const int signo = SIGTRAP;
 
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
+	KASSERT(p->p_pptr != initproc);
 	KASSERT(l->l_stat == LSONPROC);
-	KASSERT((l->l_flag & LW_SYSTEM) == 0);
+	KASSERT(ISSET(p->p_slflag, PSL_TRACED));
+	KASSERT(!ISSET(l->l_flag, LW_SYSTEM));
 	KASSERT(p->p_nrlwps > 0);
+	KASSERT((code == TRAP_CHLD) || (code == TRAP_LWP) ||
+	        (code == TRAP_EXEC));
 
 	/*
 	 * If there's a pending SIGKILL process it immediately.
 	 */
 	if (p->p_xsig == SIGKILL ||
 	    sigismember(&p->p_sigpend.sp_set, SIGKILL)) {
+		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 		return;
 	}
 
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_lid = l->l_lid;
+	ksi.ksi_info._signo = signo;
+	ksi.ksi_info._code = code;
+
+	/* Needed for ktrace */
+	ps = p->p_sigacts;
+	action = SIGACTION_PS(ps, signo).sa_handler;
+	mask = &l->l_sigmask;
+
 	p->p_xsig = signo;
 	p->p_sigctx.ps_faked = true;
-	p->p_sigctx.ps_lwp = l->l_lid;
-	memset(&p->p_sigctx.ps_info, 0, sizeof(p->p_sigctx.ps_info));
-	p->p_sigctx.ps_info._signo = signo;
-	p->p_sigctx.ps_info._code = code;
+	p->p_sigctx.ps_lwp = ksi.ksi_lid;
+	p->p_sigctx.ps_info = ksi.ksi_info;
 
 	sigswitch(0, signo, false);
+
+	/* XXX: hangs for VFORK */
+	if (code == TRAP_CHLD)
+		return;
+
+	if (ktrpoint(KTR_PSIG)) {
+		if (p->p_emul->e_ktrpsig)
+			p->p_emul->e_ktrpsig(signo, action, mask, &ksi);
+		else
+			ktrpsig(signo, action, mask, &ksi);
+	}
 }
 
 /*
@@ -1633,7 +1670,6 @@ sigswitch(int ppmask, int signo, bool relock)
 	lwp_lock(l);
 	mi_switch(l);
 	KERNEL_LOCK(biglocks, l);
-	mutex_enter(p->p_lock);
 }
 
 /*
@@ -1711,6 +1747,7 @@ issignal(struct lwp *l)
 		 */
 		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
 			sigswitch(PS_NOCLDSTOP, 0, true);
+			mutex_enter(p->p_lock);
 			signo = sigchecktrace();
 		} else if (p->p_stat == SACTIVE)
 			signo = sigchecktrace();
@@ -1782,6 +1819,7 @@ issignal(struct lwp *l)
 
 			/* Handling of signal trace */
 			sigswitch(0, signo, true);
+			mutex_enter(p->p_lock);
 
 			/* Check for a signal from the debugger. */
 			if ((signo = sigchecktrace()) == 0)
@@ -1838,6 +1876,7 @@ issignal(struct lwp *l)
 				p->p_sflag &= ~PS_CONTINUED;
 				signo = 0;
 				sigswitch(PS_NOCLDSTOP, p->p_xsig, true);
+				mutex_enter(p->p_lock);
 			} else if (prop & SA_IGNORE) {
 				/*
 				 * Except for SIGCONT, shouldn't get here.
@@ -2332,6 +2371,15 @@ proc_stoptrace(int trapno)
 
 	mutex_enter(p->p_lock);
 
+	/*
+	 * If there's a pending SIGKILL process it immediately.
+	 */
+	if (p->p_xsig == SIGKILL ||
+	    sigismember(&p->p_sigpend.sp_set, SIGKILL)) {
+		mutex_exit(p->p_lock);
+		return;
+	}
+
 	/* Needed for ktrace */
 	ps = p->p_sigacts;
 	action = SIGACTION_PS(ps, signo).sa_handler;
@@ -2347,7 +2395,6 @@ proc_stoptrace(int trapno)
 	p->p_sigctx.ps_lwp = ksi.ksi_lid;
 	p->p_sigctx.ps_info = ksi.ksi_info;
 	sigswitch(0, signo, true);
-	mutex_exit(p->p_lock);
 
 	if (ktrpoint(KTR_PSIG)) {
 		if (p->p_emul->e_ktrpsig)
