@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.38 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.38.54.1 2019/05/03 05:43:46 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.38 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.38.54.1 2019/05/03 05:43:46 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.38 2011/11/23 23:07:32 jmcneill Exp
 #include <sys/malloc.h>
 
 #include <dev/audio_if.h>
-#include <dev/auconv.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

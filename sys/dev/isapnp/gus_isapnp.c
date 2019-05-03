@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.39.2.1 2019/04/21 06:00:00 isaki Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.39.2.2 2019/05/03 05:43:46 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.39.2.1 2019/04/21 06:00:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.39.2.2 2019/05/03 05:43:46 isaki Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.39.2.1 2019/04/21 06:00:00 isaki Ex
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
-#include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

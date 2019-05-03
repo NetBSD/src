@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.18 2016/12/09 17:18:35 christos Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.18.20.1 2019/05/03 05:43:46 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.18 2016/12/09 17:18:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.18.20.1 2019/05/03 05:43:46 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.18 2016/12/09 17:18:35 christos Exp $
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
-#include <dev/mulaw.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/isa/isavar.h>
