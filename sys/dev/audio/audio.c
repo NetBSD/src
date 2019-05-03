@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.1.2.3 2019/04/27 12:05:28 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.1.2.4 2019/05/03 05:15:33 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,8 +104,8 @@
  *	open 			x	x +
  *	close 			x	x +
  *	drain 			x	x	(Not used in AUDIO2)
- *	query_encoding		-	x	(Not used in AUDIO2)
- *	set_params 		-	x	(Obsoleted in AUDIO2)
+ *	query_format		-	x
+ *	set_format		-	x
  *	round_blocksize		-	x
  *	commit_settings		-	x
  *	init_output 		x	x
@@ -129,8 +129,6 @@
  *	trigger_input 		x	x +
  *	dev_ioctl 		-	x
  *	get_locks 		-	-	Called at attach time
- *	query_format		-	x	(Added in AUDIO2)
- *	set_format		-	x	(Added in AUDIO2)
  *
  * *1 Note: Before 8.0, since these have been called only at attach time,
  *   neither lock were necessary.  In AUDIO2, on the other hand, since
@@ -154,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.3 2019/04/27 12:05:28 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.4 2019/05/03 05:15:33 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -164,7 +162,6 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.3 2019/04/27 12:05:28 isaki Exp $");
 #if NAUDIO > 0
 
 #ifdef _KERNEL
-#define OLD_FILTER
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -197,7 +194,6 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.3 2019/04/27 12:05:28 isaki Exp $");
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
-#include <dev/auconv.h>
 #include <dev/audio/audiodef.h>
 #include <dev/audio/linear.h>
 #include <dev/audio/mulaw.h>
@@ -211,7 +207,7 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.3 2019/04/27 12:05:28 isaki Exp $");
 
 /*
  * 0: No debug logs
- * 1: action changes like open/close/set_param...
+ * 1: action changes like open/close/set_format...
  * 2: + normal operations like read/write/ioctl...
  * 3: + TRACEs except interrupt
  * 4: + TRACEs including interrupt
@@ -485,15 +481,6 @@ struct portname {
 	int mask;
 };
 
-#if defined(OLD_FILTER)
-typedef struct uio_fetcher {
-	stream_fetcher_t base;
-	struct uio *uio;
-	int usedhigh;
-	int last_used;
-} uio_fetcher_t;
-#endif
-
 static int audiomatch(device_t, cfdata_t, void *);
 static void audioattach(device_t, device_t, void *);
 static int audiodetach(device_t, int);
@@ -570,7 +557,7 @@ static void audio_track_setinfo_water(audio_track_t *,
 	const struct audio_info *);
 static int audio_hw_setinfo(struct audio_softc *, const struct audio_info *,
 	struct audio_info *);
-static int audio_hw_set_params(struct audio_softc *, int,
+static int audio_hw_set_format(struct audio_softc *, int,
 	audio_format2_t *, audio_format2_t *,
 	audio_filter_reg_t *, audio_filter_reg_t *);
 static int audiogetinfo(struct audio_softc *, struct audio_info *, int,
@@ -586,10 +573,6 @@ static int audio_select_freq(const struct audio_format *);
 static int audio_hw_probe(struct audio_softc *, int, int *,
 	audio_format2_t *, audio_format2_t *);
 static int audio_hw_probe_fmt(struct audio_softc *, audio_format2_t *, int);
-static int audio_hw_probe_by_format(struct audio_softc *, audio_format2_t *,
-	int);
-static int audio_hw_probe_by_encoding(struct audio_softc *, audio_format2_t *,
-	int);
 static int audio_hw_validate_format(struct audio_softc *, int,
 	const audio_format2_t *);
 static int audio_mixers_set_format(struct audio_softc *,
@@ -634,15 +617,6 @@ static void audio_rmixer_start(struct audio_softc *);
 static void audio_rmixer_process(struct audio_softc *);
 static void audio_rmixer_input(struct audio_softc *);
 static int  audio_rmixer_halt(struct audio_softc *);
-
-#if defined(OLD_FILTER)
-static void stream_filter_list_append(stream_filter_list_t *,
-	stream_filter_factory_t, const audio_params_t *);
-static void stream_filter_list_prepend(stream_filter_list_t *,
-	stream_filter_factory_t, const audio_params_t *);
-static void stream_filter_list_set(stream_filter_list_t *, int,
-	stream_filter_factory_t, const audio_params_t *);
-#endif
 
 static void mixer_init(struct audio_softc *);
 static int mixer_open(dev_t, struct audio_softc *, int, int, struct lwp *);
@@ -897,7 +871,8 @@ audioattach(device_t parent, device_t self, void *aux)
 	hw_if->get_locks(hdlp, &sc->sc_intr_lock, &sc->sc_lock);
 
 #ifdef DIAGNOSTIC
-	if ((hw_if->set_params == NULL && hw_if->set_format == NULL) ||
+	if (hw_if->query_format == NULL ||
+	    hw_if->set_format == NULL ||
 	    (hw_if->start_output == NULL && hw_if->trigger_output == NULL) ||
 	    (hw_if->start_input == NULL && hw_if->trigger_input == NULL) ||
 	    hw_if->halt_output == NULL ||
@@ -965,7 +940,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	}
 	/* Init hardware. */
 	/* hw_probe() also validates [pr]hwfmt.  */
-	error = audio_hw_set_params(sc, mode, &phwfmt, &rhwfmt, &pfil, &rfil);
+	error = audio_hw_set_format(sc, mode, &phwfmt, &rhwfmt, &pfil, &rfil);
 	if (error) {
 		mutex_exit(sc->sc_lock);
 		goto bad;
@@ -1367,59 +1342,6 @@ audio_attach_mi(const struct audio_hw_if *ahwp, void *hdlp, device_t dev)
 	arg.hdl = hdlp;
 	return config_found(dev, &arg, audioprint);
 }
-
-#if defined(OLD_FILTER)
-static void
-stream_filter_list_append(stream_filter_list_t *list,
-			  stream_filter_factory_t factory,
-			  const audio_params_t *param)
-{
-
-	if (list->req_size >= AUDIO_MAX_FILTERS) {
-		printf("%s: increase AUDIO_MAX_FILTERS in sys/dev/audio_if.h\n",
-		       __func__);
-		return;
-	}
-	list->filters[list->req_size].factory = factory;
-	list->filters[list->req_size].param = *param;
-	list->req_size++;
-}
-
-static void
-stream_filter_list_set(stream_filter_list_t *list, int i,
-		       stream_filter_factory_t factory,
-		       const audio_params_t *param)
-{
-
-	if (i < 0 || i >= AUDIO_MAX_FILTERS) {
-		printf("%s: invalid index: %d\n", __func__, i);
-		return;
-	}
-
-	list->filters[i].factory = factory;
-	list->filters[i].param = *param;
-	if (list->req_size <= i)
-		list->req_size = i + 1;
-}
-
-static void
-stream_filter_list_prepend(stream_filter_list_t *list,
-			   stream_filter_factory_t factory,
-			   const audio_params_t *param)
-{
-
-	if (list->req_size >= AUDIO_MAX_FILTERS) {
-		printf("%s: increase AUDIO_MAX_FILTERS in sys/dev/audio_if.h\n",
-		       __func__);
-		return;
-	}
-	memmove(&list->filters[1], &list->filters[0],
-		sizeof(struct stream_filter_req) * list->req_size);
-	list->filters[0].factory = factory;
-	list->filters[0].param = *param;
-	list->req_size++;
-}
-#endif /* OLD_FILTER */
 
 /*
  * Acquire sc_lock and enter exlock critical section.
@@ -6240,35 +6162,13 @@ audio_hw_probe(struct audio_softc *sc, int is_indep, int *modep,
 }
 
 /*
- * Probe the hardware format depending on mode.
- * Must be called with sc_lock held.
- * XXX Once all hw drivers go to use query_format, the function will be gone.
- */
-static int
-audio_hw_probe_fmt(struct audio_softc *sc, audio_format2_t *cand, int mode)
-{
-
-	KASSERT(mutex_owned(sc->sc_lock));
-
-	/* XXX Display the message only during the transition period. */
-	if (sc->hw_if->query_format) {
-		aprint_normal_dev(sc->sc_dev, "use new query_format method\n");
-		return audio_hw_probe_by_format(sc, cand, mode);
-	} else {
-		aprint_normal_dev(sc->sc_dev, "use old set_param method\n");
-		return audio_hw_probe_by_encoding(sc, cand, mode);
-	}
-}
-
-/*
- * Choose the most preferred hardware format using query_format.
+ * Choose the most preferred hardware format.
  * If successful, it will store the chosen format into *cand and return 0.
  * Otherwise, return errno.
  * Must be called with sc_lock held.
  */
 static int
-audio_hw_probe_by_format(struct audio_softc *sc, audio_format2_t *cand,
-	int mode)
+audio_hw_probe_fmt(struct audio_softc *sc, audio_format2_t *cand, int mode)
 {
 	audio_format_query_t query;
 	int cand_score;
@@ -6374,52 +6274,6 @@ audio_hw_probe_by_format(struct audio_softc *sc, audio_format2_t *cand,
 	    audio_encoding_name(cand->encoding),
 	    cand->precision, cand->stride, cand->channels, cand->sample_rate);
 	return 0;
-}
-
-/*
- * Probe the hardware format using old set_params.
- * It is only provided for backward compatibility.  Please don't try to
- * improve.
- * Must be called with sc_lock held.
- */
-static int
-audio_hw_probe_by_encoding(struct audio_softc *sc, audio_format2_t *cand,
-	int mode)
-{
-	static u_int freqlist[] = { 48000, 44100, 22050, 11025, 8000, 4000 };
-	audio_format2_t fmt;
-	u_int ch;
-	u_int i;
-	int error;
-
-	KASSERT(mutex_owned(sc->sc_lock));
-
-	fmt.encoding  = AUDIO_ENCODING_SLINEAR_NE;
-	fmt.precision = AUDIO_INTERNAL_BITS;
-	fmt.stride    = AUDIO_INTERNAL_BITS;
-
-	for (ch = 2; ch > 0; ch--) {
-		for (i = 0; i < __arraycount(freqlist); i++) {
-			fmt.channels = ch;
-			fmt.sample_rate = freqlist[i];
-			error = audio_hw_set_params(sc, mode, &fmt, &fmt,
-			    NULL, NULL);
-			if (error == 0) {
-				/* Accept it because we were able to set. */
-				*cand = fmt;
-				DPRINTF(1, "%s selected: ch=%d freq=%d\n",
-				    __func__,
-				    fmt.channels,
-				    fmt.sample_rate);
-				return 0;
-			}
-			DPRINTF(1, "%s trying ch=%d freq=%d failed\n",
-			    __func__,
-			    fmt.channels,
-			    fmt.sample_rate);
-		}
-	}
-	return ENXIO;
 }
 
 /*
@@ -6608,7 +6462,7 @@ audio_mixers_set_format(struct audio_softc *sc, const struct audio_info *ai)
 	/* Configure the mixers. */
 	memset(&pfil, 0, sizeof(pfil));
 	memset(&rfil, 0, sizeof(rfil));
-	error = audio_hw_set_params(sc, mode, &phwfmt, &rhwfmt, &pfil, &rfil);
+	error = audio_hw_set_format(sc, mode, &phwfmt, &rhwfmt, &pfil, &rfil);
 	if (error)
 		return error;
 
@@ -7216,74 +7070,35 @@ abort:
  * - phwfmt and rhwfmt must not be NULL regardless of setmode.
  * - On non-independent devices, phwfmt and rhwfmt must have the same
  *   parameters.
- * - pfil and rfil must be zero-filled when using set_format, or can be
- *   NULL when using set_params.
+ * - pfil and rfil must be zero-filled.
  * If successful,
  * - phwfmt, rhwfmt will be overwritten by hardware format.
  * - pfil, rfil will be filled with filter information specified by the
- *   hardware driver (when using set_format).
+ *   hardware driver.
  * and then returns 0.  Otherwise returns errno.
  * Must be called with sc_lock held.
- *
- * Note about old set_params:
- * set_params used to update pp and/or rp when it used filter chain.
- * However this function does not reference pp and rp after calling
- * set_params, because it will never happen that the situation that
- * set_params must update pp and/or rp nowadays.
  */
 static int
-audio_hw_set_params(struct audio_softc *sc, int setmode,
+audio_hw_set_format(struct audio_softc *sc, int setmode,
 	audio_format2_t *phwfmt, audio_format2_t *rhwfmt,
 	audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	audio_params_t pp, rp;
-	stream_filter_list_t pfilters, rfilters;
 	int error;
-	int usemode;
-	bool use_set_format;
 
 	KASSERT(mutex_owned(sc->sc_lock));
 	KASSERT(phwfmt != NULL);
 	KASSERT(rhwfmt != NULL);
 
-	/* Use set_format if defined. */
-	use_set_format = (sc->hw_if->set_format != NULL);
-	if (use_set_format)
-		TRACE(2, "use_set_format");
-
-	usemode = setmode;
 	pp = format2_to_params(phwfmt);
 	rp = format2_to_params(rhwfmt);
 
-	if (use_set_format == false) {
-		memset(&pfilters, 0, sizeof(pfilters));
-		memset(&rfilters, 0, sizeof(rfilters));
-#if defined(OLD_FILTER)
-		pfilters.append = stream_filter_list_append;
-		pfilters.prepend = stream_filter_list_prepend;
-		pfilters.set = stream_filter_list_set;
-		rfilters.append = stream_filter_list_append;
-		rfilters.prepend = stream_filter_list_prepend;
-		rfilters.set = stream_filter_list_set;
-#endif
-	}
-
-	if (use_set_format) {
-		error = sc->hw_if->set_format(sc->hw_hdl, setmode,
-		    &pp, &rp, pfil, rfil);
-		if (error) {
-			device_printf(sc->sc_dev,
-			    "set_format failed with %d\n", error);
-			return error;
-		}
-	} else {
-		error = sc->hw_if->set_params(sc->hw_hdl, setmode, usemode,
-		    &pp, &rp, &pfilters, &rfilters);
-		if (error) {
-			device_printf(sc->sc_dev,
-			    "set_params failed with %d\n", error);
-			return error;
-		}
+	error = sc->hw_if->set_format(sc->hw_hdl, setmode,
+	    &pp, &rp, pfil, rfil);
+	if (error) {
+		device_printf(sc->sc_dev,
+		    "set_format failed with %d\n", error);
+		return error;
 	}
 
 	if (sc->hw_if->commit_settings) {
@@ -7651,7 +7466,7 @@ audio_sysctl_blk_ms(SYSCTLFN_ARGS)
 	/* re-init hardware */
 	memset(&pfil, 0, sizeof(pfil));
 	memset(&rfil, 0, sizeof(rfil));
-	error = audio_hw_set_params(sc, mode, &phwfmt, &rhwfmt, &pfil, &rfil);
+	error = audio_hw_set_format(sc, mode, &phwfmt, &rhwfmt, &pfil, &rfil);
 	if (error) {
 		goto abort;
 	}
