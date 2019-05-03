@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.70.24.2 2019/04/27 12:05:28 isaki Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.70.24.3 2019/05/03 05:15:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -182,20 +182,10 @@ struct audio_hw_if {
 	/* Obsoleted in AUDIO2. */
 	int	(*drain)(void *);	/* Optional: drain buffers */
 
-	/* Encoding. */
-	/* Obsoleted in AUDIO2. */
-	int	(*query_encoding)(void *, audio_encoding_t *);
-
-	/* Set the audio encoding parameters (record and play).
-	 * Return 0 on success, or an error code if the
-	 * requested parameters are impossible.
-	 * The values in the params struct may be changed (e.g. rounding
-	 * to the nearest sample rate.)
-	 */
-	/* Obsoleted in AUDIO2. */
-	int	(*set_params)(void *, int, int, audio_params_t *,
-		    audio_params_t *, stream_filter_list_t *,
-		    stream_filter_list_t *);
+	int	(*query_format)(void *, audio_format_query_t *);
+	int	(*set_format)(void *, int,
+		    const audio_params_t *, const audio_params_t *,
+		    audio_filter_reg_t *, audio_filter_reg_t *);
 
 	/* Hardware may have some say in the blocksize to choose */
 	int	(*round_blocksize)(void *, int, int, const audio_params_t *);
@@ -252,10 +242,6 @@ struct audio_hw_if {
 	int	(*dev_ioctl)(void *, u_long, void *, int, struct lwp *);
 	void	(*get_locks)(void *, kmutex_t **, kmutex_t **);
 
-	int	(*query_format)(void *, audio_format_query_t *);
-	int	(*set_format)(void *, int,
-		    const audio_params_t *, const audio_params_t *,
-		    audio_filter_reg_t *, audio_filter_reg_t *);
 };
 
 struct audio_attach_args {
