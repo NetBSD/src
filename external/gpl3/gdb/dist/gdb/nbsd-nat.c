@@ -364,8 +364,7 @@ nbsd_wait (struct target_ops *ops,
    * Always perform polling on exact PID, overwrite the default polling on
    * WAIT_ANY.
    *
-   * This avoids events reported in random order reported for FORK / VFORK
-   * when child and parent events are otherwise reported in random order.
+   * This avoids events reported in random order reported for FORK / VFORK.
    *
    * Polling on traced parent always simplifies the code.
    */
