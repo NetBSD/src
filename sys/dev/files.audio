@@ -1,16 +1,12 @@
-#	$NetBSD: files.audio,v 1.11.16.1 2019/04/21 04:28:59 isaki Exp $
+#	$NetBSD: files.audio,v 1.11.16.2 2019/05/03 05:43:46 isaki Exp $
 
 define	audiobus	{ }
 define	midibus		{ }
 define	midisyn
 
-# audio device attributes
-#
-define	auconv
-
 # audio and midi devices, attaches to audio hardware driver
 #
-device	audio {}: audiodev, auconv
+device	audio {}: audiodev
 attach	audio at audiobus
 device	midi: audio
 attach	midi at midibus
@@ -22,7 +18,6 @@ define	audiobell
 
 file	dev/audio/alaw.c		audio
 file	dev/audio/linear.c		audio
-file	dev/auconv.c			auconv
 file	dev/audio/audio.c		audio			needs-flag
 file	dev/audiobell.c			spkr_audio		needs-flag
 file	dev/audio/mulaw.c		audio

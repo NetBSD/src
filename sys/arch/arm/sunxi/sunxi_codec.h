@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.h,v 1.4.8.1 2019/04/27 05:30:37 isaki Exp $ */
+/* $NetBSD: sunxi_codec.h,v 1.4.8.2 2019/05/03 05:43:46 isaki Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/auconv.h>
 
 #include <dev/fdt/fdtvar.h>
 
