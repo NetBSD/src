@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.211 2019/05/01 18:01:54 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.212 2019/05/03 22:34:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.211 2019/05/01 18:01:54 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.212 2019/05/03 22:34:21 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -203,6 +203,9 @@ sys___clone(struct lwp *l, const struct sys___clone_args *uap,
  */
 static struct timeval fork_tfmrate = { 10, 0 };
 
+/*
+ * Check if a process is traced and shall inform about FORK events.
+ */
 static inline bool
 tracefork(struct proc *p, int flags)
 {
@@ -211,6 +214,9 @@ tracefork(struct proc *p, int flags)
 	    (PSL_TRACEFORK|PSL_TRACED) && (flags & FORK_PPWAIT) == 0;
 }
 
+/*
+ * Check if a process is traced and shall inform about VFORK events.
+ */
 static inline bool
 tracevfork(struct proc *p, int flags)
 {
@@ -219,6 +225,9 @@ tracevfork(struct proc *p, int flags)
 	    (PSL_TRACEVFORK|PSL_TRACED) && (flags & FORK_PPWAIT) != 0;
 }
 
+/*
+ * Check if a process is traced and shall inform about VFORK_DONE events.
+ */
 static inline bool
 tracevforkdone(struct proc *p, int flags)
 {
@@ -595,9 +604,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	if (tracefork(p1, flags) || tracevfork(p1, flags)) {
 		mutex_enter(p1->p_lock);
-		eventswitch(SIGTRAP, TRAP_CHLD);
-		// XXX ktrpoint(KTR_PSIG)
-		mutex_exit(p1->p_lock);
+		eventswitch(TRAP_CHLD);
 		mutex_enter(proc_lock);
 	}
 
@@ -614,16 +621,16 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (tracevforkdone(p1, flags)) {
 		mutex_enter(p1->p_lock);
 		p1->p_vfpid_done = retval[0];
-		eventswitch(SIGTRAP, TRAP_CHLD);
-		// XXX ktrpoint(KTR_PSIG)
-		mutex_exit(p1->p_lock);
-		// proc_lock unlocked
+		eventswitch(TRAP_CHLD);
 	} else
 		mutex_exit(proc_lock);
 
 	return 0;
 }
 
+/*
+ * MI code executed in each newly spawned process before returning to userland.
+ */
 void
 child_return(void *arg)
 {
@@ -639,9 +646,7 @@ child_return(void *arg)
 		}
 
 		mutex_enter(p->p_lock);
-		eventswitch(SIGTRAP, TRAP_CHLD);
-		// XXX ktrpoint(KTR_PSIG)
-		mutex_exit(p->p_lock);
+		eventswitch(TRAP_CHLD);
 	}
 
 my_tracer_is_gone:
