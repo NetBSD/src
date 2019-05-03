@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.113 2019/03/19 20:30:05 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.114 2019/05/03 01:08:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1000,8 +1000,6 @@ Lcacheon:
 	/*
 	 * Final setup for C code
 	 */
-	movw	#PSL_LOWIPL,%sr		|  lower SPL
-
 #ifdef notdef
 	movl	%d6,_C_LABEL(bootdev)	|    and boot device
 #endif
