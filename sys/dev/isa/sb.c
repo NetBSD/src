@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.90 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: sb.c,v 1.90.2.1 2019/05/03 03:00:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.90 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.90.2.1 2019/05/03 03:00:33 isaki Exp $");
 
 #include "midi.h"
 
@@ -82,8 +82,8 @@ int	sb_getdev(void *, struct audio_device *);
 const struct audio_hw_if sb_hw_if = {
 	.open			= sbdsp_open,
 	.close			= sbdsp_close,
-	.query_encoding		= sbdsp_query_encoding,
-	.set_params		= sbdsp_set_params,
+	.query_format		= sbdsp_query_format,
+	.set_format		= sbdsp_set_format,
 	.round_blocksize	= sbdsp_round_blocksize,
 	.halt_output		= sbdsp_halt_output,
 	.halt_input		= sbdsp_halt_input,
@@ -95,7 +95,6 @@ const struct audio_hw_if sb_hw_if = {
 	.allocm			= sb_malloc,
 	.freem			= sb_free,
 	.round_buffersize	= sb_round_buffersize,
-	.mappage		= sb_mappage,
 	.get_props		= sbdsp_get_props,
 	.trigger_output		= sbdsp_trigger_output,
 	.trigger_input		= sbdsp_trigger_input,
