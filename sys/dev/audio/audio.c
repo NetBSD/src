@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.1.2.7 2019/05/04 07:20:09 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.1.2.8 2019/05/04 07:41:50 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@
  *	get_locks 		-	-	Called at attach time
  *
  * *1 Note: Before 8.0, since these have been called only at attach time,
- *   neither lock were necessary.  In AUDIO2, on the other hand, since
+ *   neither lock were necessary.  Currently, on the other hand, since
  *   these may be also called after attach, the thread lock is required.
  *
  * In addition, there are two additional locks.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.7 2019/05/04 07:20:09 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.8 2019/05/04 07:41:50 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -6512,10 +6512,9 @@ audio_mixers_get_format(struct audio_softc *sc, struct audio_info *ai)
  *
  * ai.mode				(R/W)
  *	It specifies the playback or recording mode, AUMODE_*.
- *	In AUDIO2, A mode change operation by ai.mode after opening is
- *	prohibited.
- *	In AUDIO2, AUMODE_PLAY_ALL no longer makes sense.  However, it's
- *	possible to get or to set for backward compatibility.
+ *	Currently, a mode change operation by ai.mode after opening is
+ *	prohibited.  In addition, AUMODE_PLAY_ALL no longer makes sense.
+ *	However, it's possible to get or to set for backward compatibility.
  *
  * ai.{hiwat,lowat}			(R/W)
  *	These specify the high water mark and low water mark for playback
@@ -6573,8 +6572,7 @@ audio_mixers_get_format(struct audio_softc *sc, struct audio_info *ai)
  *
  * ai.blocksize				(R/-)
  *	It indicates the block size in bytes.
- *	XXX In AUDIO2, the blocksize of playback and recording may be
- *	different.
+ *	XXX The blocksize of playback and recording may be different.
  */
 
 /*
