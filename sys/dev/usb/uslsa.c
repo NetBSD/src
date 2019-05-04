@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.26 2019/01/22 06:47:20 skrll Exp $ */
+/* $NetBSD: uslsa.c,v 1.27 2019/05/04 08:04:13 mrg Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.26 2019/01/22 06:47:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.27 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -118,8 +118,6 @@ static const struct ucom_methods uslsa_methods = {
 	.ucom_ioctl = uslsa_ioctl,
 	.ucom_open = uslsa_open,
 	.ucom_close = uslsa_close,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
 };
 
 #define USLSA_CONFIG_INDEX	0
@@ -334,17 +332,12 @@ uslsa_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 
 	DPRINTF((sc->sc_dev, "%s: GET_MDMSTS %#x\n", __func__, mdmsts));
 
-	if (lsr != NULL) {
-		*lsr = 0;
-	}
+	*lsr = 0;
 
-	if (msr != NULL) {
-		*msr = 0;
-		*msr |= ISSET(mdmsts, SLSA_MDMSTS_CTS) ? UMSR_CTS : 0;
-		*msr |= ISSET(mdmsts, SLSA_MDMSTS_DSR) ? UMSR_DSR : 0;
-		*msr |= ISSET(mdmsts, SLSA_MDMSTS_RI) ? UMSR_RI : 0;
-		*msr |= ISSET(mdmsts, SLSA_MDMSTS_DCD) ? UMSR_DCD : 0;
-	}
+	*msr  = ISSET(mdmsts, SLSA_MDMSTS_CTS) ? UMSR_CTS : 0;
+	*msr |= ISSET(mdmsts, SLSA_MDMSTS_DSR) ? UMSR_DSR : 0;
+	*msr |= ISSET(mdmsts, SLSA_MDMSTS_RI) ? UMSR_RI : 0;
+	*msr |= ISSET(mdmsts, SLSA_MDMSTS_DCD) ? UMSR_DCD : 0;
 }
 
 static void
