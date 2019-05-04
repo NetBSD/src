@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.8 2019/05/04 10:07:10 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.9 2019/05/04 17:19:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.8 2019/05/04 10:07:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.9 2019/05/04 17:19:10 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -237,17 +237,6 @@ kasan_add_redzone(size_t *size)
 	*size += KASAN_SHADOW_SCALE_SIZE;
 }
 
-static void
-kasan_markmem(const void *addr, size_t size, bool valid, uint8_t code)
-{
-	KASSERT((vaddr_t)addr % KASAN_SHADOW_SCALE_SIZE == 0);
-	if (valid) {
-		kasan_shadow_Nbyte_markvalid(addr, size);
-	} else {
-		kasan_shadow_Nbyte_fill(addr, size, code);
-	}
-}
-
 void
 kasan_softint(struct lwp *l)
 {
@@ -268,8 +257,30 @@ kasan_softint(struct lwp *l)
 void
 kasan_mark(const void *addr, size_t size, size_t sz_with_redz, uint8_t code)
 {
-	kasan_markmem(addr, sz_with_redz, false, code);
-	kasan_markmem(addr, size, true, code);
+	size_t i, n, redz;
+	int8_t *shad;
+
+	KASSERT((vaddr_t)addr % KASAN_SHADOW_SCALE_SIZE == 0);
+	redz = sz_with_redz - roundup(size, KASAN_SHADOW_SCALE_SIZE);
+	KASSERT(redz % KASAN_SHADOW_SCALE_SIZE == 0);
+	shad = kasan_md_addr_to_shad(addr);
+
+	/* Chunks of 8 bytes, valid. */
+	n = size / KASAN_SHADOW_SCALE_SIZE;
+	for (i = 0; i < n; i++) {
+		*shad++ = 0;
+	}
+
+	/* Possibly one chunk, mid. */
+	if ((size & KASAN_SHADOW_MASK) != 0) {
+		*shad++ = (size & KASAN_SHADOW_MASK);
+	}
+
+	/* Chunks of 8 bytes, invalid. */
+	n = redz / KASAN_SHADOW_SCALE_SIZE;
+	for (i = 0; i < n; i++) {
+		*shad++ = code;
+	}
 }
 
 /* -------------------------------------------------------------------------- */
