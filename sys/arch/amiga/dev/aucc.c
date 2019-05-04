@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.44.2.1 2019/04/21 09:33:54 isaki Exp $ */
+/*	$NetBSD: aucc.c,v 1.44.2.2 2019/05/04 04:51:20 isaki Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -46,7 +46,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.44.2.1 2019/04/21 09:33:54 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.44.2.2 2019/05/04 04:51:20 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,6 @@ extern struct audio_channel channel[4];
  * Software state.
  */
 struct aucc_softc {
-	int	sc_open;		/* single use device */
 	aucc_data_t sc_channel[4];	/* per channel freq, ... */
 	u_int	sc_encoding;		/* encoding AUDIO_ENCODING_.*/
 	int	sc_channels;		/* # of channels used */
@@ -312,9 +311,6 @@ aucc_open(void *addr, int flags)
 	sc = addr;
 	DPRINTF(("sa_open: unit %p\n",sc));
 
-	if (sc->sc_open)
-		return EBUSY;
-	sc->sc_open = 1;
 	for (i = 0; i < AUCC_MAXINT; i++) {
 		sc->sc_channel[i].nd_intr = NULL;
 		sc->sc_channel[i].nd_intrdata = NULL;
@@ -330,11 +326,6 @@ aucc_open(void *addr, int flags)
 void
 aucc_close(void *addr)
 {
-	struct aucc_softc *sc;
-
-	sc = addr;
-	DPRINTF(("sa_close: sc=%p\n", sc));
-	sc->sc_open = 0;
 
 	DPRINTF(("sa_close: closed.\n"));
 }

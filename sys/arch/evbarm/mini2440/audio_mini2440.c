@@ -66,8 +66,6 @@ struct uda_softc {
 	s3c2440_i2s_buf_t	sc_rec_buf;
 
 	void			*sc_i2s_handle;
-
-	bool			sc_open;
 };
 
 int	uda_ssio_open(void *, int);
@@ -161,7 +159,6 @@ uda_ssio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_play_buf = NULL;
 	sc->sc_i2s_handle = aa->i2sa_handle;
-	sc->sc_open = false;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
@@ -211,14 +208,9 @@ uda_ssio_attach(device_t parent, device_t self, void *aux)
 int
 uda_ssio_open(void *handle, int flags)
 {
-	struct uda1341_softc *uc = handle;
-	struct uda_softc *sc = uc->parent;
 	int retval;
 
 	DPRINTF(("%s\n", __func__));
-
-	if (sc->sc_open)
-		return EBUSY;
 
 	/* We only support write operations */
 	if (!(flags & FREAD) && !(flags & FWRITE))
@@ -233,20 +225,16 @@ uda_ssio_open(void *handle, int flags)
 		return retval;
 	}
 
-	sc->sc_open = true;
-
 	return 0; /* SUCCESS */
 }
 
 void
 uda_ssio_close(void *handle)
 {
-	struct uda1341_softc *uc = handle;
-	struct uda_softc *sc = uc->parent;
+
 	DPRINTF(("%s\n", __func__));
 
 	uda1341_close(handle);
-	sc->sc_open = false;
 }
 
 int
