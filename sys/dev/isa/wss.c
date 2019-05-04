@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.72.2.2 2019/05/04 04:13:24 isaki Exp $	*/
+/*	$NetBSD: wss.c,v 1.72.2.3 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.72.2.2 2019/05/04 04:13:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.72.2.3 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.72.2.2 2019/05/04 04:13:24 isaki Exp $");
 #include <sys/bus.h>
 #include <sys/audioio.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

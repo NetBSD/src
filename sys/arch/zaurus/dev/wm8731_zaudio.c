@@ -1,4 +1,4 @@
-/*	$NetBSD: wm8731_zaudio.c,v 1.2.4.2 2019/05/04 04:13:23 isaki Exp $	*/
+/*	$NetBSD: wm8731_zaudio.c,v 1.2.4.3 2019/05/04 07:20:09 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wm8731_zaudio.c,v 1.2.4.2 2019/05/04 04:13:23 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wm8731_zaudio.c,v 1.2.4.3 2019/05/04 07:20:09 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: wm8731_zaudio.c,v 1.2.4.2 2019/05/04 04:13:23 isaki 
 #include <sys/intr.h>
 #include <sys/bus.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/i2c/i2cvar.h>
 

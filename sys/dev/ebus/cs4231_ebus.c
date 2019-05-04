@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.38.2.1 2019/04/21 06:00:00 isaki Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.38.2.2 2019/05/04 07:20:09 isaki Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.38.2.1 2019/04/21 06:00:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.38.2.2 2019/05/04 07:20:09 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sparc_arch.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.38.2.1 2019/04/21 06:00:00 isaki E
 #include <dev/ebus/ebusvar.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/cs4231reg.h>

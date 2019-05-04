@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.61.2.3 2019/05/04 04:13:24 isaki Exp $	*/
+/*	$NetBSD: yds.c,v 1.61.2.4 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.61.2.3 2019/05/04 04:13:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.61.2.4 2019/05/04 07:20:10 isaki Exp $");
 
 #include "mpu.h"
 
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.61.2.3 2019/05/04 04:13:24 isaki Exp $");
 #include <dev/pci/pcivar.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 #include <dev/ic/mpuvar.h>

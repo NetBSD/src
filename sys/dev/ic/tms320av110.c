@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.25.2.2 2019/04/25 13:24:11 isaki Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.25.2.3 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.25.2.2 2019/04/25 13:24:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.25.2.3 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.25.2.2 2019/04/25 13:24:11 isaki E
 #include <sys/proc.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/tms320av110reg.h>
 #include <dev/ic/tms320av110var.h>

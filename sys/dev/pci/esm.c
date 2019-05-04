@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.61.2.2 2019/04/28 03:33:26 isaki Exp $      */
+/*      $NetBSD: esm.c,v 1.61.2.3 2019/05/04 07:20:10 isaki Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.61.2.2 2019/04/28 03:33:26 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.61.2.3 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.61.2.2 2019/04/28 03:33:26 isaki Exp $");
 #include <sys/bus.h>
 #include <sys/audioio.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ac97var.h>
 #include <dev/ic/ac97reg.h>

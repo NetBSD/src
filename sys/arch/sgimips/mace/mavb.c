@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.12.2.2 2019/04/21 13:05:46 isaki Exp $ */
+/* $NetBSD: mavb.c,v 1.12.2.3 2019/05/04 07:20:08 isaki Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -29,7 +29,7 @@
 #include <machine/autoconf.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <arch/sgimips/mace/macevar.h>
 #include <arch/sgimips/mace/macereg.h>

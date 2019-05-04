@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.24.2.2 2019/04/28 02:07:42 isaki Exp $ */
+/* $NetBSD: haltwo.c,v 1.24.2.3 2019/05/04 07:20:08 isaki Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,17 +30,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.24.2.2 2019/04/28 02:07:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.24.2.3 2019/05/04 07:20:08 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
 #include <sys/kmem.h>
-#include <dev/audio_if.h>
-
 #include <sys/bus.h>
 #include <machine/sysconf.h>
+
+#include <dev/audio/audio_if.h>
 
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>

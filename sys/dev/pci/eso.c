@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.69.2.3 2019/04/28 05:07:00 isaki Exp $	*/
+/*	$NetBSD: eso.c,v 1.69.2.4 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.69.2.3 2019/04/28 05:07:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.69.2.4 2019/05/04 07:20:10 isaki Exp $");
 
 #include "mpu.h"
 
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.69.2.3 2019/04/28 05:07:00 isaki Exp $");
 #include <dev/pci/pcivar.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/mpuvar.h>
 #include <dev/ic/i8237reg.h>

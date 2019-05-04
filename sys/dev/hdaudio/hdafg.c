@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.16.2.2 2019/04/27 12:28:40 isaki Exp $ */
+/* $NetBSD: hdafg.c,v 1.16.2.3 2019/05/04 07:20:09 isaki Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.16.2.2 2019/04/27 12:28:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.16.2.3 2019/05/04 07:20:09 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.16.2.2 2019/04/27 12:28:40 isaki Exp $")
 #include <sys/module.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #ifdef _KERNEL_OPT
 #include "opt_hdaudio.h"

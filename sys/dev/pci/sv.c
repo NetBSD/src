@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.54.2.2 2019/04/29 09:30:18 isaki Exp $ */
+/*      $NetBSD: sv.c,v 1.54.2.3 2019/05/04 07:20:10 isaki Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.54.2.2 2019/04/29 09:30:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.54.2.3 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.54.2.2 2019/04/29 09:30:18 isaki Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/i8237reg.h>
 #include <dev/pci/svreg.h>

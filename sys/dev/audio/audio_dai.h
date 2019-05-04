@@ -1,4 +1,4 @@
-/* $NetBSD: audio_dai.h,v 1.1.2.1 2019/05/04 06:35:16 isaki Exp $ */
+/* $NetBSD: audio_dai.h,v 1.1.2.2 2019/05/04 07:20:09 isaki Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #define _DEV_AUDIO_AUDIO_DAI_H
 
 #include <sys/errno.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #define	AUDIO_DAI_FORMAT_MASK		__BITS(3,0)
 #define	AUDIO_DAI_FORMAT_I2S		0

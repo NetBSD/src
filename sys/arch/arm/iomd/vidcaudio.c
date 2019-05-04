@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.57.2.2 2019/05/04 06:13:46 isaki Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.57.2.3 2019/05/04 07:20:07 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.57.2.2 2019/05/04 06:13:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.57.2.3 2019/05/04 07:20:07 isaki Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.57.2.2 2019/05/04 06:13:46 isaki Exp
 
 #include <uvm/uvm_extern.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/audio/audiobellvar.h>
 #include <dev/audio/mulaw.h>
 

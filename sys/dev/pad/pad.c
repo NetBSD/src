@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.58.2.1 2019/04/21 04:28:59 isaki Exp $ */
+/* $NetBSD: pad.c,v 1.58.2.2 2019/05/04 07:20:10 isaki Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.58.2.1 2019/04/21 04:28:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.58.2.2 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.58.2.1 2019/04/21 04:28:59 isaki Exp $");
 #include <sys/atomic.h>
 #include <sys/time.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/audio/audiovar.h>
 
 #include <dev/pad/padvar.h>

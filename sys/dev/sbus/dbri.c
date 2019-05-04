@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.39.2.2 2019/05/01 12:18:59 isaki Exp $	*/
+/*	$NetBSD: dbri.c,v 1.39.2.3 2019/05/04 07:20:11 isaki Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.39.2.2 2019/05/01 12:18:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.39.2.3 2019/05/04 07:20:11 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.39.2.2 2019/05/01 12:18:59 isaki Exp $");
 #include <machine/autoconf.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/cs4215reg.h>
 #include <dev/ic/cs4215var.h>

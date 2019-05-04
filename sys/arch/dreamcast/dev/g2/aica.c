@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.25.2.2 2019/05/03 04:15:23 isaki Exp $	*/
+/*	$NetBSD: aica.c,v 1.25.2.3 2019/05/04 07:20:07 isaki Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.25.2.2 2019/05/03 04:15:23 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.25.2.3 2019/05/04 07:20:07 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.25.2.2 2019/05/03 04:15:23 isaki Exp $");
 #include <sys/audioio.h>
 #include <sys/bus.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/audio/audiovar.h>	/* AUDIO_MIN_FREQUENCY */
 
 #include <machine/sysasicvar.h>

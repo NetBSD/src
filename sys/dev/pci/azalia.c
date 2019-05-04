@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.86.2.1 2019/04/28 02:15:32 isaki Exp $	*/
+/*	$NetBSD: azalia.c,v 1.86.2.2 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.86.2.1 2019/04/28 02:15:32 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.86.2.2 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.86.2.1 2019/04/28 02:15:32 isaki Exp $"
 #include <sys/systm.h>
 #include <sys/module.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

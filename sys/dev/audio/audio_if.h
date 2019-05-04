@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.70.24.4 2019/05/04 04:13:24 isaki Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.1.2.1 2019/05/04 07:20:09 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -34,8 +34,8 @@
  *
  */
 
-#ifndef _SYS_DEV_AUDIO_IF_H_
-#define _SYS_DEV_AUDIO_IF_H_
+#ifndef _SYS_DEV_AUDIO_AUDIO_IF_H_
+#define _SYS_DEV_AUDIO_AUDIO_IF_H_
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -276,5 +276,5 @@ extern const char *audio_encoding_name(int);
  */
 #define AUDIO_MAX_CHANNELS	12
 
-#endif /* _SYS_DEV_AUDIO_IF_H_ */
+#endif /* _SYS_DEV_AUDIO_AUDIO_IF_H_ */
 

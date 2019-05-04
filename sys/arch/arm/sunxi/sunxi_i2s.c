@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_i2s.c,v 1.3.2.2 2019/05/04 04:13:23 isaki Exp $ */
+/* $NetBSD: sunxi_i2s.c,v 1.3.2.3 2019/05/04 07:20:07 isaki Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.3.2.2 2019/05/04 04:13:23 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.3.2.3 2019/05/04 07:20:07 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.3.2.2 2019/05/04 04:13:23 isaki Exp 
 #include <sys/gpio.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/audio/linear.h>
 
 #include <dev/fdt/fdtvar.h>

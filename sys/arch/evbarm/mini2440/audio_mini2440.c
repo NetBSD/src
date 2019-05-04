@@ -36,7 +36,7 @@
 
 #include <sys/bus.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 
 #include <dev/ic/uda1341var.h>

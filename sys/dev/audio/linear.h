@@ -1,4 +1,4 @@
-/*	$NetBSD: linear.h,v 1.1.2.1 2019/04/21 04:28:59 isaki Exp $	*/
+/*	$NetBSD: linear.h,v 1.1.2.2 2019/05/04 07:20:09 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -29,7 +29,7 @@
 #ifndef _SYS_DEV_AUDIO_LINEAR_H_
 #define _SYS_DEV_AUDIO_LINEAR_H_
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 extern void audio_internal_to_linear8(audio_filter_arg_t *);
 extern void audio_internal_to_linear16(audio_filter_arg_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.16.2.2 2019/05/04 04:44:03 isaki Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.16.2.3 2019/05/04 07:20:07 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.16.2.2 2019/05/04 04:44:03 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.16.2.3 2019/05/04 07:20:07 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.16.2.2 2019/05/04 04:44:03 isaki Exp $")
 #include <machine/config_hook.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vripif.h>

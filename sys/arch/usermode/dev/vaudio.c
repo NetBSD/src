@@ -1,4 +1,4 @@
-/* $NetBSD: vaudio.c,v 1.4.32.2 2019/04/27 11:58:02 isaki Exp $ */
+/* $NetBSD: vaudio.c,v 1.4.32.3 2019/05/04 07:20:08 isaki Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vaudio.c,v 1.4.32.2 2019/04/27 11:58:02 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vaudio.c,v 1.4.32.3 2019/05/04 07:20:08 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: vaudio.c,v 1.4.32.2 2019/04/27 11:58:02 isaki Exp $"
 #include <machine/mainbus.h>
 #include <machine/thunk.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 static const struct audio_format vaudio_audio_formats[1] = {
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.45.2.2 2019/05/04 04:13:24 isaki Exp $	*/
+/*	$NetBSD: ym.c,v 1.45.2.3 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.45.2.2 2019/05/04 04:13:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.45.2.3 2019/05/04 07:20:10 isaki Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.45.2.2 2019/05/04 04:13:24 isaki Exp $");
 #include <sys/bus.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
