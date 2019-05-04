@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_tseng.c,v 1.11 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: pci_tseng.c,v 1.12 2019/05/04 08:20:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_tseng.c,v 1.11 2009/10/20 19:10:11 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_tseng.c,v 1.12 2019/05/04 08:20:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -39,21 +39,24 @@ __KERNEL_RCSID(0, "$NetBSD: pci_tseng.c,v 1.11 2009/10/20 19:10:11 snj Exp $");
 #define PCI_LINMEMBASE	0x0e000000
 #define PCI_IOBASE	0x800
 
-static void et6000_init(volatile u_char *, u_char *, int);
+static void et6000_init(volatile uint8_t *, uint8_t *, int);
 
 /*
  * Use tables for the card init...
  */
-static u_char seq_tab[] = {
- 	0x03, 0x01, 0x03, 0x00, 0x02, 0x00, 0x00, 0xb4 };
+static uint8_t seq_tab[] = {
+ 	0x03, 0x01, 0x03, 0x00, 0x02, 0x00, 0x00, 0xb4
+};
 
-static u_char gfx_tab[] = {
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x0f, 0xff };
+static uint8_t gfx_tab[] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x0f, 0xff
+};
 
-static u_char attr_tab[] = {
-	0x0a, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00 };
+static uint8_t attr_tab[] = {
+	0x0a, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00
+};
 
-static u_char crt_tab[] = {
+static uint8_t crt_tab[] = {
 	0x60, 0x53, 0x4f, 0x94, 0x56, 0x05, 0xc1, 0x1f,
 	0x00, 0x4f, 0x00, 0x0f, 0x00, 0x00, 0x07, 0x80,
 	0x98, 0x3d, 0x8f, 0x28, 0x0f, 0x8f, 0xc2, 0xa3,
@@ -65,24 +68,28 @@ static u_char crt_tab[] = {
 #else
 	0x00, 0x80, 0x28, 0x00, 0x00, 0x10, 0x43, 0x09,		/* 1 MB video memory */
 #endif
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
 
-static u_char ras_cas_tab[] = {
-	0x11, 0x14, 0x15 };
+static uint8_t ras_cas_tab[] = {
+	0x11, 0x14, 0x15
+};
 
 void
-tseng_init(pci_chipset_tag_t pc, pcitag_t tag, int id, volatile u_char *ba, u_char *fb)
+tseng_init(pci_chipset_tag_t pc, pcitag_t tag, int id, volatile uint8_t *ba,
+    uint8_t *fb)
 {
-	int			i, j, csr;
-	int			is_et6000 = 0;
+	int i, j;
+	int is_et6000 = 0;
+	uint32_t csr;
 
 	is_et6000 = (id ==  PCI_PRODUCT_TSENG_ET6000) ? 1 : 0;
 
 	/* Turn on the card */
 	pci_conf_write(pc, tag, PCI_MAPREG_START, PCI_LINMEMBASE);
 	if (is_et6000)
-		pci_conf_write(pc, tag, PCI_MAPREG_START+4,
-					PCI_IOBASE | PCI_MAPREG_TYPE_IO);
+		pci_conf_write(pc, tag, PCI_MAPREG_START + 4,
+		    PCI_IOBASE | PCI_MAPREG_TYPE_IO);
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	csr |= (PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_IO_ENABLE);
 	csr |= PCI_COMMAND_MASTER_ENABLE;
@@ -158,18 +165,16 @@ tseng_init(pci_chipset_tag_t pc, pcitag_t tag, int id, volatile u_char *ba, u_ch
  */
 
 static void
-et6000_init(volatile u_char *ba, u_char *fb, int iter)
+et6000_init(volatile uint8_t *ba, uint8_t *fb, int iter)
 {
-
 	int		i;
-	u_char		dac_tab[] = { 0x7d,0x67, 0x5d,0x64, 0x56,0x63,
+	uint8_t		dac_tab[] = { 0x7d,0x67, 0x5d,0x64, 0x56,0x63,
 				      0x28,0x22, 0x79,0x49, 0x6f,0x47,
 				      0x28,0x41, 0x6b,0x44, 0x00,0x00,
 				      0x00,0x00, 0x5d,0x25, 0x00,0x00,
 				      0x00,0x00, 0x00,0x96 };
 
 	ba += 0x800;
-
 
 	ba[0x40] = 0x06;	/* Use standard vga addressing		*/
 	ba[0x41] = 0x2a;	/* Performance control			*/
@@ -189,8 +194,8 @@ et6000_init(volatile u_char *ba, u_char *fb, int iter)
 		ba[0x69] = dac_tab[i];
 
 	if (ba[8] == 0x70) { /* et6100, right? */
-		volatile u_char *ma = (volatile u_char *)fb;
-		u_char		bv;
+		volatile uint8_t *ma = (volatile uint8_t *)fb;
+		uint8_t bv;
 
 		/*
 		 * XXX Black magic to get the bloody MDRAM's to function...
