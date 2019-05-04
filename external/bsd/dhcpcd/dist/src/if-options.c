@@ -1320,7 +1320,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			return -1;
 #else
 			if (ifname == NULL) {
-				logerr("IA PD must belong in an "
+				logerrx("IA PD must belong in an "
 				    "interface block");
 				return -1;
 			}
