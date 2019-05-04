@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.25 2019/05/04 07:20:22 maxv Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.26 2019/05/04 11:15:49 kre Exp $	*/
 
 /*
  * Copyright (c) 2004 Christian Limpach.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.25 2019/05/04 07:20:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.26 2019/05/04 11:15:49 kre Exp $");
 
 #include <sys/param.h>
 
@@ -138,7 +138,7 @@ rcr0(void)
 
 #ifndef __x86_64__
 void
-lcr3(vaddr_t val)
+lcr3(register_t val)
 {
 	int s = splvm(); /* XXXSMP */
 	xpq_queue_pt_switch(xpmap_ptom_masked(val));
