@@ -1,11 +1,11 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.92 2019/04/13 08:26:14 isaki Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.93 2019/05/04 13:14:18 tsutsui Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: MILAN.in,v 1.28 2018/01/20 19:24:27 tsutsui Exp $
+#		NetBSD: MILAN.in,v 1.29 2019/05/04 13:12:03 tsutsui Exp $
 #		NetBSD: GENERIC.in,v 1.118 2019/04/13 08:22:59 isaki Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -98,7 +98,10 @@ vga0 at pci? dev ? function ? # a PCI VGA card
 wsdisplay* at vga? console ? # as a wscons console
 pckbc0 at isa? # PC keyboard controller
 pckbd* at pckbc? # PC keyboard
+pms* at pckbc? # PS/2 mouse
 wskbd* at pckbd? console ? # wscons keyboard
+wsmouse* at pms? # wscons mouse
+pseudo-device wsmux # mouse & keyboard multiplexor
 wd* at atabus? drive ?
 atapibus* at atabus? # ATAPI bus support
 cd* at atapibus? drive ? # ATAPI CD-ROM drives
