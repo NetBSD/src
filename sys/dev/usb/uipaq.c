@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.22 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.23 2019/05/04 08:04:13 mrg Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.22 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.23 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -105,14 +105,7 @@ Static void	uipaq_break(struct uipaq_softc *, int);
 
 
 struct ucom_methods uipaq_methods = {
-	.ucom_get_status = NULL,
 	.ucom_set = uipaq_set,
-	.ucom_param = NULL,
-	.ucom_ioctl = NULL,
-	.ucom_open = NULL,
-	.ucom_close = NULL,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
 };
 
 struct uipaq_type {

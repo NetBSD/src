@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.35 2019/01/22 06:47:20 skrll Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.36 2019/05/04 08:04:13 mrg Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.35 2019/01/22 06:47:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.36 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -102,11 +102,8 @@ struct	ucom_methods ubsa_methods = {
 	.ucom_get_status = ubsa_get_status,
 	.ucom_set = ubsa_set,
 	.ucom_param = ubsa_param,
-	.ucom_ioctl = NULL,
 	.ucom_open = ubsa_open,
 	.ucom_close = ubsa_close,
-	.ucom_read = NULL,
-	.ucom_write = NULL
 };
 
 Static const struct usb_devno ubsa_devs[] = {
