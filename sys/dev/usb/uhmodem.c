@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.15 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.16 2019/05/04 08:04:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.15 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.16 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -142,11 +142,8 @@ struct	ucom_methods uhmodem_methods = {
 	.ucom_get_status = ubsa_get_status,
 	.ucom_set = ubsa_set,
 	.ucom_param = ubsa_param,
-	.ucom_ioctl = NULL,
 	.ucom_open = uhmodem_open,
 	.ucom_close = ubsa_close,
-	.ucom_read = NULL,
-	.ucom_write = NULL
 };
 
 struct uhmodem_type {

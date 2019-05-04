@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.69 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: umodem.c,v 1.70 2019/05/04 08:04:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.69 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.70 2019/05/04 08:04:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,6 @@ Static struct ucom_methods umodem_methods = {
 	.ucom_ioctl = umodem_ioctl,
 	.ucom_open = umodem_open,
 	.ucom_close = umodem_close,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
 };
 
 int	umodem_match(device_t, cfdata_t, void *);

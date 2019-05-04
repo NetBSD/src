@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.12 2019/01/22 06:47:20 skrll Exp $	*/
+/*	$NetBSD: uark.c,v 1.13 2019/05/04 08:04:13 mrg Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.12 2019/01/22 06:47:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.13 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -88,11 +88,6 @@ struct ucom_methods uark_methods = {
 	.ucom_get_status = uark_get_status,
 	.ucom_set = uark_set,
 	.ucom_param = uark_param,
-	.ucom_ioctl = NULL,
-	.ucom_open = NULL,
-	.ucom_close = NULL,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
 };
 
 static const struct usb_devno uark_devs[] = {
@@ -325,10 +320,8 @@ uark_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 {
 	struct uark_softc *sc = vsc;
 
-	if (msr != NULL)
-		*msr = sc->sc_msr;
-	if (lsr != NULL)
-		*lsr = sc->sc_lsr;
+	*msr = sc->sc_msr;
+	*lsr = sc->sc_lsr;
 }
 
 void
