@@ -111,6 +111,7 @@ int if_getifaddrs(struct ifaddrs **);
 #define	getifaddrs	if_getifaddrs
 #endif
 
+int if_getflags(struct interface *ifp);
 int if_setflag(struct interface *ifp, short flag);
 #define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING))
 bool if_valid_hwaddr(const uint8_t *, size_t);
@@ -133,7 +134,6 @@ int if_carrier(struct interface *);
 int if_makealias(char *, size_t, const char *, int);
 #endif
 
-int if_carrier_os(struct interface *);
 int if_mtu_os(const struct interface *);
 
 /*
