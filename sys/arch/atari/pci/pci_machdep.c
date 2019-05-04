@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.57 2019/05/04 08:20:05 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.58 2019/05/04 08:30:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.57 2019/05/04 08:20:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.58 2019/05/04 08:30:06 tsutsui Exp $");
 
 #include "opt_mbtype.h"
 
@@ -228,7 +228,7 @@ init_pci_bus(void)
 	pcitag_t		tag;
 	pcireg_t		csr;
 	int			device, maxndevs;
-	int			id;
+	uint32_t		id;
 
 	tag   = 0;
 	id    = 0;
@@ -328,7 +328,7 @@ enable_pci_devices(void)
 	PCI_MEMREG iolist;
 	struct pci_memreg *p, *q;
 	int dev, reg;
-	int id, class;
+	uint32_t id, class;
 	pcitag_t tag;
 	pcireg_t csr, address, mask;
 	pci_chipset_tag_t pc;
