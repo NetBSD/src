@@ -1,4 +1,4 @@
-/*	$NetBSD: arcofivar.h,v 1.1.28.1 2019/04/21 06:55:34 isaki Exp $	*/
+/*	$NetBSD: arcofivar.h,v 1.1.28.2 2019/05/04 04:51:20 isaki Exp $	*/
 /*	$OpenBSD: arcofivar.h,v 1.2 2011/12/25 00:07:27 miod Exp $	*/
 
 /*
@@ -27,7 +27,6 @@ struct arcofi_softc {
 
 	struct audio_device	sc_audio_device;
 
-	int			sc_open;
 	int			sc_mode;
 
 	struct {

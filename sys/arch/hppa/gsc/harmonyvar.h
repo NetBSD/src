@@ -1,4 +1,4 @@
-/*	$NetBSD: harmonyvar.h,v 1.1.38.1 2019/04/21 10:11:44 isaki Exp $	*/
+/*	$NetBSD: harmonyvar.h,v 1.1.38.2 2019/05/04 04:51:20 isaki Exp $	*/
 
 /*	$OpenBSD: harmonyvar.h,v 1.8 2003/08/15 13:25:53 mickey Exp $	*/
 
@@ -87,7 +87,6 @@ struct harmony_softc {
 	bus_dma_tag_t sc_dmat;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
-	int sc_open;
 	uint32_t sc_cntlbits;
 	int sc_need_commit;
 	int sc_playback_empty;
