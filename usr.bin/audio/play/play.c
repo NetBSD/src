@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.56 2018/11/16 13:55:17 mlelstv Exp $	*/
+/*	$NetBSD: play.c,v 1.57 2019/05/04 08:27:30 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002, 2010 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.56 2018/11/16 13:55:17 mlelstv Exp $");
+__RCSID("$NetBSD: play.c,v 1.57 2019/05/04 08:27:30 isaki Exp $");
 #endif
 
 
@@ -224,6 +224,7 @@ play(char *file)
 	off_t datasize = 0;
 	ssize_t	hdrlen;
 	int fd;
+	int nw;
 
 	if (file[0] == '-' && file[1] == 0) {
 		play_fd("standard input", STDIN_FILENO);
@@ -283,13 +284,19 @@ play(char *file)
 	}
 
 	while ((uint64_t)datasize > bufsize) {
-		if ((size_t)write(audiofd, addr, bufsize) != bufsize)
+		nw = write(audiofd, addr, bufsize);
+		if (nw == -1)
 			err(1, "write failed");
+		if ((size_t)nw != bufsize)
+			errx(1, "write failed");
 		addr = (char *)addr + bufsize;
 		datasize -= bufsize;
 	}
-	if ((off_t)write(audiofd, addr, datasize) != datasize)
+	nw = write(audiofd, addr, datasize);
+	if (nw == -1)
 		err(1, "final write failed");
+	if ((off_t)nw != datasize)
+		errx(1, "final write failed");
 
 	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
 		warn("audio drain ioctl failed");
@@ -341,8 +348,10 @@ play_fd(const char *file, int fd)
 		if (datasize != 0 && dataout + nr > datasize)
 			nr = datasize - dataout;
 		nw = write(audiofd, buffer, nr);
+		if (nw == -1)
+			err(1, "audio device write failed");
 		if (nw != nr)
-			goto write_error;
+			errx(1, "audio device write failed");
 		dataout += nw;
 		nr = read(fd, buffer, bufsize);
 		if (nr == -1)
@@ -356,8 +365,6 @@ play_fd(const char *file, int fd)
 	return;
 read_error:
 	err(1, "read of standard input failed");
-write_error:
-	err(1, "audio device write failed");
 }
 
 /*
