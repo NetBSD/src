@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.14 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.15 2019/05/04 08:20:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.14 2009/10/20 19:10:11 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.15 2019/05/04 08:20:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -48,14 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.14 2009/10/20 19:10:11 snj Exp $");
 #include <dev/ic/vgavar.h>
 #endif
 
-static void loadfont(volatile u_char *, u_char *fb);
+static void loadfont(volatile uint8_t *, uint8_t *fb);
 
 /* XXX: Shouldn't these be in font.h???? */
 extern font_info	font_info_8x8;
 extern font_info	font_info_8x16;
 
 /* Console colors */
-static u_char conscolors[3][3] = {	/* background, foreground, hilite */
+static uint8_t conscolors[3][3] = {	/* background, foreground, hilite */
 	{0x0, 0x0, 0x0}, {0x30, 0x30, 0x30}, { 0x3f,  0x3f,  0x3f}
 };
 
@@ -77,9 +77,10 @@ check_for_vga(bus_space_tag_t iot, bus_space_tag_t memt)
 	bus_space_handle_t	ioh_regs, memh_fb;
 	pcitag_t		tag;
 	int			device, found, id, maxndevs, i, j;
-	int			class, got_ioh, got_memh, rv;
-	volatile u_char		*regs;
-	u_char			*fb;
+	int			got_ioh, got_memh, rv;
+	int		class;
+	volatile uint8_t	*regs;
+	uint8_t			*fb;
 	const char		*nbd = "NetBSD/Atari";
 
 	found    = 0;
@@ -198,12 +199,12 @@ check_for_vga(bus_space_tag_t iot, bus_space_tag_t memt)
 	vga_memt = memt;
 	rv = tags_valid = 1;
 
-bad:
+ bad:
 	if (got_memh)
 		bus_space_unmap(memt, memh_fb, VGA_FB_SIZE);
 	if (got_ioh)
 		bus_space_unmap(iot, ioh_regs, VGA_REG_SIZE);
-	return (rv);
+	return rv;
 }
 
 #if NVGA_PCI > 0
@@ -213,6 +214,7 @@ void vgacninit(struct consdev *);
 void
 vgacnprobe(struct consdev *cp)
 {
+
 	if (tags_valid)
 		cp->cn_pri = CN_NORMAL;
 }
@@ -220,6 +222,7 @@ vgacnprobe(struct consdev *cp)
 void
 vgacninit(struct consdev *cp)
 {
+
 	if (tags_valid) {
 		/* XXX: Are those arguments correct? Leo */
 		vga_cnattach(vga_iot, vga_memt, 8, 0);
@@ -232,13 +235,13 @@ vgacninit(struct consdev *cp)
  * place the card into textmode.
  */
 static void
-loadfont(volatile u_char *ba, u_char *fb)
+loadfont(volatile uint8_t *ba, uint8_t *fb)
 	/* ba:	 Register area KVA */
-	/* fb:	 Frame buffer	KVA  */
+	/* fb:	 Frame buffer KVA  */
 {
 	font_info	*fd;
-	u_char		*c, *f, tmp;
-	u_short		z, y;
+	uint8_t		*c, *f, tmp;
+	uint16_t	z, y;
 
 #if defined(KFONT_8X8)
 	fd = &font_info_8x8;
@@ -260,7 +263,7 @@ loadfont(volatile u_char *ba, u_char *fb)
 	for (z = 0, c = fb; z < 256 * 32; z++)
 		*c++ = 0;
 
-	c = (unsigned char *) (fb) + (32 * fd->font_lo);
+	c = (uint8_t *)(fb) + (32 * fd->font_lo);
 	f = fd->font_p;
 	z = fd->font_lo;
 	for (; z <= fd->font_hi; z++, c += (32 - fd->height))
