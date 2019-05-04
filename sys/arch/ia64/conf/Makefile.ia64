@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ia64,v 1.6 2018/09/22 12:24:02 rin Exp $
+#	$NetBSD: Makefile.ia64,v 1.7 2019/05/04 02:06:59 scole Exp $
 
 # Makefile for NetBSD
 #
@@ -33,6 +33,11 @@ GENASSYM_CONF=	${IA64}/ia64/genassym.cf
 ##
 CPPFLAGS+=	-mconstant-gp -Dia64
 AFLAGS+=	-x assembler-with-cpp -Wa,-x 
+
+# XXX don't optimize pmap.c to get rid of assembler warnings like:
+#   Warning: Use of 'st8' may violate RAW dependency 'RR#' (data)
+# Happening with gcc7 and iirc several years worth of prior gcc versions
+COPTS.pmap.c+=	-O0
 
 ##
 ## (3) libkern and compat
