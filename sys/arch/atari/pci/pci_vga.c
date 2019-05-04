@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.15 2019/05/04 08:20:05 tsutsui Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.16 2019/05/04 08:30:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.15 2019/05/04 08:20:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.16 2019/05/04 08:30:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -76,9 +76,9 @@ check_for_vga(bus_space_tag_t iot, bus_space_tag_t memt)
 	pci_chipset_tag_t	pc = NULL; /* XXX */
 	bus_space_handle_t	ioh_regs, memh_fb;
 	pcitag_t		tag;
-	int			device, found, id, maxndevs, i, j;
+	int			device, found, maxndevs, i, j;
 	int			got_ioh, got_memh, rv;
-	int		class;
+	uint32_t		id, class;
 	volatile uint8_t	*regs;
 	uint8_t			*fb;
 	const char		*nbd = "NetBSD/Atari";
