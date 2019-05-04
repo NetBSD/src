@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.16 2019/05/04 08:30:06 tsutsui Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.17 2019/05/04 09:03:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.16 2019/05/04 08:30:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.17 2019/05/04 09:03:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -55,8 +55,11 @@ extern font_info	font_info_8x8;
 extern font_info	font_info_8x16;
 
 /* Console colors */
-static uint8_t conscolors[3][3] = {	/* background, foreground, hilite */
-	{0x0, 0x0, 0x0}, {0x30, 0x30, 0x30}, { 0x3f,  0x3f,  0x3f}
+static const uint8_t conscolors[3][3] = {
+	/* background, foreground, hilite */
+	{ 0x00, 0x00, 0x00 },
+	{ 0x30, 0x30, 0x30 },
+	{ 0x3f, 0x3f, 0x3f }
 };
 
 static bus_space_tag_t	vga_iot, vga_memt;
