@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.28 2018/01/20 19:24:27 tsutsui Exp $
+#	$NetBSD: MILAN.in,v 1.29 2019/05/04 13:12:03 tsutsui Exp $
 #
 # Milan
 #
@@ -102,7 +102,10 @@ vga0 		at pci? dev ? function ?	# a PCI VGA card
 wsdisplay* 	at vga? console ?		# as a wscons console
 pckbc0 		at isa? 			# PC keyboard controller
 pckbd* 		at pckbc?			# PC keyboard
+pms*		at pckbc?			# PS/2 mouse
 wskbd* 		at pckbd? console ?		# wscons keyboard
+wsmouse*	at pms?				# wscons mouse
+pseudo-device	wsmux				# mouse & keyboard multiplexor
 
 # ATA devices
 wd*		at atabus? drive ?
