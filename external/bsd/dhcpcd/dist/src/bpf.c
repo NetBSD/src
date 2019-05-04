@@ -301,6 +301,7 @@ bpf_close(struct interface *ifp, int fd)
 /* Normally this is needed by bootp.
  * Once that uses this again, the ARP guard here can be removed. */
 #ifdef ARP
+#define BPF_CMP_HWADDR_LEN	((((HWADDR_LEN / 4) + 2) * 2) + 1)
 static unsigned int
 bpf_cmp_hwaddr(struct bpf_insn *bpf, size_t bpf_len, size_t off,
     bool equal, uint8_t *hwaddr, size_t hwaddr_len)
@@ -414,7 +415,7 @@ static const struct bpf_insn bpf_arp_ether [] = {
 	         sizeof(((struct ether_arp *)0)->arp_sha), 1, 0),
 	BPF_STMT(BPF_RET + BPF_K, 0),
 };
-#define bpf_arp_ether_len	__arraycount(bpf_arp_ether)
+#define BPF_ARP_ETHER_LEN	__arraycount(bpf_arp_ether)
 
 static const struct bpf_insn bpf_arp_filter [] = {
 	/* Make sure this is for IP. */
@@ -425,21 +426,25 @@ static const struct bpf_insn bpf_arp_filter [] = {
 	BPF_STMT(BPF_LD + BPF_H + BPF_IND, offsetof(struct arphdr, ar_op)),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ARPOP_REQUEST, 2, 0),
 	/* or ARP REPLY. */
-	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ARPOP_REPLY, 1, 1),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ARPOP_REPLY, 1, 0),
 	BPF_STMT(BPF_RET + BPF_K, 0),
 	/* Make sure the protocol length matches. */
 	BPF_STMT(BPF_LD + BPF_B + BPF_IND, offsetof(struct arphdr, ar_pln)),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, sizeof(in_addr_t), 1, 0),
 	BPF_STMT(BPF_RET + BPF_K, 0),
 };
-#define bpf_arp_filter_len	__arraycount(bpf_arp_filter)
-#define bpf_arp_extra		((((ARP_ADDRS_MAX + 1) * 2) * 2) + 2)
-#define bpf_arp_hw		((((HWADDR_LEN / 4) + 2) * 2) + 1)
+#define BPF_ARP_FILTER_LEN	__arraycount(bpf_arp_filter)
+
+#define BPF_ARP_ADDRS_LEN	1 + (ARP_ADDRS_MAX * 2) + 3 + \
+				(ARP_ADDRS_MAX * 2) + 1
+
+#define BPF_ARP_LEN		BPF_ARP_ETHER_LEN + BPF_ARP_FILTER_LEN + \
+				BPF_CMP_HWADDR_LEN + BPF_ARP_ADDRS_LEN
 
 int
 bpf_arp(struct interface *ifp, int fd)
 {
-	struct bpf_insn bpf[3+ bpf_arp_filter_len + bpf_arp_hw + bpf_arp_extra];
+	struct bpf_insn bpf[BPF_ARP_LEN];
 	struct bpf_insn *bp;
 	struct iarp_state *state;
 	uint16_t arp_len;
@@ -452,7 +457,7 @@ bpf_arp(struct interface *ifp, int fd)
 	switch(ifp->family) {
 	case ARPHRD_ETHER:
 		memcpy(bp, bpf_arp_ether, sizeof(bpf_arp_ether));
-		bp += bpf_arp_ether_len;
+		bp += BPF_ARP_ETHER_LEN;
 		arp_len = sizeof(struct ether_header)+sizeof(struct ether_arp);
 		break;
 	default:
@@ -462,10 +467,10 @@ bpf_arp(struct interface *ifp, int fd)
 
 	/* Copy in the main filter. */
 	memcpy(bp, bpf_arp_filter, sizeof(bpf_arp_filter));
-	bp += bpf_arp_filter_len;
+	bp += BPF_ARP_FILTER_LEN;
 
 	/* Ensure it's not from us. */
-	bp += bpf_cmp_hwaddr(bp, bpf_arp_hw, sizeof(struct arphdr),
+	bp += bpf_cmp_hwaddr(bp, BPF_CMP_HWADDR_LEN, sizeof(struct arphdr),
 	                     false, ifp->hwaddr, ifp->hwlen);
 
 	state = ARP_STATE(ifp);
