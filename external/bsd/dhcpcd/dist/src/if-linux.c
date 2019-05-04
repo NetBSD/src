@@ -349,6 +349,15 @@ if_closesockets_os(struct dhcpcd_ctx *ctx)
 	}
 }
 
+int
+if_carrier(struct interface *ifp)
+{
+
+	if (if_getflags(ifp) == -1)
+		return LINK_UNKNOWN;
+	return ifp->flags & IFF_RUNNING ? LINK_UP : LINK_DOWN;
+}
+
 static int
 get_netlink(struct dhcpcd_ctx *ctx, struct iovec *iov,
     struct interface *ifp, int fd, int flags,
