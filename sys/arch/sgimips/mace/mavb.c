@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.12.2.3 2019/05/04 07:20:08 isaki Exp $ */
+/* $NetBSD: mavb.c,v 1.12.2.4 2019/05/04 12:03:03 isaki Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -111,8 +111,8 @@ static const struct audio_format mavb_formats[] = {
 	{
 		.mode		= AUMODE_PLAY,
 		.encoding	= AUDIO_ENCODING_SLINEAR_BE,
-		.validbits	= 16,
-		.precision	= 16,
+		.validbits	= 24,
+		.precision	= 32,
 		.channels	= 2,
 		.channel_mask	= AUFMT_STEREO,
 		.frequency_type	= 0,
