@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.29 2019/04/27 01:23:26 mrg Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.30 2019/05/04 08:04:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.29 2019/04/27 01:23:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.30 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -192,11 +192,8 @@ struct	ucom_methods uchcom_methods = {
 	.ucom_get_status	= uchcom_get_status,
 	.ucom_set		= uchcom_set,
 	.ucom_param		= uchcom_param,
-	.ucom_ioctl		= NULL,
 	.ucom_open		= uchcom_open,
 	.ucom_close		= uchcom_close,
-	.ucom_read		= NULL,
-	.ucom_write		= NULL,
 };
 
 int uchcom_match(device_t, cfdata_t, void *);

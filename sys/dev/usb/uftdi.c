@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.67 2018/02/20 15:48:37 ws Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.68 2019/05/04 08:04:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.67 2018/02/20 15:48:37 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.68 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -104,15 +104,13 @@ Static void	uftdi_set(void *, int, int, int);
 Static int	uftdi_param(void *, int, struct termios *);
 Static int	uftdi_open(void *, int);
 Static void	uftdi_read(void *, int, u_char **, uint32_t *);
-Static void	uftdi_write(void *, int, u_char *, u_char *,
-			    uint32_t *);
+Static void	uftdi_write(void *, int, u_char *, u_char *, uint32_t *);
 Static void	uftdi_break(void *, int, int);
 
 struct ucom_methods uftdi_methods = {
 	.ucom_get_status = uftdi_get_status,
 	.ucom_set = uftdi_set,
 	.ucom_param = uftdi_param,
-	.ucom_ioctl = NULL,
 	.ucom_open = uftdi_open,
 	.ucom_close = NULL,
 	.ucom_read = uftdi_read,
@@ -621,10 +619,8 @@ uftdi_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 	DPRINTF(("uftdi_status: msr=0x%02x lsr=0x%02x\n",
 		 sc->sc_msr, sc->sc_lsr));
 
-	if (msr != NULL)
-		*msr = sc->sc_msr;
-	if (lsr != NULL)
-		*lsr = sc->sc_lsr;
+	*msr = sc->sc_msr;
+	*lsr = sc->sc_lsr;
 }
 
 void
