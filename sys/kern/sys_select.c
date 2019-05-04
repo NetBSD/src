@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.41 2018/01/30 07:52:23 ozaki-r Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.42 2019/05/04 15:46:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.41 2018/01/30 07:52:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.42 2019/05/04 15:46:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,7 +488,8 @@ pollcommon(register_t *retval, struct pollfd *u_fds, u_int nfds,
 	int		error;
 	size_t		ni;
 
-	if (nfds > 1000 + curlwp->l_fd->fd_dt->dt_nfiles) {
+	if (nfds > MAX(1000 + curlwp->l_fd->fd_dt->dt_nfiles,
+	    curlwp->l_proc->p_rlimit[RLIMIT_NOFILE].rlim_cur)) {
 		/*
 		 * Either the user passed in a very sparse 'fds' or junk!
 		 * The kmem_alloc() call below would be bad news.
