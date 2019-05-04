@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.18.54.1 2019/04/21 06:00:00 isaki Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.18.54.2 2019/05/04 04:13:24 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -197,7 +197,6 @@ void	ad1848_destroy_locks(struct ad1848_softc *);
 
 int	ad1848_halt_output(void *);
 int	ad1848_halt_input(void *);
-paddr_t	ad1848_mappage(void *, void *, off_t, int);
 void	ad1848_get_locks(void *, kmutex_t **, kmutex_t **);
 
 #ifdef AUDIO_DEBUG

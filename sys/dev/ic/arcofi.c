@@ -1,4 +1,4 @@
-/*	$NetBSD: arcofi.c,v 1.1.28.3 2019/04/21 07:09:13 isaki Exp $	*/
+/*	$NetBSD: arcofi.c,v 1.1.28.4 2019/05/04 04:13:24 isaki Exp $	*/
 /*	$OpenBSD: arcofi.c,v 1.6 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
@@ -233,14 +233,12 @@ static const struct audio_hw_if arcofi_hw_if = {
 	.halt_input	  = arcofi_halt_input,
 	.speaker_ctl	  = NULL,
 	.getdev		  = arcofi_getdev,
-	.setfd		  = NULL,
 	.set_port	  = arcofi_set_port,
 	.get_port	  = arcofi_get_port,
 	.query_devinfo	  = arcofi_query_devinfo,
 	.allocm		  = NULL,
 	.freem		  = NULL,
 	.round_buffersize = NULL,
-	.mappage	  = NULL,
 	.get_props	  = arcofi_get_props,
 	.trigger_output	  = NULL,
 	.trigger_input	  = NULL,

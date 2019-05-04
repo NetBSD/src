@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.40.2.1 2019/04/21 06:00:00 isaki Exp $	*/
+/*	$NetBSD: interwave.c,v 1.40.2.2 2019/05/04 04:13:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.40.2.1 2019/04/21 06:00:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.40.2.2 2019/05/04 04:13:24 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1031,13 +1031,6 @@ iw_getdev(void *addr, struct audio_device *retp)
 	return 0;
 }
 
-int
-iw_setfd(void *addr, int flag)
-{
-
-	return 0;
-}
-
 /* Mixer (in/out ports) */
 int
 iw_set_port(void *addr, mixer_ctrl_t *cp)
@@ -1451,13 +1444,6 @@ iw_round_buffersize(void *addr, int direction, size_t size)
 	if (size > maxsize)
 		size = maxsize;
 	return size;
-}
-
-paddr_t
-iw_mappage(void *addr, void *mem, off_t off, int prot)
-{
-
-	return isa_mappage(mem, off, prot);
 }
 
 int

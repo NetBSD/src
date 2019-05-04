@@ -1,4 +1,4 @@
-/* $NetBSD: ausoc.c,v 1.3.8.1 2019/04/27 10:17:59 isaki Exp $ */
+/* $NetBSD: ausoc.c,v 1.3.8.2 2019/05/04 04:13:24 isaki Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.3.8.1 2019/04/27 10:17:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.3.8.2 2019/05/04 04:13:24 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,14 +105,6 @@ ausoc_open(void *priv, int flags)
 failed:
 	ausoc_close(priv);
 	return error;
-}
-
-static int
-ausoc_drain(void *priv)
-{
-	struct ausoc_link * const link = priv;
-
-	return audio_dai_drain(link->link_cpu);
 }
 
 static int
@@ -338,7 +330,6 @@ ausoc_get_locks(void *priv, kmutex_t **intr, kmutex_t **thread)
 static const struct audio_hw_if ausoc_hw_if = {
 	.open = ausoc_open,
 	.close = ausoc_close,
-	.drain = ausoc_drain,
 	.query_format = ausoc_query_format,
 	.set_format = ausoc_set_format,
 	.allocm = ausoc_allocm,

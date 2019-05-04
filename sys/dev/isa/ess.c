@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.84.2.2 2019/04/25 14:00:20 isaki Exp $	*/
+/*	$NetBSD: ess.c,v 1.84.2.3 2019/05/04 04:13:24 isaki Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.84.2.2 2019/04/25 14:00:20 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.84.2.3 2019/05/04 04:13:24 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,6 @@ int	ess_get_port(void *, mixer_ctrl_t *);
 void   *ess_malloc(void *, int, size_t);
 void	ess_free(void *, void *, size_t);
 size_t	ess_round_buffersize(void *, int, size_t);
-paddr_t	ess_mappage(void *, void *, off_t, int);
 
 
 int	ess_query_devinfo(void *, mixer_devinfo_t *);

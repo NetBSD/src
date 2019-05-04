@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.38.54.1 2019/05/03 05:43:46 isaki Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.38.54.2 2019/05/04 04:13:24 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.38.54.1 2019/05/03 05:43:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.38.54.2 2019/05/04 04:13:24 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,12 +775,6 @@ ad1848_isa_round_buffersize(void *addr, int direction, size_t size)
 	if (size > maxsize)
 		size = maxsize;
 	return size;
-}
-
-paddr_t
-ad1848_isa_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	return isa_mappage(mem, off, prot);
 }
 
 int

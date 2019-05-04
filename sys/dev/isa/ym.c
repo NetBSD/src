@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.45.2.1 2019/04/21 06:00:00 isaki Exp $	*/
+/*	$NetBSD: ym.c,v 1.45.2.2 2019/05/04 04:13:24 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.45.2.1 2019/04/21 06:00:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.45.2.2 2019/05/04 04:13:24 isaki Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -183,7 +183,6 @@ const struct audio_hw_if ym_hw_if = {
 	.allocm			= ad1848_isa_malloc,
 	.freem			= ad1848_isa_free,
 	.round_buffersize	= ad1848_isa_round_buffersize,
-	.mappage		= ad1848_isa_mappage,
 	.get_props		= ad1848_isa_get_props,
 	.trigger_output		= ad1848_isa_trigger_output,
 	.trigger_input		= ad1848_isa_trigger_input,

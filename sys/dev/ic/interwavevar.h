@@ -1,4 +1,4 @@
-/*	$NetBSD: interwavevar.h,v 1.18.42.1 2019/04/21 06:00:00 isaki Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.18.42.2 2019/05/04 04:13:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -224,7 +224,6 @@ int	iw_halt_input(void *);
 
 int	iw_speaker_ctl(void *, int);
 int	iw_getdev(void *, struct audio_device *);
-int	iw_setfd(void *, int);
 
 	/* Mixer (in/out ports) */
 int	iw_set_port(void *, mixer_ctrl_t *);
@@ -236,7 +235,6 @@ struct malloc_type;
 void *	iw_malloc(void *, int, size_t);
 void	iw_free(void *, void *, size_t);
 size_t	iw_round_buffersize(void *, int, size_t);
-paddr_t	iw_mappage(void *, void *, off_t, int);
 int	iw_get_props(void *);
 void	iw_get_locks(void *, kmutex_t **, kmutex_t **);
 

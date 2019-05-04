@@ -1,4 +1,4 @@
-/* $NetBSD: audio_dai.h,v 1.4.2.1 2019/04/27 10:17:59 isaki Exp $ */
+/* $NetBSD: audio_dai.h,v 1.4.2.2 2019/05/04 04:13:24 isaki Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -135,14 +135,6 @@ audio_dai_close(audio_dai_tag_t dai)
 	if (!dai->dai_hw_if->close)
 		return;
 	dai->dai_hw_if->close(dai->dai_priv);
-}
-
-static inline int
-audio_dai_drain(audio_dai_tag_t dai)
-{
-	if (!dai->dai_hw_if->drain)
-		return 0;
-	return dai->dai_hw_if->drain(dai->dai_priv);
 }
 
 static inline int
