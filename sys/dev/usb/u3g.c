@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.35 2018/07/24 08:15:57 msaitoh Exp $	*/
+/*	$NetBSD: u3g.c,v 1.36 2019/05/04 08:04:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.35 2018/07/24 08:15:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.36 2019/05/04 08:04:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,8 +166,6 @@ static void u3g_write(void *, int, u_char *, u_char *, uint32_t *);
 struct ucom_methods u3g_methods = {
 	.ucom_get_status = u3g_get_status,
 	.ucom_set = u3g_set,
-	.ucom_param = NULL,
-	.ucom_ioctl = NULL,
 	.ucom_open = u3g_open,
 	.ucom_close = u3g_close,
 	.ucom_read = u3g_read,
@@ -542,10 +540,8 @@ u3g_get_status(void *arg, int portno, u_char *lsr, u_char *msr)
 {
 	struct u3g_softc *sc = arg;
 
-	if (lsr != NULL)
-		*lsr = 0;	/* LSR isn't supported */
-	if (msr != NULL)
-		*msr = sc->sc_com[portno].c_msr;
+	*lsr = 0;	/* LSR isn't supported */
+	*msr = sc->sc_com[portno].c_msr;
 }
 
 /*ARGSUSED*/

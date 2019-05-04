@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.20 2019/01/22 06:47:20 skrll Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.21 2019/05/04 08:04:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.20 2019/01/22 06:47:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.21 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -96,8 +96,6 @@ Static struct ucom_methods ukyopon_methods = {
 	.ucom_ioctl = ukyopon_ioctl,
 	.ucom_open = umodem_open,
 	.ucom_close = umodem_close,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
 };
 
 int		ukyopon_match(device_t, cfdata_t, void *);

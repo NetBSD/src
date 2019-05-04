@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.80 2016/12/04 10:12:35 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.81 2019/05/04 08:04:13 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.80 2016/12/04 10:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.81 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -146,8 +146,6 @@ struct	ucom_methods uplcom_methods = {
 	.ucom_ioctl = NULL,	/* TODO */
 	.ucom_open = uplcom_open,
 	.ucom_close = uplcom_close,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
 };
 
 static const struct usb_devno uplcom_devs[] = {
@@ -883,10 +881,8 @@ uplcom_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 
 	DPRINTF(("uplcom_get_status:\n"));
 
-	if (lsr != NULL)
-		*lsr = sc->sc_lsr;
-	if (msr != NULL)
-		*msr = sc->sc_msr;
+	*lsr = sc->sc_lsr;
+	*msr = sc->sc_msr;
 }
 
 #if TODO

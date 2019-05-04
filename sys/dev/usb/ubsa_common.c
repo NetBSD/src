@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.10 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.11 2019/05/04 08:04:13 mrg Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.10 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.11 2019/05/04 08:04:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,9 +436,7 @@ ubsa_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 
 	DPRINTF(("ubsa_get_status\n"));
 
-	if (lsr != NULL)
-		*lsr = sc->sc_lsr;
-	if (msr != NULL)
-		*msr = sc->sc_msr;
+	*lsr = sc->sc_lsr;
+	*msr = sc->sc_msr;
 }
 

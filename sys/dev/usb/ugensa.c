@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.36 2018/07/24 08:15:57 msaitoh Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.37 2019/05/04 08:04:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.36 2018/07/24 08:15:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.37 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -73,13 +73,6 @@ struct ugensa_softc {
 
 struct ucom_methods ugensa_methods = {
 	.ucom_get_status = NULL,
-	.ucom_set = NULL,
-	.ucom_param = NULL,
-	.ucom_ioctl = NULL,
-	.ucom_open = NULL,
-	.ucom_close = NULL,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
 };
 
 #define UGENSA_CONFIG_INDEX	0

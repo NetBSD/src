@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.32 2019/02/07 12:41:03 skrll Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.33 2019/05/04 08:04:13 mrg Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.32 2019/02/07 12:41:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.33 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -195,8 +195,6 @@ struct ucom_methods uvscom_methods = {
 	.ucom_ioctl = NULL,		/* TODO */
 	.ucom_open = uvscom_open,
 	.ucom_close = uvscom_close,
-	.ucom_read = NULL,
-	.ucom_write = NULL
 };
 
 static const struct usb_devno uvscom_devs [] = {
@@ -859,9 +857,7 @@ uvscom_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 {
 	struct uvscom_softc *sc = addr;
 
-	if (lsr != NULL)
-		*lsr = sc->sc_lsr;
-	if (msr != NULL)
-		*msr = sc->sc_msr;
+	*lsr = sc->sc_lsr;
+	*msr = sc->sc_msr;
 }
 
