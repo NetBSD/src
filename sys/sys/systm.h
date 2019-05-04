@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.283 2019/04/11 17:43:45 maxv Exp $	*/
+/*	$NetBSD: systm.h,v 1.284 2019/05/04 10:07:11 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -260,7 +260,12 @@ int	format_bytes(char *, size_t, uint64_t);
 
 void	tablefull(const char *, const char *);
 
+#if defined(_KERNEL) && defined(KASAN)
+int	kasan_kcopy(const void *, void *, size_t);
+#define kcopy		kasan_kcopy
+#else
 int	kcopy(const void *, void *, size_t);
+#endif
 
 #ifdef _KERNEL
 #define bcopy(src, dst, len)	memcpy((dst), (src), (len))
@@ -268,15 +273,17 @@ int	kcopy(const void *, void *, size_t);
 #define bcmp(a, b, len)		memcmp((a), (b), (len))
 #endif /* KERNEL */
 
-int	copystr(const void *, void *, size_t, size_t *);
 #if defined(_KERNEL) && defined(KASAN)
+int	kasan_copystr(const void *, void *, size_t, size_t *);
 int	kasan_copyinstr(const void *, void *, size_t, size_t *);
 int	kasan_copyoutstr(const void *, void *, size_t, size_t *);
 int	kasan_copyin(const void *, void *, size_t);
+#define copystr		kasan_copystr
 #define copyinstr	kasan_copyinstr
 #define copyoutstr	kasan_copyoutstr
 #define copyin		kasan_copyin
 #else
+int	copystr(const void *, void *, size_t, size_t *);
 int	copyinstr(const void *, void *, size_t, size_t *);
 int	copyoutstr(const void *, void *, size_t, size_t *);
 int	copyin(const void *, void *, size_t);
