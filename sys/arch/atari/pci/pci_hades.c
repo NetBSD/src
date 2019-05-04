@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.15 2019/05/04 08:20:05 tsutsui Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.16 2019/05/04 09:03:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.15 2019/05/04 08:20:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.16 2019/05/04 09:03:08 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -206,21 +206,21 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
  */
 #define PCI_LINMEMBASE  0x0e000000
 
-static uint8_t crt_tab[] = {
+static const uint8_t crt_tab[] = {
 	0x5f, 0x4f, 0x50, 0x82, 0x55, 0x81, 0xbf, 0x1f,
 	0x00, 0x4f, 0x0d, 0x0e, 0x00, 0x00, 0x00, 0x00,
 	0x9c, 0x8e, 0x8f, 0x28, 0x1f, 0x96, 0xb9, 0xa3,
 	0xff };
 
-static uint8_t seq_tab[] = {
+static const uint8_t seq_tab[] = {
 	0x03, 0x00, 0x03, 0x00, 0x02, 0x00, 0x00, 0x00
 };
 
-static uint8_t attr_tab[] = {
+static const uint8_t attr_tab[] = {
 	0x0c, 0x00, 0x0f, 0x08, 0x00, 0x00, 0x00, 0x00
 };
 
-static uint8_t gdc_tab[] = {
+static const uint8_t gdc_tab[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00, 0xff
 };
 

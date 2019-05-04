@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_tseng.c,v 1.12 2019/05/04 08:20:05 tsutsui Exp $	*/
+/*	$NetBSD: pci_tseng.c,v 1.13 2019/05/04 09:03:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_tseng.c,v 1.12 2019/05/04 08:20:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_tseng.c,v 1.13 2019/05/04 09:03:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -44,19 +44,19 @@ static void et6000_init(volatile uint8_t *, uint8_t *, int);
 /*
  * Use tables for the card init...
  */
-static uint8_t seq_tab[] = {
+static const uint8_t seq_tab[] = {
  	0x03, 0x01, 0x03, 0x00, 0x02, 0x00, 0x00, 0xb4
 };
 
-static uint8_t gfx_tab[] = {
+static const uint8_t gfx_tab[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x0f, 0xff
 };
 
-static uint8_t attr_tab[] = {
+static const uint8_t attr_tab[] = {
 	0x0a, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static uint8_t crt_tab[] = {
+static const uint8_t crt_tab[] = {
 	0x60, 0x53, 0x4f, 0x94, 0x56, 0x05, 0xc1, 0x1f,
 	0x00, 0x4f, 0x00, 0x0f, 0x00, 0x00, 0x07, 0x80,
 	0x98, 0x3d, 0x8f, 0x28, 0x0f, 0x8f, 0xc2, 0xa3,
@@ -71,7 +71,7 @@ static uint8_t crt_tab[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static uint8_t ras_cas_tab[] = {
+static const uint8_t ras_cas_tab[] = {
 	0x11, 0x14, 0x15
 };
 
