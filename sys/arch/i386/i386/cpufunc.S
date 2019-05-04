@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.30 2019/05/01 15:17:49 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.31 2019/05/04 07:20:22 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.30 2019/05/01 15:17:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.31 2019/05/04 07:20:22 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -72,22 +72,6 @@ ENTRY(lidt)
 	ret
 END(lidt)
 #endif /* XENPV */
-
-ENTRY(rcr3)
-	movl	%cr3, %eax
-	ret
-END(rcr3)
-
-ENTRY(lcr4)
-	movl	4(%esp), %eax
-	movl	%eax, %cr4
-	ret
-END(lcr4)
-
-ENTRY(rcr4)
-	movl	%cr4, %eax
-	ret
-END(rcr4)
 
 ENTRY(x86_read_flags)
 	pushfl
@@ -275,21 +259,6 @@ ENTRY(x86_cpuid2)
 	popl	%ebx
 	ret
 END(x86_cpuid2)
-
-ENTRY(x86_getss)
-	movl	%ss, %eax
-	ret
-END(x86_getss)
-
-ENTRY(fnclex)	
-	fnclex
-	ret
-END(fnclex)	
-
-ENTRY(fninit)
-	fninit
-	ret
-END(fninit)
 
 ENTRY(fnsave)
 	movl	4(%esp), %eax
