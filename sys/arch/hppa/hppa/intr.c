@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.3 2019/05/04 13:04:36 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2019/04/15 20:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3 2019/05/04 13:04:36 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -501,7 +501,6 @@ hppa_intr_ipending(struct hppa_interrupt_register *ir, int eirr)
 			pending |= ir->ir_bits_map[31 ^ idx];
 		}
 	}
-
 
 	return pending;
 }
