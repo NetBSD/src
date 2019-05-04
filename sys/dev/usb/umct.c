@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.36 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.37 2019/05/04 08:04:13 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.36 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.37 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -131,11 +131,8 @@ struct	ucom_methods umct_methods = {
 	.ucom_get_status = umct_get_status,
 	.ucom_set = umct_set,
 	.ucom_param = umct_param,
-	.ucom_ioctl = NULL,
 	.ucom_open = umct_open,
 	.ucom_close = umct_close,
-	.ucom_read = NULL,
-	.ucom_write = NULL,
 };
 
 static const struct usb_devno umct_devs[] = {
@@ -633,8 +630,6 @@ umct_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 
 	DPRINTF(("umct_get_status:\n"));
 
-	if (lsr != NULL)
-		*lsr = sc->sc_lsr;
-	if (msr != NULL)
-		*msr = sc->sc_msr;
+	*lsr = sc->sc_lsr;
+	*msr = sc->sc_msr;
 }

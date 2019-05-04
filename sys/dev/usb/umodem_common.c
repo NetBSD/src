@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.27 2019/04/20 05:53:18 mrg Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.28 2019/05/04 08:04:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.27 2019/04/20 05:53:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.28 2019/05/04 08:04:13 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -454,10 +454,8 @@ umodem_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 
 	DPRINTF(("umodem_get_status:\n"));
 
-	if (lsr != NULL)
-		*lsr = sc->sc_lsr;
-	if (msr != NULL)
-		*msr = sc->sc_msr;
+	*lsr = sc->sc_lsr;
+	*msr = sc->sc_msr;
 }
 
 int
