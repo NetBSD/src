@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.165 2019/03/29 21:44:22 christos Exp $
+#	$NetBSD: special,v 1.166 2019/05/04 08:26:51 mrg Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -314,6 +314,7 @@
 ./etc/rc.subr			type=file mode=0644
 ./etc/remote			type=file mode=0644
 ./etc/resolv.conf		type=file mode=0644 optional
+./etc/route.conf		type=file mode=0644 optional
 ./etc/rpc			type=file mode=0644
 ./etc/rtadvd.conf		type=file mode=0644 optional
 ./etc/saslc.d			type=dir  mode=0755
