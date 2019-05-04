@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.24 2019/01/06 14:35:31 cherry Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.25 2019/05/04 07:20:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 2004 Christian Limpach.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.24 2019/01/06 14:35:31 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.25 2019/05/04 07:20:22 maxv Exp $");
 
 #include <sys/param.h>
 
@@ -124,12 +124,12 @@ ltr(u_short sel)
 }
 
 void
-lcr0(u_long val)
+lcr0(register_t val)
 {
 	panic("XXX lcr0 not supported\n");
 }
 
-u_long
+register_t
 rcr0(void)
 {
 	/* XXX: handle X86_CR0_TS ? */
@@ -250,7 +250,7 @@ wbinvd(void)
 	xpq_flush_cache();
 }
 
-vaddr_t
+register_t
 rcr2(void)
 {
 	return curcpu()->ci_vcpu->arch.cr2;
