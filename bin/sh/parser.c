@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.167 2019/02/27 04:10:56 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.168 2019/05/04 02:52:22 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.167 2019/02/27 04:10:56 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.168 2019/05/04 02:52:22 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1974,6 +1974,7 @@ readtoken1(int firstc, char const *syn, int oneword)
 			CVTRACE(DBG_LEXER, quotef==0, (" QF=1 "));
 			quotef = 1;	/* current token is quoted */
 			if (quoted && c != '\\' && c != '`' &&
+			    (c != '}' || varnest == 0) &&
 			    c != '$' && (c != '"' || magicq)) {
 				/*
 				 * retain the \ (which we *know* needs CTLESC)
