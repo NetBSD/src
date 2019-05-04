@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.21 2019/04/10 08:13:11 kre Exp $
+# $NetBSD: t_expand.sh,v 1.22 2019/05/04 02:52:22 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1332,10 +1332,283 @@ embedded_nl_body() {
 		EOF
 }
 
+check3()
+{
+	check "X=foo; ${1}"		"$2" 0
+	check "X=; ${1}"		"$3" 0
+	check "unset X; ${1}"		"$4" 0
+}
+
+atf_test_case alternative
+alternative_head() {
+	atf_set descr 'Test various possibilities for ${var+xxx}'
+}
+alternative_body() {
+	reset alternative
+
+	# just to verify (validate) that the test method works as expected
+	# (this is currently the very first test performed in this test set)
+	check	'printf %s a b'				ab	0	#  1
+
+	check3	'set -- ${X+bar}; echo "$#:$1"'		1:bar 1:bar 0:  #  4
+	check3	'set -- ${X+}; echo "$#:$1"'		0: 0: 0:	#  7
+	check3	'set -- ${X+""}; echo "$#:$1"'		1: 1: 0:	# 10
+	check3	'set -- "${X+}"; echo "$#:$1"'		1: 1: 1:	# 13
+	check3	'set -- "${X+bar}"; echo "$#:$1"'	1:bar 1:bar 1:	# 16
+
+	check3	'set -- ${X+a b c}; echo "$#:$1"'	3:a 3:a 0:	# 19
+	check3	'set -- ${X+"a b c"}; echo "$#:$1"'	'1:a b c' '1:a b c' 0:
+	check3	'set -- "${X+a b c}"; echo "$#:$1"'	'1:a b c' '1:a b c' 1:
+	check3	'set -- ${X+a b\ c}; echo "$#:$1"'	2:a 2:a 0:	# 28
+	check3	'set -- ${X+"a b" c}; echo "$#:$1"'	'2:a b' '2:a b' 0:
+
+	check3	'printf %s "" ${X+}'			''  ''  ''	# 34
+	check3	'printf %s ""${X+bar}'			bar bar ''	# 37
+
+	check3	'Y=bar; printf %s ${X+x}${Y+y}'		xy  xy  y	# 40
+	check3	'Y=bar; printf %s ""${X+${Y+z}}'	z   z   ''	# 43
+	check3	'Y=; printf %s ""${X+${Y+z}}'		z   z   ''	# 46
+	check3	'unset Y; printf %s ""${X+${Y+z}}'	''  ''  ''	# 49
+	check3	'Y=1; printf %s a ${X+"${Y+z}"}'	az  az	a	# 52
+
+	check3	'printf %s ${X+}x}'			x}  x}  x}	# 55
+	check3	'printf %s ${X+}}'			 }   }   }	# 58
+	check3	'printf %s "" ${X+"}"x}'		}x  }x  ''	# 61
+	check3	'printf %s "" ${X+\}x}'			}x  }x  ''	# 64
+	check3	'printf %s "${X+\}x}"'			}x  }x  ''	# 67
+	check3	'printf %s "${X+\}}"'			 }  }   ''	# 70
+
+	check3	'set -- ${X:+bar}; echo "$#:$1"'	1:bar 0: 0:	# 73
+	check3	'set -- ${X:+}; echo "$#:$1"'		0: 0: 0:	# 76
+	check3	'set -- ${X:+""}; echo "$#:$1"'		1: 0: 0:	# 79
+	check3	'set -- "${X:+}"; echo "$#:$1"'		1: 1: 1:	# 80
+	check3	'set -- "${X:+bar}"; echo "$#:$1"'	1:bar 1: 1:	# 83
+
+	check3	'set -- ${X:+a b c}; echo "$#:$1"'	3:a 0: 0:	# 86
+	check3	'set -- ${X:+"a b c"}; echo "$#:$1"'	'1:a b c' 0: 0:	# 89
+	check3	'set -- "${X:+a b c}"; echo "$#:$1"'	'1:a b c' 1: 1:	# 92
+	check3	'set -- ${X:+a b\ c}; echo "$#:$1"'	2:a 0: 0:	# 95
+	check3	'set -- ${X:+"a b" c}; echo "$#:$1"'	'2:a b' 0: 0:	# 98
+
+	check3	'printf %s "" ${X:+}'			''  ''  ''	#101
+	check3	'printf %s ""${X:+bar}'			bar ''  ''	#104
+
+	check3	'Y=bar; printf %s ${X:+x}${Y:+y}'	xy  y   y	#107
+	check3	'Y=bar; printf %s ""${X:+${Y:+z}}'	z   ''  ''	#110
+	check3	'Y=; printf %s ""${X:+${Y+z}}'		z   ''  ''	#113
+	check3	'Y=; printf %s ""${X:+${Y:+z}}'		''  ''  ''	#116
+	check3	'unset Y; printf %s ""${X:+${Y:+z}}'	''  ''  ''	#119
+	check3	'Y=1; printf %s a ${X:+"${Y:+z}"}'	az  a	a	#122
+
+	check3	'printf %s ${X:+}x}'			x}  x}  x}	#125
+	check3	'printf %s ${X:+}}'			 }   }   }	#128
+	check3	'printf %s "" ${X:+"}"x}'		}x  ''  ''	#131
+	check3	'printf %s "" ${X:+\}x}'		}x  ''  ''	#134
+	check3	'printf %s "${X:+\}x}"'			}x  ''  ''	#137
+	check3	'printf %s "${X:+\}}"'			 }  ''  ''	#140
+
+	results
+}
+
+atf_test_case default
+default_head() {
+	atf_set descr 'Test various possibilities for ${var-xxx}'
+}
+default_body() {
+	reset default
+
+	check3	'set -- ${X-bar}; echo "$#:$1"'		1:foo 0: 1:bar	#  3
+	check3	'set -- ${X-}; echo "$#:$1"'		1:foo 0: 0:	#  6
+	check3	'set -- ${X-""}; echo "$#:$1"'		1:foo 0: 1:	#  9
+	check3	'set -- "${X-}"; echo "$#:$1"'		1:foo 1: 1:	# 12
+	check3	'set -- "${X-bar}"; echo "$#:$1"'	1:foo 1: 1:bar	# 15
+
+	check3	'set -- ${X-a b c}; echo "$#:$1"'	1:foo 0: 3:a	# 18
+	check3	'set -- ${X-"a b c"}; echo "$#:$1"'	1:foo 0: '1:a b c' #21
+	check3	'set -- "${X-a b c}"; echo "$#:$1"'	1:foo 1: '1:a b c' #24
+	check3	'set -- ${X-a b\ c}; echo "$#:$1"'	1:foo 0: 2:a	# 27
+	check3	'set -- ${X-"a b" c}; echo "$#:$1"'	1:foo 0: '2:a b'   #30
+
+	check3	'printf %s "" ${X-}'			foo '' ''	# 33
+	check3	'printf %s ""${X-bar}'			foo '' bar	# 36
+
+	check3	'Y=bar; printf %s ${X-x}${Y-y}'		foobar bar xbar	# 39
+	check3	'Y=bar; printf %s ""${X-${Y-z}}'	foo '' bar	# 42
+	check3	'Y=; printf %s ""${X-${Y-z}}'		foo '' ''	# 45
+	check3	'unset Y; printf %s ""${X-${Y-z}}'	foo '' z	# 48
+	check3	'Y=1; printf %s a ${X-"${Y-z}"}'	afoo a a1	# 51
+
+	check3	'printf %s ${X-}x}'			foox} x} x}	# 54
+	check3	'printf %s ${X-}}'			 foo}  }  }	# 57
+	check3	'printf %s ${X-{}}'			 foo}  } {}	# 60
+	check3	'printf %s "" ${X-"}"x}'		foo ''  }x	# 63
+	check3	'printf %s "" ${X-\}x}'			foo ''  }x	# 66
+	check3	'printf %s "${X-\}x}"'			foo ''  }x	# 69
+	check3	'printf %s "${X-\}}"'			foo ''  }	# 72
+
+	check3	'set -- ${X:-bar}; echo "$#:$1"'	1:foo 1:bar 1:bar  #75
+	check3	'set -- ${X:-}; echo "$#:$1"'		1:foo 0: 0:	# 78
+	check3	'set -- ${X:-""}; echo "$#:$1"'		1:foo 1: 1:	# 81
+	check3	'set -- "${X:-}"; echo "$#:$1"'		1:foo 1: 1:	# 84
+	check3	'set -- "${X:-bar}"; echo "$#:$1"'	1:foo 1:bar 1:bar  #87
+
+	check3	'set -- ${X:-a b c}; echo "$#:$1"'	1:foo 3:a 3:a	# 90
+	check3	'set -- ${X:-"a b c"}; echo "$#:$1"' 1:foo '1:a b c' '1:a b c'
+	check3	'set -- "${X:-a b c}"; echo "$#:$1"' 1:foo '1:a b c' '1:a b c'
+	check3	'set -- ${X:-a b\ c}; echo "$#:$1"'	1:foo 2:a 2:a	# 99
+	check3	'set -- ${X:-"a b" c}; echo "$#:$1"'	1:foo '2:a b' '2:a b'
+
+	check3	'printf %s "" ${X:-}'			foo ''  ''	#105
+	check3	'printf %s ""${X:-bar}'			foo bar bar	#108
+
+	check3	'Y=bar; printf %s ${X:-x}${Y:-y}'	foobar xbar xbar #111
+	check3	'Y=bar; printf %s ""${X:-${Y:-z}}'	foo  bar bar	#114
+	check3	'Y=; printf %s ""${X:-${Y-z}}'		foo  ''  ''	#117
+	check3	'Y=; printf %s ""${X:-${Y:-z}}'		foo  z   z	#120
+	check3	'unset Y; printf %s ""${X:-${Y:-z}}'	foo  z   z	#123
+	check3	'Y=1; printf %s a ${X:-"${Y:-z}"}'	afoo a1	 a1	#126
+
+	check3	'printf %s ${X:-}x}'			foox} x}  x}	#129
+	check3	'printf %s ${X:-}}'			 foo}  }   }	#132
+	check3	'printf %s ${X:-{}}'			 foo} {}  {}	#135
+	check3	'printf %s "" ${X:-"}"x}'		 foo  }x  }x	#138
+	check3	'printf %s "" ${X:-\}x}'		 foo  }x  }x	#141
+	check3	'printf %s "${X:-\}x}"'			 foo  }x  }x	#144
+	check3	'printf %s "${X:-\}}"'			 foo  }   }	#147
+
+	results
+}
+
+atf_test_case assign
+assign_head() {
+	atf_set descr 'Test various possibilities for ${var=xxx}'
+}
+assign_body() {
+	reset assign
+
+	check3	'set -- ${X=bar}; echo "$#:$1"'		1:foo 0: 1:bar	#  3
+	check3	'set -- ${X=}; echo "$#:$1"'		1:foo 0: 0:	#  6
+	check3	'set -- ${X=""}; echo "$#:$1"'		1:foo 0: 0:	#  9
+	check3	'set -- "${X=}"; echo "$#:$1"'		1:foo 1: 1:	# 12
+	check3	'set -- "${X=bar}"; echo "$#:$1"'	1:foo 1: 1:bar	# 15
+
+	check3	'set -- ${X=a b c}; echo "$#:$1"'	1:foo 0: 3:a	# 18
+	check3	'set -- ${X="a b c"}; echo "$#:$1"'	1:foo 0: 3:a	# 21
+	check3	'set -- "${X=a b c}"; echo "$#:$1"'	1:foo 1: '1:a b c' #24
+	check3	'set -- ${X=a b\ c}; echo "$#:$1"'	1:foo 0: 3:a	# 27
+	check3	'set -- ${X="a b" c}; echo "$#:$1"'	1:foo 0: 3:a	# 30
+
+	check3	'printf %s "" ${X=}'			foo '' ''	# 33
+	check3	'printf %s ""${X=bar}'			foo '' bar	# 36
+
+	check3	'Y=bar; printf %s ${X=x}${Y=y}'		foobar bar xbar	# 39
+	check3	'Y=bar; printf %s ""${X=${Y=z}}'	foo '' bar	# 42
+	check3	'Y=; printf %s ""${X=${Y=z}}'		foo '' ''	# 45
+	check3	'unset Y; printf %s ""${X=${Y=z}}'	foo '' z	# 48
+	check3	'Y=1; printf %s a ${X="${Y=z}"}'	afoo a a1	# 51
+
+	check3	'printf %s ${X=}x}'			foox} x} x}	# 54
+	check3	'printf %s ${X=}}'			 foo}  }  }	# 57
+	check3	'printf %s ${X={}}'			 foo}  } {}	# 60
+	check3	'printf %s "" ${X="}"x}'		foo ''  }x	# 63
+	check3	'printf %s "" ${X=\}x}'			foo ''  }x	# 66
+	check3	'printf %s "${X=\}x}"'			foo ''  }x	# 69
+	check3	'printf %s "${X=\}}"'			foo ''  }	# 72
+
+	check3	'set -- ${X=a b c}; echo "$#:$1:$X"'  1:foo:foo 0:: '3:a:a b c'
+	check3	'set -- ${X="a b c"}; echo "$#:$1:$X"' 1:foo:foo 0:: '3:a:a b c'
+	check3	'set -- "${X=a b c}"; echo "$#:$1:$X"' \
+						1:foo:foo 1:: '1:a b c:a b c'
+	check3	'set -- ${X=a b\ c}; echo "$#:$1:$X"' 1:foo:foo 0:: '3:a:a b c'
+	check3	'set -- ${X="a b" c}; echo "$#:$1:$X"' 1:foo:foo 0:: '3:a:a b c'
+
+	check3	'printf %s ${X=}x}; printf :%s "${X-U}"' foox}:foo x}: x}: #90
+	check3	'printf %s ${X=}}; printf :%s "${X-U}"'  foo}:foo }:  }:   #93
+	check3	'printf %s ${X={}}; printf :%s "${X-U}"' foo}:foo }: {}:{  #96
+
+	check3	'set -- ${X:=bar}; echo "$#:$1"'	1:foo 1:bar 1:bar # 99	
+	check3	'set -- ${X:=}; echo "$#:$1"'		1:foo 0: 0:	#102
+	check3	'set -- ${X:=""}; echo "$#:$1"'		1:foo 0: 0:	#105
+	check3	'set -- "${X:=}"; echo "$#:$1"'		1:foo 1: 1:	#108
+	check3	'set -- "${X:=bar}"; echo "$#:$1"'	1:foo 1:bar 1:bar #111
+
+	check3	'set -- ${X:=a b c}; echo "$#:$1"'	1:foo 3:a 3:a	#114
+	check3	'set -- ${X:="a b c"}; echo "$#:$1"' 1:foo 3:a 3:a	#117
+	check3	'set -- "${X:=a b c}"; echo "$#:$1"' 1:foo '1:a b c' '1:a b c'
+	check3	'set -- ${X:=a b\ c}; echo "$#:$1"'	1:foo 3:a 3:a	#123
+	check3	'set -- ${X:="a b" c}; echo "$#:$1"'	1:foo 3:a 3:a	#126
+
+	check3	'printf %s "" ${X:=}'			foo ''  ''	#129
+	check3	'printf %s ""${X:=bar}'			foo bar bar	#132
+
+	check3	'Y=bar; printf %s ${X:=x}${Y:=y}'	foobar xbar xbar #135
+	check3	'Y=bar; printf %s ""${X:=${Y:=z}}'	foo  bar bar	#138
+	check3	'Y=; printf %s ""${X:=${Y=z}}'		foo  ''  ''	#141
+	check3	'Y=; printf %s ""${X:=${Y:=z}}'		foo  z   z	#144
+	check3	'unset Y; printf %s ""${X:=${Y:=z}}'	foo  z   z	#147
+	check3	'Y=1; printf %s a ${X:="${Y:=z}"}'	afoo a1	 a1	#150
+
+	check3	'printf %s ${X:=}x}'			foox} x}  x}	#153
+	check3	'printf %s ${X:=}}'			 foo}  }   }	#156
+	check3	'printf %s ${X:={}}'			 foo} {}  {}	#159
+	check3	'printf %s "" ${X:="}"x}'		 foo  }x  }x	#162
+	check3	'printf %s "" ${X:=\}x}'		 foo  }x  }x	#165
+	check3	'printf %s "${X:=\}x}"'			 foo  }x  }x	#168
+	check3	'printf %s "${X:=\}}"'			 foo  }   }	#171
+
+	check3	'set -- ${X:=a b c}; echo "$#:$1:$X"' \
+				1:foo:foo '3:a:a b c' '3:a:a b c'	#174
+	check3	'set -- ${X:="a b c"}; echo "$#:$1:$X"' \
+				1:foo:foo '3:a:a b c' '3:a:a b c'	#177
+	check3	'set -- "${X:=a b c}"; echo "$#:$1:$X"' \
+				1:foo:foo '1:a b c:a b c' '1:a b c:a b c' #180
+	check3	'set -- ${X:=a b\ c}; echo "$#:$1:$X"' \
+				1:foo:foo '3:a:a b c' '3:a:a b c'	#183
+	check3	'set -- ${X:="a b" c}; echo "$#:$1:$X"' \
+				1:foo:foo '3:a:a b c' '3:a:a b c'	#186
+
+	check3	'printf %s ${X:=}x}; printf :%s "${X-U}"' foox}:foo x}: x}:
+	check3	'printf %s ${X:=}}; printf :%s "${X-U}"'  foo}:foo }:  }:
+	check3	'printf %s ${X:=\}}; printf :%s "${X-U}"' foo:foo }:}  }:}
+	check3	'printf %s ${X:={}}; printf :%s "${X-U}"' foo}:foo {}:{ {}:{
+									#198
+
+	results
+}
+
+atf_test_case error
+error_head() {
+	atf_set descr 'Test various possibilities for ${var?xxx}'
+}
+error_body() {
+	reset error
+
+	check 'X=foo; printf %s ${X?X is not set}'	foo	0	#1
+	check 'X=; printf %s ${X?X is not set}'		''	0	#2
+	check 'unset X; printf %s ${X?X is not set}'	''	2	#3
+
+	check 'X=foo; printf %s ${X?}'			foo	0	#4
+	check 'X=; printf %s ${X?}'			''	0	#5
+	check 'unset X; printf %s ${X?}'		''	2	#6
+
+	check 'X=foo; printf %s ${X:?X is not set}'	foo	0	#7
+	check 'X=; printf %s ${X:?X is not set}'	''	2	#8
+	check 'unset X; printf %s ${X:?X is not set}'	''	2	#9
+
+	check 'X=foo; printf %s ${X:?}'			foo	0	#10
+	check 'X=; printf %s ${X:?}'			''	2	#11
+	check 'unset X; printf %s ${X:?}'		''	2	#12
+
+	results
+}
+
 atf_init_test_cases() {
 	# Listed here in the order ATF runs them, not the order from above
 
+	atf_add_test_case alternative
 	atf_add_test_case arithmetic
+	atf_add_test_case assign
+	atf_add_test_case default
 	atf_add_test_case dollar_at
 	atf_add_test_case dollar_at_empty_and_conditional
 	atf_add_test_case dollar_at_in_field_split_context
@@ -1348,6 +1621,7 @@ atf_init_test_cases() {
 	atf_add_test_case dollar_star_in_word_empty_ifs
 	atf_add_test_case dollar_star_with_empty_ifs
 	atf_add_test_case embedded_nl
+	atf_add_test_case error
 	atf_add_test_case iteration_on_null_parameter
 	atf_add_test_case iteration_on_quoted_null_parameter
 	atf_add_test_case iteration_on_null_or_null_parameter
