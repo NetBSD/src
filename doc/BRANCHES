@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.348 2019/01/28 00:43:54 jdolecek Exp $
+#	$NetBSD: BRANCHES,v 1.349 2019/05/04 04:54:15 isaki Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -458,6 +458,17 @@ Base Tag:	hpcarm-cleanup-base
 Maintainer:	Robert Swindells <rjs@NetBSD.org>
 Scope:		kernel
 Notes:		Modify SA11x0 interrupt code to match PXA2x0 equivalent.
+
+Branch:		isaki-audio2
+Description:	Overhaul audio subsystem
+Status:		Active
+Start Date:	21 Apr 2019
+End Date:
+Base Tag:	isaki-audio2-base
+Maintainer:	Tetsuya Isaki <isaki@NetBSD.org>
+Scope:		src/sys
+Notes:		Rework audio subsystem, including multiple streaming,
+		filter pipeline.
 
 Branch:		itohy-usb1
 Description:	USB stack overhaul, mostly DMA related
