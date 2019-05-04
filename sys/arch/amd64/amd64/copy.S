@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.32 2019/04/06 20:25:26 thorpej Exp $	*/
+/*	$NetBSD: copy.S,v 1.33 2019/05/04 08:50:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -242,6 +242,7 @@ ENTRY(copy_efault)
 END(copy_efault)
 
 ENTRY(kcopy_fault)
+	cld
 	ret
 END(kcopy_fault)
 
