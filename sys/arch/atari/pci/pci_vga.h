@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.h,v 1.5 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: pci_vga.h,v 1.6 2019/05/04 08:20:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -28,8 +28,9 @@ int check_for_vga(bus_space_tag_t, bus_space_tag_t);
 /*
  * Card specific functions
  */
-void ati_vga_init (pci_chipset_tag_t, pcitag_t, int, volatile u_char *,
-								u_char *);
-void tseng_init (pci_chipset_tag_t, pcitag_t, int, volatile u_char *, u_char *);
-void milan_vga_init(pci_chipset_tag_t, pcitag_t, int, volatile u_char *,
-								u_char *);
+void ati_vga_init(pci_chipset_tag_t, pcitag_t, int, volatile uint8_t *,
+    uint8_t *);
+void tseng_init(pci_chipset_tag_t, pcitag_t, int, volatile uint8_t *,
+    uint8_t *);
+void milan_vga_init(pci_chipset_tag_t, pcitag_t, int, volatile uint8_t *,
+    uint8_t *);

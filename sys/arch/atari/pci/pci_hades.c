@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.14 2015/10/02 05:22:50 msaitoh Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.15 2019/05/04 08:20:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.14 2015/10/02 05:22:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.15 2019/05/04 08:20:05 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,7 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.14 2015/10/02 05:22:50 msaitoh Exp $
 int
 pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
-	return (4);
+
+	return 4;
 }
 
 static int pci_config_offset(pcitag_t);
@@ -66,35 +67,37 @@ static int pci_config_offset(pcitag_t);
 /*
  * Atari_init.c maps the config areas PAGE_SIZE bytes apart....
  */
-static int pci_config_offset(pcitag_t tag)
+static int
+pci_config_offset(pcitag_t tag)
 {
-	int	device;
+	int device;
 
 	device = (tag >> 11) & 0x1f;
-	return(device * PAGE_SIZE);
+
+	return device * PAGE_SIZE;
 }
 
 pcireg_t
 pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
-	u_long	data;
+	uint32_t data;
 
-	if ((unsigned int)reg >= PCI_CONF_SIZE)
-		return ((pcireg_t) -1);
+	if ((uint32_t)reg >= PCI_CONF_SIZE)
+		return 0xffffffff;
 
-	data = *(u_long *)(pci_conf_addr + pci_config_offset(tag) + reg);
-	return (bswap32(data));
+	data = *(uint32_t *)(pci_conf_addr + pci_config_offset(tag) + reg);
+	return bswap32(data);
 }
 
 void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 
-	if ((unsigned int)reg >= PCI_CONF_SIZE)
+	if ((uint32_t)reg >= PCI_CONF_SIZE)
 		return;
 
-	*((u_long *)(pci_conf_addr + pci_config_offset(tag) + reg))
-		= bswap32(data);
+	*((uint32_t *)(pci_conf_addr + pci_config_offset(tag) + reg))
+	    = bswap32(data);
 }
 
 /*
@@ -105,13 +108,13 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
  */
 static pci_intr_info_t iinfo[4] = { { -1 }, { -1 }, { -1 }, { -1 } };
 
-static int	iifun(int, int);
+static int iifun(int, int);
 
 static int
 iifun(int slot, int sr)
 {
 	pci_intr_info_t *iinfo_p;
-	int		s;
+	int s;
 
 	iinfo_p = &iinfo[slot];
 
@@ -125,10 +128,9 @@ iifun(int slot, int sr)
 		 * We're running at a too high priority now.
 		 */
 		add_sicallback((si_farg)iifun, (void*)slot, 0);
-	}
-	else {
+	} else {
 		s = splx(iinfo_p->ipl);
-		(void) (iinfo_p->ifunc)(iinfo_p->iarg);
+		(void)(iinfo_p->ifunc)(iinfo_p->iarg);
 		splx(s);
 
 		/*
@@ -141,7 +143,7 @@ iifun(int slot, int sr)
 
 int
 pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
-		 int attr, uint64_t data)
+    int attr, uint64_t data)
 {
 
 	switch (attr) {
@@ -153,20 +155,21 @@ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
 }
 
 void *
-pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level, int (*ih_fun)(void *), void *ih_arg)
+pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
+    int (*ih_fun)(void *), void *ih_arg)
 {
 	pci_intr_info_t *iinfo_p;
 	struct intrhand	*ihand;
-	int		slot;
+	int slot;
 
 	slot    = ih;
 	iinfo_p = &iinfo[slot];
 
 	if (iinfo_p->ipl > 0)
-	    panic("pci_intr_establish: interrupt was already established");
+		panic("pci_intr_establish: interrupt was already established");
 
 	ihand = intr_establish((slot == 3) ? 23 : 16 + slot, USER_VEC, 0,
-				(hw_ifun_t)iifun, (void *)slot);
+	    (hw_ifun_t)iifun, (void *)slot);
 	if (ihand != NULL) {
 		iinfo_p->ipl   = level;
 		iinfo_p->imask = (slot == 3) ? 0x80 : (0x01 << slot);
@@ -179,7 +182,7 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level, int (*
 		 */
 		MFP2->mf_imrb |= iinfo_p->imask;
 		MFP2->mf_ierb |= iinfo_p->imask;
-		return(iinfo_p);
+		return iinfo_p;
 	}
 	return NULL;
 }
@@ -190,11 +193,11 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 	pci_intr_info_t *iinfo_p = (pci_intr_info_t *)cookie;
 
 	if (iinfo->ipl < 0)
-	    panic("pci_intr_disestablish: interrupt was not established");
+		panic("pci_intr_disestablish: interrupt was not established");
 
 	MFP2->mf_imrb &= ~iinfo->imask;
 	MFP2->mf_ierb &= ~iinfo->imask;
-	(void) intr_disestablish(iinfo_p->ihand);
+	(void)intr_disestablish(iinfo_p->ihand);
 	iinfo_p->ipl = -1;
 }
 
@@ -203,25 +206,30 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
  */
 #define PCI_LINMEMBASE  0x0e000000
 
-static u_char crt_tab[] = {
+static uint8_t crt_tab[] = {
 	0x5f, 0x4f, 0x50, 0x82, 0x55, 0x81, 0xbf, 0x1f,
 	0x00, 0x4f, 0x0d, 0x0e, 0x00, 0x00, 0x00, 0x00,
 	0x9c, 0x8e, 0x8f, 0x28, 0x1f, 0x96, 0xb9, 0xa3,
 	0xff };
 
-static u_char seq_tab[] = {
-	0x03, 0x00, 0x03, 0x00, 0x02, 0x00, 0x00, 0x00 };
+static uint8_t seq_tab[] = {
+	0x03, 0x00, 0x03, 0x00, 0x02, 0x00, 0x00, 0x00
+};
 
-static u_char attr_tab[] = {
-	0x0c, 0x00, 0x0f, 0x08, 0x00, 0x00, 0x00, 0x00 };
+static uint8_t attr_tab[] = {
+	0x0c, 0x00, 0x0f, 0x08, 0x00, 0x00, 0x00, 0x00
+};
 
-static u_char gdc_tab[] = {
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00, 0xff };
+static uint8_t gdc_tab[] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00, 0xff
+};
 
 void
-ati_vga_init(pci_chipset_tag_t pc, pcitag_t tag, int id, volatile u_char *ba, u_char *fb)
+ati_vga_init(pci_chipset_tag_t pc, pcitag_t tag, int id, volatile uint8_t *ba,
+    uint8_t *fb)
 {
-	int			i, csr;
+	uint32_t csr;
+	int i;
 
 	/* Turn on the card */
 	pci_conf_write(pc, tag, PCI_MAPREG_START, PCI_LINMEMBASE);

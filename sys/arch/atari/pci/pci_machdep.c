@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.56 2018/02/09 15:24:35 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.57 2019/05/04 08:20:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56 2018/02/09 15:24:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.57 2019/05/04 08:20:05 tsutsui Exp $");
 
 #include "opt_mbtype.h"
 
@@ -89,12 +89,12 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56 2018/02/09 15:24:35 tsutsui Exp
  * Struct to hold the memory and I/O datas of the pci devices
  */
 struct pci_memreg {
-    LIST_ENTRY(pci_memreg) link;
-    int dev;
-    pcitag_t tag;
-    pcireg_t reg, address, mask;
-    u_int32_t size;
-    u_int32_t csr;
+	LIST_ENTRY(pci_memreg) link;
+	int dev;
+	pcitag_t tag;
+	pcireg_t reg, address, mask;
+	uint32_t size;
+	uint32_t csr;
 };
 
 typedef LIST_HEAD(pci_memreg_head, pci_memreg) PCI_MEMREG;
@@ -128,7 +128,7 @@ void	pcibusattach(device_t, device_t, void *);
 static void enable_pci_devices(void);
 static void insert_into_list(PCI_MEMREG *head, struct pci_memreg *elem);
 static int overlap_pci_areas(struct pci_memreg *p,
-	struct pci_memreg *self, u_int addr, u_int size, u_int what);
+    struct pci_memreg *self, u_int addr, u_int size, u_int what);
 
 CFATTACH_DECL_NEW(pcib, 0,
     pcibusmatch, pcibusattach, NULL, NULL);
@@ -142,7 +142,7 @@ static struct atari_bus_space	bs_storage[2];	/* 1 iot, 1 memt */
 int
 pcibusmatch(device_t parent, cfdata_t cf, void *aux)
 {
-	static int	nmatched = 0;
+	static int nmatched = 0;
 
 	if (strcmp((char *)aux, "pcib"))
 		return 0;	/* Wrong number... */
@@ -150,7 +150,7 @@ pcibusmatch(device_t parent, cfdata_t cf, void *aux)
 	if (atari_realconfig == 0)
 		return 1;
 
-	if (machineid & (ATARI_HADES|ATARI_MILAN)) {
+	if ((machineid & (ATARI_HADES|ATARI_MILAN)) != 0) {
 		/*
 		 * Both Hades and Milan have only one pci bus
 		 */
@@ -165,7 +165,7 @@ pcibusmatch(device_t parent, cfdata_t cf, void *aux)
 void
 pcibusattach(device_t parent, device_t self, void *aux)
 {
-	struct pcibus_attach_args	pba;
+	struct pcibus_attach_args pba;
 
 	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
@@ -227,7 +227,8 @@ init_pci_bus(void)
 	pci_chipset_tag_t	pc = NULL; /* XXX */
 	pcitag_t		tag;
 	pcireg_t		csr;
-	int			device, id, maxndevs;
+	int			device, maxndevs;
+	int			id;
 
 	tag   = 0;
 	id    = 0;
@@ -255,18 +256,20 @@ init_pci_bus(void)
 static void
 insert_into_list(PCI_MEMREG *head, struct pci_memreg *elem)
 {
-    struct pci_memreg *p, *q;
+	struct pci_memreg *p, *q;
 
-    p = LIST_FIRST(head);
-    q = NULL;
+	p = LIST_FIRST(head);
+	q = NULL;
 
-    for (; p != NULL && p->size < elem->size; q = p, p = LIST_NEXT(p, link));
+	for (; p != NULL && p->size < elem->size;
+	    q = p, p = LIST_NEXT(p, link))
+		;
 
-    if (q == NULL) {
-	LIST_INSERT_HEAD(head, elem, link);
-    } else {
-	LIST_INSERT_AFTER(q, elem, link);
-    }
+	if (q == NULL) {
+		LIST_INSERT_HEAD(head, elem, link);
+	} else {
+		LIST_INSERT_AFTER(q, elem, link);
+	}
 }
 
 /*
@@ -274,34 +277,39 @@ insert_into_list(PCI_MEMREG *head, struct pci_memreg *elem)
  * pci area.
  */
 static int
-overlap_pci_areas(struct pci_memreg *p, struct pci_memreg *self, u_int addr, u_int size, u_int what)
+overlap_pci_areas(struct pci_memreg *p, struct pci_memreg *self, u_int addr,
+    u_int size, u_int what)
 {
-    struct pci_memreg *q;
+	struct pci_memreg *q;
 
-    if (p == NULL)
-	return 0;
+	if (p == NULL)
+		return 0;
     
-    q = p;
-    while (q != NULL) {
-      if ((q != self) && (q->csr & what)) {
-	if ((addr >= q->address) && (addr < (q->address + q->size))) {
+	q = p;
+	while (q != NULL) {
+		if ((q != self) && (q->csr & what)) {
+			if ((addr >= q->address) &&
+			    (addr < (q->address + q->size))) {
 #ifdef DEBUG_PCI_MACHDEP
-	  printf("\noverlap area dev %d reg 0x%02x with dev %d reg 0x%02x",
-			self->dev, self->reg, q->dev, q->reg);
+				printf("\noverlap area dev %d reg 0x%02x "
+				    "with dev %d reg 0x%02x",
+				    self->dev, self->reg, q->dev, q->reg);
 #endif
-	  return 1;
-	}
-	if ((q->address >= addr) && (q->address < (addr + size))) {
+				return 1;
+			}
+			if ((q->address >= addr) &&
+			    (q->address < (addr + size))) {
 #ifdef DEBUG_PCI_MACHDEP
-	  printf("\noverlap area dev %d reg 0x%02x with dev %d reg 0x%02x",
-			self->dev, self->reg, q->dev, q->reg);
+				printf("\noverlap area dev %d reg 0x%02x "
+				    "with dev %d reg 0x%02x",
+				    self->dev, self->reg, q->dev, q->reg);
 #endif
-	  return 1;
+				return 1;
+			}
+		}
+		q = LIST_NEXT(q, link);
 	}
-      }
-      q = LIST_NEXT(q, link);
-    }
-    return 0;
+	return 0;
 }
 
 /*
@@ -316,303 +324,328 @@ overlap_pci_areas(struct pci_memreg *p, struct pci_memreg *self, u_int addr, u_i
 static void
 enable_pci_devices(void)
 {
-    PCI_MEMREG memlist;
-    PCI_MEMREG iolist;
-    struct pci_memreg *p, *q;
-    int dev, reg, id, class;
-    pcitag_t tag;
-    pcireg_t csr, address, mask;
-    pci_chipset_tag_t pc;
-    int sizecnt, membase_1m;
+	PCI_MEMREG memlist;
+	PCI_MEMREG iolist;
+	struct pci_memreg *p, *q;
+	int dev, reg;
+	int id, class;
+	pcitag_t tag;
+	pcireg_t csr, address, mask;
+	pci_chipset_tag_t pc;
+	int sizecnt, membase_1m;
 
-    pc = 0;
-    csr = 0;
-    tag = 0;
+	pc = 0;
+	csr = 0;
+	tag = 0;
 
-    LIST_INIT(&memlist);
-    LIST_INIT(&iolist);
-
-    /*
-     * first step: go through all devices and gather memory and I/O
-     * sizes
-     */
-    for (dev = 0; dev < pci_bus_maxdevs(pc,0); dev++) {
-
-	tag = pci_make_tag(pc, 0, dev, 0);
-	id  = pci_conf_read(pc, tag, PCI_ID_REG);
-	if (id == 0 || id == 0xffffffff)
-	    continue;
-
-	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	LIST_INIT(&memlist);
+	LIST_INIT(&iolist);
 
 	/*
-	 * special case: if a display card is found and memory is enabled
-	 * preserve 128k at 0xa0000 as vga memory.
-	 * XXX: if a display card is found without being enabled, leave
-	 *      it alone! You will usually only create conflicts by enabeling
-	 *      it.
+	 * first step: go through all devices and gather memory and I/O
+	 * sizes
 	 */
-	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
-	switch (PCI_CLASS(class)) {
-	    case PCI_CLASS_PREHISTORIC:
-	    case PCI_CLASS_DISPLAY:
-	      if (csr & (PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE)) {
-		    p = (struct pci_memreg *)malloc(sizeof(struct pci_memreg),
-				M_TEMP, M_WAITOK);
-		    memset(p, '\0', sizeof(struct pci_memreg));
-		    p->dev = dev;
-		    p->csr = csr;
-		    p->tag = tag;
-		    p->reg = 0;     /* there is no register about this */
-		    p->size = 0x20000;  /* 128kByte */
-		    p->mask = 0xfffe0000;
-		    p->address = 0xa0000;
+	for (dev = 0; dev < pci_bus_maxdevs(pc,0); dev++) {
 
-		    insert_into_list(&memlist, p);
-	      }
-	      else continue;
-	}
+		tag = pci_make_tag(pc, 0, dev, 0);
+		id  = pci_conf_read(pc, tag, PCI_ID_REG);
+		if (id == 0 || id == 0xffffffff)
+			continue;
 
-	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
-
-	    address = pci_conf_read(pc, tag, reg);
-	    pci_conf_write(pc, tag, reg, 0xffffffff);
-	    mask    = pci_conf_read(pc, tag, reg);
-	    pci_conf_write(pc, tag, reg, address);
-	    if (mask == 0)
-		continue; /* Register unused */
-
-	    p = (struct pci_memreg *)malloc(sizeof(struct pci_memreg),
-			M_TEMP, M_WAITOK);
-	    memset(p, '\0', sizeof(struct pci_memreg));
-	    p->dev = dev;
-	    p->csr = csr;
-	    p->tag = tag;
-	    p->reg = reg;
-	    p->mask = mask;
-	    p->address = 0;
-
-	    if (mask & PCI_MAPREG_TYPE_IO) {
-		p->size = PCI_MAPREG_IO_SIZE(mask);
+		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 
 		/*
-		 * Align IO if necessary
+		 * special case: if a display card is found and memory is
+		 * enabled preserve 128k at 0xa0000 as vga memory.
+		 * XXX: if a display card is found without being enabled,
+		 * leave it alone! You will usually only create conflicts
+		 * by enabeling it.
 		 */
-		if (p->size < PCI_MAPREG_IO_SIZE(PCI_MACHDEP_IO_ALIGN_MASK)) {
-		    p->mask = PCI_MACHDEP_IO_ALIGN_MASK;
-		    p->size = PCI_MAPREG_IO_SIZE(p->mask);
+		class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+		switch (PCI_CLASS(class)) {
+		case PCI_CLASS_PREHISTORIC:
+		case PCI_CLASS_DISPLAY:
+			if (csr & (PCI_COMMAND_MEM_ENABLE |
+			    PCI_COMMAND_MASTER_ENABLE)) {
+				p = malloc(sizeof(struct pci_memreg),
+				    M_TEMP, M_WAITOK);
+				memset(p, 0, sizeof(struct pci_memreg));
+				p->dev = dev;
+				p->csr = csr;
+				p->tag = tag;
+				p->reg = 0;	/* there is no register
+						   about this */
+				p->size = 0x20000; /* 128kByte */
+				p->mask = 0xfffe0000;
+				p->address = 0xa0000;
+
+				insert_into_list(&memlist, p);
+			} else
+				continue;
 		}
 
-		/*
-		 * if I/O is already enabled (probably by the console driver)
-		 * save the address in order to take care about it later.
-		 */
-		if (csr & PCI_COMMAND_IO_ENABLE)
-		    p->address = address;
+		for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
+			address = pci_conf_read(pc, tag, reg);
+			pci_conf_write(pc, tag, reg, 0xffffffff);
+			mask    = pci_conf_read(pc, tag, reg);
+			pci_conf_write(pc, tag, reg, address);
+			if (mask == 0)
+				continue; /* Register unused */
 
-		insert_into_list(&iolist, p);
-	    } else {
-		p->size = PCI_MAPREG_MEM_SIZE(mask);
+			p = malloc(sizeof(struct pci_memreg),
+			    M_TEMP, M_WAITOK);
+			memset(p, 0, sizeof(struct pci_memreg));
+			p->dev = dev;
+			p->csr = csr;
+			p->tag = tag;
+			p->reg = reg;
+			p->mask = mask;
+			p->address = 0;
 
-		/*
-		 * Align memory if necessary
-		 */
-		if (p->size < PCI_MAPREG_IO_SIZE(PCI_MACHDEP_MEM_ALIGN_MASK)) {
-		    p->mask = PCI_MACHDEP_MEM_ALIGN_MASK;
-		    p->size = PCI_MAPREG_MEM_SIZE(p->mask);
+			if ((mask & PCI_MAPREG_TYPE_IO) != 0) {
+				p->size = PCI_MAPREG_IO_SIZE(mask);
+
+				/*
+				 * Align IO if necessary
+				 */
+				if (p->size < PCI_MAPREG_IO_SIZE(
+				    PCI_MACHDEP_IO_ALIGN_MASK)) {
+					p->mask = PCI_MACHDEP_IO_ALIGN_MASK;
+					p->size = PCI_MAPREG_IO_SIZE(p->mask);
+				}
+
+				/*
+				 * if I/O is already enabled
+				 * (probably by the console driver)
+				 * save the address in order to take care
+				 * about it later.
+				 */
+				if ((csr & PCI_COMMAND_IO_ENABLE) != 0)
+					p->address = address;
+
+				insert_into_list(&iolist, p);
+			} else {
+				p->size = PCI_MAPREG_MEM_SIZE(mask);
+
+				/*
+				 * Align memory if necessary
+				 */
+				if (p->size < PCI_MAPREG_IO_SIZE(
+				    PCI_MACHDEP_MEM_ALIGN_MASK)) {
+					p->mask = PCI_MACHDEP_MEM_ALIGN_MASK;
+					p->size = PCI_MAPREG_MEM_SIZE(p->mask);
+				}
+
+				/*
+				 * if memory is already enabled
+				 * (probably by the console driver)
+				 * save the address in order to take care
+				 * about it later.
+				 */
+				if ((csr & PCI_COMMAND_MEM_ENABLE) != 0)
+					p->address = address;
+
+				insert_into_list(&memlist, p);
+
+				if (PCI_MAPREG_MEM_TYPE(mask) ==
+				    PCI_MAPREG_MEM_TYPE_64BIT)
+					reg++;
+			}
 		}
-
-		/*
-		 * if memory is already enabled (probably by the console driver)
-		 * save the address in order to take care about it later.
-		 */
-		if (csr & PCI_COMMAND_MEM_ENABLE)
-		    p->address = address;
-
-		insert_into_list(&memlist, p);
-
-		if (PCI_MAPREG_MEM_TYPE(mask) == PCI_MAPREG_MEM_TYPE_64BIT)
-		    reg++;
-	    }
-	}
-
 
 #if defined(_ATARIHW_)
-	/*
-	 * Both interrupt pin & line are set to the device (== slot)
-	 * number. This makes sense on the atari Hades because the
-	 * individual slots are hard-wired to a specific MFP-pin.
-	 */
-	csr  = (DEV2SLOT(dev) << PCI_INTERRUPT_PIN_SHIFT);
-	csr |= (DEV2SLOT(dev) << PCI_INTERRUPT_LINE_SHIFT);
-	pci_conf_write(pc, tag, PCI_INTERRUPT_REG, csr);
+		/*
+		 * Both interrupt pin & line are set to the device (== slot)
+		 * number. This makes sense on the atari Hades because the
+		 * individual slots are hard-wired to a specific MFP-pin.
+		 */
+		csr  = (DEV2SLOT(dev) << PCI_INTERRUPT_PIN_SHIFT);
+		csr |= (DEV2SLOT(dev) << PCI_INTERRUPT_LINE_SHIFT);
+		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, csr);
 #else
-	/*
-	 * On the Milan, we accept the BIOS's choice.
-	 */
-	/* ..except the secondary IDE interrupt that the BIOS doesn't setup. */
+		/*
+		 * On the Milan, we accept the BIOS's choice.
+		 */
+		/*
+		 * ..except the secondary IDE interrupt that
+		 * the BIOS doesn't setup.
+		 */
 #define PIIX_PCIB_MBIRQ0	0x70
-	if ((PCI_VENDOR(id) == PCI_VENDOR_INTEL) &&
-	    (PCI_PRODUCT(id) == PCI_PRODUCT_INTEL_82371FB_ISA)) {
-		/*
-		 * Set Interrupt Routing for MBIRQ0 to IRQ15.
-		 * Note Milan's ROM bootloader v1.2 and v1.4 incorrectly
-		 * set MBIRQ0 to IRQ14 (not 15) and unused MBIRQ1 to IRQ 15,
-		 * so explicitly disable MBIRQ1.
-		 */
-		csr = pci_conf_read(pc, tag, PIIX_PCIB_MBIRQ0);
-		csr &= ~0x000ffff;
-		csr |=  0x000800f;	/* MBIRQ1: disable, MBIRQ0: IRQ15 */
-		pci_conf_write(pc, tag, PIIX_PCIB_MBIRQ0, csr);
+		if ((PCI_VENDOR(id) == PCI_VENDOR_INTEL) &&
+		    (PCI_PRODUCT(id) == PCI_PRODUCT_INTEL_82371FB_ISA)) {
+			/*
+			 * Set Interrupt Routing for MBIRQ0 to IRQ15.
+			 * Note Milan's ROM bootloader v1.2 and v1.4
+			 * incorrectly set MBIRQ0 to IRQ14 (not 15)
+			 * and unused MBIRQ1 to IRQ 15,
+			 * so explicitly disable MBIRQ1.
+			 */
+			csr = pci_conf_read(pc, tag, PIIX_PCIB_MBIRQ0);
+			csr &= ~0x0000ffff;
+			/* MBIRQ1: disable, MBIRQ0: IRQ15 */
+			csr |=  0x0000800f;
+			pci_conf_write(pc, tag, PIIX_PCIB_MBIRQ0, csr);
 #ifdef DEBUG_PCI_MACHDEP
-		printf("\npcib0: enable and route MBIRQ0 to irq 15\n");
+			printf("\npcib0: enable and route MBIRQ0 to irq 15\n");
+#endif
+		}
 #endif
 	}
-#endif
-    }
 
-    /*
-     * second step: calculate the memory and I/O addresses beginning from
-     * PCI_MEM_START and PCI_IO_START. Care about already mapped areas.
-     *
-     * begin with memory list
-     */
+	/*
+	 * second step: calculate the memory and I/O addresses beginning from
+	 * PCI_MEM_START and PCI_IO_START. Care about already mapped areas.
+	 *
+	 * begin with memory list
+	 */
 
-    address = PCI_MEM_START;
-    sizecnt = 0;
-    membase_1m = 0;
-    p = LIST_FIRST(&memlist);
-    while (p != NULL) {
-	if (!(p->csr & PCI_COMMAND_MEM_ENABLE)) {
-	    if (PCI_MAPREG_MEM_TYPE(p->mask) == PCI_MAPREG_MEM_TYPE_32BIT_1M) {
-		if (p->size > membase_1m)
-		    membase_1m = p->size;
-		do {
-		    p->address = membase_1m;
-		    membase_1m += p->size;
-		} while (overlap_pci_areas(LIST_FIRST(&memlist), p, p->address,
-					   p->size, PCI_COMMAND_MEM_ENABLE));
-		if (membase_1m > 0x00100000) {
-		    /*
-		     * Should we panic here?
-		     */
-		    printf("\npcibus0: dev %d reg %d: memory not configured",
-			    p->dev, p->reg);
-		    p->reg = 0;
-		}
-	    } else {
-
-		if (sizecnt && (p->size > sizecnt))
-		    sizecnt = ((p->size + sizecnt) & p->mask) &
-			      PCI_MAPREG_MEM_ADDR_MASK;
-		if (sizecnt > address) {
-		    address = sizecnt;
-		    sizecnt = 0;
-		}
-
-		do {
-		    p->address = address + sizecnt;
-		    sizecnt += p->size;
-		} while (overlap_pci_areas(LIST_FIRST(&memlist), p, p->address,
-					   p->size, PCI_COMMAND_MEM_ENABLE));
-
-		if ((address + sizecnt) > PCI_MEM_END) {
-		    /*
-		     * Should we panic here?
-		     */
-		    printf("\npcibus0: dev %d reg %d: memory not configured",
-			    p->dev, p->reg);
-		    p->reg = 0;
-		}
-	    }
-	    if (p->reg > 0) {
-		pci_conf_write(pc, p->tag, p->reg, p->address);
-		csr = pci_conf_read(pc, p->tag, PCI_COMMAND_STATUS_REG);
-		csr |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
-		pci_conf_write(pc, p->tag, PCI_COMMAND_STATUS_REG, csr);
-		p->csr = csr;
-	    }
-	}
-	p = LIST_NEXT(p, link);
-    }
-
-    /*
-     * now the I/O list
-     */
-
-    address = PCI_IO_START;
-    sizecnt = 0;
-    p = LIST_FIRST(&iolist);
-    while (p != NULL) {
-	if (!(p->csr & PCI_COMMAND_IO_ENABLE)) {
-
-	    if (sizecnt && (p->size > sizecnt))
-		sizecnt = ((p->size + sizecnt) & p->mask) &
-			  PCI_MAPREG_IO_ADDR_MASK;
-	    if (sizecnt > address) {
-		address = sizecnt;
-		sizecnt = 0;
-	    }
-
-	    do {
-		p->address = address + sizecnt;
-		sizecnt += p->size;
-	    } while (overlap_pci_areas(LIST_FIRST(&iolist), p, p->address,
-				       p->size, PCI_COMMAND_IO_ENABLE));
-
-	    if ((address + sizecnt) > PCI_IO_END) {
-		/*
-		 * Should we panic here?
-		 */
-		printf("\npcibus0: dev %d reg %d: io not configured",
-			p->dev, p->reg);
-	    } else {
-		pci_conf_write(pc, p->tag, p->reg, p->address);
-		csr = pci_conf_read(pc, p->tag, PCI_COMMAND_STATUS_REG);
-		csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE;
-		pci_conf_write(pc, p->tag, PCI_COMMAND_STATUS_REG, csr);
-		p->csr = csr;
-	    }
-	}
-	p = LIST_NEXT(p, link);
-    }
-
-#ifdef DEBUG_PCI_MACHDEP
-    printf("\nI/O List:\n");
-    p = LIST_FIRST(&iolist);
-
-    while (p != NULL) {
-	printf("\ndev: %d, reg: 0x%02x, size: 0x%08x, addr: 0x%08x", p->dev,
-			p->reg, p->size, p->address);
-	p = LIST_NEXT(p, link);
-    }
-    printf("\nMemlist:");
-    p = LIST_FIRST(&memlist);
-
-    while (p != NULL) {
-	printf("\ndev: %d, reg: 0x%02x, size: 0x%08x, addr: 0x%08x", p->dev,
-			p->reg, p->size, p->address);
-	p = LIST_NEXT(p, link);
-    }
-#endif
-
-    /*
-     * Free the lists
-     */
-    p = LIST_FIRST(&iolist);
-    while (p != NULL) {
-	q = p;
-	LIST_REMOVE(q, link);
-	free(p, M_WAITOK);
-	p = LIST_FIRST(&iolist);
-    }
-    p = LIST_FIRST(&memlist);
-    while (p != NULL) {
-	q = p;
-	LIST_REMOVE(q, link);
-	free(p, M_WAITOK);
+	address = PCI_MEM_START;
+	sizecnt = 0;
+	membase_1m = 0;
 	p = LIST_FIRST(&memlist);
-    }
+	while (p != NULL) {
+		if ((p->csr & PCI_COMMAND_MEM_ENABLE) == 0) {
+			if (PCI_MAPREG_MEM_TYPE(p->mask) ==
+			    PCI_MAPREG_MEM_TYPE_32BIT_1M) {
+				if (p->size > membase_1m)
+					membase_1m = p->size;
+				do {
+					p->address = membase_1m;
+					membase_1m += p->size;
+				} while (overlap_pci_areas(LIST_FIRST(&memlist),
+				    p, p->address, p->size,
+				    PCI_COMMAND_MEM_ENABLE));
+				if (membase_1m > 0x00100000) {
+					/*
+					 * Should we panic here?
+					 */
+					printf("\npcibus0: dev %d reg %d:"
+					    " memory not configured",
+					    p->dev, p->reg);
+					p->reg = 0;
+				}
+			} else {
+				if (sizecnt && (p->size > sizecnt))
+					sizecnt =
+					    ((p->size + sizecnt) & p->mask) &
+					    PCI_MAPREG_MEM_ADDR_MASK;
+				if (sizecnt > address) {
+					address = sizecnt;
+					sizecnt = 0;
+				}
+
+				do {
+					p->address = address + sizecnt;
+					sizecnt += p->size;
+				} while (overlap_pci_areas(LIST_FIRST(&memlist),
+				    p, p->address, p->size,
+				    PCI_COMMAND_MEM_ENABLE));
+
+				if ((address + sizecnt) > PCI_MEM_END) {
+					/*
+					 * Should we panic here?
+					 */
+					printf("\npcibus0: dev %d reg %d:"
+					    " memory not configured",
+					    p->dev, p->reg);
+					p->reg = 0;
+				}
+			}
+			if (p->reg > 0) {
+				pci_conf_write(pc, p->tag, p->reg, p->address);
+				csr = pci_conf_read(pc, p->tag,
+				    PCI_COMMAND_STATUS_REG);
+				csr |= PCI_COMMAND_MEM_ENABLE |
+				    PCI_COMMAND_MASTER_ENABLE;
+				pci_conf_write(pc, p->tag,
+				    PCI_COMMAND_STATUS_REG, csr);
+				p->csr = csr;
+			}
+		}
+		p = LIST_NEXT(p, link);
+	}
+
+	/*
+	 * now the I/O list
+	 */
+
+	address = PCI_IO_START;
+	sizecnt = 0;
+	p = LIST_FIRST(&iolist);
+	while (p != NULL) {
+		if (!(p->csr & PCI_COMMAND_IO_ENABLE)) {
+
+			if (sizecnt && (p->size > sizecnt))
+				sizecnt = ((p->size + sizecnt) & p->mask) &
+				    PCI_MAPREG_IO_ADDR_MASK;
+			if (sizecnt > address) {
+				address = sizecnt;
+				sizecnt = 0;
+			}
+
+			do {
+				p->address = address + sizecnt;
+				sizecnt += p->size;
+			} while (overlap_pci_areas(LIST_FIRST(&iolist), p,
+			    p->address, p->size, PCI_COMMAND_IO_ENABLE));
+
+			if ((address + sizecnt) > PCI_IO_END) {
+				/*
+				 * Should we panic here?
+				 */
+				printf("\npcibus0: dev %d reg %d:"
+				    " io not configured",
+				    p->dev, p->reg);
+			} else {
+				pci_conf_write(pc, p->tag, p->reg, p->address);
+				csr = pci_conf_read(pc, p->tag,
+				    PCI_COMMAND_STATUS_REG);
+				csr |= PCI_COMMAND_IO_ENABLE |
+				    PCI_COMMAND_MASTER_ENABLE;
+				pci_conf_write(pc, p->tag,
+				    PCI_COMMAND_STATUS_REG, csr);
+				p->csr = csr;
+			}
+		}
+		p = LIST_NEXT(p, link);
+	}
+
+#ifdef DEBUG_PCI_MACHDEP
+	printf("\nI/O List:\n");
+	p = LIST_FIRST(&iolist);
+
+	while (p != NULL) {
+		printf("\ndev: %d, reg: 0x%02x, size: 0x%08x, addr: 0x%08x",
+		    p->dev, p->reg, p->size, p->address);
+		p = LIST_NEXT(p, link);
+	}
+	printf("\nMemlist:");
+	p = LIST_FIRST(&memlist);
+
+	while (p != NULL) {
+		printf("\ndev: %d, reg: 0x%02x, size: 0x%08x, addr: 0x%08x",
+		    p->dev, p->reg, p->size, p->address);
+		p = LIST_NEXT(p, link);
+	}
+#endif
+
+	/*
+	 * Free the lists
+	 */
+	p = LIST_FIRST(&iolist);
+	while (p != NULL) {
+		q = p;
+		LIST_REMOVE(q, link);
+		free(p, M_WAITOK);
+		p = LIST_FIRST(&iolist);
+	}
+	p = LIST_FIRST(&memlist);
+	while (p != NULL) {
+		q = p;
+		LIST_REMOVE(q, link);
+		free(p, M_WAITOK);
+		p = LIST_FIRST(&memlist);
+	}
 }
 
 pcitag_t
@@ -692,8 +725,10 @@ bad:
 }
 
 const char *
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf, size_t len)
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
 {
+
 	if (ih == -1)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
