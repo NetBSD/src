@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.174 2019/02/09 09:17:59 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.175 2019/05/04 02:52:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.174 2019/02/09 09:17:59 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.175 2019/05/04 02:52:55 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,6 +407,8 @@ evalloop(union node *n, int flags)
 			}
 			if (evalskip == SKIPBREAK && --skipcount <= 0)
 				evalskip = SKIPNONE;
+			if (evalskip == SKIPFUNC || evalskip == SKIPFILE)
+				status = exitstatus;
 			break;
 		}
 		if (n->type == NWHILE) {
