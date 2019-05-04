@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.20 2019/01/06 14:35:31 cherry Exp $	*/
+/*	$NetBSD: i386func.S,v 1.21 2019/05/04 07:20:22 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.20 2019/01/06 14:35:31 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.21 2019/05/04 07:20:22 maxv Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -65,23 +65,6 @@ ENTRY(ltr)
 	ltr	%ax
 	ret
 END(ltr)
-
-ENTRY(lcr0)
-	movl	4(%esp), %eax
-	movl	%eax, %cr0
-	ret
-END(lcr0)
-
-ENTRY(rcr0)
-	movl	%cr0, %eax
-	ret
-END(rcr0)
-
-ENTRY(lcr3)
-	movl	4(%esp), %eax
-	movl	%eax, %cr3
-	ret
-END(lcr3)
 
 /*
  * Big hammer: flush all TLB entries, including ones from PTE's
@@ -123,97 +106,10 @@ ENTRY(tlbflush)
 	ret
 END(tlbflush)
 
-ENTRY(ldr0)
-	movl	4(%esp), %eax
-	movl	%eax, %dr0
-	ret
-END(ldr0)
-
-ENTRY(rdr0)
-	movl	%dr0, %eax
-	ret
-END(rdr0)
-
-ENTRY(ldr1)
-	movl	4(%esp), %eax
-	movl	%eax, %dr1
-	ret
-END(ldr1)
-
-ENTRY(rdr1)
-	movl	%dr1, %eax
-	ret
-END(rdr1)
-
-ENTRY(ldr2)
-	movl	4(%esp), %eax
-	movl	%eax, %dr2
-	ret
-END(ldr2)
-
-ENTRY(rdr2)
-	movl	%dr2, %eax
-	ret
-END(rdr2)
-
-ENTRY(ldr3)
-	movl	4(%esp), %eax
-	movl	%eax, %dr3
-	ret
-END(ldr3)
-
-ENTRY(rdr3)
-	movl	%dr3, %eax
-	ret
-END(rdr3)
-
-ENTRY(ldr6)
-	movl	4(%esp), %eax
-	movl	%eax, %dr6
-	ret
-END(ldr6)
-
-ENTRY(rdr6)
-	movl	%dr6, %eax
-	ret
-END(rdr6)
-
-ENTRY(ldr7)
-	movl	4(%esp), %eax
-	movl	%eax, %dr7
-	ret
-END(ldr7)
-
-ENTRY(rdr7)
-	movl	%dr7, %eax
-	ret
-END(rdr7)
-
-ENTRY(rcr2)
-	movl	%cr2, %eax
-	ret
-END(rcr2)
-
-ENTRY(lcr2)
-	movl	4(%esp), %eax
-	movl	%eax, %cr2
-	ret
-END(lcr2)
-
 ENTRY(wbinvd)
 	wbinvd
 	ret
 END(wbinvd)
-
-ENTRY(x86_disable_intr)
-	cli
-	ret
-END(x86_disable_intr)
-
-ENTRY(x86_enable_intr)
-	sti
-	ret
-END(x86_enable_intr)
 
 /*
  * void lgdt(struct region_descriptor *rdp);

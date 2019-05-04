@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.26 2019/05/01 15:17:49 maxv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.27 2019/05/04 07:20:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -95,47 +95,160 @@ void	lidt(struct region_descriptor *);
 void	lldt(u_short);
 void	ltr(u_short);
 
-void	lcr0(u_long);
-u_long	rcr0(void);
-void	lcr2(vaddr_t);
-vaddr_t	rcr2(void);
-void	lcr3(vaddr_t);
-vaddr_t	rcr3(void);
-void	lcr4(vaddr_t);
-vaddr_t	rcr4(void);
-void	lcr8(vaddr_t);
-vaddr_t	rcr8(void);
+static inline uint16_t
+x86_getss(void)
+{
+	uint16_t val;
 
-register_t	rdr0(void);
-void		ldr0(register_t);
-register_t	rdr1(void);
-void		ldr1(register_t);
-register_t	rdr2(void);
-void		ldr2(register_t);
-register_t	rdr3(void);
-void		ldr3(register_t);
-register_t	rdr6(void);
-void		ldr6(register_t);
-register_t	rdr7(void);
-void		ldr7(register_t);
+	asm volatile (
+		"mov	%%ss,%[val]"
+		: [val] "=r" (val)
+		:
+	);
+	return val;
+}
 
-u_int	x86_getss(void);
-void	setds(int);
-void	setes(int);
-void	setfs(int);
+static inline void
+setds(uint16_t val)
+{
+	asm volatile (
+		"mov	%[val],%%ds"
+		:
+		: [val] "r" (val)
+	);
+}
+
+static inline void
+setes(uint16_t val)
+{
+	asm volatile (
+		"mov	%[val],%%es"
+		:
+		: [val] "r" (val)
+	);
+}
+
+static inline void
+setfs(uint16_t val)
+{
+	asm volatile (
+		"mov	%[val],%%fs"
+		:
+		: [val] "r" (val)
+	);
+}
+
 void	setusergs(int);
 
 /* -------------------------------------------------------------------------- */
 
+#define FUNC_CR(crnum)					\
+	static inline void lcr##crnum(register_t val)	\
+	{						\
+		asm volatile (				\
+			"mov	%[val],%%cr" #crnum	\
+			:				\
+			: [val] "r" (val)		\
+		);					\
+	}						\
+	static inline register_t rcr##crnum(void)	\
+	{						\
+		register_t val;				\
+		asm volatile (				\
+			"mov	%%cr" #crnum ",%[val]"	\
+			: [val] "=r" (val)		\
+			:				\
+		);					\
+		return val;				\
+	}
+
+#define PROTO_CR(crnum)					\
+	void lcr##crnum(register_t);			\
+	register_t rcr##crnum(void);
+
+#ifndef XENPV
+FUNC_CR(0)
+FUNC_CR(2)
+FUNC_CR(3)
+#else
+PROTO_CR(0)
+PROTO_CR(2)
+PROTO_CR(3)
+#endif
+
+FUNC_CR(4)
+FUNC_CR(8)
+
+/* -------------------------------------------------------------------------- */
+
+#define FUNC_DR(drnum)					\
+	static inline void ldr##drnum(register_t val)	\
+	{						\
+		asm volatile (				\
+			"mov	%[val],%%dr" #drnum	\
+			:				\
+			: [val] "r" (val)		\
+		);					\
+	}						\
+	static inline register_t rdr##drnum(void)	\
+	{						\
+		register_t val;				\
+		asm volatile (				\
+			"mov	%%dr" #drnum ",%[val]"	\
+			: [val] "=r" (val)		\
+			:				\
+		);					\
+		return val;				\
+	}
+
+#define PROTO_DR(drnum)					\
+	register_t rdr##drnum(void);			\
+	void ldr##drnum(register_t);
+
+#ifndef XENPV
+FUNC_DR(0)
+FUNC_DR(1)
+FUNC_DR(2)
+FUNC_DR(3)
+FUNC_DR(6)
+FUNC_DR(7)
+#else
+PROTO_DR(0)
+PROTO_DR(1)
+PROTO_DR(2)
+PROTO_DR(3)
+PROTO_DR(6)
+PROTO_DR(7)
+#endif
+
+/* -------------------------------------------------------------------------- */
+
 union savefpu;
-void	fnclex(void);
-void	fninit(void);
+
+static inline void
+fninit(void)
+{
+	asm volatile ("fninit");
+}
+
+static inline void
+fnclex(void)
+{
+	asm volatile ("fnclex");
+}
+
 void	fnsave(union savefpu *);
 void	fnstcw(uint16_t *);
 uint16_t fngetsw(void);
 void	fnstsw(uint16_t *);
 void	frstor(const union savefpu *);
-void	clts(void);
+
+static inline void
+clts(void)
+{
+	asm volatile ("clts");
+}
+
 void	stts(void);
 void	fxsave(union savefpu *);
 void	fxrstor(const union savefpu *);
@@ -178,9 +291,19 @@ void	xsaveopt(union savefpu *, uint64_t);
 
 /* -------------------------------------------------------------------------- */
 
+static inline void
+x86_disable_intr(void)
+{
+	asm volatile ("cli");
+}
+
+static inline void
+x86_enable_intr(void)
+{
+	asm volatile ("sti");
+}
+
 /* Use read_psl, write_psl when saving and restoring interrupt state. */
-void	x86_disable_intr(void);
-void	x86_enable_intr(void);
 u_long	x86_read_psl(void);
 void	x86_write_psl(u_long);
 
@@ -194,10 +317,8 @@ void	x86_reset(void);
 
 /* 
  * Some of the undocumented AMD64 MSRs need a 'passcode' to access.
- *
  * See LinuxBIOSv2: src/cpu/amd/model_fxx/model_fxx_init.c
  */
-
 #define	OPTERON_MSR_PASSCODE	0x9c5a203aU
 
 static inline uint64_t
