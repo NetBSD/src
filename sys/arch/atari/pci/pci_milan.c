@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.15 2018/01/28 14:22:23 tsutsui Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.16 2019/05/04 08:20:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.15 2018/01/28 14:22:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.16 2019/05/04 08:20:05 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,32 +52,33 @@ __KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.15 2018/01/28 14:22:23 tsutsui Exp $
 int
 pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
-	return (6);
+
+	return 6;
 }
 
 /*
  * These are defined in locore.s:
  */
 pcireg_t	milan_pci_confread(pcitag_t);
-void		milan_pci_confwrite(u_long, pcireg_t);
-extern u_long	plx_status;
+void		milan_pci_confwrite(uint32_t, pcireg_t);
+extern uint32_t	plx_status;
 
 pcireg_t
 pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
-	u_long		data;
+	uint32_t data;
 
-	if ((unsigned int)reg >= PCI_CONF_SIZE)
+	if ((uint32_t)reg >= PCI_CONF_SIZE)
 		return 0xffffffff;
 
 	data = bswap32(milan_pci_confread(tag | reg));
-	if ((plx_status) & 0xf9000000) {
+	if ((plx_status & 0xf9000000) != 0) {
 		/*
 		 * Access error, assume nothing there...
 		 */
 		data = 0xffffffff;
 	}
-	return(data);
+	return data;
 }
 
 
@@ -85,15 +86,15 @@ void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 
-	if ((unsigned int)reg >= PCI_CONF_SIZE)
+	if ((uint32_t)reg >= PCI_CONF_SIZE)
 		return;
 
 	milan_pci_confwrite(tag | reg, bswap32(data));
 }
 
 int
-pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
-		 int attr, uint64_t data)
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih, int attr,
+    uint64_t data)
 {
 
 	switch (attr) {
@@ -105,8 +106,10 @@ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
 }
 
 void *
-pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level, int (*ih_fun)(void *), void *ih_arg)
+pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
+    int (*ih_fun)(void *), void *ih_arg)
 {
+
 	if (ih == 0 || ih >= 16 || ih == 2)
 		panic("pci_intr_establish: bogus handle 0x%x", ih);
 	return isa_intr_establish(NULL, ih, IST_LEVEL, level, ih_fun, ih_arg);
@@ -115,6 +118,7 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level, int (*
 void
 pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
+
 	isa_intr_disestablish(NULL, cookie);
 }
 
@@ -162,9 +166,11 @@ static const uint8_t crt_tab[] = {
 #define PCI_LINMEMBASE  0x0e000000
 
 void
-milan_vga_init(pci_chipset_tag_t pc, pcitag_t tag, int id, volatile u_char *ba, u_char *fb)
+milan_vga_init(pci_chipset_tag_t pc, pcitag_t tag, int id,
+    volatile uint8_t *ba, uint8_t *fb)
 {
-	int			i, csr;
+	uint32_t csr;
+	int i;
 
 	/* Turn on the card */
 	pci_conf_write(pc, tag, PCI_MAPREG_START, PCI_LINMEMBASE);

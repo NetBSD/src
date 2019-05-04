@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.7 2012/10/27 17:17:43 chs Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.8 2019/05/04 08:20:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.7 2012/10/27 17:17:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.8 2019/05/04 08:20:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,5 +67,5 @@ pciide_machdep_compat_intr_establish(device_t dev,
 		return (NULL);
 	printf("%s: %s channel interrupting at irq %d\n", device_xname(dev),
 	    PCIIDE_CHANNEL_NAME(chan), irq);
-	return (cookie);
+	return cookie;
 }
