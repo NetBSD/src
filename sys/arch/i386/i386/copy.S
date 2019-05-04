@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.30 2019/04/06 20:25:27 thorpej Exp $	*/
+/*	$NetBSD: copy.S,v 1.31 2019/05/04 08:50:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.30 2019/04/06 20:25:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.31 2019/05/04 08:50:39 maxv Exp $");
 
 #include "assym.h"
 
@@ -309,6 +309,7 @@ END(copy_efault)
  */
 
 ENTRY(kcopy_fault)
+	cld
 	popl	%edi
 	popl	%esi
 	ret
