@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_i2s.c,v 1.3.2.1 2019/04/27 05:22:28 isaki Exp $ */
+/* $NetBSD: sunxi_i2s.c,v 1.3.2.2 2019/05/04 04:13:23 isaki Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.3.2.1 2019/04/27 05:22:28 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.3.2.2 2019/05/04 04:13:23 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -481,7 +481,6 @@ sunxi_i2s_get_locks(void *priv, kmutex_t **intr, kmutex_t **thread)
 }
 
 static const struct audio_hw_if sunxi_i2s_hw_if = {
-	.drain = NULL,
 	.query_format = sunxi_i2s_query_format,
 	.set_format = sunxi_i2s_set_format,
 	.allocm = sunxi_i2s_allocm,

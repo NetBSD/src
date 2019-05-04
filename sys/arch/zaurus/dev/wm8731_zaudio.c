@@ -1,4 +1,4 @@
-/*	$NetBSD: wm8731_zaudio.c,v 1.2.4.1 2019/04/24 13:03:06 isaki Exp $	*/
+/*	$NetBSD: wm8731_zaudio.c,v 1.2.4.2 2019/05/04 04:13:23 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wm8731_zaudio.c,v 1.2.4.1 2019/04/24 13:03:06 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wm8731_zaudio.c,v 1.2.4.2 2019/05/04 04:13:23 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,6 @@ static int wm8731_query_devinfo(void *, struct mixer_devinfo *);
 static struct audio_hw_if wm8731_hw_if = {
 	.open			= zaudio_open,
 	.close			= zaudio_close,
-	.drain			= NULL,
 	.query_format		= zaudio_query_format,
 	.set_format		= zaudio_set_format,
 	.round_blocksize	= zaudio_round_blocksize,
@@ -123,7 +122,6 @@ static struct audio_hw_if wm8731_hw_if = {
 	.halt_input		= wm8731_halt_input,
 	.speaker_ctl		= NULL,
 	.getdev			= wm8731_getdev,
-	.setfd			= NULL,
 	.set_port		= wm8731_set_port,
 	.get_port		= wm8731_get_port,
 	.query_devinfo		= wm8731_query_devinfo,

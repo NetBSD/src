@@ -1,4 +1,4 @@
-/*	$NetBSD: wm8750_zaudio.c,v 1.2.4.2 2019/04/24 13:03:06 isaki Exp $	*/
+/*	$NetBSD: wm8750_zaudio.c,v 1.2.4.3 2019/05/04 04:13:23 isaki Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wm8750_zaudio.c,v 1.2.4.2 2019/04/24 13:03:06 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wm8750_zaudio.c,v 1.2.4.3 2019/05/04 04:13:23 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,6 @@ static int wm8750_query_devinfo(void *, struct mixer_devinfo *);
 static struct audio_hw_if wm8750_hw_if = {
 	.open			= zaudio_open,
 	.close			= zaudio_close,
-	.drain			= NULL,
 	.query_format		= zaudio_query_format,
 	.set_format		= zaudio_set_format,
 	.round_blocksize	= zaudio_round_blocksize,
@@ -143,7 +142,6 @@ static struct audio_hw_if wm8750_hw_if = {
 	.halt_input		= wm8750_halt_input,
 	.speaker_ctl		= NULL,
 	.getdev			= wm8750_getdev,
-	.setfd			= NULL,
 	.set_port		= wm8750_set_port,
 	.get_port		= wm8750_get_port,
 	.query_devinfo		= wm8750_query_devinfo,

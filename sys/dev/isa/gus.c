@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.115.2.1 2019/04/21 06:00:00 isaki Exp $	*/
+/*	$NetBSD: gus.c,v 1.115.2.2 2019/05/04 04:13:24 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.115.2.1 2019/04/21 06:00:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.115.2.2 2019/05/04 04:13:24 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -594,7 +594,6 @@ const struct audio_hw_if gus_hw_if = {
 	.allocm			= ad1848_isa_malloc,
 	.freem			= ad1848_isa_free,
 	.round_buffersize	= ad1848_isa_round_buffersize,
-	.mappage		= ad1848_isa_mappage,
 	.get_props		= gus_get_props,
 	.get_locks		= ad1848_get_locks,
 };
@@ -618,7 +617,6 @@ static const struct audio_hw_if gusmax_hw_if = {
 	.allocm			= ad1848_isa_malloc,
 	.freem			= ad1848_isa_free,
 	.round_buffersize	= ad1848_isa_round_buffersize,
-	.mappage		= ad1848_isa_mappage,
 	.get_props		= gusmax_get_props,
 	.get_locks		= ad1848_get_locks,
 };

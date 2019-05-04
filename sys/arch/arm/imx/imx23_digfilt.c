@@ -1,4 +1,4 @@
-/* $Id: imx23_digfilt.c,v 1.1.24.1 2019/04/24 12:01:50 isaki Exp $ */
+/* $Id: imx23_digfilt.c,v 1.1.24.2 2019/05/04 04:13:23 isaki Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -159,14 +159,12 @@ static const struct audio_hw_if digfilt_hw_if = {
 	.halt_output = digfilt_halt_output,
 	.speaker_ctl = NULL,
 	.getdev = digfilt_getdev,
-	.setfd = NULL,
 	.set_port = digfilt_set_port,
 	.get_port = digfilt_get_port,
 	.query_devinfo = digfilt_query_devinfo,
 	.allocm = digfilt_allocm,
 	.freem = digfilt_freem,
 	.round_buffersize = digfilt_round_buffersize,
-	.mappage = NULL,
 	.get_props = digfilt_get_props,
 	.trigger_output = NULL,
 	.trigger_input = NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.72.2.1 2019/04/21 06:00:00 isaki Exp $	*/
+/*	$NetBSD: wss.c,v 1.72.2.2 2019/05/04 04:13:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.72.2.1 2019/04/21 06:00:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.72.2.2 2019/05/04 04:13:24 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,6 @@ const struct audio_hw_if wss_hw_if = {
 	.allocm			= ad1848_isa_malloc,
 	.freem			= ad1848_isa_free,
 	.round_buffersize	= ad1848_isa_round_buffersize,
-	.mappage		= ad1848_isa_mappage,
 	.get_props		= ad1848_isa_get_props,
 	.trigger_output		= ad1848_isa_trigger_output,
 	.trigger_input		= ad1848_isa_trigger_input,

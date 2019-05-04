@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.61.2.2 2019/04/29 09:32:07 isaki Exp $	*/
+/*	$NetBSD: yds.c,v 1.61.2.3 2019/05/04 04:13:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.61.2.2 2019/04/29 09:32:07 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.61.2.3 2019/05/04 04:13:24 isaki Exp $");
 
 #include "mpu.h"
 
@@ -202,7 +202,6 @@ static void	yds_dump_play_slot(struct yds_softc *, int);
 static const struct audio_hw_if yds_hw_if = {
 	.open		  = yds_open,
 	.close		  = yds_close,
-	.drain		  = NULL,
 	.query_format	  = yds_query_format,
 	.set_format	  = yds_set_format,
 	.round_blocksize  = yds_round_blocksize,
@@ -215,7 +214,6 @@ static const struct audio_hw_if yds_hw_if = {
 	.halt_input	  = yds_halt_input,
 	.speaker_ctl	  = NULL,
 	.getdev		  = yds_getdev,
-	.setfd		  = NULL,
 	.set_port	  = yds_mixer_set_port,
 	.get_port	  = yds_mixer_get_port,
 	.query_devinfo	  = yds_query_devinfo,

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.70.24.3 2019/05/03 05:15:33 isaki Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.70.24.4 2019/05/04 04:13:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -179,9 +179,6 @@ struct audio_hw_if {
 	int	(*open)(void *, int);	/* open hardware */
 	void	(*close)(void *);	/* close hardware */
 
-	/* Obsoleted in AUDIO2. */
-	int	(*drain)(void *);	/* Optional: drain buffers */
-
 	int	(*query_format)(void *, audio_format_query_t *);
 	int	(*set_format)(void *, int,
 		    const audio_params_t *, const audio_params_t *,
@@ -216,9 +213,6 @@ struct audio_hw_if {
 
 	int	(*getdev)(void *, struct audio_device *);
 
-	/* Obsoleted in AUDIO2. */
-	int	(*setfd)(void *, int);
-
 	/* Mixer (in/out ports) */
 	int	(*set_port)(void *, mixer_ctrl_t *);
 	int	(*get_port)(void *, mixer_ctrl_t *);
@@ -229,9 +223,6 @@ struct audio_hw_if {
 	void	*(*allocm)(void *, int, size_t);
 	void	(*freem)(void *, void *, size_t);
 	size_t	(*round_buffersize)(void *, int, size_t);
-
-	/* Obsoleted in AUDIO2. */
-	paddr_t	(*mappage)(void *, void *, off_t, int);
 
 	int	(*get_props)(void *); /* device properties */
 

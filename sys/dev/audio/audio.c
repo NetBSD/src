@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.1.2.5 2019/05/03 06:29:05 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.1.2.6 2019/05/04 04:13:23 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -103,7 +103,6 @@
  *	----------------------- ------- -------	-------------------------
  *	open 			x	x +
  *	close 			x	x +
- *	drain 			x	x	(Not used in AUDIO2)
  *	query_format		-	x
  *	set_format		-	x
  *	round_blocksize		-	x
@@ -116,14 +115,12 @@
  *	halt_input 		x	x +
  *	speaker_ctl 		x	x
  *	getdev 			-	x
- *	setfd 			-	x	(Not used in AUDIO2)
  *	set_port 		-	x +
  *	get_port 		-	x +
  *	query_devinfo 		-	x
  *	allocm 			-	- +	(*1)
  *	freem 			-	- +	(*1)
  *	round_buffersize 	-	x
- *	mappage 		-	-	(Not used in AUDIO2)
  *	get_props 		-	x
  *	trigger_output 		x	x +
  *	trigger_input 		x	x +
@@ -152,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.5 2019/05/03 06:29:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.6 2019/05/04 04:13:23 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"

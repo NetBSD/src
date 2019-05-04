@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.16.2.2 2019/04/28 07:01:45 isaki Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.16.2.3 2019/05/04 04:13:24 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.16.2.2 2019/04/28 07:01:45 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.16.2.3 2019/05/04 04:13:24 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,6 @@ static struct audio_device gcscaudio_device = {
 static const struct audio_hw_if gcscaudio_hw_if = {
 	.open			= gcscaudio_open,
 	.close			= gcscaudio_close,
-	.drain			= NULL,
 	.query_format		= gcscaudio_query_format,
 	.set_format		= gcscaudio_set_format,
 	.round_blocksize	= gcscaudio_round_blocksize,
@@ -194,7 +193,6 @@ static const struct audio_hw_if gcscaudio_hw_if = {
 	.halt_input		= gcscaudio_halt_input,
 	.speaker_ctl		= NULL,
 	.getdev			= gcscaudio_getdev,
-	.setfd			= NULL,
 	.set_port		= gcscaudio_set_port,
 	.get_port		= gcscaudio_get_port,
 	.query_devinfo		= gcscaudio_query_devinfo,

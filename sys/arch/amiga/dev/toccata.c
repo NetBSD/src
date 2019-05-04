@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.18.2.1 2019/04/21 05:59:59 isaki Exp $ */
+/* $NetBSD: toccata.c,v 1.18.2.2 2019/05/04 04:13:23 isaki Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.18.2.1 2019/04/21 05:59:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.18.2.2 2019/05/04 04:13:23 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -179,12 +179,6 @@ void toccata_get_locks(void *, kmutex_t **, kmutex_t **);
 const struct audio_hw_if audiocs_hw_if = {
 	.open			= toccata_open,
 	.close			= toccata_close,
-	/*
-	 * XXX toccata_drain could be written:
-	 * sleep for play interrupt. This loses less than 512 bytes of
-	 * sample data, otherwise up to 1024.
-	 */
-	.drain			= NULL,
 	.query_format		= ad1848_query_format,
 	.set_format		= ad1848_set_format,
 	.round_blocksize	= toccata_round_blocksize,
