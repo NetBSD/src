@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_codec.c,v 1.5.6.1 2019/04/27 10:17:59 isaki Exp $ */
+/* $NetBSD: sun8i_codec.c,v 1.5.6.2 2019/05/04 06:35:15 isaki Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.5.6.1 2019/04/27 10:17:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.5.6.2 2019/05/04 06:35:15 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.5.6.1 2019/04/27 10:17:59 isaki Ex
 #include <sys/gpio.h>
 #include <sys/workqueue.h>
 
-#include <dev/audio_dai.h>
+#include <dev/audio/audio_dai.h>
 
 #include <dev/fdt/fdtvar.h>
 
