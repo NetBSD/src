@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.40.2.2 2019/05/04 04:13:24 isaki Exp $	*/
+/*	$NetBSD: interwave.c,v 1.40.2.3 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.40.2.2 2019/05/04 04:13:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.40.2.3 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.40.2.2 2019/05/04 04:13:24 isaki Exp
 
 #include <machine/pio.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

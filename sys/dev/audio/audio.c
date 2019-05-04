@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.1.2.6 2019/05/04 04:13:23 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.1.2.7 2019/05/04 07:20:09 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.6 2019/05/04 04:13:23 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.7 2019/05/04 07:20:09 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -189,7 +189,7 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.6 2019/05/04 04:13:23 isaki Exp $");
 #include <sys/syslog.h>
 #include <sys/vnode.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/audio/audiovar.h>
 #include <dev/audio/audiodef.h>
 #include <dev/audio/linear.h>
@@ -8489,7 +8489,7 @@ audio_query_devinfo(struct audio_softc *sc, mixer_devinfo_t *di)
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #endif
 
 #if NAUDIO > 0 || (NMIDI > 0 || NMIDIBUS > 0)

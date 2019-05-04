@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.5.2.2 2019/05/04 04:51:20 isaki Exp $	*/
+/*	$NetBSD: harmony.c,v 1.5.2.3 2019/05/04 07:20:08 isaki Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -76,7 +76,7 @@
 #include <sys/rndsource.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>

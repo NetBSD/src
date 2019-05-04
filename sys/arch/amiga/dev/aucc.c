@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.44.2.2 2019/05/04 04:51:20 isaki Exp $ */
+/*	$NetBSD: aucc.c,v 1.44.2.3 2019/05/04 07:20:07 isaki Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -46,7 +46,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.44.2.2 2019/05/04 04:51:20 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.44.2.3 2019/05/04 07:20:07 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.44.2.2 2019/05/04 04:51:20 isaki Exp $");
 #include <machine/cpu.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/audio/audiovar.h>	/* for AUDIO_MIN_FREQUENCY */
 
 #include <amiga/amiga/cc.h>

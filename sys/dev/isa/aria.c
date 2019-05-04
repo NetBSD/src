@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.39.2.1 2019/04/21 06:09:01 isaki Exp $	*/
+/*	$NetBSD: aria.c,v 1.39.2.2 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.39.2.1 2019/04/21 06:09:01 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.39.2.2 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.39.2.1 2019/04/21 06:09:01 isaki Exp $");
 #include <sys/bus.h>
 #include <sys/audioio.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/ariareg.h>

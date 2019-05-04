@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.13.2.1 2019/04/21 08:11:27 isaki Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.13.2.2 2019/05/04 07:20:07 isaki Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.13.2.1 2019/04/21 08:11:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.13.2.2 2019/05/04 07:20:07 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.13.2.1 2019/04/21 08:11:27 isa
 #include <sys/kmem.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <interface/compat/vchi_bsd.h>
 #include <interface/vchiq_arm/vchiq_netbsd.h>

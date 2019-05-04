@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.71.2.1 2019/05/03 03:00:33 isaki Exp $	*/
+/*	$NetBSD: pas.c,v 1.71.2.2 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.71.2.1 2019/05/03 03:00:33 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.71.2.2 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.71.2.1 2019/05/03 03:00:33 isaki Exp $");
 #include <machine/pio.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
 
 #include <dev/isa/isavar.h>

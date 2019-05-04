@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.54.2.1 2019/04/21 07:49:16 isaki Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.54.2.2 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.54.2.1 2019/04/21 07:49:16 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.54.2.2 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.54.2.1 2019/04/21 07:49:16 isaki Exp $"
 #include <dev/pci/cs428xreg.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
 
 #include <dev/ic/ac97reg.h>

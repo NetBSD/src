@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.18.2.2 2019/05/04 04:13:23 isaki Exp $ */
+/* $NetBSD: toccata.c,v 1.18.2.3 2019/05/04 07:20:07 isaki Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.18.2.2 2019/05/04 04:13:23 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.18.2.3 2019/05/04 07:20:07 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.18.2.2 2019/05/04 04:13:23 isaki Exp $
 #include <sys/bus.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/ad1848var.h>

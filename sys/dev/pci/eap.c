@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.99.2.3 2019/04/30 06:05:02 isaki Exp $	*/
+/*	$NetBSD: eap.c,v 1.99.2.4 2019/05/04 07:20:10 isaki Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.99.2.3 2019/04/30 06:05:02 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.99.2.4 2019/05/04 07:20:10 isaki Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.99.2.3 2019/04/30 06:05:02 isaki Exp $");
 #include <sys/bus.h>
 #include <sys/audioio.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
 
 #include <dev/pci/pcidevs.h>

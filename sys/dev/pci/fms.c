@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.45.2.2 2019/04/28 06:36:50 isaki Exp $	*/
+/*	$NetBSD: fms.c,v 1.45.2.3 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.45.2.2 2019/04/28 06:36:50 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.45.2.3 2019/05/04 07:20:10 isaki Exp $");
 
 #include "mpu.h"
 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.45.2.2 2019/04/28 06:36:50 isaki Exp $");
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ac97var.h>
 #include <dev/ic/mpuvar.h>

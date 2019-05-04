@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.31.54.1 2019/04/21 06:00:00 isaki Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.31.54.2 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.31.54.1 2019/04/21 06:00:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.31.54.2 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.31.54.1 2019/04/21 06:00:00 isaki Exp $
 #include <sys/bus.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/cs4231reg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.67.2.6 2019/05/03 06:19:42 isaki Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.67.2.7 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67.2.6 2019/05/03 06:19:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67.2.7 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.67.2.6 2019/05/03 06:19:42 isaki Exp $"
 #include <sys/bus.h>
 #include <sys/intr.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>

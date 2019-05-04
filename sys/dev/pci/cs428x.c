@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.18.14.2 2019/05/03 05:43:47 isaki Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.18.14.3 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.18.14.2 2019/05/03 05:43:47 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.18.14.3 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.18.14.2 2019/05/03 05:43:47 isaki Exp $
 #include <sys/audioio.h>
 #include <sys/bus.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
 
 #include <dev/ic/ac97reg.h>

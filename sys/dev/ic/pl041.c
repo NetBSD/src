@@ -1,4 +1,4 @@
-/* $NetBSD: pl041.c,v 1.5.2.1 2019/04/27 11:52:53 isaki Exp $ */
+/* $NetBSD: pl041.c,v 1.5.2.2 2019/05/04 07:20:10 isaki Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.5.2.1 2019/04/27 11:52:53 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.5.2.2 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.5.2.1 2019/04/27 11:52:53 isaki Exp $");
 #include <sys/bus.h>
 #include <sys/audioio.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ac97var.h>
 #include <dev/ic/ac97reg.h>

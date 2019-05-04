@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.38.2.3 2019/05/04 04:13:24 isaki Exp $	*/
+/*	$NetBSD: btsco.c,v 1.38.2.4 2019/05/04 07:20:09 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.38.2.3 2019/05/04 04:13:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.38.2.4 2019/05/04 07:20:09 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.38.2.3 2019/05/04 04:13:24 isaki Exp $")
 #include <netbt/rfcomm.h>
 #include <netbt/sco.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/bluetooth/btdev.h>
 #include <dev/bluetooth/btsco.h>

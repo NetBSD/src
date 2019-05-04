@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.49.2.2 2019/04/22 12:30:26 isaki Exp $	*/
+/*	$NetBSD: snapper.c,v 1.49.2.3 2019/05/04 07:20:08 isaki Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.49.2.2 2019/04/22 12:30:26 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.49.2.3 2019/05/04 07:20:08 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.49.2.2 2019/04/22 12:30:26 isaki Exp $
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/ofw/openfirm.h>
 #include <macppc/dev/dbdma.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.154.2.2 2019/04/27 12:53:37 isaki Exp $	*/
+/*	$NetBSD: auich.c,v 1.154.2.3 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.154.2.2 2019/04/27 12:53:37 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.154.2.3 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.154.2.2 2019/04/27 12:53:37 isaki Exp $"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/auichreg.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>

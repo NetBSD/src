@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.36.2.2 2019/04/27 12:57:54 isaki Exp $	*/
+/*	$NetBSD: auacer.c,v 1.36.2.3 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.36.2.2 2019/04/27 12:57:54 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.36.2.3 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.36.2.2 2019/04/27 12:57:54 isaki Exp $"
 #include <dev/pci/auacerreg.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <sys/bus.h>
 

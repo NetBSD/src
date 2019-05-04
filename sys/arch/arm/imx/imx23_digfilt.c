@@ -1,4 +1,4 @@
-/* $Id: imx23_digfilt.c,v 1.1.24.2 2019/05/04 04:13:23 isaki Exp $ */
+/* $Id: imx23_digfilt.c,v 1.1.24.3 2019/05/04 07:20:07 isaki Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
 #include <sys/bus.h>
 #include <sys/mutex.h>
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
 #include <sys/mallocvar.h>
+#include <dev/audio/audio_if.h>
 #include <arm/imx/imx23_digfiltreg.h>
 #include <arm/imx/imx23_rtcvar.h>
 #include <arm/imx/imx23_clkctrlvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.46.2.2 2019/04/24 12:47:13 isaki Exp $	*/
+/*	$NetBSD: awacs.c,v 1.46.2.3 2019/05/04 07:20:08 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.46.2.2 2019/04/24 12:47:13 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.46.2.3 2019/05/04 07:20:08 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.46.2.2 2019/04/24 12:47:13 isaki Exp $")
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <uvm/uvm_extern.h>
 #include <machine/autoconf.h>

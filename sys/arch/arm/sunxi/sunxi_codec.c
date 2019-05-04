@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.c,v 1.5.4.1 2019/04/27 05:30:37 isaki Exp $ */
+/* $NetBSD: sunxi_codec.c,v 1.5.4.2 2019/05/04 07:20:07 isaki Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.5.4.1 2019/04/27 05:30:37 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.5.4.2 2019/05/04 07:20:07 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.5.4.1 2019/04/27 05:30:37 isaki Ex
 #include <sys/gpio.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/fdt/fdtvar.h>
 

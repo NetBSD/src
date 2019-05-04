@@ -1,4 +1,4 @@
-/* $NetBSD: ausoc.c,v 1.3.8.3 2019/05/04 06:35:16 isaki Exp $ */
+/* $NetBSD: ausoc.c,v 1.3.8.4 2019/05/04 07:20:09 isaki Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.3.8.3 2019/05/04 06:35:16 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.3.8.4 2019/05/04 07:20:09 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.3.8.3 2019/05/04 06:35:16 isaki Exp $");
 #include <sys/gpio.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/audio/audio_dai.h>
 
 #include <dev/fdt/fdtvar.h>

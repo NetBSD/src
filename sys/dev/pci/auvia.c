@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.82.2.3 2019/05/03 06:19:42 isaki Exp $	*/
+/*	$NetBSD: auvia.c,v 1.82.2.4 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.82.2.3 2019/05/03 06:19:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.82.2.4 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.82.2.3 2019/05/03 06:19:42 isaki Exp $")
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>

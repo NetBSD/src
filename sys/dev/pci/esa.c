@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.63.2.3 2019/05/04 04:13:24 isaki Exp $ */
+/* $NetBSD: esa.c,v 1.63.2.4 2019/05/04 07:20:10 isaki Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.63.2.3 2019/05/04 04:13:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.63.2.4 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.63.2.3 2019/05/04 04:13:24 isaki Exp $");
 #include <sys/bus.h>
 #include <sys/intr.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ac97var.h>
 #include <dev/ic/ac97reg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: arcofi.c,v 1.1.28.5 2019/05/04 04:51:20 isaki Exp $	*/
+/*	$NetBSD: arcofi.c,v 1.1.28.6 2019/05/04 07:20:10 isaki Exp $	*/
 /*	$OpenBSD: arcofi.c,v 1.6 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 #include <sys/audioio.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/audio/mulaw.h>
 
 #include <dev/ic/arcofivar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.27.20.1 2019/05/03 05:43:46 isaki Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.27.20.2 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.27.20.1 2019/05/03 05:43:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.27.20.2 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.27.20.1 2019/05/03 05:43:46 isaki Ex
 #include <sys/intr.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/isa/isavar.h>

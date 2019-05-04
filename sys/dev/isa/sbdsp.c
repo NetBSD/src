@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.139.2.2 2019/05/03 03:00:33 isaki Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.139.2.3 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.139.2.2 2019/05/03 03:00:33 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.139.2.3 2019/05/04 07:20:10 isaki Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.139.2.2 2019/05/03 03:00:33 isaki Exp $"
 #include <sys/bus.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/audio/linear.h>
 #include <dev/midi_if.h>
 

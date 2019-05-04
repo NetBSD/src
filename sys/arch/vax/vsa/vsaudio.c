@@ -1,4 +1,4 @@
-/*	$NetBSD: vsaudio.c,v 1.4.2.1 2019/04/22 13:29:34 isaki Exp $	*/
+/*	$NetBSD: vsaudio.c,v 1.4.2.2 2019/05/04 07:20:08 isaki Exp $	*/
 /*	$OpenBSD: vsaudio.c,v 1.4 2013/05/15 21:21:11 ratchov Exp $	*/
 
 /*
@@ -77,7 +77,7 @@
 #include <machine/vsbus.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/am7930reg.h>
 #include <dev/ic/am7930var.h>

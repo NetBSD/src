@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.84.2.3 2019/05/04 04:13:24 isaki Exp $	*/
+/*	$NetBSD: ess.c,v 1.84.2.4 2019/05/04 07:20:10 isaki Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.84.2.3 2019/05/04 04:13:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.84.2.4 2019/05/04 07:20:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.84.2.3 2019/05/04 04:13:24 isaki Exp $");
 #include <sys/audioio.h>
 #include <sys/malloc.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

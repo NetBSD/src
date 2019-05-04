@@ -1,4 +1,4 @@
-/*	$NetBSD: arcofi_dio.c,v 1.1.26.1 2019/04/21 06:55:34 isaki Exp $	*/
+/*	$NetBSD: arcofi_dio.c,v 1.1.26.2 2019/05/04 07:20:07 isaki Exp $	*/
 /*	$OpenBSD: arcofi_dio.c,v 1.1 2011/12/21 23:12:03 miod Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
 #include <sys/intr.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/ic/arcofivar.h>
 
 #include <hp300/dev/dioreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.1.2.1 2019/04/21 04:28:59 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.1.2.2 2019/05/04 07:20:09 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include <sys/proc.h>
 #include <sys/queue.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/audio/audiofil.h>
 #else
 #include <stdint.h>

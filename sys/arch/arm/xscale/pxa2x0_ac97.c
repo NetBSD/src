@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.15.2.3 2019/05/03 06:19:42 isaki Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.15.2.4 2019/05/04 07:20:07 isaki Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
 #include <machine/intr.h>
 #include <sys/bus.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
