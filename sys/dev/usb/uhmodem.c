@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.17 2019/05/04 23:07:07 mrg Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.18 2019/05/04 23:36:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.17 2019/05/04 23:07:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.18 2019/05/04 23:36:14 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -354,7 +354,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 		ucaa.ucaa_device = dev;
 		ucaa.ucaa_iface = sc->sc_iface[i];
 		ucaa.ucaa_methods = &uhmodem_methods;
-		ucaa.ucaa_arg = &sc->sc_ubsa;
+		ucaa.ucaa_arg = sc;
 		ucaa.ucaa_info = comname;
 		DPRINTF(("uhmodem: int#=%d, in = 0x%x, out = 0x%x, intr = 0x%x\n",
 		    i, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout,
@@ -363,7 +363,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 				 &ucaa, ucomprint, ucomsubmatch);
 
 		/* issue endpoint halt to each interface */
-		err = uhmodem_endpointhalt(&sc->sc_ubsa, i);
+		err = uhmodem_endpointhalt(sc, i);
 		if (err)
 			aprint_error("%s: endpointhalt fail\n", __func__);
 		else
