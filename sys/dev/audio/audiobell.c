@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.26.2.1 2019/04/21 04:28:59 isaki Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.1.2.1 2019/05/04 06:13:47 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999 Richard Earnshaw
@@ -31,7 +31,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.26.2.1 2019/04/21 04:28:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.1.2.1 2019/05/04 06:13:47 isaki Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.26.2.1 2019/04/21 04:28:59 isaki Exp
 #include <dev/audio_if.h>
 #include <dev/audio/audiovar.h>
 #include <dev/audio/audiodef.h>
-#include <dev/audiobellvar.h>
+#include <dev/audio/audiobellvar.h>
 
 /* 44.1 kHz should reduce hum at higher pitches. */
 #define BELL_SAMPLE_RATE	44100
