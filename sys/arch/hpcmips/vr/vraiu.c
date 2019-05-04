@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.16.2.1 2019/04/21 09:54:00 isaki Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.16.2.2 2019/05/04 04:44:03 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.16.2.1 2019/04/21 09:54:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.16.2.2 2019/05/04 04:44:03 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,6 @@ struct vraiu_softc {
 	vrcmu_chipset_tag_t	sc_cc;
 	void			*sc_handler;
 	u_short	*sc_buf;	/* DMA buffer pointer */
-	int	sc_status;	/* status */
 	u_int	sc_rate;	/* sampling rate */
 	u_char	sc_volume;	/* volume */
 	void	(*sc_intr)(void *);	/* interrupt routine */
@@ -106,8 +105,6 @@ const struct audio_format vraiu_formats = {
 /*
  * Define our interface to the higher level audio driver.
  */
-int vraiu_open(void *, int);
-void vraiu_close(void *);
 int vraiu_query_format(void *, audio_format_query_t *);
 int vraiu_round_blocksize(void *, int, int, const audio_params_t *);
 int vraiu_commit_settings(void *);
@@ -127,8 +124,6 @@ int vraiu_get_props(void *);
 void vraiu_get_locks(void *, kmutex_t **, kmutex_t **);
 
 const struct audio_hw_if vraiu_hw_if = {
-	.open			= vraiu_open,
-	.close			= vraiu_close,
 	.query_format		= vraiu_query_format,
 	.set_format		= vraiu_set_format,
 	.round_blocksize	= vraiu_round_blocksize,
@@ -169,7 +164,6 @@ vraiu_attach(device_t parent, device_t self, void *aux)
 	va = aux;
 	sc = device_private(self);
 	sc->sc_dev = self;
-	sc->sc_status = ENXIO;
 	sc->sc_intr = NULL;
 	sc->sc_iot = va->va_iot;
 	sc->sc_vrip = va->va_vc;
@@ -253,37 +247,11 @@ vraiu_attach(device_t parent, device_t self, void *aux)
 	}
 	printf("\n");
 
-	sc->sc_status = 0;
 	sc->sc_rate = SPS8000;
 	DPRINTFN(1, ("vraiu_attach: reset AIU\n"))
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SEQ_REG_W, AIURST);
 	/* attach audio subsystem */
 	audio_attach_mi(&vraiu_hw_if, sc, self);
-}
-
-int
-vraiu_open(void *self, int flags)
-{
-	struct vraiu_softc *sc;
-
-	DPRINTFN(1, ("vraiu_open\n"));
-	sc = self;
-	if (sc->sc_status) {
-		DPRINTFN(0, ("vraiu_open: device error\n"));
-		return sc->sc_status;
-	}
-	sc->sc_status = EBUSY;
-	return 0;
-}
-
-void
-vraiu_close(void *self)
-{
-	struct vraiu_softc *sc;
-
-	DPRINTFN(1, ("vraiu_close\n"));
-	sc = self;
-	sc->sc_status = 0;
 }
 
 int
@@ -340,8 +308,6 @@ vraiu_commit_settings(void *self)
 
 	DPRINTFN(1, ("vraiu_commit_settings\n"));
 	sc = self;
-	if (sc->sc_status != EBUSY)
-		return sc->sc_status;
 
 	DPRINTFN(1, ("vraiu_commit_settings: set conversion rate %d\n",
 		     sc->sc_rate))
