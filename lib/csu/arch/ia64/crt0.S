@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.2 2018/11/26 17:37:45 joerg Exp $ */
+/* $NetBSD: crt0.S,v 1.3 2019/05/04 22:55:32 scole Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.2 2018/11/26 17:37:45 joerg Exp $")
+RCSID("$NetBSD: crt0.S,v 1.3 2019/05/04 22:55:32 scole Exp $")
 
 STRONG_ALIAS(_start,__start)
 	
@@ -53,5 +53,6 @@ __start:
 	mov sp = in3 /* Setup Memory Stack Pointer. */
 	mov in1 = in2 /* obj is no longer used. */
 	alloc r31 = ar.pfs, 3, 0, 0, 0 /* Adjust backingstore for ___start() */
+	;;
 	br.call.sptk.many rp = ___start
 
