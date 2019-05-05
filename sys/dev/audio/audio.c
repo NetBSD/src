@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.1.2.8 2019/05/04 07:41:50 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.1.2.9 2019/05/05 02:20:36 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.8 2019/05/04 07:41:50 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.1.2.9 2019/05/05 02:20:36 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -577,6 +577,7 @@ static int audio_mixers_set_format(struct audio_softc *,
 static void audio_mixers_get_format(struct audio_softc *, struct audio_info *);
 static int audio_sysctl_volume(SYSCTLFN_PROTO);
 static int audio_sysctl_blk_ms(SYSCTLFN_PROTO);
+static int audio_sysctl_multiuser(SYSCTLFN_PROTO);
 #if defined(AUDIO_DEBUG)
 static int audio_sysctl_debug(SYSCTLFN_PROTO);
 #endif
@@ -991,6 +992,13 @@ audioattach(device_t parent, device_t self, void *aux)
 		    CTLTYPE_INT, "blk_ms",
 		    SYSCTL_DESCR("blocksize in msec"),
 		    audio_sysctl_blk_ms, 0, (void *)sc, 0,
+		    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+		sysctl_createv(&sc->sc_log, 0, NULL, NULL,
+		    CTLFLAG_READWRITE,
+		    CTLTYPE_BOOL, "multiuser",
+		    SYSCTL_DESCR("allow multiple user access"),
+		    audio_sysctl_multiuser, 0, (void *)sc, 0,
 		    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
 
 #if defined(AUDIO_DEBUG)
@@ -2070,9 +2078,9 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 					goto bad3;
 			}
 		}
-	} else /* if (sc->sc_multiuser == false) XXX not yet */ {
+	} else if (sc->sc_multiuser == false) {
 		uid_t euid = kauth_cred_geteuid(kauth_cred_get());
-		if (euid != 0 && kauth_cred_geteuid(sc->sc_cred) != euid) {
+		if (euid != 0 && euid != kauth_cred_geteuid(sc->sc_cred)) {
 			error = EPERM;
 			goto bad2;
 		}
@@ -7474,6 +7482,34 @@ audio_sysctl_blk_ms(SYSCTLFN_ARGS)
 		audio_mixers_init(sc, mode, &phwfmt, &rhwfmt, &pfil, &rfil);
 		goto abort;
 	}
+	error = 0;
+abort:
+	mutex_exit(sc->sc_lock);
+	return error;
+}
+
+/*
+ * Get or set multiuser mode.
+ */
+static int
+audio_sysctl_multiuser(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct audio_softc *sc;
+	int t, error;
+
+	node = *rnode;
+	sc = node.sysctl_data;
+
+	mutex_enter(sc->sc_lock);
+
+	t = sc->sc_multiuser;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		goto abort;
+
+	sc->sc_multiuser = t;
 	error = 0;
 abort:
 	mutex_exit(sc->sc_lock);

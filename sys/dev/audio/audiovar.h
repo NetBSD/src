@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.1.2.2 2019/05/04 07:20:09 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.1.2.3 2019/05/05 02:20:36 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -221,6 +221,12 @@ struct audio_softc {
 	 */
 	bool		sc_dying;
 
+	/*
+	 * If multiuser is false, other users who have different euid
+	 * than the first user cannot open this device.
+	 * Must be protected by sc_lock.
+	 */
+	bool sc_multiuser;
 	kauth_cred_t sc_cred;
 
 	struct sysctllog *sc_log;
