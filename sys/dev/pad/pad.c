@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.58.2.2 2019/05/04 07:20:10 isaki Exp $ */
+/* $NetBSD: pad.c,v 1.58.2.3 2019/05/05 02:01:34 isaki Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.58.2.2 2019/05/04 07:20:10 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.58.2.3 2019/05/05 02:01:34 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -401,7 +401,7 @@ pad_set_format(void *opaque, int setmode,
     const audio_params_t *play, const audio_params_t *rec,
 	audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	pad_softc_t *sc __diagused;
+	pad_softc_t *sc;
 
 	sc = (pad_softc_t *)opaque;
 
