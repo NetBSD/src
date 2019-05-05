@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.25.8.1 2018/02/04 12:40:31 martin Exp $	*/
+/*	$NetBSD: copy.S,v 1.25.8.2 2019/05/05 08:34:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.25.8.1 2018/02/04 12:40:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.25.8.2 2019/05/05 08:34:16 martin Exp $");
 
 #include "assym.h"
 
@@ -305,6 +305,7 @@ END(copy_efault)
  */
 
 NENTRY(kcopy_fault)
+	cld
 	popl	%edi
 	popl	%esi
 	ret
