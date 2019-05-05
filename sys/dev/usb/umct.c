@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.37 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: umct.c,v 1.38 2019/05/05 03:17:54 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.37 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.38 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -152,7 +152,7 @@ void umct_attach(device_t, device_t, void *);
 void umct_childdet(device_t, device_t);
 int umct_detach(device_t, int);
 int umct_activate(device_t, enum devact);
-extern struct cfdriver umct_cd;
+
 CFATTACH_DECL2_NEW(umct, sizeof(struct umct_softc), umct_match,
     umct_attach, umct_detach, umct_activate, NULL, umct_childdet);
 

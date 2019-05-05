@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.29 2019/01/22 06:47:20 skrll Exp $	*/
+/*	$NetBSD: uhso.c,v 1.30 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.29 2019/01/22 06:47:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.30 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.29 2019/01/22 06:47:20 skrll Exp $");
 #include <dev/scsipi/scsi_disk.h>
 
 #include "usbdevs.h"
+#include "ioconf.h"
 
 #undef DPRINTF
 #ifdef UHSO_DEBUG
@@ -336,7 +337,7 @@ int uhso_match(device_t, cfdata_t, void *);
 void uhso_attach(device_t, device_t, void *);
 int uhso_detach(device_t, int);
 
-extern struct cfdriver uhso_cd;
+
 
 CFATTACH_DECL_NEW(uhso, sizeof(struct uhso_softc), uhso_match, uhso_attach,
     uhso_detach, NULL);

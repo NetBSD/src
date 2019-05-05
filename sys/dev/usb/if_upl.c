@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.62 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.63 2019/05/05 03:17:54 mrg Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.62 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.63 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -176,7 +176,7 @@ int	upl_match(device_t, cfdata_t, void *);
 void	upl_attach(device_t, device_t, void *);
 int	upl_detach(device_t, int);
 int	upl_activate(device_t, enum devact);
-extern struct cfdriver upl_cd;
+
 CFATTACH_DECL_NEW(upl, sizeof(struct upl_softc), upl_match, upl_attach,
     upl_detach, upl_activate);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.49 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.50 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.49 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.50 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -191,7 +191,7 @@ void uvisor_attach(device_t, device_t, void *);
 void uvisor_childdet(device_t, device_t);
 int uvisor_detach(device_t, int);
 int uvisor_activate(device_t, enum devact);
-extern struct cfdriver uvisor_cd;
+
 CFATTACH_DECL2_NEW(uvisor, sizeof(struct uvisor_softc), uvisor_match,
     uvisor_attach, uvisor_detach, uvisor_activate, NULL, uvisor_childdet);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.22 2019/01/22 06:47:20 skrll Exp $	*/
+/*	$NetBSD: uyap.c,v 1.23 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.22 2019/01/22 06:47:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.23 2019/05/05 03:17:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ int	uyap_match(device_t, cfdata_t, void *);
 void	uyap_attach(device_t, device_t, void *);
 int	uyap_detach(device_t, int);
 int	uyap_activate(device_t, enum devact);
-extern struct cfdriver uyap_cd;
+
 CFATTACH_DECL_NEW(uyap, sizeof(struct uyap_softc), uyap_match, uyap_attach,
     uyap_detach, uyap_activate);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.30 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.31 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.30 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.31 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -202,7 +202,7 @@ void uchcom_childdet(device_t, device_t);
 int uchcom_detach(device_t, int);
 int uchcom_activate(device_t, enum devact);
 
-extern struct cfdriver uchcom_cd;
+
 
 CFATTACH_DECL2_NEW(uchcom,
     sizeof(struct uchcom_softc),

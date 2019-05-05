@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.150 2019/04/22 08:36:03 msaitoh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.151 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.150 2019/04/22 08:36:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.151 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -212,7 +212,7 @@ int aue_match(device_t, cfdata_t, void *);
 void aue_attach(device_t, device_t, void *);
 int aue_detach(device_t, int);
 int aue_activate(device_t, enum devact);
-extern struct cfdriver aue_cd;
+
 CFATTACH_DECL_NEW(aue, sizeof(struct aue_softc), aue_match, aue_attach,
     aue_detach, aue_activate);
 
