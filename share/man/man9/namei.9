@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.50 2017/07/03 21:28:48 wiz Exp $
+.\"     $NetBSD: namei.9,v 1.51 2019/05/05 20:10:57 christos Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006, 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 18, 2017
+.Dd May 5, 2019
 .Dt NAMEI 9
 .Os
 .Sh NAME
@@ -57,12 +57,12 @@
 "struct vnode **ret"
 .Ft int
 .Fn relookup "struct vnode *dvp" "struct vnode **vpp" \
-"struct componentname *cnp"
+"struct componentname *cnp" "int dummy"
 .Ft int
 .Fn lookup_for_nfsd "struct nameidata *ndp" "struct vnode *startdir" \
 "int neverfollow"
 .Ft int
-.Fn lookup_for_nfsd_index "struct nameidata *ndp"
+.Fn lookup_for_nfsd_index "struct nameidata *ndp" "struct vnode *startdir"
 .Sh DESCRIPTION
 The
 .Nm
@@ -647,7 +647,7 @@ except that the
 argument shall be a user pointer
 .Pq Dv UIO_USERSPACE
 rather than a kernel pointer.
-.It Fn relookup "dvp" "vpp" "cnp"
+.It Fn relookup "dvp" "vpp" "cnp" "dummy"
 Reacquire a path name component is a directory.
 This is a quicker way to lookup a pathname component when the parent
 directory is known.
@@ -657,6 +657,9 @@ and the pathname component by
 .Fa cnp .
 The vnode of the pathname is returned in the address specified by
 .Fa vpp .
+The
+.Fa dummy
+argument is unused.
 Note that one may only use
 .Fn relookup
 to repeat a lookup of a final path component previously done by
@@ -678,11 +681,12 @@ is set,
 symbolic link (not just at the end of the path) will cause an error.
 Otherwise, it follows symlinks normally.
 It should not be used by new code.
-.It Fn lookup_for_nfsd_index "ndp"
+.It Fn lookup_for_nfsd_index "ndp" "startdir"
 This is a (second) private entry point into
 .Nm
 used by the NFS server code.
-It looks up a single path component.
+It looks up a single path component starting from
+.Fa startdir .
 It should not be used by new code.
 .El
 .Sh INTERNALS
