@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.26 2019/05/05 01:48:53 christos Exp $	*/
+/*	$NetBSD: dir.h,v 1.27 2019/05/05 15:07:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -109,7 +109,9 @@ struct	direct {
  * The UFS_DIRSIZ macro gives the minimum record length which will hold
  * the directory entry.  This requires the amount of space in struct direct
  * without the d_name field, plus enough space for the name with a terminating
- * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
+ * NUL byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
+ * The UFS_NAMEPAD macro gives the number bytes of padding needed including
+ * the NUL terminating byte.
  */
 #define DIR_ROUNDUP	4
 #define UFS_NAMEROUNDUP(namlen)	(((namlen) + DIR_ROUNDUP) & ~(DIR_ROUNDUP - 1))
