@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.59 2018/11/08 06:34:40 msaitoh Exp $	*/
+/*	$NetBSD: dir.c,v 1.60 2019/05/05 13:24:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.59 2018/11/08 06:34:40 msaitoh Exp $");
+__RCSID("$NetBSD: dir.c,v 1.60 2019/05/05 13:24:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,6 +144,23 @@ reparent(ino_t inumber, ino_t parent)
 	propagate(inumber);
 }
 
+#if (BYTE_ORDER == LITTLE_ENDIAN)
+# define NEEDSWAP	(!needswap)
+#else
+# define NEEDSWAP	(needswap)
+#endif
+
+static void
+dirswap(void *dbuf)
+{
+	struct direct *tdp = (struct direct *)dbuf;
+	u_char tmp;
+
+	tmp = tdp->d_namlen;
+	tdp->d_namlen = tdp->d_type;
+	tdp->d_type = tmp;
+}
+
 /*
  * Scan each entry in a directory block.
  */
@@ -201,33 +218,12 @@ dirscan(struct inodesc *idesc)
 		if (dsize > (int)sizeof dbuf)
 			dsize = sizeof dbuf;
 		memmove(dbuf, dp, (size_t)dsize);
-#		if (BYTE_ORDER == LITTLE_ENDIAN)
-			if (!newinofmt && !needswap) {
-#		else
-			if (!newinofmt && needswap) {
-#		endif
-				struct direct *tdp = (struct direct *)dbuf;
-				u_char tmp;
-
-				tmp = tdp->d_namlen;
-				tdp->d_namlen = tdp->d_type;
-				tdp->d_type = tmp;
-			}
+		if (!newinofmt && NEEDSWAP)
+			dirswap(dbuf);
 		idesc->id_dirp = (struct direct *)dbuf;
 		if ((n = (*idesc->id_func)(idesc)) & ALTERED) {
-#			if (BYTE_ORDER == LITTLE_ENDIAN)
-				if (!newinofmt && !doinglevel2 && !needswap) {
-#			else
-				if (!newinofmt && !doinglevel2 && needswap) {
-#			endif
-					struct direct *tdp;
-					u_char tmp;
-
-					tdp = (struct direct *)dbuf;
-					tmp = tdp->d_namlen;
-					tdp->d_namlen = tdp->d_type;
-					tdp->d_type = tmp;
-				}
+			if (!newinofmt && !doinglevel2 && NEEDSWAP)
+				dirswap(dbuf);
 			bp = getdirblk(idesc->id_blkno, blksiz);
 			memmove(bp->b_un.b_buf + idesc->id_loc - dsize, dbuf,
 			    (size_t)dsize);
@@ -325,17 +321,13 @@ dircheck(struct inodesc *idesc, struct direct *dp)
 	if (dp->d_ino == 0)
 		return (1);
 	size = UFS_DIRSIZ(!newinofmt, dp, needswap);
-#	if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (!newinofmt && !needswap) {
-#	else
-		if (!newinofmt && needswap) {
-#	endif
-			type = dp->d_namlen;
-			namlen = dp->d_type;
-		} else {
-			namlen = dp->d_namlen;
-			type = dp->d_type;
-		}
+	if (!newinofmt && NEEDSWAP) {
+		type = dp->d_namlen;
+		namlen = dp->d_type;
+	} else {
+		namlen = dp->d_namlen;
+		type = dp->d_type;
+	}
 	if (iswap16(dp->d_reclen) < size ||
 	    idesc->id_filesize < size ||
 	    /* namlen > MAXNAMLEN || */
@@ -469,23 +461,14 @@ mkentry(struct inodesc *idesc)
 		dirp->d_type = 0;
 	dirp->d_namlen = newent.d_namlen;
 	memmove(dirp->d_name, idesc->id_name, (size_t)newent.d_namlen + 1);
-#	if (BYTE_ORDER == LITTLE_ENDIAN)
-		/*
-		 * If the entry was split, dirscan() will only reverse the byte
-		 * order of the original entry, and not the new one, before
-		 * writing it back out.  So, we reverse the byte order here if
-		 * necessary.
-		 */
-		if (oldlen != 0 && !newinofmt && !doinglevel2 && !needswap) {
-#	else
-		if (oldlen != 0 && !newinofmt && !doinglevel2 && needswap) {
-#	endif
-			u_char tmp;
-
-			tmp = dirp->d_namlen;
-			dirp->d_namlen = dirp->d_type;
-			dirp->d_type = tmp;
-		}
+	/*
+	 * If the entry was split, dirscan() will only reverse the byte
+	 * order of the original entry, and not the new one, before
+	 * writing it back out.  So, we reverse the byte order here if
+	 * necessary.
+	 */
+	if (oldlen != 0 && !newinofmt && !doinglevel2 && NEEDSWAP)
+		dirswap(dirp);
 	return (ALTERED|STOP);
 }
 
