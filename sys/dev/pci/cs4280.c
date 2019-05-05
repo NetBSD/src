@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.71.2.2 2019/05/04 07:20:10 isaki Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.71.2.3 2019/05/05 05:59:40 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.71.2.2 2019/05/04 07:20:10 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.71.2.3 2019/05/05 05:59:40 isaki Exp $");
 
 #include "midi.h"
 
@@ -450,9 +450,6 @@ cs4280_intr(void *p)
 	}
 	/* Capture Interrupt */
 	if (intr & HISR_CINT) {
-		int  i;
-		int16_t rdata;
-
 		handled = 1;
 		mem = BA1READ4(sc, CS4280_CIE);
 		BA1WRITE4(sc, CS4280_CIE, (mem & ~CIE_CI_MASK) | CIE_CI_DISABLE);
@@ -463,53 +460,9 @@ cs4280_intr(void *p)
 			if ((sc->sc_ri&1) == 0)
 				empty_dma += sc->hw_blocksize;
 
-			/*
-			 * XXX
-			 * I think this audio data conversion should be
-			 * happend in upper layer, but I put this here
-			 * since there is no conversion function available.
-			 */
-			switch(sc->sc_rparam) {
-			case CF_16BIT_STEREO:
-				/* just copy it */
-				memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
-				sc->sc_rn += sc->hw_blocksize;
-				break;
-			case CF_16BIT_MONO:
-				for (i = 0; i < 512; i++) {
-					rdata  = *((int16_t *)empty_dma)>>1;
-					empty_dma += 2;
-					rdata += *((int16_t *)empty_dma)>>1;
-					empty_dma += 2;
-					*((int16_t *)sc->sc_rn) = rdata;
-					sc->sc_rn += 2;
-				}
-				break;
-			case CF_8BIT_STEREO:
-				for (i = 0; i < 512; i++) {
-					rdata = *((int16_t*)empty_dma);
-					empty_dma += 2;
-					*sc->sc_rn++ = rdata >> 8;
-					rdata = *((int16_t*)empty_dma);
-					empty_dma += 2;
-					*sc->sc_rn++ = rdata >> 8;
-				}
-				break;
-			case CF_8BIT_MONO:
-				for (i = 0; i < 512; i++) {
-					rdata =	 *((int16_t*)empty_dma) >>1;
-					empty_dma += 2;
-					rdata += *((int16_t*)empty_dma) >>1;
-					empty_dma += 2;
-					*sc->sc_rn++ = rdata >>8;
-				}
-				break;
-			default:
-				/* Should not reach here */
-				aprint_error_dev(sc->sc_dev,
-				    "unknown sc->sc_rparam: %d\n",
-				    sc->sc_rparam);
-			}
+			/* just copy it */
+			memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
+			sc->sc_rn += sc->hw_blocksize;
 			if (sc->sc_rn >= sc->sc_re)
 				sc->sc_rn = sc->sc_rs;
 		}
@@ -751,17 +704,6 @@ cs4280_trigger_input(void *addr, void *start, void *end, int blksize,
 
 	/* initiate capture DMA */
 	BA1WRITE4(sc, CS4280_CBA, DMAADDR(p));
-
-	/* setup format information for internal converter */
-	sc->sc_rparam = 0;
-	if (param->precision == 8) {
-		sc->sc_rparam += CF_8BIT;
-		sc->sc_rcount <<= 1;
-	}
-	if (param->channels  == 1) {
-		sc->sc_rparam += CF_MONO;
-		sc->sc_rcount <<= 1;
-	}
 
 	/* set CIE */
 	cie = BA1READ4(sc, CS4280_CIE) & ~CIE_CI_MASK;
