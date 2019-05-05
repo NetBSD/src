@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.16.42.1 2019/04/21 07:49:16 isaki Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.16.42.2 2019/05/05 05:59:40 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -118,7 +118,6 @@ struct cs428x_softc {
 	int	sc_ri;
 	struct	cs428x_dma *sc_rdma;
 	char	*sc_rbuf;
-	int	sc_rparam;		/* record format */
 	int	(*halt_input)(void *);
 	char	sc_rrun;		/* recording status */
 	int	sc_rrate;		/* recording sample rate */
