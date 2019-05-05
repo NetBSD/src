@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.11 2019/02/28 03:05:46 msaitoh Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.12 2019/05/05 19:10:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.11 2019/02/28 03:05:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.12 2019/05/05 19:10:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -170,6 +170,7 @@ rk3399_gmac_set_mode_rgmii(struct dwc_gmac_softc *sc, u_int tx_delay, u_int rx_d
 	    (RK3399_GRF_SOC_CON5_RMII_MODE | RK3399_GRF_SOC_CON5_GMAC_PHY_INTF_SEL) << 16;
 	const uint32_t con5 = __SHIFTIN(1, RK3399_GRF_SOC_CON5_GMAC_PHY_INTF_SEL);
 
+#if notyet
 	const uint32_t con6_mask =
 	    (RK3399_GRF_SOC_CON6_GMAC_RXCLK_DLY_ENA |
 		RK3399_GRF_SOC_CON6_GMAC_TXCLK_DLY_ENA |
@@ -180,10 +181,13 @@ rk3399_gmac_set_mode_rgmii(struct dwc_gmac_softc *sc, u_int tx_delay, u_int rx_d
 	    (rx_delay ? RK3399_GRF_SOC_CON6_GMAC_RXCLK_DLY_ENA : 0) |
 	    __SHIFTIN(rx_delay, RK3399_GRF_SOC_CON6_GMAC_CLK_RX_DL_CFG) |
 	    __SHIFTIN(tx_delay, RK3399_GRF_SOC_CON6_GMAC_CLK_TX_DL_CFG);
+#endif
 
 	syscon_lock(rk_sc->sc_syscon);
 	syscon_write_4(rk_sc->sc_syscon, RK3399_GRF_SOC_CON5, con5 | con5_mask);
+#if notyet
 	syscon_write_4(rk_sc->sc_syscon, RK3399_GRF_SOC_CON6, con6 | con6_mask);
+#endif
 	syscon_unlock(rk_sc->sc_syscon);
 }
 
