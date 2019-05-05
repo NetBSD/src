@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.20.10.3 2018/04/14 10:11:49 martin Exp $	*/
+/*	$NetBSD: copy.S,v 1.20.10.4 2019/05/05 08:34:16 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -242,6 +242,7 @@ NENTRY(copy_efault)
 END(copy_efault)
 
 NENTRY(kcopy_fault)
+	cld
 	ret
 END(kcopy_fault)
 
