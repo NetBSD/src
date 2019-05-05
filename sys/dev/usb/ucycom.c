@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.46 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.47 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.46 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.47 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -194,7 +194,7 @@ int	ucycom_match(device_t, cfdata_t, void *);
 void	ucycom_attach(device_t, device_t, void *);
 int	ucycom_detach(device_t, int);
 int	ucycom_activate(device_t, enum devact);
-extern struct cfdriver ucycom_cd;
+
 CFATTACH_DECL_NEW(ucycom, sizeof(struct ucycom_softc), ucycom_match,
     ucycom_attach, ucycom_detach, ucycom_activate);
 

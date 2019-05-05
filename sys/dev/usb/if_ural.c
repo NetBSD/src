@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.58 2018/09/03 16:29:33 riastradh Exp $ */
+/*	$NetBSD: if_ural.c,v 1.59 2019/05/05 03:17:54 mrg Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.58 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.59 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -339,7 +339,7 @@ int	ural_match(device_t, cfdata_t, void *);
 void	ural_attach(device_t, device_t, void *);
 int	ural_detach(device_t, int);
 int	ural_activate(device_t, enum devact);
-extern struct cfdriver ural_cd;
+
 CFATTACH_DECL_NEW(ural, sizeof(struct ural_softc), ural_match, ural_attach,
     ural_detach, ural_activate);
 
