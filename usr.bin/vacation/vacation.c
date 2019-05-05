@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.36 2008/07/21 14:19:27 lukem Exp $	*/
+/*	$NetBSD: vacation.c,v 1.37 2019/05/05 23:08:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.36 2008/07/21 14:19:27 lukem Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.37 2019/05/05 23:08:37 pgoyette Exp $");
 #endif /* not lint */
 
 /*
@@ -219,7 +219,7 @@ main(int argc, char **argv)
 					tflag |= DELIVERED_TO;
 					break;
 				default:
-					errx(1, "Unknown -t option `%c'", *p);
+					errx(1, "Unknown -T option `%c'", *p);
 				}
 			break;
 		case '?':
