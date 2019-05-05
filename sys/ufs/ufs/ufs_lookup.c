@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.149 2019/05/05 01:48:53 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.150 2019/05/05 15:07:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.149 2019/05/05 01:48:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.150 2019/05/05 15:07:12 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -799,7 +799,7 @@ ufs_makedirentry(struct inode *ip, struct componentname *cnp,
 	newdirp->d_namlen = namelen;
 	memcpy(newdirp->d_name, cnp->cn_nameptr, namelen);
 
-	/* Zero out padding */
+	/* NUL terminate and zero out padding */
 	memset(&newdirp->d_name[namelen], 0, UFS_NAMEPAD(namelen));
 
 	if (FSFMT(ITOV(ip)))
