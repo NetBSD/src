@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.99.8.3 2018/06/07 18:12:17 martin Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.99.8.4 2019/05/05 08:20:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.99.8.3 2018/06/07 18:12:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.99.8.4 2019/05/05 08:20:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -996,6 +996,23 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,				      0, 0 },
 	    {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* NetMos PCIe NM9912 */
+	{ "NetMos NM9912 Dual PCI-E UART and 1284 Printer Port",
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9912, 0, 0x1000 },
+	    {   0xffff, 0xffff, 0, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, 0 },
+	    },
+	},
+
+	{ "NetMos NM9912 Dual PCI-E UART and 1284 Printer Port",
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9912, 0, 0x2000 },
+	    {   0xffff, 0xffff, 0, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x0000, 0 },
 	    },
 	},
 
