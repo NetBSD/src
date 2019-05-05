@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.92 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.93 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.92 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.93 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -161,7 +161,7 @@ int kue_match(device_t, cfdata_t, void *);
 void kue_attach(device_t, device_t, void *);
 int kue_detach(device_t, int);
 int kue_activate(device_t, enum devact);
-extern struct cfdriver kue_cd;
+
 CFATTACH_DECL_NEW(kue, sizeof(struct kue_softc), kue_match, kue_attach,
     kue_detach, kue_activate);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.76 2019/02/07 13:20:41 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.77 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.76 2019/02/07 13:20:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.77 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -314,7 +314,7 @@ void umidi_attach(device_t, device_t, void *);
 void umidi_childdet(device_t, device_t);
 int umidi_detach(device_t, int);
 int umidi_activate(device_t, enum devact);
-extern struct cfdriver umidi_cd;
+
 CFATTACH_DECL2_NEW(umidi, sizeof(struct umidi_softc), umidi_match,
     umidi_attach, umidi_detach, umidi_activate, NULL, umidi_childdet);
 

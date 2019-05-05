@@ -1,4 +1,4 @@
-/*	$NetBSD: uipad.c,v 1.6 2017/09/30 13:01:50 sevan Exp $	*/
+/*	$NetBSD: uipad.c,v 1.7 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.6 2017/09/30 13:01:50 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.7 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -100,7 +100,7 @@ void	uipad_attach(device_t, device_t, void *);
 int	uipad_detach(device_t, int);
 int	uipad_activate(device_t, enum devact);
 
-extern struct cfdriver uipad_cd;
+
 CFATTACH_DECL_NEW(uipad, sizeof(struct uipad_softc), uipad_match,
     uipad_attach, uipad_detach, NULL);
 
