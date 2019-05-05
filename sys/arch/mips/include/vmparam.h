@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.61 2018/05/31 22:26:36 mrg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.62 2019/05/05 18:13:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,10 +50,6 @@
 /*
  * Machine dependent VM constants for MIPS.
  */
-#if !defined(_RUMPKERNEL) && (defined(MODULAR) || defined(_MODULE))
-#define MAX_PAGE_SIZE	16384
-#define MIN_PAGE_SIZE	4096
-#endif
 
 /*
  * We normally use a 4K page but may use 16K on MIPS systems.
@@ -69,6 +65,12 @@
 #endif
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+
+#define MIN_PAGE_SHIFT	12
+#define	MAX_PAGE_SHIFT	14
+
+#define MAX_PAGE_SIZE	(1 << MAX_PAGE_SHIFT)
+#define MIN_PAGE_SIZE	(1 << MIN_PAGE_SHIFT)
 
 /*
  * USRSTACK is the top (end) of the user stack.
