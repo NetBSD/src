@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.138 2019/05/01 09:13:31 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.139 2019/05/05 08:43:44 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -3063,4 +3063,32 @@ sys/kern/sys_pipe.c				1.147,1.148
 	Clean up pipe structure before recycling it.
 	Handle half-closed pipes in FIONWRITE and FIONSPACE.
 	[mlelstv, ticket #1253]
+
+sys/dev/pci/pucdata.c				1.104
+
+	Add entries for NetMos NM9912.
+	[jdolecek, ticket #1255]
+
+external/bsd/dhcpcd/dist/src/bpf.c              up to 1.9
+external/bsd/dhcpcd/dist/src/defs.h             up to 1.1.1.21
+external/bsd/dhcpcd/dist/src/dhcp.c             up to 1.19
+external/bsd/dhcpcd/dist/src/dhcp6.c            up to 1.7
+external/bsd/dhcpcd/dist/src/dhcpcd.c           up to 1.19
+external/bsd/dhcpcd/dist/src/dhcpcd.h           up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/if-bsd.c           up to 1.7
+external/bsd/dhcpcd/dist/src/if-linux.c         up to 1.1.1.13
+external/bsd/dhcpcd/dist/src/if-options.c       up to 1.14
+external/bsd/dhcpcd/dist/src/if-sun.c           up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/if.c               up to 1.1.1.13
+external/bsd/dhcpcd/dist/src/if.h               up to 1.1.1.8
+doc/3RDPARTY					(manually adjusted)
+
+	Import dhcpcd-7.2.2
+	[roy, ticket #1256]
+
+sys/arch/amd64/amd64/copy.S			1.33
+sys/arch/i386/i386/copy.S			1.31
+
+	Don't forget to clear the direction flag if kcopy fails.
+	[maxv, ticket #1257]
 
