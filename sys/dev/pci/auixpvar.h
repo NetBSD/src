@@ -1,4 +1,4 @@
-/* $NetBSD: auixpvar.h,v 1.8.42.2 2019/04/27 13:10:03 isaki Exp $*/
+/* $NetBSD: auixpvar.h,v 1.8.42.3 2019/05/05 03:11:28 isaki Exp $*/
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -119,7 +119,6 @@ struct auixp_softc {
 
 	/* audio formats supported */
 	struct audio_format sc_formats[AUIXP_NFORMATS];
-	struct audio_encoding_set *sc_encodings;
 
 	/* codecs */
 	int			sc_num_codecs;
