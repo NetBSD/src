@@ -126,65 +126,37 @@ if_closesockets(struct dhcpcd_ctx *ctx)
 }
 
 int
-if_carrier(struct interface *ifp)
+if_getflags(struct interface *ifp)
 {
-	int r;
-	struct ifreq ifr;
-#ifdef SIOCGIFMEDIA
-	struct ifmediareq ifmr;
-#endif
+	struct ifreq ifr = { .ifr_flags = 0 };
 
-	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-	r = ioctl(ifp->ctx->pf_inet_fd, SIOCGIFFLAGS, &ifr);
-	if (r != -1)
-		ifp->flags = (unsigned int)ifr.ifr_flags;
-
-#ifdef __sun
-	return if_carrier_os(ifp);
-#else
-	if (r == -1)
-		return LINK_UNKNOWN;
-
-#ifdef SIOCGIFMEDIA
-	memset(&ifmr, 0, sizeof(ifmr));
-	strlcpy(ifmr.ifm_name, ifp->name, sizeof(ifmr.ifm_name));
-	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFMEDIA, &ifmr) != -1 &&
-	    ifmr.ifm_status & IFM_AVALID)
-	{
-		ifp->media_valid = true;
-		r = (ifmr.ifm_status & IFM_ACTIVE) ? LINK_UP : LINK_DOWN;
-	} else {
-		ifp->media_valid = false;
-		r = ifr.ifr_flags & IFF_RUNNING ? LINK_UP : LINK_UNKNOWN;
-	}
-#else
-	r = ifr.ifr_flags & IFF_RUNNING ? LINK_UP : LINK_DOWN;
-#endif
-#endif /* __sun */
-	return r;
+	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFFLAGS, &ifr) == -1)
+		return -1;
+	ifp->flags = (unsigned int)ifr.ifr_flags;
+	return 0;
 }
 
 int
 if_setflag(struct interface *ifp, short flag)
 {
-	struct ifreq ifr;
-	int r;
+	struct ifreq ifr = { .ifr_flags = 0 };
+	short f;
 
-	memset(&ifr, 0, sizeof(ifr));
+	if (if_getflags(ifp) == -1)
+		return -1;
+
+	f = (short)ifp->flags;
+	if ((f & flag) == flag)
+		return 0;
+
 	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-	r = -1;
-	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFFLAGS, &ifr) == 0) {
-		if (flag == 0 || (ifr.ifr_flags & flag) == flag)
-			r = 0;
-		else {
-			ifr.ifr_flags |= flag;
-			if (ioctl(ifp->ctx->pf_inet_fd, SIOCSIFFLAGS, &ifr) ==0)
-				r = 0;
-		}
-		ifp->flags = (unsigned int)ifr.ifr_flags;
-	}
-	return r;
+	ifr.ifr_flags = f | flag;
+	if (ioctl(ifp->ctx->pf_inet_fd, SIOCSIFFLAGS, &ifr) == -1)
+		return -1;
+
+	ifp->flags = (unsigned int)ifr.ifr_flags;
+	return 0;
 }
 
 static int
