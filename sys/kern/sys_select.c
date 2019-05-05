@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.42 2019/05/04 15:46:58 christos Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.43 2019/05/05 20:45:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.42 2019/05/04 15:46:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.43 2019/05/05 20:45:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,14 +488,18 @@ pollcommon(register_t *retval, struct pollfd *u_fds, u_int nfds,
 	int		error;
 	size_t		ni;
 
-	if (nfds > MAX(1000 + curlwp->l_fd->fd_dt->dt_nfiles,
-	    curlwp->l_proc->p_rlimit[RLIMIT_NOFILE].rlim_cur)) {
+	if (nfds > curlwp->l_proc->p_rlimit[RLIMIT_NOFILE].rlim_cur) {
 		/*
-		 * Either the user passed in a very sparse 'fds' or junk!
-		 * The kmem_alloc() call below would be bad news.
-		 * We could process the 'fds' array in chunks, but that
+		 * Prevent userland from causing over-allocation.
+		 * Raising the default limit too high can still cause
+		 * a lot of memory to be allocated, but this also means
+		 * that the file descriptor array will also be large.
+		 *
+		 * To reduce the memory requirements here, we could 
+		 * process the 'fds' array in chunks, but that
 		 * is a lot of code that isn't normally useful.
 		 * (Or just move the copyin/out into pollscan().)
+		 *
 		 * Historically the code silently truncated 'fds' to
 		 * dt_nfiles entries - but that does cause issues.
 		 */
