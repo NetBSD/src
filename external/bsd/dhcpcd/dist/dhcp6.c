@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.1.1.13.2.2 2015/02/05 15:13:12 martin Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.1.1.13.2.2.2.1 2019/05/05 09:09:50 martin Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1856,38 +1856,39 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 		ex = dhcp6_findoption(D6_OPTION_PD_EXCLUDE, p, ol);
 		a->prefix_exclude_len = 0;
 		memset(&a->prefix_exclude, 0, sizeof(a->prefix_exclude));
-#if 0
-		if (ex == NULL) {
-			struct dhcp6_option *w;
-			uint8_t *wp;
-
-			w = calloc(1, 128);
-			w->len = htons(2);
-			wp = D6_OPTION_DATA(w);
-			*wp++ = 64;
-			*wp++ = 0x78;
-			ex = w;
-		}
-#endif
 		if (ex == NULL)
 			continue;
+
 		ol = ntohs(ex->len);
-		if (ol < 2) {
-			syslog(LOG_ERR, "%s: truncated PD Exclude",
-			    ifp->name);
+
+		/* RFC 6603 4.2 says option length MUST be between 2 and 17.
+		 * This allows 1 octet for prefix length and 16 for the
+		 * subnet ID. */
+		if (ol < 2 || ol > 17) {
+			syslog(LOG_ERR,
+			    "%s: invalid PD Exclude option", ifp->name);
 			continue;
 		}
+
 		op = D6_COPTION_DATA(ex);
-		a->prefix_exclude_len = *op++;
+		/* RFC 6603 4.2 says prefix length MUST be between the
+		 * length of the IAPREFIX prefix length + 1 and 128. */
+		if (*op < a->prefix_len + 1 || *op > 128) {
+			syslog(LOG_ERR,
+			    "%s: invalid PD Exclude length", ifp->name);
+			continue;
+		}
+
+		/* Check option length matches prefix length. */
 		ol--;
-		if (((a->prefix_exclude_len - a->prefix_len - 1) / NBBY) + 1
-		    != ol)
-		{
-			syslog(LOG_ERR, "%s: PD Exclude length mismatch",
-			    ifp->name);
+		if (((*op - a->prefix_len - 1) / NBBY) + 1 != ol) {
+			syslog(LOG_ERR,
+			    "%s: PD Exclude length mismatch", ifp->name);
 			a->prefix_exclude_len = 0;
 			continue;
 		}
+		a->prefix_exclude_len = *op++;
+
 		u8 = a->prefix_len % NBBY;
 		memcpy(&a->prefix_exclude, &a->prefix,
 		    sizeof(a->prefix_exclude));
