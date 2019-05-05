@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.43.2.1 2019/05/01 12:18:59 isaki Exp $
+#	$NetBSD: files.sbus,v 1.43.2.2 2019/05/05 02:31:42 isaki Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -129,7 +129,7 @@ file	dev/sbus/p9100.c		pnozz needs-flag
 # SUNW,DBRI audio
 defflag	opt_sbus_dbri.h	DBRI_DEBUG
 defflag	opt_sbus_dbri.h	DBRI_SPIN
-device	dbri { }: audiobus, auconv, mulaw
+device	dbri { }: audiobus
 attach	dbri at sbus
 file	dev/sbus/dbri.c			dbri
 
