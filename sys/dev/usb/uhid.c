@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.107 2019/03/23 02:19:31 mrg Exp $	*/
+/*	$NetBSD: uhid.c,v 1.108 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.107 2019/03/23 02:19:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.108 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.107 2019/03/23 02:19:31 mrg Exp $");
 #include <dev/hid/hid.h>
 
 #include <dev/usb/uhidev.h>
+
+#include "ioconf.h"
 
 #ifdef UHID_DEBUG
 #define DPRINTF(x)	if (uhiddebug) printf x
@@ -143,7 +145,7 @@ int	uhid_match(device_t, cfdata_t, void *);
 void	uhid_attach(device_t, device_t, void *);
 int	uhid_detach(device_t, int);
 int	uhid_activate(device_t, enum devact);
-extern struct cfdriver uhid_cd;
+
 CFATTACH_DECL_NEW(uhid, sizeof(struct uhid_softc), uhid_match, uhid_attach,
     uhid_detach, uhid_activate);
 

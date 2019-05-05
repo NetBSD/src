@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.9 2018/03/25 09:34:02 ryoon Exp $	*/
+/*	$NetBSD: uts.c,v 1.10 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.9 2018/03/25 09:34:02 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.10 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -110,7 +110,7 @@ Static void	uts_childdet(device_t, device_t);
 Static int	uts_detach(device_t, int);
 Static int	uts_activate(device_t, enum devact);
 
-extern struct cfdriver uts_cd;
+
 
 CFATTACH_DECL2_NEW(uts, sizeof(struct uts_softc), uts_match, uts_attach,
     uts_detach, uts_activate, NULL, uts_childdet);

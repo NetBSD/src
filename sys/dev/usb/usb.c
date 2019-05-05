@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.178 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: usb.c,v 1.179 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.178 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.179 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.178 2019/03/01 11:06:56 pgoyette Exp $");
 #include <dev/usb/usb_verbose.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/usbhist.h>
+
+#include "ioconf.h"
 
 #if defined(USB_DEBUG)
 
@@ -212,7 +214,7 @@ static void usb_childdet(device_t, device_t);
 static int usb_once_init(void);
 static void usb_doattach(device_t);
 
-extern struct cfdriver usb_cd;
+
 
 CFATTACH_DECL3_NEW(usb, sizeof(struct usb_softc),
     usb_match, usb_attach, usb_detach, usb_activate, NULL, usb_childdet,

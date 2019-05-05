@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.56 2019/01/22 03:42:28 msaitoh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.57 2019/05/05 03:17:54 mrg Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.56 2019/01/22 03:42:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.57 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,7 +90,7 @@ int	udav_match(device_t, cfdata_t, void *);
 void	udav_attach(device_t, device_t, void *);
 int	udav_detach(device_t, int);
 int	udav_activate(device_t, enum devact);
-extern struct cfdriver udav_cd;
+
 CFATTACH_DECL_NEW(udav, sizeof(struct udav_softc), udav_match, udav_attach,
     udav_detach, udav_activate);
 

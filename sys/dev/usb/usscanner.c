@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.43 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.44 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.43 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.44 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -156,7 +156,7 @@ void usscanner_attach(device_t, device_t, void *);
 void usscanner_childdet(device_t, device_t);
 int usscanner_detach(device_t, int);
 int usscanner_activate(device_t, enum devact);
-extern struct cfdriver usscanner_cd;
+
 CFATTACH_DECL2_NEW(usscanner, sizeof(struct usscanner_softc),
     usscanner_match, usscanner_attach, usscanner_detach, usscanner_activate,
     NULL, usscanner_childdet);

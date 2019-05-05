@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.47 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: urio.c,v 1.48 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.47 2018/09/03 16:29:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.48 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.47 2018/09/03 16:29:34 riastradh Exp $");
 
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/urio.h>
+
+#include "ioconf.h"
 
 #ifdef URIO_DEBUG
 #define DPRINTF(x)	if (uriodebug) printf x
@@ -130,7 +132,7 @@ int	urio_match(device_t, cfdata_t, void *);
 void	urio_attach(device_t, device_t, void *);
 int	urio_detach(device_t, int);
 int	urio_activate(device_t, enum devact);
-extern struct cfdriver urio_cd;
+
 CFATTACH_DECL_NEW(urio, sizeof(struct urio_softc), urio_match, urio_attach,
     urio_detach, urio_activate);
 
