@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.84 2017/02/08 16:11:40 rin Exp $	*/
+/*	$NetBSD: main.c,v 1.85 2019/05/05 14:59:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.84 2017/02/08 16:11:40 rin Exp $");
+__RCSID("$NetBSD: main.c,v 1.85 2019/05/05 14:59:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 #ifndef NO_APPLE_UFS
 	isappleufs = 0;
 #endif
-	while ((ch = getopt(argc, argv, "aB:b:c:dFfm:npPqUyx:X")) != -1) {
+	while ((ch = getopt(argc, argv, "aB:b:c:dFfm:npPqUyx:Xz")) != -1) {
 		switch (ch) {
 #ifndef NO_APPLE_UFS
 		case 'a':
@@ -179,15 +179,21 @@ main(int argc, char *argv[])
 			break;
 #endif
 
+		case 'x':
+			snap_backup = optarg;
+			break;
+
+		case 'X':
+			snap_internal = 1;
+			break;
+
 		case 'y':
 			yflag++;
 			nflag = 0;
 			break;
-		case 'x':
-			snap_backup = optarg;
-			break;
-		case 'X':
-			snap_internal = 1;
+
+		case 'z':
+			zflag++;
 			break;
 
 		default:
