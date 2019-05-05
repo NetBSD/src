@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.50 2019/05/01 09:50:53 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.51 2019/05/05 09:04:48 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -556,4 +556,14 @@ sys/kern/sys_pipe.c				1.147,1.148
 	Handle half-closed pipes in FIONWRITE and FIONSPACE.
 	[mlelstv, ticket #1692]
 
+sys/arch/amd64/amd64/copy.S			1.33
+sys/arch/i386/i386/copy.S			1.31
+
+	Don't forget to clear the direction flag if kcopy fails.
+	[maxv, ticket #1693]
+
+external/bsd/dhcpcd/dist/src/dhcp6.c		(apply patch)
+
+	DHCPv6: Fix a potential read overflow with D6_OPTION_PD_EXCLUDE.
+	[roy, ticket #1695]
 
