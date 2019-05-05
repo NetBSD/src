@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.80 2018/08/02 06:09:04 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.81 2019/05/05 03:17:54 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.80 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.81 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -116,7 +116,7 @@ int cue_match(device_t, cfdata_t, void *);
 void cue_attach(device_t, device_t, void *);
 int cue_detach(device_t, int);
 int cue_activate(device_t, enum devact);
-extern struct cfdriver cue_cd;
+
 CFATTACH_DECL_NEW(cue, sizeof(struct cue_softc), cue_match, cue_attach,
     cue_detach, cue_activate);
 

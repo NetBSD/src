@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.37 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.38 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.37 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.38 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -112,7 +112,7 @@ void ugensa_attach(device_t, device_t, void *);
 void ugensa_childdet(device_t, device_t);
 int ugensa_detach(device_t, int);
 int ugensa_activate(device_t, enum devact);
-extern struct cfdriver ugensa_cd;
+
 CFATTACH_DECL2_NEW(ugensa, sizeof(struct ugensa_softc), ugensa_match,
     ugensa_attach, ugensa_detach, ugensa_activate, NULL, ugensa_childdet);
 

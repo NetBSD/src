@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.74 2018/11/15 23:01:46 jakllsch Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.75 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.74 2018/11/15 23:01:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.75 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -90,7 +90,7 @@ void uhidev_attach(device_t, device_t, void *);
 void uhidev_childdet(device_t, device_t);
 int uhidev_detach(device_t, int);
 int uhidev_activate(device_t, enum devact);
-extern struct cfdriver uhidev_cd;
+
 CFATTACH_DECL2_NEW(uhidev, sizeof(struct uhidev_softc), uhidev_match,
     uhidev_attach, uhidev_detach, uhidev_activate, NULL, uhidev_childdet);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.43 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: uirda.c,v 1.44 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.43 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.44 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -151,7 +151,7 @@ void uirda_attach(device_t, device_t, void *);
 void uirda_childdet(device_t, device_t);
 int uirda_detach(device_t, int);
 int uirda_activate(device_t, enum devact);
-extern struct cfdriver uirda_cd;
+
 CFATTACH_DECL2_NEW(uirda, sizeof(struct uirda_softc), uirda_match,
     uirda_attach, uirda_detach, uirda_activate, NULL, uirda_childdet);
 

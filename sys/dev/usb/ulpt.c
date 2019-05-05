@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.102 2019/02/07 12:37:40 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.103 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.102 2019/02/07 12:37:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.103 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.102 2019/02/07 12:37:40 skrll Exp $");
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
+
+#include "ioconf.h"
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
@@ -171,7 +173,7 @@ void ulpt_attach(device_t, device_t, void *);
 int ulpt_detach(device_t, int);
 int ulpt_activate(device_t, enum devact);
 
-extern struct cfdriver ulpt_cd;
+
 
 CFATTACH_DECL_NEW(ulpt, sizeof(struct ulpt_softc), ulpt_match, ulpt_attach,
     ulpt_detach, ulpt_activate);

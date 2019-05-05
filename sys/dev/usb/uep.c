@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.21 2016/12/05 13:14:22 maya Exp $	*/
+/*	$NetBSD: uep.c,v 1.22 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  *  eGalax USB touchpanel controller driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.21 2016/12/05 13:14:22 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.22 2019/05/05 03:17:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ void uep_attach(device_t, device_t, void *);
 void uep_childdet(device_t, device_t);
 int uep_detach(device_t, int);
 int uep_activate(device_t, enum devact);
-extern struct cfdriver uep_cd;
+
 CFATTACH_DECL2_NEW(uep, sizeof(struct uep_softc), uep_match, uep_attach,
     uep_detach, uep_activate, NULL, uep_childdet);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.13 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: uark.c,v 1.14 2019/05/05 03:17:54 mrg Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.13 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.14 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -98,7 +98,7 @@ int             uark_match(device_t, cfdata_t, void *);
 void            uark_attach(device_t, device_t, void *);
 int             uark_detach(device_t, int);
 int             uark_activate(device_t, enum devact);
-extern struct cfdriver uark_cd;
+
 CFATTACH_DECL_NEW(uark, sizeof(struct uark_softc), uark_match, uark_attach,
     uark_detach, uark_activate);
 
