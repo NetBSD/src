@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.60 2019/05/05 13:24:19 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.61 2019/05/05 14:59:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.60 2019/05/05 13:24:19 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.61 2019/05/05 14:59:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ struct	odirtemplate odirhead = {
 };
 
 static int chgino(struct  inodesc *);
-static int dircheck(struct inodesc *, struct direct *);
+static int dircheck(struct inodesc *, struct direct *, struct bufarea *);
 static int expanddir(union dinode *, char *);
 static void freedir(ino_t, ino_t);
 static struct direct *fsck_readdir(struct inodesc *);
@@ -251,7 +251,7 @@ fsck_readdir(struct inodesc *idesc)
 	if (idesc->id_loc % dirblksiz == 0 && idesc->id_filesize > 0 &&
 	    idesc->id_loc < blksiz) {
 		dp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
-		if (dircheck(idesc, dp))
+		if (dircheck(idesc, dp, bp))
 			goto dpok;
 		if (idesc->id_fix == IGNORE)
 			return (0);
@@ -282,7 +282,7 @@ dpok:
 		return (dp);
 	ndp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
 	if (idesc->id_loc < blksiz && idesc->id_filesize > 0 &&
-	    dircheck(idesc, ndp) == 0) {
+	    dircheck(idesc, ndp, bp) == 0) {
 		size = dirblksiz - (idesc->id_loc % dirblksiz);
 		idesc->id_loc += size;
 		idesc->id_filesize -= size;
@@ -303,24 +303,25 @@ dpok:
 /*
  * Verify that a directory entry is valid.
  * This is a superset of the checks made in the kernel.
+ * Returns:
+ *	1: good
+ *	0: bad
  */
 static int
-dircheck(struct inodesc *idesc, struct direct *dp)
+dircheck(struct inodesc *idesc, struct direct *dp, struct bufarea *bp) 
 {
-	int size;
+	uint8_t namlen, type;
+	uint16_t reclen;
+	uint32_t ino;
 	char *cp;
-	u_char namlen, type;
-	int spaceleft;
+	int size, spaceleft, modified, unused, i;
 
+	modified = 0;
 	spaceleft = dirblksiz - (idesc->id_loc % dirblksiz);
-	if (iswap32(dp->d_ino) >= maxino ||
-	    dp->d_reclen == 0 ||
-	    iswap16(dp->d_reclen) > spaceleft ||
-	    (iswap16(dp->d_reclen) & 0x3) != 0) 
-		return (0);
-	if (dp->d_ino == 0)
-		return (1);
-	size = UFS_DIRSIZ(!newinofmt, dp, needswap);
+
+	/* fill in the correct info for our fields */
+	ino = iswap32(dp->d_ino);
+	reclen = iswap16(dp->d_reclen);
 	if (!newinofmt && NEEDSWAP) {
 		type = dp->d_namlen;
 		namlen = dp->d_type;
@@ -328,17 +329,84 @@ dircheck(struct inodesc *idesc, struct direct *dp)
 		namlen = dp->d_namlen;
 		type = dp->d_type;
 	}
-	if (iswap16(dp->d_reclen) < size ||
-	    idesc->id_filesize < size ||
+
+	if (ino >= maxino ||
+	    reclen == 0 || reclen > spaceleft || (reclen & 0x3) != 0)
+		goto bad;
+
+	size = UFS_DIRSIZ(!newinofmt, dp, needswap);
+	if (ino == 0) {
+		/*
+		 * Special case of an unused directory entry. Normally
+		 * the kernel would coalesce unused space with the previous
+		 * entry by extending its d_reclen, but there are situations
+		 * (e.g. fsck) where that doesn't occur.
+		 * If we're clearing out directory cruft (-z flag), then make
+		 * sure this entry gets fully cleared as well.
+		 */
+		if (!zflag || fswritefd < 0)
+			return 1;
+
+		if (dp->d_type != 0) {
+			dp->d_type = 0;
+			modified = 1;
+		}
+		if (dp->d_namlen != 0) {
+			dp->d_namlen = 0;
+			modified = 1;
+		}
+		if (dp->d_name[0] != '\0') {
+			dp->d_name[0] = '\0';
+			modified = 1;
+		}
+		goto good;
+	}
+
+	if (reclen < size || idesc->id_filesize < size ||
 	    /* namlen > MAXNAMLEN || */
 	    type > 15)
-		return (0);
-	for (cp = dp->d_name, size = 0; size < namlen; size++)
+		goto bad;
+
+	for (cp = dp->d_name, i = 0; i < namlen; i++)
 		if (*cp == '\0' || (*cp++ == '/'))
-			return (0);
+			goto bad;
+
 	if (*cp != '\0')
-		return (0);
-	return (1);
+		goto bad;
+
+	if (!zflag || fswritefd < 0)
+		return 1;
+good:
+	/*
+	 * Clear unused directory entry space, including the d_name
+	 * padding.
+	 */
+	/* First figure the number of pad bytes. */
+	unused = UFS_NAMEPAD(namlen);
+
+	/* Add in the free space to the end of the record. */
+	unused += iswap16(dp->d_reclen) - size;
+
+	/*
+	 * Now clear out the unused space, keeping track if we actually
+	 * changed anything.
+	 */
+	for (cp = &dp->d_name[namlen]; unused > 0; unused--, cp++) {
+		if (*cp == '\0')
+			continue;
+		*cp = '\0';
+		modified = 1;
+	}
+
+	/* mark dirty so we update the zeroed space */
+	if (modified)
+		dirty(bp);
+	return 1;
+bad:
+	if (debug)
+		printf("Bad dir: ino %d reclen %d namlen %d type %d name %s\n",
+		    ino, reclen, namlen, type, dp->d_name);
+	return 0;
 }
 
 void
