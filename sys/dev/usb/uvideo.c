@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.46 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.47 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.46 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.47 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -374,7 +374,7 @@ CFATTACH_DECL2_NEW(uvideo, sizeof(struct uvideo_softc),
     uvideo_match, uvideo_attach, uvideo_detach, uvideo_activate, NULL,
     uvideo_childdet);
 
-extern struct cfdriver uvideo_cd;
+
 
 
 static const struct video_hw_if uvideo_hw_if = {

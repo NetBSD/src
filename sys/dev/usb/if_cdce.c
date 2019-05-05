@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.46 2018/06/26 06:48:02 msaitoh Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.47 2019/05/05 03:17:54 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.46 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.47 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -111,7 +111,7 @@ int cdce_match(device_t, cfdata_t, void *);
 void cdce_attach(device_t, device_t, void *);
 int cdce_detach(device_t, int);
 int cdce_activate(device_t, enum devact);
-extern struct cfdriver cdce_cd;
+
 CFATTACH_DECL_NEW(cdce, sizeof(struct cdce_softc), cdce_match, cdce_attach,
     cdce_detach, cdce_activate);
 

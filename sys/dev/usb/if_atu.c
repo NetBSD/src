@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.64 2019/04/26 06:33:34 msaitoh Exp $ */
+/*	$NetBSD: if_atu.c,v 1.65 2019/05/05 03:17:54 mrg Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.64 2019/04/26 06:33:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.65 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -282,7 +282,7 @@ int atu_match(device_t, cfdata_t, void *);
 void atu_attach(device_t, device_t, void *);
 int atu_detach(device_t, int);
 int atu_activate(device_t, enum devact);
-extern struct cfdriver atu_cd;
+
 CFATTACH_DECL_NEW(atu, sizeof(struct atu_softc), atu_match, atu_attach,
     atu_detach, atu_activate);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.22 2019/05/04 23:52:18 mrg Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.23 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.22 2019/05/04 23:52:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.23 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -106,7 +106,7 @@ static int	ukyopon_match(device_t, cfdata_t, void *);
 static void	ukyopon_attach(device_t, device_t, void *);
 static int	ukyopon_detach(device_t, int);
 static int	ukyopon_activate(device_t, enum devact);
-extern struct cfdriver ukyopon_cd;
+
 CFATTACH_DECL_NEW(ukyopon, sizeof(struct ukyopon_softc), ukyopon_match,
     ukyopon_attach, ukyopon_detach, ukyopon_activate);
 

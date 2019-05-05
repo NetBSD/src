@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.33 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.34 2019/05/05 03:17:54 mrg Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.33 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.34 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -216,7 +216,7 @@ void uvscom_attach(device_t, device_t, void *);
 void uvscom_childdet(device_t, device_t);
 int uvscom_detach(device_t, int);
 int uvscom_activate(device_t, enum devact);
-extern struct cfdriver uvscom_cd;
+
 CFATTACH_DECL2_NEW(uvscom, sizeof(struct uvscom_softc), uvscom_match,
     uvscom_attach, uvscom_detach, uvscom_activate, NULL, uvscom_childdet);
 

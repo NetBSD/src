@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.145 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: ugen.c,v 1.146 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.145 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.146 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.145 2019/03/01 11:06:56 pgoyette Exp $");
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+
+#include "ioconf.h"
 
 #ifdef UGEN_DEBUG
 #define DPRINTF(x)	if (ugendebug) printf x
@@ -188,7 +190,7 @@ int	ugen_match(device_t, cfdata_t, void *);
 void	ugen_attach(device_t, device_t, void *);
 int	ugen_detach(device_t, int);
 int	ugen_activate(device_t, enum devact);
-extern struct cfdriver ugen_cd;
+
 CFATTACH_DECL_NEW(ugen, sizeof(struct ugen_softc), ugen_match,
     ugen_attach, ugen_detach, ugen_activate);
 CFATTACH_DECL_NEW(ugenif, sizeof(struct ugen_softc), ugenif_match,

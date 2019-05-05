@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.123 2019/05/01 06:01:01 mrg Exp $	*/
+/*	$NetBSD: ucom.c,v 1.124 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.123 2019/05/01 06:01:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.124 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.123 2019/05/01 06:01:01 mrg Exp $");
 #include <dev/usb/ucomvar.h>
 
 #include "ucom.h"
-
 #include "locators.h"
+#include "ioconf.h"
 
 #if NUCOM > 0
 
@@ -246,7 +246,7 @@ int ucom_match(device_t, cfdata_t, void *);
 void ucom_attach(device_t, device_t, void *);
 int ucom_detach(device_t, int);
 int ucom_activate(device_t, enum devact);
-extern struct cfdriver ucom_cd;
+
 CFATTACH_DECL_NEW(ucom, sizeof(struct ucom_softc), ucom_match, ucom_attach,
     ucom_detach, ucom_activate);
 

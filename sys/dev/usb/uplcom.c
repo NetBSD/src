@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.81 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.82 2019/05/05 03:17:54 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.81 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.82 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -203,7 +203,7 @@ void uplcom_attach(device_t, device_t, void *);
 void uplcom_childdet(device_t, device_t);
 int uplcom_detach(device_t, int);
 int uplcom_activate(device_t, enum devact);
-extern struct cfdriver uplcom_cd;
+
 CFATTACH_DECL2_NEW(uplcom, sizeof(struct uplcom_softc), uplcom_match,
     uplcom_attach, uplcom_detach, uplcom_activate, NULL, uplcom_childdet);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.15 2019/02/07 12:41:21 skrll Exp $ */
+/*	$NetBSD: uyurex.c,v 1.16 2019/05/05 03:17:54 mrg Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.15 2019/02/07 12:41:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.16 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -113,7 +113,7 @@ void uyurex_intr(struct uhidev *, void *, u_int);
 static void uyurex_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void uyurex_delta(void *);
 
-extern struct cfdriver uyurex_cd;
+
 CFATTACH_DECL_NEW(uyurex, sizeof(struct uyurex_softc),
     uyurex_match, uyurex_attach, uyurex_detach, uyurex_activate);
 

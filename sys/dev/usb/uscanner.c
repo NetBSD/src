@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.83 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.84 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.83 2018/09/03 16:29:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.84 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.83 2018/09/03 16:29:34 riastradh Exp 
 #include <dev/usb/usbdi_util.h>
 
 #include <dev/usb/usbdevs.h>
+
+#include "ioconf.h"
 
 #ifdef USCANNER_DEBUG
 #define DPRINTF(x)	if (uscannerdebug) printf x
@@ -269,7 +271,7 @@ int	uscanner_match(device_t, cfdata_t, void *);
 void	uscanner_attach(device_t, device_t, void *);
 int	uscanner_detach(device_t, int);
 int	uscanner_activate(device_t, enum devact);
-extern struct cfdriver uscanner_cd;
+
 CFATTACH_DECL_NEW(uscanner, sizeof(struct uscanner_softc), uscanner_match,
     uscanner_attach, uscanner_detach, uscanner_activate);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.26 2016/12/04 10:12:35 skrll Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.27 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.26 2016/12/04 10:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.27 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -106,7 +106,7 @@ void udsbr_attach(device_t, device_t, void *);
 void udsbr_childdet(device_t, device_t);
 int udsbr_detach(device_t, int);
 int udsbr_activate(device_t, enum devact);
-extern struct cfdriver udsbr_cd;
+
 CFATTACH_DECL2_NEW(udsbr, sizeof(struct udsbr_softc), udsbr_match,
     udsbr_attach, udsbr_detach, udsbr_activate, NULL, udsbr_childdet);
 

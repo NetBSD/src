@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.141 2018/10/23 01:49:37 manu Exp $	*/
+/*	$NetBSD: uhub.c,v 1.142 2019/05/05 03:17:54 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.141 2018/10/23 01:49:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.142 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -140,7 +140,7 @@ void uhub_attach(device_t, device_t, void *);
 int uhub_rescan(device_t, const char *, const int *);
 void uhub_childdet(device_t, device_t);
 int uhub_detach(device_t, int);
-extern struct cfdriver uhub_cd;
+
 CFATTACH_DECL3_NEW(uhub, sizeof(struct uhub_softc), uhub_match,
     uhub_attach, uhub_detach, NULL, uhub_rescan, uhub_childdet,
     DVF_DETACH_SHUTDOWN);

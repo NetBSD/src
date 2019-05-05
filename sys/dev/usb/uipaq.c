@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.23 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.24 2019/05/05 03:17:54 mrg Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.23 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.24 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -129,7 +129,7 @@ void uipaq_attach(device_t, device_t, void *);
 void uipaq_childdet(device_t, device_t);
 int uipaq_detach(device_t, int);
 int uipaq_activate(device_t, enum devact);
-extern struct cfdriver uipaq_cd;
+
 CFATTACH_DECL2_NEW(uipaq, sizeof(struct uipaq_softc), uipaq_match,
     uipaq_attach, uipaq_detach, uipaq_activate, NULL, uipaq_childdet);
 

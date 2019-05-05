@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.13 2019/01/22 06:47:20 skrll Exp $	*/
+/*	$NetBSD: uberry.c,v 1.14 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.13 2019/01/22 06:47:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.14 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -93,7 +93,7 @@ int	uberry_match(device_t, cfdata_t, void *);
 void	uberry_attach(device_t, device_t, void *);
 int	uberry_detach(device_t, int);
 int	uberry_activate(device_t, enum devact);
-extern struct cfdriver uberry_cd;
+
 CFATTACH_DECL_NEW(uberry, sizeof(struct uberry_softc), uberry_match,
     uberry_attach, uberry_detach, NULL);
 

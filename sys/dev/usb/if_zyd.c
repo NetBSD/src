@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.51 2018/09/03 16:29:33 riastradh Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.52 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.51 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.52 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -160,7 +160,7 @@ int zyd_match(device_t, cfdata_t, void *);
 void zyd_attach(device_t, device_t, void *);
 int zyd_detach(device_t, int);
 int zyd_activate(device_t, enum devact);
-extern struct cfdriver zyd_cd;
+
 
 CFATTACH_DECL_NEW(zyd, sizeof(struct zyd_softc), zyd_match,
     zyd_attach, zyd_detach, zyd_activate);

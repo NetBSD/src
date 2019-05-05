@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.141 2018/01/09 17:58:09 christos Exp $        */
+/*      $NetBSD: ukbd.c,v 1.142 2019/05/05 03:17:54 mrg Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.141 2018/01/09 17:58:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.142 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -371,7 +371,7 @@ static int ukbd_detach(device_t, int);
 static int ukbd_activate(device_t, enum devact);
 static void ukbd_childdet(device_t, device_t);
 
-extern struct cfdriver ukbd_cd;
+
 
 CFATTACH_DECL2_NEW(ukbd, sizeof(struct ukbd_softc), ukbd_match, ukbd_attach,
     ukbd_detach, ukbd_activate, NULL, ukbd_childdet);

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.64 2018/09/12 21:57:18 christos Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.65 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.64 2018/09/12 21:57:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.65 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -234,7 +234,7 @@ static int rum_match(device_t, cfdata_t, void *);
 static void rum_attach(device_t, device_t, void *);
 static int rum_detach(device_t, int);
 static int rum_activate(device_t, enum devact);
-extern struct cfdriver rum_cd;
+
 CFATTACH_DECL_NEW(rum, sizeof(struct rum_softc), rum_match, rum_attach,
     rum_detach, rum_activate);
 

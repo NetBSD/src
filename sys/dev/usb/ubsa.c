@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.36 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.37 2019/05/05 03:17:54 mrg Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.36 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.37 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -132,7 +132,7 @@ void ubsa_childdet(device_t, device_t);
 int ubsa_detach(device_t, int);
 int ubsa_activate(device_t, enum devact);
 
-extern struct cfdriver ubsa_cd;
+
 
 CFATTACH_DECL2_NEW(ubsa, sizeof(struct ubsa_softc),
     ubsa_match, ubsa_attach, ubsa_detach, ubsa_activate, NULL, ubsa_childdet);

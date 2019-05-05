@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.68 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.69 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.68 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.69 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -179,7 +179,7 @@ void uftdi_attach(device_t, device_t, void *);
 void uftdi_childdet(device_t, device_t);
 int uftdi_detach(device_t, int);
 int uftdi_activate(device_t, enum devact);
-extern struct cfdriver uftdi_cd;
+
 CFATTACH_DECL2_NEW(uftdi, sizeof(struct uftdi_softc), uftdi_match,
     uftdi_attach, uftdi_detach, uftdi_activate, NULL, uftdi_childdet);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.62 2019/03/08 03:05:15 msaitoh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.63 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.62 2019/03/08 03:05:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.63 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -91,7 +91,7 @@ int	url_match(device_t, cfdata_t, void *);
 void	url_attach(device_t, device_t, void *);
 int	url_detach(device_t, int);
 int	url_activate(device_t, enum devact);
-extern struct cfdriver url_cd;
+
 CFATTACH_DECL_NEW(url, sizeof(struct url_softc), url_match, url_attach,
     url_detach, url_activate);
 

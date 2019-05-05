@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.174 2019/02/10 19:23:55 jdolecek Exp $	*/
+/*	$NetBSD: umass.c,v 1.175 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.174 2019/02/10 19:23:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.175 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -219,7 +219,7 @@ void umass_attach(device_t, device_t, void *);
 int umass_detach(device_t, int);
 static void umass_childdet(device_t, device_t);
 int umass_activate(device_t, enum devact);
-extern struct cfdriver umass_cd;
+
 CFATTACH_DECL2_NEW(umass, sizeof(struct umass_softc), umass_match,
     umass_attach, umass_detach, umass_activate, NULL, umass_childdet);
 

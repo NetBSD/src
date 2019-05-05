@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.158 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.159 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.158 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.159 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -381,7 +381,7 @@ int uaudio_detach(device_t, int);
 void uaudio_childdet(device_t, device_t);
 int uaudio_activate(device_t, enum devact);
 
-extern struct cfdriver uaudio_cd;
+
 
 CFATTACH_DECL2_NEW(uaudio, sizeof(struct uaudio_softc),
     uaudio_match, uaudio_attach, uaudio_detach, uaudio_activate, NULL,

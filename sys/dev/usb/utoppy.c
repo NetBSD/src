@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.31 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.32 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.31 2018/09/03 16:29:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.32 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.31 2018/09/03 16:29:34 riastradh Exp $"
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/utoppy.h>
+
+#include "ioconf.h"
 
 #undef UTOPPY_DEBUG
 #ifdef UTOPPY_DEBUG
@@ -204,7 +206,7 @@ int	utoppy_match(device_t, cfdata_t, void *);
 void	utoppy_attach(device_t, device_t, void *);
 int	utoppy_detach(device_t, int);
 int	utoppy_activate(device_t, enum devact);
-extern struct cfdriver utoppy_cd;
+
 CFATTACH_DECL_NEW(utoppy, sizeof(struct utoppy_softc), utoppy_match,
     utoppy_attach, utoppy_detach, utoppy_activate);
 

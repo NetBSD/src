@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.70 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: umodem.c,v 1.71 2019/05/05 03:17:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.70 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.71 2019/05/05 03:17:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ void	umodem_attach(device_t, device_t, void *);
 int	umodem_detach(device_t, int);
 int	umodem_activate(device_t, enum devact);
 
-extern struct cfdriver umodem_cd;
+
 
 CFATTACH_DECL_NEW(umodem, sizeof(struct umodem_softc), umodem_match,
     umodem_attach, umodem_detach, umodem_activate);
