@@ -85,7 +85,6 @@ struct interface {
 	unsigned short vlanid;
 	unsigned int metric;
 	int carrier;
-	bool media_valid;
 	bool wireless;
 	uint8_t ssid[IF_SSIDLEN];
 	unsigned int ssid_len;
