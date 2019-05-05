@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_amd64_wait.h,v 1.7 2019/05/05 10:04:11 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_amd64_wait.h,v 1.8 2019/05/05 18:16:39 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -198,12 +198,100 @@ ATF_TC_BODY(x86_64_regs_gp_read, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
+ATF_TC(x86_64_regs_r8_read);
+ATF_TC_HEAD(x86_64_regs_r8_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"Set r8..r15 reg values from debugged program and read "
+		"them via PT_GETREGS, comparing values against expected.");
+}
+
+ATF_TC_BODY(x86_64_regs_r8_read, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGTRAP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct reg gpr;
+
+	const uint64_t r8[] = {
+		0x0001020304050607,
+		0x1011121314151617,
+		0x2021222324252627,
+		0x3031323334353637,
+		0x4041424344454647,
+		0x5051525354555657,
+		0x6061626364656667,
+		0x7071727374757677,
+	};
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before running assembly from child\n");
+
+		__asm__ __volatile__(
+			"movq    0x00(%%rbx), %%r8\n\t"
+			"movq    0x08(%%rbx), %%r9\n\t"
+			"movq    0x10(%%rbx), %%r10\n\t"
+			"movq    0x18(%%rbx), %%r11\n\t"
+			"movq    0x20(%%rbx), %%r12\n\t"
+			"movq    0x28(%%rbx), %%r13\n\t"
+			"movq    0x30(%%rbx), %%r14\n\t"
+			"movq    0x38(%%rbx), %%r15\n\t"
+			"int3\n\t"
+			:
+			: "b"(r8)
+			: "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15"
+		);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	DPRINTF("Call GETREGS for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &gpr, 0) != -1);
+
+	ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R8], r8[0]);
+	ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R9], r8[1]);
+	ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R10], r8[2]);
+	ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R11], r8[3]);
+	ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R12], r8[4]);
+	ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R13], r8[5]);
+	ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R14], r8[6]);
+	ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R15], r8[7]);
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
 /// ----------------------------------------------------------------------------
 
 
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_AMD64() \
 	ATF_TP_ADD_TC_HAVE_GPREGS(tp, x86_64_regs1); \
-	ATF_TP_ADD_TC_HAVE_GPREGS(tp, x86_64_regs_gp_read);
+	ATF_TP_ADD_TC_HAVE_GPREGS(tp, x86_64_regs_gp_read); \
+	ATF_TP_ADD_TC_HAVE_GPREGS(tp, x86_64_regs_r8_read);
 #else
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_AMD64()
 #endif
