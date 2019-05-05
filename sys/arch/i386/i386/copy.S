@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.23 2014/01/10 16:47:07 pedro Exp $	*/
+/*	$NetBSD: copy.S,v 1.23.8.1 2019/05/05 08:49:18 martin Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.23 2014/01/10 16:47:07 pedro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.23.8.1 2019/05/05 08:49:18 martin Exp $");
 
 #include "assym.h"
 
@@ -308,6 +308,7 @@ NENTRY(copy_efault)
  */
 /* LINTSTUB: Ignore */
 NENTRY(kcopy_fault)
+	cld
 	popl	%edi
 	popl	%esi
 	ret
