@@ -240,7 +240,7 @@
 /* #undef HAVE_LIBDL */
 
 /* Define if you have the expat library. */
-/* #undef HAVE_LIBEXPAT */
+#define HAVE_LIBEXPAT 1
 
 /* Define to 1 if you have the `libiconvlist' function. */
 /* #undef HAVE_LIBICONVLIST */
