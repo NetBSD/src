@@ -19661,7 +19661,7 @@ elf32_arm_swap_symbol_in (bfd * abfd,
 
   /* Mark CMSE special symbols.  */
   symtab_hdr = & elf_symtab_hdr (abfd);
-  if (symtab_hdr->sh_size)
+  if (symtab_hdr->sh_size && dst->st_size != 0)
     name = bfd_elf_sym_name (abfd, symtab_hdr, dst, NULL);
   if (name && CONST_STRNEQ (name, CMSE_PREFIX))
     ARM_SET_SYM_CMSE_SPCL (dst->st_target_internal);
