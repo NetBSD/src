@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.139.2.3 2019/05/04 07:20:10 isaki Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.139.2.4 2019/05/05 01:57:06 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.139.2.3 2019/05/04 07:20:10 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.139.2.4 2019/05/05 01:57:06 isaki Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -462,7 +462,7 @@ sbdsp_attach(struct sbdsp_softc *sc)
 		}
 	}
 
-	/* Construct sc_format from model */
+	/* Construct sc_formats from model */
 	sbdsp_init_format(sc);
 	if (sc->sc_nformats == 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -597,7 +597,7 @@ sbdsp_init_format(struct sbdsp_softc *sc)
 			idx = (m->precision / 16) * 2 + (m->channels - 1);
 			d = &dbase[idx];
 			if (d->mode == 0) {
-				/* The first elements of this room */
+				/* The first element of this room */
 				*d = tmp;
 				continue;
 			}
