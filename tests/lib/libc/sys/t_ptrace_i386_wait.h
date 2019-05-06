@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_i386_wait.h,v 1.6 2019/05/05 18:15:40 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_i386_wait.h,v 1.7 2019/05/06 00:08:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -112,9 +112,9 @@ ATF_TC_HEAD(i386_regs_gp_read, tc)
 ATF_TC_BODY(i386_regs_gp_read, tc)
 {
 	const int exitval = 5;
-	const int sigval = SIGTRAP;
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
+	const int sigval = SIGTRAP;
 	int status;
 #endif
 	struct reg gpr;
@@ -185,9 +185,9 @@ ATF_TC_HEAD(i386_regs_ebp_esp_read, tc)
 ATF_TC_BODY(i386_regs_ebp_esp_read, tc)
 {
 	const int exitval = 5;
-	const int sigval = SIGTRAP;
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
+	const int sigval = SIGTRAP;
 	int status;
 #endif
 	struct reg gpr;
