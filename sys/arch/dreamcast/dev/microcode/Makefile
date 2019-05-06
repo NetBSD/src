@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/03/04 02:00:16 uwe Exp $
+#	$NetBSD: Makefile,v 1.5 2019/05/06 17:12:50 ryo Exp $
 
 S	= ${.CURDIR}/../../../..
 
@@ -6,7 +6,7 @@ CC	= ${TOOLDIR}/bin/arm--netbsdelf-gcc
 OBJCOPY	= ${TOOLDIR}/bin/arm--netbsdelf-objcopy
 
 CFLAGS	= -W -Wall -mlittle-endian
-CFLAGS	+= -O3 -mcpu=arm7tdmi
+CFLAGS	+= -O3 -mcpu=arm7
 CFLAGS	+= -fomit-frame-pointer -funroll-loops -finline-functions
 CFLAGS	+= -I${S}
 #AFLAGS	= -mcpu=arm7tdmi -mthumb -mthumb-interwork -mapcs-32
