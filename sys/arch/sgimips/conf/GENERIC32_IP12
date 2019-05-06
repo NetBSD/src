@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.35 2019/04/26 21:40:32 sevan Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.36 2019/05/06 02:24:37 sevan Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -32,7 +32,7 @@ makeoptions	TEXTADDR=0x80002000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.35 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.36 $"
 
 maxusers	32
 
@@ -81,26 +81,7 @@ include 	"conf/compat_netbsd15.config"
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 
 
 # File systems
-file-system 	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
-#file-system 	LFS		# log-structured file system
-file-system 	MFS		# memory file system
-file-system 	NFS		# Network File System client
-#file-system 	NTFS		# Windows/NT file system (experimental)
-file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-file-system 	MSDOSFS		# MS-DOS file system
-#file-system 	FDESC		# /dev/fd
-file-system 	KERNFS		# /kern
-#file-system 	NULLFS		# loopback file system
-#file-system 	OVERLAY		# overlay file system
-file-system 	PROCFS		# /proc
-#file-system 	UMAPFS		# NULLFS + uid and gid remapping
-#file-system 	UNION		# union file system
-#file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	PTYFS		# /dev/pts/N support
-file-system	TMPFS		# Efficient memory file-system
-#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-file-system	EFS		# Silicon Graphics Extent File System
+include "conf/filesystems.config"
 
 # File system options
 options 	QUOTA		# legacy UFS quotas
@@ -263,8 +244,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsmux                   # mouse & keyboard multiplexor
 pseudo-device	wsfont
-
-# a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 include "dev/veriexec.config"

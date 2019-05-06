@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.125 2019/04/26 21:40:32 sevan Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.126 2019/05/06 02:24:37 sevan Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.125 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.126 $"
 
 maxusers	32
 
@@ -74,27 +74,7 @@ options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 
 
 # File systems
-file-system 	FFS		# UFS
-file-system 	EXT2FS		# second extended file system (linux)
-file-system 	LFS		# log-structured file system
-file-system 	MFS		# memory file system
-file-system 	NFS		# Network File System client
-file-system 	NTFS		# Windows/NT file system (experimental)
-file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-file-system 	MSDOSFS		# MS-DOS file system
-file-system 	FDESC		# /dev/fd
-file-system 	KERNFS		# /kern
-file-system 	NULLFS		# loopback file system
-file-system 	OVERLAY		# overlay file system
-file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
-file-system 	PROCFS		# /proc
-file-system 	UMAPFS		# NULLFS + uid and gid remapping
-file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	PTYFS		# /dev/pts/N support
-file-system	TMPFS		# Efficient memory file-system
-#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-file-system	EFS		# Silicon Graphics Extent File System
+include "conf/filesystems.config"
 
 # File system options
 options 	QUOTA		# legacy UFS quotas
@@ -348,7 +328,6 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	sequencer		# MIDI sequencer
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	putter			# for puffs and pud
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
@@ -356,8 +335,5 @@ pseudo-device	wsfont
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
-
-# a pseudo device needed for Coda	# also needs CODA (above)
-pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 include "dev/veriexec.config"
