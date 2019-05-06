@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.25 2019/03/16 12:09:56 isaki Exp $	*/
+/*	$NetBSD: aica.c,v 1.26 2019/05/06 17:12:50 ryo Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.25 2019/03/16 12:09:56 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.26 2019/05/06 17:12:50 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -616,8 +616,6 @@ aica_trigger_output(void *addr, void *start, void *end, int blksize,
 	struct aica_softc *sc;
 
 	sc = addr;
-	aica_command(sc, AICA_COMMAND_INIT);
-	tsleep(aica_trigger_output, PWAIT, "aicawait", hz / 20);
 
 	sc->sc_buffer_start = sc->sc_buffer = start;
 	sc->sc_buffer_end = end;
@@ -627,9 +625,12 @@ aica_trigger_output(void *addr, void *start, void *end, int blksize,
 	sc->sc_intr = intr;
 	sc->sc_intr_arg = arg;
 
-	/* fill buffers in advance */
-	aica_intr(sc);
-	aica_intr(sc);
+	/*
+	 * The aica arm side driver uses a double buffer to play sounds.
+	 * we need to fill two buffers before playing.
+	 */
+	aica_fillbuffer(sc);
+	aica_fillbuffer(sc);
 
 	/* ...and start playing */
 	aica_play(sc, blksize / sc->sc_channels, sc->sc_channels, sc->sc_rate,
