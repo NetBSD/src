@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.130 2018/04/29 18:00:31 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.131 2019/05/06 19:20:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.130 2018/04/29 18:00:31 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.131 2019/05/06 19:20:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -568,7 +568,6 @@ ktrsyscall(struct ktr_syscall *ktr)
 		sys_name = emul->sysnames[ktr->ktr_code];
 		(void)printf("%s", sys_name);
 	}
-#ifdef _LP64
 #define NETBSD32_	"netbsd32_"
 	if (cur_emul->flags & EMUL_FLAG_NETBSD32) {
 		size_t len = strlen(NETBSD32_);
@@ -576,7 +575,6 @@ ktrsyscall(struct ktr_syscall *ktr)
 			sys_name += len;
 	}
 #undef NETBSD32_
-#endif
 
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
 	if (argcount) {
