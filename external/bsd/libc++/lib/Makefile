@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2018/07/17 18:58:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2019/05/06 23:20:51 christos Exp $
 
 LIB=		c++
 WARNS=		4
@@ -43,6 +43,9 @@ CWARNFLAGS.clang+=	-Wno-error=unused-variable -Wno-error=missing-noreturn
 CWARNFLAGS.clang+=	-Wno-error=missing-prototypes -Wno-error=sometimes-uninitialized
 CWARNFLAGS.clang+=	-Wno-error=missing-field-initializers -Wno-error=switch
 CWARNFLAGS.clang+=	-Wno-error=implicit-exception-spec-mismatch
+
+# with SSP and FORTIFY, on earm...
+COPTS.rt_libelftc_dem_gnu3.c += ${${ACTIVE_CC} == "clang":? -Wno-error=builtin-memcpy-chk-size :}
 
 .if ${MKSANITIZER} != "yes"
 LDFLAGS+=	-Wl,-z,defs
