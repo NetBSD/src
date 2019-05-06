@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.357 2019/05/03 22:34:21 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.358 2019/05/06 08:05:03 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.357 2019/05/03 22:34:21 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.358 2019/05/06 08:05:03 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -2352,7 +2352,8 @@ proc_unstop(struct proc *p)
 }
 
 void
-proc_stoptrace(int trapno)
+proc_stoptrace(int trapno, int sysnum, const register_t args[],
+               const register_t *ret, int error)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -2360,14 +2361,36 @@ proc_stoptrace(int trapno)
 	sigset_t *mask;
 	sig_t action;
 	ksiginfo_t ksi;
+	size_t i, sy_narg;
 	const int signo = SIGTRAP;
 
 	KASSERT((trapno == TRAP_SCE) || (trapno == TRAP_SCX));
+	KASSERT(p->p_pptr != initproc);
+	KASSERT(ISSET(p->p_slflag, PSL_TRACED));
+	KASSERT(ISSET(p->p_slflag, PSL_SYSCALL));
+
+	sy_narg = p->p_emul->e_sysent[sysnum].sy_narg;
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_lid = l->l_lid;
-	ksi.ksi_info._signo = signo;
-	ksi.ksi_info._code = trapno;
+	ksi.ksi_signo = signo;
+	ksi.ksi_code = trapno;
+
+	ksi.ksi_sysnum = sysnum;
+	if (trapno == TRAP_SCE) {
+		ksi.ksi_retval[0] = 0;
+		ksi.ksi_retval[1] = 0;
+		ksi.ksi_error = 0;
+	} else {
+		ksi.ksi_retval[0] = ret[0];
+		ksi.ksi_retval[1] = ret[1];
+		ksi.ksi_error = error;
+	}
+
+	memset(ksi.ksi_args, 0, sizeof(ksi.ksi_args));
+
+	for (i = 0; i < sy_narg; i++)
+		ksi.ksi_args[i] = args[i];
 
 	mutex_enter(p->p_lock);
 
@@ -2384,12 +2407,6 @@ proc_stoptrace(int trapno)
 	ps = p->p_sigacts;
 	action = SIGACTION_PS(ps, signo).sa_handler;
 	mask = &l->l_sigmask;
-
-	/* initproc (PID1) cannot became a debugger */
-	KASSERT(p->p_pptr != initproc);
-
-	KASSERT(ISSET(p->p_slflag, PSL_TRACED));
-	KASSERT(ISSET(p->p_slflag, PSL_SYSCALL));
 
 	p->p_xsig = signo;
 	p->p_sigctx.ps_lwp = ksi.ksi_lid;
