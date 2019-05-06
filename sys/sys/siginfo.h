@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.32 2017/03/01 00:19:22 kamil Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.33 2019/05/06 08:05:03 kamil Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,6 +77,13 @@ struct _ksiginfo {
 			long	_band;
 			int	_fd;
 		} _poll;
+
+		struct {
+			int	_sysnum;
+			int	_retval[2];
+			int	_error;
+			uint64_t _args[8]; /* SYS_MAXSYSARGS */
+		} _syscall;
 	} _reason;
 };
 
@@ -155,6 +162,11 @@ typedef union siginfo {
 #define	si_band		_info._reason._poll._band
 #define	si_fd		_info._reason._poll._fd
 
+#define	si_sysnum	_info._reason._syscall._sysnum
+#define si_retval	_info._reason._syscall._retval
+#define si_error	_info._reason._syscall._error
+#define si_args		_info._reason._syscall._args
+
 #ifdef _KERNEL
 /** Field access macros */
 #define	ksi_signo	ksi_info._signo
@@ -175,6 +187,11 @@ typedef union siginfo {
 
 #define	ksi_band	ksi_info._reason._poll._band
 #define	ksi_fd		ksi_info._reason._poll._fd
+
+#define	ksi_sysnum	ksi_info._reason._syscall._sysnum
+#define ksi_retval	ksi_info._reason._syscall._retval
+#define ksi_error	ksi_info._reason._syscall._error
+#define ksi_args	ksi_info._reason._syscall._args
 #endif /* _KERNEL */
 
 /** si_code */
