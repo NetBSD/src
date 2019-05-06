@@ -1,4 +1,4 @@
-/*	$NetBSD: aica_arm_locore.S,v 1.2 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: aica_arm_locore.S,v 1.3 2019/05/06 17:12:50 ryo Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,6 @@
  */
 
 	.text
-	.globl
 
 	b	exp_reset
 	b	exp_undef
