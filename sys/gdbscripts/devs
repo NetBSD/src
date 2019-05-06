@@ -1,0 +1,20 @@
+#	$NetBSD: devs,v 1.1 2019/05/06 02:41:02 mrg Exp $
+
+define devs
+	set $i = 0
+
+	while ($i < 2)
+		if ($i == 0)
+			set $d = alldevs.tqh_first
+		end
+		if ($d)
+			printf "        device_t            parent           private  dv_xname\n"
+		end
+		while ($d)
+			printf "%16lx  %16lx  %16lx  %s\n", \
+				$d, $d->dv_parent, $d->dv_private, $d->dv_xname
+			set $d = $d->dv_list.tqe_next
+		end
+		set $i++
+	end
+end
