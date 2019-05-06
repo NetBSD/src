@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.249 2019/04/24 14:15:35 sevan Exp $
+$NetBSD: acronyms.comp,v 1.250 2019/05/06 00:29:12 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -466,6 +466,7 @@ EEPROM	electrically erasable programmable read only memory
 EFI	extensible firmware interface
 EFL	emitter follower logic
 EFM	eight to fourteen modulation
+EFS	extent file system
 EGA	Enhanced Graphics Adapter
 EGP	exterior gateway protocol
 EH	extension header
