@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.52 2015/12/06 02:04:10 tsutsui Exp $	*/
+/*	$NetBSD: maple.c,v 1.53 2019/05/06 17:16:41 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.52 2015/12/06 02:04:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.53 2019/05/06 17:16:41 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -246,13 +246,13 @@ mapleattach(device_t parent, device_t self, void *aux)
 
 	MAPLE_ENABLE = 1;
 
-	maple_polling = 1;
-	maple_scanbus(sc);
-
 	mutex_init(&sc->sc_dma_lock, MUTEX_DEFAULT, IPL_MAPLE);
 	cv_init(&sc->sc_dma_cv, device_xname(self));
 	mutex_init(&sc->sc_event_lock, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	cv_init(&sc->sc_event_cv, device_xname(self));
+
+	maple_polling = 1;
+	maple_scanbus(sc);
 
 	callout_init(&sc->maple_callout_ch, 0);
 
