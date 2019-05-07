@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.139 2019/05/05 08:43:44 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.140 2019/05/07 18:52:49 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2900,14 +2900,6 @@ sys/external/bsd/drm2/ttm/ttm_bo_vm.c		1.12
 	netbsd errnos.
 	[mrg, ticket #1239]
 
-sys/dev/usb/ucom.c				1.122
-sys/dev/usb/umodem_common.c			1.27
-sys/dev/usb/umodemvar.h				1.10
-
-	Fix umodem(4) detach when unpluging a device while it is still
-	open.
-	[mrg, ticket #1240]
-
 sys/net/if_gif.c				1.146
 
 	gif(4): prevent duplicate tunnels early.
@@ -3091,4 +3083,10 @@ sys/arch/i386/i386/copy.S			1.31
 
 	Don't forget to clear the direction flag if kcopy fails.
 	[maxv, ticket #1257]
+
+sys/netsmb/smb_conn.c				1.30
+
+	Prevent a NULL pointer dereference when the local endpoint is not
+	defined.
+	[christos, ticket #1258]
 
