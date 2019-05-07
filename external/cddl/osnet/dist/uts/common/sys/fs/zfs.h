@@ -630,7 +630,7 @@ typedef struct zpool_rewind_policy {
 #define	ZPOOL_CACHE		"/boot/zfs/zpool.cache"
 #endif
 #ifdef __NetBSD__
-#define	ZPOOL_CACHE		"/var/db/zfs/zpool.cache"
+#define	ZPOOL_CACHE		"/etc/zfs/zpool.cache"
 #endif
 
 /*
