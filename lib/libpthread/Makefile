@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.93 2019/05/07 18:12:53 maya Exp $
+#	$NetBSD: Makefile,v 1.94 2019/05/07 18:45:37 maya Exp $
 #
 
 NOSANITIZER=	# defined
@@ -281,7 +281,7 @@ __archivebuild: .USE
 	${LD} -r -o ${.TARGET}.o `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 	${AR} ${_ARFL} ${.TARGET} ${.TARGET}.o
 
-CLEANFILES+=	${.TARGET}.o
+CLEANFILES+=	${_LIBS:=.o}
 
 .include <bsd.lib.mk>
 
