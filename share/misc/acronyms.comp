@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.250 2019/05/06 00:29:12 sevan Exp $
+$NetBSD: acronyms.comp,v 1.251 2019/05/07 21:14:46 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1479,6 +1479,7 @@ TLS	thread local storage
 TLS	transport layer security
 TM	Turing machine
 TM	thermal monitor
+TMG	transmogrifier
 TMDS	transition minimized differential signaling
 TMO	timeout
 TOD	time of day
