@@ -6973,7 +6973,7 @@ MODULE_DEPEND(zfsctrl, acl_nfs4, 1, 1, 1);
 #include <sys/module.h>
 #include <uvm/uvm_extern.h>
 
-MODULE(MODULE_CLASS_DRIVER, zfs, "solaris");
+MODULE(MODULE_CLASS_VFS, zfs, "solaris");
 
 static const struct fileops zfs_fileops;
 
@@ -7180,9 +7180,6 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		if (!rootvnode)
-			return EAGAIN;
-
 		/* XXXNETBSD trim is not supported yet */
 		zfs_trim_enabled = B_FALSE;
 
