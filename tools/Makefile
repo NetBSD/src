@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202 2019/05/07 04:29:45 thorpej Exp $
+#	$NetBSD: Makefile,v 1.203 2019/05/07 10:22:54 hannken Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -101,12 +101,11 @@ SUBDIR+= cap_mkdb crunchgen ctags gencat hexdump \
 .endif
 
 SUBDIR+= cat rpcgen join lorder m4 mkdep tsort xz-include .WAIT yacc .WAIT awk .WAIT lex
-SUBDIR+= grep xz-lib libprop
+SUBDIR+= grep xz-lib pax .WAIT libprop
 
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR += .WAIT texinfo \
 	.WAIT tic \
-	.WAIT pax \
 	.WAIT ${TOOLCHAIN_BITS} \
 	${DTRACE_BITS} \
 		asn1_compile cksum compile_et db \
