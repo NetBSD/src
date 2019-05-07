@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.154 2019/02/06 11:55:06 rin Exp $
+#	$NetBSD: files.usb,v 1.155 2019/05/07 22:00:10 mrg Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -418,11 +418,6 @@ attach	umct at usbdevif
 file	dev/usb/umct.c			umct
 
 # MOSCHIP MCS7xxx serial driver
-device	moscom: ucombus
-attach	moscom at usbdevif
-file	dev/usb/moscom.c		moscom
-
-# andother driver for the same chip
 device	umcs: ucombus
 attach	umcs at usbdevif
 file	dev/usb/umcs.c			umcs

@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.11 2016/11/21 08:48:00 skrll Exp $
+$NetBSD: TODO.usbmp,v 1.12 2019/05/07 22:00:10 mrg Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -201,7 +201,7 @@ ucom attachments:
   - uplcom		attaches ok
   - uslsa		working
   - uvscom
-  - moscom
+  - umcs
   - uvisor
   - ukyopon
   - u3g
