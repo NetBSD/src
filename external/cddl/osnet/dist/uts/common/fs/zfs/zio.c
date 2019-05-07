@@ -1537,8 +1537,10 @@ zio_taskq_dispatch(zio_t *zio, zio_taskq_type_t q, boolean_t cutinline)
 	 * to a single taskq at a time.  It would be a grievous error
 	 * to dispatch the zio to another taskq at the same time.
 	 */
-#if defined(illumos) || defined(__NetBSD__) || !defined(_KERNEL)
+#if defined(illumos) || !defined(_KERNEL)
 	ASSERT(zio->io_tqent.tqent_next == NULL);
+#elif defined(__NetBSD__)
+	ASSERT(zio->io_tqent.tqent_queued == 0);
 #else
 	ASSERT(zio->io_tqent.tqent_task.ta_pending == 0);
 #endif
@@ -3842,8 +3844,10 @@ zio_done(zio_t *zio)
 			 * Reexecution is potentially a huge amount of work.
 			 * Hand it off to the otherwise-unused claim taskq.
 			 */
-#if defined(illumos) || defined(__NetBSD__) || !defined(_KERNEL)
+#if defined(illumos) || !defined(_KERNEL)
 			ASSERT(zio->io_tqent.tqent_next == NULL);
+#elif defined(__NetBSD__)
+			ASSERT(zio->io_tqent.tqent_queued == 0);
 #else
 			ASSERT(zio->io_tqent.tqent_task.ta_pending == 0);
 #endif
