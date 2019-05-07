@@ -60,6 +60,10 @@
 #include <sys/sysctl.h>
 #endif
 
+#if defined( __NetBSD__) && defined(_KERNEL)
+#include <sys/device.h>
+#endif
+
 /*
  * SPA locking
  *
@@ -2071,7 +2075,11 @@ spa_init(int mode)
 	zfs_prop_init();
 	zpool_prop_init();
 	zpool_feature_init();
+#if defined(__NetBSD__) && defined(_KERNEL)
+	config_mountroot((device_t) 0, (void (*)(device_t)) spa_config_load);
+#else
 	spa_config_load();
+#endif
 	l2arc_start();
 #ifdef __FreeBSD__
 #ifdef _KERNEL
