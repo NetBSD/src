@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1203 2019/04/18 03:50:12 rin Exp $
+# $NetBSD: mi,v 1.1204 2019/05/07 05:02:41 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3054,6 +3054,9 @@
 ./usr/share/i18n/iconv				base-sysutil-share
 ./usr/share/i18n/iconv/iconv.dir		base-sysutil-share	nls
 ./usr/share/info				base-texinfo-share
+./usr/share/installboot				base-sysutil-share
+./usr/share/installboot/evbarm			base-sysutil-share
+./usr/share/installboot/evbarm/boards.plist	base-sysutil-share
 ./usr/share/keymaps				base-sys-share
 ./usr/share/keymaps/amiga			base-sys-share
 ./usr/share/keymaps/atari			base-sys-share
