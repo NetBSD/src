@@ -1,4 +1,3 @@
-/*	$NetBSD: ansi.h,v 1.4 1994/10/26 07:26:16 cgd Exp $	*/
+/*	$NetBSD: ansi.h,v 1.5 2019/05/07 03:49:26 kamil Exp $	*/
 
-/* Just use the common m68k definition */
 #include <m68k/ansi.h>

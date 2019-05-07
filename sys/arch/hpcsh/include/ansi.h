@@ -1,7 +1,3 @@
-/*	$NetBSD: ansi.h,v 1.2 2001/01/28 03:31:30 uch Exp $	*/
-#ifndef _HPCSH_ANSI_H_
-#define _HPCSH_ANSI_H_
+/*	$NetBSD: ansi.h,v 1.3 2019/05/07 03:49:26 kamil Exp $	*/
 
 #include <sh3/ansi.h>
-
-#endif /* _HPCSH_ANSI_H_ */
