@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2018/06/10 17:55:11 christos Exp $
+#	$NetBSD: Makefile,v 1.36 2019/05/07 05:02:42 thorpej Exp $
 #	from @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # Missing:  ms
@@ -7,7 +7,7 @@
 
 .if ${MKSHARE} != "no" || \
 	make(clean) || make(cleandir) || make(distclean) || make(obj)
-SUBDIR=	dict examples legal man me misc mk \
+SUBDIR=	dict examples installboot legal man me misc mk \
 	tabset terminfo tmac wscons xml
 
 .if ${MKGROFF} != "no"
