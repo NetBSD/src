@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.7 2016/08/04 18:07:43 scole Exp $ */
+/* $NetBSD: exec.c,v 1.8 2019/05/07 02:05:17 scole Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -192,12 +192,16 @@ elf64_exec(struct preloaded_file *fp)
 
 	__asm __volatile("mov cr.ifa=%0" :: "r"(IA64_RR_BASE(7)));
 	__asm __volatile("mov cr.itir=%0" :: "r"(28 << 2));
-	__asm __volatile("ptr.i %0,%1" :: "r"(IA64_RR_BASE(7)), "r"(28<<2));
+	__asm __volatile("srlz.d;;");
+	
 	__asm __volatile("ptr.d %0,%1" :: "r"(IA64_RR_BASE(7)), "r"(28<<2));
+	__asm __volatile("srlz.d;;");
+	__asm __volatile("itr.d dtr[%0]=%1;;" :: "r"(0), "r"(pte));
+	__asm __volatile("srlz.d;;");
+	
+	__asm __volatile("ptr.i %0,%1;;" :: "r"(IA64_RR_BASE(7)), "r"(28<<2));
 	__asm __volatile("srlz.i;;");
 	__asm __volatile("itr.i itr[%0]=%1;;" :: "r"(0), "r"(pte));
-	__asm __volatile("srlz.i;;");
-	__asm __volatile("itr.d dtr[%0]=%1;;" :: "r"(0), "r"(pte));
 	__asm __volatile("srlz.i;;");
 
 	enter_kernel(fp->marks[MARK_ENTRY], bi);
