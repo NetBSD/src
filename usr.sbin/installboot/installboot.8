@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.96 2019/05/07 05:02:42 thorpej Exp $
+.\"	$NetBSD: installboot.8,v 1.97 2019/05/07 08:14:59 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -299,15 +299,16 @@ Modify the default boot command line.
 Set the console device, <console name> must be one of:
 pc, com0, com1, com2, com3, com0kbd, com1kbd, com2kbd, com3kbd or auto.
 .
-.It Sy dtb=<path to dtb file>
+.It Sy dtb=/path/to/dtb/file
 .Sy [ evbarm ]
 Attempt to determine the board type from information in the device tree
-blob file at <path to dtb file>.
+blob file at
+.Pa /path/to/dtb/file .
 If both
 .Sy board
 and
 .Sy dtb
-optios are specified,
+options are specified,
 .Sy board
 takes precendence.
 .
@@ -479,7 +480,7 @@ packages with
 .Nm installboot
 installation overlays.
 If multiple overlays are found, overlays from paths closer to the front
-of the list take precensence.
+of the list take precedence.
 If not specified, the default path is
 .Pa /usr/pkg/share/u-boot .
 This environment variable is only used on platforms that support
@@ -950,7 +951,7 @@ already present:
 .Xr disklabel 8 ,
 .Xr dumpfs 8 ,
 .Xr fdisk 8 ,
-.Xr pxeboot 8
+.Xr x86/pxeboot 8
 .
 .Sh HISTORY
 This implementation of
