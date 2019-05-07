@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_component.c,v 1.2 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: zfs_component.c,v 1.3 2019/05/07 08:51:09 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zfs_component.c,v 1.2 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zfs_component.c,v 1.3 2019/05/07 08:51:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,7 +41,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_VFS)
 	extern const struct bdevsw zfs_bdevsw;
 	extern const struct cdevsw zfs_cdevsw;
 	devmajor_t bmaj, cmaj;
-	int error;
+	int error, exist;
 
 	/* go, mydevfs */
 	bmaj = cmaj = -1;
@@ -49,9 +49,12 @@ RUMP_COMPONENT(RUMP_COMPONENT_VFS)
 	if ((error = devsw_attach("zfs", &zfs_bdevsw, &bmaj,
 	    &zfs_cdevsw, &cmaj)) != 0 && error != EEXIST)
 		panic("cannot attach zfs: %d", error);
+	exist = (error == EEXIST);
 
 	if ((error = rump_vfs_makeonedevnode(S_IFCHR,
 	    "/dev/zfs", cmaj, 0)) != 0)
 		panic("cannot create zfs dev nodes: %d", error);
-	devsw_detach(&zfs_bdevsw, &zfs_cdevsw);
+
+	if (!exist)
+		devsw_detach(&zfs_bdevsw, &zfs_cdevsw);
 }
