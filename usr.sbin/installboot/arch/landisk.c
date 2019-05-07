@@ -1,4 +1,4 @@
-/*	$NetBSD: landisk.c,v 1.7 2017/07/17 18:43:45 christos Exp $	*/
+/*	$NetBSD: landisk.c,v 1.8 2019/05/07 04:35:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: landisk.c,v 1.7 2017/07/17 18:43:45 christos Exp $");
+__RCSID("$NetBSD: landisk.c,v 1.8 2019/05/07 04:35:31 thorpej Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -53,9 +53,13 @@ __RCSID("$NetBSD: landisk.c,v 1.7 2017/07/17 18:43:45 christos Exp $");
 
 static int landisk_setboot(ib_params *);
 
-struct ib_mach ib_mach_landisk =
-	{ "landisk", landisk_setboot, no_clearboot, no_editboot,
-	  IB_TIMEOUT };
+struct ib_mach ib_mach_landisk = {
+	.name		=	"landisk",
+	.setboot	=	landisk_setboot,
+	.clearboot	=	no_clearboot,
+	.editboot	=	no_editboot,
+	.valid_flags	=	IB_TIMEOUT,
+};
 
 static int
 landisk_setboot(ib_params *params)
