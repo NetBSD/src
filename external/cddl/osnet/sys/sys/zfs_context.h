@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.20 2018/11/15 05:43:57 riastradh Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.21 2019/05/07 08:49:59 hannken Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -634,7 +634,6 @@ typedef	uint32_t	idmap_rid_t;
 #include <sys/bitmap.h>
 #include <sys/cmn_err.h>
 #include <sys/taskq.h>
-#include <sys/taskq_impl.h>
 #include <sys/conf.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
@@ -746,12 +745,6 @@ tsd_set(uint_t key, void *value)
 }
 
 #define td_ru l_ru
-
-/* NetBSD doesn't need this routines in zfs code, yet */
-#define	taskq_create_proc(a, b, c, d, e, p, f) \
-	(taskq_create(a, b, c, d, e, f))
-#define	taskq_create_sysdc(a, b, d, e, p, dc, f) \
-	(taskq_create(a, b, maxclsyspri, d, e, f))
 
 #define	FIGNORECASE		0
 

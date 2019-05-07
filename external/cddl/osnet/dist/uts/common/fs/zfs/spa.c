@@ -924,7 +924,7 @@ spa_taskqs_init(spa_t *spa, zio_type_t t, zio_taskq_type_t q)
 			 *   then a difference between them is insignificant.
 			 */
 			if (t == ZIO_TYPE_WRITE && q == ZIO_TASKQ_ISSUE)
-#ifdef illumos
+#if defined(illumos) || defined(__NetBSD__)
 				pri--;
 #else
 				pri += 4;
