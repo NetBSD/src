@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.51 2019/05/05 09:04:48 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.52 2019/05/07 18:54:28 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -566,4 +566,10 @@ external/bsd/dhcpcd/dist/src/dhcp6.c		(apply patch)
 
 	DHCPv6: Fix a potential read overflow with D6_OPTION_PD_EXCLUDE.
 	[roy, ticket #1695]
+
+sys/netsmb/smb_conn.c				1.30
+
+	Prevent a NULL pointer dereference when the local endpoint is not
+	defined.
+	[christos, ticket #1696]
 
