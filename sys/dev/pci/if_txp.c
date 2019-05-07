@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.53 2019/04/26 06:33:34 msaitoh Exp $ */
+/* $NetBSD: if_txp.c,v 1.54 2019/05/07 15:23:32 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.53 2019/04/26 06:33:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.54 2019/05/07 15:23:32 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -257,7 +257,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 		aprint_normal("\n");
 		return;
 	}
-	aprint_error(": interrupting at %s\n", intrstr);
+	aprint_normal(": interrupting at %s\n", intrstr);
 
 	if (txp_chip_init(sc))
 		goto cleanupintr;
@@ -1237,8 +1237,10 @@ fail_0:
 void
 txp_dma_free(struct txp_softc *sc, struct txp_dma_alloc *dma)
 {
+	bus_size_t mapsize = dma->dma_map->dm_mapsize;
+
 	bus_dmamap_unload(sc->sc_dmat, dma->dma_map);
-	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, dma->dma_map->dm_mapsize);
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, mapsize);
 	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
 	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
 }
