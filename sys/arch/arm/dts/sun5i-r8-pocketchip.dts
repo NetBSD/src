@@ -1,4 +1,4 @@
-/* $NetBSD: sun5i-r8-pocketchip.dts,v 1.1 2017/08/27 02:20:49 jmcneill Exp $ */
+/* $NetBSD: sun5i-r8-pocketchip.dts,v 1.2 2019/05/07 04:21:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 
 / {
 	model = "NextThing PocketC.H.I.P.";
-	compatible = "nextthing,chip", "allwinner,sun5i-r8", "allwinner,sun5i-a13";
+	compatible = "nextthing,pocketchip", "nextthing,chip", "allwinner,sun5i-r8", "allwinner,sun5i-a13";
 };
 
 /* Keyboard */
