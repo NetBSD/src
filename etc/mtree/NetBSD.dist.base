@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.196 2019/04/18 03:50:12 rin Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.197 2019/05/07 05:02:42 thorpej Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -472,6 +472,8 @@
 ./usr/share/i18n/esdb/UTF
 ./usr/share/i18n/iconv
 ./usr/share/info
+./usr/share/installboot
+./usr/share/installboot/evbarm
 ./usr/share/keymaps
 ./usr/share/keymaps/amiga
 ./usr/share/keymaps/atari

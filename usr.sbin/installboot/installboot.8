@@ -1,6 +1,6 @@
-.\"	$NetBSD: installboot.8,v 1.95 2017/08/15 21:21:18 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.96 2019/05/07 05:02:42 thorpej Exp $
 .\"
-.\" Copyright (c) 2002-2017 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 14, 2017
+.Dd May 5, 2019
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -132,6 +132,28 @@ other platforms:
 .Sy next68k .
 .El
 .Pp
+Some platforms, typically embedded system platforms, are umbrella platforms
+that support many different individual board types, each with their own
+boot loader binary and installation procedure requirements.
+On these platforms, it may be necessary to provide specific board type
+information to
+.Nm .
+Information about known boards and their requirements is loaded from a
+database at run-time.
+Sometimes these platforms also require the use of 3rd-party boot loader
+software, such as
+.Sy U-boot .
+To support these platforms,
+.Nm
+scans known locations for these 3rd-party boot loader packages for
+database overlays that contain additional board-specific boot loader
+installation information in a file called
+.Sq installboot.plist .
+.Pp
+The following platforms have this requirement and utilize this database
+overlay feature:
+.Sy evbarm .
+.Pp
 The options and arguments recognized by
 .Nm
 are as follows:
@@ -202,6 +224,7 @@ The following machines are currently supported by
 .Sy alpha ,
 .Sy amd64 ,
 .Sy amiga ,
+.Sy evbarm ,
 .Sy ews4800mips ,
 .Sy hp300 ,
 .Sy hppa ,
@@ -250,6 +273,15 @@ to the end of
 .Ar filesystem ,
 which must be a regular file in this case.
 .
+.It Sy board=<board name>
+.Sy [ evbarm ]
+Specify the board type used to determine the correct boot loader image
+and installation procedure.
+If omitted,
+.Nm
+will attempt to guess the board type based on system information if run
+natively.
+.
 .It Sy bootconf
 .Sy [ amd64 ,
 .Sy i386 ]
@@ -266,6 +298,18 @@ Modify the default boot command line.
 .Sy i386 ]
 Set the console device, <console name> must be one of:
 pc, com0, com1, com2, com3, com0kbd, com1kbd, com2kbd, com3kbd or auto.
+.
+.It Sy dtb=<path to dtb file>
+.Sy [ evbarm ]
+Attempt to determine the board type from information in the device tree
+blob file at <path to dtb file>.
+If both
+.Sy board
+and
+.Sy dtb
+optios are specified,
+.Sy board
+takes precendence.
 .
 .It Sy ioaddr=<ioaddr>
 .Sy [ amd64 ,
@@ -284,6 +328,16 @@ would swap the lowercase letters
 .Sq y
 and
 .Sq z .
+.
+.It Sy media=<media type>
+.Sy [ evbarm ]
+Some boards require a different boot loader binary and/or installation
+procedure depending on what type of media will be used to boot the system.
+For such boards, this option is required, and omitting it will display a
+usage message that lists the valid media types for the board.
+For boards that do not require special media handling, this option is
+not allowed.
+Common values: sdmmc, emmc, usb.
 .
 .It Sy modules
 .Sy [ amd64 ,
@@ -418,6 +472,21 @@ uses the following environment variables:
 .
 .Bl -tag -width "MACHINE"
 .
+.It Ev INSTALLBOOT_UBOOT_PATHS
+A colon-separated list of search paths to scan for
+.Sy U-boot
+packages with
+.Nm installboot
+installation overlays.
+If multiple overlays are found, overlays from paths closer to the front
+of the list take precensence.
+If not specified, the default path is
+.Pa /usr/pkg/share/u-boot .
+This environment variable is only used on platforms that support
+using
+.Sy U-boot :
+.Sy evbarm .
+.
 .It Ev MACHINE
 Default value for
 .Ar machine ,
@@ -523,6 +592,30 @@ Searched for by the primary bootstrap if
 .Pa /boot. Ns Sy MACHINE
 is not found.
 .
+.El
+.
+.Ss Nx Ns /evbarm files
+The
+.Nx Ns /evbarm
+platform covers a wide variety of board types, many of which use
+.Sy U-boot .
+Running
+.Nm
+with no options will display a list of known boards.
+Using the verbose option will also display information about which
+.Sy U-boot
+package needs to be installed to support that board, and if the required
+.Sy U-boot
+package is installed, the path at which it is located.
+.Bl -tag -width /usr/pkg/share/u-boot
+.It Pa /usr/pkg/share/u-boot
+The default location scanned for
+.Sy U-boot
+packages with installation overlays.
+.It Pa /usr/share/installboot/evbarm/boards.plist
+Base board database, used to provide information about which
+.Sy U-boot
+package is required for a given board.
 .El
 .
 .Ss Nx Ns /evbmips files
@@ -648,6 +741,27 @@ Remove the primary bootstrap from disk
 Modify the command line to change the default from "netbsd -ASn2" to
 "netbsd -S":
 .Dl Ic installboot -m amiga -o command="netbsd -S" /dev/rsd0a /usr/mdec/bootxx_ffs
+.
+.Ss Nx Ns /evbarm
+Install the
+.Sy U-boot
+boot loader for a Pinebook into an image that will be written to
+an SDMMC card:
+.Dl Ic installboot -m evbarm -o board=pine64,pinebook arm64.img
+.Pp
+Install / update the
+.Sy U-boot
+boot loader for the current running system on the eMMC device
+.Sq ld0
+and display verbose information about the procedure:
+.Dl Ic installboot -v /dev/rld0c
+.Pp
+Install a specific
+.Sy U-boot
+package for a BeagleBone Black into an image that will be written
+to an SDMMC card:
+.Dl Ic installboot -m evbarm -o board=ti,am335x-bone-black armv7.img \
+	/path/to/experimental/u-boot/package
 .
 .Ss Nx Ns /ews4800mips
 Install the System V Boot File System primary bootstrap on to disk
