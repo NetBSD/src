@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.1.2.1 2019/05/04 07:20:09 isaki Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.1.2.2 2019/05/08 11:57:52 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -72,107 +72,6 @@ typedef struct audio_params {
 #define	AUFMT_VALIDATE(fmt)	(fmt)->mode &= 0x7fffffff
 #define	AUFMT_IS_VALID(fmt)	(((fmt)->mode & 0x80000000) == 0)
 
-/**
- * audio stream buffer
- */
-typedef struct audio_stream {
-	size_t bufsize;		/* allocated memory */
-	uint8_t *start;		/* start of buffer area */
-	uint8_t *end;		/* end of valid buffer area */
-	uint8_t *inp;		/* address to be written next */
-	const uint8_t *outp;	/* address to be read next */
-	int used;		/* valid data size in this stream */
-	audio_params_t param;	/* represents this stream */
-	bool loop;
-} audio_stream_t;
-
-static __inline int
-audio_stream_get_space(const audio_stream_t *s)
-{
-	if (s)
-		return (s->end - s->start) - s->used;
-	return 0;
-}
-
-static __inline int
-audio_stream_get_used(const audio_stream_t *s)
-{
-	return s ? s->used : 0;
-}
-
-static __inline uint8_t *
-audio_stream_add_inp(audio_stream_t *s, uint8_t *v, int diff)
-{
-	s->used += diff;
-	v += diff;
-	if (v >= s->end)
-		v -= s->end - s->start;
-	return v;
-}
-
-static __inline const uint8_t *
-audio_stream_add_outp(audio_stream_t *s, const uint8_t *v, int diff)
-{
-	s->used -= diff;
-	v += diff;
-	if (v >= s->end)
-		v -= s->end - s->start;
-	return v;
-}
-
-/**
- * an interface to fill a audio stream buffer
- */
-typedef struct stream_fetcher {
-	int (*fetch_to)(struct audio_softc *, struct stream_fetcher *,
-            audio_stream_t *, int);
-} stream_fetcher_t;
-
-/**
- * audio stream filter.
- * This must be an extension of stream_fetcher_t.
- */
-typedef struct stream_filter {
-/* public: */
-	stream_fetcher_t base;
-	void (*dtor)(struct stream_filter *);
-	void (*set_fetcher)(struct stream_filter *, stream_fetcher_t *);
-	void (*set_inputbuffer)(struct stream_filter *, audio_stream_t *);
-/* private: */
-	stream_fetcher_t *prev;
-	audio_stream_t *src;
-} stream_filter_t;
-
-/**
- * factory method for stream_filter_t
- */
-typedef stream_filter_t *stream_filter_factory_t(struct audio_softc *,
-	const audio_params_t *, const audio_params_t *);
-
-/**
- * filter pipeline request
- *
- * filters[0] is the first filter for playing or the last filter for recording.
- * The audio_params_t instance for the hardware is filters[0].param.
- */
-#ifndef AUDIO_MAX_FILTERS
-# define AUDIO_MAX_FILTERS	8
-#endif
-typedef struct stream_filter_list {
-	void (*append)(struct stream_filter_list *, stream_filter_factory_t,
-		       const audio_params_t *);
-	void (*prepend)(struct stream_filter_list *, stream_filter_factory_t,
-			const audio_params_t *);
-	void (*set)(struct stream_filter_list *, int, stream_filter_factory_t,
-		    const audio_params_t *);
-	int req_size;
-	struct stream_filter_req {
-		stream_filter_factory_t *factory;
-		audio_params_t param; /* from-param for recording,
-					 to-param for playing */
-	} filters[AUDIO_MAX_FILTERS];
-} stream_filter_list_t;
-
 #include <dev/audio/audiofil.h>
 
 struct audio_hw_if {
@@ -232,7 +131,6 @@ struct audio_hw_if {
 		    void (*)(void *), void *, const audio_params_t *);
 	int	(*dev_ioctl)(void *, u_long, void *, int, struct lwp *);
 	void	(*get_locks)(void *, kmutex_t **, kmutex_t **);
-
 };
 
 struct audio_attach_args {
