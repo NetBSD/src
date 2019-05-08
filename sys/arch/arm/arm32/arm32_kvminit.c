@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.54 2019/04/23 16:14:32 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.55 2019/05/08 13:18:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.54 2019/04/23 16:14:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.55 2019/05/08 13:18:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -755,8 +755,6 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	while (pv != NULL) {
 		if (mapallmem_p) {
 			if (concat_pvaddr(&cur_pv, pv)) {
-				cur_pv.pv_size += pv->pv_size;
-
 				pv = SLIST_NEXT(pv, pv_list);
 				continue;
 			}
