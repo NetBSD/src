@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.82 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: auvia.c,v 1.83 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.82 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.83 2019/05/08 13:40:18 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.82 2019/03/16 12:09:58 isaki Exp $");
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
-#include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
@@ -85,13 +83,13 @@ static int	auvia_detach(device_t, int);
 static void	auvia_childdet(device_t, device_t);
 static int	auvia_open(void *, int);
 static void	auvia_close(void *);
-static int	auvia_query_encoding(void *, struct audio_encoding *);
-static void	auvia_set_params_sub(struct auvia_softc *,
+static int	auvia_query_format(void *, audio_format_query_t *);
+static void	auvia_set_format_sub(struct auvia_softc *,
 				     struct auvia_softc_chan *,
 				     const audio_params_t *);
-static int	auvia_set_params(void *, int, int, audio_params_t *,
-				 audio_params_t *, stream_filter_list_t *,
-				 stream_filter_list_t *);
+static int	auvia_set_format(void *, int,
+				 const audio_params_t *, const audio_params_t *,
+				 audio_filter_reg_t *, audio_filter_reg_t *);
 static int	auvia_round_blocksize(void *, int, int, const audio_params_t *);
 static int	auvia_halt_output(void *);
 static int	auvia_halt_input(void *);
@@ -101,8 +99,6 @@ static int	auvia_get_port(void *, mixer_ctrl_t *);
 static int	auvia_query_devinfo(void *, mixer_devinfo_t *);
 static void *	auvia_malloc(void *, int, size_t);
 static void	auvia_free(void *, void *, size_t);
-static size_t	auvia_round_buffersize(void *, int, size_t);
-static paddr_t	auvia_mappage(void *, void *, off_t, int);
 static int	auvia_get_props(void *);
 static int	auvia_build_dma_ops(struct auvia_softc *,
 				    struct auvia_softc_chan *,
@@ -212,8 +208,8 @@ CFATTACH_DECL2_NEW(auvia, sizeof (struct auvia_softc),
 static const struct audio_hw_if auvia_hw_if = {
 	.open			= auvia_open,
 	.close			= auvia_close,
-	.query_encoding		= auvia_query_encoding,
-	.set_params		= auvia_set_params,
+	.query_format		= auvia_query_format,
+	.set_format		= auvia_set_format,
 	.round_blocksize	= auvia_round_blocksize,
 	.halt_output		= auvia_halt_output,
 	.halt_input		= auvia_halt_input,
@@ -223,41 +219,44 @@ static const struct audio_hw_if auvia_hw_if = {
 	.query_devinfo		= auvia_query_devinfo,
 	.allocm			= auvia_malloc,
 	.freem			= auvia_free,
-	.round_buffersize	= auvia_round_buffersize,
-	.mappage		= auvia_mappage,
 	.get_props		= auvia_get_props,
 	.trigger_output		= auvia_trigger_output,
 	.trigger_input		= auvia_trigger_input,
 	.get_locks		= auvia_get_locks,
 };
 
-#define AUVIA_FORMATS_4CH_16	2
-#define AUVIA_FORMATS_6CH_16	3
-#define AUVIA_FORMATS_4CH_8	6
-#define AUVIA_FORMATS_6CH_8	7
+#define AUVIA_FORMATS_4CH	2
+#define AUVIA_FORMATS_6CH	3
+#define AUVIA_FORMAT(aumode, ch, chmask) \
+	{ \
+		.mode		= (aumode), \
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE, \
+		.validbits	= 16, \
+		.precision	= 16, \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 0, \
+		.frequency	= { 4000, 48000 }, \
+	}
 static const struct audio_format auvia_formats[AUVIA_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
+	AUVIA_FORMAT(AUMODE_PLAY | AUMODE_RECORD, 1, AUFMT_MONAURAL),
+	AUVIA_FORMAT(AUMODE_PLAY | AUMODE_RECORD, 2, AUFMT_STEREO),
+	AUVIA_FORMAT(AUMODE_PLAY                , 4, AUFMT_SURROUND4),
+	AUVIA_FORMAT(AUMODE_PLAY                , 6, AUFMT_DOLBY_5_1),
 };
 
 #define	AUVIA_SPDIF_NFORMATS	1
 static const struct audio_format auvia_spdif_formats[AUVIA_SPDIF_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 1, {48000}},
+	{
+		.mode		= AUMODE_PLAY,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 1,
+		.frequency	= { 48000 },
+	},
 };
 
 
@@ -297,8 +296,6 @@ auvia_detach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 	mutex_enter(&sc->sc_lock);
-	auconv_delete_encodings(sc->sc_encodings);
-	auconv_delete_encodings(sc->sc_spdif_encodings);
 	if (sc->codec_if != NULL)
 		sc->codec_if->vtbl->detach(sc->codec_if);
 	mutex_exit(&sc->sc_lock);
@@ -468,12 +465,10 @@ auvia_attach(device_t parent, device_t self, void *aux)
 	memcpy(sc->sc_formats, auvia_formats, sizeof(auvia_formats));
 	mutex_enter(&sc->sc_lock);
 	if (sc->sc_play.sc_base != VIA8233_MP_BASE || !AC97_IS_4CH(sc->codec_if)) {
-		AUFMT_INVALIDATE(&sc->sc_formats[AUVIA_FORMATS_4CH_8]);
-		AUFMT_INVALIDATE(&sc->sc_formats[AUVIA_FORMATS_4CH_16]);
+		AUFMT_INVALIDATE(&sc->sc_formats[AUVIA_FORMATS_4CH]);
 	}
 	if (sc->sc_play.sc_base != VIA8233_MP_BASE || !AC97_IS_6CH(sc->codec_if)) {
-		AUFMT_INVALIDATE(&sc->sc_formats[AUVIA_FORMATS_6CH_8]);
-		AUFMT_INVALIDATE(&sc->sc_formats[AUVIA_FORMATS_6CH_16]);
+		AUFMT_INVALIDATE(&sc->sc_formats[AUVIA_FORMATS_6CH]);
 	}
 	if (AC97_IS_FIXED_RATE(sc->codec_if)) {
 		for (r = 0; r < AUVIA_NFORMATS; r++) {
@@ -482,31 +477,6 @@ auvia_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 	mutex_exit(&sc->sc_lock);
-
-	if (0 != auconv_create_encodings(sc->sc_formats, AUVIA_NFORMATS,
-					 &sc->sc_encodings)) {
-		mutex_enter(&sc->sc_lock);
-		sc->codec_if->vtbl->detach(sc->codec_if);
-		mutex_exit(&sc->sc_lock);
-		pci_intr_disestablish(pc, sc->sc_ih);
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
-		mutex_destroy(&sc->sc_lock);
-		mutex_destroy(&sc->sc_intr_lock);
-		aprint_error_dev(sc->sc_dev, "can't create encodings\n");
-		return;
-	}
-	if (0 != auconv_create_encodings(auvia_spdif_formats,
-	    AUVIA_SPDIF_NFORMATS, &sc->sc_spdif_encodings)) {
-		mutex_enter(&sc->sc_lock);
-		sc->codec_if->vtbl->detach(sc->codec_if);
-		mutex_exit(&sc->sc_lock);
-		pci_intr_disestablish(pc, sc->sc_ih);
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
-		mutex_destroy(&sc->sc_lock);
-		mutex_destroy(&sc->sc_intr_lock);
-		aprint_error_dev(sc->sc_dev, "can't create spdif encodings\n");
-		return;
-	}
 
 	if (!pmf_device_register(self, NULL, auvia_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -662,17 +632,22 @@ auvia_close(void *addr)
 }
 
 static int
-auvia_query_encoding(void *addr, struct audio_encoding *fp)
+auvia_query_format(void *addr, audio_format_query_t *afp)
 {
 	struct auvia_softc *sc;
 
 	sc = (struct auvia_softc *)addr;
-	return auconv_query_encoding(
-	    sc->sc_spdif ? sc->sc_spdif_encodings : sc->sc_encodings, fp);
+	if (sc->sc_spdif) {
+		return audio_query_format(auvia_spdif_formats,
+		    AUVIA_SPDIF_NFORMATS, afp);
+	} else {
+		return audio_query_format(sc->sc_formats,
+		    AUVIA_NFORMATS, afp);
+	}
 }
 
 static void
-auvia_set_params_sub(struct auvia_softc *sc, struct auvia_softc_chan *ch,
+auvia_set_format_sub(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 		     const audio_params_t *p)
 {
 	uint32_t v;
@@ -712,17 +687,16 @@ auvia_set_params_sub(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 }
 
 static int
-auvia_set_params(void *addr, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
-    stream_filter_list_t *rfil)
+auvia_set_format(void *addr, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct auvia_softc *sc;
 	struct auvia_softc_chan *ch;
-	struct audio_params *p;
+	const struct audio_params *p;
 	struct ac97_codec_if* codec;
-	stream_filter_list_t *fil;
 	int reg, mode;
-	int index;
+	int rate;
 
 	sc = addr;
 	codec = sc->codec_if;
@@ -732,46 +706,32 @@ auvia_set_params(void *addr, int setmode, int usemode,
 		if ((setmode & mode) == 0)
 			continue;
 
-		if (mode == AUMODE_PLAY ) {
+		if (mode == AUMODE_PLAY) {
 			p = play;
 			ch = &sc->sc_play;
 			reg = AC97_REG_PCM_FRONT_DAC_RATE;
-			fil = pfil;
 		} else {
 			p = rec;
 			ch = &sc->sc_record;
 			reg = AC97_REG_PCM_LR_ADC_RATE;
-			fil = rfil;
 		}
 
-		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
-		    (p->precision != 8 && p->precision != 16))
-			return (EINVAL);
-		if (sc->sc_spdif)
-			index = auconv_set_converter(auvia_spdif_formats,
-			    AUVIA_SPDIF_NFORMATS, mode, p, TRUE, fil);
-		else
-			index = auconv_set_converter(sc->sc_formats,
-			    AUVIA_NFORMATS, mode, p, TRUE, fil);
-		if (index < 0)
-			return EINVAL;
-		if (fil->req_size > 0)
-			p = &fil->filters[0].param;
 		if (!AC97_IS_FIXED_RATE(codec)) {
-			if (codec->vtbl->set_rate(codec, reg, &p->sample_rate))
+			rate = p->sample_rate;
+			if (codec->vtbl->set_rate(codec, reg, &rate))
 				return EINVAL;
 			reg = AC97_REG_PCM_SURR_DAC_RATE;
+			rate = p->sample_rate;
 			if (p->channels >= 4
-			    && codec->vtbl->set_rate(codec, reg,
-						     &p->sample_rate))
+			    && codec->vtbl->set_rate(codec, reg, &rate))
 				return EINVAL;
 			reg = AC97_REG_PCM_LFE_DAC_RATE;
+			rate = p->sample_rate;
 			if (p->channels == 6
-			    && codec->vtbl->set_rate(codec, reg,
-						     &p->sample_rate))
+			    && codec->vtbl->set_rate(codec, reg, &rate))
 				return EINVAL;
 		}
-		auvia_set_params_sub(sc, ch, p);
+		auvia_set_format_sub(sc, ch, p);
 	}
 
 	return 0;
@@ -1006,32 +966,6 @@ auvia_free(void *addr, void *ptr, size_t size)
 		}
 
 	panic("auvia_free: trying to free unallocated memory");
-}
-
-static size_t
-auvia_round_buffersize(void *addr, int direction, size_t size)
-{
-
-	return size;
-}
-
-static paddr_t
-auvia_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct auvia_softc *sc;
-	struct auvia_dma *p;
-
-	if (off < 0)
-		return -1;
-	sc = addr;
-	for (p = sc->sc_dmas; p && p->addr != mem; p = p->next)
-		continue;
-
-	if (!p)
-		return -1;
-
-	return bus_dmamem_mmap(sc->sc_dmat, &p->seg, 1, off, prot,
-	    BUS_DMA_WAITOK);
 }
 
 static int

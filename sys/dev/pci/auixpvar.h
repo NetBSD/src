@@ -1,4 +1,4 @@
-/* $NetBSD: auixpvar.h,v 1.8 2012/10/27 17:18:28 chs Exp $*/
+/* $NetBSD: auixpvar.h,v 1.9 2019/05/08 13:40:18 isaki Exp $*/
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -42,22 +42,11 @@
 
 /* audio format structure describing our hardware capabilities */
 /* XXX min and max sample rates are for AD1888 codec XXX */
-#define AUIXP_NFORMATS 6
+#define AUIXP_NFORMATS 3
 
 
 #define AUIXP_MINRATE  7000
 #define AUIXP_MAXRATE 48000
-
-
-/* current AC'97 driver only supports SPDIF outputting channel 3&4 i.e. STEREO */
-static const struct audio_format auixp_formats[AUIXP_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16, 2, AUFMT_STEREO, 0, {7000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 32, 32, 2, AUFMT_STEREO, 0, {7000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16, 4, AUFMT_SURROUND4, 0, {7000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 32, 32, 4, AUFMT_SURROUND4, 0, {7000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16, 6, AUFMT_DOLBY_5_1, 0, {7000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 32, 32, 6, AUFMT_DOLBY_5_1, 0, {7000, 48000}},
-};
 
 
 /* auixp structures; used to record alloced DMA space */
@@ -130,7 +119,6 @@ struct auixp_softc {
 
 	/* audio formats supported */
 	struct audio_format sc_formats[AUIXP_NFORMATS];
-	struct audio_encoding_set *sc_encodings;
 
 	/* codecs */
 	int			sc_num_codecs;

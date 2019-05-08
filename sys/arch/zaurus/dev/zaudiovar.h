@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudiovar.h,v 1.2 2016/07/07 06:55:40 msaitoh Exp $	*/
+/*	$NetBSD: zaudiovar.h,v 1.3 2019/05/08 13:40:17 isaki Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -83,11 +83,14 @@ struct zaudio_softc {
 
 int	zaudio_open(void *, int);
 void	zaudio_close(void *);
+int	zaudio_query_format(void *, audio_format_query_t *);
+int	zaudio_set_format(void *, int,
+	    const audio_params_t *, const audio_params_t *,
+	    audio_filter_reg_t *, audio_filter_reg_t *);
 int	zaudio_round_blocksize(void *, int, int, const audio_params_t *);
 void *	zaudio_allocm(void *, int, size_t);
 void	zaudio_freem(void  *, void *, size_t);
 size_t	zaudio_round_buffersize(void *, int, size_t);
-paddr_t	zaudio_mappage(void *, void *, off_t, int);
 int	zaudio_get_props(void *);
 void	zaudio_get_locks(void *, kmutex_t **, kmutex_t **);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.c,v 1.12 2017/06/01 02:45:06 chs Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.c,v 1.13 2019/05/08 13:40:14 isaki Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.c,v 1.7 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.12 2017/06/01 02:45:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.13 2019/05/08 13:40:14 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,11 +140,10 @@ pxa2x0_i2s_write(struct pxa2x0_i2s_softc *sc, uint32_t data)
 }
 
 void
-pxa2x0_i2s_setspeed(struct pxa2x0_i2s_softc *sc, u_int *argp)
+pxa2x0_i2s_setspeed(struct pxa2x0_i2s_softc *sc, u_int arg)
 {
 	/*
 	 * The available speeds are in the following table.
-	 * Keep the speeds in increasing order.
 	 */
 	static const struct speed_struct {
 		int	speed;
@@ -158,7 +157,6 @@ pxa2x0_i2s_setspeed(struct pxa2x0_i2s_softc *sc, u_int *argp)
 		{48000,	SADIV_3_058MHz},
 	};
 	const int n = (int)__arraycount(speed_table);
-	u_int arg = (u_int)*argp;
 	int selected = -1;
 	int i;
 
@@ -167,25 +165,11 @@ pxa2x0_i2s_setspeed(struct pxa2x0_i2s_softc *sc, u_int *argp)
 	if (arg > speed_table[n - 1].speed)
 		selected = n - 1;
 
-	for (i = 1; selected == -1 && i < n; i++) {
+	for (i = 0; selected == -1 && i < n; i++) {
 		if (speed_table[i].speed == arg)
 			selected = i;
-		else if (speed_table[i].speed > arg) {
-			int diff1, diff2;
-
-			diff1 = arg - speed_table[i - 1].speed;
-			diff2 = speed_table[i].speed - arg;
-			if (diff1 < diff2)
-				selected = i - 1;
-			else
-				selected = i;
-		}
 	}
-
-	if (selected == -1)
-		selected = 0;
-
-	*argp = speed_table[selected].speed;
+	KASSERT(selected != -1);
 
 	sc->sc_sadiv = speed_table[selected].div;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, I2S_SADIV, sc->sc_sadiv);
@@ -273,27 +257,6 @@ pxa2x0_i2s_freem(void *hdl, void *ptr, size_t size)
 		}
 	}
 	panic("pxa2x0_i2s_freem: trying to free unallocated memory");
-}
-
-paddr_t
-pxa2x0_i2s_mappage(void *hdl, void *mem, off_t off, int prot)
-{
-	struct pxa2x0_i2s_softc *sc = hdl;
-	struct pxa2x0_i2s_dma *p;
-
-	if (off < 0)
-		return -1;
-
-	for (p = sc->sc_dmas; p && p->addr != mem; p = p->next)
-		continue;
-	if (p == NULL)
-		return -1;
-
-	if (off > p->size)
-		return -1;
-
-	return bus_dmamem_mmap(sc->sc_dmat, p->segs, p->nsegs, off, prot,
-	    BUS_DMA_WAITOK);
 }
 
 int

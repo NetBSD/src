@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.57 2017/08/29 06:38:49 isaki Exp $	*/
+/*	$NetBSD: am7930.c,v 1.58 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.57 2017/08/29 06:38:49 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.58 2019/05/08 13:40:18 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.57 2017/08/29 06:38:49 isaki Exp $");
 #include <sys/cpu.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/mulaw.h>
+#include <dev/audio/audio_if.h>
+#include <dev/audio/mulaw.h>
 
 #include <dev/ic/am7930reg.h>
 #include <dev/ic/am7930var.h>
@@ -137,7 +137,16 @@ static const uint16_t ger_coeff[] = {
 #define NGER (sizeof(ger_coeff) / sizeof(ger_coeff[0]))
 };
 
-extern stream_filter_factory_t null_filter;
+static const struct audio_format am7930_format = {
+	.mode		= AUMODE_PLAY | AUMODE_RECORD,
+	.encoding	= AUDIO_ENCODING_ULAW,
+	.validbits	= 8,
+	.precision	= 8,
+	.channels	= 1,
+	.channel_mask	= AUFMT_MONAURAL,
+	.frequency_type	= 1,
+	.frequency	= { 8000 },
+};
 
 /*
  * Reset chip and set boot-time softc defaults.
@@ -218,96 +227,27 @@ am7930_close(void *addr)
 	DPRINTF(("sa_close: closed.\n"));
 }
 
-/*
- * XXX should be extended to handle a few of the more common formats.
- */
 int
-am7930_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
-    audio_params_t *r, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+am7930_query_format(void *addr, audio_format_query_t *afp)
 {
-	audio_params_t hw;
-	struct am7930_softc *sc;
 
-	sc = addr;
-	if ((usemode & AUMODE_PLAY) == AUMODE_PLAY) {
-		if (p->sample_rate < 7500 || p->sample_rate > 8500 ||
-			(p->encoding != AUDIO_ENCODING_ULAW &&
-			 p->encoding != AUDIO_ENCODING_SLINEAR) ||
-			p->precision != 8 ||
-			p->channels != 1)
-				return EINVAL;
-		p->sample_rate = 8000;
-		if (sc->sc_glue->output_conv != NULL) {
-			hw = *p;
-			hw.encoding = AUDIO_ENCODING_NONE;
-			hw.precision = 8;
-			pfil->append(pfil, null_filter, &hw);
-			hw.precision *= sc->sc_glue->factor;
-			pfil->append(pfil, sc->sc_glue->output_conv, &hw);
-		}
-		if (p->encoding == AUDIO_ENCODING_SLINEAR) {
-			hw = *p;
-			hw.precision = 8;
-			hw.encoding = AUDIO_ENCODING_ULAW;
-			pfil->append(pfil, linear8_to_mulaw, &hw);
-		}
-
-	}
-	if ((usemode & AUMODE_RECORD) == AUMODE_RECORD) {
-		if (r->sample_rate < 7500 || r->sample_rate > 8500 ||
-			(r->encoding != AUDIO_ENCODING_ULAW &&
-			 r->encoding != AUDIO_ENCODING_SLINEAR) ||
-			r->precision != 8 ||
-			r->channels != 1)
-				return EINVAL;
-		r->sample_rate = 8000;
-		if (sc->sc_glue->input_conv != NULL) {
-			hw = *r;
-			hw.encoding = AUDIO_ENCODING_NONE;
-			hw.precision = 8;
-			rfil->append(rfil, null_filter, &hw);
-			hw.precision *= sc->sc_glue->factor;
-			rfil->append(rfil, sc->sc_glue->input_conv, &hw);
-		}
-	    	if (r->encoding == AUDIO_ENCODING_SLINEAR) {
-			hw = *r;
-			hw.precision = 8;
-			hw.encoding = AUDIO_ENCODING_ULAW;
-			rfil->append(rfil, mulaw_to_linear8, &hw);
-		}
-	}
-
-	return 0;
+	return audio_query_format(&am7930_format, 1, afp);
 }
 
 int
-am7930_query_encoding(void *addr, struct audio_encoding *fp)
+am7930_set_format(void *addr, int setmode,
+	const audio_params_t *play, const audio_params_t *rec,
+	audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	default:
-		return EINVAL;
-		    /*NOTREACHED*/
-	}
-	return 0;
-}
 
-int
-am7930_round_blocksize(void *addr, int blk,
-    int mode, const audio_params_t *param)
-{
-	return blk;
+	if ((setmode & AUMODE_PLAY) != 0) {
+		pfil->codec = audio_internal_to_mulaw;
+	}
+	if ((setmode & AUMODE_RECORD) != 0) {
+		rfil->codec = audio_mulaw_to_internal;
+	}
+
+	return 0;
 }
 
 int

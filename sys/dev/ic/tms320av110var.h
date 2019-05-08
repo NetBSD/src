@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110var.h,v 1.12 2012/10/27 17:18:23 chs Exp $	*/
+/*	$NetBSD: tms320av110var.h,v 1.13 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,10 +48,11 @@ struct tav_softc {
 	device_t	sc_dev;
 	kmutex_t	sc_lock;
 	kmutex_t	sc_intr_lock;
-	kcondvar_t	sc_cv;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+
+	int		sc_active;
 
 	/* above audio callback function */
 	void		(*sc_intr)(void *);

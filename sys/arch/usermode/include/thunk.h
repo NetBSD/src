@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.66 2018/08/01 09:46:46 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.67 2019/05/08 13:40:16 isaki Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -185,7 +185,6 @@ typedef struct {
 
 int	thunk_audio_open(const char *);
 int	thunk_audio_close(int);
-int	thunk_audio_drain(int);
 int	thunk_audio_config(int, const thunk_audio_config_t *,
 			   const thunk_audio_config_t *);
 int	thunk_audio_pollout(int);

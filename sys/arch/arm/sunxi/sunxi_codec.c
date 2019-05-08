@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.c,v 1.5 2018/04/20 18:07:40 bouyer Exp $ */
+/* $NetBSD: sunxi_codec.c,v 1.6 2019/05/08 13:40:14 isaki Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.5 2018/04/20 18:07:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.6 2019/05/08 13:40:14 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,8 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.5 2018/04/20 18:07:40 bouyer Exp $
 #include <sys/gpio.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -163,48 +162,18 @@ sunxi_codec_transfer(struct sunxi_codec_chan *ch)
 }
 
 static int
-sunxi_codec_open(void *priv, int flags)
-{
-	return 0;
-}
-
-static void
-sunxi_codec_close(void *priv)
-{
-}
-
-static int
-sunxi_codec_query_encoding(void *priv, struct audio_encoding *ae)
+sunxi_codec_query_format(void *priv, audio_format_query_t *afp)
 {
 	struct sunxi_codec_softc * const sc = priv;
 
-	return auconv_query_encoding(sc->sc_encodings, ae);
+	return audio_query_format(&sc->sc_format, 1, afp);
 }
 
 static int
-sunxi_codec_set_params(void *priv, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+sunxi_codec_set_format(void *priv, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	struct sunxi_codec_softc * const sc = priv;
-	int index;
-
-	if (play && (setmode & AUMODE_PLAY)) {
-		index = auconv_set_converter(&sc->sc_format, 1,
-		    AUMODE_PLAY, play, true, pfil);
-		if (index < 0)
-			return EINVAL;
-		sc->sc_pchan.ch_params = pfil->req_size > 0 ?
-		    pfil->filters[0].param : *play;
-	}
-	if (rec && (setmode & AUMODE_RECORD)) {
-		index = auconv_set_converter(&sc->sc_format, 1,
-		    AUMODE_RECORD, rec, true, rfil);
-		if (index < 0)
-			return EINVAL;
-		sc->sc_rchan.ch_params = rfil->req_size > 0 ?
-		    rfil->filters[0].param : *rec;
-	}
 
 	return 0;
 }
@@ -270,24 +239,6 @@ sunxi_codec_freem(void *priv, void *addr, size_t size)
 		}
 }
 
-static paddr_t
-sunxi_codec_mappage(void *priv, void *addr, off_t off, int prot)
-{
-	struct sunxi_codec_softc * const sc = priv;
-	struct sunxi_codec_dma *dma;
-
-	if (off < 0)
-		return -1;
-
-	LIST_FOREACH(dma, &sc->sc_dmalist, dma_list)
-		if (dma->dma_addr == addr) {
-			return bus_dmamem_mmap(sc->sc_dmat, dma->dma_segs,
-			    dma->dma_nsegs, off, prot, BUS_DMA_WAITOK);
-		}
-
-	return -1;
-}
-
 static int
 sunxi_codec_getdev(void *priv, struct audio_device *adev)
 {
@@ -317,12 +268,6 @@ sunxi_codec_round_blocksize(void *priv, int bs, int mode,
 	if (bs == 0)
 		bs = 4;
 	return bs;
-}
-
-static size_t
-sunxi_codec_round_buffersize(void *priv, int dir, size_t bufsize)
-{
-	return bufsize;
 }
 
 static int
@@ -521,21 +466,16 @@ sunxi_codec_get_locks(void *priv, kmutex_t **intr, kmutex_t **thread)
 }
 
 static const struct audio_hw_if sunxi_codec_hw_if = {
-	.open = sunxi_codec_open,
-	.close = sunxi_codec_close,
-	.drain = NULL,
-	.query_encoding = sunxi_codec_query_encoding,
-	.set_params = sunxi_codec_set_params,
+	.query_format = sunxi_codec_query_format,
+	.set_format = sunxi_codec_set_format,
 	.allocm = sunxi_codec_allocm,
 	.freem = sunxi_codec_freem,
-	.mappage = sunxi_codec_mappage,
 	.getdev = sunxi_codec_getdev,
 	.set_port = sunxi_codec_set_port,
 	.get_port = sunxi_codec_get_port,
 	.query_devinfo = sunxi_codec_query_devinfo,
 	.get_props = sunxi_codec_get_props,
 	.round_blocksize = sunxi_codec_round_blocksize,
-	.round_buffersize = sunxi_codec_round_buffersize,
 	.trigger_output = sunxi_codec_trigger_output,
 	.trigger_input = sunxi_codec_trigger_input,
 	.halt_output = sunxi_codec_halt_output,
@@ -656,7 +596,6 @@ sunxi_codec_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	uint32_t val;
-	int error;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -709,14 +648,8 @@ sunxi_codec_attach(device_t parent, device_t self, void *aux)
 	sc->sc_format.precision = 16;
 	sc->sc_format.channels = 2;
 	sc->sc_format.channel_mask = AUFMT_STEREO;
-	sc->sc_format.frequency_type = 0;
-	sc->sc_format.frequency[0] = sc->sc_format.frequency[1] = 48000;
-
-	error = auconv_create_encodings(&sc->sc_format, 1, &sc->sc_encodings);
-	if (error) {
-		aprint_error_dev(self, "couldn't create encodings\n");
-		return;
-	}
+	sc->sc_format.frequency_type = 1;
+	sc->sc_format.frequency[0] = 48000;
 
 	audio_attach_mi(&sunxi_codec_hw_if, sc, self);
 }

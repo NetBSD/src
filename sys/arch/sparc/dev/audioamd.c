@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.28 2019/03/16 12:09:57 isaki Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.29 2019/05/08 13:40:16 isaki Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.28 2019/03/16 12:09:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.29 2019/05/08 13:40:16 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.28 2019/03/16 12:09:57 isaki Exp $");
 #include <machine/autoconf.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/am7930reg.h>
 #include <dev/ic/am7930var.h>
@@ -137,9 +137,6 @@ struct am7930_glue audioamd_glue = {
 	audioamd_codec_iwrite16,
 	audioamd_onopen,
 	audioamd_onclose,
-	0,
-	0,
-	0,
 };
 
 /*
@@ -153,9 +150,8 @@ void	audioamd_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread);
 const struct audio_hw_if sa_hw_if = {
 	.open			= am7930_open,
 	.close			= am7930_close,
-	.query_encoding		= am7930_query_encoding,
-	.set_params		= am7930_set_params,
-	.round_blocksize	= am7930_round_blocksize,
+	.query_format		= am7930_query_format,
+	.set_format		= am7930_set_format,
 	.commit_settings	= am7930_commit_settings,
 	.start_output		= audioamd_start_output,	/* md */
 	.start_input		= audioamd_start_input,		/* md */

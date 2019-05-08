@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.77 2019/04/13 08:23:00 isaki Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.78 2019/05/08 13:40:16 isaki Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -317,7 +317,6 @@ pseudo-device	npf			# NPF packet filter
 ## /dev/audio support
 
 #options 	DBRI_DEBUG	# noisy debug output from the dbri driver
-options 	DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
 dbri0		at sbus0 slot ? offset ?		# SUNW,DBRI[s3|e]
 audio*		at audiobus?
 

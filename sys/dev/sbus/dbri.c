@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.39 2018/09/03 16:29:33 riastradh Exp $	*/
+/*	$NetBSD: dbri.c,v 1.40 2019/05/08 13:40:19 isaki Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.39 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.40 2019/05/08 13:40:19 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -54,8 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.39 2018/09/03 16:29:33 riastradh Exp $");
 #include <machine/autoconf.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/cs4215reg.h>
 #include <dev/ic/cs4215var.h>
@@ -132,9 +131,10 @@ static void	pipe_ts_link(struct dbri_softc *, int, enum io, int, int, int);
 static int	pipe_active(struct dbri_softc *, int);
 
 /* audio(9) stuff */
-static int	dbri_query_encoding(void *, struct audio_encoding *);
-static int	dbri_set_params(void *, int, int, struct audio_params *,
-    struct audio_params *,stream_filter_list_t *, stream_filter_list_t *);
+static int	dbri_query_format(void *, audio_format_query_t *);
+static int	dbri_set_format(void *, int,
+    const audio_params_t *, const audio_params_t *,
+    audio_filter_reg_t *, audio_filter_reg_t *);
 static int	dbri_round_blocksize(void *, int, int, const audio_params_t *);
 static int	dbri_halt_output(void *);
 static int	dbri_halt_input(void *);
@@ -142,7 +142,6 @@ static int	dbri_getdev(void *, struct audio_device *);
 static int	dbri_set_port(void *, mixer_ctrl_t *);
 static int	dbri_get_port(void *, mixer_ctrl_t *);
 static int	dbri_query_devinfo(void *, mixer_devinfo_t *);
-static size_t	dbri_round_buffersize(void *, int, size_t);
 static int	dbri_get_props(void *);
 static int	dbri_open(void *, int);
 static void	dbri_close(void *);
@@ -160,7 +159,6 @@ static void	dbri_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static void	*dbri_malloc(void *, int, size_t);
 static void	dbri_free(void *, void *, size_t);
-static paddr_t	dbri_mappage(void *, void *, off_t, int);
 static void	dbri_set_power(struct dbri_softc *, int);
 static void	dbri_bring_up(struct dbri_softc *);
 static bool	dbri_suspend(device_t, const pmf_qual_t *);
@@ -179,8 +177,8 @@ struct audio_device dbri_device = {
 struct audio_hw_if dbri_hw_if = {
 	.open			= dbri_open,
 	.close			= dbri_close,
-	.query_encoding		= dbri_query_encoding,
-	.set_params		= dbri_set_params,
+	.query_format		= dbri_query_format,
+	.set_format		= dbri_set_format,
 	.round_blocksize	= dbri_round_blocksize,
 	.halt_output		= dbri_halt_output,
 	.halt_input		= dbri_halt_input,
@@ -190,8 +188,6 @@ struct audio_hw_if dbri_hw_if = {
 	.query_devinfo		= dbri_query_devinfo,
 	.allocm			= dbri_malloc,
 	.freem			= dbri_free,
-	.round_buffersize	= dbri_round_buffersize,
-	.mappage		= dbri_mappage,
 	.get_props		= dbri_get_props,
 	.trigger_output		= dbri_trigger_output,
 	.trigger_input		= dbri_trigger_input,
@@ -202,30 +198,21 @@ struct audio_hw_if dbri_hw_if = {
 CFATTACH_DECL_NEW(dbri, sizeof(struct dbri_softc),
     dbri_match_sbus, dbri_attach_sbus, NULL, NULL);
 
-#define DBRI_NFORMATS		4
-static const struct audio_format dbri_formats[DBRI_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	 2, AUFMT_STEREO, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},
-/*	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULAW, 8, 8,
-	 2, AUFMT_STEREO, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ALAW, 8, 8,
-	 2, AUFMT_STEREO, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR, 8, 8,
-	 2, AUFMT_STEREO, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},*/
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULAW, 8, 8,
-	 1, AUFMT_MONAURAL, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ALAW, 8, 8,
-	 1, AUFMT_MONAURAL, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR, 8, 8,
-	 1, AUFMT_MONAURAL, 8, {8000, 9600, 11025, 16000, 22050, 32000, 44100, 
-	 48000}},
+/* The HW actually supports more encodings/frequencies, but it's enough. */
+static const struct audio_format dbri_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_BE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 8,
+		.frequency	=
+		    { 8000, 9600, 11025, 16000, 22050, 32000, 44100, 48000 },
+	},
 };
+#define DBRI_NFORMATS	__arraycount(dbri_formats)
 
 enum {
 	DBRI_OUTPUT_CLASS,
@@ -306,6 +293,7 @@ dbri_attach_sbus(device_t parent, device_t self, void *aux)
 	for (i = 0; i < DBRI_NUM_DESCRIPTORS; i++) {
 		sc->sc_desc[i].softint = softint_establish(SOFTINT_SERIAL,
 		    dbri_softint, &sc->sc_desc[i]);
+		sc->sc_desc[i].sc = sc;
 	}
 
 	if (sa->sa_npromvaddrs)
@@ -534,9 +522,12 @@ static void
 dbri_softint(void *cookie)
 {
 	struct dbri_desc *dd = cookie;
+	struct dbri_softc *sc = dd->sc;
 
+	mutex_spin_enter(&sc->sc_intr_lock);
 	if (dd->callback != NULL)
 		dd->callback(dd->callback_args);
+	mutex_spin_exit(&sc->sc_intr_lock);
 }
 
 static int
@@ -1600,135 +1591,28 @@ pipe_active(struct dbri_softc *sc, int pipe)
  */
 
 static int
-dbri_query_encoding(void *hdl, struct audio_encoding *ae)
+dbri_query_format(void *hdl, audio_format_query_t *afp)
 {
 
-	switch (ae->index) {
-	case 0:
-		strcpy(ae->name, AudioEulinear);
-		ae->encoding = AUDIO_ENCODING_ULINEAR;
-		ae->precision = 8;
-		ae->flags = 0;
-		break;
-	case 1:
-		strcpy(ae->name, AudioEmulaw);
-		ae->encoding = AUDIO_ENCODING_ULAW;
-		ae->precision = 8;
-		ae->flags = 0;
-		break;
-	case 2:
-		strcpy(ae->name, AudioEalaw);
-		ae->encoding = AUDIO_ENCODING_ALAW;
-		ae->precision = 8;
-		ae->flags = 0;
-		break;
-	case 3:
-		strcpy(ae->name, AudioEslinear);
-		ae->encoding = AUDIO_ENCODING_SLINEAR;
-		ae->precision = 8;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 4:
-		strcpy(ae->name, AudioEslinear_le);
-		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		ae->precision = 16;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 5:
-		strcpy(ae->name, AudioEulinear_le);
-		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		ae->precision = 16;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strcpy(ae->name, AudioEslinear_be);
-		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		ae->precision = 16;
-		ae->flags = 0;
-		break;
-	case 7:
-		strcpy(ae->name, AudioEulinear_be);
-		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		ae->precision = 16;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 8:
-		strcpy(ae->name, AudioEslinear);
-		ae->encoding = AUDIO_ENCODING_SLINEAR;
-		ae->precision = 16;
-		ae->flags = 0;
-		break;
-	default:
-		return (EINVAL);
-	}
-
-	return (0);
+	return audio_query_format(dbri_formats, DBRI_NFORMATS, afp);
 }
 
 static int
-dbri_set_params(void *hdl, int setmode, int usemode,
-		struct audio_params *play, struct audio_params *rec,
-		stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+dbri_set_format(void *hdl, int setmode,
+		const audio_params_t *play, const audio_params_t *rec,
+		audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct dbri_softc *sc = hdl;
 	int rate;
-	audio_params_t *p = NULL;
-	stream_filter_list_t *fil;
-	int mode;
 
-	/*
-	 * This device only has one clock, so make the sample rates match.
-	 */
-	if (play->sample_rate != rec->sample_rate &&
-	    usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
-		if (setmode == AUMODE_PLAY) {
-			rec->sample_rate = play->sample_rate;
-			setmode |= AUMODE_RECORD;
-		} else if (setmode == AUMODE_RECORD) {
-			play->sample_rate = rec->sample_rate;
-			setmode |= AUMODE_PLAY;
-		} else
-			return EINVAL;
-	}
-
-	for (mode = AUMODE_RECORD; mode != -1;
-	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
-			continue;
-
-		p = mode == AUMODE_PLAY ? play : rec;
-		if (p->sample_rate < 4000 || p->sample_rate > 50000) {
-			DPRINTF("dbri_set_params: invalid rate %d\n", 
-			    p->sample_rate);
-			return EINVAL;
-		}
-
-		fil = mode == AUMODE_PLAY ? pfil : rfil;
-	DPRINTF("requested enc: %d rate: %d prec: %d chan: %d\n", p->encoding,
-	    p->sample_rate, p->precision, p->channels); 
-		if (auconv_set_converter(dbri_formats, DBRI_NFORMATS,
-					 mode, p, true, fil) < 0) {
-			aprint_debug("dbri_set_params: auconv_set_converter failed\n");
-			return EINVAL;
-		}
-		if (fil->req_size > 0)
-			p = &fil->filters[0].param;
-	}
-
-	if (p == NULL) {
-		DPRINTF("dbri_set_params: no parameters to set\n");
-		return 0;
-	}
-
-	DPRINTF("native enc: %d rate: %d prec: %d chan: %d\n", p->encoding,
-	    p->sample_rate, p->precision, p->channels); 
+	/* *play and *rec are the identical because !AUDIO_PROP_INDEPENDENT. */
 
 	for (rate = 0; CS4215_FREQ[rate].freq; rate++)
-		if (CS4215_FREQ[rate].freq == p->sample_rate)
+		if (CS4215_FREQ[rate].freq == play->sample_rate)
 			break;
 
 	if (CS4215_FREQ[rate].freq == 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/* set frequency */
 	sc->sc_mm.c.bcontrol[1] &= ~0x38;
@@ -1736,40 +1620,15 @@ dbri_set_params(void *hdl, int setmode, int usemode,
 	sc->sc_mm.c.bcontrol[2] &= ~0x70;
 	sc->sc_mm.c.bcontrol[2] |= CS4215_FREQ[rate].xtal;
 
-	switch (p->encoding) {
-	case AUDIO_ENCODING_ULAW:
-		sc->sc_mm.c.bcontrol[1] &= ~3;
-		sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_ULAW;
-		break;
-	case AUDIO_ENCODING_ALAW:
-		sc->sc_mm.c.bcontrol[1] &= ~3;
-		sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_ALAW;
-		break;
-	case AUDIO_ENCODING_ULINEAR:
-		sc->sc_mm.c.bcontrol[1] &= ~3;
-		if (p->precision == 8) {
-			sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_LINEAR8;
-		} else {
-			sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_LINEAR16;
-		}
-		break;
-	case AUDIO_ENCODING_SLINEAR_BE:
-	case AUDIO_ENCODING_SLINEAR:
-		sc->sc_mm.c.bcontrol[1] &= ~3;
-		sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_LINEAR16;
-		break;
-	}
+	/* set encoding */
+	sc->sc_mm.c.bcontrol[1] &= ~3;
+	sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_LINEAR16;
 
-	switch (p->channels) {
-	case 1:
-		sc->sc_mm.c.bcontrol[1] &= ~CS4215_DFR_STEREO;
-		break;
-	case 2:
-		sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_STEREO;
-		break;
-	}
+	/* set channel */
+	sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_STEREO;
+
 	sc->sc_whack_codec = 1;
-	return (0);
+	return 0;
 }
 
 static int
@@ -1777,12 +1636,9 @@ dbri_round_blocksize(void *hdl, int bs, int mode,
 			const audio_params_t *param)
 {
 
-	/*
-	 * DBRI DMA segment size can be up to 0x1fff, sixes that are not powers
-	 * of two seem to confuse the upper audio layer so we're going with
-	 * 0x1000 here
-	 */
-	return 0x1000;
+	if (bs > 0x1fff)
+		return 0x1fff;
+	return bs;
 }
 
 static int
@@ -1857,7 +1713,9 @@ dbri_set_port(void *hdl, mixer_ctrl_t *mc)
 	sc->sc_latt = latt;
 	sc->sc_ratt = ratt;
 
+	mutex_spin_enter(&sc->sc_intr_lock);
 	mmcodec_setgain(sc, 0);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return (0);
 }
@@ -1992,16 +1850,6 @@ dbri_query_devinfo(void *hdl, mixer_devinfo_t *di)
 	}
 
 	return (ENXIO);
-}
-
-static size_t
-dbri_round_buffersize(void *hdl, int dir, size_t bufsize)
-{
-#ifdef DBRI_BIG_BUFFER
-	return 0x20000;	/* use 128KB buffer */
-#else
-	return bufsize;
-#endif
 }
 
 static int
@@ -2195,28 +2043,6 @@ dbri_free(void *v, void *p, size_t size)
 		return;
 	bus_dmamap_unload(sc->sc_dmat, dd->dmamap);
 	bus_dmamap_destroy(sc->sc_dmat, dd->dmamap);
-}
-
-static paddr_t
-dbri_mappage(void *v, void *mem, off_t off, int prot)
-{
-	struct dbri_softc *sc = v;
-	int current;
-
-	if (off < 0)
-		return -1;
-
-	current = 0;
-	while ((current < sc->sc_desc_used) &&
-	    (sc->sc_desc[current].buf != mem))
-	    	current++;
-
-	if (current < sc->sc_desc_used) {
-		return bus_dmamem_mmap(sc->sc_dmat,
-		    &sc->sc_desc[current].dmaseg, 1, off, prot, BUS_DMA_WAITOK);
-	}
-
-	return -1;
 }
 
 static int

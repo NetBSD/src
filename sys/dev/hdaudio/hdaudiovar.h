@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.6 2018/04/19 21:50:08 christos Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.7 2019/05/08 13:40:18 isaki Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -32,7 +32,7 @@
 #ifndef _HDAUDIOVAR_H
 #define _HDAUDIOVAR_H
 
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #ifdef _KERNEL_OPT
 #include "opt_hdaudio.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.25 2011/06/02 14:12:25 tsutsui Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.26 2019/05/08 13:40:18 isaki Exp $ */
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.25 2011/06/02 14:12:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.26 2019/05/08 13:40:18 isaki Exp $");
 
 #include "mpu_ym.h"
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.25 2011/06/02 14:12:25 tsutsui Exp $
 #include <sys/errno.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

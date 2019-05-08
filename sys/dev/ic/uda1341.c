@@ -34,7 +34,7 @@
 #include <sys/audioio.h>
 #include <sys/fcntl.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/uda1341var.h>
 #include <dev/ic/uda1341reg.h>
@@ -46,22 +46,6 @@
 #else
 #define DPRINTF(s) do {} while (/*CONSTCOND*/0)
 #endif
-
-const struct audio_format uda1341_formats[UDA1341_NFORMATS] =
-{
-	{NULL, AUMODE_PLAY|AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8, 2,
-	 AUFMT_STEREO, 0, {8000, 48000}
-	},
-	{NULL, AUMODE_PLAY|AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16, 2,
-	 AUFMT_STEREO, 0, {8000, 48000}
-	},
-	{NULL, AUMODE_PLAY|AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8, 2,
-	 AUFMT_STEREO, 0, {8000, 48000}
-	},
-	{NULL, AUMODE_PLAY|AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 16, 16, 2,
-	 AUFMT_STEREO, 0, {8000, 48000}
-	},
-};
 
 static void uda1341_update_sound_settings(struct uda1341_softc *sc);
 
@@ -87,48 +71,6 @@ uda1341_attach(struct uda1341_softc *sc)
 	sc->sc_agc = 0;
 	sc->sc_agc_lvl = 0;
 	sc->sc_ch2_gain = 0;
-
-	return 0;
-}
-
-int
-uda1341_query_encodings(void *handle, audio_encoding_t *ae)
-{
-	switch(ae->index) {
-	case 0:
-		strlcpy(ae->name, AudioEmulaw, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_ULAW;
-		ae->precision = 8;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 1:
-		strlcpy(ae->name, AudioEslinear_le, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		ae->precision = 8;
-		ae->flags = 0;
-		break;
-	case 2:
-		strlcpy(ae->name, AudioEslinear_le, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		ae->precision = 16;
-		ae->flags = 0;
-		break;
-	case 3:
-		strlcpy(ae->name, AudioEulinear_le, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		ae->precision = 8;
-		ae->flags = 0;
-		break;
-	case 4:
-		strlcpy(ae->name, AudioEulinear_le, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		ae->precision = 16;
-		ae->flags = 0;
-		break;
-
-	default:
-		return EINVAL;
-	}
 
 	return 0;
 }
@@ -185,13 +127,13 @@ uda1341_close(void *handle)
 }
 
 int
-uda1341_set_params(void *handle, int setmode, int usemode,
-		   audio_params_t *play, audio_params_t *rec,
-		   stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+uda1341_set_format(void *handle, int setmode,
+		   const audio_params_t *play, const audio_params_t *rec,
+		   audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct uda1341_softc *sc = handle;
 	if (sc->sc_system_clock == UDA1341_CLOCK_NA)
-		panic("uda1341_set_params was called without sc_system_clock set!\n");
+		panic("%s was called without sc_system_clock set!\n", __func__);
 
 	/* Select status register */
 	sc->sc_l3_write(sc, 0, UDA1341_L3_ADDR_DEVICE |

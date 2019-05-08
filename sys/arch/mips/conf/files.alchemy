@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.13 2006/10/02 08:00:07 gdamore Exp $
+#	$NetBSD: files.alchemy,v 1.14 2019/05/08 13:40:15 isaki Exp $
 
 defflag opt_alchemy.h		ALCHEMY_AU1000
 				ALCHEMY_AU1100
@@ -42,7 +42,7 @@ attach	ohci at aubus with ohci_aubus
 file	arch/mips/alchemy/dev/ohci_aubus.c	ohci
 
 # On-chip AC'97 audio controller
-device	auaudio: audiobus, auconv, mulaw, ac97, aurateconv
+device	auaudio: audiobus, ac97
 attach	auaudio at aubus
 file	arch/mips/alchemy/dev/auaudio.c		auaudio
 

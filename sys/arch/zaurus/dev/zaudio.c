@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.21 2014/09/23 14:49:46 nonaka Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.22 2019/05/08 13:40:17 isaki Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.21 2014/09/23 14:49:46 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.22 2019/05/08 13:40:17 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.21 2014/09/23 14:49:46 nonaka Exp $");
 #include <sys/device.h>
 #include <sys/mutex.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -81,6 +81,20 @@ static void	zaudio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(zaudio, sizeof(struct zaudio_softc), 
     zaudio_match, zaudio_attach, NULL, NULL);
+
+static const struct audio_format zaudio_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 6,
+		.frequency	= { 8000, 11025, 16000, 22050, 44100, 48000 },
+	}
+};
+#define ZAUDIO_NFORMATS	__arraycount(zaudio_formats)
 
 static int
 zaudio_match(device_t parent, cfdata_t cf, void *aux)
@@ -158,6 +172,30 @@ zaudio_close(void *hdl)
 }
 
 int
+zaudio_query_format(void *hdl, audio_format_query_t *afp)
+{
+
+	return audio_query_format(zaudio_formats, ZAUDIO_NFORMATS, afp);
+}
+
+int
+zaudio_set_format(void *hdl, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
+{
+	struct zaudio_softc *sc = hdl;
+
+	/* *play and *rec are the identical because !AUDIO_PROP_INDEPENDENT. */
+
+	if (setmode == AUMODE_RECORD)
+		pxa2x0_i2s_setspeed(&sc->sc_i2s, rec->sample_rate);
+	else
+		pxa2x0_i2s_setspeed(&sc->sc_i2s, play->sample_rate);
+
+	return 0;
+}
+
+int
 zaudio_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
 {
 	struct zaudio_softc *sc = hdl;
@@ -189,19 +227,11 @@ zaudio_round_buffersize(void *hdl, int direction, size_t bufsize)
 	return pxa2x0_i2s_round_buffersize(&sc->sc_i2s, direction, bufsize);
 }
 
-paddr_t
-zaudio_mappage(void *hdl, void *mem, off_t off, int prot)
-{
-	struct zaudio_softc *sc = hdl;
-	
-	return pxa2x0_i2s_mappage(&sc->sc_i2s, mem, off, prot);
-}
-
 int
 zaudio_get_props(void *hdl)
 {
 
-	return AUDIO_PROP_MMAP|AUDIO_PROP_INDEPENDENT;
+	return AUDIO_PROP_MMAP;
 }
 
 void

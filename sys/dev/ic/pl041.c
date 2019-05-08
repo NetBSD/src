@@ -1,4 +1,4 @@
-/* $NetBSD: pl041.c,v 1.5 2018/09/03 16:29:31 riastradh Exp $ */
+/* $NetBSD: pl041.c,v 1.6 2019/05/08 13:40:18 isaki Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.5 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.6 2019/05/08 13:40:18 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,8 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.5 2018/09/03 16:29:31 riastradh Exp $");
 #include <sys/bus.h>
 #include <sys/audioio.h>
 
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ac97var.h>
 #include <dev/ic/ac97reg.h>
@@ -93,8 +92,8 @@ static const struct audio_format aaci_format = {
 	.precision = 16,
 	.channels = 2,
 	.channel_mask = AUFMT_STEREO,
-	.frequency_type = 0,
-	.frequency = { 48000, 48000 }
+	.frequency_type = 1,
+	.frequency = { 48000 }
 };
 
 static void
@@ -122,27 +121,19 @@ aaci_write_data(struct aaci_softc *sc)
 }
 
 static int
-aaci_query_encoding(void *priv, struct audio_encoding *enc)
+aaci_query_format(void *priv, audio_format_query_t *afp)
 {
-	struct aaci_softc * const sc = priv;
 
-	return auconv_query_encoding(sc->sc_encodings, enc);
+	return audio_query_format(&aaci_format, 1, afp);
 }
 
 static int
-aaci_set_params(void *priv, int setmode, int usermode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+aaci_set_format(void *priv, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	int index;
 
-	if (play && (setmode & AUMODE_PLAY) != 0) {
-		index = auconv_set_converter(&aaci_format, 1, AUMODE_PLAY,
-		    play, true, pfil);
-		if (index < 0)
-			return EINVAL;
-	}
-
+	/* We have only one format so nothing to do here. */
 	return 0;
 }
 
@@ -250,8 +241,8 @@ aaci_get_locks(void *priv, kmutex_t **intr, kmutex_t **thread)
 }
 
 static const struct audio_hw_if aaci_hw_if = {
-	.query_encoding = aaci_query_encoding,
-	.set_params = aaci_set_params,
+	.query_format = aaci_query_format,
+	.set_format = aaci_set_format,
 	.getdev = aaci_getdev,
 	.set_port = aaci_set_port,
 	.get_port = aaci_get_port,
@@ -318,13 +309,6 @@ aaci_attach(struct aaci_softc *sc)
 	error = ac97_attach(&sc->sc_ac97_host, sc->sc_dev, &sc->sc_lock);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "couldn't attach codec (%d)\n",
-		    error);
-		return;
-	}
-
-	error = auconv_create_encodings(&aaci_format, 1, &sc->sc_encodings);
-	if (error) {
-		aprint_error_dev(sc->sc_dev, "couldn't create encodings (%d)\n",
 		    error);
 		return;
 	}

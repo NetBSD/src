@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.18 2019/03/16 12:09:56 isaki Exp $ */
+/* $NetBSD: toccata.c,v 1.19 2019/05/08 13:40:14 isaki Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.18 2019/03/16 12:09:56 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.19 2019/05/08 13:40:14 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.18 2019/03/16 12:09:56 isaki Exp $");
 #include <sys/bus.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/ad1848var.h>
@@ -179,14 +179,8 @@ void toccata_get_locks(void *, kmutex_t **, kmutex_t **);
 const struct audio_hw_if audiocs_hw_if = {
 	.open			= toccata_open,
 	.close			= toccata_close,
-	/*
-	 * XXX toccata_drain could be written:
-	 * sleep for play interrupt. This loses less than 512 bytes of
-	 * sample data, otherwise up to 1024.
-	 */
-	.drain			= NULL,
-	.query_encoding		= ad1848_query_encoding,
-	.set_params		= ad1848_set_params,
+	.query_format		= ad1848_query_format,
+	.set_format		= ad1848_set_format,
 	.round_blocksize	= toccata_round_blocksize,
 	.commit_settings	= ad1848_commit_settings,
 	.init_output		= NULL,	/* XXX need this to prefill? */

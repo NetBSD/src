@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.61 2011/11/23 23:07:33 jmcneill Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.62 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -116,7 +116,6 @@ struct sbdsp_softc {
 #define SB_CLOSED 0
 #define SB_OPEN_AUDIO 1
 #define SB_OPEN_MIDI 2
-	u_char	sc_fullduplex;		/* can do full duplex */
 
 	u_char	gain[SB_NDEVS][2];	/* kept in input levels */
 #define SB_LEFT 0
@@ -179,6 +178,9 @@ struct sbdsp_softc {
 #define SBVER_MAJOR(v)	(((v)>>8) & 0xff)
 #define SBVER_MINOR(v)	((v)&0xff)
 
+	struct audio_format sc_formats[4];
+	int sc_nformats;
+
 #if NMPU > 0
 	int	sc_hasmpu;
 #define SBMPU_EXTERNAL	1
@@ -211,9 +213,10 @@ int	sbdsp_set_out_gain_real(void *, u_int, u_char);
 int	sbdsp_get_out_gain(void *);
 int	sbdsp_set_monitor_gain(void *, u_int);
 int	sbdsp_get_monitor_gain(void *);
-int	sbdsp_query_encoding(void *, struct audio_encoding *);
-int	sbdsp_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-	    stream_filter_list_t *, stream_filter_list_t *);
+int	sbdsp_query_format(void *, audio_format_query_t *);
+int	sbdsp_set_format(void *, int,
+	    const audio_params_t *, const audio_params_t *,
+	    audio_filter_reg_t *, audio_filter_reg_t *);
 int	sbdsp_round_blocksize(void *, int, int, const audio_params_t *);
 int	sbdsp_get_avail_in_ports(void *);
 int	sbdsp_get_avail_out_ports(void *);
@@ -251,7 +254,6 @@ int	sbdsp_mixer_query_devinfo(void *, mixer_devinfo_t *);
 void	*sb_malloc(void *, int, size_t);
 void	sb_free(void *, void *, size_t);
 size_t	sb_round_buffersize(void *, int, size_t);
-paddr_t	sb_mappage(void *, void *, off_t, int);
 
 int	sbdsp_get_props(void *);
 void	sbdsp_get_locks(void *, kmutex_t **, kmutex_t **);

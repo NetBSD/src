@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.12 2019/03/16 12:09:57 isaki Exp $ */
+/* $NetBSD: mavb.c,v 1.13 2019/05/08 13:40:16 isaki Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -29,8 +29,7 @@
 #include <machine/autoconf.h>
 
 #include <sys/audioio.h>
-#include <dev/auconv.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <arch/sgimips/mace/macevar.h>
 #include <arch/sgimips/mace/macereg.h>
@@ -108,13 +107,19 @@ const char *ad1843_input[] = {
 	AudioNmono		/* AD1843_MISC_SETTINGS */
 };
 
-#define MAVB_NFORMATS 2
-static const struct audio_format mavb_formats[MAVB_NFORMATS] = {
-	{ NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	  1, AUFMT_MONAURAL, 0, { 8000, 48000 } },
-	{ NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	  2, AUFMT_STEREO, 0, { 8000, 48000 } },
+static const struct audio_format mavb_formats[] = {
+	{
+		.mode		= AUMODE_PLAY,
+		.encoding	= AUDIO_ENCODING_SLINEAR_BE,
+		.validbits	= 24,
+		.precision	= 32,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 0,
+		.frequency	= { 8000, 48000 },
+	},
 };
+#define MAVB_NFORMATS __arraycount(mavb_formats)
 
 struct mavb_softc {
 	device_t sc_dev;
@@ -143,100 +148,7 @@ struct mavb_softc {
 	u_int sc_play_format;
 
 	struct callout sc_volume_button_ch;
-
-	struct audio_format sc_formats[MAVB_NFORMATS];
-	struct audio_encoding_set *sc_encodings;
 };
-
-struct mavb_codecvar {
-	stream_filter_t base;
-};
-
-static stream_filter_t *mavb_factory
-    (struct audio_softc *,
-     int (*)(struct audio_softc *, stream_fetcher_t *, audio_stream_t *, int));
-static void mavb_dtor(stream_filter_t *);
-
-/* XXX I'm going to complain every time I have to copy this macro */
-#define DEFINE_FILTER(name)						\
-static int								\
-name##_fetch_to(struct audio_softc *, stream_fetcher_t *,		\
-		audio_stream_t *, int);					\
-stream_filter_t *name(struct audio_softc *,				\
-    const audio_params_t *, const audio_params_t *);			\
-stream_filter_t *							\
-name(struct audio_softc *sc, const audio_params_t *from,		\
-    const audio_params_t *to)						\
-{									\
-	return mavb_factory(sc, name##_fetch_to);			\
-}									\
-static int								\
-name##_fetch_to(struct audio_softc *asc, stream_fetcher_t *self,	\
-    audio_stream_t *dst, int max_used)
-
-DEFINE_FILTER(mavb_16to24)
-{
-	stream_filter_t *this;
-	int m, err;
-
-	this = (stream_filter_t *)self;
-	max_used = (max_used + 1) & ~1;
-	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used)))
-		return err;
-	m = (dst->end - dst->start) & ~1;
-	m = uimin(m, max_used);
-	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 4, m) {
-		d[3] = 0;
-		d[2] = s[1];
-		d[1] = s[0];
-		d[0] = (s[0] & 0x80) ? 0xff : 0;
-	} FILTER_LOOP_EPILOGUE(this->src, dst);
-
-	return 0;
-}
-
-DEFINE_FILTER(mavb_mts)
-{
-	stream_filter_t *this;
-	int m, err;
-
-	this = (stream_filter_t *)self;
-	max_used = (max_used + 1) & ~1;
-	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used)))
-		return err;
-	m = (dst->end - dst->start) & ~1;
-	m = uimin(m, max_used);
-	FILTER_LOOP_PROLOGUE(this->src, 4, dst, 8, m) {
-		d[3] = d[7] = s[3];
-		d[2] = d[6] = s[2];
-		d[1] = d[5] = s[1];
-		d[0] = d[4] = s[0];
-	} FILTER_LOOP_EPILOGUE(this->src, dst);
-
-	return 0;
-}
-
-static stream_filter_t *
-mavb_factory(struct audio_softc *asc, int (*fetch_to)(struct audio_softc *, stream_fetcher_t *, audio_stream_t *, int))
-{
-	struct mavb_codecvar *this;
-
-	this = kmem_zalloc(sizeof(*this), KM_SLEEP);
-	this->base.base.fetch_to = fetch_to;
-	this->base.dtor = mavb_dtor;
-	this->base.set_fetcher = stream_filter_set_fetcher;
-	this->base.set_inputbuffer = stream_filter_set_inputbuffer;
-
-	return &this->base;
-}
-
-static void
-mavb_dtor(stream_filter_t *this)
-{
-
-	if (this != NULL)
-		kmem_free(this, sizeof(struct mavb_codecvar));
-}
 
 typedef uint64_t ad1843_addr_t;
 
@@ -249,13 +161,11 @@ void mavb_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(mavb, sizeof(struct mavb_softc),
     mavb_match, mavb_attach, NULL, NULL);
-    
-int mavb_open(void *, int);
-void mavb_close(void *);
-int mavb_query_encoding(void *, struct audio_encoding *);
-int mavb_set_params(void *, int, int, struct audio_params *,
-		    struct audio_params *, stream_filter_list_t *,
-		    stream_filter_list_t *);
+
+int mavb_query_format(void *, audio_format_query_t *);
+int mavb_set_format(void *, int,
+		    const audio_params_t *, const audio_params_t *,
+		    audio_filter_reg_t *, audio_filter_reg_t *);
 int mavb_round_blocksize(void *hdl, int, int, const audio_params_t *);
 int mavb_halt_output(void *);
 int mavb_halt_input(void *);
@@ -263,7 +173,6 @@ int mavb_getdev(void *, struct audio_device *);
 int mavb_set_port(void *, struct mixer_ctrl *);
 int mavb_get_port(void *, struct mixer_ctrl *);
 int mavb_query_devinfo(void *, struct mixer_devinfo *);
-size_t mavb_round_buffersize(void *, int, size_t);
 int mavb_get_props(void *);
 int mavb_trigger_output(void *, void *, void *, int, void (*)(void *),
 			void *, const audio_params_t *);
@@ -272,10 +181,8 @@ int mavb_trigger_input(void *, void *, void *, int, void (*)(void *),
 void mavb_get_locks(void *, kmutex_t **, kmutex_t **);
 
 struct audio_hw_if mavb_sa_hw_if = {
-	.open			= mavb_open,
-	.close			= mavb_close,
-	.query_encoding		= mavb_query_encoding,
-	.set_params		= mavb_set_params,
+	.query_format		= mavb_query_format,
+	.set_format		= mavb_set_format,
 	.round_blocksize	= mavb_round_blocksize,
 	.halt_output		= mavb_halt_output,
 	.halt_input		= mavb_halt_input,
@@ -283,7 +190,6 @@ struct audio_hw_if mavb_sa_hw_if = {
 	.set_port		= mavb_set_port,
 	.get_port		= mavb_get_port,
 	.query_devinfo		= mavb_query_devinfo,
-	.round_buffersize	= mavb_round_buffersize,
 	.get_props		= mavb_get_props,
 	.trigger_output		= mavb_trigger_output,
 	.trigger_input		= mavb_trigger_input,
@@ -296,32 +202,34 @@ struct audio_device mavb_device = {
 	"mavb"
 };
 
-int
-mavb_open(void *hdl, int flags)
+static void
+mavb_internal_to_slinear24_32(audio_filter_arg_t *arg)
 {
+	const aint_t *src;
+	uint32_t *dst;
+	u_int sample_count;
+	u_int i;
 
-	return 0;
+	src = arg->src;
+	dst = arg->dst;
+	sample_count = arg->count * arg->srcfmt->channels;
+	for (i = 0; i < sample_count; i++) {
+		*dst++ = (*src++) << 8;
+	}
 }
 
-void
-mavb_close(void *hdl)
-{
-}
-
 int
-mavb_query_encoding(void *hdl, struct audio_encoding *ae)
+mavb_query_format(void *hdl, audio_format_query_t *afp)
 {
-	struct mavb_softc *sc = (struct mavb_softc *)hdl;
 
-	return auconv_query_encoding(sc->sc_encodings, ae);
+	return audio_query_format(mavb_formats, MAVB_NFORMATS, afp);
 }
 
 static int
 mavb_set_play_rate(struct mavb_softc *sc, u_long sample_rate)
 {
 
-	if (sample_rate < 4000 || sample_rate > 48000)
-		return EINVAL;
+	KASSERT((4000 <= sample_rate && sample_rate <= 48000));
 
 	if (sc->sc_play_rate != sample_rate) {
 		ad1843_reg_write(sc, AD1843_CLOCK2_SAMPLE_RATE, sample_rate);
@@ -337,17 +245,8 @@ mavb_set_play_format(struct mavb_softc *sc, u_int encoding)
 	u_int format;
 
 	switch(encoding) {
-	case AUDIO_ENCODING_ULINEAR_BE:
-		format = AD1843_PCM8;
-		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
 		format = AD1843_PCM16;
-		break;
-	case AUDIO_ENCODING_ULAW:
-		format = AD1843_ULAW;
-		break;
-	case AUDIO_ENCODING_ALAW:
-		format = AD1843_ALAW;
 		break;
 	default:
 		return EINVAL;
@@ -364,48 +263,31 @@ mavb_set_play_format(struct mavb_softc *sc, u_int encoding)
 }
 
 int
-mavb_set_params(void *hdl, int setmode, int usemode,
-    struct audio_params *play, struct audio_params *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+mavb_set_format(void *hdl, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct mavb_softc *sc = (struct mavb_softc *)hdl;
-	struct audio_params *p;
-	stream_filter_list_t *fil;
 	int error;
 
-	DPRINTF(1, ("%s: mavb_set_params: sample=%u precision=%d "
-	    "channels=%d\n", device_xname(sc->sc_dev), play->sample_rate,
-	    play->precision, play->channels));
+	DPRINTF(1, ("%s: %s: sample=%u precision=%d channels=%d\n",
+	    device_xname(sc->sc_dev), __func__,
+	    play->sample_rate, play->precision, play->channels));
 
 	if (setmode & AUMODE_PLAY) {
-		if (play->sample_rate < 4000 || play->sample_rate > 48000)
-			return EINVAL;
-
-		p = play;
-		fil = pfil;
-		if (auconv_set_converter(sc->sc_formats, MAVB_NFORMATS,
-		    AUMODE_PLAY, p, TRUE, fil) < 0)
-			return EINVAL;
-
-		fil->append(fil, mavb_16to24, p);
-		if (p->channels == 1)
-			fil->append(fil, mavb_mts, p);
-		if (fil->req_size > 0)
-			p = &fil->filters[0].param;
+		pfil->codec = mavb_internal_to_slinear24_32;
 		
-		error = mavb_set_play_rate(sc, p->sample_rate);
+		error = mavb_set_play_rate(sc, play->sample_rate);
 		if (error)
 			return error;
 
-		error = mavb_set_play_format(sc, p->encoding);
+		error = mavb_set_play_format(sc, play->encoding);
 		if (error)
 			return error;
 	}
 
 #if 0
 	if (setmode & AUMODE_RECORD) {
-		if (rec->sample_rate < 4000 || rec->sample_rate > 48000)
-			return EINVAL;
 	}
 #endif
 
@@ -825,18 +707,12 @@ mavb_query_devinfo(void *hdl, struct mixer_devinfo *di)
 	return 0;
 }
 
-size_t
-mavb_round_buffersize(void *hdl, int dir, size_t bufsize)
-{
-
-	return bufsize;
-}
-
 int
 mavb_get_props(void *hdl)
 {
 
-	return AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT;
+	return AUDIO_PROP_PLAYBACK |
+	    AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT;
 }
 
 static void
@@ -1024,7 +900,7 @@ mavb_attach(device_t parent, device_t self, void *aux)
 	bus_dma_segment_t seg;
 	uint64_t control;
 	uint16_t value;
-	int rseg, err;
+	int rseg;
 
 	sc->sc_dev = self;
 
@@ -1141,15 +1017,6 @@ mavb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_play_rate = 48000;
 	sc->sc_play_format = AD1843_PCM8;
-
-	memcpy(sc->sc_formats, mavb_formats, sizeof(mavb_formats));
-	err = auconv_create_encodings(sc->sc_formats, MAVB_NFORMATS,
-	    &sc->sc_encodings);
-	if (err) {
-		printf("%s: couldn't create encodings: %d\n",
-		    device_xname(self), err);
-		return;
-	}
 
 	callout_init(&sc->sc_volume_button_ch, 0);
 

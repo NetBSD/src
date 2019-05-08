@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_cmpci.c,v 1.16 2011/11/23 23:07:35 jmcneill Exp $	*/
+/*	$NetBSD: mpu_cmpci.c,v 1.17 2019/05/08 13:40:19 isaki Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.16 2011/11/23 23:07:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.17 2019/05/08 13:40:19 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.16 2011/11/23 23:07:35 jmcneill Exp 
 
 #include <sys/bus.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
 
 #include <dev/pci/pcivar.h>

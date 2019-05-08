@@ -1,4 +1,4 @@
-/*	$NetBSD: wm8750_zaudio.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: wm8750_zaudio.c,v 1.3 2019/05/08 13:40:17 isaki Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wm8750_zaudio.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wm8750_zaudio.c,v 1.3 2019/05/08 13:40:17 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: wm8750_zaudio.c,v 1.2 2018/06/16 21:22:13 thorpej Ex
 #include <sys/intr.h>
 #include <sys/bus.h>
 
-#include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -112,54 +110,6 @@ static struct audio_device wm8750_device = {
 	"wm"
 };
 
-static const struct audio_format wm8750_formats[] = {
-	{
-		.driver_data	= NULL,
-		.mode		= AUMODE_PLAY | AUMODE_RECORD,
-		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
-		.validbits	= 16,
-		.precision	= 16,
-		.channels	= 2,
-		.channel_mask	= AUFMT_STEREO,
-		.frequency_type	= 0,
-		.frequency	= { 4000, 48000 }
-	},
-	{
-		.driver_data	= NULL,
-		.mode		= AUMODE_PLAY | AUMODE_RECORD,
-		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
-		.validbits	= 16,
-		.precision	= 16,
-		.channels	= 1,
-		.channel_mask	= AUFMT_MONAURAL,
-		.frequency_type	= 0,
-		.frequency	= { 4000, 48000 }
-	},
-	{
-		.driver_data	= NULL,
-		.mode		= AUMODE_PLAY | AUMODE_RECORD,
-		.encoding	= AUDIO_ENCODING_ULINEAR_LE,
-		.validbits	= 8,
-		.precision	= 8,
-		.channels	= 2,
-		.channel_mask	= AUFMT_STEREO,
-		.frequency_type	= 0,
-		.frequency	= { 4000, 48000 }
-	},
-	{
-		.driver_data	= NULL,
-		.mode		= AUMODE_PLAY | AUMODE_RECORD,
-		.encoding	= AUDIO_ENCODING_ULINEAR_LE,
-		.validbits	= 8,
-		.precision	= 8,
-		.channels	= 1,
-		.channel_mask	= AUFMT_MONAURAL,
-		.frequency_type	= 0,
-		.frequency	= { 4000, 48000 }
-	},
-};
-static const int wm8750_nformats = (int)__arraycount(wm8750_formats);
-
 static void wm8750_init(struct zaudio_softc *);
 static int wm8750_jack_intr(void *);
 static void wm8750_jack(void *);
@@ -168,9 +118,6 @@ static void wm8750_update_volume(struct zaudio_softc *, int);
 static void wm8750_update_mutes(struct zaudio_softc *, int);
 static void wm8750_play_setup(struct zaudio_softc *);
 /*static*/ void wm8750_record_setup(struct zaudio_softc *);
-static int wm8750_query_encoding(void *, struct audio_encoding *);
-static int wm8750_set_params(void *, int, int, audio_params_t *,
-    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
 static int wm8750_start_output(void *, void *, int, void (*)(void *), void *);
 static int wm8750_start_input(void *, void *, int, void (*)(void *), void *);
 static int wm8750_halt_output(void *);
@@ -183,9 +130,8 @@ static int wm8750_query_devinfo(void *, struct mixer_devinfo *);
 static struct audio_hw_if wm8750_hw_if = {
 	.open			= zaudio_open,
 	.close			= zaudio_close,
-	.drain			= NULL,
-	.query_encoding		= wm8750_query_encoding,
-	.set_params		= wm8750_set_params,
+	.query_format		= zaudio_query_format,
+	.set_format		= zaudio_set_format,
 	.round_blocksize	= zaudio_round_blocksize,
 	.commit_settings	= NULL,
 	.init_output		= NULL,
@@ -196,14 +142,12 @@ static struct audio_hw_if wm8750_hw_if = {
 	.halt_input		= wm8750_halt_input,
 	.speaker_ctl		= NULL,
 	.getdev			= wm8750_getdev,
-	.setfd			= NULL,
 	.set_port		= wm8750_set_port,
 	.get_port		= wm8750_get_port,
 	.query_devinfo		= wm8750_query_devinfo,
 	.allocm			= zaudio_allocm,
 	.freem			= zaudio_freem,
 	.round_buffersize	= zaudio_round_buffersize,
-	.mappage		= zaudio_mappage,
 	.get_props		= zaudio_get_props,
 	.trigger_output		= NULL,
 	.trigger_input		= NULL,
@@ -701,122 +645,6 @@ wm8750_record_setup(struct zaudio_softc *sc)
 	wm8750_update_mutes(sc, 2);
 
 	iic_release_bus(sc->sc_i2c, 0);
-}
-
-static int
-wm8750_query_encoding(void *hdl, struct audio_encoding *aep)
-{
-
-	switch (aep->index) {
-	case 0:
-		strlcpy(aep->name, AudioEulinear, sizeof(aep->name));
-		aep->encoding = AUDIO_ENCODING_ULINEAR;
-		aep->precision = 8;
-		aep->flags = 0;
-		break;
-
-	case 1:
-		strlcpy(aep->name, AudioEmulaw, sizeof(aep->name));
-		aep->encoding = AUDIO_ENCODING_ULAW;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-
-	case 2:
-		strlcpy(aep->name, AudioEalaw, sizeof(aep->name));
-		aep->encoding = AUDIO_ENCODING_ALAW;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-
-	case 3:
-		strlcpy(aep->name, AudioEslinear, sizeof(aep->name));
-		aep->encoding = AUDIO_ENCODING_SLINEAR;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-
-	case 4:
-		strlcpy(aep->name, AudioEslinear_le, sizeof(aep->name));
-		aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		aep->precision = 16;
-		aep->flags = 0;
-		break;
-
-	case 5:
-		strlcpy(aep->name, AudioEulinear_le, sizeof(aep->name));
-		aep->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-
-	case 6:
-		strlcpy(aep->name, AudioEslinear_be, sizeof(aep->name));
-		aep->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-
-	case 7:
-		strlcpy(aep->name, AudioEulinear_be, sizeof(aep->name));
-		aep->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-
-	default:
-		return EINVAL;
-	}
-
-	return 0;
-}
-
-static int
-wm8750_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
-    audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
-{
-	struct zaudio_softc *sc = hdl;
-	struct audio_params *p;
-	stream_filter_list_t *fil;
-	int mode, i;
-
-	if (play->sample_rate != rec->sample_rate &&
-	    usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
-		if (setmode == AUMODE_PLAY) {
-			rec->sample_rate = play->sample_rate;
-			setmode |= AUMODE_RECORD;
-		} else if (setmode == AUMODE_RECORD) {
-			play->sample_rate = rec->sample_rate;
-			setmode |= AUMODE_PLAY;
-		} else
-			return EINVAL;
-	}
-
-	for (mode = AUMODE_RECORD; mode != -1;
-	     mode = (mode == AUMODE_RECORD) ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
-			continue;
-
-		p = (mode == AUMODE_PLAY) ? play : rec;
-
-		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return EINVAL;
-
-		fil = (mode == AUMODE_PLAY) ? pfil : rfil;
-		i = auconv_set_converter(wm8750_formats, wm8750_nformats,
-		    mode, p, false, fil);
-		if (i < 0)
-			return EINVAL;
-	}
-
-	if (setmode == AUMODE_RECORD)
-		pxa2x0_i2s_setspeed(&sc->sc_i2s, &rec->sample_rate);
-	else
-		pxa2x0_i2s_setspeed(&sc->sc_i2s, &play->sample_rate);
-
-	return 0;
 }
 
 static int

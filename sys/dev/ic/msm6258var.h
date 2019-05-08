@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258var.h,v 1.10 2017/09/02 12:57:35 isaki Exp $	*/
+/*	$NetBSD: msm6258var.h,v 1.11 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -28,7 +28,13 @@
 /*
  * OKI MSM6258 ADPCM voice synthesizer codec.
  */
-extern stream_filter_factory_t msm6258_slinear16_to_adpcm;
-extern stream_filter_factory_t msm6258_linear8_to_adpcm;
-extern stream_filter_factory_t msm6258_adpcm_to_slinear16;
-extern stream_filter_factory_t msm6258_adpcm_to_linear8;
+
+struct msm6258_codecvar {
+	int16_t		mc_amp;
+	int8_t		mc_estim;
+
+	aint_t pending_sample;	/* hold one pending sample. */
+};
+
+extern void msm6258_adpcm_to_internal(audio_filter_arg_t *);
+extern void msm6258_internal_to_adpcm(audio_filter_arg_t *);

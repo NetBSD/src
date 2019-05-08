@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.46 2019/03/16 12:09:57 isaki Exp $	*/
+/*	$NetBSD: awacs.c,v 1.47 2019/05/08 13:40:15 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.46 2019/03/16 12:09:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.47 2019/05/08 13:40:15 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -38,9 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.46 2019/03/16 12:09:57 isaki Exp $");
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 
-#include <dev/auconv.h>
-#include <dev/audio_if.h>
-#include <dev/mulaw.h>
+#include <dev/audio/audio_if.h>
 
 #include <uvm/uvm_extern.h>
 #include <machine/autoconf.h>
@@ -59,12 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.46 2019/03/16 12:09:57 isaki Exp $");
 # define DPRINTF while (0) printf
 #endif
 
-/* sc_flags values */
-#define AWACS_CAP_BSWAP		0x0001
-
 struct awacs_softc {
 	device_t sc_dev;
-	int sc_flags;
 	bus_space_tag_t sc_tag;
 	bus_space_handle_t	sc_regh;
 	bus_space_handle_t	sc_idmah;
@@ -107,9 +101,6 @@ struct awacs_softc {
 	struct dbdma_command *sc_odmacmd;
 	struct dbdma_command *sc_idmacmd;
 
-#define AWACS_NFORMATS	2
-	struct audio_format sc_formats[AWACS_NFORMATS];
-
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
 };
@@ -120,9 +111,10 @@ static int awacs_intr(void *);
 static int awacs_status_intr(void *);
 
 static void awacs_close(void *);
-static int awacs_query_encoding(void *, struct audio_encoding *);
-static int awacs_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-		     stream_filter_list_t *, stream_filter_list_t *);
+static int awacs_query_format(void *, audio_format_query_t *);
+static int awacs_set_format(void *, int,
+		     const audio_params_t *, const audio_params_t *,
+		     audio_filter_reg_t *, audio_filter_reg_t *);
 
 static int awacs_round_blocksize(void *, int, int, const audio_params_t *);
 static int awacs_trigger_output(void *, void *, void *, int, void (*)(void *),
@@ -136,7 +128,6 @@ static int awacs_set_port(void *, mixer_ctrl_t *);
 static int awacs_get_port(void *, mixer_ctrl_t *);
 static int awacs_query_devinfo(void *, mixer_devinfo_t *);
 static size_t awacs_round_buffersize(void *, int, size_t);
-static paddr_t awacs_mappage(void *, void *, off_t, int);
 static int awacs_get_props(void *);
 static void awacs_get_locks(void *, kmutex_t **, kmutex_t **);
 
@@ -164,8 +155,8 @@ CFATTACH_DECL_NEW(awacs, sizeof(struct awacs_softc),
 
 const struct audio_hw_if awacs_hw_if = {
 	.close			= awacs_close,
-	.query_encoding		= awacs_query_encoding,
-	.set_params		= awacs_set_params,
+	.query_format		= awacs_query_format,
+	.set_format		= awacs_set_format,
 	.round_blocksize	= awacs_round_blocksize,
 	.halt_output		= awacs_halt_output,
 	.halt_input		= awacs_halt_input,
@@ -174,7 +165,6 @@ const struct audio_hw_if awacs_hw_if = {
 	.get_port		= awacs_get_port,
 	.query_devinfo		= awacs_query_devinfo,
 	.round_buffersize	= awacs_round_buffersize,
-	.mappage		= awacs_mappage,
 	.get_props		= awacs_get_props,
 	.trigger_output		= awacs_trigger_output,
 	.trigger_input		= awacs_trigger_input,
@@ -187,16 +177,20 @@ struct audio_device awacs_device = {
 	"awacs"
 };
 
-#define AWACS_NFORMATS		2
-#define AWACS_FORMATS_LE	0
-static const struct audio_format awacs_formats[AWACS_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 8, 
-	 {7350, 8820, 11025, 14700, 17640, 22050, 29400, 44100}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	 2, AUFMT_STEREO, 8, 
-	 {7350, 8820, 11025, 14700, 17640, 22050, 29400, 44100}},
+static const struct audio_format awacs_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_BE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 8,
+		.frequency	=
+		    { 7350, 8820, 11025, 14700, 17640, 22050, 29400, 44100 },
+	}
 };
+#define AWACS_NFORMATS		__arraycount(awacs_formats)
 
 /* register offset */
 #define AWACS_SOUND_CTRL	0x00
@@ -401,17 +395,6 @@ awacs_attach(device_t parent, device_t self, void *aux)
 
 	sc->vol_l = 0;
 	sc->vol_r = 0;
-
-	memcpy(&sc->sc_formats, awacs_formats, sizeof(awacs_formats));
-
-	/* XXX Uni-North based models don't have byteswap capability. */
-	if (OF_finddevice("/uni-n") == -1) {
-
-		sc->sc_flags |= AWACS_CAP_BSWAP;
-	} else {
-
-		AUFMT_INVALIDATE(&sc->sc_formats[AWACS_FORMATS_LE]);
-	}
 
 	sc->sc_soundctl = AWACS_INPUT_SUBFRAME0 | AWACS_OUTPUT_SUBFRAME0 |
 		AWACS_RATE_44100 | AWACS_INTR_PORTCHG;
@@ -656,119 +639,27 @@ awacs_close(void *h)
 }
 
 static int
-awacs_query_encoding(void *h, struct audio_encoding *ae)
+awacs_query_format(void *h, audio_format_query_t *afp)
 {
-	struct awacs_softc *sc;
 
-	sc = h;
-	ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-
-	switch (ae->index) {
-	case 0:
-		strcpy(ae->name, AudioEslinear);
-		ae->encoding = AUDIO_ENCODING_SLINEAR;
-		ae->precision = 16;
-		ae->flags = 0;
-		return 0;
-	case 1:
-		strcpy(ae->name, AudioEslinear_be);
-		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		ae->precision = 16;
-		ae->flags = 0;
-		return 0;
-	case 2:
-		strcpy(ae->name, AudioEslinear_le);
-		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		ae->precision = 16;
-		if (sc->sc_flags & AWACS_CAP_BSWAP)
-			ae->flags = 0;
-		return 0;
-	case 3:
-		strcpy(ae->name, AudioEulinear_be);
-		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		ae->precision = 16;
-		return 0;
-	case 4:
-		strcpy(ae->name, AudioEulinear_le);
-		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		ae->precision = 16;
-		return 0;
-	case 5:
-		strcpy(ae->name, AudioEmulaw);
-		ae->encoding = AUDIO_ENCODING_ULAW;
-		ae->precision = 8;
-		return 0;
-	case 6:
-		strcpy(ae->name, AudioEalaw);
-		ae->encoding = AUDIO_ENCODING_ALAW;
-		ae->precision = 8;
-		return 0;
-	default:
-		return EINVAL;
-	}
+	return audio_query_format(awacs_formats, AWACS_NFORMATS, afp);
 }
 
 static int
-awacs_set_params(void *h, int setmode, int usemode,
-		 audio_params_t *play, audio_params_t *rec,
-		 stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+awacs_set_format(void *h, int setmode,
+		 const audio_params_t *play, const audio_params_t *rec,
+		 audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct awacs_softc *sc;
-	audio_params_t *p;
-	stream_filter_list_t *fil;
-	int mode, i;
 
 	sc = h;
-	p = NULL;
-	/*
-	 * This device only has one clock, so make the sample rates match.
-	 */
-	if (play->sample_rate != rec->sample_rate &&
-	    usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
-		if (setmode == AUMODE_PLAY) {
-			rec->sample_rate = play->sample_rate;
-			setmode |= AUMODE_RECORD;
-		} else if (setmode == AUMODE_RECORD) {
-			play->sample_rate = rec->sample_rate;
-			setmode |= AUMODE_PLAY;
-		} else
-			return EINVAL;
-	}
 
-	for (mode = AUMODE_RECORD; mode != -1;
-	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
-			continue;
+	/* *play and *rec are the identical because !AUDIO_PROP_INDEPENDENT. */
 
-		p = mode == AUMODE_PLAY ? play : rec;
-		fil = mode == AUMODE_PLAY ? pfil : rfil;
-		switch (p->sample_rate) {
-		case 48000:	/* aurateconv */
-		case 44100:
-		case 29400:
-		case 22050:
-		case 17640:
-		case 14700:
-		case 11025:
-		case 8820:
-		case 8000:	/* aurateconv */
-		case 7350:
-			break;
-		default:
-			return EINVAL;
-		}
-		awacs_write_reg(sc, AWACS_BYTE_SWAP, 0);
-		i = auconv_set_converter(sc->sc_formats, AWACS_NFORMATS,
-					 mode, p, true, fil);
-		if (i < 0)
-			return EINVAL;
-		if (i == AWACS_FORMATS_LE)
-			awacs_write_reg(sc, AWACS_BYTE_SWAP, 1);
-		if (fil->req_size > 0)
-			p = &fil->filters[0].param;
-		if (awacs_set_rate(sc, p))
-			return EINVAL;
-	}
+	awacs_write_reg(sc, AWACS_BYTE_SWAP, 0);
+
+	if (awacs_set_rate(sc, play))
+		return EINVAL;
 	return 0;
 }
 
@@ -1071,15 +962,6 @@ awacs_round_buffersize(void *h, int dir, size_t size)
 	if (size > 65536)
 		size = 65536;
 	return size;
-}
-
-static paddr_t
-awacs_mappage(void *h, void *mem, off_t off, int prot)
-{
-
-	if (off < 0)
-		return -1;
-	return -1;	/* XXX */
 }
 
 static int

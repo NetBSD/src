@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.31 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.32 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.31 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.32 2019/05/08 13:40:18 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,9 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.31 2011/11/23 23:07:32 jmcneill Exp $")
 #include <sys/bus.h>
 
 #include <sys/audioio.h>
-
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/cs4231reg.h>
@@ -138,6 +136,21 @@ void ad1848_dump_regs(struct ad1848_softc *);
 #else
 #define DPRINTF(x)
 #endif
+
+/* The HW supports more frequencies but I chose several major ones. */
+static const struct audio_format ad1848_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 6,
+		.frequency	= { 8000, 11025, 16000, 22050, 44100, 48000 },
+	},
+};
+#define AD1848_NFORMATS __arraycount(ad1848_formats)
 
 /*
  * Initial values for the indirect registers of CS4248/AD1848.
@@ -777,203 +790,38 @@ ad1848_mixer_set_port(struct ad1848_softc *ac, const struct ad1848_devmap *map,
 }
 
 int
-ad1848_query_encoding(void *addr, struct audio_encoding *fp)
+ad1848_query_format(void *addr, audio_format_query_t *afp)
 {
-	struct ad1848_softc *sc;
 
-	sc = addr;
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 2:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 3:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-
-	case 4: /* only on CS4231 */
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = sc->mode == 1
-#if AD1845_HACK
-		    || sc->is_ad1845
-#endif
-			? AUDIO_ENCODINGFLAG_EMULATED : 0;
-		break;
-
-		/* emulate some modes */
-	case 5:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-
-	case 8: /* only on CS4231 */
-		if (sc->mode == 1 || sc->is_ad1845)
-			return EINVAL;
-		strcpy(fp->name, AudioEadpcm);
-		fp->encoding = AUDIO_ENCODING_ADPCM;
-		fp->precision = 4;
-		fp->flags = 0;
-		break;
-	default:
-		return EINVAL;
-		/*NOTREACHED*/
-	}
-	return 0;
+	return audio_query_format(ad1848_formats, AD1848_NFORMATS, afp);
 }
 
 int
-ad1848_set_params(void *addr, int setmode, int usemode,
-    audio_params_t *p, audio_params_t *r, stream_filter_list_t *pfil,
-    stream_filter_list_t *rfil)
+ad1848_set_format(void *addr, int setmode,
+    const audio_params_t *p, const audio_params_t *r,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	audio_params_t phw, rhw;
 	struct ad1848_softc *sc;
-	int error, bits, enc;
-	stream_filter_factory_t *pswcode;
-	stream_filter_factory_t *rswcode;
+	int rate;
+	int error;
 
-	DPRINTF(("ad1848_set_params: %u %u %u %u\n",
-		 p->encoding, p->precision, p->channels, p->sample_rate));
+	/* *p and *r are the identical because !AUDIO_PROP_INDEPENDENT. */
+	DPRINTF(("%s: %u %u %u %u\n", __func__,
+	    p->encoding, p->precision, p->channels, p->sample_rate));
 
 	sc = addr;
-	enc = p->encoding;
-	pswcode = rswcode = 0;
-	phw = *p;
-	rhw = *r;
-	switch (enc) {
-	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision == 8) {
-			enc = AUDIO_ENCODING_ULINEAR_LE;
-			phw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-			rhw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-			pswcode = rswcode = change_sign8;
-		}
-		break;
-	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision == 16 && (sc->mode == 1
-#if AD1845_HACK
-		    || sc->is_ad1845
-#endif
-			)) {
-			enc = AUDIO_ENCODING_SLINEAR_LE;
-			phw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			rhw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			pswcode = rswcode = swap_bytes;
-		}
-		break;
-	case AUDIO_ENCODING_ULINEAR_LE:
-		if (p->precision == 16) {
-			enc = AUDIO_ENCODING_SLINEAR_LE;
-			phw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			rhw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			pswcode = rswcode = change_sign16;
-		}
-		break;
-	case AUDIO_ENCODING_ULINEAR_BE:
-		if (p->precision == 16) {
-			if (sc->mode == 1
-#if AD1845_HACK
-			    || sc->is_ad1845
-#endif
-				) {
-				enc = AUDIO_ENCODING_SLINEAR_LE;
-				phw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-				rhw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-				pswcode = swap_bytes_change_sign16;
-				rswcode = swap_bytes_change_sign16;
-			} else {
-				enc = AUDIO_ENCODING_SLINEAR_BE;
-				phw.encoding = AUDIO_ENCODING_SLINEAR_BE;
-				rhw.encoding = AUDIO_ENCODING_SLINEAR_BE;
-				pswcode = rswcode = change_sign16;
-			}
-		}
-		break;
-	}
-	switch (enc) {
-	case AUDIO_ENCODING_ULAW:
-		bits = FMT_ULAW >> 5;
-		break;
-	case AUDIO_ENCODING_ALAW:
-		bits = FMT_ALAW >> 5;
-		break;
-	case AUDIO_ENCODING_ADPCM:
-		bits = FMT_ADPCM >> 5;
-		break;
-	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision == 16)
-			bits = FMT_TWOS_COMP >> 5;
-		else
-			return EINVAL;
-		break;
-	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision == 16)
-			bits = FMT_TWOS_COMP_BE >> 5;
-		else
-			return EINVAL;
-		break;
-	case AUDIO_ENCODING_ULINEAR_LE:
-		if (p->precision == 8)
-			bits = FMT_PCM8 >> 5;
-		else
-			return EINVAL;
-		break;
-	default:
-		return EINVAL;
-	}
 
-	if (p->channels < 1 || p->channels > 2)
-		return EINVAL;
-
-	error = ad1848_set_speed(sc, &p->sample_rate);
+	rate = p->sample_rate;
+	error = ad1848_set_speed(sc, &rate);
 	if (error)
 		return error;
-	phw.sample_rate = p->sample_rate;
 
-	if (pswcode != NULL)
-		pfil->append(pfil, pswcode, &phw);
-	if (rswcode != NULL)
-		rfil->append(rfil, rswcode, &rhw);
-
-	sc->format_bits = bits;
+	sc->format_bits = FMT_TWOS_COMP >> 5;
 	sc->channels = p->channels;
 	sc->precision = p->precision;
 	sc->need_commit = 1;
 
-	DPRINTF(("ad1848_set_params succeeded, bits=%x\n", bits));
+	DPRINTF(("%s succeeded\n", __func__));
 	return 0;
 }
 

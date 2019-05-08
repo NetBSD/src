@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.36 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: auacer.c,v 1.37 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.36 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.37 2019/05/08 13:40:18 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.36 2019/03/16 12:09:58 isaki Exp $");
 #include <dev/pci/auacerreg.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <sys/bus.h>
 
@@ -128,7 +126,6 @@ struct auacer_softc {
 
 #define AUACER_NFORMATS	3
 	struct audio_format sc_formats[AUACER_NFORMATS];
-	struct audio_encoding_set *sc_encodings;
 };
 
 #define READ1(sc, a) bus_space_read_1(sc->iot, sc->aud_ioh, a)
@@ -153,10 +150,10 @@ int auacer_debug = 0;
 
 static int	auacer_intr(void *);
 
-static int	auacer_query_encoding(void *, struct audio_encoding *);
-static int	auacer_set_params(void *, int, int, audio_params_t *,
-				  audio_params_t *, stream_filter_list_t *,
-				  stream_filter_list_t *);
+static int	auacer_query_format(void *, audio_format_query_t *);
+static int	auacer_set_format(void *, int,
+				 const audio_params_t *, const audio_params_t *,
+				 audio_filter_reg_t *, audio_filter_reg_t *);
 static int	auacer_round_blocksize(void *, int, int,
 				       const audio_params_t *);
 static int	auacer_halt_output(void *);
@@ -168,7 +165,6 @@ static int	auacer_query_devinfo(void *, mixer_devinfo_t *);
 static void	*auacer_allocm(void *, int, size_t);
 static void	auacer_freem(void *, void *, size_t);
 static size_t	auacer_round_buffersize(void *, int, size_t);
-static paddr_t	auacer_mappage(void *, void *, off_t, int);
 static int	auacer_get_props(void *);
 static int	auacer_trigger_output(void *, void *, void *, int,
 				      void (*)(void *), void *,
@@ -190,8 +186,8 @@ static int	auacer_set_rate(struct auacer_softc *, int, u_int);
 static void auacer_reset(struct auacer_softc *sc);
 
 static const struct audio_hw_if auacer_hw_if = {
-	.query_encoding		= auacer_query_encoding,
-	.set_params		= auacer_set_params,
+	.query_format		= auacer_query_format,
+	.set_format		= auacer_set_format,
 	.round_blocksize	= auacer_round_blocksize,
 	.halt_output		= auacer_halt_output,
 	.halt_input		= auacer_halt_input,
@@ -202,7 +198,6 @@ static const struct audio_hw_if auacer_hw_if = {
 	.allocm			= auacer_allocm,
 	.freem			= auacer_freem,
 	.round_buffersize	= auacer_round_buffersize,
-	.mappage		= auacer_mappage,
 	.get_props		= auacer_get_props,
 	.trigger_output		= auacer_trigger_output,
 	.trigger_input		= auacer_trigger_input,
@@ -211,13 +206,22 @@ static const struct audio_hw_if auacer_hw_if = {
 
 #define AUACER_FORMATS_4CH	1
 #define AUACER_FORMATS_6CH	2
+#define AUACER_FORMAT(aumode, ch, chmask) \
+	{ \
+		.mode		= (aumode), \
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE, \
+		.validbits	= 16, \
+		.precision	= 16, \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 9, \
+		.frequency	= {  8000, 11025, 12000, 16000, 22050, \
+		                    24000, 32000, 44100, 48000, }, \
+	}
 static const struct audio_format auacer_formats[AUACER_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
-	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
+	AUACER_FORMAT(AUMODE_PLAY | AUMODE_RECORD, 2, AUFMT_STEREO),
+	AUACER_FORMAT(AUMODE_PLAY                , 4, AUFMT_SURROUND4),
+	AUACER_FORMAT(AUMODE_PLAY                , 6, AUFMT_DOLBY_5_1),
 };
 
 static int	auacer_attach_codec(void *, struct ac97_codec_if *);
@@ -334,16 +338,7 @@ auacer_attach(device_t parent, device_t self, void *aux)
 			sc->sc_formats[i].frequency[0] = 48000;
 		}
 	}
-	mutex_exit(&sc->sc_lock);
 
-	if (0 != auconv_create_encodings(sc->sc_formats, AUACER_NFORMATS,
-					 &sc->sc_encodings)) {
-		mutex_destroy(&sc->sc_lock);
-		mutex_destroy(&sc->sc_intr_lock);
-		return;
-	}
-
-	mutex_enter(&sc->sc_lock);
 	mutex_spin_enter(&sc->sc_intr_lock);
 	auacer_reset(sc);
 	mutex_spin_exit(&sc->sc_intr_lock);
@@ -492,13 +487,13 @@ auacer_reset(struct auacer_softc *sc)
 }
 
 static int
-auacer_query_encoding(void *v, struct audio_encoding *aep)
+auacer_query_format(void *v, audio_format_query_t *afp)
 {
 	struct auacer_softc *sc;
 
-	DPRINTF(ALI_DEBUG_API, ("auacer_query_encoding\n"));
+	DPRINTF(ALI_DEBUG_API, ("%s\n", __func__));
 	sc = v;
-	return auconv_query_encoding(sc->sc_encodings, aep);
+	return audio_query_format(sc->sc_formats, AUACER_NFORMATS, afp);
 }
 
 static int
@@ -529,17 +524,16 @@ auacer_set_rate(struct auacer_softc *sc, int mode, u_int srate)
 }
 
 static int
-auacer_set_params(void *v, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
-    stream_filter_list_t *rfil)
+auacer_set_format(void *v, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct auacer_softc *sc;
-	struct audio_params *p;
-	stream_filter_list_t *fil;
+	const audio_params_t *p;
 	uint32_t control;
 	int mode, index;
 
-	DPRINTF(ALI_DEBUG_API, ("auacer_set_params\n"));
+	DPRINTF(ALI_DEBUG_API, ("%s\n", __func__));
 	sc = v;
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
@@ -547,27 +541,9 @@ auacer_set_params(void *v, int setmode, int usemode,
 			continue;
 
 		p = mode == AUMODE_PLAY ? play : rec;
-		if (p == NULL)
-			continue;
 
-		if ((p->sample_rate !=  8000) &&
-		    (p->sample_rate != 11025) &&
-		    (p->sample_rate != 12000) &&
-		    (p->sample_rate != 16000) &&
-		    (p->sample_rate != 22050) &&
-		    (p->sample_rate != 24000) &&
-		    (p->sample_rate != 32000) &&
-		    (p->sample_rate != 44100) &&
-		    (p->sample_rate != 48000))
-			return (EINVAL);
-
-		fil = mode == AUMODE_PLAY ? pfil : rfil;
-		index = auconv_set_converter(sc->sc_formats, AUACER_NFORMATS,
-					     mode, p, TRUE, fil);
-		if (index < 0)
-			return EINVAL;
-		if (fil->req_size > 0)
-			p = &fil->filters[0].param;
+		index = audio_indexof_format(sc->sc_formats, AUACER_NFORMATS,
+		    mode, p);
 		/* p points HW encoding */
 		if (sc->sc_formats[index].frequency_type != 1
 		    && auacer_set_rate(sc, mode, p->sample_rate))
@@ -583,7 +559,7 @@ auacer_set_params(void *v, int setmode, int usemode,
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -731,23 +707,6 @@ auacer_round_buffersize(void *v, int direction, size_t size)
 		size = ALI_DMALIST_MAX * ALI_DMASEG_MAX;
 
 	return size;
-}
-
-static paddr_t
-auacer_mappage(void *v, void *mem, off_t off, int prot)
-{
-	struct auacer_softc *sc;
-	struct auacer_dma *p;
-
-	if (off < 0)
-		return -1;
-	sc = v;
-	for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
-		continue;
-	if (p == NULL)
-		return -1;
-	return bus_dmamem_mmap(sc->dmat, p->segs, p->nsegs,
-	    off, prot, BUS_DMA_WAITOK);
 }
 
 static int

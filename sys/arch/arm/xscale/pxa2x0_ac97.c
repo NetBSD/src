@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.15 2019/03/16 12:09:56 isaki Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.16 2019/05/08 13:40:14 isaki Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -47,10 +47,7 @@
 #include <machine/intr.h>
 #include <sys/bus.h>
 
-#include <dev/audio_if.h>
-#include <dev/audiovar.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
@@ -110,9 +107,6 @@ struct acu_softc {
 	/* Child audio(4) device */
 	device_t sc_audiodev;
 
-	/* auconv encodings */
-	struct audio_encoding_set *sc_encodings;
-
 	/* MPSAFE interfaces */
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
@@ -132,9 +126,10 @@ static int acu_intr(void *);
 
 static int acu_open(void *, int);
 static void acu_close(void *);
-static int acu_query_encoding(void *, struct audio_encoding *);
-static int acu_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-	    stream_filter_list_t *, stream_filter_list_t *);
+static int acu_query_format(void *, audio_format_query_t *);
+static int acu_set_format(void *, int,
+	    const audio_params_t *, const audio_params_t *,
+	    audio_filter_reg_t *, audio_filter_reg_t *);
 static int acu_round_blocksize(void *, int, int, const audio_params_t *);
 static int acu_halt_output(void *);
 static int acu_halt_input(void *);
@@ -150,16 +145,14 @@ static int acu_mixer_get_port(void *, mixer_ctrl_t *);
 static int acu_query_devinfo(void *, mixer_devinfo_t *);
 static void *acu_malloc(void *, int, size_t);
 static void acu_free(void *, void *, size_t);
-static size_t acu_round_buffersize(void *, int, size_t);
-static paddr_t acu_mappage(void *, void *, off_t, int);
 static int acu_get_props(void *);
 static void acu_get_locks(void *, kmutex_t **, kmutex_t **);
 
 struct audio_hw_if acu_hw_if = {
 	.open			= acu_open,
 	.close			= acu_close,
-	.query_encoding		= acu_query_encoding,
-	.set_params		= acu_set_params,
+	.query_format		= acu_query_format,
+	.set_format		= acu_set_format,
 	.round_blocksize	= acu_round_blocksize,
 	.halt_output		= acu_halt_output,
 	.halt_input		= acu_halt_input,
@@ -169,8 +162,6 @@ struct audio_hw_if acu_hw_if = {
 	.query_devinfo		= acu_query_devinfo,
 	.allocm			= acu_malloc,
 	.freem			= acu_free,
-	.round_buffersize	= acu_round_buffersize,
-	.mappage		= acu_mappage,
 	.get_props		= acu_get_props,
 	.trigger_output		= acu_trigger_output,
 	.trigger_input		= acu_trigger_input,
@@ -184,8 +175,17 @@ struct audio_device acu_device = {
 };
 
 static const struct audio_format acu_formats[] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {4000, 48000}}
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 0,
+		/* XXX Need an accurate list of frequencies. */
+		.frequency	= { 4000, 48000 },
+	},
 };
 #define	ACU_NFORMATS	(sizeof(acu_formats) / sizeof(struct audio_format))
 
@@ -311,20 +311,11 @@ pxaacu_attach(device_t parent, device_t self, void *aux)
 
 	if (ac97_attach(&sc->sc_host_if, sc->sc_dev, &sc->sc_lock)) {
 		aprint_error_dev(self, "Failed to attach primary codec\n");
- fail:
 		acu_reg_write(sc, AC97_GCR, 0);
 		delay(100);
 		pxa2x0_clkman_config(CKEN_AC97, false);
 		bus_space_unmap(sc->sc_bust, sc->sc_bush, pxa->pxa_size);
 		return;
-	}
-
-	if (auconv_create_encodings(acu_formats, ACU_NFORMATS,
-	    &sc->sc_encodings)) {
-		aprint_error_dev(self, "Failed to create encodings\n");
-		if (sc->sc_codec_if != NULL)
-			(sc->sc_codec_if->vtbl->detach)(sc->sc_codec_if);
-		goto fail;
 	}
 
 	sc->sc_audiodev = audio_attach_mi(&acu_hw_if, sc, sc->sc_dev);
@@ -564,59 +555,38 @@ acu_close(void *arg)
 }
 
 static int
-acu_query_encoding(void *arg, struct audio_encoding *fp)
+acu_query_format(void *arg, audio_format_query_t *afp)
 {
-	struct acu_softc *sc = arg;
 
-	return (auconv_query_encoding(sc->sc_encodings, fp));
+	return audio_query_format(acu_formats, ACU_NFORMATS, afp);
 }
 
 static int
-acu_set_params(void *arg, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+acu_set_format(void *arg, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct acu_softc *sc = arg;
-	struct audio_params *p;
-	stream_filter_list_t *fil;
-	int mode, err;
+	int rate;
+	int err;
 
-	for (mode = AUMODE_RECORD; mode != -1; 
-	    mode = (mode == AUMODE_RECORD) ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
-			continue;
-
-		p = (mode == AUMODE_PLAY) ? play : rec;
-
-		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2)) {
-			printf("acu_set_params: precision/channels botch\n");
-			printf("acu_set_params: rate %d, prec %d, chan %d\n",
-			    p->sample_rate, p->precision, p->channels);
-			return (EINVAL);
-		}
-
-		fil = (mode == AUMODE_PLAY) ? pfil : rfil;
-		err = auconv_set_converter(acu_formats, ACU_NFORMATS,
-		    mode, p, true, fil);
-		if (err < 0)
-			return (EINVAL);
-
-		if (mode == AUMODE_PLAY) {
-			err = sc->sc_codec_if->vtbl->set_rate(sc->sc_codec_if,
-			    AC97_REG_PCM_FRONT_DAC_RATE, &play->sample_rate);
-			sc->sc_dac_rate = play->sample_rate;
-		} else {
-			err = sc->sc_codec_if->vtbl->set_rate(sc->sc_codec_if,
-			    AC97_REG_PCM_LR_ADC_RATE, &rec->sample_rate);
-			sc->sc_adc_rate = rec->sample_rate;
-		}
+	if ((setmode & AUMODE_PLAY)) {
+		rate = play->sample_rate;
+		err = sc->sc_codec_if->vtbl->set_rate(sc->sc_codec_if,
+		    AC97_REG_PCM_FRONT_DAC_RATE, &rate);
 		if (err)
-			return (EINVAL);
+			return EINVAL;
+		sc->sc_dac_rate = play->sample_rate;
 	}
-
-	return (0);
+	if ((setmode & AUMODE_RECORD)) {
+		rate = rec->sample_rate;
+		err = sc->sc_codec_if->vtbl->set_rate(sc->sc_codec_if,
+		    AC97_REG_PCM_LR_ADC_RATE, &rate);
+		if (err)
+			return EINVAL;
+		sc->sc_adc_rate = rec->sample_rate;
+	}
+	return 0;
 }
 
 static int
@@ -729,29 +699,6 @@ acu_free(void *arg, void *ptr, size_t size)
 			return;
 		}
 	}
-}
-
-static size_t
-acu_round_buffersize(void *arg, int direction, size_t size)
-{
-
-	return (size);
-}
-
-static paddr_t
-acu_mappage(void *arg, void *mem, off_t off, int prot)
-{
-	struct acu_softc *sc = arg;
-	struct acu_dma *ad;
-
-	if (off < 0)
-		return (-1);
-	for (ad = sc->sc_dmas; ad && KERNADDR(ad) != mem; ad = ad->ad_next)
-		;
-	if (ad == NULL)
-		return (-1);
-	return (bus_dmamem_mmap(sc->sc_dmat, ad->ad_segs, ad->ad_nsegs, 
-	    off, prot, BUS_DMA_WAITOK));
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.56 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: autri.c,v 1.57 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.56 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.57 2019/05/08 13:40:18 isaki Exp $");
 
 #include "midi.h"
 
@@ -50,10 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.56 2019/03/16 12:09:58 isaki Exp $");
 #include <sys/bus.h>
 #include <sys/intr.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
@@ -111,10 +109,10 @@ static void autri_disable_loop_interrupt(void *);
 #endif
 
 static int	autri_open(void *, int);
-static int	autri_query_encoding(void *, struct audio_encoding *);
-static int	autri_set_params(void *, int, int, audio_params_t *,
-				 audio_params_t *, stream_filter_list_t *,
-				 stream_filter_list_t *);
+static int	autri_query_format(void *, audio_format_query_t *);
+static int	autri_set_format(void *, int,
+				 const audio_params_t *, const audio_params_t *,
+				 audio_filter_reg_t *, audio_filter_reg_t *);
 static int	autri_round_blocksize(void *, int, int, const audio_params_t *);
 static int	autri_trigger_output(void *, void *, void *, int,
 				     void (*)(void *), void *,
@@ -129,16 +127,14 @@ static int	autri_mixer_set_port(void *, mixer_ctrl_t *);
 static int	autri_mixer_get_port(void *, mixer_ctrl_t *);
 static void*	autri_malloc(void *, int, size_t);
 static void	autri_free(void *, void *, size_t);
-static size_t	autri_round_buffersize(void *, int, size_t);
-static paddr_t autri_mappage(void *, void *, off_t, int);
 static int	autri_get_props(void *);
 static int	autri_query_devinfo(void *, mixer_devinfo_t *);
 static void	autri_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if autri_hw_if = {
 	.open			= autri_open,
-	.query_encoding		= autri_query_encoding,
-	.set_params		= autri_set_params,
+	.query_format		= autri_query_format,
+	.set_format		= autri_set_format,
 	.round_blocksize	= autri_round_blocksize,
 	.halt_output		= autri_halt_output,
 	.halt_input		= autri_halt_input,
@@ -148,8 +144,6 @@ static const struct audio_hw_if autri_hw_if = {
 	.query_devinfo		= autri_query_devinfo,
 	.allocm			= autri_malloc,
 	.freem			= autri_free,
-	.round_buffersize	= autri_round_buffersize,
-	.mappage		= autri_mappage,
 	.get_props		= autri_get_props,
 	.trigger_output		= autri_trigger_output,
 	.trigger_input		= autri_trigger_input,
@@ -173,25 +167,23 @@ static const struct midi_hw_if autri_midi_hw_if = {
 };
 #endif
 
-#define AUTRI_NFORMATS	8
-static const struct audio_format autri_formats[AUTRI_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 0, {4000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+/*
+ * The hardware actually supports frequencies other than 48kHz.  But
+ * 48kHz is the basis frequency of this hardware and it's enough.
+ */
+static const struct audio_format autri_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 1,
+		.frequency	= { 48000 },
+	},
 };
+#define AUTRI_NFORMATS __arraycount(autri_formats)
 
 /*
  * register set/clear bit
@@ -904,80 +896,18 @@ autri_open(void *addr, int flags)
 }
 
 static int
-autri_query_encoding(void *addr, struct audio_encoding *fp)
+autri_query_format(void *addr, audio_format_query_t *afp)
 {
 
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 4:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 5:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 6:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	default:
-		return EINVAL;
-	}
-
-	return 0;
+	return audio_query_format(autri_formats, AUTRI_NFORMATS, afp);
 }
 
 static int
-autri_set_params(void *addr, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
-    stream_filter_list_t *rfil)
+autri_set_format(void *addr, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	if (setmode & AUMODE_RECORD) {
-		if (auconv_set_converter(autri_formats, AUTRI_NFORMATS,
-					 AUMODE_RECORD, rec, FALSE, rfil) < 0)
-			return EINVAL;
-	}
-	if (setmode & AUMODE_PLAY) {
-		if (auconv_set_converter(autri_formats, AUTRI_NFORMATS,
-					 AUMODE_PLAY, play, FALSE, pfil) < 0)
-			return EINVAL;
-	}
+
 	return 0;
 }
 
@@ -1126,30 +1056,6 @@ autri_find_dma(struct autri_softc *sc, void *addr)
 		continue;
 
 	return p;
-}
-
-static size_t
-autri_round_buffersize(void *addr, int direction, size_t size)
-{
-
-	return size;
-}
-
-static paddr_t
-autri_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct autri_softc *sc;
-	struct autri_dma *p;
-
-	if (off < 0)
-		return -1;
-	sc = addr;
-	p = autri_find_dma(sc, mem);
-	if (!p)
-		return -1;
-
-	return bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
-	    off, prot, BUS_DMA_WAITOK);
 }
 
 static int

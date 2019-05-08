@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.21 2011/11/23 23:07:35 jmcneill Exp $	*/
+/*	$NetBSD: azalia.h,v 1.22 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -584,7 +584,6 @@ typedef struct codec_t {
 	struct audio_format *formats;
 	int nformats;
 	size_t szformats;
-	struct audio_encoding_set *encodings;
 
 	uint32_t *extra;
 	size_t szextra;

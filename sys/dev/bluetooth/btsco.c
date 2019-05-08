@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.38 2019/03/16 12:09:57 isaki Exp $	*/
+/*	$NetBSD: btsco.c,v 1.39 2019/05/08 13:40:17 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.38 2019/03/16 12:09:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.39 2019/05/08 13:40:17 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -54,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.38 2019/03/16 12:09:57 isaki Exp $");
 #include <netbt/rfcomm.h>
 #include <netbt/sco.h>
 
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
-#include <dev/mulaw.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/bluetooth/btdev.h>
 #include <dev/bluetooth/btsco.h>
@@ -149,16 +147,16 @@ CFATTACH_DECL_NEW(btsco, sizeof(struct btsco_softc),
 /* audio(9) glue */
 static int btsco_open(void *, int);
 static void btsco_close(void *);
-static int btsco_query_encoding(void *, struct audio_encoding *);
-static int btsco_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-				stream_filter_list_t *, stream_filter_list_t *);
+static int btsco_query_format(void *, audio_format_query_t *);
+static int btsco_set_format(void *, int,
+				const audio_params_t *, const audio_params_t *,
+				audio_filter_reg_t *, audio_filter_reg_t *);
 static int btsco_round_blocksize(void *, int, int, const audio_params_t *);
 static int btsco_start_output(void *, void *, int, void (*)(void *), void *);
 static int btsco_start_input(void *, void *, int, void (*)(void *), void *);
 static int btsco_halt_output(void *);
 static int btsco_halt_input(void *);
 static int btsco_getdev(void *, struct audio_device *);
-static int btsco_setfd(void *, int);
 static int btsco_set_port(void *, mixer_ctrl_t *);
 static int btsco_get_port(void *, mixer_ctrl_t *);
 static int btsco_query_devinfo(void *, mixer_devinfo_t *);
@@ -171,15 +169,14 @@ static void btsco_get_locks(void *, kmutex_t **, kmutex_t **);
 static const struct audio_hw_if btsco_if = {
 	.open			= btsco_open,
 	.close			= btsco_close,
-	.query_encoding		= btsco_query_encoding,
-	.set_params		= btsco_set_params,
+	.query_format		= btsco_query_format,
+	.set_format		= btsco_set_format,
 	.round_blocksize	= btsco_round_blocksize,
 	.start_output		= btsco_start_output,
 	.start_input		= btsco_start_input,
 	.halt_output		= btsco_halt_output,
 	.halt_input		= btsco_halt_input,
 	.getdev			= btsco_getdev,
-	.setfd			= btsco_setfd,
 	.set_port		= btsco_set_port,
 	.get_port		= btsco_get_port,
 	.query_devinfo		= btsco_query_devinfo,
@@ -198,15 +195,14 @@ static const struct audio_device btsco_device = {
 
 /* Voice_Setting == 0x0060: 8000Hz, mono, 16-bit, slinear_le */
 static const struct audio_format btsco_format = {
-	NULL,				/* driver_data */
-	(AUMODE_PLAY | AUMODE_RECORD),	/* mode */
-	AUDIO_ENCODING_SLINEAR_LE,	/* encoding */
-	16,				/* validbits */
-	16,				/* precision */
-	1,				/* channels */
-	AUFMT_MONAURAL,			/* channel_mask */
-	1,				/* frequency_type */
-	{ 8000 }			/* frequency */
+	.mode		= AUMODE_PLAY | AUMODE_RECORD,
+	.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+	.validbits	= 16,
+	.precision	= 16,
+	.channels	= 1,
+	.channel_mask	= AUFMT_MONAURAL,
+	.frequency_type	= 1,
+	.frequency	= { 8000 },
 };
 
 /* bluetooth(9) glue for SCO */
@@ -687,58 +683,19 @@ btsco_close(void *hdl)
 }
 
 static int
-btsco_query_encoding(void *hdl, struct audio_encoding *ae)
+btsco_query_format(void *hdl, audio_format_query_t *afp)
 {
-/*	struct btsco_softc *sc = hdl;	*/
-	int err = 0;
 
-	switch (ae->index) {
-	case 0:
-		strcpy(ae->name, AudioEslinear_le);
-		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		ae->precision = 16;
-		ae->flags = 0;
-		break;
-
-	default:
-		err = EINVAL;
-	}
-
-	return err;
+	return audio_query_format(&btsco_format, 1, afp);
 }
 
 static int
-btsco_set_params(void *hdl, int setmode, int usemode,
-		audio_params_t *play, audio_params_t *rec,
-		stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+btsco_set_format(void *hdl, int setmode,
+		const audio_params_t *play, const audio_params_t *rec,
+		audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-/*	struct btsco_softc *sc = hdl;	*/
-	const struct audio_format *f;
-	int rv;
 
-	DPRINTF("setmode 0x%x usemode 0x%x\n", setmode, usemode);
-	DPRINTF("rate %d, precision %d, channels %d encoding %d\n",
-		play->sample_rate, play->precision, play->channels, play->encoding);
-
-	/*
-	 * If we had a list of formats, we could check the HCI_Voice_Setting
-	 * and select the appropriate one to use. Currently only one is
-	 * supported: 0x0060 == 8000Hz, mono, 16-bit, slinear_le
-	 */
-	f = &btsco_format;
-
-	if (setmode & AUMODE_PLAY) {
-		rv = auconv_set_converter(f, 1, AUMODE_PLAY, play, TRUE, pfil);
-		if (rv < 0)
-			return EINVAL;
-	}
-
-	if (setmode & AUMODE_RECORD) {
-		rv = auconv_set_converter(f, 1, AUMODE_RECORD, rec, TRUE, rfil);
-		if (rv < 0)
-			return EINVAL;
-	}
-
+	/* We have only one format so nothing to do here. */
 	return 0;
 }
 
@@ -884,14 +841,6 @@ btsco_getdev(void *hdl, struct audio_device *ret)
 {
 
 	*ret = btsco_device;
-	return 0;
-}
-
-static int
-btsco_setfd(void *hdl, int fd)
-{
-	DPRINTF("set %s duplex\n", fd ? "full" : "half");
-
 	return 0;
 }
 

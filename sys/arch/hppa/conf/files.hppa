@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.20 2019/04/16 06:44:17 skrll Exp $
+#	$NetBSD: files.hppa,v 1.21 2019/05/08 13:40:15 isaki Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -240,13 +240,13 @@ attach	gsckbc at gsc
 file	arch/hppa/gsc/gsckbc.c		gsckbc
 
 # PSB 2160-N based 8bit mono audio (705, 710, 745i/*, 747i/*)
-device	aone: audiobus, mulaw, auconv
+device	aone: audiobus
 attach	aone at gsc
 file	arch/hppa/gsc/aone.c		aone
 
 # CS4215/AD1849 based 16bit mono/stereo audio iface (most of others not w/ aone)
 # a.k.a. Audio Type 2 (optional beeper)
-device	harmony {} : audiobus, mulaw, auconv
+device	harmony {} : audiobus
 attach	harmony at gsc
 file	arch/hppa/gsc/harmony.c		harmony
 

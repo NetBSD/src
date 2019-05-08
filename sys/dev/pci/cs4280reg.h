@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280reg.h,v 1.7 2006/04/15 21:20:47 jmcneill Exp $	*/
+/*	$NetBSD: cs4280reg.h,v 1.8 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -216,14 +216,6 @@
 #define CS4280_FRMT	  0x30030	/* Frame Timer Register */
 #define	 FRMT_FTV	  0x00000adf
 
-
-#define CF_MONO		  0x01
-#define CF_8BIT		  0x02
-
-#define CF_16BIT_STEREO	  0x00
-#define CF_16BIT_MONO	  0x01
-#define CF_8BIT_STEREO	  0x02
-#define CF_8BIT_MONO	  0x03
 
 #define MIDI_BUSY_WAIT		100
 #define MIDI_BUSY_DELAY		100	/* Delay when UART is busy */

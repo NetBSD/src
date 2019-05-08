@@ -1,4 +1,4 @@
-# $NetBSD: files.usermode,v 1.18 2018/08/01 09:50:57 reinoud Exp $
+# $NetBSD: files.usermode,v 1.19 2019/05/08 13:40:16 isaki Exp $
 
 maxpartitions 8
 maxusers 8 16 64
@@ -30,7 +30,7 @@ device	veth { } : arp, ether, ifnet
 attach	veth at thunkbus
 file	arch/usermode/dev/if_veth.c		veth
 
-device	vaudio { } : audiobus, auconv, aurateconv, mulaw
+device	vaudio { } : audiobus
 attach	vaudio at thunkbus
 file	arch/usermode/dev/vaudio.c		vaudio
 

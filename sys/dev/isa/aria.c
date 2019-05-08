@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.39 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: aria.c,v 1.40 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 The NetBSD Foundation, Inc.
@@ -36,12 +36,7 @@
  *  o   Look into where aria_prometheus_kludge() belongs.
  *  o   Add some DMA code.  It accomplishes its goal by
  *      direct IO at the moment.
- *  o   Different programs should be able to open the device
- *      with O_RDONLY and O_WRONLY at the same time.  But I
- *      do not see support for this in /sys/dev/audio.c, so
  *	I cannot effectively code it.
- *  o   We should nicely deal with the cards that can do mu-law
- *      and A-law output.
  *  o   Rework the mixer interface.
  *       o   Deal with the lvls better.  We need to do better mapping
  *           between logarithmic scales and the one byte that
@@ -50,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.39 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.40 2019/05/08 13:40:18 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.39 2019/03/16 12:09:58 isaki Exp $");
 #include <sys/bus.h>
 #include <sys/audioio.h>
 
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
-#include <dev/mulaw.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/ariareg.h>
@@ -147,12 +140,13 @@ void	aria_do_kludge(bus_space_tag_t, bus_space_handle_t,
 		       u_short, u_short, u_short, u_short);
 void	aria_prometheus_kludge(struct isa_attach_args *, bus_space_handle_t);
 
-int	aria_query_encoding(void *, struct audio_encoding *);
+int	aria_query_format(void *, audio_format_query_t *);
 int	aria_round_blocksize(void *, int, int, const audio_params_t *);
 int	aria_speaker_ctl(void *, int);
 int	aria_commit_settings(void *);
-int	aria_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-			stream_filter_list_t *, stream_filter_list_t *);
+int	aria_set_format(void *, int,
+			const audio_params_t *, const audio_params_t *,
+			audio_filter_reg_t *, audio_filter_reg_t *);
 int	aria_get_props(void *);
 void	aria_get_locks(void *, kmutex_t **, kmutex_t **);
 
@@ -196,6 +190,24 @@ struct audio_device aria_device = {
 	"aria"
 };
 
+#define ARIA_FORMAT(enc, prec) \
+	{ \
+		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
+		.encoding	= (enc), \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= 2, \
+		.channel_mask	= AUFMT_STEREO, \
+		.frequency_type	= 6, \
+		.frequency	= { 7875, 11025, 15750, 22050, 31500, 44100 }, \
+	}
+/* XXX Some models seem to support mulaw/alaw.  */
+const struct audio_format aria_formats[] = {
+	ARIA_FORMAT(AUDIO_ENCODING_ULINEAR,     8),
+	ARIA_FORMAT(AUDIO_ENCODING_SLINEAR_LE, 16),
+};
+#define ARIA_NFORMATS __arraycount(aria_formats)
+
 /*
  * Define our interface to the higher level audio driver.
  */
@@ -203,8 +215,8 @@ struct audio_device aria_device = {
 const struct audio_hw_if aria_hw_if = {
 	.open			= ariaopen,
 	.close			= ariaclose,
-	.query_encoding		= aria_query_encoding,
-	.set_params		= aria_set_params,
+	.query_format		= aria_query_format,
+	.set_format		= aria_set_format,
 	.round_blocksize	= aria_round_blocksize,
 	.commit_settings	= aria_commit_settings,
 	.start_output		= aria_start_output,
@@ -500,68 +512,10 @@ aria_getdev(void *addr, struct audio_device *retp)
  */
 
 int
-aria_query_encoding(void *addr, struct audio_encoding *fp)
+aria_query_format(void *addr, audio_format_query_t *afp)
 {
-	struct aria_softc *sc;
 
-	sc = addr;
-	switch (fp->index) {
-		case 0:
-			strcpy(fp->name, AudioEmulaw);
-			fp->encoding = AUDIO_ENCODING_ULAW;
-			fp->precision = 8;
-			if ((ARIA_MODEL&sc->sc_hardware) == 0)
-				fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 1:
-			strcpy(fp->name, AudioEalaw);
-			fp->encoding = AUDIO_ENCODING_ALAW;
-			fp->precision = 8;
-			if ((ARIA_MODEL&sc->sc_hardware) == 0)
-				fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 2:
-			strcpy(fp->name, AudioEslinear);
-			fp->encoding = AUDIO_ENCODING_SLINEAR;
-			fp->precision = 8;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 3:
-			strcpy(fp->name, AudioEslinear_le);
-			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-			fp->precision = 16;
-			fp->flags = 0;
-			break;
-		case 4:
-			strcpy(fp->name, AudioEslinear_be);
-			fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-			fp->precision = 16;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 5:
-			strcpy(fp->name, AudioEulinear);
-			fp->encoding = AUDIO_ENCODING_ULINEAR;
-			fp->precision = 8;
-			fp->flags = 0;
-			break;
-		case 6:
-			strcpy(fp->name, AudioEulinear_le);
-			fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-			fp->precision = 16;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 7:
-			strcpy(fp->name, AudioEulinear_be);
-			fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-			fp->precision = 16;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		default:
-			return EINVAL;
-		/*NOTREACHED*/
-	}
-
-	return 0;
+	return audio_query_format(aria_formats, ARIA_NFORMATS, afp);
 }
 
 /*
@@ -588,94 +542,24 @@ int
 aria_get_props(void *addr)
 {
 
-	return AUDIO_PROP_FULLDUPLEX;
+	/* XXX This driver doesn't seem to be written as full duplex. */
+	return 0;
 }
 
 int
-aria_set_params(
-    void *addr,
-    int setmode,
-    int usemode,
-    audio_params_t *p,
-    audio_params_t *r,
-    stream_filter_list_t *pfil,
-    stream_filter_list_t *rfil
-)
+aria_set_format(void *addr, int setmode,
+    const audio_params_t *p, const audio_params_t *r,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	audio_params_t hw;
 	struct aria_softc *sc;
 
 	sc = addr;
-	switch(p->encoding) {
-	case AUDIO_ENCODING_ULAW:
-	case AUDIO_ENCODING_ALAW:
-	case AUDIO_ENCODING_SLINEAR:
-	case AUDIO_ENCODING_SLINEAR_LE:
-	case AUDIO_ENCODING_SLINEAR_BE:
-	case AUDIO_ENCODING_ULINEAR:
-	case AUDIO_ENCODING_ULINEAR_LE:
-	case AUDIO_ENCODING_ULINEAR_BE:
-		break;
-	default:
-		return EINVAL;
-	}
 
-	if (p->sample_rate <= 9450)
-		p->sample_rate = 7875;
-	else if (p->sample_rate <= 13387)
-		p->sample_rate = 11025;
-	else if (p->sample_rate <= 18900)
-		p->sample_rate = 15750;
-	else if (p->sample_rate <= 26775)
-		p->sample_rate = 22050;
-	else if (p->sample_rate <= 37800)
-		p->sample_rate = 31500;
-	else
-		p->sample_rate = 44100;
-
-	hw = *p;
+	/* *p and *r are the identical because !AUDIO_PROP_INDEPENDENT. */
 	sc->sc_encoding = p->encoding;
 	sc->sc_precision = p->precision;
 	sc->sc_chans = p->channels;
 	sc->sc_rate = p->sample_rate;
-
-	switch(p->encoding) {
-	case AUDIO_ENCODING_ULAW:
-		if ((ARIA_MODEL&sc->sc_hardware) == 0) {
-			hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-			pfil->append(pfil, mulaw_to_linear8, &hw);
-			rfil->append(rfil, linear8_to_mulaw, &hw);
-		}
-		break;
-	case AUDIO_ENCODING_ALAW:
-		if ((ARIA_MODEL&sc->sc_hardware) == 0) {
-			hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-			pfil->append(pfil, alaw_to_linear8, &hw);
-			rfil->append(rfil, linear8_to_alaw, &hw);
-		}
-		break;
-	case AUDIO_ENCODING_SLINEAR:
-		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-		pfil->append(pfil, change_sign8, &hw);
-		rfil->append(rfil, change_sign8, &hw);
-		break;
-	case AUDIO_ENCODING_ULINEAR_LE:
-		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-		pfil->append(pfil, change_sign16, &hw);
-		rfil->append(rfil, change_sign16, &hw);
-		break;
-	case AUDIO_ENCODING_SLINEAR_BE:
-		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-		pfil->append(pfil, swap_bytes, &hw);
-		rfil->append(rfil, swap_bytes, &hw);
-		break;
-	case AUDIO_ENCODING_ULINEAR_BE:
-		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-		pfil->append(pfil, swap_bytes_change_sign16, &hw);
-		rfil->append(rfil, swap_bytes_change_sign16, &hw);
-		break;
-	}
-
 	return 0;
 }
 
@@ -709,11 +593,6 @@ aria_commit_settings(void *addr)
 	case 31500: format = 0x10; samp = 0x20; break;
 	case 44100: format = 0x20; samp = 0x00; break;
 	default:    format = 0x00; samp = 0x40; break;/* XXX can we get here? */
-	}
-
-	if ((ARIA_MODEL&sc->sc_hardware) != 0) {
-		format |= sc->sc_encoding == AUDIO_ENCODING_ULAW ? 0x06 : 0x00;
-		format |= sc->sc_encoding == AUDIO_ENCODING_ALAW ? 0x08 : 0x00;
 	}
 
 	format |= (sc->sc_precision == 16) ? 0x02 : 0x00;

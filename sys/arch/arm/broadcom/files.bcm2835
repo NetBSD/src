@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.32 2018/10/18 09:01:52 skrll Exp $
+#	$NetBSD: files.bcm2835,v 1.33 2019/05/08 13:40:14 isaki Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -79,7 +79,7 @@ file	arch/arm/broadcom/bcm2835_genfb.c	bcmgenfb	needs-flag
 include "external/bsd/vchiq/conf/files.vchiq"
 
 # VC audio
-device	vcaudio: audiobus, auconv, mulaw, aurateconv, auvolconv
+device	vcaudio: audiobus
 attach	vcaudio at vchiqbus
 file	arch/arm/broadcom/bcm2835_vcaudio.c	vcaudio
 

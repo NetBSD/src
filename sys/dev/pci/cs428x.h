@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.16 2012/10/27 17:18:31 chs Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.17 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -118,7 +118,6 @@ struct cs428x_softc {
 	int	sc_ri;
 	struct	cs428x_dma *sc_rdma;
 	char	*sc_rbuf;
-	int	sc_rparam;		/* record format */
 	int	(*halt_input)(void *);
 	char	sc_rrun;		/* recording status */
 	int	sc_rrate;		/* recording sample rate */
@@ -184,7 +183,6 @@ int  cs428x_query_devinfo(void *, mixer_devinfo_t *);
 void *cs428x_malloc(void *, int, size_t);
 size_t cs428x_round_buffersize(void *, int, size_t);
 void cs428x_free(void *, void *, size_t);
-paddr_t cs428x_mappage(void *, void *, off_t, int);
 void cs428x_get_locks(void *, kmutex_t **, kmutex_t **);
 
 /* internal functions */

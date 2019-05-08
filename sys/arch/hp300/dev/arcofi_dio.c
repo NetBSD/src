@@ -1,4 +1,4 @@
-/*	$NetBSD: arcofi_dio.c,v 1.1 2014/08/24 08:17:44 tsutsui Exp $	*/
+/*	$NetBSD: arcofi_dio.c,v 1.2 2019/05/08 13:40:15 isaki Exp $	*/
 /*	$OpenBSD: arcofi_dio.c,v 1.1 2011/12/21 23:12:03 miod Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
 #include <sys/intr.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/ic/arcofivar.h>
 
 #include <hp300/dev/dioreg.h>
@@ -80,11 +80,6 @@ arcofi_dio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_sih = softint_establish(SOFTINT_AUDIO, arcofi_swintr, sc);
-	if (sc->sc_sih == NULL) {
-		aprint_error(": can't register soft interrupt\n");
-		return;
-	}
 	ipl = da->da_ipl;
 	dio_intr_establish(arcofi_hwintr, sc, ipl, IPL_AUDIO);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.15 2017/12/21 21:56:29 macallan Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.16 2019/05/08 13:40:19 isaki Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -41,6 +41,8 @@
 #define	DBRI_INT_BLOCKS		64
 
 #define DBRI_PIPE_MAX		32
+
+struct dbri_softc;
 
 enum direction {
 	in,
@@ -104,6 +106,7 @@ struct dbri_desc {
 	void		(*callback)(void *);
 	void		*callback_args;
 	void		*softint;
+	struct dbri_softc *sc;
 };
 
 struct dbri_dma {

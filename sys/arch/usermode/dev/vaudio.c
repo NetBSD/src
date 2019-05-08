@@ -1,4 +1,4 @@
-/* $NetBSD: vaudio.c,v 1.4 2014/03/26 08:29:41 christos Exp $ */
+/* $NetBSD: vaudio.c,v 1.5 2019/05/08 13:40:16 isaki Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vaudio.c,v 1.4 2014/03/26 08:29:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vaudio.c,v 1.5 2019/05/08 13:40:16 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -38,13 +38,21 @@ __KERNEL_RCSID(0, "$NetBSD: vaudio.c,v 1.4 2014/03/26 08:29:41 christos Exp $");
 #include <machine/mainbus.h>
 #include <machine/thunk.h>
 
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 static const struct audio_format vaudio_audio_formats[1] = {
-	{ NULL, AUMODE_PLAY|AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	  2, AUFMT_STEREO, 0, { 8000, 48000 } },
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 0,
+		.frequency	= { 8000, 48000 },
+	},
 };
+#define VAUDIO_NFORMATS __arraycount(vaudio_audio_formats)
 
 struct vaudio_stream {
 	struct vaudio_softc		*st_softc;
@@ -64,7 +72,6 @@ struct vaudio_softc {
 	void *				sc_audiodev;
 	const char *			sc_audiopath;
 	int				sc_audiofd;
-	struct audio_encoding_set *	sc_encodings;
 	audio_params_t			sc_pparam;
 	audio_params_t			sc_rparam;
 	kmutex_t			sc_lock;
@@ -82,13 +89,10 @@ static void	vaudio_intr(void *);
 static void	vaudio_softintr_play(void *);
 static void	vaudio_softintr_record(void *);
 
-static int	vaudio_open(void *, int);
-static void	vaudio_close(void *);
-static int	vaudio_drain(void *);
-static int	vaudio_query_encoding(void *, audio_encoding_t *);
-static int	vaudio_set_params(void *, int, int, audio_params_t *,
-				  audio_params_t *, stream_filter_list_t *,
-				  stream_filter_list_t *);
+static int	vaudio_query_format(void *, audio_format_query_t *);
+static int	vaudio_set_format(void *, int, const audio_params_t *,
+				  const audio_params_t *,
+				  audio_filter_reg_t *, audio_filter_reg_t *);
 static int	vaudio_commit_settings(void *);
 static int	vaudio_trigger_output(void *, void *, void *, int,
 				      void (*)(void *), void *,
@@ -109,11 +113,8 @@ CFATTACH_DECL_NEW(vaudio, sizeof(struct vaudio_softc),
     vaudio_match, vaudio_attach, NULL, NULL);
 
 static const struct audio_hw_if vaudio_hw_if = {
-	.open = vaudio_open,
-	.close = vaudio_close,
-	.drain = vaudio_drain,
-	.query_encoding = vaudio_query_encoding,
-	.set_params = vaudio_set_params,
+	.query_format = vaudio_query_format,
+	.set_format = vaudio_set_format,
 	.commit_settings = vaudio_commit_settings,
 	.halt_output = vaudio_halt_output,
 	.halt_input = vaudio_halt_input,
@@ -143,7 +144,6 @@ vaudio_attach(device_t parent, device_t self, void *opaque)
 {
 	struct vaudio_softc *sc = device_private(self);
 	struct thunkbus_attach_args *taa = opaque;
-	int error;
 
 	aprint_naive("\n");
 	aprint_normal(": Virtual Audio (device = %s)\n", taa->u.vaudio.device);
@@ -162,13 +162,6 @@ vaudio_attach(device_t parent, device_t self, void *opaque)
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
-
-	error = auconv_create_encodings(vaudio_audio_formats,
-	    __arraycount(vaudio_audio_formats), &sc->sc_encodings);
-	if (error) {
-		aprint_error_dev(self, "couldn't create encodings\n");
-		return;
-	}
 
 	sc->sc_play.st_softc = sc;
 	sc->sc_play.st_sih = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
@@ -251,63 +244,23 @@ vaudio_softintr_record(void *opaque)
 }
 
 static int
-vaudio_open(void *opaque, int flags)
+vaudio_query_format(void *opaque, audio_format_query_t *afp)
 {
-	return 0;
-}
 
-static void
-vaudio_close(void *opaque)
-{
+	return audio_query_format(vaudio_audio_formats, VAUDIO_NFORMATS, afp);
 }
 
 static int
-vaudio_drain(void *opaque)
+vaudio_set_format(void *opaque, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct vaudio_softc *sc = opaque;
 
-	return thunk_audio_drain(sc->sc_audiofd);
-}
-
-static int
-vaudio_query_encoding(void *opaque, audio_encoding_t *enc)
-{
-	struct vaudio_softc *sc = opaque;
-
-	return auconv_query_encoding(sc->sc_encodings, enc);
-}
-
-static int
-vaudio_set_params(void *opaque, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
-{
-	struct vaudio_softc *sc = opaque;
-	audio_params_t *p;
-	stream_filter_list_t *fil;
-	int mode, index;
-
-	for (mode = AUMODE_RECORD; mode != -1;
-	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
-			continue;
-		p = mode == AUMODE_PLAY ? play : rec;
-		fil = mode == AUMODE_PLAY ? pfil : rfil;
-		if (p == NULL)
-			continue;
-
-		index = auconv_set_converter(vaudio_audio_formats,
-		    __arraycount(vaudio_audio_formats), mode, p, TRUE, fil);
-		if (index < 0)
-			return EINVAL;
-		if (fil->req_size > 0)
-			p = &fil->filters[0].param;
-
-		if (mode == AUMODE_PLAY)
-			sc->sc_pparam = *p;
-		else
-			sc->sc_rparam = *p;
-	}
+	if ((setmode & AUMODE_PLAY))
+		sc->sc_pparam = *play;
+	if ((setmode & AUMODE_RECORD))
+		sc->sc_rparam = *rec;
 
 	return 0;
 }

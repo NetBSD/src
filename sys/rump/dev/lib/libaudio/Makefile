@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.6 2017/06/01 09:44:30 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.7 2019/05/08 13:40:19 isaki Exp $
 #
 
-.PATH:	${.CURDIR}/../../../../dev
+.PATH:	${.CURDIR}/../../../../dev/audio
 
 LIB=	rumpdev_audio
 COMMENT=Audio support (incl. /dev/audio and /dev/mixer)
 
 IOCONF=	AUDIO.ioconf
 
-SRCS=	audio.c auconv.c aurateconv.c auvolconv.c mulaw.c
+SRCS=	alaw.c audio.c linear.c mulaw.c
 SRCS+=	audio_component.c
 
-CPPFLAGS+=	-DNAUDIO=1 -DNAURATECONV=1 -DNMULAW=1
+CPPFLAGS+=	-DNAUDIO=1
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

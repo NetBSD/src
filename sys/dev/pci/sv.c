@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.54 2019/03/16 12:09:58 isaki Exp $ */
+/*      $NetBSD: sv.c,v 1.55 2019/05/08 13:40:19 isaki Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.54 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.55 2019/05/08 13:40:19 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,9 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.54 2019/03/16 12:09:58 isaki Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/i8237reg.h>
 #include <dev/pci/svreg.h>
@@ -141,10 +139,10 @@ static int	sv_freemem(struct sv_softc *, struct sv_dma *);
 static void	sv_init_mixer(struct sv_softc *);
 
 static int	sv_open(void *, int);
-static int	sv_query_encoding(void *, struct audio_encoding *);
-static int	sv_set_params(void *, int, int, audio_params_t *,
-			      audio_params_t *, stream_filter_list_t *,
-			      stream_filter_list_t *);
+static int	sv_query_format(void *, audio_format_query_t *);
+static int	sv_set_format(void *, int,
+			      const audio_params_t *, const audio_params_t *,
+			      audio_filter_reg_t *, audio_filter_reg_t *);
 static int	sv_round_blocksize(void *, int, int, const audio_params_t *);
 static int	sv_trigger_output(void *, void *, void *, int, void (*)(void *),
 				  void *, const audio_params_t *);
@@ -158,8 +156,6 @@ static int	sv_mixer_get_port(void *, mixer_ctrl_t *);
 static int	sv_query_devinfo(void *, mixer_devinfo_t *);
 static void *	sv_malloc(void *, int, size_t);
 static void	sv_free(void *, void *, size_t);
-static size_t	sv_round_buffersize(void *, int, size_t);
-static paddr_t	sv_mappage(void *, void *, off_t, int);
 static int	sv_get_props(void *);
 static void	sv_get_locks(void *, kmutex_t **, kmutex_t **);
 
@@ -169,8 +165,8 @@ void    sv_dumpregs(struct sv_softc *sc);
 
 static const struct audio_hw_if sv_hw_if = {
 	.open			= sv_open,
-	.query_encoding		= sv_query_encoding,
-	.set_params		= sv_set_params,
+	.query_format		= sv_query_format,
+	.set_format		= sv_set_format,
 	.round_blocksize	= sv_round_blocksize,
 	.halt_output		= sv_halt_output,
 	.halt_input		= sv_halt_input,
@@ -180,25 +176,25 @@ static const struct audio_hw_if sv_hw_if = {
 	.query_devinfo		= sv_query_devinfo,
 	.allocm			= sv_malloc,
 	.freem			= sv_free,
-	.round_buffersize	= sv_round_buffersize,
-	.mappage		= sv_mappage,
 	.get_props		= sv_get_props,
 	.trigger_output		= sv_trigger_output,
 	.trigger_input		= sv_trigger_input,
 	.get_locks		= sv_get_locks,
 };
 
-#define SV_NFORMATS	4
-static const struct audio_format sv_formats[SV_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {2000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {2000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 0, {2000, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 0, {2000, 48000}},
+static const struct audio_format sv_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 0,
+		.frequency	= { 2000, 48000 },
+	},
 };
+#define SV_NFORMATS	__arraycount(sv_formats)
 
 
 static void
@@ -575,105 +571,25 @@ sv_open(void *addr, int flags)
 }
 
 static int
-sv_query_encoding(void *addr, struct audio_encoding *fp)
+sv_query_format(void *addr, audio_format_query_t *afp)
 {
 
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		return 0;
-	case 1:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 2:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 3:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 4:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		return 0;
-	case 5:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 6:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	case 7:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
-	default:
-		return EINVAL;
-	}
+	return audio_query_format(sv_formats, SV_NFORMATS, afp);
 }
 
 static int
-sv_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
-    audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+sv_set_format(void *addr, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct sv_softc *sc;
-	audio_params_t *p;
 	uint32_t val;
 
 	sc = addr;
-	p = NULL;
-	/*
-	 * This device only has one clock, so make the sample rates match.
-	 */
-	if (play->sample_rate != rec->sample_rate &&
-	    usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
-		if (setmode == AUMODE_PLAY) {
-			rec->sample_rate = play->sample_rate;
-			setmode |= AUMODE_RECORD;
-		} else if (setmode == AUMODE_RECORD) {
-			play->sample_rate = rec->sample_rate;
-			setmode |= AUMODE_PLAY;
-		} else
-			return EINVAL;
-	}
 
-	if (setmode & AUMODE_RECORD) {
-		p = rec;
-		if (auconv_set_converter(sv_formats, SV_NFORMATS,
-					 AUMODE_RECORD, rec, FALSE, rfil) < 0)
-			return EINVAL;
-	}
-	if (setmode & AUMODE_PLAY) {
-		p = play;
-		if (auconv_set_converter(sv_formats, SV_NFORMATS,
-					 AUMODE_PLAY, play, FALSE, pfil) < 0)
-			return EINVAL;
-	}
+	/* *play and *rec are the identical because !AUDIO_PROP_INDEPENDENT. */
 
-	if (p == NULL)
-		return 0;
-
-	val = p->sample_rate * 65536 / 48000;
+	val = play->sample_rate * 65536 / 48000;
 	/*
 	 * If the sample rate is exactly 48 kHz, the fraction would overflow the
 	 * register, so we have to bias it.  This causes a little clock drift.
@@ -1433,34 +1349,10 @@ sv_free(void *addr, void *ptr, size_t size)
 	}
 }
 
-static size_t
-sv_round_buffersize(void *addr, int direction, size_t size)
-{
-
-	return size;
-}
-
-static paddr_t
-sv_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct sv_softc *sc;
-	struct sv_dma *p;
-
-	sc = addr;
-	if (off < 0)
-		return -1;
-	for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
-		continue;
-	if (p == NULL)
-		return -1;
-	return bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
-			       off, prot, BUS_DMA_WAITOK);
-}
-
 static int
 sv_get_props(void *addr)
 {
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_MMAP | AUDIO_PROP_FULLDUPLEX;
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.h,v 1.4 2017/10/07 21:53:16 jmcneill Exp $ */
+/* $NetBSD: sunxi_codec.h,v 1.5 2019/05/08 13:40:14 isaki Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,8 +30,7 @@
 #define _ARM_SUNXI_CODEC_H
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -112,7 +111,6 @@ struct sunxi_codec_softc {
 	kmutex_t		sc_intr_lock;
 
 	struct audio_format	sc_format;
-	struct audio_encoding_set *sc_encodings;
 
 	struct sunxi_codec_chan	sc_pchan;
 	struct sunxi_codec_chan	sc_rchan;

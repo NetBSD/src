@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.5 2019/03/16 12:09:56 isaki Exp $	*/
+/*	$NetBSD: harmony.c,v 1.6 2019/05/08 13:40:15 isaki Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -76,8 +76,7 @@
 #include <sys/rndsource.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -90,11 +89,11 @@
 #include <hppa/gsc/harmonyreg.h>
 #include <hppa/gsc/harmonyvar.h>
 
-int	harmony_open(void *, int);
 void	harmony_close(void *);
-int	harmony_query_encoding(void *, struct audio_encoding *);
-int	harmony_set_params(void *, int, int, audio_params_t *,
-    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
+int	harmony_query_format(void *, audio_format_query_t *);
+int	harmony_set_format(void *, int,
+    const audio_params_t *, const audio_params_t *,
+    audio_filter_reg_t *, audio_filter_reg_t *);
 int	harmony_round_blocksize(void *, int, int, const audio_params_t *);
 
 int	harmony_control_wait(struct harmony_softc *);
@@ -117,10 +116,9 @@ int	harmony_trigger_input(void *, void *, void *, int,
 void	harmony_get_locks(void *, kmutex_t **, kmutex_t **);
 
 const struct audio_hw_if harmony_sa_hw_if = {
-	.open			= harmony_open,
 	.close			= harmony_close,
-	.query_encoding		= harmony_query_encoding,
-	.set_params		= harmony_set_params,
+	.query_format		= harmony_query_format,
+	.set_format		= harmony_set_format,
 	.round_blocksize	= harmony_round_blocksize,
 	.commit_settings	= harmony_commit_settings,
 	.halt_output		= harmony_halt_output,
@@ -137,6 +135,25 @@ const struct audio_hw_if harmony_sa_hw_if = {
 	.trigger_input		= harmony_trigger_input,
 	.get_locks		= harmony_get_locks,
 };
+
+/* The HW actually supports more frequencies, but these looks enough. */
+#define HARMONY_FORMAT(enc, prec) \
+	{ \
+		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
+		.encoding	= (enc), \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= 2, \
+		.channel_mask	= AUFMT_STEREO, \
+		.frequency_type = 4, \
+		.frequency	= { 16000, 32000, 44100, 48000 }, \
+	}
+static struct audio_format harmony_formats[] = {
+	HARMONY_FORMAT(AUDIO_ENCODING_ULAW,        8),
+	HARMONY_FORMAT(AUDIO_ENCODING_ALAW,        8),
+	HARMONY_FORMAT(AUDIO_ENCODING_SLINEAR_BE, 16),
+};
+#define HARMONY_NFORMATS __arraycount(harmony_formats)
 
 int harmony_match(device_t, struct cfdata *, void *);
 void harmony_attach(device_t, device_t, void *);
@@ -298,9 +315,6 @@ harmony_attach(device_t parent, device_t self, void *aux)
 		printf(", teleshare");
 	aprint_normal("\n");
 
-	if ((rev & CS4215_REV_VER) >= CS4215_REV_VER_E)
-		sc->sc_hasulinear8 = 1;
-
 	strlcpy(sc->sc_audev.name, ga->ga_name, sizeof(sc->sc_audev.name));
 	snprintf(sc->sc_audev.version, sizeof sc->sc_audev.version,
 	    "%u.%u;%u", ga->ga_type.iodc_sv_rev,
@@ -404,185 +418,44 @@ harmony_intr_disable(struct harmony_softc *sc)
 	SYNC_REG(sc, HARMONY_DSTATUS, BUS_SPACE_BARRIER_WRITE);
 }
 
-int
-harmony_open(void *vsc, int flags)
-{
-	struct harmony_softc *sc;
-
-	sc = vsc;
-	if (sc->sc_open)
-		return EBUSY;
-	sc->sc_open = 1;
-	return 0;
-}
-
 void
 harmony_close(void *vsc)
 {
 	struct harmony_softc *sc;
 
 	sc = vsc;
-	harmony_halt_input(sc);
-	harmony_halt_output(sc);
 	harmony_intr_disable(sc);
-	sc->sc_open = 0;
 }
 
 int
-harmony_query_encoding(void *vsc, struct audio_encoding *fp)
+harmony_query_format(void *vsc, audio_format_query_t *afp)
 {
-	struct harmony_softc *sc;
-	int err;
 
-	sc = vsc;
-	err = 0;
-	switch (fp->index) {
-	case 0:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 4:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 5:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		if (sc->sc_hasulinear8) {
-			strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-			fp->encoding = AUDIO_ENCODING_ULINEAR;
-			fp->precision = 8;
-			fp->flags = 0;
-			break;
-		}
-		/*FALLTHROUGH*/
-	case 7:
-		if (sc->sc_hasulinear8) {
-			strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-			fp->encoding = AUDIO_ENCODING_SLINEAR;
-			fp->precision = 8;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		}
-		/*FALLTHROUGH*/
-	default:
-		err = EINVAL;
-	}
-	return err;
+	return audio_query_format(harmony_formats, HARMONY_NFORMATS, afp);
 }
 
 int
-harmony_set_params(void *vsc, int setmode, int usemode,
-    audio_params_t *p, audio_params_t *r,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+harmony_set_format(void *vsc, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+	audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	audio_params_t hw;
 	struct harmony_softc *sc;
 	uint32_t bits;
-	stream_filter_factory_t *pswcode = NULL;
-	stream_filter_factory_t *rswcode = NULL;
+	int rate;
 
 	sc = vsc;
-	/* assume p.equals(r) */
-	hw = *p;
-	switch (p->encoding) {
+
+	/* *play and *rec are the identical because !AUDIO_PROP_INDEPENDENT. */
+	switch (play->encoding) {
 	case AUDIO_ENCODING_ULAW:
-		if (p->precision != 8)
-			return EINVAL;
 		bits = CNTL_FORMAT_ULAW;
 		break;
 	case AUDIO_ENCODING_ALAW:
-		if (p->precision != 8)
-			return EINVAL;
 		bits = CNTL_FORMAT_ALAW;
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision == 8) {
-			bits = CNTL_FORMAT_ULINEAR8;
-			hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-			rswcode = pswcode = change_sign8;
-			break;
-		}
-		if (p->precision == 16) {
-			bits = CNTL_FORMAT_SLINEAR16BE;
-			break;
-		}
-		return EINVAL;
-	case AUDIO_ENCODING_ULINEAR:
-		if (p->precision != 8)
-			return EINVAL;
-		bits = CNTL_FORMAT_ULINEAR8;
+		bits = CNTL_FORMAT_SLINEAR16BE;
 		break;
-	case AUDIO_ENCODING_SLINEAR:
-		if (p->precision != 8)
-			return EINVAL;
-		bits = CNTL_FORMAT_ULINEAR8;
-		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-		rswcode = pswcode = change_sign8;
-		break;
-	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision == 8) {
-			bits = CNTL_FORMAT_ULINEAR8;
-			hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-			rswcode = pswcode = change_sign8;
-			break;
-		}
-		if (p->precision == 16) {
-			bits = CNTL_FORMAT_SLINEAR16BE;
-			hw.encoding = AUDIO_ENCODING_SLINEAR_BE;
-			rswcode = pswcode = swap_bytes;
-			break;
-		}
-		return EINVAL;
-	case AUDIO_ENCODING_ULINEAR_BE:
-		if (p->precision == 8) {
-			bits = CNTL_FORMAT_ULINEAR8;
-			break;
-		}
-		if (p->precision == 16) {
-			bits = CNTL_FORMAT_SLINEAR16BE;
-			rswcode = pswcode = change_sign16;
-			break;
-		}
-		return EINVAL;
-	case AUDIO_ENCODING_ULINEAR_LE:
-		if (p->precision == 8) {
-			bits = CNTL_FORMAT_ULINEAR8;
-			break;
-		}
-		if (p->precision == 16) {
-			bits = CNTL_FORMAT_SLINEAR16BE;
-			hw.encoding = AUDIO_ENCODING_SLINEAR_BE;
-			rswcode = pswcode = swap_bytes_change_sign16;
-			break;
-		}
-		return EINVAL;
 	default:
 		return EINVAL;
 	}
@@ -590,19 +463,11 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 	if (sc->sc_outputgain)
 		bits |= CNTL_OLB;
 
-	if (p->channels == 1)
-		bits |= CNTL_CHANS_MONO;
-	else if (p->channels == 2)
-		bits |= CNTL_CHANS_STEREO;
-	else
-		return EINVAL;
+	bits |= CNTL_CHANS_STEREO;
 
-	bits |= harmony_speed_bits(sc, &p->sample_rate);
-	if (pswcode != NULL)
-		pfil->append(pfil, pswcode, &hw);
-	if (rswcode != NULL)
-		rfil->append(rfil, rswcode, &hw);
-	sc->sc_cntlbits = bits;
+	/* XXX modify harmony_speed_bits() not to rewrite rate */
+	rate = play->sample_rate;
+	sc->sc_cntlbits |= harmony_speed_bits(sc, &rate);
 	sc->sc_need_commit = 1;
 
 	return 0;

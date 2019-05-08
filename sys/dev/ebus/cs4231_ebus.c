@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.38 2019/03/16 12:09:57 isaki Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.39 2019/05/08 13:40:17 isaki Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.38 2019/03/16 12:09:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.39 2019/05/08 13:40:17 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sparc_arch.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.38 2019/03/16 12:09:57 isaki Exp $
 #include <dev/ebus/ebusvar.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/cs4231reg.h>
@@ -98,8 +98,8 @@ static int	cs4231_ebus_halt_input(void *);
 const struct audio_hw_if audiocs_ebus_hw_if = {
 	.open			= cs4231_open,
 	.close			= cs4231_close,
-	.query_encoding		= ad1848_query_encoding,
-	.set_params		= ad1848_set_params,
+	.query_format		= ad1848_query_format,
+	.set_format		= ad1848_set_format,
 	.round_blocksize	= cs4231_ebus_round_blocksize,
 	.commit_settings	= ad1848_commit_settings,
 	.halt_output		= cs4231_ebus_halt_output,

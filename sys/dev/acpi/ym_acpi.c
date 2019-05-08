@@ -1,4 +1,4 @@
-/* $NetBSD: ym_acpi.c,v 1.15 2016/07/11 11:31:50 msaitoh Exp $ */
+/* $NetBSD: ym_acpi.c,v 1.16 2019/05/08 13:40:17 isaki Exp $ */
 
 /*
  * Copyright (c) 2006 Jasper Wallace <jasper@pointless.net>
@@ -29,14 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.15 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.16 2019/05/08 13:40:17 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <dev/acpi/acpivar.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/opl3sa3reg.h>
