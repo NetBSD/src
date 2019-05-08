@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.39 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: ciss.c,v 1.40 2019/05/08 05:40:51 cnst Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.39 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.40 2019/05/08 05:40:51 cnst Exp $");
 
 #include "bio.h"
 
@@ -1390,8 +1390,6 @@ ciss_ioctl(device_t dev, u_long cmd, void *addr)
 		}
 		break;
 
-	case BIOCALARM:
-	case BIOCSETSTATE:
 	default:
 		error = EINVAL;
 	}
