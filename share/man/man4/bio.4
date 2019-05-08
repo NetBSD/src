@@ -1,4 +1,4 @@
-.\"	$NetBSD: bio.4,v 1.14 2019/05/08 02:49:10 cnst Exp $
+.\"	$NetBSD: bio.4,v 1.15 2019/05/08 06:57:18 cnst Exp $
 .\"	$OpenBSD: bio.4,v 1.19 2006/09/20 22:22:37 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 7, 2019
+.Dd May 8, 2019
 .Dt BIO 4
 .Os
 .Sh NAME
@@ -99,6 +99,14 @@ but doesn't require the disks to be in volume sets, so this
 applies to any physical disk connected to the controller.
 .Pp
 Note: this ioctl might not be supported on all hardware.
+It is supported by
+.Xr arcmsr 4 ,
+.Xr ciss 4 ,
+.Xr mpt 4 .
+It is also supported by
+.Xr cac 4 ,
+but handled exactly the same as
+.Em BIOCDISK .
 .It Dv BIOCVOL
 Retrieve detailed information for the specified volume.
 Information returned can include status, size, RAID level, number of disks,
@@ -109,6 +117,11 @@ Supported states are: disable alarm, enable alarm, silence alarm, status and
 test alarm.
 .Pp
 Note: These options might not be supported on all hardware.
+It is supported by
+.Xr arcmsr 4 ,
+.Xr mfi 4
+and
+.Xr mfii 4 .
 .It Dv BIOCBLINK
 Blink an LED of the specified physical disk.
 Supported blink states are: blink LED, unblink LED and blink alarm LED.
@@ -118,18 +131,30 @@ Note: This option is only supported if the disk is governed by
 .\" or
 .\" .Xr safte 4
 and the hardware supports hardware blinking.
+It is supported by
+.Xr ciss 4 ,
+.Xr mfi 4
+and 
+.Xr mfii 4 .
 .It Dv BIOCSETSTATE
 Alter the state of specified physical disk.
 Supported states are: create/remove hot-spare, create/remove pass through
 disk, start/stop consistency check in a volume, online disk and offline disk.
 .Pp
 Note: These options might not be supported on all hardware.
+Some of these options are supported by
+.Xr arcmsr 4 ,
+.Xr mfi 4
+and
+.Xr mfii 4 .
 .It Dv BIOCVOLOPS
 For operations in volume sets.
 It's able to create and remove a volume
 set in a supported RAID controller.
 .Pp
 Note: this ioctl might not be supported on all hardware.
+It is supported by
+.Xr arcmsr 4 .
 .El
 .Sh FILES
 .Bl -tag -width /dev/bio -compact
