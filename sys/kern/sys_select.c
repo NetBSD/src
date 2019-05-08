@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.44 2019/05/07 20:10:21 christos Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.45 2019/05/08 00:55:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.44 2019/05/07 20:10:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.45 2019/05/08 00:55:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,7 +488,7 @@ pollcommon(register_t *retval, struct pollfd *u_fds, u_int nfds,
 	int		error;
 	size_t		ni;
 
-	if (nfds > curlwp->l_proc->p_rlimit[RLIMIT_NOFILE].rlim_max) {
+	if (nfds > curlwp->l_proc->p_rlimit[RLIMIT_NOFILE].rlim_max + 1000) {
 		/*
 		 * Prevent userland from causing over-allocation.
 		 * Raising the default limit too high can still cause
@@ -505,7 +505,11 @@ pollcommon(register_t *retval, struct pollfd *u_fds, u_int nfds,
 		 *
 		 * Using the max limit equivalent to sysctl
 		 * kern.maxfiles is the moral equivalent of OPEN_MAX
-		 * as specified by POSIX
+		 * as specified by POSIX.
+		 *
+		 * We add a slop of 1000 in case the resource limit was
+		 * changed after opening descriptors or the same descriptor
+		 * was specified more than once.
 		 */
 		return EINVAL;
 	}
