@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.69 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: eso.c,v 1.70 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.69 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.70 2019/05/08 13:40:18 isaki Exp $");
 
 #include "mpu.h"
 
@@ -78,10 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.69 2019/03/16 12:09:58 isaki Exp $");
 #include <dev/pci/pcivar.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/mpuvar.h>
 #include <dev/ic/i8237reg.h>
@@ -131,10 +128,10 @@ CFATTACH_DECL_NEW(eso, sizeof (struct eso_softc),
 static int eso_intr(void *);
 
 /* MI audio layer interface */
-static int	eso_query_encoding(void *, struct audio_encoding *);
-static int	eso_set_params(void *, int, int, audio_params_t *,
-		    audio_params_t *, stream_filter_list_t *,
-		    stream_filter_list_t *);
+static int	eso_query_format(void *, audio_format_query_t *);
+static int	eso_set_format(void *, int,
+		    const audio_params_t *, const audio_params_t *,
+		    audio_filter_reg_t *, audio_filter_reg_t *);
 static int	eso_round_blocksize(void *, int, int, const audio_params_t *);
 static int	eso_halt_output(void *);
 static int	eso_halt_input(void *);
@@ -145,7 +142,6 @@ static int	eso_query_devinfo(void *, mixer_devinfo_t *);
 static void *	eso_allocm(void *, int, size_t);
 static void	eso_freem(void *, void *, size_t);
 static size_t	eso_round_buffersize(void *, int, size_t);
-static paddr_t	eso_mappage(void *, void *, off_t, int);
 static int	eso_get_props(void *);
 static int	eso_trigger_output(void *, void *, void *, int,
 		    void (*)(void *), void *, const audio_params_t *);
@@ -154,8 +150,8 @@ static int	eso_trigger_input(void *, void *, void *, int,
 static void	eso_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if eso_hw_if = {
-	.query_encoding		= eso_query_encoding,
-	.set_params		= eso_set_params,
+	.query_format		= eso_query_format,
+	.set_format		= eso_set_format,
 	.round_blocksize	= eso_round_blocksize,
 	.halt_output		= eso_halt_output,
 	.halt_input		= eso_halt_input,
@@ -166,7 +162,6 @@ static const struct audio_hw_if eso_hw_if = {
 	.allocm			= eso_allocm,
 	.freem			= eso_freem,
 	.round_buffersize	= eso_round_buffersize,
-	.mappage		= eso_mappage,
 	.get_props		= eso_get_props,
 	.trigger_output		= eso_trigger_output,
 	.trigger_input		= eso_trigger_input,
@@ -179,25 +174,23 @@ static const char * const eso_rev2model[] = {
 	"ES1946 Revision E"
 };
 
-#define ESO_NFORMATS	8
-static const struct audio_format eso_formats[ESO_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {ESO_MINRATE, ESO_MAXRATE}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {ESO_MINRATE, ESO_MAXRATE}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {ESO_MINRATE, ESO_MAXRATE}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {ESO_MINRATE, ESO_MAXRATE}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 0, {ESO_MINRATE, ESO_MAXRATE}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 0, {ESO_MINRATE, ESO_MAXRATE}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 0, {ESO_MINRATE, ESO_MAXRATE}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 0, {ESO_MINRATE, ESO_MAXRATE}}
+/*
+ * XXX The HW actually supports more frequencies but I select a few
+ * typical frequencies which does not include rounding error.
+ */
+static const struct audio_format eso_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 4,
+		.frequency	= { 8000, 22050, 44100, 48000 },
+	},
 };
+#define ESO_NFORMATS	__arraycount(eso_formats)
 
 
 /*
@@ -697,76 +690,21 @@ eso_reset(struct eso_softc *sc)
 }
 
 static int
-eso_query_encoding(void *hdl, struct audio_encoding *fp)
+eso_query_format(void *hdl, audio_format_query_t *afp)
 {
 
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 4:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 5:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	default:
-		return EINVAL;
-	}
-
-	return 0;
+	return audio_query_format(eso_formats, ESO_NFORMATS, afp);
 }
 
 static int
-eso_set_params(void *hdl, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
-    stream_filter_list_t *rfil)
+eso_set_format(void *hdl, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct eso_softc *sc;
-	struct audio_params *p;
-	stream_filter_list_t *fil;
-	int mode, r[2], rd[2], ar[2], clk;
+	const struct audio_params *p;
+	int mode;
 	unsigned int srg, fltdiv;
-	int i;
 
 	sc = hdl;
 	for (mode = AUMODE_RECORD; mode != -1;
@@ -776,38 +714,23 @@ eso_set_params(void *hdl, int setmode, int usemode,
 
 		p = (mode == AUMODE_PLAY) ? play : rec;
 
-		if (p->sample_rate < ESO_MINRATE ||
-		    p->sample_rate > ESO_MAXRATE ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
+		/* We use a few fixed rate which doesn't have rounding error. */
+		switch (p->sample_rate) {
+		case  8000:
+		case 48000:
+			srg = (128 - ESO_CLK1 / p->sample_rate);
+			srg |= ESO_CLK1_SELECT;
+			break;
+		case 22050:
+		case 44100:
+			srg = (128 - ESO_CLK0 / p->sample_rate);
+			break;
+		default:
+			/* NOTREACHED */
 			return EINVAL;
-
-		/*
-		 * We'll compute both possible sample rate dividers and pick
-		 * the one with the least error.
-		 */
-#define ABS(x) ((x) < 0 ? -(x) : (x))
-		r[0] = ESO_CLK0 /
-		    (128 - (rd[0] = 128 - ESO_CLK0 / p->sample_rate));
-		r[1] = ESO_CLK1 /
-		    (128 - (rd[1] = 128 - ESO_CLK1 / p->sample_rate));
-
-		ar[0] = p->sample_rate - r[0];
-		ar[1] = p->sample_rate - r[1];
-		clk = ABS(ar[0]) > ABS(ar[1]) ? 1 : 0;
-		srg = rd[clk] | (clk == 1 ? ESO_CLK1_SELECT : 0x00);
-
+		}
 		/* Roll-off frequency of 87%, as in the ES1888 driver. */
-		fltdiv = 256 - 200279L / r[clk];
-
-		/* Update to reflect the possibly inexact rate. */
-		p->sample_rate = r[clk];
-
-		fil = (mode == AUMODE_PLAY) ? pfil : rfil;
-		i = auconv_set_converter(eso_formats, ESO_NFORMATS,
-					 mode, p, FALSE, fil);
-		if (i < 0)
-			return EINVAL;
+		fltdiv = 256 - 200279L / p->sample_rate;
 
 		mutex_spin_enter(&sc->sc_intr_lock);
 		if (mode == AUMODE_RECORD) {
@@ -822,8 +745,6 @@ eso_set_params(void *hdl, int setmode, int usemode,
 			eso_write_mixreg(sc, ESO_MIXREG_A2FLTDIV, fltdiv);
 		}
 		mutex_spin_exit(&sc->sc_intr_lock);
-#undef ABS
-
 	}
 
 	return 0;
@@ -863,13 +784,7 @@ eso_halt_output(void *hdl)
 	    ESO_IO_A2DMAM_DMAENB);
 
 	sc->sc_pintr = NULL;
-	mutex_exit(&sc->sc_lock);
 	error = cv_timedwait_sig(&sc->sc_pcv, &sc->sc_intr_lock, sc->sc_pdrain);
-	if (!mutex_tryenter(&sc->sc_lock)) {
-		mutex_spin_exit(&sc->sc_intr_lock);
-		mutex_enter(&sc->sc_lock);
-		mutex_spin_enter(&sc->sc_intr_lock);
-	}
 
 	/* Shut down DMA completely. */
 	eso_write_mixreg(sc, ESO_MIXREG_A2C1, 0);
@@ -895,13 +810,7 @@ eso_halt_input(void *hdl)
 	    DMA37MD_WRITE | DMA37MD_DEMAND);
 
 	sc->sc_rintr = NULL;
-	mutex_exit(&sc->sc_lock);
 	error = cv_timedwait_sig(&sc->sc_rcv, &sc->sc_intr_lock, sc->sc_rdrain);
-	if (!mutex_tryenter(&sc->sc_lock)) {
-		mutex_spin_exit(&sc->sc_intr_lock);
-		mutex_enter(&sc->sc_lock);
-		mutex_spin_enter(&sc->sc_intr_lock);
-	}
 
 	/* Shut down DMA completely. */
 	eso_write_ctlreg(sc, ESO_CTLREG_A1C2,
@@ -1709,21 +1618,6 @@ eso_round_buffersize(void *hdl, int direction, size_t bufsize)
 		bufsize = maxsize;
 
 	return bufsize;
-}
-
-static paddr_t
-eso_mappage(void *hdl, void *addr, off_t offs, int prot)
-{
-	struct eso_softc *sc;
-	struct eso_dma *ed;
-
-	sc = hdl;
-	if (offs < 0)
-		return -1;
-	ed = eso_kva2dma(sc, addr);
-
-	return bus_dmamem_mmap(ed->ed_dmat, ed->ed_segs, ed->ed_nsegs,
-	    offs, prot, BUS_DMA_WAITOK);
 }
 
 /* ARGSUSED */

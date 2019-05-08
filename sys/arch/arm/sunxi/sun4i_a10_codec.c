@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_codec.c,v 1.2 2017/08/27 22:22:32 jmcneill Exp $ */
+/* $NetBSD: sun4i_a10_codec.c,v 1.3 2019/05/08 13:40:14 isaki Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_a10_codec.c,v 1.2 2017/08/27 22:22:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_a10_codec.c,v 1.3 2019/05/08 13:40:14 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: sun4i_a10_codec.c,v 1.2 2017/08/27 22:22:32 jmcneill
 #include <sys/bitops.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <arm/sunxi/sunxi_codec.h>
 

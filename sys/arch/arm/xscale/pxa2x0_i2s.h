@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.h,v 1.5 2012/11/12 18:00:38 skrll Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.h,v 1.6 2019/05/08 13:40:14 isaki Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.h,v 1.3 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -59,11 +59,10 @@ void	pxa2x0_i2s_open(struct pxa2x0_i2s_softc *);
 void	pxa2x0_i2s_close(struct pxa2x0_i2s_softc *);
 void	pxa2x0_i2s_write(struct pxa2x0_i2s_softc *, uint32_t);
 
-void	pxa2x0_i2s_setspeed(struct pxa2x0_i2s_softc *, u_int *);
+void	pxa2x0_i2s_setspeed(struct pxa2x0_i2s_softc *, u_int);
 
 void *	pxa2x0_i2s_allocm(void *, int, size_t);
 void	pxa2x0_i2s_freem(void  *, void *, size_t);
-paddr_t	pxa2x0_i2s_mappage(void *, void *, off_t, int);
 int	pxa2x0_i2s_round_blocksize(void *, int, int, const struct audio_params *);
 size_t	pxa2x0_i2s_round_buffersize(void *, int, size_t);
 int	pxa2x0_i2s_halt_output(void *);

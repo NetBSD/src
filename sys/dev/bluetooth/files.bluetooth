@@ -1,4 +1,4 @@
-#	$NetBSD: files.bluetooth,v 1.15 2017/08/10 13:22:19 nat Exp $
+#	$NetBSD: files.bluetooth,v 1.16 2019/05/08 13:40:17 isaki Exp $
 #
 # Config file for machine independent Bluetooth devices
 
@@ -33,7 +33,7 @@ attach btmagic at bthub
 file dev/bluetooth/btmagic.c		btmagic
 
 # SCO Audio
-device btsco: bluetooth, audiobus, auconv, mulaw, aurateconv
+device btsco: bluetooth, audiobus
 attach btsco at bthub
 file dev/bluetooth/btsco.c		btsco
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.84 2018/08/27 22:22:16 dholland Exp $	*/
+/*	$NetBSD: file.h,v 1.85 2019/05/08 13:40:19 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ union file_data {
 	struct kqueue *fd_kq;		// DTYPE_KQUEUE
 	void *fd_data;			// DTYPE_MISC
 	struct rnd_ctx *fd_rndctx;	// DTYPE_MISC (rnd)
-	struct audio_chan *fd_audioctx;	// DTYPE_MISC (audio)
+	struct audio_file *fd_audioctx;	// DTYPE_MISC (audio)
 	struct pad_softc *fd_pad;	// DTYPE_MISC (pad)
 	int fd_devunit;			// DTYPE_MISC (tap)
 	struct bpf_d *fd_bpf;		// DTYPE_MISC (bpf)

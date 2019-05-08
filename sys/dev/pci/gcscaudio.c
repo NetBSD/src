@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.16 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.17 2019/05/08 13:40:19 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.16 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.17 2019/05/08 13:40:19 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,9 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.16 2018/12/09 11:14:02 jdolecek Exp 
 #include <dev/pci/pcivar.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
+
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
@@ -101,7 +100,6 @@ struct gcscaudio_softc {
 #define GCSCAUDIO_MAXFORMATS	4
 	struct audio_format sc_formats[GCSCAUDIO_MAXFORMATS];
 	int sc_nformats;
-	struct audio_encoding_set *sc_encodings;
 
 	/* AC97 codec */
 	struct ac97_host_if host_if;
@@ -129,10 +127,10 @@ static void gcscaudio_attach(device_t, device_t, void *);
 /* for audio_hw_if */
 static int gcscaudio_open(void *, int);
 static void gcscaudio_close(void *);
-static int gcscaudio_query_encoding(void *, struct audio_encoding *);
-static int gcscaudio_set_params(void *, int, int, audio_params_t *,
-                                audio_params_t *, stream_filter_list_t *,
-                                stream_filter_list_t *);
+static int gcscaudio_query_format(void *, audio_format_query_t *);
+static int gcscaudio_set_format(void *, int,
+                                const audio_params_t *, const audio_params_t *,
+                                audio_filter_reg_t *, audio_filter_reg_t *);
 static int gcscaudio_round_blocksize(void *, int, int, const audio_params_t *);
 static int gcscaudio_halt_output(void *);
 static int gcscaudio_halt_input(void *);
@@ -143,7 +141,6 @@ static int gcscaudio_query_devinfo(void *, mixer_devinfo_t *);
 static void *gcscaudio_malloc(void *, int, size_t);
 static void gcscaudio_free(void *, void *, size_t);
 static size_t gcscaudio_round_buffersize(void *, int, size_t);
-static paddr_t gcscaudio_mappage(void *, void *, off_t, int);
 static int gcscaudio_get_props(void *);
 static int gcscaudio_trigger_output(void *, void *, void *, int,
                                     void (*)(void *), void *,
@@ -166,9 +163,6 @@ static void gcscaudio_spdif_event_codec(void *, bool);
 static int gcscaudio_append_formats(struct gcscaudio_softc *,
                                     const struct audio_format *);
 static int gcscaudio_wait_ready_codec(struct gcscaudio_softc *sc, const char *);
-static int gcscaudio_set_params_ch(struct gcscaudio_softc *,
-                                   struct gcscaudio_softc_ch *, int,
-                                   audio_params_t *, stream_filter_list_t *);
 static int gcscaudio_allocate_dma(struct gcscaudio_softc *, size_t, void **,
                                   bus_dma_segment_t *, int, int *,
                                   bus_dmamap_t *);
@@ -187,9 +181,8 @@ static struct audio_device gcscaudio_device = {
 static const struct audio_hw_if gcscaudio_hw_if = {
 	.open			= gcscaudio_open,
 	.close			= gcscaudio_close,
-	.drain			= NULL,
-	.query_encoding		= gcscaudio_query_encoding,
-	.set_params		= gcscaudio_set_params,
+	.query_format		= gcscaudio_query_format,
+	.set_format		= gcscaudio_set_format,
 	.round_blocksize	= gcscaudio_round_blocksize,
 	.commit_settings	= NULL,
 	.init_output		= NULL,
@@ -200,14 +193,12 @@ static const struct audio_hw_if gcscaudio_hw_if = {
 	.halt_input		= gcscaudio_halt_input,
 	.speaker_ctl		= NULL,
 	.getdev			= gcscaudio_getdev,
-	.setfd			= NULL,
 	.set_port		= gcscaudio_set_port,
 	.get_port		= gcscaudio_get_port,
 	.query_devinfo		= gcscaudio_query_devinfo,
 	.allocm			= gcscaudio_malloc,
 	.freem			= gcscaudio_free,
 	.round_buffersize	= gcscaudio_round_buffersize,
-	.mappage		= gcscaudio_mappage,
 	.get_props		= gcscaudio_get_props,
 	.trigger_output		= gcscaudio_trigger_output,
 	.trigger_input		= gcscaudio_trigger_input,
@@ -215,20 +206,25 @@ static const struct audio_hw_if gcscaudio_hw_if = {
 	.get_locks		= gcscaudio_get_locks,
 };
 
-static const struct audio_format gcscaudio_formats_2ch = {
-	NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	2, AUFMT_STEREO, 0, {8000, 48000}
-};
+#define GCSCAUDIO_FORMAT(aumode, ch, chmask) \
+	{ \
+		.mode		= (aumode), \
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE, \
+		.validbits	= 16, \
+		.precision	= 16, \
+		.channels	= (ch), \
+		.channel_mask	= (chmask), \
+		.frequency_type	= 0, \
+		.frequency	= { 8000, 48000 }, \
+	}
+static const struct audio_format gcscaudio_formats_2ch =
+	GCSCAUDIO_FORMAT(AUMODE_PLAY | AUMODE_RECORD, 2, AUFMT_STEREO);
 
-static const struct audio_format gcscaudio_formats_4ch = {
-	NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	4, AUFMT_SURROUND4, 0, {8000, 48000}
-};
+static const struct audio_format gcscaudio_formats_4ch =
+	GCSCAUDIO_FORMAT(AUMODE_PLAY                , 4, AUFMT_SURROUND4);
 
-static const struct audio_format gcscaudio_formats_6ch = {
-	NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	6, AUFMT_DOLBY_5_1, 0, {8000, 48000}
-};
+static const struct audio_format gcscaudio_formats_6ch =
+	GCSCAUDIO_FORMAT(AUMODE_PLAY                , 6, AUFMT_DOLBY_5_1);
 
 static int
 gcscaudio_match(device_t parent, cfdata_t match, void *aux)
@@ -345,18 +341,9 @@ gcscaudio_attach(device_t parent, device_t self, void *aux)
 	}
 	mutex_exit(&sc->sc_lock);
 
-	if ((rc = auconv_create_encodings(sc->sc_formats, sc->sc_nformats,
-	    &sc->sc_encodings)) != 0) {
-		aprint_error_dev(self,
-		    "auconv_create_encoding: error=%d\n", rc);
-		goto attach_failure_codec;
-	}
-
 	audio_attach_mi(&gcscaudio_hw_if, sc, sc->sc_dev);
 	return;
 
-attach_failure_codec:
-	sc->codec_if->vtbl->detach(sc->codec_if);
 attach_failure_intr:
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 attach_failure_unmap:
@@ -501,87 +488,58 @@ gcscaudio_close(void *arg)
 }
 
 static int
-gcscaudio_query_encoding(void *arg, struct audio_encoding *fp)
+gcscaudio_query_format(void *arg, audio_format_query_t *afp)
 {
 	struct gcscaudio_softc *sc;
 
 	sc = (struct gcscaudio_softc *)arg;
-	return auconv_query_encoding(sc->sc_encodings, fp);
+	return audio_query_format(sc->sc_formats, sc->sc_nformats, afp);
 }
 
 static int
-gcscaudio_set_params_ch(struct gcscaudio_softc *sc,
-                        struct gcscaudio_softc_ch *ch, int mode,
-                        audio_params_t *p, stream_filter_list_t *fil)
-{
-	int error, idx;
-
-	if ((p->sample_rate < 8000) || (p->sample_rate > 48000))
-		return EINVAL;
-
-	if (p->precision != 8 && p->precision != 16)
-		return EINVAL;
-
-	if ((idx = auconv_set_converter(sc->sc_formats, sc->sc_nformats,
-	    mode, p, TRUE, fil)) < 0)
-		return EINVAL;
-
-	if (fil->req_size > 0)
-		p = &fil->filters[0].param;
-
-	if (mode == AUMODE_PLAY) {
-		if (!AC97_IS_FIXED_RATE(sc->codec_if)) {
-			/* setup rate of DAC */
-			if ((error = sc->codec_if->vtbl->set_rate(sc->codec_if,
-			    AC97_REG_PCM_FRONT_DAC_RATE, &p->sample_rate)) != 0)
-				return error;
-
-			/* additional rate of DAC for Surround */
-			if ((p->channels >= 4) &&
-			    (error = sc->codec_if->vtbl->set_rate(sc->codec_if,
-			    AC97_REG_PCM_SURR_DAC_RATE, &p->sample_rate)) != 0)
-				return error;
-
-			/* additional rate of DAC for LowFrequencyEffect */
-			if ((p->channels == 6) &&
-			    (error = sc->codec_if->vtbl->set_rate(sc->codec_if,
-			    AC97_REG_PCM_LFE_DAC_RATE, &p->sample_rate)) != 0)
-				return error;
-		}
-	}
-
-	if (mode == AUMODE_RECORD) {
-		if (!AC97_IS_FIXED_RATE(sc->codec_if)) {
-			/* setup rate of ADC */
-			if ((error = sc->codec_if->vtbl->set_rate(sc->codec_if,
-			    AC97_REG_PCM_LR_ADC_RATE, &p->sample_rate)) != 0)
-				return error;
-		}
-	}
-
-	ch->ch_params = *p;
-	return 0;
-}
-
-static int
-gcscaudio_set_params(void *arg, int setmode, int usemode,
-                     audio_params_t *play, audio_params_t *rec,
-                     stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+gcscaudio_set_format(void *arg, int setmode,
+                     const audio_params_t *play, const audio_params_t *rec,
+                     audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct gcscaudio_softc *sc;
+	int rate;
 	int error;
 
 	sc = (struct gcscaudio_softc *)arg;
 
 	if (setmode & AUMODE_PLAY) {
-		if ((error = gcscaudio_set_params_ch(sc, &sc->sc_play,
-		    AUMODE_PLAY, play, pfil)) != 0)
-			return error;
+		if (!AC97_IS_FIXED_RATE(sc->codec_if)) {
+			/* setup rate of DAC */
+			rate = play->sample_rate;
+			if ((error = sc->codec_if->vtbl->set_rate(sc->codec_if,
+			    AC97_REG_PCM_FRONT_DAC_RATE, &rate)) != 0)
+				return error;
+
+			/* additional rate of DAC for Surround */
+			rate = play->sample_rate;
+			if ((play->channels >= 4) &&
+			    (error = sc->codec_if->vtbl->set_rate(sc->codec_if,
+			    AC97_REG_PCM_SURR_DAC_RATE, &rate)) != 0)
+				return error;
+
+			/* additional rate of DAC for LowFrequencyEffect */
+			rate = play->sample_rate;
+			if ((play->channels == 6) &&
+			    (error = sc->codec_if->vtbl->set_rate(sc->codec_if,
+			    AC97_REG_PCM_LFE_DAC_RATE, &rate)) != 0)
+				return error;
+		}
+		sc->sc_play.ch_params = *rec;
 	}
 	if (setmode & AUMODE_RECORD) {
-		if ((error = gcscaudio_set_params_ch(sc, &sc->sc_rec,
-		    AUMODE_RECORD, rec, rfil)) != 0)
-			return error;
+		if (!AC97_IS_FIXED_RATE(sc->codec_if)) {
+			/* setup rate of ADC */
+			rate = rec->sample_rate;
+			if ((error = sc->codec_if->vtbl->set_rate(sc->codec_if,
+			    AC97_REG_PCM_LR_ADC_RATE, &rate)) != 0)
+				return error;
+		}
+		sc->sc_rec.ch_params = *rec;
 	}
 
 	return 0;
@@ -712,26 +670,6 @@ gcscaudio_free(void *arg, void *ptr, size_t size)
 			break;
 		}
 	}
-}
-
-static paddr_t
-gcscaudio_mappage(void *arg, void *mem, off_t off, int prot)
-{
-	struct gcscaudio_softc *sc;
-	struct gcscaudio_dma *p;
-
-	if (off < 0)
-		return -1;
-
-	sc = (struct gcscaudio_softc *)arg;
-	LIST_FOREACH(p, &sc->sc_dmalist, list) {
-		if (p->addr == mem) {
-			return bus_dmamem_mmap(sc->sc_dmat, p->segs, p->nseg,
-			    off, prot, BUS_DMA_WAITOK);
-		}
-	}
-
-	return -1;
 }
 
 static size_t

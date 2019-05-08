@@ -1,4 +1,4 @@
-/*	$NetBSD: harmonyvar.h,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: harmonyvar.h,v 1.2 2019/05/08 13:40:15 isaki Exp $	*/
 
 /*	$OpenBSD: harmonyvar.h,v 1.8 2003/08/15 13:25:53 mickey Exp $	*/
 
@@ -87,7 +87,6 @@ struct harmony_softc {
 	bus_dma_tag_t sc_dmat;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
-	int sc_open;
 	uint32_t sc_cntlbits;
 	int sc_need_commit;
 	int sc_playback_empty;
@@ -102,7 +101,7 @@ struct harmony_softc {
 	int sc_playing, sc_capturing;
 	struct harmony_channel sc_playback, sc_capture;
 	struct harmony_volume sc_monitor_lvl, sc_input_lvl, sc_output_lvl;
-	int sc_in_port, sc_out_port, sc_hasulinear8;
+	int sc_in_port, sc_out_port;
 	int sc_micpreamp, sc_ov, sc_outputgain;
 	int sc_teleshare;
 
