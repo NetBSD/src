@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.35 2018/02/05 22:14:26 mrg Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.36 2019/05/08 06:32:01 cnst Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.35 2018/02/05 22:14:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.36 2019/05/08 06:32:01 cnst Exp $");
 
 #include "bio.h"
 
@@ -113,7 +113,6 @@ static int	mpt_bio_ioctl_inq(mpt_softc_t *, struct bioc_inq *);
 static int	mpt_bio_ioctl_vol(mpt_softc_t *, struct bioc_vol *);
 static int	mpt_bio_ioctl_disk(mpt_softc_t *, struct bioc_disk *);
 static int	mpt_bio_ioctl_disk_novol(mpt_softc_t *, struct bioc_disk *);
-static int	mpt_bio_ioctl_setstate(mpt_softc_t *, struct bioc_setstate *);
 #endif
 
 void
@@ -1781,9 +1780,6 @@ mpt_bio_ioctl(device_t dev, u_long cmd, void *addr)
 	case BIOCDISK:
 		error = mpt_bio_ioctl_disk(mpt, addr);
 		break;
-	case BIOCSETSTATE:
-		error = mpt_bio_ioctl_setstate(mpt, addr);
-		break;
 	default:
 		error = EINVAL;
 		break;
@@ -2068,12 +2064,6 @@ mpt_bio_ioctl_disk(mpt_softc_t *mpt, struct bioc_disk *bd)
 fail:
 	if (ioc2) free(ioc2, M_DEVBUF);
 	return EINVAL;
-}
-
-static int
-mpt_bio_ioctl_setstate(mpt_softc_t *mpt, struct bioc_setstate *bs)
-{
-	return ENOTTY;
 }
 #endif
 
