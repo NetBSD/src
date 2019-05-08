@@ -1,16 +1,16 @@
-/* $NetBSD: joy_ess.c,v 1.6 2011/11/23 23:07:32 jmcneill Exp $ */
+/* $NetBSD: joy_ess.c,v 1.7 2019/05/08 13:40:18 isaki Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_ess.c,v 1.6 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_ess.c,v 1.7 2019/05/08 13:40:18 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
 #include <sys/bus.h>
 
+#include <dev/audio/audio_if.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/essvar.h>
 #include <dev/ic/joyvar.h>

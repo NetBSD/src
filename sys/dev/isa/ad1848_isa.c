@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.38 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.39 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.38 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.39 2019/05/08 13:40:18 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,8 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.38 2011/11/23 23:07:32 jmcneill Exp
 #include <sys/audioio.h>
 #include <sys/malloc.h>
 
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -776,12 +775,6 @@ ad1848_isa_round_buffersize(void *addr, int direction, size_t size)
 	if (size > maxsize)
 		size = maxsize;
 	return size;
-}
-
-paddr_t
-ad1848_isa_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	return isa_mappage(mem, off, prot);
 }
 
 int

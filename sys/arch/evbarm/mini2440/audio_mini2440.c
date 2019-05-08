@@ -36,7 +36,7 @@
 
 #include <sys/bus.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 
 #include <dev/ic/uda1341var.h>
@@ -66,14 +66,14 @@ struct uda_softc {
 	s3c2440_i2s_buf_t	sc_rec_buf;
 
 	void			*sc_i2s_handle;
-
-	bool			sc_open;
 };
 
 int	uda_ssio_open(void *, int);
 void	uda_ssio_close(void *);
-int	uda_ssio_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-		       stream_filter_list_t *, stream_filter_list_t *);
+int	uda_ssio_query_format(void *, audio_format_query_t *);
+int	uda_ssio_set_format(void *, int,
+		       const audio_params_t *, const audio_params_t *,
+		       audio_filter_reg_t *, audio_filter_reg_t *);
 int	uda_ssio_round_blocksize(void *, int, int, const audio_params_t *);
 int	uda_ssio_start_output(void *, void *, int, void (*)(void *),
 			      void *);
@@ -91,8 +91,8 @@ void	uda_ssio_get_locks(void *, kmutex_t**, kmutex_t**);
 struct audio_hw_if uda1341_hw_if = {
 	.open			= uda_ssio_open,
 	.close			= uda_ssio_close,
-	.query_encoding		= uda1341_query_encodings,
-	.set_params		= uda_ssio_set_params,
+	.query_format		= uda_ssio_query_format,
+	.set_format		= uda_ssio_set_format,
 	.round_blocksize	= uda_ssio_round_blocksize,
 	.start_output		= uda_ssio_start_output,
 	.start_input		= uda_ssio_start_input,
@@ -114,6 +114,21 @@ static struct audio_device uda1341_device = {
 	"0.1",
 	"uda_ssio"
 };
+
+static const struct audio_format uda_ssio_formats[] =
+{
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 6,
+		.frequency	= { 8000, 11025, 22050, 32000, 44100, 48000 },
+	}
+};
+#define UDA_SSIO_NFORMATS __arraycount(uda_ssio_formats)
 
 void uda_ssio_l3_write(void *,int mode, int value);
 
@@ -144,7 +159,6 @@ uda_ssio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_play_buf = NULL;
 	sc->sc_i2s_handle = aa->i2sa_handle;
-	sc->sc_open = false;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
@@ -194,14 +208,9 @@ uda_ssio_attach(device_t parent, device_t self, void *aux)
 int
 uda_ssio_open(void *handle, int flags)
 {
-	struct uda1341_softc *uc = handle;
-	struct uda_softc *sc = uc->parent;
 	int retval;
 
 	DPRINTF(("%s\n", __func__));
-
-	if (sc->sc_open)
-		return EBUSY;
 
 	/* We only support write operations */
 	if (!(flags & FREAD) && !(flags & FWRITE))
@@ -216,71 +225,41 @@ uda_ssio_open(void *handle, int flags)
 		return retval;
 	}
 
-	sc->sc_open = true;
-
 	return 0; /* SUCCESS */
 }
 
 void
 uda_ssio_close(void *handle)
 {
-	struct uda1341_softc *uc = handle;
-	struct uda_softc *sc = uc->parent;
+
 	DPRINTF(("%s\n", __func__));
 
 	uda1341_close(handle);
-	sc->sc_open = false;
 }
 
 int
-uda_ssio_set_params(void *handle, int setmode, int usemode,
-		    audio_params_t *play, audio_params_t *rec,
-		    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+uda_ssio_query_format(void *handle, audio_format_query_t *afp)
+{
+
+	return audio_query_format(uda_ssio_formats, UDA_SSIO_NFORMATS, afp);
+}
+
+int
+uda_ssio_set_format(void *handle, int setmode,
+		    const audio_params_t *play, const audio_params_t *rec,
+		    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct uda1341_softc *uc = handle;
 	struct uda_softc *sc = uc->parent;
-	const struct audio_format *selected_format;
-	audio_params_t *params;
-	stream_filter_list_t *fil;
 	int retval;
 
 	DPRINTF(("%s: setmode: %d\n", __func__, setmode));
-	DPRINTF(("%s: usemode: %d\n", __func__, usemode));
 
-	if (setmode == 0)
-		setmode = usemode;
-
-	if (setmode & AUMODE_PLAY) {
-		params = play;
-		fil = pfil;
-	} else if (setmode == AUMODE_RECORD) {
-		params = rec;
-		fil = rfil;
-	} else {
-		return EINVAL;
-	}
+	/* *play and *rec are the identical because !AUDIO_PROP_INDEPENDENT. */
 
 	DPRINTF(("%s: %dHz, encoding: %d, precision: %d, channels: %d\n",
-		 __func__, params->sample_rate, params->encoding, play->precision,
-		 params->channels));
-
-	if (params->sample_rate != 8000 &&
-	    params->sample_rate != 11025 &&
-	    params->sample_rate != 22050 &&
-	    params->sample_rate != 32000 &&
-	    params->sample_rate != 44100 &&
-	    params->sample_rate != 48000) {
-		return EINVAL;
-	}
-
-	retval = auconv_set_converter(uda1341_formats, UDA1341_NFORMATS,
-				    setmode, params, true, fil);
-	if (retval < 0) {
-		printf("Could not find valid format\n");
-		return EINVAL;
-	}
-
-	selected_format = &uda1341_formats[retval];
+		 __func__, play->sample_rate, play->encoding, play->precision,
+		 play->channels));
 
 	if (setmode == AUMODE_PLAY) {
 		s3c2440_i2s_set_direction(sc->sc_i2s_handle,
@@ -290,12 +269,11 @@ uda_ssio_set_params(void *handle, int setmode, int usemode,
 					  S3C2440_I2S_RECEIVE);
 	}
 
-	s3c2440_i2s_set_sample_rate(sc->sc_i2s_handle, params->sample_rate);
-	s3c2440_i2s_set_sample_width(sc->sc_i2s_handle,
-				     selected_format->precision);
+	s3c2440_i2s_set_sample_rate(sc->sc_i2s_handle, play->sample_rate);
+	s3c2440_i2s_set_sample_width(sc->sc_i2s_handle, 16);
 
 	/* It is vital that sc_system_clock is set PRIOR to calling
-	   uda1341_set_params. */
+	   uda1341_set_format. */
 	switch (s3c2440_i2s_get_master_clock(sc->sc_i2s_handle)) {
 	case 384:
 		uc->sc_system_clock = UDA1341_CLOCK_384;
@@ -307,8 +285,7 @@ uda_ssio_set_params(void *handle, int setmode, int usemode,
 		return EINVAL;
 	}
 
-	retval = uda1341_set_params(handle, setmode, usemode,
-				    play, rec, pfil, rfil);
+	retval = uda1341_set_format(handle, setmode, play, rec, pfil, rfil);
 	if (retval != 0) {
 		return retval;
 	}

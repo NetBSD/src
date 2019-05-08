@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_acodec.c,v 1.8 2018/05/16 10:23:43 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_acodec.c,v 1.9 2019/05/08 13:40:14 isaki Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.8 2018/05/16 10:23:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.9 2019/05/08 13:40:14 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: sun50i_a64_acodec.c,v 1.8 2018/05/16 10:23:43 jmcnei
 #include <sys/kmem.h>
 #include <sys/bitops.h>
 
-#include <dev/audio_dai.h>
+#include <dev/audio/audio_dai.h>
 
 #include <dev/fdt/fdtvar.h>
 

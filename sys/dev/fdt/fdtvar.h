@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.50 2019/02/27 17:01:57 jakllsch Exp $ */
+/* $NetBSD: fdtvar.h,v 1.51 2019/05/08 13:40:18 isaki Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -42,7 +42,7 @@
 #include "audio.h"
 #endif
 #if NAUDIO > 0
-#include <dev/audio_dai.h>
+#include <dev/audio/audio_dai.h>
 #else
 typedef void *audio_dai_tag_t;
 #endif

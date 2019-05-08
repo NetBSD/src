@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.91 2018/08/01 09:44:31 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.92 2019/05/08 13:40:16 isaki Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.91 2018/08/01 09:44:31 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.92 2019/05/08 13:40:16 isaki Exp $");
 #endif
 
 #define _KMEMUSER
@@ -909,12 +909,6 @@ int
 thunk_audio_close(int fd)
 {
 	return close(fd);
-}
-
-int
-thunk_audio_drain(int fd)
-{
-	return ioctl(fd, AUDIO_DRAIN, 0);
 }
 
 int

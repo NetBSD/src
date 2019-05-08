@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.24 2012/04/09 10:18:16 plunky Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.25 2019/05/08 13:40:17 isaki Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.24 2012/04/09 10:18:16 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.25 2019/05/08 13:40:17 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.24 2012/04/09 10:18:16 plunky Exp $");
 #include <sys/midiio.h>
 #include <sys/device.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
 #include <dev/midivar.h>
 #include <dev/midisynvar.h>

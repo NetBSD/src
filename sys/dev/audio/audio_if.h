@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.70 2014/11/18 01:50:12 jmcneill Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.2 2019/05/08 13:40:17 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -34,8 +34,8 @@
  *
  */
 
-#ifndef _SYS_DEV_AUDIO_IF_H_
-#define _SYS_DEV_AUDIO_IF_H_
+#ifndef _SYS_DEV_AUDIO_AUDIO_IF_H_
+#define _SYS_DEV_AUDIO_AUDIO_IF_H_
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -68,128 +68,20 @@ typedef struct audio_params {
 	u_int	channels;	/* mono(1), stereo(2) */
 } audio_params_t;
 
-/* The default audio mode: 8 kHz mono mu-law */
-extern const struct audio_params audio_default;
+#define	AUFMT_INVALIDATE(fmt)	(fmt)->mode |= 0x80000000
+#define	AUFMT_VALIDATE(fmt)	(fmt)->mode &= 0x7fffffff
+#define	AUFMT_IS_VALID(fmt)	(((fmt)->mode & 0x80000000) == 0)
 
-/**
- * audio stream buffer
- */
-typedef struct audio_stream {
-	size_t bufsize;		/* allocated memory */
-	uint8_t *start;		/* start of buffer area */
-	uint8_t *end;		/* end of valid buffer area */
-	uint8_t *inp;		/* address to be written next */
-	const uint8_t *outp;	/* address to be read next */
-	int used;		/* valid data size in this stream */
-	audio_params_t param;	/* represents this stream */
-	bool loop;
-} audio_stream_t;
-
-static __inline int
-audio_stream_get_space(const audio_stream_t *s)
-{
-	if (s)
-		return (s->end - s->start) - s->used;
-	return 0;
-}
-
-static __inline int
-audio_stream_get_used(const audio_stream_t *s)
-{
-	return s ? s->used : 0;
-}
-
-static __inline uint8_t *
-audio_stream_add_inp(audio_stream_t *s, uint8_t *v, int diff)
-{
-	s->used += diff;
-	v += diff;
-	if (v >= s->end)
-		v -= s->end - s->start;
-	return v;
-}
-
-static __inline const uint8_t *
-audio_stream_add_outp(audio_stream_t *s, const uint8_t *v, int diff)
-{
-	s->used -= diff;
-	v += diff;
-	if (v >= s->end)
-		v -= s->end - s->start;
-	return v;
-}
-
-/**
- * an interface to fill a audio stream buffer
- */
-typedef struct stream_fetcher {
-	int (*fetch_to)(struct audio_softc *, struct stream_fetcher *,
-            audio_stream_t *, int);
-} stream_fetcher_t;
-
-/**
- * audio stream filter.
- * This must be an extension of stream_fetcher_t.
- */
-typedef struct stream_filter {
-/* public: */
-	stream_fetcher_t base;
-	void (*dtor)(struct stream_filter *);
-	void (*set_fetcher)(struct stream_filter *, stream_fetcher_t *);
-	void (*set_inputbuffer)(struct stream_filter *, audio_stream_t *);
-/* private: */
-	stream_fetcher_t *prev;
-	audio_stream_t *src;
-} stream_filter_t;
-
-/**
- * factory method for stream_filter_t
- */
-typedef stream_filter_t *stream_filter_factory_t(struct audio_softc *,
-	const audio_params_t *, const audio_params_t *);
-
-/**
- * filter pipeline request
- *
- * filters[0] is the first filter for playing or the last filter for recording.
- * The audio_params_t instance for the hardware is filters[0].param.
- */
-#ifndef AUDIO_MAX_FILTERS
-# define AUDIO_MAX_FILTERS	8
-#endif
-typedef struct stream_filter_list {
-	void (*append)(struct stream_filter_list *, stream_filter_factory_t,
-		       const audio_params_t *);
-	void (*prepend)(struct stream_filter_list *, stream_filter_factory_t,
-			const audio_params_t *);
-	void (*set)(struct stream_filter_list *, int, stream_filter_factory_t,
-		    const audio_params_t *);
-	int req_size;
-	struct stream_filter_req {
-		stream_filter_factory_t *factory;
-		audio_params_t param; /* from-param for recording,
-					 to-param for playing */
-	} filters[AUDIO_MAX_FILTERS];
-} stream_filter_list_t;
+#include <dev/audio/audiofil.h>
 
 struct audio_hw_if {
 	int	(*open)(void *, int);	/* open hardware */
 	void	(*close)(void *);	/* close hardware */
-	int	(*drain)(void *);	/* Optional: drain buffers */
 
-	/* Encoding. */
-	/* XXX should we have separate in/out? */
-	int	(*query_encoding)(void *, audio_encoding_t *);
-
-	/* Set the audio encoding parameters (record and play).
-	 * Return 0 on success, or an error code if the
-	 * requested parameters are impossible.
-	 * The values in the params struct may be changed (e.g. rounding
-	 * to the nearest sample rate.)
-	 */
-	int	(*set_params)(void *, int, int, audio_params_t *,
-		    audio_params_t *, stream_filter_list_t *,
-		    stream_filter_list_t *);
+	int	(*query_format)(void *, audio_format_query_t *);
+	int	(*set_format)(void *, int,
+		    const audio_params_t *, const audio_params_t *,
+		    audio_filter_reg_t *, audio_filter_reg_t *);
 
 	/* Hardware may have some say in the blocksize to choose */
 	int	(*round_blocksize)(void *, int, int, const audio_params_t *);
@@ -219,7 +111,6 @@ struct audio_hw_if {
 #define SPKR_OFF	0
 
 	int	(*getdev)(void *, struct audio_device *);
-	int	(*setfd)(void *, int);
 
 	/* Mixer (in/out ports) */
 	int	(*set_port)(void *, mixer_ctrl_t *);
@@ -231,7 +122,6 @@ struct audio_hw_if {
 	void	*(*allocm)(void *, int, size_t);
 	void	(*freem)(void *, void *, size_t);
 	size_t	(*round_buffersize)(void *, int, size_t);
-	paddr_t	(*mappage)(void *, void *, off_t, int);
 
 	int	(*get_props)(void *); /* device properties */
 
@@ -258,8 +148,11 @@ struct audio_attach_args {
 device_t audio_attach_mi(const struct audio_hw_if *, void *, device_t);
 int	audioprint(void *, const char *);
 
-/* Get the hw device from an audio softc */
-device_t audio_get_device(struct audio_softc *);
+extern int audio_query_format(const struct audio_format *, int,
+	audio_format_query_t *);
+extern int audio_indexof_format(const struct audio_format *, int, int,
+	const audio_params_t *);
+extern const char *audio_encoding_name(int);
 
 /* Device identity flags */
 #define SOUND_DEVICE		0
@@ -281,5 +174,5 @@ device_t audio_get_device(struct audio_softc *);
  */
 #define AUDIO_MAX_CHANNELS	12
 
-#endif /* _SYS_DEV_AUDIO_IF_H_ */
+#endif /* _SYS_DEV_AUDIO_AUDIO_IF_H_ */
 

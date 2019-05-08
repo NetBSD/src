@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.39 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.40 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.39 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.40 2019/05/08 13:40:18 isaki Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -44,9 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.39 2019/03/16 12:09:58 isaki Exp $"
 #include <sys/bus.h>
 #include <sys/audioio.h>
 
-#include <dev/audio_if.h>
-#include <dev/audiovar.h>
-#include <dev/mulaw.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -66,8 +64,8 @@ static int     gus_isapnp_open(void *, int);
 static const struct audio_hw_if guspnp_hw_if = {
 	.open			= gus_isapnp_open,
 	.close			= iwclose,
-	.query_encoding		= iw_query_encoding,
-	.set_params		= iw_set_params,
+	.query_format		= iw_query_format,
+	.set_format		= iw_audio_set_format,
 	.round_blocksize	= iw_round_blocksize,
 	.commit_settings	= iw_commit_settings,
 	.init_output		= iw_init_output,
@@ -78,14 +76,12 @@ static const struct audio_hw_if guspnp_hw_if = {
 	.halt_input		= iw_halt_input,
 	.speaker_ctl		= iw_speaker_ctl,
 	.getdev			= iw_getdev,
-	.setfd			= iw_setfd,
 	.set_port		= iw_set_port,
 	.get_port		= iw_get_port,
 	.query_devinfo		= iw_query_devinfo,
 	.allocm			= iw_malloc,
 	.freem			= iw_free,
 	.round_buffersize	= iw_round_buffersize,
-	.mappage		= iw_mappage,
 	.get_props		= iw_get_props,
 	.get_locks		= iw_get_locks,
 };

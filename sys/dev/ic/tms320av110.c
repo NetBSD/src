@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.25 2019/03/16 12:09:57 isaki Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.26 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.25 2019/03/16 12:09:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.26 2019/05/08 13:40:18 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,28 +46,25 @@ __KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.25 2019/03/16 12:09:57 isaki Exp $
 #include <sys/proc.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/tms320av110reg.h>
 #include <dev/ic/tms320av110var.h>
 
 #include <sys/bus.h>
 
-int tav_open(void *, int);
 void tav_close(void *);
-int tav_drain(void *);
-int tav_query_encoding(void *, struct audio_encoding *);
-int tav_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-    stream_filter_list_t *, stream_filter_list_t *);
+int tav_query_format(void *, audio_format_query_t *);
+int tav_set_format(void *, int,
+    const audio_params_t *, const audio_params_t *,
+    audio_filter_reg_t *, audio_filter_reg_t *);
 int tav_round_blocksize(void *, int, int, const audio_params_t *);
-int tav_init_output(void *, void *, int);
 int tav_start_output(void *, void *, int, void (*)(void *), void *);
 int tav_start_input(void *, void *, int, void (*)(void *), void *);
 int tav_halt_output(void *);
 int tav_halt_input(void *);
 int tav_speaker_ctl(void *, int);
 int tav_getdev(void *, struct audio_device *);
-int tav_setfd(void *, int);
 int tav_set_port(void *, mixer_ctrl_t *);
 int tav_get_port(void *, mixer_ctrl_t *);
 int tav_query_devinfo(void *, mixer_devinfo_t *);
@@ -75,12 +72,10 @@ int tav_get_props(void *);
 void tav_get_locks(void *, kmutex_t **, kmutex_t **);
 
 const struct audio_hw_if tav_audio_if = {
-	.open			= tav_open,
 	.close			= tav_close,
-	.query_encoding		= tav_query_encoding,
-	.set_params		= tav_set_params,
+	.query_format		= tav_query_format,
+	.set_format		= tav_set_format,
 	.round_blocksize	= tav_round_blocksize,
-	.init_output		= tav_init_output,	/* optional */
 	.start_output		= tav_start_output,
 	.start_input		= tav_start_input,
 	.halt_output		= tav_halt_output,
@@ -93,6 +88,30 @@ const struct audio_hw_if tav_audio_if = {
 	.get_props		= tav_get_props,
 	.get_locks		= tav_get_locks,
 };
+
+/*
+ * XXX: The frequency might depend on the specific board.
+ * should be handled by the backend.
+ */
+#define TAV_FORMAT(prio, enc, prec) \
+	{ \
+		.priority	= (prio), \
+		.mode		= AUMODE_PLAY, \
+		.encoding	= (enc), \
+		.validbits	= (prec), \
+		.precision	= (prec), \
+		.channels	= 2, \
+		.channel_mask	= AUFMT_STEREO, \
+		.frequency_type	= 1, \
+		.frequency	= { 44100 }, \
+	}
+const struct audio_format tav_formats[] = {
+	TAV_FORMAT(-1, AUDIO_ENCODING_MPEG_L2_STREAM, 1),
+	TAV_FORMAT(-1, AUDIO_ENCODING_MPEG_L2_PACKETS, 1),
+	TAV_FORMAT(-1, AUDIO_ENCODING_MPEG_L2_SYSTEM, 1),
+	TAV_FORMAT( 0, AUDIO_ENCODING_SLINEAR_BE, 16),
+};
+#define TAV_NFORMATS __arraycount(tav_formats)
 
 void
 tms320av110_attach_mi(struct tav_softc *sc)
@@ -129,6 +148,8 @@ tms320av110_attach_mi(struct tav_softc *sc)
 	tav_write_byte(iot, ioh, TAV_SYNC_ECM, TAV_ECM_REPEAT);
 	tav_write_byte(iot, ioh, TAV_CRC_ECM, TAV_ECM_REPEAT);
 
+	sc->sc_active = 0;
+
 	audio_attach_mi(&tav_audio_if, sc, sc->sc_dev);
 }
 
@@ -145,8 +166,10 @@ tms320av110_intr(void *p)
 	intlist = tav_read_short(sc->sc_iot, sc->sc_ioh, TAV_INTR)
 	    /* & tav_read_short(sc->sc_iot, sc->sc_ioh, TAV_INTR_EN)*/;
 
-	if (!intlist)
+	if (!intlist) {
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
+	}
 
 	/* ack now, so that we don't miss later interrupts */
 	if (sc->sc_intack)
@@ -156,28 +179,9 @@ tms320av110_intr(void *p)
 		(*sc->sc_intr)(sc->sc_intrarg);
 	}
 
-	if (intlist & TAV_INTR_PCM_OUTPUT_UNDERFLOW) {
-		 cv_broadcast(&sc->sc_cv);
-	}
-
 	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return 1;
-}
-
-struct audio_encoding tav_encodings[] = {
-	{0, AudioEmpeg_l2_stream, AUDIO_ENCODING_MPEG_L2_STREAM, 1, 0,},
-	{1, AudioEmpeg_l2_packets, AUDIO_ENCODING_MPEG_L2_PACKETS, 1, 0,},
-	{2, AudioEmpeg_l2_system, AUDIO_ENCODING_MPEG_L2_SYSTEM, 1, 0,},
-	{3, AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE, 16, 0,},
-};
-
-int
-tav_open(void *hdl, int flags)
-{
-
-	/* dummy */
-	return 0;
 }
 
 void
@@ -198,55 +202,10 @@ tav_close(void *hdl)
 }
 
 int
-tav_drain(void *hdl)
-{
-	struct tav_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int16_t mask;
-
-	sc = hdl;
-	iot = sc->sc_iot;
-	ioh = sc->sc_ioh;
-
-	mutex_spin_enter(&sc->sc_intr_lock);
-
-	/*
-	 * wait for underflow interrupt.
-	 */
-	if (tav_read_short(iot, ioh, TAV_BUFF)) {
-		mask = tav_read_short(iot, ioh, TAV_INTR_EN);
-		tav_write_short(iot, ioh, TAV_INTR_EN,
-		    mask|TAV_INTR_PCM_OUTPUT_UNDERFLOW);
-
-		/* still more than zero? */
-		if (tav_read_short(iot, ioh, TAV_BUFF)) {
-			(void)cv_timedwait_sig(&sc->sc_cv,
-			    &sc->sc_intr_lock, 32*hz);
-		}
-
-		/* can be really that long for mpeg */
-
-		mask = tav_read_short(iot, ioh, TAV_INTR_EN);
-		tav_write_short(iot, ioh, TAV_INTR_EN,
-		    mask & ~TAV_INTR_PCM_OUTPUT_UNDERFLOW);
-	}
-
-	mutex_spin_exit(&sc->sc_intr_lock);
-
-	return 0;
-}
-
-int
-tav_query_encoding(void *hdl, struct audio_encoding *ae)
+tav_query_format(void *hdl, audio_format_query_t *afp)
 {
 
-	if (ae->index >= sizeof(tav_encodings)/sizeof(*ae))
-		return EINVAL;
-
-	*ae = tav_encodings[ae->index];
-
-	return 0;
+	return audio_query_format(tav_formats, TAV_NFORMATS, afp);
 }
 
 int
@@ -283,25 +242,14 @@ tav_start_output(void *hdl, void *block, int bsize,
 	sc->sc_intr = intr;
 	sc->sc_intrarg = intrarg;
 
+	if (sc->sc_active == 0) {
+		tav_write_byte(iot, ioh, TAV_PLAY, 1);
+		tav_write_byte(iot, ioh, TAV_MUTE, 0);
+		sc->sc_active = 1;
+	}
+
 	bus_space_write_multi_1(iot, ioh, TAV_DATAIN, ptr, count);
 	tav_write_short(iot, ioh, TAV_INTR_EN, TAV_INTR_LOWWATER);
-
-	return 0;
-}
-
-int
-tav_init_output(void *hdl, void *buffer, int size)
-{
-	struct tav_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-
-	sc = hdl;
-	iot = sc->sc_iot;
-	ioh = sc->sc_ioh;
-
-	tav_write_byte(iot, ioh, TAV_PLAY, 1);
-	tav_write_byte(iot, ioh, TAV_MUTE, 0);
 
 	return 0;
 }
@@ -318,6 +266,7 @@ tav_halt_output(void *hdl)
 	ioh = sc->sc_ioh;
 
 	tav_write_byte(iot, ioh, TAV_PLAY, 0);
+	sc->sc_active = 0;
 
 	return 0;
 }
@@ -384,8 +333,9 @@ tav_get_locks(void *hdl, kmutex_t **intr, kmutex_t **thread)
 }
 
 int
-tav_set_params(void *hdl, int setmode, int usemode, audio_params_t *p,
-    audio_params_t *r, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+tav_set_format(void *hdl, int setmode,
+    const audio_params_t *p, const audio_params_t *r,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct tav_softc *sc;
 	bus_space_tag_t iot;
@@ -395,60 +345,11 @@ tav_set_params(void *hdl, int setmode, int usemode, audio_params_t *p,
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
-	if (!(setmode & AUMODE_PLAY))
-		return 0;
+	KASSERT((setmode & AUMODE_PLAY));
+	KASSERT(p->encoding == AUDIO_ENCODING_SLINEAR_BE);
 
-	if (p->encoding == AUDIO_ENCODING_ULAW)
-		p->encoding = AUDIO_ENCODING_MPEG_L2_STREAM;
+	bus_space_write_1(iot, ioh, TAV_STR_SEL, TAV_STR_SEL_AUDIO_BYPASS);
 
-	switch(p->encoding) {
-	default:
-		return EINVAL;
-
-	case AUDIO_ENCODING_SLINEAR_BE:
-
-		/* XXX: todo: add 8bit and mono using software */
-		p->precision = 16;
-		p->channels = 2;
-
-		/* XXX: this might depend on the specific board.
-		   should be handled by the backend */
-
-		p->sample_rate = 44100;
-
-		bus_space_write_1(iot, ioh, TAV_STR_SEL,
-		    TAV_STR_SEL_AUDIO_BYPASS);
-		break;
-
-	/* XXX: later: add ULINEAR, and LE using software encoding */
-
-	case AUDIO_ENCODING_MPEG_L1_STREAM:
-		/* FALLTHROUGH */
-	case AUDIO_ENCODING_MPEG_L2_STREAM:
-		bus_space_write_1(iot, ioh, TAV_STR_SEL,
-		    TAV_STR_SEL_MPEG_AUDIO_STREAM);
-		p->sample_rate = 44100;
-		p->precision = 1;
-		break;
-
-	case AUDIO_ENCODING_MPEG_L1_PACKETS:
-		/* FALLTHROUGH */
-	case AUDIO_ENCODING_MPEG_L2_PACKETS:
-		bus_space_write_1(iot, ioh, TAV_STR_SEL,
-		    TAV_STR_SEL_MPEG_AUDIO_PACKETS);
-		p->sample_rate = 44100;
-		p->precision = 1;
-		break;
-
-	case AUDIO_ENCODING_MPEG_L1_SYSTEM:
-		/* FALLTHROUGH */
-	case AUDIO_ENCODING_MPEG_L2_SYSTEM:
-		bus_space_write_1(iot, ioh, TAV_STR_SEL,
-		    TAV_STR_SEL_MPEG_SYSTEM_STREAM);
-		p->sample_rate = 44100;
-		p->precision = 1;
-		break;
-	}
 	tav_write_byte(iot, ioh, TAV_RESTART, 1);
 	do {
 		delay(10);
