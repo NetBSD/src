@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.14 2009/01/25 06:59:35 cyber Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.15 2019/05/08 02:25:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <prop/prop_data.h>
 #include "prop_object_impl.h"
+#include <prop/prop_data.h>
 
 #if defined(_KERNEL)
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.17 2009/01/03 18:31:33 pooka Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.18 2019/05/08 02:25:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <prop/prop_bool.h>
 #include "prop_object_impl.h"
+#include <prop/prop_bool.h>
 
 struct _prop_bool {
 	struct _prop_object	pb_obj;
