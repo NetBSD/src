@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.30 2016/06/28 06:47:35 pgoyette Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.31 2019/05/08 02:25:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,9 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/rbtree.h>
-#include <prop/prop_number.h>
 #include "prop_object_impl.h"
+#include <prop/prop_number.h>
+#include <sys/rbtree.h>
 
 #if defined(_KERNEL)
 #include <sys/systm.h>
