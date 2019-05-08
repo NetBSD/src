@@ -206,7 +206,7 @@ CONFIGURATION
                  Directory containing sources of externally added programs and
                  libraries.  If specified, must be an absolute path.
 
-                 Default: NETBSDRCDIR/../extsrc, if that exists; otherwise
+                 Default: NETBSDSRCDIR/../extsrc, if that exists; otherwise
                  /usr/extsrc.
 
      MAKECONF    The name of the make(1) configuration file.  Only settable in
@@ -461,7 +461,7 @@ CONFIGURATION
                  must be an absolute path.  The main modular Xorg source is
                  found in X11SRCDIR/external/mit.
 
-                 Default: NETBSDRCDIR/../xsrc, if that exists; otherwise
+                 Default: NETBSDSRCDIR/../xsrc, if that exists; otherwise
                  /usr/xsrc.
 
    "make" variables for full builds
