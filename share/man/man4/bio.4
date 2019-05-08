@@ -1,4 +1,4 @@
-.\"	$NetBSD: bio.4,v 1.15 2019/05/08 06:57:18 cnst Exp $
+.\"	$NetBSD: bio.4,v 1.16 2019/05/08 07:41:23 wiz Exp $
 .\"	$OpenBSD: bio.4,v 1.19 2006/09/20 22:22:37 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
@@ -94,7 +94,7 @@ vendor name, serial number, and processor device (ses).
 .\" or safte
 .It Dv BIOCDISK_NOVOL
 Is just the same as
-.Em BIOCDISK
+.Dv BIOCDISK
 but doesn't require the disks to be in volume sets, so this
 applies to any physical disk connected to the controller.
 .Pp
@@ -102,11 +102,12 @@ Note: this ioctl might not be supported on all hardware.
 It is supported by
 .Xr arcmsr 4 ,
 .Xr ciss 4 ,
+and
 .Xr mpt 4 .
 It is also supported by
 .Xr cac 4 ,
 but handled exactly the same as
-.Em BIOCDISK .
+.Dv BIOCDISK .
 .It Dv BIOCVOL
 Retrieve detailed information for the specified volume.
 Information returned can include status, size, RAID level, number of disks,
@@ -119,7 +120,7 @@ test alarm.
 Note: These options might not be supported on all hardware.
 It is supported by
 .Xr arcmsr 4 ,
-.Xr mfi 4
+.Xr mfi 4 ,
 and
 .Xr mfii 4 .
 .It Dv BIOCBLINK
@@ -133,8 +134,8 @@ Note: This option is only supported if the disk is governed by
 and the hardware supports hardware blinking.
 It is supported by
 .Xr ciss 4 ,
-.Xr mfi 4
-and 
+.Xr mfi 4 ,
+and
 .Xr mfii 4 .
 .It Dv BIOCSETSTATE
 Alter the state of specified physical disk.
@@ -144,7 +145,7 @@ disk, start/stop consistency check in a volume, online disk and offline disk.
 Note: These options might not be supported on all hardware.
 Some of these options are supported by
 .Xr arcmsr 4 ,
-.Xr mfi 4
+.Xr mfi 4 ,
 and
 .Xr mfii 4 .
 .It Dv BIOCVOLOPS
