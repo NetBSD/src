@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.c,v 1.6 2016/03/05 22:10:39 mrg Exp $ */
+/* $NetBSD: audiodev.c,v 1.7 2019/05/08 14:36:12 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,6 +31,7 @@
 #include <sys/stat.h>
 #include <sys/drvctlio.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
@@ -47,51 +48,23 @@ static TAILQ_HEAD(audiodevhead, audiodev) audiodevlist =
 
 #define AUDIODEV_SAMPLE_RATE	44100
 
-static unsigned int
-audiodev_probe_pchans(struct audiodev *adev)
-{
-	audio_info_t info;
-	unsigned int nchans = 0, n;
-	int error;
-
-	AUDIO_INITINFO(&info);
-	info.play.sample_rate = AUDIODEV_SAMPLE_RATE;
-	info.play.precision = 16;
-	info.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
-	info.play.channels = 1;
-	info.mode = AUMODE_PLAY;
-	error = ioctl(adev->fd, AUDIO_SETINFO, &info);
-	if (error == -1)
-		return 0;
-	nchans = 1;
-
-	for (n = 2; n <= 16; n += 2) {
-		info.play.channels = n;
-		error = ioctl(adev->fd, AUDIO_SETINFO, &info);
-		if (error == -1)
-			break;
-		nchans = info.play.channels;
-	}
-
-	return nchans;
-}
-
 static int
 audiodev_getinfo(struct audiodev *adev)
 {
 	struct stat st;
+	struct audiofmt *f;
+	audio_format_query_t query;
+	int i;
 
-	if (stat(adev->path, &st) == -1)
+	if (stat(adev->ctlpath, &st) == -1)
 		return -1;
 	adev->dev = st.st_rdev;
 
-	if (stat(_PATH_AUDIO, &st) != -1 && st.st_rdev == adev->dev)
+	if (stat(_PATH_AUDIOCTL, &st) != -1 && st.st_rdev == adev->dev)
 		adev->defaultdev = true;
 
-	adev->fd = open(adev->path, O_RDWR);
+	adev->fd = open(adev->ctlpath, O_RDONLY);
 	if (adev->fd == -1) {
-		adev->fd = open(adev->path, O_WRONLY);
-		if (adev->fd == -1)
 			return -1;
 	}
 	if (ioctl(adev->fd, AUDIO_GETDEV, &adev->audio_device) == -1) {
@@ -99,7 +72,29 @@ audiodev_getinfo(struct audiodev *adev)
 		return -1;
 	}
 
-	adev->pchan = audiodev_probe_pchans(adev);
+	for (i = 0; ;i++) {
+		memset(&query, 0, sizeof(query));
+		query.index = i;
+		if (ioctl(adev->fd, AUDIO_QUERYFORMAT, &query) == -1) {
+			if (errno == ENODEV) {
+				/* QUERYFORMAT not supported. */
+				break;
+			}
+			if (errno == EINVAL)
+				break;
+			close(adev->fd);
+			return -1;
+		}
+
+		f = calloc(1, sizeof(*f));
+		f->fmt = query.fmt;
+		TAILQ_INSERT_TAIL(&adev->formats, f, next);
+	}
+
+	if (ioctl(adev->fd, AUDIO_GETFORMAT, &adev->info) == -1) {
+		close(adev->fd);
+		return -1;
+	}
 
 	return 0;
 }
@@ -115,8 +110,10 @@ audiodev_add(const char *pdev, const char *dev, unsigned int unit)
 
 	strlcpy(adev->pxname, pdev, sizeof(adev->pxname));
 	strlcpy(adev->xname, dev, sizeof(adev->xname));
-	snprintf(adev->path, sizeof(adev->path) - 1, "/dev/%s", dev);
+	snprintf(adev->path, sizeof(adev->path), "/dev/%s", dev);
+	snprintf(adev->ctlpath, sizeof(adev->ctlpath), "/dev/audioctl%d", unit);
 	adev->unit = unit;
+	TAILQ_INIT(&adev->formats);
 
 	if (audiodev_getinfo(adev) == -1) {
 		free(adev);
@@ -124,8 +121,16 @@ audiodev_add(const char *pdev, const char *dev, unsigned int unit)
 	}
 
 #ifdef DEBUG
-	printf("[%c] %s: %s\n", adev->defaultdev ? '*' : ' ',
-	    adev->path, adev->audio_device.name);
+	printf("DEBUG: [%c] %s(%s): %s\n", adev->defaultdev ? '*' : ' ',
+	    adev->path, adev->ctlpath, adev->audio_device.name);
+	struct audiofmt *f;
+	TAILQ_FOREACH(f, &adev->formats, next) {
+		printf("DEBUG: enc%d, %d/%d, %dch\n",
+		    f->fmt.encoding,
+		    f->fmt.validbits,
+		    f->fmt.precision,
+		    f->fmt.channels);
+	}
 #endif
 
 	TAILQ_INSERT_TAIL(&audiodevlist, adev, next);
@@ -207,13 +212,13 @@ audiodev_set_default(struct audiodev *adev)
 	char audioctlpath[PATH_MAX+1];
 	char mixerpath[PATH_MAX+1];
 
-	snprintf(audiopath, sizeof(audiopath) - 1,
+	snprintf(audiopath, sizeof(audiopath),
 	    _PATH_AUDIO "%u", adev->unit);
-	snprintf(soundpath, sizeof(soundpath) - 1,
+	snprintf(soundpath, sizeof(soundpath),
 	    _PATH_SOUND "%u", adev->unit);
-	snprintf(audioctlpath, sizeof(audioctlpath) - 1,
+	snprintf(audioctlpath, sizeof(audioctlpath),
 	    _PATH_AUDIOCTL "%u", adev->unit);
-	snprintf(mixerpath, sizeof(mixerpath) - 1,
+	snprintf(mixerpath, sizeof(mixerpath),
 	    _PATH_MIXER "%u", adev->unit);
 
 	unlink(_PATH_AUDIO);
@@ -242,33 +247,92 @@ audiodev_set_default(struct audiodev *adev)
 }
 
 int
+audiodev_set_param(struct audiodev *adev, int mode,
+	const char *encname, unsigned int prec, unsigned int ch, unsigned int freq)
+{
+	struct audio_info ai;
+	int setmode;
+	u_int enc;
+
+	setmode = 0;
+	ai = adev->info;
+
+	for (enc = 0; enc < encoding_max; enc++) {
+		if (strcmp(encname, encoding_names[enc]) == 0)
+			break;
+	}
+	if (enc >= encoding_max) {
+		fprintf(stderr, "unknown encoding name: %s\n", encname);
+		errno = EINVAL;
+		return -1;
+	}
+
+	if ((ai.mode & mode & AUMODE_PLAY)) {
+		setmode |= AUMODE_PLAY;
+		ai.play.encoding = enc;
+		ai.play.precision = prec;
+		ai.play.channels = ch;
+		ai.play.sample_rate = freq;
+	}
+	if ((ai.mode & mode & AUMODE_RECORD)) {
+		setmode |= AUMODE_RECORD;
+		ai.record.encoding = enc;
+		ai.record.precision = prec;
+		ai.record.channels = ch;
+		ai.record.sample_rate = freq;
+	}
+
+	if (setmode == 0) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	ai.mode = setmode;
+	printf("setting %s to %s:%u, %uch, %uHz\n",
+	    adev->xname, encname, prec, ch, freq);
+	if (ioctl(adev->fd, AUDIO_SETFORMAT, &ai) == -1) {
+		perror("ioctl AUDIO_SETFORMAT");
+		return -1;
+	}
+	return 0;
+}
+
+int
 audiodev_test(struct audiodev *adev, unsigned int chanmask)
 {
 	audio_info_t info;
 	int16_t *buf;
 	size_t buflen;
 	off_t off;
-	int rv = 0;
+	int fd;
+	int rv = -1;
+
+	fd = open(adev->path, O_WRONLY);
+	if (fd == -1) {
+		perror("open");
+		return -1;
+	}
 
 	AUDIO_INITINFO(&info);
 	info.play.sample_rate = AUDIODEV_SAMPLE_RATE;
-	info.play.channels = adev->pchan;
+	info.play.channels = adev->info.play.channels;
 	info.play.precision = 16;
 	info.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
 	info.mode = AUMODE_PLAY;
-	if (ioctl(adev->fd, AUDIO_SETINFO, &info) == -1) {
+	if (ioctl(fd, AUDIO_SETINFO, &info) == -1) {
 		perror("ioctl AUDIO_SETINFO");
-		return -1;
+		goto abort;
 	}
-	if (ioctl(adev->fd, AUDIO_GETINFO, &info) == -1) {
+	if (ioctl(fd, AUDIO_GETINFO, &info) == -1) {
 		perror("ioctl AUDIO_GETINFO");
-		return -1;
+		goto abort;
 	}
 
 	dtmf_new(&buf, &buflen, info.play.sample_rate, 2,
-	    adev->pchan, chanmask, 350.0, 440.0);
-	if (buf == NULL)
-		return -1;
+	    adev->info.play.channels, chanmask, 350.0, 440.0);
+	if (buf == NULL) {
+		goto abort;
+	}
 
 	off = 0;
 	while (buflen > 0) {
@@ -278,10 +342,9 @@ audiodev_test(struct audiodev *adev, unsigned int chanmask)
 		wlen = info.play.buffer_size;
 		if (wlen > buflen)
 			wlen = buflen;
-		ret = write(adev->fd, (char *)buf + off, wlen);
+		ret = write(fd, (char *)buf + off, wlen);
 		if (ret == -1) {
 			perror("write");
-			rv = -1;
 			goto done;
 		}
 		wlen = ret;
@@ -289,11 +352,16 @@ audiodev_test(struct audiodev *adev, unsigned int chanmask)
 		buflen -= wlen;
 	}
 
-	if (ioctl(adev->fd, AUDIO_DRAIN) == -1)
+	if (ioctl(fd, AUDIO_DRAIN) == -1) {
 		perror("ioctl AUDIO_DRAIN");
+		goto done;
+	}
 
+	rv = 0;
 done:
 	free(buf);
+abort:
+	close(fd);
 
 	return rv;
 }
