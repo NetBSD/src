@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/05/07 04:29:45 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2019/05/08 02:25:50 thorpej Exp $
 
 HOSTLIB=	prop
 
@@ -10,6 +10,7 @@ LIBPROP_INC=	${.CURDIR}/../../common/include
 .include "${LIBPROP_DIR}/Makefile.inc"
 
 CPPFLAGS+=	-I${.CURDIR}/../compat -I${LIBPROP_INC}
+CPPFLAGS+=	-I${TOOLDIR}/include/compat
 CPPFLAGS+=	-I${TOOLDIR}/include/nbinclude
 
 .PATH:		${LIBPROP_DIR}
