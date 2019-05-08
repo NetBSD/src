@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.122 2018/11/09 07:54:25 mbalmer Exp $
+#	$NetBSD: RESPONSIBLE,v 1.123 2019/05/08 22:01:47 nat Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -117,7 +117,7 @@ Kernel:
 device support:
 
 acpi		thorpej*, kochi*, jmcneill, joerg
-audio		augustss*, jmcneill, nat
+audio		augustss*, jmcneill
 cgd		elric
 firewire	jmc*
 flash		ahoka
