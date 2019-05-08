@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.59 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: cac.c,v 1.60 2019/05/08 05:40:51 cnst Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.59 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.60 2019/05/08 05:40:51 cnst Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -642,9 +642,6 @@ cac_ioctl(device_t dev, u_long cmd, void *addr)
 		/* No disk information yet */
 		break;
 
-	case BIOCBLINK:
-	case BIOCALARM:
-	case BIOCSETSTATE:
 	default:
 		error = EINVAL;
 	}
