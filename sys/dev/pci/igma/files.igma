@@ -8,6 +8,6 @@ attach	igmafb at igmabus
 file	dev/pci/igma/igmafb.c		igmafb needs-flag
 
 ## the audio part
-#device 	vac: audiobus, auconv, mulaw
+#device 	vac: audiobus
 #attach 	vac at igmabus
 #file 	dev/pci/igma/vac.c		vac needs-flag

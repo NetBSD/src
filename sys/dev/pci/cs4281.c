@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.54 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.55 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.54 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.55 2019/05/08 13:40:18 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,10 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.54 2019/03/16 12:09:58 isaki Exp $");
 #include <dev/pci/cs428xreg.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
@@ -83,10 +81,10 @@ __KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.54 2019/03/16 12:09:58 isaki Exp $");
 static int	cs4281_match(device_t, cfdata_t, void *);
 static void	cs4281_attach(device_t, device_t, void *);
 static int	cs4281_intr(void *);
-static int	cs4281_query_encoding(void *, struct audio_encoding *);
-static int	cs4281_set_params(void *, int, int, audio_params_t *,
-				  audio_params_t *, stream_filter_list_t *,
-				  stream_filter_list_t *);
+static int	cs4281_query_format(void *, audio_format_query_t *);
+static int	cs4281_set_format(void *, int,
+				 const audio_params_t *, const audio_params_t *,
+				 audio_filter_reg_t *, audio_filter_reg_t *);
 static int	cs4281_halt_output(void *);
 static int	cs4281_halt_input(void *);
 static int	cs4281_getdev(void *, struct audio_device *);
@@ -110,8 +108,8 @@ static bool	cs4281_suspend(device_t, const pmf_qual_t *);
 static bool	cs4281_resume(device_t, const pmf_qual_t *);
 
 static const struct audio_hw_if cs4281_hw_if = {
-	.query_encoding		= cs4281_query_encoding,
-	.set_params		= cs4281_set_params,
+	.query_format		= cs4281_query_format,
+	.set_format		= cs4281_set_format,
 	.round_blocksize	= cs428x_round_blocksize,
 	.halt_output		= cs4281_halt_output,
 	.halt_input		= cs4281_halt_input,
@@ -122,7 +120,6 @@ static const struct audio_hw_if cs4281_hw_if = {
 	.allocm			= cs428x_malloc,
 	.freem			= cs428x_free,
 	.round_buffersize	= cs428x_round_buffersize,
-	.mappage		= cs428x_mappage,
 	.get_props		= cs428x_get_props,
 	.trigger_output		= cs4281_trigger_output,
 	.trigger_input		= cs4281_trigger_input,
@@ -156,6 +153,19 @@ static struct audio_device cs4281_device = {
 	"cs4281"
 };
 
+static const struct audio_format cs4281_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_NE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 6,
+		.frequency	= { 8000, 11025, 16000, 22050, 44100, 48000 },
+	},
+};
+#define CS4281_NFORMATS __arraycount(cs4281_formats)
 
 static int
 cs4281_match(device_t parent, cfdata_t match, void *aux)
@@ -384,129 +394,20 @@ cs4281_intr(void *p)
 }
 
 static int
-cs4281_query_encoding(void *addr, struct audio_encoding *fp)
+cs4281_query_format(void *addr, audio_format_query_t *afp)
 {
 
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 4:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 5:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 6:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 7:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return EINVAL;
-	}
-	return 0;
+	return audio_query_format(cs4281_formats, CS4281_NFORMATS, afp);
 }
 
 static int
-cs4281_set_params(void *addr, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
-    stream_filter_list_t *rfil)
+cs4281_set_format(void *addr, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	audio_params_t hw;
 	struct cs428x_softc *sc;
-	audio_params_t *p;
-	stream_filter_list_t *fil;
-	int mode;
 
 	sc = addr;
-	for (mode = AUMODE_RECORD; mode != -1;
-	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
-			continue;
-
-		p = mode == AUMODE_PLAY ? play : rec;
-
-		if (p == play) {
-			DPRINTFN(5,
-			    ("play: sample=%u precision=%u channels=%u\n",
-			    p->sample_rate, p->precision, p->channels));
-			if (p->sample_rate < 6023 || p->sample_rate > 48000 ||
-			    (p->precision != 8 && p->precision != 16) ||
-			    (p->channels != 1  && p->channels != 2)) {
-				return EINVAL;
-			}
-		} else {
-			DPRINTFN(5,
-			    ("rec: sample=%u precision=%u channels=%u\n",
-			    p->sample_rate, p->precision, p->channels));
-			if (p->sample_rate < 6023 || p->sample_rate > 48000 ||
-			    (p->precision != 8 && p->precision != 16) ||
-			    (p->channels != 1 && p->channels != 2)) {
-				return EINVAL;
-			}
-		}
-		hw = *p;
-		fil = mode == AUMODE_PLAY ? pfil : rfil;
-
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			break;
-		case AUDIO_ENCODING_ULAW:
-			hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			fil->append(fil, mode == AUMODE_PLAY ? mulaw_to_linear8
-				    :  linear8_to_mulaw, &hw);
-			break;
-		case AUDIO_ENCODING_ALAW:
-			hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			fil->append(fil, mode == AUMODE_PLAY ? alaw_to_linear8
-				    : linear8_to_alaw, &hw);
-			break;
-		default:
-			return EINVAL;
-		}
-	}
-
 	/* set sample rate */
 	cs4281_set_dac_rate(sc, play->sample_rate);
 	cs4281_set_adc_rate(sc, rec->sample_rate);
@@ -607,16 +508,8 @@ cs4281_trigger_output(void *addr, void *start, void *end, int blksize,
 
 	/* set playback format */
 	fmt = BA0READ4(sc, CS4281_DMR0) & ~DMRn_FMTMSK;
-	if (param->precision == 8)
-		fmt |= DMRn_SIZE8;
-	if (param->channels == 1)
-		fmt |= DMRn_MONO;
-	if (param->encoding == AUDIO_ENCODING_ULINEAR_BE ||
-	    param->encoding == AUDIO_ENCODING_SLINEAR_BE)
+	if (param->encoding == AUDIO_ENCODING_SLINEAR_BE)
 		fmt |= DMRn_BEND;
-	if (param->encoding == AUDIO_ENCODING_ULINEAR_BE ||
-	    param->encoding == AUDIO_ENCODING_ULINEAR_LE)
-		fmt |= DMRn_USIGN;
 	BA0WRITE4(sc, CS4281_DMR0, fmt);
 
 	/* set sample rate */
@@ -695,16 +588,8 @@ cs4281_trigger_input(void *addr, void *start, void *end, int blksize,
 
 	/* set recording format */
 	fmt = BA0READ4(sc, CS4281_DMR1) & ~DMRn_FMTMSK;
-	if (param->precision == 8)
-		fmt |= DMRn_SIZE8;
-	if (param->channels == 1)
-		fmt |= DMRn_MONO;
-	if (param->encoding == AUDIO_ENCODING_ULINEAR_BE ||
-	    param->encoding == AUDIO_ENCODING_SLINEAR_BE)
+	if (param->encoding == AUDIO_ENCODING_SLINEAR_BE)
 		fmt |= DMRn_BEND;
-	if (param->encoding == AUDIO_ENCODING_ULINEAR_BE ||
-	    param->encoding == AUDIO_ENCODING_ULINEAR_LE)
-		fmt |= DMRn_USIGN;
 	BA0WRITE4(sc, CS4281_DMR1, fmt);
 
 	/* set sample rate */

@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.37 2017/03/21 07:04:29 nat Exp $	*/
+/*	$NetBSD: audioio.h,v 1.38 2019/05/08 13:40:19 isaki Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -134,6 +134,21 @@ typedef struct audio_offset {
 #define AUDIO_ENCODING_MPEG_L2_SYSTEM	17
 #define AUDIO_ENCODING_AC3		18
 
+/* XXX Consider whether to export to userland? */
+#if defined(_KERNEL)
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define AUDIO_ENCODING_SLINEAR_NE AUDIO_ENCODING_SLINEAR_LE
+#define AUDIO_ENCODING_ULINEAR_NE AUDIO_ENCODING_ULINEAR_LE
+#define AUDIO_ENCODING_SLINEAR_OE AUDIO_ENCODING_SLINEAR_BE
+#define AUDIO_ENCODING_ULINEAR_OE AUDIO_ENCODING_ULINEAR_BE
+#else
+#define AUDIO_ENCODING_SLINEAR_NE AUDIO_ENCODING_SLINEAR_BE
+#define AUDIO_ENCODING_ULINEAR_NE AUDIO_ENCODING_ULINEAR_BE
+#define AUDIO_ENCODING_SLINEAR_OE AUDIO_ENCODING_SLINEAR_LE
+#define AUDIO_ENCODING_ULINEAR_OE AUDIO_ENCODING_ULINEAR_LE
+#endif
+#endif /* _KERNEL */
+
 typedef struct audio_encoding {
 	int	index;
 	char	name[MAX_AUDIO_DEV_LEN];
@@ -142,6 +157,92 @@ typedef struct audio_encoding {
 	int	flags;
 #define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
 } audio_encoding_t;
+
+struct audio_format {
+	/**
+	 * Device-dependent audio drivers may use this field freely.
+	 */
+	void *driver_data;
+
+	/**
+	 * combination of AUMODE_PLAY and AUMODE_RECORD
+	 */
+	int32_t mode;
+
+	/**
+	 * Encoding type.  AUDIO_ENCODING_*.
+	 * Don't use AUDIO_ENCODING_SLINEAR/ULINEAR/LINEAR/LINEAR8
+	 */
+	u_int encoding;
+
+	/**
+	 * The size of valid bits in one sample.
+	 * It must be <= precision.
+	 */
+	u_int validbits;
+
+	/**
+	 * The bit size of one sample.
+	 * It must be >= validbits, and is usualy a multiple of 8.
+	 */
+	u_int precision;
+
+	/**
+	 * The number of channels.  >= 1
+	 */
+	u_int channels;
+
+	u_int channel_mask;
+#define	AUFMT_UNKNOWN_POSITION		0U
+#define	AUFMT_FRONT_LEFT		0x00001U /* USB audio compatible */
+#define	AUFMT_FRONT_RIGHT		0x00002U /* USB audio compatible */
+#define	AUFMT_FRONT_CENTER		0x00004U /* USB audio compatible */
+#define	AUFMT_LOW_FREQUENCY		0x00008U /* USB audio compatible */
+#define	AUFMT_BACK_LEFT			0x00010U /* USB audio compatible */
+#define	AUFMT_BACK_RIGHT		0x00020U /* USB audio compatible */
+#define	AUFMT_FRONT_LEFT_OF_CENTER	0x00040U /* USB audio compatible */
+#define	AUFMT_FRONT_RIGHT_OF_CENTER	0x00080U /* USB audio compatible */
+#define	AUFMT_BACK_CENTER		0x00100U /* USB audio compatible */
+#define	AUFMT_SIDE_LEFT			0x00200U /* USB audio compatible */
+#define	AUFMT_SIDE_RIGHT		0x00400U /* USB audio compatible */
+#define	AUFMT_TOP_CENTER		0x00800U /* USB audio compatible */
+#define	AUFMT_TOP_FRONT_LEFT		0x01000U
+#define	AUFMT_TOP_FRONT_CENTER		0x02000U
+#define	AUFMT_TOP_FRONT_RIGHT		0x04000U
+#define	AUFMT_TOP_BACK_LEFT		0x08000U
+#define	AUFMT_TOP_BACK_CENTER		0x10000U
+#define	AUFMT_TOP_BACK_RIGHT		0x20000U
+
+#define	AUFMT_MONAURAL		AUFMT_FRONT_CENTER
+#define	AUFMT_STEREO		(AUFMT_FRONT_LEFT | AUFMT_FRONT_RIGHT)
+#define	AUFMT_SURROUND4		(AUFMT_STEREO | AUFMT_BACK_LEFT \
+				| AUFMT_BACK_RIGHT)
+#define	AUFMT_DOLBY_5_1		(AUFMT_SURROUND4 | AUFMT_FRONT_CENTER \
+				| AUFMT_LOW_FREQUENCY)
+
+	/**
+	 * 0: frequency[0] is lower limit, and frequency[1] is higher limit.
+	 * 1-16: frequency[0] to frequency[frequency_type-1] are valid.
+	 */
+	u_int frequency_type;
+
+#define	AUFMT_MAX_FREQUENCIES	16
+	/**
+	 * sampling rates
+	 */
+	u_int frequency[AUFMT_MAX_FREQUENCIES];
+
+	/**
+	 * 0-3: priority.  0 is the lowest.
+	 * -1: hardware supports this format but driver doesn't (e.g. AC3).
+	 */
+	int priority;
+};
+
+typedef struct audio_format_query {
+	u_int	index;
+	struct audio_format fmt;
+} audio_format_query_t;
 
 /*
  * Balance settings.
@@ -193,6 +294,9 @@ typedef struct audio_encoding {
 #define AUDIO_GETBUFINFO	_IOR('A', 35, struct audio_info)
 #define AUDIO_SETCHAN	_IOW('A', 36, int)
 #define AUDIO_GETCHAN	_IOR('A', 37, int)
+#define AUDIO_QUERYFORMAT	_IOWR('A', 38, struct audio_format_query)
+#define AUDIO_GETFORMAT	_IOR('A', 39, struct audio_info)
+#define AUDIO_SETFORMAT	_IOW('A', 40, struct audio_info)
 
 /*
  * Mixer device

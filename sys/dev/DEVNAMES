@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.320 2019/01/27 08:53:30 maxv Exp $
+#	$NetBSD: DEVNAMES,v 1.321 2019/05/08 13:40:17 isaki Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -127,7 +127,6 @@ auacer			MI
 aubus			evbmips
 aucc			amiga
 aucc			amigappc
-auconv			MI		Attribute
 audio			MI
 audio			MI		Attribute
 audioamd		MI
@@ -140,7 +139,6 @@ auixp			MI
 aumac			evbmips
 aupci			evbmips
 aupcmcia		evbmips
-aurateconv		MI		Attribute
 aurtc			evbmips
 auspi			evbmips
 autri			MI
@@ -916,7 +914,6 @@ mtc			MI
 mtd			MI
 mtty			MI
 mu			vax
-mulaw			MI		Attribute
 mvgbe			MI
 mvpex			MI
 mvsata			MI

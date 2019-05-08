@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.53 2019/03/16 12:23:49 isaki Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.54 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.53 2019/03/16 12:23:49 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.54 2019/05/08 13:40:18 isaki Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -65,11 +65,9 @@ int cmpcidebug = 0;
 #include <dev/pci/pcivar.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
 
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 #include <dev/pci/cmpcireg.h>
 #include <dev/pci/cmpcivar.h>
 
@@ -128,9 +126,10 @@ static struct cmpci_dmanode * cmpci_find_dmamem(struct cmpci_softc *,
 /*
  * interface to machine independent layer
  */
-static int cmpci_query_encoding(void *, struct audio_encoding *);
-static int cmpci_set_params(void *, int, int, audio_params_t *,
-	audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
+static int cmpci_query_format(void *, audio_format_query_t *);
+static int cmpci_set_format(void *, int,
+    const audio_params_t *, const audio_params_t *,
+    audio_filter_reg_t *, audio_filter_reg_t *);
 static int cmpci_round_blocksize(void *, int, int, const audio_params_t *);
 static int cmpci_halt_output(void *);
 static int cmpci_halt_input(void *);
@@ -141,7 +140,6 @@ static int cmpci_query_devinfo(void *, mixer_devinfo_t *);
 static void *cmpci_allocm(void *, int, size_t);
 static void cmpci_freem(void *, void *, size_t);
 static size_t cmpci_round_buffersize(void *, int, size_t);
-static paddr_t cmpci_mappage(void *, void *, off_t, int);
 static int cmpci_get_props(void *);
 static int cmpci_trigger_output(void *, void *, void *, int,
 	void (*)(void *), void *, const audio_params_t *);
@@ -150,8 +148,8 @@ static int cmpci_trigger_input(void *, void *, void *, int,
 static void cmpci_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if cmpci_hw_if = {
-	.query_encoding		= cmpci_query_encoding,
-	.set_params		= cmpci_set_params,
+	.query_format		= cmpci_query_format,
+	.set_format		= cmpci_set_format,
 	.round_blocksize	= cmpci_round_blocksize,
 	.halt_output		= cmpci_halt_output,
 	.halt_input		= cmpci_halt_input,
@@ -162,24 +160,26 @@ static const struct audio_hw_if cmpci_hw_if = {
 	.allocm			= cmpci_allocm,
 	.freem			= cmpci_freem,
 	.round_buffersize	= cmpci_round_buffersize,
-	.mappage		= cmpci_mappage,
 	.get_props		= cmpci_get_props,
 	.trigger_output		= cmpci_trigger_output,
 	.trigger_input		= cmpci_trigger_input,
 	.get_locks		= cmpci_get_locks,
 };
 
-#define CMPCI_NFORMATS	4
-static const struct audio_format cmpci_formats[CMPCI_NFORMATS] = {
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 2, AUFMT_STEREO, 0, {5512, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	 1, AUFMT_MONAURAL, 0, {5512, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 2, AUFMT_STEREO, 0, {5512, 48000}},
-	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
-	 1, AUFMT_MONAURAL, 0, {5512, 48000}},
+static const struct audio_format cmpci_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 8,
+		.frequency	=
+		    { 5512, 8000, 11025, 16000, 22050, 32000, 44100, 48000 },
+	},
 };
+#define CMPCI_NFORMATS __arraycount(cmpci_formats)
 
 
 /*
@@ -323,8 +323,7 @@ cmpci_rate_to_index(int rate)
 	int i;
 
 	for (i = 0; i < CMPCI_REG_NUMRATE - 1; i++)
-		if (rate <=
-		    (cmpci_rate_table[i].rate+cmpci_rate_table[i+1].rate) / 2)
+		if (rate == cmpci_rate_table[i].rate)
 			return i;
 	return i;  /* 48000 */
 }
@@ -565,69 +564,16 @@ cmpci_intr(void *handle)
 }
 
 static int
-cmpci_query_encoding(void *handle, struct audio_encoding *fp)
+cmpci_query_format(void *handle, audio_format_query_t *afp)
 {
 
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 1:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 4:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 5:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	default:
-		return EINVAL;
-	}
-	return 0;
+	return audio_query_format(cmpci_formats, CMPCI_NFORMATS, afp);
 }
 
-
 static int
-cmpci_set_params(void *handle, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
-    stream_filter_list_t *rfil)
+cmpci_set_format(void *handle, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	int i;
 	struct cmpci_softc *sc;
@@ -638,20 +584,16 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 		int md_divide;
 		int md_index;
 		int mode;
-		audio_params_t *p;
-		stream_filter_list_t *fil;
-		int ind;
+		const audio_params_t *p;
 
 		switch (i) {
 		case 0:
 			mode = AUMODE_PLAY;
 			p = play;
-			fil = pfil;
 			break;
 		case 1:
 			mode = AUMODE_RECORD;
 			p = rec;
-			fil = rfil;
 			break;
 		default:
 			return EINVAL;
@@ -662,16 +604,8 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 
 		md_index = cmpci_rate_to_index(p->sample_rate);
 		md_divide = cmpci_index_to_divider(md_index);
-		p->sample_rate = cmpci_index_to_rate(md_index);
 		DPRINTF(("%s: sample:%u, divider=%d\n",
 			 device_xname(sc->sc_dev), p->sample_rate, md_divide));
-
-		ind = auconv_set_converter(cmpci_formats, CMPCI_NFORMATS,
-					   mode, p, FALSE, fil);
-		if (ind < 0)
-			return EINVAL;
-		if (fil->req_size > 0)
-			p = &fil->filters[0].param;
 
 		/* format */
 		md_format = p->channels == 1
@@ -1626,19 +1560,6 @@ cmpci_round_buffersize(void *handle, int direction,
 		bufsize = 0x10000;
 
 	return bufsize;
-}
-
-static paddr_t
-cmpci_mappage(void *handle, void *addr, off_t offset, int prot)
-{
-	struct cmpci_dmanode *p;
-
-	if (offset < 0 || NULL == (p = cmpci_find_dmamem(handle, addr)))
-		return -1;
-
-	return bus_dmamem_mmap(p->cd_tag, p->cd_segs,
-		   sizeof(p->cd_segs)/sizeof(p->cd_segs[0]),
-		   offset, prot, BUS_DMA_WAITOK);
 }
 
 /* ARGSUSED */

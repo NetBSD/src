@@ -1,4 +1,4 @@
-#	$NetBSD: files.mace,v 1.10 2007/10/17 19:57:05 garbled Exp $
+#	$NetBSD: files.mace,v 1.11 2019/05/08 13:40:16 isaki Exp $
 
 device mace {[offset = -1], [intr = -1], [intrmask = 0] }
 attach mace at mainbus
@@ -22,7 +22,7 @@ device mec: arp, ether, ifnet, mii
 attach mec at mace
 file arch/sgimips/mace/if_mec.c		mec
 
-device mavb: audiobus, auconv, mulaw, aurateconv
+device mavb: audiobus
 attach mavb at mace
 file arch/sgimips/mace/mavb.c		mavb
 

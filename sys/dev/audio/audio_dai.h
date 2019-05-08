@@ -1,4 +1,4 @@
-/* $NetBSD: audio_dai.h,v 1.4 2018/11/19 10:14:40 maya Exp $ */
+/* $NetBSD: audio_dai.h,v 1.2 2019/05/08 13:40:17 isaki Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -26,11 +26,11 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _DEV_AUDIO_DAI_H
-#define _DEV_AUDIO_DAI_H
+#ifndef _DEV_AUDIO_AUDIO_DAI_H
+#define _DEV_AUDIO_AUDIO_DAI_H
 
 #include <sys/errno.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #define	AUDIO_DAI_FORMAT_MASK		__BITS(3,0)
 #define	AUDIO_DAI_FORMAT_I2S		0
@@ -138,30 +138,22 @@ audio_dai_close(audio_dai_tag_t dai)
 }
 
 static inline int
-audio_dai_drain(audio_dai_tag_t dai)
+audio_dai_query_format(audio_dai_tag_t dai, audio_format_query_t *afp)
 {
-	if (!dai->dai_hw_if->drain)
+	if (!dai->dai_hw_if->query_format)
 		return 0;
-	return dai->dai_hw_if->drain(dai->dai_priv);
+	return dai->dai_hw_if->query_format(dai->dai_priv, afp);
 }
 
 static inline int
-audio_dai_query_encoding(audio_dai_tag_t dai, audio_encoding_t *ae)
+audio_dai_mi_set_format(audio_dai_tag_t dai, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	if (!dai->dai_hw_if->query_encoding)
+	if (!dai->dai_hw_if->set_format)
 		return 0;
-	return dai->dai_hw_if->query_encoding(dai->dai_priv, ae);
-}
-
-static inline int
-audio_dai_set_params(audio_dai_tag_t dai, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
-{
-	if (!dai->dai_hw_if->set_params)
-		return 0;
-	return dai->dai_hw_if->set_params(dai->dai_priv, setmode,
-	    usemode, play, rec, pfil, rfil);
+	return dai->dai_hw_if->set_format(dai->dai_priv, setmode,
+	    play, rec, pfil, rfil);
 }
 
 static inline int
@@ -244,14 +236,6 @@ audio_dai_round_buffersize(audio_dai_tag_t dai, int dir, size_t bufsize)
 	return dai->dai_hw_if->round_buffersize(dai->dai_priv, dir, bufsize);
 }
 
-static inline paddr_t
-audio_dai_mappage(audio_dai_tag_t dai, void *addr, off_t off, int prot)
-{
-	if (!dai->dai_hw_if->mappage)
-		return -1;
-	return dai->dai_hw_if->mappage(dai->dai_priv, addr, off, prot);
-}
-
 static inline int
 audio_dai_get_props(audio_dai_tag_t dai)
 {
@@ -304,4 +288,4 @@ audio_dai_get_locks(audio_dai_tag_t dai, kmutex_t **intr, kmutex_t **thread)
 	dai->dai_hw_if->get_locks(dai->dai_priv, intr, thread);
 }
 
-#endif /* _DEV_AUDIO_DAI_H */
+#endif /* _DEV_AUDIO_AUDIO_DAI_H */
