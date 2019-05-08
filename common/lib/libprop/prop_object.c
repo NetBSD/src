@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.30 2015/05/12 14:59:35 christos Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.31 2019/05/08 04:34:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -950,7 +950,10 @@ _prop_object_internalize_map_file(const char *fname)
 		_PROP_FREE(mf, M_TEMP);
 		return (NULL);
 	}
-	(void) madvise(mf->poimf_xml, mf->poimf_mapsize, MADV_SEQUENTIAL);
+#ifdef POSIX_MADV_SEQUENTIAL
+	(void) posix_madvise(mf->poimf_xml, mf->poimf_mapsize,
+	    POSIX_MADV_SEQUENTIAL);
+#endif
 
 	if (need_guard) {
 		if (mmap(mf->poimf_xml + mf->poimf_mapsize,
@@ -976,7 +979,10 @@ _prop_object_internalize_unmap_file(
     struct _prop_object_internalize_mapped_file *mf)
 {
 
-	(void) madvise(mf->poimf_xml, mf->poimf_mapsize, MADV_DONTNEED);
+#ifdef POSIX_MADV_DONTNEED
+	(void) posix_madvise(mf->poimf_xml, mf->poimf_mapsize,
+	    POSIX_MADV_DONTNEED);
+#endif
 	(void) munmap(mf->poimf_xml, mf->poimf_mapsize);
 	_PROP_FREE(mf, M_TEMP);
 }
