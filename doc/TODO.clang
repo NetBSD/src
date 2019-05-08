@@ -1,13 +1,28 @@
-$NetBSD: TODO.clang,v 1.20 2017/01/11 12:19:03 joerg Exp $
+$NetBSD: TODO.clang,v 1.21 2019/05/08 01:08:18 christos Exp $
 
 Hacks for the clang integration
 -------------------------------
 
-"-no-integrated-as" is used in src/sys/arch/i386/stand to compensate
-for the incomplete explicit positioning support in LLVM MC.
+src/sys/arch/i386/stand
+    "-no-integrated-as" is used to compensate
+    for the incomplete explicit positioning support in LLVM MC.
 
-src/external/gpl3/gcc/usr.bin/backend forces tree.c to be compiled with -O0.
-g++ otherwise crashes on trivial input.
+src/external/gpl3/gcc/usr.bin/backend
+    forces tree.c to be compiled with -O0.
+    g++ otherwise crashes on trivial input.
 
-src/external/mit/xorg/lib/pixman uses -fno-integrated-as on ARM for the
-macro (ab)use.
+src/external/mit/xorg/lib/pixman
+    uses -fno-integrated-as on ARM for the macro (ab)use.
+
+src/external/libc++/lib
+    Avoid clang bug on earm with SSP/FORTIFY:
+    rt_libelftc_dem_gnu3.c:3567:3: warning: '__builtin___memset_chk'
+    will always overflow destination buffer [-Wbuiltin-memcpy-chk-size]
+			    memset(&f, 0, FLOAT_EXTENED_BYTES);
+
+src/external/mit/xorg/lib/gallium
+    has atomic alignment issues and uses unknown pragma
+
+src/external/mpl/bind/
+    has atomic alignment issues 
+
