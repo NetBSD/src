@@ -1,4 +1,4 @@
-.\"	$NetBSD: bio.4,v 1.16 2019/05/08 07:41:23 wiz Exp $
+.\"	$NetBSD: bio.4,v 1.17 2019/05/08 19:34:09 cnst Exp $
 .\"	$OpenBSD: bio.4,v 1.19 2006/09/20 22:22:37 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
@@ -99,6 +99,10 @@ but doesn't require the disks to be in volume sets, so this
 applies to any physical disk connected to the controller.
 .Pp
 Note: this ioctl might not be supported on all hardware.
+It is a
+.Nx
+extension of
+.Nm .
 It is supported by
 .Xr arcmsr 4 ,
 .Xr ciss 4 ,
@@ -140,7 +144,8 @@ and
 .It Dv BIOCSETSTATE
 Alter the state of specified physical disk.
 Supported states are: create/remove hot-spare, create/remove pass through
-disk, start/stop consistency check in a volume, online disk and offline disk.
+disk, start/stop consistency check in a volume, online disk and offline disk,
+and a manual rebuild kick-off designation.
 .Pp
 Note: These options might not be supported on all hardware.
 Some of these options are supported by
@@ -148,13 +153,33 @@ Some of these options are supported by
 .Xr mfi 4 ,
 and
 .Xr mfii 4 .
+.Pp
+Online, offline and hotspare designations are supported by
+.Xr mfi 4
+and
+.Xr mfii 4 ,
+plus a rebuild designation is supported by
+.Xr mfii 4 ;
+all four of these state options are the original states from
+.Ox ,
+the other options, including hotspare unmarking, being
+.Nx
+extensions of
+.Nm .
+.Pp
+Hotspare, pass through and consistency check options are supported by
+.Xr arcmsr 4 .
 .It Dv BIOCVOLOPS
 For operations in volume sets.
 It's able to create and remove a volume
 set in a supported RAID controller.
 .Pp
 Note: this ioctl might not be supported on all hardware.
-It is supported by
+It is a
+.Nx
+extension of
+.Nm ,
+and is supported by
 .Xr arcmsr 4 .
 .El
 .Sh FILES
