@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.71 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.72 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.71 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.72 2019/05/08 13:40:18 isaki Exp $");
 
 #include "midi.h"
 
@@ -68,10 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.71 2019/03/16 12:09:58 isaki Exp $");
 #include <sys/bus.h>
 #include <sys/bswap.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
@@ -90,10 +88,10 @@ __KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.71 2019/03/16 12:09:58 isaki Exp $");
 static int  cs4280_match(device_t, cfdata_t, void *);
 static void cs4280_attach(device_t, device_t, void *);
 static int  cs4280_intr(void *);
-static int  cs4280_query_encoding(void *, struct audio_encoding *);
-static int  cs4280_set_params(void *, int, int, audio_params_t *,
-			      audio_params_t *, stream_filter_list_t *,
-			      stream_filter_list_t *);
+static int  cs4280_query_format(void *, audio_format_query_t *);
+static int  cs4280_set_format(void *, int,
+			      const audio_params_t *, const audio_params_t *,
+			      audio_filter_reg_t *, audio_filter_reg_t *);
 static int  cs4280_halt_output(void *);
 static int  cs4280_halt_input(void *);
 static int  cs4280_getdev(void *, struct audio_device *);
@@ -159,8 +157,8 @@ static const struct cs4280_card_t cs4280_cards[] = {
 #define CS4280_CARDS_SIZE (sizeof(cs4280_cards)/sizeof(cs4280_cards[0]))
 
 static const struct audio_hw_if cs4280_hw_if = {
-	.query_encoding		= cs4280_query_encoding,
-	.set_params		= cs4280_set_params,
+	.query_format		= cs4280_query_format,
+	.set_format		= cs4280_set_format,
 	.round_blocksize	= cs428x_round_blocksize,
 	.halt_output		= cs4280_halt_output,
 	.halt_input		= cs4280_halt_input,
@@ -171,7 +169,6 @@ static const struct audio_hw_if cs4280_hw_if = {
 	.allocm			= cs428x_malloc,
 	.freem			= cs428x_free,
 	.round_buffersize	= cs428x_round_buffersize,
-	.mappage		= cs428x_mappage,
 	.get_props		= cs428x_get_props,
 	.trigger_output		= cs4280_trigger_output,
 	.trigger_input		= cs4280_trigger_input,
@@ -205,6 +202,26 @@ static struct audio_device cs4280_device = {
 	"cs4280"
 };
 
+/*
+ * XXX recording must be 16bit stereo and sample rate range from
+ *     11025Hz to 48000Hz.  However, it looks like to work with 8000Hz,
+ *     although data sheets say lower limit is 11025Hz.
+ * XXX The combination of available formats is complicated, so I use
+ *     a common format only.  Please fix it if not suitable.
+ */
+static const struct audio_format cs4280_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 0,
+		.frequency	= { 8000, 48000 },
+	}
+};
+#define CS4280_NFORMATS __arraycount(cs4280_formats)
 
 static int
 cs4280_match(device_t parent, cfdata_t match, void *aux)
@@ -433,9 +450,6 @@ cs4280_intr(void *p)
 	}
 	/* Capture Interrupt */
 	if (intr & HISR_CINT) {
-		int  i;
-		int16_t rdata;
-
 		handled = 1;
 		mem = BA1READ4(sc, CS4280_CIE);
 		BA1WRITE4(sc, CS4280_CIE, (mem & ~CIE_CI_MASK) | CIE_CI_DISABLE);
@@ -446,53 +460,9 @@ cs4280_intr(void *p)
 			if ((sc->sc_ri&1) == 0)
 				empty_dma += sc->hw_blocksize;
 
-			/*
-			 * XXX
-			 * I think this audio data conversion should be
-			 * happend in upper layer, but I put this here
-			 * since there is no conversion function available.
-			 */
-			switch(sc->sc_rparam) {
-			case CF_16BIT_STEREO:
-				/* just copy it */
-				memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
-				sc->sc_rn += sc->hw_blocksize;
-				break;
-			case CF_16BIT_MONO:
-				for (i = 0; i < 512; i++) {
-					rdata  = *((int16_t *)empty_dma)>>1;
-					empty_dma += 2;
-					rdata += *((int16_t *)empty_dma)>>1;
-					empty_dma += 2;
-					*((int16_t *)sc->sc_rn) = rdata;
-					sc->sc_rn += 2;
-				}
-				break;
-			case CF_8BIT_STEREO:
-				for (i = 0; i < 512; i++) {
-					rdata = *((int16_t*)empty_dma);
-					empty_dma += 2;
-					*sc->sc_rn++ = rdata >> 8;
-					rdata = *((int16_t*)empty_dma);
-					empty_dma += 2;
-					*sc->sc_rn++ = rdata >> 8;
-				}
-				break;
-			case CF_8BIT_MONO:
-				for (i = 0; i < 512; i++) {
-					rdata =	 *((int16_t*)empty_dma) >>1;
-					empty_dma += 2;
-					rdata += *((int16_t*)empty_dma) >>1;
-					empty_dma += 2;
-					*sc->sc_rn++ = rdata >>8;
-				}
-				break;
-			default:
-				/* Should not reach here */
-				aprint_error_dev(sc->sc_dev,
-				    "unknown sc->sc_rparam: %d\n",
-				    sc->sc_rparam);
-			}
+			/* just copy it */
+			memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
+			sc->sc_rn += sc->hw_blocksize;
 			if (sc->sc_rn >= sc->sc_re)
 				sc->sc_rn = sc->sc_rs;
 		}
@@ -550,161 +520,20 @@ cs4280_intr(void *p)
 }
 
 static int
-cs4280_query_encoding(void *addr, struct audio_encoding *fp)
+cs4280_query_format(void *addr, audio_format_query_t *afp)
 {
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strcpy(fp->name, AudioEslinear);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 4:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 5:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 6:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 7:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return EINVAL;
-	}
-	return 0;
+
+	return audio_query_format(cs4280_formats, CS4280_NFORMATS, afp);
 }
 
 static int
-cs4280_set_params(void *addr, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
-    stream_filter_list_t *rfil)
+cs4280_set_format(void *addr, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	audio_params_t hw;
 	struct cs428x_softc *sc;
-	struct audio_params *p;
-	stream_filter_list_t *fil;
-	int mode;
 
 	sc = addr;
-	for (mode = AUMODE_RECORD; mode != -1;
-	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1 ) {
-		if ((setmode & mode) == 0)
-			continue;
-
-		p = mode == AUMODE_PLAY ? play : rec;
-
-		if (p == play) {
-			DPRINTFN(5,("play: sample=%d precision=%d channels=%d\n",
-				p->sample_rate, p->precision, p->channels));
-			/* play back data format may be 8- or 16-bit and
-			 * either stereo or mono.
-			 * playback rate may range from 8000Hz to 48000Hz
-			 */
-			if (p->sample_rate < 8000 || p->sample_rate > 48000 ||
-			    (p->precision != 8 && p->precision != 16) ||
-			    (p->channels != 1  && p->channels != 2) ) {
-				return EINVAL;
-			}
-		} else {
-			DPRINTFN(5,("rec: sample=%d precision=%d channels=%d\n",
-				p->sample_rate, p->precision, p->channels));
-			/* capture data format must be 16bit stereo
-			 * and sample rate range from 11025Hz to 48000Hz.
-			 *
-			 * XXX: it looks like to work with 8000Hz,
-			 *	although data sheets say lower limit is
-			 *	11025 Hz.
-			 */
-
-			if (p->sample_rate < 8000 || p->sample_rate > 48000 ||
-			    (p->precision != 8 && p->precision != 16) ||
-			    (p->channels  != 1 && p->channels  != 2) ) {
-				return EINVAL;
-			}
-		}
-		fil = mode == AUMODE_PLAY ? pfil : rfil;
-		hw = *p;
-		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-
-		/* capturing data is slinear */
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (mode == AUMODE_RECORD && p->precision == 16) {
-				fil->append(fil, swap_bytes, &hw);
-			}
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (mode == AUMODE_RECORD) {
-				fil->append(fil, p->precision == 16
-					    ? swap_bytes_change_sign16
-					    : change_sign8, &hw);
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (mode == AUMODE_RECORD) {
-				fil->append(fil, p->precision == 16
-					    ? change_sign16 : change_sign8,
-					    &hw);
-			}
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				hw.precision = 16;
-				hw.validbits = 16;
-				fil->append(fil, mulaw_to_linear16, &hw);
-			} else {
-				fil->append(fil, linear8_to_mulaw, &hw);
-			}
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				hw.precision = 16;
-				hw.validbits = 16;
-				fil->append(fil, alaw_to_linear16, &hw);
-			} else {
-				fil->append(fil, linear8_to_alaw, &hw);
-			}
-			break;
-		default:
-			return EINVAL;
-		}
-	}
-
 	/* set sample rate */
 	cs4280_set_dac_rate(sc, play->sample_rate);
 	cs4280_set_adc_rate(sc, rec->sample_rate);
@@ -815,19 +644,8 @@ cs4280_trigger_output(void *addr, void *start, void *end, int blksize,
 
 	/* set PFIE */
 	pfie = BA1READ4(sc, CS4280_PFIE) & ~PFIE_MASK;
-
-	if (param->precision == 8)
-		pfie |= PFIE_8BIT;
-	if (param->channels == 1)
-		pfie |= PFIE_MONO;
-
-	if (param->encoding == AUDIO_ENCODING_ULINEAR_BE ||
-	    param->encoding == AUDIO_ENCODING_SLINEAR_BE)
+	if (param->encoding == AUDIO_ENCODING_SLINEAR_BE)
 		pfie |= PFIE_SWAPPED;
-	if (param->encoding == AUDIO_ENCODING_ULINEAR_BE ||
-	    param->encoding == AUDIO_ENCODING_ULINEAR_LE)
-		pfie |= PFIE_UNSIGNED;
-
 	BA1WRITE4(sc, CS4280_PFIE, pfie | PFIE_PI_ENABLE);
 
 	sc->sc_prate = param->sample_rate;
@@ -886,17 +704,6 @@ cs4280_trigger_input(void *addr, void *start, void *end, int blksize,
 
 	/* initiate capture DMA */
 	BA1WRITE4(sc, CS4280_CBA, DMAADDR(p));
-
-	/* setup format information for internal converter */
-	sc->sc_rparam = 0;
-	if (param->precision == 8) {
-		sc->sc_rparam += CF_8BIT;
-		sc->sc_rcount <<= 1;
-	}
-	if (param->channels  == 1) {
-		sc->sc_rparam += CF_MONO;
-		sc->sc_rcount <<= 1;
-	}
 
 	/* set CIE */
 	cie = BA1READ4(sc, CS4280_CIE) & ~CIE_CI_MASK;

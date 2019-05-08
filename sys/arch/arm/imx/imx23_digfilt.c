@@ -1,4 +1,4 @@
-/* $Id: imx23_digfilt.c,v 1.1 2015/01/10 12:16:28 jmcneill Exp $ */
+/* $Id: imx23_digfilt.c,v 1.2 2019/05/08 13:40:14 isaki Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,9 +38,8 @@
 #include <sys/bus.h>
 #include <sys/mutex.h>
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
 #include <sys/mallocvar.h>
+#include <dev/audio/audio_if.h>
 #include <arm/imx/imx23_digfiltreg.h>
 #include <arm/imx/imx23_rtcvar.h>
 #include <arm/imx/imx23_clkctrlvar.h>
@@ -56,11 +55,10 @@ static void digfilt_attach(device_t, device_t, void *);
 static int digfilt_activate(device_t, enum devact);
 
 /* Audio driver interface. */
-static int digfilt_drain(void *);
-static int digfilt_query_encoding(void *, struct audio_encoding *);
-static int digfilt_set_params(void *, int, int, audio_params_t *,
-    audio_params_t *, stream_filter_list_t *,
-    stream_filter_list_t *);
+static int digfilt_query_format(void *, audio_format_query_t *);
+static int digfilt_set_format(void *, int,
+    const audio_params_t *, const audio_params_t *,
+    audio_filter_reg_t *, audio_filter_reg_t *);
 static int digfilt_round_blocksize(void *, int, int, const audio_params_t *);
 static int digfilt_init_output(void *, void *, int );
 static int digfilt_start_output(void *, void *, int, void (*)(void *), void *);
@@ -116,7 +114,6 @@ struct digfilt_softc {
 	device_t sc_dev;
 	device_t sc_audiodev;
 	struct audio_format sc_format;
-	struct audio_encoding_set *sc_encodings;
 	bus_space_handle_t sc_aihdl;
 	bus_space_handle_t sc_aohdl;
 	apbdma_softc_t sc_dmac;
@@ -151,9 +148,8 @@ CFATTACH_DECL3_NEW(digfilt,
 static const struct audio_hw_if digfilt_hw_if = {
 	.open = NULL,
 	.close = NULL,
-	.drain = digfilt_drain,
-	.query_encoding = digfilt_query_encoding,
-	.set_params = digfilt_set_params,
+	.query_format = digfilt_query_format,
+	.set_format = digfilt_set_format,
 	.round_blocksize = digfilt_round_blocksize,
 	.commit_settings = NULL,
 	.init_output = digfilt_init_output,
@@ -163,14 +159,12 @@ static const struct audio_hw_if digfilt_hw_if = {
 	.halt_output = digfilt_halt_output,
 	.speaker_ctl = NULL,
 	.getdev = digfilt_getdev,
-	.setfd = NULL,
 	.set_port = digfilt_set_port,
 	.get_port = digfilt_get_port,
 	.query_devinfo = digfilt_query_devinfo,
 	.allocm = digfilt_allocm,
 	.freem = digfilt_freem,
 	.round_buffersize = digfilt_round_buffersize,
-	.mappage = NULL,
 	.get_props = digfilt_get_props,
 	.trigger_output = NULL,
 	.trigger_input = NULL,
@@ -309,11 +303,6 @@ digfilt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_format.frequency[6] = 32000;
 	sc->sc_format.frequency[7] = 44100;
 
-	if (auconv_create_encodings(&sc->sc_format, 1, &sc->sc_encodings)) {
-		aprint_error_dev(self, "could not create encodings\n");
-		return;
-	}
-
 	sc->sc_audiodev = audio_attach_mi(&digfilt_hw_if, sc, sc->sc_dev);
 
 	/* Default mutes. */
@@ -359,41 +348,21 @@ digfilt_activate(device_t self, enum devact act)
 }
 
 static int
-digfilt_drain(void *priv)
+digfilt_query_format(void *priv, audio_format_query_t *afp)
 {
-
 	struct digfilt_softc *sc = priv;
 
-	apbdma_wait(sc->sc_dmac, 1);
-	sc->sc_cmd_index = 0;
-	
-	return 0;
+	return audio_query_format(&sc->sc_format, 1, afp);
 }
 
 static int
-digfilt_query_encoding(void *priv, struct audio_encoding *ae)
+digfilt_set_format(void *priv, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct digfilt_softc *sc = priv;
-	return auconv_query_encoding(sc->sc_encodings, ae);
-}
 
-static int
-digfilt_set_params(void *priv, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
-{
-	struct digfilt_softc *sc = priv;
-	int index;
-
-	if (play && (setmode & AUMODE_PLAY)) {
-		index = auconv_set_converter(&sc->sc_format, 1,
-		    AUMODE_PLAY, play, true, pfil);
-		if (index < 0)
-			return EINVAL;
-		sc->sc_pparam = pfil->req_size > 0 ?
-		    pfil->filters[0].param :
-		    *play;
-
+	if ((setmode & AUMODE_PLAY)) {
 		/* At this point bitrate should be figured out. */
 		digfilt_ao_set_rate(sc, sc->sc_pparam.sample_rate);
 	}
@@ -486,6 +455,9 @@ digfilt_start_output(void *priv, void *start, int bs, void (*intr)(void*), void 
 static int
 digfilt_halt_output(void *priv)
 {
+	struct digfilt_softc *sc = priv;
+
+	sc->sc_cmd_index = 0;
 	return 0;
 }
 

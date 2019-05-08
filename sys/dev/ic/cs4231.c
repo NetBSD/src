@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.29 2017/06/01 02:45:10 chs Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.30 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.29 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.30 2019/05/08 13:40:18 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.29 2017/06/01 02:45:10 chs Exp $");
 #include <sys/cpu.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/cs4231reg.h>

@@ -1,4 +1,4 @@
-# $NetBSD: files.hpc,v 1.16 2018/04/09 20:07:22 christos Exp $
+# $NetBSD: files.hpc,v 1.17 2019/05/08 13:40:16 isaki Exp $
 
 device	sq: arp, ether, ifnet
 attach	sq at hpc
@@ -11,7 +11,7 @@ device	wdsc: wd33c93, scsi, hpcdma
 attach	wdsc at hpc
 file	arch/sgimips/hpc/wdsc.c		wdsc
 
-device	haltwo: audiobus, auconv, mulaw
+device	haltwo: audiobus
 attach	haltwo at hpc
 file	arch/sgimips/hpc/haltwo.c	haltwo
 

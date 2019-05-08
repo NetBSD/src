@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.40 2019/02/03 11:15:45 mrg Exp $	*/
+/*	$NetBSD: interwave.c,v 1.41 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.40 2019/02/03 11:15:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.41 2019/05/08 13:40:18 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.40 2019/02/03 11:15:45 mrg Exp $");
 
 #include <machine/pio.h>
 
-#include <dev/audio_if.h>
-#include <dev/mulaw.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -89,6 +88,25 @@ struct audio_device iw_device = {
 	"0.1",
 	"guspnp"
 };
+
+/* The HW supports more formats but only SLINEAR_NE/16/2ch is enough. */
+static const struct audio_format iw_formats[] = {
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_NE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 16,
+		.frequency	= {
+			 5510,  6620,  8000,  9600, 11025,
+			16000, 18900, 22050, 27420, 32000,
+			33075, 37800, 38400, 44100, 44800, 48000,
+		},
+	},
+};
+#define IW_NFORMATS __arraycount(iw_formats)
 
 #ifdef AUDIO_DEBUG
 int iw_debug;
@@ -582,65 +600,14 @@ iw_set_speed(struct iw_softc *sc, u_long freq, char in)
 	return freq;
 }
 
-/* Encoding. */
 int
-iw_query_encoding(void *addr, audio_encoding_t *fp)
+iw_query_format(void *addr, audio_format_query_t *afp)
 {
-	/*
-	 * LINEAR, ALAW, ULAW, ADPCM in HW, we'll use linear unsigned
-	 * hardware mode for all 8-bit modes due to buggy (?) codec.
-	 */
 
-	/*
-	 * except in wavetable synth. there we have only mu-law and 8 and 16
-	 * bit linear data
-	 */
-
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strcpy(fp->name, AudioEadpcm);
-		fp->encoding = AUDIO_ENCODING_ADPCM;
-		fp->precision = 8;	/* really 4 bit */
-		fp->flags = 0;
-		break;
-	case 4:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 5:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	default:
-		return EINVAL;
-		/* NOTREACHED */
-	}
-	return 0;
+	return audio_query_format(iw_formats, IW_NFORMATS, afp);
 }
 
-u_long
+static u_long
 iw_set_format(struct iw_softc *sc, u_long precision, int in)
 {
 	u_char	data;
@@ -704,84 +671,32 @@ iw_set_format(struct iw_softc *sc, u_long precision, int in)
 }
 
 int
-iw_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
-    audio_params_t *q, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+iw_audio_set_format(void *addr, int setmode,
+	const audio_params_t *p, const audio_params_t *q,
+	audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	audio_params_t phw, rhw;
 	struct iw_softc *sc;
-	stream_filter_factory_t *swcode;
 
-	DPRINTF(("iw_setparams: code %u, prec %u, rate %u, chan %u\n",
+	DPRINTF(("%s: code %u, prec %u, rate %u, chan %u\n", __func__,
 	    p->encoding, p->precision, p->sample_rate, p->channels));
 	sc = addr;
-	swcode = NULL;
-	phw = *p;
-	rhw = *q;
-	switch (p->encoding) {
-	case AUDIO_ENCODING_ULAW:
-		if (p->precision != 8)
-			return EINVAL;
-		phw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-		rhw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-		swcode = setmode & AUMODE_PLAY ? mulaw_to_linear8 : linear8_to_mulaw;
-		break;
-	case AUDIO_ENCODING_ALAW:
-		if (p->precision != 8)
-			return EINVAL;
-		phw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-		rhw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-		swcode = setmode & AUMODE_PLAY ? alaw_to_linear8 : linear8_to_alaw;
-		break;
-	case AUDIO_ENCODING_ADPCM:
-		if (p->precision != 8)
-			return EINVAL;
-		else
-			break;
-
-	case AUDIO_ENCODING_SLINEAR_LE:
-	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision != 8 && p->precision != 16)
-			return EINVAL;
-		else
-			break;
-
-	default:
-		return EINVAL;
-
-	}
 
 	if (setmode & AUMODE_PLAY) {
 		sc->play_channels = p->channels;
 		sc->play_encoding = p->encoding;
 		sc->play_precision = p->precision;
 		iw_set_format(sc, p->precision, 0);
-		q->sample_rate = p->sample_rate = sc->sc_orate =
-			iw_set_speed(sc, p->sample_rate, 0);
-		if (swcode != NULL) {
-			phw.sample_rate = p->sample_rate;
-			pfil->append(pfil, swcode, &phw);
-		}
+		sc->sc_orate = iw_set_speed(sc, p->sample_rate, 0);
 	} else {
-#if 0
-		q->channels = sc->rec_channels = p->channels;
-		q->encoding = sc->rec_encoding = p->encoding;
-		q->precision = sc->rec_precision = p->precision;
-#endif
 		sc->rec_channels = q->channels;
 		sc->rec_encoding = q->encoding;
 		sc->rec_precision = q->precision;
-
+		/* XXX Is this 'p' a typo of 'q' ? */
 		iw_set_format(sc, p->precision, 1);
-		q->sample_rate = sc->sc_irate =
-			iw_set_speed(sc, q->sample_rate, 1);
-		if (swcode != NULL) {
-			rhw.sample_rate = q->sample_rate;
-			rfil->append(rfil, swcode, &rhw);
-		}
+		sc->sc_irate = iw_set_speed(sc, q->sample_rate, 1);
 	}
 	return 0;
 }
-
 
 int
 iw_round_blocksize(void *addr, int blk, int mode,
@@ -789,7 +704,7 @@ iw_round_blocksize(void *addr, int blk, int mode,
 {
 
 	/* Round to a multiple of the biggest sample size. */
-	return blk &= -4;
+	return blk & -4;
 }
 
 void
@@ -1113,13 +1028,6 @@ iw_getdev(void *addr, struct audio_device *retp)
 {
 
 	*retp = iw_device;
-	return 0;
-}
-
-int
-iw_setfd(void *addr, int flag)
-{
-
 	return 0;
 }
 
@@ -1536,13 +1444,6 @@ iw_round_buffersize(void *addr, int direction, size_t size)
 	if (size > maxsize)
 		size = maxsize;
 	return size;
-}
-
-paddr_t
-iw_mappage(void *addr, void *mem, off_t off, int prot)
-{
-
-	return isa_mappage(mem, off, prot);
 }
 
 int

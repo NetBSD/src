@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.77 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.78 2019/05/08 13:40:19 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.77 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.78 2019/05/08 13:40:19 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.77 2019/05/05 03:17:54 mrg Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 
-#include <dev/auconv.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/umidi_quirks.h>
 #include <dev/midi_if.h>

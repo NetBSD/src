@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.13 2019/04/02 03:52:17 isaki Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.14 2019/05/08 13:40:14 isaki Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.13 2019/04/02 03:52:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.14 2019/05/08 13:40:14 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,9 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.13 2019/04/02 03:52:17 isaki E
 #include <sys/kmem.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
-#include <dev/auvolconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <interface/compat/vchi_bsd.h>
 #include <interface/vchiq_arm/vchiq_netbsd.h>
@@ -95,10 +93,11 @@ enum vcaudio_dest {
  * 50ms.
  */
 
-#define VCAUDIO_MSGSIZE		1600
+/* 40ms block of 16bit 48kHz stereo is 7680 bytes. */
+#define VCAUDIO_MSGSIZE		1920
 #define VCAUDIO_NUMMSGS		4
 #define VCAUDIO_BLOCKSIZE	(VCAUDIO_MSGSIZE * VCAUDIO_NUMMSGS)
-#define VCAUDIO_BUFFERSIZE	128000
+/* The driver seems to have no buffer size restrictions. */
 #define VCAUDIO_PREFILLCOUNT	2
 
 struct vcaudio_softc {
@@ -115,7 +114,6 @@ struct vcaudio_softc {
 	kcondvar_t			sc_msgcv;
 
 	struct audio_format		sc_format;
-	struct audio_encoding_set	*sc_encodings;
 
 	void				(*sc_pint)(void *);
 	void				*sc_pintarg;
@@ -156,12 +154,10 @@ static int	vcaudio_msg_sync(struct vcaudio_softc *, VC_AUDIO_MSG_T *,
     size_t);
 static void	vcaudio_worker(void *);
 
-static int	vcaudio_open(void *, int);
-static void	vcaudio_close(void *);
-static int	vcaudio_query_encoding(void *, struct audio_encoding *);
-static int	vcaudio_set_params(void *, int, int,
-    audio_params_t *, audio_params_t *,
-    stream_filter_list_t *, stream_filter_list_t *);
+static int	vcaudio_query_format(void *, audio_format_query_t *);
+static int	vcaudio_set_format(void *, int,
+    const audio_params_t *, const audio_params_t *,
+    audio_filter_reg_t *, audio_filter_reg_t *);
 static int	vcaudio_halt_output(void *);
 static int	vcaudio_halt_input(void *);
 static int	vcaudio_set_port(void *, mixer_ctrl_t *);
@@ -172,7 +168,6 @@ static int	vcaudio_get_props(void *);
 
 static int	vcaudio_round_blocksize(void *, int, int,
     const audio_params_t *);
-static size_t	vcaudio_round_buffersize(void *, int, size_t);
 
 static int	vcaudio_trigger_output(void *, void *, void *, int,
     void (*)(void *), void *, const audio_params_t *);
@@ -181,15 +176,11 @@ static int	vcaudio_trigger_input(void *, void *, void *, int,
 
 static void	vcaudio_get_locks(void *, kmutex_t **, kmutex_t **);
 
-static stream_filter_t *vcaudio_swvol_filter(struct audio_softc *,
-    const audio_params_t *, const audio_params_t *);
-static void	vcaudio_swvol_dtor(stream_filter_t *);
+static void vcaudio_swvol_codec(audio_filter_arg_t *);
 
 static const struct audio_hw_if vcaudio_hw_if = {
-	.open = vcaudio_open,
-	.close = vcaudio_close,
-	.query_encoding = vcaudio_query_encoding,
-	.set_params = vcaudio_set_params,
+	.query_format = vcaudio_query_format,
+	.set_format = vcaudio_set_format,
 	.halt_output = vcaudio_halt_output,
 	.halt_input = vcaudio_halt_input,
 	.getdev = vcaudio_getdev,
@@ -198,7 +189,6 @@ static const struct audio_hw_if vcaudio_hw_if = {
 	.query_devinfo = vcaudio_query_devinfo,
 	.get_props = vcaudio_get_props,
 	.round_blocksize = vcaudio_round_blocksize,
-	.round_buffersize = vcaudio_round_buffersize,
 	.trigger_output = vcaudio_trigger_output,
 	.trigger_input = vcaudio_trigger_input,
 	.get_locks = vcaudio_get_locks,
@@ -294,13 +284,6 @@ vcaudio_init(struct vcaudio_softc *sc)
 	sc->sc_format.frequency_type = 0;
 	sc->sc_format.frequency[0] = 48000;
 	sc->sc_format.frequency[1] = 48000;
-
-	error = auconv_create_encodings(&sc->sc_format, 1, &sc->sc_encodings);
-	if (error) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't create encodings (error=%d)\n", error);
-		return error;
-	}
 
 	error = vchi_initialise(&sc->sc_instance);
 	if (error) {
@@ -579,41 +562,22 @@ done:
 }
 
 static int
-vcaudio_open(void *priv, int flags)
-{
-	return 0;
-}
-
-static void
-vcaudio_close(void *priv)
-{
-}
-
-static int
-vcaudio_query_encoding(void *priv, struct audio_encoding *ae)
+vcaudio_query_format(void *priv, audio_format_query_t *afp)
 {
 	struct vcaudio_softc *sc = priv;
 
-	return auconv_query_encoding(sc->sc_encodings, ae);
+	return audio_query_format(&sc->sc_format, 1, afp);
 }
 
 static int
-vcaudio_set_params(void *priv, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+vcaudio_set_format(void *priv, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct vcaudio_softc *sc = priv;
-	int index;
 
-	if (play && (setmode & AUMODE_PLAY)) {
-		index = auconv_set_converter(&sc->sc_format, 1,
-		    AUMODE_PLAY, play, true, pfil);
-		if (index < 0)
-			return EINVAL;
-		if (pfil->req_size > 0)
-			play = &pfil->filters[0].param;
-		pfil->prepend(pfil, vcaudio_swvol_filter, play);
-	}
+	pfil->codec = vcaudio_swvol_codec;
+	pfil->context = sc;
 
 	return 0;
 }
@@ -851,13 +815,6 @@ vcaudio_round_blocksize(void *priv, int bs, int mode,
 	return VCAUDIO_BLOCKSIZE;
 }
 
-static size_t
-vcaudio_round_buffersize(void *priv, int direction, size_t bufsize)
-{
-
-	return VCAUDIO_BUFFERSIZE;
-}
-
 static int
 vcaudio_trigger_output(void *priv, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *params)
@@ -899,27 +856,21 @@ vcaudio_get_locks(void *priv, kmutex_t **intr, kmutex_t **thread)
 	*thread = &sc->sc_lock;
 }
 
-static stream_filter_t *
-vcaudio_swvol_filter(struct audio_softc *asc,
-    const audio_params_t *from, const audio_params_t *to)
-{
-	auvolconv_filter_t *this;
-	device_t dev = audio_get_device(asc);
-	struct vcaudio_softc *sc = device_private(dev);
-
-	this = kmem_alloc(sizeof(auvolconv_filter_t), KM_SLEEP);
-	this->base.base.fetch_to = auvolconv_slinear16_le_fetch_to;
-	this->base.dtor = vcaudio_swvol_dtor;
-	this->base.set_fetcher = stream_filter_set_fetcher;
-	this->base.set_inputbuffer = stream_filter_set_inputbuffer;
-	this->vol = &sc->sc_swvol;
-
-	return (stream_filter_t *)this;
-}
-
 static void
-vcaudio_swvol_dtor(stream_filter_t *this)
+vcaudio_swvol_codec(audio_filter_arg_t *arg)
 {
-	if (this)
-		kmem_free(this, sizeof(auvolconv_filter_t));
+	struct vcaudio_softc *sc = arg->context;
+	const aint_t *src;
+	aint_t *dst;
+	u_int sample_count;
+	u_int i;
+
+	src = arg->src;
+	dst = arg->dst;
+	sample_count = arg->count * arg->srcfmt->channels;
+	for (i = 0; i < sample_count; i++) {
+		aint2_t v = (aint2_t)(*src++);
+		v = v * sc->sc_swvol / 255;
+		*dst++ = (aint_t)v;
+	}
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.20 2018/03/09 17:14:57 christos Exp $
+#	$NetBSD: files.pxa2x0,v 1.21 2019/05/08 13:40:14 isaki Exp $
 #
 # Configuration info for Intel PXA2[751]0 CPU support
 #
@@ -55,7 +55,7 @@ defparam	opt_pxa2x0_dmac.h	PXA2X0_DMAC_FIXED_PRIORITY
 defparam	opt_pxa2x0_dmac.h	PXA2X0_DMAC_DMOVER_CONCURRENCY
 
 # AC97 Controller
-device	pxaacu: audiobus, auconv, mulaw, ac97, aurateconv
+device	pxaacu: audiobus, ac97
 attach	pxaacu at pxaip
 file	arch/arm/xscale/pxa2x0_ac97.c		pxaacu
 

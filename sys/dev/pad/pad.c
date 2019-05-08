@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.58 2018/09/25 06:55:23 nakayama Exp $ */
+/* $NetBSD: pad.c,v 1.59 2019/05/08 13:40:18 isaki Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.58 2018/09/25 06:55:23 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.59 2019/05/08 13:40:18 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,17 +45,19 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.58 2018/09/25 06:55:23 nakayama Exp $");
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/audioio.h>
-#include <sys/vnode.h>
 #include <sys/module.h>
-#include <sys/atomic.h>
-#include <sys/time.h>
 
-#include <dev/audio_if.h>
-#include <dev/audiovar.h>
-#include <dev/auconv.h>
-#include <dev/auvolconv.h>
+#include <dev/audio/audio_if.h>
+#include <dev/audio/audiovar.h>
 
 #include <dev/pad/padvar.h>
+
+/* #define PAD_DEBUG */
+#ifdef PAD_DEBUG
+#define DPRINTF(fmt...)	printf(fmt)
+#else
+#define DPRINTF(fmt...) /**/
+#endif
 
 #define MAXDEVS		128
 #define PADCLONER	254
@@ -64,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.58 2018/09/25 06:55:23 nakayama Exp $");
 #define PADFREQ		44100
 #define PADCHAN		2
 #define PADPREC		16
-#define PADENC		AUDIO_ENCODING_SLINEAR_LE
 
 extern struct cfdriver pad_cd;
 kmutex_t padconfig;
@@ -87,11 +88,10 @@ static void	pad_attach(device_t, device_t, void *);
 static int	pad_detach(device_t, int);
 static void	pad_childdet(device_t, device_t);
 
-static int	pad_audio_open(void *, int);
-static int	pad_query_encoding(void *, struct audio_encoding *);
-static int	pad_set_params(void *, int, int,
-				audio_params_t *, audio_params_t *,
-				stream_filter_list_t *, stream_filter_list_t *);
+static int	pad_query_format(void *, audio_format_query_t *);
+static int	pad_set_format(void *, int,
+		    const audio_params_t *, const audio_params_t *,
+		    audio_filter_reg_t *, audio_filter_reg_t *);
 static int	pad_start_output(void *, void *, int,
 				    void (*)(void *), void *);
 static int	pad_start_input(void *, void *, int,
@@ -103,14 +103,10 @@ static int	pad_set_port(void *, mixer_ctrl_t *);
 static int	pad_get_port(void *, mixer_ctrl_t *);
 static int	pad_query_devinfo(void *, mixer_devinfo_t *);
 static int	pad_get_props(void *);
-static int	pad_round_blocksize(void *, int, int, const audio_params_t *);
 static void	pad_get_locks(void *, kmutex_t **, kmutex_t **);
 
-static stream_filter_t *pad_swvol_filter_le(struct audio_softc *,
-    const audio_params_t *, const audio_params_t *);
-static stream_filter_t *pad_swvol_filter_be(struct audio_softc *,
-    const audio_params_t *, const audio_params_t *);
-static void	pad_swvol_dtor(stream_filter_t *);
+static void	pad_done_output(void *);
+static void	pad_swvol_codec(audio_filter_arg_t *);
 
 static int pad_close(struct pad_softc *);
 static int pad_read(struct pad_softc *, off_t *, struct uio *, kauth_cred_t, int);
@@ -126,9 +122,8 @@ static int pad_mmap(struct file *, off_t *, size_t, int, int *, int *,
 			   struct uvm_object **, int *);
 
 static const struct audio_hw_if pad_hw_if = {
-	.open = pad_audio_open,
-	.query_encoding = pad_query_encoding,
-	.set_params = pad_set_params,
+	.query_format = pad_query_format,
+	.set_format = pad_set_format,
 	.start_output = pad_start_output,
 	.start_input = pad_start_input,
 	.halt_output = pad_halt_output,
@@ -138,14 +133,21 @@ static const struct audio_hw_if pad_hw_if = {
 	.get_port = pad_get_port,
 	.query_devinfo = pad_query_devinfo,
 	.get_props = pad_get_props,
-	.round_blocksize = pad_round_blocksize,
 	.get_locks = pad_get_locks,
 };
 
 #define PAD_NFORMATS	1
 static const struct audio_format pad_formats[PAD_NFORMATS] = {
-	{ NULL, AUMODE_PLAY|AUMODE_RECORD, PADENC, PADPREC, PADPREC,
-	  PADCHAN, AUFMT_STEREO, 1, { PADFREQ } },
+	{
+		.mode		= AUMODE_PLAY,
+		.encoding	= AUDIO_ENCODING_SLINEAR_NE,
+		.validbits	= PADPREC,
+		.precision	= PADPREC,
+		.channels	= PADCHAN,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 1,
+		.frequency	= { PADFREQ },
+	},
 };
 
 extern void	padattach(int);
@@ -211,11 +213,6 @@ pad_add_block(pad_softc_t *sc, uint8_t *blk, int blksize)
 {
 	int l;
 
-	if (sc->sc_open == 0)
-		return EIO;
-
-	KASSERT(mutex_owned(&sc->sc_lock));
-
 	if (sc->sc_buflen + blksize > PAD_BUFSIZE)
 		return ENOBUFS;
 
@@ -228,7 +225,7 @@ pad_add_block(pad_softc_t *sc, uint8_t *blk, int blksize)
 	}
 
 	sc->sc_wpos += blksize;
-	if (sc->sc_wpos > PAD_BUFSIZE)
+	if (sc->sc_wpos >= PAD_BUFSIZE)
 		sc->sc_wpos -= PAD_BUFSIZE;
 
 	sc->sc_buflen += blksize;
@@ -241,11 +238,7 @@ pad_get_block(pad_softc_t *sc, pad_block_t *pb, int blksize)
 {
 	int l;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(pb != NULL);
-
-	if (sc->sc_buflen < (uint)blksize)
-		return ERESTART;
 
 	pb->pb_ptr = (sc->sc_audiobuf + sc->sc_rpos);
 	if (sc->sc_rpos + blksize < PAD_BUFSIZE) {
@@ -361,18 +354,11 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 		}
 	}
 
-	if (auconv_create_encodings(pad_formats, PAD_NFORMATS,
-	    &sc->sc_encodings) != 0) {
-		aprint_error_dev(sc->sc_dev, "couldn't create encodings\n");
-		if (existing == false)
-			config_detach(sc->sc_dev, 0);
-		mutex_exit(&padconfig);
-		return EINVAL;
-	}
-
 	cv_init(&sc->sc_condvar, device_xname(sc->sc_dev));
+	mutex_init(&sc->sc_cond_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_NONE);
+	callout_init(&sc->sc_pcallout, 0/*XXX?*/);
 
 	sc->sc_swvol = 255;
 	sc->sc_buflen = 0;
@@ -423,11 +409,10 @@ pad_close(struct pad_softc *sc)
 
 	pmf_device_deregister(sc->sc_dev);
 
+	mutex_destroy(&sc->sc_cond_lock);
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
 	cv_destroy(&sc->sc_condvar);
-
-	auconv_delete_encodings(sc->sc_encodings);
 
 	rc = config_detach(sc->sc_dev, 0);
 	mutex_exit(&padconfig);
@@ -514,10 +499,6 @@ pad_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 	return 1;
 }
 
-#define PAD_BYTES_PER_SEC   (PADFREQ * PADPREC / NBBY * PADCHAN)
-#define BYTESTOSLEEP	    (int64_t)(PAD_BLKSIZE)
-#define TIMENEXTREAD	    (int64_t)(BYTESTOSLEEP * 1000000 / PAD_BYTES_PER_SEC)
-
 int
 cdev_pad_read(dev_t dev, struct uio *uio, int ioflag)
 {
@@ -546,77 +527,36 @@ static int
 pad_read(struct pad_softc *sc, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	  int ioflag)
 {
-	struct timeval now;
-	uint64_t nowusec, lastusec;
 	pad_block_t pb;
-	void (*intr)(void *);
-	void *intrarg;
-	int err, wait_ticks;
+	int len;
+	int err;
 
 	err = 0;
-
+	DPRINTF("%s: resid=%zu\n", __func__, uio->uio_resid);
 	while (uio->uio_resid > 0 && !err) {
-		mutex_enter(&sc->sc_lock);
-		if (sc->sc_dying == true) {
-			mutex_exit(&sc->sc_lock);
-			return EIO;
-		}
-		intr = sc->sc_intr;
-		intrarg = sc->sc_intrarg;
-
-		getmicrotime(&now);
-		nowusec = (now.tv_sec * 1000000) + now.tv_usec;
-		lastusec = (sc->sc_last.tv_sec * 1000000) +
-		     sc->sc_last.tv_usec;
-		if (lastusec + TIMENEXTREAD > nowusec) {
-			if (sc->sc_bytes_count >= BYTESTOSLEEP) {
-				sc->sc_remainder +=
-				    ((lastusec + TIMENEXTREAD) - nowusec);
+		mutex_enter(&sc->sc_cond_lock);
+		if (sc->sc_buflen == 0) {
+			DPRINTF("%s: wait\n", __func__);
+			err = cv_wait_sig(&sc->sc_condvar, &sc->sc_cond_lock);
+			DPRINTF("%s: wake up %d\n", __func__, err);
+			mutex_exit(&sc->sc_cond_lock);
+			if (err) {
+				if (err == ERESTART)
+					err = EINTR;
+				break;
 			}
-			
-			wait_ticks = (hz * sc->sc_remainder) / 1000000;
-			if (wait_ticks > 0) {
-				sc->sc_remainder -= wait_ticks * 1000000 / hz;
-				err = kpause("padwait", TRUE, wait_ticks,
-				    &sc->sc_lock);
-				if (err != EWOULDBLOCK) {
-					mutex_exit(&sc->sc_lock);
-					continue;
-				}
-			}
-		}
-
-		if (sc->sc_bytes_count >= BYTESTOSLEEP)
-			sc->sc_bytes_count -= BYTESTOSLEEP;
-
-		err = pad_get_block(sc, &pb, uimin(uio->uio_resid, PAD_BLKSIZE));
-		if (!err) {
-			getmicrotime(&sc->sc_last);
-			sc->sc_bytes_count += pb.pb_len;
-			mutex_exit(&sc->sc_lock);
-			err = uiomove(pb.pb_ptr, pb.pb_len, uio);
+			if (sc->sc_buflen == 0)
+				break;
 			continue;
 		}
 
-		if (intr) {
-			mutex_enter(&sc->sc_intr_lock);
-			kpreempt_disable();
-			(*intr)(intrarg);
-			kpreempt_enable();
-			mutex_exit(&sc->sc_intr_lock);
-			intr = sc->sc_intr;
-			intrarg = sc->sc_intrarg;
-			err = 0;
-			mutex_exit(&sc->sc_lock);
-			continue;
-		}
-		err = cv_wait_sig(&sc->sc_condvar, &sc->sc_lock);
-		if (err != 0) {
-			mutex_exit(&sc->sc_lock);
+		len = uimin(uio->uio_resid, sc->sc_buflen);
+		err = pad_get_block(sc, &pb, len);
+		mutex_exit(&sc->sc_cond_lock);
+		if (err)
 			break;
-		}
-
-		mutex_exit(&sc->sc_lock);
+		DPRINTF("%s: move %d\n", __func__, pb.pb_len);
+		uiomove(pb.pb_ptr, pb.pb_len, uio);
 	}
 
 	return err;
@@ -630,23 +570,16 @@ pad_write(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 }
 
 static int
-pad_audio_open(void *opaque, int flags)
+pad_query_format(void *opaque, audio_format_query_t *afp)
 {
-	pad_softc_t *sc;
-	sc = opaque;
 
-	if (sc->sc_open == 0)
-		return EIO;
-
-	getmicrotime(&sc->sc_last);
-	sc->sc_bytes_count = 0;
-	sc->sc_remainder = 0;
-
-	return 0;
+	return audio_query_format(pad_formats, PAD_NFORMATS, afp);
 }
 
 static int
-pad_query_encoding(void *opaque, struct audio_encoding *ae)
+pad_set_format(void *opaque, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	pad_softc_t *sc;
 
@@ -654,41 +587,9 @@ pad_query_encoding(void *opaque, struct audio_encoding *ae)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	return auconv_query_encoding(sc->sc_encodings, ae);
-}
-
-static int
-pad_set_params(void *opaque, int setmode, int usemode,
-    audio_params_t *play, audio_params_t *rec,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
-{
-	pad_softc_t *sc __diagused;
-
-	sc = (pad_softc_t *)opaque;
-
-	KASSERT(mutex_owned(&sc->sc_lock));
-
-	if (auconv_set_converter(pad_formats, PAD_NFORMATS, AUMODE_PLAY,
-	    play, true, pfil) < 0)
-		return EINVAL;
-	if (auconv_set_converter(pad_formats, PAD_NFORMATS, AUMODE_RECORD,
-	    rec, true, rfil) < 0)
-		return EINVAL;
-
-	if (pfil->req_size > 0)
-		play = &pfil->filters[0].param;
-	switch (play->encoding) {
-	case AUDIO_ENCODING_SLINEAR_LE:
-		if (play->precision == 16 && play->validbits == 16)
-			pfil->prepend(pfil, pad_swvol_filter_le, play);
-		break;
-	case AUDIO_ENCODING_SLINEAR_BE:
-		if (play->precision == 16 && play->validbits == 16)
-			pfil->prepend(pfil, pad_swvol_filter_be, play);
-		break;
-	default:
-		break;
-	}
+	/* XXX playback only */
+	pfil->codec = pad_swvol_codec;
+	pfil->context = sc;
 
 	return 0;
 }
@@ -699,20 +600,25 @@ pad_start_output(void *opaque, void *block, int blksize,
 {
 	pad_softc_t *sc;
 	int err;
+	int ms;
 
 	sc = (pad_softc_t *)opaque;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
-	if (!sc->sc_open)
-		return EIO;
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	sc->sc_intr = intr;
 	sc->sc_intrarg = intrarg;
 	sc->sc_blksize = blksize;
 
+	DPRINTF("%s: blksize=%d\n", __func__, blksize);
+	mutex_enter(&sc->sc_cond_lock);
 	err = pad_add_block(sc, block, blksize);
-
+	mutex_exit(&sc->sc_cond_lock);
 	cv_broadcast(&sc->sc_condvar);
+
+	ms = blksize * 1000 / PADCHAN / (PADPREC / NBBY) / PADFREQ;
+	DPRINTF("%s: callout ms=%d\n", __func__, ms);
+	callout_reset(&sc->sc_pcallout, mstohz(ms), pad_done_output, sc);
 
 	return err;
 }
@@ -725,7 +631,7 @@ pad_start_input(void *opaque, void *block, int blksize,
 
 	sc = (pad_softc_t *)opaque;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	return EOPNOTSUPP;
 }
@@ -737,8 +643,11 @@ pad_halt_output(void *opaque)
 
 	sc = (pad_softc_t *)opaque;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	DPRINTF("%s\n", __func__);
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
+	cv_broadcast(&sc->sc_condvar);
+	callout_stop(&sc->sc_pcallout);
 	sc->sc_intr = NULL;
 	sc->sc_intrarg = NULL;
 	sc->sc_buflen = 0;
@@ -754,9 +663,23 @@ pad_halt_input(void *opaque)
 
 	sc = (pad_softc_t *)opaque;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	return 0;
+}
+
+static void
+pad_done_output(void *arg)
+{
+	pad_softc_t *sc;
+
+	DPRINTF("%s\n", __func__);
+	sc = (pad_softc_t *)arg;
+	callout_stop(&sc->sc_pcallout);
+
+	mutex_enter(&sc->sc_intr_lock);
+	(*sc->sc_intr)(sc->sc_intrarg);
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static int
@@ -863,19 +786,7 @@ pad_get_props(void *opaque)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	return 0;
-}
-
-static int
-pad_round_blocksize(void *opaque, int blksize, int mode,
-    const audio_params_t *p)
-{
-	pad_softc_t *sc __diagused;
-
-	sc = (pad_softc_t *)opaque;
-	KASSERT(mutex_owned(&sc->sc_lock));
-
-	return PAD_BLKSIZE;
+	return AUDIO_PROP_PLAYBACK;
 }
 
 static void
@@ -889,47 +800,23 @@ pad_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread)
 	*thread = &sc->sc_lock;
 }
 
-static stream_filter_t *
-pad_swvol_filter_le(struct audio_softc *asc,
-    const audio_params_t *from, const audio_params_t *to)
-{
-	auvolconv_filter_t *this;
-	device_t dev = audio_get_device(asc);
-	struct pad_softc *sc = device_private(dev);
-
-	this = kmem_alloc(sizeof(auvolconv_filter_t), KM_SLEEP);
-	this->base.base.fetch_to = auvolconv_slinear16_le_fetch_to;
-	this->base.dtor = pad_swvol_dtor;
-	this->base.set_fetcher = stream_filter_set_fetcher;
-	this->base.set_inputbuffer = stream_filter_set_inputbuffer;
-	this->vol = &sc->sc_swvol;
-
-	return (stream_filter_t *)this;
-}
-
-static stream_filter_t *
-pad_swvol_filter_be(struct audio_softc *asc,
-    const audio_params_t *from, const audio_params_t *to)
-{
-	auvolconv_filter_t *this;
-	device_t dev = audio_get_device(asc);
-	struct pad_softc *sc = device_private(dev);
-
-	this = kmem_alloc(sizeof(auvolconv_filter_t), KM_SLEEP);
-	this->base.base.fetch_to = auvolconv_slinear16_be_fetch_to;
-	this->base.dtor = pad_swvol_dtor;
-	this->base.set_fetcher = stream_filter_set_fetcher;
-	this->base.set_inputbuffer = stream_filter_set_inputbuffer;
-	this->vol = &sc->sc_swvol;
-
-	return (stream_filter_t *)this;
-}
-
 static void
-pad_swvol_dtor(stream_filter_t *this)
+pad_swvol_codec(audio_filter_arg_t *arg)
 {
-	if (this)
-		kmem_free(this, sizeof(auvolconv_filter_t));
+	struct pad_softc *sc = arg->context;
+	const aint_t *src;
+	aint_t *dst;
+	u_int sample_count;
+	u_int i;
+
+	src = arg->src;
+	dst = arg->dst;
+	sample_count = arg->count * arg->srcfmt->channels;
+	for (i = 0; i < sample_count; i++) {
+		aint2_t v = (aint2_t)(*src++);
+		v = v * sc->sc_swvol / 255;
+		*dst++ = (aint_t)v;
+	}
 }
 
 MODULE(MODULE_CLASS_DRIVER, pad, "audio");

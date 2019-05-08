@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.44 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.45 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,6 +117,5 @@ int	ad1848_isa_intr(void *);
 void   *ad1848_isa_malloc(void *, int, size_t);
 void	ad1848_isa_free(void *, void *, size_t);
 size_t	ad1848_isa_round_buffersize(void *, int, size_t);
-paddr_t	ad1848_isa_mappage(void *, void *, off_t, int);
 int	ad1848_isa_get_props(void *);
 #endif

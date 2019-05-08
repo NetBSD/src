@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.17 2019/03/16 12:09:57 isaki Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.18 2019/05/08 13:40:16 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.17 2019/03/16 12:09:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.18 2019/05/08 13:40:16 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.17 2019/03/16 12:09:57 isaki Exp $");
 #include <machine/intr.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -96,8 +96,8 @@ static int paud_query_devinfo(void *, mixer_devinfo_t *);
 static const struct audio_hw_if paud_hw_if = {
 	.open			= ad1848_isa_open,
 	.close			= ad1848_isa_close,
-	.query_encoding		= ad1848_query_encoding,
-	.set_params		= ad1848_set_params,
+	.query_format		= ad1848_query_format,
+	.set_format		= ad1848_set_format,
 	.round_blocksize	= ad1848_round_blocksize,
 	.commit_settings	= ad1848_commit_settings,
 	.halt_output		= ad1848_isa_halt_output,
@@ -109,7 +109,6 @@ static const struct audio_hw_if paud_hw_if = {
 	.allocm			= ad1848_isa_malloc,
 	.freem			= ad1848_isa_free,
 	.round_buffersize	= ad1848_isa_round_buffersize,
-	.mappage		= ad1848_isa_mappage,
 	.get_props		= ad1848_isa_get_props,
 	.trigger_output		= ad1848_isa_trigger_output,
 	.trigger_input		= ad1848_isa_trigger_input,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.45 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: ym.c,v 1.46 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.45 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.46 2019/05/08 13:40:18 isaki Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.45 2019/03/16 12:09:58 isaki Exp $");
 #include <sys/bus.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -170,8 +170,8 @@ static bool ym_resume(device_t, const pmf_qual_t *);
 const struct audio_hw_if ym_hw_if = {
 	.open			= ad1848_isa_open,
 	.close			= ad1848_isa_close,
-	.query_encoding		= ad1848_query_encoding,
-	.set_params		= ad1848_set_params,
+	.query_format		= ad1848_query_format,
+	.set_format		= ad1848_set_format,
 	.round_blocksize	= ad1848_round_blocksize,
 	.commit_settings	= ad1848_commit_settings,
 	.halt_output		= ad1848_isa_halt_output,
@@ -183,7 +183,6 @@ const struct audio_hw_if ym_hw_if = {
 	.allocm			= ad1848_isa_malloc,
 	.freem			= ad1848_isa_free,
 	.round_buffersize	= ad1848_isa_round_buffersize,
-	.mappage		= ad1848_isa_mappage,
 	.get_props		= ad1848_isa_get_props,
 	.trigger_output		= ad1848_isa_trigger_output,
 	.trigger_input		= ad1848_isa_trigger_input,

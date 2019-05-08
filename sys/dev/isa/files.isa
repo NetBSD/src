@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.172 2019/01/27 08:53:30 maxv Exp $
+#	$NetBSD: files.isa,v 1.173 2019/05/08 13:40:18 isaki Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -290,7 +290,7 @@ define	sbdsp { }
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb: audiobus, isadma, sbdsp, mulaw, auconv, midibus
+device	sb: audiobus, isadma, sbdsp, midibus
 file	dev/isa/sb.c			sb			needs-flag
 
 attach	sb at isa with sb_isa
@@ -303,7 +303,7 @@ attach	mpu at sbdsp with mpu_sb
 file	dev/isa/mpu_sb.c		mpu_sb
 
 # ProAudio Spectrum
-device	pas: audiobus, isadma, sbdsp, mulaw, auconv
+device	pas: audiobus, isadma, sbdsp
 attach	pas at isa
 file	dev/isa/pas.c			pas			needs-flag
 
@@ -315,7 +315,7 @@ define	ics2101
 file	dev/isa/ics2101.c		ics2101
 
 # Microsoft Windows Sound System
-device	wss { } : audiobus, isadma, ad1848, auconv
+device	wss { } : audiobus, isadma, ad1848
 file	dev/isa/wss.c			wss			needs-flag
 
 attach	wss at isa with wss_isa
@@ -325,7 +325,7 @@ attach	opl at wss with opl_wss
 file	dev/isa/opl_wss.c		opl_wss
 
 # ESS Technology ES1887/ES888/ES1888
-device	ess { } : audiobus, isadma, mulaw, auconv, midibus
+device	ess { } : audiobus, isadma, midibus
 file	dev/isa/ess.c			ess			needs-flag
 
 attach	ess at isa with ess_isa
@@ -342,7 +342,7 @@ attach	opl at isa with opl_isa
 file	dev/isa/opl_isa.c		opl_isa
 
 # Yamaha OPL3-SA3
-device	ym { }: audiobus, isadma, ad1848, auconv
+device	ym { }: audiobus, isadma, ad1848
 file	dev/isa/ym.c			ym
 defparam opt_ym.h	YM_POWER_MODE YM_POWER_OFF_SEC
 
@@ -355,13 +355,13 @@ file	dev/isa/mpu_ym.c		mpu_ym			needs-flag
 # Gravis UltraSound & UltraSound MAX.
 # Use the "drq2" keyword in a config file to specify an extra DMA
 # channel for full-duplex operation.
-device	gus: audiobus, isadma, ics2101, ad1848, mulaw, auconv
+device	gus: audiobus, isadma, ics2101, ad1848
 attach	gus at isa
 file	dev/isa/gus.c			gus			needs-flag
 
 # Sierra's Aria chipset.
 # (e.g. Prometheus Aria 16)
-device	aria: audiobus, mulaw, auconv
+device	aria: audiobus
 attach	aria at isa
 file	dev/isa/aria.c			aria
 
