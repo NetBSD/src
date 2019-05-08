@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiocfg.1,v 1.3 2010/09/01 09:17:31 wiz Exp $
+.\"	$NetBSD: audiocfg.1,v 1.4 2019/05/08 14:36:12 isaki Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,6 +40,14 @@
 .Cm default
 .Ar index
 .Nm
+.Cm set
+.Ar index
+.Ar direction
+.Ar encoding
+.Ar precision
+.Ar channels
+.Ar sample_rate
+.Nm
 .Cm test
 .Ar index
 .Sh DESCRIPTION
@@ -51,6 +59,25 @@ Run with
 .Dq Cm list ,
 it lists the available audio devices and shows the currently selected
 default audio device.
+.Pp
+Run with
+.Dq Cm set ,
+if sets the hardware format.
+The
+.Ar direction
+is represented by either of 'p'(playback) or 'r'(record), or both of them,
+indicates direction you want to set to.
+The remaining parameters
+.Ar encoding ,
+.Ar precision ,
+.Ar channels
+and
+.Ar sample_rate
+indicate the hardware format you want to set to.
+These parameters must be selected from the candidates displayed by
+.Nm
+.Cm list .
+.Pp
 Called with
 .Dq Cm test ,
 it plays a tone of 2 seconds for each channel of the device with the index
