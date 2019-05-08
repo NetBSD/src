@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.106 2019/02/17 04:17:52 rin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.107 2019/05/08 06:31:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.106 2019/02/17 04:17:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107 2019/05/08 06:31:02 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1839,6 +1839,19 @@ xhci_clear_endpoint_stall_async_task(void *cookie)
 	DPRINTFN(4, "xfer %#jx slot %ju dci %ju", (uintptr_t)xfer, xs->xs_idx,
 	    dci, 0);
 
+	/*
+	 * XXXMRG: Stall task can run after slot is disabled when yanked.
+	 * This hack notices that the xs has been memset() in
+	 * xhci_disable_slot() and returns.  Both xhci_reset_endpoint()
+	 * and xhci_set_dequeue() rely upon a valid ring setup for correct
+	 * operation, and the latter will fault, as would
+	 * usb_transfer_complete() if it got that far.
+	 */
+	if (xs->xs_idx == 0) {
+		DPRINTFN(4, "ends xs_idx is 0", 0, 0, 0, 0);
+		return;
+	}
+
 	xhci_reset_endpoint(xfer->ux_pipe);
 	xhci_set_dequeue(xfer->ux_pipe);
 
@@ -2085,7 +2098,7 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		KASSERTMSG((xfer->ux_status == USBD_CANCELLED ||
 		            xfer->ux_status == USBD_TIMEOUT),
 			   "xfer %p status %x", xfer, xfer->ux_status);
-		return;;
+		return;
 	}
 
 	/* Otherwise, set the status.  */
