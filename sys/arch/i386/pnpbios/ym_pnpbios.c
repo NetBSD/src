@@ -1,4 +1,4 @@
-/* $NetBSD: ym_pnpbios.c,v 1.18 2016/07/14 10:19:05 msaitoh Exp $ */
+/* $NetBSD: ym_pnpbios.c,v 1.19 2019/05/08 13:40:15 isaki Exp $ */
 /*
  * Copyright (c) 1999
  *	Matthias Drochner.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.18 2016/07/14 10:19:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.19 2019/05/08 13:40:15 isaki Exp $");
 
 #include "mpu_ym.h"
 
@@ -42,9 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.18 2016/07/14 10:19:05 msaitoh Exp 
 #include <sys/bus.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
-#include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

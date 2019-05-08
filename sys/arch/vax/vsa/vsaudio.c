@@ -1,4 +1,4 @@
-/*	$NetBSD: vsaudio.c,v 1.4 2019/04/08 14:48:33 isaki Exp $	*/
+/*	$NetBSD: vsaudio.c,v 1.5 2019/05/08 13:40:16 isaki Exp $	*/
 /*	$OpenBSD: vsaudio.c,v 1.4 2013/05/15 21:21:11 ratchov Exp $	*/
 
 /*
@@ -77,8 +77,7 @@
 #include <machine/vsbus.h>
 
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/ic/am7930reg.h>
 #include <dev/ic/am7930var.h>
@@ -170,9 +169,6 @@ struct am7930_glue vsaudio_glue = {
 	vsaudio_codec_iwrite16,
 	vsaudio_onopen,
 	vsaudio_onclose,
-	0,
-	/*vsaudio_input_conv*/0,
-	/*vsaudio_output_conv*/0,
 };
 
 /*
@@ -186,9 +182,8 @@ void	vsaudio_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread);
 struct audio_hw_if vsaudio_hw_if = {
 	.open			= am7930_open,
 	.close			= am7930_close,
-	.query_encoding		= am7930_query_encoding,
-	.set_params		= am7930_set_params,
-	.round_blocksize	= am7930_round_blocksize,
+	.query_format		= am7930_query_format,
+	.set_format		= am7930_set_format,
 	.commit_settings	= am7930_commit_settings,
 	.start_output		= vsaudio_start_output,
 	.start_input		= vsaudio_start_input,
@@ -520,58 +515,5 @@ vsaudio_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread)
 	*intr = &sc->sc_intr_lock;
 	*thread = &sc->sc_lock;
 }
-
-/*
-static stream_filter_t *
-vsaudio_input_conv(struct audio_softc *sc, const audio_params_t *from,
-		const audio_params_t *to)
-{
-	return auconv_nocontext_filter_factory(vsaudio_input_conv_fetch_to);
-}
-
-static int
-vsaudio_input_conv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
-		audio_stream_t *dst, int max_used)
-{
-	stream_filter_t *this;
-	int m, err;
-
-	this = (stream_filter_t *)self;
-	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used * 4)))
-		return err;
-	m = dst->end - dst->start;
-	m = uimin(m, max_used);
-	FILTER_LOOP_PROLOGUE(this->src, 4, dst, 1, m) {
-		*d = ((*(const uint32_t *)s) >> 16) & 0xff;
-	} FILTER_LOOP_EPILOGUE(this->src, dst);
-	return 0;
-}
-
-static stream_filter_t *
-vsaudio_output_conv(struct audio_softc *sc, const audio_params_t *from,
-		const audio_params_t *to)
-{
-	return auconv_nocontext_filter_factory(vsaudio_output_conv_fetch_to);
-}
-
-static int
-vsaudio_output_conv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
-		audio_stream_t *dst, int max_used)
-{
-	stream_filter_t *this;
-	int m, err;
-
-	this = (stream_filter_t *)self;
-	max_used = (max_used + 3) & ~3;
-	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used / 4)))
-		return err;
-	m = (dst->end - dst->start) & ~3;
-	m = uimin(m, max_used);
-	FILTER_LOOP_PROLOGUE(this->src, 1, dst, 4, m) {
-		*(uint32_t *)d = (*s << 16);
-	} FILTER_LOOP_EPILOGUE(this->src, dst);
-	return 0;
-}
-*/
 
 #endif /* NAUDIO > 0 */

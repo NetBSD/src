@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.86 2019/03/16 12:09:58 isaki Exp $	*/
+/*	$NetBSD: azalia.c,v 1.87 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.86 2019/03/16 12:09:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.87 2019/05/08 13:40:18 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,8 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.86 2019/03/16 12:09:58 isaki Exp $");
 #include <sys/systm.h>
 #include <sys/module.h>
 
-#include <dev/audio_if.h>
-#include <dev/auconv.h>
+#include <dev/audio/audio_if.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
@@ -205,9 +204,10 @@ static int	azalia_stream_intr(stream_t *, uint32_t);
 
 static int	azalia_open(void *, int);
 static void	azalia_close(void *);
-static int	azalia_query_encoding(void *, audio_encoding_t *);
-static int	azalia_set_params(void *, int, int, audio_params_t *,
-	audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
+static int	azalia_query_format(void *, audio_format_query_t *);
+static int	azalia_set_format(void *, int,
+    const audio_params_t *, const audio_params_t *,
+    audio_filter_reg_t *, audio_filter_reg_t *);
 static int	azalia_round_blocksize(void *, int, int, const audio_params_t *);
 static int	azalia_halt_output(void *);
 static int	azalia_halt_input(void *);
@@ -235,8 +235,8 @@ CFATTACH_DECL2_NEW(azalia, sizeof(azalia_t),
 static const struct audio_hw_if azalia_hw_if = {
 	.open			= azalia_open,
 	.close			= azalia_close,
-	.query_encoding		= azalia_query_encoding,
-	.set_params		= azalia_set_params,
+	.query_format		= azalia_query_format,
+	.set_format		= azalia_set_format,
 	.round_blocksize	= azalia_round_blocksize,
 	.halt_output		= azalia_halt_output,
 	.halt_input		= azalia_halt_input,
@@ -1298,8 +1298,6 @@ azalia_codec_delete(codec_t *this)
 		kmem_free(this->formats, this->szformats);
 		this->formats = NULL;
 	}
-	auconv_delete_encodings(this->encodings);
-	this->encodings = NULL;
 	if (this->extra != NULL) {
 		kmem_free(this->extra, this->szextra);
 		this->extra = NULL;
@@ -1318,7 +1316,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	const convgroup_t *group;
 	uint32_t bits_rates;
 	int variation;
-	int nbits, c, chan, i, err;
+	int nbits, c, chan, i;
 	nid_t nid;
 
 	variation = 0;
@@ -1435,10 +1433,6 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	}
 #endif
 
-	err = auconv_create_encodings(this->formats, this->nformats,
-	    &this->encodings);
-	if (err)
-		return err;
 	return 0;
 }
 
@@ -2121,39 +2115,22 @@ azalia_close(void *v)
 }
 
 static int
-azalia_query_encoding(void *v, audio_encoding_t *enc)
+azalia_query_format(void *v, audio_format_query_t *afp)
 {
 	azalia_t *az;
 	codec_t *codec;
 
 	az = v;
 	codec = &az->codecs[az->codecno];
-	return auconv_query_encoding(codec->encodings, enc);
+	return audio_query_format(codec->formats, codec->nformats, afp);
 }
 
 static int
-azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
-    audio_params_t *r, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+azalia_set_format(void *v, int setmode,
+    const audio_params_t *p, const audio_params_t *r,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	azalia_t *az;
-	codec_t *codec;
-	int index;
 
-	az = v;
-	codec = &az->codecs[az->codecno];
-	smode &= az->mode_cap;
-	if (smode & AUMODE_RECORD && r != NULL) {
-		index = auconv_set_converter(codec->formats, codec->nformats,
-		    AUMODE_RECORD, r, TRUE, rfil);
-		if (index < 0)
-			return EINVAL;
-	}
-	if (smode & AUMODE_PLAY && p != NULL) {
-		index = auconv_set_converter(codec->formats, codec->nformats,
-		    AUMODE_PLAY, p, TRUE, pfil);
-		if (index < 0)
-			return EINVAL;
-	}
 	return 0;
 }
 

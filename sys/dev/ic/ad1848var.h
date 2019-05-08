@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.18 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.19 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -172,10 +172,10 @@ int	ad1848_mixer_set_port(struct ad1848_softc *, const ad1848_devmap_t *,
 	    int, mixer_ctrl_t *);
 int	ad1848_set_speed(struct ad1848_softc *, u_int *);
 void	ad1848_mute_wave_output(struct ad1848_softc *, int, int);
-int	ad1848_query_encoding(void *, struct audio_encoding *);
-int	ad1848_set_params(void *, int, int, audio_params_t *,
-	    audio_params_t *, stream_filter_list_t *,
-	    stream_filter_list_t *);
+int	ad1848_query_format(void *, audio_format_query_t *);
+int	ad1848_set_format(void *, int,
+	    const audio_params_t *, const audio_params_t *,
+	    audio_filter_reg_t *, audio_filter_reg_t *);
 int	ad1848_round_blocksize(void *, int, int, const audio_params_t *);
 int	ad1848_commit_settings(void *);
 int	ad1848_set_rec_port(struct ad1848_softc *, int);
@@ -197,7 +197,6 @@ void	ad1848_destroy_locks(struct ad1848_softc *);
 
 int	ad1848_halt_output(void *);
 int	ad1848_halt_input(void *);
-paddr_t	ad1848_mappage(void *, void *, off_t, int);
 void	ad1848_get_locks(void *, kmutex_t **, kmutex_t **);
 
 #ifdef AUDIO_DEBUG

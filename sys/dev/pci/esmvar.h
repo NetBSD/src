@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.18 2011/11/23 23:07:35 jmcneill Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.19 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -214,16 +214,16 @@ int	esm_halt_output(void *);
 int	esm_halt_input(void *);
 int	esm_getdev(void *, struct audio_device *);
 int	esm_round_blocksize(void *, int, int, const audio_params_t *);
-int	esm_query_encoding(void *, struct audio_encoding *);
-int	esm_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-	    stream_filter_list_t *, stream_filter_list_t *);
+int	esm_query_format(void *, audio_format_query_t *);
+int	esm_set_format(void *, int,
+	    const audio_params_t *, const audio_params_t *,
+	    audio_filter_reg_t *, audio_filter_reg_t *);
 int	esm_set_port(void *, mixer_ctrl_t *);
 int	esm_get_port(void *, mixer_ctrl_t *);
 int	esm_query_devinfo(void *, mixer_devinfo_t *);
 void	*esm_malloc(void *, int, size_t);
 void	esm_free(void *, void *, size_t);
 size_t	esm_round_buffersize(void *, int, size_t);
-paddr_t	esm_mappage(void *, void *, off_t, int);
 int	esm_get_props(void *);
 void	esm_get_locks(void *, kmutex_t **, kmutex_t **);
 

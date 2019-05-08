@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibmnws,v 1.13 2011/06/22 18:06:33 matt Exp $
+#	$NetBSD: files.ibmnws,v 1.14 2019/05/08 13:40:15 isaki Exp $
 #
 # ibmnws-specific configuration info
 #
@@ -91,7 +91,7 @@ file	arch/powerpc/isa/isadma_machdep.c	isa
 file	arch/powerpc/isa/isapnp_machdep.c	isapnp
 
 # Audio controller
-device	paud { }: audiobus, isadma, ad1848, auconv
+device	paud { }: audiobus, isadma, ad1848
 attach	paud at isa with paud_isa
 file	arch/prep/isa/paud_isa.c	paud_isa
 

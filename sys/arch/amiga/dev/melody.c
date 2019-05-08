@@ -1,4 +1,4 @@
-/*	$NetBSD: melody.c,v 1.18 2012/10/27 17:17:30 chs Exp $ */
+/*	$NetBSD: melody.c,v 1.19 2019/05/08 13:40:14 isaki Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: melody.c,v 1.18 2012/10/27 17:17:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: melody.c,v 1.19 2019/05/08 13:40:14 isaki Exp $");
 
 /*
  * Melody audio driver.
@@ -114,7 +114,6 @@ melody_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_tav.sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_tav.sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
-	cv_init(&sc->sc_tav.sc_cv, device_xname(self));
 
 	/*
 	 * Attach option boards now. They might provide additional

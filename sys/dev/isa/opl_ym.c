@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ym.c,v 1.18 2012/04/09 10:18:17 plunky Exp $	*/
+/*	$NetBSD: opl_ym.c,v 1.19 2019/05/08 13:40:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.18 2012/04/09 10:18:17 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.19 2019/05/08 13:40:18 isaki Exp $");
 
 #include "mpu_ym.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.18 2012/04/09 10:18:17 plunky Exp $");
 
 #include <sys/bus.h>
 
-#include <dev/audio_if.h>
+#include <dev/audio/audio_if.h>
 #include <dev/midi_if.h>
 #include <dev/ic/oplreg.h>
 #include <dev/ic/oplvar.h>
