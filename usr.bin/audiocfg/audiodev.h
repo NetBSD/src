@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.h,v 1.4 2013/08/11 06:31:00 dholland Exp $ */
+/* $NetBSD: audiodev.h,v 1.5 2019/05/08 14:36:12 isaki Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,19 +35,25 @@
 
 #include <stdbool.h>
 
+struct audiofmt {
+	struct audio_format fmt;
+	TAILQ_ENTRY(audiofmt) next;
+};
+
 struct audiodev {
 	char pxname[16];	/* hw (parent) device */
 	char xname[16];		/* audio(4) device */
 	uint16_t unit;
 	char path[PATH_MAX+1];
+	char ctlpath[PATH_MAX+1];
 
 	int fd;
 	dev_t dev;
 	bool defaultdev;
 
-	unsigned pchan;
-
 	audio_device_t audio_device;
+	TAILQ_HEAD(, audiofmt) formats;
+	struct audio_info info;
 
 	TAILQ_ENTRY(audiodev) next;
 };
@@ -56,6 +62,12 @@ int			audiodev_refresh(void);
 unsigned int		audiodev_count(void);
 struct audiodev *	audiodev_get(unsigned int);
 int			audiodev_set_default(struct audiodev *);
+int			audiodev_set_param(struct audiodev *, int,
+				const char *, unsigned int, unsigned int,
+				unsigned int);
 int			audiodev_test(struct audiodev *, unsigned int);
+
+extern const char *	encoding_names[];
+extern u_int		encoding_max;
 
 #endif /* !_HAVE_AUDIODEV_H */
