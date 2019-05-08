@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8.2.1 2019/05/07 15:01:50 isaki Exp $
+# $NetBSD: Makefile,v 1.8.2.2 2019/05/08 12:48:01 isaki Exp $
 
 .include "../Makefile.inc"
 
@@ -13,6 +13,8 @@ SRCS+=	spkr_audio.c
 
 .PATH:	${S}/dev/audio
 SRCS+=	audiobell.c
+
+WARNS=	3
 
 CPPFLAGS+=	-DNWSMUX=1
 
