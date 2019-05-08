@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.7 2019/04/22 07:51:16 msaitoh Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.8 2019/05/08 09:53:43 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.7 2019/04/22 07:51:16 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.8 2019/05/08 09:53:43 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -864,9 +864,11 @@ sun4i_emac_rx_hash(struct sun4i_emac_softc *sc)
 	if ((ifp->if_flags & IFF_PROMISC) == 0) {
 		hash[0] = hash[1] = 0;
 
+		ETHER_LOCK(&sc->sc_ec);
 		ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+				ETHER_UNLOCK(&sc->sc_ec);
 				/*
 				 * We must listen to a range of multicast addresses.
 				 * For now, just accept all multicasts, rather than
@@ -889,6 +891,7 @@ sun4i_emac_rx_hash(struct sun4i_emac_softc *sc)
 			hash[crc >> 5] |= __BIT(crc & 31);
                 	ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(&sc->sc_ec);
 		ifp->if_flags &= ~IFF_ALLMULTI;
 		rxctl |= EMAC_RX_CTL_MHF;
 	}
