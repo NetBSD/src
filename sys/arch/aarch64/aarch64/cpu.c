@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.16 2019/01/21 08:04:26 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.17 2019/05/09 07:38:44 mrg Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.16 2019/01/21 08:04:26 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.17 2019/05/09 07:38:44 mrg Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -190,6 +190,7 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA73R0 & CPU_PARTMASK, "Cortex-A73", "Cortex", "V8-A" },
 	{ CPU_ID_CORTEXA55R1 & CPU_PARTMASK, "Cortex-A55", "Cortex", "V8.2-A" },
 	{ CPU_ID_CORTEXA75R2 & CPU_PARTMASK, "Cortex-A75", "Cortex", "V8.2-A" },
+	{ CPU_ID_CORTEXA76R3 & CPU_PARTMASK, "Cortex-A76", "Cortex", "V8.2-A" },
 	{ CPU_ID_THUNDERXRX, "Cavium ThunderX", "Cavium", "V8-A" },
 	{ CPU_ID_THUNDERX81XXRX, "Cavium ThunderX CN81XX", "Cavium", "V8-A" },
 	{ CPU_ID_THUNDERX83XXRX, "Cavium ThunderX CN83XX", "Cavium", "V8-A" },
