@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.20 2018/08/12 22:05:29 mrg Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.21 2019/05/09 05:00:31 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -44,10 +44,12 @@
 #define	LOCKOPS_SPIN	1
 #define	LOCKOPS_CV	2
 
+typedef void (*lockop_printer_t)(const char *, ...) __printflike(1, 2);
+
 typedef	struct lockops {
 	const char	*lo_name;
 	int		lo_type;
-	void		(*lo_dump)(const volatile void *);
+	void		(*lo_dump)(const volatile void *, lockop_printer_t);
 } lockops_t;
 
 #define	LOCKDEBUG_ABORT(f, ln, l, o, m) \
