@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.464 2019/05/03 22:34:21 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.465 2019/05/09 20:50:14 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.464 2019/05/03 22:34:21 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.465 2019/05/09 20:50:14 kamil Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1269,7 +1269,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	mutex_enter(proc_lock);
 
-	if ((p->p_slflag & (PSL_TRACED|PSL_SYSCALL)) == PSL_TRACED) {
+	if (p->p_slflag & PSL_TRACED) {
 		mutex_enter(p->p_lock);
 		eventswitch(TRAP_EXEC);
 		mutex_enter(proc_lock);
