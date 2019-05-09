@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.69 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.70 2019/05/09 02:43:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.69 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.70 2019/05/09 02:43:35 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -93,26 +93,25 @@ struct uftdi_softc {
 
 	device_t		sc_subdev;
 
-	u_char			sc_dying;
+	bool			sc_dying;
 
 	u_int			last_lcr;
 
 };
 
-Static void	uftdi_get_status(void *, int, u_char *, u_char *);
-Static void	uftdi_set(void *, int, int, int);
-Static int	uftdi_param(void *, int, struct termios *);
-Static int	uftdi_open(void *, int);
-Static void	uftdi_read(void *, int, u_char **, uint32_t *);
-Static void	uftdi_write(void *, int, u_char *, u_char *, uint32_t *);
-Static void	uftdi_break(void *, int, int);
+static void	uftdi_get_status(void *, int, u_char *, u_char *);
+static void	uftdi_set(void *, int, int, int);
+static int	uftdi_param(void *, int, struct termios *);
+static int	uftdi_open(void *, int);
+static void	uftdi_read(void *, int, u_char **, uint32_t *);
+static void	uftdi_write(void *, int, u_char *, u_char *, uint32_t *);
+static void	uftdi_break(void *, int, int);
 
 struct ucom_methods uftdi_methods = {
 	.ucom_get_status = uftdi_get_status,
 	.ucom_set = uftdi_set,
 	.ucom_param = uftdi_param,
 	.ucom_open = uftdi_open,
-	.ucom_close = NULL,
 	.ucom_read = uftdi_read,
 	.ucom_write = uftdi_write,
 };
@@ -174,16 +173,15 @@ static const struct usb_devno uftdi_devs[] = {
 };
 #define uftdi_lookup(v, p) usb_lookup(uftdi_devs, v, p)
 
-int uftdi_match(device_t, cfdata_t, void *);
-void uftdi_attach(device_t, device_t, void *);
-void uftdi_childdet(device_t, device_t);
-int uftdi_detach(device_t, int);
-int uftdi_activate(device_t, enum devact);
+static int	uftdi_match(device_t, cfdata_t, void *);
+static void	uftdi_attach(device_t, device_t, void *);
+static void	uftdi_childdet(device_t, device_t);
+static int	uftdi_detach(device_t, int);
 
 CFATTACH_DECL2_NEW(uftdi, sizeof(struct uftdi_softc), uftdi_match,
-    uftdi_attach, uftdi_detach, uftdi_activate, NULL, uftdi_childdet);
+    uftdi_attach, uftdi_detach, NULL, NULL, uftdi_childdet);
 
-int
+static int
 uftdi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
@@ -198,7 +196,7 @@ uftdi_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT_CONF_IFACE : UMATCH_NONE;
 }
 
-void
+static void
 uftdi_attach(device_t parent, device_t self, void *aux)
 {
 	struct uftdi_softc *sc = device_private(self);
@@ -223,6 +221,7 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
+	sc->sc_dying = false;
 	sc->sc_iface_no = uiaa->uiaa_ifaceno;
 	sc->sc_type = UFTDI_TYPE_8U232AM; /* most devices are post-8U232AM */
 	sc->sc_hdrlen = 0;
@@ -311,25 +310,11 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 
 bad:
 	DPRINTF(("uftdi_attach: ATTACH ERROR\n"));
-	sc->sc_dying = 1;
+	sc->sc_dying = true;
 	return;
 }
 
-int
-uftdi_activate(device_t self, enum devact act)
-{
-	struct uftdi_softc *sc = device_private(self);
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
-}
-
-void
+static void
 uftdi_childdet(device_t self, device_t child)
 {
 	struct uftdi_softc *sc = device_private(self);
@@ -338,22 +323,27 @@ uftdi_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int
+static int
 uftdi_detach(device_t self, int flags)
 {
 	struct uftdi_softc *sc = device_private(self);
+	int rv = 0;
 
 	DPRINTF(("uftdi_detach: sc=%p flags=%d\n", sc, flags));
-	sc->sc_dying = 1;
-	if (sc->sc_subdev != NULL)
-		config_detach(sc->sc_subdev, flags);
+
+	sc->sc_dying = true;
+
+	if (sc->sc_subdev != NULL) {
+		rv = config_detach(sc->sc_subdev, flags);
+		sc->sc_subdev = NULL;
+	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
-	return 0;
+	return rv;
 }
 
-Static int
+static int
 uftdi_open(void *vsc, int portno)
 {
 	struct uftdi_softc *sc = vsc;
@@ -394,7 +384,7 @@ uftdi_open(void *vsc, int portno)
 	return 0;
 }
 
-Static void
+static void
 uftdi_read(void *vsc, int portno, u_char **ptr, uint32_t *count)
 {
 	struct uftdi_softc *sc = vsc;
@@ -426,7 +416,7 @@ uftdi_read(void *vsc, int portno, u_char **ptr, uint32_t *count)
 	*ptr += 2;
 }
 
-Static void
+static void
 uftdi_write(void *vsc, int portno, u_char *to, u_char *from, uint32_t *count)
 {
 	struct uftdi_softc *sc = vsc;
@@ -442,7 +432,7 @@ uftdi_write(void *vsc, int portno, u_char *to, u_char *from, uint32_t *count)
 	*count += sc->sc_hdrlen;
 }
 
-Static void
+static void
 uftdi_set(void *vsc, int portno, int reg, int onoff)
 {
 	struct uftdi_softc *sc = vsc;
@@ -451,6 +441,9 @@ uftdi_set(void *vsc, int portno, int reg, int onoff)
 
 	DPRINTF(("uftdi_set: sc=%p, port=%d reg=%d onoff=%d\n", vsc, portno,
 		 reg, onoff));
+
+	if (sc->sc_dying)
+		return;
 
 	switch (reg) {
 	case UCOM_SET_DTR:
@@ -476,7 +469,7 @@ uftdi_set(void *vsc, int portno, int reg, int onoff)
 	(void)usbd_do_request(sc->sc_udev, &req, NULL);
 }
 
-Static int
+static int
 uftdi_param(void *vsc, int portno, struct termios *t)
 {
 	struct uftdi_softc *sc = vsc;
@@ -611,7 +604,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	return 0;
 }
 
-void
+static void
 uftdi_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 {
 	struct uftdi_softc *sc = vsc;
@@ -619,11 +612,14 @@ uftdi_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 	DPRINTF(("uftdi_status: msr=0x%02x lsr=0x%02x\n",
 		 sc->sc_msr, sc->sc_lsr));
 
+	if (sc->sc_dying)
+		return;
+
 	*msr = sc->sc_msr;
 	*lsr = sc->sc_lsr;
 }
 
-void
+static void
 uftdi_break(void *vsc, int portno, int onoff)
 {
 	struct uftdi_softc *sc = vsc;

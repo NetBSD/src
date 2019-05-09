@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.24 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.25 2019/05/09 02:43:35 mrg Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.24 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.25 2019/05/09 02:43:35 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -90,22 +90,24 @@ struct uipaq_softc {
 
 	uint16_t		sc_flags;
 
-	u_char			sc_dying;
+	bool			sc_dying;
 };
 
 /* Callback routines */
-Static void	uipaq_set(void *, int, int, int);
+static void	uipaq_set(void *, int, int, int);
+static int	uipaq_open(void *, int);
 
 
 /* Support routines. */
 /* based on uppc module by Sam Lawrance */
-Static void	uipaq_dtr(struct uipaq_softc *, int);
-Static void	uipaq_rts(struct uipaq_softc *, int);
-Static void	uipaq_break(struct uipaq_softc *, int);
+static void	uipaq_dtr(struct uipaq_softc *, int);
+static void	uipaq_rts(struct uipaq_softc *, int);
+static void	uipaq_break(struct uipaq_softc *, int);
 
 
 struct ucom_methods uipaq_methods = {
 	.ucom_set = uipaq_set,
+	.ucom_open = uipaq_open,
 };
 
 struct uipaq_type {
@@ -128,10 +130,9 @@ int uipaq_match(device_t, cfdata_t, void *);
 void uipaq_attach(device_t, device_t, void *);
 void uipaq_childdet(device_t, device_t);
 int uipaq_detach(device_t, int);
-int uipaq_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(uipaq, sizeof(struct uipaq_softc), uipaq_match,
-    uipaq_attach, uipaq_detach, uipaq_activate, NULL, uipaq_childdet);
+    uipaq_attach, uipaq_detach, NULL, NULL, uipaq_childdet);
 
 int
 uipaq_match(device_t parent, cfdata_t match, void *aux)
@@ -163,6 +164,7 @@ uipaq_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(10,("\nuipaq_attach: sc=%p\n", sc));
 
 	sc->sc_dev = self;
+	sc->sc_dying = false;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -242,7 +244,7 @@ uipaq_attach(device_t parent, device_t self, void *aux)
 
 bad:
 	DPRINTF(("uipaq_attach: ATTACH ERROR\n"));
-	sc->sc_dying = 1;
+	sc->sc_dying = true;
 	return;
 }
 
@@ -342,6 +344,9 @@ uipaq_set(void *addr, int portno, int reg, int onoff)
 {
 	struct uipaq_softc* sc = addr;
 
+	if (sc->sc_dying)
+		return;
+
 	switch (reg) {
 	case UCOM_SET_DTR:
 		uipaq_dtr(addr, onoff);
@@ -359,19 +364,15 @@ uipaq_set(void *addr, int portno, int reg, int onoff)
 	}
 }
 
-
-int
-uipaq_activate(device_t self, enum devact act)
+static int
+uipaq_open(void *arg, int portno)
 {
-	struct uipaq_softc *sc = device_private(self);
+	struct uipaq_softc *sc = arg;
 
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
+	if (sc->sc_dying)
+		return EIO;
+
+	return 0;
 }
 
 void
@@ -390,12 +391,15 @@ uipaq_detach(device_t self, int flags)
 	int rv = 0;
 
 	DPRINTF(("uipaq_detach: sc=%p flags=%d\n", sc, flags));
-	sc->sc_dying = 1;
-	if (sc->sc_subdev != NULL)
+
+	sc->sc_dying = true;
+
+	if (sc->sc_subdev != NULL) {
 		rv |= config_detach(sc->sc_subdev, flags);
+		sc->sc_subdev = NULL;
+	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }
-
