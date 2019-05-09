@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.120 2019/05/02 22:52:21 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.121 2019/05/09 13:07:35 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.120 2019/05/02 22:52:21 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.121 2019/05/09 13:07:35 mgorny Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,6 +56,11 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.120 2019/05/02 22:52:21 kamil Exp $");
 #include <fenv.h>
 #if (__arm__ && !__SOFTFP__) || __aarch64__
 #include <ieeefp.h> /* only need for ARM Cortex/Neon hack */
+#endif
+
+#if defined(__i386__) || defined(__x86_64__)
+#include <cpuid.h>
+#include <x86/cpu_extended_state.h>
 #endif
 
 #include <atf-c.h>
