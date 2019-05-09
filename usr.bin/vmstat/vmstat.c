@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.226 2019/04/30 23:29:18 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.227 2019/05/09 08:01:07 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.226 2019/04/30 23:29:18 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.227 2019/05/09 08:01:07 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -2148,15 +2148,13 @@ hist_dodump(struct kern_history *histp)
 		e = &histents[i];
 		if (e->fmt != NULL) {
 			if (fmt == NULL || e->fmtlen > fmtlen) {
-				if (fmt != NULL)
-					free(fmt);
+				free(fmt);
 				fmtlen = e->fmtlen;
 				if ((fmt = malloc(fmtlen + 1)) == NULL)
 					err(1, "malloc printf format");
 			}
 			if (fn == NULL || e->fnlen > fnlen) {
-				if (fn != NULL)
-					free(fn);
+				free(fn);
 				fnlen = e->fnlen;
 				if ((fn = malloc(fnlen + 1)) == NULL)
 					err(1, "malloc function name");
@@ -2164,6 +2162,10 @@ hist_dodump(struct kern_history *histp)
 
 			deref_kptr(e->fmt, fmt, fmtlen, "printf format");
 			fmt[fmtlen] = '\0';
+			for (unsigned z = 0; z < fmtlen - 1; z++) {
+				if (fmt[z] == '%' && fmt[z+1] == 's')
+					fmt[z+1] = 'p';
+			}
 
 			deref_kptr(e->fn, fn, fnlen, "function name");
 			fn[fnlen] = '\0';
@@ -2180,10 +2182,8 @@ hist_dodump(struct kern_history *histp)
 	} while (i != histp->f);
 
 	free(histents);
-	if (fmt != NULL)
-		free(fmt);
-	if (fn != NULL)
-		free(fn);
+	free(fmt);
+	free(fn);
 }
 
 void
@@ -2293,6 +2293,11 @@ hist_dodump_sysctl(int mib[], unsigned int miblen)
 		e = &hist->sh_events[i];
 		if (e->she_fmtoffset != 0) {
 			fmt = &strp[e->she_fmtoffset];
+			size_t fmtlen = strlen(fmt);
+			for (unsigned z = 0; z < fmtlen - 1; z++) {
+				if (fmt[z] == '%' && fmt[z+1] == 's')
+					fmt[z+1] = 'p';
+			}
 			fn = &strp[e->she_funcoffset];
 			bintime2timeval(&e->she_bintime, &tv);
 			(void)printf("%06ld.%06ld %s#%"PRIu32"@%"PRIu32": ",
