@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.25 2013/11/09 02:23:57 christos Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.26 2019/05/09 16:48:31 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.25 2013/11/09 02:23:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.26 2019/05/09 16:48:31 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,16 +37,21 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.25 2013/11/09 02:23:57 christos Exp $
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
+#include <ddb/db_proc.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 
 volatile int db_trace_debug = 0; /* settabble from ddb */
-#define DPRINTF if (__predict_false(db_trace_debug)) (*print)
-
+#define DPRINTF(level, fmt, args...)					\
+	do {								\
+		if (__predict_false(db_trace_debug > (level))) {	\
+			print(fmt, ## args);				\
+		}							\
+	} while (0 /* CONSTCOND*/)
 
 extern char start[], etext[];
-static void db_nextframe(db_addr_t, db_addr_t *, db_addr_t *,
-			 void (*)(const char *, ...));
+static bool db_nextframe(db_addr_t, db_addr_t, db_addr_t *, db_addr_t *,
+    db_addr_t *, void (*)(const char *, ...) __printflike(1, 2));
 
 const struct db_variable db_regs[] = {
 	{ "r0",   (long *)&ddb_regs.tf_r0,   FCN_NULL },
@@ -74,13 +79,28 @@ const struct db_variable db_regs[] = {
 
 const struct db_variable * const db_eregs = db_regs + __arraycount(db_regs);
 
+static void
+dump_trapframe(struct trapframe *tf,
+	void (*print)(const char *, ...) __printflike(1, 2))
+{
+	print("   sr=%08x   gbr=%08x    pc=%08x     pr=%08x\n",
+	    tf->tf_ssr, tf->tf_gbr, tf->tf_spc, tf->tf_pr);
+	print("   r0=%08x    r1=%08x    r2=%08x     r3=%08x\n",
+	    tf->tf_r0, tf->tf_r1, tf->tf_r2, tf->tf_r3);
+	print("   r4=%08x    r6=%08x    r7=%08x     r8=%08x\n",
+	    tf->tf_r4, tf->tf_r5, tf->tf_r6, tf->tf_r7);
+	print("   r5=%08x    r9=%08x   r10=%08x    r11=%08x\n",
+	    tf->tf_r8, tf->tf_r9, tf->tf_r10, tf->tf_r11);
+	print("  r12=%08x   r13=%08x   r14=%08x sp=r15=%08x\n",
+	    tf->tf_r12, tf->tf_r13, tf->tf_r14, tf->tf_r15);
+}
 
 void
 db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
-    const char *modif, void (*print)(const char *, ...))
+	const char *modif, void (*print)(const char *, ...) __printflike(1, 2))
 {
 	struct trapframe *tf;
-	db_addr_t callpc, frame, lastframe;
+	db_addr_t func, pc, lastpc, pr, sp, fp;
 	uint32_t vbr;
 	bool lwpid = false;
 	bool lwpaddr = false;
@@ -106,17 +126,20 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		return;
 	}
 
-
 	if (!have_addr) {
 		tf = &ddb_regs;
-		frame = tf->tf_r14;
-		callpc = tf->tf_spc;
-		if (callpc == 0) {
-			(*print)("calling through null pointer?\n");
-			callpc = tf->tf_pr;
+		fp = tf->tf_r14;
+		sp = tf->tf_r15;
+		pr = tf->tf_pr;
+		pc = tf->tf_spc;
+		if (pc == 0) {
+			print("calling through null pointer?\n");
+			pc = tf->tf_pr;
 		}
-	}
-	else if (lwpaddr || lwpid) {
+		DPRINTF(1, "# trapframe: pc=%lx pr=%lx fp=%lx sp=%lx\n",
+		    pc, pr, fp, sp);
+
+	} else if (lwpaddr || lwpid) {
 		struct proc *p;
 		struct lwp *l;
 		struct pcb *pcb;
@@ -124,121 +147,143 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (lwpaddr) {
 			l = (struct lwp *)addr;
 			p = l->l_proc;
-			(*print)("trace: lwp addr %p pid %d ",
-				 (void *)addr, p->p_pid);
-		}
-		else {
+			print("trace: lwp addr %p pid %d ",
+			    (void *)addr, p->p_pid);
+		} else {
 			pid_t pid = (pid_t)addr;
-			(*print)("trace: pid %d ", pid);
-			p = proc_find_raw(pid);
+			print("trace: pid %d ", pid);
+			p = db_proc_find(pid);
 			if (p == NULL) {
-				(*print)("not found\n");
+				print("not found\n");
 				return;
 			}
 			l = LIST_FIRST(&p->p_lwps);
 		}
 		KASSERT(l != NULL);
-		(*print)("lid %d ", l->l_lid);
+		print("lid %d", l->l_lid);
 		pcb = lwp_getpcb(l);
 		tf = (struct trapframe *)pcb->pcb_sf.sf_r6_bank;
-		frame = pcb->pcb_sf.sf_r14;
-		callpc = pcb->pcb_sf.sf_pr;
-		(*print)("at %p\n", frame);
-	}
-	else {
-		/* XXX */
-		db_printf("trace by frame address is not supported\n");
-		return;
+		fp = pcb->pcb_sf.sf_r14;
+		sp = pcb->pcb_sf.sf_r15;
+		pr = pcb->pcb_sf.sf_pr;
+		pc = pcb->pcb_sf.sf_pr;
+		print(", fp=%lx, sp=%lx\n", fp, sp);
+		DPRINTF(1, "# lwp: pc=%lx pr=%lx fp=%lx sp=%lx\n",
+		    pc, pr, fp, sp);
+	} else {
+		fp = 0;
+		sp = addr;
+		pr = 0;
+		/*
+		 * Assume that the frame address (__builtin_frame_address)
+		 * passed as an argument is the same level
+		 * as this __builtin_return_address().
+		 */
+		pc = (db_addr_t)__builtin_return_address(0);
 	}
 
-	lastframe = 0;
-	while (count > 0 && frame != 0) {
+	lastpc = 0;
+	while (count > 0 && pc != 0 && sp != 0) {
+		DPRINTF(2, "# trace: pc=%lx sp=%lx fp=%lx\n", pc, sp, fp);
+
 		/* Are we crossing a trap frame? */
-		if ((callpc & ~PAGE_MASK) == vbr) {
+		if ((pc & ~PAGE_MASK) == vbr) {
+			struct trapframe trapframe;
+			tf = &trapframe;
+
 			/* r14 in exception vectors points to trap frame */
-			tf = (void *)frame;
+			db_read_bytes((db_addr_t)fp, sizeof(*tf), (char *)tf);
+			pc = tf->tf_spc;
+			pr = tf->tf_pr;
+			fp = tf->tf_r14;
+			sp = tf->tf_r15;
 
-			frame = tf->tf_r14;
-			callpc = tf->tf_spc;
+			print("<EXPEVT %03x; SSR=%08x> at ",
+			    tf->tf_expevt, tf->tf_ssr);
+			db_printsym(pc, DB_STGY_PROC, print);
+			print("\n");
 
-			(*print)("<EXPEVT %03x; SSR=%08x> at ",
-				 tf->tf_expevt, tf->tf_ssr);
-			db_printsym(callpc, DB_STGY_PROC, print);
-			(*print)("\n");
-
-			lastframe = 0;
+			print("[trapframe 0x%lx]\n", fp);
+			dump_trapframe(tf, print);
 
 			/* XXX: don't venture into the userland yet */
 			if ((tf->tf_ssr & PSL_MD) == 0)
 				break;
 		} else {
-			db_addr_t oldfp;
 			const char *name;
 			db_expr_t offset;
 			db_sym_t sym;
+			bool found;
 
-
-			DPRINTF("    (1) newpc 0x%lx, newfp 0x%lx\n",
-				callpc, frame);
-
-			sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
-			db_symbol_values(sym, &name, NULL);
-
-			if (lastframe == 0 && sym == 0) {
-				(*print)("symbol not found\n");
+			sym = db_search_symbol(pc, DB_STGY_ANY, &offset);
+			if (sym == 0) {
+				print("symbol not found\n");
 				break;
 			}
+			db_symbol_values(sym, &name, NULL);
 
-			oldfp = frame;
+			func = pc - offset;
 
-			db_nextframe(callpc - offset, &frame, &callpc, print);
-			DPRINTF("    (2) newpc 0x%lx, newfp 0x%lx\n",
-				callpc, frame);
+			DPRINTF(1,
+			    "    (1) func=%lx+%lx, pc=%lx, sp=%lx, fp=%lx\n",
+			    func, offset, pc, sp, fp);
 
-			/* leaf routine or interrupted early? */
-			if (lastframe == 0 && callpc == 0) {
-				callpc = tf->tf_pr; /* PR still in register */
+			found = db_nextframe(func, pc, &fp, &pr, &sp, print);
+			if (!found && lastpc == pc)
+				break;
+			lastpc = pc;
 
-				/* asm routine w/out frame? */
-				if (frame == 0)
-					frame = oldfp;
-				DPRINTF("    (3) newpc 0x%lx, newfp 0x%lx\n",
-					callpc, frame);
-			}
+			DPRINTF(1, "    (2) newpc=%lx, newsp=%lx, newfp=%lx\n",
+			    pr, sp, fp);
 
-			(*print)("%s() at ", name ? name : "");
-			db_printsym(callpc, DB_STGY_PROC, print);
-			(*print)("\n");
+			DPRINTF(1, "sp=%lx ", sp);
+			print("%s() at ", name ? name : "");
+			db_printsym(pr, DB_STGY_PROC, print);
+			print("\n");
 
-			lastframe = frame;
+			pc = pr;
+			pr = 0;
 		}
 
 		count--;
 	}
 }
 
-static void
+static bool
 db_nextframe(
-	db_addr_t pc,		/* in: entry address of current function */
-	db_addr_t *fp,		/* in: current fp, out: parent fp */
+	db_addr_t func,		/* in: entry address of current function */
+	db_addr_t curpc,	/* in: current pc in the function */
+	db_addr_t *fp,		/* out: parent fp */
 	db_addr_t *pr,		/* out: parent pr */
-	void (*print)(const char *, ...))
+	db_addr_t *sp,		/* in: current sp, out: parent sp */
+	void (*print)(const char *, ...) __printflike(1, 2))
 {
-	int *frame = (void *)*fp;
-	int i, inst;
+	int *stack = (void *)*sp;
+	int i, inst, inst2;
 	int depth, prdepth, fpdepth;
+	db_addr_t pc;
 
+	if (__predict_false(db_trace_debug >= 2)) {
+		DPRINTF(2, "%s:%d: START: func=%lx=", __func__, __LINE__, func);
+		db_printsym(func, DB_STGY_PROC, print);
+		DPRINTF(2, " pc=%lx fp=%lx pr=%lx, sp=%lx\n",
+		    curpc, *fp, *pr, *sp);
+	}
+
+	pc = func;
 	depth = 0;
 	prdepth = fpdepth = -1;
 
 	if (pc < (db_addr_t)start || pc > (db_addr_t)etext)
 		goto out;
 
-	for (i = 0; i < 30; i++) {
+	for (i = 0; i < 30 && pc < curpc; i++) {
 		inst = db_get_value(pc, 2, false);
+		DPRINTF(2, "%s:%d: %lx insn=%04x depth=%d\n",
+		    __func__, __LINE__, pc, inst, depth);
 		pc += 2;
 
-		if (inst == 0x000b) 	/* rts - asm routines w/out frame */
+		if (inst == 0x000b)	/* rts - asm routines w/out frame */
 			break;
 
 		if (inst == 0x6ef3)	/* mov r15,r14 -- end of prologue */
@@ -262,26 +307,33 @@ db_nextframe(
 			int8_t n = inst & 0xff;
 
 			if (n >= 0) {
-				(*print)("add #n,r15  (n > 0)\n");
+				/* XXX: in epilogue? ignore it */
+				DPRINTF(2,
+				    "%s:%d: %lx: add #%d,r15 (n > 0) ignored\n",
+				    __func__, __LINE__, pc - 2, n);
 				break;
 			}
 
-			depth += -n/4;
+			depth += -n / 4;
 			continue;
 		}
 		if ((inst & 0xf000) == 0x9000) {
-			if (db_get_value(pc, 2, false) == 0x3f38) {
-				/* "mov #n,r3; sub r3,r15" */
-				unsigned int disp = (int)(inst & 0xff);
-				int r3;
+			inst2 = db_get_value(pc, 2, false);
+			if (((inst2 & 0xff0f) == 0x3f08) &&
+			    ((inst & 0x0f00) == ((inst2 & 0x00f0) << 4))) {
 
-				r3 = (int)*(unsigned short *)(pc + (4 - 2)
-				    + (disp << 1));
-				if ((r3 & 0x00008000) == 0)
-					r3 &= 0x0000ffff;
+				/* mov <disp>,r?; sub r?,r15 */
+				unsigned int disp = (int)(inst & 0xff);
+				vaddr_t addr;
+				int val;
+
+				addr = pc + (4 - 2) + (disp << 1);
+				db_read_bytes(addr, sizeof(val), (char *)&val);
+				if ((val & 0x00008000) == 0)
+					val &= 0x0000ffff;
 				else
-					r3 |= 0xffff0000;
-				depth += (r3 / 4);
+					val |= 0xffff0000;
+				depth += (val / 4);
 
 				pc += 2;
 				continue;
@@ -289,21 +341,59 @@ db_nextframe(
 		}
 
 		if (__predict_false(db_trace_debug > 1)) {
-			(*print)("    unknown insn at ");
+			print("    unknown insn at ");
 			db_printsym(pc - 2, DB_STGY_PROC, print);
-			(*print)(":\t");
-			db_disasm(pc - 2, 0); /* XXX: always uses db_printf */
+			print(":\t");
+			db_disasm(pc - 2, 0);/* XXX: always uses db_printf */
 		}
 	}
 
  out:
-	if (fpdepth != -1)
-		*fp = frame[depth - fpdepth - 1];
-	else
-		*fp = 0;
+	DPRINTF(2, "%s:%d: fpdepth=%d prdepth=%d depth=%d sp=%lx->%lx\n",
+	    __func__, __LINE__, fpdepth, prdepth, depth, *sp, *sp - depth * 4);
 
+	/* dump stack */
+	if (__predict_false(db_trace_debug > 2) &&
+	    ((fpdepth != -1) || (prdepth != -1))) {
+		print("%s:%d: func=%lx pc=%lx\n",
+		    __func__, __LINE__, func, curpc);
+
+		for (int j = 0; j < prdepth + 32; j++) {
+			uint32_t v;
+
+			db_read_bytes((db_addr_t)&stack[j],
+			    sizeof(v), (char *)&v);
+			print("  STACK[%2d]: %p: %08x  ",
+			    j, &stack[j], v);
+			db_printsym(v, DB_STGY_PROC, print);
+			if (j == (depth - prdepth - 1))
+				print("  # = pr");
+			if (j == (depth - fpdepth - 1))
+				print("  # = fp");
+			print("\n");
+		}
+	}
+
+	/* fetch fp and pr if exists in stack */
+	if (fpdepth != -1)
+		db_read_bytes((db_addr_t)&stack[depth - fpdepth - 1],
+		    sizeof(*fp), (char *)fp);
 	if (prdepth != -1)
-		*pr = frame[depth - prdepth - 1];
-	else
-		*pr = 0;
+		db_read_bytes((db_addr_t)&stack[depth - prdepth - 1],
+		    sizeof(*pr), (char *)pr);
+
+	/* adjust stack pointer, and update */
+	stack += depth;
+	*sp = (db_addr_t)stack;
+
+	if (__predict_false(db_trace_debug >= 2)) {
+		DPRINTF(2, "%s:%d: RESULT: fp=%lx pr=%lx(",
+		    __func__, __LINE__, *fp, *pr);
+		db_printsym(*pr, DB_STGY_PROC, print);
+		DPRINTF(2, ") sp=%lx\n", *sp);
+	}
+
+	if ((prdepth == -1) && (fpdepth == -1) && (depth == 0))
+		return false;
+	return true;
 }
