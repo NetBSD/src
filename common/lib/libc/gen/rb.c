@@ -1,4 +1,4 @@
-/*	$NetBSD: rb.c,v 1.14 2019/03/08 09:14:54 roy Exp $	*/
+/*	$NetBSD: rb.c,v 1.15 2019/05/09 10:56:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,6 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/types.h>
 #include <stddef.h>
@@ -41,10 +45,10 @@
 #define KASSERT(s)	do { } while (/*CONSTCOND*/ 0)
 #define	__rbt_unused	__unused
 #endif
-__RCSID("$NetBSD: rb.c,v 1.14 2019/03/08 09:14:54 roy Exp $");
+__RCSID("$NetBSD: rb.c,v 1.15 2019/05/09 10:56:24 skrll Exp $");
 #else
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: rb.c,v 1.14 2019/03/08 09:14:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rb.c,v 1.15 2019/05/09 10:56:24 skrll Exp $");
 #ifndef DIAGNOSTIC
 #define	__rbt_unused	__unused
 #else
