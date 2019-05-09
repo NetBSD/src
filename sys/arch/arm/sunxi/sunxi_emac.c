@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.25 2019/04/22 14:53:51 maya Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.26 2019/05/09 01:46:37 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.25 2019/04/22 14:53:51 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.26 2019/05/09 01:46:37 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -543,6 +543,7 @@ sunxi_emac_setup_rxfilter(struct sunxi_emac_softc *sc)
 		hash[0] = hash[1] = ~0;
 	} else {
 		val |= HASH_MULTICAST;
+		ETHER_LOCK(&sc->ec);
 		ETHER_FIRST_MULTI(step, &sc->ec, enm);
 		while (enm != NULL) {
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
@@ -553,6 +554,7 @@ sunxi_emac_setup_rxfilter(struct sunxi_emac_softc *sc)
 			hash[hashreg] |= (1 << hashbit);
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(&sc->ec);
 	}
 
 	/* Write our unicast address */
