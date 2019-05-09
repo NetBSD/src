@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.14 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: uark.c,v 1.15 2019/05/09 02:43:35 mrg Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.14 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.15 2019/05/09 02:43:35 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -75,34 +75,35 @@ struct uark_softc {
 	u_char			sc_msr;
 	u_char			sc_lsr;
 
-	u_char			sc_dying;
+	bool			sc_dying;
 };
 
-void	uark_get_status(void *, int portno, u_char *lsr, u_char *msr);
-void	uark_set(void *, int, int, int);
-int	uark_param(void *, int, struct termios *);
-void	uark_break(void *, int, int);
-int	uark_cmd(struct uark_softc *, uint16_t, uint16_t);
+static void	uark_get_status(void *, int portno, u_char *lsr, u_char *msr);
+static void	uark_set(void *, int, int, int);
+static int	uark_param(void *, int, struct termios *);
+static int	uark_open(void *, int);
+static void	uark_break(void *, int, int);
+static int	uark_cmd(struct uark_softc *, uint16_t, uint16_t);
 
 struct ucom_methods uark_methods = {
 	.ucom_get_status = uark_get_status,
 	.ucom_set = uark_set,
 	.ucom_param = uark_param,
+	.ucom_open = uark_open,
 };
 
 static const struct usb_devno uark_devs[] = {
 	{ USB_VENDOR_ARKMICROCHIPS, USB_PRODUCT_ARKMICROCHIPS_USBSERIAL },
 };
 
-int             uark_match(device_t, cfdata_t, void *);
-void            uark_attach(device_t, device_t, void *);
-int             uark_detach(device_t, int);
-int             uark_activate(device_t, enum devact);
+static int	uark_match(device_t, cfdata_t, void *);
+static void	uark_attach(device_t, device_t, void *);
+static int	uark_detach(device_t, int);
 
 CFATTACH_DECL_NEW(uark, sizeof(struct uark_softc), uark_match, uark_attach,
-    uark_detach, uark_activate);
+    uark_detach, NULL);
 
-int
+static int
 uark_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -111,7 +112,7 @@ uark_match(device_t parent, cfdata_t match, void *aux)
 	    != NULL) ? UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 uark_attach(device_t parent, device_t self, void *aux)
 {
 	struct uark_softc *sc = device_private(self);
@@ -134,10 +135,11 @@ uark_attach(device_t parent, device_t self, void *aux)
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = dev;
+	sc->sc_dying = false;
 
 	if (usbd_set_config_index(sc->sc_udev, UARK_CONFIG_NO, 1) != 0) {
 		aprint_error_dev(self, "could not set configuration no\n");
-		sc->sc_dying = 1;
+		sc->sc_dying = true;
 		return;
 	}
 
@@ -146,7 +148,7 @@ uark_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_iface);
 	if (error != 0) {
 		aprint_error_dev(self, "could not get interface handle\n");
-		sc->sc_dying = 1;
+		sc->sc_dying = true;
 		return;
 	}
 
@@ -158,7 +160,7 @@ uark_attach(device_t parent, device_t self, void *aux)
 		if (ed == NULL) {
 			aprint_error_dev(self,
 			    "no endpoint descriptor found for %d\n", i);
-			sc->sc_dying = 1;
+			sc->sc_dying = true;
 			return;
 		}
 
@@ -172,7 +174,7 @@ uark_attach(device_t parent, device_t self, void *aux)
 
 	if (ucaa.ucaa_bulkin == -1 || ucaa.ucaa_bulkout == -1) {
 		aprint_error_dev(self, "missing endpoint\n");
-		sc->sc_dying = 1;
+		sc->sc_dying = true;
 		return;
 	}
 
@@ -194,13 +196,14 @@ uark_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 uark_detach(device_t self, int flags)
 {
 	struct uark_softc *sc = device_private(self);
 	int rv = 0;
 
-	sc->sc_dying = 1;
+	sc->sc_dying = true;
+
 	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;
@@ -211,26 +214,13 @@ uark_detach(device_t self, int flags)
 	return rv;
 }
 
-int
-uark_activate(device_t self, enum devact act)
-{
-	struct uark_softc *sc = device_private(self);
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
-		sc->sc_dying = 1;
-		break;
-	}
-	return rv;
-}
-
-void
+static void
 uark_set(void *vsc, int portno, int reg, int onoff)
 {
 	struct uark_softc *sc = vsc;
+
+	if (sc->sc_dying)
+		return;
 
 	switch (reg) {
 	case UCOM_SET_BREAK:
@@ -243,11 +233,14 @@ uark_set(void *vsc, int portno, int reg, int onoff)
 	}
 }
 
-int
+static int
 uark_param(void *vsc, int portno, struct termios *t)
 {
 	struct uark_softc *sc = (struct uark_softc *)vsc;
 	int data;
+
+	if (sc->sc_dying)
+		return EIO;
 
 	switch (t->c_ospeed) {
 	case 300:
@@ -303,7 +296,7 @@ uark_param(void *vsc, int portno, struct termios *t)
 
 #if 0
 	/* XXX flow control */
-	if (ISSET(t->c_cflag, CRTSCTS))
+	if (ISSET(t->c_cflag, CRTSCTS)) {
 		/*  rts/cts flow ctl */
 	} else if (ISSET(t->c_iflag, IXON|IXOFF)) {
 		/*  xon/xoff flow ctl */
@@ -315,20 +308,37 @@ uark_param(void *vsc, int portno, struct termios *t)
 	return 0;
 }
 
-void
+static int
+uark_open(void *arg, int portno)
+{
+	struct uark_softc *sc = arg;
+
+	if (sc->sc_dying)
+		return EIO;
+
+	return 0;
+}
+
+static void
 uark_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 {
 	struct uark_softc *sc = vsc;
+
+	if (sc->sc_dying)
+		return;
 
 	*msr = sc->sc_msr;
 	*lsr = sc->sc_lsr;
 }
 
-void
+static void
 uark_break(void *vsc, int portno, int onoff)
 {
 #if 0
 	struct uark_softc *sc = vsc;
+
+	if (sc->sc_dying)
+		return;
 
 #ifdef UARK_DEBUG
 	aprint_normal_dev(sc->sc_dev, "break %s!\n", onoff ? "on" : "off");
@@ -342,7 +352,7 @@ uark_break(void *vsc, int portno, int onoff)
 #endif
 }
 
-int
+static int
 uark_cmd(struct uark_softc *sc, uint16_t index, uint16_t value)
 {
 	usb_device_request_t req;

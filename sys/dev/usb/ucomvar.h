@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.22 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.23 2019/05/09 02:43:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,24 @@
 #define UCOM_UNK_PORTNO (-1)
 
 struct	ucom_softc;
+
+/*
+ * USB detach requires ensuring that outstanding operations and
+ * open devices are properly closed before detach can return.
+ *
+ * ucom parents rely upon ucom(4) itself doing any safety here.
+ * The standard method is:
+ *
+ * 1. device softc has a "bool sc_dying" member, that may be set
+ *    in attach or other run-time for general failure, and set
+ *    early in the detach callback
+ *
+ * 2. if sc_dying is set, most functions should perform as close
+ *    to zero operations as possible
+ *
+ * 3. detach callback sets sc_dying to true and then cleans up
+ *    any local state and calls config_detach() on each child
+ */
 
 /*
  * The first argument to the ucom callbacks is the passed in ucaa_arg

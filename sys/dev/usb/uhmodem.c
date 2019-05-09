@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.18 2019/05/04 23:36:14 mrg Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.19 2019/05/09 02:43:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.18 2019/05/04 23:36:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.19 2019/05/09 02:43:35 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -167,10 +167,9 @@ static int	uhmodem_match(device_t, cfdata_t, void *);
 static void	uhmodem_attach(device_t, device_t, void *);
 static void	uhmodem_childdet(device_t, device_t);
 static int	uhmodem_detach(device_t, int);
-static int	uhmodem_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(uhmodem, sizeof(struct ubsa_softc), uhmodem_match,
-    uhmodem_attach, uhmodem_detach, uhmodem_activate, NULL, uhmodem_childdet);
+    uhmodem_attach, uhmodem_detach, NULL, NULL, uhmodem_childdet);
 
 static int
 uhmodem_match(device_t parent, cfdata_t match, void *aux)
@@ -211,7 +210,8 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
 	sc->sc_config_index = UBSA_DEFAULT_CONFIG_INDEX;
-	sc->sc_numif = 1; /* defaut device has one interface */
+	sc->sc_numif = 1; /* default device has one interface */
+	sc->sc_dying = false;
 
 	/* Hauwei E220 need special request to change its mode to modem */
 	if ((uiaa->uiaa_ifaceno == 0) && (uiaa->uiaa_class != 255)) {
@@ -219,12 +219,10 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 		if (err) {
 			aprint_error_dev(self, "failed to change mode: %s\n",
 				usbd_errstr(err));
-			sc->sc_dying = 1;
 			goto error;
 		}
 		aprint_error_dev(self,
 		    "mass storage only mode, reattach to enable modem\n");
-		sc->sc_dying = 1;
 		goto error;
 	}
 
@@ -247,7 +245,6 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 	if (err) {
 		aprint_error_dev(self, "failed to set configuration: %s\n",
 		    usbd_errstr(err));
-		sc->sc_dying = 1;
 		goto error;
 	}
 
@@ -256,7 +253,6 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 	if (cdesc == NULL) {
 		aprint_error_dev(self,
 		    "failed to get configuration descriptor\n");
-		sc->sc_dying = 1;
 		goto error;
 	}
 
@@ -270,7 +266,6 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 		if (err) {
 			if (i == 0){
 				/* can not get main interface */
-				sc->sc_dying = 1;
 				goto error;
 			} else
 				break;
@@ -311,7 +306,6 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 			    "to enable modem function\n");
 			if (i == 0) {
 				/* could not get intr for main tty */
-				sc->sc_dying = 1;
 				goto error;
 			} else
 				break;
@@ -319,14 +313,12 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 		if (ucaa.ucaa_bulkin == -1) {
 			aprint_error_dev(self,
 			    "Could not find data bulk in\n");
-			sc->sc_dying = 1;
 			goto error;
 		}
 
 		if (ucaa.ucaa_bulkout == -1) {
 			aprint_error_dev(self,
 			    "Could not find data bulk out\n");
-			sc->sc_dying = 1;
 			goto error;
 		}
 
@@ -376,6 +368,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 	return;
 
 error:
+	sc->sc_dying = true;
 	return;
 }
 
@@ -402,17 +395,15 @@ uhmodem_detach(device_t self, int flags)
 
 	DPRINTF(("uhmodem_detach: sc = %p\n", sc));
 
-	if (sc->sc_intr_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_intr_pipe);
-		usbd_close_pipe(sc->sc_intr_pipe);
-		kmem_free(sc->sc_intr_buf, sc->sc_isize);
-		sc->sc_intr_pipe = NULL;
-	}
+	sc->sc_dying = true;
 
-	sc->sc_dying = 1;
+	ubsa_close_pipe(sc);
+
 	for (i = 0; i < sc->sc_numif; i++) {
-		if (sc->sc_subdevs[i] != NULL)
+		if (sc->sc_subdevs[i] != NULL) {
 			rv |= config_detach(sc->sc_subdevs[i], flags);
+			sc->sc_subdevs[i] = NULL;
+		}
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
@@ -422,49 +413,38 @@ uhmodem_detach(device_t self, int flags)
 }
 
 static int
-uhmodem_activate(device_t self, enum devact act)
-{
-	struct ubsa_softc *sc = device_private(self);
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
-}
-
-static int
 uhmodem_open(void *addr, int portno)
 {
 	struct ubsa_softc *sc = addr;
 	usbd_status err;
 
-	if (sc->sc_dying)
-		return ENXIO;
-
 	DPRINTF(("%s: sc = %p\n", __func__, sc));
 
+	if (sc->sc_dying)
+		return EIO;
+
 	err = uhmodem_endpointhalt(sc, 0);
-	if (err)
+	if (err) {
 		aprint_error("%s: endpointhalt fail\n", __func__);
-	else
+		return EIO;
+	} else
 		usbd_delay_ms(sc->sc_udev, 50);
 
 	if (sc->sc_devflags & A2502) {
 		err = a2502_init(sc->sc_udev);
-		if (err)
+		if (err) {
 			aprint_error("%s: a2502init fail\n", __func__);
-		else
+			return EIO;
+		} else
 			usbd_delay_ms(sc->sc_udev, 50);
 	}
 #if 0 /* currently disabled */
 	if (sc->sc_devflags & E220) {
 		err = e220_init(sc->sc_udev);
-		if (err)
+		if (err) {
 			aprint_error("%s: e220init fail\n", __func__);
-		else
+			return EIO;
+		} else
 			usbd_delay_ms(sc->sc_udev, 50);
 	}
 #endif

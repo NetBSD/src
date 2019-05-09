@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.11 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.12 2019/05/09 02:43:35 mrg Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.11 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.12 2019/05/09 02:43:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,15 +182,20 @@ ubsa_break(struct ubsa_softc *sc, int portno, int onoff)
 {
 	DPRINTF(("ubsa_rts: onoff = %d\n", onoff));
 
+	if (sc->sc_dying) 
+		return;
+
 	ubsa_request(sc, portno, UBSA_SET_BREAK, onoff ? 1 : 0);
 }
 
 void
 ubsa_set(void *addr, int portno, int reg, int onoff)
 {
-	struct ubsa_softc *sc;
+	struct ubsa_softc *sc = addr;
 
-	sc = addr;
+	if (sc->sc_dying)
+		return;
+
 	switch (reg) {
 	case UCOM_SET_DTR:
 		if (sc->sc_quadumts)
@@ -322,6 +327,9 @@ ubsa_param(void *addr, int portno, struct termios *ti)
 {
 	struct ubsa_softc *sc = addr;
 
+	if (sc->sc_dying)
+		return EIO;
+
 	DPRINTF(("ubsa_param: sc = %p\n", sc));
 
 	if (!sc->sc_quadumts) {
@@ -342,7 +350,7 @@ ubsa_open(void *addr, int portno)
 	int err;
 
 	if (sc->sc_dying)
-		return ENXIO;
+		return EIO;
 
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_intr_buf = kmem_alloc(sc->sc_isize, KM_SLEEP);
@@ -369,30 +377,31 @@ ubsa_open(void *addr, int portno)
 }
 
 void
+ubsa_close_pipe(struct ubsa_softc *sc)
+{
+
+	if (sc->sc_intr_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_intr_pipe);
+		usbd_close_pipe(sc->sc_intr_pipe);
+		sc->sc_intr_pipe = NULL;
+	}
+	if (sc->sc_intr_buf) {
+		kmem_free(sc->sc_intr_buf, sc->sc_isize);
+		sc->sc_intr_buf = NULL;
+	}
+}
+
+void
 ubsa_close(void *addr, int portno)
 {
 	struct ubsa_softc *sc = addr;
-	int err;
+
+	DPRINTF(("ubsa_close: close\n"));
 
 	if (sc->sc_dying)
 		return;
 
-	DPRINTF(("ubsa_close: close\n"));
-
-	if (sc->sc_intr_pipe != NULL) {
-		err = usbd_abort_pipe(sc->sc_intr_pipe);
-		if (err)
-			printf("%s: abort interrupt pipe failed: %s\n",
-			    device_xname(sc->sc_dev),
-			    usbd_errstr(err));
-		err = usbd_close_pipe(sc->sc_intr_pipe);
-		if (err)
-			printf("%s: close interrupt pipe failed: %s\n",
-			    device_xname(sc->sc_dev),
-			    usbd_errstr(err));
-		kmem_free(sc->sc_intr_buf, sc->sc_isize);
-		sc->sc_intr_pipe = NULL;
-	}
+	ubsa_close_pipe(sc);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.12 2018/08/03 13:19:33 skrll Exp $ */
+/* $NetBSD: umcs.c,v 1.13 2019/05/09 02:43:35 mrg Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.12 2018/08/03 13:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.13 2019/05/09 02:43:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,6 @@ static void umcs7840_attach(device_t, device_t, void *);
 static int umcs7840_detach(device_t, int);
 static void umcs7840_intr(struct usbd_xfer *, void *, usbd_status);
 static void umcs7840_change_task(void *arg);
-static int umcs7840_activate(device_t, enum devact);
 static void umcs7840_childdet(device_t, device_t);
 
 static void umcs7840_get_status(void *, int, u_char *, u_char *);
@@ -140,7 +139,7 @@ static const struct usb_devno umcs7840_devs[] = {
 #define umcs7840_lookup(v, p) usb_lookup(umcs7840_devs, v, p)
 
 CFATTACH_DECL2_NEW(umcs, sizeof(struct umcs7840_softc), umcs7840_match,
-    umcs7840_attach, umcs7840_detach, umcs7840_activate, NULL,
+    umcs7840_attach, umcs7840_detach, NULL, NULL,
     umcs7840_childdet);
 
 static inline int
@@ -193,9 +192,11 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_udev = uaa->uaa_device;
+	sc->sc_dying = false;
 
 	if (usbd_set_config_index(sc->sc_udev, MCS7840_CONFIG_INDEX, 1) != 0) {
 		aprint_error(": could not set configuration no\n");
+		sc->sc_dying = true;
 		return;
 	}
 
@@ -204,6 +205,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_iface);
 	if (error != 0) {
 		aprint_error(": could not get interface handle\n");
+		sc->sc_dying = true;
 		return;
 	}
 
@@ -266,6 +268,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	}
 	if (intr_addr < 0) {
 		aprint_error_dev(self, "interrupt pipe not found\n");
+		sc->sc_dying = true;
 		return;
 	}
 	sc->sc_intr_buf = kmem_alloc(sc->sc_intr_buflen, KM_SLEEP);
@@ -276,6 +279,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	if (error) {
 		aprint_error_dev(self, "cannot open interrupt pipe "
 		    "(addr %d)\n", intr_addr);
+		sc->sc_dying = true;
 		return;
 	}
 
@@ -310,6 +314,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 		if (ed == NULL) {
 			aprint_error_dev(self,
 			    "no bulk in endpoint found for %d\n", i);
+			sc->sc_dying = true;
 			return;
 		}
 		ucaa.ucaa_bulkin = ed->bEndpointAddress;
@@ -504,18 +509,13 @@ umcs7840_detach(device_t self, int flags)
 
 	/* close interrupt pipe */
 	if (sc->sc_intr_pipe != NULL) {
-		rv = usbd_abort_pipe(sc->sc_intr_pipe);
-		if (rv)
-			aprint_error_dev(sc->sc_dev,
-			    "abort interrupt pipe failed: %s\n",
-			    usbd_errstr(rv));
-		rv = usbd_close_pipe(sc->sc_intr_pipe);
-		if (rv)
-			aprint_error_dev(sc->sc_dev,
-			    "failed to close interrupt pipe: %s\n",
-			    usbd_errstr(rv));
-		kmem_free(sc->sc_intr_buf, sc->sc_intr_buflen);
+		usbd_abort_pipe(sc->sc_intr_pipe);
+		usbd_close_pipe(sc->sc_intr_pipe);
 		sc->sc_intr_pipe = NULL;
+	}
+	if (sc->sc_intr_buf != NULL) {
+		kmem_free(sc->sc_intr_buf, sc->sc_intr_buflen);
+		sc->sc_intr_buf = NULL;
 	}
 	usb_rem_task_wait(sc->sc_udev, &sc->sc_change_task, USB_TASKQ_DRIVER,
 	    NULL);
@@ -523,30 +523,15 @@ umcs7840_detach(device_t self, int flags)
 	/* detach children */
 	for (i = 0; i < sc->sc_numports; i++) {
 		if (sc->sc_ports[i].sc_port_ucom) {
-			rv = config_detach(sc->sc_ports[i].sc_port_ucom,
+			rv |= config_detach(sc->sc_ports[i].sc_port_ucom,
 			    flags);
-			if (rv)
-				break;
+			sc->sc_ports[i].sc_port_ucom = NULL;
 		}
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
-}
-
-int
-umcs7840_activate(device_t self, enum devact act)
-{
-	struct umcs7840_softc *sc = device_private(self);
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = true;
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
 }
 
 static void
@@ -612,6 +597,9 @@ umcs7840_param(void *self, int portno, struct termios *t)
 	int pn = sc->sc_ports[portno].sc_port_phys;
 	uint8_t lcr = sc->sc_ports[portno].sc_port_lcr;
 	uint8_t mcr = sc->sc_ports[portno].sc_port_mcr;
+
+	if (sc->sc_dying)
+		return EIO;
 
 	if (t->c_cflag & CSTOPB) {
 		lcr |= MCS7840_UART_LCR_STOPB2;
@@ -859,6 +847,9 @@ umcs7840_intr(struct usbd_xfer *xfer, void *priv,
 	u_char *buf = sc->sc_intr_buf;
 	int actlen;
 	int subunit;
+
+	if (sc->sc_dying)
+		return;
 
 	if (status == USBD_NOT_STARTED || status == USBD_CANCELLED
 	    || status == USBD_IOERROR)

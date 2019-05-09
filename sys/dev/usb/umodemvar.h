@@ -1,4 +1,4 @@
-/*	$NetBSD: umodemvar.h,v 1.11 2019/05/06 23:47:39 mrg Exp $	*/
+/*	$NetBSD: umodemvar.h,v 1.12 2019/05/09 02:43:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,5 +73,4 @@ int	umodem_param(void *, int, struct termios *);
 int	umodem_ioctl(void *, int, u_long, void *, int, proc_t *);
 int	umodem_open(void *, int);
 void	umodem_close(void *, int);
-int	umodem_common_activate(struct umodem_softc *, enum devact);
 int	umodem_common_detach(struct umodem_softc *, int);

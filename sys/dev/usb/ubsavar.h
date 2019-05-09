@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsavar.h,v 1.10 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: ubsavar.h,v 1.11 2019/05/09 02:43:35 mrg Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -133,7 +133,7 @@ struct	ubsa_softc {
 	device_t		sc_subdevs[UBSA_MAXCONN]; /* ucom device */
 	int			sc_numif;	/* number of interfaces */
 
-	u_char			sc_dying;	/* disconnecting */
+	bool			sc_dying;	/* disconnecting */
 	u_char			sc_quadumts;
 	uint16_t		sc_devflags;
 };
@@ -146,6 +146,7 @@ void ubsa_set(void *, int, int, int);
 int  ubsa_param(void *, int, struct termios *);
 int  ubsa_open(void *, int);
 void ubsa_close(void *, int);
+void ubsa_close_pipe(struct ubsa_softc *);
 
 void ubsa_break(struct ubsa_softc *, int, int);
 int  ubsa_request(struct ubsa_softc *, int, uint8_t, uint16_t);
