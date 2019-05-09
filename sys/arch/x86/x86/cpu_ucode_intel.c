@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.15 2019/01/27 02:08:39 pgoyette Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.16 2019/05/09 18:53:14 maxv Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.15 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.16 2019/05/09 18:53:14 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
@@ -213,7 +213,14 @@ cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 		rv = EEXIST; /* ??? */
 		goto out;
 	}
+
+	/*
+	 * Perform update. On some platforms a cache invalidation is
+	 * required.
+	 */
+	wbinvd();
 	wrmsr(MSR_BIOS_UPDT_TRIG, (uintptr_t)uh + 48);
+
 	intel_getcurrentucode(&nucodeversion, &platformid);
 	cpuid = curcpu()->ci_index;
 
