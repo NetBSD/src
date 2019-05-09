@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.39 2017/12/02 08:15:43 mrg Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.40 2019/05/09 08:16:15 skrll Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.39 2017/12/02 08:15:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.40 2019/05/09 08:16:15 skrll Exp $");
 
 #include "opt_readahead.h"
 #include "opt_ddb.h"
@@ -61,7 +61,7 @@ uvmexp_print(void (*pr)(const char *, ...)
 	struct cpu_info *ci;
 
 	uvm_estimatepageable(&active, &inactive);
-	poolpages = pool_totalpages();
+	poolpages = pool_totalpages_locked();
 
 	(*pr)("Current UVM status:\n");
 	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d, ncolors=%d\n",

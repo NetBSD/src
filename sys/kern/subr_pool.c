@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.249 2019/04/13 08:41:36 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.250 2019/05/09 08:16:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.249 2019/04/13 08:41:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.250 2019/05/09 08:16:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1635,10 +1635,20 @@ pool_drain(struct pool **ppp)
 int
 pool_totalpages(void)
 {
+
+	mutex_enter(&pool_head_lock);
+	int pages = pool_totalpages_locked();
+	mutex_exit(&pool_head_lock);
+
+	return pages;
+}
+
+int
+pool_totalpages_locked(void)
+{
 	struct pool *pp;
 	uint64_t total = 0;
 
-	mutex_enter(&pool_head_lock);
 	TAILQ_FOREACH(pp, &pool_head, pr_poollist) {
 		uint64_t bytes = pp->pr_npages * pp->pr_alloc->pa_pagesz;
 
@@ -1646,7 +1656,6 @@ pool_totalpages(void)
 			bytes -= (pp->pr_nout * pp->pr_size);
 		total += bytes;
 	}
-	mutex_exit(&pool_head_lock);
 
 	return atop(total);
 }
