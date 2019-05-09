@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.85 2019/02/13 06:52:43 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.86 2019/05/09 17:09:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.85 2019/02/13 06:52:43 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.86 2019/05/09 17:09:51 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -368,7 +368,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	}
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
 	iplmask = evtsource[evtch]->ev_imask;
-	sti();
+	x86_enable_intr();
 	mutex_spin_enter(&evtlock[evtch]);
 	ih = evtsource[evtch]->ev_handlers;
 	while (ih != NULL) {
@@ -383,7 +383,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		if (evtch == IRQ_DEBUG)
 		    printf("ih->ih_level %d <= ilevel %d\n", ih->ih_level, ilevel);
 #endif
-			cli();
+			x86_disable_intr();
 			hypervisor_set_ipending(iplmask,
 			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 			/* leave masked */
@@ -397,7 +397,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		ih = ih->ih_evt_next;
 	}
 	mutex_spin_exit(&evtlock[evtch]);
-	cli();
+	x86_disable_intr();
 	hypervisor_unmask_event(evtch);
 #if NPCI > 0 || NISA > 0
 	hypervisor_ack_pirq_event(evtch);
@@ -419,10 +419,10 @@ splx:
 				for (ih = ci->ci_xsources[i]->is_handlers;
 				    ih != NULL; ih = ih->ih_next) {
 					KASSERT(ih->ih_cpu == ci);
-					sti();
+					x86_enable_intr();
 					ih_fun = (void *)ih->ih_fun;
 					ih_fun(ih->ih_arg, regs);
-					cli();
+					x86_disable_intr();
 				}
 				hypervisor_enable_ipl(i);
 				/* more pending IPLs may have been registered */

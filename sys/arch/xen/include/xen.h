@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.43 2019/02/04 18:14:53 cherry Exp $	*/
+/*	$NetBSD: xen.h,v 1.44 2019/05/09 17:09:50 bouyer Exp $	*/
 
 /*
  *
@@ -134,55 +134,6 @@ void xpq_flush_cache(void);
 
 #define xendomain_is_dom0()		(xen_start_info.flags & SIF_INITDOMAIN)
 #define xendomain_is_privileged()	(xen_start_info.flags & SIF_PRIVILEGED)
-
-/*
- * STI/CLI equivalents. These basically set and clear the virtual
- * event_enable flag in the shared_info structure. Note that when
- * the enable bit is set, there may be pending events to be handled.
- * We may therefore call into do_hypervisor_callback() directly.
- */
-
-#define __save_flags(x)							\
-do {									\
-	(x) = curcpu()->ci_vcpu->evtchn_upcall_mask;			\
-} while (0)
-
-#define __restore_flags(x)						\
-do {									\
-	volatile struct vcpu_info *_vci = curcpu()->ci_vcpu;		\
-	__insn_barrier();						\
-	if ((_vci->evtchn_upcall_mask = (x)) == 0) {			\
-		x86_lfence();						\
-		if (__predict_false(_vci->evtchn_upcall_pending))	\
-			hypervisor_force_callback();			\
-	}								\
-} while (0)
-
-#define __cli()								\
-do {									\
-	curcpu()->ci_vcpu->evtchn_upcall_mask = 1;			\
-	x86_lfence();							\
-} while (0)
-
-#define __sti()								\
-do {									\
-	volatile struct vcpu_info *_vci = curcpu()->ci_vcpu;		\
-	__insn_barrier();						\
-	_vci->evtchn_upcall_mask = 0;					\
-	x86_lfence(); /* unmask then check (avoid races) */		\
-	if (__predict_false(_vci->evtchn_upcall_pending))		\
-		hypervisor_force_callback();				\
-} while (0)
-
-#define cli()			__cli()
-#define sti()			__sti()
-#define save_flags(x)		__save_flags(x)
-#define restore_flags(x)	__restore_flags(x)
-#define save_and_cli(x)	do {					\
-	__save_flags(x);					\
-	__cli();						\
-} while (/* CONSTCOND */ 0)
-#define save_and_sti(x)		__save_and_sti(x)
 
 /*
  * always assume we're on multiprocessor. We don't know how many CPU the

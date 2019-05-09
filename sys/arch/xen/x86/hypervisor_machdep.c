@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.35 2019/02/12 07:58:26 cherry Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.36 2019/05/09 17:09:51 bouyer Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.35 2019/02/12 07:58:26 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36 2019/05/09 17:09:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ stipending(void)
 	 */
 
 	while (vci->evtchn_upcall_pending) {
-		cli();
+		x86_disable_intr();
 
 		vci->evtchn_upcall_pending = 0;
 
@@ -200,7 +200,7 @@ stipending(void)
 		    s->evtchn_pending, s->evtchn_mask,
 		    evt_set_pending, &ret);
 
-		sti();
+		x86_enable_intr();
 	}
 
 #if 0

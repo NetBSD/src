@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.27 2019/05/04 07:20:22 maxv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.28 2019/05/09 17:09:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
 #include <machine/specialreg.h>
 
 #ifdef _KERNEL
+#if defined(_KERNEL_OPT)
+#include "opt_xen.h"
+#endif
 
 static inline void
 x86_pause(void)
@@ -291,6 +294,10 @@ void	xsaveopt(union savefpu *, uint64_t);
 
 /* -------------------------------------------------------------------------- */
 
+#ifdef XENPV
+void x86_disable_intr(void);
+void x86_enable_intr(void);
+#else
 static inline void
 x86_disable_intr(void)
 {
@@ -302,6 +309,7 @@ x86_enable_intr(void)
 {
 	asm volatile ("sti");
 }
+#endif /* XENPV */
 
 /* Use read_psl, write_psl when saving and restoring interrupt state. */
 u_long	x86_read_psl(void);
