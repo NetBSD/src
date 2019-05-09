@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.6 2019/04/16 10:00:04 mrg Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.7 2019/05/09 05:00:31 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.6 2019/04/16 10:00:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.7 2019/05/09 05:00:31 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -123,40 +123,40 @@ ww_acquire_fini(struct ww_acquire_ctx *ctx)
 
 #ifdef LOCKDEBUG
 static void
-ww_dump(const volatile void *cookie)
+ww_dump(const volatile void *cookie, lockop_printer_t pr)
 {
 	const volatile struct ww_mutex *mutex = cookie;
 
-	printf_nolog("%-13s: ", "state");
+	pr("%-13s: ", "state");
 	switch (mutex->wwm_state) {
 	case WW_UNLOCKED:
-		printf_nolog("unlocked\n");
+		pr("unlocked\n");
 		break;
 	case WW_OWNED:
-		printf_nolog("owned by lwp\n");
-		printf_nolog("%-13s: %p\n", "owner", mutex->wwm_u.owner);
-		printf_nolog("%-13s: %s\n", "waiters",
+		pr("owned by lwp\n");
+		pr("%-13s: %p\n", "owner", mutex->wwm_u.owner);
+		pr("%-13s: %s\n", "waiters",
 		    cv_has_waiters((void *)(intptr_t)&mutex->wwm_cv)
 			? "yes" : "no");
 		break;
 	case WW_CTX:
-		printf_nolog("owned via ctx\n");
-		printf_nolog("%-13s: %p\n", "context", mutex->wwm_u.ctx);
-		printf_nolog("%-13s: %p\n", "lwp",
+		pr("owned via ctx\n");
+		pr("%-13s: %p\n", "context", mutex->wwm_u.ctx);
+		pr("%-13s: %p\n", "lwp",
 		    mutex->wwm_u.ctx->wwx_owner);
-		printf_nolog("%-13s: %s\n", "waiters",
+		pr("%-13s: %s\n", "waiters",
 		    cv_has_waiters((void *)(intptr_t)&mutex->wwm_cv)
 			? "yes" : "no");
 		break;
 	case WW_WANTOWN:
-		printf_nolog("owned via ctx\n");
-		printf_nolog("%-13s: %p\n", "context", mutex->wwm_u.ctx);
-		printf_nolog("%-13s: %p\n", "lwp",
+		pr("owned via ctx\n");
+		pr("%-13s: %p\n", "context", mutex->wwm_u.ctx);
+		pr("%-13s: %p\n", "lwp",
 		    mutex->wwm_u.ctx->wwx_owner);
-		printf_nolog("%-13s: %s\n", "waiters", "yes (noctx)");
+		pr("%-13s: %s\n", "waiters", "yes (noctx)");
 		break;
 	default:
-		printf_nolog("unknown\n");
+		pr("unknown\n");
 		break;
 	}
 }
