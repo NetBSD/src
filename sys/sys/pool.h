@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.88 2019/04/13 08:41:37 maxv Exp $	*/
+/*	$NetBSD: pool.h,v 1.89 2019/05/09 08:16:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -320,6 +320,7 @@ void		pool_sethiwat(struct pool *, int);
 void		pool_sethardlimit(struct pool *, int, const char *, int);
 bool		pool_drain(struct pool **);
 int		pool_totalpages(void);
+int		pool_totalpages_locked(void);
 
 /*
  * Debugging and diagnostic aides.
