@@ -1,4 +1,4 @@
-#	$NetBSD: procs,v 1.3 2019/05/06 02:41:02 mrg Exp $
+#	$NetBSD: procs,v 1.4 2019/05/09 07:59:49 mrg Exp $
 
 define procs
 	set $i = 0
@@ -19,4 +19,9 @@ define procs
 		end
 		set $i++
 	end
+end
+document procs
+list all processes.
+displays struct proc *, pid, flags, status, nlwps, first lwp addr
+and command name.
 end

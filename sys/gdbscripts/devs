@@ -1,4 +1,4 @@
-#	$NetBSD: devs,v 1.1 2019/05/06 02:41:02 mrg Exp $
+#	$NetBSD: devs,v 1.2 2019/05/09 07:59:49 mrg Exp $
 
 define devs
 	set $i = 0
@@ -17,4 +17,8 @@ define devs
 		end
 		set $i++
 	end
+end
+document devs
+dump a list of all devices known on the system with their name,
+and these pointers: this device, parent device, device private.
 end
