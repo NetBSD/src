@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.77 2019/04/17 02:29:43 ozaki-r Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.78 2019/05/09 04:52:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.77 2019/04/17 02:29:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.78 2019/05/09 04:52:59 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -298,7 +298,7 @@ syncobj_t mutex_syncobj = {
  *
  *	Dump the contents of a mutex structure.
  */
-void
+static void
 mutex_dump(const volatile void *cookie)
 {
 	const volatile kmutex_t *mtx = cookie;
@@ -315,7 +315,7 @@ mutex_dump(const volatile void *cookie)
  *	generates a lot of machine code in the DIAGNOSTIC case, so
  *	we ask the compiler to not inline it.
  */
-void __noinline
+static void __noinline
 mutex_abort(const char *func, size_t line, const kmutex_t *mtx, const char *msg)
 {
 
