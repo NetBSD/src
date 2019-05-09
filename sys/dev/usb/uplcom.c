@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.84 2019/05/09 02:43:35 mrg Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.85 2019/05/09 14:50:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.84 2019/05/09 02:43:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.85 2019/05/09 14:50:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -270,7 +270,7 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 	struct ucom_attach_args ucaa;
 
 	UPLCOMHIST_FUNC(); UPLCOMHIST_CALLED();
-	DPRINTF("sc=%p", sc, 0, 0, 0);
+	DPRINTF("sc=%#jx", (uintptr_t)sc, 0, 0, 0);
 
 	sc->sc_dev = self;
 	sc->sc_dying = false;
@@ -497,7 +497,7 @@ uplcom_detach(device_t self, int flags)
 	int rv = 0;
 
 	UPLCOMHIST_FUNC(); UPLCOMHIST_CALLED();
-	DPRINTF("sc=%p flags=%d", sc, flags, 0, 0);
+	DPRINTF("sc=%#jx flags=%d", (uintptr_t)sc, flags, 0, 0);
 
 	sc->sc_dying = true;
  
@@ -752,7 +752,7 @@ uplcom_param(void *addr, int portno, struct termios *t)
 	usb_cdc_line_state_t ls;
 
 	UPLCOMHIST_FUNC(); UPLCOMHIST_CALLED();
-	DPRINTF("sc=%p", sc, 0, 0, 0);
+	DPRINTF("sc=%#jx", (uintptr_t)sc, 0, 0, 0);
 
 	if (sc->sc_dying)
 		return EIO;
@@ -835,7 +835,7 @@ uplcom_open(void *addr, int portno)
 	usbd_status err = 0;
  
 	UPLCOMHIST_FUNC(); UPLCOMHIST_CALLED();
-	DPRINTF("sc=%p", sc, 0, 0, 0);
+	DPRINTF("sc=%#jx", (uintptr_t)sc, 0, 0, 0);
 
 	if (sc->sc_dying)
 		return EIO;
@@ -870,7 +870,7 @@ uplcom_close(void *addr, int portno)
 	struct uplcom_softc *sc = addr;
 
 	UPLCOMHIST_FUNC(); UPLCOMHIST_CALLED();
-	DPRINTF("sc=%p", sc, 0, 0, 0);
+	DPRINTF("sc=%#jx", (uintptr_t)sc, 0, 0, 0);
 
 	if (sc->sc_dying)
 		return;
