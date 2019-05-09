@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.124 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: ucom.c,v 1.125 2019/05/09 02:43:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.124 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.125 2019/05/09 02:43:35 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -245,10 +245,9 @@ static void	ucom_softintr(void *);
 int ucom_match(device_t, cfdata_t, void *);
 void ucom_attach(device_t, device_t, void *);
 int ucom_detach(device_t, int);
-int ucom_activate(device_t, enum devact);
 
 CFATTACH_DECL_NEW(ucom, sizeof(struct ucom_softc), ucom_match, ucom_attach,
-    ucom_detach, ucom_activate);
+    ucom_detach, NULL);
 
 int
 ucom_match(device_t parent, cfdata_t match, void *aux)
@@ -497,26 +496,6 @@ ucom_detach(device_t self, int flags)
 	cv_destroy(&sc->sc_detachcv);
 
 	return 0;
-}
-
-int
-ucom_activate(device_t self, enum devact act)
-{
-	struct ucom_softc *sc = device_private(self);
-
-	UCOMHIST_FUNC(); UCOMHIST_CALLED();
-
-	DPRINTFN(5, "%jd", act, 0, 0, 0);
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		mutex_enter(&sc->sc_lock);
-		sc->sc_dying = true;
-		mutex_exit(&sc->sc_lock);
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
 }
 
 void
