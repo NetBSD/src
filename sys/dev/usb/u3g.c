@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.36 2019/05/04 08:04:13 mrg Exp $	*/
+/*	$NetBSD: u3g.c,v 1.37 2019/05/09 02:43:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.36 2019/05/04 08:04:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.37 2019/05/09 02:43:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,11 +148,10 @@ struct u3g_softc {
 static int u3g_match(device_t, cfdata_t, void *);
 static void u3g_attach(device_t, device_t, void *);
 static int u3g_detach(device_t, int);
-static int u3g_activate(device_t, enum devact);
 static void u3g_childdet(device_t, device_t);
 
 CFATTACH_DECL2_NEW(u3g, sizeof(struct u3g_softc), u3g_match,
-    u3g_attach, u3g_detach, u3g_activate, NULL, u3g_childdet);
+    u3g_attach, u3g_detach, NULL, NULL, u3g_childdet);
 
 
 static void u3g_intr(struct usbd_xfer *, void *, usbd_status);
@@ -348,7 +347,6 @@ u3g_attach(device_t parent, device_t self, void *aux)
 	ucaa.ucaa_portno = -1;
 	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 
-
 	sc->sc_ifaceno = uiaa->uiaa_ifaceno;
 	intr_address = -1;
 	intr_size = 0;
@@ -431,25 +429,13 @@ static int
 u3g_detach(device_t self, int flags)
 {
 	struct u3g_softc *sc = device_private(self);
-	int rv;
+	int rv = 0;
 
-	if (sc->sc_dying)
-		return 0;
-
-	pmf_device_deregister(self);
-
-	for (size_t i = 0; i < sc->sc_ncom; i++)
-		if (sc->sc_com[i].c_dev != NULL) {
-			rv = config_detach(sc->sc_com[i].c_dev, flags);
-			if (rv != 0) {
-				aprint_verbose_dev(self, "Can't deallocate "
-				    "port (%d)", rv);
-			}
-		}
+	sc->sc_dying = true;
 
 	if (sc->sc_intr_pipe != NULL) {
-		(void) usbd_abort_pipe(sc->sc_intr_pipe);
-		(void) usbd_close_pipe(sc->sc_intr_pipe);
+		usbd_abort_pipe(sc->sc_intr_pipe);
+		usbd_close_pipe(sc->sc_intr_pipe);
 		sc->sc_intr_pipe = NULL;
 	}
 	if (sc->sc_intr_buff != NULL) {
@@ -457,7 +443,22 @@ u3g_detach(device_t self, int flags)
 		sc->sc_intr_buff = NULL;
 	}
 
-	return 0;
+	for (size_t i = 0; i < sc->sc_ncom; i++)
+		if (sc->sc_com[i].c_dev != NULL) {
+			int port_rv;
+
+			port_rv = config_detach(sc->sc_com[i].c_dev, flags);
+			if (port_rv != 0) {
+				aprint_verbose_dev(self, "Can't deallocate "
+				    "port (%d)", port_rv);
+			}
+			rv |= port_rv;
+			sc->sc_com[i].c_dev = NULL;
+		}
+
+	pmf_device_deregister(self);
+
+	return rv;
 }
 
 static void
@@ -468,29 +469,6 @@ u3g_childdet(device_t self, device_t child)
 	for (size_t i = 0; i < sc->sc_ncom; i++)
 		    if (sc->sc_com[i].c_dev == child)
 			    sc->sc_com[i].c_dev = NULL;
-}
-
-static int
-u3g_activate(device_t self, enum devact act)
-{
-	struct u3g_softc *sc = device_private(self);
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		for (size_t i = 0; i < sc->sc_ncom; i++)
-			if (sc->sc_com[i].c_dev != NULL &&
-			    config_deactivate(sc->sc_com[i].c_dev) && rv == 0)
-			rv = -1;
-		else
-			rv = 0;
-		break;
-
-	default:
-		break;
-	}
-
-	return rv;
 }
 
 static void
@@ -602,7 +580,7 @@ u3g_open(void *arg, int portno)
 	int i, nin;
 
 	if (sc->sc_dying)
-		return 0;
+ 		return EIO;
 
 	err = usbd_device2interface_handle(sc->sc_udev, sc->sc_ifaceno, &ih);
 	if (err)

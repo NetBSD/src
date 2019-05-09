@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.32 2019/05/06 23:46:25 mrg Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.33 2019/05/09 02:43:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.32 2019/05/06 23:46:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.33 2019/05/09 02:43:35 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -193,20 +193,17 @@ struct	ucom_methods uchcom_methods = {
 	.ucom_close		= uchcom_close,
 };
 
-int uchcom_match(device_t, cfdata_t, void *);
-void uchcom_attach(device_t, device_t, void *);
-void uchcom_childdet(device_t, device_t);
-int uchcom_detach(device_t, int);
-int uchcom_activate(device_t, enum devact);
-
-
+static int	uchcom_match(device_t, cfdata_t, void *);
+static void	uchcom_attach(device_t, device_t, void *);
+static void	uchcom_childdet(device_t, device_t);
+static int	uchcom_detach(device_t, int);
 
 CFATTACH_DECL2_NEW(uchcom,
     sizeof(struct uchcom_softc),
     uchcom_match,
     uchcom_attach,
     uchcom_detach,
-    uchcom_activate,
+    NULL,
     NULL,
     uchcom_childdet);
 
@@ -214,7 +211,7 @@ CFATTACH_DECL2_NEW(uchcom,
  * driver entry points
  */
 
-int
+static int
 uchcom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -223,7 +220,7 @@ uchcom_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void
+static void
 uchcom_attach(device_t parent, device_t self, void *aux)
 {
 	struct uchcom_softc *sc = device_private(self);
@@ -241,7 +238,7 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev = self;
-        sc->sc_udev = dev;
+	sc->sc_udev = dev;
 	sc->sc_dying = false;
 	sc->sc_dtr = sc->sc_rts = -1;
 	sc->sc_lsr = sc->sc_msr = 0;
@@ -286,7 +283,7 @@ failed:
 	return;
 }
 
-void
+static void
 uchcom_childdet(device_t self, device_t child)
 {
 	struct uchcom_softc *sc = device_private(self);
@@ -295,7 +292,7 @@ uchcom_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int
+static int
 uchcom_detach(device_t self, int flags)
 {
 	struct uchcom_softc *sc = device_private(self);
@@ -307,27 +304,14 @@ uchcom_detach(device_t self, int flags)
 
 	sc->sc_dying = true;
 
-	if (sc->sc_subdev != NULL)
+	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
+		sc->sc_subdev = NULL;
+	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
-}
-
-int
-uchcom_activate(device_t self, enum devact act)
-{
-	struct uchcom_softc *sc = device_private(self);
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		close_intr_pipe(sc);
-		sc->sc_dying = true;
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
 }
 
 static int
@@ -903,7 +887,7 @@ uchcom_param(void *arg, int portno, struct termios *t)
 	int ret;
 
 	if (sc->sc_dying)
-		return 0;
+		return EIO;
 
 	ret = set_line_control(sc, t->c_cflag);
 	if (ret)
