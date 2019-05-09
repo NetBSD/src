@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockopt.2,v 1.40 2019/05/08 14:10:42 christos Exp $
+.\"	$NetBSD: getsockopt.2,v 1.41 2019/05/09 09:09:38 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,13 +105,13 @@ size of the buffer pointed to by
 and modified on return to indicate the actual size of
 the value returned.
 If the size of the requested option value to be stored in
-.Fa optval 
+.Fa optval
 is greater than the size indicated in
 .Fa optlen
 then only
 .Fa optlen
 bytes will be stored in
-.Fa optval 
+.Fa optval
 and the result will be silently truncated.
 If no option value is to be supplied or returned,
 .Fa optval
