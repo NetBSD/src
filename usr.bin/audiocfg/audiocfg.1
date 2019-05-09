@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiocfg.1,v 1.4 2019/05/08 14:36:12 isaki Exp $
+.\"	$NetBSD: audiocfg.1,v 1.5 2019/05/09 09:34:58 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 1, 2010
+.Dd May 8, 2019
 .Dt AUDIOCFG 1
 .Os
 .Sh NAME
@@ -62,18 +62,18 @@ default audio device.
 .Pp
 Run with
 .Dq Cm set ,
-if sets the hardware format.
+it sets the hardware format.
 The
 .Ar direction
-is represented by either of 'p'(playback) or 'r'(record), or both of them,
-indicates direction you want to set to.
+is represented by either of 'p' (playback) or 'r' (record), or both of them.
+This indicates the direction you want to set.
 The remaining parameters
 .Ar encoding ,
 .Ar precision ,
-.Ar channels
+.Ar channels ,
 and
 .Ar sample_rate
-indicate the hardware format you want to set to.
+indicate the hardware format you want to set.
 These parameters must be selected from the candidates displayed by
 .Nm
 .Cm list .
