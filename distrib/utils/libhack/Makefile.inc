@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.28 2019/03/28 15:04:41 christos Exp $
+# $NetBSD: Makefile.inc,v 1.29 2019/05/09 08:20:35 roy Exp $
 #
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
@@ -16,11 +16,17 @@
 #					that only supports /etc/hosts
 #			
 
+.include <bsd.own.mk>
+
 CPPFLAGS+=	-DSMALL
 CPPFLAGS+=	-DLIBHACK
 HACKOBJS+=	getcap.o getgrent.o getnet.o getnetgr.o getpwent.o jemalloc.o \
 		localeconv.o multibyte.o perror.o runetable.o setlocale.o \
-		strerror.o strsignal.o syslog.o utmp.o yplib.o
+		strerror.o strsignal.o syslog.o utmp.o
+
+.if (${USE_YP} != "no")
+HACKOBJS+=	yplib.o
+.endif
 
 CPPFLAGS.runetable.c+= -I${HACKSRC}/../../../lib/libc/citrus \
 			-DALL_80_TO_FF_SW1
@@ -58,5 +64,7 @@ strerror.o:	${HACKSRC}/strerror.c
 strsignal.o:	${HACKSRC}/strsignal.c
 syslog.o:	${HACKSRC}/syslog.c
 utmp.o:		${HACKSRC}/utmp.c
+.if (${USE_YP} != "no")
 yplib.o:	${HACKSRC}/yplib.c
+.endif
 .endif
