@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.23 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.24 2019/05/09 02:43:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.23 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.24 2019/05/09 02:43:35 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -105,10 +105,9 @@ static struct ucom_methods ukyopon_methods = {
 static int	ukyopon_match(device_t, cfdata_t, void *);
 static void	ukyopon_attach(device_t, device_t, void *);
 static int	ukyopon_detach(device_t, int);
-static int	ukyopon_activate(device_t, enum devact);
 
 CFATTACH_DECL_NEW(ukyopon, sizeof(struct ukyopon_softc), ukyopon_match,
-    ukyopon_attach, ukyopon_detach, ukyopon_activate);
+    ukyopon_attach, ukyopon_detach, NULL);
 
 static int
 ukyopon_match(device_t parent, cfdata_t match, void *aux)
@@ -154,7 +153,7 @@ ukyopon_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 	if ((sc->sc_umodem.sc_msr & UMSR_DCD) == 0)
 		sc->sc_umodem.sc_msr |= UMSR_DCD;
 
-	umodem_get_status(addr, portno, lsr, msr);
+	umodem_get_status(&sc->sc_umodem, portno, lsr, msr);
 }
 
 static void
@@ -209,19 +208,11 @@ ukyopon_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
 		break;
 
 	default:
-		error = umodem_ioctl(addr, portno, cmd, data, flag, p);
+		error = umodem_ioctl(&sc->sc_umodem, portno, cmd, data, flag, p);
 		break;
 	}
 
 	return error;
-}
-
-int
-ukyopon_activate(device_t self, enum devact act)
-{
-	struct ukyopon_softc *sc = device_private(self);
-
-	return umodem_common_activate(&sc->sc_umodem, act);
 }
 
 int
