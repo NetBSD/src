@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.37 2018/05/25 06:34:02 jdolecek Exp $ */
+/* $NetBSD: pmap.c,v 1.38 2019/05/09 15:48:55 scole Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2018/05/25 06:34:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2019/05/09 15:48:55 scole Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -471,12 +471,13 @@ pmap_bootstrap(void)
 	if (base == 0)
 		panic("Unable to allocate VHPT");
 
-	if (bootverbose)
-		printf("VHPT: address=%#lx, size=%#lx\n", base, size);
-
 	pmap_vhpt_nbuckets = size / sizeof(struct ia64_lpte);
 	pmap_vhpt_bucket = (void *)uvm_pageboot_alloc(pmap_vhpt_nbuckets *
 						      sizeof(struct ia64_bucket));
+	if (bootverbose)
+		printf("VHPT: address=%#lx, size=%#lx, buckets=%ld, address=%lx\n",
+		       base, size, pmap_vhpt_nbuckets, (long unsigned int)&pmap_vhpt_bucket[0]);
+
 	for (i = 0; i < pmap_vhpt_nbuckets; i++) {
 		/* Stolen memory is zeroed. */
 		mutex_init(&pmap_vhpt_bucket[i].mutex, MUTEX_DEFAULT, IPL_VM);
@@ -2541,6 +2542,8 @@ pmap_switch(pmap_t pm)
 		}
 	}
 
+	/* XXX */
+	ia64_srlz_d();
 	curcpu()->ci_pmap = pm;
 	ia64_srlz_d();
 
