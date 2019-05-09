@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.15 2019/02/14 08:18:26 cherry Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.16 2019/05/09 17:09:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.15 2019/02/14 08:18:26 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.16 2019/05/09 17:09:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -87,7 +87,7 @@ xen_spllower(int nlevel)
 
 	xmask = XUNMASK(ci, nlevel);
 	psl = xen_read_psl();
-	xen_disable_intr();
+	x86_disable_intr();
 	if (ci->ci_xpending & xmask) {
 		KASSERT(psl == 0);
 		Xspllower(nlevel);
@@ -98,16 +98,23 @@ xen_spllower(int nlevel)
 	}
 }
 
+
 void
-xen_disable_intr(void)
+x86_disable_intr(void)
 {
-	__cli();
+	curcpu()->ci_vcpu->evtchn_upcall_mask = 1;
+	x86_lfence();
 }
 
 void
-xen_enable_intr(void)
+x86_enable_intr(void)
 {
-	__sti();
+	volatile struct vcpu_info *_vci = curcpu()->ci_vcpu;
+	__insn_barrier();
+	_vci->evtchn_upcall_mask = 0;
+	x86_lfence(); /* unmask then check (avoid races) */
+	if (__predict_false(_vci->evtchn_upcall_pending))
+		hypervisor_force_callback();
 }
 
 u_long
@@ -493,8 +500,6 @@ xen_intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size
 
 #if !defined(XENPVHVM)
 __strong_alias(spllower, xen_spllower);
-__strong_alias(x86_disable_intr, xen_disable_intr);
-__strong_alias(x86_enable_intr, xen_enable_intr);
 __strong_alias(x86_read_psl, xen_read_psl);
 __strong_alias(x86_write_psl, xen_write_psl);
 
