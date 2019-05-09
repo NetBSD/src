@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.6 2019/01/23 07:41:54 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.7 2019/05/09 07:38:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.6 2019/01/23 07:41:54 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.7 2019/05/09 07:38:44 mrg Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -75,6 +75,7 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA73R0 & CPU_PARTMASK, "Cortex-A73", "Cortex", "V8-A" },
 	{ CPU_ID_CORTEXA55R1 & CPU_PARTMASK, "Cortex-A55", "Cortex", "V8.2-A" },
 	{ CPU_ID_CORTEXA75R2 & CPU_PARTMASK, "Cortex-A75", "Cortex", "V8.2-A" },
+	{ CPU_ID_CORTEXA76R3 & CPU_PARTMASK, "Cortex-A76", "Cortex", "V8.2-A" },
 	{ CPU_ID_THUNDERXRX, "Cavium ThunderX", "Cavium", "V8-A" },
 	{ CPU_ID_THUNDERX81XXRX, "Cavium ThunderX CN81XX", "Cavium", "V8-A" },
 	{ CPU_ID_THUNDERX83XXRX, "Cavium ThunderX CN83XX", "Cavium", "V8-A" },
