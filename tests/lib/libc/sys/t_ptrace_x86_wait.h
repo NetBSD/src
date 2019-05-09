@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.9 2019/02/10 02:13:45 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.10 2019/05/09 13:07:35 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -2189,6 +2189,287 @@ ATF_TC_BODY(x86_cve_2018_8897, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
+ATF_TC(x86_regs_mm_read);
+ATF_TC_HEAD(x86_regs_mm_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"Set MMX (mm0..mm7) reg values from debugged program and read "
+		"them via PT_GETFPREGS, comparing values against expected.");
+}
+
+__attribute__((target("mmx")))
+static __inline void set_mm_regs(const uint64_t mm[])
+{
+	__asm__ __volatile__(
+		"movq    0x00(%0), %%mm0\n\t"
+		"movq    0x08(%0), %%mm1\n\t"
+		"movq    0x10(%0), %%mm2\n\t"
+		"movq    0x18(%0), %%mm3\n\t"
+		"movq    0x20(%0), %%mm4\n\t"
+		"movq    0x28(%0), %%mm5\n\t"
+		"movq    0x30(%0), %%mm6\n\t"
+		"movq    0x38(%0), %%mm7\n\t"
+		"int3\n\t"
+		:
+		: "b"(mm)
+		: "%mm0", "%mm1", "%mm2", "%mm3", "%mm4", "%mm5", "%mm6", "%mm7"
+	);
+}
+
+#if defined(__i386__)
+__CTASSERT(sizeof(struct fpreg) == sizeof(struct save87));
+#endif
+
+ATF_TC_BODY(x86_regs_mm_read, tc)
+{
+	const int exitval = 5;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	const int sigval = SIGTRAP;
+	int status;
+#endif
+#if defined(__x86_64__)
+	struct fpreg fpr;
+#else
+	/* TODO: replace this with 'struct fpreg' once it becomes non-opaque */
+	struct save87 fpr;
+#endif
+
+	const uint64_t mm[] = {
+		0x0001020304050607,
+		0x1011121314151617,
+		0x2021222324252627,
+		0x3031323334353637,
+		0x4041424344454647,
+		0x5051525354555657,
+		0x6061626364656667,
+		0x7071727374757677,
+	};
+
+	/* verify whether MMX is supported here */
+	DPRINTF("Before invoking cpuid\n");
+	{
+		unsigned int eax, ebx, ecx, edx;
+		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+			atf_tc_skip("CPUID is not supported by the CPU");
+
+		DPRINTF("cpuid: EDX = %08x\n", edx);
+
+		if (!(edx & bit_MMX))
+			atf_tc_skip("MMX is not supported by the CPU");
+	}
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before running assembly from child\n");
+		set_mm_regs(mm);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	DPRINTF("Call GETFPREGS for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &fpr, 0) != -1);
+
+#if defined(__x86_64__)
+#define MM_REG(n) fpr.fxstate.fx_87_ac[n].r.f87_mantissa
+#else
+#define MM_REG(n) fpr.s87_ac[n].f87_mantissa
+#endif
+
+	ATF_CHECK_EQ(MM_REG(0), mm[0]);
+	ATF_CHECK_EQ(MM_REG(1), mm[1]);
+	ATF_CHECK_EQ(MM_REG(2), mm[2]);
+	ATF_CHECK_EQ(MM_REG(3), mm[3]);
+	ATF_CHECK_EQ(MM_REG(4), mm[4]);
+	ATF_CHECK_EQ(MM_REG(5), mm[5]);
+	ATF_CHECK_EQ(MM_REG(6), mm[6]);
+	ATF_CHECK_EQ(MM_REG(7), mm[7]);
+
+#undef MM_REG
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+__attribute__((target("sse")))
+static __inline void set_xmm_regs(const void* xmm)
+{
+	__asm__ __volatile__(
+		"movaps   0x00(%0), %%xmm0\n\t"
+		"movaps   0x10(%0), %%xmm1\n\t"
+		"movaps   0x20(%0), %%xmm2\n\t"
+		"movaps   0x30(%0), %%xmm3\n\t"
+		"movaps   0x40(%0), %%xmm4\n\t"
+		"movaps   0x50(%0), %%xmm5\n\t"
+		"movaps   0x60(%0), %%xmm6\n\t"
+		"movaps   0x70(%0), %%xmm7\n\t"
+#if defined(__x86_64__)
+		"movaps   0x80(%0), %%xmm8\n\t"
+		"movaps   0x90(%0), %%xmm9\n\t"
+		"movaps   0xA0(%0), %%xmm10\n\t"
+		"movaps   0xB0(%0), %%xmm11\n\t"
+		"movaps   0xC0(%0), %%xmm12\n\t"
+		"movaps   0xD0(%0), %%xmm13\n\t"
+		"movaps   0xE0(%0), %%xmm14\n\t"
+		"movaps   0xF0(%0), %%xmm15\n\t"
+#endif
+		"int3\n\t"
+		:
+		: "b"(xmm)
+		: "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6",
+		"%xmm7"
+#if defined(__x86_64__)
+		, "%xmm8", "%xmm9", "%xmm10", "%xmm11", "%xmm12", "%xmm13",
+		"%xmm14", "%xmm15"
+#endif
+	);
+}
+
+#if defined(__i386__)
+__CTASSERT(sizeof(struct xmmregs) == sizeof(struct fxsave));
+#endif
+
+ATF_TC(x86_regs_xmm_read);
+ATF_TC_HEAD(x86_regs_xmm_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"Set xmm0..xmm15 (..xmm7 on i386) reg values from debugged program "
+		"and read them via PT_GETFPREGS (PT_GETXMMREGS on i386), comparing "
+		"values against expected.");
+}
+
+ATF_TC_BODY(x86_regs_xmm_read, tc)
+{
+	const int exitval = 5;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	const int sigval = SIGTRAP;
+	int status;
+#endif
+#if defined(__x86_64__)
+	struct fpreg fpr;
+#else
+	/* TODO: use 'struct xmmregs' when it stops being opaque */
+	struct fxsave fpr;
+#endif
+	struct xmmreg* fpr_xmm;
+
+	const struct {
+		uint64_t a, b;
+	} xmm[] __aligned(16) = {
+		{ 0x0706050403020100, 0x0F0E0D0C0B0A0908, },
+		{ 0x0807060504030201, 0x100F0E0D0C0B0A09, },
+		{ 0x0908070605040302, 0x11100F0E0D0C0B0A, },
+		{ 0x0A09080706050403, 0x1211100F0E0D0C0B, },
+		{ 0x0B0A090807060504, 0x131211100F0E0D0C, },
+		{ 0x0C0B0A0908070605, 0x14131211100F0E0D, },
+		{ 0x0D0C0B0A09080706, 0x1514131211100F0E, },
+		{ 0x0E0D0C0B0A090807, 0x161514131211100F, },
+#if defined(__x86_64__)
+		{ 0x0F0E0D0C0B0A0908, 0x1716151413121110, },
+		{ 0x100F0E0D0C0B0A09, 0x1817161514131211, },
+		{ 0x11100F0E0D0C0B0A, 0x1918171615141312, },
+		{ 0x1211100F0E0D0C0B, 0x1A19181716151413, },
+		{ 0x131211100F0E0D0C, 0x1B1A191817161514, },
+		{ 0x14131211100F0E0D, 0x1C1B1A1918171615, },
+		{ 0x1514131211100F0E, 0x1D1C1B1A19181716, },
+		{ 0x161514131211100F, 0x1E1D1C1B1A191817, },
+#endif
+	};
+
+	/* verify whether SSE is supported here */
+	DPRINTF("Before invoking cpuid\n");
+	{
+		unsigned int eax, ebx, ecx, edx;
+		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+			atf_tc_skip("CPUID is not supported by the CPU");
+
+		DPRINTF("cpuid: EDX = %08x\n", edx);
+
+		if (!(edx & bit_SSE))
+			atf_tc_skip("SSE is not supported by the CPU");
+	}
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before running assembly from child\n");
+		set_xmm_regs(xmm);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+#if defined(__x86_64__)
+	DPRINTF("Call GETFPREGS for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &fpr, 0) != -1);
+	fpr_xmm = fpr.fxstate.fx_xmm;
+#else
+	DPRINTF("Call GETXMMREGS for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETXMMREGS, child, &fpr, 0) != -1);
+	fpr_xmm = fpr.fx_xmm;
+#endif
+
+	ATF_CHECK(!memcmp(&fpr_xmm[0], &xmm[0], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[1], &xmm[1], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[2], &xmm[2], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[3], &xmm[3], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[4], &xmm[4], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[5], &xmm[5], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[6], &xmm[6], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[7], &xmm[7], sizeof(*xmm)));
+#if defined(__x86_64__)
+	ATF_CHECK(!memcmp(&fpr_xmm[8], &xmm[8], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[9], &xmm[9], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[10], &xmm[10], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[11], &xmm[11], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[12], &xmm[12], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[13], &xmm[13], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[14], &xmm[14], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr_xmm[15], &xmm[15], sizeof(*xmm)));
+#endif
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
 /// ----------------------------------------------------------------------------
 
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_X86() \
@@ -2253,7 +2534,9 @@ ATF_TC_BODY(x86_cve_2018_8897, tc)
 	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_dr1_dont_inherit_execve); \
 	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_dr2_dont_inherit_execve); \
 	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_dr3_dont_inherit_execve); \
-	ATF_TP_ADD_TC_HAVE_DBREGS(tp, x86_cve_2018_8897);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, x86_cve_2018_8897); \
+	ATF_TP_ADD_TC_HAVE_FPREGS(tp, x86_regs_mm_read); \
+	ATF_TP_ADD_TC_HAVE_FPREGS(tp, x86_regs_xmm_read);
 #else
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_X86()
 #endif
