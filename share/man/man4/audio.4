@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.88 2019/05/08 14:25:39 isaki Exp $
+.\"	$NetBSD: audio.4,v 1.89 2019/05/09 09:22:13 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,6 @@ operations as
 but no other operations.
 It can be opened at any time and can be used to manipulate the
 audio device while it is in use.
-.Pp
 .Sh SAMPLING DEVICES
 When
 .Pa /dev/audio
@@ -116,15 +115,15 @@ frequently enough, it will simply miss samples.
 The audio driver supports track multiplexing.
 All sampling devices can be opened at any time without interference.
 For playback, all tracks opened simultaneously are mixed,
-even if thier specified format is different.
+even if their specified format is different.
 For recording, recorded data is distributed to all opened tracks,
-even if thier specified format is different.
-To achieve this, the audio driver has an small efficient encoding converter,
-a channel mixer, and a frequency conveter.
+even if their specified format is different.
+To achieve this, the audio driver has a small efficient encoding converter,
+a channel mixer, and a frequency converter.
 The frequency conversion adapts the simplest way
 (interpolation method for upward, and simple thinning method for downward)
 due to restriction in kernel resources and processing time.
-It will work well in most case but don't expect excessively for its quality.
+It will work well in most case but don't expect excessive quality.
 .Pp
 The audio device is normally accessed with
 .Xr read 2
@@ -150,13 +149,13 @@ and
 calls can be used.
 Note that
 .Xr mmap 2
-no longer maps hardware buffer directly.
+no longer maps hardware buffers directly.
 Now it is achieved by emulation so don't expect any improvements excessively
 rather than normal
 .Xr write 2 .
 For historical reasons, only encodings that are not set
 .Dv AUDIO_ENCODINGFLAG_EMULATED
-is able to
+are able to
 .Xr mmap 2 .
 .Pp
 The audio device, like most devices, can be used in
@@ -223,9 +222,9 @@ all the supported encodings, start with an index field of 0 and
 continue with successive encodings (1, 2, ...) until the command returns
 an error.
 .It Dv AUDIO_GETFD (int)
-This command is obsoleted.
+This command is obsolete.
 .It Dv AUDIO_SETFD (int)
-This command is obsoleted.
+This command is obsolete.
 .It Dv AUDIO_GETPROPS (int)
 This command gets a bit set of hardware properties.
 If the hardware
@@ -306,9 +305,9 @@ field indicates current operation mode, either one of
 or
 .Dv AUMODE_RECORD .
 These two flags can not be changed once this descriptor is opened.
-On playback mode, obsoleted
+For playback mode, the obsolete
 .Dv AUMODE_PLAY_ALL
-can be set but has no effect.
+flag can be set but has no effect.
 .Pp
 .Va hiwat
 and
@@ -336,16 +335,16 @@ implementation-required limits.
 Normally the
 .Va blocksize
 is calculated to correspond to 40ms
-(For some hardware, this value may be different due to
+(for some hardware, this value may be different due to
 the hardware restrictions)
 of sound and it is recalculated
-when the encoding parameter changes.
+when the encoding parameters change.
 If the descriptor is opened for read only,
 .Va blocksize
-indicates the blocksize on recording track.
+indicates the blocksize for the recording track.
 Otherwise,
 .Va blocksize
-indicates the blocksize on playback track.
+indicates the blocksize for the playback track.
 .Bd -literal
 struct audio_prinfo {
 	u_int	sample_rate;	/* sample rate in samples/s [track] */
@@ -370,7 +369,7 @@ struct audio_prinfo {
 };
 .Ed
 .Pp
-Note:  many hardware audio drivers require identical playback and
+Note: many hardware audio drivers require identical playback and
 recording sample rates, sample encodings, and channel counts.
 The playing information is always set last and will prevail on such hardware.
 If the hardware can handle different settings the
@@ -403,12 +402,18 @@ unsigned linear encoding with big endian byte order
 Dolby Digital AC3
 .El
 .Pp
-Regardless of format supported by underlying driver,
-audio driver accepts following formats.
-encoding and precision is one of those obtained by
+Regardless of formats supported by underlying driver, the
+.Nm
+driver accepts the following formats.
+.Va encoding
+and
+.Va precision
+are one of the values obtained by
 .Dv AUDIO_GETENC .
-channels ranges from 1 to 12.
-frequency ranges from 1000Hz to 192000Hz.
+.Va channels
+ranges from 1 to 12.
+.Va frequency
+ranges from 1000Hz to 192000Hz.
 .Pp
 The
 .Va gain ,
@@ -498,21 +503,29 @@ typedef struct audio_format_query {
 .Ed
 .It Dv AUDIO_GETFORMAT (audio_info_t)
 This command fetches the current hardware format.
-Only following members in audio_info_t are used.
-Members which is not listed here or belong in invalid direction are
-filled by -1.
-.\" XXX I want something like <ul> on HTML...
-.Bd -literal
- mode
- play.encoding
- play.precision
- play.channels
- play.sample_rate
- record.encoding
- record.precision
- record.channels
- record.sample_rate
-.Ed
+Only the following members in audio_info_t are used.
+Members which are not listed here or belong in invalid direction are
+filled by \-1.
+.Bl -bullet
+.It
+mode
+.It
+play.encoding
+.It
+play.precision
+.It
+play.channels
+.It
+play.sample_rate
+.It
+record.encoding
+.It
+record.precision
+.It
+record.channels
+.It
+record.sample_rate
+.El
 .Pp
 .Va mode
 indicates which direction is valid.
@@ -528,9 +541,9 @@ Members which is not listed or belong in invalid direction are ignored.
 The parameters can be chosen from the choices obtained by
 .Dv AUDIO_QUERYFORMAT .
 .It Dv AUDIO_GETCHAN (int)
-This command is obsoleted.
+This command is obsolete.
 .It Dv AUDIO_SETCHAN (int)
-This command is obsoleted.
+This command is obsolete.
 .El
 .Sh MIXER DEVICE
 The mixer device,
