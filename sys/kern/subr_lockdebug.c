@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.69 2018/11/03 15:20:03 christos Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.70 2019/05/09 05:00:31 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.69 2018/11/03 15:20:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.70 2019/05/09 05:00:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -768,7 +768,7 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...)
 	}
 
 	if (ld->ld_lockops->lo_dump != NULL)
-		(*ld->ld_lockops->lo_dump)(ld->ld_lock);
+		(*ld->ld_lockops->lo_dump)(ld->ld_lock, pr);
 
 	if (sleeper) {
 		(*pr)("\n");
@@ -1037,7 +1037,7 @@ lockdebug_abort(const char *func, size_t line, const volatile void *lock,
 	    "current lwp  : %#018lx\n",
 	    ops->lo_name, func, line, msg, (long)lock,
 	    (int)cpu_index(curcpu()), (long)curlwp);
-	(*ops->lo_dump)(lock);
+	(*ops->lo_dump)(lock, printf_nolog);
 	printf_nolog("\n");
 
 	panic("lock error: %s: %s,%zu: %s: lock %p cpu %d lwp %p",
