@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.52 2019/05/08 14:25:39 isaki Exp $
+.\"	$NetBSD: audio.9,v 1.53 2019/05/09 09:32:26 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -147,7 +147,7 @@ if not needed.
 optional, is called when the first device combining playback and recording
 is opened.
 On a full duplex hardware,
-.Dv (FREAD | FWRITE)
+.Dv ( FREAD | FWRITE )
 is passed to flags.
 On a half duplex hardware,
 .Dv FWRITE
@@ -159,16 +159,19 @@ Every successful call to
 is matched by a call to
 .Va close .
 Return 0 on success, otherwise an error code.
-It is called at Closed phase.
+It is called in the Closed phase.
 .It Dv void close(void *hdl)
 optional, is called when the last audio device combining
 playback and recording is closed.
-It is called at Opened phase.
+It is called in the Opened phase.
 .It Dv int query_format(void *hdl, audio_format_query_t *afp)
 is called to enumerate formats supported by the hardware.
-It should fill the audio_format_t structure according to given number
-afp->index.
-If there is no format with given number, return EINVAL.
+It should fill the
+.Vt audio_format_t
+structure according to given number
+.Va afp->index .
+If there is no format with given number, return
+.Er EINVAL .
 It is called at any time.
 .Bd -literal
 typedef struct audio_format_query {
@@ -179,26 +182,41 @@ typedef struct audio_format_query {
 .Pp
 It is also used to determine the default format.
 The upper layer chooses the most preferred one as default format by following:
-.\" XXX I don't know syntax to represent <OL> in html
-1. Higher priority is preferred (normally 0, the highest is 3, the lowest is 0).
-2. AUDIO_ENCODING_SLINEAR_NE:16 is preferred if exists.
-3. AUDIO_ENCODING_SLINEAR_OE:16 is preferred if exists.
-4. More channels is preferred.
+.Bl -enum
+.It
+Higher priority is preferred (normally 0, the highest is 3, the lowest is 0).
+.It
+.Dv AUDIO_ENCODING_SLINEAR_NE:16
+is preferred if exists.
+.It
+.Dv AUDIO_ENCODING_SLINEAR_OE:16
+is preferred if exists.
+.It
+More channels is preferred.
+.El
 .Pp
-If the driver supports SLINEAR_NE:16 and the upper layer chooses it,
+If the driver supports
+.Dv SLINEAR_NE:16
+and the upper layer chooses it,
 the driver does not need to provide conversion function in
 .Va set_format .
-Similarly, if the driver supports SLINEAR_OE:16 and the upper layer chooses it,
-the driver does not need to provide conversion function.
+Similarly, if the driver supports
+.Dv SLINEAR_OE:16
+and the upper layer chooses it,
+the driver does not need to provide a conversion function.
 Because the upper layer only supports conversion between
-SLINEAR_NE:16 and SLINEAR_OE:16 for convenience.
-If the upper layer chooses other format,
-the driver needs to provide conversion function in
+.Dv SLINEAR_NE:16
+and
+.Dv SLINEAR_OE:16
+for convenience.
+If the upper layer chooses another format,
+the driver needs to provide a conversion function in
 .Va set_format .
 See also
 .Va set_format .
-If the driver can not provide the conversion from/to SLINEAR_NE:16,
-set priority to -1.
+If the driver can not provide the conversion from/to
+.Dv SLINEAR_NE:16 ,
+set priority to \-1.
 It means that the hardware supports this format but the driver does not
 (e.g. AC3), and it will never be chosen.
 .It Dv int set_foramt(void *hdl, int setmode,
@@ -239,7 +257,9 @@ conversion information should be filled the
 for playing or
 .Va rfil
 for recording.
-The definition of audio_filter_reg_t and related structure follow:
+The definition of
+.Vt audio_filter_reg_t
+and a related structure follow:
 .Bd -literal
 typedef struct {
 	const void *src;
@@ -259,9 +279,9 @@ typedef struct {
 .Ed
 .Pp
 .Va codec
-is conversion function and
+is a conversion function and
 .Va context
-is optional opaque pointer passed to
+is an optional opaque pointer passed to
 .Va codec .
 .Pp
 When
@@ -271,13 +291,13 @@ is called, all parameters required by
 are contained in
 .Va arg .
 .Va src
-points input buffer block,
+points to the input buffer block,
 .Va srcfmt
-contains input encoding parameter,
+contains the input encoding parameters,
 .Va dst
-points output buffer block and
+points to the output buffer block and
 .Va dstfmt
-contains output encoding parameter.
+contains the output encoding parameters.
 .Va count
 represents the number of frames to process on this call.
 .Va src
@@ -310,7 +330,7 @@ property the same value is passed in both
 and
 .Va rec .
 Return 0 on success, otherwise an error code.
-It is called at Attach or Closed phase.
+It is called in the Attach or Closed phases.
 .It Dv int round_blocksize(void *hdl, int bs, int mode,
 .Dv "const audio_params_t *param)"
 .Pp
@@ -326,7 +346,7 @@ and
 encoding parameters for the hardware.
 It should return a block size, possibly changed according to the needs
 of the hardware driver.
-It is called at Attach or Closed phase.
+It is called in the Attach or Closed phases.
 .It Dv int commit_settings(void *hdl)
 optional, is called after all calls to
 .Va set_params ,
@@ -337,7 +357,7 @@ A hardware driver that needs to get the hardware in and out of command
 mode for each change can save all the changes during previous calls and
 do them all here.
 Return 0 on success, otherwise an error code.
-It is called at Attach or Closed phase.
+It is called in the Attach or Closed phases.
 .It Dv int init_output(void *hdl, void *buffer, int size)
 optional, is called before any output starts, but when the total
 .Va size
@@ -346,7 +366,7 @@ of the output
 has been determined.
 It can be used to initialize looping DMA for hardware that needs that.
 Return 0 on success, otherwise an error code.
-It is called at Attach or Closed phase.
+It is called in the Attach or Closed phases.
 .It Dv int init_input(void *hdl, void *buffer, int size)
 optional, is called before any input starts, but when the total
 .Va size
@@ -355,7 +375,7 @@ of the input
 has been determined.
 It can be used to initialize looping DMA for hardware that needs that.
 Return 0 on success, otherwise an error code.
-It is called at Attach or Closed phase.
+It is called in the Attach or Closed phases.
 .It Dv int start_output(void *hdl, void *block, int blksize,
 .Dv "void (*intr)(void*), void *intrarg)"
 .Pp
@@ -375,7 +395,7 @@ Calling
 will normally initiate another call to
 .Va start_output .
 Return 0 on success, otherwise an error code.
-It is called at Opened phase.
+It is called in the Opened phase.
 .It Dv int start_input(void *hdl, void *block, int blksize,
 .Dv "void (*intr)(void*), void *intrarg)"
 .Pp
@@ -395,32 +415,32 @@ Calling
 will normally initiate another call to
 .Va start_input .
 Return 0 on success, otherwise an error code.
-It is called at Opened phase.
+It is called in the Opened phase.
 .It Dv int halt_output(void *hdl)
 is called to abort the output transfer (started by
 .Va start_output )
 in progress.
 Return 0 on success, otherwise an error code.
-It is called at Opened phase.
+It is called in the Opened phase.
 .It Dv int halt_input(void *hdl)
 is called to abort the input transfer (started by
 .Va start_input )
 in progress.
 Return 0 on success, otherwise an error code.
-It is called at Opened phase.
+It is called in the Opened phase.
 .It Dv int speaker_ctl(void *hdl, int on)
 optional, is called when a half duplex device changes between
 playing and recording.
 It can, e.g., be used to turn on
 and off the speaker.
 Return 0 on success, otherwise an error code.
-It is called at Opened phase.
+It is called in the Opened phase.
 .It Dv int getdev(void *hdl, struct audio_device *ret)
 Should fill the
 .Va audio_device
 struct with relevant information about the driver.
 Return 0 on success, otherwise an error code.
-It is called at Opened phase.
+It is called in the Opened phase.
 .It Dv int set_port(void *hdl, mixer_ctrl_t *mc)
 is called in when
 .Dv AUDIO_MIXER_WRITE
@@ -429,7 +449,7 @@ It should take data from the
 .Va mixer_ctrl_t
 struct at set the corresponding mixer values.
 Return 0 on success, otherwise an error code.
-It is called at Opened or Closed phase.
+It is called in the Opened or Closed phases.
 .It Dv int get_port(void *hdl, mixer_ctrl_t *mc)
 is called in when
 .Dv AUDIO_MIXER_READ
@@ -438,7 +458,7 @@ It should fill the
 .Va mixer_ctrl_t
 struct.
 Return 0 on success, otherwise an error code.
-It is called at Opened or Closed phase.
+It is called in the Opened or Closed phases.
 .It Dv int query_devinfo(void *hdl, mixer_devinfo_t *di)
 is called in when
 .Dv AUDIO_MIXER_DEVINFO
@@ -459,14 +479,14 @@ is that some buses need special allocation to do DMA.
 Returns the address of the buffer, or
 .Dv NULL
 on failure.
-It is called at Attached or Closed phase.
+It is called in the Attached or Closed phases.
 .It Dv void freem(void *hdl, void *addr, size_t size)
 optional, is called to free memory allocated by
 .Va allocm .
 If not supplied
 .Xr free 9
 is used.
-It is called at Attached or Closed phase.
+It is called in the Attached or Closed phases.
 .It Dv size_t round_buffersize(void *hdl, int direction, size_t bufsize)
 optional, is called at startup to determine the audio
 buffer size.
@@ -474,14 +494,14 @@ The upper layer supplies the suggested size in
 .Va bufsize ,
 which the hardware driver can then change if needed.
 E.g., DMA on the ISA bus cannot exceed 65536 bytes.
-It is called at Attached or Closed phase.
+It is called in the Attached or Closed phases.
 .It Dv int get_props(void *hdl)
 Should return the device properties; i.e., a combination of
 AUDIO_PROP_xxx.
 It is called at any time.
 .Pp
 .Dv AUDIO_PROP_MMAP
-is acceptable but obsoleted, so new drivers should not return this property.
+is acceptable but obsolete, so new drivers should not return this property.
 .It Dv int trigger_output(void *hdl, void *start, void *end,
 .Dv "int blksize, void (*intr)(void*), void *intrarg,"
 .Pp
@@ -506,7 +526,7 @@ should be called with the argument
 Once started the transfer may be stopped using
 .Va halt_output .
 Return 0 on success, otherwise an error code.
-It is called at Opened phase.
+It is called in the Opened phase.
 .It Dv int trigger_input(void *hdl, void *start, void *end,
 .Dv "int blksize, void (*intr)(void*), void *intrarg,"
 .Pp
@@ -531,7 +551,7 @@ should be called with the argument
 Once started the transfer may be stopped using
 .Va halt_input .
 Return 0 on success, otherwise an error code.
-It is called at Opened phase.
+It is called in the Opened phase.
 .It Dv int dev_ioctl(void *hdl, u_long cmd, void *addr,
 .Pp
 .Dv "int flag, struct lwp *l)"
@@ -540,10 +560,10 @@ optional, is called when an
 .Xr ioctl 2
 is not recognized by the generic audio driver.
 Return 0 on success, otherwise an error code.
-It is called at Opened phase.
+It is called in the Opened phase.
 .It Dv void get_locks(void *hdl, kmutex_t **intr, kmutex_t **thread)
 Returns the interrupt and thread locks to the common audio layer.
-It is called at Attach phase.
+It is called in the Attach phase.
 .El
 .Pp
 The
