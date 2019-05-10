@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.179 2019/03/18 11:38:03 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.180 2019/05/10 02:56:08 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1445,7 +1445,7 @@ ixgbe_add_media_types(struct adapter *adapter)
 		ADD(IFM_10G_KR | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KX4) {
-		ADD(AIFM_10G_KX4 | IFM_FDX, 0);
+		ADD(IFM_10G_KX4 | IFM_FDX, 0);
 	}
 #else
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR) {
