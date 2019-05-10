@@ -1,4 +1,4 @@
-/*      $NetBSD: cpuctl_i386.h,v 1.2 2013/01/07 23:20:42 dsl Exp $      */
+/*      $NetBSD: cpuctl_i386.h,v 1.3 2019/05/10 16:42:57 mlelstv Exp $      */
 
 /* Interfaces to code in i386-asm.S */
 
@@ -7,3 +7,4 @@
 void x86_cpuid2(uint32_t, uint32_t, uint32_t *);
 uint32_t x86_identify(void);
 uint32_t x86_xgetbv(void);
+uint64_t rdmsr(u_int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.95 2019/03/24 04:43:54 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.96 2019/05/10 16:42:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.95 2019/03/24 04:43:54 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.96 2019/05/10 16:42:57 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -119,6 +119,7 @@ struct cpu_info {
 	uint8_t		ci_coreid;
 	uint8_t		ci_smtid;
 	uint32_t	ci_initapicid;
+	uint32_t	ci_max_ext_cpuid;
 
 	uint32_t	ci_cur_xsave;
 	uint32_t	ci_max_xsave;
@@ -1925,6 +1926,76 @@ identifycpu_cpuids_intel(struct cpu_info *ci)
 }
 
 static void
+identifycpu_cpuids_amd(struct cpu_info *ci)
+{
+	const char *cpuname = ci->ci_dev;
+	u_int lp_max, core_max;
+	int n, cpu_family, apic_id, smt_bits, core_bits = 0;
+	uint32_t descs[4];
+
+	apic_id = ci->ci_initapicid;
+	cpu_family = CPUID_TO_FAMILY(ci->ci_signature);
+
+	if (cpu_family < 0xf)
+		return;
+
+	if ((ci->ci_feat_val[0] & CPUID_HTT) != 0) {
+		x86_cpuid(1, descs);
+		lp_max = __SHIFTOUT(descs[1], CPUID_HTT_CORES);
+
+		if (cpu_family >= 0x10 && ci->ci_max_ext_cpuid >= 0x8000008) {
+			x86_cpuid(0x8000008, descs);
+			core_max = (descs[2] & 0xff) + 1;
+			n = (descs[2] >> 12) & 0x0f;
+			if (n != 0)
+				core_bits = n;
+		}
+	} else {
+		lp_max = 1;
+	}
+	core_max = lp_max;
+
+	smt_bits = ilog2((lp_max / core_max) - 1) + 1;
+	if (core_bits == 0)
+		core_bits = ilog2(core_max - 1) + 1;
+
+	if (cpu_family < 0x11) {
+		const uint64_t reg = rdmsr(MSR_NB_CFG);
+		if ((reg & NB_CFG_INITAPICCPUIDLO) == 0) {
+			const u_int node_id = apic_id & __BITS(0, 2);
+			apic_id = (cpu_family == 0xf) ?
+				(apic_id >> core_bits) | (node_id << core_bits) :
+				(apic_id >> 5) | (node_id << 2);
+		}
+	}
+
+	if (cpu_family == 0x17) {
+		x86_cpuid(0x8000001e, descs);
+		const u_int threads = ((descs[1] >> 8) & 0xff) + 1;
+		smt_bits = ilog2(threads);
+		core_bits -= smt_bits;
+	}
+
+	if (smt_bits + core_bits) {
+		if (smt_bits + core_bits < 32)
+			ci->ci_packageid = 0;
+	}
+	if (core_bits) {
+		u_int core_mask = __BITS(smt_bits, smt_bits + core_bits - 1);
+		ci->ci_coreid = __SHIFTOUT(apic_id, core_mask);
+	}
+	if (smt_bits) {
+		u_int smt_mask = __BITS(0, smt_bits - 1);
+		ci->ci_smtid = __SHIFTOUT(apic_id, smt_mask);
+	}
+
+	aprint_verbose("%s: Cluster/Package ID %u\n", cpuname,
+	    ci->ci_packageid);
+	aprint_verbose("%s: Core ID %u\n", cpuname, ci->ci_coreid);
+	aprint_verbose("%s: SMT ID %u\n", cpuname, ci->ci_smtid);
+}
+
+static void
 identifycpu_cpuids(struct cpu_info *ci)
 {
 	const char *cpuname = ci->ci_dev;
@@ -1936,6 +2007,8 @@ identifycpu_cpuids(struct cpu_info *ci)
 
 	if (cpu_vendor == CPUVENDOR_INTEL)
 		identifycpu_cpuids_intel(ci);
+	else if (cpu_vendor == CPUVENDOR_AMD)
+		identifycpu_cpuids_amd(ci);
 }
 
 void
@@ -2213,6 +2286,10 @@ identifycpu(int fd, const char *cpuname)
 
 	if (cpu_vendor == CPUVENDOR_AMD) {
 		x86_cpuid(0x80000000, descs);
+		if (descs[0] >= 0x80000000)
+			ci->ci_max_ext_cpuid = descs[0];
+		else
+			ci->ci_max_ext_cpuid = 0;
 		if (descs[0] >= 0x80000007)
 			powernow_probe(ci);
 

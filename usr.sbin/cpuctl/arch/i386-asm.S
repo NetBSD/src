@@ -1,4 +1,4 @@
-/*	$NetBSD: i386-asm.S,v 1.4 2015/03/01 18:02:42 tnn Exp $	*/
+/*	$NetBSD: i386-asm.S,v 1.5 2019/05/10 16:42:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -29,6 +29,9 @@
 #include <machine/asm.h>
 #include <machine/cputypes.h>
 #include <machine/psl.h>
+
+/* From sys/arch/x86/include/cpufunc.h */
+#define	OPTERON_MSR_PASSCODE	0x9c5a203aU
 
 	.text
 
@@ -160,3 +163,12 @@ trycyrix486:
 is486dlc:
 	movl	$CPU_486DLC,%eax
 	ret
+
+ENTRY(rdmsr_locked)
+	movl	4(%esp), %ecx
+	pushl	%edi
+	movl	$OPTERON_MSR_PASSCODE, %edi
+	rdmsr
+	popl	%edi
+	ret
+END(rdmsr_locked)
