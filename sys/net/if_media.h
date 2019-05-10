@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.63 2019/04/24 05:07:20 msaitoh Exp $	*/
+/*	$NetBSD: if_media.h,v 1.64 2019/05/10 06:33:14 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 #define	IFM_MODE(x)	((x) & IFM_MMASK)
 
 #define	IFM_TYPE_MATCH(dt, t)						\
-	(IFM_TYPE((dt)) == 0 || IFM_TYPE((dt)) == IFM_TYPE((t)))
+	(IFM_TYPE(dt) == 0 || IFM_TYPE(dt) == IFM_TYPE(t))
 
 #define	IFM_INST_MAX	IFM_INST(IFM_IMASK)
 #define	IFM_INST_ANY	((u_int) -1)
