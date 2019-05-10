@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_64-asm.S,v 1.5 2015/03/01 18:02:42 tnn Exp $	*/
+/*	$NetBSD: x86_64-asm.S,v 1.6 2019/05/10 16:42:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -28,6 +28,9 @@
 
 #include <machine/asm.h>
 
+/* From sys/arch/x86/include/cpufunc.h */
+#define	OPTERON_MSR_PASSCODE	0x9c5a203aU
+
 	.text
 
 ENTRY(x86_cpuid2)
@@ -50,4 +53,13 @@ ENTRY(x86_xgetbv)
 
 ENTRY(x86_identify)
 	movl	$-1,%eax
+	ret
+
+ENTRY(rdmsr)
+	movq	%rdi, %rcx
+	xorq	%rax, %rax
+	movl	$OPTERON_MSR_PASSCODE, %edi
+	rdmsr
+	shlq	$32, %rdx
+	orq	%rdx, %rax
 	ret
