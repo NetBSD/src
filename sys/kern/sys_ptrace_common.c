@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.52 2019/05/02 00:23:01 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.53 2019/05/10 21:08:26 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.52 2019/05/02 00:23:01 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.53 2019/05/10 21:08:26 mgorny Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -206,7 +206,7 @@ static kcondvar_t ptrace_cv;
 #endif
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS) || \
-    defined(PT_SETFPREGS) || defined(PT_GETFOREGS) || \
+    defined(PT_SETFPREGS) || defined(PT_GETFPREGS) || \
     defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
 # define PT_REGISTERS
 #endif
