@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.11 2019/03/03 16:29:00 skrll Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.12 2019/05/10 08:28:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.11 2019/03/03 16:29:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.12 2019/05/10 08:28:50 skrll Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -671,16 +671,40 @@ bcmgpio_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 {
 
 	/* 1st cell is the GPIO number */
-	/* 3rd cell is flags */
+	/* 2nd cell is flags */
 	if (!specifier)
 		return (false);
 	const u_int bank = be32toh(specifier[0]) / 32;
 	const u_int pin = be32toh(specifier[0]) % 32;
+	const u_int type = be32toh(specifier[1]) & 0xf;
+	char const* typestr;
 
 	if (bank >= BCMGPIO_NBANKS)
 		return (false);
+	switch (type) {
+	case FDT_INTR_TYPE_DOUBLE_EDGE:
+		typestr = "double edge";
+		break;
+	case FDT_INTR_TYPE_POS_EDGE:
+		typestr = "positive edge";
+		break;
+	case FDT_INTR_TYPE_NEG_EDGE:
+		typestr = "negative edge";
+		break;
+	case FDT_INTR_TYPE_HIGH_LEVEL:
+		typestr = "high level";
+		break;
+	case FDT_INTR_TYPE_LOW_LEVEL:
+		typestr = "low level";
+		break;
+	default:
+		aprint_error_dev(dev, "%s: unsupported irq type 0x%x\n",
+		    __func__, type);
 
-	snprintf(buf, buflen, "GPIO %u", (bank * 32) + pin);
+		return (false);
+	}
+
+	snprintf(buf, buflen, "GPIO %u (%s)", (bank * 32) + pin, typestr);
 
 	return (true);
 }
