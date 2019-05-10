@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.271 2019/05/10 06:45:19 msaitoh Exp $	*/
+/*	$NetBSD: if.h,v 1.272 2019/05/10 06:53:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -939,11 +939,11 @@ struct if_addrprefreq {
 #define IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
-	if (ALTQ_IS_ENABLED((ifq)))					\
+	if (ALTQ_IS_ENABLED(ifq))					\
 		ALTQ_ENQUEUE((ifq), (m), (err));			\
 	else {								\
-		if (IF_QFULL((ifq))) {					\
-			m_freem((m));					\
+		if (IF_QFULL(ifq)) {					\
+			m_freem(m);					\
 			(err) = ENOBUFS;				\
 		} else {						\
 			IF_ENQUEUE((ifq), (m));				\
@@ -958,9 +958,9 @@ do {									\
 #define IFQ_DEQUEUE(ifq, m)						\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
-	if (TBR_IS_ENABLED((ifq)))					\
+	if (TBR_IS_ENABLED(ifq))					\
 		(m) = tbr_dequeue((ifq), ALTDQ_REMOVE);			\
-	else if (ALTQ_IS_ENABLED((ifq)))				\
+	else if (ALTQ_IS_ENABLED(ifq))					\
 		ALTQ_DEQUEUE((ifq), (m));				\
 	else								\
 		IF_DEQUEUE((ifq), (m));					\
@@ -970,9 +970,9 @@ do {									\
 #define	IFQ_POLL(ifq, m)						\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
-	if (TBR_IS_ENABLED((ifq)))					\
+	if (TBR_IS_ENABLED(ifq))					\
 		(m) = tbr_dequeue((ifq), ALTDQ_POLL);			\
-	else if (ALTQ_IS_ENABLED((ifq)))				\
+	else if (ALTQ_IS_ENABLED(ifq))					\
 		ALTQ_POLL((ifq), (m));					\
 	else								\
 		IF_POLL((ifq), (m));					\
@@ -982,10 +982,10 @@ do {									\
 #define	IFQ_PURGE(ifq)							\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
-	if (ALTQ_IS_ENABLED((ifq)))					\
-		ALTQ_PURGE((ifq));					\
+	if (ALTQ_IS_ENABLED(ifq))					\
+		ALTQ_PURGE(ifq);					\
 	else								\
-		IF_PURGE((ifq));					\
+		IF_PURGE(ifq);						\
 	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
@@ -998,9 +998,9 @@ do {									\
 do {									\
 	KASSERT(((m)->m_flags & M_PKTHDR) != 0);			\
 	mutex_enter((ifq)->ifq_lock);					\
-	if (ALTQ_IS_ENABLED((ifq))) {					\
-		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
-			(m)->m_pkthdr.pattr_class = (*(ifq)->altq_classify)   \
+	if (ALTQ_IS_ENABLED(ifq)) {					\
+		if (ALTQ_NEEDS_CLASSIFY(ifq))				\
+			(m)->m_pkthdr.pattr_class = (*(ifq)->altq_classify) \
 				((ifq)->altq_clfier, (m), (af));	\
 		(m)->m_pkthdr.pattr_af = (af);				\
 		(m)->m_pkthdr.pattr_hdr = mtod((m), void *);		\
@@ -1011,14 +1011,14 @@ do {									\
 #define	IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
-	if (IF_QFULL((ifq))) {						\
-		m_freem((m));						\
+	if (IF_QFULL(ifq)) {						\
+		m_freem(m);						\
 		(err) = ENOBUFS;					\
 	} else {							\
 		IF_ENQUEUE((ifq), (m));					\
 		(err) = 0;						\
 	}								\
-	if ((err))							\
+	if (err)							\
 		(ifq)->ifq_drops++;					\
 	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
@@ -1040,7 +1040,7 @@ do {									\
 #define	IFQ_PURGE(ifq)							\
 do {									\
 	mutex_enter((ifq)->ifq_lock);					\
-	IF_PURGE((ifq));						\
+	IF_PURGE(ifq);							\
 	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
@@ -1056,7 +1056,7 @@ do {									\
 #define IFQ_LOCK(ifq)		mutex_enter((ifq)->ifq_lock)
 #define IFQ_UNLOCK(ifq)		mutex_exit((ifq)->ifq_lock)
 
-#define	IFQ_IS_EMPTY(ifq)		IF_IS_EMPTY((ifq))
+#define	IFQ_IS_EMPTY(ifq)		IF_IS_EMPTY(ifq)
 #define	IFQ_INC_LEN(ifq)		((ifq)->ifq_len++)
 #define	IFQ_DEC_LEN(ifq)		(--(ifq)->ifq_len)
 #define	IFQ_INC_DROPS(ifq)		((ifq)->ifq_drops++)
@@ -1251,7 +1251,7 @@ __END_DECLS
 	                     ifa_pslist_entry) == NULL)
 #define IFADDR_WRITER_INSERT_TAIL(__ifp, __new)				\
 	do {								\
-		if (IFADDR_WRITER_EMPTY((__ifp))) {			\
+		if (IFADDR_WRITER_EMPTY(__ifp)) {			\
 			IFADDR_WRITER_INSERT_HEAD((__ifp), (__new));	\
 		} else {						\
 			struct ifaddr *__ifa;				\
@@ -1294,7 +1294,7 @@ __END_DECLS
 #define IFNET_WRITER_INSERT_TAIL(__new)					\
 	do {								\
 		if (IFNET_WRITER_EMPTY()) {				\
-			IFNET_WRITER_INSERT_HEAD((__new));		\
+			IFNET_WRITER_INSERT_HEAD(__new);		\
 		} else {						\
 			struct ifnet *__ifp;				\
 			IFNET_WRITER_FOREACH(__ifp) {			\
