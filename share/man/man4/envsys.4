@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.53 2018/05/31 07:37:45 wiz Exp $
+.\"	$NetBSD: envsys.4,v 1.54 2019/05/10 05:59:47 cnst Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -351,6 +351,23 @@ will be returned, or if the sensor does not support changing
 rfact (voltage sensors) or critical/warning/capacity limits,
 .Er ENOTSUP
 will be returned.
+.El
+.Pp
+Additionally, the following
+.Xr ioctl 2
+commands are provided for compatibility purposes
+for applications written against the original experimental
+.Nm
+API available between
+.Nx 1.5
+and
+.Nx 4.0 ;
+they have been deprecated since
+.Nx 5.0 ,
+and may be removed at any time:
+.Bl -tag -width Ds
+.It Dv ENVSYS_GTREDATA Pq envsys_tre_data_t
+.It Dv ENVSYS_GTREINFO Pq envsys_basic_info_t
 .El
 .Sh NOTES
 When setting a critical/warning max or min limit with the
