@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.270 2019/04/03 15:22:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.271 2019/05/10 09:42:46 nakayama Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -170,7 +170,7 @@ SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 .endif
 
-.if (${MKLLVMRT} != "no")
+.if (${MKLLVMRT} != "no" && (!defined(MLIBDIR) || ${MKCOMPATX11} != "no"))
 SUBDIR+=	../external/bsd/llvm/include
 .endif
 
@@ -183,7 +183,7 @@ SUBDIR+= ../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer}
 .endif
 .endfor
 
-.if (${MKLLVMRT} != "no")
+.if (${MKLLVMRT} != "no" && (!defined(MLIBDIR) || ${MKCOMPATX11} != "no"))
 SUBDIR+=	../external/bsd/llvm/librt
 .endif
 
