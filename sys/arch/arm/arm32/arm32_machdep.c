@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.127 2019/02/04 13:12:03 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.128 2019/05/10 16:43:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.127 2019/02/04 13:12:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.128 2019/05/10 16:43:09 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -863,7 +863,7 @@ cpu_kernel_vm_init(paddr_t memory_start, psize_t memory_size)
 #endif
 
 	VPRINTF("%s: kernel phys start %" PRIxPADDR " end %" PRIxPADDR "\n",
-	    __func__, memory_start, memory_size);
+	    __func__, memory_start, memory_start + memory_size);
 
 	arm32_bootmem_init(memory_start, memory_size, KERNEL_BASE_PHYS);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
