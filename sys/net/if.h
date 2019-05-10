@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.269 2019/03/23 09:48:04 pgoyette Exp $	*/
+/*	$NetBSD: if.h,v 1.270 2019/05/10 05:16:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -871,14 +871,14 @@ struct ifdatareq {
 };
 
 struct ifmediareq {
-	char	ifm_name[IFNAMSIZ];		/* if name, e.g. "en0" */
-	int	ifm_current;			/* current media options */
-	int	ifm_mask;			/* don't care mask */
-	int	ifm_status;			/* media status */
-	int	ifm_active;			/* active options */
-	int	ifm_count;			/* # entries in ifm_ulist
-						   array */
-	int	*ifm_ulist;			/* media words */
+	char	ifm_name[IFNAMSIZ];	/* if name, e.g. "en0" */
+	int	ifm_current;		/* IFMWD: current media options */
+	int	ifm_mask;		/* IFMWD: don't care mask */
+	int	ifm_status;		/* media status */
+	int	ifm_active;		/* IFMWD: active options */
+	int	ifm_count;		/* # entries in ifm_ulist
+					   array */
+	int	*ifm_ulist;		/* array of ifmedia word */
 };
 
 
