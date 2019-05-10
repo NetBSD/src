@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.11 2019/05/10 16:28:00 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.12 2019/05/10 17:34:26 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -2216,10 +2216,6 @@ static __inline void set_mm_regs(const uint64_t mm[])
 	);
 }
 
-#if defined(__i386__)
-__CTASSERT(sizeof(struct fpreg) == sizeof(struct save87));
-#endif
-
 ATF_TC_BODY(x86_regs_mm_read, tc)
 {
 	const int exitval = 5;
@@ -2339,10 +2335,6 @@ static __inline void set_xmm_regs(const void* xmm)
 #endif
 	);
 }
-
-#if defined(__i386__)
-__CTASSERT(sizeof(struct xmmregs) == sizeof(struct fxsave));
-#endif
 
 ATF_TC(x86_regs_xmm_read);
 ATF_TC_HEAD(x86_regs_xmm_read, tc)
