@@ -1,8 +1,16 @@
-#	$NetBSD: Makefile,v 1.31 2019/04/13 09:29:49 maya Exp $
+#	$NetBSD: Makefile,v 1.32 2019/05/10 06:25:58 mrg Exp $
 
 .include <bsd.own.mk>
 
+# Set this to 2014 for the last release, which does not support newer
+# chipsets as well, but cause major problems on older chipsets.
+INTEL_DRIVER_DATE?=	2019
+
+.if ${INTEL_DRIVER_DATE} > 2014
 DRIVER=		xf86-video-intel
+.else
+DRIVER=		xf86-video-intel-2014
+.endif
 DRIVER_NAME=	intel_drv
 
 # main module
@@ -41,7 +49,9 @@ SRCS+=		gen7_render.c
 SRCS+=		gen8_eu.c
 SRCS+=		gen8_render.c
 SRCS+=		gen8_vertex.c
+.if ${INTEL_DRIVER_DATE} > 2014
 SRCS+=		gen9_render.c
+.endif
 
 SRCS+=		sna_accel.c
 SRCS+=		sna_acpi.c
