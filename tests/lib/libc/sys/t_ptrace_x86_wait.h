@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.10 2019/05/09 13:07:35 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.11 2019/05/10 16:28:00 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -2228,12 +2228,7 @@ ATF_TC_BODY(x86_regs_mm_read, tc)
 	const int sigval = SIGTRAP;
 	int status;
 #endif
-#if defined(__x86_64__)
 	struct fpreg fpr;
-#else
-	/* TODO: replace this with 'struct fpreg' once it becomes non-opaque */
-	struct save87 fpr;
-#endif
 
 	const uint64_t mm[] = {
 		0x0001020304050607,
@@ -2284,7 +2279,7 @@ ATF_TC_BODY(x86_regs_mm_read, tc)
 #if defined(__x86_64__)
 #define MM_REG(n) fpr.fxstate.fx_87_ac[n].r.f87_mantissa
 #else
-#define MM_REG(n) fpr.s87_ac[n].f87_mantissa
+#define MM_REG(n) fpr.fstate.s87_ac[n].f87_mantissa
 #endif
 
 	ATF_CHECK_EQ(MM_REG(0), mm[0]);
@@ -2369,10 +2364,8 @@ ATF_TC_BODY(x86_regs_xmm_read, tc)
 #if defined(__x86_64__)
 	struct fpreg fpr;
 #else
-	/* TODO: use 'struct xmmregs' when it stops being opaque */
-	struct fxsave fpr;
+	struct xmmregs fpr;
 #endif
-	struct xmmreg* fpr_xmm;
 
 	const struct {
 		uint64_t a, b;
@@ -2432,30 +2425,28 @@ ATF_TC_BODY(x86_regs_xmm_read, tc)
 #if defined(__x86_64__)
 	DPRINTF("Call GETFPREGS for the child process\n");
 	SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &fpr, 0) != -1);
-	fpr_xmm = fpr.fxstate.fx_xmm;
 #else
 	DPRINTF("Call GETXMMREGS for the child process\n");
 	SYSCALL_REQUIRE(ptrace(PT_GETXMMREGS, child, &fpr, 0) != -1);
-	fpr_xmm = fpr.fx_xmm;
 #endif
 
-	ATF_CHECK(!memcmp(&fpr_xmm[0], &xmm[0], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[1], &xmm[1], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[2], &xmm[2], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[3], &xmm[3], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[4], &xmm[4], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[5], &xmm[5], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[6], &xmm[6], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[7], &xmm[7], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[0], &xmm[0], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[1], &xmm[1], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[2], &xmm[2], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[3], &xmm[3], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[4], &xmm[4], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[5], &xmm[5], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[6], &xmm[6], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[7], &xmm[7], sizeof(*xmm)));
 #if defined(__x86_64__)
-	ATF_CHECK(!memcmp(&fpr_xmm[8], &xmm[8], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[9], &xmm[9], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[10], &xmm[10], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[11], &xmm[11], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[12], &xmm[12], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[13], &xmm[13], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[14], &xmm[14], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr_xmm[15], &xmm[15], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[8], &xmm[8], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[9], &xmm[9], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[10], &xmm[10], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[11], &xmm[11], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[12], &xmm[12], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[13], &xmm[13], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[14], &xmm[14], sizeof(*xmm)));
+	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[15], &xmm[15], sizeof(*xmm)));
 #endif
 
 	DPRINTF("Before resuming the child process where it left off and "
