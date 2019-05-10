@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.270 2019/05/10 05:16:34 msaitoh Exp $	*/
+/*	$NetBSD: if.h,v 1.271 2019/05/10 06:45:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -996,14 +996,14 @@ do {									\
 
 #define	IFQ_CLASSIFY(ifq, m, af)					\
 do {									\
-	KASSERT((m->m_flags & M_PKTHDR) != 0);				\
+	KASSERT(((m)->m_flags & M_PKTHDR) != 0);			\
 	mutex_enter((ifq)->ifq_lock);					\
 	if (ALTQ_IS_ENABLED((ifq))) {					\
 		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
-			m->m_pkthdr.pattr_class = (*(ifq)->altq_classify) \
+			(m)->m_pkthdr.pattr_class = (*(ifq)->altq_classify)   \
 				((ifq)->altq_clfier, (m), (af));	\
-		m->m_pkthdr.pattr_af = (af);				\
-		m->m_pkthdr.pattr_hdr = mtod((m), void *);		\
+		(m)->m_pkthdr.pattr_af = (af);				\
+		(m)->m_pkthdr.pattr_hdr = mtod((m), void *);		\
 	}								\
 	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
