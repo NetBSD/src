@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.96 2019/05/10 16:42:57 mlelstv Exp $	*/
+/*	$NetBSD: i386.c,v 1.97 2019/05/11 12:59:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.96 2019/05/10 16:42:57 mlelstv Exp $");
+__RCSID("$NetBSD: i386.c,v 1.97 2019/05/11 12:59:50 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,6 +81,7 @@ __RCSID("$NetBSD: i386.c,v 1.96 2019/05/10 16:42:57 mlelstv Exp $");
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
+#include <x86/cpufunc.h>
 #include <x86/cacheinfo.h>
 #include <x86/cpu_ucode.h>
 
