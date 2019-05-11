@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.29 2019/04/28 14:22:13 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.30 2019/05/11 07:31:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -606,7 +606,7 @@ read_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 		mem.gpa = gpa;
 		mem.write = false;
 		mem.size = size;
-		(*__callbacks.mem)(&mem);
+		(*mach->cbs.mem)(&mem);
 	} else {
 		if (__predict_false(!(prot & NVMM_PROT_READ))) {
 			errno = EFAULT;
@@ -660,7 +660,7 @@ write_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 		mem.gpa = gpa;
 		mem.write = true;
 		mem.size = size;
-		(*__callbacks.mem)(&mem);
+		(*mach->cbs.mem)(&mem);
 	} else {
 		if (__predict_false(!(prot & NVMM_PROT_WRITE))) {
 			errno = EFAULT;
@@ -706,7 +706,7 @@ assist_io_batch(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	}
 
 	for (i = 0; i < iocnt; i++) {
-		(*__callbacks.io)(io);
+		(*mach->cbs.io)(io);
 		io->data += io->size;
 	}
 
@@ -816,7 +816,7 @@ nvmm_assist_io(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 		}
 	}
 
-	(*__callbacks.io)(&io);
+	(*mach->cbs.io)(&io);
 
 	if (io.in) {
 		if (!exit->u.io.str) {
@@ -865,19 +865,19 @@ out:
 struct x86_emul {
 	bool read;
 	bool notouch;
-	void (*func)(struct nvmm_mem *, uint64_t *);
+	void (*func)(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
 };
 
-static void x86_func_or(struct nvmm_mem *, uint64_t *);
-static void x86_func_and(struct nvmm_mem *, uint64_t *);
-static void x86_func_sub(struct nvmm_mem *, uint64_t *);
-static void x86_func_xor(struct nvmm_mem *, uint64_t *);
-static void x86_func_cmp(struct nvmm_mem *, uint64_t *);
-static void x86_func_test(struct nvmm_mem *, uint64_t *);
-static void x86_func_mov(struct nvmm_mem *, uint64_t *);
-static void x86_func_stos(struct nvmm_mem *, uint64_t *);
-static void x86_func_lods(struct nvmm_mem *, uint64_t *);
-static void x86_func_movs(struct nvmm_mem *, uint64_t *);
+static void x86_func_or(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
+static void x86_func_and(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
+static void x86_func_sub(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
+static void x86_func_xor(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
+static void x86_func_cmp(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
+static void x86_func_test(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
+static void x86_func_mov(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
+static void x86_func_stos(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
+static void x86_func_lods(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
+static void x86_func_movs(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
 
 static const struct x86_emul x86_emul_or = {
 	.read = true,
@@ -2631,7 +2631,7 @@ EXEC_DISPATCHER(xor)
  */
 
 static void
-x86_func_or(struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_or(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *retval = (uint64_t *)mem->data;
 	const bool write = mem->write;
@@ -2643,7 +2643,7 @@ x86_func_or(struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch the value to be OR'ed (op2). */
 	mem->data = (uint8_t *)&op2;
 	mem->write = false;
-	(*__callbacks.mem)(mem);
+	(*mach->cbs.mem)(mem);
 
 	/* Perform the OR. */
 	ret = exec_or(*op1, op2, &fl, mem->size);
@@ -2652,7 +2652,7 @@ x86_func_or(struct nvmm_mem *mem, uint64_t *gprs)
 		/* Write back the result. */
 		mem->data = (uint8_t *)&ret;
 		mem->write = true;
-		(*__callbacks.mem)(mem);
+		(*mach->cbs.mem)(mem);
 	} else {
 		/* Return data to the caller. */
 		*retval = ret;
@@ -2663,7 +2663,7 @@ x86_func_or(struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_and(struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_and(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *retval = (uint64_t *)mem->data;
 	const bool write = mem->write;
@@ -2675,7 +2675,7 @@ x86_func_and(struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch the value to be AND'ed (op2). */
 	mem->data = (uint8_t *)&op2;
 	mem->write = false;
-	(*__callbacks.mem)(mem);
+	(*mach->cbs.mem)(mem);
 
 	/* Perform the AND. */
 	ret = exec_and(*op1, op2, &fl, mem->size);
@@ -2684,7 +2684,7 @@ x86_func_and(struct nvmm_mem *mem, uint64_t *gprs)
 		/* Write back the result. */
 		mem->data = (uint8_t *)&ret;
 		mem->write = true;
-		(*__callbacks.mem)(mem);
+		(*mach->cbs.mem)(mem);
 	} else {
 		/* Return data to the caller. */
 		*retval = ret;
@@ -2695,7 +2695,7 @@ x86_func_and(struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_sub(struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_sub(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *retval = (uint64_t *)mem->data;
 	const bool write = mem->write;
@@ -2710,7 +2710,7 @@ x86_func_sub(struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch the value to be SUB'ed (op1 or op2). */
 	mem->data = (uint8_t *)&tmp;
 	mem->write = false;
-	(*__callbacks.mem)(mem);
+	(*mach->cbs.mem)(mem);
 
 	/* Perform the SUB. */
 	ret = exec_sub(*op1, *op2, &fl, mem->size);
@@ -2719,7 +2719,7 @@ x86_func_sub(struct nvmm_mem *mem, uint64_t *gprs)
 		/* Write back the result. */
 		mem->data = (uint8_t *)&ret;
 		mem->write = true;
-		(*__callbacks.mem)(mem);
+		(*mach->cbs.mem)(mem);
 	} else {
 		/* Return data to the caller. */
 		*retval = ret;
@@ -2730,7 +2730,7 @@ x86_func_sub(struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_xor(struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_xor(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *retval = (uint64_t *)mem->data;
 	const bool write = mem->write;
@@ -2742,7 +2742,7 @@ x86_func_xor(struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch the value to be XOR'ed (op2). */
 	mem->data = (uint8_t *)&op2;
 	mem->write = false;
-	(*__callbacks.mem)(mem);
+	(*mach->cbs.mem)(mem);
 
 	/* Perform the XOR. */
 	ret = exec_xor(*op1, op2, &fl, mem->size);
@@ -2751,7 +2751,7 @@ x86_func_xor(struct nvmm_mem *mem, uint64_t *gprs)
 		/* Write back the result. */
 		mem->data = (uint8_t *)&ret;
 		mem->write = true;
-		(*__callbacks.mem)(mem);
+		(*mach->cbs.mem)(mem);
 	} else {
 		/* Return data to the caller. */
 		*retval = ret;
@@ -2762,7 +2762,7 @@ x86_func_xor(struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_cmp(struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_cmp(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *op1, *op2, fl;
 	uint64_t tmp;
@@ -2775,7 +2775,7 @@ x86_func_cmp(struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch the value to be CMP'ed (op1 or op2). */
 	mem->data = (uint8_t *)&tmp;
 	mem->write = false;
-	(*__callbacks.mem)(mem);
+	(*mach->cbs.mem)(mem);
 
 	/* Perform the CMP. */
 	exec_sub(*op1, *op2, &fl, mem->size);
@@ -2785,7 +2785,7 @@ x86_func_cmp(struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_test(struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_test(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *op1, *op2, fl;
 	uint64_t tmp;
@@ -2798,7 +2798,7 @@ x86_func_test(struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch the value to be TEST'ed (op1 or op2). */
 	mem->data = (uint8_t *)&tmp;
 	mem->write = false;
-	(*__callbacks.mem)(mem);
+	(*mach->cbs.mem)(mem);
 
 	/* Perform the TEST. */
 	exec_and(*op1, *op2, &fl, mem->size);
@@ -2808,21 +2808,21 @@ x86_func_test(struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_mov(struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_mov(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	/*
 	 * Nothing special, just move without emulation.
 	 */
-	(*__callbacks.mem)(mem);
+	(*mach->cbs.mem)(mem);
 }
 
 static void
-x86_func_stos(struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_stos(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	/*
 	 * Just move, and update RDI.
 	 */
-	(*__callbacks.mem)(mem);
+	(*mach->cbs.mem)(mem);
 
 	if (gprs[NVMM_X64_GPR_RFLAGS] & PSL_D) {
 		gprs[NVMM_X64_GPR_RDI] -= mem->size;
@@ -2832,12 +2832,12 @@ x86_func_stos(struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_lods(struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_lods(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	/*
 	 * Just move, and update RSI.
 	 */
-	(*__callbacks.mem)(mem);
+	(*mach->cbs.mem)(mem);
 
 	if (gprs[NVMM_X64_GPR_RFLAGS] & PSL_D) {
 		gprs[NVMM_X64_GPR_RSI] -= mem->size;
@@ -2847,7 +2847,7 @@ x86_func_lods(struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_movs(struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_movs(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	/*
 	 * Special instruction: double memory operand. Don't call the cb,
@@ -3047,7 +3047,7 @@ assist_mem_double(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 		return -1;
 
 	mem.size = size;
-	(*instr->emul->func)(&mem, state->gprs);
+	(*instr->emul->func)(mach, &mem, state->gprs);
 
 	return 0;
 }
@@ -3124,7 +3124,7 @@ assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 		memcpy(mem.data, &val, mem.size);
 	}
 
-	(*instr->emul->func)(&mem, state->gprs);
+	(*instr->emul->func)(mach, &mem, state->gprs);
 
 	if (!instr->emul->notouch && !mem.write) {
 		if (instr->dst.type != STORE_REG) {

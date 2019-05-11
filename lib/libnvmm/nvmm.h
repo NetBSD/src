@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.10 2019/04/28 14:22:13 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.11 2019/05/11 07:31:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,13 +38,6 @@
 #include <dev/nvmm/nvmm.h>
 #include <dev/nvmm/nvmm_ioctl.h>
 
-struct nvmm_machine {
-	nvmm_machid_t machid;
-	struct nvmm_comm_page **pages;
-	size_t npages;
-	void *areas; /* opaque */
-};
-
 struct nvmm_io {
 	uint64_t port;
 	bool in;
@@ -63,6 +56,16 @@ struct nvmm_callbacks {
 	void (*io)(struct nvmm_io *);
 	void (*mem)(struct nvmm_mem *);
 };
+
+struct nvmm_machine {
+	nvmm_machid_t machid;
+	struct nvmm_comm_page **pages;
+	size_t npages;
+	void *areas; /* opaque */
+	struct nvmm_callbacks cbs;
+};
+
+#define NVMM_MACH_CONF_CALLBACKS	NVMM_MACH_CONF_LIBNVMM_BEGIN
 
 #define NVMM_PROT_READ		0x01
 #define NVMM_PROT_WRITE		0x02
@@ -96,7 +99,6 @@ int nvmm_gpa_to_hva(struct nvmm_machine *, gpaddr_t, uintptr_t *,
 
 int nvmm_assist_io(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *);
 int nvmm_assist_mem(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *);
-void nvmm_callbacks_register(const struct nvmm_callbacks *);
 
 int nvmm_ctl(int, void *, size_t);
 
