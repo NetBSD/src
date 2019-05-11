@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.2 2019/05/08 13:40:17 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.3 2019/05/11 03:26:43 maya Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.2 2019/05/08 13:40:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.3 2019/05/11 03:26:43 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -7214,7 +7214,7 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai, int need_mixerinfo,
 	 * XXX hiwat/lowat is a playback-only parameter.  What should I
 	 *     return for a record-only descriptor?
 	 */
-	track = ptrack ?: rtrack;
+	track = ptrack ? ptrack : rtrack;
 	if (track) {
 		ai->blocksize = track->usrbuf_blksize;
 		ai->hiwat = track->usrbuf_usedhigh / track->usrbuf_blksize;
