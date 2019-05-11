@@ -592,9 +592,16 @@ extern int dot_symbols;
 #define USE_LD_AS_NEEDED 1
 #endif
 
-/* NetBSD ppc64 has 128-bit long double support.  */
+/*
+ * NetBSD ppc64 used to have 128-bit long double support.
+ * But it does not work anymore:
+ * (insn 23 22 24 5 (set (reg:CCFP 179)
+ *	 (compare:CCFP (reg/v:TF 171 [ a ])
+ * 		     (reg:TF 177)))
+ *  "/usr/src/sys/external/bsd/compiler_rt/dist/lib/builtins/fixxfti.c":43 -1
+ */
 #undef	RS6000_DEFAULT_LONG_DOUBLE_SIZE
-#define RS6000_DEFAULT_LONG_DOUBLE_SIZE 128
+#define RS6000_DEFAULT_LONG_DOUBLE_SIZE 64
 
 #define POWERPC_NETBSD
 
