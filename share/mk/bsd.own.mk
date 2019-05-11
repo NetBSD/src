@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1133 2019/05/10 06:19:54 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1134 2019/05/11 02:40:31 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -58,10 +58,6 @@ TOOLCHAIN_MISSING?=	no
 #
 # What GCC is used?
 #
-.if \
-    ${MACHINE_ARCH} == "powerpc64"
-HAVE_GCC?=	6
-.endif
 HAVE_GCC?=	7
 
 #
