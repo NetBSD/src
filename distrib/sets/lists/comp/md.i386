@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.187 2019/04/03 15:12:44 joerg Exp $
+# $NetBSD: md.i386,v 1.188 2019/05/11 13:04:40 christos Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -684,6 +684,7 @@
 ./usr/include/x86/cpu_extended_state.h		comp-c-include
 ./usr/include/x86/cpu_rng.h			comp-c-include
 ./usr/include/x86/cpu_ucode.h			comp-c-include
+./usr/include/x86/cpufunc.h			comp-c-include
 ./usr/include/x86/cputypes.h			comp-c-include
 ./usr/include/x86/cpuvar.h			comp-c-include
 ./usr/include/x86/dbregs.h			comp-obsolete		obsolete
