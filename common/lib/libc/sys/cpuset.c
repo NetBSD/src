@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.c,v 1.20 2018/07/26 00:13:19 kamil Exp $	*/
+/*	$NetBSD: cpuset.c,v 1.21 2019/05/11 11:53:55 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _STANDALONE
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cpuset.c,v 1.20 2018/07/26 00:13:19 kamil Exp $");
+__RCSID("$NetBSD: cpuset.c,v 1.21 2019/05/11 11:53:55 maxv Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _LIBC
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: cpuset.c,v 1.20 2018/07/26 00:13:19 kamil Exp $");
 
 #define	CPUSET_SHIFT	5
 #define	CPUSET_MASK	31
-#define CPUSET_NENTRIES(nc)	((nc) > 32 ? ((nc) >> CPUSET_SHIFT) : 1)
+#define	CPUSET_NENTRIES(nc)	(((nc) >> CPUSET_SHIFT) + 1)
 #ifndef __lint__
 #define CPUSET_SIZE(n)	(sizeof( \
 	struct {  \
