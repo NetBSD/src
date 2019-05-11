@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.155 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: auich.c,v 1.156 2019/05/11 02:34:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.155 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.156 2019/05/11 02:34:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -959,7 +959,7 @@ auich_query_format(void *v, struct audio_format_query *afp)
 		return audio_query_format(auich_spdif_formats,
 		    AUICH_SPDIF_NFORMATS, afp);
 	} else {
-		return audio_query_format(auich_audio_formats,
+		return audio_query_format(sc->sc_audio_formats,
 		    AUICH_AUDIO_NFORMATS, afp);
 	}
 }
