@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.9 2019/05/01 09:20:21 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.10 2019/05/11 07:31:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -93,6 +93,13 @@ struct nvmm_capability {
 	uint64_t max_ram;
 	struct nvmm_cap_md arch;
 };
+
+/* Configuration slots. */
+#define NVMM_MACH_CONF_LIBNVMM_BEGIN	0
+#define NVMM_MACH_CONF_MI_BEGIN		100
+#define NVMM_MACH_CONF_MD_BEGIN		200
+
+#define NVMM_MACH_CONF_MD(op)		(op - NVMM_MACH_CONF_MD_BEGIN)
 
 struct nvmm_comm_page {
 	/* State. */
