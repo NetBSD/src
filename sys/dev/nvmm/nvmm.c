@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.20 2019/05/01 09:20:21 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.21 2019/05/11 07:31:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.20 2019/05/01 09:20:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.21 2019/05/11 07:31:56 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,14 +338,16 @@ nvmm_machine_configure(struct nvmm_owner *owner,
 {
 	struct nvmm_machine *mach;
 	size_t allocsz;
+	uint64_t op;
 	void *data;
 	int error;
 
-	if (__predict_false(args->op >= nvmm_impl->conf_max)) {
+	op = NVMM_MACH_CONF_MD(args->op);
+	if (__predict_false(op >= nvmm_impl->conf_max)) {
 		return EINVAL;
 	}
 
-	allocsz = nvmm_impl->conf_sizes[args->op];
+	allocsz = nvmm_impl->conf_sizes[op];
 	data = kmem_alloc(allocsz, KM_SLEEP);
 
 	error = nvmm_machine_get(owner, args->machid, &mach, true);
@@ -359,7 +361,7 @@ nvmm_machine_configure(struct nvmm_owner *owner,
 		goto out;
 	}
 
-	error = (*nvmm_impl->machine_configure)(mach, args->op, data);
+	error = (*nvmm_impl->machine_configure)(mach, op, data);
 
 out:
 	nvmm_machine_put(mach);
