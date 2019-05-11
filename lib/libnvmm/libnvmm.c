@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.12 2019/05/01 09:20:21 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.13 2019/05/11 07:31:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 
 #include "nvmm.h"
 
-static struct nvmm_callbacks __callbacks;
 static struct nvmm_capability __capability;
 
 #ifdef __x86_64__
@@ -254,6 +253,12 @@ nvmm_machine_configure(struct nvmm_machine *mach, uint64_t op, void *conf)
 {
 	struct nvmm_ioc_machine_configure args;
 	int ret;
+
+	switch (op) {
+	case NVMM_MACH_CONF_CALLBACKS:
+		memcpy(&mach->cbs, conf, sizeof(mach->cbs));
+		return 0;
+	}
 
 	args.machid = mach->machid;
 	args.op = op;
@@ -509,12 +514,6 @@ nvmm_gpa_to_hva(struct nvmm_machine *mach, gpaddr_t gpa, uintptr_t *hva,
 /*
  * nvmm_assist_mem(): architecture-specific.
  */
-
-void
-nvmm_callbacks_register(const struct nvmm_callbacks *cbs)
-{
-	memcpy(&__callbacks, cbs, sizeof(__callbacks));
-}
 
 int
 nvmm_ctl(int op, void *data, size_t size)

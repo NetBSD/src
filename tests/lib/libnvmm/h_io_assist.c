@@ -1,4 +1,4 @@
-/*	$NetBSD: h_io_assist.c,v 1.6 2019/03/22 01:50:14 htodd Exp $	*/
+/*	$NetBSD: h_io_assist.c,v 1.7 2019/05/11 07:31:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -353,7 +353,7 @@ static const struct test tests[] = {
 	{ NULL, NULL, NULL, NULL, false }
 };
 
-static const struct nvmm_callbacks callbacks = {
+static struct nvmm_callbacks callbacks = {
 	.io = io_callback,
 	.mem = NULL
 };
@@ -375,7 +375,7 @@ int main(int argc, char *argv[])
 		err(errno, "nvmm_machine_create");
 	if (nvmm_vcpu_create(&mach, 0) == -1)
 		err(errno, "nvmm_vcpu_create");
-	nvmm_callbacks_register(&callbacks);
+	nvmm_machine_configure(&mach, NVMM_MACH_CONF_CALLBACKS, &callbacks);
 	map_pages(&mach);
 
 	for (i = 0; tests[i].name != NULL; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.33 2019/05/01 09:20:21 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.34 2019/05/11 07:31:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.33 2019/05/01 09:20:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.34 2019/05/11 07:31:56 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -698,12 +698,13 @@ static uint64_t vmx_xcr0_mask __read_mostly;
 
 struct vmx_machdata {
 	bool cpuidpresent[VMX_NCPUIDS];
-	struct nvmm_x86_conf_cpuid cpuid[VMX_NCPUIDS];
+	struct nvmm_mach_conf_x86_cpuid cpuid[VMX_NCPUIDS];
 	volatile uint64_t mach_htlb_gen;
 };
 
 static const size_t vmx_conf_sizes[NVMM_X86_NCONF] = {
-	[NVMM_X86_CONF_CPUID] = sizeof(struct nvmm_x86_conf_cpuid)
+	[NVMM_MACH_CONF_MD(NVMM_MACH_CONF_X86_CPUID)] =
+	    sizeof(struct nvmm_mach_conf_x86_cpuid)
 };
 
 struct vmx_cpudata {
@@ -1210,7 +1211,7 @@ vmx_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 {
 	struct vmx_machdata *machdata = mach->machdata;
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	struct nvmm_x86_conf_cpuid *cpuid;
+	struct nvmm_mach_conf_x86_cpuid *cpuid;
 	uint64_t eax, ecx;
 	u_int descs[4];
 	size_t i;
@@ -2783,11 +2784,11 @@ vmx_machine_destroy(struct nvmm_machine *mach)
 static int
 vmx_machine_configure(struct nvmm_machine *mach, uint64_t op, void *data)
 {
-	struct nvmm_x86_conf_cpuid *cpuid = data;
+	struct nvmm_mach_conf_x86_cpuid *cpuid = data;
 	struct vmx_machdata *machdata = (struct vmx_machdata *)mach->machdata;
 	size_t i;
 
-	if (__predict_false(op != NVMM_X86_CONF_CPUID)) {
+	if (__predict_false(op != NVMM_MACH_CONF_MD(NVMM_MACH_CONF_X86_CPUID))) {
 		return EINVAL;
 	}
 
@@ -2805,7 +2806,7 @@ vmx_machine_configure(struct nvmm_machine *mach, uint64_t op, void *data)
 		}
 		if (machdata->cpuid[i].leaf == cpuid->leaf) {
 			memcpy(&machdata->cpuid[i], cpuid,
-			    sizeof(struct nvmm_x86_conf_cpuid));
+			    sizeof(struct nvmm_mach_conf_x86_cpuid));
 			return 0;
 		}
 	}
@@ -2815,7 +2816,7 @@ vmx_machine_configure(struct nvmm_machine *mach, uint64_t op, void *data)
 		if (!machdata->cpuidpresent[i]) {
 			machdata->cpuidpresent[i] = true;
 			memcpy(&machdata->cpuid[i], cpuid,
-			    sizeof(struct nvmm_x86_conf_cpuid));
+			    sizeof(struct nvmm_mach_conf_x86_cpuid));
 			return 0;
 		}
 	}

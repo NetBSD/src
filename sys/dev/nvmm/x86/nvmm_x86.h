@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.14 2019/05/01 09:20:21 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.15 2019/05/11 07:31:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -231,10 +231,10 @@ struct nvmm_x64_state {
 
 #define nvmm_vcpu_state nvmm_x64_state
 
-#define NVMM_X86_CONF_CPUID	0
-#define NVMM_X86_NCONF		1
+#define NVMM_MACH_CONF_X86_CPUID	NVMM_MACH_CONF_MD_BEGIN
+#define NVMM_X86_NCONF			1
 
-struct nvmm_x86_conf_cpuid {
+struct nvmm_mach_conf_x86_cpuid {
 	uint32_t leaf;
 	struct {
 		uint32_t eax;
