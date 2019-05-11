@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.17 2019/05/11 07:40:38 maxv Exp $
+.\"	$NetBSD: libnvmm.3,v 1.18 2019/05/11 07:44:00 maxv Exp $
 .\"
 .\" Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,13 +86,13 @@
     "struct nvmm_exit *exit"
 .Sh DESCRIPTION
 .Nm
-provides a library for VMM software to handle hardware-accelerated virtual
+provides a library for emulator software to handle hardware-accelerated virtual
 machines in
 .Nx .
 A virtual machine is described by an opaque structure,
 .Cd nvmm_machine .
-VMM software should not attempt to modify this structure directly, and should
-use the API provided by
+Emulator software should not attempt to modify this structure directly, and
+should use the API provided by
 .Nm
 to manage virtual machines.
 .Pp
@@ -268,8 +268,8 @@ below for details.
 .Ss NVMM Capability
 The
 .Cd nvmm_capability
-structure helps VMM software identify the capabilities offered by NVMM on the
-host:
+structure helps emulator software identify the capabilities offered by NVMM on
+the host:
 .Bd -literal
 struct nvmm_capability {
 	uint64_t version;
@@ -289,7 +289,7 @@ field indicates the maximum number of virtual machines supported, while
 .Cd max_vcpus
 indicates the maximum number of VCPUs supported per virtual machine.
 .Ss Machine Configuration
-VMM software can configure several parameters of a virtual machine by using
+Emulator software can configure several parameters of a virtual machine by using
 .Fn nvmm_machine_configure ,
 which can take the following operations:
 .Bd -literal
@@ -300,10 +300,10 @@ which can take the following operations:
 The higher fields depend on the architecture.
 .Ss Guest-Host Mappings
 Each virtual machine has an associated guest physical memory.
-VMM software is allowed to modify this guest physical memory by mapping
+Emulator software is allowed to modify this guest physical memory by mapping
 it into some parts of its virtual address space.
 .Pp
-VMM software should follow the following steps to achieve that:
+Emulator software should follow the following steps to achieve that:
 .Pp
 .Bl -bullet -offset indent -compact
 .It
@@ -346,7 +346,7 @@ will be reflected in the host's
 .Fa hva ,
 and vice versa.
 .Pp
-It is illegal for VMM software to use
+It is illegal for emulator software to use
 .Fn munmap
 on an area that was mapped via
 .Fn nvmm_hva_map .
@@ -415,10 +415,10 @@ contains a partial, implementation-specific VCPU state, usable as a fast-path
 to retrieve certain state values.
 .Pp
 It is possible that a VM exit was caused by a reason internal to the host
-kernel, and that VMM software should not be concerned with.
+kernel, and that emulator software should not be concerned with.
 In this case, the exit reason is set to
 .Cd NVMM_EXIT_NONE .
-This gives a chance for VMM software to halt the VM in its tracks.
+This gives a chance for emulator software to halt the VM in its tracks.
 .Pp
 Refer to functional examples to see precisely how to handle VM exits.
 .Ss Event Injection
@@ -464,7 +464,7 @@ the event is a non-maskable interrupt (NMI), and the VCPU is already in an
 in-NMI context.
 .El
 .Pp
-VMM software can manage interrupt and NMI window-exiting via the
+Emulator software can manage interrupt and NMI window-exiting via the
 .Va intr
 component of the VCPU state.
 When such window-exiting is enabled, NVMM will cause a VM exit with reason
@@ -476,7 +476,7 @@ of interrupts.
 .Ss Assist Callbacks
 In order to assist emulation of certain operations,
 .Nm
-requires VMM software to register, via
+requires emulator software to register, via
 .Fn nvmm_machine_configure ,
 a set of callbacks described in the following structure:
 .Bd -literal
@@ -493,15 +493,15 @@ each time
 or
 .Fn nvmm_assist_mem
 are invoked.
-VMM software that does not intend to use either of these assists can put
+Emulator software that does not intend to use either of these assists can put
 .Dv NULL
 in the callbacks.
 .Ss I/O Assist
 When a VM exit occurs with reason
 .Cd NVMM_EXIT_IO ,
-it is necessary for VMM software to emulate the associated I/O operation.
+it is necessary for emulator software to emulate the associated I/O operation.
 .Nm
-provides an easy way for VMM software to perform that.
+provides an easy way for emulator software to perform that.
 .Pp
 .Fn nvmm_assist_io
 will call the registered
@@ -545,9 +545,10 @@ will indicate the size of the access.
 .Ss Mem Assist
 When a VM exit occurs with reason
 .Cd NVMM_EXIT_MEMORY ,
-it is necessary for VMM software to emulate the associated memory operation.
+it is necessary for emulator software to emulate the associated memory
+operation.
 .Nm
-provides an easy way for VMM software to perform that, similar to the I/O
+provides an easy way for emulator software to perform that, similar to the I/O
 Assist.
 .Pp
 .Fn nvmm_assist_mem
