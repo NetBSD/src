@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.29 2019/05/11 12:58:17 christos Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.30 2019/05/11 13:40:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -329,12 +329,6 @@ void	x86_reset(void);
  */
 #define	OPTERON_MSR_PASSCODE	0x9c5a203aU
 
-uint64_t	rdmsr_locked(u_int);
-int		rdmsr_safe(u_int, uint64_t *);
-void		wrmsr_locked(u_int, uint64_t);
-
-#endif /* _KERNEL */
-
 static inline uint64_t
 rdmsr(u_int msr)
 {
@@ -349,6 +343,9 @@ rdmsr(u_int msr)
 	return (low | ((uint64_t)high << 32));
 }
 
+uint64_t	rdmsr_locked(u_int);
+int		rdmsr_safe(u_int, uint64_t *);
+
 static inline void
 wrmsr(u_int msr, uint64_t val)
 {
@@ -362,5 +359,9 @@ wrmsr(u_int msr, uint64_t val)
 		: "a" (low), "d" (high), "c" (msr)
 	);
 }
+
+void		wrmsr_locked(u_int, uint64_t);
+
+#endif /* _KERNEL */
 
 #endif /* !_X86_CPUFUNC_H_ */
