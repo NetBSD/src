@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.140 2019/05/07 18:52:49 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.141 2019/05/12 09:23:50 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -3089,4 +3089,23 @@ sys/netsmb/smb_conn.c				1.30
 	Prevent a NULL pointer dereference when the local endpoint is not
 	defined.
 	[christos, ticket #1258]
+
+sys/arch/arm/sunxi/sunxi_emac.c			1.26
+
+	Protect ether_multi list.
+	[ozaki-r, ticket #1259]
+
+common/lib/libc/sys/cpuset.c			1.21
+usr.sbin/cpuctl/cpuctl.c			1.30
+
+	Fix the computation of cpuset_nentries to be able to address the
+	last 32 bits.
+	Check the return value of cpuset_set(), to prevent future surprises.
+	[maxv, ticket #1260]
+
+sys/arch/x86/x86/cpu_ucode_intel.c		1.16,1.17
+
+	Invalidate the cache before updating the microcode.
+	Clean up, and add sanity checks on the microcode lengths.
+	[maxv, ticket #1261]
 
