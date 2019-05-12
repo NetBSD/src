@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.108 2019/04/24 07:09:44 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.109 2019/05/12 02:19:23 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.108 2019/04/24 07:09:44 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.109 2019/05/12 02:19:23 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -100,7 +100,7 @@ wnoutrefresh(WINDOW *win)
 {
 
 #ifdef DEBUG
-	__CTRACE(__CTRACE_REFRESH, "wnoutrefresh: win %p\n", win);
+	__CTRACE(__CTRACE_REFRESH, "wnoutrefresh: win %p, begy %d, begx %d, maxy %d, maxx %d\n", win, win->begy, win->begx, win->maxy, win->maxx);
 #endif
 
 	return _wnoutrefresh(win, 0, 0, win->begy, win->begx,
@@ -262,12 +262,18 @@ _wnoutrefresh(WINDOW *win, int begy, int begx, int wbegy, int wbegx,
 		"_wnoutrefresh: %s wy %d\tf %d\tl %d\tflags %x\n",
 		_wintype, dy_off, *dwlp->firstchp, *dwlp->lastchp, dwlp->flags);
 		__CTRACE(__CTRACE_REFRESH,
-		"_wnoutrefresh: %s maxx %d\tch_off %d\n",
-		_wintype, dwin->maxx, dwin->ch_off);
+		"_wnoutrefresh: %s maxx %d\tch_off %d wlp %p\n",
+		_wintype, dwin->maxx, dwin->ch_off, wlp);
 #endif
 		if (((wlp->flags & (__ISDIRTY | __ISFORCED)) == 0) &&
 		    ((dwlp->flags & (__ISDIRTY | __ISFORCED)) == 0))
 			continue;
+#ifdef DEBUG
+		__CTRACE(__CTRACE_REFRESH,
+		"_wnoutrefresh: line is dirty\n");
+#endif
+
+		wlp = swin->alines[wy];
 		vlp = screen->__virtscr->alines[y_off];
 
 		if ((*wlp->firstchp < maxx + swin->ch_off &&
@@ -308,6 +314,9 @@ _wnoutrefresh(WINDOW *win, int begy, int begx, int wbegy, int wbegx,
 				    wy, wx, y_off, x_off,
 				    unctrl(wlp->line[wx].ch),
 				    wlp->line[wx].attr);
+				__CTRACE(__CTRACE_REFRESH, " (curdest %s, 0x%x)",
+				    unctrl(vlp->line[x_off].ch),
+				    vlp->line[x_off].attr);
 #endif
 				/* Copy character */
 				vlp->line[x_off].ch = wlp->line[wx].ch;
