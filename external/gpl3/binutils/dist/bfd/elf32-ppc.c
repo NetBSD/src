@@ -6616,9 +6616,16 @@ maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
       struct bfd_link_info *info = (struct bfd_link_info *) info_p;
 
       info->flags |= DF_TEXTREL;
-      info->callbacks->minfo
-	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
-	 sec->owner, h->root.root.string, sec);
+      /* xgettext:c-format */
+      info->callbacks->minfo (_("%pB: dynamic relocation against `%pT' "
+				"in read-only section `%pA'\n"),
+			      sec->owner, h->root.root.string, sec);
+      if ((info->warn_shared_textrel && bfd_link_pic (info))
+	  || info->error_textrel)
+	/* xgettext:c-format */
+	info->callbacks->einfo (_("%P: %pB: warning: relocation against `%s' "
+				  "in read-only section `%pA'\n"),
+				sec->owner, h->root.root.string, sec);
 
       /* Not an error, just cut short the traversal.  */
       return FALSE;
