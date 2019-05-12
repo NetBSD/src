@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.54 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.55 2019/05/12 13:40:19 maya Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.54 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.55 2019/05/12 13:40:19 maya Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -92,7 +92,6 @@ static inline void cmpci_reg_clear_4(struct cmpci_softc *, int, uint32_t);
 static inline void cmpci_reg_set_reg_misc(struct cmpci_softc *, uint32_t);
 static inline void cmpci_reg_clear_reg_misc(struct cmpci_softc *, uint32_t);
 static int cmpci_rate_to_index(int);
-static inline int cmpci_index_to_rate(int);
 static inline int cmpci_index_to_divider(int);
 
 static int cmpci_adjust(int, int);
@@ -326,13 +325,6 @@ cmpci_rate_to_index(int rate)
 		if (rate == cmpci_rate_table[i].rate)
 			return i;
 	return i;  /* 48000 */
-}
-
-static inline int
-cmpci_index_to_rate(int index)
-{
-
-	return cmpci_rate_table[index].rate;
 }
 
 static inline int
