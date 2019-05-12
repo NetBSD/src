@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.28 2015/11/16 03:34:50 mrg Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.28.8.1 2019/05/12 09:21:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012, 2015 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.28 2015/11/16 03:34:50 mrg Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.28.8.1 2019/05/12 09:21:12 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -239,7 +239,8 @@ cpu_ucode(char **argv)
 		if (cpuset == NULL)
 			err(EXIT_FAILURE, "cpuset_create");
 		cpuset_zero(cpuset);
-		cpuset_set(id, cpuset);
+		if (cpuset_set(id, cpuset) < 0)
+			err(EXIT_FAILURE, "cpuset_set");
 		if (_sched_setaffinity(0, 0, cpuset_size(cpuset), cpuset) < 0) {
 			err(EXIT_FAILURE, "_sched_setaffinity");
 		}
@@ -272,7 +273,8 @@ cpu_identify(char **argv)
 			if (cpuset == NULL)
 				err(EXIT_FAILURE, "cpuset_create");
 			cpuset_zero(cpuset);
-			cpuset_set(id, cpuset);
+			if (cpuset_set(id, cpuset) < 0)
+				err(EXIT_FAILURE, "cpuset_set");
 			if (_sched_setaffinity(0, 0, cpuset_size(cpuset), cpuset) < 0) {
 				if (errno == EPERM) {
 					printf("Cannot bind to target CPU.  Output "
