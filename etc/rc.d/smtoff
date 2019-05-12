@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: smtoff,v 1.2 2019/05/12 00:24:03 kre Exp $
+# $NetBSD: smtoff,v 1.3 2019/05/12 11:55:47 kre Exp $
 #
 # Public Domain.
 #
@@ -44,7 +44,6 @@ GetSmtId() {
 			;;
 		esac
 	done
-	printf "error"
 }
 
 #
@@ -75,7 +74,7 @@ smtoff_start()
 		smtid=$(GetSmtId "$i" 2>/dev/null)
 
 		case "$smtid" in
-		error)			# Didn't get the ID? Then maybe no SMT.
+		'')			# Didn't get the ID? Then maybe no SMT.
 			;;
 
 		0)			# The first thread is never disabled.
