@@ -1,4 +1,4 @@
-/*	$NetBSD: evboards.c,v 1.1 2019/05/07 05:02:42 thorpej Exp $	*/
+/*	$NetBSD: evboards.c,v 1.2 2019/05/12 13:47:09 maya Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: evboards.c,v 1.1 2019/05/07 05:02:42 thorpej Exp $");
+__RCSID("$NetBSD: evboards.c,v 1.2 2019/05/12 13:47:09 maya Exp $");
 #endif  /* !__lint */
 
 #include <sys/types.h>
@@ -331,7 +331,7 @@ __RCSID("$NetBSD: evboards.c,v 1.1 2019/05/07 05:02:42 thorpej Exp $");
  *	Build a path into the given buffer with the specified
  *	format.  Returns NULL if the path won't fit.
  */
-static const char *
+static __printflike(3,4) const char *
 make_path(char *buf, size_t bufsize, const char *fmt, ...)
 {
 	va_list ap;
