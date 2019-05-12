@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: smtoff,v 1.1 2019/05/11 19:31:03 maxv Exp $
+# $NetBSD: smtoff,v 1.2 2019/05/12 00:24:03 kre Exp $
 #
 # Public Domain.
 #
@@ -28,25 +28,36 @@ stop_cmd="smtoff_stop"
 # Return the value.
 #
 GetSmtId() {
-	smtid=$(cpuctl identify $1 | grep "SMT ID" | cut -d " " -f 4)
-	case $smtid in
-		[0-9]*)
-			echo "$smtid" ;;
-		*)
-			echo "error" ;;
-	esac
+	cpuctl identify "$1" |
+	while read cpuN smt id N junk
+	do
+		test -n "$junk" && continue
+
+		case "${smt} ${id}" in
+		'SMT ID')
+			case "$N" in
+			[0-9]|[1-9][0-9]|[1-9][0-9]*[0-9])
+				printf %s "$N"
+				return
+				;;
+			esac
+			;;
+		esac
+	done
+	printf "error"
 }
 
 #
-# The format of the output is:
+# The format of the output (without -n) would be:
 #
 #     hw.ncpu = 80
+#
+# so use -n to make life easy
 #
 # Return the value.
 #
 CountCPUs() {
-	ncpus=$(sysctl hw.ncpu | cut -d " " -f 3)
-	echo "$ncpus"
+	sysctl -n hw.ncpu
 }
 
 # ------------------------------------------------------------------------------
@@ -59,24 +70,22 @@ smtoff_start()
 	ncpus=$(CountCPUs)
 	i=1
 
-	while [ $i -lt $ncpus ]
+	while [ "$i" -lt "$ncpus" ]
 	do
-		smtid=$(GetSmtId "$i")
+		smtid=$(GetSmtId "$i" 2>/dev/null)
 
-		# Didn't get the ID? Then maybe no SMT.
-		if [ "$smtid" = "error" ]; then
-			i=$(($i+1))
-			continue
-		fi
+		case "$smtid" in
+		error)			# Didn't get the ID? Then maybe no SMT.
+			;;
 
-		# The first thread is never disabled.
-		if [ $smtid -eq 0 ]; then
-			i=$(($i+1))
-			continue
-		fi
+		0)			# The first thread is never disabled.
+			;;
 
-		cmd="cpuctl offline $i"
-		$cmd
+		*)
+			cpuctl offline "$i"
+			;;
+		esac
+
 		i=$(($i+1))
 	done
 }
@@ -89,10 +98,9 @@ smtoff_stop()
 	ncpus=$(CountCPUs)
 	i=1
 
-	while [ $i -lt $ncpus ]
+	while [ "$i" -lt "$ncpus" ]
 	do
-		cmd="cpuctl online $i"
-		$cmd
+		cpuctl online "$i"
 		i=$(($i+1))
 	done
 }
