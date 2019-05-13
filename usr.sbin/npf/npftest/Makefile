@@ -19,7 +19,6 @@ LDADD+=		-L${LIBNPFTEST} -lnpftest
 
 LDADD+=		-lrump -lrumpvfs -lrumpuser -lrumpnet -lrumpnet_net
 LDADD+=		-lrumpdev_bpf
-LDADD+=		-lrumpdev
 
 .include <bsd.own.mk>
 
