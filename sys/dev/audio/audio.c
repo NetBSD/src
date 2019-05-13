@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.5 2019/05/13 04:11:04 nakayama Exp $	*/
+/*	$NetBSD: audio.c,v 1.6 2019/05/13 07:53:56 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.5 2019/05/13 04:11:04 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.6 2019/05/13 07:53:56 nakayama Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -7511,7 +7511,8 @@ audio_sysctl_multiuser(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	struct audio_softc *sc;
-	int t, error;
+	bool t;
+	int error;
 
 	node = *rnode;
 	sc = node.sysctl_data;
