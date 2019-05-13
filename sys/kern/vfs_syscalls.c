@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.527 2019/03/01 11:06:57 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.528 2019/05/13 08:17:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.527 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.528 2019/05/13 08:17:30 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4538,7 +4538,7 @@ sys_mkdirat(struct lwp *l, const struct sys_mkdirat_args *uap,
 int
 do_sys_mkdir(const char *path, mode_t mode, enum uio_seg seg)
 {
-	return do_sys_mkdirat(NULL, AT_FDCWD, path, mode, UIO_USERSPACE);
+	return do_sys_mkdirat(NULL, AT_FDCWD, path, mode, seg);
 }
 
 static int
