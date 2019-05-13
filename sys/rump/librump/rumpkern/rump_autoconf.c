@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: rump_autoconf.c,v 1.1 2019/05/13 17:49:05 bad Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_autoconf.c,v 1.1 2019/05/13 17:49:05 bad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
