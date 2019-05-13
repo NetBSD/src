@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2014/03/26 17:58:57 christos Exp $	 */
+/*	$NetBSD: main.c,v 1.33 2019/05/13 17:50:30 maxv Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -43,10 +43,6 @@
 #include <lib/libsa/ufs.h>
 
 #include <libi386.h>
-
-#ifdef SUPPORT_LYNX
-extern int exec_lynx(const char*, int);
-#endif
 
 int errno;
 
@@ -184,26 +180,11 @@ bootit(const char *filename, int howto, int tell)
 			printf(" (howto 0x%x)", howto);
 		printf("\n");
 	}
-#ifdef SUPPORT_LYNX
-	if(exec_netbsd(filename, 0, howto, floppy, NULL) < 0)
-		printf("boot netbsd: %s: %s\n", sprint_bootsel(filename),
-		       strerror(errno));
-	else {
-		printf("boot netbsd returned\n");
-		return;
-	}
-	if (exec_lynx(filename, 0) < 0)
-		printf("boot lynx: %s: %s\n", sprint_bootsel(filename),
-		       strerror(errno));
-	else
-		printf("boot lynx returned\n");
-#else
 	if (exec_netbsd(filename, 0, howto, floppy, NULL) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
 		       strerror(errno));
 	else
 		printf("boot returned\n");
-#endif
 }
 
 static void
