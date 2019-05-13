@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.59 2018/12/31 11:59:23 mrg Exp $
+# $NetBSD: md.cats,v 1.60 2019/05/13 08:38:45 uki Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -27,14 +27,14 @@
 ./usr/X11R7/lib/modules/drivers/chips_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_alpine.so	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so	-obsolete-	obsolete
-./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so.1	-obsolete-	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so	xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so.1	xdebug-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_laguna.so	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so	-obsolete-	obsolete
-./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so.1	-obsolete-	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so	xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so.1	xdebug-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg,xorg_server_ver=110
