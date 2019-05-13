@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.180 2019/05/10 02:56:08 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.181 2019/05/13 05:04:17 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2940,10 +2940,9 @@ ixgbe_media_change(struct ifnet *ifp)
 	case IFM_10G_LRM:
 	case IFM_10G_LR:
 	case IFM_10G_TWINAX:
-#ifndef IFM_ETH_XTYPE
-	case IFM_10G_SR: /* KR, too */
-	case IFM_10G_CX4: /* KX4 */
-#else
+	case IFM_10G_SR:
+	case IFM_10G_CX4:
+#ifdef IFM_ETH_XTYPE
 	case IFM_10G_KR:
 	case IFM_10G_KX4:
 #endif
