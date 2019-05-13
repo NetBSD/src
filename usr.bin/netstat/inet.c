@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.108 2018/05/03 07:13:48 maxv Exp $	*/
+/*	$NetBSD: inet.c,v 1.109 2019/05/13 07:48:42 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.108 2018/05/03 07:13:48 maxv Exp $");
+__RCSID("$NetBSD: inet.c,v 1.109 2019/05/13 07:48:42 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -630,6 +630,8 @@ ip_stats(u_long off, const char *name)
 	p(IP_STAT_OFRAGMENTS, "\t%" PRIu64 " fragment%s created\n");
 	p(IP_STAT_CANTFRAG, "\t%" PRIu64 " datagram%s that can't be fragmented\n");
 	p(IP_STAT_BADADDR, "\t%" PRIu64 " datagram%s with bad address in header\n");
+	p(IP_STAT_PFILDROP_IN, "\t%" PRIu64 " input packet%s dropped by pfil\n");
+	p(IP_STAT_PFILDROP_OUT, "\t%" PRIu64 " output packet%s dropped by pfil\n");
 #undef ps
 #undef p
 }
