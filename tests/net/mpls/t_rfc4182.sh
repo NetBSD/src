@@ -1,4 +1,4 @@
-# $NetBSD: t_rfc4182.sh,v 1.4 2016/08/10 07:50:37 ozaki-r Exp $
+# $NetBSD: t_rfc4182.sh,v 1.5 2019/05/13 17:55:09 bad Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,7 +45,7 @@ RUMP_SERVER3=unix://./r3
 RUMP_SERVER4=unix://./r4
 
 RUMP_FLAGS="-lrumpnet -lrumpnet_net -lrumpnet_netinet	\
-            -lrumpdev -lrumpnet_netmpls -lrumpnet_shmif"
+            -lrumpnet_netmpls -lrumpnet_shmif"
 
 atf_test_case rfc4182 cleanup
 rfc4182_head()

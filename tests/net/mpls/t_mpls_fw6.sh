@@ -1,4 +1,4 @@
-# $NetBSD: t_mpls_fw6.sh,v 1.3 2016/08/10 07:50:37 ozaki-r Exp $
+# $NetBSD: t_mpls_fw6.sh,v 1.4 2019/05/13 17:55:09 bad Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -44,7 +44,7 @@ RUMP_SERVER3=unix://./r3
 RUMP_SERVER4=unix://./r4
 
 RUMP_FLAGS6="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6 \
-             -lrumpdev -lrumpnet_shmif -lrumpnet_netmpls"
+             -lrumpnet_shmif -lrumpnet_netmpls"
 
 atf_test_case mplsfw6 cleanup
 mplsfw6_head()
