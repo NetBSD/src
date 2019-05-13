@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.85 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.85.8.1 2019/05/13 12:40:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.85 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.85.8.1 2019/05/13 12:40:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,7 +472,7 @@ sk_xmac_miibus_statchg(struct ifnet *ifp)
 	 * duplex mode accordingly.
 	 */
 	if (sc_if->sk_phytype != SK_PHYTYPE_XMAC) {
-		if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
+		if ((mii->mii_media_active & IFM_FDX) != 0)
 			SK_XM_SETBIT_2(sc_if, XM_MMUCMD, XM_MMUCMD_GMIIFDX);
 		else
 			SK_XM_CLRBIT_2(sc_if, XM_MMUCMD, XM_MMUCMD_GMIIFDX);

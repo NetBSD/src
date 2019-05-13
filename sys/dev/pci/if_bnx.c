@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.61.8.2 2018/05/09 14:52:40 martin Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.61.8.3 2019/05/13 12:40:13 martin Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.61.8.2 2018/05/09 14:52:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.61.8.3 2019/05/13 12:40:13 martin Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -1223,7 +1223,7 @@ bnx_miibus_statchg(struct ifnet *ifp)
 	/* Set half or full duplex based on the duplicity
 	 * negotiated by the PHY.
 	 */
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_HDX) {
+	if ((mii->mii_media_active & IFM_HDX) != 0) {
 		DBPRINT(sc, BNX_INFO, "Setting Half-Duplex interface.\n");
 		val |= BNX_EMAC_MODE_HALF_DUPLEX;
 	} else {

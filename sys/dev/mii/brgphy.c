@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.76.20.1 2019/03/07 17:22:19 martin Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.76.20.2 2019/05/13 12:40:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.76.20.1 2019/03/07 17:22:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.76.20.2 2019/05/13 12:40:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,7 +423,7 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			speed = BMCR_S10;
 setit:
 			brgphy_loop(sc);
-			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
+			if ((ife->ifm_media & IFM_FDX) != 0) {
 				speed |= BMCR_FDX;
 				gig = GTCR_ADV_1000TFDX;
 			} else
