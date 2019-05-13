@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.54.8.1 2018/03/08 14:31:18 martin Exp $ */
+/* $NetBSD: if_msk.c,v 1.54.8.2 2019/05/13 12:40:13 martin Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.54.8.1 2018/03/08 14:31:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.54.8.2 2019/05/13 12:40:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ msk_miibus_statchg(struct ifnet *ifp)
 
 		/* Set duplex. */
 		gpcr |= YU_GPCR_DPLX_DIS;
-		if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
+		if ((mii->mii_media_active & IFM_FDX) != 0)
 			gpcr |= YU_GPCR_DUPLEX;
 
 		/* Disable flow control. */

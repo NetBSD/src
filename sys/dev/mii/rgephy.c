@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.40.10.1 2019/01/31 05:59:55 martin Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.40.10.2 2019/05/13 12:40:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.40.10.1 2019/01/31 05:59:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.40.10.2 2019/05/13 12:40:13 martin Exp $");
 
 
 /*
@@ -229,7 +229,7 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			anar |= ANAR_10_FD | ANAR_10;
  setit:
 			rgephy_loop(sc);
-			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
+			if ((ife->ifm_media & IFM_FDX) != 0) {
 				speed |= BMCR_FDX;
 				gig = GTCR_ADV_1000TFDX;
 				anar &= ~(ANAR_TX | ANAR_10);
