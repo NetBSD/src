@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2018/09/29 14:41:36 rmind Exp $
+# $NetBSD: Makefile,v 1.12 2019/05/13 17:55:09 bad Exp $
 #
 # Public Domain
 #
@@ -19,7 +19,6 @@ LDADD+=		-L${LIBNPFTEST} -lnpftest
 
 LDADD+=		-lrump -lrumpvfs -lrumpuser -lrumpnet -lrumpnet_net
 LDADD+=		-lrumpdev_bpf
-LDADD+=		-lrumpdev
 
 .include <bsd.own.mk>
 

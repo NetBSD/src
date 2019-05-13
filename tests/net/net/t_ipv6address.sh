@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6address.sh,v 1.14 2017/06/21 09:05:31 ozaki-r Exp $
+#	$NetBSD: t_ipv6address.sh,v 1.15 2019/05/13 17:55:09 bad Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 SERVER="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet"
-SERVER="${SERVER} -lrumpnet_shmif -lrumpdev"
+SERVER="${SERVER} -lrumpnet_shmif"
 SERVER6="${SERVER} -lrumpnet_netinet6"
 
 SOCKSRC=unix://commsock1
