@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.218 2019/04/03 19:23:38 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.219 2019/05/13 07:47:59 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.218 2019/04/03 19:23:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.219 2019/05/13 07:47:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -756,10 +756,11 @@ ip6_output(
 	/*
 	 * Run through list of hooks for output packets.
 	 */
-	if ((error = pfil_run_hooks(inet6_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
+	error = pfil_run_hooks(inet6_pfil_hook, &m, ifp, PFIL_OUT);
+	if (error != 0 || m == NULL) {
+		IP6_STATINC(IP6_STAT_PFILDROP_OUT);
 		goto done;
-	if (m == NULL)
-		goto done;
+	}
 	ip6 = mtod(m, struct ip6_hdr *);
 
 	/*

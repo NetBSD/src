@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.388 2019/01/17 02:47:15 knakahara Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.389 2019/05/13 07:47:59 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.388 2019/01/17 02:47:15 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.389 2019/05/13 07:47:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -578,6 +578,7 @@ ip_input(struct mbuf *m)
 		freed = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_IN) != 0;
 		if (freed || m == NULL) {
 			m = NULL;
+			IP_STATINC(IP_STAT_PFILDROP_IN);
 			goto out;
 		}
 		KASSERT(m->m_len >= sizeof(struct ip));

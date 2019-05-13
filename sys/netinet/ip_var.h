@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.127 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.128 2019/05/13 07:47:59 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -147,8 +147,10 @@ struct ip_pktopts {
 #define	IP_STAT_BADADDR		29	/* invalid address on header */
 #define	IP_STAT_NOL2TP		30	/* no match l2tp found */
 #define	IP_STAT_NOIPSEC		31	/* no match ipsec(4) found */
+#define	IP_STAT_PFILDROP_IN	32	/* dropped by pfil (PFIL_IN) */
+#define	IP_STAT_PFILDROP_OUT	33	/* dropped by pfil (PFIL_OUT) */
 
-#define	IP_NSTATS		32
+#define	IP_NSTATS		34
 
 #ifdef _KERNEL
 
