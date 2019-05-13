@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.71 2018/05/03 07:13:48 maxv Exp $	*/
+/*	$NetBSD: inet6.c,v 1.72 2019/05/13 07:48:42 ozaki-r Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.71 2018/05/03 07:13:48 maxv Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.72 2019/05/13 07:48:42 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -798,6 +798,8 @@ ip6_stats(u_long off, const char *name)
 
 	p1(IP6_STAT_FORWARD_CACHEHIT, "\t%llu forward cache hit\n");
 	p1(IP6_STAT_FORWARD_CACHEMISS, "\t%llu forward cache miss\n");
+	p(IP6_STAT_PFILDROP_IN, "\t%llu input packet%s dropped by pfil\n");
+	p(IP6_STAT_PFILDROP_OUT, "\t%llu output packet%s dropped by pfil\n");
 #undef p
 #undef p1
 }
