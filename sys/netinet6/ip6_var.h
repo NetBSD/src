@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.81 2018/11/29 09:51:21 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.82 2019/05/13 07:47:59 ozaki-r Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -186,8 +186,10 @@ struct	ip6_pktopts {
 #define	IP6_STAT_FASTFORWARD	400	/* packets fast forwarded */
 #define	IP6_STAT_FASTFORWARDFLOWS 401	/* number of fast forward flows */
 #define	IP6_STAT_NOIPSEC	402	/* no match ipsec(4) found */
+#define	IP6_STAT_PFILDROP_IN	403	/* dropped by pfil (PFIL_IN) */
+#define	IP6_STAT_PFILDROP_OUT	404	/* dropped by pfil (PFIL_OUT) */
 
-#define	IP6_NSTATS		403
+#define	IP6_NSTATS		405
 
 #define IP6FLOW_HASHBITS         6 /* should not be a multiple of 8 */
 
