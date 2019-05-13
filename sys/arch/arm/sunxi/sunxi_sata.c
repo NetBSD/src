@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_sata.c,v 1.1 2017/10/07 15:12:35 jmcneill Exp $ */
+/* $NetBSD: sunxi_sata.c,v 1.2 2019/05/13 16:55:17 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_sata.c,v 1.1 2017/10/07 15:12:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_sata.c,v 1.2 2019/05/13 16:55:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,8 +55,8 @@ sunxi_sata_channel_start(struct ahci_softc *sc, struct ata_channel *chp)
 	uint32_t val;
 
 	val = AHCI_READ(sc, dma_reg);
-	val &= ~0xff00;
-	val |= 0x4400;
+	val &= ~0xffff;
+	val |= 0x4433;
 	AHCI_WRITE(sc, dma_reg, val);
 }
 
