@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.47 2019/04/16 21:20:51 mrg Exp $
+# $NetBSD: shl.mi,v 1.48 2019/05/13 08:38:45 uki Exp $
 ./usr/libdata/debug/usr/X11R7/lib	-unknown-		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	obsolete		xorg,obsolete
@@ -59,7 +59,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libdrm.so.3.4.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_radeon.so.0.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libepoxy.so.0.0.debug	-unknown-		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libexpat.so.2.0.debug	-obsolete-		obsolete,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libexpat.so.2.0.debug	xdebug-obsolete		obsolete,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libfontconfig.so.2.3.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libfontenc.so.2.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libfreetype.so.18.16.1.debug	-unknown-		xorg,debug,compatx11file
