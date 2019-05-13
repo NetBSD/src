@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.142 2019/05/13 09:05:33 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.143 2019/05/13 12:42:24 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -3113,4 +3113,26 @@ sys/netinet6/nd6_nbr.c				1.163
 
 	inet6: discard any received NA with a LL address we own.
 	[roy, ticket #1262]
+
+sys/dev/mii/brgphy.c				1.84
+sys/dev/mii/ciphy.c				1.33 via patch
+sys/dev/mii/rgephy.c				1.53
+sys/arch/arm/imx/if_enet.c			1.18
+sys/arch/mips/adm5120/dev/if_admsw.c		1.19-1.20
+sys/dev/pci/if_bge.c				1.329
+sys/dev/pci/if_bnx.c				1.81
+sys/dev/pci/if_et.c				1.21
+sys/dev/pci/if_lii.c				1.22
+sys/dev/pci/if_msk.c				1.87
+sys/dev/pci/if_nfe.c				1.68
+sys/dev/pci/if_sk.c				1.95
+sys/dev/pci/if_ti.c				1.107
+sys/dev/pci/if_txp.c				1.52
+sys/dev/pci/if_vge.c				1.69
+sys/dev/usb/if_axen.c				1.38
+sys/dev/usb/if_aue.c				1.149
+
+	Fix a bug that the duplex of manual media setting may be wrong
+	when the IFM_GMASK bit other than IFM_[FH]DX is set.
+	[msaitoh, #1263]
 
