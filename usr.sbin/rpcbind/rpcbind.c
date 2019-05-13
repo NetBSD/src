@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.27 2019/01/03 19:26:50 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.28 2019/05/13 14:29:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009, Sun Microsystems, Inc.
@@ -635,11 +635,13 @@ init_transport(struct netconfig *nconf)
 			/* Let's snarf the universal address */
 			/* "h1.h2.h3.h4.p1.p2" */
 			udp_uaddr = taddr2uaddr(nconf, &taddr.addr);
-		}
+		} else if (strcmp(nconf->nc_netid, "local") == 0) {
 #ifdef IPPROTO_ST
-		else if (strcmp(nconf->nc_netid, "local") == 0)
 			pml->pml_map.pm_prot = IPPROTO_ST;
+#else
+			pml->pml_map.pm_prot = 0;
 #endif
+		}
 		pml->pml_next = list_pml;
 		list_pml = pml;
 
