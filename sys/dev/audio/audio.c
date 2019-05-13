@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.3 2019/05/11 03:26:43 maya Exp $	*/
+/*	$NetBSD: audio.c,v 1.4 2019/05/13 04:09:35 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.3 2019/05/11 03:26:43 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.4 2019/05/13 04:09:35 nakayama Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -928,12 +928,16 @@ audioattach(device_t parent, device_t self, void *aux)
 	memset(&pfil, 0, sizeof(pfil));
 	memset(&rfil, 0, sizeof(rfil));
 	mutex_enter(sc->sc_lock);
-	if (audio_hw_probe(sc, is_indep, &mode, &phwfmt, &rhwfmt) != 0) {
+	error = audio_hw_probe(sc, is_indep, &mode, &phwfmt, &rhwfmt);
+	if (error) {
 		mutex_exit(sc->sc_lock);
+		aprint_error_dev(self, "audio_hw_probe failed, "
+		    "error = %d\n", error);
 		goto bad;
 	}
 	if (mode == 0) {
 		mutex_exit(sc->sc_lock);
+		aprint_error_dev(self, "audio_hw_probe failed, no mode\n");
 		goto bad;
 	}
 	/* Init hardware. */
@@ -941,6 +945,8 @@ audioattach(device_t parent, device_t self, void *aux)
 	error = audio_hw_set_format(sc, mode, &phwfmt, &rhwfmt, &pfil, &rfil);
 	if (error) {
 		mutex_exit(sc->sc_lock);
+		aprint_error_dev(self, "audio_hw_set_format failed, "
+		    "error = %d\n", error);
 		goto bad;
 	}
 
@@ -950,8 +956,11 @@ audioattach(device_t parent, device_t self, void *aux)
 	 */
 	error = audio_mixers_init(sc, mode, &phwfmt, &rhwfmt, &pfil, &rfil);
 	mutex_exit(sc->sc_lock);
-	if (sc->sc_pmixer == NULL && sc->sc_rmixer == NULL)
+	if (sc->sc_pmixer == NULL && sc->sc_rmixer == NULL) {
+		aprint_error_dev(self, "audio_mixers_init failed, "
+		    "error = %d\n", error);
 		goto bad;
+	}
 
 	selinit(&sc->sc_wsel);
 	selinit(&sc->sc_rsel);
