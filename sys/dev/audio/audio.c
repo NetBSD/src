@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.4 2019/05/13 04:09:35 nakayama Exp $	*/
+/*	$NetBSD: audio.c,v 1.5 2019/05/13 04:11:04 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.4 2019/05/13 04:09:35 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.5 2019/05/13 04:11:04 nakayama Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -6149,17 +6149,23 @@ audio_hw_probe(struct audio_softc *sc, int is_indep, int *modep,
 	    "invalid mode = %x", mode);
 
 	if (is_indep) {
+		int errorp = 0, errorr = 0;
+
 		/* On independent devices, probe separately. */
 		if ((mode & AUMODE_PLAY) != 0) {
-			error = audio_hw_probe_fmt(sc, phwfmt, AUMODE_PLAY);
-			if (error)
+			errorp = audio_hw_probe_fmt(sc, phwfmt, AUMODE_PLAY);
+			if (errorp)
 				mode &= ~AUMODE_PLAY;
 		}
 		if ((mode & AUMODE_RECORD) != 0) {
-			error = audio_hw_probe_fmt(sc, rhwfmt, AUMODE_RECORD);
-			if (error)
+			errorr = audio_hw_probe_fmt(sc, rhwfmt, AUMODE_RECORD);
+			if (errorr)
 				mode &= ~AUMODE_RECORD;
 		}
+
+		/* Return error if both play and record probes failed. */
+		if (errorp && errorr)
+			error = errorp;
 	} else {
 		/* On non independent devices, probe simultaneously. */
 		error = audio_hw_probe_fmt(sc, &fmt, mode);
