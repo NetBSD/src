@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.59 2019/04/15 13:01:08 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.60 2019/05/13 08:16:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.59 2019/04/15 13:01:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.60 2019/05/13 08:16:56 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -383,7 +383,9 @@ fstrans_alloc_lwp_info(struct mount *mp)
 	fli->fli_mount = mp;
 	fli->fli_mountinfo = fmi;
 	fmi->fmi_ref_cnt += 1;
-	mp = mp->mnt_lower;
+	do {
+		mp = mp->mnt_lower;
+	} while (mp && mp->mnt_lower);
 	mutex_exit(&fstrans_mount_lock);
 
 	if (mp) {
