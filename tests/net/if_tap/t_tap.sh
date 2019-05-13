@@ -1,4 +1,4 @@
-#	$NetBSD: t_tap.sh,v 1.8 2018/03/22 09:21:24 ozaki-r Exp $
+#	$NetBSD: t_tap.sh,v 1.9 2019/05/13 17:55:08 bad Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -49,7 +49,7 @@ tap_create_destroy_head()
 tap_create_destroy_body()
 {
 
-	rump_server_start $SOCK_LOCAL netinet6 tap
+	rump_server_fs_start $SOCK_LOCAL netinet6 tap
 
 	test_create_destroy_common $SOCK_LOCAL tap0 true
 }
@@ -72,8 +72,8 @@ tap_create_destroy_head()
 tap_stand_alone_body()
 {
 
-	rump_server_start $SOCK_LOCAL netinet6 tap
-	rump_server_start $SOCK_REMOTE netinet6 tap
+	rump_server_fs_start $SOCK_LOCAL netinet6 tap
+	rump_server_fs_start $SOCK_REMOTE netinet6 tap
 
 	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
 	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS
@@ -131,8 +131,8 @@ tap_bridged_head()
 tap_bridged_body()
 {
 
-	rump_server_start $SOCK_LOCAL netinet6 tap bridge
-	rump_server_start $SOCK_REMOTE netinet6 tap
+	rump_server_fs_start $SOCK_LOCAL netinet6 tap bridge
+	rump_server_fs_start $SOCK_REMOTE netinet6 tap
 
 	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
 	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS
