@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1619 2019/05/08 18:00:16 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1620 2019/05/13 09:21:06 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -120,8 +120,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.10.8-P1/BSD	9.14.1/MPL
-Current Vers:			9.14.1/MPL
+Version:	9.14.1/MPL
+Current Vers:	9.14.1/MPL
 Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
@@ -470,7 +470,7 @@ Before importing a new version of external/gpl3/gcc:
 
 Package:	gdb
 Version:	8.0.1
-Current Vers:	8.2.1
+Current Vers:	8.3
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
