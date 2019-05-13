@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.13 2016/08/10 23:47:14 kre Exp $
+#	$NetBSD: t_sp.sh,v 1.14 2019/05/13 17:55:09 bad Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -73,7 +73,7 @@ stress()
 
 	export RUMP_SERVER=unix://commsock
 	atf_check -s exit:0 rump_server \
-	    -lrumpvfs -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpdev \
+	    -lrumpvfs -lrumpnet -lrumpnet_net -lrumpnet_netinet \
 	    ${RUMP_SERVER}
 	atf_check -s exit:0 -e ignore $(atf_get_srcdir)/h_client/h_stresscli $@
 }
@@ -82,7 +82,7 @@ fork()
 {
 
 	export RUMP_SERVER=unix://commsock
-	atf_check -s exit:0 rump_server -lrumpvfs -lrumpdev ${RUMP_SERVER}
+	atf_check -s exit:0 rump_server -lrumpvfs ${RUMP_SERVER}
 	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_forkcli ${1}
 }
 

@@ -1,4 +1,4 @@
-#       $NetBSD: t_exec.sh,v 1.9 2016/08/10 21:10:18 kre Exp $
+#       $NetBSD: t_exec.sh,v 1.10 2019/05/13 17:55:08 bad Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-rumpsrv='rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpdev -lrumpvfs'
+rumpsrv='rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet'
 export RUMP_SERVER=unix://csock
 export RUMPHIJACK_RETRYCONNECT='die'
 

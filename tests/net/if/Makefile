@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2017/02/14 08:43:06 ozaki-r Exp $
+# $NetBSD: Makefile,v 1.8 2019/05/13 17:55:08 bad Exp $
 #
 
 .include <bsd.own.mk>
@@ -16,6 +16,6 @@ MAN.ifconf=	# empty
 BINDIR.ifconf=	${TESTSDIR}
 
 LDADD.t_compat=		-lrumpnet_shmif -lrumpnet_netinet -lrumpnet_net -lrumpnet -lrump
-LDADD.t_compat+=	-lrumpuser -lrump -lpthread -lrumpdev -lrumpvfs
+LDADD.t_compat+=	-lrumpuser -lrump -lpthread
 
 .include <bsd.test.mk>

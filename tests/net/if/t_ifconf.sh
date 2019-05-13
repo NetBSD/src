@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconf.sh,v 1.3 2016/08/10 22:30:02 kre Exp $
+# $NetBSD: t_ifconf.sh,v 1.4 2019/05/13 17:55:08 bad Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,7 +28,7 @@
 RUMP_SERVER1=unix://./r1
 
 RUMP_FLAGS=\
-"-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif -lrumpdev"
+"-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
 
 atf_test_case basic cleanup
 basic_head()
