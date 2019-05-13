@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.253 2019/04/29 11:57:22 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.254 2019/05/13 02:03:07 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.253 2019/04/29 11:57:22 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.254 2019/05/13 02:03:07 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1794,9 +1794,9 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 
 			if (duplicated_linklocal) {
 				ND.flags |= ND6_IFF_IFDISABLED;
-				log(LOG_ERR, "Cannot enable an interface"
+				log(LOG_ERR, "%s: Cannot enable an interface"
 				    " with a link-local address marked"
-				    " duplicate.\n");
+				    " duplicate.\n", if_name(ifp));
 			} else {
 				ND_IFINFO(ifp)->flags &= ~ND6_IFF_IFDISABLED;
 				if (ifp->if_flags & IFF_UP)
