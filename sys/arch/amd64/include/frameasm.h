@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.20.32.3 2018/04/14 10:11:49 martin Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.20.32.4 2019/05/14 17:12:19 martin Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -42,6 +42,7 @@
 #define HP_NAME_SVS_LEAVE	6
 #define HP_NAME_SVS_ENTER_ALT	7
 #define HP_NAME_SVS_LEAVE_ALT	8
+#define HP_NAME_MDS_LEAVE	13
 
 #define HOTPATCH(name, size) \
 123:						; \
@@ -58,6 +59,18 @@
 #define SMAP_DISABLE \
 	HOTPATCH(HP_NAME_STAC, 3)		; \
 	.byte 0x0F, 0x1F, 0x00			; \
+
+/*
+ * MDS
+ */
+
+#define MDS_LEAVE_BYTES	20
+#define MDS_LEAVE \
+	HOTPATCH(HP_NAME_MDS_LEAVE, MDS_LEAVE_BYTES)		; \
+	NOMDS_LEAVE
+#define NOMDS_LEAVE \
+	.byte 0xEB, (MDS_LEAVE_BYTES-2)	/* jmp */		; \
+	.fill	(MDS_LEAVE_BYTES-2),1,0xCC
 
 #define	SWAPGS	NOT_XEN(swapgs)
 
