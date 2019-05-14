@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.247 2017/05/21 15:28:38 riastradh Exp $
+# $NetBSD: mi,v 1.247.2.1 2019/05/14 11:33:42 martin Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -283,6 +283,7 @@
 ./etc/rc.d/screenblank				etc-sys-rc
 ./etc/rc.d/sdpd					etc-obsolete		obsolete
 ./etc/rc.d/securelevel				etc-sys-rc
+./etc/rc.d/smtoff				etc-sys-rc
 ./etc/rc.d/sshd					etc-secsh-rc
 ./etc/rc.d/staticroute				etc-sys-rc
 ./etc/rc.d/swap1				etc-sys-rc

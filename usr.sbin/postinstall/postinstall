@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.214.4.1 2017/07/10 13:06:45 martin Exp $
+# $NetBSD: postinstall,v 1.214.4.2 2019/05/14 11:33:43 martin Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1457,6 +1457,7 @@ rwho
 savecore
 screenblank
 securelevel
+smtoff
 sshd
 staticroute
 swap1

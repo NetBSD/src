@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.166 2016/12/17 07:44:59 maya Exp $
+.\"	$NetBSD: rc.conf.5,v 1.166.6.1 2019/05/14 11:33:43 martin Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 17, 2016
+.Dd May 14, 2019
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -621,6 +621,9 @@ A string.
 Flags to pass to the
 .Nm veriexecctl
 command.
+.It Sy smtoff
+Boolean value.
+Disables SMT (Simultaneous Multi-Threading).
 .El
 .Ss Networking startup
 .Bl -tag -width net_interfaces

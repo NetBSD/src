@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.95 2017/01/05 14:39:09 christos Exp $
+# $NetBSD: Makefile,v 1.95.6.1 2019/05/14 11:33:42 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -35,7 +35,7 @@ CONFIGFILES=\
 		racoon rpcbind raidframe raidframeparity random_seed rarpd \
 		rbootd resize_root rndctl root route6d routed rtadvd \
 		rtclocaltime rwho \
-		savecore screenblank securelevel sshd \
+		savecore screenblank securelevel smtoff sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
 		veriexec virecover wdogctl wpa_supplicant wscons wsmoused \
