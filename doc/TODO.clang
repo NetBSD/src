@@ -1,4 +1,4 @@
-$NetBSD: TODO.clang,v 1.21 2019/05/08 01:08:18 christos Exp $
+$NetBSD: TODO.clang,v 1.22 2019/05/14 19:24:09 christos Exp $
 
 Hacks for the clang integration
 -------------------------------
@@ -25,4 +25,10 @@ src/external/mit/xorg/lib/gallium
 
 src/external/mpl/bind/
     has atomic alignment issues 
+
+src/external/bsd/jemalloc/include/jemalloc/internal/jemalloc_internal_defs.h
+    hack around tls_model("initial_exec") on powerpc
+
+src/tests/libexec/ld.elf_so/Makefile.inc
+    use -msecure-plt on powerpc for ifuncs
 
