@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.180 2019/03/09 08:42:25 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.181 2019/05/14 16:59:25 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1483,6 +1483,7 @@ IDTVEC_END(osyscall)
 	TEXT_USER_BEGIN
 	_ALIGN_TEXT
 LABEL(syscall_sysret)
+	MDS_LEAVE
 	SVS_LEAVE
 	IBRS_LEAVE
 	INTR_RESTORE_GPRS
@@ -1574,6 +1575,7 @@ END(pagezero)
 	_ALIGN_TEXT
 LABEL(intrfastexit)
 	NOT_XEN(cli;)
+	MDS_LEAVE
 	SVS_LEAVE
 	IBRS_LEAVE
 	INTR_RESTORE_GPRS
@@ -1721,3 +1723,18 @@ LABEL(noibrs_enter_end)
 LABEL(noibrs_leave)
 	NOIBRS_LEAVE
 LABEL(noibrs_leave_end)
+
+	.globl	mds_leave, mds_leave_end
+
+LABEL(mds_leave)
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1234f
+	pushq	$GSEL(GDATA_SEL, SEL_KPL)
+	verw	(%rsp)
+	addq	$8,%rsp
+1234:
+LABEL(mds_leave_end)
+
+LABEL(nomds_leave)
+	NOMDS_LEAVE
+LABEL(nomds_leave_end)
