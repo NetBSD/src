@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98.2.11 2019/02/12 09:27:17 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98.2.12 2019/05/14 17:12:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -426,6 +426,7 @@
 /* %edx */
 #define CPUID_SEF_AVX512_4VNNIW	__BIT(2)
 #define CPUID_SEF_AVX512_4FMAPS	__BIT(3)
+#define CPUID_SEF_MD_CLEAR	__BIT(10)
 #define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
 #define CPUID_SEF_L1D_FLUSH	__BIT(28) /* IA32_FLUSH_CMD MSR */
@@ -745,6 +746,7 @@
 #define 	IA32_ARCH_RSBA		0x04
 #define 	IA32_ARCH_SKIP_L1DFL_VMENTRY 0x08
 #define 	IA32_ARCH_SSB_NO	0x10
+#define 	IA32_ARCH_MDS_NO	0x20
 #define MSR_IA32_FLUSH_CMD 0x10b
 #define 	IA32_FLUSH_CMD_L1D_FLUSH 0x01
 #define MSR_BBL_CR_ADDR		0x116	/* PII+ only */
