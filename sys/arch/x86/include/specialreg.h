@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.144 2019/05/14 16:59:26 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.145 2019/05/14 18:11:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -437,6 +437,7 @@
 
 #define CPUID_SEF_FLAGS2	"\20" \
 				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
+				"\13" "MD_CLEAR"			\
 			"\16" "TSX_FORCE_ABORT"				\
 	"\33" "IBRS"	"\34" "STIBP"					\
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP" "\37CORE_CAP"	"\40" "SSBD"
