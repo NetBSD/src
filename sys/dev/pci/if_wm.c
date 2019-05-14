@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.31 2019/03/07 17:11:53 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.32 2019/05/14 11:40:41 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.31 2019/03/07 17:11:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.32 2019/05/14 11:40:41 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3321,7 +3321,6 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 	switch (cmd) {
 	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
 		WM_CORE_LOCK(sc);
 		/* Flow control requires full-duplex mode. */
 		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
