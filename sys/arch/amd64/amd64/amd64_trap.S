@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.46 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.47 2019/05/14 16:59:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -281,6 +281,7 @@ IDTVEC(trap02)
 	call	_C_LABEL(nmitrap)
 
 .Lnmileave:
+	MDS_LEAVE
 	SVS_LEAVE_NMI
 	IBRS_LEAVE
 	INTR_RESTORE_GPRS
@@ -369,6 +370,7 @@ IDTVEC(trap08)
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(doubletrap)
 
+	MDS_LEAVE
 	SVS_LEAVE_ALTSTACK
 	IBRS_LEAVE
 	INTR_RESTORE_GPRS
