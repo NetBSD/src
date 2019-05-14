@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.143 2019/05/13 12:42:24 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.144 2019/05/14 11:44:32 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -3135,4 +3135,43 @@ sys/dev/usb/if_aue.c				1.149
 	Fix a bug that the duplex of manual media setting may be wrong
 	when the IFM_GMASK bit other than IFM_[FH]DX is set.
 	[msaitoh, #1263]
+
+sys/arch/arm/sunxi/sunxi_sata.c			1.2 (via patch)
+	(applied to sys/arm/allwinner/awin_ahcisata.c)
+
+	Use new magic values from linux for DMACR.
+	[bouyer, ticket #1264]
+
+distrib/sets/lists/etc/mi			1.258
+etc/defaults/rc.conf				1.148
+etc/mtree/special				1.167
+etc/rc.d/Makefile				1.103,1.104
+etc/rc.d/smtoff					1.1-1.4
+share/man/man5/rc.conf.5			1.180
+usr.sbin/postinstall/postinstall		1.226
+
+	Add smtoff, an rc.d script that disables Simultaneous Multi-Threading.
+	[maxv, ticket #1265]
+
+sys/net/if_media.c				1.42 (patch)
+
+	Add missing error check.
+	[msaitoh, ticket #1266]
+
+sys/arch/arm/imx/if_enet.c			1.19
+sys/dev/pci/if_wm.c				1.634
+
+	SIOCS is 'S'et function and the ioctl argument is ifreq.
+	SIOCG is 'G'et function and the ioctl argument is ifmediareq.
+	Before this change, SIOCG modify sc->sc_flowflags unexpectedly.
+	Don't hook SIOCGIFMEDIA because this driver uses MII(4) and
+	ether_ioctl has	the hook(if_ethersubr.c rev. 1.160).
+	[msaitoh, ticket #1267]
+
+sys/dev/pci/if_alc.c				1.33,1.34
+
+	Fix a wrong and extra ether_ioctl() call in alc_ioctl().
+	Add ether_ioctl() call for SIOCSIFADDR and SIOCSIFFLAGS to make
+	behavior the same as before.
+	[msaitoh, ticket #1268]
 
