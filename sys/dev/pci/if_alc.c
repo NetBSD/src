@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.24.8.2 2018/07/26 23:55:30 snj Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.24.8.3 2019/05/14 11:43:23 martin Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2036,15 +2036,16 @@ alc_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	error = ether_ioctl(ifp, cmd, data);
 	switch (cmd) {
 	case SIOCSIFADDR:
+		error = ether_ioctl(ifp, cmd, data);
 		ifp->if_flags |= IFF_UP;
 		if (!(ifp->if_flags & IFF_RUNNING))
 			alc_init(ifp);
 		break;
- 
+
 	case SIOCSIFFLAGS:
+		error = ether_ioctl(ifp, cmd, data);
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
 				error = ENETRESET;
@@ -2060,7 +2061,7 @@ alc_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
 		break;
- 
+
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		break;
