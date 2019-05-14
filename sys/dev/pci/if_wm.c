@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.634 2019/04/24 11:18:20 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.635 2019/05/14 09:43:55 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.634 2019/04/24 11:18:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.635 2019/05/14 09:43:55 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3319,7 +3319,7 @@ wm_ifflags_cb(struct ethercom *ec)
 	}
 
 	/* iff related updates */
-	if ((iffchange & (IFF_PROMISC | IFF_ALLMULTI)) != 0)
+	if ((iffchange & IFF_PROMISC) != 0)
 		wm_set_filter(sc);
 
 	wm_set_vlan(sc);
