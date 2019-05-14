@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.32.6.2 2018/01/02 10:20:33 snj Exp $	*/
+/*	$NetBSD: if_media.c,v 1.32.6.3 2019/05/14 11:37:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.32.6.2 2018/01/02 10:20:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.32.6.3 2019/05/14 11:37:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,6 +335,9 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 			    : nwords;
 			int *kptr = (int *)malloc(minwords * sizeof(int),
 			    M_TEMP, M_WAITOK);
+
+			if (kptr == NULL)
+				return ENOMEM;
 			/*
 			 * Get the media words from the interface's list.
 			 */
