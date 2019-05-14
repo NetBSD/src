@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.10.8.1 2019/05/13 12:40:13 martin Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.10.8.2 2019/05/14 11:40:41 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.10.8.1 2019/05/13 12:40:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.10.8.2 2019/05/14 11:40:41 martin Exp $");
 
 #include "vlan.h"
 
@@ -1036,7 +1036,6 @@ enet_ioctl(struct ifnet *ifp, u_long command, void *data)
 		}
 		break;
 	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
 		/* Flow control requires full-duplex mode. */
 		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
 		    (ifr->ifr_media & IFM_FDX) == 0)
