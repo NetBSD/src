@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.26 2019/04/27 10:40:17 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.27 2019/05/14 16:59:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.26 2019/04/27 10:40:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.27 2019/05/14 16:59:26 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -549,6 +549,226 @@ sysctl_machdep_spectreV4_mitigated(SYSCTLFN_ARGS)
 
 /* -------------------------------------------------------------------------- */
 
+enum mds_mitigation {
+	MDS_MITIGATION_NONE,
+	MDS_MITIGATION_VERW,
+	MDS_MITIGATION_MDS_NO
+};
+
+static char mds_mitigation_name[64] = "(none)";
+
+static enum mds_mitigation mds_mitigation_method = MDS_MITIGATION_NONE;
+static bool mds_mitigation_enabled __read_mostly = false;
+
+static volatile unsigned long mds_cpu_barrier1 __cacheline_aligned;
+static volatile unsigned long mds_cpu_barrier2 __cacheline_aligned;
+
+#ifdef __x86_64__
+static void
+mds_disable_hotpatch(void)
+{
+	extern uint8_t nomds_leave, nomds_leave_end;
+	u_long psl, cr0;
+	uint8_t *bytes;
+	size_t size;
+
+	x86_patch_window_open(&psl, &cr0);
+
+	bytes = &nomds_leave;
+	size = (size_t)&nomds_leave_end - (size_t)&nomds_leave;
+	x86_hotpatch(HP_NAME_MDS_LEAVE, bytes, size);
+
+	x86_patch_window_close(psl, cr0);
+}
+
+static void
+mds_enable_hotpatch(void)
+{
+	extern uint8_t mds_leave, mds_leave_end;
+	u_long psl, cr0;
+	uint8_t *bytes;
+	size_t size;
+
+	x86_patch_window_open(&psl, &cr0);
+
+	bytes = &mds_leave;
+	size = (size_t)&mds_leave_end - (size_t)&mds_leave;
+	x86_hotpatch(HP_NAME_MDS_LEAVE, bytes, size);
+
+	x86_patch_window_close(psl, cr0);
+}
+#else
+/* MDS not supported on i386 */
+static void
+mds_disable_hotpatch(void)
+{
+	panic("%s: impossible", __func__);
+}
+static void
+mds_enable_hotpatch(void)
+{
+	panic("%s: impossible", __func__);
+}
+#endif
+
+static void
+mitigation_mds_apply_cpu(struct cpu_info *ci, bool enabled)
+{
+	switch (mds_mitigation_method) {
+	case MDS_MITIGATION_NONE:
+	case MDS_MITIGATION_MDS_NO:
+		panic("impossible");
+	case MDS_MITIGATION_VERW:
+		/* cpu0 is the one that does the hotpatch job */
+		if (ci == &cpu_info_primary) {
+			if (enabled) {
+				mds_enable_hotpatch();
+			} else {
+				mds_disable_hotpatch();
+			}
+		}
+		break;
+	}
+}
+
+static void
+mitigation_mds_change_cpu(void *arg1, void *arg2)
+{
+	struct cpu_info *ci = curcpu();
+	bool enabled = (bool)arg1;
+	u_long psl = 0;
+
+	/* Rendez-vous 1. */
+	psl = x86_read_psl();
+	x86_disable_intr();
+
+	atomic_dec_ulong(&mds_cpu_barrier1);
+	while (atomic_cas_ulong(&mds_cpu_barrier1, 0, 0) != 0) {
+		x86_pause();
+	}
+
+	mitigation_mds_apply_cpu(ci, enabled);
+
+	/* Rendez-vous 2. */
+	atomic_dec_ulong(&mds_cpu_barrier2);
+	while (atomic_cas_ulong(&mds_cpu_barrier2, 0, 0) != 0) {
+		x86_pause();
+	}
+
+	/* Write back and invalidate cache, flush pipelines. */
+	wbinvd();
+	x86_flush();
+
+	x86_write_psl(psl);
+}
+
+static void
+mds_detect_method(void)
+{
+	u_int descs[4];
+	uint64_t msr;
+
+	if (cpu_vendor != CPUVENDOR_INTEL) {
+		mds_mitigation_method = MDS_MITIGATION_MDS_NO;
+		return;
+	}
+
+	x86_cpuid(0x7, descs);
+	if (descs[3] & CPUID_SEF_ARCH_CAP) {
+		msr = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
+		if (msr & IA32_ARCH_MDS_NO) {
+			mds_mitigation_method = MDS_MITIGATION_MDS_NO;
+			return;
+		}
+	}
+
+#ifdef __x86_64__
+	if (descs[3] & CPUID_SEF_MD_CLEAR) {
+		mds_mitigation_method = MDS_MITIGATION_VERW;
+	}
+#endif
+}
+
+static void
+mds_set_name(void)
+{
+	char name[64] = "";
+
+	if (!mds_mitigation_enabled) {
+		strlcat(name, "(none)", sizeof(name));
+	} else {
+		switch (mds_mitigation_method) {
+		case MDS_MITIGATION_NONE:
+			panic("%s: impossible", __func__);
+		case MDS_MITIGATION_MDS_NO:
+			strlcat(name, "[MDS_NO]", sizeof(name));
+			break;
+		case MDS_MITIGATION_VERW:
+			strlcat(name, "[VERW]", sizeof(name));
+			break;
+		}
+	}
+
+	strlcpy(mds_mitigation_name, name,
+	    sizeof(mds_mitigation_name));
+}
+
+static int
+mitigation_mds_change(bool enabled)
+{
+	uint64_t xc;
+
+	mds_detect_method();
+
+	switch (mds_mitigation_method) {
+	case MDS_MITIGATION_NONE:
+		printf("[!] No mitigation available\n");
+		return EOPNOTSUPP;
+	case MDS_MITIGATION_VERW:
+		/* Initialize the barriers */
+		mds_cpu_barrier1 = ncpu;
+		mds_cpu_barrier2 = ncpu;
+
+		printf("[+] %s MDS Mitigation...",
+		    enabled ? "Enabling" : "Disabling");
+		xc = xc_broadcast(XC_HIGHPRI, mitigation_mds_change_cpu,
+		    (void *)enabled, NULL);
+		xc_wait(xc);
+		printf(" done!\n");
+		mds_mitigation_enabled = enabled;
+		mds_set_name();
+		return 0;
+	case MDS_MITIGATION_MDS_NO:
+		printf("[+] The CPU is not affected by MDS\n");
+		return 0;
+	default:
+		panic("impossible");
+	}
+}
+
+static int
+sysctl_machdep_mds_mitigated(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error;
+	bool val;
+
+	val = *(bool *)rnode->sysctl_data;
+
+	node = *rnode;
+	node.sysctl_data = &val;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	if (val == mds_mitigation_enabled)
+		return 0;
+	return mitigation_mds_change(val);
+}
+
+/* -------------------------------------------------------------------------- */
+
 void speculation_barrier(struct lwp *, struct lwp *);
 
 void
@@ -628,6 +848,23 @@ cpu_speculation_init(struct cpu_info *ci)
 		}
 	}
 #endif
+
+	/*
+	 * Microarchectural Data Sampling.
+	 *
+	 * cpu0 is the one that detects the method and sets the global
+	 * variable.
+	 */
+	if (ci == &cpu_info_primary) {
+		mds_detect_method();
+		mds_mitigation_enabled =
+		    (mds_mitigation_method != MDS_MITIGATION_NONE);
+		mds_set_name();
+	}
+	if (mds_mitigation_method != MDS_MITIGATION_NONE &&
+	    mds_mitigation_method != MDS_MITIGATION_MDS_NO) {
+		mitigation_mds_apply_cpu(ci, true);
+	}
 }
 
 void sysctl_speculation_init(struct sysctllog **);
@@ -704,5 +941,27 @@ sysctl_speculation_init(struct sysctllog **clog)
 		       SYSCTL_DESCR("Mitigation method in use"),
 		       NULL, 0,
 		       v4_mitigation_name, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	/* Microarchitectural Data Sampling */
+	spec_rnode = NULL;
+	sysctl_createv(clog, 0, NULL, &spec_rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "mds", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE);
+	sysctl_createv(clog, 0, &spec_rnode, NULL,
+		       CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "mitigated",
+		       SYSCTL_DESCR("Whether MDS is mitigated"),
+		       sysctl_machdep_mds_mitigated, 0,
+		       &mds_mitigation_enabled, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &spec_rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "method",
+		       SYSCTL_DESCR("Mitigation method in use"),
+		       NULL, 0,
+		       mds_mitigation_name, 0,
 		       CTL_CREATE, CTL_EOL);
 }
