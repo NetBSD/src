@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.535.2.3 2018/07/17 14:54:09 martin Exp $
+.\"	$NetBSD: main,v 1.535.2.4 2019/05/14 17:18:20 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd July 17, 2018
+.Dd May 13, 2019
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -480,44 +480,21 @@ possible,
 would not exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss "Dedication"
 .Pp
-.
-.Nx
-8.0 is dedicated to the memory of Nicolas Joly, who
-passed away in June 2017.
-.Pp
-Nicolas' technical contributions are too many to list here in full.
-He commited more than 1000 changes all over the
-.Nx
-source tree and pkgsrc.
-.Pp
-Beyond that he was always helpful and friendly. His
-example encouraged users to contribute to the project and share their
-work with the community.
-.Pp
-.Ss Changes Between The NetBSD 7.0 and 8.0 Releases
+.Ss Changes Between The NetBSD 8.0 and 8.1 Releases
 .Pp
 The
 .Nx
 \*V release
-provides many significant changes, including support for many new
-devices, hundreds of bug fixes, new and updated kernel subsystems, and
-numerous userland enhancements.
-The result of these improvements is a stable operating system fit for
-production use that rivals most commercially available systems.
-.Pp
-It is impossible to completely summarize the massive development that
-went into the
-.Nx
-\*V release.
+is the first security/critical update of the NetBSD 8 release branch.
+It represents a selected subset of fixes deemed important for
+security or stability reasons.
 The complete list of changes can be found in the
-CHANGES:
-.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.0/CHANGES
-and
-CHANGES-8.0:
-.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.0/CHANGES-8.0
-files in the top level directory of the NetBSD 8.0 release tree.
+CHANGES-8.1:
+.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.1_RC1/CHANGES-8.1
+file in the top level directory of the NetBSD
+\*V release
+tree.
 .Pp
 The release anouncements, status, updates and links to other resources
 can be found at
@@ -588,6 +565,8 @@ The root directory of the
 Changes between the 7.0 and 8.0 releases.
 .It Li CHANGES-8.0
 Changes between the initial 8.0 branch and final release of 8.0.
+.It Li CHANGES-8.1
+Changes between the 8.0 release and the 8.1 release.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
