@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.160 2017/02/20 13:45:43 christos Exp $
+#	$NetBSD: special,v 1.160.4.1 2019/05/14 11:33:43 martin Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -281,6 +281,7 @@
 ./etc/rc.d/savecore		type=file mode=0555
 ./etc/rc.d/screenblank		type=file mode=0555
 ./etc/rc.d/securelevel		type=file mode=0555
+./etc/rc.d/smtoff		type=file mode=0555
 ./etc/rc.d/sshd			type=file mode=0555
 ./etc/rc.d/staticroute		type=file mode=0555
 ./etc/rc.d/swap1		type=file mode=0555
