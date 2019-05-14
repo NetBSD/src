@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.181 2019/05/13 05:04:17 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.182 2019/05/14 09:43:55 ozaki-r Exp $ */
 
 /******************************************************************************
 
@@ -6163,7 +6163,7 @@ ixgbe_ifflags_cb(struct ethercom *ec)
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		rc = ENETRESET;
-	else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) != 0)
+	else if ((change & IFF_PROMISC) != 0)
 		ixgbe_set_promisc(adapter);
 
 	/* Set up VLAN support and filter */
