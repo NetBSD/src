@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.59 2019/01/07 22:00:32 jdolecek Exp $ */
+/*	$NetBSD: param.h,v 1.60 2019/05/15 16:59:10 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -224,8 +224,10 @@ extern int nbpg, pgofset, pgshift;
 #ifdef _KERNEL
 #ifndef _LOCORE
 
+#ifndef __HIDE_DELAY
 extern void	delay(unsigned int);
 #define	DELAY(n)	delay(n)
+#endif /* __HIDE_DELAY */
 
 #ifdef	__arch64__
 /* If we're using a 64-bit kernel use 64-bit math */
