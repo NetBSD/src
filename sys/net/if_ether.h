@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.77 2019/03/05 08:25:03 msaitoh Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.78 2019/05/15 02:56:48 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -189,6 +189,8 @@ struct ethercom {
 	 */
 	ether_cb_t				ec_ifflags_cb;
 	kmutex_t				*ec_lock;
+	/* Flags used only by the kernel */
+	int					ec_flags;
 #ifdef MBUFTRACE
 	struct	mowner ec_rx_mowner;		/* mbufs received */
 	struct	mowner ec_tx_mowner;		/* mbufs transmitted */
@@ -225,6 +227,12 @@ struct ether_multi_sysctl {
 };
 
 #ifdef	_KERNEL
+/*
+ * Flags for ec_flags
+ */
+/* Store IFF_ALLMULTI in ec_flags instead of if_flags to avoid data races. */
+#define ETHER_F_ALLMULTI	__BIT(0)
+
 extern const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN];
 extern const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
