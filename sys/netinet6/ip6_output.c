@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.219 2019/05/13 07:47:59 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.220 2019/05/15 02:59:18 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.219 2019/05/13 07:47:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.220 2019/05/15 02:59:18 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2535,9 +2535,7 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		 * Everything looks good; add a new record to the multicast
 		 * address list for the given interface.
 		 */
-		IFNET_LOCK(ifp);
 		imm = in6_joingroup(ifp, &ia, &error, 0);
-		IFNET_UNLOCK(ifp);
 		if (imm == NULL)
 			goto put_break;
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm, i6mm_chain);
@@ -2548,7 +2546,6 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 	    }
 
 	case IPV6_LEAVE_GROUP: {
-		struct ifnet *in6m_ifp;
 		/*
 		 * Drop a multicast group membership.
 		 * Group must be a valid IP6 multicast address.
@@ -2630,11 +2627,8 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		 * membership points.
 		 */
 		LIST_REMOVE(imm, i6mm_chain);
-		in6m_ifp = imm->i6mm_maddr->in6m_ifp;
-		IFNET_LOCK(in6m_ifp);
 		in6_leavegroup(imm);
 		/* in6m_ifp should not leave thanks to in6p_lock */
-		IFNET_UNLOCK(in6m_ifp);
 		break;
 	    }
 
@@ -2715,15 +2709,8 @@ ip6_freemoptions(struct ip6_moptions *im6o)
 
 	/* The owner of im6o (in6p) should be protected by solock */
 	LIST_FOREACH_SAFE(imm, &im6o->im6o_memberships, i6mm_chain, nimm) {
-		struct ifnet *ifp;
-
 		LIST_REMOVE(imm, i6mm_chain);
-
-		ifp = imm->i6mm_maddr->in6m_ifp;
-		IFNET_LOCK(ifp);
 		in6_leavegroup(imm);
-		/* ifp should not leave thanks to solock */
-		IFNET_UNLOCK(ifp);
 	}
 	free(im6o, M_IPMOPTS);
 }

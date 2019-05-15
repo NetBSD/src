@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.182 2018/02/27 14:44:10 maxv Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.183 2019/05/15 02:59:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.182 2018/02/27 14:44:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.183 2019/05/15 02:59:18 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -779,9 +779,7 @@ in_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 		}
 
 		/* IFNET_LOCK must be taken after solock */
-		IFNET_LOCK(ifp);
 		in_purgeifmcast(inp->inp_moptions, ifp);
-		IFNET_UNLOCK(ifp);
 
 		if (need_unlock)
 			inp_unlock(inp);
