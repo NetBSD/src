@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.182 2019/05/14 09:43:55 ozaki-r Exp $ */
+/* $NetBSD: ixgbe.c,v 1.183 2019/05/15 02:56:47 ozaki-r Exp $ */
 
 /******************************************************************************
 
@@ -3017,10 +3017,10 @@ ixgbe_set_promisc(struct adapter *adapter)
 	KASSERT(mutex_owned(&adapter->core_mtx));
 	rctl = IXGBE_READ_REG(&adapter->hw, IXGBE_FCTRL);
 	rctl &= (~IXGBE_FCTRL_UPE);
-	if (ifp->if_flags & IFF_ALLMULTI)
+	ETHER_LOCK(ec);
+	if (ec->ec_flags & ETHER_F_ALLMULTI)
 		mcnt = MAX_NUM_MULTICAST_ADDRESSES;
 	else {
-		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (mcnt == MAX_NUM_MULTICAST_ADDRESSES)
@@ -3028,7 +3028,6 @@ ixgbe_set_promisc(struct adapter *adapter)
 			mcnt++;
 			ETHER_NEXT_MULTI(step, enm);
 		}
-		ETHER_UNLOCK(ec);
 	}
 	if (mcnt < MAX_NUM_MULTICAST_ADDRESSES)
 		rctl &= (~IXGBE_FCTRL_MPE);
@@ -3037,11 +3036,12 @@ ixgbe_set_promisc(struct adapter *adapter)
 	if (ifp->if_flags & IFF_PROMISC) {
 		rctl |= (IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, rctl);
-	} else if (ifp->if_flags & IFF_ALLMULTI) {
+	} else if (ec->ec_flags & ETHER_F_ALLMULTI) {
 		rctl |= IXGBE_FCTRL_MPE;
 		rctl &= ~IXGBE_FCTRL_UPE;
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, rctl);
 	}
+	ETHER_UNLOCK(ec);
 } /* ixgbe_set_promisc */
 
 /************************************************************************
@@ -4354,14 +4354,14 @@ ixgbe_set_multi(struct adapter *adapter)
 	mta = adapter->mta;
 	bzero(mta, sizeof(*mta) * MAX_NUM_MULTICAST_ADDRESSES);
 
-	ifp->if_flags &= ~IFF_ALLMULTI;
 	ETHER_LOCK(ec);
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if ((mcnt == MAX_NUM_MULTICAST_ADDRESSES) ||
 		    (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			ETHER_ADDR_LEN) != 0)) {
-			ifp->if_flags |= IFF_ALLMULTI;
+			ec->ec_flags |= ETHER_F_ALLMULTI;
 			break;
 		}
 		bcopy(enm->enm_addrlo,
@@ -4370,15 +4370,15 @@ ixgbe_set_multi(struct adapter *adapter)
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
-	ETHER_UNLOCK(ec);
 
 	fctrl = IXGBE_READ_REG(&adapter->hw, IXGBE_FCTRL);
 	fctrl &= ~(IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
 	if (ifp->if_flags & IFF_PROMISC)
 		fctrl |= (IXGBE_FCTRL_UPE | IXGBE_FCTRL_MPE);
-	else if (ifp->if_flags & IFF_ALLMULTI) {
+	else if (ec->ec_flags & ETHER_F_ALLMULTI) {
 		fctrl |= IXGBE_FCTRL_MPE;
 	}
+	ETHER_UNLOCK(ec);
 
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_FCTRL, fctrl);
 
