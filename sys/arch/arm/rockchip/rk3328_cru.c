@@ -1,4 +1,4 @@
-/* $NetBSD: rk3328_cru.c,v 1.4 2018/08/12 16:48:04 jmcneill Exp $ */
+/* $NetBSD: rk3328_cru.c,v 1.5 2019/05/15 01:24:43 mrg Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.4 2018/08/12 16:48:04 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.5 2019/05/15 01:24:43 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -147,6 +147,7 @@ static const char * mux_uart1_parents[] = { "clk_uart1_div", "clk_uart1_frac", "
 static const char * mux_uart2_parents[] = { "clk_uart2_div", "clk_uart2_frac", "xin24m" };
 static const char * mux_mac2io_src_parents[] = { "clk_mac2io_src", "gmac_clkin" };
 static const char * mux_mac2io_ext_parents[] = { "clk_mac2io", "gmac_clkin" };
+static const char * mux_clk_tsadc_parents[] = { "clk_24m" };
 static const char * mux_2plls_parents[] = { "cpll", "gpll" };
 static const char * mux_2plls_hdmiphy_parents[] = { "cpll", "gpll", "dummy_hdmiphy" };
 static const char * comp_uart_parents[] = { "cpll", "gpll", "usb480m" };
@@ -329,6 +330,15 @@ static struct rk_cru_clk rk3328_cru_clks[] = {
 		     CLKGATE_CON(2),	/* gate_reg */
 		     __BIT(12),		/* gate_mask */
 		     0),
+	RK_COMPOSITE(RK3328_SCLK_TSADC, "clk_tsadc", mux_clk_tsadc_parents,
+		     CLKSEL_CON(22),	/* muxdiv_reg */
+		     0,			/* mux_mask */
+		     __BITS(9,0),	/* div_mask */
+		     CLKGATE_CON(2),	/* gate_reg */
+		     __BIT(6),		/* gate_mask */
+		     0),
+
+	RK_DIV(0, "clk_24m", "xin24m", CLKSEL_CON(2), __BITS(12,8), 0),
 
 	RK_GATE(0, "apll_core", "apll", CLKGATE_CON(0), 0),
 	RK_GATE(0, "dpll_core", "dpll", CLKGATE_CON(0), 1),
@@ -351,6 +361,7 @@ static struct rk_cru_clk rk3328_cru_clks[] = {
 	RK_GATE(RK3328_PCLK_UART0, "pclk_uart0", "pclk_bus", CLKGATE_CON(16), 11),
 	RK_GATE(RK3328_PCLK_UART1, "pclk_uart1", "pclk_bus", CLKGATE_CON(16), 12),
 	RK_GATE(RK3328_PCLK_UART2, "pclk_uart2", "pclk_bus", CLKGATE_CON(16), 13),
+	RK_GATE(RK3328_PCLK_TSADC, "pclk_tsadc", "pclk_bus", CLKGATE_CON(16), 14),
 	RK_GATE(RK3328_SCLK_MAC2IO_REF, "clk_mac2io_ref", "clk_mac2io", CLKGATE_CON(9), 7),
 	RK_GATE(RK3328_SCLK_MAC2IO_RX, "clk_mac2io_rx", "clk_mac2io", CLKGATE_CON(9), 4),
 	RK_GATE(RK3328_SCLK_MAC2IO_TX, "clk_mac2io_tx", "clk_mac2io", CLKGATE_CON(9), 5),
