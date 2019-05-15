@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.146 2019/05/14 17:21:59 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.147 2019/05/15 04:42:01 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -3161,18 +3161,15 @@ sys/net/if_media.c				1.42 (patch)
 sys/arch/arm/imx/if_enet.c			1.19
 sys/dev/pci/if_wm.c				1.634
 
-	SIOCS is 'S'et function and the ioctl argument is ifreq.
-	SIOCG is 'G'et function and the ioctl argument is ifmediareq.
-	Before this change, SIOCG modify sc->sc_flowflags unexpectedly.
-	Don't hook SIOCGIFMEDIA because this driver uses MII(4) and
-	ether_ioctl has	the hook(if_ethersubr.c rev. 1.160).
+	Fix a bug that getting interface's media breaks
+	flow setting in enet(4) and wm(4)   
 	[msaitoh, ticket #1267]
 
 sys/dev/pci/if_alc.c				1.33,1.34
 
-	Fix a wrong and extra ether_ioctl() call in alc_ioctl().
-	Add ether_ioctl() call for SIOCSIFADDR and SIOCSIFFLAGS to make
-	behavior the same as before.
+	Fix a bug that other than SIOCSIFADDR and SIOCSIFFLAGS
+	may not work correctly. One of bug example is that SIOCGIFMEDIA
+	always failed.
 	[msaitoh, ticket #1268]
 
 sys/arch/amd64/amd64/amd64_trap.S		1.47 (adapted)
