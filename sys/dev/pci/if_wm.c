@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.635 2019/05/14 09:43:55 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.636 2019/05/15 02:56:47 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.635 2019/05/14 09:43:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.636 2019/05/15 02:56:47 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3707,6 +3707,9 @@ wm_set_filter(struct wm_softc *sc)
 		sc->sc_rctl |= RCTL_BAM;
 	if (ifp->if_flags & IFF_PROMISC) {
 		sc->sc_rctl |= RCTL_UPE;
+		ETHER_LOCK(ec);
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
 		goto allmulti;
 	}
 
@@ -3757,6 +3760,7 @@ wm_set_filter(struct wm_softc *sc)
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ec->ec_flags |= ETHER_F_ALLMULTI;
 			ETHER_UNLOCK(ec);
 			/*
 			 * We must listen to a range of multicast addresses.
@@ -3804,13 +3808,12 @@ wm_set_filter(struct wm_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_UNLOCK(ec);
 
-	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
 
  allmulti:
-	ifp->if_flags |= IFF_ALLMULTI;
 	sc->sc_rctl |= RCTL_MPE;
 
  setit:

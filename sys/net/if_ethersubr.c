@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.273 2019/02/04 10:11:34 mrg Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.274 2019/05/15 02:56:48 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.273 2019/02/04 10:11:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.274 2019/05/15 02:56:48 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -997,6 +997,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 
 	LIST_INIT(&ec->ec_multiaddrs);
 	ec->ec_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+	ec->ec_flags = 0;
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 #ifdef MBUFTRACE
@@ -1470,6 +1471,14 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			return error;
 		return ether_ioctl_reinit(ec);
+	case SIOCGIFFLAGS:
+		error = ifioctl_common(ifp, cmd, data);
+		if (error == 0) {
+			/* Set IFF_ALLMULTI for backcompat */
+			ifr->ifr_flags |= (ec->ec_flags & ETHER_F_ALLMULTI) ?
+			    IFF_ALLMULTI : 0;
+		}
+		return error;
 	case SIOCGETHERCAP:
 		eccr = (struct eccapreq *)data;
 		eccr->eccr_capabilities = ec->ec_capabilities;
