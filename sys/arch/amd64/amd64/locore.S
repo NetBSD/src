@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.181 2019/05/14 16:59:25 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.182 2019/05/15 17:31:41 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1621,10 +1621,6 @@ END(intrfastexit)
 	.globl	svs_enter_altstack, svs_enter_altstack_end
 	.globl	svs_leave, svs_leave_end
 	.globl	svs_leave_altstack, svs_leave_altstack_end
-	.globl	nosvs_enter, nosvs_enter_end
-	.globl	nosvs_enter_altstack, nosvs_enter_altstack_end
-	.globl	nosvs_leave, nosvs_leave_end
-	.globl	nosvs_leave_altstack, nosvs_leave_altstack_end
 
 LABEL(svs_enter)
 	movabs	SVS_UTLS+UTLS_KPDIRPA,%rax
@@ -1668,30 +1664,6 @@ LABEL(svs_leave_nmi)
 	movq	(FRAMESIZE+1*8)(%rsp),%rax	/* nmistore->scratch */
 	movq	%rax,%cr3
 LABEL(svs_leave_nmi_end)
-
-LABEL(nosvs_enter)
-	NOSVS_ENTER
-LABEL(nosvs_enter_end)
-
-LABEL(nosvs_enter_altstack)
-	NOSVS_ENTER_ALTSTACK
-LABEL(nosvs_enter_altstack_end)
-
-LABEL(nosvs_enter_nmi)
-	NOSVS_ENTER_NMI
-LABEL(nosvs_enter_nmi_end)
-
-LABEL(nosvs_leave)
-	NOSVS_LEAVE
-LABEL(nosvs_leave_end)
-
-LABEL(nosvs_leave_altstack)
-	NOSVS_LEAVE_ALTSTACK
-LABEL(nosvs_leave_altstack_end)
-
-LABEL(nosvs_leave_nmi)
-	NOSVS_LEAVE_NMI
-LABEL(nosvs_leave_nmi_end)
 #endif
 
 	.globl	ibrs_enter, ibrs_enter_end
