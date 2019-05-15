@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.6 2019/04/06 11:49:53 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.7 2019/05/15 04:39:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.6 2019/04/06 11:49:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.7 2019/05/15 04:39:52 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,8 +284,8 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000007 = {
 	    CPUID_SEF_CLDEMOTE | CPUID_SEF_MOVDIRI |
 	    CPUID_SEF_MOVDIR64B | CPUID_SEF_SGXLC,
 	.edx =
-	    /* Excluded: all except CAP. */
-	    CPUID_SEF_ARCH_CAP
+	    /* Excluded: all except MD_CLEAR and ARCH_CAP. */
+	    CPUID_SEF_MD_CLEAR | CPUID_SEF_ARCH_CAP
 };
 
 const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000001 = {
