@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.166 2019/03/09 08:42:25 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.167 2019/05/15 18:27:51 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.166 2019/03/09 08:42:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.167 2019/05/15 18:27:51 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1137,7 +1137,6 @@ skip_save:
 	call	_C_LABEL(x86_dbregs_switch)
 	addl	$8,%esp
 
-#ifndef XENPV
 	pushl	%edx
 	movb	_C_LABEL(x86_fpu_eager),%dl
 	testb	%dl,%dl
@@ -1148,7 +1147,6 @@ skip_save:
 	addl	$8,%esp
 .Lno_eagerfpu:
 	popl	%edx
-#endif
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
