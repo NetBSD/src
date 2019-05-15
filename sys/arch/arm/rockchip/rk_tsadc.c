@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_tsadc.c,v 1.4 2019/05/14 07:45:03 mrg Exp $	*/
+/*	$NetBSD: rk_tsadc.c,v 1.5 2019/05/15 01:24:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.4 2019/05/14 07:45:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.5 2019/05/15 01:24:43 mrg Exp $");
 
 /*
  * Driver for the TSADC temperature sensor monitor in RK3328 and RK3399.
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.4 2019/05/14 07:45:03 mrg Exp $");
  * - handle DT trips/temp value defaults
  * - interrupts aren't triggered (test by lowering warn/crit values), and
  *   once they work, make the interrupt do something
- * - fix for RK3328, and port to other rockchips (will require moving some
- *   part into per-chipset sections, such as code<->temp tables)
  */
 
 #include <sys/param.h>
@@ -57,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.4 2019/05/14 07:45:03 mrg Exp $");
 
 #include <dev/sysmon/sysmonvar.h>
 
-//#define RKTSADC_DEBUG
 #ifdef RKTSADC_DEBUG
 #define DPRINTF(fmt, ...) \
 	printf("%s:%d: " fmt "\n", __func__, __LINE__, ## __VA_ARGS__)
@@ -159,7 +156,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.4 2019/05/14 07:45:03 mrg Exp $");
 
 #define TSADC_DATA_MAX    0xfff
 
-#define NUM_SENSORS       2
+#define MAX_SENSORS       2
 
 typedef struct rk_data_array {
 	uint32_t data;  /* register value */
@@ -167,14 +164,15 @@ typedef struct rk_data_array {
 } rk_data_array;
 
 struct rk_tsadc_softc;
-typedef struct rk_data_table {
-	const rk_data_array	*rdt_array;
-	size_t			 rdt_size;
-	void			(*rdt_init)(struct rk_tsadc_softc *, int, int);
-	bool			 rdt_decr;  /* lower values -> higher temp */
-	unsigned		 rdt_min, rdt_max;
-	unsigned		 rdt_auto_period;
-} rk_data_table;
+typedef struct rk_data {
+	const rk_data_array	*rd_array;
+	size_t			 rd_size;
+	void			(*rd_init)(struct rk_tsadc_softc *, int, int);
+	bool			 rd_decr;  /* lower values -> higher temp */
+	unsigned		 rd_min, rd_max;
+	unsigned		 rd_auto_period;
+	unsigned		 rd_num_sensors;
+} rk_data;
 
 /* Per-sensor data */
 struct rk_tsadc_sensor {
@@ -201,14 +199,14 @@ struct rk_tsadc_softc {
 	void			*sc_ih;
 
 	struct sysmon_envsys	*sc_sme;
-	struct rk_tsadc_sensor	sc_sensors[NUM_SENSORS];
+	struct rk_tsadc_sensor	sc_sensors[MAX_SENSORS];
 
 	struct clk		*sc_clock;
 	struct clk		*sc_clockapb;
 	struct fdtbus_reset	*sc_reset;
 	struct syscon		*sc_syscon;
 
-	const rk_data_table	*sc_rdt;
+	const rk_data		*sc_rd;
 };
 
 static int rk_tsadc_match(device_t, cfdata_t, void *);
@@ -264,9 +262,15 @@ static const struct rk_tsadc_sensor rk_tsadc_sensors[] = {
 	},
 };
 
-/* Table from RK3328 manual */
+/*
+ * Table from RK3328 manual.  Note that the manual lists valid numbers as
+ * 4096 - number.  This also means it is increasing not decreasing for
+ * higher temps, and the min and max are also offset from 4096.
+ */
+#define RK3328_DATA_OFFSET (4096)
 static const rk_data_array rk3328_data_array[] = {
-#define ENTRY(d,C)	{ .data = (d), .temp = (C) * 1000 * 1000, }
+#define ENTRY(d,C) \
+	{ .data = RK3328_DATA_OFFSET - (d), .temp = (C) * 1000 * 1000, }
 	ENTRY(TSADC_DATA_MAX,    -40),
 	ENTRY(3800, -40),
 	ENTRY(3792, -35),
@@ -348,34 +352,30 @@ static const rk_data_array rk3399_data_array[] = {
 #undef ENTRY
 };
 
-static const rk_data_table rk3328_data_table = {
-	.rdt_array = rk3328_data_array,
-	.rdt_size = __arraycount(rk3328_data_array),
-	.rdt_init = rk_tsadc_init_rk3328,
-	.rdt_decr = true,
-	.rdt_max = 3801,
-	.rdt_min = 3420,
-	.rdt_auto_period = RK3328_TSADC_AUTO_PERIOD_TIME,
+static const rk_data rk3328_data_table = {
+	.rd_array = rk3328_data_array,
+	.rd_size = __arraycount(rk3328_data_array),
+	.rd_init = rk_tsadc_init_rk3328,
+	.rd_decr = false,
+	.rd_max = RK3328_DATA_OFFSET - 3420,
+	.rd_min = RK3328_DATA_OFFSET - 3801,
+	.rd_auto_period = RK3328_TSADC_AUTO_PERIOD_TIME,
+	.rd_num_sensors = 1,
 };
 
-static const rk_data_table rk3399_data_table = {
-	.rdt_array = rk3399_data_array,
-	.rdt_size = __arraycount(rk3399_data_array),
-	.rdt_init = rk_tsadc_init_rk3399,
-	.rdt_decr = false,
-	.rdt_max = 686,
-	.rdt_min = 401,
-	.rdt_auto_period = RK3399_TSADC_AUTO_PERIOD_TIME,
+static const rk_data rk3399_data_table = {
+	.rd_array = rk3399_data_array,
+	.rd_size = __arraycount(rk3399_data_array),
+	.rd_init = rk_tsadc_init_rk3399,
+	.rd_decr = false,
+	.rd_max = 686,
+	.rd_min = 401,
+	.rd_auto_period = RK3399_TSADC_AUTO_PERIOD_TIME,
+	.rd_num_sensors = 2,
 };
 
 static const char * const compatible_rk3328[] = {
-#if 0
-	/*
-	 * does not yet report sane values.  should be between 3421 and 3800,
-	 * but CPU tends to report < 1000 and the GPU reports 600-1600.
-	 */
 	"rockchip,rk3328-tsadc",
-#endif
 	NULL
 };
 
@@ -430,6 +430,13 @@ rk_tsadc_attach(device_t parent, device_t self, void *aux)
 
 	pmf_device_register(self, NULL, NULL);
 
+	if (of_match_compatible(faa->faa_phandle, compatible_rk3328)) {
+		sc->sc_rd = &rk3328_data_table;
+	} else {
+		KASSERT(of_match_compatible(faa->faa_phandle, compatible_rk3399));
+		sc->sc_rd = &rk3399_data_table;
+	}
+
 	/* Default to tshut via gpio and tshut low is active */
 	if (of_getprop_uint32(phandle, "rockchip,hw-tshut-mode",
 			      &mode) != 0) {
@@ -455,7 +462,7 @@ rk_tsadc_attach(device_t parent, device_t self, void *aux)
 	tshut_temp *= 1000;	/* convert fdt ms -> us */
 
 	memcpy(sc->sc_sensors, rk_tsadc_sensors, sizeof(sc->sc_sensors));
-	for (unsigned n = 0; n < NUM_SENSORS; n++) {
+	for (unsigned n = 0; n < sc->sc_rd->rd_num_sensors; n++) {
 		struct rk_tsadc_sensor *rks = &sc->sc_sensors[n];
 
 		rks->s_data.flags = ENVSYS_FMONLIMITS;
@@ -508,13 +515,6 @@ rk_tsadc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (of_match_compatible(faa->faa_phandle, compatible_rk3328)) {
-		sc->sc_rdt = &rk3328_data_table;
-	} else {
-		KASSERT(of_match_compatible(faa->faa_phandle, compatible_rk3399));
-		sc->sc_rdt = &rk3399_data_table;
-	}
-
 	/*
 	 * Manual says to setup auto period (both), high temp (interrupt),
 	 * high temp (shutdown), enable high temp resets (TSHUT to GPIO
@@ -536,7 +536,7 @@ rk_tsadc_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	for (unsigned n = 0; n < NUM_SENSORS; n++) {
+	for (unsigned n = 0; n < sc->sc_rd->rd_num_sensors; n++) {
 		struct rk_tsadc_sensor *rks = &sc->sc_sensors[n];
 
 		if (rks->s_attached) {
@@ -598,8 +598,8 @@ static void
 rk_tsadc_init_counts(struct rk_tsadc_softc *sc)
 {
 
-	TSADC_WRITE(sc, TSADC_AUTO_PERIOD, sc->sc_rdt->rdt_auto_period);
-	TSADC_WRITE(sc, TSADC_AUTO_PERIOD_HT, sc->sc_rdt->rdt_auto_period);
+	TSADC_WRITE(sc, TSADC_AUTO_PERIOD, sc->sc_rd->rd_auto_period);
+	TSADC_WRITE(sc, TSADC_AUTO_PERIOD_HT, sc->sc_rd->rd_auto_period);
 	TSADC_WRITE(sc, TSADC_HIGH_INT_DEBOUNCE, TSADC_HT_DEBOUNCE_COUNT);
 	TSADC_WRITE(sc, TSADC_HIGH_TSHUT_DEBOUNCE, TSADC_HT_DEBOUNCE_COUNT);
 }
@@ -610,10 +610,15 @@ rk_tsadc_tshut_set(struct rk_tsadc_softc *sc)
 {
 	uint32_t val = TSADC_READ(sc, TSADC_AUTO_CON);
 
-	for (unsigned n = 0; n < NUM_SENSORS; n++) {
+	for (unsigned n = 0; n < sc->sc_rd->rd_num_sensors; n++) {
 		struct rk_tsadc_sensor *rks = &sc->sc_sensors[n];
-		uint32_t data = rk_tsadc_temp_to_data(sc, rks->s_tshut);
-		uint32_t warndata = rk_tsadc_temp_to_data(sc, rks->s_warn);
+		uint32_t data, warndata;
+
+		if (!rks->s_attached)
+			continue;
+
+		data = rk_tsadc_temp_to_data(sc, rks->s_tshut);
+		warndata = rk_tsadc_temp_to_data(sc, rks->s_warn);
 
 		DPRINTF("(%s:%s): tshut/data %d/%u warn/data %d/%u",
 			sc->sc_sme->sme_name, rks->s_data.desc,
@@ -726,17 +731,18 @@ static void
 rk_tsadc_init(struct rk_tsadc_softc *sc, int mode, int polarity)
 {
 
-	(*sc->sc_rdt->rdt_init)(sc, mode, polarity);
+	(*sc->sc_rd->rd_init)(sc, mode, polarity);
 	rk_tsadc_init_enable(sc);
 }
 
 /* run time support */
 
+/* given edata, find the matching rk sensor structure */
 static struct rk_tsadc_sensor *
 rk_tsadc_edata_to_sensor(struct rk_tsadc_softc * const sc, envsys_data_t *edata)
 {
 
-	for (unsigned n = 0; n < NUM_SENSORS; n++) {
+	for (unsigned n = 0; n < sc->sc_rd->rd_num_sensors; n++) {
 		struct rk_tsadc_sensor *rks = &sc->sc_sensors[n];
 
 		if (&rks->s_data == edata)
@@ -821,23 +827,24 @@ static int
 rk_tsadc_data_to_temp(struct rk_tsadc_softc *sc, uint32_t data)
 {
 	unsigned i;
-	const rk_data_table *rdt = sc->sc_rdt;
+	const rk_data *rd = sc->sc_rd;
 
-	if (data > rdt->rdt_max || data < rdt->rdt_min) {
-		DPRINTF("data out of range (%u > %u || %u < %u)", data, rdt->rdt_max, data, rdt->rdt_min);
+	if (data > rd->rd_max || data < rd->rd_min) {
+		DPRINTF("data out of range (%u > %u || %u < %u)",
+			data, rd->rd_max, data, rd->rd_min);
 		return sc->sc_data_mask;
 	}
-	for (i = 1; i < rdt->rdt_size; i++) {
-		if (rdt->rdt_array[i].data >= data) {
+	for (i = 1; i < rd->rd_size; i++) {
+		if (rd->rd_array[i].data >= data) {
 			int temprange, offset;
 			uint32_t datarange, datadiff;
 			unsigned first, secnd;
 
-			if (rdt->rdt_array[i].data == data)
-				return rdt->rdt_array[i].temp;
+			if (rd->rd_array[i].data == data)
+				return rd->rd_array[i].temp;
 
 			/* must interpolate */
-			if (rdt->rdt_decr) {
+			if (rd->rd_decr) {
 				first = i;
 				secnd = i+1;
 			} else {
@@ -845,14 +852,14 @@ rk_tsadc_data_to_temp(struct rk_tsadc_softc *sc, uint32_t data)
 				secnd = i-1;
 			}
 
-			temprange = rdt->rdt_array[first].temp -
-				    rdt->rdt_array[secnd].temp;
-			datarange = rdt->rdt_array[first].data -
-				    rdt->rdt_array[secnd].data;
-			datadiff = data - rdt->rdt_array[secnd].data;
+			temprange = rd->rd_array[first].temp -
+				    rd->rd_array[secnd].temp;
+			datarange = rd->rd_array[first].data -
+				    rd->rd_array[secnd].data;
+			datadiff = data - rd->rd_array[secnd].data;
 
 			offset = (temprange * datadiff) / datarange;
-			return rdt->rdt_array[secnd].temp + offset;
+			return rd->rd_array[secnd].temp + offset;
 		}
 	}
 	panic("didn't find range");
@@ -862,19 +869,19 @@ static uint32_t
 rk_tsadc_temp_to_data(struct rk_tsadc_softc *sc, int temp)
 {
 	unsigned i;
-	const rk_data_table *rdt = sc->sc_rdt;
+	const rk_data *rd = sc->sc_rd;
 
-	for (i = 1; i < rdt->rdt_size; i++) {
-		if (rdt->rdt_array[i].temp >= temp) {
+	for (i = 1; i < rd->rd_size; i++) {
+		if (rd->rd_array[i].temp >= temp) {
 			int temprange, tempdiff;
 			uint32_t datarange, offset;
 			unsigned first, secnd;
 
-			if (rdt->rdt_array[i].temp == temp)
-				return rdt->rdt_array[i].data;
+			if (rd->rd_array[i].temp == temp)
+				return rd->rd_array[i].data;
 
 			/* must interpolate */
-			if (rdt->rdt_decr) {
+			if (rd->rd_decr) {
 				first = i;
 				secnd = i+1;
 			} else {
@@ -882,14 +889,14 @@ rk_tsadc_temp_to_data(struct rk_tsadc_softc *sc, int temp)
 				secnd = i-1;
 			}
 
-			datarange = rdt->rdt_array[first].data -
-				    rdt->rdt_array[secnd].data;
-			temprange = rdt->rdt_array[first].temp -
-				    rdt->rdt_array[secnd].temp;
-			tempdiff = temp - rdt->rdt_array[secnd].temp;
+			datarange = rd->rd_array[first].data -
+				    rd->rd_array[secnd].data;
+			temprange = rd->rd_array[first].temp -
+				    rd->rd_array[secnd].temp;
+			tempdiff = temp - rd->rd_array[secnd].temp;
 
 			offset = (datarange * tempdiff) / temprange;
-			return rdt->rdt_array[secnd].data + offset;
+			return rd->rd_array[secnd].data + offset;
 		}
 	}
 
