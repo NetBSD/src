@@ -1,4 +1,4 @@
-#	$NetBSD: t_call_once2.sh,v 1.1 2018/03/24 00:26:51 kamil Exp $
+#	$NetBSD: t_call_once2.sh,v 1.2 2019/05/15 13:43:45 christos Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -117,7 +117,7 @@ EOF
 }
 
 call_once2_profile_body() {
-	atf_expect_fail "profiling option doesn't work now"
+	atf_expect_fail "profiling option doesn't work with shared libraries"
 	cat > test.cpp << EOF
 #include <mutex>
 #include <thread>
@@ -290,7 +290,7 @@ EOF
 }
 
 call_once2_pic_profile_body() {
-	atf_expect_fail "profiling option doesn't work now"
+	atf_expect_fail "profiling option doesn't work with pic"
 	cat > test.cpp << EOF
 #include <stdlib.h>
 int callpic(void);
@@ -333,7 +333,7 @@ EOF
 }
 
 call_once2_pic_profile_32_body() {
-	atf_expect_fail "profiling option doesn't work now"
+	atf_expect_fail "profiling option doesn't work with shared libraries"
 	# check whether this arch is 64bit
 	if ! c++ -dM -E - < /dev/null | fgrep -q _LP64; then
 		atf_skip "this is not a 64 bit architecture"
