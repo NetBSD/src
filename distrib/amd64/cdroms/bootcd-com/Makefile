@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2011/01/18 00:16:13 jym Exp $
+#	$NetBSD: Makefile,v 1.6 2019/05/15 13:47:41 christos Exp $
 #
 
 .include "${.CURDIR}/../Makefile.cdrom"
 
 CDBASE=		boot-com			# gives ${CDBASE}.iso
+# HP Proliant iLO serial console is on com1
 CDBOOTOPTIONS=	-o console=com0
 
 CDBUILDEXTRA+=	boot.cfg		# Add boot.cfg file
