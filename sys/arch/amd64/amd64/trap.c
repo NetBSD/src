@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.119 2019/04/06 03:06:24 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.120 2019/05/15 13:49:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119 2019/04/06 03:06:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2019/05/15 13:49:10 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -751,10 +751,10 @@ sigdebug(const struct trapframe *tf, const ksiginfo_t *ksi, int e)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 
-	printf("pid %d.%d (%s): signal %d (trap %#lx) "
+	printf("pid %d.%d (%s): signal %d code=%d (trap %#lx) "
 	    "@rip %#lx addr %#lx error=%d\n",
-	    p->p_pid, l->l_lid, p->p_comm, ksi->ksi_signo, tf->tf_trapno,
-	    tf->tf_rip, rcr2(), e);
+	    p->p_pid, l->l_lid, p->p_comm, ksi->ksi_signo, ksi->ksi_code,
+	    tf->tf_trapno, tf->tf_rip, rcr2(), e);
 	frame_dump(tf, lwp_getpcb(l));
 }
 #endif
