@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.70 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.71 2019/05/15 03:33:41 knakahara Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.70 2018/09/14 05:09:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.71 2019/05/15 03:33:41 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.70 2018/09/14 05:09:51 maxv Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h> /* for softnet_lock */
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
