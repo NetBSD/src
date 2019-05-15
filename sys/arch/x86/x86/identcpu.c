@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.88 2019/02/11 18:50:15 cherry Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.89 2019/05/15 18:27:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.88 2019/02/11 18:50:15 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.89 2019/05/15 18:27:51 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -744,7 +744,6 @@ cpu_probe_old_fpu(struct cpu_info *ci)
 #endif
 }
 
-#ifndef XENPV
 static void
 cpu_probe_fpu_leak(struct cpu_info *ci)
 {
@@ -786,16 +785,13 @@ cpu_probe_fpu_leak(struct cpu_info *ci)
 		break;
 	}
 }
-#endif
 
 static void
 cpu_probe_fpu(struct cpu_info *ci)
 {
 	u_int descs[4];
 
-#ifndef XENPV
 	cpu_probe_fpu_leak(ci);
-#endif
 
 	x86_fpu_save = FPU_SAVE_FSAVE;
 

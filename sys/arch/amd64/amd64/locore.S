@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.182 2019/05/15 17:31:41 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.183 2019/05/15 18:27:51 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1147,7 +1147,6 @@ ENTRY(cpu_switchto)
 	movq	%r12,%rsi
 	callq	_C_LABEL(x86_dbregs_switch)
 
-#ifndef XENPV
 	movb	_C_LABEL(x86_fpu_eager),%dl
 	testb	%dl,%dl
 	jz	.Lno_eagerfpu
@@ -1155,7 +1154,6 @@ ENTRY(cpu_switchto)
 	movq	%r12,%rsi
 	callq	_C_LABEL(fpu_eagerswitch)
 .Lno_eagerfpu:
-#endif
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%r12)
