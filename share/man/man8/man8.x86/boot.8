@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.14 2018/11/27 10:35:03 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.15 2019/05/15 17:35:02 maxv Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd November 25, 2018
+.Dd May 15, 2019
 .Dt BOOT 8 x86
 .Os
 .Sh NAME
@@ -245,8 +245,8 @@ Sets the machine-dependent flag
 in
 .Va boothowto .
 In
-.Nx Ns /x86 ,
-this has no effect.
+.Nx Ns /amd64 ,
+this disables SVS.
 .It Fl 4
 Sets the machine-dependent flag
 .Sy RB_MD4
