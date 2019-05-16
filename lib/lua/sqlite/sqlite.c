@@ -1,4 +1,4 @@
-/*	$NetBSD: sqlite.c,v 1.9 2017/05/10 07:36:01 mbalmer Exp $ */
+/*	$NetBSD: sqlite.c,v 1.10 2019/05/16 12:42:35 tpaul Exp $ */
 
 /*
  * Copyright (c) 2011, 2013, 2016, 2017 Marc Balmer <marc@msys.ch>
@@ -336,7 +336,10 @@ stmt_clear_bindings(lua_State *L)
 	sqlite3_stmt **stmt;
 
 	stmt = luaL_checkudata(L, 1, SQLITE_STMT_METATABLE);
-	sqlite3_clear_bindings(*stmt);
+	if (*stmt) {
+		sqlite3_clear_bindings(*stmt);
+		*stmt = NULL;
+	}
 	return 0;
 }
 
