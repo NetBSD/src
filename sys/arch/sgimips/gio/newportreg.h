@@ -1,4 +1,4 @@
-/*	$NetBSD: newportreg.h,v 1.8 2019/05/10 22:54:51 macallan Exp $	*/
+/*	$NetBSD: newportreg.h,v 1.9 2019/05/16 23:42:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -145,6 +145,14 @@
 #define REX3_REG_COLORBACK		0x0018
 #define REX3_REG_COLORVRAM		0x001c
 
+#define REX3_REG_ALPHAREF		0x0020
+#define REX3_REG_STALL0			0x0024	/* stall until engine is idle */
+
+#define REX3_REG_SMASK0X		0x0028	/* min/max 16.16 */  
+#define REX3_REG_SMASK0Y		0x002c	/* min/max 16.16 */  
+
+#define REX3_REG_SETUP			0x0030  
+
 #define REX3_REG_XSTART			0x0100
 
 #define REX3_REG_XYMOVE			0x0114
@@ -161,6 +169,9 @@
 #define REX3_REG_WRMASK			0x0220
 
 #define REX3_REG_COLORI			0x0224
+
+#define REX3_REG_HOSTRW0		0x0230
+#define REX3_REG_HOSTRW1		0x0234
 
 #define REX3_REG_DCBMODE		0x0238
 #define  REX3_DCBMODE_DW_MASK		0x00000003
@@ -190,6 +201,16 @@
 /* Not really a register, but in the same space */
 #define REX3_REG_GO			0x0800
 
+/* clipping regions, enable/disable in REG_CLIPMODE */
+#define REX3_REG_SMASK1X		0x1300	/* min/max 16.16 */  
+#define REX3_REG_SMASK1Y		0x1304	/* min/max 16.16 */  
+#define REX3_REG_SMASK2X		0x1308	/* min/max 16.16 */  
+#define REX3_REG_SMASK2Y		0x130c	/* min/max 16.16 */  
+#define REX3_REG_SMASK3X		0x1310	/* min/max 16.16 */  
+#define REX3_REG_SMASK3Y		0x1314	/* min/max 16.16 */  
+#define REX3_REG_SMASK4X		0x1318	/* min/max 16.16 */  
+#define REX3_REG_SMASK4Y		0x131c	/* min/max 16.16 */  
+
 #define REX3_REG_TOPSCAN		0x1320
 #define REX3_REG_XYWIN			0x1324
 #define REX3_REG_CLIPMODE		0x1328
@@ -203,6 +224,8 @@
 #define  REX3_CLIPMODE_CIDMATCH2	0x0800
 #define  REX3_CLIPMODE_CIDMATCH3	0x1000
 
+#define REX3_REG_STALL1			0x132c
+#define REX3_REG_CONFIG			0x1330
 
 #define REX3_REG_STATUS			0x1338
 #define  REX3_STATUS_GFXBUSY		0x00000008
