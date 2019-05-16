@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.30 2019/05/16 02:42:19 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.31 2019/05/16 04:26:13 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.30 2019/05/16 02:42:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.31 2019/05/16 04:26:13 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,9 +345,11 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 		diff = last - *left;
 	}
 
-	if (cpu_vendor == CPUVENDOR_INTEL) {
-		procfs_getonefeatreg(ci->ci_feat_val[7], x86_features[18],
-		    p + diff, left);
+	if ((cpu_vendor == CPUVENDOR_INTEL)
+	    && (ci->ci_max_cpuid >= 0x00000007)) {
+		x86_cpuid(0x00000007, descs);
+		procfs_getonefeatreg(descs[3], x86_features[18], p + diff,
+		    left);
 		diff = last - *left;
 	}
 
