@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.251 2019/05/07 21:14:46 sevan Exp $
+$NetBSD: acronyms.comp,v 1.252 2019/05/16 10:28:19 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -213,6 +213,7 @@ CDMA	code division multiple access
 CDP	Cisco Discovery Protocol
 CDRAM	cache dynamic random access memory
 CER	canonical encoding rules
+CE	customer edge
 CF	compact flash
 CFB	cipher feedback
 CFG	context-free grammar
@@ -371,6 +372,7 @@ DIRT	design in real time
 DL	diode logic
 DL	discrete logarithm
 DL	download
+DLCI	data link connection identifier
 DLE	data link escape
 DLL	dynamic link library
 DLP	discrete logarithm problem
@@ -799,6 +801,7 @@ LLF	low level format
 LLMNR	link-local multicast name resolution
 LLVM	Low Level Virtual Machine
 LM	long mode
+LMI	local management interface
 LMM	link management mode
 LMP	link management protocol
 LNO	loop nest optimization
@@ -868,6 +871,7 @@ MFC	merge from current
 MFC	Microsoft Foundation Classes
 MFM	modified frequency modulation
 MFU	most frequently used
+MGCP	media gateway control protocol
 MI	machine-independent
 MI	machine interface
 MIB	management information base
@@ -1084,6 +1088,7 @@ PDP	page {descriptor,directory} page
 PDS	product data sheet
 PDU	protocol data unit
 PE	protection enable
+PE	provider edge
 PEAP	Protected EAP
 PECI	platform environment control interface
 PEP	protocol extension protocol
@@ -1174,6 +1179,7 @@ PU	processing unit
 PUC	personal unblocking code
 PUN	physical unit number
 PV	physical volume
+PVC	permanent virtual circuit
 PVG	physical volume group
 PVI	protected-mode virtual interrupt
 PVST	Per-VLAN Spanning Tree
@@ -1431,6 +1437,7 @@ STP	shielded twisted pair
 SUN	Stanford University Network
 SUS	Single Unix Specification
 SUT	system under test
+SVC	switched virtual circuit
 SVG	scalable vector graphics
 SVGA	Super Video Graphics Array
 SVI	{switch,switched} virtual interface
@@ -1594,6 +1601,7 @@ VMX	virtual machine extensions
 VOD	video on demand
 VPD	vital product data
 VPN	virtual private network
+VPWS	virtual private wire service
 VR	virtual reality
 VRAM	video random access memory
 VRF	virtual routing and forwarding
