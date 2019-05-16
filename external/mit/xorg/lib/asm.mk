@@ -1,17 +1,16 @@
-#	$NetBSD: asm.mk,v 1.2 2019/04/05 10:31:53 maya Exp $
+#	$NetBSD: asm.mk,v 1.3 2019/05/16 01:22:35 christos Exp $
 
 # Shared with libmesa.mk / libGL / libglapi
 
-.if ${MACHINE} == "amd64"
-CPPFLAGS+=	\
+X11ASM_CPPFLAGS.x86_64+=	\
 	-DUSE_SSE41 \
 	-DUSE_X86_64_ASM
-.elif ${MACHINE} == "i386"
-CPPFLAGS+=	\
+
+X11ASM_CPPFLAGS.i386+=	\
 	-DUSE_X86_ASM \
 	-DUSE_MMX_ASM \
 	-DUSE_3DNOW_ASM \
 	-DUSE_SSE_ASM \
 	-DGLX_X86_READONLY_TEXT
-.elif ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
-.endif
+
+CPPFLAGS+= ${X11ASM_CPPFLAGS.${XORG_MACHINE_ARCH:U${MACHINE_ARCH}}}
