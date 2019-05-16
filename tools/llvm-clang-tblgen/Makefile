@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2011/10/11 13:54:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2019/05/16 20:00:49 nakayama Exp $
 
-HOSTPROGNAME=	${_TOOL_PREFIX}clang-tblgen
-HOSTPROG_CXX=	${_TOOL_PREFIX}clang-tblgen
+HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-clang-tblgen
+HOSTPROG_CXX=	${MACHINE_GNU_PLATFORM}-clang-tblgen
 HOST_SRCDIR=	external/bsd/llvm/bin/clang-tblgen
 
 .include "${.CURDIR}/../Makefile.host"
