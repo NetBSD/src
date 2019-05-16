@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2019/05/11 17:44:16 christos Exp $
+# $NetBSD: Makefile,v 1.27 2019/05/16 01:22:35 christos Exp $
 
 # Link the gallium mega driver.
 
@@ -1045,9 +1045,8 @@ CPPFLAGS.streaming-load-memcpy.c+= -msse4.1
 .endif
 
 # Needs 64bit atomics
-.if ${MACHINE} == "i386"
-CPPFLAGS+=	-march=i586
-.endif
+CPPFLAGS.i386+= -march=i586
+CPPFLAGS+=	${CPPFLAGS.${XORG_MACHINE_ARCH:U${MACHINE_ARCH}}}
 
 .include "../driver.mk"
 
