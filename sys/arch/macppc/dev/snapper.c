@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.50 2019/05/08 13:40:15 isaki Exp $	*/
+/*	$NetBSD: snapper.c,v 1.51 2019/05/16 23:39:37 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.50 2019/05/08 13:40:15 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.51 2019/05/16 23:39:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -680,7 +680,7 @@ snapper_attach(device_t parent, device_t self, void *aux)
 	sc->sc_baseaddr = ca->ca_baseaddr;
 
 	OF_getprop(soundbus, "reg", reg, sizeof reg);
-	/* deal with messed up properties on PowerMac7,3 abd friends */
+	/* deal with messed up properties on PowerMac7,3 and friends */
 	if (reg[0] == 0) {
 		reg[0] += ca->ca_reg[0];
 		reg[2] += ca->ca_reg[2];
@@ -1702,7 +1702,7 @@ const struct tas3004_reg tas3004_initdata = {
 	{ 0x10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },	/* BIQUAD */
 	{ 0, 0, 0 },						/* LLB_GAIN */
 	{ 0, 0, 0 },						/* RLB_GAIN */
-	{ DEQ_ACR_ADM | DEQ_ACR_LRB | DEQ_ACR_INP_B },		/* ACR - right channel of input B is the microphone */
+	{ 0 },							/* ACR - line in */
 	{ 2 }							/* MCR2 - AllPass mode since we don't use the equalizer anyway */
 };
 
@@ -2031,10 +2031,10 @@ snapper_init(struct snapper_softc *sc, int node)
 	snapper_set_bass(sc, 128);
 	snapper_set_treble(sc, 128);
 
-	/* Record source defaults to microphone.  This reflects the
+	/* Record source defaults to line in.  This reflects the
 	 * default value for the ACR (see tas3004_initdata).
 	 */
-	sc->sc_record_source = 1 << 0;
+	sc->sc_record_source = 1 << 1;
 	
 	/* We mute the analog input for now */
 	sc->mixer[0] = 128;
