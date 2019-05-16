@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2019/04/18 22:49:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2019/05/16 01:22:36 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -60,12 +60,13 @@ BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/util/debug.c UTILdebug.c
 SRCS.glapi=	glapi_gentable.c
 
 .PATH:		${X11SRCDIR.Mesa}/src/mapi/glapi
-.if ${MACHINE_ARCH} == "i386"
-SRCS.glx+=			glapi_x86.S
-.elif ${MACHINE_ARCH} == "x86_64"
-SRCS.glx+=			glapi_x86-64.S
-.elif ${MACHINE_ARCH} == "sparc"
-SRCS.glx+=			glapi_sparc.S
+
+SRCS.i386.glx=		glapi_x86.S
+SRCS.x86_64.glx=	glapi_x86-64.S
+SRCS.sparc.glx=		glapi_sparc.S
+
+.if !empty(SRCS.${MACHINE_ARCH}.glx)
+SRCS.glx += ${SRCS.${XORG_MACHINE_ARCH:U${MACHINE_ARCH}}.glx}
 .else
 SRCS.glapi+=			entry.c
 .endif
