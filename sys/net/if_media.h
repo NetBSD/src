@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.64 2019/05/10 06:33:14 msaitoh Exp $	*/
+/*	$NetBSD: if_media.h,v 1.65 2019/05/17 07:37:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,8 @@
  * if_media Options word:
  *	Bits	Use
  *	----	-------
- *	0-4	Media subtype		MAX SUBTYPE == 31!
+ *	0-4	Media subtype	MAX SUBTYPE == 255 for ETH and 31 for others
+ *				See below (IFM_ETHER part) for the detail.
  *	5-7	Media type
  *	8-15	Type specific options
  *	16-18	Mode (for multi-mode devices)
@@ -105,14 +106,19 @@
  *   1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
  *  +-------+---------------+-+-----+---------------+-----+---------+
  *  |       |               |R|     |               |     |         |
- *  | IMASK |     GMASK     |F|MMASK|     OMASK     |NMASK|  TMASK  |
- *  |       |               |U|     |               |     |         |
- *  +-------+---------------+-+-----+---------------+-----+---------+
+ *  | IMASK |     GMASK     |F|MMASK+-----+ OMASK   |NMASK|  TMASK  |
+ *  |       |               |U|     |XTMSK|         |     |         |
+ *  +-------+---------------+-+-----+-----+---------+-----+---------+
  *   <----->                   <--->                 <--->
  *  IFM_INST()               IFM_MODE()            IFM_TYPE()
  *
- *           <------------->         <------------->       <------->
- *                        IFM_OPTIONS()                  IFM_SUBTYPE()
+ *                              IFM_SUBTYPE(other than ETH)<------->
+ *
+ *                                   <---> IFM_SUBTYPE(ETH)<------->
+ *                                         
+ *
+ *           <------------->         <------------->
+ *                        IFM_OPTIONS()
  */
 
 /*
@@ -131,13 +137,15 @@
  * Macros to extract various bits of information from the media word.
  */
 #define	IFM_TYPE(x)	((x) & IFM_NMASK)
-#define	IFM_SUBTYPE(x)	((x) & IFM_TMASK)
+#define	IFM_SUBTYPE(x)	(IFM_TYPE(x) == IFM_ETHER ?			      \
+	    IFM_ETHER_SUBTYPE_GET(x) : ((x) & IFM_TMASK))
+#define	IFM_TYPE_MATCH(dt, t)						      \
+	(IFM_TYPE(dt) == 0 || IFM_TYPE(dt) == IFM_TYPE(t))
+#define	IFM_TYPE_SUBTYPE_MATCH(dt, t)					      \
+	(IFM_TYPE(dt) == IFM_TYPE(t) && IFM_SUBTYPE(dt) == IFM_SUBTYPE(t))
 #define	IFM_INST(x)	(((x) & IFM_IMASK) >> IFM_ISHIFT)
 #define	IFM_OPTIONS(x)	((x) & (IFM_OMASK | IFM_GMASK))
 #define	IFM_MODE(x)	((x) & IFM_MMASK)
-
-#define	IFM_TYPE_MATCH(dt, t)						\
-	(IFM_TYPE(dt) == 0 || IFM_TYPE(dt) == IFM_TYPE(t))
 
 #define	IFM_INST_MAX	IFM_INST(IFM_IMASK)
 #define	IFM_INST_ANY	((u_int) -1)
@@ -197,7 +205,16 @@
 
 /*
  * 1: Ethernet (IFM_ETHER)
+ *
+ * In order to use more than 31 subtypes, Ethernet uses some of the option
+ * bits as part of the subtype field. See the options section below for
+ * relevant definitions.
  */
+#define	IFM_ETHER_SUBTYPE(x) (((x) & IFM_TMASK) |			      \
+	    (((x) & (_IFM_ETH_XTMASK >> IFM_ETH_XSHIFT)) << IFM_ETH_XSHIFT))
+#define IFM_ETHER_SUBTYPE_GET(x) ((x) & (IFM_TMASK | _IFM_ETH_XTMASK))
+#define _IFM_EX(x)	IFM_ETHER_SUBTYPE(x) /* internal shorthand */
+
 #define	IFM_10_T	3		/* 10BaseT - RJ45 */
 #define	IFM_10_2	4		/* 10Base2 - Thinnet */
 #define	IFM_10_5	5		/* 10Base5 - AUI */
@@ -226,10 +243,86 @@
 #define	IFM_2500_KX	28		/* 2500base-KX backplane */
 #define	IFM_2500_T	29		/* 2500base-T - RJ45 */
 #define	IFM_5000_T	30		/* 5Gbase-T - RJ45 */
+#define	IFM_OTHER	31		/*
+					 * This number indicates "Not listed".
+					 * and also used for backward
+					 * compatibility.
+					 */
+#define	IFM_1000_SGMII	_IFM_EX(32)	/* 1G SGMII */
+#define	IFM_5000_KR	_IFM_EX(33)	/* 5GBASE-KR backplane */
+#define	IFM_10G_AOC	_IFM_EX(34)	/* 10G active optical cable */
+#define	IFM_10G_CR1	_IFM_EX(35)	/* 10GBASE-CR1 Twinax splitter */
+#define	IFM_10G_ER	_IFM_EX(36)	/* 10GBASE-ER */
+#define	IFM_10G_KR	_IFM_EX(37)	/* 10GBASE-KR backplane */
+#define	IFM_10G_KX4	_IFM_EX(38)	/* 10GBASE-KX4 backplane */
+#define	IFM_10G_LX4	_IFM_EX(39)	/* 10GBASE-LX4 */
+#define	IFM_10G_SFI	_IFM_EX(40)	/* 10G SFI */
+#define	IFM_10G_ZR	_IFM_EX(41)	/* 10GBASE-ZR */
+#define	IFM_20G_KR2	_IFM_EX(42)	/* 20GBASE-KR2 backplane */
+#define	IFM_25G_AOC	_IFM_EX(43)	/* 25G active optical cable */
+#define	IFM_25G_AUI	_IFM_EX(44)	/* 25G-AUI-C2C (chip to chip) */
+#define	IFM_25G_CR	_IFM_EX(45)	/* 25GBASE-CR (twinax) */
+#define	IFM_25G_CR_S	_IFM_EX(47)	/* 25GBASE-CR-S (CR short) */
+#define	IFM_25G_ER	_IFM_EX(48)	/* 25GBASE-ER */
+#define	IFM_25G_KR	_IFM_EX(49)	/* 25GBASE-KR */
+#define	IFM_25G_KR_S	_IFM_EX(50)	/* 25GBASE-KR-S (KR short) */
+#define	IFM_25G_LR	_IFM_EX(51)	/* 25GBASE-LR */
+#define	IFM_25G_SR	_IFM_EX(52)	/* 25GBASE-SR */
+#define	IFM_25G_T	_IFM_EX(53)	/* 25GBASE-T - RJ45 */
+#define	IFM_40G_AOC	_IFM_EX(54)	/* 40G Active Optical Cable */
+#define	IFM_40G_CR4	_IFM_EX(55)	/* 40GBASE-CR4 */
+#define	IFM_40G_ER4	_IFM_EX(56)	/* 40GBASE-ER4 */
+#define	IFM_40G_FR	_IFM_EX(57)	/* 40GBASE-FR */
+#define	IFM_40G_KR4	_IFM_EX(58)	/* 40GBASE-KR4 */
+#define	IFM_40G_LR4	_IFM_EX(59)	/* 40GBASE-LR4 */
+#define	IFM_40G_SR4	_IFM_EX(60)	/* 40GBASE-SR4 */
+#define	IFM_40G_T	_IFM_EX(61)	/* 40GBASE-T */
+#define	IFM_40G_XLPPI	_IFM_EX(62)	/* 40G XLPPI */
+#define	IFM_50G_AUI1	_IFM_EX(63)	/* 50GAUI-1 */
+#define	IFM_50G_AUI2	_IFM_EX(64)	/* 50GAUI-2 */
+#define	IFM_50G_CR	_IFM_EX(65)	/* 50GBASE-CR */
+#define	IFM_50G_CR2	_IFM_EX(66)	/* 50GBASE-CR2 */
+#define	IFM_50G_FR	_IFM_EX(67)	/* 50GBASE-FR */
+#define	IFM_50G_KR	_IFM_EX(68)	/* 50GBASE-KR */
+#define	IFM_50G_KR2	_IFM_EX(69)	/* 50GBASE-KR2 */
+#define	IFM_50G_LAUI2	_IFM_EX(70)	/* 50GLAUI-2 */
+#define	IFM_50G_LR	_IFM_EX(71)	/* 50GBASE-LR (2Km) */
+#define	IFM_50G_LR10	_IFM_EX(72)	/* 50GBASE-LR10 (10Km) */
+#define	IFM_50G_SR	_IFM_EX(73)	/* 50GBASE-SR */
+#define	IFM_50G_SR2	_IFM_EX(74)	/* 50GBASE-SR2 */
+#define	IFM_56G_R4	_IFM_EX(75)	/* 56GBASE-R4 */
+#define	IFM_100G_CR2	_IFM_EX(76)	/* 100GBASE-CR2 (CP2?) */
+#define	IFM_100G_CR4	_IFM_EX(77)	/* 100GBASE-CR4 */
+#define	IFM_100G_CR10	_IFM_EX(78)	/* 100GBASE-CR10 */
+#define	IFM_100G_DR	_IFM_EX(79)	/* 100GBASE-DR */
+#define	IFM_100G_ER4	_IFM_EX(80)	/* 100GBASE-ER4 */
+#define	IFM_100G_KP4	_IFM_EX(81)	/* 100GBASE-KP4 */
+#define	IFM_100G_KR2	_IFM_EX(82)	/* 100GBASE-KR2 */
+#define	IFM_100G_KR4	_IFM_EX(83)	/* 100GBASE-KR4 */
+#define	IFM_100G_LR4	_IFM_EX(84)	/* 100GBASE-LR4 */
+#define	IFM_100G_SR2	_IFM_EX(85)	/* 100GBASE-SR2 */
+#define	IFM_100G_SR4	_IFM_EX(86)	/* 100GBASE-SR4 */
+#define	IFM_100G_SR10	_IFM_EX(87)	/* 100GBASE-SR10 */
+#define	IFM_200G_CR2	_IFM_EX(88)	/* 200GBASE-CR2 */
+#define	IFM_200G_CR4	_IFM_EX(89)	/* 200GBASE-CR4 */
+#define	IFM_200G_DR4	_IFM_EX(90)	/* 200GBASE-DR4 */
+#define	IFM_200G_FR4	_IFM_EX(91)	/* 200GBASE-FR4 */
+#define	IFM_200G_KR2	_IFM_EX(92)	/* 200GBASE-KR2 */
+#define	IFM_200G_KR4	_IFM_EX(93)	/* 200GBASE-KR4 */
+#define	IFM_200G_LR4	_IFM_EX(94)	/* 200GBASE-LR4 */
+#define	IFM_200G_SR4	_IFM_EX(95)	/* 200GBASE-SR4 */
+#define	IFM_400G_CR4	_IFM_EX(96)	/* 400GBASE-CR4 */
+#define	IFM_400G_DR4	_IFM_EX(97)	/* 400GBASE-DR4 */
+#define	IFM_400G_FR8	_IFM_EX(98)	/* 400GBASE-FR8 */
+#define	IFM_400G_KR4	_IFM_EX(99)	/* 400GBASE-KR4 */
+#define	IFM_400G_LR8	_IFM_EX(100)	/* 400GBASE-LR8 */
+#define	IFM_400G_SR16	_IFM_EX(101)	/* 400GBASE-SR16 */
 /* IFM_OMASK bits */
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x00000200	/* receive PAUSE frames */
 #define	IFM_ETH_TXPAUSE	0x00000400	/* transmit PAUSE frames */
+#define	_IFM_ETH_XTMASK	0x0000e000	/* Media sub-type (MSB) */
+#define	IFM_ETH_XSHIFT	(13 - 5)	/* shift XTYPE next to TMASK */
 
 /* Ethernet flow control mask */
 #define	IFM_ETH_FMASK	(IFM_FLOW | IFM_ETH_RXPAUSE | IFM_ETH_TXPAUSE)
@@ -400,6 +493,7 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_2500_T | IFM_FDX,	"2500baseT" },		\
 	{ IFM_ETHER | IFM_5000_T | IFM_FDX,	"5GBASE-T" },		\
 	{ IFM_ETHER | IFM_5000_T | IFM_FDX,	"5GbaseT" },		\
+	{ IFM_ETHER | IFM_OTHER,		"Other" },		\
 	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GbaseLR" },		\
 	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GLR" },		\
 	{ IFM_ETHER | IFM_10G_LR | IFM_FDX,	"10GBASE-LR" },		\
@@ -415,6 +509,75 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_10G_CX4 | IFM_FDX,	"10GBASE-CX4" },	\
 	{ IFM_ETHER | IFM_2500_SX | IFM_FDX,	"2500baseSX" },		\
 	{ IFM_ETHER | IFM_2500_SX | IFM_FDX,	"2500SX" },		\
+	{ IFM_ETHER | IFM_1000_SGMII | IFM_FDX,	"1000BASE-SGMII" },	\
+	{ IFM_ETHER | IFM_5000_KR | IFM_FDX,	"5GBASE-KR" },		\
+	{ IFM_ETHER | IFM_10G_AOC | IFM_FDX,	"10GBASE-AOC" },	\
+	{ IFM_ETHER | IFM_10G_CR1 | IFM_FDX,	"10GBASE-CR1" },	\
+	{ IFM_ETHER | IFM_10G_ER | IFM_FDX,	"10GBASE-ER" },		\
+	{ IFM_ETHER | IFM_10G_KR | IFM_FDX,	"10GBASE-KR" },		\
+	{ IFM_ETHER | IFM_10G_KX4 | IFM_FDX,	"10GBASE-KX4" },	\
+	{ IFM_ETHER | IFM_10G_LX4 | IFM_FDX,	"10GBASE-LX4" },	\
+	{ IFM_ETHER | IFM_10G_SFI | IFM_FDX,	"10GBASE-SFI" },	\
+	{ IFM_ETHER | IFM_10G_ZR | IFM_FDX,	"10GBASE-ZR" },		\
+	{ IFM_ETHER | IFM_20G_KR2 | IFM_FDX,	"20GBASE-KR2" },	\
+	{ IFM_ETHER | IFM_25G_AOC | IFM_FDX,	"25GBASE-AOC" },	\
+	{ IFM_ETHER | IFM_25G_AUI | IFM_FDX,	"25G-AUI" },	\
+	{ IFM_ETHER | IFM_25G_CR | IFM_FDX,	"25GBASE-CR" },		\
+	{ IFM_ETHER | IFM_25G_CR_S | IFM_FDX,	"25GBASE-CR-S" },	\
+	{ IFM_ETHER | IFM_25G_ER | IFM_FDX,	"25GBASE-ER" },		\
+	{ IFM_ETHER | IFM_25G_KR | IFM_FDX,	"25GBASE-KR" },		\
+	{ IFM_ETHER | IFM_25G_KR_S | IFM_FDX,	"25GBASE-KR-S" },	\
+	{ IFM_ETHER | IFM_25G_LR | IFM_FDX,	"25GBASE-LR" },		\
+	{ IFM_ETHER | IFM_25G_SR | IFM_FDX,	"25GBASE-SR" },		\
+	{ IFM_ETHER | IFM_25G_T | IFM_FDX,	"25GBASE-T" },		\
+	{ IFM_ETHER | IFM_40G_AOC | IFM_FDX,	"40GBASE-AOC" },	\
+	{ IFM_ETHER | IFM_40G_CR4 | IFM_FDX,	"40GBASE-CR4" },	\
+	{ IFM_ETHER | IFM_40G_ER4 | IFM_FDX,	"40GBASE-ER4" },	\
+	{ IFM_ETHER | IFM_40G_FR | IFM_FDX,	"40GBASE-FR" },		\
+	{ IFM_ETHER | IFM_40G_KR4 | IFM_FDX,	"40GBASE-KR4" },	\
+	{ IFM_ETHER | IFM_40G_LR4 | IFM_FDX,	"40GBASE-LR4" },	\
+	{ IFM_ETHER | IFM_40G_SR4 | IFM_FDX,	"40GBASE-SR4" },	\
+	{ IFM_ETHER | IFM_40G_T | IFM_FDX,	"40GBASE-T" },		\
+	{ IFM_ETHER | IFM_40G_XLPPI | IFM_FDX,	"40G-XLPPI" },		\
+	{ IFM_ETHER | IFM_50G_AUI1 | IFM_FDX,	"50GAUI-1" },		\
+	{ IFM_ETHER | IFM_50G_AUI2 | IFM_FDX,	"50GAUI-2" },		\
+	{ IFM_ETHER | IFM_50G_CR | IFM_FDX,	"50GBASE-CR" },		\
+	{ IFM_ETHER | IFM_50G_CR2 | IFM_FDX,	"50GBASE-CR2" },	\
+	{ IFM_ETHER | IFM_50G_FR | IFM_FDX,	"50GBASE-FR" },		\
+	{ IFM_ETHER | IFM_50G_KR | IFM_FDX,	"50GBASE-KR" },		\
+	{ IFM_ETHER | IFM_50G_KR2 | IFM_FDX,	"50GBASE-KR2" },	\
+	{ IFM_ETHER | IFM_50G_LAUI2 | IFM_FDX,	"50GLAUI-2" },		\
+	{ IFM_ETHER | IFM_50G_LR | IFM_FDX,	"50GBASE-LR" },		\
+	{ IFM_ETHER | IFM_50G_LR10 | IFM_FDX,	"50GBASE-LR10" },	\
+	{ IFM_ETHER | IFM_50G_SR | IFM_FDX,	"50GBASE-SR" },		\
+	{ IFM_ETHER | IFM_50G_SR2 | IFM_FDX,	"50GBASE-SR2" },	\
+	{ IFM_ETHER | IFM_56G_R4 | IFM_FDX,	"56GBASE-R4" },		\
+	{ IFM_ETHER | IFM_100G_CR2 | IFM_FDX,	"100GBASE-CR2" },	\
+	{ IFM_ETHER | IFM_100G_CR4 | IFM_FDX,	"100GBASE-CR4" },	\
+	{ IFM_ETHER | IFM_100G_CR10 | IFM_FDX,	"100GBASE-CR10" },	\
+	{ IFM_ETHER | IFM_100G_DR | IFM_FDX,	"100GBASE-DR" },	\
+	{ IFM_ETHER | IFM_100G_ER4 | IFM_FDX,	"100GBASE-ER4" },	\
+	{ IFM_ETHER | IFM_100G_KP4 | IFM_FDX,	"100GBASE-KP4" },	\
+	{ IFM_ETHER | IFM_100G_KR2 | IFM_FDX,	"100GBASE-KR2" },	\
+	{ IFM_ETHER | IFM_100G_KR4 | IFM_FDX,	"100GBASE-KR4" },	\
+	{ IFM_ETHER | IFM_100G_LR4 | IFM_FDX,	"100GBASE-LR4" },	\
+	{ IFM_ETHER | IFM_100G_SR2 | IFM_FDX,	"100GBASE-SR2" },	\
+	{ IFM_ETHER | IFM_100G_SR4 | IFM_FDX,	"100GBASE-SR4" },	\
+	{ IFM_ETHER | IFM_100G_SR10 | IFM_FDX,	"100GBASE-SR10" },	\
+	{ IFM_ETHER | IFM_200G_CR2 | IFM_FDX,	"200GBASE-CR2" },	\
+	{ IFM_ETHER | IFM_200G_CR4 | IFM_FDX,	"200GBASE-CR4" },	\
+	{ IFM_ETHER | IFM_200G_DR4 | IFM_FDX,	"200GBASE-DR4" },	\
+	{ IFM_ETHER | IFM_200G_FR4 | IFM_FDX,	"200GBASE-FR4" },	\
+	{ IFM_ETHER | IFM_200G_KR2 | IFM_FDX,	"200GBASE-KR2" },	\
+	{ IFM_ETHER | IFM_200G_KR4 | IFM_FDX,	"200GBASE-KR4" },	\
+	{ IFM_ETHER | IFM_200G_LR4 | IFM_FDX,	"200GBASE-LR4" },	\
+	{ IFM_ETHER | IFM_200G_SR4 | IFM_FDX,	"200GBASE-SR4" },	\
+	{ IFM_ETHER | IFM_400G_CR4 | IFM_FDX,	"400GBASE-CR4" },	\
+	{ IFM_ETHER | IFM_400G_DR4 | IFM_FDX,	"400GBASE-DR4" },	\
+	{ IFM_ETHER | IFM_400G_FR8 | IFM_FDX,	"400GBASE-FR8" },	\
+	{ IFM_ETHER | IFM_400G_KR4 | IFM_FDX,	"400GBASE-KR4" },	\
+	{ IFM_ETHER | IFM_400G_LR8 | IFM_FDX,	"400GBASE-LR8" },	\
+	{ IFM_ETHER | IFM_400G_SR16 | IFM_FDX,	"400GBASE-SR16" },	\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	"DB9/4Mbit" },			\
 	{ IFM_TOKEN | IFM_TOK_STP4,	"4STP" },			\
@@ -556,7 +719,76 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_1000_KX,	IF_Mbps(1000ULL) },		\
 	{ IFM_ETHER | IFM_2500_KX,	IF_Mbps(2500ULL) },		\
 	{ IFM_ETHER | IFM_2500_T,	IF_Mbps(2500ULL) },		\
-	{ IFM_ETHER | IFM_5000_T,	IF_Mbps(5000ULL) },		\
+	{ IFM_ETHER | IFM_5000_T,	IF_Gbps(5) },			\
+	{ IFM_ETHER | IFM_1000_SGMII,	IF_Gbps(1) },			\
+	{ IFM_ETHER | IFM_5000_KR,	IF_Gbps(5) },			\
+	{ IFM_ETHER | IFM_10G_AOC,	IF_Gbps(10) },			\
+	{ IFM_ETHER | IFM_10G_CR1,	IF_Gbps(10) },			\
+	{ IFM_ETHER | IFM_10G_ER,	IF_Gbps(10) },			\
+	{ IFM_ETHER | IFM_10G_KR,	IF_Gbps(10) },			\
+	{ IFM_ETHER | IFM_10G_KX4,	IF_Gbps(10) },			\
+	{ IFM_ETHER | IFM_10G_LX4,	IF_Gbps(10) },			\
+	{ IFM_ETHER | IFM_10G_SFI,	IF_Gbps(10) },			\
+	{ IFM_ETHER | IFM_10G_ZR,	IF_Gbps(10) },			\
+	{ IFM_ETHER | IFM_20G_KR2,	IF_Gbps(20) },			\
+	{ IFM_ETHER | IFM_25G_AOC,	IF_Gbps(25) },			\
+	{ IFM_ETHER | IFM_25G_AUI,	IF_Gbps(25) },			\
+	{ IFM_ETHER | IFM_25G_CR,	IF_Gbps(25) },			\
+	{ IFM_ETHER | IFM_25G_CR_S,	IF_Gbps(25) },			\
+	{ IFM_ETHER | IFM_25G_ER,	IF_Gbps(25) },			\
+	{ IFM_ETHER | IFM_25G_KR,	IF_Gbps(25) },			\
+	{ IFM_ETHER | IFM_25G_KR_S,	IF_Gbps(25) },			\
+	{ IFM_ETHER | IFM_25G_LR,	IF_Gbps(25) },			\
+	{ IFM_ETHER | IFM_25G_SR,	IF_Gbps(25) },			\
+	{ IFM_ETHER | IFM_25G_T,	IF_Gbps(25) },			\
+	{ IFM_ETHER | IFM_40G_AOC,	IF_Gbps(40) },			\
+	{ IFM_ETHER | IFM_40G_CR4,	IF_Gbps(40) },			\
+	{ IFM_ETHER | IFM_40G_ER4,	IF_Gbps(40) },			\
+	{ IFM_ETHER | IFM_40G_FR,	IF_Gbps(40) },			\
+	{ IFM_ETHER | IFM_40G_KR4,	IF_Gbps(40) },			\
+	{ IFM_ETHER | IFM_40G_LR4,	IF_Gbps(40) },			\
+	{ IFM_ETHER | IFM_40G_SR4,	IF_Gbps(40) },			\
+	{ IFM_ETHER | IFM_40G_T,	IF_Gbps(40) },			\
+	{ IFM_ETHER | IFM_40G_XLPPI,	IF_Gbps(40) },			\
+	{ IFM_ETHER | IFM_50G_AUI1,	IF_Gbps(50) },			\
+	{ IFM_ETHER | IFM_50G_AUI2,	IF_Gbps(50) },			\
+	{ IFM_ETHER | IFM_50G_CR,	IF_Gbps(50) },			\
+	{ IFM_ETHER | IFM_50G_CR2,	IF_Gbps(50) },			\
+	{ IFM_ETHER | IFM_50G_FR,	IF_Gbps(50) },			\
+	{ IFM_ETHER | IFM_50G_KR,	IF_Gbps(50) },			\
+	{ IFM_ETHER | IFM_50G_KR2,	IF_Gbps(50) },			\
+	{ IFM_ETHER | IFM_50G_LAUI2,	IF_Gbps(50) },			\
+	{ IFM_ETHER | IFM_50G_LR,	IF_Gbps(50) },			\
+	{ IFM_ETHER | IFM_50G_LR10,	IF_Gbps(50) },			\
+	{ IFM_ETHER | IFM_50G_SR,	IF_Gbps(50) },			\
+	{ IFM_ETHER | IFM_50G_SR2,	IF_Gbps(50) },			\
+	{ IFM_ETHER | IFM_56G_R4,	IF_Gbps(56) },			\
+	{ IFM_ETHER | IFM_100G_CR2,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_CR4,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_CR10,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_DR,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_ER4,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_KP4,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_KR2,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_KR4,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_LR4,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_SR2,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_SR4,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_SR10,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_200G_CR2,	IF_Gbps(200) },			\
+	{ IFM_ETHER | IFM_200G_CR4,	IF_Gbps(200) },			\
+	{ IFM_ETHER | IFM_200G_DR4,	IF_Gbps(200) },			\
+	{ IFM_ETHER | IFM_200G_FR4,	IF_Gbps(200) },			\
+	{ IFM_ETHER | IFM_200G_KR2,	IF_Gbps(200) },			\
+	{ IFM_ETHER | IFM_200G_KR4,	IF_Gbps(200) },			\
+	{ IFM_ETHER | IFM_200G_LR4,	IF_Gbps(200) },			\
+	{ IFM_ETHER | IFM_200G_SR4,	IF_Gbps(200) },			\
+	{ IFM_ETHER | IFM_400G_CR4,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_DR4,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_FR8,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_KR4,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_LR8,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_SR16,	IF_Gbps(400) },			\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	IF_Mbps(4) },			\
 	{ IFM_TOKEN | IFM_TOK_STP16,	IF_Mbps(16) },			\

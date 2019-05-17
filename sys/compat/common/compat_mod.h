@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.4 2019/04/15 02:07:11 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.5 2019/05/17 07:37:11 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@ int compat_80_init(void);
 int compat_80_fini(void);
 void kern_mod_80_init(void);
 void kern_mod_80_fini(void);
+void ifmedia_80_init(void);
+void ifmedia_80_fini(void);
 #endif
 
 #ifdef COMPAT_70
