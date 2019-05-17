@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.453 2019/05/17 03:34:26 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.454 2019/05/17 07:37:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.453 2019/05/17 03:34:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.454 2019/05/17 07:37:12 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3134,7 +3134,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
-	int error = 0, hook;
+	int error = 0;
 	u_long ocmd = cmd;
 	short oif_flags;
 	struct ifreq ifrb;
@@ -3142,6 +3142,8 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	int r;
 	struct psref psref;
 	int bound;
+	bool do_if43_post = false;
+	bool do_ifm80_post = false;
 
 	switch (cmd) {
 	case SIOCGIFCONF:
@@ -3163,14 +3165,15 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	ifr = data;
 	/* Pre-conversion */
-	MODULE_HOOK_CALL(if_cvtcmd_43_hook, (&cmd, ocmd), enosys(), hook);
-	if (hook != ENOSYS) {
-		if (cmd != ocmd) {
-			oifr = data;
-			data = ifr = &ifrb;
-			IFREQO2N_43(oifr, ifr);
-		}
+	MODULE_HOOK_CALL(if_cvtcmd_43_hook, (&cmd, ocmd), enosys(), error);
+	if (cmd != ocmd) {
+		oifr = data;
+		data = ifr = &ifrb;
+		IFREQO2N_43(oifr, ifr);
+		do_if43_post = true;
 	}
+	MODULE_HOOK_CALL(ifmedia_80_pre_hook, (ifr, &cmd, &do_ifm80_post),
+	    enosys(), error);
 
 	switch (cmd) {
 	case SIOCIFCREATE:
@@ -3281,7 +3284,10 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 
 	/* Post-conversion */
-	if (cmd != ocmd)
+	if (do_ifm80_post && (error == 0))
+		MODULE_HOOK_CALL(ifmedia_80_post_hook, (ifr, cmd),
+		    enosys(), error);
+	if (do_if43_post)
 		IFREQN2O_43(oifr, ifr);
 
 	IFNET_UNLOCK(ifp);
