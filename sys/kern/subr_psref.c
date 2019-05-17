@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_psref.c,v 1.12 2019/04/19 01:52:55 ozaki-r Exp $	*/
+/*	$NetBSD: subr_psref.c,v 1.13 2019/05/17 03:34:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.12 2019/04/19 01:52:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.13 2019/05/17 03:34:26 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.12 2019/04/19 01:52:55 ozaki-r Exp 
 #include <sys/psref.h>
 #include <sys/queue.h>
 #include <sys/xcall.h>
+#include <sys/lwp.h>
 
 SLIST_HEAD(psref_head, psref);
 
@@ -106,6 +107,44 @@ struct psref_class {
 struct psref_cpu {
 	struct psref_head	pcpu_head;
 };
+
+/*
+ * Data structures and functions for debugging.
+ */
+#ifndef PSREF_DEBUG_NITEMS
+#define PSREF_DEBUG_NITEMS 16
+#endif
+
+struct psref_debug_item {
+	void			*prdi_caller;
+	struct psref		*prdi_psref;
+};
+
+struct psref_debug {
+	int			prd_refs_peek;
+	struct psref_debug_item prd_items[PSREF_DEBUG_NITEMS];
+};
+
+#ifdef PSREF_DEBUG
+static void psref_debug_acquire(struct psref *);
+static void psref_debug_release(struct psref *);
+
+static void psref_debug_lwp_free(void *);
+
+static specificdata_key_t psref_debug_lwp_key;
+#endif
+
+/*
+ * psref_init()
+ */
+void
+psref_init(void)
+{
+
+#ifdef PSREF_DEBUG
+	lwp_specific_key_create(&psref_debug_lwp_key, psref_debug_lwp_free);
+#endif
+}
 
 /*
  * psref_class_create(name, ipl)
@@ -279,8 +318,11 @@ psref_acquire(struct psref *psref, const struct psref_target *target,
 	percpu_putref(class->prc_percpu);
 	splx(s);
 
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(PSREF_DEBUG)
 	curlwp->l_psrefs++;
+#endif
+#ifdef PSREF_DEBUG
+	psref_debug_acquire(psref);
 #endif
 }
 
@@ -336,9 +378,12 @@ psref_release(struct psref *psref, const struct psref_target *target,
 	percpu_putref(class->prc_percpu);
 	splx(s);
 
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(PSREF_DEBUG)
 	KASSERT(curlwp->l_psrefs > 0);
 	curlwp->l_psrefs--;
+#endif
+#ifdef PSREF_DEBUG
+	psref_debug_release(psref);
 #endif
 
 	/* If someone is waiting for users to drain, notify 'em.  */
@@ -398,7 +443,7 @@ psref_copy(struct psref *pto, const struct psref *pfrom,
 	percpu_putref(class->prc_percpu);
 	splx(s);
 
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(PSREF_DEBUG)
 	curlwp->l_psrefs++;
 #endif
 }
@@ -565,3 +610,90 @@ psref_held(const struct psref_target *target, struct psref_class *class)
 
 	return _psref_held(target, class, false);
 }
+
+#ifdef PSREF_DEBUG
+void
+psref_debug_init_lwp(struct lwp *l)
+{
+	struct psref_debug *prd;
+
+	prd = kmem_zalloc(sizeof(*prd), KM_SLEEP);
+	lwp_setspecific_by_lwp(l, psref_debug_lwp_key, prd);
+}
+
+static void
+psref_debug_lwp_free(void *arg)
+{
+	struct psref_debug *prd = arg;
+
+	kmem_free(prd, sizeof(*prd));
+}
+
+static void
+psref_debug_acquire(struct psref *psref)
+{
+	struct psref_debug *prd;
+	struct lwp *l = curlwp;
+	int s, i;
+
+	prd = lwp_getspecific(psref_debug_lwp_key);
+	if (__predict_false(prd == NULL)) {
+		psref->psref_debug = NULL;
+		return;
+	}
+
+	s = splserial();
+	if (l->l_psrefs > prd->prd_refs_peek) {
+		prd->prd_refs_peek = l->l_psrefs;
+		if (__predict_false(prd->prd_refs_peek > PSREF_DEBUG_NITEMS))
+			panic("exceeded PSREF_DEBUG_NITEMS");
+	}
+	for (i = 0; i < prd->prd_refs_peek; i++) {
+		struct psref_debug_item *prdi = &prd->prd_items[i];
+		if (prdi->prdi_psref != NULL)
+			continue;
+		prdi->prdi_caller = psref->psref_debug;
+		prdi->prdi_psref = psref;
+		psref->psref_debug = prdi;
+		break;
+	}
+	if (__predict_false(i == prd->prd_refs_peek))
+		panic("out of range: %d", i);
+	splx(s);
+}
+
+static void
+psref_debug_release(struct psref *psref)
+{
+	int s;
+
+	s = splserial();
+	if (__predict_true(psref->psref_debug != NULL)) {
+		struct psref_debug_item *prdi = psref->psref_debug;
+		prdi->prdi_psref = NULL;
+	}
+	splx(s);
+}
+
+void
+psref_debug_barrier(void)
+{
+	struct psref_debug *prd;
+	struct lwp *l = curlwp;
+	int s, i;
+
+	prd = lwp_getspecific(psref_debug_lwp_key);
+	if (__predict_false(prd == NULL))
+		return;
+
+	s = splserial();
+	for (i = 0; i < prd->prd_refs_peek; i++) {
+		struct psref_debug_item *prdi = &prd->prd_items[i];
+		if (__predict_true(prdi->prdi_psref == NULL))
+			continue;
+		panic("psref leaked: lwp(%p) acquired at %p", l, prdi->prdi_caller);
+	}
+	prd->prd_refs_peek = 0; /* Reset the counter */
+	splx(s);
+}
+#endif /* PSREF_DEBUG */
