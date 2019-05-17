@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.183 2019/05/15 02:56:47 ozaki-r Exp $ */
+/* $NetBSD: ixgbe.c,v 1.184 2019/05/17 07:39:33 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1440,25 +1440,12 @@ ixgbe_add_media_types(struct adapter *adapter)
 		ADD(IFM_10G_CX4 | IFM_FDX, 0);
 	}
 
-#ifdef IFM_ETH_XTYPE
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR) {
 		ADD(IFM_10G_KR | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KX4) {
 		ADD(IFM_10G_KX4 | IFM_FDX, 0);
 	}
-#else
-	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR) {
-		device_printf(dev, "Media supported: 10GbaseKR\n");
-		device_printf(dev, "10GbaseKR mapped to 10GbaseSR\n");
-		ADD(IFM_10G_SR | IFM_FDX, 0);
-	}
-	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KX4) {
-		device_printf(dev, "Media supported: 10GbaseKX4\n");
-		device_printf(dev, "10GbaseKX4 mapped to 10GbaseCX4\n");
-		ADD(IFM_10G_CX4 | IFM_FDX, 0);
-	}
-#endif
 	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_KX) {
 		ADD(IFM_1000_KX | IFM_FDX, 0);
 	}
@@ -2840,11 +2827,7 @@ ixgbe_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR)
 		switch (adapter->link_speed) {
 		case IXGBE_LINK_SPEED_10GB_FULL:
-#ifndef IFM_ETH_XTYPE
-			ifmr->ifm_active |= IFM_10G_SR | IFM_FDX;
-#else
 			ifmr->ifm_active |= IFM_10G_KR | IFM_FDX;
-#endif
 			break;
 		case IXGBE_LINK_SPEED_2_5GB_FULL:
 			ifmr->ifm_active |= IFM_2500_KX | IFM_FDX;
@@ -2858,11 +2841,7 @@ ixgbe_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	    layer & IXGBE_PHYSICAL_LAYER_1000BASE_KX)
 		switch (adapter->link_speed) {
 		case IXGBE_LINK_SPEED_10GB_FULL:
-#ifndef IFM_ETH_XTYPE
-			ifmr->ifm_active |= IFM_10G_CX4 | IFM_FDX;
-#else
 			ifmr->ifm_active |= IFM_10G_KX4 | IFM_FDX;
-#endif
 			break;
 		case IXGBE_LINK_SPEED_2_5GB_FULL:
 			ifmr->ifm_active |= IFM_2500_KX | IFM_FDX;
@@ -2942,10 +2921,8 @@ ixgbe_media_change(struct ifnet *ifp)
 	case IFM_10G_TWINAX:
 	case IFM_10G_SR:
 	case IFM_10G_CX4:
-#ifdef IFM_ETH_XTYPE
 	case IFM_10G_KR:
 	case IFM_10G_KX4:
-#endif
 		speed |= IXGBE_LINK_SPEED_10GB_FULL;
 		break;
 	case IFM_5000_T:
