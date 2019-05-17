@@ -540,6 +540,10 @@ typedef UINT64                          ACPI_INTEGER;
 
 #define ACPI_ARRAY_LENGTH(x)            (sizeof(x) / sizeof((x)[0]))
 
+/* Use a union to align  string s to type t */
+#define ACPI_ALIGNED_STR_UNION(t, s)	\
+    (&((const union { char _s[sizeof(t)]; t _t; }){ s }._t))
+
 /* Pointer manipulation */
 
 #define ACPI_CAST_PTR(t, p)             ((t *) (ACPI_UINTPTR_T) (p))
