@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.200 2019/05/03 22:34:21 kamil Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.201 2019/05/17 03:34:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.200 2019/05/03 22:34:21 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.201 2019/05/17 03:34:26 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -242,6 +242,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.200 2019/05/03 22:34:21 kamil Exp $")
 #include <sys/xcall.h>
 #include <sys/uidinfo.h>
 #include <sys/sysctl.h>
+#include <sys/psref.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -878,6 +879,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	cv_init(&l2->l_sigcv, "sigwait");
 	cv_init(&l2->l_waitcv, "vfork");
 	l2->l_syncobj = &sched_syncobj;
+	PSREF_DEBUG_INIT_LWP(l2);
 
 	if (rnewlwpp != NULL)
 		*rnewlwpp = l2;
