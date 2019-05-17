@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.274 2019/03/01 09:02:03 hannken Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.275 2019/05/17 03:34:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.274 2019/03/01 09:02:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.275 2019/05/17 03:34:26 ozaki-r Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.274 2019/03/01 09:02:03 hannken Exp 
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
 #include <sys/sdt.h>
+#include <sys/psref.h>
 
 #include <uvm/uvm_extern.h>
 
