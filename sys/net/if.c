@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.452 2019/05/15 02:56:48 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.453 2019/05/17 03:34:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.452 2019/05/15 02:56:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.453 2019/05/17 03:34:26 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1863,6 +1863,7 @@ void
 ifa_acquire(struct ifaddr *ifa, struct psref *psref)
 {
 
+	PSREF_DEBUG_FILL_RETURN_ADDRESS(psref);
 	psref_acquire(psref, &ifa->ifa_psref, ifa_psref_class);
 }
 
@@ -2739,6 +2740,7 @@ if_get(const char *name, struct psref *psref)
 		if (if_is_deactivated(ifp))
 			continue;
 		if (strcmp(ifp->if_xname, name) == 0) {
+			PSREF_DEBUG_FILL_RETURN_ADDRESS(psref);
 			psref_acquire(psref, &ifp->if_psref,
 			    ifnet_psref_class);
 			goto out;
@@ -2802,8 +2804,10 @@ if_get_byindex(u_int idx, struct psref *psref)
 
 	s = pserialize_read_enter();
 	ifp = if_byindex(idx);
-	if (__predict_true(ifp != NULL))
+	if (__predict_true(ifp != NULL)) {
+		PSREF_DEBUG_FILL_RETURN_ADDRESS(psref);
 		psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
+	}
 	pserialize_read_exit(s);
 
 	return ifp;

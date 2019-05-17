@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.182 2019/04/19 01:52:55 ozaki-r Exp $	*/
+/*	$NetBSD: lwp.h,v 1.183 2019/05/17 03:34:26 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -357,6 +357,7 @@ void	*lwp_getspecific(specificdata_key_t);
 void	*_lwp_getspecific_by_lwp(lwp_t *, specificdata_key_t);
 #endif
 void	lwp_setspecific(specificdata_key_t, void *);
+void	lwp_setspecific_by_lwp(lwp_t *, specificdata_key_t, void *);
 
 /* Syscalls. */
 int	lwp_park(clockid_t, int, struct timespec *, const void *);
