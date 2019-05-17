@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.218 2019/04/29 11:57:22 roy Exp $	*/
+/*	$NetBSD: route.c,v 1.219 2019/05/17 03:34:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.218 2019/04/29 11:57:22 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.219 2019/05/17 03:34:26 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -2077,6 +2077,8 @@ rtcache_ref(struct rtentry *rt, struct route *ro)
 #ifdef NET_MPSAFE
 	RTCACHE_PSREF_TRACE(rt, ro);
 	ro->ro_bound = curlwp_bind();
+	/* XXX Use a real caller's address */
+	PSREF_DEBUG_FILL_RETURN_ADDRESS(&ro->ro_psref);
 	psref_acquire(&ro->ro_psref, &rt->rt_psref, rt_psref_class);
 #endif
 }

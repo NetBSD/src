@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.333 2019/03/29 02:09:14 christos Exp $	*/
+/*	$NetBSD: rump.c,v 1.334 2019/05/17 03:34:26 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.333 2019/03/29 02:09:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.334 2019/05/17 03:34:26 ozaki-r Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.333 2019/03/29 02:09:14 christos Exp $");
 #include <sys/cprng.h>
 #include <sys/rnd.h>
 #include <sys/ktrace.h>
+#include <sys/psref.h>
 
 #include <rump-sys/kern.h>
 #include <rump-sys/dev.h>
@@ -343,6 +344,9 @@ rump_init(void)
 
 	lwpinit_specificdata();
 	lwp_initspecific(&lwp0);
+
+	/* Must be called after lwpinit_specificdata */
+	psref_init();
 
 	threadpools_init();
 

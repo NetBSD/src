@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.46 2019/04/19 01:52:55 ozaki-r Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.47 2019/05/17 03:34:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.46 2019/04/19 01:52:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.47 2019/05/17 03:34:26 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -603,6 +603,8 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 		KASSERT((sh->sh_flags & SOFTINT_ACTIVE) != 0);
 		sh->sh_flags ^= SOFTINT_ACTIVE;
 	}
+
+	PSREF_DEBUG_BARRIER();
 
 	if (havelock) {
 		KERNEL_UNLOCK_ONE(l);

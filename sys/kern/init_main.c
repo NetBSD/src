@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.503 2019/02/20 10:07:27 hannken Exp $	*/
+/*	$NetBSD: init_main.c,v 1.504 2019/05/17 03:34:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.503 2019/02/20 10:07:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.504 2019/05/17 03:34:26 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -195,6 +195,7 @@ extern void *_binary_splash_image_end;
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
 #include <sys/cprng.h>
+#include <sys/psref.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -392,6 +393,9 @@ main(void)
 	/* Initialize process and pgrp structures. */
 	procinit();
 	lwpinit();
+
+	/* Must be called after lwpinit (lwpinit_specificdata) */
+	psref_init();
 
 	/* Initialize signal-related data structures. */
 	signal_init();
