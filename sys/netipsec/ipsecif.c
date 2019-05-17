@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.15 2019/04/12 07:12:12 knakahara Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.16 2019/05/17 05:27:24 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.15 2019/04/12 07:12:12 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.16 2019/05/17 05:27:24 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -583,13 +583,13 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 		return ENETUNREACH;
 	}
 #ifndef IPSEC_TX_TOS_CLEAR
+	if (!ip6_ipsec_copy_tos)
+		otos = 0;
+
 	if (ifp->if_flags & IFF_ECN)
 		ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
 	else
 		ip_ecn_ingress(ECN_NOCARE, &otos, &itos);
-
-	if (!ip6_ipsec_copy_tos)
-		otos = 0;
 #else
 	if (ip6_ipsec_copy_tos)
 		otos = itos;
