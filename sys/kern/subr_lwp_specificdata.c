@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lwp_specificdata.c,v 1.3 2013/10/25 16:17:35 martin Exp $	*/
+/*	$NetBSD: subr_lwp_specificdata.c,v 1.4 2019/05/17 03:34:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define _LWP_API_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lwp_specificdata.c,v 1.3 2013/10/25 16:17:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lwp_specificdata.c,v 1.4 2019/05/17 03:34:26 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -128,4 +128,12 @@ lwp_setspecific(specificdata_key_t key, void *data)
 
 	specificdata_setspecific(lwp_specificdata_domain,
 				 &curlwp->l_specdataref, key, data);
+}
+
+void
+lwp_setspecific_by_lwp(struct lwp *l, specificdata_key_t key, void *data)
+{
+
+	specificdata_setspecific(lwp_specificdata_domain,
+				 &l->l_specdataref, key, data);
 }

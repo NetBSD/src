@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.41 2019/03/09 09:02:38 hannken Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.42 2019/05/17 03:34:26 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.41 2019/03/09 09:02:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.42 2019/05/17 03:34:26 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.41 2019/03/09 09:02:38 hannken Exp $");
 #include <sys/queue.h>
 #include <sys/resourcevar.h>
 #include <sys/uidinfo.h>
+#include <sys/psref.h>
 
 #include <rump-sys/kern.h>
 
@@ -372,6 +373,7 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 
 	lwp_update_creds(l);
 	lwp_initspecific(l);
+	PSREF_DEBUG_INIT_LWP(l);
 
 	membar_enter();
 	lwproc_curlwpop(RUMPUSER_LWP_CREATE, l);
