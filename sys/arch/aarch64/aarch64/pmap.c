@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 2019/04/08 21:18:22 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 2019/05/17 06:05:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2019/04/08 21:18:22 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2019/05/17 06:05:07 mrg Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -628,10 +628,10 @@ static int
 _pmap_sweep_pdp(struct pmap *pm)
 {
 	struct vm_page *pg, *tmp;
-	pd_entry_t *ptep_in_parent, opte;
+	pd_entry_t *ptep_in_parent, opte __diagused;
 	paddr_t pa, pdppa;
 	int nsweep;
-	uint16_t wirecount;
+	uint16_t wirecount __diagused;
 
 	nsweep = 0;
 	TAILQ_FOREACH_SAFE(pg, &pm->pm_vmlist, mdpage.mdpg_vmlist, tmp) {
@@ -1452,7 +1452,7 @@ _pmap_pdp_delref(struct pmap *pm, paddr_t pdppa, bool do_free_pdp)
 	/* if no reference, free pdp */
 	removed = false;
 	while (wirecount == 1) {
-		pd_entry_t *ptep_in_parent, opte;;
+		pd_entry_t *ptep_in_parent, opte __diagused;
 		ptep_in_parent = VM_PAGE_TO_MD(pg)->mdpg_ptep_parent;
 		if (ptep_in_parent == NULL) {
 			/* no parent */
