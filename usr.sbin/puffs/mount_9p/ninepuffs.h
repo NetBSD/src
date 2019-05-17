@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.h,v 1.12 2007/11/30 19:02:38 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.h,v 1.13 2019/05/17 08:48:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -103,6 +103,8 @@ struct puffs9p {
 	p9pfid_t nextfid;
 
 	size_t maxreq;		/* negotiated with server */
+
+	int protover;
 };
 
 struct dirfid {
@@ -147,18 +149,19 @@ uint8_t		p9pbuf_get_type(struct puffs_framebuf *);
 uint16_t	p9pbuf_get_tag(struct puffs_framebuf *);
 
 int	proto_getqid(struct puffs_framebuf *, struct qid9p *);
-int	proto_getstat(struct puffs_framebuf *, struct vattr *,
+int	proto_getstat(struct puffs_usermount *, struct puffs_framebuf *, struct vattr *,
 		      char **, uint16_t *);
 int	proto_expect_walk_nqids(struct puffs_framebuf *, uint16_t *);
-int	proto_expect_stat(struct puffs_framebuf *, struct vattr *);
+int	proto_expect_stat(struct puffs_usermount *, struct puffs_framebuf *,
+	                  struct vattr *);
 int	proto_expect_qid(struct puffs_framebuf *, uint8_t, struct qid9p *);
 
 int	proto_cc_dupfid(struct puffs_usermount *, p9pfid_t, p9pfid_t);
 int	proto_cc_clunkfid(struct puffs_usermount *, p9pfid_t, int);
 int	proto_cc_open(struct puffs_usermount *, p9pfid_t, p9pfid_t, int);
 
-void	proto_make_stat(struct puffs_framebuf *, const struct vattr *,
-			const char *, enum vtype);
+void	proto_make_stat(struct puffs_usermount *, struct puffs_framebuf *,
+	                const struct vattr *, const char *, enum vtype);
 
 struct puffs_node	*p9p_handshake(struct puffs_usermount *,
 				       const char *, const char *);

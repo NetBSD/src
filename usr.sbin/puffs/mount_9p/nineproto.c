@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.c,v 1.9 2007/11/30 19:02:38 pooka Exp $	*/
+/*	$NetBSD: nineproto.c,v 1.10 2019/05/17 08:48:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nineproto.c,v 1.9 2007/11/30 19:02:38 pooka Exp $");
+__RCSID("$NetBSD: nineproto.c,v 1.10 2019/05/17 08:48:04 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -117,9 +117,10 @@ do {									\
 	size -= *strsize;						\
 } while (/*CONSTCOND*/0)
 int
-proto_getstat(struct puffs_framebuf *pb, struct vattr *vap,
+proto_getstat(struct puffs_usermount *pu, struct puffs_framebuf *pb, struct vattr *vap,
 	char **name, uint16_t *rs)
 {
+	struct puffs9p *p9p = puffs_getspecific(pu);
 	char *uid, *gid;
 	struct qid9p qid;
 	uint64_t flen;
@@ -176,6 +177,13 @@ proto_getstat(struct puffs_framebuf *pb, struct vattr *vap,
 
 	/* muid, not used */
 	GETSTR(NULL, &v16);
+	if (p9p->protover == P9PROTO_VERSION_U) {
+		uint32_t dummy;
+		GETSTR(NULL, &v16); /* extention[s], not used */
+		GETFIELD(p9pbuf_get_4, &dummy, 4); /* n_uid[4], not used */
+		GETFIELD(p9pbuf_get_4, &dummy, 4); /* n_gid[4], not used */
+		GETFIELD(p9pbuf_get_4, &dummy, 4); /* n_muid[4], not used */
+	}
 
 	return 0;
 }
@@ -269,9 +277,10 @@ proto_cc_open(struct puffs_usermount *pu, p9pfid_t fid,
 }
 
 void
-proto_make_stat(struct puffs_framebuf *pb, const struct vattr *vap,
-	const char *filename, enum vtype vt)
+proto_make_stat(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+    const struct vattr *vap, const char *filename, enum vtype vt)
 {
+	struct puffs9p *p9p = puffs_getspecific(pu);
 	struct vattr fakeva;
 	uint32_t mode, atime, mtime;
 	uint64_t flen;
@@ -324,6 +333,12 @@ proto_make_stat(struct puffs_framebuf *pb, const struct vattr *vap,
 	p9pbuf_put_str(pb, owner);
 	p9pbuf_put_str(pb, group);
 	p9pbuf_put_str(pb, "");			/* muid		*/
+	if (p9p->protover == P9PROTO_VERSION_U) {
+		p9pbuf_put_str(pb, P9PROTO_STAT_NOSTR);	/* extentions[s] */
+		p9pbuf_put_4(pb, P9PROTO_STAT_NOVAL4);	/* n_uid[4] */
+		p9pbuf_put_4(pb, P9PROTO_STAT_NOVAL4);	/* n_gid[4] */
+		p9pbuf_put_4(pb, P9PROTO_STAT_NOVAL4);	/* n_muid[4] */
+	}
 
 	curoff = puffs_framebuf_telloff(pb);
 	puffs_framebuf_seekset(pb, startoff);
@@ -352,7 +367,8 @@ proto_expect_qid(struct puffs_framebuf *pb, uint8_t op, struct qid9p *qid)
 }
 
 int
-proto_expect_stat(struct puffs_framebuf *pb, struct vattr *va)
+proto_expect_stat(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+    struct vattr *va)
 {
 	uint16_t dummy;
 	int rv;
@@ -361,5 +377,5 @@ proto_expect_stat(struct puffs_framebuf *pb, struct vattr *va)
 		return EPROTO;
 	if ((rv = p9pbuf_get_2(pb, &dummy)))
 		return rv;
-	return proto_getstat(pb, va, NULL, NULL);
+	return proto_getstat(pu, pb, va, NULL, NULL);
 }
