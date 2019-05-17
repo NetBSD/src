@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.18 2019/04/16 04:31:42 msaitoh Exp $	*/
+/*	$NetBSD: sockio.h,v 1.19 2019/05/17 07:37:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -112,7 +112,9 @@ struct oifdatareq {
 #define	OSIOCGIFCONF	 _IOWR('i', 36, struct ifconf)	/* get ifnet list */
 #define	OSIOCADDMULTI	 _IOW('i', 49, struct oifreq)	/* add m'cast addr */
 #define	OSIOCDELMULTI	 _IOW('i', 50, struct oifreq)	/* del m'cast addr */
-#define	OSIOCSIFMEDIA	 _IOWR('i', 53, struct oifreq)	/* set net media */
+#define	SIOCSIFMEDIA_43	 _IOWR('i', 53, struct oifreq)	/* set net media */
+#define	SIOCSIFMEDIA_80	 _IOWR('i', 53, struct ifreq)	/* set net media */
+#define	SIOCGIFMEDIA_80	 _IOWR('i', 54, struct ifmediareq) /* set net media */
 #define	OSIOCGIFMTU	 _IOWR('i', 126, struct oifreq)	/* get ifnet mtu */
 #define	OSIOCGIFDATA	 _IOWR('i', 128, struct oifdatareq) /* get if_data */
 #define	OSIOCZIFDATA	 _IOWR('i', 129, struct oifdatareq) /* get if_data then

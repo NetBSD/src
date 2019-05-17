@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.44 2019/05/10 08:24:54 msaitoh Exp $	*/
+/*	$NetBSD: if_media.c,v 1.45 2019/05/17 07:37:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.44 2019/05/10 08:24:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.45 2019/05/17 07:37:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,6 +350,7 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 				error = E2BIG;	/* oops! */
 			free(kptr, M_TEMP);
 		}
+		/* Update with the real number */
 		ifmr->ifm_count = nwords;
 		break;
 	}
@@ -447,8 +448,8 @@ ifmedia_baudrate(int mword)
 	int i;
 
 	for (i = 0; ifmedia_baudrate_descriptions[i].ifmb_word != 0; i++) {
-		if ((mword & (IFM_NMASK|IFM_TMASK)) ==
-		    ifmedia_baudrate_descriptions[i].ifmb_word)
+		if (IFM_TYPE_SUBTYPE_MATCH(mword,
+		    ifmedia_baudrate_descriptions[i].ifmb_word))
 			return ifmedia_baudrate_descriptions[i].ifmb_baudrate;
 	}
 

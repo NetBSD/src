@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.21 2019/04/16 04:31:42 msaitoh Exp $	*/
+/*	$NetBSD: if_43.c,v 1.22 2019/05/17 07:37:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.21 2019/04/16 04:31:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.22 2019/05/17 07:37:11 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -126,8 +126,8 @@ compat_cvtcmd(u_long cmd)
 		return SIOCADDMULTI;
 	case OSIOCDELMULTI:
 		return SIOCDELMULTI;
-	case OSIOCSIFMEDIA:
-		return SIOCSIFMEDIA;
+	case SIOCSIFMEDIA_43:
+		return SIOCSIFMEDIA_80;
 	case OSIOCGIFMTU:
 		return SIOCGIFMTU;
 	case OSIOCGIFDATA:

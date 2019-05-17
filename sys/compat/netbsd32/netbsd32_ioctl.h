@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.66 2018/11/25 17:58:29 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.67 2019/05/17 07:37:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -354,8 +354,9 @@ struct netbsd32_if_clonereq {
 #define	SIOCDELMULTI32	 _IOW('i', 50, struct netbsd32_ifreq)	/* del m'cast addr */
 #define	OSIOCDELMULTI32	 _IOW('i', 50, struct netbsd32_oifreq)	/* del m'cast addr */
 
-#define	SIOCSIFMEDIA32	_IOWR('i', 53, struct netbsd32_ifreq)	/* set net media */
-#define	OSIOCSIFMEDIA32	_IOWR('i', 53, struct netbsd32_oifreq)	/* set net media */
+#define	SIOCSIFMEDIA32_80	_IOWR('i', 53, struct netbsd32_ifreq)	/* set net media */
+#define	SIOCSIFMEDIA32_43	_IOWR('i', 53, struct netbsd32_oifreq)	/* set net media */
+#define	SIOCSIFMEDIA32		_IOWR('i', 55, struct netbsd32_ifreq)	/* set net media */
 
 #define	SIOCSIFGENERIC32 _IOW('i', 57, struct netbsd32_ifreq)	/* generic IF set op */
 #define	SIOCGIFGENERIC32 _IOWR('i', 58, struct netbsd32_ifreq)	/* generic IF get op */
@@ -403,7 +404,8 @@ struct netbsd32_ifmediareq {
 	netbsd32_intp	ifm_ulist;		/* media words */
 };
 /* from <sys/sockio.h> */
-#define	SIOCGIFMEDIA32	_IOWR('i', 54, struct netbsd32_ifmediareq) /* get net media */
+#define	SIOCGIFMEDIA32_80 _IOWR('i', 54, struct netbsd32_ifmediareq) /* get net media */
+#define	SIOCGIFMEDIA32	_IOWR('i', 56, struct netbsd32_ifmediareq) /* get net media */
 
 /* from net/if_pppoe.h */
 struct netbsd32_pppoediscparms {

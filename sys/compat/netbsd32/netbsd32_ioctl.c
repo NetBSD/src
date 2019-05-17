@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.102 2019/04/23 07:45:06 msaitoh Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.103 2019/05/17 07:37:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.102 2019/04/23 07:45:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.103 2019/05/17 07:37:12 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -1346,6 +1346,8 @@ netbsd32_ioctl(struct lwp *l,
 	case OSIOCSIFFLAGS32:
 		IOCTL_STRUCT_CONV_TO(OSIOCSIFFLAGS, oifreq);
 
+	case SIOCGIFMEDIA32_80:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFMEDIA_80, ifmediareq);
 	case SIOCGIFMEDIA32:
 		IOCTL_STRUCT_CONV_TO(SIOCGIFMEDIA, ifmediareq);
 

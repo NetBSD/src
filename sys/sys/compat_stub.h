@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.15 2019/04/29 16:12:30 roy Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.16 2019/05/17 07:37:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -335,6 +335,15 @@ MODULE_HOOK(uipc_unp_70_hook, struct mbuf *,
  */
 #include <sys/sysctl.h>
 MODULE_HOOK(sysvipc_sysctl_50_hook, int, (SYSCTLFN_PROTO));
+
+/*
+ * ifmedia_80 compatibility
+ */
+
+struct ifmedia;
+struct ifreq;
+MODULE_HOOK(ifmedia_80_pre_hook, int, (struct ifreq *, u_long *, bool *));
+MODULE_HOOK(ifmedia_80_post_hook, int, (struct ifreq *, u_long));
 
 /* 
  * Hook for 32-bit machine name
