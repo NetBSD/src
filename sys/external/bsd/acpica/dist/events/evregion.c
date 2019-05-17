@@ -581,7 +581,7 @@ AcpiEvExecuteRegMethod (
     ACPI_EVALUATE_INFO      *Info;
     ACPI_OPERAND_OBJECT     *Args[3];
     ACPI_OPERAND_OBJECT     *RegionObj2;
-    const ACPI_NAME         *RegNamePtr = ACPI_CAST_PTR (ACPI_NAME, METHOD_NAME__REG);
+    const ACPI_NAME         *RegNamePtr = ACPI_ALIGNED_STR_UNION (ACPI_NAME, METHOD_NAME__REG);
     ACPI_NAMESPACE_NODE     *MethodNode;
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_STATUS             Status;
