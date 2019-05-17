@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.h,v 1.1 2007/04/21 14:21:43 pooka Exp $	*/
+/*	$NetBSD: nineproto.h,v 1.2 2019/05/17 08:48:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,12 @@
 
 #include <stdint.h>
 
-#define P9PROTO_VERSION		"9P2000"
+#define P9PROTO_VERSION		0
+#define P9PROTO_VERSION_U	1
+
+#define P9PROTO_VERSTR		"9P2000"
+#define P9PROTO_VERSTR_U	"9P2000.u"
+#define P9PROTO_VERSTR_MAXLEN	(sizeof(P9PROTO_VERSTR_U))
 
 #define P9PROTO_T_VERSION	100
 #define P9PROTO_R_VERSION	101
@@ -66,12 +71,18 @@
 #define P9PROTO_NOFID		(uint32_t)~0
 #define P9PROTO_NOTAG		(uint16_t)~0
 
+#define P9PROTO_NUNAME_UNSPECIFIED	(uint16_t)~0
+
 /* type field in a qid */
 #define P9PROTO_QID_TYPE_DIR	0x80
 #define P9PROTO_QID_TYPE_APPEND	0x40
 #define P9PROTO_QID_TYPE_EXCL	0x20
 #define P9PROTO_QID_TYPE_MOUNT	0x10
 #define P9PROTO_QID_TYPE_AUTH	0x08
+/* P92000.u extensions */
+#define P9PROTO_QID_TYPE_TMP	0x04
+#define P9PROTO_QID_TYPE_LINK	0x02
+#define P9PROTO_QID_TYPE_FILE	0x00
 
 /* mode in open */
 #define P9PROTO_OMODE_READ	0x00
@@ -83,11 +94,24 @@
 
 /* for creating directories */
 #define P9PROTO_CPERM_DIR	0x80000000
+#define P9PROTO_CPERM_APPEND	0x40000000
+#define P9PROTO_CPERM_EXCL	0x20000000
+#define P9PROTO_CPERM_MOUNT	0x10000000
+#define P9PROTO_CPERM_AUTH	0x08000000
+#define P9PROTO_CPERM_TMP	0x04000000
+#define P9PROTO_CPERM_SYMLINK	0x02000000
+/* P92000.u extensions */
+#define P9PROTO_CPERM_DEVICE	0x00800000
+#define P9PROTO_CPERM_NAMEDPIPE	0x00200000
+#define P9PROTO_CPERM_SOCKET	0x00100000
+#define P9PROTO_CPERM_SETUID	0x00080000
+#define P9PROTO_CPERM_SETGID	0x00040000
 
 /* stat non-values */
 #define P9PROTO_STAT_NOVAL1	(uint8_t)~0
 #define P9PROTO_STAT_NOVAL2	(uint16_t)~0
 #define P9PROTO_STAT_NOVAL4	(uint32_t)~0
 #define P9PROTO_STAT_NOVAL8	(uint64_t)~0
+#define P9PROTO_STAT_NOSTR	""
 
 #endif /* PUFFS9P_PROTO_H_ */
