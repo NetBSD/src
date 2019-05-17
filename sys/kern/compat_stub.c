@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.11 2019/04/29 16:12:30 roy Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.12 2019/05/17 07:37:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -262,6 +262,12 @@ struct uipc_unp_70_hook_t uipc_unp_70_hook;
  * Hook for sysvipc50_sysctl
  */
 struct sysvipc_sysctl_50_hook_t sysvipc_sysctl_50_hook;
+
+/*
+ * ifmedia_80 compatability
+ */
+struct ifmedia_80_pre_hook_t ifmedia_80_pre_hook;
+struct ifmedia_80_post_hook_t ifmedia_80_post_hook;
 
 /*
  * Hook for 32-bit machine name
