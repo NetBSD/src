@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_9p.8,v 1.7 2019/05/17 08:26:20 wiz Exp $
+.\"	$NetBSD: mount_9p.8,v 1.8 2019/05/17 08:48:04 ozaki-r Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -32,6 +32,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl s
+.Op Fl u
 .Op Fl o Ar mntopts
 .Op Fl p Ar port
 .Ar [user@]host[:path]
@@ -61,6 +62,16 @@ With the
 option
 .Nm
 runs in the forground.
+.Pp
+By default
+.Nm
+follows the 9P2000 protocol.
+With
+.Fl u
+option
+.Nm
+follows the 9P2000.u protocol that includes extensions to better support Unix
+environments.
 .Sh SEE ALSO
 .Xr puffs 3 ,
 .Xr puffs 4 ,
@@ -74,6 +85,9 @@ The
 .Nm
 utility first appeared in
 .Nx 5.0 .
+.Pp
+Experimental 9P2000.u support appeared in
+.Nx 9.0 .
 .Sh CAVEATS
 Permissions are not handled well.
 .Pp
@@ -82,3 +96,5 @@ Authentication support is missing.
 Error code handling is missing.
 .Pp
 Under construction.
+.Pp
+9P2000.u support doesn't use extension fields.

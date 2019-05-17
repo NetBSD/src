@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.9 2011/06/22 04:03:23 mrg Exp $	*/
+/*	$NetBSD: fs.c,v 1.10 2019/05/17 08:48:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.9 2011/06/22 04:03:23 mrg Exp $");
+__RCSID("$NetBSD: fs.c,v 1.10 2019/05/17 08:48:04 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -48,6 +48,17 @@ __RCSID("$NetBSD: fs.c,v 1.9 2011/06/22 04:03:23 mrg Exp $");
 	rv = fname(a1, a2, a3, a4);					\
 	if (rv) errx(1, "p9p_handshake io failed %d, %d", rv, *a4) 
 
+static const char *
+p9p_ver2str(int version)
+{
+
+	switch (version) {
+	case P9PROTO_VERSION:	return P9PROTO_VERSTR;
+	case P9PROTO_VERSION_U:	return P9PROTO_VERSTR_U;
+	}
+	return NULL;
+}
+
 struct puffs_node *
 p9p_handshake(struct puffs_usermount *pu,
 	const char *username, const char *path)
@@ -63,13 +74,15 @@ p9p_handshake(struct puffs_usermount *pu,
 	const char *p;
 	uint8_t type;
 	int rv, done, x = 1, ncomp;
+	uint16_t strsize;
+	char *str;
 
 	/* send initial handshake */
 	pb = p9pbuf_makeout();
 	p9pbuf_put_1(pb, P9PROTO_T_VERSION);
 	p9pbuf_put_2(pb, P9PROTO_NOTAG);
 	p9pbuf_put_4(pb, p9p->maxreq);
-	p9pbuf_put_str(pb, P9PROTO_VERSION);
+	p9pbuf_put_str(pb, p9p_ver2str(p9p->protover));
 	DO_IO(p9pbuf_write, pu, pb, p9p->servsock, &done, rv);
 
 	puffs_framebuf_recycle(pb);
@@ -89,6 +102,13 @@ p9p_handshake(struct puffs_usermount *pu,
 		    "%d vs. %d", P9P_MINREQLEN, maxreq);
 	p9p->maxreq = maxreq;
 
+	if (p9pbuf_get_str(pb, &str, &strsize))
+		errx(1, "server invalid response: no version");
+	if (strncmp(str, p9p_ver2str(p9p->protover), P9PROTO_VERSTR_MAXLEN) != 0) {
+		errx(1, "server doesn't support %s", p9p_ver2str(p9p->protover));
+		/* Should downgrade from 9P2000.u to 9P2000 if the server request? */
+	}
+
 	/* tell the server we don't support authentication */
 	p9pbuf_recycleout(pb);
 	tagid = NEXTTAG(p9p);
@@ -97,6 +117,8 @@ p9p_handshake(struct puffs_usermount *pu,
 	p9pbuf_put_4(pb, P9PROTO_NOFID);
 	p9pbuf_put_str(pb, username);
 	p9pbuf_put_str(pb, "");
+	if (p9p->protover == P9PROTO_VERSION_U)
+		p9pbuf_put_4(pb, P9PROTO_NUNAME_UNSPECIFIED); /* n_uname[4] */
 	DO_IO(p9pbuf_write, pu, pb, p9p->servsock, &done, rv);
 
 	puffs_framebuf_recycle(pb);
@@ -117,6 +139,8 @@ p9p_handshake(struct puffs_usermount *pu,
 	p9pbuf_put_4(pb, P9PROTO_NOFID);
 	p9pbuf_put_str(pb, username);
 	p9pbuf_put_str(pb, "");
+	if (p9p->protover == P9PROTO_VERSION_U)
+		p9pbuf_put_4(pb, P9PROTO_NUNAME_UNSPECIFIED); /* n_uname[4] */
 	DO_IO(p9pbuf_write, pu, pb, p9p->servsock, &done, rv);
 
 	puffs_framebuf_recycle(pb);
@@ -213,7 +237,7 @@ p9p_handshake(struct puffs_usermount *pu,
 		errx(1, "server invalid tag: %d vs. %d", tagid, rtagid);
 	if (p9pbuf_get_2(pb, &dummy))
 		errx(1, "couldn't get stat len parameter");
-	if (proto_getstat(pb, &rootva, NULL, NULL))
+	if (proto_getstat(pu, pb, &rootva, NULL, NULL))
 		errx(1, "could not parse root attributes");
 	puffs_framebuf_destroy(pb);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.21 2009/01/18 10:10:47 lukem Exp $	*/
+/*	$NetBSD: node.c,v 1.22 2019/05/17 08:48:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.21 2009/01/18 10:10:47 lukem Exp $");
+__RCSID("$NetBSD: node.c,v 1.22 2019/05/17 08:48:04 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -62,7 +62,7 @@ do_getattr(struct puffs_usermount *pu, struct puffs_node *pn, struct vattr *vap)
 	p9pbuf_put_4(pb, p9n->fid_base);
 	GETRESPONSE(pb);
 
-	rv = proto_expect_stat(pb, vap);
+	rv = proto_expect_stat(pu, pb, vap);
 
  out:
 	RETURN(rv);
@@ -120,7 +120,7 @@ puffs9p_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo 
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, tfid);
 	GETRESPONSE(pb);
-	if ((rv = proto_expect_stat(pb, &va)) != 0) {
+	if ((rv = proto_expect_stat(pu, pb, &va)) != 0) {
 		proto_cc_clunkfid(pu, tfid, 0);
 		rv = ENOENT;
 		goto out;
@@ -194,7 +194,7 @@ puffs9p_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	}
 
 	while (count > 0) {
-		if ((rv = proto_getstat(pb, &va, &name, &statsize))) {
+		if ((rv = proto_getstat(pu, pb, &va, &name, &statsize))) {
 			/*
 			 * If there was an error, it's unlikely we'll be
 			 * coming back, so just nuke the dfp.  If we do
@@ -231,7 +231,7 @@ puffs9p_node_setattr(struct puffs_usermount *pu, void *opc,
 	p9pbuf_put_1(pb, P9PROTO_T_WSTAT);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n->fid_base);
-	proto_make_stat(pb, va, NULL, pn->pn_va.va_type);
+	proto_make_stat(pu, pb, va, NULL, pn->pn_va.va_type);
 	GETRESPONSE(pb);
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_WSTAT)
@@ -426,6 +426,8 @@ nodecreate(struct puffs_usermount *pu, struct puffs_node *pn,
 	p9pbuf_put_str(pb, name);
 	p9pbuf_put_4(pb, dirbit | (vap->va_mode & 0777));
 	p9pbuf_put_1(pb, 0);
+	if (p9p->protover == P9PROTO_VERSION_U)
+		p9pbuf_put_str(pb, ""); /* extension[s] */
 	GETRESPONSE(pb);
 
 	rv = proto_expect_qid(pb, P9PROTO_R_CREATE, &nqid);
@@ -579,7 +581,7 @@ puffs9p_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 	p9pbuf_put_1(pb, P9PROTO_T_WSTAT);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n_src->fid_base);
-	proto_make_stat(pb, NULL, pcn_targ->pcn_name, pn_src->pn_va.va_type);
+	proto_make_stat(pu, pb, NULL, pcn_targ->pcn_name, pn_src->pn_va.va_type);
 	GETRESPONSE(pb);
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_WSTAT)
