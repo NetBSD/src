@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2018/05/01 12:38:39 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2019/05/17 13:51:36 nakayama Exp $
 
-HOSTPROGNAME=	nbdisklabel
+HOSTPROGNAME=	${_TOOL_PREFIX}disklabel
 HOST_SRCDIR=	sbin/disklabel
 HOST_SRCS=	disklabel.c
 

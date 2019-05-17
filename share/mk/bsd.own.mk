@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1136 2019/05/17 13:44:55 nakayama Exp $
+#	$NetBSD: bsd.own.mk,v 1.1137 2019/05/17 13:51:36 nakayama Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -374,7 +374,7 @@ TOOL_CTFCONVERT=	${TOOLDIR}/bin/${_TOOL_PREFIX}ctfconvert
 TOOL_CTFMERGE=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctfmerge
 TOOL_CVSLATEST=		${TOOLDIR}/bin/${_TOOL_PREFIX}cvslatest
 TOOL_DB=		${TOOLDIR}/bin/${_TOOL_PREFIX}db
-TOOL_DISKLABEL=		${TOOLDIR}/bin/nbdisklabel
+TOOL_DISKLABEL=		${TOOLDIR}/bin/${_TOOL_PREFIX}disklabel
 TOOL_DTC=		${TOOLDIR}/bin/${_TOOL_PREFIX}dtc
 TOOL_EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
 TOOL_FDISK=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-fdisk
