@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.50 2019/04/03 22:10:52 christos Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.51 2019/05/17 18:50:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.50 2019/04/03 22:10:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.51 2019/05/17 18:50:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,6 +568,12 @@ look_netbsd_part(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 	return SCAN_CONTINUE;
 }
 
+static bool
+check_label_magic(const struct disklabel *dlp, uint32_t diskmagic)
+{
+	return memcmp(&dlp->d_magic, &diskmagic, sizeof(diskmagic)) == 0 &&
+	    memcmp(&dlp->d_magic2, &diskmagic, sizeof(diskmagic)) == 0;
+}
 
 #ifdef DISKLABEL_EI
 /*
@@ -617,11 +623,10 @@ validate_label(mbr_args_t *a, uint label_sector)
 			dlp = (void *)dlp_byte;
 			break;
 		}
-		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC)
+		if (!check_label_magic(dlp, DISKMAGIC))
 #ifdef DISKLABEL_EI
 		{
-			if (bswap32(dlp->d_magic)  != DISKMAGIC ||
-			    bswap32(dlp->d_magic2) != DISKMAGIC)
+			if (!check_label_magic(dlp, bswap32(DISKMAGIC)))
 				continue;
 
 			/*
