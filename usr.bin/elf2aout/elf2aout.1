@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf2aout.1,v 1.10 2012/03/05 10:57:18 njoly Exp $
+.\"	$NetBSD: elf2aout.1,v 1.11 2019/05/18 21:16:12 christos Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -19,7 +19,8 @@
 .Nm elf2aout
 .Nd convert a NetBSD ELF-format executable to NetBSD a.out format
 .Sh SYNOPSIS
-.Nm elf2aout
+.Nm
+.Op Fl \&Os
 .Ar elf-file
 .Ar aout-file
 .Sh DESCRIPTION
@@ -35,6 +36,18 @@ to a.out format, for compatibility with bootblocks and kernel-reading
 utilities like
 .Xr kvm 3 ,
 which currently expect an a.out format kernel.
+.Pp
+The following options are available:
+.Bl -tag -width flag
+.It Fl O
+Produce
+.Dv OMAGIC
+instead of
+.Dv ZMAGIC
+binaries which is the default.
+.It Fl s
+Preserve the symbol table.
+.El
 .\" .Sh DIAGNOSTICS
 .Sh SEE ALSO
 .Xr elf2ecoff 1 ,
