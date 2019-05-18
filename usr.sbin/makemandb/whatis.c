@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.7 2017/05/23 15:27:54 abhinav Exp $	*/
+/*	$NetBSD: whatis.c,v 1.8 2019/05/18 07:56:43 abhinav Exp $	*/
 /*-
  * Copyright (c) 2012 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: whatis.c,v 1.7 2017/05/23 15:27:54 abhinav Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.8 2019/05/18 07:56:43 abhinav Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -48,24 +48,20 @@ usage(void)
 static int
 whatis(sqlite3 *db, const char *cmd)
 {
-	static const char sqlstr[] = "SELECT name, section, name_desc"
-		" FROM mandb WHERE name MATCH ? AND name=? COLLATE NOCASE"
-		" UNION"
-		" SELECT b.link AS name, b.section, a.name_desc FROM mandb a"
-		" JOIN"
-		" mandb_links b ON a.name=b.target AND a.section=b.section WHERE b.link=?"
-		" GROUP BY a.name, a.section, a.name_desc ORDER BY section, name";
+	static const char sqlstr[] = "SELECT link AS name, section, name_desc"
+		" FROM mandb_links WHERE link=? UNION SELECT name, section, name_desc"
+		" FROM mandb WHERE name MATCH ? AND name=? ORDER BY section";
 	sqlite3_stmt *stmt = NULL;
 	int retval;
-
+	int i;
 	if (sqlite3_prepare_v2(db, sqlstr, -1, &stmt, NULL) != SQLITE_OK)
-		errx(EXIT_FAILURE, "Unable to query database");
-	if (sqlite3_bind_text(stmt, 1, cmd, -1, NULL) != SQLITE_OK)
-		errx(EXIT_FAILURE, "Unable to query database");
-	if (sqlite3_bind_text(stmt, 2, cmd, -1, NULL) != SQLITE_OK)
-		errx(EXIT_FAILURE, "Unable to query database");
-	if (sqlite3_bind_text(stmt, 3, cmd, -1, NULL) != SQLITE_OK)
-		errx(EXIT_FAILURE, "Unable to query database");
+		errx(EXIT_FAILURE, "%s", sqlite3_errmsg(db));
+
+	for (i = 0; i < 3; i++) {
+		if (sqlite3_bind_text(stmt, i + 1, cmd, -1, NULL) != SQLITE_OK)
+			errx(EXIT_FAILURE, "%s", sqlite3_errmsg(db));
+	}
+
 	retval = 1;
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
 		printf("%s(%s) - %s\n", sqlite3_column_text(stmt, 0),

@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.59 2019/03/11 00:31:36 christos Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.60 2019/05/18 07:56:43 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.59 2019/03/11 00:31:36 christos Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.60 2019/05/18 07:56:43 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1767,9 +1767,9 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 				ln[strlen(ln) - 1] = 0;
 
 			str = sqlite3_mprintf("INSERT INTO mandb_links"
-					      " VALUES (%Q, %Q, %Q, %Q, %Q)",
+					      " VALUES (%Q, %Q, %Q, %Q, %Q, %Q)",
 					      ln, rec->name, rec->section,
-					      rec->machine, rec->md5_hash);
+					      rec->machine, rec->md5_hash, rec->name_desc);
 			sqlite3_exec(db, str, NULL, NULL, &errmsg);
 			sqlite3_free(str);
 			if (errmsg != NULL) {

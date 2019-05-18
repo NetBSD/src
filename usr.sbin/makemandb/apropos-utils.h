@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.h,v 1.14 2017/11/25 14:29:38 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.h,v 1.15 2019/05/18 07:56:43 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -45,7 +45,7 @@ typedef enum mandb_access_mode {
 } mandb_access_mode;
 
 
-#define APROPOS_SCHEMA_VERSION 20170618
+#define APROPOS_SCHEMA_VERSION 20190518
 
 /*
  * Used to identify the section of a man(7) page.
