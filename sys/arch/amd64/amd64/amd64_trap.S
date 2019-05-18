@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.47 2019/05/14 16:59:25 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.48 2019/05/18 13:32:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -253,7 +253,12 @@ IDTVEC(trap02)
 	ZTRAP_NJ(T_NMI)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
+
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1f
 	IBRS_ENTER
+1:
+
 	cld
 	SMAP_ENABLE
 	movw	%gs,TF_GS(%rsp)
@@ -281,9 +286,13 @@ IDTVEC(trap02)
 	call	_C_LABEL(nmitrap)
 
 .Lnmileave:
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1f
 	MDS_LEAVE
-	SVS_LEAVE_NMI
 	IBRS_LEAVE
+1:
+
+	SVS_LEAVE_NMI
 	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
@@ -353,12 +362,15 @@ IDTVEC(trap08)
 	TRAP_NJ(T_DOUBLEFLT)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
-	IBRS_ENTER
-	SVS_ENTER_ALTSTACK
+
 	testb	$SEL_UPL,TF_CS(%rsp)
 	jz	1f
+	IBRS_ENTER
 	swapgs
 1:
+
+	SVS_ENTER_ALTSTACK
+
 	cld
 	SMAP_ENABLE
 	movw	%gs,TF_GS(%rsp)
@@ -370,15 +382,15 @@ IDTVEC(trap08)
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(doubletrap)
 
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1f
 	MDS_LEAVE
 	SVS_LEAVE_ALTSTACK
 	IBRS_LEAVE
-	INTR_RESTORE_GPRS
-
-	testb	$SEL_UPL,TF_CS(%rsp)
-	jz	1f
 	swapgs
 1:
+
+	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
 #endif
