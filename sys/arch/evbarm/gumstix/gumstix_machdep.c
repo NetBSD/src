@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.61 2018/09/21 12:04:08 skrll Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.62 2019/05/18 08:49:24 skrll Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -179,10 +179,7 @@
 #include <arm/locore.h>
 
 #include <arm/arm32/machdep.h>
-#if NARML2CC > 0
-#include <arm/cortex/pl310_var.h>
-#endif
-#include <arm/cortex/scu_reg.h>
+
 #include <arm/omap/omap2_obiovar.h>
 #include <arm/omap/am335x_prcm.h>
 #include <arm/omap/omap2_gpio.h>
@@ -195,16 +192,35 @@
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_com.h>
 #include <arm/omap/tifbvar.h>
+
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 #include <evbarm/gumstix/gumstixreg.h>
 #include <evbarm/gumstix/gumstixvar.h>
 
+#if defined(CPU_CORTEXA9)
+#include <arm/cortex/pl310_var.h>
+#include <arm/cortex/pl310_reg.h>
+#include <arm/cortex/scu_reg.h>
+
+#include <arm/cortex/a9tmr_var.h>
+#endif
+
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
+#include <arm/cortex/gtmr_var.h>
+#endif
+
 #include <dev/cons.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
+#endif
+
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	__nothing
 #endif
 
 /*
@@ -391,6 +407,13 @@ static const struct pmap_devmap gumstix_devmap[] = {
 		VM_PROT_READ | VM_PROT_WRITE,
 		PTE_NOCACHE
 	},
+	{
+		OVERO_SRDC_VBASE,
+		_A(OMAP3530_SDRC_BASE),
+		_S(OMAP3530_SDRC_SIZE),
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE
+	},
 #elif defined(DUOVERO)
 	{
 		DUOVERO_L4_CM_VBASE,
@@ -420,6 +443,13 @@ static const struct pmap_devmap gumstix_devmap[] = {
 		VM_PROT_READ | VM_PROT_WRITE,
 		PTE_NOCACHE
 	},
+	{
+		DUOVERO_DMM_VBASE,
+		_A(OMAP4430_DMM_BASE),
+		_S(OMAP4430_DMM_SIZE),
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE
+	},
 #elif defined(PEPPER)
 	{
 		/* CM, Control Module, GPIO0, Console */
@@ -444,6 +474,95 @@ static const struct pmap_devmap gumstix_devmap[] = {
 #undef	_A
 #undef	_S
 
+#ifdef MULTIPROCESSOR
+void gumstix_cpu_hatch(struct cpu_info *);
+
+void
+gumstix_cpu_hatch(struct cpu_info *ci)
+{
+#if defined(CPU_CORTEXA9)
+	a9tmr_init_cpu_clock(ci);
+#elif defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
+	gtmr_init_cpu_clock(ci);
+#endif
+}
+#endif
+
+
+static void
+gumstix_mpstart(void)
+{
+#if defined(MULTIPROCESSOR)
+	const bus_space_tag_t iot = &omap_bs_tag;
+	int error;
+
+#if defined(CPU_CORTEXA9)
+	bus_space_handle_t scu_ioh;
+	error = bus_space_map(iot, OMAP4_SCU_BASE, OMAP4_SCU_SIZE, 0, &scu_ioh);
+	if (error)
+		panic("Could't map OMAP4_SCU_BASE");
+
+	/*
+	 * Invalidate all SCU cache tags. That is, for all cores (0-3)
+	 */
+	bus_space_write_4(iot, scu_ioh, SCU_INV_ALL_REG, 0xffff);
+
+	uint32_t diagctl = bus_space_read_4(iot, scu_ioh, SCU_DIAG_CONTROL);
+	diagctl |= SCU_DIAG_DISABLE_MIGBIT;
+	bus_space_write_4(iot, scu_ioh, SCU_DIAG_CONTROL, diagctl);
+
+	uint32_t scu_ctl = bus_space_read_4(iot, scu_ioh, SCU_CTL);
+	scu_ctl |= SCU_CTL_SCU_ENA;
+	bus_space_write_4(iot, scu_ioh, SCU_CTL, scu_ctl);
+
+	armv7_dcache_wbinv_all();
+#endif
+	bus_space_handle_t wugen_ioh;
+	error = bus_space_map(iot, OMAP4_WUGEN_BASE, OMAP4_WUGEN_SIZE, 0,
+	    &wugen_ioh);
+	if (error)
+		panic("Couldn't map OMAP4_WUGEN_BASE");
+	const paddr_t mpstart = KERN_VTOPHYS((vaddr_t)cpu_mpstart);
+
+	bus_space_write_4(iot, wugen_ioh, OMAP4_AUX_CORE_BOOT1, mpstart);
+
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		uint32_t boot = bus_space_read_4(iot, wugen_ioh, OMAP4_AUX_CORE_BOOT0);
+		boot |= __SHIFTIN(0xf, i * 4);
+		bus_space_write_4(iot, wugen_ioh, OMAP4_AUX_CORE_BOOT0, boot);
+	}
+
+	arm_dsb();
+	__asm __volatile("sev" ::: "memory");
+
+	for (int loop = 0; loop < 16; loop++) {
+		VPRINTF("%u hatched %#x\n", loop, arm_cpu_hatched);
+		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
+			break;
+		int timo = 1500000;
+		while (arm_cpu_hatched != __BITS(arm_cpu_max - 1, 1))
+			if (--timo == 0)
+				break;
+	}
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		if ((arm_cpu_hatched & __BIT(i)) == 0) {
+		printf("%s: warning: cpu%zu failed to hatch\n",
+			    __func__, i);
+		}
+	}
+
+	VPRINTF(" (%u cpu%s, hatched %#x)",
+	    arm_cpu_max, arm_cpu_max ? "s" : "",
+	    arm_cpu_hatched);
+#endif
+}
+
+#if defined(CPU_CORTEX)
+/* filled in before cleaning bss. keep in .data */
+u_int uboot_args[4] __attribute__((__section__(".data")));
+#else
+extern uint32_t *uboot_args;
+#endif
 
 /*
  * u_int initarm(...)
@@ -462,9 +581,14 @@ u_int
 initarm(void *arg)
 {
 	extern char KERNEL_BASE_phys[];
-	extern uint32_t *u_boot_args[];
-	extern uint32_t ram_size;
+	uint32_t ram_size = 0x400000;
 	enum { r0 = 0, r1 = 1, r2 = 2, r3 = 3 }; /* args from u-boot */
+
+#if defined(OVERO) || defined(DUOVERO) /* || defined(PEPPER) */
+	const bus_space_tag_t iot = &omap_bs_tag;
+#endif
+
+#if defined(CPU_XSCALE)
 
 	/*
 	 * We mapped PA == VA in gumstix_start.S.
@@ -477,21 +601,7 @@ initarm(void *arg)
 	 * 0x40000000 - 0x480fffff    Processor Registers
 	 * 0xa0000000 - 0xa3ffffff    SDRAM Bank 0 (64MB or 128MB)
 	 * 0xc0000000 - 0xc3ffffff    KERNEL_BASE
-	 *
-	 * Overo:
-	 * Physical Address Range     Description
-	 * -----------------------    ----------------------------------
-	 * 0x80000000 - 0x9fffffff    SDRAM Bank 0
-	 * 0x80000000 - 0x83ffffff    KERNEL_BASE
-	 *
-	 * DuoVero, Pepper:
-	 * Physical Address Range     Description
-	 * -----------------------    ----------------------------------
-	 * 0x80000000 - 0xbfffffff    SDRAM Bank 0
-	 * 0x80000000 - 0x83ffffff    KERNEL_BASE
 	 */
-
-#if defined(CPU_XSCALE)
 	extern vaddr_t xscale_cache_clean_addr;
 	xscale_cache_clean_addr = 0xff000000U;
 
@@ -524,6 +634,62 @@ initarm(void *arg)
 	pxa2x0_clkman_bootstrap(GUMSTIX_CLKMAN_VBASE);
 #endif
 
+
+#if defined(OVERO)
+
+#define OMAP3530_SRDC_MCFG_p(p)		(0x80 + ((p) * 0x30))
+#define OMAP3530_SRDC_MCFG_RAMSIZE	__BITS(17,8)
+
+	bus_space_handle_t sdrcioh;
+	if (bus_space_map(iot, OMAP3530_SDRC_BASE, OMAP3530_SDRC_SIZE,
+	    0, &sdrcioh) != 0)
+		panic("OMAP_SDRC_BASE map failed\n");
+
+	ram_size = 0;
+	for (u_int p = 0; p < 2; p++) {
+		uint32_t mcfg = bus_space_read_4(iot, sdrcioh,
+		    OMAP3530_SRDC_MCFG_p(p));
+		ram_size += __SHIFTOUT(mcfg, OMAP3530_SRDC_MCFG_RAMSIZE) *
+		    (2 * 1024 * 1024);
+	}
+
+#elif defined(DUOVERO)
+
+#define OMAP4_DMM_LISA_MAP_i(i)		(0x40 + ((i) * 0x4))
+#define  OMAP4_DMM_LISA_SYS_ADDR	__BITS(31,24)
+#define  OMAP4_DMM_LISA_SYS_SIZE	__BITS(22,20)
+#define  OMAP4_DMM_LISA_SDRC_ADDRSPC	__BITS(17,16)
+
+	bus_space_handle_t dmmioh;
+	if (bus_space_map(iot, OMAP4430_DMM_BASE, OMAP4430_DMM_SIZE, 0,
+	    &dmmioh) != 0)
+		panic("OMAP4_DMM_BASE map failed\n");
+
+	ram_size = 0;
+	for (u_int i = 0; i < 4; i++) {
+		const uint32_t lisa = bus_space_read_4(iot, dmmioh,
+		     OMAP4_DMM_LISA_MAP_i(i));
+
+		const uint32_t sys_addr =
+		    __SHIFTOUT(lisa, OMAP4_DMM_LISA_SYS_ADDR);
+		/* skip non-physical */
+		if ((sys_addr & 0x80) != 0)
+			continue;
+
+		const uint32_t sdrc_addrspc =
+		    __SHIFTOUT(lisa, OMAP4_DMM_LISA_SDRC_ADDRSPC);
+		/* Skip reserced areas */
+		if (sdrc_addrspc == 2)
+			continue;
+
+		const uint32_t sys_size =
+		    __SHIFTOUT(lisa, OMAP4_DMM_LISA_SYS_SIZE);
+		ram_size += (16 * 1024 * 1024) << sys_size;
+	}
+
+
+#endif
+
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
 	/* configure MUX, GPIO and CLK. */
@@ -545,17 +711,16 @@ initarm(void *arg)
 #elif defined(OVERO) || defined(DUOVERO) || defined(PEPPER)
 #define SDRAM_START	0x80000000UL
 #endif
-	if ((uint32_t)u_boot_args[r0] < SDRAM_START ||
-	    (uint32_t)u_boot_args[r0] >= SDRAM_START + ram_size)
+	if (uboot_args[r0] < SDRAM_START ||
+	    uboot_args[r0] >= SDRAM_START + ram_size)
 		/* Maybe r0 is 'argc'.  We are booted by command 'go'. */
-		process_kernel_args((int)u_boot_args[r0],
-		    (char **)u_boot_args[r1]);
+		process_kernel_args(uboot_args[r0], (char **)uboot_args[r1]);
 	else
 		/*
 		 * Maybe r3 is 'boot args string' of 'bootm'.  This string is
 		 * linely.
 		 */
-		process_kernel_args_liner((char *)u_boot_args[r3]);
+		process_kernel_args_liner((char *)uboot_args[r3]);
 #ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
 	consinit();
 #endif
@@ -570,12 +735,9 @@ initarm(void *arg)
 	read_system_serial();
 #endif
 
-#ifdef VERBOSE_INIT_ARM
-	printf("initarm: Configuring system ...\n");
-#endif
+	VPRINTF("initarm: Configuring system ...\n");
 
 #if defined(OMAP_4430)
-	const bus_space_tag_t iot = &omap_bs_tag;
 	bus_space_handle_t ioh;
 
 #if NARML2CC > 0
@@ -616,7 +778,14 @@ initarm(void *arg)
 
 	evbarm_device_register = gumstix_device_register;
 
-	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+
+	/*
+	 * initarm_common flushes cache if required before AP start
+	 */
+	gumstix_mpstart();
+
+	return sp;
 }
 
 #if defined(GUMSTIX)
