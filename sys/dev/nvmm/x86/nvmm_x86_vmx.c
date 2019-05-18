@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.34 2019/05/11 07:31:56 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.35 2019/05/18 08:55:59 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.34 2019/05/11 07:31:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.35 2019/05/18 08:55:59 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1772,8 +1772,6 @@ vmx_vcpu_guest_misc_enter(struct nvmm_cpu *vcpu)
 	vmx_vmwrite(VMCS_HOST_CR3, rcr3());
 	vmx_vmwrite(VMCS_HOST_CR4, rcr4());
 
-	/* Note: MSR_LSTAR is not static, because of SVS. */
-	cpudata->lstar = rdmsr(MSR_LSTAR);
 	cpudata->kernelgsbase = rdmsr(MSR_KERNELGSBASE);
 }
 
@@ -2655,6 +2653,7 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 
 	/* These MSRs are static. */
 	cpudata->star = rdmsr(MSR_STAR);
+	cpudata->lstar = rdmsr(MSR_LSTAR);
 	cpudata->cstar = rdmsr(MSR_CSTAR);
 	cpudata->sfmask = rdmsr(MSR_SFMASK);
 
