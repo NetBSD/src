@@ -51,3 +51,4 @@ There are three tables in the database at present:
   4. machine        The machine architecture (if any) for which 
                     the page is relevant
   5. md5_hash       MD5 Hash of the target man page.
+  6. name_desc      The one line description from the NAME section  
