@@ -1,7 +1,7 @@
-/*	$NetBSD: spectre.c,v 1.27 2019/05/14 16:59:26 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.28 2019/05/18 08:54:38 maxv Exp $	*/
 
 /*
- * Copyright (c) 2018 NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,11 +30,11 @@
  */
 
 /*
- * Mitigations for the SpectreV2 and SpectreV4 CPU flaws.
+ * Mitigations for the SpectreV2, SpectreV4 and MDS CPU flaws.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.27 2019/05/14 16:59:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.28 2019/05/18 08:54:38 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -328,7 +328,7 @@ mitigation_v2_change(bool enabled)
 
 		printf("[+] %s SpectreV2 Mitigation...",
 		    enabled ? "Enabling" : "Disabling");
-		xc = xc_broadcast(0, mitigation_v2_change_cpu,
+		xc = xc_broadcast(XC_HIGHPRI, mitigation_v2_change_cpu,
 		    (void *)enabled, NULL);
 		xc_wait(xc);
 		printf(" done!\n");
