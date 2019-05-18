@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.21 2019/04/27 15:43:09 skrll Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.22 2019/05/18 21:16:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -63,17 +63,131 @@ struct sect {
 	uint32_t len;
 };
 
-void	combine(struct sect *, struct sect *, int);
-int	phcmp(const void *, const void *);
-void   *saveRead(int file, off_t offset, size_t len, const char *name);
-void	copy(int, int, off_t, off_t);
-void	translate_syms(int, int, off_t, off_t, off_t, off_t);
+static void	combine(struct sect *, struct sect *, int);
+static int	phcmp(const void *, const void *);
+static void   *saveRead(int file, off_t offset, size_t len, const char *name);
+static void	copy(int, int, off_t, off_t);
+static void	translate_syms(int, int, off_t, off_t, off_t, off_t);
 
 #if TARGET_BYTE_ORDER != BYTE_ORDER
-void	bswap32_region(int32_t* , int);
+static void	bswap32_region(int32_t* , int);
 #endif
 
-int    *symTypeTable;
+static int    *symTypeTable;
+static int     debug;
+
+static __dead void
+usage(void)
+{
+	fprintf(stderr, "Usage: %s [-sO] <elf executable> <a.out executable>\n",
+	    getprogname());
+	exit(EXIT_FAILURE);
+}
+
+static const struct {
+	const char *n;
+	int v;
+} nv[] = {
+	{ ".text", N_TEXT },
+	{ ".rodata", N_TEXT },
+	{ ".data", N_DATA },
+	{ ".sdata", N_DATA },
+	{ ".lit4", N_DATA },
+	{ ".lit8", N_DATA },
+	{ ".bss", N_BSS },
+	{ ".sbss", N_BSS },
+};
+
+static int
+get_symtab_type(const char *name)
+{
+	size_t i;
+	for (i = 0; i < __arraycount(nv); i++) {
+		if (strcmp(name, nv[i].n) == 0)
+			return nv[i].v;
+	}
+	if (debug)
+		warnx("section `%s' is not handled\n", name);
+	return 0;
+}
+
+static uint32_t
+get_mid(const Elf32_Ehdr *ex)
+{
+	switch (ex->e_machine) {
+#ifdef notyet
+	case EM_AARCH64:
+		return MID_AARCH64;
+	case EM_ALPHA:
+		return MID_ALPHA;
+#endif
+	case EM_ARM:
+		return MID_ARM6;
+#ifdef notyet
+	case EM_PARISC:
+		return MID_HPPA;
+#endif
+	case EM_386:
+		return MID_I386;
+	case EM_68K:
+		return MID_M68K;
+	case EM_OR1K:
+		return MID_OR1K;
+	case EM_MIPS:
+		if (ex->e_ident[EI_DATA] == ELFDATA2LSB)
+			return MID_PMAX;
+		else
+			return MID_MIPS;
+	case EM_PPC:
+		return MID_POWERPC;
+#ifdef notyet
+	case EM_PPC64:
+		return MID_POWERPC64;
+		break;
+#endif
+	case EM_RISCV:
+		return MID_RISCV;
+	case EM_SH:
+		return MID_SH3;
+	case EM_SPARC:
+	case EM_SPARC32PLUS:
+	case EM_SPARCV9:
+		if (ex->e_ident[EI_CLASS] == ELFCLASS32)
+			return MID_SPARC;
+#ifdef notyet
+		return MID_SPARC64;
+	case EM_X86_64:
+		return MID_X86_64;
+#else
+		break;
+#endif
+	case EM_VAX:
+		return MID_VAX;
+	case EM_NONE:
+		return MID_ZERO;
+	default:
+		break;
+	}
+	if (debug)
+		warnx("Unsupported machine `%d'", ex->e_machine);
+	return MID_ZERO;
+}
+
+static unsigned char
+get_type(Elf32_Half shndx)
+{
+	switch (shndx) {
+	case SHN_UNDEF:
+		return N_UNDF;
+	case SHN_ABS:
+		return N_ABS;
+	case SHN_COMMON:
+	case SHN_MIPS_ACOMMON:
+		return N_COMM;
+	default:
+		return (unsigned char)symTypeTable[shndx];
+	}
+}
 
 int
 main(int argc, char **argv)
@@ -88,28 +202,42 @@ main(int argc, char **argv)
 	int     infile, outfile;
 	uint32_t cur_vma = UINT32_MAX;
 	uint32_t mid;
-	int     symflag = 0;
+	int symflag = 0, c;
+	unsigned long magic = ZMAGIC;
 
 	strtabix = symtabix = 0;
 	text.len = data.len = bss.len = 0;
 	text.vaddr = data.vaddr = bss.vaddr = 0;
 
+	while ((c = getopt(argc, argv, "dOs")) != -1) {
+		switch (c) {
+		case 'd':
+			debug++;
+			break;
+		case 's':
+			symflag = 1;
+			break;
+		case 'O':
+			magic = OMAGIC;
+			break;
+		case '?':
+		default:
+		usage:
+			usage();
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
 	/* Check args... */
-	if (argc < 3 || argc > 4) {
-usage:
-		fprintf(stderr,
-		    "Usage: %s <elf executable> <a.out executable> [-s]\n",
-		    getprogname());
-		exit(EXIT_FAILURE);
-	}
-	if (argc == 4) {
-		if (strcmp(argv[3], "-s"))
-			goto usage;
-		symflag = 1;
-	}
+	if (argc != 2)
+		goto usage;
+
+
 	/* Try the input file... */
-	if ((infile = open(argv[1], O_RDONLY)) < 0)
-		err(EXIT_FAILURE, "Can't open `%s' for read", argv[1]);
+	if ((infile = open(argv[0], O_RDONLY)) < 0)
+		err(EXIT_FAILURE, "Can't open `%s' for read", argv[0]);
 
 	/* Read the header, which is at the beginning of the file... */
 	i = read(infile, &ex, sizeof ex);
@@ -134,6 +262,10 @@ usage:
 	ex.e_shnum	= bswap16(ex.e_shnum);
 	ex.e_shstrndx	= bswap16(ex.e_shstrndx);
 #endif
+	// Not yet
+	if (ex.e_ident[EI_CLASS] == ELFCLASS64)
+		errx(EXIT_FAILURE, "Only 32 bit is supported");
+
 	/* Read the program headers... */
 	ph = saveRead(infile, ex.e_phoff,
 	    (size_t)ex.e_phnum * sizeof(Elf32_Phdr), "ph");
@@ -163,19 +295,10 @@ usage:
 		char   *name = shstrtab + sh[i].sh_name;
 		if (!strcmp(name, ".symtab"))
 			symtabix = i;
+		else if (!strcmp(name, ".strtab"))
+			strtabix = i;
 		else
-			if (!strcmp(name, ".strtab"))
-				strtabix = i;
-			else
-				if (!strcmp(name, ".text") || !strcmp(name, ".rodata"))
-					symTypeTable[i] = N_TEXT;
-				else
-					if (!strcmp(name, ".data") || !strcmp(name, ".sdata") ||
-					    !strcmp(name, ".lit4") || !strcmp(name, ".lit8"))
-						symTypeTable[i] = N_DATA;
-					else
-						if (!strcmp(name, ".bss") || !strcmp(name, ".sbss"))
-							symTypeTable[i] = N_BSS;
+			symTypeTable[i] = get_symtab_type(name);
 	}
 
 	/* Figure out if we can cram the program header into an a.out
@@ -192,11 +315,14 @@ usage:
 		    ph[i].p_type == PT_PHDR || ph[i].p_type == PT_MIPS_REGINFO)
 			continue;
 		/* Section types we can't handle... */
-		else
-			if (ph[i].p_type != PT_LOAD)
-				errx(EXIT_FAILURE, "Program header %zd "
-				    "type %d can't be converted.",
-				    i, ph[i].p_type);
+		if (ph[i].p_type == PT_TLS) {
+			if (debug)
+				warnx("Can't handle TLS section");
+			continue;
+		}
+		if (ph[i].p_type != PT_LOAD)
+			errx(EXIT_FAILURE, "Program header %zd "
+			    "type %d can't be converted.", i, ph[i].p_type);
 		/* Writable (data) segment? */
 		if (ph[i].p_flags & PF_W) {
 			struct sect ndata, nbss;
@@ -243,45 +369,16 @@ usage:
 		text.len = data.vaddr - text.vaddr;
 
 	/* We now have enough information to cons up an a.out header... */
-	switch (ex.e_machine) {
-	case EM_SPARC:
-		mid = MID_SPARC;
-		break;
-	case EM_386:
-		mid = MID_PC386;
-		break;
-	case EM_68K:
-		mid = MID_M68K;
-		break;
-	case EM_MIPS:
-		if (ex.e_ident[EI_DATA] == ELFDATA2LSB)
-			mid = MID_PMAX;
-		else
-			mid = MID_MIPS;
-		break;
-	case EM_PPC:
-		mid = MID_POWERPC;
-		break;
-	case EM_ARM:
-		mid = MID_ARM6;
-		break;
-	case EM_VAX:
-		mid = MID_VAX;
-		break;
-	case EM_NONE:
-	default:
-		mid = MID_ZERO;
-	}
+	mid = get_mid(&ex);
 	aex.a_midmag = (u_long)htonl(((u_long)symflag << 26)
-	    | ((u_long)mid << 16) | ZMAGIC);
+	    | ((u_long)mid << 16) | magic);
 
 	aex.a_text = text.len;
 	aex.a_data = data.len;
 	aex.a_bss = bss.len;
 	aex.a_entry = ex.e_entry;
 	aex.a_syms = (sizeof(struct nlist) *
-	    (symtabix != -1
-		? sh[symtabix].sh_size / sizeof(Elf32_Sym) : 0));
+	    (symtabix != -1 ? sh[symtabix].sh_size / sizeof(Elf32_Sym) : 0));
 	aex.a_trsize = 0;
 	aex.a_drsize = 0;
 #if TARGET_BYTE_ORDER != BYTE_ORDER
@@ -295,16 +392,16 @@ usage:
 #endif
 
 	/* Make the output file... */
-	if ((outfile = open(argv[2], O_WRONLY | O_CREAT, 0777)) < 0)
-		err(EXIT_FAILURE, "Unable to create `%s'", argv[2]);
+	if ((outfile = open(argv[1], O_WRONLY | O_CREAT, 0777)) < 0)
+		err(EXIT_FAILURE, "Unable to create `%s'", argv[1]);
 	/* Truncate file... */
 	if (ftruncate(outfile, 0)) {
-		warn("ftruncate %s", argv[2]);
+		warn("ftruncate %s", argv[1]);
 	}
 	/* Write the header... */
 	i = write(outfile, &aex, sizeof aex);
 	if (i != sizeof aex)
-		err(EXIT_FAILURE, "Can't write `%s'", argv[2]);
+		err(EXIT_FAILURE, "Can't write `%s'", argv[1]);
 	/* Copy the loadable sections.   Zero-fill any gaps less than 64k;
 	 * complain about any zero-filling, and die if we're asked to
 	 * zero-fill more than 64k. */
@@ -318,9 +415,8 @@ usage:
 				if (gap > 65536)
 					errx(EXIT_FAILURE,
 			"Intersegment gap (%u bytes) too large", gap);
-#ifdef DEBUG
-				warnx("%u byte intersegment gap", gap);
-#endif
+				if (debug)
+					warnx("%u byte intersegment gap", gap);
 				memset(obuf, 0, sizeof obuf);
 				while (gap) {
 					ssize_t count = write(outfile, obuf,
@@ -445,17 +541,7 @@ translate_syms(int out, int in, off_t symoff, off_t symsize,
 			if (type == STT_FILE)
 				outbuf[i].n_type = N_FN;
 			else
-				if (inbuf[i].st_shndx == SHN_UNDEF)
-					outbuf[i].n_type = N_UNDF;
-				else
-					if (inbuf[i].st_shndx == SHN_ABS)
-						outbuf[i].n_type = N_ABS;
-					else
-						if (inbuf[i].st_shndx == SHN_COMMON ||
-						    inbuf[i].st_shndx == SHN_MIPS_ACOMMON)
-							outbuf[i].n_type = N_COMM;
-						else
-							outbuf[i].n_type = (unsigned char)symTypeTable[inbuf[i].st_shndx];
+				outbuf[i].n_type = get_type(inbuf[i].st_shndx);
 			if (binding == STB_GLOBAL)
 				outbuf[i].n_type |= N_EXT;
 			/* Symbol values in executables should be compatible. */
@@ -486,7 +572,7 @@ translate_syms(int out, int in, off_t symoff, off_t symsize,
 	free(oldstrings);
 }
 
-void
+static void
 copy(int out, int in, off_t offset, off_t size)
 {
 	char    ibuf[4096];
@@ -514,9 +600,10 @@ copy(int out, int in, off_t offset, off_t size)
 			err(EXIT_FAILURE, "%s: write failed", __func__);
 	}
 }
+
 /* Combine two segments, which must be contiguous.   If pad is true, it's
    okay for there to be padding between. */
-void
+static void
 combine(struct sect *base, struct sect *new, int pad)
 {
 
@@ -535,7 +622,7 @@ combine(struct sect *base, struct sect *new, int pad)
 		}
 }
 
-int
+static int
 phcmp(const void *vh1, const void *vh2)
 {
 	const Elf32_Phdr *h1, *h2;
@@ -552,7 +639,7 @@ phcmp(const void *vh1, const void *vh2)
 			return 0;
 }
 
-void *
+static void *
 saveRead(int file, off_t offset, size_t len, const char *name)
 {
 	char   *tmp;
@@ -577,7 +664,7 @@ saveRead(int file, off_t offset, size_t len, const char *name)
 
 #if TARGET_BYTE_ORDER != BYTE_ORDER
 /* swap a 32bit region */
-void
+static void
 bswap32_region(int32_t* p, int len)
 {
 	size_t i;
