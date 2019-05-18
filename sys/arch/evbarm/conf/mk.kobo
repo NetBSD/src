@@ -1,11 +1,11 @@
-#	$NetBSD: mk.kobo,v 1.1 2014/07/25 11:22:50 hkenken Exp $
+#	$NetBSD: mk.kobo,v 1.2 2019/05/18 08:49:23 skrll Exp $
 
 CPPFLAGS+= -mcpu=cortex-a8 -mfpu=neon
 
-SYSTEM_FIRST_OBJ=	kobo_start.o
-SYSTEM_FIRST_SFILE=	${THISARM}/kobo/kobo_start.S
+SYSTEM_FIRST_OBJ=	armv6_start.o
+SYSTEM_FIRST_SFILE=	${ARM}/arm/armv6_start.S
 
-MKUBOOTIMAGEARGS=	-A arm -T kernel
+MKUBOOTIMAGEARGS=	-A arm -T kernel -O linux
 MKUBOOTIMAGEARGS+=	-a $(LOADADDRESS) -e $(LOADADDRESS)
 MKUBOOTIMAGEARGS+=	-n "NetBSD/$(BOARDTYPE) ${_OSRELEASE}"
 MKUBOOTIMAGEARGS_NONE=	${MKUBOOTIMAGEARGS} -C none

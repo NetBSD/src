@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.34 2016/10/04 16:03:39 kiyohara Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.35 2019/05/18 08:49:23 skrll Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -92,6 +92,9 @@
 
 #define	OMAP4430_EMIF2_BASE		0x4D000000	/* MemCtrl 1 */
 #define	OMAP4430_EMIF2_SIZE		0x00100000	/* 4KB padded to 1M */
+
+#define	OMAP4430_DMM_BASE		0x4e000000
+#define	OMAP4430_DMM_SIZE		0x02000000	/* 32MB */
 
 /* OMAP5 processors */
 
@@ -876,6 +879,7 @@
  * PL310 L2CC (44xx)
  */
 #define	OMAP4_SCU_BASE			0x48240000
+#define	OMAP4_SCU_SIZE			0x00000100
 #define	OMAP4_L2CC_BASE			0x48242000
 #define	OMAP4_L2CC_SIZE			0x00001000	/* 4KB */
 
@@ -885,6 +889,7 @@
 
 /* These also apply to OMAP5 */
 #define	OMAP4_WUGEN_BASE		0x48281000
+#define	OMAP4_WUGEN_SIZE		0x00001000
 #define	OMAP4_WKG_CONTROL_0		0x00000000
 #define	OMAP4_WKG_CONTROL_1		0x00000400
 #define	OMAP4_AUX_CORE_BOOT0		0x00000800

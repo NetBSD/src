@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_machdep.c,v 1.9 2018/09/21 12:04:08 skrll Exp $	*/
+/*	$NetBSD: imx7_machdep.c,v 1.10 2019/05/18 08:49:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.9 2018/09/21 12:04:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.10 2019/05/18 08:49:24 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -62,9 +62,17 @@ __KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.9 2018/09/21 12:04:08 skrll Exp $
 #include <machine/bootconfig.h>
 
 #include <arm/imx/imx7var.h>
+#include <arm/imx/imx7_srcreg.h>
 #include <arm/imx/imxuartvar.h>
+#include <arm/imx/imxuartreg.h>
 
 #include <evbarm/imx7/platform.h>
+
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	__nothing
+#endif
 
 extern int _end[];
 extern int KERNEL_BASE_phys[];
@@ -76,12 +84,6 @@ char *boot_args = NULL;
 
 /* filled in before cleaning bss. keep in .data */
 u_int uboot_args[4] __attribute__((__section__(".data")));
-
-/*
- * Macros to translate between physical and virtual for a subset of the
- * kernel address space.  *Not* for general use.
- */
-#define KERN_VTOPDIFF	((vaddr_t)KERNEL_BASE_phys - (vaddr_t)KERNEL_BASE_virt)
 
 #ifndef CONADDR
 #define CONADDR	(IMX7_AIPS_BASE + AIPS3_UART1_BASE)
@@ -96,10 +98,30 @@ u_int uboot_args[4] __attribute__((__section__(".data")));
 void imx7_setup_iomux(void);
 void imx7_setup_gpio(void);
 void imx7board_device_register(device_t, void *);
+void imx7_mpstart(void);
+void imx7_platform_early_putchar(char);
 
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+
+static void
+earlyconsputc(dev_t dev, int c)
+{
+	uartputc(c);
+}
+
+static int
+earlyconsgetc(dev_t dev)
+{
+	return 0;
+}
+
+static struct consdev earlycons = {
+	.cn_putc = earlyconsputc,
+	.cn_getc = earlyconsgetc,
+	.cn_pollc = nullcnpollc,
+};
 
 /*
  * Static device mappings. These peripheral registers are mapped at
@@ -142,6 +164,74 @@ static struct boot_physmem bp_highgig = {
 };
 #endif
 
+void
+imx7_platform_early_putchar(char c)
+{
+#define CONADDR_VA (CONADDR - IMX7_IOREG_PBASE + KERNEL_IO_IOREG_VBASE)
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONADDR_VA :
+	    (volatile uint32_t *)CONADDR;
+
+	int timo = 150000;
+
+	while ((uartaddr[IMX_USR2 / 4] & IMX_USR2_TXDC) == 0) {
+		if (--timo == 0)
+			break;
+	}
+
+	uartaddr[IMX_UTXD / 4] = c;
+
+	timo = 150000;
+	while ((uartaddr[IMX_USR2 / 4] & IMX_USR2_TXDC) == 0) {
+		if (--timo == 0)
+			break;
+	}
+}
+
+void
+imx7_mpstart(void)
+{
+#if defined(MULTIPROCESSOR)
+	if (arm_cpu_max <= 1)
+		return;
+
+	const bus_space_tag_t bst = &armv7_generic_bs_tag;
+
+	const bus_space_handle_t bsh = KERNEL_IO_IOREG_VBASE + AIPS1_SRC_BASE;
+	const paddr_t mpstart = KERN_VTOPHYS((vaddr_t)cpu_mpstart);
+
+	bus_space_write_4(bst, bsh, SRC_GPR3, mpstart);
+
+	uint32_t rcr1 = bus_space_read_4(bst, bsh, SRC_A7RCR1);
+	rcr1 |= SRC_A7RCR1_A7_CORE1_ENABLE;
+	bus_space_write_4(bst, bsh, SRC_A7RCR1, rcr1);
+
+	arm_dsb();
+	__asm __volatile("sev" ::: "memory");
+
+	for (int loop = 0; loop < 16; loop++) {
+		VPRINTF("%u hatched %#x\n", loop, arm_cpu_hatched);
+		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
+			break;
+		int timo = 1500000;
+		while (arm_cpu_hatched != __BITS(arm_cpu_max - 1, 1))
+			if (--timo == 0)
+				break;
+	}
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		if ((arm_cpu_hatched & __BIT(i)) == 0) {
+		printf("%s: warning: cpu%zu failed to hatch\n",
+			    __func__, i);
+		}
+	}
+
+	VPRINTF(" (%u cpu%s, hatched %#x)",
+	    arm_cpu_max, arm_cpu_max ? "s" : "",
+	    arm_cpu_hatched);
+#endif
+}
+
+
 /*
  * u_int initarm(...)
  *
@@ -159,21 +249,23 @@ initarm(void *arg)
 {
 	psize_t memsize;
 
-	kern_vtopdiff = KERN_VTOPDIFF;
+	/*
+	 * Heads up ... Setup the CPU / MMU / TLB functions
+	 */
+	if (set_cpufuncs())		// starts PMC counter
+		panic("cpu not recognized!");
 
-	pmap_devmap_register(devmap);
+	cn_tab = &earlycons;
+
+	extern char ARM_BOOTSTRAP_LxPT[];
+	pmap_devmap_bootstrap((vaddr_t)ARM_BOOTSTRAP_LxPT, devmap);
+
 	imx7_bootstrap(KERNEL_IO_IOREG_VBASE);
 
 	imx7_setup_iomux();
 	imx7_setup_gpio();
 
 	consinit();
-
-	/*
-	 * Heads up ... Setup the CPU / MMU / TLB functions
-	 */
-	if (set_cpufuncs())		// starts PMC counter
-		panic("cpu not recognized!");
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
@@ -266,7 +358,14 @@ initarm(void *arg)
 		    &bp_highgig, 1);
 	}
 #endif
-	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+
+	/*
+	 * initarm_common flushes cache if required before AP start
+	 */
+	imx7_mpstart();
+
+	return sp;
 }
 
 #ifdef CONSDEVNAME

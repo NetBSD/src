@@ -1,4 +1,4 @@
-#	$NetBSD: std.gumstix,v 1.10 2018/10/07 07:48:44 skrll Exp $
+#	$NetBSD: std.gumstix,v 1.11 2019/05/18 08:49:23 skrll Exp $
 #
 # standard NetBSD/evbarm for GUMSTIX options
 
@@ -7,13 +7,14 @@ include		"arch/evbarm/conf/std.evbarm"
 
 include 	"arch/evbarm/conf/files.gumstix"
 
-options 	KERNEL_BASE_EXT=0xc0000000
-makeoptions 	LOADADDRESS="0xc0200000"
-makeoptions 	BOARDTYPE="gumstix"
-options 	EVBARM_BOARDTYPE=gumstix
-makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.gumstix"
-
 options 	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
+options 	EVBARM_BOARDTYPE=gumstix
+options 	KERNEL_BASE_EXT=0xc0000000
+options 	MD_CPU_HATCH=gumstix_cpu_hatch
+
+makeoptions 	BOARDTYPE="gumstix"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.gumstix"
+makeoptions 	LOADADDRESS="0xc0200000"
 
 # OS Timer
 saost* 		at pxaip? addr 0x40a00000 size 0x20

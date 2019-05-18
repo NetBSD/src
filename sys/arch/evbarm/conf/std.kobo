@@ -1,4 +1,4 @@
-#	$NetBSD: std.kobo,v 1.4 2018/10/15 16:54:54 skrll Exp $
+#	$NetBSD: std.kobo,v 1.5 2019/05/18 08:49:23 skrll Exp $
 #
 # standard NetBSD/evbarm options for Kobo
 
@@ -8,22 +8,22 @@ include		"arch/evbarm/conf/std.evbarm"
 # Pull in i.mx51 config definitions.
 include		"arch/evbarm/conf/files.kobo"
 
-options 	MODULAR
-options 	MODULAR_DEFAULT_AUTOLOAD
-options 	__HAVE_FAST_SOFTINTS		# should be in types.h
-options 	__HAVE_CPU_COUNTER
-options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
-options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	ARM_GENERIC_TODR
 options 	ARM_HAS_VBAR
-options 	TPIDRPRW_IS_CURCPU
+options 	ARM_INTR_IMPL="<arch/arm/imx/imx51_intr.h>"
 options 	CORTEX_PMC
 options 	CORTEX_PMC_CCNT_HZ=800000000
 options 	EVBARM_BOARDTYPE="kobo"
 options 	FPU_VFP
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
+options 	TPIDRPRW_IS_CURCPU
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_GENERIC_START
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 
 makeoptions 	LOADADDRESS_VIRT="0x80100000"
 makeoptions 	LOADADDRESS="0x70100000"
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.kobo"
-
-options 	ARM_INTR_IMPL="<arch/arm/imx/imx51_intr.h>"
-options 	ARM_GENERIC_TODR
