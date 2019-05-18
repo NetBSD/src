@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.105 2019/03/31 13:04:54 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.106 2019/05/18 07:33:10 skrll Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -108,8 +108,6 @@ EVBARM_BOARDS.armv7+=		OVERO
 EVBARM_BOARDS.armv7hf+=		OVERO
 EVBARM_BOARDS.armv7+=		PANDABOARD
 EVBARM_BOARDS.armv7hf+= 	PANDABOARD
-EVBARM_BOARDS.armv7+=		RPI2
-EVBARM_BOARDS.armv7hf+=	 	RPI2
 
 KERNEL_SETS.arm64+=		GENERIC64
 .endif

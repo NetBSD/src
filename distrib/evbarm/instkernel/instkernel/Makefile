@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2017/12/14 06:29:15 skrll Exp $
+#	$NetBSD: Makefile,v 1.31 2019/05/18 07:33:10 skrll Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,7 +12,7 @@ SSHRAMDISK=	${SSHRAMDISKDIR}/sshramdisk.fs
 
 MDSETTARGETS=
 .for i in ${BUILD_KERNELS:M*_INSTALL}
-.if ${i} == "RPI_INSTALL" || ${i} == "RPI2_INSTALL"
+.if ${i} == "RPI_INSTALL"
 MDSETTARGETS+=		${i}	${SSHRAMDISK}	netbsd-${i}
 MDSET_SUFFIXES.netbsd-${i}=	bin create-bin  img create-img
 .else
