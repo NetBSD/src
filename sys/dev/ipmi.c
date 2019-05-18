@@ -1,5 +1,29 @@
-/*	$NetBSD: ipmi.c,v 1.3 2018/12/28 12:44:15 mlelstv Exp $ */
+/*	$NetBSD: ipmi.c,v 1.4 2019/05/18 08:38:00 mlelstv Exp $ */
 
+/*
+ * Copyright (c) 2019 Michael van Elst
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -52,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.3 2018/12/28 12:44:15 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.4 2019/05/18 08:38:00 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,13 +90,41 @@ __KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.3 2018/12/28 12:44:15 mlelstv Exp $");
 #include <sys/kthread.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
+#include <sys/ioctl.h>
+#include <sys/poll.h>
+#include <sys/conf.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
+#include <sys/ipmi.h>
 #include <dev/ipmivar.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "ioconf.h"
+
+static dev_type_open(ipmi_open);
+static dev_type_close(ipmi_close);
+static dev_type_ioctl(ipmi_ioctl);
+static dev_type_poll(ipmi_poll);
+
+const struct cdevsw ipmi_cdevsw = {
+	.d_open = ipmi_open,
+	.d_close = ipmi_close,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = ipmi_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = ipmi_poll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
+};
+
+#define IPMIUNIT(n) (minor(n))
 
 struct ipmi_sensor {
 	uint8_t	*i_sdr;
@@ -344,6 +396,8 @@ bmc_io_wait_spin(struct ipmi_softc *sc, int offset, uint8_t mask,
 }
 
 #define NETFN_LUN(nf,ln) (((nf) << 2) | ((ln) & 0x3))
+#define GET_NETFN(m) (((m) >> 2)
+#define GET_LUN(m) ((m) & 0x03)
 
 /*
  * BT interface
@@ -1014,7 +1068,7 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 		return -1;
 	}
 
-	*rxlen = rawlen - IPMI_MSG_DATARCV;
+	*rxlen = rawlen >= IPMI_MSG_DATARCV ? rawlen - IPMI_MSG_DATARCV : 0;
 	if (*rxlen > 0 && data)
 		memcpy(data, buf + IPMI_MSG_DATARCV, *rxlen);
 
@@ -2037,13 +2091,20 @@ ipmi_thread(void *cookie)
 
 	mutex_enter(&sc->sc_poll_mtx);
 	while (sc->sc_thread_running) {
-		ipmi_refresh_sensors(sc);
-		cv_timedwait(&sc->sc_poll_cv, &sc->sc_poll_mtx,
-		    SENSOR_REFRESH_RATE);
+		while (sc->sc_mode == IPMI_MODE_COMMAND)
+			cv_wait(&sc->sc_mode_cv, &sc->sc_poll_mtx);
+		sc->sc_mode = IPMI_MODE_ENVSYS;
+
 		if (sc->sc_tickle_due) {
 			ipmi_dotickle(sc);
 			sc->sc_tickle_due = false;
 		}
+		ipmi_refresh_sensors(sc);
+
+		sc->sc_mode = IPMI_MODE_IDLE;
+		cv_broadcast(&sc->sc_mode_cv);
+		cv_timedwait(&sc->sc_poll_cv, &sc->sc_poll_mtx,
+		    SENSOR_REFRESH_RATE);
 	}
 	mutex_exit(&sc->sc_poll_mtx);
 	self->dv_flags &= ~DVF_ATTACH_INPROGRESS;
@@ -2067,6 +2128,7 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_poll_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	cv_init(&sc->sc_poll_cv, "ipmipoll");
+	cv_init(&sc->sc_mode_cv, "ipmimode");
 
 	if (kthread_create(PRI_NONE, 0, NULL, ipmi_thread, self,
 	    &sc->sc_kthread, "%s", device_xname(self)) != 0) {
@@ -2121,6 +2183,7 @@ ipmi_detach(device_t self, int flags)
 
 	ipmi_unmap_regs(sc);
 
+	cv_destroy(&sc->sc_mode_cv);
 	cv_destroy(&sc->sc_poll_cv);
 	mutex_destroy(&sc->sc_poll_mtx);
 	cv_destroy(&sc->sc_cmd_sleep);
@@ -2246,4 +2309,209 @@ ipmi_suspend(device_t dev, const pmf_qual_t *qual)
 	if ((sc->sc_wdog.smw_mode & WDOG_MODE_MASK) != WDOG_MODE_DISARMED)
 		return false;
 	return true;
+}
+
+static int
+ipmi_open(dev_t dev, int flag, int fmt, lwp_t *l)
+{
+	return 0;
+}
+
+static int
+ipmi_close(dev_t dev, int flag, int fmt, lwp_t *l)
+{
+	struct ipmi_softc *sc;
+	int unit;
+
+	unit = IPMIUNIT(dev);
+	if ((sc = device_lookup_private(&ipmi_cd, unit)) == NULL)
+		return (ENXIO);
+
+	mutex_enter(&sc->sc_poll_mtx);
+	if (sc->sc_mode == IPMI_MODE_COMMAND) {
+		sc->sc_mode = IPMI_MODE_IDLE;
+		cv_broadcast(&sc->sc_mode_cv);
+	}
+	mutex_exit(&sc->sc_poll_mtx);
+	return 0;
+}
+
+static int
+ipmi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
+{
+	struct ipmi_softc *sc;
+	int unit, error = 0, len;
+	struct ipmi_req *req;
+	struct ipmi_recv *recv;
+	struct ipmi_addr addr;
+	unsigned char ccode, *buf = NULL;
+
+	unit = IPMIUNIT(dev);
+	if ((sc = device_lookup_private(&ipmi_cd, unit)) == NULL)
+		return (ENXIO);
+
+	switch (cmd) {
+	case IPMICTL_SEND_COMMAND:
+		mutex_enter(&sc->sc_poll_mtx);
+		while (sc->sc_mode == IPMI_MODE_ENVSYS) {
+			error = cv_wait_sig(&sc->sc_mode_cv, &sc->sc_poll_mtx);
+			if (error == EINTR) {
+				mutex_exit(&sc->sc_poll_mtx);
+				return error;
+			}
+		}
+		sc->sc_mode = IPMI_MODE_COMMAND;
+		mutex_exit(&sc->sc_poll_mtx);
+		break;
+	}
+
+	mutex_enter(&sc->sc_cmd_mtx);
+
+	switch (cmd) {
+	case IPMICTL_SEND_COMMAND:
+		req = data;
+		buf = malloc(IPMI_MAX_RX, M_DEVBUF, M_WAITOK);
+
+		len = req->msg.data_len;
+		if (len < 0 || len > IPMI_MAX_RX) {
+			error = EINVAL;
+			break;
+		}
+
+		/* clear pending result */
+		if (sc->sc_sent)
+			(void)ipmi_recvcmd(sc, IPMI_MAX_RX, &len, buf);
+
+		/* XXX */
+		error = copyin(req->addr, &addr, sizeof(addr));
+		if (error)
+			break;
+
+		error = copyin(req->msg.data, buf, len);
+		if (error)
+			break;
+
+		/* save for receive */
+		sc->sc_msgid = req->msgid;
+		sc->sc_netfn = req->msg.netfn;
+		sc->sc_cmd = req->msg.cmd;
+
+		if (ipmi_sendcmd(sc, BMC_SA, 0, req->msg.netfn,
+		    req->msg.cmd, len, buf)) {
+			error = EIO;
+			break;
+		}
+		sc->sc_sent = true;
+		break;
+	case IPMICTL_RECEIVE_MSG_TRUNC:
+	case IPMICTL_RECEIVE_MSG:
+		recv = data;
+		buf = malloc(IPMI_MAX_RX, M_DEVBUF, M_WAITOK);
+
+		if (recv->msg.data_len < 1) {
+			error = EINVAL;
+			break;
+		}
+
+		/* XXX */
+		error = copyin(recv->addr, &addr, sizeof(addr));
+		if (error)
+			break;
+
+
+		if (!sc->sc_sent) {
+			error = EIO;
+			break;
+		}
+
+		len = 0;
+		error = ipmi_recvcmd(sc, IPMI_MAX_RX, &len, buf);
+		if (error < 0) {
+			error = EIO;
+			break;
+		}
+		ccode = (unsigned char)error;
+		sc->sc_sent = false;
+
+		if (len > recv->msg.data_len - 1) {
+			if (cmd == IPMICTL_RECEIVE_MSG) {
+				error = EMSGSIZE;
+				break;
+			}
+			len = recv->msg.data_len - 1;
+		}
+
+		addr.channel = IPMI_BMC_CHANNEL;
+
+		recv->recv_type = IPMI_RESPONSE_RECV_TYPE;
+		recv->msgid = sc->sc_msgid;
+		recv->msg.netfn = sc->sc_netfn;
+		recv->msg.cmd = sc->sc_cmd;
+		recv->msg.data_len = len+1;
+
+		error = copyout(&addr, recv->addr, sizeof(addr));
+		if (error == 0)
+			error = copyout(&ccode, recv->msg.data, 1);
+		if (error == 0)
+			error = copyout(buf, recv->msg.data+1, len);
+		break;
+	case IPMICTL_SET_MY_ADDRESS_CMD:
+		sc->sc_address = *(int *)data;
+		break;
+	case IPMICTL_GET_MY_ADDRESS_CMD:
+		*(int *)data = sc->sc_address;
+		break;
+	case IPMICTL_SET_MY_LUN_CMD:
+		sc->sc_lun = *(int *)data & 0x3;
+		break;
+	case IPMICTL_GET_MY_LUN_CMD:
+		*(int *)data = sc->sc_lun;
+		break;
+	case IPMICTL_SET_GETS_EVENTS_CMD:
+		break;
+	case IPMICTL_REGISTER_FOR_CMD:
+	case IPMICTL_UNREGISTER_FOR_CMD:
+		error = EOPNOTSUPP;
+		break;
+	default:
+		error = ENODEV;	
+		break;
+	}
+
+	if (buf)
+		free(buf, M_DEVBUF);
+
+	mutex_exit(&sc->sc_cmd_mtx);
+
+	switch (cmd) {
+	case IPMICTL_RECEIVE_MSG:
+	case IPMICTL_RECEIVE_MSG_TRUNC:
+		mutex_enter(&sc->sc_poll_mtx);
+		sc->sc_mode = IPMI_MODE_IDLE;
+		cv_broadcast(&sc->sc_mode_cv);
+		mutex_exit(&sc->sc_poll_mtx);
+		break;
+	}
+
+	return error;
+}
+
+static int
+ipmi_poll(dev_t dev, int events, lwp_t *l)
+{
+	struct ipmi_softc *sc;
+	int unit, revents = 0;
+
+	unit = IPMIUNIT(dev);
+	if ((sc = device_lookup_private(&ipmi_cd, unit)) == NULL)
+		return (ENXIO);
+
+	mutex_enter(&sc->sc_cmd_mtx);
+	if (events & (POLLIN | POLLRDNORM)) {
+		if (sc->sc_sent)
+			revents |= events & (POLLIN | POLLRDNORM);
+	}
+	mutex_exit(&sc->sc_cmd_mtx);
+
+	return revents;
 }

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.202 2019/04/01 13:08:24 martin Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.203 2019/05/18 08:38:00 mlelstv Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -242,6 +242,7 @@
 #	iic*	IIC bus device
 #	io	x86 IOPL access for COMPAT_10, COMPAT_FREEBSD
 #	iop*	I2O IOP control interface
+#	ipmi*	OpenIPMI compatible interface
 #	ipl	IP Filter
 #	irframe* IrDA physical frame
 #	ite*	terminal emulator interface to HP300 graphics devices
@@ -2227,6 +2228,11 @@ autofs)
 kcov)
         mkdev kcov c %kcov_chr% 0
         ;;
+
+ipmi[0-9]*)
+	unit=${i#ipmi}
+	mkdev ipmi${unit} c %ipmi_chr% $unit 600
+	;;
 
 midevend)
 %MI_DEVICES_END%

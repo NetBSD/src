@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.2 2018/12/28 12:44:15 mlelstv Exp $ */
+/* $NetBSD: ipmivar.h,v 1.3 2019/05/18 08:38:00 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -92,6 +92,7 @@ struct ipmi_softc {
 
 	kmutex_t		sc_poll_mtx;
 	kcondvar_t		sc_poll_cv;
+	kcondvar_t		sc_mode_cv;
 
 	kmutex_t		sc_cmd_mtx;
 	kmutex_t		sc_sleep_mtx;
@@ -107,8 +108,24 @@ struct ipmi_softc {
 	envsys_data_t		*sc_sensor;
 	int 		sc_nsensors; /* total number of sensors */
 
-	char		sc_buf[64];
+	char		sc_buf[1024 + 3]; /* IPMI_MAX_RX + 3 */
 	bool		sc_buf_rsvd;
+
+	/* request busy */
+	int		sc_mode;
+#define IPMI_MODE_IDLE		0
+#define IPMI_MODE_COMMAND	1
+#define IPMI_MODE_ENVSYS	2
+	bool		sc_sent;
+
+	/* dummy */
+	int		sc_address;
+	int		sc_lun;
+
+	/* saved from last SEND_COMMAND */
+	int		sc_msgid;
+	int		sc_netfn;
+	int		sc_cmd;
 };
 
 struct ipmi_device_id {
