@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.19 2018/11/03 15:02:32 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.20 2019/05/18 08:49:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.19 2018/11/03 15:02:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.20 2019/05/18 08:49:23 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -100,6 +100,9 @@ static void bcm53xx_system_reset(void);
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 
+void bcm53xx_mpstart(void);
+void bcm53xx_platform_early_putchar(char);
+
 #if (NCOM > 0)
 static const bus_addr_t comcnaddr = (bus_addr_t)CONADDR;
 
@@ -159,6 +162,13 @@ static const struct pmap_devmap devmap[] = {
 		VM_PROT_READ|VM_PROT_WRITE,
 		PTE_NOCACHE,
 	},
+	{
+		KERNEL_IO_ROM_REGION_VBASE,
+		BCM53XX_ROM_REGION_PBASE,	/* 0xfff00000 */
+		BCM53XX_ROM_REGION_SIZE,	/* 1MB */
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
 #if NPCI > 0
 	{
 		KERNEL_IO_PCIE0_OWIN_VBASE,
@@ -191,6 +201,71 @@ static const struct boot_physmem bp_first256 = {
 	.bp_freelist = VM_FREELIST_ISADMA,
 	.bp_flags = 0,
 };
+
+#define BCM53xx_ROM_CPU_ENTRY	0xffff0400
+
+void
+bcm53xx_mpstart(void)
+{
+#ifdef MULTIPROCESSOR
+	/*
+	 * Invalidate all SCU cache tags. That is, for all cores (0-3)
+	 */
+	bus_space_write_4(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
+	    ARMCORE_SCU_BASE + SCU_INV_ALL_REG, 0xffff);
+
+	uint32_t diagctl = bus_space_read_4(bcm53xx_armcore_bst,
+	   bcm53xx_armcore_bsh, ARMCORE_SCU_BASE + SCU_DIAG_CONTROL);
+	diagctl |= SCU_DIAG_DISABLE_MIGBIT;
+	bus_space_write_4(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
+	    ARMCORE_SCU_BASE + SCU_DIAG_CONTROL, diagctl);
+
+	uint32_t scu_ctl = bus_space_read_4(bcm53xx_armcore_bst,
+	    bcm53xx_armcore_bsh, ARMCORE_SCU_BASE + SCU_CTL);
+	scu_ctl |= SCU_CTL_SCU_ENA;
+	bus_space_write_4(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
+	    ARMCORE_SCU_BASE + SCU_CTL, scu_ctl);
+
+	armv7_dcache_wbinv_all();
+
+	const paddr_t mpstart = KERN_VTOPHYS((vaddr_t)cpu_mpstart);
+	bus_space_tag_t bcm53xx_rom_bst = &bcmgen_bs_tag;
+	bus_space_handle_t bcm53xx_rom_entry_bsh;
+
+	int error = bus_space_map(bcm53xx_rom_bst, BCM53xx_ROM_CPU_ENTRY,
+	    4, 0, &bcm53xx_rom_entry_bsh);
+
+	/*
+	 * Before we turn on the MMU, let's the other process out of the
+	 * SKU ROM but setting the magic LUT address to our own mp_start
+	 * routine.
+	 */
+	bus_space_write_4(bcm53xx_rom_bst, bcm53xx_rom_entry_bsh, mpstart);
+
+	arm_dsb();
+	__asm __volatile("sev" ::: "memory");
+
+	for (int loop = 0; loop < 16; loop++) {
+		VPRINTF("%u hatched %#x\n", loop, arm_cpu_hatched);
+		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
+			break;
+		int timo = 1500000;
+		while (arm_cpu_hatched != __BITS(arm_cpu_max - 1, 1))
+			if (--timo == 0)
+				break;
+	}
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		if ((arm_cpu_hatched & __BIT(i)) == 0) {
+		printf("%s: warning: cpu%zu failed to hatch\n",
+			    __func__, i);
+		}
+	}
+
+	VPRINTF(" (%u cpu%s, hatched %#x)",
+	    arm_cpu_max, arm_cpu_max ? "s" : "",
+	    arm_cpu_hatched);
+#endif /* MULTIPROCESSOR */
+}
 
 /*
  * u_int initarm(...)
@@ -313,8 +388,15 @@ initarm(void *arg)
 	 * If we have more than 256MB of RAM, set aside the first 256MB for
 	 * non-default VM allocations.
 	 */
-	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
+	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
 	    (bigmem_p ? &bp_first256 : NULL), (bigmem_p ? 1 : 0));
+
+	/*
+	 * initarm_common flushes cache if required before AP start
+	 */
+	bcm53xx_mpstart();
+
+	return sp;
 }
 
 void

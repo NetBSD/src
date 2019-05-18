@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OMAP5EVM,v 1.15 2018/10/23 19:58:52 jdolecek Exp $
+#	$NetBSD: OMAP5EVM,v 1.16 2019/05/18 08:49:23 skrll Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -116,13 +116,16 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
+
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	EARLYCONS=beagle
+options 	CONSADDR=0x48020000, CONSPEED=115200
 
 ## USB Debugging options
 options USB_DEBUG
@@ -198,7 +201,6 @@ gpio*		at omapgpio?
 
 # On-board 16550 UARTs
 com0		at obio2 addr 0x48020000 intr 106 mult 4 # UART3 (console) 74+32
-options 	CONSADDR=0x48020000, CONSPEED=115200
 
 # Operating System Timer
 #omapmputmr0	at obio2 addr 0x48032000 intr 70	# GP Timer 2 L4PER

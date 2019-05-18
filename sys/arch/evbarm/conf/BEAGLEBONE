@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.47 2019/02/06 11:58:30 rin Exp $
+#	$NetBSD: BEAGLEBONE,v 1.48 2019/05/18 08:49:23 skrll Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -23,6 +23,9 @@ options 	TI_AM335X
 options 	DEBUG
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
+
+#options 	VERBOSE_INIT_ARM
+#options 	EARLYCONS=beagle	# CONSADDR set below
 
 ## USB Debugging options
 options USB_DEBUG

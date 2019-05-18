@@ -1,4 +1,4 @@
-#	$NetBSD: std.bcm53xx,v 1.19 2019/01/21 07:29:36 skrll Exp $
+#	$NetBSD: std.bcm53xx,v 1.20 2019/05/18 08:49:23 skrll Exp $
 #
 # standard NetBSD/evbarm for BCM5301X options
 
@@ -21,6 +21,7 @@ options 	_ARM32_NEED_BUS_DMA_BOUNCE
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_GENERIC_START
 options 	__HAVE_MM_MD_CACHE_ALIASING
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	__HAVE_PCI_CONF_HOOK
