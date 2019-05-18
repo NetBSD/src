@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.21 2019/05/10 16:27:03 mgorny Exp $	*/
+/*	$NetBSD: reg.h,v 1.22 2019/05/18 17:41:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@ struct reg {
 struct fpreg {
 	struct save87 fstate;
 };
-__CTASSERT(sizeof(struct fpreg) == 108);
+__CTASSERT_NOLINT(sizeof(struct fpreg) == 108);
 
 struct xmmregs {
 	struct fxsave fxstate;
