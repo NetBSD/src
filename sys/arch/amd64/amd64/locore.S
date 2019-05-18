@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.183 2019/05/15 18:27:51 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.184 2019/05/18 07:58:58 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1571,6 +1571,7 @@ END(pagezero)
 #define TF_BACKW(val, reg)	(val - (TF_REGSIZE+16))(reg)
 
 	_ALIGN_TEXT
+	.type intrfastexit,@function
 LABEL(intrfastexit)
 	NOT_XEN(cli;)
 	MDS_LEAVE
