@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.8 2019/05/18 07:56:43 abhinav Exp $	*/
+/*	$NetBSD: whatis.c,v 1.9 2019/05/18 10:28:57 leot Exp $	*/
 /*-
  * Copyright (c) 2012 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: whatis.c,v 1.8 2019/05/18 07:56:43 abhinav Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.9 2019/05/18 10:28:57 leot Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -49,8 +49,11 @@ static int
 whatis(sqlite3 *db, const char *cmd)
 {
 	static const char sqlstr[] = "SELECT link AS name, section, name_desc"
-		" FROM mandb_links WHERE link=? UNION SELECT name, section, name_desc"
-		" FROM mandb WHERE name MATCH ? AND name=? ORDER BY section";
+		" FROM mandb_links WHERE link=?" 
+		" UNION"
+		" SELECT name, section, name_desc"
+		" FROM mandb WHERE name MATCH ? AND name=? COLLATE NOCASE"
+		" ORDER BY section";
 	sqlite3_stmt *stmt = NULL;
 	int retval;
 	int i;
