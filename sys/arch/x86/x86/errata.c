@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.25 2018/08/12 05:43:42 maxv Exp $	*/
+/*	$NetBSD: errata.c,v 1.26 2019/05/18 07:49:31 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.25 2018/08/12 05:43:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.26 2019/05/18 07:49:31 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -341,6 +341,7 @@ static errata_t errata[] = {
 		1049, FALSE, MSR_FP_CFG, x86_errata_set13,
 		x86_errata_setmsr, FP_CFG_ERRATA_1049
 	},
+#if 0	/* Should we apply this errata? The other OSes don't. */
 	/*
 	 * 1091: Address Boundary Crossing Load Operation May Receive
 	 * Stale Data
@@ -349,6 +350,7 @@ static errata_t errata[] = {
 		1091, FALSE, MSR_LS_CFG2, x86_errata_set13,
 		x86_errata_setmsr, LS_CFG2_ERRATA_1091
 	},
+#endif
 	/*
 	 * 1095: Potential Violation of Read Ordering In Lock Operation
 	 * In SMT (Simultaneous Multithreading) Mode
