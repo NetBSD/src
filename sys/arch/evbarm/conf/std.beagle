@@ -1,4 +1,4 @@
-#	$NetBSD: std.beagle,v 1.17 2018/10/15 16:54:54 skrll Exp $
+#	$NetBSD: std.beagle,v 1.18 2019/05/18 08:49:23 skrll Exp $
 #
 # standard NetBSD/evbarm for BEAGLEBOARD options
 
@@ -14,12 +14,14 @@ options 	ARM_HAS_VBAR
 options 	ARM_INTR_IMPL="<arch/arm/omap/omap2_intr.h>"
 options 	CORTEX_PMC
 options 	FPU_VFP
+options 	MD_CPU_HATCH=beagle_cpu_hatch
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
 options 	TPIDRPRW_IS_CURCPU
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_GENERIC_START
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.beagle"

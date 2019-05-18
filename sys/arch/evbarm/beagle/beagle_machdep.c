@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.76 2018/10/18 09:01:53 skrll Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.77 2019/05/18 08:49:23 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.76 2018/10/18 09:01:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.77 2019/05/18 08:49:23 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -218,6 +218,12 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.76 2018/10/18 09:01:53 skrll Ex
 
 #include <dev/usb/ukbdvar.h>
 
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	__nothing
+#endif
+
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
@@ -243,28 +249,13 @@ int use_fb_console = true;
 uint32_t omap5_cnt_frq;
 #endif
 
-#ifdef MULTIPROCESSOR
-
-void beagle_cpu_hatch(struct cpu_info *);
-
-void
-beagle_cpu_hatch(struct cpu_info *ci)
-{
-#if defined(CPU_CORTEXA9)
-	a9tmr_init_cpu_clock(ci);
-#elif defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
-	gtmr_init_cpu_clock(ci);
-#endif
-}
-
-#endif
-
 /*
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
  */
 #define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
 #define	OMAP_L4_CORE_VOFFSET	(OMAP_L4_CORE_VBASE - OMAP_L4_CORE_BASE)
+
 
 /* Prototypes */
 
@@ -290,12 +281,34 @@ static psize_t emif_memprobe(void);
 static psize_t omap3_memprobe(void);
 #endif
 
+#ifdef MULTIPROCESSOR
+void beagle_cpu_hatch(struct cpu_info *);
+#endif
+
 bs_protos(bs_notimpl);
 
 #if NCOM > 0
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif
+
+static void
+earlyconsputc(dev_t dev, int c)
+{
+	uartputc(c);
+}
+
+static int
+earlyconsgetc(dev_t dev)
+{
+	return 0;
+}
+
+static struct consdev earlycons = {
+	.cn_putc = earlyconsputc,
+	.cn_getc = earlyconsgetc,
+	.cn_pollc = nullcnpollc,
+};
 
 /*
  * Static device mappings. These peripheral registers are mapped at
@@ -421,6 +434,82 @@ static const struct pmap_devmap devmap[] = {
 #undef	_A
 #undef	_S
 
+#ifdef MULTIPROCESSOR
+
+void
+beagle_cpu_hatch(struct cpu_info *ci)
+{
+#if defined(CPU_CORTEXA9)
+	a9tmr_init_cpu_clock(ci);
+#elif defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
+	gtmr_init_cpu_clock(ci);
+#endif
+}
+#endif
+
+static void
+beagle_mpstart(void)
+{
+#if defined(MULTIPROCESSOR)
+	const bus_space_tag_t bst = &omap_bs_tag;
+
+#if defined(CPU_CORTEXA9)
+	const bus_space_handle_t scu_bsh = OMAP4_SCU_BASE
+	    + OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
+
+	/*
+	 * Invalidate all SCU cache tags. That is, for all cores (0-3)
+	 */
+	bus_space_write_4(bst, scu_bsh, SCU_INV_ALL_REG, 0xffff);
+
+	uint32_t diagctl = bus_space_read_4(bst, scu_bsh, SCU_DIAG_CONTROL);
+	diagctl |= SCU_DIAG_DISABLE_MIGBIT;
+	bus_space_write_4(bst, scu_bsh, SCU_DIAG_CONTROL, diagctl);
+
+	uint32_t scu_ctl = bus_space_read_4(bst, scu_bsh, SCU_CTL);
+	scu_ctl |= SCU_CTL_SCU_ENA;
+	bus_space_write_4(bst, scu_bsh, SCU_CTL, scu_ctl);
+
+	armv7_dcache_wbinv_all();
+#endif
+	const bus_space_handle_t wugen_bsh = OMAP4_WUGEN_BASE +	OMAP_L4_CORE_VOFFSET;
+	const paddr_t mpstart = KERN_VTOPHYS((vaddr_t)cpu_mpstart);
+
+	bus_space_write_4(bst, wugen_bsh, OMAP4_AUX_CORE_BOOT1, mpstart);
+
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		uint32_t boot = bus_space_read_4(bst, wugen_bsh, OMAP4_AUX_CORE_BOOT0);
+		boot |= __SHIFTIN(0xf, i * 4);
+		bus_space_write_4(bst, wugen_bsh, OMAP4_AUX_CORE_BOOT0, boot);
+	}
+
+
+	arm_dsb();
+	__asm __volatile("sev" ::: "memory");
+
+	for (int loop = 0; loop < 16; loop++) {
+		VPRINTF("%u hatched %#x\n", loop, arm_cpu_hatched);
+		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
+			break;
+		int timo = 1500000;
+		while (arm_cpu_hatched != __BITS(arm_cpu_max - 1, 1))
+			if (--timo == 0)
+				break;
+	}
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		if ((arm_cpu_hatched & __BIT(i)) == 0) {
+		printf("%s: warning: cpu%zu failed to hatch\n",
+			    __func__, i);
+		}
+	}
+
+	VPRINTF(" (%u cpu%s, hatched %#x)",
+	    arm_cpu_max, arm_cpu_max ? "s" : "",
+	    arm_cpu_hatched);
+#endif
+}
+
+
 #ifdef DDB
 static void
 beagle_db_trap(int where)
@@ -438,27 +527,7 @@ beagle_db_trap(int where)
 #endif
 
 #ifdef VERBOSE_INIT_ARM
-void beagle_putchar(char c);
-void
-beagle_putchar(char c)
-{
-#if NCOM > 0
-	volatile uint32_t *com0addr = (volatile uint32_t *)CONSADDR_VA;
-	int timo = 150000;
-
-	while ((com0addr[com_lsr] & LSR_TXRDY) == 0) {
-		if (--timo == 0)
-			break;
-	}
-
-	com0addr[com_data] = c;
-
-	while ((com0addr[com_lsr] & LSR_TXRDY) == 0) {
-		if (--timo == 0)
-			break;
-	}
-#endif
-}
+#define	beagle_putchar(c)	beagle_platform_early_putchar(c)
 
 void beagle_platform_early_putchar(char);
 
@@ -510,12 +579,15 @@ initarm(void *arg)
 	beagle_putchar('d');
 #endif
 
-	/*
-	 * When we enter here, we are using a temporary first level
-	 * translation table with section entries in it to cover the OBIO
-	 * peripherals and SDRAM.  The temporary first level translation table
-	 * is at the end of SDRAM.
-	 */
+	/* Heads up ... Setup the CPU / MMU / TLB functions. */
+	if (set_cpufuncs())
+		panic("cpu not recognized!");
+
+	cn_tab = &earlycons;
+
+	extern char ARM_BOOTSTRAP_LxPT[];
+	pmap_devmap_bootstrap((vaddr_t)ARM_BOOTSTRAP_LxPT, devmap);
+
 #if defined(OMAP_3XXX) || defined(TI_DM37XX)
 	omap3_cpu_clk();		// find our CPU speed.
 #endif
@@ -528,14 +600,8 @@ initarm(void *arg)
 	am335x_sys_clk(TI_AM335X_CTLMOD_BASE + OMAP_L4_CORE_VOFFSET);
 	am335x_cpu_clk();		// find our CPU speed.
 #endif
-	/* Heads up ... Setup the CPU / MMU / TLB functions. */
-	if (set_cpufuncs())
-		panic("cpu not recognized!");
 
 	init_clocks();
-
-	/* The console is going to try to map things.  Give pmap a devmap. */
-	pmap_devmap_register(devmap);
 
 	if (get_bootconf_option(bootargs, "console",
 		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
@@ -582,19 +648,15 @@ initarm(void *arg)
 
 	cpu_reset_address = beagle_reset;
 
-#ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
-	printf("\nNetBSD/evbarm (beagle) booting ...\n");
-#endif
+	VPRINTF("\nNetBSD/evbarm (beagle) booting ...\n");
 
 #ifdef BOOT_ARGS
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
 
-#ifdef VERBOSE_INIT_ARM
-	printf("initarm: Configuring system ...\n");
-#endif
+	VPRINTF("initarm: Configuring system ...\n");
 
 #if !defined(CPU_CORTEXA8)
 	printf("initarm: cbar=%#x\n", armreg_cbar_read());
@@ -663,8 +725,16 @@ initarm(void *arg)
 
 	db_trap_callback = beagle_db_trap;
 
-	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
+	/*
+	 * initarm_common flushes cache if required before AP start
+	 */
+	VPRINTF("mpstart\n");
+
+	beagle_mpstart();
+
+	return sp;
 }
 
 static void
@@ -940,10 +1010,10 @@ emif_memprobe(void)
 	KASSERT(ebank == 0);	// No chip selects on Sitara
 #endif
 	memsize <<= (ebank + ibank + rsize + pagesize + width);
-#ifdef VERBOSE_INIT_ARM
-	printf("sdram_config = %#x, memsize = %uMB\n", sdram_config,
+
+	VPRINTF("sdram_config = %#x, memsize = %uMB\n", sdram_config,
 	    (u_int)(memsize >> 20));
-#endif
+
 	return memsize;
 }
 #endif
