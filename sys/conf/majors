@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.86 2019/05/05 17:24:00 mlelstv Exp $
+# $NetBSD: majors,v 1.87 2019/05/18 08:38:00 mlelstv Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -85,4 +85,4 @@ device-major spi       char 347		   spi
 # Major 351 is reserved for sys/modules/examples
 # Major 352 is reserved for external/cddl/osnet/dev/fbt/fbt.c
 # Major 353 is reserved for external/cddl/osnet/dev/sdt/sdt.c
-# Major 354 is reserved for IPMI userland driver
+device-major ipmi      char 354		   ipmi
