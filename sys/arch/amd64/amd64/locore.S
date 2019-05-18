@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.184 2019/05/18 07:58:58 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.185 2019/05/18 13:32:12 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1574,25 +1574,26 @@ END(pagezero)
 	.type intrfastexit,@function
 LABEL(intrfastexit)
 	NOT_XEN(cli;)
+
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	.Lkexit
+
 	MDS_LEAVE
 	SVS_LEAVE
 	IBRS_LEAVE
 	INTR_RESTORE_GPRS
 	addq	$(TF_REGSIZE+16),%rsp	/* iret frame */
+	SWAPGS
 
-	testb	$SEL_UPL,TF_BACKW(TF_CS, %rsp)
-	jz	.Lkexit
 	cmpw	$LSEL(LUCODE_SEL, SEL_UPL),TF_BACKW(TF_CS, %rsp)
-	je	.Luexit64
+	je	do_iret
 	cmpw	$GSEL(GUCODE_SEL, SEL_UPL),TF_BACKW(TF_CS, %rsp)
-	je	.Luexit64
+	je	do_iret
 #ifdef XENPV
 	cmpw	$FLAT_RING3_CS64,TF_BACKW(TF_CS, %rsp)
-	je	.Luexit64
+	je	do_iret
 #endif
 
-.Luexit32:
-	SWAPGS
 do_mov_es:
 	movw	TF_BACKW(TF_ES, %rsp),%es
 do_mov_ds:
@@ -1603,13 +1604,13 @@ do_mov_fs:
 do_mov_gs:
 	movw	TF_BACKW(TF_GS, %rsp),%gs
 #endif
-	jmp	.Lkexit
 
-.Luexit64:
-	SWAPGS
+do_iret:
+	iretq
 
 .Lkexit:
-do_iret:
+	INTR_RESTORE_GPRS
+	addq	$(TF_REGSIZE+16),%rsp	/* iret frame */
 	iretq
 END(intrfastexit)
 
@@ -1643,12 +1644,9 @@ LABEL(svs_enter_nmi)
 LABEL(svs_enter_nmi_end)
 
 LABEL(svs_leave)
-	testb	$SEL_UPL,TF_CS(%rsp)
-	jz	1234f
 	movq	CPUVAR(URSP0),%rsp
 	movq	CPUVAR(UPDIRPA),%rax
 	movq	%rax,%cr3
-1234:
 LABEL(svs_leave_end)
 
 LABEL(svs_leave_altstack)
@@ -1671,20 +1669,17 @@ LABEL(svs_leave_nmi_end)
 	/* IBRS <- 1 */
 LABEL(ibrs_enter)
 	movl	$MSR_IA32_SPEC_CTRL,%ecx
-	movl	$IA32_SPEC_CTRL_IBRS,%eax
-	movl	$(IA32_SPEC_CTRL_IBRS >> 32),%edx
+	rdmsr
+	orl	$IA32_SPEC_CTRL_IBRS,%eax
 	wrmsr
 LABEL(ibrs_enter_end)
 
 	/* IBRS <- 0 */
 LABEL(ibrs_leave)
-	testb	$SEL_UPL,TF_CS(%rsp)
-	jz	1234f
 	movl	$MSR_IA32_SPEC_CTRL,%ecx
-	xorl	%eax,%eax
-	xorl	%edx,%edx
+	rdmsr
+	andl	$~IA32_SPEC_CTRL_IBRS,%eax
 	wrmsr
-1234:
 LABEL(ibrs_leave_end)
 
 LABEL(noibrs_enter)
@@ -1698,12 +1693,9 @@ LABEL(noibrs_leave_end)
 	.globl	mds_leave, mds_leave_end
 
 LABEL(mds_leave)
-	testb	$SEL_UPL,TF_CS(%rsp)
-	jz	1234f
 	pushq	$GSEL(GDATA_SEL, SEL_KPL)
 	verw	(%rsp)
 	addq	$8,%rsp
-1234:
 LABEL(mds_leave_end)
 
 LABEL(nomds_leave)
