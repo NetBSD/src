@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.43 2019/04/19 20:35:13 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.44 2019/05/18 07:56:43 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.43 2019/04/19 20:35:13 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.44 2019/05/18 07:56:43 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -213,7 +213,7 @@ create_db(sqlite3 *db)
 		"file UNIQUE, md5_hash UNIQUE, id  INTEGER PRIMARY KEY); "
 	    //mandb_links
 	    "CREATE TABLE IF NOT EXISTS mandb_links(link COLLATE NOCASE, target, section, "
-		"machine, md5_hash); ";
+		"machine, md5_hash, name_desc); ";
 
 	sqlite3_exec(db, sqlstr, NULL, NULL, &errmsg);
 	if (errmsg != NULL)
