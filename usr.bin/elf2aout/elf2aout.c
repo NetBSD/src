@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.22 2019/05/18 21:16:12 christos Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.23 2019/05/19 09:14:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -79,7 +79,7 @@ static int     debug;
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-sO] <elf executable> <a.out executable>\n",
+	fprintf(stderr, "Usage: %s [-Os] <elf executable> <a.out executable>\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
