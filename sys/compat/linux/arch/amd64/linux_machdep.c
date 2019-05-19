@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.57 2019/03/24 13:15:43 maxv Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.58 2019/05/19 08:46:15 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.57 2019/03/24 13:15:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.58 2019/05/19 08:46:15 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -90,7 +90,7 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	pmap_ldt_cleanup(l);
 #endif
 
-	fpu_save_area_clear(l, __NetBSD_NPXCW__);
+	fpu_clear(l, __NetBSD_NPXCW__);
 
 	kpreempt_disable();
 	pcb->pcb_flags = 0;

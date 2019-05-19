@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.51 2019/05/19 08:17:02 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.52 2019/05/19 08:46:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.51 2019/05/19 08:17:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.52 2019/05/19 08:46:15 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -610,7 +610,7 @@ fpu_set_default_cw(struct lwp *l, unsigned int x87_cw)
 }
 
 void
-fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
+fpu_clear(struct lwp *l, unsigned int x87_cw)
 {
 	union savefpu *fpu_save;
 	struct pcb *pcb;
@@ -671,7 +671,7 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 }
 
 void
-fpu_save_area_reset(struct lwp *l)
+fpu_sigreset(struct lwp *l)
 {
 	union savefpu *fpu_save = lwp_fpuarea(l);
 	struct pcb *pcb = lwp_getpcb(l);

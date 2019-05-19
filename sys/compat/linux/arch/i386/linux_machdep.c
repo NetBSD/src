@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.165 2017/09/17 09:41:35 maxv Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.166 2019/05/19 08:46:15 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.165 2017/09/17 09:41:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.166 2019/05/19 08:46:15 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_user_ldt.h"
@@ -132,7 +132,7 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	pmap_ldt_cleanup(l);
 #endif
 
-	fpu_save_area_clear(l, __Linux_NPXCW__);
+	fpu_clear(l, __Linux_NPXCW__);
 
 	tf = l->l_md.md_regs;
 	tf->tf_gs = 0;
