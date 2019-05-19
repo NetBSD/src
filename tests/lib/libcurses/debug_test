@@ -20,6 +20,8 @@ usage() {
 	echo "         script."
 	echo "    -f : Specify the file name for curses tracing the default is"
 	echo "         ${CURSES_TRACE_FILE}"
+	echo "	  -L : Add the argument as a prefix to LD_LIBRARY_PATH to"
+	echo "	       use an alternate libcurses version"
 	echo "    -s : Specify the slave command.  Defaults to \"../slave/slave\""
 	echo "    -v : Enable verbose output"
 	echo
@@ -28,7 +30,7 @@ usage() {
 #
 ARGS=""
 #
-while getopts cf:s:v opt
+while getopts cf:L:s:v opt
 do
     case "${opt}" in
 	c)
@@ -41,6 +43,10 @@ do
 
 	f)
 	    CURSES_TRACE_FILE=${OPTARG}
+	    ;;
+
+	L)
+	    LD_LIBRARY_PATH=${OPTARG}:${LD_LIBRARY_PATH}
 	    ;;
 
 	s)
