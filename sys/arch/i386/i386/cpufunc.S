@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.31 2019/05/04 07:20:22 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.32 2019/05/19 08:17:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.31 2019/05/04 07:20:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.32 2019/05/19 08:17:02 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -288,11 +288,6 @@ ENTRY(frstor)
 	frstor	(%eax)
 	ret
 END(frstor)
-
-ENTRY(clts)
-	clts
-	ret
-END(clts)
 
 ENTRY(stts)
 	movl	%cr0, %eax
