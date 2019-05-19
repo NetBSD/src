@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.30 2017/09/17 09:41:35 maxv Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.31 2019/05/19 08:46:15 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.30 2017/09/17 09:41:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.31 2019/05/19 08:46:15 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -232,7 +232,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 		/* NOTREACHED */
 	}
 
-	fpu_save_area_reset(l);
+	fpu_sigreset(l);
 	buildcontext(l, sel, catcher, fp);
 
 	/* Remember that we're now on the signal stack. */
