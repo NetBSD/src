@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.819 2019/05/19 08:17:02 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.820 2019/05/19 08:46:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.819 2019/05/19 08:17:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.820 2019/05/19 08:46:15 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -666,7 +666,7 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
 	/* Ensure FP state is reset. */
-	fpu_save_area_reset(l);
+	fpu_sigreset(l);
 }
 
 void
@@ -865,7 +865,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	pmap_ldt_cleanup(l);
 #endif
 
-	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
+	fpu_clear(l, pack->ep_osversion >= 699002600
 	    ? __INITIAL_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 
 	memcpy(&pcb->pcb_fsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_fsd));
