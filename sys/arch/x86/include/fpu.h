@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.15 2019/05/19 08:17:02 maxv Exp $	*/
+/*	$NetBSD: fpu.h,v 1.16 2019/05/19 08:46:15 maxv Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -27,8 +27,8 @@ void fpu_set_default_cw(struct lwp *, unsigned int);
 void fputrap(struct trapframe *);
 void fpudna(struct trapframe *);
 
-void fpu_save_area_clear(struct lwp *, unsigned int);
-void fpu_save_area_reset(struct lwp *);
+void fpu_clear(struct lwp *, unsigned int);
+void fpu_sigreset(struct lwp *);
 
 void fpu_save_area_fork(struct pcb *, const struct pcb *);
 
