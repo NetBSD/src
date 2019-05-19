@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.44 2019/03/24 15:58:32 maxv Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.45 2019/05/19 08:46:15 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.44 2019/03/24 15:58:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.45 2019/05/19 08:46:15 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_user_ldt.h"
@@ -285,7 +285,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	netbsd32_adjust_limits(p);
 
-	fpu_save_area_clear(l, __Linux_NPXCW__);
+	fpu_clear(l, __Linux_NPXCW__);
 
 	kpreempt_disable();
 	pcb->pcb_flags = PCB_COMPAT32;

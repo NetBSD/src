@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.330 2019/05/19 08:17:02 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.331 2019/05/19 08:46:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.330 2019/05/19 08:17:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.331 2019/05/19 08:46:15 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -585,7 +585,7 @@ buildcontext(struct lwp *l, void *catcher, void *f)
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
 	/* Ensure FP state is sane */
-	fpu_save_area_reset(l);
+	fpu_sigreset(l);
 }
 
 void
@@ -1369,7 +1369,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	pmap_ldt_cleanup(l);
 #endif
 
-	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
+	fpu_clear(l, pack->ep_osversion >= 699002600
 	    ? __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 	x86_dbregs_clear(l);
 

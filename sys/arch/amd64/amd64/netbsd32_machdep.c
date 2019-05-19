@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.120 2019/03/24 15:58:32 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.121 2019/05/19 08:46:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.120 2019/03/24 15:58:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.121 2019/05/19 08:46:15 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -138,7 +138,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	netbsd32_adjust_limits(p);
 
-	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
+	fpu_clear(l, pack->ep_osversion >= 699002600
 	    ?  __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 	x86_dbregs_clear(l);
 
@@ -183,7 +183,7 @@ netbsd32_buildcontext(struct lwp *l, struct trapframe *tf, void *fp,
 #endif
 
 	/* Ensure FP state is sane. */
-	fpu_save_area_reset(l);
+	fpu_sigreset(l);
 
 	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
