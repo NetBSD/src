@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.50 2019/02/11 14:59:33 cherry Exp $	*/
+/*	$NetBSD: fpu.c,v 1.51 2019/05/19 08:17:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.50 2019/02/11 14:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.51 2019/05/19 08:17:02 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -185,8 +185,8 @@ fpuinit_mxcsr_mask(void)
 #endif
 }
 
-static void
-fpu_clear_amd(void)
+static inline void
+fpu_errata_amd(void)
 {
 	/*
 	 * AMD FPUs do not restore FIP, FDP, and FOP on fxrstor and xrstor
@@ -240,13 +240,13 @@ fpu_area_restore(void *area, uint64_t xsave_features)
 		break;
 	case FPU_SAVE_FXSAVE:
 		if (cpu_vendor == CPUVENDOR_AMD)
-			fpu_clear_amd();
+			fpu_errata_amd();
 		fxrstor(area);
 		break;
 	case FPU_SAVE_XSAVE:
 	case FPU_SAVE_XSAVEOPT:
 		if (cpu_vendor == CPUVENDOR_AMD)
-			fpu_clear_amd();
+			fpu_errata_amd();
 		xrstor(area, xsave_features);
 		break;
 	}
