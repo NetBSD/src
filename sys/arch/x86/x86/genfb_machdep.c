@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.12 2017/02/25 01:13:50 nonaka Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.13 2019/05/19 07:43:17 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.12 2017/02/25 01:13:50 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.13 2019/05/19 07:43:17 mlelstv Exp $");
 
 #include "opt_mtrr.h"
 
@@ -196,7 +196,7 @@ x86_genfb_cnattach(void)
 	} else
 		ri->ri_bits = bits;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_CLEAR;
-	rasops_init(ri, ri->ri_width / 8, ri->ri_height / 8);
+	rasops_init(ri, ri->ri_height / 8, ri->ri_width / 8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 	    ri->ri_width / ri->ri_font->fontwidth);
