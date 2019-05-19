@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167 2019/05/15 18:27:51 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.168 2019/05/19 08:17:02 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.167 2019/05/15 18:27:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.168 2019/05/19 08:17:02 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1199,7 +1199,7 @@ no_RAS:
 	pushl	%edi
 	call	_C_LABEL(i386_tls_switch)
 	addl	$4,%esp
-#else /* !XENPV */
+#else
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%ebx),%ecx		/* has CR0_TS clear */
 	movl	%cr0,%edx
@@ -1217,7 +1217,7 @@ skip_TS:
 	cmpl	%edx,%ecx
 	je	switch_return
 	movl	%ecx,%cr0
-#endif /* !XENPV */
+#endif
 
 switch_return:
 	/* Return to the new LWP, returning 'oldlwp' in %eax. */

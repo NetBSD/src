@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.39 2019/05/04 07:20:22 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.40 2019/05/19 08:17:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -373,11 +373,6 @@ ENTRY(frstor)
 	frstor	(%rdi)
 	ret
 END(frstor)
-
-ENTRY(clts)
-	clts
-	ret
-END(clts)
 
 ENTRY(stts)
 	movq	%cr0, %rax

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.329 2019/03/24 15:58:32 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.330 2019/05/19 08:17:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.329 2019/03/24 15:58:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.330 2019/05/19 08:17:02 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -457,15 +457,15 @@ x86_64_tls_switch(struct lwp *l)
 
 	/* Update segment registers */
 	if (pcb->pcb_flags & PCB_COMPAT32) {
-		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
-		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
+		update_descriptor(&ci->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
+		update_descriptor(&ci->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
 		setds(GSEL(GUDATA32_SEL, SEL_UPL));
 		setes(GSEL(GUDATA32_SEL, SEL_UPL));
 		setfs(GSEL(GUDATA32_SEL, SEL_UPL));
 		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, tf->tf_gs);
 	} else {
-		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &zero);
-		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &zero);
+		update_descriptor(&ci->ci_gdt[GUFS_SEL], &zero);
+		update_descriptor(&ci->ci_gdt[GUGS_SEL], &zero);
 		setds(GSEL(GUDATA_SEL, SEL_UPL));
 		setes(GSEL(GUDATA_SEL, SEL_UPL));
 		setfs(0);
