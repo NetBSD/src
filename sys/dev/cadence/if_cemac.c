@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.17 2019/04/22 08:05:01 msaitoh Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.18 2019/05/19 13:32:35 alnsn Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.17 2019/04/22 08:05:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.18 2019/05/19 13:32:35 alnsn Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -739,7 +739,6 @@ cemac_tick(void *arg)
 static int
 cemac_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct cemac_softc *sc = ifp->if_softc;
 	int s, error;
 
 	s = splnet();
