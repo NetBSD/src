@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.237 2019/02/23 11:57:41 kamil Exp $ */
+/*	$NetBSD: st.c,v 1.238 2019/05/19 19:06:53 kardel Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.237 2019/02/23 11:57:41 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.238 2019/05/19 19:06:53 kardel Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -355,6 +355,7 @@ static int	st_rewind(struct st_softc *, u_int, int);
 static int	st_interpret_sense(struct scsipi_xfer *);
 static int	st_touch_tape(struct st_softc *);
 static int	st_erase(struct st_softc *, int full, int flags);
+static void     st_updatefilepos(struct st_softc *);
 static int	st_rdpos(struct st_softc *, int, uint32_t *);
 static int	st_setpos(struct st_softc *, int, uint32_t *);
 
@@ -1823,8 +1824,7 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 					st->blkno = -1;
 			}
 		} else if (what == SP_EOM) {
-			/* This loses us relative position. */
-			st->fileno = st->blkno = -1;
+                        st_updatefilepos(st);
 		}
 	}
 	return error;
@@ -1995,6 +1995,54 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	} else
 		st->fileno = st->blkno = 0;
 	return error;
+}
+
+static void
+st_updatefilepos(struct st_softc *st)
+{
+        int error;
+        uint8_t posdata[32];
+        struct scsi_tape_read_position cmd;
+
+        memset(&cmd, 0, sizeof(cmd));
+        memset(&posdata, 0, sizeof(posdata));
+        cmd.opcode = READ_POSITION;
+        cmd.byte1 = 6;  /* service action: LONG FORM */
+
+        error = scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd),
+            (void *)&posdata, sizeof(posdata), ST_RETRIES, ST_CTL_TIME, NULL,
+            XS_CTL_SILENT | XS_CTL_DATA_IN);
+
+        if (error == 0) {
+#ifdef SCSIPI_DEBUG
+                if (st->sc_periph->periph_dbflags & SCSIPI_DB3) {
+                        int hard;
+
+                        printf("posdata: ");
+                        for (hard = 0; hard < sizeof(posdata); hard++)
+                                printf("%02x ", posdata[hard] & 0xff);
+                        printf("\n");
+                }
+#endif
+                if (posdata[0] & 0xC) { /* Block|Mark Position Unknown */
+                        SC_DEBUG(st->sc_periph, SCSIPI_DB3,
+                                 ("st_updatefilepos block/mark position unknown (0x%02x)\n",
+                                  posdata[0]));
+                } else {
+                        st->fileno = _8btol(&posdata[16]);
+                        st->blkno = 0;
+                        SC_DEBUG(st->sc_periph, SCSIPI_DB3,
+                                 ("st_updatefilepos file position %"PRId64"\n",
+                                  st->fileno));
+                        return;
+                }
+        } else {
+                SC_DEBUG(st->sc_periph, SCSIPI_DB3,
+                         ("st_updatefilepos READ POSITION(LONG_FORM) failed (error=%d)\n",
+                          error));
+        }
+        st->fileno = -1;
+        st->blkno = -1;
 }
 
 static int
