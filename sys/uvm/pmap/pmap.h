@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2019/05/20 16:58:49 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 2019/05/20 17:00:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -130,7 +130,7 @@ struct pmap {
 	pmap_segtab_t *		pm_segtab;	/* pointers to pages of PTEs */
 	u_int			pm_count;	/* pmap reference count */
 	u_int			pm_flags;
-#define	PMAP_DEFERRED_ACTIVATE	0x0001
+#define	PMAP_DEFERRED_ACTIVATE	__BIT(0)
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	vaddr_t			pm_minaddr;
 	vaddr_t			pm_maxaddr;
