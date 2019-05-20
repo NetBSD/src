@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.284 2019/05/04 10:07:11 maxv Exp $	*/
+/*	$NetBSD: systm.h,v 1.285 2019/05/20 20:35:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -235,6 +235,8 @@ void	printf_nolog(const char *, ...) __printflike(1, 2);
 void	printf(const char *, ...) __printflike(1, 2);
 
 int	snprintf(char *, size_t, const char *, ...) __printflike(3, 4);
+
+int	vasprintf(char **, const char *, va_list) __printflike(2, 0);
 
 void	vprintf(const char *, va_list) __printflike(1, 0);
 
