@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.37 2018/05/27 21:09:39 maya Exp $
+.\"     $NetBSD: kprintf.9,v 1.38 2019/05/20 20:25:09 christos Exp $
 .\"
 .\" Copyright (c) 1998, 2002, 2007, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 27, 2018
+.Dd May 20, 2019
 .Dt KPRINTF 9
 .Os
 .Sh NAME
@@ -35,6 +35,7 @@
 .Nm printf ,
 .Nm printf_nolog ,
 .Nm snprintf ,
+.Nm vasrintf ,
 .Nm vprintf ,
 .Nm vsnprintf ,
 .Nm uprintf ,
@@ -69,6 +70,8 @@
 .Fn "printf_nolog" "const char *format" "..."
 .Ft int
 .Fn "snprintf" "char *buf" "size_t size" "const char *format" "..."
+.Ft int
+.Fn "vasprintf" "char **buf" "const char *format" "va_list ap"
 .Ft void
 .Fn "vprintf" "const char *format" "va_list ap"
 .Ft int
@@ -138,12 +141,19 @@ function is identical to
 .Fn printf ,
 except it does not send the data to the system log.
 The functions
-.Fn snprintf
+.Fn snprintf ,
+.Fn vasprintf
 and
 .Fn vsnprintf
 write output to a string buffer.
-These four functions work similarly to their user space counterparts,
+These five functions work similarly to their user space counterparts,
 and are not described in detail here.
+The
+.Fn vasprintf
+function allocates memory with
+.Xr kmem_alloc 9
+and it is the callers responsibility to free the returned string with
+.Cr kmem_free .
 .Pp
 The functions
 .Fn uprintf
