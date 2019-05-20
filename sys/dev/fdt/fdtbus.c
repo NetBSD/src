@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.27 2019/02/25 19:28:36 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.28 2019/05/20 11:12:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.27 2019/02/25 19:28:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.28 2019/05/20 11:12:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ struct fdt_node {
 	int		n_phandle;
 	const char	*n_name;
 	struct fdt_attach_args n_faa;
+	cfdata_t	n_cf;
 
 	u_int		n_order;
 
@@ -74,6 +75,7 @@ static int	fdt_rescan(device_t, const char *, const int *);
 static void	fdt_childdet(device_t, device_t);
 
 static int	fdt_scan_submatch(device_t, cfdata_t, const int *, void *);
+static cfdata_t	fdt_scan_best(struct fdt_softc *, struct fdt_node *);
 static void	fdt_scan(struct fdt_softc *, int);
 static void	fdt_add_node(struct fdt_node *);
 static u_int	fdt_get_order(int);
@@ -143,7 +145,11 @@ static int
 fdt_rescan(device_t self, const char *ifattr, const int *locs)
 {
 	struct fdt_softc *sc = device_private(self);
+	struct fdt_node *node;
 	int pass;
+
+	TAILQ_FOREACH(node, &fdt_nodes, n_nodes)
+		node->n_cf = fdt_scan_best(sc, node);
 
 	pass = 0;
 	fdt_need_rescan = false;
@@ -151,6 +157,10 @@ fdt_rescan(device_t self, const char *ifattr, const int *locs)
 		fdt_scan(sc, pass);
 		if (fdt_need_rescan == true) {
 			pass = 0;
+			TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
+				if (node->n_dev == NULL)
+					node->n_cf = fdt_scan_best(sc, node);
+			}
 			fdt_need_rescan = false;
 		} else {
 			pass++;
@@ -280,7 +290,7 @@ fdt_scan(struct fdt_softc *sc, int pass)
 	char buf[FDT_MAX_PATH];
 
 	TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
-		if (node->n_dev != NULL)
+		if (node->n_dev != NULL || node->n_cf == NULL)
 			continue;
 
 		fdt_init_attach_args(&sc->sc_faa, node, quiet, &faa);
@@ -288,17 +298,16 @@ fdt_scan(struct fdt_softc *sc, int pass)
 		/*
 		 * Make sure we don't attach before a better match in a later pass.
 		 */
-		cfdata_t cf_best = fdt_scan_best(sc, node);
 		cfdata_t cf_pass =
 		    config_search_loc(fdt_scan_submatch, node->n_bus, "fdt", locs, &faa);
-		if (cf_best != cf_pass)
+		if (node->n_cf != cf_pass)
 			continue;
 
 		/*
 		 * Attach the device.
 		 */
-		node->n_dev = config_found_sm_loc(node->n_bus, "fdt", locs,
-		    &faa, fdtbus_print, fdt_scan_submatch);
+		node->n_dev = config_attach_loc(node->n_bus, cf_pass, locs,
+		    &faa, fdtbus_print);
 		if (node->n_dev) {
 			dict = device_properties(node->n_dev);
 			if (fdtbus_get_path(node->n_phandle, buf, sizeof(buf)))
