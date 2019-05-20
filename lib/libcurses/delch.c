@@ -1,4 +1,4 @@
-/*	$NetBSD: delch.c,v 1.24 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: delch.c,v 1.25 2019/05/20 22:17:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delch.c,v 1.24 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: delch.c,v 1.25 2019/05/20 22:17:41 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -72,7 +72,7 @@ mvdelch(int y, int x)
 int
 mvwdelch(WINDOW *win, int y, int x)
 {
-	if (wmove(win, y, x) == ERR)
+	if (_cursesi_wmove(win, y, x, 0) == ERR)
 		return ERR;
 
 	return wdelch(win);
