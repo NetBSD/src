@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_platform.c,v 1.10 2019/01/31 13:06:10 skrll Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.11 2019/05/20 20:17:25 aymeric Exp $ */
 
 /* This file is in the public domain. */
 
@@ -7,7 +7,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.10 2019/01/31 13:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.11 2019/05/20 20:17:25 aymeric Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -92,18 +92,21 @@ cycv_mpstart(void)
 	bus_space_write_4(bst, bsh_scu, SCU_CTL,
 		bus_space_read_4(bst, bsh_scu, SCU_CTL) | SCU_CTL_SCU_ENA);
 
-	const uint32_t startfunc = (uint32_t) KERN_VTOPHYS((vaddr_t)cpu_mpstart);
+	const uint32_t startfunc =
+		(uint32_t) KERN_VTOPHYS((vaddr_t) cpu_mpstart);
 
 	/*
-	 * We place a "B cortex_mpstart" at address 0 in order to bootstrap
+	 * We place a "LDR PC, =cpu_mpstart" at address 0 in order to bootstrap
 	 * CPU 1. We can't use the similar feature of the Boot ROM because
-	 * it was unmapped by u-boot in favor of the SDRAM. Plus the dtb is
-	 * stored very low in RAM so we can't re-map the Boot ROM easily.
+	 * it was unmapped by u-boot in favor of the SDRAM.
 	 */
 	pmap_map_chunk(kernel_l1pt.pv_va, CYCV_SDRAM_VBASE, CYCV_SDRAM_BASE,
 		L1_S_SIZE, VM_PROT_READ|VM_PROT_WRITE, PMAP_NOCACHE);
-	*(volatile uint32_t *) CYCV_SDRAM_VBASE =
-	    htole32(0xea000000 | ((startfunc - 8 - 0x0) >> 2));
+
+	/* 0: LDR PC, [PC, #0x18] -> loads address at 0x20 into PC */
+	*(volatile uint32_t *) CYCV_SDRAM_VBASE = htole32(0xe59ff018);
+	*(volatile uint32_t *) (CYCV_SDRAM_VBASE + 0x20) = startfunc;
+
 	pmap_unmap_chunk(kernel_l1pt.pv_va, CYCV_SDRAM_VBASE, L1_S_SIZE);
 
 	bus_space_write_4(bst, bsh_rst, CYCV_RSTMGR_MPUMODRST,
