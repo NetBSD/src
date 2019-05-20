@@ -1,6 +1,6 @@
 /*
  * Do not edit!  Automatically generated file:
- *   from: NetBSD: shlib_version,v 1.42 2017/01/02 12:38:16 roy Exp 
+ *   from: NetBSD: shlib_version,v 1.43 2018/11/16 10:12:00 blymn Exp 
  *   by  : NetBSD: genfileioh.awk,v 1.2 2008/05/02 11:13:02 martin Exp 
  */
 
