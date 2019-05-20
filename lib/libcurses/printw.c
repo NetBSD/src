@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.27 2019/04/01 11:39:15 roy Exp $	*/
+/*	$NetBSD: printw.c,v 1.28 2019/05/20 22:17:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.27 2019/04/01 11:39:15 roy Exp $");
+__RCSID("$NetBSD: printw.c,v 1.28 2019/05/20 22:17:41 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -102,7 +102,7 @@ mvwprintw(WINDOW * win, int y, int x, const char *fmt,...)
 	va_list ap;
 	int     ret;
 
-	if (wmove(win, y, x) != OK)
+	if (_cursesi_wmove(win, y, x, 0) != OK)
 		return ERR;
 
 	va_start(ap, fmt);
