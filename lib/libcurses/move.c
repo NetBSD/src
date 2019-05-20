@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.19 2018/09/26 18:51:45 kamil Exp $	*/
+/*	$NetBSD: move.c,v 1.20 2019/05/20 22:17:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: move.c,v 1.19 2018/09/26 18:51:45 kamil Exp $");
+__RCSID("$NetBSD: move.c,v 1.20 2019/05/20 22:17:41 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -50,7 +50,7 @@ int
 move(int y, int x)
 {
 
-	return wmove(stdscr, y, x);
+	return _cursesi_wmove(stdscr, y, x, 1);
 }
 
 #endif
@@ -62,20 +62,34 @@ move(int y, int x)
 int
 wmove(WINDOW *win, int y, int x)
 {
+	return _cursesi_wmove(win, y, x, 1);
+}
+
+
+/*
+ * _cursesi_wmove:
+ *	Moves the cursor to the given point, if keep_old == 0 then
+ * update the old cursor position.
+ */
+int
+_cursesi_wmove(WINDOW *win, int y, int x, int keep_old)
+{
 
 #ifdef DEBUG
-	__CTRACE(__CTRACE_MISC, "wmove: (%d, %d)\n", y, x);
+	__CTRACE(__CTRACE_MISC, "_cursesi_wmove: (%d, %d), keep_old: %d\n", y, x, keep_old);
 #endif
 	if (x < 0 || y < 0)
 		return ERR;
 	if (x >= win->maxx || y >= win->maxy)
 		return ERR;
+
 	win->curx = x;
-	win->alines[win->cury]->flags &= ~__ISPASTEOL;
-	win->alines[win->cury]->flags |= __ISDIRTY;
 	win->cury = y;
-	win->alines[y]->flags &= ~__ISPASTEOL;
-	win->alines[y]->flags |= __ISDIRTY;
+	if (keep_old == 0) {
+		win->ocurx = x;
+		win->ocury = y;
+	}
+
 	return OK;
 }
 
@@ -84,8 +98,8 @@ wcursyncup(WINDOW *win)
 {
 
 	while (win->orig) {
-		wmove(win->orig, win->cury + win->begy - win->orig->begy,
-		      win->curx + win->begx - win->orig->begx);
+		_cursesi_wmove(win->orig, win->cury + win->begy - win->orig->begy,
+		      win->curx + win->begx - win->orig->begx, 0);
 		win = win->orig;
 	}
 }

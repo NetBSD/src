@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.26 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: erase.c,v 1.27 2019/05/20 22:17:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.26 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: erase.c,v 1.27 2019/05/20 22:17:41 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -105,6 +105,6 @@ werase(WINDOW *win)
 	 * windows - this will result in the (intended) clearing of the
 	 * screen over the area covered by the window. */
 	__touchwin(win);
-	wmove(win, 0, 0);
+	_cursesi_wmove(win, 0, 0, 0);
 	return OK;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: addchnstr.c,v 1.6 2013/11/09 11:16:59 blymn Exp $	*/
+/*	$NetBSD: addchnstr.c,v 1.7 2019/05/20 22:17:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addchnstr.c,v 1.6 2013/11/09 11:16:59 blymn Exp $");
+__RCSID("$NetBSD: addchnstr.c,v 1.7 2019/05/20 22:17:41 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -111,7 +111,7 @@ mvaddchnstr(int y, int x, const chtype *chstr, int n)
 int
 mvwaddchnstr(WINDOW *win, int y, int x, const chtype *chstr, int n)
 {
-	if (wmove(win, y, x) == ERR)
+	if (_cursesi_wmove(win, y, x, 0) == ERR)
 		return ERR;
 
 	return waddchnstr(win, chstr, n);
@@ -180,6 +180,6 @@ waddchnstr(WINDOW *win, const chtype *chstr, int n)
 	*cp = '\0';
 	ret = _cursesi_waddbytes(win, start, i, attr, 0);
 	free(ocp);
-	wmove(win, oy, ox);
+	_cursesi_wmove(win, oy, ox, 1);
 	return ret;
 }

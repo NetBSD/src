@@ -1,4 +1,4 @@
-/*   $NetBSD: insstr.c,v 1.5 2017/01/06 13:53:18 roy Exp $ */
+/*   $NetBSD: insstr.c,v 1.6 2019/05/20 22:17:41 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insstr.c,v 1.5 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: insstr.c,v 1.6 2019/05/20 22:17:41 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -100,7 +100,7 @@ int
 mvwinsstr(WINDOW *win, int y, int x, const char *str)
 {
 
-	if (wmove(win, y, x) == ERR)
+	if (_cursesi_wmove(win, y, x, 0) == ERR)
 		return ERR;
 
 	return winsstr(stdscr, str);
@@ -114,7 +114,7 @@ int
 mvwinsnstr(WINDOW *win, int y, int x, const char *str, int n)
 {
 
-	if (wmove(win, y, x) == ERR)
+	if (_cursesi_wmove(win, y, x, 0) == ERR)
 		return ERR;
 
 	return winsnstr(stdscr, str, n);

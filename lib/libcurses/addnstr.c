@@ -1,4 +1,4 @@
-/*	$NetBSD: addnstr.c,v 1.15 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: addnstr.c,v 1.16 2019/05/20 22:17:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addnstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addnstr.c,v 1.15 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: addnstr.c,v 1.16 2019/05/20 22:17:41 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -115,7 +115,7 @@ mvaddnstr(int y, int x, const char *str, int count)
 int
 mvwaddnstr(WINDOW *win, int y, int x, const char *str, int count)
 {
-	if (wmove(win, y, x) == ERR)
+	if (_cursesi_wmove(win, y, x, 0) == ERR)
 		return ERR;
 
 	return waddnstr(win, str, count);

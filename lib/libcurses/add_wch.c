@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wch.c,v 1.7 2019/04/24 07:09:44 blymn Exp $ */
+/*   $NetBSD: add_wch.c,v 1.8 2019/05/20 22:17:41 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wch.c,v 1.7 2019/04/24 07:09:44 blymn Exp $");
+__RCSID("$NetBSD: add_wch.c,v 1.8 2019/05/20 22:17:41 blymn Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -76,7 +76,7 @@ mvadd_wch(int y, int x, const cchar_t *wch)
 int
 mvwadd_wch(WINDOW *win, int y, int x, const cchar_t *wch)
 {
-	if (wmove(win, y, x) == ERR)
+	if (_cursesi_wmove(win, y, x, 0) == ERR)
 		return ERR;
 
 	return wadd_wch(win, wch);
@@ -92,11 +92,12 @@ mvwadd_wch(WINDOW *win, int y, int x, const cchar_t *wch)
 int
 wadd_wch(WINDOW *win, const cchar_t *wch)
 {
-	int x = win->curx, y = win->cury;
+	int y = win->cury;
 	__LINE *lnp = NULL;
 
 #ifdef DEBUG
 	int i;
+	int x = win->curx;
 
 	for (i = 0; i < win->maxy; i++) {
 		assert(win->alines[i]->sentinel == SENTINEL_VALUE);
@@ -105,5 +106,5 @@ wadd_wch(WINDOW *win, const cchar_t *wch)
 	    win, x, y);
 #endif
 	lnp = win->alines[y];
-	return _cursesi_addwchar(win, &lnp, &y, &x, wch, 1);
+	return _cursesi_addwchar(win, &lnp, &(win->cury), &(win->curx), wch, 1);
 }
