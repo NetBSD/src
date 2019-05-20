@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2017/06/24 05:49:50 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 2019/05/20 16:58:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -157,11 +157,11 @@ struct pmap_limits {
  */
 #ifdef MULTIPROCESSOR
 #define PMAP_SIZE	offsetof(struct pmap, pm_pai[PMAP_TLB_MAX])
-#else       
+#else
 #define PMAP_SIZE	sizeof(struct pmap)
-#endif      
+#endif
 
-/* 
+/*
  * The pools from which pmap structures and sub-structures are allocated.
  */
 extern struct pool pmap_pmap_pool;
