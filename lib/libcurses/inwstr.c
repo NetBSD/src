@@ -1,4 +1,4 @@
-/*   $NetBSD: inwstr.c,v 1.6 2019/02/24 20:20:18 roy Exp $ */
+/*   $NetBSD: inwstr.c,v 1.7 2019/05/20 22:17:41 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inwstr.c,v 1.6 2019/02/24 20:20:18 roy Exp $");
+__RCSID("$NetBSD: inwstr.c,v 1.7 2019/05/20 22:17:41 blymn Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -87,7 +87,7 @@ __warn_references(mvwinwstr,
 int
 mvwinwstr(WINDOW *win, int y, int x, wchar_t *wstr)
 {
-	if (wmove(win, y, x) == ERR)
+	if (_cursesi_wmove(win, y, x, 0) == ERR)
 		return ERR;
 
 	return winwstr(win, wstr);
@@ -96,7 +96,7 @@ mvwinwstr(WINDOW *win, int y, int x, wchar_t *wstr)
 int
 mvwinnwstr(WINDOW *win, int y, int x, wchar_t *wstr, int n)
 {
-	if (wmove(win, y, x) == ERR)
+	if (_cursesi_wmove(win, y, x, 0) == ERR)
 		return ERR;
 
 	return winnwstr(win, wstr, n);
