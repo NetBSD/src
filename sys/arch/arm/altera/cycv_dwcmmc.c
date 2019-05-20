@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_dwcmmc.c,v 1.1 2018/09/19 17:31:38 aymeric Exp $ */
+/* $NetBSD: cycv_dwcmmc.c,v 1.2 2019/05/20 20:14:08 aymeric Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_dwcmmc.c,v 1.1 2018/09/19 17:31:38 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_dwcmmc.c,v 1.2 2019/05/20 20:14:08 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: cycv_dwcmmc.c,v 1.1 2018/09/19 17:31:38 aymeric Exp 
 
 static int	cycv_dwcmmc_match(device_t, cfdata_t, void *);
 static void	cycv_dwcmmc_attach(device_t, device_t, void *);
-
-static int	cycv_dwcmmc_card_detect(struct dwc_mmc_softc *);
 
 struct cycv_dwcmmc_softc {
 	struct dwc_mmc_softc	sc;
@@ -130,7 +128,7 @@ cycv_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_fifo_reg = FIFO_REG;
 	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG | DWC_MMC_F_DMA;
 
-	sc->sc_card_detect = cycv_dwcmmc_card_detect;
+	sc->sc_card_detect = NULL;
 	sc->sc_write_protect = NULL;
 
 	aprint_naive("\n");
@@ -152,12 +150,4 @@ cycv_dwcmmc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
-}
-
-static int
-cycv_dwcmmc_card_detect(struct dwc_mmc_softc *sc)
-{
-	/* Card detection is broken on the nanosoc. Pretend it's present. */
-
-	return 0;
 }
