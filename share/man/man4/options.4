@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.503 2019/05/21 16:22:36 sevan Exp $
+.\"	$NetBSD: options.4,v 1.504 2019/05/21 16:45:19 sevan Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -123,20 +123,6 @@ Functions the same as
 except failure to open
 .Ar filename
 produces a fatal error.
-.It Sy options Ar option_name Op , Ar option_name=value Op ...
-Specifies (or sets) the option, or comma-separated list of options,
-.Ar option_name .
-Some options expect to be assigned a value, which may be an integer,
-a double-quoted word, a bare word, or an empty string
-.Pq Qq .
-Note that those are eventually handled by the C compiler, so the rules
-of that language apply.
-.Pp
-.Em Note :
-Options that are not defined by device definition files are passed to
-the compile process as
-.Fl D
-flags to the C compiler.
 .It Sy makeoptions Ar name=value
 Defines a
 .Xr make 1
@@ -165,6 +151,20 @@ include "arch/i386/conf/GENERIC"
 no options COMPAT_09
 no pseudo-device bridge
 .Ed
+.It Sy options Ar option_name Op , Ar option_name=value Op ...
+Specifies (or sets) the option, or comma-separated list of options,
+.Ar option_name .
+Some options expect to be assigned a value, which may be an integer,
+a double-quoted word, a bare word, or an empty string
+.Pq Qq .
+Note that those are eventually handled by the C compiler, so the rules
+of that language apply.
+.Pp
+.Em Note :
+Options that are not defined by device definition files are passed to
+the compile process as
+.Fl D
+flags to the C compiler.
 .It Sy pseudo-device Ar name Op Ar N
 Includes support for the pseudo-device
 .Ar name .
