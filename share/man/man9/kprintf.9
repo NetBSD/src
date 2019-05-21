@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.38 2019/05/20 20:25:09 christos Exp $
+.\"     $NetBSD: kprintf.9,v 1.39 2019/05/21 09:24:21 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002, 2007, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nm printf ,
 .Nm printf_nolog ,
 .Nm snprintf ,
-.Nm vasrintf ,
+.Nm vasprintf ,
 .Nm vprintf ,
 .Nm vsnprintf ,
 .Nm uprintf ,
@@ -63,62 +63,62 @@
 .Sh SYNOPSIS
 .In sys/systm.h
 .Ft void
-.Fn "device_printf" "device_t" "const char *format" "..."
+.Fn device_printf "device_t" "const char *format" "..."
 .Ft void
-.Fn "printf" "const char *format" "..."
+.Fn printf "const char *format" "..."
 .Ft void
-.Fn "printf_nolog" "const char *format" "..."
+.Fn printf_nolog "const char *format" "..."
 .Ft int
-.Fn "snprintf" "char *buf" "size_t size" "const char *format" "..."
+.Fn snprintf "char *buf" "size_t size" "const char *format" "..."
 .Ft int
-.Fn "vasprintf" "char **buf" "const char *format" "va_list ap"
+.Fn vasprintf "char **buf" "const char *format" "va_list ap"
 .Ft void
-.Fn "vprintf" "const char *format" "va_list ap"
+.Fn vprintf "const char *format" "va_list ap"
 .Ft int
-.Fn "vsnprintf" "char *buf" "size_t size" "const char *format" "va_list ap"
+.Fn vsnprintf "char *buf" "size_t size" "const char *format" "va_list ap"
 .Ft void
-.Fn "uprintf" "const char *format" "..."
+.Fn uprintf "const char *format" "..."
 .Ft void
-.Fn "ttyprintf" "struct tty *tty" "const char *format" "..."
+.Fn ttyprintf "struct tty *tty" "const char *format" "..."
 .In sys/tprintf.h
 .Ft tpr_t
-.Fn "tprintf_open" "struct proc *p"
+.Fn tprintf_open "struct proc *p"
 .Ft void
-.Fn "tprintf" "tpr_t tpr" "const char *format" "..."
+.Fn tprintf "tpr_t tpr" "const char *format" "..."
 .Ft void
-.Fn "tprintf_close" "tpr_t tpr"
+.Fn tprintf_close "tpr_t tpr"
 .Ft void
-.Fn "aprint_normal" "const char *format" "..."
+.Fn aprint_normal "const char *format" "..."
 .Ft void
-.Fn "aprint_naive" "const char *format" "..."
+.Fn aprint_naive "const char *format" "..."
 .Ft void
-.Fn "aprint_verbose" "const char *format" "..."
+.Fn aprint_verbose "const char *format" "..."
 .Ft void
-.Fn "aprint_debug" "const char *format" "..."
+.Fn aprint_debug "const char *format" "..."
 .Ft void
-.Fn "aprint_error" "const char *format" "..."
+.Fn aprint_error "const char *format" "..."
 .Ft void
-.Fn "aprint_normal_dev" "device_t" "const char *format" "..."
+.Fn aprint_normal_dev "device_t" "const char *format" "..."
 .Ft void
-.Fn "aprint_naive_dev" "device_t" "const char *format" "..."
+.Fn aprint_naive_dev "device_t" "const char *format" "..."
 .Ft void
-.Fn "aprint_verbose_dev" "device_t" "const char *format" "..."
+.Fn aprint_verbose_dev "device_t" "const char *format" "..."
 .Ft void
-.Fn "aprint_debug_dev" "device_t" "const char *format" "..."
+.Fn aprint_debug_dev "device_t" "const char *format" "..."
 .Ft void
-.Fn "aprint_error_dev" "device_t" "const char *format" "..."
+.Fn aprint_error_dev "device_t" "const char *format" "..."
 .Ft void
-.Fn "aprint_normal_ifnet" "struct ifnet *" "const char *format" "..."
+.Fn aprint_normal_ifnet "struct ifnet *" "const char *format" "..."
 .Ft void
-.Fn "aprint_naive_ifnet" "struct ifnet *" "const char *format" "..."
+.Fn aprint_naive_ifnet "struct ifnet *" "const char *format" "..."
 .Ft void
-.Fn "aprint_verbose_ifnet" "struct ifnet *" "const char *format" "..."
+.Fn aprint_verbose_ifnet "struct ifnet *" "const char *format" "..."
 .Ft void
-.Fn "aprint_debug_ifnet" "struct ifnet *" "const char *format" "..."
+.Fn aprint_debug_ifnet "struct ifnet *" "const char *format" "..."
 .Ft void
-.Fn "aprint_error_ifnet" "struct ifnet *" "const char *format" "..."
+.Fn aprint_error_ifnet "struct ifnet *" "const char *format" "..."
 .Ft int
-.Fn "aprint_get_error_count" "void"
+.Fn aprint_get_error_count "void"
 .Sh DESCRIPTION
 The
 .Fn printf
@@ -142,7 +142,7 @@ function is identical to
 except it does not send the data to the system log.
 The functions
 .Fn snprintf ,
-.Fn vasprintf
+.Fn vasprintf ,
 and
 .Fn vsnprintf
 write output to a string buffer.
@@ -152,8 +152,8 @@ The
 .Fn vasprintf
 function allocates memory with
 .Xr kmem_alloc 9
-and it is the callers responsibility to free the returned string with
-.Cr kmem_free .
+and it is the caller's responsibility to free the returned string with
+.Xr kmem_free 9 .
 .Pp
 The functions
 .Fn uprintf
