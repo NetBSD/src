@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_64-asm.S,v 1.6 2019/05/10 16:42:57 mlelstv Exp $	*/
+/*	$NetBSD: x86_64-asm.S,v 1.7 2019/05/21 05:29:21 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,11 +55,3 @@ ENTRY(x86_identify)
 	movl	$-1,%eax
 	ret
 
-ENTRY(rdmsr)
-	movq	%rdi, %rcx
-	xorq	%rax, %rax
-	movl	$OPTERON_MSR_PASSCODE, %edi
-	rdmsr
-	shlq	$32, %rdx
-	orq	%rdx, %rax
-	ret

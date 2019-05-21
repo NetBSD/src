@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.98 2019/05/11 17:21:07 kre Exp $	*/
+/*	$NetBSD: i386.c,v 1.99 2019/05/21 05:29:21 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.98 2019/05/11 17:21:07 kre Exp $");
+__RCSID("$NetBSD: i386.c,v 1.99 2019/05/21 05:29:21 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1959,6 +1959,7 @@ identifycpu_cpuids_amd(struct cpu_info *ci)
 	if (core_bits == 0)
 		core_bits = ilog2(core_max - 1) + 1;
 
+#if 0 /* MSRs need kernel mode */
 	if (cpu_family < 0x11) {
 		const uint64_t reg = rdmsr(MSR_NB_CFG);
 		if ((reg & NB_CFG_INITAPICCPUIDLO) == 0) {
@@ -1968,6 +1969,7 @@ identifycpu_cpuids_amd(struct cpu_info *ci)
 				(apic_id >> 5) | (node_id << 2);
 		}
 	}
+#endif
 
 	if (cpu_family == 0x17) {
 		x86_cpuid(0x8000001e, descs);
