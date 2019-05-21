@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.502 2019/05/21 16:18:07 sevan Exp $
+.\"	$NetBSD: options.4,v 1.503 2019/05/21 16:22:36 sevan Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1064,13 +1064,22 @@ emulation for Linux binaries is required.
 .Bl -ohang
 .It Cd options APPLE_UFS
 Enable support for UFS filesystems created on Mac OS X.
-.It Cd options WAPBL
+.It Cd options FFS_EI
 Enable
-.Dq Write Ahead Physical Block Logging file system journaling .
-This provides rapid file system consistency checking after a system outage.
-It also provides better general use performance over regular FFS.
+.Dq Endian-Independent
+FFS support.
+This allows a system to mount an FFS file system created for another
+architecture, at a small performance cost for all FFS file systems.
 See also
-.Xr wapbl 4 .
+.Xr newfs 8 ,
+.Xr fsck_ffs 8 ,
+.Xr dumpfs 8
+for file system byte order status and manipulation.
+.It Cd options FFS_NO_SNAPSHOT
+Disable support for the creation of file system internal snapshot
+of FFS file systems.
+Maybe useful for install media kernels, small memory systems and
+embedded systems which don't require the snapshot support.
 .It Cd options QUOTA
 Enables kernel support for traditional quotas in FFS.
 Traditional quotas store the quota information in external files and
@@ -1091,27 +1100,18 @@ MFS volumes can also use
 quotas; see
 .Xr mount_mfs 8
 for more information.
-.It Cd options FFS_EI
-Enable
-.Dq Endian-Independent
-FFS support.
-This allows a system to mount an FFS file system created for another
-architecture, at a small performance cost for all FFS file systems.
-See also
-.Xr newfs 8 ,
-.Xr fsck_ffs 8 ,
-.Xr dumpfs 8
-for file system byte order status and manipulation.
-.It Cd options FFS_NO_SNAPSHOT
-Disable support for the creation of file system internal snapshot
-of FFS file systems.
-Maybe useful for install media kernels, small memory systems and
-embedded systems which don't require the snapshot support.
-.It Cd options UFS_EXTATTR
-Enable extended attribute support for UFS1 file systems.
 .It Cd options UFS_DIRHASH
 Increase lookup performance by maintaining in-core hash tables
 for large directories.
+.It Cd options UFS_EXTATTR
+Enable extended attribute support for UFS1 file systems.
+.It Cd options WAPBL
+Enable
+.Dq Write Ahead Physical Block Logging file system journaling .
+This provides rapid file system consistency checking after a system outage.
+It also provides better general use performance over regular FFS.
+See also
+.Xr wapbl 4 .
 .El
 .Ss Options for the LFS File System
 .Bl -ohang
