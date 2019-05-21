@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.179 2019/05/21 04:53:52 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.180 2019/05/21 04:55:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.179 2019/05/21 04:53:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.180 2019/05/21 04:55:07 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -106,7 +106,6 @@ static void	 putchar(int, int, struct tty *);
 extern	struct tty *constty;	/* pointer to console "window" tty */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 extern	krndsource_t	rnd_printf_source;
-extern int config_pending;
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
 struct cpu_info *paniccpu;	/* cpu that first paniced */
@@ -867,8 +866,6 @@ aprint_error_internal(const char *prefix, const char *fmt, va_list ap)
 
 	if (prefix)
 		kprintf_internal("%s: ", flags, NULL, NULL, prefix);
-	if (config_pending)
-		kprintf_internal("autoconfiguration error: ", TOLOG, NULL, NULL);
 	kprintf(fmt, flags, NULL, NULL, ap);
 
 	kprintf_unlock();
