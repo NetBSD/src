@@ -1,4 +1,4 @@
-/*	$NetBSD: i386-asm.S,v 1.6 2019/05/11 12:24:42 mlelstv Exp $	*/
+/*	$NetBSD: i386-asm.S,v 1.7 2019/05/21 05:29:21 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -164,11 +164,3 @@ is486dlc:
 	movl	$CPU_486DLC,%eax
 	ret
 
-ENTRY(rdmsr)
-	movl	4(%esp), %ecx
-	pushl	%edi
-	movl	$OPTERON_MSR_PASSCODE, %edi
-	rdmsr
-	popl	%edi
-	ret
-END(rdmsr)
