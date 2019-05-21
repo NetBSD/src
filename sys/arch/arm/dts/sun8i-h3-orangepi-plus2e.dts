@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-h3-orangepi-plus2e.dts,v 1.3 2017/11/30 21:36:45 jmcneill Exp $ */
+/* $NetBSD: sun8i-h3-orangepi-plus2e.dts,v 1.4 2019/05/21 22:31:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,15 +33,21 @@
 	cpus {
 		cpu@0 {
 			cpu-supply = <&vdd_cpu>;
-			operating-points = <
-				/* kHz	  uV */
-				1296000	1340000
-				1200000	1320000
-				1008000	1200000
-				816000	1100000
-				648000	1040000
-				>;
 		};
+	};
+};
+
+&cpu0_opp_table {
+	opp@1200000000 {
+		opp-hz = /bits/ 64 <1200000000>;
+		opp-microvolt = <1320000 1320000 1320000>;
+		clock-latency-ns = <244144>;
+	};
+
+	opp@1296000000 {
+		opp-hz = /bits/ 64 <1296000000>;
+		opp-microvolt = <1340000 1340000 1340000>;
+		clock-latency-ns = <244144>;
 	};
 };
 
