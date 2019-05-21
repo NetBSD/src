@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.32 2019/02/03 03:19:28 mrg Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.33 2019/05/21 18:09:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.32 2019/02/03 03:19:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.33 2019/05/21 18:09:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,16 +481,17 @@ sys_close(struct lwp *l, const struct sys_close_args *uap, register_t *retval)
 		syscallarg(int)	fd;
 	} */
 	int error;
+	int fd = SCARG(uap, fd);
 
-	if (fd_getfile(SCARG(uap, fd)) == NULL) {
+	if (fd_getfile(fd) == NULL) {
 		return EBADF;
 	}
 
-	error = fd_close(SCARG(uap, fd));
+	error = fd_close(fd);
 	if (error == ERESTART) {
 #ifdef DIAGNOSTIC
-		printf("pid %d: close returned ERESTART\n",
-		    (int)l->l_proc->p_pid);
+		printf("%s[%d]: close(%d) returned ERESTART\n",
+		    l->l_proc->p_comm, (int)l->l_proc->p_pid, fd);
 #endif
 		error = EINTR;
 	}
