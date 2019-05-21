@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.501 2019/05/05 21:01:01 sevan Exp $
+.\"	$NetBSD: options.4,v 1.502 2019/05/21 16:18:07 sevan Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd May 5, 2019
+.Dd May 21, 2019
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -971,6 +971,8 @@ See
 for more details.
 This enables for example sshfs:
 .Xr mount_psshfs 8 .
+.It Cd file-system EFS
+Include code for the Extent File System. developed by Silicon Graphics
 .El
 .Ss File System Options
 .Bl -ohang
@@ -1060,6 +1062,8 @@ emulation for Linux binaries is required.
 .El
 .Ss Options for FFS/UFS File Systems
 .Bl -ohang
+.It Cd options APPLE_UFS
+Enable support for UFS filesystems created on Mac OS X.
 .It Cd options WAPBL
 Enable
 .Dq Write Ahead Physical Block Logging file system journaling .
