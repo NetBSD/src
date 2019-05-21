@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.177 2019/05/20 20:35:45 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.178 2019/05/21 00:57:54 kre Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.177 2019/05/20 20:35:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.178 2019/05/21 00:57:54 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.177 2019/05/20 20:35:45 christos Exp 
 #include <sys/cpu.h>
 #include <sys/sha2.h>
 #include <sys/rndsource.h>
+#include <sys/kmem.h>
 
 #include <dev/cons.h>
 
