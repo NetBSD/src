@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.45 2019/05/17 07:37:12 msaitoh Exp $	*/
+/*	$NetBSD: if_media.c,v 1.46 2019/05/21 09:18:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.45 2019/05/17 07:37:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.46 2019/05/21 09:18:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,8 +134,7 @@ ifmedia_change(struct ifmedia *ifm, struct ifnet *ifp)
 }
 
 static void
-ifmedia_status(struct ifmedia *ifm, struct ifnet *ifp,
-	struct ifmediareq *ifmr)
+ifmedia_status(struct ifmedia *ifm, struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 
 	if (ifm->ifm_status == NULL)
