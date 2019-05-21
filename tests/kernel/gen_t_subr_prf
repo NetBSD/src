@@ -23,7 +23,7 @@ cat << _EOF > $2
 #undef putchar
 #define putchar xputchar
 
-#define	kmem_alloc(n, f)	malloc(n)
+#define kmem_alloc(n, f)	malloc(n)
 
 static int putchar(char c, int foo, void *b)
 {
@@ -57,7 +57,7 @@ static void (*v_flush)(void) = empty;
 ATF_TC(snprintf_print);
 ATF_TC_HEAD(snprintf_print, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "checks snprintf print");
+	atf_tc_set_md_var(tc, "descr", "checks snprintf print");
 }
  
 ATF_TC_BODY(snprintf_print, tc)
@@ -74,7 +74,7 @@ ATF_TC_BODY(snprintf_print, tc)
 ATF_TC(snprintf_print_overflow);
 ATF_TC_HEAD(snprintf_print_overflow, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "checks snprintf print with overflow");
+	atf_tc_set_md_var(tc, "descr", "checks snprintf print with overflow");
 }
  
 ATF_TC_BODY(snprintf_print_overflow, tc)
@@ -91,7 +91,7 @@ ATF_TC_BODY(snprintf_print_overflow, tc)
 ATF_TC(snprintf_count);
 ATF_TC_HEAD(snprintf_count, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "checks snprintf count");
+	atf_tc_set_md_var(tc, "descr", "checks snprintf count");
 }
  
 ATF_TC_BODY(snprintf_count, tc)
@@ -105,7 +105,7 @@ ATF_TC_BODY(snprintf_count, tc)
 ATF_TC(snprintf_count_overflow);
 ATF_TC_HEAD(snprintf_count_overflow, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "checks snprintf count with overflow");
+	atf_tc_set_md_var(tc, "descr", "checks snprintf count with overflow");
 }
  
 ATF_TC_BODY(snprintf_count_overflow, tc)
@@ -119,7 +119,7 @@ ATF_TC_BODY(snprintf_count_overflow, tc)
 ATF_TC(vasprintf_print);
 ATF_TC_HEAD(vasprintf_print, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "checks vasprintf works");
+	atf_tc_set_md_var(tc, "descr", "checks vasprintf works");
 }
 
 static int __printflike(2, 3)
@@ -149,13 +149,13 @@ ATF_TC_BODY(vasprintf_print, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-        ATF_TP_ADD_TC(tp, snprintf_print);
-        ATF_TP_ADD_TC(tp, snprintf_print_overflow);
-        ATF_TP_ADD_TC(tp, snprintf_count);
-        ATF_TP_ADD_TC(tp, snprintf_count_overflow);
+	ATF_TP_ADD_TC(tp, snprintf_print);
+	ATF_TP_ADD_TC(tp, snprintf_print_overflow);
+	ATF_TP_ADD_TC(tp, snprintf_count);
+	ATF_TP_ADD_TC(tp, snprintf_count_overflow);
 	ATF_TP_ADD_TC(tp, vasprintf_print);
 
-        return atf_no_error();
+	return atf_no_error();
 }
 _EOF
 
