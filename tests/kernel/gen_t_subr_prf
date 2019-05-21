@@ -122,9 +122,7 @@ ATF_TC_HEAD(vasprintf_print, tc)
         atf_tc_set_md_var(tc, "descr", "checks vasprintf works");
 }
 
-int vasp_helper(char **, const char *, ...);
-
-int
+static int __printflike(2, 3)
 vasp_helper(char **buf, const char *fmt, ...)
 {
 	va_list ap;
