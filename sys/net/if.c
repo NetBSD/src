@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.454 2019/05/17 07:37:12 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.455 2019/05/21 09:18:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.454 2019/05/17 07:37:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.455 2019/05/21 09:18:37 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -452,7 +452,7 @@ if_dl_create(const struct ifnet *ifp, const struct sockaddr_dl **sdlp)
 	addrlen = ifp->if_addrlen;
 	socksize = roundup(sockaddr_dl_measure(namelen, addrlen), sizeof(long));
 	ifasize = sizeof(*ifa) + 2 * socksize;
-	ifa = malloc(ifasize, M_IFADDR, M_WAITOK|M_ZERO);
+	ifa = malloc(ifasize, M_IFADDR, M_WAITOK | M_ZERO);
 
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	mask = (struct sockaddr_dl *)(socksize + (char *)sdl);
@@ -657,7 +657,7 @@ skip:
 		/* grow ifindex2ifnet */
 		m = oldlim * sizeof(struct ifnet *);
 		n = if_indexlim * sizeof(struct ifnet *);
-		q = malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
+		q = malloc(n, M_IFADDR, M_WAITOK | M_ZERO);
 		if (ifindex2ifnet != NULL) {
 			memcpy(q, ifindex2ifnet, m);
 			free(ifindex2ifnet, M_IFADDR);
@@ -985,7 +985,7 @@ sysctl_percpuq_setup(struct sysctllog **clog, const char* ifname,
 		goto bad;
 
 	if (sysctl_createv(clog, 0, &rnode, &cnode,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxlen",
 		       SYSCTL_DESCR("Maximum allowed input queue length"),
 		       sysctl_percpuq_maxlen_handler, 0, (void *)ipq, 0,
@@ -1643,7 +1643,7 @@ static bool
 if_is_unit(const char *name)
 {
 
-	while(*name != '\0') {
+	while (*name != '\0') {
 		if (*name < '0' || *name > '9')
 			return false;
 		name++;
@@ -3583,8 +3583,8 @@ if_do_dad(struct ifnet *ifp)
 		 * XXX: we should rather mark "tentative" on such addresses,
 		 * and do DAD after the interface becomes ready.
 		 */
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
-		    (IFF_UP|IFF_RUNNING))
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
+		    (IFF_UP | IFF_RUNNING))
 			return 0;
 
 		return 1;
@@ -3684,7 +3684,7 @@ sysctl_sndq_setup(struct sysctllog **clog, const char *ifname,
 		goto bad;
 
 	if (sysctl_createv(clog, 0, &rnode, &cnode,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxlen",
 		       SYSCTL_DESCR("Maximum allowed output queue length"),
 		       NULL, 0, &ifq->ifq_maxlen, 0,
@@ -3788,7 +3788,7 @@ sysctl_net_pktq_setup(struct sysctllog **clog, int pf)
 		       len_func, 0, NULL, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_LEN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxlen",
 		       SYSCTL_DESCR("Maximum allowed input queue length"),
 		       maxlen_func, 0, NULL, 0,
