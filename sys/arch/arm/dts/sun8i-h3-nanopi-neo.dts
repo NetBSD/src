@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-h3-nanopi-neo.dts,v 1.3 2017/11/30 21:36:45 jmcneill Exp $ */
+/* $NetBSD: sun8i-h3-nanopi-neo.dts,v 1.4 2019/05/21 22:31:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,12 +33,6 @@
 	cpus {
 		cpu@0 {
 			cpu-supply = <&vdd_cpu>;
-			operating-points = <
-				/* kHz	  uV */
-				1008000	1300000
-				816000	1100000
-				480000	1100000
-				>;
 		};
 	};
 
