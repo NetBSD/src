@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.7 2018/11/01 14:47:36 jmcneill Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.8 2019/05/21 22:15:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.7 2018/11/01 14:47:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.8 2019/05/21 22:15:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,9 +377,11 @@ cpufreq_dt_parse_opp_v2(struct cpufreq_dt_softc *sc)
 		opp_uv = fdtbus_get_prop(opp_node, "opp-microvolt", &len);
 		if (opp_uv == NULL || len < 1)
 			return EINVAL;
-		sc->sc_opp[i].freq_khz = (u_int)(opp_hz / 1000);
-		sc->sc_opp[i].voltage_uv = be32toh(opp_uv[0]);
-		of_getprop_uint32(opp_node, "clock-latency-ns", &sc->sc_opp[i].latency_ns);
+		/* Table is in reverse order */
+		const int index = sc->sc_nopp - i - 1;
+		sc->sc_opp[index].freq_khz = (u_int)(opp_hz / 1000);
+		sc->sc_opp[index].voltage_uv = be32toh(opp_uv[0]);
+		of_getprop_uint32(opp_node, "clock-latency-ns", &sc->sc_opp[index].latency_ns);
 	}
 
 	return 0;
