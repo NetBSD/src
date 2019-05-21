@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.111 2019/04/26 11:51:56 pgoyette Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.112 2019/05/21 09:18:37 msaitoh Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.111 2019/04/26 11:51:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.112 2019/05/21 09:18:37 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -251,6 +251,7 @@ static void
 tapinit(void)
 {
 	int error = config_cfattach_attach(tap_cd.cd_name, &tap_ca);
+
 	if (error) {
 		aprint_error("%s: unable to register cfattach\n",
 		    tap_cd.cd_name);
@@ -350,14 +351,14 @@ tap_attach(device_t parent, device_t self, void *aux)
 	 * of them.
 	 */
 	ifmedia_init(&sc->sc_im, 0, tap_mediachange, tap_mediastatus);
-	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_1000_T, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_1000_T|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_100_TX, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_10_T, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_AUTO);
+	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_1000_T, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_1000_T | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_100_TX, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_10_T, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_AUTO, 0, NULL);
+	ifmedia_set(&sc->sc_im, IFM_ETHER | IFM_AUTO);
 
 	/*
 	 * One should note that an interface must do multicast in order
@@ -477,6 +478,7 @@ static void
 tap_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	struct tap_softc *sc = (struct tap_softc *)ifp->if_softc;
+
 	imr->ifm_active = sc->sc_im.ifm_cur->ifm_media;
 }
 
@@ -516,7 +518,7 @@ tap_start(struct ifnet *ifp)
 	mutex_enter(&sc->sc_lock);
 	if ((sc->sc_flags & TAP_INUSE) == 0) {
 		/* Simply drop packets */
-		for(;;) {
+		for (;;) {
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				goto done;
@@ -550,7 +552,7 @@ tap_softintr(void *cookie)
 		ifp = &sc->sc_ec.ec_if;
 		if (ifp->if_flags & IFF_RUNNING) {
 			a = POLL_IN;
-			b = POLLIN|POLLRDNORM;
+			b = POLLIN | POLLRDNORM;
 		} else {
 			a = POLL_HUP;
 			b = 0;
@@ -661,6 +663,7 @@ tap_stop(struct ifnet *ifp, int disable)
 static int
 tap_clone_create(struct if_clone *ifc, int unit)
 {
+
 	if (tap_clone_creator(unit) == NULL) {
 		aprint_error("%s%d: unable to attach an instance\n",
 		    tap_cd.cd_name, unit);
@@ -806,7 +809,7 @@ tap_dev_cloner(struct lwp *l)
 
 	sc->sc_flags |= TAP_INUSE;
 
-	return fd_clone(fp, fd, FREAD|FWRITE, &tap_fileops,
+	return fd_clone(fp, fd, FREAD | FWRITE, &tap_fileops,
 	    (void *)(intptr_t)device_unit(sc->sc_dev));
 }
 
@@ -821,11 +824,9 @@ tap_dev_cloner(struct lwp *l)
  * created it closes it.
  */
 static int
-tap_cdev_close(dev_t dev, int flags, int fmt,
-    struct lwp *l)
+tap_cdev_close(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	struct tap_softc *sc =
-	    device_lookup_private(&tap_cd, minor(dev));
+	struct tap_softc *sc = device_lookup_private(&tap_cd, minor(dev));
 
 	if (sc == NULL)
 		return ENXIO;
@@ -842,8 +843,8 @@ tap_cdev_close(dev_t dev, int flags, int fmt,
 static int
 tap_fops_close(file_t *fp)
 {
-	int unit = fp->f_devunit;
 	struct tap_softc *sc;
+	int unit = fp->f_devunit;
 	int error;
 
 	sc = device_lookup_private(&tap_cd, unit);
@@ -909,6 +910,7 @@ tap_dev_close(struct tap_softc *sc)
 static int
 tap_cdev_read(dev_t dev, struct uio *uio, int flags)
 {
+
 	return tap_dev_read(minor(dev), uio, flags);
 }
 
@@ -941,15 +943,12 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return EHOSTDOWN;
 
-	/*
-	 * In the TAP_NBIO case, we have to make sure we won't be sleeping
-	 */
+	/* In the TAP_NBIO case, we have to make sure we won't be sleeping */
 	if ((sc->sc_flags & TAP_NBIO) != 0) {
 		if (!mutex_tryenter(&sc->sc_lock))
 			return EWOULDBLOCK;
-	} else {
+	} else
 		mutex_enter(&sc->sc_lock);
-	}
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd)) {
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -1027,6 +1026,7 @@ out:
 static int
 tap_cdev_write(dev_t dev, struct uio *uio, int flags)
 {
+
 	return tap_dev_write(minor(dev), uio, flags);
 }
 
@@ -1092,15 +1092,16 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 }
 
 static int
-tap_cdev_ioctl(dev_t dev, u_long cmd, void *data, int flags,
-    struct lwp *l)
+tap_cdev_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
+
 	return tap_dev_ioctl(minor(dev), cmd, data, l);
 }
 
 static int
 tap_fops_ioctl(file_t *fp, u_long cmd, void *data)
 {
+
 	return tap_dev_ioctl(fp->f_devunit, cmd, data, curlwp);
 }
 
@@ -1174,26 +1175,27 @@ tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 static int
 tap_cdev_poll(dev_t dev, int events, struct lwp *l)
 {
+
 	return tap_dev_poll(minor(dev), events, l);
 }
 
 static int
 tap_fops_poll(file_t *fp, int events)
 {
+
 	return tap_dev_poll(fp->f_devunit, events, curlwp);
 }
 
 static int
 tap_dev_poll(int unit, int events, struct lwp *l)
 {
-	struct tap_softc *sc =
-	    device_lookup_private(&tap_cd, unit);
+	struct tap_softc *sc = device_lookup_private(&tap_cd, unit);
 	int revents = 0;
 
 	if (sc == NULL)
 		return POLLERR;
 
-	if (events & (POLLIN|POLLRDNORM)) {
+	if (events & (POLLIN | POLLRDNORM)) {
 		struct ifnet *ifp = &sc->sc_ec.ec_if;
 		struct mbuf *m;
 		int s;
@@ -1202,7 +1204,7 @@ tap_dev_poll(int unit, int events, struct lwp *l)
 		IFQ_POLL(&ifp->if_snd, m);
 
 		if (m != NULL)
-			revents |= events & (POLLIN|POLLRDNORM);
+			revents |= events & (POLLIN | POLLRDNORM);
 		else {
 			mutex_spin_enter(&sc->sc_lock);
 			selrecord(l, &sc->sc_rsel);
@@ -1210,7 +1212,7 @@ tap_dev_poll(int unit, int events, struct lwp *l)
 		}
 		splx(s);
 	}
-	revents |= events & (POLLOUT|POLLWRNORM);
+	revents |= events & (POLLOUT | POLLWRNORM);
 
 	return revents;
 }
@@ -1223,20 +1225,21 @@ static struct filterops tap_seltrue_filterops = { 1, NULL, tap_kqdetach,
 static int
 tap_cdev_kqfilter(dev_t dev, struct knote *kn)
 {
+
 	return tap_dev_kqfilter(minor(dev), kn);
 }
 
 static int
 tap_fops_kqfilter(file_t *fp, struct knote *kn)
 {
+
 	return tap_dev_kqfilter(fp->f_devunit, kn);
 }
 
 static int
 tap_dev_kqfilter(int unit, struct knote *kn)
 {
-	struct tap_softc *sc =
-	    device_lookup_private(&tap_cd, unit);
+	struct tap_softc *sc = device_lookup_private(&tap_cd, unit);
 
 	if (sc == NULL)
 		return ENXIO;
