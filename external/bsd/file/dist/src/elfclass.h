@@ -1,4 +1,4 @@
-/*	$NetBSD: elfclass.h,v 1.1.1.7 2018/10/18 23:54:09 christos Exp $	*/
+/*	$NetBSD: elfclass.h,v 1.1.1.8 2019/05/22 17:19:56 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2008.
@@ -43,8 +43,8 @@
 			return toomany(ms, "program headers", phnum);
 		flags |= FLAGS_IS_CORE;
 		if (dophn_core(ms, clazz, swap, fd,
-		    (off_t)elf_getu(swap, elfhdr.e_phoff), phnum,
-		    (size_t)elf_getu16(swap, elfhdr.e_phentsize),
+		    CAST(off_t, elf_getu(swap, elfhdr.e_phoff)), phnum,
+		    CAST(size_t, elf_getu16(swap, elfhdr.e_phentsize)),
 		    fsize, &flags, &notecount) == -1)
 			return -1;
 		break;
@@ -58,8 +58,8 @@
 		if (shnum > ms->elf_shnum_max)
 			return toomany(ms, "section", shnum);
 		if (dophn_exec(ms, clazz, swap, fd,
-		    (off_t)elf_getu(swap, elfhdr.e_phoff), phnum,
-		    (size_t)elf_getu16(swap, elfhdr.e_phentsize),
+		    CAST(off_t, elf_getu(swap, elfhdr.e_phoff)), phnum,
+		    CAST(size_t, elf_getu16(swap, elfhdr.e_phentsize)),
 		    fsize, shnum, &flags, &notecount) == -1)
 			return -1;
 		/*FALLTHROUGH*/
@@ -68,10 +68,10 @@
 		if (shnum > ms->elf_shnum_max)
 			return toomany(ms, "section headers", shnum);
 		if (doshn(ms, clazz, swap, fd,
-		    (off_t)elf_getu(swap, elfhdr.e_shoff), shnum,
-		    (size_t)elf_getu16(swap, elfhdr.e_shentsize),
+		    CAST(off_t, elf_getu(swap, elfhdr.e_shoff)), shnum,
+		    CAST(size_t, elf_getu16(swap, elfhdr.e_shentsize)),
 		    fsize, elf_getu16(swap, elfhdr.e_machine),
-		    (int)elf_getu16(swap, elfhdr.e_shstrndx),
+		    CAST(int, elf_getu16(swap, elfhdr.e_shstrndx)),
 		    &flags, &notecount) == -1)
 			return -1;
 		break;
