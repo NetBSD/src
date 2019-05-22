@@ -676,7 +676,7 @@ zvol_create_minor(const char *name)
 	minor_t minor = 0;
 	vnode_t *vp = NULL;
 	char *devpath;
-	size_t devpathlen = strlen(ZVOL_FULL_DEV_DIR) + strlen(name) + 1;
+	size_t devpathlen = strlen(ZVOL_FULL_DEV_DIR) + strlen(name) + 2;
 #endif
 
 	mutex_enter(&zfsdev_state_lock);
