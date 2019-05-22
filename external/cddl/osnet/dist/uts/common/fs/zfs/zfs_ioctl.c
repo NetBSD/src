@@ -6285,6 +6285,7 @@ zfsdev_close(dev_t dev, int flag, int otyp, cred_t *cr)
 #ifdef __FreeBSD__
 		return;
 #else
+		return zvol_close(dev, flag, otyp, cr);
 		return 0;
 #endif
 	}
@@ -6303,7 +6304,7 @@ zfsdev_ioctl(struct cdev *dev, u_long zcmd, caddr_t arg, int flag,
 #endif
 #ifdef __NetBSD__
 static int
-zfsdev_ioctl(dev_t dev, int zcmd, intptr_t iarg, int flag, cred_t *cr, int *rvalp)
+zfsdev_ioctl(dev_t dev, u_long zcmd, intptr_t iarg, int flag, cred_t *cr, int *rvalp)
 #endif
 {
 	zfs_cmd_t *zc;

@@ -315,29 +315,14 @@ zvol_size_changed(zvol_state_t *zv, uint64_t volsize)
 	}
 #endif /* __FreeBSD__ */
 #ifdef __NetBSD__
-	prop_dictionary_t disk_info, odisk_info, geom;
-	struct disk *disk;
+	struct disk_geom *dg = &zv->zv_dk.dk_geom;
 
-	disk = &zv->zv_dk;
+	zv->zv_volsize = volsize;
 
-	disk_info = prop_dictionary_create();
-	geom = prop_dictionary_create();
-
-	prop_dictionary_set_cstring_nocopy(disk_info, "type", "ESDI");
-	prop_dictionary_set_uint64(geom, "sectors-per-unit", zv->zv_volsize);
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    DEV_BSIZE /* XXX 512? */);
-	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
-	prop_dictionary_set_uint32(geom, "tracks-per-cylinder", 64);
-	prop_dictionary_set_uint32(geom, "cylinders-per-unit", zv->zv_volsize / 2048);
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	odisk_info = disk->dk_info;
-	disk->dk_info = disk_info;
-
-	if (odisk_info != NULL)
-		prop_object_release(odisk_info);
+	memset(dg, 0, sizeof(*dg));
+	dg->dg_secsize = DEV_BSIZE; /* XXX 512? */
+	dg->dg_secperunit = zv->zv_volsize / dg->dg_secsize;;
+	disk_set_info(NULL, &zv->zv_dk, "ZVOL");
 #endif
 }
 
@@ -1793,7 +1778,7 @@ zvol_strategy(buf_t *bp)
 	objset_t *os;
 	rl_t *rl;
 	int error = 0;
-#ifdef illumos
+#if defined(illumos) || defined(__NetBSD__)
 	boolean_t doread = bp->b_flags & B_READ;
 #else
 	boolean_t doread = 0;
@@ -2136,6 +2121,12 @@ zvol_read(struct cdev *dev, struct uio *uio, int ioflag)
 	}
 #endif
 
+#ifdef __NetBSD__
+	uint64_t resid = uio->uio_resid;
+	mutex_enter(&zv->zv_dklock);
+	disk_busy(&zv->zv_dk);
+	mutex_exit(&zv->zv_dklock);
+#endif
 	rl = zfs_range_lock(&zv->zv_znode, uio->uio_loffset, uio->uio_resid,
 	    RL_READER);
 	while (uio->uio_resid > 0 && uio->uio_loffset < volsize) {
@@ -2154,6 +2145,11 @@ zvol_read(struct cdev *dev, struct uio *uio, int ioflag)
 		}
 	}
 	zfs_range_unlock(rl);
+#ifdef __NetBSD__
+	mutex_enter(&zv->zv_dklock);
+	disk_unbusy(&zv->zv_dk, resid - uio->uio_resid, 1);
+	mutex_exit(&zv->zv_dklock);
+#endif
 	return (error);
 }
 
@@ -2205,6 +2201,12 @@ zvol_write(struct cdev *dev, struct uio *uio, int ioflag)
 #endif
 	    (zv->zv_objset->os_sync == ZFS_SYNC_ALWAYS);
 
+#ifdef __NetBSD__
+	uint64_t resid = uio->uio_resid;
+	mutex_enter(&zv->zv_dklock);
+	disk_busy(&zv->zv_dk);
+	mutex_exit(&zv->zv_dklock);
+#endif
 	rl = zfs_range_lock(&zv->zv_znode, uio->uio_loffset, uio->uio_resid,
 	    RL_WRITER);
 	while (uio->uio_resid > 0 && uio->uio_loffset < volsize) {
@@ -2232,6 +2234,11 @@ zvol_write(struct cdev *dev, struct uio *uio, int ioflag)
 	zfs_range_unlock(rl);
 	if (sync)
 		zil_commit(zv->zv_zilog, ZVOL_OBJ);
+#ifdef __NetBSD__
+	mutex_enter(&zv->zv_dklock);
+	disk_unbusy(&zv->zv_dk, resid - uio->uio_resid, 0);
+	mutex_exit(&zv->zv_dklock);
+#endif
 	return (error);
 }
 
@@ -3568,42 +3575,33 @@ zvol_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 		return (ENXIO);
 	}
 
+	error = disk_ioctl(&zv->zv_dk, NODEV, cmd, (void *)arg, flag, curlwp);
+	if (error != EPASSTHROUGH) {
+		mutex_exit(&zfsdev_state_lock);
+		return error;
+	}
+
+	error = 0;
+
 	switch(cmd) {
 	case DIOCGWEDGEINFO:
 	{
 		struct dkwedge_info *dkw = (void *) arg;
-
-		strlcpy(dkw->dkw_devname, zv->zv_name, 16);
-		strlcpy(dkw->dkw_wname, zv->zv_name, MAXPATHLEN);
-		strlcpy(dkw->dkw_parent, zv->zv_name, 16);
+		
+		memset(dkw, 0, sizeof(*dkw));
+		strlcpy(dkw->dkw_devname, zv->zv_name,
+		    sizeof(dkw->dkw_devname));
+		strlcpy(dkw->dkw_parent, "ZFS", sizeof(dkw->dkw_parent));
 		
 		dkw->dkw_offset = 0;
-		/* XXX NetBSD supports only DEV_BSIZE device block
-		   size zv_volblocksize >> DEV_BSIZE*/
-		dkw->dkw_size = (zv->zv_volsize / DEV_BSIZE);
-		dprintf("dkw %"PRIu64" volsize %"PRIu64" volblock %"PRIu64" \n",
-		    dkw->dkw_size, zv->zv_volsize, zv->zv_volblocksize);
+		dkw->dkw_size = zv->zv_volsize / DEV_BSIZE;
 		strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
 
 		break;
 	}
 
-	case DIOCGDISKINFO:
-	{
-		struct plistref *pref = (struct plistref *) arg;
-
-		if (zv->zv_dk.dk_info == NULL) {
-			mutex_exit(&zfsdev_state_lock);
-			return ENOTSUP;
-		} else
-			prop_dictionary_copyout_ioctl(pref, cmd,
-			    zv->zv_dk.dk_info);
-		
-		break;
-	}
-	
 	default:
-		aprint_debug("unknown disk_ioctl called\n");
+		dprintf("unknown disk_ioctl called\n");
 		error = ENOTTY;
 		break; 
 	}
