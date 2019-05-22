@@ -1,4 +1,4 @@
-/*	$NetBSD: seccomp.c,v 1.1.1.2 2018/10/18 23:54:09 christos Exp $	*/
+/*	$NetBSD: seccomp.c,v 1.1.1.3 2019/05/22 17:19:56 christos Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: seccomp.c,v 1.7 2018/09/09 20:33:28 christos Exp $")
+FILE_RCSID("@(#)$File: seccomp.c,v 1.8 2019/02/24 18:12:04 christos Exp $")
 #else
-__RCSID("$NetBSD: seccomp.c,v 1.1.1.2 2018/10/18 23:54:09 christos Exp $");
+__RCSID("$NetBSD: seccomp.c,v 1.1.1.3 2019/05/22 17:19:56 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -182,6 +182,7 @@ enable_sandbox_full(void)
  	ALLOW_RULE(_llseek);
 	ALLOW_RULE(lstat);
  	ALLOW_RULE(lstat64);
+	ALLOW_RULE(madvise);
 	ALLOW_RULE(mmap);
  	ALLOW_RULE(mmap2);
 	ALLOW_RULE(mprotect);
