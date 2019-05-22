@@ -1,4 +1,4 @@
-/*	$NetBSD: der.c,v 1.4 2018/10/19 00:11:48 christos Exp $	*/
+/*	$NetBSD: der.c,v 1.5 2019/05/22 17:26:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Christos Zoulas
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: der.c,v 1.15 2018/10/15 16:29:16 christos Exp $")
+FILE_RCSID("@(#)$File: der.c,v 1.16 2019/02/20 02:35:27 christos Exp $")
 #else
-__RCSID("$NetBSD: der.c,v 1.4 2018/10/19 00:11:48 christos Exp $");
+__RCSID("$NetBSD: der.c,v 1.5 2019/05/22 17:26:05 christos Exp $");
 #endif
 #endif
 #endif
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: der.c,v 1.4 2018/10/19 00:11:48 christos Exp $");
 #include <err.h>
 #endif
 
-#define DER_BAD	((uint32_t)-1)
+#define DER_BAD	CAST(uint32_t, -1)
 
 #define DER_CLASS_UNIVERSAL	0
 #define	DER_CLASS_APPLICATION	1
@@ -230,7 +230,7 @@ der_data(char *buf, size_t blen, uint32_t tag, const void *q, uint32_t len)
 	case DER_TAG_UTF8_STRING:
 	case DER_TAG_IA5_STRING:
 	case DER_TAG_UTCTIME:
-		return snprintf(buf, blen, "%.*s", len, (const char *)q);
+		return snprintf(buf, blen, "%.*s", len, RCAST(const char *, q));
 	default:
 		break;
 	}
@@ -313,13 +313,13 @@ again:
 		s++;
 		goto val;
 	default:
-		if (!isdigit((unsigned char)*s))
+		if (!isdigit(CAST(unsigned char, *s)))
 			return 0;
 
 		slen = 0;
 		do
 			slen = slen * 10 + *s - '0';
-		while (isdigit((unsigned char)*++s));
+		while (isdigit(CAST(unsigned char, *++s)));
 		if ((ms->flags & MAGIC_DEBUG) != 0)
 			fprintf(stderr, "%s: len %" SIZE_T_FORMAT "u %u\n",
 			    __func__, slen, tlen);

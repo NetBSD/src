@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.12 2018/10/19 00:11:48 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.13 2019/05/22 17:26:05 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: file.c,v 1.178 2018/10/01 18:50:31 christos Exp $")
+FILE_RCSID("@(#)$File: file.c,v 1.181 2019/03/28 20:54:03 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.12 2018/10/19 00:11:48 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.13 2019/05/22 17:26:05 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -192,9 +192,7 @@ main(int argc, char *argv[])
 	char *progname;
 
 	/* makes islower etc work for other langs */
-#ifdef HAVE_SETLOCALE
 	(void)setlocale(LC_CTYPE, "");
-#endif
 
 #ifdef __EMX__
 	/* sh-like wildcard expansion! Shouldn't hurt at least ... */
@@ -250,11 +248,11 @@ main(int argc, char *argv[])
 			flags |= MAGIC_ERROR;
 			break;
 		case 'e':
-			for (i = 0; i < sizeof(nv) / sizeof(nv[0]); i++)
+			for (i = 0; i < __arraycount(nv); i++)
 				if (strcmp(nv[i].name, optarg) == 0)
 					break;
 
-			if (i == sizeof(nv) / sizeof(nv[0]))
+			if (i == __arraycount(nv))
 				errflg++;
 			else
 				flags |= nv[i].value;
@@ -406,7 +404,8 @@ main(int argc, char *argv[])
 	}
 	else {
 		size_t j, wid, nw;
-		for (wid = 0, j = (size_t)optind; j < (size_t)argc; j++) {
+		for (wid = 0, j = CAST(size_t, optind); j < CAST(size_t, argc);
+		    j++) {
 			nw = file_mbswidth(argv[j]);
 			if (nw > wid)
 				wid = nw;
@@ -543,9 +542,8 @@ process(struct magic_set *ms, const char *inname, int wid)
 			(void)putc('\0', stdout);
 		if (nulsep < 2) {
 			(void)printf("%s", separator);
-			(void)printf("%*s ",
-			    (int) (nopad ? 0 : (wid - file_mbswidth(inname))),
-			    "");
+			(void)printf("%*s ", CAST(int, nopad ? 0
+			    : (wid - file_mbswidth(inname))), "");
 		}
 	}
 
@@ -572,8 +570,8 @@ file_mbswidth(const char *s)
 
 	while (n > 0) {
 		bytesconsumed = mbrtowc(&nextchar, s, n, &state);
-		if (bytesconsumed == (size_t)(-1) ||
-		    bytesconsumed == (size_t)(-2)) {
+		if (bytesconsumed == CAST(size_t, -1) ||
+		    bytesconsumed == CAST(size_t, -2)) {
 			/* Something went wrong, return something reasonable */
 			return old_n;
 		}
@@ -632,13 +630,13 @@ docprint(const char *opts, int def)
 	for (sp = p - 1; sp > opts && *sp == ' '; sp--)
 		continue;
 
-	fprintf(stdout, "%.*s", (int)(p - opts), opts);
+	fprintf(stdout, "%.*s", CAST(int, p - opts), opts);
 
 	comma = 0;
 	for (i = 0; i < __arraycount(nv); i++) {
 		fprintf(stdout, "%s%s", comma++ ? ", " : "", nv[i].name);
 		if (i && i % 5 == 0 && i != __arraycount(nv) - 1) {
-			fprintf(stdout, ",\n%*s", (int)(p - sp - 1), "");
+			fprintf(stdout, ",\n%*s", CAST(int, p - sp - 1), "");
 			comma = 0;
 		}
 	}

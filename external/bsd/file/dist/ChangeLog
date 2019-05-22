@@ -1,3 +1,53 @@
+2019-05-14  22:26  Christos Zoulas <christos@zoulas.com>
+
+	* release 5.37
+
+2019-05-09  22:27  Christos Zoulas <christos@zoulas.com>
+	
+	* Make sure that continuation separators are printed
+	  with -k within softmagic
+
+2019-05-06  22:27  Christos Zoulas <christos@zoulas.com>
+
+	* Change SIGPIPE saving and restoring during compression to use
+	  sigaction(2) instead of signal(3) and cache it. (Denys Vlasenko)
+	* Cache stat(2) calls more to reduce number of calls (Denys Vlasenko)
+
+2019-05-06  17:25  Christos Zoulas <christos@zoulas.com>
+
+	* PR/77: Handle --mime-type and -k correctly.
+
+2019-05-03  15:26  Christos Zoulas <christos@zoulas.com>
+
+	* Switch decompression code to use vfork() because
+	  tools like rpmdiff and rpmbuild call libmagic
+	  with large process footprints (Denys Vlasenko)
+
+2019-04-07  14:05  Christos Zoulas <christos@zoulas.com>
+
+	* PR/75: --enable-zlib, did not work.
+
+2019-02-27  11:54  Christos Zoulas <christos@zoulas.com>
+
+	* Improve regex efficiency (Michael Schroeder) by:
+		1. Prefixing regex searches with regular search
+		   for keywords where possible
+		2. Using memmem(3) where available
+
+2019-02-20  10:16  Christos Zoulas <christos@zoulas.com>
+
+	* release 5.36
+
+2019-02-19  15:30  Christos Zoulas <christos@zoulas.com>
+
+	* Fix cast to use cast macros
+	* Add UCS-32 builtin detection (PR/61) reported by tmc
+
+2019-02-18  18:24  Christos Zoulas <christos@zoulas.com>
+
+	* Fix stack read (PR/62) and write (PR/64) stack overflows
+	  reported by spinpx 
+
 2018-10-18  19:32  Christos Zoulas <christos@zoulas.com>
 
 	* release 5.35

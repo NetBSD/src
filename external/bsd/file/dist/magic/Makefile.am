@@ -1,5 +1,5 @@
 #
-# $File: Makefile.am,v 1.138 2018/10/16 12:07:08 christos Exp $
+# $File: Makefile.am,v 1.143 2019/05/09 16:24:36 christos Exp $
 #
 MAGIC_FRAGMENT_BASE = magdir
 MAGIC_DIR = $(top_srcdir)/magic
@@ -33,8 +33,8 @@ $(MAGIC_FRAGMENT_DIR)/asterix \
 $(MAGIC_FRAGMENT_DIR)/att3b \
 $(MAGIC_FRAGMENT_DIR)/audio \
 $(MAGIC_FRAGMENT_DIR)/basis \
-$(MAGIC_FRAGMENT_DIR)/ber \
 $(MAGIC_FRAGMENT_DIR)/beetle \
+$(MAGIC_FRAGMENT_DIR)/ber \
 $(MAGIC_FRAGMENT_DIR)/bflt \
 $(MAGIC_FRAGMENT_DIR)/bhl \
 $(MAGIC_FRAGMENT_DIR)/bioinformatics \
@@ -59,6 +59,7 @@ $(MAGIC_FRAGMENT_DIR)/citrus \
 $(MAGIC_FRAGMENT_DIR)/clarion \
 $(MAGIC_FRAGMENT_DIR)/claris \
 $(MAGIC_FRAGMENT_DIR)/clipper \
+$(MAGIC_FRAGMENT_DIR)/clojure \
 $(MAGIC_FRAGMENT_DIR)/coff \
 $(MAGIC_FRAGMENT_DIR)/commands \
 $(MAGIC_FRAGMENT_DIR)/communications \
@@ -83,12 +84,14 @@ $(MAGIC_FRAGMENT_DIR)/dolby \
 $(MAGIC_FRAGMENT_DIR)/dump \
 $(MAGIC_FRAGMENT_DIR)/dyadic \
 $(MAGIC_FRAGMENT_DIR)/ebml \
+$(MAGIC_FRAGMENT_DIR)/edid \
 $(MAGIC_FRAGMENT_DIR)/editors \
 $(MAGIC_FRAGMENT_DIR)/efi \
 $(MAGIC_FRAGMENT_DIR)/elf \
 $(MAGIC_FRAGMENT_DIR)/encore \
 $(MAGIC_FRAGMENT_DIR)/epoc \
 $(MAGIC_FRAGMENT_DIR)/erlang \
+$(MAGIC_FRAGMENT_DIR)/espressif \
 $(MAGIC_FRAGMENT_DIR)/esri \
 $(MAGIC_FRAGMENT_DIR)/fcs \
 $(MAGIC_FRAGMENT_DIR)/filesystems \
@@ -106,8 +109,8 @@ $(MAGIC_FRAGMENT_DIR)/gcc \
 $(MAGIC_FRAGMENT_DIR)/gconv \
 $(MAGIC_FRAGMENT_DIR)/geo \
 $(MAGIC_FRAGMENT_DIR)/geos \
-$(MAGIC_FRAGMENT_DIR)/glibc \
 $(MAGIC_FRAGMENT_DIR)/gimp \
+$(MAGIC_FRAGMENT_DIR)/glibc \
 $(MAGIC_FRAGMENT_DIR)/gnome \
 $(MAGIC_FRAGMENT_DIR)/gnu \
 $(MAGIC_FRAGMENT_DIR)/gnumeric \
@@ -151,8 +154,8 @@ $(MAGIC_FRAGMENT_DIR)/lua \
 $(MAGIC_FRAGMENT_DIR)/luks \
 $(MAGIC_FRAGMENT_DIR)/m4 \
 $(MAGIC_FRAGMENT_DIR)/mach \
-$(MAGIC_FRAGMENT_DIR)/macos \
 $(MAGIC_FRAGMENT_DIR)/macintosh \
+$(MAGIC_FRAGMENT_DIR)/macos \
 $(MAGIC_FRAGMENT_DIR)/magic \
 $(MAGIC_FRAGMENT_DIR)/mail.news \
 $(MAGIC_FRAGMENT_DIR)/make \
@@ -180,8 +183,8 @@ $(MAGIC_FRAGMENT_DIR)/motorola \
 $(MAGIC_FRAGMENT_DIR)/mozilla \
 $(MAGIC_FRAGMENT_DIR)/msdos \
 $(MAGIC_FRAGMENT_DIR)/msooxml \
-$(MAGIC_FRAGMENT_DIR)/msx \
 $(MAGIC_FRAGMENT_DIR)/msvc \
+$(MAGIC_FRAGMENT_DIR)/msx \
 $(MAGIC_FRAGMENT_DIR)/mup \
 $(MAGIC_FRAGMENT_DIR)/music \
 $(MAGIC_FRAGMENT_DIR)/nasa \
@@ -193,6 +196,7 @@ $(MAGIC_FRAGMENT_DIR)/netscape \
 $(MAGIC_FRAGMENT_DIR)/netware \
 $(MAGIC_FRAGMENT_DIR)/news \
 $(MAGIC_FRAGMENT_DIR)/nitpicker \
+$(MAGIC_FRAGMENT_DIR)/numpy \
 $(MAGIC_FRAGMENT_DIR)/oasis \
 $(MAGIC_FRAGMENT_DIR)/ocaml \
 $(MAGIC_FRAGMENT_DIR)/octave \
@@ -232,6 +236,7 @@ $(MAGIC_FRAGMENT_DIR)/revision \
 $(MAGIC_FRAGMENT_DIR)/riff \
 $(MAGIC_FRAGMENT_DIR)/rpi \
 $(MAGIC_FRAGMENT_DIR)/rpm \
+$(MAGIC_FRAGMENT_DIR)/rpmsg \
 $(MAGIC_FRAGMENT_DIR)/rtf \
 $(MAGIC_FRAGMENT_DIR)/ruby \
 $(MAGIC_FRAGMENT_DIR)/sc \
@@ -275,8 +280,8 @@ $(MAGIC_FRAGMENT_DIR)/unicode \
 $(MAGIC_FRAGMENT_DIR)/unknown \
 $(MAGIC_FRAGMENT_DIR)/uterus \
 $(MAGIC_FRAGMENT_DIR)/uuencode \
-$(MAGIC_FRAGMENT_DIR)/varied.out \
 $(MAGIC_FRAGMENT_DIR)/vacuum-cleaner \
+$(MAGIC_FRAGMENT_DIR)/varied.out \
 $(MAGIC_FRAGMENT_DIR)/varied.script \
 $(MAGIC_FRAGMENT_DIR)/vax \
 $(MAGIC_FRAGMENT_DIR)/vicar \

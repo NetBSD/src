@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.13 2018/10/19 00:11:48 christos Exp $	*/
+/*	$NetBSD: magic.c,v 1.14 2019/05/22 17:26:05 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -36,9 +36,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: magic.c,v 1.106 2018/10/01 18:45:39 christos Exp $")
+FILE_RCSID("@(#)$File: magic.c,v 1.111 2019/05/07 02:27:11 christos Exp $")
 #else
-__RCSID("$NetBSD: magic.c,v 1.13 2018/10/19 00:11:48 christos Exp $");
+__RCSID("$NetBSD: magic.c,v 1.14 2019/05/22 17:26:05 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -318,7 +318,8 @@ magic_load_buffers(struct magic_set *ms, void **bufs, size_t *sizes,
 {
 	if (ms == NULL)
 		return -1;
-	return buffer_apprentice(ms, (struct magic **)bufs, sizes, nbufs);
+	return buffer_apprentice(ms, RCAST(struct magic **, bufs),
+	    sizes, nbufs);
 }
 #endif
 
@@ -411,7 +412,8 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 	struct stat	sb;
 	ssize_t nbytes = 0;	/* number of bytes read from a datafile */
 	int	ispipe = 0;
-	off_t	pos = (off_t)-1;
+	int	okstat = 0;
+	off_t	pos = CAST(off_t, -1);
 
 	if (file_reset(ms, 1) == -1)
 		goto out;
@@ -443,7 +445,7 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 		int flags = O_RDONLY|O_BINARY|O_NONBLOCK;
 		errno = 0;
 		if ((fd = open(inname, flags)) < 0) {
-			int okstat = stat(inname, &sb) == 0;
+			okstat = stat(inname, &sb) == 0;
 			if (okstat && S_ISFIFO(sb.st_mode))
 				ispipe = 1;
 #ifdef WIN32
@@ -467,22 +469,26 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 	}
 
 	if (fd != -1) {
-		if (fstat(fd, &sb) == 0 && S_ISFIFO(sb.st_mode))
+		if (!okstat)
+			okstat = fstat(fd, &sb) == 0;
+		if (okstat && S_ISFIFO(sb.st_mode))
 			ispipe = 1;
 		if (inname == NULL)
-			pos = lseek(fd, (off_t)0, SEEK_CUR);
+			pos = lseek(fd, CAST(off_t, 0), SEEK_CUR);
 	}
 
 	/*
 	 * try looking at the first ms->bytes_max bytes
 	 */
 	if (ispipe) {
-		ssize_t r = 0;
+		if (fd != -1) {
+			ssize_t r = 0;
 
-		while ((r = sread(fd, (void *)&buf[nbytes],
-		    (size_t)(ms->bytes_max - nbytes), 1)) > 0) {
-			nbytes += r;
-			if (r < PIPE_BUF) break;
+			while ((r = sread(fd, RCAST(void *, &buf[nbytes]),
+			    CAST(size_t, ms->bytes_max - nbytes), 1)) > 0) {
+				nbytes += r;
+				if (r < PIPE_BUF) break;
+			}
 		}
 
 		if (nbytes == 0 && inname) {
@@ -493,14 +499,14 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 			goto done;
 		}
 
-	} else {
+	} else if (fd != -1) {
 		/* Windows refuses to read from a big console buffer. */
 		size_t howmany =
 #if defined(WIN32)
-				_isatty(fd) ? 8 * 1024 :
+		    _isatty(fd) ? 8 * 1024 :
 #endif
-				ms->bytes_max;
-		if ((nbytes = read(fd, (char *)buf, howmany)) == -1) {
+		    ms->bytes_max;
+		if ((nbytes = read(fd, RCAST(void *, buf), howmany)) == -1) {
 			if (inname == NULL && fd != STDIN_FILENO)
 				file_error(ms, errno, "cannot read fd %d", fd);
 			else
@@ -511,13 +517,13 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 	}
 
 	(void)memset(buf + nbytes, 0, SLOP); /* NUL terminate */
-	if (file_buffer(ms, fd, inname, buf, (size_t)nbytes) == -1)
+	if (file_buffer(ms, fd, okstat ? &sb : NULL, inname, buf, CAST(size_t, nbytes)) == -1)
 		goto done;
 	rv = 0;
 done:
 	free(buf);
 	if (fd != -1) {
-		if (pos != (off_t)-1)
+		if (pos != CAST(off_t, -1))
 			(void)lseek(fd, pos, SEEK_SET);
 		close_and_restore(ms, inname, fd, &sb);
 	}
@@ -537,7 +543,7 @@ magic_buffer(struct magic_set *ms, const void *buf, size_t nb)
 	 * The main work is done here!
 	 * We have the file name and/or the data buffer to be identified.
 	 */
-	if (file_buffer(ms, -1, NULL, buf, nb) == -1) {
+	if (file_buffer(ms, -1, NULL, NULL, buf, nb) == -1) {
 		return NULL;
 	}
 	return file_getbuffer(ms);
@@ -595,25 +601,25 @@ magic_setparam(struct magic_set *ms, int param, const void *val)
 		return -1;
 	switch (param) {
 	case MAGIC_PARAM_INDIR_MAX:
-		ms->indir_max = (uint16_t)*(const size_t *)val;
+		ms->indir_max = CAST(uint16_t, *CAST(const size_t *, val));
 		return 0;
 	case MAGIC_PARAM_NAME_MAX:
-		ms->name_max = (uint16_t)*(const size_t *)val;
+		ms->name_max = CAST(uint16_t, *CAST(const size_t *, val));
 		return 0;
 	case MAGIC_PARAM_ELF_PHNUM_MAX:
-		ms->elf_phnum_max = (uint16_t)*(const size_t *)val;
+		ms->elf_phnum_max = CAST(uint16_t, *CAST(const size_t *, val));
 		return 0;
 	case MAGIC_PARAM_ELF_SHNUM_MAX:
-		ms->elf_shnum_max = (uint16_t)*(const size_t *)val;
+		ms->elf_shnum_max = CAST(uint16_t, *CAST(const size_t *, val));
 		return 0;
 	case MAGIC_PARAM_ELF_NOTES_MAX:
-		ms->elf_notes_max = (uint16_t)*(const size_t *)val;
+		ms->elf_notes_max = CAST(uint16_t, *CAST(const size_t *, val));
 		return 0;
 	case MAGIC_PARAM_REGEX_MAX:
-		ms->elf_notes_max = (uint16_t)*(const size_t *)val;
+		ms->regex_max = CAST(uint16_t, *CAST(const size_t *, val));
 		return 0;
 	case MAGIC_PARAM_BYTES_MAX:
-		ms->bytes_max = *(const size_t *)val;
+		ms->bytes_max = *CAST(const size_t *, val);
 		return 0;
 	default:
 		errno = EINVAL;
@@ -628,25 +634,25 @@ magic_getparam(struct magic_set *ms, int param, void *val)
 		return -1;
 	switch (param) {
 	case MAGIC_PARAM_INDIR_MAX:
-		*(size_t *)val = ms->indir_max;
+		*CAST(size_t *, val) = ms->indir_max;
 		return 0;
 	case MAGIC_PARAM_NAME_MAX:
-		*(size_t *)val = ms->name_max;
+		*CAST(size_t *, val) = ms->name_max;
 		return 0;
 	case MAGIC_PARAM_ELF_PHNUM_MAX:
-		*(size_t *)val = ms->elf_phnum_max;
+		*CAST(size_t *, val) = ms->elf_phnum_max;
 		return 0;
 	case MAGIC_PARAM_ELF_SHNUM_MAX:
-		*(size_t *)val = ms->elf_shnum_max;
+		*CAST(size_t *, val) = ms->elf_shnum_max;
 		return 0;
 	case MAGIC_PARAM_ELF_NOTES_MAX:
-		*(size_t *)val = ms->elf_notes_max;
+		*CAST(size_t *, val) = ms->elf_notes_max;
 		return 0;
 	case MAGIC_PARAM_REGEX_MAX:
-		*(size_t *)val = ms->regex_max;
+		*CAST(size_t *, val) = ms->regex_max;
 		return 0;
 	case MAGIC_PARAM_BYTES_MAX:
-		*(size_t *)val = ms->bytes_max;
+		*CAST(size_t *, val) = ms->bytes_max;
 		return 0;
 	default:
 		errno = EINVAL;

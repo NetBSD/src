@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.22 2018/10/19 00:32:47 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.23 2019/05/22 17:26:05 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -29,7 +29,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$File: file.h,v 1.199 2018/10/15 16:29:16 christos Exp $
+ * @(#)$File: file.h,v 1.206 2019/05/07 02:27:11 christos Exp $
  */
 
 #ifndef __file_h__
@@ -456,12 +456,13 @@ protected const char *file_fmttime(uint64_t, int, char *);
 protected struct magic_set *file_ms_alloc(int);
 protected void file_ms_free(struct magic_set *);
 protected int file_default(struct magic_set *, size_t);
-protected int file_buffer(struct magic_set *, int, const char *, const void *,
-    size_t);
+protected int file_buffer(struct magic_set *, int, struct stat *, const char *,
+    const void *, size_t);
 protected int file_fsmagic(struct magic_set *, const char *, struct stat *);
 protected int file_pipe2file(struct magic_set *, int, const void *, size_t);
 protected int file_vprintf(struct magic_set *, const char *, va_list)
     __attribute__((__format__(__printf__, 2, 0)));
+protected int file_separator(struct magic_set *);
 protected size_t file_printedlen(const struct magic_set *);
 protected int file_replace(struct magic_set *, const char *, const char *);
 protected int file_printf(struct magic_set *, const char *, ...)
@@ -508,13 +509,14 @@ protected int file_looks_utf8(const unsigned char *, size_t, unichar *,
     size_t *);
 protected size_t file_pstring_length_size(const struct magic *);
 protected size_t file_pstring_get_length(const struct magic *, const char *);
-protected char * file_printable(char *, size_t, const char *);
+protected char * file_printable(char *, size_t, const char *, size_t);
 #ifdef __EMX__
 protected int file_os2_apptype(struct magic_set *, const char *, const void *,
     size_t);
 #endif /* __EMX__ */
 
-protected void buffer_init(struct buffer *, int, const void *, size_t);
+protected void buffer_init(struct buffer *, int, const struct stat *,
+    const void *, size_t);
 protected void buffer_fini(struct buffer *);
 protected int buffer_fill(const struct buffer *);
 
@@ -553,17 +555,6 @@ protected char  *file_pop_buffer(struct magic_set *, file_pushbuf_t *);
 #ifndef COMPILE_ONLY
 extern const char *file_names[];
 extern const size_t file_nnames;
-#endif
-
-#ifndef HAVE_STRERROR
-extern int sys_nerr;
-extern char *sys_errlist[];
-#define strerror(e) \
-	(((e) >= 0 && (e) < sys_nerr) ? sys_errlist[(e)] : "Unknown error")
-#endif
-
-#ifndef HAVE_STRTOUL
-#define strtoul(a, b, c)	strtol(a, b, c)
 #endif
 
 #ifndef HAVE_PREAD
