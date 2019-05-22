@@ -28,7 +28,6 @@ Tasks remaining:
       originally written by one of ia64 gurus but still looks maintained
       and portable
    4) something else
-- kernel with LOCKDEBUG option crashes in pmap startup somewhere
 - redo _regset.h in netbsd style with __greg_t __gregset_t
 - implement ld.elf_so, MK_DYNAMICROOT
 - fix memory detection, on real hardware doesn't find all memory
