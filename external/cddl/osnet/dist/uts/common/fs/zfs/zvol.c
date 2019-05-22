@@ -870,7 +870,7 @@ zvol_create_minor(const char *name)
 
 	(void) strlcpy(zv->zv_name, name, MAXPATHLEN);
 	zv->zv_min_bs = DEV_BSHIFT;
-#ifdef illumos
+#if defined(illumos) || defined(__NetBSD__)
 	zv->zv_minor = minor;
 #endif
 	zv->zv_objset = os;
@@ -950,12 +950,17 @@ zvol_remove_zv(zvol_state_t *zv)
 	char nmbuf[20];
 	minor_t minor = zv->zv_minor;
 
-	/* XXXNETBSD needs changes here */
-	(void) snprintf(nmbuf, sizeof (nmbuf), "%u,raw", zv->zv_minor);
+	LIST_REMOVE(zv, zv_links);
+
+	(void) snprintf(nmbuf, sizeof (nmbuf), "%s", zv->zv_name);
 	ddi_remove_minor_node(zfs_dip, nmbuf);
 
-	(void) snprintf(nmbuf, sizeof (nmbuf), "%u", zv->zv_minor);
+	(void) snprintf(nmbuf, sizeof (nmbuf), "%s", zv->zv_name);
 	ddi_remove_minor_node(zfs_dip, nmbuf);
+
+	disk_detach(&zv->zv_dk);
+	disk_destroy(&zv->zv_dk);
+	mutex_destroy(&zv->zv_dklock);
 #endif
 
 	avl_destroy(&zv->zv_znode.z_range_avl);
@@ -983,6 +988,11 @@ zvol_remove_minor(const char *name)
 		mutex_exit(&zfsdev_state_lock);
 		return (SET_ERROR(ENXIO));
 	}
+#ifdef __NetBSD__
+	disk_detach(&zv->zv_dk);
+	disk_destroy(&zv->zv_dk);
+	mutex_destroy(&zv->zv_dklock);
+#endif
 	rc = zvol_remove_zv(zv);
 	mutex_exit(&zfsdev_state_lock);
 	return (rc);
@@ -1058,12 +1068,6 @@ zvol_last_close(zvol_state_t *zv)
 
 	dmu_objset_disown(zv->zv_objset, zvol_tag);
 	zv->zv_objset = NULL;
-#ifdef __NetBSD__xxx
-	/* the old code has this here, but it's in the wrong place. */
-	disk_detach(&zv->zv_dk);
-	disk_destroy(&zv->zv_dk);
-	mutex_destroy(&zv->zv_dklock);
-#endif
 }
 
 #ifdef illumos
@@ -3125,6 +3129,7 @@ zvol_geom_worker(void *arg)
 		}
 	}
 }
+#endif
 
 extern boolean_t dataset_name_hidden(const char *name);
 
@@ -3243,6 +3248,26 @@ zvol_create_minors(const char *name)
 	return (0);
 }
 
+#ifdef __NetBSD__
+void
+zvol_rename_minor(zvol_state_t *zv, const char *newname)
+{
+	char *nm;
+	minor_t minor = zv->zv_minor;
+
+	nm = PNBUF_GET();
+	strlcpy(nm, newname, MAXPATHLEN);
+	ddi_remove_minor_node(zfs_dip, zv->zv_name);
+	(void)ddi_create_minor_node(zfs_dip, nm, S_IFCHR, minor, DDI_PSEUDO, 0);
+	(void)ddi_create_minor_node(zfs_dip, nm, S_IFBLK, minor, DDI_PSEUDO, 0);
+	PNBUF_PUT(nm);
+
+	strlcpy(zv->zv_name, newname, sizeof(zv->zv_name));
+	/* XXX Update dk_name? */
+}
+#endif
+
+#ifdef __FreeBSD__
 static void
 zvol_rename_minor(zvol_state_t *zv, const char *newname)
 {
@@ -3297,6 +3322,7 @@ zvol_rename_minor(zvol_state_t *zv, const char *newname)
 	}
 	strlcpy(zv->zv_name, newname, sizeof(zv->zv_name));
 }
+#endif
 
 void
 zvol_rename_minors(const char *oldname, const char *newname)
@@ -3337,6 +3363,7 @@ zvol_rename_minors(const char *oldname, const char *newname)
 	PICKUP_GIANT();
 }
 
+#ifdef __FreeBSD__
 static int
 zvol_d_open(struct cdev *dev, int flags, int fmt, struct thread *td)
 {

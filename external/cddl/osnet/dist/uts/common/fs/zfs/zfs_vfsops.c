@@ -2956,7 +2956,7 @@ zfs_get_zplprop(objset_t *os, zfs_prop_t prop, uint64_t *value)
 	return (error);
 }
 
-#ifdef __FreeBSD_kernel__
+#if defined(__FreeBSD_kernel__) || defined(__NetBSD__)
 #ifdef _KERNEL
 void
 zfsvfs_update_fromname(const char *oldname, const char *newname)
@@ -2968,8 +2968,14 @@ zfsvfs_update_fromname(const char *oldname, const char *newname)
 
 	oldlen = strlen(oldname);
 
+#ifdef __NetBSD__
+	mount_iterator_t *iter;
+	mountlist_iterator_init(&iter);
+	while ((mp = mountlist_iterator_next(iter)) != NULL) {
+#else
 	mtx_lock(&mountlist_mtx);
 	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
+#endif
 		fromname = mp->mnt_stat.f_mntfromname;
 		if (strcmp(fromname, oldname) == 0) {
 			(void)strlcpy(fromname, newname,
@@ -2985,7 +2991,11 @@ zfsvfs_update_fromname(const char *oldname, const char *newname)
 			continue;
 		}
 	}
+#ifdef __NetBSD__
+	mountlist_iterator_destroy(iter);
+#else
 	mtx_unlock(&mountlist_mtx);
+#endif
 }
 #endif
 #endif
