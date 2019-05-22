@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.24 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.25 2019/05/22 08:47:02 hannken Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.24 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.25 2019/05/22 08:47:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -177,6 +177,18 @@ iostat_free(struct io_stats *stats)
 	iostat_count--;
 	rw_exit(&iostatlist_lock);
 	kmem_free(stats, sizeof(*stats));
+}
+
+/*
+ * Rename i/o stats.
+ */
+void
+iostat_rename(struct io_stats *stats, const char *name)
+{
+
+	rw_enter(&iostatlist_lock, RW_WRITER);
+	(void)strlcpy(stats->io_name, name, sizeof(stats->io_name));
+	rw_exit(&iostatlist_lock);
 }
 
 /*

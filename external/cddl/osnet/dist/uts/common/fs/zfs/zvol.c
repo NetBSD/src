@@ -3270,7 +3270,9 @@ zvol_rename_minor(zvol_state_t *zv, const char *newname)
 	PNBUF_PUT(nm);
 
 	strlcpy(zv->zv_name, newname, sizeof(zv->zv_name));
-	/* XXX Update dk_name? */
+	mutex_enter(&zv->zv_dklock);
+	disk_rename(&zv->zv_dk, zv->zv_name);
+	mutex_exit(&zv->zv_dklock);
 }
 #endif
 

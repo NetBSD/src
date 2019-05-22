@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.73 2018/11/06 04:04:34 mrg Exp $	*/
+/*	$NetBSD: disk.h,v 1.74 2019/05/22 08:47:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -527,6 +527,7 @@ extern	int disk_count;			/* number of disks in global disklist */
 
 struct proc;
 
+void	disk_rename(struct disk *, const char *);
 void	disk_attach(struct disk *);
 int	disk_begindetach(struct disk *, int (*)(device_t), device_t, int);
 void	disk_detach(struct disk *);
