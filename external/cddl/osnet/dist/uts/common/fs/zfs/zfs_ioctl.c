@@ -3360,10 +3360,8 @@ zfs_ioc_create(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 		if (error != 0)
 			(void) dsl_destroy_head(fsname);
 	}
-#ifdef __FreeBSD__
 	if (error == 0 && type == DMU_OST_ZVOL)
 		zvol_create_minors(fsname);
-#endif
 	return (error);
 }
 
@@ -3405,10 +3403,8 @@ zfs_ioc_clone(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 		if (error != 0)
 			(void) dsl_destroy_head(fsname);
 	}
-#ifdef __FreeBSD__
 	if (error == 0)
 		zvol_create_minors(fsname);
-#endif
 	return (error);
 }
 
@@ -3681,9 +3677,7 @@ zfs_ioc_destroy_snaps(const char *poolname, nvlist_t *innvl, nvlist_t *outnvl)
 		error = zfs_unmount_snap(name);
 		if (error != 0)
 			return (error);
-#if defined(__FreeBSD__)
 		zvol_remove_minors(name);
-#endif
 	}
 
 	return (dsl_destroy_snapshots_nvl(snaps, defer, outnvl));
@@ -3807,7 +3801,7 @@ zfs_ioc_destroy(zfs_cmd_t *zc)
 	else
 		err = dsl_destroy_head(zc->zc_name);
 	if (zc->zc_objset_type == DMU_OST_ZVOL && err == 0)
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 		zvol_remove_minors(zc->zc_name);
 #else
 		(void) zvol_remove_minor(zc->zc_name);
@@ -4550,10 +4544,8 @@ zfs_ioc_recv(zfs_cmd_t *zc)
 	}
 #endif
 
-#ifdef __FreeBSD__
 	if (error == 0)
 		zvol_create_minors(tofs);
-#endif
 
 	/*
 	 * On error, restore the original props.
@@ -6166,7 +6158,9 @@ zfsdev_minor_alloc(void)
 	static minor_t last_minor;
 	minor_t m;
 
+#ifndef __NetBSD__
 	ASSERT(MUTEX_HELD(&spa_namespace_lock));
+#endif
 
 	for (m = last_minor + 1; m != last_minor; m++) {
 		if (m > ZFSDEV_MAX_MINOR)
