@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.7 2018/05/28 21:05:09 chs Exp $	*/
+/*	$NetBSD: vfs.c,v 1.8 2019/05/22 08:42:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -40,34 +40,23 @@ __FBSDID("$FreeBSD: head/sys/cddl/compat/opensolaris/kern/opensolaris_lookup.c 3
 #include <lib/libkern/libkern.h>
 
 int
-lookupname(char *dirname, enum uio_seg seg, enum symfollow follow, vnode_t **dirvpp, vnode_t **compvpp)
+lookupname(char *dirname, enum uio_seg seg, enum symfollow follow,
+    vnode_t **dirvpp, vnode_t **compvpp)
 {
-        return (lookupnameat(dirname, seg, follow, dirvpp, compvpp, NULL));
-}
-
-int
-lookupnameat(char *dirname, enum uio_seg seg, enum symfollow follow,
-    vnode_t **dirvpp, vnode_t **compvpp, vnode_t *startvp)
-{
-
-	struct nameidata nd;
 	int error;
 
-	error = EOPNOTSUPP;
+	KASSERT(seg == UIO_SYSSPACE);
+	KASSERT(dirvpp == NULL);
 
-/*      XXX Disable until I upgrade testing kernel.
-        KASSERT(dirvpp == NULL);
+	*compvpp = NULL;
+	error = namei_simple_kernel(dirname,
+	    follow == FOLLOW ? NSM_FOLLOW_NOEMULROOT : NSM_NOFOLLOW_NOEMULROOT,
+	    compvpp);
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, dirname);
+	KASSERT(error == 0 || *compvpp == NULL);
 
-	if ((error = nameiat(&nd, startvp)) != 0)
-		return error;
-
-	*compvpp = nd.ni_vp;*/
-
-	return (error);
+        return error;
 }
-
 
 void
 vfs_setmntopt(vfs_t *vfsp, const char *name, const char *arg,
