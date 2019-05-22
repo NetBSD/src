@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $	*/
+/*	$NetBSD: print.c,v 1.14 2019/05/22 17:26:05 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: print.c,v 1.83 2018/09/09 20:33:28 christos Exp $")
+FILE_RCSID("@(#)$File: print.c,v 1.85 2019/03/12 20:43:05 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: print.c,v 1.14 2019/05/22 17:26:05 christos Exp $");
 #endif
 #endif  /* lint */
 
@@ -48,8 +48,6 @@ __RCSID("$NetBSD: print.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $");
 #include <unistd.h>
 #endif
 #include <time.h>
-
-#define SZOF(a)	(sizeof(a) / sizeof(a[0]))
 
 #include "cdf.h"
 
@@ -71,9 +69,9 @@ file_mdump(struct magic *m)
 		if (m->in_op & FILE_OPINVERSE)
 			(void) fputc('~', stderr);
 		(void) fprintf(stderr, "%c%u),",
-		    ((size_t)(m->in_op & FILE_OPS_MASK) <
-		    SZOF(optyp)) ? optyp[m->in_op & FILE_OPS_MASK] : '?',
-		    m->in_offset);
+		    (CAST(size_t, m->in_op & FILE_OPS_MASK) <
+		    __arraycount(optyp)) ?
+		    optyp[m->in_op & FILE_OPS_MASK] : '?', m->in_offset);
 	}
 	(void) fprintf(stderr, " %s%s", (m->flag & UNSIGNED) ? "u" : "",
 	    /* Note: type is unsigned */
@@ -118,14 +116,15 @@ file_mdump(struct magic *m)
 			(void) fprintf(stderr, "/%u", m->str_range);
 	}
 	else {
-		if ((size_t)(m->mask_op & FILE_OPS_MASK) < SZOF(optyp))
+		if (CAST(size_t, m->mask_op & FILE_OPS_MASK) <
+		    __arraycount(optyp))
 			(void) fputc(optyp[m->mask_op & FILE_OPS_MASK], stderr);
 		else
 			(void) fputc('?', stderr);
 
 		if (m->num_mask) {
 			(void) fprintf(stderr, "%.8llx",
-			    (unsigned long long)m->num_mask);
+			    CAST(unsigned long long, m->num_mask));
 		}
 	}
 	(void) fprintf(stderr, ",%c", m->reln);
@@ -147,7 +146,7 @@ file_mdump(struct magic *m)
 		case FILE_LEQUAD:
 		case FILE_QUAD:
 			(void) fprintf(stderr, "%" INT64_T_FORMAT "d",
-			    (unsigned long long)m->value.q);
+			    CAST(long long, m->value.q));
 			break;
 		case FILE_PSTRING:
 		case FILE_STRING:
@@ -155,7 +154,8 @@ file_mdump(struct magic *m)
 		case FILE_BESTRING16:
 		case FILE_LESTRING16:
 		case FILE_SEARCH:
-			file_showstr(stderr, m->value.s, (size_t)m->vallen);
+			file_showstr(stderr, m->value.s,
+			    CAST(size_t, m->vallen));
 			break;
 		case FILE_DATE:
 		case FILE_LEDATE:
@@ -227,7 +227,7 @@ file_magwarn(struct magic_set *ms, const char *f, ...)
 
 	if (ms->file)
 		(void) fprintf(stderr, "%s, %lu: ", ms->file,
-		    (unsigned long)ms->line);
+		    CAST(unsigned long, ms->line));
 	(void) fprintf(stderr, "Warning: ");
 	va_start(va, f);
 	(void) vfprintf(stderr, f, va);
@@ -249,7 +249,7 @@ file_fmttime(uint64_t v, int flags, char *buf)
 	} else {
 		// XXX: perhaps detect and print something if overflow
 		// on 32 bit time_t?
-		t = (time_t)v;
+		t = CAST(time_t, v);
 	}
 
 	if (flags & FILE_T_LOCAL) {

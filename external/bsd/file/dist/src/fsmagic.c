@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.14 2018/10/19 00:11:48 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.15 2019/05/22 17:26:05 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: fsmagic.c,v 1.79 2018/10/02 00:38:33 christos Exp $")
+FILE_RCSID("@(#)$File: fsmagic.c,v 1.80 2019/04/23 18:59:27 christos Exp $")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.14 2018/10/19 00:11:48 christos Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.15 2019/05/22 17:26:05 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -52,11 +52,14 @@ __RCSID("$NetBSD: fsmagic.c,v 1.14 2018/10/19 00:11:48 christos Exp $");
 # include <sys/mkdev.h>
 # define HAVE_MAJOR
 #endif
-#ifdef MAJOR_IN_SYSMACROS
+#ifdef HAVE_SYS_SYSMACROS_H
 # include <sys/sysmacros.h>
+#endif
+#ifdef MAJOR_IN_SYSMACROS
 # define HAVE_MAJOR
 #endif
-#ifdef major			/* Might be defined in sys/types.h.  */
+#if defined(major) && !defined(HAVE_MAJOR)
+/* Might be defined in sys/types.h.  */
 # define HAVE_MAJOR
 #endif
 #ifdef WIN32

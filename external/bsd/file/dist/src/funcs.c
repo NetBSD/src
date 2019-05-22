@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.15 2018/10/19 00:11:48 christos Exp $	*/
+/*	$NetBSD: funcs.c,v 1.16 2019/05/22 17:26:05 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: funcs.c,v 1.100 2018/10/01 18:45:39 christos Exp $")
+FILE_RCSID("@(#)$File: funcs.c,v 1.104 2019/05/07 02:27:11 christos Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.15 2018/10/19 00:11:48 christos Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.16 2019/05/22 17:26:05 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -166,12 +166,18 @@ file_badread(struct magic_set *ms)
 
 #ifndef COMPILE_ONLY
 
+protected int
+file_separator(struct magic_set *ms)
+{
+	return file_printf(ms, "\n- ");
+}
+
 static int
 checkdone(struct magic_set *ms, int *rv)
 {
 	if ((ms->flags & MAGIC_CONTINUE) == 0)
 		return 1;
-	if (file_printf(ms, "\n- ") == -1)
+	if (file_separator(ms) == -1)
 		*rv = -1;
 	return 0;
 }
@@ -207,7 +213,8 @@ file_default(struct magic_set *ms, size_t nb)
  */
 /*ARGSUSED*/
 protected int
-file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__unused__)),
+file_buffer(struct magic_set *ms, int fd, struct stat *st,
+    const char *inname __attribute__ ((__unused__)),
     const void *buf, size_t nb)
 {
 	int m = 0, rv = 0, looks_text = 0;
@@ -218,7 +225,7 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 	char *rbuf = NULL;
 	struct buffer b;
 
-	buffer_init(&b, fd, buf, nb);
+	buffer_init(&b, fd, st, buf, nb);
 	ms->mode = b.st.st_mode;
 
 	if (nb == 0) {
@@ -341,8 +348,7 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 		if ((ms->flags & MAGIC_DEBUG) != 0)
 			(void)fprintf(stderr, "[try ascmagic %d]\n", m);
 		if (m) {
-			if (checkdone(ms, &rv))
-				goto done;
+			goto done;
 		}
 	}
 
@@ -398,9 +404,9 @@ file_reset(struct magic_set *ms, int checkloaded)
 #define OCTALIFY(n, o)	\
 	/*LINTED*/ \
 	(void)(*(n)++ = '\\', \
-	*(n)++ = (((uint32_t)*(o) >> 6) & 3) + '0', \
-	*(n)++ = (((uint32_t)*(o) >> 3) & 7) + '0', \
-	*(n)++ = (((uint32_t)*(o) >> 0) & 7) + '0', \
+	*(n)++ = ((CAST(uint32_t, *(o)) >> 6) & 3) + '0', \
+	*(n)++ = ((CAST(uint32_t, *(o)) >> 3) & 7) + '0', \
+	*(n)++ = ((CAST(uint32_t, *(o)) >> 0) & 7) + '0', \
 	(o)++)
 
 protected const char *
@@ -446,9 +452,9 @@ file_getbuffer(struct magic_set *ms)
 
 		while (op < eop) {
 			bytesconsumed = mbrtowc(&nextchar, op,
-			    (size_t)(eop - op), &state);
-			if (bytesconsumed == (size_t)(-1) ||
-			    bytesconsumed == (size_t)(-2)) {
+			    CAST(size_t, eop - op), &state);
+			if (bytesconsumed == CAST(size_t, -1) ||
+			    bytesconsumed == CAST(size_t, -2)) {
 				mb_conv = 0;
 				break;
 			}
@@ -471,7 +477,7 @@ file_getbuffer(struct magic_set *ms)
 #endif
 
 	for (np = ms->o.pbuf, op = ms->o.buf; *op;) {
-		if (isprint((unsigned char)*op)) {
+		if (isprint(CAST(unsigned char, *op))) {
 			*np++ = *op++;
 		} else {
 			OCTALIFY(np, op);
@@ -629,12 +635,13 @@ file_pop_buffer(struct magic_set *ms, file_pushbuf_t *pb)
  * convert string to ascii printable format.
  */
 protected char *
-file_printable(char *buf, size_t bufsiz, const char *str)
+file_printable(char *buf, size_t bufsiz, const char *str, size_t slen)
 {
-	char *ptr, *eptr;
-	const unsigned char *s = (const unsigned char *)str;
+	char *ptr, *eptr = buf + bufsiz - 1;
+	const unsigned char *s = RCAST(const unsigned char *, str);
+	const unsigned char *es = s + slen;
 
-	for (ptr = buf, eptr = ptr + bufsiz - 1; ptr < eptr && *s; s++) {
+	for (ptr = buf;  ptr < eptr && s < es && *s; s++) {
 		if (isprint(*s)) {
 			*ptr++ = *s;
 			continue;
