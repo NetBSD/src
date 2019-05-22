@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.h,v 1.11 2017/03/05 23:07:12 mlelstv Exp $	*/
+/*	$NetBSD: iostat.h,v 1.12 2019/05/22 08:47:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004, 2009 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ bool	iostat_isbusy(struct io_stats *);
 struct io_stats *iostat_find(const char *);
 struct io_stats *iostat_alloc(int32_t, void *, const char *);
 void	iostat_free(struct io_stats *);
+void	iostat_rename(struct io_stats *, const char *);
 void	iostat_seek(struct io_stats *);
 #endif
 

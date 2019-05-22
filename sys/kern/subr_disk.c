@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.127 2019/04/04 20:19:07 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.128 2019/05/22 08:47:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.127 2019/04/04 20:19:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.128 2019/05/22 08:47:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -196,6 +196,17 @@ disk_init(struct disk *diskp, const char *name, const struct dkdriver *driver)
 	diskp->dk_byteshift = DK_BSIZE2BYTESHIFT(blocksize);
 	diskp->dk_name = name;
 	diskp->dk_driver = driver;
+}
+
+/*
+ * Rename a disk.
+ */
+void
+disk_rename(struct disk *diskp, const char *name)
+{
+
+	diskp->dk_name = name;
+	iostat_rename(diskp->dk_stats, diskp->dk_name);
 }
 
 /*
