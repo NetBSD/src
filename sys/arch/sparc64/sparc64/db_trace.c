@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.51 2019/05/22 04:17:39 martin Exp $ */
+/*	$NetBSD: db_trace.c,v 1.52 2019/05/22 07:40:09 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.51 2019/05/22 04:17:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.52 2019/05/22 07:40:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -163,7 +163,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (kernel_only) {
 			if (pc < KERNBASE || pc >= KERNEND)
 				break;
-			if (frame < KERNBASE || frame >= KERNEND)
+			if (frame < KERNBASE || frame >= VM_MAX_KERNEL_ADDRESS)
 				break;
 		} else {
 			if (frame == 0 || frame == (vaddr_t)-1)
