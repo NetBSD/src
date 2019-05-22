@@ -211,11 +211,8 @@ static struct cdev *zfsdev;
 #endif
 
 #ifdef __NetBSD__
-static int zfs_cmajor = -1;
-static int zfs_bmajor = -1;
-dev_info_t *zfs_dip;
-
-#define ddi_driver_major(x)	zfs_cmajor
+static dev_info_t __zfs_devinfo = { -1, -1 };
+dev_info_t *zfs_dip = &__zfs_devinfo;
 
 #define zfs_init() /* nothing */
 #define zfs_fini() /* nothing */
@@ -7204,8 +7201,8 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 		zfs_ioctl_init();
 		zfs_sysctl_init();
 
-		error = devsw_attach("zfs", &zfs_bdevsw, &zfs_bmajor,
-		    &zfs_cdevsw, &zfs_cmajor);
+		error = devsw_attach("zfs", &zfs_bdevsw, &zfs_dip->di_bmajor,
+		    &zfs_cdevsw, &zfs_dip->di_cmajor);
 		if (error != 0) {
 			goto attacherr;
 		}
