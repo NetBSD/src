@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.52 2019/05/22 07:40:09 martin Exp $ */
+/*	$NetBSD: db_trace.c,v 1.53 2019/05/22 15:10:13 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.52 2019/05/22 07:40:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.53 2019/05/22 15:10:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.52 2019/05/22 07:40:09 martin Exp $")
 #include <sys/systm.h>
 #include <machine/db_machdep.h>
 #include <machine/ctlreg.h>
+#include <machine/vmparam.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_proc.h>
