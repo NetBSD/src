@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.76 2019/02/24 08:02:45 maxv Exp $
+#	$NetBSD: Makefile.amd64,v 1.77 2019/05/22 08:31:25 kamil Exp $
 
 # Makefile for NetBSD
 #
@@ -54,7 +54,7 @@ KASANFLAGS=	-fsanitize=kernel-address \
 		--param asan-globals=1 --param asan-stack=1 \
 		-fsanitize-address-use-after-scope \
 		-fasan-shadow-offset=0xDFFF900000000000
-.for f in subr_asan.c
+.for f in subr_asan.c subr_kcov.c subr_lwp_specificdata.c subr_specificdata.c
 KASANFLAGS.${f}=	# empty
 .endfor
 CFLAGS+=	${KASANFLAGS.${.IMPSRC:T}:U${KASANFLAGS}}
