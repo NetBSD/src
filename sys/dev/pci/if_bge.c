@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.330 2019/04/26 06:33:34 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.331 2019/05/23 10:51:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.330 2019/04/26 06:33:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.331 2019/05/23 10:51:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,14 +273,14 @@ static void bge_ape_driver_state_change(struct bge_softc *, int);
 
 #ifdef BGE_DEBUG
 #define DPRINTF(x)	if (bgedebug) printf x
-#define DPRINTFN(n,x)	if (bgedebug >= (n)) printf x
+#define DPRINTFN(n, x)	if (bgedebug >= (n)) printf x
 #define BGE_TSO_PRINTF(x)  do { if (bge_tso_debug) printf x ;} while (0)
 int	bgedebug = 0;
 int	bge_tso_debug = 0;
 void		bge_debug_info(struct bge_softc *);
 #else
 #define DPRINTF(x)
-#define DPRINTFN(n,x)
+#define DPRINTFN(n, x)
 #define BGE_TSO_PRINTF(x)
 #endif
 
@@ -1496,7 +1496,7 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
 	if (!(sc->bge_flags & BGEF_RX_ALIGNBUG))
 	    m_adj(m_new, ETHER_ALIGN);
 	if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT)) {
+	    BUS_DMA_READ | BUS_DMA_NOWAIT)) {
 		m_freem(m_new);
 		return ENOBUFS;
 	}
@@ -1514,7 +1514,7 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
 	    offsetof(struct bge_ring_data, bge_rx_std_ring) +
 		i * sizeof (struct bge_rx_bd),
 	    sizeof (struct bge_rx_bd),
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	return 0;
 }
@@ -1565,7 +1565,7 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 	r = &sc->bge_rdata->bge_rx_jumbo_ring[i];
 	sc->bge_cdata.bge_rx_jumbo_chain[i] = m_new;
 	BGE_HOSTADDR(r->bge_addr, BGE_JUMBO_DMA_ADDR(sc, m_new));
-	r->bge_flags = BGE_RXBDFLAG_END|BGE_RXBDFLAG_JUMBO_RING;
+	r->bge_flags = BGE_RXBDFLAG_END | BGE_RXBDFLAG_JUMBO_RING;
 	r->bge_len = m_new->m_len;
 	r->bge_idx = i;
 
@@ -1573,7 +1573,7 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 	    offsetof(struct bge_ring_data, bge_rx_jumbo_ring) +
 		i * sizeof (struct bge_rx_bd),
 	    sizeof (struct bge_rx_bd),
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	return 0;
 }
@@ -2542,7 +2542,7 @@ bge_blockinit(struct bge_softc *sc)
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 		    offsetof(struct bge_ring_data, bge_info),
 		    sizeof (struct bge_gib),
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 
 	/* Choose de-pipeline mode for BCM5906 A0, A1 and A2. */
@@ -3179,6 +3179,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	uint32_t		hwcfg, hwcfg2, hwcfg3, hwcfg4, hwcfg5;
 	uint32_t		command;
 	struct ifnet		*ifp;
+	struct mii_data * const mii = &sc->bge_mii;
 	uint32_t		misccfg, mimode;
 	void *			kva;
 	u_char			eaddr[ETHER_ADDR_LEN];
@@ -3293,7 +3294,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		 * device into D0 state before starting initialization.
 		 */
 		pm_ctl = pci_conf_read(pc, sc->sc_pcitag, BGE_PCI_PWRMGMT_CMD);
-		pm_ctl &= ~(PCI_PWR_D0|PCI_PWR_D1|PCI_PWR_D2|PCI_PWR_D3);
+		pm_ctl &= ~(PCI_PWR_D0 | PCI_PWR_D1 | PCI_PWR_D2 | PCI_PWR_D3);
 		pm_ctl |= (1 << 8) | PCI_PWR_D0 ; /* D0 state */
 		pci_conf_write(pc, sc->sc_pcitag, BGE_PCI_PWRMGMT_CMD, pm_ctl);
 		DELAY(1000);	/* 27 usec is allegedly sufficent */
@@ -3837,10 +3838,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * Do MII setup.
 	 */
 	DPRINTFN(5, ("mii setup\n"));
-	sc->bge_mii.mii_ifp = ifp;
-	sc->bge_mii.mii_readreg = bge_miibus_readreg;
-	sc->bge_mii.mii_writereg = bge_miibus_writereg;
-	sc->bge_mii.mii_statchg = bge_miibus_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = bge_miibus_readreg;
+	mii->mii_writereg = bge_miibus_writereg;
+	mii->mii_statchg = bge_miibus_statchg;
 
 	/*
 	 * Figure out what sort of media we have by checking the hardware
@@ -3871,7 +3872,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,
 		    bge_ifmedia_sts);
 		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER |IFM_1000_SX, 0, NULL);
-		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER | IFM_1000_SX|IFM_FDX,
+		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER | IFM_1000_SX |IFM_FDX,
 			    0, NULL);
 		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER | IFM_AUTO, 0, NULL);
 		ifmedia_set(&sc->bge_ifmedia, IFM_ETHER | IFM_AUTO);
@@ -3888,23 +3889,21 @@ bge_attach(device_t parent, device_t self, void *aux)
 		BGE_CLRBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
 		bge_asf_driver_up(sc);
 
-		ifmedia_init(&sc->bge_mii.mii_media, 0, bge_ifmedia_upd,
+		ifmedia_init(&mii->mii_media, 0, bge_ifmedia_upd,
 			     bge_ifmedia_sts);
 		mii_flags = MIIF_DOPAUSE;
 		if (sc->bge_flags & BGEF_FIBER_MII)
 			mii_flags |= MIIF_HAVEFIBER;
-		mii_attach(sc->bge_dev, &sc->bge_mii, capmask, sc->bge_phy_addr,
+		mii_attach(sc->bge_dev, mii, capmask, sc->bge_phy_addr,
 		    MII_OFFSET_ANY, mii_flags);
 
-		if (LIST_EMPTY(&sc->bge_mii.mii_phys)) {
+		if (LIST_EMPTY(&mii->mii_phys)) {
 			aprint_error_dev(sc->bge_dev, "no PHY found!\n");
-			ifmedia_add(&sc->bge_mii.mii_media,
-				    IFM_ETHER|IFM_MANUAL, 0, NULL);
-			ifmedia_set(&sc->bge_mii.mii_media,
-				    IFM_ETHER|IFM_MANUAL);
+			ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL,
+			    0, NULL);
+			ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 		} else
-			ifmedia_set(&sc->bge_mii.mii_media,
-				    IFM_ETHER|IFM_AUTO);
+			ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 		/*
 		 * Now tell the firmware we are going up after probing the PHY
@@ -4483,8 +4482,7 @@ bge_rxcsum(struct bge_softc *sc, struct bge_rx_bd *cur_rx, struct mbuf *m)
 				m->m_pkthdr.csum_data =
 				    cur_rx->bge_tcp_udp_csum;
 				m->m_pkthdr.csum_flags |=
-				    (M_CSUM_TCPv4|M_CSUM_UDPv4|
-					M_CSUM_DATA);
+				    (M_CSUM_TCPv4 | M_CSUM_UDPv4 |M_CSUM_DATA);
 			}
 		}
 	} else {
@@ -4503,8 +4501,7 @@ bge_rxcsum(struct bge_softc *sc, struct bge_rx_bd *cur_rx, struct mbuf *m)
 			m->m_pkthdr.csum_data =
 			    cur_rx->bge_tcp_udp_csum;
 			m->m_pkthdr.csum_flags |=
-			    (M_CSUM_TCPv4|M_CSUM_UDPv4|
-				M_CSUM_DATA);
+			    (M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_DATA);
 		}
 	}
 }
@@ -4540,13 +4537,13 @@ bge_txeof(struct bge_softc *sc)
 		tlen = (BGE_TX_RING_CNT - sc->bge_tx_saved_considx) *
 		    sizeof (struct bge_tx_bd);
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
-		    toff, tlen, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    toff, tlen, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		tosync = -tosync;
 	}
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offset, tosync * sizeof (struct bge_tx_bd),
-	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	/*
 	 * Go through our tx ring and free mbufs for those
@@ -4906,7 +4903,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 	prev = NULL;
 	totlen = 0;
 
-	for (m = pkt; m != NULL; prev = m,m = m->m_next) {
+	for (m = pkt; m != NULL; prev = m, m = m->m_next) {
 		int mlen = m->m_len;
 		int shortfall = 8 - mlen ;
 
@@ -5029,7 +5026,7 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, uint32_t *txidx)
 	if (m_head->m_pkthdr.csum_flags) {
 		if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
 			csum_flags |= BGE_TXBDFLAG_IP_CSUM;
-		if (m_head->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4))
+		if (m_head->m_pkthdr.csum_flags & (M_CSUM_TCPv4 |M_CSUM_UDPv4))
 			csum_flags |= BGE_TXBDFLAG_TCP_UDP_CSUM;
 	}
 
@@ -5360,7 +5357,7 @@ bge_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	prodidx = sc->bge_tx_prodidx;
@@ -5770,7 +5767,7 @@ bge_ifflags_cb(struct ethercom *ec)
 	struct bge_softc *sc = ifp->if_softc;
 	int change = ifp->if_flags ^ sc->bge_if_flags;
 
-	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;
 	else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) == 0)
 		return 0;
@@ -6135,8 +6132,8 @@ bge_link_upd(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_MISC_CFG, reg);
 	}
 	/* Clear the attention */
-	CSR_WRITE_4(sc, BGE_MAC_STS, BGE_MACSTAT_SYNC_CHANGED|
-	    BGE_MACSTAT_CFG_CHANGED|BGE_MACSTAT_MI_COMPLETE|
+	CSR_WRITE_4(sc, BGE_MAC_STS, BGE_MACSTAT_SYNC_CHANGED |
+	    BGE_MACSTAT_CFG_CHANGED | BGE_MACSTAT_MI_COMPLETE |
 	    BGE_MACSTAT_LINK_CHANGED);
 }
 

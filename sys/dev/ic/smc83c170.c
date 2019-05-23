@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.87 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.88 2019/05/23 10:51:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.87 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.88 2019/05/23 10:51:39 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -104,6 +104,7 @@ epic_attach(struct epic_softc *sc)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	int rseg, error, miiflags;
 	u_int i;
 	bus_dma_segment_t seg;
@@ -120,7 +121,7 @@ epic_attach(struct epic_softc *sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct epic_control_data) + ETHER_PAD_LEN, PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, 
+		aprint_error_dev(sc->sc_dev,
 		    "unable to allocate control data, error = %d\n", error);
 		goto fail_0;
 	}
@@ -128,7 +129,7 @@ epic_attach(struct epic_softc *sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct epic_control_data) + ETHER_PAD_LEN,
 	    (void **)&sc->sc_control_data,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
@@ -150,7 +151,7 @@ epic_attach(struct epic_softc *sc)
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct epic_control_data), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, 
+		aprint_error_dev(sc->sc_dev,
 		    "unable to load control data DMA map, error = %d\n",
 		    error);
 		goto fail_3;
@@ -246,26 +247,26 @@ epic_attach(struct epic_softc *sc)
 	/*
 	 * Initialize our media structures and probe the MII.
 	 */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = epic_mii_read;
-	sc->sc_mii.mii_writereg = epic_mii_write;
-	sc->sc_mii.mii_statchg = epic_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = epic_mii_read;
+	mii->mii_writereg = epic_mii_write;
+	mii->mii_statchg = epic_statchg;
 
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, epic_mediachange,
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, epic_mediachange,
 	    ether_mediastatus);
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, miiflags);
-	if (LIST_EMPTY(&sc->sc_mii.mii_phys)) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	if (LIST_EMPTY(&mii->mii_phys)) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	if (sc->sc_hwflags & EPIC_HAS_BNC) {
 		/* use the next free media instance */
-		sc->sc_serinst = sc->sc_mii.mii_instance++;
-		ifmedia_add(&sc->sc_mii.mii_media,
+		sc->sc_serinst = mii->mii_instance++;
+		ifmedia_add(&mii->mii_media,
 		    IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0, sc->sc_serinst),
 		    0, NULL);
 		aprint_normal_dev(sc->sc_dev, "10base2/BNC\n");
@@ -401,7 +402,7 @@ epic_start(struct ifnet *ifp)
 		 * again.
 		 */
 		if ((error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0 ||
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT)) != 0 ||
 		    (m0->m_pkthdr.len < ETHER_PAD_LEN &&
 		    dmamap-> dm_nsegs == EPIC_NFRAGS)) {
 			if (error == 0)
@@ -426,7 +427,7 @@ epic_start(struct ifnet *ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", device_xname(sc->sc_dev),
@@ -484,7 +485,7 @@ epic_start(struct ifnet *ifp)
 			    TXSTAT_TXLENGTH(len) | ET_TXSTAT_OWNER;
 
 		EPIC_CDTXSYNC(sc, nexttx,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Advance the tx pointer. */
 		sc->sc_txpending++;
@@ -515,7 +516,7 @@ epic_start(struct ifnet *ifp)
 		 */
 		EPIC_CDTX(sc, sc->sc_txlast)->et_control |= ET_TXCTL_IAF;
 		EPIC_CDTXSYNC(sc, sc->sc_txlast,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * The entire packet chain is set up.  Give the
@@ -523,7 +524,7 @@ epic_start(struct ifnet *ifp)
 		 */
 		EPIC_CDTX(sc, firsttx)->et_txstatus |= ET_TXSTAT_OWNER;
 		EPIC_CDTXSYNC(sc, firsttx,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Start the transmitter. */
 		bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_COMMAND,
@@ -620,7 +621,7 @@ epic_intr(void *arg)
 			ds = EPIC_DSRX(sc, i);
 
 			EPIC_CDRXSYNC(sc, i,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 			rxstatus = rxd->er_rxstatus;
 			if (rxstatus & ER_RXSTAT_OWNER) {
@@ -743,7 +744,7 @@ epic_intr(void *arg)
 			ds = EPIC_DSTX(sc, i);
 
 			EPIC_CDTXSYNC(sc, i,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 			txstatus = txd->et_txstatus;
 			if (txstatus & ET_TXSTAT_OWNER)
@@ -975,7 +976,8 @@ epic_init(struct ifnet *ifp)
 		memset(txd, 0, sizeof(struct epic_txdesc));
 		txd->et_bufaddr = EPIC_CDFLADDR(sc, i);
 		txd->et_nextdesc = EPIC_CDTXADDR(sc, EPIC_NEXTTX(i));
-		EPIC_CDTXSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		EPIC_CDTXSYNC(sc, i,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 	sc->sc_txpending = 0;
 	sc->sc_txdirty = 0;
@@ -1146,17 +1148,18 @@ epic_read_eeprom(struct epic_softc *sc, int word, int wordcnt, uint16_t *data)
 
 	for (i = 0; i < wordcnt; i++) {
 		/* Send CHIP SELECT for one clock tick. */
-		bus_space_write_4(st, sh, EPIC_EECTL, EECTL_ENABLE|EECTL_EECS);
+		bus_space_write_4(st, sh, EPIC_EECTL,
+		    EECTL_ENABLE | EECTL_EECS);
 		EEPROM_WAIT_READY(st, sh);
 
 		/* Shift in the READ opcode. */
 		for (x = 3; x > 0; x--) {
-			reg = EECTL_ENABLE|EECTL_EECS;
+			reg = EECTL_ENABLE | EECTL_EECS;
 			if (EPIC_EEPROM_OPC_READ & (1 << (x - 1)))
 				reg |= EECTL_EEDI;
 			bus_space_write_4(st, sh, EPIC_EECTL, reg);
 			EEPROM_WAIT_READY(st, sh);
-			bus_space_write_4(st, sh, EPIC_EECTL, reg|EECTL_EESK);
+			bus_space_write_4(st, sh, EPIC_EECTL, reg |EECTL_EESK);
 			EEPROM_WAIT_READY(st, sh);
 			bus_space_write_4(st, sh, EPIC_EECTL, reg);
 			EEPROM_WAIT_READY(st, sh);
@@ -1164,22 +1167,22 @@ epic_read_eeprom(struct epic_softc *sc, int word, int wordcnt, uint16_t *data)
 
 		/* Shift in address. */
 		for (x = 6; x > 0; x--) {
-			reg = EECTL_ENABLE|EECTL_EECS;
+			reg = EECTL_ENABLE | EECTL_EECS;
 			if ((word + i) & (1 << (x - 1)))
 				reg |= EECTL_EEDI;
 			bus_space_write_4(st, sh, EPIC_EECTL, reg);
 			EEPROM_WAIT_READY(st, sh);
-			bus_space_write_4(st, sh, EPIC_EECTL, reg|EECTL_EESK);
+			bus_space_write_4(st, sh, EPIC_EECTL, reg |EECTL_EESK);
 			EEPROM_WAIT_READY(st, sh);
 			bus_space_write_4(st, sh, EPIC_EECTL, reg);
 			EEPROM_WAIT_READY(st, sh);
 		}
 
 		/* Shift out data. */
-		reg = EECTL_ENABLE|EECTL_EECS;
+		reg = EECTL_ENABLE | EECTL_EECS;
 		data[i] = 0;
 		for (x = 16; x > 0; x--) {
-			bus_space_write_4(st, sh, EPIC_EECTL, reg|EECTL_EESK);
+			bus_space_write_4(st, sh, EPIC_EECTL, reg |EECTL_EESK);
 			EEPROM_WAIT_READY(st, sh);
 			if (bus_space_read_4(st, sh, EPIC_EECTL) & EECTL_EEDO)
 				data[i] |= (1 << (x - 1));
@@ -1227,7 +1230,7 @@ epic_add_rxbuf(struct epic_softc *sc, int idx)
 
 	error = bus_dmamap_load(sc->sc_dmat, ds->ds_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    device_xname(sc->sc_dev), idx, error);
@@ -1390,9 +1393,9 @@ epic_statchg(struct ifnet *ifp)
 	 */
 	txcon = bus_space_read_4(sc->sc_st, sc->sc_sh, EPIC_TXCON);
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
-		txcon |= (TXCON_LOOPBACK_D1|TXCON_LOOPBACK_D2);
+		txcon |= (TXCON_LOOPBACK_D1 | TXCON_LOOPBACK_D2);
 	else
-		txcon &= ~(TXCON_LOOPBACK_D1|TXCON_LOOPBACK_D2);
+		txcon &= ~(TXCON_LOOPBACK_D1 | TXCON_LOOPBACK_D2);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_TXCON, txcon);
 
 	/* On some cards we need manualy set fullduplex led */

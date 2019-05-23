@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.25 2019/04/22 08:05:00 msaitoh Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.25 2019/04/22 08:05:00 msaitoh Exp $	*/
+/*	$Id: at91emac.c,v 1.26 2019/05/23 10:51:38 msaitoh Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.26 2019/05/23 10:51:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.25 2019/04/22 08:05:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.26 2019/05/23 10:51:38 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,9 +112,9 @@ CFATTACH_DECL_NEW(at91emac, sizeof(struct emac_softc),
 
 #ifdef	EMAC_DEBUG
 int emac_debug = EMAC_DEBUG;
-#define	DPRINTFN(n,fmt)	if (emac_debug >= (n)) printf fmt
+#define	DPRINTFN(n, fmt)	if (emac_debug >= (n)) printf fmt
 #else
-#define	DPRINTFN(n,fmt)
+#define	DPRINTFN(n, fmt)
 #endif
 
 static int
@@ -149,15 +149,16 @@ emac_attach(device_t parent, device_t self, void *aux)
 	EMAC_WRITE(ETH_CTL, 0);			// disable everything
 	EMAC_WRITE(ETH_IDR, -1);		// disable interrupts
 	EMAC_WRITE(ETH_RBQP, 0);		// clear receive
-	EMAC_WRITE(ETH_CFG, ETH_CFG_CLK_32 | ETH_CFG_SPD | ETH_CFG_FD | ETH_CFG_BIG);
+	EMAC_WRITE(ETH_CFG,
+	    ETH_CFG_CLK_32 | ETH_CFG_SPD | ETH_CFG_FD | ETH_CFG_BIG);
 	EMAC_WRITE(ETH_TCR, 0);			// send nothing
 	//(void)EMAC_READ(ETH_ISR);
 	u = EMAC_READ(ETH_TSR);
 	EMAC_WRITE(ETH_TSR, (u & (ETH_TSR_UND | ETH_TSR_COMP | ETH_TSR_BNQ
 				  | ETH_TSR_IDLE | ETH_TSR_RLE
-				  | ETH_TSR_COL|ETH_TSR_OVR)));
+				  | ETH_TSR_COL | ETH_TSR_OVR)));
 	u = EMAC_READ(ETH_RSR);
-	EMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR|ETH_RSR_REC|ETH_RSR_BNA)));
+	EMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR | ETH_RSR_REC | ETH_RSR_BNA)));
 
 	/* Fetch the Ethernet address from property if set. */
 	enaddr = prop_dictionary_get(device_properties(self), "mac-address");
@@ -174,7 +175,8 @@ emac_attach(device_t parent, device_t self, void *aux)
 		memcpy(sc->sc_enaddr, hardcoded, ETHER_ADDR_LEN);
 	}
 
-        at91_intr_establish(sc->sc_pid, IPL_NET, INTR_HIGH_LEVEL, emac_intr, sc);
+	at91_intr_establish(sc->sc_pid, IPL_NET, INTR_HIGH_LEVEL, emac_intr,
+	    sc);
 	emac_init(sc);
 }
 
@@ -194,10 +196,11 @@ emac_gctx(struct emac_softc *sc)
 	while (sc->txqc > (tsr & ETH_TSR_IDLE ? 0 : 1)) {
 		int i = sc->txqi % TX_QLEN;
 		bus_dmamap_sync(sc->sc_dmat, sc->txq[i].m_dmamap, 0,
-				sc->txq[i].m->m_pkthdr.len, BUS_DMASYNC_POSTWRITE);
+		    sc->txq[i].m->m_pkthdr.len, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sc->txq[i].m_dmamap);
 		m_freem(sc->txq[i].m);
-		DPRINTFN(2,("%s: freed idx #%i mbuf %p (txqc=%i)\n", __FUNCTION__, i, sc->txq[i].m, sc->txqc));
+		DPRINTFN(2,("%s: freed idx #%i mbuf %p (txqc=%i)\n",
+			__FUNCTION__, i, sc->txq[i].m, sc->txqc));
 		sc->txq[i].m = NULL;
 		sc->txqi = (i + 1) % TX_QLEN;
 		sc->txqc--;
@@ -222,18 +225,20 @@ emac_intr(void *arg)
 	int bi;
 
 	imr = ~EMAC_READ(ETH_IMR);
-	if (!(imr & (ETH_ISR_RCOM|ETH_ISR_TBRE|ETH_ISR_TIDLE|ETH_ISR_RBNA|ETH_ISR_ROVR))) {
+	if (!(imr & (ETH_ISR_RCOM | ETH_ISR_TBRE | ETH_ISR_TIDLE
+	    | ETH_ISR_RBNA | ETH_ISR_ROVR))) {
 		// interrupt not enabled, can't be us
 		return 0;
 	}
 
 	isr = EMAC_READ(ETH_ISR) & imr;
-#ifdef EMAC_DEBUG 
-	uint32_t rsr = 
+#ifdef EMAC_DEBUG
+	uint32_t rsr =
 #endif
 	EMAC_READ(ETH_RSR);		// get receive status register
 
-	DPRINTFN(2, ("%s: isr=0x%08X rsr=0x%08X imr=0x%08X\n", __FUNCTION__, isr, rsr, imr));
+	DPRINTFN(2, ("%s: isr=0x%08X rsr=0x%08X imr=0x%08X\n", __FUNCTION__,
+		isr, rsr, imr));
 
 	if (isr & ETH_ISR_RBNA) {		// out of receive buffers
 		EMAC_WRITE(ETH_RSR, ETH_RSR_BNA);	// clear interrupt
@@ -251,13 +256,14 @@ emac_intr(void *arg)
 		ifp->if_ipackets++;
 		DPRINTFN(1,("%s: receive overrun\n", __FUNCTION__));
 	}
-	
+
 	if (isr & ETH_ISR_RCOM) {			// packet has been received!
 		uint32_t nfo;
 		// @@@ if memory is NOT coherent, then we're in trouble @@@@
 //		bus_dmamap_sync(sc->sc_dmat, sc->rbqpage_dmamap, 0, sc->rbqlen, BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 //		printf("## RDSC[%i].ADDR=0x%08X\n", sc->rxqi % RX_QLEN, sc->RDSC[sc->rxqi % RX_QLEN].Addr);
-		DPRINTFN(2,("#2 RDSC[%i].INFO=0x%08X\n", sc->rxqi % RX_QLEN, sc->RDSC[sc->rxqi % RX_QLEN].Info));
+		DPRINTFN(2,("#2 RDSC[%i].INFO=0x%08X\n", sc->rxqi % RX_QLEN,
+			sc->RDSC[sc->rxqi % RX_QLEN].Info));
 		while (sc->RDSC[(bi = sc->rxqi % RX_QLEN)].Addr & ETH_RDSC_F_USED) {
 			int fl;
 			struct mbuf *m;
@@ -269,12 +275,13 @@ emac_intr(void *arg)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m != NULL) MCLGET(m, M_DONTWAIT);
 			if (m != NULL && (m->m_flags & M_EXT)) {
-				bus_dmamap_sync(sc->sc_dmat, sc->rxq[bi].m_dmamap, 0,
-						MCLBYTES, BUS_DMASYNC_POSTREAD);
-				bus_dmamap_unload(sc->sc_dmat, 
+				bus_dmamap_sync(sc->sc_dmat,
+				    sc->rxq[bi].m_dmamap, 0,
+				    MCLBYTES, BUS_DMASYNC_POSTREAD);
+				bus_dmamap_unload(sc->sc_dmat,
 					sc->rxq[bi].m_dmamap);
 				m_set_rcvif(sc->rxq[bi].m, ifp);
-				sc->rxq[bi].m->m_pkthdr.len = 
+				sc->rxq[bi].m->m_pkthdr.len =
 					sc->rxq[bi].m->m_len = fl;
 				DPRINTFN(2,("received %u bytes packet\n", fl));
 				if_percpuq_enqueue(ifp->if_percpuq, sc->rxq[bi].m);
@@ -282,12 +289,13 @@ emac_intr(void *arg)
 					m_adj(m, mtod(m, intptr_t) & 3);
 				}
 				sc->rxq[bi].m = m;
-				bus_dmamap_load(sc->sc_dmat, 
-					sc->rxq[bi].m_dmamap, 
+				bus_dmamap_load(sc->sc_dmat,
+					sc->rxq[bi].m_dmamap,
 					m->m_ext.ext_buf, MCLBYTES,
 					NULL, BUS_DMA_NOWAIT);
-				bus_dmamap_sync(sc->sc_dmat, sc->rxq[bi].m_dmamap, 0,
-						MCLBYTES, BUS_DMASYNC_PREREAD);
+				bus_dmamap_sync(sc->sc_dmat,
+				    sc->rxq[bi].m_dmamap, 0,
+				    MCLBYTES, BUS_DMASYNC_PREREAD);
 				sc->RDSC[bi].Info = 0;
 				sc->RDSC[bi].Addr =
 					sc->rxq[bi].m_dmamap->dm_segs[0].ds_addr
@@ -300,7 +308,7 @@ emac_intr(void *arg)
 					m_freem(m);
 				}
 				ifp->if_ierrors++;
-			} 
+			}
 			sc->rxqi++;
 		}
 //		bus_dmamap_sync(sc->sc_dmat, sc->rbqpage_dmamap, 0, sc->rbqlen, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -310,7 +318,7 @@ emac_intr(void *arg)
 		if_schedule_deferred_start(ifp);
 #if 0 // reloop
 	irq = EMAC_READ(IntStsC);
-	if ((irq & (IntSts_RxSQ|IntSts_ECI)) != 0)
+	if ((irq & (IntSts_RxSQ | IntSts_ECI)) != 0)
 		goto begin;
 #endif
 
@@ -325,6 +333,7 @@ emac_init(struct emac_softc *sc)
 	void *addr;
 	int rsegs, err, i;
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	uint32_t u;
 #if 0
 	int mdcdiv = DEFAULT_MDCDIV;
@@ -336,18 +345,20 @@ emac_init(struct emac_softc *sc)
 	EMAC_WRITE(ETH_CTL, ETH_CTL_MPE);	// disable everything
 	EMAC_WRITE(ETH_IDR, -1);		// disable interrupts
 	EMAC_WRITE(ETH_RBQP, 0);		// clear receive
-	EMAC_WRITE(ETH_CFG, ETH_CFG_CLK_32 | ETH_CFG_SPD | ETH_CFG_FD | ETH_CFG_BIG);
+	EMAC_WRITE(ETH_CFG,
+	    ETH_CFG_CLK_32 | ETH_CFG_SPD | ETH_CFG_FD | ETH_CFG_BIG);
 	EMAC_WRITE(ETH_TCR, 0);			// send nothing
 //	(void)EMAC_READ(ETH_ISR);
 	u = EMAC_READ(ETH_TSR);
 	EMAC_WRITE(ETH_TSR, (u & (ETH_TSR_UND | ETH_TSR_COMP | ETH_TSR_BNQ
 				  | ETH_TSR_IDLE | ETH_TSR_RLE
-				  | ETH_TSR_COL|ETH_TSR_OVR)));
+				  | ETH_TSR_COL | ETH_TSR_OVR)));
 	u = EMAC_READ(ETH_RSR);
-	EMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR|ETH_RSR_REC|ETH_RSR_BNA)));
+	EMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR | ETH_RSR_REC | ETH_RSR_BNA)));
 
 	/* configure EMAC */
-	EMAC_WRITE(ETH_CFG, ETH_CFG_CLK_32 | ETH_CFG_SPD | ETH_CFG_FD | ETH_CFG_BIG);
+	EMAC_WRITE(ETH_CFG,
+	    ETH_CFG_CLK_32 | ETH_CFG_SPD | ETH_CFG_FD | ETH_CFG_BIG);
 	EMAC_WRITE(ETH_CTL, ETH_CTL_MPE);
 #if 0
 	if (device_cfdata(sc->sc_dev)->cf_flags)
@@ -377,7 +388,7 @@ emac_init(struct emac_softc *sc)
 	if (err == 0) {
 		DPRINTFN(1,("%s: -> bus_dmamem_map\n", __FUNCTION__));
 		err = bus_dmamem_map(sc->sc_dmat, &segs, 1, sc->rbqlen,
-			&sc->rbqpage, (BUS_DMA_WAITOK|BUS_DMA_COHERENT));
+			&sc->rbqpage, (BUS_DMA_WAITOK | BUS_DMA_COHERENT));
 	}
 	if (err == 0) {
 		DPRINTFN(1,("%s: -> bus_dmamap_create\n", __FUNCTION__));
@@ -404,26 +415,28 @@ emac_init(struct emac_softc *sc)
 
 	/* Populate the RXQ with mbufs */
 	sc->rxqi = 0;
-	for(i = 0; i < RX_QLEN; i++) {
+	for (i = 0; i < RX_QLEN; i++) {
 		struct mbuf *m;
 
-		err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, PAGE_SIZE,
-			BUS_DMA_WAITOK, &sc->rxq[i].m_dmamap);
-		if (err) {
-			panic("%s: dmamap_create failed: %i\n", __FUNCTION__, err);
-		}
+		err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+		    PAGE_SIZE, BUS_DMA_WAITOK, &sc->rxq[i].m_dmamap);
+		if (err)
+			panic("%s: dmamap_create failed: %i\n",
+			    __FUNCTION__, err);
+
 		MGETHDR(m, M_WAIT, MT_DATA);
 		MCLGET(m, M_WAIT);
 		sc->rxq[i].m = m;
 		if (mtod(m, intptr_t) & 3) {
 			m_adj(m, mtod(m, intptr_t) & 3);
 		}
-		err = bus_dmamap_load(sc->sc_dmat, sc->rxq[i].m_dmamap, 
-			m->m_ext.ext_buf, MCLBYTES, NULL, 
+		err = bus_dmamap_load(sc->sc_dmat, sc->rxq[i].m_dmamap,
+			m->m_ext.ext_buf, MCLBYTES, NULL,
 			BUS_DMA_WAITOK);
-		if (err) {
-			panic("%s: dmamap_load failed: %i\n", __FUNCTION__, err);
-		}
+		if (err)
+			panic("%s: dmamap_load failed: %i\n",
+			    __FUNCTION__, err);
+
 		sc->RDSC[i].Addr = sc->rxq[i].m_dmamap->dm_segs[0].ds_addr
 			| (i == (RX_QLEN-1) ? ETH_RDSC_F_WRAP : 0);
 		sc->RDSC[i].Info = 0;
@@ -442,7 +455,7 @@ emac_init(struct emac_softc *sc)
 	}
 
 	/* Program each queue's start addr, cur addr, and len registers
-	 * with the physical addresses. 
+	 * with the physical addresses.
 	 */
 	bus_dmamap_sync(sc->sc_dmat, sc->rbqpage_dmamap, 0, sc->rbqlen,
 			 BUS_DMASYNC_PREREAD);
@@ -450,16 +463,16 @@ emac_init(struct emac_softc *sc)
 	EMAC_WRITE(ETH_RBQP, (uint32_t)addr);
 
 	/* Divide HCLK by 32 for MDC clock */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = emac_mii_readreg;
-	sc->sc_mii.mii_writereg = emac_mii_writereg;
-	sc->sc_mii.mii_statchg = emac_statchg;
-	sc->sc_ec.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, emac_mediachange,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = emac_mii_readreg;
+	mii->mii_writereg = emac_mii_writereg;
+	mii->mii_statchg = emac_statchg;
+	sc->sc_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, emac_mediachange,
 		emac_mediastatus);
-	mii_attach((device_t )sc, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach((device_t )sc, mii, 0xffffffff, MII_PHY_ANY,
 		MII_OFFSET_ANY, 0);
-	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	// enable / disable interrupts
 
@@ -524,7 +537,8 @@ emac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 			     | ((phy << ETH_MAN_PHYA_SHIFT) & ETH_MAN_PHYA)
 			     | ((reg << ETH_MAN_REGA_SHIFT) & ETH_MAN_REGA)
 			     | ETH_MAN_CODE_IEEE802_3));
-	while (!(EMAC_READ(ETH_SR) & ETH_SR_IDLE)) ;
+	while (!(EMAC_READ(ETH_SR) & ETH_SR_IDLE))
+		;
 	*val = EMAC_READ(ETH_MAN) & ETH_MAN_DATA;
 
 	return 0;
@@ -542,12 +556,12 @@ emac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 			     | ((reg << ETH_MAN_REGA_SHIFT) & ETH_MAN_REGA)
 			     | ETH_MAN_CODE_IEEE802_3
 			     | (val & ETH_MAN_DATA)));
-	while (!(EMAC_READ(ETH_SR) & ETH_SR_IDLE)) ;
+	while (!(EMAC_READ(ETH_SR) & ETH_SR_IDLE))
+		;
 
 	return 0;
 }
 
-	
 void
 emac_statchg(struct ifnet *ifp)
 {
@@ -577,7 +591,7 @@ emac_tick(void *arg)
 	ifp->if_collisions += EMAC_READ(ETH_SCOL) + EMAC_READ(ETH_MCOL);
 	/* These misses are ok, they will happen if the RAM/CPU can't keep up */
 	misses = EMAC_READ(ETH_DRFC);
-	if (misses > 0) 
+	if (misses > 0)
 		printf("%s: %d rx misses\n", device_xname(sc->sc_dev), misses);
 
 	s = splnet();
@@ -598,7 +612,7 @@ emac_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int s, error;
 
 	s = splnet();
-	switch(cmd) {
+	switch (cmd) {
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
@@ -619,7 +633,7 @@ emac_ifstart(struct ifnet *ifp)
 	bus_dma_segment_t *segs;
 	int s, bi, err, nsegs;
 
-	s = splnet();	
+	s = splnet();
 start:
 	if (emac_gctx(sc) == 0) {
 		/* Enable transmit-buffer-free interrupt */
@@ -640,13 +654,13 @@ start:
 //more:
 	bi = (sc->txqi + sc->txqc) % TX_QLEN;
 	if ((err = bus_dmamap_load_mbuf(sc->sc_dmat, sc->txq[bi].m_dmamap, m,
-		BUS_DMA_NOWAIT)) || 
+		BUS_DMA_NOWAIT)) ||
 		sc->txq[bi].m_dmamap->dm_segs[0].ds_addr & 0x3 ||
 		sc->txq[bi].m_dmamap->dm_nsegs > 1) {
 		/* Copy entire mbuf chain to new single */
 		struct mbuf *mn;
 
-		if (err == 0) 
+		if (err == 0)
 			bus_dmamap_unload(sc->sc_dmat, sc->txq[bi].m_dmamap);
 
 		MGETHDR(mn, M_DONTWAIT, MT_DATA);
@@ -688,8 +702,8 @@ start:
 	}
 #endif
 
-	bus_dmamap_sync(sc->sc_dmat, sc->txq[bi].m_dmamap, 0, 
-		sc->txq[bi].m_dmamap->dm_mapsize, 
+	bus_dmamap_sync(sc->sc_dmat, sc->txq[bi].m_dmamap, 0,
+		sc->txq[bi].m_dmamap->dm_mapsize,
 		BUS_DMASYNC_PREWRITE);
 
 	EMAC_WRITE(ETH_TAR, segs->ds_addr);
@@ -747,15 +761,16 @@ emac_ifstop(struct ifnet *ifp, int disable)
 	EMAC_WRITE(ETH_CTL, ETH_CTL_MPE);	// disable everything
 	EMAC_WRITE(ETH_IDR, -1);		// disable interrupts
 //	EMAC_WRITE(ETH_RBQP, 0);		// clear receive
-	EMAC_WRITE(ETH_CFG, ETH_CFG_CLK_32 | ETH_CFG_SPD | ETH_CFG_FD | ETH_CFG_BIG);
+	EMAC_WRITE(ETH_CFG,
+	    ETH_CFG_CLK_32 | ETH_CFG_SPD | ETH_CFG_FD | ETH_CFG_BIG);
 	EMAC_WRITE(ETH_TCR, 0);			// send nothing
 //	(void)EMAC_READ(ETH_ISR);
 	u = EMAC_READ(ETH_TSR);
 	EMAC_WRITE(ETH_TSR, (u & (ETH_TSR_UND | ETH_TSR_COMP | ETH_TSR_BNQ
 				  | ETH_TSR_IDLE | ETH_TSR_RLE
-				  | ETH_TSR_COL|ETH_TSR_OVR)));
+				  | ETH_TSR_COL | ETH_TSR_OVR)));
 	u = EMAC_READ(ETH_RSR);
-	EMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR|ETH_RSR_REC|ETH_RSR_BNA)));
+	EMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR | ETH_RSR_REC | ETH_RSR_BNA)));
 #endif
 	callout_stop(&sc->emac_tick_ch);
 

@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.33 2019/03/08 08:35:58 msaitoh Exp $ */
+/* $Id: if_ae.c,v 1.34 2019/05/23 10:51:38 msaitoh Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.33 2019/03/08 08:35:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.34 2019/05/23 10:51:38 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -132,7 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.33 2019/03/08 08:35:58 msaitoh Exp $");
 #include <mips/atheros/dev/aevar.h>
 
 static const struct {
-	u_int32_t txth_opmode;		/* OPMODE bits */
+	uint32_t txth_opmode;		/* OPMODE bits */
 	const char *txth_name;		/* name of mode */
 } ae_txthresh[] = {
 	{ OPMODE_TR_32,		"32 words" },
@@ -150,7 +150,7 @@ static int	ae_activate(device_t, enum devact);
 
 static int	ae_ifflags_cb(struct ethercom *);
 static void	ae_reset(struct ae_softc *);
-static void	ae_idle(struct ae_softc *, u_int32_t);
+static void	ae_idle(struct ae_softc *, uint32_t);
 
 static void	ae_start(struct ifnet *);
 static void	ae_watchdog(struct ifnet *);
@@ -223,6 +223,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	struct ae_softc *sc = device_private(self);
 	struct arbus_attach_args *aa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	int i, error;
 
 	sc->sc_dev = self;
@@ -345,21 +346,20 @@ ae_attach(device_t parent, device_t self, void *aux)
 	 * Initialize our media structures.  This may probe the MII, if
 	 * present.
 	 */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = ae_mii_readreg;
-	sc->sc_mii.mii_writereg = ae_mii_writereg;
-	sc->sc_mii.mii_statchg = ae_mii_statchg;
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = ae_mii_readreg;
+	mii->mii_writereg = ae_mii_writereg;
+	mii->mii_statchg = ae_mii_statchg;
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	sc->sc_tick = ae_mii_tick;
 
@@ -556,7 +556,7 @@ ae_start(struct ifnet *ifp)
 	    device_xname(sc->sc_dev), sc->sc_flags, ifp->if_flags));
 
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*
@@ -594,7 +594,7 @@ ae_start(struct ifnet *ifp)
 		 */
 		if (((mtod(m0, uintptr_t) & 3) != 0) ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		      BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
+		      BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -614,7 +614,7 @@ ae_start(struct ifnet *ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", device_xname(sc->sc_dev),
@@ -710,7 +710,7 @@ ae_start(struct ifnet *ifp)
 
 		/* Sync the descriptors we're using. */
 		AE_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * Store a pointer to the packet so we can free it later,
@@ -749,7 +749,7 @@ ae_start(struct ifnet *ifp)
 		 */
 		sc->sc_txdescs[lasttx].ad_ctl |= ADCTL_Tx_IC;
 		AE_CDTXSYNC(sc, lasttx, 1,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * The entire packet chain is set up.  Give the
@@ -757,7 +757,7 @@ ae_start(struct ifnet *ifp)
 		 */
 		sc->sc_txdescs[firsttx].ad_status |= ADSTAT_OWN;
 		AE_CDTXSYNC(sc, firsttx, 1,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Wake up the transmitter. */
 		/* XXX USE AUTOPOLLING? */
@@ -806,7 +806,7 @@ ae_ifflags_cb(struct ethercom *ec)
 	struct ae_softc *sc = ifp->if_softc;
 	int change = ifp->if_flags ^ sc->sc_if_flags;
 
-	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;
 	else if ((change & IFF_PROMISC) != 0)
 		ae_filter_setup(sc);
@@ -857,7 +857,7 @@ ae_intr(void *arg)
 {
 	struct ae_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	u_int32_t status, rxstatus, txstatus;
+	uint32_t status, rxstatus, txstatus;
 	int handled = 0, txthresh;
 
 	DPRINTF(sc, ("%s: ae_intr\n", device_xname(sc->sc_dev)));
@@ -927,8 +927,7 @@ ae_intr(void *arg)
 					ae_idle(sc, OPMODE_ST);
 
 					sc->sc_txthresh = txthresh;
-					opmode &=
-					    ~(OPMODE_TR|OPMODE_SF);
+					opmode &= ~(OPMODE_TR | OPMODE_SF);
 					opmode |=
 					    ae_txthresh[txthresh].txth_opmode;
 					printf("%s: transmit underrun; new "
@@ -950,7 +949,7 @@ ae_intr(void *arg)
 			}
 		}
 
-		if (status & (STATUS_TPS|STATUS_RPS)) {
+		if (status & (STATUS_TPS | STATUS_RPS)) {
 			if (status & STATUS_TPS)
 				printf("%s: transmit process stopped\n",
 				    device_xname(sc->sc_dev));
@@ -1012,14 +1011,14 @@ ae_rxintr(struct ae_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ae_rxsoft *rxs;
 	struct mbuf *m;
-	u_int32_t rxstat;
+	uint32_t rxstat;
 	int i, len;
 
 	for (i = sc->sc_rxptr;; i = AE_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
 
 		AE_CDRXSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		rxstat = sc->sc_rxdescs[i].ad_status;
 
@@ -1150,7 +1149,7 @@ ae_txintr(struct ae_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ae_txsoft *txs;
-	u_int32_t txstat;
+	uint32_t txstat;
 
 	DPRINTF(sc, ("%s: ae_txintr: sc_flags 0x%08x\n",
 	    device_xname(sc->sc_dev), sc->sc_flags));
@@ -1164,7 +1163,7 @@ ae_txintr(struct ae_softc *sc)
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
 		AE_CDTXSYNC(sc, txs->txs_lastdesc,
 		    txs->txs_ndescs,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 #ifdef AE_DEBUG
 		if (ifp->if_flags & IFF_DEBUG) {
@@ -1217,7 +1216,7 @@ ae_txintr(struct ae_softc *sc)
 			sc->sc_stats.ts_tx_lc++;
 #endif
 
-		if (txstat & (ADSTAT_Tx_UF|ADSTAT_Tx_TO))
+		if (txstat & (ADSTAT_Tx_UF | ADSTAT_Tx_TO))
 			ifp->if_oerrors++;
 
 		if (txstat & ADSTAT_Tx_EC)
@@ -1334,7 +1333,7 @@ ae_init(struct ifnet *ifp)
 	}
 	sc->sc_txdescs[AE_NTXDESC - 1].ad_ctl |= ADCTL_ER;
 	AE_CDTXSYNC(sc, 0, AE_NTXDESC,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = AE_NTXDESC;
 	sc->sc_txnext = 0;
 
@@ -1382,8 +1381,8 @@ ae_init(struct ifnet *ifp)
 	sc->sc_inten |= STATUS_TPS | STATUS_TJT | STATUS_UNF |
 	    STATUS_RU | STATUS_RPS | STATUS_SE | STATUS_AIS;
 
-	sc->sc_rxint_mask = STATUS_RI|STATUS_RU;
-	sc->sc_txint_mask = STATUS_TI|STATUS_UNF|STATUS_TJT;
+	sc->sc_rxint_mask = STATUS_RI | STATUS_RU;
+	sc->sc_txint_mask = STATUS_TI | STATUS_UNF | STATUS_TJT;
 
 	sc->sc_rxint_mask &= sc->sc_inten;
 	sc->sc_txint_mask &= sc->sc_inten;
@@ -1641,7 +1640,7 @@ ae_add_rxbuf(struct ae_softc *sc, int idx)
 
 	error = bus_dmamap_load(sc->sc_dmat, rxs->rxs_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    device_xname(sc->sc_dev), idx, error);
@@ -1742,7 +1741,7 @@ ae_filter_setup(struct ae_softc *sc)
  *	Cause the transmit and/or receive processes to go idle.
  */
 void
-ae_idle(struct ae_softc *sc, u_int32_t bits)
+ae_idle(struct ae_softc *sc, uint32_t bits)
 {
 	static const char * const txstate_names[] = {
 		"STOPPED",
@@ -1765,7 +1764,7 @@ ae_idle(struct ae_softc *sc, u_int32_t bits)
 		"RUNNING - QUEUE",
 	};
 
-	u_int32_t csr, ackmask = 0;
+	uint32_t csr, ackmask = 0;
 	int i;
 
 	if (bits & OPMODE_ST)
@@ -1840,7 +1839,7 @@ ae_mii_statchg(struct ifnet *ifp)
 
 	/* XXX: do we need to do this? */
 	/* Idle the transmit and receive processes. */
-	//ae_idle(sc, OPMODE_ST|OPMODE_SR);
+	//ae_idle(sc, OPMODE_ST | OPMODE_SR);
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX) {
 		flowc = FLOWC_FCE;

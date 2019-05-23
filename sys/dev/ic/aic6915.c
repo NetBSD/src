@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.37 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.38 2019/05/23 10:51:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.37 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.38 2019/05/23 10:51:39 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -137,9 +137,10 @@ void
 sf_attach(struct sf_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	int i, rseg, error;
 	bus_dma_segment_t seg;
-	u_int8_t enaddr[ETHER_ADDR_LEN];
+	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	callout_init(&sc->sc_tick_callout, 0);
 
@@ -182,7 +183,7 @@ sf_attach(struct sf_softc *sc)
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct sf_control_data), (void **)&sc->sc_control_data,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
@@ -254,20 +255,20 @@ sf_attach(struct sf_softc *sc)
 	/*
 	 * Initialize our media structures and probe the MII.
 	 */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = sf_mii_read;
-	sc->sc_mii.mii_writereg = sf_mii_write;
-	sc->sc_mii.mii_statchg = sf_mii_statchg;
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = sf_mii_read;
+	mii->mii_writereg = sf_mii_write;
+	mii->mii_statchg = sf_mii_statchg;
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 	    ether_mediastatus);
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -395,7 +396,7 @@ sf_start(struct ifnet *ifp)
 		 * again.
 		 */
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				aprint_error_dev(sc->sc_dev,
@@ -414,7 +415,7 @@ sf_start(struct ifnet *ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (error) {
 				aprint_error_dev(sc->sc_dev,
 				    "unable to load Tx buffer, error = %d\n",
@@ -565,7 +566,7 @@ sf_intr(void *arg)
 			sf_rxintr(sc);
 
 		/* Handle transmit completion interrupts. */
-		if (isr & (IS_TxDmaDoneInt|IS_TxQueueDoneInt))
+		if (isr & (IS_TxDmaDoneInt | IS_TxQueueDoneInt))
 			sf_txintr(sc);
 
 		/* Handle abnormal interrupts. */
@@ -710,9 +711,9 @@ sf_rxintr(struct sf_softc *sc)
 	while (consumer != producer) {
 		rcd = &sc->sc_rxcomp[consumer];
 		SF_CDRXCSYNC(sc, consumer,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		SF_CDRXCSYNC(sc, consumer,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		word0 = le32toh(rcd->rcd_word0);
 		rxidx = RCD_W0_EndIndex(word0);
@@ -946,7 +947,7 @@ sf_init(struct ifnet *ifp)
 	 */
 	for (i = 0; i < SF_NTCD; i++) {
 		sc->sc_txcomp[i].tcd_word0 = TCD_DMA_ID;
-		SF_CDTXCSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		SF_CDTXCSYNC(sc, i, BUS_DMASYNC_PREREAD |BUS_DMASYNC_PREWRITE);
 	}
 	sf_funcreg_write(sc, SF_CompletionQueueHighAddr, 0);
 	sf_funcreg_write(sc, SF_TxCompletionQueueCtrl, SF_CDTXCADDR(sc, 0));
@@ -983,7 +984,7 @@ sf_init(struct ifnet *ifp)
 		sc->sc_rxcomp[i].rcd_word1 = 0;
 		sc->sc_rxcomp[i].rcd_word2 = 0;
 		sc->sc_rxcomp[i].rcd_timestamp = 0;
-		SF_CDRXCSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		SF_CDRXCSYNC(sc, i, BUS_DMASYNC_PREREAD |BUS_DMASYNC_PREWRITE);
 	}
 	sf_funcreg_write(sc, SF_RxCompletionQueue1Ctrl, SF_CDRXCADDR(sc, 0) |
 	    RCQ1C_RxCompletionQ1Type(3));
@@ -1079,7 +1080,7 @@ sf_init(struct ifnet *ifp)
 	 * Start the transmit and receive processes.
 	 */
 	sf_funcreg_write(sc, SF_GeneralEthernetCtrl,
-	    GEC_TxDmaEn|GEC_RxDmaEn|GEC_TransmitEn|GEC_ReceiveEn);
+	    GEC_TxDmaEn | GEC_RxDmaEn | GEC_TransmitEn | GEC_ReceiveEn);
 
 	/* Start the on second clock. */
 	callout_reset(&sc->sc_tick_callout, hz, sf_tick, sc);
@@ -1210,7 +1211,7 @@ sf_add_rxbuf(struct sf_softc *sc, int idx)
 
 	error = bus_dmamap_load(sc->sc_dmat, ds->ds_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "can't load rx DMA map %d, error = %d\n", idx, error);

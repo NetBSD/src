@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.45 2019/01/22 03:42:25 msaitoh Exp $ */
+/* $NetBSD: if_aumac.c,v 1.46 2019/05/23 10:51:38 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.45 2019/01/22 03:42:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.46 2019/05/23 10:51:38 msaitoh Exp $");
 
 
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.45 2019/01/22 03:42:25 msaitoh Exp $"
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/endian.h>
-#include <sys/errno.h> 
+#include <sys/errno.h>
 #include <sys/intr.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
@@ -207,9 +207,9 @@ aumac_match(device_t parent, struct cfdata *cf, void *aux)
 	struct aubus_attach_args *aa = aux;
 
 	if (strcmp(aa->aa_name, cf->cf_name) == 0)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -220,6 +220,7 @@ aumac_attach(device_t parent, device_t self, void *aux)
 	struct aumac_softc *sc = device_private(self);
 	struct aubus_attach_args *aa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	struct pglist pglist;
 	paddr_t bufaddr;
 	vaddr_t vbufaddr;
@@ -309,22 +310,22 @@ aumac_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize the media structures and probe the MII.
 	 */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = aumac_mii_readreg;
-	sc->sc_mii.mii_writereg = aumac_mii_writereg;
-	sc->sc_mii.mii_statchg = aumac_mii_statchg;
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = aumac_mii_readreg;
+	mii->mii_writereg = aumac_mii_writereg;
+	mii->mii_statchg = aumac_mii_statchg;
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE,
+		    0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	strcpy(ifp->if_xname, device_xname(self));
 	ifp->if_softc = sc;
@@ -337,7 +338,7 @@ aumac_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
-	if_attach(ifp); 
+	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
@@ -394,7 +395,7 @@ aumac_start(struct ifnet *ifp)
 	struct mbuf *m;
 	int nexttx;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*
@@ -505,7 +506,7 @@ aumac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	aumac_start(ifp);
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 /*
@@ -527,7 +528,7 @@ aumac_intr(void *arg)
 	 * (for status updating).
 	 */
 	if ((sc->sc_ethercom.ec_if.if_flags & IFF_RUNNING) == 0)
-		return (0);
+		return 0;
 
 	status = aumac_rxintr(sc);
 	status += aumac_txintr(sc);
@@ -806,14 +807,14 @@ aumac_init(struct ifnet *ifp)
 	callout_reset(&sc->sc_tick_ch, hz, aumac_tick, sc);
 
 	/* ...all done! */
-	ifp->if_flags |= IFF_RUNNING; 
+	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	au_intr_enable(sc->sc_irq);
 out:
 	if (error)
 		printf("%s: interface not running\n", device_xname(sc->sc_dev));
-	return (error);
+	return error;
 }
 
 /*
@@ -870,11 +871,11 @@ aumac_powerup(struct aumac_softc *sc)
 {
 
 	/* Enable clocks to the MAC. */
-	bus_space_write_4(sc->sc_st, sc->sc_macen_sh, 0, MACEN_JP|MACEN_CE);
+	bus_space_write_4(sc->sc_st, sc->sc_macen_sh, 0, MACEN_JP | MACEN_CE);
 
 	/* Enable MAC, coherent transactions, pass only valid frames. */
 	bus_space_write_4(sc->sc_st, sc->sc_macen_sh, 0,
-	    MACEN_E2|MACEN_E1|MACEN_E0|MACEN_CE);
+	    MACEN_E2 | MACEN_E1 | MACEN_E0 | MACEN_CE);
 
 	delay(20000);
 }
@@ -978,7 +979,7 @@ aumac_mii_wait(struct aumac_softc *sc, const char *msg)
 	for (i = 0; i < 10000; i++) {
 		if ((bus_space_read_4(sc->sc_st, sc->sc_mac_sh,
 		     MAC_MIICTRL) & MIICTRL_MB) == 0)
-			return (0);
+			return 0;
 		delay(10);
 	}
 

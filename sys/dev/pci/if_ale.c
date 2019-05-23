@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.28 2019/03/05 08:25:02 msaitoh Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.29 2019/05/23 10:51:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.28 2019/03/05 08:25:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.29 2019/05/23 10:51:39 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -388,6 +388,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	struct ifnet *ifp;
+	struct mii_data * const mii = &sc->sc_miibus;
 	pcireg_t memtype;
 	int mii_flags, error = 0;
 	uint32_t rxf_len, txf_len;
@@ -555,27 +556,25 @@ ale_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* Set up MII bus. */
-	sc->sc_miibus.mii_ifp = ifp;
-	sc->sc_miibus.mii_readreg = ale_miibus_readreg;
-	sc->sc_miibus.mii_writereg = ale_miibus_writereg;
-	sc->sc_miibus.mii_statchg = ale_miibus_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = ale_miibus_readreg;
+	mii->mii_writereg = ale_miibus_writereg;
+	mii->mii_statchg = ale_miibus_statchg;
 
-	sc->sc_ec.ec_mii = &sc->sc_miibus;
-	ifmedia_init(&sc->sc_miibus.mii_media, 0, ale_mediachange,
-	    ale_mediastatus);
+	sc->sc_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ale_mediachange, ale_mediastatus);
 	mii_flags = 0;
 	if ((sc->ale_flags & ALE_FLAG_JUMBO) != 0)
 		mii_flags |= MIIF_DOPAUSE;
-	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, mii_flags);
 
-	if (LIST_FIRST(&sc->sc_miibus.mii_phys) == NULL) {
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
-		ifmedia_add(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_MANUAL,
-		    0, NULL);
-		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_MANUAL);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else
-		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.104 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.105 2019/05/23 10:51:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.104 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.105 2019/05/23 10:51:39 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -242,7 +242,7 @@ rtk_mii_sync(struct rtk_softc *sc)
 {
 	int i;
 
-	MII_SET(RTK_MII_DIR|RTK_MII_DATAOUT);
+	MII_SET(RTK_MII_DIR | RTK_MII_DATAOUT);
 
 	for (i = 0; i < 32; i++) {
 		MII_SET(RTK_MII_CLK);
@@ -311,7 +311,7 @@ rtk_mii_readreg(struct rtk_softc *sc, struct rtk_mii_frame *frame)
 	rtk_mii_send(sc, frame->mii_regaddr, 5);
 
 	/* Idle bit */
-	MII_CLR((RTK_MII_CLK|RTK_MII_DATAOUT));
+	MII_CLR((RTK_MII_CLK | RTK_MII_DATAOUT));
 	DELAY(1);
 	MII_SET(RTK_MII_CLK);
 	DELAY(1);
@@ -616,6 +616,7 @@ rtk_attach(struct rtk_softc *sc)
 {
 	device_t self = sc->sc_dev;
 	struct ifnet *ifp;
+	struct mii_data * const mii = &sc->mii;
 	struct rtk_tx_desc *txd;
 	uint16_t val;
 	uint8_t eaddr[ETHER_ADDR_LEN];
@@ -655,7 +656,7 @@ rtk_attach(struct rtk_softc *sc)
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg,
 	    RTK_RXBUFLEN + 16, (void **)&sc->rtk_rx_buf,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(self,
 		    "can't map recv buffer, error = %d\n", error);
 		goto fail_1;
@@ -671,7 +672,7 @@ rtk_attach(struct rtk_softc *sc)
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->recv_dmamap,
 	    sc->rtk_rx_buf, RTK_RXBUFLEN + 16,
-	    NULL, BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
+	    NULL, BUS_DMA_READ | BUS_DMA_NOWAIT)) != 0) {
 		aprint_error_dev(self,
 		    "can't load recv buffer DMA map, error = %d\n", error);
 		goto fail_3;
@@ -719,23 +720,21 @@ rtk_attach(struct rtk_softc *sc)
 	/*
 	 * Do ifmedia setup.
 	 */
-	sc->mii.mii_ifp = ifp;
-	sc->mii.mii_readreg = rtk_phy_readreg;
-	sc->mii.mii_writereg = rtk_phy_writereg;
-	sc->mii.mii_statchg = rtk_phy_statchg;
-	sc->ethercom.ec_mii = &sc->mii;
-	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, ether_mediachange,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = rtk_phy_readreg;
+	mii->mii_writereg = rtk_phy_writereg;
+	mii->mii_statchg = rtk_phy_statchg;
+	sc->ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 	    ether_mediastatus);
-	mii_attach(self, &sc->mii, 0xffffffff,
-	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
 	/* Choose a default media. */
-	if (LIST_FIRST(&sc->mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->mii.mii_media, IFM_ETHER|IFM_NONE);
-	} else {
-		ifmedia_set(&sc->mii.mii_media, IFM_ETHER|IFM_AUTO);
-	}
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
+	} else
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	/*
 	 * Call MI attach routines.
@@ -962,12 +961,12 @@ rtk_rxeof(struct rtk_softc *sc)
 			 *
 			 */
 #if 0
-			if (rxstat & (RTK_RXSTAT_BADSYM|RTK_RXSTAT_RUNT|
-			    RTK_RXSTAT_GIANT|RTK_RXSTAT_CRCERR|
+			if (rxstat & (RTK_RXSTAT_BADSYM | RTK_RXSTAT_RUNT |
+			    RTK_RXSTAT_GIANT | RTK_RXSTAT_CRCERR |
 			    RTK_RXSTAT_ALIGNERR)) {
 				CSR_WRITE_2(sc, RTK_COMMAND, RTK_CMD_TX_ENB);
 				CSR_WRITE_2(sc, RTK_COMMAND,
-				    RTK_CMD_TX_ENB|RTK_CMD_RX_ENB);
+				    RTK_CMD_TX_ENB | RTK_CMD_RX_ENB);
 				CSR_WRITE_4(sc, RTK_RXCFG, RTK_RXCFG_CONFIG);
 				CSR_WRITE_4(sc, RTK_RXADDR,
 				    sc->recv_dmamap->dm_segs[0].ds_addr);
@@ -1102,8 +1101,8 @@ rtk_txeof(struct rtk_softc *sc)
 	 */
 	while ((txd = SIMPLEQ_FIRST(&sc->rtk_tx_dirty)) != NULL) {
 		txstat = CSR_READ_4(sc, txd->txd_txstat);
-		if ((txstat & (RTK_TXSTAT_TX_OK|
-		    RTK_TXSTAT_TX_UNDERRUN|RTK_TXSTAT_TXABRT)) == 0)
+		if ((txstat & (RTK_TXSTAT_TX_OK |
+		    RTK_TXSTAT_TX_UNDERRUN | RTK_TXSTAT_TXABRT)) == 0)
 			break;
 
 		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_dirty, txd_q);
@@ -1141,7 +1140,7 @@ rtk_txeof(struct rtk_softc *sc)
 				printf("\n");
 #endif
 			}
-			if (txstat & (RTK_TXSTAT_TXABRT|RTK_TXSTAT_OUTOFWIN))
+			if (txstat & (RTK_TXSTAT_TXABRT | RTK_TXSTAT_OUTOFWIN))
 				CSR_WRITE_4(sc, RTK_TXCFG, RTK_TXCFG_CONFIG);
 		}
 		SIMPLEQ_INSERT_TAIL(&sc->rtk_tx_free, txd, txd_q);
@@ -1193,7 +1192,7 @@ rtk_intr(void *arg)
 		if (status & RTK_ISR_RX_ERR)
 			rtk_rxeof(sc);
 
-		if (status & (RTK_ISR_TX_OK|RTK_ISR_TX_ERR))
+		if (status & (RTK_ISR_TX_OK | RTK_ISR_TX_ERR))
 			rtk_txeof(sc);
 
 		if (status & RTK_ISR_SYSTEM_ERR) {
@@ -1242,7 +1241,7 @@ rtk_start(struct ifnet *ifp)
 		if ((mtod(m_head, uintptr_t) & 3) != 0 ||
 		    m_head->m_pkthdr.len < ETHER_PAD_LEN ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmamap,
-			m_head, BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
+			m_head, BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 			if (m_new == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -1272,7 +1271,7 @@ rtk_start(struct ifnet *ifp)
 			}
 			error = bus_dmamap_load_mbuf(sc->sc_dmat,
 			    txd->txd_dmamap, m_new,
-			    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n",
@@ -1357,7 +1356,7 @@ rtk_init(struct ifnet *ifp)
 	/*
 	 * Enable transmit and receive.
 	 */
-	CSR_WRITE_1(sc, RTK_COMMAND, RTK_CMD_TX_ENB|RTK_CMD_RX_ENB);
+	CSR_WRITE_1(sc, RTK_COMMAND, RTK_CMD_TX_ENB | RTK_CMD_RX_ENB);
 
 	/*
 	 * Set the initial TX and RX configuration.
@@ -1403,9 +1402,9 @@ rtk_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, RTK_MISSEDPKT, 0);
 
 	/* Enable receiver and transmitter. */
-	CSR_WRITE_1(sc, RTK_COMMAND, RTK_CMD_TX_ENB|RTK_CMD_RX_ENB);
+	CSR_WRITE_1(sc, RTK_COMMAND, RTK_CMD_TX_ENB | RTK_CMD_RX_ENB);
 
-	CSR_WRITE_1(sc, RTK_CFG1, RTK_CFG1_DRVLOAD|RTK_CFG1_FULLDUPLEX);
+	CSR_WRITE_1(sc, RTK_CFG1, RTK_CFG1_DRVLOAD | RTK_CFG1_FULLDUPLEX);
 
 	/*
 	 * Set current media.

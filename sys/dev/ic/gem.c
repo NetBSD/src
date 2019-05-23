@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.116 2019/04/11 04:50:47 msaitoh Exp $ */
+/*	$NetBSD: gem.c,v 1.117 2019/05/23 10:51:39 msaitoh Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.116 2019/04/11 04:50:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.117 2019/05/23 10:51:39 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -409,7 +409,7 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 			aprint_debug_dev(sc->sc_dev, "using external PHY\n");
 #endif
 		/* Look for internal PHY if no external PHY was found */
-		if (LIST_EMPTY(&mii->mii_phys) && 
+		if (LIST_EMPTY(&mii->mii_phys) &&
 		    ((sc->sc_mif_config & GEM_MIF_CONFIG_MDI0) ||
 		     (sc->sc_variant == GEM_APPLE_K2_GMAC))) {
 			sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
@@ -474,7 +474,7 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 			 * XXX - we can really do the following ONLY if the
 			 * PHY indeed has the auto negotiation capability!!
 			 */
-			ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+			ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 		}
 	} else {
 		ifmedia_init(&mii->mii_media, IFM_IMASK, gem_ser_mediachange,
@@ -492,20 +492,20 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 		aprint_normal_dev(sc->sc_dev, "using external PCS %s: ",
 		    sc->sc_flags & GEM_SERDES ? "SERDES" : "Serialink");
 
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO, 0, NULL);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 		/* Check for FDX and HDX capabilities */
 		sc->sc_mii_anar = bus_space_read_4(t, h, GEM_MII_ANAR);
 		if (sc->sc_mii_anar & GEM_MII_ANEG_FUL_DUPLX) {
-			ifmedia_add(&sc->sc_mii.mii_media,
-			    IFM_ETHER|IFM_1000_SX|IFM_MANUAL|IFM_FDX, 0, NULL);
+			ifmedia_add(&mii->mii_media, IFM_ETHER |
+			    IFM_1000_SX | IFM_MANUAL | IFM_FDX, 0, NULL);
 			aprint_normal("1000baseSX-FDX, ");
 		}
 		if (sc->sc_mii_anar & GEM_MII_ANEG_HLF_DUPLX) {
-			ifmedia_add(&sc->sc_mii.mii_media,
-			    IFM_ETHER|IFM_1000_SX|IFM_MANUAL|IFM_HDX, 0, NULL);
+			ifmedia_add(&mii->mii_media, IFM_ETHER |
+			    IFM_1000_SX | IFM_MANUAL | IFM_HDX, 0, NULL);
 			aprint_normal("1000baseSX-HDX, ");
 		}
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 		sc->sc_mii_media = IFM_AUTO;
 		aprint_normal("auto\n");
 
@@ -559,7 +559,7 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 	 * If we support GigE media, we support jumbo frames too.
 	 * Unless we are Apple.
 	 */
-	TAILQ_FOREACH(ifm, &sc->sc_mii.mii_media.ifm_list, ifm_list) {
+	TAILQ_FOREACH(ifm, &mii->mii_media.ifm_list, ifm_list) {
 		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_T ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_SX ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_LX ||
@@ -673,7 +673,7 @@ gem_reset(struct gem_softc *sc)
 	gem_reset_tx(sc);
 
 	/* Do a full reset */
-	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_RX|GEM_RESET_TX);
+	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_RX | GEM_RESET_TX);
 	if (!gem_bitwait(sc, h, GEM_RESET, GEM_RESET_RX | GEM_RESET_TX, 0))
 		aprint_error_dev(sc->sc_dev, "cannot reset device\n");
 	splx(s);
@@ -949,7 +949,7 @@ gem_meminit(struct gem_softc *sc)
 		sc->sc_txdescs[i].gd_addr = 0;
 	}
 	GEM_CDTXSYNC(sc, 0, GEM_NTXDESC,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = GEM_NTXDESC-1;
 	sc->sc_txnext = 0;
 	sc->sc_txwin = 0;
@@ -1408,7 +1408,7 @@ gem_start(struct ifnet *ifp)
 		 * again.
 		 */
 		if (bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap, m0,
-		      BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0 ||
+		      BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0 ||
 		      (m0->m_pkthdr.len < ETHER_MIN_TX &&
 		       dmamap->dm_nsegs == GEM_NTXSEGS)) {
 			if (m0->m_pkthdr.len > MCLBYTES) {
@@ -1437,7 +1437,7 @@ gem_start(struct ifnet *ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (error) {
 				aprint_error_dev(sc->sc_dev,
 				    "unable to load Tx buffer, error = %d\n",
@@ -1587,7 +1587,7 @@ gem_start(struct ifnet *ifp)
 
 		/* Sync the descriptors we're using. */
 		GEM_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndescs,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Advance the tx pointer. */
 		sc->sc_txfree -= txs->txs_ndescs;
@@ -1692,7 +1692,7 @@ gem_tint(struct gem_softc *sc)
 			break;
 
 		GEM_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndescs,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 #ifdef GEM_DEBUG	/* XXX DMA synchronization? */
 		if (ifp->if_flags & IFF_DEBUG) {
@@ -1794,7 +1794,7 @@ gem_rint(struct gem_softc *sc)
 		rxs = &sc->sc_rxsoft[i];
 
 		GEM_CDRXSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		rxstat = GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags);
 
@@ -2029,7 +2029,7 @@ gem_add_rxbuf(struct gem_softc *sc, int idx)
 
 	error = bus_dmamap_load(sc->sc_dmatag, rxs->rxs_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "can't load rx DMA map %d, error = %d\n", idx, error);
@@ -2074,7 +2074,7 @@ gem_eint(struct gem_softc *sc, u_int status)
 	}
 	snprintb(bits, sizeof(bits), GEM_INTR_BITS, status);
 	printf("%s: status=%s\n", device_xname(sc->sc_dev), bits);
-		
+
 	return (1);
 }
 
@@ -2186,7 +2186,6 @@ gem_intr(void *v)
 #endif
 	DPRINTF(sc, ("%s: gem_intr: cplt 0x%x status %s\n",
 		device_xname(sc->sc_dev), (status >> 19), bits));
-		
 
 	if ((status & (GEM_INTR_RX_TAG_ERR | GEM_INTR_BERR)) != 0)
 		r |= gem_eint(sc, status);
@@ -2608,7 +2607,7 @@ gem_ifflags_cb(struct ethercom *ec)
 	struct gem_softc *sc = ifp->if_softc;
 	int change = ifp->if_flags ^ sc->sc_if_flags;
 
-	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;
 	else if ((change & IFF_PROMISC) != 0)
 		gem_setladrf(sc);
@@ -2661,8 +2660,8 @@ gem_inten(struct gem_softc *sc)
 		      ~(GEM_INTR_TX_INTME |
 			GEM_INTR_TX_EMPTY |
 			GEM_INTR_TX_MAC |
-			GEM_INTR_RX_DONE | GEM_INTR_RX_NOBUF|
-			GEM_INTR_RX_TAG_ERR | GEM_INTR_MAC_CONTROL|
+			GEM_INTR_RX_DONE | GEM_INTR_RX_NOBUF |
+			GEM_INTR_RX_TAG_ERR | GEM_INTR_MAC_CONTROL |
 			GEM_INTR_BERR | v));
 }
 
@@ -2724,7 +2723,7 @@ gem_setladrf(struct gem_softc *sc)
 	 * and hash filter.  Depending on the case, the right bit will be
 	 * enabled.
 	 */
-	v &= ~(GEM_MAC_RX_PROMISCUOUS|GEM_MAC_RX_HASH_FILTER|
+	v &= ~(GEM_MAC_RX_PROMISCUOUS | GEM_MAC_RX_HASH_FILTER |
 	    GEM_MAC_RX_PROMISC_GRP);
 
 	if ((ifp->if_flags & IFF_PROMISC) != 0) {

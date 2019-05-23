@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.22 2019/04/22 08:05:01 msaitoh Exp $	*/
+/*	$NetBSD: if_et.c,v 1.23 2019/05/23 10:51:39 msaitoh Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.22 2019/04/22 08:05:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.23 2019/05/23 10:51:39 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -189,6 +189,7 @@ et_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data * const mii = &sc->sc_miibus;
 	pcireg_t memtype;
 	int error;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -266,23 +267,22 @@ et_attach(device_t parent, device_t self, void *aux)
 
 	et_chip_attach(sc);
 
-	sc->sc_miibus.mii_ifp = ifp;
-	sc->sc_miibus.mii_readreg = et_miibus_readreg;
-	sc->sc_miibus.mii_writereg = et_miibus_writereg;
-	sc->sc_miibus.mii_statchg = et_miibus_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = et_miibus_readreg;
+	mii->mii_writereg = et_miibus_writereg;
+	mii->mii_statchg = et_miibus_statchg;
 
-	sc->sc_ethercom.ec_mii = &sc->sc_miibus;
-	ifmedia_init(&sc->sc_miibus.mii_media, 0, ether_mediachange,
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
-	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc->sc_miibus.mii_phys) == NULL) {
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
-		ifmedia_add(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_MANUAL,
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL,
 		    0, NULL);
-		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_MANUAL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else
-		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
@@ -738,7 +738,7 @@ et_dma_free(struct et_softc *sc)
 	 * Destroy RX stat ring DMA stuffs
 	 */
 	et_dma_mem_destroy(sc, rxst_ring->rsr_stat, rxst_ring->rsr_dmap);
-			  
+
 	/*
 	 * Destroy RX status DMA stuffs
 	 */
@@ -1903,7 +1903,6 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 
 	bus_dmamap_sync(sc->sc_dmat, tx_ring->tr_dmap, 0,
 	    tx_ring->tr_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
-		
 
 	tx_ready_pos = __SHIFTIN(tx_ring->tr_ready_index,
 		       ET_TX_READY_POS_INDEX);

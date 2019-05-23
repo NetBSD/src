@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.82 2019/04/24 10:38:09 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.83 2019/05/23 10:51:39 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.82 2019/04/24 10:38:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.83 2019/05/23 10:51:39 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -581,6 +581,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	const char 		*intrstr = NULL;
 	uint32_t		command;
 	struct ifnet		*ifp;
+	struct mii_data * const mii = &sc->bnx_mii;
 	uint32_t		val;
 	int			mii_flags = MIIF_FORCEANEG;
 	pcireg_t		memtype;
@@ -875,17 +876,16 @@ bnx_attach(device_t parent, device_t self, void *aux)
 		goto bnx_attach_fail;
 	}
 
-	sc->bnx_mii.mii_ifp = ifp;
-	sc->bnx_mii.mii_readreg = bnx_miibus_read_reg;
-	sc->bnx_mii.mii_writereg = bnx_miibus_write_reg;
-	sc->bnx_mii.mii_statchg = bnx_miibus_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = bnx_miibus_read_reg;
+	mii->mii_writereg = bnx_miibus_write_reg;
+	mii->mii_statchg = bnx_miibus_statchg;
 
 	/* Handle any special PHY initialization for SerDes PHYs. */
 	bnx_init_media(sc);
 
-	sc->bnx_ec.ec_mii = &sc->bnx_mii;
-	ifmedia_init(&sc->bnx_mii.mii_media, 0, bnx_ifmedia_upd,
-	    bnx_ifmedia_sts);
+	sc->bnx_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, bnx_ifmedia_upd, bnx_ifmedia_sts);
 
 	/* set phyflags and chipid before mii_attach() */
 	dict = device_properties(self);
@@ -900,21 +900,20 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	mii_flags |= MIIF_DOPAUSE;
 	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
 		mii_flags |= MIIF_HAVEFIBER;
-	mii_attach(self, &sc->bnx_mii, 0xffffffff,
+	mii_attach(self, mii, 0xffffffff,
 	    sc->bnx_phy_addr, MII_OFFSET_ANY, mii_flags);
 
-	if (LIST_EMPTY(&sc->bnx_mii.mii_phys)) {
+	if (LIST_EMPTY(&mii->mii_phys)) {
 		aprint_error_dev(self, "no PHY found!\n");
-		ifmedia_add(&sc->bnx_mii.mii_media,
-		    IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->bnx_mii.mii_media, IFM_ETHER | IFM_MANUAL);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else
-		ifmedia_set(&sc->bnx_mii.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	/* Attach to the Ethernet interface list. */
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
-	ether_ifattach(ifp,sc->eaddr);
+	ether_ifattach(ifp, sc->eaddr);
 
 	callout_init(&sc->bnx_timeout, 0);
 
@@ -1711,7 +1710,7 @@ bnx_init_nvram(struct bnx_softc *sc)
 	int			j, entry_count, rc = 0;
 	struct flash_spec	*flash;
 
-	DBPRINT(sc,BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
+	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
 
 	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
 		sc->bnx_flash_info = &flash_5709;
@@ -1733,7 +1732,7 @@ bnx_init_nvram(struct bnx_softc *sc)
 	if (val & 0x40000000) {
 		/* Flash interface reconfigured by bootcode. */
 
-		DBPRINT(sc,BNX_INFO_LOAD,
+		DBPRINT(sc, BNX_INFO_LOAD,
 			"bnx_init_nvram(): Flash WAS reconfigured.\n");
 
 		for (j = 0, flash = &flash_table[0]; j < entry_count;
@@ -1748,7 +1747,7 @@ bnx_init_nvram(struct bnx_softc *sc)
 		/* Flash interface not yet reconfigured. */
 		uint32_t mask;
 
-		DBPRINT(sc,BNX_INFO_LOAD,
+		DBPRINT(sc, BNX_INFO_LOAD,
 			"bnx_init_nvram(): Flash was NOT reconfigured.\n");
 
 		if (val & (1 << 23))
@@ -2316,7 +2315,7 @@ bnx_dma_free(struct bnx_softc *sc)
 {
 	int			i;
 
-	DBPRINT(sc,BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
+	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
 
 	/* Destroy the status block. */
 	if (sc->status_block != NULL && sc->status_map != NULL) {
@@ -2562,7 +2561,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	memset(sc->stats_block, 0, BNX_STATS_BLK_SZ);
 
 	/* DRC - Fix for 64 bit address. */
-	DBPRINT(sc,BNX_INFO, "stats_block_paddr = 0x%08X\n",
+	DBPRINT(sc, BNX_INFO, "stats_block_paddr = 0x%08X\n",
 	    (uint32_t) sc->stats_block_paddr);
 
 	/*
@@ -5296,7 +5295,7 @@ bnx_start(struct ifnet *ifp)
 
 	/* If there's no link or the transmit queue is empty then just exit. */
 	if (!sc->bnx_link
-	    ||(ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING) {
+	    ||(ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING) {
 		DBPRINT(sc, BNX_INFO_SEND,
 		    "%s(): output active or device not running.\n", __func__);
 		goto bnx_start_exit;
@@ -5898,7 +5897,7 @@ bnx_tick(void *xsc)
 		/* Now that link is up, handle any outstanding TX traffic. */
 		if_schedule_deferred_start(ifp);
 	}
-	
+
 bnx_tick_exit:
 	/* try to get more RX buffers, just in case */
 	prod = sc->rx_prod;
