@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.2 2019/05/08 13:40:17 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.3 2019/05/23 12:20:27 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -181,13 +181,6 @@ struct audio_file {
 
 	/* process who wants audio SIGIO. */
 	pid_t		async_audio;
-
-	/*
-	 * Non-zero if some thread context is using this file structure
-	 * (including ptrack and rtrack) now.
-	 * Must be protected by sc_lock.
-	 */
-	volatile int lock;
 
 	SLIST_ENTRY(audio_file) entry;
 };
