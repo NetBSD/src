@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.9 2017/05/10 16:35:18 christos Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.10 2019/05/23 11:13:17 kre Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.9 2017/05/10 16:35:18 christos Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.10 2019/05/23 11:13:17 kre Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -344,17 +344,19 @@ provide(struct puffs_usermount *pu, struct portal_node *portn,
 
 	switch (fork()) {
 	case -1:
+		close(s[0]); close(s[1]);
 		goto bad;
 	case 0:
+		close(s[0]);
 		error = activate_argv(portc, portn->path, v, &fd);
 		sendfd(s[1], fd, error);
 		exit(0);
 	default:
+		close(s[1]);
 		puffs_framev_addfd(pu, s[0], PUFFS_FBIO_READ);
 		puffs_framev_enqueue_directreceive(pcc, s[0], pufbuf, 0);
 		puffs_framev_removefd(pu, s[0], 0);
 		close(s[0]);
-		close(s[1]);
 
 		if (puffs_framebuf_tellsize(pufbuf) < sizeof(int)) {
 			errno = EIO;
@@ -535,7 +537,7 @@ portal_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	return 0;
 }
 
-int fakeid = 3;
+unsigned int fakeid = 3;
 
 /* XXX: libpuffs'ize */
 int
@@ -544,6 +546,7 @@ portal_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 {
 	struct timeval tv;
 	struct timespec ts;
+	int res = 0;
 
 	puffs_vattr_null(va);
 	if (opc == PORTAL_ROOT) {
@@ -551,7 +554,11 @@ portal_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 		va->va_mode = 0777;
 		va->va_nlink = 2;
 		va->va_uid = va->va_gid = 0;
+#if 0	/* XXX Huh? */
 		va->va_fileid = fakeid++;
+#else
+		va->va_fileid = 2;	/*XXX; ROOTINO*/
+#endif
 		va->va_size = va->va_bytes = 0;
 		va->va_gen = 0;
 		va->va_rdev = PUFFS_VNOVAL;
@@ -564,36 +571,55 @@ portal_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	} else {
 		/* cheat for now */
 		int error;
+		int newfd;
 		struct stat st;
 		struct portal_node *portn = opc;
 		struct portal_cred portc;
 		char **v = conf_match(&q, portn->path);
+
 		if (v == NULL)
 			return ENOENT;
-		credtr(&portc, pcr, 0777);
-		error = provide(pu, portn, &portc, v);
-		if (error)
-			return error;
+		if (portn->fd == -1) {
+			credtr(&portc, pcr, 0777);
+			error = provide(pu, portn, &portc, v);
+			if (error)
+				return error;
+			newfd = 1;
+		} else
+			newfd = 0;
+
 		if (fstat(portn->fd, &st) == -1)
-			return errno;
-		va->va_type = S_ISDIR(st.st_mode) ? VDIR : VREG; /* XXX */
-		va->va_mode = st.st_mode;
-		va->va_nlink = st.st_nlink;
-		va->va_uid = st.st_uid;
-		va->va_gid = st.st_gid;
-		va->va_fileid = st.st_ino;
-		va->va_size = va->va_bytes = st.st_size;
-		va->va_gen = 0;
-		va->va_rdev = st.st_rdev;
-		va->va_blocksize = st.st_blksize;
-		va->va_atime = st.st_atim;
-		va->va_ctime = st.st_ctim;
-		va->va_mtime = st.st_mtim;
-		va->va_birthtime = st.st_birthtim;
-		portal_node_reclaim(pu, opc);
+			res = errno;
+		else {
+#if 0
+			va->va_type = S_ISDIR(st.st_mode) ? VDIR : VREG; /* XXX */
+#else
+			va->va_type = puffs_mode2vt(st.st_mode);
+#endif
+			/* puffs supplies S_IFMT bits later */
+			va->va_mode = (st.st_mode & ~S_IFMT);
+
+			va->va_nlink = st.st_nlink ? st.st_nlink : 1;
+			va->va_uid = st.st_uid;
+			va->va_gid = st.st_gid;
+			va->va_fileid = st.st_ino ? st.st_ino : fakeid++;
+			va->va_size = va->va_bytes = st.st_size;
+			va->va_gen = 0;
+			va->va_rdev = st.st_rdev;
+			va->va_blocksize = st.st_blksize;
+			va->va_atime = st.st_atim;
+			va->va_ctime = st.st_ctim;
+			va->va_mtime = st.st_mtim;
+			va->va_birthtime = st.st_birthtim;
+		}
+		if (newfd) {
+			puffs_framev_removefd(pu, portn->fd, 0);
+			close(portn->fd);
+			portn->fd = -1;
+		}
 	}
 
-	return 0;
+	return res;
 }
 
 /* for writing, just pretend we care */
