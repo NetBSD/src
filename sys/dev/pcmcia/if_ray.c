@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.92 2019/02/03 03:19:27 mrg Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.93 2019/05/23 10:57:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.92 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.93 2019/05/23 10:57:28 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -170,23 +170,23 @@ struct ray_softc {
 		struct ray_startup_params_tail_4	u_params_4;
 	} sc_u;
 
-	u_int8_t	sc_ccsinuse[64];	/* ccs in use -- not for tx */
+	uint8_t	sc_ccsinuse[64];	/* ccs in use -- not for tx */
 	u_int		sc_txfree;	/* a free count for efficiency */
 
-	u_int8_t	sc_bssid[ETHER_ADDR_LEN];	/* current net values */
-	u_int8_t	sc_authid[ETHER_ADDR_LEN];	/* ID of authenticating
+	uint8_t	sc_bssid[ETHER_ADDR_LEN];	/* current net values */
+	uint8_t	sc_authid[ETHER_ADDR_LEN];	/* ID of authenticating
 							   station */
 	struct ieee80211_nwid	sc_cnwid;	/* last nwid */
 	struct ieee80211_nwid	sc_dnwid;	/* desired nwid */
-	u_int8_t	sc_omode;	/* old operating mode SC_MODE_xx */
-	u_int8_t	sc_mode;	/* current operating mode SC_MODE_xx */
-	u_int8_t	sc_countrycode;	/* current country code */
-	u_int8_t	sc_dcountrycode; /* desired country code */
+	uint8_t	sc_omode;	/* old operating mode SC_MODE_xx */
+	uint8_t	sc_mode;	/* current operating mode SC_MODE_xx */
+	uint8_t	sc_countrycode;	/* current country code */
+	uint8_t	sc_dcountrycode; /* desired country code */
 	int		sc_havenet;	/* true if we have acquired a network */
 	bus_size_t	sc_txpad;	/* tib size plus "phy" size */
-	u_int8_t	sc_deftxrate;	/* default transfer rate */
-	u_int8_t	sc_encrypt;
-	u_int8_t	sc_authstate;	/* authentication state */
+	uint8_t	sc_deftxrate;	/* default transfer rate */
+	uint8_t	sc_encrypt;
+	uint8_t	sc_authstate;	/* authentication state */
 
 	int		sc_promisc;	/* current set value */
 	int		sc_running;	/* things we are doing */
@@ -197,10 +197,10 @@ struct ray_softc {
 	u_int		sc_startcmd;	/* cmd (start | join) */
 
 	int		sc_checkcounters;
-	u_int64_t	sc_rxoverflow;
-	u_int64_t	sc_rxcksum;
-	u_int64_t	sc_rxhcksum;
-	u_int8_t	sc_rxnoise;
+	uint64_t	sc_rxoverflow;
+	uint64_t	sc_rxcksum;
+	uint64_t	sc_rxhcksum;
+	uint8_t	sc_rxnoise;
 
 	/* use to return values to the user */
 	struct ray_param_req	*sc_repreq;
@@ -289,7 +289,7 @@ static void ray_disable(struct ray_softc *);
 static void ray_download_params(struct ray_softc *);
 static int ray_enable(struct ray_softc *);
 static u_int ray_find_free_tx_ccs(struct ray_softc *, u_int);
-static u_int8_t ray_free_ccs(struct ray_softc *, bus_size_t);
+static uint8_t ray_free_ccs(struct ray_softc *, bus_size_t);
 static void ray_free_ccs_chain(struct ray_softc *, u_int);
 static void ray_if_start(struct ifnet *);
 static void ray_if_stop(struct ifnet *, int);
@@ -302,13 +302,13 @@ static int ray_match(device_t, cfdata_t, void *);
 static int ray_media_change(struct ifnet *);
 static void ray_media_status(struct ifnet *, struct ifmediareq *);
 static ray_cmd_func_t ray_rccs_intr(struct ray_softc *, bus_size_t);
-static void ray_read_region(struct ray_softc *, bus_size_t,void *,size_t);
+static void ray_read_region(struct ray_softc *, bus_size_t, void *, size_t);
 static void ray_recv(struct ray_softc *, bus_size_t);
 static void ray_recv_auth(struct ray_softc *, struct ieee80211_frame *);
 static void ray_report_params(struct ray_softc *);
 static void ray_reset(struct ray_softc *);
 static void ray_reset_resetloop(void *);
-static int ray_send_auth(struct ray_softc *, u_int8_t *, u_int8_t);
+static int ray_send_auth(struct ray_softc *, uint8_t *, uint8_t);
 static void ray_set_pending(struct ray_softc *, u_int);
 static int ray_simple_cmd(struct ray_softc *, u_int, u_int);
 static void ray_start_assoc(struct ray_softc *);
@@ -328,10 +328,10 @@ static int ray_user_report_params(struct ray_softc *,
     struct ray_param_req *);
 static int ray_user_update_params(struct ray_softc *,
     struct ray_param_req *);
-static void ray_write_region(struct ray_softc *,bus_size_t,void *,size_t);
+static void ray_write_region(struct ray_softc *, bus_size_t, void *, size_t);
 
 #ifdef RAY_DO_SIGLEV
-static void ray_update_siglev(struct ray_softc *, u_int8_t *, u_int8_t);
+static void ray_update_siglev(struct ray_softc *, uint8_t *, uint8_t);
 #endif
 
 #ifdef RAY_DEBUG
@@ -387,13 +387,13 @@ static void ray_dump_mbuf(struct ray_softc *, struct mbuf *);
 	bus_space_read_1((sc)->sc_ccrt, (sc)->sc_ccrh, ((sc)->sc_ccroff + (off)))
 
 #define	SRAM_READ_1(sc, off) \
-	((u_int8_t)bus_space_read_1((sc)->sc_memt, (sc)->sc_memh, (off)))
+	((uint8_t)bus_space_read_1((sc)->sc_memt, (sc)->sc_memh, (off)))
 
 #define	SRAM_READ_FIELD_1(sc, off, s, f) \
 	SRAM_READ_1(sc, (off) + offsetof(struct s, f))
 
 #define	SRAM_READ_FIELD_2(sc, off, s, f)			\
-	((((u_int16_t)SRAM_READ_1(sc, (off) + offsetof(struct s, f)) << 8) \
+	((((uint16_t)SRAM_READ_1(sc, (off) + offsetof(struct s, f)) << 8) \
 	|(SRAM_READ_1(sc, (off) + 1 + offsetof(struct s, f)))))
 
 #define	SRAM_READ_FIELD_N(sc, off, s, f, p, n)	\
@@ -431,7 +431,7 @@ static void ray_dump_mbuf(struct ray_softc *, struct mbuf *);
  * Globals
  */
 
-static u_int8_t llc_snapid[6] = { LLC_SNAP_LSAP, LLC_SNAP_LSAP, LLC_UI, };
+static uint8_t llc_snapid[6] = { LLC_SNAP_LSAP, LLC_SNAP_LSAP, LLC_UI, };
 
 /* based on bit index in SCP_xx */
 static ray_cmd_func_t ray_cmdtab[] = {
@@ -574,7 +574,7 @@ ray_attach(device_t parent, device_t self, void *aux)
 	ifp->if_stop = ray_if_stop;
 	ifp->if_ioctl = ray_ioctl;
 	ifp->if_mtu = ETHERMTU;
-	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
@@ -1057,8 +1057,8 @@ ray_intr_start(struct ray_softc *sc)
 	struct mbuf *m0, *m;
 	struct ifnet *ifp;
 	u_int firsti, hinti, previ, i, pcount;
-	u_int16_t et;
-	u_int8_t *d;
+	uint16_t et;
+	uint8_t *d;
 
 	ifp = &sc->sc_if;
 
@@ -1161,7 +1161,7 @@ ray_intr_start(struct ray_softc *sc)
 		}
 		/* copy the frame into the mbuf for tapping */
 		iframe = mtod(m0, struct ieee80211_frame *);
-		eh = (struct ether_header *)((u_int8_t *)iframe + tmplen);
+		eh = (struct ether_header *)((uint8_t *)iframe + tmplen);
 		iframe->i_fc[0] =
 		    (IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA);
 		if (sc->sc_mode == SC_MODE_ADHOC) {
@@ -1171,7 +1171,7 @@ ray_intr_start(struct ray_softc *sc)
 			memcpy(iframe->i_addr3, sc->sc_bssid, ETHER_ADDR_LEN);
 		} else {
 			iframe->i_fc[1] = IEEE80211_FC1_DIR_TODS;
-			memcpy(iframe->i_addr1, sc->sc_bssid,ETHER_ADDR_LEN);
+			memcpy(iframe->i_addr1, sc->sc_bssid, ETHER_ADDR_LEN);
 			memcpy(iframe->i_addr2, eh->ether_shost,ETHER_ADDR_LEN);
 			memmove(iframe->i_addr3,eh->ether_dhost,ETHER_ADDR_LEN);
 		}
@@ -1202,7 +1202,7 @@ ray_intr_start(struct ray_softc *sc)
 			RAY_DPRINTF((
 			    "%s: copying mbuf 0x%lx bufp 0x%lx len %d\n",
 			    ifp->if_xname, (long)m, (long)bufp, (int)len));
-			d = mtod(m, u_int8_t *);
+			d = mtod(m, uint8_t *);
 			ebufp = bufp + len;
 			if (ebufp <= RAY_TX_END)
 				ray_write_region(sc, bufp, d, len);
@@ -1281,11 +1281,11 @@ ray_recv(struct ray_softc *sc, bus_size_t ccs)
 	size_t pktlen, fudge, len, lenread = 0;
 	bus_size_t bufp, ebufp, tmp;
 	struct ifnet *ifp;
-	u_int8_t *src, *d;
+	uint8_t *src, *d;
 	u_int frag = 0, ni, i, issnap, first;
-	u_int8_t fc0;
+	uint8_t fc0;
 #ifdef RAY_DO_SIGLEV
-	u_int8_t siglev;
+	uint8_t siglev;
 #endif
 
 #ifdef RAY_DEBUG
@@ -1349,7 +1349,7 @@ ray_recv(struct ray_softc *sc, bus_size_t ccs)
 	m->m_pkthdr.len = pktlen;
 	m->m_len = pktlen;
 	m->m_data += fudge;
-	d = mtod(m, u_int8_t *);
+	d = mtod(m, uint8_t *);
 
 	RAY_DPRINTF(("%s: recv ccs index %d\n", device_xname(sc->sc_dev),
 	    first));
@@ -1423,7 +1423,7 @@ done:
 	/* receivce the packet */
 	frame = mtod(m, struct ieee80211_frame *);
 	fc0 = frame->i_fc[0]
-	   & (IEEE80211_FC0_VERSION_MASK|IEEE80211_FC0_TYPE_MASK);
+	   & (IEEE80211_FC0_VERSION_MASK | IEEE80211_FC0_TYPE_MASK);
 	if ((fc0 & IEEE80211_FC0_VERSION_MASK) != IEEE80211_FC0_VERSION_0) {
 		RAY_DPRINTF(("%s: pkt not version 0 fc 0x%x\n",
 		    device_xname(sc->sc_dev), fc0));
@@ -1528,7 +1528,7 @@ done:
 static void
 ray_recv_auth(struct ray_softc *sc, struct ieee80211_frame *frame)
 {
-	u_int8_t *var = (u_int8_t *)(frame + 1);
+	uint8_t *var = (uint8_t *)(frame + 1);
 
 	if (sc->sc_mode == SC_MODE_ADHOC) {
 		RAY_DPRINTF(("%s: recv auth packet:\n",
@@ -1559,9 +1559,9 @@ ray_recv_auth(struct ray_softc *sc, struct ieee80211_frame *frame)
  * send an auth packet
  */
 static int
-ray_send_auth(struct ray_softc *sc, u_int8_t *dest, u_int8_t auth_type)
+ray_send_auth(struct ray_softc *sc, uint8_t *dest, uint8_t auth_type)
 {
-	u_int8_t packet[sizeof(struct ieee80211_frame) + ETHER_ADDR_LEN], *var;
+	uint8_t packet[sizeof(struct ieee80211_frame) + ETHER_ADDR_LEN], *var;
 	struct ieee80211_frame *frame;
 	bus_size_t bufp;
 	int ccsindex;
@@ -1583,7 +1583,7 @@ ray_send_auth(struct ray_softc *sc, u_int8_t *dest, u_int8_t auth_type)
 	    ETHER_ADDR_LEN);
 	memcpy(frame->i_addr3, sc->sc_bssid, ETHER_ADDR_LEN);
 
-	var = (u_int8_t *)(frame + 1);
+	var = (uint8_t *)(frame + 1);
 	memset(var, 0, ETHER_ADDR_LEN);
 	var[2] = auth_type;
 
@@ -2070,10 +2070,10 @@ ray_free_ccs_chain(struct ray_softc *sc, u_int ni)
  * free up a cmd and return the old status
  * this routine is only used for commands
  */
-static u_int8_t
+static uint8_t
 ray_free_ccs(struct ray_softc *sc, bus_size_t ccs)
 {
-	u_int8_t stat;
+	uint8_t stat;
 
 	RAY_DPRINTF(("%s: free_ccs idx %llu\n", device_xname(sc->sc_dev),
 	    (unsigned long long)RAY_GET_INDEX(ccs)));
@@ -2675,7 +2675,8 @@ ray_start_join_net_done(struct ray_softc *sc, u_int cmd, bus_size_t ccs,
 		/* see if our nwid is up to date */
 		if (!memcmp(&sc->sc_cnwid, &sc->sc_dnwid, sizeof(sc->sc_cnwid))
 		    && sc->sc_omode == sc->sc_mode)
-			SRAM_WRITE_FIELD_1(sc,ccs, ray_cmd_net, c_upd_param, 0);
+			SRAM_WRITE_FIELD_1(sc, ccs, ray_cmd_net, c_upd_param,
+			    0);
 		else {
 			memset(&np, 0, sizeof(np));
 			np.p_net_type = sc->sc_mode;
@@ -2683,7 +2684,8 @@ ray_start_join_net_done(struct ray_softc *sc, u_int cmd, bus_size_t ccs,
 			    sizeof(np.p_ssid));
 			ray_write_region(sc, RAY_HOST_TO_ECF_BASE, &np,
 			    sizeof(np));
-			SRAM_WRITE_FIELD_1(sc,ccs, ray_cmd_net, c_upd_param, 1);
+			SRAM_WRITE_FIELD_1(sc,ccs, ray_cmd_net, c_upd_param,
+			    1);
 		}
 
 		if (sc->sc_mode == SC_MODE_ADHOC)
@@ -2733,7 +2735,7 @@ ray_start_join_net_done(struct ray_softc *sc, u_int cmd, bus_size_t ccs,
 	    SRAM_READ_FIELD_1(sc, ccs, ray_cmd_net, c_inited)));
 
 	/* network is now active */
-	ray_cmd_schedule(sc, SCP_UPD_MCAST|SCP_UPD_PROMISC);
+	ray_cmd_schedule(sc, SCP_UPD_MCAST | SCP_UPD_PROMISC);
 	if (cmd == RAY_CMD_JOIN_NET)
 		return (ray_start_assoc);
 	else {
@@ -2961,7 +2963,7 @@ ray_read_region(struct ray_softc *sc, bus_size_t off, void *vp, size_t c)
 {
 #ifdef RAY_USE_OPTIMIZED_COPY
 	u_int n2, n4, tmp;
-	u_int8_t *p;
+	uint8_t *p;
 
 	p = vp;
 
@@ -2978,13 +2980,13 @@ ray_read_region(struct ray_softc *sc, bus_size_t off, void *vp, size_t c)
 		}
 		switch (c) {
 		case 3:
-			*p = bus_space_read_1(sc->sc_memt,sc->sc_memh, off);
+			*p = bus_space_read_1(sc->sc_memt, sc->sc_memh, off);
 			p++, off++;
 		case 2:
-			*p = bus_space_read_1(sc->sc_memt,sc->sc_memh, off);
+			*p = bus_space_read_1(sc->sc_memt, sc->sc_memh, off);
 			p++, off++;
 		case 1:
-			*p = bus_space_read_1(sc->sc_memt,sc->sc_memh, off);
+			*p = bus_space_read_1(sc->sc_memt, sc->sc_memh, off);
 		}
 		break;
 	case 2:
@@ -3017,7 +3019,7 @@ ray_write_region(struct ray_softc *sc, bus_size_t off, void *vp, size_t c)
 {
 #ifdef RAY_USE_OPTIMIZED_COPY
 	size_t n2, n4, tmp;
-	u_int8_t *p;
+	uint8_t *p;
 
 	p = vp;
 	/* XXX we may be making poor assumptions here but lets hope */
@@ -3033,13 +3035,13 @@ ray_write_region(struct ray_softc *sc, bus_size_t off, void *vp, size_t c)
 		}
 		switch (c) {
 		case 3:
-			bus_space_write_1(sc->sc_memt,sc->sc_memh, off, *p);
+			bus_space_write_1(sc->sc_memt, sc->sc_memh, off, *p);
 			p++, off++;
 		case 2:
-			bus_space_write_1(sc->sc_memt,sc->sc_memh, off, *p);
+			bus_space_write_1(sc->sc_memt, sc->sc_memh, off, *p);
 			p++, off++;
 		case 1:
-			bus_space_write_1(sc->sc_memt,sc->sc_memh, off, *p);
+			bus_space_write_1(sc->sc_memt, sc->sc_memh, off, *p);
 		}
 		break;
 	case 2:
@@ -3076,7 +3078,7 @@ ray_dump_mbuf(struct ray_softc *sc, struct mbuf *m)
 
 #ifdef RAY_DO_SIGLEV
 static void
-ray_update_siglev(struct ray_softc *sc, u_int8_t *src, u_int8_t siglev)
+ray_update_siglev(struct ray_softc *sc, uint8_t *src, uint8_t siglev)
 {
 	int i, mini;
 	struct timeval mint;

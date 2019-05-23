@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.8 2019/05/08 09:53:43 ozaki-r Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.9 2019/05/23 10:57:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.8 2019/05/08 09:53:43 ozaki-r Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.9 2019/05/23 10:57:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,7 +113,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.8 2019/05/08 09:53:43 ozaki-r Exp $
 #define	 EMAC_INT_TX1			__BIT(1)
 #define	 EMAC_INT_TX0			__BIT(0)
 #define	 EMAC_INT_ENABLE		\
-		(EMAC_INT_RX|EMAC_INT_TX1|EMAC_INT_TX0)
+		(EMAC_INT_RX | EMAC_INT_TX1 | EMAC_INT_TX0)
 #define	EMAC_MAC_CTL0_REG	0x5c
 #define	 EMAC_MAC_CTL0_SOFT_RESET	__BIT(15)
 #define	 EMAC_MAC_CTL0_TFC		__BIT(3)
@@ -358,20 +358,20 @@ sun4i_emac_attach(device_t parent, device_t self, void *aux)
 
         mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
-        if (LIST_EMPTY(&mii->mii_phys)) { 
+        if (LIST_EMPTY(&mii->mii_phys)) {
                 aprint_error_dev(self, "no PHY found!\n");
-                ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-                ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_MANUAL);
+                ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+                ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
         } else {
-                ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
+                ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
         }
 
-	/*      
+	/*
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
-	ether_ifattach(ifp, enaddr); 
+	ether_ifattach(ifp, enaddr);
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 }
@@ -440,8 +440,8 @@ sun4i_emac_miibus_statchg(struct ifnet *ifp)
 
 	/*
 	 * Set MII interface based on the speed
-	 * negotiated by the PHY.                                           
-	 */                                                                 
+	 * negotiated by the PHY.
+	 */
 	switch (IFM_SUBTYPE(media)) {
 	case IFM_10_T:
 		sun4i_emac_clear_set(sc, EMAC_MAC_SUPP_REG,
@@ -453,7 +453,7 @@ sun4i_emac_miibus_statchg(struct ifnet *ifp)
 		break;
 	}
 
-	const bool link = (IFM_SUBTYPE(media) & (IFM_10_T|IFM_100_TX)) != 0;
+	const bool link = (IFM_SUBTYPE(media) & (IFM_10_T | IFM_100_TX)) != 0;
 	if (link) {
 		if (media & IFM_FDX) {
 			sun4i_emac_clear_set(sc, EMAC_MAC_CTL1_REG,
@@ -508,7 +508,7 @@ sun4i_emac_rxfifo_transfer(struct sun4i_emac_softc *sc, struct mbuf *m)
 	uint32_t *dp32 = mtod(m, uint32_t *);
 	const int len = roundup2(m->m_len, 4);
 
-	bus_space_read_multi_4(sc->sc_bst, sc->sc_bsh, 
+	bus_space_read_multi_4(sc->sc_bst, sc->sc_bsh,
 	    EMAC_RX_IO_DATA_REG, dp32, len / 4);
 }
 
@@ -657,7 +657,7 @@ sun4i_emac_intr(void *arg)
 	if (sts & EMAC_INT_TX1) {
 		sun4i_emac_tx_intr(sc, 1);
 	}
-	if (sts & (EMAC_INT_TX0|EMAC_INT_TX1)) {
+	if (sts & (EMAC_INT_TX0 | EMAC_INT_TX1)) {
 		if (sc->sc_tx_active == 0)
 			ifp->if_timer = 0;
 		if_schedule_deferred_start(ifp);
@@ -867,25 +867,29 @@ sun4i_emac_rx_hash(struct sun4i_emac_softc *sc)
 		ETHER_LOCK(&sc->sc_ec);
 		ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
 		while (enm != NULL) {
-			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
 				ETHER_UNLOCK(&sc->sc_ec);
 				/*
-				 * We must listen to a range of multicast addresses.
-				 * For now, just accept all multicasts, rather than
-				 * trying to set only those filter bits needed to match
-				 * the range.  (At this time, the only use of address
-				 * ranges is for IP multicast routing, for which the
-				 * range is big enough to require all bits set.)
-				 */ 
+				 * We must listen to a range of multicast
+				 * addresses. For now, just accept all
+				 * multicasts, rather than trying to set only
+				 * those filter bits needed to match the range.
+				 * (At this time, the only use of address
+				 * ranges is for IP multicast routing, for
+				 * which the range is big enough to require all
+				 * bits set.)
+				 */
 				hash[0] = hash[1] = ~0;
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto done;
                 	}
 
-			u_int crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+			u_int crc = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN);
 
 			/* Just want the 6 most significant bits. */
-			crc >>= 26; 
+			crc >>= 26;
 
 			/* Set the corresponding bit in the filter. */
 			hash[crc >> 5] |= __BIT(crc & 31);

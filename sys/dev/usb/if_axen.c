@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.38 2019/04/11 08:50:59 msaitoh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.39 2019/05/23 10:57:29 msaitoh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.38 2019/04/11 08:50:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.39 2019/05/23 10:57:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -66,11 +66,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.38 2019/04/11 08:50:59 msaitoh Exp $")
 
 #ifdef AXEN_DEBUG
 #define DPRINTF(x)	do { if (axendebug) printf x; } while (/*CONSTCOND*/0)
-#define DPRINTFN(n,x)	do { if (axendebug >= (n)) printf x; } while (/*CONSTCOND*/0)
+#define DPRINTFN(n, x)	do { if (axendebug >= (n)) printf x; } while (/*CONSTCOND*/0)
 int	axendebug = 0;
 #else
 #define DPRINTF(x)
-#define DPRINTFN(n,x)
+#define DPRINTFN(n, x)
 #endif
 
 /*
@@ -409,7 +409,7 @@ axen_reset(struct axen_softc *sc)
 }
 
 #if 0 /* not used */
-#define AXEN_GPIO_WRITE(x,y) do {				\
+#define AXEN_GPIO_WRITE(x, y) do {				\
 	axen_cmd(sc, AXEN_CMD_WRITE_GPIO, 0, (x), NULL);	\
 	usbd_delay_ms(sc->axen_udev, (y));			\
 } while (/*CONSTCOND*/0)
@@ -1080,7 +1080,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 #endif
 
 	do {
-		if ((buf[0] != 0xee) || (buf[1] != 0xee)){
+		if ((buf[0] != 0xee) || (buf[1] != 0xee)) {
 			aprint_error_dev(sc->axen_dev,
 			    "invalid buffer(pkt#%d), continue\n", pkt_count);
 	    		ifp->if_ierrors += pkt_count;
@@ -1133,7 +1133,7 @@ nextpkt:
 		buf = buf + temp;
 		hdr_p++;
 		pkt_count--;
-	} while( pkt_count > 0);
+	} while(pkt_count > 0);
 
 done:
 	/* Setup new transfer. */
@@ -1349,7 +1349,7 @@ axen_start(struct ifnet *ifp)
 	if (sc->axen_link == 0)
 		return;
 
-	if ((ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
 		return;
 
 	idx = cd->axen_tx_prod;
@@ -1515,7 +1515,7 @@ axen_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 
 		error = 0;
-		switch(cmd) {
+		switch (cmd) {
 		case SIOCADDMULTI:
 		case SIOCDELMULTI:
 			axen_iff(sc);

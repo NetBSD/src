@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.52 2019/04/26 06:33:34 msaitoh Exp $ */
+/*	$NetBSD: if_dge.c,v 1.53 2019/05/23 10:57:28 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.52 2019/04/26 06:33:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.53 2019/05/23 10:57:28 msaitoh Exp $");
 
 
 
@@ -412,7 +412,7 @@ do {									\
 	__rxd->dr_status = 0;						\
 	__rxd->dr_errors = 0;						\
 	__rxd->dr_special = 0;						\
-	DGE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+	DGE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE); \
 									\
 	CSR_WRITE((sc), DGE_RDT, (x));					\
 } while (/*CONSTCOND*/0)
@@ -448,7 +448,7 @@ do {									\
 	__rxd->dr_status = 0;						\
 	__rxd->dr_errors = 0;						\
 	__rxd->dr_special = 0;						\
-	DGE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+	DGE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE); \
 									\
 	CSR_WRITE((sc), DGE_RDT, (x));					\
 } while (/*CONSTCOND*/0)
@@ -911,11 +911,11 @@ dge_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc->sc_media, IFM_IMASK, dge_xgmii_mediachange,
 	    dge_xgmii_mediastatus);
 	if (dgep->dgep_flags & DGEP_F_10G_SR) {
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10G_SR, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10G_SR);
+		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_SR, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_10G_SR);
 	} else { /* XXX default is LR */
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10G_LR, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10G_LR);
+		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_LR, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_10G_LR);
 	}
 
 	ifp = &sc->sc_ethercom.ec_if;
@@ -1123,7 +1123,7 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 
 	offset += iphl;
 
-	if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+	if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
 		DGE_EVCNT_INCR(&sc->sc_ev_txtusum);
 		fields |= TDESC_POPTS_TXSM;
 		tucs = DGE_TCPIP_TUCSS(offset) |
@@ -1191,7 +1191,7 @@ dge_start(struct ifnet *ifp)
 	uint32_t cksumcmd;
 	uint8_t cksumfields;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*
@@ -1238,7 +1238,7 @@ dge_start(struct ifnet *ifp)
 		 * buffer.
 		 */
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error) {
 			if (error == EFBIG) {
 				DGE_EVCNT_INCR(&sc->sc_ev_txdrop);
@@ -1317,7 +1317,7 @@ dge_start(struct ifnet *ifp)
 		 * this packet.
 		 */
 		if (m0->m_pkthdr.csum_flags &
-		    (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+		    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
 			if (dge_tx_cksum(sc, txs, &cksumfields) != 0) {
 				/* Error message already displayed. */
 				bus_dmamap_unload(sc->sc_dmat, dmamap);
@@ -1374,7 +1374,7 @@ dge_start(struct ifnet *ifp)
 
 		/* Sync the descriptors we're using. */
 		DGE_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Give the packet to the chip. */
 		CSR_WRITE(sc, DGE_TDT, nexttx);
@@ -1543,11 +1543,11 @@ dge_intr(void *arg)
 		handled = 1;
 
 #if defined(DGE_DEBUG) || defined(DGE_EVENT_COUNTERS)
-		if (icr & (ICR_RXDMT0|ICR_RXT0)) {
+		if (icr & (ICR_RXDMT0 | ICR_RXT0)) {
 			DPRINTF(DGE_DEBUG_RX,
 			    ("%s: RX: got Rx intr 0x%08x\n",
 			    device_xname(sc->sc_dev),
-			    icr & (ICR_RXDMT0|ICR_RXT0)));
+			    icr & (ICR_RXDMT0 | ICR_RXT0)));
 			DGE_EVCNT_INCR(&sc->sc_ev_rxintr);
 		}
 #endif
@@ -1565,7 +1565,7 @@ dge_intr(void *arg)
 #endif
 		dge_txintr(sc);
 
-		if (icr & (ICR_LSC|ICR_RXSEQ)) {
+		if (icr & (ICR_LSC | ICR_RXSEQ)) {
 			DGE_EVCNT_INCR(&sc->sc_ev_linkintr);
 			dge_linkintr(sc, icr);
 		}
@@ -1615,7 +1615,7 @@ dge_txintr(struct dge_softc *sc)
 		    ("%s: TX: checking job %d\n", device_xname(sc->sc_dev), i));
 
 		DGE_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_dmamap->dm_nsegs,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		status =
 		    sc->sc_txdescs[txs->txs_lastdesc].dt_status;
@@ -1673,7 +1673,8 @@ dge_rxintr(struct dge_softc *sc)
 		    ("%s: RX: checking descriptor %d\n",
 		    device_xname(sc->sc_dev), i));
 
-		DGE_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		DGE_CDRXSYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		status = sc->sc_rxdescs[i].dr_status;
 		errors = sc->sc_rxdescs[i].dr_errors;
@@ -1766,8 +1767,8 @@ dge_rxintr(struct dge_softc *sc)
 		/*
 		 * If an error occurred, update stats and drop the packet.
 		 */
-		if (errors &
-		     (RDESC_ERR_CE|RDESC_ERR_SE|RDESC_ERR_P|RDESC_ERR_RXE)) {
+		if (errors & (RDESC_ERR_CE | RDESC_ERR_SE | RDESC_ERR_P |
+		    RDESC_ERR_RXE)) {
 			ifp->if_ierrors++;
 			if (errors & RDESC_ERR_SE)
 				printf("%s: symbol error\n",
@@ -1804,7 +1805,7 @@ dge_rxintr(struct dge_softc *sc)
 			 * upper layers to deal.
 			 */
 			DGE_EVCNT_INCR(&sc->sc_ev_rxtusum);
-			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4|M_CSUM_UDPv4;
+			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4 | M_CSUM_UDPv4;
 			if (errors & RDESC_ERR_TCPE)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
@@ -1924,7 +1925,7 @@ dge_init(struct ifnet *ifp)
 	/* Initialize the transmit descriptor ring. */
 	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
 	DGE_CDTXSYNC(sc, 0, DGE_NTXDESC,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = DGE_NTXDESC;
 	sc->sc_txnext = 0;
 
@@ -2025,7 +2026,7 @@ dge_init(struct ifnet *ifp)
 	/*
 	 * Set up the transmit control register.
 	 */
-	sc->sc_tctl = TCTL_TCE|TCTL_TPDE|TCTL_TXEN;
+	sc->sc_tctl = TCTL_TCE | TCTL_TPDE | TCTL_TXEN;
 	CSR_WRITE(sc, DGE_TCTL, sc->sc_tctl);
 
 	/*
@@ -2041,7 +2042,7 @@ dge_init(struct ifnet *ifp)
 #ifdef DGE_OFFBYONE_RXBUG
 	sc->sc_rctl |= RCTL_BSIZE_16k;
 #else
-	switch(MCLBYTES) {
+	switch (MCLBYTES) {
 	case 2048:
 		sc->sc_rctl |= RCTL_BSIZE_2k;
 		break;
@@ -2160,7 +2161,7 @@ dge_add_rxbuf(struct dge_softc *sc, int idx)
 	rxs->rxs_mbuf = m;
 
 	error = bus_dmamap_load(sc->sc_dmat, rxs->rxs_dmamap, buf,
-	    DGE_BUFFER_SIZE, NULL, BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    DGE_BUFFER_SIZE, NULL, BUS_DMA_READ | BUS_DMA_NOWAIT);
 #else
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
@@ -2175,7 +2176,7 @@ dge_add_rxbuf(struct dge_softc *sc, int idx)
 
 	m->m_len = m->m_pkthdr.len = m->m_ext.ext_size;
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, rxs->rxs_dmamap, m,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 #endif
 	if (error) {
 		printf("%s: unable to load rx DMA map %d, error = %d\n",
@@ -2332,12 +2333,12 @@ dge_eeprom_word(struct dge_softc *sc, int addr)
 	uint16_t rval = 0;
 	int i;
 
-	reg = CSR_READ(sc, DGE_EECD) & ~(EECD_SK|EECD_DI|EECD_CS);
+	reg = CSR_READ(sc, DGE_EECD) & ~(EECD_SK | EECD_DI | EECD_CS);
 
 	/* Lower clock pulse (and data in to chip) */
 	CSR_WRITE(sc, DGE_EECD, reg);
 	/* Select chip */
-	CSR_WRITE(sc, DGE_EECD, reg|EECD_CS);
+	CSR_WRITE(sc, DGE_EECD, reg | EECD_CS);
 
 	/* Send read command */
 	dge_eeprom_clockout(sc, 1);
@@ -2368,13 +2369,13 @@ dge_eeprom_clockout(struct dge_softc *sc, int bit)
 {
 	int reg;
 
-	reg = CSR_READ(sc, DGE_EECD) & ~(EECD_DI|EECD_SK);
+	reg = CSR_READ(sc, DGE_EECD) & ~(EECD_DI | EECD_SK);
 	if (bit)
 		reg |= EECD_DI;
 
 	CSR_WRITE(sc, DGE_EECD, reg);
 	delay(2);
-	CSR_WRITE(sc, DGE_EECD, reg|EECD_SK);
+	CSR_WRITE(sc, DGE_EECD, reg | EECD_SK);
 	delay(2);
 	CSR_WRITE(sc, DGE_EECD, reg);
 	delay(2);
@@ -2388,9 +2389,9 @@ dge_eeprom_clockin(struct dge_softc *sc)
 {
 	int reg, rv;
 
-	reg = CSR_READ(sc, DGE_EECD) & ~(EECD_DI|EECD_DO|EECD_SK);
+	reg = CSR_READ(sc, DGE_EECD) & ~(EECD_DI | EECD_DO | EECD_SK);
 
-	CSR_WRITE(sc, DGE_EECD, reg|EECD_SK); /* Raise clock */
+	CSR_WRITE(sc, DGE_EECD, reg | EECD_SK); /* Raise clock */
 	delay(2);
 	rv = (CSR_READ(sc, DGE_EECD) & EECD_DO) != 0; /* Get bit */
 	CSR_WRITE(sc, DGE_EECD, reg); /* Lower clock */
@@ -2406,9 +2407,9 @@ dge_xgmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	ifmr->ifm_status = IFM_AVALID;
 	if (sc->sc_dgep->dgep_flags & DGEP_F_10G_SR ) {
-		ifmr->ifm_active = IFM_ETHER|IFM_10G_SR;
+		ifmr->ifm_active = IFM_ETHER | IFM_10G_SR;
 	} else {
-		ifmr->ifm_active = IFM_ETHER|IFM_10G_LR;
+		ifmr->ifm_active = IFM_ETHER | IFM_10G_LR;
 	}
 
 	if (CSR_READ(sc, DGE_STATUS) & STATUS_LINKUP)

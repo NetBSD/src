@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.58 2019/01/22 03:42:26 msaitoh Exp $ */
+/* $NetBSD: if_mec.c,v 1.59 2019/05/23 10:57:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.58 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.59 2019/05/23 10:57:27 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -954,7 +954,7 @@ mec_start(struct ifnet *ifp)
 	int len, bufoff, buflen, nsegs, align, resid, pseg, nptr, slen, i;
 	uint32_t txdcmd;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*
@@ -1124,8 +1124,8 @@ mec_start(struct ifnet *ifp)
 				 * alignd, but we have to put some data into
 				 * txdesc buffer anyway even if the buffer
 				 * is uint64_t aligned.
-				 */ 
-				DPRINTF(MEC_DEBUG_START|MEC_DEBUG_TXSEGS,
+				 */
+				DPRINTF(MEC_DEBUG_START | MEC_DEBUG_TXSEGS,
 				    ("%s: re-allocating mbuf\n", __func__));
 
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1381,7 +1381,7 @@ mec_start(struct ifnet *ifp)
 
 		/* sync TX descriptor */
 		MEC_TXDESCSYNC(sc, nexttx,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* start TX */
 		bus_space_write_8(st, sh, MEC_TX_RING_PTR, MEC_NEXTTX(nexttx));
@@ -1856,7 +1856,7 @@ mec_txintr(struct mec_softc *sc, uint32_t txptr)
 		txd = &sc->sc_txdesc[i];
 
 		MEC_TXCMDSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		txstat = txd->txd_stat;
 		DPRINTF(MEC_DEBUG_TXINTR,

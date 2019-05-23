@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.124 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: ath.c,v 1.125 2019/05/23 10:57:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.124 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.125 2019/05/23 10:57:28 msaitoh Exp $");
 #endif
 
 /*
@@ -250,9 +250,10 @@ enum {
 	ATH_DEBUG_FATAL		= 0x80000000,	/* fatal errors */
 	ATH_DEBUG_ANY		= 0xffffffff
 };
-#define	IFF_DUMPPKTS(sc, m) \
-	((sc->sc_debug & (m)) || \
-	    (sc->sc_if.if_flags & (IFF_DEBUG|IFF_LINK2)) == (IFF_DEBUG|IFF_LINK2))
+#define	IFF_DUMPPKTS(sc, m)					\
+	((sc->sc_debug & (m)) ||				\
+	    (sc->sc_if.if_flags & (IFF_DEBUG | IFF_LINK2))      \
+	    == (IFF_DEBUG | IFF_LINK2))
 #define	DPRINTF(sc, m, fmt, ...) do {				\
 	if (sc->sc_debug & (m))					\
 		printf(fmt, __VA_ARGS__);			\
@@ -264,8 +265,9 @@ enum {
 static	void ath_printrxbuf(struct ath_buf *bf, int);
 static	void ath_printtxbuf(struct ath_buf *bf, int);
 #else
-#define        IFF_DUMPPKTS(sc, m) \
-	((sc->sc_if.if_flags & (IFF_DEBUG|IFF_LINK2)) == (IFF_DEBUG|IFF_LINK2))
+#define        IFF_DUMPPKTS(sc, m)				\
+	((sc->sc_if.if_flags & (IFF_DEBUG | IFF_LINK2))		\
+	    == (IFF_DEBUG | IFF_LINK2))
 #define        DPRINTF(m, fmt, ...)
 #define        KEYPRINTF(sc, k, ix, mac)
 #endif
@@ -771,7 +773,7 @@ ath_intr(void *arg)
 	if (!ath_hal_intrpend(ah))		/* shared irq, not for us */
 		return 0;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) != (IFF_RUNNING|IFF_UP)) {
+	if ((ifp->if_flags & (IFF_RUNNING |IFF_UP)) != (IFF_RUNNING |IFF_UP)) {
 		DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags 0x%x\n",
 			__func__, ifp->if_flags);
 		ath_hal_getisr(ah, &status);	/* clear ISR */
@@ -2818,7 +2820,7 @@ ath_node_alloc(struct ieee80211_node_table *nt)
 	const size_t space = sizeof(struct ath_node) + sc->sc_rc->arc_space;
 	struct ath_node *an;
 
-	an = malloc(space, M_80211_NODE, M_NOWAIT|M_ZERO);
+	an = malloc(space, M_80211_NODE, M_NOWAIT | M_ZERO);
 	if (an == NULL) {
 		/* XXX stat+msg */
 		return NULL;
@@ -4237,9 +4239,9 @@ ath_tx_proc_q0(void *arg, int npending)
 	int s;
 #endif
 
-	if (txqactive(sc->sc_ah, 0) && ath_tx_processq(sc, &sc->sc_txq[0]) > 0){
+	if (txqactive(sc->sc_ah, 0) && ath_tx_processq(sc, &sc->sc_txq[0]) > 0)
 		sc->sc_lastrx = ath_hal_gettsf64(sc->sc_ah);
-	}
+
 	if (txqactive(sc->sc_ah, sc->sc_cabq->axq_qnum))
 		ath_tx_processq(sc, sc->sc_cabq);
 
@@ -4753,7 +4755,7 @@ ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	callout_stop(&sc->sc_scan_ch);
 	callout_stop(&sc->sc_cal_ch);
-#if 0	
+#if 0
 	callout_stop(&sc->sc_dfs_ch);
 #endif
 	ath_hal_setledstate(ah, leds[nstate]);	/* set LED */
@@ -5385,8 +5387,8 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
-		case IFF_UP|IFF_RUNNING:
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
+		case IFF_UP | IFF_RUNNING:
 			/*
 			 * To avoid rescanning another access point,
 			 * do not call ath_init() here.  Instead,
