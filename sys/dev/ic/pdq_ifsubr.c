@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.64 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.65 2019/05/23 13:10:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.64 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.65 2019/05/23 13:10:51 msaitoh Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -355,7 +355,7 @@ pdq_os_update_status(pdq_t *pdq, const void *arg)
 	int media = 0;
 
 	switch (rsp->status_chars_get.pmd_type[0]) {
-	case PDQ_PMD_TYPE_ANSI_MUTLI_MODE:         media = IFM_FDDI_MMF; break;
+	case PDQ_PMD_TYPE_ANSI_MUTLI_MODE:	   media = IFM_FDDI_MMF; break;
 	case PDQ_PMD_TYPE_ANSI_SINGLE_MODE_TYPE_1: media = IFM_FDDI_SMF; break;
 	case PDQ_PMD_TYPE_ANSI_SIGNLE_MODE_TYPE_2: media = IFM_FDDI_SMF; break;
 	case PDQ_PMD_TYPE_UNSHIELDED_TWISTED_PAIR: media = IFM_FDDI_UTP; break;

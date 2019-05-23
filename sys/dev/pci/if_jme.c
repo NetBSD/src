@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.40 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.41 2019/05/23 13:10:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.40 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.41 2019/05/23 13:10:52 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -128,9 +128,9 @@ struct jme_product_desc {
 struct jme_softc {
 	device_t jme_dev;		/* base device */
 	bus_space_tag_t jme_bt_mac;
-	bus_space_handle_t jme_bh_mac;  /* Mac registers */
+	bus_space_handle_t jme_bh_mac;	/* Mac registers */
 	bus_space_tag_t jme_bt_phy;
-	bus_space_handle_t jme_bh_phy;  /* PHY registers */
+	bus_space_handle_t jme_bh_phy;	/* PHY registers */
 	bus_space_tag_t jme_bt_misc;
 	bus_space_handle_t jme_bh_misc; /* Misc registers */
 	bus_dma_tag_t jme_dmatag;
@@ -1049,7 +1049,7 @@ jme_intr_rx(jme_softc_t *sc) {
 	struct mbuf *m, *mhead;
 	bus_dmamap_t mmap;
 	struct ifnet *ifp = &sc->jme_if;
-	uint32_t flags,  buflen;
+	uint32_t flags,	 buflen;
 	int i, ipackets, nsegs, seg, error;
 	struct jme_desc *desc;
 
@@ -1067,7 +1067,7 @@ jme_intr_rx(jme_softc_t *sc) {
 		desc = &sc->jme_rxring[i];
 #ifdef JMEDEBUG_RX
 		printf("rxintr i %d flags 0x%x buflen 0x%x\n",
-		    i,  le32toh(desc->flags), le32toh(desc->buflen));
+		    i, le32toh(desc->flags), le32toh(desc->buflen));
 #endif
 		if (sc->jme_rxmbuf[i] == NULL) {
 			if ((error = jme_add_rxbuf(sc, NULL)) != 0) {
@@ -1914,7 +1914,7 @@ jme_multicast_hash(uint8_t *a)
 
 #define DA(addr, bit) (addr[5 - (bit / 8)] & (1 << (bit % 8)))
 #define xor8(a,b,c,d,e,f,g,h)						\
-	(((a != 0) + (b != 0) + (c != 0) + (d != 0) + 			\
+	(((a != 0) + (b != 0) + (c != 0) + (d != 0) +			\
 	  (e != 0) + (f != 0) + (g != 0) + (h != 0)) & 1)
 
 	hash  = xor8(DA(a,0), DA(a, 6), DA(a,12), DA(a,18), DA(a,24), DA(a,30),

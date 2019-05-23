@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.33 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.34 2019/05/23 13:10:52 msaitoh Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.33 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.34 2019/05/23 13:10:52 msaitoh Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -558,7 +558,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	if (sc->sc_mif_config & CAS_MIF_CONFIG_MDI1) {
 		sc->sc_mif_config |= CAS_MIF_CONFIG_PHY_SEL;
 		bus_space_write_4(sc->sc_memt, sc->sc_memh,
-	            CAS_MIF_CONFIG, sc->sc_mif_config);
+		    CAS_MIF_CONFIG, sc->sc_mif_config);
 	}
 
 	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
@@ -1911,7 +1911,7 @@ cas_iff(struct cas_softc *sc)
 			rxcfg |= CAS_MAC_RX_PROMISCUOUS;
 		else
 			rxcfg |= CAS_MAC_RX_PROMISC_GRP;
-        } else {
+	} else {
 		/*
 		 * Set up multicast address filter by passing all multicast
 		 * addresses through a crc generator, and then using the
@@ -1929,14 +1929,14 @@ cas_iff(struct cas_softc *sc)
 
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
-                        crc = ether_crc32_le(enm->enm_addrlo,
-                            ETHER_ADDR_LEN);
+			crc = ether_crc32_le(enm->enm_addrlo,
+			    ETHER_ADDR_LEN);
 
-                        /* Just want the 8 most significant bits. */
-                        crc >>= 24;
+			/* Just want the 8 most significant bits. */
+			crc >>= 24;
 
-                        /* Set the corresponding bit in the filter. */
-                        hash[crc >> 4] |= 1 << (15 - (crc & 15));
+			/* Set the corresponding bit in the filter. */
+			hash[crc >> 4] |= 1 << (15 - (crc & 15));
 
 			ETHER_NEXT_MULTI(step, enm);
 		}

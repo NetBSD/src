@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.114 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.115 2019/05/23 13:10:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.114 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.115 2019/05/23 13:10:52 msaitoh Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -818,7 +818,7 @@ tl_mii_sendbits(struct tl_softc *sc, uint32_t data, int nbits)
 	int i;
 
 	netsio_set(sc, TL_NETSIO_MTXEN);
-	for (i = 1 << (nbits - 1); i; i = i >>  1) {
+	for (i = 1 << (nbits - 1); i; i = i >>	1) {
 		netsio_clr(sc, TL_NETSIO_MCLK);
 		netsio_read(sc, TL_NETSIO_MCLK);
 		if (data & i)
@@ -1349,8 +1349,8 @@ tbdinit:
 		}
 #endif
 		/*
-	 	 * add the nullbuf in the seg
-	 	 */
+		 * add the nullbuf in the seg
+		 */
 		Tx->hw_list->seg[segment].data_count =
 		    htole32(ETHER_MIN_TX - size);
 		Tx->hw_list->seg[segment].data_addr =
@@ -1610,7 +1610,7 @@ tl_multicast_hash(uint8_t *a)
 
 #define DA(addr, bit) (addr[5 - (bit / 8)] & (1 << (bit % 8)))
 #define xor8(a, b, c, d, e, f, g, h)					\
-	(((a != 0) + (b != 0) + (c != 0) + (d != 0) + 			\
+	(((a != 0) + (b != 0) + (c != 0) + (d != 0) +			\
 	  (e != 0) + (f != 0) + (g != 0) + (h != 0)) & 1)
 
 	hash  = xor8(DA(a,0), DA(a, 6), DA(a,12), DA(a,18), DA(a,24), DA(a,30),

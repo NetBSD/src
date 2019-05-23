@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.62 2019/05/23 10:40:39 msaitoh Exp $ */
+/* $NetBSD: seeq8005.c,v 1.63 2019/05/23 13:10:51 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.62 2019/05/23 10:40:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.63 2019/05/23 13:10:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +409,7 @@ ea_stoptx(struct seeq8005_softc *sc)
 		status = SEEQ_READ16(sc, iot, ioh, SEEQ_STATUS);
 		delay(1);
 	} while ((status & SEEQ_STATUS_TX_ON) && --timeout > 0);
- 	if (timeout == 0)
+	if (timeout == 0)
 		log(LOG_ERR, "%s: timeout waiting for tx termination\n",
 		    device_xname(sc->sc_dev));
 
@@ -1256,49 +1256,49 @@ ea_read(struct seeq8005_softc *sc, int addr, int len)
 struct mbuf *
 ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
 {
-        struct mbuf *top, **mp, *m;
-        int len;
-        u_int cp, epkt;
+	struct mbuf *top, **mp, *m;
+	int len;
+	u_int cp, epkt;
 
-        cp = addr;
-        epkt = cp + totlen;
+	cp = addr;
+	epkt = cp + totlen;
 
-        MGETHDR(m, M_DONTWAIT, MT_DATA);
-        if (m == NULL)
-                return NULL;
-        m_set_rcvif(m, ifp);
-        m->m_pkthdr.len = totlen;
-        m->m_len = MHLEN;
-        top = NULL;
-        mp = &top;
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return NULL;
+	m_set_rcvif(m, ifp);
+	m->m_pkthdr.len = totlen;
+	m->m_len = MHLEN;
+	top = NULL;
+	mp = &top;
 
-        while (totlen > 0) {
-                if (top) {
-                        MGET(m, M_DONTWAIT, MT_DATA);
-                        if (m == NULL) {
-                                m_freem(top);
-                                return NULL;
-                        }
-                        m->m_len = MLEN;
-                }
-                len = uimin(totlen, epkt - cp);
-                if (len >= MINCLSIZE) {
-                        MCLGET(m, M_DONTWAIT);
-                        if (m->m_flags & M_EXT)
-                                m->m_len = len = uimin(len, MCLBYTES);
-                        else
-                                len = m->m_len;
-                } else {
-                        /*
-                         * Place initial small packet/header at end of mbuf.
-                         */
-                        if (len < m->m_len) {
-                                if (top == NULL && len + max_linkhdr <= m->m_len)
-                                        m->m_data += max_linkhdr;
-                                m->m_len = len;
-                        } else
-                                len = m->m_len;
-                }
+	while (totlen > 0) {
+		if (top) {
+			MGET(m, M_DONTWAIT, MT_DATA);
+			if (m == NULL) {
+				m_freem(top);
+				return NULL;
+			}
+			m->m_len = MLEN;
+		}
+		len = uimin(totlen, epkt - cp);
+		if (len >= MINCLSIZE) {
+			MCLGET(m, M_DONTWAIT);
+			if (m->m_flags & M_EXT)
+				m->m_len = len = uimin(len, MCLBYTES);
+			else
+				len = m->m_len;
+		} else {
+			/*
+			 * Place initial small packet/header at end of mbuf.
+			 */
+			if (len < m->m_len) {
+				if (top == NULL && len + max_linkhdr <= m->m_len)
+					m->m_data += max_linkhdr;
+				m->m_len = len;
+			} else
+				len = m->m_len;
+		}
 		if (top == NULL) {
 			/* Make sure the payload is aligned */
 			char *newdata = (char *)
@@ -1309,18 +1309,18 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
 			m->m_len = len;
 			m->m_data = newdata;
 		}
-                ea_readbuf(sc, mtod(m, u_char *),
+		ea_readbuf(sc, mtod(m, u_char *),
 		    cp < SEEQ_MAX_BUFFER_SIZE ? cp : cp - sc->sc_rx_bufsize,
 		    len);
-                cp += len;
-                *mp = m;
-                mp = &m->m_next;
-                totlen -= len;
-                if (cp == epkt)
-                        cp = addr;
-        }
+		cp += len;
+		*mp = m;
+		mp = &m->m_next;
+		totlen -= len;
+		if (cp == epkt)
+			cp = addr;
+	}
 
-        return top;
+	return top;
 }
 
 /*
@@ -1375,10 +1375,10 @@ ea_mc_reset_8004(struct seeq8005_softc *sc)
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
-        uint32_t crc;
-        int i;
-        struct ether_multistep step;
-        uint8_t af[8];
+	uint32_t crc;
+	int i;
+	struct ether_multistep step;
+	uint8_t af[8];
 
 	/*
 	 * Set up multicast address filter by passing all multicast addresses

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.83 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.84 2019/05/23 13:10:52 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.83 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.84 2019/05/23 13:10:52 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -578,7 +578,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
-	const char 		*intrstr = NULL;
+	const char		*intrstr = NULL;
 	uint32_t		command;
 	struct ifnet		*ifp;
 	struct mii_data * const mii = &sc->bnx_mii;
@@ -806,23 +806,23 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	/* Force more frequent interrupts. */
 	sc->bnx_tx_quick_cons_trip_int = 1;
 	sc->bnx_tx_quick_cons_trip     = 1;
-	sc->bnx_tx_ticks_int           = 0;
-	sc->bnx_tx_ticks               = 0;
+	sc->bnx_tx_ticks_int	       = 0;
+	sc->bnx_tx_ticks	       = 0;
 
 	sc->bnx_rx_quick_cons_trip_int = 1;
 	sc->bnx_rx_quick_cons_trip     = 1;
-	sc->bnx_rx_ticks_int           = 0;
-	sc->bnx_rx_ticks               = 0;
+	sc->bnx_rx_ticks_int	       = 0;
+	sc->bnx_rx_ticks	       = 0;
 #else
 	sc->bnx_tx_quick_cons_trip_int = 20;
 	sc->bnx_tx_quick_cons_trip     = 20;
-	sc->bnx_tx_ticks_int           = 80;
-	sc->bnx_tx_ticks               = 80;
+	sc->bnx_tx_ticks_int	       = 80;
+	sc->bnx_tx_ticks	       = 80;
 
 	sc->bnx_rx_quick_cons_trip_int = 6;
 	sc->bnx_rx_quick_cons_trip     = 6;
-	sc->bnx_rx_ticks_int           = 18;
-	sc->bnx_rx_ticks               = 18;
+	sc->bnx_rx_ticks_int	       = 18;
+	sc->bnx_rx_ticks	       = 18;
 #endif
 
 	/* Update statistics once every second. */
@@ -1037,7 +1037,7 @@ bnx_reg_rd_ind(struct bnx_softc *sc, uint32_t offset)
 void
 bnx_reg_wr_ind(struct bnx_softc *sc, uint32_t offset, uint32_t val)
 {
-	struct pci_attach_args  *pa = &(sc->bnx_pa);
+	struct pci_attach_args	*pa = &(sc->bnx_pa);
 
 	DBPRINT(sc, BNX_EXCESSIVE, "%s(); offset = 0x%08X, val = 0x%08X\n",
 		__func__, offset, val);
@@ -2747,7 +2747,7 @@ bnx_fw_sync(struct bnx_softc *sc, uint32_t msg_data)
 	sc->bnx_fw_wr_seq++;
 	msg_data |= sc->bnx_fw_wr_seq;
 
- 	DBPRINT(sc, BNX_VERBOSE, "bnx_fw_sync(): msg_data = 0x%08X\n",
+	DBPRINT(sc, BNX_VERBOSE, "bnx_fw_sync(): msg_data = 0x%08X\n",
 	    msg_data);
 
 	/* Send the message to the bootcode driver mailbox. */
@@ -3744,7 +3744,7 @@ int
 bnx_blockinit(struct bnx_softc *sc)
 {
 	uint32_t		reg, val;
-	int 			rc = 0;
+	int			rc = 0;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
 
@@ -3970,7 +3970,7 @@ int
 bnx_get_buf(struct bnx_softc *sc, uint16_t *prod,
     uint16_t *chain_prod, uint32_t *prod_bseq)
 {
-	struct mbuf 		*m_new = NULL;
+	struct mbuf		*m_new = NULL;
 	int			rc = 0;
 	uint16_t min_free_bd;
 
@@ -3980,7 +3980,7 @@ bnx_get_buf(struct bnx_softc *sc, uint16_t *prod,
 	/* Make sure the inputs are valid. */
 	DBRUNIF((*chain_prod > MAX_RX_BD),
 	    aprint_error_dev(sc->bnx_dev,
-	        "RX producer out of range: 0x%04X > 0x%04X\n",
+		"RX producer out of range: 0x%04X > 0x%04X\n",
 		*chain_prod, (uint16_t)MAX_RX_BD));
 
 	DBPRINT(sc, BNX_VERBOSE_RECV, "%s(enter): prod = 0x%04X, chain_prod = "
@@ -4274,7 +4274,7 @@ bnx_free_tx_chain(struct bnx_softc *sc)
 	/* Check if we lost any mbufs in the process. */
 	DBRUNIF((sc->tx_mbuf_alloc),
 	    aprint_error_dev(sc->bnx_dev,
-	        "Memory leak! Lost %d mbufs from tx chain!\n",
+		"Memory leak! Lost %d mbufs from tx chain!\n",
 		sc->tx_mbuf_alloc));
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
@@ -4298,7 +4298,7 @@ bnx_init_rx_context(struct bnx_softc *sc)
 	if (sc->bnx_flowflags & IFM_ETH_TXPAUSE)
 		val |= 0x000000ff;
 
- 	CTX_WR(sc, GET_CID_ADDR(RX_CID), BNX_L2CTX_CTX_TYPE, val);
+	CTX_WR(sc, GET_CID_ADDR(RX_CID), BNX_L2CTX_CTX_TYPE, val);
 
 	/* Setup the MQ BIN mapping for l2_ctx_host_bseq. */
 	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
@@ -4429,7 +4429,7 @@ bnx_free_rx_chain(struct bnx_softc *sc)
 	/* Check if we lost any mbufs in the process. */
 	DBRUNIF((sc->rx_mbuf_alloc),
 	    aprint_error_dev(sc->bnx_dev,
-	        "Memory leak! Lost %d mbufs from rx chain!\n",
+		"Memory leak! Lost %d mbufs from rx chain!\n",
 		sc->rx_mbuf_alloc));
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
@@ -4611,8 +4611,8 @@ bnx_rx_intr(struct bnx_softc *sc)
 			/* Validate that this is the last rx_bd. */
 			if ((rxbd->rx_bd_flags & RX_BD_FLAGS_END) == 0) {
 			    printf("%s: Unexpected mbuf found in "
-			        "rx_bd[0x%04X]!\n", device_xname(sc->bnx_dev),
-			        sw_chain_cons);
+				"rx_bd[0x%04X]!\n", device_xname(sc->bnx_dev),
+				sw_chain_cons);
 			}
 #endif
 
@@ -4670,7 +4670,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 			DBRUNIF(((len < BNX_MIN_MTU) ||
 			    (len > BNX_MAX_JUMBO_ETHER_MTU_VLAN)),
 			    aprint_error_dev(sc->bnx_dev,
-			        "Unusual frame size found. "
+				"Unusual frame size found. "
 				"Min(%d), Actual(%d), Max(%d)\n",
 				(int)BNX_MIN_MTU, len,
 				(int)BNX_MAX_JUMBO_ETHER_MTU_VLAN);
@@ -4757,7 +4757,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 				else
 					DBPRINT(sc, BNX_WARN_SEND,
 					    "%s(): Invalid IP checksum "
-					        "= 0x%04X!\n",
+						"= 0x%04X!\n",
 						__func__,
 						l2fhdr->l2_fhdr_ip_xsum
 						);
@@ -4882,7 +4882,7 @@ bnx_tx_intr(struct bnx_softc *sc)
 
 		DBRUNIF((sw_tx_chain_cons > MAX_TX_BD),
 		    aprint_error_dev(sc->bnx_dev,
-		        "TX chain consumer out of range! 0x%04X > 0x%04X\n",
+			"TX chain consumer out of range! 0x%04X > 0x%04X\n",
 			sw_tx_chain_cons, (int)MAX_TX_BD); bnx_breakpoint(sc));
 
 		DBRUNIF(1, txbd = &sc->tx_bd_chain
@@ -4890,7 +4890,7 @@ bnx_tx_intr(struct bnx_softc *sc)
 
 		DBRUNIF((txbd == NULL),
 		    aprint_error_dev(sc->bnx_dev,
-		        "Unexpected NULL tx_bd[0x%04X]!\n", sw_tx_chain_cons);
+			"Unexpected NULL tx_bd[0x%04X]!\n", sw_tx_chain_cons);
 		    bnx_breakpoint(sc));
 
 		DBRUN(BNX_INFO_SEND, aprint_debug("%s: ", __func__);
@@ -4949,7 +4949,7 @@ bnx_tx_intr(struct bnx_softc *sc)
 	if (sc->used_tx_bd < sc->max_tx_bd) {
 		DBRUNIF((ifp->if_flags & IFF_OACTIVE),
 		    aprint_debug_dev(sc->bnx_dev,
-		        "Open TX chain! %d/%d (used/total)\n",
+			"Open TX chain! %d/%d (used/total)\n",
 			sc->used_tx_bd, sc->max_tx_bd));
 		ifp->if_flags &= ~IFF_OACTIVE;
 	}
@@ -5106,7 +5106,7 @@ bnx_mgmt_init(struct bnx_softc *sc)
 	bnx_ifmedia_upd(ifp);
 
 bnx_mgmt_init_exit:
- 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
+	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 }
 
 /****************************************************************************/
@@ -5970,7 +5970,7 @@ bnx_dump_tx_mbuf_chain(struct bnx_softc *sc, int chain_prod, int count)
 	    "----------------------------\n");
 
 	for (i = 0; i < count; i++) {
-	 	m = sc->tx_mbuf_ptr[chain_prod];
+		m = sc->tx_mbuf_ptr[chain_prod];
 		BNX_PRINTF(sc, "txmbuf[%d]\n", chain_prod);
 		bnx_dump_mbuf(sc, m);
 		chain_prod = TX_CHAIN_IDX(NEXT_TX_BD(chain_prod));
@@ -5997,7 +5997,7 @@ bnx_dump_rx_mbuf_chain(struct bnx_softc *sc, int chain_prod, int count)
 	    "----------------------------\n");
 
 	for (i = 0; i < count; i++) {
-	 	m = sc->rx_mbuf_ptr[chain_prod];
+		m = sc->rx_mbuf_ptr[chain_prod];
 		BNX_PRINTF(sc, "rxmbuf[0x%04X]\n", chain_prod);
 		bnx_dump_mbuf(sc, m);
 		chain_prod = RX_CHAIN_IDX(NEXT_RX_BD(chain_prod));
@@ -6091,7 +6091,7 @@ bnx_dump_tx_chain(struct bnx_softc *sc, int tx_prod, int count)
 
 	/* Now print out the tx_bd's themselves. */
 	for (i = 0; i < count; i++) {
-	 	txbd = &sc->tx_bd_chain[TX_PAGE(tx_prod)][TX_IDX(tx_prod)];
+		txbd = &sc->tx_bd_chain[TX_PAGE(tx_prod)][TX_IDX(tx_prod)];
 		bnx_dump_txbd(sc, tx_prod, txbd);
 		tx_prod = TX_CHAIN_IDX(NEXT_TX_BD(tx_prod));
 	}
@@ -6159,7 +6159,7 @@ bnx_dump_status_block(struct bnx_softc *sc)
 
 	sblk = sc->status_block;
 
-   	aprint_debug_dev(sc->bnx_dev, "----------------------------- "
+	aprint_debug_dev(sc->bnx_dev, "----------------------------- "
 	    "Status Block -----------------------------\n");
 
 	BNX_PRINTF(sc,
@@ -6650,7 +6650,7 @@ bnx_breakpoint(struct bnx_softc *sc)
 {
 	/* Unreachable code to shut the compiler up about unused functions. */
 	if (0) {
-   		bnx_dump_txbd(sc, 0, NULL);
+		bnx_dump_txbd(sc, 0, NULL);
 		bnx_dump_rxbd(sc, 0, NULL);
 		bnx_dump_tx_mbuf_chain(sc, 0, USABLE_TX_BD);
 		bnx_dump_rx_mbuf_chain(sc, 0, sc->max_rx_bd);

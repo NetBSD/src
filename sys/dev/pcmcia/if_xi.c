@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.88 2019/05/23 10:51:39 msaitoh Exp $ */
+/*	$NetBSD: if_xi.c,v 1.89 2019/05/23 13:10:52 msaitoh Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.88 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.89 2019/05/23 13:10:52 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -451,7 +451,7 @@ xi_get(struct xi_softc *sc)
 		len = uimin(pktlen, len);
 		data = mtod(m, uint8_t *);
 		if (len > 1) {
-		        len &= ~1;
+			len &= ~1;
 			bus_space_read_multi_2(sc->sc_bst, sc->sc_bsh, EDP,
 			    (uint16_t *)data, len>>1);
 		} else

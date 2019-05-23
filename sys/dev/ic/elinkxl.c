@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.129 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.130 2019/05/23 13:10:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.129 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.130 2019/05/23 13:10:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ ex_config(struct ex_softc *sc)
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    EX_NUPD * sizeof (struct ex_upd), PAGE_SIZE, 0, &sc->sc_useg, 1,
-            &sc->sc_urseg, BUS_DMA_NOWAIT)) != 0) {
+	    &sc->sc_urseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "can't allocate upload descriptors, error = %d\n", error);
 		goto fail;
@@ -1935,7 +1935,7 @@ ex_mii_statchg(struct ifnet *ifp)
 	else
 		mctl &= ~MAC_CONTROL_FDX;
 	bus_space_write_2(iot, ioh, ELINK_W3_MAC_CONTROL, mctl);
-	GO_WINDOW(1);   /* back to operating window */
+	GO_WINDOW(1);	/* back to operating window */
 }
 
 int
