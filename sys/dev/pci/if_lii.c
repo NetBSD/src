@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.23 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.24 2019/05/23 13:10:52 msaitoh Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.23 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.24 2019/05/23 13:10:52 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -472,17 +472,17 @@ lii_spi_configure(struct lii_softc *sc)
 
 #define MAKE_SFC(cssetup, clkhi, clklo, cshold, cshi, ins) \
     ( (((cssetup) & SFC_CS_SETUP_MASK)	\
-        << SFC_CS_SETUP_SHIFT)		\
+	<< SFC_CS_SETUP_SHIFT)		\
     | (((clkhi) & SFC_CLK_HI_MASK)	\
-        << SFC_CLK_HI_SHIFT)		\
+	<< SFC_CLK_HI_SHIFT)		\
     | (((clklo) & SFC_CLK_LO_MASK)	\
-        << SFC_CLK_LO_SHIFT)		\
+	<< SFC_CLK_LO_SHIFT)		\
     | (((cshold) & SFC_CS_HOLD_MASK)	\
-        << SFC_CS_HOLD_SHIFT)		\
+	<< SFC_CS_HOLD_SHIFT)		\
     | (((cshi) & SFC_CS_HI_MASK)	\
-        << SFC_CS_HI_SHIFT)		\
+	<< SFC_CS_HI_SHIFT)		\
     | (((ins) & SFC_INS_MASK)		\
-        << SFC_INS_SHIFT))
+	<< SFC_INS_SHIFT))
 
 /* Magic settings from the Linux driver */
 
@@ -503,7 +503,7 @@ lii_spi_read(struct lii_softc *sc, uint32_t reg, uint32_t *val)
 
 	v = SFC_WAIT_READY |
 	    MAKE_SFC(CUSTOM_SPI_CS_SETUP, CUSTOM_SPI_CLK_HI,
-	         CUSTOM_SPI_CLK_LO, CUSTOM_SPI_CS_HOLD, CUSTOM_SPI_CS_HI, 1);
+		 CUSTOM_SPI_CLK_LO, CUSTOM_SPI_CS_HOLD, CUSTOM_SPI_CS_HI, 1);
 
 	AT_WRITE_4(sc, ATL2_SFC, v);
 	v |= SFC_START;
@@ -1034,7 +1034,7 @@ lii_txintr(struct lii_softc *sc)
 
 		txs->txps_update = 0;
 
-		txph =  (struct tx_pkt_header *)
+		txph =	(struct tx_pkt_header *)
 		    (sc->sc_txdbase + sc->sc_txd_ack);
 
 		if (txph->txph_size != txs->txps_size)

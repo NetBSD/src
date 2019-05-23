@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.103 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: hme.c,v 1.104 2019/05/23 13:10:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.103 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.104 2019/05/23 13:10:51 msaitoh Exp $");
 
 /* #define HMEDEBUG */
 
@@ -929,7 +929,7 @@ hme_start(struct ifnet *ifp)
 			    + start;
 			txflags = HME_XD_TXCKSUM |
 				  (offset << HME_XD_TXCSSTUFFSHIFT) |
-		  		  (start << HME_XD_TXCSSTARTSHIFT);
+				  (start << HME_XD_TXCSSTARTSHIFT);
 		} else
 #endif
 			txflags = 0;

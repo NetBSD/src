@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.251 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: wi.c,v 1.252 2019/05/23 13:10:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.251 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.252 2019/05/23 13:10:51 msaitoh Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -363,10 +363,10 @@ wi_attach(struct wi_softc *sc, const uint8_t *macaddr)
 	struct ifnet *ifp = &sc->sc_if;
 	int chan, nrate, buflen;
 	uint16_t val, chanavail;
- 	struct {
- 		uint16_t nrates;
- 		char rates[IEEE80211_RATE_SIZE];
- 	} ratebuf;
+	struct {
+		uint16_t nrates;
+		char rates[IEEE80211_RATE_SIZE];
+	} ratebuf;
 	static const uint8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
@@ -429,7 +429,7 @@ wi_attach(struct wi_softc *sc, const uint8_t *macaddr)
 
 	/* Find available channel */
 	if (wi_read_xrid(sc, WI_RID_CHANNEL_LIST, &chanavail,
-	                 sizeof(chanavail)) != 0) {
+			 sizeof(chanavail)) != 0) {
 		aprint_normal_dev(sc->sc_dev, "using default channel list\n");
 		chanavail = htole16(0x1fff);	/* assume 1-13 */
 	}
@@ -1165,7 +1165,7 @@ wi_start(struct ifnet *ifp)
 			m_copydata(m0, 4, ETHER_ADDR_LEN * 2,
 			    (void *)&frmhdr.wi_ehdr);
 			frmhdr.wi_ehdr.ether_type = 0;
-                        wh = mtod(m0, struct ieee80211_frame *);
+			wh = mtod(m0, struct ieee80211_frame *);
 			ni = M_GETCTX(m0, struct ieee80211_node *);
 			M_CLEARCTX(m0);
 		} else if (ic->ic_state == IEEE80211_S_RUN) {
@@ -1622,7 +1622,7 @@ wi_sync_bssid(struct wi_softc *sc, uint8_t new_bssid[IEEE80211_ADDR_LEN])
 	 */
 	if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 	    !ppsratecheck(&sc->sc_last_syn, &sc->sc_false_syns,
-	                 WI_MAX_FALSE_SYNS))
+			 WI_MAX_FALSE_SYNS))
 		return;
 
 	sc->sc_false_syns = MAX(0, sc->sc_false_syns - 1);
@@ -1634,7 +1634,7 @@ wi_sync_bssid(struct wi_softc *sc, uint8_t new_bssid[IEEE80211_ADDR_LEN])
 	 * called and it will overwrite the node state.
 	 */
 	s = splnet();
-        ieee80211_sta_join(ic, ieee80211_ref_node(ni));
+	ieee80211_sta_join(ic, ieee80211_ref_node(ni));
 	splx(s);
 }
 
@@ -1979,7 +1979,7 @@ wi_tx_intr(struct wi_softc *sc)
 	fid = CSR_READ_2(sc, WI_TX_CMP_FID);
 	/* Read in the frame header */
 	if (wi_read_bap(sc, fid, offsetof(struct wi_frame, wi_tx_swsup2),
-	                &frmhdr.wi_tx_swsup2, 2) != 0) {
+			&frmhdr.wi_tx_swsup2, 2) != 0) {
 		aprint_error_dev(sc->sc_dev, "%s read fid %x failed\n",
 		    __func__, fid);
 		wi_rssdescs_reset(ic, &sc->sc_rssd, &sc->sc_rssdfree,
@@ -2399,7 +2399,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, void *data)
 		return error;
 	len = (wreq.wi_len - 1) * 2;
 	switch (wreq.wi_type) {
-        case WI_RID_MAC_NODE:
+	case WI_RID_MAC_NODE:
 		/* XXX convert to SIOCALIFADDR, AF_LINK, IFLR_ACTIVE */
 		(void)memcpy(ic->ic_myaddr, wreq.wi_val, ETHER_ADDR_LEN);
 		if_set_sadl(ifp, ic->ic_myaddr, ETHER_ADDR_LEN, false);
@@ -2793,7 +2793,7 @@ wi_cmd_start(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 	if (i == 0) {
 		aprint_error_dev(sc->sc_dev, "wi_cmd: busy bit won't clear.\n");
 		return (ETIMEDOUT);
-  	}
+	}
 #ifdef WI_HISTOGRAM
 	if (i > 490)
 		hist1[500 - i]++;
