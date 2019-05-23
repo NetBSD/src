@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.5 2019/05/23 10:57:29 msaitoh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.6 2019/05/23 13:10:52 msaitoh Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
@@ -29,7 +29,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.5 2019/05/23 10:57:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.6 2019/05/23 13:10:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -757,7 +757,7 @@ ure_rtl8153_init(struct ure_softc *sc)
 	ure_write_mem(sc, URE_USB_TOLERANCE,
 	    URE_MCU_TYPE_USB | URE_BYTE_EN_SIX_BYTES, u1u2, sizeof(u1u2));
 
-        for (i = 0; i < URE_TIMEOUT; i++) {
+	for (i = 0; i < URE_TIMEOUT; i++) {
 		if (ure_read_2(sc, URE_PLA_BOOT_CTRL, URE_MCU_TYPE_PLA) &
 		    URE_AUTOLOAD_DONE)
 			break;
@@ -862,7 +862,7 @@ ure_rtl8153_init(struct ure_softc *sc)
 	ure_write_2(sc, URE_USB_U2P3_CTRL, URE_MCU_TYPE_USB, val);
 
 	memset(u1u2, 0x00, sizeof(u1u2));
-        ure_write_mem(sc, URE_USB_TOLERANCE,
+	ure_write_mem(sc, URE_USB_TOLERANCE,
 	    URE_MCU_TYPE_USB | URE_BYTE_EN_SIX_BYTES, u1u2, sizeof(u1u2));
 
 	/* Disable ALDPS. */
@@ -1446,13 +1446,13 @@ ure_rxcsum(struct ifnet *ifp, struct ure_rxpkt *rp)
 			flags |= M_CSUM_TCPv4;
 		if (csum & URE_RXPKT_UDP_CS)
 			flags |= M_CSUM_UDPv4;
-        } else if (csum & URE_RXPKT_IPV6_CS) {
+	} else if (csum & URE_RXPKT_IPV6_CS) {
 		flags = 0;
 		if (csum & URE_RXPKT_TCP_CS)
 			flags |= M_CSUM_TCPv6;
 		if (csum & URE_RXPKT_UDP_CS)
 			flags |= M_CSUM_UDPv6;
-        }
+	}
 
 	flags &= enabled;
 	if (__predict_false((flags & M_CSUM_IPv4) &&

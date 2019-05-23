@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.58 2019/05/23 10:40:39 msaitoh Exp $ */
+/* $NetBSD: sbmac.c,v 1.59 2019/05/23 13:10:50 msaitoh Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.58 2019/05/23 10:40:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.59 2019/05/23 13:10:50 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -145,7 +145,7 @@ typedef struct sbmacdma_s {
 	sbmac_port_t	sbdma_config0;	/* DMA config register 0 */
 	sbmac_port_t	sbdma_config1;	/* DMA config register 1 */
 	sbmac_port_t	sbdma_dscrbase;	/* Descriptor base address */
-	sbmac_port_t	sbdma_dscrcnt; 	/* Descriptor count register */
+	sbmac_port_t	sbdma_dscrcnt;	/* Descriptor count register */
 	sbmac_port_t	sbdma_curdscr;	/* current descriptor address */
 
 	/*
@@ -573,7 +573,7 @@ sbdma_add_rcvbuffer(sbmacdma_t *d, struct mbuf *m)
 static int
 sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 {
-        unsigned int dsc, nextdsc, prevdsc, origdesc;
+	unsigned int dsc, nextdsc, prevdsc, origdesc;
 	int length;
 	int num_mbufs = 0;
 	struct sbmac_softc *sc = d->sbdma_eth;
@@ -702,7 +702,7 @@ again:
 		d->sbdma_ctxtable[prevdsc] = m;
 
 		/* Interrupt on last dscr of packet.  */
-	        d->sbdma_dscrtable[prevdsc].dscr_a |= M_DMA_DSCRA_INTERRUPT;
+		d->sbdma_dscrtable[prevdsc].dscr_a |= M_DMA_DSCRA_INTERRUPT;
 	} else {
 		struct mbuf *m_new = NULL;
 		/*
@@ -1060,12 +1060,12 @@ sbmac_initctx(struct sbmac_softc *sc)
 	 */
 
 	sc->sbm_macenable = PKSEG1(sc->sbm_base + R_MAC_ENABLE);
-	sc->sbm_maccfg    = PKSEG1(sc->sbm_base + R_MAC_CFG);
-	sc->sbm_fifocfg   = PKSEG1(sc->sbm_base + R_MAC_THRSH_CFG);
+	sc->sbm_maccfg	  = PKSEG1(sc->sbm_base + R_MAC_CFG);
+	sc->sbm_fifocfg	  = PKSEG1(sc->sbm_base + R_MAC_THRSH_CFG);
 	sc->sbm_framecfg  = PKSEG1(sc->sbm_base + R_MAC_FRAMECFG);
 	sc->sbm_rxfilter  = PKSEG1(sc->sbm_base + R_MAC_ADFILTER_CFG);
-	sc->sbm_isr       = PKSEG1(sc->sbm_base + R_MAC_STATUS);
-	sc->sbm_imr       = PKSEG1(sc->sbm_base + R_MAC_INT_MASK);
+	sc->sbm_isr	  = PKSEG1(sc->sbm_base + R_MAC_STATUS);
+	sc->sbm_imr	  = PKSEG1(sc->sbm_base + R_MAC_INT_MASK);
 
 	/*
 	 * Initialize the DMA channels.  Right now, only one per MAC is used
@@ -2317,7 +2317,7 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize MII/media info.
 	 */
-	mii->mii_ifp      = ifp;
+	mii->mii_ifp	  = ifp;
 	mii->mii_readreg  = sbmac_mii_readreg;
 	mii->mii_writereg = sbmac_mii_writereg;
 	mii->mii_statchg  = sbmac_mii_statchg;

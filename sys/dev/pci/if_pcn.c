@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.69 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.70 2019/05/23 13:10:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.69 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.70 2019/05/23 13:10:52 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,7 +375,7 @@ do {									\
 		__rmd->rmd0 =						\
 		    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr + 2);	\
 	}								\
-	__rmd->rmd1 = htole32(LE_R1_OWN | LE_R1_ONES | 			\
+	__rmd->rmd1 = htole32(LE_R1_OWN | LE_R1_ONES |			\
 	    (LE_BCNT(MCLBYTES - 2) & LE_R1_BCNT_MASK));			\
 	PCN_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);\
 } while(/*CONSTCOND*/0)
@@ -634,7 +634,7 @@ pcn_attach(device_t parent, device_t self, void *aux)
 	obj = prop_dictionary_get(device_properties(sc->sc_dev),
 				  "am79c970-no-eeprom");
 	if (prop_bool_true(obj)) {
-	        for (i = 0; i < 3; i++) {
+		for (i = 0; i < 3; i++) {
 			uint32_t val;
 			val = pcn_csr_read(sc, LE_CSR12 + i);
 			enaddr[2 * i] = val & 0xff;

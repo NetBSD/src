@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.166 2019/05/23 10:57:28 msaitoh Exp $  */
+/*	$NetBSD: atw.c,v 1.167 2019/05/23 13:10:51 msaitoh Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.166 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.167 2019/05/23 13:10:51 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -211,7 +211,7 @@ void	atw_txintr(struct atw_softc *, uint32_t);
 static int	atw_newstate(struct ieee80211com *, enum ieee80211_state, int);
 static void	atw_next_scan(void *);
 static void	atw_recv_mgmt(struct ieee80211com *, struct mbuf *,
-		              struct ieee80211_node *, int, int, uint32_t);
+			      struct ieee80211_node *, int, int, uint32_t);
 static int	atw_tune(struct atw_softc *);
 
 /* Device initialization */
@@ -256,7 +256,7 @@ static void	atw_filter_setup(struct atw_softc *);
 /* 802.11 utilities */
 static uint64_t			atw_get_tsft(struct atw_softc *);
 static inline uint32_t	atw_last_even_tsft(uint32_t, uint32_t,
-				                   uint32_t);
+						   uint32_t);
 static struct ieee80211_node	*atw_node_alloc(struct ieee80211_node_table *);
 static void			atw_node_free(struct ieee80211_node *);
 
@@ -1065,7 +1065,7 @@ static void
 atw_txlmt_init(struct atw_softc *sc)
 {
 	ATW_WRITE(sc, ATW_TXLMT, __SHIFTIN(512, ATW_TXLMT_MTMLT_MASK) |
-	                         __SHIFTIN(1, ATW_TXLMT_SRTYLIM_MASK));
+				 __SHIFTIN(1, ATW_TXLMT_SRTYLIM_MASK));
 }
 
 static void
@@ -1129,7 +1129,7 @@ atw_ifs_init(struct atw_softc *sc)
 	 */
 	ifst = __SHIFTIN(IEEE80211_DUR_DS_SLOT, ATW_IFST_SLOT_MASK) |
 	      __SHIFTIN(22 * 10 /* IEEE80211_DUR_DS_SIFS */ /* # of 22 MHz cycles */,
-	             ATW_IFST_SIFS_MASK) |
+		     ATW_IFST_SIFS_MASK) |
 	      __SHIFTIN(IEEE80211_DUR_DS_DIFS, ATW_IFST_DIFS_MASK) |
 	      __SHIFTIN(IEEE80211_DUR_DS_EIFS, ATW_IFST_EIFS_MASK);
 
@@ -1213,7 +1213,7 @@ atw_init(struct ifnet *ifp)
 		 */
 		atw_stop(ifp, 0);
 	} else if (!pmf_device_subtree_resume(sc->sc_dev, &sc->sc_qual) ||
-	           !device_is_active(sc->sc_dev))
+		   !device_is_active(sc->sc_dev))
 		return 0;
 
 	/*
@@ -1327,7 +1327,7 @@ atw_init(struct ifnet *ifp)
 	 * Initialize the interrupt mask and enable interrupts.
 	 */
 	/* normal interrupts */
-	sc->sc_inten =  ATW_INTR_TCI | ATW_INTR_TDU | ATW_INTR_RCI |
+	sc->sc_inten = ATW_INTR_TCI | ATW_INTR_TDU | ATW_INTR_RCI |
 	    ATW_INTR_NISS | ATW_INTR_LINKON | ATW_INTR_BCNTC;
 
 	/* abnormal interrupts */
@@ -1552,7 +1552,7 @@ atw_si4126_tune(struct atw_softc *sc, u_int chan)
 
 	/* Tune IF to 748 MHz to suit the IF LO input of the
 	 * RF2494B, which is 2 x IF. No need to set an IF divider
-         * because an IF in 526 MHz - 952 MHz is allowed.
+	 * because an IF in 526 MHz - 952 MHz is allowed.
 	 *
 	 * XIN is 44.000 MHz, so divide it by two to get allowable
 	 * range of 2-25 MHz. SiLabs tells me that this is not
@@ -1962,7 +1962,7 @@ atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 	}
 	if (val != NULL)
 		*val = __SHIFTOUT(ATW_READ(sc, ATW_SYNCTL),
-		                       ATW_SYNCTL_DATA_MASK);
+				       ATW_SYNCTL_DATA_MASK);
 	return 0;
 }
 #endif /* ATW_SYNDEBUG */
@@ -2190,7 +2190,7 @@ atw_write_wep(struct atw_softc *sc)
 #endif
 	/* SRAM shared-key record format: key0 flags key1 ... key12 */
 	uint8_t buf[IEEE80211_WEP_NKID]
-	            [1 /* key[0] */ + 1 /* flags */ + 12 /* key[1 .. 12] */];
+		    [1 /* key[0] */ + 1 /* flags */ + 12 /* key[1 .. 12] */];
 
 	sc->sc_wepctl = 0;
 	ATW_WRITE(sc, ATW_WEPCTL, sc->sc_wepctl);
@@ -2470,7 +2470,7 @@ atw_predict_beacon(struct atw_softc *sc)
 	    __SHIFTIN(1, ATW_TOFS1_TSFTOFSR_MASK) |
 	    __SHIFTIN(TBTTOFS, ATW_TOFS1_TBTTOFS_MASK) |
 	    __SHIFTIN(__SHIFTOUT(tbtt - TBTTOFS * IEEE80211_DUR_TU,
-	        ATW_TBTTPRE_MASK), ATW_TOFS1_TBTTPRE_MASK));
+		ATW_TBTTPRE_MASK), ATW_TOFS1_TBTTPRE_MASK));
 #undef TBTTOFS
 }
 
@@ -2617,7 +2617,7 @@ atw_txdrain(struct atw_softc *sc)
 	}
 
 	KASSERT((sc->sc_if.if_flags & IFF_RUNNING) == 0 ||
-	        !(SIMPLEQ_EMPTY(&sc->sc_txfreeq) ||
+		!(SIMPLEQ_EMPTY(&sc->sc_txfreeq) ||
 		  sc->sc_txfree != ATW_NTXDESC));
 	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 	sc->sc_tx_timer = 0;
@@ -2970,7 +2970,7 @@ atw_softintr(void *arg)
 		 *	use single-segment receive DMA, so this
 		 *	is mostly useless.
 		 *
-		 *      TBD others
+		 *	TBD others
 		 */
 	}
 
@@ -2988,10 +2988,10 @@ atw_softintr(void *arg)
  *
  *	Cause the transmit and/or receive processes to go idle.
  *
- *      XXX It seems that the ADM8211 will not signal the end of the Rx/Tx
+ *	XXX It seems that the ADM8211 will not signal the end of the Rx/Tx
  *	process in STSR if I clear SR or ST after the process has already
  *	ceased. Fair enough. But the Rx process status bits in ATW_TEST0
- *      do not seem to be too reliable. Perhaps I have the sense of the
+ *	do not seem to be too reliable. Perhaps I have the sense of the
  *	Rx bits switched with the Tx bits?
  */
 void
@@ -3232,7 +3232,7 @@ atw_rxintr(struct atw_softc *sc)
 
 			bpf_mtap2(sc->sc_radiobpf, tap, sizeof(sc->sc_rxtapu),
 			    m, BPF_D_IN);
- 		}
+		}
 
 		sc->sc_recv_ev.ev_count++;
 
@@ -3822,7 +3822,7 @@ atw_start(struct ifnet *ifp)
 			txd->at_buf1 = htole32(dmamap->dm_segs[seg].ds_addr);
 			txd->at_flags =
 			    htole32(__SHIFTIN(dmamap->dm_segs[seg].ds_len,
-			                   ATW_TXFLAG_TBS1_MASK)) |
+					   ATW_TXFLAG_TBS1_MASK)) |
 			    ((nexttx == (ATW_NTXDESC - 1))
 			        ? htole32(ATW_TXFLAG_TER) : 0);
 			lasttx = nexttx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.39 2019/05/23 10:57:29 msaitoh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.40 2019/05/23 13:10:52 msaitoh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.39 2019/05/23 10:57:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.40 2019/05/23 13:10:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -801,7 +801,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 
 	/* Adapter does not support TSOv6 (They call it LSOv2). */
 	ifp->if_capabilities |= IFCAP_TSOv4 |
-	    IFCAP_CSUM_IPv4_Rx  | IFCAP_CSUM_IPv4_Tx  |
+	    IFCAP_CSUM_IPv4_Rx	| IFCAP_CSUM_IPv4_Tx  |
 	    IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx |
 	    IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx |
 	    IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_TCPv6_Tx |
@@ -1083,7 +1083,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		if ((buf[0] != 0xee) || (buf[1] != 0xee)) {
 			aprint_error_dev(sc->axen_dev,
 			    "invalid buffer(pkt#%d), continue\n", pkt_count);
-	    		ifp->if_ierrors += pkt_count;
+			ifp->if_ierrors += pkt_count;
 			goto done;
 		}
 
@@ -1094,7 +1094,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		   device_xname(sc->axen_dev), pkt_count, pkt_hdr, pkt_len));
 
 		if (pkt_hdr & (AXEN_RXHDR_CRC_ERR | AXEN_RXHDR_DROP_ERR)) {
-	    		ifp->if_ierrors++;
+			ifp->if_ierrors++;
 			/* move to next pkt header */
 			DPRINTF(("%s: %s err (pkt#%d)\n",
 			    device_xname(sc->axen_dev),

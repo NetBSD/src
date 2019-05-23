@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.41 2019/05/23 10:30:35 msaitoh Exp $	*/
+/*	$NetBSD: epe.c,v 1.42 2019/05/23 13:10:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.41 2019/05/23 10:30:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.42 2019/05/23 13:10:50 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.41 2019/05/23 10:30:35 msaitoh Exp $");
 static int	epe_match(device_t , cfdata_t, void *);
 static void	epe_attach(device_t, device_t, void *);
 static void	epe_init(struct epe_softc *);
-static int      epe_intr(void* arg);
+static int	epe_intr(void* arg);
 static int	epe_gctx(struct epe_softc *);
 static int	epe_mediachange(struct ifnet *);
 int		epe_mii_readreg (device_t, int, int, uint16_t *);
@@ -147,7 +147,7 @@ epe_attach(device_t parent, device_t self, void *aux)
 					 sc->sc_enaddr, ETHER_ADDR_LEN);
 	}
 
-        ep93xx_intr_establish(sc->sc_intr, IPL_NET, epe_intr, sc);
+	ep93xx_intr_establish(sc->sc_intr, IPL_NET, epe_intr, sc);
 	epe_init(sc);
 }
 
@@ -258,7 +258,7 @@ begin:
 	if (ndq > 0) {
 		ifp->if_ipackets += ndq;
 		CTRLPAGE_DMASYNC(TX_QLEN * 3 * sizeof(uint32_t),
- 			RX_QLEN * 4 * sizeof(uint32_t),
+			RX_QLEN * 4 * sizeof(uint32_t),
 			BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		EPE_WRITE(RXStsEnq, ndq);
 		EPE_WRITE(RXDEnq, ndq);
@@ -425,19 +425,19 @@ epe_init(struct epe_softc *sc)
 	 */
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
-        strcpy(ifp->if_xname, device_xname(sc->sc_dev));
-        ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-        ifp->if_ioctl = epe_ifioctl;
-        ifp->if_start = epe_ifstart;
-        ifp->if_watchdog = epe_ifwatchdog;
-        ifp->if_init = epe_ifinit;
-        ifp->if_stop = epe_ifstop;
-        ifp->if_timer = 0;
+	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_ioctl = epe_ifioctl;
+	ifp->if_start = epe_ifstart;
+	ifp->if_watchdog = epe_ifwatchdog;
+	ifp->if_init = epe_ifinit;
+	ifp->if_stop = epe_ifstop;
+	ifp->if_timer = 0;
 	ifp->if_softc = sc;
-        IFQ_SET_READY(&ifp->if_snd);
-        if_attach(ifp);
+	IFQ_SET_READY(&ifp->if_snd);
+	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
-        ether_ifattach(ifp, (sc)->sc_enaddr);
+	ether_ifattach(ifp, (sc)->sc_enaddr);
 }
 
 static int
@@ -482,18 +482,18 @@ epe_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 void
 epe_statchg(struct ifnet *ifp)
 {
-        struct epe_softc *sc = ifp->if_softc;
-        uint32_t reg;
+	struct epe_softc *sc = ifp->if_softc;
+	uint32_t reg;
 
-        /*
-         * We must keep the MAC and the PHY in sync as
-         * to the status of full-duplex!
-         */
-        reg = EPE_READ(TestCtl);
-        if (sc->sc_mii.mii_media_active & IFM_FDX)
-                reg |= TestCtl_MFDX;
-        else
-                reg &= ~TestCtl_MFDX;
+	/*
+	 * We must keep the MAC and the PHY in sync as
+	 * to the status of full-duplex!
+	 */
+	reg = EPE_READ(TestCtl);
+	if (sc->sc_mii.mii_media_active & IFM_FDX)
+		reg |= TestCtl_MFDX;
+	else
+		reg &= ~TestCtl_MFDX;
 	EPE_WRITE(TestCtl, reg);
 }
 
@@ -655,7 +655,7 @@ epe_ifwatchdog(struct ifnet *ifp)
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-       	printf("%s: device timeout, BMCtl = 0x%08x, BMSts = 0x%08x\n",
+	printf("%s: device timeout, BMCtl = 0x%08x, BMSts = 0x%08x\n",
 		device_xname(sc->sc_dev), EPE_READ(BMCtl), EPE_READ(BMSts));
 }
 
@@ -676,7 +676,7 @@ epe_ifinit(struct ifnet *ifp)
 		goto out;
 
 	callout_reset(&sc->epe_tick_ch, hz, epe_tick, sc);
-        ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags |= IFF_RUNNING;
 out:
 	splx(s);
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.82 2019/05/23 10:40:39 msaitoh Exp $	*/
+/*	$NetBSD: i82586.c,v 1.83 2019/05/23 13:10:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.82 2019/05/23 10:40:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.83 2019/05/23 13:10:51 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -200,7 +200,7 @@ static int	i82586_start_cmd(struct ie_softc *, int, int, int, int);
 static int	i82586_cmd_wait(struct ie_softc *);
 
 #if I82586_DEBUG
-void 		print_rbd(struct ie_softc *, int);
+void		print_rbd(struct ie_softc *, int);
 #endif
 
 static char* padbuf = NULL;
