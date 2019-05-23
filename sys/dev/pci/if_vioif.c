@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.47 2019/02/04 02:49:28 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.48 2019/05/23 10:40:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.47 2019/02/04 02:49:28 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.48 2019/05/23 10:40:39 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -511,7 +511,8 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		P(p, ctrlq->ctrlq_cmd, sizeof(*ctrlq->ctrlq_cmd));
 		P(p, ctrlq->ctrlq_status, sizeof(*ctrlq->ctrlq_status));
 		P(p, ctrlq->ctrlq_rx, sizeof(*ctrlq->ctrlq_rx));
-		P(p, ctrlq->ctrlq_mac_tbl_uc, sizeof(*ctrlq->ctrlq_mac_tbl_uc) + 0);
+		P(p, ctrlq->ctrlq_mac_tbl_uc,
+		    sizeof(*ctrlq->ctrlq_mac_tbl_uc) + 0);
 		P(p, ctrlq->ctrlq_mac_tbl_mc,
 		    (sizeof(*ctrlq->ctrlq_mac_tbl_mc)
 		    + ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES));
@@ -546,8 +547,10 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		rxqsize = rxq->rxq_vq->vq_num;
 		txqsize = txq->txq_vq->vq_num;
 
-		P(p, rxq->rxq_hdr_dmamaps, sizeof(rxq->rxq_hdr_dmamaps[0]) * rxqsize);
-		P(p, txq->txq_hdr_dmamaps, sizeof(txq->txq_hdr_dmamaps[0]) * txqsize);
+		P(p, rxq->rxq_hdr_dmamaps,
+		    sizeof(rxq->rxq_hdr_dmamaps[0]) * rxqsize);
+		P(p, txq->txq_hdr_dmamaps,
+		    sizeof(txq->txq_hdr_dmamaps[0]) * txqsize);
 		P(p, rxq->rxq_dmamaps, sizeof(rxq->rxq_dmamaps[0]) * rxqsize);
 		P(p, txq->txq_dmamaps, sizeof(txq->txq_dmamaps[0]) * txqsize);
 		P(p, rxq->rxq_mbufs, sizeof(rxq->rxq_mbufs[0]) * rxqsize);
@@ -555,17 +558,17 @@ vioif_alloc_mems(struct vioif_softc *sc)
 	}
 #undef P
 
-#define C(map, size, nsegs, usage)						\
-	do {									\
-		r = bus_dmamap_create(virtio_dmat(vsc), size, nsegs, size, 0,	\
-				      BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,		\
-				      &map);					\
-		if (r != 0) {							\
-			aprint_error_dev(sc->sc_dev,				\
-			    "%s dmamap creation failed, "			\
-			    "error code %d\n", usage, r);			\
-			goto err_reqs;						\
-		}								\
+#define C(map, size, nsegs, usage)					      \
+	do {								      \
+		r = bus_dmamap_create(virtio_dmat(vsc), size, nsegs, size, 0, \
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,			      \
+		    &map);						      \
+		if (r != 0) {						      \
+			aprint_error_dev(sc->sc_dev,			      \
+			    "%s dmamap creation failed, "		      \
+			    "error code %d\n", usage, r);		      \
+			goto err_reqs;					      \
+		}							      \
 	} while (0)
 #define C_L(map, buf, size, nsegs, rw, usage)				\
 	C(map, size, nsegs, usage);					\
@@ -835,7 +838,8 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		}
 		snprintf(qname, sizeof(qname), "tx%d", i);
 		r = virtio_alloc_vq(vsc, txq->txq_vq, nvqs,
-		    (sizeof(struct virtio_net_hdr) + (ETHER_MAX_LEN - ETHER_HDR_LEN)),
+		    (sizeof(struct virtio_net_hdr)
+			+ (ETHER_MAX_LEN - ETHER_HDR_LEN)),
 		    VIRTIO_NET_TX_MAXNSEGS + 1, qname);
 		if (r != 0)
 			goto err;
@@ -869,7 +873,8 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	sc->sc_ctl_softint = softint_establish(softint_flags, vioif_ctl_softint, sc);
+	sc->sc_ctl_softint = softint_establish(softint_flags,
+	    vioif_ctl_softint, sc);
 	if (sc->sc_ctl_softint == NULL) {
 		aprint_error_dev(self, "cannot establish ctl softint\n");
 		goto err;
@@ -1110,7 +1115,8 @@ vioif_stop(struct ifnet *ifp, int disable)
 }
 
 static void
-vioif_send_common_locked(struct ifnet *ifp, struct vioif_txqueue *txq, bool is_transmit)
+vioif_send_common_locked(struct ifnet *ifp, struct vioif_txqueue *txq,
+    bool is_transmit)
 {
 	struct vioif_softc *sc = ifp->if_softc;
 	struct virtio_softc *vsc = sc->sc_virtio;
@@ -1151,7 +1157,7 @@ vioif_send_common_locked(struct ifnet *ifp, struct vioif_txqueue *txq, bool is_t
 
 		r = bus_dmamap_load_mbuf(virtio_dmat(vsc),
 					 txq->txq_dmamaps[slot],
-					 m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+					 m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (r != 0) {
 			/* maybe just too fragmented */
 			struct mbuf *newm;
@@ -1166,7 +1172,7 @@ vioif_send_common_locked(struct ifnet *ifp, struct vioif_txqueue *txq, bool is_t
 			m = newm;
 			r = bus_dmamap_load_mbuf(virtio_dmat(vsc),
 					 txq->txq_dmamaps[slot],
-					 m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+					 m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (r != 0) {
 				aprint_error_dev(sc->sc_dev,
 	   			    "tx dmamap load failed, error code %d\n",
@@ -1357,7 +1363,7 @@ vioif_add_rx_mbuf(struct vioif_rxqueue *rxq, int i)
 	m->m_len = m->m_pkthdr.len = m->m_ext.ext_size;
 	r = bus_dmamap_load_mbuf(virtio_dmat(vsc),
 				 rxq->rxq_dmamaps[i],
-				 m, BUS_DMA_READ|BUS_DMA_NOWAIT);
+				 m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (r) {
 		m_freem(m);
 		rxq->rxq_mbufs[i] = NULL;
@@ -1678,7 +1684,7 @@ vioif_ctrl_load_cmdspec(struct vioif_softc *sc,
 	for (i = 0; i < nspecs; i++) {
 		r = bus_dmamap_load(virtio_dmat(vsc),
 		    specs[i].dmamap, specs[i].buf, specs[i].bufsize,
-		    NULL, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+		    NULL, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (r) {
 			printf("%s: control command dmamap load failed, "
 			       "error code %d\n", device_xname(sc->sc_dev), r);
@@ -1927,7 +1933,8 @@ vioif_ctrl_vq_done(struct virtqueue *vq)
 static int
 vioif_rx_filter(struct vioif_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	struct vioif_ctrlqueue *ctrlq = &sc->sc_ctrlq;
@@ -1946,8 +1953,8 @@ vioif_rx_filter(struct vioif_softc *sc)
 	}
 
 	nentries = -1;
-	ETHER_LOCK(&sc->sc_ethercom);
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (nentries++, enm != NULL) {
 		if (nentries >= VIRTIO_NET_CTRL_MAC_MAXENTRIES) {
 			allmulti = 1;
@@ -1965,7 +1972,7 @@ vioif_rx_filter(struct vioif_softc *sc)
 	rxfilter = 1;
 
 set_unlock:
-	ETHER_UNLOCK(&sc->sc_ethercom);
+	ETHER_UNLOCK(ec);
 
 set:
 	if (rxfilter) {
@@ -2087,21 +2094,21 @@ vioif_ctl_softint(void *arg)
 }
 
 MODULE(MODULE_CLASS_DRIVER, if_vioif, "virtio");
- 
+
 #ifdef _MODULE
 #include "ioconf.c"
 #endif
- 
-static int 
+
+static int
 if_vioif_modcmd(modcmd_t cmd, void *opaque)
 {
 	int error = 0;
- 
+
 #ifdef _MODULE
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = config_init_component(cfdriver_ioconf_if_vioif, 
-		    cfattach_ioconf_if_vioif, cfdata_ioconf_if_vioif); 
+		error = config_init_component(cfdriver_ioconf_if_vioif,
+		    cfattach_ioconf_if_vioif, cfdata_ioconf_if_vioif);
 		break;
 	case MODULE_CMD_FINI:
 		error = config_fini_component(cfdriver_ioconf_if_vioif,
@@ -2109,9 +2116,9 @@ if_vioif_modcmd(modcmd_t cmd, void *opaque)
 		break;
 	default:
 		error = ENOTTY;
-		break; 
+		break;
 	}
 #endif
-   
+
 	return error;
 }
