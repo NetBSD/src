@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.30 2019/04/24 08:11:35 msaitoh Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.31 2019/05/23 13:10:51 msaitoh Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.30 2019/04/24 08:11:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.31 2019/05/23 13:10:51 msaitoh Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -303,7 +303,7 @@ mb86950_config(struct mb86950_softc *sc, int *media, int nmedia, int defmedia)
 	sc->txb_size = 1024 * (2 << ((buf_config & 0x0c) ? (((buf_config & 0x0c) >> 2) - 1) : 0));
 	sc->txb_free = (sc->txb_size * sc->txb_count) / 1500;
 
-  	sc->rxb_size = ((8 << (buf_config & 3)) * 1024) - (sc->txb_size * sc->txb_count);
+	sc->rxb_size = ((8 << (buf_config & 3)) * 1024) - (sc->txb_size * sc->txb_count);
 	sc->rxb_max = sc->rxb_size / 64;
 
 	printf("mb86950: Buffer Size %dKB with %d transmit buffer(s) %dKB each.\n",
@@ -654,7 +654,7 @@ mb86950_put_fifo(struct mb86950_softc *sc, struct mbuf *m)
 		/* The zero fill and last byte ought to be combined somehow */
 		for (len = totlen + 1; len < (ETHER_MIN_LEN - ETHER_CRC_LEN);
 		     len += 2)
-	  		bus_space_write_2(bst, bsh, BMPR_FIFO, 0);
+			bus_space_write_2(bst, bsh, BMPR_FIFO, 0);
 		/* XXX                                       */
 
 		totlen = (ETHER_MIN_LEN - ETHER_CRC_LEN);

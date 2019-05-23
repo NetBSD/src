@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.44 2019/05/23 10:57:29 msaitoh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.45 2019/05/23 13:10:52 msaitoh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.44 2019/05/23 10:57:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.45 2019/05/23 13:10:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -70,8 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.44 2019/05/23 10:57:29 msaitoh Exp $");
 
 #ifdef USB_DEBUG
 int muedebug = 0;
-#define DPRINTF(sc, fmt, args...) 					\
-	do { 								\
+#define DPRINTF(sc, fmt, args...)					\
+	do {								\
 		if (muedebug)						\
 			MUE_PRINTF(sc, fmt, ##args);			\
 	} while (0 /* CONSTCOND */)
@@ -886,7 +886,8 @@ mue_get_macaddr(struct mue_softc *sc, prop_dictionary_t dict)
 
 
 /* 
- * Probe for a Microchip chip.  */
+ * Probe for a Microchip chip.
+ */
 static int
 mue_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -1862,7 +1863,7 @@ mue_stop(struct ifnet *ifp, int disable __unused)
 	callout_stop(&sc->mue_stat_ch);
 	sc->mue_link = 0;
 
-        /* Stop transfers. */
+	/* Stop transfers. */
 	for (i = 0; i < __arraycount(sc->mue_ep); i++)
 		if (sc->mue_ep[i] != NULL) {
 			err = usbd_abort_pipe(sc->mue_ep[i]);

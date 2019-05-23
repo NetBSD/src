@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.128 2019/05/23 10:40:40 msaitoh Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.129 2019/05/23 13:10:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.128 2019/05/23 10:40:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.129 2019/05/23 13:10:52 msaitoh Exp $");
 
 
 
@@ -199,7 +199,7 @@ struct vr_softc {
 	pci_chipset_tag_t	vr_pc;		/* PCI chipset info */
 	pcitag_t		vr_tag;		/* PCI tag */
 	struct ethercom		vr_ec;		/* Ethernet common info */
-	uint8_t 		vr_enaddr[ETHER_ADDR_LEN];
+	uint8_t			vr_enaddr[ETHER_ADDR_LEN];
 	struct mii_data		vr_mii;		/* MII/media info */
 
 	pcireg_t		vr_id;		/* vendor/product ID */
@@ -655,7 +655,7 @@ vr_rxeof(struct vr_softc *sc)
 
 			continue;
 		} else if (!(rxstat & VR_RXSTAT_FIRSTFRAG) ||
-		           !(rxstat & VR_RXSTAT_LASTFRAG)) {
+			   !(rxstat & VR_RXSTAT_LASTFRAG)) {
 			/*
 			 * This driver expects to receive whole packets every
 			 * time.  In case we receive a fragment that is not

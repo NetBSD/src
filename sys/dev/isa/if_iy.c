@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.106 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.107 2019/05/23 13:10:51 msaitoh Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.106 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.107 2019/05/23 13:10:51 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -327,12 +327,12 @@ iyattach(device_t parent, device_t self, void *aux)
 		aprint_error("EEPROM Ethernet address differs from copy\n");
 #endif
 
-        myaddr[1] = eaddr[EEPPEther0] & 0xFF;
-        myaddr[0] = eaddr[EEPPEther0] >> 8;
-        myaddr[3] = eaddr[EEPPEther1] & 0xFF;
-        myaddr[2] = eaddr[EEPPEther1] >> 8;
-        myaddr[5] = eaddr[EEPPEther2] & 0xFF;
-        myaddr[4] = eaddr[EEPPEther2] >> 8;
+	myaddr[1] = eaddr[EEPPEther0] & 0xFF;
+	myaddr[0] = eaddr[EEPPEther0] >> 8;
+	myaddr[3] = eaddr[EEPPEther1] & 0xFF;
+	myaddr[2] = eaddr[EEPPEther1] >> 8;
+	myaddr[5] = eaddr[EEPPEther2] & 0xFF;
+	myaddr[4] = eaddr[EEPPEther2] >> 8;
 
 	ifmedia_init(&sc->iy_ifmedia, 0, iy_mediachange, iy_mediastatus);
 	ifmedia_add(&sc->iy_ifmedia, IFM_ETHER | IFM_10_2, 0, NULL);
@@ -637,7 +637,7 @@ iystart(struct ifnet *ifp)
 	sc = ifp->if_softc;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
-                return;
+		return;
 
 	iy_intr_tx(sc);
 
@@ -667,13 +667,13 @@ iystart(struct ifnet *ifp)
 			pad = ETHER_MIN_LEN - ETHER_CRC_LEN - len;
 		}
 
-        	if (len + pad > ETHER_MAX_LEN) {
-        	        /* packet is obviously too large: toss it */
-        	        ++ifp->if_oerrors;
-        	        IFQ_DEQUEUE(&ifp->if_snd, m0);
-        	        m_freem(m0);
+		if (len + pad > ETHER_MAX_LEN) {
+			/* packet is obviously too large: toss it */
+			++ifp->if_oerrors;
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			m_freem(m0);
 			continue;
-        	}
+		}
 
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 
@@ -689,7 +689,7 @@ iystart(struct ifnet *ifp)
 		 * XXX todo: or even turn off the boards ints ??? hm...
 		 */
 
-       		/* See if there is room to put another packet in the buffer. */
+		/* See if there is room to put another packet in the buffer. */
 
 		if ((len+pad+2*I595_XMT_HDRLEN) > avail) {
 #ifdef IYDEBUG
@@ -704,7 +704,7 @@ iystart(struct ifnet *ifp)
 
 			temp = bus_space_read_1(iot, ioh, REG1);
 			bus_space_write_1(iot, ioh, REG1,
-	    			temp & ~XMT_CHAIN_INT);
+				temp & ~XMT_CHAIN_INT);
 
 			bus_space_write_1(iot, ioh, 0, BANK_SEL(0));
 
@@ -1349,7 +1349,7 @@ iy_mc_setup(struct iy_softc *sc)
 	bus_space_write_1(iot, ioh, 0, MC_SETUP_CMD);
 
 
-	sc->tx_start =  sc->rx_size;
+	sc->tx_start =	sc->rx_size;
 	sc->tx_end = sc->rx_size + I595_XMT_HDRLEN + len;
 
 	for (timeout=0; timeout<100; timeout++) {
@@ -1414,7 +1414,7 @@ iy_mc_reset(struct iy_softc *sc)
 		    != IFF_RUNNING) {
 			ifp->if_flags |= IFF_OACTIVE;
 			sc->want_mc_setup = 1;
-                	return;
+			return;
 		}
 #endif
 		iy_mc_setup(sc);

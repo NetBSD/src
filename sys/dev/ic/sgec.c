@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.49 2019/05/23 10:57:28 msaitoh Exp $ */
+/*      $NetBSD: sgec.c,v 1.50 2019/05/23 13:10:51 msaitoh Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.49 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.50 2019/05/23 13:10:51 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -90,9 +90,9 @@ sgec_attach(struct ze_softc *sc)
 	bus_dma_segment_t seg;
 	int i, rseg, error;
 
-        /*
-         * Allocate DMA safe memory for descriptors and setup memory.
-         */
+	/*
+	 * Allocate DMA safe memory for descriptors and setup memory.
+	 */
 	error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct ze_cdata),
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {

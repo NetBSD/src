@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.113 2019/05/23 10:57:28 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.114 2019/05/23 13:10:52 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -78,41 +78,41 @@ static const char *ixv_strings[] = {
 /*********************************************************************
  *  Function prototypes
  *********************************************************************/
-static int      ixv_probe(device_t, cfdata_t, void *);
+static int	ixv_probe(device_t, cfdata_t, void *);
 static void	ixv_attach(device_t, device_t, void *);
-static int      ixv_detach(device_t, int);
+static int	ixv_detach(device_t, int);
 #if 0
-static int      ixv_shutdown(device_t);
+static int	ixv_shutdown(device_t);
 #endif
 static int	ixv_ifflags_cb(struct ethercom *);
-static int      ixv_ioctl(struct ifnet *, u_long, void *);
+static int	ixv_ioctl(struct ifnet *, u_long, void *);
 static int	ixv_init(struct ifnet *);
 static void	ixv_init_locked(struct adapter *);
 static void	ixv_ifstop(struct ifnet *, int);
-static void     ixv_stop(void *);
-static void     ixv_init_device_features(struct adapter *);
-static void     ixv_media_status(struct ifnet *, struct ifmediareq *);
-static int      ixv_media_change(struct ifnet *);
-static int      ixv_allocate_pci_resources(struct adapter *,
+static void	ixv_stop(void *);
+static void	ixv_init_device_features(struct adapter *);
+static void	ixv_media_status(struct ifnet *, struct ifmediareq *);
+static int	ixv_media_change(struct ifnet *);
+static int	ixv_allocate_pci_resources(struct adapter *,
 		    const struct pci_attach_args *);
-static int      ixv_allocate_msix(struct adapter *,
+static int	ixv_allocate_msix(struct adapter *,
 		    const struct pci_attach_args *);
-static int      ixv_configure_interrupts(struct adapter *);
+static int	ixv_configure_interrupts(struct adapter *);
 static void	ixv_free_pci_resources(struct adapter *);
-static void     ixv_local_timer(void *);
-static void     ixv_local_timer_locked(void *);
-static int      ixv_setup_interface(device_t, struct adapter *);
-static int      ixv_negotiate_api(struct adapter *);
+static void	ixv_local_timer(void *);
+static void	ixv_local_timer_locked(void *);
+static int	ixv_setup_interface(device_t, struct adapter *);
+static int	ixv_negotiate_api(struct adapter *);
 
-static void     ixv_initialize_transmit_units(struct adapter *);
-static void     ixv_initialize_receive_units(struct adapter *);
-static void     ixv_initialize_rss_mapping(struct adapter *);
-static void     ixv_check_link(struct adapter *);
+static void	ixv_initialize_transmit_units(struct adapter *);
+static void	ixv_initialize_receive_units(struct adapter *);
+static void	ixv_initialize_rss_mapping(struct adapter *);
+static void	ixv_check_link(struct adapter *);
 
-static void     ixv_enable_intr(struct adapter *);
-static void     ixv_disable_intr(struct adapter *);
-static void     ixv_set_multi(struct adapter *);
-static void     ixv_update_link_status(struct adapter *);
+static void	ixv_enable_intr(struct adapter *);
+static void	ixv_disable_intr(struct adapter *);
+static void	ixv_set_multi(struct adapter *);
+static void	ixv_update_link_status(struct adapter *);
 static int	ixv_sysctl_debug(SYSCTLFN_PROTO);
 static void	ixv_set_ivar(struct adapter *, u8, u8, s8);
 static void	ixv_configure_ivars(struct adapter *);
@@ -135,12 +135,12 @@ static void	ixv_add_stats_sysctls(struct adapter *);
 /* Sysctl handlers */
 static void	ixv_set_sysctl_value(struct adapter *, const char *,
 		    const char *, int *, int);
-static int      ixv_sysctl_interrupt_rate_handler(SYSCTLFN_PROTO);
-static int      ixv_sysctl_next_to_check_handler(SYSCTLFN_PROTO);
-static int      ixv_sysctl_rdh_handler(SYSCTLFN_PROTO);
-static int      ixv_sysctl_rdt_handler(SYSCTLFN_PROTO);
-static int      ixv_sysctl_tdt_handler(SYSCTLFN_PROTO);
-static int      ixv_sysctl_tdh_handler(SYSCTLFN_PROTO);
+static int	ixv_sysctl_interrupt_rate_handler(SYSCTLFN_PROTO);
+static int	ixv_sysctl_next_to_check_handler(SYSCTLFN_PROTO);
+static int	ixv_sysctl_rdh_handler(SYSCTLFN_PROTO);
+static int	ixv_sysctl_rdt_handler(SYSCTLFN_PROTO);
+static int	ixv_sysctl_tdt_handler(SYSCTLFN_PROTO);
+static int	ixv_sysctl_tdh_handler(SYSCTLFN_PROTO);
 
 /* The MSI-X Interrupt handlers */
 static int	ixv_msix_que(void *);
@@ -148,7 +148,7 @@ static int	ixv_msix_mbx(void *);
 
 /* Deferred interrupt tasklets */
 static void	ixv_handle_que(void *);
-static void     ixv_handle_link(void *);
+static void	ixv_handle_link(void *);
 
 /* Workqueue handler for deferred work */
 static void	ixv_handle_que_work(struct work *, void *);
@@ -300,7 +300,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 {
 	struct adapter *adapter;
 	struct ixgbe_hw *hw;
-	int             error = 0;
+	int		error = 0;
 	pcireg_t	id, subid;
 	const ixgbe_vendor_info_t *ent;
 	const struct pci_attach_args *pa = aux;
@@ -573,7 +573,7 @@ err_out:
 static int
 ixv_detach(device_t dev, int flags)
 {
-	struct adapter  *adapter = device_private(dev);
+	struct adapter	*adapter = device_private(dev);
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = adapter->queues;
 	struct tx_ring *txr = adapter->tx_rings;
@@ -717,10 +717,10 @@ static void
 ixv_init_locked(struct adapter *adapter)
 {
 	struct ifnet	*ifp = adapter->ifp;
-	device_t 	dev = adapter->dev;
+	device_t	dev = adapter->dev;
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue	*que;
-	int             error = 0;
+	int		error = 0;
 	uint32_t mask;
 	int i;
 
@@ -839,8 +839,8 @@ ixv_enable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = &adapter->queues[vector];
-	u32             queue = 1 << vector;
-	u32             mask;
+	u32		queue = 1 << vector;
+	u32		mask;
 
 	mutex_enter(&que->dc_mtx);
 	if (que->disabled_count > 0 && --que->disabled_count > 0)
@@ -860,8 +860,8 @@ ixv_disable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = &adapter->queues[vector];
-	u64             queue = (u64)(1 << vector);
-	u32             mask;
+	u64		queue = (u64)(1 << vector);
+	u32		mask;
 
 	mutex_enter(&que->dc_mtx);
 	if (que->disabled_count++ > 0)
@@ -890,7 +890,7 @@ static int
 ixv_msix_que(void *arg)
 {
 	struct ix_queue	*que = arg;
-	struct adapter  *adapter = que->adapter;
+	struct adapter	*adapter = que->adapter;
 	struct tx_ring	*txr = que->txr;
 	struct rx_ring	*rxr = que->rxr;
 	bool		more;
@@ -1100,10 +1100,10 @@ static int
 ixv_negotiate_api(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	int             mbx_api[] = { ixgbe_mbox_api_11,
-	                              ixgbe_mbox_api_10,
-	                              ixgbe_mbox_api_unknown };
-	int             i = 0;
+	int		mbx_api[] = { ixgbe_mbox_api_11,
+				      ixgbe_mbox_api_10,
+				      ixgbe_mbox_api_unknown };
+	int		i = 0;
 
 	while (mbx_api[i] != ixgbe_mbox_api_unknown) {
 		if (ixgbevf_negotiate_api_version(hw, mbx_api[i]) == 0)
@@ -1127,8 +1127,8 @@ ixv_set_multi(struct adapter *adapter)
 	struct ether_multistep step;
 	struct ethercom *ec = &adapter->osdep.ec;
 	u8	mta[MAX_NUM_MULTICAST_ADDRESSES * IXGBE_ETH_LENGTH_OF_ADDRESS];
-	u8                 *update_ptr;
-	int                mcnt = 0;
+	u8		   *update_ptr;
+	int		   mcnt = 0;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 	IOCTL_DEBUGOUT("ixv_set_multi: begin");
@@ -1212,7 +1212,7 @@ ixv_local_timer_locked(void *arg)
 	v0 = v1 = v2 = v3 = v4 = v5 = v6 = v7 = 0;
 	que = adapter->queues;
 	for (i = 0; i < adapter->num_queues; i++, que++) {
-		struct tx_ring  *txr = que->txr;
+		struct tx_ring	*txr = que->txr;
 
 		v0 += txr->q_efbig_tx_dma_setup;
 		v1 += txr->q_mbuf_defrag_failed;
@@ -1234,8 +1234,8 @@ ixv_local_timer_locked(void *arg)
 
 	/*
 	 * Check the TX queues status
-	 *      - mark hung queues so we don't schedule on them
-	 *      - watchdog only if all queues show hung
+	 *	- mark hung queues so we don't schedule on them
+	 *	- watchdog only if all queues show hung
 	 */
 	que = adapter->queues;
 	for (i = 0; i < adapter->num_queues; i++, que++) {
@@ -1290,8 +1290,8 @@ watchdog:
  * ixv_update_link_status - Update OS on link state
  *
  * Note: Only updates the OS on the cached link state.
- *       The real check of the hardware only happens with
- *       a link interrupt.
+ *	 The real check of the hardware only happens with
+ *	 a link interrupt.
  ************************************************************************/
 static void
 ixv_update_link_status(struct adapter *adapter)
@@ -1339,7 +1339,7 @@ ixv_update_link_status(struct adapter *adapter)
 		/*
 		 * Do it when link active changes to DOWN. i.e.
 		 * a) LINK_STATE_UNKNOWN -> LINK_STATE_DOWN
-		 * b) LINK_STATE_UP      -> LINK_STATE_DOWN
+		 * b) LINK_STATE_UP	 -> LINK_STATE_DOWN
 		 */
 		if (adapter->link_active != LINK_STATE_DOWN) {
 			if (bootverbose)
@@ -1370,8 +1370,8 @@ ixv_ifstop(struct ifnet *ifp, int disable)
 static void
 ixv_stop(void *arg)
 {
-	struct ifnet    *ifp;
-	struct adapter  *adapter = arg;
+	struct ifnet	*ifp;
+	struct adapter	*adapter = arg;
 	struct ixgbe_hw *hw = &adapter->hw;
 
 	ifp = adapter->ifp;
@@ -1404,7 +1404,7 @@ ixv_allocate_pci_resources(struct adapter *adapter,
     const struct pci_attach_args *pa)
 {
 	pcireg_t	memtype, csr;
-	device_t        dev = adapter->dev;
+	device_t	dev = adapter->dev;
 	bus_addr_t addr;
 	int flags;
 
@@ -1414,7 +1414,7 @@ ixv_allocate_pci_resources(struct adapter *adapter,
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		adapter->osdep.mem_bus_space_tag = pa->pa_memt;
 		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, PCI_BAR(0),
-	              memtype, &addr, &adapter->osdep.mem_size, &flags) != 0)
+		      memtype, &addr, &adapter->osdep.mem_size, &flags) != 0)
 			goto map_err;
 		if ((flags & BUS_SPACE_MAP_PREFETCHABLE) != 0) {
 			aprint_normal_dev(dev, "clearing prefetchable bit\n");
@@ -1455,7 +1455,7 @@ map_err:
 static void
 ixv_free_pci_resources(struct adapter * adapter)
 {
-	struct 		ix_queue *que = adapter->queues;
+	struct		ix_queue *que = adapter->queues;
 	int		rid;
 
 	/*
@@ -1550,8 +1550,8 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 
 	/* Set capability flags */
 	ifp->if_capabilities |= IFCAP_HWCSUM
-	                     |  IFCAP_TSOv4
-	                     |  IFCAP_TSOv6;
+			     |	IFCAP_TSOv4
+			     |	IFCAP_TSOv6;
 	ifp->if_capenable = 0;
 
 	ec->ec_capabilities |= ETHERCAP_VLAN_HWTAGGING
@@ -1639,10 +1639,10 @@ static void
 ixv_initialize_rss_mapping(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	u32             reta = 0, mrqc, rss_key[10];
-	int             queue_id;
-	int             i, j;
-	u32             rss_hash_config;
+	u32		reta = 0, mrqc, rss_key[10];
+	int		queue_id;
+	int		i, j;
+	u32		rss_hash_config;
 
 	/* force use default RSS key. */
 #ifdef __NetBSD__
@@ -1699,9 +1699,9 @@ ixv_initialize_rss_mapping(struct adapter *adapter)
 		 * traffic.
 		 */
 		rss_hash_config = RSS_HASHTYPE_RSS_IPV4
-		                | RSS_HASHTYPE_RSS_TCP_IPV4
-		                | RSS_HASHTYPE_RSS_IPV6
-		                | RSS_HASHTYPE_RSS_TCP_IPV6;
+				| RSS_HASHTYPE_RSS_TCP_IPV4
+				| RSS_HASHTYPE_RSS_IPV6
+				| RSS_HASHTYPE_RSS_TCP_IPV6;
 	}
 
 	mrqc = IXGBE_MRQC_RSSEN;
@@ -1747,10 +1747,10 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		bufsz = 2048 >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
 
 	psrtype = IXGBE_PSRTYPE_TCPHDR
-	        | IXGBE_PSRTYPE_UDPHDR
-	        | IXGBE_PSRTYPE_IPV4HDR
-	        | IXGBE_PSRTYPE_IPV6HDR
-	        | IXGBE_PSRTYPE_L2HDR;
+		| IXGBE_PSRTYPE_UDPHDR
+		| IXGBE_PSRTYPE_IPV4HDR
+		| IXGBE_PSRTYPE_IPV6HDR
+		| IXGBE_PSRTYPE_L2HDR;
 
 	if (adapter->num_queues > 1)
 		psrtype |= 1 << 29;
@@ -1970,7 +1970,7 @@ ixv_setup_vlan_support(struct adapter *adapter)
 {
 	struct ethercom *ec = &adapter->osdep.ec;
 	struct ixgbe_hw *hw = &adapter->hw;
-	struct rx_ring  *rxr;
+	struct rx_ring	*rxr;
 	u32		ctrl, vid, vfta, retry;
 	bool		hwtagging;
 
@@ -2097,7 +2097,7 @@ ixv_enable_intr(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = adapter->queues;
-	u32             mask;
+	u32		mask;
 	int i;
 
 	/* For VTEIAC */
@@ -2146,7 +2146,7 @@ static void
 ixv_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	u32             ivar, index;
+	u32		ivar, index;
 
 	vector |= IXGBE_IVAR_ALLOC_VAL;
 
@@ -2155,7 +2155,7 @@ ixv_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 		ivar &= ~0xFF;
 		ivar |= vector;
 		IXGBE_WRITE_REG(hw, IXGBE_VTIVAR_MISC, ivar);
-	} else {          /* RX/TX IVARS */
+	} else {	  /* RX/TX IVARS */
 		index = (16 * (entry & 1)) + (8 * type);
 		ivar = IXGBE_READ_REG(hw, IXGBE_VTIVAR(entry >> 1));
 		ivar &= ~(0xFF << index);
@@ -2243,7 +2243,7 @@ ixv_init_stats(struct adapter *adapter)
 } /* ixv_init_stats */
 
 #define UPDATE_STAT_32(reg, last, count)		\
-{                                                       \
+{							\
 	u32 current = IXGBE_READ_REG(hw, (reg));	\
 	if (current < (last))				\
 		count.ev_count += 0x100000000LL;	\
@@ -2252,11 +2252,11 @@ ixv_init_stats(struct adapter *adapter)
 	count.ev_count |= current;			\
 }
 
-#define UPDATE_STAT_36(lsb, msb, last, count)           \
-{                                                       \
+#define UPDATE_STAT_36(lsb, msb, last, count)		\
+{							\
 	u64 cur_lsb = IXGBE_READ_REG(hw, (lsb));	\
 	u64 cur_msb = IXGBE_READ_REG(hw, (msb));	\
-	u64 current = ((cur_msb << 32) | cur_lsb);      \
+	u64 current = ((cur_msb << 32) | cur_lsb);	\
 	if (current < (last))				\
 		count.ev_count += 0x1000000000LL;	\
 	(last) = current;				\
@@ -2297,7 +2297,7 @@ ixv_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct ix_queue *que = (struct ix_queue *)node.sysctl_data;
-	struct adapter  *adapter = que->adapter;
+	struct adapter	*adapter = que->adapter;
 	uint32_t reg, usec, rate;
 	int error;
 
@@ -2401,9 +2401,9 @@ ixv_add_device_sysctls(struct adapter *adapter)
 static void
 ixv_add_stats_sysctls(struct adapter *adapter)
 {
-	device_t                dev = adapter->dev;
-	struct tx_ring          *txr = adapter->tx_rings;
-	struct rx_ring          *rxr = adapter->rx_rings;
+	device_t		dev = adapter->dev;
+	struct tx_ring		*txr = adapter->tx_rings;
+	struct rx_ring		*rxr = adapter->rx_rings;
 	struct ixgbevf_hw_stats *stats = &adapter->stats.vf;
 	struct ixgbe_hw *hw = &adapter->hw;
 	const struct sysctlnode *rnode, *cnode;
@@ -2587,7 +2587,7 @@ static void
 ixv_set_sysctl_value(struct adapter *adapter, const char *name,
 	const char *description, int *limit, int value)
 {
-	device_t dev =  adapter->dev;
+	device_t dev =	adapter->dev;
 	struct sysctllog **log;
 	const struct sysctlnode *rnode, *cnode;
 
@@ -2614,13 +2614,13 @@ ixv_set_sysctl_value(struct adapter *adapter, const char *name,
 static void
 ixv_print_debug_info(struct adapter *adapter)
 {
-        device_t        dev = adapter->dev;
-        struct ixgbe_hw *hw = &adapter->hw;
-        struct ix_queue *que = adapter->queues;
-        struct rx_ring  *rxr;
-        struct tx_ring  *txr;
+	device_t	dev = adapter->dev;
+	struct ixgbe_hw *hw = &adapter->hw;
+	struct ix_queue *que = adapter->queues;
+	struct rx_ring	*rxr;
+	struct tx_ring	*txr;
 #ifdef LRO
-        struct lro_ctrl *lro;
+	struct lro_ctrl *lro;
 #endif /* LRO */
 
 	device_printf(dev, "Error Byte Count = %u \n",
@@ -2662,7 +2662,7 @@ ixv_sysctl_debug(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct adapter *adapter = (struct adapter *)node.sysctl_data;
-	int            error, result;
+	int	       error, result;
 
 	node.sysctl_data = &result;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -2683,9 +2683,9 @@ static void
 ixv_init_device_features(struct adapter *adapter)
 {
 	adapter->feat_cap = IXGBE_FEATURE_NETMAP
-	                  | IXGBE_FEATURE_VF
-	                  | IXGBE_FEATURE_RSS
-	                  | IXGBE_FEATURE_LEGACY_TX;
+			  | IXGBE_FEATURE_VF
+			  | IXGBE_FEATURE_RSS
+			  | IXGBE_FEATURE_LEGACY_TX;
 
 	/* A tad short on feature flags for VFs, atm. */
 	switch (adapter->hw.mac.type) {
@@ -2777,7 +2777,7 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 	struct adapter	*adapter = ifp->if_softc;
 	struct ifcapreq *ifcr = data;
 	struct ifreq	*ifr = data;
-	int             error = 0;
+	int		error = 0;
 	int l4csum_en;
 	const int l4csum = IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
 	     IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
@@ -2867,9 +2867,9 @@ static void
 ixv_handle_que(void *context)
 {
 	struct ix_queue *que = context;
-	struct adapter  *adapter = que->adapter;
+	struct adapter	*adapter = que->adapter;
 	struct tx_ring	*txr = que->txr;
-	struct ifnet    *ifp = adapter->ifp;
+	struct ifnet	*ifp = adapter->ifp;
 	bool		more;
 
 	que->handleq.ev_count++;
@@ -2932,7 +2932,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	device_t	dev = adapter->dev;
 	struct ix_queue *que = adapter->queues;
 	struct		tx_ring *txr = adapter->tx_rings;
-	int 		error, msix_ctrl, rid, vector = 0;
+	int		error, msix_ctrl, rid, vector = 0;
 	pci_chipset_tag_t pc;
 	pcitag_t	tag;
 	char		intrbuf[PCI_INTRSTR_LEN];
@@ -2976,7 +2976,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 			return (ENXIO);
 		}
 		que->msix = vector;
-        	adapter->active_queues |= (u64)(1 << que->msix);
+		adapter->active_queues |= (u64)(1 << que->msix);
 
 		cpu_id = i;
 		/* Round-robin affinity */
@@ -3112,7 +3112,7 @@ ixv_configure_interrupts(struct adapter *adapter)
 	if (msgs >= want)
 		msgs = want;
 	else {
-               	aprint_error_dev(dev,
+		aprint_error_dev(dev,
 		    "MSI-X Configuration Problem, "
 		    "%d vectors but %d queues wanted!\n",
 		    msgs, want);

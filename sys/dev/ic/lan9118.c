@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.32 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.33 2019/05/23 13:10:51 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.32 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.33 2019/05/23 13:10:51 msaitoh Exp $");
 
 /*
  * The LAN9118 Family
@@ -402,7 +402,7 @@ lan9118_start(struct ifnet *ifp)
 				/* Copy mbuf chain. */
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL)
-					goto discard;   /* discard packet */
+					goto discard;	/* discard packet */
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
 					m_freem(m);
@@ -597,9 +597,9 @@ lan9118_init(struct ifnet *ifp)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_HW_CFG, hw_cfg);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_GPIO_CFG,
-	    LAN9118_GPIO_CFG_LEDX_EN(2)  |
-	    LAN9118_GPIO_CFG_LEDX_EN(1)  |
-	    LAN9118_GPIO_CFG_LEDX_EN(0)  |
+	    LAN9118_GPIO_CFG_LEDX_EN(2)	 |
+	    LAN9118_GPIO_CFG_LEDX_EN(1)	 |
+	    LAN9118_GPIO_CFG_LEDX_EN(0)	 |
 	    LAN9118_GPIO_CFG_GPIOBUFN(2) |
 	    LAN9118_GPIO_CFG_GPIOBUFN(1) |
 	    LAN9118_GPIO_CFG_GPIOBUFN(0));
@@ -617,10 +617,10 @@ lan9118_init(struct ifnet *ifp)
 	    LAN9118_INT_PHY_INT | /* PHY */
 	    LAN9118_INT_PME_INT | /* Power Management Event */
 #endif
-	    LAN9118_INT_RXE     | /* Receive Error */
-	    LAN9118_INT_TSFL    | /* TX Status FIFO Level */
+	    LAN9118_INT_RXE	| /* Receive Error */
+	    LAN9118_INT_TSFL	| /* TX Status FIFO Level */
 	    LAN9118_INT_RXDF_INT| /* RX Dropped Frame Interrupt */
-	    LAN9118_INT_RSFF    | /* RX Status FIFO Full */
+	    LAN9118_INT_RSFF	| /* RX Status FIFO Full */
 	    LAN9118_INT_RSFL);	  /* RX Status FIFO Level */
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_RX_CFG,
