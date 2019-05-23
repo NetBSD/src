@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_portal.8,v 1.22 2017/07/03 21:33:41 wiz Exp $
+.\"	$NetBSD: mount_portal.8,v 1.23 2019/05/23 04:34:25 kre Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)mount_portal.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd December 5, 2009
+.Dd May 23, 2019
 .Dt MOUNT_PORTAL 8
 .Os
 .Sh NAME
@@ -122,7 +122,8 @@ Each rule takes one line and consists of two or more
 whitespace separated fields.
 A hash
 .Pq Dq #
-character causes the remainder of a line to be ignored.
+character at beginning of the line, or after whitespace,
+causes the remainder of a line to be ignored.
 Blank lines are ignored.
 .Pp
 The first field is a pathname prefix to match
