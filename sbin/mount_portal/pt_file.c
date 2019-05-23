@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_file.c,v 1.19 2017/05/10 13:58:25 christos Exp $	*/
+/*	$NetBSD: pt_file.c,v 1.20 2019/05/23 11:13:17 kre Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_file.c,v 1.19 2017/05/10 13:58:25 christos Exp $");
+__RCSID("$NetBSD: pt_file.c,v 1.20 2019/05/23 11:13:17 kre Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -154,7 +154,7 @@ portal_file(struct portal_cred *pcr, char *key, char **v, int *fdp)
 	fd = open(pbuf, O_RDWR | O_CREAT, 0666);
 	if (fd < 0) {
 		error = errno;
-		if (error == EACCES) {
+		if (error == EACCES || error == EISDIR) {
 			DEBUG_SYSLOG(LOG_DEBUG, "Error:  could not open '%s' "
 			    "read/write with create flag.  "
 			    "Trying read-only open...", pbuf);
