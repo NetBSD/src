@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.102 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: hme.c,v 1.103 2019/05/23 10:51:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.102 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.103 2019/05/23 10:51:39 msaitoh Exp $");
 
 /* #define HMEDEBUG */
 
@@ -86,7 +86,7 @@ static bool	hme_shutdown(device_t, int);
 static int	hme_init(struct ifnet *);
 static void	hme_meminit(struct hme_softc *);
 static void	hme_mifinit(struct hme_softc *);
-static void	hme_reset(struct hme_softc *);  
+static void	hme_reset(struct hme_softc *);
 static void	hme_chipreset(struct hme_softc *);
 static void	hme_setladrf(struct hme_softc *);
 
@@ -195,7 +195,7 @@ hme_config(struct hme_softc *sc)
 	/* Map DMA memory in CPU addressable space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
 				    &sc->sc_rb.rb_membase,
-				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+				    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev, "DMA buffer map error %d\n",
 			error);
 		bus_dmamap_unload(dmatag, sc->sc_dmamap);
@@ -213,7 +213,7 @@ hme_config(struct hme_softc *sc)
 	/* Load the buffer */
 	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
 	    sc->sc_rb.rb_membase, size, NULL,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev, "DMA buffer map load error %d\n",
 			error);
 		bus_dmamem_free(dmatag, &seg, rseg);
@@ -256,8 +256,8 @@ hme_config(struct hme_softc *sc)
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
 		/* No PHY attached */
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
 		/*
 		 * Walk along the list of attached MII devices and
@@ -289,8 +289,8 @@ hme_config(struct hme_softc *sc)
 		 * the auto negotiation capability.
 		 * XXX; What to do otherwise?
 		 */
-		if (ifmedia_match(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO, 0))
-			ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		if (ifmedia_match(&mii->mii_media, IFM_ETHER | IFM_AUTO, 0))
+			ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 /*
 		else
 			ifmedia_set(&sc->sc_mii.mii_media, sc->sc_defaultmedia);
@@ -1115,7 +1115,7 @@ hme_eint(struct hme_softc *sc, u_int status)
 
 	snprintb(bits, sizeof(bits), HME_SEB_STAT_BITS, status);
 	printf("%s: status=%s\n", device_xname(sc->sc_dev), bits);
-		
+
 	return (1);
 }
 
@@ -1449,7 +1449,7 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
 
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
@@ -1465,7 +1465,7 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 			 */
 			error = hme_init(ifp);
 			break;
-		case IFF_UP|IFF_RUNNING:
+		case IFF_UP | IFF_RUNNING:
 			/*
 			 * If setting debug or promiscuous mode, do not reset
 			 * the chip; for everything else, call hme_init()
