@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.108 2019/04/26 06:33:34 msaitoh Exp $ */
+/* $NetBSD: if_ti.c,v 1.109 2019/05/23 10:40:39 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.108 2019/04/26 06:33:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.109 2019/05/23 10:40:39 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1145,14 +1145,13 @@ ti_del_mcast(struct ti_softc *sc, struct ether_addr *addr)
 static void
 ti_setmulti(struct ti_softc *sc)
 {
-	struct ifnet		*ifp;
+	struct ethercom		*ec = &sc->ethercom;
+	struct ifnet		*ifp = &ec->ec_if;
 	struct ti_cmd_desc	cmd;
 	struct ti_mc_entry	*mc;
 	uint32_t		intrs;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
-
-	ifp = &sc->ethercom.ec_if;
 
 	/* Disable interrupts. */
 	intrs = CSR_READ_4(sc, TI_MB_HOSTINTR);
@@ -1169,7 +1168,7 @@ ti_setmulti(struct ti_softc *sc)
 	 * Remember all multicast addresses so that we can delete them
 	 * later.  Punt if there is a range of addresses or memory shortage.
 	 */
-	ETHER_FIRST_MULTI(step, &sc->ethercom, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0)
@@ -1728,7 +1727,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * A Tigon chip was detected. Inform the world.
 	 */
-	aprint_normal_dev(self, "Ethernet address %s\n",ether_sprintf(eaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -2723,7 +2722,8 @@ ti_ioctl(struct ifnet *ifp, u_long command, void *data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET){
+		else if ((error = ifioctl_common(ifp, command, data))
+		    == ENETRESET) {
 			ti_init(sc);
 			error = 0;
 		}

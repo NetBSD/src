@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.39 2019/04/26 06:33:33 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.40 2019/05/23 10:40:39 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.39 2019/04/26 06:33:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.40 2019/05/23 10:40:39 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -192,13 +192,13 @@ static int	npe_activate(struct npe_softc *);
 #if 0
 static void	npe_deactivate(struct npe_softc *);
 #endif
-static void	npe_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr);
-static void	npe_setmac(struct npe_softc *sc, const u_char *eaddr);
-static void	npe_getmac(struct npe_softc *sc);
-static void	npe_txdone(int qid, void *arg);
+static void	npe_ifmedia_status(struct ifnet *, struct ifmediareq *);
+static void	npe_setmac(struct npe_softc *, const u_char *);
+static void	npe_getmac(struct npe_softc *);
+static void	npe_txdone(int, void *);
 static int	npe_rxbuf_init(struct npe_softc *, struct npebuf *,
 			struct mbuf *);
-static void	npe_rxdone(int qid, void *arg);
+static void	npe_rxdone(int, void *);
 static void	npeinit_macreg(struct npe_softc *);
 static int	npeinit(struct ifnet *);
 static void	npeinit_resetcb(void *);
@@ -206,15 +206,14 @@ static void	npeinit_locked(void *);
 static void	npestart(struct ifnet *);
 static void	npestop(struct ifnet *, int);
 static void	npewatchdog(struct ifnet *);
-static int	npeioctl(struct ifnet * ifp, u_long, void *);
+static int	npeioctl(struct ifnet *, u_long, void *);
 
-static int	npe_setrxqosentry(struct npe_softc *, int classix,
-			int trafclass, int qid);
+static int	npe_setrxqosentry(struct npe_softc *, int, int, int);
 static int	npe_updatestats(struct npe_softc *);
 #if 0
 static int	npe_getstats(struct npe_softc *);
 static uint32_t	npe_getimageid(struct npe_softc *);
-static int	npe_setloopback(struct npe_softc *, int ena);
+static int	npe_setloopback(struct npe_softc *, int);
 #endif
 
 static int	npe_miibus_readreg(device_t, int, int, uint16_t *);
@@ -265,6 +264,7 @@ npe_attach(device_t parent, device_t self, void *arg)
 	struct ixpnpe_softc *isc = device_private(parent);
 	struct ixpnpe_attach_args *na = arg;
 	struct ifnet *ifp;
+	struct mii_data * const mii = &sc->sc_mii;
 
 	aprint_naive("\n");
 	aprint_normal(": Ethernet co-processor\n");
@@ -277,7 +277,7 @@ npe_attach(device_t parent, device_t self, void *arg)
 	sc->sc_phy = na->na_phy;
 
 	memset(&sc->sc_ethercom, 0, sizeof(sc->sc_ethercom));
-	memset(&sc->sc_mii, 0, sizeof(sc->sc_mii));
+	memset(mii, 0, sizeof(*mii));
 
 	callout_init(&sc->sc_tick_ch, 0);
 
@@ -294,22 +294,22 @@ npe_attach(device_t parent, device_t self, void *arg)
 	    ether_sprintf(sc->sc_enaddr));
 
 	ifp = &sc->sc_ethercom.ec_if;
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = npe_miibus_readreg;
-	sc->sc_mii.mii_writereg = npe_miibus_writereg;
-	sc->sc_mii.mii_statchg = npe_miibus_statchg;
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = npe_miibus_readreg;
+	mii->mii_writereg = npe_miibus_writereg;
+	mii->mii_statchg = npe_miibus_statchg;
+	sc->sc_ethercom.ec_mii = mii;
 
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 	    npe_ifmedia_status);
 
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 		    MII_OFFSET_ANY, MIIF_DOPAUSE);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	ifp->if_softc = sc;
 	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
@@ -341,7 +341,8 @@ npe_attach(device_t parent, device_t self, void *arg)
 static void
 npe_setmcast(struct npe_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &ec->ec_if;
 	uint8_t mask[ETHER_ADDR_LEN], addr[ETHER_ADDR_LEN];
 	uint32_t reg;
 	uint32_t msg[2];
@@ -368,7 +369,7 @@ npe_setmcast(struct npe_softc *sc)
 		memset(clr, 0, ETHER_ADDR_LEN);
 		memset(set, 0xff, ETHER_ADDR_LEN);
 
-		ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN)) {
@@ -888,7 +889,7 @@ npe_rxbuf_init(struct npe_softc *sc, struct npebuf *npe, struct mbuf *m)
 	m->m_data = m->m_ext.ext_buf + (m->m_ext.ext_size
 	    - (NPE_FRAME_SIZE_DEFAULT + ETHER_ALIGN));
 	error = bus_dmamap_load_mbuf(sc->sc_dt, npe->ix_map, m,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error != 0) {
 		m_freem(m);
 		return error;
@@ -1258,7 +1259,7 @@ npestart(struct ifnet *ifp)
 	int nseg, len, error, i;
 	uint32_t next;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	while (sc->tx_free != NULL) {
@@ -1267,7 +1268,7 @@ npestart(struct ifnet *ifp)
 			break;
 		npe = sc->tx_free;
 		error = bus_dmamap_load_mbuf(sc->sc_dt, npe->ix_map, m,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error == EFBIG) {
 			n = npe_defrag(m);
 			if (n == NULL) {
@@ -1278,7 +1279,7 @@ npestart(struct ifnet *ifp)
 			}
 			m = n;
 			error = bus_dmamap_load_mbuf(sc->sc_dt, npe->ix_map,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		}
 		if (error != 0) {
 			printf("%s: %s: error %u\n",
@@ -1438,13 +1439,13 @@ npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_RUNNING) {
 			/*
 			 * If interface is marked down and it is running,
 			 * then stop and disable it.
 			 */
 			(*ifp->if_stop)(ifp, 1);
-		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
+		} else if ((ifp->if_flags & (IFF_UP |IFF_RUNNING)) == IFF_UP) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
@@ -1456,8 +1457,8 @@ npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 			/* Up (AND RUNNING). */
 
 			diff = (ifp->if_flags ^ sc->sc_if_flags)
-			    & (IFF_PROMISC|IFF_ALLMULTI);
-			if ((diff & (IFF_PROMISC|IFF_ALLMULTI)) != 0) {
+			    & (IFF_PROMISC | IFF_ALLMULTI);
+			if ((diff & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
 				/*
 				 * If the difference bettween last flag and
 				 * new flag only IFF_PROMISC or IFF_ALLMULTI,

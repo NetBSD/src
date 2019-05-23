@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.26 2019/05/09 01:46:37 ozaki-r Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.27 2019/05/23 10:40:39 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.26 2019/05/09 01:46:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.27 2019/05/23 10:40:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -285,7 +285,7 @@ sunxi_emac_update_link(struct sunxi_emac_softc *sc)
 	WR4(sc, EMAC_RX_CTL_0, val);
 
 	val = RD4(sc, EMAC_TX_FLOW_CTL);
-	val &= ~(PAUSE_TIME|TX_FLOW_CTL_EN);
+	val &= ~(PAUSE_TIME | TX_FLOW_CTL_EN);
 	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_TXPAUSE) != 0)
 		val |= TX_FLOW_CTL_EN;
 	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0)
@@ -346,7 +346,7 @@ sunxi_emac_setup_txbuf(struct sunxi_emac_softc *sc, int index, struct mbuf *m)
 	u_int csum_flags;
 
 	error = bus_dmamap_load_mbuf(sc->tx.buf_tag,
-	    sc->tx.buf_map[index].map, m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+	    sc->tx.buf_map[index].map, m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 	if (error == EFBIG) {
 		device_printf(sc->dev,
 		    "TX packet needs too many DMA segments, dropping...\n");
@@ -409,7 +409,7 @@ sunxi_emac_setup_rxbuf(struct sunxi_emac_softc *sc, int index, struct mbuf *m)
 	m_adj(m, ETHER_ALIGN);
 
 	error = bus_dmamap_load_mbuf(sc->rx.buf_tag,
-	    sc->rx.buf_map[index].map, m, BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    sc->rx.buf_map[index].map, m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error != 0)
 		return error;
 
@@ -473,7 +473,7 @@ sunxi_emac_start_locked(struct sunxi_emac_softc *sc)
 	if (cnt != 0) {
 		sunxi_emac_dma_sync(sc, sc->tx.desc_tag, sc->tx.desc_map,
 		    start, sc->tx.cur, TX_DESC_COUNT,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Start and run TX DMA */
 		val = RD4(sc, EMAC_TX_CTL_1);
@@ -525,7 +525,8 @@ bitrev32(uint32_t x)
 static void
 sunxi_emac_setup_rxfilter(struct sunxi_emac_softc *sc)
 {
-	struct ifnet *ifp = &sc->ec.ec_if;
+	struct ethercom *ec = &sc->ec;
+	struct ifnet *ifp = &ec->ec_if;
 	uint32_t val, crc, hashreg, hashbit, hash[2], machi, maclo;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -543,8 +544,8 @@ sunxi_emac_setup_rxfilter(struct sunxi_emac_softc *sc)
 		hash[0] = hash[1] = ~0;
 	} else {
 		val |= HASH_MULTICAST;
-		ETHER_LOCK(&sc->ec);
-		ETHER_FIRST_MULTI(step, &sc->ec, enm);
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 			crc &= 0x7f;
@@ -554,7 +555,7 @@ sunxi_emac_setup_rxfilter(struct sunxi_emac_softc *sc)
 			hash[hashreg] |= (1 << hashbit);
 			ETHER_NEXT_MULTI(step, enm);
 		}
-		ETHER_UNLOCK(&sc->ec);
+		ETHER_UNLOCK(ec);
 	}
 
 	/* Write our unicast address */
@@ -783,8 +784,8 @@ sunxi_emac_rxintr(struct sunxi_emac_softc *sc)
 
 	for (index = sc->rx.cur; ; index = RX_NEXT(index)) {
 		sunxi_emac_dma_sync(sc, sc->rx.desc_tag, sc->rx.desc_map,
-		    index, index + 1,
-		    RX_DESC_COUNT, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    index, index + 1, RX_DESC_COUNT,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		status = le32toh(sc->rx.desc_ring[index].status);
 		if ((status & RX_DESC_CTL) != 0)
@@ -831,7 +832,7 @@ sunxi_emac_rxintr(struct sunxi_emac_softc *sc)
 
 		sunxi_emac_dma_sync(sc, sc->rx.desc_tag, sc->rx.desc_map,
 		    index, index + 1,
-		    RX_DESC_COUNT, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+		    RX_DESC_COUNT, BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	}
 
 	sc->rx.cur = index;
@@ -854,7 +855,7 @@ sunxi_emac_txintr(struct sunxi_emac_softc *sc)
 		KASSERT(sc->tx.queued > 0 && sc->tx.queued <= TX_DESC_COUNT);
 		sunxi_emac_dma_sync(sc, sc->tx.desc_tag, sc->tx.desc_map,
 		    i, i + 1, TX_DESC_COUNT,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		desc = &sc->tx.desc_ring[i];
 		status = le32toh(desc->status);
 		if ((status & TX_DESC_CTL) != 0)
@@ -872,7 +873,7 @@ sunxi_emac_txintr(struct sunxi_emac_softc *sc)
 		sunxi_emac_setup_txdesc(sc, i, 0, 0, 0);
 		sunxi_emac_dma_sync(sc, sc->tx.desc_tag, sc->tx.desc_map,
 		    i, i + 1, TX_DESC_COUNT,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_opackets++;
@@ -896,7 +897,7 @@ sunxi_emac_intr(void *arg)
 	if (val & RX_INT)
 		sunxi_emac_rxintr(sc);
 
-	if (val & (TX_INT|TX_BUF_UA_INT)) {
+	if (val & (TX_INT | TX_BUF_UA_INT)) {
 		sunxi_emac_txintr(sc);
 		if_schedule_deferred_start(ifp);
 	}
@@ -1113,7 +1114,7 @@ sunxi_emac_setup_resources(struct sunxi_emac_softc *sc)
 	return 0;
 }
 
-static void 
+static void
 sunxi_emac_get_eaddr(struct sunxi_emac_softc *sc, uint8_t *eaddr)
 {
 	uint32_t maclo, machi;
@@ -1206,7 +1207,7 @@ sunxi_emac_setup_dma(struct sunxi_emac_softc *sc)
 
 	memset(sc->tx.desc_ring, 0, TX_DESC_SIZE);
 	bus_dmamap_sync(sc->dmat, sc->tx.desc_map, 0, TX_DESC_SIZE,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < TX_DESC_COUNT; i++)
 		sc->tx.desc_ring[i].next =
@@ -1267,7 +1268,7 @@ sunxi_emac_setup_dma(struct sunxi_emac_softc *sc)
 	}
 	bus_dmamap_sync(sc->rx.desc_tag, sc->rx.desc_map,
 	    0, sc->rx.desc_map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return 0;
 }
@@ -1449,7 +1450,7 @@ sunxi_emac_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "no PHY found!\n");
 		return;
 	}
-	ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
+	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	/* Attach interface */
 	if_attach(ifp);
