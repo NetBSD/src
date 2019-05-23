@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.30 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: if_il.c,v 1.31 2019/05/23 13:10:52 msaitoh Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.30 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.31 2019/05/23 13:10:52 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -83,10 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.30 2019/05/23 10:57:28 msaitoh Exp $");
 
 struct	il_softc {
 	device_t sc_dev;		/* Configuration common part */
-	struct	ethercom sc_ec;		/* Ethernet common part */
+	struct ethercom sc_ec;		/* Ethernet common part */
 #define	sc_if	sc_ec.ec_if		/* network-visible interface */
-	struct	evcnt sc_cintrcnt;	/* Command interrupts */
-	struct  evcnt sc_rintrcnt;	/* Receive interrupts */
+	struct evcnt sc_cintrcnt;	/* Command interrupts */
+	struct evcnt sc_rintrcnt;	/* Receive interrupts */
 	bus_space_tag_t sc_iot;
 	bus_addr_t sc_ioh;
 	bus_dma_tag_t sc_dmat;

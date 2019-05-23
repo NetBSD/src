@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.72 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: qe.c,v 1.73 2019/05/23 13:10:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.72 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.73 2019/05/23 13:10:52 msaitoh Exp $");
 
 #define QEDEBUG
 
@@ -262,8 +262,8 @@ qeattach(device_t parent, device_t self, void *aux)
 
 	/* Map DMA buffer in CPU addressable space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
-			            &sc->sc_rb.rb_membase,
-			            BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+				    &sc->sc_rb.rb_membase,
+				    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(self, "DMA buffer map error %d\n",
 			error);
 		bus_dmamem_free(dmatag, &seg, rseg);

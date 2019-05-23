@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.194 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: tulip.c,v 1.195 2019/05/23 13:10:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.194 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.195 2019/05/23 13:10:51 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -464,7 +464,7 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 	for (i = 0; i < TULIP_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-		        sc->sc_rxsoft[i].rxs_dmamap = NULL;
+			sc->sc_rxsoft[i].rxs_dmamap = NULL;
 			aprint_error_dev(self,
 			    "unable to create rx DMA map %d, error = %d\n", i,
 			    error);
@@ -816,7 +816,7 @@ tlp_start(struct ifnet *ifp)
 			    htole32(dmamap->dm_segs[seg].ds_addr);
 			txd->td_ctl =
 			    htole32((dmamap->dm_segs[seg].ds_len <<
-			        TDCTL_SIZE1_SHIFT) | sc->sc_tdctl_ch |
+				TDCTL_SIZE1_SHIFT) | sc->sc_tdctl_ch |
 				(nexttx == (TULIP_NTXDESC - 1) ?
 				 sc->sc_tdctl_er : 0));
 			lasttx = nexttx;
@@ -1826,7 +1826,7 @@ tlp_init(struct ifnet *ifp)
 	 * Initialize the interrupt mask and enable interrupts.
 	 */
 	/* normal interrupts */
-	sc->sc_inten =  STATUS_TI | STATUS_TU | STATUS_RI | STATUS_NIS;
+	sc->sc_inten = STATUS_TI | STATUS_TU | STATUS_RI | STATUS_NIS;
 
 	/* abnormal interrupts */
 	sc->sc_inten |= STATUS_TPS | STATUS_TJT | STATUS_UNF |
@@ -6118,8 +6118,8 @@ tlp_asix_tmsw_init(struct tulip_softc *sc)
 	uint32_t opmode;
 
 	mii->mii_ifp = ifp;
-        mii->mii_readreg = tlp_bitbang_mii_readreg;
-        mii->mii_writereg = tlp_bitbang_mii_writereg;
+	mii->mii_readreg = tlp_bitbang_mii_readreg;
+	mii->mii_writereg = tlp_bitbang_mii_writereg;
 	mii->mii_statchg = sc->sc_statchg;
 	sc->sc_ethercom.ec_mii = mii;
 	ifmedia_init(&mii->mii_media, 0, tlp_mediachange, tlp_mediastatus);
@@ -6132,10 +6132,10 @@ tlp_asix_tmsw_init(struct tulip_softc *sc)
 	case TULIP_CHIP_AX88141:
 		opmode = OPMODE_HBD | OPMODE_PS;
 		break;
-        default:
-                opmode = 0;
-                break;
-        }
+	default:
+		opmode = 0;
+		break;
+	}
 
 	TULIP_WRITE(sc, CSR_OPMODE, opmode);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.51 2019/05/23 10:57:27 msaitoh Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.52 2019/05/23 13:10:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.51 2019/05/23 10:57:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.52 2019/05/23 13:10:51 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -181,7 +181,7 @@ sq_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_hpct = haa->ha_st;
-	sc->hpc_regs = haa->hpc_regs;      /* HPC register definitions */
+	sc->hpc_regs = haa->hpc_regs;	   /* HPC register definitions */
 
 	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
 	    haa->ha_dmaoff, sc->hpc_regs->enet_regs_size,
@@ -349,7 +349,7 @@ sq_attach(device_t parent, device_t self, void *aux)
 	}
  fail_4:
 	for (i = 0; i < SQ_NTXDESC; i++) {
-		if (sc->sc_txmap[i] !=  NULL)
+		if (sc->sc_txmap[i] != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_txmap[i]);
 	}
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cdmap);
@@ -1322,7 +1322,7 @@ sq_dump_buffer(paddr_t addr, psize_t len)
 
 	for (i = 0; i < len; i++) {
 		printf("%02x ", *(physaddr + i) & 0xff);
-		if ((i % 16) ==  15 && i != len - 1)
+		if ((i % 16) == 15 && i != len - 1)
 		    printf("\n%p: ", physaddr + i);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.24 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.25 2019/05/23 13:10:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.24 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.25 2019/05/23 13:10:52 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,26 +258,26 @@ vte_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->vte_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
-        strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
-        ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-        ifp->if_ioctl = vte_ifioctl;
-        ifp->if_start = vte_ifstart;
-        ifp->if_watchdog = vte_ifwatchdog;
-        ifp->if_init = vte_init;
-        ifp->if_stop = vte_stop;
-        ifp->if_timer = 0;
-        IFQ_SET_READY(&ifp->if_snd);
-        if_attach(ifp);
+	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_ioctl = vte_ifioctl;
+	ifp->if_start = vte_ifstart;
+	ifp->if_watchdog = vte_ifwatchdog;
+	ifp->if_init = vte_init;
+	ifp->if_stop = vte_stop;
+	ifp->if_timer = 0;
+	IFQ_SET_READY(&ifp->if_snd);
+	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
-        ether_ifattach(&(sc)->vte_if, (sc)->vte_eaddr);
+	ether_ifattach(&(sc)->vte_if, (sc)->vte_eaddr);
 
 	if (pmf_device_register1(self, vte_suspend, vte_resume, vte_shutdown))
 		pmf_class_network_register(self, ifp);
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-        rnd_attach_source(&sc->rnd_source, device_xname(self),
-            RND_TYPE_NET, RND_FLAG_DEFAULT);
+	rnd_attach_source(&sc->rnd_source, device_xname(self),
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	if (sysctl_createv(&sc->vte_clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, device_xname(sc->vte_dev),

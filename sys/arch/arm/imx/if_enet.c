@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.20 2019/05/23 10:40:39 msaitoh Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.21 2019/05/23 13:10:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.20 2019/05/23 10:40:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.21 2019/05/23 13:10:50 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -137,7 +137,7 @@ static void enet_tick(void *);
 static int enet_tx_intr(void *);
 static int enet_rx_intr(void *);
 static void enet_rx_csum(struct enet_softc *, struct ifnet *, struct mbuf *,
-                         int);
+			 int);
 
 static void enet_start(struct ifnet *);
 static int enet_ifflags_cb(struct ethercom *);
@@ -165,7 +165,7 @@ static int enet_alloc_rxbuf(struct enet_softc *, int);
 static void enet_drain_txbuf(struct enet_softc *);
 static void enet_drain_rxbuf(struct enet_softc *);
 static int enet_alloc_dma(struct enet_softc *, size_t, void **,
-                          bus_dmamap_t *);
+			  bus_dmamap_t *);
 
 CFATTACH_DECL_NEW(enet, sizeof(struct enet_softc),
     enet_match, enet_attach, NULL, NULL);
@@ -1905,7 +1905,7 @@ enet_init_regs(struct enet_softc *sc, int init)
 
 static int
 enet_alloc_dma(struct enet_softc *sc, size_t size, void **addrp,
-              bus_dmamap_t *mapp)
+    bus_dmamap_t *mapp)
 {
 	bus_dma_segment_t seglist[1];
 	int nsegs, error;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.88 2019/05/23 10:51:39 msaitoh Exp $ */
+/* $NetBSD: if_msk.c,v 1.89 2019/05/23 13:10:52 msaitoh Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.88 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.89 2019/05/23 13:10:52 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,13 +150,13 @@ void msk_dump_bytes(const char *, int);
 static int msk_sysctl_handler(SYSCTLFN_PROTO);
 static int msk_root_num;
 
-#define MSK_ADDR_LO(x)  ((uint64_t) (x) & 0xffffffffUL)
-#define MSK_ADDR_HI(x)  ((uint64_t) (x) >> 32)
+#define MSK_ADDR_LO(x)	((uint64_t) (x) & 0xffffffffUL)
+#define MSK_ADDR_HI(x)	((uint64_t) (x) >> 32)
 
 /* supported device vendors */
 static const struct msk_product {
-	pci_vendor_id_t         msk_vendor;
-	pci_product_id_t        msk_product;
+	pci_vendor_id_t		msk_vendor;
+	pci_product_id_t	msk_product;
 } msk_products[] = {
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE550SX },
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE550T_B1 },
@@ -260,7 +260,7 @@ msk_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 		return ETIMEDOUT;
 	}
 
- 	DPRINTFN(9, ("msk_miibus_readreg: i=%d, timeout=%d\n", i, SK_TIMEOUT));
+	DPRINTFN(9, ("msk_miibus_readreg: i=%d, timeout=%d\n", i, SK_TIMEOUT));
 
 	*val = SK_YU_READ_2(sc_if, YUKON_SMIDR);
 
@@ -585,7 +585,7 @@ msk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	char *ptr, *kva;
 	int		i, state, error;
-	struct sk_jpool_entry   *entry;
+	struct sk_jpool_entry	*entry;
 
 	state = error = 0;
 
@@ -696,7 +696,7 @@ msk_free_jumbo_mem(struct sk_if_softc *sc_if)
 void *
 msk_jalloc(struct sk_if_softc *sc_if)
 {
-	struct sk_jpool_entry   *entry;
+	struct sk_jpool_entry	*entry;
 
 	mutex_enter(&sc_if->sk_jpool_mtx);
 	entry = LIST_FIRST(&sc_if->sk_jfree_listhead);
@@ -1241,7 +1241,7 @@ msk_attach(device_t parent, device_t self, void *aux)
 	 */
 	msk_init_yukon(sc_if);
 
- 	DPRINTFN(2, ("msk_attach: 1\n"));
+	DPRINTFN(2, ("msk_attach: 1\n"));
 
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = msk_miibus_readreg;
@@ -2166,7 +2166,7 @@ msk_fill_rx_tick(void *xsc_if)
 	struct sk_if_softc *sc_if = xsc_if;
 	int s, rx_prod;
 
-	KASSERT(KERNEL_LOCKED_P()); 	/* XXXSMP */
+	KASSERT(KERNEL_LOCKED_P());	/* XXXSMP */
 
 	s = splnet();
 	rx_prod = sc_if->sk_cdata.sk_rx_prod;

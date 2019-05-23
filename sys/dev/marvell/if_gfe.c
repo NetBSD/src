@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.52 2019/05/23 10:40:39 msaitoh Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.53 2019/05/23 13:10:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.52 2019/05/23 10:40:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.53 2019/05/23 13:10:51 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1751,16 +1751,16 @@ gfe_hash_compute(struct gfe_softc *sc, const uint8_t eaddr[ETHER_ADDR_LEN])
 	uint32_t result;
 
 	GE_FUNC_ENTER(sc, "gfe_hash_compute");
-	add0 = ((uint32_t) eaddr[5] <<  0) |
-	       ((uint32_t) eaddr[4] <<  8) |
+	add0 = ((uint32_t) eaddr[5] <<	0) |
+	       ((uint32_t) eaddr[4] <<	8) |
 	       ((uint32_t) eaddr[3] << 16);
 
 	add0 = ((add0 & 0x00f0f0f0) >> 4) | ((add0 & 0x000f0f0f) << 4);
 	add0 = ((add0 & 0x00cccccc) >> 2) | ((add0 & 0x00333333) << 2);
 	add0 = ((add0 & 0x00aaaaaa) >> 1) | ((add0 & 0x00555555) << 1);
 
-	add1 = ((uint32_t) eaddr[2] <<  0) |
-	       ((uint32_t) eaddr[1] <<  8) |
+	add1 = ((uint32_t) eaddr[2] <<	0) |
+	       ((uint32_t) eaddr[1] <<	8) |
 	       ((uint32_t) eaddr[0] << 16);
 
 	add1 = ((add1 & 0x00f0f0f0) >> 4) | ((add1 & 0x000f0f0f) << 4);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.36 2019/05/23 10:57:29 msaitoh Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.37 2019/05/23 13:10:52 msaitoh Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.36 2019/05/23 10:57:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.37 2019/05/23 13:10:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -811,7 +811,7 @@ otus_attachhook(device_t arg)
 	aprint_normal_dev(sc->sc_dev,
 	    "MAC/BBP AR9170, RF AR%X, MIMO %dT%dR, address %s\n",
 	    (sc->sc_capflags & AR5416_OPFLAGS_11A) ?
-	        0x9104 : ((sc->sc_txmask == 0x5) ? 0x9102 : 0x9101),
+		0x9104 : ((sc->sc_txmask == 0x5) ? 0x9102 : 0x9101),
 	    (sc->sc_txmask == 0x5) ? 2 : 1, (sc->sc_rxmask == 0x5) ? 2 : 1,
 	    ether_sprintf(ic->ic_myaddr));
 
@@ -860,7 +860,7 @@ otus_attachhook(device_t arg)
 	ieee80211_ifattach(ic);
 
 	ic->ic_node_alloc = otus_node_alloc;
-	ic->ic_newassoc   = otus_newassoc;
+	ic->ic_newassoc	  = otus_newassoc;
 	ic->ic_updateslot = otus_updateslot;
 #ifdef HAVE_EDCA
 	ic->ic_updateedca = otus_updateedca;
@@ -1132,7 +1132,7 @@ otus_alloc_tx_data_list(struct otus_softc *sc)
 	for (i = 0; i < OTUS_TX_DATA_LIST_COUNT; i++) {
 		data = &sc->sc_tx_data[i];
 
-		data->sc = sc;  /* Backpointer for callbacks. */
+		data->sc = sc;	/* Backpointer for callbacks. */
 
 		error = usbd_create_xfer(sc->sc_data_tx_pipe, OTUS_TXBUFSZ,
 		    USBD_FORCE_SHORT_XFER, 0, &data->xfer);

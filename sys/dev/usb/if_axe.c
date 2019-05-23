@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.96 2019/05/23 10:57:29 msaitoh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.97 2019/05/23 13:10:52 msaitoh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.96 2019/05/23 10:57:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.97 2019/05/23 13:10:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -210,7 +210,7 @@ static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_ETGUS2 }, AX178 },
 	{ { USB_VENDOR_JVC,		USB_PRODUCT_JVC_MP_PRX1}, 0 },
 	{ { USB_VENDOR_LENOVO,		USB_PRODUCT_LENOVO_ETHERNET }, AX772B },
-	{ { USB_VENDOR_LINKSYS, 	USB_PRODUCT_LINKSYS_HG20F9}, AX772B },
+	{ { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_HG20F9}, AX772B },
 	{ { USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_USB200M}, 0 },
 	{ { USB_VENDOR_LINKSYS4,	USB_PRODUCT_LINKSYS4_USB1000 }, AX178 },
 	{ { USB_VENDOR_LOGITEC,		USB_PRODUCT_LOGITEC_LAN_GTJU2}, AX178 },
@@ -1317,7 +1317,7 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		} else if ((sc->axe_flags & AXCSUM_FRAME) != 0) {
 			struct axe_csum_hdr csum_hdr;
 
-			if (total_len <  sizeof(csum_hdr)) {
+			if (total_len <	 sizeof(csum_hdr)) {
 				ifp->if_ierrors++;
 				goto done;
 			}
@@ -1547,7 +1547,7 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 	 * bytes at the beginning to hold the frame length.
 	 */
 	if (AXE_IS_178_FAMILY(sc)) {
-	    	struct axe_sframe_hdr hdr;
+		struct axe_sframe_hdr hdr;
 
 		boundary = (sc->axe_udev->ud_speed == USB_SPEED_HIGH) ? 512 : 64;
 

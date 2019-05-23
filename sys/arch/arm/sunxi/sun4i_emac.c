@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.9 2019/05/23 10:57:27 msaitoh Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.10 2019/05/23 13:10:50 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.9 2019/05/23 10:57:27 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.10 2019/05/23 13:10:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -351,20 +351,20 @@ sun4i_emac_attach(device_t parent, device_t self, void *aux)
 
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 
-        mii->mii_ifp = ifp;
-        mii->mii_readreg = sun4i_emac_miibus_read_reg;
-        mii->mii_writereg = sun4i_emac_miibus_write_reg;
-        mii->mii_statchg = sun4i_emac_miibus_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = sun4i_emac_miibus_read_reg;
+	mii->mii_writereg = sun4i_emac_miibus_write_reg;
+	mii->mii_statchg = sun4i_emac_miibus_statchg;
 
-        mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
-        if (LIST_EMPTY(&mii->mii_phys)) {
-                aprint_error_dev(self, "no PHY found!\n");
-                ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
-                ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
-        } else {
-                ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
-        }
+	if (LIST_EMPTY(&mii->mii_phys)) {
+		aprint_error_dev(self, "no PHY found!\n");
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
+	} else {
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
+	}
 
 	/*
 	 * Attach the interface.
@@ -883,7 +883,7 @@ sun4i_emac_rx_hash(struct sun4i_emac_softc *sc)
 				hash[0] = hash[1] = ~0;
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto done;
-                	}
+			}
 
 			u_int crc = ether_crc32_be(enm->enm_addrlo,
 			    ETHER_ADDR_LEN);
@@ -893,7 +893,7 @@ sun4i_emac_rx_hash(struct sun4i_emac_softc *sc)
 
 			/* Set the corresponding bit in the filter. */
 			hash[crc >> 5] |= __BIT(crc & 31);
-                	ETHER_NEXT_MULTI(step, enm);
+			ETHER_NEXT_MULTI(step, enm);
 		}
 		ETHER_UNLOCK(&sc->sc_ec);
 		ifp->if_flags &= ~IFF_ALLMULTI;

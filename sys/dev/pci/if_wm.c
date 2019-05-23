@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.637 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.638 2019/05/23 13:10:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.637 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.638 2019/05/23 13:10:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -390,7 +390,7 @@ struct wm_txqueue {
 	WM_Q_EVCNT_DEFINE(txq, tusum6)	    /* TCP/UDP v6 cksums comp. */
 	WM_Q_EVCNT_DEFINE(txq, tso)	    /* TCP seg offload (IPv4) */
 	WM_Q_EVCNT_DEFINE(txq, tso6)	    /* TCP seg offload (IPv6) */
-	WM_Q_EVCNT_DEFINE(txq, tsopain)     /* Painful header manip. for TSO */
+	WM_Q_EVCNT_DEFINE(txq, tsopain)	    /* Painful header manip. for TSO */
 	WM_Q_EVCNT_DEFINE(txq, pcqdrop)	    /* Pkt dropped in pcq */
 	WM_Q_EVCNT_DEFINE(txq, descdrop)    /* Pkt dropped in MAC desc ring */
 					    /* other than toomanyseg */
@@ -11831,7 +11831,7 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	CSR_WRITE_FLUSH(sc);
 	delay(1000);
 
-	ctrl =  CSR_READ(sc, WMREG_CTRL);
+	ctrl = CSR_READ(sc, WMREG_CTRL);
 	signal = wm_tbi_havesignal(sc, ctrl);
 
 	DPRINTF(WM_DEBUG_LINK, ("%s: signal = %d\n", device_xname(sc->sc_dev),
@@ -15777,7 +15777,7 @@ wm_set_mdio_slow_mode_hv(struct wm_softc *sc)
 	if (rv != 0)
 		return rv;
 
-	return  wm_gmii_hv_writereg(sc->sc_dev, 1, HV_KMRN_MODE_CTRL,
+	return wm_gmii_hv_writereg(sc->sc_dev, 1, HV_KMRN_MODE_CTRL,
 	    reg | HV_KMRN_MDIO_SLOW);
 }
 

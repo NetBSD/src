@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.24 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.25 2019/05/23 13:10:51 msaitoh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.24 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.25 2019/05/23 13:10:51 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1138,7 +1138,7 @@ mvxpe_ring_init_queue(struct mvxpe_softc *sc, int q)
 	tx->tx_queue_len = tx_default_queue_len[q];
 	if (tx->tx_queue_len > MVXPE_TX_RING_CNT)
 		tx->tx_queue_len = MVXPE_TX_RING_CNT;
-       	tx->tx_used = 0;
+	tx->tx_used = 0;
 	tx->tx_queue_th_free = tx->tx_queue_len / MVXPE_TXTH_RATIO;
 }
 
@@ -1175,7 +1175,7 @@ mvxpe_ring_flush_queue(struct mvxpe_softc *sc, int q)
 		m_freem(m);
 	}
 	tx->tx_dma = tx->tx_cpu = 0;
-       	tx->tx_used = 0;
+	tx->tx_used = 0;
 }
 
 STATIC void
@@ -2216,7 +2216,7 @@ mvxpe_tx_set_csumflag(struct ifnet *ifp,
 	int csum_flags;
 	uint32_t iphl = 0, ipoff = 0;
 
-       	csum_flags = ifp->if_csum_flags_tx & m->m_pkthdr.csum_flags;
+	csum_flags = ifp->if_csum_flags_tx & m->m_pkthdr.csum_flags;
 
 	eh = mtod(m, struct ether_header *);
 	switch (htons(eh->ether_type)) {
@@ -2773,7 +2773,7 @@ set:
 		}
 	}
 	else {
-		i = sc->sc_enaddr[5] & 0xf;             /* last nibble */
+		i = sc->sc_enaddr[5] & 0xf;		/* last nibble */
 		dfut[i>>2] = MVXPE_DF(i&3, MVXPE_DF_QUEUE(0) | MVXPE_DF_PASS);
 	}
 	MVXPE_WRITE_REGION(sc, MVXPE_DFUT(0), dfut, MVXPE_NDFUT);

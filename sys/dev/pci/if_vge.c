@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.70 2019/05/23 10:40:39 msaitoh Exp $ */
+/* $NetBSD: if_vge.c,v 1.71 2019/05/23 13:10:52 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.70 2019/05/23 10:40:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.71 2019/05/23 13:10:52 msaitoh Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -285,8 +285,8 @@ struct vge_softc {
 
 #define VGE_TIMEOUT		10000
 
-#define VGE_PCI_LOIO             0x10
-#define VGE_PCI_LOMEM            0x14
+#define VGE_PCI_LOIO		 0x10
+#define VGE_PCI_LOMEM		 0x14
 
 static inline void vge_set_txaddr(struct vge_txfrag *, bus_addr_t);
 static inline void vge_set_rxaddr(struct vge_rxdesc *, bus_addr_t);
@@ -893,7 +893,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 	pci_aprint_devinfo_fancy(pa, NULL, "VIA VT612X Gigabit Ethernet", 1);
 
 	/* Make sure bus-mastering is enabled */
-        pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
 	    PCI_COMMAND_MASTER_ENABLE);
 
@@ -906,9 +906,9 @@ vge_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-        /*
-         * Map and establish our interrupt.
-         */
+	/*
+	 * Map and establish our interrupt.
+	 */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
@@ -2082,7 +2082,7 @@ vge_suspend(device_t dev)
 
 	vge_stop(sc);
 
-        for (i = 0; i < 5; i++)
+	for (i = 0; i < 5; i++)
 		sc->sc_saved_maps[i] =
 		    pci_read_config(dev, PCIR_MAPS + i * 4, 4);
 	sc->sc_saved_biosaddr = pci_read_config(dev, PCIR_BIOS, 4);
@@ -2110,7 +2110,7 @@ vge_resume(device_t dev)
 	sc = device_private(dev);
 	ifp = &sc->sc_ethercom.ec_if;
 
-        /* better way to do this? */
+	/* better way to do this? */
 	for (i = 0; i < 5; i++)
 		pci_write_config(dev, PCIR_MAPS + i * 4,
 		    sc->sc_saved_maps[i], 4);

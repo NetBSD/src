@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.48 2019/05/23 10:40:39 msaitoh Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.49 2019/05/23 13:10:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.48 2019/05/23 10:40:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.49 2019/05/23 13:10:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1175,7 +1175,7 @@ vioif_send_common_locked(struct ifnet *ifp, struct vioif_txqueue *txq,
 					 m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (r != 0) {
 				aprint_error_dev(sc->sc_dev,
-	   			    "tx dmamap load failed, error code %d\n",
+				    "tx dmamap load failed, error code %d\n",
 				    r);
 skip:
 				m_freem(m);
@@ -1189,7 +1189,7 @@ skip:
 					txq->txq_dmamaps[slot]->dm_nsegs + 1);
 		if (r != 0) {
 			aprint_error_dev(sc->sc_dev,
-	   		    "virtio_enqueue_reserve failed, error code %d\n",
+			    "virtio_enqueue_reserve failed, error code %d\n",
 			    r);
 			bus_dmamap_unload(virtio_dmat(vsc),
 					  txq->txq_dmamaps[slot]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.100 2019/05/23 10:30:36 msaitoh Exp $	*/
+/*	$NetBSD: if_se.c,v 1.101 2019/05/23 13:10:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.100 2019/05/23 10:30:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.101 2019/05/23 13:10:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -154,7 +154,7 @@ int se_max_received = 0;	/* Instrumentation */
 	static const struct __CONCAT(scsi_, name) name
 
 /* Command initializers for commands using scsi_ctron_ether_generic */
-PROTOCMD_DECL(ctron_ether_send)  = {CTRON_ETHER_SEND, 0, {0,0}, 0};
+PROTOCMD_DECL(ctron_ether_send)	 = {CTRON_ETHER_SEND, 0, {0,0}, 0};
 PROTOCMD_DECL(ctron_ether_add_proto) = {CTRON_ETHER_ADD_PROTO, 0, {0,0}, 0};
 PROTOCMD_DECL(ctron_ether_get_addr) = {CTRON_ETHER_GET_ADDR, 0, {0,0}, 0};
 PROTOCMD_DECL(ctron_ether_set_media) = {CTRON_ETHER_SET_MEDIA, 0, {0,0}, 0};
@@ -262,9 +262,9 @@ const struct scsipi_periphsw se_switch = {
 
 const struct scsipi_inquiry_pattern se_patterns[] = {
 	{T_PROCESSOR, T_FIXED,
-	 "CABLETRN",         "EA412",                 ""},
+	 "CABLETRN",	     "EA412",		      ""},
 	{T_PROCESSOR, T_FIXED,
-	 "Cabletrn",         "EA412",                 ""},
+	 "Cabletrn",	     "EA412",		      ""},
 };
 
 #if 0
@@ -532,15 +532,15 @@ sedone(struct scsipi_xfer *xs, int error)
 					  se_poll: ntimeo);
 			}
 			sc->sc_last_timeout = ntimeo;
-			if (ntimeo == se_poll0  &&
+			if (ntimeo == se_poll0	&&
 			    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 				/* Output is pending. Do next recv
-				 * after the next send.  */
+				 * after the next send. */
 				sc->sc_flags |= SE_NEED_RECV;
 			else {
 				callout_reset(&sc->sc_recv_ch, ntimeo,
 				    se_recv, (void *)sc);
-  			}
+			}
 		}
 	}
 	splx(s);

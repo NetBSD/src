@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.35 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.36 2019/05/23 13:10:52 msaitoh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -534,7 +534,7 @@ alc_dsp_fixup(struct alc_softc *sc, int media)
 			val |= (DBG_MSE20DB_TH_DEFAULT << DBG_MSE20DB_TH_SHIFT);
 			alc_miidbg_writereg(sc, MII_DBG_MSE20DB, val);
 		}
- 	}
+	}
 }
 
 static void
@@ -756,7 +756,7 @@ alc_get_macaddr_816x(struct alc_softc *sc)
 				}
 			} else if (alcdebug)
 				printf("%s: reloading EEPROM/FLASH timed out!\n",
-			  	  device_xname(sc->sc_dev));
+				  device_xname(sc->sc_dev));
 		}
 	}
 
@@ -1273,16 +1273,16 @@ alc_attach(device_t parent, device_t self, void *aux)
 		CSR_WRITE_4(sc, ALC_PEX_UNC_ERR_SEV, val);
 
 		if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
- 			CSR_WRITE_4(sc, ALC_LTSSM_ID_CFG,
- 			    CSR_READ_4(sc, ALC_LTSSM_ID_CFG) & ~LTSSM_ID_WRO_ENB);
- 			CSR_WRITE_4(sc, ALC_PCIE_PHYMISC,
- 			    CSR_READ_4(sc, ALC_PCIE_PHYMISC) |
- 			    PCIE_PHYMISC_FORCE_RCV_DET);
- 			if (sc->alc_ident->deviceid == PCI_PRODUCT_ATTANSIC_AR8152_B &&
+			CSR_WRITE_4(sc, ALC_LTSSM_ID_CFG,
+			    CSR_READ_4(sc, ALC_LTSSM_ID_CFG) & ~LTSSM_ID_WRO_ENB);
+			CSR_WRITE_4(sc, ALC_PCIE_PHYMISC,
+			    CSR_READ_4(sc, ALC_PCIE_PHYMISC) |
+			    PCIE_PHYMISC_FORCE_RCV_DET);
+			if (sc->alc_ident->deviceid == PCI_PRODUCT_ATTANSIC_AR8152_B &&
 			    sc->alc_rev == ATHEROS_AR8152_B_V10) {
- 				val = CSR_READ_4(sc, ALC_PCIE_PHYMISC2);
- 				val &= ~(PCIE_PHYMISC2_SERDES_CDR_MASK |
- 				    PCIE_PHYMISC2_SERDES_TH_MASK);
+				val = CSR_READ_4(sc, ALC_PCIE_PHYMISC2);
+				val &= ~(PCIE_PHYMISC2_SERDES_CDR_MASK |
+				    PCIE_PHYMISC2_SERDES_TH_MASK);
 				val |= 3 << PCIE_PHYMISC2_SERDES_CDR_SHIFT;
 				val |= 3 << PCIE_PHYMISC2_SERDES_TH_SHIFT;
 				CSR_WRITE_4(sc, ALC_PCIE_PHYMISC2, val);
@@ -2365,7 +2365,7 @@ alc_txeof(struct alc_softc *sc)
 
 	if ((sc->alc_flags & ALC_FLAG_CMB_BUG) == 0)
 	    bus_dmamap_sync(sc->sc_dmat, sc->alc_cdata.alc_cmb_map, 0,
-	        sc->alc_cdata.alc_cmb_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+		sc->alc_cdata.alc_cmb_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 	sc->alc_cdata.alc_tx_cons = cons;
 	/*
 	 * Unarm watchdog timer only when there is no pending
@@ -3049,7 +3049,7 @@ alc_init_backend(struct ifnet *ifp, bool init)
 		    RXQ_CFG_816X_IDT_TBL_SIZE_MASK;
 	if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0 &&
 	    sc->alc_ident->deviceid != PCI_PRODUCT_ATTANSIC_AR8151_V2)
- 		reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_1M;
+		reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_1M;
 	CSR_WRITE_4(sc, ALC_RXQ_CFG, reg);
 
 	/* Configure DMA parameters. */
@@ -3273,7 +3273,7 @@ alc_stop_queue(struct alc_softc *sc)
 			reg &= ~RXQ_CFG_QUEUE0_ENB;
 			CSR_WRITE_4(sc, ALC_RXQ_CFG, reg);
 		}
- 	}
+	}
 	/* Disable TxQ. */
 	reg = CSR_READ_4(sc, ALC_TXQ_CFG);
 	if ((reg & TXQ_CFG_ENB) != 0) {

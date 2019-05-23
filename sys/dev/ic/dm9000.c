@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.18 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.19 2019/05/23 13:10:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -179,16 +179,16 @@ void	dme_mediastatus(struct ifnet *, struct ifmediareq *);
 /*** Internal methods ***/
 
 /* Prepare data to be transmitted (i.e. dequeue and load it into the DM9000) */
-void    dme_prepare(struct dme_softc *, struct ifnet *);
+void	dme_prepare(struct dme_softc *, struct ifnet *);
 
 /* Transmit prepared data */
-void    dme_transmit(struct dme_softc *);
+void	dme_transmit(struct dme_softc *);
 
 /* Receive data */
-void    dme_receive(struct dme_softc *, struct ifnet *);
+void	dme_receive(struct dme_softc *, struct ifnet *);
 
 /* Software Initialize/Reset of the DM9000 */
-void    dme_reset(struct dme_softc *);
+void	dme_reset(struct dme_softc *);
 
 /* Configure multicast filter */
 void	dme_set_addr_filter(struct dme_softc *);
@@ -924,13 +924,13 @@ dme_set_addr_filter(struct dme_softc *sc)
 		if (memcpy(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo))) {
 			/*
-	                 * We must listen to a range of multicast addresses.
-	                 * For now, just accept all multicasts, rather than
-	                 * trying to set only those filter bits needed to match
-	                 * the range.  (At this time, the only use of address
-	                 * ranges is for IP multicast routing, for which the
-	                 * range is big enough to require all bits set.)
-	                 */
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
 			ifp->if_flags |= IFF_ALLMULTI;
 			af[0] = af[1] = af[2] = af[3] = 0xffff;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.88 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.89 2019/05/23 13:10:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.88 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.89 2019/05/23 13:10:51 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -216,7 +216,7 @@ epic_attach(struct epic_softc *sc)
 	 */
 	epic_read_eeprom(sc, 0, __arraycount(myea), myea);
 	for (i = 0; i < __arraycount(myea); i++) {
-		enaddr[i * 2]     = myea[i] & 0xff;
+		enaddr[i * 2]	  = myea[i] & 0xff;
 		enaddr[i * 2 + 1] = myea[i] >> 8;
 	}
 
@@ -225,7 +225,7 @@ epic_attach(struct epic_softc *sc)
 	 */
 	epic_read_eeprom(sc, 0x2c, __arraycount(mydevname), mydevname);
 	for (i = 0; i < __arraycount(mydevname); i++) {
-		devname[i * 2]     = mydevname[i] & 0xff;
+		devname[i * 2]	   = mydevname[i] & 0xff;
 		devname[i * 2 + 1] = mydevname[i] >> 8;
 	}
 
@@ -398,7 +398,7 @@ epic_start(struct ifnet *ifp)
 		/*
 		 * Load the DMA map.  If this fails, the packet either
 		 * didn't fit in the alloted number of frags, or we were
-		 * short on resources.  In this case, we'll copy and try
+		 * short on resources.	In this case, we'll copy and try
 		 * again.
 		 */
 		if ((error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
@@ -504,7 +504,7 @@ epic_start(struct ifnet *ifp)
 
 	if (sc->sc_txpending != opending) {
 		/*
-		 * We enqueued packets.  If the transmitter was idle,
+		 * We enqueued packets.	 If the transmitter was idle,
 		 * reset the txdirty pointer.
 		 */
 		if (opending == 0)
@@ -566,7 +566,7 @@ epic_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	if (error == ENETRESET) {
 		/*
 		 * Multicast list has changed; set the hardware filter
-		 * accordingly.  Update our idea of the current media;
+		 * accordingly.	 Update our idea of the current media;
 		 * epic_set_mchash() needs to know what it is.
 		 */
 		if (ifp->if_flags & IFF_RUNNING) {
@@ -633,7 +633,7 @@ epic_intr(void *arg)
 			}
 
 			/*
-			 * Make sure the packet arrived intact.  If an error
+			 * Make sure the packet arrived intact.	 If an error
 			 * occurred, update stats and reset the descriptor.
 			 * The buffer will be reused the next time the
 			 * descriptor comes up in the ring.
@@ -949,7 +949,7 @@ epic_init(struct ifnet *ifp)
 	bus_space_write_4(st, sh, EPIC_LAN2, reg0);
 
 	/*
-	 * Initialize receive control.  Remember the external buffer
+	 * Initialize receive control.	Remember the external buffer
 	 * size setting.
 	 */
 	reg0 = bus_space_read_4(st, sh, EPIC_RXCON) &

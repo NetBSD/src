@@ -1,4 +1,4 @@
-/* $NetBSD: if_gmc.c,v 1.9 2019/05/23 10:51:38 msaitoh Exp $ */
+/* $NetBSD: if_gmc.c,v 1.10 2019/05/23 13:10:50 msaitoh Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,7 +47,7 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.9 2019/05/23 10:51:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.10 2019/05/23 13:10:50 msaitoh Exp $");
 
 #define	MAX_TXSEG	32
 
@@ -326,12 +326,12 @@ gmc_mii_statchg(struct ifnet *ifp)
 		gmac_status |= STATUS_SPEED_10M;
 	}
 
-        if (sc->sc_mii.mii_media_active & IFM_FDX)
+	if (sc->sc_mii.mii_media_active & IFM_FDX)
 		gmac_status |= STATUS_DUPLEX_FULL;
 	else
 		gmac_status &= ~STATUS_DUPLEX_FULL;
 
-        if (sc->sc_mii.mii_media_status & IFM_ACTIVE)
+	if (sc->sc_mii.mii_media_status & IFM_ACTIVE)
 		gmac_status |= STATUS_LINK_ON;
 	else
 		gmac_status &= ~STATUS_LINK_ON;

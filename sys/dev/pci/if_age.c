@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.57 2019/05/23 10:51:39 msaitoh Exp $ */
+/*	$NetBSD: if_age.c,v 1.58 2019/05/23 13:10:51 msaitoh Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.57 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.58 2019/05/23 13:10:51 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -161,11 +161,11 @@ age_attach(device_t parent, device_t self, void *aux)
 	 */
 	memtype = pci_mapreg_type(sc->sc_pct, sc->sc_pcitag, AGE_PCIR_BAR);
 	switch (memtype) {
-        case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-        case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT_1M:
-        case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT_1M:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		break;
-        default:
+	default:
 		aprint_error_dev(self, "invalid base address register\n");
 		break;
 	}
@@ -370,7 +370,7 @@ age_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 }
 
 /*
- * 	Write a PHY register on the MII of the L1.
+ *	Write a PHY register on the MII of the L1.
  */
 static int
 age_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
@@ -483,10 +483,10 @@ age_mediachange(struct ifnet *ifp)
 static int
 age_intr(void *arg)
 {
-        struct age_softc *sc = arg;
-        struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct age_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct cmb *cmb;
-        uint32_t status;
+	uint32_t status;
 
 	status = CSR_READ_4(sc, AGE_INTR_STATUS);
 	if (status == 0 || (status & AGE_INTRS) == 0)
@@ -1024,8 +1024,8 @@ age_dma_free(struct age_softc *sc)
 static void
 age_start(struct ifnet *ifp)
 {
-        struct age_softc *sc = ifp->if_softc;
-        struct mbuf *m_head;
+	struct age_softc *sc = ifp->if_softc;
+	struct mbuf *m_head;
 	int enq;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -1214,7 +1214,7 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 		}
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head,
-		  	    BUS_DMA_NOWAIT);
+			    BUS_DMA_NOWAIT);
 
 		if (error != 0) {
 			printf("%s: could not load defragged TX mbuf\n",
@@ -1628,11 +1628,11 @@ age_init(struct ifnet *ifp)
 
 	/* Initialize descriptors. */
 	error = age_init_rx_ring(sc);
-        if (error != 0) {
+	if (error != 0) {
 		printf("%s: no memory for Rx buffers.\n", device_xname(sc->sc_dev));
 		age_stop(ifp, 0);
 		return error;
-        }
+	}
 	age_init_rr_ring(sc);
 	age_init_tx_ring(sc);
 	age_init_cmb_block(sc);
@@ -1671,7 +1671,7 @@ age_init(struct ifnet *ifp)
 	/* Tell hardware that we're ready to load descriptors. */
 	CSR_WRITE_4(sc, AGE_DMA_BLOCK, DMA_BLOCK_LOAD);
 
-        /*
+	/*
 	 * Initialize mailbox register.
 	 * Updated producer/consumer index information is exchanged
 	 * through this mailbox register. However Tx producer and
@@ -1842,7 +1842,7 @@ age_init(struct ifnet *ifp)
 	 */
 	CSR_WRITE_4(sc, AGE_WOL_CFG, 0);
 
-        /*
+	/*
 	 * Configure Tx/Rx MACs.
 	 *  - Auto-padding for short frames.
 	 *  - Enable CRC generation.

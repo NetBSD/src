@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.47 2019/05/23 10:34:44 msaitoh Exp $ */
+/*	$NetBSD: if_ni.c,v 1.48 2019/05/23 13:10:51 msaitoh Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.47 2019/05/23 10:34:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.48 2019/05/23 13:10:51 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -119,7 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.47 2019/05/23 10:34:44 msaitoh Exp $");
 #define bbd	sc->sc_bbd
 
 struct	ni_softc {
-	device_t 	sc_dev;		/* Configuration common part	*/
+	device_t	sc_dev;		/* Configuration common part	*/
 	struct evcnt	sc_intrcnt;	/* Interrupt coounting		*/
 	struct ethercom sc_ec;		/* Ethernet common part		*/
 #define sc_if	sc_ec.ec_if		/* network-visible interface	*/
@@ -878,8 +878,8 @@ ni_shutdown(void *arg)
 {
 	struct ni_softc *sc = arg;
 
-        WAITREG(NI_PCR, PCR_OWN);
-        NI_WREG(NI_PCR, PCR_OWN | PCR_SHUTDOWN);
-        WAITREG(NI_PCR, PCR_OWN);
-        WAITREG(NI_PSR, PSR_OWN);
+	WAITREG(NI_PCR, PCR_OWN);
+	NI_WREG(NI_PCR, PCR_OWN | PCR_SHUTDOWN);
+	WAITREG(NI_PCR, PCR_OWN);
+	WAITREG(NI_PSR, PSR_OWN);
 }

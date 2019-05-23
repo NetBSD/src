@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.55 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.56 2019/05/23 13:10:51 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.55 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.56 2019/05/23 13:10:51 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -779,11 +779,11 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 
 	if (enaddrp) {
 		memcpy(enaddr, prop_data_data_nocopy(enaddrp), ETHER_ADDR_LEN);
-		maddrh  = enaddr[0] << 24;
+		maddrh	= enaddr[0] << 24;
 		maddrh |= enaddr[1] << 16;
 		maddrh |= enaddr[2] << 8;
 		maddrh |= enaddr[3];
-		maddrl  = enaddr[4] << 8;
+		maddrl	= enaddr[4] << 8;
 		maddrl |= enaddr[5];
 		MVGBE_WRITE(sc, MVGBE_MACAH, maddrh);
 		MVGBE_WRITE(sc, MVGBE_MACAL, maddrl);
@@ -1345,8 +1345,8 @@ mvgbe_stop(struct ifnet *ifp, int disable)
 		txfifoemp = MVGBE_PS_TXFIFOEMP;
 	}
 
-#define RX_DISABLE_TIMEOUT          0x1000000
-#define TX_FIFO_EMPTY_TIMEOUT       0x1000000
+#define RX_DISABLE_TIMEOUT	    0x1000000
+#define TX_FIFO_EMPTY_TIMEOUT	    0x1000000
 	/* Wait for all Rx activity to terminate. */
 	cnt = 0;
 	do {

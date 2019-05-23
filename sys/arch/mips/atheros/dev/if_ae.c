@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.34 2019/05/23 10:51:38 msaitoh Exp $ */
+/* $Id: if_ae.c,v 1.35 2019/05/23 13:10:50 msaitoh Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.34 2019/05/23 10:51:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.35 2019/05/23 13:10:50 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -143,7 +143,7 @@ static const struct {
 	{ 0,			NULL },
 };
 
-static int 	ae_match(device_t, struct cfdata *, void *);
+static int	ae_match(device_t, struct cfdata *, void *);
 static void	ae_attach(device_t, device_t, void *);
 static int	ae_detach(device_t, int);
 static int	ae_activate(device_t, enum devact);
@@ -1375,7 +1375,7 @@ ae_init(struct ifnet *ifp)
 	 * Initialize the interrupt mask and enable interrupts.
 	 */
 	/* normal interrupts */
-	sc->sc_inten =  STATUS_TI | STATUS_TU | STATUS_RI | STATUS_NIS;
+	sc->sc_inten = STATUS_TI | STATUS_TU | STATUS_RI | STATUS_NIS;
 
 	/* abnormal interrupts */
 	sc->sc_inten |= STATUS_TPS | STATUS_TJT | STATUS_UNF |

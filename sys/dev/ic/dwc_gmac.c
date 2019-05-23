@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.61 2019/05/23 10:57:28 msaitoh Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.62 2019/05/23 13:10:51 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.61 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.62 2019/05/23 13:10:51 msaitoh Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -301,20 +301,20 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 	 */
 	sc->sc_ec.ec_mii = &sc->sc_mii;
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
-        mii->mii_ifp = ifp;
-        mii->mii_readreg = dwc_gmac_miibus_read_reg;
-        mii->mii_writereg = dwc_gmac_miibus_write_reg;
-        mii->mii_statchg = dwc_gmac_miibus_statchg;
-        mii_attach(sc->sc_dev, mii, 0xffffffff, phy_id, MII_OFFSET_ANY,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = dwc_gmac_miibus_read_reg;
+	mii->mii_writereg = dwc_gmac_miibus_write_reg;
+	mii->mii_statchg = dwc_gmac_miibus_statchg;
+	mii_attach(sc->sc_dev, mii, 0xffffffff, phy_id, MII_OFFSET_ANY,
 	    MIIF_DOPAUSE);
 
-        if (LIST_EMPTY(&mii->mii_phys)) {
-                aprint_error_dev(sc->sc_dev, "no PHY found!\n");
-                ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
-                ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
-        } else {
-                ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
-        }
+	if (LIST_EMPTY(&mii->mii_phys)) {
+		aprint_error_dev(sc->sc_dev, "no PHY found!\n");
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
+	} else {
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
+	}
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames.
@@ -989,12 +989,12 @@ dwc_gmac_stop_locked(struct ifnet *ifp, int disable)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 	    AWIN_GMAC_DMA_OPMODE,
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh,
-	        AWIN_GMAC_DMA_OPMODE)
+		AWIN_GMAC_DMA_OPMODE)
 		& ~(GMAC_DMA_OP_TXSTART | GMAC_DMA_OP_RXSTART));
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 	    AWIN_GMAC_DMA_OPMODE,
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh,
-	        AWIN_GMAC_DMA_OPMODE) | GMAC_DMA_OP_FLUSHTX);
+		AWIN_GMAC_DMA_OPMODE) | GMAC_DMA_OP_FLUSHTX);
 
 	mii_down(&sc->sc_mii);
 	dwc_gmac_reset_tx_ring(sc, &sc->sc_txq);
