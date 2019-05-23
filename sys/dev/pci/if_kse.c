@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.35 2019/04/26 06:33:34 msaitoh Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.36 2019/05/23 10:40:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.35 2019/04/26 06:33:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.36 2019/05/23 10:40:39 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1023,7 +1023,8 @@ kse_set_filter(struct kse_softc *sc)
 {
 	struct ether_multistep step;
 	struct ether_multi *enm;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &ec->ec_if;
 	uint32_t h, hashes[2];
 
 	sc->sc_rxc &= ~(RXC_MHTE | RXC_RM);
@@ -1031,7 +1032,7 @@ kse_set_filter(struct kse_softc *sc)
 	if (ifp->if_flags & IFF_PROMISC)
 		return;
 
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	if (enm == NULL)
 		return;
 	hashes[0] = hashes[1] = 0;

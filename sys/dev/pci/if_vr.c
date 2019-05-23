@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.127 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.128 2019/05/23 10:40:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.127 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.128 2019/05/23 10:40:40 msaitoh Exp $");
 
 
 
@@ -270,7 +270,7 @@ do {									\
 	    ((MCLBYTES - 1) & VR_RXCTL_BUFLEN));			\
 	__d->vr_status = htole32(VR_RXSTAT_FIRSTFRAG |			\
 	    VR_RXSTAT_LASTFRAG | VR_RXSTAT_OWN);			\
-	VR_CDRXSYNC((sc), (i), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+	VR_CDRXSYNC((sc), (i), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE); \
 } while (/* CONSTCOND */ 0)
 
 /*
@@ -415,23 +415,23 @@ vr_mii_statchg(struct ifnet *ifp)
 	    IFM_SUBTYPE(sc->vr_mii.mii_media_active) != IFM_NONE) {
 		sc->vr_link = true;
 
-		if (CSR_READ_2(sc, VR_COMMAND) & (VR_CMD_TX_ON|VR_CMD_RX_ON))
+		if (CSR_READ_2(sc, VR_COMMAND) & (VR_CMD_TX_ON | VR_CMD_RX_ON))
 			VR_CLRBIT16(sc, VR_COMMAND,
-			    (VR_CMD_TX_ON|VR_CMD_RX_ON));
+			    (VR_CMD_TX_ON | VR_CMD_RX_ON));
 
 		if (sc->vr_mii.mii_media_active & IFM_FDX)
 			VR_SETBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
 		else
 			VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
 
-		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_RX_ON);
+		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON | VR_CMD_RX_ON);
 	} else {
 		sc->vr_link = false;
-		VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_RX_ON);
+		VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_TX_ON | VR_CMD_RX_ON);
 		for (i = VR_TIMEOUT; i > 0; i--) {
 			delay(10);
 			if (!(CSR_READ_2(sc, VR_COMMAND) &
-			    (VR_CMD_TX_ON|VR_CMD_RX_ON)))
+			    (VR_CMD_TX_ON | VR_CMD_RX_ON)))
 				break;
 		}
 		if (i == 0) {
@@ -452,15 +452,14 @@ vr_mii_statchg(struct ifnet *ifp)
 static void
 vr_setmulti(struct vr_softc *sc)
 {
-	struct ifnet *ifp;
+	struct ethercom *ec = &sc->vr_ec;
+	struct ifnet *ifp = &ec->ec_if;
 	int h = 0;
 	uint32_t hashes[2] = { 0, 0 };
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	int mcnt = 0;
 	uint8_t rxfilt;
-
-	ifp = &sc->vr_ec.ec_if;
 
 	rxfilt = CSR_READ_1(sc, VR_RXCFG);
 
@@ -479,7 +478,7 @@ allmulti:
 	CSR_WRITE_4(sc, VR_MAR1, 0);
 
 	/* now program new ones */
-	ETHER_FIRST_MULTI(step, &sc->vr_ec, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0)
@@ -566,7 +565,7 @@ vr_add_rxbuf(struct vr_softc *sc, int i)
 
 	error = bus_dmamap_load(sc->vr_dmat, ds->ds_dmamap,
 	    m_new->m_ext.ext_buf, m_new->m_ext.ext_size, NULL,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error_dev(sc->vr_dev,
 		    "unable to load rx DMA map %d, error = %d\n", i, error);
@@ -601,7 +600,8 @@ vr_rxeof(struct vr_softc *sc)
 		d = VR_CDRX(sc, i);
 		ds = VR_DSRX(sc, i);
 
-		VR_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		VR_CDRXSYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		rxstat = le32toh(d->vr_status);
 
@@ -838,7 +838,8 @@ vr_txeof(struct vr_softc *sc)
 		d = VR_CDTX(sc, i);
 		ds = VR_DSTX(sc, i);
 
-		VR_CDTXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		VR_CDTXSYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		txstat = le32toh(d->vr_status);
 
@@ -996,7 +997,7 @@ vr_start(struct ifnet *ifp)
 	struct vr_descsoft *ds;
 	int error, firsttx, nexttx, opending;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 	if (sc->vr_link == false)
 		return;
@@ -1039,7 +1040,7 @@ vr_start(struct ifnet *ifp)
 		if ((mtod(m0, uintptr_t) & 3) != 0 ||
 		    m0->m_pkthdr.len < VR_MIN_FRAMELEN ||
 		    bus_dmamap_load_mbuf(sc->vr_dmat, ds->ds_dmamap, m0,
-		     BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
+		     BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				aprint_error_dev(sc->vr_dev,
@@ -1067,7 +1068,7 @@ vr_start(struct ifnet *ifp)
 				m->m_pkthdr.len = m->m_len = VR_MIN_FRAMELEN;
 			}
 			error = bus_dmamap_load_mbuf(sc->vr_dmat,
-			    ds->ds_dmamap, m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    ds->ds_dmamap, m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (error) {
 				m_freem(m);
 				aprint_error_dev(sc->vr_dev, "unable to load "
@@ -1115,7 +1116,7 @@ vr_start(struct ifnet *ifp)
 			d->vr_status = htole32(VR_TXSTAT_OWN);
 
 		VR_CDTXSYNC(sc, nexttx,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Advance the tx pointer. */
 		sc->vr_txpending++;
@@ -1141,7 +1142,7 @@ vr_start(struct ifnet *ifp)
 		 */
 		VR_CDTX(sc, sc->vr_txlast)->vr_ctl |= htole32(VR_TXCTL_FINT);
 		VR_CDTXSYNC(sc, sc->vr_txlast,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * The entire packet chain is set up.  Give the
@@ -1149,7 +1150,7 @@ vr_start(struct ifnet *ifp)
 		 */
 		VR_CDTX(sc, firsttx)->vr_status = htole32(VR_TXSTAT_OWN);
 		VR_CDTXSYNC(sc, firsttx,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Start the transmitter. */
 		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_GO);
@@ -1202,7 +1203,7 @@ vr_init(struct ifnet *ifp)
 		d = VR_CDTX(sc, i);
 		memset(d, 0, sizeof(struct vr_desc));
 		d->vr_next = htole32(VR_CDTXADDR(sc, VR_NEXTTX(i)));
-		VR_CDTXSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		VR_CDTXSYNC(sc, i, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 	sc->vr_txpending = 0;
 	sc->vr_txdirty = 0;
@@ -1255,8 +1256,8 @@ vr_init(struct ifnet *ifp)
 		goto out;
 
 	/* Enable receiver and transmitter. */
-	CSR_WRITE_2(sc, VR_COMMAND, VR_CMD_TX_NOPOLL|VR_CMD_START|
-				    VR_CMD_TX_ON|VR_CMD_RX_ON|
+	CSR_WRITE_2(sc, VR_COMMAND, VR_CMD_TX_NOPOLL | VR_CMD_START |
+				    VR_CMD_TX_ON | VR_CMD_RX_ON |
 				    VR_CMD_RX_GO);
 
 	/* Enable interrupts. */
@@ -1391,7 +1392,7 @@ vr_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_STOP);
-	VR_CLRBIT16(sc, VR_COMMAND, (VR_CMD_RX_ON|VR_CMD_TX_ON));
+	VR_CLRBIT16(sc, VR_COMMAND, (VR_CMD_RX_ON | VR_CMD_TX_ON));
 	CSR_WRITE_2(sc, VR_IMR, 0x0000);
 	CSR_WRITE_4(sc, VR_TXADDR, 0x00000000);
 	CSR_WRITE_4(sc, VR_RXADDR, 0x00000000);
@@ -1477,6 +1478,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	bus_dma_segment_t seg;
 	uint32_t reg;
 	struct ifnet *ifp;
+	struct mii_data * const mii = &sc->vr_mii;
 	uint8_t eaddr[ETHER_ADDR_LEN], mac;
 	int i, rseg, error;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -1584,7 +1586,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	 * (Note some VT86C100A chip returns a product ID of VT3043)
 	 */
 	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT3043)
-		VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
+		VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0 | VR_STICKHW_DS1));
 
 	/* Reset the adapter. */
 	vr_reset(sc);
@@ -1712,21 +1714,21 @@ vr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize MII/media info.
 	 */
-	sc->vr_mii.mii_ifp = ifp;
-	sc->vr_mii.mii_readreg = vr_mii_readreg;
-	sc->vr_mii.mii_writereg = vr_mii_writereg;
-	sc->vr_mii.mii_statchg = vr_mii_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = vr_mii_readreg;
+	mii->mii_writereg = vr_mii_writereg;
+	mii->mii_statchg = vr_mii_statchg;
 
-	sc->vr_ec.ec_mii = &sc->vr_mii;
-	ifmedia_init(&sc->vr_mii.mii_media, IFM_IMASK, ether_mediachange,
+	sc->vr_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 		ether_mediastatus);
-	mii_attach(self, &sc->vr_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_FORCEANEG);
 	if (LIST_FIRST(&sc->vr_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->vr_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->vr_mii.mii_media, IFM_ETHER|IFM_NONE);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->vr_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	sc->vr_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
@@ -1796,7 +1798,7 @@ vr_resume(device_t self, const pmf_qual_t *qual)
 	struct vr_softc *sc = device_private(self);
 
 	if (PCI_PRODUCT(sc->vr_id) != PCI_PRODUCT_VIATECH_VT3043)
-		VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
+		VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0 | VR_STICKHW_DS1));
 
 	return true;
 }
