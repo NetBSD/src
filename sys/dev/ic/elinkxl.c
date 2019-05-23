@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.128 2019/04/22 08:05:01 msaitoh Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.129 2019/05/23 10:51:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.128 2019/04/22 08:05:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.129 2019/05/23 10:51:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,23 +120,23 @@ struct ex_media {
  * `native' media.
  */
 static const struct ex_media ex_native_media[] = {
-	{ ELINK_PCI_10BASE_T,	"10baseT",	IFM_ETHER|IFM_10_T,
+	{ ELINK_PCI_10BASE_T,	"10baseT",	IFM_ETHER | IFM_10_T,
 	  ELINKMEDIA_10BASE_T },
-	{ ELINK_PCI_10BASE_T,	"10baseT-FDX",	IFM_ETHER|IFM_10_T|IFM_FDX,
+	{ ELINK_PCI_10BASE_T,	"10baseT-FDX",	IFM_ETHER | IFM_10_T | IFM_FDX,
 	  ELINKMEDIA_10BASE_T },
-	{ ELINK_PCI_AUI,	"10base5",	IFM_ETHER|IFM_10_5,
+	{ ELINK_PCI_AUI,	"10base5",	IFM_ETHER | IFM_10_5,
 	  ELINKMEDIA_AUI },
-	{ ELINK_PCI_BNC,	"10base2",	IFM_ETHER|IFM_10_2,
+	{ ELINK_PCI_BNC,	"10base2",	IFM_ETHER | IFM_10_2,
 	  ELINKMEDIA_10BASE_2 },
-	{ ELINK_PCI_100BASE_TX,	"100baseTX",	IFM_ETHER|IFM_100_TX,
+	{ ELINK_PCI_100BASE_TX,	"100baseTX",	IFM_ETHER | IFM_100_TX,
 	  ELINKMEDIA_100BASE_TX },
-	{ ELINK_PCI_100BASE_TX,	"100baseTX-FDX",IFM_ETHER|IFM_100_TX|IFM_FDX,
+	{ ELINK_PCI_100BASE_TX,	"100baseTX-FDX",IFM_ETHER | IFM_100_TX|IFM_FDX,
 	  ELINKMEDIA_100BASE_TX },
-	{ ELINK_PCI_100BASE_FX,	"100baseFX",	IFM_ETHER|IFM_100_FX,
+	{ ELINK_PCI_100BASE_FX,	"100baseFX",	IFM_ETHER | IFM_100_FX,
 	  ELINKMEDIA_100BASE_FX },
-	{ ELINK_PCI_100BASE_MII,"manual",	IFM_ETHER|IFM_MANUAL,
+	{ ELINK_PCI_100BASE_MII,"manual",	IFM_ETHER | IFM_MANUAL,
 	  ELINKMEDIA_MII },
-	{ ELINK_PCI_100BASE_T4,	"100baseT4",	IFM_ETHER|IFM_100_T4,
+	{ ELINK_PCI_100BASE_T4,	"100baseT4",	IFM_ETHER | IFM_100_T4,
 	  ELINKMEDIA_100BASE_T4 },
 	{ 0,			NULL,		0,
 	  0 },
@@ -167,6 +167,7 @@ void
 ex_config(struct ex_softc *sc)
 {
 	struct ifnet *ifp;
+	struct mii_data * const mii = &sc->ex_mii;
 	uint16_t val;
 	uint8_t macaddr[ETHER_ADDR_LEN] = {0};
 	bus_space_tag_t iot = sc->sc_iot;
@@ -189,9 +190,10 @@ ex_config(struct ex_softc *sc)
 	macaddr[4] = val >> 8;
 	macaddr[5] = val & 0xff;
 
-	aprint_normal_dev(sc->sc_dev, "MAC address %s\n", ether_sprintf(macaddr));
+	aprint_normal_dev(sc->sc_dev, "MAC address %s\n",
+	    ether_sprintf(macaddr));
 
-	if (sc->ex_conf & (EX_CONF_INV_LED_POLARITY|EX_CONF_PHY_POWER)) {
+	if (sc->ex_conf & (EX_CONF_INV_LED_POLARITY | EX_CONF_PHY_POWER)) {
 		GO_WINDOW(2);
 		val = bus_space_read_2(iot, ioh, ELINK_W2_RESET_OPTIONS);
 		if (sc->ex_conf & EX_CONF_INV_LED_POLARITY)
@@ -224,7 +226,7 @@ ex_config(struct ex_softc *sc)
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg,
 	    EX_NUPD * sizeof (struct ex_upd), (void **)&sc->sc_upd,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "can't map upload descriptors, error = %d\n", error);
 		goto fail;
@@ -269,7 +271,7 @@ ex_config(struct ex_softc *sc)
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dseg, sc->sc_drseg,
 	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, (void **)&sc->sc_dpd,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "can't map download descriptors, error = %d\n", error);
 		goto fail;
@@ -353,7 +355,7 @@ ex_config(struct ex_softc *sc)
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_upd_dmamap, 0,
 	    EX_NUPD * sizeof (struct ex_upd),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	ex_init_txdescs(sc);
 
@@ -371,13 +373,12 @@ ex_config(struct ex_softc *sc)
 	 * Initialize our media structures and MII info.  We'll
 	 * probe the MII if we discover that we have one.
 	 */
-	sc->ex_mii.mii_ifp = ifp;
-	sc->ex_mii.mii_readreg = ex_mii_readreg;
-	sc->ex_mii.mii_writereg = ex_mii_writereg;
-	sc->ex_mii.mii_statchg = ex_mii_statchg;
-	sc->sc_ethercom.ec_mii = &sc->ex_mii;
-	ifmedia_init(&sc->ex_mii.mii_media, IFM_IMASK, ex_media_chg,
-	    ex_media_stat);
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = ex_mii_readreg;
+	mii->mii_writereg = ex_mii_writereg;
+	mii->mii_statchg = ex_mii_statchg;
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ex_media_chg, ex_media_stat);
 
 	if (sc->ex_conf & EX_CONF_MII) {
 		/*
@@ -386,14 +387,14 @@ ex_config(struct ex_softc *sc)
 		 */
 		ex_set_xcvr(sc, val);
 
-		mii_attach(sc->sc_dev, &sc->ex_mii, 0xffffffff,
+		mii_attach(sc->sc_dev, mii, 0xffffffff,
 		    MII_PHY_ANY, MII_OFFSET_ANY, 0);
-		if (LIST_FIRST(&sc->ex_mii.mii_phys) == NULL) {
-			ifmedia_add(&sc->ex_mii.mii_media, IFM_ETHER|IFM_NONE,
+		if (LIST_FIRST(&mii->mii_phys) == NULL) {
+			ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE,
 			    0, NULL);
-			ifmedia_set(&sc->ex_mii.mii_media, IFM_ETHER|IFM_NONE);
+			ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 		} else {
-			ifmedia_set(&sc->ex_mii.mii_media, IFM_ETHER|IFM_AUTO);
+			ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 		}
 	} else
 		ex_probemedia(sc);
@@ -538,8 +539,8 @@ ex_probemedia(struct ex_softc *sc)
 	/* Sanity check that there are any media! */
 	if ((reset_options & ELINK_PCI_MEDIAMASK) == 0) {
 		aprint_error_dev(sc->sc_dev, "no media present!\n");
-		ifmedia_add(ifm, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(ifm, IFM_ETHER|IFM_NONE);
+		ifmedia_add(ifm, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER | IFM_NONE);
 		return;
 	}
 
@@ -927,7 +928,7 @@ ex_set_media(struct ex_softc *sc)
 	switch (IFM_SUBTYPE(sc->ex_mii.mii_media.ifm_cur->ifm_media)) {
 	case IFM_10_T:
 		bus_space_write_2(iot, ioh, ELINK_W4_MEDIA_TYPE,
-		    JABBER_GUARD_ENABLE|LINKBEAT_ENABLE);
+		    JABBER_GUARD_ENABLE | LINKBEAT_ENABLE);
 		break;
 
 	case IFM_10_2:
@@ -978,7 +979,7 @@ ex_media_stat(struct ifnet *ifp, struct ifmediareq *req)
 	struct ex_softc *sc = ifp->if_softc;
 	uint16_t help;
 
-	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == (IFF_UP|IFF_RUNNING)) {
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP|IFF_RUNNING)) {
 		if (sc->ex_conf & EX_CONF_MII) {
 			mii_pollstat(&sc->ex_mii);
 			req->ifm_status = sc->ex_mii.mii_media_status;
@@ -1052,7 +1053,7 @@ ex_start(struct ifnet *ifp)
 		 */
  reload:
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-		    mb_head, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+		    mb_head, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		switch (error) {
 		case 0:
 			/* Success. */
@@ -1160,13 +1161,13 @@ ex_start(struct ifnet *ifp)
 			dpd->dpd_fsh |= csum_flags;
 		} else {
 			KDASSERT((mb_head->m_pkthdr.csum_flags &
-			    (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4)) == 0);
+			    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) == 0);
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 		    ((const char *)(intptr_t)dpd - (const char *)sc->sc_dpd),
 		    sizeof (struct ex_dpd),
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * No need to stall the download engine, we know it's
@@ -1180,11 +1181,11 @@ ex_start(struct ifnet *ifp)
 			offset = ((const char *)(intptr_t)prevdpd - (const char *)sc->sc_dpd);
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 			    offset, sizeof (struct ex_dpd),
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			prevdpd->dpd_nextptr = htole32(DPD_DMADDR(sc, txp));
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 			    offset, sizeof (struct ex_dpd),
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			sc->tx_tail->tx_next = txp;
 			sc->tx_tail = txp;
 		} else {
@@ -1202,7 +1203,7 @@ ex_start(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 		    ((char *)sc->tx_tail->tx_dpd - (char *)sc->sc_dpd),
 		    sizeof (struct ex_dpd),
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		ifp->if_flags |= IFF_OACTIVE;
 		bus_space_write_2(iot, ioh, ELINK_COMMAND, ELINK_DNUNSTALL);
 		bus_space_write_4(iot, ioh, ELINK_DNLISTPTR,
@@ -1332,11 +1333,11 @@ ex_intr(void *arg)
 
 			bus_dmamap_sync(sc->sc_dmat, rxmap, 0,
 			    rxmap->dm_mapsize,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_upd_dmamap,
 			    ((char *)upd - (char *)sc->sc_upd),
 			    sizeof (struct ex_upd),
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			pktstat = le32toh(upd->upd_pktstatus);
 
 			if (pktstat & EX_UPD_COMPLETE) {
@@ -1428,8 +1429,8 @@ ex_ifflags_cb(struct ethercom *ec)
 	struct ifnet *ifp = &ec->ec_if;
 	struct ex_softc *sc = ifp->if_softc;
 	int change = ifp->if_flags ^ sc->sc_if_flags;
-	 
-	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;
 	else if ((change & IFF_PROMISC) != 0)
 		ex_set_mc(sc);
@@ -1603,7 +1604,7 @@ ex_stop(struct ifnet *ifp, int disable)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 		    ((char *)tx->tx_dpd - (char *)sc->sc_dpd),
 		    sizeof (struct ex_dpd),
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 	sc->tx_tail = sc->tx_head = NULL;
 	ex_init_txdescs(sc);
@@ -1825,7 +1826,7 @@ ex_add_rxbuf(struct ex_softc *sc, struct ex_rxdesc *rxd)
 			bus_dmamap_unload(sc->sc_dmat, rxmap);
 		error = bus_dmamap_load(sc->sc_dmat, rxmap,
 		    m->m_ext.ext_buf, MCLBYTES, NULL,
-		    BUS_DMA_READ|BUS_DMA_NOWAIT);
+		    BUS_DMA_READ | BUS_DMA_NOWAIT);
 		if (error) {
 			aprint_error_dev(sc->sc_dev, "can't load rx buffer, error = %d\n",
 			    error);
@@ -1854,17 +1855,17 @@ ex_add_rxbuf(struct ex_softc *sc, struct ex_rxdesc *rxd)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_upd_dmamap,
 		    (char *)sc->rx_tail->rx_upd - (char *)sc->sc_upd,
 		    sizeof (struct ex_upd),
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	} else {
 		sc->rx_head = rxd;
 	}
 	sc->rx_tail = rxd;
 
 	bus_dmamap_sync(sc->sc_dmat, rxmap, 0, rxmap->dm_mapsize,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_upd_dmamap,
 	    ((char *)rxd->rx_upd - (char *)sc->sc_upd),
-	    sizeof (struct ex_upd), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    sizeof (struct ex_upd), BUS_DMASYNC_PREREAD |BUS_DMASYNC_PREWRITE);
 	return (rval);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.56 2019/03/05 08:25:02 msaitoh Exp $ */
+/*	$NetBSD: if_age.c,v 1.57 2019/05/23 10:51:39 msaitoh Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.56 2019/03/05 08:25:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.57 2019/05/23 10:51:39 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -143,6 +143,7 @@ age_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct mii_data * const mii = &sc->sc_miibus;
 	pcireg_t memtype;
 	int error = 0;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -264,24 +265,22 @@ age_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* Set up MII bus. */
-	sc->sc_miibus.mii_ifp = ifp;
-	sc->sc_miibus.mii_readreg = age_miibus_readreg;
-	sc->sc_miibus.mii_writereg = age_miibus_writereg;
-	sc->sc_miibus.mii_statchg = age_miibus_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = age_miibus_readreg;
+	mii->mii_writereg = age_miibus_writereg;
+	mii->mii_statchg = age_miibus_statchg;
 
-	sc->sc_ec.ec_mii = &sc->sc_miibus;
-	ifmedia_init(&sc->sc_miibus.mii_media, 0, age_mediachange,
-	    age_mediastatus);
-	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
+	sc->sc_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, age_mediachange, age_mediastatus);
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY,
 	   MII_OFFSET_ANY, MIIF_DOPAUSE);
 
-	if (LIST_FIRST(&sc->sc_miibus.mii_phys) == NULL) {
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
-		ifmedia_add(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_MANUAL,
-		    0, NULL);
-		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_MANUAL);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else
-		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
@@ -504,7 +503,7 @@ age_intr(void *arg)
 
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_cmb_block_map, 0,
 	    sc->age_cdata.age_cmb_block_map->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	status = le32toh(cmb->intr_status);
 	/* ACK/reenable interrupts */
 	CSR_WRITE_4(sc, AGE_INTR_STATUS, status);
@@ -518,7 +517,7 @@ age_intr(void *arg)
 		cmb->intr_status = 0;
 		bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_cmb_block_map, 0,
 		    sc->age_cdata.age_cmb_block_map->dm_mapsize,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		if (ifp->if_flags & IFF_RUNNING) {
 			if (status & INTR_CMB_RX)
@@ -547,7 +546,7 @@ age_intr(void *arg)
 		/* check if more interrupts did came in */
 		bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_cmb_block_map, 0,
 		    sc->age_cdata.age_cmb_block_map->dm_mapsize,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		status = le32toh(cmb->intr_status);
 	}
 
@@ -1108,8 +1107,7 @@ age_shutdown(device_t self, int howto)
 	age_stop(ifp, 1);
 
 	return true;
-}      
-
+}
 
 static int
 age_ioctl(struct ifnet *ifp, u_long cmd, void *data)
@@ -1278,8 +1276,8 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 		sc->age_cdata.age_tx_cnt++;
 		if (i == (nsegs - 1))
 			break;
-	
-		/* sync this descriptor and go to the next one */
+
+		/* Sync this descriptor and go to the next one */
 		bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_tx_ring_map,
 		    prod * sizeof(struct tx_desc), sizeof(struct tx_desc),
 		    BUS_DMASYNC_PREWRITE);
@@ -1318,7 +1316,6 @@ age_txintr(struct age_softc *sc, int tpd_cons)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct age_txdesc *txd;
 	int cons, prog;
-
 
 	if (sc->age_cdata.age_tx_cnt <= 0) {
 		if (ifp->if_timer != 0)
@@ -2183,7 +2180,7 @@ age_init_cmb_block(struct age_softc *sc)
 	memset(rd->age_cmb_block, 0, AGE_CMB_BLOCK_SZ);
 	bus_dmamap_sync(sc->sc_dmat, sc->age_cdata.age_cmb_block_map, 0,
 	    sc->age_cdata.age_cmb_block_map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 static void
