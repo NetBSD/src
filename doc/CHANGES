@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2539 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2540 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -382,3 +382,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[msaitoh 20190517]
 	mount_9p(8): Initial support for 9P2000.u [ozaki-r 20190517]
 	file(1): Upgraded to 5.37. [christos 20190522]
+	mount_portal(8): in portal.conf # only introduces a comment at
+		start of line, or after whitespace (start word) [kre 20190523]
