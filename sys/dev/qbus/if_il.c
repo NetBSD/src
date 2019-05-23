@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.29 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_il.c,v 1.30 2019/05/23 10:57:28 msaitoh Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.29 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.30 2019/05/23 10:57:28 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -139,7 +139,8 @@ ilmatch(device_t parent, cfdata_t cf, void *aux)
 	struct uba_attach_args *ua = aux;
 	volatile int i;
 
-	bus_space_write_2(ua->ua_iot, ua->ua_ioh, IL_CSR, ILC_OFFLINE|IL_CIE);
+	bus_space_write_2(ua->ua_iot, ua->ua_ioh, IL_CSR,
+	    ILC_OFFLINE | IL_CIE);
 	DELAY(100000);
 	i = bus_space_read_2(ua->ua_iot, ua->ua_ioh, IL_CSR); /* clear CDONE */
 
@@ -191,7 +192,7 @@ ilattach(device_t parent, device_t self, void *aux)
 
 	IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 	IL_WCSR(IL_BCR, sizeof(struct il_stats));
-	IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_STAT);
+	IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA) | ILC_STAT);
 	(void)ilwait(sc, "status");
 	ubfree(device_private(parent), &sc->sc_ui);
 	printf("%s: module=%s firmware=%s\n", device_xname(sc->sc_dev),
@@ -233,9 +234,9 @@ ilwait(struct il_softc *sc, char *op)
 
 		snprintb(bits, sizeof(bits), IL_BITS, IL_RCSR(IL_CSR));
 		aprint_error_dev(sc->sc_dev, "%s failed, csr=%s\n", op, bits);
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -276,7 +277,8 @@ ilinit(struct ifnet *ifp)
 		}
 		sc->sc_ui.ui_size = sizeof(sc->sc_isu);
 		sc->sc_ui.ui_vaddr = (void *)&sc->sc_isu;
-		uballoc(device_private(device_parent(sc->sc_dev)), &sc->sc_ui, 0);
+		uballoc(device_private(device_parent(sc->sc_dev)),
+		    &sc->sc_ui, 0);
 	}
 	sc->sc_scaninterval = ILWATCHINTERVAL;
 	ifp->if_timer = sc->sc_scaninterval;
@@ -307,12 +309,14 @@ ilinit(struct ifnet *ifp)
 		memcpy(&sc->sc_isu, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 		IL_WCSR(IL_BCR, ETHER_ADDR_LEN);
-		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_LDPA);
+		IL_WCSR(IL_CSR,
+		    ((sc->sc_ui.ui_baddr >> 2) & IL_EUA) | ILC_LDPA);
 		if (ilwait(sc, "setaddr"))
 			goto out;
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 		IL_WCSR(IL_BCR, sizeof (struct il_stats));
-		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_STAT);
+		IL_WCSR(IL_CSR,
+		    ((sc->sc_ui.ui_baddr >> 2) & IL_EUA) | ILC_STAT);
 		if (ilwait(sc, "verifying setaddr"))
 			goto out;
 		if (memcmp(sc->sc_stats.ils_addr,
@@ -380,7 +384,7 @@ ilinit(struct ifnet *ifp)
 	IL_WCSR(IL_BAR, LOWORD(sc->sc_ifuba.ifu_r.ifrw_info));
 	IL_WCSR(IL_BCR, sizeof(struct il_rheader) + ETHERMTU + 6);
 	IL_WCSR(IL_CSR,
-	    ((sc->sc_ifuba.ifu_r.ifrw_info >> 2) & IL_EUA)|ILC_RCV|IL_RIE);
+	    ((sc->sc_ifuba.ifu_r.ifrw_info >> 2) & IL_EUA) | ILC_RCV | IL_RIE);
 	while ((IL_RCSR(IL_CSR) & IL_CDONE) == 0)
 		;
 	ifp->if_flags |= IFF_RUNNING | IFF_OACTIVE;
@@ -411,7 +415,8 @@ ilstart(struct ifnet *ifp)
 			return;
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 		IL_WCSR(IL_BCR, sizeof (struct il_stats));
-		csr = ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_STAT|IL_RIE|IL_CIE;
+		csr = ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)
+		    | ILC_STAT | IL_RIE | IL_CIE;
 		sc->sc_flags &= ~ILF_STATPENDING;
 		goto startcmd;
 	}
@@ -422,8 +427,8 @@ ilstart(struct ifnet *ifp)
 #endif
 	IL_WCSR(IL_BAR, LOWORD(sc->sc_ifuba.ifu_w.ifrw_info));
 	IL_WCSR(IL_BCR, len);
-	csr =
-	  ((sc->sc_ifuba.ifu_w.ifrw_info >> 2) & IL_EUA)|ILC_XMIT|IL_CIE|IL_RIE;
+	csr = ((sc->sc_ifuba.ifu_w.ifrw_info >> 2) & IL_EUA)
+	    | ILC_XMIT | IL_CIE | IL_RIE;
 
 startcmd:
 	sc->sc_lastcmd = csr & IL_CMD;
@@ -460,8 +465,8 @@ ilcint(void *arg)
 
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ifuba.ifu_r.ifrw_info));
 		IL_WCSR(IL_BCR, sizeof(struct il_rheader) + ETHERMTU + 6);
-		IL_WCSR(IL_CSR,
-		  ((sc->sc_ifuba.ifu_r.ifrw_info>>2) & IL_EUA)|ILC_RCV|IL_RIE);
+		IL_WCSR(IL_CSR, ((sc->sc_ifuba.ifu_r.ifrw_info>>2) & IL_EUA)
+		    | ILC_RCV | IL_RIE);
 		s = splhigh();
 		while ((IL_RCSR(IL_CSR) & IL_CDONE) == 0)
 			;
@@ -511,7 +516,7 @@ ilrint(void *arg)
 #endif
 	il = (struct il_rheader *)(sc->sc_ifuba.ifu_r.ifrw_addr);
 	len = il->ilr_length - sizeof(struct il_rheader);
-	if ((il->ilr_status&(ILFSTAT_A|ILFSTAT_C)) || len < 46 ||
+	if ((il->ilr_status&(ILFSTAT_A | ILFSTAT_C)) || len < 46 ||
 	    len > ETHERMTU) {
 		sc->sc_if.if_ierrors++;
 #ifdef notdef
@@ -547,7 +552,7 @@ setup:
 	IL_WCSR(IL_BAR, LOWORD(sc->sc_ifuba.ifu_r.ifrw_info));
 	IL_WCSR(IL_BCR, sizeof(struct il_rheader) + ETHERMTU + 6);
 	IL_WCSR(IL_CSR,
-	    ((sc->sc_ifuba.ifu_r.ifrw_info >> 2) & IL_EUA)|ILC_RCV|IL_RIE);
+	    ((sc->sc_ifuba.ifu_r.ifrw_info >> 2) & IL_EUA) | ILC_RCV | IL_RIE);
 	s = splhigh();
 	while ((IL_RCSR(IL_CSR) & IL_CDONE) == 0)
 		;
@@ -592,7 +597,8 @@ iltotal(struct il_softc *sc)
 	if ((sc->sc_flags & ILF_SETADDR) &&
 	    (memcmp(sc->sc_stats.ils_addr, CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) != 0)) {
-		log(LOG_ERR, "%s: physaddr reverted\n", device_xname(sc->sc_dev));
+		log(LOG_ERR, "%s: physaddr reverted\n",
+		    device_xname(sc->sc_dev));
 		sc->sc_flags &= ~ILF_RUNNING;
 		ilinit(&sc->sc_if);
 	}

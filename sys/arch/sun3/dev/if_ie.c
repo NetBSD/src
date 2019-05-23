@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.67 2019/02/05 06:17:02 msaitoh Exp $ */
+/*	$NetBSD: if_ie.c,v 1.68 2019/05/23 10:57:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.67 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.68 2019/05/23 10:57:27 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -213,7 +213,7 @@ static inline struct mbuf * ieget(struct ie_softc *);
  */
 
 /* KVA to 24 bit device address */
-static inline u_int 
+static inline u_int
 vtop24(struct ie_softc *sc, void *ptr)
 {
 	u_int pa;
@@ -227,7 +227,7 @@ vtop24(struct ie_softc *sc, void *ptr)
 }
 
 /* KVA to 16 bit offset, swapped */
-static inline u_short 
+static inline u_short
 vtop16sw(struct ie_softc *sc, void *ptr)
 {
 	u_int pa;
@@ -241,7 +241,7 @@ vtop16sw(struct ie_softc *sc, void *ptr)
 	return SWAP(pa);
 }
 
-static inline u_int 
+static inline u_int
 Swap32(u_int x)
 {
 	u_int y;
@@ -267,7 +267,7 @@ Align(char *ptr)
 }
 
 
-static inline void 
+static inline void
 ie_ack(struct ie_softc *sc, u_int mask)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
@@ -280,7 +280,7 @@ ie_ack(struct ie_softc *sc, u_int mask)
  * Taken almost exactly from Bill's if_is.c,
  * then modified beyond recognition...
  */
-void 
+void
 ie_attach(struct ie_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
@@ -354,7 +354,7 @@ ie_attach(struct ie_softc *sc)
 /*
  * Setup IE's ram space.
  */
-static int 
+static int
 ie_setupram(struct ie_softc *sc)
 {
 	volatile struct ie_sys_conf_ptr *scp;
@@ -426,7 +426,7 @@ ie_setupram(struct ie_softc *sc)
  * Device timeout/watchdog routine.  Entered if the device neglects to
  * generate an interrupt after a transmit has been started on it.
  */
-static void 
+static void
 iewatchdog(struct ifnet *ifp)
 {
 	struct ie_softc *sc = ifp->if_softc;
@@ -439,7 +439,7 @@ iewatchdog(struct ifnet *ifp)
 /*
  * What to do upon receipt of an interrupt.
  */
-int 
+int
 ie_intr(void *arg)
 {
 	struct ie_softc *sc = arg;
@@ -529,7 +529,7 @@ ie_intr(void *arg)
 /*
  * Process a received-frame interrupt.
  */
-void 
+void
 ierint(struct ie_softc *sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
@@ -574,7 +574,7 @@ ierint(struct ie_softc *sc)
  * transmission of frames.  This routine is deceptively simple, since most
  * of the real work is done by iestart().
  */
-void 
+void
 ietint(struct ie_softc *sc)
 {
 	struct ifnet *ifp;
@@ -592,8 +592,7 @@ ietint(struct ie_softc *sc)
 
 	if (status & IE_STAT_OK) {
 		ifp->if_opackets++;
-		ifp->if_collisions += 
-		  SWAP(status & IE_XS_MAXCOLL);
+		ifp->if_collisions += SWAP(status & IE_XS_MAXCOLL);
 	} else {
 		ifp->if_oerrors++;
 		/*
@@ -667,7 +666,7 @@ ether_cmp(uint8_t *one, uint8_t *two)
  * IE_RBUF_SIZE is an even power of two.  If somehow the act_len exceeds
  * the size of the buffer, then we are screwed anyway.
  */
-static inline int 
+static inline int
 ie_buflen(struct ie_softc *sc, int head)
 {
 	int len;
@@ -677,7 +676,7 @@ ie_buflen(struct ie_softc *sc, int head)
 	return len;
 }
 
-static inline int 
+static inline int
 ie_packet_len(struct ie_softc *sc)
 {
 	int i;
@@ -711,7 +710,7 @@ ie_packet_len(struct ie_softc *sc)
  * command to the chip to be executed.  On the way, if we have a BPF listener
  * also give him a copy.
  */
-static void 
+static void
 iexmit(struct ie_softc *sc)
 {
 	struct ifnet *ifp;
@@ -737,7 +736,7 @@ iexmit(struct ie_softc *sc)
 	sc->xmit_cmds[sc->xctail]->ie_xmit_desc =
 	    vtop16sw(sc, __UNVOLATILE(sc->xmit_buffs[sc->xctail]));
 
-	sc->scb->ie_command_list = 
+	sc->scb->ie_command_list =
 	    vtop16sw(sc, __UNVOLATILE(sc->xmit_cmds[sc->xctail]));
 	cmd_and_wait(sc, IE_CU_START, 0, 0);
 
@@ -877,7 +876,7 @@ ieget(struct ie_softc *sc)
  * in wasting time on confusing code to deal with them.  Hopefully,
  * this machine will never ARP for trailers anyway.
  */
-static void 
+static void
 ie_readframe(struct ie_softc *sc, int num)
 {
 	int status;
@@ -917,7 +916,7 @@ ie_readframe(struct ie_softc *sc, int num)
 	if_percpuq_enqueue((&sc->sc_if)->if_percpuq, m);
 }
 
-static void 
+static void
 ie_drop_packet_buffer(struct ie_softc *sc)
 {
 	int i;
@@ -952,7 +951,7 @@ ie_drop_packet_buffer(struct ie_softc *sc)
 /*
  * Start transmission on an interface.
  */
-static void 
+static void
 iestart(struct ifnet *ifp)
 {
 	struct ie_softc *sc = ifp->if_softc;
@@ -1010,7 +1009,7 @@ iestart(struct ifnet *ifp)
 	}
 }
 
-static void 
+static void
 iereset(struct ie_softc *sc)
 {
 	int s;
@@ -1045,7 +1044,7 @@ iereset(struct ie_softc *sc)
  * ((volatile struct ie_cmd_common *)pcmd)->ie_cmd_status & MASK
  * to become true.
  */
-static int 
+static int
 cmd_and_wait(struct ie_softc *sc, int cmd, void *pcmd, int mask)
 {
 	volatile struct ie_cmd_common *cc = pcmd;
@@ -1102,7 +1101,7 @@ cmd_and_wait(struct ie_softc *sc, int cmd, void *pcmd, int mask)
 /*
  * Run the time-domain reflectometer.
  */
-static void 
+static void
 run_tdr(struct ie_softc *sc, struct ie_tdr_cmd *cmd)
 {
 	int result;
@@ -1158,7 +1157,7 @@ run_tdr(struct ie_softc *sc, struct ie_tdr_cmd *cmd)
  * [tbuf0, tbuf1] [rbuf0,...rbufN] gap [rframes] [tframes]
  * XXX - This needs review...
  */
-static void 
+static void
 iememinit(struct ie_softc *sc)
 {
 	uint8_t *ptr;
@@ -1195,7 +1194,7 @@ iememinit(struct ie_softc *sc)
 	for (i = 0; i < sc->nrxbuf; i++) {
 		sc->rbuffs[i] = (volatile void *)ptr;
 		ptr = Align(ptr + sizeof(*sc->rbuffs[i]));
-		sc->rbuffs[i]->ie_rbd_buffer = 
+		sc->rbuffs[i]->ie_rbd_buffer =
 		    Swap32(vtop24(sc, sc->cbuffs[i]));
 		sc->rbuffs[i]->ie_rbd_length = SWAP(IE_RBUF_SIZE);
 	}
@@ -1265,7 +1264,7 @@ iememinit(struct ie_softc *sc)
  * Run the multicast setup command.
  * Called at splnet().
  */
-static int 
+static int
 mc_setup(struct ie_softc *sc, void *ptr)
 {
 	struct ie_mcast_cmd *cmd = ptr;	/* XXX - Was volatile */
@@ -1291,7 +1290,7 @@ mc_setup(struct ie_softc *sc, void *ptr)
 	return 1;
 }
 
-static inline void 
+static inline void
 ie_setup_config(struct ie_config_cmd *cmd, int promiscuous, int manchester)
 {
 
@@ -1319,7 +1318,7 @@ ie_setup_config(struct ie_config_cmd *cmd, int promiscuous, int manchester)
  *
  * THIS ROUTINE MUST BE CALLED AT splnet() OR HIGHER.
  */
-static int 
+static int
 ieinit(struct ie_softc *sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
@@ -1404,14 +1403,14 @@ ieinit(struct ie_softc *sc)
 	return 0;
 }
 
-static void 
+static void
 iestop(struct ie_softc *sc)
 {
 
 	cmd_and_wait(sc, IE_RU_DISABLE, 0, 0);
 }
 
-static int 
+static int
 ieioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ie_softc *sc = ifp->if_softc;
@@ -1443,7 +1442,7 @@ ieioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		sc->promisc = ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI);
 
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
@@ -1497,7 +1496,7 @@ ieioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return error;
 }
 
-static void 
+static void
 mc_reset(struct ie_softc *sc)
 {
 	struct ether_multi *enm;
@@ -1528,7 +1527,7 @@ setflag:
 }
 
 #ifdef IEDEBUG
-void 
+void
 print_rbd(volatile struct ie_recv_buf_desc *rbd)
 {
 
