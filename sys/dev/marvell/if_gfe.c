@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.51 2019/04/22 08:36:03 msaitoh Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.52 2019/05/23 10:40:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.51 2019/04/22 08:36:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.52 2019/05/23 10:40:39 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -130,18 +130,18 @@ enum gfe_hash_op {
 	    (n) * sizeof((rxq)->rxq_descs[0]), sizeof((rxq)->rxq_descs[0]), \
 	    (ops))
 #define	GE_RXDPRESYNC(sc, rxq, n) \
-	GE_RXDSYNC(sc, rxq, n, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+	GE_RXDSYNC(sc, rxq, n, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)
 #define	GE_RXDPOSTSYNC(sc, rxq, n) \
-	GE_RXDSYNC(sc, rxq, n, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+	GE_RXDSYNC(sc, rxq, n, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)
 
 #define GE_TXDSYNC(sc, txq, n, ops) \
 	bus_dmamap_sync((sc)->sc_dmat, (txq)->txq_desc_mem.gdm_map, \
 	    (n) * sizeof((txq)->txq_descs[0]), sizeof((txq)->txq_descs[0]), \
 	    (ops))
 #define	GE_TXDPRESYNC(sc, txq, n) \
-	GE_TXDSYNC(sc, txq, n, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+	GE_TXDSYNC(sc, txq, n, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)
 #define	GE_TXDPOSTSYNC(sc, txq, n) \
-	GE_TXDSYNC(sc, txq, n, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+	GE_TXDSYNC(sc, txq, n, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)
 
 #define	STATIC
 
@@ -406,6 +406,7 @@ gfe_attach(device_t parent, device_t self, void *aux)
 	struct marvell_attach_args *mva = aux;
 	struct gfe_softc * const sc = device_private(self);
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	uint32_t sdcr;
 	int phyaddr, error;
 	prop_data_t ea;
@@ -494,23 +495,21 @@ gfe_attach(device_t parent, device_t self, void *aux)
 	sdcr |= ETH_ESDCR_RIFB;
 	GE_WRITE(sc, ETH_ESDCR, sdcr);
 
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = gfec_mii_read;
-	sc->sc_mii.mii_writereg = gfec_mii_write;
-	sc->sc_mii.mii_statchg = gfec_mii_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = gfec_mii_read;
+	mii->mii_writereg = gfec_mii_write;
+	mii->mii_statchg = gfec_mii_statchg;
 
-	sc->sc_ec.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-		ether_mediastatus);
+	sc->sc_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, phyaddr,
+	mii_attach(sc->sc_dev, mii, 0xffffffff, phyaddr,
 		MII_OFFSET_ANY, MIIF_NOISOLATE);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
-	} else {
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
-	}
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
+	} else
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -570,7 +569,7 @@ gfe_dmamem_alloc(struct gfe_softc *sc, struct gfe_dmamem *gdm, int maxsegs,
 		goto fail;
 
 	error = bus_dmamap_create(sc->sc_dmat, gdm->gdm_size, gdm->gdm_nsegs,
-	    gdm->gdm_size, 0, BUS_DMA_ALLOCNOW|BUS_DMA_NOWAIT, &gdm->gdm_map);
+	    gdm->gdm_size, 0, BUS_DMA_ALLOCNOW |BUS_DMA_NOWAIT, &gdm->gdm_map);
 	if (error)
 		goto fail;
 
@@ -641,8 +640,8 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
 		/* XXX re-use ether_ioctl() */
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
-		case IFF_UP|IFF_RUNNING:/* active->active, update */
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
+		case IFF_UP | IFF_RUNNING:/* active->active, update */
 			error = gfe_whack(sc, GE_WHACK_CHANGE);
 			break;
 		case IFF_RUNNING:	/* not up, so we stop */
@@ -833,30 +832,30 @@ gfe_rx_rxqinit(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 	}
 	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map, 0,
 			rxq->rxq_desc_mem.gdm_map->dm_mapsize,
-			BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_buf_mem.gdm_map, 0,
 			rxq->rxq_buf_mem.gdm_map->dm_mapsize,
 			BUS_DMASYNC_PREREAD);
 
-	rxq->rxq_intrbits = ETH_IR_RxBuffer|ETH_IR_RxError;
+	rxq->rxq_intrbits = ETH_IR_RxBuffer | ETH_IR_RxError;
 	switch (rxprio) {
 	case GE_RXPRIO_HI:
-		rxq->rxq_intrbits |= ETH_IR_RxBuffer_3|ETH_IR_RxError_3;
+		rxq->rxq_intrbits |= ETH_IR_RxBuffer_3 | ETH_IR_RxError_3;
 		rxq->rxq_efrdp = ETH_EFRDP3;
 		rxq->rxq_ecrdp = ETH_ECRDP3;
 		break;
 	case GE_RXPRIO_MEDHI:
-		rxq->rxq_intrbits |= ETH_IR_RxBuffer_2|ETH_IR_RxError_2;
+		rxq->rxq_intrbits |= ETH_IR_RxBuffer_2 | ETH_IR_RxError_2;
 		rxq->rxq_efrdp = ETH_EFRDP2;
 		rxq->rxq_ecrdp = ETH_ECRDP2;
 		break;
 	case GE_RXPRIO_MEDLO:
-		rxq->rxq_intrbits |= ETH_IR_RxBuffer_1|ETH_IR_RxError_1;
+		rxq->rxq_intrbits |= ETH_IR_RxBuffer_1 | ETH_IR_RxError_1;
 		rxq->rxq_efrdp = ETH_EFRDP1;
 		rxq->rxq_ecrdp = ETH_ECRDP1;
 		break;
 	case GE_RXPRIO_LO:
-		rxq->rxq_intrbits |= ETH_IR_RxBuffer_0|ETH_IR_RxError_0;
+		rxq->rxq_intrbits |= ETH_IR_RxBuffer_0 | ETH_IR_RxError_0;
 		rxq->rxq_efrdp = ETH_EFRDP0;
 		rxq->rxq_ecrdp = ETH_ECRDP0;
 		break;
@@ -902,9 +901,9 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		 * or for some reason it's bigger than our frame size,
 		 * ignore it and go to the next packet.
 		 */
-		if ((cmdsts & (RX_CMD_F|RX_CMD_L|RX_STS_ES)) !=
-							(RX_CMD_F|RX_CMD_L) ||
-		    buflen > sc->sc_max_frame_length) {
+		if ((cmdsts & (RX_CMD_F | RX_CMD_L | RX_STS_ES)) !=
+		    (RX_CMD_F | RX_CMD_L) ||
+		    (buflen > sc->sc_max_frame_length)) {
 			GE_DPRINTF(sc, ("!"));
 			--rxq->rxq_active;
 			ifp->if_ipackets++;
@@ -1015,7 +1014,7 @@ gfe_rx_process(struct gfe_softc *sc, uint32_t cause, uint32_t intrmask)
 		memset(masks, 0, sizeof(masks));
 		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
 		    0, rxq->rxq_desc_mem.gdm_size,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		for (idx = 0; idx < GE_RXDESC_MAX; idx++) {
 			volatile struct gt_eth_desc *rxd = &rxq->rxq_descs[idx];
 
@@ -1024,7 +1023,7 @@ gfe_rx_process(struct gfe_softc *sc, uint32_t cause, uint32_t intrmask)
 		}
 		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
 		    0, rxq->rxq_desc_mem.gdm_size,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 #if defined(DEBUG)
 		printf("%s: rx queue %d filled at %u=%#x(%#x/%#x)\n",
 		    device_xname(sc->sc_dev), rxprio, rxq->rxq_fi,
@@ -1032,7 +1031,7 @@ gfe_rx_process(struct gfe_softc *sc, uint32_t cause, uint32_t intrmask)
 #endif
 	}
 	if ((intrmask & ETH_IR_RxBits) == 0)
-		intrmask &= ~(ETH_IR_RxBuffer|ETH_IR_RxError);
+		intrmask &= ~(ETH_IR_RxBuffer | ETH_IR_RxError);
 
 	GE_FUNC_EXIT(sc, "");
 	return intrmask;
@@ -1115,8 +1114,8 @@ gfe_rx_stop(struct gfe_softc *sc, enum gfe_whack_op op)
 {
 	GE_FUNC_ENTER(sc, "gfe_rx_stop");
 	sc->sc_flags &= ~GE_RXACTIVE;
-	sc->sc_idlemask &= ~(ETH_IR_RxBits|ETH_IR_RxBuffer|ETH_IR_RxError);
-	sc->sc_intrmask &= ~(ETH_IR_RxBits|ETH_IR_RxBuffer|ETH_IR_RxError);
+	sc->sc_idlemask &= ~(ETH_IR_RxBits | ETH_IR_RxBuffer | ETH_IR_RxError);
+	sc->sc_intrmask &= ~(ETH_IR_RxBits | ETH_IR_RxBuffer | ETH_IR_RxError);
 	GE_WRITE(sc, ETH_EIMR, sc->sc_intrmask);
 	GE_WRITE(sc, ETH_ESDCMR, ETH_ESDCMR_AR);
 	do {
@@ -1148,25 +1147,25 @@ gfe_tick(void *arg)
 		gfe_ifstart(&sc->sc_ec.ec_if);
 	if (tickflags & GE_TICK_RX_RESTART) {
 		intrmask |= sc->sc_idlemask;
-		if (sc->sc_idlemask & (ETH_IR_RxBuffer_3|ETH_IR_RxError_3)) {
+		if (sc->sc_idlemask & (ETH_IR_RxBuffer_3 | ETH_IR_RxError_3)) {
 			struct gfe_rxqueue *rxq = &sc->sc_rxq[GE_RXPRIO_HI];
 			rxq->rxq_fi = 0;
 			GE_WRITE(sc, ETH_EFRDP3, rxq->rxq_desc_busaddr);
 			GE_WRITE(sc, ETH_ECRDP3, rxq->rxq_desc_busaddr);
 		}
-		if (sc->sc_idlemask & (ETH_IR_RxBuffer_2|ETH_IR_RxError_2)) {
+		if (sc->sc_idlemask & (ETH_IR_RxBuffer_2 | ETH_IR_RxError_2)) {
 			struct gfe_rxqueue *rxq = &sc->sc_rxq[GE_RXPRIO_MEDHI];
 			rxq->rxq_fi = 0;
 			GE_WRITE(sc, ETH_EFRDP2, rxq->rxq_desc_busaddr);
 			GE_WRITE(sc, ETH_ECRDP2, rxq->rxq_desc_busaddr);
 		}
-		if (sc->sc_idlemask & (ETH_IR_RxBuffer_1|ETH_IR_RxError_1)) {
+		if (sc->sc_idlemask & (ETH_IR_RxBuffer_1 | ETH_IR_RxError_1)) {
 			struct gfe_rxqueue *rxq = &sc->sc_rxq[GE_RXPRIO_MEDLO];
 			rxq->rxq_fi = 0;
 			GE_WRITE(sc, ETH_EFRDP1, rxq->rxq_desc_busaddr);
 			GE_WRITE(sc, ETH_ECRDP1, rxq->rxq_desc_busaddr);
 		}
-		if (sc->sc_idlemask & (ETH_IR_RxBuffer_0|ETH_IR_RxError_0)) {
+		if (sc->sc_idlemask & (ETH_IR_RxBuffer_0 | ETH_IR_RxError_0)) {
 			struct gfe_rxqueue *rxq = &sc->sc_rxq[GE_RXPRIO_LO];
 			rxq->rxq_fi = 0;
 			GE_WRITE(sc, ETH_EFRDP0, rxq->rxq_desc_busaddr);
@@ -1274,7 +1273,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	if (txq->txq_nactive > 0 && txq->txq_outptr <= txq->txq_inptr &&
 	    txq->txq_outptr + buflen > txq->txq_inptr) {
 		intrmask |= txq->txq_intrbits &
-		    (ETH_IR_TxBufferHigh|ETH_IR_TxBufferLow);
+		    (ETH_IR_TxBufferHigh | ETH_IR_TxBufferLow);
 		if (sc->sc_intrmask != intrmask) {
 			sc->sc_intrmask = intrmask;
 			GE_WRITE(sc, ETH_EIMR, sc->sc_intrmask);
@@ -1305,10 +1304,10 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	 */
 	txq->txq_ei_gapcount += buflen;
 	if (txq->txq_ei_gapcount > 2 * GE_TXBUF_SIZE / 3) {
-		txd->ed_cmdsts = htogt32(TX_CMD_FIRST|TX_CMD_LAST|TX_CMD_EI);
+		txd->ed_cmdsts = htogt32(TX_CMD_FIRST |TX_CMD_LAST |TX_CMD_EI);
 		txq->txq_ei_gapcount = 0;
 	} else {
-		txd->ed_cmdsts = htogt32(TX_CMD_FIRST|TX_CMD_LAST);
+		txd->ed_cmdsts = htogt32(TX_CMD_FIRST | TX_CMD_LAST);
 	}
 #if 0
 	GE_DPRINTF(sc, ("([%d]->%08lx.%08lx.%08lx.%08lx)", txq->txq_lo,
@@ -1322,7 +1321,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	 * Tell the SDMA engine to "Fetch!"
 	 */
 	GE_WRITE(sc, ETH_ESDCMR,
-		 txq->txq_esdcmrbits & (ETH_ESDCMR_TXDH|ETH_ESDCMR_TXDL));
+		 txq->txq_esdcmrbits & (ETH_ESDCMR_TXDH | ETH_ESDCMR_TXDL));
 
 	GE_DPRINTF(sc, ("(%d)", txq->txq_lo));
 
@@ -1346,7 +1345,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	 * an interrupt when the transmit queue finishes processing the
 	 * list.  But only update the mask if needs changing.
 	 */
-	intrmask |= txq->txq_intrbits & (ETH_IR_TxEndHigh|ETH_IR_TxEndLow);
+	intrmask |= txq->txq_intrbits & (ETH_IR_TxEndHigh | ETH_IR_TxEndLow);
 	if (sc->sc_intrmask != intrmask) {
 		sc->sc_intrmask = intrmask;
 		GE_WRITE(sc, ETH_EIMR, sc->sc_intrmask);
@@ -1438,8 +1437,10 @@ gfe_tx_done(struct gfe_softc *sc, enum gfe_txprio txprio, uint32_t intrmask)
 		panic("%s: transmit fifo%d empty but active count (%d) > 0!",
 		    device_xname(sc->sc_dev), txprio, txq->txq_nactive);
 	ifp->if_timer = 0;
-	intrmask &= ~(txq->txq_intrbits & (ETH_IR_TxEndHigh|ETH_IR_TxEndLow));
-	intrmask &= ~(txq->txq_intrbits & (ETH_IR_TxBufferHigh|ETH_IR_TxBufferLow));
+	intrmask &=
+	    ~(txq->txq_intrbits & (ETH_IR_TxEndHigh | ETH_IR_TxEndLow));
+	intrmask &=
+	    ~(txq->txq_intrbits & (ETH_IR_TxBufferHigh | ETH_IR_TxBufferLow));
 	GE_FUNC_EXIT(sc, "");
 	return intrmask;
 }
@@ -1519,11 +1520,11 @@ gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 	txq->txq_descs[GE_TXDESC_MAX-1].ed_nxtptr =
 	    htogt32(txq->txq_desc_busaddr);
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map, 0,
-	    GE_TXDESC_MEMSIZE, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    GE_TXDESC_MEMSIZE, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	switch (txprio) {
 	case GE_TXPRIO_HI:
-		txq->txq_intrbits = ETH_IR_TxEndHigh|ETH_IR_TxBufferHigh;
+		txq->txq_intrbits = ETH_IR_TxEndHigh | ETH_IR_TxBufferHigh;
 		txq->txq_esdcmrbits = ETH_ESDCMR_TXDH;
 		txq->txq_epsrbits = ETH_EPSR_TxHigh;
 		txq->txq_ectdp = ETH_ECTDP1;
@@ -1531,7 +1532,7 @@ gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 		break;
 
 	case GE_TXPRIO_LO:
-		txq->txq_intrbits = ETH_IR_TxEndLow|ETH_IR_TxBufferLow;
+		txq->txq_intrbits = ETH_IR_TxEndLow | ETH_IR_TxBufferLow;
 		txq->txq_esdcmrbits = ETH_ESDCMR_TXDL;
 		txq->txq_epsrbits = ETH_EPSR_TxLow;
 		txq->txq_ectdp = ETH_ECTDP0;
@@ -1588,7 +1589,7 @@ gfe_tx_stop(struct gfe_softc *sc, enum gfe_whack_op op)
 {
 	GE_FUNC_ENTER(sc, "gfe_tx_stop");
 
-	GE_WRITE(sc, ETH_ESDCMR, ETH_ESDCMR_STDH|ETH_ESDCMR_STDL);
+	GE_WRITE(sc, ETH_ESDCMR, ETH_ESDCMR_STDH | ETH_ESDCMR_STDL);
 
 	sc->sc_intrmask = gfe_tx_done(sc, GE_TXPRIO_HI, sc->sc_intrmask);
 	sc->sc_intrmask = gfe_tx_done(sc, GE_TXPRIO_LO, sc->sc_intrmask);
@@ -1631,14 +1632,14 @@ gfe_intr(void *arg)
 
 		GE_WRITE(sc, ETH_EICR, ~cause);
 #ifndef GE_NORX
-		if (cause & (ETH_IR_RxBuffer|ETH_IR_RxError))
+		if (cause & (ETH_IR_RxBuffer | ETH_IR_RxError))
 			intrmask = gfe_rx_process(sc, cause, intrmask);
 #endif
 
 #ifndef GE_NOTX
-		if (cause & (ETH_IR_TxBufferHigh|ETH_IR_TxEndHigh))
+		if (cause & (ETH_IR_TxBufferHigh | ETH_IR_TxEndHigh))
 			intrmask = gfe_tx_done(sc, GE_TXPRIO_HI, intrmask);
-		if (cause & (ETH_IR_TxBufferLow|ETH_IR_TxEndLow))
+		if (cause & (ETH_IR_TxBufferLow | ETH_IR_TxEndLow))
 			intrmask = gfe_tx_done(sc, GE_TXPRIO_LO, intrmask);
 #endif
 		if (cause & ETH_IR_MIIPhySTC) {
@@ -2006,6 +2007,7 @@ gfe_hash_multichg(struct ethercom *ec, const struct ether_multi *enm,
 int
 gfe_hash_fill(struct gfe_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ec;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	int error;
@@ -2013,16 +2015,16 @@ gfe_hash_fill(struct gfe_softc *sc)
 	GE_FUNC_ENTER(sc, "gfe_hash_fill");
 
 	error = gfe_hash_entry_op(sc, GE_HASH_ADD, GE_RXPRIO_HI,
-	    CLLADDR(sc->sc_ec.ec_if.if_sadl));
+	    CLLADDR(ec->ec_if.if_sadl));
 	if (error) {
 		GE_FUNC_EXIT(sc, "!");
 		return error;
 	}
 
 	sc->sc_flags &= ~GE_ALLMULTI;
-	if ((sc->sc_ec.ec_if.if_flags & IFF_PROMISC) == 0)
+	if ((ec->ec_if.if_flags & IFF_PROMISC) == 0)
 		sc->sc_pcr &= ~ETH_EPCR_PM;
-	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			sc->sc_flags |= GE_ALLMULTI;
