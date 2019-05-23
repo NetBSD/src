@@ -1,5 +1,4 @@
-/*	$Id: at91emac.c,v 1.27 2019/05/23 13:10:50 msaitoh Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.27 2019/05/23 13:10:50 msaitoh Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.28 2019/05/23 16:05:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.27 2019/05/23 13:10:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.28 2019/05/23 16:05:01 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -608,7 +607,6 @@ emac_tick(void *arg)
 static int
 emac_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct emac_softc *sc = ifp->if_softc;
 	int s, error;
 
 	s = splnet();
@@ -786,7 +784,7 @@ static void
 emac_setaddr(struct ifnet *ifp)
 {
 	struct emac_softc *sc = ifp->if_softc;
-	struct ethercom *ac = &sc->sc_ec;
+	struct ethercom *ec = &sc->sc_ec;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	uint8_t ias[3][ETHER_ADDR_LEN];
@@ -809,7 +807,7 @@ emac_setaddr(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	ETHER_FIRST_MULTI(step, ac, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
@@ -858,9 +856,10 @@ emac_setaddr(struct ifnet *ifp)
 	EMAC_WRITE(ETH_SA1H, (sc->sc_enaddr[5] << 8)
 		   | (sc->sc_enaddr[4]));
 	if (nma > 1) {
-		DPRINTFN(1,("%s: en1 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
-		       ias[0][0], ias[0][1], ias[0][2],
-		       ias[0][3], ias[0][4], ias[0][5]));
+		DPRINTFN(1,("%s: en1 %02x:%02x:%02x:%02x:%02x:%02x\n",
+			__FUNCTION__,
+			ias[0][0], ias[0][1], ias[0][2],
+			ias[0][3], ias[0][4], ias[0][5]));
 		EMAC_WRITE(ETH_SA2L, (ias[0][3] << 24)
 			   | (ias[0][2] << 16) | (ias[0][1] << 8)
 			   | (ias[0][0]));
@@ -868,9 +867,10 @@ emac_setaddr(struct ifnet *ifp)
 			   | (ias[0][5]));
 	}
 	if (nma > 2) {
-		DPRINTFN(1,("%s: en2 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
-		       ias[1][0], ias[1][1], ias[1][2],
-		       ias[1][3], ias[1][4], ias[1][5]));
+		DPRINTFN(1,("%s: en2 %02x:%02x:%02x:%02x:%02x:%02x\n",
+			__FUNCTION__,
+			ias[1][0], ias[1][1], ias[1][2],
+			ias[1][3], ias[1][4], ias[1][5]));
 		EMAC_WRITE(ETH_SA3L, (ias[1][3] << 24)
 			   | (ias[1][2] << 16) | (ias[1][1] << 8)
 			   | (ias[1][0]));
@@ -878,9 +878,10 @@ emac_setaddr(struct ifnet *ifp)
 			   | (ias[1][5]));
 	}
 	if (nma > 3) {
-		DPRINTFN(1,("%s: en3 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
-		       ias[2][0], ias[2][1], ias[2][2],
-		       ias[2][3], ias[2][4], ias[2][5]));
+		DPRINTFN(1,("%s: en3 %02x:%02x:%02x:%02x:%02x:%02x\n",
+			__FUNCTION__,
+			ias[2][0], ias[2][1], ias[2][2],
+			ias[2][3], ias[2][4], ias[2][5]));
 		EMAC_WRITE(ETH_SA3L, (ias[2][3] << 24)
 			   | (ias[2][2] << 16) | (ias[2][1] << 8)
 			   | (ias[2][0]));
