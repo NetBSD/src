@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.43 2019/03/05 08:25:03 msaitoh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.44 2019/05/23 10:57:29 msaitoh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.43 2019/03/05 08:25:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.44 2019/05/23 10:57:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -766,7 +766,7 @@ mue_chip_init(struct mue_softc *sc)
 	mue_csr_write(sc, (sc->mue_flags & LAN7500) ?
 	    MUE_7500_FCT_FLOW : MUE_7800_FCT_FLOW, 0);
 	mue_csr_write(sc, MUE_FLOW, 0);
- 
+
 	/* Reset PHY. */
 	MUE_SETBIT(sc, MUE_PMT_CTL, MUE_PMT_CTL_PHY_RST);
 	if (MUE_WAIT_CLR(sc, MUE_PMT_CTL, MUE_PMT_CTL_PHY_RST, 0)) {
@@ -1020,7 +1020,7 @@ mue_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_TSOv4 | IFCAP_TSOv6 |
-	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |  
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
 	    IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_TCPv6_Rx |
@@ -1109,7 +1109,7 @@ mue_detach(device_t self, int flags)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->mue_udev, sc->mue_dev);
-	
+
 	mutex_destroy(&sc->mue_mii_lock);
 
 	return 0;
@@ -1271,7 +1271,7 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 	hdr.tx_cmd_a = htole32(tx_cmd_a);
 	hdr.tx_cmd_b = htole32(tx_cmd_b);
 
-	memcpy(c->mue_buf, &hdr, sizeof(hdr)); 
+	memcpy(c->mue_buf, &hdr, sizeof(hdr));
 	m_copydata(m, 0, len, c->mue_buf + sizeof(hdr));
 
 	if (__predict_false(c->mue_xfer == NULL))
@@ -1320,7 +1320,7 @@ mue_prepare_tso(struct mue_softc *sc, struct mbuf *m)
 	default:
 		if (usbd_ratecheck(&sc->mue_tx_notice))
 			MUE_PRINTF(sc, "dropping invalid frame "
-			    "type 0x%04hx csum_flags 0x%08x\n", 
+			    "type 0x%04hx csum_flags 0x%08x\n",
 			    type, m->m_pkthdr.csum_flags);
 		return EINVAL;
 	}
@@ -1402,7 +1402,7 @@ allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
 				rxfilt |= MUE_RFE_CTL_MULTICAST_HASH;
 				h = (ether_crc32_be(enm->enm_addrlo,
 				    ETHER_ADDR_LEN) >> 23) & 0x1ff;
-				hashtbl[h / 32] |= 1 << (h % 32); 
+				hashtbl[h / 32] |= 1 << (h % 32);
 			}
 			i++;
 			ETHER_NEXT_MULTI(step, enm);
@@ -1653,7 +1653,7 @@ mue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 static int
 mue_init(struct ifnet *ifp)
 {
-	struct mue_softc *sc = ifp->if_softc; 
+	struct mue_softc *sc = ifp->if_softc;
 	int s;
 
 	if (sc->mue_dying) {
@@ -1812,7 +1812,7 @@ mue_start(struct ifnet *ifp)
 		return;
 	}
 
-	if (__predict_false((ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING))
+	if (__predict_false((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING))
 	    != IFF_RUNNING)) {
 		DPRINTF(sc, "not ready\n");
 		return;

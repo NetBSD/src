@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.81 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.82 2019/05/23 10:57:29 msaitoh Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.81 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.82 2019/05/23 10:57:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -94,11 +94,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.81 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef CUE_DEBUG
 #define DPRINTF(x)	if (cuedebug) printf x
-#define DPRINTFN(n,x)	if (cuedebug >= (n)) printf x
+#define DPRINTFN(n, x)	if (cuedebug >= (n)) printf x
 int	cuedebug = 0;
 #else
 #define DPRINTF(x)
-#define DPRINTFN(n,x)
+#define DPRINTFN(n, x)
 #endif
 
 /*
@@ -1108,7 +1108,7 @@ cue_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch(command) {
+	switch (command) {
 	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		cue_init(sc);
@@ -1125,7 +1125,8 @@ cue_ioctl(struct ifnet *ifp, u_long command, void *data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
 			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+		else if ((error = ifioctl_common(ifp, command, data))
+		    == ENETRESET)
 			error = 0;
 		break;
 

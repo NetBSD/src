@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.58 2019/04/22 08:30:31 msaitoh Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.59 2019/05/23 10:57:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.58 2019/04/22 08:30:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.59 2019/05/23 10:57:27 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -118,8 +118,8 @@ int bmac_mii_readreg(device_t, int, int, uint16_t *);
 int bmac_mii_writereg(device_t, int, int, uint16_t);
 void bmac_mii_statchg(struct ifnet *);
 void bmac_mii_tick(void *);
-u_int32_t bmac_mbo_read(device_t);
-void bmac_mbo_write(device_t, u_int32_t);
+uint32_t bmac_mbo_read(device_t);
+void bmac_mbo_write(device_t, uint32_t);
 
 CFATTACH_DECL_NEW(bm, sizeof(struct bmac_softc),
     bmac_match, bmac_attach, NULL, NULL);
@@ -251,10 +251,10 @@ bmac_attach(device_t parent, device_t self, void *aux)
 
 	/* Choose a default media. */
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
-		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_10_T, 0, NULL);
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_10_T);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_10_T, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_10_T);
 	} else
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	bmac_reset_chip(sc);
 
@@ -321,7 +321,7 @@ bmac_init(struct bmac_softc *sc)
 		printf("%s: reset timeout\n", ifp->if_xname);
 
 	if (! (sc->sc_flags & BMAC_BMACPLUS))
-		bmac_set_bits(sc, XCVRIF, ClkBit|SerialMode|COLActiveLow);
+		bmac_set_bits(sc, XCVRIF, ClkBit | SerialMode | COLActiveLow);
 
 	if ((mfpvr() >> 16) == MPC601)
 		tb = mfrtcl();
@@ -777,8 +777,8 @@ bmac_setladrf(struct bmac_softc *sc)
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	u_int32_t crc;
-	u_int16_t hash[4];
+	uint32_t crc;
+	uint16_t hash[4];
 	int x;
 
 	/*
@@ -853,7 +853,7 @@ bmac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 	return mii_bitbang_writereg(self, &bmac_mbo, phy, reg, val);
 }
 
-u_int32_t
+uint32_t
 bmac_mbo_read(device_t self)
 {
 	struct bmac_softc *sc = device_private(self);
@@ -862,7 +862,7 @@ bmac_mbo_read(device_t self)
 }
 
 void
-bmac_mbo_write(device_t self, u_int32_t val)
+bmac_mbo_write(device_t self, uint32_t val)
 {
 	struct bmac_softc *sc = device_private(self);
 

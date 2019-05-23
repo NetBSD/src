@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.22 2019/04/26 06:33:33 msaitoh Exp $ */
+/* $NetBSD: if_admsw.c,v 1.23 2019/05/23 10:57:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.22 2019/04/26 06:33:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.23 2019/05/23 10:57:27 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -163,7 +163,7 @@ admsw_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 #define	REG_READ(o)	bus_space_read_4(sc->sc_st, sc->sc_ioh, (o))
-#define	REG_WRITE(o,v)	bus_space_write_4(sc->sc_st, sc->sc_ioh, (o),(v))
+#define	REG_WRITE(o, v)	bus_space_write_4(sc->sc_st, sc->sc_ioh, (o),(v))
 
 
 static void
@@ -183,11 +183,11 @@ admsw_init_bufs(struct admsw_softc *sc)
 		desc->len = MAC_BUFLEN;
 		desc->status = 0;
 		ADMSW_CDTXHSYNC(sc, i,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 	sc->sc_txhdescs[ADMSW_NTXHDESC - 1].data |= ADM5120_DMA_RINGEND;
 	ADMSW_CDTXHSYNC(sc, ADMSW_NTXHDESC - 1,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < ADMSW_NRXHDESC; i++) {
 		if (sc->sc_rxhsoft[i].ds_mbuf == NULL) {
@@ -208,11 +208,11 @@ admsw_init_bufs(struct admsw_softc *sc)
 		desc->len = MAC_BUFLEN;
 		desc->status = 0;
 		ADMSW_CDTXLSYNC(sc, i,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 	sc->sc_txldescs[ADMSW_NTXLDESC - 1].data |= ADM5120_DMA_RINGEND;
 	ADMSW_CDTXLSYNC(sc, ADMSW_NTXLDESC - 1,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < ADMSW_NRXLDESC; i++) {
 		if (sc->sc_rxlsoft[i].ds_mbuf == NULL) {
@@ -314,7 +314,8 @@ admsw_reset(struct admsw_softc *sc)
 		    (sc->sc_enaddr[0]<<16) | (sc->sc_enaddr[1]<<24) |
 		    MAC_WT0_WRITE | MAC_WT0_VLANID_EN);
 
-		while (!(REG_READ(MAC_WT0_REG) & MAC_WT0_WRITE_DONE));
+		while (!(REG_READ(MAC_WT0_REG) & MAC_WT0_WRITE_DONE))
+			;
 	}
 	wdog1 = REG_READ(ADM5120_WDOG1);
 	REG_WRITE(ADM5120_WDOG1, wdog1 & ~ADM5120_WDOG1_WDE);
@@ -590,7 +591,7 @@ admsw_start(struct ifnet *ifp)
 		 */
 		if (m0->m_pkthdr.len < ETHER_MIN_LEN ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -617,7 +618,7 @@ admsw_start(struct ifnet *ifp)
 				m->m_pkthdr.len = m->m_len = ETHER_MIN_LEN;
 			}
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, error = "
 				    "%d\n", device_xname(sc->sc_dev), error);
@@ -640,7 +641,8 @@ admsw_start(struct ifnet *ifp)
 		    BUS_DMASYNC_PREWRITE);
 
 		if (dmamap->dm_nsegs != 1 && dmamap->dm_nsegs != 2)
-			panic("admsw_start: dm_nsegs == %d\n", dmamap->dm_nsegs);
+			panic("admsw_start: dm_nsegs == %d\n",
+			    dmamap->dm_nsegs);
 		desc->data = dmamap->dm_segs[0].ds_addr;
 		desc->len = len = dmamap->dm_segs[0].ds_len;
 		if (dmamap->dm_nsegs > 1) {
@@ -660,10 +662,10 @@ admsw_start(struct ifnet *ifp)
 
 		/* Sync the descriptor. */
 		ADMSW_CDTXLSYNC(sc, nexttx,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		REG_WRITE(SEND_TRIG_REG, 1);
-		/* printf("send slot %d\n",nexttx); */
+		/* printf("send slot %d\n", nexttx); */
 
 		/*
 		 * Store a pointer to the packet so we can free it later.
@@ -846,18 +848,18 @@ admsw_txintr(struct admsw_softc *sc, int prio)
 	int i, vlan;
 	int gotone = 0;
 
-	/* printf("txintr: txdirty: %d, txfree: %d\n",sc->sc_txdirty, sc->sc_txfree); */
+	/* printf("txintr: txdirty: %d, txfree: %d\n", sc->sc_txdirty, sc->sc_txfree); */
 	for (i = sc->sc_txdirty; sc->sc_txfree != ADMSW_NTXLDESC;
 	    i = ADMSW_NEXTTXL(i)) {
 
 		ADMSW_CDTXLSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		desc = &sc->sc_txldescs[i];
 		ds = &sc->sc_txlsoft[i];
 		if (desc->data & ADM5120_DMA_OWN) {
 			ADMSW_CDTXLSYNC(sc, i,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			break;
 		}
 
@@ -872,7 +874,7 @@ admsw_txintr(struct admsw_softc *sc, int prio)
 			panic("admsw_txintr: bad vlan\n");
 		ifp = &sc->sc_ethercom[vlan].ec_if;
 		gotone = 1;
-		/* printf("clear tx slot %d\n",i); */
+		/* printf("clear tx slot %d\n", i); */
 
 		ifp->if_opackets++;
 
@@ -901,7 +903,7 @@ admsw_txintr(struct admsw_softc *sc, int prio)
 
 	}
 
-	/* printf("txintr end: txdirty: %d, txfree: %d\n",sc->sc_txdirty, sc->sc_txfree); */
+	/* printf("txintr end: txdirty: %d, txfree: %d\n", sc->sc_txdirty, sc->sc_txfree); */
 }
 
 /*
@@ -976,7 +978,7 @@ admsw_rxintr(struct admsw_softc *sc, int high)
 			break;
 		}
 
-		/* printf("process slot %d\n",i); */
+		/* printf("process slot %d\n", i); */
 
 #ifdef ADMSW_EVENT_COUNTERS
 		pkts++;
@@ -1052,8 +1054,9 @@ admsw_init(struct ifnet *ifp)
 
 			/* Enable needed interrupts */
 			REG_WRITE(ADMSW_INT_MASK, REG_READ(ADMSW_INT_MASK) &
-			    ~(ADMSW_INTR_SHD | ADMSW_INTR_SLD | ADMSW_INTR_RHD |
-			    ADMSW_INTR_RLD | ADMSW_INTR_HDF | ADMSW_INTR_LDF));
+			    ~(ADMSW_INTR_SHD | ADMSW_INTR_SLD |
+				ADMSW_INTR_RHD | ADMSW_INTR_RLD |
+				ADMSW_INTR_HDF | ADMSW_INTR_LDF));
 		}
 		sc->ndevs++;
 	}
@@ -1078,7 +1081,7 @@ admsw_stop(struct ifnet *ifp, int disable)
 {
 	struct admsw_softc *sc = ifp->if_softc;
 
-	/* printf("admsw_stop: %d\n",disable); */
+	/* printf("admsw_stop: %d\n", disable); */
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
@@ -1244,10 +1247,10 @@ admsw_mediachange(struct ifnet *ifp)
 		return EINVAL;
 
 	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
-		val = PHY_CNTL2_AUTONEG|PHY_CNTL2_100M|PHY_CNTL2_FDX;
+		val = PHY_CNTL2_AUTONEG | PHY_CNTL2_100M | PHY_CNTL2_FDX;
 	} else if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX) {
 		if ((ifm->ifm_media & IFM_FDX) != 0)
-			val = PHY_CNTL2_100M|PHY_CNTL2_FDX;
+			val = PHY_CNTL2_100M | PHY_CNTL2_FDX;
 		else
 			val = PHY_CNTL2_100M;
 	} else if (IFM_SUBTYPE(ifm->ifm_media) == IFM_10_T) {
@@ -1259,7 +1262,8 @@ admsw_mediachange(struct ifnet *ifp)
 		return EINVAL;
 
 	old = REG_READ(PHY_CNTL2_REG);
-	new = old & ~((PHY_CNTL2_AUTONEG|PHY_CNTL2_100M|PHY_CNTL2_FDX) << port);
+	new = old & ~((PHY_CNTL2_AUTONEG | PHY_CNTL2_100M | PHY_CNTL2_FDX)
+	    << port);
 	new |= (val << port);
 
 	if (new != old)

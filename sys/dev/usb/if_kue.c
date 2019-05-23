@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.93 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.94 2019/05/23 10:57:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.93 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.94 2019/05/23 10:57:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -111,11 +111,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.93 2019/05/05 03:17:54 mrg Exp $");
 
 #ifdef KUE_DEBUG
 #define DPRINTF(x)	if (kuedebug) printf x
-#define DPRINTFN(n,x)	if (kuedebug >= (n)) printf x
+#define DPRINTFN(n, x)	if (kuedebug >= (n)) printf x
 int	kuedebug = 0;
 #else
 #define DPRINTF(x)
-#define DPRINTFN(n,x)
+#define DPRINTFN(n, x)
 #endif
 
 /*
@@ -968,7 +968,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch(command) {
+	switch (command) {
 	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		kue_init(sc);

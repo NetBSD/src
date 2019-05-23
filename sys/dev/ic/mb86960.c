@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.90 2019/04/26 06:33:34 msaitoh Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.91 2019/05/23 10:57:28 msaitoh Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.90 2019/04/26 06:33:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.91 2019/05/23 10:57:28 msaitoh Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -236,8 +236,8 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 			ifmedia_add(&sc->sc_media, media[i], 0, NULL);
 		ifmedia_set(&sc->sc_media, defmedia);
 	} else {
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 	}
 
 	/* Attach the interface. */
@@ -1190,7 +1190,7 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
 		/* XXX re-use ether_ioctl() */
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
@@ -1209,7 +1209,7 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				break;
 			mb86960_init(sc);
 			break;
-		case IFF_UP|IFF_RUNNING:
+		case IFF_UP | IFF_RUNNING:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.

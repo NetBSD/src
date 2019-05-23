@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.27 2019/03/20 13:34:51 nonaka Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.28 2019/05/23 10:57:27 msaitoh Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.27 2019/03/20 13:34:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.28 2019/05/23 10:57:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1728,12 +1728,12 @@ vmxnet3_setup_interface(struct vmxnet3_softc *sc)
 
 	ifmedia_init(&sc->vmx_media, IFM_IMASK, vmxnet3_media_change,
 	    vmxnet3_media_status);
-	ifmedia_add(&sc->vmx_media, IFM_ETHER|IFM_AUTO, 0, NULL);
-	ifmedia_add(&sc->vmx_media, IFM_ETHER|IFM_10G_T|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->vmx_media, IFM_ETHER|IFM_10G_T, 0, NULL);
-	ifmedia_add(&sc->vmx_media, IFM_ETHER|IFM_1000_T|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->vmx_media, IFM_ETHER|IFM_1000_T, 0, NULL);
-	ifmedia_set(&sc->vmx_media, IFM_ETHER|IFM_AUTO);
+	ifmedia_add(&sc->vmx_media, IFM_ETHER | IFM_AUTO, 0, NULL);
+	ifmedia_add(&sc->vmx_media, IFM_ETHER | IFM_10G_T | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->vmx_media, IFM_ETHER | IFM_10G_T, 0, NULL);
+	ifmedia_add(&sc->vmx_media, IFM_ETHER | IFM_1000_T | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->vmx_media, IFM_ETHER | IFM_1000_T, 0, NULL);
+	ifmedia_set(&sc->vmx_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
@@ -2557,7 +2557,7 @@ vmxnet3_txq_offload_ctx(struct vmxnet3_txqueue *txq, struct mbuf *m,
 	}
 
 	if ((m->m_pkthdr.csum_flags &
-	    (M_CSUM_TSOv4|M_CSUM_UDPv4|M_CSUM_TCPv4)) != 0) {
+	    (M_CSUM_TSOv4 | M_CSUM_UDPv4 | M_CSUM_TCPv4)) != 0) {
 		iphl = M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
 		v4 = true;
 	} else {

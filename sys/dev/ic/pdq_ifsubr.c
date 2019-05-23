@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.63 2019/04/24 07:46:55 msaitoh Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.64 2019/05/23 10:57:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.63 2019/04/24 07:46:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.64 2019/05/23 10:57:28 msaitoh Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -176,7 +176,7 @@ pdq_ifstart(struct ifnet *ifp)
 			if (!bus_dmamap_create(sc->sc_dmatag, m->m_pkthdr.len,
 			    255, m->m_pkthdr.len, 0, BUS_DMA_NOWAIT, &map)) {
 				if (!bus_dmamap_load_mbuf(sc->sc_dmatag, map,
-				    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT)) {
+				    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT)) {
 					bus_dmamap_sync(sc->sc_dmatag, map, 0,
 					    m->m_pkthdr.len,
 					    BUS_DMASYNC_PREWRITE);
@@ -233,7 +233,8 @@ pdq_os_receive_pdu(pdq_t *pdq, struct mbuf *m, size_t pktlen, int drop)
 #endif
 	m->m_pkthdr.len = pktlen;
 	fh = mtod(m, struct fddi_header *);
-	if (drop || (fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC) {
+	if (drop || (fh->fddi_fc & (FDDIFC_L | FDDIFC_F))
+	    != FDDIFC_LLC_ASYNC) {
 		PDQ_OS_DATABUF_FREE(pdq, m);
 		return;
 	}
@@ -382,7 +383,7 @@ pdq_ifioctl(struct ifnet *ifp, ioctl_cmd_t cmd, void *data)
 
 		ifp->if_flags |= IFF_UP;
 		pdq_ifinit(sc);
-		switch(ifa->ifa_addr->sa_family) {
+		switch (ifa->ifa_addr->sa_family) {
 #if defined(INET)
 		case AF_INET:
 			PDQ_ARP_IFINIT(sc, ifa);
@@ -543,8 +544,7 @@ pdq_os_memalloc_contig(
 	if (!not_ok) {
 		steps = 6;
 		not_ok = bus_dmamap_create(sc->sc_dmatag, ui_segs[0].ds_len, 1,
-		    PDQ_OS_PAGESIZE, 0, BUS_DMA_NOWAIT,
-		    &sc->sc_uimap);
+		    PDQ_OS_PAGESIZE, 0, BUS_DMA_NOWAIT, &sc->sc_uimap);
 	}
 	if (!not_ok) {
 		steps = 7;
@@ -666,11 +666,11 @@ pdq_os_databuf_sync(pdq_os_ctx_t *sc, struct mbuf *m, size_t offset,
 extern void
 pdq_os_databuf_free(pdq_os_ctx_t *sc, struct mbuf *m)
 {
-	if (m->m_flags & (M_HASRXDMAMAP|M_HASTXDMAMAP)) {
+	if (m->m_flags & (M_HASRXDMAMAP | M_HASTXDMAMAP)) {
 		bus_dmamap_t map = M_GETCTX(m, bus_dmamap_t);
 		bus_dmamap_unload(sc->sc_dmatag, map);
 		bus_dmamap_destroy(sc->sc_dmatag, map);
-		m->m_flags &= ~(M_HASRXDMAMAP|M_HASTXDMAMAP);
+		m->m_flags &= ~(M_HASRXDMAMAP | M_HASTXDMAMAP);
 	}
 	m_freem(m);
 }
@@ -702,7 +702,7 @@ pdq_os_databuf_alloc(pdq_os_ctx_t *sc)
 		return NULL;
 	}
 	if (bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
-		BUS_DMA_READ|BUS_DMA_NOWAIT)) {
+		BUS_DMA_READ | BUS_DMA_NOWAIT)) {
 		aprint_error_dev(sc->sc_dev, "can't load dmamap\n");
 		bus_dmamap_destroy(sc->sc_dmatag, map);
 		m_free(m);

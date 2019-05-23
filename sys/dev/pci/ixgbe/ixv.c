@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.112 2019/03/18 11:38:03 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.113 2019/05/23 10:57:28 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -590,8 +590,8 @@ ixv_detach(device_t dev, int flags)
 #if NVLAN > 0
 	/* Make sure VLANs are not using driver */
 	if (!VLAN_ATTACHED(&adapter->osdep.ec))
-		;	/* nothing to do: no VLANs */ 
-	else if ((flags & (DETACH_SHUTDOWN|DETACH_FORCE)) != 0)
+		;	/* nothing to do: no VLANs */
+	else if ((flags & (DETACH_SHUTDOWN | DETACH_FORCE)) != 0)
 		vlan_ifdetach(adapter->ifp);
 	else {
 		aprint_error_dev(dev, "VLANs in use, detach first\n");
@@ -791,7 +791,7 @@ ixv_init_locked(struct adapter *adapter)
 #endif
 	}
 #endif
-	
+
 	/* Set up VLAN offload and filter */
 	ixv_setup_vlan_support(adapter);
 
@@ -1866,7 +1866,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
  *
  *   Retrieves the TDH value from the hardware
  ************************************************************************/
-static int 
+static int
 ixv_sysctl_tdh_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
@@ -1886,7 +1886,7 @@ ixv_sysctl_tdh_handler(SYSCTLFN_ARGS)
  *
  *   Retrieves the TDT value from the hardware
  ************************************************************************/
-static int 
+static int
 ixv_sysctl_tdt_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
@@ -1907,7 +1907,7 @@ ixv_sysctl_tdt_handler(SYSCTLFN_ARGS)
  *
  *   Retrieves the next_to_check value
  ************************************************************************/
-static int 
+static int
 ixv_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
@@ -1927,7 +1927,7 @@ ixv_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
  *
  *   Retrieves the RDH value from the hardware
  ************************************************************************/
-static int 
+static int
 ixv_sysctl_rdh_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
@@ -1947,7 +1947,7 @@ ixv_sysctl_rdh_handler(SYSCTLFN_ARGS)
  *
  *   Retrieves the RDT value from the hardware
  ************************************************************************/
-static int 
+static int
 ixv_sysctl_rdt_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
@@ -2779,8 +2779,8 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 	struct ifreq	*ifr = data;
 	int             error = 0;
 	int l4csum_en;
-	const int l4csum = IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx|
-	     IFCAP_CSUM_TCPv6_Rx|IFCAP_CSUM_UDPv6_Rx;
+	const int l4csum = IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
+	     IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
 
 	switch (command) {
 	case SIOCSIFFLAGS:
@@ -3002,7 +3002,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 			ixv_handle_que, que);
 		if (que->que_si == NULL) {
 			aprint_error_dev(dev,
-			    "could not establish software interrupt\n"); 
+			    "could not establish software interrupt\n");
 		}
 	}
 	snprintf(wqname, sizeof(wqname), "%sdeferTx", device_xname(dev));
@@ -3045,7 +3045,8 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	/* Round-robin affinity */
 	kcpuset_zero(affinity);
 	kcpuset_set(affinity, cpu_id % ncpu);
-	error = interrupt_distribute(adapter->osdep.ihs[vector], affinity,NULL);
+	error = interrupt_distribute(adapter->osdep.ihs[vector],
+	    affinity, NULL);
 
 	aprint_normal_dev(dev,
 	    "for link, interrupting at %s", intrstr);

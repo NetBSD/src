@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.31 2019/04/23 03:36:45 msaitoh Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.32 2019/05/23 10:57:28 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.31 2019/04/23 03:36:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.32 2019/05/23 10:57:28 msaitoh Exp $");
 
 /*
  * The LAN9118 Family
@@ -73,11 +73,11 @@ __KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.31 2019/04/23 03:36:45 msaitoh Exp $")
 
 #ifdef SMSH_DEBUG
 #define DPRINTF(x)	if (smsh_debug) printf x
-#define DPRINTFN(n,x)	if (smsh_debug >= (n)) printf x
+#define DPRINTFN(n, x)	if (smsh_debug >= (n)) printf x
 int smsh_debug = SMSH_DEBUG;
 #else
 #define DPRINTF(x)
-#define DPRINTFN(n,x)
+#define DPRINTFN(n, x)
 #endif
 
 
@@ -343,7 +343,7 @@ lan9118_intr(void *arg)
 		if (int_sts & LAN9118_INT_RSFL) /* RX Status FIFO Level */
 			lan9118_rxintr(sc);
 	}
- 
+
 	if (handled)
 		if_schedule_deferred_start(ifp);
 
@@ -469,9 +469,11 @@ discard:
 		 * Trigger a software interrupt to catch any missed completion
 		 * interrupts.
 		 */
-		int_en = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN);
+		int_en = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    LAN9118_INT_EN);
 		int_en |= LAN9118_INT_SW_INT;
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN, int_en);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN,
+		    int_en);
 	}
 }
 
@@ -488,14 +490,14 @@ lan9118_ioctl(struct ifnet *ifp, u_long command, void *data)
 		DPRINTFN(2, ("%s: IFFLAGS\n", __func__));
 		if ((error = ifioctl_common(ifp, command, data)) != 0)
 			break;
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			lan9118_stop(ifp, 0);
 			break;
 		case IFF_UP:
 			lan9118_init(ifp);
 			break;
-		case IFF_UP|IFF_RUNNING:
+		case IFF_UP | IFF_RUNNING:
 			lan9118_set_filter(sc);
 			break;
 		default:

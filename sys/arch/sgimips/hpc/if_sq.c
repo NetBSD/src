@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.50 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.51 2019/05/23 10:57:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.50 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.51 2019/05/23 10:57:27 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -115,7 +115,7 @@ static void	sq_txring_hpc1(struct sq_softc *);
 static void	sq_txring_hpc3(struct sq_softc *);
 static void	sq_reset(struct sq_softc *);
 static int	sq_add_rxbuf(struct sq_softc *, int);
-static void	sq_dump_buffer(paddr_t addr, psize_t len);
+static void	sq_dump_buffer(paddr_t, psize_t);
 static void	sq_trace_dump(struct sq_softc *);
 
 CFATTACH_DECL_NEW(sq, sizeof(struct sq_softc),
@@ -535,7 +535,7 @@ sq_start(struct ifnet *ifp)
 	bus_dmamap_t dmamap;
 	int err, totlen, nexttx, firsttx, lasttx = -1, ofree, seg;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*

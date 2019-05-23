@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.95 2019/01/22 03:42:28 msaitoh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.96 2019/05/23 10:57:29 msaitoh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.95 2019/01/22 03:42:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.96 2019/05/23 10:57:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -165,7 +165,7 @@ SYSCTL_SETUP(sysctl_hw_axe_setup, "sysctl hw.axe setup")
 
 	/* control debugging printfs */
 	err = sysctl_createv(clog, 0, &rnode, &cnode,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "debug", SYSCTL_DESCR("Enable debugging output"),
 	    NULL, 0, &axedebug, sizeof(axedebug), CTL_CREATE, CTL_EOL);
 	if (err)
@@ -1632,7 +1632,7 @@ axe_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if ((ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
 		return;
 
 	IFQ_POLL(&ifp->if_snd, m);
@@ -1828,7 +1828,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	switch(cmd) {
+	switch (cmd) {
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;

@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.51 2019/04/24 08:03:07 msaitoh Exp $ */
+/* $NetBSD: lemac.c,v 1.52 2019/05/23 10:57:28 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.51 2019/04/24 08:03:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.52 2019/05/23 10:57:28 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -84,7 +84,7 @@ static void lemac_rxd_intr(lemac_softc_t *sc, unsigned cs_value);
 static int  lemac_read_eeprom(lemac_softc_t *sc);
 static void lemac_init_adapmem(lemac_softc_t *sc);
 
-static const u_int16_t lemac_allmulti_mctbl[LEMAC_MCTBL_SIZE/sizeof(u_int16_t)] =  {
+static const uint16_t lemac_allmulti_mctbl[LEMAC_MCTBL_SIZE/sizeof(uint16_t)] =  {
 	0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
 	0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
 	0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
@@ -152,7 +152,7 @@ lemac_tne_intr(lemac_softc_t *sc)
 	while (txcount-- > 0) {
 		unsigned txsts = LEMAC_INB(sc, LEMAC_REG_TDQ);
 		sc->sc_if.if_opackets++;		/* another one done */
-		if ((txsts & (LEMAC_TDQ_LCL|LEMAC_TDQ_NCL))
+		if ((txsts & (LEMAC_TDQ_LCL | LEMAC_TDQ_NCL))
 		    || (txsts & LEMAC_TDQ_COL) == LEMAC_TDQ_EXCCOL) {
 			if (txsts & LEMAC_TDQ_NCL)
 				sc->sc_flags &= ~LEMAC_LINKUP;
@@ -302,7 +302,7 @@ lemac_rne_intr(lemac_softc_t *sc)
 	rxcount = LEMAC_INB(sc, LEMAC_REG_RQC);
 	while (rxcount--) {
 		unsigned rxpg = LEMAC_INB(sc, LEMAC_REG_RQ);
-		u_int32_t rxlen;
+		uint32_t rxlen;
 
 		if (LEMAC_USE_PIO_MODE(sc)) {
 			LEMAC_OUTB(sc, LEMAC_REG_IOP, rxpg);
@@ -404,7 +404,7 @@ lemac_read_macaddr(unsigned char *hwaddr, const bus_space_tag_t iot,
 
 static void
 lemac_multicast_op(
-	u_int16_t *mctbl,
+	uint16_t *mctbl,
 	const u_char *mca,
 	int enable)
 {
@@ -487,8 +487,8 @@ lemac_reset(lemac_softc_t * const sc)
 
 	/* Update the control register to reflect the media choice */
 	data = LEMAC_INB(sc, LEMAC_REG_CTL);
-	if ((data & (LEMAC_CTL_APD|LEMAC_CTL_PSL)) != sc->sc_ctlmode) {
-		data &= ~(LEMAC_CTL_APD|LEMAC_CTL_PSL);
+	if ((data & (LEMAC_CTL_APD | LEMAC_CTL_PSL)) != sc->sc_ctlmode) {
+		data &= ~(LEMAC_CTL_APD | LEMAC_CTL_PSL);
 		data |= sc->sc_ctlmode;
 		LEMAC_OUTB(sc, LEMAC_REG_CTL, data);
 	}
@@ -575,7 +575,7 @@ lemac_init(lemac_softc_t * const sc)
 		sc->sc_if.if_flags |= IFF_RUNNING;
 		lemac_ifstart(&sc->sc_if);
 	} else {
-		LEMAC_OUTB(sc, LEMAC_REG_CS, LEMAC_CS_RXD|LEMAC_CS_TXD);
+		LEMAC_OUTB(sc, LEMAC_REG_CS, LEMAC_CS_RXD | LEMAC_CS_TXD);
 
 		LEMAC_INTR_DISABLE(sc);
 		sc->sc_if.if_flags &= ~IFF_RUNNING;
@@ -644,7 +644,7 @@ lemac_ifstart(
 				LEMAC_OUTSB(sc, LEMAC_REG_DAT,
 				    m0->m_len, m0->m_data);
 		} else {
-			bus_size_t txoff = /* (mtod(m, u_int32_t) & (sizeof(u_int32_t) - 1)) + */ LEMAC_TX_HDRSZ;
+			bus_size_t txoff = /* (mtod(m, uint32_t) & (sizeof(uint32_t) - 1)) + */ LEMAC_TX_HDRSZ;
 
 			/* Shift 2K window. */
 			LEMAC_OUTB(sc, LEMAC_REG_MPN, tx_pg);
@@ -660,7 +660,7 @@ lemac_ifstart(
 				LEMAC_PUTBUF8(sc, txoff, m0->m_len, m0->m_data);
 				txoff += m0->m_len;
 #else
-				const u_int8_t *cp = m0->m_data;
+				const uint8_t *cp = m0->m_data;
 				int len = m0->m_len;
 #if 0
 				if ((txoff & 3) == (((long)cp) & 3)
@@ -791,7 +791,7 @@ lemac_ifmedia_change(struct ifnet * const ifp)
 	switch (IFM_SUBTYPE(sc->sc_ifmedia.ifm_media)) {
 	case IFM_10_T: new_ctl = LEMAC_CTL_APD; break;
 	case IFM_10_2:
-	case IFM_10_5: new_ctl = LEMAC_CTL_APD|LEMAC_CTL_PSL; break;
+	case IFM_10_5: new_ctl = LEMAC_CTL_APD | LEMAC_CTL_PSL; break;
 	case IFM_AUTO: new_ctl = 0; break;
 	default:       return EINVAL;
 	}

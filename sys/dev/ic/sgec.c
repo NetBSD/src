@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.48 2018/06/26 06:48:00 msaitoh Exp $ */
+/*      $NetBSD: sgec.c,v 1.49 2019/05/23 10:57:28 msaitoh Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.48 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.49 2019/05/23 10:57:28 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -102,7 +102,7 @@ sgec_attach(struct ze_softc *sc)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(struct ze_cdata),
-	    (void **)&sc->sc_zedata, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	    (void **)&sc->sc_zedata, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error) {
 		aprint_error(
 		    ": unable to map control data, error = %d\n", error);
@@ -136,8 +136,8 @@ sgec_attach(struct ze_softc *sc)
 	 * Create the transmit descriptor DMA maps.
 	 */
 	for (i = 0; error == 0 && i < TXDESCS; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    TXDESCS - 1, MCLBYTES, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, TXDESCS - 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &sc->sc_xmtmap[i]);
 	}
 	if (error) {
@@ -297,8 +297,8 @@ zeinit(struct ze_softc *sc)
 		zc->zc_recv[i].ze_framelen = ZE_FRAMELEN_OW;
 	sc->sc_nextrx = 0;
 
-	ZE_WCSR(ZE_CSR6, ZE_NICSR6_IE|ZE_NICSR6_BL_8|ZE_NICSR6_ST|
-	    ZE_NICSR6_SR|ZE_NICSR6_DC);
+	ZE_WCSR(ZE_CSR6, ZE_NICSR6_IE | ZE_NICSR6_BL_8 | ZE_NICSR6_ST |
+	    ZE_NICSR6_SR | ZE_NICSR6_DC);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -529,7 +529,7 @@ zeioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch(ifa->ifa_addr->sa_family) {
+		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
 			zeinit(sc);
@@ -543,14 +543,14 @@ zeioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
 		/* XXX re-use ether_ioctl() */
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running,
 			 * stop it. (by disabling receive mechanism).
 			 */
 			ZE_WCSR(ZE_CSR6, ZE_RCSR(ZE_CSR6) &
-			    ~(ZE_NICSR6_ST|ZE_NICSR6_SR));
+			    ~(ZE_NICSR6_ST | ZE_NICSR6_SR));
 			ifp->if_flags &= ~IFF_RUNNING;
 			break;
 		case IFF_UP:
@@ -560,7 +560,7 @@ zeioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 */
 			zeinit(sc);
 			break;
-		case IFF_UP|IFF_RUNNING:
+		case IFF_UP | IFF_RUNNING:
 			/*
 			 * Send a new setup packet to match any new changes.
 			 * (Like IFF_PROMISC etc)
@@ -593,7 +593,7 @@ zeioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	}
 	splx(s);
-	return (error);
+	return error;
 }
 
 /*
@@ -608,13 +608,13 @@ ze_add_rxbuf(struct ze_softc *sc, int i)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		return (ENOBUFS);
+		return ENOBUFS;
 
 	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 
 	if (sc->sc_rxmbuf[i] != NULL)
@@ -622,7 +622,7 @@ ze_add_rxbuf(struct ze_softc *sc, int i)
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_rcvmap[i],
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error)
 		panic("%s: can't load rx DMA map %d, error = %d",
 		    device_xname(sc->sc_dev), i, error);
@@ -641,7 +641,7 @@ ze_add_rxbuf(struct ze_softc *sc, int i)
 	rp->ze_bufaddr = (char *)sc->sc_rcvmap[i]->dm_segs[0].ds_addr + 2;
 	rp->ze_framelen = ZE_FRAMELEN_OW;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -654,7 +654,7 @@ ze_setup(struct ze_softc *sc)
 	struct ether_multistep step;
 	struct ze_cdata *zc = sc->sc_zedata;
 	struct ifnet *ifp = &sc->sc_if;
-	const u_int8_t *enaddr = CLLADDR(ifp->if_sadl);
+	const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 	int j, idx, reg;
 
 	if (sc->sc_inq == (TXDESCS - 1)) {
@@ -713,7 +713,7 @@ ze_setup(struct ze_softc *sc)
 	/*
 	 * Only send a setup packet if needed.
 	 */
-	if ((ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) == 0) {
+	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) == 0) {
 		idx = sc->sc_nexttx;
 		zc->zc_xmit[idx].ze_tdes1 = ZE_TDES1_DT_SETUP;
 		zc->zc_xmit[idx].ze_bufsize = 128;

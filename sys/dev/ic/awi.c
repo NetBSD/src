@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.96 2019/04/26 06:33:33 msaitoh Exp $	*/
+/*	$NetBSD: awi.c,v 1.97 2019/05/23 10:57:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.96 2019/04/26 06:33:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.97 2019/05/23 10:57:28 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -635,7 +635,7 @@ awi_stop(struct ifnet *ifp, int disable)
 		awi_write_1(sc, AWI_CA_FTX_CF, 0);
 		(void)awi_cmd(sc, AWI_CMD_FLUSH_TX, AWI_WAIT);
 	}
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 	sc->sc_tx_timer = sc->sc_rx_timer = 0;
 	if (sc->sc_rxpend != NULL) {

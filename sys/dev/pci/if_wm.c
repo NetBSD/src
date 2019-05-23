@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.636 2019/05/15 02:56:47 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.637 2019/05/23 10:57:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.636 2019/05/15 02:56:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.637 2019/05/23 10:57:28 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1827,7 +1827,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Disable MSI for Errata:
 	 * "Message Signaled Interrupt Feature May Corrupt Write Transactions"
-	 * 
+	 *
 	 *  82544: Errata 25
 	 *  82540: Errata  6 (easy to reproduce device timeout)
 	 *  82545: Errata  4 (easy to reproduce device timeout)
@@ -2260,8 +2260,8 @@ alloc_retry:
 		}
 		sc->phy.acquire = wm_get_phy_82575;
 		sc->phy.release = wm_put_phy_82575;
-		sc->nvm.acquire = wm_get_nvm_80003;	
-		sc->nvm.release = wm_put_nvm_80003;	
+		sc->nvm.acquire = wm_get_nvm_80003;
+		sc->nvm.release = wm_put_nvm_80003;
 		break;
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -3335,7 +3335,7 @@ ec:
 
 	/* ec related updates */
 	wm_set_eee(sc);
-	
+
 out:
 	if (needreset)
 		rc = ENETRESET;
@@ -3580,7 +3580,7 @@ wm_set_ral(struct wm_softc *sc, const uint8_t *enaddr, int idx)
 			addrl = WMREG_PCH_LPT_SHRAL(idx - 1);
 			addrh = WMREG_PCH_LPT_SHRAH(idx - 1);
 		}
-		
+
 		if ((wlock_mac == 0) || (idx <= wlock_mac)) {
 			rv = wm_get_swflag_ich8lan(sc);
 			if (rv != 0)
@@ -3671,7 +3671,7 @@ wm_rar_count(struct wm_softc *sc)
 		size = WM_RAL_TABSIZE_I350;
 		break;
 	default:
-		size = WM_RAL_TABSIZE;    
+		size = WM_RAL_TABSIZE;
 	}
 
 	return size;
@@ -4075,7 +4075,7 @@ wm_phy_post_reset(struct wm_softc *sc)
 			delay(10 * 1000);
 			wm_gate_hw_phy_config_ich8lan(sc, false);
 		}
-		/* Set EEE LPI Update Timer to 200usec */	
+		/* Set EEE LPI Update Timer to 200usec */
 		rv = sc->phy.acquire(sc);
 		if (rv)
 			return rv;
@@ -4182,7 +4182,7 @@ wm_init_lcd_from_nvm(struct wm_softc *sc)
 		device_xname(sc->sc_dev), __func__));
 	/* word_addr is in DWORD */
 	word_addr = __SHIFTOUT(extcnfctr, EXTCNFCTR_EXT_CNF_POINTER) << 1;
-	
+
 	reg = CSR_READ(sc, WMREG_EXTCNFSIZE);
 	cnf_size = __SHIFTOUT(reg, EXTCNFSIZE_LENGTH);
 	if (cnf_size == 0)
@@ -4229,11 +4229,11 @@ wm_init_lcd_from_nvm(struct wm_softc *sc)
 		    reg_data);
 	}
 
-release:	
+release:
 	sc->phy.release(sc);
 	return rv;
 }
-    
+
 /*
  *  wm_oem_bits_config_ich8lan - SW-based LCD Configuration
  *  @sc:       pointer to the HW structure
@@ -4268,7 +4268,7 @@ wm_oem_bits_config_ich8lan(struct wm_softc *sc, bool d0_state)
 		goto release;
 
 	mac_reg = CSR_READ(sc, WMREG_PHY_CTRL);
-	
+
 	rv = wm_gmii_hv_readreg_locked(sc->sc_dev, 1, HV_OEM_BITS, &oem_reg);
 	if (rv != 0)
 		goto release;
@@ -4585,7 +4585,7 @@ wm_reset_phy(struct wm_softc *sc)
 	CSR_WRITE_FLUSH(sc);
 
 	delay(150);
-	
+
 	sc->phy.release(sc);
 
 	wm_get_cfg_done(sc);
@@ -4635,7 +4635,7 @@ wm_flush_desc_rings(struct wm_softc *sc)
 
 	bus_space_barrier(sc->sc_st, sc->sc_sh, 0, 0,
 	    BUS_SPACE_BARRIER_WRITE);
-		
+
 	txq->txq_next = WM_NEXTTX(txq, txq->txq_next);
 	CSR_WRITE(sc, WMREG_TDT(0), txq->txq_next);
 	bus_space_barrier(sc->sc_st, sc->sc_sh, 0, 0,
@@ -4943,7 +4943,7 @@ wm_reset(struct wm_softc *sc)
 		reg |= FEXTNVM3_PHY_CFG_COUNTER_50MS;
 		CSR_WRITE(sc, WMREG_FEXTNVM3, reg);
 	}
-	
+
 	if (phy_reset != 0)
 		wm_get_cfg_done(sc);
 
@@ -5095,7 +5095,7 @@ wm_reset(struct wm_softc *sc)
 	if (sc->sc_type == WM_T_80003) {
 		/* Default to TRUE to enable the MDIC W/A */
 		sc->sc_flags |= WM_F_80003_MDIC_WA;
-	
+
 		rv = wm_kmrn_readreg(sc,
 		    KUMCTRLSTA_OFFSET >> KUMCTRLSTA_OFFSET_SHIFT, &kmreg);
 		if (rv == 0) {
@@ -8230,7 +8230,7 @@ retry:
 
 		/* Set up offload parameters for this packet. */
 		uint32_t cmdlen, fields, dcmdlen;
-		if (m0->m_pkthdr.csum_flags & 
+		if (m0->m_pkthdr.csum_flags &
 		    (M_CSUM_TSOv4 | M_CSUM_TSOv6 |
 			M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4 |
 			M_CSUM_TCPv6 | M_CSUM_UDPv6)) {
@@ -9646,7 +9646,7 @@ wm_linkintr_msix(void *arg)
 
 out:
 	WM_CORE_UNLOCK(sc);
-	
+
 	if (sc->sc_type == WM_T_82574) {
 		if (!has_rxo)
 			CSR_WRITE(sc, WMREG_IMS, ICR_OTHER | ICR_LSC);
@@ -10099,7 +10099,7 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 	if ((mii->mii_readreg != NULL) && (mii->mii_readreg != new_readreg))
 		aprint_error_dev(dev, "Previously assumed PHY read/write "
 		    "function was incorrect.\n");
-	
+
 	/* Update now */
 	sc->sc_phytype = new_phytype;
 	mii->mii_readreg = new_readreg;
@@ -10611,7 +10611,7 @@ wm_gmii_i82544_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	}
 
 	rv = wm_gmii_i82544_readreg_locked(dev, phy, reg, val);
-	
+
 	sc->phy.release(sc);
 
 	return rv;
@@ -10641,7 +10641,7 @@ wm_gmii_i82544_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 			break;
 		}
 	}
-	
+
 	return wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK, val);
 }
 
@@ -10691,7 +10691,7 @@ wm_gmii_i82544_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
 			break;
 		}
 	}
-			
+
 	return wm_gmii_mdic_writereg(dev, phy, reg & MII_ADDRMASK, val);
 }
 
@@ -10730,7 +10730,7 @@ wm_gmii_i80003_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	temp = reg >> GG82563_PAGE_SHIFT;
 	if ((rv = wm_gmii_mdic_writereg(dev, phy, page_select, temp)) != 0)
 		goto out;
-	
+
 	if ((sc->sc_flags & WM_F_80003_MDIC_WA) != 0) {
 		/*
 		 * Wait more 200us for a bug of the ready bit in the MDIC
@@ -11846,12 +11846,12 @@ wm_tbi_mediachange(struct ifnet *ifp)
 		}
 
 		DPRINTF(WM_DEBUG_LINK,("%s: i = %d after waiting for link\n",
-			device_xname(sc->sc_dev),i));
+			device_xname(sc->sc_dev), i));
 
 		status = CSR_READ(sc, WMREG_STATUS);
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: status after final read = 0x%x, STATUS_LU = 0x%x\n",
-			device_xname(sc->sc_dev),status, STATUS_LU));
+			device_xname(sc->sc_dev), status, STATUS_LU));
 		if (status & STATUS_LU) {
 			/* Link is up. */
 			DPRINTF(WM_DEBUG_LINK,
@@ -11960,7 +11960,7 @@ wm_check_for_link(struct wm_softc *sc)
 	ctrl = CSR_READ(sc, WMREG_CTRL);
 	status = CSR_READ(sc, WMREG_STATUS);
 	signal = wm_tbi_havesignal(sc, ctrl);
-	
+
 	DPRINTF(WM_DEBUG_LINK,
 	    ("%s: %s: signal = %d, status_lu = %d, rxcw_c = %d\n",
 		device_xname(sc->sc_dev), __func__, signal,
@@ -13017,7 +13017,7 @@ wm_read_ich8_data(struct wm_softc *sc, uint32_t index,
 			else
 				hsfsts = ICH8_FLASH_READ16(sc,
 				    ICH_FLASH_HSFSTS);
-					
+
 			if (hsfsts & HSFSTS_ERR) {
 				/* Repeat for some time before giving up. */
 				continue;
@@ -13255,7 +13255,7 @@ wm_nvm_read_invm(struct wm_softc *sc, int offset, int words, uint16_t *data)
 {
 	int rv = 0;
 	int i;
-	
+
 	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
@@ -13587,7 +13587,7 @@ wm_nvm_read(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		return -1;
 
 	rv = sc->nvm.read(sc, word, wordcnt, data);
-	
+
 	return rv;
 }
 
@@ -13694,7 +13694,7 @@ wm_put_eecd(struct wm_softc *sc)
 		wm_nvm_eec_clock_raise(sc, &reg);
 		wm_nvm_eec_clock_lower(sc, &reg);
 	}
-	
+
 	reg = CSR_READ(sc, WMREG_EECD);
 	reg &= ~EECD_EE_REQ;
 	CSR_WRITE(sc, WMREG_EECD, reg);
@@ -14009,7 +14009,7 @@ wm_get_swflag_ich8lan(struct wm_softc *sc)
 		delay(1000);
 	}
 	if (timeout >= WM_PHY_CFG_TIMEOUT) {
-		printf("%s: SW has already locked the resource\n", 
+		printf("%s: SW has already locked the resource\n",
 		    device_xname(sc->sc_dev));
 		goto out;
 	}
@@ -14902,7 +14902,7 @@ out:
 		/* Reset PHY to activate OEM bits on 82577/8 */
 		if (sc->sc_type == WM_T_PCH)
 			wm_reset_phy(sc);
-		
+
 		if (sc->phy.acquire(sc) != 0)
 			return;
 		wm_write_smbus_addr(sc);
@@ -15487,8 +15487,6 @@ release:
 	sc->phy.release(sc);
 
 	return rv;
-
-	
 }
 
 /*
@@ -15598,7 +15596,7 @@ wm_k1_workaround_lpt_lp(struct wm_softc *sc, bool link)
 			goto release;
 		delay(20);
 		CSR_WRITE(sc, WMREG_FEXTNVM6, fextnvm6 | FEXTNVM6_REQ_PLL_CLK);
-		
+
 		rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
 		    &phyreg);
 release:
@@ -15638,7 +15636,7 @@ update_fextnvm6:
 	CSR_WRITE(sc, WMREG_FEXTNVM6, fextnvm6);
 	return 0;
 }
-	
+
 /*
  *  wm_k1_gig_workaround_hv - K1 Si workaround
  *  @sc:   pointer to the HW structure
@@ -15691,7 +15689,7 @@ wm_k1_workaround_lv(struct wm_softc *sc)
 	uint32_t reg;
 	uint16_t phyreg;
 	int rv;
-	
+
 	if (sc->sc_type != WM_T_PCH2)
 		return 0;
 
@@ -16005,7 +16003,7 @@ wm_platform_pm_pch_lpt(struct wm_softc *sc, bool link)
 	uint16_t scale = 0, lat_enc = 0;
 	int32_t obff_hwm = 0;
 	int64_t lat_ns, value;
-	
+
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
@@ -16106,7 +16104,7 @@ wm_platform_pm_pch_lpt(struct wm_softc *sc, bool link)
 	reg = CSR_READ(sc, WMREG_SVCR);
 	reg |= SVCR_OFF_EN | SVCR_OFF_MASKINT;
 	CSR_WRITE(sc, WMREG_SVCR, reg);
-	
+
 	return 0;
 }
 
