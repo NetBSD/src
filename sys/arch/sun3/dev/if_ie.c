@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.68 2019/05/23 10:57:27 msaitoh Exp $ */
+/*	$NetBSD: if_ie.c,v 1.69 2019/05/23 13:10:51 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.68 2019/05/23 10:57:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.69 2019/05/23 13:10:51 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -163,13 +163,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.68 2019/05/23 10:57:27 msaitoh Exp $");
 #ifdef	IEDEBUG
 #define	inline	/* not */
 void print_rbd(volatile struct ie_recv_buf_desc *);
-int     in_ierint = 0;
-int     in_ietint = 0;
-int     ie_debug_flags = 0;
+int	in_ierint = 0;
+int	in_ietint = 0;
+int	ie_debug_flags = 0;
 #endif
 
 /* XXX - Skip TDR for now - it always complains... */
-int 	ie_run_tdr = 0;
+int	ie_run_tdr = 0;
 
 static void iewatchdog(struct ifnet *);
 static int ieinit(struct ie_softc *);

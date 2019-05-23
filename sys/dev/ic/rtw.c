@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.131 2019/05/23 10:57:28 msaitoh Exp $ */
+/* $NetBSD: rtw.c,v 1.132 2019/05/23 13:10:51 msaitoh Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.131 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.132 2019/05/23 13:10:51 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -896,7 +896,7 @@ rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
 		rfname = "RFMD RF2948B, "	/* mentioned in Realtek docs */
 			 "LNA: RFMD RF2494, "	/* mentioned in Realtek docs */
 			 "SYN: Silicon Labs Si4126";	/* inferred from
-			 				 * reference driver
+							 * reference driver
 							 */
 		paname = "RFMD RF2189";		/* mentioned in Realtek docs */
 		break;
@@ -1130,7 +1130,7 @@ rtw_identify_sta(struct rtw_regs *regs, uint8_t (*addr)[IEEE80211_ADDR_LEN],
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
 	uint32_t idr0 = RTW_READ(regs, RTW_IDR0),
-	          idr1 = RTW_READ(regs, RTW_IDR1);
+		 idr1 = RTW_READ(regs, RTW_IDR1);
 
 	(*addr)[0] = __SHIFTOUT(idr0, __BITS(0,  7));
 	(*addr)[1] = __SHIFTOUT(idr0, __BITS(8,  15));
@@ -1379,7 +1379,7 @@ rtw_rxdesc_init(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *rs,
 #ifdef RTW_DEBUG
 	RTW_DPRINTF(
 	    kick ? (RTW_DEBUG_RECV_DESC | RTW_DEBUG_IO_KICK)
-	         : RTW_DEBUG_RECV_DESC,
+		 : RTW_DEBUG_RECV_DESC,
 	    ("%s: rd %p buf %08x -> %08x ctl %08x -> %08x\n", __func__, rd,
 	     le32toh(obuf), le32toh(rd->rd_buf), le32toh(octl),
 	     le32toh(rd->rd_ctl)));
@@ -1495,10 +1495,10 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			break;
 		}
 
-                /* ieee80211_input() might reset the receive engine
-                 * (e.g. by indirectly calling rtw_tune()), so save
-                 * the next pointer here and retrieve it again on
-                 * the next round.
+		/* ieee80211_input() might reset the receive engine
+		 * (e.g. by indirectly calling rtw_tune()), so save
+		 * the next pointer here and retrieve it again on
+		 * the next round.
 		 */
 		rdb->rdb_next = (next + 1) % rdb->rdb_ndesc;
 
@@ -2542,7 +2542,7 @@ rtw_tune(struct rtw_softc *sc)
 
 	if ((rc = rtw_phy_init(&sc->sc_regs, sc->sc_rf,
 	    rtw_chan2txpower(&sc->sc_srom, ic, ic->ic_curchan), sc->sc_csthr,
-	        ic->ic_curchan->ic_freq, antdiv, dflantb, RTW_ON)) != 0) {
+		ic->ic_curchan->ic_freq, antdiv, dflantb, RTW_ON)) != 0) {
 		/* XXX condition on powersaving */
 		aprint_error_dev(sc->sc_dev, "phy init failed\n");
 	}
@@ -2787,7 +2787,7 @@ rtw_init(struct ifnet *ifp)
 		/* Cancel pending I/O and reset. */
 		rtw_stop(ifp, 0);
 	} else if (!pmf_device_resume(sc->sc_dev, &sc->sc_qual) ||
-	           !device_is_active(sc->sc_dev))
+		   !device_is_active(sc->sc_dev))
 		return 0;
 
 	DPRINTF(sc, RTW_DEBUG_TUNE, ("%s: channel %d freq %d flags 0x%04x\n",
@@ -2879,13 +2879,13 @@ rtw_led_init(struct rtw_regs *regs)
 }
 
 /*
- * IEEE80211_S_INIT: 		LED1 off
+ * IEEE80211_S_INIT:		LED1 off
  *
  * IEEE80211_S_AUTH,
  * IEEE80211_S_ASSOC,
- * IEEE80211_S_SCAN: 		LED1 blinks @ 1 Hz, blinks at 5Hz for tx/rx
+ * IEEE80211_S_SCAN:		LED1 blinks @ 1 Hz, blinks at 5Hz for tx/rx
  *
- * IEEE80211_S_RUN: 		LED1 on, blinks @ 5Hz for tx/rx
+ * IEEE80211_S_RUN:		LED1 on, blinks @ 5Hz for tx/rx
  */
 static void
 rtw_led_newstate(struct rtw_softc *sc, enum ieee80211_state nstate)
@@ -3147,14 +3147,14 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 
 	if (sc->sc_ic.ic_state == IEEE80211_S_RUN &&
 	    (*mp = rtw_80211_dequeue(sc, &sc->sc_beaconq, RTW_TXPRIBCN, tsbp,
-		                     tdbp, nip, if_flagsp)) != NULL) {
+				     tdbp, nip, if_flagsp)) != NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue beacon frame\n",
 		    __func__));
 		return 0;
 	}
 
 	if ((*mp = rtw_80211_dequeue(sc, &sc->sc_ic.ic_mgtq, RTW_TXPRIMD, tsbp,
-		                     tdbp, nip, if_flagsp)) != NULL) {
+				     tdbp, nip, if_flagsp)) != NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue mgt frame\n",
 		    __func__));
 		return 0;
@@ -3382,7 +3382,7 @@ rtw_start(struct ifnet *ifp)
 		    (IFF_DEBUG | IFF_LINK2)) {
 			ieee80211_dump_pkt(mtod(m0, uint8_t *),
 			    (dmamap->dm_nsegs == 1) ? m0->m_pkthdr.len
-			                            : sizeof(wh),
+						    : sizeof(wh),
 			    rate, 0);
 		}
 #endif /* RTW_DEBUG */
@@ -3408,9 +3408,9 @@ rtw_start(struct ifnet *ifp)
 		if (m0->m_pkthdr.len > ic->ic_rtsthreshold)
 			ctl0 |= RTW_TXCTL0_RTSEN;
 
-                /* XXX Sometimes writes a bogus keyid; h/w doesn't
-                 * seem to care, since we don't activate h/w Tx
-                 * encryption.
+		/* XXX Sometimes writes a bogus keyid; h/w doesn't
+		 * seem to care, since we don't activate h/w Tx
+		 * encryption.
 		 */
 		if (k != NULL &&
 		    k->wk_cipher->ic_cipher == IEEE80211_CIPHER_WEP) {
@@ -4151,7 +4151,7 @@ rtw_attach(struct rtw_softc *sc)
 
 	NEXT_ATTACH_STATE(sc, FINISH_TXMAPS_CREATE);
 	if ((rc = rtw_rxdesc_dmamaps_create(sc->sc_dmat, &sc->sc_rxsoft[0],
-	                                    RTW_RXQLEN)) != 0) {
+					    RTW_RXQLEN)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not load DMA map for hw rx descriptors, error %d\n",
 		    rc);

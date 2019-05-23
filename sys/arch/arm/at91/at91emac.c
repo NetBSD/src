@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.26 2019/05/23 10:51:38 msaitoh Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.26 2019/05/23 10:51:38 msaitoh Exp $	*/
+/*	$Id: at91emac.c,v 1.27 2019/05/23 13:10:50 msaitoh Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.27 2019/05/23 13:10:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.26 2019/05/23 10:51:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.27 2019/05/23 13:10:50 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.26 2019/05/23 10:51:38 msaitoh Exp $"
 static int	emac_match(device_t, cfdata_t, void *);
 static void	emac_attach(device_t, device_t, void *);
 static void	emac_init(struct emac_softc *);
-static int      emac_intr(void* arg);
+static int	emac_intr(void* arg);
 static int	emac_gctx(struct emac_softc *);
 static int	emac_mediachange(struct ifnet *);
 static void	emac_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -269,7 +269,7 @@ emac_intr(void *arg)
 			struct mbuf *m;
 
 			nfo = sc->RDSC[bi].Info;
-		  	fl = (nfo & ETH_RDSC_I_LEN) - 4;
+			fl = (nfo & ETH_RDSC_I_LEN) - 4;
 			DPRINTFN(2,("## nfo=0x%08X\n", nfo));
 
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -492,19 +492,19 @@ emac_init(struct emac_softc *sc)
 	 */
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
-        strcpy(ifp->if_xname, device_xname(sc->sc_dev));
-        ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-        ifp->if_ioctl = emac_ifioctl;
-        ifp->if_start = emac_ifstart;
-        ifp->if_watchdog = emac_ifwatchdog;
-        ifp->if_init = emac_ifinit;
-        ifp->if_stop = emac_ifstop;
-        ifp->if_timer = 0;
+	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_ioctl = emac_ifioctl;
+	ifp->if_start = emac_ifstart;
+	ifp->if_watchdog = emac_ifwatchdog;
+	ifp->if_init = emac_ifinit;
+	ifp->if_stop = emac_ifstop;
+	ifp->if_timer = 0;
 	ifp->if_softc = sc;
-        IFQ_SET_READY(&ifp->if_snd);
-        if_attach(ifp);
+	IFQ_SET_READY(&ifp->if_snd);
+	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
-        ether_ifattach(ifp, (sc)->sc_enaddr);
+	ether_ifattach(ifp, (sc)->sc_enaddr);
 }
 
 static int
@@ -565,18 +565,18 @@ emac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 void
 emac_statchg(struct ifnet *ifp)
 {
-        struct emac_softc *sc = ifp->if_softc;
-        uint32_t reg;
+	struct emac_softc *sc = ifp->if_softc;
+	uint32_t reg;
 
-        /*
-         * We must keep the MAC and the PHY in sync as
-         * to the status of full-duplex!
-         */
+	/*
+	 * We must keep the MAC and the PHY in sync as
+	 * to the status of full-duplex!
+	 */
 	reg = EMAC_READ(ETH_CFG);
-        if (sc->sc_mii.mii_media_active & IFM_FDX)
-                reg |= ETH_CFG_FD;
-        else
-                reg &= ~ETH_CFG_FD;
+	if (sc->sc_mii.mii_media_active & IFM_FDX)
+		reg |= ETH_CFG_FD;
+	else
+		reg &= ~ETH_CFG_FD;
 	EMAC_WRITE(ETH_CFG, reg);
 }
 
@@ -723,7 +723,7 @@ emac_ifwatchdog(struct ifnet *ifp)
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-       	printf("%s: device timeout, CTL = 0x%08x, CFG = 0x%08x\n",
+	printf("%s: device timeout, CTL = 0x%08x, CFG = 0x%08x\n",
 		device_xname(sc->sc_dev), EMAC_READ(ETH_CTL), EMAC_READ(ETH_CFG));
 }
 
@@ -746,7 +746,7 @@ emac_ifinit(struct ifnet *ifp)
 
 	mii_mediachg(&sc->sc_mii);
 	callout_reset(&sc->emac_tick_ch, hz, emac_tick, sc);
-        ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags |= IFF_RUNNING;
 	splx(s);
 	return 0;
 }
@@ -800,7 +800,7 @@ emac_setaddr(struct ifnet *ifp)
 	cfg &= ~(ETH_CFG_MTI | ETH_CFG_UNI | ETH_CFG_CAF | ETH_CFG_UNI);
 
 	if (ifp->if_flags & IFF_PROMISC) {
-		cfg |=  ETH_CFG_CAF;
+		cfg |=	ETH_CFG_CAF;
 	} else {
 		cfg &= ~ETH_CFG_CAF;
 	}

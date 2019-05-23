@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.44 2019/05/23 10:40:40 msaitoh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.45 2019/05/23 13:10:52 msaitoh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.44 2019/05/23 10:40:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.45 2019/05/23 13:10:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1441,8 +1441,8 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			ifp->if_collisions++;
 
 		if (rxhdr & (SMSC_RX_STAT_ERROR
-		           | SMSC_RX_STAT_LENGTH_ERROR
-		           | SMSC_RX_STAT_MII_ERROR)) {
+			   | SMSC_RX_STAT_LENGTH_ERROR
+			   | SMSC_RX_STAT_MII_ERROR)) {
 			smsc_dbg_printf(sc, "rx error (hdr 0x%08x)\n", rxhdr);
 			ifp->if_ierrors++;
 			goto done;
