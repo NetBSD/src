@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.c,v 1.1 2018/05/28 21:05:09 chs Exp $	*/
+/*	$NetBSD: kmem.c,v 1.2 2019/05/23 08:32:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -27,6 +27,102 @@
  */
 
 #include <sys/kmem.h>
+
+struct kmem_cache {
+	pool_cache_t km_pool;
+	void *km_private;
+	int (*km_constructor)(void *, void *, int);
+	void (*km_destructor)(void *, void *);
+	void (*km_reclaim)(void *);
+};
+
+static int
+solaris_constructor(void *private, void *object, int flag)
+{
+	kmem_cache_t *km = private;
+
+	if (km->km_constructor)
+		return (*km->km_constructor)(object, km->km_private, flag);
+
+	return 0;
+}
+
+static void
+solaris_destructor(void *private, void *object)
+{
+	kmem_cache_t *km = private;
+
+	if (km->km_destructor)
+		(*km->km_destructor)(object, km->km_private);
+}
+
+static void
+solaris_reclaim(void *private, int flag)
+{
+
+	kmem_cache_t *km = private;
+
+	if (km->km_reclaim)
+		(*km->km_reclaim)(km->km_private);
+}
+
+kmem_cache_t *
+kmem_cache_create(char *name, size_t bufsize, size_t align,
+    int (*constructor)(void *, void *, int), void (*destructor)(void *, void *),
+    void (*reclaim)(void *) __unused, void *private, vmem_t *vmp, int flags)
+{
+	kmem_cache_t *km;
+
+	KASSERT(ISSET(flags, ~(KMC_NOTOUCH | KMC_NODEBUG)) == 0);
+	KASSERT(private == NULL);
+	KASSERT(vmp == NULL);
+
+	km = kmem_zalloc(sizeof(*km), KM_SLEEP);
+	km->km_private = private;
+	km->km_constructor = constructor;
+	km->km_destructor = destructor;
+	km->km_reclaim = reclaim;
+	km->km_pool = pool_cache_init(bufsize, align, 0, 0, name, NULL,
+	    IPL_NONE, solaris_constructor, solaris_destructor, km);
+	if (km->km_pool == NULL) {
+		kmem_free(km, sizeof(*km));
+		return NULL;
+	}
+	if (reclaim)
+		pool_cache_set_drain_hook(km->km_pool, solaris_reclaim, km);
+
+	return km;
+}
+void
+kmem_cache_destroy(kmem_cache_t *km)
+{
+
+	pool_cache_destroy(km->km_pool);
+	kmem_free(km, sizeof(*km));
+}
+
+void *
+kmem_cache_alloc(kmem_cache_t *km, int flags)
+{
+
+	KASSERT(ISSET(flags, ~(KM_SLEEP | KM_NOSLEEP | KM_PUSHPAGE)) == 0);
+
+	return pool_cache_get(km->km_pool, flags);
+}
+
+void
+kmem_cache_free(kmem_cache_t *km, void *object)
+{
+
+	pool_cache_put(km->km_pool, object);
+}
+
+void
+kmem_cache_reap_now(kmem_cache_t *km)
+{
+
+	pool_cache_invalidate(km->km_pool);
+}
 
 #undef kmem_alloc
 #undef kmem_zalloc

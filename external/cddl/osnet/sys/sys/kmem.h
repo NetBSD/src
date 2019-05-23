@@ -1,5 +1,5 @@
 
-/*	$NetBSD: kmem.h,v 1.10 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: kmem.h,v 1.11 2019/05/23 08:32:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -41,47 +41,26 @@
 #define	KM_NORMALPRI	0
 #define	KM_NODEBUG	0
 
-#define	KMC_NODEBUG	0
-#define	KMC_NOTOUCH	0
+#define	KMC_NOTOUCH	0x00010000
+#define	KMC_NODEBUG	0x00020000
 
-typedef void kmem_cache_t;
+struct kmem_cache;
+
+typedef struct kmem_cache kmem_cache_t;
 
 #define	POINTER_IS_VALID(p)	(!((uintptr_t)(p) & 0x3))
 #define	POINTER_INVALIDATE(pp)	(*(pp) = (void *)((uintptr_t)(*(pp)) | 0x1))
 
-void		kmem_reap(void);
-
-static inline kmem_cache_t *
-kmem_cache_create(char *name, size_t bufsize, size_t align,
-    int (*constructor)(void *, void *, int), void (*destructor)(void *, void *),
-    void (*reclaim)(void *) __unused, void *private, vmem_t *vmp, int cflags)
-{
-	pool_cache_t pc;
-	int flags = bufsize > PAGESIZE ? PR_NOALIGN : 0;
-
-	KASSERT(vmp == NULL);
-
-	pc = pool_cache_init(bufsize, align, 0, flags, name, NULL, IPL_NONE,
-	    constructor, destructor, private);
-	if (pc != NULL && reclaim != NULL) {
-		pool_cache_set_drain_hook(pc, (void *)reclaim, private);
-	}
-	return pc;
-}
-
-static inline void *
-kmem_cache_alloc(kmem_cache_t *cache, int flags)
-{
-	return pool_cache_get(cache, flags);
-}
-
-#define	kmem_cache_destroy(cache)		pool_cache_destroy(cache)
-#define	kmem_cache_free(cache, buf)		pool_cache_put(cache, buf)
-#define	kmem_cache_reap_now(cache)		pool_cache_invalidate(cache)
+kmem_cache_t *kmem_cache_create(char *, size_t, size_t,
+    int (*)(void *, void *, int), void (*)(void *, void *),
+    void (*)(void *), void *, vmem_t *, int);
+void kmem_cache_destroy(kmem_cache_t *);
+void *kmem_cache_alloc(kmem_cache_t *, int);
+void kmem_cache_free(kmem_cache_t *, void *);
+void kmem_cache_reap_now(kmem_cache_t *);
+#define	kmem_cache_set_move(cache, movefunc)	do { } while (0)
 
 #define	heap_arena			kmem_arena
-
-#define	kmem_cache_set_move(cache, movefunc)	do { } while (0)
 
 #define kmem_alloc solaris_kmem_alloc
 #define kmem_zalloc solaris_kmem_zalloc

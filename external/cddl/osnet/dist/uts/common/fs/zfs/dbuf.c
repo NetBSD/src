@@ -138,9 +138,6 @@ dbuf_cons(void *vdb, void *unused, int kmflag)
 {
 	dmu_buf_impl_t *db = vdb;
 
-#ifdef __NetBSD__
-	db = unused;
-#endif
 	bzero(db, sizeof (dmu_buf_impl_t));
 	mutex_init(&db->db_mtx, NULL, MUTEX_DEFAULT, NULL);
 	cv_init(&db->db_changed, NULL, CV_DEFAULT, NULL);
