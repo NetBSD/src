@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.57 2019/04/22 08:39:10 msaitoh Exp $ */
+/* $NetBSD: sbmac.c,v 1.58 2019/05/23 10:40:39 msaitoh Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.57 2019/04/22 08:39:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.58 2019/05/23 10:40:39 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -294,7 +294,7 @@ sbmac_mii_bitbang_write(device_t self, uint32_t val)
 	reg = PKSEG1(sc->sbm_base + R_MAC_MDIO);
 
 	SBMAC_WRITECSR(reg, (val &
-	    (M_MAC_MDC|M_MAC_MDIO_DIR|M_MAC_MDIO_OUT|M_MAC_MDIO_IN)));
+	    (M_MAC_MDC | M_MAC_MDIO_DIR | M_MAC_MDIO_OUT | M_MAC_MDIO_IN)));
 }
 
 /*
@@ -606,7 +606,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		 * Loop thru this mbuf record.
 		 * The head mbuf will have SOP set.
 		 */
-		d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m,void *)) |
+		d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m, void *)) |
 		    M_DMA_ETHTX_SOP;
 
 		/*
@@ -616,7 +616,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		d->sbdma_dscrtable[dsc].dscr_b =
 		    V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
 		    V_DMA_DSCRB_A_SIZE((m->m_len +
-		      (mtod(m,uintptr_t) & 0x0000001F))) |
+		      (mtod(m, uintptr_t) & 0x0000001F))) |
 		    V_DMA_DSCRB_PKT_SIZE_MSB((m->m_pkthdr.len & 0xc000) >> 14) |
 		    V_DMA_DSCRB_PKT_SIZE(m->m_pkthdr.len & 0x3fff);
 
@@ -712,7 +712,7 @@ again:
 		 * going.
 		 */
 
-		MGETHDR(m_new,M_DONTWAIT,MT_DATA);
+		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
 			aprint_error_dev(d->sbdma_eth->sc_dev,
 			    "mbuf allocation failed\n");
@@ -720,7 +720,7 @@ again:
 			return ENOBUFS;
 		}
 
-		MCLGET(m_new,M_DONTWAIT);
+		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			aprint_error_dev(d->sbdma_eth->sc_dev,
 			    "mbuf cluster allocation failed\n");
@@ -730,7 +730,7 @@ again:
 		}
 
 		m_new->m_len = m_new->m_pkthdr.len= MCLBYTES;
-		/*m_adj(m_new,ETHER_ALIGN);*/
+		/*m_adj(m_new, ETHER_ALIGN);*/
 
 		/*
 		 * XXX Don't forget to include the offset portion in the
@@ -741,7 +741,7 @@ again:
 		 * Copy data
 		 */
 
-		m_copydata(m,0,m->m_pkthdr.len,mtod(m_new,void *));
+		m_copydata(m, 0, m->m_pkthdr.len, mtod(m_new, void *));
 		m_new->m_len = m_new->m_pkthdr.len = m->m_pkthdr.len;
 
 		/* Free old mbuf 'm', actual mbuf is now 'm_new' */
@@ -1089,7 +1089,7 @@ sbmac_initctx(struct sbmac_softc *sc)
 	sc->sbm_duplex = sbmac_duplex_half;
 	sc->sbm_fc = sbmac_fc_disabled;
 
-	/* 
+	/*
 	 * Determine SOC type.  112x has Pass3 SOC features.
 	 */
 	sysrev = SBMAC_READCSR( PKSEG1(A_SCD_SYSTEM_REVISION) );
@@ -1286,18 +1286,18 @@ sbmac_channel_start(struct sbmac_softc *sc)
 	 * On chips which support unaligned DMA features, set the descriptor
 	 * ring for transmit channels to use the unaligned buffer format.
 	 */
-	txdma = &(sc->sbm_txdma); 
+	txdma = &(sc->sbm_txdma);
 
 	if (sc->sbm_pass3_dma) {
 		dma_cfg0 = SBMAC_READCSR(txdma->sbdma_config0);
 		dma_cfg0 |= V_DMA_DESC_TYPE(K_DMA_DESC_TYPE_RING_UAL_RMW) |
 		    M_DMA_TBX_EN | M_DMA_TDX_EN;
-		SBMAC_WRITECSR(txdma->sbdma_config0,dma_cfg0);
+		SBMAC_WRITECSR(txdma->sbdma_config0, dma_cfg0);
 
 		fifo_cfg =  SBMAC_READCSR(sc->sbm_fifocfg);
 		fifo_cfg |= V_MAC_TX_WR_THRSH(8) |
 		    V_MAC_TX_RD_THRSH(8) | V_MAC_TX_RL_THRSH(8);
-		SBMAC_WRITECSR(sc->sbm_fifocfg,fifo_cfg);
+		SBMAC_WRITECSR(sc->sbm_fifocfg, fifo_cfg);
 	}
 
 	/*
@@ -1779,7 +1779,7 @@ sbmac_start(struct ifnet *ifp)
 	struct mbuf		*m_head = NULL;
 	int			rv;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	sc = ifp->if_softc;
@@ -1837,14 +1837,13 @@ sbmac_start(struct ifnet *ifp)
 static void
 sbmac_setmulti(struct sbmac_softc *sc)
 {
-	struct ifnet *ifp;
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &ec->ec_if;
 	uint64_t reg;
 	sbmac_port_t port;
 	int idx;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-
-	ifp = &sc->sc_ethercom.ec_if;
 
 	/*
 	 * Clear out entire multicast table.  We do this by nuking
@@ -1895,7 +1894,7 @@ sbmac_setmulti(struct sbmac_softc *sc)
 	 */
 
 	idx = 1;		/* skip station address */
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while ((enm != NULL) && (idx < MAC_ADDR_COUNT)) {
 		reg = sbmac_addr2reg(enm->enm_addrlo);
 		port = PKSEG1(sc->sbm_base +
@@ -1960,7 +1959,7 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		return ENOTTY;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -2037,7 +2036,7 @@ sbmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	(void)splx(s);
 
-	return(error);
+	return error;
 }
 
 /*
@@ -2234,6 +2233,7 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbmac_softc * const sc = device_private(self);
 	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	struct sbobio_attach_args * const sa = aux;
 	u_char *eaddr;
 	static int unit = 0;	/* XXX */
@@ -2317,23 +2317,20 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize MII/media info.
 	 */
-	sc->sc_mii.mii_ifp      = ifp;
-	sc->sc_mii.mii_readreg  = sbmac_mii_readreg;
-	sc->sc_mii.mii_writereg = sbmac_mii_writereg;
-	sc->sc_mii.mii_statchg  = sbmac_mii_statchg;
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii->mii_ifp      = ifp;
+	mii->mii_readreg  = sbmac_mii_readreg;
+	mii->mii_writereg = sbmac_mii_writereg;
+	mii->mii_statchg  = sbmac_mii_statchg;
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
-	} else {
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
-	}
-
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
+	} else
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	/*
 	 * map/route interrupt

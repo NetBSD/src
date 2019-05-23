@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.43 2019/03/05 08:25:03 msaitoh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.44 2019/05/23 10:40:40 msaitoh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.43 2019/03/05 08:25:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.44 2019/05/23 10:40:40 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -460,7 +460,8 @@ smsc_hash(uint8_t addr[ETHER_ADDR_LEN])
 void
 smsc_setmulti(struct smsc_softc *sc)
 {
-	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	struct ethercom *ec = &sc->sc_ec;
+	struct ifnet * const ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	uint32_t hashtbl[2] = { 0, 0 };
@@ -483,11 +484,11 @@ allmulti:
 		sc->sc_mac_csr &= ~(SMSC_MAC_CSR_PRMS | SMSC_MAC_CSR_MCPAS);
 	}
 
-	ETHER_LOCK(&sc->sc_ec);
-	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ETHER_UNLOCK(&sc->sc_ec);
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -495,7 +496,7 @@ allmulti:
 		hashtbl[hash >> 5] |= 1 << (hash & 0x1F);
 		ETHER_NEXT_MULTI(step, enm);
 	}
-	ETHER_UNLOCK(&sc->sc_ec);
+	ETHER_UNLOCK(ec);
 
 	/* Debug */
 	if (sc->sc_mac_csr & SMSC_MAC_CSR_HPFILT) {
@@ -526,13 +527,13 @@ smsc_sethwcsum(struct smsc_softc *sc)
 	}
 
 	/* Enable/disable the Rx checksum */
-	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx))
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx))
 		val |= (SMSC_COE_CTRL_RX_EN | SMSC_COE_CTRL_RX_MODE);
 	else
 		val &= ~(SMSC_COE_CTRL_RX_EN | SMSC_COE_CTRL_RX_MODE);
 
 	/* Enable/disable the Tx checksum (currently not supported) */
-	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_UDPv4_Tx))
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx))
 		val |= SMSC_COE_CTRL_TX_EN;
 	else
 		val &= ~SMSC_COE_CTRL_TX_EN;
@@ -711,7 +712,7 @@ smsc_start_locked(struct ifnet *ifp)
 		return;
 	}
 
-	if ((ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING) {
+	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING) {
 		smsc_dbg_printf(sc, "%s: not running\n", __func__);
 		return;
 	}
