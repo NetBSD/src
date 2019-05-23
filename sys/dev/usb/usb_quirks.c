@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.91 2019/01/30 19:57:48 jakllsch Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.92 2019/05/23 04:44:49 msaitoh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.91 2019/01/30 19:57:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.92 2019/05/23 04:44:49 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -172,7 +172,7 @@ usbd_get_desc_fake(struct usbd_device *dev, int type, int index,
 	        UGETW(dd->idVendor), UGETW(dd->idProduct), 0, 0);
 out:
 	DPRINTF("return err = %d", err, 0, 0, 0);
-	return err;	
+	return err;
 }
 
 Static const struct usbd_quirk_entry {
@@ -264,15 +264,15 @@ Static const struct usbd_quirk_entry {
 	{ UQ_BROKEN_BIDIR, NULL }},
  { USB_VENDOR_HP,		USB_PRODUCT_HP_810C,			ANY,
 	{ UQ_BROKEN_BIDIR, NULL }},
- { USB_VENDOR_HP,		USB_PRODUCT_HP_830C,			ANY,	
+ { USB_VENDOR_HP,		USB_PRODUCT_HP_830C,			ANY,
 	{ UQ_BROKEN_BIDIR, NULL }},
  { USB_VENDOR_HP,		USB_PRODUCT_HP_885C,			ANY,
 	{ UQ_BROKEN_BIDIR, NULL }},
  { USB_VENDOR_HP,		USB_PRODUCT_HP_840C,			ANY,
 	{ UQ_BROKEN_BIDIR, NULL }},
- { USB_VENDOR_HP,		USB_PRODUCT_HP_816C,			ANY,	
+ { USB_VENDOR_HP,		USB_PRODUCT_HP_816C,			ANY,
 	{ UQ_BROKEN_BIDIR, NULL }},
- { USB_VENDOR_HP,		USB_PRODUCT_HP_959C,			ANY,	
+ { USB_VENDOR_HP,		USB_PRODUCT_HP_959C,			ANY,
 	{ UQ_BROKEN_BIDIR, NULL }},
  { USB_VENDOR_MTK,		USB_PRODUCT_MTK_GPS_RECEIVER,		ANY,
 	{ UQ_NO_UNION_NRM, NULL }},
