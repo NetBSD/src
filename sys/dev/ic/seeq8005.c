@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.61 2019/02/05 06:17:02 msaitoh Exp $ */
+/* $NetBSD: seeq8005.c,v 1.62 2019/05/23 10:40:39 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.61 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.62 2019/05/23 10:40:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ static void ea_await_fifo_full(struct seeq8005_softc *);
 static void ea_writebuf(struct seeq8005_softc *, u_char *, int, size_t);
 static void ea_readbuf(struct seeq8005_softc *, u_char *, int, size_t);
 static void ea_select_buffer(struct seeq8005_softc *, int);
-static void ea_set_address(struct seeq8005_softc *, int, const u_int8_t *);
+static void ea_set_address(struct seeq8005_softc *, int, const uint8_t *);
 static void ea_read(struct seeq8005_softc *, int, int);
 static struct mbuf *ea_get(struct seeq8005_softc *, int, int, struct ifnet *);
 static void ea_txint(struct seeq8005_softc *);
@@ -164,9 +164,10 @@ static u_char* padbuf = NULL;
  */
 
 void
-seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
+seeq8005_attach(struct seeq8005_softc *sc, const uint8_t *myaddr, int *media,
     int nmedia, int defmedia)
 {
+	device_t dev = sc->sc_dev;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -187,7 +188,8 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 		SEEQ_WRITE16(sc, iot, ioh, SEEQ_RX_PTR, 0x1234);
 		if (SEEQ_READ16(sc, iot, ioh, SEEQ_RX_PTR) != 0x1234) {
 			aprint_normal("\n");
-			aprint_error_dev(sc->sc_dev, "Cannot determine data bus width\n");
+			aprint_error_dev(dev,
+			    "Cannot determine data bus width\n");
 			return;
 		}
 	}
@@ -240,21 +242,21 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	ea_ramtest(sc);
 
 	printf("%s: %dKB packet memory, txbuf=%dKB (%d buffers), rxbuf=%dKB",
-	    device_xname(sc->sc_dev), sc->sc_buffersize >> 10,
+	    device_xname(dev), sc->sc_buffersize >> 10,
 	    sc->sc_tx_bufsize >> 10, sc->sc_tx_bufs, sc->sc_rx_bufsize >> 10);
 
 	if (padbuf == NULL) {
 		padbuf = malloc(ETHER_MIN_LEN - ETHER_CRC_LEN, M_DEVBUF,
 		    M_ZERO | M_NOWAIT);
 		if (padbuf == NULL) {
-			aprint_error_dev(sc->sc_dev, "can't allocate pad buffer\n");
+			aprint_error_dev(dev, "can't allocate pad buffer\n");
 			return;
 		}
 	}
 
 	/* Initialise ifnet structure. */
 
-	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ea_start;
 	ifp->if_ioctl = ea_ioctl;
@@ -275,8 +277,8 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 			ifmedia_add(&sc->sc_media, media[i], 0, NULL);
 		ifmedia_set(&sc->sc_media, defmedia);
 	} else {
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 	}
 
 	/* We can support 802.1Q VLAN-sized frames. */
@@ -290,7 +292,7 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	printf("\n");
 
 	/* After \n because it can print a line of its own. */
-	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
+	rnd_attach_source(&sc->rnd_source, device_xname(dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 }
 
@@ -303,8 +305,8 @@ ea_mediachange(struct ifnet *ifp)
 	struct seeq8005_softc *sc = ifp->if_softc;
 
 	if (sc->sc_mediachange)
-		return ((*sc->sc_mediachange)(sc));
-	return (EINVAL);
+		return (*sc->sc_mediachange)(sc);
+	return EINVAL;
 }
 
 /*
@@ -349,7 +351,7 @@ ea_ramtest(struct seeq8005_softc *sc)
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_TX_PTR, 0x0000);
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_RX_PTR, SEEQ_MAX_BUFFER_SIZE - 2);
 
-#define SEEQ_RAMTEST_LOOP(value)						\
+#define SEEQ_RAMTEST_LOOP(value)					\
 do {									\
 	/* Set the write start address and write a pattern */		\
 	ea_writebuf(sc, NULL, 0x0000, 0);				\
@@ -359,7 +361,7 @@ do {									\
 	/* Set the read start address and verify the pattern */		\
 	ea_readbuf(sc, NULL, 0x0000, 0);				\
 	for (loop = 0; loop < SEEQ_MAX_BUFFER_SIZE; loop += 2)		\
-		if (SEEQ_READ16(sc, iot, ioh, SEEQ_BUFWIN) != (value)) \
+		if (SEEQ_READ16(sc, iot, ioh, SEEQ_BUFWIN) != (value))	\
 			++sum;						\
 } while (/*CONSTCOND*/0)
 
@@ -371,7 +373,8 @@ do {									\
 	/* Report */
 
 	if (sum > 0)
-		aprint_error_dev(sc->sc_dev, "buffer RAM failed self test, %d faults\n", sum);
+		aprint_error_dev(sc->sc_dev,
+		    "buffer RAM failed self test, %d faults\n", sum);
 }
 
 
@@ -399,7 +402,7 @@ ea_stoptx(struct seeq8005_softc *sc)
 
 	/* Stop any tx and wait for confirmation */
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_COMMAND,
-			  sc->sc_command | SEEQ_CMD_TX_OFF);
+	    sc->sc_command | SEEQ_CMD_TX_OFF);
 
 	timeout = 20000;
 	do {
@@ -483,9 +486,8 @@ ea_stop(struct ifnet *ifp, int disable)
 
 	/* Clear any pending interrupts */
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_COMMAND,
-			  sc->sc_command | SEEQ_CMD_RX_INTACK |
-			  SEEQ_CMD_TX_INTACK | SEEQ_CMD_DMA_INTACK |
-			  SEEQ_CMD_BW_INTACK);
+	    sc->sc_command | SEEQ_CMD_RX_INTACK | SEEQ_CMD_TX_INTACK |
+	    SEEQ_CMD_DMA_INTACK | SEEQ_CMD_BW_INTACK);
 
 	if (sc->sc_variant == SEEQ_8004) {
 		/* Put the chip to sleep */
@@ -581,7 +583,7 @@ ea_await_fifo_full(struct seeq8005_softc *sc)
  * The buffer address is set to ADDR.
  * If len != 0 then data is copied from the address starting at buf
  * to the interface buffer.
- * BUF must be usable as a u_int16_t *.
+ * BUF must be usable as a uint16_t *.
  * If LEN is odd, it must be safe to overwrite one extra byte.
  */
 
@@ -595,7 +597,7 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 	    SEEQ_READ16(sc, iot, ioh, SEEQ_STATUS)));
 
 #ifdef DIAGNOSTIC
-	if (__predict_false(!ALIGNED_POINTER(buf, u_int16_t)))
+	if (__predict_false(!ALIGNED_POINTER(buf, uint16_t)))
 		panic("%s: unaligned writebuf", device_xname(sc->sc_dev));
 	if (__predict_false(addr >= SEEQ_MAX_BUFFER_SIZE))
 		panic("%s: writebuf out of range", device_xname(sc->sc_dev));
@@ -616,11 +618,11 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 	if (len > 0) {
 		if (sc->sc_flags & SF_8BIT)
 			bus_space_write_multi_1(iot, ioh, SEEQ_BUFWIN,
-			    (u_int8_t *)buf, len);
+			    (uint8_t *)buf, len);
 		else
 			bus_space_write_multi_2(iot, ioh, SEEQ_BUFWIN,
 			    /* LINTED: alignment checked above */
-			    (u_int16_t *)buf, len / 2);
+			    (uint16_t *)buf, len / 2);
 	}
 	if (!(sc->sc_flags & SF_8BIT) && len % 2) {
 		/* Write the last byte */
@@ -636,7 +638,7 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
  * The buffer address is set to ADDR.
  * If len != 0 then data is copied from the interface buffer to the
  * address starting at buf.
- * BUF must be usable as a u_int16_t *.
+ * BUF must be usable as a uint16_t *.
  * If LEN is odd, it must be safe to overwrite one extra byte.
  */
 
@@ -651,7 +653,7 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 	    SEEQ_READ16(sc, iot, ioh, SEEQ_STATUS), addr, len));
 
 #ifdef DIAGNOSTIC
-	if (__predict_false(!ALIGNED_POINTER(buf, u_int16_t)))
+	if (__predict_false(!ALIGNED_POINTER(buf, uint16_t)))
 		panic("%s: unaligned readbuf", device_xname(sc->sc_dev));
 	if (__predict_false(addr >= SEEQ_MAX_BUFFER_SIZE))
 		panic("%s: readbuf out of range", device_xname(sc->sc_dev));
@@ -698,11 +700,11 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 	if (len > 0) {
 		if (sc->sc_flags & SF_8BIT)
 			bus_space_read_multi_1(iot, ioh, SEEQ_BUFWIN,
-			    (u_int8_t *)buf, len);
+			    (uint8_t *)buf, len);
 		else
 			bus_space_read_multi_2(iot, ioh, SEEQ_BUFWIN,
 			    /* LINTED: pointer alignment checked above */
-			    (u_int16_t *)buf, len / 2);
+			    (uint16_t *)buf, len / 2);
 	}
 	if (!(sc->sc_flags & SF_8BIT) && len % 2) {
 		/* Read the last byte */
@@ -720,14 +722,13 @@ ea_select_buffer(struct seeq8005_softc *sc, int bufcode)
 
 /* Must be called at splnet */
 static void
-ea_set_address(struct seeq8005_softc *sc, int which, const u_int8_t *ea)
+ea_set_address(struct seeq8005_softc *sc, int which, const uint8_t *ea)
 {
 	int i;
 
 	ea_select_buffer(sc, SEEQ_BUFCODE_STATION_ADDR0 + which);
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		SEEQ_WRITE16(sc, sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN,
-				  ea[i]);
+		SEEQ_WRITE16(sc, sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN, ea[i]);
 }
 
 /*
@@ -773,7 +774,7 @@ ea_init(struct ifnet *ifp)
 	}
 
 	/* Write the station address - the receiver must be off */
-	ea_set_address(sc, 0, (const u_int8_t *)CLLADDR(ifp->if_sadl));
+	ea_set_address(sc, 0, (const uint8_t *)CLLADDR(ifp->if_sadl));
 
 	/* Split board memory into Rx and Tx. */
 	ea_select_buffer(sc, SEEQ_BUFCODE_TX_EAP);
@@ -953,7 +954,7 @@ ea_writembuf(struct seeq8005_softc *sc, struct mbuf *m0, int bufstart)
 {
 	struct mbuf *m;
 	int len, nextpacket;
-	u_int8_t hdr[4];
+	uint8_t hdr[4];
 
 	/*
 	 * Copy the datagram to the packet buffer.
@@ -1045,7 +1046,7 @@ ea_txint(struct seeq8005_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t txhdr[4];
+	uint8_t txhdr[4];
 	u_int txstatus;
 
 	ea_readbuf(sc, txhdr, 0x0000, 4);
@@ -1127,7 +1128,7 @@ ea_rxint(struct seeq8005_softc *sc)
 	int ctrl;
 	int ptr;
 	int status;
-	u_int8_t rxhdr[4];
+	uint8_t rxhdr[4];
 	struct ifnet *ifp;
 
 	ifp = &sc->sc_ethercom.ec_if;
@@ -1301,7 +1302,7 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
 		if (top == NULL) {
 			/* Make sure the payload is aligned */
 			char *newdata = (char *)
-			    ALIGN((char*)m->m_data + 
+			    ALIGN((char*)m->m_data +
 				sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;
@@ -1374,10 +1375,10 @@ ea_mc_reset_8004(struct seeq8005_softc *sc)
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
-        u_int32_t crc;
+        uint32_t crc;
         int i;
         struct ether_multistep step;
-        u_int8_t af[8];
+        uint8_t af[8];
 
 	/*
 	 * Set up multicast address filter by passing all multicast addresses
@@ -1434,19 +1435,20 @@ ea_mc_reset_8004(struct seeq8005_softc *sc)
 static void
 ea_mc_reset_8005(struct seeq8005_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ethercom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int naddr, maxaddrs;
 
 	naddr = 0;
 	maxaddrs = 5;
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		/* Have we got space? */
 		if (naddr >= maxaddrs ||
 		    memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
-			sc->sc_ethercom.ec_if.if_flags |= IFF_ALLMULTI;
-			ea_ioctl(&sc->sc_ethercom.ec_if, SIOCSIFFLAGS, NULL);
+			ec->ec_if.if_flags |= IFF_ALLMULTI;
+			ea_ioctl(&ec->ec_if, SIOCSIFFLAGS, NULL);
 			return;
 		}
 		ea_set_address(sc, 1 + naddr, enm->enm_addrlo);

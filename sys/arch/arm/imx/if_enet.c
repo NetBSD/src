@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.19 2019/04/24 11:18:20 msaitoh Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.20 2019/05/23 10:40:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.19 2019/04/24 11:18:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.20 2019/05/23 10:40:39 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -176,6 +176,7 @@ enet_attach_common(device_t self, bus_space_tag_t iot,
 {
 	struct enet_softc *sc;
 	struct ifnet *ifp;
+	struct mii_data * const mii = &sc->sc_mii;
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -283,23 +284,20 @@ enet_attach_common(device_t self, bus_space_tag_t iot,
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* setup MII */
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = enet_miibus_readreg;
-	sc->sc_mii.mii_writereg = enet_miibus_writereg;
-	sc->sc_mii.mii_statchg = enet_miibus_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-	    enet_mediastatus);
+	sc->sc_ethercom.ec_mii = mii;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = enet_miibus_readreg;
+	mii->mii_writereg = enet_miibus_writereg;
+	mii->mii_statchg = enet_miibus_statchg;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, enet_mediastatus);
 
 	/* try to attach PHY */
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL,
-		    0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL);
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	}
 
 	if_attach(ifp);
@@ -460,9 +458,9 @@ enet_intr(void *arg)
 	status = ENET_REG_READ(sc, ENET_EIR);
 
 	if (sc->sc_imxtype == 7) {
-		if (status & (ENET_EIR_TXF|ENET_EIR_TXF1|ENET_EIR_TXF2))
+		if (status & (ENET_EIR_TXF | ENET_EIR_TXF1 | ENET_EIR_TXF2))
 			enet_tx_intr(arg);
-		if (status & (ENET_EIR_RXF|ENET_EIR_RXF1|ENET_EIR_RXF2))
+		if (status & (ENET_EIR_RXF | ENET_EIR_RXF1 | ENET_EIR_RXF2))
 			enet_rx_intr(arg);
 	} else {
 		if (status & ENET_EIR_TXF)
@@ -761,17 +759,16 @@ enet_rx_csum(struct enet_softc *sc, struct ifnet *ifp, struct mbuf *m, int idx)
 static void
 enet_setmulti(struct enet_softc *sc)
 {
-	struct ifnet *ifp;
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int promisc;
 	uint32_t crc;
 	uint32_t gaddr[2];
 
-	ifp = &sc->sc_ethercom.ec_if;
-
 	promisc = 0;
-	if ((ifp->if_flags & IFF_PROMISC) || sc->sc_ethercom.ec_multicnt > 0) {
+	if ((ifp->if_flags & IFF_PROMISC) || ec->ec_multicnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC)
 			promisc = 1;
@@ -779,7 +776,7 @@ enet_setmulti(struct enet_softc *sc)
 	} else {
 		gaddr[0] = gaddr[1] = 0;
 
-		ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 			gaddr[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
@@ -1888,9 +1885,10 @@ enet_init_regs(struct enet_softc *sc, int init)
 	    sc->sc_rxdesc_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	/* enable interrupts */
-	val = ENET_EIMR|ENET_EIR_TXF|ENET_EIR_RXF|ENET_EIR_EBERR;
+	val = ENET_EIMR | ENET_EIR_TXF | ENET_EIR_RXF | ENET_EIR_EBERR;
 	if (sc->sc_imxtype == 7)
-		val |= ENET_EIR_TXF2|ENET_EIR_RXF2|ENET_EIR_TXF1|ENET_EIR_RXF1;
+		val |= ENET_EIR_TXF2 | ENET_EIR_RXF2 | ENET_EIR_TXF1 |
+		    ENET_EIR_RXF1;
 	ENET_REG_WRITE(sc, ENET_EIMR, val);
 
 	/* enable ether */
