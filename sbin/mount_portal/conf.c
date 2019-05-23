@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 2019/05/23 02:39:06 kre Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 2019/05/23 04:34:25 kre Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.13 2019/05/23 02:39:06 kre Exp $");
+__RCSID("$NetBSD: conf.c,v 1.14 2019/05/23 04:34:25 kre Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -153,20 +153,18 @@ palloc(char *cline, int lno, const char *conf_file)
 	char **ap;
 
 	/*
-	 * Implement comment chars
-	 */
-	s = strchr(cline, '#');
-	if (s)
-		*s = 0;
-
-	/*
 	 * Do a pass through the string to count the number
-	 * of arguments
+	 * of arguments.   Stop if we encounter a comment.
 	 */
 	c = 0;
 	key = strdup(cline);
 	for (s = key; s != NULL; ) {
 		char *val;
+
+		if (*s == '#') {	/* '#" at beginning of word */
+			cline[s-key] = '\0';	/* delete comment -> EOL */
+			break;
+		}
 
 		while ((val = strsep(&s, " \t\n")) != NULL && *val == '\0')
 			;
