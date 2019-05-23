@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.46 2018/06/26 06:48:00 msaitoh Exp $ */
+/*	$NetBSD: if_ni.c,v 1.47 2019/05/23 10:34:44 msaitoh Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.46 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.47 2019/05/23 10:34:44 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -130,7 +130,7 @@ struct	ni_softc {
 	struct ni_gvppqb *sc_pgvppqb;	/* Phys address of PQB		*/
 	struct ni_fqb	*sc_fqb;	/* Free Queue block		*/
 	struct ni_bbd	*sc_bbd;	/* Buffer descriptors		*/
-	u_int8_t	sc_enaddr[ETHER_ADDR_LEN];
+	uint8_t	sc_enaddr[ETHER_ADDR_LEN];
 };
 
 static	int	nimatch(device_t, cfdata_t, void *);
@@ -143,8 +143,8 @@ static	int	ni_add_rxbuf(struct ni_softc *, struct ni_dg *, int);
 static	void	ni_setup(struct ni_softc *);
 static	void	nitimeout(struct ifnet *);
 static	void	ni_shutdown(void *);
-static	void ni_getpgs(struct ni_softc *sc, int size, void **v, paddr_t *p);
-static	int failtest(struct ni_softc *, int, int, int, const char *);
+static	void	ni_getpgs(struct ni_softc *, int, void **, paddr_t *);
+static	int	failtest(struct ni_softc *, int, int, int, const char *);
 
 volatile int endwait, retry;	/* Used during autoconfig */
 
@@ -192,7 +192,7 @@ ni_getpgs(struct ni_softc *sc, int size, void **v, paddr_t *p)
 		panic(" unable to allocate memory: error %d", error);
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, nsegs, size, v,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0)
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0)
 		panic(" unable to map memory: error %d", error);
 
 	if (p)
@@ -237,8 +237,8 @@ niattach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	type = bus_space_read_2(ba->ba_iot, ba->ba_ioh, BIREG_DTYPE);
-	printf(": DEBN%c\n", type == BIDT_DEBNA ? 'A' : type == BIDT_DEBNT ?
-	    'T' : 'K');
+	aprint_normal(": DEBN%c\n", type == BIDT_DEBNA ? 'A'
+	    : type == BIDT_DEBNT ? 'T' : 'K');
 	sc->sc_iot = ba->ba_iot;
 	sc->sc_ioh = ba->ba_ioh;
 	sc->sc_dmat = ba->ba_dmat;
@@ -259,7 +259,7 @@ niattach(device_t parent, device_t self, void *aux)
 
 	nipqb->np_veclvl = (ba->ba_ivec << 2) + 2;
 	nipqb->np_node = ba->ba_intcpu;
-	nipqb->np_vpqb = (u_int32_t)gvp;
+	nipqb->np_vpqb = (uint32_t)gvp;
 #ifdef __vax__
 	nipqb->np_spt = nipqb->np_gpt = mfpr(PR_SBR);
 	nipqb->np_sptlen = nipqb->np_gptlen = mfpr(PR_SLR);
@@ -267,8 +267,8 @@ niattach(device_t parent, device_t self, void *aux)
 #error Must fix support for non-vax.
 #endif
 	nipqb->np_bvplvl = 1;
-	nipqb->np_vfqb = (u_int32_t)fqb;
-	nipqb->np_vbdt = (u_int32_t)bbd;
+	nipqb->np_vfqb = (uint32_t)fqb;
+	nipqb->np_vbdt = (uint32_t)bbd;
 	nipqb->np_nbdr = NBDESCS;
 
 	/* Free queue block */
@@ -296,7 +296,7 @@ niattach(device_t parent, device_t self, void *aux)
 	while ((NI_RREG(BIREG_VAXBICSR) & BICSR_BROKE) && --i)
 		DELAY(500000);
 	if (i == 0) {
-		printf("%s: BROKE bit set after reset\n", device_xname(self));
+		aprint_error_dev(self, "BROKE bit set after reset\n");
 		return;
 	}
 
@@ -309,7 +309,7 @@ niattach(device_t parent, device_t self, void *aux)
 	NI_WREG(NI_PCR, NI_RREG(NI_PCR) & ~PCR_OWN);
 
 	/* kick off init */
-	NI_WREG(NI_PCR, (u_int32_t)sc->sc_pgvppqb | PCR_INIT | PCR_OWN);
+	NI_WREG(NI_PCR, (uint32_t)sc->sc_pgvppqb | PCR_INIT | PCR_OWN);
 	while (NI_RREG(NI_PCR) & PCR_OWN)
 		DELAY(100000);
 
@@ -320,7 +320,7 @@ niattach(device_t parent, device_t self, void *aux)
 	NI_WREG(NI_PSR, NI_RREG(NI_PSR) & ~PSR_OWN);
 
 	WAITREG(NI_PCR, PCR_OWN);
-	NI_WREG(NI_PCR, PCR_OWN|PCR_ENABLE);
+	NI_WREG(NI_PCR, PCR_OWN | PCR_ENABLE);
 	WAITREG(NI_PCR, PCR_OWN);
 	WAITREG(NI_PSR, PSR_OWN);
 
@@ -347,7 +347,7 @@ niattach(device_t parent, device_t self, void *aux)
 		INSQTI(msg, &fqb->nf_mforw);
 	}
 	WAITREG(NI_PCR, PCR_OWN);
-	NI_WREG(NI_PCR, PCR_FREEQNE|PCR_MFREEQ|PCR_OWN);
+	NI_WREG(NI_PCR, PCR_FREEQNE | PCR_MFREEQ | PCR_OWN);
 	WAITREG(NI_PCR, PCR_OWN);
 
 	/* Set up xmit queue */
@@ -370,7 +370,7 @@ niattach(device_t parent, device_t self, void *aux)
 		INSQTI(data, &fqb->nf_dforw);
 	}
 	WAITREG(NI_PCR, PCR_OWN);
-	NI_WREG(NI_PCR, PCR_FREEQNE|PCR_DFREEQ|PCR_OWN);
+	NI_WREG(NI_PCR, PCR_FREEQNE | PCR_DFREEQ | PCR_OWN);
 	WAITREG(NI_PCR, PCR_OWN);
 
 	/* recv buffers */
@@ -392,7 +392,7 @@ niattach(device_t parent, device_t self, void *aux)
 		INSQTI(data, &fqb->nf_rforw);
 	}
 	WAITREG(NI_PCR, PCR_OWN);
-	NI_WREG(NI_PCR, PCR_FREEQNE|PCR_RFREEQ|PCR_OWN);
+	NI_WREG(NI_PCR, PCR_FREEQNE | PCR_RFREEQ | PCR_OWN);
 	WAITREG(NI_PCR, PCR_OWN);
 
 	splx(s);
@@ -410,7 +410,7 @@ niattach(device_t parent, device_t self, void *aux)
 	INSQTI(msg, &gvp->nc_forw0);
 
 retry:	WAITREG(NI_PCR, PCR_OWN);
-	NI_WREG(NI_PCR, PCR_CMDQNE|PCR_CMDQ0|PCR_OWN);
+	NI_WREG(NI_PCR, PCR_CMDQNE | PCR_CMDQ0 | PCR_OWN);
 	WAITREG(NI_PCR, PCR_OWN);
 	i = 1000;
 	while (endwait == 0 && --i)
@@ -419,7 +419,7 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	if (endwait == 0) {
 		if (++retry < 3)
 			goto retry;
-		printf("%s: no response to set params\n", device_xname(self));
+		aprint_error_dev(self, "no response to set params\n");
 		return;
 	}
 
@@ -433,7 +433,7 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	INSQTI(msg, &gvp->nc_forw0);
 
 	WAITREG(NI_PCR, PCR_OWN);
-	NI_WREG(NI_PCR, PCR_CMDQNE|PCR_CMDQ0|PCR_OWN);
+	NI_WREG(NI_PCR, PCR_CMDQNE | PCR_CMDQ0 | PCR_OWN);
 	WAITREG(NI_PCR, PCR_OWN);
 
 	/* Enable transmit logic */
@@ -451,13 +451,13 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	INSQTI(msg, &gvp->nc_forw0);
 
 	WAITREG(NI_PCR, PCR_OWN);
-	NI_WREG(NI_PCR, PCR_CMDQNE|PCR_CMDQ0|PCR_OWN);
+	NI_WREG(NI_PCR, PCR_CMDQNE | PCR_CMDQ0 | PCR_OWN);
 	WAITREG(NI_PCR, PCR_OWN);
 
 	/* Wait for everything to finish */
 	WAITREG(NI_PSR, PSR_OWN);
 
-	printf("%s: hardware address %s\n", device_xname(self),
+	aprint_normal_dev(self, "hardware address %s\n",
 	    ether_sprintf(sc->sc_enaddr));
 
 	/*
@@ -466,7 +466,8 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 	if (shutdownhook_establish(ni_shutdown, sc) == 0)
-		aprint_error_dev(self, "WARNING: unable to establish shutdown hook\n");
+		aprint_error_dev(self,
+		    "WARNING: unable to establish shutdown hook\n");
 }
 
 /*
@@ -538,9 +539,9 @@ nistart(struct ifnet *ifp)
 		for (m0 = m, i = 0, mlen = 0; m0; m0 = m0->m_next) {
 			if (m0->m_len == 0)
 				continue;
-			bdp->nb_status = (mtod(m0, u_int32_t) & NIBD_OFFSET) |
+			bdp->nb_status = (mtod(m0, uint32_t) & NIBD_OFFSET) |
 			    NIBD_VALID;
-			bdp->nb_pte = (u_int32_t)kvtopte(mtod(m0, void *));
+			bdp->nb_pte = (uint32_t)kvtopte(mtod(m0, void *));
 			bdp->nb_len = m0->m_len;
 			data->bufs[i]._offset = 0;
 			data->bufs[i]._len = bdp->nb_len;
@@ -554,7 +555,7 @@ nistart(struct ifnet *ifp)
 		data->nd_ptdbidx = 1;
 		data->nd_len = 10 + i * 8;
 		data->bufs[i - 1]._index &= ~NIDG_CHAIN;
-		data->nd_cmdref = (u_int32_t)m;
+		data->nd_cmdref = (uint32_t)m;
 #ifdef DEBUG
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: sending %d bytes (%d segments)\n",
@@ -564,7 +565,7 @@ nistart(struct ifnet *ifp)
 		res = INSQTI(data, &gvp->nc_forw0);
 		if (res == Q_EMPTY) {
 			WAITREG(NI_PCR, PCR_OWN);
-			NI_WREG(NI_PCR, PCR_CMDQNE|PCR_CMDQ0|PCR_OWN);
+			NI_WREG(NI_PCR, PCR_CMDQNE | PCR_CMDQ0 | PCR_OWN);
 		}
 	}
 }
@@ -584,7 +585,8 @@ niintr(void *arg)
 		return;
 
 	if ((NI_RREG(NI_PSR) & PSR_ERR))
-		printf("%s: PSR %x\n", device_xname(sc->sc_dev), NI_RREG(NI_PSR));
+		printf("%s: PSR %x\n", device_xname(sc->sc_dev),
+		    NI_RREG(NI_PSR));
 
 	KERNEL_LOCK(1, NULL);
 	/* Got any response packets?  */
@@ -610,7 +612,8 @@ niintr(void *arg)
 			res = INSQTI(data, &fqb->nf_rforw);
 			if (res == Q_EMPTY) {
 				WAITREG(NI_PCR, PCR_OWN);
-				NI_WREG(NI_PCR, PCR_FREEQNE|PCR_RFREEQ|PCR_OWN);
+				NI_WREG(NI_PCR,
+				    PCR_FREEQNE | PCR_RFREEQ | PCR_OWN);
 			}
 			if (m == (void *)data->nd_cmdref)
 				break; /* Out of mbufs */
@@ -625,7 +628,8 @@ niintr(void *arg)
 			res = INSQTI(data, &fqb->nf_dforw);
 			if (res == Q_EMPTY) {
 				WAITREG(NI_PCR, PCR_OWN);
-				NI_WREG(NI_PCR, PCR_FREEQNE|PCR_DFREEQ|PCR_OWN);
+				NI_WREG(NI_PCR,
+				    PCR_FREEQNE | PCR_DFREEQ | PCR_OWN);
 			}
 			break;
 
@@ -650,7 +654,8 @@ niintr(void *arg)
 			res = INSQTI(data, &fqb->nf_mforw);
 			if (res == Q_EMPTY) {
 				WAITREG(NI_PCR, PCR_OWN);
-				NI_WREG(NI_PCR, PCR_FREEQNE|PCR_MFREEQ|PCR_OWN);
+				NI_WREG(NI_PCR,
+				    PCR_FREEQNE | PCR_MFREEQ | PCR_OWN);
 			}
 			break;
 
@@ -659,7 +664,8 @@ niintr(void *arg)
 			res = INSQTI(data, &fqb->nf_mforw);
 			if (res == Q_EMPTY) {
 				WAITREG(NI_PCR, PCR_OWN);
-				NI_WREG(NI_PCR, PCR_FREEQNE|PCR_MFREEQ|PCR_OWN);
+				NI_WREG(NI_PCR,
+				    PCR_FREEQNE | PCR_MFREEQ | PCR_OWN);
 			}
 		}
 	}
@@ -667,7 +673,7 @@ niintr(void *arg)
 	/* Try to kick on the start routine again */
 	nistart(ifp);
 
-	NI_WREG(NI_PSR, NI_RREG(NI_PSR) & ~(PSR_OWN|PSR_RSQ));
+	NI_WREG(NI_PSR, NI_RREG(NI_PSR) & ~(PSR_OWN | PSR_RSQ));
 	KERNEL_UNLOCK_ONE(NULL);
 }
 
@@ -685,7 +691,7 @@ niioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch(ifa->ifa_addr->sa_family) {
+		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
 			niinit(sc);
@@ -698,7 +704,7 @@ niioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running,
@@ -714,7 +720,7 @@ niioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 */
 			niinit(sc);
 			break;
-		case IFF_UP|IFF_RUNNING:
+		case IFF_UP | IFF_RUNNING:
 			/*
 			 * Send a new setup packet to match any new changes.
 			 * (Like IFF_PROMISC etc)
@@ -747,7 +753,7 @@ niioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	}
 	splx(s);
-	return (error);
+	return error;
 }
 
 /*
@@ -761,12 +767,12 @@ ni_add_rxbuf(struct ni_softc *sc, struct ni_dg *data, int idx)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		return (ENOBUFS);
+		return ENOBUFS;
 
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 
 	m->m_data += 2;
@@ -780,7 +786,7 @@ ni_add_rxbuf(struct ni_softc *sc, struct ni_dg *data, int idx)
 	data->bufs[0]._index = idx;
 	data->nd_cmdref = (long)m;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -810,7 +816,7 @@ ni_setup(struct ni_softc *sc)
 	if (ifp->if_flags & IFF_RUNNING) {
 		msg->nm_opcode2 = NI_STPTDB;
 		ptdb->np_type = ETHERTYPE_IP;
-		ptdb->np_flags = PTDB_UNKN|PTDB_BDC;
+		ptdb->np_flags = PTDB_UNKN | PTDB_BDC;
 		if (ifp->if_flags & IFF_PROMISC)
 			ptdb->np_flags |= PTDB_PROMISC;
 		memset(ptdb->np_mcast[0], 0xff, ETHER_ADDR_LEN); /* Broadcast */
@@ -839,7 +845,7 @@ ni_setup(struct ni_softc *sc)
 	res = INSQTI(msg, &gvp->nc_forw0);
 	if (res == Q_EMPTY) {
 		WAITREG(NI_PCR, PCR_OWN);
-		NI_WREG(NI_PCR, PCR_CMDQNE|PCR_CMDQ0|PCR_OWN);
+		NI_WREG(NI_PCR, PCR_CMDQNE | PCR_CMDQ0 | PCR_OWN);
 	}
 }
 
@@ -873,7 +879,7 @@ ni_shutdown(void *arg)
 	struct ni_softc *sc = arg;
 
         WAITREG(NI_PCR, PCR_OWN);
-        NI_WREG(NI_PCR, PCR_OWN|PCR_SHUTDOWN);
+        NI_WREG(NI_PCR, PCR_OWN | PCR_SHUTDOWN);
         WAITREG(NI_PCR, PCR_OWN);
         WAITREG(NI_PSR, PSR_OWN);
 }
