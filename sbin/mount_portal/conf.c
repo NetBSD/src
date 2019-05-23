@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 2007/07/02 16:33:05 pooka Exp $	*/
+/*	$NetBSD: conf.c,v 1.13 2019/05/23 02:39:06 kre Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.12 2007/07/02 16:33:05 pooka Exp $");
+__RCSID("$NetBSD: conf.c,v 1.13 2019/05/23 02:39:06 kre Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -109,8 +109,10 @@ static void *
 xmalloc(size_t siz)
 {
 	void *p = malloc(siz);
+
 	if (p)
-		return (p);
+		return p;
+
 	syslog(LOG_ERR, "malloc: failed to get %lu bytes", (u_long)siz);
 	exit(1);
 }
@@ -128,15 +130,16 @@ pinsert(path *p0, qelem *q0)
 	qelem *q;
 
 	if (p0->p_argc == 0)
-		return (0);
+		return 0;
 
 	for (q = q0->q_forw; q != q0; q = q->q_forw) {
-		path *p = (path *) q;
+		path *p = (path *)q;
+
 		if (strcmp(p->p_key, p0->p_key) == 0)
-			return (0);
+			return 0;
 	}
 	ins_que(&p0->p_q, q0->q_back);
-	return (1);
+	return 1;
 	
 }
 
@@ -164,6 +167,7 @@ palloc(char *cline, int lno, const char *conf_file)
 	key = strdup(cline);
 	for (s = key; s != NULL; ) {
 		char *val;
+
 		while ((val = strsep(&s, " \t\n")) != NULL && *val == '\0')
 			;
 		if (val)
@@ -173,7 +177,7 @@ palloc(char *cline, int lno, const char *conf_file)
 	free(key);
 
 	if (c <= 1)
-		return (0);
+		return 0;
 
 	/*
 	 * Now do another pass and generate a new path structure
@@ -185,6 +189,7 @@ palloc(char *cline, int lno, const char *conf_file)
 	ap = p->p_argv;
 	for (s = p->p_args; s != NULL; ) {
 		char *val;
+
 		while ((val = strsep(&s, " \t\n")) != NULL && *val == '\0')
 			;
 		if (val) {
@@ -215,7 +220,7 @@ palloc(char *cline, int lno, const char *conf_file)
 	}
 	p->p_lno = lno;
 
-	return (p);
+	return p;
 }
 
 /*
@@ -225,10 +230,10 @@ static void
 pfree(path *p)
 {
 	free(p->p_args);
-	free((char *) p->p_argv);
+	free((char *)p->p_argv);
 	if (p->p_use_re)
 		regfree(&p->p_re);
-	free((char *) p);
+	free((char *)p);
 }
 
 /*
@@ -246,7 +251,7 @@ preplace(qelem *q0, qelem *xq)
 	while (q0->q_forw != q0) {
 		qelem *q = q0->q_forw;
 		rem_que(q);
-		pfree((path *) q);
+		pfree((path *)q);
 	}
 	while (xq->q_forw != xq) {
 		qelem *q = xq->q_forw;
@@ -276,6 +281,7 @@ readfp(qelem *q0, FILE *fp, const char *conf_file)
 	 */
 	while (fgets(cline, sizeof(cline), fp)) {
 		path *p = palloc(cline, nread+1, conf_file);
+
 		if (p && !pinsert(p, &q))
 			pfree(p);
 		nread++;
@@ -299,13 +305,14 @@ int
 conf_read(qelem *q, const char *conf)
 {
 	FILE *fp = fopen(conf, "r");
-	int sverrno;
+
 	if (fp) {
 		readfp(q, fp, conf);
-		(void) fclose(fp);
+		(void)fclose(fp);
 		return 0;
 	} else {
-		sverrno = errno;
+		int sverrno = errno;
+
 		syslog(LOG_WARNING, "open config file \"%s\": %m", conf);
 		errno = sverrno;
 		return -1;
@@ -319,15 +326,16 @@ conf_match(qelem *q0, char *key)
 	qelem *q;
 
 	for (q = q0->q_forw; q != q0; q = q->q_forw) {
-		path *p = (path *) q;
+		path *p = (path *)q;
+
 		if (p->p_use_re) {
 			if (regexec(&p->p_re, key, 0, NULL, 0) == 0)
-				return (p->p_argv+1);
+				return p->p_argv + 1;
 		} else {
 			if (strncmp(p->p_key, key, strlen(p->p_key)) == 0)
-				return (p->p_argv+1);
+				return p->p_argv + 1;
 		}
 	}
 
-	return (0);
+	return 0;
 }
