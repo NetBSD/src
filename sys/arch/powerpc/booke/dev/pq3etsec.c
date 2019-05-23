@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.43 2019/04/26 06:33:33 msaitoh Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.44 2019/05/23 10:51:39 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.43 2019/04/26 06:33:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.44 2019/05/23 10:51:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -93,27 +93,27 @@ __KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.43 2019/04/26 06:33:33 msaitoh Exp $"
 #define	ETSEC_NRXSEGS		1
 
 #define	IFCAP_RCTRL_IPCSEN	IFCAP_CSUM_IPv4_Rx
-#define	IFCAP_RCTRL_TUCSEN	(IFCAP_CSUM_TCPv4_Rx\
-				 |IFCAP_CSUM_UDPv4_Rx\
-				 |IFCAP_CSUM_TCPv6_Rx\
-				 |IFCAP_CSUM_UDPv6_Rx)
+#define	IFCAP_RCTRL_TUCSEN	(IFCAP_CSUM_TCPv4_Rx	\
+				 | IFCAP_CSUM_UDPv4_Rx	\
+				 | IFCAP_CSUM_TCPv6_Rx	\
+				 | IFCAP_CSUM_UDPv6_Rx)
 
 #define	IFCAP_TCTRL_IPCSEN	IFCAP_CSUM_IPv4_Tx
-#define	IFCAP_TCTRL_TUCSEN	(IFCAP_CSUM_TCPv4_Tx\
-				 |IFCAP_CSUM_UDPv4_Tx\
-				 |IFCAP_CSUM_TCPv6_Tx\
-				 |IFCAP_CSUM_UDPv6_Tx)
+#define	IFCAP_TCTRL_TUCSEN	(IFCAP_CSUM_TCPv4_Tx	\
+				 | IFCAP_CSUM_UDPv4_Tx	\
+				 | IFCAP_CSUM_TCPv6_Tx	\
+				 | IFCAP_CSUM_UDPv6_Tx)
 
-#define	IFCAP_ETSEC		(IFCAP_RCTRL_IPCSEN|IFCAP_RCTRL_TUCSEN\
-				 |IFCAP_TCTRL_IPCSEN|IFCAP_TCTRL_TUCSEN)
+#define	IFCAP_ETSEC		(IFCAP_RCTRL_IPCSEN | IFCAP_RCTRL_TUCSEN      \
+				 | IFCAP_TCTRL_IPCSEN | IFCAP_TCTRL_TUCSEN)
 
-#define	M_CSUM_IP	(M_CSUM_CIP|M_CSUM_CTU)
-#define	M_CSUM_IP6	(M_CSUM_TCPv6|M_CSUM_UDPv6)
-#define	M_CSUM_TUP	(M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_TCPv6|M_CSUM_UDPv6)
-#define	M_CSUM_UDP	(M_CSUM_UDPv4|M_CSUM_UDPv6)
-#define	M_CSUM_IP4	(M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4)
-#define	M_CSUM_CIP	(M_CSUM_IPv4)
-#define	M_CSUM_CTU	(M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_TCPv6|M_CSUM_UDPv6)
+#define	M_CSUM_IP   (M_CSUM_CIP | M_CSUM_CTU)
+#define	M_CSUM_IP6  (M_CSUM_TCPv6 | M_CSUM_UDPv6)
+#define	M_CSUM_TUP  (M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_TCPv6 | M_CSUM_UDPv6)
+#define	M_CSUM_UDP  (M_CSUM_UDPv4 | M_CSUM_UDPv6)
+#define	M_CSUM_IP4  (M_CSUM_IPv4 | M_CSUM_UDPv4 | M_CSUM_TCPv4)
+#define	M_CSUM_CIP  (M_CSUM_IPv4)
+#define	M_CSUM_CTU  (M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_TCPv6 | M_CSUM_UDPv6)
 
 struct pq3etsec_txqueue {
 	bus_dmamap_t txq_descmap;
@@ -482,8 +482,8 @@ pq3etsec_mii_statchg(struct ifnet *ifp)
 	uint32_t maccfg2 = sc->sc_maccfg2;
 	uint32_t ecntrl = sc->sc_ecntrl;
 
-	maccfg1 &= ~(MACCFG1_TX_FLOW|MACCFG1_RX_FLOW);
-	maccfg2 &= ~(MACCFG2_IFMODE|MACCFG2_FD);
+	maccfg1 &= ~(MACCFG1_TX_FLOW | MACCFG1_RX_FLOW);
+	maccfg2 &= ~(MACCFG2_IFMODE | MACCFG2_FD);
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX) {
 		maccfg2 |= MACCFG2_FD;
@@ -567,6 +567,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpunode_softc * const psc = device_private(parent);
 	struct pq3etsec_softc * const sc = device_private(self);
+	struct mii_data * const mii = &sc->sc_mii;
 	struct cpunode_attach_args * const cna = aux;
 	struct cpunode_locators * const cnl = &cna->cna_locs;
 	cfdata_t cf = device_cfdata(self);
@@ -750,30 +751,31 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	struct ethercom * const ec = &sc->sc_ec;
 	struct ifnet * const ifp = &ec->ec_if;
 
-	ec->ec_mii = &sc->sc_mii;
+	ec->ec_mii = mii;
 
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = pq3mdio_mii_readreg;
-	sc->sc_mii.mii_writereg = pq3mdio_mii_writereg;
-	sc->sc_mii.mii_statchg = pq3etsec_mii_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = pq3mdio_mii_readreg;
+	mii->mii_writereg = pq3mdio_mii_writereg;
+	mii->mii_statchg = pq3etsec_mii_statchg;
 
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 
 	if (sc->sc_mdio_dev != NULL && sc->sc_phy_addr < 32) {
-		mii_attach(sc->sc_mdio_dev, &sc->sc_mii, 0xffffffff,
+		mii_attach(sc->sc_mdio_dev, mii, 0xffffffff,
 		    sc->sc_phy_addr, MII_OFFSET_ANY, MIIF_DOPAUSE);
 
-		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-			ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-			ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+		if (LIST_FIRST(&mii->mii_phys) == NULL) {
+			ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE,
+			    0, NULL);
+			ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 		} else {
 			callout_schedule(&sc->sc_mii_callout, hz);
-			ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+			ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 		}
 	} else {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_1000_T|IFM_FDX, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_1000_T|IFM_FDX);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_1000_T | IFM_FDX,
+		    0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_1000_T | IFM_FDX);
 	}
 
 	ec->ec_capabilities = ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING
@@ -826,8 +828,8 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	return;
 
 fail_10:
-	ifmedia_removeall(&sc->sc_mii.mii_media);
-	mii_detach(&sc->sc_mii, sc->sc_phy_addr, MII_OFFSET_ANY);
+	ifmedia_removeall(&mii->mii_media);
+	mii_detach(mii, sc->sc_phy_addr, MII_OFFSET_ANY);
 fail_9:
 	softint_disestablish(sc->sc_soft_ih);
 fail_8:
@@ -912,7 +914,8 @@ pq3etsec_ifinit(struct ifnet *ifp)
 	}
 
 	uint32_t rctrl_prsdep = 0;
-	sc->sc_rctrl &= ~(RCTRL_IPCSEN|RCTRL_TUCSEN|RCTRL_VLEX|RCTRL_PRSDEP);
+	sc->sc_rctrl &=
+	    ~(RCTRL_IPCSEN | RCTRL_TUCSEN | RCTRL_VLEX | RCTRL_PRSDEP);
 	if (VLAN_ATTACHED(&sc->sc_ec)) {
 		sc->sc_rctrl |= RCTRL_VLEX;
 		rctrl_prsdep = RCTRL_PRSDEP_L2;
@@ -927,7 +930,8 @@ pq3etsec_ifinit(struct ifnet *ifp)
 	}
 	sc->sc_rctrl |= rctrl_prsdep;
 #if 0
-	if (sc->sc_rctrl & (RCTRL_IPCSEN|RCTRL_TUCSEN|RCTRL_VLEX|RCTRL_PRSDEP))
+	if (sc->sc_rctrl
+	    & (RCTRL_IPCSEN | RCTRL_TUCSEN | RCTRL_VLEX | RCTRL_PRSDEP))
 		aprint_normal_dev(sc->sc_dev,
 		    "rctrl=%#x ipcsen=%"PRIuMAX" tucsen=%"PRIuMAX" vlex=%"PRIuMAX" prsdep=%"PRIuMAX"\n",
 		    sc->sc_rctrl,
@@ -937,7 +941,7 @@ pq3etsec_ifinit(struct ifnet *ifp)
 		    __SHIFTOUT(sc->sc_rctrl, RCTRL_PRSDEP));
 #endif
 
-	sc->sc_tctrl &= ~(TCTRL_IPCSEN|TCTRL_TUCSEN|TCTRL_VLINS);
+	sc->sc_tctrl &= ~(TCTRL_IPCSEN | TCTRL_TUCSEN | TCTRL_VLINS);
 	if (VLAN_ATTACHED(&sc->sc_ec))		/* is this really true */
 		sc->sc_tctrl |= TCTRL_VLINS;
 	if (ifp->if_capenable & IFCAP_TCTRL_IPCSEN)
@@ -945,7 +949,7 @@ pq3etsec_ifinit(struct ifnet *ifp)
 	if (ifp->if_capenable & IFCAP_TCTRL_TUCSEN)
 		sc->sc_tctrl |= TCTRL_TUCSEN;
 #if 0
-	if (sc->sc_tctrl & (TCTRL_IPCSEN|TCTRL_TUCSEN|TCTRL_VLINS))
+	if (sc->sc_tctrl & (TCTRL_IPCSEN | TCTRL_TUCSEN | TCTRL_VLINS))
 		aprint_normal_dev(sc->sc_dev,
 		    "tctrl=%#x ipcsen=%"PRIuMAX" tucsen=%"PRIuMAX" vlins=%"PRIuMAX"\n",
 		    sc->sc_tctrl,
@@ -954,7 +958,7 @@ pq3etsec_ifinit(struct ifnet *ifp)
 		    __SHIFTOUT(sc->sc_tctrl, TCTRL_VLINS));
 #endif
 
-	sc->sc_maccfg1 &= ~(MACCFG1_TX_EN|MACCFG1_RX_EN);
+	sc->sc_maccfg1 &= ~(MACCFG1_TX_EN | MACCFG1_RX_EN);
 
 	const uint64_t macstnaddr =
 	    pq3etsec_macaddr_create(CLLADDR(ifp->if_sadl));
@@ -989,13 +993,13 @@ pq3etsec_ifinit(struct ifnet *ifp)
 
 	/* 11. Enable transmit queues in TQUEUE, and ensure that the transmit scheduling mode is correctly set in TCTRL. */
 	etsec_write(sc, TQUEUE, TQUEUE_EN0);
-	sc->sc_imask |= IEVENT_TXF|IEVENT_TXE|IEVENT_TXC;
+	sc->sc_imask |= IEVENT_TXF | IEVENT_TXE | IEVENT_TXC;
 
 	etsec_write(sc, TCTRL, sc->sc_tctrl);	/* for TOE stuff */
 
 	/* 12. Enable receive queues in RQUEUE, */
-	etsec_write(sc, RQUEUE, RQUEUE_EN0|RQUEUE_EX0);
-	sc->sc_imask |= IEVENT_RXF|IEVENT_BSY|IEVENT_RXC;
+	etsec_write(sc, RQUEUE, RQUEUE_EN0 | RQUEUE_EX0);
+	sc->sc_imask |= IEVENT_RXF | IEVENT_BSY | IEVENT_RXC;
 
 	/*     and optionally set TOE functionality in RCTRL. */
 	etsec_write(sc, RCTRL, sc->sc_rctrl);
@@ -1010,7 +1014,7 @@ pq3etsec_ifinit(struct ifnet *ifp)
 	etsec_write(sc, RSTAT, RSTAT_QHLT | RSTAT_RXF);
 
 	/* 15. Clear GRS/GTS bits in DMACTRL (do not change other bits) */
-	sc->sc_dmactrl &= ~(DMACTRL_GRS|DMACTRL_GTS);
+	sc->sc_dmactrl &= ~(DMACTRL_GRS | DMACTRL_GTS);
 	etsec_write(sc, DMACTRL, sc->sc_dmactrl);
 
 	/* 16. Enable Tx_EN/Rx_EN in MACCFG1 register */
@@ -1032,7 +1036,7 @@ pq3etsec_ifstop(struct ifnet *ifp, int disable)
 	struct pq3etsec_softc * const sc = ifp->if_softc;
 
 	KASSERT(!cpu_intr_p());
-	const uint32_t imask_gsc_mask = IEVENT_GTSC|IEVENT_GRSC;
+	const uint32_t imask_gsc_mask = IEVENT_GTSC | IEVENT_GRSC;
 	/*
 	 * Clear the GTSC and GRSC from the interrupt mask until
 	 * we are ready for them.  Then clear them from IEVENT,
@@ -1045,12 +1049,12 @@ pq3etsec_ifstop(struct ifnet *ifp, int disable)
 	/*
 	 * 1. Set GRS/GTS bits in DMACTRL register
 	 */
-	sc->sc_dmactrl |= DMACTRL_GRS|DMACTRL_GTS;
+	sc->sc_dmactrl |= DMACTRL_GRS | DMACTRL_GTS;
 	etsec_write(sc, IMASK, sc->sc_imask & ~imask_gsc_mask);
 	etsec_write(sc, IEVENT, imask_gsc_mask);
 	etsec_write(sc, DMACTRL, sc->sc_dmactrl);
 
-	if (etsec_read(sc, MACCFG1) & (MACCFG1_TX_EN|MACCFG1_RX_EN)) {
+	if (etsec_read(sc, MACCFG1) & (MACCFG1_TX_EN | MACCFG1_RX_EN)) {
 		/*
 		 * 2. Poll GRSC/GTSC bits in IEVENT register until both are set
 		 */
@@ -1240,7 +1244,7 @@ pq3etsec_rxq_desc_presync(
 {
 	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_descmap,
 	    (rxbd - rxq->rxq_first) * sizeof(*rxbd), count * sizeof(*rxbd),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 static void
@@ -1252,7 +1256,7 @@ pq3etsec_rxq_desc_postsync(
 {
 	bus_dmamap_sync(sc->sc_dmat, rxq->rxq_descmap,
 	    (rxbd - rxq->rxq_first) * sizeof(*rxbd), count * sizeof(*rxbd),
-	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 }
 
 static void
@@ -1264,7 +1268,7 @@ pq3etsec_txq_desc_presync(
 {
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_descmap,
 	    (txbd - txq->txq_first) * sizeof(*txbd), count * sizeof(*txbd),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 static void
@@ -1276,7 +1280,7 @@ pq3etsec_txq_desc_postsync(
 {
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_descmap,
 	    (txbd - txq->txq_first) * sizeof(*txbd), count * sizeof(*txbd),
-	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 }
 
 static bus_dmamap_t
@@ -1335,7 +1339,7 @@ pq3etsec_mapcache_create(
 	for (u_int i = 0; i < maxmaps; i++) {
 		int error = bus_dmamap_create(sc->sc_dmat, dmc->dmc_maxmapsize,
 		     dmc->dmc_maxseg, dmc->dmc_maxmapsize, 0,
-		     BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW, &dmc->dmc_maps[i]);
+		     BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &dmc->dmc_maps[i]);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
 			    "failed to creat dma map cache "
@@ -1438,7 +1442,7 @@ pq3etsec_rx_buf_alloc(
 	M_SETCTX(m, map);
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
 	int error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "fail to load rx dmamap: %d\n",
 		    error);
@@ -1549,10 +1553,10 @@ pq3etsec_rx_offload(
 		vlan_set_tag(m, fcb->rxfcb_vlctl);
 	}
 	if ((fcb->rxfcb_flags & RXFCB_IP) == 0
-	    || (fcb->rxfcb_flags & (RXFCB_CIP|RXFCB_CTU)) == 0)
+	    || (fcb->rxfcb_flags & (RXFCB_CIP | RXFCB_CTU)) == 0)
 		return true;
 	int csum_flags = 0;
-	if ((fcb->rxfcb_flags & (RXFCB_IP6|RXFCB_CIP)) == RXFCB_CIP) {
+	if ((fcb->rxfcb_flags & (RXFCB_IP6 | RXFCB_CIP)) == RXFCB_CIP) {
 		csum_flags |= M_CSUM_IPv4;
 		if (fcb->rxfcb_flags & RXFCB_EIP)
 			csum_flags |= M_CSUM_IPv4_BAD;
@@ -1560,13 +1564,13 @@ pq3etsec_rx_offload(
 	if ((fcb->rxfcb_flags & RXFCB_CTU) == RXFCB_CTU) {
 		int ipv_flags;
 		if (fcb->rxfcb_flags & RXFCB_IP6)
-			ipv_flags = M_CSUM_TCPv6|M_CSUM_UDPv6;
+			ipv_flags = M_CSUM_TCPv6 | M_CSUM_UDPv6;
 		else
-			ipv_flags = M_CSUM_TCPv4|M_CSUM_UDPv4;
+			ipv_flags = M_CSUM_TCPv4 | M_CSUM_UDPv4;
 		if (fcb->rxfcb_pro == IPPROTO_TCP) {
-			csum_flags |= (M_CSUM_TCPv4|M_CSUM_TCPv6) & ipv_flags;
+			csum_flags |= (M_CSUM_TCPv4 |M_CSUM_TCPv6) & ipv_flags;
 		} else {
-			csum_flags |= (M_CSUM_UDPv4|M_CSUM_UDPv6) & ipv_flags;
+			csum_flags |= (M_CSUM_UDPv4 |M_CSUM_UDPv6) & ipv_flags;
 		}
 		if (fcb->rxfcb_flags & RXFCB_ETU)
 			csum_flags |= M_CSUM_TCP_UDP_BAD;
@@ -1654,13 +1658,13 @@ pq3etsec_rxq_consume(
 		 * We own this packet again.  Clear all flags except wrap.
 		 */
 		rxconsumed++;
-		consumer->rxbd_flags = rxbd_flags & (RXBD_W|RXBD_I);
+		consumer->rxbd_flags = rxbd_flags & (RXBD_W | RXBD_I);
 
 		/*
 		 * If this descriptor has the LAST bit set and no errors,
 		 * it's a valid input packet.
 		 */
-		if ((rxbd_flags & (RXBD_L|RXBD_ERRORS)) == RXBD_L) {
+		if ((rxbd_flags & (RXBD_L | RXBD_ERRORS)) == RXBD_L) {
 			size_t rxbd_len = consumer->rxbd_len;
 			struct mbuf *m = rxq->rxq_mhead;
 			struct mbuf *m_last = rxq->rxq_mconsumer;
@@ -1765,7 +1769,7 @@ pq3etsec_rxq_reset(
 	/*
 	 * Last descriptor has the wrap flag.
 	 */
-	rxbd->rxbd_flags = RXBD_W|RXBD_I;
+	rxbd->rxbd_flags = RXBD_W | RXBD_I;
 
 	/*
 	 * Reset the producer consumer indexes.
@@ -1776,7 +1780,7 @@ pq3etsec_rxq_reset(
 	if (rxq->rxq_threshold < ETSEC_MINRXMBUFS)
 		rxq->rxq_threshold = ETSEC_MINRXMBUFS;
 
-	sc->sc_imask |= IEVENT_RXF|IEVENT_BSY;
+	sc->sc_imask |= IEVENT_RXF | IEVENT_BSY;
 
 	/*
 	 * Restart the transmit at the first descriptor
@@ -2317,7 +2321,7 @@ pq3etsec_txq_reset(
 	/*
 	 * What do we want to get interrupted on?
 	 */
-	sc->sc_imask |= IEVENT_TXF|IEVENT_TXE;
+	sc->sc_imask |= IEVENT_TXF | IEVENT_TXE;
 
 	/*
 	 * Restart the transmit at the first descriptor
@@ -2330,7 +2334,7 @@ pq3etsec_ifstart(struct ifnet *ifp)
 {
 	struct pq3etsec_softc * const sc = ifp->if_softc;
 
-	if (__predict_false((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)) {
+	if (__predict_false((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)) {
 		return;
 	}
 
@@ -2348,7 +2352,8 @@ pq3etsec_tx_error(
 
 	if (pq3etsec_txq_fillable_p(sc, txq))
 		sc->sc_if.if_flags &= ~IFF_OACTIVE;
-	if (sc->sc_txerrors & (IEVENT_LC|IEVENT_CRL|IEVENT_XFUN|IEVENT_BABT)) {
+	if (sc->sc_txerrors
+	    & (IEVENT_LC | IEVENT_CRL | IEVENT_XFUN | IEVENT_BABT)) {
 	} else if (sc->sc_txerrors & IEVENT_EBERR) {
 	}
 
@@ -2372,7 +2377,7 @@ pq3etsec_tx_intr(void *arg)
 	sc->sc_ev_tx_intr.ev_count++;
 
 	uint32_t ievent = etsec_read(sc, IEVENT);
-	ievent &= IEVENT_TXF|IEVENT_TXB;
+	ievent &= IEVENT_TXF | IEVENT_TXB;
 	etsec_write(sc, IEVENT, ievent);	/* write 1 to clear */
 
 #if 0
@@ -2385,7 +2390,7 @@ pq3etsec_tx_intr(void *arg)
 		return 0;
 	}
 
-	sc->sc_imask &= ~(IEVENT_TXF|IEVENT_TXB);
+	sc->sc_imask &= ~(IEVENT_TXF | IEVENT_TXB);
 	atomic_or_uint(&sc->sc_soft_flags, SOFT_TXINTR);
 	etsec_write(sc, IMASK, sc->sc_imask);
 	softint_schedule(sc->sc_soft_ih);
@@ -2405,7 +2410,7 @@ pq3etsec_rx_intr(void *arg)
 	sc->sc_ev_rx_intr.ev_count++;
 
 	uint32_t ievent = etsec_read(sc, IEVENT);
-	ievent &= IEVENT_RXF|IEVENT_RXB;
+	ievent &= IEVENT_RXF | IEVENT_RXB;
 	etsec_write(sc, IEVENT, ievent);	/* write 1 to clear */
 	if (ievent == 0) {
 		mutex_exit(sc->sc_hwlock);
@@ -2416,7 +2421,7 @@ pq3etsec_rx_intr(void *arg)
 	aprint_normal_dev(sc->sc_dev, "%s: ievent=%#x\n", __func__, ievent);
 #endif
 
-	sc->sc_imask &= ~(IEVENT_RXF|IEVENT_RXB);
+	sc->sc_imask &= ~(IEVENT_RXF | IEVENT_RXB);
 	atomic_or_uint(&sc->sc_soft_flags, SOFT_RXINTR);
 	etsec_write(sc, IMASK, sc->sc_imask);
 	softint_schedule(sc->sc_soft_ih);
@@ -2437,7 +2442,7 @@ pq3etsec_error_intr(void *arg)
 
 	for (int rv = 0, soft_flags = 0;; rv = 1) {
 		uint32_t ievent = etsec_read(sc, IEVENT);
-		ievent &= ~(IEVENT_RXF|IEVENT_RXB|IEVENT_TXF|IEVENT_TXB);
+		ievent &= ~(IEVENT_RXF | IEVENT_RXB | IEVENT_TXF | IEVENT_TXB);
 		etsec_write(sc, IEVENT, ievent);	/* write 1 to clear */
 		if (ievent == 0) {
 			if (soft_flags) {
@@ -2452,13 +2457,13 @@ pq3etsec_error_intr(void *arg)
 		    __func__, ievent, etsec_read(sc, IMASK));
 #endif
 
-		if (ievent & (IEVENT_GRSC|IEVENT_GTSC)) {
-			sc->sc_imask &= ~(IEVENT_GRSC|IEVENT_GTSC);
+		if (ievent & (IEVENT_GRSC | IEVENT_GTSC)) {
+			sc->sc_imask &= ~(IEVENT_GRSC | IEVENT_GTSC);
 			etsec_write(sc, IMASK, sc->sc_imask);
 			wakeup(sc);
 		}
-		if (ievent & (IEVENT_MMRD|IEVENT_MMWR)) {
-			sc->sc_imask &= ~(IEVENT_MMRD|IEVENT_MMWR);
+		if (ievent & (IEVENT_MMRD | IEVENT_MMWR)) {
+			sc->sc_imask &= ~(IEVENT_MMRD | IEVENT_MMWR);
 			etsec_write(sc, IMASK, sc->sc_imask);
 			wakeup(&sc->sc_mii);
 		}
@@ -2536,7 +2541,7 @@ pq3etsec_soft_intr(void *arg)
 		imask |= IEVENT_TXF;
 	}
 
-	if (soft_flags & (SOFT_RXINTR|SOFT_RXBSY)) {
+	if (soft_flags & (SOFT_RXINTR | SOFT_RXBSY)) {
 		/* Let's consume */
 		pq3etsec_rxq_consume(sc, &sc->sc_rxq);
 		imask |= IEVENT_RXF;
@@ -2736,7 +2741,7 @@ static void pq3etsec_sysctl_setup(struct sysctllog **clog,
 		goto bad;
 
 	if (sysctl_createv(clog, 0, &rnode, &cnode,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "rx_time",
 	    SYSCTL_DESCR("RX time threshold (0-65535)"),
 	    pq3etsec_sysctl_ic_rx_time_helper, 0, (void *)sc, 0,
@@ -2744,7 +2749,7 @@ static void pq3etsec_sysctl_setup(struct sysctllog **clog,
 		goto bad;
 
 	if (sysctl_createv(clog, 0, &rnode, &cnode,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "rx_count",
 	    SYSCTL_DESCR("RX frame count threshold (0-255)"),
 	    pq3etsec_sysctl_ic_rx_count_helper, 0, (void *)sc, 0,
@@ -2752,7 +2757,7 @@ static void pq3etsec_sysctl_setup(struct sysctllog **clog,
 		goto bad;
 
 	if (sysctl_createv(clog, 0, &rnode, &cnode,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "tx_time",
 	    SYSCTL_DESCR("TX time threshold (0-65535)"),
 	    pq3etsec_sysctl_ic_tx_time_helper, 0, (void *)sc, 0,
@@ -2760,7 +2765,7 @@ static void pq3etsec_sysctl_setup(struct sysctllog **clog,
 		goto bad;
 
 	if (sysctl_createv(clog, 0, &rnode, &cnode,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "tx_count",
 	    SYSCTL_DESCR("TX frame count threshold (0-255)"),
 	    pq3etsec_sysctl_ic_tx_count_helper, 0, (void *)sc, 0,
