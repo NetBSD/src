@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.11 2018/12/21 14:50:18 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.12 2019/05/23 15:54:28 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,9 +32,10 @@
 #include "com.h"
 #include "plcom.h"
 #include "opt_efi.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.11 2018/12/21 14:50:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.12 2019/05/23 15:54:28 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,7 +114,9 @@ acpi_platform_startup(void)
 {
 	ACPI_TABLE_SPCR *spcr;
 	ACPI_TABLE_FADT *fadt;
+#ifdef MULTIPROCESSOR
 	ACPI_TABLE_MADT *madt;
+#endif
 	int baud_rate;
 
 	/*
@@ -198,6 +201,7 @@ acpi_platform_startup(void)
 		acpi_table_unmap((ACPI_TABLE_HEADER *)fadt);
 	}
 
+#ifdef MULTIPROCESSOR
 	/*
 	 * Count CPUs
 	 */
@@ -212,6 +216,7 @@ acpi_platform_startup(void)
 		}
 		acpi_table_unmap((ACPI_TABLE_HEADER *)madt);
 	}
+#endif /* MULTIPROCESSOR */
 }
 
 static void
