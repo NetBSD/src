@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.5 2018/12/05 22:42:55 jmcneill Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.6 2019/05/23 15:54:28 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include "tprof.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.5 2018/12/05 22:42:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.6 2019/05/23 15:54:28 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,12 +67,14 @@ static void	cpu_acpi_tprof_init(device_t);
 
 CFATTACH_DECL_NEW(cpu_acpi, 0, cpu_acpi_match, cpu_acpi_attach, NULL, NULL);
 
+#ifdef MULTIPROCESSOR
 static register_t
 cpu_acpi_mpstart_pa(void)
 {
 
 	return (register_t)KERN_VTOPHYS((vaddr_t)cpu_mpstart);
 }
+#endif /* MULTIPROCESSOR */
 
 static int
 cpu_acpi_match(device_t parent, cfdata_t cf, void *aux)
@@ -94,10 +97,11 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 	const uint64_t mpidr = gicc->ArmMpidr;
 	const int unit = device_unit(self);
 	struct cpu_info *ci = &cpu_info_store[unit];
-	int error;
 
+#ifdef MULTIPROCESSOR
 	if (cpu_mpidr_aff_read() != mpidr) {
 		const u_int cpuindex = device_unit(self);
+		int error;
 
 		cpu_mpidr[cpuindex] = mpidr;
 		cpu_dcache_wb_range((vaddr_t)&cpu_mpidr[cpuindex], sizeof(cpu_mpidr[cpuindex]));
@@ -117,6 +121,7 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 				break;
 		}
 	}
+#endif /* MULTIPROCESSOR */
 
 	/* Store the ACPI Processor UID in cpu_info */
 	ci->ci_acpiid = gicc->Uid;
