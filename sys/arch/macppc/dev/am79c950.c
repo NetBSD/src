@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.43 2019/04/26 06:33:33 msaitoh Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.44 2019/05/23 10:30:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.43 2019/04/26 06:33:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.44 2019/05/23 10:30:35 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -155,8 +155,8 @@ mcsetup(struct mc_softc *sc, uint8_t *lladdr)
 
 	/* Initialize ifmedia structures */
 	ifmedia_init(&sc->sc_media, 0, mc_mediachange, mc_mediastatus);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
@@ -646,9 +646,9 @@ mace_get(struct mc_softc *sc, uint8_t *pkt, int totlen)
  * address filter.
  */
 void
-mace_calcladrf(struct ethercom *ac, uint8_t *af)
+mace_calcladrf(struct ethercom *ec, uint8_t *af)
 {
-	struct ifnet *ifp = &ac->ec_if;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	register u_char *cp, c;
 	register uint32_t crc;
@@ -665,7 +665,7 @@ mace_calcladrf(struct ethercom *ac, uint8_t *af)
 
 	*((uint32_t *)af) = *((uint32_t *)af + 1) = 0;
 
-	ETHER_FIRST_MULTI(step, ac, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (ETHER_CMP(enm->enm_addrlo, enm->enm_addrhi)) {
 			/*

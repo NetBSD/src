@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.55 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: lance.c,v 1.56 2019/05/23 10:30:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.55 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.56 2019/05/23 10:30:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ hide bool lance_shutdown(device_t, int);
 int lance_mediachange(struct ifnet *);
 void lance_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static inline u_int16_t ether_cmp(void *, void *);
+static inline uint16_t ether_cmp(void *, void *);
 
 void lance_stop(struct ifnet *, int);
 int lance_ioctl(struct ifnet *, u_long, void *);
@@ -189,8 +189,8 @@ lance_config(struct lance_softc *sc)
 			   0, NULL);
 		ifmedia_set(&sc->sc_media, sc->sc_defaultmedia);
 	} else {
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 	}
 
 	switch (sc->sc_memsize) {
@@ -562,9 +562,9 @@ lance_shutdown(device_t self, int howto)
  * Set up the logical address filter.
  */
 void
-lance_setladrf(struct ethercom *ac, uint16_t *af)
+lance_setladrf(struct ethercom *ec, uint16_t *af)
 {
-	struct ifnet *ifp = &ac->ec_if;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	uint32_t crc;
 	struct ether_multistep step;
@@ -581,7 +581,7 @@ lance_setladrf(struct ethercom *ac, uint16_t *af)
 		goto allmulti;
 
 	af[0] = af[1] = af[2] = af[3] = 0x0000;
-	ETHER_FIRST_MULTI(step, ac, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (ETHER_CMP(enm->enm_addrlo, enm->enm_addrhi)) {
 			/*
