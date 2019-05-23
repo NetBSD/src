@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.29 2019/04/26 06:33:34 msaitoh Exp $ */
+/*      $NetBSD: if_xge.c,v 1.30 2019/05/23 10:57:28 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.29 2019/04/26 06:33:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.30 2019/05/23 10:57:28 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -93,11 +93,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.29 2019/04/26 06:33:34 msaitoh Exp $");
 /*
  * Use clever macros to avoid a bunch of #ifdef's.
  */
-#define XCONCAT3(x,y,z) x ## y ## z
-#define CONCAT3(x,y,z) XCONCAT3(x,y,z)
-#define NDESC_BUFMODE CONCAT3(NDESC_,RX_MODE,BUFMODE)
-#define rxd_4k CONCAT3(rxd,RX_MODE,_4k)
-#define rxdesc ___CONCAT(rxd,RX_MODE)
+#define XCONCAT3(x, y, z) x ## y ## z
+#define CONCAT3(x, y, z) XCONCAT3(x, y, z)
+#define NDESC_BUFMODE CONCAT3(NDESC_, RX_MODE, BUFMODE)
+#define rxd_4k CONCAT3(rxd, RX_MODE, _4k)
+#define rxdesc ___CONCAT(rxd, RX_MODE)
 
 #define NEXTTX(x)	(((x)+1) % NTXDESCS)
 #define NRXFRAGS	RX_MODE /* hardware imposed frags */
@@ -845,7 +845,8 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > XGE_MAX_MTU)
 			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET){
+		else if ((error = ifioctl_common(ifp, cmd, data))
+		    == ENETRESET) {
 			PIF_WCSR(RMAC_MAX_PYLD_LEN,
 			    RMAC_PYLD_LEN(ifr->ifr_mtu));
 			error = 0;

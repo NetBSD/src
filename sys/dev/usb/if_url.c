@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.63 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: if_url.c,v 1.64 2019/05/23 10:57:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.63 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.64 2019/05/23 10:57:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -130,11 +130,11 @@ Static int url_mem(struct url_softc *, int, int, void *, int);
 /* Macros */
 #ifdef URL_DEBUG
 #define DPRINTF(x)	if (urldebug) printf x
-#define DPRINTFN(n,x)	if (urldebug >= (n)) printf x
+#define DPRINTFN(n, x)	if (urldebug >= (n)) printf x
 int urldebug = 0;
 #else
 #define DPRINTF(x)
-#define DPRINTFN(n,x)
+#define DPRINTFN(n, x)
 #endif
 
 #define	URL_SETBIT(sc, reg, x)	\
@@ -557,9 +557,9 @@ url_init(struct ifnet *ifp)
 
 	/* If we want promiscuous mode, accept all physical frames. */
 	if (ifp->if_flags & IFF_PROMISC)
-		URL_SETBIT2(sc, URL_RCR, URL_RCR_AAM|URL_RCR_AAP);
+		URL_SETBIT2(sc, URL_RCR, URL_RCR_AAM | URL_RCR_AAP);
 	else
-		URL_CLRBIT2(sc, URL_RCR, URL_RCR_AAM|URL_RCR_AAP);
+		URL_CLRBIT2(sc, URL_RCR, URL_RCR_AAM | URL_RCR_AAP);
 
 
 	/* Load the multicast filter */
@@ -673,7 +673,7 @@ url_setmulti(struct url_softc *sc)
 	ifp = GET_IFP(sc);
 
 	if (ifp->if_flags & IFF_PROMISC) {
-		URL_SETBIT2(sc, URL_RCR, URL_RCR_AAM|URL_RCR_AAP);
+		URL_SETBIT2(sc, URL_RCR, URL_RCR_AAM | URL_RCR_AAP);
 		return;
 	} else if (ifp->if_flags & IFF_ALLMULTI) {
 	allmulti:
@@ -705,9 +705,9 @@ url_setmulti(struct url_softc *sc)
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	URL_CLRBIT2(sc, URL_RCR, URL_RCR_AAM|URL_RCR_AAP);
+	URL_CLRBIT2(sc, URL_RCR, URL_RCR_AAM | URL_RCR_AAP);
 
-	if (mcnt){
+	if (mcnt) {
 		URL_SETBIT2(sc, URL_RCR, URL_RCR_AM);
 	} else {
 		URL_CLRBIT2(sc, URL_RCR, URL_RCR_AM);
@@ -917,7 +917,7 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 		    URL_MIN_FRAME_LEN - total_len);
 		total_len = URL_MIN_FRAME_LEN;
 	}
-	usbd_setup_xfer(c->url_xfer,c, c->url_buf, total_len,
+	usbd_setup_xfer(c->url_xfer, c, c->url_buf, total_len,
 	    USBD_FORCE_SHORT_XFER, URL_TX_TIMEOUT, url_txeof);
 
 	/* Transmit */

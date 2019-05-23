@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.71 2019/02/05 06:17:03 msaitoh Exp $	*/
+/*	$NetBSD: qe.c,v 1.72 2019/05/23 10:57:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.71 2019/02/05 06:17:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.72 2019/05/23 10:57:28 msaitoh Exp $");
 
 #define QEDEBUG
 
@@ -263,7 +263,7 @@ qeattach(device_t parent, device_t self, void *aux)
 	/* Map DMA buffer in CPU addressable space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
 			            &sc->sc_rb.rb_membase,
-			            BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+			            BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(self, "DMA buffer map error %d\n",
 			error);
 		bus_dmamem_free(dmatag, &seg, rseg);
@@ -285,15 +285,15 @@ qeattach(device_t parent, device_t self, void *aux)
 	/* Initialize media properties */
 	ifmedia_init(&sc->sc_ifmedia, 0, qe_ifmedia_upd, qe_ifmedia_sts);
 	ifmedia_add(&sc->sc_ifmedia,
-		    IFM_MAKEWORD(IFM_ETHER,IFM_10_T,0,0),
+		    IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0),
 		    0, NULL);
 	ifmedia_add(&sc->sc_ifmedia,
-		    IFM_MAKEWORD(IFM_ETHER,IFM_10_5,0,0),
+		    IFM_MAKEWORD(IFM_ETHER, IFM_10_5, 0, 0),
 		    0, NULL);
 	ifmedia_add(&sc->sc_ifmedia,
-		    IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,0),
+		    IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, 0),
 		    0, NULL);
-	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO);
+	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO);
 
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -896,7 +896,7 @@ qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
 		/* XXX re-use ether_ioctl() */
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then

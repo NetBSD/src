@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.184 2019/05/17 07:39:33 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.185 2019/05/23 10:57:28 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -533,7 +533,7 @@ ixgbe_initialize_rss_mapping(struct adapter *adapter)
  * ixgbe_initialize_receive_units - Setup receive registers and features.
  ************************************************************************/
 #define BSIZEPKT_ROUNDUP ((1<<IXGBE_SRRCTL_BSIZEPKT_SHIFT)-1)
-	
+
 static void
 ixgbe_initialize_receive_units(struct adapter *adapter)
 {
@@ -1089,7 +1089,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 
 	if ((adapter->feat_en & IXGBE_FEATURE_MSIX) == 0)
 		error = ixgbe_allocate_legacy(adapter, pa);
-	if (error) 
+	if (error)
 		goto err_late;
 
 	/* Tasklets for Link, SFP, Multispeed Fiber and Flow Director */
@@ -1461,7 +1461,7 @@ ixgbe_add_media_types(struct adapter *adapter)
 	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_BX)
 		device_printf(dev, "Media supported: 1000baseBX\n");
 	/* XXX no ifmedia_set? */
-	
+
 	ADD(IFM_AUTO, 0);
 
 #undef ADD
@@ -1508,7 +1508,7 @@ ixgbe_config_link(struct adapter *adapter)
 
 	sfp = ixgbe_is_sfp(hw);
 
-	if (sfp) { 
+	if (sfp) {
 		if (hw->phy.multispeed_fiber) {
 			ixgbe_enable_tx_laser(hw);
 			kpreempt_disable();
@@ -2171,7 +2171,7 @@ ixgbe_clear_evcnt(struct adapter *adapter)
  *
  *   Retrieves the TDH value from the hardware
  ************************************************************************/
-static int 
+static int
 ixgbe_sysctl_tdh_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
@@ -2196,7 +2196,7 @@ ixgbe_sysctl_tdh_handler(SYSCTLFN_ARGS)
  *
  *   Retrieves the TDT value from the hardware
  ************************************************************************/
-static int 
+static int
 ixgbe_sysctl_tdt_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
@@ -2222,7 +2222,7 @@ ixgbe_sysctl_tdt_handler(SYSCTLFN_ARGS)
  *
  *   Retrieves the next_to_check value
  ************************************************************************/
-static int 
+static int
 ixgbe_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
@@ -2247,7 +2247,7 @@ ixgbe_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
  *
  *   Retrieves the RDH value from the hardware
  ************************************************************************/
-static int 
+static int
 ixgbe_sysctl_rdh_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
@@ -2272,7 +2272,7 @@ ixgbe_sysctl_rdh_handler(SYSCTLFN_ARGS)
  *
  *   Retrieves the RDT value from the hardware
  ************************************************************************/
-static int 
+static int
 ixgbe_sysctl_rdt_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
@@ -2599,7 +2599,7 @@ static inline void
 ixgbe_sched_handle_que(struct adapter *adapter, struct ix_queue *que)
 {
 
-	if(que->txrx_use_workqueue) {
+	if (que->txrx_use_workqueue) {
 		/*
 		 * adapter->que_wq is bound to each CPU instead of
 		 * each NIC queue to reduce workqueue kthread. As we
@@ -2678,7 +2678,7 @@ ixgbe_msix_que(void *arg)
 	/* Idle, do nothing */
         if ((txr->bytes == 0) && (rxr->bytes == 0))
                 goto no_calc;
-                                
+
 	if ((txr->bytes) && (txr->packets))
 		newitr = txr->bytes/txr->packets;
 	if ((rxr->bytes) && (rxr->packets))
@@ -3149,7 +3149,7 @@ ixgbe_msix_link(void *arg)
 static void
 ixgbe_eitr_write(struct adapter *adapter, uint32_t index, uint32_t itr)
 {
-	
+
         if (adapter->hw.mac.type == ixgbe_mac_82598EB)
                 itr |= itr << 16;
         else
@@ -3533,8 +3533,8 @@ ixgbe_detach(device_t dev, int flags)
 #if NVLAN > 0
 	/* Make sure VLANs are not using driver */
 	if (!VLAN_ATTACHED(&adapter->osdep.ec))
-		;	/* nothing to do: no VLANs */ 
-	else if ((flags & (DETACH_SHUTDOWN|DETACH_FORCE)) != 0)
+		;	/* nothing to do: no VLANs */
+	else if ((flags & (DETACH_SHUTDOWN | DETACH_FORCE)) != 0)
 		vlan_ifdetach(adapter->ifp);
 	else {
 		aprint_error_dev(dev, "VLANs in use, detach first\n");
@@ -3551,7 +3551,7 @@ ixgbe_detach(device_t dev, int flags)
 	IXGBE_CORE_UNLOCK(adapter);
 
 	ixgbe_free_softint(adapter);
-	
+
 	/* let hardware know driver is unloading */
 	ctrl_ext = IXGBE_READ_REG(&adapter->hw, IXGBE_CTRL_EXT);
 	ctrl_ext &= ~IXGBE_CTRL_EXT_DRV_LOAD;
@@ -4077,7 +4077,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	ixgbe_config_link(adapter);
 
 	/* Hardware Packet Buffer & Flow Control setup */
-	ixgbe_config_delay_values(adapter);	
+	ixgbe_config_delay_values(adapter);
 
 	/* Initialize the FC settings */
 	ixgbe_start_hw(hw);
@@ -5887,7 +5887,7 @@ ixgbe_print_debug_info(struct adapter *adapter)
 		table_size = 32;
 		break;
 	}
-	
+
 	device_printf(dev, "[E]RETA:\n");
 	for (i = 0; i < table_size; i++) {
 		if (i < 32)
@@ -5925,7 +5925,7 @@ ixgbe_print_debug_info(struct adapter *adapter)
 		printf("%8d", adapter->queues[i].disabled_count);
 	}
 	printf("\n");
-	
+
 	device_printf(dev, "EIMS:\t%08x\n", IXGBE_READ_REG(hw, IXGBE_EIMS));
 	if (hw->mac.type != ixgbe_mac_82598EB) {
 		device_printf(dev, "EIMS_EX(0):\t%08x\n",
@@ -6167,8 +6167,8 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
 	struct ifreq	*ifr = data;
 	int             error = 0;
 	int l4csum_en;
-	const int l4csum = IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx|
-	     IFCAP_CSUM_TCPv6_Rx|IFCAP_CSUM_UDPv6_Rx;
+	const int l4csum = IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
+	     IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
 
 	if (ixgbe_fw_recovery_mode_swflag(adapter))
 		return (EPERM);
@@ -6381,7 +6381,7 @@ ixgbe_allocate_legacy(struct adapter *adapter,
 	pci_intr_type_t intr_type, max_type;
 	char            intrbuf[PCI_INTRSTR_LEN];
 	const char	*intrstr = NULL;
- 
+
 	/* We allocate a single interrupt resource */
 	max_type = PCI_INTR_TYPE_MSI;
 	counts[PCI_INTR_TYPE_MSIX] = 0;
@@ -6452,7 +6452,7 @@ alloc_retry:
 	if ((!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX)
 		& (txr->txr_si == NULL)) || (que->que_si == NULL)) {
 		aprint_error_dev(dev,
-		    "could not establish software interrupts\n"); 
+		    "could not establish software interrupts\n");
 
 		return ENXIO;
 	}
@@ -6595,7 +6595,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 			ixgbe_handle_que, que);
 		if (que->que_si == NULL) {
 			aprint_error_dev(dev,
-			    "couldn't establish software interrupt\n"); 
+			    "couldn't establish software interrupt\n");
 			error = ENXIO;
 			goto err_out;
 		}
@@ -6657,7 +6657,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 			ixgbe_handle_mbx, adapter);
 		if (adapter->mbx_si == NULL) {
 			aprint_error_dev(dev,
-			    "could not establish software interrupts\n"); 
+			    "could not establish software interrupts\n");
 
 			error = ENXIO;
 			goto err_out;
@@ -6703,7 +6703,7 @@ ixgbe_configure_interrupts(struct adapter *adapter)
 	 */
 	if (ncpu == 1)
 		goto msi;
-	
+
 	/* First try MSI-X */
 	msgs = pci_msix_count(adapter->osdep.pc, adapter->osdep.tag);
 	msgs = MIN(msgs, IXG_MAX_NINTR);

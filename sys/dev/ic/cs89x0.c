@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.44 2019/04/26 06:33:33 msaitoh Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.45 2019/05/23 10:57:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.44 2019/04/26 06:33:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.45 2019/05/23 10:57:28 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -572,17 +572,18 @@ cs_get_default_media(struct cs_softc *sc)
 
 	switch (adp_cfg & ADPTR_CFG_MEDIA) {
 	case ADPTR_CFG_AUI:
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_5);
+		ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_10_5);
 		break;
 	case ADPTR_CFG_10BASE2:
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_2);
+		ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_10_2);
 		break;
 	case ADPTR_CFG_10BASET:
 	default:
 		if (xmit_ctl & XMIT_CTL_FDX)
-			ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T|IFM_FDX);
+			ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_10_T
+			    | IFM_FDX);
 		else
-			ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T);
+			ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_10_T);
 		break;
 	}
 	return;
@@ -591,7 +592,7 @@ cs_get_default_media(struct cs_softc *sc)
 	aprint_error_dev(sc->sc_dev,
 	    "WARNING: default media setting may be inaccurate\n");
 	/* XXX Arbitrary... */
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T);
+	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_10_T);
 }
 
 /*
