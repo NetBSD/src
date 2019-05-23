@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.4 2019/03/07 14:00:25 msaitoh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.5 2019/05/23 10:57:29 msaitoh Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
@@ -29,7 +29,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.4 2019/03/07 14:00:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.5 2019/05/23 10:57:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -200,7 +200,7 @@ ure_read_1(struct ure_softc *sc, uint16_t reg, uint16_t index)
 
 	shift = (reg & 3) << 3;
 	reg &= ~3;
-	
+
 	ure_read_mem(sc, reg, index, &temp, 4);
 	val = UGETDW(temp);
 	val >>= shift;
@@ -513,7 +513,7 @@ ure_init(struct ifnet *ifp)
 	ure_write_2(sc, URE_PLA_FMC, URE_MCU_TYPE_PLA,
 	    ure_read_2(sc, URE_PLA_FMC, URE_MCU_TYPE_PLA) |
 	    URE_FMC_FCR_MCU_EN);
-	    
+
 	/* Enable transmit and receive. */
 	ure_write_1(sc, URE_PLA_CR, URE_MCU_TYPE_PLA,
 	    ure_read_1(sc, URE_PLA_CR, URE_MCU_TYPE_PLA) | URE_CR_RE |
@@ -583,7 +583,7 @@ ure_start(struct ifnet *ifp)
 	int idx;
 
 	if ((sc->ure_flags & URE_FLAG_LINK) == 0 ||
-	    (ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING) {
+	    (ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING) {
 		return;
 	}
 
@@ -775,7 +775,7 @@ ure_rtl8153_init(struct ure_softc *sc)
 	}
 	if (i == URE_TIMEOUT)
 		URE_PRINTF(sc, "timeout waiting for phy to stabilize\n");
-	
+
 	ure_write_2(sc, URE_USB_U2P3_CTRL, URE_MCU_TYPE_USB,
 	    ure_read_2(sc, URE_USB_U2P3_CTRL, URE_MCU_TYPE_USB) &
 	    ~URE_U2P3_ENABLE);
@@ -807,7 +807,7 @@ ure_rtl8153_init(struct ure_softc *sc)
 	ure_write_1(sc, URE_USB_CSR_DUMMY2, URE_MCU_TYPE_USB,
 	    ure_read_1(sc, URE_USB_CSR_DUMMY2, URE_MCU_TYPE_USB) |
 	    URE_EP4_FULL_FC);
-	
+
 	ure_write_2(sc, URE_USB_WDT11_CTRL, URE_MCU_TYPE_USB,
 	    ure_read_2(sc, URE_USB_WDT11_CTRL, URE_MCU_TYPE_USB) &
 	    ~URE_TIMER11_EN);
@@ -815,7 +815,7 @@ ure_rtl8153_init(struct ure_softc *sc)
 	ure_write_2(sc, URE_PLA_LED_FEATURE, URE_MCU_TYPE_PLA,
 	    ure_read_2(sc, URE_PLA_LED_FEATURE, URE_MCU_TYPE_PLA) &
 	    ~URE_LED_MODE_MASK);
-	    
+
 	if ((sc->ure_chip & URE_CHIP_VER_5C10) &&
 	    sc->ure_udev->ud_speed != USB_SPEED_SUPER)
 		val = URE_LPM_TIMER_500MS;
@@ -894,7 +894,7 @@ ure_disable_teredo(struct ure_softc *sc)
 {
 
 	ure_write_4(sc, URE_PLA_TEREDO_CFG, URE_MCU_TYPE_PLA,
-	    ure_read_4(sc, URE_PLA_TEREDO_CFG, URE_MCU_TYPE_PLA) & 
+	    ure_read_4(sc, URE_PLA_TEREDO_CFG, URE_MCU_TYPE_PLA) &
 	    ~(URE_TEREDO_SEL | URE_TEREDO_RS_EVENT_MASK | URE_OOB_TEREDO_EN));
 	ure_write_2(sc, URE_PLA_WDT6_CTRL, URE_MCU_TYPE_PLA,
 	    URE_WDT6_SET_MODE);
@@ -925,7 +925,7 @@ ure_init_fifo(struct ure_softc *sc)
 			    URE_CKADSEL_L | URE_ADC_EN | URE_EN_EMI_L);
 		if (sc->ure_chip & URE_CHIP_VER_5C00)
 			ure_ocp_reg_write(sc, URE_OCP_EEE_CFG,
-			    ure_ocp_reg_read(sc, URE_OCP_EEE_CFG) & 
+			    ure_ocp_reg_read(sc, URE_OCP_EEE_CFG) &
 			    ~URE_CTAP_SHORT_EN);
 		ure_ocp_reg_write(sc, URE_OCP_POWER_CFG,
 		    ure_ocp_reg_read(sc, URE_OCP_POWER_CFG) |
@@ -1358,7 +1358,7 @@ ure_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct mbuf *m;
 	int s;
 	struct ure_rxpkt rxhdr;
-	
+
 	if (sc->ure_dying)
 		return;
 

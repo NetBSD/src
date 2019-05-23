@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.17 2019/04/24 08:21:25 msaitoh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.18 2019/05/23 10:57:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -214,7 +214,8 @@ dme_phy_read(struct dme_softc *sc, int reg)
 	dme_write(sc, DM9000_EPCR, DM9000_EPCR_ERPRR + DM9000_EPCR_EPOS_PHY);
 
 	/* Wait until access to PHY has completed */
-	while (dme_read(sc, DM9000_EPCR) & DM9000_EPCR_ERRE);
+	while (dme_read(sc, DM9000_EPCR) & DM9000_EPCR_ERRE)
+		;
 
 	/* Reset ERPRR-bit */
 	dme_write(sc, DM9000_EPCR, DM9000_EPCR_EPOS_PHY);
@@ -443,7 +444,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_100_TX, 0, NULL);
 
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
 	if (enaddr != NULL)
 		memcpy(sc->sc_enaddr, enaddr, sizeof(sc->sc_enaddr));
@@ -491,7 +492,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 	    DM9000_IOMODE_MASK) >> DM9000_IOMODE_SHIFT;
 
 	DPRINTF(("DM9000 Operation Mode: "));
-	switch( io_mode) {
+	switch (io_mode) {
 	case DM9000_MODE_16BIT:
 		DPRINTF(("16-bit mode"));
 		sc->sc_data_width = 2;
@@ -697,7 +698,7 @@ dme_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	switch(cmd) {
+	switch (cmd) {
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
@@ -1039,8 +1040,8 @@ dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
 				}
 				to_write -= i * 2;
 			}
-		} /* while(...) */
-	} /* for(...) */
+		} /* while (...) */
+	} /* for (...) */
 
 	return length;
 }
@@ -1131,7 +1132,7 @@ dme_pkt_write_1(struct dme_softc *sc, struct mbuf *bufChain)
 			    sc->dme_data, *write_ptr);
 			write_ptr++;
 		}
-	} /* for(...) */
+	} /* for (...) */
 
 	return length;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.49 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.50 2019/05/23 10:57:27 msaitoh Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.49 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.50 2019/05/23 10:57:27 msaitoh Exp $");
 
 #include "opt_emac.h"
 
@@ -267,7 +267,7 @@ do {									\
 	__rxd->md_stat_ctrl = MAL_RX_EMPTY | MAL_RX_INTERRUPT |		\
 	    /* Set wrap on last descriptor. */				\
 	    (((x) == EMAC_NRXDESC - 1) ? MAL_RX_WRAP : 0);		\
-	EMAC_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+	EMAC_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE); \
 } while (/*CONSTCOND*/0)
 
 #define	EMAC_WRITE(sc, reg, val) \
@@ -525,10 +525,10 @@ emac_attach(device_t parent, device_t self, void *aux)
 	mii_attach(self, mii, 0xffffffff, mii_phy, MII_OFFSET_ANY,
 	    MIIF_DOPAUSE);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
-		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_NONE);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	ifp = &sc->sc_ethercom.ec_if;
 	strcpy(ifp->if_xname, xname);
@@ -660,7 +660,7 @@ emac_start(struct ifnet *ifp)
 
 	lasttx = 0;	/* XXX gcc */
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*
@@ -701,7 +701,7 @@ emac_start(struct ifnet *ifp)
 		 * and try again.
 		 */
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error) {
 			if (error == EFBIG) {
 				EMAC_EVCNT_INCR(&sc->sc_ev_txdrop);
@@ -1266,7 +1266,7 @@ emac_txreap(struct emac_softc *sc)
 
 		EMAC_CDTXSYNC(sc, txs->txs_lastdesc,
 		    txs->txs_dmamap->dm_nsegs,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		txstat = sc->sc_txdescs[txs->txs_lastdesc].md_stat_ctrl;
 		if (txstat & MAL_TX_READY)
@@ -1341,7 +1341,7 @@ emac_soft_reset(struct emac_softc *sc)
 	/*
 	 * The PHY must provide a TX Clk in order perform a soft reset the
 	 * EMAC.  If none is present, select the internal clock,
-	 * SDR0_MFR[E0CS,E1CS].  After the soft reset, select the external
+	 * SDR0_MFR[E0CS, E1CS].  After the soft reset, select the external
 	 * clock.
 	 */
 
@@ -1586,7 +1586,7 @@ emac_rxeob_intr(void *arg)
 		rxs = &sc->sc_rxsoft[i];
 
 		EMAC_CDRXSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		rxstat = sc->sc_rxdescs[i].md_stat_ctrl;
 
@@ -1596,7 +1596,7 @@ emac_rxeob_intr(void *arg)
 			 */
 			/* Flush current empty descriptor */
 			EMAC_CDRXSYNC(sc, i,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			break;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.35 2018/08/02 06:09:04 riastradh Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.36 2019/05/23 10:57:29 msaitoh Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.35 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.36 2019/05/23 10:57:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -901,7 +901,7 @@ otus_get_chanlist(struct otus_softc *sc)
 	/* XXX regulatory domain. */
 	uint16_t domain = le16toh(sc->sc_eeprom.baseEepHeader.regDmn[0]);
 
-	DPRINTFN(DBG_FN|DBG_INIT, sc, "regdomain=0x%04x\n", domain);
+	DPRINTFN(DBG_FN | DBG_INIT, sc, "regdomain=0x%04x\n", domain);
 #endif
 
 	ic = &sc->sc_ic;
@@ -1302,7 +1302,7 @@ otus_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	sc = ic->ic_ifp->if_softc;
 
-	DPRINTFN(DBG_FN|DBG_STM, sc, "nstate=%s(%d), arg=%d\n",
+	DPRINTFN(DBG_FN | DBG_STM, sc, "nstate=%s(%d), arg=%d\n",
 	    ieee80211_state_name[nstate], nstate, arg);
 
 	/* Do it in a process context. */
@@ -1328,7 +1328,7 @@ otus_newstate_cb(struct otus_softc *sc, void *arg)
 
 #ifdef OTUS_DEBUG
 	enum ieee80211_state ostate = ostate = ic->ic_state;
-	DPRINTFN(DBG_FN|DBG_STM, sc, "%s(%d)->%s(%d)\n",
+	DPRINTFN(DBG_FN | DBG_STM, sc, "%s(%d)->%s(%d)\n",
 	    ieee80211_state_name[ostate], ostate,
 	    ieee80211_state_name[nstate], nstate);
 #endif
@@ -1450,7 +1450,7 @@ Static void
 otus_write(struct otus_softc *sc, uint32_t reg, uint32_t val)
 {
 
-	DPRINTFN(DBG_FN|DBG_REG, sc, "reg=0x%x, val=0x%x\n", reg, val);
+	DPRINTFN(DBG_FN | DBG_REG, sc, "reg=0x%x, val=0x%x\n", reg, val);
 
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 	KASSERT(sc->sc_write_idx < __arraycount(sc->sc_write_buf));
@@ -2449,7 +2449,7 @@ otus_init_mac(struct otus_softc *sc)
 {
 	int error;
 
-	DPRINTFN(DBG_FN|DBG_INIT, sc, "\n");
+	DPRINTFN(DBG_FN | DBG_INIT, sc, "\n");
 
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
@@ -3109,7 +3109,7 @@ otus_led_newstate_type3(struct otus_softc *sc)
 
 	ic = &sc->sc_ic;
 	led_state = sc->sc_led_state;
-	switch(ic->ic_state) {
+	switch (ic->ic_state) {
 	case IEEE80211_S_INIT:
 		led_state = 0;
 		break;
@@ -3145,7 +3145,7 @@ otus_init(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	DPRINTFN(DBG_FN|DBG_INIT, sc, "\n");
+	DPRINTFN(DBG_FN | DBG_INIT, sc, "\n");
 
 	ic = &sc->sc_ic;
 
