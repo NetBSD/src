@@ -1,4 +1,4 @@
-/* $NetBSD: fixedregulator.c,v 1.6 2018/01/28 18:21:52 jmcneill Exp $ */
+/* $NetBSD: fixedregulator.c,v 1.7 2019/05/23 20:49:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.6 2018/01/28 18:21:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.7 2019/05/23 20:49:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,13 +164,13 @@ fixedregulator_enable(device_t dev, bool enable)
 
 	if (enable) {
 		if (sc->sc_pin != NULL)
-			fdtbus_gpio_write_raw(sc->sc_pin, sc->sc_enable_val);
+			fdtbus_gpio_write(sc->sc_pin, sc->sc_enable_val);
 		if (sc->sc_delay > 0)
 			delay(sc->sc_delay);
 	} else {
 		if (sc->sc_always_on)
 			return EIO;
-		fdtbus_gpio_write_raw(sc->sc_pin, !sc->sc_enable_val);
+		fdtbus_gpio_write(sc->sc_pin, !sc->sc_enable_val);
 	}
 	return 0;
 }
