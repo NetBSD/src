@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.49 2019/02/05 06:17:01 msaitoh Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.50 2019/05/23 10:30:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.49 2019/02/05 06:17:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.50 2019/05/23 10:30:35 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -81,8 +81,8 @@ integrate u_int	maceput(struct mc_softc *, struct mbuf *);
 integrate void	mc_tint(struct mc_softc *);
 integrate void	mace_read(struct mc_softc *, void *, int);
 integrate struct mbuf *mace_get(struct mc_softc *, void *, int);
-static void mace_calcladrf(struct ethercom *, u_int8_t *);
-static inline u_int16_t ether_cmp(void *, void *);
+static void mace_calcladrf(struct ethercom *, uint8_t *);
+static inline uint16_t ether_cmp(void *, void *);
 
 
 /*
@@ -99,12 +99,12 @@ static inline u_int16_t ether_cmp(void *, void *);
  * Please do NOT tweak this without looking at the actual
  * assembly code generated before and after your tweaks!
  */
-static inline u_int16_t
+static inline uint16_t
 ether_cmp(void *one, void *two)
 {
-	u_int16_t *a = (u_short *) one;
-	u_int16_t *b = (u_short *) two;
-	u_int16_t diff;
+	uint16_t *a = (u_short *) one;
+	uint16_t *b = (u_short *) two;
+	uint16_t diff;
 
 #ifdef	m68k
 	/*
@@ -124,7 +124,7 @@ ether_cmp(void *one, void *two)
 	diff = (a[0] - b[0]) | (a[1] - b[1]) | (a[2] - b[2]);
 #endif
 
-	return (diff);
+	return diff;
 }
 
 #define ETHER_CMP	ether_cmp
@@ -135,7 +135,7 @@ ether_cmp(void *one, void *two)
  * to accept packets.
  */
 int
-mcsetup(struct mc_softc	*sc, u_int8_t *lladdr)
+mcsetup(struct mc_softc	*sc, uint8_t *lladdr)
 {
 	struct ifnet *ifp = &sc->sc_if;
 
@@ -158,7 +158,7 @@ mcsetup(struct mc_softc	*sc, u_int8_t *lladdr)
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, lladdr);
 
-	return (0);
+	return 0;
 }
 
 hide int
@@ -231,7 +231,7 @@ mcioctl(struct ifnet *ifp, u_long cmd, void *data)
 		err = ether_ioctl(ifp, cmd, data);
 	}
 	splx(s);
-	return (err);
+	return err;
 }
 
 /*
@@ -285,11 +285,11 @@ hide int
 mcinit(struct mc_softc *sc)
 {
 	int s;
-	u_int8_t maccc, ladrf[8];
+	uint8_t maccc, ladrf[8];
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		/* already running */
-		return (0);
+		return 0;
 
 	s = splnet();
 
@@ -346,7 +346,7 @@ mcinit(struct mc_softc *sc)
 	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 
 	splx(s);
-	return (0);
+	return 0;
 }
 
 /*
@@ -358,7 +358,7 @@ hide int
 mcstop(struct mc_softc *sc)
 {
 	int s;
-	
+
 	s = splnet();
 
 	NIC_PUT(sc, MACE_BIUCC, SWRST);
@@ -368,7 +368,7 @@ mcstop(struct mc_softc *sc)
 	sc->sc_if.if_flags &= ~IFF_RUNNING;
 
 	splx(s);
-	return (0);
+	return 0;
 }
 
 /*
@@ -420,14 +420,14 @@ maceput(struct mc_softc *sc, struct mbuf *m)
 	(*sc->sc_putpacket)(sc, totlen);
 
 	sc->sc_if.if_timer = 5;	/* 5 seconds to watch for failing to transmit */
-	return (totlen);
+	return totlen;
 }
 
 void
 mcintr(void *arg)
 {
 struct mc_softc *sc = arg;
-	u_int8_t ir;
+	uint8_t ir;
 
 	ir = NIC_GET(sc, MACE_IR) & ~NIC_GET(sc, MACE_IMR);
 	if (ir & JAB) {
@@ -467,7 +467,7 @@ struct mc_softc *sc = arg;
 integrate void
 mc_tint(struct mc_softc *sc)
 {
-	u_int8_t /* xmtrc,*/ xmtfs;
+	uint8_t /* xmtrc,*/ xmtfs;
 
 	/* xmtrc = */ NIC_GET(sc, MACE_XMTRC);
 	xmtfs = NIC_GET(sc, MACE_XMTFS);
@@ -594,7 +594,7 @@ mace_get(struct mc_softc *sc, void *pkt, int totlen)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
-		return (0);
+		return 0;
 	m_set_rcvif(m, &sc->sc_if);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
@@ -627,7 +627,7 @@ mace_get(struct mc_softc *sc, void *pkt, int totlen)
 		mp = &m->m_next;
 	}
 
-	return (top);
+	return top;
 }
 
 /*
@@ -635,13 +635,13 @@ mace_get(struct mc_softc *sc, void *pkt, int totlen)
  * address filter.
  */
 void
-mace_calcladrf(struct ethercom *ac, u_int8_t *af)
+mace_calcladrf(struct ethercom *ec, uint8_t *af)
 {
-	struct ifnet *ifp = &ac->ec_if;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	u_char *cp;
-	u_int32_t crc;
-	static const u_int32_t crctab[] = {
+	uint32_t crc;
+	static const uint32_t crctab[] = {
 		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
 		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
 		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
@@ -658,8 +658,8 @@ mace_calcladrf(struct ethercom *ac, u_int8_t *af)
 	 * the word.
 	 */
 
-	*((u_int32_t *)af) = *((u_int32_t *)af + 1) = 0;
-	ETHER_FIRST_MULTI(step, ac, enm);
+	*((uint32_t *)af) = *((uint32_t *)af + 1) = 0;
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (ETHER_CMP(enm->enm_addrlo, enm->enm_addrhi)) {
 			/*
@@ -693,7 +693,7 @@ mace_calcladrf(struct ethercom *ac, u_int8_t *af)
 
 allmulti:
 	ifp->if_flags |= IFF_ALLMULTI;
-	*((u_int32_t *)af) = *((u_int32_t *)af + 1) = 0xffffffff;
+	*((uint32_t *)af) = *((uint32_t *)af + 1) = 0xffffffff;
 }
 
 static u_char bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
