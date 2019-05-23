@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.105 2019/04/24 09:35:54 msaitoh Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.106 2019/05/23 10:57:28 msaitoh Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.105 2019/04/24 09:35:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.106 2019/05/23 10:57:28 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -159,34 +159,34 @@ void iy_mediastatus(struct ifnet *, struct ifmediareq *);
 int iyprobe(device_t, cfdata_t, void *);
 void iyattach(device_t, device_t, void *);
 
-static u_int16_t eepromread(bus_space_tag_t, bus_space_handle_t, int);
+static uint16_t eepromread(bus_space_tag_t, bus_space_handle_t, int);
 
-static int eepromreadall(bus_space_tag_t, bus_space_handle_t, u_int16_t *,
+static int eepromreadall(bus_space_tag_t, bus_space_handle_t, uint16_t *,
     int);
 
 CFATTACH_DECL_NEW(iy, sizeof(struct iy_softc),
     iyprobe, iyattach, NULL, NULL);
 
-static u_int8_t eepro_irqmap[] = EEPP_INTMAP;
-static u_int8_t eepro_revirqmap[] = EEPP_RINTMAP;
+static uint8_t eepro_irqmap[] = EEPP_INTMAP;
+static uint8_t eepro_revirqmap[] = EEPP_RINTMAP;
 
 int
 iyprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	u_int16_t eaddr[8];
+	uint16_t eaddr[8];
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	u_int8_t c, d;
+	uint8_t c, d;
 	int irq;
 
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_nirq < 1)
-		return (0);
+		return 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	iot = ia->ia_iot;
 
@@ -278,8 +278,8 @@ iyattach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	unsigned temp;
-	u_int16_t eaddr[8];
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+	uint16_t eaddr[8];
+	uint8_t myaddr[ETHER_ADDR_LEN];
 	int eirq;
 
 	iot = ia->ia_iot;
@@ -413,7 +413,7 @@ iystop(struct iy_softc *sc)
 #endif
 	sc->tx_start = sc->tx_end = sc->rx_size;
 	sc->tx_last = 0;
-	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 void
@@ -457,9 +457,9 @@ iyinit(struct iy_softc *sc)
 	bus_space_write_1(iot, ioh, REG1,
 	    temp | /* XMT_CHAIN_INT | XMT_CHAIN_ERRSTOP | */ RCV_DISCARD_BAD);
 
-	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
+	if (ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI))
 		temp = MATCH_ALL;
-	} else
+	else
 		temp = MATCH_BRDCST;
 
 	bus_space_write_1(iot, ioh, RECV_MODES_REG, temp);
@@ -498,7 +498,7 @@ iyinit(struct iy_softc *sc)
 #endif
 	temp = (temp & TEST_MODE_MASK);
 
-	switch(IFM_SUBTYPE(sc->iy_ifmedia.ifm_media)) {
+	switch (IFM_SUBTYPE(sc->iy_ifmedia.ifm_media)) {
 	case IFM_10_5:
 		temp &= ~ (BNC_BIT | TPE_BIT);
 		break;
@@ -591,7 +591,8 @@ iyinit(struct iy_softc *sc)
 
 	bus_space_write_1(iot, ioh, 0, BANK_SEL(0));
 
-	bus_space_write_1(iot, ioh, INT_MASK_REG, ALL_INTS & ~(RX_BIT|TX_BIT));
+	bus_space_write_1(iot, ioh, INT_MASK_REG,
+	    ALL_INTS & ~(RX_BIT | TX_BIT));
 	bus_space_write_1(iot, ioh, STATUS_REG, ALL_INTS); /* clear ints */
 
 	bus_space_write_1(iot, ioh, RCV_COPY_THRESHOLD, 0);
@@ -626,7 +627,7 @@ iystart(struct ifnet *ifp)
 	int avail;
 	char *data;
 	unsigned temp;
-	u_int16_t resval, stat;
+	uint16_t resval, stat;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
@@ -756,7 +757,7 @@ iystart(struct ifnet *ifp)
 			 */
 			if (llen > 1)
 				bus_space_write_multi_stream_2(iot, ioh,
-					MEM_PORT_REG, (u_int16_t *) data,
+					MEM_PORT_REG, (uint16_t *) data,
 					llen>>1);
 			residual = llen & 1;
 			if (residual) {
@@ -810,7 +811,8 @@ iystart(struct ifnet *ifp)
 			    le16toh(stat) | CHAIN);
 #endif
 		}
-		stat = bus_space_read_2(iot, ioh, MEM_PORT_REG); /* dummy read */
+		/* dummy read */
+		stat = bus_space_read_2(iot, ioh, MEM_PORT_REG);
 
 		/* XXX todo: enable ints here if disabled */
 
@@ -849,7 +851,7 @@ eepromwritebit(bus_space_tag_t iot, bus_space_handle_t ioh, int what)
 {
 	bus_space_write_1(iot, ioh, EEPROM_REG, what);
 	delay(1);
-	bus_space_write_1(iot, ioh, EEPROM_REG, what|EESK);
+	bus_space_write_1(iot, ioh, EEPROM_REG, what | EESK);
 	delay(1);
 	bus_space_write_1(iot, ioh, EEPROM_REG, what);
 	delay(1);
@@ -860,7 +862,7 @@ eepromreadbit(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int b;
 
-	bus_space_write_1(iot, ioh, EEPROM_REG, EECS|EESK);
+	bus_space_write_1(iot, ioh, EEPROM_REG, EECS | EESK);
 	delay(1);
 	b = bus_space_read_1(iot, ioh, EEPROM_REG);
 	bus_space_write_1(iot, ioh, EEPROM_REG, EECS);
@@ -869,25 +871,25 @@ eepromreadbit(bus_space_tag_t iot, bus_space_handle_t ioh)
 	return ((b & EEDO) != 0);
 }
 
-static u_int16_t
+static uint16_t
 eepromread(bus_space_tag_t iot, bus_space_handle_t ioh, int offset)
 {
 	volatile int i;
 	volatile int j;
-	volatile u_int16_t readval;
+	volatile uint16_t readval;
 
 	bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
 	delay(1);
 	bus_space_write_1(iot, ioh, EEPROM_REG, EECS); /* XXXX??? */
 	delay(1);
 
-	eepromwritebit(iot, ioh, EECS|EEDI);
-	eepromwritebit(iot, ioh, EECS|EEDI);
+	eepromwritebit(iot, ioh, EECS | EEDI);
+	eepromwritebit(iot, ioh, EECS | EEDI);
 	eepromwritebit(iot, ioh, EECS);
 
 	for (j=5; j>=0; --j) {
 		if ((offset>>j) & 1)
-			eepromwritebit(iot, ioh, EECS|EEDI);
+			eepromwritebit(iot, ioh, EECS | EEDI);
 		else
 			eepromwritebit(iot, ioh, EECS);
 	}
@@ -897,7 +899,7 @@ eepromread(bus_space_tag_t iot, bus_space_handle_t ioh, int offset)
 		readval |= eepromreadbit(iot, ioh);
 	}
 
-	bus_space_write_1(iot, ioh, EEPROM_REG, 0|EESK);
+	bus_space_write_1(iot, ioh, EEPROM_REG, 0 | EESK);
 	delay(1);
 	bus_space_write_1(iot, ioh, EEPROM_REG, 0);
 
@@ -1021,7 +1023,7 @@ iyget(struct iy_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh,
 			len &= ~1;
 
 			bus_space_read_multi_stream_2(iot, ioh, MEM_PORT_REG,
-			    mtod(m, u_int16_t *), len/2);
+			    mtod(m, uint16_t *), len / 2);
 		} else {
 #ifdef IYDEBUG
 			printf("%s: received odd mbuf\n",
@@ -1116,7 +1118,7 @@ iy_intr_tx(struct iy_softc *sc)
 		txstatus = le16toh(bus_space_read_stream_2(iot, ioh,
 			MEM_PORT_REG));
 
-		if ((txstatus & (TX_DONE|CMD_MASK)) != (TX_DONE|XMT_CMD))
+		if ((txstatus & (TX_DONE | CMD_MASK)) != (TX_DONE | XMT_CMD))
 			break;
 
 		txstat2 = le16toh(bus_space_read_stream_2(iot, ioh,
@@ -1195,7 +1197,7 @@ iyioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		sc->promisc = ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI);
 		/* XXX re-use ether_ioctl() */
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
@@ -1262,7 +1264,7 @@ iy_mediachange(struct ifnet *ifp)
 
 	if (IFM_TYPE(sc->iy_ifmedia.ifm_media) != IFM_ETHER)
 	    return EINVAL;
-	switch(IFM_SUBTYPE(sc->iy_ifmedia.ifm_media)) {
+	switch (IFM_SUBTYPE(sc->iy_ifmedia.ifm_media)) {
 	case IFM_10_5:
 	case IFM_10_2:
 	case IFM_10_T:
@@ -1296,8 +1298,8 @@ iy_mc_setup(struct iy_softc *sc)
 	bus_space_handle_t ioh;
 	int avail, last /*, end*/ , len;
 	int timeout;
-	volatile u_int16_t dum;
-	u_int8_t temp;
+	volatile uint16_t dum;
+	uint8_t temp;
 
 
 	ecp = &sc->sc_ethercom;
@@ -1332,12 +1334,12 @@ iy_mc_setup(struct iy_softc *sc)
 	bus_space_write_stream_2(iot, ioh, MEM_PORT_REG, htole16(len));
 
 	ETHER_FIRST_MULTI(step, ecp, enm);
-	while(enm) {
+	while (enm) {
 		/*
 		 * XXX ALIGNMENT LOSSAGE HERE?
 		 */
 		bus_space_write_multi_stream_2(iot, ioh, MEM_PORT_REG,
-		    (u_int16_t *) enm->enm_addrlo, 3);
+		    (uint16_t *) enm->enm_addrlo, 3);
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
@@ -1383,7 +1385,7 @@ iy_mc_reset(struct iy_softc *sc)
 	struct ifnet *ifp;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	u_int16_t temp;
+	uint16_t temp;
 
 	ecp = &sc->sc_ethercom;
 	ifp = &ecp->ec_if;
@@ -1399,7 +1401,7 @@ iy_mc_reset(struct iy_softc *sc)
 		 * Step through the list of addresses.
 		 */
 		ETHER_FIRST_MULTI(step, ecp, enm);
-		while(enm) {
+		while (enm) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto setupmulti;
@@ -1422,9 +1424,9 @@ iy_mc_reset(struct iy_softc *sc)
 
 setupmulti:
 	bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
-	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
+	if (ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI))
 		temp = MATCH_ALL;
-	} else
+	else
 		temp = MATCH_BRDCST;
 
 	bus_space_write_1(iot, ioh, RECV_MODES_REG, temp);
@@ -1505,7 +1507,7 @@ iyprobemem(struct iy_softc *sc)
 
 	sc->sram = testing;
 
-	switch(testing) {
+	switch (testing) {
 		case 65536:
 			/* 4 NFS packets + overhead RX, 2 NFS + overhead TX  */
 			sc->rx_size = 44*1024;
@@ -1528,11 +1530,11 @@ iyprobemem(struct iy_softc *sc)
 }
 
 static int
-eepromreadall(bus_space_tag_t iot, bus_space_handle_t ioh, u_int16_t *wordp,
+eepromreadall(bus_space_tag_t iot, bus_space_handle_t ioh, uint16_t *wordp,
     int maxi)
 {
 	int i;
-	u_int16_t checksum, tmp;
+	uint16_t checksum, tmp;
 
 	checksum = 0;
 

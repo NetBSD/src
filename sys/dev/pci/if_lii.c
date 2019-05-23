@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.22 2019/04/22 08:05:01 msaitoh Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.23 2019/05/23 10:57:28 msaitoh Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.22 2019/04/22 08:05:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.23 2019/05/23 10:57:28 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -145,17 +145,17 @@ CFATTACH_DECL_NEW(lii, sizeof(struct lii_softc),
 
 /* #define LII_DEBUG_REGS */
 #ifndef LII_DEBUG_REGS
-#define AT_READ_4(sc,reg) \
+#define AT_READ_4(sc, reg) \
     bus_space_read_4((sc)->sc_mmiot, (sc)->sc_mmioh, (reg))
-#define AT_READ_2(sc,reg) \
+#define AT_READ_2(sc, reg) \
     bus_space_read_2((sc)->sc_mmiot, (sc)->sc_mmioh, (reg))
-#define AT_READ_1(sc,reg) \
+#define AT_READ_1(sc, reg) \
     bus_space_read_1((sc)->sc_mmiot, (sc)->sc_mmioh, (reg))
-#define AT_WRITE_4(sc,reg,val) \
+#define AT_WRITE_4(sc, reg, val) \
     bus_space_write_4((sc)->sc_mmiot, (sc)->sc_mmioh, (reg), (val))
-#define AT_WRITE_2(sc,reg,val) \
+#define AT_WRITE_2(sc, reg, val) \
     bus_space_write_2((sc)->sc_mmiot, (sc)->sc_mmioh, (reg), (val))
-#define AT_WRITE_1(sc,reg,val) \
+#define AT_WRITE_1(sc, reg, val) \
     bus_space_write_1((sc)->sc_mmiot, (sc)->sc_mmioh, (reg), (val))
 #else
 static inline uint32_t
@@ -319,7 +319,7 @@ lii_attach(device_t parent, device_t self, void *aux)
 	    lii_media_status);
 	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
 	    MII_OFFSET_ANY, 0);
-	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -871,7 +871,7 @@ lii_start(struct ifnet *ifp)
 
 	DPRINTF(("lii_start\n"));
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	for (;;) {

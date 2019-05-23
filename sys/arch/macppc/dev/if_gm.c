@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.53 2019/04/22 08:30:31 msaitoh Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.54 2019/05/23 10:57:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.53 2019/04/22 08:30:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.54 2019/05/23 10:57:27 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -150,7 +150,7 @@ gmac_attach(device_t parent, device_t self, void *aux)
 	int node, i;
 	char *p;
 	struct gmac_dma *dp;
-	u_int32_t reg[10];
+	uint32_t reg[10];
 	u_char laddr[6];
 	char buf[PCI_INTRSTR_LEN];
 
@@ -240,16 +240,16 @@ gmac_attach(device_t parent, device_t self, void *aux)
 
 	/* Choose a default media. */
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
-		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_NONE);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, laddr);
 	rnd_attach_source(&sc->sc_rnd_source, xname, RND_TYPE_NET,
-			  RND_FLAG_DEFAULT); 
+			  RND_FLAG_DEFAULT);
 }
 
 u_int
@@ -602,7 +602,7 @@ gmac_init_mac(struct gmac_softc *sc)
 	gmac_write_reg(sc, GMAC_MAXFRAMESIZE, ETHER_MAX_LEN);
 	gmac_write_reg(sc, GMAC_PASIZE, 7);
 	gmac_write_reg(sc, GMAC_JAMSIZE, 4);
-	gmac_write_reg(sc, GMAC_ATTEMPTLIMIT,0x10);
+	gmac_write_reg(sc, GMAC_ATTEMPTLIMIT, 0x10);
 	gmac_write_reg(sc, GMAC_MACCNTLTYPE, 0x8808);
 
 	gmac_write_reg(sc, GMAC_MACADDRESS0, (laddr[4] << 8) | laddr[5]);
@@ -646,8 +646,8 @@ gmac_setladrf(struct gmac_softc *sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	struct ethercom *ec = &sc->sc_ethercom;
-	u_int32_t crc;
-	u_int32_t hash[16];
+	uint32_t crc;
+	uint32_t hash[16];
 	u_int v;
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.42 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.43 2019/05/23 10:57:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.42 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.43 2019/05/23 10:57:28 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -113,7 +113,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    cdatasize + ETHER_PAD_LEN, (void **) &sc->sc_cdata16,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
@@ -287,7 +287,7 @@ sonic_start(struct ifnet *ifp)
 	int error, olasttx, nexttx, opending, totlen, olseg;
 	int seg = 0;	/* XXX: gcc */
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*
@@ -325,7 +325,7 @@ sonic_start(struct ifnet *ifp)
 		 * again.
 		 */
 		if ((error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0 ||
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT)) != 0 ||
 		    (m0->m_pkthdr.len < ETHER_PAD_LEN &&
 		    dmamap->dm_nsegs == SONIC_NTXFRAGS)) {
 			if (error == 0)
@@ -349,7 +349,7 @@ sonic_start(struct ifnet *ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", device_xname(sc->sc_dev),
@@ -419,7 +419,7 @@ sonic_start(struct ifnet *ifp)
 
 			/* Sync the Tx descriptor. */
 			SONIC_CDTXSYNC32(sc, nexttx,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		} else {
 			tda16 = &sc->sc_tda16[nexttx];
 			for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
@@ -458,7 +458,7 @@ sonic_start(struct ifnet *ifp)
 
 			/* Sync the Tx descriptor. */
 			SONIC_CDTXSYNC16(sc, nexttx,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		}
 
 		/* Advance the Tx pointer. */
@@ -497,22 +497,22 @@ sonic_start(struct ifnet *ifp)
 			sc->sc_tda32[sc->sc_txlast].tda_frags[seg].frag_ptr0 |=
 			    htosonic32(sc, TDA_LINK_EOL);
 			SONIC_CDTXSYNC32(sc, sc->sc_txlast,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			sc->sc_tda32[olasttx].tda_frags[olseg].frag_ptr0 &=
 			    htosonic32(sc, ~TDA_LINK_EOL);
 			SONIC_CDTXSYNC32(sc, olasttx,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		} else {
 			olseg =
 			    sonic16toh(sc, sc->sc_tda16[olasttx].tda_fragcnt);
 			sc->sc_tda16[sc->sc_txlast].tda_frags[seg].frag_ptr0 |=
 			    htosonic16(sc, TDA_LINK_EOL);
 			SONIC_CDTXSYNC16(sc, sc->sc_txlast,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			sc->sc_tda16[olasttx].tda_frags[olseg].frag_ptr0 &=
 			    htosonic16(sc, ~TDA_LINK_EOL);
 			SONIC_CDTXSYNC16(sc, olasttx,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		}
 
 		/* Start the transmitter. */
@@ -590,7 +590,7 @@ sonic_intr(void *arg)
 		if (isr & IMR_PRX)
 			sonic_rxintr(sc);
 
-		if (isr & (IMR_PTX|IMR_TXER)) {
+		if (isr & (IMR_PTX | IMR_TXER)) {
 			if (sonic_txintr(sc) & TCR_FU) {
 				printf("%s: transmit FIFO underrun\n",
 				    device_xname(sc->sc_dev));
@@ -598,7 +598,7 @@ sonic_intr(void *arg)
 			}
 		}
 
-		if (isr & (IMR_RFO|IMR_RBA|IMR_RBE|IMR_RDE)) {
+		if (isr & (IMR_RFO | IMR_RBA | IMR_RBE | IMR_RDE)) {
 #define	PRINTERR(bit, str)						\
 			if (isr & (bit))				\
 				printf("%s: %s\n",device_xname(sc->sc_dev), str)
@@ -642,19 +642,19 @@ sonic_txintr(struct sonic_softc *sc)
 
 		if (sc->sc_32bit) {
 			SONIC_CDTXSYNC32(sc, i,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			tda32 = &sc->sc_tda32[i];
 			status = sonic32toh(sc, tda32->tda_status);
 			SONIC_CDTXSYNC32(sc, i, BUS_DMASYNC_PREREAD);
 		} else {
 			SONIC_CDTXSYNC16(sc, i,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			tda16 = &sc->sc_tda16[i];
 			status = sonic16toh(sc, tda16->tda_status);
 			SONIC_CDTXSYNC16(sc, i, BUS_DMASYNC_PREREAD);
 		}
 
-		if ((status & ~(TCR_EXDIS|TCR_CRCI|TCR_POWC|TCR_PINT)) == 0)
+		if ((status & ~(TCR_EXDIS |TCR_CRCI |TCR_POWC |TCR_PINT)) == 0)
 			break;
 
 		totstat |= status;
@@ -709,7 +709,7 @@ sonic_rxintr(struct sonic_softc *sc)
 
 		if (sc->sc_32bit) {
 			SONIC_CDRXSYNC32(sc, i,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			rda32 = &sc->sc_rda32[i];
 			SONIC_CDRXSYNC32(sc, i, BUS_DMASYNC_PREREAD);
 			if (rda32->rda_inuse != 0)
@@ -721,7 +721,7 @@ sonic_rxintr(struct sonic_softc *sc)
 			/* seqno = sonic32toh(sc, rda32->rda_seqno); */
 		} else {
 			SONIC_CDRXSYNC16(sc, i,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			rda16 = &sc->sc_rda16[i];
 			SONIC_CDRXSYNC16(sc, i, BUS_DMASYNC_PREREAD);
 			if (rda16->rda_inuse != 0)
@@ -916,13 +916,13 @@ sonic_init(struct ifnet *ifp)
 		for (i = 0; i < SONIC_NTXDESC; i++) {
 			memset(&sc->sc_tda32[i], 0, sizeof(struct sonic_tda32));
 			SONIC_CDTXSYNC32(sc, i,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		}
 	} else {
 		for (i = 0; i < SONIC_NTXDESC; i++) {
 			memset(&sc->sc_tda16[i], 0, sizeof(struct sonic_tda16));
 			SONIC_CDTXSYNC16(sc, i,
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		}
 	}
 	sc->sc_txpending = 0;
@@ -1062,13 +1062,13 @@ sonic_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Stop the transmitter, receiver, and timer.
 	 */
-	CSR_WRITE(sc, SONIC_CR, CR_HTX|CR_RXDIS|CR_STP);
+	CSR_WRITE(sc, SONIC_CR, CR_HTX | CR_RXDIS | CR_STP);
 	for (i = 0; i < 1000; i++) {
-		if ((CSR_READ(sc, SONIC_CR) & (CR_TXP|CR_RXEN|CR_ST)) == 0)
+		if ((CSR_READ(sc, SONIC_CR) & (CR_TXP | CR_RXEN | CR_ST)) == 0)
 			break;
 		delay(2);
 	}
-	if ((CSR_READ(sc, SONIC_CR) & (CR_TXP|CR_RXEN|CR_ST)) != 0)
+	if ((CSR_READ(sc, SONIC_CR) & (CR_TXP | CR_RXEN | CR_ST)) != 0)
 		printf("%s: SONIC failed to stop\n", device_xname(sc->sc_dev));
 
 	/*
@@ -1122,7 +1122,7 @@ sonic_add_rxbuf(struct sonic_softc *sc, int idx)
 
 	error = bus_dmamap_load(sc->sc_dmat, ds->ds_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    device_xname(sc->sc_dev), idx, error);
