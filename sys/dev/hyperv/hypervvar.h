@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervvar.h,v 1.1 2019/02/15 08:54:01 nonaka Exp $	*/
+/*	$NetBSD: hypervvar.h,v 1.2 2019/05/24 14:28:48 nonaka Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -62,6 +62,7 @@ __CTASSERT(sizeof(struct hyperv_reftsc) == PAGE_SIZE);
 
 int	hyperv_hypercall_enabled(void);
 int	hyperv_synic_supported(void);
+int	hyperv_is_gen1(void);
 void	hyperv_send_eom(void);
 void	hyperv_intr(void);
 

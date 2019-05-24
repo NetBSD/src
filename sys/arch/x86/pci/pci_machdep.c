@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.85 2019/05/17 18:34:33 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.86 2019/05/24 14:28:48 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.85 2019/05/17 18:34:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.86 2019/05/24 14:28:48 nonaka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1117,7 +1117,6 @@ populate_fbinfo(device_t dev, prop_dictionary_t dict)
 device_t
 device_pci_register(device_t dev, void *aux)
 {
-	static bool found_console = false;
 	device_t parent = device_parent(dev);
 
 	device_pci_props_register(dev, aux);
@@ -1171,7 +1170,7 @@ device_pci_register(device_t dev, void *aux)
 		}
 	}
 	if (parent && device_is_a(parent, "pci") &&
-	    found_console == false) {
+	    x86_found_console == false) {
 		struct pci_attach_args *pa = aux;
 
 		if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY) {
@@ -1209,7 +1208,7 @@ device_pci_register(device_t dev, void *aux)
 			vga_posth = vga_post_init(pa->pa_bus, pa->pa_device,
 			    pa->pa_function);
 #endif
-			found_console = true;
+			x86_found_console = true;
 			return NULL;
 		}
 	}
