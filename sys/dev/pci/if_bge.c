@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.331 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.332 2019/05/24 05:57:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.331 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.332 2019/05/24 05:57:35 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1559,8 +1559,8 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 	if (!(sc->bge_flags & BGEF_RX_ALIGNBUG))
 	    m_adj(m_new, ETHER_ALIGN);
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map,
-	    mtod(m_new, char *) - (char *)sc->bge_cdata.bge_jumbo_buf, BGE_JLEN,
-	    BUS_DMASYNC_PREREAD);
+	    mtod(m_new, char *) - (char *)sc->bge_cdata.bge_jumbo_buf,
+	    BGE_JLEN, BUS_DMASYNC_PREREAD);
 	/* Set up the descriptor. */
 	r = &sc->bge_rdata->bge_rx_jumbo_ring[i];
 	sc->bge_cdata.bge_rx_jumbo_chain[i] = m_new;
@@ -1794,8 +1794,8 @@ alloc_done:
 static void
 bge_setmulti(struct bge_softc *sc)
 {
-	struct ethercom		*ac = &sc->ethercom;
-	struct ifnet		*ifp = &ac->ec_if;
+	struct ethercom		*ec = &sc->ethercom;
+	struct ifnet		*ifp = &ec->ec_if;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	uint32_t		hashes[4] = { 0, 0, 0, 0 };
@@ -1806,7 +1806,7 @@ bge_setmulti(struct bge_softc *sc)
 		goto allmulti;
 
 	/* Now program new ones. */
-	ETHER_FIRST_MULTI(step, ac, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
@@ -2317,8 +2317,7 @@ bge_blockinit(struct bge_softc *sc)
 	if (!BGE_IS_5705_PLUS(sc)) {
 		/* 57XX step 33 */
 		/* Configure mbuf memory pool */
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
-		    BGE_BUFFPOOL_1);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR, BGE_BUFFPOOL_1);
 
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x10000);
@@ -4452,9 +4451,8 @@ bge_rxeof(struct bge_softc *sc)
 		 * If we received a packet with a vlan tag, pass it
 		 * to vlan_input() instead of ether_input().
 		 */
-		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG) {
+		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG)
 			vlan_set_tag(m, cur_rx->bge_vlan_tag);
-		}
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
@@ -4927,8 +4925,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			prev->m_next = m_free(m);
 			m = prev;
 			continue;
-		}
-		else if (m->m_next != NULL &&
+		} else if (m->m_next != NULL &&
 			     M_TRAILINGSPACE(m) >= shortfall &&
 			     m->m_next->m_len >= (8 + shortfall)) {
 		    /* m is writable and have enough data in next, pull up. */
@@ -4938,15 +4935,17 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			m->m_len += shortfall;
 			m->m_next->m_len -= shortfall;
 			m->m_next->m_data += shortfall;
-		}
-		else if (m->m_next == NULL || 1) {
+		} else if (m->m_next == NULL || 1) {
 			/* Got a runt at the very end of the packet.
 			 * borrow data from the tail of the preceding mbuf and
-			 * update its length in-place. (The original data is still
-			 * valid, so we can do this even if prev is not writable.)
+			 * update its length in-place. (The original data is
+			 * still valid, so we can do this even if prev is not
+			 * writable.)
 			 */
 
-			/* if we'd make prev a runt, just move all of its data. */
+			/*
+			 * If we'd make prev a runt, just move all of its data.
+			 */
 			KASSERT(prev != NULL /*, ("runt but null PREV")*/);
 			KASSERT(prev->m_len >= 8 /*, ("runt prev")*/);
 
@@ -4958,10 +4957,11 @@ bge_compact_dma_runt(struct mbuf *pkt)
 				if (M_LEADINGSPACE(m) < shorfall) {
 					void *m_dat;
 					m_dat = (m->m_flags & M_PKTHDR) ?
-					  m->m_pktdat : m->dat;
-					memmove(m_dat, mtod(m, void*), m->m_len);
+					    m->m_pktdat : m->dat;
+					memmove(m_dat, mtod(m, void*),
+					    m->m_len);
 					m->m_data = m_dat;
-				    }
+				}
 			} else
 #endif	/* just do the safe slow thing */
 			{
@@ -5198,12 +5198,10 @@ doit:
 			txbd_tso_flags |=
 			    ((bge_hlen & 0xF8) << 7) | ((bge_hlen & 0x4) << 2);
 		} else if (BGE_IS_5705_PLUS(sc)) {
-			tcp_seg_flags =
-				bge_hlen << 11;
+			tcp_seg_flags = bge_hlen << 11;
 		} else {
 			/* XXX iptcp_opt_words or bge_hlen ? */
-			txbd_tso_flags |=
-				iptcp_opt_words << 12;
+			txbd_tso_flags |= iptcp_opt_words << 12;
 		}
 		maxsegsize = mss | tcp_seg_flags;
 		ip->ip_len = htons(mss + ip_tcp_hlen);
@@ -5222,10 +5220,9 @@ doit:
 	 */
 	remap = true;
 load_again:
-	error = bus_dmamap_load_mbuf(dmatag, dmamap,
-	    m_head, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(dmatag, dmamap, m_head, BUS_DMA_NOWAIT);
 	if (__predict_false(error)) {
-		if (error == EFBIG && remap)  {
+		if (error == EFBIG && remap) {
 			struct mbuf *m;
 			remap = false;
 			m = m_defrag(m_head, M_NOWAIT);
