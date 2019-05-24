@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.449 2019/04/07 13:00:00 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.450 2019/05/24 06:01:05 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.449 2019/04/07 13:00:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.450 2019/05/24 06:01:05 mlelstv Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -757,6 +757,7 @@ wd_diskstart(device_t dev, struct buf *bp)
 	struct ata_xfer *xfer;
 	struct ata_channel *chp;
 	unsigned openings;
+	int ticks;
 
 	mutex_enter(&wd->sc_lock);
 
@@ -769,22 +770,37 @@ wd_diskstart(device_t dev, struct buf *bp)
 	openings = uimin(openings, wd->drvp->drv_openings);
 
 	if (wd->inflight >= openings) {
-		mutex_exit(&wd->sc_lock);
-		return EAGAIN;
+		/*
+		 * pretend we run out of memory when the queue is full,
+		 * so that the operation is retried after a minimal
+		 * delay.
+		 */
+		xfer = NULL;
+		ticks = 1;
+	} else {
+		/*
+		 * If there is no available memory, retry later. This
+		 * happens very rarely and only under memory pressure,
+		 * so wait relatively long before retry.
+		 */
+		xfer = ata_get_xfer(chp, false);
+		ticks = hz/2;
 	}
 
-	xfer = ata_get_xfer(chp, false);
 	if (xfer == NULL) {
 		ATADEBUG_PRINT(("wd_diskstart %s no xfer\n",
 		    dksc->sc_xname), DEBUG_XFERS);
 
 		/*
-		 * No available memory, retry later. This happens very rarely
-		 * and only under memory pressure, so wait relatively long
-		 * before retry.
+		 * The disk queue is pushed automatically when an I/O
+		 * operation finishes or another one is queued. We
+		 * need this extra timeout because an ATA channel
+		 * might be shared by more than one disk queue and
+		 * all queues need to be restarted when another slot
+		 * becomes available.
 		 */
 		if (!callout_pending(&wd->sc_restart_diskqueue)) {
-			callout_reset(&wd->sc_restart_diskqueue, hz / 2,
+			callout_reset(&wd->sc_restart_diskqueue, ticks,
 			    wdrestart, dev);
 		}
 
