@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.281 2019/04/17 17:44:51 sevan Exp $
+$NetBSD: acronyms,v 1.282 2019/05/24 10:08:46 sevan Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -31,9 +31,11 @@ AISE	as I see it
 AIU	as I understand
 AIUI	as I understand it
 AKA	also known as
+ALPR	automatic license plate recognition
 AM	ante meridiem
 AMA	ask me anything
 AMOL	a mountain of love
+ANPR	automatic number plate recognition
 APM	alternative payment model
 ASAIC	as soon as I can
 ASAP	as soon as possible
@@ -42,6 +44,7 @@ ATEOTD	at the end of the day
 ATM	at the moment
 ATM	{automated,automatic} teller machine
 ATW	around the world
+AVI	automatic vehicle identification
 AWK	Aho, Weinberger, [and] Kernighan
 AWOL	absent without official leave
 AYBABTU	all your base are belong to us
@@ -97,6 +100,7 @@ COB	close of business [day]
 COTS	commercial off-the-shelf
 CPC	cost per click
 CPE	customer premises equipment
+CPR	car plate recognition
 CRM	customer relationship management
 CTF	capture the flag
 CTN	can't talk now
@@ -329,6 +333,7 @@ LMSO	laughing my socks off
 LOIC	low orbit ion cannon
 LOL	laughing out loud
 LP	long playing [record]
+LPR	license plate recognition
 LTNS	long time no see
 LWYL	laugh with you later
 M&O	management & operations
@@ -337,6 +342,7 @@ MAD	mutually assured destruction
 MBA	master of business administration
 MFW	my face when
 MIA	missing in action
+MLPR	mobile license plate reader
 MMB	message me back
 MO	modus operandi
 MOTAS	member of the appropriate sex
@@ -567,6 +573,8 @@ VCR	video cassette recorder
 VEG	very evil grin
 VIP	very important person
 VLA	variable length array
+VLPR	vehicle license plate recognition
+VRI	vehicle recognition identification
 W/	with
 W/E	whatever
 W/O	without
