@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.21 2019/05/23 13:10:50 msaitoh Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.22 2019/05/24 00:13:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.21 2019/05/23 13:10:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.22 2019/05/24 00:13:25 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -174,11 +174,10 @@ void
 enet_attach_common(device_t self, bus_space_tag_t iot,
     bus_dma_tag_t dmat, bus_addr_t addr, bus_size_t size, int irq)
 {
-	struct enet_softc *sc;
+	struct enet_softc *sc = device_private(self);
 	struct ifnet *ifp;
 	struct mii_data * const mii = &sc->sc_mii;
 
-	sc = device_private(self);
 	sc->sc_dev = self;
 	sc->sc_iot = iot;
 	sc->sc_addr = addr;
