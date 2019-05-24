@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.5 2018/12/22 07:45:58 cherry Exp $ */
+/* $NetBSD: autoconf.h,v 1.6 2019/05/24 14:28:48 nonaka Exp $ */
 #ifndef _X86_AUTOCONF_H_
 #define _X86_AUTOCONF_H_
 
@@ -19,6 +19,8 @@ struct mainbus_softc {
 	device_t	sc_pnpbios;
 #endif
 };
+
+extern int x86_found_console;
 
 void device_pci_props_register(device_t, void *);
 device_t device_pci_register(device_t, void *);

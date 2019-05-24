@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.1 2019/02/15 08:54:01 nonaka Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.2 2019/05/24 14:28:48 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.1 2019/02/15 08:54:01 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.2 2019/05/24 14:28:48 nonaka Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -41,6 +41,9 @@ __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:1
 
 #ifdef _KERNEL_OPT
 #include "lapic.h"
+#include "genfb.h"
+#include "opt_ddb.h"
+#include "wsdisplay.h"
 #endif
 
 #include <sys/param.h>
@@ -57,13 +60,27 @@ __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:1
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/autoconf.h>
+#include <machine/bootinfo.h>
 #include <machine/cpufunc.h>
 #include <machine/cputypes.h>
 #include <machine/cpuvar.h>
 #include <machine/cpu_counter.h>
+#include <x86/efi.h>
+
+#include <dev/wsfb/genfbvar.h>
+#include <arch/x86/include/genfb_machdep.h>
 
 #include <x86/x86/hypervreg.h>
+#include <x86/x86/hypervvar.h>
 #include <dev/hyperv/vmbusvar.h>
+#include <dev/hyperv/genfb_vmbusvar.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
 
 struct hyperv_softc {
 	device_t		sc_dev;
@@ -299,6 +316,26 @@ delay_tc(unsigned int n)
 	} while (now < end);
 }
 
+static void
+delay_msr(unsigned int n)
+{
+	uint64_t end, now;
+	u_int last, u;
+
+	now = 0;
+	end = HYPERV_TIMER_FREQ * n / 1000000ULL;
+	last = (u_int)rdmsr(MSR_HV_TIME_REF_COUNT);
+	do {
+		x86_pause();
+		u = (u_int)rdmsr(MSR_HV_TIME_REF_COUNT);
+		if (u < last)
+			now += 0xffffffff - last + u + 1;
+		else
+			now += u - last;
+		last = u;
+	} while (now < end);
+}
+
 static __inline uint64_t
 hyperv_hypercall_md(volatile void *hc_addr, uint64_t in_val, uint64_t in_paddr,
     uint64_t out_paddr)
@@ -341,18 +378,17 @@ hyperv_hypercall(uint64_t control, paddr_t in_paddr, paddr_t out_paddr)
 }
 
 static bool
-hyperv_identify(void)
+hyperv_probe(u_int *maxleaf, u_int *features, u_int *pm_features,
+    u_int *features3)
 {
-	char buf[256];
 	u_int regs[4];
-	u_int maxleaf;
 
 	if (vm_guest != VM_GUEST_HV)
 		return false;
 
 	x86_cpuid(CPUID_LEAF_HV_MAXLEAF, regs);
-	maxleaf = regs[0];
-	if (maxleaf < CPUID_LEAF_HV_LIMITS)
+	*maxleaf = regs[0];
+	if (*maxleaf < CPUID_LEAF_HV_LIMITS)
 		return false;
 
 	x86_cpuid(CPUID_LEAF_HV_INTERFACE, regs);
@@ -368,9 +404,23 @@ hyperv_identify(void)
 		return false;
 	}
 
-	hyperv_features = regs[0];
-	hyperv_pm_features = regs[2];
-	hyperv_features3 = regs[3];
+	*features = regs[0];
+	*pm_features = regs[2];
+	*features3 = regs[3];
+
+	return true;
+}
+
+static bool
+hyperv_identify(void)
+{
+	char buf[256];
+	u_int regs[4];
+	u_int maxleaf;
+
+	if (!hyperv_probe(&maxleaf, &hyperv_features, &hyperv_pm_features,
+	    &hyperv_features3))
+		return false;
 
 	x86_cpuid(CPUID_LEAF_HV_IDENTITY, regs);
 	hyperv_ver_major = regs[1] >> 16;
@@ -437,6 +487,19 @@ hyperv_identify(void)
 	}
 
 	return true;
+}
+
+void
+hyperv_early_init(void)
+{
+	u_int features, pm_features, features3;
+	u_int maxleaf;
+
+	if (!hyperv_probe(&maxleaf, &features, &pm_features, &features3))
+		return;
+
+	if (features & CPUID_HV_MSR_TIME_REFCNT)
+		x86_delay = delay_func = delay_msr;
 }
 
 static bool
@@ -685,6 +748,13 @@ hyperv_synic_supported(void)
 	return (hyperv_features & CPUID_HV_MSR_SYNIC) ? 1 : 0;
 }
 
+int
+hyperv_is_gen1(void)
+{
+
+	return !bootmethod_efi;
+}
+
 void
 hyperv_send_eom(void)
 {
@@ -916,4 +986,147 @@ hyperv_modcmd(modcmd_t cmd, void *aux)
 	}
 
 	return rv;
+}
+
+/*
+ * genfb at vmbus
+ */
+static struct genfb_pmf_callback pmf_cb;
+static struct genfb_mode_callback mode_cb;
+
+static bool
+x86_genfb_setmode(struct genfb_softc *sc, int newmode)
+{
+#if NGENFB > 0
+	switch (newmode) {
+	case WSDISPLAYIO_MODE_EMUL:
+		x86_genfb_mtrr_init(sc->sc_fboffset,
+		    sc->sc_height * sc->sc_stride);
+		break;
+	}
+#endif
+	return true;
+}
+
+static bool
+x86_genfb_suspend(device_t dev, const pmf_qual_t *qual)
+{
+	return true;
+}
+
+static bool
+x86_genfb_resume(device_t dev, const pmf_qual_t *qual)
+{
+#if NGENFB > 0
+	struct genfb_vmbus_softc *sc = device_private(dev);
+
+	genfb_restore_palette(&sc->sc_gen);
+#endif
+	return true;
+}
+
+static void
+populate_fbinfo(device_t dev, prop_dictionary_t dict)
+{
+#if NWSDISPLAY > 0 && NGENFB > 0
+	extern struct vcons_screen x86_genfb_console_screen;
+	struct rasops_info *ri = &x86_genfb_console_screen.scr_ri;
+#endif
+	const void *fbptr = lookup_bootinfo(BTINFO_FRAMEBUFFER);
+	struct btinfo_framebuffer fbinfo;
+
+	if (fbptr == NULL)
+		return;
+
+	memcpy(&fbinfo, fbptr, sizeof(fbinfo));
+
+	if (fbinfo.physaddr != 0) {
+		prop_dictionary_set_uint32(dict, "width", fbinfo.width);
+		prop_dictionary_set_uint32(dict, "height", fbinfo.height);
+		prop_dictionary_set_uint8(dict, "depth", fbinfo.depth);
+		prop_dictionary_set_uint16(dict, "linebytes", fbinfo.stride);
+
+		prop_dictionary_set_uint64(dict, "address", fbinfo.physaddr);
+#if NWSDISPLAY > 0 && NGENFB > 0
+		if (ri->ri_bits != NULL) {
+			prop_dictionary_set_uint64(dict, "virtual_address",
+			    ri->ri_hwbits != NULL ?
+			    (vaddr_t)ri->ri_hworigbits :
+			    (vaddr_t)ri->ri_origbits);
+		}
+#endif
+	}
+#if notyet
+	prop_dictionary_set_bool(dict, "splash",
+	    (fbinfo.flags & BI_FB_SPLASH) != 0);
+#endif
+#if 0
+	if (fbinfo.depth == 8) {
+		gfb_cb.gcc_cookie = NULL;
+		gfb_cb.gcc_set_mapreg = x86_genfb_set_mapreg;
+		prop_dictionary_set_uint64(dict, "cmap_callback",
+		    (uint64_t)(uintptr_t)&gfb_cb);
+	}
+#endif
+	if (fbinfo.physaddr != 0) {
+		mode_cb.gmc_setmode = x86_genfb_setmode;
+		prop_dictionary_set_uint64(dict, "mode_callback",
+		    (uint64_t)(uintptr_t)&mode_cb);
+	}
+
+#if NWSDISPLAY > 0 && NGENFB > 0
+	if (device_is_a(dev, "genfb")) {
+		prop_dictionary_set_bool(dict, "enable_shadowfb",
+		    ri->ri_hwbits != NULL);
+
+		x86_genfb_set_console_dev(dev);
+#ifdef DDB
+		db_trap_callback = x86_genfb_ddb_trap_callback;
+#endif
+	}
+#endif
+}
+
+device_t
+device_hyperv_register(device_t dev, void *aux)
+{
+	device_t parent = device_parent(dev);
+
+	if (parent && device_is_a(parent, "vmbus") && !x86_found_console) {
+		struct vmbus_attach_args *aa = aux;
+
+		if (memcmp(aa->aa_type, &hyperv_guid_video,
+		    sizeof(*aa->aa_type)) == 0) {
+			prop_dictionary_t dict = device_properties(dev);
+
+			/*
+			 * framebuffer drivers other than genfb can work
+			 * without the address property
+			 */
+			populate_fbinfo(dev, dict);
+
+#if 1 && NWSDISPLAY > 0 && NGENFB > 0
+			/* XXX */
+			if (device_is_a(dev, "genfb")) {
+				prop_dictionary_set_bool(dict, "is_console",
+				    genfb_is_console());
+			} else
+#endif
+			prop_dictionary_set_bool(dict, "is_console", true);
+
+			prop_dictionary_set_bool(dict, "clear-screen", false);
+#if NWSDISPLAY > 0 && NGENFB > 0
+			extern struct vcons_screen x86_genfb_console_screen;
+			prop_dictionary_set_uint16(dict, "cursor-row",
+			    x86_genfb_console_screen.scr_ri.ri_crow);
+#endif
+			pmf_cb.gpc_suspend = x86_genfb_suspend;
+			pmf_cb.gpc_resume = x86_genfb_resume;
+			prop_dictionary_set_uint64(dict, "pmf_callback",
+			    (uint64_t)(uintptr_t)&pmf_cb);
+			x86_found_console = true;
+			return NULL;
+		}
+	}
+	return NULL;
 }

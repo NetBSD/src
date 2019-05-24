@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.2 2019/02/15 16:37:54 hannken Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.3 2019/05/24 14:28:48 nonaka Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.2 2019/02/15 16:37:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.3 2019/05/24 14:28:48 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2034,6 +2034,8 @@ vmbus_attach_icdevs(struct vmbus_softc *sc)
 		dv->dv_aa.aa_inst = &ch->ch_inst;
 		dv->dv_aa.aa_ident = ch->ch_ident;
 		dv->dv_aa.aa_chan = ch;
+		dv->dv_aa.aa_iot = sc->sc_iot;
+		dv->dv_aa.aa_memt = sc->sc_memt;
 		mutex_enter(&sc->sc_icdev_lock);
 		SLIST_INSERT_HEAD(&sc->sc_icdevs, dv, dv_entry);
 		mutex_exit(&sc->sc_icdev_lock);
@@ -2068,6 +2070,8 @@ vmbus_attach_devices(struct vmbus_softc *sc)
 		dv->dv_aa.aa_inst = &ch->ch_inst;
 		dv->dv_aa.aa_ident = ch->ch_ident;
 		dv->dv_aa.aa_chan = ch;
+		dv->dv_aa.aa_iot = sc->sc_iot;
+		dv->dv_aa.aa_memt = sc->sc_memt;
 		mutex_enter(&sc->sc_dev_lock);
 		SLIST_INSERT_HEAD(&sc->sc_devs, dv, dv_entry);
 		mutex_exit(&sc->sc_dev_lock);

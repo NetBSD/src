@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbusvar.h,v 1.1 2019/02/15 08:54:02 nonaka Exp $	*/
+/*	$NetBSD: vmbusvar.h,v 1.2 2019/05/24 14:28:48 nonaka Exp $	*/
 /*	$OpenBSD: hypervvar.h,v 1.13 2017/06/23 19:05:42 mikeb Exp $	*/
 
 /*
@@ -133,6 +133,8 @@ struct vmbus_attach_args {
 	struct hyperv_guid		*aa_inst;
 	char				*aa_ident;
 	struct vmbus_channel		*aa_chan;
+	bus_space_tag_t			aa_iot;
+	bus_space_tag_t			aa_memt;
 };
 
 struct vmbus_dev {
@@ -153,6 +155,8 @@ struct vmbus_percpu_data {
 
 struct vmbus_softc {
 	device_t		sc_dev;
+	bus_space_tag_t		sc_iot;
+	bus_space_tag_t		sc_memt;
 	bus_dma_tag_t		sc_dmat;
 
 	pool_cache_t		sc_msgpool;
