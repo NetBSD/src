@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.90 2019/05/18 13:44:57 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.91 2019/05/24 14:28:48 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.90 2019/05/18 13:44:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.91 2019/05/24 14:28:48 nonaka Exp $");
 
 #include "opt_xen.h"
 
@@ -52,6 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.90 2019/05/18 13:44:57 maxv Exp $");
 
 #include <x86/x86/vmtreg.h>	/* for vmt_hvcall() */
 #include <x86/x86/vmtvar.h>	/* for vmt_hvcall() */
+
+#ifndef XEN
+#include "hyperv.h"
+#if NHYPERV > 0
+#include <x86/x86/hypervvar.h>
+#endif
+#endif
 
 static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 
@@ -1074,9 +1081,12 @@ identify_hypervisor(void)
 			memcpy(&hv_vendor[8], &regs[3], sizeof(*regs));
 			if (memcmp(hv_vendor, "VMwareVMware", 12) == 0)
 				vm_guest = VM_GUEST_VMWARE;
-			else if (memcmp(hv_vendor, "Microsoft Hv", 12) == 0)
+			else if (memcmp(hv_vendor, "Microsoft Hv", 12) == 0) {
 				vm_guest = VM_GUEST_HV;
-			else if (memcmp(hv_vendor, "KVMKVMKVM\0\0\0", 12) == 0)
+#if NHYPERV > 0
+				hyperv_early_init();
+#endif
+			} else if (memcmp(hv_vendor, "KVMKVMKVM\0\0\0", 12) == 0)
 				vm_guest = VM_GUEST_KVM;
 			else if (memcmp(hv_vendor, "XenVMMXenVMM", 12) == 0)
 				vm_guest = VM_GUEST_XEN;

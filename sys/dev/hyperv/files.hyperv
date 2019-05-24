@@ -1,8 +1,15 @@
-#	$NetBSD: files.hyperv,v 1.1 2019/02/15 08:54:01 nonaka Exp $
+#	$NetBSD: files.hyperv,v 1.2 2019/05/24 14:28:48 nonaka Exp $
 
 define	hypervvmbus {}
 device	vmbus: hypervvmbus
 file	dev/hyperv/vmbus.c		vmbus needs-flag
+
+attach	genfb at hypervvmbus with genfb_vmbus : splash
+file	dev/hyperv/genfb_vmbus.c	genfb_vmbus
+
+device	hvkbd: wskbddev
+attach	hvkbd at hypervvmbus
+file	dev/hyperv/hvkbd.c		hvkbd needs-flag
 
 device	hvn: ether, ifnet, arp
 attach	hvn at hypervvmbus
