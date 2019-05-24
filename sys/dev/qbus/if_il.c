@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.33 2019/05/24 08:27:44 msaitoh Exp $	*/
+/*	$NetBSD: if_il.c,v 1.34 2019/05/24 08:29:17 msaitoh Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.33 2019/05/24 08:27:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.34 2019/05/24 08:29:17 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -116,7 +116,7 @@ static	void ilattach(device_t, device_t, void *);
 static	void ilcint(void *);
 static	void ilrint(void *);
 static	void ilreset(device_t);
-static	int ilwait(struct il_softc *, char *);
+static	int ilwait(struct il_softc *, const char *);
 static	int ilinit(struct ifnet *);
 static	void ilstart(struct ifnet *);
 static	void ilwatch(struct ifnet *);
@@ -137,12 +137,11 @@ int
 ilmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct uba_attach_args *ua = aux;
-	volatile int i;
 
 	bus_space_write_2(ua->ua_iot, ua->ua_ioh, IL_CSR,
 	    ILC_OFFLINE | IL_CIE);
 	DELAY(100000);
-	i = bus_space_read_2(ua->ua_iot, ua->ua_ioh, IL_CSR); /* clear CDONE */
+	bus_space_read_2(ua->ua_iot, ua->ua_ioh, IL_CSR); /* clear CDONE */
 
 	return 1;
 }
@@ -202,7 +201,7 @@ ilattach(device_t parent, device_t self, void *aux)
 
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_init = ilinit;
 	ifp->if_stop = ilstop;
 	ifp->if_ioctl = ether_ioctl;
@@ -224,7 +223,7 @@ ilstop(struct ifnet *ifp, int a)
 
 
 int
-ilwait(struct il_softc *sc, char *op)
+ilwait(struct il_softc *sc, const char *op)
 {
 
 	while ((IL_RCSR(IL_CSR)&IL_CDONE) == 0)
@@ -325,19 +324,18 @@ ilinit(struct ifnet *ifp)
 			goto out;
 		}
 	}
-#ifdef MULTICAST
-	if (is->is_if.if_flags & IFF_PROMISC) {
-		addr->il_csr = ILC_PRMSC;
-		if (ilwait(ui, "all multi"))
+	if (sc->sc_if.if_flags & IFF_PROMISC) {
+		IL_WCSR(IL_CSR, ILC_PRMSC);
+		if (ilwait(sc, "all multi"))
 			goto out;
-	} else if (is->is_if.if_flags & IFF_ALLMULTI) {
-	too_many_multis:
-		addr->il_csr = ILC_ALLMC;
-		if (ilwait(ui, "all multi"))
+	} else if (sc->sc_if.if_flags & IFF_ALLMULTI) {
+too_many_multis:
+		IL_WCSR(IL_CSR, ILC_ALLMC);
+		if (ilwait(sc, "all multi"))
 			goto out;
 	} else {
 		int i;
-		register struct ether_addr *ep = is->is_maddrs;
+		register struct ether_addr *ep = sc->sc_maddrs;
 		struct ether_multi *enm;
 		struct ether_multistep step;
 		/*
@@ -347,29 +345,28 @@ ilinit(struct ifnet *ifp)
 		 * multicasts.
 		 */
 		i = 0;
-		ETHER_FIRST_MULTI(step, &is->is_ac, enm);
+		ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
 		while (enm != NULL) {
-			if (++i > 63 && k != 0) {
+			if (++i > 63 /* && k != 0 */) {
 				break;
 			}
 			*ep++ = *(struct ether_addr *)enm->enm_addrlo;
 			ETHER_NEXT_MULTI(step, enm);
 		}
-		if (i = 0) {
+		if (i == 0) {
 			/* no multicasts! */
 		} else if (i <= 63) {
-			addr->il_bar = is->is_ubaddr & 0xffff;
-			addr->il_bcr = i * sizeof (struct ether_addr);
-			addr->il_csr = ((is->is_ubaddr >> 2) & IL_EUA)|
-						LC_LDGRPS;
-			if (ilwait(ui, "load multi"))
+			IL_WCSR(IL_BAR, sc->sc_ubaddr & 0xffff);
+			IL_WCSR(IL_BCR, i * sizeof(struct ether_addr));
+			IL_WCSR(IL_CSR,
+			    ((sc->sc_ubaddr >> 2) & IL_EUA) | ILC_LDGRPS);
+			if (ilwait(sc, "load multi"))
 				goto out;
 		} else {
-		    is->is_if.if_flags |= IFF_ALLMULTI;
-		    goto too_many_multis;
+			sc->sc_if.if_flags |= IFF_ALLMULTI;
+			goto too_many_multis;
 		}
 	}
-#endif /* MULTICAST */
 	/*
 	 * Set board online.
 	 * Hang receive buffer and start any pending
