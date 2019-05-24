@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.147 2019/04/22 07:51:16 msaitoh Exp $	*/
+/*	$NetBSD: elink3.c,v 1.148 2019/05/24 06:26:38 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.147 2019/04/22 07:51:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.148 2019/05/24 06:26:38 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -363,7 +363,7 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	GO_WINDOW(5);
 	i = bus_space_read_2(iot, ioh, ELINK_W5_TX_AVAIL_THRESH);
 	GO_WINDOW(1);
-	switch (i)  {
+	switch (i) {
 	case ELINK_LARGEWIN_PROBE:
 	case (ELINK_LARGEWIN_PROBE & ELINK_LARGEWIN_MASK):
 		sc->ep_pktlenshift = 0;
@@ -1179,9 +1179,9 @@ startagain:
 	bus_space_write_2(iot, ioh, txreg, 0xffff); /* Second is meaningless */
 	if (ELINK_IS_BUS_32(sc->bustype)) {
 		for (m = m0; m;) {
-			if (m->m_len > 3)  {
+			if (m->m_len > 3) {
 				/* align our reads from core */
-				if (mtod(m, u_long) & 3)  {
+				if (mtod(m, u_long) & 3) {
 					u_long count =
 					    4 - (mtod(m, u_long) & 3);
 					bus_space_write_multi_1(iot, ioh,
@@ -1196,7 +1196,7 @@ startagain:
 					(u_long)(m->m_len & ~3));
 				m->m_len -= m->m_len & ~3;
 			}
-			if (m->m_len)  {
+			if (m->m_len) {
 				bus_space_write_multi_1(iot, ioh,
 				    txreg, mtod(m, u_int8_t *), m->m_len);
 			}
@@ -1204,8 +1204,8 @@ startagain:
 		}
 	} else {
 		for (m = m0; m;) {
-			if (m->m_len > 1)  {
-				if (mtod(m, u_long) & 1)  {
+			if (m->m_len > 1) {
+				if (mtod(m, u_long) & 1) {
 					bus_space_write_1(iot, ioh,
 					    txreg, *(mtod(m, u_int8_t *)));
 					m->m_data =
@@ -1216,7 +1216,7 @@ startagain:
 				    txreg, mtod(m, u_int16_t *),
 				    m->m_len >> 1);
 			}
-			if (m->m_len & 1)  {
+			if (m->m_len & 1) {
 				bus_space_write_1(iot, ioh, txreg,
 				     *(mtod(m, u_int8_t *) + m->m_len - 1));
 			}
@@ -1614,7 +1614,7 @@ epget(struct ep_softc *sc, int totlen)
 		 * (We can align to 4 bytes, rather than ALIGNBYTES,
 		 * here because we're later reading 4-byte chunks.)
 		 */
-		if ((remaining > 3) && (offset & 3))  {
+		if ((remaining > 3) && (offset & 3)) {
 			int count = (4 - (offset & 3));
 			bus_space_read_multi_1(iot, ioh,
 			    rxreg, (u_int8_t *) offset, count);
@@ -1628,12 +1628,12 @@ epget(struct ep_softc *sc, int totlen)
 			offset += remaining & ~3;
 			remaining &= 3;
 		}
-		if (remaining)  {
+		if (remaining) {
 			bus_space_read_multi_1(iot, ioh,
 			    rxreg, (u_int8_t *) offset, remaining);
 		}
 	} else {
-		if ((remaining > 1) && (offset & 1))  {
+		if ((remaining > 1) && (offset & 1)) {
 			bus_space_read_multi_1(iot, ioh,
 			    rxreg, (u_int8_t *) offset, 1);
 			remaining -= 1;
@@ -1645,7 +1645,7 @@ epget(struct ep_softc *sc, int totlen)
 			    remaining >> 1);
 			offset += remaining & ~1;
 		}
-		if (remaining & 1)  {
+		if (remaining & 1) {
 				bus_space_read_multi_1(iot, ioh,
 			    rxreg, (u_int8_t *) offset, remaining & 1);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.25 2019/04/05 07:29:24 msaitoh Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.26 2019/05/24 06:26:39 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -4715,7 +4715,7 @@ struct bnx_rv2p_header {
  * The default value is 0xFF.
  */
 #define BNX_RV2P_PROC2_MAX_BD_PAGE_LOC	5
-#define BNX_RV2P_PROC2_CHG_MAX_BD_PAGE(_rv2p, _v)  {			\
+#define BNX_RV2P_PROC2_CHG_MAX_BD_PAGE(_rv2p, _v) {			\
 	_rv2p[BNX_RV2P_PROC2_MAX_BD_PAGE_LOC] =				\
 	(_rv2p[BNX_RV2P_PROC2_MAX_BD_PAGE_LOC] & ~0xFFFF) | (_v);	\
 }

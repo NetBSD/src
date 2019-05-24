@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.117 2019/05/23 10:51:39 msaitoh Exp $ */
+/*	$NetBSD: gem.c,v 1.118 2019/05/24 06:26:38 msaitoh Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.117 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.118 2019/05/24 06:26:38 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1326,7 +1326,7 @@ gem_init_regs(struct gem_softc *sc)
 	 */
 	sc->sc_mif_config = bus_space_read_4(t, h, GEM_MIF_CONFIG);
 	v = GEM_MAC_XIF_TX_MII_ENA;
-	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) == 0)  {
+	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) == 0) {
 		if (sc->sc_mif_config & GEM_MIF_CONFIG_MDI1) {
 			v |= GEM_MAC_XIF_FDPLX_LED;
 				if (sc->sc_flags & GEM_GIGABIT)

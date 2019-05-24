@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.25 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.26 2019/05/24 06:26:38 msaitoh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.25 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.26 2019/05/24 06:26:38 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1209,7 +1209,7 @@ mvxpe_ring_sync_tx(struct mvxpe_softc *sc, int q, int idx, int count, int ops)
 	KASSERT(idx >= 0 && idx < MVXPE_TX_RING_CNT);
 
 	wrap = (idx + count) - MVXPE_TX_RING_CNT;
-	if (wrap > 0)  {
+	if (wrap > 0) {
 		count -= wrap;
 		bus_dmamap_sync(sc->sc_dmat, MVXPE_TX_RING_MEM_MAP(sc, q),
 		    0, sizeof(struct mvxpe_tx_desc) * wrap, ops);
