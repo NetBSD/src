@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.31 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_il.c,v 1.32 2019/05/24 08:22:05 msaitoh Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.31 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.32 2019/05/24 08:22:05 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -202,7 +202,7 @@ ilattach(device_t parent, device_t self, void *aux)
 
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_init = ilinit;
 	ifp->if_stop = ilstop;
 	ifp->if_ioctl = ether_ioctl;
@@ -325,19 +325,20 @@ ilinit(struct ifnet *ifp)
 			goto out;
 		}
 	}
-#ifdef MULTICAST
-	if (is->is_if.if_flags & IFF_PROMISC) {
+
+	if (sc->sc_if.if_flags & IFF_PROMISC) {
 		addr->il_csr = ILC_PRMSC;
 		if (ilwait(ui, "all multi"))
 			goto out;
-	} else if (is->is_if.if_flags & IFF_ALLMULTI) {
-	too_many_multis:
+	} else if (sc->sc_if.if_flags & IFF_ALLMULTI) {
+too_many_multis:
 		addr->il_csr = ILC_ALLMC;
 		if (ilwait(ui, "all multi"))
 			goto out;
 	} else {
 		int i;
-		register struct ether_addr *ep = is->is_maddrs;
+		struct ethercom *ec = &sc->sc_ec;
+		register struct ether_addr *ep = sc->sc_maddrs;
 		struct ether_multi *enm;
 		struct ether_multistep step;
 		/*
@@ -347,7 +348,8 @@ ilinit(struct ifnet *ifp)
 		 * multicasts.
 		 */
 		i = 0;
-		ETHER_FIRST_MULTI(step, &is->is_ac, enm);
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (++i > 63 && k != 0) {
 				break;
@@ -355,21 +357,22 @@ ilinit(struct ifnet *ifp)
 			*ep++ = *(struct ether_addr *)enm->enm_addrlo;
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 		if (i = 0) {
 			/* no multicasts! */
 		} else if (i <= 63) {
-			addr->il_bar = is->is_ubaddr & 0xffff;
+			addr->il_bar = sc->sc_ubaddr & 0xffff;
 			addr->il_bcr = i * sizeof (struct ether_addr);
-			addr->il_csr = ((is->is_ubaddr >> 2) & IL_EUA)|
+			addr->il_csr = ((sc->sc_ubaddr >> 2) & IL_EUA) |
 						LC_LDGRPS;
 			if (ilwait(ui, "load multi"))
 				goto out;
 		} else {
-		    is->is_if.if_flags |= IFF_ALLMULTI;
-		    goto too_many_multis;
+			sc->sc_if.if_flags |= IFF_ALLMULTI;
+			goto too_many_multis;
 		}
 	}
-#endif /* MULTICAST */
+
 	/*
 	 * Set board online.
 	 * Hang receive buffer and start any pending
