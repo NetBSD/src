@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.16 2019/04/25 19:15:23 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.17 2019/05/25 03:22:53 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -551,6 +551,26 @@ can_we_set_dbregs(void)
 		return false;
 }
 #endif
+
+static bool __used
+get_user_va0_disable(void)
+{
+	static int user_va0_disable = -1;
+	size_t user_va0_disable_len = sizeof(user_va0_disable);
+
+	if (user_va0_disable == -1) {
+		if (sysctlbyname("vm.user_va0_disable",
+			&user_va0_disable, &user_va0_disable_len, NULL, 0)
+			== -1) {
+			return true;
+		}
+	}
+
+	if (user_va0_disable > 0)
+		return true;
+	else
+		return false;
+}
 
 static bool __used
 can_we_write_to_text(pid_t pid)
