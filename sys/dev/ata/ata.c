@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.148 2019/04/06 00:35:25 uwe Exp $	*/
+/*	$NetBSD: ata.c,v 1.149 2019/05/25 16:30:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.148 2019/04/06 00:35:25 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.149 2019/05/25 16:30:18 christos Exp $");
 
 #include "opt_ata.h"
 
@@ -1278,17 +1278,8 @@ ata_activate_xfer_locked(struct ata_channel *chp, struct ata_xfer *xfer)
 struct ata_xfer *
 ata_get_xfer(struct ata_channel *chp, bool waitok)
 {
-	struct ata_xfer *xfer;
-
-	xfer = pool_get(&ata_xfer_pool, waitok ? PR_WAITOK : PR_NOWAIT);
-	KASSERT(!waitok || xfer != NULL);
-
-	if (xfer != NULL) {
-		/* zero everything */
-		memset(xfer, 0, sizeof(*xfer));
-	}
-
-	return xfer;
+	return pool_get(&ata_xfer_pool,
+	    PR_ZERO | (waitok ? PR_WAITOK : PR_NOWAIT));
 }
 
 /*
