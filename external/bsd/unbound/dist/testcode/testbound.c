@@ -344,6 +344,7 @@ main(int argc, char* argv[])
 
 	/* we do not want the test to depend on the timezone */
 	(void)putenv("TZ=UTC");
+	memset(pass_argv, 0, sizeof(pass_argv));
 
 	log_init(NULL, 0, NULL);
 	/* determine commandline options for the daemon */
@@ -429,14 +430,14 @@ main(int argc, char* argv[])
 		case 'h':
 		default:
 			testbound_usage();
-			return 1;
+			exit(1);
 		}
 	}
 	argc -= optind;
-	argv += optind;
+	/* argv += optind; not using further arguments */
 	if(argc != 0) {
 		testbound_usage();
-		return 1;
+		exit(1);
 	}
 	log_info("Start of %s testbound program.", PACKAGE_STRING);
 	if(atexit(&remove_configfile) != 0)
