@@ -1,4 +1,4 @@
-/*	$NetBSD: tegra186-hsp.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: tegra186-hsp.h,v 1.1.1.3 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -23,5 +23,16 @@
  */
 #define TEGRA_HSP_DB_MASTER_CCPLEX 17
 #define TEGRA_HSP_DB_MASTER_BPMP 19
+
+/*
+ * Shared mailboxes are unidirectional, so the direction needs to be specified
+ * in the device tree.
+ */
+#define TEGRA_HSP_SM_MASK 0x00ffffff
+#define TEGRA_HSP_SM_FLAG_RX (0 << 31)
+#define TEGRA_HSP_SM_FLAG_TX (1 << 31)
+
+#define TEGRA_HSP_SM_RX(x) (TEGRA_HSP_SM_FLAG_RX | ((x) & TEGRA_HSP_SM_MASK))
+#define TEGRA_HSP_SM_TX(x) (TEGRA_HSP_SM_FLAG_TX | ((x) & TEGRA_HSP_SM_MASK))
 
 #endif
