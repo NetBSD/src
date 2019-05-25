@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.28 2019/05/20 11:12:10 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.29 2019/05/25 19:21:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.28 2019/05/20 11:12:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.29 2019/05/25 19:21:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,24 +290,39 @@ fdt_scan(struct fdt_softc *sc, int pass)
 	char buf[FDT_MAX_PATH];
 
 	TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
-		if (node->n_dev != NULL || node->n_cf == NULL)
+		if (node->n_dev != NULL)
 			continue;
 
 		fdt_init_attach_args(&sc->sc_faa, node, quiet, &faa);
 
-		/*
-		 * Make sure we don't attach before a better match in a later pass.
-		 */
-		cfdata_t cf_pass =
-		    config_search_loc(fdt_scan_submatch, node->n_bus, "fdt", locs, &faa);
-		if (node->n_cf != cf_pass)
-			continue;
+		if (quiet) {
+			/*
+			 * No match for this device, skip it.
+			 */
+			if (node->n_cf == NULL)
+				continue;
 
-		/*
-		 * Attach the device.
-		 */
-		node->n_dev = config_attach_loc(node->n_bus, cf_pass, locs,
-		    &faa, fdtbus_print);
+			/*
+			 * Make sure we don't attach before a better match in a later pass.
+			 */
+			cfdata_t cf_pass =
+			    config_search_loc(fdt_scan_submatch, node->n_bus, "fdt", locs, &faa);
+			if (node->n_cf != cf_pass)
+				continue;
+
+			/*
+			 * Attach the device.
+			 */
+			node->n_dev = config_attach_loc(node->n_bus, cf_pass, locs,
+			    &faa, fdtbus_print);
+		} else {
+			/*
+			 * Default pass.
+			 */
+			node->n_dev = config_found_sm_loc(node->n_bus, "fdt", locs,
+			    &faa, fdtbus_print, fdt_scan_submatch);
+		}
+
 		if (node->n_dev) {
 			dict = device_properties(node->n_dev);
 			if (fdtbus_get_path(node->n_phandle, buf, sizeof(buf)))
