@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.53 2019/05/10 21:08:26 mgorny Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.54 2019/05/25 03:20:43 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.53 2019/05/10 21:08:26 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.54 2019/05/25 03:20:43 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -162,6 +162,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.53 2019/05/10 21:08:26 mgorn
 
 static kauth_listener_t ptrace_listener;
 static int process_auxv_offset(struct proc *, struct uio *);
+
+extern int user_va0_disable;
 
 #if 0
 static int ptrace_cbref;
@@ -1106,12 +1108,15 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		piod.piod_op = write ? PIOD_WRITE_D : PIOD_READ_D;
 		if ((error = ptrace_doio(l, t, lt, &piod, addr, true)) != 0)
 			break;
-#if 0 // XXX: GDB depends on it
-		if (piod.piod_len < sizeof(tmp)) {
-			error = EIO;
-			break;
-		}
-#endif
+		/*
+		 * For legacy reasons we treat here two results as success:
+		 *  - incomplete transfer  piod.piod_len < sizeof(tmp)
+		 *  - no transfer          piod.piod_len == 0
+		 *
+		 * This means that there is no way to determine whether
+		 * transfer operation was performed in PT_WRITE and PT_READ
+		 * calls.
+		 */
 		if (!write)
 			*retval = tmp;
 		break;
@@ -1125,12 +1130,11 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		}
 		if ((error = ptrace_doio(l, t, lt, &piod, addr, false)) != 0)
 			break;
-#if 0 // XXX: GDB depends on it
-		if (piod.piod_len < 1) {
-			error = EIO;
-			break;
-		}
-#endif
+		/*
+		 * For legacy reasons we treat here two results as success:
+		 *  - incomplete transfer  piod.piod_len < sizeof(tmp)
+		 *  - no transfer          piod.piod_len == 0
+		 */
 		error = ptm->ptm_copyout_piod(&piod, addr, data);
 		break;
 
@@ -1251,16 +1255,15 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		}
 
 		/*
-		 * If the address parameter is 0, report error.
+		 * Reject setting program cunter to 0x0 if VA0 is disabled.
 		 *
-		 * It's a popular mistake to set Program Counter to 0x0.
-		 * In certain kernels this is allowable parameter and causes
-		 * portability issue.
-		 *
-		 * Disallow explicitly zeroed PC, instead of triggering
-		 * a harder to debug crash later.
+		 * Not all kernels implement this feature to set Program
+		 * Counter in one go in PT_CONTINUE and similar operations.
+		 * This causes portability issues as passing address 0x0
+		 * on these kernels is no-operation, but can cause failure
+		 * in most cases on NetBSD.
 		 */
-		if (addr == 0) {
+		if (user_va0_disable && addr == 0) {
 			error = EINVAL;
 			break;
 		}
