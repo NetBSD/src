@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.62 2019/05/08 13:40:19 isaki Exp $	*/
+/*	$NetBSD: yds.c,v 1.63 2019/05/25 04:25:30 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.62 2019/05/08 13:40:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.63 2019/05/25 04:25:30 isaki Exp $");
 
 #include "mpu.h"
 
@@ -1065,19 +1065,32 @@ yds_intr(void *p)
 		printf ("yds_intr: timeout!\n");
 	}
 
+	/*
+	 * XXX
+	 * An interrupt in YMF754 occurs when next hardware frame is
+	 * requested, not when current hardware frame processing is
+	 * completed.  According to the datasheet, only access to the
+	 * inactive bank is permitted, but in fact, fields in inactive
+	 * bank that the chip should write to may or may not be filled
+	 * at that time.  On the other hand, both the CPU and the device
+	 * must guarantee that the fields in active bank are determined
+	 * at the beginning of the interrupt.
+	 * Therefore, we read active bank.
+	 */
+
 	if (status & YDS_STAT_INT) {
 		int nbank;
+		u_int pdma = 0;
+		u_int rdma = 0;
 
-		nbank = (YREAD4(sc, YDS_CONTROL_SELECT) == 0);
+		/* nbank is bank number that YDS is processing now. */
+		nbank = YREAD4(sc, YDS_CONTROL_SELECT) & 1;
+
 		/* Clear interrupt flag */
 		YWRITE4(sc, YDS_STATUS, YDS_STAT_INT);
 
-		/* Buffer for the next frame is always ready. */
-		YWRITE4(sc, YDS_MODE, YREAD4(sc, YDS_MODE) | YDS_MODE_ACTV2);
-
+		/* Read current data offset before ACTV2 */
 		if (sc->sc_play.intr) {
-			u_int dma, ccpu, blk, len;
-
 			/* Sync play slot control data */
 			bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
 					sc->pbankoff,
@@ -1086,38 +1099,12 @@ yds_intr(void *p)
 					    N_PLAY_SLOT_CTRL_BANK,
 					BUS_DMASYNC_POSTWRITE|
 					BUS_DMASYNC_POSTREAD);
-			dma = le32toh(sc->pbankp[nbank]->pgstart) * sc->sc_play.factor;
-			ccpu = sc->sc_play.offset;
-			blk = sc->sc_play.blksize;
-			len = sc->sc_play.length;
-
-			if (((dma > ccpu) && (dma - ccpu > blk * 2)) ||
-			    ((ccpu > dma) && (dma + len - ccpu > blk * 2))) {
-				/* We can fill the next block */
-				/* Sync ring buffer for previous write */
-				bus_dmamap_sync(sc->sc_dmatag,
-						sc->sc_play.dma->map,
-						ccpu, blk,
-						BUS_DMASYNC_POSTWRITE);
-				sc->sc_play.intr(sc->sc_play.intr_arg);
-				sc->sc_play.offset += blk;
-				if (sc->sc_play.offset >= len) {
-					sc->sc_play.offset -= len;
-#ifdef DIAGNOSTIC
-					if (sc->sc_play.offset != 0)
-						printf ("Audio ringbuffer botch\n");
-#endif
-				}
-				/* Sync ring buffer for next write */
-				bus_dmamap_sync(sc->sc_dmatag,
-						sc->sc_play.dma->map,
-						ccpu, blk,
-						BUS_DMASYNC_PREWRITE);
-			}
+			/* start offset of current processing bank */
+			pdma = le32toh(sc->pbankp[nbank]->pgstart) *
+			    sc->sc_play.factor;
 		}
-		if (sc->sc_rec.intr) {
-			u_int dma, ccpu, blk, len;
 
+		if (sc->sc_rec.intr) {
 			/* Sync rec slot control data */
 			bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
 					sc->rbankoff,
@@ -1126,23 +1113,54 @@ yds_intr(void *p)
 					    N_REC_SLOT_CTRL_BANK,
 					BUS_DMASYNC_POSTWRITE|
 					BUS_DMASYNC_POSTREAD);
-			dma = le32toh(sc->rbank[YDS_INPUT_SLOT*2 + nbank].pgstartadr);
-			ccpu = sc->sc_rec.offset;
-			blk = sc->sc_rec.blksize;
-			len = sc->sc_rec.length;
+			/* start offset of current processing bank */
+			rdma = le32toh(
+			    sc->rbank[YDS_INPUT_SLOT * 2 + nbank].pgstartadr);
+		}
 
-			if (((dma > ccpu) && (dma - ccpu > blk * 2)) ||
-			    ((ccpu > dma) && (dma + len - ccpu > blk * 2))) {
+		/* Buffer for the next frame is always ready. */
+		YWRITE4(sc, YDS_MODE, YREAD4(sc, YDS_MODE) | YDS_MODE_ACTV2);
+
+		if (sc->sc_play.intr) {
+			if (pdma < sc->sc_play.offset)
+				pdma += sc->sc_play.length;
+			if (pdma >= sc->sc_play.offset + sc->sc_play.blksize) {
+				/* We can fill the next block */
+				/* Sync ring buffer for previous write */
+				bus_dmamap_sync(sc->sc_dmatag,
+						sc->sc_play.dma->map,
+						0, sc->sc_play.length,
+						BUS_DMASYNC_POSTWRITE);
+				sc->sc_play.intr(sc->sc_play.intr_arg);
+				sc->sc_play.offset += sc->sc_play.blksize;
+				if (sc->sc_play.offset >= sc->sc_play.length) {
+					sc->sc_play.offset -= sc->sc_play.length;
+#ifdef DIAGNOSTIC
+					if (sc->sc_play.offset != 0)
+						printf ("Audio ringbuffer botch\n");
+#endif
+				}
+				/* Sync ring buffer for next write */
+				bus_dmamap_sync(sc->sc_dmatag,
+						sc->sc_play.dma->map,
+						0, sc->sc_play.length,
+						BUS_DMASYNC_PREWRITE);
+			}
+		}
+		if (sc->sc_rec.intr) {
+			if (rdma < sc->sc_rec.offset)
+				rdma += sc->sc_rec.length;
+			if (rdma >= sc->sc_rec.offset + sc->sc_rec.blksize) {
 				/* We can drain the current block */
 				/* Sync ring buffer first */
 				bus_dmamap_sync(sc->sc_dmatag,
 						sc->sc_rec.dma->map,
-						ccpu, blk,
+						0, sc->sc_rec.length,
 						BUS_DMASYNC_POSTREAD);
 				sc->sc_rec.intr(sc->sc_rec.intr_arg);
-				sc->sc_rec.offset += blk;
-				if (sc->sc_rec.offset >= len) {
-					sc->sc_rec.offset -= len;
+				sc->sc_rec.offset += sc->sc_rec.blksize;
+				if (sc->sc_rec.offset >= sc->sc_rec.length) {
+					sc->sc_rec.offset -= sc->sc_rec.length;
 #ifdef DIAGNOSTIC
 					if (sc->sc_rec.offset != 0)
 						printf ("Audio ringbuffer botch\n");
@@ -1151,7 +1169,7 @@ yds_intr(void *p)
 				/* Sync ring buffer for next read */
 				bus_dmamap_sync(sc->sc_dmatag,
 						sc->sc_rec.dma->map,
-						ccpu, blk,
+						0, sc->sc_rec.length,
 						BUS_DMASYNC_PREREAD);
 			}
 		}
