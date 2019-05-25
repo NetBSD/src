@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.52 2019/05/19 08:46:15 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.53 2019/05/25 21:02:32 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.52 2019/05/19 08:46:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.53 2019/05/25 21:02:32 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -827,7 +827,7 @@ process_write_fpregs_xmm(struct lwp *l, const struct fxsave *fpregs)
 {
 	union savefpu *fpu_save;
 
-	fpusave_lwp(l, false);
+	fpusave_lwp(l, true);
 	fpu_save = lwp_fpuarea(l);
 
 	if (i386_use_fxsave) {
