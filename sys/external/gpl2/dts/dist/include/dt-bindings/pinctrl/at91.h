@@ -1,4 +1,4 @@
-/*	$NetBSD: at91.h,v 1.1.1.2 2019/01/22 14:57:01 jmcneill Exp $	*/
+/*	$NetBSD: at91.h,v 1.1.1.3 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /*
  * This header provides constants for most at91 pinctrl bindings.
@@ -19,6 +19,7 @@
 #define AT91_PINCTRL_DIS_SCHMIT		(1 << 4)
 #define AT91_PINCTRL_OUTPUT		(1 << 7)
 #define AT91_PINCTRL_OUTPUT_VAL(x)	((x & 0x1) << 8)
+#define AT91_PINCTRL_SLEWRATE		(1 << 9)
 #define AT91_PINCTRL_DEBOUNCE		(1 << 16)
 #define AT91_PINCTRL_DEBOUNCE_VAL(x)	(x << 17)
 
@@ -28,6 +29,9 @@
 #define AT91_PINCTRL_DRIVE_STRENGTH_LOW			(0x1 << 5)
 #define AT91_PINCTRL_DRIVE_STRENGTH_MED			(0x2 << 5)
 #define AT91_PINCTRL_DRIVE_STRENGTH_HI			(0x3 << 5)
+
+#define AT91_PINCTRL_SLEWRATE_DIS	(0x0 << 9)
+#define AT91_PINCTRL_SLEWRATE_ENA	(0x1 << 9)
 
 #define AT91_PIOA	0
 #define AT91_PIOB	1

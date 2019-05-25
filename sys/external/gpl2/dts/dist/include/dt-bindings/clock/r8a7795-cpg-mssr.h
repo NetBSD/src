@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a7795-cpg-mssr.h,v 1.1.1.3 2019/01/22 14:57:02 jmcneill Exp $	*/
+/*	$NetBSD: r8a7795-cpg-mssr.h,v 1.1.1.4 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0+
  *
@@ -52,7 +52,7 @@
 #define R8A7795_CLK_CANFD		39
 #define R8A7795_CLK_HDMI		40
 #define R8A7795_CLK_CSI0		41
-#define R8A7795_CLK_CSIREF		42
+/* CLK_CSIREF was removed */
 #define R8A7795_CLK_CP			43
 #define R8A7795_CLK_CPEX		44
 #define R8A7795_CLK_R			45

@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3328-cru.h,v 1.1.1.3 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: rk3328-cru.h,v 1.1.1.4 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Rockchip Electronics Co. Ltd.
@@ -174,13 +174,14 @@
 #define PCLK_HDCP		232
 #define PCLK_DCF		233
 #define PCLK_SARADC		234
+#define PCLK_ACODECPHY		235
 
 /* hclk gates */
 #define HCLK_PERI		308
 #define HCLK_TSP		309
 #define HCLK_GMAC		310
 #define HCLK_I2S0_8CH		311
-#define HCLK_I2S1_8CH		313
+#define HCLK_I2S1_8CH		312
 #define HCLK_I2S2_2CH		313
 #define HCLK_SPDIF_8CH		314
 #define HCLK_VOP		315

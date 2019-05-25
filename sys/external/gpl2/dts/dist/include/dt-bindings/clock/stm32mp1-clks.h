@@ -1,4 +1,4 @@
-/*	$NetBSD: stm32mp1-clks.h,v 1.1.1.2 2018/06/27 16:27:08 jmcneill Exp $	*/
+/*	$NetBSD: stm32mp1-clks.h,v 1.1.1.3 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 or BSD-3-Clause */
 /*
@@ -249,8 +249,5 @@
 #define DDRPERFM	231
 
 #define STM32MP1_LAST_CLK 232
-
-#define LTDC_K		LTDC_PX
-#define ETHMAC_K	ETHCK_K
 
 #endif /* _DT_BINDINGS_STM32MP1_CLKS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos5433.h,v 1.1.1.2 2019/01/22 14:57:01 jmcneill Exp $	*/
+/*	$NetBSD: exynos5433.h,v 1.1.1.3 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -158,7 +158,7 @@
 #define CLK_ACLK_G2D_266		220
 #define CLK_ACLK_G2D_400		221
 #define CLK_ACLK_G3D_400		222
-#define CLK_ACLK_IMEM_SSX_266		223
+#define CLK_ACLK_IMEM_SSSX_266		223
 #define CLK_ACLK_BUS0_400		224
 #define CLK_ACLK_BUS1_400		225
 #define CLK_ACLK_IMEM_200		226
@@ -1407,5 +1407,11 @@
 #define CLK_SCLK_ISP_CA5				112
 
 #define CAM1_NR_CLK					113
+
+/* CMU_IMEM */
+#define CLK_ACLK_SLIMSSS		2
+#define CLK_PCLK_SLIMSSS		35
+
+#define IMEM_NR_CLK			36
 
 #endif /* _DT_BINDINGS_CLOCK_EXYNOS5433_H */

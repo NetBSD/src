@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a77995-cpg-mssr.h,v 1.1.1.2 2019/01/22 14:57:01 jmcneill Exp $	*/
+/*	$NetBSD: r8a77995-cpg-mssr.h,v 1.1.1.3 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0+
  *
@@ -37,8 +37,8 @@
 #define R8A77995_CLK_CRD2		24
 #define R8A77995_CLK_SD0H		25
 #define R8A77995_CLK_SD0		26
-#define R8A77995_CLK_SSP2		27
-#define R8A77995_CLK_SSP1		28
+/* CLK_SSP2 was removed */
+/* CLK_SSP1 was removed */
 #define R8A77995_CLK_RPC		29
 #define R8A77995_CLK_RPCD2		30
 #define R8A77995_CLK_ZA2		31
@@ -51,5 +51,6 @@
 #define R8A77995_CLK_LV0		38
 #define R8A77995_CLK_LV1		39
 #define R8A77995_CLK_CP			40
+#define R8A77995_CLK_CPEX		41
 
 #endif /* __DT_BINDINGS_CLOCK_R8A77995_CPG_MSSR_H__ */

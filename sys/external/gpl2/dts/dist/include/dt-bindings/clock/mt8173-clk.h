@@ -1,4 +1,4 @@
-/*	$NetBSD: mt8173-clk.h,v 1.1.1.2 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: mt8173-clk.h,v 1.1.1.3 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2014 MediaTek Inc.
@@ -196,7 +196,8 @@
 #define CLK_INFRA_PMICWRAP		11
 #define CLK_INFRA_CLK_13M		12
 #define CLK_INFRA_CA53SEL               13
-#define CLK_INFRA_CA57SEL               14
+#define CLK_INFRA_CA57SEL               14 /* Deprecated. Don't use it. */
+#define CLK_INFRA_CA72SEL               14
 #define CLK_INFRA_NR_CLK                15
 
 /* PERI_SYS */

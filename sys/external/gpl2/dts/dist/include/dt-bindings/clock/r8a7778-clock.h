@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a7778-clock.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: r8a7778-clock.h,v 1.1.1.2 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2014 Ulrich Hecht
@@ -32,6 +32,8 @@
 #define R8A7778_CLK_SCIF3	23
 #define R8A7778_CLK_SCIF4	22
 #define R8A7778_CLK_SCIF5	21
+#define R8A7778_CLK_HSCIF0	19
+#define R8A7778_CLK_HSCIF1	18
 #define R8A7778_CLK_TMU0	16
 #define R8A7778_CLK_TMU1	15
 #define R8A7778_CLK_TMU2	14
