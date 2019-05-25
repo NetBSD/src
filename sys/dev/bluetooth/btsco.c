@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.39 2019/05/08 13:40:17 isaki Exp $	*/
+/*	$NetBSD: btsco.c,v 1.40 2019/05/25 04:41:53 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.39 2019/05/08 13:40:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.40 2019/05/25 04:41:53 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -961,7 +961,7 @@ btsco_allocm(void *hdl, int direction, size_t size)
 	struct btsco_softc *sc = hdl;
 	void *addr;
 
-	DPRINTF("%s: size %d direction %d\n", sc->sc_name, size, direction);
+	DPRINTF("%s: size %zd direction %d\n", sc->sc_name, size, direction);
 
 	addr = kmem_alloc(size, KM_SLEEP);
 
