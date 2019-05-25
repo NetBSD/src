@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6qdl-clock.h,v 1.1.1.3 2019/01/22 14:57:02 jmcneill Exp $	*/
+/*	$NetBSD: imx6qdl-clock.h,v 1.1.1.4 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /*
  * Copyright 2014 Freescale Semiconductor, Inc.
@@ -276,6 +276,8 @@
 #define IMX6QDL_CLK_EPIT1			261
 #define IMX6QDL_CLK_EPIT2			262
 #define IMX6QDL_CLK_MMDC_P0_IPG			263
-#define IMX6QDL_CLK_END				264
+#define IMX6QDL_CLK_DCIC1			264
+#define IMX6QDL_CLK_DCIC2			265
+#define IMX6QDL_CLK_END				266
 
 #endif /* __DT_BINDINGS_CLOCK_IMX6QDL_H */

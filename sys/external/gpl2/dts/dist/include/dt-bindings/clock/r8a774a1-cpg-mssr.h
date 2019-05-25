@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a774a1-cpg-mssr.h,v 1.1.1.1 2019/01/22 14:57:02 jmcneill Exp $	*/
+/*	$NetBSD: r8a774a1-cpg-mssr.h,v 1.1.1.2 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0
  *
@@ -56,5 +56,6 @@
 #define R8A774A1_CLK_CPEX		43
 #define R8A774A1_CLK_R			44
 #define R8A774A1_CLK_OSC		45
+#define R8A774A1_CLK_CANFD		46
 
 #endif /* __DT_BINDINGS_CLOCK_R8A774A1_CPG_MSSR_H__ */
