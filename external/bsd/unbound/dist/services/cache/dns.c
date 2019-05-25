@@ -109,7 +109,7 @@ store_rrsets(struct module_env* env, struct reply_info* rep, time_t now,
 }
 
 /** delete message from message cache */
-static void
+void
 msg_cache_remove(struct module_env* env, uint8_t* qname, size_t qnamelen, 
 	uint16_t qtype, uint16_t qclass, uint16_t flags)
 {
@@ -547,6 +547,7 @@ tomsg(struct module_env* env, struct query_info* q, struct reply_info* r,
 	if(r->prefetch_ttl > now)
 		msg->rep->prefetch_ttl = r->prefetch_ttl - now;
 	else	msg->rep->prefetch_ttl = PREFETCH_TTL_CALC(msg->rep->ttl);
+	msg->rep->serve_expired_ttl = msg->rep->ttl + SERVE_EXPIRED_TTL;
 	msg->rep->security = r->security;
 	msg->rep->an_numrrsets = r->an_numrrsets;
 	msg->rep->ns_numrrsets = r->ns_numrrsets;
@@ -601,6 +602,7 @@ rrset_msg(struct ub_packed_rrset_key* rrset, struct regional* region,
 	msg->rep->qdcount = 1;
 	msg->rep->ttl = d->ttl - now;
 	msg->rep->prefetch_ttl = PREFETCH_TTL_CALC(msg->rep->ttl);
+	msg->rep->serve_expired_ttl = msg->rep->ttl + SERVE_EXPIRED_TTL;
 	msg->rep->security = sec_status_unchecked;
 	msg->rep->an_numrrsets = 1;
 	msg->rep->ns_numrrsets = 0;
@@ -638,6 +640,7 @@ synth_dname_msg(struct ub_packed_rrset_key* rrset, struct regional* region,
 	msg->rep->qdcount = 1;
 	msg->rep->ttl = d->ttl - now;
 	msg->rep->prefetch_ttl = PREFETCH_TTL_CALC(msg->rep->ttl);
+	msg->rep->serve_expired_ttl = msg->rep->ttl + SERVE_EXPIRED_TTL;
 	msg->rep->security = sec_status_unchecked;
 	msg->rep->an_numrrsets = 1;
 	msg->rep->ns_numrrsets = 0;
@@ -696,6 +699,7 @@ synth_dname_msg(struct ub_packed_rrset_key* rrset, struct regional* region,
 	newd->rr_ttl[0] = newd->ttl;
 	msg->rep->ttl = newd->ttl;
 	msg->rep->prefetch_ttl = PREFETCH_TTL_CALC(newd->ttl);
+	msg->rep->serve_expired_ttl = newd->ttl + SERVE_EXPIRED_TTL;
 	sldns_write_uint16(newd->rr_data[0], newlen);
 	memmove(newd->rr_data[0] + sizeof(uint16_t), newname, newlen);
 	msg->rep->an_numrrsets ++;
@@ -716,6 +720,17 @@ fill_any(struct module_env* env,
 		LDNS_RR_TYPE_DNAME, 0};
 	int i, num=6; /* number of RR types to look up */
 	log_assert(lookup[num] == 0);
+
+	if(env->cfg->deny_any) {
+		/* return empty message */
+		msg = dns_msg_create(qname, qnamelen, qtype, qclass,
+			region, 0);
+		if(!msg) {
+			return NULL;
+		}
+		msg->rep->security = sec_status_indeterminate;
+		return msg;
+	}
 
 	for(i=0; i<num; i++) {
 		/* look up this RR for inclusion in type ANY response */
