@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.1 2019/05/07 05:02:42 thorpej Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.2 2019/05/25 01:37:54 thorpej Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -135,6 +135,13 @@
 	  -->
 	<!-- Banana Pi-branded board "compatible" strings are a mess.
 	     We will just keep them all together here.  -->
+	<key>lamobo,lamobo-r1</key>
+	<dict>
+		<key>description</key>
+		<string>Lamobo R1</string>
+		<key>u-boot-pkg</key>
+		<string>lamobo-r1</string>
+	</dict>
 	<key>lemaker,bananapi</key>
 	<dict>
 		<key>description</key>
