@@ -83,7 +83,7 @@ struct rbtree_type;
 /** how nice is a server without further information, in msec 
  * Equals rtt initial timeout value.
  */
-#define UNKNOWN_SERVER_NICENESS 376
+extern int UNKNOWN_SERVER_NICENESS;
 /** maximum timeout before a host is deemed unsuitable, in msec. 
  * After host_ttl this will be timed out and the host will be tried again. 
  * Equals RTT_MAX_TIMEOUT
@@ -370,6 +370,9 @@ struct iter_qstate {
 
 	/** QNAME minimisation state, RFC7816 */
 	enum minimisation_state minimisation_state;
+
+	/** State for capsfail: QNAME minimisation state for comparisons. */
+	enum minimisation_state caps_minimisation_state;
 
 	/**
 	 * The query info that is sent upstream. Will be a subset of qchase

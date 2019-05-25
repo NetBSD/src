@@ -374,15 +374,18 @@ answer_callback_from_entry(struct replay_runtime* runtime,
 	c.fd = -1;
 	c.buffer = sldns_buffer_new(runtime->bufsize);
 	c.type = comm_udp;
-	if(pend->transport == transport_tcp)
+	if(pend->transport == transport_tcp) {
 		c.type = comm_tcp;
+		c.tcp_timeout_msec = 30000;
+		c.tcp_keepalive = runtime->tcp_seen_keepalive;
+	}
 	fill_buffer_with_reply(c.buffer, entry, pend->pkt, pend->pkt_len,
 		pend->tcp_pkt_counter);
 	repinfo.c = &c;
 	repinfo.addrlen = pend->addrlen;
 	memcpy(&repinfo.addr, &pend->addr, pend->addrlen);
 	if(!pend->serviced) {
-		if(entry->reply_list->next &&
+		if(entry && entry->reply_list->next &&
 			pend->tcp_pkt_counter < count_reply_packets(entry)) {
 			/* go to next packet next time */
 			pend->tcp_pkt_counter++;
@@ -423,6 +426,8 @@ answer_check_it(struct replay_runtime* runtime)
 			else 	runtime->answer_list = ans->next;
 			if(!ans->next)
 				runtime->answer_last = prev;
+			if(ans->repinfo.c->tcp_keepalive)
+				runtime->tcp_seen_keepalive = 1;
 			delete_replay_answer(ans);
 			return;
 		} else {
@@ -452,9 +457,12 @@ fake_front_query(struct replay_runtime* runtime, struct replay_moment *todo)
 	repinfo.c->fd = -1;
 	repinfo.c->ev = (struct internal_event*)runtime;
 	repinfo.c->buffer = sldns_buffer_new(runtime->bufsize);
-	if(todo->match->match_transport == transport_tcp)
+	if(todo->match->match_transport == transport_tcp) {
 		repinfo.c->type = comm_tcp;
-	else	repinfo.c->type = comm_udp;
+		repinfo.c->tcp_timeout_msec = 30000;
+		repinfo.c->tcp_keepalive = runtime->tcp_seen_keepalive;
+	} else
+		repinfo.c->type = comm_udp;
 	fill_buffer_with_reply(repinfo.c->buffer, todo->match, NULL, 0, 0);
 	log_info("testbound: incoming QUERY");
 	log_pkt("query pkt", todo->match->reply_list->reply_pkt,
@@ -488,8 +496,11 @@ fake_pending_callback(struct replay_runtime* runtime,
 	cb = p->callback;
 	c.buffer = sldns_buffer_new(runtime->bufsize);
 	c.type = comm_udp;
-	if(p->transport == transport_tcp)
+	if(p->transport == transport_tcp) {
 		c.type = comm_tcp;
+		c.tcp_timeout_msec = 30000;
+		c.tcp_keepalive = runtime->tcp_seen_keepalive;
+	}
 	if(todo->evt_type == repevt_back_reply && todo->match) {
 		fill_buffer_with_reply(c.buffer, todo->match, p->pkt,
 			p->pkt_len, p->tcp_pkt_counter);
@@ -498,7 +509,7 @@ fake_pending_callback(struct replay_runtime* runtime,
 	repinfo.addrlen = p->addrlen;
 	memcpy(&repinfo.addr, &p->addr, p->addrlen);
 	if(!p->serviced) {
-		if(todo->match->reply_list->next && !error &&
+		if(todo->match && todo->match->reply_list->next && !error &&
 			p->tcp_pkt_counter < count_reply_packets(todo->match)) {
 			/* go to next packet next time */
 			p->tcp_pkt_counter++;
@@ -856,6 +867,8 @@ run_scenario(struct replay_runtime* runtime)
 struct listen_dnsport* 
 listen_create(struct comm_base* base, struct listen_port* ATTR_UNUSED(ports),
 	size_t bufsize, int ATTR_UNUSED(tcp_accept_count),
+	int ATTR_UNUSED(tcp_idle_timeout),
+	struct tcl_list* ATTR_UNUSED(tcp_conn_limit),
 	void* ATTR_UNUSED(sslctx), struct dt_env* ATTR_UNUSED(dtenv),
 	comm_point_callback_type* cb, void* cb_arg)
 {
@@ -1786,6 +1799,26 @@ int outnet_tcp_connect(int ATTR_UNUSED(s), struct sockaddr_storage* ATTR_UNUSED(
 	socklen_t ATTR_UNUSED(addrlen))
 {
 	log_assert(0);
+	return 0;
+}
+
+int tcp_req_info_add_meshstate(struct tcp_req_info* ATTR_UNUSED(req),
+        struct mesh_area* ATTR_UNUSED(mesh), struct mesh_state* ATTR_UNUSED(m))
+{
+	log_assert(0);
+	return 0;
+}
+
+void
+tcp_req_info_remove_mesh_state(struct tcp_req_info* ATTR_UNUSED(req),
+	struct mesh_state* ATTR_UNUSED(m))
+{
+	log_assert(0);
+}
+
+size_t
+tcp_req_info_get_stream_buffer_size(void)
+{
 	return 0;
 }
 

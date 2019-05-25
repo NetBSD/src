@@ -43,12 +43,14 @@
 #include "util/ub_event.h"
 #include "util/log.h"
 #include "util/net_help.h"
+#include "util/tcp_conn_limit.h"
 #include "util/fptr_wlist.h"
 #include "sldns/pkthdr.h"
 #include "sldns/sbuffer.h"
 #include "sldns/str2wire.h"
 #include "dnstap/dnstap.h"
 #include "dnscrypt/dnscrypt.h"
+#include "services/listen_dnsport.h"
 #ifdef HAVE_OPENSSL_SSL_H
 #include <openssl/ssl.h>
 #endif
@@ -82,10 +84,11 @@
 #  endif
 #endif
 
-/** The TCP reading or writing query timeout in milliseconds */
+/** The TCP writing query timeout in milliseconds */
 #define TCP_QUERY_TIMEOUT 120000
-/** The TCP timeout in msec for fast queries, above half are used */
-#define TCP_QUERY_TIMEOUT_FAST 200
+/** The minimum actual TCP timeout to use, regardless of what we advertise,
+ * in msec */
+#define TCP_QUERY_TIMEOUT_MINIMUM 200
 
 #ifndef NONBLOCKING_IS_BROKEN
 /** number of UDP reads to perform per read indication from select */
@@ -148,7 +151,8 @@ struct internal_signal {
 /** create a tcp handler with a parent */
 static struct comm_point* comm_point_create_tcp_handler(
 	struct comm_base *base, struct comm_point* parent, size_t bufsize,
-        comm_point_callback_type* callback, void* callback_arg);
+	struct sldns_buffer* spoolbuf, comm_point_callback_type* callback,
+	void* callback_arg);
 
 /* -------- End of local definitions -------- */
 
@@ -728,6 +732,7 @@ comm_point_udp_callback(int fd, short event, void* arg)
 static void
 setup_tcp_handler(struct comm_point* c, int fd, int cur, int max) 
 {
+	int handler_usage;
 	log_assert(c->type == comm_tcp);
 	log_assert(c->fd == -1);
 	sldns_buffer_clear(c->buffer);
@@ -737,13 +742,29 @@ setup_tcp_handler(struct comm_point* c, int fd, int cur, int max)
 #endif
 	c->tcp_is_reading = 1;
 	c->tcp_byte_count = 0;
-	c->tcp_timeout_msec = TCP_QUERY_TIMEOUT;
 	/* if more than half the tcp handlers are in use, use a shorter
 	 * timeout for this TCP connection, we need to make space for
 	 * other connections to be able to get attention */
-	if(cur > max/2)
-		c->tcp_timeout_msec = TCP_QUERY_TIMEOUT_FAST;
-	comm_point_start_listening(c, fd, c->tcp_timeout_msec);
+	/* If > 50% TCP handler structures in use, set timeout to 1/100th
+	 * 	configured value.
+	 * If > 65%TCP handler structures in use, set to 1/500th configured
+	 * 	value.
+	 * If > 80% TCP handler structures in use, set to 0.
+	 *
+	 * If the timeout to use falls below 200 milliseconds, an actual
+	 * timeout of 200ms is used.
+	 */
+	handler_usage = (cur * 100) / max;
+	if(handler_usage > 50 && handler_usage <= 65)
+		c->tcp_timeout_msec /= 100;
+	else if (handler_usage > 65 && handler_usage <= 80)
+		c->tcp_timeout_msec /= 500;
+	else if (handler_usage > 80)
+		c->tcp_timeout_msec = 0;
+	comm_point_start_listening(c, fd,
+		c->tcp_timeout_msec < TCP_QUERY_TIMEOUT_MINIMUM
+			? TCP_QUERY_TIMEOUT_MINIMUM
+			: c->tcp_timeout_msec);
 }
 
 void comm_base_handle_slow_accept(int ATTR_UNUSED(fd),
@@ -831,6 +852,16 @@ int comm_point_perform_accept(struct comm_point* c,
 			addr, *addrlen);
 #endif
 		return -1;
+	}
+	if(c->tcp_conn_limit && c->type == comm_tcp_accept) {
+		c->tcl_addr = tcl_addr_lookup(c->tcp_conn_limit, addr, *addrlen);
+		if(!tcl_new_connection(c->tcl_addr)) {
+			if(verbosity >= 3)
+				log_err_addr("accept rejected",
+				"connection limit exceeded", addr, *addrlen);
+			close(new_fd);
+			return -1;
+		}
 	}
 #ifndef HAVE_ACCEPT4
 	fd_set_nonblock(new_fd);
@@ -958,8 +989,12 @@ tcp_callback_writer(struct comm_point* c)
 		c->tcp_is_reading = 1;
 	c->tcp_byte_count = 0;
 	/* switch from listening(write) to listening(read) */
-	comm_point_stop_listening(c);
-	comm_point_start_listening(c, -1, -1);
+	if(c->tcp_req_info) {
+		tcp_req_info_handle_writedone(c->tcp_req_info);
+	} else {
+		comm_point_stop_listening(c);
+		comm_point_start_listening(c, -1, -1);
+	}
 }
 
 /** do the callback when reading is done */
@@ -971,11 +1006,15 @@ tcp_callback_reader(struct comm_point* c)
 	if(c->tcp_do_toggle_rw)
 		c->tcp_is_reading = 0;
 	c->tcp_byte_count = 0;
-	if(c->type == comm_tcp)
-		comm_point_stop_listening(c);
-	fptr_ok(fptr_whitelist_comm_point(c->callback));
-	if( (*c->callback)(c, c->cb_arg, NETEVENT_NOERROR, &c->repinfo) ) {
-		comm_point_start_listening(c, -1, c->tcp_timeout_msec);
+	if(c->tcp_req_info) {
+		tcp_req_info_handle_readdone(c->tcp_req_info);
+	} else {
+		if(c->type == comm_tcp)
+			comm_point_stop_listening(c);
+		fptr_ok(fptr_whitelist_comm_point(c->callback));
+		if( (*c->callback)(c, c->cb_arg, NETEVENT_NOERROR, &c->repinfo) ) {
+			comm_point_start_listening(c, -1, c->tcp_timeout_msec);
+		}
 	}
 }
 
@@ -1134,6 +1173,8 @@ ssl_handle_read(struct comm_point* c)
 			c->tcp_byte_count))) <= 0) {
 			int want = SSL_get_error(c->ssl, r);
 			if(want == SSL_ERROR_ZERO_RETURN) {
+				if(c->tcp_req_info)
+					return tcp_req_info_handle_read_close(c->tcp_req_info);
 				return 0; /* shutdown, closed */
 			} else if(want == SSL_ERROR_WANT_READ) {
 				ub_winsock_tcp_wouldblock(c->ev->ev, UB_EV_READ);
@@ -1176,6 +1217,8 @@ ssl_handle_read(struct comm_point* c)
 		if(r <= 0) {
 			int want = SSL_get_error(c->ssl, r);
 			if(want == SSL_ERROR_ZERO_RETURN) {
+				if(c->tcp_req_info)
+					return tcp_req_info_handle_read_close(c->tcp_req_info);
 				return 0; /* shutdown, closed */
 			} else if(want == SSL_ERROR_WANT_READ) {
 				ub_winsock_tcp_wouldblock(c->ev->ev, UB_EV_READ);
@@ -1336,9 +1379,11 @@ comm_point_tcp_handle_read(int fd, struct comm_point* c, int short_ok)
 		/* read length bytes */
 		r = recv(fd,(void*)sldns_buffer_at(c->buffer,c->tcp_byte_count),
 			sizeof(uint16_t)-c->tcp_byte_count, 0);
-		if(r == 0)
+		if(r == 0) {
+			if(c->tcp_req_info)
+				return tcp_req_info_handle_read_close(c->tcp_req_info);
 			return 0;
-		else if(r == -1) {
+		} else if(r == -1) {
 #ifndef USE_WINSOCK
 			if(errno == EINTR || errno == EAGAIN)
 				return 1;
@@ -1387,6 +1432,8 @@ comm_point_tcp_handle_read(int fd, struct comm_point* c, int short_ok)
 	r = recv(fd, (void*)sldns_buffer_current(c->buffer), 
 		sldns_buffer_remaining(c->buffer), 0);
 	if(r == 0) {
+		if(c->tcp_req_info)
+			return tcp_req_info_handle_read_close(c->tcp_req_info);
 		return 0;
 	} else if(r == -1) {
 #ifndef USE_WINSOCK
@@ -1640,6 +1687,29 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
 	return 1;
 }
 
+/** read again to drain buffers when there could be more to read */
+static void
+tcp_req_info_read_again(int fd, struct comm_point* c)
+{
+	while(c->tcp_req_info->read_again) {
+		int r;
+		c->tcp_req_info->read_again = 0;
+		if(c->tcp_is_reading)
+			r = comm_point_tcp_handle_read(fd, c, 0);
+		else 	r = comm_point_tcp_handle_write(fd, c);
+		if(!r) {
+			reclaim_tcp_handler(c);
+			if(!c->tcp_do_close) {
+				fptr_ok(fptr_whitelist_comm_point(
+					c->callback));
+				(void)(*c->callback)(c, c->cb_arg, 
+					NETEVENT_CLOSED, NULL);
+			}
+			return;
+		}
+	}
+}
+
 void 
 comm_point_tcp_handle_callback(int fd, short event, void* arg)
 {
@@ -1669,6 +1739,7 @@ comm_point_tcp_handle_callback(int fd, short event, void* arg)
 #endif
 
 	if(event&UB_EV_READ) {
+		int has_tcpq = (c->tcp_req_info != NULL);
 		if(!comm_point_tcp_handle_read(fd, c, 0)) {
 			reclaim_tcp_handler(c);
 			if(!c->tcp_do_close) {
@@ -1678,9 +1749,12 @@ comm_point_tcp_handle_callback(int fd, short event, void* arg)
 					NETEVENT_CLOSED, NULL);
 			}
 		}
+		if(has_tcpq && c->tcp_req_info && c->tcp_req_info->read_again)
+			tcp_req_info_read_again(fd, c);
 		return;
 	}
 	if(event&UB_EV_WRITE) {
+		int has_tcpq = (c->tcp_req_info != NULL);
 		if(!comm_point_tcp_handle_write(fd, c)) {
 			reclaim_tcp_handler(c);
 			if(!c->tcp_do_close) {
@@ -1690,6 +1764,8 @@ comm_point_tcp_handle_callback(int fd, short event, void* arg)
 					NETEVENT_CLOSED, NULL);
 			}
 		}
+		if(has_tcpq && c->tcp_req_info && c->tcp_req_info->read_again)
+			tcp_req_info_read_again(fd, c);
 		return;
 	}
 	if(event&UB_EV_TIMEOUT) {
@@ -2494,7 +2570,8 @@ comm_point_create_udp_ancil(struct comm_base *base, int fd,
 static struct comm_point* 
 comm_point_create_tcp_handler(struct comm_base *base, 
 	struct comm_point* parent, size_t bufsize,
-        comm_point_callback_type* callback, void* callback_arg)
+	struct sldns_buffer* spoolbuf, comm_point_callback_type* callback,
+	void* callback_arg)
 {
 	struct comm_point* c = (struct comm_point*)calloc(1,
 		sizeof(struct comm_point));
@@ -2525,6 +2602,10 @@ comm_point_create_tcp_handler(struct comm_base *base,
 	c->tcp_is_reading = 0;
 	c->tcp_byte_count = 0;
 	c->tcp_parent = parent;
+	c->tcp_timeout_msec = parent->tcp_timeout_msec;
+	c->tcp_conn_limit = parent->tcp_conn_limit;
+	c->tcl_addr = NULL;
+	c->tcp_keepalive = 0;
 	c->max_tcp_count = 0;
 	c->cur_tcp_count = 0;
 	c->tcp_handlers = NULL;
@@ -2546,6 +2627,20 @@ comm_point_create_tcp_handler(struct comm_base *base,
 	c->repinfo.c = c;
 	c->callback = callback;
 	c->cb_arg = callback_arg;
+	if(spoolbuf) {
+		c->tcp_req_info = tcp_req_info_create(spoolbuf);
+		if(!c->tcp_req_info) {
+			log_err("could not create tcp commpoint");
+			sldns_buffer_free(c->buffer);
+			free(c->timeout);
+			free(c->ev);
+			free(c);
+			return NULL;
+		}
+		c->tcp_req_info->cp = c;
+		c->tcp_do_close = 1;
+		c->tcp_do_toggle_rw = 0;
+	}
 	/* add to parent free list */
 	c->tcp_free = parent->tcp_free;
 	parent->tcp_free = c;
@@ -2557,6 +2652,9 @@ comm_point_create_tcp_handler(struct comm_base *base,
 	{
 		log_err("could not basetset tcphdl event");
 		parent->tcp_free = c->tcp_free;
+		tcp_req_info_delete(c->tcp_req_info);
+		sldns_buffer_free(c->buffer);
+		free(c->timeout);
 		free(c->ev);
 		free(c);
 		return NULL;
@@ -2565,8 +2663,10 @@ comm_point_create_tcp_handler(struct comm_base *base,
 }
 
 struct comm_point* 
-comm_point_create_tcp(struct comm_base *base, int fd, int num, size_t bufsize,
-        comm_point_callback_type* callback, void* callback_arg)
+comm_point_create_tcp(struct comm_base *base, int fd, int num,
+	int idle_timeout, struct tcl_list* tcp_conn_limit, size_t bufsize,
+	struct sldns_buffer* spoolbuf, comm_point_callback_type* callback,
+	void* callback_arg)
 {
 	struct comm_point* c = (struct comm_point*)calloc(1,
 		sizeof(struct comm_point));
@@ -2587,6 +2687,10 @@ comm_point_create_tcp(struct comm_base *base, int fd, int num, size_t bufsize,
 	c->timeout = NULL;
 	c->tcp_is_reading = 0;
 	c->tcp_byte_count = 0;
+	c->tcp_timeout_msec = idle_timeout;
+	c->tcp_conn_limit = tcp_conn_limit;
+	c->tcl_addr = NULL;
+	c->tcp_keepalive = 0;
 	c->tcp_parent = NULL;
 	c->max_tcp_count = num;
 	c->cur_tcp_count = 0;
@@ -2629,7 +2733,7 @@ comm_point_create_tcp(struct comm_base *base, int fd, int num, size_t bufsize,
 	/* now prealloc the tcp handlers */
 	for(i=0; i<num; i++) {
 		c->tcp_handlers[i] = comm_point_create_tcp_handler(base,
-			c, bufsize, callback, callback_arg);
+			c, bufsize, spoolbuf, callback, callback_arg);
 		if(!c->tcp_handlers[i]) {
 			comm_point_delete(c);
 			return NULL;
@@ -2665,6 +2769,10 @@ comm_point_create_tcp_out(struct comm_base *base, size_t bufsize,
 	c->timeout = NULL;
 	c->tcp_is_reading = 0;
 	c->tcp_byte_count = 0;
+	c->tcp_timeout_msec = TCP_QUERY_TIMEOUT;
+	c->tcp_conn_limit = NULL;
+	c->tcl_addr = NULL;
+	c->tcp_keepalive = 0;
 	c->tcp_parent = NULL;
 	c->max_tcp_count = 0;
 	c->cur_tcp_count = 0;
@@ -2906,6 +3014,9 @@ comm_point_close(struct comm_point* c)
 			log_err("could not event_del on close");
 		}
 	}
+	tcl_close_connection(c->tcl_addr);
+	if(c->tcp_req_info)
+		tcp_req_info_clear(c->tcp_req_info);
 	/* close fd after removing from event lists, or epoll.. is messed up */
 	if(c->fd != -1 && !c->do_not_close) {
 		if(c->type == comm_tcp || c->type == comm_http) {
@@ -2949,6 +3060,9 @@ comm_point_delete(struct comm_point* c)
 			sldns_buffer_free(c->dnscrypt_buffer);
 		}
 #endif
+		if(c->tcp_req_info) {
+			tcp_req_info_delete(c->tcp_req_info);
+		}
 	}
 	ub_event_free(c->ev->ev);
 	free(c->ev);
@@ -2989,8 +3103,12 @@ comm_point_send_reply(struct comm_reply *repinfo)
 			dt_msg_send_client_response(repinfo->c->tcp_parent->dtenv,
 			&repinfo->addr, repinfo->c->type, repinfo->c->buffer);
 #endif
-		comm_point_start_listening(repinfo->c, -1,
-			repinfo->c->tcp_timeout_msec);
+		if(repinfo->c->tcp_req_info) {
+			tcp_req_info_send_reply(repinfo->c->tcp_req_info);
+		} else {
+			comm_point_start_listening(repinfo->c, -1,
+				repinfo->c->tcp_timeout_msec);
+		}
 	}
 }
 
@@ -3003,6 +3121,8 @@ comm_point_drop_reply(struct comm_reply* repinfo)
 	log_assert(repinfo->c->type != comm_tcp_accept);
 	if(repinfo->c->type == comm_udp)
 		return;
+	if(repinfo->c->tcp_req_info)
+		repinfo->c->tcp_req_info->is_drop = 1;
 	reclaim_tcp_handler(repinfo->c);
 }
 

@@ -48,6 +48,7 @@
 #include "services/outside_network.h"
 #include "services/listen_dnsport.h"
 #include "services/cache/infra.h"
+#include "iterator/iterator.h"
 #include "util/data/msgparse.h"
 #include "util/data/msgreply.h"
 #include "util/data/msgencode.h"
@@ -61,6 +62,9 @@
 #include "dnstap/dnstap.h"
 #ifdef HAVE_OPENSSL_SSL_H
 #include <openssl/ssl.h>
+#endif
+#ifdef HAVE_X509_VERIFY_PARAM_SET1_HOST
+#include <openssl/x509v3.h>
 #endif
 
 #ifdef HAVE_NETDB_H
@@ -364,6 +368,11 @@ outnet_tcp_take_into_use(struct waiting_tcp* w, uint8_t* pkt, size_t pkt_len)
 		comm_point_tcp_win_bio_cb(pend->c, pend->c->ssl);
 #endif
 		pend->c->ssl_shake_state = comm_ssl_shake_write;
+		if(w->tls_auth_name) {
+#ifdef HAVE_SSL
+			(void)SSL_set_tlsext_host_name(pend->c->ssl, w->tls_auth_name);
+#endif
+		}
 #ifdef HAVE_SSL_SET1_HOST
 		if(w->tls_auth_name) {
 			SSL_set_verify(pend->c->ssl, SSL_VERIFY_PEER, NULL);
@@ -373,9 +382,27 @@ outnet_tcp_take_into_use(struct waiting_tcp* w, uint8_t* pkt, size_t pkt_len)
                         if(!SSL_set1_host(pend->c->ssl, w->tls_auth_name)) {
                                 log_err("SSL_set1_host failed");
 				pend->c->fd = s;
+				SSL_free(pend->c->ssl);
+				pend->c->ssl = NULL;
 				comm_point_close(pend->c);
 				return 0;
 			}
+		}
+#elif defined(HAVE_X509_VERIFY_PARAM_SET1_HOST)
+		/* openssl 1.0.2 has this function that can be used for
+		 * set1_host like verification */
+		if(w->tls_auth_name) {
+			X509_VERIFY_PARAM* param = SSL_get0_param(pend->c->ssl);
+			X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+			if(!X509_VERIFY_PARAM_set1_host(param, w->tls_auth_name, strlen(w->tls_auth_name))) {
+				log_err("X509_VERIFY_PARAM_set1_host failed");
+				pend->c->fd = s;
+				SSL_free(pend->c->ssl);
+				pend->c->ssl = NULL;
+				comm_point_close(pend->c);
+				return 0;
+			}
+			SSL_set_verify(pend->c->ssl, SSL_VERIFY_PEER, NULL);
 		}
 #endif /* HAVE_SSL_SET1_HOST */
 	}
@@ -751,7 +778,7 @@ outside_network_create(struct comm_base *base, size_t bufsize,
 		outnet->delay_tv.tv_usec = (delayclose%1000)*1000;
 	}
 #endif
-	if(numavailports == 0) {
+	if(numavailports == 0 || num_ports == 0) {
 		log_err("no outgoing ports available");
 		outside_network_delete(outnet);
 		return NULL;
@@ -1036,6 +1063,8 @@ udp_sockport(struct sockaddr_storage* addr, socklen_t addrlen, int pfxlen,
 		int freebind = 0;
 		struct sockaddr_in6 sa = *(struct sockaddr_in6*)addr;
 		sa.sin6_port = (in_port_t)htons((uint16_t)port);
+		sa.sin6_flowinfo = 0;
+		sa.sin6_scope_id = 0;
 		if(pfxlen != 0) {
 			freebind = 1;
 			sai6_putrandom(&sa, pfxlen, rnd);
@@ -1258,6 +1287,13 @@ outnet_tcptimer(void* arg)
 	} else {
 		/* it was in use */
 		struct pending_tcp* pend=(struct pending_tcp*)w->next_waiting;
+		if(pend->c->ssl) {
+#ifdef HAVE_SSL
+			SSL_shutdown(pend->c->ssl);
+			SSL_free(pend->c->ssl);
+			pend->c->ssl = NULL;
+#endif
+		}
 		comm_point_close(pend->c);
 		pend->query = NULL;
 		pend->next_free = outnet->tcp_free;
@@ -1470,7 +1506,6 @@ serviced_delete(struct serviced_query* sq)
 		/* clear up the pending query */
 		if(sq->status == serviced_query_UDP_EDNS ||
 			sq->status == serviced_query_UDP ||
-			sq->status == serviced_query_PROBE_EDNS ||
 			sq->status == serviced_query_UDP_EDNS_FRAG ||
 			sq->status == serviced_query_UDP_EDNS_fallback) {
 			struct pending* p = (struct pending*)sq->pending;
@@ -1597,15 +1632,7 @@ serviced_udp_send(struct serviced_query* sq, sldns_buffer* buff)
 	sq->last_rtt = rtt;
 	verbose(VERB_ALGO, "EDNS lookup known=%d vs=%d", edns_lame_known, vs);
 	if(sq->status == serviced_initial) {
-		if(edns_lame_known == 0 && rtt > 5000 && rtt < 10001) {
-			/* perform EDNS lame probe - check if server is
-			 * EDNS lame (EDNS queries to it are dropped) */
-			verbose(VERB_ALGO, "serviced query: send probe to see "
-				" if use of EDNS causes timeouts");
-			/* even 700 msec may be too small */
-			rtt = 1000;
-			sq->status = serviced_query_PROBE_EDNS;
-		} else if(vs != -1) {
+		if(vs != -1) {
 			sq->status = serviced_query_UDP_EDNS;
 		} else { 	
 			sq->status = serviced_query_UDP; 
@@ -1859,7 +1886,7 @@ serviced_tcp_initiate(struct serviced_query* sq, sldns_buffer* buff)
 	if(!sq->pending) {
 		/* delete from tree so that a retry by above layer does not
 		 * clash with this entry */
-		log_err("serviced_tcp_initiate: failed to send tcp query");
+		verbose(VERB_ALGO, "serviced_tcp_initiate: failed to send tcp query");
 		serviced_callbacks(sq, NETEVENT_CLOSED, NULL, NULL);
 	}
 }
@@ -1882,7 +1909,7 @@ serviced_tcp_send(struct serviced_query* sq, sldns_buffer* buff)
 	sq->last_sent_time = *sq->outnet->now_tv;
 	if(sq->tcp_upstream || sq->ssl_upstream) {
 		timeout = rtt;
-		if(rtt >= 376 && rtt < TCP_AUTH_QUERY_TIMEOUT)
+		if(rtt >= UNKNOWN_SERVER_NICENESS && rtt < TCP_AUTH_QUERY_TIMEOUT)
 			timeout = TCP_AUTH_QUERY_TIMEOUT;
 	} else {
 		timeout = TCP_AUTH_QUERY_TIMEOUT;
@@ -1937,17 +1964,10 @@ serviced_udp_callback(struct comm_point* c, void* arg, int error,
 	struct serviced_query* sq = (struct serviced_query*)arg;
 	struct outside_network* outnet = sq->outnet;
 	struct timeval now = *sq->outnet->now_tv;
-	int fallback_tcp = 0;
 
 	sq->pending = NULL; /* removed after callback */
 	if(error == NETEVENT_TIMEOUT) {
 		int rto = 0;
-		if(sq->status == serviced_query_PROBE_EDNS) {
-			/* non-EDNS probe failed; we do not know its status,
-			 * keep trying with EDNS, timeout may not be caused
-			 * by EDNS. */
-			sq->status = serviced_query_UDP_EDNS;
-		}
 		if(sq->status == serviced_query_UDP_EDNS && sq->last_rtt < 5000) {
 			/* fallback to 1480/1280 */
 			sq->status = serviced_query_UDP_EDNS_FRAG;
@@ -1975,14 +1995,8 @@ serviced_udp_callback(struct comm_point* c, void* arg, int error,
 			}
 			return 0;
 		}
-		if(rto >= RTT_MAX_TIMEOUT) {
-			fallback_tcp = 1;
-			/* UDP does not work, fallback to TCP below */
-		} else {
-			serviced_callbacks(sq, NETEVENT_TIMEOUT, c, rep);
-			return 0;
-		}
-	} else if(error != NETEVENT_NOERROR) {
+	}
+	if(error != NETEVENT_NOERROR) {
 		/* udp returns error (due to no ID or interface available) */
 		serviced_callbacks(sq, error, c, rep);
 		return 0;
@@ -1995,9 +2009,8 @@ serviced_udp_callback(struct comm_point* c, void* arg, int error,
 		sq->zone, sq->zonelen, sq->qbuf, sq->qbuflen,
 		&sq->last_sent_time, sq->outnet->now_tv, c->buffer);
 #endif
-	if(!fallback_tcp) {
-	    if( (sq->status == serviced_query_UDP_EDNS 
-	        ||sq->status == serviced_query_UDP_EDNS_FRAG)
+	if( (sq->status == serviced_query_UDP_EDNS 
+		||sq->status == serviced_query_UDP_EDNS_FRAG)
 		&& (LDNS_RCODE_WIRE(sldns_buffer_begin(c->buffer)) 
 			== LDNS_RCODE_FORMERR || LDNS_RCODE_WIRE(
 			sldns_buffer_begin(c->buffer)) == LDNS_RCODE_NOTIMPL
@@ -2011,19 +2024,7 @@ serviced_udp_callback(struct comm_point* c, void* arg, int error,
 			serviced_callbacks(sq, NETEVENT_CLOSED, c, rep);
 		}
 		return 0;
-	    } else if(sq->status == serviced_query_PROBE_EDNS) {
-		/* probe without EDNS succeeds, so we conclude that this
-		 * host likely has EDNS packets dropped */
-		log_addr(VERB_DETAIL, "timeouts, concluded that connection to "
-			"host drops EDNS packets", &sq->addr, sq->addrlen);
-		/* only store noEDNS in cache if domain is noDNSSEC */
-		if(!sq->want_dnssec)
-		  if(!infra_edns_update(outnet->infra, &sq->addr, sq->addrlen,
-			sq->zone, sq->zonelen, -1, (time_t)now.tv_sec)) {
-			log_err("Out of memory caching no edns for host");
-		  }
-		sq->status = serviced_query_UDP;
-	    } else if(sq->status == serviced_query_UDP_EDNS && 
+	} else if(sq->status == serviced_query_UDP_EDNS && 
 		!sq->edns_lame_known) {
 		/* now we know that edns queries received answers store that */
 		log_addr(VERB_ALGO, "serviced query: EDNS works for",
@@ -2033,7 +2034,7 @@ serviced_udp_callback(struct comm_point* c, void* arg, int error,
 			log_err("Out of memory caching edns works");
 		}
 		sq->edns_lame_known = 1;
-	    } else if(sq->status == serviced_query_UDP_EDNS_fallback &&
+	} else if(sq->status == serviced_query_UDP_EDNS_fallback &&
 		!sq->edns_lame_known && (LDNS_RCODE_WIRE(
 		sldns_buffer_begin(c->buffer)) == LDNS_RCODE_NOERROR || 
 		LDNS_RCODE_WIRE(sldns_buffer_begin(c->buffer)) == 
@@ -2051,12 +2052,12 @@ serviced_udp_callback(struct comm_point* c, void* arg, int error,
 		  }
 		} else {
 		  log_addr(VERB_ALGO, "serviced query: EDNS fails, but "
-		  	"not stored because need DNSSEC for", &sq->addr,
+			"not stored because need DNSSEC for", &sq->addr,
 			sq->addrlen);
 		}
 		sq->status = serviced_query_UDP;
-	    }
-	    if(now.tv_sec > sq->last_sent_time.tv_sec ||
+	}
+	if(now.tv_sec > sq->last_sent_time.tv_sec ||
 		(now.tv_sec == sq->last_sent_time.tv_sec &&
 		now.tv_usec > sq->last_sent_time.tv_usec)) {
 		/* convert from microseconds to milliseconds */
@@ -2072,11 +2073,10 @@ serviced_udp_callback(struct comm_point* c, void* arg, int error,
 			sq->last_rtt, (time_t)now.tv_sec))
 			log_err("out of memory noting rtt.");
 		}
-	    }
-	} /* end of if_!fallback_tcp */
+	}
 	/* perform TC flag check and TCP fallback after updating our
 	 * cache entries for EDNS status and RTT times */
-	if(LDNS_TC_WIRE(sldns_buffer_begin(c->buffer)) || fallback_tcp) {
+	if(LDNS_TC_WIRE(sldns_buffer_begin(c->buffer))) {
 		/* fallback to TCP */
 		/* this discards partial UDP contents */
 		if(sq->status == serviced_query_UDP_EDNS ||
@@ -2190,39 +2190,48 @@ fd_for_dest(struct outside_network* outnet, struct sockaddr_storage* to_addr,
 {
 	struct sockaddr_storage* addr;
 	socklen_t addrlen;
-	int i;
-	int try;
-
-	/* select interface */
-	if(addr_is_ip6(to_addr, to_addrlen)) {
-		if(outnet->num_ip6 == 0) {
-			char to[64];
-			addr_to_str(to_addr, to_addrlen, to, sizeof(to));
-			verbose(VERB_QUERY, "need ipv6 to send, but no ipv6 outgoing interfaces, for %s", to);
-			return -1;
-		}
-		i = ub_random_max(outnet->rnd, outnet->num_ip6);
-		addr = &outnet->ip6_ifs[i].addr;
-		addrlen = outnet->ip6_ifs[i].addrlen;
-	} else {
-		if(outnet->num_ip4 == 0) {
-			char to[64];
-			addr_to_str(to_addr, to_addrlen, to, sizeof(to));
-			verbose(VERB_QUERY, "need ipv4 to send, but no ipv4 outgoing interfaces, for %s", to);
-			return -1;
-		}
-		i = ub_random_max(outnet->rnd, outnet->num_ip4);
-		addr = &outnet->ip4_ifs[i].addr;
-		addrlen = outnet->ip4_ifs[i].addrlen;
-	}
+	int i, try, pnum;
+	struct port_if* pif;
 
 	/* create fd */
 	for(try = 0; try<1000; try++) {
+		int port = 0;
 		int freebind = 0;
 		int noproto = 0;
 		int inuse = 0;
-		int port = ub_random(outnet->rnd)&0xffff;
 		int fd = -1;
+
+		/* select interface */
+		if(addr_is_ip6(to_addr, to_addrlen)) {
+			if(outnet->num_ip6 == 0) {
+				char to[64];
+				addr_to_str(to_addr, to_addrlen, to, sizeof(to));
+				verbose(VERB_QUERY, "need ipv6 to send, but no ipv6 outgoing interfaces, for %s", to);
+				return -1;
+			}
+			i = ub_random_max(outnet->rnd, outnet->num_ip6);
+			pif = &outnet->ip6_ifs[i];
+		} else {
+			if(outnet->num_ip4 == 0) {
+				char to[64];
+				addr_to_str(to_addr, to_addrlen, to, sizeof(to));
+				verbose(VERB_QUERY, "need ipv4 to send, but no ipv4 outgoing interfaces, for %s", to);
+				return -1;
+			}
+			i = ub_random_max(outnet->rnd, outnet->num_ip4);
+			pif = &outnet->ip4_ifs[i];
+		}
+		addr = &pif->addr;
+		addrlen = pif->addrlen;
+		pnum = ub_random_max(outnet->rnd, pif->avail_total);
+		if(pnum < pif->inuse) {
+			/* port already open */
+			port = pif->out[pnum]->number;
+		} else {
+			/* unused ports in start part of array */
+			port = pif->avail_ports[pnum - pif->inuse];
+		}
+
 		if(addr_is_ip6(to_addr, to_addrlen)) {
 			struct sockaddr_in6 sa = *(struct sockaddr_in6*)addr;
 			sa.sin6_port = (in_port_t)htons((uint16_t)port);
@@ -2377,6 +2386,18 @@ outnet_comm_point_for_http(struct outside_network* outnet,
 				return NULL;
 			}
 		}
+#elif defined(HAVE_X509_VERIFY_PARAM_SET1_HOST)
+		/* openssl 1.0.2 has this function that can be used for
+		 * set1_host like verification */
+		if((SSL_CTX_get_verify_mode(outnet->sslctx)&SSL_VERIFY_PEER)) {
+			X509_VERIFY_PARAM* param = SSL_get0_param(cp->ssl);
+			X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+			if(!X509_VERIFY_PARAM_set1_host(param, host, strlen(host))) {
+				log_err("X509_VERIFY_PARAM_set1_host failed");
+				comm_point_delete(cp);
+				return NULL;
+			}
+		}
 #endif /* HAVE_SSL_SET1_HOST */
 	}
 
@@ -2482,7 +2503,6 @@ serviced_get_mem(struct serviced_query* sq)
 		s += sizeof(*sb);
 	if(sq->status == serviced_query_UDP_EDNS ||
 		sq->status == serviced_query_UDP ||
-		sq->status == serviced_query_PROBE_EDNS ||
 		sq->status == serviced_query_UDP_EDNS_FRAG ||
 		sq->status == serviced_query_UDP_EDNS_fallback) {
 		s += sizeof(struct pending);

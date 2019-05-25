@@ -42,6 +42,7 @@
 #include "testcode/unitmain.h"
 #include "util/regional.h"
 #include "util/net_help.h"
+#include "util/config_file.h"
 #include "util/data/msgreply.h"
 #include "services/cache/dns.h"
 #include "sldns/str2wire.h"
@@ -111,8 +112,9 @@ static const char* zone_example_com =
 /* just an RRSIG rrset with nothing else, 2 rrsigs */
 "z5.example.com.	3600	IN	RRSIG	A 8 3 10200 20170612005010 20170515005010 42393 nlnetlabs.nl. NhEDrHkuIgHkjWhDRVsGOIJWZpSs+QdduilWFe5d+/ZhOheLJbaTYD5w6+ZZ3yPh1tNud+jlg+GyiOSVapLEO31swDCIarL1UfRjRSpxxDCHGag5Zu+S4hF+KURxO3cJk8jLBELMQyRuMRHoKrw/wsiLGVu1YpAyAPPMcjFBNbk=\n"
 "z5.example.com.	3600	IN	RRSIG	A 8 3 10200 20170612005010 20170515005010 12345 nlnetlabs.nl. NhEDrHkuIgHkjWhDRVsGOIJWZpSs+QdduilWFe5d+/ZhOheLJbaTYD5w6+ZZ3yPh1tNud+jlg+GyiOSVapLEO31swDCIarL1UfRjRSpxxDCHGag5Zu+S4hF+KURxO3cJk8jLBELMQyRuMRHoKrw/wsiLGVu1YpAyAPPMcjFBNbk=\n"
-#if 0 /* comparison of file does not work on this part because duplicates */
+#if 1 /* comparison of file does not work on this part because duplicates */
       /* are removed and the rrsets are reordered */
+"end_of_check.z6.example.com. 3600 IN 	A	10.0.0.10\n"
 /* first rrsig, then A record */
 "z6.example.com.	3600	IN	RRSIG	A 8 3 10200 20170612005010 20170515005010 42393 nlnetlabs.nl. NhEDrHkuIgHkjWhDRVsGOIJWZpSs+QdduilWFe5d+/ZhOheLJbaTYD5w6+ZZ3yPh1tNud+jlg+GyiOSVapLEO31swDCIarL1UfRjRSpxxDCHGag5Zu+S4hF+KURxO3cJk8jLBELMQyRuMRHoKrw/wsiLGVu1YpAyAPPMcjFBNbk=\n"
 "z6.example.com.	3600	IN	A	10.0.0.10\n"
@@ -131,6 +133,12 @@ static const char* zone_example_com =
 "z9.example.com.	3600	IN	A	10.0.0.10\n"
 "z9.example.com.	3600	IN	RRSIG	A 8 3 10200 20170612005010 20170515005010 42393 nlnetlabs.nl. NhEDrHkuIgHkjWhDRVsGOIJWZpSs+QdduilWFe5d+/ZhOheLJbaTYD5w6+ZZ3yPh1tNud+jlg+GyiOSVapLEO31swDCIarL1UfRjRSpxxDCHGag5Zu+S4hF+KURxO3cJk8jLBELMQyRuMRHoKrw/wsiLGVu1YpAyAPPMcjFBNbk=\n"
 "z9.example.com.	3600	IN	RRSIG	A 8 3 10200 20170612005010 20170515005010 42393 nlnetlabs.nl. NhEDrHkuIgHkjWhDRVsGOIJWZpSs+QdduilWFe5d+/ZhOheLJbaTYD5w6+ZZ3yPh1tNud+jlg+GyiOSVapLEO31swDCIarL1UfRjRSpxxDCHGag5Zu+S4hF+KURxO3cJk8jLBELMQyRuMRHoKrw/wsiLGVu1YpAyAPPMcjFBNbk=\n"
+/* different covered types, first RRSIGs then, RRs, then another RRSIG */
+"zz10.example.com.	3600	IN	RRSIG	AAAA 8 3 10200 20170612005010 20170515005010 42393 nlnetlabs.nl. NhEDrHkuIgHkjWhDRVsGOIJWZpSs+QdduilWFe5d+/ZhOheLJbaTYD5w6+ZZ3yPh1tNud+jlg+GyiOSVapLEO31swDCIarL1UfRjRSpxxDCHGag5Zu+S4hF+KURxO3cJk8jLBELMQyRuMRHoKrw/wsiLGVu1YpAyAPPMcjFBNbk=\n"
+"zz10.example.com.	3600	IN	RRSIG	A 8 3 10200 20170612005010 20170515005010 42393 nlnetlabs.nl. NhEDrHkuIgHkjWhDRVsGOIJWZpSs+QdduilWFe5d+/ZhOheLJbaTYD5w6+ZZ3yPh1tNud+jlg+GyiOSVapLEO31swDCIarL1UfRjRSpxxDCHGag5Zu+S4hF+KURxO3cJk8jLBELMQyRuMRHoKrw/wsiLGVu1YpAyAPPMcjFBNbk=\n"
+"zz10.example.com.	3600	IN	A	10.0.0.10\n"
+"zz10.example.com.	3600	IN	RRSIG	CNAME 8 3 10200 20170612005010 20170515005010 42393 nlnetlabs.nl. NhEDrHkuIgHkjWhDRVsGOIJWZpSs+QdduilWFe5d+/ZhOheLJbaTYD5w6+ZZ3yPh1tNud+jlg+GyiOSVapLEO31swDCIarL1UfRjRSpxxDCHGag5Zu+S4hF+KURxO3cJk8jLBELMQyRuMRHoKrw/wsiLGVu1YpAyAPPMcjFBNbk=\n"
+"zz10.example.com.	3600	IN	AAAA	::11\n"
 #endif /* if0 for duplicates and reordering */
 ;
 
@@ -515,6 +523,7 @@ addzone(struct auth_zones* az, const char* name, char* fname)
 	struct auth_zone* z;
 	size_t nmlen;
 	uint8_t* nm = sldns_str2wire_dname(name, &nmlen);
+	struct config_file* cfg;
 	if(!nm) fatal_exit("out of memory");
 	lock_rw_wrlock(&az->lock);
 	z = auth_zone_create(az, nm, nmlen, LDNS_RR_CLASS_IN);
@@ -522,12 +531,16 @@ addzone(struct auth_zones* az, const char* name, char* fname)
 	if(!z) fatal_exit("cannot find zone");
 	auth_zone_set_zonefile(z, fname);
 	z->for_upstream = 1;
+	cfg = config_create();
+	free(cfg->chrootdir);
+	cfg->chrootdir = NULL;
 
-	if(!auth_zone_read_zonefile(z)) {
+	if(!auth_zone_read_zonefile(z, cfg)) {
 		fatal_exit("parse failure for auth zone %s", name);
 	}
 	lock_rw_unlock(&z->lock);
 	free(nm);
+	config_delete(cfg);
 	return z;
 }
 
@@ -550,11 +563,16 @@ checkfile(char* f1, char *f2)
 		cp2 = fgets(buf2, (int)sizeof(buf2), i2);
 		if((!cp1 && !feof(i1)) || (!cp2 && !feof(i2)))
 			fatal_exit("fgets failed: %s", strerror(errno));
+		if(strncmp(buf1, "end_of_check", 12) == 0) {
+			fclose(i1);
+			fclose(i2);
+			return;
+		}
 		if(strcmp(buf1, buf2) != 0) {
 			log_info("in files %s and %s:%d", f1, f2, line);
 			log_info("'%s'", buf1);
 			log_info("'%s'", buf2);
-			fatal_exit("files are not eqaul");
+			fatal_exit("files are not equal");
 		}
 	}
 	unit_assert(feof(i1) && feof(i2));

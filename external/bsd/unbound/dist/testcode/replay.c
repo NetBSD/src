@@ -458,6 +458,8 @@ replay_scenario_read(FILE* in, const char* name, int* lineno)
 		if(parse_keyword(&parse, ";"))
 			continue; /* comment */
 		if(parse_keyword(&parse, "SCENARIO_BEGIN")) {
+			if(scen)
+				fatal_exit("%d: double SCENARIO_BEGIN", *lineno);
 			scen = make_scenario(parse);
 			if(!scen)
 				fatal_exit("%d: could not make scen", *lineno);
@@ -713,6 +715,7 @@ perform_arith(double x, char op, double y, double* res)
 		*res = x*y;
 		break;
 	default:
+		*res = 0;
 		return 0;
 	}
 
@@ -801,14 +804,19 @@ macro_expand(rbtree_type* store, struct replay_runtime* runtime, char** text)
 
 	/* check for functions */
 	if(strcmp(buf, "time") == 0) {
-		snprintf(buf, sizeof(buf), ARG_LL "d", (long long)runtime->now_secs);
+		if(runtime)
+			snprintf(buf, sizeof(buf), ARG_LL "d", (long long)runtime->now_secs);
+		else
+			snprintf(buf, sizeof(buf), ARG_LL "d", (long long)0);
 		*text += len;
 		return strdup(buf);
 	} else if(strcmp(buf, "timeout") == 0) {
 		time_t res = 0;
-		struct fake_timer* t = first_timer(runtime);
-		if(t && (time_t)t->tv.tv_sec >= runtime->now_secs) 
-			res = (time_t)t->tv.tv_sec - runtime->now_secs;
+		if(runtime) {
+			struct fake_timer* t = first_timer(runtime);
+			if(t && (time_t)t->tv.tv_sec >= runtime->now_secs) 
+				res = (time_t)t->tv.tv_sec - runtime->now_secs;
+		}
 		snprintf(buf, sizeof(buf), ARG_LL "d", (long long)res);
 		*text += len;
 		return strdup(buf);

@@ -109,13 +109,13 @@ static struct ub_ctx* ub_ctx_create_nopipe(void)
 	alloc_init(&ctx->superalloc, NULL, 0);
 	seed = (unsigned int)time(NULL) ^ (unsigned int)getpid();
 	if(!(ctx->seed_rnd = ub_initstate(seed, NULL))) {
-		seed = 0;
+		explicit_bzero(&seed, sizeof(seed));
 		ub_randfree(ctx->seed_rnd);
 		free(ctx);
 		errno = ENOMEM;
 		return NULL;
 	}
-	seed = 0;
+	explicit_bzero(&seed, sizeof(seed));
 	lock_basic_init(&ctx->qqpipe_lock);
 	lock_basic_init(&ctx->rrpipe_lock);
 	lock_basic_init(&ctx->cfglock);
@@ -392,7 +392,6 @@ ub_ctx_add_ta(struct ub_ctx* ctx, const char* ta)
 	}
 	if(!cfg_strlist_insert(&ctx->env->cfg->trust_anchor_list, dup)) {
 		lock_basic_unlock(&ctx->cfglock);
-		free(dup);
 		return UB_NOMEM;
 	}
 	lock_basic_unlock(&ctx->cfglock);
@@ -412,7 +411,6 @@ ub_ctx_add_ta_file(struct ub_ctx* ctx, const char* fname)
 	}
 	if(!cfg_strlist_insert(&ctx->env->cfg->trust_anchor_file_list, dup)) {
 		lock_basic_unlock(&ctx->cfglock);
-		free(dup);
 		return UB_NOMEM;
 	}
 	lock_basic_unlock(&ctx->cfglock);
@@ -432,7 +430,6 @@ int ub_ctx_add_ta_autr(struct ub_ctx* ctx, const char* fname)
 	if(!cfg_strlist_insert(&ctx->env->cfg->auto_trust_anchor_file_list,
 		dup)) {
 		lock_basic_unlock(&ctx->cfglock);
-		free(dup);
 		return UB_NOMEM;
 	}
 	lock_basic_unlock(&ctx->cfglock);
@@ -452,7 +449,6 @@ ub_ctx_trustedkeys(struct ub_ctx* ctx, const char* fname)
 	}
 	if(!cfg_strlist_insert(&ctx->env->cfg->trusted_keys_file_list, dup)) {
 		lock_basic_unlock(&ctx->cfglock);
-		free(dup);
 		return UB_NOMEM;
 	}
 	lock_basic_unlock(&ctx->cfglock);
@@ -728,7 +724,7 @@ ub_resolve_event(struct ub_ctx* ctx, const char* name, int rrtype,
 		*async_id = 0;
 	lock_basic_lock(&ctx->cfglock);
 	if(!ctx->finalized) {
-		int r = context_finalize(ctx);
+		r = context_finalize(ctx);
 		if(r) {
 			lock_basic_unlock(&ctx->cfglock);
 			return r;
@@ -962,11 +958,23 @@ ub_ctx_set_fwd(struct ub_ctx* ctx, const char* addr)
 		return UB_NOMEM;
 	}
 	if(!cfg_strlist_insert(&s->addrs, dupl)) {
-		free(dupl);
 		lock_basic_unlock(&ctx->cfglock);
 		errno=ENOMEM;
 		return UB_NOMEM;
 	}
+	lock_basic_unlock(&ctx->cfglock);
+	return UB_NOERROR;
+}
+
+int ub_ctx_set_tls(struct ub_ctx* ctx, int tls)
+{
+	lock_basic_lock(&ctx->cfglock);
+	if(ctx->finalized) {
+		lock_basic_unlock(&ctx->cfglock);
+		errno=EINVAL;
+		return UB_AFTERFINAL;
+	}
+	ctx->env->cfg->ssl_upstream = tls;
 	lock_basic_unlock(&ctx->cfglock);
 	return UB_NOERROR;
 }
@@ -1045,7 +1053,6 @@ int ub_ctx_set_stub(struct ub_ctx* ctx, const char* zone, const char* addr,
 	}
 	if(!cfg_strlist_insert(&elem->addrs, a)) {
 		lock_basic_unlock(&ctx->cfglock);
-		free(a);
 		errno = ENOMEM;
 		return UB_NOMEM;
 	}
@@ -1233,7 +1240,6 @@ ub_ctx_hosts(struct ub_ctx* ctx, const char* fname)
 				ins)) {
 				lock_basic_unlock(&ctx->cfglock);
 				fclose(in);
-				free(ins);
 				errno=ENOMEM;
 				return UB_NOMEM;
 			}
