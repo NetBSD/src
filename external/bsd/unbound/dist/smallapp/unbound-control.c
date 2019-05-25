@@ -73,6 +73,10 @@
 #include <sys/un.h>
 #endif
 
+static void usage(void) ATTR_NORETURN;
+static void ssl_err(const char* s) ATTR_NORETURN;
+static void ssl_path_err(const char* s, const char *path) ATTR_NORETURN;
+
 /** Give unbound-control usage, and exit (1). */
 static void
 usage(void)
@@ -143,11 +147,15 @@ usage(void)
 	printf("  ip_ratelimit_list [+a]	list ratelimited ip addresses\n");
 	printf("		+a		list all, also not ratelimited\n");
 	printf("  list_auth_zones		list auth zones\n");
+	printf("  auth_zone_reload zone		reload auth zone from zonefile\n");
+	printf("  auth_zone_transfer zone	transfer auth zone from master\n");
 	printf("  view_list_local_zones	view	list local-zones in view\n");
 	printf("  view_list_local_data	view	list local-data RRs in view\n");
 	printf("  view_local_zone view name type  	add local-zone in view\n");
 	printf("  view_local_zone_remove view name  	remove local-zone in view\n");
 	printf("  view_local_data view RR...		add local-data in view\n");
+	printf("  view_local_datas view 		add list of local-data to view\n");
+	printf("  					one entry per line read from stdin\n");
 	printf("  view_local_data_remove view name  	remove local-data in view\n");
 	printf("Version %s\n", PACKAGE_VERSION);
 	printf("BSD licensed, see LICENSE in source package for details.\n");
@@ -239,7 +247,8 @@ static void print_uptime(struct ub_shm_stat_info* shm_stat)
 }
 
 /** print memory usage */
-static void print_mem(struct ub_shm_stat_info* shm_stat)
+static void print_mem(struct ub_shm_stat_info* shm_stat,
+	struct ub_stats_info* s)
 {
 	PR_LL("mem.cache.rrset", shm_stat->mem.rrset);
 	PR_LL("mem.cache.message", shm_stat->mem.msg);
@@ -258,6 +267,7 @@ static void print_mem(struct ub_shm_stat_info* shm_stat)
 	PR_LL("mem.cache.dnscrypt_nonce",
 		shm_stat->mem.dnscrypt_nonce);
 #endif
+	PR_LL("mem.streamwait", s->svr.mem_stream_wait);
 }
 
 /** print histogram */
@@ -319,6 +329,8 @@ static void print_extended(struct ub_stats_info* s)
 	/* transport */
 	PR_UL("num.query.tcp", s->svr.qtcp);
 	PR_UL("num.query.tcpout", s->svr.qtcp_outgoing);
+	PR_UL("num.query.tls", s->svr.qtls);
+	PR_UL("num.query.tls_resume", s->svr.qtls_resume);
 	PR_UL("num.query.ipv6", s->svr.qipv6);
 
 	/* flags */
@@ -371,6 +383,10 @@ static void print_extended(struct ub_stats_info* s)
 #endif /* USE_DNSCRYPT */
 	PR_UL("num.query.authzone.up", s->svr.num_query_authzone_up);
 	PR_UL("num.query.authzone.down", s->svr.num_query_authzone_down);
+#ifdef CLIENT_SUBNET
+	PR_UL("num.query.subnet", s->svr.num_query_subnet);
+	PR_UL("num.query.subnet_cache", s->svr.num_query_subnet_cache);
+#endif
 }
 
 /** print statistics out of memory structures */
@@ -386,7 +402,7 @@ static void do_stats_shm(struct config_file* cfg, struct ub_stats_info* stats,
 	pr_stats("total", &stats[0]);
 	print_uptime(shm_stat);
 	if(cfg->stat_extended) {
-		print_mem(shm_stat);
+		print_mem(shm_stat, &stats[0]);
 		print_hist(stats);
 		print_extended(stats);
 	}
@@ -444,6 +460,22 @@ static void ssl_err(const char* s)
 	exit(1);
 }
 
+/** exit with ssl error related to a file path */
+static void ssl_path_err(const char* s, const char *path)
+{
+	unsigned long err;
+	err = ERR_peek_error();
+	if (ERR_GET_LIB(err) == ERR_LIB_SYS &&
+		(ERR_GET_FUNC(err) == SYS_F_FOPEN ||
+		 ERR_GET_FUNC(err) == SYS_F_FREAD) ) {
+		fprintf(stderr, "error: %s\n%s: %s\n",
+			s, path, ERR_reason_error_string(err));
+		exit(1);
+	} else {
+		ssl_err(s);
+	}
+}
+
 /** setup SSL context */
 static SSL_CTX*
 setup_ctx(struct config_file* cfg)
@@ -467,12 +499,15 @@ setup_ctx(struct config_file* cfg)
 	if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
 		!= SSL_OP_NO_SSLv3)
 		ssl_err("could not set SSL_OP_NO_SSLv3");
-	if(!SSL_CTX_use_certificate_chain_file(ctx,c_cert) ||
-	    !SSL_CTX_use_PrivateKey_file(ctx,c_key,SSL_FILETYPE_PEM)
-	    || !SSL_CTX_check_private_key(ctx))
-		ssl_err("Error setting up SSL_CTX client key and cert");
+	if(!SSL_CTX_use_certificate_chain_file(ctx,c_cert))
+		ssl_path_err("Error setting up SSL_CTX client cert", c_cert);
+	if (!SSL_CTX_use_PrivateKey_file(ctx,c_key,SSL_FILETYPE_PEM))
+		ssl_path_err("Error setting up SSL_CTX client key", c_key);
+	if (!SSL_CTX_check_private_key(ctx))
+		ssl_err("Error setting up SSL_CTX client key");
 	if (SSL_CTX_load_verify_locations(ctx, s_cert, NULL) != 1)
-		ssl_err("Error setting up SSL_CTX verify, server cert");
+		ssl_path_err("Error setting up SSL_CTX verify, server cert",
+			     s_cert);
 	SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
 	free(s_cert);
@@ -687,9 +722,10 @@ go_cmd(SSL* ssl, int fd, int quiet, int argc, char* argv[])
 	if(argc == 1 && strcmp(argv[0], "load_cache") == 0) {
 		send_file(ssl, fd, stdin, buf, sizeof(buf));
 	}
-	else if(argc == 1 && (strcmp(argv[0], "local_zones") == 0 ||
+	else if(argc >= 1 && (strcmp(argv[0], "local_zones") == 0 ||
 		strcmp(argv[0], "local_zones_remove") == 0 ||
 		strcmp(argv[0], "local_datas") == 0 ||
+		strcmp(argv[0], "view_local_datas") == 0 ||
 		strcmp(argv[0], "local_datas_remove") == 0)) {
 		send_file(ssl, fd, stdin, buf, sizeof(buf));
 		send_eof(ssl, fd);
