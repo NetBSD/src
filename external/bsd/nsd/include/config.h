@@ -179,6 +179,9 @@
 /* Define to 1 if you have the `localtime_r' function. */
 #define HAVE_LOCALTIME_R 1
 
+/* Define to 1 if you have the <login_cap.h> header file. */
+#define HAVE_LOGIN_CAP_H 1
+
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */
 #define HAVE_MALLOC 1
@@ -451,7 +454,7 @@
 #define PACKAGE_NAME "NSD"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "NSD 4.1.26"
+#define PACKAGE_STRING "NSD 4.1.27"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "nsd"
@@ -460,7 +463,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.1.26"
+#define PACKAGE_VERSION "4.1.27"
 
 /* Define this to use packed structure alignment. */
 /* #undef PACKED_STRUCTS */
