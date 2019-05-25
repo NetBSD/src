@@ -1,5 +1,33 @@
 NSD RELEASE NOTES
 
+4.1.27
+================
+FEATURES:
+	- Deny ANY with only one RR in response, by default.  Patch from
+	  Daisuke Higashi.  The deny-any statement in nsd.conf sets ANY
+	  queries over UDP to be further moved to TCP as well.
+	  Also no additional section processig for type ANY, reducing
+	  the response size.
+	- Fix #4215: on-the-fly change of TSIG keys with patch from Igor, adds
+	  nsd-control print_tsig, update_tsig, add_tsig, assoc_tsig
+	  and del_tsig.  These changes are gone after reload, edit the
+	  config file (or a file included from it) to make changes that
+	  last after restart.
+BUG FIXES:
+	- Fix #4213: disable-ipv6 and dnstap compile error.
+	- Fix to reduce region_log_stats if condition, this removes a
+	  debug statement.
+        - Fix for FreeBSD port with dnstap enabled.
+	- Fix to remove unused code.
+	- Fix #6: nsd-control-setup: Change validity time to a shorter
+	  period (<2038).
+	- Fix unused definition in header remote.h.
+	- Fix #4236: IPV4_MINIMAL_RESPONSE_SIZE=1480 is slightly too big.
+	- Fix #4235: IP_PMTUDISC_OMIT on IPv4/UDP sockets.
+	- Fixed radtree_insert memory leak.
+	- Fixed access recycled variable.
+
+
 4.1.26
 ================
 FEATURES:

@@ -1,4 +1,4 @@
-Id: REQUIREMENTS 4553 2015-11-18 08:50:05Z wouter 
+$Id: REQUIREMENTS,v 1.1.1.4 2019/05/25 19:44:44 christos Exp $
 
 
 NSD Requirements and Specifications
@@ -607,7 +607,7 @@ C 4.4 Truncation handling. (as rfc2181 9)
   responses are not considered REQUIRED and therefore will NOT lead
   to setting of the TC bit. The minimal response size is:
   - 512 in case of no EDNS;
-  - 1480 in case of EDNS/IPv4;
+  - 1460 in case of EDNS/IPv4;
   - 1220 in case of EDNS/IPv6;
   - the advertized buffer size if that value is smaller than the
     the EDNS defaults.
@@ -1053,5 +1053,5 @@ Appendix D. Changes to this file.
 - KEY->DNSKEY, SIG->RRSIG in the text, dnssec-bis style.
 
 ______________________________________________________________________
-Id: REQUIREMENTS 4553 2015-11-18 08:50:05Z wouter 
+$Id: REQUIREMENTS,v 1.1.1.4 2019/05/25 19:44:44 christos Exp $
 

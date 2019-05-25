@@ -1,5 +1,76 @@
+19 March 2019: Wouter
+	- tag 4.1.27rc1
+
+18 March 2019: Wouter
+	- Fix unit test bug013_truncate for new truncation with EDNS size,
+	  it is one RR smaller for the truncated response in the test.
+
+14 March 2019: Wouter
+	- Fixed radtree_insert memory leak.
+	- Fixed access recycled variable.
+
+11 March 2019: Wouter
+	- Fix #6: nsd-control-setup: Change validity time to a shorter
+	  period (<2038).
+	- Fix unused definition in header remote.h.
+	- Fix #4236: IPV4_MINIMAL_RESPONSE_SIZE=1480 is slightly too big.
+	- Fix #4235: IP_PMTUDISC_OMIT on IPv4/UDP sockets.
+
+18 February 2019: Wouter
+	- Fix to remove unused code.
+
+15 February 2019: Wouter
+	- tentative robustness, delete stats items from list twice if needed.
+
+14 February 2019: Wouter
+	- Fix #4: setusercontext() is in libutil on NetBSD, and also
+	  include login_cap.h only if it exists.
+	- Fix #4215: fixup for state update for TSIG information in server
+	  processes, nicer printout for tsig_print, tsig_print without
+	  arguments and no leaks.
+	- nicer logging for update_tsig.
+
+1 February 2019: Wouter
+	- Fix for tsig assoc_tsig command on acl with nokey elements.
+
+29 January 2019: Wouter
+	- Fix #4215: on-the-fly change of TSIG keys with patch from Igor, adds
+	  nsd-control print_tsig, update_tsig, add_tsig, assoc_tsig
+	  and del_tsig.  These changes are gone after reload, edit the
+	  config file (or a file included from it) to make changes that
+	  last after restart.
+	- documentation for tsig nsd-control options.
+
+24 January 2019: Wouter
+	- Deny ANY with only one RR in response, by default.  Patch from
+	  Daisuke Higashi.  The deny-any statement in nsd.conf sets ANY
+	  queries over UDP to be further moved to TCP as well.
+	  Also no additional section processig for type ANY, reducing
+	  the response size.
+	- assertions for clang analysis.
+
+10 December 2018: Wouter
+	- Fix for FreeBSD port with dnstap enabled.
+
+6 December 2018: Wouter
+	- Fix to reduce region_log_stats if condition, this removes a
+	  debug statement.
+
+5 December 2018: Wouter
+	- Fix #4213: disable-ipv6 and dnstap compile error.
+
+3 December 2018: Wouter
+	- Note that the content_list member is unused; and could be removed
+	  if the database format is modified or updated.
+	- Fix that dnstap logs CQ and CR like BIND does.
+	- Revert that, it looks wrong, AQ and AR are for the authoritative.
+	 
 29 November 2018: Wouter
-	- Tag for 4.1.26rc1.
+	- Tag for 4.1.26rc1. Which became 4.1.26 on 4 dec 2018.
+	  Trunk has 4.1.27 in development.
+	- Fix clang analysis warning on null in closest encloser for wildcard
+	  denial nsec.
+	- Fix clang analysis warnings.
 
 27 November 2018: Wouter
 	- Fix parsezone failure in 4194 fix.
