@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.69 2018/05/01 16:37:23 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.70 2019/05/25 04:25:14 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd May 1, 2018
+.Dd May 25, 2019
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -56,10 +56,6 @@ with
 .Dv si_code
 set to
 .Dv TRAP_EXEC .
-If a program is traced with the
-.Dv PT_SYSCALL
-option enabled,
-this event notifier is disabled.
 If a traced program calls
 .Xr execve 2
 any setuid or setgid bits on the executable being executed will be ignored.
@@ -220,6 +216,11 @@ The value read is returned as the return value from
 .Eo \&
 .Fn ptrace
 .Ec .
+.Pp
+These operations return success on incomplete and cancelled byte transfers.
+New software shall use
+.Dv PT_IO
+as it allows to check whether a byte transfer was completed.
 .It Dv PT_WRITE_I , Dv PT_WRITE_D
 These requests parallel
 .Dv PT_READ_I
@@ -229,6 +230,10 @@ except that they write rather than read.
 The
 .Fa data
 argument supplies the value to be written.
+.Pp
+New software shall use
+.Dv PT_IO
+as it allows to check whether an operation was completed.
 .It Dv PT_CONTINUE
 The traced process continues execution.
 .Fa addr
@@ -349,6 +354,15 @@ will return
 .Li \-1
 and set
 .Va errno .
+.Pp
+This interface returns success for partial and cancelled byte transfers.
+For an interrupted transfer, a user shall check whether occurred at least
+a single of the following two conditions:
+.Dv piod_len == 0
+and set
+.Va errno .
+Successful but incomplete byte transfers shall be restarted in the place
+where they were stopped.
 .It Dv PT_DUMPCORE
 Makes the process specified in the
 .Fa pid
@@ -799,6 +813,15 @@ or
 .Dv PT_SETFPREGS
 was attempted on a process with no valid register set.
 (This is normally true only of system processes.)
+.It
+A process attempted to set Program Counter to 0 in
+.Dv PT_CONTINUE ,
+.Dv PT_SYSCALL
+or
+.Dv PT_DETACH
+with
+.Dv vm.user_va0_disable
+set to 1.
 .El
 .It Bq Er EPERM
 .Bl -bullet -compact
