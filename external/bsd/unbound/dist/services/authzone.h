@@ -309,6 +309,9 @@ struct auth_probe {
 	/** we only want to do lookups for making config work (for notify),
 	 * don't proceed with UDP SOA probe queries */
 	int only_lookup;
+	/** we have seen a new lease this scan, because one of the masters
+	 * replied with the current SOA serial version */
+	int have_new_lease;
 
 	/** once notified, or the timeout has been reached. a scan starts. */
 	/** the scan specific target (notify source), or NULL if none */
@@ -375,6 +378,8 @@ struct auth_transfer {
 	 * data or add of duplicate data).  Flag is cleared once the retry
 	 * with axfr is done. */
 	int ixfr_fail;
+	/** we saw an ixfr-indicating timeout, count of them */
+	int ixfr_possible_timeout_count;
 	/** we are doing IXFR right now */
 	int on_ixfr;
 	/** did we detect the current AXFR/IXFR serial number yet, 0 not yet,
@@ -509,12 +514,13 @@ int auth_zones_lookup(struct auth_zones* az, struct query_info* qinfo,
  * @param qinfo: query info (parsed).
  * @param edns: edns info (parsed).
  * @param buf: buffer with query ID and flags, also for reply.
+ * @param repinfo: reply information for a communication point.
  * @param temp: temporary storage region.
  * @return false if not answered
  */
 int auth_zones_answer(struct auth_zones* az, struct module_env* env,
-	struct query_info* qinfo, struct edns_data* edns, struct sldns_buffer* buf,
-	struct regional* temp);
+	struct query_info* qinfo, struct edns_data* edns,
+	struct comm_reply* repinfo, struct sldns_buffer* buf, struct regional* temp);
 
 /** 
  * Find the auth zone that is above the given qname.
@@ -588,8 +594,14 @@ int auth_zones_notify(struct auth_zones* az, struct module_env* env,
  * returns 0 if no soa record in the notify */
 int auth_zone_parse_notify_serial(struct sldns_buffer* pkt, uint32_t *serial);
 
+/** for the zone and if not already going, starts the probe sequence.
+ * false if zone cannot be found.  This is like a notify arrived and was
+ * accepted for that zone. */
+int auth_zones_startprobesequence(struct auth_zones* az,
+	struct module_env* env, uint8_t* nm, size_t nmlen, uint16_t dclass);
+
 /** read auth zone from zonefile. caller must lock zone. false on failure */
-int auth_zone_read_zonefile(struct auth_zone* z);
+int auth_zone_read_zonefile(struct auth_zone* z, struct config_file* cfg);
 
 /** find serial number of zone or false if none (no SOA record) */
 int auth_zone_get_serial(struct auth_zone* z, uint32_t* serial);
@@ -637,10 +649,12 @@ int auth_xfer_transfer_http_callback(struct comm_point* c, void* arg, int err,
 void auth_xfer_probe_timer_callback(void* arg);
 /** mesh callback for task_probe on lookup of host names */
 void auth_xfer_probe_lookup_callback(void* arg, int rcode,
-	struct sldns_buffer* buf, enum sec_status sec, char* why_bogus);
+	struct sldns_buffer* buf, enum sec_status sec, char* why_bogus,
+	int was_ratelimited);
 /** mesh callback for task_transfer on lookup of host names */
 void auth_xfer_transfer_lookup_callback(void* arg, int rcode,
-	struct sldns_buffer* buf, enum sec_status sec, char* why_bogus);
+	struct sldns_buffer* buf, enum sec_status sec, char* why_bogus,
+	int was_ratelimited);
 
 /*
  * Compares two 32-bit serial numbers as defined in RFC1982.  Returns
