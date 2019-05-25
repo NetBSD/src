@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.92 2019/05/01 10:41:54 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.93 2019/05/25 12:14:28 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -16,6 +16,7 @@ makeoptions 	DTSARCH="arm aarch64"
 makeoptions	DTSGNUARCH="arm arm64"
 makeoptions	DTSSUBDIR="allwinner amlogic broadcom nvidia rockchip"
 makeoptions	DTS="
+	bcm2837-rpi-3-a-plus.dts
 	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-3-b-plus.dts
 	bcm2837-rpi-cm3-io3.dts
@@ -31,9 +32,11 @@ makeoptions	DTS="
 	meson-gxbb-wetek-hub.dts
 	meson-gxbb-wetek-play2.dts
 
+	meson-gxl-s805x-libretech-ac.dts
 	meson-gxl-s805x-p241.dts
 	meson-gxl-s905d-p230.dts
 	meson-gxl-s905d-p231.dts
+	meson-gxl-s905d-phicomm-n1.dts
 	meson-gxl-s905w-p281.dts
 	meson-gxl-s905w-tx3-mini.dts
 	meson-gxl-s905x-hwacom-amazetv.dts
@@ -51,17 +54,24 @@ makeoptions	DTS="
 	rk3399-firefly.dts
 	rk3399-gru-bob.dts
 	rk3399-gru-kevin.dts
+	rk3399-gru-scarlet-inx.dts
+	rk3399-gru-scarlet-kd.dts
+	rk3399-nanopc-t4.dts
+	rk3399-nanopi-m4.dts
 	rk3399-puma-haikou.dts
 	rk3399-roc-pc.dts
+	rk3399-rock-pi-4.dts
 	rk3399-rock960.dts
 	rk3399-rockpro64.dts
 	rk3399-sapphire-excavator.dts
 	rk3399-sapphire.dts
 
+	sun50i-a64-amarula-relic.dts
 	sun50i-a64-bananapi-m64.dts
 	sun50i-a64-nanopi-a64.dts
 	sun50i-a64-olinuxino.dts
 	sun50i-a64-orangepi-win.dts
+	sun50i-a64-pine64-lts.dts
 	sun50i-a64-pine64-plus.dts
 	sun50i-a64-pine64.dts
 	sun50i-a64-pinebook.dts
@@ -70,6 +80,7 @@ makeoptions	DTS="
 
 	sun50i-h5-bananapi-m2-plus-v1.2.dts
 	sun50i-h5-bananapi-m2-plus.dts
+	sun50i-h5-emlid-neutis-n5-devboard.dts
 	sun50i-h5-libretech-all-h3-cc.dts
 	sun50i-h5-nanopi-neo-plus2.dts
 	sun50i-h5-nanopi-neo2.dts
@@ -78,12 +89,14 @@ makeoptions	DTS="
 	sun50i-h5-orangepi-zero-plus.dts
 	sun50i-h5-orangepi-zero-plus2.dts
 
+	sun50i-h6-orangepi-lite2.dts
 	sun50i-h6-orangepi-one-plus.dts
 	sun50i-h6-pine-h64.dts
 
 	tegra210-p2371-0000.dts
 	tegra210-p2371-2180.dts
 	tegra210-p2571.dts
+	tegra210-p2894-0050-a08.dts
 	tegra210-smaug.dts
 "
 options 	CPU_CORTEXA53
