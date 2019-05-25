@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2541 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2542 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -385,3 +385,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	mount_portal(8): in portal.conf # only introduces a comment at
 		start of line, or after whitespace (start word) [kre 20190523]
 	dts: Import dts files from Linux 5.1.4. [jmcneill 20190525]
+	nsd: Import 4.1.27 [christos 20190525]
