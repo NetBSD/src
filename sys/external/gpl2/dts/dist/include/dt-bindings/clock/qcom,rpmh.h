@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,rpmh.h,v 1.1.1.1 2018/06/27 16:27:08 jmcneill Exp $	*/
+/*	$NetBSD: qcom,rpmh.h,v 1.1.1.2 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2018, The Linux Foundation. All rights reserved. */
@@ -20,5 +20,6 @@
 #define RPMH_RF_CLK2_A				9
 #define RPMH_RF_CLK3				10
 #define RPMH_RF_CLK3_A				11
+#define RPMH_IPA_CLK				12
 
 #endif

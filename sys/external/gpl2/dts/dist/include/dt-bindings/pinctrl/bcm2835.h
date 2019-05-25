@@ -1,16 +1,10 @@
-/*	$NetBSD: bcm2835.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835.h,v 1.1.1.2 2019/05/25 11:29:13 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Header providing constants for bcm2835 pinctrl bindings.
  *
  * Copyright (C) 2015 Stefan Wahren <stefan.wahren@i2se.com>
- *
- * The code contained herein is licensed under the GNU General Public
- * License. You may obtain a copy of the GNU General Public License
- * Version 2 at the following locations:
- *
- * http://www.opensource.org/licenses/gpl-license.html
- * http://www.gnu.org/copyleft/gpl.html
  */
 
 #ifndef __DT_BINDINGS_PINCTRL_BCM2835_H__

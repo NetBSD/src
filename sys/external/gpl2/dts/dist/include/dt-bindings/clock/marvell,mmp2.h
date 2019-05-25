@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell,mmp2.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: marvell,mmp2.h,v 1.1.1.3 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __DTS_MARVELL_MMP2_CLOCK_H
@@ -73,6 +73,7 @@
 #define MMP2_CLK_CCIC1_MIX		117
 #define MMP2_CLK_CCIC1_PHY		118
 #define MMP2_CLK_CCIC1_SPHY		119
+#define MMP2_CLK_DISP0_LCDC		120
 
 #define MMP2_NR_CLKS			200
 #endif

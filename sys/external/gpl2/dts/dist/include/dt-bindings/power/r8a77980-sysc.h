@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a77980-sysc.h,v 1.1.1.1 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: r8a77980-sysc.h,v 1.1.1.2 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0
  *
@@ -17,14 +17,14 @@
 #define R8A77980_PD_A2SC2		0
 #define R8A77980_PD_A2SC3		1
 #define R8A77980_PD_A2SC4		2
-#define R8A77980_PD_A2PD0		3
-#define R8A77980_PD_A2PD1		4
+#define R8A77980_PD_A2DP0		3
+#define R8A77980_PD_A2DP1		4
 #define R8A77980_PD_CA53_CPU0		5
 #define R8A77980_PD_CA53_CPU1		6
 #define R8A77980_PD_CA53_CPU2		7
 #define R8A77980_PD_CA53_CPU3		8
 #define R8A77980_PD_A2CN		10
-#define R8A77980_PD_A3VIP		11
+#define R8A77980_PD_A3VIP0		11
 #define R8A77980_PD_A2IR5		12
 #define R8A77980_PD_CR7			13
 #define R8A77980_PD_A2IR4		15
