@@ -300,6 +300,14 @@ if test $ac_cv_c_ctime_c = no; then
 fi
 ])dnl
 
+AC_CANONICAL_HOST
+
+case "${host_os}" in
+	*netbsd*)
+		# NetBSD needs -D_OPENBSD_SOURCE for reallocarray
+		CPPFLAGS="$CPPFLAGS -D_OPENBSD_SOURCE";;
+esac
+
 # Checks for typedefs, structures, and compiler characteristics.
 # allow user to override the -g -O2 flags.
 if test "x$CFLAGS" = "x" ; then
@@ -357,11 +365,8 @@ AC_DEFUN([CHECK_SSL], [
             AC_MSG_RESULT(found in $ssldir)
             HAVE_SSL=yes 
             if test x_$ssldir != x_/usr; then
-                LDFLAGS="$LDFLAGS -L$ssldir/lib";
+                LDFLAGS="$LDFLAGS -Wl,-R$ssldir/lib -L$ssldir/lib";
             fi
-	    if test x_$ssldir = x_/usr/sfw; then
-		LDFLAGS="$LDFLAGS -R$ssldir/lib";
-	    fi
         fi
         AC_SUBST(HAVE_SSL)
     fi
@@ -404,12 +409,12 @@ You can restart ./configure --with-libevent=no to use a builtin alternative.])
             AC_MSG_RESULT(found in $thedir)
 	    dnl if event2 exists and no event lib in dir itself, use subdir
 	    if test ! -f $thedir/lib/libevent.a -a ! -f $thedir/lib/libevent.so -a -d "$thedir/lib/event2"; then
-		LDFLAGS="$LDFLAGS -L$thedir/lib/event2"
+		LDFLAGS="$LDFLAGS -Wl,-R$thedir/lib -L$thedir/lib/event2"
 		ACX_RUNTIME_PATH_ADD([$thedir/lib/event2])
 	    else
 		    dnl assume /usr is in default path, do not add "".
 		    if test "$thedir" != "/usr" -a "$thedir" != ""; then
-			LDFLAGS="$LDFLAGS -L$thedir/lib"
+			LDFLAGS="$LDFLAGS -Wl,-R$thedir/lib -L$thedir/lib"
 			ACX_RUNTIME_PATH_ADD([$thedir/lib])
 		    fi
 	    fi
@@ -439,7 +444,7 @@ fi
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h sys/un.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h])
+AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h sys/un.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h login_cap.h])
 
 AC_DEFUN([CHECK_VALIST_DEF],
 [

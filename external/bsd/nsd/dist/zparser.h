@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.5.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -232,7 +232,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 50 "zparser.y" /* yacc.c:1909  */
+#line 50 "zparser.y" /* yacc.c:1910  */
 
 	domain_type	 *domain;
 	const dname_type *dname;
@@ -242,7 +242,7 @@ union YYSTYPE
 	uint16_t	  type;
 	uint16_t	 *unknown;
 
-#line 246 "zparser.h" /* yacc.c:1909  */
+#line 246 "zparser.h" /* yacc.c:1910  */
 };
 
 typedef union YYSTYPE YYSTYPE;

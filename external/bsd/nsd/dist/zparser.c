@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.5.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0.4"
+#define YYBISON_VERSION "3.0.5"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -1603,6 +1603,7 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
       case N:                               \
         yyformat = S;                       \
       break
+    default: /* Avoid compiler warnings. */
       YYCASE_(0, YY_("syntax error"));
       YYCASE_(1, YY_("syntax error, unexpected %s"));
       YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
@@ -1919,13 +1920,13 @@ yyreduce:
   switch (yyn)
     {
         case 6:
-#line 98 "zparser.y" /* yacc.c:1646  */
+#line 98 "zparser.y" /* yacc.c:1648  */
     {}
-#line 1925 "zparser.c" /* yacc.c:1646  */
+#line 1926 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 7:
-#line 100 "zparser.y" /* yacc.c:1646  */
+#line 100 "zparser.y" /* yacc.c:1648  */
     {
 	    region_free_all(parser->rr_region);
 	    parser->current_rr.type = 0;
@@ -1933,11 +1934,11 @@ yyreduce:
 	    parser->current_rr.rdatas = parser->temporary_rdatas;
 	    parser->error_occurred = 0;
     }
-#line 1937 "zparser.c" /* yacc.c:1646  */
+#line 1938 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 8:
-#line 108 "zparser.y" /* yacc.c:1646  */
+#line 108 "zparser.y" /* yacc.c:1648  */
     {
 	    region_free_all(parser->rr_region);
 	    parser->current_rr.type = 0;
@@ -1945,11 +1946,11 @@ yyreduce:
 	    parser->current_rr.rdatas = parser->temporary_rdatas;
 	    parser->error_occurred = 0;
     }
-#line 1949 "zparser.c" /* yacc.c:1646  */
+#line 1950 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 9:
-#line 116 "zparser.y" /* yacc.c:1646  */
+#line 116 "zparser.y" /* yacc.c:1648  */
     {	/* rr should be fully parsed */
 	    if (!parser->error_occurred) {
 			    parser->current_rr.rdatas
@@ -1969,11 +1970,11 @@ yyreduce:
 	    parser->current_rr.rdatas = parser->temporary_rdatas;
 	    parser->error_occurred = 0;
     }
-#line 1973 "zparser.c" /* yacc.c:1646  */
+#line 1974 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 15:
-#line 148 "zparser.y" /* yacc.c:1646  */
+#line 148 "zparser.y" /* yacc.c:1648  */
     {
 	    parser->default_ttl = zparser_ttl2int((yyvsp[-1].data).str, &(parser->error_occurred));
 	    if (parser->error_occurred == 1) {
@@ -1981,11 +1982,11 @@ yyreduce:
 			parser->error_occurred = 0;
 	    }
     }
-#line 1985 "zparser.c" /* yacc.c:1646  */
+#line 1986 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 16:
-#line 158 "zparser.y" /* yacc.c:1646  */
+#line 158 "zparser.y" /* yacc.c:1648  */
     {
 	    /* if previous origin is unused, remove it, do not leak it */
 	    if(parser->origin != error_domain && parser->origin != (yyvsp[-1].domain)) {
@@ -1996,90 +1997,90 @@ yyreduce:
 	    }
 	    parser->origin = (yyvsp[-1].domain);
     }
-#line 2000 "zparser.c" /* yacc.c:1646  */
+#line 2001 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 17:
-#line 169 "zparser.y" /* yacc.c:1646  */
+#line 169 "zparser.y" /* yacc.c:1648  */
     {
 	    zc_error_prev_line("$ORIGIN directive requires absolute domain name");
     }
-#line 2008 "zparser.c" /* yacc.c:1646  */
+#line 2009 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 18:
-#line 175 "zparser.y" /* yacc.c:1646  */
+#line 175 "zparser.y" /* yacc.c:1648  */
     {
 	    parser->current_rr.owner = (yyvsp[-2].domain);
 	    parser->current_rr.type = (yyvsp[0].type);
     }
-#line 2017 "zparser.c" /* yacc.c:1646  */
+#line 2018 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 19:
-#line 182 "zparser.y" /* yacc.c:1646  */
+#line 182 "zparser.y" /* yacc.c:1648  */
     {
 	    parser->prev_dname = (yyvsp[-1].domain);
 	    (yyval.domain) = (yyvsp[-1].domain);
     }
-#line 2026 "zparser.c" /* yacc.c:1646  */
+#line 2027 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 20:
-#line 187 "zparser.y" /* yacc.c:1646  */
+#line 187 "zparser.y" /* yacc.c:1648  */
     {
 	    (yyval.domain) = parser->prev_dname;
     }
-#line 2034 "zparser.c" /* yacc.c:1646  */
+#line 2035 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 21:
-#line 193 "zparser.y" /* yacc.c:1646  */
+#line 193 "zparser.y" /* yacc.c:1648  */
     {
 	    parser->current_rr.ttl = parser->default_ttl;
 	    parser->current_rr.klass = parser->default_class;
     }
-#line 2043 "zparser.c" /* yacc.c:1646  */
+#line 2044 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 22:
-#line 198 "zparser.y" /* yacc.c:1646  */
+#line 198 "zparser.y" /* yacc.c:1648  */
     {
 	    parser->current_rr.ttl = parser->default_ttl;
 	    parser->current_rr.klass = (yyvsp[-1].klass);
     }
-#line 2052 "zparser.c" /* yacc.c:1646  */
+#line 2053 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 23:
-#line 203 "zparser.y" /* yacc.c:1646  */
+#line 203 "zparser.y" /* yacc.c:1648  */
     {
 	    parser->current_rr.ttl = (yyvsp[-1].ttl);
 	    parser->current_rr.klass = parser->default_class;
     }
-#line 2061 "zparser.c" /* yacc.c:1646  */
+#line 2062 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 24:
-#line 208 "zparser.y" /* yacc.c:1646  */
+#line 208 "zparser.y" /* yacc.c:1648  */
     {
 	    parser->current_rr.ttl = (yyvsp[-3].ttl);
 	    parser->current_rr.klass = (yyvsp[-1].klass);
     }
-#line 2070 "zparser.c" /* yacc.c:1646  */
+#line 2071 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 25:
-#line 213 "zparser.y" /* yacc.c:1646  */
+#line 213 "zparser.y" /* yacc.c:1648  */
     {
 	    parser->current_rr.ttl = (yyvsp[-1].ttl);
 	    parser->current_rr.klass = (yyvsp[-3].klass);
     }
-#line 2079 "zparser.c" /* yacc.c:1646  */
+#line 2080 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 27:
-#line 221 "zparser.y" /* yacc.c:1646  */
+#line 221 "zparser.y" /* yacc.c:1648  */
     {
 	    if ((yyvsp[0].dname) == error_dname) {
 		    (yyval.domain) = error_domain;
@@ -2098,27 +2099,27 @@ yyreduce:
 				    domain_dname(parser->origin)));
 	    }
     }
-#line 2102 "zparser.c" /* yacc.c:1646  */
+#line 2103 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 28:
-#line 242 "zparser.y" /* yacc.c:1646  */
+#line 242 "zparser.y" /* yacc.c:1648  */
     {
 	    (yyval.domain) = parser->db->domains->root;
     }
-#line 2110 "zparser.c" /* yacc.c:1646  */
+#line 2111 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 29:
-#line 246 "zparser.y" /* yacc.c:1646  */
+#line 246 "zparser.y" /* yacc.c:1648  */
     {
 	    (yyval.domain) = parser->origin;
     }
-#line 2118 "zparser.c" /* yacc.c:1646  */
+#line 2119 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 30:
-#line 250 "zparser.y" /* yacc.c:1646  */
+#line 250 "zparser.y" /* yacc.c:1648  */
     {
 	    if ((yyvsp[-1].dname) != error_dname) {
 		    (yyval.domain) = domain_table_insert(parser->db->domains, (yyvsp[-1].dname));
@@ -2126,11 +2127,11 @@ yyreduce:
 		    (yyval.domain) = error_domain;
 	    }
     }
-#line 2130 "zparser.c" /* yacc.c:1646  */
+#line 2131 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 31:
-#line 260 "zparser.y" /* yacc.c:1646  */
+#line 260 "zparser.y" /* yacc.c:1648  */
     {
 	    if ((yyvsp[0].data).len > MAXLABELLEN) {
 		    zc_error("label exceeds %d character limit", MAXLABELLEN);
@@ -2144,20 +2145,20 @@ yyreduce:
 					       (yyvsp[0].data).len);
 	    }
     }
-#line 2148 "zparser.c" /* yacc.c:1646  */
+#line 2149 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 32:
-#line 274 "zparser.y" /* yacc.c:1646  */
+#line 274 "zparser.y" /* yacc.c:1648  */
     {
 	    zc_error("bitlabels are now deprecated. RFC2673 is obsoleted.");
 	    (yyval.dname) = error_dname;
     }
-#line 2157 "zparser.c" /* yacc.c:1646  */
+#line 2158 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 34:
-#line 282 "zparser.y" /* yacc.c:1646  */
+#line 282 "zparser.y" /* yacc.c:1648  */
     {
 	    if ((yyvsp[-2].dname) == error_dname || (yyvsp[0].dname) == error_dname) {
 		    (yyval.dname) = error_dname;
@@ -2169,11 +2170,11 @@ yyreduce:
 		    (yyval.dname) = dname_concatenate(parser->rr_region, (yyvsp[-2].dname), (yyvsp[0].dname));
 	    }
     }
-#line 2173 "zparser.c" /* yacc.c:1646  */
+#line 2174 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 36:
-#line 301 "zparser.y" /* yacc.c:1646  */
+#line 301 "zparser.y" /* yacc.c:1648  */
     {
 	    /* terminate in root label and copy the origin in there */
 	    if(parser->origin && domain_dname(parser->origin)) {
@@ -2195,22 +2196,22 @@ yyreduce:
 		    (yyval.data).str[ (yyvsp[0].data).len ] = 0;
 	    }
     }
-#line 2199 "zparser.c" /* yacc.c:1646  */
+#line 2200 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 37:
-#line 325 "zparser.y" /* yacc.c:1646  */
+#line 325 "zparser.y" /* yacc.c:1648  */
     {
 	    char *result = (char *) region_alloc(parser->rr_region, 1);
 	    result[0] = 0;
 	    (yyval.data).str = result;
 	    (yyval.data).len = 1;
     }
-#line 2210 "zparser.c" /* yacc.c:1646  */
+#line 2211 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 38:
-#line 332 "zparser.y" /* yacc.c:1646  */
+#line 332 "zparser.y" /* yacc.c:1648  */
     {
 	    if(parser->origin && domain_dname(parser->origin)) {
 		    (yyval.data).len = domain_dname(parser->origin)->name_size;
@@ -2222,11 +2223,11 @@ yyreduce:
 		    (yyval.data).str[0] = 0;
 	    }
     }
-#line 2226 "zparser.c" /* yacc.c:1646  */
+#line 2227 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 39:
-#line 344 "zparser.y" /* yacc.c:1646  */
+#line 344 "zparser.y" /* yacc.c:1648  */
     {
 	    (yyval.data).len = (yyvsp[-1].data).len + 1;
 	    if ((yyval.data).len > MAXDOMAINLEN)
@@ -2236,11 +2237,11 @@ yyreduce:
 	    memcpy((yyval.data).str, (yyvsp[-1].data).str, (yyvsp[-1].data).len);
 	    (yyval.data).str[(yyvsp[-1].data).len] = 0;
     }
-#line 2240 "zparser.c" /* yacc.c:1646  */
+#line 2241 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 40:
-#line 356 "zparser.y" /* yacc.c:1646  */
+#line 356 "zparser.y" /* yacc.c:1648  */
     {
 	    char *result = (char *) region_alloc(parser->rr_region,
 						 (yyvsp[0].data).len + 1);
@@ -2255,11 +2256,11 @@ yyreduce:
 	    (yyval.data).str = result;
 	    (yyval.data).len = (yyvsp[0].data).len + 1;
     }
-#line 2259 "zparser.c" /* yacc.c:1646  */
+#line 2260 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 42:
-#line 374 "zparser.y" /* yacc.c:1646  */
+#line 374 "zparser.y" /* yacc.c:1648  */
     {
 	    (yyval.data).len = (yyvsp[-2].data).len + (yyvsp[0].data).len;
 	    if ((yyval.data).len > MAXDOMAINLEN)
@@ -2269,36 +2270,36 @@ yyreduce:
 	    memmove((yyval.data).str, (yyvsp[-2].data).str, (yyvsp[-2].data).len);
 	    memmove((yyval.data).str + (yyvsp[-2].data).len, (yyvsp[0].data).str, (yyvsp[0].data).len);
     }
-#line 2273 "zparser.c" /* yacc.c:1646  */
+#line 2274 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 43:
-#line 386 "zparser.y" /* yacc.c:1646  */
+#line 386 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, (yyvsp[0].data).str, (yyvsp[0].data).len), 1);
     }
-#line 2281 "zparser.c" /* yacc.c:1646  */
+#line 2282 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 44:
-#line 390 "zparser.y" /* yacc.c:1646  */
+#line 390 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_txt_wireformat(zparser_conv_text(parser->rr_region, (yyvsp[0].data).str, (yyvsp[0].data).len), 0);
     }
-#line 2289 "zparser.c" /* yacc.c:1646  */
+#line 2290 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 46:
-#line 401 "zparser.y" /* yacc.c:1646  */
+#line 401 "zparser.y" /* yacc.c:1648  */
     {
 	    (yyval.data).len = 1;
 	    (yyval.data).str = region_strdup(parser->rr_region, ".");
     }
-#line 2298 "zparser.c" /* yacc.c:1646  */
+#line 2299 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 47:
-#line 406 "zparser.y" /* yacc.c:1646  */
+#line 406 "zparser.y" /* yacc.c:1648  */
     {
 	    (yyval.data).len = (yyvsp[-2].data).len + (yyvsp[0].data).len + 1;
 	    (yyval.data).str = (char *) region_alloc(parser->rr_region, (yyval.data).len + 1);
@@ -2307,11 +2308,11 @@ yyreduce:
 	    memcpy((yyval.data).str + (yyvsp[-2].data).len + 1, (yyvsp[0].data).str, (yyvsp[0].data).len);
 	    (yyval.data).str[(yyval.data).len] = '\0';
     }
-#line 2311 "zparser.c" /* yacc.c:1646  */
+#line 2312 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 48:
-#line 415 "zparser.y" /* yacc.c:1646  */
+#line 415 "zparser.y" /* yacc.c:1648  */
     {
 	    (yyval.data).len = (yyvsp[-2].data).len + (yyvsp[0].data).len + 1;
 	    (yyval.data).str = (char *) region_alloc(parser->rr_region, (yyval.data).len + 1);
@@ -2320,11 +2321,11 @@ yyreduce:
 	    memcpy((yyval.data).str + (yyvsp[-2].data).len + 1, (yyvsp[0].data).str, (yyvsp[0].data).len);
 	    (yyval.data).str[(yyval.data).len] = '\0';
     }
-#line 2324 "zparser.c" /* yacc.c:1646  */
+#line 2325 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 49:
-#line 427 "zparser.y" /* yacc.c:1646  */
+#line 427 "zparser.y" /* yacc.c:1648  */
     {
 	    uint16_t type = rrtype_from_string((yyvsp[0].data).str);
 	    if (type != 0 && type < 128) {
@@ -2333,11 +2334,11 @@ yyreduce:
 		    zc_error("bad type %d in NXT record", (int) type);
 	    }
     }
-#line 2337 "zparser.c" /* yacc.c:1646  */
+#line 2338 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 50:
-#line 436 "zparser.y" /* yacc.c:1646  */
+#line 436 "zparser.y" /* yacc.c:1648  */
     {
 	    uint16_t type = rrtype_from_string((yyvsp[0].data).str);
 	    if (type != 0 && type < 128) {
@@ -2346,25 +2347,25 @@ yyreduce:
 		    zc_error("bad type %d in NXT record", (int) type);
 	    }
     }
-#line 2350 "zparser.c" /* yacc.c:1646  */
+#line 2351 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 51:
-#line 447 "zparser.y" /* yacc.c:1646  */
+#line 447 "zparser.y" /* yacc.c:1648  */
     {
     }
-#line 2357 "zparser.c" /* yacc.c:1646  */
+#line 2358 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 52:
-#line 450 "zparser.y" /* yacc.c:1646  */
+#line 450 "zparser.y" /* yacc.c:1648  */
     {
     }
-#line 2364 "zparser.c" /* yacc.c:1646  */
+#line 2365 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 53:
-#line 453 "zparser.y" /* yacc.c:1646  */
+#line 453 "zparser.y" /* yacc.c:1648  */
     {
 	    uint16_t type = rrtype_from_string((yyvsp[-1].data).str);
 	    if (type != 0) {
@@ -2376,11 +2377,11 @@ yyreduce:
 		    zc_error("bad type %d in NSEC record", (int) type);
 	    }
     }
-#line 2380 "zparser.c" /* yacc.c:1646  */
+#line 2381 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 57:
-#line 476 "zparser.y" /* yacc.c:1646  */
+#line 476 "zparser.y" /* yacc.c:1648  */
     {
 	    char *result = (char *) region_alloc(parser->rr_region,
 						 (yyvsp[-2].data).len + (yyvsp[0].data).len + 1);
@@ -2390,11 +2391,11 @@ yyreduce:
 	    (yyval.data).len = (yyvsp[-2].data).len + (yyvsp[0].data).len;
 	    (yyval.data).str[(yyval.data).len] = '\0';
     }
-#line 2394 "zparser.c" /* yacc.c:1646  */
+#line 2395 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 59:
-#line 493 "zparser.y" /* yacc.c:1646  */
+#line 493 "zparser.y" /* yacc.c:1648  */
     {
 	    char *result = (char *) region_alloc(parser->rr_region,
 						 (yyvsp[-2].data).len + (yyvsp[0].data).len + 1);
@@ -2404,20 +2405,20 @@ yyreduce:
 	    (yyval.data).len = (yyvsp[-2].data).len + (yyvsp[0].data).len;
 	    (yyval.data).str[(yyval.data).len] = '\0';
     }
-#line 2408 "zparser.c" /* yacc.c:1646  */
+#line 2409 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 61:
-#line 509 "zparser.y" /* yacc.c:1646  */
+#line 509 "zparser.y" /* yacc.c:1648  */
     {
 	(yyval.data).str = ".";
 	(yyval.data).len = 1;
     }
-#line 2417 "zparser.c" /* yacc.c:1646  */
+#line 2418 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 62:
-#line 514 "zparser.y" /* yacc.c:1646  */
+#line 514 "zparser.y" /* yacc.c:1648  */
     {
 	    char *result = (char *) region_alloc(parser->rr_region,
 						 (yyvsp[-1].data).len + 2);
@@ -2427,11 +2428,11 @@ yyreduce:
 	    (yyval.data).len = (yyvsp[-1].data).len + 1;
 	    (yyval.data).str[(yyval.data).len] = '\0';
     }
-#line 2431 "zparser.c" /* yacc.c:1646  */
+#line 2432 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 63:
-#line 524 "zparser.y" /* yacc.c:1646  */
+#line 524 "zparser.y" /* yacc.c:1648  */
     {
 	    char *result = (char *) region_alloc(parser->rr_region,
 						 (yyvsp[-2].data).len + (yyvsp[0].data).len + 2);
@@ -2442,431 +2443,431 @@ yyreduce:
 	    (yyval.data).len = (yyvsp[-2].data).len + (yyvsp[0].data).len + 1;
 	    (yyval.data).str[(yyval.data).len] = '\0';
     }
-#line 2446 "zparser.c" /* yacc.c:1646  */
+#line 2447 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 65:
-#line 542 "zparser.y" /* yacc.c:1646  */
+#line 542 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2452 "zparser.c" /* yacc.c:1646  */
+#line 2453 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 67:
-#line 544 "zparser.y" /* yacc.c:1646  */
+#line 544 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2458 "zparser.c" /* yacc.c:1646  */
+#line 2459 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 68:
-#line 545 "zparser.y" /* yacc.c:1646  */
+#line 545 "zparser.y" /* yacc.c:1648  */
     { zc_warning_prev_line("MD is obsolete"); }
-#line 2464 "zparser.c" /* yacc.c:1646  */
+#line 2465 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 69:
-#line 547 "zparser.y" /* yacc.c:1646  */
+#line 547 "zparser.y" /* yacc.c:1648  */
     {
 	    zc_warning_prev_line("MD is obsolete");
 	    (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown));
     }
-#line 2473 "zparser.c" /* yacc.c:1646  */
+#line 2474 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 70:
-#line 551 "zparser.y" /* yacc.c:1646  */
+#line 551 "zparser.y" /* yacc.c:1648  */
     { zc_warning_prev_line("MF is obsolete"); }
-#line 2479 "zparser.c" /* yacc.c:1646  */
+#line 2480 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 71:
-#line 553 "zparser.y" /* yacc.c:1646  */
+#line 553 "zparser.y" /* yacc.c:1648  */
     {
 	    zc_warning_prev_line("MF is obsolete");
 	    (yyval.type) = (yyvsp[-2].type);
 	    parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown));
     }
-#line 2489 "zparser.c" /* yacc.c:1646  */
+#line 2490 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 73:
-#line 559 "zparser.y" /* yacc.c:1646  */
+#line 559 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2495 "zparser.c" /* yacc.c:1646  */
+#line 2496 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 75:
-#line 561 "zparser.y" /* yacc.c:1646  */
+#line 561 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2501 "zparser.c" /* yacc.c:1646  */
+#line 2502 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 76:
-#line 562 "zparser.y" /* yacc.c:1646  */
+#line 562 "zparser.y" /* yacc.c:1648  */
     { zc_warning_prev_line("MB is obsolete"); }
-#line 2507 "zparser.c" /* yacc.c:1646  */
+#line 2508 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 77:
-#line 564 "zparser.y" /* yacc.c:1646  */
+#line 564 "zparser.y" /* yacc.c:1648  */
     {
 	    zc_warning_prev_line("MB is obsolete");
 	    (yyval.type) = (yyvsp[-2].type);
 	    parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown));
     }
-#line 2517 "zparser.c" /* yacc.c:1646  */
+#line 2518 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 79:
-#line 570 "zparser.y" /* yacc.c:1646  */
+#line 570 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2523 "zparser.c" /* yacc.c:1646  */
+#line 2524 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 81:
-#line 572 "zparser.y" /* yacc.c:1646  */
+#line 572 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2529 "zparser.c" /* yacc.c:1646  */
+#line 2530 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 83:
-#line 575 "zparser.y" /* yacc.c:1646  */
+#line 575 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2535 "zparser.c" /* yacc.c:1646  */
+#line 2536 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 85:
-#line 577 "zparser.y" /* yacc.c:1646  */
+#line 577 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2541 "zparser.c" /* yacc.c:1646  */
+#line 2542 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 87:
-#line 579 "zparser.y" /* yacc.c:1646  */
+#line 579 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2547 "zparser.c" /* yacc.c:1646  */
+#line 2548 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 89:
-#line 581 "zparser.y" /* yacc.c:1646  */
+#line 581 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2553 "zparser.c" /* yacc.c:1646  */
+#line 2554 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 91:
-#line 583 "zparser.y" /* yacc.c:1646  */
+#line 583 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2559 "zparser.c" /* yacc.c:1646  */
+#line 2560 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 93:
-#line 585 "zparser.y" /* yacc.c:1646  */
+#line 585 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2565 "zparser.c" /* yacc.c:1646  */
+#line 2566 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 95:
-#line 587 "zparser.y" /* yacc.c:1646  */
+#line 587 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2571 "zparser.c" /* yacc.c:1646  */
+#line 2572 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 97:
-#line 589 "zparser.y" /* yacc.c:1646  */
+#line 589 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2577 "zparser.c" /* yacc.c:1646  */
+#line 2578 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 99:
-#line 591 "zparser.y" /* yacc.c:1646  */
+#line 591 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2583 "zparser.c" /* yacc.c:1646  */
+#line 2584 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 101:
-#line 593 "zparser.y" /* yacc.c:1646  */
+#line 593 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2589 "zparser.c" /* yacc.c:1646  */
+#line 2590 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 103:
-#line 595 "zparser.y" /* yacc.c:1646  */
+#line 595 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2595 "zparser.c" /* yacc.c:1646  */
+#line 2596 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 105:
-#line 597 "zparser.y" /* yacc.c:1646  */
+#line 597 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2601 "zparser.c" /* yacc.c:1646  */
+#line 2602 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 107:
-#line 599 "zparser.y" /* yacc.c:1646  */
+#line 599 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2607 "zparser.c" /* yacc.c:1646  */
+#line 2608 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 109:
-#line 601 "zparser.y" /* yacc.c:1646  */
+#line 601 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2613 "zparser.c" /* yacc.c:1646  */
+#line 2614 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 111:
-#line 603 "zparser.y" /* yacc.c:1646  */
+#line 603 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2619 "zparser.c" /* yacc.c:1646  */
+#line 2620 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 113:
-#line 605 "zparser.y" /* yacc.c:1646  */
+#line 605 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2625 "zparser.c" /* yacc.c:1646  */
+#line 2626 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 115:
-#line 607 "zparser.y" /* yacc.c:1646  */
+#line 607 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2631 "zparser.c" /* yacc.c:1646  */
+#line 2632 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 117:
-#line 609 "zparser.y" /* yacc.c:1646  */
+#line 609 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2637 "zparser.c" /* yacc.c:1646  */
+#line 2638 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 119:
-#line 611 "zparser.y" /* yacc.c:1646  */
+#line 611 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2643 "zparser.c" /* yacc.c:1646  */
+#line 2644 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 121:
-#line 613 "zparser.y" /* yacc.c:1646  */
+#line 613 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2649 "zparser.c" /* yacc.c:1646  */
+#line 2650 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 123:
-#line 615 "zparser.y" /* yacc.c:1646  */
+#line 615 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2655 "zparser.c" /* yacc.c:1646  */
+#line 2656 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 125:
-#line 617 "zparser.y" /* yacc.c:1646  */
+#line 617 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2661 "zparser.c" /* yacc.c:1646  */
+#line 2662 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 127:
-#line 619 "zparser.y" /* yacc.c:1646  */
+#line 619 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2667 "zparser.c" /* yacc.c:1646  */
+#line 2668 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 129:
-#line 621 "zparser.y" /* yacc.c:1646  */
+#line 621 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2673 "zparser.c" /* yacc.c:1646  */
+#line 2674 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 131:
-#line 623 "zparser.y" /* yacc.c:1646  */
+#line 623 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2679 "zparser.c" /* yacc.c:1646  */
+#line 2680 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 133:
-#line 625 "zparser.y" /* yacc.c:1646  */
+#line 625 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2685 "zparser.c" /* yacc.c:1646  */
+#line 2686 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 135:
-#line 627 "zparser.y" /* yacc.c:1646  */
+#line 627 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2691 "zparser.c" /* yacc.c:1646  */
+#line 2692 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 138:
-#line 630 "zparser.y" /* yacc.c:1646  */
+#line 630 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2697 "zparser.c" /* yacc.c:1646  */
+#line 2698 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 140:
-#line 632 "zparser.y" /* yacc.c:1646  */
+#line 632 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2703 "zparser.c" /* yacc.c:1646  */
+#line 2704 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 141:
-#line 633 "zparser.y" /* yacc.c:1646  */
+#line 633 "zparser.y" /* yacc.c:1648  */
     { if (dlv_warn) { dlv_warn = 0; zc_warning_prev_line("DLV is experimental"); } }
-#line 2709 "zparser.c" /* yacc.c:1646  */
+#line 2710 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 142:
-#line 634 "zparser.y" /* yacc.c:1646  */
+#line 634 "zparser.y" /* yacc.c:1648  */
     { if (dlv_warn) { dlv_warn = 0; zc_warning_prev_line("DLV is experimental"); } (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2715 "zparser.c" /* yacc.c:1646  */
+#line 2716 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 144:
-#line 636 "zparser.y" /* yacc.c:1646  */
+#line 636 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2721 "zparser.c" /* yacc.c:1646  */
+#line 2722 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 146:
-#line 638 "zparser.y" /* yacc.c:1646  */
+#line 638 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2727 "zparser.c" /* yacc.c:1646  */
+#line 2728 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 148:
-#line 640 "zparser.y" /* yacc.c:1646  */
+#line 640 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2733 "zparser.c" /* yacc.c:1646  */
+#line 2734 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 150:
-#line 642 "zparser.y" /* yacc.c:1646  */
+#line 642 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2739 "zparser.c" /* yacc.c:1646  */
+#line 2740 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 152:
-#line 644 "zparser.y" /* yacc.c:1646  */
+#line 644 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2745 "zparser.c" /* yacc.c:1646  */
+#line 2746 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 154:
-#line 646 "zparser.y" /* yacc.c:1646  */
+#line 646 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2751 "zparser.c" /* yacc.c:1646  */
+#line 2752 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 156:
-#line 648 "zparser.y" /* yacc.c:1646  */
+#line 648 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2757 "zparser.c" /* yacc.c:1646  */
+#line 2758 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 158:
-#line 650 "zparser.y" /* yacc.c:1646  */
+#line 650 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2763 "zparser.c" /* yacc.c:1646  */
+#line 2764 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 160:
-#line 652 "zparser.y" /* yacc.c:1646  */
+#line 652 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2769 "zparser.c" /* yacc.c:1646  */
+#line 2770 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 162:
-#line 654 "zparser.y" /* yacc.c:1646  */
+#line 654 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2775 "zparser.c" /* yacc.c:1646  */
+#line 2776 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 164:
-#line 656 "zparser.y" /* yacc.c:1646  */
+#line 656 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2781 "zparser.c" /* yacc.c:1646  */
+#line 2782 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 166:
-#line 658 "zparser.y" /* yacc.c:1646  */
+#line 658 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2787 "zparser.c" /* yacc.c:1646  */
+#line 2788 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 168:
-#line 660 "zparser.y" /* yacc.c:1646  */
+#line 660 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2793 "zparser.c" /* yacc.c:1646  */
+#line 2794 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 170:
-#line 662 "zparser.y" /* yacc.c:1646  */
+#line 662 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2799 "zparser.c" /* yacc.c:1646  */
+#line 2800 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 172:
-#line 664 "zparser.y" /* yacc.c:1646  */
+#line 664 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2805 "zparser.c" /* yacc.c:1646  */
+#line 2806 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 174:
-#line 666 "zparser.y" /* yacc.c:1646  */
+#line 666 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2811 "zparser.c" /* yacc.c:1646  */
+#line 2812 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 176:
-#line 668 "zparser.y" /* yacc.c:1646  */
+#line 668 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2817 "zparser.c" /* yacc.c:1646  */
+#line 2818 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 178:
-#line 670 "zparser.y" /* yacc.c:1646  */
+#line 670 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2823 "zparser.c" /* yacc.c:1646  */
+#line 2824 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 180:
-#line 672 "zparser.y" /* yacc.c:1646  */
+#line 672 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2829 "zparser.c" /* yacc.c:1646  */
+#line 2830 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 182:
-#line 674 "zparser.y" /* yacc.c:1646  */
+#line 674 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2835 "zparser.c" /* yacc.c:1646  */
+#line 2836 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 183:
-#line 675 "zparser.y" /* yacc.c:1646  */
+#line 675 "zparser.y" /* yacc.c:1648  */
     { (yyval.type) = (yyvsp[-2].type); parse_unknown_rdata((yyvsp[-2].type), (yyvsp[0].unknown)); }
-#line 2841 "zparser.c" /* yacc.c:1646  */
+#line 2842 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 184:
-#line 677 "zparser.y" /* yacc.c:1646  */
+#line 677 "zparser.y" /* yacc.c:1648  */
     {
 	    zc_error_prev_line("unrecognized RR type '%s'", (yyvsp[-2].data).str);
     }
-#line 2849 "zparser.c" /* yacc.c:1646  */
+#line 2850 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 185:
-#line 689 "zparser.y" /* yacc.c:1646  */
+#line 689 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_a(parser->region, (yyvsp[-1].data).str));
     }
-#line 2857 "zparser.c" /* yacc.c:1646  */
+#line 2858 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 186:
-#line 695 "zparser.y" /* yacc.c:1646  */
+#line 695 "zparser.y" /* yacc.c:1648  */
     {
 	    /* convert a single dname record */
 	    zadd_rdata_domain((yyvsp[-1].domain));
     }
-#line 2866 "zparser.c" /* yacc.c:1646  */
+#line 2867 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 187:
-#line 702 "zparser.y" /* yacc.c:1646  */
+#line 702 "zparser.y" /* yacc.c:1648  */
     {
 	    /* convert the soa data */
 	    zadd_rdata_domain((yyvsp[-13].domain));	/* prim. ns */
@@ -2877,108 +2878,108 @@ yyreduce:
 	    zadd_rdata_wireformat(zparser_conv_period(parser->region, (yyvsp[-3].data).str)); /* expire */
 	    zadd_rdata_wireformat(zparser_conv_period(parser->region, (yyvsp[-1].data).str)); /* minimum */
     }
-#line 2881 "zparser.c" /* yacc.c:1646  */
+#line 2882 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 188:
-#line 715 "zparser.y" /* yacc.c:1646  */
+#line 715 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_a(parser->region, (yyvsp[-5].data).str)); /* address */
 	    zadd_rdata_wireformat(zparser_conv_services(parser->region, (yyvsp[-3].data).str, (yyvsp[-1].data).str)); /* protocol and services */
     }
-#line 2890 "zparser.c" /* yacc.c:1646  */
+#line 2891 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 189:
-#line 722 "zparser.y" /* yacc.c:1646  */
+#line 722 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, (yyvsp[-3].data).str, (yyvsp[-3].data).len)); /* CPU */
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, (yyvsp[-1].data).str, (yyvsp[-1].data).len)); /* OS*/
     }
-#line 2899 "zparser.c" /* yacc.c:1646  */
+#line 2900 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 190:
-#line 729 "zparser.y" /* yacc.c:1646  */
+#line 729 "zparser.y" /* yacc.c:1648  */
     {
 	    /* convert a single dname record */
 	    zadd_rdata_domain((yyvsp[-3].domain));
 	    zadd_rdata_domain((yyvsp[-1].domain));
     }
-#line 2909 "zparser.c" /* yacc.c:1646  */
+#line 2910 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 191:
-#line 737 "zparser.y" /* yacc.c:1646  */
+#line 737 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-3].data).str));  /* priority */
 	    zadd_rdata_domain((yyvsp[-1].domain));	/* MX host */
     }
-#line 2918 "zparser.c" /* yacc.c:1646  */
+#line 2919 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 192:
-#line 744 "zparser.y" /* yacc.c:1646  */
+#line 744 "zparser.y" /* yacc.c:1648  */
     {
 	zadd_rdata_txt_clean_wireformat();
     }
-#line 2926 "zparser.c" /* yacc.c:1646  */
+#line 2927 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 193:
-#line 751 "zparser.y" /* yacc.c:1646  */
+#line 751 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_domain((yyvsp[-3].domain)); /* mbox d-name */
 	    zadd_rdata_domain((yyvsp[-1].domain)); /* txt d-name */
     }
-#line 2935 "zparser.c" /* yacc.c:1646  */
+#line 2936 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 194:
-#line 759 "zparser.y" /* yacc.c:1646  */
+#line 759 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-3].data).str)); /* subtype */
 	    zadd_rdata_domain((yyvsp[-1].domain)); /* domain name */
     }
-#line 2944 "zparser.c" /* yacc.c:1646  */
+#line 2945 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 195:
-#line 767 "zparser.y" /* yacc.c:1646  */
+#line 767 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, (yyvsp[-1].data).str, (yyvsp[-1].data).len)); /* X.25 address. */
     }
-#line 2952 "zparser.c" /* yacc.c:1646  */
+#line 2953 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 196:
-#line 774 "zparser.y" /* yacc.c:1646  */
+#line 774 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, (yyvsp[-1].data).str, (yyvsp[-1].data).len)); /* address */
     }
-#line 2960 "zparser.c" /* yacc.c:1646  */
+#line 2961 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 197:
-#line 778 "zparser.y" /* yacc.c:1646  */
+#line 778 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, (yyvsp[-3].data).str, (yyvsp[-3].data).len)); /* address */
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, (yyvsp[-1].data).str, (yyvsp[-1].data).len)); /* sub-address */
     }
-#line 2969 "zparser.c" /* yacc.c:1646  */
+#line 2970 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 198:
-#line 786 "zparser.y" /* yacc.c:1646  */
+#line 786 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-3].data).str)); /* preference */
 	    zadd_rdata_domain((yyvsp[-1].domain)); /* intermediate host */
     }
-#line 2978 "zparser.c" /* yacc.c:1646  */
+#line 2979 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 199:
-#line 794 "zparser.y" /* yacc.c:1646  */
+#line 794 "zparser.y" /* yacc.c:1648  */
     {
 	    /* String must start with "0x" or "0X".	 */
 	    if (strncasecmp((yyvsp[-1].data).str, "0x", 2) != 0) {
@@ -2987,58 +2988,58 @@ yyreduce:
 		    zadd_rdata_wireformat(zparser_conv_hex(parser->region, (yyvsp[-1].data).str + 2, (yyvsp[-1].data).len - 2)); /* NSAP */
 	    }
     }
-#line 2991 "zparser.c" /* yacc.c:1646  */
+#line 2992 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 200:
-#line 806 "zparser.y" /* yacc.c:1646  */
+#line 806 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-5].data).str)); /* preference */
 	    zadd_rdata_domain((yyvsp[-3].domain)); /* MAP822 */
 	    zadd_rdata_domain((yyvsp[-1].domain)); /* MAPX400 */
     }
-#line 3001 "zparser.c" /* yacc.c:1646  */
+#line 3002 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 201:
-#line 814 "zparser.y" /* yacc.c:1646  */
+#line 814 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_aaaa(parser->region, (yyvsp[-1].data).str));  /* IPv6 address */
     }
-#line 3009 "zparser.c" /* yacc.c:1646  */
+#line 3010 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 202:
-#line 820 "zparser.y" /* yacc.c:1646  */
+#line 820 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_loc(parser->region, (yyvsp[-1].data).str)); /* Location */
     }
-#line 3017 "zparser.c" /* yacc.c:1646  */
+#line 3018 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 203:
-#line 826 "zparser.y" /* yacc.c:1646  */
+#line 826 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_domain((yyvsp[-3].domain)); /* nxt name */
 	    zadd_rdata_wireformat(zparser_conv_nxt(parser->region, nxtbits)); /* nxt bitlist */
 	    memset(nxtbits, 0, sizeof(nxtbits));
     }
-#line 3027 "zparser.c" /* yacc.c:1646  */
+#line 3028 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 204:
-#line 834 "zparser.y" /* yacc.c:1646  */
+#line 834 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-7].data).str)); /* prio */
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-5].data).str)); /* weight */
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-3].data).str)); /* port */
 	    zadd_rdata_domain((yyvsp[-1].domain)); /* target name */
     }
-#line 3038 "zparser.c" /* yacc.c:1646  */
+#line 3039 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 205:
-#line 844 "zparser.y" /* yacc.c:1646  */
+#line 844 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-11].data).str)); /* order */
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-9].data).str)); /* preference */
@@ -3047,87 +3048,87 @@ yyreduce:
 	    zadd_rdata_wireformat(zparser_conv_text(parser->region, (yyvsp[-3].data).str, (yyvsp[-3].data).len)); /* regexp */
 	    zadd_rdata_domain((yyvsp[-1].domain)); /* target name */
     }
-#line 3051 "zparser.c" /* yacc.c:1646  */
+#line 3052 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 206:
-#line 856 "zparser.y" /* yacc.c:1646  */
+#line 856 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-3].data).str)); /* preference */
 	    zadd_rdata_domain((yyvsp[-1].domain)); /* exchanger */
     }
-#line 3060 "zparser.c" /* yacc.c:1646  */
+#line 3061 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 207:
-#line 864 "zparser.y" /* yacc.c:1646  */
+#line 864 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_certificate_type(parser->region, (yyvsp[-7].data).str)); /* type */
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-5].data).str)); /* key tag */
 	    zadd_rdata_wireformat(zparser_conv_algorithm(parser->region, (yyvsp[-3].data).str)); /* algorithm */
 	    zadd_rdata_wireformat(zparser_conv_b64(parser->region, (yyvsp[-1].data).str)); /* certificate or CRL */
     }
-#line 3071 "zparser.c" /* yacc.c:1646  */
+#line 3072 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 209:
-#line 877 "zparser.y" /* yacc.c:1646  */
+#line 877 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_apl_rdata(parser->region, (yyvsp[0].data).str));
     }
-#line 3079 "zparser.c" /* yacc.c:1646  */
+#line 3080 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 210:
-#line 881 "zparser.y" /* yacc.c:1646  */
+#line 881 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_apl_rdata(parser->region, (yyvsp[0].data).str));
     }
-#line 3087 "zparser.c" /* yacc.c:1646  */
+#line 3088 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 211:
-#line 887 "zparser.y" /* yacc.c:1646  */
+#line 887 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-7].data).str)); /* keytag */
 	    zadd_rdata_wireformat(zparser_conv_algorithm(parser->region, (yyvsp[-5].data).str)); /* alg */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-3].data).str)); /* type */
 	    zadd_rdata_wireformat(zparser_conv_hex(parser->region, (yyvsp[-1].data).str, (yyvsp[-1].data).len)); /* hash */
     }
-#line 3098 "zparser.c" /* yacc.c:1646  */
+#line 3099 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 212:
-#line 896 "zparser.y" /* yacc.c:1646  */
+#line 896 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-7].data).str)); /* keytag */
 	    zadd_rdata_wireformat(zparser_conv_algorithm(parser->region, (yyvsp[-5].data).str)); /* alg */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-3].data).str)); /* type */
 	    zadd_rdata_wireformat(zparser_conv_hex(parser->region, (yyvsp[-1].data).str, (yyvsp[-1].data).len)); /* hash */
     }
-#line 3109 "zparser.c" /* yacc.c:1646  */
+#line 3110 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 213:
-#line 905 "zparser.y" /* yacc.c:1646  */
+#line 905 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-5].data).str)); /* alg */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-3].data).str)); /* fp type */
 	    zadd_rdata_wireformat(zparser_conv_hex(parser->region, (yyvsp[-1].data).str, (yyvsp[-1].data).len)); /* hash */
     }
-#line 3119 "zparser.c" /* yacc.c:1646  */
+#line 3120 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 214:
-#line 913 "zparser.y" /* yacc.c:1646  */
+#line 913 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_b64(parser->region, (yyvsp[-1].data).str)); /* data blob */
     }
-#line 3127 "zparser.c" /* yacc.c:1646  */
+#line 3128 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 215:
-#line 919 "zparser.y" /* yacc.c:1646  */
+#line 919 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_rrtype(parser->region, (yyvsp[-17].data).str)); /* rr covered */
 	    zadd_rdata_wireformat(zparser_conv_algorithm(parser->region, (yyvsp[-15].data).str)); /* alg */
@@ -3140,11 +3141,11 @@ yyreduce:
 				(const uint8_t*) (yyvsp[-3].data).str,(yyvsp[-3].data).len)); /* sig name */
 	    zadd_rdata_wireformat(zparser_conv_b64(parser->region, (yyvsp[-1].data).str)); /* sig data */
     }
-#line 3144 "zparser.c" /* yacc.c:1646  */
+#line 3145 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 216:
-#line 934 "zparser.y" /* yacc.c:1646  */
+#line 934 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_dns_name(parser->region, 
 				(const uint8_t*) (yyvsp[-1].data).str, (yyvsp[-1].data).len)); /* nsec name */
@@ -3152,11 +3153,11 @@ yyreduce:
 	    memset(nsecbits, 0, sizeof(nsecbits));
             nsec_highest_rcode = 0;
     }
-#line 3156 "zparser.c" /* yacc.c:1646  */
+#line 3157 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 217:
-#line 944 "zparser.y" /* yacc.c:1646  */
+#line 944 "zparser.y" /* yacc.c:1648  */
     {
 #ifdef NSEC3
 	    nsec3_add_params((yyvsp[-9].data).str, (yyvsp[-7].data).str, (yyvsp[-5].data).str, (yyvsp[-3].data).str, (yyvsp[-3].data).len);
@@ -3169,11 +3170,11 @@ yyreduce:
 	    zc_error_prev_line("nsec3 not supported");
 #endif /* NSEC3 */
     }
-#line 3173 "zparser.c" /* yacc.c:1646  */
+#line 3174 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 218:
-#line 959 "zparser.y" /* yacc.c:1646  */
+#line 959 "zparser.y" /* yacc.c:1648  */
     {
 #ifdef NSEC3
 	    nsec3_add_params((yyvsp[-7].data).str, (yyvsp[-5].data).str, (yyvsp[-3].data).str, (yyvsp[-1].data).str, (yyvsp[-1].data).len);
@@ -3181,44 +3182,44 @@ yyreduce:
 	    zc_error_prev_line("nsec3 not supported");
 #endif /* NSEC3 */
     }
-#line 3185 "zparser.c" /* yacc.c:1646  */
+#line 3186 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 219:
-#line 969 "zparser.y" /* yacc.c:1646  */
+#line 969 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-7].data).str)); /* usage */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-5].data).str)); /* selector */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-3].data).str)); /* matching type */
 	    zadd_rdata_wireformat(zparser_conv_hex(parser->region, (yyvsp[-1].data).str, (yyvsp[-1].data).len)); /* ca data */
     }
-#line 3196 "zparser.c" /* yacc.c:1646  */
+#line 3197 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 220:
-#line 978 "zparser.y" /* yacc.c:1646  */
+#line 978 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-7].data).str)); /* usage */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-5].data).str)); /* selector */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-3].data).str)); /* matching type */
 	    zadd_rdata_wireformat(zparser_conv_hex(parser->region, (yyvsp[-1].data).str, (yyvsp[-1].data).len)); /* ca data */
     }
-#line 3207 "zparser.c" /* yacc.c:1646  */
+#line 3208 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 221:
-#line 987 "zparser.y" /* yacc.c:1646  */
+#line 987 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-7].data).str)); /* flags */
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-5].data).str)); /* proto */
 	    zadd_rdata_wireformat(zparser_conv_algorithm(parser->region, (yyvsp[-3].data).str)); /* alg */
 	    zadd_rdata_wireformat(zparser_conv_b64(parser->region, (yyvsp[-1].data).str)); /* hash */
     }
-#line 3218 "zparser.c" /* yacc.c:1646  */
+#line 3219 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 222:
-#line 996 "zparser.y" /* yacc.c:1646  */
+#line 996 "zparser.y" /* yacc.c:1648  */
     {
 	    const dname_type* name = 0;
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-6].data).str)); /* precedence */
@@ -3257,99 +3258,99 @@ yyreduce:
 			zc_error_prev_line("unknown IPSECKEY gateway type");
 	    }
     }
-#line 3261 "zparser.c" /* yacc.c:1646  */
+#line 3262 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 223:
-#line 1037 "zparser.y" /* yacc.c:1646  */
+#line 1037 "zparser.y" /* yacc.c:1648  */
     {
 	   zadd_rdata_wireformat(zparser_conv_b64(parser->region, (yyvsp[-1].data).str)); /* public key */
     }
-#line 3269 "zparser.c" /* yacc.c:1646  */
+#line 3270 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 225:
-#line 1045 "zparser.y" /* yacc.c:1646  */
+#line 1045 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-3].data).str));  /* preference */
 	    zadd_rdata_wireformat(zparser_conv_ilnp64(parser->region, (yyvsp[-1].data).str));  /* NodeID */
     }
-#line 3278 "zparser.c" /* yacc.c:1646  */
+#line 3279 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 226:
-#line 1052 "zparser.y" /* yacc.c:1646  */
+#line 1052 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-3].data).str));  /* preference */
 	    zadd_rdata_wireformat(zparser_conv_a(parser->region, (yyvsp[-1].data).str));  /* Locator32 */
     }
-#line 3287 "zparser.c" /* yacc.c:1646  */
+#line 3288 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 227:
-#line 1059 "zparser.y" /* yacc.c:1646  */
+#line 1059 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-3].data).str));  /* preference */
 	    zadd_rdata_wireformat(zparser_conv_ilnp64(parser->region, (yyvsp[-1].data).str));  /* Locator64 */
     }
-#line 3296 "zparser.c" /* yacc.c:1646  */
+#line 3297 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 228:
-#line 1066 "zparser.y" /* yacc.c:1646  */
+#line 1066 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-3].data).str));  /* preference */
 	    zadd_rdata_domain((yyvsp[-1].domain));  /* FQDN */
     }
-#line 3305 "zparser.c" /* yacc.c:1646  */
+#line 3306 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 229:
-#line 1073 "zparser.y" /* yacc.c:1646  */
+#line 1073 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_eui(parser->region, (yyvsp[-1].data).str, 48));
     }
-#line 3313 "zparser.c" /* yacc.c:1646  */
+#line 3314 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 230:
-#line 1079 "zparser.y" /* yacc.c:1646  */
+#line 1079 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_eui(parser->region, (yyvsp[-1].data).str, 64));
     }
-#line 3321 "zparser.c" /* yacc.c:1646  */
+#line 3322 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 231:
-#line 1086 "zparser.y" /* yacc.c:1646  */
+#line 1086 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-5].data).str)); /* priority */
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-3].data).str)); /* weight */
 	    zadd_rdata_wireformat(zparser_conv_long_text(parser->region, (yyvsp[-1].data).str, (yyvsp[-1].data).len)); /* target */
     }
-#line 3331 "zparser.c" /* yacc.c:1646  */
+#line 3332 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 232:
-#line 1095 "zparser.y" /* yacc.c:1646  */
+#line 1095 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, (yyvsp[-5].data).str)); /* Flags */
 	    zadd_rdata_wireformat(zparser_conv_tag(parser->region, (yyvsp[-3].data).str, (yyvsp[-3].data).len)); /* Tag */
 	    zadd_rdata_wireformat(zparser_conv_long_text(parser->region, (yyvsp[-1].data).str, (yyvsp[-1].data).len)); /* Value */
     }
-#line 3341 "zparser.c" /* yacc.c:1646  */
+#line 3342 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 233:
-#line 1104 "zparser.y" /* yacc.c:1646  */
+#line 1104 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_b64(parser->region, (yyvsp[-1].data).str));
     }
-#line 3349 "zparser.c" /* yacc.c:1646  */
+#line 3350 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 234:
-#line 1111 "zparser.y" /* yacc.c:1646  */
+#line 1111 "zparser.y" /* yacc.c:1648  */
     {
 	    zadd_rdata_wireformat(zparser_conv_serial(parser->region, (yyvsp[-3].data).str));
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, (yyvsp[-1].data).str));
@@ -3357,37 +3358,37 @@ yyreduce:
 	    memset(nsecbits, 0, sizeof(nsecbits));
             nsec_highest_rcode = 0;
     }
-#line 3361 "zparser.c" /* yacc.c:1646  */
+#line 3362 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 235:
-#line 1121 "zparser.y" /* yacc.c:1646  */
+#line 1121 "zparser.y" /* yacc.c:1648  */
     {
 	    /* $2 is the number of octets, currently ignored */
 	    (yyval.unknown) = zparser_conv_hex(parser->rr_region, (yyvsp[-1].data).str, (yyvsp[-1].data).len);
 
     }
-#line 3371 "zparser.c" /* yacc.c:1646  */
+#line 3372 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 236:
-#line 1127 "zparser.y" /* yacc.c:1646  */
+#line 1127 "zparser.y" /* yacc.c:1648  */
     {
 	    (yyval.unknown) = zparser_conv_hex(parser->rr_region, "", 0);
     }
-#line 3379 "zparser.c" /* yacc.c:1646  */
+#line 3380 "zparser.c" /* yacc.c:1648  */
     break;
 
   case 237:
-#line 1131 "zparser.y" /* yacc.c:1646  */
+#line 1131 "zparser.y" /* yacc.c:1648  */
     {
 	    (yyval.unknown) = zparser_conv_hex(parser->rr_region, "", 0);
     }
-#line 3387 "zparser.c" /* yacc.c:1646  */
+#line 3388 "zparser.c" /* yacc.c:1648  */
     break;
 
 
-#line 3391 "zparser.c" /* yacc.c:1646  */
+#line 3392 "zparser.c" /* yacc.c:1648  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -3615,7 +3616,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 1135 "zparser.y" /* yacc.c:1906  */
+#line 1135 "zparser.y" /* yacc.c:1907  */
 
 
 int
