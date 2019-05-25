@@ -164,7 +164,7 @@ bool ThreadSuspender::SuspendThread(SuspendedThreadID tid) {
         // doesn't hurt to report it.
         VReport(1, "Waiting on thread %d failed, detaching (errno %d).\n",
                 tid, wperrno);
-        internal_ptrace(PTRACE_DETACH, tid, nullptr, nullptr);
+        internal_ptrace(PTRACE_DETACH, tid, (void*)(uptr)1, nullptr);
         return false;
       }
       if (WIFSTOPPED(status) && WSTOPSIG(status) != SIGSTOP) {
@@ -183,7 +183,7 @@ void ThreadSuspender::ResumeAllThreads() {
   for (uptr i = 0; i < suspended_threads_list_.thread_count(); i++) {
     pid_t tid = suspended_threads_list_.GetThreadID(i);
     int pterrno;
-    if (!internal_iserror(internal_ptrace(PTRACE_DETACH, tid, nullptr, nullptr),
+    if (!internal_iserror(internal_ptrace(PTRACE_DETACH, tid, (void*)(uptr)1, nullptr),
                           &pterrno)) {
       VReport(2, "Detached from thread %d.\n", tid);
     } else {
