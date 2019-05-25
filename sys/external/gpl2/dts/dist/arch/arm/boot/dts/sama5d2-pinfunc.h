@@ -1,4 +1,4 @@
-/*	$NetBSD: sama5d2-pinfunc.h,v 1.1.1.3 2019/01/22 14:57:02 jmcneill Exp $	*/
+/*	$NetBSD: sama5d2-pinfunc.h,v 1.1.1.4 2019/05/25 11:29:14 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 #define PINMUX_PIN(no, func, ioset) \
@@ -520,7 +520,7 @@
 #define PIN_PC9__GPIO			PINMUX_PIN(PIN_PC9, 0, 0)
 #define PIN_PC9__FIQ			PINMUX_PIN(PIN_PC9, 1, 3)
 #define PIN_PC9__GTSUCOMP		PINMUX_PIN(PIN_PC9, 2, 1)
-#define PIN_PC9__ISC_D0			PINMUX_PIN(PIN_PC9, 2, 1)
+#define PIN_PC9__ISC_D0			PINMUX_PIN(PIN_PC9, 3, 1)
 #define PIN_PC9__TIOA4			PINMUX_PIN(PIN_PC9, 4, 2)
 #define PIN_PC10			74
 #define PIN_PC10__GPIO			PINMUX_PIN(PIN_PC10, 0, 0)
