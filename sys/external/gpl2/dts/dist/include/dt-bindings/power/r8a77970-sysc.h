@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a77970-sysc.h,v 1.1.1.1 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: r8a77970-sysc.h,v 1.1.1.2 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2017 Cogent Embedded Inc.
@@ -18,13 +18,12 @@
 
 #define R8A77970_PD_CA53_CPU0		 5
 #define R8A77970_PD_CA53_CPU1		 6
-#define R8A77970_PD_CR7			13
 #define R8A77970_PD_CA53_SCU		21
 #define R8A77970_PD_A2IR0		23
-#define R8A77970_PD_A3IR			24
+#define R8A77970_PD_A3IR		24
 #define R8A77970_PD_A2IR1		27
-#define R8A77970_PD_A2IR2		28
-#define R8A77970_PD_A2IR3		29
+#define R8A77970_PD_A2DP		28
+#define R8A77970_PD_A2CN		29
 #define R8A77970_PD_A2SC0		30
 #define R8A77970_PD_A2SC1		31
 

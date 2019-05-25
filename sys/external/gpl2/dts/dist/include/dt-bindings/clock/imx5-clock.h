@@ -1,4 +1,4 @@
-/*	$NetBSD: imx5-clock.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: imx5-clock.h,v 1.1.1.2 2019/05/25 11:29:13 jmcneill Exp $	*/
 
 /*
  * Copyright 2013 Lucas Stach, Pengutronix <l.stach@pengutronix.de>
@@ -216,6 +216,7 @@
 #define IMX5_CLK_IEEE1588_SEL		202
 #define IMX5_CLK_IEEE1588_PODF		203
 #define IMX5_CLK_IEEE1588_GATE		204
-#define IMX5_CLK_END			205
+#define IMX5_CLK_SCC2_IPG_GATE		205
+#define IMX5_CLK_END			206
 
 #endif /* __DT_BINDINGS_CLOCK_IMX5_H */
