@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.25 2019/05/08 13:40:16 isaki Exp $ */
+/* $NetBSD: haltwo.c,v 1.26 2019/05/25 04:41:53 isaki Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.25 2019/05/08 13:40:16 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.26 2019/05/25 04:41:53 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -695,7 +695,7 @@ haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 	fifoend = (param->channels * 8) >> 3;
 
 	DPRINTF(("haltwo_trigger_output: hw_channels = %d highwater = %d"
-	    " fifobeg = %d fifoend = %d\n", param->hw_channels, highwater,
+	    " fifobeg = %d fifoend = %d\n", param->channels, highwater,
 	    fifobeg, fifoend));
 
 	ctrl = HPC3_PBUS_DMACTL_RT
