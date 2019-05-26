@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/sparc64.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -240,9 +240,6 @@ sparc64fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_lp64_fetch_link_map_offsets);
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_sparc64fbsd_tdep (void);
 
 void
 _initialize_sparc64fbsd_tdep (void)

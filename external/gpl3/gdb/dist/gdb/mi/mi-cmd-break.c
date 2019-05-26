@@ -1,5 +1,5 @@
 /* MI Command Set - breakpoint and watchpoint commands.
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -24,8 +24,7 @@
 #include "mi-out.h"
 #include "breakpoint.h"
 #include "mi-getopt.h"
-#include "gdb.h"
-#include "observer.h"
+#include "observable.h"
 #include "mi-main.h"
 #include "mi-cmd-break.h"
 #include "language.h"
@@ -33,6 +32,7 @@
 #include "linespec.h"
 #include "gdb_obstack.h"
 #include <ctype.h>
+#include "tracepoint.h"
 
 enum
   {
@@ -53,7 +53,17 @@ static void
 breakpoint_notify (struct breakpoint *b)
 {
   if (mi_can_breakpoint_notify)
-    gdb_breakpoint_query (current_uiout, b->number, NULL);
+    {
+      TRY
+	{
+	  print_breakpoint (b);
+	}
+      CATCH (ex, RETURN_MASK_ALL)
+	{
+	  exception_print (gdb_stderr, ex);
+	}
+      END_CATCH
+    }
 }
 
 enum bp_type
@@ -64,102 +74,91 @@ enum bp_type
   };
 
 /* Arrange for all new breakpoints and catchpoints to be reported to
-   CURRENT_UIOUT until the cleanup returned by this function is run.
+   CURRENT_UIOUT until the destructor of the returned scoped_restore
+   is run.
 
    Note that MI output will be probably invalid if more than one
    breakpoint is created inside one MI command.  */
 
-struct cleanup *
+scoped_restore_tmpl<int>
 setup_breakpoint_reporting (void)
 {
-  struct cleanup *rev_flag;
-
   if (! mi_breakpoint_observers_installed)
     {
-      observer_attach_breakpoint_created (breakpoint_notify);
+      gdb::observers::breakpoint_created.attach (breakpoint_notify);
       mi_breakpoint_observers_installed = 1;
     }
 
-  rev_flag = make_cleanup_restore_integer (&mi_can_breakpoint_notify);
-  mi_can_breakpoint_notify = 1;
-
-  return rev_flag;
+  return make_scoped_restore (&mi_can_breakpoint_notify, 1);
 }
 
 
 /* Convert arguments in ARGV to the string in "format",argv,argv...
    and return it.  */
 
-static char *
+static std::string
 mi_argv_to_format (char **argv, int argc)
 {
   int i;
-  struct obstack obstack;
-  char *ret;
-
-  obstack_init (&obstack);
+  std::string result;
 
   /* Convert ARGV[OIND + 1] to format string and save to FORMAT.  */
-  obstack_1grow (&obstack, '\"');
+  result += '\"';
   for (i = 0; i < strlen (argv[0]); i++)
     {
       switch (argv[0][i])
 	{
 	case '\\':
-	  obstack_grow (&obstack, "\\\\", 2);
+	  result += "\\\\";
 	  break;
 	case '\a':
-	  obstack_grow (&obstack, "\\a", 2);
+	  result += "\\a";
 	  break;
 	case '\b':
-	  obstack_grow (&obstack, "\\b", 2);
+	  result += "\\b";
 	  break;
 	case '\f':
-	  obstack_grow (&obstack, "\\f", 2);
+	  result += "\\f";
 	  break;
 	case '\n':
-	  obstack_grow (&obstack, "\\n", 2);
+	  result += "\\n";
 	  break;
 	case '\r':
-	  obstack_grow (&obstack, "\\r", 2);
+	  result += "\\r";
 	  break;
 	case '\t':
-	  obstack_grow (&obstack, "\\t", 2);
+	  result += "\\t";
 	  break;
 	case '\v':
-	  obstack_grow (&obstack, "\\v", 2);
+	  result += "\\v";
 	  break;
 	case '"':
-	  obstack_grow (&obstack, "\\\"", 2);
+	  result += "\\\"";
 	  break;
 	default:
 	  if (isprint (argv[0][i]))
-	    obstack_grow (&obstack, argv[0] + i, 1);
+	    result += argv[0][i];
 	  else
 	    {
 	      char tmp[5];
 
 	      xsnprintf (tmp, sizeof (tmp), "\\%o",
 			 (unsigned char) argv[0][i]);
-	      obstack_grow (&obstack, tmp, strlen (tmp));
+	      result += tmp;
 	    }
 	  break;
 	}
     }
-  obstack_1grow (&obstack, '\"');
+  result += '\"';
 
   /* Apply other argv to FORMAT.  */
   for (i = 1; i < argc; i++)
     {
-      obstack_1grow (&obstack, ',');
-      obstack_grow (&obstack, argv[i], strlen (argv[i]));
+      result += ',';
+      result += argv[i];
     }
-  obstack_1grow (&obstack, '\0');
 
-  ret = xstrdup ((const char *) obstack_finish (&obstack));
-  obstack_free (&obstack, NULL);
-
-  return ret;
+  return result;
 }
 
 /* Insert breakpoint.
@@ -169,7 +168,7 @@ mi_argv_to_format (char **argv, int argc)
 static void
 mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
 {
-  char *address = NULL;
+  const char *address = NULL;
   int hardware = 0;
   int temp_p = 0;
   int thread = -1;
@@ -178,13 +177,12 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
   int pending = 0;
   int enabled = 1;
   int tracepoint = 0;
-  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
   enum bptype type_wanted;
   event_location_up location;
   struct breakpoint_ops *ops;
   int is_explicit = 0;
   struct explicit_location explicit_loc;
-  char *extra_string = NULL;
+  std::string extra_string;
 
   enum opt
     {
@@ -282,7 +280,6 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
 	error (_("-dprintf-insert: Missing <format>"));
 
       extra_string = mi_argv_to_format (argv + format_num, argc - format_num);
-      make_cleanup (xfree, extra_string);
       address = argv[oind];
     }
   else
@@ -301,7 +298,7 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
     }
 
   /* Now we have what we need, let's insert the breakpoint!  */
-  setup_breakpoint_reporting ();
+  scoped_restore restore_breakpoint_reporting = setup_breakpoint_reporting ();
 
   if (tracepoint)
     {
@@ -341,19 +338,19 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
     }
   else
     {
-      location = string_to_event_location_basic (&address, current_language);
+      location = string_to_event_location_basic (&address, current_language,
+						 symbol_name_match_type::WILD);
       if (*address)
 	error (_("Garbage '%s' at end of location"), address);
     }
 
   create_breakpoint (get_current_arch (), location.get (), condition, thread,
-		     extra_string,
+		     extra_string.c_str (),
 		     0 /* condition and thread are valid.  */,
 		     temp_p, type_wanted,
 		     ignore_count,
 		     pending ? AUTO_BOOLEAN_TRUE : AUTO_BOOLEAN_FALSE,
 		     ops, 0, enabled, 0, 0);
-  do_cleanups (back_to);
 }
 
 /* Implements the -break-insert command.
@@ -398,7 +395,7 @@ mi_cmd_break_passcount (const char *command, char **argv, int argc)
   if (t)
     {
       t->pass_count = p;
-      observer_notify_breakpoint_modified (&t->base);
+      gdb::observers::breakpoint_modified.notify (t);
     }
   else
     {
@@ -472,28 +469,10 @@ mi_cmd_break_watch (const char *command, char **argv, int argc)
     }
 }
 
-/* The mi_read_next_line consults these variable to return successive
-   command lines.  While it would be clearer to use a closure pointer,
-   it is not expected that any future code will use read_command_lines_1,
-   therefore no point of overengineering.  */
-
-static char **mi_command_line_array;
-static int mi_command_line_array_cnt;
-static int mi_command_line_array_ptr;
-
-static char *
-mi_read_next_line (void)
-{
-  if (mi_command_line_array_ptr == mi_command_line_array_cnt)
-    return NULL;
-  else
-    return mi_command_line_array[mi_command_line_array_ptr++];
-}
-
 void
 mi_cmd_break_commands (const char *command, char **argv, int argc)
 {
-  command_line_up break_command;
+  counted_command_line break_command;
   char *endptr;
   int bnum;
   struct breakpoint *b;
@@ -513,15 +492,24 @@ mi_cmd_break_commands (const char *command, char **argv, int argc)
   if (b == NULL)
     error (_("breakpoint %d not found."), bnum);
 
-  mi_command_line_array = argv;
-  mi_command_line_array_ptr = 1;
-  mi_command_line_array_cnt = argc;
+  int count = 1;
+  auto reader
+    = [&] ()
+      {
+	const char *result = nullptr;
+	if (count < argc)
+	  result = argv[count++];
+	return result;
+      };
 
   if (is_tracepoint (b))
-    break_command = read_command_lines_1 (mi_read_next_line, 1,
-					  check_tracepoint_command, b);
+    break_command = read_command_lines_1 (reader, 1,
+					  [=] (const char *line)
+					    {
+					      validate_actionline (line, b);
+					    });
   else
-    break_command = read_command_lines_1 (mi_read_next_line, 1, 0, 0);
+    break_command = read_command_lines_1 (reader, 1, 0);
 
   breakpoint_set_commands (b, std::move (break_command));
 }

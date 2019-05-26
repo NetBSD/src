@@ -1,4 +1,4 @@
-# Copyright 1992-2017 Free Software Foundation, Inc.
+# Copyright 1992-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -82,7 +82,8 @@ if ![info exists gdb_prompt] then {
 }
 
 # A regexp that matches the pagination prompt.
-set pagination_prompt [string_to_regexp "---Type <return> to continue, or q <return> to quit---"]
+set pagination_prompt \
+    "--Type <RET> for more, q to quit, c to continue without paging--"
 
 # The variable fullname_syntax_POSIX is a regexp which matches a POSIX 
 # absolute path ie. /foo/ 
@@ -224,6 +225,19 @@ proc delete_breakpoints {} {
     if {!$deleted} {
 	perror "breakpoints not deleted"
     }
+}
+
+# Returns true iff the target supports using the "run" command.
+
+proc target_can_use_run_cmd {} {
+    if [target_info exists use_gdb_stub] {
+	# In this case, when we connect, the inferior is already
+	# running.
+	return 0
+    }
+
+    # Assume yes.
+    return 1
 }
 
 # Generic run command.
@@ -370,9 +384,46 @@ proc gdb_start_cmd {args} {
     return -1
 }
 
+# Generic starti command.  Return 0 if we could start the program, -1
+# if we could not.
+#
+# N.B. This function does not wait for gdb to return to the prompt,
+# that is the caller's responsibility.
+
+proc gdb_starti_cmd {args} {
+    global gdb_prompt use_gdb_stub
+
+    foreach command [gdb_init_commands] {
+	send_gdb "$command\n"
+	gdb_expect 30 {
+	    -re "$gdb_prompt $" { }
+	    default {
+		perror "gdb_init_command for target failed"
+		return -1
+	    }
+	}
+    }
+
+    if $use_gdb_stub {
+	return -1
+    }
+
+    send_gdb "starti $args\n"
+    gdb_expect 60 {
+	-re "The program .* has been started already.*y or n. $" {
+	    send_gdb "y\n"
+	    exp_continue
+	}
+	-re "Starting program: \[^\r\n\]*" {
+	    return 0
+	}
+    }
+    return -1
+}
+
 # Set a breakpoint at FUNCTION.  If there is an additional argument it is
 # a list of options; the supported options are allow-pending, temporary,
-# message, no-message, and passfail.
+# message, no-message, passfail and qualified.
 # The result is 1 for success, 0 for failure.
 #
 # Note: The handling of message vs no-message is messed up, but it's based
@@ -395,6 +446,10 @@ proc gdb_breakpoint { function args } {
     if {[lsearch -exact $args temporary] != -1} {
 	set break_command "tbreak"
 	set break_message "Temporary breakpoint"
+    }
+
+    if {[lsearch -exact $args qualified] != -1} {
+	append break_command " -qualified"
     }
 
     set print_pass 0
@@ -851,10 +906,13 @@ proc gdb_test_multiple { command message user_code } {
 	}
     }
     append code $processed_code
-    append code {
-	# Reset the spawn id, in case the processed code used -i.
-	-i "$gdb_spawn_id"
 
+    # Reset the spawn id, in case the processed code used -i.
+    append code {
+	-i "$gdb_spawn_id"
+    }
+
+    append code {
 	-re "Ending remote debugging.*$gdb_prompt $" {
 	    if ![isnative] then {
 		warning "Can`t communicate to remote target."
@@ -925,7 +983,20 @@ proc gdb_test_multiple { command message user_code } {
 	    set result -1
 	}
 
-	# Patterns below apply to any spawn id specified.
+	-i $gdb_spawn_id
+	eof {
+	    perror "GDB process no longer exists"
+	    set wait_status [wait -i $gdb_spawn_id]
+	    verbose -log "GDB process exited with wait status $wait_status"
+	    if { $message != "" } {
+		fail "$message"
+	    }
+	    return -1
+	}
+    }
+
+    # Now patterns that apply to any spawn id specified.
+    append code {
 	-i $any_spawn_id
 	eof {
 	    perror "Process no longer exists"
@@ -944,6 +1015,20 @@ proc gdb_test_multiple { command message user_code } {
 		fail "$message (timeout)"
 	    }
 	    set result 1
+	}
+    }
+
+    # remote_expect calls the eof section if there is an error on the
+    # expect call.  We already have eof sections above, and we don't
+    # want them to get called in that situation.  Since the last eof
+    # section becomes the error section, here we define another eof
+    # section, but with an empty spawn_id list, so that it won't ever
+    # match.
+    append code {
+	-i "" eof {
+	    # This comment is here because the eof section must not be
+	    # the empty string, otherwise remote_expect won't realize
+	    # it exists.
 	}
     }
 
@@ -1000,7 +1085,7 @@ proc gdb_test { args } {
     }
 
     return [gdb_test_multiple $command $message {
-	-re "\[\r\n\]*($pattern)\[\r\n\]+$gdb_prompt $" {
+	-re "\[\r\n\]*(?:$pattern)\[\r\n\]+$gdb_prompt $" {
 	    if ![string match "" $message] then {
 		pass "$message"
             }
@@ -1043,7 +1128,8 @@ proc gdb_test_no_output { args } {
 # This is useful when the sequence is long and contains ".*", a single
 # regexp to match the entire output can get a timeout much easier.
 #
-# COMMAND is the command to send.
+# COMMAND is the command to execute, send to GDB with send_gdb.  If
+#   this is the null string no command is sent.
 # TEST_NAME is passed to pass/fail.  COMMAND is used if TEST_NAME is "".
 # EXPECTED_OUTPUT_LIST is a list of regexps of expected output, which are
 # processed in order, and all must be present in the output.
@@ -1066,7 +1152,9 @@ proc gdb_test_sequence { command test_name expected_output_list } {
 	set test_name $command
     }
     lappend expected_output_list ""; # implicit ".*" before gdb prompt
-    send_gdb "$command\n"
+    if { $command != "" } {
+	send_gdb "$command\n"
+    }
     return [gdb_expect_list $test_name "$gdb_prompt $" $expected_output_list]
 }
 
@@ -1465,17 +1553,17 @@ proc gdb_file_cmd { arg } {
 
     send_gdb "file $arg\n"
     gdb_expect 120 {
-	-re "Reading symbols from.*LZMA support was disabled.*done.*$gdb_prompt $" {
+	-re "Reading symbols from.*LZMA support was disabled.*$gdb_prompt $" {
 	    verbose "\t\tLoaded $arg into $GDB; .gnu_debugdata found but no LZMA available"
 	    set gdb_file_cmd_debug_info "lzma"
 	    return 0
 	}
-	-re "Reading symbols from.*no debugging symbols found.*done.*$gdb_prompt $" {
+	-re "Reading symbols from.*no debugging symbols found.*$gdb_prompt $" {
 	    verbose "\t\tLoaded $arg into $GDB with no debugging symbols"
 	    set gdb_file_cmd_debug_info "nodebug"
 	    return 0
 	}
-        -re "Reading symbols from.*done.*$gdb_prompt $" {
+        -re "Reading symbols from.*$gdb_prompt $" {
             verbose "\t\tLoaded $arg into $GDB"
 	    set gdb_file_cmd_debug_info "debug"
 	    return 0
@@ -1483,7 +1571,7 @@ proc gdb_file_cmd { arg } {
         -re "Load new symbol table from \".*\".*y or n. $" {
             send_gdb "y\n"
             gdb_expect 120 {
-                -re "Reading symbols from.*done.*$gdb_prompt $" {
+                -re "Reading symbols from.*$gdb_prompt $" {
                     verbose "\t\tLoaded $arg with new symbol table into $GDB"
 		    set gdb_file_cmd_debug_info "debug"
 		    return 0
@@ -1569,7 +1657,7 @@ proc default_gdb_spawn { } {
 # Default gdb_start procedure.
 
 proc default_gdb_start { } {
-    global gdb_prompt pagination_prompt
+    global gdb_prompt
     global gdb_spawn_id
     global inferior_spawn_id
 
@@ -1590,29 +1678,20 @@ proc default_gdb_start { } {
     # When running over NFS, particularly if running many simultaneous
     # tests on different hosts all using the same server, things can
     # get really slow.  Give gdb at least 3 minutes to start up.
-    set loop_again 1
-    while { $loop_again } {
-	set loop_again 0
-	gdb_expect 360 {
-	    -re "$pagination_prompt" {
-		verbose "Hit pagination during startup. Pressing enter to continue."
-		send_gdb "\n"
-		set loop_again 1
-	    }
-	    -re "\[\r\n\]$gdb_prompt $" {
-		verbose "GDB initialized."
-	    }
-	    -re "$gdb_prompt $"	{
-		perror "GDB never initialized."
-		unset gdb_spawn_id
-		return -1
-	    }
-	    timeout	{
-		perror "(timeout) GDB never initialized after 10 seconds."
-		remote_close host
-		unset gdb_spawn_id
-		return -1
-	    }
+    gdb_expect 360 {
+	-re "\[\r\n\]$gdb_prompt $" {
+	    verbose "GDB initialized."
+	}
+	-re "$gdb_prompt $"	{
+	    perror "GDB never initialized."
+	    unset gdb_spawn_id
+	    return -1
+	}
+	timeout	{
+	    perror "(timeout) GDB never initialized after 10 seconds."
+	    remote_close host
+	    unset gdb_spawn_id
+	    return -1
 	}
     }
 
@@ -1997,6 +2076,30 @@ proc save_vars { vars body } {
     }
 }
 
+# Run tests in BODY with the current working directory (CWD) set to
+# DIR.  When BODY is finished, restore the original CWD.  Return the
+# result of BODY.
+#
+# This procedure doesn't check if DIR is a valid directory, so you
+# have to make sure of that.
+
+proc with_cwd { dir body } {
+    set saved_dir [pwd]
+    verbose -log "Switching to directory $dir (saved CWD: $saved_dir)."
+    cd $dir
+
+    set code [catch {uplevel 1 $body} result]
+
+    verbose -log "Switching back to $saved_dir."
+    cd $saved_dir
+
+    if {$code == 1} {
+	global errorInfo errorCode
+	return -code $code -errorinfo $errorInfo -errorcode $errorCode $result
+    } else {
+	return -code $code $result
+    }
+}
 
 # Run tests in BODY with GDB prompt and variable $gdb_prompt set to
 # PROMPT.  When BODY is finished, restore GDB prompt and variable
@@ -2190,35 +2293,16 @@ gdb_caching_proc support_complex_tests {
 	return 0
     }
 
-    # Set up, compile, and execute a test program containing _Complex types.
-    # Include the current process ID in the file names to prevent conflicts
-    # with invocations for multiple testsuites.
-    set src [standard_temp_file complex[pid].c]
-    set exe [standard_temp_file complex[pid].x]
+    # Compile a test program containing _Complex types.
 
-    gdb_produce_source $src {
+    return [gdb_can_simple_compile complex {
 	int main() {
 	    _Complex float cf;
 	    _Complex double cd;
 	    _Complex long double cld;
 	    return 0;
 	}
-    }
-
-    verbose "compiling testfile $src" 2
-    set compile_flags {debug nowarnings quiet}
-    set lines [gdb_compile $src $exe executable $compile_flags]
-    file delete $src
-    file delete $exe
-
-    if ![string match "" $lines] then {
-        verbose "testfile compilation failed, returning 0" 2
-        set result 0
-    } else {
-	set result 1
-    }
-
-    return $result
+    } executable]
 }
 
 # Return 1 if GDB can get a type for siginfo from the target, otherwise
@@ -2313,21 +2397,9 @@ proc readline_is_used { } {
 gdb_caching_proc is_elf_target {
     set me "is_elf_target"
 
-    set src [standard_temp_file is_elf_target[pid].c]
-    set obj [standard_temp_file is_elf_target[pid].o]
-
-    gdb_produce_source $src {
-	int foo () {return 0;}
-    }
-
-    verbose "$me:  compiling testfile $src" 2
-    set lines [gdb_compile $src $obj object {quiet}]
-
-    file delete $src
-
-    if ![string match "" $lines] then {
-	verbose "$me:  testfile compilation failed, returning 0" 2
-	return 0
+    set src { int foo () {return 0;} }
+    if {![gdb_simple_compile elf_target $src]} {
+        return 0
     }
 
     set fp_obj [open $obj "r"]
@@ -2380,86 +2452,32 @@ proc gdb_produce_source { name sources } {
 # This cannot be decided simply from looking at the target string,
 # as it might depend on externally passed compiler options like -m64.
 gdb_caching_proc is_ilp32_target {
-    set me "is_ilp32_target"
-
-    set src [standard_temp_file ilp32[pid].c]
-    set obj [standard_temp_file ilp32[pid].o]
-
-    gdb_produce_source $src {
+    return [gdb_can_simple_compile is_ilp32_target {
 	int dummy[sizeof (int) == 4
 		  && sizeof (void *) == 4
 		  && sizeof (long) == 4 ? 1 : -1];
-    }
-
-    verbose "$me:  compiling testfile $src" 2
-    set lines [gdb_compile $src $obj object {quiet}]
-    file delete $src
-    file delete $obj
-
-    if ![string match "" $lines] then {
-        verbose "$me:  testfile compilation failed, returning 0" 2
-        return 0
-    }
-
-    verbose "$me:  returning 1" 2
-    return 1
+    }]
 }
 
 # Return 1 if target is LP64.
 # This cannot be decided simply from looking at the target string,
 # as it might depend on externally passed compiler options like -m64.
 gdb_caching_proc is_lp64_target {
-    set me "is_lp64_target"
-
-    set src [standard_temp_file lp64[pid].c]
-    set obj [standard_temp_file lp64[pid].o]
-
-    gdb_produce_source $src {
+    return [gdb_can_simple_compile is_lp64_target {
 	int dummy[sizeof (int) == 4
 		  && sizeof (void *) == 8
 		  && sizeof (long) == 8 ? 1 : -1];
-    }
-
-    verbose "$me:  compiling testfile $src" 2
-    set lines [gdb_compile $src $obj object {quiet}]
-    file delete $src
-    file delete $obj
-
-    if ![string match "" $lines] then {
-        verbose "$me:  testfile compilation failed, returning 0" 2
-        return 0
-    }
-
-    verbose "$me:  returning 1" 2
-    return 1
+    }]
 }
 
 # Return 1 if target has 64 bit addresses.
 # This cannot be decided simply from looking at the target string,
 # as it might depend on externally passed compiler options like -m64.
 gdb_caching_proc is_64_target {
-    set me "is_64_target"
-
-    set src [standard_temp_file is64[pid].c]
-    set obj [standard_temp_file is64[pid].o]
-
-    gdb_produce_source $src {
+    return [gdb_can_simple_compile is_64_target {
 	int function(void) { return 3; }
 	int dummy[sizeof (&function) == 8 ? 1 : -1];
-    }
-
-    verbose "$me:  compiling testfile $src" 2
-    set lines [gdb_compile $src $obj object {quiet}]
-    file delete $src
-    file delete $obj
-
-    if ![string match "" $lines] then {
-        verbose "$me:  testfile compilation failed, returning 0" 2
-        return 0
-    }
-
-    verbose "$me:  returning 1" 2
-    return 1
+    }]
 }
 
 # Return 1 if target has x86_64 registers - either amd64 or x32.
@@ -2470,30 +2488,14 @@ gdb_caching_proc is_amd64_regs_target {
 	return 0
     }
 
-    set me "is_amd64_regs_target"
+    return [gdb_can_simple_compile is_amd64_regs_target {
+	int main (void) {
+	    asm ("incq %rax");
+	    asm ("incq %r15");
 
-    set src [standard_temp_file reg64[pid].s]
-    set obj [standard_temp_file reg64[pid].o]
-
-    set list {}
-    foreach reg \
-	{rax rbx rcx rdx rsi rdi rbp rsp r8 r9 r10 r11 r12 r13 r14 r15} {
-	    lappend list "\tincq %$reg"
+	    return 0;
 	}
-    gdb_produce_source $src [join $list \n]
-
-    verbose "$me:  compiling testfile $src" 2
-    set lines [gdb_compile $src $obj object {quiet}]
-    file delete $src
-    file delete $obj
-
-    if ![string match "" $lines] then {
-        verbose "$me:  testfile compilation failed, returning 0" 2
-        return 0
-    }
-
-    verbose "$me:  returning 1" 2
-    return 1
+    }]
 }
 
 # Return 1 if this target is an x86 or x86-64 with -m32.
@@ -2515,30 +2517,13 @@ gdb_caching_proc is_aarch32_target {
 	return 0
     }
 
-    set me "is_aarch32_target"
-
-    set src [standard_temp_file aarch32[pid].s]
-    set obj [standard_temp_file aarch32[pid].o]
-
     set list {}
     foreach reg \
 	{r0 r1 r2 r3} {
 	    lappend list "\tmov $reg, $reg"
 	}
-    gdb_produce_source $src [join $list \n]
 
-    verbose "$me:  compiling testfile $src" 2
-    set lines [gdb_compile $src $obj object {quiet}]
-    file delete $src
-    file delete $obj
-
-    if ![string match "" $lines] then {
-	verbose "$me:  testfile compilation failed, returning 0" 2
-	return 0
-    }
-
-    verbose "$me:  returning 1" 2
-    return 1
+    return [gdb_can_simple_compile aarch32 [join $list \n]]
 }
 
 # Return 1 if this target is an aarch64, either lp64 or ilp32.
@@ -2579,27 +2564,21 @@ gdb_caching_proc skip_altivec_tests {
     }
 
     # Make sure we have a compiler that understands altivec.
-    set compile_flags {debug nowarnings}
     if [get_compiler_info] {
        warning "Could not get compiler info"
        return 1
     }
     if [test_compiler_info gcc*] {
-        set compile_flags "$compile_flags additional_flags=-maltivec"
+        set compile_flags "additional_flags=-maltivec"
     } elseif [test_compiler_info xlc*] {
-        set compile_flags "$compile_flags additional_flags=-qaltivec"
+        set compile_flags "additional_flags=-qaltivec"
     } else {
         verbose "Could not compile with altivec support, returning 1" 2
         return 1
     }
 
-    # Set up, compile, and execute a test program containing VMX instructions.
-    # Include the current process ID in the file names to prevent conflicts
-    # with invocations for multiple testsuites.
-    set src [standard_temp_file vmx[pid].c]
-    set exe [standard_temp_file vmx[pid].x]
-
-    gdb_produce_source $src {
+    # Compile a test program containing VMX instructions.
+    set src {
 	int main() {
 	    #ifdef __MACH__
 	    asm volatile ("vor v0,v0,v0");
@@ -2609,22 +2588,16 @@ gdb_caching_proc skip_altivec_tests {
 	    return 0;
 	}
     }
-
-    verbose "$me:  compiling testfile $src" 2
-    set lines [gdb_compile $src $exe executable $compile_flags]
-    file delete $src
-
-    if ![string match "" $lines] then {
-        verbose "$me:  testfile compilation failed, returning 1" 2
+    if {![gdb_simple_compile $me $src executable $compile_flags]} {
         return 1
     }
 
-    # No error message, compilation succeeded so now run it via gdb.
+    # Compilation succeeded so now run it via gdb.
 
     gdb_exit
     gdb_start
     gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load "$exe"
+    gdb_load "$obj"
     gdb_run_cmd
     gdb_expect {
         -re ".*Illegal instruction.*${gdb_prompt} $" {
@@ -2641,7 +2614,7 @@ gdb_caching_proc skip_altivec_tests {
         }
     }
     gdb_exit
-    remote_file build delete $exe
+    remote_file build delete $obj
 
     verbose "$me:  returning $skip_vmx_tests" 2
     return $skip_vmx_tests
@@ -2663,24 +2636,21 @@ gdb_caching_proc skip_vsx_tests {
     }
 
     # Make sure we have a compiler that understands altivec.
-    set compile_flags {debug nowarnings quiet}
     if [get_compiler_info] {
        warning "Could not get compiler info"
        return 1
     }
     if [test_compiler_info gcc*] {
-        set compile_flags "$compile_flags additional_flags=-mvsx"
+        set compile_flags "additional_flags=-mvsx"
     } elseif [test_compiler_info xlc*] {
-        set compile_flags "$compile_flags additional_flags=-qasm=gcc"
+        set compile_flags "additional_flags=-qasm=gcc"
     } else {
         verbose "Could not compile with vsx support, returning 1" 2
         return 1
     }
 
-    set src [standard_temp_file vsx[pid].c]
-    set exe [standard_temp_file vsx[pid].x]
-
-    gdb_produce_source $src {
+    # Compile a test program containing VSX instructions.
+    set src {
 	int main() {
 	    double a[2] = { 1.0, 2.0 };
 	    #ifdef __MACH__
@@ -2691,13 +2661,7 @@ gdb_caching_proc skip_vsx_tests {
 	    return 0;
 	}
     }
-
-    verbose "$me:  compiling testfile $src" 2
-    set lines [gdb_compile $src $exe executable $compile_flags]
-    file delete $src
-
-    if ![string match "" $lines] then {
-        verbose "$me:  testfile compilation failed, returning 1" 2
+    if {![gdb_simple_compile $me $src executable $compile_flags]} {
         return 1
     }
 
@@ -2706,7 +2670,7 @@ gdb_caching_proc skip_vsx_tests {
     gdb_exit
     gdb_start
     gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load "$exe"
+    gdb_load "$obj"
     gdb_run_cmd
     gdb_expect {
         -re ".*Illegal instruction.*${gdb_prompt} $" {
@@ -2723,7 +2687,7 @@ gdb_caching_proc skip_vsx_tests {
         }
     }
     gdb_exit
-    remote_file build delete $exe
+    remote_file build delete $obj
 
     verbose "$me:  returning $skip_vsx_tests" 2
     return $skip_vsx_tests
@@ -2737,24 +2701,16 @@ gdb_caching_proc skip_tsx_tests {
 
     set me "skip_tsx_tests"
 
-    set src [standard_temp_file tsx[pid].c]
-    set exe [standard_temp_file tsx[pid].x]
-
-    gdb_produce_source $src {
-    int main() {
-        asm volatile ("xbegin .L0");
-        asm volatile ("xend");
-        asm volatile (".L0: nop");
-        return 0;
+    # Compile a test program.
+    set src {
+        int main() {
+            asm volatile ("xbegin .L0");
+            asm volatile ("xend");
+            asm volatile (".L0: nop");
+            return 0;
+        }
     }
-    }
-
-    verbose "$me:  compiling testfile $src" 2
-    set lines [gdb_compile $src $exe executable {nowarnings quiet}]
-    file delete $src
-
-    if ![string match "" $lines] then {
-        verbose "$me:  testfile compilation failed." 2
+    if {![gdb_simple_compile $me $src executable]} {
         return 1
     }
 
@@ -2763,7 +2719,7 @@ gdb_caching_proc skip_tsx_tests {
     gdb_exit
     gdb_start
     gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load "$exe"
+    gdb_load "$obj"
     gdb_run_cmd
     gdb_expect {
         -re ".*Illegal instruction.*${gdb_prompt} $" {
@@ -2780,7 +2736,7 @@ gdb_caching_proc skip_tsx_tests {
         }
     }
     gdb_exit
-    remote_file build delete $exe
+    remote_file build delete $obj
 
     verbose "$me:  returning $skip_tsx_tests" 2
     return $skip_tsx_tests
@@ -2798,24 +2754,10 @@ gdb_caching_proc skip_btrace_tests {
         return 1
     }
 
-    # Set up, compile, and execute a test program.
-    # Include the current process ID in the file names to prevent conflicts
-    # with invocations for multiple testsuites.
-    set src [standard_temp_file btrace[pid].c]
-    set exe [standard_temp_file btrace[pid].x]
-
-    gdb_produce_source $src {
-	int main(void) { return 0; }
-    }
-
-    verbose "$me:  compiling testfile $src" 2
-    set compile_flags {debug nowarnings quiet}
-    set lines [gdb_compile $src $exe executable $compile_flags]
-
-    if ![string match "" $lines] then {
-        verbose "$me:  testfile compilation failed, returning 1" 2
-	file delete $src
-        return 1
+    # Compile a test program.
+    set src { int main() { return 0; } }
+    if {![gdb_simple_compile $me $src executable]} {
+        return 0
     }
 
     # No error message, compilation succeeded so now run it via gdb.
@@ -2823,12 +2765,10 @@ gdb_caching_proc skip_btrace_tests {
     gdb_exit
     gdb_start
     gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load $exe
+    gdb_load $obj
     if ![runto_main] {
-	file delete $src
         return 1
     }
-    file delete $src
     # In case of an unexpected output, we return 2 as a fail value.
     set skip_btrace_tests 2
     gdb_test_multiple "record btrace" "check btrace support" {
@@ -2846,7 +2786,7 @@ gdb_caching_proc skip_btrace_tests {
         }
     }
     gdb_exit
-    remote_file build delete $exe
+    remote_file build delete $obj
 
     verbose "$me:  returning $skip_btrace_tests" 2
     return $skip_btrace_tests
@@ -2865,24 +2805,10 @@ gdb_caching_proc skip_btrace_pt_tests {
         return 1
     }
 
-    # Set up, compile, and execute a test program.
-    # Include the current process ID in the file names to prevent conflicts
-    # with invocations for multiple testsuites.
-    set src [standard_temp_file btrace[pid].c]
-    set exe [standard_temp_file btrace[pid].x]
-
-    gdb_produce_source $src {
-	int main(void) { return 0; }
-    }
-
-    verbose "$me:  compiling testfile $src" 2
-    set compile_flags {debug nowarnings quiet}
-    set lines [gdb_compile $src $exe executable $compile_flags]
-
-    if ![string match "" $lines] then {
-        verbose "$me:  testfile compilation failed, returning 1" 2
-	file delete $src
-        return 1
+    # Compile a test program.
+    set src { int main() { return 0; } }
+    if {![gdb_simple_compile $me $src executable]} {
+        return 0
     }
 
     # No error message, compilation succeeded so now run it via gdb.
@@ -2890,15 +2816,13 @@ gdb_caching_proc skip_btrace_pt_tests {
     gdb_exit
     gdb_start
     gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load $exe
+    gdb_load $obj
     if ![runto_main] {
-	file delete $src
         return 1
     }
-    file delete $src
     # In case of an unexpected output, we return 2 as a fail value.
     set skip_btrace_tests 2
-    gdb_test_multiple "record btrace pt" "check btrace support" {
+    gdb_test_multiple "record btrace pt" "check btrace pt support" {
         -re "You can't do that when your target is.*\r\n$gdb_prompt $" {
             set skip_btrace_tests 1
         }
@@ -2908,7 +2832,7 @@ gdb_caching_proc skip_btrace_pt_tests {
         -re "Could not enable branch tracing.*\r\n$gdb_prompt $" {
             set skip_btrace_tests 1
         }
-        -re "GDB does not support.*\r\n$gdb_prompt $" {
+        -re "support was disabled at compile time.*\r\n$gdb_prompt $" {
             set skip_btrace_tests 1
         }
         -re "^record btrace pt\r\n$gdb_prompt $" {
@@ -2916,10 +2840,92 @@ gdb_caching_proc skip_btrace_pt_tests {
         }
     }
     gdb_exit
-    remote_file build delete $exe
+    remote_file build delete $obj
 
     verbose "$me:  returning $skip_btrace_tests" 2
     return $skip_btrace_tests
+}
+
+# Run a test on the target to see if it supports Aarch64 SVE hardware.
+# Return 0 if so, 1 if it does not.  Note this causes a restart of GDB.
+
+gdb_caching_proc skip_aarch64_sve_tests {
+    global srcdir subdir gdb_prompt inferior_exited_re
+
+    set me "skip_aarch64_sve_tests"
+
+    if { ![is_aarch64_target]} {
+	return 1
+    }
+
+    set compile_flags "{additional_flags=-march=armv8-a+sve}"
+
+    # Compile a test program containing SVE instructions.
+    set src {
+	int main() {
+	    asm volatile ("ptrue p0.b");
+	    return 0;
+	}
+    }
+    if {![gdb_simple_compile $me $src executable $compile_flags]} {
+        return 1
+    }
+
+    # Compilation succeeded so now run it via gdb.
+    clean_restart $obj
+    gdb_run_cmd
+    gdb_expect {
+        -re ".*Illegal instruction.*${gdb_prompt} $" {
+            verbose -log "\n$me sve hardware not detected"
+            set skip_sve_tests 1
+        }
+        -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
+            verbose -log "\n$me: sve hardware detected"
+            set skip_sve_tests 0
+        }
+        default {
+          warning "\n$me: default case taken"
+            set skip_sve_tests 1
+        }
+    }
+    gdb_exit
+    remote_file build delete $obj
+
+    verbose "$me:  returning $skip_sve_tests" 2
+    return $skip_sve_tests
+}
+
+
+# A helper that compiles a test case to see if __int128 is supported.
+proc gdb_int128_helper {lang} {
+    return [gdb_can_simple_compile "i128-for-$lang" {
+	__int128 x;
+	int main() { return 0; }
+    } executable $lang]
+}
+
+# Return true if the C compiler understands the __int128 type.
+gdb_caching_proc has_int128_c {
+    return [gdb_int128_helper c]
+}
+
+# Return true if the C++ compiler understands the __int128 type.
+gdb_caching_proc has_int128_cxx {
+    return [gdb_int128_helper c++]
+}
+
+# Return true if the IFUNC feature is unsupported.
+gdb_caching_proc skip_ifunc_tests {
+    if [gdb_can_simple_compile ifunc {
+	extern void f_ ();
+	typedef void F (void);
+	F* g (void) { return &f_; }
+	void f () __attribute__ ((ifunc ("g")));
+    } object] {
+	return 0
+    } else {
+	return 1
+    }
 }
 
 # Return whether we should skip tests for showing inlined functions in
@@ -3097,14 +3103,16 @@ proc skip_compile_feature_tests {} {
     return $result
 }
 
-# Helper for gdb_is_target_remote.  PROMPT_REGEXP is the expected
-# prompt.
+# Helper for gdb_is_target_* procs.  TARGET_NAME is the name of the target
+# we're looking for (used to build the test name).  TARGET_STACK_REGEXP
+# is a regexp that will match the output of "maint print target-stack" if
+# the target in question is currently pushed.  PROMPT_REGEXP is a regexp
+# matching the expected prompt after the command output.
 
-proc gdb_is_target_remote_prompt { prompt_regexp } {
-
-    set test "probe for target remote"
+proc gdb_is_target_1 { target_name target_stack_regexp prompt_regexp } {
+    set test "probe for target ${target_name}"
     gdb_test_multiple "maint print target-stack" $test {
-	-re ".*emote serial target in gdb-specific protocol.*$prompt_regexp" {
+	-re "${target_stack_regexp}${prompt_regexp}" {
 	    pass $test
 	    return 1
 	}
@@ -3115,13 +3123,27 @@ proc gdb_is_target_remote_prompt { prompt_regexp } {
     return 0
 }
 
+# Helper for gdb_is_target_remote where the expected prompt is variable.
+
+proc gdb_is_target_remote_prompt { prompt_regexp } {
+    return [gdb_is_target_1 "remote" ".*emote serial target in gdb-specific protocol.*" $prompt_regexp]
+}
+
 # Check whether we're testing with the remote or extended-remote
 # targets.
 
-proc gdb_is_target_remote {} {
+proc gdb_is_target_remote { } {
     global gdb_prompt
 
     return [gdb_is_target_remote_prompt "$gdb_prompt $"]
+}
+
+# Check whether we're testing with the native target.
+
+proc gdb_is_target_native { } {
+    global gdb_prompt
+
+    return [gdb_is_target_1 "native" ".*native \\(Native process\\).*" "$gdb_prompt $"]
 }
 
 # Return the effective value of use_gdb_stub.
@@ -3264,12 +3286,12 @@ proc get_compiler_info {{arg ""}} {
 	# We have to use -E and -o together, despite the comments
 	# above, because of how DejaGnu handles remote host testing.
 	set ppout "$outdir/compiler.i"
-	gdb_compile "${ifile}" "$ppout" preprocess [list "$arg" quiet]
+	gdb_compile "${ifile}" "$ppout" preprocess [list "$arg" quiet getting_compiler_info]
 	set file [open $ppout r]
 	set cppout [read $file]
 	close $file
     } else {
-	set cppout [ gdb_compile "${ifile}" "" preprocess [list "$arg" quiet] ]
+	set cppout [ gdb_compile "${ifile}" "" preprocess [list "$arg" quiet getting_compiler_info] ]
     }
     eval log_file $saved_log
 
@@ -3368,6 +3390,85 @@ proc gdb_wrapper_init { args } {
     set gdb_wrapper_target [current_target_name]
 }
 
+# Determine options that we always want to pass to the compiler.
+gdb_caching_proc universal_compile_options {
+    set me "universal_compile_options"
+    set options {}
+
+    set src [standard_temp_file ccopts[pid].c]
+    set obj [standard_temp_file ccopts[pid].o]
+
+    gdb_produce_source $src {
+	int foo(void) { return 0; }
+    }
+
+    # Try an option for disabling colored diagnostics.  Some compilers
+    # yield colored diagnostics by default (when run from a tty) unless
+    # such an option is specified.
+    set opt "additional_flags=-fdiagnostics-color=never"
+    set lines [target_compile $src $obj object [list "quiet" $opt]]
+    if [string match "" $lines] then {
+	# Seems to have worked; use the option.
+	lappend options $opt
+    }
+    file delete $src
+    file delete $obj
+
+    verbose "$me:  returning $options" 2
+    return $options
+}
+
+# Compile the code in $code to a file based on $name, using the flags
+# $compile_flag as well as debug, nowarning and quiet.
+# Return 1 if code can be compiled
+# Leave the file name of the resulting object in the upvar object.
+
+proc gdb_simple_compile {name code {type object} {compile_flags {}} {object obj}} {
+    upvar $object obj
+
+    switch -regexp -- $type {
+        "executable" {
+            set postfix "x"
+        }
+        "object" {
+            set postfix "o"
+        }
+        "preprocess" {
+            set postfix "i"
+        }
+        "assembly" {
+            set postfix "s"
+        }
+    }
+    set src [standard_temp_file $name-[pid].c]
+    set obj [standard_temp_file $name-[pid].$postfix]
+    set compile_flags [concat $compile_flags {debug nowarnings quiet}]
+
+    gdb_produce_source $src $code
+
+    verbose "$name:  compiling testfile $src" 2
+    set lines [gdb_compile $src $obj $type $compile_flags]
+
+    file delete $src
+
+    if ![string match "" $lines] then {
+        verbose "$name:  compilation failed, returning 0" 2
+        return 0
+    }
+    return 1
+}
+
+# Compile the code in $code to a file based on $name, using the flags
+# $compile_flag as well as debug, nowarning and quiet.
+# Return 1 if code can be compiled
+# Delete all created files and objects.
+
+proc gdb_can_simple_compile {name code {type object} {compile_flags ""}} {
+    set ret [gdb_simple_compile $name $code $type $compile_flags temp_obj]
+    file delete $temp_obj
+    return $ret
+}
+
 # Some targets need to always link a special object in.  Save its path here.
 global gdb_saved_set_unbuffered_mode_obj
 set gdb_saved_set_unbuffered_mode_obj ""
@@ -3391,6 +3492,7 @@ set gdb_saved_set_unbuffered_mode_obj ""
 #     dynamically load libraries at runtime.  For example, on Linux, this adds
 #     -ldl so that the test can use dlopen.
 #   - nowarnings:  Inhibit all compiler warnings.
+#   - nopie: Prevent creation of PIE executables.
 #
 # And here are some of the not too obscure options understood by DejaGnu that
 # influence the compilation:
@@ -3419,11 +3521,18 @@ proc gdb_compile {source dest type options} {
 
     # Add platform-specific options if a shared library was specified using
     # "shlib=librarypath" in OPTIONS.
-    set new_options ""
+    set new_options {}
+    if {[lsearch -exact $options rust] != -1} {
+	# -fdiagnostics-color is not a rustcc option.
+    } else {
+	set new_options [universal_compile_options]
+    }
     set shlib_found 0
     set shlib_load 0
+    set getting_compiler_info 0
     foreach opt $options {
-        if [regexp {^shlib=(.*)} $opt dummy_var shlib_name] {
+        if {[regexp {^shlib=(.*)} $opt dummy_var shlib_name]
+	    && $type == "executable"} {
             if [test_compiler_info "xlc-*"] {
 		# IBM xlc compiler doesn't accept shared library named other
 		# than .so: use "-Wl," to bypass this
@@ -3449,11 +3558,26 @@ proc gdb_compile {source dest type options} {
 		    lappend new_options "early_flags=-Wl,--no-as-needed"
 		}
             }
-	} elseif { $opt == "shlib_load" } {
+	} elseif { $opt == "shlib_load" && $type == "executable" } {
 	    set shlib_load 1
+	} elseif { $opt == "getting_compiler_info" } {
+	    # If this is set, calling test_compiler_info will cause recursion.
+	    set getting_compiler_info 1
         } else {
             lappend new_options $opt
         }
+    }
+
+    # Ensure stack protector is disabled for GCC, as this causes problems with
+    # DWARF line numbering.
+    # See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88432
+    # This option defaults to on for Debian/Ubuntu.
+    if { $getting_compiler_info == 0
+	 && [test_compiler_info {gcc-*-*}]
+	 && !([test_compiler_info {gcc-[0-3]-*}]
+	      || [test_compiler_info {gcc-4-0-*}]) } {
+        # Put it at the front to not override any user-provided value.
+        lappend new_options "early_flags=-fno-stack-protector"
     }
 
     # Because we link with libraries using their basename, we may need
@@ -3504,6 +3628,18 @@ proc gdb_compile {source dest type options} {
 	    set flag "additional_flags=-w"
 	}
 	set options [lreplace $options $nowarnings $nowarnings $flag]
+    }
+
+    # Replace the "nopie" option with the appropriate additional_flags
+    # to disable PIE executables.
+    set nopie [lsearch -exact $options nopie]
+    if {$nopie != -1} {
+	if [target_info exists gdb,nopie_flag] {
+	    set flag "ldflags=[target_info gdb,nopie_flag]"
+	} else {
+	    set flag "ldflags=-no-pie"
+	}
+	set options [lreplace $options $nopie $nopie $flag]
     }
 
     if { $type == "executable" } {
@@ -4321,6 +4457,12 @@ proc gdb_remote_download {dest fromfile {tofile {}}} {
 # Copy the listed library to the target.
 
 proc gdb_load_shlib { file } {
+    global gdb_spawn_id
+
+    if ![info exists gdb_spawn_id] {
+	perror "gdb_load_shlib: GDB is not running"
+    }
+
     set dest [gdb_remote_download target [shlib_target_file $file]]
 
     if {[is_remote target]} {
@@ -4616,10 +4758,14 @@ proc gdb_init { test_file_name } {
     # read from this file.
     setenv INPUTRC "/dev/null"
 
-    # The gdb.base/readline.exp arrow key test relies on the standard VT100
-    # bindings, so make sure that an appropriate terminal is selected.
-    # The same bug doesn't show up if we use ^P / ^N instead.
-    setenv TERM "vt100"
+    # This disables style output, which would interfere with many
+    # tests.
+    setenv TERM "dumb"
+
+    # Initialize GDB's pty with a fixed size, to make sure we avoid pagination
+    # during startup.  See "man expect" for details about stty_init.
+    global stty_init
+    set stty_init "rows 25 cols 80"
 
     # Some tests (for example gdb.base/maint.exp) shell out from gdb to use
     # grep.  Clear GREP_OPTIONS to make the behavior predictable,
@@ -5057,18 +5203,13 @@ gdb_caching_proc gdb_skip_xml_test {
 gdb_caching_proc gdb_has_argv0 {
     set result 0
 
-    # Set up, compile, and execute a test program to check whether
-    # argv[0] is available.
-    set src [standard_temp_file has_argv0[pid].c]
-    set exe [standard_temp_file has_argv0[pid].x]
-
-    gdb_produce_source $src {
+    # Compile and execute a test program to check whether argv[0] is available.
+    gdb_simple_compile has_argv0 {
 	int main (int argc, char **argv) {
 	    return 0;
 	}
-    }
+    } executable
 
-    gdb_compile $src $exe executable {debug}
 
     # Helper proc.
     proc gdb_has_argv0_1 { exe } {
@@ -5139,11 +5280,10 @@ gdb_caching_proc gdb_has_argv0 {
 	return $retval
     }
 
-    set result [gdb_has_argv0_1 $exe]
+    set result [gdb_has_argv0_1 $obj]
 
     gdb_exit
-    file delete $src
-    file delete $exe
+    file delete $obj
 
     if { !$result
       && ([istarget *-*-linux*]
@@ -5537,9 +5677,9 @@ proc get_valueof { fmt exp default {test ""} } {
 
     set val ${default}
     gdb_test_multiple "print${fmt} ${exp}" "$test" {
-	-re "\\$\[0-9\]* = (.*)\[\r\n\]*$gdb_prompt $" {
+	-re "\\$\[0-9\]* = (\[^\r\n\]*)\[\r\n\]*$gdb_prompt $" {
 	    set val $expect_out(1,string)
-	    pass "$test ($val)"
+	    pass "$test"
 	}
 	timeout {
 	    fail "$test (timeout)"
@@ -5564,7 +5704,7 @@ proc get_integer_valueof { exp default {test ""} } {
     gdb_test_multiple "print /d ${exp}" "$test" {
 	-re "\\$\[0-9\]* = (\[-\]*\[0-9\]*).*$gdb_prompt $" {
 	    set val $expect_out(1,string)
-	    pass "$test ($val)"
+	    pass "$test"
 	}
 	timeout {
 	    fail "$test (timeout)"
@@ -5644,6 +5784,22 @@ proc get_var_address { var } {
     return ""
 }
 
+# Return the frame number for the currently selected frame
+proc get_current_frame_number {{test_name ""}} {
+    global gdb_prompt
+
+    if { $test_name == "" } {
+	set test_name "get current frame number"
+    }
+    set frame_num -1
+    gdb_test_multiple "frame" $test_name {
+	-re "#(\[0-9\]+) .*$gdb_prompt $" {
+	    set frame_num $expect_out(1,string)
+	}
+    }
+    return $frame_num
+}
+
 # Get the current value for remotetimeout and return it.
 proc get_remotetimeout { } {
     global gdb_prompt
@@ -5669,6 +5825,19 @@ proc set_remotetimeout { timeout } {
 	    verbose "Set remotetimeout to $timeout\n"
 	}
     }
+}
+
+# Get the target's current endianness and return it.
+proc get_endianness { } {
+    global gdb_prompt
+
+    gdb_test_multiple "show endian" "determine endianness" {
+	-re ".* (little|big) endian.*\r\n$gdb_prompt $" {
+	    # Pass silently.
+	    return $expect_out(1,string)
+	}
+    }
+    return "little"
 }
 
 # ROOT and FULL are file names.  Returns the relative path from ROOT
@@ -5821,39 +5990,84 @@ proc core_find {binfile {deletefiles {}} {arg ""}} {
 # for linker symbol prefixes.
 
 gdb_caching_proc gdb_target_symbol_prefix {
-    # Set up and compile a simple test program...
-    set src [standard_temp_file main[pid].c]
-    set exe [standard_temp_file main[pid].x]
-
-    gdb_produce_source $src {
-	int main() {
-	    return 0;
-	}
+    # Compile a simple test program...
+    set src { int main() { return 0; } }
+    if {![gdb_simple_compile target_symbol_prefix $src executable]} {
+        return 0
     }
-
-    verbose "compiling testfile $src" 2
-    set compile_flags {debug nowarnings quiet}
-    set lines [gdb_compile $src $exe executable $compile_flags]
 
     set prefix ""
 
-    if ![string match "" $lines] then {
-        verbose "gdb_target_symbol_prefix: testfile compilation failed, returning null prefix" 2
-    } else {
-	set objdump_program [gdb_find_objdump]
-	set result [catch "exec $objdump_program --syms $exe" output]
+    set objdump_program [gdb_find_objdump]
+    set result [catch "exec $objdump_program --syms $obj" output]
 
-	if { $result == 0 \
-	     && ![regexp -lineanchor \
-	          { ([^ a-zA-Z0-9]*)main$} $output dummy prefix] } {
-	    verbose "gdb_target_symbol_prefix: Could not find main in objdump output; returning null prefix" 2
+    if { $result == 0 \
+	&& ![regexp -lineanchor \
+	     { ([^ a-zA-Z0-9]*)main$} $output dummy prefix] } {
+	verbose "gdb_target_symbol_prefix: Could not find main in objdump output; returning null prefix" 2
+    }
+
+    file delete $obj
+
+    return $prefix
+}
+
+# Return 1 if target supports scheduler locking, otherwise return 0.
+
+gdb_caching_proc target_supports_scheduler_locking {
+    global gdb_prompt
+
+    set me "gdb_target_supports_scheduler_locking"
+
+    set src { int main() { return 0; } }
+    if {![gdb_simple_compile $me $src executable]} {
+        return 0
+    }
+
+    clean_restart $obj
+    if ![runto_main] {
+        return 0
+    }
+
+    set supports_schedule_locking -1
+    set current_schedule_locking_mode ""
+
+    set test "reading current scheduler-locking mode"
+    gdb_test_multiple "show scheduler-locking" $test {
+	-re "Mode for locking scheduler during execution is \"(\[\^\"\]*)\".*$gdb_prompt" {
+	    set current_schedule_locking_mode $expect_out(1,string)
+	}
+	-re "$gdb_prompt $" {
+	    set supports_schedule_locking 0
+	}
+	timeout {
+	    set supports_schedule_locking 0
 	}
     }
 
-    file delete $src
-    file delete $exe
+    if { $supports_schedule_locking == -1 } {
+	set test "checking for scheduler-locking support"
+	gdb_test_multiple "set scheduler-locking $current_schedule_locking_mode" $test {
+	    -re "Target '\[^'\]+' cannot support this command\..*$gdb_prompt $" {
+		set supports_schedule_locking 0
+	    }
+	    -re "$gdb_prompt $" {
+		set supports_schedule_locking 1
+	    }
+	    timeout {
+		set supports_schedule_locking 0
+	    }
+	}
+    }
 
-    return $prefix
+    if { $supports_schedule_locking == -1 } {
+	set supports_schedule_locking 0
+    }
+
+    gdb_exit
+    remote_file build delete $obj
+    verbose "$me:  returning $supports_schedule_locking" 2
+    return $supports_schedule_locking
 }
 
 # gdb_target_symbol returns the provided symbol with the correct prefix
@@ -6068,6 +6282,61 @@ proc dejagnu_version { } {
     }
 
     return $dg_ver
+}
+
+# Define user-defined command COMMAND using the COMMAND_LIST as the
+# command's definition.  The terminating "end" is added automatically.
+
+proc gdb_define_cmd {command command_list} {
+    global gdb_prompt
+
+    set input [multi_line_input {*}$command_list "end"]
+    set test "define $command"
+
+    gdb_test_multiple "define $command" $test {
+	-re "End with"  {
+	    gdb_test_multiple $input $test {
+		-re "\r\n$gdb_prompt " {
+		}
+	    }
+	}
+    }
+}
+
+# Override the 'cd' builtin with a version that ensures that the
+# log file keeps pointing at the same file.  We need this because
+# unfortunately the path to the log file is recorded using an
+# relative path name, and, we sometimes need to close/reopen the log
+# after changing the current directory.  See get_compiler_info.
+
+rename cd builtin_cd
+
+proc cd { dir } {
+
+    # Get the existing log file flags.
+    set log_file_info [log_file -info]
+
+    # Split the flags into args and file name.
+    set log_file_flags ""
+    set log_file_file ""
+    foreach arg [ split "$log_file_info" " "] {
+	if [string match "-*" $arg] {
+	    lappend log_file_flags $arg
+	} else {
+	    lappend log_file_file $arg
+	}
+    }
+
+    # If there was an existing file, ensure it is an absolute path, and then
+    # reset logging.
+    if { $log_file_file != "" } {
+	set log_file_file [file normalize $log_file_file]
+	log_file
+	log_file $log_file_flags "$log_file_file"
+    }
+
+    # Call the builtin version of cd.
+    builtin_cd $dir
 }
 
 # Always load compatibility stuff.

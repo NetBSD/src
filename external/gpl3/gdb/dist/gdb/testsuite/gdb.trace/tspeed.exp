@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Free Software Foundation, Inc.
+# Copyright 2011-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,13 +15,36 @@
 
 load_lib "trace-support.exp"
 
+if {[skip_shlib_tests]} {
+    return 0
+}
+
 standard_testfile
 set executable $testfile
 
+# Check that the target supports trace.
+if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable $options] != "" } {
+    untested "failed to compile"
+    return -1
+}
+
+clean_restart ${testfile}
+
+if ![runto_main] {
+    fail "can't run to main to check for trace support"
+    return -1
+}
+
+if ![gdb_target_supports_trace] {
+    unsupported "target does not support trace"
+    return -1
+}
+
+# Compile the test case with the in-process agent library.
 set ipalib [get_in_proc_agent]
 
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
-	  executable [concat {debug nowarnings c} shlib=$ipalib]] != "" } {
+	  executable [concat {debug c} shlib=$ipalib]] != "" } {
     untested "failed to compile"
     return -1
 }
@@ -38,8 +61,10 @@ set cr "\[\r\n\]+"
 
 proc prepare_for_trace_test {} {
     global executable
+    global ipalib
 
     clean_restart $executable
+    gdb_load_shlib $ipalib
 
     runto_main
 
@@ -125,6 +150,8 @@ proc gdb_trace_collection_test {} {
 }
 
 clean_restart $executable
+gdb_load_shlib $ipalib
+
 runto_main
 
 if { ![gdb_target_supports_trace] } then {

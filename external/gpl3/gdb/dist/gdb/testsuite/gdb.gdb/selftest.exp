@@ -1,4 +1,4 @@
-# Copyright 1988-2017 Free Software Foundation, Inc.
+# Copyright 1988-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -63,10 +63,19 @@ proc test_with_self { } {
 	# Wait a bit while the inferior gdb gets to its prompt.
 	sleep 1
     } else {
+	set banner [multi_line \
+			"GNU gdb \[0-9\.\]*\[^\r\n\]*" \
+			"Copyright \\(C\\) \[0-9\]* Free Software Foundation, Inc\." \
+			"License GPLv3\\+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>" \
+			"This is free software: you are free to change and redistribute it\." \
+			"There is NO WARRANTY, to the extent permitted by law\." \
+			"Type \"show copying\" and \"show warranty\" for details\." \
+			"This GDB was configured as .*" \
+			"$gdb_prompt $"]
 	set test "xgdb is at prompt"
 	gdb_test_multiple "continue" $test {
 	    -i "$inferior_spawn_id"
-	    -re "GNU gdb \[0-9\.\]*.*Copyright \\(C\\) \[0-9\]* Free Software Foundation, Inc.*License GPLv3\\+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.*This is free software: you are free to change and redistribute it.*There is NO WARRANTY, to the extent permitted by law.  Type \"show copying\".*and \"show warranty\" for details.*This GDB was configured as .*$gdb_prompt $" {
+	    -re "$banner" {
 		pass $test
 	    }
 	}

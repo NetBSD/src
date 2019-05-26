@@ -7,6 +7,8 @@
 
 .include "testutils.inc"
 
+	.data
+	.align 4
 input:
 	.word 0x04030201
 	.word 0x08070605
@@ -26,10 +28,10 @@ output:
 	add x1, x1, :lo12:output
 
 	mov x2, x0
-	ldr q0, [x2], 8
+	ldr q0, [x2], 16
 	ldr q1, [x2]
 	mov x2, x0
-	ldr q2, [x2], 8
+	ldr q2, [x2], 16
 	ldr q3, [x2]
 
 	mov x2, x1
@@ -61,9 +63,9 @@ output:
 	addv b5, v5.16b
 	mov x5, v4.d[0]
 	mov x6, v5.d[0]
-	cmp x5, #136
+	cmp x5, #200
 	bne .Lfailure
-	cmp x6, #8
+	cmp x6, #72
 	bne .Lfailure
 
 	mov x2, x1
@@ -82,11 +84,11 @@ output:
 	mov x4, v4.d[0]
 	mov x5, v5.d[0]
 	mov x6, v6.d[0]
-	cmp x4, #88
+	cmp x4, #120
 	bne .Lfailure
-	cmp x5, #200
+	cmp x5, #8
 	bne .Lfailure
-	cmp x6, #248
+	cmp x6, #24
 	bne .Lfailure
 
 	mov x2, x1
@@ -108,13 +110,13 @@ output:
 	mov x5, v5.d[0]
 	mov x6, v6.d[0]
 	mov x7, v7.d[0]
-	cmp x4, #104
+	cmp x4, #168
 	bne .Lfailure
-	cmp x5, #168
+	cmp x5, #232
 	bne .Lfailure
-	cmp x6, #232
+	cmp x6, #40
 	bne .Lfailure
-	cmp x7, #40
+	cmp x7, #104
 	bne .Lfailure
 
 	pass

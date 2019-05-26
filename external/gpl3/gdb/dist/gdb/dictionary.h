@@ -1,6 +1,6 @@
 /* Routines for name->symbol lookups in GDB.
    
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    Contributed by David Carlton <carlton@bactrian.org> and by Kealia,
    Inc.
@@ -25,74 +25,77 @@
 
 #include "symfile.h"
 
-/* An opaque type for dictionaries; only dictionary.c should know
-   about its innards.  */
+/* An opaque type for multi-language dictionaries; only dictionary.c should
+   know about its innards.  */
 
-struct dictionary;
+struct multidictionary;
 
 /* Other types needed for declarations.  */
 
 struct symbol;
 struct obstack;
 struct pending;
-
+struct language_defn;
 
 /* The creation functions for various implementations of
-   dictionaries.  */
+   multi-language dictionaries.  */
 
-/* Create a dictionary implemented via a fixed-size hashtable.  All
-   memory it uses is allocated on OBSTACK; the environment is
-   initialized from SYMBOL_LIST.  */
+/* Create a multi-language dictionary of symbols implemented via
+   a fixed-size hashtable.  All memory it uses is allocated on
+   OBSTACK; the environment is initialized from SYMBOL_LIST.  */
 
-extern struct dictionary *dict_create_hashed (struct obstack *obstack,
-					      const struct pending
-					      *symbol_list);
+extern struct multidictionary *
+  mdict_create_hashed (struct obstack *obstack,
+		       const struct pending *symbol_list);
 
-/* Create a dictionary implemented via a hashtable that grows as
-   necessary.  The dictionary is initially empty; to add symbols to
-   it, call dict_add_symbol().  Call dict_free() when you're done with
-   it.  */
+/* Create a multi-language dictionary of symbols, implemented
+   via a hashtable that grows as necessary.  The initial dictionary of
+   LANGUAGE is empty; to add symbols to it, call mdict_add_symbol().
+   Call mdict_free() when you're done with it.  */
 
-extern struct dictionary *dict_create_hashed_expandable (void);
+extern struct multidictionary *
+  mdict_create_hashed_expandable (enum language language);
 
-/* Create a dictionary implemented via a fixed-size array.  All memory
-   it uses is allocated on OBSTACK; the environment is initialized
-   from the SYMBOL_LIST.  The symbols are ordered in the same order
-   that they're found in SYMBOL_LIST.  */
+/* Create a multi-language dictionary of symbols, implemented
+   via a fixed-size array.  All memory it uses is allocated on
+   OBSTACK; the environment is initialized from the SYMBOL_LIST.  The
+   symbols are ordered in the same order that they're found in
+   SYMBOL_LIST.  */
 
-extern struct dictionary *dict_create_linear (struct obstack *obstack,
-					      const struct pending
-					      *symbol_list);
+extern struct multidictionary *
+  mdict_create_linear (struct obstack *obstack,
+		       const struct pending *symbol_list);
 
-/* Create a dictionary implemented via an array that grows as
-   necessary.  The dictionary is initially empty; to add symbols to
-   it, call dict_add_symbol().  Call dict_free() when you're done with
-   it.  */
+/* Create a multi-language dictionary of symbols, implemented
+   via an array that grows as necessary.  The multidictionary initially
+   contains a single empty dictionary of LANGUAGE; to add symbols to it,
+   call mdict_add_symbol().  Call mdict_free() when you're done with it.  */
 
-extern struct dictionary *dict_create_linear_expandable (void);
+extern struct multidictionary *
+  mdict_create_linear_expandable (enum language language);
 
+/* The functions providing the interface to multi-language dictionaries.
+   Note that the most common parts of the interface, namely symbol lookup,
+   are only provided via iterator functions.  */
 
-/* The functions providing the interface to dictionaries.  Note that
-   the most common parts of the interface, namely symbol lookup, are
-   only provided via iterator functions.  */
-
-/* Free the memory used by a dictionary that's not on an obstack.  (If
+/* Free the memory used by a multidictionary that's not on an obstack.  (If
    any.)  */
 
-extern void dict_free (struct dictionary *dict);
+extern void mdict_free (struct multidictionary *mdict);
 
-/* Add a symbol to an expandable dictionary.  */
+/* Add a symbol to an expandable multidictionary.  */
 
-extern void dict_add_symbol (struct dictionary *dict, struct symbol *sym);
+extern void mdict_add_symbol (struct multidictionary *mdict,
+			      struct symbol *sym);
 
-/* Utility to add a list of symbols to a dictionary.  */
+/* Utility to add a list of symbols to a multidictionary.  */
 
-extern void dict_add_pending (struct dictionary *dict,
-			      const struct pending *symbol_list);
+extern void mdict_add_pending (struct multidictionary *mdict,
+			       const struct pending *symbol_list);
 
-/* Is the dictionary empty?  */
+/* Is the multidictionary empty?  */
 
-extern int dict_empty (struct dictionary *dict);
+extern int mdict_empty (struct multidictionary *mdict);
 
 /* A type containing data that is used when iterating over all symbols
    in a dictionary.  Don't ever look at its innards; this type would
@@ -109,65 +112,61 @@ struct dict_iterator
   struct symbol *current;
 };
 
-/* Initialize ITERATOR to point at the first symbol in DICT, and
-   return that first symbol, or NULL if DICT is empty.  */
+/* The multi-language dictionary iterator.  Like dict_iterator above,
+   these contents should be considered private.  */
 
-extern struct symbol *dict_iterator_first (const struct dictionary *dict,
-					   struct dict_iterator *iterator);
+struct mdict_iterator
+{
+  /* The multidictionary with whcih this iterator is associated.  */
+  const struct multidictionary *mdict;
 
-/* Advance ITERATOR, and return the next symbol, or NULL if there are
+  /* The iterator used to iterate through individual dictionaries.  */
+  struct dict_iterator iterator;
+
+  /* The current index of the dictionary being iterated over.  */
+  unsigned short current_idx;
+};
+
+/* Initialize ITERATOR to point at the first symbol in MDICT, and
+   return that first symbol, or NULL if MDICT is empty.  */
+
+extern struct symbol *
+  mdict_iterator_first (const struct multidictionary *mdict,
+			struct mdict_iterator *miterator);
+
+/* Advance MITERATOR, and return the next symbol, or NULL if there are
    no more symbols.  Don't call this if you've previously received
-   NULL from dict_iterator_first or dict_iterator_next on this
+   NULL from mdict_iterator_first or mdict_iterator_next on this
    iteration.  */
 
-extern struct symbol *dict_iterator_next (struct dict_iterator *iterator);
+extern struct symbol *mdict_iterator_next (struct mdict_iterator *miterator);
 
-/* Initialize ITERATOR to point at the first symbol in DICT whose
-   SYMBOL_SEARCH_NAME is NAME (as tested using strcmp_iw), and return
-   that first symbol, or NULL if there are no such symbols.  */
-
-extern struct symbol *dict_iter_name_first (const struct dictionary *dict,
-					    const char *name,
-					    struct dict_iterator *iterator);
-
-/* Advance ITERATOR to point at the next symbol in DICT whose
-   SYMBOL_SEARCH_NAME is NAME (as tested using strcmp_iw), or NULL if
-   there are no more such symbols.  Don't call this if you've
-   previously received NULL from dict_iterator_first or
-   dict_iterator_next on this iteration.  And don't call it unless
-   ITERATOR was created by a previous call to dict_iter_name_first
-   with the same NAME.  */
-
-extern struct symbol *dict_iter_name_next (const char *name,
-					   struct dict_iterator *iterator);
-
-/* Initialize ITERATOR to point at the first symbol in DICT whose
+/* Initialize MITERATOR to point at the first symbol in MDICT whose
    SYMBOL_SEARCH_NAME is NAME, as tested using COMPARE (which must use
    the same conventions as strcmp_iw and be compatible with any
    dictionary hashing function), and return that first symbol, or NULL
    if there are no such symbols.  */
 
-extern struct symbol *dict_iter_match_first (const struct dictionary *dict,
-					     const char *name,
-					     symbol_compare_ftype *compare,
-					     struct dict_iterator *iterator);
+extern struct symbol *
+  mdict_iter_match_first (const struct multidictionary *mdict,
+			  const lookup_name_info &name,
+			  struct mdict_iterator *miterator);
 
-/* Advance ITERATOR to point at the next symbol in DICT whose
+/* Advance MITERATOR to point at the next symbol in MDICT whose
    SYMBOL_SEARCH_NAME is NAME, as tested using COMPARE (see
    dict_iter_match_first), or NULL if there are no more such symbols.
    Don't call this if you've previously received NULL from 
-   dict_iterator_match_first or dict_iterator_match_next on this
-   iteration.  And don't call it unless ITERATOR was created by a
-   previous call to dict_iter_match_first with the same NAME and COMPARE.  */
+   mdict_iterator_match_first or mdict_iterator_match_next on this
+   iteration.  And don't call it unless MITERATOR was created by a
+   previous call to mdict_iter_match_first with the same NAME and COMPARE.  */
 
-extern struct symbol *dict_iter_match_next (const char *name,
-					    symbol_compare_ftype *compare,
-					    struct dict_iterator *iterator);
+extern struct symbol *mdict_iter_match_next (const lookup_name_info &name,
+					     struct mdict_iterator *miterator);
 
-/* Return some notion of the size of the dictionary: the number of
+/* Return some notion of the size of the multidictionary: the number of
    symbols if we have that, the number of hash buckets otherwise.  */
 
-extern int dict_size (const struct dictionary *dict);
+extern int mdict_size (const struct multidictionary *mdict);
 
 /* Macro to loop through all symbols in a dictionary DICT, in no
    particular order.  ITER is a struct dict_iterator (NOTE: __not__ a
@@ -177,8 +176,8 @@ extern int dict_size (const struct dictionary *dict);
    early by a break if you desire.  */
 
 #define ALL_DICT_SYMBOLS(dict, iter, sym)			\
-	for ((sym) = dict_iterator_first ((dict), &(iter));	\
+	for ((sym) = mdict_iterator_first ((dict), &(iter));	\
 	     (sym);						\
-	     (sym) = dict_iterator_next (&(iter)))
+	     (sym) = mdict_iterator_next (&(iter)))
 
 #endif /* DICTIONARY_H */

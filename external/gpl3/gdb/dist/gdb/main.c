@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,12 +40,14 @@
 #include "maint.h"
 
 #include "filenames.h"
-#include "filestuff.h"
+#include "common/filestuff.h"
 #include <signal.h>
 #include "event-top.h"
 #include "infrun.h"
-#include "signals-state-save-restore.h"
+#include "common/signals-state-save-restore.h"
 #include <vector>
+#include "common/pathstuff.h"
+#include "cli/cli-style.h"
 
 /* The selected interpreter.  This will be used as a set command
    variable, so it should always be malloc'ed - since
@@ -120,7 +122,7 @@ set_gdb_data_directory (const char *new_datadir)
     warning (_("%s is not a directory."), new_datadir);
 
   xfree (gdb_datadir);
-  gdb_datadir = gdb_realpath (new_datadir);
+  gdb_datadir = gdb_realpath (new_datadir).release ();
 
   /* gdb_realpath won't return an absolute path if the path doesn't exist,
      but we still want to record an absolute path here.  If the user entered
@@ -128,10 +130,10 @@ set_gdb_data_directory (const char *new_datadir)
      isn't canonical, but that's ok.  */
   if (!IS_ABSOLUTE_PATH (gdb_datadir))
     {
-      char *abs_datadir = gdb_abspath (gdb_datadir);
+      gdb::unique_xmalloc_ptr<char> abs_datadir = gdb_abspath (gdb_datadir);
 
       xfree (gdb_datadir);
-      gdb_datadir = abs_datadir;
+      gdb_datadir = abs_datadir.release ();
     }
 }
 
@@ -207,7 +209,7 @@ get_init_files (const char **system_gdbinit,
   if (!initialized)
     {
       struct stat homebuf, cwdbuf, s;
-      char *homedir;
+      const char *homedir;
 
       if (SYSTEM_GDBINIT[0])
 	{
@@ -224,7 +226,7 @@ get_init_files (const char **system_gdbinit,
 	    {
 	      /* Append the part of SYSTEM_GDBINIT that follows GDB_DATADIR
 		 to gdb_datadir.  */
-	      char *tmp_sys_gdbinit = xstrdup (SYSTEM_GDBINIT + datadir_len);
+	      char *tmp_sys_gdbinit = xstrdup (&SYSTEM_GDBINIT[datadir_len]);
 	      char *p;
 
 	      for (p = tmp_sys_gdbinit; IS_DIR_SEPARATOR (*p); ++p)
@@ -305,11 +307,15 @@ setup_alternate_signal_stack (void)
 #endif
 }
 
-/* Call command_loop.  If it happens to return, pass that through as a
-   non-zero return status.  */
+/* Call command_loop.  */
 
-static int
-captured_command_loop (void *data)
+/* Prevent inlining this function for the benefit of GDB's selftests
+   in the testsuite.  Those tests want to run GDB under GDB and stop
+   here.  */
+static void captured_command_loop () __attribute__((noinline));
+
+static void
+captured_command_loop ()
 {
   struct ui *ui = current_ui;
 
@@ -333,15 +339,12 @@ captured_command_loop (void *data)
      check to detect bad FUNCs code.  */
   do_cleanups (all_cleanups ());
   /* If the command_loop returned, normally (rather than threw an
-     error) we try to quit.  If the quit is aborted, catch_errors()
-     which called this catch the signal and restart the command
-     loop.  */
+     error) we try to quit.  If the quit is aborted, our caller
+     catches the signal and restarts the command loop.  */
   quit_command (NULL, ui->instream == ui->stdin_stream);
-  return 1;
 }
 
-/* Handle command errors thrown from within
-   catch_command_errors/catch_command_errors_const.  */
+/* Handle command errors thrown from within catch_command_errors.  */
 
 static int
 handle_command_errors (struct gdb_exception e)
@@ -359,42 +362,16 @@ handle_command_errors (struct gdb_exception e)
   return 1;
 }
 
-/* Type of the command callback passed to catch_command_errors.  */
+/* Type of the command callback passed to the const
+   catch_command_errors.  */
 
-typedef void (catch_command_errors_ftype) (char *, int);
+typedef void (catch_command_errors_const_ftype) (const char *, int);
 
 /* Wrap calls to commands run before the event loop is started.  */
 
 static int
-catch_command_errors (catch_command_errors_ftype *command,
-		      char *arg, int from_tty)
-{
-  TRY
-    {
-      int was_sync = current_ui->prompt_state == PROMPT_BLOCKED;
-
-      command (arg, from_tty);
-
-      maybe_wait_sync_command_done (was_sync);
-    }
-  CATCH (e, RETURN_MASK_ALL)
-    {
-      return handle_command_errors (e);
-    }
-  END_CATCH
-
-  return 1;
-}
-
-/* Type of the command callback passed to catch_command_errors_const.  */
-
-typedef void (catch_command_errors_const_ftype) (const char *, int);
-
-/* Like catch_command_errors, but works with const command and args.  */
-
-static int
-catch_command_errors_const (catch_command_errors_const_ftype *command,
-			    const char *arg, int from_tty)
+catch_command_errors (catch_command_errors_const_ftype command,
+		      const char *arg, int from_tty)
 {
   TRY
     {
@@ -425,6 +402,19 @@ symbol_file_add_main_adapter (const char *arg, int from_tty)
     add_flags |= SYMFILE_VERBOSE;
 
   symbol_file_add_main (arg, add_flags);
+}
+
+/* Perform validation of the '--readnow' and '--readnever' flags.  */
+
+static void
+validate_readnow_readnever ()
+{
+  if (readnever_symbol_files && readnow_symbol_files)
+    {
+      error (_("%s: '--readnow' and '--readnever' cannot be "
+	       "specified simultaneously"),
+	     gdb_program_name);
+    }
 }
 
 /* Type of this option.  */
@@ -496,11 +486,9 @@ captured_main_1 (struct captured_main_args *context)
 
   int i;
   int save_auto_load;
-  struct objfile *objfile;
+  int ret = 1;
 
-  struct cleanup *chain;
-
-#ifdef HAVE_SBRK
+#ifdef HAVE_USEFUL_SBRK
   /* Set this before constructing scoped_command_stats.  */
   lim_at_start = (char *) sbrk (0);
 #endif
@@ -518,9 +506,7 @@ captured_main_1 (struct captured_main_args *context)
   textdomain (PACKAGE);
 #endif
 
-  bfd_init ();
   notice_open_fds ();
-  save_original_signals_state ();
 
   saved_command_line = (char *) xstrdup ("");
 
@@ -530,11 +516,16 @@ captured_main_1 (struct captured_main_args *context)
   setvbuf (stderr, NULL, _IONBF, BUFSIZ);
 #endif
 
-  main_ui = new_ui (stdin, stdout, stderr);
+  /* Note: `error' cannot be called before this point, because the
+     caller will crash when trying to print the exception.  */
+  main_ui = new ui (stdin, stdout, stderr);
   current_ui = main_ui;
 
   gdb_stdtargerr = gdb_stderr;	/* for moment */
   gdb_stdtargin = gdb_stdin;	/* for moment */
+
+  if (bfd_init () != BFD_INIT_MAGIC)
+    error (_("fatal error: libbfd ABI mismatch"));
 
 #ifdef __MINGW32__
   /* On Windows, argv[0] is not necessarily set to absolute form when
@@ -549,10 +540,9 @@ captured_main_1 (struct captured_main_args *context)
     (xstrprintf ("%s: warning: ", gdb_program_name));
   warning_pre_print = tmp_warn_preprint.get ();
 
-  if (! getcwd (gdb_dirbuf, sizeof (gdb_dirbuf)))
+  current_directory = getcwd (NULL, 0);
+  if (current_directory == NULL)
     perror_warning_with_name (_("error finding working directory"));
-
-  current_directory = gdb_dirbuf;
 
   /* Set the sysroot path.  */
   gdb_sysroot = relocate_gdb_directory (TARGET_SYSTEM_ROOT,
@@ -607,14 +597,17 @@ captured_main_1 (struct captured_main_args *context)
       OPT_NOWINDOWS,
       OPT_WINDOWS,
       OPT_IX,
-      OPT_IEX
+      OPT_IEX,
+      OPT_READNOW,
+      OPT_READNEVER
     };
     static struct option long_options[] =
     {
       {"tui", no_argument, 0, OPT_TUI},
       {"dbx", no_argument, &dbx_commands, 1},
-      {"readnow", no_argument, &readnow_symbol_files, 1},
-      {"r", no_argument, &readnow_symbol_files, 1},
+      {"readnow", no_argument, NULL, OPT_READNOW},
+      {"readnever", no_argument, NULL, OPT_READNEVER},
+      {"r", no_argument, NULL, OPT_READNOW},
       {"quiet", no_argument, &quiet, 1},
       {"q", no_argument, &quiet, 1},
       {"silent", no_argument, &quiet, 1},
@@ -812,28 +805,42 @@ captured_main_1 (struct captured_main_args *context)
 	    break;
 	  case 'b':
 	    {
-	      int i;
+	      int rate;
 	      char *p;
 
-	      i = strtol (optarg, &p, 0);
-	      if (i == 0 && p == optarg)
+	      rate = strtol (optarg, &p, 0);
+	      if (rate == 0 && p == optarg)
 		warning (_("could not set baud rate to `%s'."),
 			 optarg);
 	      else
-		baud_rate = i;
+		baud_rate = rate;
 	    }
             break;
 	  case 'l':
 	    {
-	      int i;
+	      int timeout;
 	      char *p;
 
-	      i = strtol (optarg, &p, 0);
-	      if (i == 0 && p == optarg)
+	      timeout = strtol (optarg, &p, 0);
+	      if (timeout == 0 && p == optarg)
 		warning (_("could not set timeout limit to `%s'."),
 			 optarg);
 	      else
-		remote_timeout = i;
+		remote_timeout = timeout;
+	    }
+	    break;
+
+	  case OPT_READNOW:
+	    {
+	      readnow_symbol_files = 1;
+	      validate_readnow_readnever ();
+	    }
+	    break;
+
+	  case OPT_READNEVER:
+	    {
+	      readnever_symbol_files = 1;
+	      validate_readnow_readnever ();
 	    }
 	    break;
 
@@ -844,8 +851,15 @@ captured_main_1 (struct captured_main_args *context)
       }
 
     if (batch_flag)
-      quiet = 1;
+      {
+	quiet = 1;
+
+	/* Disable all output styling when running in batch mode.  */
+	cli_styling = 0;
+      }
   }
+
+  save_original_signals_state (quiet);
 
   /* Try to set up an alternate signal stack for SIGSEGV handlers.  */
   setup_alternate_signal_stack ();
@@ -914,7 +928,7 @@ captured_main_1 (struct captured_main_args *context)
 
   if (print_version)
     {
-      print_gdb_version (gdb_stdout);
+      print_gdb_version (gdb_stdout, false);
       wrap_here ("");
       printf_filtered ("\n");
       exit (0);
@@ -943,7 +957,7 @@ captured_main_1 (struct captured_main_args *context)
     {
       /* Print all the junk at the top, with trailing "..." if we are
          about to read a symbol file (possibly slowly).  */
-      print_gdb_version (gdb_stdout);
+      print_gdb_version (gdb_stdout, true);
       if (symarg)
 	printf_filtered ("..");
       wrap_here ("");
@@ -964,7 +978,7 @@ captured_main_1 (struct captured_main_args *context)
     {
       /* Print all the junk at the top, with trailing "..." if we are
          about to read a symbol file (possibly slowly).  */
-      print_gdb_version (gdb_stdout);
+      print_gdb_version (gdb_stdout, true);
       if (symarg)
 	printf_filtered ("..");
       wrap_here ("");
@@ -982,7 +996,7 @@ captured_main_1 (struct captured_main_args *context)
      processed; it sets global parameters, which are independent of
      what file you are debugging or what directory you are in.  */
   if (system_gdbinit && !inhibit_gdbinit)
-    catch_command_errors_const (source_script, system_gdbinit, 0);
+    ret = catch_command_errors (source_script, system_gdbinit, 0);
 
   /* Read and execute $HOME/.gdbinit file, if it exists.  This is done
      *before* all the command line arguments are processed; it sets
@@ -990,7 +1004,7 @@ captured_main_1 (struct captured_main_args *context)
      debugging or what directory you are in.  */
 
   if (home_gdbinit && !inhibit_gdbinit && !inhibit_home_gdbinit)
-    catch_command_errors_const (source_script, home_gdbinit, 0);
+    ret = catch_command_errors (source_script, home_gdbinit, 0);
 
   /* Process '-ix' and '-iex' options early.  */
   for (i = 0; i < cmdarg_vec.size (); i++)
@@ -1000,12 +1014,12 @@ captured_main_1 (struct captured_main_args *context)
       switch (cmdarg_p.type)
 	{
 	case CMDARG_INIT_FILE:
-	  catch_command_errors_const (source_script, cmdarg_p.string,
+	  ret = catch_command_errors (source_script, cmdarg_p.string,
 				      !batch_flag);
 	  break;
 	case CMDARG_INIT_COMMAND:
-	  catch_command_errors (execute_command, cmdarg_p.string,
-				!batch_flag);
+	  ret = catch_command_errors (execute_command, cmdarg_p.string,
+				      !batch_flag);
 	  break;
 	}
     }
@@ -1013,11 +1027,11 @@ captured_main_1 (struct captured_main_args *context)
   /* Now perform all the actions indicated by the arguments.  */
   if (cdarg != NULL)
     {
-      catch_command_errors (cd_command, cdarg, 0);
+      ret = catch_command_errors (cd_command, cdarg, 0);
     }
 
   for (i = 0; i < dirarg.size (); i++)
-    catch_command_errors (directory_switch, dirarg[i], 0);
+    ret = catch_command_errors (directory_switch, dirarg[i], 0);
 
   /* Skip auto-loading section-specified scripts until we've sourced
      local_gdbinit (which is often used to augment the source search
@@ -1032,19 +1046,20 @@ captured_main_1 (struct captured_main_args *context)
       /* The exec file and the symbol-file are the same.  If we can't
          open it, better only print one error message.
          catch_command_errors returns non-zero on success!  */
-      if (catch_command_errors_const (exec_file_attach, execarg,
-				      !batch_flag))
-	catch_command_errors_const (symbol_file_add_main_adapter, symarg,
-				    !batch_flag);
+      ret = catch_command_errors (exec_file_attach, execarg,
+				  !batch_flag);
+      if (ret != 0)
+	ret = catch_command_errors (symbol_file_add_main_adapter,
+				    symarg, !batch_flag);
     }
   else
     {
       if (execarg != NULL)
-	catch_command_errors_const (exec_file_attach, execarg,
+	ret = catch_command_errors (exec_file_attach, execarg,
 				    !batch_flag);
       if (symarg != NULL)
-	catch_command_errors_const (symbol_file_add_main_adapter, symarg,
-				    !batch_flag);
+	ret = catch_command_errors (symbol_file_add_main_adapter,
+				    symarg, !batch_flag);
     }
 
   if (corearg && pidarg)
@@ -1052,9 +1067,14 @@ captured_main_1 (struct captured_main_args *context)
 	     "a core file at the same time."));
 
   if (corearg != NULL)
-    catch_command_errors (core_file_command, corearg, !batch_flag);
+    {
+      ret = catch_command_errors (core_file_command, corearg,
+				  !batch_flag);
+    }
   else if (pidarg != NULL)
-    catch_command_errors (attach_command, pidarg, !batch_flag);
+    {
+      ret = catch_command_errors (attach_command, pidarg, !batch_flag);
+    }
   else if (pid_or_core_arg)
     {
       /* The user specified 'gdb program pid' or gdb program core'.
@@ -1063,14 +1083,20 @@ captured_main_1 (struct captured_main_args *context)
 
       if (isdigit (pid_or_core_arg[0]))
 	{
-	  if (catch_command_errors (attach_command, pid_or_core_arg,
-				    !batch_flag) == 0)
-	    catch_command_errors (core_file_command, pid_or_core_arg,
-				  !batch_flag);
+	  ret = catch_command_errors (attach_command, pid_or_core_arg,
+				      !batch_flag);
+	  if (ret == 0)
+	    ret = catch_command_errors (core_file_command,
+					pid_or_core_arg,
+					!batch_flag);
 	}
-      else /* Can't be a pid, better be a corefile.  */
-	catch_command_errors (core_file_command, pid_or_core_arg,
-			      !batch_flag);
+      else
+	{
+	  /* Can't be a pid, better be a corefile.  */
+	  ret = catch_command_errors (core_file_command,
+				      pid_or_core_arg,
+				      !batch_flag);
+	}
     }
 
   if (ttyarg != NULL)
@@ -1083,7 +1109,8 @@ captured_main_1 (struct captured_main_args *context)
      the same as the $HOME/.gdbinit file (it should exist, also).  */
   if (local_gdbinit)
     {
-      auto_load_local_gdbinit_pathname = gdb_realpath (local_gdbinit);
+      auto_load_local_gdbinit_pathname
+	= gdb_realpath (local_gdbinit).release ();
 
       if (!inhibit_gdbinit && auto_load_local_gdbinit
 	  && file_is_auto_load_safe (local_gdbinit,
@@ -1093,7 +1120,7 @@ captured_main_1 (struct captured_main_args *context)
 	{
 	  auto_load_local_gdbinit_loaded = 1;
 
-	  catch_command_errors_const (source_script, local_gdbinit, 0);
+	  ret = catch_command_errors (source_script, local_gdbinit, 0);
 	}
     }
 
@@ -1102,7 +1129,7 @@ captured_main_1 (struct captured_main_args *context)
      We wait until now because it is common to add to the source search
      path in local_gdbinit.  */
   global_auto_load = save_auto_load;
-  ALL_OBJFILES (objfile)
+  for (objfile *objfile : current_program_space->objfiles ())
     load_auto_scripts_for_objfile (objfile);
 
   /* Process '-x' and '-ex' options.  */
@@ -1113,12 +1140,12 @@ captured_main_1 (struct captured_main_args *context)
       switch (cmdarg_p.type)
 	{
 	case CMDARG_FILE:
-	  catch_command_errors_const (source_script, cmdarg_p.string,
+	  ret = catch_command_errors (source_script, cmdarg_p.string,
 				      !batch_flag);
 	  break;
 	case CMDARG_COMMAND:
-	  catch_command_errors (execute_command, cmdarg_p.string,
-				!batch_flag);
+	  ret = catch_command_errors (execute_command, cmdarg_p.string,
+				      !batch_flag);
 	  break;
 	}
     }
@@ -1129,8 +1156,11 @@ captured_main_1 (struct captured_main_args *context)
 
   if (batch_flag)
     {
+      int error_status = EXIT_FAILURE;
+      int *exit_arg = ret == 0 ? &error_status : NULL;
+
       /* We have hit the end of the batch file.  */
-      quit_force (NULL, 0);
+      quit_force (exit_arg, 0);
     }
 }
 
@@ -1147,7 +1177,15 @@ captured_main (void *data)
      change - SET_TOP_LEVEL() - has been eliminated.  */
   while (1)
     {
-      catch_errors (captured_command_loop, 0, "", RETURN_MASK_ALL);
+      TRY
+	{
+	  captured_command_loop ();
+	}
+      CATCH (ex, RETURN_MASK_ALL)
+	{
+	  exception_print (gdb_stderr, ex);
+	}
+      END_CATCH
     }
   /* No exit -- exit is through quit_command.  */
 }
@@ -1202,6 +1240,7 @@ Selection of debuggee and its files:\n\n\
   --se=FILE          Use FILE as symbol file and executable file.\n\
   --symbols=SYMFILE  Read symbols from SYMFILE.\n\
   --readnow          Fully read symbol files on first access.\n\
+  --readnever        Do not read symbol files.\n\
   --write            Set writing into executable and core files.\n\n\
 "), stream);
   fputs_unfiltered (_("\

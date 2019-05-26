@@ -1,5 +1,5 @@
 /* Simulator for Xilinx MicroBlaze processor
-   Copyright 2009-2017 Free Software Foundation, Inc.
+   Copyright 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -31,7 +31,7 @@
 
 #include "microblaze-dis.h"
 
-#define target_big_endian (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
+#define target_big_endian (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 
 static unsigned long
 microblaze_extract_unsigned_integer (unsigned char *addr, int len)

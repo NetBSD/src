@@ -1,4 +1,4 @@
-# Copyright 1998-2017 Free Software Foundation, Inc.
+# Copyright 1998-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ proc run_trace_experiment { } {
     global decimal
 
     setup_tracepoints
-    gdb_test "break end" "Breakpoint $decimal.*" "breakpoint at end"
+    gdb_breakpoint "end" qualified
     gdb_test "tstart" "\[\r\n\]*" "start trace experiment"
     gdb_test "continue" "Continuing.*Breakpoint \[0-9\]+, end.*" \
 	"run to end"
@@ -174,7 +174,7 @@ set frame_size -1
 with_test_prefix "frame size" {
     set_a_tracepoint func0
 
-    gdb_test "break end" "Breakpoint $decimal.*" "breakpoint at end"
+    gdb_breakpoint "end" qualified
 
     gdb_test "tstart" "\[\r\n\]*" "start trace"
 

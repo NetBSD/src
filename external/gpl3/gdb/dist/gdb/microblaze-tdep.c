@@ -1,6 +1,6 @@
 /* Target-dependent code for Xilinx MicroBlaze.
 
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,8 +34,8 @@
 #include "dwarf2-frame.h"
 #include "osabi.h"
 #include "target-descriptions.h"
-#include "opcodes/microblaze-opcm.h"
-#include "opcodes/microblaze-dis.h"
+#include "../opcodes/microblaze-opcm.h"
+#include "../opcodes/microblaze-dis.h"
 #include "microblaze-tdep.h"
 #include "remote.h"
 
@@ -82,7 +82,7 @@ static const char *microblaze_register_names[] =
 
 static unsigned int microblaze_debug_flag = 0;
 
-static void
+static void ATTRIBUTE_PRINTF (1, 2)
 microblaze_debug (const char *fmt, ...)
 { 
   if (microblaze_debug_flag)
@@ -353,12 +353,13 @@ microblaze_analyze_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
 	 instruction.  */
 
       {
-	unsigned op = (unsigned)insn >> 26;
+	unsigned ctrl_op = (unsigned)insn >> 26;
 
 	/* continue if not control flow (branch, return).  */
-	if (op != 0x26 && op != 0x27 && op != 0x2d && op != 0x2e && op != 0x2f)
+	if (ctrl_op != 0x26 && ctrl_op != 0x27 && ctrl_op != 0x2d
+	    && ctrl_op != 0x2e && ctrl_op != 0x2f)
 	  continue;
-	else if (op == 0x2c)
+	else if (ctrl_op == 0x2c)
 	  continue;    /* continue if imm.  */
       }
 
@@ -529,17 +530,17 @@ microblaze_extract_return_value (struct type *type, struct regcache *regcache,
   switch (TYPE_LENGTH (type))
     {
       case 1:	/* return last byte in the register.  */
-	regcache_cooked_read (regcache, MICROBLAZE_RETVAL_REGNUM, buf);
+	regcache->cooked_read (MICROBLAZE_RETVAL_REGNUM, buf);
 	memcpy(valbuf, buf + MICROBLAZE_REGISTER_SIZE - 1, 1);
 	return;
       case 2:	/* return last 2 bytes in register.  */
-	regcache_cooked_read (regcache, MICROBLAZE_RETVAL_REGNUM, buf);
+	regcache->cooked_read (MICROBLAZE_RETVAL_REGNUM, buf);
 	memcpy(valbuf, buf + MICROBLAZE_REGISTER_SIZE - 2, 2);
 	return;
       case 4:	/* for sizes 4 or 8, copy the required length.  */
       case 8:
-	regcache_cooked_read (regcache, MICROBLAZE_RETVAL_REGNUM, buf);
-	regcache_cooked_read (regcache, MICROBLAZE_RETVAL_REGNUM+1, buf+4);
+	regcache->cooked_read (MICROBLAZE_RETVAL_REGNUM, buf);
+	regcache->cooked_read (MICROBLAZE_RETVAL_REGNUM + 1, buf+4);
 	memcpy (valbuf, buf, TYPE_LENGTH (type));
 	return;
       default:
@@ -573,13 +574,13 @@ microblaze_store_return_value (struct type *type, struct regcache *regcache,
     {
        gdb_assert (len == 8);
        memcpy (buf, valbuf, 8);
-       regcache_cooked_write (regcache, MICROBLAZE_RETVAL_REGNUM+1, buf + 4);
+       regcache->cooked_write (MICROBLAZE_RETVAL_REGNUM+1, buf + 4);
     }
   else
     /* ??? Do we need to do any sign-extension here?  */
     memcpy (buf + 4 - len, valbuf, len);
 
-  regcache_cooked_write (regcache, MICROBLAZE_RETVAL_REGNUM, buf);
+  regcache->cooked_write (MICROBLAZE_RETVAL_REGNUM, buf);
 }
 
 static enum return_value_convention
@@ -601,11 +602,6 @@ microblaze_stabs_argument_has_addr (struct gdbarch *gdbarch, struct type *type)
   return (TYPE_LENGTH (type) == 16);
 }
 
-static void
-microblaze_write_pc (struct regcache *regcache, CORE_ADDR pc)
-{
-  regcache_cooked_write_unsigned (regcache, MICROBLAZE_PC_REGNUM, pc);
-}
 
 static int dwarf2_to_reg_map[78] =
 { 0  /* r0  */,   1  /* r1  */,   2  /* r2  */,   3  /* r3  */,  /*  0- 3 */
@@ -703,7 +699,7 @@ microblaze_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     }
 
   /* Allocate space for the new architecture.  */
-  tdep = XNEW (struct gdbarch_tdep);
+  tdep = XCNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
 
   set_gdbarch_long_double_bit (gdbarch, 128);
@@ -738,10 +734,6 @@ microblaze_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_frame_args_skip (gdbarch, 8);
 
-  set_gdbarch_print_insn (gdbarch, print_insn_microblaze);
-
-  set_gdbarch_write_pc (gdbarch, microblaze_write_pc);
-
   set_gdbarch_unwind_pc (gdbarch, microblaze_unwind_pc);
 
   microblaze_register_g_packet_guesses (gdbarch);
@@ -760,9 +752,6 @@ microblaze_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   return gdbarch;
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_microblaze_tdep (void);
 
 void
 _initialize_microblaze_tdep (void)

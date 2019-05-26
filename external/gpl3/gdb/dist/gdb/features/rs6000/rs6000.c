@@ -10,9 +10,9 @@ static void
 initialize_tdesc_rs6000 (void)
 {
   struct target_desc *result = allocate_target_description ();
-  struct tdesc_feature *feature;
-
   set_tdesc_architecture (result, bfd_scan_arch ("rs6000:6000"));
+
+  struct tdesc_feature *feature;
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.power.core");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "int");

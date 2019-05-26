@@ -1,5 +1,5 @@
 /* Internal interfaces for the GNU/Linux specific target code for gdbserver.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,6 +16,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef GDBSERVER_LINUX_LOW_H
+#define GDBSERVER_LINUX_LOW_H
+
 #include "nat/linux-nat.h"
 #include "nat/gdb_thread_db.h"
 #include <signal.h>
@@ -26,6 +29,7 @@
 /* Included for ptrace type definitions.  */
 #include "nat/linux-ptrace.h"
 #include "target/waitstatus.h" /* For enum target_stop_reason.  */
+#include "tracepoint.h"
 
 #define PTRACE_XFER_TYPE long
 
@@ -154,7 +158,7 @@ struct linux_target_ops
   const gdb_byte *(*sw_breakpoint_from_kind) (int kind, int *size);
 
   /* Find the next possible PCs after the current instruction executes.  */
-  VEC (CORE_ADDR) *(*get_next_pcs) (struct regcache *regcache);
+  std::vector<CORE_ADDR> (*get_next_pcs) (struct regcache *regcache);
 
   int decr_pc_after_break;
   int (*breakpoint_at) (CORE_ADDR pc);
@@ -188,10 +192,18 @@ struct linux_target_ops
      allocate it here.  */
   struct arch_process_info * (*new_process) (void);
 
+  /* Hook to call when a process is being deleted.  If extra per-process
+     architecture-specific data is needed, delete it here.  */
+  void (*delete_process) (struct arch_process_info *info);
+
   /* Hook to call when a new thread is detected.
      If extra per-thread architecture-specific data is needed,
      allocate it here.  */
   void (*new_thread) (struct lwp_info *);
+
+  /* Hook to call when a thread is being deleted.  If extra per-thread
+     architecture-specific data is needed, delete it here.  */
+  void (*delete_thread) (struct arch_lwp_info *);
 
   /* Hook to call, if any, when a new fork is attached.  */
   void (*new_fork) (struct process_info *parent, struct process_info *child);
@@ -251,7 +263,7 @@ struct linux_target_ops
 
 extern struct linux_target_ops the_low_target;
 
-#define get_thread_lwp(thr) ((struct lwp_info *) (inferior_target_data (thr)))
+#define get_thread_lwp(thr) ((struct lwp_info *) (thread_target_data (thr)))
 #define get_lwp_thread(lwp) ((lwp)->thread)
 
 /* This struct is recorded in the target_data field of struct thread_info.
@@ -353,12 +365,11 @@ struct lwp_info
      and then processed and cleared in linux_resume_one_lwp.  */
   struct thread_resume *resume;
 
-  /* True if it is known that this lwp is presently collecting a fast
-     tracepoint (it is in the jump pad or in some code that will
-     return to the jump pad.  Normally, we won't care about this, but
-     we will if a signal arrives to this lwp while it is
-     collecting.  */
-  int collecting_fast_tracepoint;
+  /* Information bout this lwp's fast tracepoint collection status (is it
+     currently stopped in the jump pad, and if so, before or at/after the
+     relocated instruction).  Normally, we won't care about this, but we will
+     if a signal arrives to this lwp while it is collecting.  */
+  fast_tpoint_collect_result collecting_fast_tracepoint;
 
   /* If this is non-zero, it points to a chain of signals which need
      to be reported to GDB.  These were deferred because the thread
@@ -374,6 +385,9 @@ struct lwp_info
   /* The thread handle, used for e.g. TLS access.  Only valid if
      THREAD_KNOWN is set.  */
   td_thrhandle_t th;
+
+  /* The pthread_t handle.  */
+  thread_t thread_handle;
 #endif
 
   /* Arch-specific additions.  */
@@ -410,4 +424,14 @@ int thread_db_get_tls_address (struct thread_info *thread, CORE_ADDR offset,
 			       CORE_ADDR load_module, CORE_ADDR *address);
 int thread_db_look_up_one_symbol (const char *name, CORE_ADDR *addrp);
 
+/* Called from linux-low.c when a clone event is detected.  Upon entry,
+   both the clone and the parent should be stopped.  This function does
+   whatever is required have the clone under thread_db's control.  */
+
+void thread_db_notice_clone (struct thread_info *parent_thr, ptid_t child_ptid);
+
+bool thread_db_thread_handle (ptid_t ptid, gdb_byte **handle, int *handle_len);
+
 extern int have_ptrace_getregset;
+
+#endif /* GDBSERVER_LINUX_LOW_H */

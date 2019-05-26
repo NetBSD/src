@@ -1,5 +1,5 @@
 /* Host file transfer support for gdbserver.
-   Copyright (C) 2007-2017 Free Software Foundation, Inc.
+   Copyright (C) 2007-2019 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -22,7 +22,7 @@
    on top of errno.  */
 
 #include "server.h"
-#include "fileio.h"
+#include "common/fileio.h"
 
 void
 hostio_last_error_from_errno (char *buf)

@@ -1,6 +1,6 @@
 /* Definition of objfile flags.
 
-   Copyright (C) 1992-2017 Free Software Foundation, Inc.
+   Copyright (C) 1992-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 /* Defines for the objfile flags field.  Defined in a separate file to
    break circular header dependencies.  */
 
-enum objfile_flag
+enum objfile_flag : unsigned
   {
     /* When an object file has its functions reordered (currently
        Irix-5.2 shared libraries exhibit this behaviour), we will need
@@ -64,6 +64,10 @@ enum objfile_flag
        unrelated to filesystem names.  It can be for example
        "<image in memory>".  */
     OBJF_NOT_FILENAME = 1 << 6,
+
+    /* User requested that we do not read this objfile's symbolic
+       information.  */
+    OBJF_READNEVER = 1 << 7,
   };
 
 DEF_ENUM_FLAGS_TYPE (enum objfile_flag, objfile_flags);

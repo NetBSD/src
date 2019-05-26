@@ -93,6 +93,25 @@ divsf (CGEN_FPU* fpu, SF x, SF y)
 }
 
 static SF
+remsf (CGEN_FPU* fpu, SF x, SF y)
+{
+  sim_fpu op1;
+  sim_fpu op2;
+  sim_fpu ans;
+  unsigned32 res;
+  sim_fpu_status status;
+
+  sim_fpu_32to (&op1, x);
+  sim_fpu_32to (&op2, y);
+  status = sim_fpu_rem (&ans, &op1, &op2);
+  if (status != 0)
+    (*fpu->ops->error) (fpu, status);
+  sim_fpu_to32 (&res, &ans);
+
+  return res;
+}
+
+static SF
 negsf (CGEN_FPU* fpu, SF x)
 {
   sim_fpu op1;
@@ -453,6 +472,25 @@ divdf (CGEN_FPU* fpu, DF x, DF y)
 }
 
 static DF
+remdf (CGEN_FPU* fpu, DF x, DF y)
+{
+  sim_fpu op1;
+  sim_fpu op2;
+  sim_fpu ans;
+  unsigned64 res;
+  sim_fpu_status status;
+
+  sim_fpu_64to (&op1, x);
+  sim_fpu_64to (&op2, y);
+  status = sim_fpu_rem (&ans, &op1, &op2);
+  if (status != 0)
+    (*fpu->ops->error) (fpu, status);
+  sim_fpu_to64(&res, &ans);
+
+  return res;
+}
+
+static DF
 negdf (CGEN_FPU* fpu, DF x)
 {
   sim_fpu op1;
@@ -664,6 +702,7 @@ cgen_init_accurate_fpu (SIM_CPU* cpu, CGEN_FPU* fpu, CGEN_FPU_ERROR_FN* error)
   o->subsf = subsf;
   o->mulsf = mulsf;
   o->divsf = divsf;
+  o->remsf = remsf;
   o->negsf = negsf;
   o->abssf = abssf;
   o->sqrtsf = sqrtsf;
@@ -682,6 +721,7 @@ cgen_init_accurate_fpu (SIM_CPU* cpu, CGEN_FPU* fpu, CGEN_FPU_ERROR_FN* error)
   o->subdf = subdf;
   o->muldf = muldf;
   o->divdf = divdf;
+  o->remdf = remdf;
   o->negdf = negdf;
   o->absdf = absdf;
   o->sqrtdf = sqrtdf;

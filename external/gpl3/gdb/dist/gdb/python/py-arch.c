@@ -1,6 +1,6 @@
 /* Python interface to architecture
 
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,6 @@
 #include "arch-utils.h"
 #include "disasm.h"
 #include "python-internal.h"
-#include "py-ref.h"
 
 typedef struct arch_object_type_object {
   PyObject_HEAD
@@ -97,14 +96,11 @@ archpy_name (PyObject *self, PyObject *args)
 {
   struct gdbarch *gdbarch = NULL;
   const char *name;
-  PyObject *py_name;
 
   ARCHPY_REQUIRE_VALID (self, gdbarch);
 
   name = (gdbarch_bfd_arch_info (gdbarch))->printable_name;
-  py_name = PyString_FromString (name);
-
-  return py_name;
+  return PyString_FromString (name);
 }
 
 /* Implementation of

@@ -1,6 +1,6 @@
 /* General queue data structure for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef QUEUE_H
-#define QUEUE_H
+#ifndef COMMON_QUEUE_H
+#define COMMON_QUEUE_H
 
 /* These macros implement functions and structs for a general queue.
    Macro 'DEFINE_QUEUE_P(TYPEDEF)' is to define the new queue type for
@@ -295,4 +295,4 @@ extern void							\
   queue_ ## TYPE ## _remove_elem (QUEUE (TYPE) *q,		\
 				  QUEUE_ITER (TYPE) *iter);	\
 
-#endif /* QUEUE_H */
+#endif /* COMMON_QUEUE_H */

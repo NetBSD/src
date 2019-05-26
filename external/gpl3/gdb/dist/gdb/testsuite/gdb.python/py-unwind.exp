@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2017 Free Software Foundation, Inc.
+# Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,12 @@ load_lib gdb-python.exp
 
 standard_testfile
 
-if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
+# Stack protection can make the stack look a bit different, breaking the
+# assumptions this test has about its layout.
+
+set flags "additional_flags=-fno-stack-protector"
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} "debug $flags"] } {
     return -1
 }
 
@@ -51,4 +56,5 @@ gdb_test_sequence "where"  "Backtrace restored by unwinder" {
     "\\r\\n#2 .* main \\(.*\\) at"
 }
 
-
+# Check that the Python unwinder frames can be flushed / released.
+gdb_test "flushregs" "Register cache flushed\\." "flush frames"

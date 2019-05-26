@@ -1,6 +1,6 @@
 # cpexprs.exp - C++ expressions tests
 #
-# Copyright 2008-2017 Free Software Foundation, Inc.
+# Copyright 2008-2019 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -407,6 +407,10 @@ add {base::operator int} \
     {int (const base * const)} \
     - \
     -
+add {base::operator fluff const* const*} \
+    {const fluff * const *(const base * const)} \
+    - \
+    -
 
 # Templates
 add {tclass<char>::do_something} \
@@ -745,6 +749,18 @@ gdb_test "p CV_f(CV::i)" " = 43"
 
 gdb_test "p CV_f('cpexprs.cc'::CV::t)" \
     { = {int \(int\)} 0x[0-9a-f]+ <CV_f\(int\)>}
+
+# Make sure conversion operator names are canonicalized and properly
+# "spelled."
+gdb_test "p base::operator const fluff * const *" \
+    [get "base::operator fluff const* const*" print] \
+    "canonicalized conversion operator name 1"
+gdb_test "p base::operator const fluff* const*" \
+    [get "base::operator fluff const* const*" print] \
+    "canonicalized conversion operator name 2"
+gdb_test "p base::operator derived*" \
+    "There is no field named operator derived\\*" \
+    "undefined conversion operator"
 
 gdb_exit
 return 0

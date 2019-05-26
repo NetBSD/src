@@ -1,6 +1,6 @@
 /* General utility routines for GDB/Scheme code.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -79,13 +79,11 @@ void
 gdbscm_printf (SCM port, const char *format, ...)
 {
   va_list args;
-  char *string;
 
   va_start (args, format);
-  string = xstrvprintf (format, args);
+  std::string string = string_vprintf (format, args);
   va_end (args);
-  scm_puts (string, port);
-  xfree (string);
+  scm_puts (string.c_str (), port);
 }
 
 /* Utility for calling from gdb to "display" an SCM object.  */
@@ -205,7 +203,7 @@ extract_arg (char format_char, SCM arg, void *argp,
 
 	CHECK_TYPE (gdbscm_is_true (scm_string_p (arg)), arg, position,
 		    func_name, _("string"));
-	*arg_ptr = gdbscm_scm_to_c_string (arg);
+	*arg_ptr = gdbscm_scm_to_c_string (arg).release ();
 	break;
       }
     case 't':
@@ -306,6 +304,159 @@ lookup_keyword (const SCM *keyword_list, SCM keyword)
   return -1;
 }
 
+
+/* Helper for gdbscm_parse_function_args that does most of the work,
+   in a separate function wrapped with gdbscm_wrap so that we can use
+   non-trivial-dtor objects here.  The result is #f upon success or a
+   <gdb:exception> object otherwise.  */
+
+static SCM
+gdbscm_parse_function_args_1 (const char *func_name,
+			      int beginning_arg_pos,
+			      const SCM *keywords,
+			      const char *format, va_list args)
+{
+  const char *p;
+  int i, have_rest, num_keywords, position;
+  int have_optional = 0;
+  SCM status;
+  SCM rest = SCM_EOL;
+  /* Keep track of malloc'd strings.  We need to free them upon error.  */
+  std::vector<char *> allocated_strings;
+
+  have_rest = validate_arg_format (format);
+  num_keywords = count_keywords (keywords);
+
+  p = format;
+  position = beginning_arg_pos;
+
+  /* Process required, optional arguments.  */
+
+  while (*p && *p != '#' && *p != '.')
+    {
+      SCM arg;
+      void *arg_ptr;
+
+      if (*p == '|')
+	{
+	  have_optional = 1;
+	  ++p;
+	  continue;
+	}
+
+      arg = va_arg (args, SCM);
+      if (!have_optional || !SCM_UNBNDP (arg))
+	{
+	  arg_ptr = va_arg (args, void *);
+	  status = extract_arg (*p, arg, arg_ptr, func_name, position);
+	  if (!gdbscm_is_false (status))
+	    goto fail;
+	  if (*p == 's')
+	    allocated_strings.push_back (*(char **) arg_ptr);
+	}
+      ++p;
+      ++position;
+    }
+
+  /* Process keyword arguments.  */
+
+  if (have_rest || num_keywords > 0)
+    rest = va_arg (args, SCM);
+
+  if (num_keywords > 0)
+    {
+      SCM *keyword_args = XALLOCAVEC (SCM, num_keywords);
+      int *keyword_positions = XALLOCAVEC (int, num_keywords);
+
+      gdb_assert (*p == '#');
+      ++p;
+
+      for (i = 0; i < num_keywords; ++i)
+	{
+	  keyword_args[i] = SCM_UNSPECIFIED;
+	  keyword_positions[i] = -1;
+	}
+
+      while (scm_is_pair (rest)
+	     && scm_is_keyword (scm_car (rest)))
+	{
+	  SCM keyword = scm_car (rest);
+
+	  i = lookup_keyword (keywords, keyword);
+	  if (i < 0)
+	    {
+	      status = gdbscm_make_error (scm_arg_type_key, func_name,
+					  _("Unrecognized keyword: ~a"),
+					  scm_list_1 (keyword), keyword);
+	      goto fail;
+	    }
+	  if (!scm_is_pair (scm_cdr (rest)))
+	    {
+	      status = gdbscm_make_error
+		(scm_arg_type_key, func_name,
+		 _("Missing value for keyword argument"),
+		 scm_list_1 (keyword), keyword);
+	      goto fail;
+	    }
+	  keyword_args[i] = scm_cadr (rest);
+	  keyword_positions[i] = position + 1;
+	  rest = scm_cddr (rest);
+	  position += 2;
+	}
+
+      for (i = 0; i < num_keywords; ++i)
+	{
+	  int *arg_pos_ptr = va_arg (args, int *);
+	  void *arg_ptr = va_arg (args, void *);
+	  SCM arg = keyword_args[i];
+
+	  if (! scm_is_eq (arg, SCM_UNSPECIFIED))
+	    {
+	      *arg_pos_ptr = keyword_positions[i];
+	      status = extract_arg (p[i], arg, arg_ptr, func_name,
+				    keyword_positions[i]);
+	      if (!gdbscm_is_false (status))
+		goto fail;
+	      if (p[i] == 's')
+		allocated_strings.push_back (*(char **) arg_ptr);
+	    }
+	}
+    }
+
+  /* Process "rest" arguments.  */
+
+  if (have_rest)
+    {
+      if (num_keywords > 0)
+	{
+	  SCM *rest_ptr = va_arg (args, SCM *);
+
+	  *rest_ptr = rest;
+	}
+    }
+  else
+    {
+      if (! scm_is_null (rest))
+	{
+	  status = gdbscm_make_error (scm_args_number_key, func_name,
+				      _("Too many arguments"),
+				      SCM_EOL, SCM_BOOL_F);
+	  goto fail;
+	}
+    }
+
+  /* Return anything not-an-exception.  */
+  return SCM_BOOL_F;
+
+ fail:
+  for (char *ptr : allocated_strings)
+    xfree (ptr);
+
+  /* Return the exception, which gdbscm_wrap takes care of
+     throwing.  */
+  return status;
+}
+
 /* Utility to parse required, optional, and keyword arguments to Scheme
    functions.  Modelled on PyArg_ParseTupleAndKeywords, but no attempt is made
    at similarity or functionality.
@@ -380,152 +531,14 @@ gdbscm_parse_function_args (const char *func_name,
 			    const char *format, ...)
 {
   va_list args;
-  const char *p;
-  int i, have_rest, num_keywords, length, position;
-  int have_optional = 0;
-  SCM status;
-  SCM rest = SCM_EOL;
-  /* Keep track of malloc'd strings.  We need to free them upon error.  */
-  VEC (char_ptr) *allocated_strings = NULL;
-  char *ptr;
-
-  have_rest = validate_arg_format (format);
-  num_keywords = count_keywords (keywords);
-
   va_start (args, format);
 
-  p = format;
-  position = beginning_arg_pos;
-
-  /* Process required, optional arguments.  */
-
-  while (*p && *p != '#' && *p != '.')
-    {
-      SCM arg;
-      void *arg_ptr;
-
-      if (*p == '|')
-	{
-	  have_optional = 1;
-	  ++p;
-	  continue;
-	}
-
-      arg = va_arg (args, SCM);
-      if (!have_optional || !SCM_UNBNDP (arg))
-	{
-	  arg_ptr = va_arg (args, void *);
-	  status = extract_arg (*p, arg, arg_ptr, func_name, position);
-	  if (!gdbscm_is_false (status))
-	    goto fail;
-	  if (*p == 's')
-	    VEC_safe_push (char_ptr, allocated_strings, *(char **) arg_ptr);
-	}
-      ++p;
-      ++position;
-    }
-
-  /* Process keyword arguments.  */
-
-  if (have_rest || num_keywords > 0)
-    rest = va_arg (args, SCM);
-
-  if (num_keywords > 0)
-    {
-      SCM *keyword_args = XALLOCAVEC (SCM, num_keywords);
-      int *keyword_positions = XALLOCAVEC (int, num_keywords);
-
-      gdb_assert (*p == '#');
-      ++p;
-
-      for (i = 0; i < num_keywords; ++i)
-	{
-	  keyword_args[i] = SCM_UNSPECIFIED;
-	  keyword_positions[i] = -1;
-	}
-
-      while (scm_is_pair (rest)
-	     && scm_is_keyword (scm_car (rest)))
-	{
-	  SCM keyword = scm_car (rest);
-
-	  i = lookup_keyword (keywords, keyword);
-	  if (i < 0)
-	    {
-	      status = gdbscm_make_error (scm_arg_type_key, func_name,
-					  _("Unrecognized keyword: ~a"),
-					  scm_list_1 (keyword), keyword);
-	      goto fail;
-	    }
-	  if (!scm_is_pair (scm_cdr (rest)))
-	    {
-	      status = gdbscm_make_error
-		(scm_arg_type_key, func_name,
-		 _("Missing value for keyword argument"),
-		 scm_list_1 (keyword), keyword);
-	      goto fail;
-	    }
-	  keyword_args[i] = scm_cadr (rest);
-	  keyword_positions[i] = position + 1;
-	  rest = scm_cddr (rest);
-	  position += 2;
-	}
-
-      for (i = 0; i < num_keywords; ++i)
-	{
-	  int *arg_pos_ptr = va_arg (args, int *);
-	  void *arg_ptr = va_arg (args, void *);
-	  SCM arg = keyword_args[i];
-
-	  if (! scm_is_eq (arg, SCM_UNSPECIFIED))
-	    {
-	      *arg_pos_ptr = keyword_positions[i];
-	      status = extract_arg (p[i], arg, arg_ptr, func_name,
-				    keyword_positions[i]);
-	      if (!gdbscm_is_false (status))
-		goto fail;
-	      if (p[i] == 's')
-		{
-		  VEC_safe_push (char_ptr, allocated_strings,
-				 *(char **) arg_ptr);
-		}
-	    }
-	}
-    }
-
-  /* Process "rest" arguments.  */
-
-  if (have_rest)
-    {
-      if (num_keywords > 0)
-	{
-	  SCM *rest_ptr = va_arg (args, SCM *);
-
-	  *rest_ptr = rest;
-	}
-    }
-  else
-    {
-      if (! scm_is_null (rest))
-	{
-	  status = gdbscm_make_error (scm_args_number_key, func_name,
-				      _("Too many arguments"),
-				      SCM_EOL, SCM_BOOL_F);
-	  goto fail;
-	}
-    }
+  gdbscm_wrap (gdbscm_parse_function_args_1, func_name,
+	       beginning_arg_pos, keywords, format, args);
 
   va_end (args);
-  VEC_free (char_ptr, allocated_strings);
-  return;
-
- fail:
-  va_end (args);
-  for (i = 0; VEC_iterate (char_ptr, allocated_strings, i, ptr); ++i)
-    xfree (ptr);
-  VEC_free (char_ptr, allocated_strings);
-  gdbscm_throw (status);
 }
+
 
 /* Return longest L as a scheme object.  */
 

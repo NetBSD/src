@@ -27,7 +27,7 @@
 
 
 # Specification in the form of a command-line invocation:
-#   gnulib-tool --import --lib=libgnu --source-base=import --m4-base=import/m4 --doc-base=doc --tests-base=tests --aux-dir=import/extra --no-conditional-dependencies --no-libtool --macro-prefix=gl --no-vc-files alloca canonicalize-lgpl dirent dirfd errno fnmatch-gnu frexpl inttypes limits-h lstat memchr memmem pathmax rawmemchr readlink rename signal-h strchrnul strstr strtok_r sys_stat unistd update-copyright wchar wctype-h
+#   gnulib-tool --import --lib=libgnu --source-base=import --m4-base=import/m4 --doc-base=doc --tests-base=tests --aux-dir=import/extra --no-conditional-dependencies --no-libtool --macro-prefix=gl --no-vc-files alloca canonicalize-lgpl dirent dirfd errno fnmatch-gnu frexpl getcwd glob inet_ntop inttypes limits-h lstat memchr memmem mkdir mkdtemp mkostemp pathmax rawmemchr readlink rename setenv signal-h strchrnul strstr strtok_r sys_stat unistd unsetenv update-copyright wchar wctype-h
 
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([])
@@ -39,21 +39,29 @@ gl_MODULES([
   errno
   fnmatch-gnu
   frexpl
+  getcwd
+  glob
+  inet_ntop
   inttypes
   limits-h
   lstat
   memchr
   memmem
+  mkdir
+  mkdtemp
+  mkostemp
   pathmax
   rawmemchr
   readlink
   rename
+  setenv
   signal-h
   strchrnul
   strstr
   strtok_r
   sys_stat
   unistd
+  unsetenv
   update-copyright
   wchar
   wctype-h

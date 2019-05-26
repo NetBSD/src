@@ -1,4 +1,4 @@
-# Copyright 2003-2017 Free Software Foundation, Inc.
+# Copyright 2003-2019 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +45,8 @@ gdb_load ${binfile}
 #
 
 if ![runto_main] then {
-    gdb_suppress_tests
+    fail "can't run to main"
+    return 0
 }
 
 # set all the registers integer portions to 1
@@ -59,17 +60,7 @@ for {set i 0} {$i < 32} {incr i 1} {
 
 #gdb_test "next" "" ""
 
-send_gdb "show endian\n"
-gdb_expect {
-    -re "(The target endianness is set automatically .currently )(big|little)( endian.*)$gdb_prompt $" {
-        pass "endianness"
-	set endianness $expect_out(2,string)
-    }
-    -re ".*$gdb_prompt $" {
-	fail "couldn't get endianness"
-    }
-    timeout		{ fail "(timeout) endianness" }
-}
+set endianness [get_endianness]
 
 # And then read the E500 registers back, to see that
 # a) the register write above worked, and
@@ -155,7 +146,8 @@ gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
 if ![runto_main] then {
-    gdb_suppress_tests
+    fail "can't run to main"
+    return 0
 }
 
 gdb_test "break vector_fun" \

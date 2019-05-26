@@ -1,5 +1,5 @@
 /* Thread command's finish-state machine, for GDB, the GNU debugger.
-   Copyright (C) 2015-2017 Free Software Foundation, Inc.
+   Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,34 +30,24 @@ struct thread_fsm_ops;
 
 struct thread_fsm
 {
-  /* Pointer of the virtual table of methods.  */
-  struct thread_fsm_ops *ops;
+  explicit thread_fsm (struct interp *cmd_interp)
+    : command_interp (cmd_interp)
+  {
+  }
 
-  /* Whether the FSM is done successfully.  */
-  int finished;
-
-  /* The interpreter that issued the execution command that caused
-     this thread to resume.  If the top level interpreter is MI/async,
-     and the execution command was a CLI command (next/step/etc.),
-     we'll want to print stop event output to the MI console channel
-     (the stepped-to line, etc.), as if the user entered the execution
-     command on a real GDB console.  */
-  struct interp *command_interp;
-};
-
-/* The virtual table of a thread_fsm.  */
-
-struct thread_fsm_ops
-{
   /* The destructor.  This should simply free heap allocated data
      structures.  Cleaning up target resources (like, e.g.,
      breakpoints) should be done in the clean_up method.  */
-  void (*dtor) (struct thread_fsm *self);
+  virtual ~thread_fsm () = default;
+
+  DISABLE_COPY_AND_ASSIGN (thread_fsm);
 
   /* Called to clean up target resources after the FSM.  E.g., if the
      FSM created internal breakpoints, this is where they should be
      deleted.  */
-  void (*clean_up) (struct thread_fsm *self, struct thread_info *thread);
+  virtual void clean_up (struct thread_info *thread)
+  {
+  }
 
   /* Called after handle_inferior_event decides the target is done
      (that is, after stop_waiting).  The FSM is given a chance to
@@ -66,50 +56,58 @@ struct thread_fsm_ops
      should be re-resumed.  This is a good place to cache target data
      too.  For example, the "finish" command saves the just-finished
      function's return value here.  */
-  int (*should_stop) (struct thread_fsm *self, struct thread_info *thread);
+  virtual bool should_stop (struct thread_info *thread) = 0;
 
   /* If this FSM saved a function's return value, you can use this
      method to retrieve it.  Otherwise, this returns NULL.  */
-  struct return_value_info *(*return_value) (struct thread_fsm *self);
+  virtual struct return_value_info *return_value ()
+  {
+    return nullptr;
+  }
+
+  enum async_reply_reason async_reply_reason ()
+  {
+    /* If we didn't finish, then the stop reason must come from
+       elsewhere.  E.g., a breakpoint hit or a signal intercepted.  */
+    gdb_assert (finished_p ());
+    return do_async_reply_reason ();
+  }
+
+  /* Whether the stop should be notified to the user/frontend.  */
+  virtual bool should_notify_stop ()
+  {
+    return true;
+  }
+
+  void set_finished ()
+  {
+    finished = true;
+  }
+
+  bool finished_p () const
+  {
+    return finished;
+  }
+
+  /* The interpreter that issued the execution command that caused
+     this thread to resume.  If the top level interpreter is MI/async,
+     and the execution command was a CLI command (next/step/etc.),
+     we'll want to print stop event output to the MI console channel
+     (the stepped-to line, etc.), as if the user entered the execution
+     command on a real GDB console.  */
+  struct interp *command_interp = nullptr;
+
+protected:
+
+  /* Whether the FSM is done successfully.  */
+  bool finished = false;
 
   /* The async_reply_reason that is broadcast to MI clients if this
      FSM finishes successfully.  */
-  enum async_reply_reason (*async_reply_reason) (struct thread_fsm *self);
-
-  /* Whether the stop should be notified to the user/frontend.  */
-  int (*should_notify_stop) (struct thread_fsm *self);
+  virtual enum async_reply_reason do_async_reply_reason ()
+  {
+    gdb_assert_not_reached (_("should not call async_reply_reason here"));
+  }
 };
-/* Initialize FSM.  */
-extern void thread_fsm_ctor (struct thread_fsm *self,
-			     struct thread_fsm_ops *ops,
-			     struct interp *cmd_interp);
-
-/* Calls the FSM's dtor method, and then frees FSM.  */
-extern void thread_fsm_delete (struct thread_fsm *fsm);
-
-/* Calls the FSM's clean_up method.  */
-extern void thread_fsm_clean_up (struct thread_fsm *fsm,
-				 struct thread_info *thread);
-
-/* Calls the FSM's should_stop method.  */
-extern int thread_fsm_should_stop (struct thread_fsm *fsm,
-				   struct thread_info *thread);
-
-/* Calls the FSM's return_value method.  */
-extern struct return_value_info *
-  thread_fsm_return_value (struct thread_fsm *fsm);
-
-/* Marks the FSM as completed successfully.  */
-extern void thread_fsm_set_finished (struct thread_fsm *fsm);
-
-/* Returns true if the FSM completed successfully.  */
-extern int thread_fsm_finished_p (struct thread_fsm *fsm);
-
-/* Calls the FSM's reply_reason method.  */
-extern enum async_reply_reason
-  thread_fsm_async_reply_reason (struct thread_fsm *fsm);
-
-/* Calls the FSM's should_notify_stop method.  */
-extern int thread_fsm_should_notify_stop (struct thread_fsm *self);
 
 #endif /* THREAD_FSM_H */

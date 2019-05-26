@@ -1,6 +1,6 @@
 /* Fortran language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2017 Free Software Foundation, Inc.
+   Copyright (C) 1992-2019 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C definitions by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -20,12 +20,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef F_LANG_H
+#define F_LANG_H
+
 struct type_print_options;
 struct parser_state;
 
 extern int f_parse (struct parser_state *);
-
-extern void f_yyerror (const char *);	/* Defined in f-exp.y */
 
 extern void f_print_type (struct type *, const char *, struct ui_file *, int,
 			  int, const struct type_print_options *);
@@ -81,3 +82,4 @@ struct builtin_f_type
 /* Return the Fortran type table for the specified architecture.  */
 extern const struct builtin_f_type *builtin_f_type (struct gdbarch *gdbarch);
 
+#endif /* F_LANG_H */

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1998-2017 Free Software Foundation, Inc.
+# Copyright 1998-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -86,3 +86,11 @@ set prev_timeout $timeout
 set timeout 30
 restore_tests
 set timeout $prev_timeout
+
+# Test PR cli/23785
+clean_restart $binfile
+if { ![runto_main] } {
+    return -1
+}
+gdb_test "restore non-existent-file binary" \
+    "Failed to open non-existent-file: .*"

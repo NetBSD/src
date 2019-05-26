@@ -1,4 +1,4 @@
-# Copyright 2013-2017 Free Software Foundation, Inc.
+# Copyright 2013-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -194,8 +194,8 @@ gdb_test_sequence "bt" "bt (1)" {
 # Update global variables 'global1' and 'global2' and test that the
 # entry values are updated too.
 
-gdb_test_no_output "set var global1=10"
-gdb_test_no_output "set var global2=11"
+gdb_test_no_output "set var *(int *) &global1=10"
+gdb_test_no_output "set var *(int *) &global2=11"
 
 gdb_test_sequence "bt" "bt (2)" {
     "\[\r\n\]#0 .* foo \\(i=[-]?[0-9]+, i@entry=10, j=[-]?[0-9]+, j@entry=11\\)"
@@ -226,7 +226,7 @@ gdb_test "trace foo" "Tracepoint $decimal at .*"
 # argument j.
 
 gdb_trace_setactions "set action for tracepoint 1" "" \
-    "collect i, j, global1, \(\*\(void \*\*\) \(\$$spreg\)\) @ 128" "^$"
+    "collect i, j, (int) global1, \(\*\(void \*\*\) \(\$$spreg\)\) @ 128" "^$"
 
 gdb_test_no_output "tstart"
 

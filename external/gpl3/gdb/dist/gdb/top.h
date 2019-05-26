@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,8 +20,9 @@
 #ifndef TOP_H
 #define TOP_H
 
-#include "buffer.h"
+#include "common/buffer.h"
 #include "event-loop.h"
+#include "value.h"
 
 struct tl_interp_info;
 
@@ -54,6 +55,12 @@ enum prompt_state
 
 struct ui
 {
+  /* Create a new UI.  */
+  ui (FILE *instream, FILE *outstream, FILE *errstream);
+  ~ui ();
+
+  DISABLE_COPY_AND_ASSIGN (ui);
+
   /* Pointer to next in singly-linked list.  */
   struct ui *next;
 
@@ -74,7 +81,7 @@ struct ui
 
   /* The function to invoke when a complete line of input is ready for
      processing.  */
-  void (*input_handler) (char *);
+  void (*input_handler) (gdb::unique_xmalloc_ptr<char> &&);
 
   /* True if this UI is using the readline library for command
      editing; false if using GDB's own simple readline emulation, with
@@ -203,13 +210,6 @@ public:
 #define ALL_UIS(UI)				\
   for (UI = ui_list; UI; UI = UI->next)		\
 
-/* Create a new UI.  */
-extern struct ui *new_ui (FILE *instream, FILE *outstream, FILE *errstream);
-extern void delete_ui (struct ui *todel);
-
-/* Cleanup that deletes a UI.  */
-extern struct cleanup *make_delete_ui_cleanup (struct ui *ui);
-
 /* Register the UI's input file descriptor in the event loop.  */
 extern void ui_register_input_event_handler (struct ui *ui);
 
@@ -218,13 +218,17 @@ extern void ui_unregister_input_event_handler (struct ui *ui);
 
 /* From top.c.  */
 extern char *saved_command_line;
-extern int in_user_command;
 extern int confirm;
-extern char gdb_dirbuf[1024];
 extern int inhibit_gdbinit;
 extern const char gdbinit[];
 
-extern void print_gdb_version (struct ui_file *);
+/* Print the GDB version banner to STREAM.  If INTERACTIVE is false,
+   then information referring to commands (e.g., "show configuration")
+   is omitted; this mode is used for the --version command line
+   option.  If INTERACTIVE is true, then interactive commands are
+   mentioned.  */
+extern void print_gdb_version (struct ui_file *stream, bool interactive);
+
 extern void print_gdb_configuration (struct ui_file *);
 
 extern void read_command_file (FILE *);
@@ -232,9 +236,9 @@ extern void init_history (void);
 extern void command_loop (void);
 extern int quit_confirm (void);
 extern void quit_force (int *, int);
-extern void quit_command (char *, int);
+extern void quit_command (const char *, int);
 extern void quit_cover (void);
-extern void execute_command (char *, int);
+extern void execute_command (const char *, int);
 
 /* If the interpreter is in sync mode (we're running a user command's
    list, running command hooks or similars), and we just ran a
@@ -252,7 +256,7 @@ extern void check_frame_language_change (void);
 /* Prepare for execution of a command.
    Call this before every command, CLI or MI.
    Returns a cleanup to be run after the command is completed.  */
-extern struct cleanup *prepare_execute_command (void);
+extern scoped_value_mark prepare_execute_command (void);
 
 /* This function returns a pointer to the string that is used
    by gdb for its command prompt.  */
@@ -269,6 +273,7 @@ extern int gdb_in_secondary_prompt_p (struct ui *ui);
 
 /* From random places.  */
 extern int readnow_symbol_files;
+extern int readnever_symbol_files;
 
 /* Perform _initialize initialization.  */
 extern void gdb_init (char *);
@@ -276,25 +281,23 @@ extern void gdb_init (char *);
 /* For use by event-top.c.  */
 /* Variables from top.c.  */
 extern int source_line_number;
-extern const char *source_file_name;
+extern std::string source_file_name;
 extern int history_expansion_p;
 extern int server_command;
 extern char *lim_at_start;
 
 extern void gdb_add_history (const char *);
 
-extern void show_commands (char *args, int from_tty);
+extern void show_commands (const char *args, int from_tty);
 
-extern void set_history (char *, int);
+extern void set_history (const char *, int);
 
-extern void show_history (char *, int);
+extern void show_history (const char *, int);
 
-extern void set_verbose (char *, int, struct cmd_list_element *);
-
-extern void do_restore_instream_cleanup (void *stream);
+extern void set_verbose (const char *, int, struct cmd_list_element *);
 
 extern char *handle_line_of_input (struct buffer *cmd_line_buffer,
-				   char *rl, int repeat,
+				   const char *rl, int repeat,
 				   const char *annotation_suffix);
 
 #endif

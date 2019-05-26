@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Free Software Foundation, Inc.
+# Copyright 2012-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,8 +96,13 @@ proc do_test {lang} {
     }
 
     # Some commonly used whitespace tests around ':'.
-    set spaces [list ":" ": " " :" " : " "\t:  " "  :\t" "\t:\t" \
-		     " \t:\t " "\t  \t:\t  \t  \t"]
+    set spaces [list \
+		    ":" \
+		    ": " \
+		    " :" \
+		    " : " \
+		    "  :  " \
+		   ]
 
     # A list of invalid offsets.
     set invalid_offsets [list -100 +500 1000]
@@ -112,10 +117,10 @@ proc do_test {lang} {
     foreach x $invalid_offsets {
 	set offset $x
 
-	# Relative offsets are relative to line 16.  Adjust
+	# Relative offsets are relative to the current line.  Adjust
 	# expected offset from error message accordingly.
 	if {[string index $x 0] == "+" || [string index $x 0] == "-"} {
-	    incr offset 24
+	    incr offset $bp_location
 	}
 	test_break $x invalid_offset $offset
 	test_break "-line $x" invalid_offset $offset
@@ -167,11 +172,14 @@ proc do_test {lang} {
 	test_break "-source $x -line 3" invalid_file [string trim $x \"']
     }
 
-    # Test that option lexing stops at whitespace boundaries
-    test_break "-source this file has spaces.c -line 3" invalid_file "this"
-    test_break "-function function whitespace" invalid_function "function"
-    test_break "-source $srcfile -function function whitespace" \
-	       invalid_function_f "function" $srcfile
+    # Test that option lexing stops at whitespace boundaries, except
+    # when lexing function names, where we want to handle setting
+    # breakpoints on e.g., "int template_function<int>()".
+    test_break "-source this file has spaces.c -line 3" source_incomplete
+    test_break "-function ret_type tmpl_function" \
+	invalid_function "ret_type tmpl_function"
+    test_break "-source $srcfile -function ret_type tmpl_function" \
+	       invalid_function_f "ret_type tmpl_function" $srcfile
 
     test_break "-function main -label label whitespace" \
 	       invalid_label "label" "main"
@@ -232,7 +240,12 @@ proc do_test {lang} {
     foreach x {"3" "+100" "-100" "foo"} {
 	test_break "main 3" invalid_function "main 3"
 	test_break "-function \"main $x\"" invalid_function "main $x"
-	test_break "main:here $x" invalid_label "here $x" "main"
+	if {$x == "foo"} {
+	    test_break "main:here $x" unexpected_opt "string" $x
+	} else {
+	    test_break "main:here $x" unexpected_opt "number" $x
+	}
+
 	test_break "-function main -label \"here $x\"" \
 		   invalid_label "here $x" "main"
     }
@@ -254,6 +267,7 @@ proc do_test {lang} {
 
     # Explicit linespec-specific tests
     test_break "-source $srcfile" source_incomplete
+    test_break "-source $srcfile main" source_incomplete
 }
 
 foreach_with_prefix lang {"C" "C++"} {

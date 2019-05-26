@@ -1,5 +1,5 @@
 /* GDB stub for Itanium OpenVMS
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    Contributed by Tristan Gingold, AdaCore.
 
@@ -56,7 +56,6 @@
 #include <builtins.h>
 #include <prtdef.h>
 #include <psldef.h>
-#include <ssdef.h>
 #include <chfdef.h>
 
 #include <lib_c/imcbdef.h>

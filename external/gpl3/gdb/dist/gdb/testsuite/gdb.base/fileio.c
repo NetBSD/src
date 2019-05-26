@@ -74,10 +74,14 @@ static const char *strerrno (int err);
 
 #define STRING      "Hello World"
 
-static void stop () {}
+static void stop (void) {}
 
-int
-test_open ()
+/* A NULL string.  We pass this to stat below instead of a NULL
+   literal to avoid -Wnonnull warnings.  */
+const char *null_str;
+
+void
+test_open (void)
 {
   int ret;
 
@@ -136,8 +140,8 @@ test_open ()
   stop ();
 }
 
-int
-test_write ()
+void
+test_write (void)
 {
   int fd, ret;
 
@@ -153,7 +157,7 @@ test_write ()
       close (fd);
     }
   else
-    printf ("write 1: ret = %d, errno = %d\n", ret, errno);
+    printf ("write 1: errno = %d\n", errno);
   stop ();
   /* Write using invalid file descriptor */
   errno = 0;
@@ -173,12 +177,12 @@ test_write ()
       close (fd);
     }
   else
-    printf ("write 3: ret = %d, errno = %d\n", ret, errno);
+    printf ("write 3: errno = %d\n", errno);
   stop ();
 }
 
-int
-test_read ()
+void
+test_read (void)
 {
   int fd, ret;
   char buf[16];
@@ -199,7 +203,7 @@ test_read ()
       close (fd);
     }
   else
-    printf ("read 1: ret = %d, errno = %d\n", ret, errno);
+    printf ("read 1: errno = %d\n", errno);
   stop ();
   /* Read using invalid file descriptor */
   errno = 0;
@@ -209,8 +213,8 @@ test_read ()
   stop ();
 }
 
-int
-test_lseek ()
+void
+test_lseek (void)
 {
   int fd;
   off_t ret = 0;
@@ -251,8 +255,8 @@ test_lseek ()
   stop ();
 }
 
-int
-test_close ()
+void
+test_close (void)
 {
   int fd, ret;
 
@@ -267,7 +271,7 @@ test_close ()
               ret == 0 ? "OK" : "");
     }
   else
-    printf ("close 1: ret = %d, errno = %d\n", ret, errno);
+    printf ("close 1: errno = %d\n", errno);
   stop ();
   /* Close an invalid file descriptor */
   errno = 0;
@@ -277,8 +281,8 @@ test_close ()
   stop ();
 }
 
-int
-test_stat ()
+void
+test_stat (void)
 {
   int ret;
   struct stat st;
@@ -294,7 +298,7 @@ test_stat ()
   stop ();
   /* NULL pathname */
   errno = 0;
-  ret = stat (NULL, &st);
+  ret = stat (null_str, &st);
   printf ("stat 2: ret = %d, errno = %d %s\n", ret, errno,
   	  strerrno (errno));
   stop ();
@@ -312,8 +316,8 @@ test_stat ()
   stop ();
 }
 
-int
-test_fstat ()
+void
+test_fstat (void)
 {
   int fd, ret;
   struct stat st;
@@ -333,7 +337,7 @@ test_fstat ()
       close (fd);
     }
   else
-    printf ("fstat 1: ret = %d, errno = %d\n", ret, errno);
+    printf ("fstat 1: errno = %d\n", errno);
   stop ();
   /* Fstat using invalid file descriptor */
   errno = 0;
@@ -343,8 +347,8 @@ test_fstat ()
   stop ();
 }
 
-int
-test_isatty ()
+void
+test_isatty (void)
 {
   int fd;
 
@@ -373,8 +377,8 @@ test_isatty ()
 
 char sys[1512];
 
-int
-test_system ()
+void
+test_system (void)
 {
   /*
    * Requires test framework to switch on "set remote system-call-allowed 1"
@@ -405,8 +409,8 @@ test_system ()
   stop ();
 }
 
-int
-test_rename ()
+void
+test_rename (void)
 {
   int ret;
   struct stat st;
@@ -460,8 +464,8 @@ test_rename ()
 
 char name[1256];
 
-int
-test_unlink ()
+void
+test_unlink (void)
 {
   int ret;
 
@@ -500,8 +504,8 @@ test_unlink ()
   stop ();
 }
 
-int
-test_time ()
+void
+test_time (void)
 {
   time_t ret, t;
 

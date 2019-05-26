@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Free Software Foundation, Inc.
+# Copyright 2012-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 # really tests is that GDB falls back to in-line stepping
 # automatically instead of getting stuck or crashing.
 
+load_lib valgrind.exp
+
 if [is_remote target] {
     # The test always runs locally.
     return 0
@@ -28,74 +30,9 @@ if {[build_executable "failed to build" $testfile $srcfile {debug}] == -1} {
     return -1
 }
 
-set test "spawn valgrind"
-set cmd "valgrind --vgdb-error=0 $binfile"
-set res [remote_spawn host $cmd]
-if { $res < 0 || $res == "" } {
-    verbose -log "Spawning $cmd failed."
-    unsupported $test
+if { [vgdb_start] == -1 } {
     return -1
 }
-pass $test
-# Declare GDB now as running.
-set gdb_spawn_id $res
-
-# GDB started by vgdb stops already after the startup is executed, like with
-# non-extended gdbserver.  It is also not correct to run/attach the inferior.
-set use_gdb_stub 1
-
-set test "valgrind started"
-# The trailing '.' differs for different memcheck versions.
-gdb_test_multiple "" $test {
-    -re "Memcheck, a memory error detector\\.?\r\n" {
-	pass $test
-    }
-    -re "valgrind: failed to start tool 'memcheck' for platform '.*': No such file or directory" {
-	unsupported $test
-	return -1
-    }
-    -re "valgrind: wrong ELF executable class" {
-	unsupported $test
-	return -1
-    }
-    -re "command not found" {
-	# The spawn succeeded, but then valgrind was not found - e.g. if
-	# we spawned SSH to a remote system.
-	unsupported $test
-	return -1
-    }
-    -re "valgrind: Bad option.*--vgdb-error=0" {
-	# valgrind is not >= 3.7.0.
-	unsupported $test
-	return -1
-    }
-}
-
-set test "vgdb prompt"
-# The trailing '.' differs for different memcheck versions.
-gdb_test_multiple "" $test {
-    -re "  (target remote | \[^\r\n\]*/vgdb \[^\r\n\]*)\r\n" {
-	set vgdbcmd $expect_out(1,string)
-	pass $test
-    }
-}
-
-# Do not kill valgrind.
-set valgrind_pid [exp_pid -i [board_info host fileid]]
-unset gdb_spawn_id
-set board [host_info name]
-unset_board_info fileid
-
-clean_restart $testfile
-
-# Make sure we're disconnected, in case we're testing with the
-# native-extended-gdbserver board, where gdb_start/gdb_load spawn
-# gdbserver and connect to it.
-gdb_test "disconnect" ".*"
-
-gdb_test "$vgdbcmd" " in \\.?_start .*" "target remote for vgdb"
-
-gdb_test "monitor v.set gdb_output" "valgrind output will go to gdb.*"
 
 gdb_test_no_output "set displaced-stepping off"
 gdb_breakpoint "main" "breakpoint at main"
@@ -132,5 +69,4 @@ foreach displaced { "off" "on" } {
     }
 }
 
-# Only if valgrind got stuck.
-remote_exec host "kill -9 ${valgrind_pid}"
+vgdb_stop

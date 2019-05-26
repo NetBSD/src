@@ -1,5 +1,5 @@
 /* BFD back-end for TMS320C30 a.out binaries.
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -21,10 +21,10 @@
 
 #define TARGET_IS_BIG_ENDIAN_P
 #define N_HEADER_IN_TEXT(x)	1
-#define TEXT_START_ADDR 	1024
-#define TARGET_PAGE_SIZE 	128
-#define SEGMENT_SIZE   		TARGET_PAGE_SIZE
-#define DEFAULT_ARCH 		bfd_arch_tic30
+#define TEXT_START_ADDR		1024
+#define TARGET_PAGE_SIZE	128
+#define SEGMENT_SIZE		TARGET_PAGE_SIZE
+#define DEFAULT_ARCH		bfd_arch_tic30
 #define ARCH_SIZE 32
 
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
@@ -43,11 +43,11 @@
 
 #define MY_reloc_howto(BFD, REL, IN, EX, PC)   tic30_aout_reloc_howto (BFD, REL, & IN, & EX, & PC)
 
-#define MY_final_link_relocate    tic30_aout_final_link_relocate
-#define MY_object_p               tic30_aout_object_p
-#define MY_mkobject               NAME (aout,mkobject)
+#define MY_final_link_relocate	  tic30_aout_final_link_relocate
+#define MY_object_p		  tic30_aout_object_p
+#define MY_mkobject		  NAME (aout,mkobject)
 #define MY_write_object_contents  tic30_aout_write_object_contents
-#define MY_set_sizes              tic30_aout_set_sizes
+#define MY_set_sizes		  tic30_aout_set_sizes
 
 #ifndef MY_exec_hdr_flags
 #define MY_exec_hdr_flags 1
@@ -324,9 +324,9 @@ tic30_aout_reloc_howto (bfd *abfd,
  (bfd_get_8 (BFD, ADDR + 2)      )
 
 #define bfd_putb_24(BFD,DATA,ADDR)				\
- bfd_put_8 (BFD, (bfd_byte) ((DATA >> 16) & 0xFF), ADDR    );	\
+ bfd_put_8 (BFD, (bfd_byte) ((DATA >> 16) & 0xFF), ADDR	   );	\
  bfd_put_8 (BFD, (bfd_byte) ((DATA >>  8) & 0xFF), ADDR + 1);	\
- bfd_put_8 (BFD, (bfd_byte) ( DATA        & 0xFF), ADDR + 2)
+ bfd_put_8 (BFD, (bfd_byte) ( DATA	  & 0xFF), ADDR + 2)
 
 /* Set parameters about this a.out file that are machine-dependent.
    This routine is called from some_aout_object_p just before it returns.  */
@@ -840,12 +840,12 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #define	MY_truncate_arname		bfd_bsd_truncate_arname
 #endif
 #ifndef MY_update_armap_timestamp
-#define MY_update_armap_timestamp 	_bfd_archive_bsd_update_armap_timestamp
+#define MY_update_armap_timestamp	_bfd_archive_bsd_update_armap_timestamp
 #endif
 
 /* No core file defined here -- configure in trad-core.c separately.  */
 #ifndef	MY_core_file_failing_command
-#define	MY_core_file_failing_command 	_bfd_nocore_core_file_failing_command
+#define	MY_core_file_failing_command	_bfd_nocore_core_file_failing_command
 #endif
 #ifndef	MY_core_file_failing_signal
 #define	MY_core_file_failing_signal	_bfd_nocore_core_file_failing_signal
@@ -855,21 +855,20 @@ tic30_aout_set_arch_mach (bfd *abfd,
 				_bfd_nocore_core_file_matches_executable_p
 #endif
 #ifndef	MY_core_file_pid
-#define	MY_core_file_pid  		_bfd_nocore_core_file_pid
+#define	MY_core_file_pid		_bfd_nocore_core_file_pid
 #endif
 #ifndef	MY_core_file_p
 #define	MY_core_file_p			_bfd_dummy_target
 #endif
 
 #ifndef MY_bfd_debug_info_start
-#define MY_bfd_debug_info_start		bfd_void
+#define MY_bfd_debug_info_start		_bfd_void_bfd
 #endif
 #ifndef MY_bfd_debug_info_end
-#define MY_bfd_debug_info_end		bfd_void
+#define MY_bfd_debug_info_end		_bfd_void_bfd
 #endif
 #ifndef MY_bfd_debug_info_accumulate
-#define MY_bfd_debug_info_accumulate	\
-		(void (*) (bfd*, struct bfd_section *)) bfd_void
+#define MY_bfd_debug_info_accumulate	_bfd_void_bfd_asection
 #endif
 
 #ifndef MY_core_file_failing_command
@@ -904,6 +903,9 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #endif
 #ifndef MY_canonicalize_reloc
 #define MY_canonicalize_reloc NAME (aout, canonicalize_reloc)
+#endif
+#ifndef MY_set_reloc
+#define MY_set_reloc _bfd_generic_set_reloc
 #endif
 #ifndef MY_make_empty_symbol
 #define MY_make_empty_symbol NAME (aout, make_empty_symbol)
@@ -964,6 +966,12 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #endif
 #ifndef MY_bfd_define_common_symbol
 #define MY_bfd_define_common_symbol bfd_generic_define_common_symbol
+#endif
+#ifndef MY_bfd_link_hide_symbol
+#define MY_bfd_link_hide_symbol _bfd_generic_link_hide_symbol
+#endif
+#ifndef MY_bfd_define_start_stop
+#define MY_bfd_define_start_stop bfd_generic_define_start_stop
 #endif
 #ifndef MY_bfd_reloc_type_lookup
 #define MY_bfd_reloc_type_lookup tic30_aout_reloc_type_lookup
@@ -1030,8 +1038,7 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #endif
 
 #ifndef MY_bfd_is_target_special_symbol
-#define MY_bfd_is_target_special_symbol  \
-  ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define MY_bfd_is_target_special_symbol _bfd_bool_bfd_asymbol_false
 #endif
 
 #ifndef MY_bfd_free_cached_info
@@ -1093,12 +1100,24 @@ const bfd_target tic30_aout_vec =
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Headers.  */
-  {_bfd_dummy_target, MY_object_p,		/* bfd_check_format.  */
-   bfd_generic_archive_p, MY_core_file_p},
-  {bfd_false, MY_mkobject,			/* bfd_set_format.  */
-   _bfd_generic_mkarchive, bfd_false},
-  {bfd_false, MY_write_object_contents,		/* bfd_write_contents.  */
-   _bfd_write_archive_contents, bfd_false},
+  {				/* bfd_check_format.  */
+    _bfd_dummy_target,
+    MY_object_p,
+    bfd_generic_archive_p,
+    MY_core_file_p
+  },
+  {				/* bfd_set_format.  */
+    _bfd_bool_bfd_false_error,
+    MY_mkobject,
+    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents.  */
+    _bfd_bool_bfd_false_error,
+    MY_write_object_contents,
+    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error
+  },
 
   BFD_JUMP_TABLE_GENERIC (MY),
   BFD_JUMP_TABLE_COPY (MY),

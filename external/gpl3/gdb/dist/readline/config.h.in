@@ -1,5 +1,15 @@
 /* config.h.in.  Maintained by hand. */
 
+/* Template definitions for autoconf */
+#undef __EXTENSIONS__
+#undef _ALL_SOURCE
+#undef _GNU_SOURCE
+#undef _POSIX_SOURCE
+#undef _POSIX_1_SOURCE
+#undef _POSIX_PTHREAD_SEMANTICS
+#undef _TANDEM_SOURCE
+#undef _MINIX
+
 /* Define NO_MULTIBYTE_SUPPORT to not compile in support for multibyte
    characters, even if the OS supports them. */
 #undef NO_MULTIBYTE_SUPPORT

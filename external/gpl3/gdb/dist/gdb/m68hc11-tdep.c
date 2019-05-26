@@ -1,6 +1,6 @@
 /* Target-dependent code for Motorola 68HC11 & 68HC12
 
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    Contributed by Stephane Carrez, stcarrez@nerim.fr
 
@@ -112,7 +112,7 @@ enum insn_return_kind {
 #define SOFT_D32_REGNUM     (SOFT_D1_REGNUM+31)
 #define M68HC11_MAX_SOFT_REGS 32
 
-#define M68HC11_NUM_REGS        (8)
+#define M68HC11_NUM_REGS        (M68HC11_LAST_HARD_REG + 1)
 #define M68HC11_NUM_PSEUDO_REGS (M68HC11_MAX_SOFT_REGS+5)
 #define M68HC11_ALL_REGS        (M68HC11_NUM_REGS+M68HC11_NUM_PSEUDO_REGS)
 
@@ -279,7 +279,7 @@ m68hc11_which_soft_register (CORE_ADDR addr)
    fetch into a memory read.  */
 static enum register_status
 m68hc11_pseudo_register_read (struct gdbarch *gdbarch,
-			      struct regcache *regcache,
+			      readable_regcache *regcache,
 			      int regno, gdb_byte *buf)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -292,14 +292,14 @@ m68hc11_pseudo_register_read (struct gdbarch *gdbarch,
       const int regsize = 4;
       enum register_status status;
 
-      status = regcache_cooked_read_unsigned (regcache, HARD_PC_REGNUM, &pc);
+      status = regcache->cooked_read (HARD_PC_REGNUM, &pc);
       if (status != REG_VALID)
 	return status;
       if (pc >= 0x8000 && pc < 0xc000)
         {
           ULONGEST page;
 
-          regcache_cooked_read_unsigned (regcache, HARD_PAGE_REGNUM, &page);
+	  regcache->cooked_read (HARD_PAGE_REGNUM, &page);
           pc -= 0x8000;
           pc += (page << 14);
           pc += 0x1000000;
@@ -854,10 +854,7 @@ m68hc11_frame_unwind_cache (struct frame_info *this_frame,
 
   /* Adjust all the saved registers so that they contain addresses and not
      offsets.  */
-  for (i = 0;
-       i < gdbarch_num_regs (gdbarch)
-	   + gdbarch_num_pseudo_regs (gdbarch) - 1;
-       i++)
+  for (i = 0; i < gdbarch_num_cooked_regs (gdbarch); i++)
     if (trad_frame_addr_p (info->saved_regs, i))
       {
         info->saved_regs[i].addr += this_base;
@@ -919,13 +916,11 @@ m68hc11_frame_prev_register (struct frame_info *this_frame,
           CORE_ADDR page;
 
 	  release_value (value);
-	  value_free (value);
 
 	  value = trad_frame_get_prev_register (this_frame, info->saved_regs,
 						HARD_PAGE_REGNUM);
 	  page = value_as_long (value);
 	  release_value (value);
-	  value_free (value);
 
           pc -= 0x08000;
           pc += ((page & 0x0ff) << 14);
@@ -1159,7 +1154,8 @@ static CORE_ADDR
 m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
                          struct regcache *regcache, CORE_ADDR bp_addr,
                          int nargs, struct value **args, CORE_ADDR sp,
-                         int struct_return, CORE_ADDR struct_addr)
+			 function_call_return_method return_method,
+			 CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int argnum;
@@ -1169,10 +1165,8 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   gdb_byte buf[2];
   
   first_stack_argnum = 0;
-  if (struct_return)
-    {
-      regcache_cooked_write_unsigned (regcache, HARD_D_REGNUM, struct_addr);
-    }
+  if (return_method == return_method_struct)
+    regcache_cooked_write_unsigned (regcache, HARD_D_REGNUM, struct_addr);
   else if (nargs > 0)
     {
       type = value_type (args[0]);
@@ -1261,12 +1255,11 @@ m68hc11_store_return_value (struct type *type, struct regcache *regcache,
 
   /* First argument is passed in D and X registers.  */
   if (len <= 2)
-    regcache_raw_write_part (regcache, HARD_D_REGNUM, 2 - len, len, valbuf);
+    regcache->raw_write_part (HARD_D_REGNUM, 2 - len, len, valbuf);
   else if (len <= 4)
     {
-      regcache_raw_write_part (regcache, HARD_X_REGNUM, 4 - len,
-                               len - 2, valbuf);
-      regcache_raw_write (regcache, HARD_D_REGNUM, valbuf + (len - 2));
+      regcache->raw_write_part (HARD_X_REGNUM, 4 - len, len - 2, valbuf);
+      regcache->raw_write (HARD_D_REGNUM, valbuf + (len - 2));
     }
   else
     error (_("return of value > 4 is not supported."));
@@ -1282,7 +1275,7 @@ m68hc11_extract_return_value (struct type *type, struct regcache *regcache,
 {
   gdb_byte buf[M68HC11_REG_SIZE];
 
-  regcache_raw_read (regcache, HARD_D_REGNUM, buf);
+  regcache->raw_read (HARD_D_REGNUM, buf);
   switch (TYPE_LENGTH (type))
     {
     case 1:
@@ -1295,13 +1288,13 @@ m68hc11_extract_return_value (struct type *type, struct regcache *regcache,
 
     case 3:
       memcpy ((char*) valbuf + 1, buf, 2);
-      regcache_raw_read (regcache, HARD_X_REGNUM, buf);
+      regcache->raw_read (HARD_X_REGNUM, buf);
       memcpy (valbuf, buf + 1, 1);
       break;
 
     case 4:
       memcpy ((char*) valbuf + 2, buf, 2);
-      regcache_raw_read (regcache, HARD_X_REGNUM, buf);
+      regcache->raw_read (HARD_X_REGNUM, buf);
       memcpy (valbuf, buf, 2);
       break;
 
@@ -1344,16 +1337,6 @@ m68hc11_elf_make_msymbol_special (asymbol *sym, struct minimal_symbol *msym)
   if (flags & STO_M68HC12_INTERRUPT)
     MSYMBOL_SET_RTI (msym);
 }
-
-static int
-gdb_print_insn_m68hc11 (bfd_vma memaddr, disassemble_info *info)
-{
-  if (info->arch == bfd_arch_m68hc11)
-    return print_insn_m68hc11 (memaddr, info);
-  else
-    return print_insn_m68hc12 (memaddr, info);
-}
-
 
 
 /* 68HC11/68HC12 register groups.
@@ -1444,7 +1427,7 @@ m68hc11_gdbarch_init (struct gdbarch_info info,
     }
 
   /* Need a new architecture.  Fill in a target specific vector.  */
-  tdep = XNEW (struct gdbarch_tdep);
+  tdep = XCNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
   tdep->elf_flags = elf_flags;
 
@@ -1525,7 +1508,6 @@ m68hc11_gdbarch_init (struct gdbarch_info info,
 				       m68hc11_breakpoint::kind_from_pc);
   set_gdbarch_sw_breakpoint_from_kind (gdbarch,
 				       m68hc11_breakpoint::bp_from_kind);
-  set_gdbarch_print_insn (gdbarch, gdb_print_insn_m68hc11);
 
   m68hc11_add_reggroups (gdbarch);
   set_gdbarch_register_reggroup_p (gdbarch, m68hc11_register_reggroup_p);
@@ -1553,9 +1535,6 @@ m68hc11_gdbarch_init (struct gdbarch_info info,
 
   return gdbarch;
 }
-
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_m68hc11_tdep;
 
 void
 _initialize_m68hc11_tdep (void)

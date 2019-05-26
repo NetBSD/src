@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_OUT_H
-#define TUI_OUT_H
+#ifndef TUI_TUI_OUT_H
+#define TUI_TUI_OUT_H
 
 #include "cli-out.h"
 
@@ -31,7 +31,7 @@ protected:
   void do_field_int (int fldno, int width, ui_align align, const char *fldname,
 		  int value) override;
   void do_field_string (int fldno, int width, ui_align align, const char *fldname,
-		     const char *string) override;
+			const char *string, ui_out_style_kind style) override;
   void do_field_fmt (int fldno, int width, ui_align align, const char *fldname,
 		  const char *format, va_list args) override
     ATTRIBUTE_PRINTF (6,0);
@@ -45,4 +45,4 @@ private:
 
 extern tui_ui_out *tui_out_new (struct ui_file *stream);
 
-#endif
+#endif /* TUI_TUI_OUT_H */

@@ -1,5 +1,5 @@
 /* ARM ELF support for BFD.
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,6 +23,8 @@
 #include "elf/reloc-macros.h"
 
 /* Processor specific flags for the ELF header e_flags field.  */
+
+/* Old ABI (ie GNU pre EABI).  These are deprecated.  */
 #define EF_ARM_RELEXEC     0x01
 #define EF_ARM_INTERWORK   0x04
 #define EF_ARM_APCS_26     0x08
@@ -38,13 +40,12 @@
 /* Frame unwind information */
 #define PT_ARM_EXIDX (PT_LOPROC + 1)
 
-/* Other constants defined in the ARM ELF spec. version B-01.  */
+/* Old ARM ELF spec. version B-01.  Mostly deprecated.  */
 #define EF_ARM_SYMSARESORTED 0x04	/* NB conflicts with EF_INTERWORK.  */
 #define EF_ARM_DYNSYMSUSESEGIDX 0x08	/* NB conflicts with EF_APCS26.  */
 #define EF_ARM_MAPSYMSFIRST 0x10	/* NB conflicts with EF_APCS_FLOAT.  */
-#define EF_ARM_EABIMASK      0xFF000000
 
-/* New constants defined in the ARM ELF spec. version XXX.
+/* New constants defined in the ARM ELF spec. version XXX (AAELF).
    Only valid in conjunction with EF_ARM_EABI_VER5. */
 #define EF_ARM_ABI_FLOAT_SOFT 0x200	/* NB conflicts with EF_ARM_SOFT_FLOAT.  */
 #define EF_ARM_ABI_FLOAT_HARD 0x400	/* NB conflicts with EF_ARM_VFP_FLOAT.  */
@@ -53,6 +54,7 @@
 #define EF_ARM_BE8	    0x00800000
 #define EF_ARM_LE8	    0x00400000
 
+#define EF_ARM_EABIMASK      0xFF000000
 #define EF_ARM_EABI_VERSION(flags) ((flags) & EF_ARM_EABIMASK)
 #define EF_ARM_EABI_UNKNOWN  0x00000000
 #define EF_ARM_EABI_VER1     0x01000000
@@ -106,6 +108,7 @@
 #define TAG_CPU_ARCH_V6S_M	12
 #define TAG_CPU_ARCH_V7E_M	13
 #define TAG_CPU_ARCH_V8		14
+#define TAG_CPU_ARCH_V8R	15
 #define TAG_CPU_ARCH_V8M_BASE	16
 #define TAG_CPU_ARCH_V8M_MAIN	17
 #define MAX_TAG_CPU_ARCH	TAG_CPU_ARCH_V8M_MAIN
@@ -239,6 +242,13 @@ START_RELOC_NUMBERS (elf_arm_reloc_type)
   RELOC_NUMBER (R_ARM_THM_ALU_ABS_G3_NC,135)
 
   RELOC_NUMBER (R_ARM_IRELATIVE,      	160)
+  RELOC_NUMBER (R_ARM_GOTFUNCDESC,    	161)
+  RELOC_NUMBER (R_ARM_GOTOFFFUNCDESC, 	162)
+  RELOC_NUMBER (R_ARM_FUNCDESC,       	163)
+  RELOC_NUMBER (R_ARM_FUNCDESC_VALUE, 	164)
+  RELOC_NUMBER (R_ARM_TLS_GD32_FDPIC,   165)
+  RELOC_NUMBER (R_ARM_TLS_LDM32_FDPIC,  166)
+  RELOC_NUMBER (R_ARM_TLS_IE32_FDPIC,   167)
 
   /* Extensions?  R=read-only?  */
   RELOC_NUMBER (R_ARM_RXPC25,         	249)

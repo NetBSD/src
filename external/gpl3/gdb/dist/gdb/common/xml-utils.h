@@ -1,6 +1,6 @@
 /* Shared helper routines for manipulating XML.
 
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,17 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef XML_UTILS_H
-#define XML_UTILS_H
+#ifndef COMMON_XML_UTILS_H
+#define COMMON_XML_UTILS_H
 
-/* Return a malloc allocated string with special characters from TEXT
-   replaced by entity references.  */
+/* Return a string with special characters from TEXT replaced by entity
+   references.  */
 
-extern char *xml_escape_text (const char *text);
+extern std::string xml_escape_text (const char *text);
 
-#endif
+/* Append TEXT to RESULT, with special characters replaced by entity
+   references.  */
+
+extern void xml_escape_text_append (std::string *result, const char *text);
+
+#endif /* COMMON_XML_UTILS_H */

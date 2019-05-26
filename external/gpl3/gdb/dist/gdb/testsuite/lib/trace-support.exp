@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2017 Free Software Foundation, Inc.
+# Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,6 +48,25 @@ if [is_amd64_regs_target] {
     set fpreg "fp"
     set spreg "sp"
     set pcreg "pc"
+}
+
+#
+# Procedure: gdb_trace_common_supports_arch
+# Returns true if gdb.trace/trace-common.h knows about this target.
+# Allows skipping tests that depend on being able to include this file.
+# Please keep this in sync with the supported targets in the header.
+#
+
+proc gdb_trace_common_supports_arch { } {
+  if { [istarget "x86_64*-*-*"]
+	|| [istarget "i386*-*-*"]
+	|| [istarget "aarch64*-*-*"]
+	|| [istarget "powerpc*-*-*"]
+	|| [istarget "s390*-*-*"] } {
+	return 1
+    } else {
+	return 0
+    }
 }
 
 #

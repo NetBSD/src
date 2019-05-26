@@ -1,6 +1,6 @@
 /* Macros for general registry objects.
 
-   Copyright (C) 2011-2017 Free Software Foundation, Inc.
+   Copyright (C) 2011-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -158,8 +158,6 @@ const struct TAG ## _data *						\
 register_ ## TAG ## _data_with_cleanup (void (*save) (struct TAG *, void *), \
 					void (*free) (struct TAG *, void *)) \
 {									\
-  struct registry_data_registration **curr;				\
-									\
   return (struct TAG ## _data *)					\
     register_data_with_cleanup (&TAG ## _data_registry,			\
 				(registry_data_callback) save,		\
@@ -186,8 +184,6 @@ TAG ## registry_callback_adaptor (registry_data_callback func,		\
 				  void *data)				\
 {									\
   struct TAG *tagged_container = (struct TAG *) container;		\
-  struct registry_fields *rdata						\
-    = &ACCESS (tagged_container)->registry_data;			\
 									\
   registry_ ## TAG ## _callback tagged_func				\
     = (registry_ ## TAG ## _callback) func;				\

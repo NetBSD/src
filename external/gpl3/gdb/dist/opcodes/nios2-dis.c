@@ -1,5 +1,5 @@
 /* Altera Nios II disassemble routines
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -21,7 +21,8 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "dis-asm.h"
+#include "disassemble.h"
+#include "opintl.h"
 #include "opcode/nios2.h"
 #include "libiberty.h"
 #include <string.h>
@@ -130,9 +131,9 @@ nios2_init_opcode_hash (nios2_disassembler_state *state)
 	      (nios2_opcode_hash *) malloc (sizeof (nios2_opcode_hash));
 	    if (new_hash == NULL)
 	      {
-		fprintf (stderr,
-			 "error allocating memory...broken disassembler\n");
-		abort ();
+		/* xgettext:c-format */
+		opcodes_error_handler (_("out of memory"));
+		exit (1);
 	      }
 	    new_hash->opcode = op;
 	    new_hash->next = NULL;
@@ -257,8 +258,10 @@ nios2_control_regs (void)
 static void
 bad_opcode (const struct nios2_opcode *op)
 {
-  fprintf (stderr, "Internal error: broken opcode descriptor for `%s %s'\n",
-	   op->name, op->args);
+  opcodes_error_handler
+    /* xgettext:c-format */
+    (_("internal error: broken opcode descriptor for `%s %s'"),
+     op->name, op->args);
   abort ();
 }
 
@@ -272,6 +275,8 @@ nios2_print_insn_arg (const char *argptr,
 		      const struct nios2_opcode *op)
 {
   unsigned long i = 0;
+  long s = 0;
+  bfd_signed_vma o = 0;
   struct nios2_reg *reg_base;
 
   switch (*argptr)
@@ -549,15 +554,15 @@ nios2_print_insn_arg (const char *argptr,
       switch (op->format)
 	{
 	case iw_i_type:
-	  i = (signed) (GET_IW_I_IMM16 (opcode) << 16) >> 16;
+	  s = (int32_t) (GET_IW_I_IMM16 (opcode) << 16) >> 16;
 	  break;
 	case iw_F2I16_type:
-	  i = (signed) (GET_IW_F2I16_IMM16 (opcode) << 16) >> 16;
+	  s = (int32_t) (GET_IW_F2I16_IMM16 (opcode) << 16) >> 16;
 	  break;
 	default:
 	  bad_opcode (op);
 	}
-      (*info->fprintf_func) (info->stream, "%ld", i);
+      (*info->fprintf_func) (info->stream, "%ld", s);
       break;
 
     case 'I':
@@ -565,15 +570,15 @@ nios2_print_insn_arg (const char *argptr,
       switch (op->format)
 	{
 	case iw_F2X4I12_type:
-	  i = (signed) (GET_IW_F2X4I12_IMM12 (opcode) << 20) >> 20;
+	  s = (int32_t) (GET_IW_F2X4I12_IMM12 (opcode) << 20) >> 20;
 	  break;
 	case iw_F1X4I12_type:
-	  i = (signed) (GET_IW_F1X4I12_IMM12 (opcode) << 20) >> 20;
+	  s = (int32_t) (GET_IW_F1X4I12_IMM12 (opcode) << 20) >> 20;
 	  break;
 	default:
 	  bad_opcode (op);
 	}
-      (*info->fprintf_func) (info->stream, "%ld", i);
+      (*info->fprintf_func) (info->stream, "%ld", s);
       break;
 
     case 'u':
@@ -668,15 +673,15 @@ nios2_print_insn_arg (const char *argptr,
       switch (op->format)
 	{
 	case iw_i_type:
-	  i = (signed) (GET_IW_I_IMM16 (opcode) << 16) >> 16;
+	  o = (int32_t) (GET_IW_I_IMM16 (opcode) << 16) >> 16;
 	  break;
 	case iw_F2I16_type:
-	  i = (signed) (GET_IW_F2I16_IMM16 (opcode) << 16) >> 16;
+	  o = (int32_t) (GET_IW_F2I16_IMM16 (opcode) << 16) >> 16;
 	  break;
 	default:
 	  bad_opcode (op);
 	}
-      address = address + 4 + i;
+      address = address + 4 + o;
       (*info->print_address_func) (address, info);
       break;
 
@@ -685,12 +690,12 @@ nios2_print_insn_arg (const char *argptr,
       switch (op->format)
 	{
 	case iw_I10_type:
-	  i = (signed) (GET_IW_I10_IMM10 (opcode) << 22) >> 21;
+	  o = (int32_t) (GET_IW_I10_IMM10 (opcode) << 22) >> 21;
 	  break;
 	default:
 	  bad_opcode (op);
 	}
-      address = address + 2 + i;
+      address = address + 2 + o;
       (*info->print_address_func) (address, info);
       break;
 
@@ -699,12 +704,12 @@ nios2_print_insn_arg (const char *argptr,
       switch (op->format)
 	{
 	case iw_T1I7_type:
-	  i = (signed) (GET_IW_T1I7_IMM7 (opcode) << 25) >> 24;
+	  o = (int32_t) (GET_IW_T1I7_IMM7 (opcode) << 25) >> 24;
 	  break;
 	default:
 	  bad_opcode (op);
 	}
-      address = address + 2 + i;
+      address = address + 2 + o;
       (*info->print_address_func) (address, info);
       break;
 

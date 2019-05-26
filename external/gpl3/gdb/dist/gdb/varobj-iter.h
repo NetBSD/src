@@ -1,5 +1,5 @@
 /* Iterator of varobj.
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,6 +13,9 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+#ifndef VAROBJ_ITER_H
+#define VAROBJ_ITER_H
 
 /* A node or item of varobj, composed of the name and the value.  */
 
@@ -70,3 +73,5 @@ struct varobj_iter_ops
 	  xfree (ITER);		       \
 	}				       \
     } while (0)
+
+#endif /* VAROBJ_ITER_H */

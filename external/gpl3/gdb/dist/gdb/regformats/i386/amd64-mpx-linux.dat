@@ -1,6 +1,7 @@
 # THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
 # Generated from: i386/amd64-mpx-linux.xml
 name:amd64_mpx_linux
+feature:1
 xmltarget:amd64-mpx-linux.xml
 expedite:rbp,rsp,rip
 64:rax

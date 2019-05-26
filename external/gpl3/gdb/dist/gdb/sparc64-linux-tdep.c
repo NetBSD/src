@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux UltraSPARC.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,6 +33,17 @@
 #include "xml-syscall.h"
 #include "linux-tdep.h"
 
+/* ADI specific si_code */
+#ifndef SEGV_ACCADI
+#define SEGV_ACCADI	3
+#endif
+#ifndef SEGV_ADIDERR
+#define SEGV_ADIDERR	4
+#endif
+#ifndef SEGV_ADIPERR
+#define SEGV_ADIPERR	5
+#endif
+
 /* The syscall's XML filename for sparc 64-bit.  */
 #define XML_SYSCALL_FILENAME_SPARC64 "syscalls/sparc64-linux.xml"
 
@@ -53,9 +64,9 @@ static const struct tramp_frame sparc64_linux_rt_sigframe =
   SIGTRAMP_FRAME,
   4,
   {
-    { 0x82102065, -1 },		/* mov __NR_rt_sigreturn, %g1 */
-    { 0x91d0206d, -1 },		/* ta  0x6d */
-    { TRAMP_SENTINEL_INSN, -1 }
+    { 0x82102065, ULONGEST_MAX },		/* mov __NR_rt_sigreturn, %g1 */
+    { 0x91d0206d, ULONGEST_MAX },		/* ta  0x6d */
+    { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
   },
   sparc64_linux_sigframe_init
 };
@@ -104,6 +115,62 @@ sparc64_linux_sigframe_init (const struct tramp_frame *self,
     }
   trad_frame_set_id (this_cache, frame_id_build (base, func));
 }
+
+/* sparc64 GNU/Linux implementation of the handle_segmentation_fault
+   gdbarch hook.
+   Displays information related to ADI memory corruptions.  */
+
+void
+sparc64_linux_handle_segmentation_fault (struct gdbarch *gdbarch,
+				      struct ui_out *uiout)
+{
+  if (gdbarch_bfd_arch_info (gdbarch)->bits_per_word != 64)
+    return;
+
+  CORE_ADDR addr = 0;
+  long si_code = 0;
+
+  TRY
+    {
+      /* Evaluate si_code to see if the segfault is ADI related.  */
+      si_code = parse_and_eval_long ("$_siginfo.si_code\n");
+
+      if (si_code >= SEGV_ACCADI && si_code <= SEGV_ADIPERR)
+        addr = parse_and_eval_long ("$_siginfo._sifields._sigfault.si_addr");
+    }
+  CATCH (exception, RETURN_MASK_ALL)
+    {
+      return;
+    }
+  END_CATCH
+
+  /* Print out ADI event based on sig_code value */
+  switch (si_code)
+    {
+    case SEGV_ACCADI:	/* adi not enabled */
+      uiout->text ("\n");
+      uiout->field_string ("sigcode-meaning", _("ADI disabled"));
+      uiout->text (_(" while accessing address "));
+      uiout->field_fmt ("bound-access", "%s", paddress (gdbarch, addr));
+      break;
+    case SEGV_ADIDERR:	/* disrupting mismatch */
+      uiout->text ("\n");
+      uiout->field_string ("sigcode-meaning", _("ADI deferred mismatch"));
+      uiout->text (_(" while accessing address "));
+      uiout->field_fmt ("bound-access", "%s", paddress (gdbarch, addr));
+      break;
+    case SEGV_ADIPERR:	/* precise mismatch */
+      uiout->text ("\n");
+      uiout->field_string ("sigcode-meaning", _("ADI precise mismatch"));
+      uiout->text (_(" while accessing address "));
+      uiout->field_fmt ("bound-access", "%s", paddress (gdbarch, addr));
+      break;
+    default:
+      break;
+    }
+
+}
+
 
 /* Return the address of a system call's alternative return
    address.  */
@@ -194,7 +261,7 @@ sparc64_linux_collect_core_fpregset (const struct regset *regset,
 static void
 sparc64_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (get_regcache_arch (regcache));
+  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
   ULONGEST state;
 
   regcache_cooked_write_unsigned (regcache, tdep->pc_regnum, pc);
@@ -215,9 +282,9 @@ sparc64_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 
 static LONGEST
 sparc64_linux_get_syscall_number (struct gdbarch *gdbarch,
-				  ptid_t ptid)
+				  thread_info *thread)
 {
-  struct regcache *regcache = get_thread_regcache (ptid);
+  struct regcache *regcache = get_thread_regcache (thread);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   /* The content of a register.  */
   gdb_byte buf[8];
@@ -227,7 +294,7 @@ sparc64_linux_get_syscall_number (struct gdbarch *gdbarch,
   /* Getting the system call number from the register.
      When dealing with the sparc architecture, this information
      is stored at the %g1 register.  */
-  regcache_cooked_read (regcache, SPARC_G1_REGNUM, buf);
+  regcache->cooked_read (SPARC_G1_REGNUM, buf);
 
   ret = extract_signed_integer (buf, 8, byte_order);
 
@@ -338,11 +405,9 @@ sparc64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_SPARC64);
   set_gdbarch_get_syscall_number (gdbarch,
                                   sparc64_linux_get_syscall_number);
+  set_gdbarch_handle_segmentation_fault (gdbarch,
+					 sparc64_linux_handle_segmentation_fault);
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern void _initialize_sparc64_linux_tdep (void);
 
 void
 _initialize_sparc64_linux_tdep (void)

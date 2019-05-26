@@ -1,6 +1,6 @@
 /* Abstraction of GNU v2 abi.
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    Contributed by Daniel Berlin <dberlin@redhat.com>
 
@@ -68,7 +68,7 @@ gnuv2_is_vtable_name (const char *name)
 static int
 gnuv2_is_operator_name (const char *name)
 {
-  return startswith (name, "operator");
+  return startswith (name, CP_OPERATOR_STR);
 }
 
 
@@ -412,8 +412,6 @@ init_gnuv2_ops (void)
   gnu_v2_abi_ops.rtti_type = gnuv2_value_rtti_type;
   gnu_v2_abi_ops.baseclass_offset = gnuv2_baseclass_offset;
 }
-
-extern initialize_file_ftype _initialize_gnu_v2_abi; /* -Wmissing-prototypes */
 
 void
 _initialize_gnu_v2_abi (void)

@@ -1,6 +1,6 @@
 /* Native-dependent definitions for Solaris SPARC.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NM_SOL2_H
-#define NM_SOL2_H
+#ifndef CONFIG_SPARC_NM_SOL2_H
+#define CONFIG_SPARC_NM_SOL2_H
 
 #define GDB_GREGSET_T prgregset_t
 #define GDB_FPREGSET_T prfpregset_t
 
-#endif /* nm-sol2.h */
+#endif /* CONFIG_SPARC_NM_SOL2_H */

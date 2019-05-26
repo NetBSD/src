@@ -1,5 +1,5 @@
 /* GNU/Linux on ARM native support.
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 #include "linux-nat.h"
 #include "target-descriptions.h"
 #include "auxv.h"
-#include "observer.h"
+#include "observable.h"
 #include "gdbthread.h"
 
 #include "arm-tdep.h"
@@ -66,6 +66,49 @@
 
 extern int arm_apcs_32;
 
+class arm_linux_nat_target final : public linux_nat_target
+{
+public:
+  /* Add our register access methods.  */
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+
+  /* Add our hardware breakpoint and watchpoint implementation.  */
+  int can_use_hw_breakpoint (enum bptype, int, int) override;
+
+  int insert_hw_breakpoint (struct gdbarch *, struct bp_target_info *) override;
+
+  int remove_hw_breakpoint (struct gdbarch *, struct bp_target_info *) override;
+
+  int region_ok_for_hw_watchpoint (CORE_ADDR, int) override;
+
+  int insert_watchpoint (CORE_ADDR, int, enum target_hw_bp_type,
+			 struct expression *) override;
+
+  int remove_watchpoint (CORE_ADDR, int, enum target_hw_bp_type,
+			 struct expression *) override;
+  bool stopped_by_watchpoint () override;
+
+  bool stopped_data_address (CORE_ADDR *) override;
+
+  bool watchpoint_addr_within_range (CORE_ADDR, CORE_ADDR, int) override;
+
+  const struct target_desc *read_description () override;
+
+  /* Override linux_nat_target low methods.  */
+
+  /* Handle thread creation and exit.  */
+  void low_new_thread (struct lwp_info *lp) override;
+  void low_delete_thread (struct arch_lwp_info *lp) override;
+  void low_prepare_to_resume (struct lwp_info *lp) override;
+
+  /* Handle process creation and exit.  */
+  void low_new_fork (struct lwp_info *parent, pid_t child_pid) override;
+  void low_forget_process (pid_t pid) override;
+};
+
+static arm_linux_nat_target the_arm_linux_nat_target;
+
 /* Get the whole floating point state of the process and store it
    into regcache.  */
 
@@ -76,7 +119,7 @@ fetch_fpregs (struct regcache *regcache)
   gdb_byte fp[ARM_LINUX_SIZEOF_NWFPE];
 
   /* Get the thread id for the ptrace call.  */
-  tid = ptid_get_lwp (regcache_get_ptid (regcache));
+  tid = regcache->ptid ().lwp ();
 
   /* Read the floating point state.  */
   if (have_ptrace_getregset == TRIBOOL_TRUE)
@@ -95,8 +138,7 @@ fetch_fpregs (struct regcache *regcache)
     perror_with_name (_("Unable to fetch the floating point registers."));
 
   /* Fetch fpsr.  */
-  regcache_raw_supply (regcache, ARM_FPS_REGNUM,
-		       fp + NWFPE_FPSR_OFFSET);
+  regcache->raw_supply (ARM_FPS_REGNUM, fp + NWFPE_FPSR_OFFSET);
 
   /* Fetch the floating point registers.  */
   for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
@@ -113,7 +155,7 @@ store_fpregs (const struct regcache *regcache)
   gdb_byte fp[ARM_LINUX_SIZEOF_NWFPE];
 
   /* Get the thread id for the ptrace call.  */
-  tid = ptid_get_lwp (regcache_get_ptid (regcache));
+  tid = regcache->ptid ().lwp ();
 
   /* Read the floating point state.  */
   if (have_ptrace_getregset == TRIBOOL_TRUE)
@@ -133,12 +175,12 @@ store_fpregs (const struct regcache *regcache)
     perror_with_name (_("Unable to fetch the floating point registers."));
 
   /* Store fpsr.  */
-  if (REG_VALID == regcache_register_status (regcache, ARM_FPS_REGNUM))
-    regcache_raw_collect (regcache, ARM_FPS_REGNUM, fp + NWFPE_FPSR_OFFSET);
+  if (REG_VALID == regcache->get_register_status (ARM_FPS_REGNUM))
+    regcache->raw_collect (ARM_FPS_REGNUM, fp + NWFPE_FPSR_OFFSET);
 
   /* Store the floating point registers.  */
   for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
-    if (REG_VALID == regcache_register_status (regcache, regno))
+    if (REG_VALID == regcache->get_register_status (regno))
       collect_nwfpe_register (regcache, regno, fp);
 
   if (have_ptrace_getregset == TRIBOOL_TRUE)
@@ -163,11 +205,11 @@ store_fpregs (const struct regcache *regcache)
 static void
 fetch_regs (struct regcache *regcache)
 {
-  int ret, regno, tid;
+  int ret, tid;
   elf_gregset_t regs;
 
   /* Get the thread id for the ptrace call.  */
-  tid = ptid_get_lwp (regcache_get_ptid (regcache));
+  tid = regcache->ptid ().lwp ();
 
   if (have_ptrace_getregset == TRIBOOL_TRUE)
     {
@@ -190,11 +232,11 @@ fetch_regs (struct regcache *regcache)
 static void
 store_regs (const struct regcache *regcache)
 {
-  int ret, regno, tid;
+  int ret, tid;
   elf_gregset_t regs;
 
   /* Get the thread id for the ptrace call.  */
-  tid = ptid_get_lwp (regcache_get_ptid (regcache));
+  tid = regcache->ptid ().lwp ();
 
   /* Fetch the general registers.  */
   if (have_ptrace_getregset == TRIBOOL_TRUE)
@@ -242,23 +284,22 @@ fetch_wmmx_regs (struct regcache *regcache)
   int ret, regno, tid;
 
   /* Get the thread id for the ptrace call.  */
-  tid = ptid_get_lwp (regcache_get_ptid (regcache));
+  tid = regcache->ptid ().lwp ();
 
   ret = ptrace (PTRACE_GETWMMXREGS, tid, 0, regbuf);
   if (ret < 0)
     perror_with_name (_("Unable to fetch WMMX registers."));
 
   for (regno = 0; regno < 16; regno++)
-    regcache_raw_supply (regcache, regno + ARM_WR0_REGNUM,
-			 &regbuf[regno * 8]);
+    regcache->raw_supply (regno + ARM_WR0_REGNUM, &regbuf[regno * 8]);
 
   for (regno = 0; regno < 2; regno++)
-    regcache_raw_supply (regcache, regno + ARM_WCSSF_REGNUM,
-			 &regbuf[16 * 8 + regno * 4]);
+    regcache->raw_supply (regno + ARM_WCSSF_REGNUM,
+			  &regbuf[16 * 8 + regno * 4]);
 
   for (regno = 0; regno < 4; regno++)
-    regcache_raw_supply (regcache, regno + ARM_WCGR0_REGNUM,
-			 &regbuf[16 * 8 + 2 * 4 + regno * 4]);
+    regcache->raw_supply (regno + ARM_WCGR0_REGNUM,
+			  &regbuf[16 * 8 + 2 * 4 + regno * 4]);
 }
 
 static void
@@ -268,29 +309,25 @@ store_wmmx_regs (const struct regcache *regcache)
   int ret, regno, tid;
 
   /* Get the thread id for the ptrace call.  */
-  tid = ptid_get_lwp (regcache_get_ptid (regcache));
+  tid = regcache->ptid ().lwp ();
 
   ret = ptrace (PTRACE_GETWMMXREGS, tid, 0, regbuf);
   if (ret < 0)
     perror_with_name (_("Unable to fetch WMMX registers."));
 
   for (regno = 0; regno < 16; regno++)
-    if (REG_VALID == regcache_register_status (regcache,
-					       regno + ARM_WR0_REGNUM))
-      regcache_raw_collect (regcache, regno + ARM_WR0_REGNUM,
-			    &regbuf[regno * 8]);
+    if (REG_VALID == regcache->get_register_status (regno + ARM_WR0_REGNUM))
+      regcache->raw_collect (regno + ARM_WR0_REGNUM, &regbuf[regno * 8]);
 
   for (regno = 0; regno < 2; regno++)
-    if (REG_VALID == regcache_register_status (regcache,
-					       regno + ARM_WCSSF_REGNUM))
-      regcache_raw_collect (regcache, regno + ARM_WCSSF_REGNUM,
-			    &regbuf[16 * 8 + regno * 4]);
+    if (REG_VALID == regcache->get_register_status (regno + ARM_WCSSF_REGNUM))
+      regcache->raw_collect (regno + ARM_WCSSF_REGNUM,
+			     &regbuf[16 * 8 + regno * 4]);
 
   for (regno = 0; regno < 4; regno++)
-    if (REG_VALID == regcache_register_status (regcache,
-					       regno + ARM_WCGR0_REGNUM))
-      regcache_raw_collect (regcache, regno + ARM_WCGR0_REGNUM,
-			    &regbuf[16 * 8 + 2 * 4 + regno * 4]);
+    if (REG_VALID == regcache->get_register_status (regno + ARM_WCGR0_REGNUM))
+      regcache->raw_collect (regno + ARM_WCGR0_REGNUM,
+			     &regbuf[16 * 8 + 2 * 4 + regno * 4]);
 
   ret = ptrace (PTRACE_SETWMMXREGS, tid, 0, regbuf);
 
@@ -302,12 +339,12 @@ static void
 fetch_vfp_regs (struct regcache *regcache)
 {
   gdb_byte regbuf[VFP_REGS_SIZE];
-  int ret, regno, tid;
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  int ret, tid;
+  struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   /* Get the thread id for the ptrace call.  */
-  tid = ptid_get_lwp (regcache_get_ptid (regcache));
+  tid = regcache->ptid ().lwp ();
 
   if (have_ptrace_getregset == TRIBOOL_TRUE)
     {
@@ -331,12 +368,12 @@ static void
 store_vfp_regs (const struct regcache *regcache)
 {
   gdb_byte regbuf[VFP_REGS_SIZE];
-  int ret, regno, tid;
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  int ret, tid;
+  struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   /* Get the thread id for the ptrace call.  */
-  tid = ptid_get_lwp (regcache_get_ptid (regcache));
+  tid = regcache->ptid ().lwp ();
 
   if (have_ptrace_getregset == TRIBOOL_TRUE)
     {
@@ -374,11 +411,10 @@ store_vfp_regs (const struct regcache *regcache)
    regno == -1, otherwise fetch all general registers or all floating
    point registers depending upon the value of regno.  */
 
-static void
-arm_linux_fetch_inferior_registers (struct target_ops *ops,
-				    struct regcache *regcache, int regno)
+void
+arm_linux_nat_target::fetch_registers (struct regcache *regcache, int regno)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   if (-1 == regno)
@@ -412,11 +448,10 @@ arm_linux_fetch_inferior_registers (struct target_ops *ops,
    regno == -1, otherwise store all general registers or all floating
    point registers depending upon the value of regno.  */
 
-static void
-arm_linux_store_inferior_registers (struct target_ops *ops,
-				    struct regcache *regcache, int regno)
+void
+arm_linux_nat_target::store_registers (struct regcache *regcache, int regno)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   if (-1 == regno)
@@ -495,8 +530,8 @@ ps_get_thread_area (struct ps_prochandle *ph,
   return PS_OK;
 }
 
-static const struct target_desc *
-arm_linux_read_description (struct target_ops *ops)
+const struct target_desc *
+arm_linux_nat_target::read_description ()
 {
   CORE_ADDR arm_hwcap = 0;
 
@@ -504,7 +539,7 @@ arm_linux_read_description (struct target_ops *ops)
     {
       elf_gregset_t gpregs;
       struct iovec iov;
-      int tid = ptid_get_lwp (inferior_ptid);
+      int tid = inferior_ptid.lwp ();
 
       iov.iov_base = &gpregs;
       iov.iov_len = sizeof (gpregs);
@@ -516,9 +551,9 @@ arm_linux_read_description (struct target_ops *ops)
 	have_ptrace_getregset = TRIBOOL_TRUE;
     }
 
-  if (target_auxv_search (ops, AT_HWCAP, &arm_hwcap) != 1)
+  if (target_auxv_search (this, AT_HWCAP, &arm_hwcap) != 1)
     {
-      return ops->beneath->to_read_description (ops->beneath);
+      return this->beneath ()->read_description ();
     }
 
   if (arm_hwcap & HWCAP_IWMMXT)
@@ -541,7 +576,7 @@ arm_linux_read_description (struct target_ops *ops)
 
       /* Now make sure that the kernel supports reading these
 	 registers.  Support was added in 2.6.30.  */
-      pid = ptid_get_lwp (inferior_ptid);
+      pid = inferior_ptid.lwp ();
       errno = 0;
       buf = (char *) alloca (VFP_REGS_SIZE);
       if (ptrace (PTRACE_GETVFPREGS, pid, 0, buf) < 0
@@ -551,7 +586,7 @@ arm_linux_read_description (struct target_ops *ops)
       return result;
     }
 
-  return ops->beneath->to_read_description (ops->beneath);
+  return this->beneath ()->read_description ();
 }
 
 /* Information describing the hardware breakpoint capabilities.  */
@@ -587,7 +622,7 @@ arm_linux_get_hwbp_cap (void)
       int tid;
       unsigned int val;
 
-      tid = ptid_get_lwp (inferior_ptid);
+      tid = inferior_ptid.lwp ();
       if (ptrace (PTRACE_GETHBPREGS, tid, 0, &val) < 0)
 	available = 0;
       else
@@ -635,10 +670,9 @@ arm_linux_get_hw_watchpoint_count (void)
 
 /* Have we got a free break-/watch-point available for use?  Returns -1 if
    there is not an appropriate resource available, otherwise returns 1.  */
-static int
-arm_linux_can_use_hw_breakpoint (struct target_ops *self,
-				 enum bptype type,
-				 int cnt, int ot)
+int
+arm_linux_nat_target::can_use_hw_breakpoint (enum bptype type,
+					     int cnt, int ot)
 {
   if (type == bp_hardware_watchpoint || type == bp_read_watchpoint
       || type == bp_access_watchpoint || type == bp_watchpoint)
@@ -786,8 +820,8 @@ arm_linux_process_info_get (pid_t pid)
 /* Called whenever GDB is no longer debugging process PID.  It deletes
    data structures that keep track of debug register state.  */
 
-static void
-arm_linux_forget_process (pid_t pid)
+void
+arm_linux_nat_target::low_forget_process (pid_t pid)
 {
   struct arm_linux_process_info *proc, **proc_link;
 
@@ -959,8 +993,8 @@ arm_linux_insert_hw_breakpoint1 (const struct arm_linux_hw_breakpoint* bpt,
   struct arm_linux_hw_breakpoint* bpts;
   struct update_registers_data data;
 
-  pid = ptid_get_pid (inferior_ptid);
-  pid_ptid = pid_to_ptid (pid);
+  pid = inferior_ptid.pid ();
+  pid_ptid = ptid_t (pid);
 
   if (watchpoint)
     {
@@ -998,8 +1032,8 @@ arm_linux_remove_hw_breakpoint1 (const struct arm_linux_hw_breakpoint *bpt,
   struct arm_linux_hw_breakpoint* bpts;
   struct update_registers_data data;
 
-  pid = ptid_get_pid (inferior_ptid);
-  pid_ptid = pid_to_ptid (pid);
+  pid = inferior_ptid.pid ();
+  pid_ptid = ptid_t (pid);
 
   if (watchpoint)
     {
@@ -1026,12 +1060,10 @@ arm_linux_remove_hw_breakpoint1 (const struct arm_linux_hw_breakpoint *bpt,
 }
 
 /* Insert a Hardware breakpoint.  */
-static int
-arm_linux_insert_hw_breakpoint (struct target_ops *self,
-				struct gdbarch *gdbarch, 
-				struct bp_target_info *bp_tgt)
+int
+arm_linux_nat_target::insert_hw_breakpoint (struct gdbarch *gdbarch,
+					    struct bp_target_info *bp_tgt)
 {
-  struct lwp_info *lp;
   struct arm_linux_hw_breakpoint p;
 
   if (arm_linux_get_hw_breakpoint_count () == 0)
@@ -1045,12 +1077,10 @@ arm_linux_insert_hw_breakpoint (struct target_ops *self,
 }
 
 /* Remove a hardware breakpoint.  */
-static int
-arm_linux_remove_hw_breakpoint (struct target_ops *self,
-				struct gdbarch *gdbarch, 
-				struct bp_target_info *bp_tgt)
+int
+arm_linux_nat_target::remove_hw_breakpoint (struct gdbarch *gdbarch,
+					    struct bp_target_info *bp_tgt)
 {
-  struct lwp_info *lp;
   struct arm_linux_hw_breakpoint p;
 
   if (arm_linux_get_hw_breakpoint_count () == 0)
@@ -1065,9 +1095,8 @@ arm_linux_remove_hw_breakpoint (struct target_ops *self,
 
 /* Are we able to use a hardware watchpoint for the LEN bytes starting at 
    ADDR?  */
-static int
-arm_linux_region_ok_for_hw_watchpoint (struct target_ops *self,
-				       CORE_ADDR addr, int len)
+int
+arm_linux_nat_target::region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
 {
   const struct arm_linux_hwbp_cap *cap = arm_linux_get_hwbp_cap ();
   CORE_ADDR max_wp_length, aligned_addr;
@@ -1098,13 +1127,11 @@ arm_linux_region_ok_for_hw_watchpoint (struct target_ops *self,
 }
 
 /* Insert a Hardware breakpoint.  */
-static int
-arm_linux_insert_watchpoint (struct target_ops *self,
-			     CORE_ADDR addr, int len,
-			     enum target_hw_bp_type rw,
-			     struct expression *cond)
+int
+arm_linux_nat_target::insert_watchpoint (CORE_ADDR addr, int len,
+					 enum target_hw_bp_type rw,
+					 struct expression *cond)
 {
-  struct lwp_info *lp;
   struct arm_linux_hw_breakpoint p;
 
   if (arm_linux_get_hw_watchpoint_count () == 0)
@@ -1118,12 +1145,11 @@ arm_linux_insert_watchpoint (struct target_ops *self,
 }
 
 /* Remove a hardware breakpoint.  */
-static int
-arm_linux_remove_watchpoint (struct target_ops *self, CORE_ADDR addr,
-			     int len, enum target_hw_bp_type rw,
-			     struct expression *cond)
+int
+arm_linux_nat_target::remove_watchpoint (CORE_ADDR addr,
+					 int len, enum target_hw_bp_type rw,
+					 struct expression *cond)
 {
-  struct lwp_info *lp;
   struct arm_linux_hw_breakpoint p;
 
   if (arm_linux_get_hw_watchpoint_count () == 0)
@@ -1137,19 +1163,19 @@ arm_linux_remove_watchpoint (struct target_ops *self, CORE_ADDR addr,
 }
 
 /* What was the data address the target was stopped on accessing.  */
-static int
-arm_linux_stopped_data_address (struct target_ops *target, CORE_ADDR *addr_p)
+bool
+arm_linux_nat_target::stopped_data_address (CORE_ADDR *addr_p)
 {
   siginfo_t siginfo;
   int slot;
 
   if (!linux_nat_get_siginfo (inferior_ptid, &siginfo))
-    return 0;
+    return false;
 
   /* This must be a hardware breakpoint.  */
   if (siginfo.si_signo != SIGTRAP
       || (siginfo.si_code & 0xffff) != 0x0004 /* TRAP_HWBKPT */)
-    return 0;
+    return false;
 
   /* We must be able to set hardware watchpoints.  */
   if (arm_linux_get_hw_watchpoint_count () == 0)
@@ -1160,32 +1186,32 @@ arm_linux_stopped_data_address (struct target_ops *target, CORE_ADDR *addr_p)
   /* If we are in a positive slot then we're looking at a breakpoint and not
      a watchpoint.  */
   if (slot >= 0)
-    return 0;
+    return false;
 
   *addr_p = (CORE_ADDR) (uintptr_t) siginfo.si_addr;
-  return 1;
+  return true;
 }
 
 /* Has the target been stopped by hitting a watchpoint?  */
-static int
-arm_linux_stopped_by_watchpoint (struct target_ops *ops)
+bool
+arm_linux_nat_target::stopped_by_watchpoint ()
 {
   CORE_ADDR addr;
-  return arm_linux_stopped_data_address (ops, &addr);
+  return stopped_data_address (&addr);
 }
 
-static int
-arm_linux_watchpoint_addr_within_range (struct target_ops *target,
-					CORE_ADDR addr,
-					CORE_ADDR start, int length)
+bool
+arm_linux_nat_target::watchpoint_addr_within_range (CORE_ADDR addr,
+						    CORE_ADDR start,
+						    int length)
 {
   return start <= addr && start + length - 1 >= addr;
 }
 
 /* Handle thread creation.  We need to copy the breakpoints and watchpoints
    in the parent thread to the child thread.  */
-static void
-arm_linux_new_thread (struct lwp_info *lp)
+void
+arm_linux_nat_target::low_new_thread (struct lwp_info *lp)
 {
   int i;
   struct arch_lwp_info *info = XCNEW (struct arch_lwp_info);
@@ -1202,19 +1228,27 @@ arm_linux_new_thread (struct lwp_info *lp)
   lp->arch_private = info;
 }
 
+/* Function to call when a thread is being deleted.  */
+
+void
+arm_linux_nat_target::low_delete_thread (struct arch_lwp_info *arch_lwp)
+{
+  xfree (arch_lwp);
+}
+
 /* Called when resuming a thread.
    The hardware debug registers are updated when there is any change.  */
 
-static void
-arm_linux_prepare_to_resume (struct lwp_info *lwp)
+void
+arm_linux_nat_target::low_prepare_to_resume (struct lwp_info *lwp)
 {
   int pid, i;
   struct arm_linux_hw_breakpoint *bpts, *wpts;
   struct arch_lwp_info *arm_lwp_info = lwp->arch_private;
 
-  pid = ptid_get_lwp (lwp->ptid);
-  bpts = arm_linux_get_debug_reg_state (ptid_get_pid (lwp->ptid))->bpts;
-  wpts = arm_linux_get_debug_reg_state (ptid_get_pid (lwp->ptid))->wpts;
+  pid = lwp->ptid.lwp ();
+  bpts = arm_linux_get_debug_reg_state (lwp->ptid.pid ())->bpts;
+  wpts = arm_linux_get_debug_reg_state (lwp->ptid.pid ())->wpts;
 
   /* NULL means this is the main thread still going through the shell,
      or, no watchpoint has been set yet.  In that case, there's
@@ -1259,8 +1293,8 @@ arm_linux_prepare_to_resume (struct lwp_info *lwp)
 
 /* linux_nat_new_fork hook.  */
 
-static void
-arm_linux_new_fork (struct lwp_info *parent, pid_t child_pid)
+void
+arm_linux_nat_target::low_new_fork (struct lwp_info *parent, pid_t child_pid)
 {
   pid_t parent_pid;
   struct arm_linux_debug_reg_state *parent_state;
@@ -1277,47 +1311,16 @@ arm_linux_new_fork (struct lwp_info *parent, pid_t child_pid)
      new process so that all breakpoints and watchpoints can be
      removed together.  */
 
-  parent_pid = ptid_get_pid (parent->ptid);
+  parent_pid = parent->ptid.pid ();
   parent_state = arm_linux_get_debug_reg_state (parent_pid);
   child_state = arm_linux_get_debug_reg_state (child_pid);
   *child_state = *parent_state;
 }
 
-void _initialize_arm_linux_nat (void);
-
 void
 _initialize_arm_linux_nat (void)
 {
-  struct target_ops *t;
-
-  /* Fill in the generic GNU/Linux methods.  */
-  t = linux_target ();
-
-  /* Add our register access methods.  */
-  t->to_fetch_registers = arm_linux_fetch_inferior_registers;
-  t->to_store_registers = arm_linux_store_inferior_registers;
-
-  /* Add our hardware breakpoint and watchpoint implementation.  */
-  t->to_can_use_hw_breakpoint = arm_linux_can_use_hw_breakpoint;
-  t->to_insert_hw_breakpoint = arm_linux_insert_hw_breakpoint;
-  t->to_remove_hw_breakpoint = arm_linux_remove_hw_breakpoint;
-  t->to_region_ok_for_hw_watchpoint = arm_linux_region_ok_for_hw_watchpoint;
-  t->to_insert_watchpoint = arm_linux_insert_watchpoint;
-  t->to_remove_watchpoint = arm_linux_remove_watchpoint;
-  t->to_stopped_by_watchpoint = arm_linux_stopped_by_watchpoint;
-  t->to_stopped_data_address = arm_linux_stopped_data_address;
-  t->to_watchpoint_addr_within_range = arm_linux_watchpoint_addr_within_range;
-
-  t->to_read_description = arm_linux_read_description;
-
   /* Register the target.  */
-  linux_nat_add_target (t);
-
-  /* Handle thread creation and exit.  */
-  linux_nat_set_new_thread (t, arm_linux_new_thread);
-  linux_nat_set_prepare_to_resume (t, arm_linux_prepare_to_resume);
-
-  /* Handle process creation and exit.  */
-  linux_nat_set_new_fork (t, arm_linux_new_fork);
-  linux_nat_set_forget_process (t, arm_linux_forget_process);
+  linux_target = &the_arm_linux_nat_target;
+  add_inf_child_target (&the_arm_linux_nat_target);
 }

@@ -1,4 +1,4 @@
-# Copyright 2015-2017 Free Software Foundation, Inc.
+# Copyright 2015-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -83,18 +83,62 @@ with_test_prefix "memory page boundary" {
 }
 
 with_test_prefix "address zero boundary" {
-    if {[is_address_zero_readable]} {
-        set address_zero "0x0"
-        set byte "\t0x\[0-9a-f\]+"
-        gdb_test "x/3xb ${address_zero}" \
-            "0x\[0-9a-f\]+00.*:${byte}${byte}${byte}" \
-            "examine 3 bytes forward from ${address_zero}"
-        gdb_test "x/-6x" \
-            "0x\[0-9a-f\]+fd.*:${byte}${byte}${byte}${byte}${byte}${byte}" \
-            "examine 6 bytes backward"
-        gdb_test "x/-3x ${address_zero}" \
-            "0x\[0-9a-f\]+fd.*:${byte}${byte}${byte}" \
-            "examine 3 bytes backward from ${address_zero}"
+    global gdb_prompt
+
+    set address_zero "0x0"
+    set byte "\t0x\[0-9a-f\]+"
+
+    set test "examine 3 bytes forward from ${address_zero}"
+    gdb_test_multiple "x/3xb ${address_zero}" "$test" {
+	-re "0x\[0-9a-f\]*0.*:${byte}${byte}${byte}\[\r\n\]*$gdb_prompt $" {
+	    pass $test
+	}
+	-re "0x\[0-9a-f\]*0.*:\tCannot access memory at address 0x\[0-9a-f\]*0\[\r\n\]*$gdb_prompt $" {
+	    # If we failed to read address 0 then this is fine, so
+	    # long as we're not expecting to be able to read from
+	    # address 0.
+	    if {![is_address_zero_readable]} {
+		# The next test assumes that the last address examined
+		# would be 0x2.  As we just failed to read address 0x0
+		# things are going to go wrong unless we now tell GDB
+		# to examine address 0x2.  We assume here that if we
+		# can't read 0x0 we can't read 0x2 either.
+		gdb_test "x/3xb 0x2" "Cannot access memory at address 0x\[0-9a-f\]*2" \
+		    "set last examined address to 0x2"
+		pass $test
+	    } else {
+		fail $test
+	    }
+	}
+    }
+
+    set test "examine 6 bytes backward"
+    gdb_test_multiple "x/-6x" "$test" {
+	-re "0x\[0-9a-f\]+fd.*:${byte}${byte}${byte}${byte}${byte}${byte}.*\[\r\n\]*$gdb_prompt $" {
+	    pass $test
+	}
+	-re "0x\[0-9a-f\]+fd.*:\tCannot access memory at address 0x\[0-9a-f\]+fd.*\[\r\n\]*$gdb_prompt $" {
+	    # We may, or may not have managed to read from address 0x0
+	    # in the previous test, however, being able to read 0x0 is
+	    # no guarantee that we can read from the other end of the
+	    # address space.  If we get an error about trying to read
+	    # from the expected address then we count that as a pass,
+	    # GDB did try to read the correct location, and this test
+	    # is (mostly) about does GDB calculate the correct address
+	    # when wrapping around.
+	    pass $test
+	}
+    }
+
+    set test "examine 3 bytes backward from ${address_zero}"
+    gdb_test_multiple "x/-3x ${address_zero}" "$test" {
+	-re "0x\[0-9a-f\]+fd.*:${byte}${byte}${byte}${byte}${byte}${byte}.*\[\r\n\]*$gdb_prompt $" {
+	    pass $test
+	}
+	-re "0x\[0-9a-f\]+fd.*:\tCannot access memory at address 0x\[0-9a-f\]+fd.*\[\r\n\]*$gdb_prompt $" {
+	    # See previous test for why this is a pass.
+	    pass $test
+	}
     }
 }
 

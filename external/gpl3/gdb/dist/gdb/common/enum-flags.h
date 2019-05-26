@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@
        flag_val3 = 1 << 3,
        flag_val4 = 1 << 4,
     };
-    DEF_ENUM_FLAGS_TYPE(enum some_flag, some_flags)
+    DEF_ENUM_FLAGS_TYPE(enum some_flag, some_flags);
 
     some_flags f = flag_val1 | flag_val2;
     f |= flag_val3;
@@ -120,16 +120,6 @@ public:
     : m_enum_value ((enum_type) 0)
   {}
 
-  enum_flags (const enum_flags &other)
-    : m_enum_value (other.m_enum_value)
-  {}
-
-  enum_flags &operator= (const enum_flags &other)
-  {
-    m_enum_value = other.m_enum_value;
-    return *this;
-  }
-
   /* If you get an error saying these two overloads are ambiguous,
      then you tried to mix values of different enum types.  */
   enum_flags (enum_type e)
@@ -174,6 +164,12 @@ public:
   }
   enum_flags operator~ () const
   {
+    // We only the underlying type to be unsigned when actually using
+    // operator~ -- if it were not unsigned, undefined behavior could
+    // result.  However, asserting this in the class itself would
+    // require too many unnecessary changes to otherwise ok enum
+    // types.
+    gdb_static_assert (std::is_unsigned<underlying_type>::value);
     return (enum_type) ~underlying_value ();
   }
 

@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris.
 
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,11 +49,11 @@ sol2_core_pid_to_str (struct gdbarch *gdbarch, ptid_t ptid)
 
   /* Check whether we're printing an LWP (gdb thread) or a
      process.  */
-  pid = ptid_get_lwp (ptid);
+  pid = ptid.lwp ();
   if (pid != 0)
     {
       /* A thread.  */
-      xsnprintf (buf, sizeof buf, "LWP %ld", ptid_get_lwp (ptid));
+      xsnprintf (buf, sizeof buf, "LWP %ld", ptid.lwp ());
       return buf;
     }
 

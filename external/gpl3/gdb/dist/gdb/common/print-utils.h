@@ -1,6 +1,6 @@
 /* Cell-based print utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_CELLS_H
-#define COMMON_CELLS_H
+#ifndef COMMON_PRINT_UTILS_H
+#define COMMON_PRINT_UTILS_H
 
 /* How many characters (including the terminating null byte) fit in a
    cell.  */
@@ -79,4 +79,4 @@ extern const char *host_address_to_string_1 (const void *addr);
 
 extern char *get_print_cell (void);
 
-#endif /* COMMON_CELLS_H */
+#endif /* COMMON_PRINT_UTILS_H */

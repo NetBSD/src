@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Free Software Foundation, Inc.
+# Copyright 2012-2019 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -63,7 +63,7 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
     set match_str {All functions matching regular expression "foo":[\r\n]*}
     if { "$libsepdebug" != "NO"  } {
 	append match_str {File .*/info-fun-solib[.]c:[\r\n]*}
-	append match_str {int foo\(void\);[\r\n]*}
+	append match_str {\d+:\tint foo\(void\);[\r\n]*}
     }
     append match_str {Non-debugging symbols:[\r\n]*}
     # Note: Targets like {m68k,ppc64,s390x}-linux also have, e.g.,

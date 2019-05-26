@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2017 Free Software Foundation, Inc.
+# Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,6 +68,13 @@ proc do_test { detach_on_fork follow_fork non_stop schedule_multiple } {
     gdb_test_no_output "set follow-fork $follow_fork"
     if {$non_stop == "off"} {
 	gdb_test_no_output "set schedule-multiple $schedule_multiple"
+    }
+
+    # If we're detaching from the parent (or child), then tell it to
+    # exit itself when its child (or parent) exits.  If we stay
+    # attached, we take care of killing it.
+    if {$detach_on_fork == "on"} {
+	gdb_test "print exit_if_relative_exits = 1" " = 1"
     }
 
     set test "continue &"

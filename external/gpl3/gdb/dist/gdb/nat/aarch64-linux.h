@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AARCH64_LINUX_H
-#define AARCH64_LINUX_H 1
+#ifndef NAT_AARCH64_LINUX_H
+#define NAT_AARCH64_LINUX_H
 
 #include <signal.h>
 
@@ -122,8 +122,11 @@ void aarch64_linux_prepare_to_resume (struct lwp_info *lwp);
 
 void aarch64_linux_new_thread (struct lwp_info *lwp);
 
+/* Function to call when a thread is being deleted.  */
+void aarch64_linux_delete_thread (struct arch_lwp_info *arch_lwp);
+
 ps_err_e aarch64_ps_get_thread_area (struct ps_prochandle *ph,
 				       lwpid_t lwpid, int idx, void **base,
 				       int is_64bit_p);
 
-#endif /* AARCH64_LINUX_H */
+#endif /* NAT_AARCH64_LINUX_H */

@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2017 Free Software Foundation, Inc.
+# Copyright (C) 2014-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@
 # run twice, and we restart gdb before testing each different command to
 # ensure that nothing is being cached.
 
-set opts {}
 standard_testfile .S
 
 if { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
@@ -35,7 +34,7 @@ if { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
     return
 }
 
-if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $opts] } {
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} {nopie}] } {
     return -1
 }
 
@@ -70,9 +69,9 @@ if ![runto breakpt] {
 }
 
 gdb_test "interpreter-exec mi \"-stack-list-frames\"" \
-    "\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"breakpt\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"\},frame=\{level=\"1\",addr=\"$hex\",func=\"func5\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"\},frame=\{level=\"2\",addr=\"$hex\",func=\"func4\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"\},frame=\{level=\"3\",addr=\"$hex\",func=\"func3\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"\}\\\]" \
+    "\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"breakpt\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"(,arch=\"\[^\"\]+\")?\},frame=\{level=\"1\",addr=\"$hex\",func=\"func5\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"(,arch=\"\[^\"\]+\")?\},frame=\{level=\"2\",addr=\"$hex\",func=\"func4\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"(,arch=\"\[^\"\]+\")?\},frame=\{level=\"3\",addr=\"$hex\",func=\"func3\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"(,arch=\"\[^\"\]+\")?\}\\\]" \
     "check mi -stack-list-frames command, first time"
 
 gdb_test "interpreter-exec mi \"-stack-list-frames\"" \
-    "\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"breakpt\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"\},frame=\{level=\"1\",addr=\"$hex\",func=\"func5\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"\},frame=\{level=\"2\",addr=\"$hex\",func=\"func4\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"\},frame=\{level=\"3\",addr=\"$hex\",func=\"func3\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"\}\\\]" \
+    "\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"breakpt\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"(,arch=\"\[^\"\]+\")?\},frame=\{level=\"1\",addr=\"$hex\",func=\"func5\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"(,arch=\"\[^\"\]+\")?\},frame=\{level=\"2\",addr=\"$hex\",func=\"func4\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"(,arch=\"\[^\"\]+\")?\},frame=\{level=\"3\",addr=\"$hex\",func=\"func3\",file=\"\[^\"\]+\",fullname=\"\[^\"\]+\",line=\"${decimal}\"(,arch=\"\[^\"\]+\")?\}\\\]" \
     "check mi -stack-list-frames command, second time"

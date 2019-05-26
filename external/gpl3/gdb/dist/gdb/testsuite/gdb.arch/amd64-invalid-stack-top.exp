@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2017 Free Software Foundation, Inc.
+# Copyright (C) 2014-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,9 +72,9 @@ if ![runto breakpt] {
 }
 
 gdb_test "interpreter-exec mi \"-stack-list-frames\"" \
-    "\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"func2\"\}\\\]" \
+    "\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"func2\"(,arch=\"\[^\"\]+\")?\}\\\]" \
     "check mi -stack-list-frames command, first time"
 
 gdb_test "interpreter-exec mi \"-stack-list-frames\"" \
-    "\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"func2\"\}\\\]" \
+    "\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"func2\"(,arch=\"\[^\"\]+\")?\}\\\]" \
     "check mi -stack-list-frames command, second time"

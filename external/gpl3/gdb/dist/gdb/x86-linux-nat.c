@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,6 @@
 #include <sys/uio.h>
 
 #include "x86-nat.h"
-#include "linux-nat.h"
 #ifndef __x86_64__
 #include "i386-linux-nat.h"
 #endif
@@ -36,27 +35,17 @@
 #ifdef __x86_64__
 #include "amd64-linux-tdep.h"
 #endif
-#include "x86-xstate.h"
+#include "common/x86-xstate.h"
 #include "nat/linux-btrace.h"
 #include "nat/linux-nat.h"
 #include "nat/x86-linux.h"
 #include "nat/x86-linux-dregs.h"
 #include "nat/linux-ptrace.h"
 
-/* Per-thread arch-specific data we want to keep.  */
+/* linux_nat_target::low_new_fork implementation.  */
 
-struct arch_lwp_info
-{
-  /* Non-zero if our copy differs from what's recorded in the thread.  */
-  int debug_registers_changed;
-};
-
-
-
-/* linux_nat_new_fork hook.   */
-
-static void
-x86_linux_new_fork (struct lwp_info *parent, pid_t child_pid)
+void
+x86_linux_nat_target::low_new_fork (struct lwp_info *parent, pid_t child_pid)
 {
   pid_t parent_pid;
   struct x86_debug_reg_state *parent_state;
@@ -81,21 +70,22 @@ x86_linux_new_fork (struct lwp_info *parent, pid_t child_pid)
      in the end before detaching the forked off process, thus making
      this compatible with older Linux kernels too.  */
 
-  parent_pid = ptid_get_pid (parent->ptid);
+  parent_pid = parent->ptid.pid ();
   parent_state = x86_debug_reg_state (parent_pid);
   child_state = x86_debug_reg_state (child_pid);
   *child_state = *parent_state;
 }
 
 
-static void (*super_post_startup_inferior) (struct target_ops *self,
-					    ptid_t ptid);
+x86_linux_nat_target::~x86_linux_nat_target ()
+{
+}
 
-static void
-x86_linux_child_post_startup_inferior (struct target_ops *self, ptid_t ptid)
+void
+x86_linux_nat_target::post_startup_inferior (ptid_t ptid)
 {
   x86_cleanup_dregs ();
-  super_post_startup_inferior (self, ptid);
+  linux_nat_target::post_startup_inferior (ptid);
 }
 
 #ifdef __x86_64__
@@ -112,8 +102,8 @@ x86_linux_child_post_startup_inferior (struct target_ops *self, ptid_t ptid)
 
 /* Get Linux/x86 target description from running target.  */
 
-static const struct target_desc *
-x86_linux_read_description (struct target_ops *ops)
+const struct target_desc *
+x86_linux_nat_target::read_description ()
 {
   int tid;
   int is_64bit = 0;
@@ -124,9 +114,9 @@ x86_linux_read_description (struct target_ops *ops)
   uint64_t xcr0_features_bits;
 
   /* GNU/Linux LWP ID's are process ID's.  */
-  tid = ptid_get_lwp (inferior_ptid);
+  tid = inferior_ptid.lwp ();
   if (tid == 0)
-    tid = ptid_get_pid (inferior_ptid); /* Not a threaded program.  */
+    tid = inferior_ptid.pid (); /* Not a threaded program.  */
 
 #ifdef __x86_64__
   {
@@ -163,7 +153,7 @@ x86_linux_read_description (struct target_ops *ops)
 	{
 	  have_ptrace_getfpxregs = 0;
 	  have_ptrace_getregset = TRIBOOL_FALSE;
-	  return tdesc_i386_mmx_linux;
+	  return i386_linux_read_description (X86_XSTATE_X87_MASK);
 	}
     }
 #endif
@@ -202,59 +192,18 @@ x86_linux_read_description (struct target_ops *ops)
   if (is_64bit)
     {
 #ifdef __x86_64__
-      switch (xcr0_features_bits)
-	{
-	case X86_XSTATE_AVX_MPX_AVX512_PKU_MASK:
-	  if (is_x32)
-	    /* No MPX, PKU on x32, fall back to AVX-AVX512.  */
-	    return tdesc_x32_avx_avx512_linux;
-	  else
-	    return tdesc_amd64_avx_mpx_avx512_pku_linux;
-	case X86_XSTATE_AVX_AVX512_MASK:
-	  if (is_x32)
-	    return tdesc_x32_avx_avx512_linux;
-	  else
-	    return tdesc_amd64_avx_avx512_linux;
-	case X86_XSTATE_MPX_MASK:
-	  if (is_x32)
-	    return tdesc_x32_avx_linux; /* No MPX on x32 using AVX.  */
-	  else
-	    return tdesc_amd64_mpx_linux;
-	case X86_XSTATE_AVX_MPX_MASK:
-	  if (is_x32)
-	    return tdesc_x32_avx_linux; /* No MPX on x32 using AVX.  */
-	  else
-	    return tdesc_amd64_avx_mpx_linux;
-	case X86_XSTATE_AVX_MASK:
-	  if (is_x32)
-	    return tdesc_x32_avx_linux;
-	  else
-	    return tdesc_amd64_avx_linux;
-	default:
-	  if (is_x32)
-	    return tdesc_x32_linux;
-	  else
-	    return tdesc_amd64_linux;
-	}
+      return amd64_linux_read_description (xcr0_features_bits, is_x32);
 #endif
     }
   else
     {
-      switch (xcr0_features_bits)
-	{
-	case X86_XSTATE_AVX_MPX_AVX512_PKU_MASK:
-	  return tdesc_i386_avx_mpx_avx512_pku_linux;
-	case X86_XSTATE_AVX_AVX512_MASK:
-	  return tdesc_i386_avx_avx512_linux;
-	case X86_XSTATE_MPX_MASK:
-	  return tdesc_i386_mpx_linux;
-	case X86_XSTATE_AVX_MPX_MASK:
-	  return tdesc_i386_avx_mpx_linux;
-	case X86_XSTATE_AVX_MASK:
-	  return tdesc_i386_avx_linux;
-	default:
-	  return tdesc_i386_linux;
-	}
+      const struct target_desc * tdesc
+	= i386_linux_read_description (xcr0_features_bits);
+
+      if (tdesc == NULL)
+	tdesc = i386_linux_read_description (X86_XSTATE_SSE_MASK);
+
+      return tdesc;
     }
 
   gdb_assert_not_reached ("failed to return tdesc");
@@ -263,27 +212,29 @@ x86_linux_read_description (struct target_ops *ops)
 
 /* Enable branch tracing.  */
 
-static struct btrace_target_info *
-x86_linux_enable_btrace (struct target_ops *self, ptid_t ptid,
-			 const struct btrace_config *conf)
+struct btrace_target_info *
+x86_linux_nat_target::enable_btrace (ptid_t ptid,
+				     const struct btrace_config *conf)
 {
-  struct btrace_target_info *tinfo;
-
-  errno = 0;
-  tinfo = linux_enable_btrace (ptid, conf);
-
-  if (tinfo == NULL)
-    error (_("Could not enable branch tracing for %s: %s."),
-	   target_pid_to_str (ptid), safe_strerror (errno));
+  struct btrace_target_info *tinfo = nullptr;
+  TRY
+    {
+      tinfo = linux_enable_btrace (ptid, conf);
+    }
+  CATCH (exception, RETURN_MASK_ERROR)
+    {
+      error (_("Could not enable branch tracing for %s: %s"),
+	     target_pid_to_str (ptid), exception.message);
+    }
+  END_CATCH
 
   return tinfo;
 }
 
 /* Disable branch tracing.  */
 
-static void
-x86_linux_disable_btrace (struct target_ops *self,
-			  struct btrace_target_info *tinfo)
+void
+x86_linux_nat_target::disable_btrace (struct btrace_target_info *tinfo)
 {
   enum btrace_error errcode = linux_disable_btrace (tinfo);
 
@@ -293,28 +244,25 @@ x86_linux_disable_btrace (struct target_ops *self,
 
 /* Teardown branch tracing.  */
 
-static void
-x86_linux_teardown_btrace (struct target_ops *self,
-			   struct btrace_target_info *tinfo)
+void
+x86_linux_nat_target::teardown_btrace (struct btrace_target_info *tinfo)
 {
   /* Ignore errors.  */
   linux_disable_btrace (tinfo);
 }
 
-static enum btrace_error
-x86_linux_read_btrace (struct target_ops *self,
-		       struct btrace_data *data,
-		       struct btrace_target_info *btinfo,
-		       enum btrace_read_type type)
+enum btrace_error
+x86_linux_nat_target::read_btrace (struct btrace_data *data,
+				   struct btrace_target_info *btinfo,
+				   enum btrace_read_type type)
 {
   return linux_read_btrace (data, btinfo, type);
 }
 
 /* See to_btrace_conf in target.h.  */
 
-static const struct btrace_config *
-x86_linux_btrace_conf (struct target_ops *self,
-		       const struct btrace_target_info *btinfo)
+const struct btrace_config *
+x86_linux_nat_target::btrace_conf (const struct btrace_target_info *btinfo)
 {
   return linux_btrace_conf (btinfo);
 }
@@ -363,49 +311,14 @@ x86_linux_get_thread_area (pid_t pid, void *addr, unsigned int *base_addr)
 }
 
 
-/* Create an x86 GNU/Linux target.  */
-
-struct target_ops *
-x86_linux_create_target (void)
+void
+_initialize_x86_linux_nat ()
 {
-  /* Fill in the generic GNU/Linux methods.  */
-  struct target_ops *t = linux_target ();
-
   /* Initialize the debug register function vectors.  */
-  x86_use_watchpoints (t);
   x86_dr_low.set_control = x86_linux_dr_set_control;
   x86_dr_low.set_addr = x86_linux_dr_set_addr;
   x86_dr_low.get_addr = x86_linux_dr_get_addr;
   x86_dr_low.get_status = x86_linux_dr_get_status;
   x86_dr_low.get_control = x86_linux_dr_get_control;
   x86_set_debug_register_length (sizeof (void *));
-
-  /* Override the GNU/Linux inferior startup hook.  */
-  super_post_startup_inferior = t->to_post_startup_inferior;
-  t->to_post_startup_inferior = x86_linux_child_post_startup_inferior;
-
-  /* Add the description reader.  */
-  t->to_read_description = x86_linux_read_description;
-
-  /* Add btrace methods.  */
-  t->to_supports_btrace = linux_supports_btrace;
-  t->to_enable_btrace = x86_linux_enable_btrace;
-  t->to_disable_btrace = x86_linux_disable_btrace;
-  t->to_teardown_btrace = x86_linux_teardown_btrace;
-  t->to_read_btrace = x86_linux_read_btrace;
-  t->to_btrace_conf = x86_linux_btrace_conf;
-
-  return t;
-}
-
-/* Add an x86 GNU/Linux target.  */
-
-void
-x86_linux_add_target (struct target_ops *t)
-{
-  linux_nat_add_target (t);
-  linux_nat_set_new_thread (t, x86_linux_new_thread);
-  linux_nat_set_new_fork (t, x86_linux_new_fork);
-  linux_nat_set_forget_process (t, x86_forget_process);
-  linux_nat_set_prepare_to_resume (t, x86_linux_prepare_to_resume);
 }

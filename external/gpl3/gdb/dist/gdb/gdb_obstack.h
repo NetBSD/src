@@ -1,6 +1,6 @@
 /* Obstack wrapper for GDB.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,12 +24,40 @@
 
 /* Utility macros - wrap obstack alloc into something more robust.  */
 
-#define OBSTACK_ZALLOC(OBSTACK,TYPE) \
-  ((TYPE *) memset (obstack_alloc ((OBSTACK), sizeof (TYPE)), 0, sizeof (TYPE)))
+template <typename T>
+static inline T*
+obstack_zalloc (struct obstack *ob)
+{
+  static_assert (IsMallocable<T>::value, "Trying to use OBSTACK_ZALLOC with a \
+non-POD data type.  Use obstack_new instead.");
+  return ((T *) memset (obstack_alloc (ob, sizeof (T)), 0, sizeof (T)));
+}
+
+#define OBSTACK_ZALLOC(OBSTACK,TYPE) obstack_zalloc<TYPE> ((OBSTACK))
+
+template <typename T>
+static inline T *
+obstack_calloc (struct obstack *ob, size_t number)
+{
+  static_assert (IsMallocable<T>::value, "Trying to use OBSTACK_CALLOC with a \
+non-POD data type.  Use obstack_new instead.");
+  return ((T *) memset (obstack_alloc (ob, number * sizeof (T)), 0,
+			number * sizeof (T)));
+}
 
 #define OBSTACK_CALLOC(OBSTACK,NUMBER,TYPE) \
-  ((TYPE *) memset (obstack_alloc ((OBSTACK), (NUMBER) * sizeof (TYPE)), \
-		    0, (NUMBER) * sizeof (TYPE)))
+  obstack_calloc<TYPE> ((OBSTACK), (NUMBER))
+
+/* Allocate an object on OB and call its constructor.  */
+
+template <typename T, typename... Args>
+static inline T*
+obstack_new (struct obstack *ob, Args&&... args)
+{
+  T* object = (T *) obstack_alloc (ob, sizeof (T));
+  object = new (object) T (std::forward<Args> (args)...);
+  return object;
+}
 
 /* Unless explicitly specified, GDB obstacks always use xmalloc() and
    xfree().  */
@@ -62,5 +90,40 @@ extern char *obconcat (struct obstack *obstackp, ...) ATTRIBUTE_SENTINEL;
    obstack OBSTACKP.  */
 
 extern char *obstack_strdup (struct obstack *obstackp, const char *string);
+
+/* An obstack that frees itself on scope exit.  */
+struct auto_obstack : obstack
+{
+  auto_obstack ()
+  { obstack_init (this); }
+
+  ~auto_obstack ()
+  { obstack_free (this, NULL); }
+
+  /* Free all memory in the obstack but leave it valid for further
+     allocation.  */
+  void clear ()
+  { obstack_free (this, obstack_base (this)); }
+};
+
+/* Objects are allocated on obstack instead of heap.  */
+
+struct allocate_on_obstack
+{
+  allocate_on_obstack () = default;
+
+  void* operator new (size_t size, struct obstack *obstack)
+  {
+    return obstack_alloc (obstack, size);
+  }
+
+  void* operator new[] (size_t size, struct obstack *obstack)
+  {
+    return obstack_alloc (obstack, size);
+  }
+
+  void operator delete (void *memory) {}
+  void operator delete[] (void *memory) {}
+};
 
 #endif

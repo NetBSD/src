@@ -1,6 +1,6 @@
 /* Compile-time valid expression checker for GDB, the GNU debugger.
 
-   Copyright (C) 2017 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -85,24 +85,24 @@
    another variant.  */
 
 #define CHECK_VALID_EXPR_1(T1, VALID, EXPR_TYPE, EXPR)			\
-  CHECK_VALID_EXPR_INT (ESC (typename T1),				\
-			ESC (T1),					\
+  CHECK_VALID_EXPR_INT (ESC_PARENS (typename T1),			\
+			ESC_PARENS (T1),				\
 			VALID, EXPR_TYPE, EXPR)
 
 #define CHECK_VALID_EXPR_2(T1, T2, VALID, EXPR_TYPE, EXPR)		\
-  CHECK_VALID_EXPR_INT (ESC (typename T1, typename T2),			\
-			ESC (T1, T2),					\
+  CHECK_VALID_EXPR_INT (ESC_PARENS(typename T1, typename T2),		\
+			ESC_PARENS (T1, T2),				\
 			VALID, EXPR_TYPE, EXPR)
 
 #define CHECK_VALID_EXPR_3(T1, T2, T3, VALID, EXPR_TYPE, EXPR)		\
-  CHECK_VALID_EXPR_INT (ESC (typename T1, typename T2, typename T3),	\
-			ESC (T1, T2, T3),				\
+  CHECK_VALID_EXPR_INT (ESC_PARENS (typename T1, typename T2, typename T3), \
+			ESC_PARENS (T1, T2, T3),				\
 			VALID, EXPR_TYPE, EXPR)
 
 #define CHECK_VALID_EXPR_4(T1, T2, T3, T4, VALID, EXPR_TYPE, EXPR)	\
-  CHECK_VALID_EXPR_INT (ESC (typename T1, typename T2,			\
-			     typename T3, typename T4),			\
-			ESC (T1, T2, T3, T4),				\
+  CHECK_VALID_EXPR_INT (ESC_PARENS (typename T1, typename T2,		\
+				    typename T3, typename T4),		\
+			ESC_PARENS (T1, T2, T3, T4),			\
 			VALID, EXPR_TYPE, EXPR)
 
 #endif /* COMMON_VALID_EXPR_H */

@@ -1,5 +1,5 @@
 /* Interface to prologue value handling for GDB.
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -221,83 +221,110 @@ enum pv_boolean pv_is_array_ref (pv_t addr, CORE_ADDR size,
                                  int *i);
 
 
-/* A 'struct pv_area' keeps track of values stored in a particular
-   region of memory.  */
-struct pv_area;
+/* A 'pv_area' keeps track of values stored in a particular region of
+   memory.  */
+class pv_area
+{
+public:
 
-/* Create a new area, tracking stores relative to the original value
-   of BASE_REG.  If BASE_REG is SP, then this effectively records the
-   contents of the stack frame: the original value of the SP is the
-   frame's CFA, or some constant offset from it.
+  /* Create a new area, tracking stores relative to the original value
+     of BASE_REG.  If BASE_REG is SP, then this effectively records the
+     contents of the stack frame: the original value of the SP is the
+     frame's CFA, or some constant offset from it.
 
-   Stores to constant addresses, unknown addresses, or to addresses
-   relative to registers other than BASE_REG will trash this area; see
-   pv_area_store_would_trash.
+     Stores to constant addresses, unknown addresses, or to addresses
+     relative to registers other than BASE_REG will trash this area; see
+     pv_area::store_would_trash.
 
-   To check whether a pointer refers to this area, only the low
-   ADDR_BIT bits will be compared.  */
-struct pv_area *make_pv_area (int base_reg, int addr_bit);
+     To check whether a pointer refers to this area, only the low
+     ADDR_BIT bits will be compared.  */
+  pv_area (int base_reg, int addr_bit);
 
-/* Free AREA.  */
-void free_pv_area (struct pv_area *area);
+  ~pv_area ();
 
+  DISABLE_COPY_AND_ASSIGN (pv_area);
 
-/* Register a cleanup to free AREA.  */
-struct cleanup *make_cleanup_free_pv_area (struct pv_area *area);
+  /* Store the SIZE-byte value VALUE at ADDR in AREA.
 
+     If ADDR is not relative to the same base register we used in
+     creating AREA, then we can't tell which values here the stored
+     value might overlap, and we'll have to mark everything as
+     unknown.  */
+  void store (pv_t addr,
+	      CORE_ADDR size,
+	      pv_t value);
 
-/* Store the SIZE-byte value VALUE at ADDR in AREA.
+  /* Return the SIZE-byte value at ADDR in AREA.  This may return
+     pv_unknown ().  */
+  pv_t fetch (pv_t addr, CORE_ADDR size);
 
-   If ADDR is not relative to the same base register we used in
-   creating AREA, then we can't tell which values here the stored
-   value might overlap, and we'll have to mark everything as
-   unknown.  */
-void pv_area_store (struct pv_area *area,
-                    pv_t addr,
-                    CORE_ADDR size,
-                    pv_t value);
+  /* Return true if storing to address ADDR in AREA would force us to
+     mark the contents of the entire area as unknown.  This could happen
+     if, say, ADDR is unknown, since we could be storing anywhere.  Or,
+     it could happen if ADDR is relative to a different register than
+     the other stores base register, since we don't know the relative
+     values of the two registers.
 
-/* Return the SIZE-byte value at ADDR in AREA.  This may return
-   pv_unknown ().  */
-pv_t pv_area_fetch (struct pv_area *area, pv_t addr, CORE_ADDR size);
+     If you've reached such a store, it may be better to simply stop the
+     prologue analysis, and return the information you've gathered,
+     instead of losing all that information, most of which is probably
+     okay.  */
+  bool store_would_trash (pv_t addr);
 
-/* Return true if storing to address ADDR in AREA would force us to
-   mark the contents of the entire area as unknown.  This could happen
-   if, say, ADDR is unknown, since we could be storing anywhere.  Or,
-   it could happen if ADDR is relative to a different register than
-   the other stores base register, since we don't know the relative
-   values of the two registers.
+  /* Search AREA for the original value of REGISTER.  If we can't find
+     it, return zero; if we can find it, return a non-zero value, and if
+     OFFSET_P is non-zero, set *OFFSET_P to the register's offset within
+     AREA.  GDBARCH is the architecture of which REGISTER is a member.
 
-   If you've reached such a store, it may be better to simply stop the
-   prologue analysis, and return the information you've gathered,
-   instead of losing all that information, most of which is probably
-   okay.  */
-int pv_area_store_would_trash (struct pv_area *area, pv_t addr);
-
-
-/* Search AREA for the original value of REGISTER.  If we can't find
-   it, return zero; if we can find it, return a non-zero value, and if
-   OFFSET_P is non-zero, set *OFFSET_P to the register's offset within
-   AREA.  GDBARCH is the architecture of which REGISTER is a member.
-
-   In the worst case, this takes time proportional to the number of
-   items stored in AREA.  If you plan to gather a lot of information
-   about registers saved in AREA, consider calling pv_area_scan
-   instead, and collecting all your information in one pass.  */
-int pv_area_find_reg (struct pv_area *area,
-                      struct gdbarch *gdbarch,
-                      int reg,
-                      CORE_ADDR *offset_p);
+     In the worst case, this takes time proportional to the number of
+     items stored in AREA.  If you plan to gather a lot of information
+     about registers saved in AREA, consider calling pv_area::scan
+     instead, and collecting all your information in one pass.  */
+  bool find_reg (struct gdbarch *gdbarch, int reg, CORE_ADDR *offset_p);
 
 
-/* For every part of AREA whose value we know, apply FUNC to CLOSURE,
-   the value's address, its size, and the value itself.  */
-void pv_area_scan (struct pv_area *area,
-                   void (*func) (void *closure,
-                                 pv_t addr,
-                                 CORE_ADDR size,
-                                 pv_t value),
-                   void *closure);
+  /* For every part of AREA whose value we know, apply FUNC to CLOSURE,
+     the value's address, its size, and the value itself.  */
+  void scan (void (*func) (void *closure,
+			   pv_t addr,
+			   CORE_ADDR size,
+			   pv_t value),
+	     void *closure);
 
+private:
+
+  struct area_entry;
+
+  /* Delete all entries from AREA.  */
+  void clear_entries ();
+
+  /* Return a pointer to the first entry we hit in AREA starting at
+     OFFSET and going forward.
+
+     This may return zero, if AREA has no entries.
+
+     And since the entries are a ring, this may return an entry that
+     entirely precedes OFFSET.  This is the correct behavior: depending
+     on the sizes involved, we could still overlap such an area, with
+     wrap-around.  */
+  struct area_entry *find_entry (CORE_ADDR offset);
+
+  /* Return non-zero if the SIZE bytes at OFFSET would overlap ENTRY;
+     return zero otherwise.  AREA is the area to which ENTRY belongs.  */
+  int overlaps (struct area_entry *entry,
+		CORE_ADDR offset,
+		CORE_ADDR size);
+
+  /* This area's base register.  */
+  int m_base_reg;
+
+  /* The mask to apply to addresses, to make the wrap-around happen at
+     the right place.  */
+  CORE_ADDR m_addr_mask;
+
+  /* An element of the doubly-linked ring of entries, or zero if we
+     have none.  */
+  struct area_entry *m_entry;
+};
 
 #endif /* PROLOGUE_VALUE_H */

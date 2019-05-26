@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,56 +18,20 @@
 #include "server.h"
 #include "dll.h"
 
-#define get_dll(inf) ((struct dll_info *)(inf))
+#include <algorithm>
 
 /* An "unspecified" CORE_ADDR, for match_dll.  */
 #define UNSPECIFIED_CORE_ADDR (~(CORE_ADDR) 0)
 
-struct inferior_list all_dlls;
+std::list<dll_info> all_dlls;
 int dlls_changed;
-
-static void
-free_one_dll (struct inferior_list_entry *inf)
-{
-  struct dll_info *dll = get_dll (inf);
-  if (dll->name != NULL)
-    free (dll->name);
-  free (dll);
-}
-
-/* Find a DLL with the same name and/or base address.  A NULL name in
-   the key is ignored; so is an all-ones base address.  */
-
-static int
-match_dll (struct inferior_list_entry *inf, void *arg)
-{
-  struct dll_info *iter = (struct dll_info *) inf;
-  struct dll_info *key = (struct dll_info *) arg;
-
-  if (key->base_addr != UNSPECIFIED_CORE_ADDR
-      && iter->base_addr == key->base_addr)
-    return 1;
-  else if (key->name != NULL
-	   && iter->name != NULL
-	   && strcmp (key->name, iter->name) == 0)
-    return 1;
-
-  return 0;
-}
 
 /* Record a newly loaded DLL at BASE_ADDR.  */
 
 void
 loaded_dll (const char *name, CORE_ADDR base_addr)
 {
-  struct dll_info *new_dll = XCNEW (struct dll_info);
-
-  new_dll->entry.id = minus_one_ptid;
-
-  new_dll->name = xstrdup (name);
-  new_dll->base_addr = base_addr;
-
-  add_inferior_to_list (&all_dlls, &new_dll->entry);
+  all_dlls.emplace_back (name != NULL ? name : "", base_addr);
   dlls_changed = 1;
 }
 
@@ -76,16 +40,21 @@ loaded_dll (const char *name, CORE_ADDR base_addr)
 void
 unloaded_dll (const char *name, CORE_ADDR base_addr)
 {
-  struct dll_info *dll;
-  struct dll_info key_dll;
+  auto pred = [&] (const dll_info &dll)
+    {
+      if (base_addr != UNSPECIFIED_CORE_ADDR
+	  && base_addr == dll.base_addr)
+	return true;
 
-  /* Be careful not to put the key DLL in any list.  */
-  key_dll.name = (char *) name;
-  key_dll.base_addr = base_addr;
+      if (name != NULL && dll.name == name)
+	return true;
 
-  dll = (struct dll_info *) find_inferior (&all_dlls, match_dll, &key_dll);
+      return false;
+    };
 
-  if (dll == NULL)
+  auto iter = std::find_if (all_dlls.begin (), all_dlls.end (), pred);
+
+  if (iter == all_dlls.end ())
     /* For some inferiors we might get unloaded_dll events without having
        a corresponding loaded_dll.  In that case, the dll cannot be found
        in ALL_DLL, and there is nothing further for us to do.
@@ -99,8 +68,7 @@ unloaded_dll (const char *name, CORE_ADDR base_addr)
     {
       /* DLL has been found so remove the entry and free associated
          resources.  */
-      remove_inferior (&all_dlls, &dll->entry);
-      free_one_dll (&dll->entry);
+      all_dlls.erase (iter);
       dlls_changed = 1;
     }
 }
@@ -108,6 +76,5 @@ unloaded_dll (const char *name, CORE_ADDR base_addr)
 void
 clear_dlls (void)
 {
-  for_each_inferior (&all_dlls, free_one_dll);
-  clear_inferior_list (&all_dlls);
+  all_dlls.clear ();
 }

@@ -1,5 +1,5 @@
 #  S/390 opcodes list. Use s390-mkopc to convert it into the opcode table.
-#  Copyright (C) 2000-2017 Free Software Foundation, Inc.
+#  Copyright (C) 2000-2019 Free Software Foundation, Inc.
 #  Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 5a a RX_RRRD "add" g5 esa,zarch
 6a ad RX_FRRD "add normalized (long)" g5 esa,zarch
@@ -79,7 +79,7 @@ b224 iac RRE_R0 "insert address space control" g5 esa,zarch
 bf icm RS_RURD "insert characters under mask" g5 esa,zarch
 b20b ipk S_00 "insert PSW key" g5 esa,zarch
 b222 ipm RRE_R0 "insert program mask" g5 esa,zarch
-b221 ipte RRE_RR "invalidate page table entry" g5 esa,zarch
+b221 ipte RRF_RURR "invalidate page table entry" g5 esa,zarch optparm2
 b229 iske RRE_RR "insert storage key extended" g5 esa,zarch
 b223 ivsk RRE_RR "insert virtual storage key" g5 esa,zarch
 58 l RX_RRRD "load" g5 esa,zarch
@@ -103,7 +103,7 @@ b7 lctl RS_CCRD "load control" g5 esa,zarch
 20 lpdr RR_FF "load positive (long)" g5 esa,zarch
 30 lper RR_FF "load positive (short)" g5 esa,zarch
 10 lpr RR_RR "load positive" g5 esa,zarch
-82 lpsw S_RD "load PSW" g5 esa,zarch
+82 lpsw SI_RD "load PSW" g5 esa,zarch
 18 lr RR_RR "load" g5 esa,zarch
 b1 lra RX_RRRD "load real address" g5 esa,zarch
 25 ldxr RR_FFE "load rounded (ext. to long)" g5 esa,zarch
@@ -199,7 +199,7 @@ b25e srst RRE_RR "search string" g5 esa,zarch
 b225 ssar RRE_R0 "set secondary ASN" g5 esa,zarch
 b233 ssch S_RD "start subchannel" g5 esa,zarch
 b22b sske RRE_RR "set storage key extended" g5 esa,zarch
-80 ssm S_RD "set system mask" g5 esa,zarch
+80 ssm SI_RD "set system mask" g5 esa,zarch
 50 st RX_RRRD "store" g5 esa,zarch
 9b stam RS_AARD "store access multiple" g5 esa,zarch
 b212 stap S_RD "store CPU address" g5 esa,zarch
@@ -228,14 +228,14 @@ b246 stura RRE_RR "store using real address" g5 esa,zarch
 2f swr RR_FF "subtract unnormalized (long)" g5 esa,zarch
 37 sxr RR_FEFE "subtract normalized (ext.)" g5 esa,zarch
 b24c tar RRE_AR "test access" g5 esa,zarch
-b22c tb RRE_0R "test block" g5 esa,zarch
+b22c tb RRE_RR "test block" g5 esa,zarch
 91 tm SI_URD "test under mask" g5 esa,zarch
 b236 tpi S_RD "test pending interruption" g5 esa,zarch
 e501 tprot SSE_RDRD "test protection" g5 esa,zarch
 dc tr SS_L0RDRD "translate" g5 esa,zarch
 99 trace RS_RRRD "trace" g5 esa,zarch
 dd trt SS_L0RDRD "translate and test" g5 esa,zarch
-93 ts S_RD "test and set" g5 esa,zarch
+93 ts SI_RD "test and set" g5 esa,zarch
 b235 tsch S_RD "test subchannel" g5 esa,zarch
 f3 unpk SS_LLRDRD "unpack" g5 esa,zarch
 0102 upt E "update tree" g5 esa,zarch
@@ -700,7 +700,7 @@ eb000000008f clclu RSY_RRRD "compare logical long unicode with long offset" z990
 eb0000000096 lmh RSY_RRRD "load multiple high" z990 zarch
 # new z990 instructions
 b98a cspg RRE_RR "compare and swap and purge" z990 zarch
-b98e idte RRF_R0RR "invalidate dat table entry" z990 zarch
+b98e idte RRF_RURR2 "invalidate dat table entry" z990 zarch optparm
 b33e madr RRF_F0FF "multiply and add long hfp" z990 esa,zarch
 ed000000003e mad RXF_FRRDF "multiply and add long hfp" z990 esa,zarch
 b32e maer RRF_F0FF "multiply and add short hfp" z990 esa,zarch
@@ -817,8 +817,8 @@ b3f2 cdutr RRE_FR "convert from unsigned bcd to long dfp" z9-ec zarch
 b3fa cxutr RRE_FER "convert from unsigned bcd to extended dfp" z9-ec zarch
 b3e1 cgdtr RRF_U0RF "convert from long dfp to fixed" z9-ec zarch
 b3e9 cgxtr RRF_U0RFE "convert from extended dfp to fixed" z9-ec zarch
-b3e3 csdtr RRE_RF "convert from long dfp to signed bcd" z9-ec zarch
-b3eb csxtr RRE_RFE "convert from extended dfp to signed bcd" z9-ec zarch
+b3e3 csdtr RRF_0URF "convert from long dfp to signed bcd" z9-ec zarch
+b3eb csxtr RRF_0UREFE "convert from extended dfp to signed bcd" z9-ec zarch
 b3e2 cudtr RRE_RF "convert from long dfp to unsigned bcd" z9-ec zarch
 b3ea cuxtr RRE_RFE "convert from extended dfp to unsigned bcd" z9-ec zarch
 b3d1 ddtr RRR_F0FF "divide long dfp" z9-ec zarch
@@ -976,7 +976,6 @@ b286 qsi S_RD "query sampling information" z10 zarch
 b2e0 scctr RRE_RR "set cpu counter" z10 zarch
 b2e1 spctr RRE_RR "set peripheral counter" z10 zarch
 b280 lpp S_RD "load program parameter" z10 zarch
-b928 pckmo RRE_00 "perform cryptographic key management operation" z10 zarch
 
 # The new instructions of the IBM zEnterprise z196
 b9c8 ahhhr RRF_R0RR2 "add high high" z196 zarch
@@ -1116,6 +1115,7 @@ b92a kmf RRE_RR "cipher message with CFB" z196 zarch
 b92b kmo RRE_RR "cipher message with OFB" z196 zarch
 b92c pcc RRE_00 "perform cryptographic computation" z196 zarch
 b92d kmctr RRF_R0RR "cipher message with counter" z196 zarch
+b928 pckmo RRE_00 "perform cryptographic key management operation" z196 zarch
 
 # The new instructions of the IBM zEnterprise EC12
 b2ec etnd RRE_R0 "extract transaction nesting depth" zEC12 zarch htm
@@ -1126,7 +1126,7 @@ e561 tbeginc SIL_RDU "constrained transaction begin" zEC12 zarch htm
 b2f8 tend S_00 "transaction end" zEC12 zarch htm
 c7 bpp SMI_U0RDP "branch prediction preload" zEC12 zarch
 c5 bprp MII_UPP "branch prediction relative preload" zEC12 zarch
-b2e8 ppa RRF_U0RR "perform processor assist" zEC12 zarch
+b2e8 ppa RRF_U0RR "perform processor assist" zEC12 zarch htm
 b2fa niai IE_UU "next instruction access intent" zEC12 zarch
 b98f crdte RRF_RURR2 "compare and replace DAT table entry" zEC12 zarch optparm
 e3000000009f lat RXY_RRRD "load and trap 32 bit" zEC12 zarch
@@ -1876,3 +1876,118 @@ e30000000049 stgsc RXY_RRRD "store guarded storage controls" arch12 zarch
 # Message-Security-Assist Extension 8
 
 b929 kma RRF_R0RR "cipher message with galois counter mode" arch12 zarch
+
+b93c prno RRE_RR "perform pseudorandom number operation" arch12 zarch
+b9a1 tpei RRE_RR "test pending external interruption" arch12 zarch
+b9ac irbm RRE_RR "insert reference bits multiple" arch12 zarch
+
+# Aligned vector store hints
+
+e70000000006 vl VRX_VRRDU "vector memory load" arch12 zarch optparm
+e70000000036 vlm VRS_VVRDU "vector load multiple" arch12 zarch optparm
+e7000000000e vst VRX_VRRDU "vector store" arch12 zarch optparm
+e7000000003e vstm VRS_VVRDU "vector store multiple" arch12 zarch optparm
+
+# arch13 instructions
+
+b9f5 ncrk RRF_R0RR2 " " arch13 zarch
+b9e5 ncgrk RRF_R0RR2 " " arch13 zarch
+e50a mvcrl SSE_RDRD " " arch13 zarch
+b974 nnrk RRF_R0RR2 " " arch13 zarch
+b964 nngrk RRF_R0RR2 " " arch13 zarch
+b976 nork RRF_R0RR2 " " arch13 zarch
+b966 nogrk RRF_R0RR2 " " arch13 zarch
+b977 nxrk RRF_R0RR2 " " arch13 zarch
+b967 nxgrk RRF_R0RR2 " " arch13 zarch
+b975 ocrk RRF_R0RR2 " " arch13 zarch
+b965 ocgrk RRF_R0RR2 " " arch13 zarch
+b9e1 popcnt RRF_U0RR " " arch13 zarch optparm
+b9f0 selr RRF_RURR " " arch13 zarch
+b9f00000 selr*20 RRF_R0RR3 " " arch13 zarch
+b9e3 selgr RRF_RURR " " arch13 zarch
+b9e30000 selgr*20 RRF_R0RR3 " " arch13 zarch
+b9c0 selhhhr RRF_RURR " " arch13 zarch
+b9c00000 selhhhr*20 RRF_R0RR3 " " arch13 zarch
+
+e60000000006 vlbr VRX_VRRDU " " arch13 zarch
+e60000001006 vlbrh VRX_VRRD " " arch13 zarch
+e60000002006 vlbrf VRX_VRRD " " arch13 zarch
+e60000003006 vlbrg VRX_VRRD " " arch13 zarch
+e60000004006 vlbrq VRX_VRRD " " arch13 zarch
+
+e60000000007 vler VRX_VRRDU " " arch13 zarch
+e60000001007 vlerh VRX_VRRD " " arch13 zarch
+e60000002007 vlerf VRX_VRRD " " arch13 zarch
+e60000003007 vlerg VRX_VRRD " " arch13 zarch
+
+e60000000004 vllebrz VRX_VRRDU " " arch13 zarch
+e60000001004 vllebrzh VRX_VRRD " " arch13 zarch
+e60000002004 vllebrzf VRX_VRRD " " arch13 zarch
+e60000003004 ldrv VRX_VRRD " " arch13 zarch
+e60000003004 vllebrzg VRX_VRRD " " arch13 zarch
+e60000006004 lerv VRX_VRRD " " arch13 zarch
+e60000006004 vllebrze VRX_VRRD " " arch13 zarch
+
+e60000000001 vlebrh VRX_VRRDU " " arch13 zarch
+e60000000003 vlebrf VRX_VRRDU " " arch13 zarch
+e60000000002 vlebrg VRX_VRRDU " " arch13 zarch
+
+e60000000005 vlbrrep VRX_VRRDU " " arch13 zarch
+e60000001005 vlbrreph VRX_VRRD " " arch13 zarch
+e60000002005 vlbrrepf VRX_VRRD " " arch13 zarch
+e60000003005 vlbrrepg VRX_VRRD " " arch13 zarch
+
+e6000000000e vstbr VRX_VRRDU " " arch13 zarch
+e6000000100e vstbrh VRX_VRRD " " arch13 zarch
+e6000000200e vstbrf VRX_VRRD " " arch13 zarch
+e6000000300e vstbrg VRX_VRRD " " arch13 zarch
+e6000000400e vstbrq VRX_VRRD " " arch13 zarch
+
+e6000000000f vster VRX_VRRDU " " arch13 zarch
+e6000000100f vsterh VRX_VRRD " " arch13 zarch
+e6000000200f vsterf VRX_VRRD " " arch13 zarch
+e6000000300f vsterg VRX_VRRD " " arch13 zarch
+
+e60000000009 vstebrh VRX_VRRDU " " arch13 zarch
+e6000000000b vstebrf VRX_VRRDU " " arch13 zarch
+e6000000000b sterv VRX_VRRD " " arch13 zarch
+e6000000000a vstebrg VRX_VRRDU " " arch13 zarch
+e6000000000a stdrv VRX_VRRD " " arch13 zarch
+
+e70000000086 vsld VRI_VVV0U " " arch13 zarch
+e70000000087 vsrd VRI_VVV0U " " arch13 zarch
+
+e7000000008b vstrs VRR_VVVUU0V " " arch13 zarch optparm
+
+e7000000008b vstrsb VRR_VVVU0VB " " arch13 zarch optparm
+e7000100008b vstrsh VRR_VVVU0VB " " arch13 zarch optparm
+e7000200008b vstrsf VRR_VVVU0VB " " arch13 zarch optparm
+
+e7000020008b vstrszb VRR_VVVU0VB2 " " arch13 zarch optparm
+e7000120008b vstrszh VRR_VVVU0VB2 " " arch13 zarch optparm
+e7000220008b vstrszf VRR_VVVU0VB2 " " arch13 zarch optparm
+
+e700000000c3 vcfps VRR_VV0UUU " " arch13 zarch
+e700000020c3 vcefb VRR_VV0UU " " arch13 zarch
+e700000820c3 wcefb VRR_VV0UU8 " " arch13 zarch
+
+e700000000c1 vcfpl VRR_VV0UUU " " arch13 zarch
+e700000020c1 vcelfb VRR_VV0UU " " arch13 zarch
+e700000820c1 wcelfb VRR_VV0UU8 " " arch13 zarch
+
+e700000000c2 vcsfp VRR_VV0UUU " " arch13 zarch
+e700000020c2 vcfeb VRR_VV0UU " " arch13 zarch
+e700000820c2 wcfeb VRR_VV0UU8 " " arch13 zarch
+
+e700000000c0 vclfp VRR_VV0UUU " " arch13 zarch
+e700000020c0 vclfeb VRR_VV0UU " " arch13 zarch
+e700000820c0 wclfeb VRR_VV0UU8 " " arch13 zarch
+
+b939 dfltcc RRF_R0RR2 " " arch13 zarch
+
+b938 sortl RRE_RR " " arch13 zarch
+
+e60000000050 vcvb VRR_RV0UU " " arch13 zarch optparm
+e60000000052 vcvbg VRR_RV0UU " " arch13 zarch optparm
+
+b93a kdsa RRE_RR " " arch13 zarch

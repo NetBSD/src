@@ -1,5 +1,5 @@
 /* Table of opcodes for the sparc.
-   Copyright (C) 1989-2017 Free Software Foundation, Inc.
+   Copyright (C) 1989-2019 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -42,20 +42,24 @@
 #define MASK_V9E	SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V9E)
 #define MASK_V9V	SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V9V)
 #define MASK_V9M	SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V9M)
+#define MASK_M8	SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_M8)
 
 /* Bit masks of architectures supporting the insn.  */
 
 #define v6		(MASK_V6 | MASK_V7 | MASK_V8 | MASK_LEON \
 			 | MASK_SPARCLET | MASK_SPARCLITE \
 			 | MASK_V9 | MASK_V9A | MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
 /* v6 insns not supported on the sparclet.  */
 #define v6notlet	(MASK_V6 | MASK_V7 | MASK_V8 | MASK_LEON \
 			 | MASK_SPARCLITE | MASK_V9 | MASK_V9A | MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
 #define v7		(MASK_V7 | MASK_V8 | MASK_LEON | MASK_SPARCLET \
 			 | MASK_SPARCLITE | MASK_V9 | MASK_V9A | MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
 /* Although not all insns are implemented in hardware, sparclite is defined
    to be a superset of v8.  Unimplemented insns trap and are then theoretically
    implemented in software.
@@ -64,26 +68,33 @@
    recognizes all v8 insns.  */
 #define v8		(MASK_V8 | MASK_LEON | MASK_SPARCLET | MASK_SPARCLITE \
 			 | MASK_V9 | MASK_V9A | MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
 #define sparclet	(MASK_SPARCLET)
+#define leon		(MASK_LEON)
 /* sparclet insns supported by leon.  */
 #define letandleon	(MASK_SPARCLET | MASK_LEON)
 #define sparclite	(MASK_SPARCLITE)
 #define v9		(MASK_V9 | MASK_V9A | MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
 /* v9 insns supported by leon.  */
 #define v9andleon	(MASK_V9 | MASK_V9A | MASK_V9B \
                          | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
-                         | MASK_LEON)
+                         | MASK_M8 | MASK_LEON)
 #define v9a		(MASK_V9A | MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
 #define v9b		(MASK_V9B \
-                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
-#define v9c		(MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
-#define v9d		(MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M)
-#define v9e		(MASK_V9E | MASK_V9V | MASK_V9M)
-#define v9v		(MASK_V9V | MASK_V9M)
-#define v9m		(MASK_V9M)
+                         | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
+#define v9c		(MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
+                         | MASK_M8)
+#define v9d		(MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M | MASK_M8)
+#define v9e		(MASK_V9E | MASK_V9V | MASK_V9M | MASK_M8)
+#define v9v		(MASK_V9V | MASK_V9M | MASK_M8)
+#define v9m		(MASK_V9M | MASK_M8)
+#define m8		(MASK_M8)
 
 /* v6 insns not supported by v9.  */
 #define v6notv9		(MASK_V6 | MASK_V7 | MASK_V8 | MASK_LEON \
@@ -106,10 +117,15 @@
   | HWCAP_MONT | HWCAP_CRC32C | HWCAP_CBCOND | HWCAP_PAUSE
 #define HWS_VV HWS_VE | HWCAP_FJFMAU | HWCAP_IMA
 #define HWS_VM HWS_VV
+#define HWS_VM8 HWS_VM
 
 #define HWS2_VM							\
   HWCAP2_VIS3B | HWCAP2_ADP | HWCAP2_SPARC5 | HWCAP2_MWAIT	\
   | HWCAP2_XMPMUL | HWCAP2_XMONT
+#define HWS2_VM8 HWS2_VM \
+  | HWCAP2_SPARC6 | HWCAP2_ONADDSUB | HWCAP2_ONMUL | HWCAP2_ONDIV \
+  | HWCAP2_DICTUNP | HWCAP2_FPCMPSHL | HWCAP2_RLE | HWCAP2_SHA3
+
 
 /* Table of opcode architectures.
    The order is defined in opcode/sparc.h.  */
@@ -144,6 +160,10 @@ const struct sparc_opcode_arch sparc_opcode_archs[] =
   /* v9 with OSA2015 and M7 additions.  */
   { "v9m", (MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 | MASK_V9A | MASK_V9B
             | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M), HWS_VM, HWS2_VM },
+  /* v9 with OSA2017 and M8 additions.  */
+  { "m8", (MASK_V6 | MASK_V7 | MASK_V8 | MASK_V9 | MASK_V9A | MASK_V9B
+           | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M | MASK_M8),
+    HWS_VM8, HWS2_VM8 },
   { NULL, 0, 0, 0 }
 };
 
@@ -788,13 +808,13 @@ ldtxa (0xEB), /* #ASI_TWINX_SL  */
 { "restore",	F3(2, 0x3d, 1), F3(~2, ~0x3d, ~1),				"1,i,d", 0, 0, 0, v6 },
 { "restore",	F3(2, 0x3d, 1), F3(~2, ~0x3d, ~1)|RD_G0|RS1_G0|SIMM13(~0),	"", 0, 0, 0, v6 }, /* restore %g0,0,%g0 */
 
-{ "rett",	F3(2, 0x39, 0), F3(~2, ~0x39, ~0)|RD_G0|ASI(~0),	"1+2", F_UNBR|F_DELAYED, 0, 0, v6 }, /* rett rs1+rs2 */
-{ "rett",	F3(2, 0x39, 0), F3(~2, ~0x39, ~0)|RD_G0|ASI_RS2(~0),	"1", F_UNBR|F_DELAYED, 0, 0, v6 },	/* rett rs1,%g0 */
-{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0,		"1+i", F_UNBR|F_DELAYED, 0, 0, v6 }, /* rett rs1+X */
-{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0,		"i+1", F_UNBR|F_DELAYED, 0, 0, v6 }, /* rett X+rs1 */
-{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0|RS1_G0,		"i", F_UNBR|F_DELAYED, 0, 0, v6 }, /* rett X+rs1 */
-{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0|RS1_G0,		"i", F_UNBR|F_DELAYED, 0, 0, v6 },	/* rett X */
-{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0|SIMM13(~0),	"1", F_UNBR|F_DELAYED, 0, 0, v6 },	/* rett rs1+0 */
+{ "rett",	F3(2, 0x39, 0), F3(~2, ~0x39, ~0)|RD_G0|ASI(~0),	"1+2", F_UNBR|F_DELAYED, 0, 0, v6notv9 }, /* rett rs1+rs2 */
+{ "rett",	F3(2, 0x39, 0), F3(~2, ~0x39, ~0)|RD_G0|ASI_RS2(~0),	"1", F_UNBR|F_DELAYED, 0, 0, v6notv9 },	/* rett rs1,%g0 */
+{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0,		"1+i", F_UNBR|F_DELAYED, 0, 0, v6notv9 }, /* rett rs1+X */
+{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0,		"i+1", F_UNBR|F_DELAYED, 0, 0, v6notv9 }, /* rett X+rs1 */
+{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0|RS1_G0,		"i", F_UNBR|F_DELAYED, 0, 0, v6notv9 }, /* rett X+rs1 */
+{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0|RS1_G0,		"i", F_UNBR|F_DELAYED, 0, 0, v6notv9 },	/* rett X */
+{ "rett",	F3(2, 0x39, 1), F3(~2, ~0x39, ~1)|RD_G0|SIMM13(~0),	"1", F_UNBR|F_DELAYED, 0, 0, v6notv9 },	/* rett rs1+0 */
 
 { "save",	F3(2, 0x3c, 0), F3(~2, ~0x3c, ~0)|ASI(~0),	"1,2,d", 0, 0, 0, v6 },
 { "save",	F3(2, 0x3c, 1), F3(~2, ~0x3c, ~1),		"1,i,d", 0, 0, 0, v6 },
@@ -1004,6 +1024,13 @@ wrasr (26, HWCAP_CBCOND, 0, v9e), /* wr ...,%cfr  */
 wrasr (27, HWCAP_PAUSE, 0, v9e),  /* wr ...,%pause  */
 wrasr (28, 0, HWCAP2_MWAIT, v9m), /* wr ...,%mwait  */
 
+{ "pwr",	F3(2, 0x31, 0)|RD(1),	F3(~2, ~0x31, ~0)|RD(~1)|ASI(~0),		"1,2,p", 0, 0, 0, leon }, /* pwr r,r,%psr */
+{ "pwr",	F3(2, 0x31, 1)|RD(1),	F3(~2, ~0x31, ~1)|RD(~1),			"1,i,p", 0, 0, 0, leon }, /* pwr r,i,%psr */
+{ "pwr",	F3(2, 0x31, 0)|RD(1),	F3(~2, ~0x31, ~0)|RD(~1)|RS1_G0|ASI(~0),	"2,p", F_PREF_ALIAS, 0, 0, leon }, /* pwr %g0,rs2,%psr */
+{ "pwr",	F3(2, 0x31, 1)|RD(1),	F3(~2, ~0x31, ~1)|RD(~1)|RS1_G0,		"i,p", F_PREF_ALIAS, 0, 0, leon }, /* pwr %g0,i,%psr */
+{ "pwr",	F3(2, 0x31, 1)|RD(1),	F3(~2, ~0x31, ~1)|RD(~1)|SIMM13(~0),		"1,p", F_PREF_ALIAS, 0, 0, leon }, /* pwr rs1,0,%psr */
+{ "pwr",	F3(2, 0x31, 0)|RD(1),	F3(~2, ~0x31, ~0)|RD(~1)|ASI_RS2(~0),		"1,p", F_PREF_ALIAS, 0, 0, leon }, /* pwr rs1,%g0,%psr */
+
 { "pause", F3(2, 0x30, 1)|RD(27)|RS1(0), F3(~2, ~0x30, ~1)|RD(~27)|RS1(~0), "i", 0, HWCAP_PAUSE, 0, v9e }, /* wr %g0,i,%pause */
 
 { "rd",	F3(2, 0x28, 0)|RS1(2),		F3(~2, ~0x28, ~0)|RS1(~2)|SIMM13(~0),	"E,d", 0, 0, 0, v9 }, /* rd %ccr,r */
@@ -1011,6 +1038,7 @@ wrasr (28, 0, HWCAP2_MWAIT, v9m), /* wr ...,%mwait  */
 { "rd",	F3(2, 0x28, 0)|RS1(4),		F3(~2, ~0x28, ~0)|RS1(~4)|SIMM13(~0),	"W,d", 0, 0, 0, v9 }, /* rd %tick,r */
 { "rd",	F3(2, 0x28, 0)|RS1(5),		F3(~2, ~0x28, ~0)|RS1(~5)|SIMM13(~0),	"P,d", 0, 0, 0, v9 }, /* rd %pc,r */
 { "rd",	F3(2, 0x28, 0)|RS1(6),		F3(~2, ~0x28, ~0)|RS1(~6)|SIMM13(~0),	"s,d", 0, 0, 0, v9 }, /* rd %fprs,r */
+{ "rd", F3(2, 0x28, 0)|RS1(13),         F3(~2, ~0x28, ~0)|RS1(~13)|SIMM13(~0),  "&,d", 0, 0, HWCAP2_SPARC6, m8 }, /* rd %entropy,r */
 { "rd", F3(2, 0x28, 0)|RS1(14),         F3(~2, ~0x28, ~0)|RS1(~14)|SIMM13(~0),  "{,d", 0, 0, HWCAP2_SPARC5, v9m }, /* rd %mcdper,r */
 
 /* Read from ASR registers 16..31, which is the range defined in SPARC
@@ -2180,6 +2208,7 @@ SLCBCC("cbnefr", 15),
 { "sha1",       F3F(2, 0x36, 0x141), F3F(~2, ~0x36, ~0x141), "", F_FLOAT, HWCAP_SHA1, 0, v9e },
 { "sha256",     F3F(2, 0x36, 0x142), F3F(~2, ~0x36, ~0x142), "", F_FLOAT, HWCAP_SHA256, 0, v9e },
 { "sha512",     F3F(2, 0x36, 0x143), F3F(~2, ~0x36, ~0x143), "", F_FLOAT, HWCAP_SHA512, 0, v9e },
+{ "sha3",	F3F(2, 0x36, 0x144), F3F(~2, ~0x36, ~0x144), "", F_FLOAT, 0, HWCAP2_SHA3, m8 },
 { "crc32c",     F3F(2, 0x36, 0x147), F3F(~2, ~0x36, ~0x147), "v,B,H", F_FLOAT, HWCAP_CRC32C, 0, v9e },
 { "xmpmul",     F3F(2, 0x36, 0x148)|RD(1), F3F(~2, ~0x36, ~0x148)|RD(~1), "X", F_FLOAT, 0, HWCAP2_XMPMUL, v9m },
 { "mpmul",      F3F(2, 0x36, 0x148), F3F(~2, ~0x36, ~0x148), "X", F_FLOAT, HWCAP_MPMUL, 0, v9e },
@@ -2243,6 +2272,168 @@ SLCBCC("cbnefr", 15),
 { "fpsubs8",    F3F(2, 0x36, 0x156), F3F(~2, ~0x36, ~0x156), "v,B,H", 0, 0, HWCAP2_SPARC5, v9m },
 { "fpsubus8",   F3F(2, 0x36, 0x157), F3F(~2, ~0x36, ~0x157), "v,B,H", 0, 0, HWCAP2_SPARC5, v9m },
 { "fpsubus16",  F3F(2, 0x36, 0x153), F3F(~2, ~0x36, ~0x153), "v,B,H", 0, 0, HWCAP2_SPARC5, v9m },
+
+/* Other OSA2017 and M8 instructions.  */
+
+{ "dictunpack", F3F(2, 0x36, 0x1c), F3F(~2, ~0x36, ~0x1c), "v,X,H", 0, 0, HWCAP2_DICTUNP, m8 },
+
+#define fpcmpshl(cbits, opf) \
+  { "fpcmp" cbits "shl", F3F(2, 0x36, (opf)), F3F(~2, ~0x36, ~(opf)), "v,',|,d", 0, 0, HWCAP2_FPCMPSHL, m8 }
+
+fpcmpshl ("ule8", 0x190),
+fpcmpshl ("ugt8", 0x191),
+fpcmpshl ("eq8", 0x192),
+fpcmpshl ("ne8", 0x193),
+
+fpcmpshl ("ule16", 0x194),
+fpcmpshl ("ugt16", 0x195),
+fpcmpshl ("eq16", 0x196),
+fpcmpshl ("ne16", 0x197),
+
+fpcmpshl ("ule32", 0x198),
+fpcmpshl ("ugt32", 0x199),
+fpcmpshl ("eq32", 0x19a),
+fpcmpshl ("ne32", 0x19b),
+
+fpcmpshl ("de8", 0x45),
+fpcmpshl ("de16", 0x47),
+fpcmpshl  ("de32", 0x4a),
+
+fpcmpshl ("ur8", 0x19c),
+fpcmpshl ("ur16", 0x19d),
+fpcmpshl ("ur32", 0x19e),
+
+#undef fpcmpshl
+  
+#define fps64x(dir, opf) \
+  { "fps" dir "64x", F3F(2, 0x36, (opf)), F3F(~2, ~0x36, ~(opf)), "v,B,H", 0, 0, HWCAP2_SPARC6, m8 }
+
+fps64x ("ll", 0x106),
+fps64x ("ra", 0x10f),
+fps64x ("rl", 0x107),
+
+#undef fps64x
+
+#define ldm(width,opm,flags)                                                 \
+  { "ldm" width, F3(3, 0x31, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~0), "[1+2],d", (flags), 0, HWCAP2_SPARC6, m8 }, \
+  { "ldm" width, F3(3, 0x31, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~0)|RS2_G0, "[1],d", (flags), 0, HWCAP2_SPARC6, m8 }, /* ldm [rs1+%g0],d */ \
+  { "ldm" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm)), "[1+j],d", (flags), 0, HWCAP2_SPARC6, m8 }, \
+  { "ldm" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm)), "[j+1],d", (flags), 0, HWCAP2_SPARC6, m8 }, /* ldm [rs1+j],d  */ \
+  { "ldm" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm))|RS1_G0, "[j],d", (flags), 0, HWCAP2_SPARC6, m8 }, \
+  { "ldm" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm))|SIMM10(~0), "[1],d", (flags), 0, HWCAP2_SPARC6, m8 } /* ldm [rs1+0],d  */
+
+ldm ("sh", 0x0, 0),
+ldm ("uh", 0x1, 0),
+ldm ("sw", 0x2, 0),
+ldm ("uw", 0x3, 0),
+/* Note that opm=0x4 is reserved.  */
+ldm ("x",  0x5, 0),
+ldm ("ux", 0x5, F_ALIAS),
+
+#undef ldm
+
+#define ldma(width,opm,flags)                   \
+  { "ldm" width "a", F3(3, 0x31, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~1), "[1+2]o,d", (flags), 0, HWCAP2_SPARC6, m8 }, \
+  { "ldm" width "a", F3(3, 0x31, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~1)|RS2_G0, "[1]o,d", (flags), 0, HWCAP2_SPARC6, m8 }
+
+ldma ("sh", 0x0, 0),
+ldma ("uh", 0x1, 0),
+ldma ("sw", 0x2, 0),
+ldma ("uw", 0x3, 0),
+/* Note that opm=0x4 is reserved.  */
+ldma ("x",  0x5, 0),
+ldma ("ux", 0x5, F_ALIAS),
+
+#undef ldma
+
+#define ldmf(width,opm,rd)                                                \
+  { "ldmf" width, F3(3, 0x31, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~0), "[1+2]," rd, 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "ldmf" width, F3(3, 0x31, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~0)|RS2_G0, "[1]," rd, 0, 0, HWCAP2_SPARC6, m8 },  /* ldmf [rs1+%g0],rd  */ \
+  { "ldmf" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm)), "[1+j]," rd, 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "ldmf" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm)), "[j+1]," rd, 0, 0, HWCAP2_SPARC6, m8 }, /* ldmf [rs1+j],rd  */ \
+  { "ldmf" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm))|RS1_G0, "[j]," rd, 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "ldmf" width, F3(3, 0x31, 1)|OPM((opm)), F3(~3, ~0x31, ~1)|OPM(~(opm))|SIMM10(~0), "[1]," rd, 0, 0, HWCAP2_SPARC6, m8 } /* ldmf [rs1+0],rd  */
+
+ldmf ("s", 0x6, "g"),
+ldmf ("d", 0x7, "H"),
+
+#undef ldmf
+
+#define ldmfa(width,opm,rd)                                                \
+  { "ldmf" width "a", F3(3, 0x31, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~1), "[1+2]o," rd, 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "ldmf" width "a", F3(3, 0x31, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x31, ~0)|OPM(~(opm))|OPMI(~1)|RS2_G0, "[1]o," rd, 0, 0, HWCAP2_SPARC6, m8}
+
+ldmfa ("s", 0x6, "g"),
+ldmfa ("d", 0x7, "H"),
+
+#undef ldmfa
+
+#define stm(width,opm) \
+  { "stm" width, F3(3, 0x35, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~0), "d,[1+2]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stm" width, F3(3, 0x35, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~0)|RS2_G0, "d,[1]", 0, 0, HWCAP2_SPARC6, m8 }, /* stm d,[rs1+%g0]  */ \
+  { "stm" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm)), "d,[1+j]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stm" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm)), "d,[j+1]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stm" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm))|RS1_G0, "d,[j]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stm" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm))|SIMM10(~0), "d,[1]", 0, 0, HWCAP2_SPARC6, m8 }
+
+stm ("h", 0x1),
+stm ("w", 0x3),
+stm ("x", 0x5),
+
+#undef stm
+
+#define stma(width,opm) \
+  { "stm" width "a", F3(3, 0x35, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~1), "d,[1+2]o", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stm" width "a", F3(3, 0x35, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~1)|RS2_G0, "d,[1]o", 0, 0, HWCAP2_SPARC6, m8 }
+
+stma ("h", 0x1),
+stma ("w", 0x3),
+stma ("x", 0x5),
+
+#undef stma
+
+#define stmf(width, opm, rd)                                               \
+  { "stmf" width, F3(3, 0x35, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~0), rd ",[1+2]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stmf" width, F3(3, 0x35, 0)|OPM((opm))|OPMI(0), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~0)|RS2_G0, rd ",[1]", 0, 0, HWCAP2_SPARC6, m8 }, /* stmf rd,[rs1+%g0]  */ \
+  { "stmf" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm)), rd ",[1+j]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stmf" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm)), rd ",[j+1]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stmf" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm))|RS1_G0, rd ",[j]", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stmf" width, F3(3, 0x35, 1)|OPM((opm)), F3(~3, ~0x35, ~1)|OPM(~(opm))|SIMM10(~0), rd ",[1]", 0, 0, HWCAP2_SPARC6, m8 }
+
+stmf ("s", 0x6, "g"),
+stmf ("d", 0x7, "H"),
+
+#define stmfa(width, opm, rd) \
+  { "stmf" width "a", F3(3, 0x35, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~1), rd ",[1+2]o", 0, 0, HWCAP2_SPARC6, m8 }, \
+  { "stmf" width "a", F3(3, 0x35, 0)|OPM((opm))|OPMI(1), F3(~3, ~0x35, ~0)|OPM(~(opm))|OPMI(~1)|RS2_G0, rd ",[1]o", 0, 0, HWCAP2_SPARC6, m8 }
+
+stmfa ("s", 0x6, "g"),
+stmfa ("d", 0x7, "H"),
+
+#undef stmfa
+
+#define on(op,fcn,hwcaps2)                                                     \
+  { "on" op, F3F(2, 0x36, 0x15)|ONFCN((fcn)), F3F(~2, ~0x36, ~0x15)|ONFCN(~(fcn)), ";,:,^", 0, 0, (hwcaps2), m8 }
+
+on ("add", 0x0, HWCAP2_ONADDSUB),
+on ("sub", 0x1, HWCAP2_ONADDSUB),
+on ("mul", 0x2, HWCAP2_ONMUL),
+on ("div", 0x3, HWCAP2_ONDIV),
+
+#undef on
+
+#define rev(what,width,fcn)                        \
+  { "rev" what width, F3F(2, 0x36, 0x1e)|REVFCN((fcn)), F3F(~2, ~0x36, ~0x1e)|REVFCN(~(fcn)), "1,d", 0, 0, HWCAP2_SPARC6, m8 }
+
+rev ("bits",  "b", 0x0),
+rev ("bytes", "h", 0x1),
+rev ("bytes", "w", 0x2),
+rev ("bytes", "x", 0x3),
+
+#undef rev
+
+{ "rle_burst", F3F(2, 0x36, 0x30), F3F(~2, ~0x36, ~0x30), "1,2,d", 0, 0, HWCAP2_RLE, m8 },
+{ "rle_length", F3F(2, 0x36, 0x32)|RS1(0), F3F(~2, ~0x36, ~0x32)|RS1(~0), "2,d", 0, 0, HWCAP2_RLE, m8 },
 
 /* More v9 specific insns, these need to come last so they do not clash
    with v9a instructions such as "edge8" which looks like impdep1. */
@@ -2311,6 +2502,8 @@ static sparc_asi asi_table[] =
   { 0x21, "#ASI_MMU", v9c },
   { 0x23, "#ASI_BLK_INIT_QUAD_LDD_AIUS", v9c },
   { 0x24, "#ASI_NUCLEUS_QUAD_LDD", v9b },
+  { 0x24, "#ASI_CORE_COMMIT_COUNT", m8 },
+  { 0x24, "#ASI_CORE_SELECT_COUNT", m8 },
   { 0x25, "#ASI_QUEUE", v9c },
   { 0x26, "#ASI_QUAD_LDD_PHYS_4V", v9c },
   { 0x2c, "#ASI_NUCLEUS_QUAD_LDD_L", v9b },
@@ -2344,17 +2537,22 @@ static sparc_asi asi_table[] =
   { 0x4c, "#ASI_AFSR", v9b },
   { 0x4d, "#ASI_AFAR", v9b },
   { 0x4e, "#ASI_EC_TAG_DATA", v9b },
+  { 0x48, "#ASI_ARF_ECC_REG", m8 },
   { 0x50, "#ASI_IMMU", v9b },
   { 0x51, "#ASI_IMMU_TSB_8KB_PTR", v9b },
   { 0x52, "#ASI_IMMU_TSB_64KB_PTR", v9b },
+  { 0x53, "#ASI_ITLB_PROBE", m8 },
   { 0x54, "#ASI_ITLB_DATA_IN", v9b },
   { 0x55, "#ASI_ITLB_DATA_ACCESS", v9b },
   { 0x56, "#ASI_ITLB_TAG_READ", v9b },
   { 0x57, "#ASI_IMMU_DEMAP", v9b },
   { 0x58, "#ASI_DMMU", v9b },
+  { 0x58, "#ASI_DSFAR", m8 },
   { 0x59, "#ASI_DMMU_TSB_8KB_PTR", v9b },
   { 0x5a, "#ASI_DMMU_TSB_64KB_PTR", v9b },
+  { 0x5a, "#ASI_DTLB_PROBE_PRIMARY", m8 },
   { 0x5b, "#ASI_DMMU_TSB_DIRECT_PTR", v9b },
+  { 0x5b, "#ASI_DTLB_PROBE_REAL", m8 },
   { 0x5c, "#ASI_DTLB_DATA_IN", v9b },
   { 0x5d, "#ASI_DTLB_DATA_ACCESS", v9b },
   { 0x5e, "#ASI_DTLB_TAG_READ", v9b },
@@ -2363,6 +2561,7 @@ static sparc_asi asi_table[] =
   { 0x63, "#ASI_INTR_ID", v9b },
   { 0x63, "#ASI_CORE_ID", v9b },
   { 0x63, "#ASI_CESR_ID", v9b },
+  { 0x64, "#ASI_CORE_SELECT_COMMIT_NHT", m8 },
   { 0x66, "#ASI_IC_INSTR", v9b },
   { 0x67, "#ASI_IC_TAG", v9b },
   { 0x68, "#ASI_IC_STAG", v9b },

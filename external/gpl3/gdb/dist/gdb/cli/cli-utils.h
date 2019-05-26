@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (C) 2011-2017 Free Software Foundation, Inc.
+   Copyright (C) 2011-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLI_UTILS_H
-#define CLI_UTILS_H
+#ifndef CLI_CLI_UTILS_H
+#define CLI_CLI_UTILS_H
 
 /* *PP is a string denoting a number.  Get the number.  Advance *PP
    after the string and any trailing whitespace.
@@ -33,11 +33,41 @@ extern int get_number_trailer (const char **pp, int trailer);
 
 /* Convenience.  Like get_number_trailer, but with no TRAILER.  */
 
-extern int get_number_const (const char **);
+extern int get_number (const char **);
 
-/* Like get_number_const, but takes a non-const "char **".  */
+/* Like the above, but takes a non-const "char **".  */
 
 extern int get_number (char **);
+
+/* Extract from ARGS the arguments [-q] [-t TYPEREGEXP] [--] NAMEREGEXP.
+
+   The caller is responsible to initialize *QUIET to false, *REGEXP
+   and *T_REGEXP to "".
+   extract_info_print_args can then be called iteratively to search
+   for valid arguments, as part of a 'main parsing loop' searching for
+   -q/-t/-- arguments together with other flags and options.
+
+   Returns true and updates *ARGS + one of *QUIET, *REGEXP, *T_REGEXP if
+   it finds a valid argument.
+   Returns false if no valid argument is found at the beginning of ARGS.  */
+
+extern bool extract_info_print_args (const char **args,
+				     bool *quiet,
+				     std::string *regexp,
+				     std::string *t_regexp);
+
+/* Throws an error telling the user that ARGS starts with an option
+   unrecognized by COMMAND.  */
+
+extern void report_unrecognized_option_error (const char *command,
+					      const char *args);
+
+
+/* Builds the help string for a command documented by PREFIX,
+   followed by the extract_info_print_args help for ENTITY_KIND.  */
+
+const char *info_print_args_help (const char *prefix,
+				  const char *entity_kind);
 
 /* Parse a number or a range.
    A number will be of the form handled by get_number.
@@ -75,8 +105,7 @@ public:
 		    const char *end_ptr);
 
   /* Returns true if parsing has completed.  */
-  bool finished () const
-  { return m_finished; }
+  bool finished () const;
 
   /* Return the string being parsed.  When parsing has finished, this
      points past the last parsed token.  */
@@ -96,15 +125,13 @@ public:
   {
     gdb_assert (m_in_range);
     m_cur_tok = m_end_ptr;
+    m_in_range = false;
   }
 
 private:
   /* No need for these.  They are intentionally not defined anywhere.  */
   number_or_range_parser (const number_or_range_parser &);
   number_or_range_parser &operator= (const number_or_range_parser &);
-
-  /* True if parsing has completed.  */
-  bool m_finished;
 
   /* The string being parsed.  When parsing has finished, this points
      past the last parsed token.  */
@@ -149,17 +176,14 @@ remove_trailing_whitespace (const char *start, char *s)
 }
 
 /* A helper function to extract an argument from *ARG.  An argument is
-   delimited by whitespace.  The return value is either NULL if no
-   argument was found, or an xmalloc'd string.  */
+   delimited by whitespace.  The return value is empty if no argument
+   was found.  */
 
-extern char *extract_arg (char **arg);
+extern std::string extract_arg (char **arg);
 
-/* A const-correct version of "extract_arg".
+/* A const-correct version of the above.  */
 
-   Since the returned value is xmalloc'd, it eventually needs to be
-   xfree'ed, which prevents us from making it const as well.  */
-
-extern char *extract_arg_const (const char **arg);
+extern std::string extract_arg (const char **arg);
 
 /* A helper function that looks for an argument at the start of a
    string.  The argument must also either be at the end of the string,
@@ -176,4 +200,43 @@ check_for_argument (char **str, const char *arg, int arg_len)
 			     arg, arg_len);
 }
 
-#endif /* CLI_UTILS_H */
+/* A helper function that looks for a set of flags at the start of a
+   string.  The possible flags are given as a null terminated string.
+   A flag in STR must either be at the end of the string,
+   or be followed by whitespace.
+   Returns 0 if no valid flag is found at the start of STR.
+   Otherwise updates *STR, and returns N (which is > 0),
+   such that FLAGS [N - 1] is the valid found flag.  */
+extern int parse_flags (const char **str, const char *flags);
+
+/* qcs_flags struct regroups the flags parsed by parse_flags_qcs.  */
+
+struct qcs_flags
+{
+  bool quiet = false;
+  bool cont = false;
+  bool silent = false;
+};
+
+/* A helper function that uses parse_flags to handle the flags qcs :
+     A flag -q sets FLAGS->QUIET to true.
+     A flag -c sets FLAGS->CONT to true.
+     A flag -s sets FLAGS->SILENT to true.
+
+   The caller is responsible to initialize *FLAGS to false before the (first)
+   call to parse_flags_qcs.
+   parse_flags_qcs can then be called iteratively to search for more
+   valid flags, as part of a 'main parsing loop' searching for -q/-c/-s
+   flags together with other flags and options.
+
+   Returns true and updates *STR and one of FLAGS->QUIET, FLAGS->CONT,
+   FLAGS->SILENT if it finds a valid flag.
+   Returns false if no valid flag is found at the beginning of STR.
+
+   Throws an error if a flag is found such that both FLAGS->CONT and
+   FLAGS->SILENT are true.  */
+
+extern bool parse_flags_qcs (const char *which_command, const char **str,
+			     qcs_flags *flags);
+
+#endif /* CLI_CLI_UTILS_H */

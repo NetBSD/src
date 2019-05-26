@@ -1,6 +1,6 @@
 /* Support for debug methods in Python.
 
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +26,6 @@
 
 #include "python.h"
 #include "python-internal.h"
-#include "py-ref.h"
 
 static const char enabled_field_name[] = "enabled";
 static const char match_method_name[] = "match";
@@ -37,54 +36,43 @@ static const char matchers_attr_str[] = "xmethods";
 static PyObject *py_match_method_name = NULL;
 static PyObject *py_get_arg_types_method_name = NULL;
 
-struct gdbpy_worker_data
+struct python_xmethod_worker : xmethod_worker
 {
-  PyObject *worker;
-  PyObject *this_type;
+  python_xmethod_worker (PyObject *worker, PyObject *this_type);
+  ~python_xmethod_worker ();
+
+  DISABLE_COPY_AND_ASSIGN (python_xmethod_worker);
+
+  /* Implementation of xmethod_worker::invoke for Python.  */
+
+  value *invoke (value *obj, gdb::array_view<value *> args) override;
+
+  /* Implementation of xmethod_worker::do_get_arg_types for Python.  */
+
+  ext_lang_rc do_get_arg_types (std::vector<type *> *type_args) override;
+
+  /* Implementation of xmethod_worker::do_get_result_type for Python.
+
+     For backward compatibility with 7.9, which did not support getting the
+     result type, if the get_result_type operation is not provided by WORKER
+     then EXT_LANG_RC_OK is returned and NULL is returned in *RESULT_TYPE.  */
+
+  ext_lang_rc do_get_result_type (value *obj, gdb::array_view<value *> args,
+				  type **result_type_ptr) override;
+
+private:
+
+  PyObject *m_py_worker;
+  PyObject *m_this_type;
 };
 
-static struct xmethod_worker *new_python_xmethod_worker (PyObject *item,
-							 PyObject *py_obj_type);
-
-/* Implementation of free_xmethod_worker_data for Python.  */
-
-void
-gdbpy_free_xmethod_worker_data (const struct extension_language_defn *extlang,
-				void *data)
+python_xmethod_worker::~python_xmethod_worker ()
 {
-  struct gdbpy_worker_data *worker_data = (struct gdbpy_worker_data *) data;
-
-  gdb_assert (worker_data->worker != NULL && worker_data->this_type != NULL);
-
   /* We don't do much here, but we still need the GIL.  */
   gdbpy_enter enter_py (get_current_arch (), current_language);
 
-  Py_DECREF (worker_data->worker);
-  Py_DECREF (worker_data->this_type);
-  xfree (worker_data);
-}
-
-/* Implementation of clone_xmethod_worker_data for Python.  */
-
-void *
-gdbpy_clone_xmethod_worker_data (const struct extension_language_defn *extlang,
-				 void *data)
-{
-  struct gdbpy_worker_data *worker_data
-    = (struct gdbpy_worker_data *) data, *new_data;
-
-  gdb_assert (worker_data->worker != NULL && worker_data->this_type != NULL);
-
-  /* We don't do much here, but we still need the GIL.  */
-  gdbpy_enter enter_py (get_current_arch (), current_language);
-
-  new_data = XCNEW (struct gdbpy_worker_data);
-  new_data->worker = worker_data->worker;
-  new_data->this_type = worker_data->this_type;
-  Py_INCREF (new_data->worker);
-  Py_INCREF (new_data->this_type);
-
-  return new_data;
+  Py_DECREF (m_py_worker);
+  Py_DECREF (m_this_type);
 }
 
 /* Invoke the "match" method of the MATCHER and return a new reference
@@ -130,12 +118,8 @@ enum ext_lang_rc
 gdbpy_get_matching_xmethod_workers
   (const struct extension_language_defn *extlang,
    struct type *obj_type, const char *method_name,
-   xmethod_worker_vec **dm_vec)
+   std::vector<xmethod_worker_up> *dm_vec)
 {
-  struct objfile *objfile;
-  VEC (xmethod_worker_ptr) *worker_vec = NULL;
-  PyObject *py_progspace;
-
   gdb_assert (obj_type != NULL && method_name != NULL);
 
   gdbpy_enter enter_py (get_current_arch (), current_language);
@@ -158,9 +142,9 @@ gdbpy_get_matching_xmethod_workers
   /* Gather debug method matchers registered with the object files.
      This could be done differently by iterating over each objfile's matcher
      list individually, but there's no data yet to show it's needed.  */
-  ALL_OBJFILES (objfile)
+  for (objfile *objfile : current_program_space->objfiles ())
     {
-      PyObject *py_objfile = objfile_to_objfile_object (objfile);
+      gdbpy_ref<> py_objfile = objfile_to_objfile_object (objfile);
 
       if (py_objfile == NULL)
 	{
@@ -168,7 +152,8 @@ gdbpy_get_matching_xmethod_workers
 	  return EXT_LANG_RC_ERROR;
 	}
 
-      gdbpy_ref<> objfile_matchers (objfpy_get_xmethods (py_objfile, NULL));
+      gdbpy_ref<> objfile_matchers (objfpy_get_xmethods (py_objfile.get (),
+							 NULL));
       gdbpy_ref<> temp (PySequence_Concat (py_xmethod_matcher_list.get (),
 					   objfile_matchers.get ()));
       if (temp == NULL)
@@ -182,10 +167,11 @@ gdbpy_get_matching_xmethod_workers
 
   /* Gather debug methods matchers registered with the current program
      space.  */
-  py_progspace = pspace_to_pspace_object (current_program_space);
+  gdbpy_ref<> py_progspace = pspace_to_pspace_object (current_program_space);
   if (py_progspace != NULL)
     {
-      gdbpy_ref<> pspace_matchers (pspy_get_xmethods (py_progspace, NULL));
+      gdbpy_ref<> pspace_matchers (pspy_get_xmethods (py_progspace.get (),
+						      NULL));
 
       gdbpy_ref<> temp (PySequence_Concat (py_xmethod_matcher_list.get (),
 					   pspace_matchers.get ()));
@@ -282,49 +268,39 @@ gdbpy_get_matching_xmethod_workers
 		  break;
 		}
 
-	      worker = new_python_xmethod_worker (py_worker.get (),
+	      worker = new python_xmethod_worker (py_worker.get (),
 						  py_type.get ());
-	      VEC_safe_push (xmethod_worker_ptr, worker_vec, worker);
+
+	      dm_vec->emplace_back (worker);
 	    }
 	}
       else
 	{
 	  struct xmethod_worker *worker;
 
-	  worker = new_python_xmethod_worker (match_result.get (),
+	  worker = new python_xmethod_worker (match_result.get (),
 					      py_type.get ());
-	  VEC_safe_push (xmethod_worker_ptr, worker_vec, worker);
+	  dm_vec->emplace_back (worker);
 	}
     }
-
-  *dm_vec = worker_vec;
 
   return EXT_LANG_RC_OK;
 }
 
-/* Implementation of get_xmethod_arg_types for Python.  */
+/* See declaration.  */
 
-enum ext_lang_rc
-gdbpy_get_xmethod_arg_types (const struct extension_language_defn *extlang,
-			     struct xmethod_worker *worker,
-			     int *nargs, struct type ***arg_types)
+ext_lang_rc
+python_xmethod_worker::do_get_arg_types (std::vector<type *> *arg_types)
 {
   /* The gdbpy_enter object needs to be placed first, so that it's the last to
      be destroyed.  */
   gdbpy_enter enter_py (get_current_arch (), current_language);
-  struct gdbpy_worker_data *worker_data
-    = (struct gdbpy_worker_data *) worker->data;
-  PyObject *py_worker = worker_data->worker;
   struct type *obj_type;
   int i = 1, arg_count;
   gdbpy_ref<> list_iter;
 
-  /* Set nargs to -1 so that any premature return from this function returns
-     an invalid/unusable number of arg types.  */
-  *nargs = -1;
-
   gdbpy_ref<> get_arg_types_method
-    (PyObject_GetAttrString (py_worker, get_arg_types_method_name));
+    (PyObject_GetAttrString (m_py_worker, get_arg_types_method_name));
   if (get_arg_types_method == NULL)
     {
       gdbpy_print_stack ();
@@ -332,7 +308,7 @@ gdbpy_get_xmethod_arg_types (const struct extension_language_defn *extlang,
     }
 
   gdbpy_ref<> py_argtype_list
-    (PyObject_CallMethodObjArgs (py_worker, py_get_arg_types_method_name,
+    (PyObject_CallMethodObjArgs (m_py_worker, py_get_arg_types_method_name,
 				 NULL));
   if (py_argtype_list == NULL)
     {
@@ -362,8 +338,7 @@ gdbpy_get_xmethod_arg_types (const struct extension_language_defn *extlang,
     arg_count = 1;
 
   /* Include the 'this' argument in the size.  */
-  gdb::unique_xmalloc_ptr<struct type *> type_array
-    (XCNEWVEC (struct type *, arg_count + 1));
+  arg_types->resize (arg_count + 1);
   i = 1;
   if (list_iter != NULL)
     {
@@ -390,7 +365,7 @@ gdbpy_get_xmethod_arg_types (const struct extension_language_defn *extlang,
 	      return EXT_LANG_RC_ERROR;
 	    }
 
-	  (type_array.get ())[i] = arg_type;
+	  (*arg_types)[i] = arg_type;
 	  i++;
 	}
     }
@@ -410,7 +385,7 @@ gdbpy_get_xmethod_arg_types (const struct extension_language_defn *extlang,
 	}
       else
 	{
-	  (type_array.get ())[i] = arg_type;
+	  (*arg_types)[i] = arg_type;
 	  i++;
 	}
     }
@@ -418,27 +393,20 @@ gdbpy_get_xmethod_arg_types (const struct extension_language_defn *extlang,
   /* Add the type of 'this' as the first argument.  The 'this' pointer should
      be a 'const' value.  Hence, create a 'const' variant of the 'this' pointer
      type.  */
-  obj_type = type_object_to_type (worker_data->this_type);
-  (type_array.get ())[0] = make_cv_type (1, 0, lookup_pointer_type (obj_type),
-					 NULL);
-  *nargs = i;
-  *arg_types = type_array.release ();
+  obj_type = type_object_to_type (m_this_type);
+  (*arg_types)[0] = make_cv_type (1, 0, lookup_pointer_type (obj_type),
+				  NULL);
 
   return EXT_LANG_RC_OK;
 }
 
-/* Implementation of get_xmethod_result_type for Python.  */
+/* See declaration.  */
 
-enum ext_lang_rc
-gdbpy_get_xmethod_result_type (const struct extension_language_defn *extlang,
-			       struct xmethod_worker *worker,
-			       struct value *obj,
-			       struct value **args, int nargs,
-			       struct type **result_type_ptr)
+ext_lang_rc
+python_xmethod_worker::do_get_result_type (value *obj,
+					   gdb::array_view<value *> args,
+					   type **result_type_ptr)
 {
-  struct gdbpy_worker_data *worker_data
-    = (struct gdbpy_worker_data *) worker->data;
-  PyObject *py_worker = worker_data->worker;
   struct type *obj_type, *this_type;
   int i;
 
@@ -447,7 +415,7 @@ gdbpy_get_xmethod_result_type (const struct extension_language_defn *extlang,
   /* First see if there is a get_result_type method.
      If not this could be an old xmethod (pre 7.9.1).  */
   gdbpy_ref<> get_result_type_method
-    (PyObject_GetAttrString (py_worker, get_result_type_method_name));
+    (PyObject_GetAttrString (m_py_worker, get_result_type_method_name));
   if (get_result_type_method == NULL)
     {
       PyErr_Clear ();
@@ -456,7 +424,7 @@ gdbpy_get_xmethod_result_type (const struct extension_language_defn *extlang,
     }
 
   obj_type = check_typedef (value_type (obj));
-  this_type = check_typedef (type_object_to_type (worker_data->this_type));
+  this_type = check_typedef (type_object_to_type (m_this_type));
   if (TYPE_CODE (obj_type) == TYPE_CODE_PTR)
     {
       struct type *this_ptr = lookup_pointer_type (this_type);
@@ -484,7 +452,7 @@ gdbpy_get_xmethod_result_type (const struct extension_language_defn *extlang,
       return EXT_LANG_RC_ERROR;
     }
 
-  gdbpy_ref<> py_arg_tuple (PyTuple_New (nargs + 1));
+  gdbpy_ref<> py_arg_tuple (PyTuple_New (args.size () + 1));
   if (py_arg_tuple == NULL)
     {
       gdbpy_print_stack ();
@@ -495,7 +463,7 @@ gdbpy_get_xmethod_result_type (const struct extension_language_defn *extlang,
      release.  */
   PyTuple_SET_ITEM (py_arg_tuple.get (), 0, py_value_obj.release ());
 
-  for (i = 0; i < nargs; i++)
+  for (i = 0; i < args.size (); i++)
     {
       PyObject *py_value_arg = value_to_value_object (args[i]);
 
@@ -528,24 +496,20 @@ gdbpy_get_xmethod_result_type (const struct extension_language_defn *extlang,
   return EXT_LANG_RC_OK;
 }
 
-/* Implementation of invoke_xmethod for Python.  */
+/* See declaration.  */
 
 struct value *
-gdbpy_invoke_xmethod (const struct extension_language_defn *extlang,
-		      struct xmethod_worker *worker,
-		      struct value *obj, struct value **args, int nargs)
+python_xmethod_worker::invoke (struct value *obj,
+			       gdb::array_view<value *> args)
 {
+  gdbpy_enter enter_py (get_current_arch (), current_language);
+
   int i;
   struct type *obj_type, *this_type;
   struct value *res = NULL;
-  struct gdbpy_worker_data *worker_data
-    = (struct gdbpy_worker_data *) worker->data;
-  PyObject *xmethod_worker = worker_data->worker;
-
-  gdbpy_enter enter_py (get_current_arch (), current_language);
 
   obj_type = check_typedef (value_type (obj));
-  this_type = check_typedef (type_object_to_type (worker_data->this_type));
+  this_type = check_typedef (type_object_to_type (m_this_type));
   if (TYPE_CODE (obj_type) == TYPE_CODE_PTR)
     {
       struct type *this_ptr = lookup_pointer_type (this_type);
@@ -573,7 +537,7 @@ gdbpy_invoke_xmethod (const struct extension_language_defn *extlang,
       error (_("Error while executing Python code."));
     }
 
-  gdbpy_ref<> py_arg_tuple (PyTuple_New (nargs + 1));
+  gdbpy_ref<> py_arg_tuple (PyTuple_New (args.size () + 1));
   if (py_arg_tuple == NULL)
     {
       gdbpy_print_stack ();
@@ -584,7 +548,7 @@ gdbpy_invoke_xmethod (const struct extension_language_defn *extlang,
      release.  */
   PyTuple_SET_ITEM (py_arg_tuple.get (), 0, py_value_obj.release ());
 
-  for (i = 0; i < nargs; i++)
+  for (i = 0; i < args.size (); i++)
     {
       PyObject *py_value_arg = value_to_value_object (args[i]);
 
@@ -597,7 +561,7 @@ gdbpy_invoke_xmethod (const struct extension_language_defn *extlang,
       PyTuple_SET_ITEM (py_arg_tuple.get (), i + 1, py_value_arg);
     }
 
-  gdbpy_ref<> py_result (PyObject_CallObject (xmethod_worker,
+  gdbpy_ref<> py_result (PyObject_CallObject (m_py_worker,
 					      py_arg_tuple.get ()));
   if (py_result == NULL)
     {
@@ -623,24 +587,15 @@ gdbpy_invoke_xmethod (const struct extension_language_defn *extlang,
   return res;
 }
 
-/* Creates a new Python xmethod_worker object.
-   The new object has data of type 'struct gdbpy_worker_data' composed
-   with the components PY_WORKER and THIS_TYPE.  */
-
-static struct xmethod_worker *
-new_python_xmethod_worker (PyObject *py_worker, PyObject *this_type)
+python_xmethod_worker::python_xmethod_worker (PyObject *py_worker,
+					       PyObject *this_type)
+: xmethod_worker (&extension_language_python),
+  m_py_worker (py_worker), m_this_type (this_type)
 {
-  struct gdbpy_worker_data *data;
+  gdb_assert (m_py_worker != NULL && m_this_type != NULL);
 
-  gdb_assert (py_worker != NULL && this_type != NULL);
-
-  data = XCNEW (struct gdbpy_worker_data);
-  data->worker = py_worker;
-  data->this_type = this_type;
   Py_INCREF (py_worker);
   Py_INCREF (this_type);
-
-  return new_xmethod_worker (&extension_language_python, data);
 }
 
 int

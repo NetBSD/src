@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARM_H
-#define ARM_H
+#ifndef ARCH_ARM_H
+#define ARCH_ARM_H
 
 /* Register numbers of various important registers.  */
 
@@ -146,4 +146,4 @@ unsigned long shifted_reg_val (struct regcache *regcache,
 			       unsigned long pc_val,
 			       unsigned long status_reg);
 
-#endif
+#endif /* ARCH_ARM_H */

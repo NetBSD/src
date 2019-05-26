@@ -1,6 +1,6 @@
 /* GDB/Scheme exception support.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -575,16 +575,13 @@ gdbscm_print_gdb_exception (SCM port, SCM exception)
 
 /* Return a string description of <gdb:exception> EXCEPTION.
    If EXCEPTION is a gdb:with-stack exception, unwrap it, a backtrace
-   is never returned as part of the result.
+   is never returned as part of the result.  */
 
-   Space for the result is malloc'd, the caller must free.  */
-
-char *
+gdb::unique_xmalloc_ptr<char>
 gdbscm_exception_message_to_string (SCM exception)
 {
   SCM port = scm_open_output_string ();
   SCM key, args;
-  char *result;
 
   gdb_assert (gdbscm_is_exception (exception));
 
@@ -601,9 +598,9 @@ gdbscm_exception_message_to_string (SCM exception)
     }
 
   gdbscm_print_exception_message (port, SCM_BOOL_F, key, args);
-  result = gdbscm_scm_to_c_string (scm_get_output_string (port));
+  gdb::unique_xmalloc_ptr<char> result
+    = gdbscm_scm_to_c_string (scm_get_output_string (port));
   scm_close_port (port);
-
   return result;
 }
 

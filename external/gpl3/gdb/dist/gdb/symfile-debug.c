@@ -1,6 +1,6 @@
 /* Debug logging for the symbol file functions for the GNU debugger, GDB.
 
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -28,7 +28,7 @@
 #include "defs.h"
 #include "gdbcmd.h"
 #include "objfiles.h"
-#include "observer.h"
+#include "observable.h"
 #include "source.h"
 #include "symtab.h"
 #include "symfile.h"
@@ -194,23 +194,6 @@ debug_qf_dump (struct objfile *objfile)
 }
 
 static void
-debug_qf_relocate (struct objfile *objfile,
-		   const struct section_offsets *new_offsets,
-		   const struct section_offsets *delta)
-{
-  const struct debug_sym_fns_data *debug_data
-    = ((const struct debug_sym_fns_data *)
-       objfile_data (objfile, symfile_debug_objfile_data_key));
-
-  fprintf_filtered (gdb_stdlog, "qf->relocate (%s, %s, %s)\n",
-		    objfile_debug_name (objfile),
-		    host_address_to_string (new_offsets),
-		    host_address_to_string (delta));
-
-  debug_data->real_sf->qf->relocate (objfile, new_offsets, delta);
-}
-
-static void
 debug_qf_expand_symtabs_for_function (struct objfile *objfile,
 				      const char *func_name)
 {
@@ -260,7 +243,7 @@ debug_qf_map_matching_symbols (struct objfile *objfile,
 			       int (*callback) (struct block *,
 						struct symbol *, void *),
 			       void *data,
-			       symbol_compare_ftype *match,
+			       symbol_name_match_type match,
 			       symbol_compare_ftype *ordered_compare)
 {
   const struct debug_sym_fns_data *debug_data
@@ -273,7 +256,7 @@ debug_qf_map_matching_symbols (struct objfile *objfile,
 		    domain_name (domain), global,
 		    host_address_to_string (callback),
 		    host_address_to_string (data),
-		    host_address_to_string (match),
+		    plongest ((LONGEST) match),
 		    host_address_to_string (ordered_compare));
 
   debug_data->real_sf->qf->map_matching_symbols (objfile, name,
@@ -287,6 +270,7 @@ static void
 debug_qf_expand_symtabs_matching
   (struct objfile *objfile,
    gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
+   const lookup_name_info &lookup_name,
    gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
    gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
    enum search_domain kind)
@@ -305,6 +289,7 @@ debug_qf_expand_symtabs_matching
 
   debug_data->real_sf->qf->expand_symtabs_matching (objfile,
 						    file_matcher,
+						    lookup_name,
 						    symbol_matcher,
 						    expansion_notify,
 						    kind);
@@ -363,6 +348,33 @@ debug_qf_map_symbol_filenames (struct objfile *objfile,
 						 need_fullname);
 }
 
+static struct compunit_symtab *
+debug_qf_find_compunit_symtab_by_address (struct objfile *objfile,
+					  CORE_ADDR address)
+{
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
+  fprintf_filtered (gdb_stdlog,
+		    "qf->find_compunit_symtab_by_address (%s, %s)\n",
+		    objfile_debug_name (objfile),
+		    hex_string (address));
+
+  struct compunit_symtab *result = NULL;
+  if (debug_data->real_sf->qf->map_symbol_filenames != NULL)
+    result
+      = debug_data->real_sf->qf->find_compunit_symtab_by_address (objfile,
+								  address);
+
+  fprintf_filtered (gdb_stdlog,
+		    "qf->find_compunit_symtab_by_address (...) = %s\n",
+		    result
+		    ? debug_symtab_name (compunit_primary_filetab (result))
+		    : "NULL");
+
+  return result;
+}
+
 static const struct quick_symbol_functions debug_sym_quick_functions =
 {
   debug_qf_has_symbols,
@@ -372,32 +384,32 @@ static const struct quick_symbol_functions debug_sym_quick_functions =
   debug_qf_lookup_symbol,
   debug_qf_print_stats,
   debug_qf_dump,
-  debug_qf_relocate,
   debug_qf_expand_symtabs_for_function,
   debug_qf_expand_all_symtabs,
   debug_qf_expand_symtabs_with_fullname,
   debug_qf_map_matching_symbols,
   debug_qf_expand_symtabs_matching,
   debug_qf_find_pc_sect_compunit_symtab,
+  debug_qf_find_compunit_symtab_by_address,
   debug_qf_map_symbol_filenames
 };
 
 /* Debugging version of struct sym_probe_fns.  */
 
-static VEC (probe_p) *
+static const std::vector<probe *> &
 debug_sym_get_probes (struct objfile *objfile)
 {
   const struct debug_sym_fns_data *debug_data
     = ((const struct debug_sym_fns_data *)
        objfile_data (objfile, symfile_debug_objfile_data_key));
-  VEC (probe_p) *retval;
 
-  retval = debug_data->real_sf->sym_probe_fns->sym_get_probes (objfile);
+  const std::vector<probe *> &retval
+    = debug_data->real_sf->sym_probe_fns->sym_get_probes (objfile);
 
   fprintf_filtered (gdb_stdlog,
 		    "probes->sym_get_probes (%s) = %s\n",
 		    objfile_debug_name (objfile),
-		    host_address_to_string (retval));
+		    host_address_to_string (retval.data ()));
 
   return retval;
 }
@@ -476,7 +488,7 @@ debug_sym_finish (struct objfile *objfile)
 
 static void
 debug_sym_offsets (struct objfile *objfile,
-		   const struct section_addr_info *info)
+		   const section_addr_info &info)
 {
   const struct debug_sym_fns_data *debug_data
     = ((const struct debug_sym_fns_data *)
@@ -484,7 +496,7 @@ debug_sym_offsets (struct objfile *objfile,
 
   fprintf_filtered (gdb_stdlog, "sf->sym_offsets (%s, %s)\n",
 		    objfile_debug_name (objfile),
-		    host_address_to_string (info));
+		    host_address_to_string (&info));
 
   debug_data->real_sf->sym_offsets (objfile, info);
 }
@@ -645,25 +657,24 @@ objfile_set_sym_fns (struct objfile *objfile, const struct sym_fns *sf)
 }
 
 static void
-set_debug_symfile (char *args, int from_tty, struct cmd_list_element *c)
+set_debug_symfile (const char *args, int from_tty, struct cmd_list_element *c)
 {
   struct program_space *pspace;
-  struct objfile *objfile;
 
   ALL_PSPACES (pspace)
-    ALL_PSPACE_OBJFILES (pspace, objfile)
-    {
-      if (debug_symfile)
-	{
-	  if (!symfile_debug_installed (objfile))
-	    install_symfile_debug_logging (objfile);
-	}
-      else
-	{
-	  if (symfile_debug_installed (objfile))
-	    uninstall_symfile_debug_logging (objfile);
-	}
-    }
+    for (objfile *objfile : pspace->objfiles ())
+      {
+	if (debug_symfile)
+	  {
+	    if (!symfile_debug_installed (objfile))
+	      install_symfile_debug_logging (objfile);
+	  }
+	else
+	  {
+	    if (symfile_debug_installed (objfile))
+	      uninstall_symfile_debug_logging (objfile);
+	  }
+      }
 }
 
 static void
@@ -672,8 +683,6 @@ show_debug_symfile (struct ui_file *file, int from_tty,
 {
   fprintf_filtered (file, _("Symfile debugging is %s.\n"), value);
 }
-
-initialize_file_ftype _initialize_symfile_debug;
 
 void
 _initialize_symfile_debug (void)

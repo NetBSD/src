@@ -1,4 +1,4 @@
-# Copyright 1998-2017 Free Software Foundation, Inc.
+# Copyright 1998-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -61,8 +61,8 @@ proc prepare_for_trace_test {} {
 
     runto_main
 
-    gdb_test "break begin" ".*" ""
-    gdb_test "break end" ".*" ""
+    gdb_breakpoint "begin" qualified
+    gdb_breakpoint "end" qualified
 }
 
 proc run_trace_experiment { test_func } {

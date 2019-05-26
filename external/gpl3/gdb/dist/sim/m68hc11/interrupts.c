@@ -1,5 +1,5 @@
 /* interrupts.c -- 68HC11 Interrupts Emulation
-   Copyright 1999-2017 Free Software Foundation, Inc.
+   Copyright 1999-2019 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.

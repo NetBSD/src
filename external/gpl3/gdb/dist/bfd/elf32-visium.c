@@ -1,6 +1,6 @@
 /* Visium-specific support for 32-bit ELF.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,6 +25,7 @@
 #include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf/visium.h"
+#include "libiberty.h"
 
 static bfd_reloc_status_type visium_elf_howto_parity_reloc
   (bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **);
@@ -311,7 +312,6 @@ visium_elf_howto_parity_reloc (bfd * input_bfd, arelent *reloc_entry,
   bfd_vma relocation;
   bfd_byte *inplace_address;
   bfd_vma insn;
-  const bfd_vma signmask = 0xffff8000;
 
   /* This part is from bfd_elf_generic_reloc.
      If we're relocating, and this an external symbol, we don't want
@@ -350,19 +350,19 @@ visium_elf_howto_parity_reloc (bfd * input_bfd, arelent *reloc_entry,
 
   if (reloc_entry->howto->pc_relative)
     {
-      relocation -= input_section->output_section->vma
-	+ input_section->output_offset;
+      relocation -= input_section->output_section->vma;
+      relocation -= input_section->output_offset;
       relocation -= reloc_entry->address;
     }
 
   switch (reloc_entry->howto->type)
     {
     case R_VISIUM_PC16:
-      relocation >>= 2;
-      if (ret == bfd_reloc_ok && (relocation & signmask) != 0
-	  && (relocation & signmask) != signmask)
+      if (ret == bfd_reloc_ok
+	  && ((bfd_signed_vma) relocation < -0x20000
+	      || (bfd_signed_vma) relocation > 0x1ffff))
 	ret = bfd_reloc_overflow;
-      relocation &= 0xffff;
+      relocation = (relocation >> 2) & 0xffff;
       break;
     case R_VISIUM_HI16:
     case R_VISIUM_HI16_PCREL:
@@ -458,8 +458,8 @@ visium_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 
 /* Set the howto pointer for a VISIUM ELF reloc.  */
 
-static void
-visium_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
+static bfd_boolean
+visium_info_to_howto_rela (bfd *abfd, arelent *cache_ptr,
 			   Elf_Internal_Rela *dst)
 {
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
@@ -475,15 +475,18 @@ visium_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
       break;
 
     default:
-      if (r_type >= (unsigned int) R_VISIUM_max)
+      if (r_type >= ARRAY_SIZE (visium_elf_howto_table))
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("%B: invalid Visium reloc number: %d"), abfd, r_type);
-	  r_type = 0;
+	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			      abfd, r_type);
+	  bfd_set_error (bfd_error_bad_value);
+	  return FALSE;
 	}
       cache_ptr->howto = &visium_elf_howto_table[r_type];
       break;
     }
+  return TRUE;
 }
 
 /* Look through the relocs for a section during the first phase.
@@ -617,7 +620,7 @@ visium_elf_relocate_section (bfd *output_bfd,
 	     or sections discarded by a linker script, we just want the
 	     section contents zeroed.  Avoid any special processing.  */
 	  _bfd_clear_contents (howto, input_bfd, input_section,
-			       contents + rel->r_offset);
+			       contents, rel->r_offset);
 
 	  rel->r_info = 0;
 	  rel->r_addend = 0;
@@ -814,7 +817,7 @@ visium_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       if (mismatch)
 	_bfd_error_handler
 	  /* xgettext:c-format */
-	  (_("%B: compiled %s -mtune=%s and linked with modules"
+	  (_("%pB: compiled %s -mtune=%s and linked with modules"
 	     " compiled %s -mtune=%s"),
 	   ibfd, new_opt_with, opt_arch, old_opt_with, opt_arch);
     }

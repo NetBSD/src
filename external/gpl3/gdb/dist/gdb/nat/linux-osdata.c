@@ -1,6 +1,6 @@
 /* Linux-specific functions to retrieve OS data.
-   
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
+#include "common/common-defs.h"
 #include "linux-osdata.h"
 
 #include <sys/types.h>
@@ -32,11 +32,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "xml-utils.h"
-#include "buffer.h"
+#include "common/xml-utils.h"
+#include "common/buffer.h"
 #include <dirent.h>
 #include <sys/stat.h>
-#include "filestuff.h"
+#include "common/filestuff.h"
+#include <algorithm>
 
 #define NAMELEN(dirent) strlen ((dirent)->d_name)
 
@@ -54,14 +55,13 @@ typedef long long TIME_T;
 #define MAX_PID_T_STRLEN  (sizeof ("-9223372036854775808") - 1)
 
 /* Returns the CPU core that thread PTID is currently running on.  */
-					  
+
 /* Compute and return the processor core of a given thread.  */
 
 int
 linux_common_core_of_thread (ptid_t ptid)
 {
   char filename[sizeof ("/proc//task//stat") + 2 * MAX_PID_T_STRLEN];
-  FILE *f;
   char *content = NULL;
   char *p;
   char *ts = 0;
@@ -70,8 +70,8 @@ linux_common_core_of_thread (ptid_t ptid)
   int core;
 
   sprintf (filename, "/proc/%lld/task/%lld/stat",
-	   (PID_T) ptid_get_pid (ptid), (PID_T) ptid_get_lwp (ptid));
-  f = gdb_fopen_cloexec (filename, "r");
+	   (PID_T) ptid.pid (), (PID_T) ptid.lwp ());
+  gdb_file_up f = gdb_fopen_cloexec (filename, "r");
   if (!f)
     return -1;
 
@@ -79,7 +79,7 @@ linux_common_core_of_thread (ptid_t ptid)
     {
       int n;
       content = (char *) xrealloc (content, content_read + 1024);
-      n = fread (content + content_read, 1, 1024, f);
+      n = fread (content + content_read, 1, 1024, f.get ());
       content_read += n;
       if (n < 1024)
 	{
@@ -104,7 +104,6 @@ linux_common_core_of_thread (ptid_t ptid)
     core = -1;
 
   xfree (content);
-  fclose (f);
 
   return core;
 }
@@ -116,11 +115,11 @@ linux_common_core_of_thread (ptid_t ptid)
 static void
 command_from_pid (char *command, int maxlen, PID_T pid)
 {
-  char *stat_path = xstrprintf ("/proc/%lld/stat", pid); 
-  FILE *fp = gdb_fopen_cloexec (stat_path, "r");
-  
+  std::string stat_path = string_printf ("/proc/%lld/stat", pid);
+  gdb_file_up fp = gdb_fopen_cloexec (stat_path, "r");
+
   command[0] = '\0';
- 
+
   if (fp)
     {
       /* sizeof (cmd) should be greater or equal to TASK_COMM_LEN (in
@@ -128,15 +127,13 @@ command_from_pid (char *command, int maxlen, PID_T pid)
 	 (for the brackets).  */
       char cmd[18];
       PID_T stat_pid;
-      int items_read = fscanf (fp, "%lld %17s", &stat_pid, cmd);
-	  
+      int items_read = fscanf (fp.get (), "%lld %17s", &stat_pid, cmd);
+
       if (items_read == 2 && pid == stat_pid)
 	{
 	  cmd[strlen (cmd) - 1] = '\0'; /* Remove trailing parenthesis.  */
 	  strncpy (command, cmd + 1, maxlen); /* Ignore leading parenthesis.  */
 	}
-
-      fclose (fp);
     }
   else
     {
@@ -145,8 +142,6 @@ command_from_pid (char *command, int maxlen, PID_T pid)
     }
 
   command[maxlen - 1] = '\0'; /* Ensure string is null-terminated.  */
-	
-  xfree (stat_path);
 }
 
 /* Returns the command-line of the process with the given PID. The
@@ -155,19 +150,19 @@ command_from_pid (char *command, int maxlen, PID_T pid)
 static char *
 commandline_from_pid (PID_T pid)
 {
-  char *pathname = xstrprintf ("/proc/%lld/cmdline", pid);
+  std::string pathname = string_printf ("/proc/%lld/cmdline", pid);
   char *commandline = NULL;
-  FILE *f = gdb_fopen_cloexec (pathname, "r");
+  gdb_file_up f = gdb_fopen_cloexec (pathname, "r");
 
   if (f)
     {
       size_t len = 0;
 
-      while (!feof (f))
+      while (!feof (f.get ()))
 	{
 	  char buf[1024];
-	  size_t read_bytes = fread (buf, 1, sizeof (buf), f);
-     
+	  size_t read_bytes = fread (buf, 1, sizeof (buf), f.get ());
+
 	  if (read_bytes)
 	    {
 	      commandline = (char *) xrealloc (commandline, len + read_bytes + 1);
@@ -175,8 +170,6 @@ commandline_from_pid (PID_T pid)
 	      len += read_bytes;
 	    }
 	}
-
-      fclose (f);
 
       if (commandline)
 	{
@@ -203,8 +196,6 @@ commandline_from_pid (PID_T pid)
 	}
     }
 
-  xfree (pathname);
-
   return commandline;
 }
 
@@ -215,7 +206,7 @@ static void
 user_from_uid (char *user, int maxlen, uid_t uid)
 {
   struct passwd *pwentry = getpwuid (uid);
-  
+
   if (pwentry)
     {
       strncpy (user, pwentry->pw_name, maxlen);
@@ -236,7 +227,7 @@ get_process_owner (uid_t *owner, PID_T pid)
   char procentry[sizeof ("/proc/") + MAX_PID_T_STRLEN];
 
   sprintf (procentry, "/proc/%lld", pid);
-  
+
   if (stat (procentry, &statbuf) == 0 && S_ISDIR (statbuf.st_mode))
     {
       *owner = statbuf.st_uid;
@@ -271,8 +262,8 @@ get_cores_used_by_process (PID_T pid, int *cores, const int num_cores)
 	    continue;
 
 	  sscanf (dp->d_name, "%lld", &tid);
-	  core = linux_common_core_of_thread (ptid_build ((pid_t) pid,
-							  (pid_t) tid, 0));
+	  core = linux_common_core_of_thread (ptid_t ((pid_t) pid,
+						      (pid_t) tid, 0));
 
 	  if (core >= 0 && core < num_cores)
 	    {
@@ -287,594 +278,421 @@ get_cores_used_by_process (PID_T pid, int *cores, const int num_cores)
   return task_count;
 }
 
-static LONGEST
-linux_xfer_osdata_processes (gdb_byte *readbuf,
-			     ULONGEST offset, ULONGEST len)
+static void
+linux_xfer_osdata_processes (struct buffer *buffer)
 {
-  /* We make the process list snapshot when the object starts to be read.  */
-  static const char *buf;
-  static LONGEST len_avail = -1;
-  static struct buffer buffer;
+  DIR *dirp;
 
-  if (offset == 0)
+  buffer_grow_str (buffer, "<osdata type=\"processes\">\n");
+
+  dirp = opendir ("/proc");
+  if (dirp)
     {
-      DIR *dirp;
+      const int num_cores = sysconf (_SC_NPROCESSORS_ONLN);
+      struct dirent *dp;
 
-      if (len_avail != -1 && len_avail != 0)
-	buffer_free (&buffer);
-      len_avail = 0;
-      buf = NULL;
-      buffer_init (&buffer);
-      buffer_grow_str (&buffer, "<osdata type=\"processes\">\n");
-
-      dirp = opendir ("/proc");
-      if (dirp)
+      while ((dp = readdir (dirp)) != NULL)
 	{
-	  const int num_cores = sysconf (_SC_NPROCESSORS_ONLN);
-	  struct dirent *dp;
+	  PID_T pid;
+	  uid_t owner;
+	  char user[UT_NAMESIZE];
+	  char *command_line;
+	  int *cores;
+	  int task_count;
+	  char *cores_str;
+	  int i;
 
-	  while ((dp = readdir (dirp)) != NULL)
-	    {
-	      PID_T pid;
-	      uid_t owner;
-	      char user[UT_NAMESIZE];
-	      char *command_line;
-	      int *cores;
-	      int task_count;
-	      char *cores_str;
-	      int i;
+	  if (!isdigit (dp->d_name[0])
+	      || NAMELEN (dp) > MAX_PID_T_STRLEN)
+	    continue;
 
-	      if (!isdigit (dp->d_name[0])
-		  || NAMELEN (dp) > MAX_PID_T_STRLEN)
-		continue;
+	  sscanf (dp->d_name, "%lld", &pid);
+	  command_line = commandline_from_pid (pid);
 
-	      sscanf (dp->d_name, "%lld", &pid);
-	      command_line = commandline_from_pid (pid);
+	  if (get_process_owner (&owner, pid) == 0)
+	    user_from_uid (user, sizeof (user), owner);
+	  else
+	    strcpy (user, "?");
 
-	      if (get_process_owner (&owner, pid) == 0)
-		user_from_uid (user, sizeof (user), owner);
-	      else
-		strcpy (user, "?");
+	  /* Find CPU cores used by the process.  */
+	  cores = XCNEWVEC (int, num_cores);
+	  task_count = get_cores_used_by_process (pid, cores, num_cores);
+	  cores_str = (char *) xcalloc (task_count, sizeof ("4294967295") + 1);
 
-	      /* Find CPU cores used by the process.  */
-	      cores = XCNEWVEC (int, num_cores);
-	      task_count = get_cores_used_by_process (pid, cores, num_cores);
-	      cores_str = (char *) xcalloc (task_count, sizeof ("4294967295") + 1);
+	  for (i = 0; i < num_cores && task_count > 0; ++i)
+	    if (cores[i])
+	      {
+		char core_str[sizeof ("4294967295")];
 
-	      for (i = 0; i < num_cores && task_count > 0; ++i)
-		if (cores[i])
-		  {
-		    char core_str[sizeof ("4294967295")];
+		sprintf (core_str, "%d", i);
+		strcat (cores_str, core_str);
 
-		    sprintf (core_str, "%d", i);
-		    strcat (cores_str, core_str);
+		task_count -= cores[i];
+		if (task_count > 0)
+		  strcat (cores_str, ",");
+	      }
 
-		    task_count -= cores[i];
-		    if (task_count > 0)
-		      strcat (cores_str, ",");
-		  }
+	  xfree (cores);
 
-	      xfree (cores);
-	      
-	      buffer_xml_printf (
-		  &buffer,
-		  "<item>"
-		  "<column name=\"pid\">%lld</column>"
-		  "<column name=\"user\">%s</column>"
-		  "<column name=\"command\">%s</column>"
-		  "<column name=\"cores\">%s</column>"
-		  "</item>",
-		  pid,
-		  user,
-		  command_line ? command_line : "",
-		  cores_str);
+	  buffer_xml_printf
+	    (buffer,
+	     "<item>"
+	     "<column name=\"pid\">%lld</column>"
+	     "<column name=\"user\">%s</column>"
+	     "<column name=\"command\">%s</column>"
+	     "<column name=\"cores\">%s</column>"
+	     "</item>",
+	     pid,
+	     user,
+	     command_line ? command_line : "",
+	     cores_str);
 
-	      xfree (command_line);     
-	      xfree (cores_str);
-	    }
-	  
-	  closedir (dirp);
+	  xfree (command_line);
+	  xfree (cores_str);
 	}
 
-      buffer_grow_str0 (&buffer, "</osdata>\n");
-      buf = buffer_finish (&buffer);
-      len_avail = strlen (buf);
+      closedir (dirp);
     }
 
-  if (offset >= len_avail)
-    {
-      /* Done.  Get rid of the buffer.  */
-      buffer_free (&buffer);
-      buf = NULL;
-      len_avail = 0;
-      return 0;
-    }
-
-  if (len > len_avail - offset)
-    len = len_avail - offset;
-  memcpy (readbuf, buf + offset, len);
-
-  return len;
+  buffer_grow_str0 (buffer, "</osdata>\n");
 }
 
-/* Auxiliary function used by qsort to sort processes by process
-   group.  Compares two processes with ids PROCESS1 and PROCESS2.
-   PROCESS1 comes before PROCESS2 if it has a lower process group id.
-   If they belong to the same process group, PROCESS1 comes before
-   PROCESS2 if it has a lower process id or is the process group
-   leader.  */
+/* A simple PID/PGID pair.  */
 
-static int
-compare_processes (const void *process1, const void *process2)
+struct pid_pgid_entry
 {
-  PID_T pid1 = *((PID_T *) process1);
-  PID_T pid2 = *((PID_T *) process2);
-  PID_T pgid1 = *((PID_T *) process1 + 1);
-  PID_T pgid2 = *((PID_T *) process2 + 1);
+  pid_pgid_entry (PID_T pid_, PID_T pgid_)
+  : pid (pid_), pgid (pgid_)
+  {}
 
-  /* Sort by PGID.  */
-  if (pgid1 < pgid2)
-    return -1;
-  else if (pgid1 > pgid2)
-    return 1;
-  else
-    {
-      /* Process group leaders always come first, else sort by PID.  */
-      if (pid1 == pgid1)
-	return -1;
-      else if (pid2 == pgid2)
-	return 1;
-      else if (pid1 < pid2)
-	return -1;
-      else if (pid1 > pid2)
-	return 1;
-      else
-	return 0;
-    }
-}
+  /* Return true if this pid is the leader of its process group.  */
 
-/* Collect all process groups from /proc.  */
+  bool is_leader () const
+  {
+    return pid == pgid;
+  }
 
-static LONGEST
-linux_xfer_osdata_processgroups (gdb_byte *readbuf,
-				 ULONGEST offset, ULONGEST len)
+  bool operator< (const pid_pgid_entry &other) const
+  {
+    /* Sort by PGID.  */
+    if (this->pgid != other.pgid)
+      return this->pgid < other.pgid;
+
+    /* Process group leaders always come first...  */
+    if (this->is_leader ())
+      {
+	if (!other.is_leader ())
+	  return true;
+      }
+    else if (other.is_leader ())
+      return false;
+
+    /* ...else sort by PID.  */
+    return this->pid < other.pid;
+  }
+
+  PID_T pid, pgid;
+};
+
+/* Collect all process groups from /proc in BUFFER.  */
+
+static void
+linux_xfer_osdata_processgroups (struct buffer *buffer)
 {
-  /* We make the process list snapshot when the object starts to be read.  */
-  static const char *buf;
-  static LONGEST len_avail = -1;
-  static struct buffer buffer;
+  DIR *dirp;
 
-  if (offset == 0)
+  buffer_grow_str (buffer, "<osdata type=\"process groups\">\n");
+
+  dirp = opendir ("/proc");
+  if (dirp)
     {
-      DIR *dirp;
+      std::vector<pid_pgid_entry> process_list;
+      struct dirent *dp;
 
-      if (len_avail != -1 && len_avail != 0)
-	buffer_free (&buffer);
-      len_avail = 0;
-      buf = NULL;
-      buffer_init (&buffer);
-      buffer_grow_str (&buffer, "<osdata type=\"process groups\">\n");
+      process_list.reserve (512);
 
-      dirp = opendir ("/proc");
-      if (dirp)
+      /* Build list consisting of PIDs followed by their
+	 associated PGID.  */
+      while ((dp = readdir (dirp)) != NULL)
 	{
-	  struct dirent *dp;
-	  const size_t list_block_size = 512;
-	  PID_T *process_list = XNEWVEC (PID_T, list_block_size * 2);
-	  size_t process_count = 0;
-	  size_t i;
+	  PID_T pid, pgid;
 
-	  /* Build list consisting of PIDs followed by their
-	     associated PGID.  */
-	  while ((dp = readdir (dirp)) != NULL)
-	    {
-	      PID_T pid, pgid;
+	  if (!isdigit (dp->d_name[0])
+	      || NAMELEN (dp) > MAX_PID_T_STRLEN)
+	    continue;
 
-	      if (!isdigit (dp->d_name[0])
-		  || NAMELEN (dp) > MAX_PID_T_STRLEN)
-		continue;
+	  sscanf (dp->d_name, "%lld", &pid);
+	  pgid = getpgid (pid);
 
-	      sscanf (dp->d_name, "%lld", &pid);
-	      pgid = getpgid (pid);
+	  if (pgid > 0)
+	    process_list.emplace_back (pid, pgid);
+	}
 
-	      if (pgid > 0)
-		{
-		  process_list[2 * process_count] = pid;
-		  process_list[2 * process_count + 1] = pgid;
-		  ++process_count;
+      closedir (dirp);
 
-		  /* Increase the size of the list if necessary.  */
-		  if (process_count % list_block_size == 0)
-		    process_list = (PID_T *) xrealloc (
-			process_list,
-			(process_count + list_block_size)
-			* 2 * sizeof (PID_T));
-		}
-	    }
+      /* Sort the process list.  */
+      std::sort (process_list.begin (), process_list.end ());
 
-	  closedir (dirp);
+      for (const pid_pgid_entry &entry : process_list)
+	{
+	  PID_T pid = entry.pid;
+	  PID_T pgid = entry.pgid;
+	  char leader_command[32];
+	  char *command_line;
 
-	  /* Sort the process list.  */
-	  qsort (process_list, process_count, 2 * sizeof (PID_T),
-		 compare_processes);
+	  command_from_pid (leader_command, sizeof (leader_command), pgid);
+	  command_line = commandline_from_pid (pid);
 
-	  for (i = 0; i < process_count; ++i)
-	    {
-	      PID_T pid = process_list[2 * i];
-	      PID_T pgid = process_list[2 * i + 1];
-	      char leader_command[32];
-	      char *command_line;
+	  buffer_xml_printf
+	    (buffer,
+	     "<item>"
+	     "<column name=\"pgid\">%lld</column>"
+	     "<column name=\"leader command\">%s</column>"
+	     "<column name=\"pid\">%lld</column>"
+	     "<column name=\"command line\">%s</column>"
+	     "</item>",
+	     pgid,
+	     leader_command,
+	     pid,
+	     command_line ? command_line : "");
 
-	      command_from_pid (leader_command, sizeof (leader_command), pgid);
-	      command_line = commandline_from_pid (pid);
-
-	      buffer_xml_printf (
-		  &buffer,
-		  "<item>"
-		  "<column name=\"pgid\">%lld</column>"
-		  "<column name=\"leader command\">%s</column>"
-		  "<column name=\"pid\">%lld</column>"
-		  "<column name=\"command line\">%s</column>"
-		  "</item>",
-		  pgid,
-		  leader_command,
-		  pid,
-		  command_line ? command_line : "");
-
-	      xfree (command_line);
-	    }
-
-	  xfree (process_list);
-	}   
-
-      buffer_grow_str0 (&buffer, "</osdata>\n");
-      buf = buffer_finish (&buffer);
-      len_avail = strlen (buf);
+	  xfree (command_line);
+	}
     }
 
-  if (offset >= len_avail)
-    {
-      /* Done.  Get rid of the buffer.  */
-      buffer_free (&buffer);
-      buf = NULL;
-      len_avail = 0;
-      return 0;
-    }
-
-  if (len > len_avail - offset)
-    len = len_avail - offset;
-  memcpy (readbuf, buf + offset, len);
-
-  return len;
+  buffer_grow_str0 (buffer, "</osdata>\n");
 }
 
 /* Collect all the threads in /proc by iterating through processes and
-   then tasks within each process.  */
+   then tasks within each process in BUFFER.  */
 
-static LONGEST
-linux_xfer_osdata_threads (gdb_byte *readbuf,
-			   ULONGEST offset, ULONGEST len)
+static void
+linux_xfer_osdata_threads (struct buffer *buffer)
 {
-  /* We make the process list snapshot when the object starts to be read.  */
-  static const char *buf;
-  static LONGEST len_avail = -1;
-  static struct buffer buffer;
+  DIR *dirp;
 
-  if (offset == 0)
+  buffer_grow_str (buffer, "<osdata type=\"threads\">\n");
+
+  dirp = opendir ("/proc");
+  if (dirp)
     {
-      DIR *dirp;
+      struct dirent *dp;
 
-      if (len_avail != -1 && len_avail != 0)
-	buffer_free (&buffer);
-      len_avail = 0;
-      buf = NULL;
-      buffer_init (&buffer);
-      buffer_grow_str (&buffer, "<osdata type=\"threads\">\n");
-
-      dirp = opendir ("/proc");
-      if (dirp)
+      while ((dp = readdir (dirp)) != NULL)
 	{
-	  struct dirent *dp;
+	  struct stat statbuf;
+	  char procentry[sizeof ("/proc/4294967295")];
 
-	  while ((dp = readdir (dirp)) != NULL)
+	  if (!isdigit (dp->d_name[0])
+	      || NAMELEN (dp) > sizeof ("4294967295") - 1)
+	    continue;
+
+	  xsnprintf (procentry, sizeof (procentry), "/proc/%s",
+		     dp->d_name);
+	  if (stat (procentry, &statbuf) == 0
+	      && S_ISDIR (statbuf.st_mode))
 	    {
-	      struct stat statbuf;
-	      char procentry[sizeof ("/proc/4294967295")];
+	      DIR *dirp2;
+	      PID_T pid;
+	      char command[32];
 
-	      if (!isdigit (dp->d_name[0])
-		  || NAMELEN (dp) > sizeof ("4294967295") - 1)
-		continue;
+	      std::string pathname
+		= string_printf ("/proc/%s/task", dp->d_name);
 
-	      xsnprintf (procentry, sizeof (procentry), "/proc/%s",
-			 dp->d_name);
-	      if (stat (procentry, &statbuf) == 0
-		  && S_ISDIR (statbuf.st_mode))
+	      pid = atoi (dp->d_name);
+	      command_from_pid (command, sizeof (command), pid);
+
+	      dirp2 = opendir (pathname.c_str ());
+
+	      if (dirp2)
 		{
-		  DIR *dirp2;
-		  char *pathname;
-		  PID_T pid;
-		  char command[32];
+		  struct dirent *dp2;
 
-		  pathname = xstrprintf ("/proc/%s/task", dp->d_name);
-		  
-		  pid = atoi (dp->d_name);
-		  command_from_pid (command, sizeof (command), pid);
-
-		  dirp2 = opendir (pathname);
-
-		  if (dirp2)
+		  while ((dp2 = readdir (dirp2)) != NULL)
 		    {
-		      struct dirent *dp2;
+		      PID_T tid;
+		      int core;
 
-		      while ((dp2 = readdir (dirp2)) != NULL)
-			{
-			  PID_T tid;
-			  int core;
+		      if (!isdigit (dp2->d_name[0])
+			  || NAMELEN (dp2) > sizeof ("4294967295") - 1)
+			continue;
 
-			  if (!isdigit (dp2->d_name[0])
-			      || NAMELEN (dp2) > sizeof ("4294967295") - 1)
-			    continue;
+		      tid = atoi (dp2->d_name);
+		      core = linux_common_core_of_thread (ptid_t (pid, tid, 0));
 
-			  tid = atoi (dp2->d_name);
-			  core = linux_common_core_of_thread (ptid_build (pid, tid, 0));
-
-			  buffer_xml_printf (
-			    &buffer,
-			    "<item>"
-			    "<column name=\"pid\">%lld</column>"
-			    "<column name=\"command\">%s</column>"
-			    "<column name=\"tid\">%lld</column>"
-			    "<column name=\"core\">%d</column>"
-			    "</item>",
-			    pid,
-			    command,
-			    tid,
-			    core);
-			}
-
-		      closedir (dirp2);
+		      buffer_xml_printf
+			(buffer,
+			 "<item>"
+			 "<column name=\"pid\">%lld</column>"
+			 "<column name=\"command\">%s</column>"
+			 "<column name=\"tid\">%lld</column>"
+			 "<column name=\"core\">%d</column>"
+			 "</item>",
+			 pid,
+			 command,
+			 tid,
+			 core);
 		    }
 
-		  xfree (pathname);
+		  closedir (dirp2);
 		}
 	    }
-
-	  closedir (dirp);
 	}
 
-      buffer_grow_str0 (&buffer, "</osdata>\n");
-      buf = buffer_finish (&buffer);
-      len_avail = strlen (buf);
+      closedir (dirp);
     }
 
-  if (offset >= len_avail)
-    {
-      /* Done.  Get rid of the buffer.  */
-      buffer_free (&buffer);
-      buf = NULL;
-      len_avail = 0;
-      return 0;
-    }
-
-  if (len > len_avail - offset)
-    len = len_avail - offset;
-  memcpy (readbuf, buf + offset, len);
-
-  return len;
+  buffer_grow_str0 (buffer, "</osdata>\n");
 }
 
-/* Collect data about the cpus/cores on the system */
+/* Collect data about the cpus/cores on the system in BUFFER.  */
 
-static LONGEST
-linux_xfer_osdata_cpus (gdb_byte *readbuf,
-			   ULONGEST offset, ULONGEST len)
+static void
+linux_xfer_osdata_cpus (struct buffer *buffer)
 {
-  static const char *buf;
-  static LONGEST len_avail = -1;
-  static struct buffer buffer;
+  int first_item = 1;
 
-  if (offset == 0)
+  buffer_grow_str (buffer, "<osdata type=\"cpus\">\n");
+
+  gdb_file_up fp = gdb_fopen_cloexec ("/proc/cpuinfo", "r");
+  if (fp != NULL)
     {
-      FILE *fp;
-      int first_item = 1;
+      char buf[8192];
 
-      if (len_avail != -1 && len_avail != 0)
-	buffer_free (&buffer);
-      len_avail = 0;
-      buf = NULL;
-      buffer_init (&buffer);
-      buffer_grow_str (&buffer, "<osdata type=\"cpus\">\n");
-
-      fp = gdb_fopen_cloexec ("/proc/cpuinfo", "r");
-      if (fp != NULL)
+      do
 	{
-	  char buf[8192];
-
-	  do
+	  if (fgets (buf, sizeof (buf), fp.get ()))
 	    {
-	      if (fgets (buf, sizeof (buf), fp))
+	      char *key, *value;
+	      int i = 0;
+
+	      key = strtok (buf, ":");
+	      if (key == NULL)
+		continue;
+
+	      value = strtok (NULL, ":");
+	      if (value == NULL)
+		continue;
+
+	      while (key[i] != '\t' && key[i] != '\0')
+		i++;
+
+	      key[i] = '\0';
+
+	      i = 0;
+	      while (value[i] != '\t' && value[i] != '\0')
+		i++;
+
+	      value[i] = '\0';
+
+	      if (strcmp (key, "processor") == 0)
 		{
-		  char *key, *value;
-		  int i = 0;
+		  if (first_item)
+		    buffer_grow_str (buffer, "<item>");
+		  else
+		    buffer_grow_str (buffer, "</item><item>");
 
-		  key = strtok (buf, ":");
-		  if (key == NULL)
-		    continue;
-
-		  value = strtok (NULL, ":");
-		  if (value == NULL)
-		    continue;
-
-		  while (key[i] != '\t' && key[i] != '\0')
-		    i++;
-
-		  key[i] = '\0';
-
-		  i = 0;
-		  while (value[i] != '\t' && value[i] != '\0')
-		    i++;
-
-		  value[i] = '\0';
-
-		  if (strcmp (key, "processor") == 0)
-		    {
-		      if (first_item)
-			buffer_grow_str (&buffer, "<item>");
-		      else
-			buffer_grow_str (&buffer, "</item><item>");
-
-		      first_item = 0;
-		    }
-
-		  buffer_xml_printf (&buffer,
-				     "<column name=\"%s\">%s</column>",
-				     key,
-				     value);
+		  first_item = 0;
 		}
+
+	      buffer_xml_printf (buffer,
+				 "<column name=\"%s\">%s</column>",
+				 key,
+				 value);
 	    }
-	  while (!feof (fp));
-
-	  if (first_item == 0)
-	    buffer_grow_str (&buffer, "</item>");
-
-	  fclose (fp);
 	}
+      while (!feof (fp.get ()));
 
-      buffer_grow_str0 (&buffer, "</osdata>\n");
-      buf = buffer_finish (&buffer);
-      len_avail = strlen (buf);
+      if (first_item == 0)
+	buffer_grow_str (buffer, "</item>");
     }
 
-  if (offset >= len_avail)
-    {
-      /* Done.  Get rid of the buffer.  */
-      buffer_free (&buffer);
-      buf = NULL;
-      len_avail = 0;
-      return 0;
-    }
-
-  if (len > len_avail - offset)
-    len = len_avail - offset;
-  memcpy (readbuf, buf + offset, len);
-
-  return len;
+  buffer_grow_str0 (buffer, "</osdata>\n");
 }
 
 /* Collect all the open file descriptors found in /proc and put the details
-   found about them into READBUF.  */
+   found about them into BUFFER.  */
 
-static LONGEST
-linux_xfer_osdata_fds (gdb_byte *readbuf,
-		       ULONGEST offset, ULONGEST len)
+static void
+linux_xfer_osdata_fds (struct buffer *buffer)
 {
-  /* We make the process list snapshot when the object starts to be read.  */
-  static const char *buf;
-  static LONGEST len_avail = -1;
-  static struct buffer buffer;
+  DIR *dirp;
 
-  if (offset == 0)
+  buffer_grow_str (buffer, "<osdata type=\"files\">\n");
+
+  dirp = opendir ("/proc");
+  if (dirp)
     {
-      DIR *dirp;
+      struct dirent *dp;
 
-      if (len_avail != -1 && len_avail != 0)
-	buffer_free (&buffer);
-      len_avail = 0;
-      buf = NULL;
-      buffer_init (&buffer);
-      buffer_grow_str (&buffer, "<osdata type=\"files\">\n");
-
-      dirp = opendir ("/proc");
-      if (dirp)
+      while ((dp = readdir (dirp)) != NULL)
 	{
-	  struct dirent *dp;
+	  struct stat statbuf;
+	  char procentry[sizeof ("/proc/4294967295")];
 
-	  while ((dp = readdir (dirp)) != NULL)
+	  if (!isdigit (dp->d_name[0])
+	      || NAMELEN (dp) > sizeof ("4294967295") - 1)
+	    continue;
+
+	  xsnprintf (procentry, sizeof (procentry), "/proc/%s",
+		     dp->d_name);
+	  if (stat (procentry, &statbuf) == 0
+	      && S_ISDIR (statbuf.st_mode))
 	    {
-	      struct stat statbuf;
-	      char procentry[sizeof ("/proc/4294967295")];
+	      DIR *dirp2;
+	      PID_T pid;
+	      char command[32];
 
-	      if (!isdigit (dp->d_name[0])
-		  || NAMELEN (dp) > sizeof ("4294967295") - 1)
-		continue;
+	      pid = atoi (dp->d_name);
+	      command_from_pid (command, sizeof (command), pid);
 
-	      xsnprintf (procentry, sizeof (procentry), "/proc/%s",
-			 dp->d_name);
-	      if (stat (procentry, &statbuf) == 0
-		  && S_ISDIR (statbuf.st_mode))
+	      std::string pathname
+		= string_printf ("/proc/%s/fd", dp->d_name);
+	      dirp2 = opendir (pathname.c_str ());
+
+	      if (dirp2)
 		{
-		  char *pathname;
-		  DIR *dirp2;
-		  PID_T pid;
-		  char command[32];
+		  struct dirent *dp2;
 
-		  pid = atoi (dp->d_name);
-		  command_from_pid (command, sizeof (command), pid);
-
-		  pathname = xstrprintf ("/proc/%s/fd", dp->d_name);
-		  dirp2 = opendir (pathname);
-
-		  if (dirp2)
+		  while ((dp2 = readdir (dirp2)) != NULL)
 		    {
-		      struct dirent *dp2;
+		      char buf[1000];
+		      ssize_t rslt;
 
-		      while ((dp2 = readdir (dirp2)) != NULL)
-			{
-			  char *fdname;
-			  char buf[1000];
-			  ssize_t rslt;
+		      if (!isdigit (dp2->d_name[0]))
+			continue;
 
-			  if (!isdigit (dp2->d_name[0]))
-			    continue;
+		      std::string fdname
+			= string_printf ("%s/%s", pathname.c_str (),
+					 dp2->d_name);
+		      rslt = readlink (fdname.c_str (), buf,
+				       sizeof (buf) - 1);
+		      if (rslt >= 0)
+			buf[rslt] = '\0';
 
-			  fdname = xstrprintf ("%s/%s", pathname, dp2->d_name);
-			  rslt = readlink (fdname, buf, sizeof (buf) - 1);
-			  if (rslt >= 0)
-			    buf[rslt] = '\0';
-
-			  buffer_xml_printf (
-			    &buffer,
-			    "<item>"
-			    "<column name=\"pid\">%s</column>"
-			    "<column name=\"command\">%s</column>"
-			    "<column name=\"file descriptor\">%s</column>"
-			    "<column name=\"name\">%s</column>"
-			    "</item>",
-			    dp->d_name,
-			    command,
-			    dp2->d_name,
-			    (rslt >= 0 ? buf : dp2->d_name));
-			}
-
-		      closedir (dirp2);
+		      buffer_xml_printf
+			(buffer,
+			 "<item>"
+			 "<column name=\"pid\">%s</column>"
+			 "<column name=\"command\">%s</column>"
+			 "<column name=\"file descriptor\">%s</column>"
+			 "<column name=\"name\">%s</column>"
+			 "</item>",
+			 dp->d_name,
+			 command,
+			 dp2->d_name,
+			 (rslt >= 0 ? buf : dp2->d_name));
 		    }
 
-		  xfree (pathname);
+		  closedir (dirp2);
 		}
 	    }
-
-	  closedir (dirp);
 	}
 
-      buffer_grow_str0 (&buffer, "</osdata>\n");
-      buf = buffer_finish (&buffer);
-      len_avail = strlen (buf);
+      closedir (dirp);
     }
 
-  if (offset >= len_avail)
-    {
-      /* Done.  Get rid of the buffer.  */
-      buffer_free (&buffer);
-      buf = NULL;
-      len_avail = 0;
-      return 0;
-    }
-
-  if (len > len_avail - offset)
-    len = len_avail - offset;
-  memcpy (readbuf, buf + offset, len);
-
-  return len;
+  buffer_grow_str0 (buffer, "</osdata>\n");
 }
 
 /* Returns the socket state STATE in textual form.  */
@@ -942,7 +760,6 @@ static void
 print_sockets (unsigned short family, int tcp, struct buffer *buffer)
 {
   const char *proc_file;
-  FILE *fp;
 
   if (family == AF_INET)
     proc_file = tcp ? "/proc/net/tcp" : "/proc/net/udp";
@@ -951,14 +768,14 @@ print_sockets (unsigned short family, int tcp, struct buffer *buffer)
   else
     return;
 
-  fp = gdb_fopen_cloexec (proc_file, "r");
+  gdb_file_up fp = gdb_fopen_cloexec (proc_file, "r");
   if (fp)
     {
       char buf[8192];
 
       do
 	{
-	  if (fgets (buf, sizeof (buf), fp))
+	  if (fgets (buf, sizeof (buf), fp.get ()))
 	    {
 	      uid_t uid;
 	      unsigned int local_port, remote_port, state;
@@ -975,7 +792,7 @@ print_sockets (unsigned short family, int tcp, struct buffer *buffer)
 			       remote_address, &remote_port,
 			       &state,
 			       &uid);
-	      
+
 	      if (result == 6)
 		{
 		  union socket_addr locaddr, remaddr;
@@ -989,7 +806,7 @@ print_sockets (unsigned short family, int tcp, struct buffer *buffer)
 			      &locaddr.sin.sin_addr.s_addr);
 		      sscanf (remote_address, "%X",
 			      &remaddr.sin.sin_addr.s_addr);
-		      
+
 		      locaddr.sin.sin_port = htons (local_port);
 		      remaddr.sin.sin_port = htons (remote_port);
 
@@ -1010,7 +827,7 @@ print_sockets (unsigned short family, int tcp, struct buffer *buffer)
 
 		      locaddr.sin6.sin6_port = htons (local_port);
 		      remaddr.sin6.sin6_port = htons (remote_port);
-		      
+
 		      locaddr.sin6.sin6_flowinfo = 0;
 		      remaddr.sin6.sin6_flowinfo = 0;
 		      locaddr.sin6.sin6_scope_id = 0;
@@ -1018,9 +835,9 @@ print_sockets (unsigned short family, int tcp, struct buffer *buffer)
 
 		      addr_size = sizeof (struct sockaddr_in6);
 		    }
-	      
+
 		  locaddr.sa.sa_family = remaddr.sa.sa_family = family;
-		      
+
 		  result = getnameinfo (&locaddr.sa, addr_size,
 					local_address, sizeof (local_address),
 					local_service, sizeof (local_service),
@@ -1028,7 +845,7 @@ print_sockets (unsigned short family, int tcp, struct buffer *buffer)
 					| (tcp ? 0 : NI_DGRAM));
 		  if (result)
 		    continue;
-		  
+
 		  result = getnameinfo (&remaddr.sa, addr_size,
 					remote_address,
 					sizeof (remote_address),
@@ -1038,9 +855,9 @@ print_sockets (unsigned short family, int tcp, struct buffer *buffer)
 					| (tcp ? 0 : NI_DGRAM));
 		  if (result)
 		    continue;
-		  
+
 		  user_from_uid (user, sizeof (user), uid);
-		  
+
 		  buffer_xml_printf (
 		      buffer,
 		      "<item>"
@@ -1050,7 +867,7 @@ print_sockets (unsigned short family, int tcp, struct buffer *buffer)
 		      "<column name=\"remote port\">%s</column>"
 		      "<column name=\"state\">%s</column>"
 		      "<column name=\"user\">%s</column>"
-		      "<column name=\"family\">%s</column>" 
+		      "<column name=\"family\">%s</column>"
 		      "<column name=\"protocol\">%s</column>"
 		      "</item>",
 		      local_address,
@@ -1064,55 +881,23 @@ print_sockets (unsigned short family, int tcp, struct buffer *buffer)
 		}
 	    }
 	}
-      while (!feof (fp));
-
-      fclose (fp);
+      while (!feof (fp.get ()));
     }
 }
 
-/* Collect data about internet sockets and write it into READBUF.  */
+/* Collect data about internet sockets and write it into BUFFER.  */
 
-static LONGEST
-linux_xfer_osdata_isockets (gdb_byte *readbuf,
-			    ULONGEST offset, ULONGEST len)
+static void
+linux_xfer_osdata_isockets (struct buffer *buffer)
 {
-  static const char *buf;
-  static LONGEST len_avail = -1;
-  static struct buffer buffer;
+  buffer_grow_str (buffer, "<osdata type=\"I sockets\">\n");
 
-  if (offset == 0)
-    {
-      if (len_avail != -1 && len_avail != 0)
-	buffer_free (&buffer);
-      len_avail = 0;
-      buf = NULL;
-      buffer_init (&buffer);
-      buffer_grow_str (&buffer, "<osdata type=\"I sockets\">\n");
+  print_sockets (AF_INET, 1, buffer);
+  print_sockets (AF_INET, 0, buffer);
+  print_sockets (AF_INET6, 1, buffer);
+  print_sockets (AF_INET6, 0, buffer);
 
-      print_sockets (AF_INET, 1, &buffer);
-      print_sockets (AF_INET, 0, &buffer);
-      print_sockets (AF_INET6, 1, &buffer);
-      print_sockets (AF_INET6, 0, &buffer);
-
-      buffer_grow_str0 (&buffer, "</osdata>\n");
-      buf = buffer_finish (&buffer);
-      len_avail = strlen (buf);
-    }
-
-  if (offset >= len_avail)
-    {
-      /* Done.  Get rid of the buffer.  */
-      buffer_free (&buffer);
-      buf = NULL;
-      len_avail = 0;
-      return 0;
-    }
-
-  if (len > len_avail - offset)
-    len = len_avail - offset;
-  memcpy (readbuf, buf + offset, len);
-
-  return len;
+  buffer_grow_str0 (buffer, "</osdata>\n");
 }
 
 /* Converts the time SECONDS into textual form and copies it into a
@@ -1126,7 +911,7 @@ time_from_time_t (char *time, int maxlen, TIME_T seconds)
   else
     {
       time_t t = (time_t) seconds;
-      
+
       strncpy (time, ctime (&t), maxlen);
       time[maxlen - 1] = '\0';
     }
@@ -1139,7 +924,7 @@ static void
 group_from_gid (char *group, int maxlen, gid_t gid)
 {
   struct group *grentry = getgrgid (gid);
-  
+
   if (grentry)
     {
       strncpy (group, grentry->gr_name, maxlen);
@@ -1151,509 +936,434 @@ group_from_gid (char *group, int maxlen, gid_t gid)
 }
 
 /* Collect data about shared memory recorded in /proc and write it
-   into READBUF.  */
+   into BUFFER.  */
 
-static LONGEST
-linux_xfer_osdata_shm (gdb_byte *readbuf,
-		       ULONGEST offset, ULONGEST len)
+static void
+linux_xfer_osdata_shm (struct buffer *buffer)
 {
-  static const char *buf;
-  static LONGEST len_avail = -1;
-  static struct buffer buffer;
+  buffer_grow_str (buffer, "<osdata type=\"shared memory\">\n");
 
-  if (offset == 0)
+  gdb_file_up fp = gdb_fopen_cloexec ("/proc/sysvipc/shm", "r");
+  if (fp)
     {
-      FILE *fp;
+      char buf[8192];
 
-      if (len_avail != -1 && len_avail != 0)
-	buffer_free (&buffer);
-      len_avail = 0;
-      buf = NULL;
-      buffer_init (&buffer);
-      buffer_grow_str (&buffer, "<osdata type=\"shared memory\">\n");
-
-      fp = gdb_fopen_cloexec ("/proc/sysvipc/shm", "r");
-      if (fp)
+      do
 	{
-	  char buf[8192];
-
-	  do
+	  if (fgets (buf, sizeof (buf), fp.get ()))
 	    {
-	      if (fgets (buf, sizeof (buf), fp))
-		{
-		  key_t key;
-		  uid_t uid, cuid;
-		  gid_t gid, cgid;
-		  PID_T cpid, lpid;
-		  int shmid, size, nattch;
-		  TIME_T atime, dtime, ctime;
-		  unsigned int perms;
-		  int items_read;
-				  
-		  items_read = sscanf (buf,
-				       "%d %d %o %d %lld %lld %d %u %u %u %u %lld %lld %lld",
-				       &key, &shmid, &perms, &size,
-				       &cpid, &lpid,
-				       &nattch,
-				       &uid, &gid, &cuid, &cgid,
-				       &atime, &dtime, &ctime);
+	      key_t key;
+	      uid_t uid, cuid;
+	      gid_t gid, cgid;
+	      PID_T cpid, lpid;
+	      int shmid, size, nattch;
+	      TIME_T atime, dtime, ctime;
+	      unsigned int perms;
+	      int items_read;
 
-		  if (items_read == 14)
-		    {
-		      char user[UT_NAMESIZE], group[UT_NAMESIZE];
-		      char cuser[UT_NAMESIZE], cgroup[UT_NAMESIZE];
-		      char ccmd[32], lcmd[32];
-		      char atime_str[32], dtime_str[32], ctime_str[32];
-		      
-		      user_from_uid (user, sizeof (user), uid);
-		      group_from_gid (group, sizeof (group), gid);
-		      user_from_uid (cuser, sizeof (cuser), cuid);
-		      group_from_gid (cgroup, sizeof (cgroup), cgid);
-		      
-		      command_from_pid (ccmd, sizeof (ccmd), cpid);
-		      command_from_pid (lcmd, sizeof (lcmd), lpid);
-		      
-		      time_from_time_t (atime_str, sizeof (atime_str), atime);
-		      time_from_time_t (dtime_str, sizeof (dtime_str), dtime);
-		      time_from_time_t (ctime_str, sizeof (ctime_str), ctime);
-		      
-		      buffer_xml_printf (
-		          &buffer,
-			  "<item>"
-			  "<column name=\"key\">%d</column>"
-			  "<column name=\"shmid\">%d</column>"
-			  "<column name=\"permissions\">%o</column>"
-			  "<column name=\"size\">%d</column>"
-			  "<column name=\"creator command\">%s</column>"
-			  "<column name=\"last op. command\">%s</column>"
-			  "<column name=\"num attached\">%d</column>"
-			  "<column name=\"user\">%s</column>"
-			  "<column name=\"group\">%s</column>"
-			  "<column name=\"creator user\">%s</column>"
-			  "<column name=\"creator group\">%s</column>"
-			  "<column name=\"last shmat() time\">%s</column>"
-			  "<column name=\"last shmdt() time\">%s</column>"
-			  "<column name=\"last shmctl() time\">%s</column>"
-			  "</item>",
-			  key,
-			  shmid,
-			  perms,
-			  size,
-			  ccmd,
-			  lcmd,
-			  nattch,
-			  user,
-			  group,
-			  cuser,
-			  cgroup,
-			  atime_str,
-			  dtime_str,
-			  ctime_str);
-		    }
+	      items_read = sscanf (buf,
+				   "%d %d %o %d %lld %lld %d %u %u %u %u %lld %lld %lld",
+				   &key, &shmid, &perms, &size,
+				   &cpid, &lpid,
+				   &nattch,
+				   &uid, &gid, &cuid, &cgid,
+				   &atime, &dtime, &ctime);
+
+	      if (items_read == 14)
+		{
+		  char user[UT_NAMESIZE], group[UT_NAMESIZE];
+		  char cuser[UT_NAMESIZE], cgroup[UT_NAMESIZE];
+		  char ccmd[32], lcmd[32];
+		  char atime_str[32], dtime_str[32], ctime_str[32];
+
+		  user_from_uid (user, sizeof (user), uid);
+		  group_from_gid (group, sizeof (group), gid);
+		  user_from_uid (cuser, sizeof (cuser), cuid);
+		  group_from_gid (cgroup, sizeof (cgroup), cgid);
+
+		  command_from_pid (ccmd, sizeof (ccmd), cpid);
+		  command_from_pid (lcmd, sizeof (lcmd), lpid);
+
+		  time_from_time_t (atime_str, sizeof (atime_str), atime);
+		  time_from_time_t (dtime_str, sizeof (dtime_str), dtime);
+		  time_from_time_t (ctime_str, sizeof (ctime_str), ctime);
+
+		  buffer_xml_printf
+		    (buffer,
+		     "<item>"
+		     "<column name=\"key\">%d</column>"
+		     "<column name=\"shmid\">%d</column>"
+		     "<column name=\"permissions\">%o</column>"
+		     "<column name=\"size\">%d</column>"
+		     "<column name=\"creator command\">%s</column>"
+		     "<column name=\"last op. command\">%s</column>"
+		     "<column name=\"num attached\">%d</column>"
+		     "<column name=\"user\">%s</column>"
+		     "<column name=\"group\">%s</column>"
+		     "<column name=\"creator user\">%s</column>"
+		     "<column name=\"creator group\">%s</column>"
+		     "<column name=\"last shmat() time\">%s</column>"
+		     "<column name=\"last shmdt() time\">%s</column>"
+		     "<column name=\"last shmctl() time\">%s</column>"
+		     "</item>",
+		     key,
+		     shmid,
+		     perms,
+		     size,
+		     ccmd,
+		     lcmd,
+		     nattch,
+		     user,
+		     group,
+		     cuser,
+		     cgroup,
+		     atime_str,
+		     dtime_str,
+		     ctime_str);
 		}
 	    }
-	  while (!feof (fp));
-
-	  fclose (fp);
 	}
-      
-      buffer_grow_str0 (&buffer, "</osdata>\n");
-      buf = buffer_finish (&buffer);
-      len_avail = strlen (buf);
+      while (!feof (fp.get ()));
     }
 
-  if (offset >= len_avail)
-    {
-      /* Done.  Get rid of the buffer.  */
-      buffer_free (&buffer);
-      buf = NULL;
-      len_avail = 0;
-      return 0;
-    }
-
-  if (len > len_avail - offset)
-    len = len_avail - offset;
-  memcpy (readbuf, buf + offset, len);
-
-  return len;
+  buffer_grow_str0 (buffer, "</osdata>\n");
 }
 
 /* Collect data about semaphores recorded in /proc and write it
-   into READBUF.  */
+   into BUFFER.  */
 
-static LONGEST
-linux_xfer_osdata_sem (gdb_byte *readbuf,
-		       ULONGEST offset, ULONGEST len)
+static void
+linux_xfer_osdata_sem (struct buffer *buffer)
 {
-  static const char *buf;
-  static LONGEST len_avail = -1;
-  static struct buffer buffer;
+  buffer_grow_str (buffer, "<osdata type=\"semaphores\">\n");
 
-  if (offset == 0)
+  gdb_file_up fp = gdb_fopen_cloexec ("/proc/sysvipc/sem", "r");
+  if (fp)
     {
-      FILE *fp;
-      
-      if (len_avail != -1 && len_avail != 0)
-	buffer_free (&buffer);
-      len_avail = 0;
-      buf = NULL;
-      buffer_init (&buffer);
-      buffer_grow_str (&buffer, "<osdata type=\"semaphores\">\n");
+      char buf[8192];
 
-      fp = gdb_fopen_cloexec ("/proc/sysvipc/sem", "r");
-      if (fp)
+      do
 	{
-	  char buf[8192];
-	  
-	  do
+	  if (fgets (buf, sizeof (buf), fp.get ()))
 	    {
-	      if (fgets (buf, sizeof (buf), fp))
+	      key_t key;
+	      uid_t uid, cuid;
+	      gid_t gid, cgid;
+	      unsigned int perms, nsems;
+	      int semid;
+	      TIME_T otime, ctime;
+	      int items_read;
+
+	      items_read = sscanf (buf,
+				   "%d %d %o %u %d %d %d %d %lld %lld",
+				   &key, &semid, &perms, &nsems,
+				   &uid, &gid, &cuid, &cgid,
+				   &otime, &ctime);
+
+	      if (items_read == 10)
 		{
-		  key_t key;
-		  uid_t uid, cuid;
-		  gid_t gid, cgid;
-		  unsigned int perms, nsems;
-		  int semid;
-		  TIME_T otime, ctime;
-		  int items_read;
-		  
-		  items_read = sscanf (buf,
-				       "%d %d %o %u %d %d %d %d %lld %lld",
-				       &key, &semid, &perms, &nsems,
-				       &uid, &gid, &cuid, &cgid,
-				       &otime, &ctime);
-		  
-		  if (items_read == 10)
-		    {
-		      char user[UT_NAMESIZE], group[UT_NAMESIZE];
-		      char cuser[UT_NAMESIZE], cgroup[UT_NAMESIZE];
-		      char otime_str[32], ctime_str[32];
-		      
-		      user_from_uid (user, sizeof (user), uid);
-		      group_from_gid (group, sizeof (group), gid);
-		      user_from_uid (cuser, sizeof (cuser), cuid);
-		      group_from_gid (cgroup, sizeof (cgroup), cgid);
-		      
-		      time_from_time_t (otime_str, sizeof (otime_str), otime);
-		      time_from_time_t (ctime_str, sizeof (ctime_str), ctime);
-		      
-		      buffer_xml_printf (
-			  &buffer,
-			  "<item>"
-			  "<column name=\"key\">%d</column>"
-			  "<column name=\"semid\">%d</column>"
-			  "<column name=\"permissions\">%o</column>"
-			  "<column name=\"num semaphores\">%u</column>"
-			  "<column name=\"user\">%s</column>"
-			  "<column name=\"group\">%s</column>"
-			  "<column name=\"creator user\">%s</column>"
-			  "<column name=\"creator group\">%s</column>"
-			  "<column name=\"last semop() time\">%s</column>"
-			  "<column name=\"last semctl() time\">%s</column>"
-			  "</item>",
-			  key,
-			  semid,
-			  perms,
-			  nsems,
-			  user,
-			  group,
-			  cuser,
-			  cgroup,
-			  otime_str,
-			  ctime_str);
-		    }
+		  char user[UT_NAMESIZE], group[UT_NAMESIZE];
+		  char cuser[UT_NAMESIZE], cgroup[UT_NAMESIZE];
+		  char otime_str[32], ctime_str[32];
+
+		  user_from_uid (user, sizeof (user), uid);
+		  group_from_gid (group, sizeof (group), gid);
+		  user_from_uid (cuser, sizeof (cuser), cuid);
+		  group_from_gid (cgroup, sizeof (cgroup), cgid);
+
+		  time_from_time_t (otime_str, sizeof (otime_str), otime);
+		  time_from_time_t (ctime_str, sizeof (ctime_str), ctime);
+
+		  buffer_xml_printf
+		    (buffer,
+		     "<item>"
+		     "<column name=\"key\">%d</column>"
+		     "<column name=\"semid\">%d</column>"
+		     "<column name=\"permissions\">%o</column>"
+		     "<column name=\"num semaphores\">%u</column>"
+		     "<column name=\"user\">%s</column>"
+		     "<column name=\"group\">%s</column>"
+		     "<column name=\"creator user\">%s</column>"
+		     "<column name=\"creator group\">%s</column>"
+		     "<column name=\"last semop() time\">%s</column>"
+		     "<column name=\"last semctl() time\">%s</column>"
+		     "</item>",
+		     key,
+		     semid,
+		     perms,
+		     nsems,
+		     user,
+		     group,
+		     cuser,
+		     cgroup,
+		     otime_str,
+		     ctime_str);
 		}
 	    }
-	  while (!feof (fp));
-
-	  fclose (fp);
 	}
-
-      buffer_grow_str0 (&buffer, "</osdata>\n");
-      buf = buffer_finish (&buffer);
-      len_avail = strlen (buf);
+      while (!feof (fp.get ()));
     }
 
-  if (offset >= len_avail)
-    {
-      /* Done.  Get rid of the buffer.  */
-      buffer_free (&buffer);
-      buf = NULL;
-      len_avail = 0;
-      return 0;
-    }
-
-  if (len > len_avail - offset)
-    len = len_avail - offset;
-  memcpy (readbuf, buf + offset, len);
-
-  return len;
+  buffer_grow_str0 (buffer, "</osdata>\n");
 }
 
 /* Collect data about message queues recorded in /proc and write it
-   into READBUF.  */
+   into BUFFER.  */
 
-static LONGEST
-linux_xfer_osdata_msg (gdb_byte *readbuf,
-		       ULONGEST offset, ULONGEST len)
+static void
+linux_xfer_osdata_msg (struct buffer *buffer)
 {
-  static const char *buf;
-  static LONGEST len_avail = -1;
-  static struct buffer buffer;
+  buffer_grow_str (buffer, "<osdata type=\"message queues\">\n");
 
-  if (offset == 0)
+  gdb_file_up fp = gdb_fopen_cloexec ("/proc/sysvipc/msg", "r");
+  if (fp)
     {
-      FILE *fp;
-      
-      if (len_avail != -1 && len_avail != 0)
-	buffer_free (&buffer);
-      len_avail = 0;
-      buf = NULL;
-      buffer_init (&buffer);
-      buffer_grow_str (&buffer, "<osdata type=\"message queues\">\n");
-      
-      fp = gdb_fopen_cloexec ("/proc/sysvipc/msg", "r");
-      if (fp)
+      char buf[8192];
+
+      do
 	{
-	  char buf[8192];
-	  
-	  do
+	  if (fgets (buf, sizeof (buf), fp.get ()))
 	    {
-	      if (fgets (buf, sizeof (buf), fp))
+	      key_t key;
+	      PID_T lspid, lrpid;
+	      uid_t uid, cuid;
+	      gid_t gid, cgid;
+	      unsigned int perms, cbytes, qnum;
+	      int msqid;
+	      TIME_T stime, rtime, ctime;
+	      int items_read;
+
+	      items_read = sscanf (buf,
+				   "%d %d %o %u %u %lld %lld %d %d %d %d %lld %lld %lld",
+				   &key, &msqid, &perms, &cbytes, &qnum,
+				   &lspid, &lrpid, &uid, &gid, &cuid, &cgid,
+				   &stime, &rtime, &ctime);
+
+	      if (items_read == 14)
 		{
-		  key_t key;
-		  PID_T lspid, lrpid;
-		  uid_t uid, cuid;
-		  gid_t gid, cgid;
-		  unsigned int perms, cbytes, qnum;
-		  int msqid;
-		  TIME_T stime, rtime, ctime;
-		  int items_read;
-		  
-		  items_read = sscanf (buf,
-				       "%d %d %o %u %u %lld %lld %d %d %d %d %lld %lld %lld",
-				       &key, &msqid, &perms, &cbytes, &qnum,
-				       &lspid, &lrpid, &uid, &gid, &cuid, &cgid,
-				       &stime, &rtime, &ctime);
-		  
-		  if (items_read == 14)
-		    {
-		      char user[UT_NAMESIZE], group[UT_NAMESIZE];
-		      char cuser[UT_NAMESIZE], cgroup[UT_NAMESIZE];
-		      char lscmd[32], lrcmd[32];
-		      char stime_str[32], rtime_str[32], ctime_str[32];
-		      
-		      user_from_uid (user, sizeof (user), uid);
-		      group_from_gid (group, sizeof (group), gid);
-		      user_from_uid (cuser, sizeof (cuser), cuid);
-		      group_from_gid (cgroup, sizeof (cgroup), cgid);
-		      
-		      command_from_pid (lscmd, sizeof (lscmd), lspid);
-		      command_from_pid (lrcmd, sizeof (lrcmd), lrpid);
-		      
-		      time_from_time_t (stime_str, sizeof (stime_str), stime);
-		      time_from_time_t (rtime_str, sizeof (rtime_str), rtime);
-		      time_from_time_t (ctime_str, sizeof (ctime_str), ctime);
-		      
-		      buffer_xml_printf (
-			  &buffer,
-			  "<item>"
-			  "<column name=\"key\">%d</column>"
-			  "<column name=\"msqid\">%d</column>"
-			  "<column name=\"permissions\">%o</column>"
-			  "<column name=\"num used bytes\">%u</column>"
-			  "<column name=\"num messages\">%u</column>"
-			  "<column name=\"last msgsnd() command\">%s</column>"
-			  "<column name=\"last msgrcv() command\">%s</column>"
-			  "<column name=\"user\">%s</column>"
-			  "<column name=\"group\">%s</column>"
-			  "<column name=\"creator user\">%s</column>"
-			  "<column name=\"creator group\">%s</column>"
-			  "<column name=\"last msgsnd() time\">%s</column>"
-			  "<column name=\"last msgrcv() time\">%s</column>"
-			  "<column name=\"last msgctl() time\">%s</column>"
-			  "</item>",
-			  key,
-			  msqid,
-			  perms,
-			  cbytes,
-			  qnum,
-			  lscmd,
-			  lrcmd,
-			  user,
-			  group,
-			  cuser,
-			  cgroup,
-			  stime_str,
-			  rtime_str,
-			  ctime_str);
-		    }
+		  char user[UT_NAMESIZE], group[UT_NAMESIZE];
+		  char cuser[UT_NAMESIZE], cgroup[UT_NAMESIZE];
+		  char lscmd[32], lrcmd[32];
+		  char stime_str[32], rtime_str[32], ctime_str[32];
+
+		  user_from_uid (user, sizeof (user), uid);
+		  group_from_gid (group, sizeof (group), gid);
+		  user_from_uid (cuser, sizeof (cuser), cuid);
+		  group_from_gid (cgroup, sizeof (cgroup), cgid);
+
+		  command_from_pid (lscmd, sizeof (lscmd), lspid);
+		  command_from_pid (lrcmd, sizeof (lrcmd), lrpid);
+
+		  time_from_time_t (stime_str, sizeof (stime_str), stime);
+		  time_from_time_t (rtime_str, sizeof (rtime_str), rtime);
+		  time_from_time_t (ctime_str, sizeof (ctime_str), ctime);
+
+		  buffer_xml_printf
+		    (buffer,
+		     "<item>"
+		     "<column name=\"key\">%d</column>"
+		     "<column name=\"msqid\">%d</column>"
+		     "<column name=\"permissions\">%o</column>"
+		     "<column name=\"num used bytes\">%u</column>"
+		     "<column name=\"num messages\">%u</column>"
+		     "<column name=\"last msgsnd() command\">%s</column>"
+		     "<column name=\"last msgrcv() command\">%s</column>"
+		     "<column name=\"user\">%s</column>"
+		     "<column name=\"group\">%s</column>"
+		     "<column name=\"creator user\">%s</column>"
+		     "<column name=\"creator group\">%s</column>"
+		     "<column name=\"last msgsnd() time\">%s</column>"
+		     "<column name=\"last msgrcv() time\">%s</column>"
+		     "<column name=\"last msgctl() time\">%s</column>"
+		     "</item>",
+		     key,
+		     msqid,
+		     perms,
+		     cbytes,
+		     qnum,
+		     lscmd,
+		     lrcmd,
+		     user,
+		     group,
+		     cuser,
+		     cgroup,
+		     stime_str,
+		     rtime_str,
+		     ctime_str);
 		}
 	    }
-	  while (!feof (fp));
-
-	  fclose (fp);
 	}
-
-      buffer_grow_str0 (&buffer, "</osdata>\n");
-      buf = buffer_finish (&buffer);
-      len_avail = strlen (buf);
+      while (!feof (fp.get ()));
     }
 
-  if (offset >= len_avail)
-    {
-      /* Done.  Get rid of the buffer.  */
-      buffer_free (&buffer);
-      buf = NULL;
-      len_avail = 0;
-      return 0;
-    }
-
-  if (len > len_avail - offset)
-    len = len_avail - offset;
-  memcpy (readbuf, buf + offset, len);
-
-  return len;
+  buffer_grow_str0 (buffer, "</osdata>\n");
 }
 
 /* Collect data about loaded kernel modules and write it into
-   READBUF.  */
+   BUFFER.  */
 
-static LONGEST
-linux_xfer_osdata_modules (gdb_byte *readbuf,
-			   ULONGEST offset, ULONGEST len)
+static void
+linux_xfer_osdata_modules (struct buffer *buffer)
 {
-  static const char *buf;
-  static LONGEST len_avail = -1;
-  static struct buffer buffer;
+  buffer_grow_str (buffer, "<osdata type=\"modules\">\n");
 
-  if (offset == 0)
+  gdb_file_up fp = gdb_fopen_cloexec ("/proc/modules", "r");
+  if (fp)
     {
-      FILE *fp;
+      char buf[8192];
 
-      if (len_avail != -1 && len_avail != 0)
-	buffer_free (&buffer);
-      len_avail = 0;
-      buf = NULL;
-      buffer_init (&buffer);
-      buffer_grow_str (&buffer, "<osdata type=\"modules\">\n");
-
-      fp = gdb_fopen_cloexec ("/proc/modules", "r");
-      if (fp)
+      do
 	{
-	  char buf[8192];
-	  
-	  do
+	  if (fgets (buf, sizeof (buf), fp.get ()))
 	    {
-	      if (fgets (buf, sizeof (buf), fp))
-		{
-		  char *name, *dependencies, *status, *tmp;
-		  unsigned int size;
-		  unsigned long long address;
-		  int uses;
+	      char *name, *dependencies, *status, *tmp;
+	      unsigned int size;
+	      unsigned long long address;
+	      int uses;
 
-		  name = strtok (buf, " ");
-		  if (name == NULL)
-		    continue;
+	      name = strtok (buf, " ");
+	      if (name == NULL)
+		continue;
 
-		  tmp = strtok (NULL, " ");
-		  if (tmp == NULL)
-		    continue;
-		  if (sscanf (tmp, "%u", &size) != 1)
-		    continue;
+	      tmp = strtok (NULL, " ");
+	      if (tmp == NULL)
+		continue;
+	      if (sscanf (tmp, "%u", &size) != 1)
+		continue;
 
-		  tmp = strtok (NULL, " ");
-		  if (tmp == NULL)
-		    continue;
-		  if (sscanf (tmp, "%d", &uses) != 1)
-		    continue;
+	      tmp = strtok (NULL, " ");
+	      if (tmp == NULL)
+		continue;
+	      if (sscanf (tmp, "%d", &uses) != 1)
+		continue;
 
-		  dependencies = strtok (NULL, " ");
-		  if (dependencies == NULL)
-		    continue;
+	      dependencies = strtok (NULL, " ");
+	      if (dependencies == NULL)
+		continue;
 
-		  status = strtok (NULL, " ");
-		  if (status == NULL)
-		    continue;
+	      status = strtok (NULL, " ");
+	      if (status == NULL)
+		continue;
 
-		  tmp = strtok (NULL, "\n");
-		  if (tmp == NULL)
-		    continue;
-		  if (sscanf (tmp, "%llx", &address) != 1)
-		    continue;
+	      tmp = strtok (NULL, "\n");
+	      if (tmp == NULL)
+		continue;
+	      if (sscanf (tmp, "%llx", &address) != 1)
+		continue;
 
-		  buffer_xml_printf (
-			&buffer,
-			"<item>"
-			"<column name=\"name\">%s</column>"
-			"<column name=\"size\">%u</column>"
-			"<column name=\"num uses\">%d</column>"
-			"<column name=\"dependencies\">%s</column>"
-			"<column name=\"status\">%s</column>"
-			"<column name=\"address\">%llx</column>"
-			"</item>",
-			name,
-			size,
-			uses,
-			dependencies,
-			status,
-			address);
-		}
+	      buffer_xml_printf (buffer,
+				 "<item>"
+				 "<column name=\"name\">%s</column>"
+				 "<column name=\"size\">%u</column>"
+				 "<column name=\"num uses\">%d</column>"
+				 "<column name=\"dependencies\">%s</column>"
+				 "<column name=\"status\">%s</column>"
+				 "<column name=\"address\">%llx</column>"
+				 "</item>",
+				 name,
+				 size,
+				 uses,
+				 dependencies,
+				 status,
+				 address);
 	    }
-	  while (!feof (fp));
-
-	  fclose (fp);
 	}
-
-      buffer_grow_str0 (&buffer, "</osdata>\n");
-      buf = buffer_finish (&buffer);
-      len_avail = strlen (buf);
+      while (!feof (fp.get ()));
     }
 
-  if (offset >= len_avail)
-    {
-      /* Done.  Get rid of the buffer.  */
-      buffer_free (&buffer);
-      buf = NULL;
-      len_avail = 0;
-      return 0;
-    }
-
-  if (len > len_avail - offset)
-    len = len_avail - offset;
-  memcpy (readbuf, buf + offset, len);
-
-  return len;
+  buffer_grow_str0 (buffer, "</osdata>\n");
 }
+
+static void linux_xfer_osdata_info_os_types (struct buffer *buffer);
 
 struct osdata_type {
   const char *type;
   const char *title;
   const char *description;
-  LONGEST (*getter) (gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
+  void (*take_snapshot) (struct buffer *buffer);
+  LONGEST len_avail;
+  struct buffer buffer;
 } osdata_table[] = {
+  { "types", "Types", "Listing of info os types you can list",
+    linux_xfer_osdata_info_os_types, -1 },
   { "cpus", "CPUs", "Listing of all cpus/cores on the system",
-    linux_xfer_osdata_cpus },
+    linux_xfer_osdata_cpus, -1 },
   { "files", "File descriptors", "Listing of all file descriptors",
-    linux_xfer_osdata_fds },
+    linux_xfer_osdata_fds, -1 },
   { "modules", "Kernel modules", "Listing of all loaded kernel modules",
-    linux_xfer_osdata_modules },
+    linux_xfer_osdata_modules, -1 },
   { "msg", "Message queues", "Listing of all message queues",
-    linux_xfer_osdata_msg },
+    linux_xfer_osdata_msg, -1 },
   { "processes", "Processes", "Listing of all processes",
-    linux_xfer_osdata_processes },
+    linux_xfer_osdata_processes, -1 },
   { "procgroups", "Process groups", "Listing of all process groups",
-    linux_xfer_osdata_processgroups },
+    linux_xfer_osdata_processgroups, -1 },
   { "semaphores", "Semaphores", "Listing of all semaphores",
-    linux_xfer_osdata_sem },
+    linux_xfer_osdata_sem, -1 },
   { "shm", "Shared-memory regions", "Listing of all shared-memory regions",
-    linux_xfer_osdata_shm },
+    linux_xfer_osdata_shm, -1 },
   { "sockets", "Sockets", "Listing of all internet-domain sockets",
-    linux_xfer_osdata_isockets },
+    linux_xfer_osdata_isockets, -1 },
   { "threads", "Threads", "Listing of all threads",
-    linux_xfer_osdata_threads },
+  linux_xfer_osdata_threads, -1 },
   { NULL, NULL, NULL }
 };
+
+/* Collect data about all types info os can show in BUFFER.  */
+
+static void
+linux_xfer_osdata_info_os_types (struct buffer *buffer)
+{
+  buffer_grow_str (buffer, "<osdata type=\"types\">\n");
+
+  /* Start the below loop at 1, as we do not want to list ourselves.  */
+  for (int i = 1; osdata_table[i].type; ++i)
+    buffer_xml_printf (buffer,
+		       "<item>"
+		       "<column name=\"Type\">%s</column>"
+		       "<column name=\"Description\">%s</column>"
+		       "<column name=\"Title\">%s</column>"
+		       "</item>",
+		       osdata_table[i].type,
+		       osdata_table[i].description,
+		       osdata_table[i].title);
+
+  buffer_grow_str0 (buffer, "</osdata>\n");
+}
+
+
+/*  Copies up to LEN bytes in READBUF from offset OFFSET in OSD->BUFFER.
+    If OFFSET is zero, first calls OSD->TAKE_SNAPSHOT.  */
+
+static LONGEST
+common_getter (struct osdata_type *osd,
+	       gdb_byte *readbuf, ULONGEST offset, ULONGEST len)
+{
+  gdb_assert (readbuf);
+
+  if (offset == 0)
+    {
+      if (osd->len_avail != -1 && osd->len_avail != 0)
+	buffer_free (&osd->buffer);
+      osd->len_avail = 0;
+      buffer_init (&osd->buffer);
+      (osd->take_snapshot) (&osd->buffer);
+      osd->len_avail = strlen (osd->buffer.buffer);
+    }
+  if (offset >= osd->len_avail)
+    {
+      /* Done.  Get rid of the buffer.  */
+      buffer_free (&osd->buffer);
+      osd->len_avail = 0;
+      return 0;
+    }
+  if (len > osd->len_avail - offset)
+    len = osd->len_avail - offset;
+  memcpy (readbuf, osd->buffer.buffer + offset, len);
+
+  return len;
+
+}
 
 LONGEST
 linux_common_xfer_osdata (const char *annex, gdb_byte *readbuf,
@@ -1661,52 +1371,8 @@ linux_common_xfer_osdata (const char *annex, gdb_byte *readbuf,
 {
   if (!annex || *annex == '\0')
     {
-      static const char *buf;
-      static LONGEST len_avail = -1;
-      static struct buffer buffer;
-
-      if (offset == 0)
-	{
-	  int i;
-
-	  if (len_avail != -1 && len_avail != 0)
-	    buffer_free (&buffer);
-	  len_avail = 0;
-	  buf = NULL;
-	  buffer_init (&buffer);
-	  buffer_grow_str (&buffer, "<osdata type=\"types\">\n");
-
-	  for (i = 0; osdata_table[i].type; ++i)
-	    buffer_xml_printf (
-			       &buffer,
-			       "<item>"
-			       "<column name=\"Type\">%s</column>"
-			       "<column name=\"Description\">%s</column>"
-			       "<column name=\"Title\">%s</column>"
-			       "</item>",
-			       osdata_table[i].type,
-			       osdata_table[i].description,
-			       osdata_table[i].title);
-
-	  buffer_grow_str0 (&buffer, "</osdata>\n");
-	  buf = buffer_finish (&buffer);
-	  len_avail = strlen (buf);
-	}
-
-      if (offset >= len_avail)
-	{
-	  /* Done.  Get rid of the buffer.  */
-	  buffer_free (&buffer);
-	  buf = NULL;
-	  len_avail = 0;
-	  return 0;
-	}
-
-      if (len > len_avail - offset)
-	len = len_avail - offset;
-      memcpy (readbuf, buf + offset, len);
-
-      return len;
+      return common_getter (&osdata_table[0],
+			    readbuf, offset, len);
     }
   else
     {
@@ -1715,14 +1381,10 @@ linux_common_xfer_osdata (const char *annex, gdb_byte *readbuf,
       for (i = 0; osdata_table[i].type; ++i)
 	{
 	  if (strcmp (annex, osdata_table[i].type) == 0)
-	    {
-	      gdb_assert (readbuf);
-	      
-	      return (osdata_table[i].getter) (readbuf, offset, len);
-	    }
+	    return common_getter (&osdata_table[i],
+				  readbuf, offset, len);
 	}
 
       return 0;
     }
 }
-

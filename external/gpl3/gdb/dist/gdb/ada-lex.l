@@ -1,5 +1,5 @@
 /* FLEX lexer for Ada expressions, for GDB.
-   Copyright (C) 1994-2017 Free Software Foundation, Inc.
+   Copyright (C) 1994-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,6 +40,14 @@ EXP	(e[+-]{NUM10})
 POSEXP  (e"+"?{NUM10})
 
 %{
+
+#include "diagnostics.h"
+
+/* Some old versions of flex generate code that uses the "register" keyword,
+   which clang warns about.  This was observed for example with flex 2.5.35,
+   as shipped with macOS 10.12.  */
+DIAGNOSTIC_PUSH
+DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER
 
 #define NUMERAL_WIDTH 256
 #define LONGEST_SIGN ((ULONGEST) 1 << (sizeof(LONGEST) * HOST_CHAR_BIT - 1))
@@ -282,7 +290,7 @@ false		{ return FALSEKEYWORD; }
 "$"({LETTER}|{DIG}|"$")*  {
 		  yylval.sval.ptr = yytext;
 		  yylval.sval.length = yyleng;
-		  return SPECIAL_VARIABLE;
+		  return DOLLAR_VARIABLE;
 		}
 
 	/* CATCH-ALL ERROR CASE */
@@ -395,16 +403,12 @@ processInt (struct parser_state *par_state, const char *base0,
 static int
 processReal (struct parser_state *par_state, const char *num0)
 {
-  sscanf (num0, "%" DOUBLEST_SCAN_FORMAT, &yylval.typed_val_float.dval);
+  yylval.typed_val_float.type = type_long_double (par_state);
 
-  yylval.typed_val_float.type = type_float (par_state);
-  if (sizeof(DOUBLEST) >= gdbarch_double_bit (parse_gdbarch (par_state))
-			    / TARGET_CHAR_BIT)
-    yylval.typed_val_float.type = type_double (par_state);
-  if (sizeof(DOUBLEST) >= gdbarch_long_double_bit (parse_gdbarch (par_state))
-			    / TARGET_CHAR_BIT)
-    yylval.typed_val_float.type = type_long_double (par_state);
-
+  bool parsed = parse_float (num0, strlen (num0),
+			     yylval.typed_val_float.type,
+			     yylval.typed_val_float.val);
+  gdb_assert (parsed);
   return FLOAT;
 }
 
@@ -412,13 +416,12 @@ processReal (struct parser_state *par_state, const char *num0)
 /* Store a canonicalized version of NAME0[0..LEN-1] in yylval.ssym.  The
    resulting string is valid until the next call to ada_parse.  If
    NAME0 contains the substring "___", it is assumed to be already
-   encoded and the resulting name is equal to it.  Otherwise, it differs
+   encoded and the resulting name is equal to it.  Similarly, if the name
+   starts with '<', it is copied verbatim.  Otherwise, it differs
    from NAME0 in that:
-    + Characters between '...' or <...> are transfered verbatim to 
-      yylval.ssym.
-    + <, >, and trailing "'" characters in quoted sequences are removed
-      (a leading quote is preserved to indicate that the name is not to be
-      GNAT-encoded).
+    + Characters between '...' are transfered verbatim to yylval.ssym.
+    + Trailing "'" characters in quoted sequences are removed (a leading quote is
+      preserved to indicate that the name is not to be GNAT-encoded).
     + Unquoted whitespace is removed.
     + Unquoted alphabetic characters are mapped to lower case.
    Result is returned as a struct stoken, but for convenience, the string
@@ -436,7 +439,7 @@ processId (const char *name0, int len)
   while (len > 0 && isspace (name0[len-1]))
     len -= 1;
 
-  if (strstr (name0, "___") != NULL)
+  if (name0[0] == '<' || strstr (name0, "___") != NULL)
     {
       strncpy (name, name0, len);
       name[len] = '\000';
@@ -468,15 +471,6 @@ processId (const char *name0, int len)
 	      i += 1; i0 += 1;
 	    }
 	  while (i0 < len && name0[i0] != '\'');
-	  i0 += 1;
-	  break;
-	case '<':
-	  i0 += 1;
-	  while (i0 < len && name0[i0] != '>')
-	    {
-	      name[i] = name0[i0];
-	      i += 1; i0 += 1;
-	    }
 	  i0 += 1;
 	  break;
 	}
@@ -648,3 +642,5 @@ dummy_function ada_flex_use[] =
 { 
   (dummy_function) yyunput
 };
+
+DIAGNOSTIC_POP

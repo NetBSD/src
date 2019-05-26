@@ -1,5 +1,5 @@
 /* GNU/Linux/m32r specific low level interface, for the remote server for GDB.
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -134,7 +134,9 @@ struct linux_target_ops the_low_target = {
   NULL, /* supply_ptrace_register */
   NULL, /* siginfo_fixup */
   NULL, /* new_process */
+  NULL, /* delete_process */
   NULL, /* new_thread */
+  NULL, /* delete_thread */
   NULL, /* new_fork */
   NULL, /* prepare_to_resume */
   NULL, /* process_qsupported */

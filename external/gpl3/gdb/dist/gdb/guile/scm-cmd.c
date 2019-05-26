@@ -1,6 +1,6 @@
 /* GDB commands implemented in Scheme.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -114,7 +114,7 @@ static const struct cmdscm_completer cmdscm_completers[] =
   { "COMPLETE_FILENAME", filename_completer },
   { "COMPLETE_LOCATION", location_completer },
   { "COMPLETE_COMMAND", command_completer },
-  { "COMPLETE_SYMBOL", make_symbol_completion_list_fn },
+  { "COMPLETE_SYMBOL", symbol_completer },
   { "COMPLETE_EXPRESSION", expression_completer },
 };
 
@@ -267,9 +267,9 @@ gdbscm_command_valid_p (SCM self)
 static SCM
 gdbscm_dont_repeat (SCM self)
 {
-  /* We currently don't need anything from SELF, but still verify it.  */
-  command_smob *c_smob
-    = cmdscm_get_valid_command_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
+  /* We currently don't need anything from SELF, but still verify it.
+     Call for side effects.  */
+  cmdscm_get_valid_command_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
 
   dont_repeat ();
 
@@ -292,9 +292,8 @@ cmdscm_destroyer (struct cmd_list_element *self, void *context)
 
 static void
 cmdscm_function (struct cmd_list_element *command,
-		 char *args_entry, int from_tty)
+		 const char *args, int from_tty)
 {
-  const char *args = args_entry;
   command_smob *c_smob/*obj*/ = (command_smob *) get_cmd_context (command);
   SCM arg_scm, tty_scm, result;
 
@@ -317,10 +316,10 @@ cmdscm_function (struct cmd_list_element *command,
 	 itself.  */
       if (gdbscm_user_error_p (gdbscm_exception_key (result)))
 	{
-	  char *msg = gdbscm_exception_message_to_string (result);
+	  gdb::unique_xmalloc_ptr<char> msg
+	    = gdbscm_exception_message_to_string (result);
 
-	  make_cleanup (xfree, msg);
-	  error ("%s", msg);
+	  error ("%s", msg.get ());
 	}
       else
 	{
@@ -350,9 +349,8 @@ cmdscm_bad_completion_result (const char *msg, SCM completion)
    The result is a boolean indicating success.  */
 
 static int
-cmdscm_add_completion (SCM completion, VEC (char_ptr) **result)
+cmdscm_add_completion (SCM completion, completion_tracker &tracker)
 {
-  char *item;
   SCM except_scm;
 
   if (!scm_is_string (completion))
@@ -363,8 +361,9 @@ cmdscm_add_completion (SCM completion, VEC (char_ptr) **result)
       return 0;
     }
 
-  item = gdbscm_scm_to_string (completion, NULL, host_charset (), 1,
-			       &except_scm);
+  gdb::unique_xmalloc_ptr<char> item
+    = gdbscm_scm_to_string (completion, NULL, host_charset (), 1,
+			    &except_scm);
   if (item == NULL)
     {
       /* Inform the user, but otherwise ignore the entire result.  */
@@ -372,21 +371,21 @@ cmdscm_add_completion (SCM completion, VEC (char_ptr) **result)
       return 0;
     }
 
-  VEC_safe_push (char_ptr, *result, item);
+  tracker.add_completion (std::move (item));
 
   return 1;
 }
 
 /* Called by gdb for command completion.  */
 
-static VEC (char_ptr) *
+static void
 cmdscm_completer (struct cmd_list_element *command,
+		  completion_tracker &tracker,
 		  const char *text, const char *word)
 {
   command_smob *c_smob/*obj*/ = (command_smob *) get_cmd_context (command);
   SCM completer_result_scm;
-  SCM text_scm, word_scm, result_scm;
-  VEC (char_ptr) *result = NULL;
+  SCM text_scm, word_scm;
 
   gdb_assert (c_smob != NULL);
   gdb_assert (gdbscm_is_procedure (c_smob->complete));
@@ -408,7 +407,7 @@ cmdscm_completer (struct cmd_list_element *command,
     {
       /* Inform the user, but otherwise ignore.  */
       gdbscm_print_gdb_exception (SCM_BOOL_F, completer_result_scm);
-      goto done;
+      return;
     }
 
   if (gdbscm_is_true (scm_list_p (completer_result_scm)))
@@ -419,11 +418,8 @@ cmdscm_completer (struct cmd_list_element *command,
 	{
 	  SCM next = scm_car (list);
 
-	  if (!cmdscm_add_completion (next, &result))
-	    {
-	      VEC_free (char_ptr, result);
-	      goto done;
-	    }
+	  if (!cmdscm_add_completion (next, tracker))
+	    break;
 
 	  list = scm_cdr (list);
 	}
@@ -437,17 +433,13 @@ cmdscm_completer (struct cmd_list_element *command,
 	{
 	  if (gdbscm_is_exception (next))
 	    {
-	      /* Inform the user, but otherwise ignore the entire result.  */
+	      /* Inform the user.  */
 	      gdbscm_print_gdb_exception (SCM_BOOL_F, completer_result_scm);
-	      VEC_free (char_ptr, result);
-	      goto done;
+	      break;
 	    }
 
-	  if (!cmdscm_add_completion (next, &result))
-	    {
-	      VEC_free (char_ptr, result);
-	      goto done;
-	    }
+	  if (cmdscm_add_completion (next, tracker))
+	    break;
 
 	  next = itscm_safe_call_next_x (iter, NULL);
 	}
@@ -458,9 +450,6 @@ cmdscm_completer (struct cmd_list_element *command,
       cmdscm_bad_completion_result (_("Bad completer result: "),
 				    completer_result_scm);
     }
-
- done:
-  return result;
 }
 
 /* Helper for gdbscm_make_command which locates the command list to use and
@@ -757,7 +746,7 @@ gdbscm_register_command_x (SCM self)
 {
   command_smob *c_smob
     = cmdscm_get_command_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
-  char *cmd_name, *pfx_name;
+  char *cmd_name;
   struct cmd_list_element **cmd_list;
   struct cmd_list_element *cmd = NULL;
 
@@ -784,7 +773,7 @@ gdbscm_register_command_x (SCM self)
       else
 	{
 	  cmd = add_cmd (c_smob->cmd_name, c_smob->cmd_class,
-			 NULL, c_smob->doc, cmd_list);
+			 c_smob->doc, cmd_list);
 	}
     }
   CATCH (except, RETURN_MASK_ALL)

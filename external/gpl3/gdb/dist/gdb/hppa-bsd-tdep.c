@@ -1,6 +1,6 @@
 /* Target-dependent code for HP PA-RISC BSD's.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,12 +35,12 @@ hppabsd_find_global_pointer (struct gdbarch *gdbarch, struct value *function)
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR faddr = value_as_address (function);
   struct obj_section *faddr_sec;
-  gdb_byte buf[4];
 
   /* Is this a plabel? If so, dereference it to get the Global Pointer
      value.  */
   if (faddr & 2)
     {
+      gdb_byte buf[4];
       if (target_read_memory ((faddr & ~3) + 4, buf, sizeof buf) == 0)
 	return extract_unsigned_integer (buf, sizeof buf, byte_order);
     }

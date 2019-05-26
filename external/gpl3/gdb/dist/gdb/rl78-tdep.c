@@ -1,6 +1,6 @@
 /* Target-dependent code for the Renesas RL78 for GDB, the GNU debugger.
 
-   Copyright (C) 2011-2017 Free Software Foundation, Inc.
+   Copyright (C) 2011-2019 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -271,7 +271,7 @@ rl78_psw_type (struct gdbarch *gdbarch)
   if (tdep->rl78_psw_type == NULL)
     {
       tdep->rl78_psw_type = arch_flags_type (gdbarch,
-					     "builtin_type_rl78_psw", 1);
+					     "builtin_type_rl78_psw", 8);
       append_flags_type_flag (tdep->rl78_psw_type, 0, "CY");
       append_flags_type_flag (tdep->rl78_psw_type, 1, "ISP0");
       append_flags_type_flag (tdep->rl78_psw_type, 2, "ISP1");
@@ -640,7 +640,7 @@ rl78_make_data_address (CORE_ADDR addr)
 
 static enum register_status
 rl78_pseudo_register_read (struct gdbarch *gdbarch,
-                           struct regcache *regcache,
+			   readable_regcache *regcache,
                            int reg, gdb_byte *buffer)
 {
   enum register_status status;
@@ -650,68 +650,67 @@ rl78_pseudo_register_read (struct gdbarch *gdbarch,
       int raw_regnum = RL78_RAW_BANK0_R0_REGNUM
                        + (reg - RL78_BANK0_R0_REGNUM);
 
-      status = regcache_raw_read (regcache, raw_regnum, buffer);
+      status = regcache->raw_read (raw_regnum, buffer);
     }
   else if (RL78_BANK0_RP0_REGNUM <= reg && reg <= RL78_BANK3_RP3_REGNUM)
     {
       int raw_regnum = 2 * (reg - RL78_BANK0_RP0_REGNUM)
                        + RL78_RAW_BANK0_R0_REGNUM;
 
-      status = regcache_raw_read (regcache, raw_regnum, buffer);
+      status = regcache->raw_read (raw_regnum, buffer);
       if (status == REG_VALID)
-	status = regcache_raw_read (regcache, raw_regnum + 1, buffer + 1);
+	status = regcache->raw_read (raw_regnum + 1, buffer + 1);
     }
   else if (RL78_BANK0_RP0_PTR_REGNUM <= reg && reg <= RL78_BANK3_RP3_PTR_REGNUM)
     {
       int raw_regnum = 2 * (reg - RL78_BANK0_RP0_PTR_REGNUM)
                        + RL78_RAW_BANK0_R0_REGNUM;
 
-      status = regcache_raw_read (regcache, raw_regnum, buffer);
+      status = regcache->raw_read (raw_regnum, buffer);
       if (status == REG_VALID)
-	status = regcache_raw_read (regcache, raw_regnum + 1, buffer + 1);
+	status = regcache->raw_read (raw_regnum + 1, buffer + 1);
     }
   else if (reg == RL78_SP_REGNUM)
     {
-      status = regcache_raw_read (regcache, RL78_SPL_REGNUM, buffer);
+      status = regcache->raw_read (RL78_SPL_REGNUM, buffer);
       if (status == REG_VALID)
-	status = regcache_raw_read (regcache, RL78_SPH_REGNUM, buffer + 1);
+	status = regcache->raw_read (RL78_SPH_REGNUM, buffer + 1);
     }
   else if (reg == RL78_PC_REGNUM)
     {
       gdb_byte rawbuf[4];
 
-      status = regcache_raw_read (regcache, RL78_RAW_PC_REGNUM, rawbuf);
+      status = regcache->raw_read (RL78_RAW_PC_REGNUM, rawbuf);
       memcpy (buffer, rawbuf, 3);
     }
   else if (RL78_X_REGNUM <= reg && reg <= RL78_H_REGNUM)
     {
       ULONGEST psw;
 
-      status = regcache_raw_read_unsigned (regcache, RL78_PSW_REGNUM, &psw);
+      status = regcache->raw_read (RL78_PSW_REGNUM, &psw);
       if (status == REG_VALID)
 	{
 	  /* RSB0 is at bit 3; RSBS1 is at bit 5.  */
 	  int bank = ((psw >> 3) & 1) | ((psw >> 4) & 1);
 	  int raw_regnum = RL78_RAW_BANK0_R0_REGNUM + bank * RL78_REGS_PER_BANK
 	                   + (reg - RL78_X_REGNUM);
-	  status = regcache_raw_read (regcache, raw_regnum, buffer);
+	  status = regcache->raw_read (raw_regnum, buffer);
 	}
     }
   else if (RL78_AX_REGNUM <= reg && reg <= RL78_HL_REGNUM)
     {
       ULONGEST psw;
 
-      status = regcache_raw_read_unsigned (regcache, RL78_PSW_REGNUM, &psw);
+      status = regcache->raw_read (RL78_PSW_REGNUM, &psw);
       if (status == REG_VALID)
 	{
 	  /* RSB0 is at bit 3; RSBS1 is at bit 5.  */
 	  int bank = ((psw >> 3) & 1) | ((psw >> 4) & 1);
 	  int raw_regnum = RL78_RAW_BANK0_R0_REGNUM + bank * RL78_REGS_PER_BANK
 	                   + 2 * (reg - RL78_AX_REGNUM);
-	  status = regcache_raw_read (regcache, raw_regnum, buffer);
+	  status = regcache->raw_read (raw_regnum, buffer);
 	  if (status == REG_VALID)
-	    status = regcache_raw_read (regcache, raw_regnum + 1,
-	                                buffer + 1);
+	    status = regcache->raw_read (raw_regnum + 1, buffer + 1);
 	}
     }
   else
@@ -731,28 +730,28 @@ rl78_pseudo_register_write (struct gdbarch *gdbarch,
       int raw_regnum = RL78_RAW_BANK0_R0_REGNUM
                        + (reg - RL78_BANK0_R0_REGNUM);
 
-      regcache_raw_write (regcache, raw_regnum, buffer);
+      regcache->raw_write (raw_regnum, buffer);
     }
   else if (RL78_BANK0_RP0_REGNUM <= reg && reg <= RL78_BANK3_RP3_REGNUM)
     {
       int raw_regnum = 2 * (reg - RL78_BANK0_RP0_REGNUM)
                        + RL78_RAW_BANK0_R0_REGNUM;
 
-      regcache_raw_write (regcache, raw_regnum, buffer);
-      regcache_raw_write (regcache, raw_regnum + 1, buffer + 1);
+      regcache->raw_write (raw_regnum, buffer);
+      regcache->raw_write (raw_regnum + 1, buffer + 1);
     }
   else if (RL78_BANK0_RP0_PTR_REGNUM <= reg && reg <= RL78_BANK3_RP3_PTR_REGNUM)
     {
       int raw_regnum = 2 * (reg - RL78_BANK0_RP0_PTR_REGNUM)
                        + RL78_RAW_BANK0_R0_REGNUM;
 
-      regcache_raw_write (regcache, raw_regnum, buffer);
-      regcache_raw_write (regcache, raw_regnum + 1, buffer + 1);
+      regcache->raw_write (raw_regnum, buffer);
+      regcache->raw_write (raw_regnum + 1, buffer + 1);
     }
   else if (reg == RL78_SP_REGNUM)
     {
-      regcache_raw_write (regcache, RL78_SPL_REGNUM, buffer);
-      regcache_raw_write (regcache, RL78_SPH_REGNUM, buffer + 1);
+      regcache->raw_write (RL78_SPL_REGNUM, buffer);
+      regcache->raw_write (RL78_SPH_REGNUM, buffer + 1);
     }
   else if (reg == RL78_PC_REGNUM)
     {
@@ -760,7 +759,7 @@ rl78_pseudo_register_write (struct gdbarch *gdbarch,
 
       memcpy (rawbuf, buffer, 3);
       rawbuf[3] = 0;
-      regcache_raw_write (regcache, RL78_RAW_PC_REGNUM, rawbuf);
+      regcache->raw_write (RL78_RAW_PC_REGNUM, rawbuf);
     }
   else if (RL78_X_REGNUM <= reg && reg <= RL78_H_REGNUM)
     {
@@ -773,7 +772,7 @@ rl78_pseudo_register_write (struct gdbarch *gdbarch,
       /* RSB0 is at bit 3; RSBS1 is at bit 5.  */
       raw_regnum = RL78_RAW_BANK0_R0_REGNUM + bank * RL78_REGS_PER_BANK
 	           + (reg - RL78_X_REGNUM);
-      regcache_raw_write (regcache, raw_regnum, buffer);
+      regcache->raw_write (raw_regnum, buffer);
     }
   else if (RL78_AX_REGNUM <= reg && reg <= RL78_HL_REGNUM)
     {
@@ -785,8 +784,8 @@ rl78_pseudo_register_write (struct gdbarch *gdbarch,
       /* RSB0 is at bit 3; RSBS1 is at bit 5.  */
       raw_regnum = RL78_RAW_BANK0_R0_REGNUM + bank * RL78_REGS_PER_BANK
 		   + 2 * (reg - RL78_AX_REGNUM);
-      regcache_raw_write (regcache, raw_regnum, buffer);
-      regcache_raw_write (regcache, raw_regnum + 1, buffer + 1);
+      regcache->raw_write (raw_regnum, buffer);
+      regcache->raw_write (raw_regnum + 1, buffer + 1);
     }
   else
     gdb_assert_not_reached ("invalid pseudo register number");
@@ -883,7 +882,7 @@ rl78_get_opcode_byte (void *handle)
 }
 
 /* Function for finding saved registers in a 'struct pv_area'; this
-   function is passed to pv_area_scan.
+   function is passed to pv_area::scan.
 
    If VALUE is a saved register, ADDR says it was saved at a constant
    offset from the frame base, and SIZE indicates that the whole
@@ -912,8 +911,6 @@ rl78_analyze_prologue (CORE_ADDR start_pc,
   CORE_ADDR pc, next_pc;
   int rn;
   pv_t reg[RL78_NUM_TOTAL_REGS];
-  struct pv_area *stack;
-  struct cleanup *back_to;
   CORE_ADDR after_last_frame_setup_insn = start_pc;
   int bank = 0;
 
@@ -925,12 +922,11 @@ rl78_analyze_prologue (CORE_ADDR start_pc,
       result->reg_offset[rn] = 1;
     }
 
-  stack = make_pv_area (RL78_SP_REGNUM, gdbarch_addr_bit (target_gdbarch ()));
-  back_to = make_cleanup_free_pv_area (stack);
+  pv_area stack (RL78_SP_REGNUM, gdbarch_addr_bit (target_gdbarch ()));
 
   /* The call instruction has saved the return address on the stack.  */
   reg[RL78_SP_REGNUM] = pv_add_constant (reg[RL78_SP_REGNUM], -4);
-  pv_area_store (stack, reg[RL78_SP_REGNUM], 4, reg[RL78_PC_REGNUM]);
+  stack.store (reg[RL78_SP_REGNUM], 4, reg[RL78_PC_REGNUM]);
 
   pc = start_pc;
   while (pc < limit_pc)
@@ -954,12 +950,12 @@ rl78_analyze_prologue (CORE_ADDR start_pc,
 	       && opc.op[1].type == RL78_Operand_Register)
 	{
 	  int rsrc = (bank * RL78_REGS_PER_BANK) 
-	           + 2 * (opc.op[1].reg - RL78_Reg_AX);
+	    + 2 * (opc.op[1].reg - RL78_Reg_AX);
 
 	  reg[RL78_SP_REGNUM] = pv_add_constant (reg[RL78_SP_REGNUM], -1);
-	  pv_area_store (stack, reg[RL78_SP_REGNUM], 1, reg[rsrc]);
+	  stack.store (reg[RL78_SP_REGNUM], 1, reg[rsrc]);
 	  reg[RL78_SP_REGNUM] = pv_add_constant (reg[RL78_SP_REGNUM], -1);
-	  pv_area_store (stack, reg[RL78_SP_REGNUM], 1, reg[rsrc + 1]);
+	  stack.store (reg[RL78_SP_REGNUM], 1, reg[rsrc + 1]);
 	  after_last_frame_setup_insn = next_pc;
 	}
       else if (opc.id == RLO_sub
@@ -1016,11 +1012,9 @@ rl78_analyze_prologue (CORE_ADDR start_pc,
     result->frame_size = reg[RL78_SP_REGNUM].k;
 
   /* Record where all the registers were saved.  */
-  pv_area_scan (stack, check_for_saved, (void *) result);
+  stack.scan (check_for_saved, (void *) result);
 
   result->prologue_end = after_last_frame_setup_insn;
-
-  do_cleanups (back_to);
 }
 
 /* Implement the "addr_bits_remove" gdbarch method.  */
@@ -1342,7 +1336,8 @@ static CORE_ADDR
 rl78_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      struct regcache *regcache, CORE_ADDR bp_addr,
 		      int nargs, struct value **args, CORE_ADDR sp,
-		      int struct_return, CORE_ADDR struct_addr)
+		      function_call_return_method return_method,
+		      CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   gdb_byte buf[4];
@@ -1361,7 +1356,7 @@ rl78_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Store struct value address.  */
-  if (struct_return)
+  if (return_method == return_method_struct)
     {
       store_unsigned_integer (buf, 2, byte_order, struct_addr);
       sp -= 2;
@@ -1417,7 +1412,8 @@ rl78_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep->elf_flags = elf_flags;
 
   /* Initialize types.  */
-  tdep->rl78_void = arch_type (gdbarch, TYPE_CODE_VOID, 1, "void");
+  tdep->rl78_void = arch_type (gdbarch, TYPE_CODE_VOID, TARGET_CHAR_BIT,
+			       "void");
   tdep->rl78_uint8 = arch_integer_type (gdbarch, 8, 1, "uint8_t");
   tdep->rl78_int8 = arch_integer_type (gdbarch, 8, 0, "int8_t");
   tdep->rl78_uint16 = arch_integer_type (gdbarch, 16, 1, "uint16_t");
@@ -1470,9 +1466,6 @@ rl78_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_sw_breakpoint_from_kind (gdbarch, rl78_breakpoint::bp_from_kind);
   set_gdbarch_decr_pc_after_break (gdbarch, 1);
 
-  /* Disassembly.  */
-  set_gdbarch_print_insn (gdbarch, print_insn_rl78);
-
   /* Frames, prologues, etc.  */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_skip_prologue (gdbarch, rl78_skip_prologue);
@@ -1493,9 +1486,6 @@ rl78_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   return gdbarch;
 }
-
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_rl78_tdep;
 
 /* Register the above initialization routine.  */
 
