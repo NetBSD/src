@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -143,7 +143,8 @@ windows_get_tlb_type (struct gdbarch *gdbarch)
   TYPE_NAME (seh_type) = xstrdup ("seh");
 
   seh_ptr_type = arch_type (gdbarch, TYPE_CODE_PTR,
-			    TYPE_LENGTH (void_ptr_type), NULL);
+			    TYPE_LENGTH (void_ptr_type) * TARGET_CHAR_BIT,
+			    NULL);
   TYPE_TARGET_TYPE (seh_ptr_type) = seh_type;
 
   append_composite_type_field (seh_type, "next_seh", seh_ptr_type);
@@ -163,7 +164,8 @@ windows_get_tlb_type (struct gdbarch *gdbarch)
   append_composite_type_field (peb_ldr_type, "entry_in_progress",
 			       void_ptr_type);
   peb_ldr_ptr_type = arch_type (gdbarch, TYPE_CODE_PTR,
-			    TYPE_LENGTH (void_ptr_type), NULL);
+				TYPE_LENGTH (void_ptr_type) * TARGET_CHAR_BIT,
+				NULL);
   TYPE_TARGET_TYPE (peb_ldr_ptr_type) = peb_ldr_type;
 
 
@@ -181,7 +183,8 @@ windows_get_tlb_type (struct gdbarch *gdbarch)
   append_composite_type_field (peb_type, "process_heap", void_ptr_type);
   append_composite_type_field (peb_type, "fast_peb_lock", void_ptr_type);
   peb_ptr_type = arch_type (gdbarch, TYPE_CODE_PTR,
-			    TYPE_LENGTH (void_ptr_type), NULL);
+			    TYPE_LENGTH (void_ptr_type) * TARGET_CHAR_BIT,
+			    NULL);
   TYPE_TARGET_TYPE (peb_ptr_type) = peb_type;
 
 
@@ -224,7 +227,8 @@ windows_get_tlb_type (struct gdbarch *gdbarch)
   append_composite_type_field (tib_type, "last_error_number", dword_ptr_type);
 
   tib_ptr_type = arch_type (gdbarch, TYPE_CODE_PTR,
-			    TYPE_LENGTH (void_ptr_type), NULL);
+			    TYPE_LENGTH (void_ptr_type) * TARGET_CHAR_BIT,
+			    NULL);
   TYPE_TARGET_TYPE (tib_ptr_type) = tib_type;
 
   last_tlb_type = tib_ptr_type;
@@ -275,7 +279,7 @@ static const struct lval_funcs tlb_value_funcs =
 static struct value *
 tlb_make_value (struct gdbarch *gdbarch, struct internalvar *var, void *ignore)
 {
-  if (target_has_stack && !ptid_equal (inferior_ptid, null_ptid))
+  if (target_has_stack && inferior_ptid != null_ptid)
     {
       struct type *type = windows_get_tlb_type (gdbarch);
       return allocate_computed_value (type, &tlb_value_funcs, NULL);
@@ -327,7 +331,7 @@ display_one_tib (ptid_t ptid)
       return -1;
     }
 
-  if (target_read (&current_target, TARGET_OBJECT_MEMORY,
+  if (target_read (current_top_target (), TARGET_OBJECT_MEMORY,
 		   NULL, tib, thread_local_base, tib_size) != tib_size)
     {
       printf_filtered (_("Unable to read thread information "
@@ -361,9 +365,9 @@ display_one_tib (ptid_t ptid)
 /* Display thread information block of the current thread.  */
 
 static void
-display_tib (char * args, int from_tty)
+display_tib (const char * args, int from_tty)
 {
-  if (!ptid_equal (inferior_ptid, null_ptid))
+  if (inferior_ptid != null_ptid)
     display_one_tib (inferior_ptid);
 }
 
@@ -371,13 +375,11 @@ void
 windows_xfer_shared_library (const char* so_name, CORE_ADDR load_addr,
 			     struct gdbarch *gdbarch, struct obstack *obstack)
 {
-  char *p;
   CORE_ADDR text_offset;
 
   obstack_grow_str (obstack, "<library name=\"");
-  p = xml_escape_text (so_name);
-  obstack_grow_str (obstack, p);
-  xfree (p);
+  std::string p = xml_escape_text (so_name);
+  obstack_grow_str (obstack, p.c_str ());
   obstack_grow_str (obstack, "\"><segment address=\"");
   gdb_bfd_ref_ptr dll (gdb_bfd_open (so_name, gnutarget, -1));
   /* The following calls are OK even if dll is NULL.
@@ -413,7 +415,6 @@ windows_iterate_over_objfiles_in_search_order
    void *cb_data, struct objfile *current_objfile)
 {
   int stop;
-  struct objfile *objfile;
 
   if (current_objfile)
     {
@@ -422,7 +423,7 @@ windows_iterate_over_objfiles_in_search_order
 	return;
     }
 
-  ALL_OBJFILES (objfile)
+  for (objfile *objfile : current_program_space->objfiles ())
     {
       if (objfile != current_objfile)
 	{
@@ -442,7 +443,7 @@ show_maint_show_all_tib (struct ui_file *file, int from_tty,
 }
 
 static void
-info_w32_command (char *args, int from_tty)
+info_w32_command (const char *args, int from_tty)
 {
   help_list (info_w32_cmdlist, "info w32 ", class_info, gdb_stdout);
 }
@@ -478,9 +479,6 @@ windows_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   set_solib_ops (gdbarch, &solib_target_so_ops);
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_windows_tdep;
 
 /* Implementation of `tlb' variable.  */
 

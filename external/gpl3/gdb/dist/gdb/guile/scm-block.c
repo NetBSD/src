@@ -1,6 +1,6 @@
 /* Scheme interface to blocks.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -613,9 +613,8 @@ bkscm_block_syms_progress_p (SCM scm)
 static SCM
 gdbscm_make_block_syms_iter (SCM self)
 {
-  block_smob *b_smob
-    = bkscm_get_valid_block_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
-  const struct block *block = b_smob->block;
+  /* Call for side effects.  */
+  bkscm_get_valid_block_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   SCM progress, iter;
 
   progress = bkscm_make_block_syms_progress_smob ();

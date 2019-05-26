@@ -1,4 +1,4 @@
-# Copyright 2016-2017 Free Software Foundation, Inc.
+# Copyright 2016-2019 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -72,9 +72,10 @@ proc return_if_fail { result } {
 }
 
 # Detach from a process, and ensure that it exits after detaching.
-# This relies on inferior I/O.
+# This relies on inferior I/O.  INF_OUTPUT_RE is the pattern that
+# matches the expected inferior output.
 
-proc detach_and_expect_exit {test} {
+proc detach_and_expect_exit {inf_output_re test} {
     global decimal
     global gdb_spawn_id
     global inferior_spawn_id
@@ -85,9 +86,17 @@ proc detach_and_expect_exit {test} {
 	}
     }]
 
+    # Use an indirect spawn id list, and remove inferior spawn id from
+    # the expected output as soon as it matches, so that if
+    # $inf_inferior_spawn_id is $server_spawn_id and we're testing in
+    # "target remote" mode, the eof caused by gdbserver exiting is
+    # left for the caller to handle.
+    global daee_spawn_id_list
+    set daee_spawn_id_list "$inferior_spawn_id $gdb_spawn_id"
+
     set saw_prompt 0
     set saw_inf_exit 0
-    while { !$saw_prompt && ! $saw_inf_exit } {
+    while { !$saw_prompt || ! $saw_inf_exit } {
 	# We don't know what order the interesting things will arrive in.
 	# Using a pattern of the form 'x|y|z' instead of -re x ... -re y
 	# ... -re z ensures that expect always chooses the match that
@@ -95,14 +104,16 @@ proc detach_and_expect_exit {test} {
 	# first in the script that occurs anywhere in the input, so that
 	# we don't skip anything.
 	return_if_fail [gdb_test_multiple "" $test {
-	    -i "$inferior_spawn_id $gdb_spawn_id"
-	    -re "(exited, status=0)|($gdb_prompt )" {
+	    -i daee_spawn_id_list
+	    -re "($inf_output_re)|($gdb_prompt )" {
 		if {[info exists expect_out(1,string)]} {
 		    verbose -log "saw inferior exit"
 		    set saw_inf_exit 1
+		    set daee_spawn_id_list "$gdb_spawn_id"
 		} elseif {[info exists expect_out(2,string)]} {
 		    verbose -log "saw prompt"
 		    set saw_prompt 1
+		    set daee_spawn_id_list "$inferior_spawn_id"
 		}
 		array unset expect_out
 	    }
@@ -130,22 +141,35 @@ proc continue_to_exit_bp {} {
 #
 # CMD indicates what to do with the parent after detaching the child.
 # Can be either "detach" to detach, or "continue", to continue to
-# exit.  If "continue", then CONTINUE_RE is the regexp to expect.
-# Defaults to normal exit output.
+# exit.
 #
-proc do_detach {multi_process cmd {continue_re ""}} {
+# CHILD_EXIT indicates how is the child expected to exit.  Can be
+# either "normal" for normal exit, or "signal" for killed with signal
+# SIGKILL.
+#
+proc do_detach {multi_process cmd child_exit} {
     global decimal
     global server_spawn_id
 
-    if {$continue_re == ""} {
+    if {$child_exit == "normal"} {
 	set continue_re "exited normally.*"
+	set inf_output_re "exited, status=0"
+    } elseif {$child_exit == "signal"} {
+	if {$multi_process} {
+	    set continue_re "exited with code 02.*"
+	} else {
+	    set continue_re "terminated with signal SIGKILL.*"
+	}
+	set inf_output_re "signaled, sig=9"
+    } else {
+	error "unhandled \$child_exit: $child_exit"
     }
 
     set is_remote [expr {[target_info exists gdb_protocol]
 			 && [target_info gdb_protocol] == "remote"}]
 
     if {$multi_process} {
-	gdb_test "detach" "Detaching from .*, process $decimal" \
+	gdb_test "detach" "Detaching from .*, process $decimal\r\n\\\[Inferior $decimal \\(.*\\) detached\\\]" \
 	    "detach child"
 
 	gdb_test "inferior 1" "\[Switching to inferior $decimal\].*" \
@@ -154,7 +178,7 @@ proc do_detach {multi_process cmd {continue_re ""}} {
 	if {$cmd == "detach"} {
 	    # Make sure that detach works and that the parent process
 	    # exits cleanly.
-	    detach_and_expect_exit "detach parent"
+	    detach_and_expect_exit $inf_output_re "detach parent"
 	} elseif {$cmd == "continue"} {
 	    # Make sure that continuing works and that the parent process
 	    # exits cleanly.
@@ -169,7 +193,7 @@ proc do_detach {multi_process cmd {continue_re ""}} {
 	    set extra ""
 	}
 	if {$cmd == "detach"} {
-	    gdb_test "detach" "Detaching from .*, process $decimal$extra"
+	    gdb_test "detach" "Detaching from .*, process ${decimal}\r\n\\\[Inferior $decimal \\(.*\\) detached\\\]$extra"
 	} elseif {$cmd == "continue"} {
 	    gdb_test "continue" $continue_re
 	} else {
@@ -205,7 +229,7 @@ proc test_detach {multi_process cmd} {
 	# Run to _exit in the child.
 	continue_to_exit_bp
 
-	do_detach $multi_process $cmd
+	do_detach $multi_process $cmd "normal"
     }
 }
 
@@ -240,7 +264,7 @@ proc test_detach_watch {multi_process cmd} {
 	# thread individually).
 	continue_to_exit_bp
 
-	do_detach $multi_process $cmd
+	do_detach $multi_process $cmd "normal"
     }
 }
 
@@ -279,12 +303,7 @@ proc test_detach_killed_outside {multi_process cmd} {
 	# Give it some time to die.
 	sleep 2
 
-	if {$multi_process} {
-	    set continue_re "exited with code 02.*"
-	} else {
-	    set continue_re "terminated with signal SIGKILL.*"
-	}
-	do_detach $multi_process $cmd $continue_re
+	do_detach $multi_process $cmd "signal"
     }
 }
 

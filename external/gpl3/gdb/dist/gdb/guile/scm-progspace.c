@@ -1,6 +1,6 @@
 /* Guile interface to program spaces.
 
-   Copyright (C) 2010-2017 Free Software Foundation, Inc.
+   Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -285,20 +285,19 @@ gdbscm_progspace_objfiles (SCM self)
 {
   pspace_smob *p_smob
     = psscm_get_valid_pspace_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
-  struct objfile *objfile;
   SCM result;
 
   result = SCM_EOL;
 
-  ALL_PSPACE_OBJFILES (p_smob->pspace, objfile)
-  {
-    if (objfile->separate_debug_objfile_backlink == NULL)
-      {
-	SCM item = ofscm_scm_from_objfile (objfile);
+  for (objfile *objfile : p_smob->pspace->objfiles ())
+    {
+      if (objfile->separate_debug_objfile_backlink == NULL)
+	{
+	  SCM item = ofscm_scm_from_objfile (objfile);
 
-	result = scm_cons (item, result);
-      }
-  }
+	  result = scm_cons (item, result);
+	}
+    }
 
   /* We don't really have to return the list in the same order as recorded
      internally, but for consistency we do.  We still advertise that one

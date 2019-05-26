@@ -1,4 +1,4 @@
-# Copyright 2015-2017 Free Software Foundation, Inc.
+# Copyright 2015-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ gdb_test "ptype vla1(3, 6, 9)" "no such vector element \\\(vector not allocated\
   "ptype vla1(3, 6, 9) not initialized"
 gdb_test "ptype vla2(5, 45, 20)" \
   "no such vector element \\\(vector not allocated\\\)" \
-  "ptype vla1(5, 45, 20) not initialized"
+  "ptype vla2(5, 45, 20) not initialized"
 
 gdb_breakpoint [gdb_get_line_number "vla1-allocated"]
 gdb_continue_to_breakpoint "vla1-allocated"
@@ -63,7 +63,7 @@ gdb_continue_to_breakpoint "vla2-filled"
 gdb_test "ptype vla2" "type = $real \\\(7,42:50,13:35\\\)" \
   "ptype vla2 filled"
 gdb_test "ptype vla2(5, 45, 20)" "type = $real" \
-  "ptype vla1(5, 45, 20) filled"
+  "ptype vla2(5, 45, 20) filled"
 
 gdb_breakpoint [gdb_get_line_number "pvla-associated"]
 gdb_continue_to_breakpoint "pvla-associated"
@@ -77,7 +77,7 @@ gdb_continue_to_breakpoint "pvla-re-associated"
 gdb_test "ptype pvla" "type = $real \\\(7,42:50,13:35\\\)" \
   "ptype pvla re-associated"
 gdb_test "ptype vla2(5, 45, 20)" "type = $real" \
-  "ptype vla1(5, 45, 20) re-associated"
+  "ptype vla2(5, 45, 20) re-associated"
 
 gdb_breakpoint [gdb_get_line_number "pvla-deassociated"]
 gdb_continue_to_breakpoint "pvla-deassociated"

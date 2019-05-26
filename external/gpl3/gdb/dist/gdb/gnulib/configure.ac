@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright (C) 1995-2017 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2019 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -18,8 +18,8 @@ dnl along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.64)dnl
-AC_INIT(import/memmem.c)
+AC_INIT([libgnu], [UNUSED-VERSION])
+AC_CONFIG_SRCDIR([import/memmem.c])
 AC_CONFIG_HEADER(config.h:config.in)
 AM_MAINTAINER_MODE
 
@@ -35,7 +35,9 @@ gl_INIT
 
 # We don't use automake, but gnulib does.  This line lets us generate
 # its Makefile.in.
-AM_INIT_AUTOMAKE(libgnu, UNUSED-VERSION, [no-define])
+AM_INIT_AUTOMAKE([no-define])
+
+AM_SILENT_RULES([yes])
 
 # --------------------- #
 # Checks for programs.  #

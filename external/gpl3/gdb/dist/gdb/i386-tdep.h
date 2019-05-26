@@ -1,6 +1,6 @@
 /* Target-dependent code for the i386.
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 
 #ifndef I386_TDEP_H
 #define I386_TDEP_H
+
+#include "infrun.h"
 
 struct frame_info;
 struct gdbarch;
@@ -339,9 +341,6 @@ enum record_i386_regnum
 /* Size of the largest register.  */
 #define I386_MAX_REGISTER_SIZE	64
 
-extern struct target_desc *tdesc_i386;
-extern struct target_desc *tdesc_i386_mmx;
-
 /* Types for i386-specific registers.  */
 extern struct type *i387_ext_type (struct gdbarch *gdbarch);
 
@@ -365,7 +364,7 @@ extern struct type *i386_pseudo_register_type (struct gdbarch *gdbarch,
 					       int regnum);
 
 extern void i386_pseudo_register_read_into_value (struct gdbarch *gdbarch,
-						  struct regcache *regcache,
+						  readable_regcache *regcache,
 						  int regnum,
 						  struct value *result);
 
@@ -418,6 +417,8 @@ extern void
 				     iterate_over_regset_sections_cb *cb,
 				     void *cb_data,
 				     const struct regcache *regcache);
+
+typedef buf_displaced_step_closure i386_displaced_step_closure;
 
 extern struct displaced_step_closure *i386_displaced_step_copy_insn
   (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to,

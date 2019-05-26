@@ -1,6 +1,6 @@
 /* Call module for 'compile' command.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -62,7 +62,6 @@ static void
 do_module_cleanup (void *arg, int registers_valid)
 {
   struct do_module_cleanup *data = (struct do_module_cleanup *) arg;
-  struct objfile *objfile;
 
   if (data->executedp != NULL)
     {
@@ -83,11 +82,11 @@ do_module_cleanup (void *arg, int registers_valid)
 	}
     }
 
-  ALL_OBJFILES (objfile)
+  for (objfile *objfile : current_program_space->objfiles ())
     if ((objfile->flags & OBJF_USERLOADED) == 0
         && (strcmp (objfile_name (objfile), data->objfile_name_string) == 0))
       {
-	free_objfile (objfile);
+	delete objfile;
 
 	/* It may be a bit too pervasive in this dummy_frame dtor callback.  */
 	clear_symtab_users (0);
@@ -99,7 +98,7 @@ do_module_cleanup (void *arg, int registers_valid)
   unlink (data->source_file);
   xfree (data->source_file);
 
-  munmap_list_free (data->munmap_list_head);
+  delete data->munmap_list_head;
 
   /* Delete the .o file.  */
   unlink (data->objfile_name_string);
@@ -116,8 +115,6 @@ void
 compile_object_run (struct compile_module *module)
 {
   struct value *func_val;
-  struct frame_id dummy_id;
-  struct cleanup *cleanups;
   struct do_module_cleanup *data;
   const char *objfile_name_s = objfile_name (module->objfile);
   int dtor_found, executed = 0;
@@ -154,7 +151,7 @@ compile_object_run (struct compile_module *module)
 
       gdb_assert (TYPE_CODE (func_type) == TYPE_CODE_FUNC);
       func_val = value_from_pointer (lookup_pointer_type (func_type),
-				   BLOCK_START (SYMBOL_BLOCK_VALUE (func_sym)));
+				   BLOCK_ENTRY_PC (SYMBOL_BLOCK_VALUE (func_sym)));
 
       vargs = XALLOCAVEC (struct value *, TYPE_NFIELDS (func_type));
       if (TYPE_NFIELDS (func_type) >= 1)
@@ -172,7 +169,8 @@ compile_object_run (struct compile_module *module)
 	  ++current_arg;
 	}
       gdb_assert (current_arg == TYPE_NFIELDS (func_type));
-      call_function_by_hand_dummy (func_val, TYPE_NFIELDS (func_type), vargs,
+      auto args = gdb::make_array_view (vargs, TYPE_NFIELDS (func_type));
+      call_function_by_hand_dummy (func_val, NULL, args,
 				   do_module_cleanup, data);
     }
   CATCH (ex, RETURN_MASK_ERROR)

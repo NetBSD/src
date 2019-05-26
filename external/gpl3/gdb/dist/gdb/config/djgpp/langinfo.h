@@ -1,5 +1,5 @@
 /* langinfo.h file for DJGPP.
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Written by Eli Zaretskii.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef _LANGINFO_H
-#define _LANGINFO_H
+#ifndef CONFIG_DJGPP_LANGINFO_H
+#define CONFIG_DJGPP_LANGINFO_H
 
 #include <nl_types.h>
 
@@ -32,4 +32,4 @@ enum {
 
 extern char *nl_langinfo (nl_item);
 
-#endif /* _LANGINFO_H */
+#endif /* CONFIG_DJGPP_LANGINFO_H */

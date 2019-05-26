@@ -1,4 +1,4 @@
-# Copyright 2017 Free Software Foundation, Inc.
+# Copyright 2017-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,31 +28,28 @@ if [prepare_for_testing "failed to prepare for endianness test" ${testfile} ${sr
     return -1
 }
 
-set endianness "little"
-set test "show endian"
-gdb_test_multiple $test $test {
-    -re "(.* )(big|little)( endian.*)\r\n$gdb_prompt $" {
-	set endianness $expect_out(2,string)
-	pass "endianness"
-    }
-}
+set endianness [get_endianness]
 
 set high "0x123456789abcdef0"
 set low "0x0fedcba987654321"
 if { $endianness == "big" } {
     set pair $high,$low
+    set pair2 0x0,$low
+    set negative 0xffffffffffffffff,$low
 } else {
     set pair $low,$high
+    set pair2 $low,0x0
+    set negative $low,0xffffffffffffffff
 }
 
 # Make some DWARF for the test.
 set asm_file [standard_output_file $srcfile2]
 Dwarf::assemble $asm_file {
-    global pair
+    global pair pair2 negative
 
     cu { addr_size 4 } {
  	compile_unit {} {
-	    declare_labels int_label
+	    declare_labels int_label sint_label
 
 	    int_label: DW_TAG_base_type {
 		{DW_AT_byte_size 16 DW_FORM_udata}
@@ -60,10 +57,28 @@ Dwarf::assemble $asm_file {
 		{DW_AT_name "__uint128"}
 	    }
 
+	    sint_label: DW_TAG_base_type {
+		{DW_AT_byte_size 16 DW_FORM_udata}
+		{DW_AT_encoding @DW_ATE_signed}
+		{DW_AT_name "__int128"}
+	    }
+
 	    DW_TAG_variable {
 		{name xxx}
 		{type :$int_label}
 		{const_value $pair DW_FORM_data16}
+	    }
+
+	    DW_TAG_variable {
+		{name yyy}
+		{type :$int_label}
+		{const_value $pair2 DW_FORM_data16}
+	    }
+
+	    DW_TAG_variable {
+		{name sss}
+		{type :$sint_label}
+		{const_value $negative DW_FORM_data16}
 	    }
 	}
     }
@@ -75,3 +90,8 @@ if { [prepare_for_testing "failed to prepare" ${testfile} \
 }
 
 gdb_test "p/x xxx" " = 0x123456789abcdef00fedcba987654321"
+gdb_test "p xxx" "= 24197857203266734864629346612071973665"
+gdb_test "p/x yyy" " = 0xfedcba987654321"
+gdb_test "p yyy" "= 1147797409030816545"
+gdb_test "p/x sss" " = 0xffffffffffffffff0fedcba987654321"
+gdb_test "p sss" "= -17298946664678735071"

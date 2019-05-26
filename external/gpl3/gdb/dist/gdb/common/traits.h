@@ -1,4 +1,4 @@
-/* Copyright (C) 2017 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,29 @@
 #ifndef COMMON_TRAITS_H
 #define COMMON_TRAITS_H
 
+#include <type_traits>
+
+/* GCC does not understand __has_feature.  */
+#if !defined(__has_feature)
+# define __has_feature(x) 0
+#endif
+
+/* HAVE_IS_TRIVIALLY_COPYABLE is defined as 1 iff
+   std::is_trivially_copyable is available.  GCC only implemented it
+   in GCC 5.  */
+#if (__has_feature(is_trivially_copyable) \
+     || (defined __GNUC__ && __GNUC__ >= 5))
+# define HAVE_IS_TRIVIALLY_COPYABLE 1
+#endif
+
+/* HAVE_IS_TRIVIALLY_CONSTRUCTIBLE is defined as 1 iff
+   std::is_trivially_constructible is available.  GCC only implemented it
+   in GCC 5.  */
+#if (__has_feature(is_trivially_constructible) \
+     || (defined __GNUC__ && __GNUC__ >= 5))
+# define HAVE_IS_TRIVIALLY_CONSTRUCTIBLE 1
+#endif
+
 namespace gdb {
 
 /* Pre C++14-safe (CWG 1558) version of C++17's std::void_t.  See
@@ -29,6 +52,58 @@ struct make_void { typedef void type; };
 template<typename... Ts>
 using void_t = typename make_void<Ts...>::type;
 
+/* A few trait helpers, mainly stolen from libstdc++.  Uppercase
+   because "and/or", etc. are reserved keywords.  */
+
+template<typename Predicate>
+struct Not : public std::integral_constant<bool, !Predicate::value>
+{};
+
+template<typename...>
+struct Or;
+
+template<>
+struct Or<> : public std::false_type
+{};
+
+template<typename B1>
+struct Or<B1> : public B1
+{};
+
+template<typename B1, typename B2>
+struct Or<B1, B2>
+  : public std::conditional<B1::value, B1, B2>::type
+{};
+
+template<typename B1,typename B2,typename B3, typename... Bn>
+struct Or<B1, B2, B3, Bn...>
+  : public std::conditional<B1::value, B1, Or<B2, B3, Bn...>>::type
+{};
+
+template<typename...>
+struct And;
+
+template<>
+struct And<> : public std::true_type
+{};
+
+template<typename B1>
+struct And<B1> : public B1
+{};
+
+template<typename B1, typename B2>
+struct And<B1, B2>
+  : public std::conditional<B1::value, B2, B1>::type
+{};
+
+template<typename B1, typename B2, typename B3, typename... Bn>
+struct And<B1, B2, B3, Bn...>
+  : public std::conditional<B1::value, And<B2, B3, Bn...>, B1>::type
+{};
+
+/* Concepts-light-like helper to make SFINAE logic easier to read.  */
+template<typename Condition>
+using Requires = typename std::enable_if<Condition::value, void>::type;
 }
 
 #endif /* COMMON_TRAITS_H */

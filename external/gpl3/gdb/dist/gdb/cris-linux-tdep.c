@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on CRIS processors, for GDB.
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB.
    Written by Hendrik Ruijter, Stefan Andersson, Orjan Friberg,
@@ -45,9 +45,6 @@ cris_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 					 svr4_ilp32_fetch_link_map_offsets);
 
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_cris_linux_tdep;
 
 void
 _initialize_cris_linux_tdep (void)

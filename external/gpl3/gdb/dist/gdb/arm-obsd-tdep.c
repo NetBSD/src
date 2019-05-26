@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/arm.
 
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -58,11 +58,11 @@ static const struct tramp_frame armobsd_sigframe =
   SIGTRAMP_FRAME,
   4,
   {
-    { 0xe28d0010, -1 },		/* add     r0, sp, #16 */
-    { 0xef000067, -1 },		/* swi     SYS_sigreturn */
-    { 0xef000001, -1 },		/* swi     SYS_exit */
-    { 0xeafffffc, -1 },		/* b       . - 8 */
-    { TRAMP_SENTINEL_INSN, -1 }
+    { 0xe28d0010, ULONGEST_MAX },		/* add     r0, sp, #16 */
+    { 0xef000067, ULONGEST_MAX },		/* swi     SYS_sigreturn */
+    { 0xef000001, ULONGEST_MAX },		/* swi     SYS_exit */
+    { 0xeafffffc, ULONGEST_MAX },		/* b       . - 8 */
+    { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
   },
   armobsd_sigframe_init
 };
@@ -114,10 +114,6 @@ armobsd_init_abi (struct gdbarch_info info,
       break;
     }
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_armobsd_tdep;
 
 void
 _initialize_armobsd_tdep (void)

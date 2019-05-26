@@ -1,5 +1,5 @@
 /* Disassemble h8300 instructions.
-   Copyright (C) 1993-2017 Free Software Foundation, Inc.
+   Copyright (C) 1993-2019 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -23,7 +23,7 @@
 #include "sysdep.h"
 #define h8_opcodes h8ops
 #include "opcode/h8300.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opintl.h"
 #include "libiberty.h"
 
@@ -59,7 +59,8 @@ bfd_h8_disassemble_init (void)
 
       if (i & 1)
 	{
-	  fprintf (stderr, "Internal error, h8_disassemble_init.\n");
+	  /* xgettext:c-format */
+	  opcodes_error_handler (_("internal error, h8_disassemble_init"));
 	  abort ();
 	}
 

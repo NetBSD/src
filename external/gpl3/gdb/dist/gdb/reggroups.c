@@ -1,6 +1,6 @@
 /* Register groupings for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -26,6 +26,7 @@
 #include "regcache.h"
 #include "command.h"
 #include "gdbcmd.h"		/* For maintenanceprintlist.  */
+#include "gdb_obstack.h"
 
 /* Individual register groups.  */
 
@@ -41,6 +42,20 @@ reggroup_new (const char *name, enum reggroup_type type)
   struct reggroup *group = XNEW (struct reggroup);
 
   group->name = name;
+  group->type = type;
+  return group;
+}
+
+/* See reggroups.h.  */
+
+struct reggroup *
+reggroup_gdbarch_new (struct gdbarch *gdbarch, const char *name,
+		      enum reggroup_type type)
+{
+  struct reggroup *group = GDBARCH_OBSTACK_ZALLOC (gdbarch,
+						   struct reggroup);
+
+  group->name = gdbarch_obstack_strdup (gdbarch, name);
   group->type = type;
   return group;
 }
@@ -76,10 +91,9 @@ struct reggroups
 static struct gdbarch_data *reggroups_data;
 
 static void *
-reggroups_init (struct gdbarch *gdbarch)
+reggroups_init (struct obstack *obstack)
 {
-  struct reggroups *groups = GDBARCH_OBSTACK_ZALLOC (gdbarch,
-						     struct reggroups);
+  struct reggroups *groups = OBSTACK_ZALLOC (obstack, struct reggroups);
 
   groups->last = &groups->first;
   return groups;
@@ -105,13 +119,6 @@ reggroup_add (struct gdbarch *gdbarch, struct reggroup *group)
   struct reggroups *groups
     = (struct reggroups *) gdbarch_data (gdbarch, reggroups_data);
 
-  if (groups == NULL)
-    {
-      /* ULGH, called during architecture initialization.  Patch
-         things up.  */
-      groups = (struct reggroups *) reggroups_init (gdbarch);
-      deprecated_set_gdbarch_data (gdbarch, reggroups_data, groups);
-    }
   add_group (groups, group,
 	     GDBARCH_OBSTACK_ZALLOC (gdbarch, struct reggroup_el));
 }
@@ -195,7 +202,9 @@ default_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
   if (group == all_reggroup)
     return 1;
   vector_p = TYPE_VECTOR (register_type (gdbarch, regnum));
-  float_p = TYPE_CODE (register_type (gdbarch, regnum)) == TYPE_CODE_FLT;
+  float_p = (TYPE_CODE (register_type (gdbarch, regnum)) == TYPE_CODE_FLT
+	     || (TYPE_CODE (register_type (gdbarch, regnum))
+		 == TYPE_CODE_DECFLOAT));
   raw_p = regnum < gdbarch_num_regs (gdbarch);
   if (group == float_reggroup)
     return float_p;
@@ -206,6 +215,23 @@ default_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
   if (group == save_reggroup || group == restore_reggroup)
     return raw_p;
   return 0;   
+}
+
+/* See reggroups.h.  */
+
+reggroup *
+reggroup_find (struct gdbarch *gdbarch, const char *name)
+{
+  struct reggroup *group;
+
+  for (group = reggroup_next (gdbarch, NULL);
+       group != NULL;
+       group = reggroup_next (gdbarch, group))
+    {
+      if (strcmp (name, reggroup_name (group)) == 0)
+	return group;
+    }
+  return NULL;
 }
 
 /* Dump out a table of register groups for the current architecture.  */
@@ -262,7 +288,7 @@ reggroups_dump (struct gdbarch *gdbarch, struct ui_file *file)
 }
 
 static void
-maintenance_print_reggroups (char *args, int from_tty)
+maintenance_print_reggroups (const char *args, int from_tty)
 {
   struct gdbarch *gdbarch = get_current_arch ();
 
@@ -295,12 +321,10 @@ struct reggroup *const all_reggroup = &all_group;
 struct reggroup *const save_reggroup = &save_group;
 struct reggroup *const restore_reggroup = &restore_group;
 
-extern initialize_file_ftype _initialize_reggroup; /* -Wmissing-prototypes */
-
 void
 _initialize_reggroup (void)
 {
-  reggroups_data = gdbarch_data_register_post_init (reggroups_init);
+  reggroups_data = gdbarch_data_register_pre_init (reggroups_init);
 
   /* The pre-defined list of groups.  */
   add_group (&default_groups, general_reggroup, XNEW (struct reggroup_el));

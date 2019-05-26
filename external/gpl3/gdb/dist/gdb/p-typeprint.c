@@ -1,5 +1,5 @@
 /* Support for printing Pascal types for GDB, the GNU debugger.
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -139,7 +139,7 @@ pascal_type_print_derivation_info (struct ui_file *stream, struct type *type)
       fprintf_filtered (stream, "%s%s ",
 			BASETYPE_VIA_PUBLIC (type, i) ? "public" : "private",
 			BASETYPE_VIA_VIRTUAL (type, i) ? " virtual" : "");
-      name = type_name_no_tag (TYPE_BASECLASS (type, i));
+      name = TYPE_NAME (TYPE_BASECLASS (type, i));
       fprintf_filtered (stream, "%s", name ? name : "(null)");
     }
   if (i > 0)
@@ -227,7 +227,8 @@ pascal_type_print_varspec_prefix (struct type *type, struct ui_file *stream,
     case TYPE_CODE_METHOD:
       if (passed_a_ptr)
 	fprintf_filtered (stream, "(");
-      if (TYPE_CODE (TYPE_TARGET_TYPE (type)) != TYPE_CODE_VOID)
+      if (TYPE_TARGET_TYPE (type) != NULL
+	  && TYPE_CODE (TYPE_TARGET_TYPE (type)) != TYPE_CODE_VOID)
 	{
 	  fprintf_filtered (stream, "function  ");
 	}
@@ -255,7 +256,8 @@ pascal_type_print_varspec_prefix (struct type *type, struct ui_file *stream,
       if (passed_a_ptr)
 	fprintf_filtered (stream, "(");
 
-      if (TYPE_CODE (TYPE_TARGET_TYPE (type)) != TYPE_CODE_VOID)
+      if (TYPE_TARGET_TYPE (type) != NULL
+	  && TYPE_CODE (TYPE_TARGET_TYPE (type)) != TYPE_CODE_VOID)
 	{
 	  fprintf_filtered (stream, "function  ");
 	}
@@ -334,6 +336,33 @@ pascal_print_func_args (struct type *type, struct ui_file *stream,
     }
 }
 
+/* Helper for pascal_type_print_varspec_suffix to print the suffix of
+   a function or method.  */
+
+static void
+pascal_type_print_func_varspec_suffix  (struct type *type, struct ui_file *stream,
+					int show, int passed_a_ptr,
+					int demangled_args,
+					const struct type_print_options *flags)
+{
+  if (TYPE_TARGET_TYPE (type) == NULL
+      || TYPE_CODE (TYPE_TARGET_TYPE (type)) != TYPE_CODE_VOID)
+    {
+      fprintf_filtered (stream, " : ");
+      pascal_type_print_varspec_prefix (TYPE_TARGET_TYPE (type),
+					stream, 0, 0, flags);
+
+      if (TYPE_TARGET_TYPE (type) == NULL)
+	type_print_unknown_return_type (stream);
+      else
+	pascal_type_print_base (TYPE_TARGET_TYPE (type), stream, show, 0,
+				flags);
+
+      pascal_type_print_varspec_suffix (TYPE_TARGET_TYPE (type), stream, 0,
+					passed_a_ptr, 0, flags);
+    }
+}
+
 /* Print any array sizes, function arguments or close parentheses
    needed after the variable name (to describe its type).
    Args work like pascal_type_print_varspec_prefix.  */
@@ -365,16 +394,8 @@ pascal_type_print_varspec_suffix (struct type *type, struct ui_file *stream,
       pascal_type_print_method_args ("",
 				     "",
 				     stream);
-      if (TYPE_CODE (TYPE_TARGET_TYPE (type)) != TYPE_CODE_VOID)
-	{
-	  fprintf_filtered (stream, " : ");
-	  pascal_type_print_varspec_prefix (TYPE_TARGET_TYPE (type),
-					    stream, 0, 0, flags);
-	  pascal_type_print_base (TYPE_TARGET_TYPE (type), stream, show, 0,
-				  flags);
-	  pascal_type_print_varspec_suffix (TYPE_TARGET_TYPE (type), stream, 0,
-					    passed_a_ptr, 0, flags);
-	}
+      pascal_type_print_func_varspec_suffix (type, stream, show,
+					     passed_a_ptr, 0, flags);
       break;
 
     case TYPE_CODE_PTR:
@@ -388,16 +409,8 @@ pascal_type_print_varspec_suffix (struct type *type, struct ui_file *stream,
 	fprintf_filtered (stream, ")");
       if (!demangled_args)
 	pascal_print_func_args (type, stream, flags);
-      if (TYPE_CODE (TYPE_TARGET_TYPE (type)) != TYPE_CODE_VOID)
-	{
-	  fprintf_filtered (stream, " : ");
-	  pascal_type_print_varspec_prefix (TYPE_TARGET_TYPE (type),
-					    stream, 0, 0, flags);
-	  pascal_type_print_base (TYPE_TARGET_TYPE (type), stream, show, 0,
-				  flags);
-	  pascal_type_print_varspec_suffix (TYPE_TARGET_TYPE (type), stream, 0,
-					    passed_a_ptr, 0, flags);
-	}
+      pascal_type_print_func_varspec_suffix (type, stream, show,
+					     passed_a_ptr, 0, flags);
       break;
 
     case TYPE_CODE_UNDEF:
@@ -509,9 +522,9 @@ pascal_type_print_base (struct type *type, struct ui_file *stream, int show,
          only after args !!  */
       break;
     case TYPE_CODE_STRUCT:
-      if (TYPE_TAG_NAME (type) != NULL)
+      if (TYPE_NAME (type) != NULL)
 	{
-	  fputs_filtered (TYPE_TAG_NAME (type), stream);
+	  fputs_filtered (TYPE_NAME (type), stream);
 	  fputs_filtered (" = ", stream);
 	}
       if (HAVE_CPLUS_STRUCT (type))
@@ -525,9 +538,9 @@ pascal_type_print_base (struct type *type, struct ui_file *stream, int show,
       goto struct_union;
 
     case TYPE_CODE_UNION:
-      if (TYPE_TAG_NAME (type) != NULL)
+      if (TYPE_NAME (type) != NULL)
 	{
-	  fputs_filtered (TYPE_TAG_NAME (type), stream);
+	  fputs_filtered (TYPE_NAME (type), stream);
 	  fputs_filtered (" = ", stream);
 	}
       fprintf_filtered (stream, "case <?> of ");
@@ -537,10 +550,10 @@ pascal_type_print_base (struct type *type, struct ui_file *stream, int show,
       if (show < 0)
 	{
 	  /* If we just printed a tag name, no need to print anything else.  */
-	  if (TYPE_TAG_NAME (type) == NULL)
+	  if (TYPE_NAME (type) == NULL)
 	    fprintf_filtered (stream, "{...}");
 	}
-      else if (show > 0 || TYPE_TAG_NAME (type) == NULL)
+      else if (show > 0 || TYPE_NAME (type) == NULL)
 	{
 	  pascal_type_print_derivation_info (stream, type);
 
@@ -727,9 +740,9 @@ pascal_type_print_base (struct type *type, struct ui_file *stream, int show,
       break;
 
     case TYPE_CODE_ENUM:
-      if (TYPE_TAG_NAME (type) != NULL)
+      if (TYPE_NAME (type) != NULL)
 	{
-	  fputs_filtered (TYPE_TAG_NAME (type), stream);
+	  fputs_filtered (TYPE_NAME (type), stream);
 	  if (show > 0)
 	    fputs_filtered (" ", stream);
 	}
@@ -740,10 +753,10 @@ pascal_type_print_base (struct type *type, struct ui_file *stream, int show,
       if (show < 0)
 	{
 	  /* If we just printed a tag name, no need to print anything else.  */
-	  if (TYPE_TAG_NAME (type) == NULL)
+	  if (TYPE_NAME (type) == NULL)
 	    fprintf_filtered (stream, "(...)");
 	}
-      else if (show > 0 || TYPE_TAG_NAME (type) == NULL)
+      else if (show > 0 || TYPE_NAME (type) == NULL)
 	{
 	  fprintf_filtered (stream, "(");
 	  len = TYPE_NFIELDS (type);

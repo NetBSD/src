@@ -1,4 +1,4 @@
-# Copyright 1992-2017 Free Software Foundation, Inc.
+# Copyright 1992-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ gdb_test "show pagination" "State of pagination is on.*" "pagination is on"
 gdb_test_no_output "set height 10"
 send_gdb "help\n"
 gdb_expect_list "paged help" \
-	".*---Type <return> to continue, or q <return> to quit---" {
+	".*$pagination_prompt" {
     "List of classes of commands:"
     ""
     "aliases -- Aliases of other commands"
@@ -60,6 +60,39 @@ gdb_expect_list "paged help" \
 }
 gdb_test "q"
 
+gdb_test_no_output "set height 5"
+send_gdb "printf \"1\\n2\\n3\\n4\\n5\\n6\\n7\\n8\\n9\\n10\\n11\"\n"
+gdb_expect_list "paged count" \
+    ".*$pagination_prompt" {
+	1
+	2
+	3
+	4
+}
+send_gdb "c\n"
+gdb_expect_list "paged count remainder" "${gdb_prompt} " {
+    5
+    6
+    7
+    8
+    9
+    10
+    11
+}
+
+set fours [string repeat 4 40]
+set str "1\\n2\\n3\\n$fours\\n5\\n"
+
+# Avoid some confusing output from readline.
+gdb_test_no_output "set editing off"
+
+gdb_test_no_output "set width 30"
+send_gdb "printf \"$str\"\n"
+gdb_expect_list "paged count for interrupt" \
+    ".*$pagination_prompt" \
+    [list 1\r\n 2\r\n 3\r\n 444444444444444444444444444444]
+
+gdb_test "q" "Quit" "quit while paging"
 
 gdb_exit
 return 0

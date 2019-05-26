@@ -1,6 +1,6 @@
 /* Definitions for expressions stored in reversed prefix form, for GDB.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,6 @@
 
 
 #include "symtab.h"		/* Needed for "struct block" type.  */
-#include "doublest.h"		/* Needed for DOUBLEST.  */
 
 
 /* Definitions for saved C expressions.  */
@@ -40,7 +39,7 @@
    and skip that many.  Strings, like numbers, are indicated
    by the preceding opcode.  */
 
-enum exp_opcode
+enum exp_opcode : uint8_t
   {
 #define OP(name) name ,
 
@@ -64,9 +63,9 @@ union exp_element
   {
     enum exp_opcode opcode;
     struct symbol *symbol;
+    struct minimal_symbol *msymbol;
     LONGEST longconst;
-    DOUBLEST doubleconst;
-    gdb_byte decfloatconst[16];
+    gdb_byte floatconst[16];
     /* Really sizeof (union exp_element) characters (or less for the last
        element of a string).  */
     char string;
@@ -102,8 +101,8 @@ extern expression_up parse_expression (const char *);
 extern expression_up parse_expression_with_language (const char *string,
 						     enum language lang);
 
-extern struct type *parse_expression_for_completion (const char *, char **,
-						     enum type_code *);
+extern struct type *parse_expression_for_completion
+    (const char *, gdb::unique_xmalloc_ptr<char> *, enum type_code *);
 
 extern expression_up parse_exp_1 (const char **, CORE_ADDR pc,
 				  const struct block *, int);
@@ -112,11 +111,6 @@ extern expression_up parse_exp_1 (const char **, CORE_ADDR pc,
    attempt completion.  */
 extern int parse_completion;
 
-/* The innermost context required by the stack and register variables
-   we've encountered so far.  To use this, set it to NULL, then call
-   parse_<whatever>, then look at it.  */
-extern const struct block *innermost_block;
-
 /* From eval.c */
 
 /* Values of NOSIDE argument to eval_subexp.  */
@@ -124,7 +118,9 @@ extern const struct block *innermost_block;
 enum noside
   {
     EVAL_NORMAL,
-    EVAL_SKIP,			/* Only effect is to increment pos.  */
+    EVAL_SKIP,			/* Only effect is to increment pos.
+				   Return type information where
+				   possible.  */
     EVAL_AVOID_SIDE_EFFECTS	/* Don't modify any variables or
 				   call any functions.  The value
 				   returned will have the correct
@@ -156,15 +152,26 @@ extern void dump_prefix_expression (struct expression *, struct ui_file *);
 
 /* In an OP_RANGE expression, either bound could be empty, indicating
    that its value is by default that of the corresponding bound of the
-   array or string.  So we have four sorts of subrange.  This
-   enumeration type is to identify this.  */
-   
+   array or string.  Also, the upper end of the range can be exclusive
+   or inclusive.  So we have six sorts of subrange.  This enumeration
+   type is to identify this.  */
+
 enum range_type
-  {
-    BOTH_BOUND_DEFAULT,		/* "(:)"  */
-    LOW_BOUND_DEFAULT,		/* "(:high)"  */
-    HIGH_BOUND_DEFAULT,		/* "(low:)"  */
-    NONE_BOUND_DEFAULT		/* "(low:high)"  */
-  };
+{
+  /* Neither the low nor the high bound was given -- so this refers to
+     the entire available range.  */
+  BOTH_BOUND_DEFAULT,
+  /* The low bound was not given and the high bound is inclusive.  */
+  LOW_BOUND_DEFAULT,
+  /* The high bound was not given and the low bound in inclusive.  */
+  HIGH_BOUND_DEFAULT,
+  /* Both bounds were given and both are inclusive.  */
+  NONE_BOUND_DEFAULT,
+  /* The low bound was not given and the high bound is exclusive.  */
+  NONE_BOUND_DEFAULT_EXCLUSIVE,
+  /* Both bounds were given.  The low bound is inclusive and the high
+     bound is exclusive.  */
+  LOW_BOUND_DEFAULT_EXCLUSIVE,
+};
 
 #endif /* !defined (EXPRESSION_H) */

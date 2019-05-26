@@ -1,5 +1,5 @@
 /* ARC-specific header file for PLT support.
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
    Contributed by Cupertino Miranda (cmiranda@synopsys.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -22,8 +22,6 @@
 #ifndef ARC_PLT_H
 #define ARC_PLT_H
 
-#include <stdint.h>
-
 /* Instructions appear in memory as a sequence of half-words (16 bit);
    individual half-words are represented on the target in target byte order.
    We use 'unsigned short' on the host to represent the PLT templates,
@@ -43,11 +41,11 @@ enum plt_reloc_symbol
   MIDDLE_ENDIAN = (1 << 11)
 };
 
-#define IS_RELATIVE(S)      ((S & (RELATIVE | RELATIVE_INSN_24 | RELATIVE_INSN_32)) != 0)
-#define IS_INSN_32(S)       ((S & RELATIVE_INSN_32) != 0)
-#define IS_INSN_24(S)       ((S & RELATIVE_INSN_24) != 0)
+#define IS_RELATIVE(S)	    ((S & (RELATIVE | RELATIVE_INSN_24 | RELATIVE_INSN_32)) != 0)
+#define IS_INSN_32(S)	    ((S & RELATIVE_INSN_32) != 0)
+#define IS_INSN_24(S)	    ((S & RELATIVE_INSN_24) != 0)
 #define IS_MIDDLE_ENDIAN(S) ((S & MIDDLE_ENDIAN) != 0)
-#define SYM_ONLY(S)         (S & 0xFF)
+#define SYM_ONLY(S)	    (S & 0xFF)
 
 struct plt_reloc
 {
@@ -115,7 +113,7 @@ struct plt_version_t
 #define PLT_TYPE_END(NAME) \
     {0, 0, 0, LAST_RELOC, 0} \
   };
-#define PLT_ENTRY(...) 
+#define PLT_ENTRY(...)
 #define PLT_ELEM(...)
 #define ENTRY_RELOC(...) { __VA_ARGS__ },
 #define ELEM_RELOC(...)
@@ -152,7 +150,7 @@ struct plt_version_t
 #define PLT_TYPE_END(NAME) \
     {0, 0, 0, LAST_RELOC, 0} \
   };
-#define PLT_ENTRY(...) 
+#define PLT_ENTRY(...)
 #define PLT_ELEM(...)
 #define ENTRY_RELOC(...)
 #define ELEM_RELOC(...) { __VA_ARGS__ },
