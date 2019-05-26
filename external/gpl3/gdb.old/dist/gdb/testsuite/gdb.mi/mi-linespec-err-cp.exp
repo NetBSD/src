@@ -1,4 +1,4 @@
-# Copyright 2016 Free Software Foundation, Inc.
+# Copyright 2016-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ set MIFLAGS "-i=mi"
 standard_testfile .cc
 set exefile $testfile
 
-if {[prepare_for_testing $testfile $exefile $srcfile {debug c++}]} {
+if {[prepare_for_testing "failed to prepare" $exefile $srcfile {debug c++}]} {
     return -1
 }
 

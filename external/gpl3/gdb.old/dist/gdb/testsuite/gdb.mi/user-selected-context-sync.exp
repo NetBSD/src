@@ -1,4 +1,4 @@
-# Copyright 2016 Free Software Foundation, Inc.
+# Copyright 2016-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,30 +36,19 @@ standard_testfile
 # Multiple inferiors are needed, therefore only native gdb and extended
 # gdbserver modes are supported.
 if [use_gdb_stub] {
-    untested ${testfile}.exp
+    untested "using gdb stub"
     return
 }
 
 set compile_options "debug pthreads"
 if {[build_executable $testfile.exp $testfile ${srcfile} ${compile_options}] == -1} {
-    untested "failed to compile $testfile"
+    untested "failed to compile"
     return -1
 }
 
 set main_break_line [gdb_get_line_number "main break line"]
 set thread_loop_line [gdb_get_line_number "thread loop line"]
 set thread_caller_line [gdb_get_line_number "thread caller line"]
-
-# Call PROCNAME with the given arguments, inside a with_test_prefix $procname
-# block.
-
-proc with_test_prefix_procname { procname args } {
-    with_test_prefix $procname {
-	# Note: this syntax requires TCL 8.5, if we need to support 8.4,
-	# we'll need to find an alternative.
-	$procname {*}$args
-    }
-}
 
 # Return whether we expect thread THREAD to be running in mode MODE.
 #
@@ -377,7 +366,7 @@ proc test_continue_to_start { mode inf } {
 #
 # MODE can be either "all-stop" or "non-stop".
 
-proc test_setup { mode } {
+proc_with_prefix test_setup { mode } {
     global srcfile
     global srcdir
     global subdir
@@ -407,7 +396,7 @@ proc test_setup { mode } {
     mi_gdb_load $binfile
 
     if { [mi_runto main] < 0 } {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return
     }
 
@@ -420,7 +409,7 @@ proc test_setup { mode } {
 	# Add the second inferior now.  While this is not mandatory, it allows
 	# us to assume that per-inferior thread numbering will be used,
 	# simplifying test_continue_to_start a bit (Thread 1.2 and not Thread 2).
-	gdb_test "add-inferior" "Added inferior 2" "Add inferior 2"
+	gdb_test "add-inferior" "Added inferior 2" "add inferior 2"
 
 	# Prepare the first inferior for the test.
 	test_continue_to_start $mode 1
@@ -535,7 +524,7 @@ proc match_re_or_ensure_not_output { re test } {
 
 # Test selecting an inferior from CLI.
 
-proc test_cli_inferior { mode } {
+proc_with_prefix test_cli_inferior { mode } {
     global gdb_main_spawn_id mi_spawn_id
 
     reset_selection "1.1"
@@ -567,7 +556,7 @@ proc test_cli_inferior { mode } {
 
 # Test thread selection from CLI.
 
-proc test_cli_thread { mode } {
+proc_with_prefix test_cli_thread { mode } {
     global gdb_main_spawn_id
     global mi_spawn_id
 
@@ -671,7 +660,7 @@ proc test_cli_thread { mode } {
 
 # Test frame selection from CLI.
 
-proc test_cli_frame { mode } {
+proc_with_prefix test_cli_frame { mode } {
     global gdb_main_spawn_id mi_spawn_id
 
     with_test_prefix "thread 1.2" {
@@ -756,7 +745,7 @@ proc test_cli_frame { mode } {
 
 # Test frame selection from CLI with the select-frame command.
 
-proc test_cli_select_frame { mode } {
+proc_with_prefix test_cli_select_frame { mode } {
     global gdb_main_spawn_id mi_spawn_id expect_out
 
     with_test_prefix "thread 1.2" {
@@ -818,7 +807,7 @@ proc test_cli_select_frame { mode } {
 
 # Test doing an up and then down command from CLI.
 
-proc test_cli_up_down { mode } {
+proc_with_prefix test_cli_up_down { mode } {
     global gdb_main_spawn_id mi_spawn_id
 
     reset_selection "1.2"
@@ -853,7 +842,7 @@ proc test_cli_up_down { mode } {
 
 # Test selecting a thread from MI.
 
-proc test_mi_thread_select { mode } {
+proc_with_prefix test_mi_thread_select { mode } {
     global gdb_main_spawn_id mi_spawn_id
 
     reset_selection "1.1"
@@ -948,7 +937,7 @@ proc test_mi_thread_select { mode } {
     # place to test it.
 }
 
-proc test_mi_stack_select_frame { mode } {
+proc_with_prefix test_mi_stack_select_frame { mode } {
     global gdb_main_spawn_id mi_spawn_id
 
     with_test_prefix "thread 1.2" {
@@ -1019,7 +1008,7 @@ proc make_cli_in_mi_command { cli_in_mi_mode command } {
 
 # Test selecting the inferior using a CLI command in the MI channel.
 
-proc test_cli_in_mi_inferior { mode cli_in_mi_mode } {
+proc_with_prefix test_cli_in_mi_inferior { mode cli_in_mi_mode } {
     global gdb_main_spawn_id mi_spawn_id
 
     reset_selection "1.1"
@@ -1051,7 +1040,7 @@ proc test_cli_in_mi_inferior { mode cli_in_mi_mode } {
 
 # Test selecting the thread using a CLI command in the MI channel.
 
-proc test_cli_in_mi_thread { mode cli_in_mi_mode } {
+proc_with_prefix test_cli_in_mi_thread { mode cli_in_mi_mode } {
     global gdb_main_spawn_id mi_spawn_id
 
     reset_selection "1.1"
@@ -1164,7 +1153,7 @@ proc test_cli_in_mi_thread { mode cli_in_mi_mode } {
 
 # Test selecting the frame using a CLI command in the MI channel.
 
-proc test_cli_in_mi_frame { mode cli_in_mi_mode } {
+proc_with_prefix test_cli_in_mi_frame { mode cli_in_mi_mode } {
     global gdb_main_spawn_id mi_spawn_id
 
     with_test_prefix "thread 1.2" {
@@ -1258,28 +1247,28 @@ proc test_cli_in_mi_frame { mode cli_in_mi_mode } {
 }
 
 foreach_with_prefix mode { "all-stop" "non-stop" } {
-    with_test_prefix_procname test_setup $mode
+    test_setup $mode
 
     # Test selecting inferior, thread and frame from CLI
 
-    with_test_prefix_procname test_cli_inferior $mode
-    with_test_prefix_procname test_cli_thread $mode
-    with_test_prefix_procname test_cli_frame $mode
-    with_test_prefix_procname test_cli_select_frame $mode
-    with_test_prefix_procname test_cli_up_down $mode
+    test_cli_inferior $mode
+    test_cli_thread $mode
+    test_cli_frame $mode
+    test_cli_select_frame $mode
+    test_cli_up_down $mode
 
     # Test selecting thread and frame from MI
 
-    with_test_prefix_procname test_mi_thread_select $mode
-    with_test_prefix_procname test_mi_stack_select_frame $mode
+    test_mi_thread_select $mode
+    test_mi_stack_select_frame $mode
 
     # Test some CLI commands sent through MI, both with a "direct" command,
     # such as "thread 1", and with -interpreter-exec, such as
     # '-interpreter-exec console "thread 1"'.
 
     foreach_with_prefix exec_mode {"direct" "interpreter-exec"} {
-	with_test_prefix_procname test_cli_in_mi_inferior $mode $exec_mode
-	with_test_prefix_procname test_cli_in_mi_thread $mode $exec_mode
-	with_test_prefix_procname test_cli_in_mi_frame $mode $exec_mode
+	test_cli_in_mi_inferior $mode $exec_mode
+	test_cli_in_mi_thread $mode $exec_mode
+	test_cli_in_mi_frame $mode $exec_mode
     }
 }

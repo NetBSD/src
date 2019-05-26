@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2016 Free Software Foundation, Inc.
+# Copyright (C) 2015-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ proc probe_displaced_stepping_support {} {
 
 	gdb_test_no_output "set displaced on"
 	if ![runto_main] then {
-	    fail "Can't run to main"
+	    fail "can't run to main"
 	    return 0
 	}
 
@@ -79,7 +79,7 @@ proc do_test { cond_bp_target detach_on_fork displaced } {
     set GDBFLAGS $saved_gdbflags
 
     if ![runto_main] then {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return 0
     }
 
