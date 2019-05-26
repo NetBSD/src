@@ -1,0 +1,4 @@
+include start
+input "testing 1 2 3\n"
+call2 OK "testing" mvscanw 3 5 "%s"
+compare /dev/null
