@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.32 2019/05/25 12:06:59 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.33 2019/05/26 14:12:34 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -412,6 +412,7 @@ plcom*		at fdt?			# ARM PL011 UART
 mesonuart*	at fdt?			# Amlogic Meson UART
 
 # I2C controllers
+options 	I2C_MAX_ADDR=0xfff
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
 exyoi2c*	at fdt?			# Samsung Exynos I2C
 sunxirsb*	at fdt? pass 4		# Allwinner RSB
