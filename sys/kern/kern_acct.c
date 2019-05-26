@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.95 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.96 2019/05/26 19:23:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.95 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.96 2019/05/26 19:23:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ encode_comp_t(u_long s, u_long us)
 	s += us / (1000000 / AHZ);	/* Maximize precision. */
 
 	while (s > MAXFRACT) {
-	rnd = s & (1 << (EXPSIZE - 1));	/* Round up? */
+		rnd = s & (1 << (EXPSIZE - 1));	/* Round up? */
 		s >>= EXPSIZE;		/* Base 8 exponent == 3 bit shift. */
 		exp++;
 	}
