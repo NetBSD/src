@@ -1,4 +1,4 @@
-# Copyright 2015-2016 Free Software Foundation, Inc.
+# Copyright 2015-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ proc do_test {multiprocess} {
 
     gdb_test_no_output "set remote multiprocess-feature $multiprocess"
 
-    set res [gdbserver_spawn ${binfile}]
+    set res [gdbserver_spawn ""]
     set gdbserver_protocol [lindex $res 0]
     set gdbserver_gdbport [lindex $res 1]
 
