@@ -1,4 +1,4 @@
-/* $NetBSD: sun9i_a80_ccu.c,v 1.2 2019/01/03 15:49:09 jmcneill Exp $ */
+/* $NetBSD: sun9i_a80_ccu.c,v 1.3 2019/05/26 13:56:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun9i_a80_ccu.c,v 1.2 2019/01/03 15:49:09 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun9i_a80_ccu.c,v 1.3 2019/05/26 13:56:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,6 +95,7 @@ static struct sunxi_ccu_reset sun9i_a80_ccu_resets[] = {
 	SUNXI_CCU_RESET(A80_RST_BUS_SPI3, BUS_SOFT_RST_REG0, 23),
 
 	SUNXI_CCU_RESET(A80_RST_BUS_OTG_PHY, BUS_SOFT_RST_REG1, 1),
+	SUNXI_CCU_RESET(A80_RST_BUS_GMAC, BUS_SOFT_RST_REG1, 17),
 	SUNXI_CCU_RESET(A80_RST_BUS_MSGBOX, BUS_SOFT_RST_REG1, 21),
 	SUNXI_CCU_RESET(A80_RST_BUS_SPINLOCK, BUS_SOFT_RST_REG1, 22),
 	SUNXI_CCU_RESET(A80_RST_BUS_HSTIMER, BUS_SOFT_RST_REG1, 23),
@@ -329,6 +330,8 @@ static struct sunxi_ccu_clk sun9i_a80_ccu_clks[] = {
 
 	SUNXI_CCU_GATE(A80_CLK_BUS_USB, "ahb1-usb", "ahb1",
 	    BUS_CLK_GATING_REG1, 1),
+	SUNXI_CCU_GATE(A80_CLK_BUS_GMAC, "ahb1-gmac", "ahb1",
+	    BUS_CLK_GATING_REG1, 17),
 	SUNXI_CCU_GATE(A80_CLK_BUS_MSGBOX, "ahb1-msgbox", "ahb1",
 	    BUS_CLK_GATING_REG1, 21),
 	SUNXI_CCU_GATE(A80_CLK_BUS_SPINLOCK, "ahb1-spinlock", "ahb1",
