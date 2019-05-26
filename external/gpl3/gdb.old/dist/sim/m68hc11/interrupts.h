@@ -1,5 +1,5 @@
 /* interrupts.h -- 68HC11 Interrupts Emulation
-   Copyright 1999-2016 Free Software Foundation, Inc.
+   Copyright 1999-2017 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@worldnet.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -122,7 +122,7 @@ struct interrupt
       are masked; second it checks for pending interrupts and raise one if
       interrupts are enabled.  */
 struct interrupts {
-  struct _sim_cpu   *cpu;
+  sim_cpu           *cpu;
 
   /* Mask of current pending interrupts.  */
   unsigned long     pending_mask;
@@ -159,7 +159,7 @@ struct interrupts {
   struct interrupt_history interrupts_history[MAX_INT_HISTORY];
 };
 
-extern void interrupts_initialize     (SIM_DESC sd, struct _sim_cpu* cpu);
+extern void interrupts_initialize     (SIM_DESC sd, sim_cpu *cpu);
 extern void interrupts_reset          (struct interrupts* interrupts);
 extern void interrupts_update_pending (struct interrupts* interrupts);
 extern int  interrupts_get_current    (struct interrupts* interrupts);

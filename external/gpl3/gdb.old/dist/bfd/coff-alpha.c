@@ -1,5 +1,5 @@
 /* BFD back-end for ALPHA Extended-Coff files.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
    Modified from coff-mips.c by Steve Chamberlain <sac@cygnus.com> and
    Ian Lance Taylor <ian@cygnus.com>.
 
@@ -446,7 +446,7 @@ alpha_ecoff_bad_format_hook (bfd *abfd ATTRIBUTE_UNUSED,
     return TRUE;
 
   if (ALPHA_ECOFF_COMPRESSEDMAG (*internal_f))
-    (*_bfd_error_handler)
+    _bfd_error_handler
       (_("%B: Cannot handle compressed Alpha binaries.\n"
 	 "   Use compiler flags, or objZ, to generate uncompressed binaries."),
        abfd);
@@ -597,7 +597,8 @@ alpha_adjust_reloc_in (bfd *abfd,
 {
   if (intern->r_type > ALPHA_R_GPVALUE)
     {
-      (*_bfd_error_handler)
+      /* xgettext:c-format */
+      _bfd_error_handler
 	(_("%B: unknown/unsupported relocation type %d"),
 	 abfd, intern->r_type);
       bfd_set_error (bfd_error_bad_value);
@@ -1498,21 +1499,22 @@ alpha_relocate_section (bfd *output_bfd,
       switch (r_type)
 	{
 	case ALPHA_R_GPRELHIGH:
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
 	    (_("%B: unsupported relocation: ALPHA_R_GPRELHIGH"),
 	     input_bfd);
 	  bfd_set_error (bfd_error_bad_value);
 	  continue;
 
 	case ALPHA_R_GPRELLOW:
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
 	    (_("%B: unsupported relocation: ALPHA_R_GPRELLOW"),
 	     input_bfd);
 	  bfd_set_error (bfd_error_bad_value);
 	  continue;
 
 	default:
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
+	    /* xgettext:c-format */
 	    (_("%B: unknown relocation type %d"),
 	     input_bfd, (int) r_type);
 	  bfd_set_error (bfd_error_bad_value);

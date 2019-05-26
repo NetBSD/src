@@ -1,5 +1,5 @@
 /* bfd back-end for we32k support
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
    Contributed by Brendan Kehoe (brendan@cs.widener.edu).
 
    This file is part of BFD, the Binary File Descriptor library.

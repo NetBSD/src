@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2016 Free Software Foundation, Inc.
+# Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +12,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set skip_float_test [gdb_skip_float_test]
 
 proc do_test {type} {
     set typenospace [string map {{ } -} $type]
@@ -42,6 +44,9 @@ proc do_test {type} {
 }
 
 foreach type {{signed char} {short} {int} {long} {long long} {float} {double}} {
+    if { $skip_float_test && ($type == "float" || $type == "double") } {
+	continue
+    }
     set typeesc [string map {{ } {\ }} $type]
     set typenospace [string map {{ } -} $type]
 
@@ -49,7 +54,7 @@ foreach type {{signed char} {short} {int} {long} {long long} {float} {double}} {
 
     set additional_flags "additional_flags=-DTYPE=$typeesc"
 
-    if {[prepare_for_testing_full $testfile.exp \
+    if {[prepare_for_testing_full "failed to prepare" \
 	     [list ${testfile}-${typenospace} debug \
 		  $srcfile [list debug $additional_flags] \
 		  $srcfile2 [list $additional_flags]]]} {

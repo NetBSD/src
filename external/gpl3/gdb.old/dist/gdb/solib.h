@@ -1,6 +1,6 @@
 /* Shared library declarations for GDB, the GNU Debugger.
    
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +26,11 @@ struct target_ops;
 struct target_so_ops;
 struct program_space;
 
+#include "symfile-add-flags.h"
+
+/* List of known shared objects */
+#define so_list_head current_program_space->so_list
+
 /* Called when we free all symtabs, to free the shared library information
    as well.  */
 
@@ -33,8 +38,8 @@ extern void clear_solib (void);
 
 /* Called to add symbols from a shared library to gdb's symbol table.  */
 
-extern void solib_add (const char *, int, struct target_ops *, int);
-extern int solib_read_symbols (struct so_list *, int);
+extern void solib_add (const char *, int, int);
+extern int solib_read_symbols (struct so_list *, symfile_add_flags);
 
 /* Function to be called when the inferior starts up, to discover the
    names of shared libraries that are dynamically linked, the base
@@ -72,6 +77,24 @@ extern void no_shared_libraries (char *ignored, int from_tty);
 
 extern void set_solib_ops (struct gdbarch *gdbarch,
 			   const struct target_so_ops *new_ops);
+
+/* Synchronize GDB's shared object list with inferior's.
+
+   Extract the list of currently loaded shared objects from the
+   inferior, and compare it with the list of shared objects currently
+   in GDB's so_list_head list.  Edit so_list_head to bring it in sync
+   with the inferior's new list.
+
+   If we notice that the inferior has unloaded some shared objects,
+   free any symbolic info GDB had read about those shared objects.
+
+   Don't load symbolic info for any new shared objects; just add them
+   to the list, and leave their symbols_loaded flag clear.
+
+   If FROM_TTY is non-null, feel free to print messages about what
+   we're doing.  */
+
+extern void update_solib_list (int from_tty);
 
 /* Return non-zero if NAME is the libpthread shared library.  */
 

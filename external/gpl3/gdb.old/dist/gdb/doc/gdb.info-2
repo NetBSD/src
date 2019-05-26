@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 6.0 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.3 from gdb.texinfo.
 
-Copyright (C) 1988-2016 Free Software Foundation, Inc.
+Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.12.
+Source-Level Debugger' for GDB (GDB) Version 8.0.1.
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -250,6 +250,21 @@ instructions that call functions or branch to locations in the shared
 libraries might show a seemingly bogus location--it's actually a
 location of the relocation table.  On some architectures, GDB might be
 able to resolve these to actual function names.
+
+'set disassembler-options OPTION1[,OPTION2...]'
+     This command controls the passing of target specific information to
+     the disassembler.  For a list of valid options, please refer to the
+     '-M'/'--disassembler-options' section of the 'objdump' manual
+     and/or the output of 'objdump --help' (*note objdump:
+     (binutils.info)objdump.).  The default value is the empty string.
+
+     If it is necessary to specify more than one disassembler option,
+     then multiple options can be placed together into a comma separated
+     list.  Currently this command is only supported on targets ARM,
+     PowerPC and S/390.
+
+'show disassembler-options'
+     Show the current setting of the disassembler options.
 
 'set disassembly-flavor INSTRUCTION-SET'
      Select the instruction set to use when disassembling the program
@@ -1391,7 +1406,7 @@ print symbol on':
      same way as with the 'no' setting.
 
      This functionality is currently supported only by DWARF 2 debugging
-     format and the compiler has to produce 'DW_TAG_GNU_call_site' tags.
+     format and the compiler has to produce 'DW_TAG_call_site' tags.
      With GCC, you need to specify '-O -g' during compilation, to get
      this information.
 
@@ -3270,8 +3285,8 @@ fictitious call frame for that, with the return address set up as if 'B'
 called 'C' normally.
 
    This functionality is currently supported only by DWARF 2 debugging
-format and the compiler has to produce 'DW_TAG_GNU_call_site' tags.
-With GCC, you need to specify '-O -g' during compilation, to get this
+format and the compiler has to produce 'DW_TAG_call_site' tags.  With
+GCC, you need to specify '-O -g' during compilation, to get this
 information.
 
    'info frame' command (*note Frame Info::) will indicate the tail call
@@ -3317,8 +3332,8 @@ the indirect reference by variable 'x'):
      static void __attribute__((noinline, noclone)) c (void) { a (); }
      int main (void) { x (); return 0; }
 
-     Breakpoint 1, DW_OP_GNU_entry_value resolving cannot find
-     DW_TAG_GNU_call_site 0x40039a in main
+     Breakpoint 1, DW_OP_entry_value resolving cannot find
+     DW_TAG_call_site 0x40039a in main
      a () at t.c:3
      3	static void __attribute__((noinline, noclone)) a (void) { x++; }
      (gdb) bt
@@ -3376,7 +3391,7 @@ function entry may fail:
 
      (gdb) bt
      #0  c (i=i@entry=0) at t.c:2
-     #1  0x0000000000400428 in a (DW_OP_GNU_entry_value resolving has found
+     #1  0x0000000000400428 in a (DW_OP_entry_value resolving has found
      function "a" at 0x400420 can call itself via tail calls
      i=<optimized out>) at t.c:6
      #2  0x000000000040036e in main () at t.c:7
@@ -4714,7 +4729,7 @@ data, via the 'target tfile' command.
      trace buffer is very large.  (Note, however, that 'target tfile'
      can only read from files accessible to the host.)  By default, this
      command will save trace frame in tfile format.  You can supply the
-     optional argument '-ctf' to save date in CTF format.  The "Common
+     optional argument '-ctf' to save data in CTF format.  The "Common
      Trace Format" (CTF) is proposed as a trace format that can be
      shared by multiple debugging and tracing tools.  Please go to
      'http://www.efficios.com/ctf' to get more information.
@@ -5403,10 +5418,10 @@ File: gdb.info,  Node: Supported Languages,  Next: Unsupported Languages,  Prev:
 15.4 Supported Languages
 ========================
 
-GDB supports C, C++, D, Go, Objective-C, Fortran, Java, OpenCL C,
-Pascal, Rust, assembly, Modula-2, and Ada.  Some GDB features may be
-used in expressions regardless of the language you use: the GDB '@' and
-'::' operators, and the '{type}addr' construct (*note Expressions:
+GDB supports C, C++, D, Go, Objective-C, Fortran, OpenCL C, Pascal,
+Rust, assembly, Modula-2, and Ada.  Some GDB features may be used in
+expressions regardless of the language you use: the GDB '@' and '::'
+operators, and the '{type}addr' construct (*note Expressions:
 Expressions.) can be used with the constructs of any supported language.
 
    The following sections detail to what degree each source language is
@@ -5492,9 +5507,9 @@ increasing precedence:
 
 'OP='
      Used in an expression of the form 'A OP= B', and translated to
-     'A = A OP B'.  'OP=' and '=' have the same precedence.  The
-     operator OP is any one of the operators '|', '^', '&', '<<', '>>',
-     '+', '-', '*', '/', '%'.
+     'A = A OP B'. 'OP=' and '=' have the same precedence.  The operator
+     OP is any one of the operators '|', '^', '&', '<<', '>>', '+', '-',
+     '*', '/', '%'.
 
 '?:'
      The ternary operator.  'A ? B : C' can be thought of as: if A then
@@ -5707,9 +5722,9 @@ GDB expression handling can interpret most C++ expressions.
      The GDB command-completion facility can simplify this; see *note
      Command Completion: Completion.
 
-  4. GDB understands variables declared as C++ references; you can use
-     them in expressions just as you do in C++ source--they are
-     automatically dereferenced.
+  4. GDB understands variables declared as C++ lvalue or rvalue
+     references; you can use them in expressions just as you do in C++
+     source--they are automatically dereferenced.
 
      In the parameter list shown when GDB displays a frame, the values
      of reference variables are not displayed (unlike other variables);
@@ -7786,21 +7801,29 @@ looks up the value of 'x' in the scope of the file 'foo.c'.
      Show whether messages will be printed when a GDB command entered
      from the keyboard causes symbol information to be loaded.
 
-'maint print symbols FILENAME'
-'maint print psymbols FILENAME'
-'maint print msymbols FILENAME'
-     Write a dump of debugging symbol data into the file FILENAME.
-     These commands are used to debug the GDB symbol-reading code.  Only
-     symbols with debugging data are included.  If you use 'maint print
-     symbols', GDB includes all the symbols for which it has already
-     collected full details: that is, FILENAME reflects symbols for only
-     those files whose symbols GDB has read.  You can use the command
-     'info sources' to find out which files these are.  If you use
-     'maint print psymbols' instead, the dump shows information about
-     symbols that GDB only knows partially--that is, symbols defined in
-     files that GDB has skimmed, but not yet read completely.  Finally,
-     'maint print msymbols' dumps just the minimal symbol information
-     required for each object file from which GDB has read some symbols.
+'maint print symbols [-pc ADDRESS] [FILENAME]'
+'maint print symbols [-objfile OBJFILE] [-source SOURCE] [--] [FILENAME]'
+'maint print psymbols [-objfile OBJFILE] [-pc ADDRESS] [--] [FILENAME]'
+'maint print psymbols [-objfile OBJFILE] [-source SOURCE] [--] [FILENAME]'
+'maint print msymbols [-objfile OBJFILE] [--] [FILENAME]'
+     Write a dump of debugging symbol data into the file FILENAME or the
+     terminal if FILENAME is unspecified.  If '-objfile OBJFILE' is
+     specified, only dump symbols for that objfile.  If '-pc ADDRESS' is
+     specified, only dump symbols for the file with code at that
+     address.  Note that ADDRESS may be a symbol like 'main'.  If
+     '-source SOURCE' is specified, only dump symbols for that source
+     file.
+
+     These commands are used to debug the GDB symbol-reading code.
+     These commands do not modify internal GDB state, therefore 'maint
+     print symbols' will only print symbols for already expanded symbol
+     tables.  You can use the command 'info sources' to find out which
+     files these are.  If you use 'maint print psymbols' instead, the
+     dump shows information about symbols that GDB only knows
+     partially--that is, symbols defined in files that GDB has skimmed,
+     but not yet read completely.  Finally, 'maint print msymbols' just
+     dumps "minimal symbols", e.g., "ELF symbols".
+
      *Note Commands to Specify Files: Files, for a discussion of how GDB
      reads symbols (in the description of 'symbol-file').
 

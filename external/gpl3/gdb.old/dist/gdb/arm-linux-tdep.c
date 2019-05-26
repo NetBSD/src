@@ -1,6 +1,6 @@
 /* GNU/Linux on ARM target support.
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -921,12 +921,10 @@ arm_linux_get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self)
 
 /* Insert a single step breakpoint at the next executed instruction.  */
 
-static int
-arm_linux_software_single_step (struct frame_info *frame)
+static VEC (CORE_ADDR) *
+arm_linux_software_single_step (struct regcache *regcache)
 {
-  struct regcache *regcache = get_current_regcache ();
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  struct address_space *aspace = get_regcache_aspace (regcache);
   struct arm_get_next_pcs next_pcs_ctx;
   CORE_ADDR pc;
   int i;
@@ -936,7 +934,7 @@ arm_linux_software_single_step (struct frame_info *frame)
   /* If the target does have hardware single step, GDB doesn't have
      to bother software single step.  */
   if (target_can_do_single_step () == 1)
-    return 0;
+    return NULL;
 
   old_chain = make_cleanup (VEC_cleanup (CORE_ADDR), &next_pcs);
 
@@ -950,11 +948,14 @@ arm_linux_software_single_step (struct frame_info *frame)
   next_pcs = arm_get_next_pcs (&next_pcs_ctx);
 
   for (i = 0; VEC_iterate (CORE_ADDR, next_pcs, i, pc); i++)
-    arm_insert_single_step_breakpoint (gdbarch, aspace, pc);
+    {
+      pc = gdbarch_addr_bits_remove (gdbarch, pc);
+      VEC_replace (CORE_ADDR, next_pcs, i, pc);
+    }
 
-  do_cleanups (old_chain);
+  discard_cleanups (old_chain);
 
-  return 1;
+  return next_pcs;
 }
 
 /* Support for displaced stepping of Linux SVC instructions.  */

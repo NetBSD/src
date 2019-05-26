@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Free Software Foundation, Inc.
+# Copyright 2011-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ gdb_test_multiple $test $test {
     -re ":\[ \t\]*0xaa551234\r\n$gdb_prompt $" {
 	# big endian
 	pass $test
-	gdb_test "p/x implicit4to2" " = 0x3344"
+	gdb_test "p/x implicit4to2" " = 0x1122"
 	gdb_test "p/x implicit4to4" " = 0x11223344"
     }
     -re ":\[ \t\]*0x\[0-9a-f\]{8}\r\n$gdb_prompt $" {

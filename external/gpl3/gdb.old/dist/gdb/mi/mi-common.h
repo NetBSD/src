@@ -1,5 +1,5 @@
 /* Interface for common GDB/MI data
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,10 @@
 
 #ifndef MI_COMMON_H
 #define MI_COMMON_H
+
+#include "interps.h"
+
+struct mi_console_file;
 
 /* Represents the reason why GDB is sending an asynchronous command to
    the front end.  NOTE: When modifing this, don't forget to update
@@ -48,14 +52,29 @@ enum async_reply_reason
 
 const char *async_reason_lookup (enum async_reply_reason reason);
 
-struct mi_interp
+/* An MI interpreter.  */
+
+class mi_interp final : public interp
 {
+public:
+  mi_interp (const char *name)
+    : interp (name)
+  {}
+
+  void init (bool top_level) override;
+  void resume () override;
+  void suspend () override;
+  gdb_exception exec (const char *command_str) override;
+  ui_out *interp_ui_out () override;
+  void set_logging (ui_file_up logfile, bool logging_redirect) override;
+  void pre_command_loop () override;
+
   /* MI's output channels */
-  struct ui_file *out;
-  struct ui_file *err;
-  struct ui_file *log;
-  struct ui_file *targ;
-  struct ui_file *event_channel;
+  mi_console_file *out;
+  mi_console_file *err;
+  mi_console_file *log;
+  mi_console_file *targ;
+  mi_console_file *event_channel;
 
   /* Raw console output.  */
   struct ui_file *raw_stdout;
@@ -69,11 +88,6 @@ struct mi_interp
 
   /* MI's CLI builder (wraps OUT).  */
   struct ui_out *cli_uiout;
-
-  /* This is the interpreter for the mi... */
-  struct interp *mi2_interp;
-  struct interp *mi1_interp;
-  struct interp *mi_interp;
 };
 
 #endif

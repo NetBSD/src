@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 
 #ifndef X86_LINUX_NAT_H
 #define X86_LINUX_NAT_H 1
+
+#include "gdb_proc_service.h"  /* For ps_err_e.  */
 
 
 

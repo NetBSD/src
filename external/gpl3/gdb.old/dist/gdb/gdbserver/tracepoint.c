@@ -1,5 +1,5 @@
 /* Tracepoint code for remote server for GDB.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "gdb_sys_time.h"
+#include <chrono>
 #include <inttypes.h>
 #include "ax.h"
 #include "tdesc.h"
@@ -4534,7 +4534,7 @@ handle_tracepoint_bkpts (struct thread_info *tinfo, CORE_ADDR stop_pc)
 	    trace_debug ("lib stopped due to full buffer.");
 	  if (ipa_stopping_tracepoint)
 	    trace_debug ("lib stopped due to tpoint");
-	  if (ipa_stopping_tracepoint)
+	  if (ipa_error_tracepoint)
 	    trace_debug ("lib stopped due to error");
 	}
 
@@ -7410,12 +7410,10 @@ getauxval (unsigned long type)
 static LONGEST
 get_timestamp (void)
 {
-   struct timeval tv;
+  using namespace std::chrono;
 
-   if (gettimeofday (&tv, 0) != 0)
-     return -1;
-   else
-     return (LONGEST) tv.tv_sec * 1000000 + tv.tv_usec;
+  steady_clock::time_point now = steady_clock::now ();
+  return duration_cast<microseconds> (now.time_since_epoch ()).count ();
 }
 
 void

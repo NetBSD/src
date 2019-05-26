@@ -1,6 +1,6 @@
 /* Generate a core file for the inferior process.
 
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,6 +34,8 @@
 #include "regset.h"
 #include "gdb_bfd.h"
 #include "readline/tilde.h"
+#include <algorithm>
+#include "common/gdb_unlinker.h"
 
 /* The largest amount of memory to read from the target at once.  We
    must throttle it to limit the amount of memory used by GDB during
@@ -48,15 +50,15 @@ static int gcore_memory_sections (bfd *);
 /* create_gcore_bfd -- helper for gcore_command (exported).
    Open a new bfd core file for output, and return the handle.  */
 
-bfd *
+gdb_bfd_ref_ptr
 create_gcore_bfd (const char *filename)
 {
-  bfd *obfd = gdb_bfd_openw (filename, default_gcore_target ());
+  gdb_bfd_ref_ptr obfd (gdb_bfd_openw (filename, default_gcore_target ()));
 
-  if (!obfd)
+  if (obfd == NULL)
     error (_("Failed to open '%s' for output."), filename);
-  bfd_set_format (obfd, bfd_core);
-  bfd_set_arch_mach (obfd, default_gcore_arch (), default_gcore_mach ());
+  bfd_set_format (obfd.get (), bfd_core);
+  bfd_set_arch_mach (obfd.get (), default_gcore_arch (), default_gcore_mach ());
   return obfd;
 }
 
@@ -134,59 +136,44 @@ write_gcore_file (bfd *obfd)
     throw_exception (except);
 }
 
-static void
-do_bfd_delete_cleanup (void *arg)
-{
-  bfd *obfd = (bfd *) arg;
-  const char *filename = obfd->filename;
-
-  gdb_bfd_unref ((bfd *) arg);
-  unlink (filename);
-}
-
 /* gcore_command -- implements the 'gcore' command.
    Generate a core file from the inferior process.  */
 
 static void
 gcore_command (char *args, int from_tty)
 {
-  struct cleanup *filename_chain;
-  struct cleanup *bfd_chain;
-  char *corefilename;
-  bfd *obfd;
+  gdb::unique_xmalloc_ptr<char> corefilename;
 
   /* No use generating a corefile without a target process.  */
   if (!target_has_execution)
     noprocess ();
 
   if (args && *args)
-    corefilename = tilde_expand (args);
+    corefilename.reset (tilde_expand (args));
   else
     {
       /* Default corefile name is "core.PID".  */
-      corefilename = xstrprintf ("core.%d", ptid_get_pid (inferior_ptid));
+      corefilename.reset (xstrprintf ("core.%d", ptid_get_pid (inferior_ptid)));
     }
-  filename_chain = make_cleanup (xfree, corefilename);
 
   if (info_verbose)
     fprintf_filtered (gdb_stdout,
-		      "Opening corefile '%s' for output.\n", corefilename);
+		      "Opening corefile '%s' for output.\n",
+		      corefilename.get ());
 
   /* Open the output file.  */
-  obfd = create_gcore_bfd (corefilename);
+  gdb_bfd_ref_ptr obfd (create_gcore_bfd (corefilename.get ()));
 
-  /* Need a cleanup that will close and delete the file.  */
-  bfd_chain = make_cleanup (do_bfd_delete_cleanup, obfd);
+  /* Arrange to unlink the file on failure.  */
+  gdb::unlinker unlink_file (corefilename.get ());
 
   /* Call worker function.  */
-  write_gcore_file (obfd);
+  write_gcore_file (obfd.get ());
 
   /* Succeeded.  */
-  discard_cleanups (bfd_chain);
-  gdb_bfd_unref (obfd);
+  unlink_file.keep ();
 
-  fprintf_filtered (gdb_stdout, "Saved corefile %s\n", corefilename);
-  do_cleanups (filename_chain);
+  fprintf_filtered (gdb_stdout, "Saved corefile %s\n", corefilename.get ());
 }
 
 static unsigned long
@@ -572,7 +559,7 @@ gcore_copy_callback (bfd *obfd, asection *osec, void *ignored)
   if (!startswith (bfd_section_name (obfd, osec), "load"))
     return;
 
-  size = min (total_size, MAX_COPY_BYTES);
+  size = std::min (total_size, (bfd_size_type) MAX_COPY_BYTES);
   memhunk = (gdb_byte *) xmalloc (size);
   old_chain = make_cleanup (xfree, memhunk);
 

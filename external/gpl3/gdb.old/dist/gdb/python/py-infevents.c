@@ -1,6 +1,6 @@
 /* Python interface to inferior function events.
 
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 
 #include "defs.h"
 #include "py-event.h"
+#include "py-ref.h"
 
 extern PyTypeObject inferior_call_pre_event_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("event_object");
@@ -36,52 +37,36 @@ static PyObject *
 create_inferior_call_event_object (inferior_call_kind flag, ptid_t ptid,
 				   CORE_ADDR addr)
 {
-  PyObject *event;
-  PyObject *ptid_obj = NULL;
-  PyObject *addr_obj = NULL;
+  gdbpy_ref<> event;
   int failed;
-  struct cleanup *cleanups;
-  struct cleanup *member_cleanups;
 
   switch (flag)
     {
     case INFERIOR_CALL_PRE:
-      event = create_event_object (&inferior_call_pre_event_object_type);
+      event.reset (create_event_object (&inferior_call_pre_event_object_type));
       break;
     case INFERIOR_CALL_POST:
-      event = create_event_object (&inferior_call_post_event_object_type);
+      event.reset (create_event_object (&inferior_call_post_event_object_type));
       break;
     default:
-      return NULL;
+      gdb_assert_not_reached ("invalid inferior_call_kind");
     }
 
-  cleanups = make_cleanup_py_decref (event);
-
-  ptid_obj = gdbpy_create_ptid_object (ptid);
+  gdbpy_ref<> ptid_obj (gdbpy_create_ptid_object (ptid));
   if (ptid_obj == NULL)
-    goto fail;
-  member_cleanups = make_cleanup_py_decref (ptid_obj);
+    return NULL;
 
-  failed = evpy_add_attribute (event, "ptid", ptid_obj) < 0;
-  if (failed)
-    goto fail;
+  if (evpy_add_attribute (event.get (), "ptid", ptid_obj.get ()) < 0)
+    return NULL;
 
-  addr_obj = PyLong_FromLongLong (addr);
+  gdbpy_ref<> addr_obj (PyLong_FromLongLong (addr));
   if (addr_obj == NULL)
-    goto fail;
-  make_cleanup_py_decref (addr_obj);
+    return NULL;
 
-  failed = evpy_add_attribute (event, "address", addr_obj) < 0;
-  if (failed)
-    goto fail;
+  if (evpy_add_attribute (event.get (), "address", addr_obj.get ()) < 0)
+    return NULL;
 
-  do_cleanups (member_cleanups);
-  discard_cleanups (cleanups);
-  return event;
-
- fail:
-  do_cleanups (cleanups);
-  return NULL;
+  return event.release ();
 }
 
 /* Construct a gdb.RegisterChangedEvent containing the affected
@@ -91,44 +76,25 @@ static PyObject *
 create_register_changed_event_object (struct frame_info *frame, 
 				      int regnum)
 {
-  PyObject *event;
-  PyObject *frame_obj = NULL;
-  PyObject *regnum_obj = NULL;
-  int failed;
-  struct cleanup *cleanups;
-  struct cleanup *member_cleanups;
-
-  event = create_event_object (&register_changed_event_object_type);
+  gdbpy_ref<> event (create_event_object (&register_changed_event_object_type));
   if (event == NULL)
     return NULL;
 
-  cleanups = make_cleanup_py_decref (event);
-
-  frame_obj = frame_info_to_frame_object (frame);
+  gdbpy_ref<> frame_obj (frame_info_to_frame_object (frame));
   if (frame_obj == NULL)
-    goto fail;
-  member_cleanups = make_cleanup_py_decref (frame_obj);
+    return NULL;
 
-  failed = evpy_add_attribute (event, "frame", frame_obj) < 0;
-  if (failed)
-    goto fail;
+  if (evpy_add_attribute (event.get (), "frame", frame_obj.get ()) < 0)
+    return NULL;
 
-  regnum_obj = PyLong_FromLongLong (regnum);
+  gdbpy_ref<> regnum_obj (PyLong_FromLongLong (regnum));
   if (regnum_obj == NULL)
-    goto fail;
-  make_cleanup_py_decref (regnum_obj);
+    return NULL;
 
-  failed = evpy_add_attribute (event, "regnum", regnum_obj) < 0;
-  if (failed)
-    goto fail;
+  if (evpy_add_attribute (event.get (), "regnum", regnum_obj.get ()) < 0)
+    return NULL;
 
-  do_cleanups (member_cleanups);
-  discard_cleanups (cleanups);
-  return event;
-
- fail:
-  do_cleanups (cleanups);
-  return NULL;
+  return event.release ();
 }
 
 /* Construct a gdb.MemoryChangedEvent describing the extent of the
@@ -137,44 +103,26 @@ create_register_changed_event_object (struct frame_info *frame,
 static PyObject *
 create_memory_changed_event_object (CORE_ADDR addr, ssize_t len)
 {
-  PyObject *event;
-  PyObject *addr_obj = NULL;
-  PyObject *len_obj = NULL;
-  int failed;
-  struct cleanup *cleanups;
-  struct cleanup *member_cleanups;
-
-  event = create_event_object (&memory_changed_event_object_type);
+  gdbpy_ref<> event (create_event_object (&memory_changed_event_object_type));
 
   if (event == NULL)
     return NULL;
-  cleanups = make_cleanup_py_decref (event);
 
-  addr_obj = PyLong_FromLongLong (addr);
+  gdbpy_ref<> addr_obj (PyLong_FromLongLong (addr));
   if (addr_obj == NULL)
-    goto fail;
-  member_cleanups = make_cleanup_py_decref (addr_obj);
+    return NULL;
 
-  failed = evpy_add_attribute (event, "address", addr_obj) < 0;
-  if (failed)
-    goto fail;
+  if (evpy_add_attribute (event.get (), "address", addr_obj.get ()) < 0)
+    return NULL;
 
-  len_obj = PyLong_FromLong (len);
+  gdbpy_ref<> len_obj (PyLong_FromLong (len));
   if (len_obj == NULL)
-    goto fail;
-  make_cleanup_py_decref (len_obj);
+    return NULL;
 
-  failed = evpy_add_attribute (event, "length", len_obj) < 0;
-  if (failed)
-    goto fail;
+  if (evpy_add_attribute (event.get (), "length", len_obj.get ()) < 0)
+    return NULL;
 
-  do_cleanups (member_cleanups);
-  discard_cleanups (cleanups);
-  return event;
-
- fail:
-  do_cleanups (cleanups);
-  return NULL;
+  return event.release ();
 }
 
 /* Callback function which notifies observers when an event occurs which
@@ -186,14 +134,12 @@ int
 emit_inferior_call_event (inferior_call_kind flag, ptid_t thread,
 			  CORE_ADDR addr)
 {
-  PyObject *event;
-
   if (evregpy_no_listeners_p (gdb_py_events.inferior_call))
     return 0;
 
-  event = create_inferior_call_event_object (flag, thread, addr);
+  gdbpy_ref<> event (create_inferior_call_event_object (flag, thread, addr));
   if (event != NULL)
-    return evpy_emit_event (event, gdb_py_events.inferior_call);
+    return evpy_emit_event (event.get (), gdb_py_events.inferior_call);
   return -1;
 }
 
@@ -203,14 +149,12 @@ emit_inferior_call_event (inferior_call_kind flag, ptid_t thread,
 int
 emit_memory_changed_event (CORE_ADDR addr, ssize_t len)
 {
-  PyObject *event;
-
   if (evregpy_no_listeners_p (gdb_py_events.memory_changed))
     return 0;
 
-  event = create_memory_changed_event_object (addr, len);
+  gdbpy_ref<> event (create_memory_changed_event_object (addr, len));
   if (event != NULL)
-    return evpy_emit_event (event, gdb_py_events.memory_changed);
+    return evpy_emit_event (event.get (), gdb_py_events.memory_changed);
   return -1;
 }
 
@@ -220,14 +164,12 @@ emit_memory_changed_event (CORE_ADDR addr, ssize_t len)
 int
 emit_register_changed_event (struct frame_info* frame, int regnum)
 {
-  PyObject *event;
-
   if (evregpy_no_listeners_p (gdb_py_events.register_changed))
     return 0;
 
-  event = create_register_changed_event_object (frame, regnum);
+  gdbpy_ref<> event (create_register_changed_event_object (frame, regnum));
   if (event != NULL)
-    return evpy_emit_event (event, gdb_py_events.register_changed);
+    return evpy_emit_event (event.get (), gdb_py_events.register_changed);
   return -1;
 }
 

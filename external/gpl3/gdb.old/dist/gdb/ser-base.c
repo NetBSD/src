@@ -1,6 +1,6 @@
 /* Generic serial interface functions.
 
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -205,6 +205,11 @@ push_event (void *context)
 /* Wait for input on scb, with timeout seconds.  Returns 0 on success,
    otherwise SERIAL_TIMEOUT or SERIAL_ERROR.  */
 
+/* NOTE: Some of the code below is dead.  The only possible values of
+   the TIMEOUT parameter are ONE and ZERO.  OTOH, we should probably
+   get rid of the deprecated_ui_loop_hook call in do_ser_base_readchar
+   instead and support infinite time outs here.  */
+
 static int
 ser_base_wait_for (struct serial *scb, int timeout)
 {
@@ -308,10 +313,11 @@ ser_base_read_error_fd (struct serial *scb, int close_fd)
     }
 }
 
-/* Read a character with user-specified timeout.  TIMEOUT is number of seconds
-   to wait, or -1 to wait forever.  Use timeout of 0 to effect a poll.  Returns
-   char if successful.  Returns -2 if timeout expired, EOF if line dropped
-   dead, or -3 for any other error (see errno in that case).  */
+/* Read a character with user-specified timeout.  TIMEOUT is number of
+   seconds to wait, or -1 to wait forever.  Use timeout of 0 to effect
+   a poll.  Returns char if successful.  Returns SERIAL_TIMEOUT if
+   timeout expired, SERIAL_EOF if line dropped dead, or SERIAL_ERROR
+   for any other error (see errno in that case).  */
 
 static int
 do_ser_base_readchar (struct serial *scb, int timeout)
