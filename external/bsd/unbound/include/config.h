@@ -1183,8 +1183,9 @@ int isblank(int c);
 #endif
 
 #ifndef HAVE_EXPLICIT_BZERO
-#define explicit_bzero unbound_explicit_bzero
-void explicit_bzero(void* buf, size_t len);
+// #define explicit_bzero unbound_explicit_bzero
+// void explicit_bzero(void* buf, size_t len);
+#define explicit_bzero(a, b) explicit_memset(a, 0, b) 
 #endif
 
 #if defined(HAVE_INET_NTOP) && !HAVE_DECL_INET_NTOP
@@ -1219,7 +1220,6 @@ void *reallocarray(void *ptr, size_t nmemb, size_t size);
 #  endif
 #endif /* HAVE_LIBRESSL */
 #ifndef HAVE_ARC4RANDOM
-void explicit_bzero(void* buf, size_t len);
 int getentropy(void* buf, size_t len);
 uint32_t arc4random(void);
 void arc4random_buf(void* buf, size_t n);
