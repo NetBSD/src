@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.70 2018/09/03 16:29:33 riastradh Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.71 2019/05/26 08:12:41 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.70 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.71 2019/05/26 08:12:41 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_freebsd.h"
@@ -328,10 +328,18 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 		struct scsi_ioctl *si;
 		int len;
 
+		len = screq->datalen;
+
+		/*
+		 * If there is data, there must be a data buffer and a direction specified
+		 */
+		if (len > 0 && (screq->databuf == NULL ||
+		    (screq->flags & (SCCMD_READ|SCCMD_WRITE)) == 0))
+			return (EINVAL);
+
 		si = si_get();
 		si->si_screq = *screq;
 		si->si_periph = periph;
-		len = screq->datalen;
 		if (len) {
 			si->si_iov.iov_base = screq->databuf;
 			si->si_iov.iov_len = len;
