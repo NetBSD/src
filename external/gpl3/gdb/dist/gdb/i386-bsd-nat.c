@@ -1,6 +1,6 @@
 /* Native-dependent code for modern i386 BSD's.
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -97,7 +97,7 @@ i386bsd_supply_gregset (struct regcache *regcache, const void *gregs)
       int offset = i386bsd_r_reg_offset[regnum];
 
       if (offset != -1)
-	regcache_raw_supply (regcache, regnum, regs + offset);
+	regcache->raw_supply (regnum, regs + offset);
     }
 }
 
@@ -119,7 +119,7 @@ i386bsd_collect_gregset (const struct regcache *regcache,
 	  int offset = i386bsd_r_reg_offset[i];
 
 	  if (offset != -1)
-	    regcache_raw_collect (regcache, i, regs + offset);
+	    regcache->raw_collect (i, regs + offset);
 	}
     }
 }
@@ -127,11 +127,10 @@ i386bsd_collect_gregset (const struct regcache *regcache,
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
    for all registers (including the floating point registers).  */
 
-static void
-i386bsd_fetch_inferior_registers (struct target_ops *ops,
-				  struct regcache *regcache, int regnum)
+void
+i386bsd_fetch_inferior_registers (struct regcache *regcache, int regnum)
 {
-  pid_t pid = get_ptrace_pid (regcache_get_ptid (regcache));
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
 
   if (regnum == -1 || GETREGS_SUPPLIES (regnum))
     {
@@ -191,11 +190,10 @@ i386bsd_fetch_inferior_registers (struct target_ops *ops,
 /* Store register REGNUM back into the inferior.  If REGNUM is -1, do
    this for all registers (including the floating point registers).  */
 
-static void
-i386bsd_store_inferior_registers (struct target_ops *ops,
-				  struct regcache *regcache, int regnum)
+void
+i386bsd_store_inferior_registers (struct regcache *regcache, int regnum)
 {
-  pid_t pid = get_ptrace_pid (regcache_get_ptid (regcache));
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
 
   if (regnum == -1 || GETREGS_SUPPLIES (regnum))
     {
@@ -266,24 +264,6 @@ i386bsd_store_inferior_registers (struct target_ops *ops,
 #endif
     }
 }
-
-/* Create a prototype *BSD/i386 target.  The client can override it
-   with local methods.  */
-
-struct target_ops *
-i386bsd_target (void)
-{
-  struct target_ops *t;
-
-  t = x86bsd_target ();
-  t->to_fetch_registers = i386bsd_fetch_inferior_registers;
-  t->to_store_registers = i386bsd_store_inferior_registers;
-  return t;
-}
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_i386bsd_nat (void);
 
 void
 _initialize_i386bsd_nat (void)

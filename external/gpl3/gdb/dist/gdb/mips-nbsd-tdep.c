@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/mips.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -55,7 +55,7 @@ mipsnbsd_supply_fpregset (const struct regset *regset,
 			  struct regcache *regcache,
 			  int regnum, const void *fpregs, size_t len)
 {
-  size_t regsize = mips_isa_regsize (get_regcache_arch (regcache));
+  size_t regsize = mips_isa_regsize (regcache->arch ());
   const char *regs = (const char *) fpregs;
   int i;
 
@@ -64,8 +64,7 @@ mipsnbsd_supply_fpregset (const struct regset *regset,
   for (i = MIPS_FP0_REGNUM; i <= MIPS_FSR_REGNUM; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache_raw_supply (regcache, i,
-			     regs + (i - MIPS_FP0_REGNUM) * regsize);
+	regcache->raw_supply (i, regs + (i - MIPS_FP0_REGNUM) * regsize);
     }
 }
 
@@ -78,8 +77,7 @@ mipsnbsd_supply_gregset (const struct regset *regset,
 			 struct regcache *regcache, int regnum,
 			 const void *gregs, size_t len)
 {
-  size_t regsize = mips_isa_regsize (get_regcache_arch (regcache));
-  char zerobuf[MAX_REGISTER_SIZE];
+  size_t regsize = mips_isa_regsize (regcache->arch ());
   const char *regs = (const char *) gregs;
   int i;
 
@@ -90,12 +88,7 @@ mipsnbsd_supply_gregset (const struct regset *regset,
   for (i = 0; i <= MIPS_PC_REGNUM; i++)
     {
       if (regnum == i || regnum == -1)
-        {
-          if (i == MIPS_ZERO_REGNUM || i == MIPS_UNUSED_REGNUM)
-            regcache_raw_supply (regcache, i, zerobuf);
-          else
-	    regcache_raw_supply (regcache, i, regs + i * regsize);
-	}
+	regcache->raw_supply (i, regs + i * regsize);
     }
 
   if (len >= (MIPSNBSD_NUM_GREGS + MIPSNBSD_NUM_FPREGS) * regsize)
@@ -132,10 +125,10 @@ mipsnbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 {
   size_t regsize = mips_isa_regsize (gdbarch);
 
-  cb (".reg", MIPSNBSD_NUM_GREGS * regsize, &mipsnbsd_gregset,
-      NULL, cb_data);
-  cb (".reg2", MIPSNBSD_NUM_FPREGS * regsize, &mipsnbsd_fpregset,
-      NULL, cb_data);
+  cb (".reg", MIPSNBSD_NUM_GREGS * regsize, MIPSNBSD_NUM_GREGS * regsize,
+      &mipsnbsd_gregset, NULL, cb_data);
+  cb (".reg2", MIPSNBSD_NUM_FPREGS * regsize, MIPSNBSD_NUM_FPREGS * regsize,
+      &mipsnbsd_fpregset, NULL, cb_data);
 }
 
 
@@ -145,8 +138,7 @@ mipsnbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 void
 mipsnbsd_supply_reg (struct regcache *regcache, const char *regs, int regno)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  char zerobuf[MAX_REGISTER_SIZE];
+  struct gdbarch *gdbarch = regcache->arch ();
   int i;
 
   memset (zerobuf, 0, MAX_REGISTER_SIZE);
@@ -155,13 +147,11 @@ mipsnbsd_supply_reg (struct regcache *regcache, const char *regs, int regno)
     {
       if (regno == i || regno == -1)
 	{
-          if (i == MIPS_ZERO_REGNUM || i == MIPS_UNUSED_REGNUM)
-            regcache_raw_supply (regcache, i, zerobuf);
-	  else if (gdbarch_cannot_fetch_register (gdbarch, i))
-	    regcache_raw_supply (regcache, i, NULL);
+	  if (gdbarch_cannot_fetch_register (gdbarch, i))
+	    regcache->raw_supply (i, NULL);
 	  else
-            regcache_raw_supply (regcache, i,
-				 regs + (i * mips_isa_regsize (gdbarch)));
+            regcache->raw_supply
+	      (i, regs + (i * mips_isa_regsize (gdbarch)));
         }
     }
 }
@@ -169,21 +159,20 @@ mipsnbsd_supply_reg (struct regcache *regcache, const char *regs, int regno)
 void
 mipsnbsd_fill_reg (const struct regcache *regcache, char *regs, int regno)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   int i;
 
   for (i = 0; i <= gdbarch_pc_regnum (gdbarch); i++)
     if ((regno == i || regno == -1)
 	&& ! gdbarch_cannot_store_register (gdbarch, i))
-      regcache_raw_collect (regcache, i,
-			    regs + (i * mips_isa_regsize (gdbarch)));
+      regcache->raw_collect (i, regs + (i * mips_isa_regsize (gdbarch)));
 }
 
 void
 mipsnbsd_supply_fpreg (struct regcache *regcache,
 		       const char *fpregs, int regno)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   int i;
 
   for (i = gdbarch_fp0_regnum (gdbarch);
@@ -193,10 +182,10 @@ mipsnbsd_supply_fpreg (struct regcache *regcache,
       if (regno == i || regno == -1)
 	{
 	  if (gdbarch_cannot_fetch_register (gdbarch, i))
-	    regcache_raw_supply (regcache, i, NULL);
+	    regcache->raw_supply (i, NULL);
 	  else
-            regcache_raw_supply (regcache, i,
-				 fpregs 
+            regcache->raw_supply (i,
+				 fpregs
 				 + ((i - gdbarch_fp0_regnum (gdbarch))
 				    * mips_isa_regsize (gdbarch)));
 	}
@@ -206,7 +195,7 @@ mipsnbsd_supply_fpreg (struct regcache *regcache,
 void
 mipsnbsd_fill_fpreg (const struct regcache *regcache, char *fpregs, int regno)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   int i;
 
   for (i = gdbarch_fp0_regnum (gdbarch);
@@ -214,9 +203,9 @@ mipsnbsd_fill_fpreg (const struct regcache *regcache, char *fpregs, int regno)
        i++)
     if ((regno == i || regno == -1) 
 	&& ! gdbarch_cannot_store_register (gdbarch, i))
-      regcache_raw_collect (regcache, i,
-			    fpregs + ((i - gdbarch_fp0_regnum (gdbarch))
-			      * mips_isa_regsize (gdbarch)));
+      regcache->raw_collect
+	(i, (fpregs + ((i - gdbarch_fp0_regnum (gdbarch))
+	     * mips_isa_regsize (gdbarch))));
 }
 
 #if 0
@@ -385,10 +374,6 @@ mipsnbsd_init_abi (struct gdbarch_info info,
 	       mipsnbsd_ilp32_fetch_link_map_offsets :
 	       mipsnbsd_lp64_fetch_link_map_offsets));
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_mipsnbsd_tdep;
 
 void
 _initialize_mipsnbsd_tdep (void)

@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -40,15 +40,13 @@
 #include "bsd-kvm.h"
 #include "inf-ptrace.h"
 
-#ifndef HAVE_GREGSET_T
-typedef struct reg gregset_t;
-#endif
+struct ppc_nbsd_nat_target final : public inf_ptrace_target
+{
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+};
 
-#ifndef HAVE_FPREGSET_T
-typedef struct fpreg fpregset_t;
-#endif
-#include "gregset.h"
- 
+static ppc_nbsd_nat_target the_ppc_nbsd_nat_target;
 
 /* Returns true if PT_GETREGS fetches this register.  */
 
@@ -90,11 +88,11 @@ getfpregs_supplies (struct gdbarch *gdbarch, int regnum)
 	  || regnum == tdep->ppc_fpscr_regnum);
 }
 
-static void
-ppcnbsd_fetch_inferior_registers (struct target_ops *ops,
-				  struct regcache *regcache, int regnum)
+void
+ppc_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
+  pid_t pid = regcache->ptid ().pid ();
 
   if (regnum == -1 || getregs_supplies (gdbarch, regnum))
     {
@@ -121,11 +119,11 @@ ppcnbsd_fetch_inferior_registers (struct target_ops *ops,
     }
 }
 
-static void
-ppcnbsd_store_inferior_registers (struct target_ops *ops,
-				  struct regcache *regcache, int regnum)
+void
+ppc_nbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
+  pid_t pid = regcache->ptid ().pid ();
 
   if (regnum == -1 || getregs_supplies (gdbarch, regnum))
     {
@@ -197,7 +195,7 @@ ppcnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
   struct switchframe sf;
   struct callframe cf;
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int i;
 
@@ -206,38 +204,28 @@ ppcnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
     return 0;
 
   read_memory (pcb->pcb_sp, (gdb_byte *)&sf, sizeof sf);
-  regcache_raw_supply (regcache, tdep->ppc_cr_regnum, &sf.sf_cr);
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 2, &sf.sf_fixreg2);
+  regcache->raw_supply (tdep->ppc_cr_regnum, &sf.cr);
+  regcache->raw_supply (tdep->ppc_gp0_regnum + 2, &sf.fixreg2);
   for (i = 0 ; i < 19 ; i++)
-    regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 13 + i,
-			 &sf.sf_fixreg[i]);
+    regcache->raw_supply (tdep->ppc_gp0_regnum + 13 + i, &sf.fixreg[i]);
 
-  read_memory(sf.sf_sp, (gdb_byte *)&cf, sizeof(cf));
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 30, &cf.cf_r30);
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 31, &cf.cf_r31);
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 1, &cf.cf_sp);
+  read_memory(sf.sp, (gdb_byte *)&cf, sizeof(cf));
+  regcache->raw_supply (tdep->ppc_gp0_regnum + 30, &cf.r30);
+  regcache->raw_supply (tdep->ppc_gp0_regnum + 31, &cf.r31);
+  regcache->raw_supply (tdep->ppc_gp0_regnum + 1, &cf.sp);
 
-  read_memory(cf.cf_sp, (gdb_byte *)&cf, sizeof(cf));
-  regcache_raw_supply (regcache, tdep->ppc_lr_regnum, &cf.cf_lr);
-  regcache_raw_supply (regcache, gdbarch_pc_regnum (gdbarch), &cf.cf_lr);
+  read_memory(cf.sp, (gdb_byte *)&cf, sizeof(cf));
+  regcache->raw_supply (tdep->ppc_lr_regnum, &cf.lr);
+  regcache->raw_supply (gdbarch_pc_regnum (gdbarch), &cf.lr);
 
   return 1;
 }
 
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_ppcnbsd_nat (void);
-
 void
 _initialize_ppcnbsd_nat (void)
 {
-  struct target_ops *t;
-
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (ppcnbsd_supply_pcb);
 
-  /* Add in local overrides.  */
-  t = inf_ptrace_target ();
-  t->to_fetch_registers = ppcnbsd_fetch_inferior_registers;
-  t->to_store_registers = ppcnbsd_store_inferior_registers;
-  nbsd_nat_add_target (t);
+  add_inf_child_target (&the_ppc_nbsd_nat_target);
 }

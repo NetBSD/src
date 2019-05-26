@@ -1,6 +1,6 @@
 /* Native-dependent code for Motorola 68000 BSD's.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,6 +29,14 @@
 #include "m68k-tdep.h"
 #include "inf-ptrace.h"
 
+struct m68k_bsd_nat_target final : public inf_ptrace_target
+{
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+};
+
+static m68k_bsd_nat_target the_m68k_bsd_nat_target;
+
 static int
 m68kbsd_gregset_supplies_p (int regnum)
 {
@@ -50,7 +58,7 @@ m68kbsd_supply_gregset (struct regcache *regcache, const void *gregs)
   int regnum;
 
   for (regnum = M68K_D0_REGNUM; regnum <= M68K_PC_REGNUM; regnum++)
-    regcache_raw_supply (regcache, regnum, regs + regnum * 4);
+    regcache->raw_supply (regnum, regs + regnum * 4);
 }
 
 /* Supply the floating-point registers stored in FPREGS to REGCACHE.  */
@@ -58,13 +66,13 @@ m68kbsd_supply_gregset (struct regcache *regcache, const void *gregs)
 static void
 m68kbsd_supply_fpregset (struct regcache *regcache, const void *fpregs)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  const char *regs = (const char *)fpregs;
+  struct gdbarch *gdbarch = regcache->arch ();
+  const char *regs = fpregs;
   int regnum;
 
   for (regnum = M68K_FP0_REGNUM; regnum <= M68K_FPI_REGNUM; regnum++)
-    regcache_raw_supply (regcache, regnum,
-			 regs + m68kbsd_fpreg_offset (gdbarch, regnum));
+    regcache->raw_supply (regnum,
+			  regs + m68kbsd_fpreg_offset (gdbarch, regnum));
 }
 
 /* Collect the general-purpose registers from REGCACHE and store them
@@ -80,7 +88,7 @@ m68kbsd_collect_gregset (const struct regcache *regcache,
   for (i = M68K_D0_REGNUM; i <= M68K_PC_REGNUM; i++)
     {
       if (regnum == -1 || regnum == i)
-	regcache_raw_collect (regcache, i, regs + i * 4);
+	regcache->raw_collect (i, regs + i * 4);
     }
 }
 
@@ -91,15 +99,14 @@ static void
 m68kbsd_collect_fpregset (struct regcache *regcache,
 			  void *fpregs, int regnum)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  char *regs = (char *)fpregs;
+  struct gdbarch *gdbarch = regcache->arch ();
+  char *regs = fpregs;
   int i;
 
   for (i = M68K_FP0_REGNUM; i <= M68K_FPI_REGNUM; i++)
     {
       if (regnum == -1 || regnum == i)
-	regcache_raw_collect (regcache, i,
-			      regs + m68kbsd_fpreg_offset (gdbarch, i));
+	regcache->raw_collect (i, regs + m68kbsd_fpreg_offset (gdbarch, i));
     }
 }
 
@@ -107,11 +114,10 @@ m68kbsd_collect_fpregset (struct regcache *regcache,
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
    for all registers (including the floating-point registers).  */
 
-static void
-m68kbsd_fetch_inferior_registers (struct target_ops *ops,
-				  struct regcache *regcache, int regnum)
+void
+m68k_bsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
-  pid_t pid = ptid_get_pid (regcache_get_ptid (regcache));
+  pid_t pid = regcache->ptid ().pid ();
 
   if (regnum == -1 || m68kbsd_gregset_supplies_p (regnum))
     {
@@ -137,11 +143,10 @@ m68kbsd_fetch_inferior_registers (struct target_ops *ops,
 /* Store register REGNUM back into the inferior.  If REGNUM is -1, do
    this for all registers (including the floating-point registers).  */
 
-static void
-m68kbsd_store_inferior_registers (struct target_ops *ops,
-				  struct regcache *regcache, int regnum)
+void
+m68k_bsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
-  pid_t pid = ptid_get_pid (regcache_get_ptid (regcache));
+  pid_t pid = regcache->ptid ().pid ();
 
   if (regnum == -1 || m68kbsd_gregset_supplies_p (regnum))
     {
@@ -203,32 +208,23 @@ m68kbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
     return 0;
 
   for (regnum = M68K_D2_REGNUM; regnum <= M68K_D7_REGNUM; regnum++)
-    regcache_raw_supply (regcache, regnum, &pcb->pcb_regs[i++]);
+    regcache->raw_supply (regnum, &pcb->pcb_regs[i++]);
   for (regnum = M68K_A2_REGNUM; regnum <= M68K_SP_REGNUM; regnum++)
-    regcache_raw_supply (regcache, regnum, &pcb->pcb_regs[i++]);
+    regcache->raw_supply (regnum, &pcb->pcb_regs[i++]);
 
   tmp = pcb->pcb_ps & 0xffff;
-  regcache_raw_supply (regcache, M68K_PS_REGNUM, &tmp);
+  regcache->raw_supply (M68K_PS_REGNUM, &tmp);
 
-  read_memory (pcb->pcb_regs[PCB_REGS_FP] + 4, (gdb_byte *) &tmp, sizeof tmp);
-  regcache_raw_supply (regcache, M68K_PC_REGNUM, &tmp);
+  read_memory (pcb->pcb_regs[PCB_REGS_FP] + 4, (char *) &tmp, sizeof tmp);
+  regcache->raw_supply (M68K_PC_REGNUM, &tmp);
 
   return 1;
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_m68kbsd_nat (void);
 
 void
 _initialize_m68kbsd_nat (void)
 {
-  struct target_ops *t;
-
-  t = inf_ptrace_target ();
-  t->to_fetch_registers = m68kbsd_fetch_inferior_registers;
-  t->to_store_registers = m68kbsd_store_inferior_registers;
-  add_target (t);
+  add_inf_child_target (&the_m68k_bsd_nat_target);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (m68kbsd_supply_pcb);
