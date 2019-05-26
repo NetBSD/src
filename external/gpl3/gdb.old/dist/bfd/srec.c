@@ -1,5 +1,5 @@
 /* BFD back-end for s-record objects.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -129,12 +129,12 @@ static const char digs[] = "0123456789ABCDEF";
 /* The number of data bytes we actually fit onto a line on output.
    This variable can be modified by objcopy's --srec-len parameter.
    For a 0x75 byte record you should set --srec-len=0x70.  */
-unsigned int Chunk = DEFAULT_CHUNK;
+unsigned int _bfd_srec_len = DEFAULT_CHUNK;
 
 /* The type of srec output (free or forced to S3).
    This variable can be modified by objcopy's --srec-forceS3
    parameter.  */
-bfd_boolean S3Forced = FALSE;
+bfd_boolean _bfd_srec_forceS3 = FALSE;
 
 /* When writing an S-record file, the S-records can not be output as
    they are seen.  This structure is used to hold them in memory.  */
@@ -255,7 +255,8 @@ srec_bad_byte (bfd *abfd,
 	  buf[0] = c;
 	  buf[1] = '\0';
 	}
-      (*_bfd_error_handler)
+      _bfd_error_handler
+	/* xgettext:c-format */
 	(_("%B:%d: Unexpected character `%s' in S-record file\n"),
 	 abfd, lineno, buf);
       bfd_set_error (bfd_error_bad_value);
@@ -483,8 +484,9 @@ srec_scan (bfd *abfd)
 	      min_bytes = 5;
 	    if (bytes < min_bytes)
 	      {
-		(*_bfd_error_handler) (_("%B:%d: byte count %d too small\n"),
-				       abfd, lineno, bytes);
+		/* xgettext:c-format */
+		_bfd_error_handler (_("%B:%d: byte count %d too small\n"),
+				    abfd, lineno, bytes);
 		bfd_set_error (bfd_error_bad_value);
 		goto error_return;
 	      }
@@ -574,7 +576,8 @@ srec_scan (bfd *abfd)
 		check_sum = 255 - (check_sum & 0xff);
 		if (check_sum != HEX (data))
 		  {
-		    (*_bfd_error_handler)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
 		      (_("%B:%d: Bad checksum in S-record file\n"),
 		       abfd, lineno);
 		    bfd_set_error (bfd_error_bad_value);
@@ -607,7 +610,8 @@ srec_scan (bfd *abfd)
 		check_sum = 255 - (check_sum & 0xff);
 		if (check_sum != HEX (data))
 		  {
-		    (*_bfd_error_handler)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
 		      (_("%B:%d: Bad checksum in S-record file\n"),
 		       abfd, lineno);
 		    bfd_set_error (bfd_error_bad_value);
@@ -900,9 +904,9 @@ srec_set_section_contents (bfd *abfd,
 	return FALSE;
       memcpy ((void *) data, location, (size_t) bytes_to_do);
 
-      /* Ff S3Forced is TRUE then always select S3 records,
-	 regardless of the siez of the addresses.  */
-      if (S3Forced)
+      /* If _bfd_srec_forceS3 is TRUE then always select S3 records,
+	 regardless of the size of the addresses.  */
+      if (_bfd_srec_forceS3)
 	tdata->type = 3;
       else if ((section->lma + (offset + bytes_to_do) / opb - 1) <= 0xffff)
 	;  /* The default, S1, is OK.  */
@@ -972,10 +976,12 @@ srec_write_record (bfd *abfd,
     case 7:
       TOHEX (dst, (address >> 24), check_sum);
       dst += 2;
+      /* Fall through.  */
     case 8:
     case 2:
       TOHEX (dst, (address >> 16), check_sum);
       dst += 2;
+      /* Fall through.  */
     case 9:
     case 1:
     case 0:
@@ -1034,18 +1040,18 @@ srec_write_section (bfd *abfd,
      have three, and S3 (tdata->type == 3) records have four.
      The total length can't exceed 255, and a zero data length will
      spin for a long time.  */
-  if (Chunk == 0)
-    Chunk = 1;
-  else if (Chunk > MAXCHUNK - tdata->type - 2)
-    Chunk = MAXCHUNK - tdata->type - 2;
+  if (_bfd_srec_len == 0)
+    _bfd_srec_len = 1;
+  else if (_bfd_srec_len > MAXCHUNK - tdata->type - 2)
+    _bfd_srec_len = MAXCHUNK - tdata->type - 2;
 
   while (octets_written < list->size)
     {
       bfd_vma address;
       unsigned int octets_this_chunk = list->size - octets_written;
 
-      if (octets_this_chunk > Chunk)
-	octets_this_chunk = Chunk;
+      if (octets_this_chunk > _bfd_srec_len)
+	octets_this_chunk = _bfd_srec_len;
 
       address = list->where + octets_written / bfd_octets_per_byte (abfd);
 

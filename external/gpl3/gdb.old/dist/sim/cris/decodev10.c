@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2016 Free Software Foundation, Inc.
+Copyright 1996-2017 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -302,7 +302,7 @@ crisv10f_init_idesc_table (SIM_CPU *cpu)
     init_idesc (cpu, id, t);
 
   /* Now fill in the values for the chosen cpu.  */
-  for (t = crisv10f_insn_sem, tend = t + sizeof (crisv10f_insn_sem) / sizeof (*t);
+  for (t = crisv10f_insn_sem, tend = t + ARRAY_SIZE (crisv10f_insn_sem);
        t != tend; ++t)
     {
       init_idesc (cpu, & table[t->index], t);

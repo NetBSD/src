@@ -10,12 +10,6 @@ NATDEPFILES= inf-ptrace.o fork-child.o \
 	linux-namespaces.o
 NAT_CDEPS = $(srcdir)/proc-service.list
 
-# The PowerPC has severe limitations on TOC size, and uses them even
-# for non-PIC code.  GDB overflows those tables when compiling with
-# -mfull-toc (the default), so we need to ask GCC to use as few TOC
-# entries as possible.
-MH_CFLAGS= -mminimal-toc
-
 # The dynamically loaded libthread_db needs access to symbols in the
 # gdb executable.
 LOADLIBES= -ldl $(RDYNAMIC)

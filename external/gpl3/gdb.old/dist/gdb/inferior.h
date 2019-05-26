@@ -1,7 +1,7 @@
 /* Variables that describe the inferior process running under GDB:
    Where it is, why it stopped, and how to step it.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +30,8 @@ struct regcache;
 struct ui_out;
 struct terminal_info;
 struct target_desc_info;
+struct gdb_environ;
+struct continuation;
 
 /* For bpstat.  */
 #include "breakpoint.h"
@@ -42,6 +44,8 @@ struct target_desc_info;
 
 #include "progspace.h"
 #include "registry.h"
+
+#include "symfile-add-flags.h"
 
 struct infcall_suspend_state;
 struct infcall_control_state;
@@ -130,7 +134,21 @@ extern void child_terminal_init_with_pgrp (int pgrp);
 
 /* From fork-child.c */
 
-extern int fork_inferior (char *, char *, char **,
+/* Report an error that happened when starting to trace the inferior
+   (i.e., when the "traceme_fun" callback is called on fork_inferior)
+   and bail out.  This function does not return.  */
+
+extern void trace_start_error (const char *fmt, ...)
+  ATTRIBUTE_NORETURN;
+
+/* Like "trace_start_error", but the error message is constructed by
+   combining STRING with the system error message for errno.  This
+   function does not return.  */
+
+extern void trace_start_error_with_name (const char *string)
+  ATTRIBUTE_NORETURN;
+
+extern int fork_inferior (const char *, const std::string &, char **,
 			  void (*)(void),
 			  void (*)(int), void (*)(void), char *,
                           void (*)(const char *,
@@ -289,112 +307,114 @@ struct inferior_control_state
    target process ids.  Each inferior may in turn have multiple
    threads running in it.  */
 
-struct inferior
+class inferior
 {
+public:
+  explicit inferior (int pid);
+  ~inferior ();
+
   /* Pointer to next inferior in singly-linked list of inferiors.  */
-  struct inferior *next;
+  struct inferior *next = NULL;
 
   /* Convenient handle (GDB inferior id).  Unique across all
      inferiors.  */
-  int num;
+  int num = 0;
 
   /* Actual target inferior id, usually, a process id.  This matches
      the ptid_t.pid member of threads of this inferior.  */
-  int pid;
+  int pid = 0;
   /* True if the PID was actually faked by GDB.  */
-  int fake_pid_p;
+  bool fake_pid_p = false;
 
   /* The highest thread number this inferior ever had.  */
-  int highest_thread_num;
+  int highest_thread_num = 0;
 
   /* State of GDB control of inferior process execution.
      See `struct inferior_control_state'.  */
-  struct inferior_control_state control;
+  inferior_control_state control {NO_STOP_QUIETLY};
 
   /* True if this was an auto-created inferior, e.g. created from
      following a fork; false, if this inferior was manually added by
      the user, and we should not attempt to prune it
      automatically.  */
-  int removable;
+  bool removable = false;
 
   /* The address space bound to this inferior.  */
-  struct address_space *aspace;
+  struct address_space *aspace = NULL;
 
   /* The program space bound to this inferior.  */
-  struct program_space *pspace;
+  struct program_space *pspace = NULL;
 
   /* The arguments string to use when running.  */
-  char *args;
+  char *args = NULL;
 
   /* The size of elements in argv.  */
-  int argc;
+  int argc = 0;
 
   /* The vector version of arguments.  If ARGC is nonzero,
      then we must compute ARGS from this (via the target).
      This is always coming from main's argv and therefore
      should never be freed.  */
-  char **argv;
+  char **argv = NULL;
 
   /* The name of terminal device to use for I/O.  */
-  char *terminal;
+  char *terminal = NULL;
 
   /* Environment to use for running inferior,
      in format described in environ.h.  */
-  struct gdb_environ *environment;
+  gdb_environ *environment = NULL;
 
-  /* Nonzero if this child process was attached rather than
-     forked.  */
-  int attach_flag;
+  /* True if this child process was attached rather than forked.  */
+  bool attach_flag = false;
 
   /* If this inferior is a vfork child, then this is the pointer to
      its vfork parent, if GDB is still attached to it.  */
-  struct inferior *vfork_parent;
+  inferior *vfork_parent = NULL;
 
   /* If this process is a vfork parent, this is the pointer to the
      child.  Since a vfork parent is left frozen by the kernel until
      the child execs or exits, a process can only have one vfork child
      at a given time.  */
-  struct inferior *vfork_child;
+  inferior *vfork_child = NULL;
 
   /* True if this inferior should be detached when it's vfork sibling
      exits or execs.  */
-  int pending_detach;
+  bool pending_detach = false;
 
   /* True if this inferior is a vfork parent waiting for a vfork child
      not under our control to be done with the shared memory region,
      either by exiting or execing.  */
-  int waiting_for_vfork_done;
+  bool waiting_for_vfork_done = false;
 
   /* True if we're in the process of detaching from this inferior.  */
-  int detaching;
+  int detaching = 0;
 
   /* What is left to do for an execution command after any thread of
      this inferior stops.  For continuations associated with a
      specific thread, see `struct thread_info'.  */
-  struct continuation *continuations;
+  continuation *continuations = NULL;
 
   /* True if setup_inferior wasn't called for this inferior yet.
      Until that is done, we must not access inferior memory or
      registers, as we haven't determined the target
      architecture/description.  */
-  int needs_setup;
+  bool needs_setup = false;
 
   /* Private data used by the target vector implementation.  */
-  struct private_inferior *priv;
+  private_inferior *priv = NULL;
 
   /* HAS_EXIT_CODE is true if the inferior exited with an exit code.
      In this case, the EXIT_CODE field is also valid.  */
-  int has_exit_code;
-  LONGEST exit_code;
+  bool has_exit_code = false;
+  LONGEST exit_code = 0;
 
   /* Default flags to pass to the symbol reading functions.  These are
-     used whenever a new objfile is created.  The valid values come
-     from enum symfile_add_flags.  */
-  int symfile_flags;
+     used whenever a new objfile is created.  */
+  symfile_add_flags symfile_flags = 0;
 
   /* Info about an inferior's target description (if it's fetched; the
      user supplied description's filename, if any; etc.).  */
-  struct target_desc_info *tdesc_info;
+  target_desc_info *tdesc_info = NULL;
 
   /* The architecture associated with the inferior through the
      connection to the target.
@@ -407,7 +427,7 @@ struct inferior
      per-thread/per-frame/per-objfile properties, accesses to
      per-inferior/target properties should be made through
      this gdbarch.  */
-  struct gdbarch *gdbarch;
+  struct gdbarch *gdbarch = NULL;
 
   /* Per inferior data-pointers required by other GDB modules.  */
   REGISTRY_FIELDS;
@@ -417,9 +437,6 @@ struct inferior
    modules.  */
 
 DECLARE_REGISTRY (inferior);
-
-/* Create an empty inferior list, or empty the existing one.  */
-extern void init_inferior_list (void);
 
 /* Add an inferior to the inferior list, print a message that a new
    inferior is found, and return the pointer to the new inferior.
@@ -512,6 +529,12 @@ extern struct cleanup *save_current_inferior (void);
 
 #define ALL_INFERIORS(I) \
   for ((I) = inferior_list; (I); (I) = (I)->next)
+
+/* Traverse all non-exited inferiors.  */
+
+#define ALL_NON_EXITED_INFERIORS(I) \
+  ALL_INFERIORS (I)		    \
+    if ((I)->pid != 0)
 
 extern struct inferior *inferior_list;
 

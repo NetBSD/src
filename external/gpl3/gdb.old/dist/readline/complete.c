@@ -156,7 +156,8 @@ int _rl_complete_mark_symlink_dirs = 0;
 int _rl_print_completions_horizontally;
 
 /* Non-zero means that case is not significant in filename completion. */
-#if defined (__MSDOS__) && !defined (__DJGPP__)
+#if defined (__MSDOS__) && !defined (__DJGPP__)	\
+  || (defined (_WIN32) && !defined (__CYGWIN__))
 int _rl_completion_case_fold = 1;
 #else
 int _rl_completion_case_fold = 0;
@@ -636,7 +637,7 @@ printable_part (pathname)
     return (pathname);
 
   temp = strrchr (pathname, '/');
-#if defined (__MSDOS__)
+#if defined (__MSDOS__) || defined (_WIN32)
   if (temp == 0 && ISALPHA ((unsigned char)pathname[0]) && pathname[1] == ':')
     temp = pathname + 1;
 #endif
@@ -2186,7 +2187,7 @@ rl_filename_completion_function (text, state)
 
       temp = strrchr (dirname, '/');
 
-#if defined (__MSDOS__)
+#if defined (__MSDOS__) || defined (_WIN32)
       /* special hack for //X/... */
       if (dirname[0] == '/' && dirname[1] == '/' && ISALPHA ((unsigned char)dirname[2]) && dirname[3] == '/')
         temp = strrchr (dirname + 3, '/');
@@ -2197,7 +2198,7 @@ rl_filename_completion_function (text, state)
 	  strcpy (filename, ++temp);
 	  *temp = '\0';
 	}
-#if defined (__MSDOS__)
+#if defined (__MSDOS__) || (defined (_WIN32) && !defined (__CYGWIN__))
       /* searches from current directory on the drive */
       else if (ISALPHA ((unsigned char)dirname[0]) && dirname[1] == ':')
         {

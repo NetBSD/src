@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux x86-64.
 
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -44,11 +44,12 @@
 #include "features/i386/amd64-avx-linux.c"
 #include "features/i386/amd64-mpx-linux.c"
 #include "features/i386/amd64-avx-mpx-linux.c"
-#include "features/i386/amd64-avx512-linux.c"
+#include "features/i386/amd64-avx-avx512-linux.c"
+#include "features/i386/amd64-avx-mpx-avx512-pku-linux.c"
 
 #include "features/i386/x32-linux.c"
 #include "features/i386/x32-avx-linux.c"
-#include "features/i386/x32-avx512-linux.c"
+#include "features/i386/x32-avx-avx512-linux.c"
 
 /* The syscall's XML filename for i386.  */
 #define XML_SYSCALL_FILENAME_AMD64 "syscalls/amd64-linux.xml"
@@ -103,6 +104,10 @@ int amd64_linux_gregset_reg_offset[] =
   -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1,
+  -1,				/* PKEYS register pkru  */
+
+  /* End of hardware registers */
+  21 * 8, 22 * 8,		      /* fs_base and gs_base.  */
   15 * 8			      /* "orig_rax" */
 };
 
@@ -284,7 +289,9 @@ static int
 amd64_linux_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
 				 struct reggroup *group)
 { 
-  if (regnum == AMD64_LINUX_ORIG_RAX_REGNUM)
+  if (regnum == AMD64_LINUX_ORIG_RAX_REGNUM
+      || regnum == AMD64_FSBASE_REGNUM
+      || regnum == AMD64_GSBASE_REGNUM)
     return (group == system_reggroup
             || group == save_reggroup
             || group == restore_reggroup);
@@ -1580,20 +1587,27 @@ amd64_linux_core_read_description (struct gdbarch *gdbarch,
 
   switch (xcr0 & X86_XSTATE_ALL_MASK)
     {
-    case X86_XSTATE_MPX_AVX512_MASK:
-    case X86_XSTATE_AVX512_MASK:
+    case X86_XSTATE_AVX_MPX_AVX512_PKU_MASK:
       if (gdbarch_ptr_bit (gdbarch) == 32)
-	return tdesc_x32_avx512_linux;
+	  /* No MPX on x32, fallback to AVX-AVX512.  */
+	return tdesc_x32_avx_avx512_linux;
       else
-	return tdesc_amd64_avx512_linux;
+	return tdesc_amd64_avx_mpx_avx512_pku_linux;
+    case X86_XSTATE_AVX_AVX512_MASK:
+      if (gdbarch_ptr_bit (gdbarch) == 32)
+	return tdesc_x32_avx_avx512_linux;
+      else
+	return tdesc_amd64_avx_avx512_linux;
     case X86_XSTATE_MPX_MASK:
       if (gdbarch_ptr_bit (gdbarch) == 32)
-	return tdesc_x32_avx_linux;  /* No x32 MPX falling back to AVX.  */
+	  /* No MPX on x32, fallback to AVX-AVX512.  */
+	return tdesc_x32_avx_linux;
       else
 	return tdesc_amd64_mpx_linux;
     case X86_XSTATE_AVX_MPX_MASK:
       if (gdbarch_ptr_bit (gdbarch) == 32)
-	return tdesc_x32_avx_linux;  /* No x32 MPX falling back to AVX.  */
+	  /* No MPX on x32, fallback to AVX-AVX512.  */
+	return tdesc_x32_avx_linux;
       else
 	return tdesc_amd64_avx_mpx_linux;
     case X86_XSTATE_AVX_MASK:
@@ -2291,9 +2305,10 @@ _initialize_amd64_linux_tdep (void)
   initialize_tdesc_amd64_avx_linux ();
   initialize_tdesc_amd64_mpx_linux ();
   initialize_tdesc_amd64_avx_mpx_linux ();
-  initialize_tdesc_amd64_avx512_linux ();
+  initialize_tdesc_amd64_avx_avx512_linux ();
+  initialize_tdesc_amd64_avx_mpx_avx512_pku_linux ();
 
   initialize_tdesc_x32_linux ();
   initialize_tdesc_x32_avx_linux ();
-  initialize_tdesc_x32_avx512_linux ();
+  initialize_tdesc_x32_avx_avx512_linux ();
 }

@@ -1,5 +1,5 @@
 /* m6811_cpu.c -- 68HC11&68HC12 CPU Emulation
-   Copyright 1999-2016 Free Software Foundation, Inc.
+   Copyright 1999-2017 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -114,7 +114,7 @@ cpu_set_sp (sim_cpu *cpu, uint16 val)
 }
 
 uint16
-cpu_get_reg (sim_cpu* cpu, uint8 reg)
+cpu_get_reg (sim_cpu *cpu, uint8 reg)
 {
   switch (reg)
     {
@@ -136,7 +136,7 @@ cpu_get_reg (sim_cpu* cpu, uint8 reg)
 }
 
 uint16
-cpu_get_src_reg (sim_cpu* cpu, uint8 reg)
+cpu_get_src_reg (sim_cpu *cpu, uint8 reg)
 {
   switch (reg)
     {
@@ -170,7 +170,7 @@ cpu_get_src_reg (sim_cpu* cpu, uint8 reg)
 }
 
 void
-cpu_set_dst_reg (sim_cpu* cpu, uint8 reg, uint16 val)
+cpu_set_dst_reg (sim_cpu *cpu, uint8 reg, uint16 val)
 {
   switch (reg)
     {
@@ -212,7 +212,7 @@ cpu_set_dst_reg (sim_cpu* cpu, uint8 reg, uint16 val)
 }
 
 void
-cpu_set_reg (sim_cpu* cpu, uint8 reg, uint16 val)
+cpu_set_reg (sim_cpu *cpu, uint8 reg, uint16 val)
 {
   switch (reg)
     {
@@ -240,7 +240,7 @@ cpu_set_reg (sim_cpu* cpu, uint8 reg, uint16 val)
 /* Returns the address of a 68HC12 indexed operand.
    Pre and post modifications are handled on the source register.  */
 uint16
-cpu_get_indexed_operand_addr (sim_cpu* cpu, int restricted)
+cpu_get_indexed_operand_addr (sim_cpu *cpu, int restricted)
 {
   uint8 reg;
   uint16 sval;
@@ -345,7 +345,7 @@ cpu_get_indexed_operand_addr (sim_cpu* cpu, int restricted)
 }
 
 uint8
-cpu_get_indexed_operand8 (sim_cpu* cpu, int restricted)
+cpu_get_indexed_operand8 (sim_cpu *cpu, int restricted)
 {
   uint16 addr;
 
@@ -354,7 +354,7 @@ cpu_get_indexed_operand8 (sim_cpu* cpu, int restricted)
 }
 
 uint16
-cpu_get_indexed_operand16 (sim_cpu* cpu, int restricted)
+cpu_get_indexed_operand16 (sim_cpu *cpu, int restricted)
 {
   uint16 addr;
 
@@ -602,11 +602,11 @@ print_io_word (SIM_DESC sd, const char *name, io_reg_desc *desc,
 }
 
 void
-cpu_ccr_update_tst8 (sim_cpu *proc, uint8 val)
+cpu_ccr_update_tst8 (sim_cpu *cpu, uint8 val)
 {
-  cpu_set_ccr_V (proc, 0);
-  cpu_set_ccr_N (proc, val & 0x80 ? 1 : 0);
-  cpu_set_ccr_Z (proc, val == 0 ? 1 : 0);
+  cpu_set_ccr_V (cpu, 0);
+  cpu_set_ccr_N (cpu, val & 0x80 ? 1 : 0);
+  cpu_set_ccr_Z (cpu, val == 0 ? 1 : 0);
 }
 
 
@@ -656,7 +656,7 @@ cpu_push_all (sim_cpu *cpu)
 
 /* Simulation of the dbcc/ibcc/tbcc 68HC12 conditional branch operations.  */
 void
-cpu_dbcc (sim_cpu* cpu)
+cpu_dbcc (sim_cpu *cpu)
 {
   uint8 code;
   uint16 addr;
@@ -697,7 +697,7 @@ cpu_dbcc (sim_cpu* cpu)
 }
 
 void
-cpu_exg (sim_cpu* cpu, uint8 code)
+cpu_exg (sim_cpu *cpu, uint8 code)
 {
   uint8 r1, r2;
   uint16 src1;

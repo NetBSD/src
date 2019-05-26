@@ -1,4 +1,4 @@
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,11 +28,11 @@ set probes_bp "dl_main"
 
 if { [gdb_compile_shlib $srcfile_lib $binfile_lib \
 	  [list additional_flags=-fPIC]] != "" } {
-    untested "Could not compile $binfile_lib."
+    untested "failed to compile shared library"
     return -1
 }
 
-if { [prepare_for_testing $testfile.exp $testfile $srcfile \
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
 	  [list additional_flags=-DSHLIB_NAME=\"$binfile_lib\" libs=-ldl]] } {
     return -1
 }

@@ -1,6 +1,6 @@
 /* Data/register window display.
 
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -101,7 +101,7 @@ tui_delete_data_content_windows (void)
 
 
 void
-tui_erase_data_content (char *prompt)
+tui_erase_data_content (const char *prompt)
 {
   werase (TUI_DATA_WIN->generic.handle);
   tui_check_and_display_highlight_if_needed (TUI_DATA_WIN);
@@ -117,7 +117,7 @@ tui_erase_data_content (char *prompt)
       mvwaddstr (TUI_DATA_WIN->generic.handle,
 		 (TUI_DATA_WIN->generic.height / 2),
 		 x_pos,
-		 prompt);
+		 (char *) prompt);
     }
   wrefresh (TUI_DATA_WIN->generic.handle);
 }

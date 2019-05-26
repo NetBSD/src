@@ -1,6 +1,6 @@
 /* Test printing of structure member names in gdb. PR exp/1821
 
-   Copyright 2005-2016 Free Software Foundation, Inc.
+   Copyright 2005-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

@@ -1,5 +1,5 @@
 /* BFD back-end for binary objects.
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2017 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -269,10 +269,11 @@ binary_set_section_contents (bfd *abfd,
 	     have.  */
 
 	  if (s->filepos < 0)
-	    (*_bfd_error_handler)
-	      (_("Warning: Writing section `%s' at huge (ie negative) file offset 0x%lx."),
-	       bfd_get_section_name (abfd, s),
-	       (unsigned long) s->filepos);
+	    _bfd_error_handler
+	      /* xgettext:c-format */
+	      (_("warning: writing section `%A' at huge (ie negative) "
+		 "file offset 0x%lx."),
+	       s, (unsigned long) s->filepos);
 	}
 
       abfd->output_has_begun = TRUE;

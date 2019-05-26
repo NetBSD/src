@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Free Software Foundation, Inc.
+# Copyright 2011-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ if [gdb_skip_xml_test] then {
 }
 
 # Compile test program.
-if { [prepare_for_testing ${testfile}.exp $testfile $srcfile {debug additional_flags=-lpthread}] } {
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile {debug additional_flags=-lpthread}] } {
     fail "cannot compile test program"
     return -1
 }

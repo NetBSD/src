@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -624,23 +624,23 @@ darwin_debug_regions_recurse (task_t task)
 
   if (gdbarch_addr_bit (target_gdbarch ()) <= 32)
     {
-      ui_out_table_header (uiout, 10, ui_left, "start", "Start");
-      ui_out_table_header (uiout, 10, ui_left, "end", "End");
+      uiout->table_header (10, ui_left, "start", "Start");
+      uiout->table_header (10, ui_left, "end", "End");
     }
   else
     {
-      ui_out_table_header (uiout, 18, ui_left, "start", "Start");
-      ui_out_table_header (uiout, 18, ui_left, "end", "End");
+      uiout->table_header (18, ui_left, "start", "Start");
+      uiout->table_header (18, ui_left, "end", "End");
     }
-  ui_out_table_header (uiout, 3, ui_left, "min-prot", "Min");
-  ui_out_table_header (uiout, 3, ui_left, "max-prot", "Max");
-  ui_out_table_header (uiout, 5, ui_left, "inheritence", "Inh");
-  ui_out_table_header (uiout, 9, ui_left, "share-mode", "Shr");
-  ui_out_table_header (uiout, 1, ui_left, "depth", "D");
-  ui_out_table_header (uiout, 3, ui_left, "submap", "Sm");
-  ui_out_table_header (uiout, 0, ui_noalign, "tag", "Tag");
+  uiout->table_header (3, ui_left, "min-prot", "Min");
+  uiout->table_header (3, ui_left, "max-prot", "Max");
+  uiout->table_header (5, ui_left, "inheritence", "Inh");
+  uiout->table_header (9, ui_left, "share-mode", "Shr");
+  uiout->table_header (1, ui_left, "depth", "D");
+  uiout->table_header (3, ui_left, "submap", "Sm");
+  uiout->table_header (0, ui_noalign, "tag", "Tag");
 
-  ui_out_table_body (uiout);
+  uiout->table_body ();
 
   r_start = 0;
   r_depth = 0;
@@ -658,29 +658,29 @@ darwin_debug_regions_recurse (task_t task)
 	break;
       row_chain = make_cleanup_ui_out_tuple_begin_end (uiout, "regions-row");
 
-      ui_out_field_core_addr (uiout, "start", target_gdbarch (), r_start);
-      ui_out_field_core_addr (uiout, "end", target_gdbarch (), r_start + r_size);
-      ui_out_field_string (uiout, "min-prot", 
+      uiout->field_core_addr ("start", target_gdbarch (), r_start);
+      uiout->field_core_addr ("end", target_gdbarch (), r_start + r_size);
+      uiout->field_string ("min-prot",
 			   unparse_protection (r_info.protection));
-      ui_out_field_string (uiout, "max-prot", 
+      uiout->field_string ("max-prot",
 			   unparse_protection (r_info.max_protection));
-      ui_out_field_string (uiout, "inheritence",
+      uiout->field_string ("inheritence",
 			   unparse_inheritance (r_info.inheritance));
-      ui_out_field_string (uiout, "share-mode",
+      uiout->field_string ("share-mode",
 			   unparse_share_mode (r_info.share_mode));
-      ui_out_field_int (uiout, "depth", r_depth);
-      ui_out_field_string (uiout, "submap",
+      uiout->field_int ("depth", r_depth);
+      uiout->field_string ("submap",
 			   r_info.is_submap ? _("sm ") : _("obj"));
       tag = unparse_user_tag (r_info.user_tag);
       if (tag)
-	ui_out_field_string (uiout, "tag", tag);
+	uiout->field_string ("tag", tag);
       else
-	ui_out_field_int (uiout, "tag", r_info.user_tag);
+	uiout->field_int ("tag", r_info.user_tag);
 
       do_cleanups (row_chain);
 
-      if (!ui_out_is_mi_like_p (uiout))
-	ui_out_text (uiout, "\n");
+      if (!uiout->is_mi_like_p ())
+	uiout->text ("\n");
 
       if (r_info.is_submap)
 	r_depth++;
@@ -725,14 +725,13 @@ info_mach_regions_recurse_command (char *args, int from_tty)
 static void
 info_mach_region_command (char *exp, int from_tty)
 {
-  struct expression *expr;
   struct value *val;
   mach_vm_address_t address;
   struct inferior *inf;
 
-  expr = parse_expression (exp);
-  val = evaluate_expression (expr);
-  if (TYPE_CODE (value_type (val)) == TYPE_CODE_REF)
+  expression_up expr = parse_expression (exp);
+  val = evaluate_expression (expr.get ());
+  if (TYPE_IS_REFERENCE (value_type (val)))
     {
       val = value_ind (val);
     }
