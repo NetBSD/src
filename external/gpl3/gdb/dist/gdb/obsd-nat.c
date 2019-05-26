@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD.
 
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
-#include "gdb_wait.h"
+#include "common/gdb_wait.h"
 
 #include "inf-child.h"
 #include "obsd-nat.h"
@@ -35,24 +35,24 @@
 
 #ifdef PT_GET_THREAD_FIRST
 
-static const char *
-obsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
+const char *
+obsd_nat_target::pid_to_str (ptid_t ptid)
 {
-  if (ptid_get_lwp (ptid) != 0)
+  if (ptid.lwp () != 0)
     {
       static char buf[64];
 
-      xsnprintf (buf, sizeof buf, "thread %ld", ptid_get_lwp (ptid));
+      xsnprintf (buf, sizeof buf, "thread %ld", ptid.lwp ());
       return buf;
     }
 
   return normal_pid_to_str (ptid);
 }
 
-static void
-obsd_update_thread_list (struct target_ops *ops)
+void
+obsd_nat_target::update_thread_list ()
 {
-  pid_t pid = ptid_get_pid (inferior_ptid);
+  pid_t pid = inferior_ptid.pid ();
   struct ptrace_thread_state pts;
 
   prune_threads ();
@@ -62,11 +62,11 @@ obsd_update_thread_list (struct target_ops *ops)
 
   while (pts.pts_tid != -1)
     {
-      ptid_t ptid = ptid_build (pid, pts.pts_tid, 0);
+      ptid_t ptid = ptid_t (pid, pts.pts_tid, 0);
 
       if (!in_thread_list (ptid))
 	{
-	  if (ptid_get_lwp (inferior_ptid) == 0)
+	  if (inferior_ptid.lwp () == 0)
 	    thread_change_ptid (inferior_ptid, ptid);
 	  else
 	    add_thread (ptid);
@@ -77,9 +77,9 @@ obsd_update_thread_list (struct target_ops *ops)
     }
 }
 
-static ptid_t
-obsd_wait (struct target_ops *ops,
-	   ptid_t ptid, struct target_waitstatus *ourstatus, int options)
+ptid_t
+obsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
+		       int options)
 {
   pid_t pid;
   int status, save_errno;
@@ -90,7 +90,7 @@ obsd_wait (struct target_ops *ops,
 
       do
 	{
-	  pid = waitpid (ptid_get_pid (ptid), &status, 0);
+	  pid = waitpid (ptid.pid (), &status, 0);
 	  save_errno = errno;
 	}
       while (pid == -1 && errno == EINTR);
@@ -110,12 +110,12 @@ obsd_wait (struct target_ops *ops,
 	}
 
       /* Ignore terminated detached child processes.  */
-      if (!WIFSTOPPED (status) && pid != ptid_get_pid (inferior_ptid))
+      if (!WIFSTOPPED (status) && pid != inferior_ptid.pid ())
 	pid = -1;
     }
   while (pid == -1);
 
-  ptid = pid_to_ptid (pid);
+  ptid = ptid_t (pid);
 
   if (WIFSTOPPED (status))
     {
@@ -129,7 +129,7 @@ obsd_wait (struct target_ops *ops,
 	{
 	case PTRACE_FORK:
 	  ourstatus->kind = TARGET_WAITKIND_FORKED;
-	  ourstatus->value.related_pid = pid_to_ptid (pe.pe_other_pid);
+	  ourstatus->value.related_pid = ptid_t (pe.pe_other_pid);
 
 	  /* Make sure the other end of the fork is stopped too.  */
 	  fpid = waitpid (pe.pe_other_pid, &status, 0);
@@ -142,19 +142,19 @@ obsd_wait (struct target_ops *ops,
 
 	  gdb_assert (pe.pe_report_event == PTRACE_FORK);
 	  gdb_assert (pe.pe_other_pid == pid);
-	  if (fpid == ptid_get_pid (inferior_ptid))
+	  if (fpid == inferior_ptid.pid ())
 	    {
-	      ourstatus->value.related_pid = pid_to_ptid (pe.pe_other_pid);
-	      return pid_to_ptid (fpid);
+	      ourstatus->value.related_pid = ptid_t (pe.pe_other_pid);
+	      return ptid_t (fpid);
 	    }
 
-	  return pid_to_ptid (pid);
+	  return ptid_t (pid);
 	}
 
-      ptid = ptid_build (pid, pe.pe_tid, 0);
+      ptid = ptid_t (pid, pe.pe_tid, 0);
       if (!in_thread_list (ptid))
 	{
-	  if (ptid_get_lwp (inferior_ptid) == 0)
+	  if (inferior_ptid.lwp () == 0)
 	    thread_change_ptid (inferior_ptid, ptid);
 	  else
 	    add_thread (ptid);
@@ -163,24 +163,6 @@ obsd_wait (struct target_ops *ops,
 
   store_waitstatus (ourstatus, status);
   return ptid;
-}
-
-void
-obsd_add_target (struct target_ops *t)
-{
-  /* Override some methods to support threads.  */
-  t->to_pid_to_str = obsd_pid_to_str;
-  t->to_update_thread_list = obsd_update_thread_list;
-  t->to_wait = obsd_wait;
-  add_target (t);
-}
-
-#else
-
-void
-obsd_add_target (struct target_ops *t)
-{
-  add_target (t);
 }
 
 #endif /* PT_GET_THREAD_FIRST */

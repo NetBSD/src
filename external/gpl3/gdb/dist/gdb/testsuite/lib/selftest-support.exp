@@ -1,4 +1,4 @@
-# Copyright 2003-2017 Free Software Foundation, Inc.
+# Copyright 2003-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -88,17 +88,12 @@ proc selftest_setup { executable function } {
 
     set description "run until breakpoint at $function"
     gdb_test_multiple "run $INTERNAL_GDBFLAGS" "$description" {
-        -re "Starting program.*Breakpoint \[0-9\]+,.*$function .data.* at .*main.c:.*$gdb_prompt $" {
+        -re "Starting program.*Breakpoint \[0-9\]+,.*$function \\(.*\\).* at .*main.c:.*$gdb_prompt $" {
             pass "$description"
         }
-        -re "Starting program.*Breakpoint \[0-9\]+,.*$function .data.*$gdb_prompt $" {
+        -re "Starting program.*Breakpoint \[0-9\]+,.*$function \\(.*\\).*$gdb_prompt $" {
             xfail "$description (line numbers scrambled?)"
         }
-	-re "Starting program.*Breakpoint \[0-9\]+,.* at .*main.c:.*$function.*$gdb_prompt $" {
-	    # $function may be inlined, so the program stops at the line
-	    # calling $function.
-	    pass "$description"
-	}
         -re "vfork: No more processes.*$gdb_prompt $" {
             fail "$description (out of virtual memory)"
             set timeout $oldtimeout
@@ -124,8 +119,23 @@ proc selftest_setup { executable function } {
 proc do_self_tests {function body} {
     global GDB tool
 
-    # Are we on a target board.
-    if { [is_remote target] || ![isnative] } then {
+    # Are we testing with a remote board?  In that case, the target
+    # won't have access to the GDB's auxilliary data files
+    # (data-directory, etc.).  It's simpler to just skip.
+    if [is_remote target] {
+	return
+    }
+
+    # ... or seemingly testing with a cross debugger?  Likely GDB
+    # wouldn't be able to debug itself then...
+    if ![isnative] {
+	return
+    }
+
+    # ... or with a stub-like server?  I.e., gdbserver + "target
+    # remote"?  In that case we won't be able to pass command line
+    # arguments to GDB, and selftest_setup wants to do exactly that.
+    if [use_gdb_stub] {
 	return
     }
 

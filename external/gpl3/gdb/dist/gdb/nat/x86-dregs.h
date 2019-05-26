@@ -1,6 +1,6 @@
 /* Debug register code for x86 (i386 and x86-64).
 
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef NAT_X86_DREGS_H
+#define NAT_X86_DREGS_H
+
 /* Support for hardware watchpoints and breakpoints using the x86
    debug registers.
 
@@ -29,10 +32,8 @@
    counts, and allow to watch regions up to 16 bytes long
    (32 bytes on 64 bit hosts).  */
 
-#ifndef X86_DREGS_H
-#define X86_DREGS_H 1
 
-#include "break-common.h" /* target_hw_bp_type */
+#include "common/break-common.h" /* target_hw_bp_type */
 
 /* Low-level function vector.  */
 
@@ -128,4 +129,8 @@ extern int x86_dr_stopped_data_address (struct x86_debug_reg_state *state,
    Otherwise return false.  */
 extern int x86_dr_stopped_by_watchpoint (struct x86_debug_reg_state *state);
 
-#endif /* X86_DREGS_H */
+/* Return true if the inferior has some hardware breakpoint that
+   triggered.  Otherwise return false.  */
+extern int x86_dr_stopped_by_hw_breakpoint (struct x86_debug_reg_state *state);
+
+#endif /* NAT_X86_DREGS_H */

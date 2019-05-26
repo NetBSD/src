@@ -1,6 +1,6 @@
 /* varobj support for Ada.
 
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -350,8 +350,7 @@ ada_varobj_get_number_of_children (struct value *parent_value,
   /* A typedef to an array descriptor in fact represents a pointer
      to an unconstrained array.  These types always have one child
      (the unconstrained array).  */
-  if (ada_is_array_descriptor_type (parent_type)
-      && TYPE_CODE (parent_type) == TYPE_CODE_TYPEDEF)
+  if (ada_is_access_to_unconstrained_array (parent_type))
     return 1;
 
   if (TYPE_CODE (parent_type) == TYPE_CODE_ARRAY)
@@ -419,7 +418,8 @@ ada_varobj_describe_struct_child (struct value *parent_value,
   int fieldno;
   int childno = 0;
 
-  gdb_assert (TYPE_CODE (parent_type) == TYPE_CODE_STRUCT);
+  gdb_assert (TYPE_CODE (parent_type) == TYPE_CODE_STRUCT
+	      || TYPE_CODE (parent_type) == TYPE_CODE_UNION);
 
   for (fieldno = 0; fieldno < TYPE_NFIELDS (parent_type); fieldno++)
     {
@@ -679,8 +679,7 @@ ada_varobj_describe_child (struct value *parent_value,
   if (child_path_expr)
     *child_path_expr = std::string ();
 
-  if (ada_is_array_descriptor_type (parent_type)
-      && TYPE_CODE (parent_type) == TYPE_CODE_TYPEDEF)
+  if (ada_is_access_to_unconstrained_array (parent_type))
     {
       ada_varobj_describe_ptr_child (parent_value, parent_type,
 				     parent_name, parent_path_expr,
@@ -699,7 +698,8 @@ ada_varobj_describe_child (struct value *parent_value,
       return;
     }
 
-  if (TYPE_CODE (parent_type) == TYPE_CODE_STRUCT)
+  if (TYPE_CODE (parent_type) == TYPE_CODE_STRUCT
+      || TYPE_CODE (parent_type) == TYPE_CODE_UNION)
     {
       ada_varobj_describe_struct_child (parent_value, parent_type,
 					parent_name, parent_path_expr,
@@ -825,7 +825,6 @@ ada_varobj_get_value_of_array_variable (struct value *value,
 					struct type *type,
 					struct value_print_options *opts)
 {
-  char *result;
   const int numchild = ada_varobj_get_array_number_of_children (value, type);
 
   /* If we have a string, provide its contents in the "value" field.
@@ -873,7 +872,7 @@ ada_varobj_get_value_of_variable (struct value *value,
 static int
 ada_number_of_children (const struct varobj *var)
 {
-  return ada_varobj_get_number_of_children (var->value, var->type);
+  return ada_varobj_get_number_of_children (var->value.get (), var->type);
 }
 
 static std::string
@@ -885,7 +884,7 @@ ada_name_of_variable (const struct varobj *parent)
 static std::string
 ada_name_of_child (const struct varobj *parent, int index)
 {
-  return ada_varobj_get_name_of_child (parent->value, parent->type,
+  return ada_varobj_get_name_of_child (parent->value.get (), parent->type,
 				       parent->name.c_str (), index);
 }
 
@@ -895,7 +894,7 @@ ada_path_expr_of_child (const struct varobj *child)
   const struct varobj *parent = child->parent;
   const char *parent_path_expr = varobj_get_path_expr (parent);
 
-  return ada_varobj_get_path_expr_of_child (parent->value,
+  return ada_varobj_get_path_expr_of_child (parent->value.get (),
 					    parent->type,
 					    parent->name.c_str (),
 					    parent_path_expr,
@@ -905,14 +904,14 @@ ada_path_expr_of_child (const struct varobj *child)
 static struct value *
 ada_value_of_child (const struct varobj *parent, int index)
 {
-  return ada_varobj_get_value_of_child (parent->value, parent->type,
+  return ada_varobj_get_value_of_child (parent->value.get (), parent->type,
 					parent->name.c_str (), index);
 }
 
 static struct type *
 ada_type_of_child (const struct varobj *parent, int index)
 {
-  return ada_varobj_get_type_of_child (parent->value, parent->type,
+  return ada_varobj_get_type_of_child (parent->value.get (), parent->type,
 				       index);
 }
 
@@ -924,22 +923,26 @@ ada_value_of_variable (const struct varobj *var,
 
   varobj_formatted_print_options (&opts, format);
 
-  return ada_varobj_get_value_of_variable (var->value, var->type, &opts);
+  return ada_varobj_get_value_of_variable (var->value.get (), var->type,
+					   &opts);
 }
 
 /* Implement the "value_is_changeable_p" routine for Ada.  */
 
-static int
+static bool
 ada_value_is_changeable_p (const struct varobj *var)
 {
-  struct type *type = var->value ? value_type (var->value) : var->type;
+  struct type *type = (var->value != nullptr
+		       ? value_type (var->value.get ()) : var->type);
 
-  if (ada_is_array_descriptor_type (type)
-      && TYPE_CODE (type) == TYPE_CODE_TYPEDEF)
+  if (TYPE_CODE (type) == TYPE_CODE_REF)
+    type = TYPE_TARGET_TYPE (type);
+
+  if (ada_is_access_to_unconstrained_array (type))
     {
       /* This is in reality a pointer to an unconstrained array.
 	 its value is changeable.  */
-      return 1;
+      return true;
     }
 
   if (ada_is_string_type (type))
@@ -947,7 +950,7 @@ ada_value_is_changeable_p (const struct varobj *var)
       /* We display the contents of the string in the array's
 	 "value" field.  The contents can change, so consider
 	 that the array is changeable.  */
-      return 1;
+      return true;
     }
 
   return varobj_default_value_is_changeable_p (var);
@@ -955,11 +958,10 @@ ada_value_is_changeable_p (const struct varobj *var)
 
 /* Implement the "value_has_mutated" routine for Ada.  */
 
-static int
+static bool
 ada_value_has_mutated (const struct varobj *var, struct value *new_val,
 		       struct type *new_type)
 {
-  int i;
   int from = -1;
   int to = -1;
 
@@ -967,7 +969,7 @@ ada_value_has_mutated (const struct varobj *var, struct value *new_val,
      has mutated.  */
   if (ada_varobj_get_number_of_children (new_val, new_type)
       != var->num_children)
-    return 1;
+    return true;
 
   /* If the number of fields have remained the same, then we need
      to check the name of each field.  If they remain the same,
@@ -983,13 +985,13 @@ ada_value_has_mutated (const struct varobj *var, struct value *new_val,
      has mutated or not. So just assume it hasn't.  */
 
   varobj_restrict_range (var->children, &from, &to);
-  for (i = from; i < to; i++)
+  for (int i = from; i < to; i++)
     if (ada_varobj_get_name_of_child (new_val, new_type,
 				      var->name.c_str (), i)
-	!= VEC_index (varobj_p, var->children, i)->name)
-      return 1;
+	!= var->children[i]->name)
+      return true;
 
-  return 0;
+  return false;
 }
 
 /* varobj operations for ada.  */

@@ -1,5 +1,5 @@
 /* Support for GDB maintenance commands.
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 #ifndef MAINT_H
 #define MAINT_H
 
-#include "run-time-clock.h"
+#include "common/run-time-clock.h"
 #include <chrono>
 
 extern void set_per_command_time (int);

@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux Super-H.
 
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -194,26 +194,18 @@ sh_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
                                              svr4_fetch_objfile_link_map);
 
-  /* Core files and signal handler frame unwinding are supported for
-     32-bit SH only, at present.  */
-  if (info.bfd_arch_info->mach != bfd_mach_sh5)
-    {
-      struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-      /* Remember regset characteristics.  The sizes should match
-	 elf_gregset_t and elf_fpregset_t from Linux.  */
-      tdep->core_gregmap = (struct sh_corefile_regmap *)gregs_table;
-      tdep->sizeof_gregset = 92;
-      tdep->core_fpregmap = (struct sh_corefile_regmap *)fpregs_table;
-      tdep->sizeof_fpregset = 136;
+  /* Remember regset characteristics.  The sizes should match
+     elf_gregset_t and elf_fpregset_t from Linux.  */
+  tdep->core_gregmap = (struct sh_corefile_regmap *) gregs_table;
+  tdep->sizeof_gregset = 92;
+  tdep->core_fpregmap = (struct sh_corefile_regmap *) fpregs_table;
+  tdep->sizeof_fpregset = 136;
 
-      tramp_frame_prepend_unwinder (gdbarch, &sh_linux_sigreturn_tramp_frame);
-      tramp_frame_prepend_unwinder (gdbarch, &sh_linux_rt_sigreturn_tramp_frame);
-    }
+  tramp_frame_prepend_unwinder (gdbarch, &sh_linux_sigreturn_tramp_frame);
+  tramp_frame_prepend_unwinder (gdbarch, &sh_linux_rt_sigreturn_tramp_frame);
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern void _initialize_sh_linux_tdep (void);
 
 void
 _initialize_sh_linux_tdep (void)

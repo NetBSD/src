@@ -10,11 +10,9 @@ static void
 initialize_tdesc_s390x_vx_linux64 (void)
 {
   struct target_desc *result = allocate_target_description ();
-  struct tdesc_feature *feature;
-  struct tdesc_type *field_type;
-  struct tdesc_type *type;
-
   set_tdesc_architecture (result, bfd_scan_arch ("s390:64-bit"));
+
+  struct tdesc_feature *feature;
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.s390.core");
   tdesc_create_reg (feature, "pswm", 0, 1, "psw", 64, "uint64");
@@ -79,39 +77,42 @@ initialize_tdesc_s390x_vx_linux64 (void)
   tdesc_create_reg (feature, "system_call", 53, 1, "system", 32, "uint32");
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.s390.vx");
-  field_type = tdesc_named_type (feature, "ieee_single");
-  tdesc_create_vector (feature, "v4f", field_type, 4);
+  tdesc_type *element_type;
+  element_type = tdesc_named_type (feature, "ieee_single");
+  tdesc_create_vector (feature, "v4f", element_type, 4);
 
-  field_type = tdesc_named_type (feature, "ieee_double");
-  tdesc_create_vector (feature, "v2d", field_type, 2);
+  element_type = tdesc_named_type (feature, "ieee_double");
+  tdesc_create_vector (feature, "v2d", element_type, 2);
 
-  field_type = tdesc_named_type (feature, "int8");
-  tdesc_create_vector (feature, "v16i8", field_type, 16);
+  element_type = tdesc_named_type (feature, "int8");
+  tdesc_create_vector (feature, "v16i8", element_type, 16);
 
-  field_type = tdesc_named_type (feature, "int16");
-  tdesc_create_vector (feature, "v8i16", field_type, 8);
+  element_type = tdesc_named_type (feature, "int16");
+  tdesc_create_vector (feature, "v8i16", element_type, 8);
 
-  field_type = tdesc_named_type (feature, "int32");
-  tdesc_create_vector (feature, "v4i32", field_type, 4);
+  element_type = tdesc_named_type (feature, "int32");
+  tdesc_create_vector (feature, "v4i32", element_type, 4);
 
-  field_type = tdesc_named_type (feature, "int64");
-  tdesc_create_vector (feature, "v2i64", field_type, 2);
+  element_type = tdesc_named_type (feature, "int64");
+  tdesc_create_vector (feature, "v2i64", element_type, 2);
 
-  type = tdesc_create_union (feature, "vec128");
+  tdesc_type_with_fields *type_with_fields;
+  type_with_fields = tdesc_create_union (feature, "vec128");
+  tdesc_type *field_type;
   field_type = tdesc_named_type (feature, "v4f");
-  tdesc_add_field (type, "v4_float", field_type);
+  tdesc_add_field (type_with_fields, "v4_float", field_type);
   field_type = tdesc_named_type (feature, "v2d");
-  tdesc_add_field (type, "v2_double", field_type);
+  tdesc_add_field (type_with_fields, "v2_double", field_type);
   field_type = tdesc_named_type (feature, "v16i8");
-  tdesc_add_field (type, "v16_int8", field_type);
+  tdesc_add_field (type_with_fields, "v16_int8", field_type);
   field_type = tdesc_named_type (feature, "v8i16");
-  tdesc_add_field (type, "v8_int16", field_type);
+  tdesc_add_field (type_with_fields, "v8_int16", field_type);
   field_type = tdesc_named_type (feature, "v4i32");
-  tdesc_add_field (type, "v4_int32", field_type);
+  tdesc_add_field (type_with_fields, "v4_int32", field_type);
   field_type = tdesc_named_type (feature, "v2i64");
-  tdesc_add_field (type, "v2_int64", field_type);
+  tdesc_add_field (type_with_fields, "v2_int64", field_type);
   field_type = tdesc_named_type (feature, "uint128");
-  tdesc_add_field (type, "uint128", field_type);
+  tdesc_add_field (type_with_fields, "uint128", field_type);
 
   tdesc_create_reg (feature, "v0l", 54, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "v1l", 55, 1, NULL, 64, "uint64");

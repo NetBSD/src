@@ -1,6 +1,6 @@
 /* Python interface to blocks.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,6 @@
 #include "symtab.h"
 #include "python-internal.h"
 #include "objfiles.h"
-#include "symtab.h"
 
 typedef struct blpy_block_object {
   PyObject_HEAD
@@ -110,7 +109,7 @@ blpy_get_start (PyObject *self, void *closure)
 
   BLPY_REQUIRE_VALID (self, block);
 
-  return gdb_py_object_from_ulongest (BLOCK_START (block));
+  return gdb_py_object_from_ulongest (BLOCK_START (block)).release ();
 }
 
 static PyObject *
@@ -120,7 +119,7 @@ blpy_get_end (PyObject *self, void *closure)
 
   BLPY_REQUIRE_VALID (self, block);
 
-  return gdb_py_object_from_ulongest (BLOCK_END (block));
+  return gdb_py_object_from_ulongest (BLOCK_END (block)).release ();
 }
 
 static PyObject *
@@ -364,44 +363,6 @@ blpy_iter_is_valid (PyObject *self, PyObject *args)
     Py_RETURN_FALSE;
 
   Py_RETURN_TRUE;
-}
-
-/* Return the innermost lexical block containing the specified pc value,
-   or 0 if there is none.  */
-PyObject *
-gdbpy_block_for_pc (PyObject *self, PyObject *args)
-{
-  gdb_py_ulongest pc;
-  const struct block *block = NULL;
-  struct compunit_symtab *cust = NULL;
-
-  if (!PyArg_ParseTuple (args, GDB_PY_LLU_ARG, &pc))
-    return NULL;
-
-  TRY
-    {
-      cust = find_pc_compunit_symtab (pc);
-
-      if (cust != NULL && COMPUNIT_OBJFILE (cust) != NULL)
-	block = block_for_pc (pc);
-    }
-  CATCH (except, RETURN_MASK_ALL)
-    {
-      GDB_PY_HANDLE_EXCEPTION (except);
-    }
-  END_CATCH
-
-  if (cust == NULL || COMPUNIT_OBJFILE (cust) == NULL)
-    {
-      PyErr_SetString (PyExc_RuntimeError,
-		       _("Cannot locate object file for block."));
-      return NULL;
-    }
-
-  if (block)
-    return block_to_block_object (block, COMPUNIT_OBJFILE (cust));
-
-  Py_RETURN_NONE;
 }
 
 /* This function is called when an objfile is about to be freed.

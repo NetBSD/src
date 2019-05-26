@@ -1,6 +1,6 @@
 /* Wrapper for waitpid for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef LINUX_WAITPID_H
-#define LINUX_WAITPID_H
+#ifndef NAT_LINUX_WAITPID_H
+#define NAT_LINUX_WAITPID_H
 
 /* Wrapper function for waitpid which handles EINTR.  */
 extern int my_waitpid (int pid, int *status, int flags);
@@ -27,4 +27,4 @@ extern int my_waitpid (int pid, int *status, int flags);
    messages only.  */
 extern char *status_to_str (int status);
 
-#endif /* LINUX_WAITPID_H */
+#endif /* NAT_LINUX_WAITPID_H */

@@ -1,4 +1,4 @@
-#   Copyright 1988-2017 Free Software Foundation, Inc.
+#   Copyright 1988-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,8 +24,6 @@ set timeout 60
 #
 # test default actions of gdb commands
 #
-
-#load_lib gdb.exp
 
 gdb_test "add-symbol-file" "add-symbol-file takes a file name and an address" "add-symbol-file"
 
@@ -511,7 +509,7 @@ gdb_test "set history size" "Argument required .integer to set it to.*" "set his
 #test set history
 gdb_test "set history" "\"set history\" must be followed by the name of a history subcommand.(\[^\r\n\]*\[\r\n\])+List of set history subcommands:(\[^\r\n\]*\[\r\n\])+set history expansion -- Set history expansion on command input(\[^\r\n\]*\[\r\n\])+set history filename -- Set the filename in which to record the command history(\[^\r\n\]*\[\r\n\])+set history save -- Set saving of the history record on exit(\[^\r\n\]*\[\r\n\])+set history size -- Set the size of the command history(\[^\r\n\]*\[\r\n\])+Type \"help set history\" followed by set history subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "set history"
 #test set language
-gdb_test "set language" "Requires an argument. Valid arguments are ada, c, c.., asm, minimal, d, fortran, go, auto, local, unknown, modula-2, objective-c, opencl, pascal, rust." "set language"
+gdb_test "set language" "Requires an argument. Valid arguments are auto, local, unknown, ada, asm, c, c.., d, fortran, go, minimal, modula-2, objective-c, opencl, pascal, rust." "set language"
 #test set listsize
 gdb_test "set listsize" "Argument required .integer to set it to.*" "set listsize"
 #test set print "p" abbreviation
@@ -686,7 +684,7 @@ gdb_test_no_output "show values" "show values"
 #test show verbose
 gdb_test "show verbose" "Verbose printing of informational messages is o.*|Verbosity is off.*" "show verbose"
 #test show version
-gdb_test "show version" "GNU gdb \[0-9\.\]*(\[^\r\n\]*\[\r\n\])+Copyright \\(C\\) \[0-9\]* Free Software Foundation, Inc(\[^\r\n\]*\[\r\n\])+License GPLv3\\+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>(\[^\r\n\]*\[\r\n\])+This is free software: you are free to change and redistribute it.(\[^\r\n\]*\[\r\n\])+There is NO WARRANTY, to the extent permitted by law.  Type \"show copying\"(\[^\r\n\]*\[\r\n\])+and \"show warranty\" for details..*" "show version" 
+gdb_test "show version" "GNU gdb \[0-9\.\]*(\[^\r\n\]*\[\r\n\])+Copyright \\(C\\) \[0-9\]* Free Software Foundation, Inc(\[^\r\n\]*\[\r\n\])+License GPLv3\\+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>(\[^\r\n\]*\[\r\n\])+This is free software: you are free to change and redistribute it.(\[^\r\n\]*\[\r\n\])+There is NO WARRANTY, to the extent permitted by law.(\[^\r\n\]*\[\r\n\])+Type \"show copying\" and \"show warranty\" for details..*" "show version"
 #test show width
 gdb_test "show width" "Number of characters gdb thinks are in a line is.*" "show width"
 #test show write

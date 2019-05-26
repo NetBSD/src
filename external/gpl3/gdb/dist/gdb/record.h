@@ -1,6 +1,6 @@
 /* Process record and replay target for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,13 +17,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef _RECORD_H_
-#define _RECORD_H_
+#ifndef RECORD_H
+#define RECORD_H
 
 #include "target/waitstatus.h" /* For enum target_stop_reason.  */
 #include "common/enum-flags.h"
 
 struct cmd_list_element;
+struct inferior;
 
 extern unsigned int record_debug;
 
@@ -71,7 +72,7 @@ DEF_ENUM_FLAGS_TYPE (enum record_print_flag, record_print_flags);
    otherwise.  */
 
 extern int
-  record_check_stopped_by_breakpoint (struct address_space *aspace,
+  record_check_stopped_by_breakpoint (const address_space *aspace,
 				      CORE_ADDR pc,
 				      enum target_stop_reason *reason);
 
@@ -88,7 +89,7 @@ extern void record_goto (const char *arg);
 extern void record_disconnect (struct target_ops *, const char *, int);
 
 /* The default "to_detach" target method for record targets.  */
-extern void record_detach (struct target_ops *, const char *, int);
+extern void record_detach (struct target_ops *, inferior *, int);
 
 /* The default "to_mourn_inferior" target method for record targets.  */
 extern void record_mourn_inferior (struct target_ops *);
@@ -112,4 +113,4 @@ extern void record_start (const char *method, const char *format,
 /* Stop recording.  Throw on failure.  */
 extern void record_stop (int from_tty);
 
-#endif /* _RECORD_H_ */
+#endif /* RECORD_H */

@@ -1,6 +1,6 @@
 /* Low-level debug register code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef X86_LINUX_DREGS_H
-#define X86_LINUX_DREGS_H
+#ifndef NAT_X86_LINUX_DREGS_H
+#define NAT_X86_LINUX_DREGS_H
 
 /* Return the address stored in the current inferior's debug register
    REGNUM.  */
@@ -50,4 +50,4 @@ extern unsigned long x86_linux_dr_get_status (void);
 
 extern void x86_linux_update_debug_registers (struct lwp_info *lwp);
 
-#endif /* X86_LINUX_DREGS_H */
+#endif /* NAT_X86_LINUX_DREGS_H */

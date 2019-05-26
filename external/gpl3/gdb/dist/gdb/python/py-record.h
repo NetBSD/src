@@ -1,6 +1,6 @@
 /* Python interface to record targets.
 
-   Copyright 2017 Free Software Foundation, Inc.
+   Copyright 2017-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_PY_RECORD_H
-#define GDB_PY_RECORD_H
+#ifndef PYTHON_PY_RECORD_H
+#define PYTHON_PY_RECORD_H
 
 #include "inferior.h"
 #include "python-internal.h"
@@ -29,8 +29,8 @@ typedef struct
 {
   PyObject_HEAD
 
-  /* The ptid this object refers to.  */
-  ptid_t ptid;
+  /* The thread this object refers to.  */
+  thread_info *thread;
 
   /* The current recording method.  */
   enum record_method method;
@@ -43,8 +43,8 @@ typedef struct
 {
   PyObject_HEAD
 
-  /* The ptid this object refers to.  */
-  ptid_t ptid;
+  /* The thread this object refers to.  */
+  thread_info *thread;
 
   /* The current recording method.  */
   enum record_method method;
@@ -60,15 +60,15 @@ extern PyTypeObject recpy_insn_type;
 extern PyTypeObject recpy_func_type;
 
 /* Create a new gdb.RecordInstruction object.  */
-extern PyObject *recpy_insn_new (ptid_t ptid, enum record_method method,
+extern PyObject *recpy_insn_new (thread_info *thread, enum record_method method,
 				 Py_ssize_t number);
 
 /* Create a new gdb.RecordFunctionSegment object.  */
-extern PyObject *recpy_func_new (ptid_t ptid, enum record_method method,
+extern PyObject *recpy_func_new (thread_info *thread, enum record_method method,
 				 Py_ssize_t number);
 
 /* Create a new gdb.RecordGap object.  */
 extern PyObject *recpy_gap_new (int reason_code, const char *reason_string,
 				Py_ssize_t number);
 
-#endif /* GDB_PY_RECORD_H */
+#endif /* PYTHON_PY_RECORD_H */

@@ -1,6 +1,6 @@
 /* Target wait definitions and prototypes.
 
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef WAIT_H
-#define WAIT_H
+#ifndef TARGET_WAIT_H
+#define TARGET_WAIT_H
 
 /* Options that can be passed to target_wait.  */
 
@@ -27,4 +27,4 @@
    event.  */
 #define TARGET_WNOHANG 1
 
-#endif /* WAIT_H */
+#endif /* TARGET_WAIT_H */

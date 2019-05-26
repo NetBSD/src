@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Free Software Foundation, Inc.
+# Copyright 2012-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Tests for explicit locations
+
+load_lib completion-support.exp
 
 standard_testfile explicit.c explicit2.c 3explicit.c
 set exefile $testfile
@@ -222,13 +224,14 @@ namespace eval $testfile {
 	    }
 	}
 
-	set tst "complete unique file name"
-	send_gdb "break -source 3ex\t"
-	gdb_test_multiple "" $tst {
-	    -re "break -source 3explicit.c " {
-		send_gdb "\n"
-		gdb_test "" \
-		    {Source filename requires function, label, or line offset.} $tst
+	with_test_prefix "complete unique file name" {
+	    foreach qc $completion::maybe_quoted_list {
+		set cmd "break -source ${qc}3explicit.c${qc}"
+		test_gdb_complete_unique \
+		    "break -source ${qc}3ex" \
+		    $cmd
+		gdb_test $cmd \
+		    {Source filename requires function, label, or line offset.}
 	    }
 	}
 
@@ -326,10 +329,217 @@ namespace eval $testfile {
 	    }
 	}
 
+	with_test_prefix "complete unique label name" {
+	    foreach qc $completion::maybe_quoted_list {
+		test_gdb_complete_unique \
+		    "break -function myfunction -label ${qc}to" \
+		    "break -function myfunction -label ${qc}top${qc}"
+	    }
+	}
+
+	with_test_prefix "complete unique label name with source file" {
+	    test_gdb_complete_unique \
+		"break -source explicit.c -function myfunction -label to" \
+		"break -source explicit.c -function myfunction -label top"
+	}
+
+	with_test_prefix "complete unique label name reversed" {
+	    test_gdb_complete_multiple "b -label top -function " "myfunction" "" {
+		"myfunction"
+		"myfunction2"
+		"myfunction3"
+		"myfunction4"
+	    }
+	}
+
+	with_test_prefix "complete non-unique label name" {
+	    test_gdb_complete_multiple "b -function myfunction -label " "" "" {
+		"done"
+		"top"
+	    }
+	}
+
+	# The program is stopped at myfunction, so gdb is able to
+	# infer the label's function.
+	with_test_prefix "complete label name with no function" {
+	    test_gdb_complete_unique \
+		"break -label to" \
+		"break -label top"
+	    check_bp_locations_match_list \
+		"break -label top" {
+		    "-function myfunction -label top"
+		}
+	}
+
+	# See above.
+	with_test_prefix "complete label name with source file but no function" {
+	    test_gdb_complete_unique \
+		"break -source explicit.c -label to" \
+		"break -source explicit.c -label top"
+	    check_bp_locations_match_list \
+		"break -source explicit.c -label top" {
+		    "-source explicit.c -function myfunction -label top"
+		}
+	}
+
+	with_test_prefix "complete label name with wrong source file" {
+	    test_gdb_complete_none \
+		"break -source explicit2.c -function myfunction -label to"
+	    check_setting_bp_fails \
+		"break -source explicit2.c -function myfunction -label top"
+	}
+
+	# Get rid of symbols from shared libraries, otherwise
+	# "b -source thr<tab>" could find some system library's
+	# source.
+	gdb_test_no_output "nosharedlibrary"
+
+	# Test that after a seemingly finished option argument,
+	# completion matches both the explicit location options and
+	# the linespec keywords.
+	set completions_list {
+	    "-function"
+	    "-label"
+	    "-line"
+	    "-qualified"
+	    "-source"
+	    "if"
+	    "task"
+	    "thread"
+	}
+	foreach what { "-function" "-label" "-line" "-source" } {
+	    # Also test with "-qualified" appearing before the
+	    # explicit location.
+	    foreach prefix {"" "-qualified "} {
+
+		# ... and with "-qualified" appearing after the
+		# explicit location.
+		foreach suffix {"" " -qualified"} {
+		    with_test_prefix "complete after $prefix$what$suffix" {
+			if {$what != "-line"} {
+			    set w "$prefix$what argument$suffix "
+			    test_gdb_complete_multiple \
+				"b $w" "" "" $completions_list
+			    test_gdb_complete_unique \
+				"b $w thr" \
+				"b $w thread"
+			    test_gdb_complete_unique \
+				"b $w -fun" \
+				"b $w -function"
+			} else {
+			    # After -line, we expect a number / offset.
+			    foreach line {"10" "+10" "-10"} {
+				set w "$prefix-line $line$suffix"
+				test_gdb_complete_multiple \
+				    "b $w " "" "" $completions_list
+				test_gdb_complete_unique \
+				    "b $w thr" \
+				    "b $w thread"
+				test_gdb_complete_unique \
+				    "b $w -fun" \
+				    "b $w -function"
+			    }
+
+			    # With an invalid -line argument, we don't get any
+			    # completions.
+			    test_gdb_complete_none "b $prefix-line argument$suffix "
+			}
+
+		    }
+
+		}
+
+		# These tests don't make sense with "-qualified" after
+		# the location.
+		with_test_prefix "complete after $prefix$what" {
+		    # Don't complete a linespec keyword ("thread") or
+		    # another option name when expecting an option
+		    # argument.
+		    test_gdb_complete_none "b $prefix$what thr"
+		    test_gdb_complete_none "b $prefix$what -fun"
+		}
+	    }
+	}
+
+	# Tests that ensure that after "if" we complete on expressions
+	# are in cpcompletion.exp.
+
+	# Disable the completion limit for the rest of the testcase.
+	gdb_test_no_output "set max-completions unlimited"
+
+	# Get rid of symbols from shared libraries, otherwise the
+	# completions match list for "break <tab>" is huge and makes
+	# the test below quite long while the gdb_test_multiple loop
+	# below consumes the matches.  Not doing this added ~20
+	# seconds at the time of writing.  (Actually, already done above.)
+	# gdb_test_no_output "nosharedlibrary"
+
+	# Test completion with no input argument.  We should see all
+	# the options, plus all the functions.  To keep it simple, as
+	# proxy, we check for presence of one explicit location
+	# option, one probe location, and one function.
+	set saw_opt_function 0
+	set saw_opt_probe_stap 0
+	set saw_function 0
+
+	set tst "complete with no arguments"
+	send_gdb "break \t"
+	gdb_test_multiple "" $tst {
+	    "break \\\x07" {
+		send_gdb "\t\t"
+		gdb_test_multiple "" $tst {
+		    "Display all" {
+			send_gdb "y"
+			exp_continue
+		    }
+		    -re "-function" {
+			set saw_opt_function 1
+			exp_continue
+		    }
+		    -re "-probe-stap" {
+			set saw_opt_probe_stap 1
+			exp_continue
+		    }
+		    -re "myfunction4" {
+			set saw_function 1
+			exp_continue
+		    }
+		    -re "\r\n$gdb_prompt " {
+			gdb_assert {$saw_opt_function && $saw_opt_probe_stap && $saw_function} $tst
+		    }
+		    -re "  " {
+			exp_continue
+		    }
+		}
+	    }
+	}
+	clear_input_line $tst
+
 	# NOTE: We don't bother testing more elaborate combinations of options,
 	# such as "-func main -sour 3ex\t" (main is defined in explicit.c).
 	# The completer cannot handle these yet.
 
+	# The following completion tests require having no symbols
+	# loaded.
+	gdb_exit
+	gdb_start
+
+	# The match list you get when you complete with no options
+	# specified at all.
+	set completion_list {
+	    "-function"
+	    "-label"
+	    "-line"
+	    "-probe"
+	    "-probe-dtrace"
+	    "-probe-stap"
+	    "-qualified"
+	    "-source"
+	}
+	with_test_prefix "complete with no arguments and no symbols" {
+	    test_gdb_complete_multiple "b " "" "-" $completion_list
+	    test_gdb_complete_multiple "b " "-" "" $completion_list
+	}
     }
     # End of completion tests.
 

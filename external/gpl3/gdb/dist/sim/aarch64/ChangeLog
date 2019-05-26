@@ -1,3 +1,18 @@
+2017-09-06  John Baldwin  <jhb@FreeBSD.org>
+
+	* configure: Regenerate.
+
+2017-04-22  Jim Wilson  <jim.wilson@linaro.org>
+
+	* simulator.c (vec_load): Add M argument.  Rewrite to iterate over
+	registers based on structure size.
+	(LD4, LD3, LD2, LD1_2, LD1_3, LD1_4): Pass new arg to vec_load.
+	(LD1_1): Replace with call to vec_load.
+	(vec_store): Add new M argument.  Rewrite to iterate over registers
+	based on structure size.
+	(ST4, ST3, ST2, ST1_2, ST1_3, ST1_4): Pass new arg to vec_store.
+	(ST1_1): Replace with call to vec_store.
+
 2017-04-08  Jim Wilson  <jim.wilson@linaro.org>
 
 	* simulator.c (do_vec_FCVTL): New.

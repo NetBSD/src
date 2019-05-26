@@ -1,3 +1,7 @@
+2017-09-06  John Baldwin  <jhb@FreeBSD.org>
+
+	* configure: Regenerate.
+
 2016-07-27  Alan Modra  <amodra@gmail.com>
 
 	* load.c: Don't include libbfd.h.

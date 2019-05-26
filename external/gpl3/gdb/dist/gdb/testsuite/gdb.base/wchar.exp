@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Free Software Foundation, Inc.
+# Copyright 2011-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,3 +69,6 @@ gdb_test "print repeat" "= L\"A$cent$cent\"\.\.\." \
 
 gdb_test "print repeat_p" "= $hex L\"A$cent$cent\"\.\.\." \
     "print repeat_p (print elements 3)"
+
+# From PR cli/14977, but here because it requires wchar_t.
+gdb_test "printf \"%ls\\n\", 0" "\\(null\\)"

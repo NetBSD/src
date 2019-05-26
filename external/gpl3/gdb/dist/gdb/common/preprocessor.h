@@ -1,4 +1,4 @@
-/* Copyright (C) 2017 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_PREPROC_H
-#define COMMON_PREPROC_H
+#ifndef COMMON_PREPROCESSOR_H
+#define COMMON_PREPROCESSOR_H
 
 /* Generally useful preprocessor bits.  */
 
@@ -24,8 +24,12 @@
 #define CONCAT_1(a, b) a ## b
 #define CONCAT(a, b) CONCAT_1 (a, b)
 
+/* Stringification.  */
+#define STRINGIFY_1(x) #x
+#define STRINGIFY(x) STRINGIFY_1 (x)
+
 /* Escape parens out.  Useful if you need to pass an argument that
    includes commas to another macro.  */
-#define ESC(...) __VA_ARGS__
+#define ESC_PARENS(...) __VA_ARGS__
 
-#endif /* COMMON_PREPROC */
+#endif /* COMMON_PREPROCESSOR_H */

@@ -1,5 +1,5 @@
 /* Low level interface to Windows debugging, for gdbserver.
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    Contributed by Leo Zayas.  Based on "win32-nat.c" from GDB.
 
@@ -32,6 +32,8 @@
 #include <tlhelp32.h>
 #include <psapi.h>
 #include <process.h>
+#include "common/gdb_tilde_expand.h"
+#include "common/common-inferior.h"
 
 #ifndef USE_WIN32API
 #include <sys/cygwin.h>
@@ -118,7 +120,7 @@ current_thread_ptid (void)
 static ptid_t
 debug_event_ptid (DEBUG_EVENT *event)
 {
-  return ptid_build (event->dwProcessId, event->dwThreadId, 0);
+  return ptid_t (event->dwProcessId, event->dwThreadId, 0);
 }
 
 /* Get the thread context of the thread associated with TH.  */
@@ -191,14 +193,11 @@ win32_require_context (win32_thread_info *th)
 static win32_thread_info *
 thread_rec (ptid_t ptid, int get_context)
 {
-  struct thread_info *thread;
-  win32_thread_info *th;
-
-  thread = (struct thread_info *) find_inferior_id (&all_threads, ptid);
+  thread_info *thread = find_thread_ptid (ptid);
   if (thread == NULL)
     return NULL;
 
-  th = (win32_thread_info *) inferior_target_data (thread);
+  win32_thread_info *th = (win32_thread_info *) thread_target_data (thread);
   if (get_context)
     win32_require_context (th);
   return th;
@@ -209,7 +208,7 @@ static win32_thread_info *
 child_add_thread (DWORD pid, DWORD tid, HANDLE h, void *tlb)
 {
   win32_thread_info *th;
-  ptid_t ptid = ptid_build (pid, tid, 0);
+  ptid_t ptid = ptid_t (pid, tid, 0);
 
   if ((th = thread_rec (ptid, FALSE)))
     return th;
@@ -229,10 +228,9 @@ child_add_thread (DWORD pid, DWORD tid, HANDLE h, void *tlb)
 
 /* Delete a thread from the list of threads.  */
 static void
-delete_thread_info (struct inferior_list_entry *entry)
+delete_thread_info (thread_info *thread)
 {
-  struct thread_info *thread = (struct thread_info *) entry;
-  win32_thread_info *th = (win32_thread_info *) inferior_target_data (thread);
+  win32_thread_info *th = (win32_thread_info *) thread_target_data (thread);
 
   remove_thread (thread);
   CloseHandle (th->h);
@@ -243,15 +241,11 @@ delete_thread_info (struct inferior_list_entry *entry)
 static void
 child_delete_thread (DWORD pid, DWORD tid)
 {
-  struct inferior_list_entry *thread;
-  ptid_t ptid;
-
   /* If the last thread is exiting, just return.  */
-  if (one_inferior_p (&all_threads))
+  if (all_threads.size () == 1)
     return;
 
-  ptid = ptid_build (pid, tid, 0);
-  thread = find_inferior_id (&all_threads, ptid);
+  thread_info *thread = find_thread_ptid (ptid_t (pid, tid));
   if (thread == NULL)
     return;
 
@@ -345,7 +339,7 @@ child_xfer_memory (CORE_ADDR memaddr, char *our, int len,
 static void
 child_init_thread_list (void)
 {
-  for_each_inferior (&all_threads, delete_thread_info);
+  for_each_thread (delete_thread_info);
 }
 
 /* Zero during the child initialization phase, and nonzero otherwise.  */
@@ -428,12 +422,10 @@ do_initial_child_stuff (HANDLE proch, DWORD pid, int attached)
 
 /* Resume all artificially suspended threads if we are continuing
    execution.  */
-static int
-continue_one_thread (struct inferior_list_entry *this_thread, void *id_ptr)
+static void
+continue_one_thread (thread_info *thread, int thread_id)
 {
-  struct thread_info *thread = (struct thread_info *) this_thread;
-  int thread_id = * (int *) id_ptr;
-  win32_thread_info *th = (win32_thread_info *) inferior_target_data (thread);
+  win32_thread_info *th = (win32_thread_info *) thread_target_data (thread);
 
   if (thread_id == -1 || thread_id == th->tid)
     {
@@ -456,8 +448,6 @@ continue_one_thread (struct inferior_list_entry *this_thread, void *id_ptr)
 	  th->suspended = 0;
 	}
     }
-
-  return 0;
 }
 
 static BOOL
@@ -465,7 +455,10 @@ child_continue (DWORD continue_status, int thread_id)
 {
   /* The inferior will only continue after the ContinueDebugEvent
      call.  */
-  find_inferior (&all_threads, continue_one_thread, &thread_id);
+  for_each_thread ([&] (thread_info *thread)
+    {
+      continue_one_thread (thread, thread_id);
+    });
   faked_breakpoint = 0;
 
   if (!ContinueDebugEvent (current_event.dwProcessId,
@@ -562,10 +555,11 @@ static BOOL
 create_process (const char *program, char *args,
 		DWORD flags, PROCESS_INFORMATION *pi)
 {
+  const char *inferior_cwd = get_inferior_cwd ();
   BOOL ret;
 
 #ifdef _WIN32_WCE
-  wchar_t *p, *wprogram, *wargs;
+  wchar_t *p, *wprogram, *wargs, *wcwd = NULL;
   size_t argslen;
 
   wprogram = alloca ((strlen (program) + 1) * sizeof (wchar_t));
@@ -579,6 +573,20 @@ create_process (const char *program, char *args,
   wargs = alloca ((argslen + 1) * sizeof (wchar_t));
   mbstowcs (wargs, args, argslen + 1);
 
+  if (inferior_cwd != NULL)
+    {
+      std::string expanded_infcwd = gdb_tilde_expand (inferior_cwd);
+      std::replace (expanded_infcwd.begin (), expanded_infcwd.end (),
+		    '/', '\\');
+      wcwd = alloca ((expanded_infcwd.size () + 1) * sizeof (wchar_t));
+      if (mbstowcs (wcwd, expanded_infcwd.c_str (),
+		    expanded_infcwd.size () + 1) == NULL)
+	{
+	  error (_("\
+Could not convert the expanded inferior cwd to wide-char."));
+	}
+    }
+
   ret = CreateProcessW (wprogram, /* image name */
 			wargs,    /* command line */
 			NULL,     /* security, not supported */
@@ -586,7 +594,7 @@ create_process (const char *program, char *args,
 			FALSE,    /* inherit handles, not supported */
 			flags,    /* start flags */
 			NULL,     /* environment, not supported */
-			NULL,     /* current directory, not supported */
+			wcwd,     /* current directory */
 			NULL,     /* start info, not supported */
 			pi);      /* proc info */
 #else
@@ -599,7 +607,10 @@ create_process (const char *program, char *args,
 			TRUE,     /* inherit handles */
 			flags,    /* start flags */
 			NULL,     /* environment */
-			NULL,     /* current directory */
+			/* current directory */
+			(inferior_cwd == NULL
+			 ? NULL
+			 : gdb_tilde_expand (inferior_cwd).c_str()),
 			&si,      /* start info */
 			pi);      /* proc info */
 #endif
@@ -608,25 +619,25 @@ create_process (const char *program, char *args,
 }
 
 /* Start a new process.
-   PROGRAM is a path to the program to execute.
-   ARGS is a standard NULL-terminated array of arguments,
-   to be passed to the inferior as ``argv''.
+   PROGRAM is the program name.
+   PROGRAM_ARGS is the vector containing the inferior's args.
    Returns the new PID on success, -1 on failure.  Registers the new
    process with the process list.  */
 static int
-win32_create_inferior (char *program, char **program_args)
+win32_create_inferior (const char *program,
+		       const std::vector<char *> &program_args)
 {
+  client_state &cs = get_client_state ();
 #ifndef USE_WIN32API
   char real_path[PATH_MAX];
   char *orig_path, *new_path, *path_ptr;
 #endif
   BOOL ret;
   DWORD flags;
-  char *args;
-  int argslen;
-  int argc;
   PROCESS_INFORMATION pi;
   DWORD err;
+  std::string str_program_args = stringify_argv (program_args);
+  char *args = (char *) str_program_args.c_str ();
 
   /* win32_wait needs to know we're not attaching.  */
   attaching = 0;
@@ -652,18 +663,6 @@ win32_create_inferior (char *program, char **program_args)
   program = real_path;
 #endif
 
-  argslen = 1;
-  for (argc = 1; program_args[argc]; argc++)
-    argslen += strlen (program_args[argc]) + 1;
-  args = (char *) alloca (argslen);
-  args[0] = '\0';
-  for (argc = 1; program_args[argc]; argc++)
-    {
-      /* FIXME: Can we do better about quoting?  How does Cygwin
-	 handle this?  */
-      strcat (args, " ");
-      strcat (args, program_args[argc]);
-    }
   OUTMSG2 (("Command line is \"%s\"\n", args));
 
 #ifdef CREATE_NEW_PROCESS_GROUP
@@ -703,6 +702,10 @@ win32_create_inferior (char *program, char **program_args)
 #endif
 
   do_initial_child_stuff (pi.hProcess, pi.dwProcessId, 0);
+
+  /* Wait till we are at 1st instruction in program, return new pid
+     (assuming success).  */
+  cs.last_ptid = win32_wait (ptid_t (current_process_id), &cs.last_status, 0);
 
   return current_process_id;
 }
@@ -796,19 +799,15 @@ win32_clear_inferiors (void)
   if (current_process_handle != NULL)
     CloseHandle (current_process_handle);
 
-  for_each_inferior (&all_threads, delete_thread_info);
+  for_each_thread (delete_thread_info);
   clear_inferiors ();
 }
 
-/* Kill all inferiors.  */
+/* Implementation of target_ops::kill.  */
+
 static int
-win32_kill (int pid)
+win32_kill (process_info *process)
 {
-  struct process_info *process;
-
-  if (current_process_handle == NULL)
-    return -1;
-
   TerminateProcess (current_process_handle, 0);
   for (;;)
     {
@@ -824,16 +823,15 @@ win32_kill (int pid)
 
   win32_clear_inferiors ();
 
-  process = find_process_pid (pid);
   remove_process (process);
   return 0;
 }
 
-/* Detach from inferior PID.  */
+/* Implementation of target_ops::detach.  */
+
 static int
-win32_detach (int pid)
+win32_detach (process_info *process)
 {
-  struct process_info *process;
   winapi_DebugActiveProcessStop DebugActiveProcessStop = NULL;
   winapi_DebugSetProcessKillOnExit DebugSetProcessKillOnExit = NULL;
 #ifdef _WIN32_WCE
@@ -860,7 +858,6 @@ win32_detach (int pid)
     return -1;
 
   DebugSetProcessKillOnExit (FALSE);
-  process = find_process_pid (pid);
   remove_process (process);
 
   win32_clear_inferiors ();
@@ -873,7 +870,8 @@ win32_mourn (struct process_info *process)
   remove_process (process);
 }
 
-/* Wait for inferiors to end.  */
+/* Implementation of target_ops::join.  */
+
 static void
 win32_join (int pid)
 {
@@ -889,15 +887,9 @@ win32_join (int pid)
 static int
 win32_thread_alive (ptid_t ptid)
 {
-  int res;
-
   /* Our thread list is reliable; don't bother to poll target
      threads.  */
-  if (find_inferior_id (&all_threads, ptid) != NULL)
-    res = 1;
-  else
-    res = 0;
-  return res;
+  return find_thread_ptid (ptid) != NULL;
 }
 
 /* Resume the inferior process.  RESUME_INFO describes how we want
@@ -915,7 +907,7 @@ win32_resume (struct thread_resume *resume_info, size_t n)
   /* This handles the very limited set of resume packets that GDB can
      currently produce.  */
 
-  if (n == 1 && ptid_equal (resume_info[0].thread, minus_one_ptid))
+  if (n == 1 && resume_info[0].thread == minus_one_ptid)
     tid = -1;
   else if (n > 1)
     tid = -1;
@@ -924,7 +916,7 @@ win32_resume (struct thread_resume *resume_info, size_t n)
        the Windows resume code do the right thing for thread switching.  */
     tid = current_event.dwThreadId;
 
-  if (!ptid_equal (resume_info[0].thread, minus_one_ptid))
+  if (resume_info[0].thread != minus_one_ptid)
     {
       sig = gdb_signal_from_host (resume_info[0].sig);
       step = resume_info[0].kind == resume_step;
@@ -1341,10 +1333,9 @@ handle_exception (struct target_waitstatus *ourstatus)
 
 
 static void
-suspend_one_thread (struct inferior_list_entry *entry)
+suspend_one_thread (thread_info *thread)
 {
-  struct thread_info *thread = (struct thread_info *) entry;
-  win32_thread_info *th = (win32_thread_info *) inferior_target_data (thread);
+  win32_thread_info *th = (win32_thread_info *) thread_target_data (thread);
 
   if (!th->suspended)
     {
@@ -1372,7 +1363,7 @@ fake_breakpoint_event (void)
   current_event.u.Exception.ExceptionRecord.ExceptionCode
     = EXCEPTION_BREAKPOINT;
 
-  for_each_inferior (&all_threads, suspend_one_thread);
+  for_each_thread (suspend_one_thread);
 }
 
 #ifdef _WIN32_WCE
@@ -1482,7 +1473,7 @@ get_child_debug_event (struct target_waitstatus *ourstatus)
       child_delete_thread (current_event.dwProcessId,
 			   current_event.dwThreadId);
 
-      current_thread = (struct thread_info *) all_threads.head;
+      current_thread = get_first_thread ();
       return 1;
 
     case CREATE_PROCESS_DEBUG_EVENT:
@@ -1580,8 +1571,7 @@ get_child_debug_event (struct target_waitstatus *ourstatus)
     }
 
   ptid = debug_event_ptid (&current_event);
-  current_thread =
-    (struct thread_info *) find_inferior_id (&all_threads, ptid);
+  current_thread = find_thread_ptid (ptid);
   return 1;
 }
 
@@ -1615,7 +1605,7 @@ win32_wait (ptid_t ptid, struct target_waitstatus *ourstatus, int options)
 	  OUTMSG2 (("Child exited with retcode = %x\n",
 		    ourstatus->value.integer));
 	  win32_clear_inferiors ();
-	  return pid_to_ptid (current_event.dwProcessId);
+	  return ptid_t (current_event.dwProcessId);
 	case TARGET_WAITKIND_STOPPED:
 	case TARGET_WAITKIND_LOADED:
 	  OUTMSG2 (("Child Stopped with signal = %d \n",
@@ -1853,7 +1843,6 @@ static struct target_ops win32_target_ops = {
   NULL, /* get_min_fast_tracepoint_insn_len */
   NULL, /* qxfer_libraries_svr4 */
   NULL, /* support_agent */
-  NULL, /* support_btrace */
   NULL, /* enable_btrace */
   NULL, /* disable_btrace */
   NULL, /* read_btrace */

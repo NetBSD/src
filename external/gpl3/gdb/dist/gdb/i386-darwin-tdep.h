@@ -1,6 +1,6 @@
 /* Target-dependent code for Darwin x86.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,9 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
-#ifndef __I386_DARWIN_TDEP_H__
-#define __I386_DARWIN_TDEP_H__
+
+#ifndef I386_DARWIN_TDEP_H
+#define I386_DARWIN_TDEP_H
 
 #include "frame.h"
 
@@ -28,4 +29,4 @@ extern const int i386_darwin_thread_state_num_regs;
 
 int darwin_dwarf_signal_frame_p (struct gdbarch *, struct frame_info *);
 
-#endif /* __I386_DARWIN_TDEP_H__ */
+#endif /* I386_DARWIN_TDEP_H */

@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Free Software Foundation, Inc.
+# Copyright 2011-2019 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -14,12 +14,21 @@
 
 load_lib "trace-support.exp"
 
+if {[skip_shlib_tests]} {
+    return 0
+}
+
 standard_testfile
 set executable $testfile
 set expfile $testfile.exp
 
 # Some targets have leading underscores on assembly symbols.
 set additional_flags [gdb_target_symbol_prefix_flags]
+
+if ![gdb_trace_common_supports_arch] {
+    unsupported "no trace-common.h support for arch"
+    return -1
+}
 
 if [prepare_for_testing "failed to prepare" $executable $srcfile \
 	[list debug $additional_flags]] {
@@ -63,9 +72,36 @@ proc run_trace_experiment {} {
 
     gdb_test_no_output "tstart" "start trace experiment"
 
-    gdb_test "continue" \
-	".*Breakpoint \[0-9\]+, end .*" \
-	"advance through tracing"
+    # Fast tracepoint can be set in signal handler, so gdb_collect in
+    # IPA shouldn't call any non-async-signal-safe functions.  It is
+    # impractical to list all non-async-signal-safe functions, and set
+    # breakpoints on them, so choose malloc only in this test.
+    gdb_test "b -q malloc"
+
+    # Performance-wise, gdb_collect in IPA shouldn't call any syscall
+    # in order to keep fast tracepoint fast enough.
+    global gdb_prompt
+    set test "catch syscall"
+    gdb_test_multiple $test $test {
+	-re "The feature \'catch syscall\' is not supported.*\r\n$gdb_prompt $" {
+	}
+	-re ".*$gdb_prompt $" {
+	    pass $test
+	}
+    }
+
+    global decimal
+    set test "advance through tracing"
+    gdb_test_multiple "continue" $test {
+	-re "Thread 2 .* hit Catchpoint $decimal \\(call to syscall .*\\).*\r\n$gdb_prompt $" {
+	    # IPA starts a helper thread, which calls accept.  Ignore it.
+	    send_gdb "continue\n"
+	    exp_continue
+	}
+	-re "Breakpoint $decimal, end .*$gdb_prompt $" {
+	    pass $test
+	}
+    }
 
     gdb_test "tstatus" ".*Trace .*" "check on trace status"
 
@@ -77,9 +113,9 @@ proc test_fast_tracepoints {} {
 
     set fourgood 0
 
-    gdb_test "break begin" ".*" ""
+    gdb_breakpoint "begin" qualified
 
-    gdb_test "break end" ".*" ""
+    gdb_breakpoint "end" qualified
 
     gdb_test "print gdb_agent_gdb_trampoline_buffer_error" ".*" ""
 

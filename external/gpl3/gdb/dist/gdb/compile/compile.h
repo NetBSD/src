@@ -1,6 +1,6 @@
 /* Header file for Compile and inject module.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_COMPILE_H
-#define GDB_COMPILE_H
+#ifndef COMPILE_COMPILE_H
+#define COMPILE_COMPILE_H
 
 struct ui_file;
 struct gdbarch;
@@ -55,7 +55,7 @@ extern void eval_compile_command (struct command_line *cmd,
    PER_CU is the per-CU object used for looking up various other
    things.  */
 
-extern void compile_dwarf_expr_to_c (string_file &stream,
+extern void compile_dwarf_expr_to_c (string_file *stream,
 				     const char *result_name,
 				     struct symbol *sym,
 				     CORE_ADDR pc,
@@ -90,7 +90,7 @@ extern void compile_dwarf_expr_to_c (string_file &stream,
    PER_CU is the per-CU object used for looking up various other
    things.  */
 
-extern void compile_dwarf_bounds_to_c (string_file &stream,
+extern void compile_dwarf_bounds_to_c (string_file *stream,
 				       const char *result_name,
 				       const struct dynamic_prop *prop,
 				       struct symbol *sym, CORE_ADDR pc,
@@ -103,4 +103,7 @@ extern void compile_dwarf_bounds_to_c (string_file &stream,
 
 extern void compile_print_value (struct value *val, void *data_voidp);
 
-#endif /* GDB_COMPILE_H */
+/* Command element for the 'compile' command.  */
+extern cmd_list_element *compile_cmd_element;
+
+#endif /* COMPILE_COMPILE_H */

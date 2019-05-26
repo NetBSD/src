@@ -1,6 +1,6 @@
 /* Portable <curses.h>.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -39,7 +39,9 @@
 #define NOMACROS
 #define NCURSES_NOMACROS
 
-#if defined (HAVE_NCURSES_NCURSES_H)
+#if defined (HAVE_NCURSESW_NCURSES_H)
+#include <ncursesw/ncurses.h>
+#elif defined (HAVE_NCURSES_NCURSES_H)
 #include <ncurses/ncurses.h>
 #elif defined (HAVE_NCURSES_H)
 #include <ncurses.h>

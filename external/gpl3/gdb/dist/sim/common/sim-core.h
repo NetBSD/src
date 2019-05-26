@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2017 Free Software Foundation, Inc.
+   Copyright 2002-2019 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -89,7 +89,7 @@ struct _sim_core {
 
 typedef struct _sim_cpu_core {
   sim_core_common common;
-  address_word xor[WITH_XOR_ENDIAN + 1]; /* +1 to avoid zero-sized array */
+  address_word byte_xor[WITH_XOR_ENDIAN + 1]; /* +1 to avoid zero-sized array */
 } sim_cpu_core;
 
 

@@ -1,5 +1,5 @@
 /* Handle FR-V (FDPIC) shared libraries for GDB, the GNU Debugger.
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -202,36 +202,42 @@ struct ext_link_map
 
 /* Link map info to include in an allocated so_list entry.  */
 
-struct lm_info
+struct lm_info_frv : public lm_info_base
+{
+  ~lm_info_frv ()
   {
-    /* The loadmap, digested into an easier to use form.  */
-    struct int_elf32_fdpic_loadmap *map;
-    /* The GOT address for this link map entry.  */
-    CORE_ADDR got_value;
-    /* The link map address, needed for frv_fetch_objfile_link_map().  */
-    CORE_ADDR lm_addr;
+    xfree (this->map);
+    xfree (this->dyn_syms);
+    xfree (this->dyn_relocs);
+  }
 
-    /* Cached dynamic symbol table and dynamic relocs initialized and
-       used only by find_canonical_descriptor_in_load_object().
+  /* The loadmap, digested into an easier to use form.  */
+  int_elf32_fdpic_loadmap *map = NULL;
+  /* The GOT address for this link map entry.  */
+  CORE_ADDR got_value = 0;
+  /* The link map address, needed for frv_fetch_objfile_link_map().  */
+  CORE_ADDR lm_addr = 0;
 
-       Note: kevinb/2004-02-26: It appears that calls to
-       bfd_canonicalize_dynamic_reloc() will use the same symbols as
-       those supplied to the first call to this function.  Therefore,
-       it's important to NOT free the asymbol ** data structure
-       supplied to the first call.  Thus the caching of the dynamic
-       symbols (dyn_syms) is critical for correct operation.  The
-       caching of the dynamic relocations could be dispensed with.  */
-    asymbol **dyn_syms;
-    arelent **dyn_relocs;
-    int dyn_reloc_count;	/* Number of dynamic relocs.  */
+  /* Cached dynamic symbol table and dynamic relocs initialized and
+     used only by find_canonical_descriptor_in_load_object().
 
-  };
+     Note: kevinb/2004-02-26: It appears that calls to
+     bfd_canonicalize_dynamic_reloc() will use the same symbols as
+     those supplied to the first call to this function.  Therefore,
+     it's important to NOT free the asymbol ** data structure
+     supplied to the first call.  Thus the caching of the dynamic
+     symbols (dyn_syms) is critical for correct operation.  The
+     caching of the dynamic relocations could be dispensed with.  */
+  asymbol **dyn_syms = NULL;
+  arelent **dyn_relocs = NULL;
+  int dyn_reloc_count = 0;	/* Number of dynamic relocs.  */
+};
 
 /* The load map, got value, etc. are not available from the chain
    of loaded shared objects.  ``main_executable_lm_info'' provides
    a way to get at this information so that it doesn't need to be
    frequently recomputed.  Initialized by frv_relocate_main_executable().  */
-static struct lm_info *main_executable_lm_info;
+static lm_info_frv *main_executable_lm_info;
 
 static void frv_relocate_main_executable (void);
 static CORE_ADDR main_got (void);
@@ -240,7 +246,7 @@ static int enable_break2 (void);
 /* Implement the "open_symbol_file_object" target_so_ops method.  */
 
 static int
-open_symbol_file_object (void *from_ttyp)
+open_symbol_file_object (int from_tty)
 {
   /* Unimplemented.  */
   return 0;
@@ -371,7 +377,7 @@ frv_current_sos (void)
       if (got_addr != mgot)
 	{
 	  int errcode;
-	  char *name_buf;
+	  gdb::unique_xmalloc_ptr<char> name_buf;
 	  struct int_elf32_fdpic_loadmap *loadmap;
 	  struct so_list *sop;
 	  CORE_ADDR addr;
@@ -389,10 +395,11 @@ frv_current_sos (void)
 	    }
 
 	  sop = XCNEW (struct so_list);
-	  sop->lm_info = XCNEW (struct lm_info);
-	  sop->lm_info->map = loadmap;
-	  sop->lm_info->got_value = got_addr;
-	  sop->lm_info->lm_addr = lm_addr;
+	  lm_info_frv *li = new lm_info_frv;
+	  sop->lm_info = li;
+	  li->map = loadmap;
+	  li->got_value = got_addr;
+	  li->lm_addr = lm_addr;
 	  /* Fetch the name.  */
 	  addr = extract_unsigned_integer (lm_buf.l_name,
 					   sizeof (lm_buf.l_name),
@@ -402,16 +409,16 @@ frv_current_sos (void)
 
 	  if (solib_frv_debug)
 	    fprintf_unfiltered (gdb_stdlog, "current_sos: name = %s\n",
-	                        name_buf);
+	                        name_buf.get ());
 	  
 	  if (errcode != 0)
 	    warning (_("Can't read pathname for link map entry: %s."),
 		     safe_strerror (errcode));
 	  else
 	    {
-	      strncpy (sop->so_name, name_buf, SO_NAME_MAX_PATH_SIZE - 1);
+	      strncpy (sop->so_name, name_buf.get (),
+		       SO_NAME_MAX_PATH_SIZE - 1);
 	      sop->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-	      xfree (name_buf);
 	      strcpy (sop->so_original_name, sop->so_name);
 	    }
 
@@ -762,8 +769,6 @@ frv_relocate_main_executable (void)
   int status;
   CORE_ADDR exec_addr, interp_addr;
   struct int_elf32_fdpic_loadmap *ldm;
-  struct cleanup *old_chain;
-  struct section_offsets *new_offsets;
   int changed;
   struct obj_section *osect;
 
@@ -781,14 +786,12 @@ frv_relocate_main_executable (void)
   if (ldm == NULL)
     error (_("Unable to load the executable's loadmap."));
 
-  if (main_executable_lm_info)
-    xfree (main_executable_lm_info);
-  main_executable_lm_info = XCNEW (struct lm_info);
+  delete main_executable_lm_info;
+  main_executable_lm_info = new lm_info_frv;
   main_executable_lm_info->map = ldm;
 
-  new_offsets = XCNEWVEC (struct section_offsets,
-			  symfile_objfile->num_sections);
-  old_chain = make_cleanup (xfree, new_offsets);
+  gdb::unique_xmalloc_ptr<struct section_offsets> new_offsets
+    (XCNEWVEC (struct section_offsets, symfile_objfile->num_sections));
   changed = 0;
 
   ALL_OBJFILE_OSECTIONS (symfile_objfile, osect)
@@ -822,9 +825,7 @@ frv_relocate_main_executable (void)
     }
 
   if (changed)
-    objfile_relocate (symfile_objfile, new_offsets);
-
-  do_cleanups (old_chain);
+    objfile_relocate (symfile_objfile, new_offsets.get ());
 
   /* Now that symfile_objfile has been relocated, we can compute the
      GOT value and stash it away.  */
@@ -857,23 +858,17 @@ frv_clear_solib (void)
   lm_base_cache = 0;
   enable_break2_done = 0;
   main_lm_addr = 0;
-  if (main_executable_lm_info != 0)
-    {
-      xfree (main_executable_lm_info->map);
-      xfree (main_executable_lm_info->dyn_syms);
-      xfree (main_executable_lm_info->dyn_relocs);
-      xfree (main_executable_lm_info);
-      main_executable_lm_info = 0;
-    }
+
+  delete main_executable_lm_info;
+  main_executable_lm_info = NULL;
 }
 
 static void
 frv_free_so (struct so_list *so)
 {
-  xfree (so->lm_info->map);
-  xfree (so->lm_info->dyn_syms);
-  xfree (so->lm_info->dyn_relocs);
-  xfree (so->lm_info);
+  lm_info_frv *li = (lm_info_frv *) so->lm_info;
+
+  delete li;
 }
 
 static void
@@ -881,9 +876,8 @@ frv_relocate_section_addresses (struct so_list *so,
                                  struct target_section *sec)
 {
   int seg;
-  struct int_elf32_fdpic_loadmap *map;
-
-  map = so->lm_info->map;
+  lm_info_frv *li = (lm_info_frv *) so->lm_info;
+  int_elf32_fdpic_loadmap *map = li->map;
 
   for (seg = 0; seg < map->nsegs; seg++)
     {
@@ -926,15 +920,14 @@ frv_fdpic_find_global_pointer (CORE_ADDR addr)
   while (so)
     {
       int seg;
-      struct int_elf32_fdpic_loadmap *map;
-
-      map = so->lm_info->map;
+      lm_info_frv *li = (lm_info_frv *) so->lm_info;
+      int_elf32_fdpic_loadmap *map = li->map;
 
       for (seg = 0; seg < map->nsegs; seg++)
 	{
 	  if (map->segs[seg].addr <= addr
 	      && addr < map->segs[seg].addr + map->segs[seg].p_memsz)
-	    return so->lm_info->got_value;
+	    return li->got_value;
 	}
 
       so = so->next;
@@ -947,7 +940,7 @@ frv_fdpic_find_global_pointer (CORE_ADDR addr)
 
 /* Forward declarations for frv_fdpic_find_canonical_descriptor().  */
 static CORE_ADDR find_canonical_descriptor_in_load_object
-  (CORE_ADDR, CORE_ADDR, const char *, bfd *, struct lm_info *);
+  (CORE_ADDR, CORE_ADDR, const char *, bfd *, lm_info_frv *);
 
 /* Given a function entry point, attempt to find the canonical descriptor
    associated with that entry point.  Return 0 if no canonical descriptor
@@ -987,8 +980,10 @@ frv_fdpic_find_canonical_descriptor (CORE_ADDR entry_point)
       so = master_so_list ();
       while (so)
 	{
+	  lm_info_frv *li = (lm_info_frv *) so->lm_info;
+
 	  addr = find_canonical_descriptor_in_load_object
-		   (entry_point, got_value, name, so->abfd, so->lm_info);
+		   (entry_point, got_value, name, so->abfd, li);
 
 	  if (addr != 0)
 	    break;
@@ -1003,7 +998,7 @@ frv_fdpic_find_canonical_descriptor (CORE_ADDR entry_point)
 static CORE_ADDR
 find_canonical_descriptor_in_load_object
   (CORE_ADDR entry_point, CORE_ADDR got_value, const char *name, bfd *abfd,
-   struct lm_info *lm)
+   lm_info_frv *lm)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   arelent *rel;
@@ -1141,8 +1136,10 @@ frv_fetch_objfile_link_map (struct objfile *objfile)
      of shared libraries.  */
   for (so = master_so_list (); so; so = so->next)
     {
+      lm_info_frv *li = (lm_info_frv *) so->lm_info;
+
       if (so->objfile == objfile)
-	return so->lm_info->lm_addr;
+	return li->lm_addr;
     }
 
   /* Not found!  */
@@ -1150,9 +1147,6 @@ frv_fetch_objfile_link_map (struct objfile *objfile)
 }
 
 struct target_so_ops frv_so_ops;
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_frv_solib;
 
 void
 _initialize_frv_solib (void)

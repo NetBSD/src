@@ -1,5 +1,6 @@
-<?xml version="1.0"?>
-<!-- Copyright (C) 2009-2017 Free Software Foundation, Inc.
+<?xml version="1.0"?> <!-- THIS FILE IS GENERATED -*- buffer-read-only: t -*-  -->
+<!-- vi:set ro: -->
+<!-- Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -24,12 +25,14 @@
   <syscall name="wait4" number="7"/>
   <syscall name="link" number="9"/>
   <syscall name="unlink" number="10"/>
+  <syscall name="execv" number="11"/>
   <syscall name="chdir" number="12"/>
   <syscall name="fchdir" number="13"/>
-  <syscall name="mknod" number="14"/>
+  <syscall name="freebsd11_mknod" number="14" alias="mknod"/>
   <syscall name="chmod" number="15"/>
   <syscall name="chown" number="16"/>
   <syscall name="break" number="17"/>
+  <syscall name="freebsd4_getfsstat" number="18" alias="getfsstat"/>
   <syscall name="getpid" number="20"/>
   <syscall name="mount" number="21"/>
   <syscall name="unmount" number="22"/>
@@ -50,7 +53,7 @@
   <syscall name="kill" number="37"/>
   <syscall name="getppid" number="39"/>
   <syscall name="dup" number="41"/>
-  <syscall name="pipe" number="42"/>
+  <syscall name="freebsd10_pipe" number="42" alias="pipe"/>
   <syscall name="getegid" number="43"/>
   <syscall name="profil" number="44"/>
   <syscall name="ktrace" number="45"/>
@@ -69,12 +72,16 @@
   <syscall name="chroot" number="61"/>
   <syscall name="msync" number="65"/>
   <syscall name="vfork" number="66"/>
+  <syscall name="vread" number="67"/>
+  <syscall name="vwrite" number="68"/>
   <syscall name="sbrk" number="69"/>
   <syscall name="sstk" number="70"/>
-  <syscall name="vadvise" number="72"/>
+  <syscall name="freebsd11_vadvise" number="72" alias="vadvise"/>
   <syscall name="munmap" number="73"/>
   <syscall name="mprotect" number="74"/>
   <syscall name="madvise" number="75"/>
+  <syscall name="vhangup" number="76"/>
+  <syscall name="vlimit" number="77"/>
   <syscall name="mincore" number="78"/>
   <syscall name="getgroups" number="79"/>
   <syscall name="setgroups" number="80"/>
@@ -95,6 +102,8 @@
   <syscall name="bind" number="104"/>
   <syscall name="setsockopt" number="105"/>
   <syscall name="listen" number="106"/>
+  <syscall name="vtimes" number="107"/>
+  <syscall name="vtrace" number="115"/>
   <syscall name="gettimeofday" number="116"/>
   <syscall name="getrusage" number="117"/>
   <syscall name="getsockopt" number="118"/>
@@ -119,27 +128,42 @@
   <syscall name="quotactl" number="148"/>
   <syscall name="nlm_syscall" number="154"/>
   <syscall name="nfssvc" number="155"/>
+  <syscall name="freebsd4_statfs" number="157" alias="statfs"/>
+  <syscall name="freebsd4_fstatfs" number="158" alias="fstatfs"/>
   <syscall name="lgetfh" number="160"/>
   <syscall name="getfh" number="161"/>
+  <syscall name="freebsd4_getdomainname" number="162" alias="getdomainname"/>
+  <syscall name="freebsd4_setdomainname" number="163" alias="setdomainname"/>
+  <syscall name="freebsd4_uname" number="164" alias="uname"/>
   <syscall name="sysarch" number="165"/>
   <syscall name="rtprio" number="166"/>
   <syscall name="semsys" number="169"/>
   <syscall name="msgsys" number="170"/>
   <syscall name="shmsys" number="171"/>
+  <syscall name="freebsd6_pread" number="173" alias="pread"/>
+  <syscall name="freebsd6_pwrite" number="174" alias="pwrite"/>
   <syscall name="setfib" number="175"/>
   <syscall name="ntp_adjtime" number="176"/>
   <syscall name="setgid" number="181"/>
   <syscall name="setegid" number="182"/>
   <syscall name="seteuid" number="183"/>
-  <syscall name="stat" number="188"/>
-  <syscall name="fstat" number="189"/>
-  <syscall name="lstat" number="190"/>
+  <syscall name="lfs_bmapv" number="184"/>
+  <syscall name="lfs_markv" number="185"/>
+  <syscall name="lfs_segclean" number="186"/>
+  <syscall name="lfs_segwait" number="187"/>
+  <syscall name="freebsd11_stat" number="188" alias="stat"/>
+  <syscall name="freebsd11_fstat" number="189" alias="fstat"/>
+  <syscall name="freebsd11_lstat" number="190" alias="lstat"/>
   <syscall name="pathconf" number="191"/>
   <syscall name="fpathconf" number="192"/>
   <syscall name="getrlimit" number="194"/>
   <syscall name="setrlimit" number="195"/>
-  <syscall name="getdirentries" number="196"/>
+  <syscall name="freebsd11_getdirentries" number="196" alias="getdirentries"/>
+  <syscall name="freebsd6_mmap" number="197" alias="mmap"/>
   <syscall name="__syscall" number="198"/>
+  <syscall name="freebsd6_lseek" number="199" alias="lseek"/>
+  <syscall name="freebsd6_truncate" number="200" alias="truncate"/>
+  <syscall name="freebsd6_ftruncate" number="201" alias="ftruncate"/>
   <syscall name="__sysctl" number="202"/>
   <syscall name="mlock" number="203"/>
   <syscall name="munlock" number="204"/>
@@ -147,15 +171,16 @@
   <syscall name="futimes" number="206"/>
   <syscall name="getpgid" number="207"/>
   <syscall name="poll" number="209"/>
-  <syscall name="freebsd7___semctl" number="220"/>
+  <syscall name="freebsd7___semctl" number="220" alias="__semctl"/>
   <syscall name="semget" number="221"/>
   <syscall name="semop" number="222"/>
-  <syscall name="freebsd7_msgctl" number="224"/>
+  <syscall name="semconfig" number="223"/>
+  <syscall name="freebsd7_msgctl" number="224" alias="msgctl"/>
   <syscall name="msgget" number="225"/>
   <syscall name="msgsnd" number="226"/>
   <syscall name="msgrcv" number="227"/>
   <syscall name="shmat" number="228"/>
-  <syscall name="freebsd7_shmctl" number="229"/>
+  <syscall name="freebsd7_shmctl" number="229" alias="shmctl"/>
   <syscall name="shmdt" number="230"/>
   <syscall name="shmget" number="231"/>
   <syscall name="clock_gettime" number="232"/>
@@ -170,6 +195,7 @@
   <syscall name="ffclock_getcounter" number="241"/>
   <syscall name="ffclock_setestimate" number="242"/>
   <syscall name="ffclock_getestimate" number="243"/>
+  <syscall name="clock_nanosleep" number="244"/>
   <syscall name="clock_getcpuclockid2" number="247"/>
   <syscall name="ntp_gettime" number="248"/>
   <syscall name="minherit" number="250"/>
@@ -180,18 +206,19 @@
   <syscall name="aio_read" number="255"/>
   <syscall name="aio_write" number="256"/>
   <syscall name="lio_listio" number="257"/>
-  <syscall name="getdents" number="272"/>
+  <syscall name="freebsd11_getdents" number="272" alias="getdents"/>
   <syscall name="lchmod" number="274"/>
   <syscall name="netbsd_lchown" number="275"/>
   <syscall name="lutimes" number="276"/>
   <syscall name="netbsd_msync" number="277"/>
-  <syscall name="nstat" number="278"/>
-  <syscall name="nfstat" number="279"/>
-  <syscall name="nlstat" number="280"/>
+  <syscall name="freebsd11_nstat" number="278" alias="nstat"/>
+  <syscall name="freebsd11_nfstat" number="279" alias="nfstat"/>
+  <syscall name="freebsd11_nlstat" number="280" alias="nlstat"/>
   <syscall name="preadv" number="289"/>
   <syscall name="pwritev" number="290"/>
+  <syscall name="freebsd4_fhstatfs" number="297" alias="fhstatfs"/>
   <syscall name="fhopen" number="298"/>
-  <syscall name="fhstat" number="299"/>
+  <syscall name="freebsd11_fhstat" number="299" alias="fhstat"/>
   <syscall name="modnext" number="300"/>
   <syscall name="modstat" number="301"/>
   <syscall name="modfnext" number="302"/>
@@ -205,11 +232,17 @@
   <syscall name="getsid" number="310"/>
   <syscall name="setresuid" number="311"/>
   <syscall name="setresgid" number="312"/>
+  <syscall name="signanosleep" number="313"/>
   <syscall name="aio_return" number="314"/>
   <syscall name="aio_suspend" number="315"/>
   <syscall name="aio_cancel" number="316"/>
   <syscall name="aio_error" number="317"/>
+  <syscall name="freebsd6_aio_read" number="318" alias="aio_read"/>
+  <syscall name="freebsd6_aio_write" number="319" alias="aio_write"/>
+  <syscall name="freebsd6_lio_listio" number="320" alias="lio_listio"/>
   <syscall name="yield" number="321"/>
+  <syscall name="thr_sleep" number="322"/>
+  <syscall name="thr_wakeup" number="323"/>
   <syscall name="mlockall" number="324"/>
   <syscall name="munlockall" number="325"/>
   <syscall name="__getcwd" number="326"/>
@@ -222,12 +255,15 @@
   <syscall name="sched_get_priority_min" number="333"/>
   <syscall name="sched_rr_get_interval" number="334"/>
   <syscall name="utrace" number="335"/>
+  <syscall name="freebsd4_sendfile" number="336" alias="sendfile"/>
   <syscall name="kldsym" number="337"/>
   <syscall name="jail" number="338"/>
   <syscall name="nnpfs_syscall" number="339"/>
   <syscall name="sigprocmask" number="340"/>
   <syscall name="sigsuspend" number="341"/>
+  <syscall name="freebsd4_sigaction" number="342" alias="sigaction"/>
   <syscall name="sigpending" number="343"/>
+  <syscall name="freebsd4_sigreturn" number="344" alias="sigreturn"/>
   <syscall name="sigtimedwait" number="345"/>
   <syscall name="sigwaitinfo" number="346"/>
   <syscall name="__acl_get_file" number="347"/>
@@ -246,14 +282,26 @@
   <syscall name="getresuid" number="360"/>
   <syscall name="getresgid" number="361"/>
   <syscall name="kqueue" number="362"/>
-  <syscall name="kevent" number="363"/>
+  <syscall name="freebsd11_kevent" number="363" alias="kevent"/>
+  <syscall name="__cap_get_proc" number="364"/>
+  <syscall name="__cap_set_proc" number="365"/>
+  <syscall name="__cap_get_fd" number="366"/>
+  <syscall name="__cap_get_file" number="367"/>
+  <syscall name="__cap_set_fd" number="368"/>
+  <syscall name="__cap_set_file" number="369"/>
   <syscall name="extattr_set_fd" number="371"/>
   <syscall name="extattr_get_fd" number="372"/>
   <syscall name="extattr_delete_fd" number="373"/>
   <syscall name="__setugid" number="374"/>
+  <syscall name="nfsclnt" number="375"/>
   <syscall name="eaccess" number="376"/>
   <syscall name="afs3_syscall" number="377"/>
   <syscall name="nmount" number="378"/>
+  <syscall name="kse_exit" number="379"/>
+  <syscall name="kse_wakeup" number="380"/>
+  <syscall name="kse_create" number="381"/>
+  <syscall name="kse_thr_interrupt" number="382"/>
+  <syscall name="kse_release" number="383"/>
   <syscall name="__mac_get_proc" number="384"/>
   <syscall name="__mac_set_proc" number="385"/>
   <syscall name="__mac_get_fd" number="386"/>
@@ -265,10 +313,10 @@
   <syscall name="uuidgen" number="392"/>
   <syscall name="sendfile" number="393"/>
   <syscall name="mac_syscall" number="394"/>
-  <syscall name="getfsstat" number="395"/>
-  <syscall name="statfs" number="396"/>
-  <syscall name="fstatfs" number="397"/>
-  <syscall name="fhstatfs" number="398"/>
+  <syscall name="freebsd11_getfsstat" number="395" alias="getfsstat"/>
+  <syscall name="freebsd11_statfs" number="396" alias="statfs"/>
+  <syscall name="freebsd11_fstatfs" number="397" alias="fstatfs"/>
+  <syscall name="freebsd11_fhstatfs" number="398" alias="fhstatfs"/>
   <syscall name="ksem_close" number="400"/>
   <syscall name="ksem_post" number="401"/>
   <syscall name="ksem_wait" number="402"/>
@@ -304,6 +352,7 @@
   <syscall name="extattr_list_fd" number="437"/>
   <syscall name="extattr_list_file" number="438"/>
   <syscall name="extattr_list_link" number="439"/>
+  <syscall name="kse_switchin" number="440"/>
   <syscall name="ksem_timedwait" number="441"/>
   <syscall name="thr_suspend" number="442"/>
   <syscall name="thr_wake" number="443"/>
@@ -352,12 +401,12 @@
   <syscall name="fchmodat" number="490"/>
   <syscall name="fchownat" number="491"/>
   <syscall name="fexecve" number="492"/>
-  <syscall name="fstatat" number="493"/>
+  <syscall name="freebsd11_fstatat" number="493" alias="fstatat"/>
   <syscall name="futimesat" number="494"/>
   <syscall name="linkat" number="495"/>
   <syscall name="mkdirat" number="496"/>
   <syscall name="mkfifoat" number="497"/>
-  <syscall name="mknodat" number="498"/>
+  <syscall name="freebsd11_mknodat" number="498" alias="mknodat"/>
   <syscall name="openat" number="499"/>
   <syscall name="readlinkat" number="500"/>
   <syscall name="renameat" number="501"/>
@@ -373,6 +422,7 @@
   <syscall name="msgctl" number="511"/>
   <syscall name="shmctl" number="512"/>
   <syscall name="lpathconf" number="513"/>
+  <syscall name="cap_new" number="514"/>
   <syscall name="__cap_rights_get" number="515"/>
   <syscall name="cap_enter" number="516"/>
   <syscall name="cap_getmode" number="517"/>
@@ -407,4 +457,18 @@
   <syscall name="utimensat" number="547"/>
   <syscall name="numa_getaffinity" number="548"/>
   <syscall name="numa_setaffinity" number="549"/>
+  <syscall name="fdatasync" number="550"/>
+  <syscall name="fstat" number="551"/>
+  <syscall name="fstatat" number="552"/>
+  <syscall name="fhstat" number="553"/>
+  <syscall name="getdirentries" number="554"/>
+  <syscall name="statfs" number="555"/>
+  <syscall name="fstatfs" number="556"/>
+  <syscall name="getfsstat" number="557"/>
+  <syscall name="fhstatfs" number="558"/>
+  <syscall name="mknodat" number="559"/>
+  <syscall name="kevent" number="560"/>
+  <syscall name="cpuset_getdomain" number="561"/>
+  <syscall name="cpuset_setdomain" number="562"/>
+  <syscall name="getrandom" number="563"/>
 </syscalls_info>

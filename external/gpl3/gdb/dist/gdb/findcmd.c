@@ -1,6 +1,6 @@
 /* The find command.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,11 +25,12 @@
 #include "target.h"
 #include "cli/cli-utils.h"
 #include <algorithm>
+#include "common/byte-vector.h"
 
 /* Copied from bfd_put_bits.  */
 
 static void
-put_bits (bfd_uint64_t data, gdb_byte *buf, int bits, bfd_boolean big_p)
+put_bits (bfd_uint64_t data, gdb::byte_vector &buf, int bits, bfd_boolean big_p)
 {
   int i;
   int bytes;
@@ -37,11 +38,13 @@ put_bits (bfd_uint64_t data, gdb_byte *buf, int bits, bfd_boolean big_p)
   gdb_assert (bits % 8 == 0);
 
   bytes = bits / 8;
+  size_t last = buf.size ();
+  buf.resize (last + bytes);
   for (i = 0; i < bytes; i++)
     {
       int index = big_p ? bytes - i - 1 : i;
 
-      buf[index] = data & 0xff;
+      buf[last + index] = data & 0xff;
       data >>= 8;
     }
 }
@@ -49,9 +52,8 @@ put_bits (bfd_uint64_t data, gdb_byte *buf, int bits, bfd_boolean big_p)
 /* Subroutine of find_command to simplify it.
    Parse the arguments of the "find" command.  */
 
-static void
-parse_find_args (char *args, ULONGEST *max_countp,
-		 gdb_byte **pattern_bufp, ULONGEST *pattern_lenp,
+static gdb::byte_vector
+parse_find_args (const char *args, ULONGEST *max_countp,
 		 CORE_ADDR *start_addrp, ULONGEST *search_space_lenp,
 		 bfd_boolean big_p)
 {
@@ -59,26 +61,14 @@ parse_find_args (char *args, ULONGEST *max_countp,
   char size = '\0';
   ULONGEST max_count = ~(ULONGEST) 0;
   /* Buffer to hold the search pattern.  */
-  gdb_byte *pattern_buf;
-  /* Current size of search pattern buffer.
-     We realloc space as needed.  */
-#define INITIAL_PATTERN_BUF_SIZE 100
-  ULONGEST pattern_buf_size = INITIAL_PATTERN_BUF_SIZE;
-  /* Pointer to one past the last in-use part of pattern_buf.  */
-  gdb_byte *pattern_buf_end;
-  ULONGEST pattern_len;
+  gdb::byte_vector pattern_buf;
   CORE_ADDR start_addr;
   ULONGEST search_space_len;
   const char *s = args;
-  struct cleanup *old_cleanups;
   struct value *v;
 
   if (args == NULL)
     error (_("Missing search parameters."));
-
-  pattern_buf = (gdb_byte *) xmalloc (pattern_buf_size);
-  pattern_buf_end = pattern_buf;
-  old_cleanups = make_cleanup (free_current_contents, &pattern_buf);
 
   /* Get search granularity and/or max count if specified.
      They may be specified in either order, together or separately.  */
@@ -110,7 +100,7 @@ parse_find_args (char *args, ULONGEST *max_countp,
 	    }
 	}
 
-      s = skip_spaces_const (s);
+      s = skip_spaces (s);
     }
 
   /* Get the search range.  */
@@ -120,7 +110,7 @@ parse_find_args (char *args, ULONGEST *max_countp,
 
   if (*s == ',')
     ++s;
-  s = skip_spaces_const (s);
+  s = skip_spaces (s);
 
   if (*s == '+')
     {
@@ -131,9 +121,8 @@ parse_find_args (char *args, ULONGEST *max_countp,
       len = value_as_long (v);
       if (len == 0)
 	{
-	  do_cleanups (old_cleanups);
 	  printf_filtered (_("Empty search range.\n"));
-	  return;
+	  return pattern_buf;
 	}
       if (len < 0)
 	error (_("Invalid length."));
@@ -169,26 +158,11 @@ parse_find_args (char *args, ULONGEST *max_countp,
     {
       LONGEST x;
       struct type *t;
-      ULONGEST pattern_buf_size_need;
 
-      s = skip_spaces_const (s);
+      s = skip_spaces (s);
 
       v = parse_to_comma_and_eval (&s);
       t = value_type (v);
-
-      /* Keep it simple and assume size == 'g' when watching for when we
-	 need to grow the pattern buf.  */
-      pattern_buf_size_need = (pattern_buf_end - pattern_buf
-			       + std::max (TYPE_LENGTH (t),
-					   (unsigned) sizeof (int64_t)));
-      if (pattern_buf_size_need > pattern_buf_size)
-	{
-	  size_t current_offset = pattern_buf_end - pattern_buf;
-
-	  pattern_buf_size = pattern_buf_size_need * 2;
-	  pattern_buf = (gdb_byte *) xrealloc (pattern_buf, pattern_buf_size);
-	  pattern_buf_end = pattern_buf + current_offset;
-	}
 
       if (size != '\0')
 	{
@@ -196,87 +170,78 @@ parse_find_args (char *args, ULONGEST *max_countp,
 	  switch (size)
 	    {
 	    case 'b':
-	      *pattern_buf_end++ = x;
+	      pattern_buf.push_back (x);
 	      break;
 	    case 'h':
-	      put_bits (x, pattern_buf_end, 16, big_p);
-	      pattern_buf_end += sizeof (int16_t);
+	      put_bits (x, pattern_buf, 16, big_p);
 	      break;
 	    case 'w':
-	      put_bits (x, pattern_buf_end, 32, big_p);
-	      pattern_buf_end += sizeof (int32_t);
+	      put_bits (x, pattern_buf, 32, big_p);
 	      break;
 	    case 'g':
-	      put_bits (x, pattern_buf_end, 64, big_p);
-	      pattern_buf_end += sizeof (int64_t);
+	      put_bits (x, pattern_buf, 64, big_p);
 	      break;
 	    }
 	}
       else
 	{
-	  memcpy (pattern_buf_end, value_contents (v), TYPE_LENGTH (t));
-	  pattern_buf_end += TYPE_LENGTH (t);
+	  const gdb_byte *contents = value_contents (v);
+	  pattern_buf.insert (pattern_buf.end (), contents,
+			      contents + TYPE_LENGTH (t));
 	}
 
       if (*s == ',')
 	++s;
-      s = skip_spaces_const (s);
+      s = skip_spaces (s);
     }
 
-  if (pattern_buf_end == pattern_buf)
+  if (pattern_buf.empty ())
     error (_("Missing search pattern."));
 
-  pattern_len = pattern_buf_end - pattern_buf;
-
-  if (search_space_len < pattern_len)
+  if (search_space_len < pattern_buf.size ())
     error (_("Search space too small to contain pattern."));
 
   *max_countp = max_count;
-  *pattern_bufp = pattern_buf;
-  *pattern_lenp = pattern_len;
   *start_addrp = start_addr;
   *search_space_lenp = search_space_len;
 
-  /* We successfully parsed the arguments, leave the freeing of PATTERN_BUF
-     to the caller now.  */
-  discard_cleanups (old_cleanups);
+  return pattern_buf;
 }
 
 static void
-find_command (char *args, int from_tty)
+find_command (const char *args, int from_tty)
 {
   struct gdbarch *gdbarch = get_current_arch ();
   bfd_boolean big_p = gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG;
   /* Command line parameters.
      These are initialized to avoid uninitialized warnings from -Wall.  */
   ULONGEST max_count = 0;
-  gdb_byte *pattern_buf = 0;
-  ULONGEST pattern_len = 0;
   CORE_ADDR start_addr = 0;
   ULONGEST search_space_len = 0;
   /* End of command line parameters.  */
   unsigned int found_count;
   CORE_ADDR last_found_addr;
-  struct cleanup *old_cleanups;
 
-  parse_find_args (args, &max_count, &pattern_buf, &pattern_len, 
-		   &start_addr, &search_space_len, big_p);
-
-  old_cleanups = make_cleanup (free_current_contents, &pattern_buf);
+  gdb::byte_vector pattern_buf = parse_find_args (args, &max_count,
+						  &start_addr,
+						  &search_space_len,
+						  big_p);
 
   /* Perform the search.  */
 
   found_count = 0;
   last_found_addr = 0;
 
-  while (search_space_len >= pattern_len
+  while (search_space_len >= pattern_buf.size ()
 	 && found_count < max_count)
     {
       /* Offset from start of this iteration to the next iteration.  */
       ULONGEST next_iter_incr;
       CORE_ADDR found_addr;
       int found = target_search_memory (start_addr, search_space_len,
-					pattern_buf, pattern_len, &found_addr);
+					pattern_buf.data (),
+					pattern_buf.size (),
+					&found_addr);
 
       if (found <= 0)
 	break;
@@ -313,12 +278,7 @@ find_command (char *args, int from_tty)
   else
     printf_filtered ("%d pattern%s found.\n", found_count,
 		     found_count > 1 ? "s" : "");
-
-  do_cleanups (old_cleanups);
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_mem_search;
 
 void
 _initialize_mem_search (void)
@@ -326,14 +286,16 @@ _initialize_mem_search (void)
   add_cmd ("find", class_vars, find_command, _("\
 Search memory for a sequence of bytes.\n\
 Usage:\nfind \
-[/size-char] [/max-count] start-address, end-address, expr1 [, expr2 ...]\n\
-find [/size-char] [/max-count] start-address, +length, expr1 [, expr2 ...]\n\
-size-char is one of b,h,w,g for 8,16,32,64 bit values respectively,\n\
+[/SIZE-CHAR] [/MAX-COUNT] START-ADDRESS, END-ADDRESS, EXPR1 [, EXPR2 ...]\n\
+find [/SIZE-CHAR] [/MAX-COUNT] START-ADDRESS, +LENGTH, EXPR1 [, EXPR2 ...]\n\
+SIZE-CHAR is one of b,h,w,g for 8,16,32,64 bit values respectively,\n\
 and if not specified the size is taken from the type of the expression\n\
 in the current language.\n\
 Note that this means for example that in the case of C-like languages\n\
 a search for an untyped 0x42 will search for \"(int) 0x42\"\n\
-which is typically four bytes.\n\
+which is typically four bytes, and a search for a string \"hello\" will\n\
+include the trailing '\\0'.  The null terminator can be removed from\n\
+searching by using casts, e.g.: {char[5]}\"hello\".\n\
 \n\
 The address of the last match is stored as the value of \"$_\".\n\
 Convenience variable \"$numfound\" is set to the number of matches."),

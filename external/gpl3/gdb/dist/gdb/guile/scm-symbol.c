@@ -1,6 +1,6 @@
 /* Scheme interface to symbols.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -582,15 +582,11 @@ gdbscm_lookup_symbol (SCM name_scm, SCM rest)
   int block_arg_pos = -1, domain_arg_pos = -1;
   struct field_of_this_result is_a_field_of_this;
   struct symbol *symbol = NULL;
-  struct cleanup *cleanups;
-  struct gdb_exception except = exception_none;
 
   gdbscm_parse_function_args (FUNC_NAME, SCM_ARG1, keywords, "s#Oi",
 			      name_scm, &name, rest,
 			      &block_arg_pos, &block_scm,
 			      &domain_arg_pos, &domain);
-
-  cleanups = make_cleanup (xfree, name);
 
   if (block_arg_pos >= 0)
     {
@@ -600,7 +596,7 @@ gdbscm_lookup_symbol (SCM name_scm, SCM rest)
 				  &except_scm);
       if (block == NULL)
 	{
-	  do_cleanups (cleanups);
+	  xfree (name);
 	  gdbscm_throw (except_scm);
 	}
     }
@@ -613,13 +609,15 @@ gdbscm_lookup_symbol (SCM name_scm, SCM rest)
 	  selected_frame = get_selected_frame (_("no frame selected"));
 	  block = get_frame_block (selected_frame, NULL);
 	}
-      CATCH (except, RETURN_MASK_ALL)
+      CATCH (ex, RETURN_MASK_ALL)
 	{
-	  GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS (except, cleanups);
+	  xfree (name);
+	  GDBSCM_HANDLE_GDB_EXCEPTION (ex);
 	}
       END_CATCH
     }
 
+  struct gdb_exception except = exception_none;
   TRY
     {
       symbol = lookup_symbol (name, block, (domain_enum) domain,
@@ -631,7 +629,7 @@ gdbscm_lookup_symbol (SCM name_scm, SCM rest)
     }
   END_CATCH
 
-  do_cleanups (cleanups);
+  xfree (name);
   GDBSCM_HANDLE_GDB_EXCEPTION (except);
 
   if (symbol == NULL)
@@ -652,14 +650,11 @@ gdbscm_lookup_global_symbol (SCM name_scm, SCM rest)
   int domain_arg_pos = -1;
   int domain = VAR_DOMAIN;
   struct symbol *symbol = NULL;
-  struct cleanup *cleanups;
   struct gdb_exception except = exception_none;
 
   gdbscm_parse_function_args (FUNC_NAME, SCM_ARG1, keywords, "s#i",
 			      name_scm, &name, rest,
 			      &domain_arg_pos, &domain);
-
-  cleanups = make_cleanup (xfree, name);
 
   TRY
     {
@@ -671,7 +666,7 @@ gdbscm_lookup_global_symbol (SCM name_scm, SCM rest)
     }
   END_CATCH
 
-  do_cleanups (cleanups);
+  xfree (name);
   GDBSCM_HANDLE_GDB_EXCEPTION (except);
 
   if (symbol == NULL)

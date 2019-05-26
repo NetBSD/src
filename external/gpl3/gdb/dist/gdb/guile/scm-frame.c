@@ -1,6 +1,6 @@
 /* Scheme interface to stack frames.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -418,7 +418,7 @@ static SCM
 gdbscm_frame_name (SCM self)
 {
   frame_smob *f_smob;
-  char *name = NULL;
+  gdb::unique_xmalloc_ptr<char> name;
   enum language lang = language_minimal;
   struct frame_info *frame = NULL;
   SCM result;
@@ -429,11 +429,10 @@ gdbscm_frame_name (SCM self)
     {
       frame = frscm_frame_smob_to_frame (f_smob);
       if (frame != NULL)
-	find_frame_funname (frame, &name, &lang, NULL);
+	name = find_frame_funname (frame, &lang, NULL);
     }
   CATCH (except, RETURN_MASK_ALL)
     {
-      xfree (name);
       GDBSCM_HANDLE_GDB_EXCEPTION (except);
     }
   END_CATCH
@@ -445,10 +444,7 @@ gdbscm_frame_name (SCM self)
     }
 
   if (name != NULL)
-    {
-      result = gdbscm_scm_from_c_string (name);
-      xfree (name);
-    }
+    result = gdbscm_scm_from_c_string (name.get ());
   else
     result = SCM_BOOL_F;
 
@@ -761,7 +757,7 @@ gdbscm_frame_sal (SCM self)
     {
       frame = frscm_frame_smob_to_frame (f_smob);
       if (frame != NULL)
-	find_frame_sal (frame, &sal);
+	sal = find_frame_sal (frame);
     }
   CATCH (except, RETURN_MASK_ALL)
     {
@@ -787,13 +783,13 @@ gdbscm_frame_read_register (SCM self, SCM register_scm)
   char *register_str;
   struct value *value = NULL;
   struct frame_info *frame = NULL;
-  struct cleanup *cleanup;
   frame_smob *f_smob;
 
   f_smob = frscm_get_frame_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   gdbscm_parse_function_args (FUNC_NAME, SCM_ARG2, NULL, "s",
 			      register_scm, &register_str);
-  cleanup = make_cleanup (xfree, register_str);
+
+  struct gdb_exception except = exception_none;
 
   TRY
     {
@@ -809,13 +805,14 @@ gdbscm_frame_read_register (SCM self, SCM register_scm)
 	    value = value_of_register (regnum, frame);
 	}
     }
-  CATCH (except, RETURN_MASK_ALL)
+  CATCH (ex, RETURN_MASK_ALL)
     {
-      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+      except = ex;
     }
   END_CATCH
 
-  do_cleanups (cleanup);
+  xfree (register_str);
+  GDBSCM_HANDLE_GDB_EXCEPTION (except);
 
   if (frame == NULL)
     {
@@ -844,7 +841,6 @@ static SCM
 gdbscm_frame_read_var (SCM self, SCM symbol_scm, SCM rest)
 {
   SCM keywords[] = { block_keyword, SCM_BOOL_F };
-  int rc;
   frame_smob *f_smob;
   int block_arg_pos = -1;
   SCM block_scm = SCM_UNDEFINED;
@@ -882,9 +878,6 @@ gdbscm_frame_read_var (SCM self, SCM symbol_scm, SCM rest)
     }
   else if (scm_is_string (symbol_scm))
     {
-      char *var_name;
-      const struct block *block = NULL;
-      struct cleanup *cleanup;
       struct gdb_exception except = exception_none;
 
       if (! SCM_UNBNDP (block_scm))
@@ -898,38 +891,35 @@ gdbscm_frame_read_var (SCM self, SCM symbol_scm, SCM rest)
 	    gdbscm_throw (except_scm);
 	}
 
-      var_name = gdbscm_scm_to_c_string (symbol_scm);
-      cleanup = make_cleanup (xfree, var_name);
-      /* N.B. Between here and the call to do_cleanups, don't do anything
-	 to cause a Scheme exception without performing the cleanup.  */
+      {
+	gdb::unique_xmalloc_ptr<char> var_name
+	  (gdbscm_scm_to_c_string (symbol_scm));
+	/* N.B. Between here and the end of the scope, don't do anything
+	   to cause a Scheme exception.  */
 
-      TRY
-	{
-	  struct block_symbol lookup_sym;
+	TRY
+	  {
+	    struct block_symbol lookup_sym;
 
-	  if (block == NULL)
-	    block = get_frame_block (frame, NULL);
-	  lookup_sym = lookup_symbol (var_name, block, VAR_DOMAIN, NULL);
-	  var = lookup_sym.symbol;
-	  block = lookup_sym.block;
-	}
-      CATCH (ex, RETURN_MASK_ALL)
-	{
-	  except = ex;
-	}
-      END_CATCH
+	    if (block == NULL)
+	      block = get_frame_block (frame, NULL);
+	    lookup_sym = lookup_symbol (var_name.get (), block, VAR_DOMAIN,
+					NULL);
+	    var = lookup_sym.symbol;
+	    block = lookup_sym.block;
+	  }
+	CATCH (ex, RETURN_MASK_ALL)
+	  {
+	    except = ex;
+	  }
+	END_CATCH
+      }
 
-      do_cleanups (cleanup);
       GDBSCM_HANDLE_GDB_EXCEPTION (except);
 
       if (var == NULL)
-	{
-	  do_cleanups (cleanup);
-	  gdbscm_out_of_range_error (FUNC_NAME, 0, symbol_scm,
-				     _("variable not found"));
-	}
-
-      do_cleanups (cleanup);
+	gdbscm_out_of_range_error (FUNC_NAME, 0, symbol_scm,
+				   _("variable not found"));
     }
   else
     {
