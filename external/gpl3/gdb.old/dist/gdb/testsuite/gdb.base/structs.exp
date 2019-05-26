@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1996-2016 Free Software Foundation, Inc.
+# Copyright 1996-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 # test.
 
 if [target_info exists gdb,cannot_call_functions] {
-    unsupported "This target can not call functions"
+    unsupported "this target can not call functions"
     continue
 }
 
@@ -35,6 +35,8 @@ set anychar_re {-?[0-9]{1,3} '(.|\\([0-7]{3}|[a-z]|\\|'))'}
 if [get_compiler_info] {
     return -1
 }
+
+set skip_float_test [gdb_skip_float_test]
 
 # Compile a variant of structs.c using TYPES to specify the type of
 # the first N struct elements (the remaining elements take the type of
@@ -68,7 +70,7 @@ proc start_structs_test { types } {
 	# built the second test case since we can't use prototypes
 	warning "Prototypes not supported, rebuilding with -DNO_PROTOTYPES"
 	if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "${flags} additional_flags=-DNO_PROTOTYPES"] != "" } {
-	    untested structs.exp
+	    untested "failed to compile"
 	    return -1
 	}
     }
@@ -563,25 +565,27 @@ test_struct_calls 1
 test_struct_calls 2
 test_struct_returns 1
 
-# Approx size: 4, 8, ...
-start_structs_test { tf }
-test_struct_calls 1
-test_struct_calls 2
-test_struct_calls 3
-test_struct_returns 1
-test_struct_returns 2
+if { !$skip_float_test } {
+    # Approx size: 4, 8, ...
+    start_structs_test { tf }
+    test_struct_calls 1
+    test_struct_calls 2
+    test_struct_calls 3
+    test_struct_returns 1
+    test_struct_returns 2
 
-# Approx size: 8, 16, ...
-start_structs_test { td }
-test_struct_calls 1
-test_struct_calls 2
-test_struct_returns 1
+    # Approx size: 8, 16, ...
+    start_structs_test { td }
+    test_struct_calls 1
+    test_struct_calls 2
+    test_struct_returns 1
 
-# Approx size: 16, 32, ...
-start_structs_test { tld }
-test_struct_calls 1
-test_struct_calls 2
-test_struct_returns 1
+    # Approx size: 16, 32, ...
+    start_structs_test { tld }
+    test_struct_calls 1
+    test_struct_calls 2
+    test_struct_returns 1
+}
 
 # Approx size: 2+1=3, 4, ...
 start_structs_test { ts tc }
@@ -616,22 +620,24 @@ test_struct_returns 2
 start_structs_test { tll tc }
 test_struct_calls 2
 
-# Approx size: 4+1=5, 6, ...
-start_structs_test { tf tc }
-test_struct_calls 2
-test_struct_calls 3
-test_struct_calls 4
-test_struct_calls 5
-test_struct_calls 6
-test_struct_returns 2
+if { !$skip_float_test } {
+    # Approx size: 4+1=5, 6, ...
+    start_structs_test { tf tc }
+    test_struct_calls 2
+    test_struct_calls 3
+    test_struct_calls 4
+    test_struct_calls 5
+    test_struct_calls 6
+    test_struct_returns 2
 
-# Approx size: 8+1=9, 10, ...
-start_structs_test { td tc }
-test_struct_calls 2
+    # Approx size: 8+1=9, 10, ...
+    start_structs_test { td tc }
+    test_struct_calls 2
 
-# Approx size: 16+1=17, 18, ...
-start_structs_test { tld tc }
-test_struct_calls 2
+    # Approx size: 16+1=17, 18, ...
+    start_structs_test { tld tc }
+    test_struct_calls 2
+}
 
 # Approx size: (1+1)+2=4, 6, ...
 start_structs_test { tc ts }
@@ -660,30 +666,31 @@ test_struct_returns 2
 start_structs_test { tc tll }
 test_struct_calls 2
 
-# Approx size: (1+3)+4=8, 12, ...
-start_structs_test { tc tf }
-test_struct_calls 2
-test_struct_calls 3
-test_struct_calls 4
+if { !$skip_float_test } {
+    # Approx size: (1+3)+4=8, 12, ...
+    start_structs_test { tc tf }
+    test_struct_calls 2
+    test_struct_calls 3
+    test_struct_calls 4
 
-# Approx size: (1+7)+8=16, 24, ...
-start_structs_test { tc td }
-test_struct_calls 2
+    # Approx size: (1+7)+8=16, 24, ...
+    start_structs_test { tc td }
+    test_struct_calls 2
 
-# Approx size: (1+15)+16=32, 48, ...
-start_structs_test { tc tld }
-test_struct_calls 2
+    # Approx size: (1+15)+16=32, 48, ...
+    start_structs_test { tc tld }
+    test_struct_calls 2
 
-# Some float combinations
+    # Some float combinations
 
-# Approx size: 8+4=12, 16, ...
-start_structs_test { td tf }
-test_struct_calls 2
-test_struct_returns 2
+    # Approx size: 8+4=12, 16, ...
+    start_structs_test { td tf }
+    test_struct_calls 2
+    test_struct_returns 2
 
-# Approx size: (4+4)+8=16, 32, ...
-start_structs_test { tf td }
-test_struct_calls 2
-test_struct_returns 2
-
+    # Approx size: (4+4)+8=16, 32, ...
+    start_structs_test { tf td }
+    test_struct_calls 2
+    test_struct_returns 2
+}
 return 0

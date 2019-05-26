@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Free Software Foundation, Inc.
+# Copyright 2013-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ if {![istarget "x86_64-*-*"] || ![is_lp64_target]} {
 
 standard_testfile .S
 
-if { [prepare_for_testing $testfile.exp $testfile $srcfile {nodebug}] } {
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile {nodebug}] } {
     return -1
 }
 
@@ -52,7 +52,7 @@ for {set f 0} {$f < 3} {incr f} {
     }
 
     # Select frame.
-    gdb_test "frame ${f}" "#${f}.*" "Switch to frame ${f}"
+    gdb_test "frame ${f}" "#${f}.*" "switch to frame ${f}"
 
     gdb_test "p/x \$rax" ".*$pattern_rax_rbx_rcx_print.*" \
 	"print \$rax in frame ${f}"

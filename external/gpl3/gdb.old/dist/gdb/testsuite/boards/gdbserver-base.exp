@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Free Software Foundation, Inc.
+# Copyright 2011-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ process_multilib_options ""
 set_board_info compiler "[find_gcc]"
 
 # Test the copy of gdbserver in the build directory.
-set_board_info gdb_server_prog "../gdbserver/gdbserver"
+set_board_info gdb_server_prog "[pwd]/../gdbserver/gdbserver"
 
 # gdbserver does not intercept target file operations and perform them
 # on the host.

@@ -1,6 +1,6 @@
 /* BSD Kernel Data Access Library (libkvm) interface.
 
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -358,7 +358,7 @@ bsd_kvm_thread_alive (struct target_ops *ops,
   return 1;
 }
 
-static char *
+static const char *
 bsd_kvm_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   static char buf[64];

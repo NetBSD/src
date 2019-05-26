@@ -1,5 +1,5 @@
 /* C preprocessor macro expansion commands for GDB.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -186,20 +186,6 @@ print_macro_definition (const char *name,
     fprintf_filtered (gdb_stdout, "=%s\n", d->replacement);
 }
 
-/* A callback function for usage with macro_for_each and friends.
-   If USER_DATA is null all macros will be printed.
-   Otherwise USER_DATA is considered to be a string, printing
-   only macros who's NAME matches USER_DATA.  Other arguments are
-   routed to print_macro_definition.  */
-static void
-print_macro_callback (const char *name, const struct macro_definition *macro,
-		   struct macro_source_file *source, int line,
-		   void *user_data)
-{
-  if (! user_data || strcmp ((const char *) user_data, name) == 0)
-    print_macro_definition (name, macro, source, line);
-}
-
 /* The implementation of the `info macro' command.  */
 static void
 info_macro_command (char *args, int from_tty)
@@ -248,7 +234,14 @@ info_macro_command (char *args, int from_tty)
   if (! ms)
     macro_inform_no_debuginfo ();
   else if (show_all_macros_named)
-    macro_for_each (ms->file->table, print_macro_callback, name);
+    macro_for_each (ms->file->table, [&] (const char *macro_name,
+					  const macro_definition *macro,
+					  macro_source_file *source,
+					  int line)
+      {
+	if (strcmp (name, macro_name) == 0)
+	  print_macro_definition (name, macro, source, line);
+      });
   else
     {
       struct macro_definition *d;
@@ -296,7 +289,7 @@ info_macros_command (char *args, int from_tty)
   if (! ms || ! ms->file || ! ms->file->table)
     macro_inform_no_debuginfo ();
   else
-    macro_for_each_in_scope (ms->file, ms->line, print_macro_callback, NULL);
+    macro_for_each_in_scope (ms->file, ms->line, print_macro_definition);
 
   do_cleanups (cleanup_chain);
 }
@@ -465,8 +458,7 @@ macro_undef_command (char *exp, int from_tty)
 
 static void
 print_one_macro (const char *name, const struct macro_definition *macro,
-		 struct macro_source_file *source, int line,
-		 void *ignore)
+		 struct macro_source_file *source, int line)
 {
   fprintf_filtered (gdb_stdout, "macro define %s", name);
   if (macro->kind == macro_function_like)
@@ -486,7 +478,7 @@ print_one_macro (const char *name, const struct macro_definition *macro,
 static void
 macro_list_command (char *exp, int from_tty)
 {
-  macro_for_each (macro_user_macros, print_one_macro, NULL);
+  macro_for_each (macro_user_macros, print_one_macro);
 }
 
 

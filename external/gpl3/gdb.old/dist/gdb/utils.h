@@ -1,7 +1,7 @@
 /* *INDENT-OFF* */ /* ATTRIBUTE_PRINTF confuses indent, avoid running it
 		      for now.  */
 /* I/O, string, cleanup, and other random utilities for GDB.
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,8 @@
 #define UTILS_H
 
 #include "exceptions.h"
+#include "common/scoped_restore.h"
+#include <chrono>
 
 extern void initialize_utils (void);
 
@@ -35,7 +37,7 @@ extern int strcmp_iw_ordered (const char *, const char *);
 
 extern int streq (const char *, const char *);
 
-extern int subset_compare (char *, char *);
+extern int subset_compare (const char *, const char *);
 
 int compare_positive_ints (const void *ap, const void *bp);
 int compare_strings (const void *ap, const void *bp);
@@ -50,7 +52,7 @@ extern const char *gdb_bfd_errmsg (bfd_error_type error_tag, char **matching);
 /* Reset the prompt_for_continue clock.  */
 void reset_prompt_for_continue_wait_time (void);
 /* Return the time spent in prompt_for_continue.  */
-struct timeval get_prompt_for_continue_wait_time (void);
+std::chrono::steady_clock::duration get_prompt_for_continue_wait_time ();
 
 /* Parsing utilites.  */
 
@@ -64,12 +66,6 @@ char **gdb_buildargv (const char *);
 
 extern struct cleanup *make_cleanup_freeargv (char **);
 
-struct dyn_string;
-extern struct cleanup *make_cleanup_dyn_string_delete (struct dyn_string *);
-
-struct ui_file;
-extern struct cleanup *make_cleanup_ui_file_delete (struct ui_file *);
-
 struct ui_out;
 extern struct cleanup *
   make_cleanup_ui_out_redirect_pop (struct ui_out *uiout);
@@ -82,8 +78,6 @@ extern struct cleanup *(make_cleanup_free_section_addr_info
 
 extern struct cleanup *make_cleanup_fclose (FILE *file);
 
-extern struct cleanup *make_cleanup_bfd_unref (bfd *abfd);
-
 struct obstack;
 extern struct cleanup *make_cleanup_obstack_free (struct obstack *obstack);
 
@@ -93,9 +87,6 @@ extern struct cleanup *make_cleanup_restore_uinteger (unsigned int *variable);
 struct target_ops;
 extern struct cleanup *make_cleanup_unpush_target (struct target_ops *ops);
 
-extern struct cleanup *
-  make_cleanup_restore_ui_file (struct ui_file **variable);
-
 extern struct cleanup *make_cleanup_value_free_to_mark (struct value *);
 extern struct cleanup *make_cleanup_value_free (struct value *);
 
@@ -104,7 +95,17 @@ extern struct cleanup *make_cleanup_free_so (struct so_list *so);
 
 extern struct cleanup *make_cleanup_restore_current_language (void);
 
-extern struct cleanup *make_cleanup_htab_delete (htab_t htab);
+/* A deleter for a hash table.  */
+struct htab_deleter
+{
+  void operator() (htab *ptr) const
+  {
+    htab_delete (ptr);
+  }
+};
+
+/* A unique_ptr wrapper for htab_t.  */
+typedef std::unique_ptr<htab, htab_deleter> htab_up;
 
 struct parser_state;
 extern struct cleanup *make_cleanup_clear_parser_state
@@ -134,7 +135,7 @@ extern int gdb_filename_fnmatch (const char *pattern, const char *string,
 extern void substitute_path_component (char **stringp, const char *from,
 				       const char *to);
 
-char *ldirname (const char *filename);
+std::string ldirname (const char *filename);
 
 extern int count_path_elements (const char *path);
 
@@ -150,7 +151,7 @@ extern int yquery (const char *, ...) ATTRIBUTE_PRINTF (1, 2);
 
 extern void begin_line (void);
 
-extern void wrap_here (char *);
+extern void wrap_here (const char *);
 
 extern void reinitialize_more_filter (void);
 
@@ -297,9 +298,9 @@ extern void (*deprecated_error_begin_hook) (void);
 
 /* Message to be printed before the warning message, when a warning occurs.  */
 
-extern char *warning_pre_print;
+extern const char *warning_pre_print;
 
-extern void error_stream (struct ui_file *) ATTRIBUTE_NORETURN;
+extern void error_stream (const string_file &) ATTRIBUTE_NORETURN;
 
 extern void demangler_vwarning (const char *file, int line,
 			       const char *, va_list ap)

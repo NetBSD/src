@@ -1,7 +1,7 @@
 
 /* Internal type definitions for GDB.
 
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -45,6 +45,7 @@
  */
 
 #include "hashtab.h"
+#include "common/offset-type.h"
 
 /* Forward declarations for prototypes.  */
 struct field;
@@ -57,18 +58,11 @@ struct language_defn;
 
 /* * Offset relative to the start of its containing CU (compilation
    unit).  */
-typedef struct
-{
-  unsigned int cu_off;
-} cu_offset;
+DEFINE_OFFSET_TYPE (cu_offset, unsigned int);
 
 /* * Offset relative to the start of its .debug_info or .debug_types
    section.  */
-
-typedef struct
-{
-  unsigned int sect_off;
-} sect_offset;
+DEFINE_OFFSET_TYPE (sect_offset, unsigned int);
 
 /* Some macros for char-based bitfields.  */
 
@@ -160,6 +154,8 @@ enum type_code
 
     TYPE_CODE_REF,		/**< C++ Reference types */
 
+    TYPE_CODE_RVALUE_REF,	/**< C++ rvalue reference types */
+
     TYPE_CODE_CHAR,		/**< *real* character type */
 
     /* * Boolean type.  0 is false, 1 is true, and other values are
@@ -184,35 +180,8 @@ enum type_code
     TYPE_CODE_XMETHOD
   };
 
-/* * Some constants representing each bit field in the main_type.  See
-   the bit-field-specific macros, below, for documentation of each
-   constant in this enum.  These enum values are only used with
-   init_type.  Note that the values are chosen not to conflict with
-   type_instance_flag_value; this lets init_type error-check its
-   input.  */
-
-enum type_flag_value
-{
-  TYPE_FLAG_UNSIGNED = (1 << 9),
-  TYPE_FLAG_NOSIGN = (1 << 10),
-  TYPE_FLAG_STUB = (1 << 11),
-  TYPE_FLAG_TARGET_STUB = (1 << 12),
-  TYPE_FLAG_STATIC = (1 << 13),
-  TYPE_FLAG_PROTOTYPED = (1 << 14),
-  TYPE_FLAG_INCOMPLETE = (1 << 15),
-  TYPE_FLAG_VARARGS = (1 << 16),
-  TYPE_FLAG_VECTOR = (1 << 17),
-  TYPE_FLAG_FIXED_INSTANCE = (1 << 18),
-  TYPE_FLAG_STUB_SUPPORTED = (1 << 19),
-  TYPE_FLAG_GNU_IFUNC = (1 << 20),
-
-  /* * Used for error-checking.  */
-  TYPE_FLAG_MIN = TYPE_FLAG_UNSIGNED
-};
-
 /* * Some bits for the type's instance_flags word.  See the macros
-   below for documentation on each bit.  Note that if you add a value
-   here, you must update the enum type_flag_value as well.  */
+   below for documentation on each bit.  */
 
 enum type_instance_flag_value
 {
@@ -228,7 +197,7 @@ enum type_instance_flag_value
 };
 
 /* * Unsigned integer type.  If this is not set for a TYPE_CODE_INT,
-   the type is signed (unless TYPE_FLAG_NOSIGN (below) is set).  */
+   the type is signed (unless TYPE_NOSIGN (below) is set).  */
 
 #define TYPE_UNSIGNED(t)	(TYPE_MAIN_TYPE (t)->flag_unsigned)
 
@@ -362,6 +331,11 @@ enum type_instance_flag_value
 #define TYPE_ATOMIC(t) \
   (TYPE_INSTANCE_FLAGS (t) & TYPE_INSTANCE_FLAG_ATOMIC)
 
+/* * True if this type represents either an lvalue or lvalue reference type.  */
+
+#define TYPE_IS_REFERENCE(t) \
+  (TYPE_CODE (t) == TYPE_CODE_REF || TYPE_CODE (t) == TYPE_CODE_RVALUE_REF)
+
 /* * Instruction-space delimited type.  This is for Harvard architectures
    which have separate instruction and data address spaces (and perhaps
    others).
@@ -370,11 +344,11 @@ enum type_instance_flag_value
    architecture's two (or more) address spaces, but this is an extension
    of the architecture's model.
 
-   If TYPE_FLAG_INST is set, an object of the corresponding type
+   If TYPE_INSTANCE_FLAG_CODE_SPACE is set, an object of the corresponding type
    resides in instruction memory, even if its address (in the extended
    flat address space) does not reflect this.
 
-   Similarly, if TYPE_FLAG_DATA is set, then an object of the 
+   Similarly, if TYPE_INSTANCE_FLAG_DATA_SPACE is set, then an object of the
    corresponding type resides in the data memory space, even if
    this is not indicated by its (flat address space) address.
 
@@ -390,7 +364,7 @@ enum type_instance_flag_value
 /* * Address class flags.  Some environments provide for pointers
    whose size is different from that of a normal pointer or address
    types where the bits are interpreted differently than normal
-   addresses.  The TYPE_FLAG_ADDRESS_CLASS_n flags may be used in
+   addresses.  The TYPE_INSTANCE_FLAG_ADDRESS_CLASS_n flags may be used in
    target specific ways to represent these different types of address
    classes.  */
 
@@ -685,7 +659,7 @@ struct main_type
 
      This is used for printing only, except by poorly designed C++ code.
      For looking up a name, look for a symbol in the STRUCT_DOMAIN.
-     One more legitimate use is that if TYPE_FLAG_STUB is set, this is
+     One more legitimate use is that if TYPE_STUB is set, this is
      the name to use to look for definitions in other files.  */
 
   const char *tag_name;
@@ -766,6 +740,10 @@ struct type
   /* * C++: also need a reference type.  */
 
   struct type *reference_type;
+
+  /* * A C++ rvalue reference type added in C++11. */
+
+  struct type *rvalue_reference_type;
 
   /* * Variant chain.  This points to a type that differs from this
      one only in qualifiers and length.  Currently, the possible
@@ -953,10 +931,6 @@ struct cplus_struct_type
 
     int is_dynamic : 2;
 
-    /* * Non-zero if this type came from a Java CU.  */
-
-    unsigned int is_java : 1;
-
     /* * The base class which defined the virtual function table pointer.  */
 
     struct type *vptr_basetype;
@@ -1072,12 +1046,12 @@ struct func_type
 
     unsigned int is_noreturn : 1;
 
-    /* * Only those DW_TAG_GNU_call_site's in this function that have
-       DW_AT_GNU_tail_call set are linked in this list.  Function
+    /* * Only those DW_TAG_call_site's in this function that have
+       DW_AT_call_tail_call set are linked in this list.  Function
        without its tail call list complete
-       (DW_AT_GNU_all_tail_call_sites or its superset
-       DW_AT_GNU_all_call_sites) has TAIL_CALL_LIST NULL, even if some
-       DW_TAG_GNU_call_site's exist in such function. */
+       (DW_AT_call_all_tail_calls or its superset
+       DW_AT_call_all_calls) has TAIL_CALL_LIST NULL, even if some
+       DW_TAG_call_site's exist in such function. */
 
     struct call_site *tail_call_list;
 
@@ -1128,7 +1102,7 @@ union call_site_parameter_u
      DW_TAG_formal_parameter which is referenced by both
      caller and the callee.  */
 
-  cu_offset param_offset;
+  cu_offset param_cu_off;
 };
 
 struct call_site_parameter
@@ -1137,13 +1111,12 @@ struct call_site_parameter
 
   union call_site_parameter_u u;
 
-  /* * DW_TAG_formal_parameter's DW_AT_GNU_call_site_value.  It
-     is never NULL.  */
+  /* * DW_TAG_formal_parameter's DW_AT_call_value.  It is never NULL.  */
 
   const gdb_byte *value;
   size_t value_size;
 
-  /* * DW_TAG_formal_parameter's DW_AT_GNU_call_site_data_value.
+  /* * DW_TAG_formal_parameter's DW_AT_call_data_value.
      It may be NULL if not provided by DWARF.  */
 
   const gdb_byte *data_value;
@@ -1151,8 +1124,7 @@ struct call_site_parameter
 };
 
 /* * A place where a function gets called from, represented by
-   DW_TAG_GNU_call_site.  It can be looked up from
-   symtab->call_site_htab.  */
+   DW_TAG_call_site.  It can be looked up from symtab->call_site_htab.  */
 
 struct call_site
   {
@@ -1166,7 +1138,7 @@ struct call_site
 
     struct call_site *tail_call_next;
 
-    /* * Describe DW_AT_GNU_call_site_target.  Missing attribute uses
+    /* * Describe DW_AT_call_target.  Missing attribute uses
        FIELD_LOC_KIND_DWARF_BLOCK with FIELD_DWARF_BLOCK == NULL.  */
 
     struct call_site_target target;
@@ -1180,7 +1152,7 @@ struct call_site
 
     struct dwarf2_per_cu_data *per_cu;
 
-    /* * Describe DW_TAG_GNU_call_site's DW_TAG_formal_parameter.  */
+    /* * Describe DW_TAG_call_site's DW_TAG_formal_parameter.  */
 
     struct call_site_parameter parameter[1];
   };
@@ -1229,6 +1201,7 @@ extern void allocate_gnat_aux_type (struct type *);
 #define TYPE_TARGET_TYPE(thistype) TYPE_MAIN_TYPE(thistype)->target_type
 #define TYPE_POINTER_TYPE(thistype) (thistype)->pointer_type
 #define TYPE_REFERENCE_TYPE(thistype) (thistype)->reference_type
+#define TYPE_RVALUE_REFERENCE_TYPE(thistype) (thistype)->rvalue_reference_type
 #define TYPE_CHAIN(thistype) (thistype)->chain
 /* * Note that if thistype is a TYPEDEF type, you have to call check_typedef.
    But check_typedef does set the TYPE_LENGTH of the TYPEDEF type,
@@ -1336,7 +1309,6 @@ extern void set_type_vptr_basetype (struct type *, struct type *);
 #define BASETYPE_VIA_PUBLIC(thistype, index) \
   ((!TYPE_FIELD_PRIVATE(thistype, index)) && (!TYPE_FIELD_PROTECTED(thistype, index)))
 #define TYPE_CPLUS_DYNAMIC(thistype) TYPE_CPLUS_SPECIFIC (thistype)->is_dynamic
-#define TYPE_CPLUS_REALLY_JAVA(thistype) TYPE_CPLUS_SPECIFIC (thistype)->is_java
 
 #define BASETYPE_VIA_VIRTUAL(thistype, index) \
   (TYPE_CPLUS_SPECIFIC(thistype)->virtual_field_bits == NULL ? 0 \
@@ -1531,6 +1503,7 @@ struct builtin_type
   /* Wide character types.  */
   struct type *builtin_char16;
   struct type *builtin_char32;
+  struct type *builtin_wchar;
 
   /* Pointer types.  */
 
@@ -1672,8 +1645,21 @@ extern unsigned int type_length_units (struct type *type);
 
 /* * Helper function to construct objfile-owned types.  */
 
-extern struct type *init_type (enum type_code, int, int, const char *,
-			       struct objfile *);
+extern struct type *init_type (struct objfile *, enum type_code, int,
+			       const char *);
+extern struct type *init_integer_type (struct objfile *, int, int,
+				       const char *);
+extern struct type *init_character_type (struct objfile *, int, int,
+					 const char *);
+extern struct type *init_boolean_type (struct objfile *, int, int,
+				       const char *);
+extern struct type *init_float_type (struct objfile *, int, const char *,
+				     const struct floatformat **);
+extern struct type *init_decfloat_type (struct objfile *, int, const char *);
+extern struct type *init_complex_type (struct objfile *, const char *,
+				       struct type *);
+extern struct type *init_pointer_type (struct objfile *, int, const char *,
+				       struct type *);
 
 /* Helper functions to construct architecture-owned types.  */
 extern struct type *arch_type (struct gdbarch *, enum type_code, int,
@@ -1686,7 +1672,10 @@ extern struct type *arch_boolean_type (struct gdbarch *, int, int,
 				       const char *);
 extern struct type *arch_float_type (struct gdbarch *, int, const char *,
 				     const struct floatformat **);
+extern struct type *arch_decfloat_type (struct gdbarch *, int, const char *);
 extern struct type *arch_complex_type (struct gdbarch *, const char *,
+				       struct type *);
+extern struct type *arch_pointer_type (struct gdbarch *, int, const char *,
 				       struct type *);
 
 /* Helper functions to construct a struct or record type.  An
@@ -1720,9 +1709,13 @@ extern void append_flags_type_flag (struct type *type, int bitpos,
 extern void make_vector_type (struct type *array_type);
 extern struct type *init_vector_type (struct type *elt_type, int n);
 
-extern struct type *lookup_reference_type (struct type *);
+extern struct type *lookup_reference_type (struct type *, enum type_code);
+extern struct type *lookup_lvalue_reference_type (struct type *);
+extern struct type *lookup_rvalue_reference_type (struct type *);
 
-extern struct type *make_reference_type (struct type *, struct type **);
+
+extern struct type *make_reference_type (struct type *, struct type **,
+                                         enum type_code);
 
 extern struct type *make_cv_type (int, int, struct type *, struct type **);
 
@@ -1898,10 +1891,21 @@ extern const struct rank VOID_PTR_CONVERSION_BADNESS;
 extern const struct rank BOOL_CONVERSION_BADNESS;
 /* * Badness of converting derived to base class.  */
 extern const struct rank BASE_CONVERSION_BADNESS;
-/* * Badness of converting from non-reference to reference.  */
+/* * Badness of converting from non-reference to reference.  Subrank
+   is the type of reference conversion being done.  */
 extern const struct rank REFERENCE_CONVERSION_BADNESS;
+/* * Conversion to rvalue reference.  */
+#define REFERENCE_CONVERSION_RVALUE 1
+/* * Conversion to const lvalue reference.  */
+#define REFERENCE_CONVERSION_CONST_LVALUE 2
+
 /* * Badness of converting integer 0 to NULL pointer.  */
 extern const struct rank NULL_POINTER_CONVERSION;
+/* * Badness of cv-conversion.  Subrank is a flag describing the conversions
+   being done.  */
+extern const struct rank CV_CONVERSION_BADNESS;
+#define CV_CONVERSION_CONST 1
+#define CV_CONVERSION_VOLATILE 2
 
 /* Non-standard conversions allowed by the debugger */
 

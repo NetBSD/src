@@ -1,4 +1,4 @@
-# Copyright 1998-2016 Free Software Foundation, Inc.
+# Copyright 1998-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 standard_testfile break.c break1.c
 
-if {[prepare_for_testing ${testfile}.exp ${testfile} \
+if {[prepare_for_testing "failed to prepare" ${testfile} \
 	 [list $srcfile $srcfile2] {debug nowarnings}]} {
     return -1
 }
@@ -146,6 +146,38 @@ gdb_test_multiple "define ifnospace" "define user command: ifnospace" \
 }
 
 gdb_test "ifnospace" ".*hi there.*" "test ifnospace is parsed correctly"
+
+# Verify that the command parser properly handles command abbreviations.
+with_test_prefix "command abbreviations in define" {
+  set test "define user command: breakmain"
+  gdb_test_multiple "define breakmain" "$test" {
+      -re "Type commands for definition of \"breakmain\".\r\nEnd with a line saying just \"end\".\r\n>$" {
+	  pass "$test"
+	  set test "send body of breakmain"
+	  gdb_test_multiple "break main\ncommand\necho\nend\nend" "$test"  {
+	      -re "$gdb_prompt $"\
+		  {pass "$test"}
+	  }
+      }
+  }
+
+  gdb_test "breakmain" ".*Breakpoint .*" "run user command"
+
+  # If GDB fails to interpret properly the abbrev "command", the last "end"
+  # will be missing.  Issue it to avoid a desync that would break the other
+  # tests in this file.
+  gdb_test "end" \
+    "This command cannot be used at the top level.*" \
+    "additional end command"
+
+  gdb_test "info break \$bpnum" \
+    [multi_line \
+      "Num     Type\[ \]+Disp Enb Address\[ \]+What.*" \
+      "\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*" \
+      "\[\t \]+echo.*"] \
+    "info break shows echo command"
+}
+
 
 # Verify that the command parser doesn't require a space after an 'while'
 # command in a user defined function.

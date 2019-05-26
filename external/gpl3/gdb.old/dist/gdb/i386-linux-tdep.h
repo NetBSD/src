@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux x86.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,7 @@
 /* Register number for the "orig_eax" pseudo-register.  If this
    pseudo-register contains a value >= 0 it is interpreted as the
    system call number that the kernel is supposed to restart.  */
-#define I386_LINUX_ORIG_EAX_REGNUM (I386_ZMM7H_REGNUM + 1)
+#define I386_LINUX_ORIG_EAX_REGNUM (I386_PKRU_REGNUM + 1)
 
 /* Total number of registers for GNU/Linux.  */
 #define I386_LINUX_NUM_REGS (I386_LINUX_ORIG_EAX_REGNUM + 1)
@@ -48,7 +48,8 @@ extern struct target_desc *tdesc_i386_mmx_linux;
 extern struct target_desc *tdesc_i386_avx_linux;
 extern struct target_desc *tdesc_i386_mpx_linux;
 extern struct target_desc *tdesc_i386_avx_mpx_linux;
-extern struct target_desc *tdesc_i386_avx512_linux;
+extern struct target_desc *tdesc_i386_avx_avx512_linux;
+extern struct target_desc *tdesc_i386_avx_mpx_avx512_pku_linux;
 
 /* Format of XSAVE extended state is:
  	struct
@@ -62,6 +63,7 @@ extern struct target_desc *tdesc_i386_avx512_linux;
 	  avx512_zmmh_regs0-7[1153..1407]
 	  avx512_zmmh_regs8-15[1408..1663]
 	  avx512_zmm_regs16-31[1664..2687]
+	  pkru[2688..2752]
 	  future_state etc
 	};
 

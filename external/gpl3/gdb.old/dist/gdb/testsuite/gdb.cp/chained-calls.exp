@@ -1,4 +1,4 @@
-# Copyright 2014-2016 Free Software Foundation, Inc.
+# Copyright 2014-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ if {[skip_cplus_tests]} { continue }
 
 standard_testfile .cc
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
 
@@ -40,5 +40,5 @@ gdb_test "p g(f(g(f(300) + f(40))) + f(5))" ".* = 345" \
 gdb_test "p getb(makeb(), 789)" ".* = 789" "getb(makeb(), ...)"
 gdb_test "p *c" ".* = {a = 5678}" "*c"
 gdb_test "p *c + *c" ".* = {a = 11356}" "*c + *c"
-gdb_test "P q(*c + *c)" ".* = {a = 11356}" "q(*c + *c)"
+gdb_test "p q(*c + *c)" ".* = {a = 11356}" "q(*c + *c)"
 gdb_test "p make_int().get_type ()" ".* = INT" "make_int().get_type ()"

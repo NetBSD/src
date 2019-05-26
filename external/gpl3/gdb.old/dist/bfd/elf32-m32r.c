@@ -1,5 +1,5 @@
 /* M32R-specific support for 32-bit ELF.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1282,6 +1282,7 @@ m32r_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type > (unsigned int) R_M32R_GNU_VTENTRY)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid M32R reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -1522,11 +1523,6 @@ struct elf_m32r_link_hash_table
   struct elf_link_hash_table root;
 
   /* Short-cuts to get to dynamic linker sections.  */
-  asection *sgot;
-  asection *sgotplt;
-  asection *srelgot;
-  asection *splt;
-  asection *srelplt;
   asection *sdynbss;
   asection *srelbss;
 
@@ -1605,30 +1601,6 @@ m32r_elf_link_hash_table_create (bfd *abfd)
   return &ret->root.root;
 }
 
-/* Create .got, .gotplt, and .rela.got sections in DYNOBJ, and set up
-   shortcuts to them in our hash table.  */
-
-static bfd_boolean
-create_got_section (bfd *dynobj, struct bfd_link_info *info)
-{
-  struct elf_m32r_link_hash_table *htab;
-
-  if (! _bfd_elf_create_got_section (dynobj, info))
-    return FALSE;
-
-  htab = m32r_elf_hash_table (info);
-  if (htab == NULL)
-    return FALSE;
-
-  htab->sgot = bfd_get_linker_section (dynobj, ".got");
-  htab->sgotplt = bfd_get_linker_section (dynobj, ".got.plt");
-  htab->srelgot = bfd_get_linker_section (dynobj, ".rela.got");
-  if (! htab->sgot || ! htab->sgotplt || ! htab->srelgot)
-    abort ();
-
-  return TRUE;
-}
-
 /* Create dynamic sections when linking against a dynamic object.  */
 
 static bfd_boolean
@@ -1657,7 +1629,7 @@ m32r_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
     pltflags |= SEC_READONLY;
 
   s = bfd_make_section_anyway_with_flags (abfd, ".plt", pltflags);
-  htab->splt = s;
+  htab->root.splt = s;
   if (s == NULL
       || ! bfd_set_section_alignment (abfd, s, bed->plt_alignment))
     return FALSE;
@@ -1688,13 +1660,13 @@ m32r_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 					  bed->default_use_rela_p
 					  ? ".rela.plt" : ".rel.plt",
 					  flags | SEC_READONLY);
-  htab->srelplt = s;
+  htab->root.srelplt = s;
   if (s == NULL
       || ! bfd_set_section_alignment (abfd, s, ptralign))
     return FALSE;
 
-  if (htab->sgot == NULL
-      && ! create_got_section (abfd, info))
+  if (htab->root.sgot == NULL
+      && !_bfd_elf_create_got_section (abfd, info))
     return FALSE;
 
   if (bed->want_dynbss)
@@ -1961,7 +1933,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 
       if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (1, bfd_link_pic (info), h))
         {
-          asection *s = htab->splt;
+          asection *s = htab->root.splt;
 
           /* If this is the first .plt entry, make room for the special
              first entry.  */
@@ -1987,10 +1959,10 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 
           /* We also need to make an entry in the .got.plt section, which
              will be placed in the .got section by the linker script.  */
-          htab->sgotplt->size += 4;
+          htab->root.sgotplt->size += 4;
 
           /* We also need to make an entry in the .rel.plt section.  */
-          htab->srelplt->size += sizeof (Elf32_External_Rela);
+          htab->root.srelplt->size += sizeof (Elf32_External_Rela);
         }
       else
         {
@@ -2018,13 +1990,13 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
             return FALSE;
         }
 
-      s = htab->sgot;
+      s = htab->root.sgot;
 
       h->got.offset = s->size;
       s->size += 4;
       dyn = htab->root.dynamic_sections_created;
       if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, bfd_link_pic (info), h))
-        htab->srelgot->size += sizeof (Elf32_External_Rela);
+        htab->root.srelgot->size += sizeof (Elf32_External_Rela);
     }
   else
     h->got.offset = (bfd_vma) -1;
@@ -2226,8 +2198,8 @@ m32r_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       symtab_hdr = &elf_tdata (ibfd)->symtab_hdr;
       locsymcount = symtab_hdr->sh_info;
       end_local_got = local_got + locsymcount;
-      s = htab->sgot;
-      srel = htab->srelgot;
+      s = htab->root.sgot;
+      srel = htab->root.srelgot;
       for (; local_got < end_local_got; ++local_got)
         {
           if (*local_got > 0)
@@ -2254,9 +2226,9 @@ m32r_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       if ((s->flags & SEC_LINKER_CREATED) == 0)
         continue;
 
-      if (s == htab->splt
-          || s == htab->sgot
-          || s == htab->sgotplt
+      if (s == htab->root.splt
+          || s == htab->root.sgot
+          || s == htab->root.sgotplt
 	  || s == htab->sdynbss)
         {
           /* Strip this section if we don't need it; see the
@@ -2264,7 +2236,7 @@ m32r_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
         }
       else if (CONST_STRNEQ (bfd_get_section_name (dynobj, s), ".rela"))
         {
-          if (s->size != 0 && s != htab->srelplt)
+          if (s->size != 0 && s != htab->root.srelplt)
             relocs = TRUE;
 
           /* We use the reloc_count field as a counter if we need
@@ -2319,7 +2291,7 @@ m32r_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    return FALSE;
 	}
 
-      if (htab->splt->size != 0)
+      if (htab->root.splt->size != 0)
         {
           if (! add_dynamic_entry (DT_PLTGOT, 0)
               || ! add_dynamic_entry (DT_PLTRELSZ, 0)
@@ -2403,7 +2375,6 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
   /* Assume success.  */
   bfd_boolean ret = TRUE;
   struct elf_m32r_link_hash_table *htab = m32r_elf_hash_table (info);
-  bfd *dynobj;
   bfd_vma *local_got_offsets;
   asection *sgot, *splt, *sreloc;
   bfd_vma high_address = bfd_get_section_limit (input_bfd, input_section);
@@ -2411,11 +2382,10 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (htab == NULL)
     return FALSE;
 
-  dynobj = htab->root.dynobj;
   local_got_offsets = elf_local_got_offsets (input_bfd);
 
-  sgot = htab->sgot;
-  splt = htab->splt;
+  sgot = htab->root.sgot;
+  splt = htab->root.splt;
   sreloc = NULL;
 
   rel = relocs;
@@ -2444,9 +2414,9 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
       r_type = ELF32_R_TYPE (rel->r_info);
       if (r_type < 0 || r_type >= (int) R_M32R_max)
 	{
-	  (*_bfd_error_handler) (_("%B: unknown relocation type %d"),
-				 input_bfd,
-				 (int) r_type);
+	  /* xgettext:c-format */
+	  _bfd_error_handler (_("%B: unknown relocation type %d"),
+			      input_bfd, (int) r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  ret = FALSE;
 	  continue;
@@ -2565,7 +2535,8 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 						    rel->r_offset)
 			   != (bfd_vma) -1))
 		{
-		  (*_bfd_error_handler)
+		  _bfd_error_handler
+		    /* xgettext:c-format */
 		    (_("%B(%A+0x%lx): unresolvable %s relocation against symbol `%s'"),
 		     input_bfd,
 		     input_section,
@@ -2790,8 +2761,7 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
                           /* We need to generate a R_M32R_RELATIVE reloc
                              for the dynamic linker.  */
-                          srelgot = bfd_get_linker_section (dynobj,
-							    ".rela.got");
+                          srelgot = htab->root.srelgot;
                           BFD_ASSERT (srelgot != NULL);
 
                           outrel.r_offset = (sgot->output_section->vma
@@ -3009,12 +2979,13 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		  }
 		else
 		  {
-		    (*_bfd_error_handler)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
 		      (_("%B: The target (%s) of an %s relocation is in the wrong section (%A)"),
 		       input_bfd,
-		       sec,
 		       sym_name,
-		       m32r_elf_howto_table[(int) r_type].name);
+		       m32r_elf_howto_table[(int) r_type].name,
+		       sec);
 		    /*bfd_set_error (bfd_error_bad_value); ??? why? */
 		    ret = FALSE;
 		    continue;
@@ -3131,9 +3102,9 @@ m32r_elf_finish_dynamic_symbol (bfd *output_bfd,
 
       BFD_ASSERT (h->dynindx != -1);
 
-      splt = htab->splt;
-      sgot = htab->sgotplt;
-      srela = htab->srelplt;
+      splt = htab->root.splt;
+      sgot = htab->root.sgotplt;
+      srela = htab->root.srelplt;
       BFD_ASSERT (splt != NULL && sgot != NULL && srela != NULL);
 
       /* Get the index in the procedure linkage table which
@@ -3227,8 +3198,8 @@ m32r_elf_finish_dynamic_symbol (bfd *output_bfd,
       /* This symbol has an entry in the global offset table.  Set it
          up.  */
 
-      sgot = htab->sgot;
-      srela = htab->srelgot;
+      sgot = htab->root.sgot;
+      srela = htab->root.srelgot;
       BFD_ASSERT (sgot != NULL && srela != NULL);
 
       rela.r_offset = (sgot->output_section->vma
@@ -3319,7 +3290,7 @@ m32r_elf_finish_dynamic_sections (bfd *output_bfd,
 
   dynobj = htab->root.dynobj;
 
-  sgot = htab->sgotplt;
+  sgot = htab->root.sgotplt;
   sdyn = bfd_get_linker_section (dynobj, ".dynamic");
 
   if (htab->root.dynamic_sections_created)
@@ -3345,43 +3316,25 @@ m32r_elf_finish_dynamic_sections (bfd *output_bfd,
               break;
 
             case DT_PLTGOT:
-              s = htab->sgotplt;
+              s = htab->root.sgotplt;
               goto get_vma;
             case DT_JMPREL:
-              s = htab->srelplt;
+              s = htab->root.srelplt;
             get_vma:
               dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
               bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
               break;
 
             case DT_PLTRELSZ:
-              s = htab->srelplt;
+              s = htab->root.srelplt;
 	      dyn.d_un.d_val = s->size;
-              bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
-              break;
-
-            case DT_RELASZ:
-              /* My reading of the SVR4 ABI indicates that the
-                 procedure linkage table relocs (DT_JMPREL) should be
-                 included in the overall relocs (DT_RELA).  This is
-                 what Solaris does.  However, UnixWare can not handle
-                 that case.  Therefore, we override the DT_RELASZ entry
-                 here to make it not include the JMPREL relocs.  Since
-                 the linker script arranges for .rela.plt to follow all
-                 other relocation sections, we don't have to worry
-                 about changing the DT_RELA entry.  */
-              if (htab->srelplt != NULL)
-                {
-                  s = htab->srelplt;
-		  dyn.d_un.d_val -= s->size;
-                }
               bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
               break;
             }
         }
 
       /* Fill in the first entry in the procedure linkage table.  */
-      splt = htab->splt;
+      splt = htab->root.splt;
       if (splt && splt->size > 0)
         {
           if (bfd_link_pic (info))
@@ -3484,8 +3437,9 @@ m32r_elf_set_private_flags (bfd *abfd, flagword flags)
    object file when linking.  */
 
 static bfd_boolean
-m32r_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+m32r_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword out_flags;
   flagword in_flags;
 
@@ -3528,7 +3482,7 @@ m32r_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
           || ((out_flags & EF_M32R_ARCH) == E_M32R_ARCH)
           || ((in_flags  & EF_M32R_ARCH) == E_M32R2_ARCH))
 	{
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
 	    (_("%B: Instruction set mismatch with previous modules"), ibfd);
 
 	  bfd_set_error (bfd_error_bad_value);
@@ -3756,7 +3710,7 @@ m32r_elf_check_relocs (bfd *abfd,
 	}
 
       /* Some relocs require a global offset table.  */
-      if (htab->sgot == NULL)
+      if (htab->root.sgot == NULL)
         {
           switch (r_type)
             {
@@ -3774,7 +3728,7 @@ m32r_elf_check_relocs (bfd *abfd,
             case R_M32R_GOT24:
               if (dynobj == NULL)
                 htab->root.dynobj = dynobj = abfd;
-              if (! create_got_section (dynobj, info))
+              if (!_bfd_elf_create_got_section (dynobj, info))
                 return FALSE;
               break;
 
@@ -4042,6 +3996,7 @@ m32r_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
 #define elf_backend_plt_readonly 1
 #define elf_backend_want_plt_sym 0
 #define elf_backend_got_header_size 12
+#define elf_backend_dtrel_excludes_plt	1
 
 #define elf_backend_may_use_rel_p       1
 #ifdef USE_M32R_OLD_RELOC
@@ -4076,4 +4031,3 @@ m32r_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
 #define elf32_bed               elf32_m32r_lin_bed
 
 #include "elf32-target.h"
-
