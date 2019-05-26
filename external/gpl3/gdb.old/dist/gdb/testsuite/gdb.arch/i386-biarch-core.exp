@@ -1,4 +1,4 @@
-# Copyright 2015-2016 Free Software Foundation, Inc.
+# Copyright 2015-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,6 +54,18 @@ if {$corestat(size) != 102400} {
     return -1
 }
 
+# First check if this particular GDB supports i386, otherwise we should not
+# expect the i386 core file to be loaded successfully.
+set supports_arch_i386 1
+set test "complete set architecture i386"
+gdb_test_multiple $test $test {
+    -re "\r\nset architecture i386\r\n(.*\r\n)?$gdb_prompt $" {
+    }
+    -re "\r\n$gdb_prompt $" {
+        set supports_arch_i386 0
+    }
+}
+
 # Wrongly built GDB complains by:
 # "..." is not a core dump: File format not recognized
 # As the provided test core has 64bit PRSTATUS i386 built GDB cannot parse it.
@@ -62,7 +74,24 @@ if {$corestat(size) != 102400} {
 # objcopy as it corrupts the core file beyond all recognition.
 # The output therefore does not matter much, just we should not get GDB
 # internal error.
-gdb_test "core-file ${corefile}" ".*" "core-file"
+#
+# If this particular GDB does not support i386, it is expected GDB will not
+# recognize the core file.  If it does anyway, it should not crash.
+set test "load core file"
+gdb_test_multiple "core-file ${corefile}" $test {
+    -re "no core file handler recognizes format.*\r\n$gdb_prompt $" {
+	if { $supports_arch_i386 } {
+	    fail $test
+	} else {
+	    pass $test
+	    untested ".text is readable (core file unrecognized)"
+	    return
+	}
+    }
+    -re "\r\n$gdb_prompt $" {
+	pass $test
+    }
+}
 
 # Test if at least the core file segments memory has been loaded.
 # https://bugzilla.redhat.com/show_bug.cgi?id=457187

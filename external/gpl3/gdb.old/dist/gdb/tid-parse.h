@@ -1,6 +1,6 @@
 /* TID parsing for GDB, the GNU debugger.
 
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,56 +36,6 @@ extern void ATTRIBUTE_NORETURN invalid_thread_id_error (const char *string);
    thrown.  */
 struct thread_info *parse_thread_id (const char *tidstr, const char **end);
 
-/* The possible states of the tid range parser's state machine.  */
-enum tid_range_state
-{
-  /* Parsing the inferior number.  */
-  TID_RANGE_STATE_INFERIOR,
-
-  /* Parsing the thread number or thread number range.  */
-  TID_RANGE_STATE_THREAD_RANGE,
-
-  /* Parsing a star wildcard thread range.  E.g., "1.*".  */
-  TID_RANGE_STATE_STAR_RANGE,
-};
-
-/* An object of this type is passed to tid_range_parser_get_tid.  It
-   must be initialized by calling tid_range_parser_init.  This type is
-   defined here so that it can be stack-allocated, but all members
-   should be treated as opaque.  */
-struct tid_range_parser
-{
-  /* What sub-component are we expecting.  */
-  enum tid_range_state state;
-
-  /* The string being parsed.  When parsing has finished, this points
-     past the last parsed token.  */
-  const char *string;
-
-  /* The range parser state when we're parsing the thread number
-     sub-component.  */
-  struct get_number_or_range_state range_parser;
-
-  /* Last inferior number returned.  */
-  int inf_num;
-
-  /* True if the TID last parsed was explicitly inferior-qualified.
-     IOW, whether the spec specified an inferior number
-     explicitly.  */
-  int qualified;
-
-  /* The inferior number to assume if the TID is not qualified.  */
-  int default_inferior;
-};
-
-/* Initialize a tid_range_parser for use with
-   tid_range_parser_get_tid.  TIDLIST is the string to be parsed.
-   DEFAULT_INFERIOR is the inferior number to assume if a
-   non-qualified thread ID is found.  */
-extern void tid_range_parser_init (struct tid_range_parser *parser,
-				   const char *tidlist,
-				   int default_inferior);
-
 /* Parse a thread ID or a thread range list.
 
    A range will be of the form
@@ -99,74 +49,133 @@ extern void tid_range_parser_init (struct tid_range_parser *parser,
      <thread_number1>-<thread_number2>
 
    in which case GDB infers the inferior number from the default
-   passed to the tid_range_parser_init function.
+   passed to the constructor or to the last call to the init
+   function.  */
+class tid_range_parser
+{
+public:
+  /* Default construction.  Must call init before calling get_*.  */
+  tid_range_parser () {}
 
-   This function is designed to be called iteratively.  While
-   processing a thread ID range list, at each call it will return (in
-   the INF_NUM and THR_NUM output parameters) the next thread ID in
-   the range (irrespective of whether the thread actually exists).
+  /* Calls init automatically.  See init for description of
+     parameters.  */
+  tid_range_parser (const char *tidlist, int default_inferior);
 
-   At the beginning of parsing a thread range, the char pointer
-   PARSER->string will be advanced past <thread_number1> and left
-   pointing at the '-' token.  Subsequent calls will not advance the
-   pointer until the range is completed.  The call that completes the
-   range will advance the pointer past <thread_number2>.
+  /* Reinitialize a tid_range_parser.  TIDLIST is the string to be
+     parsed.  DEFAULT_INFERIOR is the inferior number to assume if a
+     non-qualified thread ID is found.  */
+  void init (const char *tidlist, int default_inferior);
 
-   This function advances through the input string for as long you
-   call it.  Once the end of the input string is reached, a call to
-   tid_range_parser_finished returns false (see below).
+  /* Parse a thread ID or a thread range list.
 
-   E.g., with list: "1.2 3.4-6":
+     This function is designed to be called iteratively.  While
+     processing a thread ID range list, at each call it will return
+     (in the INF_NUM and THR_NUM output parameters) the next thread ID
+     in the range (irrespective of whether the thread actually
+     exists).
+
+     At the beginning of parsing a thread range, the char pointer
+     PARSER->m_cur_tok will be advanced past <thread_number1> and left
+     pointing at the '-' token.  Subsequent calls will not advance the
+     pointer until the range is completed.  The call that completes
+     the range will advance the pointer past <thread_number2>.
+
+     This function advances through the input string for as long you
+     call it.  Once the end of the input string is reached, a call to
+     finished returns false (see below).
+
+     E.g., with list: "1.2 3.4-6":
 
      1st call: *INF_NUM=1; *THR_NUM=2 (finished==0)
      2nd call: *INF_NUM=3; *THR_NUM=4 (finished==0)
      3rd call: *INF_NUM=3; *THR_NUM=5 (finished==0)
      4th call: *INF_NUM=3; *THR_NUM=6 (finished==1)
 
-   Returns true if parsed a thread/range successfully, false
-   otherwise.  */
-extern int tid_range_parser_get_tid (struct tid_range_parser *parser,
-				      int *inf_num, int *thr_num);
+     Returns true if a thread/range is parsed successfully, false
+     otherwise.  */
+  bool get_tid (int *inf_num, int *thr_num);
 
-/* Like tid_range_parser_get_tid, but return a thread ID range per
-   call, rather then a single thread ID.
+  /* Like get_tid, but return a thread ID range per call, rather then
+     a single thread ID.
 
-   If the next element in the list is a single thread ID, then
-   *THR_START and *THR_END are set to the same value.
+     If the next element in the list is a single thread ID, then
+     *THR_START and *THR_END are set to the same value.
 
-   E.g.,. with list: "1.2 3.4-6"
+     E.g.,. with list: "1.2 3.4-6"
 
      1st call: *INF_NUM=1; *THR_START=2; *THR_END=2 (finished==0)
      2nd call: *INF_NUM=3; *THR_START=4; *THR_END=6 (finished==1)
 
-   Returns true if parsed a thread/range successfully, false
-   otherwise.  */
-extern int tid_range_parser_get_tid_range (struct tid_range_parser *parser,
-					   int *inf_num,
-					   int *thr_start, int *thr_end);
+     Returns true if parsed a thread/range successfully, false
+     otherwise.  */
+  bool get_tid_range (int *inf_num, int *thr_start, int *thr_end);
 
-/* Returns non-zero if processing a star wildcard (e.g., "1.*")
-   range.  */
-extern int tid_range_parser_star_range (struct tid_range_parser *parser);
+  /* Returns true if processing a star wildcard (e.g., "1.*")
+     range.  */
+  bool in_star_range () const;
 
-/* Returns non-zero if parsing has completed.  */
-extern int tid_range_parser_finished (struct tid_range_parser *parser);
+  /* Returns true if parsing has completed.  */
+  bool finished () const;
 
-/* Return the string being parsed.  When parsing has finished, this
-   points past the last parsed token.  */
-const char *tid_range_parser_string (struct tid_range_parser *parser);
+  /* Return the current token being parsed.  When parsing has
+     finished, this points past the last parsed token.  */
+  const char *cur_tok () const;
 
-/* When parsing a range, advance past the final token in the range.  */
-extern void tid_range_parser_skip (struct tid_range_parser *parser);
+  /* When parsing a range, advance past the final token in the
+     range.  */
+  void skip_range ();
 
-/* True if the TID last parsed was explicitly inferior-qualified.
-   IOW, whether the spec specified an inferior number explicitly.  */
-extern int tid_range_parser_qualified (struct tid_range_parser *parser);
+  /* True if the TID last parsed was explicitly inferior-qualified.
+     IOW, whether the spec specified an inferior number
+     explicitly.  */
+  bool tid_is_qualified () const;
+
+private:
+  /* No need for these.  They are intentionally not defined anywhere.  */
+  tid_range_parser (const tid_range_parser &);
+  tid_range_parser &operator= (const tid_range_parser &);
+
+  bool get_tid_or_range (int *inf_num, int *thr_start, int *thr_end);
+
+  /* The possible states of the tid range parser's state machine,
+     indicating what sub-component are we expecting.  */
+  enum
+    {
+      /* Parsing the inferior number.  */
+      STATE_INFERIOR,
+
+      /* Parsing the thread number or thread number range.  */
+      STATE_THREAD_RANGE,
+
+      /* Parsing a star wildcard thread range.  E.g., "1.*".  */
+      STATE_STAR_RANGE,
+    } m_state;
+
+  /* The string being parsed.  When parsing has finished, this points
+     past the last parsed token.  */
+  const char *m_cur_tok;
+
+  /* The range parser state when we're parsing the thread number
+     sub-component.  */
+  number_or_range_parser m_range_parser;
+
+  /* Last inferior number returned.  */
+  int m_inf_num;
+
+  /* True if the TID last parsed was explicitly inferior-qualified.
+     IOW, whether the spec specified an inferior number
+     explicitly.  */
+  bool m_qualified;
+
+  /* The inferior number to assume if the TID is not qualified.  */
+  int m_default_inferior;
+};
+
 
 /* Accept a string-form list of thread IDs such as is accepted by
-   tid_range_parser_get_tid.  Return true if the INF_NUM.THR.NUM
-   thread is in the list.  DEFAULT_INFERIOR is the inferior number to
-   assume if a non-qualified thread ID is found in the list.
+   tid_range_parser.  Return true if the INF_NUM.THR.NUM thread is in
+   the list.  DEFAULT_INFERIOR is the inferior number to assume if a
+   non-qualified thread ID is found in the list.
 
    By definition, an empty list includes all threads.  This is to be
    interpreted as typing a command such as "info threads" with no

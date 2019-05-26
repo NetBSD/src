@@ -1,5 +1,5 @@
 /* Opcode table for the ARC.
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2017 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -42,20 +42,44 @@ typedef enum
   ACL,
   ARITH,
   AUXREG,
+  BBIT0,
+  BBIT1,
+  BI,
+  BIH,
   BITOP,
+  BITSTREAM,
   BMU,
   BRANCH,
+  BRCC,
   CONTROL,
+  DIVREM,
+  DMA,
   DPI,
   DSP,
+  EI,
+  ENTER,
   FLOAT,
   INVALID,
+  JLI,
   JUMP,
   KERNEL,
+  LEAVE,
+  LOAD,
   LOGICAL,
+  LOOP,
   MEMORY,
+  MISC,
+  MOVE,
+  MPY,
   NET,
-  PMU
+  PROTOCOL_DECODE,
+  PMU,
+  POP,
+  PUSH,
+  STORE,
+  SUB,
+  ULTRAIP,
+  XY
 } insn_class_t;
 
 /* Instruction Subclass.  */
@@ -103,24 +127,33 @@ typedef enum
   F_CLASS_EXTEND = (1 << 2),
 
   /* Condition code flag.  */
-  F_CLASS_COND = (1 << 3)
+  F_CLASS_COND = (1 << 3),
+
+  /* Write back mode.  */
+  F_CLASS_WB = (1 << 4),
+
+  /* Data size.  */
+  F_CLASS_ZZ = (1 << 5),
+
+  /* Implicit flag.  */
+  F_CLASS_IMPLICIT = (1 << 6)
 } flag_class_t;
 
 /* The opcode table is an array of struct arc_opcode.  */
 struct arc_opcode
 {
   /* The opcode name.  */
-  const char *name;
+  const char * name;
 
   /* The opcode itself.  Those bits which will be filled in with
      operands are zeroes.  */
-  unsigned opcode;
+  unsigned long long opcode;
 
   /* The opcode mask.  This is used by the disassembler.  This is a
      mask containing ones indicating those bits which must match the
      opcode field, and zeroes indicating those bits which need not
      match (and are presumably filled in by operands).  */
-  unsigned mask;
+  unsigned long long mask;
 
   /* One bit flags for the opcode.  These are primarily used to
      indicate specific processors and environments support the
@@ -144,34 +177,13 @@ struct arc_opcode
   unsigned char flags[MAX_INSN_FLGS + 1];
 };
 
-/* Structure used to describe 48 and 64 bit instructions.  */
-struct arc_long_opcode
-{
-  /* The base instruction is either 16 or 32 bits, and is described like a
-     normal instruction.  */
-  struct arc_opcode base_opcode;
-
-  /* The template value for the 32-bit LIMM extension.  Used by the
-     assembler and disassembler in the same way as the 'opcode' field of
-     'struct arc_opcode'.  */
-  unsigned limm_template;
-
-  /* The mask value for the 32-bit LIMM extension.  Used by the
-     disassembler just like the 'mask' field in 'struct arc_opcode'.  */
-  unsigned limm_mask;
-
-  /* Array of operand codes similar to the 'operands' array in 'struct
-     arc_opcode'.  These operands are used to fill in the LIMM value.  */
-  unsigned char operands[MAX_INSN_ARGS + 1];
-};
-
-extern const struct arc_long_opcode arc_long_opcodes[];
-extern const unsigned arc_num_long_opcodes;
-
 /* The table itself is sorted by major opcode number, and is otherwise
    in the order in which the disassembler should consider
    instructions.  */
 extern const struct arc_opcode arc_opcodes[];
+
+/* Return length of an instruction represented by OPCODE, in bytes.  */
+extern int arc_opcode_len (const struct arc_opcode *opcode);
 
 /* CPU Availability.  */
 #define ARC_OPCODE_NONE     0x0000
@@ -184,6 +196,7 @@ extern const struct arc_opcode arc_opcodes[];
 #define ARC_OPCODE_ARCALL  (ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700	\
 			    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS)
 #define ARC_OPCODE_ARCFPX  (ARC_OPCODE_ARC700 | ARC_OPCODE_ARCv2EM)
+#define ARC_OPCODE_ARCV2   (ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS)
 
 /* CPU extensions.  */
 #define ARC_EA       0x0001
@@ -225,10 +238,6 @@ extern const struct arc_opcode arc_opcodes[];
 #define ARC_XMAC     0x1000
 #define ARC_CRC      0x1000
 
-/* A macro to check for short instructions.  */
-#define ARC_SHORT(mask)				\
-  (((mask) & 0xFFFF0000) ? 0 : 1)
-
 /* The operands table is an array of struct arc_operand.  */
 struct arc_operand
 {
@@ -260,7 +269,9 @@ struct arc_operand
      string (the operand will be inserted in any case).	 If the
      operand value is legal, *ERRMSG will be unchanged (most operands
      can accept any value).  */
-  unsigned (*insert) (unsigned instruction, int op, const char **errmsg);
+  unsigned long long (*insert) (unsigned long long instruction,
+                                long long int op,
+                                const char **errmsg);
 
   /* Extraction function.  This is used by the disassembler.  To
      extract this operand type from an instruction, check this field.
@@ -279,7 +290,8 @@ struct arc_operand
      TRUE if this operand type can not actually be extracted from
      this operand (i.e., the instruction does not match).  If the
      operand is valid, *INVALID will not be changed.  */
-  int (*extract) (unsigned instruction, bfd_boolean *invalid);
+  long long int (*extract) (unsigned long long instruction,
+                            bfd_boolean *invalid);
 };
 
 /* Elements in the table are retrieved by indexing with values from
@@ -361,7 +373,7 @@ extern const unsigned arc_NToperand;
 struct arc_flag_operand
 {
   /* The flag name.  */
-  const char *name;
+  const char * name;
 
   /* The flag code.  */
   unsigned code;
@@ -443,13 +455,13 @@ struct arc_operand_operation
 struct arc_pseudo_insn
 {
   /* Mnemonic for pseudo/alias insn.  */
-  const char *mnemonic_p;
+  const char * mnemonic_p;
 
   /* Mnemonic for real instruction.  */
-  const char *mnemonic_r;
+  const char * mnemonic_r;
 
   /* Flag that will have to be added (if any).  */
-  const char *flag_r;
+  const char * flag_r;
 
   /* Amount of operands.  */
   unsigned operand_cnt;
@@ -476,7 +488,7 @@ struct arc_aux_reg
   insn_subclass_t subclass;
 
   /* Register name.  */
-  const char *name;
+  const char * name;
 
   /* Size of the string.  */
   size_t length;
@@ -527,26 +539,28 @@ extern const unsigned arc_num_relax_opcodes;
 #define INSN3OP_C0LU(MOP,SOP)					\
   (INSN3OP (MOP,SOP) | (0x03 << 22) | (0x01 << 5) | FIELDB (62))
 
-#define MINSN3OP_ABC  (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_ALC  (~(FIELDF | FIELDA (63) | FIELDC (63)))
-#define MINSN3OP_ABL  (~(FIELDF | FIELDA (63) | FIELDB (63)))
-#define MINSN3OP_ALL  (~(FIELDF | FIELDA (63)))
-#define MINSN3OP_0BC  (~(FIELDF | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_0LC  (~(FIELDF | FIELDC (63)))
-#define MINSN3OP_0BL  (~(FIELDF | FIELDB (63)))
-#define MINSN3OP_0LL  (~(FIELDF))
-#define MINSN3OP_ABU  (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_ALU  (~(FIELDF | FIELDA (63) | FIELDC (63)))
-#define MINSN3OP_0BU  (~(FIELDF | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_0LU  (~(FIELDF | FIELDC (63)))
-#define MINSN3OP_BBS  (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_0LS  (~(FIELDF | FIELDA (63) | FIELDC (63)))
-#define MINSN3OP_CBBC (~(FIELDF | FIELDQ | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_CBBL (~(FIELDF | FIELDQ | FIELDB (63)))
-#define MINSN3OP_C0LC (~(FIELDF | FIELDQ | FIELDC (63)))
-#define MINSN3OP_C0LL (~(FIELDF | FIELDQ))
-#define MINSN3OP_CBBU (~(FIELDF | FIELDQ | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_C0LU (~(FIELDF | FIELDQ | FIELDC (63)))
+#define MASK_32BIT(VAL) (0xffffffff & (VAL))
+
+#define MINSN3OP_ABC  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_ALC  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDC (63))))
+#define MINSN3OP_ABL  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDB (63))))
+#define MINSN3OP_ALL  (MASK_32BIT (~(FIELDF | FIELDA (63))))
+#define MINSN3OP_0BC  (MASK_32BIT (~(FIELDF | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_0LC  (MASK_32BIT (~(FIELDF | FIELDC (63))))
+#define MINSN3OP_0BL  (MASK_32BIT (~(FIELDF | FIELDB (63))))
+#define MINSN3OP_0LL  (MASK_32BIT (~(FIELDF)))
+#define MINSN3OP_ABU  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_ALU  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDC (63))))
+#define MINSN3OP_0BU  (MASK_32BIT (~(FIELDF | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_0LU  (MASK_32BIT (~(FIELDF | FIELDC (63))))
+#define MINSN3OP_BBS  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_0LS  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDC (63))))
+#define MINSN3OP_CBBC (MASK_32BIT (~(FIELDF | FIELDQ | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_CBBL (MASK_32BIT (~(FIELDF | FIELDQ | FIELDB (63))))
+#define MINSN3OP_C0LC (MASK_32BIT (~(FIELDF | FIELDQ | FIELDC (63))))
+#define MINSN3OP_C0LL (MASK_32BIT (~(FIELDF | FIELDQ)))
+#define MINSN3OP_CBBU (MASK_32BIT (~(FIELDF | FIELDQ | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_C0LU (MASK_32BIT (~(FIELDF | FIELDQ | FIELDC (63))))
 
 #define INSN2OP_BC(MOP,SOP) (INSN2OP (MOP,SOP))
 #define INSN2OP_BL(MOP,SOP) (INSN2OP (MOP,SOP) | FIELDC (62))
@@ -555,12 +569,12 @@ extern const unsigned arc_num_relax_opcodes;
 #define INSN2OP_BU(MOP,SOP) (INSN2OP (MOP,SOP) | (0x01 << 22))
 #define INSN2OP_0U(MOP,SOP) (INSN2OP (MOP,SOP) | (0x01 << 22) | FIELDB (62))
 
-#define MINSN2OP_BC  (~(FIELDF | FIELDB (63) | FIELDC (63)))
-#define MINSN2OP_BL  (~(FIELDF | FIELDB (63)))
-#define MINSN2OP_0C  (~(FIELDF | FIELDC (63)))
-#define MINSN2OP_0L  (~(FIELDF))
-#define MINSN2OP_BU  (~(FIELDF | FIELDB (63) | FIELDC (63)))
-#define MINSN2OP_0U  (~(FIELDF | FIELDC (63)))
+#define MINSN2OP_BC  (MASK_32BIT ((~(FIELDF | FIELDB (63) | FIELDC (63)))))
+#define MINSN2OP_BL  (MASK_32BIT ((~(FIELDF | FIELDB (63)))))
+#define MINSN2OP_0C  (MASK_32BIT ((~(FIELDF | FIELDC (63)))))
+#define MINSN2OP_0L  (MASK_32BIT ((~(FIELDF))))
+#define MINSN2OP_BU  (MASK_32BIT ((~(FIELDF | FIELDB (63) | FIELDC (63)))))
+#define MINSN2OP_0U  (MASK_32BIT ((~(FIELDF | FIELDC (63)))))
 
 /* Various constants used when defining an extension instruction.  */
 #define ARC_SYNTAX_3OP		(1 << 0)

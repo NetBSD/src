@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -221,8 +221,8 @@ catch_exceptions_with_msg (struct ui_out *func_uiout,
 /* This function is superseded by catch_exceptions().  */
 
 int
-catch_errors (catch_errors_ftype *func, void *func_args, char *errstring,
-	      return_mask mask)
+catch_errors (catch_errors_ftype *func, void *func_args,
+	      const char *errstring, return_mask mask)
 {
   struct gdb_exception exception = exception_none;
   volatile int val = 0;
@@ -255,4 +255,22 @@ catch_errors (catch_errors_ftype *func, void *func_args, char *errstring,
   if (exception.reason != 0)
     return 0;
   return val;
+}
+
+/* See exceptions.h.  */
+
+int
+exception_print_same (struct gdb_exception e1, struct gdb_exception e2)
+{
+  const char *msg1 = e1.message;
+  const char *msg2 = e2.message;
+
+  if (msg1 == NULL)
+    msg1 = "";
+  if (msg2 == NULL)
+    msg2 = "";
+
+  return (e1.reason == e2.reason
+	  && e1.error == e2.error
+	  && strcmp (msg1, msg2) == 0);
 }

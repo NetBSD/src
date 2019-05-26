@@ -1,5 +1,5 @@
 /* BFD back-end for oasys objects.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support, <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -612,6 +612,7 @@ oasys_object_p (bfd *abfd)
 	  break;
 	case oasys_record_is_data_enum:
 	  oasys->first_data_record = bfd_tell (abfd) - record.header.length;
+	  /* Fall through.  */
 	case oasys_record_is_debug_enum:
 	case oasys_record_is_module_enum:
 	case oasys_record_is_named_section_enum:
@@ -875,9 +876,9 @@ oasys_write_sections (bfd *abfd)
     {
       if (!ISDIGIT (s->name[0]))
 	{
-	  (*_bfd_error_handler)
-	    (_("%s: can not represent section `%s' in oasys"),
-	     bfd_get_filename (abfd), s->name);
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%B: can not represent section `%A' in oasys"), abfd, s);
 	  bfd_set_error (bfd_error_nonrepresentable_section);
 	  return FALSE;
 	}

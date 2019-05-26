@@ -1,4 +1,4 @@
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ set lib_opts "debug"
 
 if { [gdb_compile_shlib $libsrc1 $lib_sl1 $lib_opts] != ""
      || [gdb_compile_shlib $libsrc2 $lib_sl2 $lib_opts] != ""} {
-    untested "Could not compile either $libsrc1 or $libsrc2"
+    untested "failed to compile shared library"
     return -1
 }
 
@@ -39,7 +39,7 @@ set MIFLAGS "-i=mi"
 
 set exec_opts [list debug shlib=$lib_sl1 shlib_load]
 if { [gdb_compile $srcdir/$subdir/$srcfile $binfile executable $exec_opts] != "" } {
-    untested "Failed to compile $srcfile"
+    untested "failed to compile"
     return -1
 }
 

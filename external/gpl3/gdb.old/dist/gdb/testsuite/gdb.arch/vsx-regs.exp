@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2016 Free Software Foundation, Inc.
+# Copyright (C) 2008-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,9 +24,7 @@ if {![istarget "powerpc*"] || [skip_vsx_tests]} then {
     return
 }
 
-set testfile "vsx-regs"
-set binfile ${objdir}/${subdir}/${testfile}
-set srcfile ${testfile}.c
+standard_testfile
 
 set compile_flags {debug nowarnings quiet}
 if [get_compiler_info] {
@@ -44,7 +42,7 @@ if [test_compiler_info gcc*] {
 }
 
 if  { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable $compile_flags] != "" } {
-     untested vsx-regs.exp
+     untested "failed to compile"
      return -1
 }
 
@@ -154,7 +152,7 @@ for {set i 0} {$i < 32} {incr i 1} {
 # later when loading the core file (i.e., different register values for different
 # vector register banks).
 
-set corefile "${objdir}/${subdir}/vsx-core.test"
+set corefile [standard_output_file vsx-core.test]
 set core_supported [gdb_gcore_cmd "$corefile" "Save a VSX-enabled corefile"]
 
 # Now run the F32~F63/VR0~VR31 tests.
@@ -201,9 +199,9 @@ if { $core_loaded == -1 } {
 }
 
 for {set i 0} {$i < 32} {incr i 1} {
-    gdb_test "info reg vs$i" "vs$i.*$vector_register2" "Restore vs$i from core file"
+    gdb_test "info reg vs$i" "vs$i.*$vector_register2" "restore vs$i from core file"
 }
 
 for {set i 32} {$i < 64} {incr i 1} {
-    gdb_test "info reg vs$i" "vs$i.*$vector_register3" "Restore vs$i from core file"
+    gdb_test "info reg vs$i" "vs$i.*$vector_register3" "restore vs$i from core file"
 }

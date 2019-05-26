@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 6.0 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.3 from gdb.texinfo.
 
-Copyright (C) 1988-2016 Free Software Foundation, Inc.
+Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.12.
+Source-Level Debugger' for GDB (GDB) Version 8.0.1.
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,317 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Sample Init File,  Prev: Conditional Init Constructs,  Up: Readline Init File
+
+32.3.3 Sample Init File
+-----------------------
+
+Here is an example of an INPUTRC file.  This illustrates key binding,
+variable assignment, and conditional syntax.
+
+     # This file controls the behaviour of line input editing for
+     # programs that use the GNU Readline library.  Existing
+     # programs include FTP, Bash, and GDB.
+     #
+     # You can re-read the inputrc file with C-x C-r.
+     # Lines beginning with '#' are comments.
+     #
+     # First, include any systemwide bindings and variable
+     # assignments from /etc/Inputrc
+     $include /etc/Inputrc
+
+     #
+     # Set various bindings for emacs mode.
+
+     set editing-mode emacs
+
+     $if mode=emacs
+
+     Meta-Control-h:	backward-kill-word	Text after the function name is ignored
+
+     #
+     # Arrow keys in keypad mode
+     #
+     #"\M-OD":        backward-char
+     #"\M-OC":        forward-char
+     #"\M-OA":        previous-history
+     #"\M-OB":        next-history
+     #
+     # Arrow keys in ANSI mode
+     #
+     "\M-[D":        backward-char
+     "\M-[C":        forward-char
+     "\M-[A":        previous-history
+     "\M-[B":        next-history
+     #
+     # Arrow keys in 8 bit keypad mode
+     #
+     #"\M-\C-OD":       backward-char
+     #"\M-\C-OC":       forward-char
+     #"\M-\C-OA":       previous-history
+     #"\M-\C-OB":       next-history
+     #
+     # Arrow keys in 8 bit ANSI mode
+     #
+     #"\M-\C-[D":       backward-char
+     #"\M-\C-[C":       forward-char
+     #"\M-\C-[A":       previous-history
+     #"\M-\C-[B":       next-history
+
+     C-q: quoted-insert
+
+     $endif
+
+     # An old-style binding.  This happens to be the default.
+     TAB: complete
+
+     # Macros that are convenient for shell interaction
+     $if Bash
+     # edit the path
+     "\C-xp": "PATH=${PATH}\e\C-e\C-a\ef\C-f"
+     # prepare to type a quoted word --
+     # insert open and close double quotes
+     # and move to just after the open quote
+     "\C-x\"": "\"\"\C-b"
+     # insert a backslash (testing backslash escapes
+     # in sequences and macros)
+     "\C-x\\": "\\"
+     # Quote the current or previous word
+     "\C-xq": "\eb\"\ef\""
+     # Add a binding to refresh the line, which is unbound
+     "\C-xr": redraw-current-line
+     # Edit variable on current line.
+     "\M-\C-v": "\C-a\C-k$\C-y\M-\C-e\C-a\C-y="
+     $endif
+
+     # use a visible bell if one is available
+     set bell-style visible
+
+     # don't strip characters to 7 bits when reading
+     set input-meta on
+
+     # allow iso-latin1 characters to be inserted rather
+     # than converted to prefix-meta sequences
+     set convert-meta off
+
+     # display characters with the eighth bit set directly
+     # rather than as meta-prefixed characters
+     set output-meta on
+
+     # if there are more than 150 possible completions for
+     # a word, ask the user if he wants to see all of them
+     set completion-query-items 150
+
+     # For FTP
+     $if Ftp
+     "\C-xg": "get \M-?"
+     "\C-xt": "put \M-?"
+     "\M-.": yank-last-arg
+     $endif
+
+
+File: gdb.info,  Node: Bindable Readline Commands,  Next: Readline vi Mode,  Prev: Readline Init File,  Up: Command Line Editing
+
+32.4 Bindable Readline Commands
+===============================
+
+* Menu:
+
+* Commands For Moving::		Moving about the line.
+* Commands For History::	Getting at previous lines.
+* Commands For Text::		Commands for changing text.
+* Commands For Killing::	Commands for killing and yanking.
+* Numeric Arguments::		Specifying numeric arguments, repeat counts.
+* Commands For Completion::	Getting Readline to do the typing for you.
+* Keyboard Macros::		Saving and re-executing typed characters
+* Miscellaneous Commands::	Other miscellaneous commands.
+
+This section describes Readline commands that may be bound to key
+sequences.  Command names without an accompanying key sequence are
+unbound by default.
+
+   In the following descriptions, "point" refers to the current cursor
+position, and "mark" refers to a cursor position saved by the 'set-mark'
+command.  The text between the point and mark is referred to as the
+"region".
+
+
+File: gdb.info,  Node: Commands For Moving,  Next: Commands For History,  Up: Bindable Readline Commands
+
+32.4.1 Commands For Moving
+--------------------------
+
+'beginning-of-line (C-a)'
+     Move to the start of the current line.
+
+'end-of-line (C-e)'
+     Move to the end of the line.
+
+'forward-char (C-f)'
+     Move forward a character.
+
+'backward-char (C-b)'
+     Move back a character.
+
+'forward-word (M-f)'
+     Move forward to the end of the next word.  Words are composed of
+     letters and digits.
+
+'backward-word (M-b)'
+     Move back to the start of the current or previous word.  Words are
+     composed of letters and digits.
+
+'clear-screen (C-l)'
+     Clear the screen and redraw the current line, leaving the current
+     line at the top of the screen.
+
+'redraw-current-line ()'
+     Refresh the current line.  By default, this is unbound.
+
+
+File: gdb.info,  Node: Commands For History,  Next: Commands For Text,  Prev: Commands For Moving,  Up: Bindable Readline Commands
+
+32.4.2 Commands For Manipulating The History
+--------------------------------------------
+
+'accept-line (Newline or Return)'
+     Accept the line regardless of where the cursor is.  If this line is
+     non-empty, it may be added to the history list for future recall
+     with 'add_history()'.  If this line is a modified history line, the
+     history line is restored to its original state.
+
+'previous-history (C-p)'
+     Move 'back' through the history list, fetching the previous
+     command.
+
+'next-history (C-n)'
+     Move 'forward' through the history list, fetching the next command.
+
+'beginning-of-history (M-<)'
+     Move to the first line in the history.
+
+'end-of-history (M->)'
+     Move to the end of the input history, i.e., the line currently
+     being entered.
+
+'reverse-search-history (C-r)'
+     Search backward starting at the current line and moving 'up'
+     through the history as necessary.  This is an incremental search.
+
+'forward-search-history (C-s)'
+     Search forward starting at the current line and moving 'down'
+     through the the history as necessary.  This is an incremental
+     search.
+
+'non-incremental-reverse-search-history (M-p)'
+     Search backward starting at the current line and moving 'up'
+     through the history as necessary using a non-incremental search for
+     a string supplied by the user.
+
+'non-incremental-forward-search-history (M-n)'
+     Search forward starting at the current line and moving 'down'
+     through the the history as necessary using a non-incremental search
+     for a string supplied by the user.
+
+'history-search-forward ()'
+     Search forward through the history for the string of characters
+     between the start of the current line and the point.  This is a
+     non-incremental search.  By default, this command is unbound.
+
+'history-search-backward ()'
+     Search backward through the history for the string of characters
+     between the start of the current line and the point.  This is a
+     non-incremental search.  By default, this command is unbound.
+
+'yank-nth-arg (M-C-y)'
+     Insert the first argument to the previous command (usually the
+     second word on the previous line) at point.  With an argument N,
+     insert the Nth word from the previous command (the words in the
+     previous command begin with word 0).  A negative argument inserts
+     the Nth word from the end of the previous command.  Once the
+     argument N is computed, the argument is extracted as if the '!N'
+     history expansion had been specified.
+
+'yank-last-arg (M-. or M-_)'
+     Insert last argument to the previous command (the last word of the
+     previous history entry).  With a numeric argument, behave exactly
+     like 'yank-nth-arg'.  Successive calls to 'yank-last-arg' move back
+     through the history list, inserting the last word (or the word
+     specified by the argument to the first call) of each line in turn.
+     Any numeric argument supplied to these successive calls determines
+     the direction to move through the history.  A negative argument
+     switches the direction through the history (back or forward).  The
+     history expansion facilities are used to extract the last argument,
+     as if the '!$' history expansion had been specified.
+
+
+File: gdb.info,  Node: Commands For Text,  Next: Commands For Killing,  Prev: Commands For History,  Up: Bindable Readline Commands
+
+32.4.3 Commands For Changing Text
+---------------------------------
+
+'delete-char (C-d)'
+     Delete the character at point.  If point is at the beginning of the
+     line, there are no characters in the line, and the last character
+     typed was not bound to 'delete-char', then return EOF.
+
+'backward-delete-char (Rubout)'
+     Delete the character behind the cursor.  A numeric argument means
+     to kill the characters instead of deleting them.
+
+'forward-backward-delete-char ()'
+     Delete the character under the cursor, unless the cursor is at the
+     end of the line, in which case the character behind the cursor is
+     deleted.  By default, this is not bound to a key.
+
+'quoted-insert (C-q or C-v)'
+     Add the next character typed to the line verbatim.  This is how to
+     insert key sequences like 'C-q', for example.
+
+'tab-insert (M-<TAB>)'
+     Insert a tab character.
+
+'self-insert (a, b, A, 1, !, ...)'
+     Insert yourself.
+
+'transpose-chars (C-t)'
+     Drag the character before the cursor forward over the character at
+     the cursor, moving the cursor forward as well.  If the insertion
+     point is at the end of the line, then this transposes the last two
+     characters of the line.  Negative arguments have no effect.
+
+'transpose-words (M-t)'
+     Drag the word before point past the word after point, moving point
+     past that word as well.  If the insertion point is at the end of
+     the line, this transposes the last two words on the line.
+
+'upcase-word (M-u)'
+     Uppercase the current (or following) word.  With a negative
+     argument, uppercase the previous word, but do not move the cursor.
+
+'downcase-word (M-l)'
+     Lowercase the current (or following) word.  With a negative
+     argument, lowercase the previous word, but do not move the cursor.
+
+'capitalize-word (M-c)'
+     Capitalize the current (or following) word.  With a negative
+     argument, capitalize the previous word, but do not move the cursor.
+
+'overwrite-mode ()'
+     Toggle overwrite mode.  With an explicit positive numeric argument,
+     switches to overwrite mode.  With an explicit non-positive numeric
+     argument, switches to insert mode.  This command affects only
+     'emacs' mode; 'vi' mode does overwrite differently.  Each call to
+     'readline()' starts in insert mode.
+
+     In overwrite mode, characters bound to 'self-insert' replace the
+     text at point rather than pushing the text to the right.
+     Characters bound to 'backward-delete-char' replace the character
+     before point with a space.
+
+     By default, this command is unbound.
 
 
 File: gdb.info,  Node: Commands For Killing,  Next: Numeric Arguments,  Prev: Commands For Text,  Up: Bindable Readline Commands
@@ -548,7 +859,7 @@ and TeX (or 'texi2roff') to typeset the printed version.
 
    GDB includes an already formatted copy of the on-line Info version of
 this manual in the 'gdb' subdirectory.  The main Info file is
-'gdb-7.12/gdb/gdb.info', and it refers to subordinate files matching
+'gdb-8.0.1/gdb/gdb.info', and it refers to subordinate files matching
 'gdb.info*' in the same directory.  If necessary, you can print out
 these files, or read them with any editor; but they are easier to read
 using the 'info' subsystem in GNU Emacs or the standalone 'info'
@@ -558,7 +869,7 @@ program, available as part of the GNU Texinfo distribution.
 Info formatting programs, such as 'texinfo-format-buffer' or 'makeinfo'.
 
    If you have 'makeinfo' installed, and are in the top level GDB source
-directory ('gdb-7.12', in the case of version 7.12), you can make the
+directory ('gdb-8.0.1', in the case of version 8.0.1), you can make the
 Info file by typing:
 
      cd gdb
@@ -584,7 +895,7 @@ On its own, TeX cannot either read or typeset a Texinfo file.
 
    If you have TeX and a DVI printer program installed, you can typeset
 and print this manual.  First switch to the 'gdb' subdirectory of the
-main source directory (for example, to 'gdb-7.12/gdb') and type:
+main source directory (for example, to 'gdb-8.0.1/gdb') and type:
 
      make gdb.dvi
 
@@ -592,7 +903,7 @@ main source directory (for example, to 'gdb-7.12/gdb') and type:
 
    ---------- Footnotes ----------
 
-   (1) In 'gdb-7.12/gdb/refcard.ps' of the version 7.12 release.
+   (1) In 'gdb-8.0.1/gdb/refcard.ps' of the version 8.0.1 release.
 
 
 File: gdb.info,  Node: Installing GDB,  Next: Maintenance Commands,  Prev: Formatting Documentation,  Up: Top
@@ -696,39 +1007,39 @@ preparing GDB for installation; you can then use 'make' to build the
 a single directory, whose name is usually composed by appending the
 version number to 'gdb'.
 
-   For example, the GDB version 7.12 distribution is in the 'gdb-7.12'
+   For example, the GDB version 8.0.1 distribution is in the 'gdb-8.0.1'
 directory.  That directory contains:
 
-'gdb-7.12/configure (and supporting files)'
+'gdb-8.0.1/configure (and supporting files)'
      script for configuring GDB and all its supporting libraries
 
-'gdb-7.12/gdb'
+'gdb-8.0.1/gdb'
      the source specific to GDB itself
 
-'gdb-7.12/bfd'
+'gdb-8.0.1/bfd'
      source for the Binary File Descriptor library
 
-'gdb-7.12/include'
+'gdb-8.0.1/include'
      GNU include files
 
-'gdb-7.12/libiberty'
+'gdb-8.0.1/libiberty'
      source for the '-liberty' free software library
 
-'gdb-7.12/opcodes'
+'gdb-8.0.1/opcodes'
      source for the library of opcode tables and disassemblers
 
-'gdb-7.12/readline'
+'gdb-8.0.1/readline'
      source for the GNU command-line interface
 
-'gdb-7.12/glob'
+'gdb-8.0.1/glob'
      source for the GNU filename pattern-matching subroutine
 
-'gdb-7.12/mmalloc'
+'gdb-8.0.1/mmalloc'
      source for the GNU memory-mapped malloc package
 
    The simplest way to configure and build GDB is to run 'configure'
 from the 'gdb-VERSION-NUMBER' source directory, which in this example is
-the 'gdb-7.12' directory.
+the 'gdb-8.0.1' directory.
 
    First switch to the 'gdb-VERSION-NUMBER' source directory if you are
 not already in it; then run 'configure'.  Pass the identifier for the
@@ -736,7 +1047,7 @@ platform on which GDB will run as an argument.
 
    For example:
 
-     cd gdb-7.12
+     cd gdb-8.0.1
      ./configure HOST
      make
 
@@ -757,8 +1068,8 @@ need to run 'sh' on it explicitly:
      sh configure HOST
 
    If you run 'configure' from a directory that contains source
-directories for multiple libraries or programs, such as the 'gdb-7.12'
-source directory for version 7.12, 'configure' creates configuration
+directories for multiple libraries or programs, such as the 'gdb-8.0.1'
+source directory for version 8.0.1, 'configure' creates configuration
 files for every directory level underneath (unless you tell it not to,
 with the '--norecursion' option).
 
@@ -798,13 +1109,13 @@ to specify a path to find 'configure' itself from your working
 directory.  If the path to 'configure' would be the same as the argument
 to '--srcdir', you can leave out the '--srcdir' option; it is assumed.)
 
-   For example, with version 7.12, you can build GDB in a separate
+   For example, with version 8.0.1, you can build GDB in a separate
 directory for a Sun 4 like this:
 
-     cd gdb-7.12
+     cd gdb-8.0.1
      mkdir ../gdb-sun4
      cd ../gdb-sun4
-     ../gdb-7.12/configure sun4
+     ../gdb-8.0.1/configure sun4
      make
 
    When 'configure' builds a configuration using a remote source
@@ -815,7 +1126,7 @@ the example, you'd find the Sun 4 library 'libiberty.a' in the directory
 
    Make sure that your path to the 'configure' script has just one
 instance of 'gdb' in it.  If your path to 'configure' looks like
-'../gdb-7.12/gdb/configure', you are configuring only one subdirectory
+'../gdb-8.0.1/gdb/configure', you are configuring only one subdirectory
 of GDB, not the whole package.  This leads to build errors about missing
 include files such as 'bfd/bfd.h'.
 
@@ -831,9 +1142,9 @@ a configured directory--whatever directory you were in when you called
 
    The 'Makefile' that 'configure' generates in each source directory
 also runs recursively.  If you type 'make' in a source directory such as
-'gdb-7.12' (or in a separate configured directory configured with
-'--srcdir=DIRNAME/gdb-7.12'), you will build all the required libraries,
-and then build GDB.
+'gdb-8.0.1' (or in a separate configured directory configured with
+'--srcdir=DIRNAME/gdb-8.0.1'), you will build all the required
+libraries, and then build GDB.
 
    When you have multiple hosts or targets configured in separate
 directories, you can run 'make' on them in parallel (for example, if
@@ -877,7 +1188,7 @@ you can use it to test your guesses on abbreviations--for example:
      Invalid configuration `i986v': machine `i986v' not recognized
 
 'config.sub' is also distributed in the GDB source directory
-('gdb-7.12', for version 7.12).
+('gdb-8.0.1', for version 8.0.1).
 
 
 File: gdb.info,  Node: Configure Options,  Next: System-wide configuration,  Prev: Config Names,  Up: Installing GDB
@@ -1827,8 +2138,7 @@ letter, other than those described here, are reserved for future use.
           order.  The size of each register and their position within
           the 'g' packet are determined by the GDB internal gdbarch
           functions 'DEPRECATED_REGISTER_RAW_SIZE' and
-          'gdbarch_register_name'.  The specification of several
-          standard 'g' packets is specified below.
+          'gdbarch_register_name'.
 
           When reading registers from a trace frame (*note Using the
           Collected Data: Analyze Collected Data.), the stub may also
@@ -2033,13 +2343,15 @@ letter, other than those described here, are reserved for future use.
 
 'vCont[;ACTION[:THREAD-ID]]...'
      Resume the inferior, specifying different actions for each thread.
-     If an action is specified with no THREAD-ID, then it is applied to
-     any threads that don't have a specific action specified; if no
-     default action is specified then other threads should remain
-     stopped in all-stop mode and in their current state in non-stop
-     mode.  Specifying multiple default actions is an error; specifying
-     no actions is also an error.  Thread IDs are specified using the
-     syntax described in *note thread-id syntax::.
+
+     For each inferior thread, the leftmost action with a matching
+     THREAD-ID is applied.  Threads that don't match any action remain
+     in their current state.  Thread IDs are specified using the syntax
+     described in *note thread-id syntax::.  If multiprocess extensions
+     (*note multiprocess extensions::) are supported, actions can be
+     specified to match all threads in a process by using the 'pPID.-1'
+     form of the THREAD-ID.  An action with no THREAD-ID matches all
+     threads.  Specifying no actions is an error.
 
      Currently supported actions are:
 
@@ -2083,10 +2395,16 @@ letter, other than those described here, are reserved for future use.
      stopped with signal '0', regardless of whether the target uses some
      other signal as an implementation detail.
 
+     The server must ignore 'c', 'C', 's', 'S', and 'r' actions for
+     threads that are already running.  Conversely, the server must
+     ignore 't' actions for threads that are already stopped.
+
+     _Note:_ In non-stop mode, a thread is considered running until GDB
+     acknowleges an asynchronous stop notification for it with the
+     'vStopped' packet (*note Remote Non-Stop::).
+
      The stub must support 'vCont' if it reports support for
-     multiprocess extensions (*note multiprocess extensions::).  Note
-     that in this case 'vCont' actions can be specified to apply to all
-     threads in a process by using the 'pPID.-1' form of the THREAD-ID.
+     multiprocess extensions (*note multiprocess extensions::).
 
      Reply: *Note Stop Reply Packets::, for the reply specifications.
 
@@ -2219,22 +2537,25 @@ letter, other than those described here, are reserved for future use.
 
 'z0,ADDR,KIND'
 'Z0,ADDR,KIND[;COND_LIST...][;cmds:PERSIST,CMD_LIST...]'
-     Insert ('Z0') or remove ('z0') a memory breakpoint at address ADDR
-     of type KIND.
+     Insert ('Z0') or remove ('z0') a software breakpoint at address
+     ADDR of type KIND.
 
-     A memory breakpoint is implemented by replacing the instruction at
-     ADDR with a software breakpoint or trap instruction.  The KIND is
-     target-specific and typically indicates the size of the breakpoint
-     in bytes that should be inserted.  E.g., the ARM and MIPS can
-     insert either a 2 or 4 byte breakpoint.  Some architectures have
-     additional meanings for KIND; COND_LIST is an optional list of
-     conditional expressions in bytecode form that should be evaluated
-     on the target's side.  These are the conditions that should be
-     taken into consideration when deciding if the breakpoint trigger
-     should be reported back to GDBN.
+     A software breakpoint is implemented by replacing the instruction
+     at ADDR with a software breakpoint or trap instruction.  The KIND
+     is target-specific and typically indicates the size of the
+     breakpoint in bytes that should be inserted.  E.g., the ARM and
+     MIPS can insert either a 2 or 4 byte breakpoint.  Some
+     architectures have additional meanings for KIND (*note
+     Architecture-Specific Protocol Details::); if no
+     architecture-specific value is being used, it should be '0'.  KIND
+     is hex-encoded.  COND_LIST is an optional list of conditional
+     expressions in bytecode form that should be evaluated on the
+     target's side.  These are the conditions that should be taken into
+     consideration when deciding if the breakpoint trigger should be
+     reported back to GDB.
 
      See also the 'swbreak' stop reason (*note swbreak stop reason::)
-     for how to best report a memory breakpoint event to GDB.
+     for how to best report a software breakpoint event to GDB.
 
      The COND_LIST parameter is comprised of a series of expressions,
      concatenated without separators.  Each expression has the following
@@ -2256,10 +2577,8 @@ letter, other than those described here, are reserved for future use.
           LEN is the length of the bytecode expression and EXPR is the
           actual conditional expression in bytecode form.
 
-     see *note Architecture-Specific Protocol Details::.
-
      _Implementation note: It is possible for a target to copy or move
-     code that contains memory breakpoints (e.g., when implementing
+     code that contains software breakpoints (e.g., when implementing
      overlays).  The behavior of this packet, in the presence of such a
      target, is not defined._
 
@@ -2272,13 +2591,14 @@ letter, other than those described here, are reserved for future use.
           for an error
 
 'z1,ADDR,KIND'
-'Z1,ADDR,KIND[;COND_LIST...]'
+'Z1,ADDR,KIND[;COND_LIST...][;cmds:PERSIST,CMD_LIST...]'
      Insert ('Z1') or remove ('z1') a hardware breakpoint at address
      ADDR.
 
      A hardware breakpoint is implemented using a mechanism that is not
-     dependant on being able to modify the target's memory.  The KIND
-     and COND_LIST have the same meaning as in 'Z0' packets.
+     dependent on being able to modify the target's memory.  The KIND,
+     COND_LIST, and CMD_LIST arguments have the same meaning as in 'Z0'
+     packets.
 
      _Implementation note: A hardware breakpoint is not affected by code
      movement._
@@ -2342,6 +2662,10 @@ packets can receive any of the below as a reply.  Except for '?' and
 below the exact meaning of "signal number" is defined by the header
 'include/gdb/signals.h' in the GDB source code.
 
+   In non-stop mode, the server will simply reply 'OK' to commands such
+as 'vCont'; any stop will be the subject of a future notification.
+*Note Remote Non-Stop::.
+
    As in the description of request packets, we include spaces in the
 reply templates for clarity; these are not part of the reply packet's
 syntax.  No GDB stop reply packet uses spaces to separate its
@@ -2404,7 +2728,7 @@ components.
           Execution::, for more information.
 
      'swbreak'
-          The packet indicates a memory breakpoint instruction was
+          The packet indicates a software breakpoint instruction was
           executed, irrespective of whether it was GDB that planted the
           breakpoint or the breakpoint is hardcoded in the program.  The
           R part must be left empty.
@@ -2484,7 +2808,7 @@ components.
           resumption packet (*note vCont packet::).  This packet should
           not be sent by default; GDB requests it with the *note
           QThreadEvents:: packet.  See also the 'w' (*note thread exit
-          event::) remote reply below.
+          event::) remote reply below.  The R part is ignored.
 
 'W AA'
 'W AA ; process:PID'
@@ -2494,7 +2818,8 @@ components.
      The second form of the response, including the process ID of the
      exited process, can be used only when GDB has reported support for
      multiprocess protocol extensions; see *note multiprocess
-     extensions::.  The PID is formatted as a big-endian hex string.
+     extensions::.  Both AA and PID are formatted as big-endian hex
+     strings.
 
 'X AA'
 'X AA ; process:PID'
@@ -2503,14 +2828,15 @@ components.
      The second form of the response, including the process ID of the
      terminated process, can be used only when GDB has reported support
      for multiprocess protocol extensions; see *note multiprocess
-     extensions::.  The PID is formatted as a big-endian hex string.
+     extensions::.  Both AA and PID are formatted as big-endian hex
+     strings.
 
 'w AA ; TID'
 
      The thread exited, and AA is the exit status.  This response should
      not be sent by default; GDB requests it with the *note
      QThreadEvents:: packet.  See also *note thread create event::
-     above.
+     above.  AA is formatted as a big-endian hex string.
 
 'N'
      There are no resumed threads left in the target.  In other words,
@@ -4713,7 +5039,7 @@ and the process shall be repeated.
 
    The process of asynchronous notification can be illustrated by the
 following example:
-     <- %%Stop:T0505:98e7ffbf;04:4ce6ffbf;08:b1b6e54c;thread:p7526.7526;core:0;
+     <- %Stop:T0505:98e7ffbf;04:4ce6ffbf;08:b1b6e54c;thread:p7526.7526;core:0;
      ...
      -> vStopped
      <- T0505:68f37db7;04:40f37db7;08:63850408;thread:p7526.7528;core:0;
@@ -7353,354 +7679,4 @@ types.  The currently supported types are:
 
 'i386_mxcsr'
      32bit MXCSR register used by x86.
-
-
-File: gdb.info,  Node: Enum Target Types,  Next: Standard Target Features,  Prev: Predefined Target Types,  Up: Target Descriptions
-
-G.4 Enum Target Types
-=====================
-
-Enum target types are useful in 'struct' and 'flags' register
-descriptions.  *Note Target Description Format::.
-
-   Enum types have a name, size and a list of name/value pairs.
-
-     <enum id="ID" size="SIZE">
-       <evalue name="NAME" value="VALUE"/>
-       ...
-     </enum>
-
-   Enums must be defined before they are used.
-
-     <enum id="levels_type" size="4">
-       <evalue name="low" value="0"/>
-       <evalue name="high" value="1"/>
-     </enum>
-     <flags id="flags_type" size="4">
-       <field name="X" start="0"/>
-       <field name="LEVEL" start="1" end="1" type="levels_type"/>
-     </flags>
-     <reg name="flags" bitsize="32" type="flags_type"/>
-
-   Given that description, a value of 3 for the 'flags' register would
-be printed as:
-
-     (gdb) info register flags
-     flags 0x3 [ X LEVEL=high ]
-
-
-File: gdb.info,  Node: Standard Target Features,  Prev: Enum Target Types,  Up: Target Descriptions
-
-G.5 Standard Target Features
-============================
-
-A target description must contain either no registers or all the
-target's registers.  If the description contains no registers, then GDB
-will assume a default register layout, selected based on the
-architecture.  If the description contains any registers, the default
-layout will not be used; the standard registers must be described in the
-target description, in such a way that GDB can recognize them.
-
-   This is accomplished by giving specific names to feature elements
-which contain standard registers.  GDB will look for features with those
-names and verify that they contain the expected registers; if any known
-feature is missing required registers, or if any required feature is
-missing, GDB will reject the target description.  You can add additional
-registers to any of the standard features -- GDB will display them just
-as if they were added to an unrecognized feature.
-
-   This section lists the known features and their expected contents.
-Sample XML documents for these features are included in the GDB source
-tree, in the directory 'gdb/features'.
-
-   Names recognized by GDB should include the name of the company or
-organization which selected the name, and the overall architecture to
-which the feature applies; so e.g. the feature containing ARM core
-registers is named 'org.gnu.gdb.arm.core'.
-
-   The names of registers are not case sensitive for the purpose of
-recognizing standard features, but GDB will only display registers using
-the capitalization used in the description.
-
-* Menu:
-
-* AArch64 Features::
-* ARM Features::
-* i386 Features::
-* MicroBlaze Features::
-* MIPS Features::
-* M68K Features::
-* NDS32 Features::
-* Nios II Features::
-* PowerPC Features::
-* S/390 and System z Features::
-* TIC6x Features::
-
-
-File: gdb.info,  Node: AArch64 Features,  Next: ARM Features,  Up: Standard Target Features
-
-G.5.1 AArch64 Features
-----------------------
-
-The 'org.gnu.gdb.aarch64.core' feature is required for AArch64 targets.
-It should contain registers 'x0' through 'x30', 'sp', 'pc', and 'cpsr'.
-
-   The 'org.gnu.gdb.aarch64.fpu' feature is optional.  If present, it
-should contain registers 'v0' through 'v31', 'fpsr', and 'fpcr'.
-
-
-File: gdb.info,  Node: ARM Features,  Next: i386 Features,  Prev: AArch64 Features,  Up: Standard Target Features
-
-G.5.2 ARM Features
-------------------
-
-The 'org.gnu.gdb.arm.core' feature is required for non-M-profile ARM
-targets.  It should contain registers 'r0' through 'r13', 'sp', 'lr',
-'pc', and 'cpsr'.
-
-   For M-profile targets (e.g.  Cortex-M3), the 'org.gnu.gdb.arm.core'
-feature is replaced by 'org.gnu.gdb.arm.m-profile'.  It should contain
-registers 'r0' through 'r13', 'sp', 'lr', 'pc', and 'xpsr'.
-
-   The 'org.gnu.gdb.arm.fpa' feature is optional.  If present, it should
-contain registers 'f0' through 'f7' and 'fps'.
-
-   The 'org.gnu.gdb.xscale.iwmmxt' feature is optional.  If present, it
-should contain at least registers 'wR0' through 'wR15' and 'wCGR0'
-through 'wCGR3'.  The 'wCID', 'wCon', 'wCSSF', and 'wCASF' registers are
-optional.
-
-   The 'org.gnu.gdb.arm.vfp' feature is optional.  If present, it should
-contain at least registers 'd0' through 'd15'.  If they are present,
-'d16' through 'd31' should also be included.  GDB will synthesize the
-single-precision registers from halves of the double-precision
-registers.
-
-   The 'org.gnu.gdb.arm.neon' feature is optional.  It does not need to
-contain registers; it instructs GDB to display the VFP double-precision
-registers as vectors and to synthesize the quad-precision registers from
-pairs of double-precision registers.  If this feature is present,
-'org.gnu.gdb.arm.vfp' must also be present and include 32
-double-precision registers.
-
-
-File: gdb.info,  Node: i386 Features,  Next: MicroBlaze Features,  Prev: ARM Features,  Up: Standard Target Features
-
-G.5.3 i386 Features
--------------------
-
-The 'org.gnu.gdb.i386.core' feature is required for i386/amd64 targets.
-It should describe the following registers:
-
-   - 'eax' through 'edi' plus 'eip' for i386
-   - 'rax' through 'r15' plus 'rip' for amd64
-   - 'eflags', 'cs', 'ss', 'ds', 'es', 'fs', 'gs'
-   - 'st0' through 'st7'
-   - 'fctrl', 'fstat', 'ftag', 'fiseg', 'fioff', 'foseg', 'fooff' and
-     'fop'
-
-   The register sets may be different, depending on the target.
-
-   The 'org.gnu.gdb.i386.sse' feature is optional.  It should describe
-registers:
-
-   - 'xmm0' through 'xmm7' for i386
-   - 'xmm0' through 'xmm15' for amd64
-   - 'mxcsr'
-
-   The 'org.gnu.gdb.i386.avx' feature is optional and requires the
-'org.gnu.gdb.i386.sse' feature.  It should describe the upper 128 bits
-of YMM registers:
-
-   - 'ymm0h' through 'ymm7h' for i386
-   - 'ymm0h' through 'ymm15h' for amd64
-
-   The 'org.gnu.gdb.i386.mpx' is an optional feature representing Intel
-Memory Protection Extension (MPX). It should describe the following
-registers:
-
-   - 'bnd0raw' through 'bnd3raw' for i386 and amd64.
-   - 'bndcfgu' and 'bndstatus' for i386 and amd64.
-
-   The 'org.gnu.gdb.i386.linux' feature is optional.  It should describe
-a single register, 'orig_eax'.
-
-   The 'org.gnu.gdb.i386.avx512' feature is optional and requires the
-'org.gnu.gdb.i386.avx' feature.  It should describe additional XMM
-registers:
-
-   - 'xmm16h' through 'xmm31h', only valid for amd64.
-
-   It should describe the upper 128 bits of additional YMM registers:
-
-   - 'ymm16h' through 'ymm31h', only valid for amd64.
-
-   It should describe the upper 256 bits of ZMM registers:
-
-   - 'zmm0h' through 'zmm7h' for i386.
-   - 'zmm0h' through 'zmm15h' for amd64.
-
-   It should describe the additional ZMM registers:
-
-   - 'zmm16h' through 'zmm31h', only valid for amd64.
-
-
-File: gdb.info,  Node: MicroBlaze Features,  Next: MIPS Features,  Prev: i386 Features,  Up: Standard Target Features
-
-G.5.4 MicroBlaze Features
--------------------------
-
-The 'org.gnu.gdb.microblaze.core' feature is required for MicroBlaze
-targets.  It should contain registers 'r0' through 'r31', 'rpc', 'rmsr',
-'rear', 'resr', 'rfsr', 'rbtr', 'rpvr', 'rpvr1' through 'rpvr11',
-'redr', 'rpid', 'rzpr', 'rtlbx', 'rtlbsx', 'rtlblo', and 'rtlbhi'.
-
-   The 'org.gnu.gdb.microblaze.stack-protect' feature is optional.  If
-present, it should contain registers 'rshr' and 'rslr'
-
-
-File: gdb.info,  Node: MIPS Features,  Next: M68K Features,  Prev: MicroBlaze Features,  Up: Standard Target Features
-
-G.5.5 MIPS Features
--------------------
-
-The 'org.gnu.gdb.mips.cpu' feature is required for MIPS targets.  It
-should contain registers 'r0' through 'r31', 'lo', 'hi', and 'pc'.  They
-may be 32-bit or 64-bit depending on the target.
-
-   The 'org.gnu.gdb.mips.cp0' feature is also required.  It should
-contain at least the 'status', 'badvaddr', and 'cause' registers.  They
-may be 32-bit or 64-bit depending on the target.
-
-   The 'org.gnu.gdb.mips.fpu' feature is currently required, though it
-may be optional in a future version of GDB.  It should contain registers
-'f0' through 'f31', 'fcsr', and 'fir'.  They may be 32-bit or 64-bit
-depending on the target.
-
-   The 'org.gnu.gdb.mips.dsp' feature is optional.  It should contain
-registers 'hi1' through 'hi3', 'lo1' through 'lo3', and 'dspctl'.  The
-'dspctl' register should be 32-bit and the rest may be 32-bit or 64-bit
-depending on the target.
-
-   The 'org.gnu.gdb.mips.linux' feature is optional.  It should contain
-a single register, 'restart', which is used by the Linux kernel to
-control restartable syscalls.
-
-
-File: gdb.info,  Node: M68K Features,  Next: NDS32 Features,  Prev: MIPS Features,  Up: Standard Target Features
-
-G.5.6 M68K Features
--------------------
-
-''org.gnu.gdb.m68k.core''
-''org.gnu.gdb.coldfire.core''
-''org.gnu.gdb.fido.core''
-     One of those features must be always present.  The feature that is
-     present determines which flavor of m68k is used.  The feature that
-     is present should contain registers 'd0' through 'd7', 'a0' through
-     'a5', 'fp', 'sp', 'ps' and 'pc'.
-
-''org.gnu.gdb.coldfire.fp''
-     This feature is optional.  If present, it should contain registers
-     'fp0' through 'fp7', 'fpcontrol', 'fpstatus' and 'fpiaddr'.
-
-
-File: gdb.info,  Node: NDS32 Features,  Next: Nios II Features,  Prev: M68K Features,  Up: Standard Target Features
-
-G.5.7 NDS32 Features
---------------------
-
-The 'org.gnu.gdb.nds32.core' feature is required for NDS32 targets.  It
-should contain at least registers 'r0' through 'r10', 'r15', 'fp', 'gp',
-'lp', 'sp', and 'pc'.
-
-   The 'org.gnu.gdb.nds32.fpu' feature is optional.  If present, it
-should contain 64-bit double-precision floating-point registers 'fd0'
-through _fdN_, which should be 'fd3', 'fd7', 'fd15', or 'fd31' based on
-the FPU configuration implemented.
-
-   _Note:_ The first sixteen 64-bit double-precision floating-point
-registers are overlapped with the thirty-two 32-bit single-precision
-floating-point registers.  The 32-bit single-precision registers, if not
-being listed explicitly, will be synthesized from halves of the
-overlapping 64-bit double-precision registers.  Listing 32-bit
-single-precision registers explicitly is deprecated, and the support to
-it could be totally removed some day.
-
-
-File: gdb.info,  Node: Nios II Features,  Next: PowerPC Features,  Prev: NDS32 Features,  Up: Standard Target Features
-
-G.5.8 Nios II Features
-----------------------
-
-The 'org.gnu.gdb.nios2.cpu' feature is required for Nios II targets.  It
-should contain the 32 core registers ('zero', 'at', 'r2' through 'r23',
-'et' through 'ra'), 'pc', and the 16 control registers ('status' through
-'mpuacc').
-
-
-File: gdb.info,  Node: PowerPC Features,  Next: S/390 and System z Features,  Prev: Nios II Features,  Up: Standard Target Features
-
-G.5.9 PowerPC Features
-----------------------
-
-The 'org.gnu.gdb.power.core' feature is required for PowerPC targets.
-It should contain registers 'r0' through 'r31', 'pc', 'msr', 'cr', 'lr',
-'ctr', and 'xer'.  They may be 32-bit or 64-bit depending on the target.
-
-   The 'org.gnu.gdb.power.fpu' feature is optional.  It should contain
-registers 'f0' through 'f31' and 'fpscr'.
-
-   The 'org.gnu.gdb.power.altivec' feature is optional.  It should
-contain registers 'vr0' through 'vr31', 'vscr', and 'vrsave'.
-
-   The 'org.gnu.gdb.power.vsx' feature is optional.  It should contain
-registers 'vs0h' through 'vs31h'.  GDB will combine these registers with
-the floating point registers ('f0' through 'f31') and the altivec
-registers ('vr0' through 'vr31') to present the 128-bit wide registers
-'vs0' through 'vs63', the set of vector registers for POWER7.
-
-   The 'org.gnu.gdb.power.spe' feature is optional.  It should contain
-registers 'ev0h' through 'ev31h', 'acc', and 'spefscr'.  SPE targets
-should provide 32-bit registers in 'org.gnu.gdb.power.core' and provide
-the upper halves in 'ev0h' through 'ev31h'.  GDB will combine these to
-present registers 'ev0' through 'ev31' to the user.
-
-
-File: gdb.info,  Node: S/390 and System z Features,  Next: TIC6x Features,  Prev: PowerPC Features,  Up: Standard Target Features
-
-G.5.10 S/390 and System z Features
-----------------------------------
-
-The 'org.gnu.gdb.s390.core' feature is required for S/390 and System z
-targets.  It should contain the PSW and the 16 general registers.  In
-particular, System z targets should provide the 64-bit registers 'pswm',
-'pswa', and 'r0' through 'r15'.  S/390 targets should provide the 32-bit
-versions of these registers.  A System z target that runs in 31-bit
-addressing mode should provide 32-bit versions of 'pswm' and 'pswa', as
-well as the general register's upper halves 'r0h' through 'r15h', and
-their lower halves 'r0l' through 'r15l'.
-
-   The 'org.gnu.gdb.s390.fpr' feature is required.  It should contain
-the 64-bit registers 'f0' through 'f15', and 'fpc'.
-
-   The 'org.gnu.gdb.s390.acr' feature is required.  It should contain
-the 32-bit registers 'acr0' through 'acr15'.
-
-   The 'org.gnu.gdb.s390.linux' feature is optional.  It should contain
-the register 'orig_r2', which is 64-bit wide on System z targets and
-32-bit otherwise.  In addition, the feature may contain the 'last_break'
-register, whose width depends on the addressing mode, as well as the
-'system_call' register, which is always 32-bit wide.
-
-   The 'org.gnu.gdb.s390.tdb' feature is optional.  It should contain
-the 64-bit registers 'tdb0', 'tac', 'tct', 'atia', and 'tr0' through
-'tr15'.
-
-   The 'org.gnu.gdb.s390.vx' feature is optional.  It should contain
-64-bit wide registers 'v0l' through 'v15l', which will be combined by
-GDB with the floating point registers 'f0' through 'f15' to present the
-128-bit wide vector registers 'v0' through 'v15'.  In addition, this
-feature should contain the 128-bit wide vector registers 'v16' through
-'v31'.
 

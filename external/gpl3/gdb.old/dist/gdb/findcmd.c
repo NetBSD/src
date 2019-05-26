@@ -1,6 +1,6 @@
 /* The find command.
 
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 #include "value.h"
 #include "target.h"
 #include "cli/cli-utils.h"
+#include <algorithm>
 
 /* Copied from bfd_put_bits.  */
 
@@ -178,7 +179,8 @@ parse_find_args (char *args, ULONGEST *max_countp,
       /* Keep it simple and assume size == 'g' when watching for when we
 	 need to grow the pattern buf.  */
       pattern_buf_size_need = (pattern_buf_end - pattern_buf
-			       + max (TYPE_LENGTH (t), sizeof (int64_t)));
+			       + std::max (TYPE_LENGTH (t),
+					   (unsigned) sizeof (int64_t)));
       if (pattern_buf_size_need > pattern_buf_size)
 	{
 	  size_t current_offset = pattern_buf_end - pattern_buf;

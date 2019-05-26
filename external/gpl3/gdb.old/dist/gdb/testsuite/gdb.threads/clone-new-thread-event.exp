@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ if ![istarget *-*-linux*] then {
     return
 }
 
-if { [prepare_for_testing clone-new-thread-event.exp clone-new-thread-event] } {
+if { [prepare_for_testing "failed to prepare" clone-new-thread-event] } {
     return -1
 }
 

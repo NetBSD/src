@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Free Software Foundation, Inc.
+# Copyright 2013-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ if { [target_info exists gdb,nosignals] } {
 
 standard_testfile segv.c
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
     return -1
 }
 
@@ -78,7 +78,7 @@ gdb_test "print \$_exitcode" " = void" \
 # inferior execution.
 standard_testfile normal.c
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
     return -1
 }
 

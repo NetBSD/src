@@ -1,6 +1,6 @@
 /* A very minimal do-nothing termcap emulation stub.
 
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery, LLC.
 
@@ -22,9 +22,7 @@
 
 #include "defs.h"
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 
 /* -Wmissing-prototypes */
 extern int tgetent (char *buffer, char *termtype);
@@ -34,9 +32,7 @@ extern char* tgetstr (char *name, char **area);
 extern int tputs (char *string, int nlines, int (*outfun) (int));
 extern char *tgoto (const char *cap, int col, int row);
 
-#ifdef __cplusplus
 }
-#endif
 
 /* These globals below are global termcap variables that readline
    references.

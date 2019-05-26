@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on CRIS processors, for GDB.
 
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB.
    Written by Hendrik Ruijter, Stefan Andersson, Orjan Friberg,

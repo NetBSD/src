@@ -1,6 +1,6 @@
 /* Support for printing Modula 2 values for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,7 +37,7 @@ static void
 m2_print_array_contents (struct type *type, const gdb_byte *valaddr,
 			 int embedded_offset, CORE_ADDR address,
 			 struct ui_file *stream, int recurse,
-			 const struct value *val,
+			 struct value *val,
 			 const struct value_print_options *options,
 			 int len);
 
@@ -262,7 +262,7 @@ static void
 m2_print_array_contents (struct type *type, const gdb_byte *valaddr,
 			 int embedded_offset, CORE_ADDR address,
 			 struct ui_file *stream, int recurse,
-			 const struct value *val,
+			 struct value *val,
 			 const struct value_print_options *options,
 			 int len)
 {
@@ -282,7 +282,7 @@ m2_print_array_contents (struct type *type, const gdb_byte *valaddr,
       else
 	{
 	  fprintf_filtered (stream, "{");
-	  val_print_array_elements (type, valaddr, embedded_offset,
+	  val_print_array_elements (type, embedded_offset,
 				    address, stream, recurse, val,
 				    options, 0);
 	  fprintf_filtered (stream, "}");
@@ -308,15 +308,16 @@ static const struct generic_val_print_decorations m2_decorations =
    function; they are identical.  */
 
 void
-m2_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
+m2_val_print (struct type *type, int embedded_offset,
 	      CORE_ADDR address, struct ui_file *stream, int recurse,
-	      const struct value *original_value,
+	      struct value *original_value,
 	      const struct value_print_options *options)
 {
   struct gdbarch *gdbarch = get_type_arch (type);
   unsigned len;
   struct type *elttype;
   CORE_ADDR addr;
+  const gdb_byte *valaddr = value_contents_for_printing (original_value);
 
   type = check_typedef (type);
   switch (TYPE_CODE (type))
@@ -356,7 +357,7 @@ m2_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
 	  else
 	    {
 	      fprintf_filtered (stream, "{");
-	      val_print_array_elements (type, valaddr, embedded_offset,
+	      val_print_array_elements (type, embedded_offset,
 					address, stream,
 					recurse, original_value,
 					options, 0);
@@ -373,7 +374,7 @@ m2_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
 	print_variable_at_address (type, valaddr + embedded_offset,
 				   stream, recurse, options);
       else if (options->format && options->format != 's')
-	val_print_scalar_formatted (type, valaddr, embedded_offset,
+	val_print_scalar_formatted (type, embedded_offset,
 				    original_value, options, 0, stream);
       else
 	{
@@ -397,7 +398,7 @@ m2_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
 	m2_print_unbounded_array (type, valaddr, embedded_offset,
 				  address, stream, recurse, options);
       else
-	cp_print_value_fields (type, type, valaddr, embedded_offset,
+	cp_print_value_fields (type, type, embedded_offset,
 			       address, stream, recurse, original_value,
 			       options, NULL, 0);
       break;
@@ -469,7 +470,7 @@ m2_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
     case TYPE_CODE_RANGE:
       if (TYPE_LENGTH (type) == TYPE_LENGTH (TYPE_TARGET_TYPE (type)))
 	{
-	  m2_val_print (TYPE_TARGET_TYPE (type), valaddr, embedded_offset,
+	  m2_val_print (TYPE_TARGET_TYPE (type), embedded_offset,
 			address, stream, recurse, original_value, options);
 	  break;
 	}
@@ -494,7 +495,7 @@ m2_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
     case TYPE_CODE_BOOL:
     case TYPE_CODE_CHAR:
     default:
-      generic_val_print (type, valaddr, embedded_offset, address,
+      generic_val_print (type, embedded_offset, address,
 			 stream, recurse, original_value, options,
 			 &m2_decorations);
       break;

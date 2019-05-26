@@ -1,5 +1,5 @@
 #  S/390 opcodes list. Use s390-mkopc to convert it into the opcode table.
-#  Copyright (C) 2000-2016 Free Software Foundation, Inc.
+#  Copyright (C) 2000-2017 Free Software Foundation, Inc.
 #  Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 5a a RX_RRRD "add" g5 esa,zarch
 6a ad RX_FRRD "add normalized (long)" g5 esa,zarch
@@ -630,7 +630,7 @@ eb0000000051 tmy SIY_URD "test under mask with long offset" z990 zarch
 # 'old' instructions extended to long displacement
 # these instructions are entered into the opcode table twice.
 e30000000003 lrag RXY_RRRD "load real address with long offset 64" z990 zarch
-e30000000004 lg RXY_RRRD "	 load 64" z990 zarch
+e30000000004 lg RXY_RRRD "load 64" z990 zarch
 e30000000008 ag RXY_RRRD "add with long offset 64" z990 zarch
 e30000000009 sg RXY_RRRD "subtract with long offset 64" z990 zarch
 e3000000000a alg RXY_RRRD "add logical with long offset 64" z990 zarch
@@ -1115,7 +1115,7 @@ b2b8 srnmb S_RD "set 3 bit bfp rounding mode" z196 zarch
 b92a kmf RRE_RR "cipher message with CFB" z196 zarch
 b92b kmo RRE_RR "cipher message with OFB" z196 zarch
 b92c pcc RRE_00 "perform cryptographic computation" z196 zarch
-b92d kmctr RRF_R0RR2 "cipher message with counter" z196 zarch
+b92d kmctr RRF_R0RR "cipher message with counter" z196 zarch
 
 # The new instructions of the IBM zEnterprise EC12
 b2ec etnd RRE_R0 "extract transaction nesting depth" zEC12 zarch htm
@@ -1584,27 +1584,27 @@ e7000230008a vstrczfs VRR_VVVU0VB3 "vector string range compare word" z13 zarch 
 
 # Chapter 24
 e700000000e3 vfa VRR_VVV0UU "vector fp add" z13 zarch vx
-e700000030e3 vfadb VRR_VVV "vector fp add" z13 zarch vx
-e700000830e3 wfadb VRR_VVV "vector fp add" z13 zarch vx
+e700000030e3 vfadb VRR_VVV "vector fp add long" z13 zarch vx
+e700000830e3 wfadb VRR_VVV "vector fp add long" z13 zarch vx
 e700000000cb wfc VRR_VV0UU2 "vector fp compare scalar" z13 zarch vx
-e700000030cb wfcdb VRR_VV "vector fp compare scalar" z13 zarch vx
+e700000030cb wfcdb VRR_VV "vector fp compare scalar long" z13 zarch vx
 e700000000ca wfk VRR_VV0UU2 "vector fp compare and signal scalar" z13 zarch vx
-e700000030ca wfkdb VRR_VV "vector fp compare and signal scalar" z13 zarch vx
+e700000030ca wfkdb VRR_VV "vector fp compare and signal scalar long" z13 zarch vx
 e700000000e8 vfce VRR_VVV0UUU "vector fp compare equal" z13 zarch vx
-e700000030e8 vfcedb VRR_VVV "vector fp compare equal" z13 zarch vx
-e700001030e8 vfcedbs VRR_VVV "vector fp compare equal" z13 zarch vx
-e700000830e8 wfcedb VRR_VVV "vector fp compare equal" z13 zarch vx
-e700001830e8 wfcedbs VRR_VVV "vector fp compare equal" z13 zarch vx
+e700000030e8 vfcedb VRR_VVV "vector fp compare equal long" z13 zarch vx
+e700001030e8 vfcedbs VRR_VVV "vector fp compare equal long" z13 zarch vx
+e700000830e8 wfcedb VRR_VVV "vector fp compare equal long" z13 zarch vx
+e700001830e8 wfcedbs VRR_VVV "vector fp compare equal long" z13 zarch vx
 e700000000eb vfch VRR_VVV0UUU "vector fp compare high" z13 zarch vx
-e700000030eb vfchdb VRR_VVV "vector fp compare high" z13 zarch vx
-e700001030eb vfchdbs VRR_VVV "vector fp compare high" z13 zarch vx
-e700000830eb wfchdb VRR_VVV "vector fp compare high" z13 zarch vx
-e700001830eb wfchdbs VRR_VVV "vector fp compare high" z13 zarch vx
+e700000030eb vfchdb VRR_VVV "vector fp compare high long" z13 zarch vx
+e700001030eb vfchdbs VRR_VVV "vector fp compare high long" z13 zarch vx
+e700000830eb wfchdb VRR_VVV "vector fp compare high long" z13 zarch vx
+e700001830eb wfchdbs VRR_VVV "vector fp compare high long" z13 zarch vx
 e700000000ea vfche VRR_VVV0UUU "vector fp compare high or equal" z13 zarch vx
-e700000030ea vfchedb VRR_VVV "vector fp compare high or equal" z13 zarch vx
-e700001030ea vfchedbs VRR_VVV "vector fp compare high or equal" z13 zarch vx
-e700000830ea wfchedb VRR_VVV "vector fp compare high or equal" z13 zarch vx
-e700001830ea wfchedbs VRR_VVV "vector fp compare high or equal" z13 zarch vx
+e700000030ea vfchedb VRR_VVV "vector fp compare high or equal long" z13 zarch vx
+e700001030ea vfchedbs VRR_VVV "vector fp compare high or equal long" z13 zarch vx
+e700000830ea wfchedb VRR_VVV "vector fp compare high or equal long" z13 zarch vx
+e700001830ea wfchedbs VRR_VVV "vector fp compare high or equal long" z13 zarch vx
 e700000000c3 vcdg VRR_VV0UUU "vector fp convert from fixed 64 bit" z13 zarch vx
 e700000030c3 vcdgb VRR_VV0UU "vector fp convert from fixed 64 bit" z13 zarch vx
 e700000830c3 wcdgb VRR_VV0UU8 "vector fp convert from fixed 64 bit" z13 zarch vx
@@ -1618,41 +1618,41 @@ e700000000c0 vclgd VRR_VV0UUU "vector fp convert to logical 64 bit" z13 zarch vx
 e700000030c0 vclgdb VRR_VV0UU "vector fp convert to logical 64 bit" z13 zarch vx
 e700000830c0 wclgdb VRR_VV0UU8 "vector fp convert to logical 64 bit" z13 zarch vx
 e700000000e5 vfd VRR_VVV0UU "vector fp divide" z13 zarch vx
-e700000030e5 vfddb VRR_VVV "vector fp divide" z13 zarch vx
-e700000830e5 wfddb VRR_VVV "vector fp divide" z13 zarch vx
+e700000030e5 vfddb VRR_VVV "vector fp divide long" z13 zarch vx
+e700000830e5 wfddb VRR_VVV "vector fp divide long" z13 zarch vx
 e700000000c7 vfi VRR_VV0UUU "vector load fp integer" z13 zarch vx
-e700000030c7 vfidb VRR_VV0UU "vector load fp integer" z13 zarch vx
-e700000830c7 wfidb VRR_VV0UU8 "vector load fp integer" z13 zarch vx
+e700000030c7 vfidb VRR_VV0UU "vector load fp integer long" z13 zarch vx
+e700000830c7 wfidb VRR_VV0UU8 "vector load fp integer long" z13 zarch vx
 e700000000c4 vlde VRR_VV0UU2 "vector fp load lengthened" z13 zarch vx
-e700000020c4 vldeb VRR_VV "vector fp load lengthened" z13 zarch vx
-e700000820c4 wldeb VRR_VV "vector fp load lengthened" z13 zarch vx
+e700000020c4 vldeb VRR_VV "vector fp load lengthened short to long" z13 zarch vx
+e700000820c4 wldeb VRR_VV "vector fp load lengthened short to long" z13 zarch vx
 e700000000c5 vled VRR_VV0UUU "vector fp load rounded" z13 zarch vx
-e700000030c5 vledb VRR_VV0UU "vector fp load rounded" z13 zarch vx
-e700000830c5 wledb VRR_VV0UU8 "vector fp load rounded" z13 zarch vx
+e700000030c5 vledb VRR_VV0UU "vector fp load rounded long to short" z13 zarch vx
+e700000830c5 wledb VRR_VV0UU8 "vector fp load rounded long to short" z13 zarch vx
 e700000000e7 vfm VRR_VVV0UU "vector fp multiply" z13 zarch vx
-e700000030e7 vfmdb VRR_VVV "vector fp multiply" z13 zarch vx
-e700000830e7 wfmdb VRR_VVV "vector fp multiply" z13 zarch vx
+e700000030e7 vfmdb VRR_VVV "vector fp multiply long" z13 zarch vx
+e700000830e7 wfmdb VRR_VVV "vector fp multiply long" z13 zarch vx
 e7000000008f vfma VRR_VVVU0UV "vector fp multiply and add" z13 zarch vx
-e7000300008f vfmadb VRR_VVVV "vector fp multiply and add" z13 zarch vx
-e7000308008f wfmadb VRR_VVVV "vector fp multiply and add" z13 zarch vx
+e7000300008f vfmadb VRR_VVVV "vector fp multiply and add long" z13 zarch vx
+e7000308008f wfmadb VRR_VVVV "vector fp multiply and add long" z13 zarch vx
 e7000000008e vfms VRR_VVVU0UV "vector fp multiply and subtract" z13 zarch vx
-e7000300008e vfmsdb VRR_VVVV "vector fp multiply and subtract" z13 zarch vx
-e7000308008e wfmsdb VRR_VVVV "vector fp multiply and subtract" z13 zarch vx
+e7000300008e vfmsdb VRR_VVVV "vector fp multiply and subtract long" z13 zarch vx
+e7000308008e wfmsdb VRR_VVVV "vector fp multiply and subtract long" z13 zarch vx
 e700000000cc vfpso VRR_VV0UUU "vector fp perform sign operation" z13 zarch vx
-e700000030cc vfpsodb VRR_VV0U2 "vector fp perform sign operation" z13 zarch vx
-e700000830cc wfpsodb VRR_VV0U2 "vector fp perform sign operation" z13 zarch vx
-e700000030cc vflcdb VRR_VV "vector fp perform sign operation" z13 zarch vx
-e700000830cc wflcdb VRR_VV "vector fp perform sign operation" z13 zarch vx
-e700001030cc vflndb VRR_VV "vector fp perform sign operation" z13 zarch vx
-e700001830cc wflndb VRR_VV "vector fp perform sign operation" z13 zarch vx
-e700002030cc vflpdb VRR_VV "vector fp perform sign operation" z13 zarch vx
-e700002830cc wflpdb VRR_VV "vector fp perform sign operation" z13 zarch vx
+e700000030cc vfpsodb VRR_VV0U2 "vector fp perform sign operation long" z13 zarch vx
+e700000830cc wfpsodb VRR_VV0U2 "vector fp perform sign operation long" z13 zarch vx
+e700000030cc vflcdb VRR_VV "vector fp perform sign operation long" z13 zarch vx
+e700000830cc wflcdb VRR_VV "vector fp perform sign operation long" z13 zarch vx
+e700001030cc vflndb VRR_VV "vector fp perform sign operation long" z13 zarch vx
+e700001830cc wflndb VRR_VV "vector fp perform sign operation long" z13 zarch vx
+e700002030cc vflpdb VRR_VV "vector fp perform sign operation long" z13 zarch vx
+e700002830cc wflpdb VRR_VV "vector fp perform sign operation long" z13 zarch vx
 e700000000ce vfsq VRR_VV0UU2 "vector fp square root" z13 zarch vx
-e700000030ce vfsqdb VRR_VV "vector fp square root" z13 zarch vx
-e700000830ce wfsqdb VRR_VV "vector fp square root" z13 zarch vx
+e700000030ce vfsqdb VRR_VV "vector fp square root long" z13 zarch vx
+e700000830ce wfsqdb VRR_VV "vector fp square root long" z13 zarch vx
 e700000000e2 vfs VRR_VVV0UU "vector fp subtract" z13 zarch vx
-e700000030e2 vfsdb VRR_VVV "vector fp subtract" z13 zarch vx
-e700000830e2 wfsdb VRR_VVV "vector fp subtract" z13 zarch vx
+e700000030e2 vfsdb VRR_VVV "vector fp subtract long" z13 zarch vx
+e700000830e2 wfsdb VRR_VVV "vector fp subtract long" z13 zarch vx
 e7000000004a vftci VRI_VVUUU "vector fp test data class immediate" z13 zarch vx
 e7000000304a vftcidb VRI_VVU2 "vector fp test data class immediate" z13 zarch vx
 e7000008304a wftcidb VRI_VVU2 "vector fp test data class immediate" z13 zarch vx
@@ -1679,3 +1679,200 @@ e3000000003a llzrgf RXY_RRRD "load logical and zero rightmost bytes 32->64" z13 
 e3000000003b lzrf RXY_RRRD "load and zero rightmost byte 32->32" z13 zarch
 e3000000002a lzrg RXY_RRRD "load and zero rightmost byte 64->64" z13 zarch
 b93c ppno RRE_RR "perform pseudorandom number operation" z13 zarch
+
+# arch12 instructions
+
+# Vector Enhancements Facility 1
+
+e70000000085 vbperm VRR_VVV "vector bit permute" arch12 zarch
+e70000006004 vllezlf VRX_VRRD "vector load logical word element and zero - left aligned" arch12 zarch
+e700000000b8 vmsl VRR_VVVUU0V "vector multiply sum logical" arch12 zarch
+e700030000b8 vmslg VRR_VVVU0VB "vector multiply sum logical double word" arch12 zarch
+e7000000006c vnx VRR_VVV "vector not exclusive or" arch12 zarch
+e7000000006e vnn VRR_VVV "vector nand" arch12 zarch
+e7000000006f voc VRR_VVV "vector or with complement" arch12 zarch
+e70000000050 vpopctb VRR_VV "vector population count byte" arch12 zarch
+e70000001050 vpopcth VRR_VV "vector population count halfword" arch12 zarch
+e70000002050 vpopctf VRR_VV "vector population count word" arch12 zarch
+e70000003050 vpopctg VRR_VV "vector population count double word" arch12 zarch
+e700000020e3 vfasb VRR_VVV "vector fp add short" arch12 zarch
+e700000820e3 wfasb VRR_VVV "scalar vector fp add scalar short" arch12 zarch
+e700000840e3 wfaxb VRR_VVV "scalar vector fp add scalar extended" arch12 zarch
+e700000020cb wfcsb VRR_VV "scalar vector fp compare scalar short" arch12 zarch
+e700000040cb wfcxb VRR_VV "scalar vector fp compare scalar extended" arch12 zarch
+e700000020ca wfksb VRR_VV "scalar vector fp compare and signal scalar short" arch12 zarch
+e700000040ca wfkxb VRR_VV "scalar vector fp compare and signal scalar extended" arch12 zarch
+
+e700000020e8 vfcesb VRR_VVV "vector fp compare equal short" arch12 zarch
+e700001020e8 vfcesbs VRR_VVV "vector fp compare equal short" arch12 zarch
+e700000820e8 wfcesb VRR_VVV "scalar vector fp compare equal scalar short" arch12 zarch
+e700001820e8 wfcesbs VRR_VVV "scalar fp compare equal scalar short" arch12 zarch
+e700000840e8 wfcexb VRR_VVV "scalar vector fp compare equal scalar extended" arch12 zarch
+e700001840e8 wfcexbs VRR_VVV "scalar vector fp compare equal scalar extended" arch12 zarch
+
+e700000420e8 vfkesb VRR_VVV "vector fp compare and signal equal short" arch12 zarch
+e700001420e8 vfkesbs VRR_VVV "vector fp compare and signal equal short" arch12 zarch
+e700000c20e8 wfkesb VRR_VVV "scalar vector fp compare and signal equal scalar short" arch12 zarch
+e700001c20e8 wfkesbs VRR_VVV "scalar fp compare and signal equal scalar short" arch12 zarch
+e700000430e8 vfkedb VRR_VVV "vector fp compare and signal equal long" arch12 zarch vx
+e700001430e8 vfkedbs VRR_VVV "vector fp compare and signal equal long" arch12 zarch vx
+e700000c30e8 wfkedb VRR_VVV "vector fp compare and signal equal long" arch12 zarch vx
+e700001c30e8 wfkedbs VRR_VVV "vector fp compare and signal equal long" arch12 zarch vx
+e700000c40e8 wfkexb VRR_VVV "scalar vector fp compare and signal equal scalar extended" arch12 zarch
+e700001c40e8 wfkexbs VRR_VVV "scalar vector fp compare and signal equal scalar extended" arch12 zarch
+
+e700000020eb vfchsb VRR_VVV "vector fp compare high short" arch12 zarch
+e700001020eb vfchsbs VRR_VVV "vector fp compare high short" arch12 zarch
+e700000820eb wfchsb VRR_VVV "scalar vector fp compare high scalar short" arch12 zarch
+e700001820eb wfchsbs VRR_VVV "scalar vector fp compare high scalar short" arch12 zarch
+e700000840eb wfchxb VRR_VVV "scalar vector fp compare high scalar extended" arch12 zarch
+e700001840eb wfchxbs VRR_VVV "scalar vector fp compare high scalar extended" arch12 zarch
+
+e700000420eb vfkhsb VRR_VVV "vector fp compare and signal high short" arch12 zarch
+e700001420eb vfkhsbs VRR_VVV "vector fp compare and signal high short" arch12 zarch
+e700000c20eb wfkhsb VRR_VVV "scalar vector fp compare and signal high scalar short" arch12 zarch
+e700001c20eb wfkhsbs VRR_VVV "scalar vector fp compare and signal high scalar short" arch12 zarch
+e700000430eb vfkhdb VRR_VVV "vector fp compare and signal high long" arch12 zarch vx
+e700001430eb vfkhdbs VRR_VVV "vector fp compare and signal high long" arch12 zarch vx
+e700000c30eb wfkhdb VRR_VVV "vector fp compare and signal high long" arch12 zarch vx
+e700001c30eb wfkhdbs VRR_VVV "vector fp compare and signal high long" arch12 zarch vx
+e700000c40eb wfkhxb VRR_VVV "scalar vector fp compare and signal high scalar extended" arch12 zarch
+e700001c40eb wfkhxbs VRR_VVV "scalar vector fp compare and signal high scalar extended" arch12 zarch
+
+e700000020ea vfchesb VRR_VVV "vector fp compare high or equal short" arch12 zarch
+e700001020ea vfchesbs VRR_VVV "vector fp compare high or equal short" arch12 zarch
+e700000820ea wfchesb VRR_VVV "scalar vector fp compare high or equal scalar short" arch12 zarch
+e700001820ea wfchesbs VRR_VVV "scalar vector fp compare high or equal scalar short" arch12 zarch
+e700000840ea wfchexb VRR_VVV "scalar vector fp compare high or equal scalar extended" arch12 zarch
+e700001840ea wfchexbs VRR_VVV "scalar vector fp compare high or equal scalar extended" arch12 zarch
+
+e700000420ea vfkhesb VRR_VVV "vector fp compare and signal high or equal short" arch12 zarch
+e700001420ea vfkhesbs VRR_VVV "vector fp compare and signal high or equal short" arch12 zarch
+e700000c20ea wfkhesb VRR_VVV "scalar vector fp compare and signal high or equal scalar short" arch12 zarch
+e700001c20ea wfkhesbs VRR_VVV "scalar vector fp compare and signal high or equal scalar short" arch12 zarch
+e700000430ea vfkhedb VRR_VVV "vector fp compare and signal high or equal long" arch12 zarch vx
+e700001430ea vfkhedbs VRR_VVV "vector fp compare and signal high or equal long" arch12 zarch vx
+e700000c30ea wfkhedb VRR_VVV "vector fp compare and signal high or equal long" arch12 zarch vx
+e700001c30ea wfkhedbs VRR_VVV "vector fp compare and signal high or equal long" arch12 zarch vx
+e700000c40ea wfkhexb VRR_VVV "scalar vector fp compare and signal high or equal scalar extended" arch12 zarch
+e700001c40ea wfkhexbs VRR_VVV "scalar vector fp compare and signal high or equal scalar extended" arch12 zarch
+
+e700000020e5 vfdsb VRR_VVV "vector fp divide short" arch12 zarch
+e700000820e5 wfdsb VRR_VVV "scalar vector fp divide scalar short" arch12 zarch
+e700000840e5 wfdxb VRR_VVV "scalar vector fp divide scalar extended" arch12 zarch
+e700000020c7 vfisb VRR_VV0UU "vector load fp integer short" arch12 zarch
+e700000820c7 wfisb VRR_VV0UU8 "scalar vector load fp integer scalar short" arch12 zarch
+e700000840c7 wfixb VRR_VV0UU8 "scalar vector load fp integer scalar extended" arch12 zarch
+e700000000c4 vfll VRR_VV0UU2 "vector fp load lengthened" arch12 zarch
+e700000020c4 vflls VRR_VV "vector fp load lengthened" arch12 zarch
+e700000820c4 wflls VRR_VV "scalar vector fp load lengthened short" arch12 zarch
+e700000830c4 wflld VRR_VV "scalar vector fp load lengthened long" arch12 zarch
+e700000000c5 vflr VRR_VV0UUU "vector fp load rounded" arch12 zarch
+e700000030c5 vflrd VRR_VV0UU "vector fp load rounded long" arch12 zarch
+e700000830c5 wflrd VRR_VV0UU8 "scalar vector fp load rounded long" arch12 zarch
+e700000840c5 wflrx VRR_VV0UU8 "scalar vector fp load rounded extended" arch12 zarch
+e700000000ef vfmax VRR_VVV0UUU "vector fp maximum" arch12 zarch
+e700000020ef vfmaxsb VRR_VVV0U0 "vector fp maximum short" arch12 zarch
+e700000030ef vfmaxdb VRR_VVV0U0 "vector fp maximum long" arch12 zarch
+e700000820ef wfmaxsb VRR_VVV0U0 "scalar fp maximum scalar short" arch12 zarch
+e700000830ef wfmaxdb VRR_VVV0U0 "scalar fp maximum scalar long" arch12 zarch
+e700000840ef wfmaxxb VRR_VVV0U0 "scalar fp maximum scalar extended" arch12 zarch
+e700000000ee vfmin VRR_VVV0UUU "vector fp minimum" arch12 zarch
+e700000020ee vfminsb VRR_VVV0U0 "vector fp minimum short" arch12 zarch
+e700000030ee vfmindb VRR_VVV0U0 "vector fp minimum long" arch12 zarch
+e700000820ee wfminsb VRR_VVV0U0 "scalar fp minimum scalar short" arch12 zarch
+e700000830ee wfmindb VRR_VVV0U0 "scalar fp minimum scalar long" arch12 zarch
+e700000840ee wfminxb VRR_VVV0U0 "scalar fp minimum scalar extended" arch12 zarch
+e700000020e7 vfmsb VRR_VVV "vector fp multiply short" arch12 zarch
+e700000820e7 wfmsb VRR_VVV "scalar vector fp multiply scalar short" arch12 zarch
+e700000840e7 wfmxb VRR_VVV "scalar vector fp multiply scalar extended" arch12 zarch
+e7000200008f vfmasb VRR_VVVV "vector fp multiply and add short" arch12 zarch
+e7000208008f wfmasb VRR_VVVV "scalar vector fp multiply and add scalar short" arch12 zarch
+e7000408008f wfmaxb VRR_VVVV "scalar vector fp multiply and add scalar extended" arch12 zarch
+e7000200008e vfmssb VRR_VVVV "vector fp multiply and subtract short" arch12 zarch
+e7000208008e wfmssb VRR_VVVV "scalar vector fp multiply and subtract scalar short" arch12 zarch
+e7000408008e wfmsxb VRR_VVVV "scalar vector fp multiply and subtract scalar extended" arch12 zarch
+e7000000009f vfnma VRR_VVVU0UV "vector fp negative multiply and add" arch12 zarch
+e7000200009f vfnmasb VRR_VVVV "vector fp negative multiply and add short" arch12 zarch
+e7000208009f wfnmasb VRR_VVVV "scalar vector fp negative multiply and add scalar short" arch12 zarch
+e7000300009f vfnmadb VRR_VVVV "vector fp negative multiply and add long" arch12 zarch
+e7000308009f wfnmadb VRR_VVVV "scalar vector fp negative multiply and add scalar long" arch12 zarch
+e7000408009f wfnmaxb VRR_VVVV "scalar vector fp negative multiply and add scalar extended" arch12 zarch
+e7000000009e vfnms VRR_VVVU0UV "vector fp negative multiply and subtract" arch12 zarch
+e7000200009e vfnmssb VRR_VVVV "vector fp negative multiply and subtract short" arch12 zarch
+e7000208009e wfnmssb VRR_VVVV "scalar vector fp negative multiply and subtract scalar short" arch12 zarch
+e7000300009e vfnmsdb VRR_VVVV "vector fp negative multiply and subtract long" arch12 zarch
+e7000308009e wfnmsdb VRR_VVVV "scalar vector fp negative multiply and subtract scalar long" arch12 zarch
+e7000408009e wfnmsxb VRR_VVVV "scalar vector fp negative multiply and subtract scalar extended" arch12 zarch
+e700000020cc vfpsosb VRR_VV0U2 "vector fp perform sign operation short" arch12 zarch
+e700000820cc wfpsosb VRR_VV0U2 "scalar vector fp perform sign operation scalar short" arch12 zarch
+e700000020cc vflcsb VRR_VV "vector fp perform sign operation short" arch12 zarch
+e700000820cc wflcsb VRR_VV "scalar vector fp perform sign operation scalar short" arch12 zarch
+e700001020cc vflnsb VRR_VV "vector fp perform sign operation short" arch12 zarch
+e700001820cc wflnsb VRR_VV "scalar vector fp perform sign operation scalar short" arch12 zarch
+e700002020cc vflpsb VRR_VV "vector fp perform sign operation short" arch12 zarch
+e700002820cc wflpsb VRR_VV "scalar vector fp perform sign operation scalar short" arch12 zarch
+e700000840cc wfpsoxb VRR_VV0U2 "scalar vector fp perform sign operation scalar extended" arch12 zarch
+e700000840cc wflcxb VRR_VV "scalar vector fp perform sign operation scalar extended" arch12 zarch
+e700001840cc wflnxb VRR_VV "scalar vector fp perform sign operation scalar extended" arch12 zarch
+e700002840cc wflpxb VRR_VV "scalar vector fp perform sign operation scalar extended" arch12 zarch
+e700000020ce vfsqsb VRR_VV "vector fp square root short" arch12 zarch
+e700000820ce wfsqsb VRR_VV "scalar vector fp square root scalar short" arch12 zarch
+e700000840ce wfsqxb VRR_VV "scalar vector fp square root scalar extended" arch12 zarch
+e700000020e2 vfssb VRR_VVV "vector fp subtract short" arch12 zarch
+e700000820e2 wfssb VRR_VVV "scalar vector fp subtract scalar short" arch12 zarch
+e700000840e2 wfsxb VRR_VVV "scalar vector fp subtract scalar extended" arch12 zarch
+e7000000204a vftcisb VRI_VVU2 "vector fp test data class immediate short" arch12 zarch
+e7000008204a wftcisb VRI_VVU2 "scalar vector fp test data class immediate scalar short" arch12 zarch
+e7000008404a wftcixb VRI_VVU2 "scalar vector fp test data class immediate scalar extended" arch12 zarch
+
+# Miscellaneous Instruction Extensions Facility 2
+
+e30000000038 agh RXY_RRRD "add halfword to 64 bit value" arch12 zarch
+e30000000047 bic RXY_URRD "branch indirect on condition" arch12 zarch
+e3f000000047 bi RXY_0RRD "unconditional indirect branch" arch12 zarch
+e30000000047 bi*8 RXY_0RRD "branch indirect on condition" arch12 zarch
+b9ec mgrk RRF_R0RR2 "multiply 64x64reg -> 128" arch12 zarch
+e30000000084 mg RXY_RRRD "multiply 64x64mem -> 128" arch12 zarch
+e3000000003c mgh RXY_RRRD "multiply halfword 64x16mem -> 64" arch12 zarch
+b9fd msrkc RRF_R0RR2 "multiply single 32x32 -> 32" arch12 zarch
+b9ed msgrkc RRF_R0RR2 "multiply single 64x64 -> 64" arch12 zarch
+e30000000053 msc RXY_RRRD "multiply single 32x32mem -> 32" arch12 zarch
+e30000000083 msgc RXY_RRRD "multiply single 64x64mem -> 64" arch12 zarch
+e30000000039 sgh RXY_RRRD "subtract halfword from 64 bit value" arch12 zarch
+
+# Vector packed decimal facility
+
+e60000000037 vlrlr VRS_RRDV "vector load rightmost with length" arch12 zarch
+e60000000035 vlrl VSI_URDV "vector load rightmost with immediate length" arch12 zarch
+e6000000003f vstrlr VRS_RRDV "vector store rightmost with length" arch12 zarch
+e6000000003d vstrl VSI_URDV "vector store rightmost with immediate length" arch12 zarch
+e60000000071 vap VRI_VVV0UU2 "vector add decimal" arch12 zarch
+e60000000077 vcp VRR_0VV0U "vector compare decimal" arch12 zarch
+e60000000050 vcvb VRR_RV0U "vector convert to binary 32 bit" arch12 zarch
+e60000000052 vcvbg VRR_RV0U "vector convert to binary 64 bit" arch12 zarch
+e60000000058 vcvd VRI_VR0UU "vector convert to decimal 32 bit" arch12 zarch
+e6000000005a vcvdg VRI_VR0UU "vector convert to decimal 64 bit" arch12 zarch
+e6000000007a vdp VRI_VVV0UU2 "vector divide decimal" arch12 zarch
+e60000000049 vlip VRI_V0UU2 "vector load immediate decimal" arch12 zarch
+e60000000078 vmp VRI_VVV0UU2 "vector multiply decimal" arch12 zarch
+e60000000079 vmsp VRI_VVV0UU2 "vector multiply and shift decimal" arch12 zarch
+e60000000034 vpkz VSI_URDV "vector pack zoned" arch12 zarch
+e6000000005b vpsop VRI_VVUUU2 "vector perform sign operation decimal" arch12 zarch
+e6000000007b vrp VRI_VVV0UU2 "vector remainder decimal" arch12 zarch
+e6000000007e vsdp VRI_VVV0UU2 "vector shift and divide decimal" arch12 zarch
+e60000000059 vsrp VRI_VVUUU2 "vector shift and round decimal" arch12 zarch
+e60000000073 vsp VRI_VVV0UU2 "vector subtract decimal" arch12 zarch
+e6000000005f vtp VRR_0V "vector test decimal" arch12 zarch
+e6000000003c vupkz VSI_URDV "vector unpack zoned" arch12 zarch
+
+# Guarded storage facility
+
+e3000000004c lgg RXY_RRRD "load guarded 64 bit" arch12 zarch
+e30000000048 llgfsg RXY_RRRD "load logical and shift guarded 64 bit" arch12 zarch
+e3000000004d lgsc RXY_RRRD "load guarded storage controls" arch12 zarch
+e30000000049 stgsc RXY_RRRD "store guarded storage controls" arch12 zarch
+
+# Message-Security-Assist Extension 8
+
+b929 kma RRF_R0RR "cipher message with galois counter mode" arch12 zarch

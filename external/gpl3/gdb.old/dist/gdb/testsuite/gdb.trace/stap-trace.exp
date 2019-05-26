@@ -1,4 +1,4 @@
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ proc compile_stap_bin {exec_name {arg ""}} {
     if { [gdb_compile "$srcdir/$subdir/$srcfile" \
 	      [standard_output_file $exec_name] \
 	      executable [concat $arg debug nowarnings]] != "" } {
-	untested "Could not compile ${srcfile}"
+	untested "failed to compile"
 	return 0
     }
 

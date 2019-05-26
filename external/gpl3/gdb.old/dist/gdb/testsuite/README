@@ -484,7 +484,7 @@ ANSI/ISO C, and C++.
 gdb.<lang>
 
 Language-specific tests for any language besides C.  Examples are
-gdb.cp for C++ and gdb.java for Java.
+gdb.cp for C++ and gdb.rust for Rust.
 
 gdb.<platform>
 

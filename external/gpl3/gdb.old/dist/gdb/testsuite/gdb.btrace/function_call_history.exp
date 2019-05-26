@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2016 Free Software Foundation, Inc.
+# Copyright 2013-2017 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <christian.himpel@intel.com>
 #
@@ -17,15 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# check for btrace support
-if { [skip_btrace_tests] } { return -1 }
-
-# start inferior
-standard_testfile
-if [prepare_for_testing function_call_history.exp $testfile {} {debug}] {
+if { [skip_btrace_tests] } {
+    unsupported "target does not support record-btrace"
     return -1
 }
+
+standard_testfile
+if [prepare_for_testing "failed to prepare" $testfile {} {debug}] {
+    return -1
+}
+
 if ![runto_main] {
+    untested "failed to run to main"
     return -1
 }
 
@@ -226,6 +229,7 @@ gdb_test "record function-call-history /c 21, +11" [multi_line \
 
 # make sure we can handle incomplete trace with respect to indentation
 if ![runto_main] {
+    untested "failed to run to main"
     return -1
 }
 # navigate to the fib in line 24 above

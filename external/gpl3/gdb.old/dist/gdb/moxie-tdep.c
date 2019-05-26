@@ -1,6 +1,6 @@
 /* Target-dependent code for Moxie.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -39,6 +39,7 @@
 #include "record-full.h"
 
 #include "moxie-tdep.h"
+#include <algorithm>
 
 /* Local functions.  */
 
@@ -67,21 +68,13 @@ moxie_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
   return sp & ~1;
 }
 
-/* Implement the "breakpoint_from_pc" gdbarch method.  */
+constexpr gdb_byte moxie_break_insn[] = { 0x35, 0x00 };
 
-static const unsigned char *
-moxie_breakpoint_from_pc (struct gdbarch *gdbarch,
-			  CORE_ADDR *pcptr, int *lenptr)
-{
-  static unsigned char breakpoint[] = { 0x35, 0x00 };
-
-  *lenptr = sizeof (breakpoint);
-  return breakpoint;
-}
+typedef BP_MANIPULATION (moxie_break_insn) moxie_breakpoint;
 
 /* Moxie register names.  */
 
-char *moxie_register_names[] = {
+static const char *moxie_register_names[] = {
   "$fp",  "$sp",  "$r0",  "$r1",  "$r2",
   "$r3",  "$r4",  "$r5", "$r6", "$r7",
   "$r8", "$r9", "$r10", "$r11", "$r12",
@@ -225,7 +218,7 @@ moxie_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       CORE_ADDR post_prologue_pc
 	= skip_prologue_using_sal (gdbarch, func_addr);
       if (post_prologue_pc != 0)
-	return max (pc, post_prologue_pc);
+	return std::max (pc, post_prologue_pc);
       else
 	{
 	  /* Can't determine prologue from the symbol table, need to examine
@@ -306,20 +299,19 @@ moxie_process_readu (CORE_ADDR addr, gdb_byte *buf,
 
 /* Insert a single step breakpoint.  */
 
-static int
-moxie_software_single_step (struct frame_info *frame)
+static VEC (CORE_ADDR) *
+moxie_software_single_step (struct regcache *regcache)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct address_space *aspace = get_frame_address_space (frame);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
   CORE_ADDR addr;
   gdb_byte buf[4];
   uint16_t inst;
   uint32_t tmpu32;
   ULONGEST fp;
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct regcache *regcache = get_current_regcache ();
+  VEC (CORE_ADDR) *next_pcs = NULL;
 
-  addr = get_frame_pc (frame);
+  addr = regcache_read_pc (regcache);
 
   inst = (uint16_t) moxie_process_readu (addr, buf, 2, byte_order);
 
@@ -345,8 +337,9 @@ moxie_software_single_step (struct frame_info *frame)
 	    case 0x09: /* bleu */
 	      /* Insert breaks on both branches, because we can't currently tell
 		 which way things will go.  */
-	      insert_single_step_breakpoint (gdbarch, aspace, addr + 2);
-	      insert_single_step_breakpoint (gdbarch, aspace, addr + 2 + INST2OFFSET(inst));
+	      VEC_safe_push (CORE_ADDR, next_pcs, addr + 2);
+	      VEC_safe_push (CORE_ADDR, next_pcs,
+			     addr + 2 + INST2OFFSET(inst));
 	      break;
 	    default:
 	      {
@@ -358,7 +351,7 @@ moxie_software_single_step (struct frame_info *frame)
       else
 	{
 	  /* This is a Form 2 instruction.  They are all 16 bits.  */
-	  insert_single_step_breakpoint (gdbarch, aspace, addr + 2);
+	  VEC_safe_push (CORE_ADDR, next_pcs, addr + 2);
 	}
     }
   else
@@ -405,7 +398,7 @@ moxie_software_single_step (struct frame_info *frame)
 	case 0x32: /* udiv.l */
 	case 0x33: /* mod.l */
 	case 0x34: /* umod.l */
-	  insert_single_step_breakpoint (gdbarch, aspace, addr + 2);
+	  VEC_safe_push (CORE_ADDR, next_pcs, addr + 2);
 	  break;
 
 	  /* 32-bit instructions.  */
@@ -415,7 +408,7 @@ moxie_software_single_step (struct frame_info *frame)
 	case 0x37: /* sto.b */
 	case 0x38: /* ldo.s */
 	case 0x39: /* sto.s */
-	  insert_single_step_breakpoint (gdbarch, aspace, addr + 4);
+	  VEC_safe_push (CORE_ADDR, next_pcs, addr + 4);
 	  break;
 
 	  /* 48-bit instructions.  */
@@ -428,32 +421,27 @@ moxie_software_single_step (struct frame_info *frame)
 	case 0x20: /* ldi.s (immediate) */
 	case 0x22: /* lda.s */
 	case 0x24: /* sta.s */
-	  insert_single_step_breakpoint (gdbarch, aspace, addr + 6);
+	  VEC_safe_push (CORE_ADDR, next_pcs, addr + 6);
 	  break;
 
 	  /* Control flow instructions.	 */
 	case 0x03: /* jsra */
 	case 0x1a: /* jmpa */
-	  insert_single_step_breakpoint (gdbarch, aspace,
-					 moxie_process_readu (addr + 2,
-							      buf, 4,
-							      byte_order));
+	  VEC_safe_push (CORE_ADDR, next_pcs,
+			 moxie_process_readu (addr + 2, buf, 4, byte_order));
 	  break;
 
 	case 0x04: /* ret */
 	  regcache_cooked_read_unsigned (regcache, MOXIE_FP_REGNUM, &fp);
-	  insert_single_step_breakpoint (gdbarch, aspace,
-					 moxie_process_readu (fp + 4,
-							      buf, 4,
-							      byte_order));
+	  VEC_safe_push (CORE_ADDR, next_pcs,
+			 moxie_process_readu (fp + 4, buf, 4, byte_order));
 	  break;
 
 	case 0x19: /* jsr */
 	case 0x25: /* jmp */
 	  regcache_raw_read (regcache,
 			     (inst >> 4) & 0xf, (gdb_byte *) & tmpu32);
-	  insert_single_step_breakpoint (gdbarch, aspace,
-					 tmpu32);
+	  VEC_safe_push (CORE_ADDR, next_pcs, tmpu32);
 	  break;
 
 	case 0x30: /* swi */
@@ -463,7 +451,7 @@ moxie_software_single_step (struct frame_info *frame)
 	}
     }
 
-  return 1;
+  return next_pcs;
 }
 
 /* Implement the "read_pc" gdbarch method.  */
@@ -1124,6 +1112,9 @@ moxie_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep = XNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
 
+  set_gdbarch_wchar_bit (gdbarch, 32);
+  set_gdbarch_wchar_signed (gdbarch, 0);
+
   set_gdbarch_read_pc (gdbarch, moxie_read_pc);
   set_gdbarch_write_pc (gdbarch, moxie_write_pc);
   set_gdbarch_unwind_sp (gdbarch, moxie_unwind_sp);
@@ -1138,7 +1129,10 @@ moxie_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_skip_prologue (gdbarch, moxie_skip_prologue);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
-  set_gdbarch_breakpoint_from_pc (gdbarch, moxie_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch,
+				       moxie_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch,
+				       moxie_breakpoint::bp_from_kind);
   set_gdbarch_frame_align (gdbarch, moxie_frame_align);
 
   frame_base_set_default (gdbarch, &moxie_frame_base);

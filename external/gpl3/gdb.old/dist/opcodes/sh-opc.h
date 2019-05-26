@@ -1,5 +1,5 @@
 /* Definitions for SH opcodes.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -285,7 +285,6 @@ sh_dsp_reg_nums;
 unsigned int sh_get_arch_from_bfd_mach (unsigned long mach);
 unsigned int sh_get_arch_up_from_bfd_mach (unsigned long mach);
 unsigned long sh_get_bfd_mach_from_arch_set (unsigned int arch_set);
-bfd_boolean sh_merge_bfd_arch (bfd *ibfd, bfd *obfd);
 
 /* Below are the 'architecture sets'.
    They describe the following inheritance graph:
