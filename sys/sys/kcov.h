@@ -1,4 +1,4 @@
-/*      $NetBSD: kcov.h,v 1.5 2019/04/11 11:20:46 kamil Exp $        */
+/*      $NetBSD: kcov.h,v 1.6 2019/05/26 01:44:34 kamil Exp $        */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -46,8 +46,5 @@
 
 typedef volatile uint64_t kcov_int_t;
 #define KCOV_ENTRY_SIZE sizeof(kcov_int_t)
-
-#define KCOV_STORE(x,v)	(x) = (v)
-#define KCOV_LOAD(x)	(x)
 
 #endif /* !_SYS_KCOV_H_ */

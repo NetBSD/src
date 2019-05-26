@@ -339,10 +339,10 @@ kcov_basic(bool fd_dup, int mode)
 	ATF_REQUIRE_MSG(ioctl(fd, KCOV_IOC_ENABLE, &mode) == 0,
 	    "Unable to enable kcov ");
 
-	KCOV_STORE(buf[0], 0);
+	buf[0] = 0;
 
 	sleep(0); /* XXX: Is it enough for all trace types? */
-	ATF_REQUIRE_MSG(KCOV_LOAD(buf[0]) != 0, "No records found");
+	ATF_REQUIRE_MSG(buf[0] != 0, "No records found");
 
 	ATF_REQUIRE_MSG(ioctl(fd, KCOV_IOC_DISABLE) == 0,
 	    "Unable to disable kcov");
@@ -409,7 +409,7 @@ thread_buffer_access_test_helper(void *ptr)
 	kcov_int_t *buf = ptr;
 
 	/* Test mapped buffer access from a custom thread */
-	KCOV_STORE(buf[0], KCOV_LOAD(buf[0]));
+	buf[0] = buf[0];
 
 	return NULL;
 }
@@ -470,10 +470,10 @@ ATF_TC_BODY(kcov_thread, tc)
 	/* The thread does something, does not matter what exactly. */
 	pthread_create(&thread, NULL, thread_test_helper, __UNVOLATILE(buf));
 
-	KCOV_STORE(buf[0], 0);
+	buf[0] = 0;
 	for (i = 0; i < 10000; i++)
 		continue;
-	ATF_REQUIRE_EQ_MSG(KCOV_LOAD(buf[0]), 0,
+	ATF_REQUIRE_EQ_MSG(buf[0], 0,
 	    "Records changed in blocked thread");
 
 	pthread_join(thread, NULL);
@@ -496,10 +496,10 @@ multiple_threads_helper(void *ptr __unused)
 	ATF_REQUIRE_MSG(ioctl(fd, KCOV_IOC_ENABLE, &mode) == 0,
 	    "Unable to enable kcov ");
 
-	KCOV_STORE(buf[0], 0);
+	buf[0] = 0;
 
 	sleep(0);
-	ATF_REQUIRE_MSG(KCOV_LOAD(buf[0]) != 0, "No records found");
+	ATF_REQUIRE_MSG(buf[0] != 0, "No records found");
 
 	ATF_REQUIRE_MSG(ioctl(fd, KCOV_IOC_DISABLE) == 0,
 	    "Unable to disable kcov");
