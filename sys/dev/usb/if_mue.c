@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.45 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.46 2019/05/26 04:52:07 mlelstv Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.45 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.46 2019/05/26 04:52:07 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -958,6 +958,7 @@ mue_attach(device_t parent, device_t self, void *aux)
 		sc->mue_tx_list_cnt = MUE_TX_LIST_CNT;
 	}
 	sc->mue_txbufsz = MUE_TX_BUFSIZE;
+	mutex_init(&sc->mue_usb_lock, MUTEX_DEFAULT, IPL_NET);
 
 	/* Find endpoints. */
 	id = usbd_get_interface_descriptor(sc->mue_iface);
@@ -1819,6 +1820,8 @@ mue_start(struct ifnet *ifp)
 		return;
 	}
 
+	mutex_enter(&sc->mue_usb_lock);
+
 	idx = cd->mue_tx_prod;
 	while (cd->mue_tx_cnt < (int)sc->mue_tx_list_cnt) {
 		IFQ_POLL(&ifp->if_snd, m);
@@ -1834,14 +1837,15 @@ mue_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m, BPF_D_OUT);
 		m_freem(m);
 
-		idx = (idx + 1) % sc->mue_tx_list_cnt;
 		cd->mue_tx_cnt++;
-
+		idx = (idx + 1) % sc->mue_tx_list_cnt;
 	}
 	cd->mue_tx_prod = idx;
 
 	if (cd->mue_tx_cnt >= (int)sc->mue_tx_list_cnt)
 		ifp->if_flags |= IFF_OACTIVE;
+
+	mutex_exit(&sc->mue_usb_lock);
 
 	/* Set a timeout in case the chip goes out to lunch. */
 	ifp->if_timer = 5;
