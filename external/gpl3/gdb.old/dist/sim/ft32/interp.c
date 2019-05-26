@@ -1,6 +1,6 @@
 /* Simulator for the FT32 processor
 
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
    Contributed by FTDI <support@ftdichip.com>
 
    This file is part of simulators.

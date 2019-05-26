@@ -1,6 +1,6 @@
 /* Memory ranges
 
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 
 #include "defs.h"
 #include "memrange.h"
+#include <algorithm>
 
 int
 mem_ranges_overlap (CORE_ADDR start1, int len1,
@@ -26,8 +27,8 @@ mem_ranges_overlap (CORE_ADDR start1, int len1,
 {
   ULONGEST h, l;
 
-  l = max (start1, start2);
-  h = min (start1 + len1, start2 + len2);
+  l = std::max (start1, start2);
+  h = std::min (start1 + len1, start2 + len2);
   return (l < h);
 }
 
@@ -82,7 +83,7 @@ normalize_mem_ranges (VEC(mem_range_s) *ranges)
 	     merge them.  */
 	  if (rb->start <= ra->start + ra->length)
 	    {
-	      ra->length = max (ra->length,
+	      ra->length = std::max ((CORE_ADDR) ra->length,
 				(rb->start - ra->start) + rb->length);
 	      continue;		/* next b, same a */
 	    }

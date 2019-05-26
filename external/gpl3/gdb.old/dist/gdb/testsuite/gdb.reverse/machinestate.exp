@@ -1,4 +1,4 @@
-# Copyright 2008-2016 Free Software Foundation, Inc.
+# Copyright 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ if ![supports_reverse] {
 
 standard_testfile .c ms1.c
 
-if { [prepare_for_testing $testfile.exp $testfile \
+if { [prepare_for_testing "failed to prepare" $testfile \
 	  [list $srcfile $srcfile2]] } {
     return -1
 }
@@ -57,7 +57,7 @@ runto main
 
 if [supports_process_record] {
     # Activate process record/replay
-    gdb_test_no_output "record" "Turn on process record"
+    gdb_test_no_output "record" "turn on process record"
 }
 
 # Proceed to end of main

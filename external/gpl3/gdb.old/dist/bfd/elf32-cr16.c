@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CR16 ELF
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
    Written by M R Swami Reddy.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -582,10 +582,11 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
   asection * s;
   struct elf_link_hash_entry * h;
   const struct elf_backend_data * bed = get_elf_backend_data (abfd);
+  struct elf_link_hash_table *htab = elf_hash_table (info);
   int ptralign;
 
   /* This function may be called more than once.  */
-  if (bfd_get_linker_section (abfd, ".got") != NULL)
+  if (htab->sgot != NULL)
     return TRUE;
 
   switch (bed->s->arch_size)
@@ -607,6 +608,7 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
            | SEC_LINKER_CREATED);
 
   s = bfd_make_section_anyway_with_flags (abfd, ".got", flags);
+  htab->sgot= s;
   if (s == NULL
       || ! bfd_set_section_alignment (abfd, s, ptralign))
     return FALSE;
@@ -614,6 +616,7 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
   if (bed->want_got_plt)
     {
       s = bfd_make_section_anyway_with_flags (abfd, ".got.plt", flags);
+      htab->sgotplt = s;
       if (s == NULL
           || ! bfd_set_section_alignment (abfd, s, ptralign))
         return FALSE;
@@ -624,7 +627,7 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
      because we don't want to define the symbol if we are not creating
      a global offset table.  */
   h = _bfd_elf_define_linkage_sym (abfd, info, s, "_GLOBAL_OFFSET_TABLE_");
-  elf_hash_table (info)->hgot = h;
+  htab->hgot = h;
   if (h == NULL)
     return FALSE;
 
@@ -647,7 +650,7 @@ elf_cr16_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
     if (code == cr16_reloc_map[i].bfd_reloc_enum)
       return &cr16_elf_howto_table[cr16_reloc_map[i].cr16_reloc_type];
 
-  _bfd_error_handler ("Unsupported CR16 relocation type: 0x%x\n", code);
+  _bfd_error_handler (_("Unsupported CR16 relocation type: 0x%x\n"), code);
   return NULL;
 }
 
@@ -675,8 +678,9 @@ elf_cr16_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
 
   if (r_type >= R_CR16_MAX)
     {
-      (*_bfd_error_handler) (_("%B: unrecognised CR16 reloc number: %d"),
-			     abfd, r_type);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%B: unrecognised CR16 reloc number: %d"),
+			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
       r_type = R_CR16_NONE;
     }
@@ -760,29 +764,9 @@ cr16_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
         case R_CR16_GOTC_REGREL20:
           /* This symbol requires a global offset table entry.  */
 
-          if (sgot == NULL)
-            {
-              sgot = bfd_get_linker_section (dynobj, ".got");
-              BFD_ASSERT (sgot != NULL);
-            }
-
-          if (srelgot == NULL
-              && (h != NULL || bfd_link_executable (info)))
-            {
-              srelgot = bfd_get_linker_section (dynobj, ".rela.got");
-              if (srelgot == NULL)
-                {
-		  flagword flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
-				    | SEC_IN_MEMORY | SEC_LINKER_CREATED
-				    | SEC_READONLY);
-		  srelgot = bfd_make_section_anyway_with_flags (dynobj,
-								".rela.got",
-								flags);
-                  if (srelgot == NULL
-                      || ! bfd_set_section_alignment (dynobj, srelgot, 2))
-                    goto fail;
-                }
-            }
+	  sgot = elf_hash_table (info)->sgot;
+	  srelgot = elf_hash_table (info)->srelgot;
+	  BFD_ASSERT (sgot != NULL && srelgot != NULL);
 
           if (h != NULL)
             {
@@ -869,9 +853,6 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
   unsigned short r_type = howto->type;
   bfd_byte *hit_data = contents + offset;
   bfd_vma reloc_bits, check, Rvalue1;
-  bfd *      dynobj;
-
-  dynobj = elf_hash_table (info)->dynobj;
 
   switch (r_type)
     {
@@ -1055,7 +1036,7 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
           }
         else if (r_type == R_CR16_GOT_REGREL20)
           {
-            asection * sgot = bfd_get_linker_section (dynobj, ".got");
+            asection *sgot = elf_hash_table (info)->sgot;
 
             if (h != NULL)
               {
@@ -1103,8 +1084,7 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
           }
         else if (r_type == R_CR16_GOTC_REGREL20)
           {
-             asection * sgot;
-             sgot = bfd_get_linker_section (dynobj, ".got");
+             asection *sgot = elf_hash_table (info)->sgot;
 
              if (h != NULL)
                {
@@ -1725,8 +1705,10 @@ _bfd_cr16_elf_object_p (bfd *abfd)
    object file when linking.  */
 
 static bfd_boolean
-_bfd_cr16_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+_bfd_cr16_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
+
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
     return TRUE;
@@ -2245,6 +2227,7 @@ _bfd_cr16_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
   flagword   flags;
   asection * s;
   const struct elf_backend_data * bed = get_elf_backend_data (abfd);
+  struct elf_link_hash_table *htab = elf_hash_table (info);
   int ptralign = 0;
 
   switch (bed->s->arch_size)
@@ -2272,6 +2255,7 @@ _bfd_cr16_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 					  (bed->default_use_rela_p
 					   ? ".rela.plt" : ".rel.plt"),
 					  flags | SEC_READONLY);
+  htab->srelplt = s;
   if (s == NULL
       || ! bfd_set_section_alignment (abfd, s, ptralign))
     return FALSE;
@@ -2370,13 +2354,13 @@ _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
       /* We also need to make an entry in the .got.plt section, which
          will be placed in the .got section by the linker script.  */
 
-      s = bfd_get_linker_section (dynobj, ".got.plt");
+      s = elf_hash_table (info)->sgotplt;
       BFD_ASSERT (s != NULL);
       s->size += 4;
 
       /* We also need to make an entry in the .rela.plt section.  */
 
-      s = bfd_get_linker_section (dynobj, ".rela.plt");
+      s = elf_hash_table (info)->srelplt;
       BFD_ASSERT (s != NULL);
       s->size += sizeof (Elf32_External_Rela);
 
@@ -2475,7 +2459,7 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
          not actually use these entries.  Reset the size of .rela.got,
          which will cause it to get stripped from the output file
          below.  */
-      s = bfd_get_linker_section (dynobj, ".rela.got");
+      s = elf_hash_table (info)->srelgot;
       if (s != NULL)
         s->size = 0;
     }
@@ -2630,8 +2614,8 @@ _bfd_cr16_elf_finish_dynamic_symbol (bfd * output_bfd,
 
       /* This symbol has an entry in the global offset table.  Set it up.  */
 
-      sgot = bfd_get_linker_section (dynobj, ".got");
-      srel = bfd_get_linker_section (dynobj, ".rela.got");
+      sgot = elf_hash_table (info)->sgot;
+      srel = elf_hash_table (info)->srelgot;
       BFD_ASSERT (sgot != NULL && srel != NULL);
 
       rel.r_offset = (sgot->output_section->vma
@@ -2709,7 +2693,7 @@ _bfd_cr16_elf_finish_dynamic_sections (bfd * output_bfd,
 
   dynobj = elf_hash_table (info)->dynobj;
 
-  sgot = bfd_get_linker_section (dynobj, ".got.plt");
+  sgot = elf_hash_table (info)->sgotplt;
   BFD_ASSERT (sgot != NULL);
   sdyn = bfd_get_linker_section (dynobj, ".dynamic");
 
@@ -2726,7 +2710,6 @@ _bfd_cr16_elf_finish_dynamic_sections (bfd * output_bfd,
       for (; dyncon < dynconend; dyncon++)
         {
           Elf_Internal_Dyn dyn;
-          const char * name;
           asection * s;
 
           bfd_elf32_swap_dyn_in (dynobj, dyncon, &dyn);
@@ -2737,36 +2720,19 @@ _bfd_cr16_elf_finish_dynamic_sections (bfd * output_bfd,
               break;
 
             case DT_PLTGOT:
-              name = ".got.plt";
+              s = elf_hash_table (info)->sgotplt;
               goto get_vma;
 
             case DT_JMPREL:
-              name = ".rela.plt";
+              s = elf_hash_table (info)->srelplt;
             get_vma:
-              s = bfd_get_linker_section (dynobj, name);
               dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
               bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
               break;
 
             case DT_PLTRELSZ:
-              s = bfd_get_linker_section (dynobj, ".rela.plt");
+              s = elf_hash_table (info)->srelplt;
               dyn.d_un.d_val = s->size;
-              bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
-              break;
-
-            case DT_RELASZ:
-              /* My reading of the SVR4 ABI indicates that the
-                 procedure linkage table relocs (DT_JMPREL) should be
-                 included in the overall relocs (DT_RELA).  This is
-                 what Solaris does.  However, UnixWare can not handle
-                 that case.  Therefore, we override the DT_RELASZ entry
-                 here to make it not include the JMPREL relocs.  Since
-                 the linker script arranges for .rela.plt to follow all
-                 other relocation sections, we don't have to worry
-                 about changing the DT_RELA entry.  */
-              s = bfd_get_linker_section (dynobj, ".rela.plt");
-              if (s != NULL)
-                dyn.d_un.d_val -= s->size;
               bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
               break;
             }
@@ -2986,5 +2952,6 @@ _bfd_cr16_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSE
 #define elf_backend_plt_readonly        1
 #define elf_backend_want_plt_sym        0
 #define elf_backend_got_header_size     12
+#define elf_backend_dtrel_excludes_plt	1
 
 #include "elf32-target.h"

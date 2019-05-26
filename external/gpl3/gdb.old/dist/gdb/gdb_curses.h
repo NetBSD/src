@@ -1,6 +1,6 @@
 /* Portable <curses.h>.
 
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,6 +31,13 @@
    API headers.  */
 #undef KEY_EVENT
 #endif
+
+/* On Solaris and probably other SysVr4 derived systems, we need to define
+   NOMACROS so the native <curses.h> doesn't define clear which interferes
+   with the clear member of class string_file.  ncurses potentially has a
+   similar problem and fix.  */
+#define NOMACROS
+#define NCURSES_NOMACROS
 
 #if defined (HAVE_NCURSES_NCURSES_H)
 #include <ncurses/ncurses.h>

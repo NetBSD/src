@@ -1,6 +1,6 @@
 /* GDB parameters implemented in Python
 
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,11 +27,12 @@
 #include "completer.h"
 #include "language.h"
 #include "arch-utils.h"
+#include "py-ref.h"
 
 /* Parameter constants and their values.  */
 struct parm_constant
 {
-  char *name;
+  const char *name;
   int value;
 };
 
@@ -148,21 +149,19 @@ set_parameter_value (parmpy_object *self, PyObject *value)
 	}
       else
 	{
-	  char *string;
-
-	  string = python_string_to_host_string (value);
+	  gdb::unique_xmalloc_ptr<char>
+	    string (python_string_to_host_string (value));
 	  if (string == NULL)
 	    return -1;
 
 	  xfree (self->value.stringval);
-	  self->value.stringval = string;
+	  self->value.stringval = string.release ();
 	}
       break;
 
     case var_enum:
       {
 	int i;
-	char *str;
 
 	if (! gdbpy_is_string (value))
 	  {
@@ -171,13 +170,13 @@ set_parameter_value (parmpy_object *self, PyObject *value)
 	    return -1;
 	  }
 
-	str = python_string_to_host_string (value);
+	gdb::unique_xmalloc_ptr<char>
+	  str (python_string_to_host_string (value));
 	if (str == NULL)
 	  return -1;
 	for (i = 0; self->enumeration[i]; ++i)
-	  if (! strcmp (self->enumeration[i], str))
+	  if (! strcmp (self->enumeration[i], str.get ()))
 	    break;
-	xfree (str);
 	if (! self->enumeration[i])
 	  {
 	    PyErr_SetString (PyExc_RuntimeError,
@@ -301,25 +300,24 @@ set_attr (PyObject *obj, PyObject *attr_name, PyObject *val)
 /* A helper function which returns a documentation string for an
    object. */
 
-static char *
+static gdb::unique_xmalloc_ptr<char>
 get_doc_string (PyObject *object, PyObject *attr)
 {
-  char *result = NULL;
+  gdb::unique_xmalloc_ptr<char> result;
 
   if (PyObject_HasAttr (object, attr))
     {
-      PyObject *ds_obj = PyObject_GetAttr (object, attr);
+      gdbpy_ref<> ds_obj (PyObject_GetAttr (object, attr));
 
-      if (ds_obj && gdbpy_is_string (ds_obj))
+      if (ds_obj != NULL && gdbpy_is_string (ds_obj.get ()))
 	{
-	  result = python_string_to_host_string (ds_obj);
+	  result = python_string_to_host_string (ds_obj.get ());
 	  if (result == NULL)
 	    gdbpy_print_stack ();
 	}
-      Py_XDECREF (ds_obj);
     }
   if (! result)
-    result = xstrdup (_("This command is not documented."));
+    result.reset (xstrdup (_("This command is not documented.")));
   return result;
 }
 
@@ -327,19 +325,18 @@ get_doc_string (PyObject *object, PyObject *attr)
    argument ARG.  ARG can be NULL.  METHOD should return a Python
    string.  If this function returns NULL, there has been an error and
    the appropriate exception set.  */
-static char *
+static gdb::unique_xmalloc_ptr<char>
 call_doc_function (PyObject *obj, PyObject *method, PyObject *arg)
 {
-  char *data = NULL;
-  PyObject *result = PyObject_CallMethodObjArgs (obj, method, arg, NULL);
+  gdb::unique_xmalloc_ptr<char> data;
+  gdbpy_ref<> result (PyObject_CallMethodObjArgs (obj, method, arg, NULL));
 
-  if (! result)
+  if (result == NULL)
     return NULL;
 
-  if (gdbpy_is_string (result))
+  if (gdbpy_is_string (result.get ()))
     {
-      data = python_string_to_host_string (result);
-      Py_DECREF (result);
+      data = python_string_to_host_string (result.get ());
       if (! data)
 	return NULL;
     }
@@ -347,7 +344,6 @@ call_doc_function (PyObject *obj, PyObject *method, PyObject *arg)
     {
       PyErr_SetString (PyExc_RuntimeError,
 		       _("Parameter must return a string value."));
-      Py_DECREF (result);
       return NULL;
     }
 
@@ -365,19 +361,25 @@ get_set_value (char *args, int from_tty,
 	       struct cmd_list_element *c)
 {
   PyObject *obj = (PyObject *) get_cmd_context (c);
-  char *set_doc_string;
-  struct cleanup *cleanup = ensure_python_env (get_current_arch (),
-					       current_language);
-  PyObject *set_doc_func = PyString_FromString ("get_set_string");
+  gdb::unique_xmalloc_ptr<char> set_doc_string;
 
-  if (! set_doc_func)
-    goto error;
+  gdbpy_enter enter_py (get_current_arch (), current_language);
+  gdbpy_ref<> set_doc_func (PyString_FromString ("get_set_string"));
 
-  if (PyObject_HasAttr (obj, set_doc_func))
+  if (set_doc_func == NULL)
     {
-      set_doc_string = call_doc_function (obj, set_doc_func, NULL);
+      gdbpy_print_stack ();
+      return;
+    }
+
+  if (PyObject_HasAttr (obj, set_doc_func.get ()))
+    {
+      set_doc_string = call_doc_function (obj, set_doc_func.get (), NULL);
       if (! set_doc_string)
-	goto error;
+	{
+	  gdbpy_print_stack ();
+	  return;
+	}
     }
   else
     {
@@ -387,18 +389,7 @@ get_set_value (char *args, int from_tty,
       set_doc_string  = get_doc_string (obj, set_doc_cst);
     }
 
-  make_cleanup (xfree, set_doc_string);
-  fprintf_filtered (gdb_stdout, "%s\n", set_doc_string);
-
-  Py_XDECREF (set_doc_func);
-  do_cleanups (cleanup);
-  return;
-
- error:
-  Py_XDECREF (set_doc_func);
-  gdbpy_print_stack ();
-  do_cleanups (cleanup);
-  return;
+  fprintf_filtered (gdb_stdout, "%s\n", set_doc_string.get ());
 }
 
 /* A callback function that is registered against the respective
@@ -413,29 +404,36 @@ get_show_value (struct ui_file *file, int from_tty,
 		const char *value)
 {
   PyObject *obj = (PyObject *) get_cmd_context (c);
-  char *show_doc_string = NULL;
-  struct cleanup *cleanup = ensure_python_env (get_current_arch (),
-					       current_language);
-  PyObject *show_doc_func = PyString_FromString ("get_show_string");
+  gdb::unique_xmalloc_ptr<char> show_doc_string;
 
-  if (! show_doc_func)
-    goto error;
+  gdbpy_enter enter_py (get_current_arch (), current_language);
+  gdbpy_ref<> show_doc_func (PyString_FromString ("get_show_string"));
 
-  if (PyObject_HasAttr (obj, show_doc_func))
+  if (show_doc_func == NULL)
     {
-      PyObject *val_obj = PyString_FromString (value);
+      gdbpy_print_stack ();
+      return;
+    }
 
-      if (! val_obj)
-	goto error;
+  if (PyObject_HasAttr (obj, show_doc_func.get ()))
+    {
+      gdbpy_ref<> val_obj (PyString_FromString (value));
 
-      show_doc_string = call_doc_function (obj, show_doc_func, val_obj);
-      Py_DECREF (val_obj);
+      if (val_obj == NULL)
+	{
+	  gdbpy_print_stack ();
+	  return;
+	}
+
+      show_doc_string = call_doc_function (obj, show_doc_func.get (),
+					   val_obj.get ());
       if (! show_doc_string)
-	goto error;
+	{
+	  gdbpy_print_stack ();
+	  return;
+	}
 
-      make_cleanup (xfree, show_doc_string);
-
-      fprintf_filtered (file, "%s\n", show_doc_string);
+      fprintf_filtered (file, "%s\n", show_doc_string.get ());
     }
   else
     {
@@ -443,19 +441,8 @@ get_show_value (struct ui_file *file, int from_tty,
 	 callback function does not exist, then attempt to read the
 	 show_doc attribute.  */
       show_doc_string  = get_doc_string (obj, show_doc_cst);
-      make_cleanup (xfree, show_doc_string);
-      fprintf_filtered (file, "%s %s\n", show_doc_string, value);
+      fprintf_filtered (file, "%s %s\n", show_doc_string.get (), value);
     }
-
-  Py_XDECREF (show_doc_func);
-  do_cleanups (cleanup);
-  return;
-
- error:
-  Py_XDECREF (show_doc_func);
-  gdbpy_print_stack ();
-  do_cleanups (cleanup);
-  return;
 }
 
 
@@ -599,23 +586,22 @@ compute_enum_values (parmpy_object *self, PyObject *enum_values)
 
   for (i = 0; i < size; ++i)
     {
-      PyObject *item = PySequence_GetItem (enum_values, i);
+      gdbpy_ref<> item (PySequence_GetItem (enum_values, i));
 
-      if (! item)
+      if (item == NULL)
 	{
 	  do_cleanups (back_to);
 	  return 0;
 	}
-      if (! gdbpy_is_string (item))
+      if (! gdbpy_is_string (item.get ()))
 	{
-	  Py_DECREF (item);
 	  do_cleanups (back_to);
 	  PyErr_SetString (PyExc_RuntimeError,
 			   _("The enumeration item not a string."));
 	  return 0;
 	}
-      self->enumeration[i] = python_string_to_host_string (item);
-      Py_DECREF (item);
+      self->enumeration[i]
+	= python_string_to_host_string (item.get ()).release ();
       if (self->enumeration[i] == NULL)
 	{
 	  do_cleanups (back_to);
@@ -716,9 +702,9 @@ parmpy_init (PyObject *self, PyObject *args, PyObject *kwds)
   if (! cmd_name)
     return -1;
 
-  set_doc = get_doc_string (self, set_doc_cst);
-  show_doc = get_doc_string (self, show_doc_cst);
-  doc = get_doc_string (self, gdbpy_doc_cst);
+  set_doc = get_doc_string (self, set_doc_cst).release ();
+  show_doc = get_doc_string (self, show_doc_cst).release ();
+  doc = get_doc_string (self, gdbpy_doc_cst).release ();
 
   Py_INCREF (self);
 

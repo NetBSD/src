@@ -1,4 +1,4 @@
-# Copyright 2002-2016 Free Software Foundation, Inc.
+# Copyright 2002-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ if {[istarget "spu*-*-*"]} then {
 }
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable ${options}] != "" } {
-     untested dump.exp
+     untested "failed to compile"
      return -1
 }
 
@@ -95,7 +95,7 @@ remote_exec host "rm -f $filenames"
 # Run target program until data structs are initialized.
 
 if { ! [ runto checkpoint1 ] } then {
-    untested dump.exp
+    untested "couldn't run to checkpoint"
     return -1
 }
 
@@ -152,10 +152,10 @@ make_dump_file "dump tekhex val [set intstr1.tekhex] intstruct" \
 	"dump struct as value, tekhex"
 
 make_dump_file "dump verilog val [set intarr1.verilog] intarray" \
-	"dump array as value, intel hex"
+	"dump array as value, verilog"
 
 make_dump_file "dump verilog val [set intstr1.verilog] intstruct" \
-	"dump struct as value, intel hex"
+	"dump struct as value, verilog"
 
 proc capture_value { expression args } {
     global gdb_prompt

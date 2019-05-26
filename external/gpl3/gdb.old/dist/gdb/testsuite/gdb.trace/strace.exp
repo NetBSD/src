@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Free Software Foundation, Inc.
+# Copyright 2011-2017 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -51,7 +51,7 @@ proc strace_remove_socket { action } {
     clean_restart $executable
     gdb_load_shlib $libipa
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -136,7 +136,7 @@ proc strace_info_marker { } {
 	clean_restart $executable
 	gdb_load_shlib $libipa
 	if ![runto_main] {
-	    fail "Can't run to main"
+	    fail "can't run to main"
 	    return -1
 	}
 
@@ -173,7 +173,7 @@ proc strace_probe_marker { } {
 	clean_restart $executable
 	gdb_load_shlib $libipa
 	if ![runto_main] {
-	    fail "Can't run to main"
+	    fail "can't run to main"
 	    return -1
 	}
 
@@ -213,7 +213,7 @@ proc strace_trace_on_same_addr { type } {
 	clean_restart $executable
 	gdb_load_shlib $libipa
 	if ![runto_main] {
-	    fail "Can't run to main"
+	    fail "can't run to main"
 	    return -1
 	}
 
@@ -317,7 +317,7 @@ proc strace_trace_on_diff_addr { } {
 	clean_restart $executable
 	gdb_load_shlib $libipa
 	if ![runto_main] {
-	    fail "Can't run to main"
+	    fail "can't run to main"
 	    return -1
 	}
 
@@ -377,7 +377,7 @@ if { [istarget "x86_64-*-linux*"] || [istarget "i\[34567\]86-*-linux*"] } {
 clean_restart $executable
 gdb_load_shlib $libipa
 if ![runto_main] {
-    fail "Can't run to main to check for trace support"
+    fail "can't run to main to check for trace support"
     return -1
 }
 if { ![gdb_target_supports_trace] } then {
@@ -386,7 +386,7 @@ if { ![gdb_target_supports_trace] } then {
     # file can be removed.  Note that GDB simply kill inferior doesn't remove
     # the socket file.
     gdb_test "detach" "Detaching .*, process .*"
-    unsupported "Current target does not support trace"
+    unsupported "current target does not support trace"
     return -1
 }
 

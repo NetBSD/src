@@ -1,5 +1,5 @@
 /* ia64-opc-a.c -- IA-64 `A' opcode table.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of the GNU opcodes library.

@@ -1,4 +1,4 @@
-# Copyright 2004-2016 Free Software Foundation, Inc.
+# Copyright 2004-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,8 +34,7 @@ if { ![supports_get_siginfo_type] } {
 
 standard_testfile
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
-    untested $testfile.exp
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
 
@@ -52,7 +51,7 @@ set gcorefile [standard_output_file $testfile.gcore]
 set gcore_created [gdb_gcore_cmd $gcorefile "save a core file"]
 
 set ssi_addr ""
-set test "Extract si_addr"
+set test "extract si_addr"
 gdb_test_multiple "p \$_siginfo" "$test" {
     -re "si_addr = ($hex).*$gdb_prompt $" {
 	set ssi_addr $expect_out(1,string)
@@ -60,7 +59,7 @@ gdb_test_multiple "p \$_siginfo" "$test" {
     }
 }
 
-set test "Extract si_errno"
+set test "extract si_errno"
 gdb_test_multiple "p \$_siginfo" "$test" {
     -re "si_errno = (\[0-9\]\+).*$gdb_prompt $" {
 	set ssi_errno $expect_out(1,string)
@@ -68,7 +67,7 @@ gdb_test_multiple "p \$_siginfo" "$test" {
     }
 }
 
-set test "Extract si_code"
+set test "extract si_code"
 gdb_test_multiple "p \$_siginfo" "$test" {
     -re "si_code = (\[0-9\]\+).*$gdb_prompt $" {
 	set ssi_code $expect_out(1,string)
@@ -76,7 +75,7 @@ gdb_test_multiple "p \$_siginfo" "$test" {
     }
 }
 
-set test "Extract si_signo"
+set test "extract si_signo"
 gdb_test_multiple "p \$_siginfo" "$test" {
     -re "si_signo = (\[0-9\]\+).*$gdb_prompt $" {
 	set ssi_signo $expect_out(1,string)
@@ -105,7 +104,7 @@ if { ![runto_main] } then {
 # Run to the signal.
 gdb_test "continue" ".*Program received signal SIGSEGV.*" "continue to signal"
 
-set test "Set si_addr"
+set test "set si_addr"
 gdb_test "p \$_siginfo._sifields._sigfault.si_addr = 0x666" " = \\(void \\*\\) 0x666"
 gdb_test "p \$_siginfo.si_errno = 666" " = 666"
 gdb_test "p \$_siginfo.si_code = 999" " = 999"

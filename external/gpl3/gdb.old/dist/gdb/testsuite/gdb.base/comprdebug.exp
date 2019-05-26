@@ -1,4 +1,4 @@
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ standard_testfile average.c
 set ofile "${binfile}0.o"
 if {[gdb_compile $srcdir/$subdir/$srcfile $ofile \
 	 object {debug}] != ""} {
-    untested comprdebug.exp
+    untested "failed to compile"
     return
 }
 
@@ -30,7 +30,7 @@ verbose "result is $result"
 verbose "output is $output"
 
 if {$result == 1} {
-    untested comprdebug.exp
+    untested "failed to execute objcopy"
     return
 }
 

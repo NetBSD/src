@@ -1,5 +1,5 @@
 /* Main simulator entry points specific to the CRIS.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -786,7 +786,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
       /* Note that the linux kernel does not correctly compute the storage
 	 needs for the static-exe AUX vector.  */
 
-      csp -= sizeof (auxv_entries) / sizeof (auxv_entries[0]) * 4 * 2;
+      csp -= ARRAY_SIZE (auxv_entries) * 4 * 2;
 
       csp -= (envc + 1) * 4;
       csp -= (my_argc + 1) * 4;
@@ -874,7 +874,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
 	goto abandon_chip;
 
       if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
-	for (i = 0; i < sizeof (auxv_entries) / sizeof (auxv_entries[0]); i++)
+	for (i = 0; i < ARRAY_SIZE (auxv_entries); i++)
 	  {
 	    write_dword (csp, auxv_entries[i].id);
 	    write_dword (csp + 4,

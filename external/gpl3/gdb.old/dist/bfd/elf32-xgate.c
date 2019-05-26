@@ -1,5 +1,5 @@
 /* Freescale XGATE-specific support for 32-bit ELF
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
    Contributed by Sean Keys(skeys@ipdatasys.com)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -424,6 +424,7 @@ xgate_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_XGATE_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid XGate reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -654,16 +655,6 @@ _bfd_xgate_elf_set_private_flags (bfd *abfd ATTRIBUTE_UNUSED,
   return TRUE;
 }
 
-/* Merge backend specific data from an object file to the output
-   object file when linking.  */
-
-bfd_boolean
-_bfd_xgate_elf_merge_private_bfd_data (bfd *ibfd ATTRIBUTE_UNUSED,
-				       bfd *obfd ATTRIBUTE_UNUSED)
-{
-  return TRUE;
-}
-
 bfd_boolean
 _bfd_xgate_elf_print_private_bfd_data (bfd *abfd, void *ptr)
 {
@@ -722,7 +713,6 @@ elf32_xgate_post_process_headers (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_in
 #define elf_backend_add_symbol_hook          elf32_xgate_add_symbol_hook
 
 #define bfd_elf32_bfd_link_hash_table_create xgate_elf_bfd_link_hash_table_create
-#define bfd_elf32_bfd_merge_private_bfd_data _bfd_xgate_elf_merge_private_bfd_data
 #define bfd_elf32_bfd_set_private_flags      _bfd_xgate_elf_set_private_flags
 #define bfd_elf32_bfd_print_private_bfd_data _bfd_xgate_elf_print_private_bfd_data
 

@@ -1,5 +1,5 @@
 /* Wide characters for gdb
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

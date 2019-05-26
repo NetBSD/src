@@ -1,5 +1,5 @@
 /* Support for 64-bit archives.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
    Ian Lance Taylor, Cygnus Support
    Linker support added by Mark Mitchell, CodeSourcery, LLC.
    <mark@codesourcery.com>

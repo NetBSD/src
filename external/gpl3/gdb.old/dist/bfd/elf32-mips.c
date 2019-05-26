@@ -1,5 +1,5 @@
 /* MIPS-specific support for 32-bit ELF
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    Most of the information added by Ian Lance Taylor, Cygnus Support,
    <ian@cygnus.com>.
@@ -2222,7 +2222,7 @@ mips_elf32_rtype_to_howto (unsigned int r_type,
         return &elf_mips16_howto_table_rel[r_type - R_MIPS16_min];
       if (r_type >= (unsigned int) R_MIPS_max)
 	{
-	  (*_bfd_error_handler) (_("Unrecognised MIPS reloc number: %d"), r_type);
+	  _bfd_error_handler (_("Unrecognised MIPS reloc number: %d"), r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  r_type = R_MIPS_NONE;
 	}
@@ -2482,6 +2482,7 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define elf_backend_ecoff_debug_swap	&mips_elf32_ecoff_debug_swap
 
 #define elf_backend_got_header_size	(4 * MIPS_RESERVED_GOTNO)
+#define elf_backend_want_dynrelro	1
 #define elf_backend_may_use_rel_p	1
 #define elf_backend_may_use_rela_p	0
 #define elf_backend_default_use_rela_p	0
@@ -2617,6 +2618,8 @@ mips_vxworks_final_write_processing (bfd *abfd, bfd_boolean linker)
 #define elf_backend_default_use_rela_p		1
 #undef elf_backend_got_header_size
 #define elf_backend_got_header_size		(4 * 3)
+#undef elf_backend_dtrel_excludes_plt
+#define elf_backend_dtrel_excludes_plt		1
 
 #undef elf_backend_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_symbol \

@@ -1,5 +1,5 @@
 /* Simulator header for cgen parallel support.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU instruction set simulator.

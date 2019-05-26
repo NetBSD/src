@@ -1,6 +1,6 @@
 /* General Compile and inject code
 
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -91,8 +91,7 @@ compile_file_command (char *arg, int from_tty)
   char *buffer;
   struct cleanup *cleanup;
 
-  cleanup = make_cleanup_restore_integer (&current_ui->async);
-  current_ui->async = 0;
+  scoped_restore save_async = make_scoped_restore (&current_ui->async, 0);
 
   /* Check the user did not just <enter> after command.  */
   if (arg == NULL)
@@ -115,7 +114,7 @@ compile_file_command (char *arg, int from_tty)
 
   arg = skip_spaces (arg);
   arg = gdb_abspath (arg);
-  make_cleanup (xfree, arg);
+  cleanup = make_cleanup (xfree, arg);
   buffer = xstrprintf ("#include \"%s\"\n", arg);
   make_cleanup (xfree, buffer);
   eval_compile_command (NULL, buffer, scope, NULL);
@@ -130,11 +129,9 @@ compile_file_command (char *arg, int from_tty)
 static void
 compile_code_command (char *arg, int from_tty)
 {
-  struct cleanup *cleanup;
   enum compile_i_scope_types scope = COMPILE_I_SIMPLE_SCOPE;
 
-  cleanup = make_cleanup_restore_integer (&current_ui->async);
-  current_ui->async = 0;
+  scoped_restore save_async = make_scoped_restore (&current_ui->async, 0);
 
   if (arg != NULL && check_raw_argument (&arg))
     {
@@ -154,14 +151,11 @@ compile_code_command (char *arg, int from_tty)
     eval_compile_command (NULL, arg, scope, NULL);
   else
     {
-      struct command_line *l = get_command_line (compile_control, "");
+      command_line_up l = get_command_line (compile_control, "");
 
-      make_cleanup_free_command_lines (&l);
       l->control_u.compile.scope = scope;
-      execute_control_command_untraced (l);
+      execute_control_command_untraced (l.get ());
     }
-
-  do_cleanups (cleanup);
 }
 
 /* Callback for compile_print_command.  */
@@ -183,12 +177,10 @@ static void
 compile_print_command (char *arg_param, int from_tty)
 {
   const char *arg = arg_param;
-  struct cleanup *cleanup;
   enum compile_i_scope_types scope = COMPILE_I_PRINT_ADDRESS_SCOPE;
   struct format_data fmt;
 
-  cleanup = make_cleanup_restore_integer (&current_ui->async);
-  current_ui->async = 0;
+  scoped_restore save_async = make_scoped_restore (&current_ui->async, 0);
 
   /* Passing &FMT as SCOPE_DATA is safe as do_module_cleanup will not
      touch the stale pointer if compile_object_run has already quit.  */
@@ -198,15 +190,12 @@ compile_print_command (char *arg_param, int from_tty)
     eval_compile_command (NULL, arg, scope, &fmt);
   else
     {
-      struct command_line *l = get_command_line (compile_control, "");
+      command_line_up l = get_command_line (compile_control, "");
 
-      make_cleanup_free_command_lines (&l);
       l->control_u.compile.scope = scope;
       l->control_u.compile.scope_data = &fmt;
-      execute_control_command_untraced (l);
+      execute_control_command_untraced (l.get ());
     }
-
-  do_cleanups (cleanup);
 }
 
 /* A cleanup function to remove a directory and all its contents.  */
@@ -255,18 +244,20 @@ get_compile_file_tempdir (void)
   return tempdir_name;
 }
 
-/* Compute the names of source and object files to use.  The names are
-   allocated by malloc and should be freed by the caller.  */
+/* Compute the names of source and object files to use.  */
 
-static void
-get_new_file_names (char **source_file, char **object_file)
+static compile_file_names
+get_new_file_names ()
 {
   static int seq;
   const char *dir = get_compile_file_tempdir ();
 
   ++seq;
-  *source_file = xstrprintf ("%s%sout%d.c", dir, SLASH_STRING, seq);
-  *object_file = xstrprintf ("%s%sout%d.o", dir, SLASH_STRING, seq);
+
+  return compile_file_names (string_printf ("%s%sout%d.c",
+					    dir, SLASH_STRING, seq),
+			     string_printf ("%s%sout%d.o",
+					    dir, SLASH_STRING, seq));
 }
 
 /* Get the block and PC at which to evaluate an expression.  */
@@ -456,18 +447,13 @@ print_callback (void *ignore, const char *message)
 }
 
 /* Process the compilation request.  On success it returns the object
-   file name and *SOURCE_FILEP is set to source file name.  On an
-   error condition, error () is called.  The caller is responsible for
-   freeing both strings.  */
+   and source file names.  On an error condition, error () is
+   called.  */
 
-static char *
+static compile_file_names
 compile_to_object (struct command_line *cmd, const char *cmd_string,
-		   enum compile_i_scope_types scope,
-		   char **source_filep)
+		   enum compile_i_scope_types scope)
 {
-  char *code;
-  const char *input;
-  char *source_file, *object_file;
   struct compile_instance *compiler;
   struct cleanup *cleanup, *inner_cleanup;
   const struct block *expr_block;
@@ -503,33 +489,32 @@ compile_to_object (struct command_line *cmd, const char *cmd_string,
 
   /* From the provided expression, build a scope to pass to the
      compiler.  */
+
+  string_file input_buf;
+  const char *input;
+
   if (cmd != NULL)
     {
-      struct ui_file *stream = mem_fileopen ();
       struct command_line *iter;
-      char *stream_buf;
 
-      make_cleanup_ui_file_delete (stream);
       for (iter = cmd->body_list[0]; iter; iter = iter->next)
 	{
-	  fputs_unfiltered (iter->line, stream);
-	  fputs_unfiltered ("\n", stream);
+	  input_buf.puts (iter->line);
+	  input_buf.puts ("\n");
 	}
 
-      stream_buf = ui_file_xstrdup (stream, NULL);
-      make_cleanup (xfree, stream_buf);
-      input = stream_buf;
+      input = input_buf.c_str ();
     }
   else if (cmd_string != NULL)
     input = cmd_string;
   else
     error (_("Neither a simple expression, or a multi-line specified."));
 
-  code = current_language->la_compute_program (compiler, input, gdbarch,
-					       expr_block, expr_pc);
-  make_cleanup (xfree, code);
+  std::string code
+    = current_language->la_compute_program (compiler, input, gdbarch,
+					    expr_block, expr_pc);
   if (compile_debug)
-    fprintf_unfiltered (gdb_stdlog, "debug output:\n\n%s", code);
+    fprintf_unfiltered (gdb_stdlog, "debug output:\n\n%s", code.c_str ());
 
   os_rx = osabi_triplet_regexp (gdbarch_osabi (gdbarch));
   arch_rx = gdbarch_gnu_triplet_regexp (gdbarch);
@@ -560,37 +545,36 @@ compile_to_object (struct command_line *cmd, const char *cmd_string,
 			    argi, argv[argi]);
     }
 
-  get_new_file_names (&source_file, &object_file);
-  inner_cleanup = make_cleanup (xfree, source_file);
-  make_cleanup (xfree, object_file);
+  compile_file_names fnames = get_new_file_names ();
 
-  src = gdb_fopen_cloexec (source_file, "w");
+  src = gdb_fopen_cloexec (fnames.source_file (), "w");
   if (src == NULL)
     perror_with_name (_("Could not open source file for writing"));
-  make_cleanup (cleanup_unlink_file, source_file);
-  if (fputs (code, src) == EOF)
+  inner_cleanup = make_cleanup (cleanup_unlink_file,
+				(void *) fnames.source_file ());
+  if (fputs (code.c_str (), src) == EOF)
     perror_with_name (_("Could not write to source file"));
   fclose (src);
 
   if (compile_debug)
     fprintf_unfiltered (gdb_stdlog, "source file produced: %s\n\n",
-			source_file);
+			fnames.source_file ());
 
   /* Call the compiler and start the compilation process.  */
-  compiler->fe->ops->set_source_file (compiler->fe, source_file);
+  compiler->fe->ops->set_source_file (compiler->fe, fnames.source_file ());
 
-  if (!compiler->fe->ops->compile (compiler->fe, object_file,
+  if (!compiler->fe->ops->compile (compiler->fe, fnames.object_file (),
 				   compile_debug))
     error (_("Compilation failed."));
 
   if (compile_debug)
     fprintf_unfiltered (gdb_stdlog, "object file produced: %s\n\n",
-			object_file);
+			fnames.object_file ());
 
   discard_cleanups (inner_cleanup);
   do_cleanups (cleanup);
-  *source_filep = source_file;
-  return object_file;
+
+  return fnames;
 }
 
 /* The "compile" prefix command.  */
@@ -609,32 +593,24 @@ void
 eval_compile_command (struct command_line *cmd, const char *cmd_string,
 		      enum compile_i_scope_types scope, void *scope_data)
 {
-  char *object_file, *source_file;
+  struct cleanup *cleanup_unlink;
+  struct compile_module *compile_module;
 
-  object_file = compile_to_object (cmd, cmd_string, scope, &source_file);
-  if (object_file != NULL)
+  compile_file_names fnames = compile_to_object (cmd, cmd_string, scope);
+
+  cleanup_unlink = make_cleanup (cleanup_unlink_file,
+				 (void *) fnames.object_file ());
+  make_cleanup (cleanup_unlink_file, (void *) fnames.source_file ());
+  compile_module = compile_object_load (fnames, scope, scope_data);
+  if (compile_module == NULL)
     {
-      struct cleanup *cleanup_xfree, *cleanup_unlink;
-      struct compile_module *compile_module;
-
-      cleanup_xfree = make_cleanup (xfree, object_file);
-      make_cleanup (xfree, source_file);
-      cleanup_unlink = make_cleanup (cleanup_unlink_file, object_file);
-      make_cleanup (cleanup_unlink_file, source_file);
-      compile_module = compile_object_load (object_file, source_file,
-					    scope, scope_data);
-      if (compile_module == NULL)
-	{
-	  gdb_assert (scope == COMPILE_I_PRINT_ADDRESS_SCOPE);
-	  do_cleanups (cleanup_xfree);
-	  eval_compile_command (cmd, cmd_string,
-				COMPILE_I_PRINT_VALUE_SCOPE, scope_data);
-	  return;
-	}
-      discard_cleanups (cleanup_unlink);
-      do_cleanups (cleanup_xfree);
-      compile_object_run (compile_module);
+      gdb_assert (scope == COMPILE_I_PRINT_ADDRESS_SCOPE);
+      eval_compile_command (cmd, cmd_string,
+			    COMPILE_I_PRINT_VALUE_SCOPE, scope_data);
+      return;
     }
+  discard_cleanups (cleanup_unlink);
+  compile_object_run (compile_module);
 }
 
 /* See compile/compile-internal.h.  */

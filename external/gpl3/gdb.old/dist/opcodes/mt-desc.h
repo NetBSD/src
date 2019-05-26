@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2016 Free Software Foundation, Inc.
+Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -24,6 +24,10 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
 #ifndef MT_CPU_H
 #define MT_CPU_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define CGEN_ARCH mt
 
@@ -295,5 +299,9 @@ extern CGEN_KEYWORD mt_cgen_opval_h_spr;
 extern const CGEN_HW_ENTRY mt_cgen_hw_table[];
 
 
+
+   #ifdef __cplusplus
+   }
+   #endif
 
 #endif /* MT_CPU_H */

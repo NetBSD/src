@@ -1,5 +1,5 @@
 /* BFD back-end for PDP-11 a.out binaries.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1147,9 +1147,10 @@ NAME (aout, set_section_contents) (bfd *abfd,
   if (section != obj_textsec (abfd)
       && section != obj_datasec (abfd))
     {
-      (*_bfd_error_handler)
-	("%s: can not represent section `%s' in a.out object file format",
-	 bfd_get_filename (abfd), bfd_get_section_name (abfd, section));
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%B: can not represent section `%A' in a.out object file format"),
+	 abfd, section);
       bfd_set_error (bfd_error_nonrepresentable_section);
       return FALSE;
     }
@@ -1379,8 +1380,9 @@ translate_to_native_sym_flags (bfd *abfd,
     {
       /* This case occurs, e.g., for the *DEBUG* section of a COFF
 	 file.  */
-      (*_bfd_error_handler)
-	("%B: can not represent section for symbol `%s' in a.out object file format",
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%B: can not represent section for symbol `%s' in a.out object file format"),
 	 abfd, cache_ptr->name != NULL ? cache_ptr->name : "*unknown*");
       bfd_set_error (bfd_error_nonrepresentable_section);
       return FALSE;
@@ -1406,8 +1408,9 @@ translate_to_native_sym_flags (bfd *abfd,
     sym_pointer->e_type[0] = N_UNDF | N_EXT;
   else
     {
-      (*_bfd_error_handler)
-	("%B: can not represent section `%A' in a.out object file format",
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%B: can not represent section `%A' in a.out object file format"),
 	 abfd, sec);
       bfd_set_error (bfd_error_nonrepresentable_section);
       return FALSE;
@@ -2985,6 +2988,7 @@ aout_link_write_other_symbol (struct bfd_hash_entry *bh, void *data)
     case bfd_link_hash_undefweak:
       type = N_WEAKU;
       val = 0;
+      /* Fall through.  */
     case bfd_link_hash_indirect:
     case bfd_link_hash_warning:
       /* FIXME: Ignore these for now.  The circumstances under which
@@ -3699,10 +3703,10 @@ NAME (aout, final_link) (bfd *abfd,
 		 and call get_reloc_upper_bound and canonicalize_reloc to
 		 work out the number of relocs needed, and then multiply
 		 by the reloc size.  */
-	      (*_bfd_error_handler)
-		("%s: relocatable link from %s to %s not supported",
-		 bfd_get_filename (abfd),
-		 sub->xvec->name, abfd->xvec->name);
+	      _bfd_error_handler
+		/* xgettext:c-format */
+		(_("%B: relocatable link from %s to %s not supported"),
+		 abfd, sub->xvec->name, abfd->xvec->name);
 	      bfd_set_error (bfd_error_invalid_operation);
 	      goto error_return;
 	    }

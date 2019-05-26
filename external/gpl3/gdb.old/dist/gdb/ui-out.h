@@ -1,6 +1,6 @@
 /* Output generating routines for GDB.
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -23,9 +23,12 @@
 #ifndef UI_OUT_H
 #define UI_OUT_H 1
 
-/* The ui_out structure */
+#include <vector>
 
-struct ui_out;
+#include "common/enum-flags.h"
+
+class ui_out_level;
+class ui_out_table;
 struct ui_file;
 
 /* the current ui_out */
@@ -45,12 +48,12 @@ enum ui_align
   };
 
 /* flags enum */
-enum ui_flags
+enum ui_out_flag
   {
-    ui_from_tty = 1,
-    ui_source_list = 2
+    ui_source_list = (1 << 0),
   };
 
+DEF_ENUM_FLAGS_TYPE (ui_out_flag, ui_out_flags);
 
 /* Prototypes for ui-out API.  */
 
@@ -62,26 +65,6 @@ enum ui_out_type
     ui_out_type_tuple,
     ui_out_type_list
   };
-
-extern void ui_out_begin (struct ui_out *uiout,
-			  enum ui_out_type level_type,
-			  const char *id);
-
-extern void ui_out_end (struct ui_out *uiout, enum ui_out_type type);
-
-extern struct cleanup *ui_out_begin_cleanup_end (struct ui_out *uiout,
-						 enum ui_out_type level_type,
-						 const char *id);
-
-/* A table can be considered a special tuple/list combination with the
-   implied structure: ``table = { hdr = { header, ... } , body = [ {
-   field, ... }, ... ] }''.  If NR_ROWS is negative then there is at
-   least one row.  */
-extern void ui_out_table_header (struct ui_out *uiout, int width,
-				 enum ui_align align, const char *col_name,
-				 const char *colhdr);
-
-extern void ui_out_table_body (struct ui_out *uiout);
 
 extern struct cleanup *make_cleanup_ui_out_table_begin_end (struct ui_out *ui_out,
                                                             int nr_cols,
@@ -95,160 +78,146 @@ extern struct cleanup *make_cleanup_ui_out_list_begin_end (struct ui_out *uiout,
 extern struct cleanup *make_cleanup_ui_out_tuple_begin_end (struct ui_out *uiout,
 							    const char *id);
 
-extern void ui_out_field_int (struct ui_out *uiout, const char *fldname,
-			      int value);
+class ui_out
+{
+ public:
 
-extern void ui_out_field_fmt_int (struct ui_out *uiout, int width,
-				  enum ui_align align, const char *fldname, 
-		 		  int value);
+  explicit ui_out (ui_out_flags flags = 0);
+  virtual ~ui_out ();
 
-/* Output a field containing an address.  */
+  void push_level (ui_out_type type);
+  void pop_level (ui_out_type type);
 
-extern void ui_out_field_core_addr (struct ui_out *uiout, const char *fldname,
-				    struct gdbarch *gdbarch, CORE_ADDR address);
+  /* A table can be considered a special tuple/list combination with the
+     implied structure: ``table = { hdr = { header, ... } , body = [ {
+     field, ... }, ... ] }''.  If NR_ROWS is negative then there is at
+     least one row.  */
 
-extern void ui_out_field_string (struct ui_out * uiout, const char *fldname,
-				 const char *string);
+  void table_begin (int nr_cols, int nr_rows, const std::string &tblid);
+  void table_header (int width, ui_align align, const std::string &col_name,
+		     const std::string &col_hdr);
+  void table_body ();
+  void table_end ();
 
-extern void ui_out_field_stream (struct ui_out *uiout, const char *fldname,
-				 struct ui_file *stream);
+  void begin (ui_out_type type, const char *id);
+  void end (ui_out_type type);
 
-extern void ui_out_field_fmt (struct ui_out *uiout, const char *fldname,
-			      const char *format, ...)
-     ATTRIBUTE_PRINTF (3, 4);
+  void field_int (const char *fldname, int value);
+  void field_fmt_int (int width, ui_align align, const char *fldname,
+		      int value);
+  void field_core_addr (const char *fldname, struct gdbarch *gdbarch,
+			CORE_ADDR address);
+  void field_string (const char *fldname, const char *string);
+  void field_stream (const char *fldname, string_file &stream);
+  void field_skip (const char *fldname);
+  void field_fmt (const char *fldname, const char *format, ...)
+    ATTRIBUTE_PRINTF (3, 4);
 
-extern void ui_out_field_skip (struct ui_out *uiout, const char *fldname);
+  void spaces (int numspaces);
+  void text (const char *string);
+  void message (const char *format, ...) ATTRIBUTE_PRINTF (2, 3);
+  void wrap_hint (const char *identstring);
 
-extern void ui_out_spaces (struct ui_out *uiout, int numspaces);
+  void flush ();
 
-extern void ui_out_text (struct ui_out *uiout, const char *string);
+  /* Redirect the output of a ui_out object temporarily.  */
+  void redirect (ui_file *outstream);
 
-extern void ui_out_message (struct ui_out *uiout, int verbosity,
-			    const char *format, ...)
-     ATTRIBUTE_PRINTF (3, 4);
+  ui_out_flags test_flags (ui_out_flags mask);
 
-extern void ui_out_wrap_hint (struct ui_out *uiout, char *identstring);
+  /* HACK: Code in GDB is currently checking to see the type of ui_out
+     builder when determining which output to produce.  This function is
+     a hack to encapsulate that test.  Once GDB manages to separate the
+     CLI/MI from the core of GDB the problem should just go away ....  */
 
-extern void ui_out_flush (struct ui_out *uiout);
+  bool is_mi_like_p ();
 
-extern int ui_out_set_flags (struct ui_out *uiout, int mask);
+  bool query_table_field (int colno, int *width, int *alignment,
+			  const char **col_name);
 
-extern int ui_out_clear_flags (struct ui_out *uiout, int mask);
+ protected:
 
-extern int ui_out_get_verblvl (struct ui_out *uiout);
+  virtual void do_table_begin (int nbrofcols, int nr_rows, const char *tblid)
+    = 0;
+  virtual void do_table_body () = 0;
+  virtual void do_table_end () = 0;
+  virtual void do_table_header (int width, ui_align align,
+				const std::string &col_name,
+				const std::string &col_hdr) = 0;
 
-extern int ui_out_test_flags (struct ui_out *uiout, int mask);
+  virtual void do_begin (ui_out_type type, const char *id) = 0;
+  virtual void do_end (ui_out_type type) = 0;
+  virtual void do_field_int (int fldno, int width, ui_align align,
+			     const char *fldname, int value) = 0;
+  virtual void do_field_skip (int fldno, int width, ui_align align,
+			      const char *fldname) = 0;
+  virtual void do_field_string (int fldno, int width, ui_align align,
+				const char *fldname, const char *string) = 0;
+  virtual void do_field_fmt (int fldno, int width, ui_align align,
+			     const char *fldname, const char *format,
+			     va_list args)
+    ATTRIBUTE_PRINTF (6,0) = 0;
+  virtual void do_spaces (int numspaces) = 0;
+  virtual void do_text (const char *string) = 0;
+  virtual void do_message (const char *format, va_list args)
+    ATTRIBUTE_PRINTF (2,0) = 0;
+  virtual void do_wrap_hint (const char *identstring) = 0;
+  virtual void do_flush () = 0;
+  virtual void do_redirect (struct ui_file *outstream) = 0;
 
-extern int ui_out_query_field (struct ui_out *uiout, int colno,
-			       int *width, int *alignment, char **col_name);
+  /* Set as not MI-like by default.  It is overridden in subclasses if
+     necessary.  */
 
-/* HACK: Code in GDB is currently checking to see the type of ui_out
-   builder when determining which output to produce.  This function is
-   a hack to encapsulate that test.  Once GDB manages to separate the
-   CLI/MI from the core of GDB the problem should just go away ....  */
+  virtual bool do_is_mi_like_p ()
+  { return false; }
 
-extern int ui_out_is_mi_like_p (struct ui_out *uiout);
+ private:
 
-/* From here on we have things that are only needed by implementation
-   routines and main.c.   We should pehaps have a separate file for that,
-   like a  ui-out-impl.h  file.  */
+  ui_out_flags m_flags;
 
-/* User Interface Output Implementation Function Table */
+  /* Vector to store and track the ui-out levels.  */
+  std::vector<std::unique_ptr<ui_out_level>> m_levels;
 
-/* Type definition of all implementation functions.  */
+  /* A table, if any.  At present only a single table is supported.  */
+  std::unique_ptr<ui_out_table> m_table_up;
 
-typedef void (table_begin_ftype) (struct ui_out * uiout,
-				  int nbrofcols, int nr_rows,
-				  const char *tblid);
-typedef void (table_body_ftype) (struct ui_out * uiout);
-typedef void (table_end_ftype) (struct ui_out * uiout);
-typedef void (table_header_ftype) (struct ui_out * uiout, int width,
-				   enum ui_align align, const char *col_name,
-				   const char *colhdr);
-/* Note: level 0 is the top-level so LEVEL is always greater than
-   zero.  */
-typedef void (ui_out_begin_ftype) (struct ui_out *uiout,
-				   enum ui_out_type type,
-				   int level, const char *id);
-typedef void (ui_out_end_ftype) (struct ui_out *uiout,
-				 enum ui_out_type type,
-				 int level);
-typedef void (field_int_ftype) (struct ui_out * uiout, int fldno, int width,
-				enum ui_align align,
-				const char *fldname, int value);
-typedef void (field_skip_ftype) (struct ui_out * uiout, int fldno, int width,
-				 enum ui_align align,
-				 const char *fldname);
-typedef void (field_string_ftype) (struct ui_out * uiout, int fldno, int width,
-				   enum ui_align align,
-				   const char *fldname,
-				   const char *string);
-typedef void (field_fmt_ftype) (struct ui_out * uiout, int fldno, int width,
-				enum ui_align align,
-				const char *fldname,
-				const char *format,
-				va_list args) ATTRIBUTE_FPTR_PRINTF(6,0);
-typedef void (spaces_ftype) (struct ui_out * uiout, int numspaces);
-typedef void (text_ftype) (struct ui_out * uiout,
-			   const char *string);
-typedef void (message_ftype) (struct ui_out * uiout, int verbosity,
-			      const char *format, va_list args)
-     ATTRIBUTE_FPTR_PRINTF(3,0);
-typedef void (wrap_hint_ftype) (struct ui_out * uiout, char *identstring);
-typedef void (flush_ftype) (struct ui_out * uiout);
-typedef int (redirect_ftype) (struct ui_out * uiout,
-			      struct ui_file * outstream);
-typedef void (data_destroy_ftype) (struct ui_out *uiout);
+  void verify_field (int *fldno, int *width, ui_align *align);
 
-/* ui-out-impl */
+  int level () const;
+  ui_out_level *current_level () const;
+};
 
-/* IMPORTANT: If you change this structure, make sure to change the default
-   initialization in ui-out.c.  */
+/* This is similar to make_cleanup_ui_out_tuple_begin_end and
+   make_cleanup_ui_out_list_begin_end, but written as an RAII template
+   class.  It takes the ui_out_type as a template parameter.  Normally
+   this is used via the typedefs ui_out_emit_tuple and
+   ui_out_emit_list.  */
+template<ui_out_type Type>
+class ui_out_emit_type
+{
+public:
 
-struct ui_out_impl
+  ui_out_emit_type (struct ui_out *uiout, const char *id)
+    : m_uiout (uiout)
   {
-    table_begin_ftype *table_begin;
-    table_body_ftype *table_body;
-    table_end_ftype *table_end;
-    table_header_ftype *table_header;
-    ui_out_begin_ftype *begin;
-    ui_out_end_ftype *end;
-    field_int_ftype *field_int;
-    field_skip_ftype *field_skip;
-    field_string_ftype *field_string;
-    field_fmt_ftype *field_fmt;
-    spaces_ftype *spaces;
-    text_ftype *text;
-    message_ftype *message;
-    wrap_hint_ftype *wrap_hint;
-    flush_ftype *flush;
-    redirect_ftype *redirect;
-    data_destroy_ftype *data_destroy;
-    int is_mi_like_p;
-  };
+    uiout->begin (Type, id);
+  }
 
-extern void *ui_out_data (struct ui_out *uiout);
+  ~ui_out_emit_type ()
+  {
+    m_uiout->end (Type);
+  }
 
-extern void uo_field_string (struct ui_out *uiout, int fldno, int width,
-			     enum ui_align align, const char *fldname,
-			     const char *string);
+  ui_out_emit_type (const ui_out_emit_type<Type> &) = delete;
+  ui_out_emit_type<Type> &operator= (const ui_out_emit_type<Type> &)
+      = delete;
 
-/* Create a ui_out object */
+private:
 
-extern struct ui_out *ui_out_new (const struct ui_out_impl *impl,
-				  void *data,
-				  int flags);
+  struct ui_out *m_uiout;
+};
 
-/* Destroy a ui_out object.  */
-
-extern void ui_out_destroy (struct ui_out *uiout);
-
-/* Redirect the ouptut of a ui_out object temporarily.  */
-
-extern int ui_out_redirect (struct ui_out *uiout, struct ui_file *outstream);
-
-/* Make a cleanup that restores the previous current uiout.  */
-
-extern struct cleanup *make_cleanup_restore_current_uiout (void);
+typedef ui_out_emit_type<ui_out_type_tuple> ui_out_emit_tuple;
+typedef ui_out_emit_type<ui_out_type_list> ui_out_emit_list;
 
 #endif /* UI_OUT_H */

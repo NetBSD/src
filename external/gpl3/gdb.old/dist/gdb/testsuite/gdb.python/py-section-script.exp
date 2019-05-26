@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2016 Free Software Foundation, Inc.
+# Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -114,3 +114,41 @@ gdb_test "continue" ".*Breakpoint.*"
 gdb_test "print ss" " = a=<1> b=<2>"
 
 gdb_test "test-cmd 1 2 3" "test-cmd output, arg = 1 2 3"
+
+
+# eu-strip creates NOBITS .debug_gdb_scripts sections in the debug files.
+# Make sure those are ignored silently.
+
+with_test_prefix "sepdebug" {
+    gdb_exit
+
+    set result [catch "exec eu-strip -g -f ${binfile}.debug ${binfile}" output]
+    verbose "result is $result"
+    verbose "output is $output"
+    if {$result != 0 || $output != ""} {
+	unsupported "cannot produce separate debug info files"
+	return
+    }
+
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+
+    gdb_test_no_output "set auto-load safe-path ${remote_python_file}:${binfile}" \
+	"set auto-load safe-path"
+    set test "load sepdebug"
+    gdb_test_multiple "file $binfile" $test {
+	-re "\r\nwarning: Invalid entry in \\.debug_gdb_scripts section.*\r\n$gdb_prompt $" {
+	    fail $test
+	}
+	-re "done\\.\r\n$gdb_prompt $" {
+	    pass $test
+	}
+    }
+
+    # Again, with a regexp this time.
+    gdb_test "info auto-load python-scripts ${testfile}" "Yes.*${testfile}.py.*"
+
+    # Again, with a regexp that matches no scripts.
+    gdb_test "info auto-load python-scripts no-script-matches-this" \
+      "No auto-load scripts matching no-script-matches-this."
+}

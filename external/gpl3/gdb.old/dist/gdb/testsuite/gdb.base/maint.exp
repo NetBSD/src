@@ -1,4 +1,4 @@
-# Copyright 1998-2016 Free Software Foundation, Inc.
+# Copyright 1998-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,9 +48,8 @@
 
 standard_testfile break.c break1.c
 
-if {[prepare_for_testing $testfile.exp $testfile \
+if {[prepare_for_testing "failed to prepare" $testfile \
 	 [list $srcfile $srcfile2] {debug nowarnings}]} {
-    untested $testfile.exp
     return -1
 }
 
@@ -207,57 +206,56 @@ if { ! $have_gdb_index } {
 }
 maint_pass_if $symtabs  "maint print objfiles: symtabs"
 
-gdb_test "maint print psymbols" \
-    "print-psymbols takes an output file name and optional symbol file name" \
-    "maint print psymbols w/o args"
-
 if { ! $have_gdb_index } {
     set psymbols_output [standard_output_file psymbols_output]
     set psymbols_output_re [string_to_regexp $psymbols_output]
-    send_gdb "maint print psymbols $psymbols_output ${srcdir}/${subdir}/${srcfile}\n"
-    gdb_expect  {
-	-re "^maint print psymbols $psymbols_output_re \[^\n\]*\r\n$gdb_prompt $" {
-	    send_gdb "shell ls $psymbols_output\n"
-	    gdb_expect {
-		-re "$psymbols_output_re\r\n$gdb_prompt $" {
-		    # We want this grep to be as specific as possible,
-		    # so it's less likely to match symbol file names in
-		    # psymbols_output.  Yes, this actually happened;
-		    # poor expect got tons of output, and timed out
-		    # trying to match it.   --- Jim Blandy <jimb@cygnus.com>
-		    send_gdb "shell grep 'main.*function' $psymbols_output\n"
+    set test_list [list \
+		       "maint print psymbols -source" \
+		       "maint print psymbols -source ${srcdir}/${subdir}/${srcfile} $psymbols_output" \
+		       "maint print psymbols -pc" \
+		       "maint print psymbols -pc main $psymbols_output"]
+    foreach { test_name command } $test_list {
+	send_gdb "$command\n"
+	    gdb_expect  {
+		-re "^maint print psymbols \[^\n\]*\r\n$gdb_prompt $" {
+		    send_gdb "shell ls $psymbols_output\n"
 		    gdb_expect {
-			-re ".main., function, $hex.*$gdb_prompt $" {
-			    pass "maint print psymbols 1"
+			-re "$psymbols_output_re\r\n$gdb_prompt $" {
+			    # We want this grep to be as specific as possible,
+			    # so it's less likely to match symbol file names in
+			    # psymbols_output.  Yes, this actually happened;
+			    # poor expect got tons of output, and timed out
+			    # trying to match it.   --- Jim Blandy <jimb@cygnus.com>
+			    send_gdb "shell grep 'main.*function' $psymbols_output\n"
+			    gdb_expect {
+				-re ".main., function, $hex.*$gdb_prompt $" {
+				    pass "$test_name 1"
+				}
+				-re ".*main.  .., function, $hex.*$gdb_prompt $" {
+				    pass "$test_name 2"
+				}
+				-re ".*$gdb_prompt $" { fail "$test_name" }
+				timeout { fail "$test_name (timeout)" }
+			    }
+			    gdb_test "shell rm -f $psymbols_output" ".*" \
+				"shell rm -f psymbols_output"
 			}
-			-re ".*main.  .., function, $hex.*$gdb_prompt $" {
-			    pass "maint print psymbols 2"
-			}
-			-re ".*$gdb_prompt $" { fail "maint print psymbols" }
-			timeout     { fail "(timeout) maint print psymbols" }
+			-re ".*$gdb_prompt $" { fail "$test_name" }
+			timeout { fail "$test_name (timeout)" }
 		    }
-		    gdb_test "shell rm -f $psymbols_output" ".*" \
-			"shell rm -f psymbols_output"
 		}
-		-re ".*$gdb_prompt $"       { fail "maint print psymbols" }
-		timeout           { fail "(timeout) maint print psymbols" }
+		-re ".*$gdb_prompt $" { fail "$test_name" }
+		timeout { fail "$test_name (timeout)" }
 	    }
-	}
-	-re ".*$gdb_prompt $"       { fail "maint print psymbols" }
-	timeout           { fail "(timeout) maint print psymbols" }
     }
 }
-
-gdb_test "maint print msymbols" \
-    "print-msymbols takes an output file name and optional symbol file name" \
-    "maint print msymbols w/o args"
 
 
 set msymbols_output [standard_output_file msymbols_output]
 set msymbols_output_re [string_to_regexp $msymbols_output]
-send_gdb "maint print msymbols $msymbols_output ${binfile}\n"
+send_gdb "maint print msymbols -objfile ${binfile} $msymbols_output\n"
 gdb_expect  {
-    -re "^maint print msymbols $msymbols_output_re \[^\n\]*\r\n$gdb_prompt $" {
+    -re "^maint print msymbols \[^\n\]*\r\n$gdb_prompt $" {
 	send_gdb "shell ls $msymbols_output\n"
 	gdb_expect {
 	    -re "$msymbols_output_re\r\n$gdb_prompt $" {
@@ -266,18 +264,18 @@ gdb_expect  {
 		    -re "\\\[ *$decimal\\\] \[tT\]\[ \t\]+$hex \\.?factorial.*$gdb_prompt $" {
 			pass "maint print msymbols"
 		    }
-		    -re ".*$gdb_prompt $"     { fail "maint print msymbols" }
-		    timeout         { fail "(timeout) maint print msymbols" }
+		    -re ".*$gdb_prompt $" { fail "maint print msymbols" }
+		    timeout { fail "maint print msymbols (timeout)" }
 		}
 		gdb_test "shell rm -f $msymbols_output" ".*" \
 		    "shell rm -f msymbols_output"
 	    }
-	    -re ".*$gdb_prompt $"     { fail "maint print msymbols" }
-	    timeout         { fail "(timeout) maint print msymbols" }
+	    -re ".*$gdb_prompt $" { fail "maint print msymbols" }
+	    timeout { fail "maint print msymbols (timeout)" }
 	}
     }
-    -re ".*$gdb_prompt $"     { fail "maint print msymbols" }
-    timeout         { fail "(timeout) maint print msymbols" }
+    -re ".*$gdb_prompt $" { fail "maint print msymbols" }
+    timeout { fail "maint print msymbols (timeout)" }
 }
 
 # Check that maint print msymbols allows relative pathnames
@@ -286,46 +284,21 @@ gdb_test "cd [standard_output_file {}]" \
     "Working directory .*\..*" \
     "cd to objdir"
 
-gdb_test_multiple "maint print msymbols msymbols_output2 ${testfile}" "maint print msymbols" {
-    -re "^maint print msymbols msymbols_output2 \[^\n\]*\r\n$gdb_prompt $" {
+gdb_test_multiple "maint print msymbols -objfile ${testfile} msymbols_output2" "maint print msymbols" {
+    -re "^maint print msymbols \[^\n\]*\r\n$gdb_prompt $" {
     	gdb_test_multiple "shell ls msymbols_output2" "maint print msymbols" {
 	    -re "msymbols_output2\r\n$gdb_prompt $" {
-	    	gdb_test_multiple "shell grep factorial msymbols_output2" "maint print msymbols" {
-		    -re "\\\[ *$decimal\\\] \[tT\]\[ \t\]+$hex \\.?factorial.*$gdb_prompt $" {
-		    	pass "maint print msymbols"
-		    }
-		    -re ".*$gdb_prompt $" {
-		        fail "maint print msymbols"
-		    }
-		    timeout {
-		        fail "(timeout) maint print msymbols"
-		    }
-		}
-		gdb_test "shell rm -f msymbols_output2" ".*" \
-		    "shell rm -f msymbols_output2"
-	    }
-	    -re ".*$gdb_prompt $" {
-		fail "maint print msymbols"
-	    }
-	    timeout {
-	    	fail "(timeout) maint print msymbols"
+		gdb_test "shell grep factorial msymbols_output2" \
+		    "\\\[ *$decimal\\\] \[tT\]\[ \t\]+$hex \\.?factorial.*" \
+		    "maint print msymbols"
+		gdb_test "shell rm -f msymbols_output2" ".*"
 	    }
 	}
-    }
-    -re ".*$gdb_prompt $" {
-	fail "maint print msymbols"
-    }
-    timeout {
-	fail "(timeout) maint print msymbols"
     }
 }
 gdb_test "cd ${mydir}" \
     "Working directory [string_to_regexp ${mydir}]\..*" \
     "cd to mydir"
-
-gdb_test "maint print symbols" \
-    "Arguments missing: an output file name and an optional symbol file name" \
-    "maint print symbols w/o args"
 
 
 # Request symbols for one particular source file so that we don't try to
@@ -334,30 +307,37 @@ gdb_test "maint print symbols" \
 
 set symbols_output [standard_output_file symbols_output]
 set symbols_output_re [string_to_regexp $symbols_output]
-send_gdb "maint print symbols $symbols_output ${srcdir}/${subdir}/${srcfile}\n"
-gdb_expect  {
-    -re "^maint print symbols $symbols_output_re \[^\n\]*\r\n$gdb_prompt $" {
-	send_gdb "shell ls $symbols_output\n"
-	gdb_expect {
-	    -re "$symbols_output_re\r\n$gdb_prompt $" {
-		# See comments for `maint print psymbols'.
-		send_gdb "shell grep 'main(.*block' $symbols_output\n"
-		gdb_expect {
-		    -re "int main\\(int, char \\*\\*, char \\*\\*\\); block.*$gdb_prompt $" {
-			pass "maint print symbols"
+set test_list [list \
+		   "maint print symbols -source" \
+		   "maint print symbols -source ${srcdir}/${subdir}/${srcfile} $symbols_output" \
+		   "maint print symbols -pc" \
+		   "maint print symbols -pc main $symbols_output"]
+foreach { test_name command } $test_list {
+    send_gdb "$command\n"
+    gdb_expect {
+	-re "^maint print symbols \[^\n\]*\r\n$gdb_prompt $" {
+	    send_gdb "shell ls $symbols_output\n"
+	    gdb_expect {
+		-re "$symbols_output_re\r\n$gdb_prompt $" {
+		    # See comments for `maint print psymbols'.
+		    send_gdb "shell grep 'main(.*block' $symbols_output\n"
+		    gdb_expect {
+			-re "int main\\(int, char \\*\\*, char \\*\\*\\); block.*$gdb_prompt $" {
+			    pass "$test_name"
+			}
+			-re ".*$gdb_prompt $" { fail "$test_name" }
+			timeout { fail "$test_name (timeout)" }
 		    }
-		    -re ".*$gdb_prompt $"     { fail "maint print symbols" }
-		    timeout         { fail "(timeout) maint print symbols" }
+		    gdb_test "shell rm -f $symbols_output" ".*" \
+			"shell rm -f symbols_output"
 		}
-		gdb_test "shell rm -f $symbols_output" ".*" \
-		    "shell rm -f symbols_output"
+		-re ".*$gdb_prompt $" { fail "$test_name" }
+		timeout { fail "$test_name (timeout)" }
 	    }
-	    -re ".*$gdb_prompt $"     { fail "maint print symbols" }
-	    timeout         { fail "(timeout) maint print symbols" }
 	}
+	-re ".*$gdb_prompt $" { fail "$test_name" }
+	timeout { fail "$test_name (timeout)" }
     }
-    -re ".*$gdb_prompt $"     { fail "maint print symbols" }
-    timeout         { fail "(timeout) maint print symbols" }
 }
 
 set msg "maint print type"
@@ -474,9 +454,41 @@ gdb_test "maint" \
     "\"maintenance\" must be followed by the name of a maintenance command\\.\r\nList.*unambiguous\\..*" \
     "maint w/o args"
 
-gdb_test "maint info line-table" \
-    "symtab: \[^\n\r\]+${srcfile}.*\\(\\(struct symtab \\*\\) $hex\\)\r\nlinetable: \\(\\(struct linetable \\*\\) $hex\\):\r\nINDEX.*LINE.*ADDRESS.*" \
-    "maint info line-table w/o a file name"
+# Test that "main info line-table" w/o a file name shows the symtab for
+# $srcfile.
+set saw_srcfile 0
+set test "maint info line-table w/o a file name"
+gdb_test_multiple "maint info line-table" $test {
+    -re "symtab: \[^\n\r\]+${srcfile} \\(\\(struct symtab \\*\\) $hex\\)\r\nlinetable: \\(\\(struct linetable \\*\\) $hex\\):\r\nINDEX\[ \t\]+LINE\[ \t\]+ADDRESS" {
+	set saw_srcfile 1
+	exp_continue
+    }
+    -re "symtab: \[^\n\r\]+ \\(\\(struct symtab \\*\\) $hex\\)\r\nlinetable: \\(\\(struct linetable \\*\\) $hex\\):\r\nINDEX\[ \t\]+LINE\[ \t\]+ADDRESS" {
+	# Match each symtab to avoid overflowing expect's buffer.
+	exp_continue
+    }
+    -re "$decimal\[ \t\]+$decimal\[ \t\]+$hex\r\n" {
+	# Line table entries can be long too:
+	#
+	#  INDEX    LINE ADDRESS
+	#  0          29 0x00000000004006f6
+	#  1          30 0x00000000004006fa
+	#  2          31 0x0000000000400704
+	#  3          42 0x0000000000400706
+	#  4          43 0x0000000000400719
+	#  5          44 0x0000000000400722
+	#  6          45 0x0000000000400740
+	#  (...)
+	#  454       129 0x00007ffff7df1d28
+	#  455         0 0x00007ffff7df1d3f
+	#
+	# Match each line to avoid overflowing expect's buffer.
+	exp_continue
+    }
+    -re "$gdb_prompt $" {
+	gdb_assert $saw_srcfile $test
+    }
+}
 
 gdb_test "maint info line-table ${srcfile}" \
     "symtab: \[^\n\r\]+${srcfile}.*INDEX.*LINE.*ADDRESS.*" \
@@ -549,6 +561,13 @@ gdb_expect {
 
 #set timeout $oldtimeout
 
+# Test that the commands work without an argument.  For this test, we
+# don't need an inferior loaded/running.  See PR gdb/21164.
+gdb_exit
+gdb_start
+gdb_test_no_output "maint print symbols"
+gdb_test_no_output "maint print msymbols"
+gdb_test_no_output "maint print psymbols"
 
 gdb_exit
 return 0

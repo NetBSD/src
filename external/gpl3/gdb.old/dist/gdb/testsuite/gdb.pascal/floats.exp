@@ -1,4 +1,4 @@
-# Copyright 2007-2016 Free Software Foundation, Inc.
+# Copyright 2007-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ load_lib "pascal.exp"
 standard_testfile .pas
 
 if {[gdb_compile_pascal "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug ]] != "" } {
-    untested $testfile.exp
+    untested "failed to compile"
     return -1
 }
 
@@ -42,15 +42,15 @@ if { [gdb_start_cmd] < 0 } {
 
 gdb_test "" ".* at .*${srcfile}.*" "start"
 
-gdb_test "cont" "Breakpoint .*:${bp_location1}.*" "Going to first breakpoint"
-gdb_test "print r" ".* = 0" "Print r before assigned to 1.25"
+gdb_test "cont" "Breakpoint .*:${bp_location1}.*" "going to first breakpoint"
+gdb_test "print r" ".* = 0" "print r before assigned to 1.25"
 
-gdb_test "next" "r := 1\\.25;" "Next to 'r := 1.25' line"
-gdb_test "next" "s := 2\\.2;" "Next to 's := 2.2' line"
-gdb_test "next" "t := -3\\.2;" "Next to 't := -3.2' line"
-gdb_test "next" "u := 78\\.3;" "Next to 'u := 78.3' line"
-gdb_test "next" "l := 1;" "Next to 'l := 1' line"
-gdb_test "next" "i := 1;" "Next to 'i := 1' line"
+gdb_test "next" "r := 1\\.25;" "next to 'r := 1.25' line"
+gdb_test "next" "s := 2\\.2;" "next to 's := 2.2' line"
+gdb_test "next" "t := -3\\.2;" "next to 't := -3.2' line"
+gdb_test "next" "u := 78\\.3;" "next to 'u := 78.3' line"
+gdb_test "next" "l := 1;" "next to 'l := 1' line"
+gdb_test "next" "i := 1;" "next to 'i := 1' line"
 
 # At that point, 
 # r should be equal to 1.25
@@ -113,16 +113,16 @@ gdb_test "print 35 / 2" " = 17\\.(499.*|5|500.*)"
 # 'set r' does not work, as there are set sub-commands starting with 'r'
 # Thus we need to use 'set var r'
 gdb_test "set var r := 2.56" " := 2\\.56"
-gdb_test "print r" " = 2\\.5(599.*|6|600.*)" "Testing new r value"
+gdb_test "print r" " = 2\\.5(599.*|6|600.*)" "testing new r value"
 
 gdb_test "cont" \
 	 "Breakpoint .*:${bp_location2}.*" \
 	 "Going to second breakpoint"
-gdb_test "next" "r := cos\\(u\\);" "Advance to 'r := cos(u)' line"
-gdb_test "print u" " = 3\\.14159.*" "Test pi value"
-gdb_test "next" "s := sin\\(u\\);" "Advance to 's := sin(u)' line"
-gdb_test "print r" " = -1" "Test cos(pi) is equal to -1" 
-gdb_test "next" "" "Go past 's := sin(u)' line"
+gdb_test "next" "r := cos\\(u\\);" "advance to 'r := cos(u)' line"
+gdb_test "print u" " = 3\\.14159.*" "test pi value"
+gdb_test "next" "s := sin\\(u\\);" "advance to 's := sin(u)' line"
+gdb_test "print r" " = -1" "test cos(pi) is equal to -1"
+gdb_test "next" "" "go past 's := sin(u)' line"
 
 set msg "Test sin(pi) is equal to 0" 
 

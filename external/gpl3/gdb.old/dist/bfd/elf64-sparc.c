@@ -1,5 +1,5 @@
 /* SPARC-specific support for 64-bit ELF
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -99,7 +99,9 @@ elf64_sparc_slurp_one_reloc_table (bfd *abfd, asection *asect,
 
       if (ELF64_R_SYM (rela.r_info) == STN_UNDEF
 	  /* PR 17512: file: 996185f8.  */
-	  || ELF64_R_SYM (rela.r_info) > bfd_get_symcount (abfd))
+	  || (!dynamic && ELF64_R_SYM(rela.r_info) > bfd_get_symcount(abfd))
+          || (dynamic
+              && ELF64_R_SYM(rela.r_info) > bfd_get_dynamic_symcount(abfd)))
 	relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
       else
 	{
@@ -442,7 +444,7 @@ elf64_sparc_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 	case 2: reg -= 2; break;
 	case 6: reg -= 4; break;
 	default:
-          (*_bfd_error_handler)
+	  _bfd_error_handler
             (_("%B: Only registers %%g[2367] can be declared using STT_REGISTER"),
              abfd);
 	  return FALSE;
@@ -462,11 +464,12 @@ elf64_sparc_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 
       if (p->name != NULL && strcmp (p->name, *namep))
 	{
-          (*_bfd_error_handler)
-            (_("Register %%g%d used incompatibly: %s in %B, previously %s in %B"),
-             abfd, p->abfd, (int) sym->st_value,
-             **namep ? *namep : "#scratch",
-             *p->name ? p->name : "#scratch");
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("Register %%g%d used incompatibly: %s in %B,"
+	       " previously %s in %B"),
+	     (int) sym->st_value, **namep ? *namep : "#scratch", abfd,
+	     *p->name ? p->name : "#scratch", p->abfd);
 	  return FALSE;
 	}
 
@@ -485,9 +488,11 @@ elf64_sparc_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 
 		  if (type > STT_FUNC)
 		    type = 0;
-		  (*_bfd_error_handler)
-		    (_("Symbol `%s' has differing types: REGISTER in %B, previously %s in %B"),
-		     abfd, p->abfd, *namep, stt_types[type]);
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("Symbol `%s' has differing types: REGISTER in %B,"
+		       " previously %s in %B"),
+		     *namep, abfd, stt_types[type], p->abfd);
 		  return FALSE;
 		}
 
@@ -530,9 +535,11 @@ elf64_sparc_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 
 	    if (type > STT_FUNC)
 	      type = 0;
-	    (*_bfd_error_handler)
-	      (_("Symbol `%s' has differing types: %s in %B, previously REGISTER in %B"),
-	       abfd, p->abfd, *namep, stt_types[type]);
+	    _bfd_error_handler
+	      /* xgettext:c-format */
+	      (_("Symbol `%s' has differing types: %s in %B,"
+		 " previously REGISTER in %B"),
+	       *namep, stt_types[type], abfd, p->abfd);
 	    return FALSE;
 	  }
     }
@@ -636,8 +643,9 @@ elf64_sparc_symbol_processing (bfd *abfd ATTRIBUTE_UNUSED, asymbol *asym)
    object file when linking.  */
 
 static bfd_boolean
-elf64_sparc_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+elf64_sparc_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   bfd_boolean error;
   flagword new_flags, old_flags;
   int new_mm, old_mm;
@@ -683,7 +691,7 @@ elf64_sparc_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 	      && (old_flags & EF_SPARC_HAL_R1))
 	    {
 	      error = TRUE;
-	      (*_bfd_error_handler)
+	      _bfd_error_handler
 		(_("%B: linking UltraSPARC specific with HAL specific code"),
 		 ibfd);
 	    }
@@ -702,7 +710,8 @@ elf64_sparc_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
       if (new_flags != old_flags)
         {
           error = TRUE;
-          (*_bfd_error_handler)
+	  _bfd_error_handler
+	    /* xgettext:c-format */
             (_("%B: uses different e_flags (0x%lx) fields than previous modules (0x%lx)"),
              ibfd, (long) new_flags, (long) old_flags);
         }
@@ -715,7 +724,7 @@ elf64_sparc_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
           return FALSE;
         }
     }
-  return _bfd_sparc_elf_merge_private_bfd_data (ibfd, obfd);
+  return _bfd_sparc_elf_merge_private_bfd_data (ibfd, info);
 }
 
 /* MARCO: Set the correct entry size for the .stab section.  */
@@ -897,6 +906,8 @@ const struct elf_size_info elf64_sparc_size_info =
   _bfd_sparc_elf_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_sections \
   _bfd_sparc_elf_finish_dynamic_sections
+#define elf_backend_fixup_symbol \
+  _bfd_sparc_elf_fixup_symbol
 
 #define bfd_elf64_mkobject \
   _bfd_sparc_elf_mkobject
@@ -915,6 +926,7 @@ const struct elf_size_info elf64_sparc_size_info =
 #define elf_backend_plt_readonly 0
 #define elf_backend_want_plt_sym 1
 #define elf_backend_got_header_size 8
+#define elf_backend_want_dynrelro 1
 #define elf_backend_rela_normal 1
 
 /* Section 5.2.4 of the ABI specifies a 256-byte boundary for the table.  */

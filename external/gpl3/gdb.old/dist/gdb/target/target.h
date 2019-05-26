@@ -1,6 +1,6 @@
 /* Declarations for common target functions.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -64,10 +64,35 @@ extern int target_write_memory (CORE_ADDR memaddr, const gdb_byte *myaddr,
 
 extern void target_stop_and_wait (ptid_t ptid);
 
-/* Restart a target previously stopped by target_stop_and_wait.
-   No signal is delivered to the target.  This function must be
-   provided by the client.  */
+/* Restart a target previously stopped.  No signal is delivered to the
+   target.  This function must be provided by the client.  */
 
 extern void target_continue_no_signal (ptid_t ptid);
+
+/* Restart a target previously stopped.  SIGNAL is delivered to the
+   target.  This function must be provided by the client.  */
+
+extern void target_continue (ptid_t ptid, enum gdb_signal signal);
+
+/* Wait for process pid to do something.  PTID = -1 to wait for any
+   pid to do something.  Return pid of child, or -1 in case of error;
+   store status through argument pointer STATUS.  Note that it is
+   _NOT_ OK to throw_exception() out of target_wait() without popping
+   the debugging target from the stack; GDB isn't prepared to get back
+   to the prompt with a debugging target but without the frame cache,
+   stop_pc, etc., set up.  OPTIONS is a bitwise OR of TARGET_W*
+   options.  */
+
+extern ptid_t target_wait (ptid_t ptid, struct target_waitstatus *status,
+			   int options);
+
+/* The inferior process has died.  Do what is right.  */
+
+extern void target_mourn_inferior (ptid_t ptid);
+
+/* Return 1 if this target can debug multiple processes
+   simultaneously, zero otherwise.  */
+
+extern int target_supports_multi_process (void);
 
 #endif /* TARGET_COMMON_H */

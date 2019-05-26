@@ -1,4 +1,4 @@
-# Copyright 1999-2016 Free Software Foundation, Inc.
+# Copyright 1999-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -98,7 +98,7 @@ for {set i 0} {$i < 5} {incr i} {
 	    # It would be nice if we could catch the message that GDB prints
 	    # when it first notices that the thread library doesn't support
 	    # debugging, or if we could explicitly ask GDB somehow.
-	    unsupported "This GDB does not support threads on this system."
+	    unsupported "this GDB does not support threads on this system."
 	    return -1
 	}
 	-re "$gdb_prompt $" {

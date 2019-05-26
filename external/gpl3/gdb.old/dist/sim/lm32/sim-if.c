@@ -1,7 +1,7 @@
 /* Main simulator entry points specific to Lattice Mico32.
    Contributed by Jon Beniston <jon@beniston.com>
    
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -71,27 +71,15 @@ find_base (bfd *prog_bfd)
 }
 
 static unsigned long
-find_limit (bfd *prog_bfd)
+find_limit (SIM_DESC sd)
 {
-  struct bfd_symbol **asymbols;
-  long symsize;
-  long symbol_count;
-  long s;
+  bfd_vma addr;
 
-  symsize = bfd_get_symtab_upper_bound (prog_bfd);
-  if (symsize < 0)
-    return 0;
-  asymbols = (asymbol **) xmalloc (symsize);
-  symbol_count = bfd_canonicalize_symtab (prog_bfd, asymbols);
-  if (symbol_count < 0)
+  addr = trace_sym_value (sd, "_fstack");
+  if (addr == -1)
     return 0;
 
-  for (s = 0; s < symbol_count; s++)
-    {
-      if (!strcmp (asymbols[s]->name, "_fstack"))
-	return (asymbols[s]->value + 65536) & ~(0xffffUL);
-    }
-  return 0;
+  return (addr + 65536) & ~(0xffffUL);
 }
 
 /* Create an instance of the simulator.  */
@@ -159,7 +147,7 @@ sim_open (kind, callback, abfd, argv)
 	{
 	  /* It doesn't, so we should try to allocate enough memory to hold program.  */
 	  base = find_base (STATE_PROG_BFD (sd));
-	  limit = find_limit (STATE_PROG_BFD (sd));
+	  limit = find_limit (sd);
 	  if (limit == 0)
 	    {
 	      sim_io_eprintf (sd,

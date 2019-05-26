@@ -1,5 +1,5 @@
 /* Machine independent support for SVR4 /proc (process file system) for GDB.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -88,7 +88,7 @@ extern  int   ioctl_with_trace (int, long, void *, char *, int);
 extern  pid_t wait_with_trace  (int *, char *, int);
 extern  int   open_with_trace  (char *, int, char *, int);
 extern  int   close_with_trace (int, char *, int);
-extern  void  procfs_note      (char *, char *, int);
+extern  void  procfs_note      (const char *, const char *, int);
 
 #ifdef PROCFS_TRACE
 /*

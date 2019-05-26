@@ -1,6 +1,6 @@
 /* Traditional frame unwind support, for GDB the GNU Debugger.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,16 +43,10 @@ trad_frame_cache_zalloc (struct frame_info *this_frame)
   return this_trad_cache;
 }
 
-/* A traditional frame is unwound by analysing the function prologue
-   and using the information gathered to track registers.  For
-   non-optimized frames, the technique is reliable (just need to check
-   for all potential instruction sequences).  */
-
 struct trad_frame_saved_reg *
-trad_frame_alloc_saved_regs (struct frame_info *this_frame)
+trad_frame_alloc_saved_regs (struct gdbarch *gdbarch)
 {
   int regnum;
-  struct gdbarch *gdbarch = get_frame_arch (this_frame);
   int numregs = gdbarch_num_regs (gdbarch) + gdbarch_num_pseudo_regs (gdbarch);
   struct trad_frame_saved_reg *this_saved_regs
     = FRAME_OBSTACK_CALLOC (numregs, struct trad_frame_saved_reg);
@@ -63,6 +57,19 @@ trad_frame_alloc_saved_regs (struct frame_info *this_frame)
       this_saved_regs[regnum].addr = -1;
     }      
   return this_saved_regs;
+}
+
+/* A traditional frame is unwound by analysing the function prologue
+   and using the information gathered to track registers.  For
+   non-optimized frames, the technique is reliable (just need to check
+   for all potential instruction sequences).  */
+
+struct trad_frame_saved_reg *
+trad_frame_alloc_saved_regs (struct frame_info *this_frame)
+{
+  struct gdbarch *gdbarch = get_frame_arch (this_frame);
+
+  return trad_frame_alloc_saved_regs (gdbarch);
 }
 
 enum { TF_REG_VALUE = -1, TF_REG_UNKNOWN = -2 };

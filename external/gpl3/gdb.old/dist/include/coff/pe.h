@@ -1,6 +1,6 @@
 /* pe.h  -  PE COFF header information
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -604,7 +604,7 @@ struct external_IMAGE_DEBUG_DIRECTORY
 #define CVINFO_PDB70_CVSIGNATURE 0x53445352 // "RSDS"
 #define CVINFO_PDB20_CVSIGNATURE 0x3031424e // "NB10"
 #define CVINFO_CV50_CVSIGNATURE  0x3131424e // "NB11"
-#define CVINFO_CV41_CVSIGNATURE  0x3930424e // âNB09"
+#define CVINFO_CV41_CVSIGNATURE  0x3930424e // "NB09"
 
 typedef struct _CV_INFO_PDB70
 {

@@ -1,4 +1,4 @@
-#   Copyright 1998-2016 Free Software Foundation, Inc.
+#   Copyright 1998-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ standard_testfile
 # Some targets can't call functions, so don't even bother with this
 # test.
 if [target_info exists gdb,cannot_call_functions] {
-    unsupported "This target can not call functions"
+    unsupported "this target can not call functions"
     continue
 }
 
@@ -33,8 +33,9 @@ if [get_compiler_info] {
     return -1
 }
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
-    untested $testfile.exp
+set skip_float_test [gdb_skip_float_test]
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
 
@@ -65,7 +66,7 @@ gdb_test continue \
 
 
 #call print_double_array(double_array)
-if {![gdb_skip_float_test "print print_double_array(double_array)"] && \
+if {!$skip_float_test && \
     ![gdb_skip_stdio_test "print print_double_array(double_array)"] } {
 
     gdb_test_stdio "print print_double_array(double_array)" \
@@ -126,7 +127,7 @@ gdb_test "tbreak $stop_line" \
 	"Temporary breakpoint.* file .*$srcfile, line $stop_line.*" \
 	"tbreakpoint at tbreak3"
 
-if {![gdb_skip_float_test "continuing to tbreak3"] && \
+if {!$skip_float_test && \
     ![gdb_skip_stdio_test "continuing to tbreak3"] } {
 
     gdb_test_stdio "continue" \
@@ -168,7 +169,7 @@ if ![gdb_skip_stdio_test "next over print_int_array in print_all_arrays"] {
 }
 
 #call print_double_array(array_d)
-if {![gdb_skip_float_test "print print_double_array(array_d)"] && \
+if {!$skip_float_test && \
     ![gdb_skip_stdio_test "print print_double_array(array_d)"] } {
 
     gdb_test_stdio "print print_double_array(array_d)" \
@@ -186,7 +187,7 @@ gdb_test "tbreak $stop_line" \
 "Temporary breakpoint.* file .*$srcfile, line $stop_line.*" \
 "tbreakpoint at tbreak4"
 
-if {![gdb_skip_float_test "continuing to tbreak4"] && \
+if {!$skip_float_test && \
     ![gdb_skip_stdio_test "continuing to tbreak4"] } {
 
     gdb_test_stdio "continue" \
@@ -305,7 +306,7 @@ if ![gdb_skip_stdio_test "continuing to tbreak6"] {
 #                         *flags, *flags_combo, *three_char, *five_char, 
 #                         *int_char_combo, *d1, *d2, *d3, *f1, *f2, *f3)
 
-if {![gdb_skip_float_test "print print_small_structs(...)"] && \
+if {!$skip_float_test && \
     ![gdb_skip_stdio_test "print print_small_structs(...)"] } {
     gdb_test_stdio "print print_small_structs(*struct1, *struct2, *struct3, *struct4, *flags, *flags_combo, *three_char, *five_char, *int_char_combo, *d1, *d2, *d3, *f1, *f2, *f3)" \
 	[multi_line \
@@ -369,7 +370,7 @@ gdb_test "print compute_with_small_structs(20)" \
 #call print_ten_doubles(123.456, 123.456, -0.12, -1.23, 343434.8, 89.098, 
 #                       3.14, -5678.12345, -0.11111111, 216.97065)
 
-if {![gdb_skip_float_test "print print_ten_doubles(...)"] && \
+if {!$skip_float_test && \
     ![gdb_skip_stdio_test "print print_ten_doubles(...)"]} {
     gdb_test_stdio "print print_ten_doubles(123.456, 123.456, -0.12, -1.23, 343434.8, 89.098, 3.14, -5678.12345, -0.11111111, 216.97065)" \
 	[multi_line \
@@ -397,7 +398,7 @@ gdb_test "tbreak print_long_arg_list" \
 # The short match case below handles cases where a buffer
 # overflows or something, and expect can't deal with the full
 # line.  Perhaps a more elegant solution exists... -sts 1999-08-17
-if {![gdb_skip_float_test "step into print_long_arg_list"]} {
+if {!$skip_float_test} {
     gdb_test_multiple "continue" "step into print_long_arg_list" {
 	-re ".*print_long_arg_list \\(a=22.25, b=33.375, c=0, d=-25, e=100, f=2345, struct1=\{value = 6, head = 0\}, struct2=\{value = 10, head = 0\}, struct3=\{value = 12, head = 0\}, struct4=\{value = 14, head = 0\}, flags=\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}, flags_combo=\{alpha = 1, beta = 0, ch1 = 121 \'y\', gamma = 1, delta = 0, ch2 = 110 \'n\', epsilon = 1, omega = 0\}, three_char=\{ch1 = 97 \'a\', ch2 = 98 \'b\', ch3 = 99 \'c\'\}, five_char=\{ch1 = 108 \'l\', ch2 = 109 \'m\', ch3 = 110 \'n\', ch4 = 111 \'o\', ch5 = 112 \'p\'\}, int_char_combo=\{int1 = 123, ch1 = 122 \'z\'\}, d1=\{double1 = 10.5\}, d2=\{double1 = -3.375\}, d3=\{double1 = 675.09375\}, f1=\{float1 = 45.2340012, float2 = 43.5999985\}, f2=\{float1 = 78.0100021, float2 = 122.099998\}, f3=\{float1 = -1232.34497, float2 = -199.210007\}\\) at .*${srcfile}:$stop_line\[\r\n\]+$stop_line\[ \t\]+printf\\(\"double :.*\", a\\);.*$gdb_prompt $" {
 	    pass "step into print_long_arg_list"
@@ -419,7 +420,7 @@ set ws "\[\n\r\t \]+"
 #                         flags_combo, three_char, five_char, int_char_combo, 
 #                         d1, d2, d3, f1, f2, f3)
 
-if {![gdb_skip_float_test "print_small_structs from print_long_arg_list"] && \
+if {!$skip_float_test && \
     ![gdb_skip_stdio_test "print_small_structs from print_long_arg_list"] } {
 
     # On 32-bit SPARC, some of the args are passed by ref, others by
@@ -520,7 +521,7 @@ gdb_test continue "Continuing\\..*main \\(\\) at .*$srcfile:$stop_line\[\r\n\t \
 
 #call print_long_arg_list(a, b, c, d, e, f, *struct1, *struct2, *struct3, *struct4, *flags, *flags_combo, *three_char, *five_char, *int_char_combo, *d1, *d2, *d3, *f1, *f2, *f3)
 
-if {![gdb_skip_float_test "print print_long_arg_list"] && \
+if {!$skip_float_test && \
     ![gdb_skip_stdio_test "print print_long_arg_list"] } {
 
     gdb_test_stdio "print print_long_arg_list(a, b, c, d, e, f, *struct1, *struct2, *struct3, *struct4, *flags, *flags_combo, *three_char, *five_char, *int_char_combo, *d1, *d2, *d3, *f1, *f2, *f3)" \

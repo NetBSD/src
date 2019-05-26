@@ -1,4 +1,4 @@
-#   Copyright 2012-2016 Free Software Foundation, Inc.
+#   Copyright 2012-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,9 +27,8 @@ if { [info proc gdb_reconnect] == "" } {
     return -1
 }
 
-if [prepare_for_testing $expfile $executable $srcfile \
+if [prepare_for_testing "failed to prepare" $executable $srcfile \
         {debug nowarnings}] {
-    untested "failed to prepare for trace tests"
     return -1
 }
 
@@ -54,7 +53,7 @@ proc disconnected_tracing {  } {
 	# Start with a fresh gdb.
 	clean_restart ${executable}
 	if ![runto_main] {
-	    fail "Can't run to main"
+	    fail "can't run to main"
 	    return -1
 	}
 
@@ -117,7 +116,7 @@ proc disconnected_tfind {  } {
 	# Start with a fresh gdb.
 	clean_restart ${executable}
 	if ![runto_main] {
-	    fail "Can't run to main"
+	    fail "can't run to main"
 	    return -1
 	}
 
