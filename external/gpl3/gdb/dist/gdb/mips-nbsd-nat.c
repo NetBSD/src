@@ -1,6 +1,6 @@
 /* Native-dependent code for MIPS systems running NetBSD.
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,6 +46,14 @@ typedef struct fpreg fpregset_t;
 
 #include "machine/pcb.h"
 
+class mips_nbsd_nat_target final : public inf_ptrace_target
+{
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+};
+
+static mips_nbsd_nat_target the_mips_nbsd_nat_target;
+
 /* Determine if PT_GETREGS fetches this register.  */
 static int
 getregs_supplies (struct gdbarch *gdbarch, int regno)
@@ -54,11 +62,12 @@ getregs_supplies (struct gdbarch *gdbarch, int regno)
 	  && (regno) <= gdbarch_pc_regnum (gdbarch));
 }
 
-static void
-mipsnbsd_fetch_inferior_registers (struct target_ops *ops,
-				   struct regcache *regcache, int regno)
+void
+mips_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  pid_t pid = regcache->ptid ().pid ();
+
+  struct gdbarch *gdbarch = regcache->arch ();
   if (regno == -1 || getregs_supplies (gdbarch, regno))
     {
       struct reg regs;
@@ -73,7 +82,7 @@ mipsnbsd_fetch_inferior_registers (struct target_ops *ops,
     }
 
   if (regno == -1
-      || regno >= gdbarch_fp0_regnum (get_regcache_arch (regcache)))
+      || regno >= gdbarch_fp0_regnum (regcache->arch ()))
     {
       struct fpreg fpregs;
 
@@ -85,11 +94,12 @@ mipsnbsd_fetch_inferior_registers (struct target_ops *ops,
     }
 }
 
-static void
-mipsnbsd_store_inferior_registers (struct target_ops *ops,
-				   struct regcache *regcache, int regno)
+void
+mips_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  pid_t pid = regcache->ptid ().pid ();
+
+  struct gdbarch *gdbarch = regcache->arch ();
   if (regno == -1 || getregs_supplies (gdbarch, regno))
     {
       struct reg regs;
@@ -109,7 +119,7 @@ mipsnbsd_store_inferior_registers (struct target_ops *ops,
     }
 
   if (regno == -1
-      || regno >= gdbarch_fp0_regnum (get_regcache_arch (regcache)))
+      || regno >= gdbarch_fp0_regnum (regcache->arch ()))
     {
       struct fpreg fpregs; 
 
@@ -125,83 +135,8 @@ mipsnbsd_store_inferior_registers (struct target_ops *ops,
     }
 }
 
-static int mipsnbsd_supply_pcb (struct regcache *, struct pcb *);
-
-static int
-mipsnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
-{
-  struct label_t sf;
-
-  sf = pcb->pcb_context;
-
-  /* really should test for n{32,64} abi for this register
-     unless this is purely the "n" ABI */
-
-  regcache_raw_supply (regcache, MIPS_S0_REGNUM, &sf.val[_L_S0]);
-  regcache_raw_supply (regcache, MIPS_S1_REGNUM, &sf.val[_L_S1]);
-  regcache_raw_supply (regcache, MIPS_S2_REGNUM, &sf.val[_L_S2]);
-  regcache_raw_supply (regcache, MIPS_S3_REGNUM, &sf.val[_L_S3]);
-  regcache_raw_supply (regcache, MIPS_S4_REGNUM, &sf.val[_L_S4]);
-  regcache_raw_supply (regcache, MIPS_S5_REGNUM, &sf.val[_L_S5]);
-  regcache_raw_supply (regcache, MIPS_S6_REGNUM, &sf.val[_L_S6]);
-  regcache_raw_supply (regcache, MIPS_S7_REGNUM, &sf.val[_L_S7]);
-
-  regcache_raw_supply (regcache, MIPS_S8_REGNUM, &sf.val[_L_S8]);
-
-  regcache_raw_supply (regcache, MIPS_T8_REGNUM, &sf.val[_L_T8]);
-
-  regcache_raw_supply (regcache, MIPS_GP_REGNUM, &sf.val[_L_GP]);
-
-  regcache_raw_supply (regcache, MIPS_SP_REGNUM, &sf.val[_L_SP]);
-  regcache_raw_supply (regcache, MIPS_RA_REGNUM, &sf.val[_L_RA]);
-  regcache_raw_supply (regcache, MIPS_PS_REGNUM, &sf.val[_L_SR]);
-
-  /* provide the return address of the savectx as the current pc */
-  regcache_raw_supply (regcache, MIPS_EMBED_PC_REGNUM, &sf.val[_L_RA]);
-
-  return 0;
-}
-
-/* Wrapper functions. */
-void
-supply_gregset (struct regcache *regcache, const gdb_gregset_t *gregsetp)
-{
-  mipsnbsd_supply_reg (regcache, (const char *) gregsetp, -1);
-}   
-
-void
-fill_gregset (const struct regcache *regcache,
-              gdb_gregset_t *gregsetp, int regno)
-{
-  mipsnbsd_fill_reg (regcache, (char *) gregsetp, -1);
-}   
-
-void
-supply_fpregset (struct regcache *regcache, const gdb_fpregset_t *fpregsetp)
-{   
-  mipsnbsd_supply_fpreg (regcache, (const char *) fpregsetp, -1);
-}
-
-void
-fill_fpregset (const struct regcache *regcache,
-               gdb_fpregset_t *fpregsetp, int regno)
-{
-  mipsnbsd_fill_fpreg (regcache, (char *) fpregsetp, -1);
-}
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_mipsnbsd_nat (void);
-
 void
 _initialize_mipsnbsd_nat (void)
 {
-  struct target_ops *t;
-
-  t = inf_ptrace_target ();
-  t->to_fetch_registers = mipsnbsd_fetch_inferior_registers;
-  t->to_store_registers = mipsnbsd_store_inferior_registers;
-  nbsd_nat_add_target (t);
-
-  /* Support debugging kernel virtual memory images.  */
-  bsd_kvm_add_target (mipsnbsd_supply_pcb);
+  add_inf_child_target (&the_mips_nbsd_nat_target);
 }

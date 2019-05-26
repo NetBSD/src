@@ -1,6 +1,6 @@
 /* Target-dependent code for ARM BSD's.
 
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -58,7 +58,7 @@ armbsd_supply_fpregset (const struct regset *regset,
   for (i = ARM_F0_REGNUM; i <= ARM_FPS_REGNUM; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache_raw_supply (regcache, i, regs + armbsd_fpreg_offset (i));
+	regcache->raw_supply (i, regs + armbsd_fpreg_offset (i));
     }
 }
 
@@ -79,11 +79,11 @@ armbsd_supply_gregset (const struct regset *regset,
   for (i = ARM_A1_REGNUM; i <= ARM_PC_REGNUM; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache_raw_supply (regcache, i, regs + i * 4);
+	regcache->raw_supply (i, regs + i * 4);
     }
 
   if (regnum == ARM_PS_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, ARM_PS_REGNUM, regs + 16 * 4);
+    regcache->raw_supply (i, regs + 16 * 4);
 
   if (len >= ARMBSD_SIZEOF_GREGS + ARMBSD_SIZEOF_FPREGS)
     {
@@ -117,6 +117,8 @@ armbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 				     void *cb_data,
 				     const struct regcache *regcache)
 {
-  cb (".reg", ARMBSD_SIZEOF_GREGS, &armbsd_gregset, NULL, cb_data);
-  cb (".reg2", ARMBSD_SIZEOF_FPREGS, &armbsd_fpregset, NULL, cb_data);
+  cb (".reg", ARMBSD_SIZEOF_GREGS, ARMBSD_SIZEOF_GREGS, &armbsd_gregset, NULL,
+      cb_data);
+  cb (".reg2", ARMBSD_SIZEOF_FPREGS, ARMBSD_SIZEOF_FPREGS, &armbsd_fpregset,
+      NULL, cb_data);
 }
