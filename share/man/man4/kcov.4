@@ -1,4 +1,4 @@
-.\"	$NetBSD: kcov.4,v 1.4 2019/03/10 17:51:00 kamil Exp $
+.\"	$NetBSD: kcov.4,v 1.5 2019/05/26 01:44:34 kamil Exp $
 .\"
 .\" Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd March 10, 2019
+.Dd May 26, 2019
 .Dt KCOV 4
 .Os
 .Sh NAME
@@ -171,12 +171,12 @@ main(void)
 	mode = KCOV_MODE_TRACE_PC;
 	if (ioctl(fd, KCOV_IOC_ENABLE, &mode) == -1)
 		err(1, "ioctl: KCOV_IOC_ENABLE");
-	KCOV_STORE(cover[0], 0);
+	cover[0] = 0;
 	read(-1, NULL, 0); /* syscall paths to be traced */
-	n = KCOV_LOAD(cover[0]);
+	n = cover[0];
 	if (ioctl(fd, KCOV_IOC_DISABLE) == -1)
 		err(1, "ioctl: KCOV_IOC_DISABLE");
-	for (i = 0; i < cover[0]; i++)
+	for (i = 0; i < n; i++)
 		printf("%p\en", (void *)cover[i + 1]);
 	if (munmap(cover, size * KCOV_ENTRY_SIZE) == -1)
 		err(1, "munmap");
