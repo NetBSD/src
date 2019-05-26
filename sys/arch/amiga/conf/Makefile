@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2008/10/25 22:27:36 apb Exp $
+#	$NetBSD: Makefile,v 1.15 2019/05/26 22:53:22 sevan Exp $
 
 #
 # Use this file to regenerate DRACO, GENERIC, INSTALL
@@ -24,3 +24,5 @@ __generate_config: .USE GENERIC.in Makefile
 	@echo -n '# Created from: ' >> ${.TARGET}
 	${TOOL_SED} -e '1s/$$NetBSD/NetBSD/' GENERIC.in |\
 		m4 -P -DM4_Target=${.TARGET} >> ${.TARGET}
+
+.include <bsd.own.mk>
