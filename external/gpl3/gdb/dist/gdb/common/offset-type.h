@@ -1,6 +1,6 @@
 /* Offset types for GDB.
 
-   Copyright (C) 2017 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -57,7 +57,7 @@
 /* The macro macro is all you need to know use offset types.  The rest
    below is all implementation detail.  */
 
-/* For each enum class type that you want to support relational
+/* For each enum class type that you want to support arithmetic
    operators, declare an "is_offset_type" overload that has exactly
    one parameter, of type that enum class.  E.g.,:
 
@@ -72,22 +72,6 @@
    namespace.  The compiler finds the corresponding is_offset_type
    function via ADL.
 */
-
-#define DEFINE_OFFSET_REL_OP(OP)					\
-  template<typename E,							\
-	   typename = decltype (is_offset_type (std::declval<E> ()))>	\
-  constexpr bool							\
-  operator OP (E lhs, E rhs)						\
-  {									\
-    using underlying = typename std::underlying_type<E>::type;		\
-    return (static_cast<underlying> (lhs)				\
-	    OP static_cast<underlying> (lhs));				\
-  }
-
-DEFINE_OFFSET_REL_OP(>)
-DEFINE_OFFSET_REL_OP(>=)
-DEFINE_OFFSET_REL_OP(<)
-DEFINE_OFFSET_REL_OP(<=)
 
 /* Adding or subtracting an integer to an offset type shifts the
    offset.  This is like "PTR = PTR + INT" and "PTR += INT".  */

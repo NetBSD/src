@@ -1,4 +1,4 @@
-/* Copyright 1999-2017 Free Software Foundation, Inc.
+/* Copyright 1999-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 
 int callee4 (void)
 {
-  int A=1;
+  int A=1; /* callee4 begin */
   int B=2;
   int C;
   int D[3] = {0, 1, 2};

@@ -1,3 +1,12 @@
+2019-01-26  Tom Tromey  <tom@tromey.com>
+
+	* Makefile.in (version.c): Use sim's create-version.sh.
+
+2018-05-09  Sebastian Rasmussen  <sebras@gmail.com>
+
+	* e500_registers.h: Comment typo fix.
+	* ppc-instructions (ppc_insn_mfcr): Likewise.
+
 2017-09-05  John Baldwin  <jhb@FreeBSD.org>
 
 	PR sim/20863

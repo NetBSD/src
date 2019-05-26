@@ -1,6 +1,6 @@
 /* simulator.c -- Interface for the AArch64 simulator.
 
-   Copyright (C) 2015-2017 Free Software Foundation, Inc.
+   Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -11524,310 +11524,224 @@ vec_reg (unsigned v, unsigned o)
   return (v + o) & 0x3F;
 }
 
-/* Load multiple N-element structures to N consecutive registers.  */
+/* Load multiple N-element structures to M consecutive registers.  */
 static void
-vec_load (sim_cpu *cpu, uint64_t address, unsigned N)
+vec_load (sim_cpu *cpu, uint64_t address, unsigned N, unsigned M)
 {
   int      all  = INSTR (30, 30);
   unsigned size = INSTR (11, 10);
   unsigned vd   = INSTR (4, 0);
-  unsigned i;
+  unsigned rpt = (N == M) ? 1 : M;
+  unsigned selem = N;
+  unsigned i, j, k;
 
   switch (size)
     {
     case 0: /* 8-bit operations.  */
-      if (all)
-	for (i = 0; i < (16 * N); i++)
-	  aarch64_set_vec_u8 (cpu, vec_reg (vd, i >> 4), i & 15,
-			      aarch64_get_mem_u8 (cpu, address + i));
-      else
-	for (i = 0; i < (8 * N); i++)
-	  aarch64_set_vec_u8 (cpu, vec_reg (vd, i >> 3), i & 7,
-			      aarch64_get_mem_u8 (cpu, address + i));
+      for (i = 0; i < rpt; i++)
+	for (j = 0; j < (8 + (8 * all)); j++)
+	  for (k = 0; k < selem; k++)
+	    {
+	      aarch64_set_vec_u8 (cpu, vec_reg (vd, i + k), j,
+				  aarch64_get_mem_u8 (cpu, address));
+	      address += 1;
+	    }
       return;
 
     case 1: /* 16-bit operations.  */
-      if (all)
-	for (i = 0; i < (8 * N); i++)
-	  aarch64_set_vec_u16 (cpu, vec_reg (vd, i >> 3), i & 7,
-			       aarch64_get_mem_u16 (cpu, address + i * 2));
-      else
-	for (i = 0; i < (4 * N); i++)
-	  aarch64_set_vec_u16 (cpu, vec_reg (vd, i >> 2), i & 3,
-			       aarch64_get_mem_u16 (cpu, address + i * 2));
+      for (i = 0; i < rpt; i++)
+	for (j = 0; j < (4 + (4 * all)); j++)
+	  for (k = 0; k < selem; k++)
+	    {
+	      aarch64_set_vec_u16 (cpu, vec_reg (vd, i + k), j,
+				   aarch64_get_mem_u16 (cpu, address));
+	      address += 2;
+	    }
       return;
 
     case 2: /* 32-bit operations.  */
-      if (all)
-	for (i = 0; i < (4 * N); i++)
-	  aarch64_set_vec_u32 (cpu, vec_reg (vd, i >> 2), i & 3,
-			       aarch64_get_mem_u32 (cpu, address + i * 4));
-      else
-	for (i = 0; i < (2 * N); i++)
-	  aarch64_set_vec_u32 (cpu, vec_reg (vd, i >> 1), i & 1,
-			       aarch64_get_mem_u32 (cpu, address + i * 4));
+      for (i = 0; i < rpt; i++)
+	for (j = 0; j < (2 + (2 * all)); j++)
+	  for (k = 0; k < selem; k++)
+	    {
+	      aarch64_set_vec_u32 (cpu, vec_reg (vd, i + k), j,
+				   aarch64_get_mem_u32 (cpu, address));
+	      address += 4;
+	    }
       return;
 
     case 3: /* 64-bit operations.  */
-      if (all)
-	for (i = 0; i < (2 * N); i++)
-	  aarch64_set_vec_u64 (cpu, vec_reg (vd, i >> 1), i & 1,
-			       aarch64_get_mem_u64 (cpu, address + i * 8));
-      else
-	for (i = 0; i < N; i++)
-	  aarch64_set_vec_u64 (cpu, vec_reg (vd, i), 0,
-			       aarch64_get_mem_u64 (cpu, address + i * 8));
+      for (i = 0; i < rpt; i++)
+	for (j = 0; j < (1 + all); j++)
+	  for (k = 0; k < selem; k++)
+	    {
+	      aarch64_set_vec_u64 (cpu, vec_reg (vd, i + k), j,
+				   aarch64_get_mem_u64 (cpu, address));
+	      address += 8;
+	    }
       return;
     }
 }
 
-/* LD4: load multiple 4-element to four consecutive registers.  */
+/* Load multiple 4-element structures into four consecutive registers.  */
 static void
 LD4 (sim_cpu *cpu, uint64_t address)
 {
-  vec_load (cpu, address, 4);
+  vec_load (cpu, address, 4, 4);
 }
 
-/* LD3: load multiple 3-element structures to three consecutive registers.  */
+/* Load multiple 3-element structures into three consecutive registers.  */
 static void
 LD3 (sim_cpu *cpu, uint64_t address)
 {
-  vec_load (cpu, address, 3);
+  vec_load (cpu, address, 3, 3);
 }
 
-/* LD2: load multiple 2-element structures to two consecutive registers.  */
+/* Load multiple 2-element structures into two consecutive registers.  */
 static void
 LD2 (sim_cpu *cpu, uint64_t address)
 {
-  vec_load (cpu, address, 2);
+  vec_load (cpu, address, 2, 2);
 }
 
 /* Load multiple 1-element structures into one register.  */
 static void
 LD1_1 (sim_cpu *cpu, uint64_t address)
 {
-  int      all  = INSTR (30, 30);
-  unsigned size = INSTR (11, 10);
-  unsigned vd   = INSTR (4, 0);
-  unsigned i;
-
-  switch (size)
-    {
-    case 0:
-      /* LD1 {Vd.16b}, addr, #16 */
-      /* LD1 {Vd.8b}, addr, #8 */
-      for (i = 0; i < (all ? 16 : 8); i++)
-	aarch64_set_vec_u8 (cpu, vd, i,
-			    aarch64_get_mem_u8 (cpu, address + i));
-      return;
-
-    case 1:
-      /* LD1 {Vd.8h}, addr, #16 */
-      /* LD1 {Vd.4h}, addr, #8 */
-      for (i = 0; i < (all ? 8 : 4); i++)
-	aarch64_set_vec_u16 (cpu, vd, i,
-			     aarch64_get_mem_u16 (cpu, address + i * 2));
-      return;
-
-    case 2:
-      /* LD1 {Vd.4s}, addr, #16 */
-      /* LD1 {Vd.2s}, addr, #8 */
-      for (i = 0; i < (all ? 4 : 2); i++)
-	aarch64_set_vec_u32 (cpu, vd, i,
-			     aarch64_get_mem_u32 (cpu, address + i * 4));
-      return;
-
-    case 3:
-      /* LD1 {Vd.2d}, addr, #16 */
-      /* LD1 {Vd.1d}, addr, #8 */
-      for (i = 0; i < (all ? 2 : 1); i++)
-	aarch64_set_vec_u64 (cpu, vd, i,
-			     aarch64_get_mem_u64 (cpu, address + i * 8));
-      return;
-    }
+  vec_load (cpu, address, 1, 1);
 }
 
 /* Load multiple 1-element structures into two registers.  */
 static void
 LD1_2 (sim_cpu *cpu, uint64_t address)
 {
-  /* FIXME: This algorithm is *exactly* the same as the LD2 version.
-     So why have two different instructions ?  There must be something
-     wrong somewhere.  */
-  vec_load (cpu, address, 2);
+  vec_load (cpu, address, 1, 2);
 }
 
 /* Load multiple 1-element structures into three registers.  */
 static void
 LD1_3 (sim_cpu *cpu, uint64_t address)
 {
-  /* FIXME: This algorithm is *exactly* the same as the LD3 version.
-     So why have two different instructions ?  There must be something
-     wrong somewhere.  */
-  vec_load (cpu, address, 3);
+  vec_load (cpu, address, 1, 3);
 }
 
 /* Load multiple 1-element structures into four registers.  */
 static void
 LD1_4 (sim_cpu *cpu, uint64_t address)
 {
-  /* FIXME: This algorithm is *exactly* the same as the LD4 version.
-     So why have two different instructions ?  There must be something
-     wrong somewhere.  */
-  vec_load (cpu, address, 4);
+  vec_load (cpu, address, 1, 4);
 }
 
-/* Store multiple N-element structures to N consecutive registers.  */
+/* Store multiple N-element structures from M consecutive registers.  */
 static void
-vec_store (sim_cpu *cpu, uint64_t address, unsigned N)
+vec_store (sim_cpu *cpu, uint64_t address, unsigned N, unsigned M)
 {
   int      all  = INSTR (30, 30);
   unsigned size = INSTR (11, 10);
   unsigned vd   = INSTR (4, 0);
-  unsigned i;
+  unsigned rpt = (N == M) ? 1 : M;
+  unsigned selem = N;
+  unsigned i, j, k;
 
   switch (size)
     {
     case 0: /* 8-bit operations.  */
-      if (all)
-	for (i = 0; i < (16 * N); i++)
-	  aarch64_set_mem_u8
-	    (cpu, address + i,
-	     aarch64_get_vec_u8 (cpu, vec_reg (vd, i >> 4), i & 15));
-      else
-	for (i = 0; i < (8 * N); i++)
-	  aarch64_set_mem_u8
-	    (cpu, address + i,
-	     aarch64_get_vec_u8 (cpu, vec_reg (vd, i >> 3), i & 7));
+      for (i = 0; i < rpt; i++)
+	for (j = 0; j < (8 + (8 * all)); j++)
+	  for (k = 0; k < selem; k++)
+	    {
+	      aarch64_set_mem_u8
+		(cpu, address,
+		 aarch64_get_vec_u8 (cpu, vec_reg (vd, i + k), j));
+	      address += 1;
+	    }
       return;
 
     case 1: /* 16-bit operations.  */
-      if (all)
-	for (i = 0; i < (8 * N); i++)
-	  aarch64_set_mem_u16
-	    (cpu, address + i * 2,
-	     aarch64_get_vec_u16 (cpu, vec_reg (vd, i >> 3), i & 7));
-      else
-	for (i = 0; i < (4 * N); i++)
-	  aarch64_set_mem_u16
-	    (cpu, address + i * 2,
-	     aarch64_get_vec_u16 (cpu, vec_reg (vd, i >> 2), i & 3));
+      for (i = 0; i < rpt; i++)
+	for (j = 0; j < (4 + (4 * all)); j++)
+	  for (k = 0; k < selem; k++)
+	    {
+	      aarch64_set_mem_u16
+		(cpu, address,
+		 aarch64_get_vec_u16 (cpu, vec_reg (vd, i + k), j));
+	      address += 2;
+	    }
       return;
 
     case 2: /* 32-bit operations.  */
-      if (all)
-	for (i = 0; i < (4 * N); i++)
-	  aarch64_set_mem_u32
-	    (cpu, address + i * 4,
-	     aarch64_get_vec_u32 (cpu, vec_reg (vd, i >> 2), i & 3));
-      else
-	for (i = 0; i < (2 * N); i++)
-	  aarch64_set_mem_u32
-	    (cpu, address + i * 4,
-	     aarch64_get_vec_u32 (cpu, vec_reg (vd, i >> 1), i & 1));
+      for (i = 0; i < rpt; i++)
+	for (j = 0; j < (2 + (2 * all)); j++)
+	  for (k = 0; k < selem; k++)
+	    {
+	      aarch64_set_mem_u32
+		(cpu, address,
+		 aarch64_get_vec_u32 (cpu, vec_reg (vd, i + k), j));
+	      address += 4;
+	    }
       return;
 
     case 3: /* 64-bit operations.  */
-      if (all)
-	for (i = 0; i < (2 * N); i++)
-	  aarch64_set_mem_u64
-	    (cpu, address + i * 8,
-	     aarch64_get_vec_u64 (cpu, vec_reg (vd, i >> 1), i & 1));
-      else
-	for (i = 0; i < N; i++)
-	  aarch64_set_mem_u64
-	    (cpu, address + i * 8,
-	     aarch64_get_vec_u64 (cpu, vec_reg (vd, i), 0));
+      for (i = 0; i < rpt; i++)
+	for (j = 0; j < (1 + all); j++)
+	  for (k = 0; k < selem; k++)
+	    {
+	      aarch64_set_mem_u64
+		(cpu, address,
+		 aarch64_get_vec_u64 (cpu, vec_reg (vd, i + k), j));
+	      address += 8;
+	    }
       return;
     }
 }
 
-/* Store multiple 4-element structure to four consecutive registers.  */
+/* Store multiple 4-element structure from four consecutive registers.  */
 static void
 ST4 (sim_cpu *cpu, uint64_t address)
 {
-  vec_store (cpu, address, 4);
+  vec_store (cpu, address, 4, 4);
 }
 
-/* Store multiple 3-element structures to three consecutive registers.  */
+/* Store multiple 3-element structures from three consecutive registers.  */
 static void
 ST3 (sim_cpu *cpu, uint64_t address)
 {
-  vec_store (cpu, address, 3);
+  vec_store (cpu, address, 3, 3);
 }
 
-/* Store multiple 2-element structures to two consecutive registers.  */
+/* Store multiple 2-element structures from two consecutive registers.  */
 static void
 ST2 (sim_cpu *cpu, uint64_t address)
 {
-  vec_store (cpu, address, 2);
+  vec_store (cpu, address, 2, 2);
 }
 
-/* Store multiple 1-element structures into one register.  */
+/* Store multiple 1-element structures from one register.  */
 static void
 ST1_1 (sim_cpu *cpu, uint64_t address)
 {
-  int      all  = INSTR (30, 30);
-  unsigned size = INSTR (11, 10);
-  unsigned vd   = INSTR (4, 0);
-  unsigned i;
-
-  switch (size)
-    {
-    case 0:
-      for (i = 0; i < (all ? 16 : 8); i++)
-	aarch64_set_mem_u8 (cpu, address + i,
-			    aarch64_get_vec_u8 (cpu, vd, i));
-      return;
-
-    case 1:
-      for (i = 0; i < (all ? 8 : 4); i++)
-	aarch64_set_mem_u16 (cpu, address + i * 2,
-			     aarch64_get_vec_u16 (cpu, vd, i));
-      return;
-
-    case 2:
-      for (i = 0; i < (all ? 4 : 2); i++)
-	aarch64_set_mem_u32 (cpu, address + i * 4,
-			     aarch64_get_vec_u32 (cpu, vd, i));
-      return;
-
-    case 3:
-      for (i = 0; i < (all ? 2 : 1); i++)
-	aarch64_set_mem_u64 (cpu, address + i * 8,
-			     aarch64_get_vec_u64 (cpu, vd, i));
-      return;
-    }
+  vec_store (cpu, address, 1, 1);
 }
 
-/* Store multiple 1-element structures into two registers.  */
+/* Store multiple 1-element structures from two registers.  */
 static void
 ST1_2 (sim_cpu *cpu, uint64_t address)
 {
-  /* FIXME: This algorithm is *exactly* the same as the ST2 version.
-     So why have two different instructions ?  There must be
-     something wrong somewhere.  */
-  vec_store (cpu, address, 2);
+  vec_store (cpu, address, 1, 2);
 }
 
-/* Store multiple 1-element structures into three registers.  */
+/* Store multiple 1-element structures from three registers.  */
 static void
 ST1_3 (sim_cpu *cpu, uint64_t address)
 {
-  /* FIXME: This algorithm is *exactly* the same as the ST3 version.
-     So why have two different instructions ?  There must be
-     something wrong somewhere.  */
-  vec_store (cpu, address, 3);
+  vec_store (cpu, address, 1, 3);
 }
 
-/* Store multiple 1-element structures into four registers.  */
+/* Store multiple 1-element structures from four registers.  */
 static void
 ST1_4 (sim_cpu *cpu, uint64_t address)
 {
-  /* FIXME: This algorithm is *exactly* the same as the ST4 version.
-     So why have two different instructions ?  There must be
-     something wrong somewhere.  */
-  vec_store (cpu, address, 4);
+  vec_store (cpu, address, 1, 4);
 }
 
 #define LDn_STn_SINGLE_LANE_AND_SIZE()				\

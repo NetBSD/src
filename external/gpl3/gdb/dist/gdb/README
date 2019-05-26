@@ -7,11 +7,8 @@ A summary of new features is in the file `gdb/NEWS'.
 Check the GDB home page at http://www.gnu.org/software/gdb/ for up to
 date release information, mailing list links and archives, etc.
 
-The file `gdb/PROBLEMS' contains information on problems identified
-late in the release cycle.  GDB's bug tracking data base at
-http://www.gnu.org/software/gdb/bugs/ contains a more complete list of
-bugs.
-
+GDB's bug tracking data base can be found at
+http://www.gnu.org/software/gdb/bugs/
 
 Unpacking and Installation -- quick overview
 ==========================
@@ -37,9 +34,8 @@ source directory called `gdb-VERSION'.
 You can build GDB right in the source directory:
 
       cd gdb-VERSION
-      ./configure
-      make
-      cp gdb/gdb /usr/local/bin/gdb	(or wherever you want)
+      ./configure --prefix=/usr/local   (or wherever you want)
+      make all install
 
 However, we recommend that an empty directory be used instead.
 This way you do not clutter your source tree with binary files
@@ -50,9 +46,8 @@ You can build GDB in any empty build directory:
 
       mkdir build
       cd build
-      <full path to your sources>/gdb-VERSION/configure
-      make
-      cp gdb/gdb /usr/local/bin/gdb	(or wherever you want)
+      <full path to your sources>/gdb-VERSION/configure [etc...]
+      make all install
 
 (Building GDB with DJGPP tools for MS-DOS/MS-Windows is slightly
 different; see the file gdb-VERSION/gdb/config/djgpp/README for details.)
@@ -77,17 +72,26 @@ such as:
    If you get other compiler errors during this stage, see the `Reporting
 Bugs' section below; there are a few known problems.
 
-   GDB requires an ISO C (ANSI C) compiler.  If you do not have an ISO
-C compiler for your system, you may be able to download and install
+   GDB's `configure' script has many options to enable or disable
+different features or dependencies.  These options are not generally
+known to the top-level `configure', so if you want to see a complete
+list of options, invoke the subdirectory `configure', like:
+
+      /berman/migchain/source/gdb-VERSION/gdb/configure --help
+
+   (Take note of how this differs from the invocation used to actually
+configure the build tree.)
+
+   GDB requires a C++11 compiler.  If you do not have a
+C++11 compiler for your system, you may be able to download and install
 the GNU CC compiler.  It is available via anonymous FTP from the
 directory `ftp://ftp.gnu.org/pub/gnu/gcc'.  GDB also requires an ISO
 C standard library.  The GDB remote server, GDBserver, builds with some
 non-ISO standard libraries - e.g. for Windows CE.
 
-   GDB uses Expat, an XML parsing library, to implement some target-specific
-features.  Expat will be linked in if it is available at build time, or
-those features will be disabled.  The latest version of Expat should be
-available from `http://expat.sourceforge.net'.
+   GDB can optionally be built against various external libraries.
+These dependencies are described below in the "`configure options"
+section of this README.
 
    GDB can be used as a cross-debugger, running on a machine of one
 type while debugging a program running on a machine of another type.
@@ -340,20 +344,21 @@ you can use it to test your guesses on abbreviations--for example:
 
    Here is a summary of the `configure' options and arguments that are
 most often useful for building GDB.  `configure' also has several other
-options not listed here.  *note : (configure.info)What Configure Does,
-for a full explanation of `configure'.
+options not listed here.  There are many options to gdb's `configure'
+script, some of which are only useful in special situation.
+*note : (autoconf.info)Running configure scripts, for a full
+explanation of `configure'.
 
      configure [--help]
                [--prefix=DIR]
                [--srcdir=PATH]
-               [--norecursion] [--rm]
-	       [--enable-build-warnings]
                [--target=TARGET]
 	       [--host=HOST]
 	       [HOST]
 
 You may introduce options with a single `-' rather than `--' if you
-prefer; but you may abbreviate option names if you use `--'.
+prefer; but you may abbreviate option names if you use `--'.  Some
+more obscure GDB `configure' options are not listed here.
 
 `--help'
      Display a quick summary of how to invoke `configure'.
@@ -384,31 +389,6 @@ prefer; but you may abbreviate option names if you use `--'.
      Same as `--host=HOST'.  If you omit this, GDB will guess; it's
      quite accurate.
 
-`--norecursion'
-     Configure only the directory level where `configure' is executed;
-     do not propagate configuration to subdirectories.
-
-`--rm'
-     Remove the configuration that the other arguments specify.
-
-`--enable-build-warnings'
-     When building the GDB sources, ask the compiler to warn about any
-     code which looks even vaguely suspicious.  You should only using
-     this feature if you're compiling with GNU CC.  It passes the
-     following flags:
-	-Wimplicit
-	-Wreturn-type
-	-Wcomment
-	-Wtrigraphs
-	-Wformat
-	-Wparentheses
-	-Wpointer-arith
-
-`--enable-werror'
-     Treat compiler warnings as werrors.  Use this only with GCC.  It
-     adds the -Werror flag to the compiler, which will fail the
-     compilation if the compiler outputs any warning messages.
-
 `--target=TARGET'
      Configure GDB for cross-debugging programs running on the specified
      TARGET.  Without this option, GDB is configured to debug programs
@@ -416,6 +396,12 @@ prefer; but you may abbreviate option names if you use `--'.
 
      There is no convenient way to generate a list of all available
      targets.
+
+`--enable-targets=TARGET,TARGET,...'
+`--enable-targets=all`
+     Configure GDB for cross-debugging programs running on the
+     specified list of targets.  The special value `all' configures
+     GDB for debugging programs running on any target it supports.
 
 `--with-gdb-datadir=PATH'
      Set the GDB-specific data directory.  GDB will look here for
@@ -442,49 +428,83 @@ prefer; but you may abbreviate option names if you use `--'.
      Requires a curses library (ncurses and cursesX are also
      supported).
 
-`--enable-gdbtk'
-     Build GDB with the gdbtk GUI interface.  Requires TCL/Tk to be
-     installed.
+`--with-curses'
+     Use the curses library instead of the termcap library, for
+     text-mode terminal operations.
 
 `--with-libunwind-ia64'
      Use the libunwind library for unwinding function call stack on ia64
      target platforms.
      See http://www.nongnu.org/libunwind/index.html for details.
 
-`--with-curses'
-     Use the curses library instead of the termcap library, for
-     text-mode terminal operations.
-
-`--enable-profiling' Enable profiling of GDB itself.  Necessary if you
-     want to use the "maint set profile" command for profiling GDB.
-     Requires the functions `monstartup' and `_mcleanup' to be present
-     in the standard C library used to build GDB, and also requires a
-     compiler that supports the `-pg' option.
-
 `--with-system-readline'
      Use the readline library installed on the host, rather than the
-     library supplied as part of GDB tarball.
+     library supplied as part of GDB.
+
+`--with-system-zlib
+     Use the zlib library installed on the host, rather than the
+     library supplied as part of GDB.
 
 `--with-expat'
-     Build GDB with the libexpat library.  (Done by default if
-     libexpat is installed and found at configure time.)  This library
-     is used to read XML files supplied with GDB.  If it is
-     unavailable, some features, such as remote protocol memory maps,
-     target descriptions, and shared library lists, that are based on
-     XML files, will not be available in GDB.  If your host does not
-     have libexpat installed, you can  get the latest version from
-     http://expat.sourceforge.net.
+     Build GDB with Expat, a library for XML parsing.  (Done by
+     default if libexpat is installed and found at configure time.)
+     This library is used to read XML files supplied with GDB.  If it
+     is unavailable, some features, such as remote protocol memory
+     maps, target descriptions, and shared library lists, that are
+     based on XML files, will not be available in GDB.  If your host
+     does not have libexpat installed, you can get the latest version
+     from `http://expat.sourceforge.net'.
 
-`--with-python[=PATH]'
+`--with-libiconv-prefix[=DIR]'
+     Build GDB with GNU libiconv, a character set encoding conversion
+     library.  This is not done by default, as on GNU systems the
+     `iconv' that is built in to the C library is sufficient.  If your
+     host does not have a working `iconv', you can get the latest
+     version of GNU iconv from `https://www.gnu.org/software/libiconv/'.
+
+     GDB's build system also supports building GNU libiconv as part of
+     the overall build.  See the GDB manual instructions on how to do
+     this.
+
+`--with-lzma'
+     Build GDB with LZMA, a compression library.  (Done by default if
+     liblzma is installed and found at configure time.)  LZMA is used
+     by GDB's "mini debuginfo" feature, which is only useful on
+     platforms using the ELF object file format.  If your host does
+     not have liblzma installed, you can get the latest version from
+     `https://tukaani.org/xz/'.
+
+`--with-mpfr'
+     Build GDB with GNU MPFR, a library for multiple-precision
+     floating-point computation with correct rounding.  (Done by
+     default if GNU MPFR is installed and found at configure time.)
+     This library is used to emulate target floating-point arithmetic
+     during expression evaluation when the target uses different
+     floating-point formats than the host.  If GNU MPFR is not
+     available, GDB will fall back to using host floating-point
+     arithmetic.  If your host does not have GNU MPFR installed, you
+     can get the latest version from `http://www.mpfr.org'.
+
+`--with-python[=PYTHON]'
      Build GDB with Python scripting support.  (Done by default if
      libpython is present and found at configure time.)  Python makes
      GDB scripting much more powerful than the restricted CLI
      scripting language.  If your host does not have Python installed,
-     you can find it on http://www.python.org/download/.  The oldest
+     you can find it on `http://www.python.org/download/'.  The oldest
      version of Python supported by GDB is 2.4.  The optional argument
-     PATH says where to find the Python headers and libraries; the
-     configure script will look in PATH/include for headers and in
-     PATH/lib for the libraries.
+     PYTHON is used to find the Python headers and libraries.  It can
+     be either the name of a Python executable, or the name of the
+     directory in which Python is installed.
+
+`--with-guile[=GUILE]'
+     Build GDB with GNU Guile scripting support.  (Done by default if
+     libguile is present and found at configure time.)  If your host
+     does not have Guile installed, you can find it at
+     `https://www.gnu.org/software/guile/'.  The optional argument
+     GUILE can be a version number, which will cause `configure' to
+     try to use that version of Guile; or the file name of a
+     `pkg-config' executable, which will be queried to find the
+     information needed to compile and link against Guile.
 
 `--without-included-regex'
      Don't use the regex library included with GDB (as part of the
@@ -507,9 +527,32 @@ prefer; but you may abbreviate option names if you use `--'.
      after being built, the location of the system-wide init file will
      be adjusted accordingly. 
 
+`--enable-build-warnings'
+     When building the GDB sources, ask the compiler to warn about any
+     code which looks even vaguely suspicious.  It passes many
+     different warning flags, depending on the exact version of the
+     compiler you are using.
+
+`--enable-werror'
+     Treat compiler warnings as werrors.  It adds the -Werror flag to
+     the compiler, which will fail the compilation if the compiler
+     outputs any warning messages.
+
+`--enable-ubsan'
+     Enable the GCC undefined behavior sanitizer.  By default this is
+     disabled in GDB releases, but enabled when building from git.
+     The undefined behavior sanitizer checks for C++ undefined
+     behavior.  It has a performance cost, so if you are looking at
+     GDB's performance, you should disable it.
+
+`--enable-unit-tests[=yes|no]'
+     Enable (i.e., include) support for unit tests when compiling GDB
+     and GDBServer.  Note that if this option is not passed, GDB will
+     have selftests if it is a development build, and will *not* have
+     selftests if it is a non-development build.
+
 `configure' accepts other options, for compatibility with configuring
-other GNU tools recursively; but these are the only options that affect
-GDB or its supporting libraries.
+other GNU tools recursively.
 
 
 Remote debugging
@@ -524,17 +567,11 @@ with the remote.c stub over a serial line.
 allows remote debugging for Unix applications.  GDBserver is only
 supported for some native configurations, including Sun 3, Sun 4, and
 Linux.
-The file gdb/gdbserver/README includes further notes on GDBserver; in
+
+   The file gdb/gdbserver/README includes further notes on GDBserver; in
 particular, it explains how to build GDBserver for cross-debugging
 (where GDBserver runs on the target machine, which is of a different
 architecture than the host machine running GDB).
-
-   There are a number of remote interfaces for talking to existing ROM
-monitors and other hardware:
-
-	remote-mips.c	 MIPS remote debugging protocol
-	remote-sds.c	 PowerPC SDS monitor
-	remote-sim.c	 Generalized simulator protocol
 
 
 Reporting Bugs in GDB
@@ -550,11 +587,13 @@ address "bug-gdb@gnu.org".
 
    When submitting a bug, please include the GDB version number, and
 how you configured it (e.g., "sun4" or "mach386 host,
-i586-intel-synopsys target").  Since GDB now supports so many
+i586-intel-synopsys target").  Since GDB supports so many
 different configurations, it is important that you be precise about
-this.  If at all possible, you should include the actual banner
-that GDB prints when it starts up, or failing that, the actual
-configure command that you used when configuring GDB.
+this.  The simplest way to do this is to include the output from these
+commands:
+
+      % gdb --version
+      % gdb --config
 
    For more information on how/whether to report bugs, see the
 Reporting Bugs chapter of the GDB manual (gdb/doc/gdb.texinfo).
@@ -566,7 +605,7 @@ Graphical interface to GDB -- X Windows, MS Windows
    Several graphical interfaces to GDB are available.  You should
 check:
 
-	http://www.gnu.org/software/gdb/links/
+	https://sourceware.org/gdb/wiki/GDB%20Front%20Ends
 
 for an up-to-date list.
 

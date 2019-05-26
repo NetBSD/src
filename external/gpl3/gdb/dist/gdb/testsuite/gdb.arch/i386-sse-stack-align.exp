@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Free Software Foundation, Inc.
+# Copyright 2012-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ if ![runto_main] then {
 
 set args ""
 foreach i {0 1 2 3 4} {
-    set test "print g$i ($args)"
+    set test "print (int) g$i ($args)"
     gdb_test_multiple $test $test {
 	-re " = 2\r\n$gdb_prompt $" {
 	    pass $test

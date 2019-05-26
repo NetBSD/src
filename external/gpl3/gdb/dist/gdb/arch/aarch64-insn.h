@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AARCH64_INSN_H
-#define AARCH64_INSN_H 1
+#ifndef ARCH_AARCH64_INSN_H
+#define ARCH_AARCH64_INSN_H
 
 extern int aarch64_debug;
 
@@ -321,4 +321,4 @@ int aarch64_emit_load_store (uint32_t *buf, uint32_t size,
 			     struct aarch64_register rn,
 			     struct aarch64_memory_operand operand);
 
-#endif
+#endif /* ARCH_AARCH64_INSN_H */

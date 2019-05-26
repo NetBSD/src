@@ -1,6 +1,603 @@
 		What has changed in GDB?
 	     (Organized release by release)
 
+*** Changes in GDB 8.3
+
+* GDB and GDBserver now support access to additional registers on
+  PowerPC GNU/Linux targets: PPR, DSCR, TAR, EBB/PMU registers, and
+  HTM registers.
+
+* GDB now has experimental support for the compilation and injection of
+  C++ source code into the inferior.  This beta release does not include
+  support for several language features, such as templates, constructors,
+  and operators.
+
+  This feature requires GCC 7.1 or higher built with libcp1.so
+  (the C++ plug-in).
+
+* GDB and GDBserver now support IPv6 connections.  IPv6 addresses
+  can be passed using the '[ADDRESS]:PORT' notation, or the regular
+  'ADDRESS:PORT' method.
+
+* DWARF index cache: GDB can now automatically save indices of DWARF
+  symbols on disk to speed up further loading of the same binaries.
+
+* Ada task switching is now supported on aarch64-elf targets when
+  debugging a program using the Ravenscar Profile.  For more information,
+  see the "Tasking Support when using the Ravenscar Profile" section
+  in the GDB user manual.
+
+* GDB in batch mode now exits with status 1 if the last command to be
+  executed failed.
+
+* The RISC-V target now supports target descriptions.
+
+* System call catchpoints now support system call aliases on FreeBSD.
+  When the ABI of a system call changes in FreeBSD, this is
+  implemented by leaving a compatibility system call using the old ABI
+  at the existing number and allocating a new system call number for
+  the new ABI.  For example, FreeBSD 12 altered the layout of 'struct
+  kevent' used by the 'kevent' system call.  As a result, FreeBSD 12
+  kernels ship with both 'kevent' and 'freebsd11_kevent' system calls.
+  The 'freebsd11_kevent' system call is assigned an alias of 'kevent'
+  so that a system call catchpoint for the 'kevent' system call will
+  catch invocations of both the 'kevent' and 'freebsd11_kevent'
+  binaries.  This ensures that 'kevent' system calls are caught for
+  binaries using either the old or new ABIs.
+
+* Terminal styling is now available for the CLI and the TUI.  GNU
+  Source Highlight can additionally be used to provide styling of
+  source code snippets.  See the "set style" commands, below, for more
+  information.
+
+* Removed support for old demangling styles arm, edg, gnu, hp and
+  lucid.
+
+* New commands
+
+set debug compile-cplus-types
+show debug compile-cplus-types
+  Control the display of debug output about type conversion in the
+  C++ compile feature.  Commands have no effect while compiliong
+  for other languages.
+
+set debug skip
+show debug skip
+  Control whether debug output about files/functions skipping is
+  displayed.
+
+frame apply [all | COUNT | -COUNT | level LEVEL...] [FLAG]... COMMAND
+  Apply a command to some frames.
+  FLAG arguments allow to control what output to produce and how to handle
+  errors raised when applying COMMAND to a frame.
+
+taas COMMAND
+  Apply a command to all threads (ignoring errors and empty output).
+  Shortcut for 'thread apply all -s COMMAND'.
+
+faas COMMAND
+  Apply a command to all frames (ignoring errors and empty output).
+  Shortcut for 'frame apply all -s COMMAND'.
+
+tfaas COMMAND
+  Apply a command to all frames of all threads (ignoring errors and empty
+  output).
+  Shortcut for 'thread apply all -s frame apply all -s COMMAND'.
+
+maint set dwarf unwinders (on|off)
+maint show dwarf unwinders
+  Control whether DWARF unwinders can be used.
+
+info proc files
+  Display a list of open files for a process.
+
+* Changed commands
+
+Changes to the "frame", "select-frame", and "info frame" CLI commands.
+  These commands all now take a frame specification which
+  is either a frame level, or one of the keywords 'level', 'address',
+  'function', or 'view' followed by a parameter.  Selecting a frame by
+  address, or viewing a frame outside the current backtrace now
+  requires the use of a keyword.  Selecting a frame by level is
+  unchanged.  The MI comment "-stack-select-frame" is unchanged.
+
+target remote FILENAME
+target extended-remote FILENAME
+  If FILENAME is a Unix domain socket, GDB will attempt to connect
+  to this socket instead of opening FILENAME as a character device.
+
+info args [-q] [-t TYPEREGEXP] [NAMEREGEXP]
+info functions [-q] [-t TYPEREGEXP] [NAMEREGEXP]
+info locals [-q] [-t TYPEREGEXP] [NAMEREGEXP]
+info variables [-q] [-t TYPEREGEXP] [NAMEREGEXP]
+  These commands can now print only the searched entities
+  matching the provided regexp(s), giving a condition
+  on the entity names or entity types.  The flag -q disables
+  printing headers or informations messages.
+
+info functions
+info types
+info variables
+rbreak
+  These commands now determine the syntax for the shown entities
+  according to the language chosen by `set language'.  In particular,
+  `set language auto' means to automatically choose the language of
+  the shown entities.
+
+thread apply [all | COUNT | -COUNT] [FLAG]... COMMAND
+  The 'thread apply' command accepts new FLAG arguments.
+  FLAG arguments allow to control what output to produce and how to handle
+  errors raised when applying COMMAND to a thread.
+
+set tui tab-width NCHARS
+show tui tab-width NCHARS
+  "set tui tab-width" replaces the "tabset" command, which has been deprecated.
+
+set style enabled [on|off]
+show style enabled
+  Enable or disable terminal styling.  Styling is enabled by default
+  on most hosts, but disabled by default when in batch mode.
+
+set style sources [on|off]
+show style sources
+  Enable or disable source code styling.  Source code styling is
+  enabled by default, but only takes effect if styling in general is
+  enabled, and if GDB was linked with GNU Source Highlight.
+
+set style filename foreground COLOR
+set style filename background COLOR
+set style filename intensity VALUE
+  Control the styling of file names.
+
+set style function foreground COLOR
+set style function background COLOR
+set style function intensity VALUE
+  Control the styling of function names.
+
+set style variable foreground COLOR
+set style variable background COLOR
+set style variable intensity VALUE
+  Control the styling of variable names.
+
+set style address foreground COLOR
+set style address background COLOR
+set style address intensity VALUE
+  Control the styling of addresses.
+
+* MI changes
+
+  ** The '-data-disassemble' MI command now accepts an '-a' option to
+     disassemble the whole function surrounding the given program
+     counter value or function name.  Support for this feature can be
+     verified by using the "-list-features" command, which should
+     contain "data-disassemble-a-option".
+
+  ** Command responses and notifications that include a frame now include
+     the frame's architecture in a new "arch" attribute.
+
+* New native configurations
+
+GNU/Linux/RISC-V		riscv*-*-linux*
+FreeBSD/riscv			riscv*-*-freebsd*
+
+* New targets
+
+GNU/Linux/RISC-V		riscv*-*-linux*
+CSKY ELF			csky*-*-elf
+CSKY GNU/LINUX			csky*-*-linux
+FreeBSD/riscv			riscv*-*-freebsd*
+NXP S12Z			s12z-*-elf
+GNU/Linux/OpenRISC		or1k*-*-linux*
+
+* Removed targets
+
+GDB no longer supports native debugging on versions of MS-Windows
+before Windows XP.
+
+* Python API
+
+  ** GDB no longer supports Python versions less than 2.6.
+
+  ** The gdb.Inferior type has a new 'progspace' property, which is the program
+     space associated to that inferior.
+
+  ** The gdb.Progspace type has a new 'objfiles' method, which returns the list
+     of objfiles associated to that program space.
+
+  ** gdb.SYMBOL_LOC_COMMON_BLOCK, gdb.SYMBOL_MODULE_DOMAIN, and
+     gdb.SYMBOL_COMMON_BLOCK_DOMAIN were added to reflect changes to
+     the gdb core.
+
+  ** gdb.SYMBOL_VARIABLES_DOMAIN, gdb.SYMBOL_FUNCTIONS_DOMAIN, and
+     gdb.SYMBOL_TYPES_DOMAIN are now deprecated.  These were never
+     correct and did not work properly.
+
+  ** The gdb.Value type has a new constructor, which is used to construct a
+     gdb.Value from a Python buffer object and a gdb.Type.
+
+* Configure changes
+
+--enable-ubsan
+
+  Enable or disable the undefined behavior sanitizer.  This is
+  disabled by default, but passing --enable-ubsan=yes or
+  --enable-ubsan=auto to configure will enable it.  Enabling this can
+  cause a performance penalty.  The undefined behavior sanitizer was
+  first introduced in GCC 4.9.
+
+*** Changes in GDB 8.2
+
+* The 'set disassembler-options' command now supports specifying options
+  for the MIPS target.
+
+* The 'symbol-file' command now accepts an '-o' option to add a relative
+  offset to all sections.
+
+* Similarly, the 'add-symbol-file' command also accepts an '-o' option to add
+  a relative offset to all sections, but it allows to override the load
+  address of individual sections using '-s'.
+
+* The 'add-symbol-file' command no longer requires the second argument
+  (address of the text section).
+
+* The endianness used with the 'set endian auto' mode in the absence of
+  an executable selected for debugging is now the last endianness chosen
+  either by one of the 'set endian big' and 'set endian little' commands
+  or by inferring from the last executable used, rather than the startup
+  default.
+
+* The pager now allows a "c" response, meaning to disable the pager
+  for the rest of the current command.
+
+* The commands 'info variables/functions/types' now show the source line
+  numbers of symbol definitions when available.
+
+* 'info proc' now works on running processes on FreeBSD systems and core
+  files created on FreeBSD systems.
+
+* C expressions can now use _Alignof, and C++ expressions can now use
+  alignof.
+
+* Support for SVE on AArch64 Linux.  Note that GDB does not detect changes to
+  the vector length while the process is running.
+
+* New commands
+
+set debug fbsd-nat
+show debug fbsd-nat
+  Control display of debugging info regarding the FreeBSD native target.
+
+set|show varsize-limit
+  This new setting allows the user to control the maximum size of Ada
+  objects being printed when those objects have a variable type,
+  instead of that maximum size being hardcoded to 65536 bytes.
+
+set|show record btrace cpu
+  Controls the processor to be used for enabling errata workarounds for
+  branch trace decode.
+
+maint check libthread-db
+  Run integrity checks on the current inferior's thread debugging
+  library
+
+maint set check-libthread-db (on|off)
+maint show check-libthread-db
+  Control whether to run integrity checks on inferior specific thread
+  debugging libraries as they are loaded.  The default is not to
+  perform such checks.
+
+* Python API
+
+  ** Type alignment is now exposed via the "align" attribute of a gdb.Type.
+
+  ** The commands attached to a breakpoint can be set by assigning to
+     the breakpoint's "commands" field.
+
+  ** gdb.execute can now execute multi-line gdb commands.
+
+  ** The new functions gdb.convenience_variable and
+     gdb.set_convenience_variable can be used to get and set the value
+     of convenience variables.
+
+  ** A gdb.Parameter will no longer print the "set" help text on an
+     ordinary "set"; instead by default a "set" will be silent unless
+     the get_set_string method returns a non-empty string.
+
+* New targets
+
+RiscV ELF			riscv*-*-elf
+
+* Removed targets and native configurations
+
+m88k running OpenBSD  		m88*-*-openbsd*
+SH-5/SH64 ELF			sh64-*-elf*, SH-5/SH64 support in sh*
+SH-5/SH64 running GNU/Linux	SH-5/SH64 support in sh*-*-linux*
+SH-5/SH64 running OpenBSD 	SH-5/SH64 support in sh*-*-openbsd*
+
+* Aarch64/Linux hardware watchpoints improvements
+
+  Hardware watchpoints on unaligned addresses are now properly
+  supported when running Linux kernel 4.10 or higher: read and access
+  watchpoints are no longer spuriously missed, and all watchpoints
+  lengths between 1 and 8 bytes are supported.  On older kernels,
+  watchpoints set on unaligned addresses are no longer missed, with
+  the tradeoff that there is a possibility of false hits being
+  reported.
+
+* Configure changes
+
+--enable-codesign=CERT
+  This can be used to invoke "codesign -s CERT" after building gdb.
+  This option is useful on macOS, where code signing is required for
+  gdb to work properly.
+
+--disable-gdbcli has been removed
+  This is now silently accepted, but does nothing.
+
+*** Changes in GDB 8.1
+
+* GDB now supports dynamically creating arbitrary register groups specified
+  in XML target descriptions.  This allows for finer grain grouping of
+  registers on systems with a large amount of registers.
+
+* The 'ptype' command now accepts a '/o' flag, which prints the
+  offsets and sizes of fields in a struct, like the pahole(1) tool.
+
+* New "--readnever" command line option instructs GDB to not read each
+  symbol file's symbolic debug information.  This makes startup faster
+  but at the expense of not being able to perform symbolic debugging.
+  This option is intended for use cases where symbolic debugging will
+  not be used, e.g., when you only need to dump the debuggee's core.
+
+* GDB now uses the GNU MPFR library, if available, to emulate target
+  floating-point arithmetic during expression evaluation when the target
+  uses different floating-point formats than the host.  At least version
+  3.1 of GNU MPFR is required.
+
+* GDB now supports access to the guarded-storage-control registers and the
+  software-based guarded-storage broadcast control registers on IBM z14.
+
+* On Unix systems, GDB now supports transmitting environment variables
+  that are to be set or unset to GDBserver.  These variables will
+  affect the environment to be passed to the remote inferior.
+
+  To inform GDB of environment variables that are to be transmitted to
+  GDBserver, use the "set environment" command.  Only user set
+  environment variables are sent to GDBserver.
+
+  To inform GDB of environment variables that are to be unset before
+  the remote inferior is started by the GDBserver, use the "unset
+  environment" command.
+
+* Completion improvements
+
+  ** GDB can now complete function parameters in linespecs and
+     explicit locations without quoting.  When setting breakpoints,
+     quoting around functions names to help with TAB-completion is
+     generally no longer necessary.  For example, this now completes
+     correctly:
+
+      (gdb) b function(in[TAB]
+      (gdb) b function(int)
+
+     Related, GDB is no longer confused with completing functions in
+     C++ anonymous namespaces:
+
+      (gdb) b (anon[TAB]
+      (gdb) b (anonymous namespace)::[TAB][TAB]
+      (anonymous namespace)::a_function()
+      (anonymous namespace)::b_function()
+
+  ** GDB now has much improved linespec and explicit locations TAB
+     completion support, that better understands what you're
+     completing and offers better suggestions.  For example, GDB no
+     longer offers data symbols as possible completions when you're
+     setting a breakpoint.
+
+  ** GDB now TAB-completes label symbol names.
+
+  ** The "complete" command now mimics TAB completion accurately.
+
+* New command line options (gcore)
+
+-a
+  Dump all memory mappings.
+
+* Breakpoints on C++ functions are now set on all scopes by default
+
+  By default, breakpoints on functions/methods are now interpreted as
+  specifying all functions with the given name ignoring missing
+  leading scopes (namespaces and classes).
+
+  For example, assuming a C++ program with symbols named:
+
+    A::B::func()
+    B::func()
+
+  both commands "break func()" and "break B::func()" set a breakpoint
+  on both symbols.
+
+  You can use the new flag "-qualified" to override this.  This makes
+  GDB interpret the specified function name as a complete
+  fully-qualified name instead.  For example, using the same C++
+  program, the "break -q B::func" command sets a breakpoint on
+  "B::func", only.  A parameter has been added to the Python
+  gdb.Breakpoint constructor to achieve the same result when creating
+  a breakpoint from Python.
+
+* Breakpoints on functions marked with C++ ABI tags
+
+  GDB can now set breakpoints on functions marked with C++ ABI tags
+  (e.g., [abi:cxx11]).  See here for a description of ABI tags:
+  https://developers.redhat.com/blog/2015/02/05/gcc5-and-the-c11-abi/
+
+  Functions with a C++11 abi tag are demangled/displayed like this:
+
+    function[abi:cxx11](int)
+            ^^^^^^^^^^^
+
+  You can now set a breakpoint on such functions simply as if they had
+  no tag, like:
+
+    (gdb) b function(int)
+
+  Or if you need to disambiguate between tags, like:
+
+    (gdb) b function[abi:other_tag](int)
+
+  Tab completion was adjusted accordingly as well.
+
+* Python Scripting
+
+  ** New events gdb.new_inferior, gdb.inferior_deleted, and
+     gdb.new_thread are emitted.  See the manual for further
+     description of these.
+
+  ** A new function, "gdb.rbreak" has been added to the Python API.
+     This function allows the setting of a large number of breakpoints
+     via a regex pattern in Python.  See the manual for further details.
+
+  ** Python breakpoints can now accept explicit locations.  See the
+     manual for a further description of this feature.
+
+
+* New features in the GDB remote stub, GDBserver
+
+  ** GDBserver is now able to start inferior processes with a
+     specified initial working directory.
+
+     The user can set the desired working directory to be used from
+     GDB using the new "set cwd" command.
+
+  ** New "--selftest" command line option runs some GDBserver self
+     tests.  These self tests are disabled in releases.
+
+  ** On Unix systems, GDBserver now does globbing expansion and variable
+     substitution in inferior command line arguments.
+
+     This is done by starting inferiors using a shell, like GDB does.
+     See "set startup-with-shell" in the user manual for how to disable
+     this from GDB when using "target extended-remote".  When using
+     "target remote", you can disable the startup with shell by using the
+     new "--no-startup-with-shell" GDBserver command line option.
+
+  ** On Unix systems, GDBserver now supports receiving environment
+     variables that are to be set or unset from GDB.  These variables
+     will affect the environment to be passed to the inferior.
+
+* When catching an Ada exception raised with a message, GDB now prints
+  the message in the catchpoint hit notification. In GDB/MI mode, that
+  information is provided as an extra field named "exception-message"
+  in the *stopped notification.
+
+* Trait objects can now be inspected When debugging Rust code.  This
+  requires compiler support which will appear in Rust 1.24.
+
+* New remote packets
+
+QEnvironmentHexEncoded
+  Inform GDBserver of an environment variable that is to be passed to
+  the inferior when starting it.
+
+QEnvironmentUnset
+  Inform GDBserver of an environment variable that is to be unset
+  before starting the remote inferior.
+
+QEnvironmentReset
+  Inform GDBserver that the environment should be reset (i.e.,
+  user-set environment variables should be unset).
+
+QStartupWithShell
+  Indicates whether the inferior must be started with a shell or not.
+
+QSetWorkingDir
+  Tell GDBserver that the inferior to be started should use a specific
+  working directory.
+
+* The "maintenance print c-tdesc" command now takes an optional
+  argument which is the file name of XML target description.
+
+* The "maintenance selftest" command now takes an optional argument to
+  filter the tests to be run.
+
+* The "enable", and "disable" commands now accept a range of
+  breakpoint locations, e.g. "enable 1.3-5".
+
+* New commands
+
+set|show cwd
+  Set and show the current working directory for the inferior.
+
+set|show compile-gcc
+  Set and show compilation command used for compiling and injecting code
+  with the 'compile' commands.
+
+set debug separate-debug-file
+show debug separate-debug-file
+  Control the display of debug output about separate debug file search.
+
+set dump-excluded-mappings
+show dump-excluded-mappings
+  Control whether mappings marked with the VM_DONTDUMP flag should be
+  dumped when generating a core file.
+
+maint info selftests
+  List the registered selftests.
+
+starti
+  Start the debugged program stopping at the first instruction.
+
+set|show debug or1k
+  Control display of debugging messages related to OpenRISC targets.
+
+set|show print type nested-type-limit
+  Set and show the limit of nesting level for nested types that the
+  type printer will show.
+
+* TUI Single-Key mode now supports two new shortcut keys: `i' for stepi and
+  `o' for nexti.
+
+* Safer/improved support for debugging with no debug info
+
+  GDB no longer assumes functions with no debug information return
+  'int'.
+
+  This means that GDB now refuses to call such functions unless you
+  tell it the function's type, by either casting the call to the
+  declared return type, or by casting the function to a function
+  pointer of the right type, and calling that:
+
+    (gdb) p getenv ("PATH")
+    'getenv' has unknown return type; cast the call to its declared return type
+    (gdb) p (char *) getenv ("PATH")
+    $1 = 0x7fffffffe "/usr/local/bin:/"...
+    (gdb) p ((char * (*) (const char *)) getenv) ("PATH")
+    $2 = 0x7fffffffe "/usr/local/bin:/"...
+
+  Similarly, GDB no longer assumes that global variables with no debug
+  info have type 'int', and refuses to print the variable's value
+  unless you tell it the variable's type:
+
+    (gdb) p var
+    'var' has unknown type; cast it to its declared type
+    (gdb) p (float) var
+    $3 = 3.14
+
+* New native configurations
+
+FreeBSD/aarch64			aarch64*-*-freebsd*
+FreeBSD/arm			arm*-*-freebsd*
+
+* New targets
+
+FreeBSD/aarch64			aarch64*-*-freebsd*
+FreeBSD/arm			arm*-*-freebsd*
+OpenRISC ELF 			or1k*-*-elf
+
+* Removed targets and native configurations
+
+Solaris 2.0-9			i?86-*-solaris2.[0-9], sparc*-*-solaris2.[0-9]
+
 *** Changes in GDB 8.0
 
 * GDB now supports access to the PKU register on GNU/Linux. The register is
@@ -107,6 +704,10 @@ show disassembler-options
 -file-list-shared-libraries
   List the shared libraries in the program.  This is
   equivalent to the CLI command "info shared".
+
+-catch-handlers
+  Catchpoints stopping the program when Ada exceptions are
+  handled.  This is equivalent to the CLI command "catch handlers".
 
 *** Changes in GDB 7.12
 
@@ -404,6 +1005,9 @@ show max-value-size
 
 * Support for reading/writing memory and extracting values on architectures
   whose memory is addressable in units of any integral multiple of 8 bits.
+
+catch handlers
+  Allows to break when an Ada exception is handled.
 
 * New remote packets
 

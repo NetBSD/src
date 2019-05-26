@@ -1,5 +1,5 @@
 /* Address ranges.
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU Simulators.
@@ -68,7 +68,7 @@ extern void sim_addr_range_delete (ADDR_RANGE * /*ar*/,
 #define SIM_ARANGE_INLINE EXTERN_INLINE
 #endif
 #else
-#define SIM_ARANGE_INLINE EXTERN
+#define SIM_ARANGE_INLINE extern
 #endif
 
 /* Return non-zero if ADDR is in range AR, traversing the entire tree.

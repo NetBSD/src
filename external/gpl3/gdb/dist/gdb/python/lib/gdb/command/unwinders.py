@@ -1,5 +1,5 @@
 # Unwinder commands.
-# Copyright 2015-2017 Free Software Foundation, Inc.
+# Copyright 2015-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,18 +56,17 @@ def parse_unwinder_command_args(arg):
 class InfoUnwinder(gdb.Command):
     """GDB command to list unwinders.
 
-    Usage: info unwinder [locus-regexp [name-regexp]]
+Usage: info unwinder [LOCUS-REGEXP [NAME-REGEXP]]
 
-    LOCUS-REGEXP is a regular expression matching the location of the
-    unwinder.  If it is omitted, all registered unwinders from all
-    loci are listed.  A locus can be 'global', 'progspace' to list
-    the unwinders from the current progspace, or a regular expression
-    matching filenames of objfiles.
+LOCUS-REGEXP is a regular expression matching the location of the
+unwinder.  If it is omitted, all registered unwinders from all
+loci are listed.  A locus can be 'global', 'progspace' to list
+the unwinders from the current progspace, or a regular expression
+matching filenames of objfiles.
 
-    NAME-REGEXP is a regular expression to filter unwinder names.  If
-    this omitted for a specified locus, then all registered unwinders
-    in the locus are listed.
-    """
+NAME-REGEXP is a regular expression to filter unwinder names.  If
+this omitted for a specified locus, then all registered unwinders
+in the locus are listed."""
 
     def __init__(self):
         super(InfoUnwinder, self).__init__("info unwinder",
@@ -145,17 +144,15 @@ def do_enable_unwinder(arg, flag):
 class EnableUnwinder(gdb.Command):
     """GDB command to enable unwinders.
 
-    Usage: enable unwinder [locus-regexp [name-regexp]]
+Usage: enable unwinder [LOCUS-REGEXP [NAME-REGEXP]]
 
-    LOCUS-REGEXP is a regular expression specifying the unwinders to
-    enable.  It can 'global', 'progspace', or the name of an objfile
-    within that progspace.
+LOCUS-REGEXP is a regular expression specifying the unwinders to
+enable.  It can 'global', 'progspace', or the name of an objfile
+within that progspace.
 
-    NAME_REGEXP is a regular expression to filter unwinder names.  If
-    this omitted for a specified locus, then all registered unwinders
-    in the locus are affected.
-
-    """
+NAME_REGEXP is a regular expression to filter unwinder names.  If
+this omitted for a specified locus, then all registered unwinders
+in the locus are affected."""
 
     def __init__(self):
         super(EnableUnwinder, self).__init__("enable unwinder",
@@ -169,17 +166,15 @@ class EnableUnwinder(gdb.Command):
 class DisableUnwinder(gdb.Command):
     """GDB command to disable the specified unwinder.
 
-    Usage: disable unwinder [locus-regexp [name-regexp]]
+Usage: disable unwinder [LOCUS-REGEXP [NAME-REGEXP]]
 
-    LOCUS-REGEXP is a regular expression specifying the unwinders to
-    disable.  It can 'global', 'progspace', or the name of an objfile
-    within that progspace.
+LOCUS-REGEXP is a regular expression specifying the unwinders to
+disable.  It can 'global', 'progspace', or the name of an objfile
+within that progspace.
 
-    NAME_REGEXP is a regular expression to filter unwinder names.  If
-    this omitted for a specified locus, then all registered unwinders
-    in the locus are affected.
-
-    """
+NAME_REGEXP is a regular expression to filter unwinder names.  If
+this omitted for a specified locus, then all registered unwinders
+in the locus are affected."""
 
     def __init__(self):
         super(DisableUnwinder, self).__init__("disable unwinder",

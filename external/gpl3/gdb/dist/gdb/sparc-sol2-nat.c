@@ -1,6 +1,6 @@
 /* Native-dependent code for Solaris SPARC.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,16 +40,10 @@
    PR_MODEL_LP64, we know that GDB is being compiled as a 64-bit
    program.
 
-   GNU/Linux uses the same formats as Solaris for its core files (but
-   not for ptrace(2)).  The GNU/Linux headers don't define
-   PR_MODEL_NATIVE though.  Therefore we rely on the __arch64__ define
-   provided by GCC to determine the appropriate data model.
-
    Note that a 32-bit GDB won't be able to debug a 64-bit target
    process using /proc on Solaris.  */
 
-#if (defined (__arch64__) || \
-     (defined (PR_MODEL_NATIVE) && (PR_MODEL_NATIVE == PR_MODEL_LP64)))
+#if PR_MODEL_NATIVE == PR_MODEL_LP64
 
 #include "sparc64-tdep.h"
 
@@ -96,19 +90,4 @@ fill_fpregset (const struct regcache *regcache,
 	       prfpregset_t *fpregs, int regnum)
 {
   sparc_collect_fpregset (&sparc_sol2_fpregmap, regcache, regnum, fpregs);
-}
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_sparc_sol2_nat;
-
-void
-_initialize_sparc_sol2_nat (void)
-{
-  struct target_ops *t;
-
-  t = procfs_target ();
-#ifdef NEW_PROC_API	/* Solaris 6 and above can do HW watchpoints.  */
-  procfs_use_watchpoints (t);
-#endif
-  add_target (t);
 }

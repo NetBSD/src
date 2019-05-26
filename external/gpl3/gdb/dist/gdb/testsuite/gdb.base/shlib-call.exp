@@ -1,4 +1,4 @@
-#   Copyright 1997-2017 Free Software Foundation, Inc.
+#   Copyright 1997-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -170,18 +170,22 @@ gdb_test_no_output "set width 0"
 # test that we can re-set breakpoints in shared libraries
 gdb_breakpoint "shr1" "allow-pending"
 
-# FIXME: should not send "run" explicitly.  Non-portable.
-
-if ![is_remote target] {
-  gdb_test "run" "Starting program:.*Breakpoint .,.*" \
-	"run to bp in shared library"
-
-  gdb_continue_to_end "" continue 1
-
-  gdb_test "run" "Starting program:.*Breakpoint .,.*" \
-	"re-run to bp in shared library (PR's 16495, 18213)"
-
-  gdb_continue_to_end "" continue 1
+set test "run to bp in shared library"
+gdb_run_cmd
+gdb_test_multiple "" $test {
+    -re "Breakpoint .,.*${gdb_prompt} " {
+	pass $test
+    }
 }
 
-return 0
+gdb_continue_to_end "" continue 1
+
+set test "re-run to bp in shared library (PR's 16495, 18213)"
+gdb_run_cmd
+gdb_test_multiple "" $test {
+    -re "Breakpoint .,.*${gdb_prompt} " {
+	pass $test
+    }
+}
+
+gdb_continue_to_end "" continue 1

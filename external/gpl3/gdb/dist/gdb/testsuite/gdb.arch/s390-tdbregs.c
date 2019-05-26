@@ -1,4 +1,4 @@
-/* Copyright 2008-2017 Free Software Foundation, Inc.
+/* Copyright 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,13 @@
 
 #include <stdio.h>
 
+/* Start a transaction.  To avoid the need for FPR save/restore, assume
+   that no FP- or vector registers are modified within the transaction.
+   Thus invoke TBEGIN with the "allow floating-point operation" flag set
+   to zero, which forces a transaction abort when hitting an FP- or vector
+   instruction.  Also assume that TBEGIN will eventually succeed, so just
+   retry indefinitely.  */
+
 static void
 my_tbegin ()
 {
@@ -27,6 +34,8 @@ my_tbegin ()
       : /* no inputs */
       : "cc", "memory" );
 }
+
+/* End a transaction.  */
 
 static void
 my_tend ()

@@ -1,6 +1,5 @@
+Known problems in GDB can be found by searching GDB's Bugzilla, here:
 
-			Known problems in GDB 8.0.1
+    https://sourceware.org/bugzilla/query.cgi?product=gdb
 
-		See also: http://www.gnu.org/software/gdb/bugs/
-
-None worth mentioning here.
+For help on searching, click the "Help" link at the top of the page.

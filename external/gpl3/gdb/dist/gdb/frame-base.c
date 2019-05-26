@@ -1,6 +1,6 @@
 /* Definitions for frame address handler, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -119,8 +119,6 @@ frame_base_find_by_frame (struct frame_info *this_frame)
     }
   return table->default_base;
 }
-
-extern initialize_file_ftype _initialize_frame_base; /* -Wmissing-prototypes */
 
 void
 _initialize_frame_base (void)

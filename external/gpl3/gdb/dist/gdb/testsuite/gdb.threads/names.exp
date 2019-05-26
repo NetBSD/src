@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2017 Free Software Foundation, Inc.
+# Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ if ![runto "all_threads_ready"] {
 }
 
 gdb_test "info threads" \
-    [multi_line "\\* 1   .*\"main\" all_threads_ready.*" \
+    [multi_line "\\* 1   .*\"main\"\[ \]\+all_threads_ready.*" \
 		"  2   .*\"carrot\".*"  \
 		"  3   .*\"potato\".*"  \
 		"  4   .*\"celery\".*" ] \

@@ -1,5 +1,5 @@
 /* Target-dependent code for the GNU Hurd.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -60,9 +60,6 @@ i386gnu_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   tdep->jb_pc_offset = 20;	/* From <bits/setjmp.h>.  */
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern void _initialize_i386gnu_tdep (void);
 
 void
 _initialize_i386gnu_tdep (void)

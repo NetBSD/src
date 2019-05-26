@@ -1,4 +1,4 @@
-# Copyright 1992-2017 Free Software Foundation, Inc.
+# Copyright 1992-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 standard_testfile scope0.c scope1.c
 
-if {[prepare_for_testing "failed to prepare" ${testfile} \
+if {[build_executable "failed to build" ${testfile} \
 	 [list $srcfile $srcfile2] {debug}]} {
     return -1
 }
@@ -497,6 +497,13 @@ proc test_at_localscopes {} {
     gdb_stop_suppressing_tests
 }
 
+# Note, we don't pass a binfile to clean_restart because we need to
+# avoid gdb_load here.  With remote targets, gdb_load connects to the
+# remote target, and we specificaly want the following tests to run
+# before the program is started.
+clean_restart
+gdb_file_cmd $binfile
+
 # Test that variables in various segments print out correctly before
 # the program is run.  
 
@@ -505,21 +512,15 @@ setup_xfail "rs6000-*-*"
 
 gdb_test "print 'scope0.c'::filelocal_ro" "= 201"
 
-# gdb currently cannot access bss memory on some targets if the inferior
-# is not running.
+# Check that gdb can access bss memory if the inferior is not running.
 #
-# For PA boards using monitor/remote-pa.c, the bss test is going to 
-# randomly fail.  We've already put remote-pa on the target stack,
-# so we actually read memory from the board.  Problem is crt0.o
-# is responsible for clearing bss and that hasnt' happened yet.
-#
-# This is a problem for all non-native targets. -- manson
-if [is_remote target] {
-    unsupported "print 'scope0.c'::filelocal_bss before run"
-} else {
-    gdb_test "print 'scope0.c'::filelocal_bss" "= 0" \
-	"print 'scope0.c'::filelocal_bss before run"
-}
+# Note the care above about avoiding gdb_load.  Otherwise, for
+# embedded stub-like boards, this test would randomly fail.  If we'd
+# already put target remote on the target stack, we'd read memory from
+# the board instead of the program's binary, and we would have
+# connected before crt0.o had had a chance to clear bss.
+gdb_test "print 'scope0.c'::filelocal_bss" "= 0" \
+    "print 'scope0.c'::filelocal_bss before run"
 
 gdb_test "print 'scope0.c'::filelocal" "= 1" \
     "print 'scope0.c'::filelocal before run"
