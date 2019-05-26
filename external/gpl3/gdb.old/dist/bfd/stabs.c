@@ -1,5 +1,5 @@
 /* Stabs in sections linking support.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -274,7 +274,8 @@ _bfd_link_section_stabs (bfd *abfd,
       symstroff = stroff + bfd_get_32 (abfd, sym + STRDXOFF);
       if (symstroff >= stabstrsec->size)
 	{
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
+	    /* xgettext:c-format */
 	    (_("%B(%A+0x%lx): Stabs entry has invalid string index."),
 	     abfd, stabsec, (long) (sym - stabbuf));
 	  bfd_set_error (bfd_error_bad_value);

@@ -1,4 +1,4 @@
-# Copyright 1998-2016 Free Software Foundation, Inc.
+# Copyright 1998-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,9 +56,8 @@ if [get_compiler_info] {
     return -1
 }
 
-if {[prepare_for_testing $testfile.exp $testfile \
+if {[prepare_for_testing "failed to prepare" $testfile \
 	 [list $srcfile $srcfile2] {debug nowarnings}]} {
-    untested $testfile.exp
     return -1
 }
 
@@ -717,7 +716,7 @@ gdb_expect {
 }
 
 # Empty COMMAND sends no newline while " " sends the newline we need.
-gdb_test " " "Source directories searched: .*" "Glob remaining of directory test"
+gdb_test " " "Source directories searched: .*" "glob remaining of directory test"
 
 gdb_test "complete file ./gdb.base/compl" \
     "file ./gdb.base/completion\\.exp.*" \
@@ -939,42 +938,5 @@ send_gdb "complete p mark\n"
 gdb_test_multiple "" "$test" {
     -re "List may be truncated, max-completions reached.*\r\n$gdb_prompt $" {
 	pass "$test"
-    }
-}
-
-gdb_test_no_output "set max-completions unlimited"
-
-if {![skip_tui_tests] && ![target_info exists gdb,nointerrupts]} {
-    set test "test completion of layout names"
-    send_gdb "layout\t\t\t"
-    gdb_test_multiple "" "$test" {
-	-re "asm *next *prev *regs *split *src *\r\n$gdb_prompt layout $" {
-	    pass "$test"
-	}
-    }
-    send_gdb "\003"
-    set test "quit command input after testing layout completion"
-    gdb_test_multiple "" "$test" {
-	-re "$gdb_prompt $" {
-	    pass "$test"
-	}
-    }
-}
-if {![skip_tui_tests] && ![target_info exists gdb,nointerrupts]} {
-    with_test_prefix "focus command" {
-	set test "test completion"
-	send_gdb "focus \t\t"
-	gdb_test_multiple "" "$test" {
-	    -re "cmd *next *prev *src *\r\n$gdb_prompt focus $" {
-		pass "$test"
-	    }
-	}
-	send_gdb "\003"
-	set test "quit command input after testing completion"
-	gdb_test_multiple "" "$test" {
-	    -re "$gdb_prompt $" {
-		pass "$test"
-	    }
-	}
     }
 }

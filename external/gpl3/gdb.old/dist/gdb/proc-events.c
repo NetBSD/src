@@ -1,6 +1,6 @@
 /* Machine-independent support for SVR4 /proc (process file system)
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
    Based on work by Fred Fish, Stu Grossman, Geoff Noer, and others.
@@ -54,8 +54,8 @@
 struct trans
 {
   int value;                    /* The numeric value.  */
-  char *name;                   /* The equivalent symbolic value.  */
-  char *desc;                   /* Short description of value.  */
+  const char *name;             /* The equivalent symbolic value.  */
+  const char *desc;             /* Short description of value.  */
 };
 
 
@@ -64,7 +64,7 @@ struct trans
 /* Syscall translation table.  */
 
 #define MAX_SYSCALLS 262	/* Pretty arbitrary.  */
-static char *syscall_table[MAX_SYSCALLS];
+static const char *syscall_table[MAX_SYSCALLS];
 
 static void
 init_syscall_table (void)

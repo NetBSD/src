@@ -1,6 +1,6 @@
 /* Frame unwinder for ia64 frames using the libunwind library.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    Written by Jeff Johnston, contributed by Red Hat Inc.
 

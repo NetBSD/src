@@ -1,5 +1,5 @@
 /* Handle TIC6X (DSBT) shared libraries for GDB, the GNU Debugger.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -816,7 +816,6 @@ enable_break (void)
     {
       unsigned int interp_sect_size;
       char *buf;
-      bfd *tmp_bfd = NULL;
       CORE_ADDR addr;
       struct int_elf32_dsbt_loadmap *ldm;
       int ret;
@@ -832,6 +831,7 @@ enable_break (void)
 	 loaded so that we can load its symbols and place a breakpoint
 	 in the dynamic linker itself.  */
 
+      gdb_bfd_ref_ptr tmp_bfd;
       TRY
 	{
 	  tmp_bfd = solib_bfd_open (buf);
@@ -852,29 +852,31 @@ enable_break (void)
 
       /* Record the relocated start and end address of the dynamic linker
 	 text and plt section for dsbt_in_dynsym_resolve_code.  */
-      interp_sect = bfd_get_section_by_name (tmp_bfd, ".text");
+      interp_sect = bfd_get_section_by_name (tmp_bfd.get (), ".text");
       if (interp_sect)
 	{
 	  info->interp_text_sect_low
-	    = bfd_section_vma (tmp_bfd, interp_sect);
+	    = bfd_section_vma (tmp_bfd.get (), interp_sect);
 	  info->interp_text_sect_low
 	    += displacement_from_map (ldm, info->interp_text_sect_low);
 	  info->interp_text_sect_high
 	    = info->interp_text_sect_low
-	    + bfd_section_size (tmp_bfd, interp_sect);
+	    + bfd_section_size (tmp_bfd.get (), interp_sect);
 	}
-      interp_sect = bfd_get_section_by_name (tmp_bfd, ".plt");
+      interp_sect = bfd_get_section_by_name (tmp_bfd.get (), ".plt");
       if (interp_sect)
 	{
 	  info->interp_plt_sect_low =
-	    bfd_section_vma (tmp_bfd, interp_sect);
+	    bfd_section_vma (tmp_bfd.get (), interp_sect);
 	  info->interp_plt_sect_low
 	    += displacement_from_map (ldm, info->interp_plt_sect_low);
 	  info->interp_plt_sect_high =
-	    info->interp_plt_sect_low + bfd_section_size (tmp_bfd, interp_sect);
+	    info->interp_plt_sect_low + bfd_section_size (tmp_bfd.get (),
+							  interp_sect);
 	}
 
-      addr = gdb_bfd_lookup_symbol (tmp_bfd, cmp_name, "_dl_debug_state");
+      addr = gdb_bfd_lookup_symbol (tmp_bfd.get (), cmp_name,
+				    "_dl_debug_state");
       if (addr != 0)
 	{
 	  if (solib_dsbt_debug)
@@ -901,10 +903,7 @@ enable_break (void)
 	  ret = 0;
 	}
 
-      /* We're done with the temporary bfd.  */
-      gdb_bfd_unref (tmp_bfd);
-
-      /* We're also done with the loadmap.  */
+      /* We're done with the loadmap.  */
       xfree (ldm);
 
       return ret;
@@ -915,15 +914,6 @@ enable_break (void)
 
   /* Failure return.  */
   return 0;
-}
-
-/* Once the symbols from a shared object have been loaded in the usual
-   way, we are called to do any system specific symbol handling that
-   is needed.  */
-
-static void
-dsbt_special_symbol_handling (void)
-{
 }
 
 static void
@@ -1074,7 +1064,6 @@ _initialize_dsbt_solib (void)
   dsbt_so_ops.free_so = dsbt_free_so;
   dsbt_so_ops.clear_solib = dsbt_clear_solib;
   dsbt_so_ops.solib_create_inferior_hook = dsbt_solib_create_inferior_hook;
-  dsbt_so_ops.special_symbol_handling = dsbt_special_symbol_handling;
   dsbt_so_ops.current_sos = dsbt_current_sos;
   dsbt_so_ops.open_symbol_file_object = open_symbol_file_object;
   dsbt_so_ops.in_dynsym_resolve_code = dsbt_in_dynsym_resolve_code;

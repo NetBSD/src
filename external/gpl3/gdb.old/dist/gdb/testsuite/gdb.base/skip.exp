@@ -1,4 +1,4 @@
-#   Copyright 2011-2016 Free Software Foundation, Inc.
+#   Copyright 2011-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # This file was written by Justin Lebar. (justin.lebar@gmail.com)
 # And further hacked on by Doug Evans. (dje@google.com)
 
-if { [prepare_for_testing skip.exp "skip" \
+if { [prepare_for_testing "failed to prepare" "skip" \
                           {skip.c skip1.c } \
                           {debug nowarnings}] } {
     return -1
@@ -46,7 +46,7 @@ gdb_test "skip -x" "Invalid skip option: -x"
 gdb_test "skip -rfu foo.* xyzzy" "Invalid argument: xyzzy"
 
 if ![runto_main] {
-    fail "Can't run to main"
+    fail "can't run to main"
     return
 }
 
@@ -91,7 +91,7 @@ gdb_test "info skip" \
 # right over it and go to the second line of main().
 
 if ![runto_main] {
-    fail "Can't run to main"
+    fail "can't run to main"
     return
 }
 
@@ -112,7 +112,7 @@ with_test_prefix "step after deleting 1" {
 	"info skip (delete 1)"
 
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return
     }
 
@@ -132,7 +132,7 @@ with_test_prefix "step after disabling 3" {
 	"info skip shows entry as disabled"
 
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return
     }
 
@@ -153,7 +153,7 @@ with_test_prefix "step after enable 3" {
 	"info skip shows entry as enabled"
 
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return
     }
 
@@ -224,7 +224,7 @@ gdb_test "skip -rfu ^b.z$" "Function\\(s\\) \\^b\\.z\\$ will be skipped when ste
 
 with_test_prefix "step using -fi" {
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return
     }
 
@@ -237,7 +237,7 @@ with_test_prefix "step using -fi" {
 
 with_test_prefix "step using -gfi" {
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return
     }
 
@@ -250,7 +250,7 @@ with_test_prefix "step using -gfi" {
 
 with_test_prefix "step using -fu for baz" {
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return
     }
 
@@ -265,7 +265,7 @@ with_test_prefix "step using -fu for baz" {
 
 with_test_prefix "step using -rfu for baz" {
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return
     }
 
@@ -284,7 +284,7 @@ with_test_prefix "step using -fi + -fu" {
     gdb_test_no_output "skip delete"
 
     if ![runto test_skip_file_and_function no-message] {
-	fail "Can't run to test_skip_file_and_function"
+	fail "can't run to test_skip_file_and_function"
 	return
     }
 

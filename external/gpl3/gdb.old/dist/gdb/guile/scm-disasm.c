@@ -1,6 +1,6 @@
 /* Scheme interface to architecture.
 
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,11 +37,13 @@ static SCM address_symbol;
 static SCM asm_symbol;
 static SCM length_symbol;
 
-/* Struct used to pass "application data" in disassemble_info.  */
-
-struct gdbscm_disasm_data
+class gdbscm_disassembler : public gdb_disassembler
 {
-  struct gdbarch *gdbarch;
+public:
+  gdbscm_disassembler (struct gdbarch *gdbarch,
+		       struct ui_file *stream,
+		       SCM port, ULONGEST offset);
+
   SCM port;
   /* The offset of the address of the first instruction in PORT.  */
   ULONGEST offset;
@@ -55,7 +57,7 @@ struct gdbscm_disasm_read_data
   bfd_vma memaddr;
   bfd_byte *myaddr;
   unsigned int length;
-  struct disassemble_info *dinfo;
+  gdbscm_disassembler *dinfo;
 };
 
 /* Subroutine of gdbscm_arch_disassemble to simplify it.
@@ -81,13 +83,11 @@ gdbscm_disasm_read_memory_worker (void *datap)
 {
   struct gdbscm_disasm_read_data *data
     = (struct gdbscm_disasm_read_data *) datap;
-  struct disassemble_info *dinfo = data->dinfo;
-  struct gdbscm_disasm_data *disasm_data
-    = (struct gdbscm_disasm_data *) dinfo->application_data;
-  SCM seekto, newpos, port = disasm_data->port;
+  gdbscm_disassembler *dinfo = data->dinfo;
+  SCM seekto, newpos, port = dinfo->port;
   size_t bytes_read;
 
-  seekto = gdbscm_scm_from_ulongest (data->memaddr - disasm_data->offset);
+  seekto = gdbscm_scm_from_ulongest (data->memaddr - dinfo->offset);
   newpos = scm_seek (port, seekto, scm_from_int (SEEK_SET));
   if (!scm_is_eq (seekto, newpos))
     return "seek error";
@@ -108,13 +108,15 @@ gdbscm_disasm_read_memory (bfd_vma memaddr, bfd_byte *myaddr,
 			   unsigned int length,
 			   struct disassemble_info *dinfo)
 {
+  gdbscm_disassembler *self
+    = static_cast<gdbscm_disassembler *> (dinfo->application_data);
   struct gdbscm_disasm_read_data data;
   const char *status;
 
   data.memaddr = memaddr;
   data.myaddr = myaddr;
   data.length = length;
-  data.dinfo = dinfo;
+  data.dinfo = self;
 
   status = gdbscm_with_guile (gdbscm_disasm_read_memory_worker, &data);
 
@@ -123,30 +125,12 @@ gdbscm_disasm_read_memory (bfd_vma memaddr, bfd_byte *myaddr,
   return status != NULL ? -1 : 0;
 }
 
-/* disassemble_info.memory_error_func for gdbscm_print_insn_from_port.
-   Technically speaking, we don't need our own memory_error_func,
-   but to not provide one would leave a subtle dependency in the code.
-   This function exists to keep a clear boundary.  */
-
-static void
-gdbscm_disasm_memory_error (int status, bfd_vma memaddr,
-			    struct disassemble_info *info)
+gdbscm_disassembler::gdbscm_disassembler (struct gdbarch *gdbarch,
+					  struct ui_file *stream,
+					  SCM port_, ULONGEST offset_)
+  : gdb_disassembler (gdbarch, stream, gdbscm_disasm_read_memory),
+    port (port_), offset (offset_)
 {
-  memory_error (TARGET_XFER_E_IO, memaddr);
-}
-
-/* disassemble_info.print_address_func for gdbscm_print_insn_from_port.
-   Since we need to use our own application_data value, we need to supply
-   this routine as well.  */
-
-static void
-gdbscm_disasm_print_address (bfd_vma addr, struct disassemble_info *info)
-{
-  struct gdbscm_disasm_data *data
-    = (struct gdbscm_disasm_data *) info->application_data;
-  struct gdbarch *gdbarch = data->gdbarch;
-
-  print_address (gdbarch, addr, (struct ui_file *) info->stream);
 }
 
 /* Subroutine of gdbscm_arch_disassemble to simplify it.
@@ -162,32 +146,11 @@ gdbscm_disasm_print_address (bfd_vma addr, struct disassemble_info *info)
 static int
 gdbscm_print_insn_from_port (struct gdbarch *gdbarch,
 			     SCM port, ULONGEST offset, CORE_ADDR memaddr,
-			     struct ui_file *stream, int *branch_delay_insns)
+			     string_file *stream, int *branch_delay_insns)
 {
-  struct disassemble_info di;
-  int length;
-  struct gdbscm_disasm_data data;
+  gdbscm_disassembler di (gdbarch, stream, port, offset);
 
-  di = gdb_disassemble_info (gdbarch, stream);
-  data.gdbarch = gdbarch;
-  data.port = port;
-  data.offset = offset;
-  di.application_data = &data;
-  di.read_memory_func = gdbscm_disasm_read_memory;
-  di.memory_error_func = gdbscm_disasm_memory_error;
-  di.print_address_func = gdbscm_disasm_print_address;
-
-  length = gdbarch_print_insn (gdbarch, memaddr, &di);
-
-  if (branch_delay_insns)
-    {
-      if (di.insn_info_valid)
-	*branch_delay_insns = di.branch_delay_insns;
-      else
-	*branch_delay_insns = 0;
-    }
-
-  return length;
+  return di.print_insn (memaddr, branch_delay_insns);
 }
 
 /* (arch-disassemble <gdb:arch> address
@@ -282,35 +245,29 @@ gdbscm_arch_disassemble (SCM self, SCM start_scm, SCM rest)
   for (pc = start, i = 0; pc <= end && i < count; )
     {
       int insn_len = 0;
-      char *as = NULL;
-      struct ui_file *memfile = mem_fileopen ();
-      struct cleanup *cleanups = make_cleanup_ui_file_delete (memfile);
+      string_file buf;
 
       TRY
 	{
 	  if (using_port)
 	    {
 	      insn_len = gdbscm_print_insn_from_port (gdbarch, port, offset,
-						      pc, memfile, NULL);
+						      pc, &buf, NULL);
 	    }
 	  else
-	    insn_len = gdb_print_insn (gdbarch, pc, memfile, NULL);
+	    insn_len = gdb_print_insn (gdbarch, pc, &buf, NULL);
 	}
       CATCH (except, RETURN_MASK_ALL)
 	{
-	  GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS (except, cleanups);
+	  GDBSCM_HANDLE_GDB_EXCEPTION (except);
 	}
       END_CATCH
 
-      as = ui_file_xstrdup (memfile, NULL);
-
-      result = scm_cons (dascm_make_insn (pc, as, insn_len),
+      result = scm_cons (dascm_make_insn (pc, buf.c_str (), insn_len),
 			 result);
 
       pc += insn_len;
       i++;
-      do_cleanups (cleanups);
-      xfree (as);
     }
 
   return scm_reverse_x (result, SCM_EOL);

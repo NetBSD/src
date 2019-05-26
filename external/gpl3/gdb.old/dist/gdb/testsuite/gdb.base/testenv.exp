@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Free Software Foundation, Inc.
+# Copyright 2011-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ standard_testfile .c
 # Compile binary
 # and start with a fresh gdb
 
-if { [prepare_for_testing ${testfile}.exp ${binfile} ${srcfile}] } {
+if { [prepare_for_testing "failed to prepare" ${binfile} ${srcfile}] } {
      return -1
 }
 
@@ -49,10 +49,10 @@ gdb_breakpoint  $bp_line
 # First test with no TEST_GDB_VAR
 gdb_test "continue" \
   ".*Program found 0 variables starting with TEST_GDB.*" \
-  "Test no TEST_GDB var"
+  "test no TEST_GDB var"
 
 gdb_test_no_output "set env TEST_GDB_VAR1 test1" \
-  "Set TEST_GDB_VAR1"
+  "set TEST_GDB_VAR1"
 
 runto_main
 gdb_breakpoint  $bp_line
@@ -60,10 +60,10 @@ gdb_breakpoint  $bp_line
 # Second test with one TEST_GDB_VAR
 gdb_test "continue" \
   ".*Program found 1 variables starting with TEST_GDB.*" \
-  "Test with one TEST_GDB var"
+  "test with one TEST_GDB var"
 
 gdb_test_no_output "set env TEST_GDB_VAR2 test2" \
-  "Set TEST_GDB_VAR2"
+  "set TEST_GDB_VAR2"
 
 runto_main
 gdb_breakpoint  $bp_line
@@ -71,10 +71,10 @@ gdb_breakpoint  $bp_line
 # Third test with two TEST_GDB_VAR
 gdb_test "continue"  \
   ".*Program found 2 variables starting with TEST_GDB.*" \
-  "Test with two TEST_GDB var"
+  "test with two TEST_GDB var"
 
 gdb_test_no_output "unset env TEST_GDB_VAR1" \
-  "Unset TEST_GDB_VAR1"
+  "unset TEST_GDB_VAR1"
 
 runto_main
 gdb_breakpoint  $bp_line
@@ -83,7 +83,7 @@ gdb_breakpoint  $bp_line
 # with unset command.
 gdb_test "continue"  \
   ".*Program found 1 variables starting with TEST_GDB.*" \
-  "Test with one TEST_GDB var, after unset"
+  "test with one TEST_GDB var, after unset"
 
 gdb_exit
 
@@ -99,14 +99,14 @@ if { ![runto_main] } {
 set bp_line [gdb_get_line_number "set breakpoint here"]
 gdb_breakpoint  $bp_line
 
-gdb_test "show env" ".*TEST_GDB_GLOBAL=.*" "Test passing TEST_GDB_GLOBAL to GDB"
+gdb_test "show env" ".*TEST_GDB_GLOBAL=.*" "test passing TEST_GDB_GLOBAL to GDB"
 # First test with only inherited TEST_GDB_GLOBAL
 gdb_test "continue" \
   ".*TEST_GDB_GLOBAL=Global environment value.*Program found 1 variables starting with TEST_GDB.*" \
-  "Test with TEST_GDB_GLOBAL"
+  "test with TEST_GDB_GLOBAL"
 
 gdb_test_no_output "unset env TEST_GDB_GLOBAL" \
-  "Unset TEST_GDB_GLOBAL"
+  "unset TEST_GDB_GLOBAL"
 
 runto_main
 gdb_breakpoint  $bp_line
@@ -114,7 +114,7 @@ gdb_breakpoint  $bp_line
 # Second test with one TEST_GDB_VAR
 gdb_test "continue" \
   ".*Program found 0 variables starting with TEST_GDB.*" \
-  "Test with TEST_GDB_GLOBAL unset"
+  "test with TEST_GDB_GLOBAL unset"
 
 gdb_exit
 

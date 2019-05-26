@@ -1,6 +1,6 @@
 /* Language independent support for printing types for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -368,30 +368,22 @@ type_print (struct type *type, const char *varstring, struct ui_file *stream,
 /* Print TYPE to a string, returning it.  The caller is responsible for
    freeing the string.  */
 
-char *
+std::string
 type_to_string (struct type *type)
 {
-  char *s = NULL;
-  struct ui_file *stb;
-  struct cleanup *old_chain;
-
-  stb = mem_fileopen ();
-  old_chain = make_cleanup_ui_file_delete (stb);
-
   TRY
     {
-      type_print (type, "", stb, -1);
-      s = ui_file_xstrdup (stb, NULL);
+      string_file stb;
+
+      type_print (type, "", &stb, -1);
+      return std::move (stb.string ());
     }
   CATCH (except, RETURN_MASK_ALL)
     {
-      s = NULL;
     }
   END_CATCH
 
-  do_cleanups (old_chain);
-
-  return s;
+  return {};
 }
 
 /* Print type of EXP, or last thing in value history if EXP == NULL.
@@ -400,7 +392,6 @@ type_to_string (struct type *type)
 static void
 whatis_exp (char *exp, int show)
 {
-  struct expression *expr;
   struct value *val;
   struct cleanup *old_chain;
   struct type *real_type = NULL;
@@ -451,9 +442,8 @@ whatis_exp (char *exp, int show)
 	  exp = skip_spaces (exp);
 	}
 
-      expr = parse_expression (exp);
-      make_cleanup (free_current_contents, &expr);
-      val = evaluate_type (expr);
+      expression_up expr = parse_expression (exp);
+      val = evaluate_type (expr.get ());
     }
   else
     val = access_value_history (0);
@@ -463,8 +453,7 @@ whatis_exp (char *exp, int show)
   get_user_print_options (&opts);
   if (opts.objectprint)
     {
-      if (((TYPE_CODE (type) == TYPE_CODE_PTR)
-	   || (TYPE_CODE (type) == TYPE_CODE_REF))
+      if (((TYPE_CODE (type) == TYPE_CODE_PTR) || TYPE_IS_REFERENCE (type))
 	  && (TYPE_CODE (TYPE_TARGET_TYPE (type)) == TYPE_CODE_STRUCT))
         real_type = value_rtti_indirect_type (val, &full, &top, &using_enc);
       else if (TYPE_CODE (type) == TYPE_CODE_STRUCT)
@@ -581,6 +570,7 @@ print_type_scalar (struct type *type, LONGEST val, struct ui_file *stream)
     case TYPE_CODE_METHODPTR:
     case TYPE_CODE_METHOD:
     case TYPE_CODE_REF:
+    case TYPE_CODE_RVALUE_REF:
     case TYPE_CODE_NAMESPACE:
       error (_("internal error: unhandled type in print_type_scalar"));
       break;
@@ -600,13 +590,10 @@ maintenance_print_type (char *type_name, int from_tty)
 {
   struct value *val;
   struct type *type;
-  struct cleanup *old_chain;
-  struct expression *expr;
 
   if (type_name != NULL)
     {
-      expr = parse_expression (type_name);
-      old_chain = make_cleanup (free_current_contents, &expr);
+      expression_up expr = parse_expression (type_name);
       if (expr->elts[0].opcode == OP_TYPE)
 	{
 	  /* The user expression names a type directly, just use that type.  */
@@ -616,14 +603,13 @@ maintenance_print_type (char *type_name, int from_tty)
 	{
 	  /* The user expression may name a type indirectly by naming an
 	     object of that type.  Find that indirectly named type.  */
-	  val = evaluate_type (expr);
+	  val = evaluate_type (expr.get ());
 	  type = value_type (val);
 	}
       if (type != NULL)
 	{
 	  recursive_dump_type (type, 0);
 	}
-      do_cleanups (old_chain);
     }
 }
 

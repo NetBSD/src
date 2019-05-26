@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Free Software Foundation, Inc.
+# Copyright 2013-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 standard_testfile
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug additional_flags=-fpie "ldflags=-pie -Wl,-z,relro"}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug additional_flags=-fpie "ldflags=-pie -Wl,-z,relro"}]} {
     return -1
 }
 
@@ -41,7 +41,7 @@ clean_restart ${stripped_binfile}
 
 # The binary is stripped of debug info, but not minsyms.
 if ![runto break_here] {
-    fail "Can't run to break_here"
+    fail "can't run to break_here"
     return -1
 }
 

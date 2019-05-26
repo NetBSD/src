@@ -1658,7 +1658,7 @@ init_dsp (struct bfd *abfd)
     {
       int i, tmp;
 
-      for (i = (sizeof sh_dsp_table / sizeof sh_dsp_table[0]) - 1; i >= 0; i--)
+      for (i = ARRAY_SIZE (sh_dsp_table) - 1; i >= 0; i--)
 	{
 	  tmp = sh_jump_table[0xf000 + i];
 	  sh_jump_table[0xf000 + i] = sh_dsp_table[i];
