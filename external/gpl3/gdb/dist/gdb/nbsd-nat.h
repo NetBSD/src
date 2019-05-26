@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD.
 
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,10 +20,13 @@
 #ifndef NBSD_NAT_H
 #define NBSD_NAT_H
 
-/* Register the customized NetBSD target.  This should be used
-   instead of calling add_target directly.  */
+#include "inf-ptrace.h"
 
-extern void nbsd_nat_add_target (struct target_ops *);
+/* A prototype NetBSD target.  */
 
+struct nbsd_nat_target : public inf_ptrace_target
+{
+  char *pid_to_exec_file (int pid) override;
+};
 
 #endif /* nbsd-nat.h */

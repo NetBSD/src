@@ -1,4 +1,0 @@
-# Host: NetBSD/mips
-NATDEPFILES= fork-child.o inf-ptrace.o nbsd-nat.o mips-nbsd-nat.o \
-	bsd-kvm.o
-LOADLIBES= -lkvm
