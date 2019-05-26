@@ -1,5 +1,5 @@
 /* Common things used by the various *gnu-nat.c files
-   Copyright (C) 1995-2017 Free Software Foundation, Inc.
+   Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
    Written by Miles Bader <miles@gnu.ai.mit.edu>
 
@@ -16,11 +16,26 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef __GNU_NAT_H__
-#define __GNU_NAT_H__
+#ifndef GNU_NAT_H
+#define GNU_NAT_H
+
+#include "defs.h"
+
+/* Work around conflict between Mach's 'thread_info' function, and GDB's
+   'thread_info' class.  Make the former available as 'mach_thread_info'.  */
+#define thread_info mach_thread_info
+/* Mach headers are not yet ready for C++ compilation.  */
+extern "C"
+{
+#include <mach.h>
+}
+#undef thread_info
+/* Divert 'mach_thread_info' to the original Mach 'thread_info' function.  */
+extern __typeof__ (mach_thread_info) mach_thread_info asm ("thread_info");
 
 #include <unistd.h>
-#include <mach.h>
+
+#include "inf-child.h"
 
 struct inf;
 
@@ -103,8 +118,36 @@ extern int gnu_debug_flag;
         fprintf_unfiltered (gdb_stdlog, "%s:%d: " msg "\r\n", \
 			    __FILE__ , __LINE__ , ##args); } while (0)
 
-/* Create a prototype generic GNU/Hurd target.  The client can
-   override it with local methods.  */
-struct target_ops *gnu_target (void);
+/* A prototype generic GNU/Hurd target.  The client can override it
+   with local methods.  */
 
-#endif /* __GNU_NAT_H__ */
+struct gnu_nat_target : public inf_child_target
+{
+  void attach (const char *, int) override;
+  bool attach_no_wait () override
+  { return true; }
+
+  void detach (inferior *, int) override;
+  void resume (ptid_t, int, enum gdb_signal) override;
+
+  ptid_t wait (ptid_t, struct target_waitstatus *, int) override;
+  enum target_xfer_status xfer_partial (enum target_object object,
+					const char *annex,
+					gdb_byte *readbuf,
+					const gdb_byte *writebuf,
+					ULONGEST offset, ULONGEST len,
+					ULONGEST *xfered_len) override;
+
+  int find_memory_regions (find_memory_region_ftype func, void *data)
+    override;
+  void kill () override;
+
+  void create_inferior (const char *, const std::string &,
+			char **, int) override;
+  void mourn_inferior () override;
+  bool thread_alive (ptid_t ptid) override;
+  const char *pid_to_str (ptid_t) override;
+  void stop (ptid_t) override;
+};
+
+#endif /* GNU_NAT_H */

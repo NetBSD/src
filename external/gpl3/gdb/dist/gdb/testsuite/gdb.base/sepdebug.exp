@@ -1,4 +1,4 @@
-#   Copyright 1988-2017 Free Software Foundation, Inc.
+#   Copyright 1988-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -660,7 +660,7 @@ if {[build_executable sepdebug.exp sepdebug2 sepdebug2.c debug] != -1
 
     set escapedobjdirsubdir [string_to_regexp [standard_output_file {}]]
 
-    gdb_test "file [standard_output_file sepdebug2]" "warning: the debug information found in \"${escapedobjdirsubdir}/sepdebug2\\.debug\" does not match \"${escapedobjdirsubdir}/sepdebug2\" \\(CRC mismatch\\)\\..*\\(no debugging symbols found\\).*" "CRC mismatch is reported"
+    gdb_test "file [standard_output_file sepdebug2]" "warning: the debug information found in \"${escapedobjdirsubdir}/sepdebug2\\.debug\" does not match \"${escapedobjdirsubdir}/sepdebug2\" \\(CRC mismatch\\)\\..*\\(No debugging symbols found in .*\\).*" "CRC mismatch is reported"
 }
 
 

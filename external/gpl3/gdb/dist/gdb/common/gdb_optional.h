@@ -1,6 +1,6 @@
 /* An optional object.
 
-   Copyright (C) 2017 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,49 +17,144 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_OPTIONAL_H
-#define GDB_OPTIONAL_H
+#ifndef COMMON_GDB_OPTIONAL_H
+#define COMMON_GDB_OPTIONAL_H
+
+#include "common/traits.h"
 
 namespace gdb
 {
+
+struct in_place_t
+{
+  explicit in_place_t () = default;
+};
+
+constexpr gdb::in_place_t in_place {};
 
 /* This class attempts to be a compatible subset of std::optional,
    which is slated to be available in C++17.  This class optionally
    holds an object of some type -- by default it is constructed not
    holding an object, but later the object can be "emplaced".  This is
    similar to using std::unique_ptr, but in-object allocation is
-   guaranteed.  */
+   guaranteed.
+
+   Unlike std::optional, we currently only support copy/move
+   construction/assignment of an optional<T> from either exactly
+   optional<T> or T.  I.e., we don't support copy/move
+   construction/assignment from optional<U> or U, when U is a type
+   convertible to T.  Making that work depending on the definitions of
+   T and U is somewhat complicated, and currently the users of this
+   class don't need it.  */
+
 template<typename T>
 class optional
 {
 public:
 
   constexpr optional ()
-    : m_dummy (),
-      m_instantiated (false)
-  {
-  }
-
-  ~optional ()
-  {
-    if (m_instantiated)
-      destroy ();
-  }
-
-  /* These aren't deleted in std::optional, but it was simpler to
-     delete them here, because currently the users of this class don't
-     need them, and making them depend on the definition of T is
-     somewhat complicated.  */
-  optional (const optional &other) = delete;
-  optional<T> &operator= (const optional &other) = delete;
+    : m_dummy ()
+  {}
 
   template<typename... Args>
-  void emplace (Args &&... args)
+  constexpr optional (in_place_t, Args &&... args)
+    : m_item (std::forward<Args> (args)...),
+      m_instantiated (true)
+  {}
+
+  ~optional ()
+  { this->reset (); }
+
+  /* Copy and move constructors.  */
+
+  optional (const optional &other)
+  {
+    if (other.m_instantiated)
+      this->emplace (other.get ());
+  }
+
+  optional (optional &&other)
+    noexcept(std::is_nothrow_move_constructible<T> ())
+  {
+    if (other.m_instantiated)
+      this->emplace (std::move (other.get ()));
+  }
+
+  constexpr optional (const T &other)
+    : m_item (other),
+      m_instantiated (true)
+  {}
+
+  constexpr optional (T &&other)
+    noexcept (std::is_nothrow_move_constructible<T> ())
+    : m_item (std::move (other)),
+      m_instantiated (true)
+  {}
+
+  /* Assignment operators.  */
+
+  optional &
+  operator= (const optional &other)
+  {
+    if (m_instantiated && other.m_instantiated)
+      this->get () = other.get ();
+    else
+      {
+	if (other.m_instantiated)
+	  this->emplace (other.get ());
+	else
+	  this->reset ();
+      }
+
+    return *this;
+  }
+
+  optional &
+  operator= (optional &&other)
+    noexcept (And<std::is_nothrow_move_constructible<T>,
+	      std::is_nothrow_move_assignable<T>> ())
+  {
+    if (m_instantiated && other.m_instantiated)
+      this->get () = std::move (other.get ());
+    else
+      {
+	if (other.m_instantiated)
+	  this->emplace (std::move (other.get ()));
+	else
+	  this->reset ();
+      }
+    return *this;
+  }
+
+  optional &
+  operator= (const T &other)
   {
     if (m_instantiated)
-      destroy ();
+      this->get () = other;
+    else
+      this->emplace (other);
+    return *this;
+  }
+
+  optional &
+  operator= (T &&other)
+    noexcept (And<std::is_nothrow_move_constructible<T>,
+	      std::is_nothrow_move_assignable<T>> ())
+  {
+    if (m_instantiated)
+      this->get () = std::move (other);
+    else
+      this->emplace (std::move (other));
+    return *this;
+  }
+
+  template<typename... Args>
+  T &emplace (Args &&... args)
+  {
+    this->reset ();
     new (&m_item) T (std::forward<Args>(args)...);
     m_instantiated = true;
+    return this->get ();
   }
 
   /* Observers.  */
@@ -87,6 +182,13 @@ public:
   constexpr bool has_value () const noexcept
   { return m_instantiated; }
 
+  /* 'reset' is a 'safe' operation with no precondition.  */
+  void reset () noexcept
+  {
+    if (m_instantiated)
+      this->destroy ();
+  }
+
 private:
 
   /* Destroy the object.  */
@@ -109,9 +211,9 @@ private:
   };
 
   /* True if the object was ever emplaced.  */
-  bool m_instantiated;
+  bool m_instantiated = false;
 };
 
 }
 
-#endif /* GDB_OPTIONAL_H */
+#endif /* COMMON_GDB_OPTIONAL_H */

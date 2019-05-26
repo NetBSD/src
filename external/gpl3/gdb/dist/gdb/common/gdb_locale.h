@@ -1,5 +1,5 @@
 /* GDB-friendly replacement for <locale.h>.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_LOCALE_H
-#define GDB_LOCALE_H
+#ifndef COMMON_GDB_LOCALE_H
+#define COMMON_GDB_LOCALE_H
 
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
@@ -40,4 +40,4 @@
 #include <langinfo.h>
 #endif
 
-#endif /* GDB_LOCALE_H */
+#endif /* COMMON_GDB_LOCALE_H */

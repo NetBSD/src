@@ -1,6 +1,6 @@
 /* Python interface to btrace record targets.
 
-   Copyright 2016-2017 Free Software Foundation, Inc.
+   Copyright 2016-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_PY_RECORD_BTRACE_H
-#define GDB_PY_RECORD_BTRACE_H
+#ifndef PYTHON_PY_RECORD_BTRACE_H
+#define PYTHON_PY_RECORD_BTRACE_H
 
 #include "python-internal.h"
 
@@ -88,4 +88,4 @@ extern PyObject *recpy_bt_func_prev (PyObject *self, void *closure);
 /* Implementation of RecordFunctionSegment.next [RecordFunctionSegment].  */
 extern PyObject *recpy_bt_func_next (PyObject *self, void *closure);
 
-#endif /* GDB_PY_RECORD_BTRACE_H */
+#endif /* PYTHON_PY_RECORD_BTRACE_H */

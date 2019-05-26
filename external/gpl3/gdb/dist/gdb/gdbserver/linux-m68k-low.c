@@ -1,5 +1,5 @@
 /* GNU/Linux/m68k specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2017 Free Software Foundation, Inc.
+   Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -199,6 +199,14 @@ m68k_arch_setup (void)
   current_process ()->tdesc = tdesc_m68k;
 }
 
+/* Support for hardware single step.  */
+
+static int
+m68k_supports_hardware_single_step (void)
+{
+  return 1;
+}
+
 struct linux_target_ops the_low_target = {
   m68k_arch_setup,
   m68k_regs_info,
@@ -212,6 +220,29 @@ struct linux_target_ops the_low_target = {
   NULL,
   2,
   m68k_breakpoint_at,
+  NULL, /* supports_z_point_type */
+  NULL, /* insert_point */
+  NULL, /* remove_point */
+  NULL, /* stopped_by_watchpoint */
+  NULL, /* stopped_data_address */
+  NULL, /* collect_ptrace_register */
+  NULL, /* supply_ptrace_register */
+  NULL, /* siginfo_fixup */
+  NULL, /* new_process */
+  NULL, /* delete_process */
+  NULL, /* new_thread */
+  NULL, /* delete_thread */
+  NULL, /* new_fork */
+  NULL, /* prepare_to_resume */
+  NULL, /* process_qsupported */
+  NULL, /* supports_tracepoints */
+  NULL, /* get_thread_area */
+  NULL, /* install_fast_tracepoint_jump_pad */
+  NULL, /* emit_ops */
+  NULL, /* get_min_fast_tracepoint_insn_len */
+  NULL, /* supports_range_stepping */
+  NULL, /* breakpoint_kind_from_current_state */
+  m68k_supports_hardware_single_step,
 };
 
 void

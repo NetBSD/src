@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -264,16 +264,16 @@ gdb_exception_sliced_copy (struct gdb_exception *to, const struct gdb_exception 
 
 #endif /* !GDB_XCPT_SJMP */
 
-/* Return EXCEPTION to the nearest containing catch_errors().  */
+/* Return EXCEPTION to the nearest containing CATCH_SJLJ block.  */
 
 void
 throw_exception_sjlj (struct gdb_exception exception)
 {
   do_cleanups (all_cleanups ());
 
-  /* Jump to the containing catch_errors() call, communicating REASON
-     to that call via setjmp's return value.  Note that REASON can't
-     be zero, by definition in defs.h.  */
+  /* Jump to the nearest CATCH_SJLJ block, communicating REASON to
+     that call via setjmp's return value.  Note that REASON can't be
+     zero, by definition in common-exceptions.h.  */
   exceptions_state_mc (CATCH_THROWING);
   current_catcher->exception = exception;
   longjmp (current_catcher->buf, exception.reason);

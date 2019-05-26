@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2017 Free Software Foundation, Inc.
+# Copyright (C) 1996-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -188,8 +188,10 @@ proc check_control_c {} {
     global gdb_prompt
 
     # Verify that all threads are running.
-    if [all_threads_running] then {
-	pass "all threads running after startup"
+    with_test_prefix "after startup" {
+	if [all_threads_running] then {
+	    pass "all threads running after startup"
+	}
     }
 
     # Send a continue followed by ^C to the process to stop it.
@@ -216,8 +218,10 @@ proc check_control_c {} {
     gdb_test "bt" ".*"
 
     # Verify that all threads can be run again after a ^C stop.
-    if [all_threads_running] then {
-	pass "all threads running after continuing from ^C stop"
+    with_test_prefix "after continue" {
+	if [all_threads_running] then {
+	    pass "all threads running after continuing from ^C stop"
+	}
     }
     return 0
 }
@@ -267,6 +271,76 @@ proc check_backtraces {} {
     }
 }
 
+proc check_qcs {} {
+    set any "\[^\r\n\]*"
+    set ws "\[ \t\]\+"
+    set number "\[0-9]\+"
+
+    # Check -c (continue) and -s (silently continue) flags.
+    gdb_test "thread apply 2-3 p notfound" \
+	[multi_line \
+	     "" \
+	     "Thread 2 ${any}" \
+	     "No symbol \\\"notfound\\\" in current context." \
+	    ] \
+	"run a failing command that aborts thread apply"
+
+    gdb_test "thread apply 2-3 -c p notfound" \
+	[multi_line \
+	     "" \
+	     "Thread 2 ${any}" \
+	     "No symbol \\\"notfound\\\" in current context." \
+	     "" \
+	     "Thread 3 ${any}" \
+	     "No symbol \\\"notfound\\\" in current context." \
+	    ] \
+	"run a failing command, -c to continue"
+
+    with_test_prefix "silent flag" {
+	foreach_with_prefix cmd_and_args {
+	    "thread apply all -s frame apply all -s"
+	    "tfaas"
+	    "taas faas"} {
+		set cmd "$cmd_and_args p i"
+		gdb_test $cmd \
+		    [multi_line \
+			 "" \
+			 "Thread 3 ${any}" \
+			 "#${number}${ws}${any} in thread2 ${any}" \
+			 "\\\$\[0-9]+ = ${number}${any}" \
+			 "" \
+			 "Thread 2 ${any}" \
+			 "#${number}${ws}${any} in thread1 ${any}" \
+			 "\\\$\[0-9]+ = ${number}${any}" \
+			] \
+		    "run a failing command except in one frame of thread 2,3, -s to silently continue"
+	    }
+    }
+
+    # Check quietness.
+    gdb_test "thread apply all -s -q frame apply all -s p i" \
+	[multi_line \
+	     "#${number}${ws}${any} in thread2 ${any}" \
+	     "\\\$\[0-9]+ = ${number}${any}" \
+	     "#${number}${ws}${any} in thread1 ${any}" \
+	     "\\\$\[0-9]+ = ${number}${any}" \
+	    ] \
+	"run a failing command except in one frame of thread 2,3, -s to silently continue.  Do not show thread information"
+
+    gdb_test "thread apply all -s -q frame apply all -s -q p i" \
+	[multi_line \
+	     "\\\$\[0-9]+ = ${number}${any}" \
+	     "\\\$\[0-9]+ = ${number}${any}" \
+	    ] \
+	"run a failing command except in one frame of thread 2,3, -s to silently continue.  Do not show thread and frame info"
+
+    # Check invalid flag combinations.
+    gdb_test "thread apply all -c -s p 1" \
+	"thread apply all: -c and -s are mutually exclusive" \
+	"check -c and -s cannot be used simultaneously"
+
+}
+
 if [runto_main] then {
     if [test_startup] then {
 	if [check_control_c] then {
@@ -274,5 +348,6 @@ if [runto_main] then {
 	    return
 	}
 	check_backtraces
+	check_qcs
     }
 }

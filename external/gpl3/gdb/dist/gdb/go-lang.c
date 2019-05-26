@@ -1,6 +1,6 @@
 /* Go language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -106,8 +106,8 @@ static int
 sixg_string_p (struct type *type)
 {
   if (TYPE_NFIELDS (type) == 2
-      && TYPE_TAG_NAME (type) != NULL
-      && strcmp (TYPE_TAG_NAME (type), "string") == 0)
+      && TYPE_NAME (type) != NULL
+      && strcmp (TYPE_NAME (type), "string") == 0)
     return 1;
 
   return 0;
@@ -565,7 +565,7 @@ go_language_arch_info (struct gdbarch *gdbarch,
   lai->bool_type_default = builtin->builtin_bool;
 }
 
-static const struct language_defn go_language_defn =
+extern const struct language_defn go_language_defn =
 {
   "go",
   "Go",
@@ -577,7 +577,6 @@ static const struct language_defn go_language_defn =
   NULL,
   &exp_descriptor_c,
   go_parse,
-  go_yyerror,
   null_post_parser,
   c_printchar,			/* Print a character constant.  */
   c_printstr,			/* Function to print string constant.  */
@@ -590,6 +589,7 @@ static const struct language_defn go_language_defn =
   default_read_var_value,	/* la_read_var_value */
   NULL,				/* Language specific skip_trampoline.  */
   NULL,				/* name_of_this */
+  false,			/* la_store_sym_names_in_linkage_form_p */
   basic_lookup_symbol_nonlocal, 
   basic_lookup_transparent_type,
   go_demangle,			/* Language specific symbol demangler.  */
@@ -600,13 +600,15 @@ static const struct language_defn go_language_defn =
   1,				/* C-style arrays.  */
   0,				/* String lower bound.  */
   default_word_break_characters,
-  default_make_symbol_completion_list,
+  default_collect_symbol_completion_matches,
   go_language_arch_info,
   default_print_array_index,
   default_pass_by_reference,
   c_get_string,
-  NULL,
+  c_watch_location_expression,
+  NULL,				/* la_get_symbol_name_matcher */
   iterate_over_symbols,
+  default_search_name_hash,
   &default_varobj_ops,
   NULL,
   NULL,
@@ -620,7 +622,7 @@ build_go_types (struct gdbarch *gdbarch)
     = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct builtin_go_type);
 
   builtin_go_type->builtin_void
-    = arch_type (gdbarch, TYPE_CODE_VOID, 1, "void");
+    = arch_type (gdbarch, TYPE_CODE_VOID, TARGET_CHAR_BIT, "void");
   builtin_go_type->builtin_char
     = arch_character_type (gdbarch, 8, 1, "char");
   builtin_go_type->builtin_bool
@@ -669,12 +671,8 @@ builtin_go_type (struct gdbarch *gdbarch)
   return (const struct builtin_go_type *) gdbarch_data (gdbarch, go_type_data);
 }
 
-extern initialize_file_ftype _initialize_go_language;
-
 void
 _initialize_go_language (void)
 {
   go_type_data = gdbarch_data_register_post_init (build_go_types);
-
-  add_language (&go_language_defn);
 }

@@ -1,4 +1,4 @@
---  Copyright 2012-2017 Free Software Foundation, Inc.
+--  Copyright 2012-2019 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -18,6 +18,9 @@ package Pck is
    type Char_Table is array (Character range Character'First .. Character'Last)
       of Natural;
    Global_Char_Table : Char_Table := (others => 0);
+
+   type Table is array (Character) of Natural;
+   My_Table : Table := (others => 4874);
 
    procedure Do_Nothing (A : System.Address);
 end Pck;

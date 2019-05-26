@@ -1,5 +1,5 @@
 /* BFD support for the Toshiba Media Engine Processor.
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

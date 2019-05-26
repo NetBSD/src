@@ -1,6 +1,6 @@
 /* TUI display locator.
 
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_STACK_H
-#define TUI_STACK_H
+#ifndef TUI_TUI_STACK_H
+#define TUI_TUI_STACK_H
 
 struct frame_info;
 
@@ -28,4 +28,4 @@ extern void tui_update_locator_fullname (const char *);
 extern void tui_show_locator_content (void);
 extern int tui_show_frame_info (struct frame_info *);
 
-#endif
+#endif /* TUI_TUI_STACK_H */

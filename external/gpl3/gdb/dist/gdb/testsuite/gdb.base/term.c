@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2017 Free Software Foundation, Inc.
+   Copyright 2012-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +15,29 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include <termios.h>
+#include <unistd.h>
+
+static struct termios t;
+
+static void
+break_here ()
+{
+}
+
 int main ()
 {
+  tcgetattr (0, &t);
+  break_here ();
+
+  /* Disable ECHO.  */
+  t.c_lflag &= ~ECHO;
+  tcsetattr (0, TCSANOW, &t);
+  tcgetattr (0, &t);
+  break_here ();
+
+  tcgetattr (0, &t);
+  break_here ();
+
   return 0;
 }

@@ -1,6 +1,6 @@
 /* Common target dependent code for GNU/Linux on ARM systems.
 
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARM_LINUX_H
-#define ARM_LINUX_H
+#ifndef ARCH_ARM_LINUX_H
+#define ARCH_ARM_LINUX_H
 
 /* The index to access CSPR in user_regs defined in GLIBC.  */
 #define ARM_CPSR_GREGNUM 16
@@ -78,4 +78,5 @@ struct arm_get_next_pcs;
 
 CORE_ADDR arm_linux_get_next_pcs_fixup (struct arm_get_next_pcs *self,
 					CORE_ADDR pc);
-#endif /* ARM_LINUX_H */
+
+#endif /* ARCH_ARM_LINUX_H */

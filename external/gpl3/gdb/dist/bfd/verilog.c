@@ -1,5 +1,5 @@
 /* BFD back-end for verilog hex memory dump files.
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Written by Anthony Green <green@moxielogic.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -45,7 +45,7 @@
 
    EXAMPLE
 	@1000
-        01 ae 3f 45 12
+	01 ae 3f 45 12
 
    DESCRIPTION
 	@1000 specifies the starting address for the memory data.
@@ -290,31 +290,31 @@ verilog_mkobject (bfd *abfd)
   return TRUE;
 }
 
-#define	verilog_close_and_cleanup                    _bfd_generic_close_and_cleanup
-#define verilog_bfd_free_cached_info                 _bfd_generic_bfd_free_cached_info
-#define verilog_new_section_hook                     _bfd_generic_new_section_hook
-#define verilog_bfd_is_target_special_symbol         ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
-#define verilog_bfd_is_local_label_name              bfd_generic_is_local_label_name
-#define verilog_get_lineno                           _bfd_nosymbols_get_lineno
-#define verilog_find_nearest_line                    _bfd_nosymbols_find_nearest_line
-#define verilog_find_inliner_info                    _bfd_nosymbols_find_inliner_info
-#define verilog_make_empty_symbol                    _bfd_generic_make_empty_symbol
-#define verilog_bfd_make_debug_symbol                _bfd_nosymbols_bfd_make_debug_symbol
-#define verilog_read_minisymbols                     _bfd_generic_read_minisymbols
-#define verilog_minisymbol_to_symbol                 _bfd_generic_minisymbol_to_symbol
-#define verilog_get_section_contents_in_window       _bfd_generic_get_section_contents_in_window
+#define verilog_close_and_cleanup		     _bfd_generic_close_and_cleanup
+#define verilog_bfd_free_cached_info		     _bfd_generic_bfd_free_cached_info
+#define verilog_new_section_hook		     _bfd_generic_new_section_hook
+#define verilog_bfd_is_target_special_symbol	     _bfd_bool_bfd_asymbol_false
+#define verilog_bfd_is_local_label_name		     bfd_generic_is_local_label_name
+#define verilog_get_lineno			     _bfd_nosymbols_get_lineno
+#define verilog_find_nearest_line		     _bfd_nosymbols_find_nearest_line
+#define verilog_find_inliner_info		     _bfd_nosymbols_find_inliner_info
+#define verilog_make_empty_symbol		     _bfd_generic_make_empty_symbol
+#define verilog_bfd_make_debug_symbol		     _bfd_nosymbols_bfd_make_debug_symbol
+#define verilog_read_minisymbols		     _bfd_generic_read_minisymbols
+#define verilog_minisymbol_to_symbol		     _bfd_generic_minisymbol_to_symbol
+#define verilog_get_section_contents_in_window	     _bfd_generic_get_section_contents_in_window
 #define verilog_bfd_get_relocated_section_contents   bfd_generic_get_relocated_section_contents
-#define verilog_bfd_relax_section                    bfd_generic_relax_section
-#define verilog_bfd_gc_sections                      bfd_generic_gc_sections
-#define verilog_bfd_merge_sections                   bfd_generic_merge_sections
-#define verilog_bfd_is_group_section                 bfd_generic_is_group_section
-#define verilog_bfd_discard_group                    bfd_generic_discard_group
-#define verilog_section_already_linked               _bfd_generic_section_already_linked
-#define verilog_bfd_link_hash_table_create           _bfd_generic_link_hash_table_create
-#define verilog_bfd_link_add_symbols                 _bfd_generic_link_add_symbols
-#define verilog_bfd_link_just_syms                   _bfd_generic_link_just_syms
-#define verilog_bfd_final_link                       _bfd_generic_final_link
-#define verilog_bfd_link_split_section               _bfd_generic_link_split_section
+#define verilog_bfd_relax_section		     bfd_generic_relax_section
+#define verilog_bfd_gc_sections			     bfd_generic_gc_sections
+#define verilog_bfd_merge_sections		     bfd_generic_merge_sections
+#define verilog_bfd_is_group_section		     bfd_generic_is_group_section
+#define verilog_bfd_discard_group		     bfd_generic_discard_group
+#define verilog_section_already_linked		     _bfd_generic_section_already_linked
+#define verilog_bfd_link_hash_table_create	     _bfd_generic_link_hash_table_create
+#define verilog_bfd_link_add_symbols		     _bfd_generic_link_add_symbols
+#define verilog_bfd_link_just_syms		     _bfd_generic_link_just_syms
+#define verilog_bfd_final_link			     _bfd_generic_final_link
+#define verilog_bfd_link_split_section		     _bfd_generic_link_split_section
 
 const bfd_target verilog_vec =
 {
@@ -345,16 +345,16 @@ const bfd_target verilog_vec =
     _bfd_dummy_target,
   },
   {
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     verilog_mkobject,
-    bfd_false,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     verilog_write_object_contents,
-    bfd_false,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
   },
 
   BFD_JUMP_TABLE_GENERIC (_bfd_generic),

@@ -1,4 +1,4 @@
-# Copyright 1997-2017 Free Software Foundation, Inc.
+# Copyright 1997-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -95,10 +95,10 @@ gdb_test_multiple "ptype ina" "ptype ina" {
 
 setup_xfail hppa*-*-*11* CLLbs14869
 gdb_test_multiple "info func xyzq" "info func xyzq" {
-    -re "All functions.*File.*namespace.cc:\r\nint AAA::A_xyzq\\(int\\);\r\nint BBB::B_xyzq\\(int\\);\r\nchar AAA::xyzq\\(char\\);\r\nchar BBB::xyzq\\(char\\);\r\nchar BBB::CCC::xyzq\\(char\\);\r\nchar BBB::Class::xyzq\\(char\\);\r\n$gdb_prompt $" {
+    -re "All functions.*File.*namespace.cc:\r\n.*\tint AAA::A_xyzq\\(int\\);\r\n.*\tint BBB::B_xyzq\\(int\\);\r\n.*\tchar AAA::xyzq\\(char\\);\r\n.*\tchar BBB::xyzq\\(char\\);\r\n.*\tchar BBB::CCC::xyzq\\(char\\);\r\n.*\tchar BBB::Class::xyzq\\(char\\);\r\n$gdb_prompt $" {
 	pass "info func xyzq"
     }    
-    -re "All functions.*File.*namespace.cc:\r\nint AAA::A_xyzq\\(int\\);\r\nchar AAA::xyzq\\(char\\);\r\nint BBB::B_xyzq\\(int\\);\r\nchar BBB::CCC::xyzq\\(char\\);\r\nchar BBB::Class::xyzq\\(char\\);\r\nchar BBB::xyzq\\(char\\);\r\n$gdb_prompt $" {
+    -re "All functions.*File.*namespace.cc:\r\n.*\tint AAA::A_xyzq\\(int\\);\r\n.*\tchar AAA::xyzq\\(char\\);\r\n.*\tint BBB::B_xyzq\\(int\\);\r\n.*\tchar BBB::CCC::xyzq\\(char\\);\r\n.*\tchar BBB::Class::xyzq\\(char\\);\r\n.*\tchar BBB::xyzq\\(char\\);\r\n$gdb_prompt $" {
 	pass "info func xyzq"
     }    
 }
@@ -120,7 +120,7 @@ gdb_test "break AAA::xyzq" \
 
 # Break on a function in the global namespace.
 
-gdb_test "break ::ensureOtherRefs" \
+gdb_test "break -qualified ::ensureOtherRefs" \
     "Breakpoint.*at $hex: file.*$srcfile2, line $decimal\\."
 
 # Call a function in a nested namespace

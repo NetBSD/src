@@ -1,4 +1,4 @@
-# Copyright 1998-2017 Free Software Foundation, Inc.
+# Copyright 1998-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -263,10 +263,24 @@ gdb_test "print bar(d)" "= 22"
 
 # List overloaded functions.
 
+gdb_test_no_output "set listsize 1" ""
+
+# Build source listing pattern based on an inclusive line range.
+
+proc line_range_pattern { range_start range_end } {
+    global line_re
+
+    for {set i $range_start} {$i <= $range_end} {incr i} {
+	append pattern "\r\n$i\[ \t\]\[^\r\n\]*"
+    }
+
+    verbose -log "pattern $pattern"
+    return $pattern
+}
+
 # The void case is tricky because some compilers say "(void)"
 # and some compilers say "()".
 
-gdb_test_no_output "set listsize 1" ""
 gdb_test_multiple "info func overloadfnarg" "list overloaded function with no args" {
     -re ".*overloadfnarg\\(void\\).*$gdb_prompt $" {
 	# gcc 2
@@ -323,6 +337,24 @@ gdb_test "print K::staticoverload (2, 3)" " = 5"
 gdb_test "print N::nsoverload ()" " = 1"
 gdb_test "print N::nsoverload (2)" " = 2"
 gdb_test "print N::nsoverload (2, 3)" " = 5"
+
+# Test "list function" when there are multiple "function" overloads.
+
+with_test_prefix "list all overloads" {
+    # Bump up listsize again, to make sure the number of lines to
+    # display before/after each location is computed correctly.
+    gdb_test_no_output "set listsize 10"
+
+    set line_bar_A [gdb_get_line_number "int bar (A)"]
+    set line_bar_B [gdb_get_line_number "int bar (B)"]
+    set lines1 [line_range_pattern [expr $line_bar_A - 5] [expr $line_bar_A + 4]]
+    set lines2 [line_range_pattern [expr $line_bar_B - 5] [expr $line_bar_B + 4]]
+
+    set any "\[^\r\n\]*"
+    set h1_re "file: \"${any}overload.cc\", line number: $line_bar_A, symbol: \"bar\\(A\\)\""
+    set h2_re "file: \"${any}overload.cc\", line number: $line_bar_B, symbol: \"bar\\(B\\)\""
+    gdb_test "list bar" "${h1_re}${lines1}\r\n${h2_re}${lines2}"
+}
 
 if ![runto 'XXX::marker2'] then {
     perror "couldn't run to XXX::marker2"

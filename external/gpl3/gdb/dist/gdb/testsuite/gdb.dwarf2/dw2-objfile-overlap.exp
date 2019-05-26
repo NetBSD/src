@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Free Software Foundation, Inc.
+# Copyright 2011-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile_outer}" "${binfile_outer}" \
 clean_restart $executable_outer
 
 gdb_test "add-symbol-file $binfile_inner outer_inner" \
-         {Reading symbols from .*\.\.\.done\.} "add-symbol-file" \
+         {Reading symbols from .*\.\.\.} "add-symbol-file" \
 	 "\r\n\t\\.text_addr = 0x\[0-9a-f\]+\r\n\\(y or n\\) \$" "y"
 
 # Expand symtab for ${binfile_outer}.

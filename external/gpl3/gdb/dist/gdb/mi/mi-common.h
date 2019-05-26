@@ -1,5 +1,5 @@
 /* Interface for common GDB/MI data
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MI_COMMON_H
-#define MI_COMMON_H
+#ifndef MI_MI_COMMON_H
+#define MI_MI_COMMON_H
 
 #include "interps.h"
 
@@ -90,4 +90,4 @@ public:
   struct ui_out *cli_uiout;
 };
 
-#endif
+#endif /* MI_MI_COMMON_H */

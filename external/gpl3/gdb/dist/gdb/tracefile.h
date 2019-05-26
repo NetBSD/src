@@ -2,6 +2,8 @@
 #define TRACEFILE_H 1
 
 #include "tracepoint.h"
+#include "target.h"
+#include "process-stratum-target.h"
 
 struct trace_file_writer;
 
@@ -113,7 +115,21 @@ struct trace_file_writer
 
 extern struct trace_file_writer *tfile_trace_file_writer_new (void);
 
-extern void init_tracefile_ops (struct target_ops *ops);
+/* Base class for tracefile related targets.  */
+
+class tracefile_target : public process_stratum_target
+{
+public:
+  tracefile_target () = default;
+
+  int get_trace_status (trace_status *ts) override;
+  bool has_all_memory () override;
+  bool has_memory () override;
+  bool has_stack () override;
+  bool has_registers () override;
+  bool has_execution (ptid_t) override { return false; }
+  bool thread_alive (ptid_t ptid) override;
+};
 
 extern void tracefile_fetch_registers (struct regcache *regcache, int regno);
 

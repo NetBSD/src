@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>.
 
@@ -26,13 +26,15 @@
    inferior.  For presentation purposes, the branch trace is represented as a
    list of sequential control-flow blocks, one such list per thread.  */
 
-#include "btrace-common.h"
+#include "common/btrace-common.h"
 #include "target/waitstatus.h" /* For enum target_stop_reason.  */
 #include "common/enum-flags.h"
 
 #if defined (HAVE_LIBIPT)
 #  include <intel-pt.h>
 #endif
+
+#include <vector>
 
 struct thread_info;
 struct btrace_function;
@@ -77,17 +79,6 @@ struct btrace_insn
 
   /* A bit vector of BTRACE_INSN_FLAGS.  */
   btrace_insn_flags flags;
-};
-
-/* A vector of branch trace instructions.  */
-typedef struct btrace_insn btrace_insn_s;
-DEF_VEC_O (btrace_insn_s);
-
-/* A doubly-linked list of branch trace function segments.  */
-struct btrace_func_link
-{
-  struct btrace_function *prev;
-  struct btrace_function *next;
 };
 
 /* Flags for btrace function segments.  */
@@ -140,29 +131,37 @@ enum btrace_pt_error
    We do not allow function segments without instructions otherwise.  */
 struct btrace_function
 {
+  btrace_function (struct minimal_symbol *msym_, struct symbol *sym_,
+		   unsigned int number_, unsigned int insn_offset_, int level_)
+    : msym (msym_), sym (sym_), insn_offset (insn_offset_), number (number_),
+      level (level_)
+  {
+  }
+
   /* The full and minimal symbol for the function.  Both may be NULL.  */
   struct minimal_symbol *msym;
   struct symbol *sym;
 
-  /* The previous and next segment belonging to the same function.
-     If a function calls another function, the former will have at least
-     two segments: one before the call and another after the return.  */
-  struct btrace_func_link segment;
+  /* The function segment numbers of the previous and next segment belonging to
+     the same function.  If a function calls another function, the former will
+     have at least two segments: one before the call and another after the
+     return.  Will be zero if there is no such function segment.  */
+  unsigned int prev = 0;
+  unsigned int next = 0;
 
-  /* The previous and next function in control flow order.  */
-  struct btrace_func_link flow;
-
-  /* The directly preceding function segment in a (fake) call stack.  */
-  struct btrace_function *up;
+  /* The function segment number of the directly preceding function segment in
+     a (fake) call stack.  Will be zero if there is no such function segment in
+     the record.  */
+  unsigned int up = 0;
 
   /* The instructions in this function segment.
      The instruction vector will be empty if the function segment
      represents a decode error.  */
-  VEC (btrace_insn_s) *insn;
+  std::vector<btrace_insn> insn;
 
   /* The error code of a decode error that led to a gap.
      Must be zero unless INSN is empty; non-zero otherwise.  */
-  int errcode;
+  int errcode = 0;
 
   /* The instruction number offset for the first instruction in this
      function segment.
@@ -170,7 +169,7 @@ struct btrace_function
      segment in control-flow order.  */
   unsigned int insn_offset;
 
-  /* The function number in control-flow order.
+  /* The 1-based function number in control-flow order.
      If INSN is empty indicating a gap in the trace due to a decode error,
      we still count the gap as a function.  */
   unsigned int number;
@@ -184,21 +183,20 @@ struct btrace_function
   int level;
 
   /* A bit-vector of btrace_function_flag.  */
-  btrace_function_flags flags;
+  btrace_function_flags flags = 0;
 };
-
-typedef struct btrace_function *btrace_fun_p;
-DEF_VEC_P (btrace_fun_p);
 
 /* A branch trace instruction iterator.  */
 struct btrace_insn_iterator
 {
-  /* The branch trace function segment containing the instruction.
-     Will never be NULL.  */
-  const struct btrace_function *function;
+  /* The branch trace information for this thread.  Will never be NULL.  */
+  const struct btrace_thread_info *btinfo;
+
+  /* The index of the function segment in BTINFO->FUNCTIONS.  */
+  unsigned int call_index;
 
   /* The index into the function segment's instruction vector.  */
-  unsigned int index;
+  unsigned int insn_index;
 };
 
 /* A branch trace function call iterator.  */
@@ -207,9 +205,8 @@ struct btrace_call_iterator
   /* The branch trace information for this thread.  Will never be NULL.  */
   const struct btrace_thread_info *btinfo;
 
-  /* The branch trace function segment.
-     This will be NULL for the iterator pointing to the end of the trace.  */
-  const struct btrace_function *function;
+  /* The index of the function segment in BTINFO->FUNCTIONS.  */
+  unsigned int index;
 };
 
 /* Branch trace iteration state for "record instruction-history".  */
@@ -231,7 +228,7 @@ struct btrace_call_history
 };
 
 /* Branch trace thread flags.  */
-enum btrace_thread_flag
+enum btrace_thread_flag : unsigned
 {
   /* The thread is to be stepped forwards.  */
   BTHR_STEP = (1 << 0),
@@ -331,18 +328,10 @@ struct btrace_thread_info
   /* The raw branch trace data for the below branch trace.  */
   struct btrace_data data;
 
-  /* The current branch trace for this thread (both inclusive).
-
-     The last instruction of END is the current instruction, which is not
-     part of the execution history.
-     Both will be NULL if there is no branch trace available.  If there is
-     branch trace available, both will be non-NULL.  */
-  struct btrace_function *begin;
-  struct btrace_function *end;
-
-  /* Vector of pointer to decoded function segments.  These are in execution
-     order with the first element == BEGIN and the last element == END.  */
-  VEC (btrace_fun_p) *functions;
+  /* Vector of decoded function segments in execution flow order.
+     Note that the numbering for btrace function segments starts with 1, so
+     function segment i will be at index (i - 1).  */
+  std::vector<btrace_function> functions;
 
   /* The function level offset.  When added to each function's LEVEL,
      this normalizes the function levels such that the smallest level
@@ -396,8 +385,10 @@ extern void btrace_teardown (struct thread_info *);
 
 extern const char *btrace_decode_error (enum btrace_format format, int errcode);
 
-/* Fetch the branch trace for a single thread.  */
-extern void btrace_fetch (struct thread_info *);
+/* Fetch the branch trace for a single thread.  If CPU is not NULL, assume
+   CPU for trace decode.  */
+extern void btrace_fetch (struct thread_info *,
+			  const struct btrace_cpu *cpu);
 
 /* Clear the branch trace for a single thread.  */
 extern void btrace_clear (struct thread_info *);
@@ -515,8 +506,5 @@ extern int btrace_is_replaying (struct thread_info *tp);
 
 /* Return non-zero if the branch trace for TP is empty; zero otherwise.  */
 extern int btrace_is_empty (struct thread_info *tp);
-
-/* Create a cleanup for DATA.  */
-extern struct cleanup *make_cleanup_btrace_data (struct btrace_data *data);
 
 #endif /* BTRACE_H */

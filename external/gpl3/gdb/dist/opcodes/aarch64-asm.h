@@ -1,5 +1,5 @@
 /* aarch64-asm.h -- Header file for aarch64-asm.c and aarch64-asm-2.c.
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -30,15 +30,17 @@ const aarch64_opcode* aarch64_find_real_opcode (const aarch64_opcode *);
 
 /* Switch-table-based high-level operand inserter.  */
 
-const char* aarch64_insert_operand (const aarch64_operand *,
+bfd_boolean aarch64_insert_operand (const aarch64_operand *,
 				    const aarch64_opnd_info *, aarch64_insn *,
-				    const aarch64_inst *);
+				    const aarch64_inst *,
+				    aarch64_operand_error *);
 
 /* Operand inserters.  */
 
 #define AARCH64_DECL_OPD_INSERTER(x)	\
-  const char* aarch64_##x (const aarch64_operand *, const aarch64_opnd_info *, \
-			   aarch64_insn *, const aarch64_inst *)
+  bfd_boolean aarch64_##x (const aarch64_operand *, const aarch64_opnd_info *, \
+			   aarch64_insn *, const aarch64_inst *, \
+			   aarch64_operand_error *)
 
 AARCH64_DECL_OPD_INSERTER (ins_regno);
 AARCH64_DECL_OPD_INSERTER (ins_reglane);
@@ -57,6 +59,7 @@ AARCH64_DECL_OPD_INSERTER (ins_limm);
 AARCH64_DECL_OPD_INSERTER (ins_inv_limm);
 AARCH64_DECL_OPD_INSERTER (ins_ft);
 AARCH64_DECL_OPD_INSERTER (ins_addr_simple);
+AARCH64_DECL_OPD_INSERTER (ins_addr_offset);
 AARCH64_DECL_OPD_INSERTER (ins_addr_regoff);
 AARCH64_DECL_OPD_INSERTER (ins_addr_simm);
 AARCH64_DECL_OPD_INSERTER (ins_addr_simm10);
