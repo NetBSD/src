@@ -1,3 +1,9 @@
+2017-02-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* decodev10.c (crisv10f_init_idesc_table): Use ARRAY_SIZE.
+	* decodev32.c (crisv32f_init_idesc_table): Likewise.
+	* sim-if.c (sim_open): Likewise.
+
 2016-01-10  Mike Frysinger  <vapier@gentoo.org>
 
 	* config.in, configure: Regenerate.

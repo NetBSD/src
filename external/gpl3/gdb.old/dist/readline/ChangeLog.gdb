@@ -1,3 +1,45 @@
+2017-05-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* input.c [_WIN32]: Include <conio.h> to avoid compiler warning on
+	MinGW.
+
+2016-09-17  Eli Zaretskii  <eliz@gnu.org>
+
+	* util.c: Include rlshell.h.
+	(_rl_tropen) [_WIN32 && !__CYGWIN__]: Open the trace file in the
+	user's temporary directory.
+
+	* tcap.h [HAVE_NCURSES_TERMCAP_H]: Include ncurses/termcap.h.
+
+	* input.c (w32_isatty) [_WIN32 && !__CYGWIN__]: New function, to
+	replace isatty that is not reliable enough on MS-Windows.
+	(isatty) [_WIN32 && !__CYGWIN__]: Redirect to w32_isatty.
+	(rl_getc): Call _getch, not getch, which could be an ncurses
+	function when linked with ncurses, in which case getch will return
+	EOF for any keystroke, because there's no curses window.
+
+	* tilde.c (tilde_expand_word) [_WIN32]:
+	* histfile.c (history_filename) [_WIN32]: Windows-specific
+	environment variable to replace HOME if that is undefined.
+
+	* funmap.c (default_funmap): Compile rl_paste_from_clipboard on
+	all Windows platforms, not just Cygwin.
+
+	* readline.h (rl_paste_from_clipboard): Include declaration for
+	all Windows platforms.
+
+	* display.c (insert_some_chars, delete_chars): Don't use the
+	MinGW-specific code if linked with ncurses.
+
+	* configure.in:
+	* config.h.in: Support ncurses/termcap.h.  The configure script
+	was updated accordingly.
+
+	* complete.c [_WIN32 && !__CYGWIN__]: Initialize
+	_rl_completion_case_fold to 1.
+	(printable_part, rl_filename_completion_function)
+	[_WIN32 && !__CYGWIN__]: Handle the drive letter.
+
 2014-12-30  Eli Zaretskii  <eliz@gnu.org>
 
 	* complete.c (stat_char) [_WIN32]: Don't use 'access' and X_OK on

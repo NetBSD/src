@@ -1,6 +1,6 @@
 /* Definitions for BFD wrappers used by GDB.
 
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -356,7 +356,7 @@ gdb_bfd_iovec_fileio_fstat (struct bfd *abfd, void *stream,
 
 /* See gdb_bfd.h.  */
 
-struct bfd *
+gdb_bfd_ref_ptr
 gdb_bfd_open (const char *name, const char *target, int fd)
 {
   hashval_t hash;
@@ -428,7 +428,7 @@ gdb_bfd_open (const char *name, const char *target, int fd)
 			    bfd_get_filename (abfd));
       close (fd);
       gdb_bfd_ref (abfd);
-      return abfd;
+      return gdb_bfd_ref_ptr (abfd);
     }
 
   abfd = bfd_fopen (name, target, FOPEN_RB, fd);
@@ -449,7 +449,7 @@ gdb_bfd_open (const char *name, const char *target, int fd)
     }
 
   gdb_bfd_ref (abfd);
-  return abfd;
+  return gdb_bfd_ref_ptr (abfd);
 }
 
 /* A helper function that releases any section data attached to the
@@ -772,7 +772,7 @@ gdb_bfd_crc (struct bfd *abfd, unsigned long *crc_out)
 
 /* See gdb_bfd.h.  */
 
-bfd *
+gdb_bfd_ref_ptr
 gdb_bfd_fopen (const char *filename, const char *target, const char *mode,
 	       int fd)
 {
@@ -781,12 +781,12 @@ gdb_bfd_fopen (const char *filename, const char *target, const char *mode,
   if (result)
     gdb_bfd_ref (result);
 
-  return result;
+  return gdb_bfd_ref_ptr (result);
 }
 
 /* See gdb_bfd.h.  */
 
-bfd *
+gdb_bfd_ref_ptr
 gdb_bfd_openr (const char *filename, const char *target)
 {
   bfd *result = bfd_openr (filename, target);
@@ -794,12 +794,12 @@ gdb_bfd_openr (const char *filename, const char *target)
   if (result)
     gdb_bfd_ref (result);
 
-  return result;
+  return gdb_bfd_ref_ptr (result);
 }
 
 /* See gdb_bfd.h.  */
 
-bfd *
+gdb_bfd_ref_ptr
 gdb_bfd_openw (const char *filename, const char *target)
 {
   bfd *result = bfd_openw (filename, target);
@@ -807,12 +807,12 @@ gdb_bfd_openw (const char *filename, const char *target)
   if (result)
     gdb_bfd_ref (result);
 
-  return result;
+  return gdb_bfd_ref_ptr (result);
 }
 
 /* See gdb_bfd.h.  */
 
-bfd *
+gdb_bfd_ref_ptr
 gdb_bfd_openr_iovec (const char *filename, const char *target,
 		     void *(*open_func) (struct bfd *nbfd,
 					 void *open_closure),
@@ -835,7 +835,7 @@ gdb_bfd_openr_iovec (const char *filename, const char *target,
   if (result)
     gdb_bfd_ref (result);
 
-  return result;
+  return gdb_bfd_ref_ptr (result);
 }
 
 /* See gdb_bfd.h.  */
@@ -861,7 +861,7 @@ gdb_bfd_mark_parent (bfd *child, bfd *parent)
 
 /* See gdb_bfd.h.  */
 
-bfd *
+gdb_bfd_ref_ptr
 gdb_bfd_openr_next_archived_file (bfd *archive, bfd *previous)
 {
   bfd *result = bfd_openr_next_archived_file (archive, previous);
@@ -869,7 +869,7 @@ gdb_bfd_openr_next_archived_file (bfd *archive, bfd *previous)
   if (result)
     gdb_bfd_mark_parent (result, archive);
 
-  return result;
+  return gdb_bfd_ref_ptr (result);
 }
 
 /* See gdb_bfd.h.  */
@@ -886,7 +886,7 @@ gdb_bfd_record_inclusion (bfd *includer, bfd *includee)
 
 /* See gdb_bfd.h.  */
 
-bfd *
+gdb_bfd_ref_ptr
 gdb_bfd_fdopenr (const char *filename, const char *target, int fd)
 {
   bfd *result = bfd_fdopenr (filename, target, fd);
@@ -894,7 +894,7 @@ gdb_bfd_fdopenr (const char *filename, const char *target, int fd)
   if (result)
     gdb_bfd_ref (result);
 
-  return result;
+  return gdb_bfd_ref_ptr (result);
 }
 
 
@@ -964,10 +964,10 @@ print_one_bfd (void **slot, void *data)
   struct cleanup *inner;
 
   inner = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
-  ui_out_field_int (uiout, "refcount", gdata->refc);
-  ui_out_field_string (uiout, "addr", host_address_to_string (abfd));
-  ui_out_field_string (uiout, "filename", bfd_get_filename (abfd));
-  ui_out_text (uiout, "\n");
+  uiout->field_int ("refcount", gdata->refc);
+  uiout->field_string ("addr", host_address_to_string (abfd));
+  uiout->field_string ("filename", bfd_get_filename (abfd));
+  uiout->text ("\n");
   do_cleanups (inner);
 
   return 1;
@@ -982,11 +982,11 @@ maintenance_info_bfds (char *arg, int from_tty)
   struct ui_out *uiout = current_uiout;
 
   cleanup = make_cleanup_ui_out_table_begin_end (uiout, 3, -1, "bfds");
-  ui_out_table_header (uiout, 10, ui_left, "refcount", "Refcount");
-  ui_out_table_header (uiout, 18, ui_left, "addr", "Address");
-  ui_out_table_header (uiout, 40, ui_left, "filename", "Filename");
+  uiout->table_header (10, ui_left, "refcount", "Refcount");
+  uiout->table_header (18, ui_left, "addr", "Address");
+  uiout->table_header (40, ui_left, "filename", "Filename");
 
-  ui_out_table_body (uiout);
+  uiout->table_body ();
   htab_traverse (all_bfds, print_one_bfd, uiout);
 
   do_cleanups (cleanup);

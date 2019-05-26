@@ -1200,6 +1200,7 @@ Picojava relocs.  Not all of these appear in object files.
 @deffnx {} BFD_RELOC_PPC_VLE_SDAREL_HI16D
 @deffnx {} BFD_RELOC_PPC_VLE_SDAREL_HA16A
 @deffnx {} BFD_RELOC_PPC_VLE_SDAREL_HA16D
+@deffnx {} BFD_RELOC_PPC_16DX_HA
 @deffnx {} BFD_RELOC_PPC_REL16DX_HA
 @deffnx {} BFD_RELOC_PPC64_HIGHER
 @deffnx {} BFD_RELOC_PPC64_HIGHER_S
@@ -1581,13 +1582,14 @@ Renesas / SuperH SH relocs.  Not all of these appear in object files.
 @deffnx {} BFD_RELOC_AC_SECTOFF_U8
 @deffnx {} BFD_RELOC_AC_SECTOFF_U8_1
 @deffnx {} BFD_RELOC_AC_SECTOFF_U8_2
-@deffnx {} BFD_RELOC_AC_SECTFOFF_S9
-@deffnx {} BFD_RELOC_AC_SECTFOFF_S9_1
-@deffnx {} BFD_RELOC_AC_SECTFOFF_S9_2
+@deffnx {} BFD_RELOC_AC_SECTOFF_S9
+@deffnx {} BFD_RELOC_AC_SECTOFF_S9_1
+@deffnx {} BFD_RELOC_AC_SECTOFF_S9_2
 @deffnx {} BFD_RELOC_ARC_SECTOFF_ME_1
 @deffnx {} BFD_RELOC_ARC_SECTOFF_ME_2
 @deffnx {} BFD_RELOC_ARC_SECTOFF_1
 @deffnx {} BFD_RELOC_ARC_SECTOFF_2
+@deffnx {} BFD_RELOC_ARC_SDA_12
 @deffnx {} BFD_RELOC_ARC_SDA16_ST2
 @deffnx {} BFD_RELOC_ARC_32_PCREL
 @deffnx {} BFD_RELOC_ARC_PC32
@@ -2539,6 +2541,55 @@ number for the IN and OUT instructions
 This is a 5 bit reloc for the AVR that stores an I/O register
 number for the SBIC, SBIS, SBI and CBI instructions
 @end deffn
+@deffn {} BFD_RELOC_RISCV_HI20
+@deffnx {} BFD_RELOC_RISCV_PCREL_HI20
+@deffnx {} BFD_RELOC_RISCV_PCREL_LO12_I
+@deffnx {} BFD_RELOC_RISCV_PCREL_LO12_S
+@deffnx {} BFD_RELOC_RISCV_LO12_I
+@deffnx {} BFD_RELOC_RISCV_LO12_S
+@deffnx {} BFD_RELOC_RISCV_GPREL12_I
+@deffnx {} BFD_RELOC_RISCV_GPREL12_S
+@deffnx {} BFD_RELOC_RISCV_TPREL_HI20
+@deffnx {} BFD_RELOC_RISCV_TPREL_LO12_I
+@deffnx {} BFD_RELOC_RISCV_TPREL_LO12_S
+@deffnx {} BFD_RELOC_RISCV_TPREL_ADD
+@deffnx {} BFD_RELOC_RISCV_CALL
+@deffnx {} BFD_RELOC_RISCV_CALL_PLT
+@deffnx {} BFD_RELOC_RISCV_ADD8
+@deffnx {} BFD_RELOC_RISCV_ADD16
+@deffnx {} BFD_RELOC_RISCV_ADD32
+@deffnx {} BFD_RELOC_RISCV_ADD64
+@deffnx {} BFD_RELOC_RISCV_SUB8
+@deffnx {} BFD_RELOC_RISCV_SUB16
+@deffnx {} BFD_RELOC_RISCV_SUB32
+@deffnx {} BFD_RELOC_RISCV_SUB64
+@deffnx {} BFD_RELOC_RISCV_GOT_HI20
+@deffnx {} BFD_RELOC_RISCV_TLS_GOT_HI20
+@deffnx {} BFD_RELOC_RISCV_TLS_GD_HI20
+@deffnx {} BFD_RELOC_RISCV_JMP
+@deffnx {} BFD_RELOC_RISCV_TLS_DTPMOD32
+@deffnx {} BFD_RELOC_RISCV_TLS_DTPREL32
+@deffnx {} BFD_RELOC_RISCV_TLS_DTPMOD64
+@deffnx {} BFD_RELOC_RISCV_TLS_DTPREL64
+@deffnx {} BFD_RELOC_RISCV_TLS_TPREL32
+@deffnx {} BFD_RELOC_RISCV_TLS_TPREL64
+@deffnx {} BFD_RELOC_RISCV_ALIGN
+@deffnx {} BFD_RELOC_RISCV_RVC_BRANCH
+@deffnx {} BFD_RELOC_RISCV_RVC_JUMP
+@deffnx {} BFD_RELOC_RISCV_RVC_LUI
+@deffnx {} BFD_RELOC_RISCV_GPREL_I
+@deffnx {} BFD_RELOC_RISCV_GPREL_S
+@deffnx {} BFD_RELOC_RISCV_TPREL_I
+@deffnx {} BFD_RELOC_RISCV_TPREL_S
+@deffnx {} BFD_RELOC_RISCV_RELAX
+@deffnx {} BFD_RELOC_RISCV_CFA
+@deffnx {} BFD_RELOC_RISCV_SUB6
+@deffnx {} BFD_RELOC_RISCV_SET6
+@deffnx {} BFD_RELOC_RISCV_SET8
+@deffnx {} BFD_RELOC_RISCV_SET16
+@deffnx {} BFD_RELOC_RISCV_SET32
+RISC-V relocations.
+@end deffn
 @deffn {} BFD_RELOC_RL78_NEG8
 @deffnx {} BFD_RELOC_RL78_NEG16
 @deffnx {} BFD_RELOC_RL78_NEG24
@@ -3353,6 +3404,41 @@ msp430 specific relocation codes
 @deffnx {} BFD_RELOC_NIOS2_R2_T1X1I6_2
 Relocations used by the Altera Nios II core.
 @end deffn
+@deffn {} BFD_RELOC_PRU_U16
+PRU LDI 16-bit unsigned data-memory relocation.
+@end deffn
+@deffn {} BFD_RELOC_PRU_U16_PMEMIMM
+PRU LDI 16-bit unsigned instruction-memory relocation.
+@end deffn
+@deffn {} BFD_RELOC_PRU_LDI32
+PRU relocation for two consecutive LDI load instructions that load a
+32 bit value into a register. If the higher bits are all zero, then
+the second instruction may be relaxed.
+@end deffn
+@deffn {} BFD_RELOC_PRU_S10_PCREL
+PRU QBBx 10-bit signed PC-relative relocation.
+@end deffn
+@deffn {} BFD_RELOC_PRU_U8_PCREL
+PRU 8-bit unsigned relocation used for the LOOP instruction.
+@end deffn
+@deffn {} BFD_RELOC_PRU_32_PMEM
+@deffnx {} BFD_RELOC_PRU_16_PMEM
+PRU Program Memory relocations.  Used to convert from byte addressing to
+32-bit word addressing.
+@end deffn
+@deffn {} BFD_RELOC_PRU_GNU_DIFF8
+@deffnx {} BFD_RELOC_PRU_GNU_DIFF16
+@deffnx {} BFD_RELOC_PRU_GNU_DIFF32
+@deffnx {} BFD_RELOC_PRU_GNU_DIFF16_PMEM
+@deffnx {} BFD_RELOC_PRU_GNU_DIFF32_PMEM
+PRU relocations to mark the difference of two local symbols.
+These are only needed to support linker relaxation and can be ignored
+when not relaxing.  The field is set to the value of the difference
+assuming no relaxation.  The relocation encodes the position of the
+second symbol so the linker can determine whether to adjust the field
+value. The PMEM variants encode the word difference, instead of byte
+difference between symbols.
+@end deffn
 @deffn {} BFD_RELOC_IQ2000_OFFSET_16
 @deffnx {} BFD_RELOC_IQ2000_OFFSET_21
 @deffnx {} BFD_RELOC_IQ2000_UHI16
@@ -3906,13 +3992,13 @@ AArch64 TLS DESC relocation.
 @deffn {} BFD_RELOC_AARCH64_TLSDESC_ADR_PAGE21
 AArch64 TLS DESC relocation.
 @end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC_LD64_LO12_NC
+@deffn {} BFD_RELOC_AARCH64_TLSDESC_LD64_LO12
 AArch64 TLS DESC relocation.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSDESC_LD32_LO12_NC
 AArch64 TLS DESC relocation.
 @end deffn
-@deffn {} BFD_RELOC_AARCH64_TLSDESC_ADD_LO12_NC
+@deffn {} BFD_RELOC_AARCH64_TLSDESC_ADD_LO12
 AArch64 TLS DESC relocation.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_TLSDESC_OFF_G1
@@ -4213,6 +4299,18 @@ Adapteva EPIPHANY - 8 bit immediate for 16 bit mov instruction.
 @deffnx {} BFD_RELOC_VISIUM_LO16_PCREL
 @deffnx {} BFD_RELOC_VISIUM_IM16_PCREL
 Visium Relocations.
+@end deffn
+@deffn {} BFD_RELOC_WASM32_LEB128
+@deffnx {} BFD_RELOC_WASM32_LEB128_GOT
+@deffnx {} BFD_RELOC_WASM32_LEB128_GOT_CODE
+@deffnx {} BFD_RELOC_WASM32_LEB128_PLT
+@deffnx {} BFD_RELOC_WASM32_PLT_INDEX
+@deffnx {} BFD_RELOC_WASM32_ABS32_CODE
+@deffnx {} BFD_RELOC_WASM32_COPY
+@deffnx {} BFD_RELOC_WASM32_CODE_POINTER
+@deffnx {} BFD_RELOC_WASM32_INDEX
+@deffnx {} BFD_RELOC_WASM32_PLT_SIG
+WebAssembly relocations.
 @end deffn
 
 @example

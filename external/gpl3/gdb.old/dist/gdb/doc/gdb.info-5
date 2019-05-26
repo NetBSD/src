@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 6.0 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.3 from gdb.texinfo.
 
-Copyright (C) 1988-2016 Free Software Foundation, Inc.
+Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.12.
+Source-Level Debugger' for GDB (GDB) Version 8.0.1.
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,327 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Guile Auto-loading,  Next: Guile Modules,  Prev: Guile API,  Up: Guile
+
+23.3.4 Guile Auto-loading
+-------------------------
+
+When a new object file is read (for example, due to the 'file' command,
+or because the inferior has loaded a shared library), GDB will look for
+Guile support scripts in two ways: 'OBJFILE-gdb.scm' and the
+'.debug_gdb_scripts' section.  *Note Auto-loading extensions::.
+
+   The auto-loading feature is useful for supplying application-specific
+debugging commands and scripts.
+
+   Auto-loading can be enabled or disabled, and the list of auto-loaded
+scripts can be printed.
+
+'set auto-load guile-scripts [on|off]'
+     Enable or disable the auto-loading of Guile scripts.
+
+'show auto-load guile-scripts'
+     Show whether auto-loading of Guile scripts is enabled or disabled.
+
+'info auto-load guile-scripts [REGEXP]'
+     Print the list of all Guile scripts that GDB auto-loaded.
+
+     Also printed is the list of Guile scripts that were mentioned in
+     the '.debug_gdb_scripts' section and were not found.  This is
+     useful because their names are not printed when GDB tries to load
+     them and fails.  There may be many of them, and printing an error
+     message for each one is problematic.
+
+     If REGEXP is supplied only Guile scripts with matching names are
+     printed.
+
+     Example:
+
+          (gdb) info auto-load guile-scripts
+          Loaded Script
+          Yes    scm-section-script.scm
+                 full name: /tmp/scm-section-script.scm
+          No     my-foo-pretty-printers.scm
+
+   When reading an auto-loaded file, GDB sets the "current objfile".
+This is available via the 'current-objfile' procedure (*note Objfiles In
+Guile::).  This can be useful for registering objfile-specific
+pretty-printers.
+
+
+File: gdb.info,  Node: Guile Modules,  Prev: Guile Auto-loading,  Up: Guile
+
+23.3.5 Guile Modules
+--------------------
+
+GDB comes with several modules to assist writing Guile code.
+
+* Menu:
+
+* Guile Printing Module::  Building and registering pretty-printers
+* Guile Types Module::     Utilities for working with types
+
+
+File: gdb.info,  Node: Guile Printing Module,  Next: Guile Types Module,  Up: Guile Modules
+
+23.3.5.1 Guile Printing Module
+..............................
+
+This module provides a collection of utilities for working with
+pretty-printers.
+
+   Usage:
+
+     (use-modules (gdb printing))
+
+ -- Scheme Procedure: prepend-pretty-printer! object printer
+     Add PRINTER to the front of the list of pretty-printers for OBJECT.
+     The OBJECT must either be a '<gdb:objfile>' object, or '#f' in
+     which case PRINTER is added to the global list of printers.
+
+ -- Scheme Procecure: append-pretty-printer! object printer
+     Add PRINTER to the end of the list of pretty-printers for OBJECT.
+     The OBJECT must either be a '<gdb:objfile>' object, or '#f' in
+     which case PRINTER is added to the global list of printers.
+
+
+File: gdb.info,  Node: Guile Types Module,  Prev: Guile Printing Module,  Up: Guile Modules
+
+23.3.5.2 Guile Types Module
+...........................
+
+This module provides a collection of utilities for working with
+'<gdb:type>' objects.
+
+   Usage:
+
+     (use-modules (gdb types))
+
+ -- Scheme Procedure: get-basic-type type
+     Return TYPE with const and volatile qualifiers stripped, and with
+     typedefs and C++ references converted to the underlying type.
+
+     C++ example:
+
+          typedef const int const_int;
+          const_int foo (3);
+          const_int& foo_ref (foo);
+          int main () { return 0; }
+
+     Then in gdb:
+
+          (gdb) start
+          (gdb) guile (use-modules (gdb) (gdb types))
+          (gdb) guile (define foo-ref (parse-and-eval "foo_ref"))
+          (gdb) guile (get-basic-type (value-type foo-ref))
+          int
+
+ -- Scheme Procedure: type-has-field-deep? type field
+     Return '#t' if TYPE, assumed to be a type with fields (e.g., a
+     structure or union), has field FIELD.  Otherwise return '#f'.  This
+     searches baseclasses, whereas 'type-has-field?' does not.
+
+ -- Scheme Procedure: make-enum-hashtable enum-type
+     Return a Guile hash table produced from ENUM-TYPE.  Elements in the
+     hash table are referenced with 'hashq-ref'.
+
+
+File: gdb.info,  Node: Auto-loading extensions,  Next: Multiple Extension Languages,  Prev: Guile,  Up: Extending GDB
+
+23.4 Auto-loading extensions
+============================
+
+GDB provides two mechanisms for automatically loading extensions when a
+new object file is read (for example, due to the 'file' command, or
+because the inferior has loaded a shared library): 'OBJFILE-gdb.EXT' and
+the '.debug_gdb_scripts' section of modern file formats like ELF.
+
+* Menu:
+
+* objfile-gdb.ext file: objfile-gdbdotext file.  The 'OBJFILE-gdb.EXT' file
+* .debug_gdb_scripts section: dotdebug_gdb_scripts section.  The '.debug_gdb_scripts' section
+* Which flavor to choose?::
+
+   The auto-loading feature is useful for supplying application-specific
+debugging commands and features.
+
+   Auto-loading can be enabled or disabled, and the list of auto-loaded
+scripts can be printed.  See the 'auto-loading' section of each
+extension language for more information.  For GDB command files see
+*note Auto-loading sequences::.  For Python files see *note Python
+Auto-loading::.
+
+   Note that loading of this script file also requires accordingly
+configured 'auto-load safe-path' (*note Auto-loading safe path::).
+
+
+File: gdb.info,  Node: objfile-gdbdotext file,  Next: dotdebug_gdb_scripts section,  Up: Auto-loading extensions
+
+23.4.1 The 'OBJFILE-gdb.EXT' file
+---------------------------------
+
+When a new object file is read, GDB looks for a file named
+'OBJFILE-gdb.EXT' (we call it SCRIPT-NAME below), where OBJFILE is the
+object file's name and where EXT is the file extension for the extension
+language:
+
+'OBJFILE-gdb.gdb'
+     GDB's own command language
+'OBJFILE-gdb.py'
+     Python
+'OBJFILE-gdb.scm'
+     Guile
+
+   SCRIPT-NAME is formed by ensuring that the file name of OBJFILE is
+absolute, following all symlinks, and resolving '.' and '..' components,
+and appending the '-gdb.EXT' suffix.  If this file exists and is
+readable, GDB will evaluate it as a script in the specified extension
+language.
+
+   If this file does not exist, then GDB will look for SCRIPT-NAME file
+in all of the directories as specified below.
+
+   Note that loading of these files requires an accordingly configured
+'auto-load safe-path' (*note Auto-loading safe path::).
+
+   For object files using '.exe' suffix GDB tries to load first the
+scripts normally according to its '.exe' filename.  But if no scripts
+are found GDB also tries script filenames matching the object file
+without its '.exe' suffix.  This '.exe' stripping is case insensitive
+and it is attempted on any platform.  This makes the script filenames
+compatible between Unix and MS-Windows hosts.
+
+'set auto-load scripts-directory [DIRECTORIES]'
+     Control GDB auto-loaded scripts location.  Multiple directory
+     entries may be delimited by the host platform path separator in use
+     (':' on Unix, ';' on MS-Windows and MS-DOS).
+
+     Each entry here needs to be covered also by the security setting
+     'set auto-load safe-path' (*note set auto-load safe-path::).
+
+     This variable defaults to '$debugdir:$datadir/auto-load'.  The
+     default 'set auto-load safe-path' value can be also overriden by
+     GDB configuration option '--with-auto-load-dir'.
+
+     Any reference to '$debugdir' will get replaced by
+     DEBUG-FILE-DIRECTORY value (*note Separate Debug Files::) and any
+     reference to '$datadir' will get replaced by DATA-DIRECTORY which
+     is determined at GDB startup (*note Data Files::).  '$debugdir' and
+     '$datadir' must be placed as a directory component -- either alone
+     or delimited by '/' or '\' directory separators, depending on the
+     host platform.
+
+     The list of directories uses path separator (':' on GNU and Unix
+     systems, ';' on MS-Windows and MS-DOS) to separate directories,
+     similarly to the 'PATH' environment variable.
+
+'show auto-load scripts-directory'
+     Show GDB auto-loaded scripts location.
+
+'add-auto-load-scripts-directory [DIRECTORIES...]'
+     Add an entry (or list of entries) to the list of auto-loaded
+     scripts locations.  Multiple entries may be delimited by the host
+     platform path separator in use.
+
+   GDB does not track which files it has already auto-loaded this way.
+GDB will load the associated script every time the corresponding OBJFILE
+is opened.  So your '-gdb.EXT' file should be careful to avoid errors if
+it is evaluated more than once.
+
+
+File: gdb.info,  Node: dotdebug_gdb_scripts section,  Next: Which flavor to choose?,  Prev: objfile-gdbdotext file,  Up: Auto-loading extensions
+
+23.4.2 The '.debug_gdb_scripts' section
+---------------------------------------
+
+For systems using file formats like ELF and COFF, when GDB loads a new
+object file it will look for a special section named
+'.debug_gdb_scripts'.  If this section exists, its contents is a list of
+null-terminated entries specifying scripts to load.  Each entry begins
+with a non-null prefix byte that specifies the kind of entry, typically
+the extension language and whether the script is in a file or inlined in
+'.debug_gdb_scripts'.
+
+   The following entries are supported:
+
+'SECTION_SCRIPT_ID_PYTHON_FILE = 1'
+'SECTION_SCRIPT_ID_SCHEME_FILE = 3'
+'SECTION_SCRIPT_ID_PYTHON_TEXT = 4'
+'SECTION_SCRIPT_ID_SCHEME_TEXT = 6'
+
+23.4.2.1 Script File Entries
+............................
+
+If the entry specifies a file, GDB will look for the file first in the
+current directory and then along the source search path (*note
+Specifying Source Directories: Source Path.), except that '$cdir' is not
+searched, since the compilation directory is not relevant to scripts.
+
+   File entries can be placed in section '.debug_gdb_scripts' with, for
+example, this GCC macro for Python scripts.
+
+     /* Note: The "MS" section flags are to remove duplicates.  */
+     #define DEFINE_GDB_PY_SCRIPT(script_name) \
+       asm("\
+     .pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\n\
+     .byte 1 /* Python */\n\
+     .asciz \"" script_name "\"\n\
+     .popsection \n\
+     ");
+
+For Guile scripts, replace '.byte 1' with '.byte 3'.  Then one can
+reference the macro in a header or source file like this:
+
+     DEFINE_GDB_PY_SCRIPT ("my-app-scripts.py")
+
+   The script name may include directories if desired.
+
+   Note that loading of this script file also requires accordingly
+configured 'auto-load safe-path' (*note Auto-loading safe path::).
+
+   If the macro invocation is put in a header, any application or
+library using this header will get a reference to the specified script,
+and with the use of '"MS"' attributes on the section, the linker will
+remove duplicates.
+
+23.4.2.2 Script Text Entries
+............................
+
+Script text entries allow to put the executable script in the entry
+itself instead of loading it from a file.  The first line of the entry,
+everything after the prefix byte and up to the first newline ('0xa')
+character, is the script name, and must not contain any kind of space
+character, e.g., spaces or tabs.  The rest of the entry, up to the
+trailing null byte, is the script to execute in the specified language.
+The name needs to be unique among all script names, as GDB executes each
+script only once based on its name.
+
+   Here is an example from file 'py-section-script.c' in the GDB
+testsuite.
+
+     #include "symcat.h"
+     #include "gdb/section-scripts.h"
+     asm(
+     ".pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\n"
+     ".byte " XSTRING (SECTION_SCRIPT_ID_PYTHON_TEXT) "\n"
+     ".ascii \"gdb.inlined-script\\n\"\n"
+     ".ascii \"class test_cmd (gdb.Command):\\n\"\n"
+     ".ascii \"  def __init__ (self):\\n\"\n"
+     ".ascii \"    super (test_cmd, self).__init__ ("
+         "\\\"test-cmd\\\", gdb.COMMAND_OBSCURE)\\n\"\n"
+     ".ascii \"  def invoke (self, arg, from_tty):\\n\"\n"
+     ".ascii \"    print (\\\"test-cmd output, arg = %s\\\" % arg)\\n\"\n"
+     ".ascii \"test_cmd ()\\n\"\n"
+     ".byte 0\n"
+     ".popsection\n"
+     );
+
+   Loading of inlined scripts requires a properly configured 'auto-load
+safe-path' (*note Auto-loading safe path::).  The path to specify in
+'auto-load safe-path' is the path of the file containing the
+'.debug_gdb_scripts' section.
 
 
 File: gdb.info,  Node: Which flavor to choose?,  Prev: dotdebug_gdb_scripts section,  Up: Auto-loading extensions
@@ -1556,9 +1877,9 @@ activity (e.g., target stopped).
 
 '=library-loaded,...'
      Reports that a new library file was loaded by the program.  This
-     notification has 4 fields--ID, TARGET-NAME, HOST-NAME, and
-     SYMBOLS-LOADED.  The ID field is an opaque identifier of the
-     library.  For remote debugging case, TARGET-NAME and HOST-NAME
+     notification has 5 fields--ID, TARGET-NAME, HOST-NAME,
+     SYMBOLS-LOADED and RANGES.  The ID field is an opaque identifier of
+     the library.  For remote debugging case, TARGET-NAME and HOST-NAME
      fields give the name of the library file on the target, and on the
      host respectively.  For native debugging, both those fields have
      the same value.  The SYMBOLS-LOADED field is emitted only for
@@ -1566,7 +1887,8 @@ activity (e.g., target stopped).
      useful information.  The THREAD-GROUP field, if present, specifies
      the id of the thread group in whose context the library was loaded.
      If the field is absent, it means the library was loaded in the
-     context of all present thread groups.
+     context of all present thread groups.  The RANGES field specifies
+     the ranges of addresses belonging to this library.
 
 '=library-unloaded,...'
      Reports that a library was unloaded by the program.  This
@@ -1621,7 +1943,7 @@ activity (e.g., target stopped).
      The METHOD field indicates the method used to record execution.  If
      the method in use supports multiple recording formats, FORMAT will
      be present and contain the currently used format.  *Note Process
-     Record and Replay::.  for existing method and format values.
+     Record and Replay::, for existing method and format values.
 
 '=cmd-param-changed,param=PARAM,value=VALUE'
      Reports that a parameter of the command 'set PARAM' is changed to
@@ -5591,11 +5913,15 @@ Example
 Synopsis
 ........
 
-      -trace-save [-r ] FILENAME
+      -trace-save [ -r ] [ -ctf ] FILENAME
 
    Saves the collected trace data to FILENAME.  Without the '-r' option,
 the data is downloaded from the target and saved in a local file.  With
 the '-r' option the target is asked to perform the save.
+
+   By default, this command will save the trace in the tfile format.
+You can supply the optional '-ctf' argument to save it the CTF format.
+See *note Trace Files:: for more information about CTF.
 
 GDB Command
 ...........
@@ -5610,7 +5936,7 @@ Synopsis
 
       -trace-start
 
-   Starts a tracing experiments.  The result of this command does not
+   Starts a tracing experiment.  The result of this command does not
 have any fields.
 
 GDB Command
@@ -5857,6 +6183,40 @@ Example
      {file=gdb_could_not_find_fullpath.c}]
      (gdb)
 
+The '-file-list-shared-libraries' Command
+-----------------------------------------
+
+Synopsis
+........
+
+      -file-list-shared-libraries [ REGEXP ]
+
+   List the shared libraries in the program.  With a regular expression
+REGEXP, only those libraries whose names match REGEXP are listed.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'info shared'.  The fields have a
+similar meaning to the '=library-loaded' notification.  The 'ranges'
+field specifies the multiple segments belonging to this library.  Each
+range has the following fields:
+
+'from'
+     The address defining the inclusive lower bound of the segment.
+'to'
+     The address defining the exclusive upper bound of the segment.
+
+Example
+.......
+
+     (gdb)
+     -file-list-exec-source-files
+     ^done,shared-libraries=[
+     {id="/lib/libfoo.so",target-name="/lib/libfoo.so",host-name="/lib/libfoo.so",symbols-loaded="1",thread-group="i1",ranges=[{from="0x72815989",to="0x728162c0"}]},
+     {id="/lib/libbar.so",target-name="/lib/libbar.so",host-name="/lib/libbar.so",symbols-loaded="1",thread-group="i1",ranges=[{from="0x76ee48c0",to="0x76ee9160"}]}]
+     (gdb)
+
 The '-file-symbol-file' Command
 -------------------------------
 
@@ -6070,6 +6430,26 @@ Example
 .......
 
 N.A.
+
+The '-target-flash-erase' Command
+---------------------------------
+
+Synopsis
+........
+
+      -target-flash-erase
+
+   Erases all known flash memory regions on the target.
+
+   The corresponding GDB command is 'flash-erase'.
+
+   The output is a list of flash regions that have been erased, with
+starting addresses and memory region sizes.
+
+     (gdb)
+     -target-flash-erase
+     ^done,erased-regions={address="0x0",size="0x40000"}
+     (gdb)
 
 The '-target-select' Command
 ----------------------------
@@ -8437,315 +8817,4 @@ four parser directives used.
      commands and bindings from that file.  For example, the following
      directive reads from '/etc/inputrc':
           $include /etc/inputrc
-
-
-File: gdb.info,  Node: Sample Init File,  Prev: Conditional Init Constructs,  Up: Readline Init File
-
-32.3.3 Sample Init File
------------------------
-
-Here is an example of an INPUTRC file.  This illustrates key binding,
-variable assignment, and conditional syntax.
-
-     # This file controls the behaviour of line input editing for
-     # programs that use the GNU Readline library.  Existing
-     # programs include FTP, Bash, and GDB.
-     #
-     # You can re-read the inputrc file with C-x C-r.
-     # Lines beginning with '#' are comments.
-     #
-     # First, include any systemwide bindings and variable
-     # assignments from /etc/Inputrc
-     $include /etc/Inputrc
-
-     #
-     # Set various bindings for emacs mode.
-
-     set editing-mode emacs
-
-     $if mode=emacs
-
-     Meta-Control-h:	backward-kill-word	Text after the function name is ignored
-
-     #
-     # Arrow keys in keypad mode
-     #
-     #"\M-OD":        backward-char
-     #"\M-OC":        forward-char
-     #"\M-OA":        previous-history
-     #"\M-OB":        next-history
-     #
-     # Arrow keys in ANSI mode
-     #
-     "\M-[D":        backward-char
-     "\M-[C":        forward-char
-     "\M-[A":        previous-history
-     "\M-[B":        next-history
-     #
-     # Arrow keys in 8 bit keypad mode
-     #
-     #"\M-\C-OD":       backward-char
-     #"\M-\C-OC":       forward-char
-     #"\M-\C-OA":       previous-history
-     #"\M-\C-OB":       next-history
-     #
-     # Arrow keys in 8 bit ANSI mode
-     #
-     #"\M-\C-[D":       backward-char
-     #"\M-\C-[C":       forward-char
-     #"\M-\C-[A":       previous-history
-     #"\M-\C-[B":       next-history
-
-     C-q: quoted-insert
-
-     $endif
-
-     # An old-style binding.  This happens to be the default.
-     TAB: complete
-
-     # Macros that are convenient for shell interaction
-     $if Bash
-     # edit the path
-     "\C-xp": "PATH=${PATH}\e\C-e\C-a\ef\C-f"
-     # prepare to type a quoted word --
-     # insert open and close double quotes
-     # and move to just after the open quote
-     "\C-x\"": "\"\"\C-b"
-     # insert a backslash (testing backslash escapes
-     # in sequences and macros)
-     "\C-x\\": "\\"
-     # Quote the current or previous word
-     "\C-xq": "\eb\"\ef\""
-     # Add a binding to refresh the line, which is unbound
-     "\C-xr": redraw-current-line
-     # Edit variable on current line.
-     "\M-\C-v": "\C-a\C-k$\C-y\M-\C-e\C-a\C-y="
-     $endif
-
-     # use a visible bell if one is available
-     set bell-style visible
-
-     # don't strip characters to 7 bits when reading
-     set input-meta on
-
-     # allow iso-latin1 characters to be inserted rather
-     # than converted to prefix-meta sequences
-     set convert-meta off
-
-     # display characters with the eighth bit set directly
-     # rather than as meta-prefixed characters
-     set output-meta on
-
-     # if there are more than 150 possible completions for
-     # a word, ask the user if he wants to see all of them
-     set completion-query-items 150
-
-     # For FTP
-     $if Ftp
-     "\C-xg": "get \M-?"
-     "\C-xt": "put \M-?"
-     "\M-.": yank-last-arg
-     $endif
-
-
-File: gdb.info,  Node: Bindable Readline Commands,  Next: Readline vi Mode,  Prev: Readline Init File,  Up: Command Line Editing
-
-32.4 Bindable Readline Commands
-===============================
-
-* Menu:
-
-* Commands For Moving::		Moving about the line.
-* Commands For History::	Getting at previous lines.
-* Commands For Text::		Commands for changing text.
-* Commands For Killing::	Commands for killing and yanking.
-* Numeric Arguments::		Specifying numeric arguments, repeat counts.
-* Commands For Completion::	Getting Readline to do the typing for you.
-* Keyboard Macros::		Saving and re-executing typed characters
-* Miscellaneous Commands::	Other miscellaneous commands.
-
-This section describes Readline commands that may be bound to key
-sequences.  Command names without an accompanying key sequence are
-unbound by default.
-
-   In the following descriptions, "point" refers to the current cursor
-position, and "mark" refers to a cursor position saved by the 'set-mark'
-command.  The text between the point and mark is referred to as the
-"region".
-
-
-File: gdb.info,  Node: Commands For Moving,  Next: Commands For History,  Up: Bindable Readline Commands
-
-32.4.1 Commands For Moving
---------------------------
-
-'beginning-of-line (C-a)'
-     Move to the start of the current line.
-
-'end-of-line (C-e)'
-     Move to the end of the line.
-
-'forward-char (C-f)'
-     Move forward a character.
-
-'backward-char (C-b)'
-     Move back a character.
-
-'forward-word (M-f)'
-     Move forward to the end of the next word.  Words are composed of
-     letters and digits.
-
-'backward-word (M-b)'
-     Move back to the start of the current or previous word.  Words are
-     composed of letters and digits.
-
-'clear-screen (C-l)'
-     Clear the screen and redraw the current line, leaving the current
-     line at the top of the screen.
-
-'redraw-current-line ()'
-     Refresh the current line.  By default, this is unbound.
-
-
-File: gdb.info,  Node: Commands For History,  Next: Commands For Text,  Prev: Commands For Moving,  Up: Bindable Readline Commands
-
-32.4.2 Commands For Manipulating The History
---------------------------------------------
-
-'accept-line (Newline or Return)'
-     Accept the line regardless of where the cursor is.  If this line is
-     non-empty, it may be added to the history list for future recall
-     with 'add_history()'.  If this line is a modified history line, the
-     history line is restored to its original state.
-
-'previous-history (C-p)'
-     Move 'back' through the history list, fetching the previous
-     command.
-
-'next-history (C-n)'
-     Move 'forward' through the history list, fetching the next command.
-
-'beginning-of-history (M-<)'
-     Move to the first line in the history.
-
-'end-of-history (M->)'
-     Move to the end of the input history, i.e., the line currently
-     being entered.
-
-'reverse-search-history (C-r)'
-     Search backward starting at the current line and moving 'up'
-     through the history as necessary.  This is an incremental search.
-
-'forward-search-history (C-s)'
-     Search forward starting at the current line and moving 'down'
-     through the the history as necessary.  This is an incremental
-     search.
-
-'non-incremental-reverse-search-history (M-p)'
-     Search backward starting at the current line and moving 'up'
-     through the history as necessary using a non-incremental search for
-     a string supplied by the user.
-
-'non-incremental-forward-search-history (M-n)'
-     Search forward starting at the current line and moving 'down'
-     through the the history as necessary using a non-incremental search
-     for a string supplied by the user.
-
-'history-search-forward ()'
-     Search forward through the history for the string of characters
-     between the start of the current line and the point.  This is a
-     non-incremental search.  By default, this command is unbound.
-
-'history-search-backward ()'
-     Search backward through the history for the string of characters
-     between the start of the current line and the point.  This is a
-     non-incremental search.  By default, this command is unbound.
-
-'yank-nth-arg (M-C-y)'
-     Insert the first argument to the previous command (usually the
-     second word on the previous line) at point.  With an argument N,
-     insert the Nth word from the previous command (the words in the
-     previous command begin with word 0).  A negative argument inserts
-     the Nth word from the end of the previous command.  Once the
-     argument N is computed, the argument is extracted as if the '!N'
-     history expansion had been specified.
-
-'yank-last-arg (M-. or M-_)'
-     Insert last argument to the previous command (the last word of the
-     previous history entry).  With a numeric argument, behave exactly
-     like 'yank-nth-arg'.  Successive calls to 'yank-last-arg' move back
-     through the history list, inserting the last word (or the word
-     specified by the argument to the first call) of each line in turn.
-     Any numeric argument supplied to these successive calls determines
-     the direction to move through the history.  A negative argument
-     switches the direction through the history (back or forward).  The
-     history expansion facilities are used to extract the last argument,
-     as if the '!$' history expansion had been specified.
-
-
-File: gdb.info,  Node: Commands For Text,  Next: Commands For Killing,  Prev: Commands For History,  Up: Bindable Readline Commands
-
-32.4.3 Commands For Changing Text
----------------------------------
-
-'delete-char (C-d)'
-     Delete the character at point.  If point is at the beginning of the
-     line, there are no characters in the line, and the last character
-     typed was not bound to 'delete-char', then return EOF.
-
-'backward-delete-char (Rubout)'
-     Delete the character behind the cursor.  A numeric argument means
-     to kill the characters instead of deleting them.
-
-'forward-backward-delete-char ()'
-     Delete the character under the cursor, unless the cursor is at the
-     end of the line, in which case the character behind the cursor is
-     deleted.  By default, this is not bound to a key.
-
-'quoted-insert (C-q or C-v)'
-     Add the next character typed to the line verbatim.  This is how to
-     insert key sequences like 'C-q', for example.
-
-'tab-insert (M-<TAB>)'
-     Insert a tab character.
-
-'self-insert (a, b, A, 1, !, ...)'
-     Insert yourself.
-
-'transpose-chars (C-t)'
-     Drag the character before the cursor forward over the character at
-     the cursor, moving the cursor forward as well.  If the insertion
-     point is at the end of the line, then this transposes the last two
-     characters of the line.  Negative arguments have no effect.
-
-'transpose-words (M-t)'
-     Drag the word before point past the word after point, moving point
-     past that word as well.  If the insertion point is at the end of
-     the line, this transposes the last two words on the line.
-
-'upcase-word (M-u)'
-     Uppercase the current (or following) word.  With a negative
-     argument, uppercase the previous word, but do not move the cursor.
-
-'downcase-word (M-l)'
-     Lowercase the current (or following) word.  With a negative
-     argument, lowercase the previous word, but do not move the cursor.
-
-'capitalize-word (M-c)'
-     Capitalize the current (or following) word.  With a negative
-     argument, capitalize the previous word, but do not move the cursor.
-
-'overwrite-mode ()'
-     Toggle overwrite mode.  With an explicit positive numeric argument,
-     switches to overwrite mode.  With an explicit non-positive numeric
-     argument, switches to insert mode.  This command affects only
-     'emacs' mode; 'vi' mode does overwrite differently.  Each call to
-     'readline()' starts in insert mode.
-
-     In overwrite mode, characters bound to 'self-insert' replace the
-     text at point rather than pushing the text to the right.
-     Characters bound to 'backward-delete-char' replace the character
-     before point with a space.
-
-     By default, this command is unbound.
 

@@ -1,5 +1,5 @@
 /* Renesas RX specific support for 32-bit ELF.
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -309,6 +309,7 @@ rx_info_to_howto_rela (bfd *               abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_RX_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid RX reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -589,12 +590,14 @@ rx_elf_relocate_section
 
 	  if (table_end_cache <= entry_vma || entry_vma < table_start_cache)
 	    {
+	      /* xgettext:c-format */
 	      _bfd_error_handler (_("%B:%A: table entry %s outside table"),
 				  input_bfd, input_section,
 				  name);
 	    }
 	  else if ((int) (entry_vma - table_start_cache) % 4)
 	    {
+	      /* xgettext:c-format */
 	      _bfd_error_handler (_("%B:%A: table entry %s not word-aligned within table"),
 				  input_bfd, input_section,
 				  name);
@@ -660,6 +663,7 @@ rx_elf_relocate_section
 #define ALIGN(m)   if (relocation & m) r = bfd_reloc_other;
 #define OP(i)      (contents[rel->r_offset + (i)])
 #define WARN_REDHAT(type) \
+      /* xgettext:c-format */ \
       _bfd_error_handler (_("%B:%A: Warning: deprecated Red Hat reloc " type " detected against: %s."), \
       input_bfd, input_section, name)
 
@@ -678,6 +682,7 @@ rx_elf_relocate_section
 	  && strcmp (name, "__gp") != 0					\
 	  && strcmp (name, "__romdatastart") != 0			\
 	  && !saw_subtract)						\
+	/* xgettext:c-format */						\
 	_bfd_error_handler (_("%B(%A): unsafe PID relocation %s at 0x%08lx (against %s in %s)"), \
 			    input_bfd, input_section, howto->name,	\
 			    input_section->output_section->vma + input_section->output_offset + rel->r_offset, \
@@ -704,6 +709,7 @@ rx_elf_relocate_section
 	case R_RX_RH_8_NEG:
 	  WARN_REDHAT ("RX_RH_8_NEG");
 	  relocation = - relocation;
+	  /* Fall through.  */
 	case R_RX_DIR8S_PCREL:
 	  UNSAFE_FOR_PID;
 	  RANGE (-128, 127);
@@ -725,6 +731,7 @@ rx_elf_relocate_section
 	case R_RX_RH_16_NEG:
 	  WARN_REDHAT ("RX_RH_16_NEG");
 	  relocation = - relocation;
+	  /* Fall through.  */
 	case R_RX_DIR16S_PCREL:
 	  UNSAFE_FOR_PID;
 	  RANGE (-32768, 32767);
@@ -809,6 +816,7 @@ rx_elf_relocate_section
 	  UNSAFE_FOR_PID;
 	  WARN_REDHAT ("RX_RH_24_NEG");
 	  relocation = - relocation;
+	  /* Fall through.  */
 	case R_RX_DIR24S_PCREL:
 	  RANGE (-0x800000, 0x7fffff);
 #if RX_OPCODE_BIG_ENDIAN
@@ -1232,6 +1240,7 @@ rx_elf_relocate_section
 
 	case R_RX_ABS8S:
 	  UNSAFE_FOR_PID;
+	  /* Fall through.  */
 	case R_RX_ABS8S_PCREL:
 	  RX_STACK_POP (relocation);
 	  RANGE (-128, 127);
@@ -1421,6 +1430,7 @@ rx_elf_relocate_section
 	      /* Catch the case of a missing function declaration
 		 and emit a more helpful error message.  */
 	      if (r_type == R_RX_DIR24S_PCREL)
+		/* xgettext:c-format */
 		msg = _("%B(%A): error: call to undefined function '%s'");
 	      else
 		(*info->callbacks->reloc_overflow)
@@ -1434,22 +1444,27 @@ rx_elf_relocate_section
 	      break;
 
 	    case bfd_reloc_other:
+	      /* xgettext:c-format */
 	      msg = _("%B(%A): warning: unaligned access to symbol '%s' in the small data area");
 	      break;
 
 	    case bfd_reloc_outofrange:
+	      /* xgettext:c-format */
 	      msg = _("%B(%A): internal error: out of range error");
 	      break;
 
 	    case bfd_reloc_notsupported:
+	      /* xgettext:c-format */
 	      msg = _("%B(%A): internal error: unsupported relocation error");
 	      break;
 
 	    case bfd_reloc_dangerous:
+	      /* xgettext:c-format */
 	      msg = _("%B(%A): internal error: dangerous relocation");
 	      break;
 
 	    default:
+	      /* xgettext:c-format */
 	      msg = _("%B(%A): internal error: unknown error");
 	      break;
 	    }
@@ -3079,8 +3094,9 @@ describe_flags (flagword flags)
    object file when linking.  */
 
 static bfd_boolean
-rx_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
+rx_elf_merge_private_bfd_data (bfd * ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword old_flags;
   flagword new_flags;
   bfd_boolean error = FALSE;
@@ -3126,11 +3142,12 @@ rx_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 	    }
 	  else
 	    {
-	      _bfd_error_handler ("There is a conflict merging the ELF header flags from %s",
-				  bfd_get_filename (ibfd));
-	      _bfd_error_handler ("  the input  file's flags: %s",
+	      _bfd_error_handler (_("There is a conflict merging the"
+				    " ELF header flags from %B"),
+				  ibfd);
+	      _bfd_error_handler (_("  the input  file's flags: %s"),
 				  describe_flags (new_flags));
-	      _bfd_error_handler ("  the output file's flags: %s",
+	      _bfd_error_handler (_("  the output file's flags: %s"),
 				  describe_flags (old_flags));
 	      error = TRUE;
 	    }
@@ -3184,9 +3201,11 @@ rx_elf_object_p (bfd * abfd)
   int i;
   unsigned int u;
   Elf_Internal_Phdr *phdr = elf_tdata (abfd)->phdr;
-  int nphdrs = elf_elfheader (abfd)->e_phnum;
+  Elf_Internal_Ehdr *ehdr = elf_elfheader (abfd);
+  int nphdrs = ehdr->e_phnum;
   sec_ptr bsec;
   static int saw_be = FALSE;
+  bfd_vma end_phdroff;
 
   /* We never want to automatically choose the non-swapping big-endian
      target.  The user can only get that explicitly, such as with -I
@@ -3211,6 +3230,17 @@ rx_elf_object_p (bfd * abfd)
      corresponds (based on matching file offsets) and use its VMA
      information to reconstruct the p_vaddr field we clobbered when we
      wrote it out.  */
+  /* If PT_LOAD headers include the ELF file header or program headers
+     then the PT_LOAD header does not start with some section contents.
+     Making adjustments based on the difference between sh_offset and
+     p_offset is nonsense in such cases.  Exclude them.  Note that
+     since standard linker scripts for RX do not use SIZEOF_HEADERS,
+     the linker won't normally create PT_LOAD segments covering the
+     headers so this is mainly for passing the ld testsuite.
+     FIXME.  Why are we looking at non-PT_LOAD headers here?  */
+  end_phdroff = ehdr->e_ehsize;
+  if (ehdr->e_phoff != 0)
+    end_phdroff = ehdr->e_phoff + nphdrs * ehdr->e_phentsize;
   for (i=0; i<nphdrs; i++)
     {
       for (u=0; u<elf_tdata(abfd)->num_elf_sections; u++)
@@ -3218,6 +3248,7 @@ rx_elf_object_p (bfd * abfd)
 	  Elf_Internal_Shdr *sec = elf_tdata(abfd)->elf_sect_ptr[u];
 
 	  if (phdr[i].p_filesz
+	      && phdr[i].p_offset >= end_phdroff
 	      && phdr[i].p_offset <= (bfd_vma) sec->sh_offset
 	      && sec->sh_size > 0
 	      && sec->sh_type != SHT_NOBITS
@@ -3722,6 +3753,7 @@ rx_table_find (struct bfd_hash_entry *vent, void *vinfo)
   if (!h || (h->type != bfd_link_hash_defined
 	     && h->type != bfd_link_hash_defweak))
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B:%A: table %s missing corresponding %s"),
 			  abfd, sec, name, buf);
       return TRUE;
@@ -3729,6 +3761,7 @@ rx_table_find (struct bfd_hash_entry *vent, void *vinfo)
 
   if (h->u.def.section != ent->u.def.section)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B:%A: %s and %s must be in the same input section"),
 			  h->u.def.section->owner, h->u.def.section,
 			  name, buf);

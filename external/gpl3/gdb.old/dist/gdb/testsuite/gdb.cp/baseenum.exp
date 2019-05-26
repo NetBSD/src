@@ -1,4 +1,4 @@
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 standard_testfile .cc
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
 
@@ -28,7 +28,7 @@ if {![runto_main]} {
 
 gdb_breakpoint [gdb_get_line_number "breakpoint 1" $srcfile]
 gdb_continue_to_breakpoint "breakpoint 1"
-gdb_test "print X" "= A::X" "Print enum constant X of class A"
+gdb_test "print X" "= A::X" "print enum constant X of class A"
 
 gdb_breakpoint [gdb_get_line_number "breakpoint 2" $srcfile]
 gdb_continue_to_breakpoint "breakpoint 2"

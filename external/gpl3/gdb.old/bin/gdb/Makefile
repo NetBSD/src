@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2017/11/28 18:09:42 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2019/05/26 20:13:49 christos Exp $
 
+NOCTF=
 .include <bsd.own.mk>
 .include "../Makefile.inc"
 
@@ -82,10 +83,16 @@ DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 	${LIBTERMINFO} \
 	${LIBIBERTYDIR}/libiberty.a
 
-LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm
-DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
+LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm -lutil
+DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM} ${LIBUTIL}
 
 .include <bsd.prog.mk>
+
+# Force c++
+CWARNFLAGS.clang+=	-Wno-deprecated
+HOST_CC:=		${HOST_CXX}
+CC:=			${CXX}
+CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${GDB_MACHINE_ARCH}

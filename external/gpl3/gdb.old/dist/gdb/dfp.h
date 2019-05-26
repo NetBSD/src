@@ -1,6 +1,6 @@
 /* Decimal floating point support for GDB.
 
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,9 @@
 
 #ifndef DFP_H
 #define DFP_H
+
+#include "doublest.h"    /* For DOUBLEST.  */
+#include "expression.h"  /* For enum exp_opcode.  */
 
 /* When using decimal128, this is the maximum string length + 1
  * (value comes from libdecnumber's DECIMAL128_String constant).  */

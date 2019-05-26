@@ -1,6 +1,6 @@
 /* BSD user-level threads support.
 
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -290,9 +290,15 @@ bsd_uthread_fetch_registers (struct target_ops *ops,
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   struct bsd_uthread_ops *uthread_ops
     = (struct bsd_uthread_ops *) gdbarch_data (gdbarch, bsd_uthread_data);
-  CORE_ADDR addr = ptid_get_tid (inferior_ptid);
+  ptid_t ptid = regcache_get_ptid (regcache);
+  CORE_ADDR addr = ptid_get_tid (ptid);
   struct target_ops *beneath = find_target_beneath (ops);
   CORE_ADDR active_addr;
+  struct cleanup *cleanup = save_inferior_ptid ();
+
+  /* We are doing operations (e.g. reading memory) that rely on
+     inferior_ptid.  */
+  inferior_ptid = ptid;
 
   /* Always fetch the appropriate registers from the layer beneath.  */
   beneath->to_fetch_registers (beneath, regcache, regnum);
@@ -309,6 +315,8 @@ bsd_uthread_fetch_registers (struct target_ops *ops,
       uthread_ops->supply_uthread (regcache, regnum,
 				   addr + bsd_uthread_thread_ctx_offset);
     }
+
+  do_cleanups (cleanup);
 }
 
 static void
@@ -319,8 +327,14 @@ bsd_uthread_store_registers (struct target_ops *ops,
   struct bsd_uthread_ops *uthread_ops
     = (struct bsd_uthread_ops *) gdbarch_data (gdbarch, bsd_uthread_data);
   struct target_ops *beneath = find_target_beneath (ops);
-  CORE_ADDR addr = ptid_get_tid (inferior_ptid);
+  ptid_t ptid = regcache_get_ptid (regcache);
+  CORE_ADDR addr = ptid_get_tid (ptid);
   CORE_ADDR active_addr;
+  struct cleanup *cleanup = save_inferior_ptid ();
+
+  /* We are doing operations (e.g. reading memory) that rely on
+     inferior_ptid.  */
+  inferior_ptid = ptid;
 
   active_addr = bsd_uthread_read_memory_address (bsd_uthread_thread_run_addr);
   if (addr != 0 && addr != active_addr)
@@ -335,6 +349,8 @@ bsd_uthread_store_registers (struct target_ops *ops,
          request to the layer beneath.  */
       beneath->to_store_registers (beneath, regcache, regnum);
     }
+
+  do_cleanups (cleanup);
 }
 
 static ptid_t
@@ -401,7 +417,7 @@ bsd_uthread_thread_alive (struct target_ops *ops, ptid_t ptid)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   struct target_ops *beneath = find_target_beneath (ops);
-  CORE_ADDR addr = ptid_get_tid (inferior_ptid);
+  CORE_ADDR addr = ptid_get_tid (ptid);
 
   if (addr != 0)
     {
@@ -448,7 +464,7 @@ bsd_uthread_update_thread_list (struct target_ops *ops)
 }
 
 /* Possible states a thread can be in.  */
-static char *bsd_uthread_state[] =
+static const char *bsd_uthread_state[] =
 {
   "RUNNING",
   "SIGTHREAD",
@@ -475,7 +491,7 @@ static char *bsd_uthread_state[] =
 /* Return a string describing th state of the thread specified by
    INFO.  */
 
-static char *
+static const char *
 bsd_uthread_extra_thread_info (struct target_ops *self,
 			       struct thread_info *info)
 {
@@ -495,7 +511,7 @@ bsd_uthread_extra_thread_info (struct target_ops *self,
   return NULL;
 }
 
-static char *
+static const char *
 bsd_uthread_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   if (ptid_get_tid (ptid) != 0)

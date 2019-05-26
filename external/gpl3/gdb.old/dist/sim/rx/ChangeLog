@@ -1,3 +1,8 @@
+2017-02-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* rx.c: Include libiberty.h.
+	(N_RXO, N_RXT): Use ARRAY_SIZE.
+
 2016-07-27  Alan Modra  <amodra@gmail.com>
 
 	* load.c: Don't include libbfd.h.

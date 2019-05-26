@@ -1,6 +1,6 @@
 /* Machine-independent support for SVR4 /proc (process file system)
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
    Based on work by Fred Fish, Stu Grossman, Geoff Noer, and others.
@@ -38,8 +38,8 @@
 struct trans
 {
   int value;                    /* The numeric value.  */
-  char *name;                   /* The equivalent symbolic value.  */
-  char *desc;                   /* Short description of value.  */
+  const char *name;                   /* The equivalent symbolic value.  */
+  const char *desc;                   /* Short description of value.  */
 };
 
 /* Translate values in the pr_why field of a `struct prstatus' or

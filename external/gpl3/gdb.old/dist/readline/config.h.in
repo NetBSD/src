@@ -186,6 +186,9 @@
 /* Define if you have the <termcap.h> header file.  */
 #undef HAVE_TERMCAP_H
 
+/* Define if you have the <ncurses/termcap.h> header file.  */
+#undef HAVE_NCURSES_TERMCAP_H
+
 /* Define if you have the <termio.h> header file.  */
 #undef HAVE_TERMIO_H
 

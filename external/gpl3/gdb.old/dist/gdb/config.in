@@ -84,6 +84,9 @@
 /* Define to 1 if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
 
+/* define if the compiler supports basic C++11 syntax */
+#undef HAVE_CXX11
+
 /* Define to 1 if you have the declaration of `ADDR_NO_RANDOMIZE', and to 0 if
    you don't. */
 #undef HAVE_DECL_ADDR_NO_RANDOMIZE
@@ -453,11 +456,11 @@
 /* Define to 1 if your system has struct lwp. */
 #undef HAVE_STRUCT_LWP
 
-/* Define to 1 if `struct ptrace_lwpinfo' is a member of `pl_tdname'. */
-#undef HAVE_STRUCT_PTRACE_LWPINFO_PL_TDNAME
-
 /* Define to 1 if `struct ptrace_lwpinfo' is a member of `pl_syscall_code'. */
 #undef HAVE_STRUCT_PTRACE_LWPINFO_PL_SYSCALL_CODE
+
+/* Define to 1 if `struct ptrace_lwpinfo' is a member of `pl_tdname'. */
+#undef HAVE_STRUCT_PTRACE_LWPINFO_PL_TDNAME
 
 /* Define to 1 if your system has struct reg in <machine/reg.h>. */
 #undef HAVE_STRUCT_REG
@@ -791,10 +794,6 @@
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
-
-/* Define to 1 so <sys/proc.h> gets a definition of anon_hdl. Works around a
-   <sys/proc.h> problem on IRIX 5. */
-#undef _KMEMUSER
 
 /* Define for large files, on AIX-style hosts. */
 #undef _LARGE_FILES

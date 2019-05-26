@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2016 Free Software Foundation, Inc.
+# Copyright (C) 2002-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,9 +26,7 @@ if {![istarget "powerpc*"] || [skip_altivec_tests]} then {
     return
 }
 
-set testfile "altivec-abi"
-set binfile ${objdir}/${subdir}/${testfile}
-set srcfile ${testfile}.c
+standard_testfile
 
 if [get_compiler_info] {
     warning "get_compiler failed"
@@ -42,7 +40,7 @@ proc altivec_abi_tests { extra_flags force_abi } {
     set compile_flags "debug nowarnings $extra_flags"
 
     if  { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable $compile_flags] != "" } {
-	untested altivec-abi.exp
+	untested "failed to compile"
 	return -1
     }
 
@@ -64,7 +62,7 @@ proc altivec_abi_tests { extra_flags force_abi } {
 
     # Run to `main' where we begin our tests.
     if ![runto_main] then {
-	untested altivec-abi.exp
+	untested "could not run to main"
 	return -1
     }
 
@@ -146,6 +144,8 @@ proc altivec_abi_tests { extra_flags force_abi } {
 }
 
 if [test_compiler_info gcc*] {
+    set binprefix ${binfile}
+
     with_test_prefix "default ABI, auto" {
 	altivec_abi_tests  "additional_flags=-maltivec" "auto"
     }
@@ -156,23 +156,23 @@ if [test_compiler_info gcc*] {
 	# On 64-bit GNU/Linux with GCC 4.1 and 4.2, -mabi=no-altivec
 	# was broken, so skip those tests there.
 	if { ![is_lp64_target] || ![test_compiler_info "gcc-4-\[12\]-*"] } {
-	    set binfile ${objdir}/${subdir}/${testfile}-ge-ge
+	    set binfile ${binprefix}-ge-ge
 	    with_test_prefix "generic ABI, forced" {
 		altivec_abi_tests "additional_flags=-maltivec additional_flags=-mabi=no-altivec" "generic"
 	    }
 
-	    set binfile ${objdir}/${subdir}/${testfile}-ge-auto
+	    set binfile ${binprefix}-ge-auto
 	    with_test_prefix "generic ABI, auto" {
 		altivec_abi_tests "additional_flags=-maltivec additional_flags=-mabi=no-altivec" "auto"
 	    }
 	}
 
-	set binfile ${objdir}/${subdir}/${testfile}-av-av
+	set binfile ${binprefix}-av-av
 	with_test_prefix "AltiVec ABI, forced" {
 	    altivec_abi_tests "additional_flags=-maltivec additional_flags=-mabi=altivec" "altivec"
 	}
 
-	set binfile ${objdir}/${subdir}/${testfile}-av-auto
+	set binfile ${binprefix}-av-auto
 	with_test_prefix "AltiVec ABI, auto" {
 	    altivec_abi_tests "additional_flags=-maltivec additional_flags=-mabi=altivec" "auto"
 	}

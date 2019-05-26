@@ -1,6 +1,6 @@
 /* QNX Neutrino specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include <x86/context.h>
 
 
-/* Definition auto generated from reg-i386.dep.  */
+/* Defined in auto-generated build-time file gdb/gdbserver/i386.c.  */
 extern void init_registers_i386 ();
 extern struct reg *regs_i386;
 extern const struct target_desc *tdesc_i386;

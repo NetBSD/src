@@ -2,7 +2,7 @@
 # -*- perl -*-
 #
 # Toshiba MeP Media Engine Relocation Generator
-# Copyright (C) 2001-2016 Free Software Foundation, Inc.
+# Copyright (C) 2001-2017 Free Software Foundation, Inc.
 # This file is part of BFD.
 # Originally written by DJ Delorie <dj@redhat.com>
 #

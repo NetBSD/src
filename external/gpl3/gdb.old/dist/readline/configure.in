@@ -198,6 +198,9 @@ if test "$TERMCAP_LIB" = "./lib/termcap/libtermcap.a"; then
 		TERMCAP_LIB=-ltermcap	#default
 	fi
 fi
+if test "$TERMCAP_LIB" = "-lncurses"; then
+	AC_CHECK_HEADERS(ncurses/termcap.h)
+fi
 
 BASH_CHECK_MULTIBYTE
 

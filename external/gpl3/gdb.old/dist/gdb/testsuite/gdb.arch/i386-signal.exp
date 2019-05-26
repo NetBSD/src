@@ -1,4 +1,4 @@
-# Copyright 2007-2016 Free Software Foundation, Inc.
+# Copyright 2007-2017 Free Software Foundation, Inc.
 
 # This file is part of the GDB testsuite.
 
@@ -24,7 +24,7 @@ standard_testfile
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 	  executable { debug }] != "" } {
-    untested ${testfile}.exp
+    untested "failed to compile"
     return -1
 }
 
@@ -35,6 +35,6 @@ gdb_load ${binfile}
 
 runto func
 gdb_test "backtrace 10" \
-    "#0  ($hex in )?func.*\r\n#1  <signal handler called>\r\n#2  ($hex in)?main.*"
+    "#0  ($hex in )?func.*\r\n#1  <signal handler called>\r\n#2  ($hex in )?main.*"
 
 gdb_test "finish" "Run till exit from \#0  func.*<signal handler called>"

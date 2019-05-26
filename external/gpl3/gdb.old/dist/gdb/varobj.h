@@ -1,5 +1,5 @@
 /* GDB variable objects API.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ enum varobj_scope_status
   };
 
 /* String representations of gdb's format codes (defined in varobj.c).  */
-extern char *varobj_format_string[];
+extern const char *varobj_format_string[];
 
 /* Struct that describes a variable object instance.  */
 
@@ -86,22 +86,22 @@ struct varobj_dynamic;
 
 /* Every variable in the system has a structure of this type defined
    for it.  This structure holds all information necessary to manipulate
-   a particular object variable.  Members which must be freed are noted.  */
+   a particular object variable.  */
 struct varobj
 {
-  /* Alloc'd name of the variable for this object.  If this variable is a
+  /* Name of the variable for this object.  If this variable is a
      child, then this name will be the child's source name.
      (bar, not foo.bar).  */
   /* NOTE: This is the "expression".  */
-  char *name;
+  std::string name;
 
-  /* Alloc'd expression for this child.  Can be used to create a
-     root variable corresponding to this child.  */
-  char *path_expr;
+  /* Expression for this child.  Can be used to create a root variable
+     corresponding to this child.  */
+  std::string path_expr;
 
-  /* The alloc'd name for this variable's object.  This is here for
+  /* The name for this variable's object.  This is here for
      convenience when constructing this object's children.  */
-  char *obj_name;
+  std::string obj_name;
 
   /* Index of this variable in its parent or -1.  */
   int index;
@@ -137,7 +137,7 @@ struct varobj
   int updated;
 
   /* Last print value.  */
-  char *print_value;
+  std::string print_value;
 
   /* Is this variable frozen.  Frozen variables are never implicitly
      updated by -var-update * 
@@ -170,18 +170,15 @@ struct lang_varobj_ops
   /* The number of children of PARENT.  */
   int (*number_of_children) (const struct varobj *parent);
 
-  /* The name (expression) of a root varobj.  The returned value must be freed
-     by the caller.  */
-  char *(*name_of_variable) (const struct varobj *parent);
+  /* The name (expression) of a root varobj.  */
+  std::string (*name_of_variable) (const struct varobj *parent);
 
-  /* The name of the INDEX'th child of PARENT.  The returned value must be
-     freed by the caller.  */
-  char *(*name_of_child) (const struct varobj *parent, int index);
+  /* The name of the INDEX'th child of PARENT.  */
+  std::string (*name_of_child) (const struct varobj *parent, int index);
 
   /* Returns the rooted expression of CHILD, which is a variable
-     obtain that has some parent.  The returned value must be freed by the
-     caller.  */
-  char *(*path_expr_of_child) (const struct varobj *child);
+     obtain that has some parent.  */
+  std::string (*path_expr_of_child) (const struct varobj *child);
 
   /* The ``struct value *'' of the INDEX'th child of PARENT.  */
   struct value *(*value_of_child) (const struct varobj *parent, int index);
@@ -189,10 +186,9 @@ struct lang_varobj_ops
   /* The type of the INDEX'th child of PARENT.  */
   struct type *(*type_of_child) (const struct varobj *parent, int index);
 
-  /* The current value of VAR.  The returned value must be freed by the
-     caller.  */
-  char *(*value_of_variable) (const struct varobj *var,
-			      enum varobj_display_formats format);
+  /* The current value of VAR.  */
+  std::string (*value_of_variable) (const struct varobj *var,
+				    enum varobj_display_formats format);
 
   /* Return non-zero if changes in value of VAR must be detected and
      reported by -var-update.  Return zero if -var-update should never
@@ -228,23 +224,22 @@ struct lang_varobj_ops
 
 extern const struct lang_varobj_ops c_varobj_ops;
 extern const struct lang_varobj_ops cplus_varobj_ops;
-extern const struct lang_varobj_ops java_varobj_ops;
 extern const struct lang_varobj_ops ada_varobj_ops;
 
 #define default_varobj_ops c_varobj_ops
 /* API functions */
 
-extern struct varobj *varobj_create (char *objname,
-				     char *expression, CORE_ADDR frame,
+extern struct varobj *varobj_create (const char *objname,
+				     const char *expression, CORE_ADDR frame,
 				     enum varobj_type type);
 
 extern char *varobj_gen_name (void);
 
-extern struct varobj *varobj_get_handle (char *name);
+extern struct varobj *varobj_get_handle (const char *name);
 
-extern char *varobj_get_objname (const struct varobj *var);
+extern const char *varobj_get_objname (const struct varobj *var);
 
-extern char *varobj_get_expression (const struct varobj *var);
+extern std::string varobj_get_expression (const struct varobj *var);
 
 /* Delete a varobj and all its children if only_children == 0, otherwise delete
    only the children.  Return the number of deleted variables.  */
@@ -269,7 +264,8 @@ extern void varobj_get_child_range (const struct varobj *var, int *from,
 
 extern void varobj_set_child_range (struct varobj *var, int from, int to);
 
-extern char *varobj_get_display_hint (const struct varobj *var);
+extern gdb::unique_xmalloc_ptr<char>
+     varobj_get_display_hint (const struct varobj *var);
 
 extern int varobj_get_num_children (struct varobj *var);
 
@@ -284,23 +280,24 @@ extern int varobj_get_num_children (struct varobj *var);
 extern VEC (varobj_p)* varobj_list_children (struct varobj *var,
 					     int *from, int *to);
 
-extern char *varobj_get_type (struct varobj *var);
+extern std::string varobj_get_type (struct varobj *var);
 
 extern struct type *varobj_get_gdb_type (const struct varobj *var);
 
-extern char *varobj_get_path_expr (const struct varobj *var);
+extern const char *varobj_get_path_expr (const struct varobj *var);
 
 extern const struct language_defn *
   varobj_get_language (const struct varobj *var);
 
 extern int varobj_get_attributes (const struct varobj *var);
 
-extern char *varobj_get_formatted_value (struct varobj *var,
-					 enum varobj_display_formats format);
+extern std::string
+  varobj_get_formatted_value (struct varobj *var,
+			      enum varobj_display_formats format);
 
-extern char *varobj_get_value (struct varobj *var);
+extern std::string varobj_get_value (struct varobj *var);
 
-extern int varobj_set_value (struct varobj *var, char *expression);
+extern int varobj_set_value (struct varobj *var, const char *expression);
 
 extern void all_root_varobjs (void (*func) (struct varobj *var, void *data),
 			      void *data);
@@ -323,8 +320,6 @@ extern int varobj_has_more (const struct varobj *var, int to);
 
 extern int varobj_is_dynamic_p (const struct varobj *var);
 
-extern struct cleanup *varobj_ensure_python_env (const struct varobj *var);
-
 extern int varobj_default_value_is_changeable_p (const struct varobj *var);
 extern int varobj_value_is_changeable_p (const struct varobj *var);
 
@@ -335,9 +330,10 @@ extern int varobj_is_anonymous_child (const struct varobj *child);
 extern const struct varobj *
   varobj_get_path_expr_parent (const struct varobj *var);
 
-extern char *varobj_value_get_print_value (struct value *value,
-					   enum varobj_display_formats format,
-					   const struct varobj *var);
+extern std::string
+  varobj_value_get_print_value (struct value *value,
+				enum varobj_display_formats format,
+				const struct varobj *var);
 
 extern void varobj_formatted_print_options (struct value_print_options *opts,
 					    enum varobj_display_formats format);

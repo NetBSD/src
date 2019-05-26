@@ -1,6 +1,6 @@
 /* Header file for Compile and inject module.
 
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ extern void eval_compile_command (struct command_line *cmd,
    PER_CU is the per-CU object used for looking up various other
    things.  */
 
-extern void compile_dwarf_expr_to_c (struct ui_file *stream,
+extern void compile_dwarf_expr_to_c (string_file &stream,
 				     const char *result_name,
 				     struct symbol *sym,
 				     CORE_ADDR pc,
@@ -90,7 +90,7 @@ extern void compile_dwarf_expr_to_c (struct ui_file *stream,
    PER_CU is the per-CU object used for looking up various other
    things.  */
 
-extern void compile_dwarf_bounds_to_c (struct ui_file *stream,
+extern void compile_dwarf_bounds_to_c (string_file &stream,
 				       const char *result_name,
 				       const struct dynamic_prop *prop,
 				       struct symbol *sym, CORE_ADDR pc,

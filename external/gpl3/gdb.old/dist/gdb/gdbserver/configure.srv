@@ -24,22 +24,21 @@
 # Default hostio_last_error implementation
 srv_hostio_err_objs="hostio-errno.o"
 
-srv_i386_regobj="i386.o i386-avx.o i386-avx512.o i386-mpx.o i386-avx-mpx.o i386-mmx.o"
-srv_i386_linux_regobj="i386-linux.o i386-avx-linux.o i386-avx512-linux.o i386-mpx-linux.o i386-avx-mpx-linux.o i386-mmx-linux.o"
-srv_amd64_regobj="amd64.o amd64-avx.o amd64-avx512.o amd64-mpx.o amd64-avx-mpx.o x32.o x32-avx.o x32-avx512.o"
-srv_amd64_linux_regobj="amd64-linux.o amd64-avx-linux.o amd64-avx512-linux.o amd64-mpx-linux.o amd64-avx-mpx-linux.o x32-linux.o x32-avx-linux.o x32-avx512-linux.o"
+srv_i386_regobj="i386.o i386-avx.o i386-avx-avx512.o i386-avx-mpx-avx512-pku.o i386-mpx.o i386-avx-mpx.o i386-mmx.o"
+srv_i386_linux_regobj="i386-linux.o i386-avx-linux.o i386-avx-avx512-linux.o i386-avx-mpx-avx512-pku-linux.o i386-mpx-linux.o i386-avx-mpx-linux.o i386-mmx-linux.o"
+srv_amd64_regobj="amd64.o amd64-avx.o amd64-avx-avx512.o amd64-avx-mpx-avx512-pku.o amd64-mpx.o amd64-avx-mpx.o x32.o x32-avx.o x32-avx-avx512.o"
+srv_amd64_linux_regobj="amd64-linux.o amd64-avx-linux.o amd64-avx-avx512-linux.o amd64-avx-mpx-avx512-pku-linux.o amd64-mpx-linux.o amd64-avx-mpx-linux.o x32-linux.o x32-avx-linux.o x32-avx-avx512-linux.o"
 
-ipa_i386_linux_regobj="i386-linux-ipa.o i386-avx-linux-ipa.o  i386-avx-mpx-linux-ipa.o i386-avx512-linux-ipa.o i386-mpx-linux-ipa.o i386-mmx-linux-ipa.o"
-ipa_amd64_linux_regobj="amd64-linux-ipa.o amd64-avx-linux-ipa.o amd64-avx-mpx-linux-ipa.o amd64-avx512-linux-ipa.o amd64-mpx-linux-ipa.o"
-ipa_x32_linux_regobj="x32-linux-ipa.o x32-avx-linux-ipa.o x32-avx512-linux-ipa.o"
+ipa_i386_linux_regobj="i386-linux-ipa.o i386-avx-linux-ipa.o  i386-avx-mpx-linux-ipa.o i386-avx-avx512-linux-ipa.o i386-avx-mpx-avx512-pku-linux-ipa.o i386-mpx-linux-ipa.o i386-mmx-linux-ipa.o"
+ipa_amd64_linux_regobj="amd64-linux-ipa.o amd64-avx-linux-ipa.o amd64-avx-mpx-linux-ipa.o amd64-avx-avx512-linux-ipa.o amd64-avx-mpx-avx512-pku-linux-ipa.o amd64-mpx-linux-ipa.o"
 ipa_ppc_linux_regobj="powerpc-32l-ipa.o powerpc-altivec32l-ipa.o powerpc-cell32l-ipa.o powerpc-vsx32l-ipa.o powerpc-isa205-32l-ipa.o powerpc-isa205-altivec32l-ipa.o powerpc-isa205-vsx32l-ipa.o powerpc-e500l-ipa.o powerpc-64l-ipa.o powerpc-altivec64l-ipa.o powerpc-cell64l-ipa.o powerpc-vsx64l-ipa.o powerpc-isa205-64l-ipa.o powerpc-isa205-altivec64l-ipa.o powerpc-isa205-vsx64l-ipa.o"
 
-srv_i386_32bit_xmlfiles="i386/32bit-core.xml i386/32bit-sse.xml i386/32bit-avx.xml i386/32bit-avx512.xml i386/32bit-mpx.xml"
-srv_i386_64bit_xmlfiles="i386/64bit-core.xml i386/64bit-sse.xml i386/64bit-avx.xml i386/64bit-avx512.xml i386/x32-core.xml i386/64bit-mpx.xml"
-srv_i386_xmlfiles="i386/i386.xml i386/i386-avx.xml i386/i386-avx512.xml i386/i386-mpx.xml i386/i386-avx-mpx.xml i386/i386-mmx.xml $srv_i386_32bit_xmlfiles"
-srv_amd64_xmlfiles="i386/amd64.xml i386/amd64-avx.xml i386/amd64-avx512.xml i386/x32.xml i386/x32-avx.xml i386/x32-avx512.xml i386/amd64-mpx.xml i386/amd64-avx-mpx.xml  $srv_i386_64bit_xmlfiles"
-srv_i386_linux_xmlfiles="i386/i386-linux.xml i386/i386-avx-linux.xml i386/i386-avx512-linux.xml i386/i386-mmx-linux.xml i386/32bit-linux.xml i386/i386-mpx-linux.xml i386/i386-avx-mpx-linux.xml $srv_i386_32bit_xmlfiles"
-srv_amd64_linux_xmlfiles="i386/amd64-linux.xml i386/amd64-avx-linux.xml i386/amd64-avx512-linux.xml i386/64bit-linux.xml i386/amd64-mpx-linux.xml i386/amd64-avx-mpx-linux.xml i386/x32-linux.xml i386/x32-avx-linux.xml i386/x32-avx512-linux.xml $srv_i386_64bit_xmlfiles"
+srv_i386_32bit_xmlfiles="i386/32bit-core.xml i386/32bit-sse.xml i386/32bit-avx.xml i386/32bit-avx512.xml i386/32bit-mpx.xml i386/32bit-pkeys.xml"
+srv_i386_64bit_xmlfiles="i386/64bit-core.xml i386/64bit-segments.xml i386/64bit-sse.xml i386/64bit-avx.xml i386/64bit-avx512.xml i386/x32-core.xml i386/64bit-mpx.xml i386/64bit-pkeys.xml"
+srv_i386_xmlfiles="i386/i386.xml i386/i386-avx.xml i386/i386-avx-avx512.xml i386/i386-avx-mpx-avx512-pku.xml i386/i386-mpx.xml i386/i386-avx-mpx.xml i386/i386-mmx.xml $srv_i386_32bit_xmlfiles"
+srv_amd64_xmlfiles="i386/amd64.xml i386/amd64-avx.xml i386/amd64-avx-avx512.xml i386/amd64-avx-mpx-avx512-pku.xml i386/x32.xml i386/x32-avx.xml i386/x32-avx-avx512.xml i386/amd64-mpx.xml i386/amd64-avx-mpx.xml  $srv_i386_64bit_xmlfiles"
+srv_i386_linux_xmlfiles="i386/i386-linux.xml i386/i386-avx-linux.xml i386/i386-avx-avx512-linux.xml i386/i386-avx-mpx-avx512-pku-linux.xml i386/i386-mmx-linux.xml i386/32bit-linux.xml i386/i386-mpx-linux.xml i386/i386-avx-mpx-linux.xml $srv_i386_32bit_xmlfiles"
+srv_amd64_linux_xmlfiles="i386/amd64-linux.xml i386/amd64-avx-linux.xml i386/amd64-avx-avx512.xml i386/amd64-avx-mpx-avx512-pku-linux.xml i386/64bit-linux.xml i386/amd64-mpx-linux.xml i386/amd64-avx-mpx-linux.xml i386/x32-linux.xml i386/x32-avx-linux.xml i386/x32-avx-avx512-linux.xml $srv_i386_64bit_xmlfiles"
 
 
 # Linux object files.  This is so we don't have to repeat
@@ -61,8 +60,8 @@ case "${target}" in
 			srv_xmlfiles="aarch64.xml"
 			srv_xmlfiles="${srv_xmlfiles} aarch64-core.xml"
 			srv_xmlfiles="${srv_xmlfiles} aarch64-fpu.xml"
-			srv_xmlfiles="${srv_xmlfiles} arm-core.xml arm-vfpv3.xml"
-			srv_xmlfiles="${srv_xmlfiles} arm-with-neon.xml"
+			srv_xmlfiles="${srv_xmlfiles} arm/arm-core.xml arm/arm-vfpv3.xml"
+			srv_xmlfiles="${srv_xmlfiles} arm/arm-with-neon.xml"
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
 			ipa_obj="linux-aarch64-ipa.o aarch64-ipa.o"
@@ -76,14 +75,14 @@ case "${target}" in
 			srv_tgtobj="${srv_tgtobj} arm.o"
 			srv_tgtobj="${srv_tgtobj} arm-linux.o"
 			srv_tgtobj="${srv_tgtobj} arm-get-next-pcs.o"
-			srv_xmlfiles="arm-with-iwmmxt.xml"
-			srv_xmlfiles="${srv_xmlfiles} arm-with-vfpv2.xml"
-			srv_xmlfiles="${srv_xmlfiles} arm-with-vfpv3.xml"
-			srv_xmlfiles="${srv_xmlfiles} arm-with-neon.xml"
-			srv_xmlfiles="${srv_xmlfiles} arm-core.xml"
-			srv_xmlfiles="${srv_xmlfiles} xscale-iwmmxt.xml"
-			srv_xmlfiles="${srv_xmlfiles} arm-vfpv2.xml"
-			srv_xmlfiles="${srv_xmlfiles} arm-vfpv3.xml"
+			srv_xmlfiles="arm/arm-with-iwmmxt.xml"
+			srv_xmlfiles="${srv_xmlfiles} arm/arm-with-vfpv2.xml"
+			srv_xmlfiles="${srv_xmlfiles} arm/arm-with-vfpv3.xml"
+			srv_xmlfiles="${srv_xmlfiles} arm/arm-with-neon.xml"
+			srv_xmlfiles="${srv_xmlfiles} arm/arm-core.xml"
+			srv_xmlfiles="${srv_xmlfiles} arm/xscale-iwmmxt.xml"
+			srv_xmlfiles="${srv_xmlfiles} arm/arm-vfpv2.xml"
+			srv_xmlfiles="${srv_xmlfiles} arm/arm-vfpv3.xml"
 			srv_linux_usrregs=yes
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes

@@ -1,5 +1,5 @@
 # DO NOT EDIT! GENERATED AUTOMATICALLY!
-# Copyright (C) 2002-2015 Free Software Foundation, Inc.
+# Copyright (C) 2002-2016 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,11 @@ AC_DEFUN([gl_EARLY],
   m4_pattern_allow([^gl_ES$])dnl a valid locale name
   m4_pattern_allow([^gl_LIBOBJS$])dnl a variable
   m4_pattern_allow([^gl_LTLIBOBJS$])dnl a variable
+
+  # Pre-early section.
+  AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
   AC_REQUIRE([gl_PROG_AR_RANLIB])
+
   # Code from module absolute-header:
   # Code from module alloca:
   # Code from module alloca-opt:
@@ -51,8 +55,8 @@ AC_DEFUN([gl_EARLY],
   # Code from module double-slash-root:
   # Code from module errno:
   # Code from module extensions:
-  AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
   # Code from module extern-inline:
+  # Code from module flexmember:
   # Code from module float:
   # Code from module fnmatch:
   # Code from module fnmatch-gnu:
@@ -62,6 +66,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module frexp:
   # Code from module frexpl:
   # Code from module gettimeofday:
+  # Code from module hard-locale:
   # Code from module include_next:
   # Code from module inttypes:
   # Code from module inttypes-incomplete:
@@ -69,6 +74,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module isnanl-nolibm:
   # Code from module largefile:
   AC_REQUIRE([AC_SYS_LARGEFILE])
+  # Code from module limits-h:
   # Code from module localcharset:
   # Code from module lstat:
   # Code from module malloc-posix:
@@ -146,7 +152,8 @@ AC_DEFUN([gl_INIT],
   gl_CONFIGMAKE_PREP
   gl_DIRENT_H
   gl_FUNC_DIRFD
-  if test $ac_cv_func_dirfd = no && test $gl_cv_func_dirfd_macro = no; then
+  if test $ac_cv_func_dirfd = no && test $gl_cv_func_dirfd_macro = no \
+     || test $REPLACE_DIRFD = 1; then
     AC_LIBOBJ([dirfd])
     gl_PREREQ_DIRFD
   fi
@@ -155,6 +162,7 @@ AC_DEFUN([gl_INIT],
   gl_DOUBLE_SLASH_ROOT
   gl_HEADER_ERRNO_H
   AC_REQUIRE([gl_EXTERN_INLINE])
+  AC_C_FLEXIBLE_ARRAY_MEMBER
   gl_FLOAT_H
   if test $REPLACE_FLOAT_LDBL = 1; then
     AC_LIBOBJ([float])
@@ -188,6 +196,7 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_GETTIMEOFDAY
   fi
   gl_SYS_TIME_MODULE_INDICATOR([gettimeofday])
+  gl_HARD_LOCALE
   gl_INTTYPES_H
   gl_INTTYPES_INCOMPLETE
   gl_FUNC_ISNAND_NO_LIBM
@@ -201,6 +210,7 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_ISNANL
   fi
   AC_REQUIRE([gl_LARGEFILE])
+  gl_LIMITS_H
   gl_LOCALCHARSET
   LOCALCHARSET_TESTS_ENVIRONMENT="CHARSETALIASDIR=\"\$(abs_top_builddir)/$gl_source_base\""
   AC_SUBST([LOCALCHARSET_TESTS_ENVIRONMENT])
@@ -476,6 +486,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/dirname.h
   lib/dosname.h
   lib/errno.in.h
+  lib/flexmember.h
   lib/float+.h
   lib/float.c
   lib/float.in.h
@@ -486,6 +497,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/frexp.c
   lib/frexpl.c
   lib/gettimeofday.c
+  lib/hard-locale.c
+  lib/hard-locale.h
   lib/inttypes.in.h
   lib/isnan.c
   lib/isnand-nolibm.h
@@ -493,6 +506,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/isnanl-nolibm.h
   lib/isnanl.c
   lib/itold.c
+  lib/limits.in.h
   lib/localcharset.c
   lib/localcharset.h
   lib/lstat.c
@@ -563,6 +577,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/extensions.m4
   m4/extern-inline.m4
   m4/fcntl-o.m4
+  m4/flexmember.m4
   m4/float_h.m4
   m4/fnmatch.m4
   m4/fpieee.m4
@@ -571,12 +586,14 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/gettimeofday.m4
   m4/glibc21.m4
   m4/gnulib-common.m4
+  m4/hard-locale.m4
   m4/include_next.m4
   m4/inttypes-pri.m4
   m4/inttypes.m4
   m4/isnand.m4
   m4/isnanl.m4
   m4/largefile.m4
+  m4/limits-h.m4
   m4/localcharset.m4
   m4/locale-fr.m4
   m4/locale-ja.m4

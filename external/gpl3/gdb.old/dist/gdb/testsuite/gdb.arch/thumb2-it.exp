@@ -1,4 +1,4 @@
-# Copyright 2010-2016 Free Software Foundation, Inc.
+# Copyright 2010-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ if {![istarget arm*-*eabi*]} then {
 standard_testfile .S
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable debug] != "" } {
-    untested thumb2-it.exp
+    untested "failed to compile"
     return -1
 }
 
@@ -33,7 +33,7 @@ gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
 
 if ![runto_main] then {
-    untested thumb2-it.exp
+    untested "could not run to main"
     return -1
 }
 
@@ -41,7 +41,7 @@ if ![runto_main] then {
 gdb_test_multiple "list" "list main" {
     -re ".*@ No Thumb-2.*$gdb_prompt $" {
 	pass "list main"
-	untested thumb2-it.exp
+	untested "skipping tests due to lack of Thumb-2"
 	return -1
     }
     -re ".*@ Thumb-2 OK.*$gdb_prompt $" {

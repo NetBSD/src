@@ -1,6 +1,6 @@
 /* A minimal multi-threaded test case.
 
-   Copyright 2003-2016 Free Software Foundation, Inc.
+   Copyright 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

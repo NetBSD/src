@@ -1,4 +1,4 @@
-# Copyright 1992-2016 Free Software Foundation, Inc.
+# Copyright 1992-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ if [get_compiler_info] {
 }
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     untested watchpoint.exp
+     untested "failed to compile"
      return -1
 }
 
@@ -146,7 +146,7 @@ Continuing.*\[Ww\]atchpoint.*ival3.*Old value = -1.*New value = 0.*ival3 = count
     }
 
     # Check that the hit count is reported correctly
-    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 1 time.*" "Watchpoint hit count is 1"
+    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 1 time.*" "watchpoint hit count is 1"
 
     gdb_test_no_output "delete \$func1_breakpoint_number"
 
@@ -154,19 +154,19 @@ Continuing.*\[Ww\]atchpoint.*ival3.*Old value = -1.*New value = 0.*ival3 = count
     gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = 0.*New value = 1.*ival3 = count; ival4 = count;.*" "watchpoint hit, second time"
 
     # Check that the hit count is reported correctly
-    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 2 times.*" "Watchpoint hit count is 2"
+    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 2 times.*" "watchpoint hit count is 2"
 
     # Continue until the next change, from 1 to 2.
     gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = 1.*New value = 2.*ival3 = count; ival4 = count;.*" "watchpoint hit, third time"
 
     # Check that the hit count is reported correctly
-    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 3 times.*" "Watchpoint hit count is 3"
+    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 3 times.*" "watchpoint hit count is 3"
     
     # Continue until the next change, from 2 to 3.
     gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = 2.*New value = 3.*ival3 = count; ival4 = count;.*" "watchpoint hit, fourth time"
 
     # Check that the hit count is reported correctly
-    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 4 times.*" "Watchpoint hit count is 4"
+    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 4 times.*" "watchpoint hit count is 4"
 
     # Continue until the next change, from 3 to 4.
     # Note that this one is outside the loop.
@@ -174,7 +174,7 @@ Continuing.*\[Ww\]atchpoint.*ival3.*Old value = -1.*New value = 0.*ival3 = count
     gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ival3.*Old value = 3.*New value = 4.*ival3 = count; ival4 = count;.*" "watchpoint hit, fifth time"
 
     # Check that the hit count is reported correctly
-    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 5 times.*" "Watchpoint hit count is 5"
+    gdb_test "info break" ".*watchpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+ival3\r\n\[ \t]+breakpoint already hit 5 times.*" "watchpoint hit count is 5"
 
     # Continue until we hit the finishing marker function.
     # Make sure we hit no more watchpoints.
@@ -347,7 +347,7 @@ proc test_watchpoint_triggered_in_syscall {} {
     # Run until we get to the first marker function.
     set x 0
     set y 0
-    set testname "Watch buffer passed to read syscall"
+    set testname "watch buffer passed to read syscall"
     if [runto marker2] then {
 	gdb_test "watch buf\[0\]" ".*\[Ww\]atchpoint \[0-9\]*: buf\\\[0\\\]"
 	gdb_test "watch buf\[1\]" ".*\[Ww\]atchpoint \[0-9\]*: buf\\\[1\\\]"
@@ -432,7 +432,7 @@ proc test_complex_watchpoint {} {
 	gdb_test "watch ptr1->val" ".*\[Ww\]atchpoint \[0-9\]*: ptr1->val"
 	gdb_test "break marker5" ".*Breakpoint.*"
 
-	gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ptr1->val.*Old value = 1.*New value = 2.*" "Test complex watchpoint"
+	gdb_test "cont" "Continuing.*\[Ww\]atchpoint.*ptr1->val.*Old value = 1.*New value = 2.*" "test complex watchpoint"
 
 	# Continue until we hit the marker5 function.
 	# Make sure we hit no more watchpoints.

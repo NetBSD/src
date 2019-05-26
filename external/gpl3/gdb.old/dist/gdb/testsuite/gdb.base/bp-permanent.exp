@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
+# Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -110,7 +110,7 @@ proc test {always_inserted sw_watchpoint} {
 		    # Some targets (QEMU for one) will disallow writes to the
 		    # .text section under certain circumstances.  It is no use
 		    # continuing with the test at this point.  Just return.
-		    unsupported "Cannot modify memory"
+		    unsupported "cannot modify memory"
 		    return
 		}
 		-re " = .*$gdb_prompt $" {

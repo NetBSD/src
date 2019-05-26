@@ -4,7 +4,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-asm.in isn't
 
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -745,6 +745,7 @@ expand_string (const char *in, int first_only)
 		  break;
 		case '(':
 		  depth++;
+		  /* Fall through.  */
 		default:
 		  args[narg].len++;
 		  break;

@@ -1,4 +1,4 @@
-# Copyright 1997-2016 Free Software Foundation, Inc.
+# Copyright 1997-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ if { [istarget "spu*-*-*"] } {
 
 standard_testfile .cc
  
-if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
 
@@ -89,9 +89,9 @@ gdb_test "tbreak main" "Temporary breakpoint 4.*" \
 
 set ok 0
 gdb_run_cmd
-gdb_test_multiple "" "Run to main" {
+gdb_test_multiple "" "run to main" {
     -re "Temporary breakpoint 4,.*$gdb_prompt $" {
-	pass "Run to main"
+	pass "run to main"
 	set ok 1
     }
 }

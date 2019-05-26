@@ -1,5 +1,5 @@
 /* Generic BFD library interface and support routines.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -180,8 +180,9 @@ CODE_FRAGMENT
 .
 .  {* Flags bits to be saved in bfd_preserve_save.  *}
 .#define BFD_FLAGS_SAVED \
-.  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN \
-.   | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON | BFD_USE_ELF_STT_COMMON)
+.  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
+.   | BFD_PLUGIN | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON \
+.   | BFD_USE_ELF_STT_COMMON)
 .
 .  {* Flags bits which are for BFD use only.  *}
 .#define BFD_FLAGS_FOR_BFD_USE_MASK \
@@ -598,11 +599,11 @@ SUBSECTION
 	problem.  They call a BFD error handler function.  This
 	function may be overridden by the program.
 
-	The BFD error handler acts like printf.
+	The BFD error handler acts like vprintf.
 
 CODE_FRAGMENT
 .
-.typedef void (*bfd_error_handler_type) (const char *, ...);
+.typedef void (*bfd_error_handler_type) (const char *, va_list);
 .
 */
 
@@ -610,39 +611,231 @@ CODE_FRAGMENT
 
 static const char *_bfd_error_program_name;
 
+/* This macro and _doprnt taken from libiberty _doprnt.c, tidied a
+   little and extended to handle '%A' and '%B'.  */
+
+#define PRINT_TYPE(TYPE) \
+  do								\
+    {								\
+      TYPE value = va_arg (ap, TYPE);				\
+      result = fprintf (stream, specifier, value);		\
+    } while (0)
+
+static int
+_doprnt (FILE *stream, const char *format, va_list ap)
+{
+  const char *ptr = format;
+  char specifier[128];
+  int total_printed = 0;
+
+  while (*ptr != '\0')
+    {
+      int result;
+
+      if (*ptr != '%')
+	{
+	  /* While we have regular characters, print them.  */
+	  char *end = strchr (ptr, '%');
+	  if (end != NULL)
+	    result = fprintf (stream, "%.*s", (int) (end - ptr), ptr);
+	  else
+	    result = fprintf (stream, "%s", ptr);
+	  ptr += result;
+	}
+      else
+	{
+	  /* We have a format specifier!  */
+	  char *sptr = specifier;
+	  int wide_width = 0, short_width = 0;
+
+	  /* Copy the % and move forward.  */
+	  *sptr++ = *ptr++;
+
+	  /* Move past flags.  */
+	  while (strchr ("-+ #0", *ptr))
+	    *sptr++ = *ptr++;
+
+	  if (*ptr == '*')
+	    {
+	      int value = abs (va_arg (ap, int));
+	      sptr += sprintf (sptr, "%d", value);
+	      ptr++;
+	    }
+	  else
+	    /* Handle explicit numeric value.  */
+	    while (ISDIGIT (*ptr))
+	      *sptr++ = *ptr++;
+
+	  if (*ptr == '.')
+	    {
+	      /* Copy and go past the period.  */
+	      *sptr++ = *ptr++;
+	      if (*ptr == '*')
+		{
+		  int value = abs (va_arg (ap, int));
+		  sptr += sprintf (sptr, "%d", value);
+		  ptr++;
+		}
+	      else
+		/* Handle explicit numeric value.  */
+		while (ISDIGIT (*ptr))
+		  *sptr++ = *ptr++;
+	    }
+	  while (strchr ("hlL", *ptr))
+	    {
+	      switch (*ptr)
+		{
+		case 'h':
+		  short_width = 1;
+		  break;
+		case 'l':
+		  wide_width++;
+		  break;
+		case 'L':
+		  wide_width = 2;
+		  break;
+		default:
+		  abort();
+		}
+	      *sptr++ = *ptr++;
+	    }
+
+	  /* Copy the type specifier, and NULL terminate.  */
+	  *sptr++ = *ptr++;
+	  *sptr = '\0';
+
+	  switch (ptr[-1])
+	    {
+	    case 'd':
+	    case 'i':
+	    case 'o':
+	    case 'u':
+	    case 'x':
+	    case 'X':
+	    case 'c':
+	      {
+		/* Short values are promoted to int, so just copy it
+		   as an int and trust the C library printf to cast it
+		   to the right width.  */
+		if (short_width)
+		  PRINT_TYPE (int);
+		else
+		  {
+		    switch (wide_width)
+		      {
+		      case 0:
+			PRINT_TYPE (int);
+			break;
+		      case 1:
+			PRINT_TYPE (long);
+			break;
+		      case 2:
+		      default:
+#if defined(__GNUC__) || defined(HAVE_LONG_LONG)
+			PRINT_TYPE (long long);
+#else
+			/* Fake it and hope for the best.  */
+			PRINT_TYPE (long);
+#endif
+			break;
+		      }
+		  }
+	      }
+	      break;
+	    case 'f':
+	    case 'e':
+	    case 'E':
+	    case 'g':
+	    case 'G':
+	      {
+		if (wide_width == 0)
+		  PRINT_TYPE (double);
+		else
+		  {
+#if defined(__GNUC__) || defined(HAVE_LONG_DOUBLE)
+		    PRINT_TYPE (long double);
+#else
+		    /* Fake it and hope for the best.  */
+		    PRINT_TYPE (double);
+#endif
+		  }
+	      }
+	      break;
+	    case 's':
+	      PRINT_TYPE (char *);
+	      break;
+	    case 'p':
+	      PRINT_TYPE (void *);
+	      break;
+	    case '%':
+	      fputc ('%', stream);
+	      result = 1;
+	      break;
+	    case 'A':
+	      {
+		asection *sec = va_arg (ap, asection *);
+		bfd *abfd;
+		const char *group = NULL;
+		struct coff_comdat_info *ci;
+
+		if (sec == NULL)
+		  /* Invoking %A with a null section pointer is an
+		     internal error.  */
+		  abort ();
+		abfd = sec->owner;
+		if (abfd != NULL
+		    && bfd_get_flavour (abfd) == bfd_target_elf_flavour
+		    && elf_next_in_group (sec) != NULL
+		    && (sec->flags & SEC_GROUP) == 0)
+		  group = elf_group_name (sec);
+		else if (abfd != NULL
+			 && bfd_get_flavour (abfd) == bfd_target_coff_flavour
+			 && (ci = bfd_coff_get_comdat_section (sec->owner,
+							       sec)) != NULL)
+		  group = ci->name;
+		if (group != NULL)
+		  result = fprintf (stream, "%s[%s]", sec->name, group);
+		else
+		  result = fprintf (stream, "%s", sec->name);
+	      }
+	      break;
+	    case 'B':
+	      {
+		bfd *abfd = va_arg (ap, bfd *);
+
+		if (abfd == NULL)
+		  /* Invoking %B with a null bfd pointer is an
+		     internal error.  */
+		  abort ();
+		else if (abfd->my_archive
+			 && !bfd_is_thin_archive (abfd->my_archive))
+		  result = fprintf (stream, "%s(%s)",
+				    abfd->my_archive->filename, abfd->filename);
+		else
+		  result = fprintf (stream, "%s", abfd->filename);
+	      }
+	      break;
+	    default:
+	      abort();
+	    }
+	}
+      if (result == -1)
+	return -1;
+      total_printed += result;
+    }
+
+  return total_printed;
+}
+
 /* This is the default routine to handle BFD error messages.
    Like fprintf (stderr, ...), but also handles some extra format specifiers.
 
    %A section name from section.  For group components, print group name too.
-   %B file name from bfd.  For archive components, prints archive too.
+   %B file name from bfd.  For archive components, prints archive too.  */
 
-   Note - because these two extra format specifiers require special handling
-   they are scanned for and processed in this function, before calling
-   vfprintf.  This means that the *arguments* for these format specifiers
-   must be the first ones in the variable argument list, regardless of where
-   the specifiers appear in the format string.  Thus for example calling
-   this function with a format string of:
-
-      "blah %s blah %A blah %d blah %B"
-
-   would involve passing the arguments as:
-
-      "blah %s blah %A blah %d blah %B",
-        asection_for_the_%A,
-	bfd_for_the_%B,
-	string_for_the_%s,
-	integer_for_the_%d);
- */
-
-void
-_bfd_default_error_handler (const char *fmt, ...)
+static void
+error_handler_internal (const char *fmt, va_list ap)
 {
-  va_list ap;
-  char *bufp;
-  const char *new_fmt, *p;
-  size_t avail = 1000;
-  char buf[1000];
-
   /* PR 4992: Don't interrupt output being sent to stdout.  */
   fflush (stdout);
 
@@ -651,138 +844,7 @@ _bfd_default_error_handler (const char *fmt, ...)
   else
     fprintf (stderr, "BFD: ");
 
-  va_start (ap, fmt);
-  new_fmt = fmt;
-  bufp = buf;
-
-  /* Reserve enough space for the existing format string.  */
-  avail -= strlen (fmt) + 1;
-  if (avail > 1000)
-    _exit (EXIT_FAILURE);
-
-  p = fmt;
-  while (1)
-    {
-      char *q;
-      size_t len, extra, trim;
-
-      p = strchr (p, '%');
-      if (p == NULL || p[1] == '\0')
-	{
-	  if (new_fmt == buf)
-	    {
-	      len = strlen (fmt);
-	      memcpy (bufp, fmt, len + 1);
-	    }
-	  break;
-	}
-
-      if (p[1] == 'A' || p[1] == 'B')
-	{
-	  len = p - fmt;
-	  memcpy (bufp, fmt, len);
-	  bufp += len;
-	  fmt = p + 2;
-	  new_fmt = buf;
-
-	  /* If we run out of space, tough, you lose your ridiculously
-	     long file or section name.  It's not safe to try to alloc
-	     memory here;  We might be printing an out of memory message.  */
-	  if (avail == 0)
-	    {
-	      *bufp++ = '*';
-	      *bufp++ = '*';
-	      *bufp = '\0';
-	    }
-	  else
-	    {
-	      if (p[1] == 'B')
-		{
-		  bfd *abfd = va_arg (ap, bfd *);
-
-		  if (abfd == NULL)
-		    /* Invoking %B with a null bfd pointer is an internal error.  */
-		    abort ();
-		  else if (abfd->my_archive
-			   && !bfd_is_thin_archive (abfd->my_archive))
-		    snprintf (bufp, avail, "%s(%s)",
-			      abfd->my_archive->filename, abfd->filename);
-		  else
-		    snprintf (bufp, avail, "%s", abfd->filename);
-		}
-	      else
-		{
-		  asection *sec = va_arg (ap, asection *);
-		  bfd *abfd;
-		  const char *group = NULL;
-		  struct coff_comdat_info *ci;
-
-		  if (sec == NULL)
-		    /* Invoking %A with a null section pointer is an internal error.  */
-		    abort ();
-		  abfd = sec->owner;
-		  if (abfd != NULL
-		      && bfd_get_flavour (abfd) == bfd_target_elf_flavour
-		      && elf_next_in_group (sec) != NULL
-		      && (sec->flags & SEC_GROUP) == 0)
-		    group = elf_group_name (sec);
-		  else if (abfd != NULL
-			   && bfd_get_flavour (abfd) == bfd_target_coff_flavour
-			   && (ci = bfd_coff_get_comdat_section (sec->owner,
-								 sec)) != NULL)
-		    group = ci->name;
-		  if (group != NULL)
-		    snprintf (bufp, avail, "%s[%s]", sec->name, group);
-		  else
-		    snprintf (bufp, avail, "%s", sec->name);
-		}
-	      len = strlen (bufp);
-	      avail = avail - len + 2;
-
-	      /* We need to replace any '%' we printed by "%%".
-		 First count how many.  */
-	      q = bufp;
-	      bufp += len;
-	      extra = 0;
-	      while ((q = strchr (q, '%')) != NULL)
-		{
-		  ++q;
-		  ++extra;
-		}
-
-	      /* If there isn't room, trim off the end of the string.  */
-	      q = bufp;
-	      bufp += extra;
-	      if (extra > avail)
-		{
-		  trim = extra - avail;
-		  bufp -= trim;
-		  do
-		    {
-		      if (*--q == '%')
-			--extra;
-		    }
-		  while (--trim != 0);
-		  *q = '\0';
-		  avail = extra;
-		}
-	      avail -= extra;
-
-	      /* Now double all '%' chars, shuffling the string as we go.  */
-	      while (extra != 0)
-		{
-		  while ((q[extra] = *q) != '%')
-		    --q;
-		  q[--extra] = '%';
-		  --q;
-		}
-	    }
-	}
-      p = p + 2;
-    }
-
-  vfprintf (stderr, new_fmt, ap);
-  va_end (ap);
+  _doprnt (stderr, fmt, ap);
 
   /* On AIX, putc is implemented as a macro that triggers a -Wunused-value
      warning, so use the fputc function to avoid it.  */
@@ -796,7 +858,17 @@ _bfd_default_error_handler (const char *fmt, ...)
    function pointer permits a program linked against BFD to intercept
    the messages and deal with them itself.  */
 
-bfd_error_handler_type _bfd_error_handler = _bfd_default_error_handler;
+static bfd_error_handler_type _bfd_error_internal = error_handler_internal;
+
+void
+_bfd_error_handler (const char *fmt, ...)
+{
+  va_list ap;
+
+  va_start (ap, fmt);
+  _bfd_error_internal (fmt, ap);
+  va_end (ap);
+}
 
 /*
 FUNCTION
@@ -815,8 +887,8 @@ bfd_set_error_handler (bfd_error_handler_type pnew)
 {
   bfd_error_handler_type pold;
 
-  pold = _bfd_error_handler;
-  _bfd_error_handler = pnew;
+  pold = _bfd_error_internal;
+  _bfd_error_internal = pnew;
   return pold;
 }
 
@@ -838,23 +910,6 @@ void
 bfd_set_error_program_name (const char *name)
 {
   _bfd_error_program_name = name;
-}
-
-/*
-FUNCTION
-	bfd_get_error_handler
-
-SYNOPSIS
-	bfd_error_handler_type bfd_get_error_handler (void);
-
-DESCRIPTION
-	Return the BFD error handler function.
-*/
-
-bfd_error_handler_type
-bfd_get_error_handler (void)
-{
-  return _bfd_error_handler;
 }
 
 /*
@@ -891,14 +946,14 @@ _bfd_default_assert_handler (const char *bfd_formatmsg,
 			     int bfd_line)
 
 {
-  (*_bfd_error_handler) (bfd_formatmsg, bfd_version, bfd_file, bfd_line);
+  _bfd_error_handler (bfd_formatmsg, bfd_version, bfd_file, bfd_line);
 }
 
 /* Similar to _bfd_error_handler, a program can decide to exit on an
    internal BFD error.  We use a non-variadic type to simplify passing
    on parameters to other functions, e.g. _bfd_error_handler.  */
 
-bfd_assert_handler_type _bfd_assert_handler = _bfd_default_assert_handler;
+static bfd_assert_handler_type _bfd_assert_handler = _bfd_default_assert_handler;
 
 /*
 FUNCTION
@@ -920,23 +975,6 @@ bfd_set_assert_handler (bfd_assert_handler_type pnew)
   pold = _bfd_assert_handler;
   _bfd_assert_handler = pnew;
   return pold;
-}
-
-/*
-FUNCTION
-	bfd_get_assert_handler
-
-SYNOPSIS
-	bfd_assert_handler_type bfd_get_assert_handler (void);
-
-DESCRIPTION
-	Return the BFD assert handler function.
-*/
-
-bfd_assert_handler_type
-bfd_get_assert_handler (void)
-{
-  return _bfd_assert_handler;
 }
 
 /*
@@ -1086,6 +1124,7 @@ bfd_set_file_flags (bfd *abfd, flagword flags)
 void
 bfd_assert (const char *file, int line)
 {
+  /* xgettext:c-format */
   (*_bfd_assert_handler) (_("BFD %s assertion fail %s:%d"),
 			  BFD_VERSION_STRING, file, line);
 }
@@ -1097,14 +1136,16 @@ void
 _bfd_abort (const char *file, int line, const char *fn)
 {
   if (fn != NULL)
-    (*_bfd_error_handler)
+    _bfd_error_handler
+      /* xgettext:c-format */
       (_("BFD %s internal error, aborting at %s:%d in %s\n"),
        BFD_VERSION_STRING, file, line, fn);
   else
-    (*_bfd_error_handler)
+    _bfd_error_handler
+      /* xgettext:c-format */
       (_("BFD %s internal error, aborting at %s:%d\n"),
        BFD_VERSION_STRING, file, line);
-  (*_bfd_error_handler) (_("Please report this bug.\n"));
+  _bfd_error_handler (_("Please report this bug.\n"));
   _exit (EXIT_FAILURE);
 }
 
@@ -1429,27 +1470,6 @@ DESCRIPTION
 
 .#define bfd_copy_private_bfd_data(ibfd, obfd) \
 .     BFD_SEND (obfd, _bfd_copy_private_bfd_data, \
-.		(ibfd, obfd))
-
-*/
-
-/*
-FUNCTION
-	bfd_merge_private_bfd_data
-
-SYNOPSIS
-	bfd_boolean bfd_merge_private_bfd_data (bfd *ibfd, bfd *obfd);
-
-DESCRIPTION
-	Merge private BFD information from the BFD @var{ibfd} to the
-	the output file BFD @var{obfd} when linking.  Return <<TRUE>>
-	on success, <<FALSE>> on error.  Possible error returns are:
-
-	o <<bfd_error_no_memory>> -
-	Not enough memory exists to create private data for @var{obfd}.
-
-.#define bfd_merge_private_bfd_data(ibfd, obfd) \
-.     BFD_SEND (obfd, _bfd_merge_private_bfd_data, \
 .		(ibfd, obfd))
 
 */

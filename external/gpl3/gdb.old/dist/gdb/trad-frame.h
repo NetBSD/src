@@ -1,6 +1,6 @@
 /* Traditional frame unwind support, for GDB the GNU Debugger.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -104,6 +104,7 @@ int trad_frame_realreg_p (struct trad_frame_saved_reg this_saved_regs[],
 
 /* Return a freshly allocated (and initialized) trad_frame array.  */
 struct trad_frame_saved_reg *trad_frame_alloc_saved_regs (struct frame_info *);
+struct trad_frame_saved_reg *trad_frame_alloc_saved_regs (struct gdbarch *);
 
 /* Given the trad_frame info, return the location of the specified
    register.  */
