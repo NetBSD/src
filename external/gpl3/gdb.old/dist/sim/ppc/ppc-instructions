@@ -908,7 +908,7 @@ model_print *::model-function::model_mon_info:model_data *model_ptr
 	  tail->suffix_singular = "";
 	}
 
-	for (j = 0; j < (sizeof(ppc_branch_conditional_name) / sizeof(ppc_branch_conditional_name[0])) ; j++) {
+	for (j = 0; j < ARRAY_SIZE (ppc_branch_conditional_name); j++) {
 	  if (model_ptr->nr_branch_conditional[j]) {
 	    tail->next = ZALLOC(model_print);
 	    tail = tail->next;

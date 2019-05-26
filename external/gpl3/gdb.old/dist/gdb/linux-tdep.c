@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux, architecture independent.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -407,7 +407,7 @@ linux_has_shared_address_space (struct gdbarch *gdbarch)
 
 /* This is how we want PTIDs from core files to be printed.  */
 
-static char *
+static const char *
 linux_core_pid_to_str (struct gdbarch *gdbarch, ptid_t ptid)
 {
   static char buf[80];

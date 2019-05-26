@@ -1,6 +1,6 @@
 /* Serial interface for raw TCP connections on Un*x like systems.
 
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -54,6 +54,7 @@
 
 #include <signal.h>
 #include "gdb_select.h"
+#include <algorithm>
 
 #ifndef HAVE_SOCKLEN_T
 typedef int socklen_t;
@@ -183,7 +184,7 @@ net_open (struct serial *scb, const char *name)
     error (_("net_open: No colon in host name!"));  /* Shouldn't ever
 						       happen.  */
 
-  tmp = min (port_str - name, (int) sizeof hostname - 1);
+  tmp = std::min (port_str - name, (ptrdiff_t) sizeof hostname - 1);
   strncpy (hostname, name, tmp);	/* Don't want colon.  */
   hostname[tmp] = '\000';	/* Tie off host name.  */
   port = atoi (port_str + 1);

@@ -1,5 +1,5 @@
 /* Define a target vector and some small routines for a variant of a.out.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -373,7 +373,7 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
   _bfd_archive_bsd_construct_extended_name_table
 #endif
 #ifndef	MY_write_armap
-#define	MY_write_armap		bsd_write_armap
+#define	MY_write_armap		_bfd_bsd_write_armap
 #endif
 #ifndef MY_read_ar_hdr
 #define MY_read_ar_hdr		_bfd_generic_read_ar_hdr

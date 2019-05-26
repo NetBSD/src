@@ -1,3 +1,13 @@
+2016-08-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* msp430-sim.c: Delete bfd.h include.
+	(lookup_symbol, msp430_sim_close): Delete.
+	(sim_open): Change lookup_symbol to trace_sym_value.
+	* sim-main.h (struct sim_state): Delete symbol_table and
+	number_of_symbols.
+	(STATE_SYMBOL_TABLE, STATE_NUM_SYMBOLS, msp430_sim_close,
+	SIM_CLOSE_HOOK): Delete.
+
 2016-01-10  Mike Frysinger  <vapier@gentoo.org>
 
 	* config.in, configure: Regenerate.

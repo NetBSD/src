@@ -1,6 +1,6 @@
 /* Scheme interface to stack frames.
 
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -156,17 +156,12 @@ static int
 frscm_print_frame_smob (SCM self, SCM port, scm_print_state *pstate)
 {
   frame_smob *f_smob = (frame_smob *) SCM_SMOB_DATA (self);
-  struct ui_file *strfile;
-  char *s;
 
   gdbscm_printf (port, "#<%s ", frame_smob_name);
 
-  strfile = mem_fileopen ();
-  fprint_frame_id (strfile, f_smob->frame_id);
-  s = ui_file_xstrdup (strfile, NULL);
-  gdbscm_printf (port, "%s", s);
-  ui_file_delete (strfile);
-  xfree (s);
+  string_file strfile;
+  fprint_frame_id (&strfile, f_smob->frame_id);
+  gdbscm_printf (port, "%s", strfile.c_str ());
 
   scm_puts (">", port);
 

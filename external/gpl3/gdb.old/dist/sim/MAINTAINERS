@@ -14,6 +14,7 @@ Mike Frysinger			vapier@gentoo.org
 	Maintainers for particular sims:
 
 aarch64	        Nick Clifton <nickc@redhat.com>
+aarch64	        Jim Wilson <jim.wilson@linaro.org>
 arm	        Nick Clifton <nickc@redhat.com>
 bfin		Mike Frysinger <vapier@gentoo.org>
 cr16	        M R Swami Reddy <MR.Swami.Reddy@nsc.com>
@@ -25,6 +26,7 @@ m32c		DJ Delorie <dj@redhat.com>
 m32r		Doug Evans <dje@sebabeach.org>
 m68hc11		Stephane Carrez <Stephane.Carrez@gmail.com>
 microblaze	Michael Eager <eager@eagercon.com>
+mips		Maciej W. Rozycki <macro@imgtec.com>
 moxie		Anthony Green <green@moxielogic.com>
 msp430		Nick Clifton <nickc@redhat.com>
 rx		DJ Delorie <dj@redhat.com>

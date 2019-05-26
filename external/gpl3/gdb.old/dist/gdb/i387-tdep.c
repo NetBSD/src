@@ -1,6 +1,6 @@
 /* Intel 387 floating point stuff.
 
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -888,6 +888,19 @@ static int xsave_avx512_zmm_h_offset[] =
 #define XSAVE_AVX512_ZMM_H_ADDR(tdep, xsave, regnum) \
   (xsave + xsave_avx512_zmm_h_offset[regnum - I387_ZMM0H_REGNUM (tdep)])
 
+/* At xsave_pkeys_offset[REGNUM] you find the offset to the location
+   of the PKRU register data structure used by the "xsave"
+   instruction where GDB register REGNUM is stored.  */
+
+static int xsave_pkeys_offset[] =
+{
+2688 + 0 * 8		/* %pkru (64 bits in XSTATE, 32-bit actually used by
+			   instructions and applications).  */
+};
+
+#define XSAVE_PKEYS_ADDR(tdep, xsave, regnum) \
+  (xsave + xsave_pkeys_offset[regnum - I387_PKRU_REGNUM (tdep)])
+
 /* Similar to i387_supply_fxsave, but use XSAVE extended state.  */
 
 void
@@ -898,8 +911,8 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   const gdb_byte *regs = (const gdb_byte *) xsave;
   int i;
-  unsigned int clear_bv;
-  static const gdb_byte zero[MAX_REGISTER_SIZE] = { 0 };
+  ULONGEST clear_bv;
+  static const gdb_byte zero[I386_MAX_REGISTER_SIZE] = { 0 };
   enum
     {
       none = 0x0,
@@ -911,8 +924,9 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
       avx512_zmm_h = 0x20,
       avx512_ymmh_avx512 = 0x40,
       avx512_xmm_avx512 = 0x80,
+      pkeys = 0x100,
       all = x87 | sse | avxh | mpx | avx512_k | avx512_zmm_h
-	    | avx512_ymmh_avx512 | avx512_xmm_avx512
+	    | avx512_ymmh_avx512 | avx512_xmm_avx512 | pkeys
     } regclass;
 
   gdb_assert (regs != NULL);
@@ -921,6 +935,9 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
 
   if (regnum == -1)
     regclass = all;
+  else if (regnum >= I387_PKRU_REGNUM (tdep)
+	   && regnum < I387_PKEYSEND_REGNUM (tdep))
+    regclass = pkeys;
   else if (regnum >= I387_ZMM0H_REGNUM (tdep)
 	   && regnum < I387_ZMMENDH_REGNUM (tdep))
     regclass = avx512_zmm_h;
@@ -950,12 +967,15 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
 
   if (regclass != none)
     {
-      /* Get `xstat_bv'.  */
-      const gdb_byte *xstate_bv_p = XSAVE_XSTATE_BV_ADDR (regs);
+      /* Get `xstat_bv'.  The supported bits in `xstat_bv' are 8 bytes.  */
+      enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+      ULONGEST xstate_bv = 0;
 
-      /* The supported bits in `xstat_bv' are 1 byte.  Clear part in
-	 vector registers if its bit in xstat_bv is zero.  */
-      clear_bv = (~(*xstate_bv_p)) & tdep->xcr0;
+      xstate_bv = extract_unsigned_integer (XSAVE_XSTATE_BV_ADDR (regs),
+					    8, byte_order);
+
+      /* Clear part in vector registers if its bit in xstat_bv is zero.  */
+      clear_bv = (~(xstate_bv)) & tdep->xcr0;
     }
   else
     clear_bv = X86_XSTATE_ALL_MASK;
@@ -973,6 +993,14 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
     {
     case none:
       break;
+
+    case pkeys:
+      if ((clear_bv & X86_XSTATE_PKRU))
+	regcache_raw_supply (regcache, regnum, zero);
+      else
+	regcache_raw_supply (regcache, regnum,
+			     XSAVE_PKEYS_ADDR (tdep, regs, regnum));
+      return;
 
     case avx512_zmm_h:
       if ((clear_bv & (X86_XSTATE_ZMM_H | X86_XSTATE_ZMM)))
@@ -1039,6 +1067,26 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
       return;
 
     case all:
+      /* Handle PKEYS registers.  */
+      if ((tdep->xcr0 & X86_XSTATE_PKRU))
+	{
+	  if ((clear_bv & X86_XSTATE_PKRU))
+	    {
+	      for (i = I387_PKRU_REGNUM (tdep);
+		   i < I387_PKEYSEND_REGNUM (tdep);
+		   i++)
+		regcache_raw_supply (regcache, i, zero);
+	    }
+	  else
+	    {
+	      for (i = I387_PKRU_REGNUM (tdep);
+		   i < I387_PKEYSEND_REGNUM (tdep);
+		   i++)
+		regcache_raw_supply (regcache, i,
+				     XSAVE_PKEYS_ADDR (tdep, regs, i));
+	    }
+	}
+
       /* Handle the upper ZMM registers.  */
       if ((tdep->xcr0 & (X86_XSTATE_ZMM_H | X86_XSTATE_ZMM)))
 	{
@@ -1283,8 +1331,9 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
       avx512_zmm_h = 0x40 | check,
       avx512_ymmh_avx512 = 0x80 | check,
       avx512_xmm_avx512 = 0x100 | check,
+      pkeys = 0x200 | check,
       all = x87 | sse | avxh | mpx | avx512_k | avx512_zmm_h
-	    | avx512_ymmh_avx512 | avx512_xmm_avx512
+	    | avx512_ymmh_avx512 | avx512_xmm_avx512 | pkeys
     } regclass;
 
   gdb_assert (tdep->st0_regnum >= I386_ST0_REGNUM);
@@ -1292,6 +1341,9 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 
   if (regnum == -1)
     regclass = all;
+  else if (regnum >= I387_PKRU_REGNUM (tdep)
+	   && regnum < I387_PKEYSEND_REGNUM (tdep))
+    regclass = pkeys;
   else if (regnum >= I387_ZMM0H_REGNUM (tdep)
 	   && regnum < I387_ZMMENDH_REGNUM (tdep))
     regclass = avx512_zmm_h;
@@ -1333,15 +1385,23 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
   if ((regclass & check))
     {
       gdb_byte raw[I386_MAX_REGISTER_SIZE];
-      gdb_byte *xstate_bv_p = XSAVE_XSTATE_BV_ADDR (regs);
-      unsigned int xstate_bv = 0;
-      /* The supported bits in `xstat_bv' are 1 byte.  */
-      unsigned int clear_bv = (~(*xstate_bv_p)) & tdep->xcr0;
+      ULONGEST initial_xstate_bv, clear_bv, xstate_bv = 0;
       gdb_byte *p;
+      enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+
+      /* The supported bits in `xstat_bv' are 8 bytes.  */
+      initial_xstate_bv = extract_unsigned_integer (XSAVE_XSTATE_BV_ADDR (regs),
+						    8, byte_order);
+      clear_bv = (~(initial_xstate_bv)) & tdep->xcr0;
 
       /* Clear register set if its bit in xstat_bv is zero.  */
       if (clear_bv)
 	{
+	  if ((clear_bv & X86_XSTATE_PKRU))
+	    for (i = I387_PKRU_REGNUM (tdep);
+		 i < I387_PKEYSEND_REGNUM (tdep); i++)
+	      memset (XSAVE_PKEYS_ADDR (tdep, regs, i), 0, 4);
+
 	  if ((clear_bv & X86_XSTATE_BNDREGS))
 	    for (i = I387_BND0R_REGNUM (tdep);
 		 i < I387_BNDCFGU_REGNUM (tdep); i++)
@@ -1390,6 +1450,20 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 
       if (regclass == all)
 	{
+	  /* Check if any PKEYS registers are changed.  */
+	  if ((tdep->xcr0 & X86_XSTATE_PKRU))
+	    for (i = I387_PKRU_REGNUM (tdep);
+		 i < I387_PKEYSEND_REGNUM (tdep); i++)
+	      {
+		regcache_raw_collect (regcache, i, raw);
+		p = XSAVE_PKEYS_ADDR (tdep, regs, i);
+		if (memcmp (raw, p, 4) != 0)
+		  {
+		    xstate_bv |= X86_XSTATE_PKRU;
+		    memcpy (p, raw, 4);
+		  }
+	      }
+
 	  /* Check if any ZMMH registers are changed.  */
 	  if ((tdep->xcr0 & (X86_XSTATE_ZMM_H | X86_XSTATE_ZMM)))
 	    for (i = I387_ZMM0H_REGNUM (tdep);
@@ -1525,6 +1599,16 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 	      internal_error (__FILE__, __LINE__,
 			      _("invalid i387 regclass"));
 
+	    case pkeys:
+	      /* This is a PKEYS register.  */
+	      p = XSAVE_PKEYS_ADDR (tdep, regs, regnum);
+	      if (memcmp (raw, p, 4) != 0)
+		{
+		  xstate_bv |= X86_XSTATE_PKRU;
+		  memcpy (p, raw, 4);
+		}
+	      break;
+
 	    case avx512_zmm_h:
 	      /* This is a ZMM register.  */
 	      p = XSAVE_AVX512_ZMM_H_ADDR (tdep, regs, regnum);
@@ -1619,8 +1703,11 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 	 registers are changed.  */
       if (xstate_bv)
 	{
-	  /* The supported bits in `xstat_bv' are 1 byte.  */
-	  *xstate_bv_p |= (gdb_byte) xstate_bv;
+	  /* The supported bits in `xstat_bv' are 8 bytes.  */
+	  initial_xstate_bv |= xstate_bv;
+	  store_unsigned_integer (XSAVE_XSTATE_BV_ADDR (regs),
+				  8, byte_order,
+				  initial_xstate_bv);
 
 	  switch (regclass)
 	    {
@@ -1639,6 +1726,7 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 	    case avx512_zmm_h:
 	    case avx512_ymmh_avx512:
 	    case avx512_xmm_avx512:
+	    case pkeys:
 	      /* Register REGNUM has been updated.  Return.  */
 	      return;
 	    }
@@ -1771,4 +1859,21 @@ i387_return_value (struct gdbarch *gdbarch, struct regcache *regcache)
      tag word is 0x3fff.  */
   regcache_raw_write_unsigned (regcache, I387_FTAG_REGNUM (tdep), 0x3fff);
 
+}
+
+/* See i387-tdep.h.  */
+
+void
+i387_reset_bnd_regs (struct gdbarch *gdbarch, struct regcache *regcache)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  if (I387_BND0R_REGNUM (tdep) > 0)
+    {
+      gdb_byte bnd_buf[16];
+
+      memset (bnd_buf, 0, 16);
+      for (int i = 0; i < I387_NUM_BND_REGS; i++)
+	regcache_raw_write (regcache, I387_BND0R_REGNUM (tdep) + i, bnd_buf);
+    }
 }

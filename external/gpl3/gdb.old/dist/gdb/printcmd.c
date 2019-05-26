@@ -1,6 +1,6 @@
 /* Print values for GNU debugger GDB.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,6 +45,7 @@
 #include "charset.h"
 #include "arch-utils.h"
 #include "cli/cli-utils.h"
+#include "cli/cli-script.h"
 #include "format.h"
 #include "source.h"
 
@@ -119,7 +120,7 @@ struct display
     char *exp_string;
 
     /* Expression to be evaluated and displayed.  */
-    struct expression *exp;
+    expression_up exp;
 
     /* Item number of this auto-display item.  */
     int number;
@@ -322,7 +323,6 @@ print_formatted (struct value *val, int size,
     /* User specified format, so don't look to the type to tell us
        what to do.  */
     val_print_scalar_formatted (type,
-				value_contents_for_printing (val),
 				value_embedded_offset (val),
 				val,
 				options, size, stream);
@@ -560,7 +560,7 @@ set_next_address (struct gdbarch *gdbarch, CORE_ADDR addr)
 int
 print_address_symbolic (struct gdbarch *gdbarch, CORE_ADDR addr,
 			struct ui_file *stream,
-			int do_demangle, char *leadin)
+			int do_demangle, const char *leadin)
 {
   char *name = NULL;
   char *filename = NULL;
@@ -806,9 +806,8 @@ find_instruction_backward (struct gdbarch *gdbarch, CORE_ADDR addr,
   /* The vector PCS is used to store instruction addresses within
      a pc range.  */
   CORE_ADDR loop_start, loop_end, p;
-  VEC (CORE_ADDR) *pcs = NULL;
+  std::vector<CORE_ADDR> pcs;
   struct symtab_and_line sal;
-  struct cleanup *cleanup = make_cleanup (VEC_cleanup (CORE_ADDR), &pcs);
 
   *inst_read = 0;
   loop_start = loop_end = addr;
@@ -822,7 +821,7 @@ find_instruction_backward (struct gdbarch *gdbarch, CORE_ADDR addr,
      instructions from INST_COUNT, and go to the next iteration.  */
   do
     {
-      VEC_truncate (CORE_ADDR, pcs, 0);
+      pcs.clear ();
       sal = find_pc_sect_line (loop_start, NULL, 1);
       if (sal.line <= 0)
         {
@@ -844,12 +843,12 @@ find_instruction_backward (struct gdbarch *gdbarch, CORE_ADDR addr,
          LOOP_START to LOOP_END.  */
       for (p = loop_start; p < loop_end;)
         {
-          VEC_safe_push (CORE_ADDR, pcs, p);
+	  pcs.push_back (p);
           p += gdb_insn_length (gdbarch, p);
         }
 
-      inst_count -= VEC_length (CORE_ADDR, pcs);
-      *inst_read += VEC_length (CORE_ADDR, pcs);
+      inst_count -= pcs.size ();
+      *inst_read += pcs.size ();
     }
   while (inst_count > 0);
 
@@ -875,9 +874,7 @@ find_instruction_backward (struct gdbarch *gdbarch, CORE_ADDR addr,
      The case when the length of PCS is 0 means that we reached an area for
      which line info is not available.  In such case, we return LOOP_START,
      which was the lowest instruction address that had line info.  */
-  p = VEC_length (CORE_ADDR, pcs) > 0
-    ? VEC_index (CORE_ADDR, pcs, -inst_count)
-    : loop_start;
+  p = pcs.size () > 0 ? pcs[-inst_count] : loop_start;
 
   /* INST_READ includes all instruction addresses in a pc range.  Need to
      exclude the beginning part up to the address we're returning.  That
@@ -885,7 +882,6 @@ find_instruction_backward (struct gdbarch *gdbarch, CORE_ADDR addr,
   if (inst_count < 0)
     *inst_read += inst_count;
 
-  do_cleanups (cleanup);
   return p;
 }
 
@@ -1243,8 +1239,6 @@ print_value (struct value *val, const struct format_data *fmtp)
 static void
 print_command_1 (const char *exp, int voidprint)
 {
-  struct expression *expr;
-  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
   struct value *val;
   struct format_data fmt;
 
@@ -1252,9 +1246,8 @@ print_command_1 (const char *exp, int voidprint)
 
   if (exp && *exp)
     {
-      expr = parse_expression (exp);
-      make_cleanup (free_current_contents, &expr);
-      val = evaluate_expression (expr);
+      expression_up expr = parse_expression (exp);
+      val = evaluate_expression (expr.get ());
     }
   else
     val = access_value_history (0);
@@ -1262,8 +1255,6 @@ print_command_1 (const char *exp, int voidprint)
   if (voidprint || (val && value_type (val) &&
 		    TYPE_CODE (value_type (val)) != TYPE_CODE_VOID))
     print_value (val, &fmt);
-
-  do_cleanups (old_chain);
 }
 
 static void
@@ -1292,8 +1283,6 @@ output_command (char *exp, int from_tty)
 void
 output_command_const (const char *exp, int from_tty)
 {
-  struct expression *expr;
-  struct cleanup *old_chain;
   char format = 0;
   struct value *val;
   struct format_data fmt;
@@ -1310,10 +1299,9 @@ output_command_const (const char *exp, int from_tty)
       format = fmt.format;
     }
 
-  expr = parse_expression (exp);
-  old_chain = make_cleanup (free_current_contents, &expr);
+  expression_up expr = parse_expression (exp);
 
-  val = evaluate_expression (expr);
+  val = evaluate_expression (expr.get ());
 
   annotate_value_begin (value_type (val));
 
@@ -1325,16 +1313,12 @@ output_command_const (const char *exp, int from_tty)
 
   wrap_here ("");
   gdb_flush (gdb_stdout);
-
-  do_cleanups (old_chain);
 }
 
 static void
 set_command (char *exp, int from_tty)
 {
-  struct expression *expr = parse_expression (exp);
-  struct cleanup *old_chain =
-    make_cleanup (free_current_contents, &expr);
+  expression_up expr = parse_expression (exp);
 
   if (expr->nelts >= 1)
     switch (expr->elts[0].opcode)
@@ -1352,8 +1336,7 @@ set_command (char *exp, int from_tty)
 	  (_("Expression is not an assignment (and might have no effect)"));
       }
 
-  evaluate_expression (expr);
-  do_cleanups (old_chain);
+  evaluate_expression (expr.get ());
 }
 
 static void
@@ -1676,7 +1659,6 @@ address_info (char *exp, int from_tty)
 static void
 x_command (char *exp, int from_tty)
 {
-  struct expression *expr;
   struct format_data fmt;
   struct cleanup *old_chain;
   struct value *val;
@@ -1698,15 +1680,14 @@ x_command (char *exp, int from_tty)
 
   if (exp != 0 && *exp != 0)
     {
-      expr = parse_expression (exp);
+      expression_up expr = parse_expression (exp);
       /* Cause expression not to be there any more if this command is
          repeated with Newline.  But don't clobber a user-defined
          command's definition.  */
       if (from_tty)
 	*exp = 0;
-      old_chain = make_cleanup (free_current_contents, &expr);
-      val = evaluate_expression (expr);
-      if (TYPE_CODE (value_type (val)) == TYPE_CODE_REF)
+      val = evaluate_expression (expr.get ());
+      if (TYPE_IS_REFERENCE (value_type (val)))
 	val = coerce_ref (val);
       /* In rvalue contexts, such as this, functions are coerced into
          pointers to functions.  This makes "x/i main" work.  */
@@ -1718,7 +1699,6 @@ x_command (char *exp, int from_tty)
 	next_address = value_as_address (val);
 
       next_gdbarch = expr->gdbarch;
-      do_cleanups (old_chain);
     }
 
   if (!next_gdbarch)
@@ -1764,7 +1744,6 @@ static void
 display_command (char *arg, int from_tty)
 {
   struct format_data fmt;
-  struct expression *expr;
   struct display *newobj;
   const char *exp = arg;
 
@@ -1792,12 +1771,12 @@ display_command (char *arg, int from_tty)
     }
 
   innermost_block = NULL;
-  expr = parse_expression (exp);
+  expression_up expr = parse_expression (exp);
 
-  newobj = XNEW (struct display);
+  newobj = new display ();
 
   newobj->exp_string = xstrdup (exp);
-  newobj->exp = expr;
+  newobj->exp = std::move (expr);
   newobj->block = innermost_block;
   newobj->pspace = current_program_space;
   newobj->number = ++display_number;
@@ -1826,8 +1805,7 @@ static void
 free_display (struct display *d)
 {
   xfree (d->exp_string);
-  xfree (d->exp);
-  xfree (d);
+  delete d;
 }
 
 /* Clear out the display_chain.  Done when new symtabs are loaded,
@@ -1876,19 +1854,18 @@ map_display_numbers (char *args,
 				       void *),
 		     void *data)
 {
-  struct get_number_or_range_state state;
   int num;
 
   if (args == NULL)
     error_no_arg (_("one or more display numbers"));
 
-  init_number_or_range (&state, args);
+  number_or_range_parser parser (args);
 
-  while (!state.finished)
+  while (!parser.finished ())
     {
-      const char *p = state.string;
+      const char *p = parser.cur_tok ();
 
-      num = get_number_or_range (&state);
+      num = parser.get_number ();
       if (num == 0)
 	warning (_("bad display number at or near '%s'"), p);
       else
@@ -1938,7 +1915,6 @@ undisplay_command (char *args, int from_tty)
 static void
 do_one_display (struct display *d)
 {
-  struct cleanup *old_chain;
   int within_current_scope;
 
   if (d->enabled_p == 0)
@@ -1953,8 +1929,7 @@ do_one_display (struct display *d)
      expression if the current architecture has changed.  */
   if (d->exp != NULL && d->exp->gdbarch != get_current_arch ())
     {
-      xfree (d->exp);
-      d->exp = NULL;
+      d->exp.reset ();
       d->block = NULL;
     }
 
@@ -1990,8 +1965,8 @@ do_one_display (struct display *d)
   if (!within_current_scope)
     return;
 
-  old_chain = make_cleanup_restore_integer (&current_display_number);
-  current_display_number = d->number;
+  scoped_restore save_display_number
+    = make_scoped_restore (&current_display_number, d->number);
 
   annotate_display_begin ();
   printf_filtered ("%d", d->number);
@@ -2027,7 +2002,7 @@ do_one_display (struct display *d)
 	  struct value *val;
 	  CORE_ADDR addr;
 
-	  val = evaluate_expression (d->exp);
+	  val = evaluate_expression (d->exp.get ());
 	  addr = value_as_address (val);
 	  if (d->format.format == 'i')
 	    addr = gdbarch_addr_bits_remove (d->exp->gdbarch, addr);
@@ -2064,7 +2039,7 @@ do_one_display (struct display *d)
         {
 	  struct value *val;
 
-	  val = evaluate_expression (d->exp);
+	  val = evaluate_expression (d->exp.get ());
 	  print_formatted (val, d->format.size, &opts, gdb_stdout);
 	}
       CATCH (ex, RETURN_MASK_ERROR)
@@ -2079,7 +2054,6 @@ do_one_display (struct display *d)
   annotate_display_end ();
 
   gdb_flush (gdb_stdout);
-  do_cleanups (old_chain);
 }
 
 /* Display all of the values on the auto-display chain which can be
@@ -2225,10 +2199,9 @@ clear_dangling_display_expressions (struct objfile *objfile)
 	continue;
 
       if (lookup_objfile_from_block (d->block) == objfile
-	  || (d->exp && exp_uses_objfile (d->exp, objfile)))
+	  || (d->exp != NULL && exp_uses_objfile (d->exp.get (), objfile)))
       {
-	xfree (d->exp);
-	d->exp = NULL;
+	d->exp.reset ();
 	d->block = NULL;
       }
     }
@@ -2740,18 +2713,13 @@ printf_command (char *arg, int from_tty)
 static void
 eval_command (char *arg, int from_tty)
 {
-  struct ui_file *ui_out = mem_fileopen ();
-  struct cleanup *cleanups = make_cleanup_ui_file_delete (ui_out);
-  char *expanded;
+  string_file stb;
 
-  ui_printf (arg, ui_out);
+  ui_printf (arg, &stb);
 
-  expanded = ui_file_xstrdup (ui_out, NULL);
-  make_cleanup (xfree, expanded);
+  std::string expanded = insert_user_defined_cmd_args (stb.c_str ());
 
-  execute_command (expanded, from_tty);
-
-  do_cleanups (cleanups);
+  execute_command (&expanded[0], from_tty);
 }
 
 void
