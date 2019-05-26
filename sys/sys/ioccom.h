@@ -1,4 +1,4 @@
-/*	$NetBSD: ioccom.h,v 1.12 2014/12/10 00:16:05 christos Exp $	*/
+/*	$NetBSD: ioccom.h,v 1.13 2019/05/26 10:21:33 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -74,8 +74,8 @@
 
 #define IOCSNPRINTF(buf, len, cmd) \
     snprintf((buf), (len), "_IO%s%s('%c', %hhu)", \
-	(((cmd) >> 30) & 1) ? "W" : "", \
-	(((cmd) >> 30) & 2) ? "R" : "", \
+	(((cmd) >> 30) & 1) ? "R" : "", \
+	(((cmd) >> 30) & 2) ? "W" : "", \
 	(char)IOCGROUP(cmd), (unsigned char)(cmd))
 		
 
