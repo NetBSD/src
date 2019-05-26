@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.813 2019/05/26 20:01:07 hannken Exp $
+# $NetBSD: mi,v 1.814 2019/05/26 21:04:56 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1309,7 +1309,6 @@
 ./usr/tests/crypto/libcrypto/d_conf.out		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/d_conf_ssleay.cnf	tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/d_server.pem	tests-crypto-tests	compattestfile,atf
-./usr/tests/crypto/libcrypto/evptests.txt	tests-obsolete		obsolete
 ./usr/tests/crypto/libcrypto/evpcase.txt	tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/evpciph.txt	tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/evpdigest.txt	tests-crypto-tests	compattestfile,atf
@@ -1319,7 +1318,7 @@
 ./usr/tests/crypto/libcrypto/evppbe.txt		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/evppkey.txt	tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/evppkey_ecc.txt	tests-crypto-tests	compattestfile,atf
-
+./usr/tests/crypto/libcrypto/evptests.txt	tests-obsolete		obsolete
 ./usr/tests/crypto/libcrypto/h_bftest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_bntest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_casttest		tests-crypto-tests	compattestfile,atf
@@ -3270,10 +3269,10 @@
 ./usr/tests/lib/libpthread/t_sleep		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_status		tests-obsolete		obsolete
 ./usr/tests/lib/libpthread/t_swapcontext	tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libpthread/t_tss		tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libpthread/t_thread_local_dtor	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_thrd		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/t_thread_local_dtor	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_timedmutex		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/t_tss		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread_dbg			tests-obsolete		obsolete
 ./usr/tests/lib/libpthread_dbg/Atffile		tests-obsolete		obsolete
 ./usr/tests/lib/libpthread_dbg/Kyuafile		tests-obsolete		obsolete
@@ -3957,7 +3956,6 @@
 ./usr/tests/usr.bin/indent			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/Atffile		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
-./usr/tests/usr.bin/indent/t_indent		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/binary.0		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/binary.0.stdout	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/comments.0		tests-usr.bin-tests	compattestfile,atf
@@ -3996,6 +3994,7 @@
 ./usr/tests/usr.bin/indent/surplusbad.0		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/surplusbad.0.pro	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/surplusbad.0.stdout	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/t_indent		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/types_from_file.0	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/types_from_file.0.list	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/types_from_file.0.pro	tests-usr.bin-tests	compattestfile,atf
