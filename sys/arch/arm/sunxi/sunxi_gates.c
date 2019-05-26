@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gates.c,v 1.2 2018/09/09 07:21:18 aymeric Exp $ */
+/* $NetBSD: sunxi_gates.c,v 1.3 2019/05/26 14:14:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gates.c,v 1.2 2018/09/09 07:21:18 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gates.c,v 1.3 2019/05/26 14:14:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gates.c,v 1.2 2018/09/09 07:21:18 aymeric Exp 
 
 static const char * compatible[] = {
 	"allwinner,sun4i-a10-gates-clk",
+	"allwinner,sun9i-a80-apbs-gates-clk",
 	NULL
 };
 
