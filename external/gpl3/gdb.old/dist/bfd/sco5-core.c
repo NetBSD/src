@@ -1,5 +1,5 @@
 /* BFD back end for SCO5 core files (U-area and raw sections)
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
    Written by Jouke Numan <jnuman@hiscom.nl>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -286,8 +286,8 @@ sco5_core_file_p (bfd *abfd)
 	  secname = NULL;	/* Ignore these */
 	  break;
 	default:
-	  (*_bfd_error_handler) ("Unhandled SCO core file section type %d\n",
-				 chead.cs_stype);
+	  _bfd_error_handler ("Unhandled SCO core file section type %d\n",
+			      chead.cs_stype);
 	  continue;
 	}
 

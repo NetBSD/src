@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD.
 
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,10 @@
 #ifndef NBSD_NAT_H
 #define NBSD_NAT_H
 
-/* Return the name of a file that can be opened to get the symbols for
-   the child process identified by PID.  */
+/* Register the customized NetBSD target.  This should be used
+   instead of calling add_target directly.  */
 
-extern char *nbsd_pid_to_exec_file (struct target_ops *self, int pid);
+extern void nbsd_nat_add_target (struct target_ops *);
+
 
 #endif /* nbsd-nat.h */

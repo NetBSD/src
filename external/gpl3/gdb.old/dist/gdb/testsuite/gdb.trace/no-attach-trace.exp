@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2015-2016 Free Software Foundation, Inc.
+# Copyright 2015-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ load_lib trace-support.exp
 
 standard_testfile
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
 
@@ -31,7 +31,7 @@ if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
 clean_restart $testfile
 
 if { ![gdb_target_supports_trace] } then {
-    unsupported "Current target does not support trace"
+    unsupported "current target does not support trace"
     return 1
 }
 
@@ -43,7 +43,7 @@ gdb_test "tstart" "Target returns error code.*\."
 
 with_test_prefix "after tstart" {
     if ![runto_main] {
-	fail "Can't run to main, target may have died unexpectedly"
+	fail "can't run to main, target may have died unexpectedly"
 	return -1
     }
 }

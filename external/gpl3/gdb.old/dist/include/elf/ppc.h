@@ -1,5 +1,5 @@
 /* PPC ELF support for BFD.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2017 Free Software Foundation, Inc.
 
    By Michael Meissner, Cygnus Support, <meissner@cygnus.com>,
    from information in the System V Application Binary Interface,
@@ -73,10 +73,14 @@ START_RELOC_NUMBERS (elf_ppc_reloc_type)
   RELOC_NUMBER (R_PPC_ADDR30,		 37)
 
 #ifndef RELOC_MACROS_GEN_FUNC
-/* Fake relocations for branch stubs, only used internally by ld.  */
+/* Relocations only used internally by ld.  If you need to use these
+   reloc numbers, you can change them to some other unused value
+   without affecting the ABI.  They will never appear in object files.  */
   RELOC_NUMBER (R_PPC_RELAX,		 48)
   RELOC_NUMBER (R_PPC_RELAX_PLT,	 49)
   RELOC_NUMBER (R_PPC_RELAX_PLTREL24,	 50)
+/* Reloc only used internally by gas.  As above, value is unimportant.  */
+  RELOC_NUMBER (R_PPC_16DX_HA,		 51)
 #endif
 
   /* Relocs added to support TLS.  */
@@ -219,11 +223,18 @@ END_RELOC_NUMBERS (R_PPC_max)
 enum
 {
   /* 0-3 are generic.  */
-  Tag_GNU_Power_ABI_FP = 4, /* Value 1 for hard-float, 2 for
-			       soft-float, 3 for single=precision 
-			       hard-float; 0 for not tagged or not
-			       using any ABIs affected by the
-			       differences.  */
+
+  /* FP ABI, low 2 bits:
+     1 for double precision hard-float,
+     2 for soft-float,
+     3 for single precision hard-float.
+     0 for not tagged or not using any ABIs affected by the differences.
+     Next 2 bits:
+     1 for ibm long double
+     2 for 64-bit long double
+     3 for IEEE long double.
+     0 for not tagged or not using any ABIs affected by the differences.  */
+  Tag_GNU_Power_ABI_FP = 4,
 
   /* Value 1 for general purpose registers only, 2 for AltiVec
      registers, 3 for SPE registers; 0 for not tagged or not using any

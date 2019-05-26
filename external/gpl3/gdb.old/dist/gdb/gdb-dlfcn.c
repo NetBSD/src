@@ -1,6 +1,6 @@
 /* Platform independent shared object routines for GDB.
 
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,27 +31,20 @@
 
 #ifdef NO_SHARED_LIB
 
-void *
+gdb_dlhandle_up
 gdb_dlopen (const char *filename)
 {
   gdb_assert_not_reached ("gdb_dlopen should not be called on this platform.");
 }
 
 void *
-gdb_dlsym (void *handle, const char *symbol)
+gdb_dlsym (const gdb_dlhandle_up &handle, const char *symbol)
 {
   gdb_assert_not_reached ("gdb_dlsym should not be called on this platform.");
 }
 
-struct cleanup *
-make_cleanup_dlclose (void *handle)
-{
-  gdb_assert_not_reached ("make_cleanup_dlclose should not be called on this "
-                          "platform.");
-}
-
-int
-gdb_dlclose (void *handle)
+void
+dlclose_deleter::operator() (void *handle) const
 {
   gdb_assert_not_reached ("gdb_dlclose should not be called on this platform.");
 }
@@ -64,7 +57,7 @@ is_dl_available (void)
 
 #else /* NO_SHARED_LIB */
 
-void *
+gdb_dlhandle_up
 gdb_dlopen (const char *filename)
 {
   void *result;
@@ -74,7 +67,7 @@ gdb_dlopen (const char *filename)
   result = (void *) LoadLibrary (filename);
 #endif
   if (result != NULL)
-    return result;
+    return gdb_dlhandle_up (result);
 
 #ifdef HAVE_DLFCN_H
   error (_("Could not load %s: %s"), filename, dlerror());
@@ -97,35 +90,23 @@ gdb_dlopen (const char *filename)
 }
 
 void *
-gdb_dlsym (void *handle, const char *symbol)
+gdb_dlsym (const gdb_dlhandle_up &handle, const char *symbol)
 {
 #ifdef HAVE_DLFCN_H
-  return dlsym (handle, symbol);
+  return dlsym (handle.get (), symbol);
 #elif __MINGW32__
-  return (void *) GetProcAddress ((HMODULE) handle, symbol);
+  return (void *) GetProcAddress ((HMODULE) handle.get (), symbol);
 #endif
 }
 
-int
-gdb_dlclose (void *handle)
+void
+dlclose_deleter::operator() (void *handle) const
 {
 #ifdef HAVE_DLFCN_H
-  return dlclose (handle);
+  dlclose (handle);
 #elif __MINGW32__
-  return !((int) FreeLibrary ((HMODULE) handle));
+  FreeLibrary ((HMODULE) handle);
 #endif
-}
-
-static void
-do_dlclose_cleanup (void *handle)
-{
-  gdb_dlclose (handle);
-}
-
-struct cleanup *
-make_cleanup_dlclose (void *handle)
-{
-  return make_cleanup (do_dlclose_cleanup, handle);
 }
 
 int

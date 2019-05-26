@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Free Software Foundation, Inc.
+# Copyright 2011-2017 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -43,7 +43,7 @@ if {[skip_cplus_tests]} { continue }
 # Tests for c++/12750
 standard_testfile .cc
 
-if {[prepare_for_testing $testfile $testfile $srcfile {c++ debug}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {c++ debug}]} {
     return -1
 }
 

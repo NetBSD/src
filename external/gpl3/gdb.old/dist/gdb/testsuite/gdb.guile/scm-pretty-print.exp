@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2016 Free Software Foundation, Inc.
+# Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ if { [skip_guile_tests] } { continue }
 proc run_lang_tests {exefile lang} {
     global srcdir subdir srcfile testfile hex
     if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${exefile}" executable "debug $lang"] != "" } {
-	untested "Couldn't compile ${srcfile} in $lang mode"
+	untested "failed to compile in $lang mode"
 	return
     }
 

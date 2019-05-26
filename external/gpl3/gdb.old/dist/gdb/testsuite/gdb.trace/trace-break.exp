@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Free Software Foundation, Inc.
+# Copyright 2011-2017 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -21,14 +21,13 @@ set expfile $testfile.exp
 # Some targets have leading underscores on assembly symbols.
 set additional_flags [gdb_target_symbol_prefix_flags]
 
-if [prepare_for_testing $expfile $executable $srcfile \
+if [prepare_for_testing "failed to prepare" $executable $srcfile \
 	[list debug $additional_flags]] {
-    untested "failed to prepare for trace tests"
     return -1
 }
 
 if ![runto_main] {
-    fail "Can't run to main to check for trace support"
+    fail "can't run to main to check for trace support"
     return -1
 }
 
@@ -48,7 +47,7 @@ proc break_trace_same_addr_1 { trace_type option } \
     # Start with a fresh gdb.
     clean_restart ${executable}
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -83,7 +82,7 @@ proc break_trace_same_addr_2 { trace_type1 trace_type2 option } \
     # Start with a fresh gdb.
     clean_restart ${executable}
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -122,7 +121,7 @@ proc break_trace_same_addr_3 { trace_type option } \
     # Start with a fresh gdb.
     clean_restart ${executable}
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -160,7 +159,7 @@ proc break_trace_same_addr_4 { trace_type option } \
     # Start with a fresh gdb.
     clean_restart ${executable}
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -204,7 +203,7 @@ proc break_trace_same_addr_5 { trace1 trace2 trace3 trace3_at_first_loc } \
     # Start with a fresh gdb.
     clean_restart ${executable}
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -278,7 +277,7 @@ proc break_trace_same_addr_6 { trace1 enable1 trace2 enable2 } \
     # Start with a fresh gdb.
     clean_restart ${executable}
     if ![runto_main] {
-	fail "Can't run to main"
+	fail "can't run to main"
 	return -1
     }
 
@@ -357,19 +356,19 @@ set remote_libipa [gdb_load_shlib $libipa]
 
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable [list debug $additional_flags shlib=$libipa] ] != "" } {
-    untested "failed to compile ftrace tests"
+    untested "failed to compile"
     return -1
 }
 clean_restart ${executable}
 
 if ![runto_main] {
-    fail "Can't run to main for ftrace tests"
+    fail "can't run to main for ftrace tests"
     return 0
 }
 
 gdb_reinitialize_dir $srcdir/$subdir
 if { [gdb_test "info sharedlibrary" ".*${remote_libipa}.*" "IPA loaded"] != 0 } {
-    untested "Could not find IPA lib loaded"
+    untested "could not find IPA lib loaded"
 } else {
     foreach break_always_inserted { "on" "off" } {
 	break_trace_same_addr_1 "ftrace" ${break_always_inserted}

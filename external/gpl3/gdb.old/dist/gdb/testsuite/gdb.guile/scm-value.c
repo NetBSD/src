@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2016 Free Software Foundation, Inc.
+   Copyright 2008-2017 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -81,13 +81,11 @@ main (int argc, char *argv[])
   char nullst[17] = "divide\0et\0impera";
   void (*fp1) (void)  = &func1;
   int  (*fp2) (int, int) = &func2;
-  const char *sptr = "pointer";
   const char *embed = "embedded x\201\202\203\204";
   int a[3] = {1,2,3};
   int *p = a;
   int i = 2;
   int *ptr_i = &i;
-  const char *sn = 0;
   s.a = 3;
   s.b = 5;
   u.a = 7;

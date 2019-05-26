@@ -1,6 +1,6 @@
 /* Machine independent variables that describe the core file under GDB.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -167,7 +167,7 @@ extern void validate_files (void);
 
 extern char *gnutarget;
 
-extern void set_gnutarget (char *);
+extern void set_gnutarget (const char *);
 
 /* Structure to keep track of core register reading functions for
    various core file types.  */

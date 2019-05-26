@@ -1,5 +1,5 @@
 /* Disassembler code for Renesas RL78.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -29,6 +29,8 @@
 #include "opcode/rl78.h"
 #include "elf/rl78.h"
 
+#include <setjmp.h>
+
 #define DEBUG_SEMANTICS 0
 
 typedef struct
@@ -37,16 +39,30 @@ typedef struct
   disassemble_info * dis;
 } RL78_Data;
 
+struct private
+{
+  OPCODES_SIGJMP_BUF bailout;
+};
+
 static int
 rl78_get_byte (void * vdata)
 {
   bfd_byte buf[1];
   RL78_Data *rl78_data = (RL78_Data *) vdata;
+  int status;
 
-  rl78_data->dis->read_memory_func (rl78_data->pc,
-				  buf,
-				  1,
-				  rl78_data->dis);
+  status = rl78_data->dis->read_memory_func (rl78_data->pc,
+					     buf,
+					     1,
+					     rl78_data->dis);
+  if (status != 0)
+    {
+      struct private *priv = (struct private *) rl78_data->dis->private_data;
+
+      rl78_data->dis->memory_error_func (status, rl78_data->pc,
+					 rl78_data->dis);
+      OPCODES_SIGLONGJMP (priv->bailout, 1);
+    }
 
   rl78_data->pc ++;
   return buf[0];
@@ -92,9 +108,17 @@ print_insn_rl78_common (bfd_vma addr, disassemble_info * dis, RL78_Dis_Isa isa)
 #if DEBUG_SEMANTICS
   static char buf[200];
 #endif
+  struct private priv;
 
+  dis->private_data = (PTR) &priv;
   rl78_data.pc = addr;
   rl78_data.dis = dis;
+
+  if (OPCODES_SIGSETJMP (priv.bailout) != 0)
+    {
+      /* Error return.  */
+      return -1;
+    }
 
   rv = rl78_decode_opcode (addr, &opcode, rl78_get_byte, &rl78_data, isa);
 

@@ -1,3 +1,7 @@
+2017-02-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* decode.c (iq2000bf_init_idesc_table): Use ARRAY_SIZE.
+
 2016-01-10  Mike Frysinger  <vapier@gentoo.org>
 
 	* config.in, configure: Regenerate.
