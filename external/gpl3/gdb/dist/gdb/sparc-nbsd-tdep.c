@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -313,10 +313,6 @@ sparc32nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_sparcnbsd_tdep (void);
 
 void
 _initialize_sparcnbsd_tdep (void)

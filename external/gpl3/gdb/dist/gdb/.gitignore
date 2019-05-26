@@ -21,7 +21,6 @@
 /jv-exp.c
 /m2-exp.c
 /objc-exp.c
-/observer.h
 /observer.inc
 /p-exp.c
 /rust-exp.c

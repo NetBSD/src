@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/i386.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,30 +61,23 @@ i386nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 
   read_memory (pcb->pcb_esp, (gdb_byte *)&sf, sizeof sf);
   pcb->pcb_esp += sizeof (struct switchframe);
-  regcache_raw_supply (regcache, I386_EDI_REGNUM, &sf.sf_edi);
-  regcache_raw_supply (regcache, I386_ESI_REGNUM, &sf.sf_esi);
-  regcache_raw_supply (regcache, I386_EBP_REGNUM, &pcb->pcb_ebp);
-  regcache_raw_supply (regcache, I386_ESP_REGNUM, &pcb->pcb_esp);
-  regcache_raw_supply (regcache, I386_EBX_REGNUM, &sf.sf_ebx);
-  regcache_raw_supply (regcache, I386_EIP_REGNUM, &sf.sf_eip);
+  regcache->raw_supply (I386_EDI_REGNUM, &sf.sf_edi);
+  regcache->raw_supply (I386_ESI_REGNUM, &sf.sf_esi);
+  regcache->raw_supply (I386_EBP_REGNUM, &pcb->pcb_ebp);
+  regcache->raw_supply (I386_ESP_REGNUM, &pcb->pcb_esp);
+  regcache->raw_supply (I386_EBX_REGNUM, &sf.sf_ebx);
+  regcache->raw_supply (I386_EIP_REGNUM, &sf.sf_eip);
 
   return 1;
 }
-
 
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_i386nbsd_nat (void);
+static i386_bsd_nat_target<nbsd_nat_target> the_i386_nbsd_nat_target;
 
 void
 _initialize_i386nbsd_nat (void)
 {
-  struct target_ops *t;
+  add_inf_child_target (&the_i386_nbsd_nat_target);
 
-  /* Add some extra features to the common *BSD/i386 target.  */
-  t = i386bsd_target ();
-  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
-  add_target (t);
- 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (i386nbsd_supply_pcb);
 }

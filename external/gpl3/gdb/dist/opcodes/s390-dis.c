@@ -1,5 +1,5 @@
 /* s390-dis.c -- Disassemble S390 instructions
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -22,7 +22,7 @@
 #include "sysdep.h"
 #include <stdio.h>
 #include "ansidecl.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opintl.h"
 #include "opcode/s390.h"
 #include "libiberty.h"
@@ -72,7 +72,8 @@ disassemble_init_s390 (struct disassemble_info *info)
       else if (CONST_STRNEQ (p, "insnlength"))
 	option_use_insn_len_bits_p = 1;
       else
-	fprintf (stderr, "Unknown S/390 disassembler option: %s\n", p);
+	/* xgettext:c-format */
+	opcodes_error_handler (_("unknown S/390 disassembler option: %s"), p);
 
       p = strchr (p, ',');
       if (p != NULL)
@@ -206,10 +207,19 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
 
       /* For instructions with a last optional operand don't print it
 	 if zero.  */
-      if ((opcode->flags & S390_INSTR_FLAG_OPTPARM)
+      if ((opcode->flags & (S390_INSTR_FLAG_OPTPARM | S390_INSTR_FLAG_OPTPARM2))
 	  && val.u == 0
 	  && opindex[1] == 0)
 	break;
+
+      if ((opcode->flags & S390_INSTR_FLAG_OPTPARM2)
+	  && val.u == 0 && opindex[1] != 0 && opindex[2] == 0)
+	{
+	  union operand_value next_op_val =
+	    s390_extract_operand (buffer, s390_operands + opindex[1]);
+	  if (next_op_val.u == 0)
+	    break;
+	}
 
       if (flags & S390_OPERAND_GPR)
 	info->fprintf_func (info->stream, "%c%%r%u", separator, val.u);
@@ -369,17 +379,23 @@ print_insn_s390 (bfd_vma memaddr, struct disassemble_info *info)
   return 0;
 }
 
-const disasm_options_t *
+const disasm_options_and_args_t *
 disassembler_options_s390 (void)
 {
-  static disasm_options_t *opts = NULL;
+  static disasm_options_and_args_t *opts_and_args;
 
-  if (opts == NULL)
+  if (opts_and_args == NULL)
     {
       size_t i, num_options = ARRAY_SIZE (options);
-      opts = XNEW (disasm_options_t);
+      disasm_options_t *opts;
+
+      opts_and_args = XNEW (disasm_options_and_args_t);
+      opts_and_args->args = NULL;
+
+      opts = &opts_and_args->options;
       opts->name = XNEWVEC (const char *, num_options + 1);
       opts->description = XNEWVEC (const char *, num_options + 1);
+      opts->arg = NULL;
       for (i = 0; i < num_options; i++)
 	{
 	  opts->name[i] = options[i].name;
@@ -390,7 +406,7 @@ disassembler_options_s390 (void)
       opts->description[i] = NULL;
     }
 
-  return opts;
+  return opts_and_args;
 }
 
 void

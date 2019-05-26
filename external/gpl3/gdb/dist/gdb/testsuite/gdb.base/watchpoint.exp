@@ -1,4 +1,4 @@
-# Copyright 1992-2017 Free Software Foundation, Inc.
+# Copyright 1992-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -444,12 +444,12 @@ proc test_complex_watchpoint {} {
         # In particular, test that a watch of stack-based things
         # is deleted when the stack-based things go out of scope.
         #
-	gdb_test_no_output "disable" "disable in test_complex_watchpoint"
+	gdb_test_no_output "disable" "disable in test_complex_watchpoint, first time"
         gdb_test "break marker6" ".*Breakpoint.*"
         gdb_test "cont" "Continuing.*Breakpoint.*marker6 \\(\\).*" \
             "continue to marker6"
 	gdb_breakpoint [gdb_get_line_number "func2 breakpoint here"]
-	gdb_continue_to_breakpoint "func2 breakpoint here"
+	gdb_continue_to_breakpoint "func2 breakpoint here, first time"
 
         # Test a watch of a single stack-based variable, whose scope
         # is the function we're now in.  This should auto-delete when
@@ -478,7 +478,7 @@ proc test_complex_watchpoint {} {
 	    }
 	}
 
-	gdb_continue_to_breakpoint "func2 breakpoint here"
+	gdb_continue_to_breakpoint "func2 breakpoint here, second time"
         # We should be in "func2" again now.  Test a watch of an
         # expression which includes both a stack-based local and
         # something whose scope is larger than this invocation
@@ -498,7 +498,7 @@ proc test_complex_watchpoint {} {
         # across any invocations of "func2", it should not auto-
         # delete.
         #
-	gdb_continue_to_breakpoint "func2 breakpoint here"
+	gdb_continue_to_breakpoint "func2 breakpoint here, third time"
         gdb_test "watch static_b" ".*\[Ww\]atchpoint \[0-9\]*: static_b" \
                  "set static local watch"
         gdb_test "cont" "Continuing.*\[Ww\]atchpoint .*: static_b.*" \
@@ -514,31 +514,35 @@ proc test_complex_watchpoint {} {
         # local to a recursing function should be bound only to that
         # one invocation, and should not trigger for other invocations.
         #
-        gdb_test "tbreak recurser" ".*breakpoint.*"
-        gdb_test "cont" "Continuing.*recurser.*"
-        gdb_test "next" "if \\(x > 0.*" "next past local_x initialization"
-        gdb_test "watch local_x" ".*\[Ww\]atchpoint \[0-9\]*: local_x" \
-                 "set local watch in recursive call"
-        gdb_test "cont" "Continuing.*\[Ww\]atchpoint .*: local_x.*New value = 2.*" \
-                 "trigger local watch in recursive call"
-        gdb_test "cont" "Continuing.*\[Ww\]atchpoint .* deleted because the program has left the block in.*which its expression is valid.*" \
-                 "self-delete local watch in recursive call"
+	with_test_prefix "local_x" {
+	    gdb_test "tbreak recurser" ".*breakpoint.*"
+	    gdb_test "cont" "Continuing.*recurser.*"
+	    gdb_test "next" "if \\(x > 0.*" "next past local_x initialization"
+	    gdb_test "watch local_x" ".*\[Ww\]atchpoint \[0-9\]*: local_x" \
+		"set local watch in recursive call"
+	    gdb_test "cont" "Continuing.*\[Ww\]atchpoint .*: local_x.*New value = 2.*" \
+		"trigger local watch in recursive call"
+	    gdb_test "cont" "Continuing.*\[Ww\]atchpoint .* deleted because the program has left the block in.*which its expression is valid.*" \
+		"self-delete local watch in recursive call"
+	}
 
         # Repeat the preceding test, but this time use "recurser::local_x" as
         # the variable to track.
-        gdb_test "cont" "Continuing.*marker6.*"
-        gdb_test "tbreak recurser" ".*breakpoint.*"
-        gdb_test "cont" "Continuing.*recurser.*"
-        gdb_test "next" "if \\(x > 0.*" "next past local_x initialization"
-        gdb_test "watch recurser::local_x" ".*\[Ww\]atchpoint \[0-9\]*: recurser::local_x" \
-                 "set local watch in recursive call with explicit scope"
-        gdb_test "cont" "Continuing.*\[Ww\]atchpoint .*: recurser::local_x.*New value = 2.*" \
-                 "trigger local watch with explicit scope in recursive call"
-        gdb_test "cont" "Continuing.*\[Ww\]atchpoint .* deleted because the program has left the block in.*which its expression is valid.*" \
-                 "self-delete local watch with explicit scope in recursive call (2)"
+	with_test_prefix "recurser::local_x" {
+	    gdb_test "cont" "Continuing.*marker6.*" "continue to marker6"
+	    gdb_test "tbreak recurser" ".*breakpoint.*"
+	    gdb_test "cont" "Continuing.*recurser.*" "continue to recurser"
+	    gdb_test "next" "if \\(x > 0.*" "next past local_x initialization"
+	    gdb_test "watch recurser::local_x" ".*\[Ww\]atchpoint \[0-9\]*: recurser::local_x" \
+		"set local watch in recursive call with explicit scope"
+	    gdb_test "cont" "Continuing.*\[Ww\]atchpoint .*: recurser::local_x.*New value = 2.*" \
+		"trigger local watch with explicit scope in recursive call"
+	    gdb_test "cont" "Continuing.*\[Ww\]atchpoint .* deleted because the program has left the block in.*which its expression is valid.*" \
+		"self-delete local watch with explicit scope in recursive call (2)"
+	}
 
 	# Disable everything so we can finish the program at full speed
-	gdb_test_no_output "disable" "disable in test_complex_watchpoint"
+	gdb_test_no_output "disable" "disable in test_complex_watchpoint, second time"
 
 	if [target_info exists gdb,noresults] { return }
 

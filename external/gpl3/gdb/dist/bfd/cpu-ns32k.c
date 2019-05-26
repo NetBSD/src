@@ -1,5 +1,5 @@
 /* BFD support for the ns32k architecture.
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
    Almost totally rewritten by Ian Dall from initial work
    by Andrew Cagney.
 
@@ -220,8 +220,8 @@ do_ns32k_reloc (bfd *      abfd,
 	 the addend to be the negative of the position of the location
 	 within the section; for example, i386-aout does this.  For
 	 i386-aout, pcrel_offset is FALSE.  Some other targets do not
-	 include the position of the location; for example, m88kbcs,
-	 or ELF.  For those targets, pcrel_offset is TRUE.
+	 include the position of the location; for example, ELF.
+	 For those targets, pcrel_offset is TRUE.
 
 	 If we are producing relocatable output, then we must ensure
 	 that this reloc will be correctly computed when the final
@@ -483,23 +483,26 @@ do_ns32k_reloc (bfd *      abfd,
      R result
 
      Do this:
-     i i i i i o o o o o        from bfd_get<size>
-     and           S S S S S    to get the size offset we want
-     +   r r r r r r r r r r  to get the final value to place
-     and           D D D D D  to chop to right size
+     i i i i i o o o o o	from bfd_get<size>
+     and	   S S S S S	to get the size offset we want
+     +	 r r r r r r r r r r  to get the final value to place
+     and	   D D D D D  to chop to right size
      -----------------------
      A A A A A
      And this:
-     ...   i i i i i o o o o o  from bfd_get<size>
-     and   N N N N N            get instruction
+     ...   i i i i i o o o o o	from bfd_get<size>
+     and   N N N N N		get instruction
      -----------------------
      ...   B B B B B
 
      And then:
      B B B B B
-     or              A A A A A
+     or		     A A A A A
      -----------------------
-     R R R R R R R R R R        put into bfd_put<size>.  */
+     R R R R R R R R R R	put into bfd_put<size>.  */
+
+  if (howto->negate)
+    relocation = -relocation;
 
 #define DOIT(x) \
   x = ( (x & ~howto->dst_mask) | (((x & howto->src_mask) +  relocation) & howto->dst_mask))
@@ -530,14 +533,6 @@ do_ns32k_reloc (bfd *      abfd,
 	  DOIT (x);
 	  put_data ((bfd_vma) x, location, 4);
 	}
-      break;
-    case -2:
-      {
-	bfd_vma x = get_data (location, 4);
-	relocation = -relocation;
-	DOIT(x);
-	put_data ((bfd_vma) x, location, 4);
-      }
       break;
 
     case 3:
@@ -793,12 +788,7 @@ _bfd_ns32k_final_link_relocate (reloc_howto_type *howto,
 
   /* If the relocation is PC relative, we want to set RELOCATION to
      the distance between the symbol (currently in RELOCATION) and the
-     location we are relocating.  Some targets (e.g., i386-aout)
-     arrange for the contents of the section to be the negative of the
-     offset of the location within the section; for such targets
-     pcrel_offset is FALSE.  Other targets (e.g., m88kbcs or ELF)
-     simply leave the contents of the section as zero; for such
-     targets pcrel_offset is TRUE.  If pcrel_offset is FALSE we do not
+     location we are relocating.  If pcrel_offset is FALSE we do not
      need to subtract out the offset of the location within the
      section (which is just ADDRESS).  */
   if (howto->pc_relative)

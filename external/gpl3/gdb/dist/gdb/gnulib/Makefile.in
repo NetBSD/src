@@ -1,4 +1,4 @@
-# Copyright (C) 1989-2017 Free Software Foundation, Inc.
+# Copyright (C) 1989-2019 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -62,11 +62,6 @@ SUBDIRS = import
 CLEANDIRS = $(SUBDIRS)
 REQUIRED_SUBDIRS = $(SUBDIRS)
 
-# If you are compiling with GCC, make sure that either 1) You have the
-# fixed include files where GCC can reach them, or 2) You use the
-# -traditional flag.  Otherwise the ioctl calls in inflow.c
-# will be incorrectly compiled.  The "fixincludes" script in the gcc
-# distribution will fix your include files up.
 CC=@CC@
 
 # Directory containing source files.
@@ -205,53 +200,10 @@ config.status: $(srcdir)/configure
 
 ACLOCAL = aclocal
 ACLOCAL_AMFLAGS = -I import/m4 -I ../../config
-aclocal_m4_deps = \
-	configure.ac \
-	import/m4/00gnulib.m4 \
-	import/m4/alloca.m4 \
-	import/m4/codeset.m4 \
-	import/m4/configmake.m4 \
-	import/m4/extensions.m4 \
-	import/m4/fcntl-o.m4 \
-	import/m4/fnmatch.m4 \
-	import/m4/glibc21.m4 \
-	import/m4/gnulib-cache.m4 \
-	import/m4/gnulib-common.m4 \
-	import/m4/gnulib-comp.m4 \
-	import/m4/gnulib-tool.m4 \
-	import/m4/include_next.m4 \
-	import/m4/inttypes-pri.m4 \
-	import/m4/inttypes.m4 \
-	import/m4/localcharset.m4 \
-	import/m4/locale-fr.m4 \
-	import/m4/locale-ja.m4 \
-	import/m4/locale-zh.m4 \
-	import/m4/longlong.m4 \
-	import/m4/mbrtowc.m4 \
-	import/m4/mbsinit.m4 \
-	import/m4/mbsrtowcs.m4 \
-	import/m4/mbstate_t.m4 \
-	import/m4/memchr.m4 \
-	import/m4/memmem.m4 \
-	import/m4/mmap-anon.m4 \
-	import/m4/multiarch.m4 \
-	import/m4/off_t.m4 \
-	import/m4/pathmax.m4 \
-	import/m4/ssize_t.m4 \
-	import/m4/stdbool.m4 \
-	import/m4/stddef_h.m4 \
-	import/m4/stdint.m4 \
-	import/m4/string_h.m4 \
-	import/m4/strtok_r.m4 \
-	import/m4/sys_types_h.m4 \
-	import/m4/unistd_h.m4 \
-	import/m4/warn-on-use.m4 \
-	import/m4/wchar_h.m4 \
-	import/m4/wchar_t.m4 \
-	import/m4/wctype_h.m4 \
-	import/m4/wint_t.m4
 
-$(srcdir)/aclocal.m4: @MAINTAINER_MODE_TRUE@ $(aclocal_m4_deps)
+include $(srcdir)/aclocal-m4-deps.mk
+
+$(srcdir)/aclocal.m4: @MAINTAINER_MODE_TRUE@ configure.ac $(aclocal_m4_deps)
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 
 AUTOCONF = autoconf

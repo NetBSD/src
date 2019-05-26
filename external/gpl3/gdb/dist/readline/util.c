@@ -515,11 +515,11 @@ _rl_tropen ()
 	   (sh_get_env_value ("TEMP")
 	    ? sh_get_env_value ("TEMP")
 	    : "."),
-	   getpid());
+	   getpid ());
 #else
-  sprintf (fnbuf, "/var/tmp/rltrace.%ld", getpid());
+  sprintf (fnbuf, "/var/tmp/rltrace.%ld", (long) getpid ());
 #endif
-  unlink(fnbuf);
+  unlink (fnbuf);
   _rl_tracefp = fopen (fnbuf, "w+");
   return _rl_tracefp != 0;
 }

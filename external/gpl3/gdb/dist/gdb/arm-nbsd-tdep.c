@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/arm.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -84,9 +84,6 @@ arm_netbsd_elf_init_abi (struct gdbarch_info info,
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_arm_netbsd_tdep;
 
 void
 _initialize_arm_netbsd_tdep (void)

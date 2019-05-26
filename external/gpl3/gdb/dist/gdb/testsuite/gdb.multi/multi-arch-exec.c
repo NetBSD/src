@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2017 Free Software Foundation, Inc.
+   Copyright 2012-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,11 +20,32 @@
 #include <unistd.h>
 #include <limits.h>
 #include <string.h>
+#include <pthread.h>
+
+#define NUM_THREADS 1
+
+static pthread_barrier_t barrier;
+
+static void *
+thread_start (void *arg)
+{
+  pthread_barrier_wait (&barrier);
+
+  while (1)
+    sleep (1);
+  return NULL;
+}
+
+static void
+all_started (void)
+{
+}
 
 int
 main (int argc, char ** argv)
 {
   char prog[PATH_MAX];
+  pthread_t thread;
   int len;
 
   strcpy (prog, argv[0]);
@@ -32,6 +53,12 @@ main (int argc, char ** argv)
   /* Replace "multi-arch-exec" with "multi-arch-exec-hello".  */
   memcpy (prog + len - 15, "multi-arch-exec-hello", 21);
   prog[len + 6] = 0;
+
+  pthread_barrier_init (&barrier, NULL, NUM_THREADS + 1);
+  pthread_create (&thread, NULL, thread_start, NULL);
+
+  pthread_barrier_wait (&barrier);
+  all_started ();
 
   execl (prog,
          prog,

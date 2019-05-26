@@ -1,6 +1,6 @@
 /* Target-dependent code for Renesas M32R, for GDB.
 
-   Copyright (C) 1996-2017 Free Software Foundation, Inc.
+   Copyright (C) 1996-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,7 +35,6 @@
 #include "regcache.h"
 #include "trad-frame.h"
 #include "dis-asm.h"
-#include "objfiles.h"
 #include "m32r-tdep.h"
 #include <algorithm>
 
@@ -43,8 +42,6 @@
 #define M32R_ARG_REGISTER_SIZE 4
 
 /* Local functions */
-
-extern void _initialize_m32r_tdep (void);
 
 static CORE_ADDR
 m32r_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
@@ -247,7 +244,7 @@ static void
 m32r_store_return_value (struct type *type, struct regcache *regcache,
 			 const gdb_byte *valbuf)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR regval;
   int len = TYPE_LENGTH (type);
@@ -652,14 +649,6 @@ m32r_frame_unwind_cache (struct frame_info *this_frame,
 }
 
 static CORE_ADDR
-m32r_read_pc (struct regcache *regcache)
-{
-  ULONGEST pc;
-  regcache_cooked_read_unsigned (regcache, M32R_PC_REGNUM, &pc);
-  return pc;
-}
-
-static CORE_ADDR
 m32r_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
 {
   return frame_unwind_register_unsigned (next_frame, M32R_SP_REGNUM);
@@ -669,7 +658,8 @@ m32r_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
 static CORE_ADDR
 m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
-		      struct value **args, CORE_ADDR sp, int struct_return,
+		      struct value **args, CORE_ADDR sp,
+		      function_call_return_method return_method,
 		      CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -693,7 +683,7 @@ m32r_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   /* If STRUCT_RETURN is true, then the struct return address (in
      STRUCT_ADDR) will consume the first argument-passing register.
      Both adjust the register count and store that value.  */
-  if (struct_return)
+  if (return_method == return_method_struct)
     {
       regcache_cooked_write_unsigned (regcache, argreg, struct_addr);
       argreg++;
@@ -772,7 +762,7 @@ static void
 m32r_extract_return_value (struct type *type, struct regcache *regcache,
 			   gdb_byte *dst)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int len = TYPE_LENGTH (type);
   ULONGEST tmp;
@@ -908,13 +898,12 @@ m32r_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     return arches->gdbarch;
 
   /* Allocate space for the new architecture.  */
-  tdep = XNEW (struct gdbarch_tdep);
+  tdep = XCNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
 
   set_gdbarch_wchar_bit (gdbarch, 16);
   set_gdbarch_wchar_signed (gdbarch, 0);
 
-  set_gdbarch_read_pc (gdbarch, m32r_read_pc);
   set_gdbarch_unwind_sp (gdbarch, m32r_unwind_sp);
 
   set_gdbarch_num_regs (gdbarch, M32R_NUM_REGS);
@@ -946,8 +935,6 @@ m32r_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Return the unwound PC value.  */
   set_gdbarch_unwind_pc (gdbarch, m32r_unwind_pc);
-
-  set_gdbarch_print_insn (gdbarch, print_insn_m32r);
 
   /* Hook in ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);

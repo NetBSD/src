@@ -1,5 +1,5 @@
 /* Annotation routines for GDB.
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,6 +15,9 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+#ifndef ANNOTATE_H
+#define ANNOTATE_H
 
 #include "symtab.h"
 #include "gdbtypes.h"
@@ -74,6 +77,16 @@ extern void annotate_arg_name_end (void);
 extern void annotate_arg_value (struct type *);
 extern void annotate_arg_end (void);
 
+/* Wrap calls to annotate_arg_begin and annotate_arg_end in an RAII
+   class. */
+struct annotate_arg_emitter
+{
+  annotate_arg_emitter () { annotate_arg_begin (); }
+  ~annotate_arg_emitter () { annotate_arg_end (); }
+
+  DISABLE_COPY_AND_ASSIGN (annotate_arg_emitter);
+};
+
 extern void annotate_source (char *, int, int, int,
 			     struct gdbarch *, CORE_ADDR);
 
@@ -100,3 +113,5 @@ extern void annotate_array_section_end (void);
 
 extern void (*deprecated_annotate_signalled_hook) (void);
 extern void (*deprecated_annotate_signal_hook) (void);
+
+#endif /* ANNOTATE_H */

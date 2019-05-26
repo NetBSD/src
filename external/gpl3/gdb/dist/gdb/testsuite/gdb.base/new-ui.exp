@@ -1,4 +1,4 @@
-# Copyright 2016-2017 Free Software Foundation, Inc.
+# Copyright 2016-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ proc_with_prefix do_test {} {
     }
 
     gdb_test "new-ui" \
-	"usage: new-ui <interpreter> <tty>" \
+	"Usage: new-ui INTERPRETER TTY" \
 	"new-ui without arguments"
 
     set test "new-ui does not repeat"
@@ -135,9 +135,18 @@ proc_with_prefix do_test {} {
 		 "Delete all breakpoints. .y or n. $" "n"
     }
     with_spawn_id $extra_spawn_id {
-	gdb_test "delete" \
-		 "Delete all breakpoints. .y or n. .answered Y; input not from terminal." \
-		 "delete all breakpoints on extra console"
+	# Check output in two stages in order to override
+	# gdb_test_multiple's internal "got interactive prompt" fail
+	# that would otherwise match if the expect buffer happens to
+	# fill with partial output that ends in "(y or n) ".
+	set test "delete all breakpoints on extra console"
+	gdb_test_multiple "delete" $test {
+	    -re "Delete all breakpoints. .y or n. " {
+		gdb_test "" \
+		    ".answered Y; input not from terminal." \
+		    $test
+	    }
+	}
     }
 
     # Run a few execution tests with the main console as the driver

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2013-2017 Free Software Foundation, Inc.
+   Copyright 2013-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,11 +26,31 @@ public:
   }
 
   void m() {
-    /* stop here */
+    /* stop inside C */
   }
 };
 
+class D {
+public:
+  int includefile();
+
+  void m() {
+    /* stop inside D */
+  }
+};
+
+int D::includefile() {
+  return 24;
+}
+
 int main() {
   C c;
+  C* pc = &c;
   c.m();
+
+  D d;
+  D* pd = &d;
+  d.m();
+
+  /* stop outside */
 }

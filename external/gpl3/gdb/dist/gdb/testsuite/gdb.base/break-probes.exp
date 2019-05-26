@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Free Software Foundation, Inc.
+# Copyright 2012-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,11 @@ set libname $testfile-solib
 set srcfile_lib $srcdir/$subdir/$libname.c
 set binfile_lib [standard_output_file $libname.so]
 
-set normal_bp "_dl_debug_state"
+if { [istarget "*bsd*"] } {
+  set normal_bp "r_debug_state"
+} else {
+  set normal_bp "_dl_debug_state"
+}
 set probes_bp "dl_main"
 
 if { [gdb_compile_shlib $srcfile_lib $binfile_lib \
@@ -33,7 +37,7 @@ if { [gdb_compile_shlib $srcfile_lib $binfile_lib \
 }
 
 if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
-	  [list additional_flags=-DSHLIB_NAME=\"$binfile_lib\" libs=-ldl]] } {
+	  [list debug shlib_load additional_flags=-DSHLIB_NAME=\"$binfile_lib\"]] } {
     return -1
 }
 
@@ -86,5 +90,5 @@ if { $using_probes } {
     }
 
     # Call something to ensure that relocation occurred
-    gdb_test "call foo(23)" "\\\$.* = 31.*\\\M.*"
+    gdb_test "call (int) foo(23)" "\\\$.* = 31.*\\\M.*"
 }

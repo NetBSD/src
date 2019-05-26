@@ -1,6 +1,6 @@
 /* Low level interface to ptrace, for GDB when running under Unix.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,17 +20,6 @@
 #ifndef INFLOW_H
 #define INFLOW_H
 
-#include "gdb_termios.h"
-
-#ifdef HAVE_TERMIOS
-# define PROCESS_GROUP_TYPE pid_t
-#elif defined (HAVE_TERMIO) || defined (HAVE_SGTTY)
-# define PROCESS_GROUP_TYPE int
-#endif
-
-#ifdef PROCESS_GROUP_TYPE
-/* Process group of the current inferior.  */
-extern PROCESS_GROUP_TYPE inferior_process_group (void);
-#endif
+#include <unistd.h>
 
 #endif /* inflow.h */

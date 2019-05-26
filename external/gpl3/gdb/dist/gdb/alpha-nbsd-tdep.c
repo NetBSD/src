@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/alpha.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -58,11 +58,11 @@ alphanbsd_supply_fpregset (const struct regset *regset,
   for (i = ALPHA_FP0_REGNUM; i < ALPHA_FP0_REGNUM + 31; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache_raw_supply (regcache, i, regs + (i - ALPHA_FP0_REGNUM) * 8);
+	regcache->raw_supply (i, regs + (i - ALPHA_FP0_REGNUM) * 8);
     }
 
   if (regnum == ALPHA_FPCR_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, ALPHA_FPCR_REGNUM, regs + 32 * 8);
+    regcache->raw_supply (ALPHA_FPCR_REGNUM, regs + 32 * 8);
 }
 
 /* Supply register REGNUM from the buffer specified by GREGS and LEN
@@ -95,11 +95,11 @@ alphanbsd_aout_supply_gregset (const struct regset *regset,
   for (i = 0; i < ARRAY_SIZE(regmap); i++)
     {
       if (regnum == i || regnum == -1)
-	regcache_raw_supply (regcache, i, regs + regmap[i] * 8);
+	regcache->raw_supply (i, regs + regmap[i] * 8);
     }
 
   if (regnum == ALPHA_PC_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, ALPHA_PC_REGNUM, regs + 31 * 8);
+    regcache->raw_supply (ALPHA_PC_REGNUM, regs + 31 * 8);
 
   if (len >= ALPHANBSD_SIZEOF_GREGS + ALPHANBSD_SIZEOF_FPREGS)
     {
@@ -130,11 +130,11 @@ alphanbsd_supply_gregset (const struct regset *regset,
   for (i = 0; i < ALPHA_ZERO_REGNUM; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache_raw_supply (regcache, i, regs + i * 8);
+	regcache->raw_supply (i, regs + i * 8);
     }
 
   if (regnum == ALPHA_PC_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, ALPHA_PC_REGNUM, regs + 31 * 8);
+    regcache->raw_supply (ALPHA_PC_REGNUM, regs + 31 * 8);
 }
 
 /* NetBSD/alpha register sets.  */
@@ -161,8 +161,10 @@ alphanbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					void *cb_data,
 					const struct regcache *regcache)
 {
-  cb (".reg", ALPHANBSD_SIZEOF_GREGS, &alphanbsd_gregset, NULL, cb_data);
-  cb (".reg2", ALPHANBSD_SIZEOF_FPREGS, &alphanbsd_fpregset, NULL, cb_data);
+  cb (".reg", ALPHANBSD_SIZEOF_GREGS, ALPHANBSD_SIZEOF_GREGS,
+      &alphanbsd_gregset, NULL, cb_data);
+  cb (".reg2", ALPHANBSD_SIZEOF_FPREGS, ALPHANBSD_SIZEOF_FPREGS,
+      &alphanbsd_fpregset, NULL, cb_data);
 }
 
 
@@ -275,9 +277,6 @@ alphanbsd_init_abi (struct gdbarch_info info,
     (gdbarch, alphanbsd_iterate_over_regset_sections);
 }
 
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_alphanbsd_tdep (void);
 
 void
 _initialize_alphanbsd_tdep (void)

@@ -1,6 +1,6 @@
 /* Declarations for common target functions.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TARGET_COMMON_H
-#define TARGET_COMMON_H
+#ifndef TARGET_TARGET_H
+#define TARGET_TARGET_H
 
 #include "target/waitstatus.h"
 /* This header is a stopgap until more code is shared.  */
@@ -95,4 +95,118 @@ extern void target_mourn_inferior (ptid_t ptid);
 
 extern int target_supports_multi_process (void);
 
-#endif /* TARGET_COMMON_H */
+/* Possible terminal states.  */
+
+enum class target_terminal_state
+  {
+    /* The inferior's terminal settings are in effect.  */
+    is_inferior = 0,
+
+    /* Some of our terminal settings are in effect, enough to get
+       proper output.  */
+    is_ours_for_output = 1,
+
+    /* Our terminal settings are in effect, for output and input.  */
+    is_ours = 2
+  };
+
+/* Represents the state of the target terminal.  */
+class target_terminal
+{
+public:
+
+  target_terminal () = delete;
+  ~target_terminal () = delete;
+  DISABLE_COPY_AND_ASSIGN (target_terminal);
+
+  /* Initialize the terminal settings we record for the inferior,
+     before we actually run the inferior.  */
+  static void init ();
+
+  /* Put the current inferior's terminal settings into effect.  This
+     is preparation for starting or resuming the inferior.  This is a
+     no-op unless called with the main UI as current UI.  */
+  static void inferior ();
+
+  /* Put our terminal settings into effect.  First record the inferior's
+     terminal settings so they can be restored properly later.  This is
+     a no-op unless called with the main UI as current UI.  */
+  static void ours ();
+
+  /* Put some of our terminal settings into effect, enough to get proper
+     results from our output, but do not change into or out of RAW mode
+     so that no input is discarded.  This is a no-op if terminal_ours
+     was most recently called.  This is a no-op unless called with the main
+     UI as current UI.  */
+  static void ours_for_output ();
+
+  /* Restore terminal settings of inferiors that are in
+     is_ours_for_output state back to "inferior".  Used when we need
+     to temporarily switch to is_ours_for_output state.  */
+  static void restore_inferior ();
+
+  /* Returns true if the terminal settings of the inferior are in
+     effect.  */
+  static bool is_inferior ()
+  {
+    return m_terminal_state == target_terminal_state::is_inferior;
+  }
+
+  /* Returns true if our terminal settings are in effect.  */
+  static bool is_ours ()
+  {
+    return m_terminal_state == target_terminal_state::is_ours;
+  }
+
+  /* Returns true if our terminal settings are in effect.  */
+  static bool is_ours_for_output ()
+  {
+    return m_terminal_state == target_terminal_state::is_ours_for_output;
+  }
+
+  /* Print useful information about our terminal status, if such a thing
+     exists.  */
+  static void info (const char *arg, int from_tty);
+
+public:
+
+  /* A class that restores the state of the terminal to the current
+     state.  */
+  class scoped_restore_terminal_state
+  {
+  public:
+
+    scoped_restore_terminal_state ()
+      : m_state (m_terminal_state)
+    {
+    }
+
+    ~scoped_restore_terminal_state ()
+    {
+      switch (m_state)
+	{
+	case target_terminal_state::is_ours:
+	  ours ();
+	  break;
+	case target_terminal_state::is_ours_for_output:
+	  ours_for_output ();
+	  break;
+	case target_terminal_state::is_inferior:
+	  restore_inferior ();
+	  break;
+	}
+    }
+
+    DISABLE_COPY_AND_ASSIGN (scoped_restore_terminal_state);
+
+  private:
+
+    target_terminal_state m_state;
+  };
+
+private:
+
+  static target_terminal_state m_terminal_state;
+};
+
+#endif /* TARGET_TARGET_H */

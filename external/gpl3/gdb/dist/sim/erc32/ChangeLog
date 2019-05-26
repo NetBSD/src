@@ -1,3 +1,13 @@
+2018-10-30  Joel Sherrill <joel@rtems.org>
+
+	* configure.ac: Remove the Cygwin-specific libtermcap.a hack
+	and use the standard logic to determine which library to use.
+	* configure: Regenerate.
+
+2017-09-06  John Baldwin  <jhb@FreeBSD.org>
+
+	* configure: Regenerate.
+
 2016-01-10  Mike Frysinger  <vapier@gentoo.org>
 
 	* config.in, configure: Regenerate.

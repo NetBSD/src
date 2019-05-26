@@ -50,7 +50,7 @@
 #define YYSKELETON_NAME "yacc.c"
 
 /* Pure parsers.  */
-#define YYPURE 0
+#define YYPURE 1
 
 /* Push parsers.  */
 #define YYPUSH 0
@@ -62,7 +62,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 22 "rust-exp.y" /* yacc.c:339  */
+#line 30 "rust-exp.y" /* yacc.c:339  */
 
 
 #include "defs.h"
@@ -74,20 +74,17 @@
 #include "gdb_regex.h"
 #include "rust-lang.h"
 #include "parser-defs.h"
-#include "selftest.h"
+#include "common/selftest.h"
 #include "value.h"
-#include "vec.h"
+#include "common/vec.h"
 
 #define GDB_YY_REMAP_PREFIX rust
 #include "yy-remap.h"
 
 #define RUSTSTYPE YYSTYPE
 
-extern initialize_file_ftype _initialize_rust_exp;
-
 struct rust_op;
-typedef const struct rust_op *rust_op_ptr;
-DEF_VEC_P (rust_op_ptr);
+typedef std::vector<const struct rust_op *> rust_op_vector;
 
 /* A typed integer constant.  */
 
@@ -101,7 +98,7 @@ struct typed_val_int
 
 struct typed_val_float
 {
-  DOUBLEST dval;
+  gdb_byte val[16];
   struct type *type;
 };
 
@@ -114,129 +111,10 @@ struct set_field
   const struct rust_op *init;
 };
 
-typedef struct set_field set_field;
-
-DEF_VEC_O (set_field);
+typedef std::vector<set_field> rust_set_vector;
 
 
-static int rustyylex (void);
-static void rust_push_back (char c);
-static const char *rust_copy_name (const char *, int);
-static struct stoken rust_concat3 (const char *, const char *, const char *);
-static struct stoken make_stoken (const char *);
-static struct block_symbol rust_lookup_symbol (const char *name,
-					       const struct block *block,
-					       const domain_enum domain);
-static struct type *rust_lookup_type (const char *name,
-				      const struct block *block);
-static struct type *rust_type (const char *name);
-
-static const struct rust_op *crate_name (const struct rust_op *name);
-static const struct rust_op *super_name (const struct rust_op *name,
-					 unsigned int n_supers);
-
-static const struct rust_op *ast_operation (enum exp_opcode opcode,
-					    const struct rust_op *left,
-					    const struct rust_op *right);
-static const struct rust_op *ast_compound_assignment
-  (enum exp_opcode opcode, const struct rust_op *left,
-   const struct rust_op *rust_op);
-static const struct rust_op *ast_literal (struct typed_val_int val);
-static const struct rust_op *ast_dliteral (struct typed_val_float val);
-static const struct rust_op *ast_structop (const struct rust_op *left,
-					   const char *name,
-					   int completing);
-static const struct rust_op *ast_structop_anonymous
-  (const struct rust_op *left, struct typed_val_int number);
-static const struct rust_op *ast_unary (enum exp_opcode opcode,
-					const struct rust_op *expr);
-static const struct rust_op *ast_cast (const struct rust_op *expr,
-				       const struct rust_op *type);
-static const struct rust_op *ast_call_ish (enum exp_opcode opcode,
-					   const struct rust_op *expr,
-					   VEC (rust_op_ptr) **params);
-static const struct rust_op *ast_path (struct stoken name,
-				       VEC (rust_op_ptr) **params);
-static const struct rust_op *ast_string (struct stoken str);
-static const struct rust_op *ast_struct (const struct rust_op *name,
-					 VEC (set_field) **fields);
-static const struct rust_op *ast_range (const struct rust_op *lhs,
-					const struct rust_op *rhs);
-static const struct rust_op *ast_array_type (const struct rust_op *lhs,
-					     struct typed_val_int val);
-static const struct rust_op *ast_slice_type (const struct rust_op *type);
-static const struct rust_op *ast_reference_type (const struct rust_op *type);
-static const struct rust_op *ast_pointer_type (const struct rust_op *type,
-					       int is_mut);
-static const struct rust_op *ast_function_type (const struct rust_op *result,
-						VEC (rust_op_ptr) **params);
-static const struct rust_op *ast_tuple_type (VEC (rust_op_ptr) **params);
-
-/* The state of the parser, used internally when we are parsing the
-   expression.  */
-
-static struct parser_state *pstate = NULL;
-
-/* A regular expression for matching Rust numbers.  This is split up
-   since it is very long and this gives us a way to comment the
-   sections.  */
-
-static const char *number_regex_text =
-  /* subexpression 1: allows use of alternation, otherwise uninteresting */
-  "^("
-  /* First comes floating point.  */
-  /* Recognize number after the decimal point, with optional
-     exponent and optional type suffix.
-     subexpression 2: allows "?", otherwise uninteresting
-     subexpression 3: if present, type suffix
-  */
-  "[0-9][0-9_]*\\.[0-9][0-9_]*([eE][-+]?[0-9][0-9_]*)?(f32|f64)?"
-#define FLOAT_TYPE1 3
-  "|"
-  /* Recognize exponent without decimal point, with optional type
-     suffix.
-     subexpression 4: if present, type suffix
-  */
-#define FLOAT_TYPE2 4
-  "[0-9][0-9_]*[eE][-+]?[0-9][0-9_]*(f32|f64)?"
-  "|"
-  /* "23." is a valid floating point number, but "23.e5" and
-     "23.f32" are not.  So, handle the trailing-. case
-     separately.  */
-  "[0-9][0-9_]*\\."
-  "|"
-  /* Finally come integers.
-     subexpression 5: text of integer
-     subexpression 6: if present, type suffix
-     subexpression 7: allows use of alternation, otherwise uninteresting
-  */
-#define INT_TEXT 5
-#define INT_TYPE 6
-  "(0x[a-fA-F0-9_]+|0o[0-7_]+|0b[01_]+|[0-9][0-9_]*)"
-  "([iu](size|8|16|32|64))?"
-  ")";
-/* The number of subexpressions to allocate space for, including the
-   "0th" whole match subexpression.  */
-#define NUM_SUBEXPRESSIONS 8
-
-/* The compiled number-matching regex.  */
-
-static regex_t number_regex;
-
-/* True if we're running unit tests.  */
-
-static int unit_testing;
-
-/* Obstack for data temporarily allocated during parsing.  */
-
-static struct obstack work_obstack;
-
-/* Result of parsing.  Points into work_obstack.  */
-
-static const struct rust_op *rust_ast;
-
-
-#line 240 "rust-exp.c" /* yacc.c:339  */
+#line 118 "rust-exp.c.tmp" /* yacc.c:339  */
 
 # ifndef YY_NULLPTRPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -289,17 +167,18 @@ extern int yydebug;
     KW_FN = 276,
     KW_SIZEOF = 277,
     DOTDOT = 278,
-    OROR = 279,
-    ANDAND = 280,
-    EQEQ = 281,
-    NOTEQ = 282,
-    LTEQ = 283,
-    GTEQ = 284,
-    LSH = 285,
-    RSH = 286,
-    COLONCOLON = 287,
-    ARROW = 288,
-    UNARY = 289
+    DOTDOTEQ = 279,
+    OROR = 280,
+    ANDAND = 281,
+    EQEQ = 282,
+    NOTEQ = 283,
+    LTEQ = 284,
+    GTEQ = 285,
+    LSH = 286,
+    RSH = 287,
+    COLONCOLON = 288,
+    ARROW = 289,
+    UNARY = 290
   };
 #endif
 /* Tokens.  */
@@ -324,24 +203,25 @@ extern int yydebug;
 #define KW_FN 276
 #define KW_SIZEOF 277
 #define DOTDOT 278
-#define OROR 279
-#define ANDAND 280
-#define EQEQ 281
-#define NOTEQ 282
-#define LTEQ 283
-#define GTEQ 284
-#define LSH 285
-#define RSH 286
-#define COLONCOLON 287
-#define ARROW 288
-#define UNARY 289
+#define DOTDOTEQ 279
+#define OROR 280
+#define ANDAND 281
+#define EQEQ 282
+#define NOTEQ 283
+#define LTEQ 284
+#define GTEQ 285
+#define LSH 286
+#define RSH 287
+#define COLONCOLON 288
+#define ARROW 289
+#define UNARY 290
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 
 union YYSTYPE
 {
-#line 197 "rust-exp.y" /* yacc.c:355  */
+#line 83 "rust-exp.y" /* yacc.c:355  */
 
   /* A typed integer constant.  */
   struct typed_val_int typed_val_int;
@@ -357,10 +237,10 @@ union YYSTYPE
 
   /* A list of expressions; for example, the arguments to a function
      call.  */
-  VEC (rust_op_ptr) **params;
+  rust_op_vector *params;
 
   /* A list of field initializers.  */
-  VEC (set_field) **field_inits;
+  rust_set_vector *field_inits;
 
   /* A single field initializer.  */
   struct set_field one_field_init;
@@ -372,7 +252,7 @@ union YYSTYPE
      "super::" prefixes on a path.  */
   unsigned int depth;
 
-#line 376 "rust-exp.c" /* yacc.c:355  */
+#line 256 "rust-exp.c.tmp" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -381,18 +261,206 @@ typedef union YYSTYPE YYSTYPE;
 #endif
 
 
-extern YYSTYPE yylval;
 
-int yyparse (void);
+int yyparse (struct rust_parser *parser);
 
 
 
 /* Copy the second part of user declarations.  */
-#line 228 "rust-exp.y" /* yacc.c:358  */
+#line 114 "rust-exp.y" /* yacc.c:358  */
 
 
-  /* Rust AST operations.  We build a tree of these; then lower them
-     to gdb expressions when parsing has completed.  */
+struct rust_parser;
+static int rustyylex (YYSTYPE *, rust_parser *);
+static void rustyyerror (rust_parser *parser, const char *msg);
+
+static void rust_push_back (char c);
+static struct stoken make_stoken (const char *);
+static struct block_symbol rust_lookup_symbol (const char *name,
+					       const struct block *block,
+					       const domain_enum domain);
+
+/* A regular expression for matching Rust numbers.  This is split up
+   since it is very long and this gives us a way to comment the
+   sections.  */
+
+static const char *number_regex_text =
+  /* subexpression 1: allows use of alternation, otherwise uninteresting */
+  "^("
+  /* First comes floating point.  */
+  /* Recognize number after the decimal point, with optional
+     exponent and optional type suffix.
+     subexpression 2: allows "?", otherwise uninteresting
+     subexpression 3: if present, type suffix
+  */
+  "[0-9][0-9_]*\\.[0-9][0-9_]*([eE][-+]?[0-9][0-9_]*)?(f32|f64)?"
+#define FLOAT_TYPE1 3
+  "|"
+  /* Recognize exponent without decimal point, with optional type
+     suffix.
+     subexpression 4: if present, type suffix
+  */
+#define FLOAT_TYPE2 4
+  "[0-9][0-9_]*[eE][-+]?[0-9][0-9_]*(f32|f64)?"
+  "|"
+  /* "23." is a valid floating point number, but "23.e5" and
+     "23.f32" are not.  So, handle the trailing-. case
+     separately.  */
+  "[0-9][0-9_]*\\."
+  "|"
+  /* Finally come integers.
+     subexpression 5: text of integer
+     subexpression 6: if present, type suffix
+     subexpression 7: allows use of alternation, otherwise uninteresting
+  */
+#define INT_TEXT 5
+#define INT_TYPE 6
+  "(0x[a-fA-F0-9_]+|0o[0-7_]+|0b[01_]+|[0-9][0-9_]*)"
+  "([iu](size|8|16|32|64))?"
+  ")";
+/* The number of subexpressions to allocate space for, including the
+   "0th" whole match subexpression.  */
+#define NUM_SUBEXPRESSIONS 8
+
+/* The compiled number-matching regex.  */
+
+static regex_t number_regex;
+
+/* An instance of this is created before parsing, and destroyed when
+   parsing is finished.  */
+
+struct rust_parser
+{
+  rust_parser (struct parser_state *state)
+    : rust_ast (nullptr),
+      pstate (state)
+  {
+  }
+
+  ~rust_parser ()
+  {
+  }
+
+  /* Create a new rust_set_vector.  The storage for the new vector is
+     managed by this class.  */
+  rust_set_vector *new_set_vector ()
+  {
+    rust_set_vector *result = new rust_set_vector;
+    set_vectors.push_back (std::unique_ptr<rust_set_vector> (result));
+    return result;
+  }
+
+  /* Create a new rust_ops_vector.  The storage for the new vector is
+     managed by this class.  */
+  rust_op_vector *new_op_vector ()
+  {
+    rust_op_vector *result = new rust_op_vector;
+    op_vectors.push_back (std::unique_ptr<rust_op_vector> (result));
+    return result;
+  }
+
+  /* Return the parser's language.  */
+  const struct language_defn *language () const
+  {
+    return parse_language (pstate);
+  }
+
+  /* Return the parser's gdbarch.  */
+  struct gdbarch *arch () const
+  {
+    return parse_gdbarch (pstate);
+  }
+
+  /* A helper to look up a Rust type, or fail.  This only works for
+     types defined by rust_language_arch_info.  */
+
+  struct type *get_type (const char *name)
+  {
+    struct type *type;
+
+    type = language_lookup_primitive_type (language (), arch (), name);
+    if (type == NULL)
+      error (_("Could not find Rust type %s"), name);
+    return type;
+  }
+
+  const char *copy_name (const char *name, int len);
+  struct stoken concat3 (const char *s1, const char *s2, const char *s3);
+  const struct rust_op *crate_name (const struct rust_op *name);
+  const struct rust_op *super_name (const struct rust_op *ident,
+				    unsigned int n_supers);
+
+  int lex_character (YYSTYPE *lvalp);
+  int lex_number (YYSTYPE *lvalp);
+  int lex_string (YYSTYPE *lvalp);
+  int lex_identifier (YYSTYPE *lvalp);
+
+  struct type *rust_lookup_type (const char *name, const struct block *block);
+  std::vector<struct type *> convert_params_to_types (rust_op_vector *params);
+  struct type *convert_ast_to_type (const struct rust_op *operation);
+  const char *convert_name (const struct rust_op *operation);
+  void convert_params_to_expression (rust_op_vector *params,
+				     const struct rust_op *top);
+  void convert_ast_to_expression (const struct rust_op *operation,
+				  const struct rust_op *top,
+				  bool want_type = false);
+
+  struct rust_op *ast_basic_type (enum type_code typecode);
+  const struct rust_op *ast_operation (enum exp_opcode opcode,
+				       const struct rust_op *left,
+				       const struct rust_op *right);
+  const struct rust_op *ast_compound_assignment
+  (enum exp_opcode opcode, const struct rust_op *left,
+   const struct rust_op *rust_op);
+  const struct rust_op *ast_literal (struct typed_val_int val);
+  const struct rust_op *ast_dliteral (struct typed_val_float val);
+  const struct rust_op *ast_structop (const struct rust_op *left,
+				      const char *name,
+				      int completing);
+  const struct rust_op *ast_structop_anonymous
+  (const struct rust_op *left, struct typed_val_int number);
+  const struct rust_op *ast_unary (enum exp_opcode opcode,
+				   const struct rust_op *expr);
+  const struct rust_op *ast_cast (const struct rust_op *expr,
+				  const struct rust_op *type);
+  const struct rust_op *ast_call_ish (enum exp_opcode opcode,
+				      const struct rust_op *expr,
+				      rust_op_vector *params);
+  const struct rust_op *ast_path (struct stoken name,
+				  rust_op_vector *params);
+  const struct rust_op *ast_string (struct stoken str);
+  const struct rust_op *ast_struct (const struct rust_op *name,
+				    rust_set_vector *fields);
+  const struct rust_op *ast_range (const struct rust_op *lhs,
+				   const struct rust_op *rhs,
+				   bool inclusive);
+  const struct rust_op *ast_array_type (const struct rust_op *lhs,
+					struct typed_val_int val);
+  const struct rust_op *ast_slice_type (const struct rust_op *type);
+  const struct rust_op *ast_reference_type (const struct rust_op *type);
+  const struct rust_op *ast_pointer_type (const struct rust_op *type,
+					  int is_mut);
+  const struct rust_op *ast_function_type (const struct rust_op *result,
+					   rust_op_vector *params);
+  const struct rust_op *ast_tuple_type (rust_op_vector *params);
+
+
+  /* A pointer to this is installed globally.  */
+  auto_obstack obstack;
+
+  /* Result of parsing.  Points into obstack.  */
+  const struct rust_op *rust_ast;
+
+  /* This keeps track of the various vectors we allocate.  */
+  std::vector<std::unique_ptr<rust_set_vector>> set_vectors;
+  std::vector<std::unique_ptr<rust_op_vector>> op_vectors;
+
+  /* The parser state gdb gave us.  */
+  struct parser_state *pstate;
+};
+
+/* Rust AST operations.  We build a tree of these; then lower them to
+   gdb expressions when parsing has completed.  */
 
 struct rust_op
 {
@@ -411,6 +479,9 @@ struct rust_op
      name occurred at the end of the expression and is eligible for
      completion.  */
   unsigned int completing : 1;
+  /* For OP_RANGE, indicates whether the range is inclusive or
+     exclusive.  */
+  unsigned int inclusive : 1;
   /* Operands of expression.  Which one is used and how depends on the
      particular opcode.  */
   RUSTSTYPE left;
@@ -418,7 +489,7 @@ struct rust_op
 };
 
 
-#line 422 "rust-exp.c" /* yacc.c:358  */
+#line 493 "rust-exp.c.tmp" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -657,23 +728,23 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  60
+#define YYFINAL  62
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   1031
+#define YYLAST   1124
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  58
+#define YYNTOKENS  59
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  35
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  121
+#define YYNRULES  125
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  213
+#define YYNSTATES  219
 
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   289
+#define YYMAXUTOK   290
 
 #define YYTRANSLATE(YYX)                                                \
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -685,16 +756,16 @@ static const yytype_uint8 yytranslate[] =
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,    57,     2,     2,     2,    45,    39,     2,
-      49,    51,    43,    41,    50,    42,    48,    44,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,    54,    56,
-      35,    34,    36,     2,    40,     2,     2,     2,     2,     2,
+       2,     2,     2,    58,     2,     2,     2,    46,    40,     2,
+      50,    52,    44,    42,    51,    43,    49,    45,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,    55,    57,
+      36,    35,    37,     2,    41,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,    47,     2,    55,    38,     2,     2,     2,     2,     2,
+       2,    48,     2,    56,    39,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,    52,    37,    53,     2,     2,     2,     2,
+       2,     2,     2,    53,    38,    54,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -710,26 +781,27 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,    28,    29,    30,    31,    32,    33,    46
+      25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
+      47
 };
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   353,   353,   366,   367,   368,   369,   370,   371,   372,
-     373,   374,   375,   376,   377,   378,   382,   390,   407,   412,
-     422,   434,   439,   449,   461,   463,   465,   467,   472,   474,
-     476,   478,   483,   485,   487,   489,   518,   520,   529,   541,
-     543,   548,   553,   558,   561,   564,   573,   576,   579,   581,
-     586,   587,   588,   589,   593,   596,   599,   602,   605,   608,
-     611,   614,   617,   620,   623,   626,   629,   632,   635,   638,
-     641,   644,   647,   652,   657,   662,   668,   673,   679,   688,
-     693,   698,   705,   709,   711,   715,   717,   722,   724,   726,
-     731,   732,   734,   736,   738,   750,   752,   758,   760,   768,
-     769,   771,   773,   775,   787,   789,   798,   799,   801,   809,
-     810,   812,   814,   816,   818,   820,   822,   824,   830,   831,
-     836,   845
+       0,   432,   432,   445,   446,   447,   448,   449,   450,   451,
+     452,   453,   454,   456,   457,   458,   462,   470,   487,   492,
+     502,   510,   522,   525,   531,   540,   552,   554,   556,   558,
+     563,   565,   567,   569,   571,   573,   578,   580,   582,   584,
+     612,   614,   623,   635,   637,   642,   647,   652,   655,   658,
+     667,   670,   673,   675,   680,   681,   682,   683,   687,   690,
+     693,   696,   699,   702,   705,   708,   711,   714,   717,   720,
+     723,   726,   729,   732,   735,   738,   741,   746,   751,   756,
+     762,   767,   772,   781,   785,   790,   795,   799,   801,   805,
+     807,   812,   814,   816,   821,   822,   824,   826,   828,   842,
+     844,   850,   852,   860,   861,   863,   865,   867,   881,   883,
+     892,   893,   895,   903,   904,   906,   908,   910,   912,   914,
+     916,   918,   924,   925,   930,   936
 };
 #endif
 
@@ -741,12 +813,12 @@ static const char *const yytname[] =
   "$end", "error", "$undefined", "GDBVAR", "IDENT", "COMPLETE", "INTEGER",
   "DECIMAL_INTEGER", "STRING", "BYTESTRING", "FLOAT", "COMPOUND_ASSIGN",
   "KW_AS", "KW_IF", "KW_TRUE", "KW_FALSE", "KW_SUPER", "KW_SELF", "KW_MUT",
-  "KW_EXTERN", "KW_CONST", "KW_FN", "KW_SIZEOF", "DOTDOT", "OROR",
-  "ANDAND", "EQEQ", "NOTEQ", "LTEQ", "GTEQ", "LSH", "RSH", "COLONCOLON",
-  "ARROW", "'='", "'<'", "'>'", "'|'", "'^'", "'&'", "'@'", "'+'", "'-'",
-  "'*'", "'/'", "'%'", "UNARY", "'['", "'.'", "'('", "','", "')'", "'{'",
-  "'}'", "':'", "']'", "';'", "'!'", "$accept", "start", "expr",
-  "tuple_expr", "unit_expr", "struct_expr", "struct_expr_tail",
+  "KW_EXTERN", "KW_CONST", "KW_FN", "KW_SIZEOF", "DOTDOT", "DOTDOTEQ",
+  "OROR", "ANDAND", "EQEQ", "NOTEQ", "LTEQ", "GTEQ", "LSH", "RSH",
+  "COLONCOLON", "ARROW", "'='", "'<'", "'>'", "'|'", "'^'", "'&'", "'@'",
+  "'+'", "'-'", "'*'", "'/'", "'%'", "UNARY", "'['", "'.'", "'('", "','",
+  "')'", "'{'", "'}'", "':'", "']'", "';'", "'!'", "$accept", "start",
+  "expr", "tuple_expr", "unit_expr", "struct_expr", "struct_expr_tail",
   "struct_expr_list", "array_expr", "range_expr", "literal", "field_expr",
   "idx_expr", "unop_expr", "binop_expr", "binop_expr_expr",
   "type_cast_expr", "assignment_expr", "compound_assignment_expr",
@@ -766,48 +838,48 @@ static const yytype_uint16 yytoknum[] =
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286,   287,   288,    61,    60,    62,   124,    94,    38,
-      64,    43,    45,    42,    47,    37,   289,    91,    46,    40,
-      44,    41,   123,   125,    58,    93,    59,    33
+     285,   286,   287,   288,   289,    61,    60,    62,   124,    94,
+      38,    64,    43,    45,    42,    47,    37,   290,    91,    46,
+      40,    44,    41,   123,   125,    58,    93,    59,    33
 };
 # endif
 
-#define YYPACT_NINF -151
+#define YYPACT_NINF -181
 
 #define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-151)))
+  (!!((Yystate) == (-181)))
 
-#define YYTABLE_NINF -119
+#define YYTABLE_NINF -123
 
 #define yytable_value_is_error(Yytable_value) \
-  (!!((Yytable_value) == (-119)))
+  (!!((Yytable_value) == (-123)))
 
   /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
      STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     384,  -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,
-     -20,    41,    -2,   119,    41,   176,   384,   384,   384,   228,
-     280,   384,    56,   742,  -151,  -151,  -151,  -151,  -151,  -151,
-    -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,
-      42,  -151,     8,    30,    41,    30,   384,   781,    30,   384,
-      68,    68,    68,    68,   384,   425,   -28,  -151,   620,    68,
-    -151,   384,   209,   119,   384,   384,   384,   384,   384,   384,
-     384,   384,   384,   384,   384,   384,   384,   384,   384,   384,
-     384,   384,   384,   384,   384,    96,   332,  -151,    53,    10,
-       6,     5,    30,   661,    68,   464,     2,   384,   384,  -151,
-     332,  -151,   820,  -151,    78,   109,    71,   109,   261,    15,
-     209,   396,    42,  -151,    73,  -151,  -151,   781,   854,   888,
-     922,   922,   922,   922,   162,   162,   820,   922,   922,   942,
-     962,   982,    47,   313,   313,   -11,   -11,   -11,   503,  -151,
-    -151,  -151,   742,    74,    70,  -151,    98,    30,    77,   384,
-    -151,    86,  -151,   209,  -151,   384,  -151,   542,   742,    89,
-     109,  -151,   396,  -151,   209,  -151,   209,   209,    87,  -151,
-      93,    95,    27,   142,   209,  -151,  -151,  -151,   384,   742,
-    -151,    -8,   581,  -151,  -151,  -151,    99,   -50,  -151,  -151,
-     112,  -151,   209,  -151,  -151,    -6,   702,  -151,  -151,  -151,
-     114,  -151,    97,   101,  -151,  -151,  -151,     6,   209,  -151,
-    -151,  -151,  -151
+     423,  -181,  -181,  -181,  -181,  -181,  -181,  -181,  -181,  -181,
+     -18,    19,     8,   158,   423,    19,   211,   423,   423,   423,
+     264,   317,   423,    49,   826,  -181,  -181,  -181,  -181,  -181,
+    -181,  -181,  -181,  -181,  -181,  -181,  -181,  -181,  -181,  -181,
+    -181,    73,  -181,    57,    85,    19,    85,   423,   866,   866,
+      85,   423,    84,    84,    84,    84,   423,   463,   -25,  -181,
+     701,    84,  -181,   423,   546,   158,   423,   423,   423,   423,
+     423,   423,   423,   423,   423,   423,   423,   423,   423,   423,
+     423,   423,   423,   423,   423,   423,   423,   423,    90,   370,
+    -181,   103,    89,     5,    -1,    85,   743,    84,   503,    -3,
+     423,   423,  -181,   370,  -181,   906,  -181,   108,   109,    96,
+     109,   551,   122,   546,    87,    73,  -181,    63,  -181,  -181,
+     866,   866,   941,   976,  1011,  1011,  1011,  1011,    80,    80,
+     906,  1011,  1011,  1032,  1053,  1074,   144,    -6,    -6,    12,
+      12,    12,   581,  -181,  -181,  -181,   826,    97,    95,  -181,
+     116,    85,   -43,   423,  -181,    98,  -181,   546,  -181,   423,
+    -181,   621,   826,   102,   109,  -181,    87,  -181,   546,  -181,
+     546,   546,    93,  -181,   105,   100,    99,   154,   546,  -181,
+    -181,  -181,     5,   423,   826,  -181,    -5,   661,  -181,  -181,
+    -181,   111,   -27,  -181,  -181,   138,  -181,   546,  -181,  -181,
+      13,  -181,   785,  -181,  -181,  -181,   135,  -181,   114,   115,
+    -181,  -181,  -181,     5,   546,  -181,  -181,  -181,  -181
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -815,46 +887,46 @@ static const yytype_int16 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-      83,    88,    95,    32,    33,    35,    36,    34,    37,    38,
-      89,     0,     0,    31,     0,    83,    83,    83,    83,    83,
-      83,    83,     0,     2,     5,     6,     7,     9,    11,     3,
-       8,    10,    12,    13,    50,    51,    52,    53,    14,    15,
-       0,     4,    87,    90,    84,    94,    83,    30,    93,    83,
-      47,    43,    44,    46,    83,    77,     0,    17,     0,    45,
-       1,    83,    83,    28,    83,    83,    83,    83,    83,    83,
-      83,    83,    83,    83,    83,    83,    83,    83,    83,    83,
-      83,    83,    83,    83,    83,     0,    79,    82,     0,     0,
-      21,     0,    91,     0,    48,    77,     0,    83,    83,    25,
-      79,    76,    75,   104,     0,     0,     0,     0,    83,     0,
-      83,    83,     0,   109,   106,    99,    73,    29,    65,    66,
-      67,    68,    69,    70,    71,    72,    74,    58,    59,    61,
-      62,    60,    55,    63,    64,    54,    56,    57,     0,    39,
-      40,    41,    77,    80,     0,    85,     0,    92,     0,    83,
-      22,     0,    96,    83,    49,    83,    24,     0,    78,     0,
-      84,   103,    83,   102,    83,   113,    83,    83,     0,   120,
-       0,   119,     0,     0,    83,    42,    81,    86,    83,    19,
-      18,     0,     0,    27,    16,   100,     0,     0,   114,   115,
-       0,   117,    83,   101,   105,     0,    20,    98,    97,    26,
-       0,   112,     0,     0,   121,   108,   107,    21,    83,   110,
-     111,    23,   116
+      87,    92,    99,    36,    37,    39,    40,    38,    41,    42,
+      93,     0,     0,    35,    87,     0,    87,    87,    87,    87,
+      87,    87,    87,     0,     2,     5,     6,     7,     9,    11,
+       3,     8,    10,    12,    13,    54,    55,    56,    57,    14,
+      15,     0,     4,    91,    94,    88,    98,    87,    33,    34,
+      97,    87,    51,    47,    48,    50,    87,    81,     0,    17,
+       0,    49,     1,    87,    87,    30,    87,    87,    87,    87,
+      87,    87,    87,    87,    87,    87,    87,    87,    87,    87,
+      87,    87,    87,    87,    87,    87,    87,    87,     0,    83,
+      86,     0,     0,    22,     0,    95,     0,    52,    81,     0,
+      87,    87,    27,    83,    80,    79,   108,     0,     0,     0,
+       0,    87,     0,    87,    87,     0,   113,   110,   103,    77,
+      31,    32,    69,    70,    71,    72,    73,    74,    75,    76,
+      78,    62,    63,    65,    66,    64,    59,    67,    68,    58,
+      60,    61,     0,    43,    44,    45,    81,    84,     0,    89,
+       0,    96,    21,    87,    23,     0,   100,    87,    53,    87,
+      26,     0,    82,     0,    88,   107,    87,   106,    87,   117,
+      87,    87,     0,   124,     0,   123,     0,     0,    87,    46,
+      85,    90,    22,    87,    19,    18,     0,     0,    29,    16,
+     104,     0,     0,   118,   119,     0,   121,    87,   105,   109,
+       0,    25,    20,   102,   101,    28,     0,   116,     0,     0,
+     125,   112,   111,    22,    87,   114,   115,    24,   120
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-    -151,  -151,     0,  -151,  -151,  -151,  -151,   -53,  -151,  -151,
-    -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,
-     -15,    57,  -151,  -151,   -60,    51,  -151,  -151,    -3,  -151,
-    -151,   -73,   -55,     3,  -150
+    -181,  -181,     0,  -181,  -181,  -181,  -181,  -180,  -181,  -181,
+    -181,  -181,  -181,  -181,  -181,  -181,  -181,  -181,  -181,  -181,
+     -19,    75,  -181,  -181,   -59,    61,  -181,  -181,    -4,  -181,
+    -181,   -74,   -54,    18,  -153
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int16 yydefgoto[] =
 {
-      -1,    22,   142,    24,    25,    26,   150,   151,    27,    28,
-      29,    30,    31,    32,    33,    34,    35,    36,    37,    38,
-     143,   144,    87,    39,    40,    89,    41,    42,    43,   113,
-     114,   115,   169,   170,   171
+      -1,    23,   146,    25,    26,    27,   154,   155,    28,    29,
+      30,    31,    32,    33,    34,    35,    36,    37,    38,    39,
+     147,   148,    90,    40,    41,    92,    42,    43,    44,   116,
+     117,   118,   173,   174,   175
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -862,218 +934,236 @@ static const yytype_int16 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
-      23,    62,   112,   181,    56,   201,   190,   116,    45,   152,
-     148,    48,    44,    47,     2,    50,    51,    52,    53,    55,
-      58,    59,    98,   197,   195,   205,   146,    99,   198,   149,
-     206,   103,   161,   166,   163,   167,    84,    85,    86,    96,
-     153,    92,   192,   146,   192,     2,    93,    46,   112,    94,
-     112,   112,    98,   165,    95,   168,    60,   156,    88,    62,
-      90,   102,    91,   117,   118,   119,   120,   121,   122,   123,
-     124,   125,   126,   127,   128,   129,   130,   131,   132,   133,
-     134,   135,   136,   137,   138,   145,   147,   185,    79,    80,
-      81,    82,    83,   112,    84,    85,    86,   157,   158,   193,
-     139,   140,   112,   141,   112,   173,   112,   112,   174,   187,
-     160,   188,   189,   103,   112,    84,    85,    86,   202,   203,
-     162,   176,     1,     2,    98,     3,     4,     5,     6,     7,
-     177,   178,   112,     8,     9,   -83,    10,   204,    11,   180,
-     184,    12,  -119,   190,   191,   192,   194,   208,   112,   179,
-     200,    14,   209,   212,   211,   182,   210,   159,    15,     0,
-      16,    17,    18,   172,     0,   186,    19,     0,    20,     0,
-       0,     0,     0,     0,    62,     0,    21,     0,   196,     1,
-       2,     0,     3,     4,     5,     6,     7,     0,     0,     0,
-       8,     9,     0,    10,    49,    11,     0,     0,    12,    13,
-       0,     0,    78,    79,    80,    81,    82,    83,    14,    84,
-      85,    86,     0,   103,     0,    15,     0,    16,    17,    18,
-       0,     0,     0,    19,     0,    20,   104,     0,   105,     0,
-     106,     1,     2,    21,     3,     4,     5,     6,     7,     0,
-       0,   107,     8,     9,     0,    10,    54,    11,   108,     0,
-      12,    13,   109,     0,     0,     0,   110,     0,   111,     0,
-      14,     0,     0,     0,     0,   103,     0,    15,     0,    16,
-      17,    18,     0,     0,     0,    19,     0,    20,   104,     0,
-     105,     0,   106,     1,     2,    21,     3,     4,     5,     6,
-       7,     0,     0,   107,     8,     9,     0,    10,     0,    11,
-     108,     0,    12,    13,   109,     0,     0,     0,   164,     0,
-     111,     0,    14,     0,     0,     0,     0,     0,     0,    15,
-       0,    16,    17,    18,     0,    62,     0,    19,     0,    20,
-       0,    57,     0,     0,     0,     1,     2,    21,     3,     4,
-       5,     6,     7,     0,     0,     0,     8,     9,   -83,    10,
-       0,    11,     0,     0,    12,    13,    81,    82,    83,     0,
-      84,    85,    86,     0,    14,     0,     0,     0,     0,     0,
-       0,    15,     0,    16,    17,    18,     0,     0,     0,    19,
-       0,    20,     0,     0,     0,     0,     0,     1,     2,    21,
+      24,    58,   201,   156,   186,   115,    64,    46,   182,   152,
+     119,    50,   183,    48,    49,    45,    52,    53,    54,    55,
+      57,    60,    61,     2,    64,   200,   101,   203,   153,   207,
+     195,   102,   204,   217,   165,   157,   167,    99,    84,    85,
+      86,    95,    87,    88,    89,   211,   197,    96,   101,    62,
+     212,    97,   115,   160,   115,   115,    98,   169,    47,   172,
+      87,    88,    89,   105,   197,   120,   121,   122,   123,   124,
+     125,   126,   127,   128,   129,   130,   131,   132,   133,   134,
+     135,   136,   137,   138,   139,   140,   141,   142,   151,    91,
+     190,   106,    64,     2,   143,   144,   177,   145,   115,   178,
+     161,   162,   198,   106,   107,   150,   108,   115,   109,   115,
+      93,   115,   115,   106,   192,   150,   193,   194,    94,   115,
+     110,    81,    82,    83,    84,    85,    86,   111,    87,    88,
+      89,   112,    87,    88,    89,   113,   149,   114,   115,  -122,
+     170,   164,   171,   210,   208,   209,   166,   180,   101,   181,
+     195,   197,   185,   184,   189,   115,    64,   196,   199,   187,
+     218,     1,     2,   206,     3,     4,     5,     6,     7,   214,
+     215,   216,     8,     9,   -87,    10,   176,    11,   163,     0,
+      12,  -123,  -123,   202,   191,     0,    82,    83,    84,    85,
+      86,    15,    87,    88,    89,     0,     0,     0,    16,     0,
+      17,    18,    19,     0,     0,     0,    20,     0,    21,     0,
+       0,     0,     0,     0,     1,     2,    22,     3,     4,     5,
+       6,     7,     0,     0,     0,     8,     9,     0,    10,    51,
+      11,     0,     0,    12,    13,    14,     0,     0,     0,     0,
+       0,     0,     0,     0,    15,     0,     0,     0,     0,     0,
+       0,    16,     0,    17,    18,    19,     0,     0,     0,    20,
+       0,    21,     0,     0,     0,     0,     0,     1,     2,    22,
        3,     4,     5,     6,     7,     0,     0,     0,     8,     9,
-     103,    10,     0,    11,     0,     0,    12,    13,     0,     0,
-       0,     0,     0,   104,     0,   105,    14,   106,     0,     0,
-       0,     0,     0,    15,     0,    16,    17,    18,   107,     0,
-       0,    19,     0,    20,     0,   108,    61,    62,     0,   109,
-       0,    21,     0,   110,     0,   111,     0,  -118,    63,    64,
-      65,    66,    67,    68,    69,    70,    71,     0,     0,    72,
-      73,    74,    75,    76,    77,    78,    79,    80,    81,    82,
-      83,     0,    84,    85,    86,    61,    62,     0,     0,     0,
-       0,    97,     0,     0,     0,     0,     0,    63,    64,    65,
-      66,    67,    68,    69,    70,    71,     0,     0,    72,    73,
-      74,    75,    76,    77,    78,    79,    80,    81,    82,    83,
-       0,    84,    85,    86,    61,    62,     0,     0,     0,     0,
-     155,     0,     0,     0,     0,     0,    63,    64,    65,    66,
-      67,    68,    69,    70,    71,     0,     0,    72,    73,    74,
-      75,    76,    77,    78,    79,    80,    81,    82,    83,     0,
-      84,    85,    86,    61,    62,     0,     0,     0,   175,     0,
-       0,     0,     0,     0,     0,    63,    64,    65,    66,    67,
-      68,    69,    70,    71,     0,     0,    72,    73,    74,    75,
-      76,    77,    78,    79,    80,    81,    82,    83,     0,    84,
-      85,    86,    61,    62,     0,     0,     0,   183,     0,     0,
-       0,     0,     0,     0,    63,    64,    65,    66,    67,    68,
-      69,    70,    71,     0,     0,    72,    73,    74,    75,    76,
-      77,    78,    79,    80,    81,    82,    83,     0,    84,    85,
-      86,    61,    62,     0,     0,     0,   199,     0,     0,     0,
-       0,     0,     0,    63,    64,    65,    66,    67,    68,    69,
-      70,    71,     0,     0,    72,    73,    74,    75,    76,    77,
-      78,    79,    80,    81,    82,    83,     0,    84,    85,    86,
-     100,   101,    61,    62,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,    63,    64,    65,    66,    67,    68,
-      69,    70,    71,     0,     0,    72,    73,    74,    75,    76,
-      77,    78,    79,    80,    81,    82,    83,     0,    84,    85,
-      86,     0,   154,    61,    62,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,    63,    64,    65,    66,    67,
-      68,    69,    70,    71,     0,     0,    72,    73,    74,    75,
-      76,    77,    78,    79,    80,    81,    82,    83,     0,    84,
-      85,    86,   207,    61,    62,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,    63,    64,    65,    66,    67,
-      68,    69,    70,    71,     0,     0,    72,    73,    74,    75,
-      76,    77,    78,    79,    80,    81,    82,    83,     0,    84,
-      85,    86,    61,    62,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,  -119,    64,    65,    66,    67,    68,
-      69,    70,    71,     0,     0,    72,    73,    74,    75,    76,
-      77,    78,    79,    80,    81,    82,    83,     0,    84,    85,
-      86,    61,    62,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,    64,    65,    66,    67,    68,    69,
-      70,    71,     0,     0,    72,    73,    74,    75,    76,    77,
-      78,    79,    80,    81,    82,    83,    62,    84,    85,    86,
+       0,    10,    56,    11,     0,     0,    12,    13,    14,     0,
+       0,     0,     0,     0,     0,     0,     0,    15,     0,     0,
+       0,     0,     0,     0,    16,     0,    17,    18,    19,     0,
+       0,     0,    20,     0,    21,     0,     0,     0,     0,     0,
+       1,     2,    22,     3,     4,     5,     6,     7,     0,     0,
+       0,     8,     9,     0,    10,     0,    11,     0,     0,    12,
+      13,    14,     0,     0,     0,     0,     0,     0,     0,     0,
+      15,     0,     0,     0,     0,     0,     0,    16,     0,    17,
+      18,    19,     0,     0,     0,    20,     0,    21,     0,    59,
+       0,     0,     0,     1,     2,    22,     3,     4,     5,     6,
+       7,     0,     0,     0,     8,     9,   -87,    10,     0,    11,
+       0,     0,    12,    13,    14,     0,     0,     0,     0,     0,
+       0,     0,     0,    15,     0,     0,     0,     0,     0,     0,
+      16,     0,    17,    18,    19,     0,     0,     0,    20,     0,
+      21,     0,     0,     0,     0,     0,     1,     2,    22,     3,
+       4,     5,     6,     7,     0,     0,     0,     8,     9,     0,
+      10,     0,    11,     0,     0,    12,    13,    14,     0,     0,
+       0,     0,     0,     0,     0,     0,    15,     0,     0,     0,
+       0,     0,     0,    16,     0,    17,    18,    19,     0,     0,
+       0,    20,     0,    21,    63,    64,     0,     0,     0,     0,
+       0,    22,     0,     0,     0,     0,    65,    66,    67,    68,
+      69,    70,    71,    72,    73,    74,     0,     0,    75,    76,
+      77,    78,    79,    80,    81,    82,    83,    84,    85,    86,
+       0,    87,    88,    89,    63,    64,     0,     0,     0,     0,
+     100,     0,     0,     0,     0,     0,    65,    66,    67,    68,
+      69,    70,    71,    72,    73,    74,     0,     0,    75,    76,
+      77,    78,    79,    80,    81,    82,    83,    84,    85,    86,
+     106,    87,    88,    89,     0,   106,     0,     0,     0,     0,
+     159,     0,     0,   107,     0,   108,     0,   109,   107,     0,
+     108,     0,   109,     0,     0,     0,     0,     0,     0,   110,
+       0,     0,     0,     0,   110,     0,   111,     0,     0,     0,
+     112,   111,    63,    64,   113,   112,   114,     0,     0,   168,
+       0,   114,     0,     0,    65,    66,    67,    68,    69,    70,
+      71,    72,    73,    74,     0,     0,    75,    76,    77,    78,
+      79,    80,    81,    82,    83,    84,    85,    86,     0,    87,
+      88,    89,    63,    64,     0,     0,     0,   179,     0,     0,
+       0,     0,     0,     0,    65,    66,    67,    68,    69,    70,
+      71,    72,    73,    74,     0,     0,    75,    76,    77,    78,
+      79,    80,    81,    82,    83,    84,    85,    86,     0,    87,
+      88,    89,    63,    64,     0,     0,     0,   188,     0,     0,
+       0,     0,     0,     0,    65,    66,    67,    68,    69,    70,
+      71,    72,    73,    74,     0,     0,    75,    76,    77,    78,
+      79,    80,    81,    82,    83,    84,    85,    86,     0,    87,
+      88,    89,    63,    64,     0,     0,     0,   205,     0,     0,
+       0,     0,     0,     0,    65,    66,    67,    68,    69,    70,
+      71,    72,    73,    74,     0,     0,    75,    76,    77,    78,
+      79,    80,    81,    82,    83,    84,    85,    86,     0,    87,
+      88,    89,   103,   104,    63,    64,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,    65,    66,    67,    68,
+      69,    70,    71,    72,    73,    74,     0,     0,    75,    76,
+      77,    78,    79,    80,    81,    82,    83,    84,    85,    86,
+       0,    87,    88,    89,     0,   158,    63,    64,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,    65,    66,
+      67,    68,    69,    70,    71,    72,    73,    74,     0,     0,
+      75,    76,    77,    78,    79,    80,    81,    82,    83,    84,
+      85,    86,     0,    87,    88,    89,   213,    63,    64,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,    65,
-      66,    67,    68,    69,    70,    71,     0,     0,     0,    73,
-      74,    75,    76,    77,    78,    79,    80,    81,    82,    83,
-      62,    84,    85,    86,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,    66,    67,    68,    69,    70,    71,
-       0,     0,     0,    73,    74,    75,    76,    77,    78,    79,
-      80,    81,    82,    83,    62,    84,    85,    86,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,  -119,  -119,
-    -119,  -119,    70,    71,    62,     0,     0,  -119,  -119,    75,
-      76,    77,    78,    79,    80,    81,    82,    83,     0,    84,
-      85,    86,    70,    71,    62,     0,     0,     0,     0,     0,
-      76,    77,    78,    79,    80,    81,    82,    83,     0,    84,
-      85,    86,    70,    71,    62,     0,     0,     0,     0,     0,
-       0,    77,    78,    79,    80,    81,    82,    83,     0,    84,
-      85,    86,    70,    71,     0,     0,     0,     0,     0,     0,
-       0,     0,    78,    79,    80,    81,    82,    83,     0,    84,
-      85,    86
+      66,    67,    68,    69,    70,    71,    72,    73,    74,     0,
+       0,    75,    76,    77,    78,    79,    80,    81,    82,    83,
+      84,    85,    86,     0,    87,    88,    89,    63,    64,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,  -123,
+    -123,    67,    68,    69,    70,    71,    72,    73,    74,     0,
+       0,    75,    76,    77,    78,    79,    80,    81,    82,    83,
+      84,    85,    86,     0,    87,    88,    89,    63,    64,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,    67,    68,    69,    70,    71,    72,    73,    74,     0,
+       0,    75,    76,    77,    78,    79,    80,    81,    82,    83,
+      84,    85,    86,    64,    87,    88,    89,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,    68,    69,    70,
+      71,    72,    73,    74,     0,     0,     0,    76,    77,    78,
+      79,    80,    81,    82,    83,    84,    85,    86,    64,    87,
+      88,    89,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,    69,    70,    71,    72,    73,    74,     0,
+       0,     0,    76,    77,    78,    79,    80,    81,    82,    83,
+      84,    85,    86,    64,    87,    88,    89,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,  -123,  -123,
+    -123,  -123,    73,    74,    64,     0,     0,  -123,  -123,    78,
+      79,    80,    81,    82,    83,    84,    85,    86,     0,    87,
+      88,    89,     0,    73,    74,    64,     0,     0,     0,     0,
+       0,    79,    80,    81,    82,    83,    84,    85,    86,     0,
+      87,    88,    89,     0,    73,    74,    64,     0,     0,     0,
+       0,     0,     0,    80,    81,    82,    83,    84,    85,    86,
+       0,    87,    88,    89,     0,    73,    74,     0,     0,     0,
+       0,     0,     0,     0,     0,    81,    82,    83,    84,    85,
+      86,     0,    87,    88,    89
 };
 
 static const yytype_int16 yycheck[] =
 {
-       0,    12,    62,   153,    19,    55,    56,    62,    11,     4,
-       4,    14,    32,    13,     4,    15,    16,    17,    18,    19,
-      20,    21,    50,    31,   174,    31,    16,    55,    36,    23,
-      36,     4,   105,    18,   107,    20,    47,    48,    49,    54,
-      35,    44,    50,    16,    50,     4,    46,    49,   108,    49,
-     110,   111,    50,   108,    54,   110,     0,    55,    16,    12,
-      52,    61,    32,    63,    64,    65,    66,    67,    68,    69,
+       0,    20,   182,     4,   157,    64,    12,    11,    51,     4,
+      64,    15,    55,    13,    14,    33,    16,    17,    18,    19,
+      20,    21,    22,     4,    12,   178,    51,    32,    23,    56,
+      57,    56,    37,   213,   108,    36,   110,    56,    44,    45,
+      46,    45,    48,    49,    50,    32,    51,    47,    51,     0,
+      37,    51,   111,    56,   113,   114,    56,   111,    50,   113,
+      48,    49,    50,    63,    51,    65,    66,    67,    68,    69,
       70,    71,    72,    73,    74,    75,    76,    77,    78,    79,
-      80,    81,    82,    83,    84,    32,    89,   160,    41,    42,
-      43,    44,    45,   153,    47,    48,    49,    97,    98,   172,
-       4,     5,   162,     7,   164,    32,   166,   167,    35,   164,
-      32,   166,   167,     4,   174,    47,    48,    49,     6,     7,
-      49,    51,     3,     4,    50,     6,     7,     8,     9,    10,
-      32,    54,   192,    14,    15,    16,    17,   192,    19,    53,
-      51,    22,    23,    56,    51,    50,     4,    33,   208,   149,
-      51,    32,    55,   208,   207,   155,    55,   100,    39,    -1,
-      41,    42,    43,   112,    -1,   162,    47,    -1,    49,    -1,
-      -1,    -1,    -1,    -1,    12,    -1,    57,    -1,   178,     3,
-       4,    -1,     6,     7,     8,     9,    10,    -1,    -1,    -1,
-      14,    15,    -1,    17,    18,    19,    -1,    -1,    22,    23,
-      -1,    -1,    40,    41,    42,    43,    44,    45,    32,    47,
-      48,    49,    -1,     4,    -1,    39,    -1,    41,    42,    43,
-      -1,    -1,    -1,    47,    -1,    49,    17,    -1,    19,    -1,
-      21,     3,     4,    57,     6,     7,     8,     9,    10,    -1,
-      -1,    32,    14,    15,    -1,    17,    18,    19,    39,    -1,
-      22,    23,    43,    -1,    -1,    -1,    47,    -1,    49,    -1,
-      32,    -1,    -1,    -1,    -1,     4,    -1,    39,    -1,    41,
-      42,    43,    -1,    -1,    -1,    47,    -1,    49,    17,    -1,
-      19,    -1,    21,     3,     4,    57,     6,     7,     8,     9,
-      10,    -1,    -1,    32,    14,    15,    -1,    17,    -1,    19,
-      39,    -1,    22,    23,    43,    -1,    -1,    -1,    47,    -1,
-      49,    -1,    32,    -1,    -1,    -1,    -1,    -1,    -1,    39,
-      -1,    41,    42,    43,    -1,    12,    -1,    47,    -1,    49,
-      -1,    51,    -1,    -1,    -1,     3,     4,    57,     6,     7,
-       8,     9,    10,    -1,    -1,    -1,    14,    15,    16,    17,
-      -1,    19,    -1,    -1,    22,    23,    43,    44,    45,    -1,
-      47,    48,    49,    -1,    32,    -1,    -1,    -1,    -1,    -1,
-      -1,    39,    -1,    41,    42,    43,    -1,    -1,    -1,    47,
-      -1,    49,    -1,    -1,    -1,    -1,    -1,     3,     4,    57,
+      80,    81,    82,    83,    84,    85,    86,    87,    92,    16,
+     164,     4,    12,     4,     4,     5,    33,     7,   157,    36,
+     100,   101,   176,     4,    17,    16,    19,   166,    21,   168,
+      53,   170,   171,     4,   168,    16,   170,   171,    33,   178,
+      33,    41,    42,    43,    44,    45,    46,    40,    48,    49,
+      50,    44,    48,    49,    50,    48,    33,    50,   197,    52,
+      18,    33,    20,   197,     6,     7,    50,    52,    51,    33,
+      57,    51,    54,   153,    52,   214,    12,    52,     4,   159,
+     214,     3,     4,    52,     6,     7,     8,     9,    10,    34,
+      56,    56,    14,    15,    16,    17,   115,    19,   103,    -1,
+      22,    23,    24,   183,   166,    -1,    42,    43,    44,    45,
+      46,    33,    48,    49,    50,    -1,    -1,    -1,    40,    -1,
+      42,    43,    44,    -1,    -1,    -1,    48,    -1,    50,    -1,
+      -1,    -1,    -1,    -1,     3,     4,    58,     6,     7,     8,
+       9,    10,    -1,    -1,    -1,    14,    15,    -1,    17,    18,
+      19,    -1,    -1,    22,    23,    24,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    33,    -1,    -1,    -1,    -1,    -1,
+      -1,    40,    -1,    42,    43,    44,    -1,    -1,    -1,    48,
+      -1,    50,    -1,    -1,    -1,    -1,    -1,     3,     4,    58,
        6,     7,     8,     9,    10,    -1,    -1,    -1,    14,    15,
-       4,    17,    -1,    19,    -1,    -1,    22,    23,    -1,    -1,
-      -1,    -1,    -1,    17,    -1,    19,    32,    21,    -1,    -1,
-      -1,    -1,    -1,    39,    -1,    41,    42,    43,    32,    -1,
-      -1,    47,    -1,    49,    -1,    39,    11,    12,    -1,    43,
-      -1,    57,    -1,    47,    -1,    49,    -1,    51,    23,    24,
-      25,    26,    27,    28,    29,    30,    31,    -1,    -1,    34,
+      -1,    17,    18,    19,    -1,    -1,    22,    23,    24,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    33,    -1,    -1,
+      -1,    -1,    -1,    -1,    40,    -1,    42,    43,    44,    -1,
+      -1,    -1,    48,    -1,    50,    -1,    -1,    -1,    -1,    -1,
+       3,     4,    58,     6,     7,     8,     9,    10,    -1,    -1,
+      -1,    14,    15,    -1,    17,    -1,    19,    -1,    -1,    22,
+      23,    24,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      33,    -1,    -1,    -1,    -1,    -1,    -1,    40,    -1,    42,
+      43,    44,    -1,    -1,    -1,    48,    -1,    50,    -1,    52,
+      -1,    -1,    -1,     3,     4,    58,     6,     7,     8,     9,
+      10,    -1,    -1,    -1,    14,    15,    16,    17,    -1,    19,
+      -1,    -1,    22,    23,    24,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    33,    -1,    -1,    -1,    -1,    -1,    -1,
+      40,    -1,    42,    43,    44,    -1,    -1,    -1,    48,    -1,
+      50,    -1,    -1,    -1,    -1,    -1,     3,     4,    58,     6,
+       7,     8,     9,    10,    -1,    -1,    -1,    14,    15,    -1,
+      17,    -1,    19,    -1,    -1,    22,    23,    24,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    33,    -1,    -1,    -1,
+      -1,    -1,    -1,    40,    -1,    42,    43,    44,    -1,    -1,
+      -1,    48,    -1,    50,    11,    12,    -1,    -1,    -1,    -1,
+      -1,    58,    -1,    -1,    -1,    -1,    23,    24,    25,    26,
+      27,    28,    29,    30,    31,    32,    -1,    -1,    35,    36,
+      37,    38,    39,    40,    41,    42,    43,    44,    45,    46,
+      -1,    48,    49,    50,    11,    12,    -1,    -1,    -1,    -1,
+      57,    -1,    -1,    -1,    -1,    -1,    23,    24,    25,    26,
+      27,    28,    29,    30,    31,    32,    -1,    -1,    35,    36,
+      37,    38,    39,    40,    41,    42,    43,    44,    45,    46,
+       4,    48,    49,    50,    -1,     4,    -1,    -1,    -1,    -1,
+      57,    -1,    -1,    17,    -1,    19,    -1,    21,    17,    -1,
+      19,    -1,    21,    -1,    -1,    -1,    -1,    -1,    -1,    33,
+      -1,    -1,    -1,    -1,    33,    -1,    40,    -1,    -1,    -1,
+      44,    40,    11,    12,    48,    44,    50,    -1,    -1,    48,
+      -1,    50,    -1,    -1,    23,    24,    25,    26,    27,    28,
+      29,    30,    31,    32,    -1,    -1,    35,    36,    37,    38,
+      39,    40,    41,    42,    43,    44,    45,    46,    -1,    48,
+      49,    50,    11,    12,    -1,    -1,    -1,    56,    -1,    -1,
+      -1,    -1,    -1,    -1,    23,    24,    25,    26,    27,    28,
+      29,    30,    31,    32,    -1,    -1,    35,    36,    37,    38,
+      39,    40,    41,    42,    43,    44,    45,    46,    -1,    48,
+      49,    50,    11,    12,    -1,    -1,    -1,    56,    -1,    -1,
+      -1,    -1,    -1,    -1,    23,    24,    25,    26,    27,    28,
+      29,    30,    31,    32,    -1,    -1,    35,    36,    37,    38,
+      39,    40,    41,    42,    43,    44,    45,    46,    -1,    48,
+      49,    50,    11,    12,    -1,    -1,    -1,    56,    -1,    -1,
+      -1,    -1,    -1,    -1,    23,    24,    25,    26,    27,    28,
+      29,    30,    31,    32,    -1,    -1,    35,    36,    37,    38,
+      39,    40,    41,    42,    43,    44,    45,    46,    -1,    48,
+      49,    50,    51,    52,    11,    12,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    23,    24,    25,    26,
+      27,    28,    29,    30,    31,    32,    -1,    -1,    35,    36,
+      37,    38,    39,    40,    41,    42,    43,    44,    45,    46,
+      -1,    48,    49,    50,    -1,    52,    11,    12,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    23,    24,
+      25,    26,    27,    28,    29,    30,    31,    32,    -1,    -1,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    -1,    47,    48,    49,    11,    12,    -1,    -1,    -1,
-      -1,    56,    -1,    -1,    -1,    -1,    -1,    23,    24,    25,
-      26,    27,    28,    29,    30,    31,    -1,    -1,    34,    35,
-      36,    37,    38,    39,    40,    41,    42,    43,    44,    45,
-      -1,    47,    48,    49,    11,    12,    -1,    -1,    -1,    -1,
-      56,    -1,    -1,    -1,    -1,    -1,    23,    24,    25,    26,
-      27,    28,    29,    30,    31,    -1,    -1,    34,    35,    36,
-      37,    38,    39,    40,    41,    42,    43,    44,    45,    -1,
-      47,    48,    49,    11,    12,    -1,    -1,    -1,    55,    -1,
-      -1,    -1,    -1,    -1,    -1,    23,    24,    25,    26,    27,
-      28,    29,    30,    31,    -1,    -1,    34,    35,    36,    37,
-      38,    39,    40,    41,    42,    43,    44,    45,    -1,    47,
-      48,    49,    11,    12,    -1,    -1,    -1,    55,    -1,    -1,
-      -1,    -1,    -1,    -1,    23,    24,    25,    26,    27,    28,
-      29,    30,    31,    -1,    -1,    34,    35,    36,    37,    38,
-      39,    40,    41,    42,    43,    44,    45,    -1,    47,    48,
-      49,    11,    12,    -1,    -1,    -1,    55,    -1,    -1,    -1,
-      -1,    -1,    -1,    23,    24,    25,    26,    27,    28,    29,
-      30,    31,    -1,    -1,    34,    35,    36,    37,    38,    39,
-      40,    41,    42,    43,    44,    45,    -1,    47,    48,    49,
-      50,    51,    11,    12,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    23,    24,    25,    26,    27,    28,
-      29,    30,    31,    -1,    -1,    34,    35,    36,    37,    38,
-      39,    40,    41,    42,    43,    44,    45,    -1,    47,    48,
-      49,    -1,    51,    11,    12,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    23,    24,    25,    26,    27,
-      28,    29,    30,    31,    -1,    -1,    34,    35,    36,    37,
-      38,    39,    40,    41,    42,    43,    44,    45,    -1,    47,
-      48,    49,    50,    11,    12,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    23,    24,    25,    26,    27,
-      28,    29,    30,    31,    -1,    -1,    34,    35,    36,    37,
-      38,    39,    40,    41,    42,    43,    44,    45,    -1,    47,
-      48,    49,    11,    12,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    23,    24,    25,    26,    27,    28,
-      29,    30,    31,    -1,    -1,    34,    35,    36,    37,    38,
-      39,    40,    41,    42,    43,    44,    45,    -1,    47,    48,
-      49,    11,    12,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    24,    25,    26,    27,    28,    29,
-      30,    31,    -1,    -1,    34,    35,    36,    37,    38,    39,
-      40,    41,    42,    43,    44,    45,    12,    47,    48,    49,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    25,
-      26,    27,    28,    29,    30,    31,    -1,    -1,    -1,    35,
-      36,    37,    38,    39,    40,    41,    42,    43,    44,    45,
-      12,    47,    48,    49,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    26,    27,    28,    29,    30,    31,
-      -1,    -1,    -1,    35,    36,    37,    38,    39,    40,    41,
-      42,    43,    44,    45,    12,    47,    48,    49,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    26,    27,
-      28,    29,    30,    31,    12,    -1,    -1,    35,    36,    37,
-      38,    39,    40,    41,    42,    43,    44,    45,    -1,    47,
-      48,    49,    30,    31,    12,    -1,    -1,    -1,    -1,    -1,
-      38,    39,    40,    41,    42,    43,    44,    45,    -1,    47,
-      48,    49,    30,    31,    12,    -1,    -1,    -1,    -1,    -1,
-      -1,    39,    40,    41,    42,    43,    44,    45,    -1,    47,
-      48,    49,    30,    31,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    40,    41,    42,    43,    44,    45,    -1,    47,
-      48,    49
+      45,    46,    -1,    48,    49,    50,    51,    11,    12,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    23,
+      24,    25,    26,    27,    28,    29,    30,    31,    32,    -1,
+      -1,    35,    36,    37,    38,    39,    40,    41,    42,    43,
+      44,    45,    46,    -1,    48,    49,    50,    11,    12,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    23,
+      24,    25,    26,    27,    28,    29,    30,    31,    32,    -1,
+      -1,    35,    36,    37,    38,    39,    40,    41,    42,    43,
+      44,    45,    46,    -1,    48,    49,    50,    11,    12,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    25,    26,    27,    28,    29,    30,    31,    32,    -1,
+      -1,    35,    36,    37,    38,    39,    40,    41,    42,    43,
+      44,    45,    46,    12,    48,    49,    50,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    26,    27,    28,
+      29,    30,    31,    32,    -1,    -1,    -1,    36,    37,    38,
+      39,    40,    41,    42,    43,    44,    45,    46,    12,    48,
+      49,    50,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    27,    28,    29,    30,    31,    32,    -1,
+      -1,    -1,    36,    37,    38,    39,    40,    41,    42,    43,
+      44,    45,    46,    12,    48,    49,    50,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    27,    28,
+      29,    30,    31,    32,    12,    -1,    -1,    36,    37,    38,
+      39,    40,    41,    42,    43,    44,    45,    46,    -1,    48,
+      49,    50,    -1,    31,    32,    12,    -1,    -1,    -1,    -1,
+      -1,    39,    40,    41,    42,    43,    44,    45,    46,    -1,
+      48,    49,    50,    -1,    31,    32,    12,    -1,    -1,    -1,
+      -1,    -1,    -1,    40,    41,    42,    43,    44,    45,    46,
+      -1,    48,    49,    50,    -1,    31,    32,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    41,    42,    43,    44,    45,
+      46,    -1,    48,    49,    50
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -1081,45 +1171,45 @@ static const yytype_int16 yycheck[] =
 static const yytype_uint8 yystos[] =
 {
        0,     3,     4,     6,     7,     8,     9,    10,    14,    15,
-      17,    19,    22,    23,    32,    39,    41,    42,    43,    47,
-      49,    57,    59,    60,    61,    62,    63,    66,    67,    68,
-      69,    70,    71,    72,    73,    74,    75,    76,    77,    81,
-      82,    84,    85,    86,    32,    86,    49,    60,    86,    18,
-      60,    60,    60,    60,    18,    60,    78,    51,    60,    60,
-       0,    11,    12,    23,    24,    25,    26,    27,    28,    29,
-      30,    31,    34,    35,    36,    37,    38,    39,    40,    41,
-      42,    43,    44,    45,    47,    48,    49,    80,    16,    83,
-      52,    32,    86,    60,    60,    60,    78,    56,    50,    55,
-      50,    51,    60,     4,    17,    19,    21,    32,    39,    43,
-      47,    49,    82,    87,    88,    89,    90,    60,    60,    60,
-      60,    60,    60,    60,    60,    60,    60,    60,    60,    60,
-      60,    60,    60,    60,    60,    60,    60,    60,    60,     4,
-       5,     7,    60,    78,    79,    32,    16,    86,     4,    23,
-      64,    65,     4,    35,    51,    56,    55,    60,    60,    79,
-      32,    89,    49,    89,    47,    90,    18,    20,    90,    90,
-      91,    92,    83,    32,    35,    55,    51,    32,    54,    60,
-      53,    92,    60,    55,    51,    89,    91,    90,    90,    90,
-      56,    51,    50,    89,     4,    92,    60,    31,    36,    55,
-      51,    55,     6,     7,    90,    31,    36,    50,    33,    55,
-      55,    65,    90
+      17,    19,    22,    23,    24,    33,    40,    42,    43,    44,
+      48,    50,    58,    60,    61,    62,    63,    64,    67,    68,
+      69,    70,    71,    72,    73,    74,    75,    76,    77,    78,
+      82,    83,    85,    86,    87,    33,    87,    50,    61,    61,
+      87,    18,    61,    61,    61,    61,    18,    61,    79,    52,
+      61,    61,     0,    11,    12,    23,    24,    25,    26,    27,
+      28,    29,    30,    31,    32,    35,    36,    37,    38,    39,
+      40,    41,    42,    43,    44,    45,    46,    48,    49,    50,
+      81,    16,    84,    53,    33,    87,    61,    61,    61,    79,
+      57,    51,    56,    51,    52,    61,     4,    17,    19,    21,
+      33,    40,    44,    48,    50,    83,    88,    89,    90,    91,
+      61,    61,    61,    61,    61,    61,    61,    61,    61,    61,
+      61,    61,    61,    61,    61,    61,    61,    61,    61,    61,
+      61,    61,    61,     4,     5,     7,    61,    79,    80,    33,
+      16,    87,     4,    23,    65,    66,     4,    36,    52,    57,
+      56,    61,    61,    80,    33,    90,    50,    90,    48,    91,
+      18,    20,    91,    91,    92,    93,    84,    33,    36,    56,
+      52,    33,    51,    55,    61,    54,    93,    61,    56,    52,
+      90,    92,    91,    91,    91,    57,    52,    51,    90,     4,
+      93,    66,    61,    32,    37,    56,    52,    56,     6,     7,
+      91,    32,    37,    51,    34,    56,    56,    66,    91
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    58,    59,    60,    60,    60,    60,    60,    60,    60,
-      60,    60,    60,    60,    60,    60,    61,    62,    63,    64,
-      64,    65,    65,    65,    66,    66,    66,    66,    67,    67,
-      67,    67,    68,    68,    68,    68,    68,    68,    68,    69,
-      69,    69,    70,    71,    71,    71,    71,    71,    71,    71,
-      72,    72,    72,    72,    73,    73,    73,    73,    73,    73,
-      73,    73,    73,    73,    73,    73,    73,    73,    73,    73,
-      73,    73,    73,    74,    75,    76,    77,    78,    78,    79,
-      79,    80,    81,    82,    82,    83,    83,    84,    84,    84,
-      85,    85,    85,    85,    85,    86,    86,    86,    86,    87,
-      87,    87,    87,    87,    88,    88,    89,    89,    89,    90,
-      90,    90,    90,    90,    90,    90,    90,    90,    91,    91,
-      92,    92
+       0,    59,    60,    61,    61,    61,    61,    61,    61,    61,
+      61,    61,    61,    61,    61,    61,    62,    63,    64,    65,
+      65,    65,    66,    66,    66,    66,    67,    67,    67,    67,
+      68,    68,    68,    68,    68,    68,    69,    69,    69,    69,
+      69,    69,    69,    70,    70,    70,    71,    72,    72,    72,
+      72,    72,    72,    72,    73,    73,    73,    73,    74,    74,
+      74,    74,    74,    74,    74,    74,    74,    74,    74,    74,
+      74,    74,    74,    74,    74,    74,    74,    75,    76,    77,
+      78,    79,    79,    80,    80,    81,    82,    83,    83,    84,
+      84,    85,    85,    85,    86,    86,    86,    86,    86,    87,
+      87,    87,    87,    88,    88,    88,    88,    88,    89,    89,
+      90,    90,    90,    91,    91,    91,    91,    91,    91,    91,
+      91,    91,    92,    92,    93,    93
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
@@ -1127,17 +1217,17 @@ static const yytype_uint8 yyr2[] =
 {
        0,     2,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     5,     2,     4,     2,
-       3,     0,     1,     5,     4,     3,     6,     5,     2,     3,
-       2,     1,     1,     1,     1,     1,     1,     1,     1,     3,
-       3,     3,     4,     2,     2,     2,     2,     2,     3,     4,
-       1,     1,     1,     1,     3,     3,     3,     3,     3,     3,
+       3,     1,     0,     1,     5,     3,     4,     3,     6,     5,
+       2,     3,     3,     2,     2,     1,     1,     1,     1,     1,
+       1,     1,     1,     3,     3,     3,     4,     2,     2,     2,
+       2,     2,     3,     4,     1,     1,     1,     1,     3,     3,
        3,     3,     3,     3,     3,     3,     3,     3,     3,     3,
-       3,     3,     3,     3,     3,     3,     3,     1,     3,     0,
-       1,     3,     2,     0,     2,     2,     3,     1,     1,     1,
-       1,     3,     3,     2,     2,     1,     3,     5,     5,     1,
-       3,     3,     2,     2,     1,     3,     1,     4,     4,     1,
-       5,     5,     4,     2,     3,     3,     6,     3,     0,     1,
-       1,     3
+       3,     3,     3,     3,     3,     3,     3,     3,     3,     3,
+       3,     1,     3,     0,     1,     3,     2,     0,     2,     2,
+       3,     1,     1,     1,     1,     3,     3,     2,     2,     1,
+       3,     5,     5,     1,     3,     3,     2,     2,     1,     3,
+       1,     4,     4,     1,     5,     5,     4,     2,     3,     3,
+       6,     3,     0,     1,     1,     3
 };
 
 
@@ -1165,7 +1255,7 @@ do                                                              \
     }                                                           \
   else                                                          \
     {                                                           \
-      yyerror (YY_("syntax error: cannot back up")); \
+      yyerror (parser, YY_("syntax error: cannot back up")); \
       YYERROR;                                                  \
     }                                                           \
 while (0)
@@ -1202,7 +1292,7 @@ do {                                                                      \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value); \
+                  Type, Value, parser); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -1213,10 +1303,11 @@ do {                                                                      \
 `----------------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, struct rust_parser *parser)
 {
   FILE *yyo = yyoutput;
   YYUSE (yyo);
+  YYUSE (parser);
   if (!yyvaluep)
     return;
 # ifdef YYPRINT
@@ -1232,12 +1323,12 @@ yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvalue
 `--------------------------------*/
 
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, struct rust_parser *parser)
 {
   YYFPRINTF (yyoutput, "%s %s (",
              yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep);
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, parser);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -1270,7 +1361,7 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
+yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, struct rust_parser *parser)
 {
   unsigned long int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -1284,7 +1375,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
       yy_symbol_print (stderr,
                        yystos[yyssp[yyi + 1 - yynrhs]],
                        &(yyvsp[(yyi + 1) - (yynrhs)])
-                                              );
+                                              , parser);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -1292,7 +1383,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
 # define YY_REDUCE_PRINT(Rule)          \
 do {                                    \
   if (yydebug)                          \
-    yy_reduce_print (yyssp, yyvsp, Rule); \
+    yy_reduce_print (yyssp, yyvsp, Rule, parser); \
 } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1550,9 +1641,10 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, struct rust_parser *parser)
 {
   YYUSE (yyvaluep);
+  YYUSE (parser);
   if (!yymsg)
     yymsg = "Deleting";
   YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
@@ -1565,22 +1657,26 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
 
 
 
-/* The lookahead symbol.  */
-int yychar;
-
-/* The semantic value of the lookahead symbol.  */
-YYSTYPE yylval;
-/* Number of syntax errors so far.  */
-int yynerrs;
-
-
 /*----------.
 | yyparse.  |
 `----------*/
 
 int
-yyparse (void)
+yyparse (struct rust_parser *parser)
 {
+/* The lookahead symbol.  */
+int yychar;
+
+
+/* The semantic value of the lookahead symbol.  */
+/* Default value used for initialization, for pacifying older GCCs
+   or non-GCC compilers.  */
+YY_INITIAL_VALUE (static YYSTYPE yyval_default;)
+YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
+
+    /* Number of syntax errors so far.  */
+    int yynerrs;
+
     int yystate;
     /* Number of tokens to shift before error messages enabled.  */
     int yyerrstatus;
@@ -1735,7 +1831,7 @@ yybackup:
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
-      yychar = yylex ();
+      yychar = yylex (&yylval, parser);
     }
 
   if (yychar <= YYEOF)
@@ -1814,48 +1910,48 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 354 "rust-exp.y" /* yacc.c:1646  */
+#line 433 "rust-exp.y" /* yacc.c:1646  */
     {
 		  /* If we are completing and see a valid parse,
 		     rust_ast will already have been set.  */
-		  if (rust_ast == NULL)
-		    rust_ast = (yyvsp[0].op);
+		  if (parser->rust_ast == NULL)
+		    parser->rust_ast = (yyvsp[0].op);
 		}
-#line 1826 "rust-exp.c" /* yacc.c:1646  */
+#line 1922 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 383 "rust-exp.y" /* yacc.c:1646  */
+#line 463 "rust-exp.y" /* yacc.c:1646  */
     {
-		  VEC_safe_insert (rust_op_ptr, *(yyvsp[-1].params), 0, (yyvsp[-3].op));
+		  (yyvsp[-1].params)->push_back ((yyvsp[-3].op));
 		  error (_("Tuple expressions not supported yet"));
 		}
-#line 1835 "rust-exp.c" /* yacc.c:1646  */
+#line 1931 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 391 "rust-exp.y" /* yacc.c:1646  */
+#line 471 "rust-exp.y" /* yacc.c:1646  */
     {
 		  struct typed_val_int val;
 
 		  val.type
-		    = language_lookup_primitive_type (parse_language (pstate),
-						      parse_gdbarch (pstate),
-						      "()");
+		    = (language_lookup_primitive_type
+		       (parser->language (), parser->arch (),
+			"()"));
 		  val.val = 0;
-		  (yyval.op) = ast_literal (val);
+		  (yyval.op) = parser->ast_literal (val);
 		}
-#line 1850 "rust-exp.c" /* yacc.c:1646  */
+#line 1946 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 408 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_struct ((yyvsp[-3].op), (yyvsp[-1].field_inits)); }
-#line 1856 "rust-exp.c" /* yacc.c:1646  */
+#line 488 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_struct ((yyvsp[-3].op), (yyvsp[-1].field_inits)); }
+#line 1952 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 413 "rust-exp.y" /* yacc.c:1646  */
+#line 493 "rust-exp.y" /* yacc.c:1646  */
     {
 		  struct set_field sf;
 
@@ -1865,11 +1961,11 @@ yyreduce:
 
 		  (yyval.one_field_init) = sf;
 		}
-#line 1870 "rust-exp.c" /* yacc.c:1646  */
+#line 1966 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 423 "rust-exp.y" /* yacc.c:1646  */
+#line 503 "rust-exp.y" /* yacc.c:1646  */
     {
 		  struct set_field sf;
 
@@ -1877,675 +1973,704 @@ yyreduce:
 		  sf.init = (yyvsp[0].op);
 		  (yyval.one_field_init) = sf;
 		}
-#line 1882 "rust-exp.c" /* yacc.c:1646  */
+#line 1978 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 434 "rust-exp.y" /* yacc.c:1646  */
+#line 511 "rust-exp.y" /* yacc.c:1646  */
     {
-		  VEC (set_field) **result
-		    = OBSTACK_ZALLOC (&work_obstack, VEC (set_field) *);
-		  (yyval.field_inits) = result;
+		  struct set_field sf;
+
+		  sf.name = (yyvsp[0].sval);
+		  sf.init = parser->ast_path ((yyvsp[0].sval), NULL);
+		  (yyval.one_field_init) = sf;
 		}
-#line 1892 "rust-exp.c" /* yacc.c:1646  */
+#line 1990 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 440 "rust-exp.y" /* yacc.c:1646  */
+#line 522 "rust-exp.y" /* yacc.c:1646  */
     {
-		  VEC (set_field) **result
-		    = OBSTACK_ZALLOC (&work_obstack, VEC (set_field) *);
-
-		  make_cleanup (VEC_cleanup (set_field), result);
-		  VEC_safe_push (set_field, *result, &(yyvsp[0].one_field_init));
-
-		  (yyval.field_inits) = result;
+		  (yyval.field_inits) = parser->new_set_vector ();
 		}
-#line 1906 "rust-exp.c" /* yacc.c:1646  */
+#line 1998 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 450 "rust-exp.y" /* yacc.c:1646  */
+#line 526 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  rust_set_vector *result = parser->new_set_vector ();
+		  result->push_back ((yyvsp[0].one_field_init));
+		  (yyval.field_inits) = result;
+		}
+#line 2008 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 24:
+#line 532 "rust-exp.y" /* yacc.c:1646  */
     {
 		  struct set_field sf;
 
 		  sf.name = (yyvsp[-4].sval);
 		  sf.init = (yyvsp[-2].op);
-		  VEC_safe_push (set_field, *(yyvsp[0].field_inits), &sf);
+		  (yyvsp[0].field_inits)->push_back (sf);
 		  (yyval.field_inits) = (yyvsp[0].field_inits);
 		}
-#line 1919 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 24:
-#line 462 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_call_ish (OP_ARRAY, NULL, (yyvsp[-1].params)); }
-#line 1925 "rust-exp.c" /* yacc.c:1646  */
+#line 2021 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 464 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_call_ish (OP_ARRAY, NULL, (yyvsp[-1].params)); }
-#line 1931 "rust-exp.c" /* yacc.c:1646  */
+#line 541 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  struct set_field sf;
+
+		  sf.name = (yyvsp[-2].sval);
+		  sf.init = parser->ast_path ((yyvsp[-2].sval), NULL);
+		  (yyvsp[0].field_inits)->push_back (sf);
+		  (yyval.field_inits) = (yyvsp[0].field_inits);
+		}
+#line 2034 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 466 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (OP_RUST_ARRAY, (yyvsp[-3].op), (yyvsp[-1].op)); }
-#line 1937 "rust-exp.c" /* yacc.c:1646  */
+#line 553 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_call_ish (OP_ARRAY, NULL, (yyvsp[-1].params)); }
+#line 2040 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 468 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (OP_RUST_ARRAY, (yyvsp[-3].op), (yyvsp[-1].op)); }
-#line 1943 "rust-exp.c" /* yacc.c:1646  */
+#line 555 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_call_ish (OP_ARRAY, NULL, (yyvsp[-1].params)); }
+#line 2046 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 473 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_range ((yyvsp[-1].op), NULL); }
-#line 1949 "rust-exp.c" /* yacc.c:1646  */
+#line 557 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (OP_RUST_ARRAY, (yyvsp[-3].op), (yyvsp[-1].op)); }
+#line 2052 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 475 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_range ((yyvsp[-2].op), (yyvsp[0].op)); }
-#line 1955 "rust-exp.c" /* yacc.c:1646  */
+#line 559 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (OP_RUST_ARRAY, (yyvsp[-3].op), (yyvsp[-1].op)); }
+#line 2058 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 477 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_range (NULL, (yyvsp[0].op)); }
-#line 1961 "rust-exp.c" /* yacc.c:1646  */
+#line 564 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_range ((yyvsp[-1].op), NULL, false); }
+#line 2064 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 479 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_range (NULL, NULL); }
-#line 1967 "rust-exp.c" /* yacc.c:1646  */
+#line 566 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_range ((yyvsp[-2].op), (yyvsp[0].op), false); }
+#line 2070 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 484 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_literal ((yyvsp[0].typed_val_int)); }
-#line 1973 "rust-exp.c" /* yacc.c:1646  */
+#line 568 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_range ((yyvsp[-2].op), (yyvsp[0].op), true); }
+#line 2076 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 486 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_literal ((yyvsp[0].typed_val_int)); }
-#line 1979 "rust-exp.c" /* yacc.c:1646  */
+#line 570 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_range (NULL, (yyvsp[0].op), false); }
+#line 2082 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 488 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_dliteral ((yyvsp[0].typed_val_float)); }
-#line 1985 "rust-exp.c" /* yacc.c:1646  */
+#line 572 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_range (NULL, (yyvsp[0].op), true); }
+#line 2088 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 490 "rust-exp.y" /* yacc.c:1646  */
+#line 574 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_range (NULL, NULL, false); }
+#line 2094 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 36:
+#line 579 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_literal ((yyvsp[0].typed_val_int)); }
+#line 2100 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 37:
+#line 581 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_literal ((yyvsp[0].typed_val_int)); }
+#line 2106 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 38:
+#line 583 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_dliteral ((yyvsp[0].typed_val_float)); }
+#line 2112 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 39:
+#line 585 "rust-exp.y" /* yacc.c:1646  */
     {
-		  const struct rust_op *str = ast_string ((yyvsp[0].sval));
-		  VEC (set_field) **fields;
 		  struct set_field field;
 		  struct typed_val_int val;
 		  struct stoken token;
 
-		  fields = OBSTACK_ZALLOC (&work_obstack, VEC (set_field) *);
-		  make_cleanup (VEC_cleanup (set_field), fields);
+		  rust_set_vector *fields = parser->new_set_vector ();
 
 		  /* Wrap the raw string in the &str struct.  */
 		  field.name.ptr = "data_ptr";
 		  field.name.length = strlen (field.name.ptr);
-		  field.init = ast_unary (UNOP_ADDR, ast_string ((yyvsp[0].sval)));
-		  VEC_safe_push (set_field, *fields, &field);
+		  field.init = parser->ast_unary (UNOP_ADDR,
+						  parser->ast_string ((yyvsp[0].sval)));
+		  fields->push_back (field);
 
-		  val.type = rust_type ("usize");
+		  val.type = parser->get_type ("usize");
 		  val.val = (yyvsp[0].sval).length;
 
 		  field.name.ptr = "length";
 		  field.name.length = strlen (field.name.ptr);
-		  field.init = ast_literal (val);
-		  VEC_safe_push (set_field, *fields, &field);
+		  field.init = parser->ast_literal (val);
+		  fields->push_back (field);
 
 		  token.ptr = "&str";
 		  token.length = strlen (token.ptr);
-		  (yyval.op) = ast_struct (ast_path (token, NULL), fields);
+		  (yyval.op) = parser->ast_struct (parser->ast_path (token, NULL),
+					   fields);
 		}
-#line 2018 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 36:
-#line 519 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_string ((yyvsp[0].sval)); }
-#line 2024 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 37:
-#line 521 "rust-exp.y" /* yacc.c:1646  */
-    {
-		  struct typed_val_int val;
-
-		  val.type = language_bool_type (parse_language (pstate),
-						 parse_gdbarch (pstate));
-		  val.val = 1;
-		  (yyval.op) = ast_literal (val);
-		}
-#line 2037 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 38:
-#line 530 "rust-exp.y" /* yacc.c:1646  */
-    {
-		  struct typed_val_int val;
-
-		  val.type = language_bool_type (parse_language (pstate),
-						 parse_gdbarch (pstate));
-		  val.val = 0;
-		  (yyval.op) = ast_literal (val);
-		}
-#line 2050 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 39:
-#line 542 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_structop ((yyvsp[-2].op), (yyvsp[0].sval).ptr, 0); }
-#line 2056 "rust-exp.c" /* yacc.c:1646  */
+#line 2144 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 544 "rust-exp.y" /* yacc.c:1646  */
-    {
-		  (yyval.op) = ast_structop ((yyvsp[-2].op), (yyvsp[0].sval).ptr, 1);
-		  rust_ast = (yyval.op);
-		}
-#line 2065 "rust-exp.c" /* yacc.c:1646  */
+#line 613 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_string ((yyvsp[0].sval)); }
+#line 2150 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 549 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_structop_anonymous ((yyvsp[-2].op), (yyvsp[0].typed_val_int)); }
-#line 2071 "rust-exp.c" /* yacc.c:1646  */
+#line 615 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  struct typed_val_int val;
+
+		  val.type = language_bool_type (parser->language (),
+						 parser->arch ());
+		  val.val = 1;
+		  (yyval.op) = parser->ast_literal (val);
+		}
+#line 2163 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 554 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_SUBSCRIPT, (yyvsp[-3].op), (yyvsp[-1].op)); }
-#line 2077 "rust-exp.c" /* yacc.c:1646  */
+#line 624 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  struct typed_val_int val;
+
+		  val.type = language_bool_type (parser->language (),
+						 parser->arch ());
+		  val.val = 0;
+		  (yyval.op) = parser->ast_literal (val);
+		}
+#line 2176 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 559 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_unary (UNOP_PLUS, (yyvsp[0].op)); }
-#line 2083 "rust-exp.c" /* yacc.c:1646  */
+#line 636 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_structop ((yyvsp[-2].op), (yyvsp[0].sval).ptr, 0); }
+#line 2182 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 562 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_unary (UNOP_NEG, (yyvsp[0].op)); }
-#line 2089 "rust-exp.c" /* yacc.c:1646  */
+#line 638 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  (yyval.op) = parser->ast_structop ((yyvsp[-2].op), (yyvsp[0].sval).ptr, 1);
+		  parser->rust_ast = (yyval.op);
+		}
+#line 2191 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 565 "rust-exp.y" /* yacc.c:1646  */
+#line 643 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_structop_anonymous ((yyvsp[-2].op), (yyvsp[0].typed_val_int)); }
+#line 2197 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 46:
+#line 648 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_SUBSCRIPT, (yyvsp[-3].op), (yyvsp[-1].op)); }
+#line 2203 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 47:
+#line 653 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_unary (UNOP_PLUS, (yyvsp[0].op)); }
+#line 2209 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 48:
+#line 656 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_unary (UNOP_NEG, (yyvsp[0].op)); }
+#line 2215 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 49:
+#line 659 "rust-exp.y" /* yacc.c:1646  */
     {
 		  /* Note that we provide a Rust-specific evaluator
 		     override for UNOP_COMPLEMENT, so it can do the
 		     right thing for both bool and integral
 		     values.  */
-		  (yyval.op) = ast_unary (UNOP_COMPLEMENT, (yyvsp[0].op));
+		  (yyval.op) = parser->ast_unary (UNOP_COMPLEMENT, (yyvsp[0].op));
 		}
-#line 2101 "rust-exp.c" /* yacc.c:1646  */
+#line 2227 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
-  case 46:
-#line 574 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_unary (UNOP_IND, (yyvsp[0].op)); }
-#line 2107 "rust-exp.c" /* yacc.c:1646  */
+  case 50:
+#line 668 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_unary (UNOP_IND, (yyvsp[0].op)); }
+#line 2233 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
-  case 47:
-#line 577 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_unary (UNOP_ADDR, (yyvsp[0].op)); }
-#line 2113 "rust-exp.c" /* yacc.c:1646  */
+  case 51:
+#line 671 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_unary (UNOP_ADDR, (yyvsp[0].op)); }
+#line 2239 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
-  case 48:
-#line 580 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_unary (UNOP_ADDR, (yyvsp[0].op)); }
-#line 2119 "rust-exp.c" /* yacc.c:1646  */
+  case 52:
+#line 674 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_unary (UNOP_ADDR, (yyvsp[0].op)); }
+#line 2245 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
-  case 49:
-#line 582 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_unary (UNOP_SIZEOF, (yyvsp[-1].op)); }
-#line 2125 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 54:
-#line 594 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_MUL, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2131 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 55:
-#line 597 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_REPEAT, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2137 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 56:
-#line 600 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_DIV, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2143 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 57:
-#line 603 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_REM, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2149 "rust-exp.c" /* yacc.c:1646  */
+  case 53:
+#line 676 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_unary (UNOP_SIZEOF, (yyvsp[-1].op)); }
+#line 2251 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 58:
-#line 606 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_LESS, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2155 "rust-exp.c" /* yacc.c:1646  */
+#line 688 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_MUL, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2257 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 59:
-#line 609 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_GTR, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2161 "rust-exp.c" /* yacc.c:1646  */
+#line 691 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_REPEAT, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2263 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 60:
-#line 612 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_BITWISE_AND, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2167 "rust-exp.c" /* yacc.c:1646  */
+#line 694 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_DIV, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2269 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 61:
-#line 615 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_BITWISE_IOR, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2173 "rust-exp.c" /* yacc.c:1646  */
+#line 697 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_REM, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2275 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 62:
-#line 618 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_BITWISE_XOR, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2179 "rust-exp.c" /* yacc.c:1646  */
+#line 700 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_LESS, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2281 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 63:
-#line 621 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_ADD, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2185 "rust-exp.c" /* yacc.c:1646  */
+#line 703 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_GTR, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2287 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 64:
-#line 624 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_SUB, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2191 "rust-exp.c" /* yacc.c:1646  */
+#line 706 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_BITWISE_AND, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2293 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 65:
-#line 627 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_LOGICAL_OR, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2197 "rust-exp.c" /* yacc.c:1646  */
+#line 709 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_BITWISE_IOR, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2299 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 66:
-#line 630 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_LOGICAL_AND, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2203 "rust-exp.c" /* yacc.c:1646  */
+#line 712 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_BITWISE_XOR, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2305 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 67:
-#line 633 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_EQUAL, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2209 "rust-exp.c" /* yacc.c:1646  */
+#line 715 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_ADD, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2311 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 68:
-#line 636 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_NOTEQUAL, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2215 "rust-exp.c" /* yacc.c:1646  */
+#line 718 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_SUB, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2317 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 69:
-#line 639 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_LEQ, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2221 "rust-exp.c" /* yacc.c:1646  */
+#line 721 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_LOGICAL_OR, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2323 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 70:
-#line 642 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_GEQ, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2227 "rust-exp.c" /* yacc.c:1646  */
+#line 724 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_LOGICAL_AND, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2329 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 71:
-#line 645 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_LSH, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2233 "rust-exp.c" /* yacc.c:1646  */
+#line 727 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_EQUAL, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2335 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 72:
-#line 648 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_RSH, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2239 "rust-exp.c" /* yacc.c:1646  */
+#line 730 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_NOTEQUAL, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2341 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 73:
-#line 653 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_cast ((yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2245 "rust-exp.c" /* yacc.c:1646  */
+#line 733 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_LEQ, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2347 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 74:
-#line 658 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_operation (BINOP_ASSIGN, (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2251 "rust-exp.c" /* yacc.c:1646  */
+#line 736 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_GEQ, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2353 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 75:
-#line 663 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_compound_assignment ((yyvsp[-1].opcode), (yyvsp[-2].op), (yyvsp[0].op)); }
-#line 2257 "rust-exp.c" /* yacc.c:1646  */
+#line 739 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_LSH, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2359 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 76:
-#line 669 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = (yyvsp[-1].op); }
-#line 2263 "rust-exp.c" /* yacc.c:1646  */
+#line 742 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_RSH, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2365 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 77:
-#line 674 "rust-exp.y" /* yacc.c:1646  */
-    {
-		  (yyval.params) = OBSTACK_ZALLOC (&work_obstack, VEC (rust_op_ptr) *);
-		  make_cleanup (VEC_cleanup (rust_op_ptr), (yyval.params));
-		  VEC_safe_push (rust_op_ptr, *(yyval.params), (yyvsp[0].op));
-		}
-#line 2273 "rust-exp.c" /* yacc.c:1646  */
+#line 747 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_cast ((yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2371 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 78:
-#line 680 "rust-exp.y" /* yacc.c:1646  */
-    {
-		  VEC_safe_push (rust_op_ptr, *(yyvsp[-2].params), (yyvsp[0].op));
-		  (yyval.params) = (yyvsp[-2].params);
-		}
-#line 2282 "rust-exp.c" /* yacc.c:1646  */
+#line 752 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_operation (BINOP_ASSIGN, (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2377 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 79:
-#line 688 "rust-exp.y" /* yacc.c:1646  */
-    {
-		  /* The result can't be NULL.  */
-		  (yyval.params) = OBSTACK_ZALLOC (&work_obstack, VEC (rust_op_ptr) *);
-		  make_cleanup (VEC_cleanup (rust_op_ptr), (yyval.params));
-		}
-#line 2292 "rust-exp.c" /* yacc.c:1646  */
+#line 757 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_compound_assignment ((yyvsp[-1].opcode), (yyvsp[-2].op), (yyvsp[0].op)); }
+#line 2383 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 80:
-#line 694 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.params) = (yyvsp[0].params); }
-#line 2298 "rust-exp.c" /* yacc.c:1646  */
+#line 763 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = (yyvsp[-1].op); }
+#line 2389 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 81:
-#line 701 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.params) = (yyvsp[-1].params); }
-#line 2304 "rust-exp.c" /* yacc.c:1646  */
+#line 768 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  (yyval.params) = parser->new_op_vector ();
+		  (yyval.params)->push_back ((yyvsp[0].op));
+		}
+#line 2398 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 82:
-#line 706 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_call_ish (OP_FUNCALL, (yyvsp[-1].op), (yyvsp[0].params)); }
-#line 2310 "rust-exp.c" /* yacc.c:1646  */
+#line 773 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  (yyvsp[-2].params)->push_back ((yyvsp[0].op));
+		  (yyval.params) = (yyvsp[-2].params);
+		}
+#line 2407 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 83:
+#line 781 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  /* The result can't be NULL.  */
+		  (yyval.params) = parser->new_op_vector ();
+		}
+#line 2416 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 84:
+#line 786 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.params) = (yyvsp[0].params); }
+#line 2422 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 85:
-#line 716 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.depth) = 1; }
-#line 2316 "rust-exp.c" /* yacc.c:1646  */
+#line 791 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.params) = (yyvsp[-1].params); }
+#line 2428 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 86:
-#line 718 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.depth) = (yyvsp[-2].depth) + 1; }
-#line 2322 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 87:
-#line 723 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = (yyvsp[0].op); }
-#line 2328 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 88:
-#line 725 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_path ((yyvsp[0].sval), NULL); }
-#line 2334 "rust-exp.c" /* yacc.c:1646  */
+#line 796 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_call_ish (OP_FUNCALL, (yyvsp[-1].op), (yyvsp[0].params)); }
+#line 2434 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 89:
-#line 727 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_path (make_stoken ("self"), NULL); }
-#line 2340 "rust-exp.c" /* yacc.c:1646  */
+#line 806 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.depth) = 1; }
+#line 2440 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 90:
+#line 808 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.depth) = (yyvsp[-2].depth) + 1; }
+#line 2446 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 91:
-#line 733 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = super_name ((yyvsp[0].op), 0); }
-#line 2346 "rust-exp.c" /* yacc.c:1646  */
+#line 813 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = (yyvsp[0].op); }
+#line 2452 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 92:
-#line 735 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = super_name ((yyvsp[0].op), (yyvsp[-1].depth)); }
-#line 2352 "rust-exp.c" /* yacc.c:1646  */
+#line 815 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_path ((yyvsp[0].sval), NULL); }
+#line 2458 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 93:
-#line 737 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = crate_name ((yyvsp[0].op)); }
-#line 2358 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 94:
-#line 739 "rust-exp.y" /* yacc.c:1646  */
-    {
-		  /* This is a gdb extension to make it possible to
-		     refer to items in other crates.  It just bypasses
-		     adding the current crate to the front of the
-		     name.  */
-		  (yyval.op) = ast_path (rust_concat3 ("::", (yyvsp[0].op)->left.sval.ptr, NULL),
-				 (yyvsp[0].op)->right.params);
-		}
-#line 2371 "rust-exp.c" /* yacc.c:1646  */
+#line 817 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_path (make_stoken ("self"), NULL); }
+#line 2464 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 95:
-#line 751 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_path ((yyvsp[0].sval), NULL); }
-#line 2377 "rust-exp.c" /* yacc.c:1646  */
+#line 823 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->super_name ((yyvsp[0].op), 0); }
+#line 2470 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 96:
-#line 753 "rust-exp.y" /* yacc.c:1646  */
-    {
-		  (yyval.op) = ast_path (rust_concat3 ((yyvsp[-2].op)->left.sval.ptr, "::",
-					       (yyvsp[0].sval).ptr),
-				 NULL);
-		}
-#line 2387 "rust-exp.c" /* yacc.c:1646  */
+#line 825 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->super_name ((yyvsp[0].op), (yyvsp[-1].depth)); }
+#line 2476 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 97:
-#line 759 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_path ((yyvsp[-4].op)->left.sval, (yyvsp[-1].params)); }
-#line 2393 "rust-exp.c" /* yacc.c:1646  */
+#line 827 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->crate_name ((yyvsp[0].op)); }
+#line 2482 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 98:
-#line 761 "rust-exp.y" /* yacc.c:1646  */
-    {
-		  (yyval.op) = ast_path ((yyvsp[-4].op)->left.sval, (yyvsp[-1].params));
-		  rust_push_back ('>');
-		}
-#line 2402 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 100:
-#line 770 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = super_name ((yyvsp[0].op), 0); }
-#line 2408 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 101:
-#line 772 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = super_name ((yyvsp[0].op), (yyvsp[-1].depth)); }
-#line 2414 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 102:
-#line 774 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = crate_name ((yyvsp[0].op)); }
-#line 2420 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 103:
-#line 776 "rust-exp.y" /* yacc.c:1646  */
+#line 829 "rust-exp.y" /* yacc.c:1646  */
     {
 		  /* This is a gdb extension to make it possible to
 		     refer to items in other crates.  It just bypasses
 		     adding the current crate to the front of the
 		     name.  */
-		  (yyval.op) = ast_path (rust_concat3 ("::", (yyvsp[0].op)->left.sval.ptr, NULL),
-				 (yyvsp[0].op)->right.params);
+		  (yyval.op) = parser->ast_path (parser->concat3 ("::",
+							  (yyvsp[0].op)->left.sval.ptr,
+							  NULL),
+					 (yyvsp[0].op)->right.params);
 		}
-#line 2433 "rust-exp.c" /* yacc.c:1646  */
+#line 2497 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 99:
+#line 843 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_path ((yyvsp[0].sval), NULL); }
+#line 2503 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 100:
+#line 845 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  (yyval.op) = parser->ast_path (parser->concat3 ((yyvsp[-2].op)->left.sval.ptr,
+							  "::", (yyvsp[0].sval).ptr),
+					 NULL);
+		}
+#line 2513 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 101:
+#line 851 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_path ((yyvsp[-4].op)->left.sval, (yyvsp[-1].params)); }
+#line 2519 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 102:
+#line 853 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  (yyval.op) = parser->ast_path ((yyvsp[-4].op)->left.sval, (yyvsp[-1].params));
+		  rust_push_back ('>');
+		}
+#line 2528 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 104:
-#line 788 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_path ((yyvsp[0].sval), NULL); }
-#line 2439 "rust-exp.c" /* yacc.c:1646  */
+#line 862 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->super_name ((yyvsp[0].op), 0); }
+#line 2534 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 105:
-#line 790 "rust-exp.y" /* yacc.c:1646  */
-    {
-		  (yyval.op) = ast_path (rust_concat3 ((yyvsp[-2].op)->left.sval.ptr, "::",
-					       (yyvsp[0].sval).ptr),
-				 NULL);
-		}
-#line 2449 "rust-exp.c" /* yacc.c:1646  */
+#line 864 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->super_name ((yyvsp[0].op), (yyvsp[-1].depth)); }
+#line 2540 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 106:
+#line 866 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->crate_name ((yyvsp[0].op)); }
+#line 2546 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 107:
-#line 800 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_path ((yyvsp[-3].op)->left.sval, (yyvsp[-1].params)); }
-#line 2455 "rust-exp.c" /* yacc.c:1646  */
+#line 868 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  /* This is a gdb extension to make it possible to
+		     refer to items in other crates.  It just bypasses
+		     adding the current crate to the front of the
+		     name.  */
+		  (yyval.op) = parser->ast_path (parser->concat3 ("::",
+							  (yyvsp[0].op)->left.sval.ptr,
+							  NULL),
+					 (yyvsp[0].op)->right.params);
+		}
+#line 2561 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 108:
-#line 802 "rust-exp.y" /* yacc.c:1646  */
-    {
-		  (yyval.op) = ast_path ((yyvsp[-3].op)->left.sval, (yyvsp[-1].params));
-		  rust_push_back ('>');
-		}
-#line 2464 "rust-exp.c" /* yacc.c:1646  */
+#line 882 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_path ((yyvsp[0].sval), NULL); }
+#line 2567 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
-  case 110:
-#line 811 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_array_type ((yyvsp[-3].op), (yyvsp[-1].typed_val_int)); }
-#line 2470 "rust-exp.c" /* yacc.c:1646  */
+  case 109:
+#line 884 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  (yyval.op) = parser->ast_path (parser->concat3 ((yyvsp[-2].op)->left.sval.ptr,
+							  "::", (yyvsp[0].sval).ptr),
+					 NULL);
+		}
+#line 2577 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 111:
-#line 813 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_array_type ((yyvsp[-3].op), (yyvsp[-1].typed_val_int)); }
-#line 2476 "rust-exp.c" /* yacc.c:1646  */
+#line 894 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_path ((yyvsp[-3].op)->left.sval, (yyvsp[-1].params)); }
+#line 2583 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 112:
-#line 815 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_slice_type ((yyvsp[-1].op)); }
-#line 2482 "rust-exp.c" /* yacc.c:1646  */
-    break;
-
-  case 113:
-#line 817 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_reference_type ((yyvsp[0].op)); }
-#line 2488 "rust-exp.c" /* yacc.c:1646  */
+#line 896 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  (yyval.op) = parser->ast_path ((yyvsp[-3].op)->left.sval, (yyvsp[-1].params));
+		  rust_push_back ('>');
+		}
+#line 2592 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 114:
-#line 819 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_pointer_type ((yyvsp[0].op), 1); }
-#line 2494 "rust-exp.c" /* yacc.c:1646  */
+#line 905 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_array_type ((yyvsp[-3].op), (yyvsp[-1].typed_val_int)); }
+#line 2598 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 115:
-#line 821 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_pointer_type ((yyvsp[0].op), 0); }
-#line 2500 "rust-exp.c" /* yacc.c:1646  */
+#line 907 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_array_type ((yyvsp[-3].op), (yyvsp[-1].typed_val_int)); }
+#line 2604 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 116:
-#line 823 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_function_type ((yyvsp[0].op), (yyvsp[-3].params)); }
-#line 2506 "rust-exp.c" /* yacc.c:1646  */
+#line 909 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_slice_type ((yyvsp[-1].op)); }
+#line 2610 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 117:
-#line 825 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.op) = ast_tuple_type ((yyvsp[-1].params)); }
-#line 2512 "rust-exp.c" /* yacc.c:1646  */
+#line 911 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_reference_type ((yyvsp[0].op)); }
+#line 2616 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 118:
-#line 830 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.params) = NULL; }
-#line 2518 "rust-exp.c" /* yacc.c:1646  */
+#line 913 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_pointer_type ((yyvsp[0].op), 1); }
+#line 2622 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 119:
-#line 832 "rust-exp.y" /* yacc.c:1646  */
-    { (yyval.params) = (yyvsp[0].params); }
-#line 2524 "rust-exp.c" /* yacc.c:1646  */
+#line 915 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_pointer_type ((yyvsp[0].op), 0); }
+#line 2628 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 120:
-#line 837 "rust-exp.y" /* yacc.c:1646  */
-    {
-		  VEC (rust_op_ptr) **result
-		    = OBSTACK_ZALLOC (&work_obstack, VEC (rust_op_ptr) *);
-
-		  make_cleanup (VEC_cleanup (rust_op_ptr), result);
-		  VEC_safe_push (rust_op_ptr, *result, (yyvsp[0].op));
-		  (yyval.params) = result;
-		}
-#line 2537 "rust-exp.c" /* yacc.c:1646  */
+#line 917 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_function_type ((yyvsp[0].op), (yyvsp[-3].params)); }
+#line 2634 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
   case 121:
-#line 846 "rust-exp.y" /* yacc.c:1646  */
+#line 919 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.op) = parser->ast_tuple_type ((yyvsp[-1].params)); }
+#line 2640 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 122:
+#line 924 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.params) = NULL; }
+#line 2646 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 123:
+#line 926 "rust-exp.y" /* yacc.c:1646  */
+    { (yyval.params) = (yyvsp[0].params); }
+#line 2652 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 124:
+#line 931 "rust-exp.y" /* yacc.c:1646  */
     {
-		  VEC_safe_push (rust_op_ptr, *(yyvsp[-2].params), (yyvsp[0].op));
+		  rust_op_vector *result = parser->new_op_vector ();
+		  result->push_back ((yyvsp[0].op));
+		  (yyval.params) = result;
+		}
+#line 2662 "rust-exp.c.tmp" /* yacc.c:1646  */
+    break;
+
+  case 125:
+#line 937 "rust-exp.y" /* yacc.c:1646  */
+    {
+		  (yyvsp[-2].params)->push_back ((yyvsp[0].op));
 		  (yyval.params) = (yyvsp[-2].params);
 		}
-#line 2546 "rust-exp.c" /* yacc.c:1646  */
+#line 2671 "rust-exp.c.tmp" /* yacc.c:1646  */
     break;
 
 
-#line 2550 "rust-exp.c" /* yacc.c:1646  */
+#line 2675 "rust-exp.c.tmp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2595,7 +2720,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (YY_("syntax error"));
+      yyerror (parser, YY_("syntax error"));
 #else
 # define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
                                         yyssp, yytoken)
@@ -2622,7 +2747,7 @@ yyerrlab:
                 yymsgp = yymsg;
               }
           }
-        yyerror (yymsgp);
+        yyerror (parser, yymsgp);
         if (yysyntax_error_status == 2)
           goto yyexhaustedlab;
       }
@@ -2646,7 +2771,7 @@ yyerrlab:
       else
         {
           yydestruct ("Error: discarding",
-                      yytoken, &yylval);
+                      yytoken, &yylval, parser);
           yychar = YYEMPTY;
         }
     }
@@ -2702,7 +2827,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp);
+                  yystos[yystate], yyvsp, parser);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -2739,7 +2864,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (YY_("memory exhausted"));
+  yyerror (parser, YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -2751,7 +2876,7 @@ yyreturn:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval);
+                  yytoken, &yylval, parser);
     }
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
@@ -2760,7 +2885,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[*yyssp], yyvsp);
+                  yystos[*yyssp], yyvsp, parser);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -2773,7 +2898,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 852 "rust-exp.y" /* yacc.c:1906  */
+#line 943 "rust-exp.y" /* yacc.c:1906  */
 
 
 /* A struct of this type is used to describe a token.  */
@@ -2825,6 +2950,7 @@ static const struct token_info operator_tokens[] =
   { "&=", COMPOUND_ASSIGN, BINOP_BITWISE_AND },
   { "|=", COMPOUND_ASSIGN, BINOP_BITWISE_IOR },
   { "^=", COMPOUND_ASSIGN, BINOP_BITWISE_XOR },
+  { "..=", DOTDOTEQ, OP_NULL },
 
   { "::", COLONCOLON, OP_NULL },
   { "..", DOTDOT, OP_NULL },
@@ -2833,10 +2959,10 @@ static const struct token_info operator_tokens[] =
 
 /* Helper function to copy to the name obstack.  */
 
-static const char *
-rust_copy_name (const char *name, int len)
+const char *
+rust_parser::copy_name (const char *name, int len)
 {
-  return (const char *) obstack_copy0 (&work_obstack, name, len);
+  return (const char *) obstack_copy0 (&obstack, name, len);
 }
 
 /* Helper function to make an stoken from a C string.  */
@@ -2854,17 +2980,17 @@ make_stoken (const char *p)
 /* Helper function to concatenate three strings on the name
    obstack.  */
 
-static struct stoken
-rust_concat3 (const char *s1, const char *s2, const char *s3)
+struct stoken
+rust_parser::concat3 (const char *s1, const char *s2, const char *s3)
 {
-  return make_stoken (obconcat (&work_obstack, s1, s2, s3, (char *) NULL));
+  return make_stoken (obconcat (&obstack, s1, s2, s3, (char *) NULL));
 }
 
 /* Return an AST node referring to NAME, but relative to the crate's
    name.  */
 
-static const struct rust_op *
-crate_name (const struct rust_op *name)
+const struct rust_op *
+rust_parser::crate_name (const struct rust_op *name)
 {
   std::string crate = rust_crate_for_block (expression_context_block);
   struct stoken result;
@@ -2873,7 +2999,7 @@ crate_name (const struct rust_op *name)
 
   if (crate.empty ())
     error (_("Could not find crate for current location"));
-  result = make_stoken (obconcat (&work_obstack, "::", crate.c_str (), "::",
+  result = make_stoken (obconcat (&obstack, "::", crate.c_str (), "::",
 				  name->left.sval.ptr, (char *) NULL));
 
   return ast_path (result, name->right.params);
@@ -2883,8 +3009,8 @@ crate_name (const struct rust_op *name)
    is the base name and N_SUPERS is how many "super::"s were
    provided.  N_SUPERS can be zero.  */
 
-static const struct rust_op *
-super_name (const struct rust_op *ident, unsigned int n_supers)
+const struct rust_op *
+rust_parser::super_name (const struct rust_op *ident, unsigned int n_supers)
 {
   const char *scope = block_scope (expression_context_block);
   int offset;
@@ -2896,7 +3022,6 @@ super_name (const struct rust_op *ident, unsigned int n_supers)
 
   if (n_supers > 0)
     {
-      int i;
       int len;
       std::vector<int> offsets;
       unsigned int current_len;
@@ -2921,45 +3046,22 @@ super_name (const struct rust_op *ident, unsigned int n_supers)
   else
     offset = strlen (scope);
 
-  obstack_grow (&work_obstack, "::", 2);
-  obstack_grow (&work_obstack, scope, offset);
-  obstack_grow (&work_obstack, "::", 2);
-  obstack_grow0 (&work_obstack, ident->left.sval.ptr, ident->left.sval.length);
+  obstack_grow (&obstack, "::", 2);
+  obstack_grow (&obstack, scope, offset);
+  obstack_grow (&obstack, "::", 2);
+  obstack_grow0 (&obstack, ident->left.sval.ptr, ident->left.sval.length);
 
-  return ast_path (make_stoken ((const char *) obstack_finish (&work_obstack)),
+  return ast_path (make_stoken ((const char *) obstack_finish (&obstack)),
 		   ident->right.params);
 }
 
-/* A helper that updates innermost_block as appropriate.  */
+/* A helper that updates the innermost block as appropriate.  */
 
 static void
 update_innermost_block (struct block_symbol sym)
 {
-  if (symbol_read_needs_frame (sym.symbol)
-      && (innermost_block == NULL
-	  || contained_in (sym.block, innermost_block)))
-    innermost_block = sym.block;
-}
-
-/* A helper to look up a Rust type, or fail.  This only works for
-   types defined by rust_language_arch_info.  */
-
-static struct type *
-rust_type (const char *name)
-{
-  struct type *type;
-
-  /* When unit testing, we don't bother checking the types, so avoid a
-     possibly-failing lookup here.  */
-  if (unit_testing)
-    return NULL;
-
-  type = language_lookup_primitive_type (parse_language (pstate),
-					 parse_gdbarch (pstate),
-					 name);
-  if (type == NULL)
-    error (_("Could not find Rust type %s"), name);
-  return type;
+  if (symbol_read_needs_frame (sym.symbol))
+    innermost_block.update (sym);
 }
 
 /* Lex a hex number with at least MIN digits and at most MAX
@@ -3069,8 +3171,8 @@ lex_escape (int is_byte)
 
 /* Lex a character constant.  */
 
-static int
-lex_character (void)
+int
+rust_parser::lex_character (YYSTYPE *lvalp)
 {
   int is_byte = 0;
   uint32_t value;
@@ -3095,8 +3197,8 @@ lex_character (void)
     error (_("Unterminated character literal"));
   ++lexptr;
 
-  rustyylval.typed_val_int.val = value;
-  rustyylval.typed_val_int.type = rust_type (is_byte ? "u8" : "char");
+  lvalp->typed_val_int.val = value;
+  lvalp->typed_val_int.type = get_type (is_byte ? "u8" : "char");
 
   return INTEGER;
 }
@@ -3136,12 +3238,11 @@ ends_raw_string (const char *str, int n)
 
 /* Lex a string constant.  */
 
-static int
-lex_string (void)
+int
+rust_parser::lex_string (YYSTYPE *lvalp)
 {
   int is_byte = lexptr[0] == 'b';
   int raw_length;
-  int len_in_chars = 0;
 
   if (is_byte)
     ++lexptr;
@@ -3168,7 +3269,7 @@ lex_string (void)
 	  value = lexptr[0] & 0xff;
 	  if (is_byte && value > 127)
 	    error (_("Non-ASCII value in raw byte string"));
-	  obstack_1grow (&work_obstack, value);
+	  obstack_1grow (&obstack, value);
 
 	  ++lexptr;
 	}
@@ -3183,11 +3284,11 @@ lex_string (void)
 	  value = lex_escape (is_byte);
 
 	  if (is_byte)
-	    obstack_1grow (&work_obstack, value);
+	    obstack_1grow (&obstack, value);
 	  else
 	    convert_between_encodings ("UTF-32", "UTF-8", (gdb_byte *) &value,
 				       sizeof (value), sizeof (value),
-				       &work_obstack, translit_none);
+				       &obstack, translit_none);
 	}
       else if (lexptr[0] == '\0')
 	error (_("Unexpected EOF in string"));
@@ -3196,13 +3297,13 @@ lex_string (void)
 	  value = lexptr[0] & 0xff;
 	  if (is_byte && value > 127)
 	    error (_("Non-ASCII value in byte string"));
-	  obstack_1grow (&work_obstack, value);
+	  obstack_1grow (&obstack, value);
 	  ++lexptr;
 	}
     }
 
-  rustyylval.sval.length = obstack_object_size (&work_obstack);
-  rustyylval.sval.ptr = (const char *) obstack_finish (&work_obstack);
+  lvalp->sval.length = obstack_object_size (&obstack);
+  lvalp->sval.ptr = (const char *) obstack_finish (&obstack);
   return is_byte ? BYTESTRING : STRING;
 }
 
@@ -3234,8 +3335,8 @@ rust_identifier_start_p (char c)
 
 /* Lex an identifier.  */
 
-static int
-lex_identifier (void)
+int
+rust_parser::lex_identifier (YYSTYPE *lvalp)
 {
   const char *start = lexptr;
   unsigned int length;
@@ -3290,7 +3391,7 @@ lex_identifier (void)
     }
 
   if (token == NULL || (parse_completion && lexptr[0] == '\0'))
-    rustyylval.sval = make_stoken (rust_copy_name (start, length));
+    lvalp->sval = make_stoken (copy_name (start, length));
 
   if (parse_completion && lexptr[0] == '\0')
     {
@@ -3309,7 +3410,7 @@ lex_identifier (void)
 /* Lex an operator.  */
 
 static int
-lex_operator (void)
+lex_operator (YYSTYPE *lvalp)
 {
   const struct token_info *token = NULL;
   int i;
@@ -3327,7 +3428,7 @@ lex_operator (void)
 
   if (token != NULL)
     {
-      rustyylval.opcode = token->opcode;
+      lvalp->opcode = token->opcode;
       return token->value;
     }
 
@@ -3336,8 +3437,8 @@ lex_operator (void)
 
 /* Lex a number.  */
 
-static int
-lex_number (void)
+int
+rust_parser::lex_number (YYSTYPE *lvalp)
 {
   regmatch_t subexps[NUM_SUBEXPRESSIONS];
   int match;
@@ -3396,7 +3497,7 @@ lex_number (void)
   gdb_assert (subexps[0].rm_eo > 0);
   if (lexptr[subexps[0].rm_eo - 1] == '.')
     {
-      const char *next = skip_spaces_const (&lexptr[subexps[0].rm_eo]);
+      const char *next = skip_spaces (&lexptr[subexps[0].rm_eo]);
 
       if (rust_identifier_start_p (*next) || *next == '.')
 	{
@@ -3421,7 +3522,7 @@ lex_number (void)
     }
 
   /* Look up the type.  */
-  type = rust_type (type_name);
+  type = get_type (type_name);
 
   /* Copy the text of the number and remove the "_"s.  */
   std::string number;
@@ -3460,15 +3561,18 @@ lex_number (void)
 
       value = strtoul (number.c_str () + offset, NULL, radix);
       if (implicit_i32 && value >= ((uint64_t) 1) << 31)
-	type = rust_type ("i64");
+	type = get_type ("i64");
 
-      rustyylval.typed_val_int.val = value;
-      rustyylval.typed_val_int.type = type;
+      lvalp->typed_val_int.val = value;
+      lvalp->typed_val_int.type = type;
     }
   else
     {
-      rustyylval.typed_val_float.dval = strtod (number.c_str (), NULL);
-      rustyylval.typed_val_float.type = type;
+      lvalp->typed_val_float.type = type;
+      bool parsed = parse_float (number.c_str (), number.length (),
+				 lvalp->typed_val_float.type,
+				 lvalp->typed_val_float.val);
+      gdb_assert (parsed);
     }
 
   return is_integer ? (could_be_decimal ? DECIMAL_INTEGER : INTEGER) : FLOAT;
@@ -3477,7 +3581,7 @@ lex_number (void)
 /* The lexer.  */
 
 static int
-rustyylex (void)
+rustyylex (YYSTYPE *lvalp, rust_parser *parser)
 {
   /* Skip all leading whitespace.  */
   while (lexptr[0] == ' ' || lexptr[0] == '\t' || lexptr[0] == '\r'
@@ -3494,28 +3598,28 @@ rustyylex (void)
     {
       if (parse_completion)
 	{
-	  rustyylval.sval = make_stoken ("");
+	  lvalp->sval = make_stoken ("");
 	  return COMPLETE;
 	}
       return 0;
     }
 
   if (lexptr[0] >= '0' && lexptr[0] <= '9')
-    return lex_number ();
+    return parser->lex_number (lvalp);
   else if (lexptr[0] == 'b' && lexptr[1] == '\'')
-    return lex_character ();
+    return parser->lex_character (lvalp);
   else if (lexptr[0] == 'b' && lexptr[1] == '"')
-    return lex_string ();
+    return parser->lex_string (lvalp);
   else if (lexptr[0] == 'b' && starts_raw_string (lexptr + 1))
-    return lex_string ();
+    return parser->lex_string (lvalp);
   else if (starts_raw_string (lexptr))
-    return lex_string ();
+    return parser->lex_string (lvalp);
   else if (rust_identifier_start_p (lexptr[0]))
-    return lex_identifier ();
+    return parser->lex_identifier (lvalp);
   else if (lexptr[0] == '"')
-    return lex_string ();
+    return parser->lex_string (lvalp);
   else if (lexptr[0] == '\'')
-    return lex_character ();
+    return parser->lex_character (lvalp);
   else if (lexptr[0] == '}' || lexptr[0] == ']')
     {
       /* Falls through to lex_operator.  */
@@ -3529,7 +3633,7 @@ rustyylex (void)
   else if (lexptr[0] == ',' && comma_terminates && paren_depth == 0)
     return 0;
 
-  return lex_operator ();
+  return lex_operator (lvalp);
 }
 
 /* Push back a single character to be re-lexed.  */
@@ -3548,11 +3652,11 @@ rust_push_back (char c)
 
 /* Make an arbitrary operation and fill in the fields.  */
 
-static const struct rust_op *
-ast_operation (enum exp_opcode opcode, const struct rust_op *left,
-		const struct rust_op *right)
+const struct rust_op *
+rust_parser::ast_operation (enum exp_opcode opcode, const struct rust_op *left,
+			    const struct rust_op *right)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
   result->opcode = opcode;
   result->left.op = left;
@@ -3563,11 +3667,12 @@ ast_operation (enum exp_opcode opcode, const struct rust_op *left,
 
 /* Make a compound assignment operation.  */
 
-static const struct rust_op *
-ast_compound_assignment (enum exp_opcode opcode, const struct rust_op *left,
-			  const struct rust_op *right)
+const struct rust_op *
+rust_parser::ast_compound_assignment (enum exp_opcode opcode,
+				      const struct rust_op *left,
+				      const struct rust_op *right)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
   result->opcode = opcode;
   result->compound_assignment = 1;
@@ -3579,10 +3684,10 @@ ast_compound_assignment (enum exp_opcode opcode, const struct rust_op *left,
 
 /* Make a typed integer literal operation.  */
 
-static const struct rust_op *
-ast_literal (struct typed_val_int val)
+const struct rust_op *
+rust_parser::ast_literal (struct typed_val_int val)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
   result->opcode = OP_LONG;
   result->left.typed_val_int = val;
@@ -3592,12 +3697,12 @@ ast_literal (struct typed_val_int val)
 
 /* Make a typed floating point literal operation.  */
 
-static const struct rust_op *
-ast_dliteral (struct typed_val_float val)
+const struct rust_op *
+rust_parser::ast_dliteral (struct typed_val_float val)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
-  result->opcode = OP_DOUBLE;
+  result->opcode = OP_FLOAT;
   result->left.typed_val_float = val;
 
   return result;
@@ -3605,18 +3710,18 @@ ast_dliteral (struct typed_val_float val)
 
 /* Make a unary operation.  */
 
-static const struct rust_op *
-ast_unary (enum exp_opcode opcode, const struct rust_op *expr)
+const struct rust_op *
+rust_parser::ast_unary (enum exp_opcode opcode, const struct rust_op *expr)
 {
   return ast_operation (opcode, expr, NULL);
 }
 
 /* Make a cast operation.  */
 
-static const struct rust_op *
-ast_cast (const struct rust_op *expr, const struct rust_op *type)
+const struct rust_op *
+rust_parser::ast_cast (const struct rust_op *expr, const struct rust_op *type)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
   result->opcode = UNOP_CAST;
   result->left.op = expr;
@@ -3629,11 +3734,11 @@ ast_cast (const struct rust_op *expr, const struct rust_op *type)
    when lowering we may discover that it actually represents the
    creation of a tuple struct.  */
 
-static const struct rust_op *
-ast_call_ish (enum exp_opcode opcode, const struct rust_op *expr,
-	       VEC (rust_op_ptr) **params)
+const struct rust_op *
+rust_parser::ast_call_ish (enum exp_opcode opcode, const struct rust_op *expr,
+			   rust_op_vector *params)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
   result->opcode = opcode;
   result->left.op = expr;
@@ -3644,10 +3749,10 @@ ast_call_ish (enum exp_opcode opcode, const struct rust_op *expr,
 
 /* Make a structure creation operation.  */
 
-static const struct rust_op *
-ast_struct (const struct rust_op *name, VEC (set_field) **fields)
+const struct rust_op *
+rust_parser::ast_struct (const struct rust_op *name, rust_set_vector *fields)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
   result->opcode = OP_AGGREGATE;
   result->left.op = name;
@@ -3658,10 +3763,10 @@ ast_struct (const struct rust_op *name, VEC (set_field) **fields)
 
 /* Make an identifier path.  */
 
-static const struct rust_op *
-ast_path (struct stoken path, VEC (rust_op_ptr) **params)
+const struct rust_op *
+rust_parser::ast_path (struct stoken path, rust_op_vector *params)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
   result->opcode = OP_VAR_VALUE;
   result->left.sval = path;
@@ -3672,10 +3777,10 @@ ast_path (struct stoken path, VEC (rust_op_ptr) **params)
 
 /* Make a string constant operation.  */
 
-static const struct rust_op *
-ast_string (struct stoken str)
+const struct rust_op *
+rust_parser::ast_string (struct stoken str)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
   result->opcode = OP_STRING;
   result->left.sval = str;
@@ -3685,10 +3790,11 @@ ast_string (struct stoken str)
 
 /* Make a field expression.  */
 
-static const struct rust_op *
-ast_structop (const struct rust_op *left, const char *name, int completing)
+const struct rust_op *
+rust_parser::ast_structop (const struct rust_op *left, const char *name,
+			   int completing)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
   result->opcode = STRUCTOP_STRUCT;
   result->completing = completing;
@@ -3700,11 +3806,11 @@ ast_structop (const struct rust_op *left, const char *name, int completing)
 
 /* Make an anonymous struct operation, like 'x.0'.  */
 
-static const struct rust_op *
-ast_structop_anonymous (const struct rust_op *left,
-			 struct typed_val_int number)
+const struct rust_op *
+rust_parser::ast_structop_anonymous (const struct rust_op *left,
+				     struct typed_val_int number)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
   result->opcode = STRUCTOP_ANONYMOUS;
   result->left.op = left;
@@ -3715,12 +3821,14 @@ ast_structop_anonymous (const struct rust_op *left,
 
 /* Make a range operation.  */
 
-static const struct rust_op *
-ast_range (const struct rust_op *lhs, const struct rust_op *rhs)
+const struct rust_op *
+rust_parser::ast_range (const struct rust_op *lhs, const struct rust_op *rhs,
+			bool inclusive)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
   result->opcode = OP_RANGE;
+  result->inclusive = inclusive;
   result->left.op = lhs;
   result->right.op = rhs;
 
@@ -3729,10 +3837,10 @@ ast_range (const struct rust_op *lhs, const struct rust_op *rhs)
 
 /* A helper function to make a type-related AST node.  */
 
-static struct rust_op *
-ast_basic_type (enum type_code typecode)
+struct rust_op *
+rust_parser::ast_basic_type (enum type_code typecode)
 {
-  struct rust_op *result = OBSTACK_ZALLOC (&work_obstack, struct rust_op);
+  struct rust_op *result = OBSTACK_ZALLOC (&obstack, struct rust_op);
 
   result->opcode = OP_TYPE;
   result->typecode = typecode;
@@ -3741,8 +3849,9 @@ ast_basic_type (enum type_code typecode)
 
 /* Create an AST node describing an array type.  */
 
-static const struct rust_op *
-ast_array_type (const struct rust_op *lhs, struct typed_val_int val)
+const struct rust_op *
+rust_parser::ast_array_type (const struct rust_op *lhs,
+			     struct typed_val_int val)
 {
   struct rust_op *result = ast_basic_type (TYPE_CODE_ARRAY);
 
@@ -3753,8 +3862,8 @@ ast_array_type (const struct rust_op *lhs, struct typed_val_int val)
 
 /* Create an AST node describing a reference type.  */
 
-static const struct rust_op *
-ast_slice_type (const struct rust_op *type)
+const struct rust_op *
+rust_parser::ast_slice_type (const struct rust_op *type)
 {
   /* Use TYPE_CODE_COMPLEX just because it is handy.  */
   struct rust_op *result = ast_basic_type (TYPE_CODE_COMPLEX);
@@ -3765,8 +3874,8 @@ ast_slice_type (const struct rust_op *type)
 
 /* Create an AST node describing a reference type.  */
 
-static const struct rust_op *
-ast_reference_type (const struct rust_op *type)
+const struct rust_op *
+rust_parser::ast_reference_type (const struct rust_op *type)
 {
   struct rust_op *result = ast_basic_type (TYPE_CODE_REF);
 
@@ -3776,8 +3885,8 @@ ast_reference_type (const struct rust_op *type)
 
 /* Create an AST node describing a pointer type.  */
 
-static const struct rust_op *
-ast_pointer_type (const struct rust_op *type, int is_mut)
+const struct rust_op *
+rust_parser::ast_pointer_type (const struct rust_op *type, int is_mut)
 {
   struct rust_op *result = ast_basic_type (TYPE_CODE_PTR);
 
@@ -3788,8 +3897,9 @@ ast_pointer_type (const struct rust_op *type, int is_mut)
 
 /* Create an AST node describing a function type.  */
 
-static const struct rust_op *
-ast_function_type (const struct rust_op *rtype, VEC (rust_op_ptr) **params)
+const struct rust_op *
+rust_parser::ast_function_type (const struct rust_op *rtype,
+				rust_op_vector *params)
 {
   struct rust_op *result = ast_basic_type (TYPE_CODE_FUNC);
 
@@ -3800,8 +3910,8 @@ ast_function_type (const struct rust_op *rtype, VEC (rust_op_ptr) **params)
 
 /* Create an AST node describing a tuple type.  */
 
-static const struct rust_op *
-ast_tuple_type (VEC (rust_op_ptr) **params)
+const struct rust_op *
+rust_parser::ast_tuple_type (rust_op_vector *params)
 {
   struct rust_op *result = ast_basic_type (TYPE_CODE_STRUCT);
 
@@ -3843,8 +3953,8 @@ rust_lookup_symbol (const char *name, const struct block *block,
 
 /* Look up a type, following Rust namespace conventions.  */
 
-static struct type *
-rust_lookup_type (const char *name, const struct block *block)
+struct type *
+rust_parser::rust_lookup_type (const char *name, const struct block *block)
 {
   struct block_symbol result;
   struct type *type;
@@ -3858,49 +3968,41 @@ rust_lookup_type (const char *name, const struct block *block)
       return SYMBOL_TYPE (result.symbol);
     }
 
-  type = lookup_typename (parse_language (pstate), parse_gdbarch (pstate),
-			  name, NULL, 1);
+  type = lookup_typename (language (), arch (), name, NULL, 1);
   if (type != NULL)
     return type;
 
   /* Last chance, try a built-in type.  */
-  return language_lookup_primitive_type (parse_language (pstate),
-					 parse_gdbarch (pstate),
-					 name);
+  return language_lookup_primitive_type (language (), arch (), name);
 }
-
-static struct type *convert_ast_to_type (struct parser_state *state,
-					 const struct rust_op *operation);
-static const char *convert_name (struct parser_state *state,
-				 const struct rust_op *operation);
 
 /* Convert a vector of rust_ops representing types to a vector of
    types.  */
 
-static std::vector<struct type *>
-convert_params_to_types (struct parser_state *state, VEC (rust_op_ptr) *params)
+std::vector<struct type *>
+rust_parser::convert_params_to_types (rust_op_vector *params)
 {
-  int i;
-  const struct rust_op *op;
   std::vector<struct type *> result;
 
-  for (i = 0; VEC_iterate (rust_op_ptr, params, i, op); ++i)
-    result.push_back (convert_ast_to_type (state, op));
+  if (params != nullptr)
+    {
+      for (const rust_op *op : *params)
+        result.push_back (convert_ast_to_type (op));
+    }
 
   return result;
 }
 
 /* Convert a rust_op representing a type to a struct type *.  */
 
-static struct type *
-convert_ast_to_type (struct parser_state *state,
-		     const struct rust_op *operation)
+struct type *
+rust_parser::convert_ast_to_type (const struct rust_op *operation)
 {
   struct type *type, *result = NULL;
 
   if (operation->opcode == OP_VAR_VALUE)
     {
-      const char *varname = convert_name (state, operation);
+      const char *varname = convert_name (operation);
 
       result = rust_lookup_type (varname, expression_context_block);
       if (result == NULL)
@@ -3913,7 +4015,7 @@ convert_ast_to_type (struct parser_state *state,
   switch (operation->typecode)
     {
     case TYPE_CODE_ARRAY:
-      type = convert_ast_to_type (state, operation->left.op);
+      type = convert_ast_to_type (operation->left.op);
       if (operation->right.typed_val_int.val < 0)
 	error (_("Negative array length"));
       result = lookup_array_range_type (type, 0,
@@ -3922,9 +4024,9 @@ convert_ast_to_type (struct parser_state *state,
 
     case TYPE_CODE_COMPLEX:
       {
-	struct type *usize = rust_type ("usize");
+	struct type *usize = get_type ("usize");
 
-	type = convert_ast_to_type (state, operation->left.op);
+	type = convert_ast_to_type (operation->left.op);
 	result = rust_slice_type ("&[*gdb*]", type, usize);
       }
       break;
@@ -3932,17 +4034,17 @@ convert_ast_to_type (struct parser_state *state,
     case TYPE_CODE_REF:
     case TYPE_CODE_PTR:
       /* For now we treat &x and *x identically.  */
-      type = convert_ast_to_type (state, operation->left.op);
+      type = convert_ast_to_type (operation->left.op);
       result = lookup_pointer_type (type);
       break;
 
     case TYPE_CODE_FUNC:
       {
 	std::vector<struct type *> args
-	  (convert_params_to_types (state, *operation->right.params));
+	  (convert_params_to_types (operation->right.params));
 	struct type **argtypes = NULL;
 
-	type = convert_ast_to_type (state, operation->left.op);
+	type = convert_ast_to_type (operation->left.op);
 	if (!args.empty ())
 	  argtypes = args.data ();
 
@@ -3956,23 +4058,22 @@ convert_ast_to_type (struct parser_state *state,
     case TYPE_CODE_STRUCT:
       {
 	std::vector<struct type *> args
-	  (convert_params_to_types (state, *operation->left.params));
+	  (convert_params_to_types (operation->left.params));
 	int i;
-	struct type *type;
 	const char *name;
 
-	obstack_1grow (&work_obstack, '(');
+	obstack_1grow (&obstack, '(');
 	for (i = 0; i < args.size (); ++i)
 	  {
 	    std::string type_name = type_to_string (args[i]);
 
 	    if (i > 0)
-	      obstack_1grow (&work_obstack, ',');
-	    obstack_grow_str (&work_obstack, type_name.c_str ());
+	      obstack_1grow (&obstack, ',');
+	    obstack_grow_str (&obstack, type_name.c_str ());
 	  }
 
-	obstack_grow_str0 (&work_obstack, ")");
-	name = (const char *) obstack_finish (&work_obstack);
+	obstack_grow_str0 (&obstack, ")");
+	name = (const char *) obstack_finish (&obstack);
 
 	/* We don't allow creating new tuple types (yet), but we do
 	   allow looking up existing tuple types.  */
@@ -3994,8 +4095,8 @@ convert_ast_to_type (struct parser_state *state,
    name.  This applies generic arguments as needed.  The returned name
    is allocated on the work obstack.  */
 
-static const char *
-convert_name (struct parser_state *state, const struct rust_op *operation)
+const char *
+rust_parser::convert_name (const struct rust_op *operation)
 {
   int i;
 
@@ -4005,90 +4106,90 @@ convert_name (struct parser_state *state, const struct rust_op *operation)
     return operation->left.sval.ptr;
 
   std::vector<struct type *> types
-    (convert_params_to_types (state, *operation->right.params));
+    (convert_params_to_types (operation->right.params));
 
-  obstack_grow_str (&work_obstack, operation->left.sval.ptr);
-  obstack_1grow (&work_obstack, '<');
+  obstack_grow_str (&obstack, operation->left.sval.ptr);
+  obstack_1grow (&obstack, '<');
   for (i = 0; i < types.size (); ++i)
     {
       std::string type_name = type_to_string (types[i]);
 
       if (i > 0)
-	obstack_1grow (&work_obstack, ',');
+	obstack_1grow (&obstack, ',');
 
-      obstack_grow_str (&work_obstack, type_name.c_str ());
+      obstack_grow_str (&obstack, type_name.c_str ());
     }
-  obstack_grow_str0 (&work_obstack, ">");
+  obstack_grow_str0 (&obstack, ">");
 
-  return (const char *) obstack_finish (&work_obstack);
+  return (const char *) obstack_finish (&obstack);
 }
-
-static void convert_ast_to_expression (struct parser_state *state,
-				       const struct rust_op *operation,
-				       const struct rust_op *top);
 
 /* A helper function that converts a vec of rust_ops to a gdb
    expression.  */
 
-static void
-convert_params_to_expression (struct parser_state *state,
-			      VEC (rust_op_ptr) *params,
-			      const struct rust_op *top)
+void
+rust_parser::convert_params_to_expression (rust_op_vector *params,
+					   const struct rust_op *top)
 {
-  int i;
-  rust_op_ptr elem;
-
-  for (i = 0; VEC_iterate (rust_op_ptr, params, i, elem); ++i)
-    convert_ast_to_expression (state, elem, top);
+  for (const rust_op *elem : *params)
+    convert_ast_to_expression (elem, top);
 }
 
 /* Lower a rust_op to a gdb expression.  STATE is the parser state.
    OPERATION is the operation to lower.  TOP is a pointer to the
    top-most operation; it is used to handle the special case where the
    top-most expression is an identifier and can be optionally lowered
-   to OP_TYPE.  */
+   to OP_TYPE.  WANT_TYPE is a flag indicating that, if the expression
+   is the name of a type, then emit an OP_TYPE for it (rather than
+   erroring).  If WANT_TYPE is set, then the similar TOP handling is
+   not done.  */
 
-static void
-convert_ast_to_expression (struct parser_state *state,
-			   const struct rust_op *operation,
-			   const struct rust_op *top)
+void
+rust_parser::convert_ast_to_expression (const struct rust_op *operation,
+					const struct rust_op *top,
+					bool want_type)
 {
   switch (operation->opcode)
     {
     case OP_LONG:
-      write_exp_elt_opcode (state, OP_LONG);
-      write_exp_elt_type (state, operation->left.typed_val_int.type);
-      write_exp_elt_longcst (state, operation->left.typed_val_int.val);
-      write_exp_elt_opcode (state, OP_LONG);
+      write_exp_elt_opcode (pstate, OP_LONG);
+      write_exp_elt_type (pstate, operation->left.typed_val_int.type);
+      write_exp_elt_longcst (pstate, operation->left.typed_val_int.val);
+      write_exp_elt_opcode (pstate, OP_LONG);
       break;
 
-    case OP_DOUBLE:
-      write_exp_elt_opcode (state, OP_DOUBLE);
-      write_exp_elt_type (state, operation->left.typed_val_float.type);
-      write_exp_elt_dblcst (state, operation->left.typed_val_float.dval);
-      write_exp_elt_opcode (state, OP_DOUBLE);
+    case OP_FLOAT:
+      write_exp_elt_opcode (pstate, OP_FLOAT);
+      write_exp_elt_type (pstate, operation->left.typed_val_float.type);
+      write_exp_elt_floatcst (pstate, operation->left.typed_val_float.val);
+      write_exp_elt_opcode (pstate, OP_FLOAT);
       break;
 
     case STRUCTOP_STRUCT:
       {
-	convert_ast_to_expression (state, operation->left.op, top);
+	convert_ast_to_expression (operation->left.op, top);
 
 	if (operation->completing)
-	  mark_struct_expression (state);
-	write_exp_elt_opcode (state, STRUCTOP_STRUCT);
-	write_exp_string (state, operation->right.sval);
-	write_exp_elt_opcode (state, STRUCTOP_STRUCT);
+	  mark_struct_expression (pstate);
+	write_exp_elt_opcode (pstate, STRUCTOP_STRUCT);
+	write_exp_string (pstate, operation->right.sval);
+	write_exp_elt_opcode (pstate, STRUCTOP_STRUCT);
       }
       break;
 
     case STRUCTOP_ANONYMOUS:
       {
-	convert_ast_to_expression (state, operation->left.op, top);
+	convert_ast_to_expression (operation->left.op, top);
 
-	write_exp_elt_opcode (state, STRUCTOP_ANONYMOUS);
-	write_exp_elt_longcst (state, operation->right.typed_val_int.val);
-	write_exp_elt_opcode (state, STRUCTOP_ANONYMOUS);
+	write_exp_elt_opcode (pstate, STRUCTOP_ANONYMOUS);
+	write_exp_elt_longcst (pstate, operation->right.typed_val_int.val);
+	write_exp_elt_opcode (pstate, STRUCTOP_ANONYMOUS);
       }
+      break;
+
+    case UNOP_SIZEOF:
+      convert_ast_to_expression (operation->left.op, top, true);
+      write_exp_elt_opcode (pstate, UNOP_SIZEOF);
       break;
 
     case UNOP_PLUS:
@@ -4096,9 +4197,8 @@ convert_ast_to_expression (struct parser_state *state,
     case UNOP_COMPLEMENT:
     case UNOP_IND:
     case UNOP_ADDR:
-    case UNOP_SIZEOF:
-      convert_ast_to_expression (state, operation->left.op, top);
-      write_exp_elt_opcode (state, operation->opcode);
+      convert_ast_to_expression (operation->left.op, top);
+      write_exp_elt_opcode (pstate, operation->opcode);
       break;
 
     case BINOP_SUBSCRIPT:
@@ -4123,43 +4223,43 @@ convert_ast_to_expression (struct parser_state *state,
     case BINOP_RSH:
     case BINOP_ASSIGN:
     case OP_RUST_ARRAY:
-      convert_ast_to_expression (state, operation->left.op, top);
-      convert_ast_to_expression (state, operation->right.op, top);
+      convert_ast_to_expression (operation->left.op, top);
+      convert_ast_to_expression (operation->right.op, top);
       if (operation->compound_assignment)
 	{
-	  write_exp_elt_opcode (state, BINOP_ASSIGN_MODIFY);
-	  write_exp_elt_opcode (state, operation->opcode);
-	  write_exp_elt_opcode (state, BINOP_ASSIGN_MODIFY);
+	  write_exp_elt_opcode (pstate, BINOP_ASSIGN_MODIFY);
+	  write_exp_elt_opcode (pstate, operation->opcode);
+	  write_exp_elt_opcode (pstate, BINOP_ASSIGN_MODIFY);
 	}
       else
-	write_exp_elt_opcode (state, operation->opcode);
+	write_exp_elt_opcode (pstate, operation->opcode);
 
       if (operation->compound_assignment
 	  || operation->opcode == BINOP_ASSIGN)
 	{
 	  struct type *type;
 
-	  type = language_lookup_primitive_type (parse_language (state),
-						 parse_gdbarch (state),
+	  type = language_lookup_primitive_type (parse_language (pstate),
+						 parse_gdbarch (pstate),
 						 "()");
 
-	  write_exp_elt_opcode (state, OP_LONG);
-	  write_exp_elt_type (state, type);
-	  write_exp_elt_longcst (state, 0);
-	  write_exp_elt_opcode (state, OP_LONG);
+	  write_exp_elt_opcode (pstate, OP_LONG);
+	  write_exp_elt_type (pstate, type);
+	  write_exp_elt_longcst (pstate, 0);
+	  write_exp_elt_opcode (pstate, OP_LONG);
 
-	  write_exp_elt_opcode (state, BINOP_COMMA);
+	  write_exp_elt_opcode (pstate, BINOP_COMMA);
 	}
       break;
 
     case UNOP_CAST:
       {
-	struct type *type = convert_ast_to_type (state, operation->right.op);
+	struct type *type = convert_ast_to_type (operation->right.op);
 
-	convert_ast_to_expression (state, operation->left.op, top);
-	write_exp_elt_opcode (state, UNOP_CAST);
-	write_exp_elt_type (state, type);
-	write_exp_elt_opcode (state, UNOP_CAST);
+	convert_ast_to_expression (operation->left.op, top);
+	write_exp_elt_opcode (pstate, UNOP_CAST);
+	write_exp_elt_type (pstate, type);
+	write_exp_elt_opcode (pstate, UNOP_CAST);
       }
       break;
 
@@ -4168,63 +4268,55 @@ convert_ast_to_expression (struct parser_state *state,
 	if (operation->left.op->opcode == OP_VAR_VALUE)
 	  {
 	    struct type *type;
-	    const char *varname = convert_name (state, operation->left.op);
+	    const char *varname = convert_name (operation->left.op);
 
 	    type = rust_lookup_type (varname, expression_context_block);
 	    if (type != NULL)
 	      {
 		/* This is actually a tuple struct expression, not a
 		   call expression.  */
-		rust_op_ptr elem;
-		int i;
-		VEC (rust_op_ptr) *params = *operation->right.params;
+		rust_op_vector *params = operation->right.params;
 
 		if (TYPE_CODE (type) != TYPE_CODE_NAMESPACE)
 		  {
 		    if (!rust_tuple_struct_type_p (type))
 		      error (_("Type %s is not a tuple struct"), varname);
 
-		    for (i = 0;
-			 VEC_iterate (rust_op_ptr, params, i, elem);
-			 ++i)
+		    for (int i = 0; i < params->size (); ++i)
 		      {
 			char *cell = get_print_cell ();
 
 			xsnprintf (cell, PRINT_CELL_SIZE, "__%d", i);
-			write_exp_elt_opcode (state, OP_NAME);
-			write_exp_string (state, make_stoken (cell));
-			write_exp_elt_opcode (state, OP_NAME);
+			write_exp_elt_opcode (pstate, OP_NAME);
+			write_exp_string (pstate, make_stoken (cell));
+			write_exp_elt_opcode (pstate, OP_NAME);
 
-			convert_ast_to_expression (state, elem, top);
+			convert_ast_to_expression ((*params)[i], top);
 		      }
 
-		    write_exp_elt_opcode (state, OP_AGGREGATE);
-		    write_exp_elt_type (state, type);
-		    write_exp_elt_longcst (state,
-					   2 * VEC_length (rust_op_ptr,
-							   params));
-		    write_exp_elt_opcode (state, OP_AGGREGATE);
+		    write_exp_elt_opcode (pstate, OP_AGGREGATE);
+		    write_exp_elt_type (pstate, type);
+		    write_exp_elt_longcst (pstate, 2 * params->size ());
+		    write_exp_elt_opcode (pstate, OP_AGGREGATE);
 		    break;
 		  }
 	      }
 	  }
-	convert_ast_to_expression (state, operation->left.op, top);
-	convert_params_to_expression (state, *operation->right.params, top);
-	write_exp_elt_opcode (state, OP_FUNCALL);
-	write_exp_elt_longcst (state, VEC_length (rust_op_ptr,
-						  *operation->right.params));
-	write_exp_elt_longcst (state, OP_FUNCALL);
+	convert_ast_to_expression (operation->left.op, top);
+	convert_params_to_expression (operation->right.params, top);
+	write_exp_elt_opcode (pstate, OP_FUNCALL);
+	write_exp_elt_longcst (pstate, operation->right.params->size ());
+	write_exp_elt_longcst (pstate, OP_FUNCALL);
       }
       break;
 
     case OP_ARRAY:
       gdb_assert (operation->left.op == NULL);
-      convert_params_to_expression (state, *operation->right.params, top);
-      write_exp_elt_opcode (state, OP_ARRAY);
-      write_exp_elt_longcst (state, 0);
-      write_exp_elt_longcst (state, VEC_length (rust_op_ptr,
-						*operation->right.params) - 1);
-      write_exp_elt_longcst (state, OP_ARRAY);
+      convert_params_to_expression (operation->right.params, top);
+      write_exp_elt_opcode (pstate, OP_ARRAY);
+      write_exp_elt_longcst (pstate, 0);
+      write_exp_elt_longcst (pstate, operation->right.params->size () - 1);
+      write_exp_elt_longcst (pstate, OP_ARRAY);
       break;
 
     case OP_VAR_VALUE:
@@ -4234,80 +4326,88 @@ convert_ast_to_expression (struct parser_state *state,
 
 	if (operation->left.sval.ptr[0] == '$')
 	  {
-	    write_dollar_variable (state, operation->left.sval);
+	    write_dollar_variable (pstate, operation->left.sval);
 	    break;
 	  }
 
-	varname = convert_name (state, operation);
+	varname = convert_name (operation);
 	sym = rust_lookup_symbol (varname, expression_context_block,
 				  VAR_DOMAIN);
-	if (sym.symbol != NULL)
+	if (sym.symbol != NULL && SYMBOL_CLASS (sym.symbol) != LOC_TYPEDEF)
 	  {
-	    write_exp_elt_opcode (state, OP_VAR_VALUE);
-	    write_exp_elt_block (state, sym.block);
-	    write_exp_elt_sym (state, sym.symbol);
-	    write_exp_elt_opcode (state, OP_VAR_VALUE);
+	    write_exp_elt_opcode (pstate, OP_VAR_VALUE);
+	    write_exp_elt_block (pstate, sym.block);
+	    write_exp_elt_sym (pstate, sym.symbol);
+	    write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 	  }
 	else
 	  {
-	    struct type *type;
+	    struct type *type = NULL;
 
-	    type = rust_lookup_type (varname, expression_context_block);
+	    if (sym.symbol != NULL)
+	      {
+		gdb_assert (SYMBOL_CLASS (sym.symbol) == LOC_TYPEDEF);
+		type = SYMBOL_TYPE (sym.symbol);
+	      }
+	    if (type == NULL)
+	      type = rust_lookup_type (varname, expression_context_block);
 	    if (type == NULL)
 	      error (_("No symbol '%s' in current context"), varname);
 
-	    if (TYPE_CODE (type) == TYPE_CODE_STRUCT
+	    if (!want_type
+		&& TYPE_CODE (type) == TYPE_CODE_STRUCT
 		&& TYPE_NFIELDS (type) == 0)
 	      {
 		/* A unit-like struct.  */
-		write_exp_elt_opcode (state, OP_AGGREGATE);
-		write_exp_elt_type (state, type);
-		write_exp_elt_longcst (state, 0);
-		write_exp_elt_opcode (state, OP_AGGREGATE);
+		write_exp_elt_opcode (pstate, OP_AGGREGATE);
+		write_exp_elt_type (pstate, type);
+		write_exp_elt_longcst (pstate, 0);
+		write_exp_elt_opcode (pstate, OP_AGGREGATE);
 	      }
-	    else if (operation == top)
+	    else if (want_type || operation == top)
 	      {
-		write_exp_elt_opcode (state, OP_TYPE);
-		write_exp_elt_type (state, type);
-		write_exp_elt_opcode (state, OP_TYPE);
-		break;
+		write_exp_elt_opcode (pstate, OP_TYPE);
+		write_exp_elt_type (pstate, type);
+		write_exp_elt_opcode (pstate, OP_TYPE);
 	      }
+	    else
+	      error (_("Found type '%s', which can't be "
+		       "evaluated in this context"),
+		     varname);
 	  }
       }
       break;
 
     case OP_AGGREGATE:
       {
-	int i;
 	int length;
-	struct set_field *init;
-	VEC (set_field) *fields = *operation->right.field_inits;
+	rust_set_vector *fields = operation->right.field_inits;
 	struct type *type;
 	const char *name;
 
 	length = 0;
-	for (i = 0; VEC_iterate (set_field, fields, i, init); ++i)
+	for (const set_field &init : *fields)
 	  {
-	    if (init->name.ptr != NULL)
+	    if (init.name.ptr != NULL)
 	      {
-		write_exp_elt_opcode (state, OP_NAME);
-		write_exp_string (state, init->name);
-		write_exp_elt_opcode (state, OP_NAME);
+		write_exp_elt_opcode (pstate, OP_NAME);
+		write_exp_string (pstate, init.name);
+		write_exp_elt_opcode (pstate, OP_NAME);
 		++length;
 	      }
 
-	    convert_ast_to_expression (state, init->init, top);
+	    convert_ast_to_expression (init.init, top);
 	    ++length;
 
-	    if (init->name.ptr == NULL)
+	    if (init.name.ptr == NULL)
 	      {
 		/* This is handled differently from Ada in our
 		   evaluator.  */
-		write_exp_elt_opcode (state, OP_OTHERS);
+		write_exp_elt_opcode (pstate, OP_OTHERS);
 	      }
 	  }
 
-	name = convert_name (state, operation->left.op);
+	name = convert_name (operation->left.op);
 	type = rust_lookup_type (name, expression_context_block);
 	if (type == NULL)
 	  error (_("Could not find type '%s'"), operation->left.sval.ptr);
@@ -4317,18 +4417,18 @@ convert_ast_to_expression (struct parser_state *state,
 	    || rust_tuple_struct_type_p (type))
 	  error (_("Struct expression applied to non-struct type"));
 
-	write_exp_elt_opcode (state, OP_AGGREGATE);
-	write_exp_elt_type (state, type);
-	write_exp_elt_longcst (state, length);
-	write_exp_elt_opcode (state, OP_AGGREGATE);
+	write_exp_elt_opcode (pstate, OP_AGGREGATE);
+	write_exp_elt_type (pstate, type);
+	write_exp_elt_longcst (pstate, length);
+	write_exp_elt_opcode (pstate, OP_AGGREGATE);
       }
       break;
 
     case OP_STRING:
       {
-	write_exp_elt_opcode (state, OP_STRING);
-	write_exp_string (state, operation->left.sval);
-	write_exp_elt_opcode (state, OP_STRING);
+	write_exp_elt_opcode (pstate, OP_STRING);
+	write_exp_string (pstate, operation->left.sval);
+	write_exp_elt_opcode (pstate, OP_STRING);
       }
       break;
 
@@ -4338,23 +4438,32 @@ convert_ast_to_expression (struct parser_state *state,
 
 	if (operation->left.op != NULL)
 	  {
-	    convert_ast_to_expression (state, operation->left.op, top);
+	    convert_ast_to_expression (operation->left.op, top);
 	    kind = HIGH_BOUND_DEFAULT;
 	  }
 	if (operation->right.op != NULL)
 	  {
-	    convert_ast_to_expression (state, operation->right.op, top);
+	    convert_ast_to_expression (operation->right.op, top);
 	    if (kind == BOTH_BOUND_DEFAULT)
-	      kind = LOW_BOUND_DEFAULT;
+	      kind = (operation->inclusive
+		      ? LOW_BOUND_DEFAULT : LOW_BOUND_DEFAULT_EXCLUSIVE);
 	    else
 	      {
 		gdb_assert (kind == HIGH_BOUND_DEFAULT);
-		kind = NONE_BOUND_DEFAULT;
+		kind = (operation->inclusive
+			? NONE_BOUND_DEFAULT : NONE_BOUND_DEFAULT_EXCLUSIVE);
 	      }
 	  }
-	write_exp_elt_opcode (state, OP_RANGE);
-	write_exp_elt_longcst (state, kind);
-	write_exp_elt_opcode (state, OP_RANGE);
+	else
+	  {
+	    /* Nothing should make an inclusive range without an upper
+	       bound.  */
+	    gdb_assert (!operation->inclusive);
+	  }
+
+	write_exp_elt_opcode (pstate, OP_RANGE);
+	write_exp_elt_longcst (pstate, kind);
+	write_exp_elt_opcode (pstate, OP_RANGE);
       }
       break;
 
@@ -4371,35 +4480,26 @@ int
 rust_parse (struct parser_state *state)
 {
   int result;
-  struct cleanup *cleanup;
 
-  obstack_init (&work_obstack);
-  cleanup = make_cleanup_obstack_free (&work_obstack);
-  rust_ast = NULL;
+  /* This sets various globals and also clears them on
+     destruction.  */
+  rust_parser parser (state);
 
-  pstate = state;
-  result = rustyyparse ();
+  result = rustyyparse (&parser);
 
-  if (!result || (parse_completion && rust_ast != NULL))
-    {
-      const struct rust_op *ast = rust_ast;
+  if (!result || (parse_completion && parser.rust_ast != NULL))
+    parser.convert_ast_to_expression (parser.rust_ast, parser.rust_ast);
 
-      rust_ast = NULL;
-      gdb_assert (ast != NULL);
-      convert_ast_to_expression (state, ast, ast);
-    }
-
-  do_cleanups (cleanup);
   return result;
 }
 
 /* The parser error handler.  */
 
-void
-rustyyerror (const char *msg)
+static void
+rustyyerror (rust_parser *parser, const char *msg)
 {
   const char *where = prev_lexptr ? prev_lexptr : lexptr;
-  error (_("%s in expression, near `%s'."), (msg ? msg : "Error"), where);
+  error (_("%s in expression, near `%s'."), msg, where);
 }
 
 
@@ -4420,20 +4520,20 @@ rust_lex_test_init (const char *input)
    returns the lexer data for this token.  */
 
 static RUSTSTYPE
-rust_lex_test_one (const char *input, int expected)
+rust_lex_test_one (rust_parser *parser, const char *input, int expected)
 {
   int token;
   RUSTSTYPE result;
 
   rust_lex_test_init (input);
 
-  token = rustyylex ();
+  token = rustyylex (&result, parser);
   SELF_CHECK (token == expected);
-  result = rustyylval;
 
   if (token)
     {
-      token = rustyylex ();
+      RUSTSTYPE ignore;
+      token = rustyylex (&ignore, parser);
       SELF_CHECK (token == 0);
     }
 
@@ -4443,21 +4543,22 @@ rust_lex_test_one (const char *input, int expected)
 /* Test that INPUT lexes as the integer VALUE.  */
 
 static void
-rust_lex_int_test (const char *input, int value, int kind)
+rust_lex_int_test (rust_parser *parser, const char *input, int value, int kind)
 {
-  RUSTSTYPE result = rust_lex_test_one (input, kind);
+  RUSTSTYPE result = rust_lex_test_one (parser, input, kind);
   SELF_CHECK (result.typed_val_int.val == value);
 }
 
 /* Test that INPUT throws an exception with text ERR.  */
 
 static void
-rust_lex_exception_test (const char *input, const char *err)
+rust_lex_exception_test (rust_parser *parser, const char *input,
+			 const char *err)
 {
   TRY
     {
       /* The "kind" doesn't matter.  */
-      rust_lex_test_one (input, DECIMAL_INTEGER);
+      rust_lex_test_one (parser, input, DECIMAL_INTEGER);
       SELF_CHECK (0);
     }
   CATCH (except, RETURN_MASK_ERROR)
@@ -4471,9 +4572,10 @@ rust_lex_exception_test (const char *input, const char *err)
    VALUE.  KIND holds the expected token kind.  */
 
 static void
-rust_lex_stringish_test (const char *input, const char *value, int kind)
+rust_lex_stringish_test (rust_parser *parser, const char *input,
+			 const char *value, int kind)
 {
-  RUSTSTYPE result = rust_lex_test_one (input, kind);
+  RUSTSTYPE result = rust_lex_test_one (parser, input, kind);
   SELF_CHECK (result.sval.length == strlen (value));
   SELF_CHECK (strncmp (result.sval.ptr, value, result.sval.length) == 0);
 }
@@ -4481,7 +4583,8 @@ rust_lex_stringish_test (const char *input, const char *value, int kind)
 /* Helper to test that a string parses as a given token sequence.  */
 
 static void
-rust_lex_test_sequence (const char *input, int len, const int expected[])
+rust_lex_test_sequence (rust_parser *parser, const char *input, int len,
+			const int expected[])
 {
   int i;
 
@@ -4490,7 +4593,8 @@ rust_lex_test_sequence (const char *input, int len, const int expected[])
 
   for (i = 0; i < len; ++i)
     {
-      int token = rustyylex ();
+      RUSTSTYPE ignore;
+      int token = rustyylex (&ignore, parser);
 
       SELF_CHECK (token == expected[i]);
     }
@@ -4499,30 +4603,34 @@ rust_lex_test_sequence (const char *input, int len, const int expected[])
 /* Tests for an integer-parsing corner case.  */
 
 static void
-rust_lex_test_trailing_dot (void)
+rust_lex_test_trailing_dot (rust_parser *parser)
 {
   const int expected1[] = { DECIMAL_INTEGER, '.', IDENT, '(', ')', 0 };
   const int expected2[] = { INTEGER, '.', IDENT, '(', ')', 0 };
   const int expected3[] = { FLOAT, EQEQ, '(', ')', 0 };
   const int expected4[] = { DECIMAL_INTEGER, DOTDOT, DECIMAL_INTEGER, 0 };
 
-  rust_lex_test_sequence ("23.g()", ARRAY_SIZE (expected1), expected1);
-  rust_lex_test_sequence ("23_0.g()", ARRAY_SIZE (expected2), expected2);
-  rust_lex_test_sequence ("23.==()", ARRAY_SIZE (expected3), expected3);
-  rust_lex_test_sequence ("23..25", ARRAY_SIZE (expected4), expected4);
+  rust_lex_test_sequence (parser, "23.g()", ARRAY_SIZE (expected1), expected1);
+  rust_lex_test_sequence (parser, "23_0.g()", ARRAY_SIZE (expected2),
+			  expected2);
+  rust_lex_test_sequence (parser, "23.==()", ARRAY_SIZE (expected3),
+			  expected3);
+  rust_lex_test_sequence (parser, "23..25", ARRAY_SIZE (expected4), expected4);
 }
 
 /* Tests of completion.  */
 
 static void
-rust_lex_test_completion (void)
+rust_lex_test_completion (rust_parser *parser)
 {
   const int expected[] = { IDENT, '.', COMPLETE, 0 };
 
   parse_completion = 1;
 
-  rust_lex_test_sequence ("something.wha", ARRAY_SIZE (expected), expected);
-  rust_lex_test_sequence ("something.", ARRAY_SIZE (expected), expected);
+  rust_lex_test_sequence (parser, "something.wha", ARRAY_SIZE (expected),
+			  expected);
+  rust_lex_test_sequence (parser, "something.", ARRAY_SIZE (expected),
+			  expected);
 
   parse_completion = 0;
 }
@@ -4530,22 +4638,23 @@ rust_lex_test_completion (void)
 /* Test pushback.  */
 
 static void
-rust_lex_test_push_back (void)
+rust_lex_test_push_back (rust_parser *parser)
 {
   int token;
+  RUSTSTYPE lval;
 
   rust_lex_test_init (">>=");
 
-  token = rustyylex ();
+  token = rustyylex (&lval, parser);
   SELF_CHECK (token == COMPOUND_ASSIGN);
-  SELF_CHECK (rustyylval.opcode == BINOP_RSH);
+  SELF_CHECK (lval.opcode == BINOP_RSH);
 
   rust_push_back ('=');
 
-  token = rustyylex ();
+  token = rustyylex (&lval, parser);
   SELF_CHECK (token == '=');
 
-  token = rustyylex ();
+  token = rustyylex (&lval, parser);
   SELF_CHECK (token == 0);
 }
 
@@ -4556,99 +4665,101 @@ rust_lex_tests (void)
 {
   int i;
 
-  obstack_init (&work_obstack);
-  unit_testing = 1;
+  // Set up dummy "parser", so that rust_type works.
+  struct parser_state ps (0, &rust_language_defn, target_gdbarch ());
+  rust_parser parser (&ps);
 
-  rust_lex_test_one ("", 0);
-  rust_lex_test_one ("    \t  \n \r  ", 0);
-  rust_lex_test_one ("thread 23", 0);
-  rust_lex_test_one ("task 23", 0);
-  rust_lex_test_one ("th 104", 0);
-  rust_lex_test_one ("ta 97", 0);
+  rust_lex_test_one (&parser, "", 0);
+  rust_lex_test_one (&parser, "    \t  \n \r  ", 0);
+  rust_lex_test_one (&parser, "thread 23", 0);
+  rust_lex_test_one (&parser, "task 23", 0);
+  rust_lex_test_one (&parser, "th 104", 0);
+  rust_lex_test_one (&parser, "ta 97", 0);
 
-  rust_lex_int_test ("'z'", 'z', INTEGER);
-  rust_lex_int_test ("'\\xff'", 0xff, INTEGER);
-  rust_lex_int_test ("'\\u{1016f}'", 0x1016f, INTEGER);
-  rust_lex_int_test ("b'z'", 'z', INTEGER);
-  rust_lex_int_test ("b'\\xfe'", 0xfe, INTEGER);
-  rust_lex_int_test ("b'\\xFE'", 0xfe, INTEGER);
-  rust_lex_int_test ("b'\\xfE'", 0xfe, INTEGER);
+  rust_lex_int_test (&parser, "'z'", 'z', INTEGER);
+  rust_lex_int_test (&parser, "'\\xff'", 0xff, INTEGER);
+  rust_lex_int_test (&parser, "'\\u{1016f}'", 0x1016f, INTEGER);
+  rust_lex_int_test (&parser, "b'z'", 'z', INTEGER);
+  rust_lex_int_test (&parser, "b'\\xfe'", 0xfe, INTEGER);
+  rust_lex_int_test (&parser, "b'\\xFE'", 0xfe, INTEGER);
+  rust_lex_int_test (&parser, "b'\\xfE'", 0xfe, INTEGER);
 
   /* Test all escapes in both modes.  */
-  rust_lex_int_test ("'\\n'", '\n', INTEGER);
-  rust_lex_int_test ("'\\r'", '\r', INTEGER);
-  rust_lex_int_test ("'\\t'", '\t', INTEGER);
-  rust_lex_int_test ("'\\\\'", '\\', INTEGER);
-  rust_lex_int_test ("'\\0'", '\0', INTEGER);
-  rust_lex_int_test ("'\\''", '\'', INTEGER);
-  rust_lex_int_test ("'\\\"'", '"', INTEGER);
+  rust_lex_int_test (&parser, "'\\n'", '\n', INTEGER);
+  rust_lex_int_test (&parser, "'\\r'", '\r', INTEGER);
+  rust_lex_int_test (&parser, "'\\t'", '\t', INTEGER);
+  rust_lex_int_test (&parser, "'\\\\'", '\\', INTEGER);
+  rust_lex_int_test (&parser, "'\\0'", '\0', INTEGER);
+  rust_lex_int_test (&parser, "'\\''", '\'', INTEGER);
+  rust_lex_int_test (&parser, "'\\\"'", '"', INTEGER);
 
-  rust_lex_int_test ("b'\\n'", '\n', INTEGER);
-  rust_lex_int_test ("b'\\r'", '\r', INTEGER);
-  rust_lex_int_test ("b'\\t'", '\t', INTEGER);
-  rust_lex_int_test ("b'\\\\'", '\\', INTEGER);
-  rust_lex_int_test ("b'\\0'", '\0', INTEGER);
-  rust_lex_int_test ("b'\\''", '\'', INTEGER);
-  rust_lex_int_test ("b'\\\"'", '"', INTEGER);
+  rust_lex_int_test (&parser, "b'\\n'", '\n', INTEGER);
+  rust_lex_int_test (&parser, "b'\\r'", '\r', INTEGER);
+  rust_lex_int_test (&parser, "b'\\t'", '\t', INTEGER);
+  rust_lex_int_test (&parser, "b'\\\\'", '\\', INTEGER);
+  rust_lex_int_test (&parser, "b'\\0'", '\0', INTEGER);
+  rust_lex_int_test (&parser, "b'\\''", '\'', INTEGER);
+  rust_lex_int_test (&parser, "b'\\\"'", '"', INTEGER);
 
-  rust_lex_exception_test ("'z", "Unterminated character literal");
-  rust_lex_exception_test ("b'\\x0'", "Not enough hex digits seen");
-  rust_lex_exception_test ("b'\\u{0}'", "Unicode escape in byte literal");
-  rust_lex_exception_test ("'\\x0'", "Not enough hex digits seen");
-  rust_lex_exception_test ("'\\u0'", "Missing '{' in Unicode escape");
-  rust_lex_exception_test ("'\\u{0", "Missing '}' in Unicode escape");
-  rust_lex_exception_test ("'\\u{0000007}", "Overlong hex escape");
-  rust_lex_exception_test ("'\\u{}", "Not enough hex digits seen");
-  rust_lex_exception_test ("'\\Q'", "Invalid escape \\Q in literal");
-  rust_lex_exception_test ("b'\\Q'", "Invalid escape \\Q in literal");
+  rust_lex_exception_test (&parser, "'z", "Unterminated character literal");
+  rust_lex_exception_test (&parser, "b'\\x0'", "Not enough hex digits seen");
+  rust_lex_exception_test (&parser, "b'\\u{0}'",
+			   "Unicode escape in byte literal");
+  rust_lex_exception_test (&parser, "'\\x0'", "Not enough hex digits seen");
+  rust_lex_exception_test (&parser, "'\\u0'", "Missing '{' in Unicode escape");
+  rust_lex_exception_test (&parser, "'\\u{0", "Missing '}' in Unicode escape");
+  rust_lex_exception_test (&parser, "'\\u{0000007}", "Overlong hex escape");
+  rust_lex_exception_test (&parser, "'\\u{}", "Not enough hex digits seen");
+  rust_lex_exception_test (&parser, "'\\Q'", "Invalid escape \\Q in literal");
+  rust_lex_exception_test (&parser, "b'\\Q'", "Invalid escape \\Q in literal");
 
-  rust_lex_int_test ("23", 23, DECIMAL_INTEGER);
-  rust_lex_int_test ("2_344__29", 234429, INTEGER);
-  rust_lex_int_test ("0x1f", 0x1f, INTEGER);
-  rust_lex_int_test ("23usize", 23, INTEGER);
-  rust_lex_int_test ("23i32", 23, INTEGER);
-  rust_lex_int_test ("0x1_f", 0x1f, INTEGER);
-  rust_lex_int_test ("0b1_101011__", 0x6b, INTEGER);
-  rust_lex_int_test ("0o001177i64", 639, INTEGER);
+  rust_lex_int_test (&parser, "23", 23, DECIMAL_INTEGER);
+  rust_lex_int_test (&parser, "2_344__29", 234429, INTEGER);
+  rust_lex_int_test (&parser, "0x1f", 0x1f, INTEGER);
+  rust_lex_int_test (&parser, "23usize", 23, INTEGER);
+  rust_lex_int_test (&parser, "23i32", 23, INTEGER);
+  rust_lex_int_test (&parser, "0x1_f", 0x1f, INTEGER);
+  rust_lex_int_test (&parser, "0b1_101011__", 0x6b, INTEGER);
+  rust_lex_int_test (&parser, "0o001177i64", 639, INTEGER);
 
-  rust_lex_test_trailing_dot ();
+  rust_lex_test_trailing_dot (&parser);
 
-  rust_lex_test_one ("23.", FLOAT);
-  rust_lex_test_one ("23.99f32", FLOAT);
-  rust_lex_test_one ("23e7", FLOAT);
-  rust_lex_test_one ("23E-7", FLOAT);
-  rust_lex_test_one ("23e+7", FLOAT);
-  rust_lex_test_one ("23.99e+7f64", FLOAT);
-  rust_lex_test_one ("23.82f32", FLOAT);
+  rust_lex_test_one (&parser, "23.", FLOAT);
+  rust_lex_test_one (&parser, "23.99f32", FLOAT);
+  rust_lex_test_one (&parser, "23e7", FLOAT);
+  rust_lex_test_one (&parser, "23E-7", FLOAT);
+  rust_lex_test_one (&parser, "23e+7", FLOAT);
+  rust_lex_test_one (&parser, "23.99e+7f64", FLOAT);
+  rust_lex_test_one (&parser, "23.82f32", FLOAT);
 
-  rust_lex_stringish_test ("hibob", "hibob", IDENT);
-  rust_lex_stringish_test ("hibob__93", "hibob__93", IDENT);
-  rust_lex_stringish_test ("thread", "thread", IDENT);
+  rust_lex_stringish_test (&parser, "hibob", "hibob", IDENT);
+  rust_lex_stringish_test (&parser, "hibob__93", "hibob__93", IDENT);
+  rust_lex_stringish_test (&parser, "thread", "thread", IDENT);
 
-  rust_lex_stringish_test ("\"string\"", "string", STRING);
-  rust_lex_stringish_test ("\"str\\ting\"", "str\ting", STRING);
-  rust_lex_stringish_test ("\"str\\\"ing\"", "str\"ing", STRING);
-  rust_lex_stringish_test ("r\"str\\ing\"", "str\\ing", STRING);
-  rust_lex_stringish_test ("r#\"str\\ting\"#", "str\\ting", STRING);
-  rust_lex_stringish_test ("r###\"str\\\"ing\"###", "str\\\"ing", STRING);
+  rust_lex_stringish_test (&parser, "\"string\"", "string", STRING);
+  rust_lex_stringish_test (&parser, "\"str\\ting\"", "str\ting", STRING);
+  rust_lex_stringish_test (&parser, "\"str\\\"ing\"", "str\"ing", STRING);
+  rust_lex_stringish_test (&parser, "r\"str\\ing\"", "str\\ing", STRING);
+  rust_lex_stringish_test (&parser, "r#\"str\\ting\"#", "str\\ting", STRING);
+  rust_lex_stringish_test (&parser, "r###\"str\\\"ing\"###", "str\\\"ing",
+			   STRING);
 
-  rust_lex_stringish_test ("b\"string\"", "string", BYTESTRING);
-  rust_lex_stringish_test ("b\"\x73tring\"", "string", BYTESTRING);
-  rust_lex_stringish_test ("b\"str\\\"ing\"", "str\"ing", BYTESTRING);
-  rust_lex_stringish_test ("br####\"\\x73tring\"####", "\\x73tring",
+  rust_lex_stringish_test (&parser, "b\"string\"", "string", BYTESTRING);
+  rust_lex_stringish_test (&parser, "b\"\x73tring\"", "string", BYTESTRING);
+  rust_lex_stringish_test (&parser, "b\"str\\\"ing\"", "str\"ing", BYTESTRING);
+  rust_lex_stringish_test (&parser, "br####\"\\x73tring\"####", "\\x73tring",
 			   BYTESTRING);
 
   for (i = 0; i < ARRAY_SIZE (identifier_tokens); ++i)
-    rust_lex_test_one (identifier_tokens[i].name, identifier_tokens[i].value);
+    rust_lex_test_one (&parser, identifier_tokens[i].name,
+		       identifier_tokens[i].value);
 
   for (i = 0; i < ARRAY_SIZE (operator_tokens); ++i)
-    rust_lex_test_one (operator_tokens[i].name, operator_tokens[i].value);
+    rust_lex_test_one (&parser, operator_tokens[i].name,
+		       operator_tokens[i].value);
 
-  rust_lex_test_completion ();
-  rust_lex_test_push_back ();
-
-  obstack_free (&work_obstack, NULL);
-  unit_testing = 0;
+  rust_lex_test_completion (&parser);
+  rust_lex_test_push_back (&parser);
 }
 
 #endif /* GDB_SELF_TEST */
@@ -4662,6 +4773,6 @@ _initialize_rust_exp (void)
   gdb_assert (code == 0);
 
 #if GDB_SELF_TEST
-  register_self_test (rust_lex_tests);
+  selftests::register_test ("rust-lex", rust_lex_tests);
 #endif
 }
