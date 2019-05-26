@@ -1,8 +1,8 @@
 /* ft32-specific support for 32-bit ELF.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
    Copied from elf32-moxie.c which is..
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
