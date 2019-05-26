@@ -152,9 +152,6 @@ zfs_znode_cache_destructor(void *buf, void *arg)
 {
 	znode_t *zp = buf;
 
-#ifdef __NetBSD__
-	zp = arg;
-#endif
 	ASSERT(!POINTER_IS_VALID(zp->z_zfsvfs));
 	ASSERT(ZTOV(zp) == NULL);
 #ifndef __NetBSD__

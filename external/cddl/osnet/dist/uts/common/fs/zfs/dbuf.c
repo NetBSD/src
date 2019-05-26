@@ -153,9 +153,6 @@ dbuf_dest(void *vdb, void *unused)
 {
 	dmu_buf_impl_t *db = vdb;
 
-#ifdef __NetBSD__
-	db = unused;
-#endif
 	mutex_destroy(&db->db_mtx);
 	cv_destroy(&db->db_changed);
 	ASSERT(!multilist_link_active(&db->db_cache_link));

@@ -168,9 +168,6 @@ dnode_dest(void *arg, void *unused)
 	int i;
 	dnode_t *dn = arg;
 
-#ifdef __NetBSD__
-	dn = unused;
-#endif
 	rw_destroy(&dn->dn_struct_rwlock);
 	mutex_destroy(&dn->dn_mtx);
 	mutex_destroy(&dn->dn_dbufs_mtx);
