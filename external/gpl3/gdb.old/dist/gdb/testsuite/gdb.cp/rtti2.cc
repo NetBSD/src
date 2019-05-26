@@ -1,6 +1,6 @@
 /* Code to go along with tests in rtti.exp.
    
-   Copyright 2003-2016 Free Software Foundation, Inc.
+   Copyright 2003-2017 Free Software Foundation, Inc.
 
    Contributed by David Carlton <carlton@bactrian.org> and by Kealia,
    Inc.

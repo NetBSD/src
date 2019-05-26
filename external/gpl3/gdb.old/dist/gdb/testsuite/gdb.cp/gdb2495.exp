@@ -1,4 +1,4 @@
-# Copyright 2009-2016 Free Software Foundation, Inc.
+# Copyright 2009-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,11 +54,11 @@ if [get_compiler_info "c++"] {
 # Some targets can't do function calls, so don't even bother with this
 # test.
 if [target_info exists gdb,cannot_call_functions] {
-    unsupported "This target can not call functions"
+    unsupported "this target can not call functions"
     continue
 }
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
 
@@ -80,7 +80,7 @@ gdb_test "p exceptions.throw_function_with_handler()" " = 2"
 # does not handle it.  It should be rewound.
 gdb_test "p exceptions.throw_function()" \
     "The program being debugged entered a std::terminate call, .*" \
-    "Call a function that raises an exception without a handler."
+    "call a function that raises an exception without a handler."
 
 # Make sure that after rewinding we are back at the call parent.
 gdb_test "bt" \
@@ -94,21 +94,17 @@ gdb_test "info breakpoints" \
     "gdb2495\.cc.*"
 
 # Turn off this new behaviour.
-gdb_test_multiple "set unwind-on-terminating-exception off" \
-    "Turn unwind-on-terminating-exception off" {
-    -re "$gdb_prompt $" {pass "set unwinn-on-terminating-exception off"}
-    timeout {fail "(timeout) set unwind-on-terminating-exception off"}
-}
+gdb_test_no_output "set unwind-on-terminating-exception off"
 
 # Check that it is turned off.
 gdb_test "show unwind-on-terminating-exception" \
     "exception is unhandled while in a call dummy is off.*" \
-    "Turn off unwind on terminating exception flag"
+    "turn off unwind on terminating exception flag"
 
 # Check that the old behaviour is restored.
 gdb_test "p exceptions.throw_function()" \
     "The program being debugged was signaled while in a function called .*" \
-    "Call a function that raises an exception with unwinding off.."
+    "call a function that raises an exception with unwinding off.."
 
 # Restart the inferior back at main.
 if ![runto_main] then {
@@ -121,15 +117,12 @@ if ![runto_main] then {
 # behaviour; it should not.  Test both on and off states.
 
 # Turn on unwind on signal behaviour.
-gdb_test_multiple "set unwindonsignal on" "Turn unwindonsignal on" {
-    -re "$gdb_prompt $" {pass "set unwindonsignal on"}
-    timeout {fail "(timeout) set unwindonsignal on"}
-}
+gdb_test_no_output "set unwindonsignal on"
 
 # Check that it is turned on.
 gdb_test "show unwindonsignal" \
     "signal is received while in a call dummy is on.*" \
-    "Turn on unwind on signal"
+    "turn on unwind on signal"
 
 # Check to see if new behaviour interferes with
 # normal signal handling in inferior function calls.
@@ -137,15 +130,12 @@ gdb_test "p exceptions.raise_signal(1)" \
     "To change this behavior use \"set unwindonsignal off\".*"
 
 # And reverse - turn off again.
-gdb_test_multiple "set unwindonsignal off" "Turn unwindonsignal off" {
-    -re "$gdb_prompt $" {pass "set unwindonsignal off"}
-    timeout {fail "(timeout) set unwindonsignal off"}
-}
+gdb_test_no_output "set unwindonsignal off"
 
 # Check that it is actually turned off.
 gdb_test "show unwindonsignal" \
     "signal is received while in a call dummy is off.*" \
-    "Turn off unwind on signal"
+    "turn off unwind on signal"
 
 # Check to see if new behaviour interferes with
 # normal signal handling in inferior function calls.

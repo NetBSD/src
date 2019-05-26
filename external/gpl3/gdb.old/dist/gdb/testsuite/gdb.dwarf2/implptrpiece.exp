@@ -1,4 +1,4 @@
-# Copyright 2013-2016 Free Software Foundation, Inc.
+# Copyright 2013-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ Dwarf::assemble $asm_file {
 		{name s}
 		{type :$struct_label}
 		{location {
-		    const1u 1
+		    const2u 0x5678
 		    stack_value
 		    piece 2
 		    const1u 2
@@ -119,4 +119,17 @@ if ![runto_main] {
     return -1
 }
 
-gdb_test "print/d p\[-1\]" " = 0"
+# Determine endianness.
+set endian "little"
+gdb_test_multiple "show endian" "determine endianness" {
+    -re ".* (big|little) endian.*$gdb_prompt $" {
+	set endian $expect_out(1,string)
+	pass "endianness: $endian"
+    }
+}
+
+# Access the second byte of s through an implicit pointer to the third
+# byte of s, using a negative offset.  Compare that to the second byte of
+# the short integer 0x5678 in target byte order.
+switch $endian { little {set val 0x56} big {set val 0x78} }
+gdb_test "p/x p\[-1\]" " = $val"

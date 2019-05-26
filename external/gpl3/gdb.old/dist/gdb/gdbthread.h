@@ -1,5 +1,5 @@
 /* Multi-process/thread control defs for GDB, the GNU debugger.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
    Contributed by Lynx Real-Time Systems, Inc.  Los Gatos, CA.
    
 
@@ -179,7 +179,32 @@ typedef VEC (value_ptr) value_vec;
 
 struct thread_info
 {
-  struct thread_info *next;
+public:
+  explicit thread_info (inferior *inf, ptid_t ptid);
+  ~thread_info ();
+
+  bool deletable () const
+  {
+    /* If this is the current thread, or there's code out there that
+       relies on it existing (m_refcount > 0) we can't delete yet.  */
+    return (m_refcount == 0 && !ptid_equal (ptid, inferior_ptid));
+  }
+
+  /* Increase the refcount.  */
+  void incref ()
+  {
+    gdb_assert (m_refcount >= 0);
+    m_refcount++;
+  }
+
+  /* Decrease the refcount.  */
+  void decref ()
+  {
+    m_refcount--;
+    gdb_assert (m_refcount >= 0);
+  }
+
+  struct thread_info *next = NULL;
   ptid_t ptid;			/* "Actual process id";
 				    In fact, this may be overloaded with 
 				    kernel thread id, etc.  */
@@ -226,13 +251,13 @@ struct thread_info
 
   /* The name of the thread, as specified by the user.  This is NULL
      if the thread does not have a user-given name.  */
-  char *name;
+  char *name = NULL;
 
   /* Non-zero means the thread is executing.  Note: this is different
      from saying that there is an active target and we are stopped at
      a breakpoint, for instance.  This is a real indicator whether the
      thread is off and running.  */
-  int executing;
+  int executing = 0;
 
   /* Non-zero if this thread is resumed from infrun's perspective.
      Note that a thread can be marked both as not-executing and
@@ -241,30 +266,25 @@ struct thread_info
      thread really run until that wait status has been processed, but
      we should not process that wait status if we didn't try to let
      the thread run.  */
-  int resumed;
+  int resumed = 0;
 
   /* Frontend view of the thread state.  Note that the THREAD_RUNNING/
      THREAD_STOPPED states are different from EXECUTING.  When the
      thread is stopped internally while handling an internal event,
      like a software single-step breakpoint, EXECUTING will be false,
      but STATE will still be THREAD_RUNNING.  */
-  enum thread_state state;
-
-  /* If this is > 0, then it means there's code out there that relies
-     on this thread being listed.  Don't delete it from the lists even
-     if we detect it exiting.  */
-  int refcount;
+  enum thread_state state = THREAD_STOPPED;
 
   /* State of GDB control of inferior thread execution.
      See `struct thread_control_state'.  */
-  struct thread_control_state control;
+  thread_control_state control {};
 
   /* State of inferior thread to restore after GDB is done with an inferior
      call.  See `struct thread_suspend_state'.  */
-  struct thread_suspend_state suspend;
+  thread_suspend_state suspend {};
 
-  int current_line;
-  struct symtab *current_symtab;
+  int current_line = 0;
+  struct symtab *current_symtab = NULL;
 
   /* Internal stepping state.  */
 
@@ -274,20 +294,20 @@ struct thread_info
      by proceed and keep_going, and among other things, it's used in
      adjust_pc_after_break to distinguish a hardware single-step
      SIGTRAP from a breakpoint SIGTRAP.  */
-  CORE_ADDR prev_pc;
+  CORE_ADDR prev_pc = 0;
 
   /* Did we set the thread stepping a breakpoint instruction?  This is
      used in conjunction with PREV_PC to decide whether to adjust the
      PC.  */
-  int stepped_breakpoint;
+  int stepped_breakpoint = 0;
 
   /* Should we step over breakpoint next time keep_going is called?  */
-  int stepping_over_breakpoint;
+  int stepping_over_breakpoint = 0;
 
   /* Should we step over a watchpoint next time keep_going is called?
      This is needed on targets with non-continuable, non-steppable
      watchpoints.  */
-  int stepping_over_watchpoint;
+  int stepping_over_watchpoint = 0;
 
   /* Set to TRUE if we should finish single-stepping over a breakpoint
      after hitting the current step-resume breakpoint.  The context here
@@ -298,12 +318,12 @@ struct thread_info
      step_after_step_resume_breakpoint is set to TRUE at this moment in
      order to keep GDB in mind that there is still a breakpoint to step over
      when GDB gets back SIGTRAP from step_resume_breakpoint.  */
-  int step_after_step_resume_breakpoint;
+  int step_after_step_resume_breakpoint = 0;
 
   /* Pointer to the state machine manager object that handles what is
      left to do for the thread's execution command after the target
      stops.  Several execution commands use it.  */
-  struct thread_fsm *thread_fsm;
+  struct thread_fsm *thread_fsm = NULL;
 
   /* This is used to remember when a fork or vfork event was caught by
      a catchpoint, and thus the event is to be followed at the next
@@ -311,37 +331,44 @@ struct thread_info
   struct target_waitstatus pending_follow;
 
   /* True if this thread has been explicitly requested to stop.  */
-  int stop_requested;
+  int stop_requested = 0;
 
   /* The initiating frame of a nexting operation, used for deciding
      which exceptions to intercept.  If it is null_frame_id no
      bp_longjmp or bp_exception but longjmp has been caught just for
      bp_longjmp_call_dummy.  */
-  struct frame_id initiating_frame;
+  struct frame_id initiating_frame = null_frame_id;
 
   /* Private data used by the target vector implementation.  */
-  struct private_thread_info *priv;
+  struct private_thread_info *priv = NULL;
 
   /* Function that is called to free PRIVATE.  If this is NULL, then
      xfree will be called on PRIVATE.  */
-  void (*private_dtor) (struct private_thread_info *);
+  void (*private_dtor) (struct private_thread_info *) = NULL;
 
   /* Branch trace information for this thread.  */
-  struct btrace_thread_info btrace;
+  struct btrace_thread_info btrace {};
 
   /* Flag which indicates that the stack temporaries should be stored while
      evaluating expressions.  */
-  int stack_temporaries_enabled;
+  int stack_temporaries_enabled = 0;
 
   /* Values that are stored as temporaries on stack while evaluating
      expressions.  */
-  value_vec *stack_temporaries;
+  value_vec *stack_temporaries = NULL;
 
   /* Step-over chain.  A thread is in the step-over queue if these are
      non-NULL.  If only a single thread is in the chain, then these
      fields point to self.  */
-  struct thread_info *step_over_prev;
-  struct thread_info *step_over_next;
+  struct thread_info *step_over_prev = NULL;
+  struct thread_info *step_over_next = NULL;
+
+private:
+
+  /* If this is > 0, then it means there's code out there that relies
+     on this thread being listed.  Don't delete it from the lists even
+     if we detect it exiting.  */
+  int m_refcount = 0;
 };
 
 /* Create an empty thread list, or empty the existing one.  */
@@ -624,6 +651,10 @@ extern void thread_cancel_execution_command (struct thread_info *thr);
    thread at this point.  If not, throw an error (e.g., the thread is
    executing).  */
 extern void validate_registers_access (void);
+
+/* Check whether it makes sense to access a register of PTID at this point.
+   Returns true if registers may be accessed; false otherwise.  */
+extern bool can_access_registers_ptid (ptid_t ptid);
 
 /* Returns whether to show which thread hit the breakpoint, received a
    signal, etc. and ended up causing a user-visible stop.  This is

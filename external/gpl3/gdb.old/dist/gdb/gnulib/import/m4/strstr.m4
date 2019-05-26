@@ -1,5 +1,5 @@
-# strstr.m4 serial 16
-dnl Copyright (C) 2008-2015 Free Software Foundation, Inc.
+# strstr.m4 serial 17
+dnl Copyright (C) 2008-2016 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -67,11 +67,17 @@ AC_DEFUN([gl_FUNC_STRSTR],
     AC_CACHE_CHECK([whether strstr works in linear time],
       [gl_cv_func_strstr_linear],
       [AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+#ifdef __MVS__
+/* z/OS does not deliver signals while strstr() is running (thanks to
+   restrictions on its LE runtime), which prevents us from limiting the
+   running time of this test.  */
+# error "This test does not work properly on z/OS"
+#endif
 #include <signal.h> /* for signal */
 #include <string.h> /* for strstr */
 #include <stdlib.h> /* for malloc */
 #include <unistd.h> /* for alarm */
-static void quit (int sig) { exit (sig + 128); }
+static void quit (int sig) { _exit (sig + 128); }
 ]], [[
     int result = 0;
     size_t m = 1000000;

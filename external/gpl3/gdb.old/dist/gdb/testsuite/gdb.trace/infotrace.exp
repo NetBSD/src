@@ -1,4 +1,4 @@
-#   Copyright 1998-2016 Free Software Foundation, Inc.
+#   Copyright 1998-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ gdb_start
 standard_testfile actions.c
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable {debug nowarnings}] != "" } {
-    untested infotrace.exp
+    untested "failed to compile"
     return -1
 }
 gdb_reinitialize_dir $srcdir/$subdir
@@ -102,12 +102,12 @@ gdb_trace_setactions "collect on tracepoint 1" "1" \
 	"collect gdb_struct1_test" "^$"
 gdb_run_cmd
 if {[gdb_test "" "Breakpoint ${decimal}, main.*"] != 0} {
-    fail "Can't run to main"
+    fail "can't run to main"
     return -1
 }
 
 if { ![gdb_target_supports_trace] } then {
-    unsupported "Current target does not support trace"
+    unsupported "current target does not support trace"
     return 1
 }
 

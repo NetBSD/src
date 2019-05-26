@@ -1,5 +1,5 @@
 /* -*- c -*- */
-/* Copyright (C) 2013-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2017 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -237,6 +237,7 @@ encode_as (int reg, int as, LocalData *ld, int ext)
 	  break;
 	case MSR_None:
 	  SA (0);
+	  break;
 	default:
 	  SM (reg, 0);
 	  break;

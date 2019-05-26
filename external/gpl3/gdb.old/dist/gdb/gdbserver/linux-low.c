@@ -1,5 +1,5 @@
 /* Low level interface to ptrace, for the remote server for GDB.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -174,6 +174,14 @@ enum target_stop_reason
 lwp_stop_reason (struct lwp_info *lwp)
 {
   return lwp->stop_reason;
+}
+
+/* See nat/linux-nat.h.  */
+
+int
+lwp_is_stepping (struct lwp_info *lwp)
+{
+  return lwp->stepping;
 }
 
 /* A list of all unknown processes which receive stop signals.  Some
@@ -550,11 +558,11 @@ handle_extended_wait (struct lwp_info **orig_event_lwp, int wstat)
 	      && can_software_single_step ()
 	      && event == PTRACE_EVENT_VFORK)
 	    {
-	      /* If we leave reinsert breakpoints there, child will
-		 hit it, so uninsert reinsert breakpoints from parent
+	      /* If we leave single-step breakpoints there, child will
+		 hit it, so uninsert single-step breakpoints from parent
 		 (and child).  Once vfork child is done, reinsert
 		 them back to parent.  */
-	      uninsert_reinsert_breakpoints (event_thr);
+	      uninsert_single_step_breakpoints (event_thr);
 	    }
 
 	  clone_all_breakpoints (child_thr, event_thr);
@@ -581,8 +589,13 @@ handle_extended_wait (struct lwp_info **orig_event_lwp, int wstat)
 	  event_lwp->status_pending_p = 1;
 	  event_lwp->status_pending = wstat;
 
-	  /* If the parent thread is doing step-over with reinsert
-	     breakpoints, the list of reinsert breakpoints are cloned
+	  /* Link the threads until the parent event is passed on to
+	     higher layers.  */
+	  event_lwp->fork_relative = child_lwp;
+	  child_lwp->fork_relative = event_lwp;
+
+	  /* If the parent thread is doing step-over with single-step
+	     breakpoints, the list of single-step breakpoints are cloned
 	     from the parent's.  Remove them from the child process.
 	     In case of vfork, we'll reinsert them back once vforked
 	     child is done.  */
@@ -592,10 +605,10 @@ handle_extended_wait (struct lwp_info **orig_event_lwp, int wstat)
 	      /* The child process is forked and stopped, so it is safe
 		 to access its memory without stopping all other threads
 		 from other processes.  */
-	      delete_reinsert_breakpoints (child_thr);
+	      delete_single_step_breakpoints (child_thr);
 
-	      gdb_assert (has_reinsert_breakpoints (event_thr));
-	      gdb_assert (!has_reinsert_breakpoints (child_thr));
+	      gdb_assert (has_single_step_breakpoints (event_thr));
+	      gdb_assert (!has_single_step_breakpoints (child_thr));
 	    }
 
 	  /* Report the event.  */
@@ -649,9 +662,9 @@ handle_extended_wait (struct lwp_info **orig_event_lwp, int wstat)
 
       if (event_lwp->bp_reinsert != 0 && can_software_single_step ())
 	{
-	  reinsert_reinsert_breakpoints (event_thr);
+	  reinsert_single_step_breakpoints (event_thr);
 
-	  gdb_assert (has_reinsert_breakpoints (event_thr));
+	  gdb_assert (has_single_step_breakpoints (event_thr));
 	}
 
       /* Report the event.  */
@@ -1968,10 +1981,9 @@ check_zombie_leaders (void)
 	     thread execs).  */
 
 	  if (debug_threads)
-	    fprintf (stderr,
-		     "CZL: Thread group leader %d zombie "
-		     "(it exited, or another thread execd).\n",
-		     leader_pid);
+	    debug_printf ("CZL: Thread group leader %d zombie "
+			  "(it exited, or another thread execd).\n",
+			  leader_pid);
 
 	  delete_lwp (leader_lp);
 	}
@@ -2622,9 +2634,9 @@ maybe_hw_step (struct thread_info *thread)
     return 1;
   else
     {
-      /* GDBserver must insert reinsert breakpoint for software
+      /* GDBserver must insert single-step breakpoint for software
 	 single step.  */
-      gdb_assert (has_reinsert_breakpoints (thread));
+      gdb_assert (has_single_step_breakpoints (thread));
       return 0;
     }
 }
@@ -2687,7 +2699,8 @@ linux_wait_for_event_filtered (ptid_t wait_ptid, ptid_t filter_ptid,
   if (ptid_equal (filter_ptid, minus_one_ptid) || ptid_is_pid (filter_ptid))
     {
       event_thread = (struct thread_info *)
-	find_inferior (&all_threads, status_pending_p_callback, &filter_ptid);
+	find_inferior_in_random (&all_threads, status_pending_p_callback,
+				 &filter_ptid);
       if (event_thread != NULL)
 	event_child = get_thread_lwp (event_thread);
       if (debug_threads && event_thread)
@@ -2798,7 +2811,8 @@ linux_wait_for_event_filtered (ptid_t wait_ptid, ptid_t filter_ptid,
       /* ... and find an LWP with a status to report to the core, if
 	 any.  */
       event_thread = (struct thread_info *)
-	find_inferior (&all_threads, status_pending_p_callback, &filter_ptid);
+	find_inferior_in_random (&all_threads, status_pending_p_callback,
+				 &filter_ptid);
       if (event_thread != NULL)
 	{
 	  event_child = get_thread_lwp (event_thread);
@@ -3330,13 +3344,13 @@ linux_wait_1 (ptid_t ptid,
      the breakpoint address.
      So in the case of the hardware single step advance the PC manually
      past the breakpoint and in the case of software single step advance only
-     if it's not the reinsert_breakpoint we are hitting.
+     if it's not the single_step_breakpoint we are hitting.
      This avoids that a program would keep trapping a permanent breakpoint
      forever.  */
   if (!ptid_equal (step_over_bkpt, null_ptid)
       && event_child->stop_reason == TARGET_STOPPED_BY_SW_BREAKPOINT
       && (event_child->stepping
-	  || !reinsert_breakpoint_inserted_here (event_child->stop_pc)))
+	  || !single_step_breakpoint_inserted_here (event_child->stop_pc)))
     {
       int increment_pc = 0;
       int breakpoint_kind = 0;
@@ -3390,8 +3404,8 @@ linux_wait_1 (ptid_t ptid,
 
       /* We have a SIGTRAP, possibly a step-over dance has just
 	 finished.  If so, tweak the state machine accordingly,
-	 reinsert breakpoints and delete any reinsert (software
-	 single-step) breakpoints.  */
+	 reinsert breakpoints and delete any single-step
+	 breakpoints.  */
       step_over_finished = finish_step_over (event_child);
 
       /* Now invoke the callbacks of any internal breakpoints there.  */
@@ -3444,6 +3458,8 @@ linux_wait_1 (ptid_t ptid,
 
 	  linux_resume_one_lwp (event_child, 0, 0, NULL);
 
+	  if (debug_threads)
+	    debug_exit ();
 	  return ignore_event (ourstatus);
 	}
     }
@@ -3539,6 +3555,9 @@ linux_wait_1 (ptid_t ptid,
 
       linux_resume_one_lwp (event_child, event_child->stepping,
 			    0, NULL);
+
+      if (debug_threads)
+	debug_exit ();
       return ignore_event (ourstatus);
     }
 
@@ -3594,6 +3613,10 @@ linux_wait_1 (ptid_t ptid,
 	  linux_resume_one_lwp (event_child, event_child->stepping,
 				WSTOPSIG (w), info_p);
 	}
+
+      if (debug_threads)
+	debug_exit ();
+
       return ignore_event (ourstatus);
     }
 
@@ -3662,18 +3685,36 @@ linux_wait_1 (ptid_t ptid,
 	  (*the_low_target.set_pc) (regcache, event_child->stop_pc);
 	}
 
-      /* We may have finished stepping over a breakpoint.  If so,
-	 we've stopped and suspended all LWPs momentarily except the
-	 stepping one.  This is where we resume them all again.  We're
-	 going to keep waiting, so use proceed, which handles stepping
-	 over the next breakpoint.  */
+      if (step_over_finished)
+	{
+	  /* If we have finished stepping over a breakpoint, we've
+	     stopped and suspended all LWPs momentarily except the
+	     stepping one.  This is where we resume them all again.
+	     We're going to keep waiting, so use proceed, which
+	     handles stepping over the next breakpoint.  */
+	  unsuspend_all_lwps (event_child);
+	}
+      else
+	{
+	  /* Remove the single-step breakpoints if any.  Note that
+	     there isn't single-step breakpoint if we finished stepping
+	     over.  */
+	  if (can_software_single_step ()
+	      && has_single_step_breakpoints (current_thread))
+	    {
+	      stop_all_lwps (0, event_child);
+	      delete_single_step_breakpoints (current_thread);
+	      unstop_all_lwps (0, event_child);
+	    }
+	}
+
       if (debug_threads)
 	debug_printf ("proceeding all threads.\n");
-
-      if (step_over_finished)
-	unsuspend_all_lwps (event_child);
-
       proceed_all_lwps ();
+
+      if (debug_threads)
+	debug_exit ();
+
       return ignore_event (ourstatus);
     }
 
@@ -3705,48 +3746,48 @@ linux_wait_1 (ptid_t ptid,
 
   /* Alright, we're going to report a stop.  */
 
-  /* Remove reinsert breakpoints.  */
+  /* Remove single-step breakpoints.  */
   if (can_software_single_step ())
     {
-      /* Remove reinsert breakpoints or not.  It it is true, stop all
+      /* Remove single-step breakpoints or not.  It it is true, stop all
 	 lwps, so that other threads won't hit the breakpoint in the
 	 staled memory.  */
-      int remove_reinsert_breakpoints_p = 0;
+      int remove_single_step_breakpoints_p = 0;
 
       if (non_stop)
 	{
-	  remove_reinsert_breakpoints_p
-	    = has_reinsert_breakpoints (current_thread);
+	  remove_single_step_breakpoints_p
+	    = has_single_step_breakpoints (current_thread);
 	}
       else
 	{
 	  /* In all-stop, a stop reply cancels all previous resume
-	     requests.  Delete all reinsert breakpoints.  */
+	     requests.  Delete all single-step breakpoints.  */
 	  struct inferior_list_entry *inf, *tmp;
 
 	  ALL_INFERIORS (&all_threads, inf, tmp)
 	    {
 	      struct thread_info *thread = (struct thread_info *) inf;
 
-	      if (has_reinsert_breakpoints (thread))
+	      if (has_single_step_breakpoints (thread))
 		{
-		  remove_reinsert_breakpoints_p = 1;
+		  remove_single_step_breakpoints_p = 1;
 		  break;
 		}
 	    }
 	}
 
-      if (remove_reinsert_breakpoints_p)
+      if (remove_single_step_breakpoints_p)
 	{
-	  /* If we remove reinsert breakpoints from memory, stop all lwps,
+	  /* If we remove single-step breakpoints from memory, stop all lwps,
 	     so that other threads won't hit the breakpoint in the staled
 	     memory.  */
 	  stop_all_lwps (0, event_child);
 
 	  if (non_stop)
 	    {
-	      gdb_assert (has_reinsert_breakpoints (current_thread));
-	      delete_reinsert_breakpoints (current_thread);
+	      gdb_assert (has_single_step_breakpoints (current_thread));
+	      delete_single_step_breakpoints (current_thread);
 	    }
 	  else
 	    {
@@ -3756,8 +3797,8 @@ linux_wait_1 (ptid_t ptid,
 		{
 		  struct thread_info *thread = (struct thread_info *) inf;
 
-		  if (has_reinsert_breakpoints (thread))
-		    delete_reinsert_breakpoints (thread);
+		  if (has_single_step_breakpoints (thread))
+		    delete_single_step_breakpoints (thread);
 		}
 	    }
 
@@ -3832,6 +3873,15 @@ linux_wait_1 (ptid_t ptid,
     {
       /* If the reported event is an exit, fork, vfork or exec, let
 	 GDB know.  */
+
+      /* Break the unreported fork relationship chain.  */
+      if (event_child->waitstatus.kind == TARGET_WAITKIND_FORKED
+	  || event_child->waitstatus.kind == TARGET_WAITKIND_VFORKED)
+	{
+	  event_child->fork_relative->fork_relative = NULL;
+	  event_child->fork_relative = NULL;
+	}
+
       *ourstatus = event_child->waitstatus;
       /* Clear the event lwp's waitstatus since we handled it already.  */
       event_child->waitstatus.kind = TARGET_WAITKIND_IGNORE;
@@ -4280,7 +4330,7 @@ install_software_single_step_breakpoints (struct lwp_info *lwp)
   next_pcs = (*the_low_target.get_next_pcs) (regcache);
 
   for (i = 0; VEC_iterate (CORE_ADDR, next_pcs, i, pc); ++i)
-    set_reinsert_breakpoint (pc, current_ptid);
+    set_single_step_breakpoint (pc, current_ptid);
 
   do_cleanups (old_chain);
 }
@@ -4410,10 +4460,10 @@ linux_resume_one_lwp_throw (struct lwp_info *lwp,
 	  if (fast_tp_collecting == 0)
 	    {
 	      if (step == 0)
-		fprintf (stderr, "BAD - reinserting but not stepping.\n");
+		warning ("BAD - reinserting but not stepping.");
 	      if (lwp->suspended)
-		fprintf (stderr, "BAD - reinserting and suspended(%d).\n",
-			 lwp->suspended);
+		warning ("BAD - reinserting and suspended(%d).",
+				 lwp->suspended);
 	    }
 	}
 
@@ -4630,6 +4680,51 @@ linux_set_resume_request (struct inferior_list_entry *entry, void *arg)
 			      : "stopping",
 			      lwpid_of (thread));
 
+	      continue;
+	    }
+
+	  /* Ignore (wildcard) resume requests for already-resumed
+	     threads.  */
+	  if (r->resume[ndx].kind != resume_stop
+	      && thread->last_resume_kind != resume_stop)
+	    {
+	      if (debug_threads)
+		debug_printf ("already %s LWP %ld at GDB's request\n",
+			      (thread->last_resume_kind
+			       == resume_step)
+			      ? "stepping"
+			      : "continuing",
+			      lwpid_of (thread));
+	      continue;
+	    }
+
+	  /* Don't let wildcard resumes resume fork children that GDB
+	     does not yet know are new fork children.  */
+	  if (lwp->fork_relative != NULL)
+	    {
+	      struct inferior_list_entry *inf, *tmp;
+	      struct lwp_info *rel = lwp->fork_relative;
+
+	      if (rel->status_pending_p
+		  && (rel->waitstatus.kind == TARGET_WAITKIND_FORKED
+		      || rel->waitstatus.kind == TARGET_WAITKIND_VFORKED))
+		{
+		  if (debug_threads)
+		    debug_printf ("not resuming LWP %ld: has queued stop reply\n",
+				  lwpid_of (thread));
+		  continue;
+		}
+	    }
+
+	  /* If the thread has a pending event that has already been
+	     reported to GDBserver core, but GDB has not pulled the
+	     event out of the vStopped queue yet, likewise, ignore the
+	     (wildcard) resume request.  */
+	  if (in_queued_stop_replies (entry->id))
+	    {
+	      if (debug_threads)
+		debug_printf ("not resuming LWP %ld: has queued stop reply\n",
+			      lwpid_of (thread));
 	      continue;
 	    }
 
@@ -4881,7 +4976,7 @@ start_step_over (struct lwp_info *lwp)
 }
 
 /* Finish a step-over.  Reinsert the breakpoint we had uninserted in
-   start_step_over, if still there, and delete any reinsert
+   start_step_over, if still there, and delete any single-step
    breakpoints we've set, on non hardware single-step targets.  */
 
 static int
@@ -4903,15 +4998,15 @@ finish_step_over (struct lwp_info *lwp)
 
       lwp->bp_reinsert = 0;
 
-      /* Delete any software-single-step reinsert breakpoints.  No
-	 longer needed.  We don't have to worry about other threads
-	 hitting this trap, and later not being able to explain it,
-	 because we were stepping over a breakpoint, and we hold all
-	 threads but LWP stopped while doing that.  */
+      /* Delete any single-step breakpoints.  No longer needed.  We
+	 don't have to worry about other threads hitting this trap,
+	 and later not being able to explain it, because we were
+	 stepping over a breakpoint, and we hold all threads but
+	 LWP stopped while doing that.  */
       if (!can_hardware_single_step ())
 	{
-	  gdb_assert (has_reinsert_breakpoints (current_thread));
-	  delete_reinsert_breakpoints (current_thread);
+	  gdb_assert (has_single_step_breakpoints (current_thread));
+	  delete_single_step_breakpoints (current_thread);
 	}
 
       step_over_bkpt = null_ptid;
@@ -5227,10 +5322,11 @@ proceed_one_lwp (struct inferior_list_entry *entry, void *except)
 	debug_printf ("   stepping LWP %ld, client wants it stepping\n",
 		      lwpid_of (thread));
 
-      /* If resume_step is requested by GDB, install reinsert
+      /* If resume_step is requested by GDB, install single-step
 	 breakpoints when the thread is about to be actually resumed if
-	 the reinsert breakpoints weren't removed.  */
-      if (can_software_single_step () && !has_reinsert_breakpoints (thread))
+	 the single-step breakpoints weren't removed.  */
+      if (can_software_single_step ()
+	  && !has_single_step_breakpoints (thread))
 	install_software_single_step_breakpoints (lwp);
 
       step = maybe_hw_step (thread);
@@ -6422,6 +6518,8 @@ linux_supports_agent (void)
 static int
 linux_supports_range_stepping (void)
 {
+  if (can_software_single_step ())
+    return 1;
   if (*the_low_target.supports_range_stepping == NULL)
     return 0;
 

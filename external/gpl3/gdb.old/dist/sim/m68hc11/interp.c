@@ -1,5 +1,5 @@
 /* interp.c -- Simulator for Motorola 68HC11/68HC12
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, the GNU debugger.
@@ -292,50 +292,25 @@ sim_hw_configure (SIM_DESC sd)
 /* Get the memory bank parameters by looking at the global symbols
    defined by the linker.  */
 static int
-sim_get_bank_parameters (SIM_DESC sd, bfd* abfd)
+sim_get_bank_parameters (SIM_DESC sd)
 {
   sim_cpu *cpu;
-  long symsize;
-  long symbol_count, i;
   unsigned size;
-  asymbol** asymbols;
-  asymbol** current;
+  bfd_vma addr;
 
   cpu = STATE_CPU (sd, 0);
 
-  symsize = bfd_get_symtab_upper_bound (abfd);
-  if (symsize < 0)
-    {
-      sim_io_eprintf (sd, "Cannot read symbols of program");
-      return 0;
-    }
-  asymbols = (asymbol **) xmalloc (symsize);
-  symbol_count = bfd_canonicalize_symtab (abfd, asymbols);
-  if (symbol_count < 0)
-    {
-      sim_io_eprintf (sd, "Cannot read symbols of program");
-      return 0;
-    }
+  addr = trace_sym_value (sd, BFD_M68HC11_BANK_START_NAME);
+  if (addr != -1)
+    cpu->bank_start = addr;
 
-  size = 0;
-  for (i = 0, current = asymbols; i < symbol_count; i++, current++)
-    {
-      const char* name = bfd_asymbol_name (*current);
+  size = trace_sym_value (sd, BFD_M68HC11_BANK_SIZE_NAME);
+  if (size == -1)
+    size = 0;
 
-      if (strcmp (name, BFD_M68HC11_BANK_START_NAME) == 0)
-        {
-          cpu->bank_start = bfd_asymbol_value (*current);
-        }
-      else if (strcmp (name, BFD_M68HC11_BANK_SIZE_NAME) == 0)
-        {
-          size = bfd_asymbol_value (*current);
-        }
-      else if (strcmp (name, BFD_M68HC11_BANK_VIRTUAL_NAME) == 0)
-        {
-          cpu->bank_virtual = bfd_asymbol_value (*current);
-        }
-    }
-  free (asymbols);
+  addr = trace_sym_value (sd, BFD_M68HC11_BANK_VIRTUAL_NAME);
+  if (addr != -1)
+    cpu->bank_virtual = addr;
 
   cpu->bank_end = cpu->bank_start + size;
   cpu->bank_shift = 0;
@@ -387,7 +362,7 @@ sim_prepare_for_program (SIM_DESC sd, bfd* abfd)
 
       if (elf_flags & E_M68HC12_BANKS)
         {
-          if (sim_get_bank_parameters (sd, abfd) != 0)
+          if (sim_get_bank_parameters (sd) != 0)
             sim_io_eprintf (sd, "Memory bank parameters are not initialized\n");
         }
     }

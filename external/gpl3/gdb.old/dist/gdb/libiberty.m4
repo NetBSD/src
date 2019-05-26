@@ -1,6 +1,6 @@
 dnl Bits libiberty clients must do on their autoconf step.
 dnl
-dnl Copyright (C) 2012-2016 Free Software Foundation, Inc.
+dnl Copyright (C) 2012-2017 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by

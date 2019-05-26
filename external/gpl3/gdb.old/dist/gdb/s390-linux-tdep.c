@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
 
    Contributed by D.J. Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
    for IBM Deutschland Entwicklung GmbH, IBM Corporation.
@@ -58,6 +58,7 @@
 #include "elf/common.h"
 #include "elf/s390.h"
 #include "elf-bfd.h"
+#include <algorithm>
 
 #include "features/s390-linux32.c"
 #include "features/s390-linux32v1.c"
@@ -77,6 +78,9 @@
 
 #define XML_SYSCALL_FILENAME_S390 "syscalls/s390-linux.xml"
 #define XML_SYSCALL_FILENAME_S390X "syscalls/s390x-linux.xml"
+
+/* Holds the current set of options to be passed to the disassembler.  */
+static char *s390_disassembler_options;
 
 enum s390_abi_kind
 {
@@ -721,42 +725,41 @@ s390_is_partial_instruction (struct gdbarch *gdbarch, CORE_ADDR loc, int *len)
    process about 4kiB of it each time, leading to O(n**2) memory and time
    complexity.  */
 
-static int
-s390_software_single_step (struct frame_info *frame)
+static VEC (CORE_ADDR) *
+s390_software_single_step (struct regcache *regcache)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct address_space *aspace = get_frame_address_space (frame);
-  CORE_ADDR loc = get_frame_pc (frame);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  CORE_ADDR loc = regcache_read_pc (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int len;
   uint16_t insn;
+  VEC (CORE_ADDR) *next_pcs = NULL;
 
   /* Special handling only if recording.  */
   if (!record_full_is_used ())
-    return 0;
+    return NULL;
 
   /* First, match a partial instruction.  */
   if (!s390_is_partial_instruction (gdbarch, loc, &len))
-    return 0;
+    return NULL;
 
   loc += len;
 
   /* Second, look for a branch back to it.  */
   insn = read_memory_integer (loc, 2, byte_order);
   if (insn != 0xa714) /* BRC with mask 1 */
-    return 0;
+    return NULL;
 
   insn = read_memory_integer (loc + 2, 2, byte_order);
   if (insn != (uint16_t) -(len / 2))
-    return 0;
+    return NULL;
 
   loc += 4;
 
   /* Found it, step past the whole thing.  */
+  VEC_safe_push (CORE_ADDR, next_pcs, loc);
 
-  insert_single_step_breakpoint (gdbarch, aspace, loc);
-
-  return 1;
+  return next_pcs;
 }
 
 static int
@@ -1201,41 +1204,6 @@ is_rsy (bfd_byte *insn, int op1, int op2,
       /* The 'long displacement' is a 20-bit signed integer.  */
       *d2 = ((((insn[2] & 0xf) << 8) | insn[3] | (insn[4] << 12))
 		^ 0x80000) - 0x80000;
-      return 1;
-    }
-  else
-    return 0;
-}
-
-
-static int
-is_rsi (bfd_byte *insn, int op,
-	unsigned int *r1, unsigned int *r3, int *i2)
-{
-  if (insn[0] == op)
-    {
-      *r1 = (insn[1] >> 4) & 0xf;
-      *r3 = insn[1] & 0xf;
-      /* i2 is a 16-bit signed quantity.  */
-      *i2 = (((insn[2] << 8) | insn[3]) ^ 0x8000) - 0x8000;
-      return 1;
-    }
-  else
-    return 0;
-}
-
-
-static int
-is_rie (bfd_byte *insn, int op1, int op2,
-	unsigned int *r1, unsigned int *r3, int *i2)
-{
-  if (insn[0] == op1
-      && insn[5] == op2)
-    {
-      *r1 = (insn[1] >> 4) & 0xf;
-      *r3 = insn[1] & 0xf;
-      /* i2 is a 16-bit signed quantity.  */
-      *i2 = (((insn[2] << 8) | insn[3]) ^ 0x8000) - 0x8000;
       return 1;
     }
   else
@@ -1734,7 +1702,7 @@ s390_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       CORE_ADDR post_prologue_pc
 	= skip_prologue_using_sal (gdbarch, func_addr);
       if (post_prologue_pc != 0)
-	return max (pc, post_prologue_pc);
+	return std::max (pc, post_prologue_pc);
     }
 
   skip_pc = s390_analyze_prologue (gdbarch, pc, (CORE_ADDR)-1, &data);
@@ -1973,20 +1941,6 @@ s390_displaced_step_fixup (struct gdbarch *gdbarch,
 				      amode | (from + insnlen));
     }
 
-  /* Handle PC-relative branch instructions.  */
-  else if (is_ri (insn, op1_brc, op2_brc, &r1, &i2)
-	   || is_ril (insn, op1_brcl, op2_brcl, &r1, &i2)
-	   || is_ri (insn, op1_brct, op2_brct, &r1, &i2)
-	   || is_ri (insn, op1_brctg, op2_brctg, &r1, &i2)
-	   || is_rsi (insn, op_brxh, &r1, &r3, &i2)
-	   || is_rie (insn, op1_brxhg, op2_brxhg, &r1, &r3, &i2)
-	   || is_rsi (insn, op_brxle, &r1, &r3, &i2)
-	   || is_rie (insn, op1_brxlg, op2_brxlg, &r1, &r3, &i2))
-    {
-      /* Update PC.  */
-      regcache_write_pc (regs, pc - to + from);
-    }
-
   /* Handle LOAD ADDRESS RELATIVE LONG.  */
   else if (is_ril (insn, op1_larl, op2_larl, &r1, &i2))
     {
@@ -2001,9 +1955,11 @@ s390_displaced_step_fixup (struct gdbarch *gdbarch,
   else if (insn[0] == 0x0 && insn[1] == 0x1)
     regcache_write_pc (regs, from);
 
-  /* For any other insn, PC points right after the original instruction.  */
+  /* For any other insn, adjust PC by negated displacement.  PC then
+     points right after the original instruction, except for PC-relative
+     branches, where it points to the adjusted branch target.  */
   else
-    regcache_write_pc (regs, from + insnlen);
+    regcache_write_pc (regs, pc - to + from);
 
   if (debug_displaced)
     fprintf_unfiltered (gdb_stdlog,
@@ -3148,7 +3104,7 @@ s390_function_arg_integer (struct type *type)
       || code == TYPE_CODE_CHAR
       || code == TYPE_CODE_BOOL
       || code == TYPE_CODE_PTR
-      || code == TYPE_CODE_REF)
+      || TYPE_IS_REFERENCE (type))
     return 1;
 
   return ((code == TYPE_CODE_UNION || code == TYPE_CODE_STRUCT)
@@ -3549,17 +3505,9 @@ s390_return_value (struct gdbarch *gdbarch, struct value *function,
 
 
 /* Breakpoints.  */
+constexpr gdb_byte s390_break_insn[] = { 0x0, 0x1 };
 
-static const gdb_byte *
-s390_breakpoint_from_pc (struct gdbarch *gdbarch,
-			 CORE_ADDR *pcptr, int *lenptr)
-{
-  static const gdb_byte breakpoint[] = { 0x0, 0x1 };
-
-  *lenptr = sizeof (breakpoint);
-  return breakpoint;
-}
-
+typedef BP_MANIPULATION (s390_break_insn) s390_breakpoint;
 
 /* Address handling.  */
 
@@ -7982,7 +7930,8 @@ s390_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_decr_pc_after_break (gdbarch, 2);
   /* Stack grows downward.  */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
-  set_gdbarch_breakpoint_from_pc (gdbarch, s390_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch, s390_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch, s390_breakpoint::bp_from_kind);
   set_gdbarch_software_single_step (gdbarch, s390_software_single_step);
   set_gdbarch_displaced_step_hw_singlestep (gdbarch, s390_displaced_step_hw_singlestep);
   set_gdbarch_skip_prologue (gdbarch, s390_skip_prologue);
@@ -8119,6 +8068,10 @@ s390_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   s390_init_linux_record_tdep (&s390_linux_record_tdep, ABI_LINUX_S390);
   s390_init_linux_record_tdep (&s390x_linux_record_tdep, ABI_LINUX_ZSERIES);
+
+  set_gdbarch_disassembler_options (gdbarch, &s390_disassembler_options);
+  set_gdbarch_valid_disassembler_options (gdbarch,
+					  disassembler_options_s390 ());
 
   return gdbarch;
 }

@@ -1,6 +1,6 @@
 /* Standard language operator definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -129,7 +129,7 @@ OP (OP_VAR_VALUE)
 /* OP_VAR_ENTRY_VALUE takes one struct symbol * in the following element,
    followed by another OP_VAR_ENTRY_VALUE, making three exp_elements.
    somename@entry may mean parameter value as present at the entry of the
-   current function.  Implemented via DW_OP_GNU_entry_value.  */
+   current function.  Implemented via DW_OP_entry_value.  */
 OP (OP_VAR_ENTRY_VALUE)
 
 /* OP_LAST is followed by an integer in the next exp_element.

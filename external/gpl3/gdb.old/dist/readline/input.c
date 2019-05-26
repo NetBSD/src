@@ -86,6 +86,37 @@ static int ibuffer_space PARAMS((void));
 static int rl_get_char PARAMS((int *));
 static int rl_gather_tyi PARAMS((void));
 
+#if defined (_WIN32) && !defined (__CYGWIN__)
+
+/* 'isatty' in the Windows runtime returns non-zero for every
+   character device, including the null device.  Repair that.  */
+#include <io.h>
+#include <conio.h>
+#define WIN32_LEAN_AND_MEAN 1
+#include <windows.h>
+
+int w32_isatty (int fd)
+{
+  if (_isatty(fd))
+    {
+      HANDLE h = (HANDLE) _get_osfhandle (fd);
+      DWORD ignored;
+
+      if (h == INVALID_HANDLE_VALUE)
+	{
+	  errno = EBADF;
+	  return 0;
+	}
+      if (GetConsoleMode (h, &ignored) != 0)
+	return 1;
+    }
+  errno = ENOTTY;
+  return 0;
+}
+
+#define isatty(x)  w32_isatty(x)
+#endif
+
 /* **************************************************************** */
 /*								    */
 /*			Character Input Buffering       	    */
@@ -465,8 +496,10 @@ rl_getc (stream)
       RL_CHECK_SIGNALS ();
 
 #if defined (__MINGW32__)
+      /* Use _getch to make sure we call the function from MS runtime,
+	 even if some curses library is linked in.  */
       if (isatty (fileno (stream)))
-	return (getch ());
+	return (_getch ());
 #endif
       result = read (fileno (stream), &c, sizeof (unsigned char));
 

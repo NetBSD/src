@@ -1,6 +1,6 @@
 /* Target-dependent code for the Tilera TILE-Gx processor.
 
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,6 +41,7 @@
 #include "solib-svr4.h"
 #include "tilegx-tdep.h"
 #include "opcode/tilegx.h"
+#include <algorithm>
 
 struct tilegx_frame_cache
 {
@@ -428,7 +429,8 @@ tilegx_analyze_prologue (struct gdbarch* gdbarch,
 	  if (instbuf_size > size_on_same_page)
 	    instbuf_size = size_on_same_page;
 
-	  instbuf_size = min (instbuf_size, (end_addr - next_addr));
+	  instbuf_size = std::min ((CORE_ADDR) instbuf_size,
+				   (end_addr - next_addr));
 	  instbuf_start = next_addr;
 
 	  status = safe_frame_unwind_memory (next_frame, instbuf_start,
@@ -447,7 +449,7 @@ tilegx_analyze_prologue (struct gdbarch* gdbarch,
       for (i = 0; i < num_insns; i++)
 	{
 	  struct tilegx_decoded_instruction *this_insn = &decoded[i];
-	  int64_t *operands = (int64_t *) this_insn->operand_values;
+	  long long *operands = this_insn->operand_values;
 	  const struct tilegx_opcode *opcode = this_insn->opcode;
 
 	  switch (opcode->mnemonic)
@@ -752,14 +754,14 @@ tilegx_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
         = skip_prologue_using_sal (gdbarch, func_start);
 
       if (post_prologue_pc != 0)
-        return max (start_pc, post_prologue_pc);
+        return std::max (start_pc, post_prologue_pc);
     }
 
   /* Don't straddle a section boundary.  */
   s = find_pc_section (start_pc);
   end_pc = start_pc + 8 * TILEGX_BUNDLE_SIZE_IN_BYTES;
   if (s != NULL)
-    end_pc = min (end_pc, obj_section_endaddr (s));
+    end_pc = std::min (end_pc, obj_section_endaddr (s));
 
   /* Otherwise, try to skip prologue the hard way.  */
   return tilegx_analyze_prologue (gdbarch,
@@ -840,19 +842,11 @@ tilegx_write_pc (struct regcache *regcache, CORE_ADDR pc)
                                   INT_SWINT_1_SIGRETURN);
 }
 
-/* This is the implementation of gdbarch method breakpoint_from_pc.  */
+/* 64-bit pattern for a { bpt ; nop } bundle.  */
+constexpr gdb_byte tilegx_break_insn[] =
+  { 0x00, 0x50, 0x48, 0x51, 0xae, 0x44, 0x6a, 0x28 };
 
-static const unsigned char *
-tilegx_breakpoint_from_pc (struct gdbarch *gdbarch,
-			   CORE_ADDR *pcptr, int *lenptr)
-{
-  /* 64-bit pattern for a { bpt ; nop } bundle.  */
-  static const unsigned char breakpoint[] =
-    { 0x00, 0x50, 0x48, 0x51, 0xae, 0x44, 0x6a, 0x28 };
-
-  *lenptr = sizeof (breakpoint);
-  return breakpoint;
-}
+typedef BP_MANIPULATION (tilegx_break_insn) tilegx_breakpoint;
 
 /* Normal frames.  */
 
@@ -1055,7 +1049,10 @@ tilegx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_push_dummy_call (gdbarch, tilegx_push_dummy_call);
   set_gdbarch_get_longjmp_target (gdbarch, tilegx_get_longjmp_target);
   set_gdbarch_write_pc (gdbarch, tilegx_write_pc);
-  set_gdbarch_breakpoint_from_pc (gdbarch, tilegx_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch,
+				       tilegx_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch,
+				       tilegx_breakpoint::bp_from_kind);
   set_gdbarch_return_value (gdbarch, tilegx_return_value);
 
   set_gdbarch_print_insn (gdbarch, print_insn_tilegx);

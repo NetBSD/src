@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2016 Free Software Foundation, Inc.
+# Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ if { [skip_cplus_tests] } { continue }
 standard_testfile .cc
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
 	  {debug c++}] != "" } {
-    untested "Couldn't compile ${srcfile}"
+    untested "failed to compile"
     return -1
 }
 

@@ -1,6 +1,6 @@
 /* Python interface to symbols.
 
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 #include "symtab.h"
 #include "python-internal.h"
 #include "objfiles.h"
+#include "py-ref.h"
 
 typedef struct sympy_symbol_object {
   PyObject_HEAD
@@ -372,13 +373,14 @@ gdbpy_lookup_symbol (PyObject *self, PyObject *args, PyObject *kw)
   int domain = VAR_DOMAIN;
   struct field_of_this_result is_a_field_of_this;
   const char *name;
-  static char *keywords[] = { "name", "block", "domain", NULL };
+  static const char *keywords[] = { "name", "block", "domain", NULL };
   struct symbol *symbol = NULL;
-  PyObject *block_obj = NULL, *ret_tuple, *sym_obj, *bool_obj;
+  PyObject *block_obj = NULL, *sym_obj, *bool_obj;
   const struct block *block = NULL;
 
-  if (! PyArg_ParseTupleAndKeywords (args, kw, "s|O!i", keywords, &name,
-				     &block_object_type, &block_obj, &domain))
+  if (!gdb_PyArg_ParseTupleAndKeywords (args, kw, "s|O!i", keywords, &name,
+					&block_object_type, &block_obj,
+					&domain))
     return NULL;
 
   if (block_obj)
@@ -410,31 +412,28 @@ gdbpy_lookup_symbol (PyObject *self, PyObject *args, PyObject *kw)
     }
   END_CATCH
 
-  ret_tuple = PyTuple_New (2);
-  if (!ret_tuple)
+  gdbpy_ref<> ret_tuple (PyTuple_New (2));
+  if (ret_tuple == NULL)
     return NULL;
 
   if (symbol)
     {
       sym_obj = symbol_to_symbol_object (symbol);
       if (!sym_obj)
-	{
-	  Py_DECREF (ret_tuple);
-	  return NULL;
-	}
+	return NULL;
     }
   else
     {
       sym_obj = Py_None;
       Py_INCREF (Py_None);
     }
-  PyTuple_SET_ITEM (ret_tuple, 0, sym_obj);
+  PyTuple_SET_ITEM (ret_tuple.get (), 0, sym_obj);
 
   bool_obj = (is_a_field_of_this.type != NULL) ? Py_True : Py_False;
   Py_INCREF (bool_obj);
-  PyTuple_SET_ITEM (ret_tuple, 1, bool_obj);
+  PyTuple_SET_ITEM (ret_tuple.get (), 1, bool_obj);
 
-  return ret_tuple;
+  return ret_tuple.release ();
 }
 
 /* Implementation of
@@ -445,12 +444,12 @@ gdbpy_lookup_global_symbol (PyObject *self, PyObject *args, PyObject *kw)
 {
   int domain = VAR_DOMAIN;
   const char *name;
-  static char *keywords[] = { "name", "domain", NULL };
+  static const char *keywords[] = { "name", "domain", NULL };
   struct symbol *symbol = NULL;
   PyObject *sym_obj;
 
-  if (! PyArg_ParseTupleAndKeywords (args, kw, "s|i", keywords, &name,
-				     &domain))
+  if (!gdb_PyArg_ParseTupleAndKeywords (args, kw, "s|i", keywords, &name,
+					&domain))
     return NULL;
 
   TRY
@@ -562,7 +561,7 @@ gdbpy_initialize_symbols (void)
 
 
 
-static PyGetSetDef symbol_object_getset[] = {
+static gdb_PyGetSetDef symbol_object_getset[] = {
   { "type", sympy_get_type, NULL,
     "Type of the symbol.", NULL },
   { "symtab", sympy_get_symtab, NULL,

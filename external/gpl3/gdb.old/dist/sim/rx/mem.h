@@ -1,6 +1,6 @@
 /* mem.h --- interface to memory for M32C simulator.
 
-Copyright (C) 2005-2016 Free Software Foundation, Inc.
+Copyright (C) 2005-2017 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.

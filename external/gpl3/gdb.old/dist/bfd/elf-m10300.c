@@ -1,5 +1,5 @@
 /* Matsushita 10300 specific support for 32-bit ELF
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -808,8 +808,9 @@ mn10300_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= R_MN10300_MAX)
     {
-      (*_bfd_error_handler) (_("%B: unrecognised MN10300 reloc number: %d"),
-			     abfd, r_type);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%B: unrecognised MN10300 reloc number: %d"),
+			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
       r_type = R_MN10300_NONE;
     }
@@ -1022,9 +1023,10 @@ mn10300_do_tls_transition (bfd *         input_bfd,
       break;
 
     default:
-      (*_bfd_error_handler)
-	(_("%s: Unsupported transition from %s to %s"),
-	 bfd_get_filename (input_bfd),
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%B: Unsupported transition from %s to %s"),
+	 input_bfd,
 	 elf_mn10300_howto_table[r_type].name,
 	 elf_mn10300_howto_table[tls_r_type].name);
       break;
@@ -1172,29 +1174,9 @@ mn10300_elf_check_relocs (bfd *abfd,
 	    default:                  tls_type = GOT_NORMAL; break;
 	    }
 
-	  if (sgot == NULL)
-	    {
-	      sgot = htab->root.sgot;
-	      BFD_ASSERT (sgot != NULL);
-	    }
-
-	  if (srelgot == NULL
-	      && (h != NULL || bfd_link_pic (info)))
-	    {
-	      srelgot = bfd_get_linker_section (dynobj, ".rela.got");
-	      if (srelgot == NULL)
-		{
-		  flagword flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
-				    | SEC_IN_MEMORY | SEC_LINKER_CREATED
-				    | SEC_READONLY);
-		  srelgot = bfd_make_section_anyway_with_flags (dynobj,
-								".rela.got",
-								flags);
-		  if (srelgot == NULL
-		      || ! bfd_set_section_alignment (dynobj, srelgot, 2))
-		    goto fail;
-		}
-	    }
+	  sgot = htab->root.sgot;
+	  srelgot = htab->root.srelgot;
+	  BFD_ASSERT (sgot != NULL && srelgot != NULL);
 
 	  if (r_type == R_MN10300_TLS_LD)
 	    {
@@ -1214,7 +1196,8 @@ mn10300_elf_check_relocs (bfd *abfd,
 		    /* Transition GD->IE.  */
 		    tls_type = GOT_TLS_IE;
 		  else
-		    (*_bfd_error_handler)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
 		      (_("%B: %s' accessed both as normal and thread local symbol"),
 		       abfd, h ? h->root.root.string : "<local>");
 		}
@@ -1470,6 +1453,7 @@ mn10300_elf_final_link_relocate (reloc_howto_type *howto,
 	  && h != NULL
 	  && ! SYMBOL_REFERENCES_LOCAL (info, h))
 	return bfd_reloc_dangerous;
+      /* Fall through.  */
     case R_MN10300_GOT32:
       /* Issue 2052223:
 	 Taking the address of a protected function in a shared library
@@ -1815,7 +1799,7 @@ mn10300_elf_final_link_relocate (reloc_howto_type *howto,
 
       if (!htab->tls_ldm_got.rel_emitted)
 	{
-	  asection * srelgot = bfd_get_linker_section (dynobj, ".rela.got");
+	  asection *srelgot = htab->root.srelgot;
 	  Elf_Internal_Rela rel;
 
 	  BFD_ASSERT (srelgot != NULL);
@@ -1892,10 +1876,9 @@ mn10300_elf_final_link_relocate (reloc_howto_type *howto,
 
 	      if (bfd_link_pic (info))
 		{
-		  asection * srelgot;
+		  asection *srelgot = htab->root.srelgot;;
 		  Elf_Internal_Rela outrel;
 
-		  srelgot = bfd_get_linker_section (dynobj, ".rela.got");
 		  BFD_ASSERT (srelgot != NULL);
 
 		  outrel.r_offset = (sgot->output_section->vma
@@ -2109,7 +2092,8 @@ mn10300_elf_relocate_section (bfd *output_bfd,
 		   && _bfd_elf_section_offset (output_bfd, info, input_section,
 					       rel->r_offset) != (bfd_vma) -1)
 
-	    (*_bfd_error_handler)
+	    _bfd_error_handler
+	      /* xgettext:c-format */
 	      (_("%B(%A+0x%lx): unresolvable %s relocation against symbol `%s'"),
 	       input_bfd,
 	       input_section,
@@ -2174,6 +2158,7 @@ mn10300_elf_relocate_section (bfd *output_bfd,
 		msg = _("error: inappropriate relocation type for shared"
 			" library (did you forget -fpic?)");
 	      else if (r_type == R_MN10300_GOT32)
+		/* xgettext:c-format */
 		msg = _("%B: taking the address of protected function"
 			" '%s' cannot be done when making a shared library");
 	      else
@@ -4724,8 +4709,10 @@ _bfd_mn10300_elf_object_p (bfd *abfd)
    object file when linking.  */
 
 static bfd_boolean
-_bfd_mn10300_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+_bfd_mn10300_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
+
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
     return TRUE;
@@ -4965,7 +4952,7 @@ _bfd_mn10300_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
       s->size += 4;
 
       /* We also need to make an entry in the .rela.plt section.  */
-      s = bfd_get_linker_section (dynobj, ".rela.plt");
+      s = htab->root.srelplt;
       BFD_ASSERT (s != NULL);
       s->size += sizeof (Elf32_External_Rela);
 
@@ -5048,7 +5035,7 @@ _bfd_mn10300_elf_size_dynamic_sections (bfd * output_bfd,
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (bfd_link_executable (info))
+      if (bfd_link_executable (info) && !info->nointerp)
 	{
 	  s = bfd_get_linker_section (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -5070,7 +5057,7 @@ _bfd_mn10300_elf_size_dynamic_sections (bfd * output_bfd,
 
   if (htab->tls_ldm_got.refcount > 0)
     {
-      s = bfd_get_linker_section (dynobj, ".rela.got");
+      s = htab->root.srelgot;
       BFD_ASSERT (s != NULL);
       s->size += sizeof (Elf32_External_Rela);
     }
@@ -5234,7 +5221,7 @@ _bfd_mn10300_elf_finish_dynamic_symbol (bfd * output_bfd,
 
       splt = htab->root.splt;
       sgot = htab->root.sgotplt;
-      srel = bfd_get_linker_section (dynobj, ".rela.plt");
+      srel = htab->root.srelplt;
       BFD_ASSERT (splt != NULL && sgot != NULL && srel != NULL);
 
       /* Get the index in the procedure linkage table which
@@ -5312,7 +5299,7 @@ _bfd_mn10300_elf_finish_dynamic_symbol (bfd * output_bfd,
 
       /* This symbol has an entry in the global offset table.  Set it up.  */
       sgot = htab->root.sgot;
-      srel = bfd_get_linker_section (dynobj, ".rela.got");
+      srel = htab->root.srelgot;
       BFD_ASSERT (sgot != NULL && srel != NULL);
 
       rel.r_offset = (sgot->output_section->vma
@@ -5441,7 +5428,6 @@ _bfd_mn10300_elf_finish_dynamic_sections (bfd * output_bfd,
       for (; dyncon < dynconend; dyncon++)
 	{
 	  Elf_Internal_Dyn dyn;
-	  const char * name;
 	  asection * s;
 
 	  bfd_elf32_swap_dyn_in (dynobj, dyncon, &dyn);
@@ -5452,36 +5438,19 @@ _bfd_mn10300_elf_finish_dynamic_sections (bfd * output_bfd,
 	      break;
 
 	    case DT_PLTGOT:
-	      name = ".got";
+	      s = htab->root.sgot;
 	      goto get_vma;
 
 	    case DT_JMPREL:
-	      name = ".rela.plt";
+	      s = htab->root.srelplt;
 	    get_vma:
-	      s = bfd_get_linker_section (dynobj, name);
 	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 
 	    case DT_PLTRELSZ:
-	      s = bfd_get_linker_section (dynobj, ".rela.plt");
+	      s = htab->root.srelplt;
 	      dyn.d_un.d_val = s->size;
-	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
-	      break;
-
-	    case DT_RELASZ:
-	      /* My reading of the SVR4 ABI indicates that the
-		 procedure linkage table relocs (DT_JMPREL) should be
-		 included in the overall relocs (DT_RELA).  This is
-		 what Solaris does.  However, UnixWare can not handle
-		 that case.  Therefore, we override the DT_RELASZ entry
-		 here to make it not include the JMPREL relocs.  Since
-		 the linker script arranges for .rela.plt to follow all
-		 other relocation sections, we don't have to worry
-		 about changing the DT_RELA entry.  */
-	      s = bfd_get_linker_section (dynobj, ".rela.plt");
-	      if (s != NULL)
-		dyn.d_un.d_val -= s->size;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 	    }
@@ -5624,5 +5593,6 @@ mn10300_elf_mkobject (bfd *abfd)
 #define elf_backend_plt_readonly	1
 #define elf_backend_want_plt_sym	0
 #define elf_backend_got_header_size	12
+#define elf_backend_dtrel_excludes_plt	1
 
 #include "elf32-target.h"

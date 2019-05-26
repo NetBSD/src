@@ -1,6 +1,6 @@
 /* GNU/Linux native-dependent code for debugging multiple forks.
 
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -680,7 +680,6 @@ checkpoint_command (char *args, int from_tty)
   struct value *fork_fn = NULL, *ret;
   struct fork_info *fp;
   pid_t retpid;
-  struct cleanup *old_chain;
 
   if (!target_has_execution) 
     error (_("The program is not being run."));
@@ -704,11 +703,13 @@ checkpoint_command (char *args, int from_tty)
   ret = value_from_longest (builtin_type (gdbarch)->builtin_int, 0);
 
   /* Tell linux-nat.c that we're checkpointing this inferior.  */
-  old_chain = make_cleanup_restore_integer (&checkpointing_pid);
-  checkpointing_pid = ptid_get_pid (inferior_ptid);
+  {
+    scoped_restore save_pid
+      = make_scoped_restore (&checkpointing_pid, ptid_get_pid (inferior_ptid));
 
-  ret = call_function_by_hand (fork_fn, 0, &ret);
-  do_cleanups (old_chain);
+    ret = call_function_by_hand (fork_fn, 0, &ret);
+  }
+
   if (!ret)	/* Probably can't happen.  */
     error (_("checkpoint: call_function_by_hand returned null."));
 

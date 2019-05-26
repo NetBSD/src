@@ -1,6 +1,6 @@
 /* Native support code for PPC AIX, for GDB the GNU debugger.
 
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
    Free Software Foundation, Inc.
 
@@ -597,10 +597,10 @@ rs6000_convert_from_func_ptr_addr (struct gdbarch *gdbarch,
 /* Calculate the destination of a branch/jump.  Return -1 if not a branch.  */
 
 static CORE_ADDR
-branch_dest (struct frame_info *frame, int opcode, int instr,
+branch_dest (struct regcache *regcache, int opcode, int instr,
 	     CORE_ADDR pc, CORE_ADDR safety)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR dest;
@@ -633,29 +633,33 @@ branch_dest (struct frame_info *frame, int opcode, int instr,
 
       if (ext_op == 16)		/* br conditional register */
 	{
-          dest = get_frame_register_unsigned (frame, tdep->ppc_lr_regnum) & ~3;
+          dest = regcache_raw_get_unsigned (regcache, tdep->ppc_lr_regnum) & ~3;
 
 	  /* If we are about to return from a signal handler, dest is
 	     something like 0x3c90.  The current frame is a signal handler
 	     caller frame, upon completion of the sigreturn system call
 	     execution will return to the saved PC in the frame.  */
 	  if (dest < AIX_TEXT_SEGMENT_BASE)
-	    dest = read_memory_unsigned_integer
-		     (get_frame_base (frame) + SIG_FRAME_PC_OFFSET,
-		      tdep->wordsize, byte_order);
+	    {
+	      struct frame_info *frame = get_current_frame ();
+
+	      dest = read_memory_unsigned_integer
+		(get_frame_base (frame) + SIG_FRAME_PC_OFFSET,
+		 tdep->wordsize, byte_order);
+	    }
 	}
 
       else if (ext_op == 528)	/* br cond to count reg */
 	{
-          dest = get_frame_register_unsigned (frame,
-					      tdep->ppc_ctr_regnum) & ~3;
+          dest = regcache_raw_get_unsigned (regcache,
+					    tdep->ppc_ctr_regnum) & ~3;
 
 	  /* If we are about to execute a system call, dest is something
 	     like 0x22fc or 0x3b00.  Upon completion the system call
 	     will return to the address in the link register.  */
 	  if (dest < AIX_TEXT_SEGMENT_BASE)
-            dest = get_frame_register_unsigned (frame,
-						tdep->ppc_lr_regnum) & ~3;
+            dest = regcache_raw_get_unsigned (regcache,
+					      tdep->ppc_lr_regnum) & ~3;
 	}
       else
 	return -1;
@@ -669,27 +673,28 @@ branch_dest (struct frame_info *frame, int opcode, int instr,
 
 /* AIX does not support PT_STEP.  Simulate it.  */
 
-static int
-rs6000_software_single_step (struct frame_info *frame)
+static VEC (CORE_ADDR) *
+rs6000_software_single_step (struct regcache *regcache)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct address_space *aspace = get_frame_address_space (frame);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int ii, insn;
   CORE_ADDR loc;
   CORE_ADDR breaks[2];
   int opcode;
+  VEC (CORE_ADDR) *next_pcs;
 
-  loc = get_frame_pc (frame);
+  loc = regcache_read_pc (regcache);
 
   insn = read_memory_integer (loc, 4, byte_order);
 
-  if (ppc_deal_with_atomic_sequence (frame))
-    return 1;
+  next_pcs = ppc_deal_with_atomic_sequence (regcache);
+  if (next_pcs != NULL)
+    return next_pcs;
   
   breaks[0] = loc + PPC_INSN_SIZE;
   opcode = insn >> 26;
-  breaks[1] = branch_dest (frame, opcode, insn, loc, breaks[0]);
+  breaks[1] = branch_dest (regcache, opcode, insn, loc, breaks[0]);
 
   /* Don't put two breakpoints on the same address.  */
   if (breaks[1] == breaks[0])
@@ -700,12 +705,12 @@ rs6000_software_single_step (struct frame_info *frame)
       /* ignore invalid breakpoint.  */
       if (breaks[ii] == -1)
 	continue;
-      insert_single_step_breakpoint (gdbarch, aspace, breaks[ii]);
+      VEC_safe_push (CORE_ADDR, next_pcs, breaks[ii]);
     }
 
   errno = 0;			/* FIXME, don't ignore errors!  */
   /* What errors?  {read,write}_memory call error().  */
-  return 1;
+  return next_pcs;
 }
 
 /* Implement the "auto_wide_charset" gdbarch method for this platform.  */
@@ -1075,6 +1080,11 @@ rs6000_aix_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
   else
     set_gdbarch_frame_red_zone_size (gdbarch, 0);
 
+  if (tdep->wordsize == 8)
+    set_gdbarch_wchar_bit (gdbarch, 32);
+  else
+    set_gdbarch_wchar_bit (gdbarch, 16);
+  set_gdbarch_wchar_signed (gdbarch, 0);
   set_gdbarch_auto_wide_charset (gdbarch, rs6000_aix_auto_wide_charset);
 
   set_solib_ops (gdbarch, &solib_aix_so_ops);

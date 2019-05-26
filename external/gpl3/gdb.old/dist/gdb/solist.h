@@ -1,5 +1,5 @@
 /* Shared library declarations for GDB, the GNU Debugger.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,12 @@
 #define SO_NAME_MAX_PATH_SIZE 512	/* FIXME: Should be dynamic */
 /* For domain_enum domain.  */
 #include "symtab.h"
+#include "gdb_bfd.h"
+
+#define ALL_SO_LIBS(so) \
+    for (so = so_list_head; \
+	 so != NULL; \
+	 so = so->next)
 
 /* Forward declaration for target specific link map information.  This
    struct is opaque to all but the target specific file.  */
@@ -73,7 +79,10 @@ struct so_list
 
     /* Record the range of addresses belonging to this shared library.
        There may not be just one (e.g. if two segments are relocated
-       differently); but this is only used for "info sharedlibrary".  */
+       differently).  This is used for "info sharedlibrary" and
+       the MI command "-file-list-shared-libraries".  The latter has a format
+       that supports outputting multiple segments once the related code
+       supports them.  */
     CORE_ADDR addr_low, addr_high;
   };
 
@@ -100,12 +109,6 @@ struct target_so_ops
     /* Target dependent code to run after child process fork.  */
     void (*solib_create_inferior_hook) (int from_tty);
 
-    /* Do additional symbol handling, lookup, etc. after symbols for a
-       shared object have been loaded in the usual way.  This is
-       called to do any system specific symbol handling that might be
-       needed.  */
-    void (*special_symbol_handling) (void);
-
     /* Construct a list of the currently loaded shared objects.  This
        list does not include an entry for the main executable file.
 
@@ -127,13 +130,13 @@ struct target_so_ops
     int (*in_dynsym_resolve_code) (CORE_ADDR pc);
 
     /* Find and open shared library binary file.  */
-    bfd *(*bfd_open) (char *pathname);
+    gdb_bfd_ref_ptr (*bfd_open) (char *pathname);
 
     /* Optional extra hook for finding and opening a solib.
        If TEMP_PATHNAME is non-NULL: If the file is successfully opened a
        pointer to a malloc'd and realpath'd copy of SONAME is stored there,
        otherwise NULL is stored there.  */
-    int (*find_and_open_solib) (char *soname,
+    int (*find_and_open_solib) (const char *soname,
         unsigned o_flags, char **temp_pathname);
 
     /* Hook for looking up global symbols in a library-specific way.  */
@@ -178,16 +181,16 @@ void free_so (struct so_list *so);
 struct so_list *master_so_list (void);
 
 /* Find main executable binary file.  */
-extern char *exec_file_find (char *in_pathname, int *fd);
+extern char *exec_file_find (const char *in_pathname, int *fd);
 
 /* Find shared library binary file.  */
-extern char *solib_find (char *in_pathname, int *fd);
+extern char *solib_find (const char *in_pathname, int *fd);
 
 /* Open BFD for shared library file.  */
-extern bfd *solib_bfd_fopen (char *pathname, int fd);
+extern gdb_bfd_ref_ptr solib_bfd_fopen (char *pathname, int fd);
 
 /* Find solib binary file and open it.  */
-extern bfd *solib_bfd_open (char *in_pathname);
+extern gdb_bfd_ref_ptr solib_bfd_open (char *in_pathname);
 
 /* FIXME: gdbarch needs to control this variable.  */
 extern struct target_so_ops *current_target_so_ops;
