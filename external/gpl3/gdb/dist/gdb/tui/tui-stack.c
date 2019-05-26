@@ -1,6 +1,6 @@
 /* TUI display locator.
 
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -53,7 +53,7 @@ static int tui_set_locator_info (struct gdbarch *gdbarch,
 				 const char *procname,
                                  int lineno, CORE_ADDR addr);
 
-static void tui_update_command (char *, int);
+static void tui_update_command (const char *, int);
 
 
 /* Create the status line to display as much information as we can on
@@ -72,7 +72,7 @@ tui_make_status_line (struct tui_locator_element *loc)
   int pid_width;
   int line_width;
 
-  if (ptid_equal (inferior_ptid, null_ptid))
+  if (inferior_ptid == null_ptid)
     pid_name = "No process";
   else
     pid_name = target_pid_to_str (inferior_ptid);
@@ -358,7 +358,6 @@ tui_show_frame_info (struct frame_info *fi)
 {
   struct tui_win_info *win_info;
   int locator_changed_p;
-  int i;
 
   if (fi)
     {
@@ -366,10 +365,9 @@ tui_show_frame_info (struct frame_info *fi)
       CORE_ADDR low;
       struct tui_gen_win_info *locator = tui_locator_win_info_ptr ();
       int source_already_displayed;
-      struct symtab_and_line sal;
       CORE_ADDR pc;
 
-      find_frame_sal (fi, &sal);
+      symtab_and_line sal = find_frame_sal (fi);
 
       source_already_displayed = sal.symtab != 0
         && tui_source_is_displayed (symtab_to_fullname (sal.symtab));
@@ -474,7 +472,7 @@ tui_show_frame_info (struct frame_info *fi)
 	return 0;
 
       tui_show_locator_content ();
-      for (i = 0; i < (tui_source_windows ())->count; i++)
+      for (int i = 0; i < (tui_source_windows ())->count; i++)
 	{
 	  win_info = (tui_source_windows ())->list[i];
 	  tui_clear_source_content (win_info, EMPTY_SOURCE_PROMPT);
@@ -488,9 +486,6 @@ tui_show_frame_info (struct frame_info *fi)
 /* Function to initialize gdb commands, for tui window stack
    manipulation.  */
 
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_tui_stack;
-
 void
 _initialize_tui_stack (void)
 {
@@ -501,10 +496,7 @@ _initialize_tui_stack (void)
 
 /* Command to update the display with the current execution point.  */
 static void
-tui_update_command (char *arg, int from_tty)
+tui_update_command (const char *arg, int from_tty)
 {
-  char cmd[sizeof("frame 0")];
-
-  strcpy (cmd, "frame 0");
-  execute_command (cmd, from_tty);
+  execute_command ("frame 0", from_tty);
 }
