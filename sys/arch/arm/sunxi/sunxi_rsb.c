@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rsb.c,v 1.6 2018/11/17 19:30:51 jmcneill Exp $ */
+/* $NetBSD: sunxi_rsb.c,v 1.7 2019/05/26 14:49:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.6 2018/11/17 19:30:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.7 2019/05/26 14:49:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -178,7 +178,7 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SCHED);
-	cv_init(&sc->sc_cv, "awinp2wi");
+	cv_init(&sc->sc_cv, "sunxirsb");
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->sc_type == SUNXI_P2WI ? "P2WI" : "RSB");
