@@ -34,6 +34,7 @@
 #include <sys/zio.h>
 #include <sys/sunldi.h>
 #include <sys/fm/fs/zfs.h>
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/workqueue.h>
@@ -146,6 +147,8 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	spa_t *spa = vd->vdev_spa;
 	vdev_disk_t *dvd;
 	vnode_t *vp;
+	struct dkwedge_info dkw;
+	struct disk *pdk;
 	int error, cmd;
 	struct partinfo pinfo;
 
@@ -235,9 +238,20 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 skip_open:
 	/*
 	 * Determine the actual size of the device.
-	 * XXXNETBSD wedges.
+	 * Try wedge info first as it supports larger disks.
 	 */
-	error = VOP_IOCTL(vp, DIOCGPARTINFO, &pinfo, FREAD|FWRITE, kcred);
+	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
+	if (error == 0) {
+		pdk = disk_find(dkw.dkw_parent);
+		if (pdk) {
+			pinfo.pi_secsize = (1 << pdk->dk_byteshift);
+			pinfo.pi_size = dkw.dkw_size;
+			pinfo.pi_offset = dkw.dkw_offset;
+		} else	
+			error = ENODEV;
+	}
+	if (error)
+		error = VOP_IOCTL(vp, DIOCGPARTINFO, &pinfo, FREAD, kcred);
 	if (error != 0) {
 		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
 		return (SET_ERROR(error));
