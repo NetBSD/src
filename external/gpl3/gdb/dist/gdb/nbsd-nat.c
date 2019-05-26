@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,8 +38,8 @@
 /* Return the name of a file that can be opened to get the symbols for
    the child process identified by PID.  */
 
-static char *
-nbsd_pid_to_exec_file (struct target_ops *self, int pid)
+char *
+nbsd_nat_target::pid_to_exec_file (int pid)
 {
   ssize_t len;
   static char buf[PATH_MAX];

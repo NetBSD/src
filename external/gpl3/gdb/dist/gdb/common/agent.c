@@ -1,6 +1,6 @@
 /* Shared utility routines for GDB to interact with agent.
 
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,8 +21,10 @@
 #include "target/target.h"
 #include "common/symbol.h"
 #include <unistd.h>
-#include "agent.h"
 #include "filestuff.h"
+
+#define IPA_SYM_STRUCT_NAME ipa_sym_addresses_common
+#include "agent.h"
 
 int debug_agent = 0;
 
@@ -48,7 +50,7 @@ int use_agent = 0;
 /* Addresses of in-process agent's symbols both GDB and GDBserver cares
    about.  */
 
-struct ipa_sym_addresses
+struct ipa_sym_addresses_common
 {
   CORE_ADDR addr_helper_thread_id;
   CORE_ADDR addr_cmd_buf;
@@ -69,7 +71,7 @@ static struct
   IPA_SYM(capability),
 };
 
-static struct ipa_sym_addresses ipa_sym_addrs;
+static struct ipa_sym_addresses_common ipa_sym_addrs;
 
 static int all_agent_symbols_looked_up = 0;
 
@@ -191,7 +193,7 @@ agent_run_command (int pid, const char *cmd, int len)
 {
   int fd;
   int tid = agent_get_helper_thread_id ();
-  ptid_t ptid = ptid_build (pid, tid, 0);
+  ptid_t ptid = ptid_t (pid, tid, 0);
 
   int ret = target_write_memory (ipa_sym_addrs.addr_cmd_buf,
 				 (gdb_byte *) cmd, len);
@@ -211,7 +213,6 @@ agent_run_command (int pid, const char *cmd, int len)
   if (fd >= 0)
     {
       char buf[1] = "";
-      int ret;
 
       DEBUG_AGENT ("agent: signalling helper thread\n");
 
@@ -235,7 +236,7 @@ agent_run_command (int pid, const char *cmd, int len)
     return -1;
 
   /* Need to read response with the inferior stopped.  */
-  if (!ptid_equal (ptid, null_ptid))
+  if (ptid != null_ptid)
     {
       /* Stop thread PTID.  */
       DEBUG_AGENT ("agent: stop helper thread\n");

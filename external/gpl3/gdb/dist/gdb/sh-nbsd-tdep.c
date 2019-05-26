@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sh.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -213,21 +213,6 @@ shnbsd_init_abi (struct gdbarch_info info,
 
   tramp_frame_prepend_unwinder (gdbarch, &shnbsd_sigtramp_si2);
 }
-
-
-#define GDB_OSABI_NETBSD_CORE GDB_OSABI_NETBSD
-
-static enum gdb_osabi
-shnbsd_core_osabi_sniffer (bfd *abfd)
-{
-  if (strcmp (bfd_get_target (abfd), "netbsd-core") == 0)
-    return GDB_OSABI_NETBSD_CORE;
-
-  return GDB_OSABI_UNKNOWN;
-}
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_shnbsd_tdep;
 
 void
 _initialize_shnbsd_tdep (void)
