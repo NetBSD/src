@@ -1,4 +1,4 @@
-/*	$NetBSD: if_muevar.h,v 1.7 2019/02/06 08:28:11 rin Exp $	*/
+/*	$NetBSD: if_muevar.h,v 1.8 2019/05/26 04:52:07 mlelstv Exp $	*/
 /*	$OpenBSD: if_muereg.h,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
 
 /*
@@ -121,6 +121,8 @@ struct mue_softc {
 
 	unsigned		mue_rx_list_cnt;
 	unsigned		mue_tx_list_cnt;
+
+	kmutex_t		mue_usb_lock;
 };
 
 #endif /* _IF_MUEVAR_H_ */
