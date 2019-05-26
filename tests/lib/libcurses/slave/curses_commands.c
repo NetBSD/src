@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.8 2019/04/26 02:46:00 blymn Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.9 2019/05/26 07:47:37 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -6143,11 +6143,15 @@ cmd_mvwchgat(int nargs, char **args)
 void
 cmd_add_wch(int nargs, char **args)
 {
+	cchar_t *ch;
+
 	if (check_arg_count(nargs, 1) == 1)
 		return;
 
+	ch = (cchar_t *) args[0];
+
 	report_count(1);
-	report_error("UNSUPPORTED");
+	report_return(add_wch(ch));
 }
 
 
