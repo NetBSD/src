@@ -1,4 +1,4 @@
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,14 +35,13 @@ proc set_src_and_obj { filename { suffix "" } } {
     upvar srcfile srcfile
     upvar objfile objfile
     global srcdir
-    global objdir
     global subdir
 
     if ![string equal "$suffix" ""] then {
 	set suffix "-$suffix"
     }
     set srcfile ${srcdir}/${subdir}/${filename}.c
-    set objfile ${objdir}/${subdir}/${filename}${suffix}.o
+    set objfile [standard_output_file ${filename}${suffix}.o]
 }
 
 # First check if a trivial MIPS16 program can be built and debugged.  This
@@ -60,10 +59,10 @@ set options [list debug nowarnings additional_flags=-mips16]
 lappend objfiles ${objfile}
 gdb_compile ${srcfile} ${objfile} object ${options}
 
-set binfile ${objdir}/${subdir}/${testname}
+set binfile [standard_output_file ${testname}]
 set options [list debug nowarnings]
 if { [gdb_compile ${objfiles} ${binfile} executable ${options}] != "" } then {
-    unsupported "No MIPS16 support in the toolchain."
+    unsupported "no MIPS16 support in the toolchain."
     return
 }
 clean_restart ${testname}
@@ -77,21 +76,21 @@ gdb_test_multiple "" "check for MIPS16 support in the processor" {
 		verbose "MIPS16 support check successful."
 	    }
 	    -re "$gdb_prompt $" {
-		unsupported "No MIPS16 support in the processor."
+		unsupported "no MIPS16 support in the processor."
 		return
 	    }
 	    default {
-		unsupported "No MIPS16 support in the processor."
+		unsupported "no MIPS16 support in the processor."
 		return
 	    }
 	}
     }
     -re "$gdb_prompt $" {
-	unsupported "No MIPS16 support in the processor."
+	unsupported "no MIPS16 support in the processor."
 	return
     }
     default {
-	unsupported "No MIPS16 support in the processor."
+	unsupported "no MIPS16 support in the processor."
 	return
     }
 }
@@ -115,7 +114,7 @@ set options [list \
 lappend objfiles ${objfile}
 gdb_compile ${srcfile} ${objfile} object ${options}
 
-set binfile ${objdir}/${subdir}/${testname}
+set binfile [standard_output_file ${testname}]
 set options [list debug nowarnings additional_flags=-fPIC]
 if { [gdb_compile ${objfiles} ${binfile} executable ${options}] == "" } then {
     clean_restart ${testname}
@@ -186,7 +185,7 @@ set options [list \
 lappend objfiles ${objfile}
 gdb_compile ${srcfile} ${objfile} object ${options}
 
-set binfile ${objdir}/${subdir}/${testname}
+set binfile [standard_output_file ${testname}]
 set options [list debug nowarnings]
 gdb_compile ${objfiles} ${binfile} executable ${options}
 clean_restart ${testname}

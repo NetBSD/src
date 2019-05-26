@@ -1,4 +1,4 @@
-# Copyright 2004-2016 Free Software Foundation, Inc.
+# Copyright 2004-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ if { ![istarget s390-*-*] && ![istarget s390x-*-* ] } {
 
 standard_testfile .c
 
-if { [prepare_for_testing $testfile.exp $testfile $srcfile] } {
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
     return -1
 }
 
@@ -36,14 +36,14 @@ if { ![runto_main] } then {
 
 gdb_test_multiple "next" "check for TE support" {
     -re "Program received signal SIGILL,.*\r\n$gdb_prompt $" {
-	unsupported "No TE support."
+	unsupported "no TE support."
 	return
     }
     -re "\[0-9\]+.*\r\n$gdb_prompt $" {
 	pass "TE support available"
     }
     -re "$gdb_prompt $" {
-	unsupported "No TE support (unknown error)."
+	unsupported "no TE support (unknown error)."
 	return
     }
 }

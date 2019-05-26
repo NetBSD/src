@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2016 Free Software Foundation, Inc.
+# Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -100,7 +100,6 @@ gdb_test_sequence $test $test {
     "need to step-over"
     "resume \\(step=1"
     "signal arrived while stepping over breakpoint"
-    "(restart threads|switching back to stepped thread)"
     "stepped to a different line"
     "callme"
 }

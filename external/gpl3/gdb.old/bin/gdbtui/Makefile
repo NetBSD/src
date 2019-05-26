@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2017/11/28 17:51:23 christos Exp $
-
+#	$NetBSD: Makefile,v 1.1.1.3 2019/05/26 20:02:04 christos Exp $
+NOCTF=
 .include "../Makefile.inc"
 
 GDBARCHDIR=${.CURDIR}/../../lib/libgdb/arch/${GDB_MACHINE_ARCH}
@@ -25,6 +25,11 @@ NOMAN=		# defined
 
 .include <bsd.prog.mk>
 
+# Force c++
+CWARNFLAGS.clang+=	-Wno-deprecated
+HOST_CC:=		${HOST_CXX}
+CC:=			${CXX}
+CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 
 LIBOPCODESDIR!=   cd ${.CURDIR}/../../lib/libopcodes   && ${PRINTOBJDIR}
 LIBBFDDIR!=       cd ${.CURDIR}/../../lib/libbfd       && ${PRINTOBJDIR}
@@ -68,8 +73,8 @@ DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 	${LIBTERMINFO} \
 	${LIBIBERTYDIR}/libiberty.a
 
-LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm
-DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
+LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm -lutil
+DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM} ${LIBUTIL}
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${GDB_MACHINE_ARCH}

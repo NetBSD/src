@@ -1,4 +1,4 @@
-# Copyright 1999-2016 Free Software Foundation, Inc.
+# Copyright 1999-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -269,12 +269,12 @@ proc default_mi_gdb_start { args } {
 	    verbose "GDB initialized."
 	}
 	-re ".*unrecognized option.*for a complete list of options." {
-	    untested "Skip mi tests (not compiled with mi support)."
+	    untested "skip mi tests (not compiled with mi support)."
 	    remote_close host
 	    return -1
 	}
 	-re ".*Interpreter `mi' unrecognized." {
-	    untested "Skip mi tests (not compiled with mi support)."
+	    untested "skip mi tests (not compiled with mi support)."
 	    remote_close host
 	    return -1
 	}
@@ -462,7 +462,7 @@ proc mi_gdb_target_cmd { targetname serialport } {
 		continue
 	    }
 	    -re "Non-stop mode requested, but remote does not support non-stop.*$mi_gdb_prompt" {
-		unsupported "Non-stop mode not supported"
+		unsupported "non-stop mode not supported"
 		return 1
 	    }
 	    -re "Timeout reading from remote system.*$mi_gdb_prompt$" {
@@ -602,8 +602,9 @@ proc mi_gdb_target_load { } {
 	    }
 	}
     } elseif { [target_info protocol] == "sim" } {
+	set target_sim_options "[board_info target gdb,target_sim_options]"
 	# For the simulator, just connect to it directly.
-	send_gdb "47-target-select sim\n"
+	send_gdb "47-target-select sim $target_sim_options\n"
 	gdb_expect $loadtimeout {
 	    -re "47\\^connected.*$mi_gdb_prompt$" {
 	    }
@@ -823,7 +824,7 @@ proc mi_gdb_test { args } {
 	}
 	 -re ".*$mi_gdb_prompt\[ \]*$" {
 	    if ![string match "" $message] then {
-		fail "$message"
+		fail "$message (unexpected output)"
 	    }
 	    set result 1
 	}
@@ -988,7 +989,7 @@ proc mi_run_cmd_full {use_mi_command args} {
 	-re "${run_match}\\^running\r\n(\\*running,thread-id=\"\[^\"\]+\"\r\n|=thread-created,id=\"1\",group-id=\"\[0-9\]+\"\r\n)*(${library_loaded_re})*(${thread_selected_re})?${mi_gdb_prompt}" {
 	}
 	-re "\\^error,msg=\"The target does not support running in non-stop mode.\"" {
-	    unsupported "Non-stop mode not supported"
+	    unsupported "non-stop mode not supported"
 	    return -1
 	}
 	timeout {

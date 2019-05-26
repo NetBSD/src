@@ -337,7 +337,7 @@
 /* Name of host specific header file to include in trad-core.c. */
 #undef TRAD_HEADER
 
-/* Define if we should use 64-bit archives. */
+/* Define if 64-bit archives should always be used. */
 #undef USE_64_BIT_ARCHIVE
 
 /* Use b modifier when opening binary files? */

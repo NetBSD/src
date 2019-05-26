@@ -1,5 +1,5 @@
 /* Interface to C preprocessor macro tables for GDB.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -19,6 +19,8 @@
 
 #ifndef MACROTAB_H
 #define MACROTAB_H
+
+#include "common/function-view.h"
 
 struct obstack;
 struct bcache;
@@ -329,28 +331,23 @@ struct macro_source_file *(macro_definition_location
                             const char *name,
                             int *definition_line));
 
-/* Callback function when walking a macro table.  NAME is the name of
-   the macro, and DEFINITION is the definition.  SOURCE is the file at the
-   start of the include path, and LINE is the line number of the SOURCE file
-   where the macro was defined.  USER_DATA is an arbitrary pointer which is
-   passed by the caller to macro_for_each or macro_for_each_in_scope.  */
-typedef void (*macro_callback_fn) (const char *name,
-				   const struct macro_definition *definition,
-				   struct macro_source_file *source,
-				   int line,
-				   void *user_data);
+/* Prototype for a callback callable when walking a macro table.  NAME
+   is the name of the macro, and DEFINITION is the definition.  SOURCE
+   is the file at the start of the include path, and LINE is the line
+   number of the SOURCE file where the macro was defined.  */
+typedef void (macro_callback_fn) (const char *name,
+				  const struct macro_definition *definition,
+				  struct macro_source_file *source,
+				  int line);
 
-/* Call the function FN for each macro in the macro table TABLE.
-   USER_DATA is passed, untranslated, to FN.  */
-void macro_for_each (struct macro_table *table, macro_callback_fn fn,
-		     void *user_data);
+/* Call the callable FN for each macro in the macro table TABLE.  */
+void macro_for_each (struct macro_table *table,
+		     gdb::function_view<macro_callback_fn> fn);
 
-/* Call the function FN for each macro that is visible in a given
-   scope.  The scope is represented by FILE and LINE.  USER_DATA is
-   passed, untranslated, to FN.  */
+/* Call FN for each macro that is visible in a given scope.  The scope
+   is represented by FILE and LINE.  */
 void macro_for_each_in_scope (struct macro_source_file *file, int line,
-			      macro_callback_fn fn,
-			      void *user_data);
+			      gdb::function_view<macro_callback_fn> fn);
 
 /* Return FILE->filename with possibly prepended compilation directory name.
    This is raw concatenation without the "set substitute-path" and gdb_realpath

@@ -1,6 +1,6 @@
 /* Solaris threads debugging interface.
 
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -86,7 +86,7 @@ struct ps_prochandle
 struct string_map
 {
   int num;
-  char *str;
+  const char *str;
 };
 
 static struct ps_prochandle main_ph;
@@ -98,62 +98,88 @@ static void init_sol_thread_ops (void);
 /* Default definitions: These must be defined in tm.h if they are to
    be shared with a process module such as procfs.  */
 
+/* Types of the libthread_db functions.  */
+
+typedef void (td_log_ftype)(const int on_off);
+typedef td_err_e (td_ta_new_ftype)(const struct ps_prochandle *ph_p,
+				   td_thragent_t **ta_pp);
+typedef td_err_e (td_ta_delete_ftype)(td_thragent_t *ta_p);
+typedef td_err_e (td_init_ftype)(void);
+typedef td_err_e (td_ta_get_ph_ftype)(const td_thragent_t *ta_p,
+				      struct ps_prochandle **ph_pp);
+typedef td_err_e (td_ta_get_nthreads_ftype)(const td_thragent_t *ta_p,
+					    int *nthread_p);
+typedef td_err_e (td_ta_tsd_iter_ftype)(const td_thragent_t *ta_p,
+					td_key_iter_f *cb, void *cbdata_p);
+typedef td_err_e (td_ta_thr_iter_ftype)(const td_thragent_t *ta_p,
+					td_thr_iter_f *cb, void *cbdata_p,
+					td_thr_state_e state, int ti_pri,
+					sigset_t *ti_sigmask_p,
+					unsigned ti_user_flags);
+typedef td_err_e (td_thr_validate_ftype)(const td_thrhandle_t *th_p);
+typedef td_err_e (td_thr_tsd_ftype)(const td_thrhandle_t * th_p,
+				    const thread_key_t key, void **data_pp);
+typedef td_err_e (td_thr_get_info_ftype)(const td_thrhandle_t *th_p,
+					 td_thrinfo_t *ti_p);
+typedef td_err_e (td_thr_getfpregs_ftype)(const td_thrhandle_t *th_p,
+					  prfpregset_t *fpregset);
+typedef td_err_e (td_thr_getxregsize_ftype)(const td_thrhandle_t *th_p,
+					    int *xregsize);
+typedef td_err_e (td_thr_getxregs_ftype)(const td_thrhandle_t *th_p,
+					 const caddr_t xregset);
+typedef td_err_e (td_thr_sigsetmask_ftype)(const td_thrhandle_t *th_p,
+					   const sigset_t ti_sigmask);
+typedef td_err_e (td_thr_setprio_ftype)(const td_thrhandle_t *th_p,
+					const int ti_pri);
+typedef td_err_e (td_thr_setsigpending_ftype)(const td_thrhandle_t *th_p,
+					      const uchar_t ti_pending_flag,
+					      const sigset_t ti_pending);
+typedef td_err_e (td_thr_setfpregs_ftype)(const td_thrhandle_t *th_p,
+					  const prfpregset_t *fpregset);
+typedef td_err_e (td_thr_setxregs_ftype)(const td_thrhandle_t *th_p,
+					 const caddr_t xregset);
+typedef td_err_e (td_ta_map_id2thr_ftype)(const td_thragent_t *ta_p,
+					  thread_t tid,
+					  td_thrhandle_t *th_p);
+typedef td_err_e (td_ta_map_lwp2thr_ftype)(const td_thragent_t *ta_p,
+					   lwpid_t lwpid,
+					   td_thrhandle_t *th_p);
+typedef td_err_e (td_thr_getgregs_ftype)(const td_thrhandle_t *th_p,
+					 prgregset_t regset);
+typedef td_err_e (td_thr_setgregs_ftype)(const td_thrhandle_t *th_p,
+					 const prgregset_t regset);
+
 /* Pointers to routines from libthread_db resolved by dlopen().  */
 
-static void (*p_td_log)(const int on_off);
-static td_err_e (*p_td_ta_new)(const struct ps_prochandle *ph_p,
-			       td_thragent_t **ta_pp);
-static td_err_e (*p_td_ta_delete)(td_thragent_t *ta_p);
-static td_err_e (*p_td_init)(void);
-static td_err_e (*p_td_ta_get_ph)(const td_thragent_t *ta_p,
-				  struct ps_prochandle **ph_pp);
-static td_err_e (*p_td_ta_get_nthreads)(const td_thragent_t *ta_p,
-					int *nthread_p);
-static td_err_e (*p_td_ta_tsd_iter)(const td_thragent_t *ta_p,
-				    td_key_iter_f *cb, void *cbdata_p);
-static td_err_e (*p_td_ta_thr_iter)(const td_thragent_t *ta_p,
-				    td_thr_iter_f *cb, void *cbdata_p,
-				    td_thr_state_e state, int ti_pri,
-				    sigset_t *ti_sigmask_p,
-				    unsigned ti_user_flags);
-static td_err_e (*p_td_thr_validate)(const td_thrhandle_t *th_p);
-static td_err_e (*p_td_thr_tsd)(const td_thrhandle_t * th_p,
-				const thread_key_t key, void **data_pp);
-static td_err_e (*p_td_thr_get_info)(const td_thrhandle_t *th_p,
-				     td_thrinfo_t *ti_p);
-static td_err_e (*p_td_thr_getfpregs)(const td_thrhandle_t *th_p,
-				      prfpregset_t *fpregset);
-static td_err_e (*p_td_thr_getxregsize)(const td_thrhandle_t *th_p,
-					int *xregsize);
-static td_err_e (*p_td_thr_getxregs)(const td_thrhandle_t *th_p,
-				     const caddr_t xregset);
-static td_err_e (*p_td_thr_sigsetmask)(const td_thrhandle_t *th_p,
-				       const sigset_t ti_sigmask);
-static td_err_e (*p_td_thr_setprio)(const td_thrhandle_t *th_p,
-				    const int ti_pri);
-static td_err_e (*p_td_thr_setsigpending)(const td_thrhandle_t *th_p,
-					  const uchar_t ti_pending_flag,
-					  const sigset_t ti_pending);
-static td_err_e (*p_td_thr_setfpregs)(const td_thrhandle_t *th_p,
-				      const prfpregset_t *fpregset);
-static td_err_e (*p_td_thr_setxregs)(const td_thrhandle_t *th_p,
-				     const caddr_t xregset);
-static td_err_e (*p_td_ta_map_id2thr)(const td_thragent_t *ta_p,
-				      thread_t tid,
-				      td_thrhandle_t *th_p);
-static td_err_e (*p_td_ta_map_lwp2thr)(const td_thragent_t *ta_p,
-				       lwpid_t lwpid,
-				       td_thrhandle_t *th_p);
-static td_err_e (*p_td_thr_getgregs)(const td_thrhandle_t *th_p,
-				     prgregset_t regset);
-static td_err_e (*p_td_thr_setgregs)(const td_thrhandle_t *th_p,
-				     const prgregset_t regset);
+static td_log_ftype *p_td_log;
+static td_ta_new_ftype *p_td_ta_new;
+static td_ta_delete_ftype *p_td_ta_delete;
+static td_init_ftype *p_td_init;
+static td_ta_get_ph_ftype *p_td_ta_get_ph;
+static td_ta_get_nthreads_ftype *p_td_ta_get_nthreads;
+static td_ta_tsd_iter_ftype *p_td_ta_tsd_iter;
+static td_ta_thr_iter_ftype *p_td_ta_thr_iter;
+static td_thr_validate_ftype *p_td_thr_validate;
+static td_thr_tsd_ftype *p_td_thr_tsd;
+static td_thr_get_info_ftype *p_td_thr_get_info;
+static td_thr_getfpregs_ftype *p_td_thr_getfpregs;
+static td_thr_getxregsize_ftype *p_td_thr_getxregsize;
+static td_thr_getxregs_ftype *p_td_thr_getxregs;
+static td_thr_sigsetmask_ftype *p_td_thr_sigsetmask;
+static td_thr_setprio_ftype *p_td_thr_setprio;
+static td_thr_setsigpending_ftype *p_td_thr_setsigpending;
+static td_thr_setfpregs_ftype *p_td_thr_setfpregs;
+static td_thr_setxregs_ftype *p_td_thr_setxregs;
+static td_ta_map_id2thr_ftype *p_td_ta_map_id2thr;
+static td_ta_map_lwp2thr_ftype *p_td_ta_map_lwp2thr;
+static td_thr_getgregs_ftype *p_td_thr_getgregs;
+static td_thr_setgregs_ftype *p_td_thr_setgregs;
 
 
 /* Return the libthread_db error string associated with ERRCODE.  If
    ERRCODE is unknown, return an appropriate message.  */
 
-static char *
+static const char *
 td_err_string (td_err_e errcode)
 {
   static struct string_map td_err_table[] =
@@ -197,7 +223,7 @@ td_err_string (td_err_e errcode)
 /* Return the libthread_db state string assicoated with STATECODE.
    If STATECODE is unknown, return an appropriate message.  */
 
-static char *
+static const char *
 td_state_string (td_thr_state_e statecode)
 {
   static struct string_map td_thr_state_table[] =
@@ -436,16 +462,17 @@ sol_thread_fetch_registers (struct target_ops *ops,
   gdb_gregset_t *gregset_p = &gregset;
   gdb_fpregset_t *fpregset_p = &fpregset;
   struct target_ops *beneath = find_target_beneath (ops);
+  ptid_t ptid = regcache_get_ptid (regcache);
 
-  if (!ptid_tid_p (inferior_ptid))
+  if (!ptid_tid_p (ptid))
     {
       /* It's an LWP; pass the request on to the layer beneath.  */
       beneath->to_fetch_registers (beneath, regcache, regnum);
       return;
     }
 
-  /* Solaris thread: convert INFERIOR_PTID into a td_thrhandle_t.  */
-  thread = ptid_get_tid (inferior_ptid);
+  /* Solaris thread: convert PTID into a td_thrhandle_t.  */
+  thread = ptid_get_tid (ptid);
   if (thread == 0)
     error (_("sol_thread_fetch_registers: thread == 0"));
 
@@ -488,8 +515,9 @@ sol_thread_store_registers (struct target_ops *ops,
   td_err_e val;
   prgregset_t gregset;
   prfpregset_t fpregset;
+  ptid_t ptid = regcache_get_ptid (regcache);
 
-  if (!ptid_tid_p (inferior_ptid))
+  if (!ptid_tid_p (ptid))
     {
       struct target_ops *beneath = find_target_beneath (ops);
 
@@ -498,8 +526,8 @@ sol_thread_store_registers (struct target_ops *ops,
       return;
     }
 
-  /* Solaris thread: convert INFERIOR_PTID into a td_thrhandle_t.  */
-  thread = ptid_get_tid (inferior_ptid);
+  /* Solaris thread: convert PTID into a td_thrhandle_t.  */
+  thread = ptid_get_tid (ptid);
 
   val = p_td_ta_map_id2thr (main_ta, thread, &thandle);
   if (val != TD_OK)
@@ -508,12 +536,6 @@ sol_thread_store_registers (struct target_ops *ops,
 
   if (regnum != -1)
     {
-      /* Not writing all the registers.  */
-      char old_value[MAX_REGISTER_SIZE];
-
-      /* Save new register value.  */
-      regcache_raw_collect (regcache, regnum, old_value);
-
       val = p_td_thr_getgregs (&thandle, gregset);
       if (val != TD_OK)
 	error (_("sol_thread_store_registers: td_thr_getgregs %s"),
@@ -522,9 +544,6 @@ sol_thread_store_registers (struct target_ops *ops,
       if (val != TD_OK)
 	error (_("sol_thread_store_registers: td_thr_getfpregs %s"),
 	       td_err_string (val));
-
-      /* Restore new register value.  */
-      regcache_raw_supply (regcache, regnum, old_value);
     }
 
   fill_gregset (regcache, (gdb_gregset_t *) &gregset, regnum);
@@ -818,7 +837,7 @@ ps_err_e
 ps_pdread (gdb_ps_prochandle_t ph, gdb_ps_addr_t addr,
 	   gdb_ps_read_buf_t buf, gdb_ps_size_t size)
 {
-  return rw_common (0, ph, addr, buf, size);
+  return rw_common (0, ph, addr, (gdb_byte *) buf, size);
 }
 
 /* Copies SIZE bytes from debugger memory .data segment to target process.  */
@@ -836,7 +855,7 @@ ps_err_e
 ps_ptread (gdb_ps_prochandle_t ph, gdb_ps_addr_t addr,
 	   gdb_ps_read_buf_t buf, gdb_ps_size_t size)
 {
-  return rw_common (0, ph, addr, buf, size);
+  return rw_common (0, ph, addr, (gdb_byte *) buf, size);
 }
 
 /* Copies SIZE bytes from debugger memory .text segment to target process.  */
@@ -853,18 +872,12 @@ ps_ptwrite (gdb_ps_prochandle_t ph, gdb_ps_addr_t addr,
 ps_err_e
 ps_lgetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, prgregset_t gregset)
 {
-  struct cleanup *old_chain;
-  struct regcache *regcache;
-
-  old_chain = save_inferior_ptid ();
-
-  inferior_ptid = ptid_build (ptid_get_pid (inferior_ptid), lwpid, 0);
-  regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
+  ptid_t ptid = ptid_build (ptid_get_pid (inferior_ptid), lwpid, 0);
+  struct regcache *regcache
+    = get_thread_arch_regcache (ptid, target_gdbarch ());
 
   target_fetch_registers (regcache, -1);
   fill_gregset (regcache, (gdb_gregset_t *) gregset, -1);
-
-  do_cleanups (old_chain);
 
   return PS_OK;
 }
@@ -875,18 +888,12 @@ ps_err_e
 ps_lsetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid,
 	     const prgregset_t gregset)
 {
-  struct cleanup *old_chain;
-  struct regcache *regcache;
-
-  old_chain = save_inferior_ptid ();
-
-  inferior_ptid = ptid_build (ptid_get_pid (inferior_ptid), lwpid, 0);
-  regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
+  ptid_t ptid = ptid_build (ptid_get_pid (inferior_ptid), lwpid, 0);
+  struct regcache *regcache
+    = get_thread_arch_regcache (ptid, target_gdbarch ());
 
   supply_gregset (regcache, (const gdb_gregset_t *) gregset);
   target_store_registers (regcache, -1);
-
-  do_cleanups (old_chain);
 
   return PS_OK;
 }
@@ -933,18 +940,12 @@ ps_err_e
 ps_lgetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid,
 	       prfpregset_t *fpregset)
 {
-  struct cleanup *old_chain;
-  struct regcache *regcache;
-
-  old_chain = save_inferior_ptid ();
-
-  inferior_ptid = ptid_build (ptid_get_pid (inferior_ptid), lwpid, 0);
-  regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
+  ptid_t ptid = ptid_build (ptid_get_pid (inferior_ptid), lwpid, 0);
+  struct regcache *regcache
+    = get_thread_arch_regcache (ptid, target_gdbarch ());
 
   target_fetch_registers (regcache, -1);
   fill_fpregset (regcache, (gdb_fpregset_t *) fpregset, -1);
-
-  do_cleanups (old_chain);
 
   return PS_OK;
 }
@@ -955,18 +956,12 @@ ps_err_e
 ps_lsetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid,
 	       const prfpregset_t * fpregset)
 {
-  struct cleanup *old_chain;
-  struct regcache *regcache;
-
-  old_chain = save_inferior_ptid ();
-
-  inferior_ptid = ptid_build (ptid_get_pid (inferior_ptid), lwpid, 0);
-  regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
+  ptid_t ptid = ptid_build (ptid_get_pid (inferior_ptid), lwpid, 0);
+  struct regcache *regcache
+    = get_thread_arch_regcache (ptid, target_gdbarch ());
 
   supply_fpregset (regcache, (const gdb_fpregset_t *) fpregset);
   target_store_registers (regcache, -1);
-
-  do_cleanups (old_chain);
 
   return PS_OK;
 }
@@ -1026,7 +1021,7 @@ ps_lgetLDT (gdb_ps_prochandle_t ph, lwpid_t lwpid,
 
 /* Convert PTID to printable form.  */
 
-static char *
+static const char *
 solaris_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   static char buf[100];
@@ -1249,7 +1244,7 @@ _initialize_sol_thread (void)
     goto die;
 
 #define resolve(X) \
-  if (!(p_##X = dlsym (dlhandle, #X))) \
+  if (!(p_##X = (X ## _ftype *) dlsym (dlhandle, #X)))	\
     goto die;
 
   resolve (td_log);

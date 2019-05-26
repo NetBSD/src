@@ -1,6 +1,6 @@
 /* Program and address space management, for GDB, the GNU debugger.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -303,10 +303,10 @@ print_program_space (struct ui_out *uiout, int requested)
   gdb_assert (count > 0);
 
   old_chain = make_cleanup_ui_out_table_begin_end (uiout, 3, count, "pspaces");
-  ui_out_table_header (uiout, 1, ui_left, "current", "");
-  ui_out_table_header (uiout, 4, ui_left, "id", "Id");
-  ui_out_table_header (uiout, 17, ui_left, "exec", "Executable");
-  ui_out_table_body (uiout);
+  uiout->table_header (1, ui_left, "current", "");
+  uiout->table_header (4, ui_left, "id", "Id");
+  uiout->table_header (17, ui_left, "exec", "Executable");
+  uiout->table_body ();
 
   ALL_PSPACES (pspace)
     {
@@ -320,16 +320,16 @@ print_program_space (struct ui_out *uiout, int requested)
       chain2 = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
 
       if (pspace == current_program_space)
-	ui_out_field_string (uiout, "current", "*");
+	uiout->field_string ("current", "*");
       else
-	ui_out_field_skip (uiout, "current");
+	uiout->field_skip ("current");
 
-      ui_out_field_int (uiout, "id", pspace->num);
+      uiout->field_int ("id", pspace->num);
 
       if (pspace->pspace_exec_filename)
-	ui_out_field_string (uiout, "exec", pspace->pspace_exec_filename);
+	uiout->field_string ("exec", pspace->pspace_exec_filename);
       else
-	ui_out_field_skip (uiout, "exec");
+	uiout->field_skip ("exec");
 
       /* Print extra info that doesn't really fit in tabular form.
 	 Currently, we print the list of inferiors bound to a pspace.
@@ -353,7 +353,7 @@ print_program_space (struct ui_out *uiout, int requested)
 			       target_pid_to_str (pid_to_ptid (inf->pid)));
 	  }
 
-      ui_out_text (uiout, "\n");
+      uiout->text ("\n");
       do_cleanups (chain2);
     }
 
