@@ -1,4 +1,4 @@
-#   Copyright 1988-2016 Free Software Foundation, Inc.
+#   Copyright 1988-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # This file was written by Rob Savoye. (rob@cygnus.com)
 
-if { [prepare_for_testing break.exp "break" {break.c break1.c} {debug nowarnings}] } {
+if { [prepare_for_testing "failed to prepare" "break" {break.c break1.c} {debug nowarnings}] } {
     return -1
 }
 set srcfile break.c
@@ -35,13 +35,13 @@ gdb_expect {
 	    send_gdb "y\n"
 	    gdb_expect {
 		-re "$gdb_prompt $" {
-		    fail "Delete all breakpoints when none (unexpected prompt)"
+		    fail "delete all breakpoints when none (unexpected prompt)"
 		}
-		timeout	{ fail "Delete all breakpoints when none (timeout after unexpected prompt)" }
+		timeout	{ fail "delete all breakpoints when none (timeout after unexpected prompt)" }
 	    }
 	}
-     -re ".*$gdb_prompt $"       { pass "Delete all breakpoints when none" }
-    timeout	            { fail "Delete all breakpoints when none (timeout)" }
+     -re ".*$gdb_prompt $"       { pass "delete all breakpoints when none" }
+    timeout	            { fail "delete all breakpoints when none (timeout)" }
 }
 
 #
@@ -420,7 +420,7 @@ delete_breakpoints
 # test temporary breakpoint at function
 #
 
-gdb_test "tbreak main" "Temporary breakpoint.*at.* file .*$srcfile, line.*" "Temporary breakpoint function"
+gdb_test "tbreak main" "Temporary breakpoint.*at.* file .*$srcfile, line.*" "temporary breakpoint function"
 
 #
 # test break at function in file
@@ -434,16 +434,16 @@ gdb_test "tbreak $srcfile:factorial" "Temporary breakpoint.*at.* file .*$srcfile
 #
 gdb_test "tbreak $bp_location1" \
     "Temporary breakpoint.*at.* file .*$srcfile, line $bp_location1.*" \
-    "Temporary breakpoint line number #1"
+    "temporary breakpoint line number #1"
 
-gdb_test "tbreak $bp_location6" "Temporary breakpoint.*at.* file .*$srcfile, line $bp_location6.*" "Temporary breakpoint line number #2"
+gdb_test "tbreak $bp_location6" "Temporary breakpoint.*at.* file .*$srcfile, line $bp_location6.*" "temporary breakpoint line number #2"
 
 #
 # test break at line number in file
 #
 gdb_test "tbreak $srcfile:$bp_location2" \
     "Temporary breakpoint.*at.* file .*$srcfile, line $bp_location2.*" \
-    "Temporary breakpoint line number in file #1"
+    "temporary breakpoint line number in file #1"
 
 set bp_location11 [gdb_get_line_number "set breakpoint 11 here"]
 gdb_test  "tbreak $srcfile:$bp_location11" "Temporary breakpoint.*at.* file .*$srcfile, line $bp_location11.*" "Temporary breakpoint line number in file #2"
@@ -747,7 +747,7 @@ test_next_with_recursion
 # build a new file with optimization enabled so that we can try breakpoints
 # on targets with optimized prologues
 
-if { [prepare_for_testing break.exp "breako2" {break.c break1.c} {debug nowarnings optimize=-O2}] } {
+if { [prepare_for_testing "failed to prepare" "breako2" {break.c break1.c} {debug nowarnings optimize=-O2}] } {
     return -1
 }
 

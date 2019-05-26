@@ -1,5 +1,5 @@
 /* MI Command Set - symbol commands.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,7 @@
    in ascending PC order.  */
 
 void
-mi_cmd_symbol_list_lines (char *command, char **argv, int argc)
+mi_cmd_symbol_list_lines (const char *command, char **argv, int argc)
 {
   struct gdbarch *gdbarch;
   char *filename;
@@ -56,9 +56,8 @@ mi_cmd_symbol_list_lines (char *command, char **argv, int argc)
     for (i = 0; i < SYMTAB_LINETABLE (s)->nitems; i++)
     {
       cleanup_tuple = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
-      ui_out_field_core_addr (uiout, "pc", gdbarch,
-			      SYMTAB_LINETABLE (s)->item[i].pc);
-      ui_out_field_int (uiout, "line", SYMTAB_LINETABLE (s)->item[i].line);
+      uiout->field_core_addr ("pc", gdbarch, SYMTAB_LINETABLE (s)->item[i].pc);
+      uiout->field_int ("line", SYMTAB_LINETABLE (s)->item[i].line);
       do_cleanups (cleanup_tuple);
     }
 

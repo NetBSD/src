@@ -1,6 +1,6 @@
 /* Select target systems and architectures at runtime for GDB.
 
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -45,6 +45,7 @@
 #include "target-debug.h"
 #include "top.h"
 #include "event-top.h"
+#include <algorithm>
 
 static void target_info (char *, int);
 
@@ -90,7 +91,7 @@ static int return_zero_has_execution (struct target_ops *, ptid_t);
 
 static void target_command (char *, int);
 
-static struct target_ops *find_default_run_target (char *);
+static struct target_ops *find_default_run_target (const char *);
 
 static struct gdbarch *default_thread_architecture (struct target_ops *ops,
 						    ptid_t ptid);
@@ -102,7 +103,7 @@ static int dummy_find_memory_regions (struct target_ops *self,
 static char *dummy_make_corefile_notes (struct target_ops *self,
 					bfd *ignore1, int *ignore2);
 
-static char *default_pid_to_str (struct target_ops *ops, ptid_t ptid);
+static const char *default_pid_to_str (struct target_ops *ops, ptid_t ptid);
 
 static enum exec_direction_kind default_execution_direction
     (struct target_ops *self);
@@ -402,7 +403,7 @@ add_target (struct target_ops *t)
 /* See target.h.  */
 
 void
-add_deprecated_target_alias (struct target_ops *t, char *alias)
+add_deprecated_target_alias (struct target_ops *t, const char *alias)
 {
   struct cmd_list_element *c;
   char *alt;
@@ -1292,7 +1293,7 @@ memory_xfer_partial (struct target_ops *ops, enum target_object object,
 	 shadow handling even though we only end up writing a small
 	 subset of it.  Cap writes to a limit specified by the target
 	 to mitigate this.  */
-      len = min (ops->to_get_memory_xfer_limit (ops), len);
+      len = std::min (ops->to_get_memory_xfer_limit (ops), len);
 
       buf = (gdb_byte *) xmalloc (len);
       old_chain = make_cleanup (xfree, buf);
@@ -1858,7 +1859,7 @@ read_memory_robust (struct target_ops *ops,
 	}
       else
 	{
-	  LONGEST to_read = min (len - xfered_total, region_len);
+	  LONGEST to_read = std::min (len - xfered_total, region_len);
 	  gdb_byte *buffer = (gdb_byte *) xmalloc (to_read * unit_size);
 	  struct cleanup *inner_cleanup = make_cleanup (xfree, buffer);
 
@@ -2283,6 +2284,8 @@ target_disconnect (const char *args, int from_tty)
   current_target.to_disconnect (&current_target, args, from_tty);
 }
 
+/* See target/target.h.  */
+
 ptid_t
 target_wait (ptid_t ptid, struct target_waitstatus *status, int options)
 {
@@ -2300,7 +2303,7 @@ default_target_wait (struct target_ops *ops,
   return minus_one_ptid;
 }
 
-char *
+const char *
 target_pid_to_str (ptid_t ptid)
 {
   return (*current_target.to_pid_to_str) (&current_target, ptid);
@@ -2324,6 +2327,34 @@ target_resume (ptid_t ptid, int step, enum gdb_signal signal)
      running state is set at a higher level.  */
   set_executing (ptid, 1);
   clear_inline_frame_state (ptid);
+}
+
+/* If true, target_commit_resume is a nop.  */
+static int defer_target_commit_resume;
+
+/* See target.h.  */
+
+void
+target_commit_resume (void)
+{
+  struct target_ops *t;
+
+  if (defer_target_commit_resume)
+    return;
+
+  current_target.to_commit_resume (&current_target);
+}
+
+/* See target.h.  */
+
+struct cleanup *
+make_cleanup_defer_target_commit_resume (void)
+{
+  struct cleanup *old_chain;
+
+  old_chain = make_cleanup_restore_integer (&defer_target_commit_resume);
+  defer_target_commit_resume = 1;
+  return old_chain;
 }
 
 void
@@ -2374,8 +2405,9 @@ default_mourn_inferior (struct target_ops *self)
 }
 
 void
-target_mourn_inferior (void)
+target_mourn_inferior (ptid_t ptid)
 {
+  gdb_assert (ptid_equal (ptid, inferior_ptid));
   current_target.to_mourn_inferior (&current_target);
 
   /* We no longer need to keep handles on any of the object files.
@@ -2443,7 +2475,8 @@ simple_search_memory (struct target_ops *ops,
   while (search_space_len >= pattern_len)
     {
       gdb_byte *found_ptr;
-      unsigned nr_search_bytes = min (search_space_len, search_buf_size);
+      unsigned nr_search_bytes
+	= std::min (search_space_len, (ULONGEST) search_buf_size);
 
       found_ptr = (gdb_byte *) memmem (search_buf, nr_search_bytes,
 				       pattern, pattern_len);
@@ -2476,7 +2509,8 @@ simple_search_memory (struct target_ops *ops,
 	  gdb_assert (keep_len == pattern_len - 1);
 	  memcpy (search_buf, search_buf + chunk_size, keep_len);
 
-	  nr_to_read = min (search_space_len - keep_len, chunk_size);
+	  nr_to_read = std::min (search_space_len - keep_len,
+				 (ULONGEST) chunk_size);
 
 	  if (target_read (ops, TARGET_OBJECT_MEMORY, NULL,
 			   search_buf + keep_len, read_addr,
@@ -2590,7 +2624,7 @@ show_auto_connect_native_target (struct ui_file *file, int from_tty,
    called for errors); else, return NULL on error.  */
 
 static struct target_ops *
-find_default_run_target (char *do_mesg)
+find_default_run_target (const char *do_mesg)
 {
   struct target_ops *runable = NULL;
 
@@ -2721,6 +2755,14 @@ target_supports_disable_randomization (void)
   return 0;
 }
 
+/* See target/target.h.  */
+
+int
+target_supports_multi_process (void)
+{
+  return (*current_target.to_supports_multi_process) (&current_target);
+}
+
 char *
 target_get_osdata (const char *type)
 {
@@ -2848,7 +2890,7 @@ static void
 release_fileio_fd (int fd, fileio_fh_t *fh)
 {
   fh->fd = -1;
-  lowest_closed_fd = min (lowest_closed_fd, fd);
+  lowest_closed_fd = std::min (lowest_closed_fd, fd);
 }
 
 /* Return a pointer to the fileio_fhandle_t corresponding to FD.  */
@@ -3249,7 +3291,7 @@ void
 target_announce_detach (int from_tty)
 {
   pid_t pid;
-  char *exec_file;
+  const char *exec_file;
 
   if (!from_tty)
     return;
@@ -3302,7 +3344,7 @@ generic_mourn_inferior (void)
 /* Convert a normal process ID to a string.  Returns the string in a
    static buffer.  */
 
-char *
+const char *
 normal_pid_to_str (ptid_t ptid)
 {
   static char buf[32];
@@ -3311,7 +3353,7 @@ normal_pid_to_str (ptid_t ptid)
   return buf;
 }
 
-static char *
+static const char *
 default_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   return normal_pid_to_str (ptid);
@@ -3449,6 +3491,14 @@ target_continue_no_signal (ptid_t ptid)
   target_resume (ptid, 0, GDB_SIGNAL_0);
 }
 
+/* See target/target.h.  */
+
+void
+target_continue (ptid_t ptid, enum gdb_signal signal)
+{
+  target_resume (ptid, 0, signal);
+}
+
 /* Concatenate ELEM to LIST, a comma separate list, and return the
    result.  The LIST incoming argument is released.  */
 
@@ -3468,7 +3518,7 @@ str_comma_list_concat_elem (char *list, const char *elem)
 
 static char *
 do_option (int *target_options, char *ret,
-	   int opt, char *opt_str)
+	   int opt, const char *opt_str)
 {
   if ((*target_options & opt) != 0)
     {
@@ -3497,49 +3547,12 @@ target_options_to_string (int target_options)
   return ret;
 }
 
-static void
-debug_print_register (const char * func,
-		      struct regcache *regcache, int regno)
-{
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-
-  fprintf_unfiltered (gdb_stdlog, "%s ", func);
-  if (regno >= 0 && regno < gdbarch_num_regs (gdbarch)
-      && gdbarch_register_name (gdbarch, regno) != NULL
-      && gdbarch_register_name (gdbarch, regno)[0] != '\0')
-    fprintf_unfiltered (gdb_stdlog, "(%s)",
-			gdbarch_register_name (gdbarch, regno));
-  else
-    fprintf_unfiltered (gdb_stdlog, "(%d)", regno);
-  if (regno >= 0 && regno < gdbarch_num_regs (gdbarch))
-    {
-      enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-      int i, size = register_size (gdbarch, regno);
-      gdb_byte buf[MAX_REGISTER_SIZE];
-
-      regcache_raw_collect (regcache, regno, buf);
-      fprintf_unfiltered (gdb_stdlog, " = ");
-      for (i = 0; i < size; i++)
-	{
-	  fprintf_unfiltered (gdb_stdlog, "%02x", buf[i]);
-	}
-      if (size <= sizeof (LONGEST))
-	{
-	  ULONGEST val = extract_unsigned_integer (buf, size, byte_order);
-
-	  fprintf_unfiltered (gdb_stdlog, " %s %s",
-			      core_addr_to_string_nz (val), plongest (val));
-	}
-    }
-  fprintf_unfiltered (gdb_stdlog, "\n");
-}
-
 void
 target_fetch_registers (struct regcache *regcache, int regno)
 {
   current_target.to_fetch_registers (&current_target, regcache, regno);
   if (targetdebug)
-    debug_print_register ("target_fetch_registers", regcache, regno);
+    regcache_debug_print_register ("target_fetch_registers", regcache, regno);
 }
 
 void
@@ -3551,7 +3564,8 @@ target_store_registers (struct regcache *regcache, int regno)
   current_target.to_store_registers (&current_target, regcache, regno);
   if (targetdebug)
     {
-      debug_print_register ("target_store_registers", regcache, regno);
+      regcache_debug_print_register ("target_store_registers", regcache,
+				     regno);
     }
 }
 
@@ -3572,7 +3586,7 @@ simple_verify_memory (struct target_ops *ops,
       ULONGEST xfered_len;
       enum target_xfer_status status;
       gdb_byte buf[1024];
-      ULONGEST howmuch = min (sizeof (buf), size - total_xfered);
+      ULONGEST howmuch = std::min<ULONGEST> (sizeof (buf), size - total_xfered);
 
       status = target_xfer_partial (ops, TARGET_OBJECT_MEMORY, NULL,
 				    buf, NULL, lma + total_xfered, howmuch,
@@ -3739,6 +3753,14 @@ target_delete_record (void)
 
 /* See target.h.  */
 
+enum record_method
+target_record_method (ptid_t ptid)
+{
+  return current_target.to_record_method (&current_target, ptid);
+}
+
+/* See target.h.  */
+
 int
 target_record_is_replaying (ptid_t ptid)
 {
@@ -3891,6 +3913,52 @@ do_monitor_command (char *cmd,
 		 int from_tty)
 {
   target_rcmd (cmd, gdb_stdtarg);
+}
+
+/* Erases all the memory regions marked as flash.  CMD and FROM_TTY are
+   ignored.  */
+
+void
+flash_erase_command (char *cmd, int from_tty)
+{
+  /* Used to communicate termination of flash operations to the target.  */
+  bool found_flash_region = false;
+  struct mem_region *m;
+  struct gdbarch *gdbarch = target_gdbarch ();
+
+  VEC(mem_region_s) *mem_regions = target_memory_map ();
+
+  /* Iterate over all memory regions.  */
+  for (int i = 0; VEC_iterate (mem_region_s, mem_regions, i, m); i++)
+    {
+      /* Fetch the memory attribute.  */
+      struct mem_attrib *attrib = &m->attrib;
+
+      /* Is this a flash memory region?  */
+      if (attrib->mode == MEM_FLASH)
+        {
+          found_flash_region = true;
+          target_flash_erase (m->lo, m->hi - m->lo);
+
+	  struct cleanup *cleanup_tuple
+	      = make_cleanup_ui_out_tuple_begin_end (current_uiout,
+						     "erased-regions");
+
+          current_uiout->message (_("Erasing flash memory region at address "));
+          current_uiout->field_fmt ("address", "%s", paddress (gdbarch,
+								 m->lo));
+          current_uiout->message (", size = ");
+          current_uiout->field_fmt ("size", "%s", hex_string (m->hi - m->lo));
+          current_uiout->message ("\n");
+          do_cleanups (cleanup_tuple);
+        }
+    }
+
+  /* Did we do any flash operations?  If so, we need to finalize them.  */
+  if (found_flash_region)
+    target_flash_done ();
+  else
+    current_uiout->message (_("No flash memory regions found.\n"));
 }
 
 /* Print the name of each layers of our target stack.  */
@@ -4182,6 +4250,9 @@ When this permission is on, GDB may interrupt/stop the target's execution.\n\
 Otherwise, any attempt to interrupt or stop will be ignored."),
 			   set_target_permissions, NULL,
 			   &setlist, &showlist);
+
+  add_com ("flash-erase", no_class, flash_erase_command,
+           _("Erase all flash memory regions."));
 
   add_setshow_boolean_cmd ("auto-connect-native-target", class_support,
 			   &auto_connect_native_target, _("\

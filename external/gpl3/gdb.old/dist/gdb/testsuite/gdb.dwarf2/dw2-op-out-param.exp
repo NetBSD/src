@@ -1,4 +1,4 @@
-# Copyright 2012-2016 Free Software Foundation, Inc.
+# Copyright 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ if {![istarget x86_64-*] || ![is_lp64_target]} {
     return 0
 }
 
-if { [prepare_for_testing "${test}.exp" "${test}" ${test}.S {nodebug}] } {
+if { [prepare_for_testing "failed to prepare" "${test}" ${test}.S {nodebug}] } {
     return -1
 }
 
@@ -46,16 +46,16 @@ gdb_test_no_output "set print frame-arguments all"
 
 # (1) int_param_single_reg_loc
 gdb_continue_to_breakpoint "Stop in breakpt for test int_param_single_reg_loc"
-gdb_test "bt" "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?int_param_single_reg_loc \\(operand0=<optimized out>, operand1=0xdeadbe00deadbe01, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)" "Backtrace for test int_param_single_reg_loc"
+gdb_test "bt" "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?int_param_single_reg_loc \\(operand0=<optimized out>, operand1=0xdeadbe00deadbe01, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)" "backtrace for test int_param_single_reg_loc"
 
 # (2) struct_param_single_reg_loc
 gdb_continue_to_breakpoint "Stop in breakpt for struct_param_single_reg_loc"
-gdb_test "bt" "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?struct_param_single_reg_loc \\(operand0={a = 0xdeadbe00deadbe01, b = <optimized out>}, operand1={a = <optimized out>, b = 0xdeadbe04deadbe05}, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)" "Backtrace for test struct_param_single_reg_loc"
+gdb_test "bt" "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?struct_param_single_reg_loc \\(operand0={a = 0xdeadbe00deadbe01, b = <optimized out>}, operand1={a = <optimized out>, b = 0xdeadbe04deadbe05}, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)" "backtrace for test struct_param_single_reg_loc"
 
 # (3) struct_param_two_reg_pieces
 gdb_continue_to_breakpoint "Stop in breakpt for struct_param_two_reg_pieces"
-gdb_test "bt" "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?struct_param_two_reg_pieces \\(operand0={a = 0xdeadbe04deadbe05, b = <optimized out>}, operand1={a = <optimized out>, b = 0xdeadbe00deadbe01}, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)" "Backtrace for test struct_param_two_reg_pieces"
+gdb_test "bt" "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?struct_param_two_reg_pieces \\(operand0={a = 0xdeadbe04deadbe05, b = <optimized out>}, operand1={a = <optimized out>, b = 0xdeadbe00deadbe01}, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)" "backtrace for test struct_param_two_reg_pieces"
 
 # (4) int_param_two_reg_pieces
 gdb_continue_to_breakpoint "Stop in breakpt for int_param_two_reg_pieces"
-gdb_test "bt" "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?int_param_two_reg_pieces \\(operand0=<optimized out>, operand1=<optimized out>, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)" "Backtrace for test int_param_two_reg_pieces"
+gdb_test "bt" "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?int_param_two_reg_pieces \\(operand0=<optimized out>, operand1=<optimized out>, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)" "backtrace for test int_param_two_reg_pieces"

@@ -1,5 +1,5 @@
 /*  maverick.c -- Cirrus/DSP co-processor interface.
-    Copyright (C) 2003-2016 Free Software Foundation, Inc.
+    Copyright (C) 2003-2017 Free Software Foundation, Inc.
     Contributed by Aldy Hernandez (aldyh@redhat.com).
 
     This program is free software; you can redistribute it and/or modify

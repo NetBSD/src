@@ -1,6 +1,6 @@
 /* vms-misc.c -- BFD back-end for VMS/VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
    Miscellaneous functions.
 
@@ -356,12 +356,12 @@ _bfd_vms_output_counted (struct vms_rec_wr *recwr, const char *value)
   len = strlen (value);
   if (len == 0)
     {
-      (*_bfd_error_handler) (_("_bfd_vms_output_counted called with zero bytes"));
+      _bfd_error_handler (_("_bfd_vms_output_counted called with zero bytes"));
       return;
     }
   if (len > 255)
     {
-      (*_bfd_error_handler) (_("_bfd_vms_output_counted called with too many bytes"));
+      _bfd_error_handler (_("_bfd_vms_output_counted called with too many bytes"));
       return;
     }
   _bfd_vms_output_byte (recwr, (unsigned int) len & 0xff);

@@ -1,6 +1,6 @@
 /* GDB-specific functions for operating on agent expressions.
 
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -128,7 +128,8 @@ static void gen_binop (struct agent_expr *ax,
 		       struct axs_value *value1,
 		       struct axs_value *value2,
 		       enum agent_op op,
-		       enum agent_op op_unsigned, int may_carry, char *name);
+		       enum agent_op op_unsigned, int may_carry,
+		       const char *name);
 static void gen_logical_not (struct agent_expr *ax, struct axs_value *value,
 			     struct type *result_type);
 static void gen_complement (struct agent_expr *ax, struct axs_value *value);
@@ -144,12 +145,13 @@ static void gen_primitive_field (struct expression *exp,
 static int gen_struct_ref_recursive (struct expression *exp,
 				     struct agent_expr *ax,
 				     struct axs_value *value,
-				     char *field, int offset,
+				     const char *field, int offset,
 				     struct type *type);
 static void gen_struct_ref (struct expression *exp, struct agent_expr *ax,
 			    struct axs_value *value,
-			    char *field,
-			    char *operator_name, char *operand_name);
+			    const char *field,
+			    const char *operator_name,
+			    const char *operand_name);
 static void gen_static_field (struct gdbarch *gdbarch,
 			      struct agent_expr *ax, struct axs_value *value,
 			      struct type *type, int fieldno);
@@ -491,6 +493,7 @@ gen_fetch (struct agent_expr *ax, struct type *type)
     {
     case TYPE_CODE_PTR:
     case TYPE_CODE_REF:
+    case TYPE_CODE_RVALUE_REF:
     case TYPE_CODE_ENUM:
     case TYPE_CODE_INT:
     case TYPE_CODE_CHAR:
@@ -910,7 +913,7 @@ gen_conversion (struct agent_expr *ax, struct type *from, struct type *to)
 static int
 is_nontrivial_conversion (struct type *from, struct type *to)
 {
-  struct agent_expr *ax = new_agent_expr (NULL, 0);
+  agent_expr_up ax (new agent_expr (NULL, 0));
   int nontrivial;
 
   /* Actually generate the code, and see if anything came out.  At the
@@ -919,9 +922,8 @@ is_nontrivial_conversion (struct type *from, struct type *to)
      floating point and the like, it may not be.  Doing things this
      way allows this function to be independent of the logic in
      gen_conversion.  */
-  gen_conversion (ax, from, to);
+  gen_conversion (ax.get (), from, to);
   nontrivial = ax->len > 0;
-  free_agent_expr (ax);
   return nontrivial;
 }
 
@@ -1001,6 +1003,7 @@ gen_cast (struct agent_expr *ax, struct axs_value *value, struct type *type)
     {
     case TYPE_CODE_PTR:
     case TYPE_CODE_REF:
+    case TYPE_CODE_RVALUE_REF:
       /* It's implementation-defined, and I'll bet this is what GCC
          does.  */
       break;
@@ -1148,7 +1151,7 @@ static void
 gen_binop (struct agent_expr *ax, struct axs_value *value,
 	   struct axs_value *value1, struct axs_value *value2,
 	   enum agent_op op, enum agent_op op_unsigned,
-	   int may_carry, char *name)
+	   int may_carry, const char *name)
 {
   /* We only handle INT op INT.  */
   if ((TYPE_CODE (value1->type) != TYPE_CODE_INT)
@@ -1433,7 +1436,7 @@ gen_primitive_field (struct expression *exp,
 static int
 gen_struct_ref_recursive (struct expression *exp, struct agent_expr *ax,
 			  struct axs_value *value,
-			  char *field, int offset, struct type *type)
+			  const char *field, int offset, struct type *type)
 {
   int i, rslt;
   int nbases = TYPE_N_BASECLASSES (type);
@@ -1497,8 +1500,8 @@ gen_struct_ref_recursive (struct expression *exp, struct agent_expr *ax,
    it operates on; we use them in error messages.  */
 static void
 gen_struct_ref (struct expression *exp, struct agent_expr *ax,
-		struct axs_value *value, char *field,
-		char *operator_name, char *operand_name)
+		struct axs_value *value, const char *field,
+		const char *operator_name, const char *operand_name)
 {
   struct type *type;
   int found;
@@ -1670,7 +1673,8 @@ static int
 gen_aggregate_elt_ref (struct expression *exp,
 		       struct agent_expr *ax, struct axs_value *value,
 		       struct type *type, char *field,
-		       char *operator_name, char *operand_name)
+		       const char *operator_name,
+		       const char *operand_name)
 {
   switch (TYPE_CODE (type))
     {
@@ -2391,38 +2395,28 @@ gen_expr_binop_rest (struct expression *exp,
    variable's name, and no parsed expression; for instance, when the
    name comes from a list of local variables of a function.  */
 
-struct agent_expr *
+agent_expr_up
 gen_trace_for_var (CORE_ADDR scope, struct gdbarch *gdbarch,
 		   struct symbol *var, int trace_string)
 {
-  struct cleanup *old_chain = 0;
-  struct agent_expr *ax = new_agent_expr (gdbarch, scope);
+  agent_expr_up ax (new agent_expr (gdbarch, scope));
   struct axs_value value;
-
-  old_chain = make_cleanup_free_agent_expr (ax);
 
   ax->tracing = 1;
   ax->trace_string = trace_string;
-  gen_var_ref (gdbarch, ax, &value, var);
+  gen_var_ref (gdbarch, ax.get (), &value, var);
 
   /* If there is no actual variable to trace, flag it by returning
      an empty agent expression.  */
   if (value.optimized_out)
-    {
-      do_cleanups (old_chain);
-      return NULL;
-    }
+    return agent_expr_up ();
 
   /* Make sure we record the final object, and get rid of it.  */
-  gen_traced_pop (gdbarch, ax, &value);
+  gen_traced_pop (gdbarch, ax.get (), &value);
 
   /* Oh, and terminate.  */
-  ax_simple (ax, aop_end);
+  ax_simple (ax.get (), aop_end);
 
-  /* We have successfully built the agent expr, so cancel the cleanup
-     request.  If we add more cleanups that we always want done, this
-     will have to get more complicated.  */
-  discard_cleanups (old_chain);
   return ax;
 }
 
@@ -2433,33 +2427,27 @@ gen_trace_for_var (CORE_ADDR scope, struct gdbarch *gdbarch,
    record the value of all memory touched by the expression.  The
    caller can then use the ax_reqs function to discover which
    registers it relies upon.  */
-struct agent_expr *
+
+agent_expr_up
 gen_trace_for_expr (CORE_ADDR scope, struct expression *expr,
 		    int trace_string)
 {
-  struct cleanup *old_chain = 0;
-  struct agent_expr *ax = new_agent_expr (expr->gdbarch, scope);
+  agent_expr_up ax (new agent_expr (expr->gdbarch, scope));
   union exp_element *pc;
   struct axs_value value;
-
-  old_chain = make_cleanup_free_agent_expr (ax);
 
   pc = expr->elts;
   ax->tracing = 1;
   ax->trace_string = trace_string;
   value.optimized_out = 0;
-  gen_expr (expr, &pc, ax, &value);
+  gen_expr (expr, &pc, ax.get (), &value);
 
   /* Make sure we record the final object, and get rid of it.  */
-  gen_traced_pop (expr->gdbarch, ax, &value);
+  gen_traced_pop (expr->gdbarch, ax.get (), &value);
 
   /* Oh, and terminate.  */
-  ax_simple (ax, aop_end);
+  ax_simple (ax.get (), aop_end);
 
-  /* We have successfully built the agent expr, so cancel the cleanup
-     request.  If we add more cleanups that we always want done, this
-     will have to get more complicated.  */
-  discard_cleanups (old_chain);
   return ax;
 }
 
@@ -2470,58 +2458,44 @@ gen_trace_for_expr (CORE_ADDR scope, struct expression *expr,
    gen_trace_for_expr does.  The generated bytecode sequence leaves
    the result of expression evaluation on the top of the stack.  */
 
-struct agent_expr *
+agent_expr_up
 gen_eval_for_expr (CORE_ADDR scope, struct expression *expr)
 {
-  struct cleanup *old_chain = 0;
-  struct agent_expr *ax = new_agent_expr (expr->gdbarch, scope);
+  agent_expr_up ax (new agent_expr (expr->gdbarch, scope));
   union exp_element *pc;
   struct axs_value value;
-
-  old_chain = make_cleanup_free_agent_expr (ax);
 
   pc = expr->elts;
   ax->tracing = 0;
   value.optimized_out = 0;
-  gen_expr (expr, &pc, ax, &value);
+  gen_expr (expr, &pc, ax.get (), &value);
 
-  require_rvalue (ax, &value);
+  require_rvalue (ax.get (), &value);
 
   /* Oh, and terminate.  */
-  ax_simple (ax, aop_end);
+  ax_simple (ax.get (), aop_end);
 
-  /* We have successfully built the agent expr, so cancel the cleanup
-     request.  If we add more cleanups that we always want done, this
-     will have to get more complicated.  */
-  discard_cleanups (old_chain);
   return ax;
 }
 
-struct agent_expr *
+agent_expr_up
 gen_trace_for_return_address (CORE_ADDR scope, struct gdbarch *gdbarch,
 			      int trace_string)
 {
-  struct cleanup *old_chain = 0;
-  struct agent_expr *ax = new_agent_expr (gdbarch, scope);
+  agent_expr_up ax (new agent_expr (gdbarch, scope));
   struct axs_value value;
-
-  old_chain = make_cleanup_free_agent_expr (ax);
 
   ax->tracing = 1;
   ax->trace_string = trace_string;
 
-  gdbarch_gen_return_address (gdbarch, ax, &value, scope);
+  gdbarch_gen_return_address (gdbarch, ax.get (), &value, scope);
 
   /* Make sure we record the final object, and get rid of it.  */
-  gen_traced_pop (gdbarch, ax, &value);
+  gen_traced_pop (gdbarch, ax.get (), &value);
 
   /* Oh, and terminate.  */
-  ax_simple (ax, aop_end);
+  ax_simple (ax.get (), aop_end);
 
-  /* We have successfully built the agent expr, so cancel the cleanup
-     request.  If we add more cleanups that we always want done, this
-     will have to get more complicated.  */
-  discard_cleanups (old_chain);
   return ax;
 }
 
@@ -2529,20 +2503,17 @@ gen_trace_for_return_address (CORE_ADDR scope, struct gdbarch *gdbarch,
    evaluate the arguments and pass everything to a special
    bytecode.  */
 
-struct agent_expr *
+agent_expr_up
 gen_printf (CORE_ADDR scope, struct gdbarch *gdbarch,
 	    CORE_ADDR function, LONGEST channel,
 	    const char *format, int fmtlen,
 	    struct format_piece *frags,
 	    int nargs, struct expression **exprs)
 {
-  struct cleanup *old_chain = 0;
-  struct agent_expr *ax = new_agent_expr (gdbarch, scope);
+  agent_expr_up ax (new agent_expr (gdbarch, scope));
   union exp_element *pc;
   struct axs_value value;
   int tem;
-
-  old_chain = make_cleanup_free_agent_expr (ax);
 
   /* We're computing values, not doing side effects.  */
   ax->tracing = 0;
@@ -2553,26 +2524,21 @@ gen_printf (CORE_ADDR scope, struct gdbarch *gdbarch,
     {
       pc = exprs[tem]->elts;
       value.optimized_out = 0;
-      gen_expr (exprs[tem], &pc, ax, &value);
-      require_rvalue (ax, &value);
+      gen_expr (exprs[tem], &pc, ax.get (), &value);
+      require_rvalue (ax.get (), &value);
     }
 
   /* Push function and channel.  */
-  ax_const_l (ax, channel);
-  ax_const_l (ax, function);
+  ax_const_l (ax.get (), channel);
+  ax_const_l (ax.get (), function);
 
   /* Issue the printf bytecode proper.  */
-  ax_simple (ax, aop_printf);
-  ax_raw_byte (ax, nargs);
-  ax_string (ax, format, fmtlen);
+  ax_simple (ax.get (), aop_printf);
+  ax_raw_byte (ax.get (), nargs);
+  ax_string (ax.get (), format, fmtlen);
 
   /* And terminate.  */
-  ax_simple (ax, aop_end);
-
-  /* We have successfully built the agent expr, so cancel the cleanup
-     request.  If we add more cleanups that we always want done, this
-     will have to get more complicated.  */
-  discard_cleanups (old_chain);
+  ax_simple (ax.get (), aop_end);
 
   return ax;
 }
@@ -2580,9 +2546,6 @@ gen_printf (CORE_ADDR scope, struct gdbarch *gdbarch,
 static void
 agent_eval_command_one (const char *exp, int eval, CORE_ADDR pc)
 {
-  struct cleanup *old_chain = 0;
-  struct expression *expr;
-  struct agent_expr *agent;
   const char *arg;
   int trace_string = 0;
 
@@ -2592,34 +2555,33 @@ agent_eval_command_one (const char *exp, int eval, CORE_ADDR pc)
         exp = decode_agent_options (exp, &trace_string);
     }
 
+  agent_expr_up agent;
+
   arg = exp;
   if (!eval && strcmp (arg, "$_ret") == 0)
     {
       agent = gen_trace_for_return_address (pc, get_current_arch (),
 					    trace_string);
-      old_chain = make_cleanup_free_agent_expr (agent);
     }
   else
     {
-      expr = parse_exp_1 (&arg, pc, block_for_pc (pc), 0);
-      old_chain = make_cleanup (free_current_contents, &expr);
+      expression_up expr = parse_exp_1 (&arg, pc, block_for_pc (pc), 0);
+
       if (eval)
 	{
 	  gdb_assert (trace_string == 0);
-	  agent = gen_eval_for_expr (pc, expr);
+	  agent = gen_eval_for_expr (pc, expr.get ());
 	}
       else
-	agent = gen_trace_for_expr (pc, expr, trace_string);
-      make_cleanup_free_agent_expr (agent);
+	agent = gen_trace_for_expr (pc, expr.get (), trace_string);
     }
 
-  ax_reqs (agent);
-  ax_print (gdb_stdout, agent);
+  ax_reqs (agent.get ());
+  ax_print (gdb_stdout, agent.get ());
 
   /* It would be nice to call ax_reqs here to gather some general info
      about the expression, and then print out the result.  */
 
-  do_cleanups (old_chain);
   dont_repeat ();
 }
 
@@ -2641,17 +2603,13 @@ agent_command_1 (char *exp, int eval)
       struct linespec_result canonical;
       int ix;
       struct linespec_sals *iter;
-      struct cleanup *old_chain;
-      struct event_location *location;
 
       exp = skip_spaces (exp);
-      init_linespec_result (&canonical);
-      location = new_linespec_location (&exp);
-      old_chain = make_cleanup_delete_event_location (location);
-      decode_line_full (location, DECODE_LINE_FUNFIRSTLINE, NULL,
+
+      event_location_up location = new_linespec_location (&exp);
+      decode_line_full (location.get (), DECODE_LINE_FUNFIRSTLINE, NULL,
 			(struct symtab *) NULL, 0, &canonical,
 			NULL, NULL);
-      make_cleanup_destroy_linespec_result (&canonical);
       exp = skip_spaces (exp);
       if (exp[0] == ',')
         {
@@ -2665,7 +2623,6 @@ agent_command_1 (char *exp, int eval)
 	  for (i = 0; i < iter->sals.nelts; i++)
 	    agent_eval_command_one (exp, eval, iter->sals.sals[i].pc);
         }
-      do_cleanups (old_chain);
     }
   else
     agent_eval_command_one (exp, eval, get_frame_pc (get_current_frame ()));
@@ -2696,9 +2653,7 @@ static void
 maint_agent_printf_command (char *exp, int from_tty)
 {
   struct cleanup *old_chain = 0;
-  struct expression *expr;
   struct expression *argvec[100];
-  struct agent_expr *agent;
   struct frame_info *fi = get_current_frame ();	/* need current scope */
   const char *cmdrest;
   const char *format_start, *format_end;
@@ -2748,8 +2703,8 @@ maint_agent_printf_command (char *exp, int from_tty)
       const char *cmd1;
 
       cmd1 = cmdrest;
-      expr = parse_exp_1 (&cmd1, 0, (struct block *) 0, 1);
-      argvec[nargs] = expr;
+      expression_up expr = parse_exp_1 (&cmd1, 0, (struct block *) 0, 1);
+      argvec[nargs] = expr.release ();
       ++nargs;
       cmdrest = cmd1;
       if (*cmdrest == ',')
@@ -2758,12 +2713,12 @@ maint_agent_printf_command (char *exp, int from_tty)
     }
 
 
-  agent = gen_printf (get_frame_pc (fi), get_current_arch (), 0, 0,
-		      format_start, format_end - format_start,
-		      fpieces, nargs, argvec);
-  make_cleanup_free_agent_expr (agent);
-  ax_reqs (agent);
-  ax_print (gdb_stdout, agent);
+  agent_expr_up agent = gen_printf (get_frame_pc (fi), get_current_arch (),
+				    0, 0,
+				    format_start, format_end - format_start,
+				    fpieces, nargs, argvec);
+  ax_reqs (agent.get ());
+  ax_print (gdb_stdout, agent.get ());
 
   /* It would be nice to call ax_reqs here to gather some general info
      about the expression, and then print out the result.  */

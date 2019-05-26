@@ -1,5 +1,5 @@
 /* Definitions for expressions designed to be executed on the agent
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -94,6 +94,11 @@ union agent_val
 /* A buffer containing a agent expression.  */
 struct agent_expr
   {
+    /* Construct an empty agent expression.  */
+    explicit agent_expr (struct gdbarch *gdbarch, CORE_ADDR scope);
+
+    ~agent_expr ();
+
     /* The bytes of the expression.  */
     unsigned char *buf;
 
@@ -162,11 +167,8 @@ struct agent_expr
     int trace_string;
   };
 
-/* Pointer to an agent_expr structure.  */
-typedef struct agent_expr *agent_expr_p;
-
-/* Vector of pointers to agent expressions.  */
-DEF_VEC_P (agent_expr_p);
+/* An agent_expr owning pointer.  */
+typedef std::unique_ptr<agent_expr> agent_expr_up;
 
 /* The actual values of the various bytecode operations.  */
 
@@ -182,13 +184,6 @@ enum agent_op
 
 
 /* Functions for building expressions.  */
-
-/* Allocate a new, empty agent expression.  */
-extern struct agent_expr *new_agent_expr (struct gdbarch *, CORE_ADDR);
-
-/* Free a agent expression.  */
-extern void free_agent_expr (struct agent_expr *);
-extern struct cleanup *make_cleanup_free_agent_expr (struct agent_expr *);
 
 /* Append a raw byte to EXPR.  */
 extern void ax_raw_byte (struct agent_expr *expr, gdb_byte byte);

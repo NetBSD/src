@@ -1,7 +1,7 @@
 /* Target-dependent code for PowerPC systems using the SVR4 ABI
    for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +28,7 @@
 #include "objfiles.h"
 #include "infcall.h"
 #include "dwarf2.h"
+#include <algorithm>
 
 
 /* Check whether FTPYE is a (pointer to) function type that should use
@@ -805,7 +806,7 @@ do_ppc_sysv_return_value (struct gdbarch *gdbarch, struct type *func_type,
 	    || TYPE_CODE (type) == TYPE_CODE_CHAR
 	    || TYPE_CODE (type) == TYPE_CODE_BOOL
 	    || TYPE_CODE (type) == TYPE_CODE_PTR
-	    || TYPE_CODE (type) == TYPE_CODE_REF
+	    || TYPE_IS_REFERENCE (type)
 	    || TYPE_CODE (type) == TYPE_CODE_ENUM)
 	   && TYPE_LENGTH (type) <= tdep->wordsize)
     {
@@ -1189,7 +1190,7 @@ ppc64_aggregate_candidate (struct type *type,
 	      if (TYPE_CODE (type) == TYPE_CODE_STRUCT)
 		count += sub_count;
 	      else
-		count = max (count, sub_count);
+		count = std::max (count, sub_count);
 	    }
 
 	  /* There must be no padding.  */
@@ -1493,7 +1494,7 @@ ppc64_sysv_abi_push_param (struct gdbarch *gdbarch,
 	    || TYPE_CODE (type) == TYPE_CODE_BOOL
 	    || TYPE_CODE (type) == TYPE_CODE_CHAR
 	    || TYPE_CODE (type) == TYPE_CODE_PTR
-	    || TYPE_CODE (type) == TYPE_CODE_REF)
+	    || TYPE_IS_REFERENCE (type))
 	   && TYPE_LENGTH (type) <= tdep->wordsize)
     {
       ULONGEST word = 0;
@@ -1999,8 +2000,7 @@ ppc64_sysv_abi_return_value (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* All pointers live in r3.  */
-  if (TYPE_CODE (valtype) == TYPE_CODE_PTR
-      || TYPE_CODE (valtype) == TYPE_CODE_REF)
+  if (TYPE_CODE (valtype) == TYPE_CODE_PTR || TYPE_IS_REFERENCE (valtype))
     {
       int regnum = tdep->ppc_gp0_regnum + 3;
 

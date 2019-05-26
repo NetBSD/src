@@ -1,5 +1,5 @@
 /* Ubicom IP2xxx specific support for 32-bit ELF
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1241,6 +1241,7 @@ ip2k_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_IP2K_max)
     {
+      /* xgettext:c-format */
       _bfd_error_handler (_("%B: invalid IP2K reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
@@ -1293,6 +1294,7 @@ ip2k_final_link_relocate (reloc_howto_type *  howto,
 	  if (PAGENO (relocation + rel->r_addend) !=
 	      ip2k_nominal_page_bits (input_bfd, input_section,
 	      			      rel->r_offset, contents))
+	    /* xgettext:c-format */
 	    _bfd_error_handler (_("ip2k linker: missing page instruction at 0x%08lx (dest = 0x%08lx)."),
 				BASEADDR (input_section) + rel->r_offset,
 				relocation + rel->r_addend);
@@ -1309,6 +1311,7 @@ ip2k_final_link_relocate (reloc_howto_type *  howto,
 	      && (PAGENO (relocation + rel->r_addend) ==
 		  ip2k_nominal_page_bits (input_bfd, input_section,
 					  rel->r_offset - 2, contents)))
+	    /* xgettext:c-format */
 	    _bfd_error_handler (_("ip2k linker: redundant page instruction at 0x%08lx (dest = 0x%08lx)."),
 				page_addr,
 				relocation + rel->r_addend);

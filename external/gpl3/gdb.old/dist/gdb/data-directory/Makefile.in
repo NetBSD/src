@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2016 Free Software Foundation, Inc.
+# Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
 # Makefile for building a staged copy of the data-directory.
 # This file is part of GDB.
@@ -15,6 +15,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please keep lists in this file sorted alphabetically, with one item per line.
+# See gdb/Makefile.in for guidelines on ordering files and directories.
 
 srcdir = @srcdir@
 SYSCALLS_SRCDIR = $(srcdir)/../syscalls
@@ -45,12 +48,20 @@ GDB_DATADIR = @GDB_DATADIR@
 
 SYSCALLS_DIR = syscalls
 SYSCALLS_INSTALL_DIR = $(DESTDIR)$(GDB_DATADIR)/$(SYSCALLS_DIR)
-GEN_SYSCALLS_FILES = arm-linux.xml aarch64-linux.xml \
-	ppc-linux.xml ppc64-linux.xml \
-	i386-linux.xml amd64-linux.xml \
-	sparc-linux.xml sparc64-linux.xml \
-	mips-o32-linux.xml mips-n32-linux.xml mips-n64-linux.xml \
-	s390-linux.xml s390x-linux.xml
+GEN_SYSCALLS_FILES = \
+	aarch64-linux.xml \
+	amd64-linux.xml \
+	arm-linux.xml \
+	i386-linux.xml \
+	mips-n32-linux.xml \
+	mips-n64-linux.xml \
+	mips-o32-linux.xml \
+	ppc-linux.xml \
+	ppc64-linux.xml \
+	s390-linux.xml \
+	s390x-linux.xml \
+	sparc-linux.xml \
+	sparc64-linux.xml
 
 SYSCALLS_FILES = gdb-syscalls.dtd freebsd.xml $(GEN_SYSCALLS_FILES)
 
@@ -58,22 +69,22 @@ PYTHON_DIR = python
 PYTHON_INSTALL_DIR = $(DESTDIR)$(GDB_DATADIR)/$(PYTHON_DIR)
 PYTHON_FILE_LIST = \
 	gdb/__init__.py \
-	gdb/frames.py \
-	gdb/FrameIterator.py \
 	gdb/FrameDecorator.py \
-	gdb/types.py \
+	gdb/FrameIterator.py \
+	gdb/frames.py \
 	gdb/printing.py \
-	gdb/unwinder.py \
 	gdb/prompt.py \
+	gdb/types.py \
+	gdb/unwinder.py \
 	gdb/xmethod.py \
 	gdb/command/__init__.py \
-	gdb/command/xmethods.py \
+	gdb/command/explore.py \
 	gdb/command/frame_filters.py \
-	gdb/command/unwinders.py \
-	gdb/command/type_printers.py \
 	gdb/command/pretty_printers.py \
 	gdb/command/prompt.py \
-	gdb/command/explore.py \
+	gdb/command/type_printers.py \
+	gdb/command/unwinders.py \
+	gdb/command/xmethods.py \
 	gdb/function/__init__.py \
 	gdb/function/as_string.py \
 	gdb/function/caller_is.py \
@@ -401,3 +412,6 @@ MAKEOVERRIDES=
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	cd $(top_builddir) && $(MAKE) data-directory/Makefile
+
+# Disable implicit make rules.
+include $(srcdir)/../disable-implicit-rules.mk

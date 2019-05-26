@@ -1,6 +1,6 @@
 /* Definitions for reading symbol files into GDB.
 
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,10 @@
 /* This file requires that you first include "bfd.h".  */
 #include "symtab.h"
 #include "probe.h"
+#include "symfile-add-flags.h"
+#include "objfile-flags.h"
+#include "gdb_bfd.h"
+#include "common/function-view.h"
 
 /* Opaque declarations.  */
 struct target_section;
@@ -130,20 +134,18 @@ typedef void (symbol_filename_ftype) (const char *filename,
 /* Callback for quick_symbol_functions->expand_symtabs_matching
    to match a file name.  */
 
-typedef int (expand_symtabs_file_matcher_ftype) (const char *filename,
-						 void *data, int basenames);
+typedef bool (expand_symtabs_file_matcher_ftype) (const char *filename,
+						  bool basenames);
 
 /* Callback for quick_symbol_functions->expand_symtabs_matching
    to match a symbol name.  */
 
-typedef int (expand_symtabs_symbol_matcher_ftype) (const char *name,
-						   void *data);
+typedef bool (expand_symtabs_symbol_matcher_ftype) (const char *name);
 
 /* Callback for quick_symbol_functions->expand_symtabs_matching
    to be called after a symtab has been expanded.  */
 
-typedef void (expand_symtabs_exp_notify_ftype) \
-  (struct compunit_symtab *symtab, void *data);
+typedef void (expand_symtabs_exp_notify_ftype) (compunit_symtab *symtab);
 
 /* The "quick" symbol functions exist so that symbol readers can
    avoiding an initial read of all the symbols.  For example, symbol
@@ -186,14 +188,11 @@ struct quick_symbol_functions
 
      If a match is found, the "partial" symbol table is expanded.
      Then, this calls iterate_over_some_symtabs (or equivalent) over
-     all newly-created symbol tables, passing CALLBACK and DATA to it.
+     all newly-created symbol tables, passing CALLBACK to it.
      The result of this call is returned.  */
-  int (*map_symtabs_matching_filename) (struct objfile *objfile,
-					const char *name,
-					const char *real_path,
-					int (*callback) (struct symtab *,
-							 void *),
-					void *data);
+  bool (*map_symtabs_matching_filename)
+    (struct objfile *objfile, const char *name, const char *real_path,
+     gdb::function_view<bool (symtab *)> callback);
 
   /* Check to see if the symbol is defined in a "partial" symbol table
      of OBJFILE.  BLOCK_INDEX should be either GLOBAL_BLOCK or STATIC_BLOCK,
@@ -269,30 +268,27 @@ struct quick_symbol_functions
   /* Expand all symbol tables in OBJFILE matching some criteria.
 
      FILE_MATCHER is called for each file in OBJFILE.  The file name
-     and the DATA argument are passed to it.  If it returns zero, this
-     file is skipped.  If FILE_MATCHER is NULL such file is not skipped.
-     If BASENAMES is non-zero the function should consider only base name of
-     DATA (passed file name is already only the lbasename part).
+     is passed to it.  If the matcher returns false, the file is
+     skipped.  If FILE_MATCHER is NULL the file is not skipped.  If
+     BASENAMES is true the matcher should consider only file base
+     names (the passed file name is already only the lbasename'd
+     part).
 
-     Otherwise, if KIND does not match this symbol is skipped.
+     Otherwise, if KIND does not match, this symbol is skipped.
 
-     If even KIND matches, then SYMBOL_MATCHER is called for each symbol
-     defined in the file.  The symbol "search" name and DATA are passed
-     to SYMBOL_MATCHER.
+     If even KIND matches, SYMBOL_MATCHER is called for each symbol
+     defined in the file.  The symbol "search" name is passed to
+     SYMBOL_MATCHER.
 
-     If SYMBOL_MATCHER returns zero, then this symbol is skipped.
+     If SYMBOL_MATCHER returns false, then the symbol is skipped.
 
-     Otherwise, this symbol's symbol table is expanded.
-
-     DATA is user data that is passed unmodified to the callback
-     functions.  */
+     Otherwise, the symbol's symbol table is expanded.  */
   void (*expand_symtabs_matching)
     (struct objfile *objfile,
-     expand_symtabs_file_matcher_ftype *file_matcher,
-     expand_symtabs_symbol_matcher_ftype *symbol_matcher,
-     expand_symtabs_exp_notify_ftype *expansion_notify,
-     enum search_domain kind,
-     void *data);
+     gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
+     gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
+     gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
+     enum search_domain kind);
 
   /* Return the comp unit from OBJFILE that contains PC and
      SECTION.  Return NULL if there is no such compunit.  This
@@ -347,7 +343,7 @@ struct sym_fns
      file we are reading.  SYMFILE_FLAGS are the flags passed to
      symbol_file_add & co.  */
 
-  void (*sym_read) (struct objfile *, int);
+  void (*sym_read) (struct objfile *, symfile_add_flags);
 
   /* Read the partial symbols for an objfile.  This may be NULL, in which case
      gdb has to check other ways if this objfile has any symbols.  This may
@@ -436,7 +432,7 @@ extern void add_compunit_symtab_to_objfile (struct compunit_symtab *cu);
 
 extern void add_symtab_fns (enum bfd_flavour flavour, const struct sym_fns *);
 
-extern void clear_symtab_users (int add_flags);
+extern void clear_symtab_users (symfile_add_flags add_flags);
 
 extern enum language deduce_language_from_filename (const char *);
 
@@ -445,34 +441,14 @@ extern enum language deduce_language_from_filename (const char *);
    function.  */
 extern void add_filename_language (const char *ext, enum language lang);
 
-/* This enum encodes bit-flags passed as ADD_FLAGS parameter to
-   symbol_file_add, etc.  */
+extern struct objfile *symbol_file_add (const char *, symfile_add_flags,
+					struct section_addr_info *, objfile_flags);
 
-enum symfile_add_flags
-  {
-    /* Be chatty about what you are doing.  */
-    SYMFILE_VERBOSE = 1 << 1,
-
-    /* This is the main symbol file (as opposed to symbol file for dynamically
-       loaded code).  */
-    SYMFILE_MAINLINE = 1 << 2,
-
-    /* Do not call breakpoint_re_set when adding this symbol file.  */
-    SYMFILE_DEFER_BP_RESET = 1 << 3,
-
-    /* Do not immediately read symbols for this file.  By default,
-       symbols are read when the objfile is created.  */
-    SYMFILE_NO_READ = 1 << 4
-  };
-
-extern struct objfile *symbol_file_add (const char *, int,
-					struct section_addr_info *, int);
-
-extern struct objfile *symbol_file_add_from_bfd (bfd *, const char *, int,
+extern struct objfile *symbol_file_add_from_bfd (bfd *, const char *, symfile_add_flags,
                                                  struct section_addr_info *,
-                                                 int, struct objfile *parent);
+                                                 objfile_flags, struct objfile *parent);
 
-extern void symbol_file_add_separate (bfd *, const char *, int,
+extern void symbol_file_add_separate (bfd *, const char *, symfile_add_flags,
 				      struct objfile *);
 
 extern char *find_separate_debug_file_by_debuglink (struct objfile *);
@@ -517,9 +493,9 @@ extern void set_initial_language (void);
 
 extern void find_lowest_section (bfd *, asection *, void *);
 
-extern bfd *symfile_bfd_open (const char *);
+extern gdb_bfd_ref_ptr symfile_bfd_open (const char *);
 
-extern int get_section_index (struct objfile *, char *);
+extern int get_section_index (struct objfile *, const char *);
 
 extern int print_symbol_loading_p (int from_tty, int mainline, int full);
 
@@ -561,7 +537,8 @@ extern CORE_ADDR overlay_unmapped_address (CORE_ADDR, struct obj_section *);
 extern CORE_ADDR symbol_overlayed_address (CORE_ADDR, struct obj_section *);
 
 /* Load symbols from a file.  */
-extern void symbol_file_add_main (const char *args, int from_tty);
+extern void symbol_file_add_main (const char *args,
+				  symfile_add_flags add_flags);
 
 /* Clear GDB symbol tables.  */
 extern void symbol_file_clear (int from_tty);
@@ -579,12 +556,13 @@ extern int symfile_map_offsets_to_segments (bfd *,
 struct symfile_segment_data *get_symfile_segment_data (bfd *abfd);
 void free_symfile_segment_data (struct symfile_segment_data *data);
 
-extern struct cleanup *increment_reading_symtab (void);
+extern scoped_restore_tmpl<int> increment_reading_symtab (void);
 
-void expand_symtabs_matching (expand_symtabs_file_matcher_ftype *,
-			      expand_symtabs_symbol_matcher_ftype *,
-			      expand_symtabs_exp_notify_ftype *,
-			      enum search_domain kind, void *data);
+void expand_symtabs_matching
+  (gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
+   gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
+   gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
+   enum search_domain kind);
 
 void map_symbol_filenames (symbol_filename_ftype *fun, void *data,
 			   int need_fullname);
@@ -616,10 +594,13 @@ struct dwarf2_debug_sections {
   struct dwarf2_section_names abbrev;
   struct dwarf2_section_names line;
   struct dwarf2_section_names loc;
+  struct dwarf2_section_names loclists;
   struct dwarf2_section_names macinfo;
   struct dwarf2_section_names macro;
   struct dwarf2_section_names str;
+  struct dwarf2_section_names line_str;
   struct dwarf2_section_names ranges;
+  struct dwarf2_section_names rnglists;
   struct dwarf2_section_names types;
   struct dwarf2_section_names addr;
   struct dwarf2_section_names frame;
@@ -652,7 +633,8 @@ void dwarf2_free_objfile (struct objfile *);
 
 /* From mdebugread.c */
 
-extern void mdebug_build_psymtabs (struct objfile *,
+extern void mdebug_build_psymtabs (minimal_symbol_reader &,
+				   struct objfile *,
 				   const struct ecoff_debug_swap *,
 				   struct ecoff_debug_info *);
 
@@ -662,6 +644,6 @@ extern void elfmdebug_build_psymtabs (struct objfile *,
 
 /* From minidebug.c.  */
 
-extern bfd *find_separate_debug_file_in_section (struct objfile *);
+extern gdb_bfd_ref_ptr find_separate_debug_file_in_section (struct objfile *);
 
 #endif /* !defined(SYMFILE_H) */

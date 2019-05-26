@@ -1,6 +1,6 @@
 /* Print in infix form a struct expression.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -62,7 +62,7 @@ print_subexp_standard (struct expression *exp, int *pos,
   const struct op_print *op_print_tab;
   int pc;
   unsigned nargs;
-  char *op_str;
+  const char *op_str;
   int assign_modify = 0;
   enum exp_opcode opcode;
   enum precedence myprec = PREC_NULL;
@@ -649,7 +649,7 @@ print_subexp_standard (struct expression *exp, int *pos,
 /* Return the operator corresponding to opcode OP as
    a string.   NULL indicates that the opcode was not found in the
    current language table.  */
-char *
+const char *
 op_string (enum exp_opcode op)
 {
   int tem;
@@ -669,7 +669,7 @@ static int dump_subexp_body (struct expression *exp, struct ui_file *, int);
 
 /* Name for OPCODE, when it appears in expression EXP.  */
 
-char *
+const char *
 op_name (struct expression *exp, enum exp_opcode opcode)
 {
   return exp->language_defn->la_exp_desc->op_name (opcode);
@@ -678,7 +678,7 @@ op_name (struct expression *exp, enum exp_opcode opcode)
 /* Default name for the standard operator OPCODE (i.e., one defined in
    the definition of enum exp_opcode).  */
 
-char *
+const char *
 op_name_standard (enum exp_opcode opcode)
 {
   switch (opcode)
@@ -703,10 +703,9 @@ op_name_standard (enum exp_opcode opcode)
 
 void
 dump_raw_expression (struct expression *exp, struct ui_file *stream,
-		     char *note)
+		     const char *note)
 {
   int elt;
-  char *opcode_name;
   char *eltscan;
   int eltsize;
 
@@ -722,9 +721,10 @@ dump_raw_expression (struct expression *exp, struct ui_file *stream,
   for (elt = 0; elt < exp->nelts; elt++)
     {
       fprintf_filtered (stream, "\t%5d  ", elt);
-      opcode_name = op_name (exp, exp->elts[elt].opcode);
 
+      const char *opcode_name = op_name (exp, exp->elts[elt].opcode);
       fprintf_filtered (stream, "%20s  ", opcode_name);
+
       print_longest (stream, 'd', 0, exp->elts[elt].longconst);
       fprintf_filtered (stream, "  ");
 

@@ -1,6 +1,6 @@
 /* Target-dependent code for the VAX.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -39,7 +39,7 @@
 static const char *
 vax_register_name (struct gdbarch *gdbarch, int regnum)
 {
-  static char *register_names[] =
+  static const char *register_names[] =
   {
     "r0", "r1", "r2",  "r3",  "r4", "r5", "r6", "r7",
     "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc",
@@ -251,15 +251,10 @@ vax_return_value (struct gdbarch *gdbarch, struct value *function,
    encode a breakpoint instruction, store the length of the string in
    *LEN and optionally adjust *PC to point to the correct memory
    location for inserting the breakpoint.  */
-   
-static const gdb_byte *
-vax_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
-{
-  static gdb_byte break_insn[] = { 3 };
 
-  *len = sizeof (break_insn);
-  return break_insn;
-}
+constexpr gdb_byte vax_break_insn[] = { 3 };
+
+typedef BP_MANIPULATION (vax_break_insn) vax_breakpoint;
 
 /* Advance PC across any function entry prologue instructions
    to reach some "real" code.  */
@@ -500,7 +495,8 @@ vax_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_dummy_id (gdbarch, vax_dummy_id);
 
   /* Breakpoint info */
-  set_gdbarch_breakpoint_from_pc (gdbarch, vax_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch, vax_breakpoint::kind_from_pc);
+  set_gdbarch_sw_breakpoint_from_kind (gdbarch, vax_breakpoint::bp_from_kind);
 
   /* Misc info */
   set_gdbarch_deprecated_function_start_offset (gdbarch, 2);
