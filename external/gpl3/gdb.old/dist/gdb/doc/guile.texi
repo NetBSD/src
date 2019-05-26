@@ -1,4 +1,4 @@
-@c Copyright (C) 2008-2016 Free Software Foundation, Inc.
+@c Copyright (C) 2008-2017 Free Software Foundation, Inc.
 @c Permission is granted to copy, distribute and/or modify this document
 @c under the terms of the GNU Free Documentation License, Version 1.3 or
 @c any later version published by the Free Software Foundation; with the
@@ -1258,7 +1258,7 @@ A string of bits.  It is deprecated.
 An unknown or erroneous type.
 
 @item TYPE_CODE_METHOD
-A method type, as found in C@t{++} or Java.
+A method type, as found in C@t{++}.
 
 @item TYPE_CODE_METHODPTR
 A pointer-to-member-function.
@@ -1322,7 +1322,7 @@ Return the enum value represented by @code{<gdb:field>} @var{field}.
 @deffn {Scheme Procedure} field-bitpos field
 Return the bit position of @code{<gdb:field>} @var{field}.
 This attribute is not available for @code{static} fields (as in
-C@t{++} or Java).
+C@t{++}).
 @end deffn
 
 @deffn {Scheme Procedure} field-bitsize field
@@ -3248,7 +3248,7 @@ most appropriate encoding when the string is printed.
 
 @deffn {Scheme Procedure} lazy-string-type lazy-string
 Return the type that is represented by @var{lazy-string}'s type.
-For a lazy string this will always be a pointer type.  To
+For a lazy string this is a pointer or array type.  To
 resolve this to the lazy string's character type, use @code{type-target-type}.
 @xref{Types In Guile}.
 @end deffn

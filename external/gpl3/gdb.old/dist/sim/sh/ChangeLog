@@ -1,3 +1,9 @@
+2017-02-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* gencode.c: Include libiberty.h.
+	(conflict_warn): Use ARRAY_SIZE.
+	* interp.c (init_dsp): Likewise.
+
 2016-04-10  Oleg Endo  <olegendo@gcc.gnu.org>
 
 	* interp.c (dmul): Split into dmul_s and dmul_u.  Use explicit integer

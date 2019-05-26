@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -129,11 +129,6 @@ struct elf_nds32_link_hash_table
   struct elf_link_hash_table root;
 
   /* Short-cuts to get to dynamic linker sections.  */
-  asection *sgot;
-  asection *sgotplt;
-  asection *srelgot;
-  asection *splt;
-  asection *srelplt;
   asection *sdynbss;
   asection *srelbss;
 

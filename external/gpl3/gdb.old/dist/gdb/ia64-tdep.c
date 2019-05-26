@@ -1,6 +1,6 @@
 /* Target-dependent code for the IA-64 for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -140,7 +140,7 @@ enum pseudo_regs { FIRST_PSEUDO_REGNUM = NUM_IA64_RAW_REGS,
 /* Array of register names; There should be ia64_num_regs strings in
    the initializer.  */
 
-static char *ia64_register_names[] = 
+static const char *ia64_register_names[] =
 { "r0",   "r1",   "r2",   "r3",   "r4",   "r5",   "r6",   "r7",
   "r8",   "r9",   "r10",  "r11",  "r12",  "r13",  "r14",  "r15",
   "r16",  "r17",  "r18",  "r19",  "r20",  "r21",  "r22",  "r23",
@@ -719,8 +719,6 @@ ia64_memory_insert_breakpoint (struct gdbarch *gdbarch,
 		    paddress (gdbarch, bp_tgt->placed_address));
   replace_slotN_contents (bundle, IA64_BREAKPOINT, slotnum);
 
-  bp_tgt->placed_size = bp_tgt->shadow_len;
-
   val = target_write_memory (addr + shadow_slotnum, bundle + shadow_slotnum,
 			     bp_tgt->shadow_len);
 
@@ -783,8 +781,7 @@ ia64_memory_remove_breakpoint (struct gdbarch *gdbarch,
       slotnum = 2;
     }
 
-  gdb_assert (bp_tgt->placed_size == BUNDLE_LEN - shadow_slotnum);
-  gdb_assert (bp_tgt->placed_size == bp_tgt->shadow_len);
+  gdb_assert (bp_tgt->shadow_len == BUNDLE_LEN - shadow_slotnum);
 
   instr_breakpoint = slotN_contents (bundle_mem, slotnum);
   if (instr_breakpoint != IA64_BREAKPOINT)
@@ -810,6 +807,15 @@ ia64_memory_remove_breakpoint (struct gdbarch *gdbarch,
 
   do_cleanups (cleanup);
   return val;
+}
+
+/* Implement the breakpoint_kind_from_pc gdbarch method.  */
+
+static int
+ia64_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
+{
+  /* A place holder of gdbarch method breakpoint_kind_from_pc.   */
+  return 0;
 }
 
 /* As gdbarch_breakpoint_from_pc ranges have byte granularity and ia64
@@ -4009,6 +4015,7 @@ ia64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_memory_remove_breakpoint (gdbarch,
 					ia64_memory_remove_breakpoint);
   set_gdbarch_breakpoint_from_pc (gdbarch, ia64_breakpoint_from_pc);
+  set_gdbarch_breakpoint_kind_from_pc (gdbarch, ia64_breakpoint_kind_from_pc);
   set_gdbarch_read_pc (gdbarch, ia64_read_pc);
   set_gdbarch_write_pc (gdbarch, ia64_write_pc);
 

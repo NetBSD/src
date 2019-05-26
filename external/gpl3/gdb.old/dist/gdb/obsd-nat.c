@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD.
 
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,7 +35,7 @@
 
 #ifdef PT_GET_THREAD_FIRST
 
-static char *
+static const char *
 obsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   if (ptid_get_lwp (ptid) != 0)

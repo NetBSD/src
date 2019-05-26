@@ -1,4 +1,4 @@
-#   Copyright 2009-2016 Free Software Foundation, Inc.
+#   Copyright 2009-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -153,7 +153,7 @@ runto gen_ABRT
 
 if [supports_process_record] {
     # Activate process record/replay
-    gdb_test_no_output "record" "Turn on process record"
+    gdb_test_no_output "record" "turn on process record"
 }
 
 # The list of signals that the program generates, in the order they

@@ -1,6 +1,6 @@
 /* Support for printing C values for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -233,7 +233,7 @@ static void
 c_val_print_array (struct type *type, const gdb_byte *valaddr,
 		   int embedded_offset, CORE_ADDR address,
 		   struct ui_file *stream, int recurse,
-		   const struct value *original_value,
+		   struct value *original_value,
 		   const struct value_print_options *options)
 {
   struct type *unresolved_elttype = TYPE_TARGET_TYPE (type);
@@ -325,7 +325,7 @@ c_val_print_array (struct type *type, const gdb_byte *valaddr,
 	    {
 	      i = 0;
 	    }
-	  val_print_array_elements (type, valaddr, embedded_offset,
+	  val_print_array_elements (type, embedded_offset,
 				    address, stream,
 				    recurse, original_value, options, i);
 	  fprintf_filtered (stream, "}");
@@ -345,7 +345,7 @@ c_val_print_array (struct type *type, const gdb_byte *valaddr,
 static void
 c_val_print_ptr (struct type *type, const gdb_byte *valaddr,
 		 int embedded_offset, struct ui_file *stream, int recurse,
-		 const struct value *original_value,
+		 struct value *original_value,
 		 const struct value_print_options *options)
 {
   struct gdbarch *arch = get_type_arch (type);
@@ -353,7 +353,7 @@ c_val_print_ptr (struct type *type, const gdb_byte *valaddr,
 
   if (options->format && options->format != 's')
     {
-      val_print_scalar_formatted (type, valaddr, embedded_offset,
+      val_print_scalar_formatted (type, embedded_offset,
 				  original_value, options, 0, stream);
     }
   else if (options->vtblprint && cp_is_vtbl_ptr_type (type))
@@ -386,7 +386,7 @@ static void
 c_val_print_struct (struct type *type, const gdb_byte *valaddr,
 		    int embedded_offset, CORE_ADDR address,
 		    struct ui_file *stream, int recurse,
-		    const struct value *original_value,
+		    struct value *original_value,
 		    const struct value_print_options *options)
 {
   if (options->vtblprint && cp_is_vtbl_ptr_type (type))
@@ -418,7 +418,7 @@ static void
 c_val_print_union (struct type *type, const gdb_byte *valaddr,
 		   int embedded_offset, CORE_ADDR address,
 		   struct ui_file *stream, int recurse,
-		   const struct value *original_value,
+		   struct value *original_value,
 		   const struct value_print_options *options)
 {
   if (recurse && !options->unionprint)
@@ -437,7 +437,7 @@ c_val_print_union (struct type *type, const gdb_byte *valaddr,
 static void
 c_val_print_int (struct type *type, struct type *unresolved_type,
 		 const gdb_byte *valaddr, int embedded_offset,
-		 struct ui_file *stream, const struct value *original_value,
+		 struct ui_file *stream, struct value *original_value,
 		 const struct value_print_options *options)
 {
   struct gdbarch *arch = get_type_arch (type);
@@ -449,7 +449,7 @@ c_val_print_int (struct type *type, struct type *unresolved_type,
 
       opts.format = (options->format ? options->format
 		     : options->output_format);
-      val_print_scalar_formatted (type, valaddr, embedded_offset,
+      val_print_scalar_formatted (type, embedded_offset,
 				  original_value, &opts, 0, stream);
     }
   else
@@ -476,7 +476,7 @@ static void
 c_val_print_memberptr (struct type *type, const gdb_byte *valaddr,
 		       int embedded_offset, CORE_ADDR address,
 		       struct ui_file *stream, int recurse,
-		       const struct value *original_value,
+		       struct value *original_value,
 		       const struct value_print_options *options)
 {
   if (!options->format)
@@ -485,7 +485,7 @@ c_val_print_memberptr (struct type *type, const gdb_byte *valaddr,
     }
   else
     {
-      generic_val_print (type, valaddr, embedded_offset, address, stream,
+      generic_val_print (type, embedded_offset, address, stream,
 			 recurse, original_value, options, &c_decorations);
     }
 }
@@ -494,13 +494,14 @@ c_val_print_memberptr (struct type *type, const gdb_byte *valaddr,
    function; they are identical.  */
 
 void
-c_val_print (struct type *type, const gdb_byte *valaddr,
+c_val_print (struct type *type,
 	     int embedded_offset, CORE_ADDR address,
 	     struct ui_file *stream, int recurse,
-	     const struct value *original_value,
+	     struct value *original_value,
 	     const struct value_print_options *options)
 {
   struct type *unresolved_type = type;
+  const gdb_byte *valaddr = value_contents_for_printing (original_value);
 
   type = check_typedef (type);
   switch (TYPE_CODE (type))
@@ -540,6 +541,7 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
       break;
 
     case TYPE_CODE_REF:
+    case TYPE_CODE_RVALUE_REF:
     case TYPE_CODE_ENUM:
     case TYPE_CODE_FLAGS:
     case TYPE_CODE_FUNC:
@@ -554,7 +556,7 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
     case TYPE_CODE_COMPLEX:
     case TYPE_CODE_CHAR:
     default:
-      generic_val_print (type, valaddr, embedded_offset, address,
+      generic_val_print (type, embedded_offset, address,
 			 stream, recurse, original_value, options,
 			 &c_decorations);
       break;
@@ -586,8 +588,7 @@ c_value_print (struct value *val, struct ui_file *stream,
   val_type = value_type (val);
   type = check_typedef (val_type);
 
-  if (TYPE_CODE (type) == TYPE_CODE_PTR
-      || TYPE_CODE (type) == TYPE_CODE_REF)
+  if (TYPE_CODE (type) == TYPE_CODE_PTR || TYPE_IS_REFERENCE (type))
     {
       /* Hack:  remove (char *) for char strings.  Their
          type is indicated by the quoted string anyway.
@@ -605,10 +606,14 @@ c_value_print (struct value *val, struct ui_file *stream,
       else if (options->objectprint
 	       && (TYPE_CODE (TYPE_TARGET_TYPE (type)) == TYPE_CODE_STRUCT))
 	{
-	  int is_ref = TYPE_CODE (type) == TYPE_CODE_REF;
+	  int is_ref = TYPE_IS_REFERENCE (type);
+	  enum type_code refcode = TYPE_CODE_UNDEF;
 
 	  if (is_ref)
-	    val = value_addr (val);
+	    {
+	      val = value_addr (val);
+	      refcode = TYPE_CODE (type);
+	    }
 
 	  /* Pointer to class, check real type of object.  */
 	  fprintf_filtered (stream, "(");
@@ -634,7 +639,7 @@ c_value_print (struct value *val, struct ui_file *stream,
 
 	  if (is_ref)
 	    {
-	      val = value_ref (value_ind (val));
+	      val = value_ref (value_ind (val), refcode);
 	      type = value_type (val);
 	    }
 
@@ -669,7 +674,7 @@ c_value_print (struct value *val, struct ui_file *stream,
 	  /* Print out object: enclosing type is same as real_type if
 	     full.  */
 	  val_print (value_enclosing_type (val),
-		     value_contents_for_printing (val), 0,
+		     0,
 		     value_address (val), stream, 0,
 		     val, &opts, current_language);
 	  return;
@@ -682,7 +687,7 @@ c_value_print (struct value *val, struct ui_file *stream,
 	  fprintf_filtered (stream, "(%s ?) ",
 			    TYPE_NAME (value_enclosing_type (val)));
 	  val_print (value_enclosing_type (val),
-		     value_contents_for_printing (val), 0,
+		     0,
 		     value_address (val), stream, 0,
 		     val, &opts, current_language);
 	  return;
@@ -690,7 +695,7 @@ c_value_print (struct value *val, struct ui_file *stream,
       /* Otherwise, we end up at the return outside this "if".  */
     }
 
-  val_print (val_type, value_contents_for_printing (val),
+  val_print (val_type,
 	     value_embedded_offset (val),
 	     value_address (val),
 	     stream, 0,
