@@ -1,6 +1,6 @@
 /* General functions for the WDB TUI.
 
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -427,7 +427,7 @@ tui_enable (void)
       /* The MinGW port of ncurses requires $TERM to be unset in order
 	 to activate the Windows console driver.  */
       if (s == NULL)
-	s = newterm ("unknown", stdout, stdin);
+	s = newterm ((char *) "unknown", stdout, stdin);
 #endif
       if (s == NULL)
 	{
@@ -439,7 +439,7 @@ tui_enable (void)
       /* Check required terminal capabilities.  The MinGW port of
 	 ncurses does have them, but doesn't expose them through "cup".  */
 #ifndef __MINGW32__
-      cap = tigetstr ("cup");
+      cap = tigetstr ((char *) "cup");
       if (cap == NULL || cap == (char *) -1 || *cap == '\0')
 	{
 	  endwin ();

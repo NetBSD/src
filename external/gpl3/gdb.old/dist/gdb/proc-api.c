@@ -1,6 +1,6 @@
 /* Machine independent support for SVR4 /proc (process file system) for GDB.
 
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
    Based on work by Fred Fish, Stu Grossman, Geoff Noer, and others.
@@ -54,21 +54,20 @@
 
 struct trans {
   long value;                   /* The numeric value */
-  char *name;                   /* The equivalent symbolic value */
-  char *desc;                   /* Short description of value */
+  const char *name;             /* The equivalent symbolic value */
+  const char *desc;             /* Short description of value */
 };
 
 static int   procfs_trace    = 0;
 static FILE *procfs_file     = NULL;
-static char *procfs_filename = "procfs_trace";
+static char *procfs_filename;
 
 static void
 prepare_to_trace (void)
 {
   if (procfs_trace)			/* if procfs tracing turned on */
     if (procfs_file == NULL)		/* if output file not yet open */
-      if (procfs_filename != NULL)	/* if output filename known */
-	procfs_file = fopen (procfs_filename, "a");	/* open output file */
+      procfs_file = fopen (procfs_filename, "a");	/* open output file */
 }
 
 static void
@@ -734,7 +733,7 @@ wait_with_trace (int *wstat, char *file, int line)
 }
 
 void
-procfs_note (char *msg, char *file, int line)
+procfs_note (const char *msg, const char *file, int line)
 {
   prepare_to_trace ();
   if (procfs_trace)
@@ -785,6 +784,7 @@ Show tracing for /proc api calls."), NULL,
 			   NULL, /* FIXME: i18n: */
 			   &setlist, &showlist);
 
+  procfs_filename = xstrdup ("procfs_trace");
   add_setshow_filename_cmd ("procfs-file", no_class, &procfs_filename, _("\
 Set filename for /proc tracefile."), _("\
 Show filename for /proc tracefile."), NULL,

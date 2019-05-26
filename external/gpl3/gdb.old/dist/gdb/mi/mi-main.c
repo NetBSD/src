@@ -1,6 +1,6 @@
 /* MI Command Set.
 
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -54,17 +54,11 @@
 #include "extension.h"
 #include "gdbcmd.h"
 #include "observer.h"
+#include "common/gdb_optional.h"
 
 #include <ctype.h>
-#include "gdb_sys_time.h"
-
-#if defined HAVE_SYS_RESOURCE_H
-#include <sys/resource.h>
-#endif
-
-#ifdef HAVE_GETRUSAGE
-struct rusage rusage;
-#endif
+#include "run-time-clock.h"
+#include <chrono>
 
 enum
   {
@@ -96,7 +90,7 @@ static void mi_cmd_execute (struct mi_parse *parse);
 
 static void mi_execute_cli_command (const char *cmd, int args_p,
 				    const char *args);
-static void mi_execute_async_cli_command (char *cli_command,
+static void mi_execute_async_cli_command (const char *cli_command,
 					  char **argv, int argc);
 static int register_changed_p (int regnum, struct regcache *,
 			       struct regcache *);
@@ -152,10 +146,9 @@ static void print_diff (struct ui_file *file, struct mi_timestamp *start,
 			struct mi_timestamp *end);
 
 void
-mi_cmd_gdb_exit (char *command, char **argv, int argc)
+mi_cmd_gdb_exit (const char *command, char **argv, int argc)
 {
-  struct mi_interp *mi
-    = (struct mi_interp *) interp_data (current_interpreter ());
+  struct mi_interp *mi = (struct mi_interp *) current_interpreter ();
 
   /* We have to print everything right here because we never return.  */
   if (current_token)
@@ -168,7 +161,7 @@ mi_cmd_gdb_exit (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_exec_next (char *command, char **argv, int argc)
+mi_cmd_exec_next (const char *command, char **argv, int argc)
 {
   /* FIXME: Should call a libgdb function, not a cli wrapper.  */
   if (argc > 0 && strcmp(argv[0], "--reverse") == 0)
@@ -178,7 +171,7 @@ mi_cmd_exec_next (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_exec_next_instruction (char *command, char **argv, int argc)
+mi_cmd_exec_next_instruction (const char *command, char **argv, int argc)
 {
   /* FIXME: Should call a libgdb function, not a cli wrapper.  */
   if (argc > 0 && strcmp(argv[0], "--reverse") == 0)
@@ -188,7 +181,7 @@ mi_cmd_exec_next_instruction (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_exec_step (char *command, char **argv, int argc)
+mi_cmd_exec_step (const char *command, char **argv, int argc)
 {
   /* FIXME: Should call a libgdb function, not a cli wrapper.  */
   if (argc > 0 && strcmp(argv[0], "--reverse") == 0)
@@ -198,7 +191,7 @@ mi_cmd_exec_step (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_exec_step_instruction (char *command, char **argv, int argc)
+mi_cmd_exec_step_instruction (const char *command, char **argv, int argc)
 {
   /* FIXME: Should call a libgdb function, not a cli wrapper.  */
   if (argc > 0 && strcmp(argv[0], "--reverse") == 0)
@@ -208,7 +201,7 @@ mi_cmd_exec_step_instruction (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_exec_finish (char *command, char **argv, int argc)
+mi_cmd_exec_finish (const char *command, char **argv, int argc)
 {
   /* FIXME: Should call a libgdb function, not a cli wrapper.  */
   if (argc > 0 && strcmp(argv[0], "--reverse") == 0)
@@ -218,7 +211,7 @@ mi_cmd_exec_finish (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_exec_return (char *command, char **argv, int argc)
+mi_cmd_exec_return (const char *command, char **argv, int argc)
 {
   /* This command doesn't really execute the target, it just pops the
      specified number of frames.  */
@@ -237,7 +230,7 @@ mi_cmd_exec_return (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_exec_jump (char *args, char **argv, int argc)
+mi_cmd_exec_jump (const char *args, char **argv, int argc)
 {
   /* FIXME: Should call a libgdb function, not a cli wrapper.  */
   mi_execute_async_cli_command ("jump", argv, argc);
@@ -301,7 +294,7 @@ exec_continue (char **argv, int argc)
     }
   else
     {
-      struct cleanup *back_to = make_cleanup_restore_integer (&sched_multi);
+      scoped_restore save_multi = make_scoped_restore (&sched_multi);
 
       if (current_context->all)
 	{
@@ -316,21 +309,13 @@ exec_continue (char **argv, int argc)
 	     same.  */
 	  continue_1 (1);
 	}
-      do_cleanups (back_to);
     }
-}
-
-static void
-exec_direction_forward (void *notused)
-{
-  execution_direction = EXEC_FORWARD;
 }
 
 static void
 exec_reverse_continue (char **argv, int argc)
 {
   enum exec_direction_kind dir = execution_direction;
-  struct cleanup *old_chain;
 
   if (dir == EXEC_REVERSE)
     error (_("Already in reverse mode."));
@@ -338,14 +323,13 @@ exec_reverse_continue (char **argv, int argc)
   if (!target_can_execute_reverse)
     error (_("Target %s does not support this command."), target_shortname);
 
-  old_chain = make_cleanup (exec_direction_forward, NULL);
-  execution_direction = EXEC_REVERSE;
+  scoped_restore save_exec_dir = make_scoped_restore (&execution_direction,
+						      EXEC_REVERSE);
   exec_continue (argv, argc);
-  do_cleanups (old_chain);
 }
 
 void
-mi_cmd_exec_continue (char *command, char **argv, int argc)
+mi_cmd_exec_continue (const char *command, char **argv, int argc)
 {
   if (argc > 0 && strcmp (argv[0], "--reverse") == 0)
     exec_reverse_continue (argv + 1, argc - 1);
@@ -375,7 +359,7 @@ interrupt_thread_callback (struct thread_info *thread, void *arg)
    mi_cmd_execute.  */
 
 void
-mi_cmd_exec_interrupt (char *command, char **argv, int argc)
+mi_cmd_exec_interrupt (const char *command, char **argv, int argc)
 {
   /* In all-stop mode, everything stops, so we don't need to try
      anything specific.  */
@@ -445,7 +429,7 @@ run_one_inferior (struct inferior *inf, void *arg)
 }
 
 void
-mi_cmd_exec_run (char *command, char **argv, int argc)
+mi_cmd_exec_run (const char *command, char **argv, int argc)
 {
   int start_p = 0;
 
@@ -513,7 +497,7 @@ find_thread_of_process (struct thread_info *ti, void *p)
 }
 
 void
-mi_cmd_target_detach (char *command, char **argv, int argc)
+mi_cmd_target_detach (const char *command, char **argv, int argc)
 {
   if (argc != 0 && argc != 1)
     error (_("Usage: -target-detach [pid | thread-group]"));
@@ -561,7 +545,13 @@ mi_cmd_target_detach (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_thread_select (char *command, char **argv, int argc)
+mi_cmd_target_flash_erase (const char *command, char **argv, int argc)
+{
+  flash_erase_command (NULL, 0);
+}
+
+void
+mi_cmd_thread_select (const char *command, char **argv, int argc)
 {
   enum gdb_rc rc;
   char *mi_error_message;
@@ -591,7 +581,7 @@ mi_cmd_thread_select (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_thread_list_ids (char *command, char **argv, int argc)
+mi_cmd_thread_list_ids (const char *command, char **argv, int argc)
 {
   enum gdb_rc rc;
   char *mi_error_message;
@@ -609,7 +599,7 @@ mi_cmd_thread_list_ids (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_thread_info (char *command, char **argv, int argc)
+mi_cmd_thread_info (const char *command, char **argv, int argc)
 {
   if (argc != 0 && argc != 1)
     error (_("Invalid MI command"));
@@ -673,17 +663,17 @@ print_one_inferior (struct inferior *inferior, void *xdata)
       struct cleanup *back_to
 	= make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
 
-      ui_out_field_fmt (uiout, "id", "i%d", inferior->num);
-      ui_out_field_string (uiout, "type", "process");
+      uiout->field_fmt ("id", "i%d", inferior->num);
+      uiout->field_string ("type", "process");
       if (inferior->has_exit_code)
-	ui_out_field_string (uiout, "exit-code",
+	uiout->field_string ("exit-code",
 			     int_string (inferior->exit_code, 8, 0, 0, 1));
       if (inferior->pid != 0)
-	ui_out_field_int (uiout, "pid", inferior->pid);
+	uiout->field_int ("pid", inferior->pid);
 
       if (inferior->pspace->pspace_exec_filename != NULL)
 	{
-	  ui_out_field_string (uiout, "executable",
+	  uiout->field_string ("executable",
 			       inferior->pspace->pspace_exec_filename);
 	}
 
@@ -709,7 +699,7 @@ print_one_inferior (struct inferior *inferior, void *xdata)
 	  e = unique (b, e);
 
 	  for (; b != e; ++b)
-	    ui_out_field_int (uiout, NULL, *b);
+	    uiout->field_int (NULL, *b);
 
 	  do_cleanups (back_to_2);
 	}
@@ -738,7 +728,7 @@ output_cores (struct ui_out *uiout, const char *field_name, const char *xcores)
   make_cleanup (xfree, cores);
 
   for (p = strtok (p, ","); p;  p = strtok (NULL, ","))
-    ui_out_field_string (uiout, NULL, p);
+    uiout->field_string (NULL, p);
 
   do_cleanups (back_to);
 }
@@ -861,12 +851,12 @@ list_available_thread_groups (VEC (int) *ids, int recurse)
 
       back_to = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
 
-      ui_out_field_fmt (uiout, "id", "%s", pid);
-      ui_out_field_string (uiout, "type", "process");
+      uiout->field_fmt ("id", "%s", pid);
+      uiout->field_string ("type", "process");
       if (cmd)
-	ui_out_field_string (uiout, "description", cmd);
+	uiout->field_string ("description", cmd);
       if (user)
-	ui_out_field_string (uiout, "user", user);
+	uiout->field_string ("user", user);
       if (cores)
 	output_cores (uiout, "cores", cores);
 
@@ -890,9 +880,9 @@ list_available_thread_groups (VEC (int) *ids, int recurse)
 		  const char *tid = get_osdata_column (child, "tid");
 		  const char *tcore = get_osdata_column (child, "core");
 
-		  ui_out_field_string (uiout, "id", tid);
+		  uiout->field_string ("id", tid);
 		  if (tcore)
-		    ui_out_field_string (uiout, "core", tcore);
+		    uiout->field_string ("core", tcore);
 
 		  do_cleanups (back_to_2);
 		}
@@ -906,7 +896,7 @@ list_available_thread_groups (VEC (int) *ids, int recurse)
 }
 
 void
-mi_cmd_list_thread_groups (char *command, char **argv, int argc)
+mi_cmd_list_thread_groups (const char *command, char **argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
   struct cleanup *back_to;
@@ -1008,7 +998,7 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_data_list_register_names (char *command, char **argv, int argc)
+mi_cmd_data_list_register_names (const char *command, char **argv, int argc)
 {
   struct gdbarch *gdbarch;
   struct ui_out *uiout = current_uiout;
@@ -1036,10 +1026,9 @@ mi_cmd_data_list_register_names (char *command, char **argv, int argc)
 	{
 	  if (gdbarch_register_name (gdbarch, regnum) == NULL
 	      || *(gdbarch_register_name (gdbarch, regnum)) == '\0')
-	    ui_out_field_string (uiout, NULL, "");
+	    uiout->field_string (NULL, "");
 	  else
-	    ui_out_field_string (uiout, NULL,
-				 gdbarch_register_name (gdbarch, regnum));
+	    uiout->field_string (NULL, gdbarch_register_name (gdbarch, regnum));
 	}
     }
 
@@ -1052,16 +1041,15 @@ mi_cmd_data_list_register_names (char *command, char **argv, int argc)
 
       if (gdbarch_register_name (gdbarch, regnum) == NULL
 	  || *(gdbarch_register_name (gdbarch, regnum)) == '\0')
-	ui_out_field_string (uiout, NULL, "");
+	uiout->field_string (NULL, "");
       else
-	ui_out_field_string (uiout, NULL,
-			     gdbarch_register_name (gdbarch, regnum));
+	uiout->field_string (NULL, gdbarch_register_name (gdbarch, regnum));
     }
   do_cleanups (cleanup);
 }
 
 void
-mi_cmd_data_list_changed_registers (char *command, char **argv, int argc)
+mi_cmd_data_list_changed_registers (const char *command, char **argv, int argc)
 {
   static struct regcache *this_regs = NULL;
   struct ui_out *uiout = current_uiout;
@@ -1107,7 +1095,7 @@ mi_cmd_data_list_changed_registers (char *command, char **argv, int argc)
 	    error (_("-data-list-changed-registers: "
 		     "Unable to read register contents."));
 	  else if (changed)
-	    ui_out_field_int (uiout, NULL, regnum);
+	    uiout->field_int (NULL, regnum);
 	}
     }
 
@@ -1126,7 +1114,7 @@ mi_cmd_data_list_changed_registers (char *command, char **argv, int argc)
 	    error (_("-data-list-changed-registers: "
 		     "Unable to read register contents."));
 	  else if (changed)
-	    ui_out_field_int (uiout, NULL, regnum);
+	    uiout->field_int (NULL, regnum);
 	}
       else
 	error (_("bad register number"));
@@ -1172,7 +1160,7 @@ register_changed_p (int regnum, struct regcache *prev_regs,
    their values is returned.  */
 
 void
-mi_cmd_data_list_register_values (char *command, char **argv, int argc)
+mi_cmd_data_list_register_values (const char *command, char **argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
   struct frame_info *frame;
@@ -1271,13 +1259,12 @@ output_register (struct frame_info *frame, int regnum, int format,
   struct value *val = value_of_register (regnum, frame);
   struct cleanup *tuple_cleanup;
   struct value_print_options opts;
-  struct ui_file *stb;
 
   if (skip_unavailable && !value_entirely_available (val))
     return;
 
   tuple_cleanup = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
-  ui_out_field_int (uiout, "number", regnum);
+  uiout->field_int ("number", regnum);
 
   if (format == 'N')
     format = 0;
@@ -1285,16 +1272,14 @@ output_register (struct frame_info *frame, int regnum, int format,
   if (format == 'r')
     format = 'z';
 
-  stb = mem_fileopen ();
-  make_cleanup_ui_file_delete (stb);
+  string_file stb;
 
   get_formatted_print_options (&opts, format);
   opts.deref_ref = 1;
   val_print (value_type (val),
-	     value_contents_for_printing (val),
 	     value_embedded_offset (val), 0,
-	     stb, 0, val, &opts, current_language);
-  ui_out_field_stream (uiout, "value", stb);
+	     &stb, 0, val, &opts, current_language);
+  uiout->field_stream ("value", stb);
 
   do_cleanups (tuple_cleanup);
 }
@@ -1304,7 +1289,7 @@ output_register (struct frame_info *frame, int regnum, int format,
    -data-write-register-values <format>
                                [<regnum1> <value1>...<regnumN> <valueN>] */
 void
-mi_cmd_data_write_register_values (char *command, char **argv, int argc)
+mi_cmd_data_write_register_values (const char *command, char **argv, int argc)
 {
   struct regcache *regcache;
   struct gdbarch *gdbarch;
@@ -1361,36 +1346,28 @@ mi_cmd_data_write_register_values (char *command, char **argv, int argc)
    included in double quotes.  */
 
 void
-mi_cmd_data_evaluate_expression (char *command, char **argv, int argc)
+mi_cmd_data_evaluate_expression (const char *command, char **argv, int argc)
 {
-  struct expression *expr;
-  struct cleanup *old_chain;
   struct value *val;
-  struct ui_file *stb;
   struct value_print_options opts;
   struct ui_out *uiout = current_uiout;
-
-  stb = mem_fileopen ();
-  old_chain = make_cleanup_ui_file_delete (stb);
 
   if (argc != 1)
     error (_("-data-evaluate-expression: "
 	     "Usage: -data-evaluate-expression expression"));
 
-  expr = parse_expression (argv[0]);
+  expression_up expr = parse_expression (argv[0]);
 
-  make_cleanup (free_current_contents, &expr);
+  val = evaluate_expression (expr.get ());
 
-  val = evaluate_expression (expr);
+  string_file stb;
 
   /* Print the result of the expression evaluation.  */
   get_user_print_options (&opts);
   opts.deref_ref = 0;
-  common_val_print (val, stb, 0, &opts, current_language);
+  common_val_print (val, &stb, 0, &opts, current_language);
 
-  ui_out_field_stream (uiout, "value", stb);
-
-  do_cleanups (old_chain);
+  uiout->field_stream ("value", stb);
 }
 
 /* This is the -data-read-memory command.
@@ -1413,11 +1390,10 @@ mi_cmd_data_evaluate_expression (char *command, char **argv, int argc)
    The number of bytes read is SIZE*ROW*COL.  */
 
 void
-mi_cmd_data_read_memory (char *command, char **argv, int argc)
+mi_cmd_data_read_memory (const char *command, char **argv, int argc)
 {
   struct gdbarch *gdbarch = get_current_arch ();
   struct ui_out *uiout = current_uiout;
-  struct cleanup *cleanups = make_cleanup (null_cleanup, NULL);
   CORE_ADDR addr;
   long total_bytes, nr_cols, nr_rows;
   char word_format;
@@ -1425,7 +1401,6 @@ mi_cmd_data_read_memory (char *command, char **argv, int argc)
   long word_size;
   char word_asize;
   char aschar;
-  gdb_byte *mbuf;
   int nr_bytes;
   long offset = 0;
   int oind = 0;
@@ -1510,39 +1485,35 @@ mi_cmd_data_read_memory (char *command, char **argv, int argc)
 
   /* Create a buffer and read it in.  */
   total_bytes = word_size * nr_rows * nr_cols;
-  mbuf = XCNEWVEC (gdb_byte, total_bytes);
-  make_cleanup (xfree, mbuf);
+
+  std::unique_ptr<gdb_byte[]> mbuf (new gdb_byte[total_bytes]);
 
   /* Dispatch memory reads to the topmost target, not the flattened
      current_target.  */
   nr_bytes = target_read (current_target.beneath,
-			  TARGET_OBJECT_MEMORY, NULL, mbuf,
+			  TARGET_OBJECT_MEMORY, NULL, mbuf.get (),
 			  addr, total_bytes);
   if (nr_bytes <= 0)
     error (_("Unable to read memory."));
 
   /* Output the header information.  */
-  ui_out_field_core_addr (uiout, "addr", gdbarch, addr);
-  ui_out_field_int (uiout, "nr-bytes", nr_bytes);
-  ui_out_field_int (uiout, "total-bytes", total_bytes);
-  ui_out_field_core_addr (uiout, "next-row",
-			  gdbarch, addr + word_size * nr_cols);
-  ui_out_field_core_addr (uiout, "prev-row",
-			  gdbarch, addr - word_size * nr_cols);
-  ui_out_field_core_addr (uiout, "next-page", gdbarch, addr + total_bytes);
-  ui_out_field_core_addr (uiout, "prev-page", gdbarch, addr - total_bytes);
+  uiout->field_core_addr ("addr", gdbarch, addr);
+  uiout->field_int ("nr-bytes", nr_bytes);
+  uiout->field_int ("total-bytes", total_bytes);
+  uiout->field_core_addr ("next-row", gdbarch, addr + word_size * nr_cols);
+  uiout->field_core_addr ("prev-row", gdbarch, addr - word_size * nr_cols);
+  uiout->field_core_addr ("next-page", gdbarch, addr + total_bytes);
+  uiout->field_core_addr ("prev-page", gdbarch, addr - total_bytes);
 
   /* Build the result as a two dimentional table.  */
   {
-    struct ui_file *stream;
-    struct cleanup *cleanup_stream;
     int row;
     int row_byte;
+    struct cleanup *cleanup_list;
 
-    stream = mem_fileopen ();
-    cleanup_stream = make_cleanup_ui_file_delete (stream);
+    string_file stream;
 
-    make_cleanup_ui_out_list_begin_end (uiout, "memory");
+    cleanup_list = make_cleanup_ui_out_list_begin_end (uiout, "memory");
     for (row = 0, row_byte = 0;
 	 row < nr_rows;
 	 row++, row_byte += nr_cols * word_size)
@@ -1554,7 +1525,7 @@ mi_cmd_data_read_memory (char *command, char **argv, int argc)
 	struct value_print_options opts;
 
 	cleanup_tuple = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
-	ui_out_field_core_addr (uiout, "addr", gdbarch, addr + row_byte);
+	uiout->field_core_addr ("addr", gdbarch, addr + row_byte);
 	/* ui_out_field_core_addr_symbolic (uiout, "saddr", addr +
 	   row_byte); */
 	cleanup_list_data = make_cleanup_ui_out_list_begin_end (uiout, "data");
@@ -1565,14 +1536,14 @@ mi_cmd_data_read_memory (char *command, char **argv, int argc)
 	  {
 	    if (col_byte + word_size > nr_bytes)
 	      {
-		ui_out_field_string (uiout, NULL, "N/A");
+		uiout->field_string (NULL, "N/A");
 	      }
 	    else
 	      {
-		ui_file_rewind (stream);
-		print_scalar_formatted (mbuf + col_byte, word_type, &opts,
-					word_asize, stream);
-		ui_out_field_stream (uiout, NULL, stream);
+		stream.clear ();
+		print_scalar_formatted (&mbuf[col_byte], word_type, &opts,
+					word_asize, &stream);
+		uiout->field_stream (NULL, stream);
 	      }
 	  }
 	do_cleanups (cleanup_list_data);
@@ -1580,28 +1551,27 @@ mi_cmd_data_read_memory (char *command, char **argv, int argc)
 	  {
 	    int byte;
 
-	    ui_file_rewind (stream);
+	    stream.clear ();
 	    for (byte = row_byte;
 		 byte < row_byte + word_size * nr_cols; byte++)
 	      {
 		if (byte >= nr_bytes)
-		  fputc_unfiltered ('X', stream);
+		  stream.putc ('X');
 		else if (mbuf[byte] < 32 || mbuf[byte] > 126)
-		  fputc_unfiltered (aschar, stream);
+		  stream.putc (aschar);
 		else
-		  fputc_unfiltered (mbuf[byte], stream);
+		  stream.putc (mbuf[byte]);
 	      }
-	    ui_out_field_stream (uiout, "ascii", stream);
+	    uiout->field_stream ("ascii", stream);
 	  }
 	do_cleanups (cleanup_tuple);
       }
-    do_cleanups (cleanup_stream);
+    do_cleanups (cleanup_list);
   }
-  do_cleanups (cleanups);
 }
 
 void
-mi_cmd_data_read_memory_bytes (char *command, char **argv, int argc)
+mi_cmd_data_read_memory_bytes (const char *command, char **argv, int argc)
 {
   struct gdbarch *gdbarch = get_current_arch ();
   struct ui_out *uiout = current_uiout;
@@ -1664,10 +1634,9 @@ mi_cmd_data_read_memory_bytes (char *command, char **argv, int argc)
       int i;
       int alloc_len;
 
-      ui_out_field_core_addr (uiout, "begin", gdbarch, read_result->begin);
-      ui_out_field_core_addr (uiout, "offset", gdbarch, read_result->begin
-			      - addr);
-      ui_out_field_core_addr (uiout, "end", gdbarch, read_result->end);
+      uiout->field_core_addr ("begin", gdbarch, read_result->begin);
+      uiout->field_core_addr ("offset", gdbarch, read_result->begin - addr);
+      uiout->field_core_addr ("end", gdbarch, read_result->end);
 
       alloc_len = (read_result->end - read_result->begin) * 2 * unit_size + 1;
       data = (char *) xmalloc (alloc_len);
@@ -1678,7 +1647,7 @@ mi_cmd_data_read_memory_bytes (char *command, char **argv, int argc)
 	{
 	  sprintf (p, "%02x", read_result->data[i]);
 	}
-      ui_out_field_string (uiout, "contents", data);
+      uiout->field_string ("contents", data);
       xfree (data);
       do_cleanups (t);
     }
@@ -1703,7 +1672,7 @@ mi_cmd_data_read_memory_bytes (char *command, char **argv, int argc)
    Prints nothing.  */
 
 void
-mi_cmd_data_write_memory (char *command, char **argv, int argc)
+mi_cmd_data_write_memory (const char *command, char **argv, int argc)
 {
   struct gdbarch *gdbarch = get_current_arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -1776,7 +1745,7 @@ mi_cmd_data_write_memory (char *command, char **argv, int argc)
    COUNT: number of bytes to be filled (decimal integer).  */
 
 void
-mi_cmd_data_write_memory_bytes (char *command, char **argv, int argc)
+mi_cmd_data_write_memory_bytes (const char *command, char **argv, int argc)
 {
   CORE_ADDR addr;
   char *cdata;
@@ -1850,7 +1819,7 @@ mi_cmd_data_write_memory_bytes (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_enable_timings (char *command, char **argv, int argc)
+mi_cmd_enable_timings (const char *command, char **argv, int argc)
 {
   if (argc == 0)
     do_timings = 1;
@@ -1873,7 +1842,7 @@ mi_cmd_enable_timings (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_list_features (char *command, char **argv, int argc)
+mi_cmd_list_features (const char *command, char **argv, int argc)
 {
   if (argc == 0)
     {
@@ -1881,19 +1850,19 @@ mi_cmd_list_features (char *command, char **argv, int argc)
       struct ui_out *uiout = current_uiout;
 
       cleanup = make_cleanup_ui_out_list_begin_end (uiout, "features");
-      ui_out_field_string (uiout, NULL, "frozen-varobjs");
-      ui_out_field_string (uiout, NULL, "pending-breakpoints");
-      ui_out_field_string (uiout, NULL, "thread-info");
-      ui_out_field_string (uiout, NULL, "data-read-memory-bytes");
-      ui_out_field_string (uiout, NULL, "breakpoint-notifications");
-      ui_out_field_string (uiout, NULL, "ada-task-info");
-      ui_out_field_string (uiout, NULL, "language-option");
-      ui_out_field_string (uiout, NULL, "info-gdb-mi-command");
-      ui_out_field_string (uiout, NULL, "undefined-command-error-code");
-      ui_out_field_string (uiout, NULL, "exec-run-start-option");
+      uiout->field_string (NULL, "frozen-varobjs");
+      uiout->field_string (NULL, "pending-breakpoints");
+      uiout->field_string (NULL, "thread-info");
+      uiout->field_string (NULL, "data-read-memory-bytes");
+      uiout->field_string (NULL, "breakpoint-notifications");
+      uiout->field_string (NULL, "ada-task-info");
+      uiout->field_string (NULL, "language-option");
+      uiout->field_string (NULL, "info-gdb-mi-command");
+      uiout->field_string (NULL, "undefined-command-error-code");
+      uiout->field_string (NULL, "exec-run-start-option");
 
       if (ext_lang_initialized_p (get_ext_lang_defn (EXT_LANG_PYTHON)))
-	ui_out_field_string (uiout, NULL, "python");
+	uiout->field_string (NULL, "python");
 
       do_cleanups (cleanup);
       return;
@@ -1903,7 +1872,7 @@ mi_cmd_list_features (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_list_target_features (char *command, char **argv, int argc)
+mi_cmd_list_target_features (const char *command, char **argv, int argc)
 {
   if (argc == 0)
     {
@@ -1912,9 +1881,9 @@ mi_cmd_list_target_features (char *command, char **argv, int argc)
 
       cleanup = make_cleanup_ui_out_list_begin_end (uiout, "features");
       if (mi_async_p ())
-	ui_out_field_string (uiout, NULL, "async");
+	uiout->field_string (NULL, "async");
       if (target_can_execute_reverse)
-	ui_out_field_string (uiout, NULL, "reverse");
+	uiout->field_string (NULL, "reverse");
       do_cleanups (cleanup);
       return;
     }
@@ -1923,7 +1892,7 @@ mi_cmd_list_target_features (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_add_inferior (char *command, char **argv, int argc)
+mi_cmd_add_inferior (const char *command, char **argv, int argc)
 {
   struct inferior *inf;
 
@@ -1932,7 +1901,7 @@ mi_cmd_add_inferior (char *command, char **argv, int argc)
 
   inf = add_inferior_with_spaces ();
 
-  ui_out_field_fmt (current_uiout, "inferior", "i%d", inf->num);
+  current_uiout->field_fmt ("inferior", "i%d", inf->num);
 }
 
 /* Callback used to find the first inferior other than the current
@@ -1948,7 +1917,7 @@ get_other_inferior (struct inferior *inf, void *arg)
 }
 
 void
-mi_cmd_remove_inferior (char *command, char **argv, int argc)
+mi_cmd_remove_inferior (const char *command, char **argv, int argc)
 {
   int id;
   struct inferior *inf;
@@ -1997,7 +1966,7 @@ mi_cmd_remove_inferior (char *command, char **argv, int argc)
 static void
 captured_mi_execute_command (struct ui_out *uiout, struct mi_parse *context)
 {
-  struct mi_interp *mi = (struct mi_interp *) interp_data (command_interp ());
+  struct mi_interp *mi = (struct mi_interp *) command_interp ();
   struct cleanup *cleanup;
 
   if (do_timings)
@@ -2055,7 +2024,7 @@ captured_mi_execute_command (struct ui_out *uiout, struct mi_parse *context)
 	/* Echo the command on the console.  */
 	fprintf_unfiltered (gdb_stdlog, "%s\n", context->command);
 	/* Call the "console" interpreter.  */
-	argv[0] = INTERP_CONSOLE;
+	argv[0] = (char *) INTERP_CONSOLE;
 	argv[1] = context->command;
 	mi_cmd_interpreter_exec ("-interpreter-exec", argv, 2);
 
@@ -2089,8 +2058,7 @@ captured_mi_execute_command (struct ui_out *uiout, struct mi_parse *context)
 static void
 mi_print_exception (const char *token, struct gdb_exception exception)
 {
-  struct mi_interp *mi
-    = (struct mi_interp *) interp_data (current_interpreter ());
+  struct mi_interp *mi = (struct mi_interp *) current_interpreter ();
 
   fputs_unfiltered (token, mi->raw_stdout);
   fputs_unfiltered ("^error,msg=\"", mi->raw_stdout);
@@ -2142,7 +2110,7 @@ void
 mi_execute_command (const char *cmd, int from_tty)
 {
   char *token;
-  struct mi_parse *command = NULL;
+  std::unique_ptr<struct mi_parse> command;
 
   /* This is to handle EOF (^D). We just quit gdb.  */
   /* FIXME: we should call some API function here.  */
@@ -2165,25 +2133,23 @@ mi_execute_command (const char *cmd, int from_tty)
   if (command != NULL)
     {
       ptid_t previous_ptid = inferior_ptid;
-      struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
+
+      gdb::optional<scoped_restore_tmpl<int>> restore_suppress;
+
+      if (command->cmd != NULL && command->cmd->suppress_notification != NULL)
+	restore_suppress.emplace (command->cmd->suppress_notification, 1);
 
       command->token = token;
 
-      if (command->cmd != NULL && command->cmd->suppress_notification != NULL)
-        {
-          make_cleanup_restore_integer (command->cmd->suppress_notification);
-          *command->cmd->suppress_notification = 1;
-        }
-
       if (do_timings)
 	{
-	  command->cmd_start = XNEW (struct mi_timestamp);
+	  command->cmd_start = new mi_timestamp ();
 	  timestamp (command->cmd_start);
 	}
 
       TRY
 	{
-	  captured_mi_execute_command (current_uiout, command);
+	  captured_mi_execute_command (current_uiout, command.get ());
 	}
       CATCH (result, RETURN_MASK_ALL)
 	{
@@ -2205,16 +2171,15 @@ mi_execute_command (const char *cmd, int from_tty)
 
       if (/* The notifications are only output when the top-level
 	     interpreter (specified on the command line) is MI.  */
-	  ui_out_is_mi_like_p (interp_ui_out (top_level_interpreter ()))
+	  interp_ui_out (top_level_interpreter ())->is_mi_like_p ()
 	  /* Don't try report anything if there are no threads --
 	     the program is dead.  */
 	  && thread_count () != 0
 	  /* If the command already reports the thread change, no need to do it
 	     again.  */
-	  && !command_notifies_uscc_observer (command))
+	  && !command_notifies_uscc_observer (command.get ()))
 	{
-	  struct mi_interp *mi
-	    = (struct mi_interp *) top_level_interpreter_data ();
+	  struct mi_interp *mi = (struct mi_interp *) top_level_interpreter ();
 	  int report_change = 0;
 
 	  if (command->thread == -1)
@@ -2236,10 +2201,6 @@ mi_execute_command (const char *cmd, int from_tty)
 		  (USER_SELECTED_THREAD | USER_SELECTED_FRAME);
 	    }
 	}
-
-      mi_parse_free (command);
-
-      do_cleanups (cleanup);
     }
 }
 
@@ -2331,15 +2292,12 @@ mi_cmd_execute (struct mi_parse *parse)
   else
     {
       /* FIXME: DELETE THIS.  */
-      struct ui_file *stb;
+      string_file stb;
 
-      stb = mem_fileopen ();
+      stb.puts ("Undefined mi command: ");
+      stb.putstr (parse->command, '"');
+      stb.puts (" (missing implementation)");
 
-      fputs_unfiltered ("Undefined mi command: ", stb);
-      fputstr_unfiltered (parse->command, '"', stb);
-      fputs_unfiltered (" (missing implementation)", stb);
-
-      make_cleanup_ui_file_delete (stb);
       error_stream (stb);
     }
   do_cleanups (cleanup);
@@ -2373,7 +2331,7 @@ mi_execute_cli_command (const char *cmd, int args_p, const char *args)
 }
 
 void
-mi_execute_async_cli_command (char *cli_command, char **argv, int argc)
+mi_execute_async_cli_command (const char *cli_command, char **argv, int argc)
 {
   struct cleanup *old_cleanups;
   char *run;
@@ -2398,14 +2356,13 @@ mi_load_progress (const char *section_name,
 		  unsigned long total_sent,
 		  unsigned long grand_total)
 {
-  struct timeval time_now, delta, update_threshold;
-  static struct timeval last_update;
+  using namespace std::chrono;
+  static steady_clock::time_point last_update;
   static char *previous_sect_name = NULL;
   int new_section;
   struct ui_out *saved_uiout;
   struct ui_out *uiout;
-  struct mi_interp *mi
-    = (struct mi_interp *) interp_data (current_interpreter ());
+  struct mi_interp *mi = (struct mi_interp *) current_interpreter ();
 
   /* This function is called through deprecated_show_load_progress
      which means uiout may not be correct.  Fix it for the duration
@@ -2424,19 +2381,6 @@ mi_load_progress (const char *section_name,
 
   uiout = current_uiout;
 
-  update_threshold.tv_sec = 0;
-  update_threshold.tv_usec = 500000;
-  gettimeofday (&time_now, NULL);
-
-  delta.tv_usec = time_now.tv_usec - last_update.tv_usec;
-  delta.tv_sec = time_now.tv_sec - last_update.tv_sec;
-
-  if (delta.tv_usec < 0)
-    {
-      delta.tv_sec -= 1;
-      delta.tv_usec += 1000000L;
-    }
-
   new_section = (previous_sect_name ?
 		 strcmp (previous_sect_name, section_name) : 1);
   if (new_section)
@@ -2450,31 +2394,30 @@ mi_load_progress (const char *section_name,
 	fputs_unfiltered (current_token, mi->raw_stdout);
       fputs_unfiltered ("+download", mi->raw_stdout);
       cleanup_tuple = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
-      ui_out_field_string (uiout, "section", section_name);
-      ui_out_field_int (uiout, "section-size", total_section);
-      ui_out_field_int (uiout, "total-size", grand_total);
+      uiout->field_string ("section", section_name);
+      uiout->field_int ("section-size", total_section);
+      uiout->field_int ("total-size", grand_total);
       do_cleanups (cleanup_tuple);
       mi_out_put (uiout, mi->raw_stdout);
       fputs_unfiltered ("\n", mi->raw_stdout);
       gdb_flush (mi->raw_stdout);
     }
 
-  if (delta.tv_sec >= update_threshold.tv_sec &&
-      delta.tv_usec >= update_threshold.tv_usec)
+  steady_clock::time_point time_now = steady_clock::now ();
+  if (time_now - last_update > milliseconds (500))
     {
       struct cleanup *cleanup_tuple;
 
-      last_update.tv_sec = time_now.tv_sec;
-      last_update.tv_usec = time_now.tv_usec;
+      last_update = time_now;
       if (current_token)
 	fputs_unfiltered (current_token, mi->raw_stdout);
       fputs_unfiltered ("+download", mi->raw_stdout);
       cleanup_tuple = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
-      ui_out_field_string (uiout, "section", section_name);
-      ui_out_field_int (uiout, "section-sent", sent_so_far);
-      ui_out_field_int (uiout, "section-size", total_section);
-      ui_out_field_int (uiout, "total-sent", total_sent);
-      ui_out_field_int (uiout, "total-size", grand_total);
+      uiout->field_string ("section", section_name);
+      uiout->field_int ("section-sent", sent_so_far);
+      uiout->field_int ("section-size", total_section);
+      uiout->field_int ("total-sent", total_sent);
+      uiout->field_int ("total-size", grand_total);
       do_cleanups (cleanup_tuple);
       mi_out_put (uiout, mi->raw_stdout);
       fputs_unfiltered ("\n", mi->raw_stdout);
@@ -2488,23 +2431,10 @@ mi_load_progress (const char *section_name,
 static void
 timestamp (struct mi_timestamp *tv)
 {
-  gettimeofday (&tv->wallclock, NULL);
-#ifdef HAVE_GETRUSAGE
-  getrusage (RUSAGE_SELF, &rusage);
-  tv->utime.tv_sec = rusage.ru_utime.tv_sec;
-  tv->utime.tv_usec = rusage.ru_utime.tv_usec;
-  tv->stime.tv_sec = rusage.ru_stime.tv_sec;
-  tv->stime.tv_usec = rusage.ru_stime.tv_usec;
-#else
-  {
-    long usec = get_run_time ();
+  using namespace std::chrono;
 
-    tv->utime.tv_sec = usec/1000000L;
-    tv->utime.tv_usec = usec - 1000000L*tv->utime.tv_sec;
-    tv->stime.tv_sec = 0;
-    tv->stime.tv_usec = 0;
-  }
-#endif
+  tv->wallclock = steady_clock::now ();
+  run_time_clock::now (tv->utime, tv->stime);
 }
 
 static void
@@ -2525,27 +2455,24 @@ mi_print_timing_maybe (struct ui_file *file)
     print_diff_now (file, current_command_ts);
 }
 
-static long
-timeval_diff (struct timeval start, struct timeval end)
-{
-  return ((end.tv_sec - start.tv_sec) * 1000000L)
-    + (end.tv_usec - start.tv_usec);
-}
-
 static void
 print_diff (struct ui_file *file, struct mi_timestamp *start,
 	    struct mi_timestamp *end)
 {
+  using namespace std::chrono;
+
+  duration<double> wallclock = end->wallclock - start->wallclock;
+  duration<double> utime = end->utime - start->utime;
+  duration<double> stime = end->stime - start->stime;
+
   fprintf_unfiltered
     (file,
      ",time={wallclock=\"%0.5f\",user=\"%0.5f\",system=\"%0.5f\"}",
-     timeval_diff (start->wallclock, end->wallclock) / 1000000.0,
-     timeval_diff (start->utime, end->utime) / 1000000.0,
-     timeval_diff (start->stime, end->stime) / 1000000.0);
+     wallclock.count (), utime.count (), stime.count ());
 }
 
 void
-mi_cmd_trace_define_variable (char *command, char **argv, int argc)
+mi_cmd_trace_define_variable (const char *command, char **argv, int argc)
 {
   LONGEST initval = 0;
   struct trace_state_variable *tsv;
@@ -2571,7 +2498,7 @@ mi_cmd_trace_define_variable (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_trace_list_variables (char *command, char **argv, int argc)
+mi_cmd_trace_list_variables (const char *command, char **argv, int argc)
 {
   if (argc != 0)
     error (_("-trace-list-variables: no arguments allowed"));
@@ -2580,7 +2507,7 @@ mi_cmd_trace_list_variables (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_trace_find (char *command, char **argv, int argc)
+mi_cmd_trace_find (const char *command, char **argv, int argc)
 {
   char *mode;
 
@@ -2663,7 +2590,7 @@ mi_cmd_trace_find (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_trace_save (char *command, char **argv, int argc)
+mi_cmd_trace_save (const char *command, char **argv, int argc)
 {
   int target_saves = 0;
   int generate_ctf = 0;
@@ -2699,6 +2626,11 @@ mi_cmd_trace_save (char *command, char **argv, int argc)
 	  break;
 	}
     }
+
+  if (argc - oind != 1)
+    error (_("Exactly one argument required "
+	     "(file in which to save trace data)"));
+
   filename = argv[oind];
 
   if (generate_ctf)
@@ -2708,19 +2640,19 @@ mi_cmd_trace_save (char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_trace_start (char *command, char **argv, int argc)
+mi_cmd_trace_start (const char *command, char **argv, int argc)
 {
   start_tracing (NULL);
 }
 
 void
-mi_cmd_trace_status (char *command, char **argv, int argc)
+mi_cmd_trace_status (const char *command, char **argv, int argc)
 {
   trace_status_mi (0);
 }
 
 void
-mi_cmd_trace_stop (char *command, char **argv, int argc)
+mi_cmd_trace_stop (const char *command, char **argv, int argc)
 {
   stop_tracing (NULL);
   trace_status_mi (1);
@@ -2729,7 +2661,7 @@ mi_cmd_trace_stop (char *command, char **argv, int argc)
 /* Implement the "-ada-task-info" command.  */
 
 void
-mi_cmd_ada_task_info (char *command, char **argv, int argc)
+mi_cmd_ada_task_info (const char *command, char **argv, int argc)
 {
   if (argc != 0 && argc != 1)
     error (_("Invalid MI command"));
@@ -2740,37 +2672,33 @@ mi_cmd_ada_task_info (char *command, char **argv, int argc)
 /* Print EXPRESSION according to VALUES.  */
 
 static void
-print_variable_or_computed (char *expression, enum print_values values)
+print_variable_or_computed (const char *expression, enum print_values values)
 {
-  struct expression *expr;
   struct cleanup *old_chain;
   struct value *val;
-  struct ui_file *stb;
   struct type *type;
   struct ui_out *uiout = current_uiout;
 
-  stb = mem_fileopen ();
-  old_chain = make_cleanup_ui_file_delete (stb);
+  string_file stb;
 
-  expr = parse_expression (expression);
-
-  make_cleanup (free_current_contents, &expr);
+  expression_up expr = parse_expression (expression);
 
   if (values == PRINT_SIMPLE_VALUES)
-    val = evaluate_type (expr);
+    val = evaluate_type (expr.get ());
   else
-    val = evaluate_expression (expr);
+    val = evaluate_expression (expr.get ());
 
+  old_chain = make_cleanup (null_cleanup, NULL);
   if (values != PRINT_NO_VALUES)
     make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
-  ui_out_field_string (uiout, "name", expression);
+  uiout->field_string ("name", expression);
 
   switch (values)
     {
     case PRINT_SIMPLE_VALUES:
       type = check_typedef (value_type (val));
-      type_print (value_type (val), "", stb, -1);
-      ui_out_field_stream (uiout, "type", stb);
+      type_print (value_type (val), "", &stb, -1);
+      uiout->field_stream ("type", stb);
       if (TYPE_CODE (type) != TYPE_CODE_ARRAY
 	  && TYPE_CODE (type) != TYPE_CODE_STRUCT
 	  && TYPE_CODE (type) != TYPE_CODE_UNION)
@@ -2779,8 +2707,8 @@ print_variable_or_computed (char *expression, enum print_values values)
 
 	  get_no_prettyformat_print_options (&opts);
 	  opts.deref_ref = 1;
-	  common_val_print (val, stb, 0, &opts, current_language);
-	  ui_out_field_stream (uiout, "value", stb);
+	  common_val_print (val, &stb, 0, &opts, current_language);
+	  uiout->field_stream ("value", stb);
 	}
       break;
     case PRINT_ALL_VALUES:
@@ -2789,8 +2717,8 @@ print_variable_or_computed (char *expression, enum print_values values)
 
 	get_no_prettyformat_print_options (&opts);
 	opts.deref_ref = 1;
-	common_val_print (val, stb, 0, &opts, current_language);
-	ui_out_field_stream (uiout, "value", stb);
+	common_val_print (val, &stb, 0, &opts, current_language);
+	uiout->field_stream ("value", stb);
       }
       break;
     }
@@ -2801,7 +2729,7 @@ print_variable_or_computed (char *expression, enum print_values values)
 /* Implement the "-trace-frame-collected" command.  */
 
 void
-mi_cmd_trace_frame_collected (char *command, char **argv, int argc)
+mi_cmd_trace_frame_collected (const char *command, char **argv, int argc)
 {
   struct cleanup *old_chain;
   struct bp_location *tloc;
@@ -2869,8 +2797,7 @@ mi_cmd_trace_frame_collected (char *command, char **argv, int argc)
   old_chain = make_cleanup_restore_current_thread ();
   select_frame (get_current_frame ());
 
-  encode_actions_and_make_cleanup (tloc, &tracepoint_list,
-				   &stepping_list);
+  encode_actions (tloc, &tracepoint_list, &stepping_list);
 
   if (stepping_frame)
     clist = &stepping_list;
@@ -2882,13 +2809,19 @@ mi_cmd_trace_frame_collected (char *command, char **argv, int argc)
   /* Explicitly wholly collected variables.  */
   {
     struct cleanup *list_cleanup;
-    char *p;
     int i;
 
     list_cleanup = make_cleanup_ui_out_list_begin_end (uiout,
 						       "explicit-variables");
-    for (i = 0; VEC_iterate (char_ptr, clist->wholly_collected, i, p); i++)
-      print_variable_or_computed (p, var_print_values);
+
+    const std::vector<std::string> &wholly_collected
+      = clist->wholly_collected ();
+    for (size_t i = 0; i < wholly_collected.size (); i++)
+      {
+	const std::string &str = wholly_collected[i];
+	print_variable_or_computed (str.c_str (), var_print_values);
+      }
+
     do_cleanups (list_cleanup);
   }
 
@@ -2901,8 +2834,14 @@ mi_cmd_trace_frame_collected (char *command, char **argv, int argc)
     list_cleanup
       = make_cleanup_ui_out_list_begin_end (uiout,
 					    "computed-expressions");
-    for (i = 0; VEC_iterate (char_ptr, clist->computed, i, p); i++)
-      print_variable_or_computed (p, comp_print_values);
+
+    const std::vector<std::string> &computed = clist->computed ();
+    for (size_t i = 0; i < computed.size (); i++)
+      {
+	const std::string &str = computed[i];
+	print_variable_or_computed (str.c_str (), comp_print_values);
+      }
+
     do_cleanups (list_cleanup);
   }
 
@@ -2961,16 +2900,16 @@ mi_cmd_trace_frame_collected (char *command, char **argv, int argc)
 	    tsvname = (char *) xrealloc (tsvname, strlen (tsv->name) + 2);
 	    tsvname[0] = '$';
 	    strcpy (tsvname + 1, tsv->name);
-	    ui_out_field_string (uiout, "name", tsvname);
+	    uiout->field_string ("name", tsvname);
 
 	    tsv->value_known = target_get_trace_state_variable_value (tsv->number,
 								      &tsv->value);
-	    ui_out_field_int (uiout, "current", tsv->value);
+	    uiout->field_int ("current", tsv->value);
 	  }
 	else
 	  {
-	    ui_out_field_skip (uiout, "name");
-	    ui_out_field_skip (uiout, "current");
+	    uiout->field_skip ("name");
+	    uiout->field_skip ("current");
 	  }
 
 	do_cleanups (cleanup_child);
@@ -2999,8 +2938,8 @@ mi_cmd_trace_frame_collected (char *command, char **argv, int argc)
 
 	cleanup_child = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
 
-	ui_out_field_core_addr (uiout, "address", gdbarch, r->start);
-	ui_out_field_int (uiout, "length", r->length);
+	uiout->field_core_addr ("address", gdbarch, r->start);
+	uiout->field_int ("length", r->length);
 
 	data = (gdb_byte *) xmalloc (r->length);
 	make_cleanup (xfree, data);
@@ -3017,10 +2956,10 @@ mi_cmd_trace_frame_collected (char *command, char **argv, int argc)
 
 		for (m = 0, p = data_str; m < r->length; ++m, p += 2)
 		  sprintf (p, "%02x", data[m]);
-		ui_out_field_string (uiout, "contents", data_str);
+		uiout->field_string ("contents", data_str);
 	      }
 	    else
-	      ui_out_field_skip (uiout, "contents");
+	      uiout->field_skip ("contents");
 	  }
 	do_cleanups (cleanup_child);
       }

@@ -1153,9 +1153,9 @@ static emul_syscall_descriptor netbsd_descriptors[] = {
   { 0, }, /* 67 is obsolete vread */
   { 0, }, /* 68 is obsolete vwrite */
   /* 69 */ { 0, "sbrk" },
-  /* 70 */ { 0, "sstk" },
+  { 0, }, /* 70 is obsolete sstk */
   { 0, }, /* 71 is old mmap */
-  /* 72 */ { 0, "vadvise" },
+  { 0, }, /* 72 is obsolete vadvise */
   /* 73 */ { 0, "munmap" },
   /* 74 */ { 0, "mprotect" },
   /* 75 */ { 0, "madvise" },
@@ -1700,11 +1700,11 @@ static char *(netbsd_signal_names[]) = {
 
 static emul_syscall emul_netbsd_syscalls = {
   netbsd_descriptors,
-  sizeof(netbsd_descriptors) / sizeof(netbsd_descriptors[0]),
+  ARRAY_SIZE (netbsd_descriptors),
   netbsd_error_names,
-  sizeof(netbsd_error_names) / sizeof(netbsd_error_names[0]),
+  ARRAY_SIZE (netbsd_error_names),
   netbsd_signal_names,
-  sizeof(netbsd_signal_names) / sizeof(netbsd_signal_names[0]),
+  ARRAY_SIZE (netbsd_signal_names),
 };
 
 

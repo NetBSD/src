@@ -1,4 +1,4 @@
-# Copyright 1998-2016 Free Software Foundation, Inc.
+# Copyright 1998-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,8 @@ load_lib "trace-support.exp"
 
 standard_testfile
 
-if [prepare_for_testing ${testfile}.exp $testfile $srcfile \
+if [prepare_for_testing "failed to prepare" $testfile $srcfile \
         {debug nowarnings}] {
-    untested "failed to prepare for trace tests"
     return -1
 }
 

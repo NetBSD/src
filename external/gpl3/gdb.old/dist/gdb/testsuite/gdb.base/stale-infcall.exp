@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2016 Free Software Foundation, Inc.
+# Copyright (C) 2012-2017 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 standard_testfile .c
 
-if { [prepare_for_testing $testfile.exp $testfile $srcfile] } {
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
     return -1
 }
 
@@ -35,7 +35,7 @@ gdb_test_multiple "next" $test {
     }
     -re "( test-fail .*|\r\nCannot insert breakpoint 0\\.\r\n.*)\r\n$gdb_prompt $" {
 	xfail $test
-	untested "System lacks support for tracking longjmps"
+	untested "system lacks support for tracking longjmps"
 	return -1
     }
 }

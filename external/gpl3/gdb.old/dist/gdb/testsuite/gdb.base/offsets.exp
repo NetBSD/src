@@ -1,6 +1,6 @@
 # Test big offsets
 
-# Copyright (c) 2014- 2016 Free Software Foundation, Inc.
+# Copyright (c) 2014-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@ standard_testfile offsets.c
 
 if { [prepare_for_testing "failed to prepare for testing large offsets" \
 	  ${testfile} ${srcfile}] } {
-    untested offsets.exp
     return -1
 }
 

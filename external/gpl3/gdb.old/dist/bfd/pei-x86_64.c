@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 386 PE IMAGE COFF files.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -487,6 +487,7 @@ pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
   stop = pei_section_data (abfd, pdata_section)->virt_size;
   if ((stop % onaline) != 0)
     fprintf (file,
+	     /* xgettext:c-format */
 	     _("Warning: %s section size (%ld) is not a multiple of %d\n"),
 	     pdata_section->name, (long) stop, onaline);
 
@@ -508,6 +509,7 @@ pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
   else if (datasize < stop)
       {
 	fprintf (file,
+		 /* xgettext:c-format */
 		 _("Warning: %s section size (%ld) is smaller than virtual size (%ld)\n"),
 		 pdata_section->name, (unsigned long) datasize,
 		 (unsigned long) stop);

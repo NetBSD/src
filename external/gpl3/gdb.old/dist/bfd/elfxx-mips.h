@@ -1,5 +1,5 @@
 /* MIPS ELF specific backend routines.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -107,7 +107,7 @@ extern struct bfd_link_hash_table *_bfd_mips_vxworks_link_hash_table_create
 extern bfd_boolean _bfd_mips_elf_final_link
   (bfd *, struct bfd_link_info *);
 extern bfd_boolean _bfd_mips_elf_merge_private_bfd_data
-  (bfd *, bfd *);
+  (bfd *, struct bfd_link_info *);
 extern bfd_boolean _bfd_mips_elf_set_private_flags
   (bfd *, flagword);
 extern const char * _bfd_mips_fp_abi_string
@@ -139,8 +139,6 @@ extern bfd_reloc_status_type _bfd_mips_elf_generic_reloc
   (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
 extern unsigned long _bfd_elf_mips_mach
   (flagword);
-extern bfd_boolean _bfd_mips_relax_section
-  (bfd *, asection *, struct bfd_link_info *, bfd_boolean *);
 extern bfd_vma _bfd_mips_elf_sign_extend
   (bfd_vma, int);
 extern void _bfd_mips_elf_merge_symbol_attribute
@@ -150,8 +148,8 @@ extern bfd_boolean _bfd_mips_elf_ignore_undef_symbol
   (struct elf_link_hash_entry *);
 extern void _bfd_mips_elf_use_plts_and_copy_relocs
   (struct bfd_link_info *);
-extern void _bfd_mips_elf_insn32
-  (struct bfd_link_info *, bfd_boolean);
+extern void _bfd_mips_elf_linker_flags
+  (struct bfd_link_info *, bfd_boolean, bfd_boolean);
 extern bfd_boolean _bfd_mips_elf_init_stubs
   (struct bfd_link_info *,
    asection *(*) (const char *, asection *, asection *));

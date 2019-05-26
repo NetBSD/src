@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -51,26 +51,21 @@ PyObject *
 create_thread_event_object (PyTypeObject *py_type)
 {
   PyObject *thread = NULL;
-  PyObject *thread_event_obj = NULL;
 
-  thread_event_obj = create_event_object (py_type);
-  if (!thread_event_obj)
-    goto fail;
+  gdbpy_ref<> thread_event_obj (create_event_object (py_type));
+  if (thread_event_obj == NULL)
+    return NULL;
 
   thread = get_event_thread ();
   if (!thread)
-    goto fail;
+    return NULL;
 
-  if (evpy_add_attribute (thread_event_obj,
+  if (evpy_add_attribute (thread_event_obj.get (),
                           "inferior_thread",
                           thread) < 0)
-    goto fail;
+    return NULL;
 
-  return thread_event_obj;
-
-  fail:
-   Py_XDECREF (thread_event_obj);
-   return NULL;
+  return thread_event_obj.release ();
 }
 
 GDBPY_NEW_EVENT_TYPE (thread,

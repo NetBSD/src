@@ -1,4 +1,4 @@
-# Copyright 1998-2016 Free Software Foundation, Inc.
+# Copyright 1998-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ if [get_compiler_info "c++"] {
   return -1
 }
 
-if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
 
@@ -164,9 +164,9 @@ gdb_test "up" ".*main.*" "up from marker2"
 # setup_kfail "gdb/825"
 
 set eol "\[\t \]*\[\r\n\]+\[\t \]*"
-gdb_test_multiple "ptype Local" "Local out of scope" {
+gdb_test_multiple "ptype Local" "local out of scope" {
     -re "No symbol \"Local\" in current context.*${gdb_prompt} $" {
-        pass "Local out of scope"
+        pass "local out of scope"
     }
     -re "ptype Local${eol}type = class Local {${eol}  public:${eol}    int loc1;${eol}.*${eol}    char loc_foo\\(char\\);${eol}}${eol}${gdb_prompt} " {
         # GCC emits STABS debugging information in a way that doesn't

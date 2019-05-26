@@ -1,5 +1,5 @@
 /* Low level interface to ptrace, for GDB when running under Unix.
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,6 +31,7 @@
 
 #include "inflow.h"
 #include "gdbcmd.h"
+#include "gdb_termios.h"
 
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>

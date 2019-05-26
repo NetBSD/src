@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris.
 
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,6 @@ struct gdbarch;
 
 CORE_ADDR sol2_skip_solib_resolver (struct gdbarch *, CORE_ADDR);
 
-char *sol2_core_pid_to_str (struct gdbarch *gdbarch, ptid_t ptid);
+const char *sol2_core_pid_to_str (struct gdbarch *gdbarch, ptid_t ptid);
 
 #endif /* sol2-tdep.h */

@@ -1,5 +1,5 @@
 /* Intel 80386/80486-specific support for 32-bit ELF
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -383,8 +383,9 @@ elf_i386_rtype_to_howto (bfd *abfd, unsigned r_type)
       && ((indx = r_type - R_386_vt_offset) - R_386_ext2
 	  >= R_386_vt - R_386_ext2))
     {
-      (*_bfd_error_handler) (_("%B: invalid relocation type %d"),
-			     abfd, (int) r_type);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%B: invalid relocation type %d"),
+			  abfd, (int) r_type);
       indx = R_386_NONE;
     }
   /* PR 17512: file: 0f67f69d.  */
@@ -647,6 +648,32 @@ static const bfd_byte elf_i386_eh_frame_plt[] =
   DW_CFA_nop, DW_CFA_nop, DW_CFA_nop, DW_CFA_nop
 };
 
+/* .eh_frame covering the .plt.got section.  */
+
+static const bfd_byte elf_i386_eh_frame_plt_got[] =
+{
+#define PLT_GOT_FDE_LENGTH		16
+  PLT_CIE_LENGTH, 0, 0, 0,	/* CIE length */
+  0, 0, 0, 0,			/* CIE ID */
+  1,				/* CIE version */
+  'z', 'R', 0,			/* Augmentation string */
+  1,				/* Code alignment factor */
+  0x7c,				/* Data alignment factor */
+  8,				/* Return address column */
+  1,				/* Augmentation size */
+  DW_EH_PE_pcrel | DW_EH_PE_sdata4, /* FDE encoding */
+  DW_CFA_def_cfa, 4, 4,		/* DW_CFA_def_cfa: r4 (esp) ofs 4 */
+  DW_CFA_offset + 8, 1,		/* DW_CFA_offset: r8 (eip) at cfa-4 */
+  DW_CFA_nop, DW_CFA_nop,
+
+  PLT_GOT_FDE_LENGTH, 0, 0, 0,	/* FDE length */
+  PLT_CIE_LENGTH + 8, 0, 0, 0,	/* CIE pointer */
+  0, 0, 0, 0,			/* the start of .plt.got goes here */
+  0, 0, 0, 0,			/* .plt.got size goes here */
+  0,				/* Augmentation size */
+  DW_CFA_nop, DW_CFA_nop, DW_CFA_nop
+};
+
 struct elf_i386_plt_layout
 {
   /* The first entry in an absolute procedure linkage table looks like this.  */
@@ -678,6 +705,10 @@ struct elf_i386_plt_layout
   /* .eh_frame covering the .plt section.  */
   const bfd_byte *eh_frame_plt;
   unsigned int eh_frame_plt_size;
+
+  /* .eh_frame covering the .plt.got section.  */
+  const bfd_byte *eh_frame_plt_got;
+  unsigned int eh_frame_plt_got_size;
 };
 
 #define GET_PLT_ENTRY_SIZE(abfd) \
@@ -700,6 +731,8 @@ static const struct elf_i386_plt_layout elf_i386_plt =
     elf_i386_pic_plt_entry,             /* pic_plt_entry */
     elf_i386_eh_frame_plt,              /* eh_frame_plt */
     sizeof (elf_i386_eh_frame_plt),     /* eh_frame_plt_size */
+    elf_i386_eh_frame_plt_got,          /* eh_frame_plt_got */
+    sizeof (elf_i386_eh_frame_plt_got), /* eh_frame_plt_got_size */
   };
 
 
@@ -847,10 +880,9 @@ struct elf_i386_link_hash_table
 
   /* Short-cuts to get to dynamic linker sections.  */
   asection *interp;
-  asection *sdynbss;
-  asection *srelbss;
   asection *plt_eh_frame;
   asection *plt_got;
+  asection *plt_got_eh_frame;
 
   union
   {
@@ -1083,29 +1115,6 @@ elf_i386_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
       htab->interp = s;
     }
 
-  htab->sdynbss = bfd_get_linker_section (dynobj, ".dynbss");
-  if (!htab->sdynbss)
-    abort ();
-
-  if (bfd_link_executable (info))
-    {
-      /* Always allow copy relocs for building executables.  */
-      asection *s = bfd_get_linker_section (dynobj, ".rel.bss");
-      if (s == NULL)
-	{
-	  const struct elf_backend_data *bed = get_elf_backend_data (dynobj);
-	  s = bfd_make_section_anyway_with_flags (dynobj,
-						  ".rel.bss",
-						  (bed->dynamic_sec_flags
-						   | SEC_READONLY));
-	  if (s == NULL
-	      || ! bfd_set_section_alignment (dynobj, s,
-					      bed->s->log_file_align))
-	    return FALSE;
-	}
-      htab->srelbss = s;
-    }
-
   if (get_elf_i386_backend_data (dynobj)->is_vxworks
       && !elf_vxworks_create_dynamic_sections (dynobj, info,
 					       &htab->srelplt2))
@@ -1192,7 +1201,8 @@ elf_i386_copy_indirect_symbol (struct bfd_link_info *info,
       /* If called to transfer flags for a weakdef during processing
 	 of elf_adjust_dynamic_symbol, don't copy non_got_ref.
 	 We clear it ourselves for ELIMINATE_COPY_RELOCS.  */
-      dir->ref_dynamic |= ind->ref_dynamic;
+      if (dir->versioned != versioned_hidden)
+	dir->ref_dynamic |= ind->ref_dynamic;
       dir->ref_regular |= ind->ref_regular;
       dir->ref_regular_nonweak |= ind->ref_regular_nonweak;
       dir->needs_plt |= ind->needs_plt;
@@ -1555,11 +1565,12 @@ elf_i386_tls_transition (struct bfd_link_info *info, bfd *abfd,
 	    }
 	}
 
-      (*_bfd_error_handler)
+      _bfd_error_handler
+	/* xgettext:c-format */
 	(_("%B: TLS transition from %s to %s against `%s' at 0x%lx "
 	   "in section `%A' failed"),
-	 abfd, sec, from->name, to->name, name,
-	 (unsigned long) rel->r_offset);
+	 abfd, from->name, to->name, name,
+	 (unsigned long) rel->r_offset, sec);
       bfd_set_error (bfd_error_bad_value);
       return FALSE;
     }
@@ -1642,8 +1653,10 @@ elf_i386_convert_load_reloc (bfd *abfd, Elf_Internal_Shdr *symtab_hdr,
       else
 	name = h->root.root.string;
 
-      (*_bfd_error_handler)
-	(_("%B: direct GOT relocation R_386_GOT32X against `%s' without base register can not be used when making a shared object"),
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%B: direct GOT relocation R_386_GOT32X against `%s' without base"
+	   " register can not be used when making a shared object"),
 	 abfd, name);
       return FALSE;
     }
@@ -1898,9 +1911,9 @@ elf_i386_check_relocs (bfd *abfd,
 
       if (r_symndx >= NUM_SHDR_ENTRIES (symtab_hdr))
 	{
-	  (*_bfd_error_handler) (_("%B: bad symbol index: %d"),
-				 abfd,
-				 r_symndx);
+	  /* xgettext:c-format */
+	  _bfd_error_handler (_("%B: bad symbol index: %d"),
+			      abfd, r_symndx);
 	  goto error_return;
 	}
 
@@ -1948,6 +1961,7 @@ elf_i386_check_relocs (bfd *abfd,
 
 	    case R_386_GOTOFF:
 	      eh->gotoff_ref = 1;
+	      /* Fall through.  */
 	    case R_386_32:
 	    case R_386_PC32:
 	    case R_386_PLT32:
@@ -2098,7 +2112,8 @@ elf_i386_check_relocs (bfd *abfd,
 		    else
 		      name = bfd_elf_sym_name (abfd, symtab_hdr, isym,
 					     NULL);
-		    (*_bfd_error_handler)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
 		      (_("%B: `%s' accessed both as normal and "
 			 "thread local symbol"),
 		       abfd, name);
@@ -2178,6 +2193,21 @@ do_relocation:
 		     a function defined in a shared library.  */
 		  if ((sec->flags & SEC_CODE) == 0)
 		    h->pointer_equality_needed = 1;
+		  else if (h->type == STT_GNU_IFUNC
+			   && bfd_link_pic (info))
+		    {
+		    if (isym == NULL)
+		      name = h->root.root.string;
+		    else
+		      name = bfd_elf_sym_name (abfd, symtab_hdr, isym,
+					       NULL);
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%B: unsupported non-PIC call to IFUNC `%s'"),
+		       abfd, name);
+		      bfd_set_error (bfd_error_bad_value);
+		      goto error_return;
+		    }
 		}
 	      else
 		{
@@ -2351,6 +2381,24 @@ do_size:
 					     htab->plt_got,
 					     plt_got_align))
 	    goto error_return;
+
+	  if (!info->no_ld_generated_unwind_info
+	      && htab->plt_got_eh_frame == NULL
+	      && get_elf_i386_backend_data (abfd)->plt->eh_frame_plt_got != NULL)
+	    {
+	      flagword flags = (SEC_ALLOC | SEC_LOAD | SEC_READONLY
+				| SEC_HAS_CONTENTS | SEC_IN_MEMORY
+				| SEC_LINKER_CREATED);
+	      htab->plt_got_eh_frame
+		= bfd_make_section_anyway_with_flags (htab->elf.dynobj,
+						      ".eh_frame",
+						      flags);
+	      if (htab->plt_got_eh_frame == NULL
+		  || !bfd_set_section_alignment (htab->elf.dynobj,
+						 htab->plt_got_eh_frame,
+						 2))
+		goto error_return;
+	    }
 	}
 
       if (r_type == R_386_GOT32X
@@ -2429,7 +2477,7 @@ elf_i386_adjust_dynamic_symbol (struct bfd_link_info *info,
 				struct elf_link_hash_entry *h)
 {
   struct elf_i386_link_hash_table *htab;
-  asection *s;
+  asection *s, *srel;
   struct elf_i386_link_hash_entry *eh;
   struct elf_dyn_relocs *p;
 
@@ -2589,13 +2637,21 @@ elf_i386_adjust_dynamic_symbol (struct bfd_link_info *info,
   /* We must generate a R_386_COPY reloc to tell the dynamic linker to
      copy the initial value out of the dynamic object and into the
      runtime process image.  */
+  if ((h->root.u.def.section->flags & SEC_READONLY) != 0)
+    {
+      s = htab->elf.sdynrelro;
+      srel = htab->elf.sreldynrelro;
+    }
+  else
+    {
+      s = htab->elf.sdynbss;
+      srel = htab->elf.srelbss;
+    }
   if ((h->root.u.def.section->flags & SEC_ALLOC) != 0 && h->size != 0)
     {
-      htab->srelbss->size += sizeof (Elf32_External_Rel);
+      srel->size += sizeof (Elf32_External_Rel);
       h->needs_copy = 1;
     }
-
-  s = htab->sdynbss;
 
   return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
@@ -3047,6 +3103,7 @@ elf_i386_readonly_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 
 	  if ((info->warn_shared_textrel && bfd_link_pic (info))
 	      || info->error_textrel)
+	    /* xgettext:c-format */
 	    info->callbacks->einfo (_("%P: %B: warning: relocation against `%s' in readonly section `%A'\n"),
 				    p->sec->owner, h->root.root.string,
 				    p->sec);
@@ -3258,6 +3315,7 @@ elf_i386_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 		      info->flags |= DF_TEXTREL;
 		      if ((info->warn_shared_textrel && bfd_link_pic (info))
 			  || info->error_textrel)
+			/* xgettext:c-format */
 			info->callbacks->einfo (_("%P: %B: warning: relocation in readonly section `%A'\n"),
 						p->sec->owner, p->sec);
 		    }
@@ -3373,13 +3431,22 @@ elf_i386_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	htab->elf.sgotplt->size = 0;
     }
 
+  if (_bfd_elf_eh_frame_present (info))
+    {
+      if (htab->plt_eh_frame != NULL
+	  && htab->elf.splt != NULL
+	  && htab->elf.splt->size != 0
+	  && !bfd_is_abs_section (htab->elf.splt->output_section))
+	htab->plt_eh_frame->size
+	  = get_elf_i386_backend_data (output_bfd)->plt->eh_frame_plt_size;
 
-  if (htab->plt_eh_frame != NULL
-      && htab->elf.splt != NULL
-      && htab->elf.splt->size != 0
-      && !bfd_is_abs_section (htab->elf.splt->output_section)
-      && _bfd_elf_eh_frame_present (info))
-    htab->plt_eh_frame->size = sizeof (elf_i386_eh_frame_plt);
+      if (htab->plt_got_eh_frame != NULL
+	  && htab->plt_got != NULL
+	  && htab->plt_got->size != 0
+	  && !bfd_is_abs_section (htab->plt_got->output_section))
+	htab->plt_got_eh_frame->size
+	  = get_elf_i386_backend_data (output_bfd)->plt->eh_frame_plt_got_size;
+    }
 
   /* We now have determined the sizes of the various dynamic sections.
      Allocate memory for them.  */
@@ -3408,7 +3475,9 @@ elf_i386_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	       || s == htab->elf.igotplt
 	       || s == htab->plt_got
 	       || s == htab->plt_eh_frame
-	       || s == htab->sdynbss)
+	       || s == htab->plt_got_eh_frame
+	       || s == htab->elf.sdynbss
+	       || s == htab->elf.sdynrelro)
 	{
 	  /* Strip these too.  */
 	}
@@ -3461,10 +3530,22 @@ elf_i386_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
   if (htab->plt_eh_frame != NULL
       && htab->plt_eh_frame->contents != NULL)
     {
-      memcpy (htab->plt_eh_frame->contents, elf_i386_eh_frame_plt,
-	      sizeof (elf_i386_eh_frame_plt));
+      memcpy (htab->plt_eh_frame->contents,
+	      get_elf_i386_backend_data (output_bfd)->plt->eh_frame_plt,
+	      htab->plt_eh_frame->size);
       bfd_put_32 (dynobj, htab->elf.splt->size,
 		  htab->plt_eh_frame->contents + PLT_FDE_LEN_OFFSET);
+    }
+
+  if (htab->plt_got_eh_frame != NULL
+      && htab->plt_got_eh_frame->contents != NULL)
+    {
+      memcpy (htab->plt_got_eh_frame->contents,
+	      get_elf_i386_backend_data (output_bfd)->plt->eh_frame_plt_got,
+	      htab->plt_got_eh_frame->size);
+      bfd_put_32 (dynobj, htab->plt_got->size,
+		  (htab->plt_got_eh_frame->contents
+		   + PLT_FDE_LEN_OFFSET));
     }
 
   if (htab->elf.dynamic_sections_created)
@@ -3753,9 +3834,10 @@ elf_i386_relocate_section (bfd *output_bfd,
 	  && ((indx = r_type - R_386_tls_offset) - R_386_ext
 	      >= R_386_ext2 - R_386_ext))
 	{
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
+	    /* xgettext:c-format */
 	    (_("%B: unrecognized relocation (0x%x) in section `%A'"),
-	     input_bfd, input_section, r_type);
+	     input_bfd, r_type, input_section);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 	}
@@ -3993,7 +4075,9 @@ elf_i386_relocate_section (bfd *output_bfd,
 			      - gotplt->output_section->vma
 			      - gotplt->output_offset);
 
-	      if ((*(contents + rel->r_offset - 1) & 0xc7) == 0x5)
+	      if (rel->r_offset > 1
+		  && (*(contents + rel->r_offset - 1) & 0xc7) == 0x5
+		  && *(contents + rel->r_offset - 2) != 0x8d)
 		{
 		  if (bfd_link_pic (info))
 		    goto disallow_got32;
@@ -4032,7 +4116,8 @@ bad_ifunc_reloc:
 	      else
 		name = bfd_elf_sym_name (input_bfd, symtab_hdr, sym,
 					 NULL);
-	      (*_bfd_error_handler)
+	      _bfd_error_handler
+		/* xgettext:c-format */
 		(_("%B: relocation %s against STT_GNU_IFUNC "
 		   "symbol `%s' isn't supported"), input_bfd,
 		 howto->name, name);
@@ -4263,24 +4348,29 @@ r_386_got32:
 
 	  relocation = (htab->elf.sgot->output_section->vma
 			+ htab->elf.sgot->output_offset + off);
-	  if ((*(contents + rel->r_offset - 1) & 0xc7) == 0x5)
+	  if (rel->r_offset > 1
+	      && (*(contents + rel->r_offset - 1) & 0xc7) == 0x5
+	      && *(contents + rel->r_offset - 2) != 0x8d)
 	    {
 	      if (bfd_link_pic (info))
 		{
 		  /* For PIC, disallow R_386_GOT32 without a base
-		     register since we don't know what the GOT base
-		     is.  */
+		     register, except for "lea foo@GOT, %reg", since
+		     we don't know what the GOT base is.  */
 		  const char *name;
 
 disallow_got32:
-		  if (h == NULL)
+		  if (h == NULL || h->root.root.string == NULL)
 		    name = bfd_elf_sym_name (input_bfd, symtab_hdr, sym,
 					     NULL);
 		  else
 		    name = h->root.root.string;
 
-		  (*_bfd_error_handler)
-		    (_("%B: direct GOT relocation %s against `%s' without base register can not be used when making a shared object"),
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("%B: direct GOT relocation %s against `%s'"
+		       " without base register can not be used"
+		       " when making a shared object"),
 		     input_bfd, howto->name, name);
 		  bfd_set_error (bfd_error_bad_value);
 		  return FALSE;
@@ -4326,8 +4416,10 @@ disallow_got32:
 		      break;
 		    }
 
-		  (*_bfd_error_handler)
-		    (_("%B: relocation R_386_GOTOFF against undefined %s `%s' can not be used when making a shared object"),
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("%B: relocation R_386_GOTOFF against undefined %s"
+		       " `%s' can not be used when making a shared object"),
 		     input_bfd, v, h->root.root.string);
 		  bfd_set_error (bfd_error_bad_value);
 		  return FALSE;
@@ -4337,8 +4429,10 @@ disallow_got32:
 			   || h->type == STT_OBJECT)
 		       && ELF_ST_VISIBILITY (h->other) == STV_PROTECTED)
 		{
-		  (*_bfd_error_handler)
-		    (_("%B: relocation R_386_GOTOFF against protected %s `%s' can not be used when making a shared object"),
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("%B: relocation R_386_GOTOFF against protected %s"
+		       " `%s' can not be used when making a shared object"),
 		     input_bfd,
 		     h->type == STT_FUNC ? "function" : "data",
 		     h->root.root.string);
@@ -5128,7 +5222,8 @@ disallow_got32:
 	  && _bfd_elf_section_offset (output_bfd, info, input_section,
 				      rel->r_offset) != (bfd_vma) -1)
 	{
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
+	    /* xgettext:c-format */
 	    (_("%B(%A+0x%lx): unresolvable %s relocation against symbol `%s'"),
 	     input_bfd,
 	     input_section,
@@ -5167,7 +5262,8 @@ check_relocation_error:
 	       (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	  else
 	    {
-	      (*_bfd_error_handler)
+	      _bfd_error_handler
+		/* xgettext:c-format */
 		(_("%B(%A+0x%lx): reloc against `%s': error %d"),
 		 input_bfd, input_section,
 		 (long) rel->r_offset, name, (int) r);
@@ -5560,20 +5656,26 @@ do_glob_dat:
   if (h->needs_copy)
     {
       Elf_Internal_Rela rel;
+      asection *s;
 
       /* This symbol needs a copy reloc.  Set it up.  */
 
       if (h->dynindx == -1
 	  || (h->root.type != bfd_link_hash_defined
 	      && h->root.type != bfd_link_hash_defweak)
-	  || htab->srelbss == NULL)
+	  || htab->elf.srelbss == NULL
+	  || htab->elf.sreldynrelro == NULL)
 	abort ();
 
       rel.r_offset = (h->root.u.def.value
 		      + h->root.u.def.section->output_section->vma
 		      + h->root.u.def.section->output_offset);
       rel.r_info = ELF32_R_INFO (h->dynindx, R_386_COPY);
-      elf_append_rel (output_bfd, htab->srelbss, &rel);
+      if (h->root.u.def.section == htab->elf.sdynrelro)
+	s = htab->elf.sreldynrelro;
+      else
+	s = htab->elf.srelbss;
+      elf_append_rel (output_bfd, s, &rel);
     }
 
   return TRUE;
@@ -5717,31 +5819,6 @@ elf_i386_finish_dynamic_sections (bfd *output_bfd,
 	      s = htab->elf.srelplt;
 	      dyn.d_un.d_val = s->size;
 	      break;
-
-	    case DT_RELSZ:
-	      /* My reading of the SVR4 ABI indicates that the
-		 procedure linkage table relocs (DT_JMPREL) should be
-		 included in the overall relocs (DT_REL).  This is
-		 what Solaris does.  However, UnixWare can not handle
-		 that case.  Therefore, we override the DT_RELSZ entry
-		 here to make it not include the JMPREL relocs.  */
-	      s = htab->elf.srelplt;
-	      if (s == NULL)
-		continue;
-	      dyn.d_un.d_val -= s->size;
-	      break;
-
-	    case DT_REL:
-	      /* We may not be using the standard ELF linker script.
-		 If .rel.plt is the first .rel section, we adjust
-		 DT_REL to not include it.  */
-	      s = htab->elf.srelplt;
-	      if (s == NULL)
-		continue;
-	      if (dyn.d_un.d_ptr != s->output_section->vma + s->output_offset)
-		continue;
-	      dyn.d_un.d_ptr += s->size;
-	      break;
 	    }
 
 	  bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
@@ -5841,7 +5918,7 @@ elf_i386_finish_dynamic_sections (bfd *output_bfd,
     {
       if (bfd_is_abs_section (htab->elf.sgotplt->output_section))
 	{
-	  (*_bfd_error_handler)
+	  _bfd_error_handler
 	    (_("discarded output section: `%A'"), htab->elf.sgotplt);
 	  return FALSE;
 	}
@@ -5884,6 +5961,33 @@ elf_i386_finish_dynamic_sections (bfd *output_bfd,
 	  if (! _bfd_elf_write_section_eh_frame (output_bfd, info,
 						 htab->plt_eh_frame,
 						 htab->plt_eh_frame->contents))
+	    return FALSE;
+	}
+    }
+
+  /* Adjust .eh_frame for .plt.got section.  */
+  if (htab->plt_got_eh_frame != NULL
+      && htab->plt_got_eh_frame->contents != NULL)
+    {
+      if (htab->plt_got != NULL
+	  && htab->plt_got->size != 0
+	  && (htab->plt_got->flags & SEC_EXCLUDE) == 0
+	  && htab->plt_got->output_section != NULL
+	  && htab->plt_got_eh_frame->output_section != NULL)
+	{
+	  bfd_vma plt_start = htab->plt_got->output_section->vma;
+	  bfd_vma eh_frame_start = htab->plt_got_eh_frame->output_section->vma
+				   + htab->plt_got_eh_frame->output_offset
+				   + PLT_FDE_START_OFFSET;
+	  bfd_put_signed_32 (dynobj, plt_start - eh_frame_start,
+			     htab->plt_got_eh_frame->contents
+			     + PLT_FDE_START_OFFSET);
+	}
+      if (htab->plt_got_eh_frame->sec_info_type == SEC_INFO_TYPE_EH_FRAME)
+	{
+	  if (! _bfd_elf_write_section_eh_frame (output_bfd, info,
+						 htab->plt_got_eh_frame,
+						 htab->plt_got_eh_frame->contents))
 	    return FALSE;
 	}
     }
@@ -6032,6 +6136,78 @@ elf_i386_hash_symbol (struct elf_link_hash_entry *h)
   return _bfd_elf_hash_symbol (h);
 }
 
+/* Parse i386 GNU properties.  */
+
+static enum elf_property_kind
+elf_i386_parse_gnu_properties (bfd *abfd, unsigned int type,
+			       bfd_byte *ptr, unsigned int datasz)
+{
+  elf_property *prop;
+
+  switch (type)
+    {
+    case GNU_PROPERTY_X86_ISA_1_USED:
+    case GNU_PROPERTY_X86_ISA_1_NEEDED:
+      if (datasz != 4)
+	{
+	  _bfd_error_handler
+	    ((type == GNU_PROPERTY_X86_ISA_1_USED
+	      ? _("error: %B: <corrupt x86 ISA used size: 0x%x>")
+	      : _("error: %B: <corrupt x86 ISA needed size: 0x%x>")),
+	     abfd, datasz);
+	  return property_corrupt;
+	}
+      prop = _bfd_elf_get_property (abfd, type, datasz);
+      prop->u.number = bfd_h_get_32 (abfd, ptr);
+      prop->pr_kind = property_number;
+      break;
+
+    default:
+      return property_ignored;
+    }
+
+  return property_number;
+}
+
+/* Merge i386 GNU property BPROP with APROP.  If APROP isn't NULL,
+   return TRUE if APROP is updated.  Otherwise, return TRUE if BPROP
+   should be merged with ABFD.  */
+
+static bfd_boolean
+elf_i386_merge_gnu_properties (bfd *abfd ATTRIBUTE_UNUSED,
+			       elf_property *aprop,
+			       elf_property *bprop)
+{
+  unsigned int number;
+  bfd_boolean updated = FALSE;
+  unsigned int pr_type = aprop != NULL ? aprop->pr_type : bprop->pr_type;
+
+  switch (pr_type)
+    {
+    case GNU_PROPERTY_X86_ISA_1_USED:
+    case GNU_PROPERTY_X86_ISA_1_NEEDED:
+      if (aprop != NULL && bprop != NULL)
+	{
+	  number = aprop->u.number;
+	  aprop->u.number = number | bprop->u.number;
+	  updated = number != (unsigned int) aprop->u.number;
+	}
+      else
+	{
+	  /* Return TRUE if APROP is NULL to indicate that BPROP should
+	     be added to ABFD.  */
+	  updated = aprop == NULL;
+	}
+      break;
+
+    default:
+      /* Never should happen.  */
+      abort ();
+    }
+
+  return updated;
+}
+
 #define TARGET_LITTLE_SYM		i386_elf32_vec
 #define TARGET_LITTLE_NAME		"elf32-i386"
 #define ELF_ARCH			bfd_arch_i386
@@ -6046,8 +6222,10 @@ elf_i386_hash_symbol (struct elf_link_hash_entry *h)
 #define elf_backend_want_plt_sym	0
 #define elf_backend_got_header_size	12
 #define elf_backend_plt_alignment	4
+#define elf_backend_dtrel_excludes_plt	1
 #define elf_backend_extern_protected_data 1
 #define elf_backend_caches_rawsize	1
+#define elf_backend_want_dynrelro	1
 
 /* Support RELA for objdump of prelink objects.  */
 #define elf_info_to_howto		      elf_i386_info_to_howto_rel
@@ -6081,6 +6259,8 @@ elf_i386_hash_symbol (struct elf_link_hash_entry *h)
   ((bfd_boolean (*) (bfd *, struct bfd_link_info *, asection *)) bfd_true)
 #define elf_backend_hash_symbol		      elf_i386_hash_symbol
 #define elf_backend_fixup_symbol	      elf_i386_fixup_symbol
+#define elf_backend_parse_gnu_properties      elf_i386_parse_gnu_properties
+#define elf_backend_merge_gnu_properties      elf_i386_merge_gnu_properties
 
 #include "elf32-target.h"
 
@@ -6429,6 +6609,8 @@ static const struct elf_i386_plt_layout elf_i386_nacl_plt =
     elf_i386_nacl_pic_plt_entry,	/* pic_plt_entry */
     elf_i386_nacl_eh_frame_plt,		/* eh_frame_plt */
     sizeof (elf_i386_nacl_eh_frame_plt),/* eh_frame_plt_size */
+    NULL,				/* eh_frame_plt_got */
+    0,					/* eh_frame_plt_got_size */
   };
 
 static const struct elf_i386_backend_data elf_i386_nacl_arch_bed =

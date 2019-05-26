@@ -1,6 +1,6 @@
 /* varobj support for Ada.
 
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -74,22 +74,15 @@ ada_varobj_decode_var (struct value **value_ptr, struct type **type_ptr)
 /* Return a string containing an image of the given scalar value.
    VAL is the numeric value, while TYPE is the value's type.
    This is useful for plain integers, of course, but even more
-   so for enumerated types.
+   so for enumerated types.  */
 
-   The result should be deallocated by xfree after use.  */
-
-static char *
+static std::string
 ada_varobj_scalar_image (struct type *type, LONGEST val)
 {
-  struct ui_file *buf = mem_fileopen ();
-  struct cleanup *cleanups = make_cleanup_ui_file_delete (buf);
-  char *result;
+  string_file buf;
 
-  ada_print_scalar (type, val, buf);
-  result = ui_file_xstrdup (buf, NULL);
-  do_cleanups (cleanups);
-
-  return result;
+  ada_print_scalar (type, val, &buf);
+  return std::move (buf.string ());
 }
 
 /* Assuming that the (PARENT_VALUE, PARENT_TYPE) pair designates
@@ -404,10 +397,10 @@ static void ada_varobj_describe_child (struct value *parent_value,
 				       const char *parent_name,
 				       const char *parent_path_expr,
 				       int child_index,
-				       char **child_name,
+				       std::string *child_name,
 				       struct value **child_value,
 				       struct type **child_type,
-				       char **child_path_expr);
+				       std::string *child_path_expr);
 
 /* Same as ada_varobj_describe_child, but limited to struct/union
    objects.  */
@@ -418,10 +411,10 @@ ada_varobj_describe_struct_child (struct value *parent_value,
 				  const char *parent_name,
 				  const char *parent_path_expr,
 				  int child_index,
-				  char **child_name,
+				  std::string *child_name,
 				  struct value **child_value,
 				  struct type **child_type,
-				  char **child_path_expr)
+				  std::string *child_path_expr)
 {
   int fieldno;
   int childno = 0;
@@ -506,7 +499,7 @@ ada_varobj_describe_struct_child (struct value *parent_value,
 	      const char *field_name = TYPE_FIELD_NAME (parent_type, fieldno);
 	      int child_name_len = ada_name_prefix_len (field_name);
 
-	      *child_name = xstrprintf ("%.*s", child_name_len, field_name);
+	      *child_name = string_printf ("%.*s", child_name_len, field_name);
 	    }
 
 	  if (child_value && parent_value)
@@ -527,8 +520,8 @@ ada_varobj_describe_struct_child (struct value *parent_value,
 	      int child_name_len = ada_name_prefix_len (field_name);
 
 	      *child_path_expr =
-		xstrprintf ("(%s).%.*s", parent_path_expr,
-			    child_name_len, field_name);
+		string_printf ("(%s).%.*s", parent_path_expr,
+			       child_name_len, field_name);
 	    }
 
 	  return;
@@ -556,13 +549,13 @@ ada_varobj_describe_ptr_child (struct value *parent_value,
 			       const char *parent_name,
 			       const char *parent_path_expr,
 			       int child_index,
-			       char **child_name,
+			       std::string *child_name,
 			       struct value **child_value,
 			       struct type **child_type,
-			       char **child_path_expr)
+			       std::string *child_path_expr)
 {
   if (child_name)
-    *child_name = xstrprintf ("%s.all", parent_name);
+    *child_name = string_printf ("%s.all", parent_name);
 
   if (child_value && parent_value)
     ada_varobj_ind (parent_value, parent_type, child_value, NULL);
@@ -571,7 +564,7 @@ ada_varobj_describe_ptr_child (struct value *parent_value,
     ada_varobj_ind (parent_value, parent_type, NULL, child_type);
 
   if (child_path_expr)
-    *child_path_expr = xstrprintf ("(%s).all", parent_path_expr);
+    *child_path_expr = string_printf ("(%s).all", parent_path_expr);
 }
 
 /* Same as ada_varobj_describe_child, limited to simple array objects
@@ -586,10 +579,10 @@ ada_varobj_describe_simple_array_child (struct value *parent_value,
 					const char *parent_name,
 					const char *parent_path_expr,
 					int child_index,
-					char **child_name,
+					std::string *child_name,
 					struct value **child_value,
 					struct type **child_type,
-					char **child_path_expr)
+					std::string *child_path_expr)
 {
   struct type *index_type;
   int real_index;
@@ -612,8 +605,7 @@ ada_varobj_describe_simple_array_child (struct value *parent_value,
 
   if (child_path_expr)
     {
-      char *index_img = ada_varobj_scalar_image (index_type, real_index);
-      struct cleanup *cleanups = make_cleanup (xfree, index_img);
+      std::string index_img = ada_varobj_scalar_image (index_type, real_index);
 
       /* Enumeration litterals by themselves are potentially ambiguous.
 	 For instance, consider the following package spec:
@@ -647,13 +639,12 @@ ada_varobj_describe_simple_array_child (struct value *parent_value,
 
       if (index_type_name != NULL)
 	*child_path_expr =
-	  xstrprintf ("(%s)(%.*s'(%s))", parent_path_expr,
-		      ada_name_prefix_len (index_type_name),
-		      index_type_name, index_img);
+	  string_printf ("(%s)(%.*s'(%s))", parent_path_expr,
+			 ada_name_prefix_len (index_type_name),
+			 index_type_name, index_img.c_str ());
       else
 	*child_path_expr =
-	  xstrprintf ("(%s)(%s)", parent_path_expr, index_img);
-      do_cleanups (cleanups);
+	  string_printf ("(%s)(%s)", parent_path_expr, index_img.c_str ());
     }
 }
 
@@ -665,10 +656,10 @@ ada_varobj_describe_child (struct value *parent_value,
 			   const char *parent_name,
 			   const char *parent_path_expr,
 			   int child_index,
-			   char **child_name,
+			   std::string *child_name,
 			   struct value **child_value,
 			   struct type **child_type,
-			   char **child_path_expr)
+			   std::string *child_path_expr)
 {
   /* We cannot compute the child's path expression without
      the parent's path expression.  This is a pre-condition
@@ -680,13 +671,13 @@ ada_varobj_describe_child (struct value *parent_value,
   ada_varobj_adjust_for_child_access (&parent_value, &parent_type);
 
   if (child_name)
-    *child_name = NULL;
+    *child_name = std::string ();
   if (child_value)
     *child_value = NULL;
   if (child_type)
     *child_type = NULL;
   if (child_path_expr)
-    *child_path_expr = NULL;
+    *child_path_expr = std::string ();
 
   if (ada_is_array_descriptor_type (parent_type)
       && TYPE_CODE (parent_type) == TYPE_CODE_TYPEDEF)
@@ -731,20 +722,18 @@ ada_varobj_describe_child (struct value *parent_value,
   /* It should never happen.  But rather than crash, report dummy names
      and return a NULL child_value.  */
   if (child_name)
-    *child_name = xstrdup ("???");
+    *child_name = "???";
 }
 
 /* Return the name of the child number CHILD_INDEX of the (PARENT_VALUE,
-   PARENT_TYPE) pair.  PARENT_NAME is the name of the PARENT.
+   PARENT_TYPE) pair.  PARENT_NAME is the name of the PARENT.  */
 
-   The result should be deallocated after use with xfree.  */
-
-static char *
+static std::string
 ada_varobj_get_name_of_child (struct value *parent_value,
 			      struct type *parent_type,
 			      const char *parent_name, int child_index)
 {
-  char *child_name;
+  std::string child_name;
 
   ada_varobj_describe_child (parent_value, parent_type, parent_name,
 			     NULL, child_index, &child_name, NULL,
@@ -755,18 +744,16 @@ ada_varobj_get_name_of_child (struct value *parent_value,
 /* Return the path expression of the child number CHILD_INDEX of
    the (PARENT_VALUE, PARENT_TYPE) pair.  PARENT_NAME is the name
    of the parent, and PARENT_PATH_EXPR is the parent's path expression.
-   Both must be non-NULL.
+   Both must be non-NULL.  */
 
-   The result must be deallocated after use with xfree.  */
-
-static char *
+static std::string
 ada_varobj_get_path_expr_of_child (struct value *parent_value,
 				   struct type *parent_type,
 				   const char *parent_name,
 				   const char *parent_path_expr,
 				   int child_index)
 {
-  char *child_path_expr;
+  std::string child_path_expr;
 
   ada_varobj_describe_child (parent_value, parent_type, parent_name,
 			     parent_path_expr, child_index, NULL,
@@ -813,22 +800,14 @@ ada_varobj_get_type_of_child (struct value *parent_value,
 
    The resulting string must be deallocated after use with xfree.  */
 
-static char *
+static std::string
 ada_varobj_get_value_image (struct value *value,
 			    struct value_print_options *opts)
 {
-  char *result;
-  struct ui_file *buffer;
-  struct cleanup *old_chain;
+  string_file buffer;
 
-  buffer = mem_fileopen ();
-  old_chain = make_cleanup_ui_file_delete (buffer);
-
-  common_val_print (value, buffer, 0, opts, current_language);
-  result = ui_file_xstrdup (buffer, NULL);
-
-  do_cleanups (old_chain);
-  return result;
+  common_val_print (value, &buffer, 0, opts, current_language);
+  return std::move (buffer.string ());
 }
 
 /* Assuming that the (VALUE, TYPE) pair designates an array varobj,
@@ -841,7 +820,7 @@ ada_varobj_get_value_image (struct value *value,
 
    The result should be deallocated after use using xfree.  */
 
-static char *
+static std::string
 ada_varobj_get_value_of_array_variable (struct value *value,
 					struct type *type,
 					struct value_print_options *opts)
@@ -857,50 +836,36 @@ ada_varobj_get_value_of_array_variable (struct value *value,
       && ada_is_string_type (type)
       && (opts->format == 0 || opts->format == 's'))
     {
-      char *str;
-      struct cleanup *old_chain;
-
-      str = ada_varobj_get_value_image (value, opts);
-      old_chain = make_cleanup (xfree, str);
-      result = xstrprintf ("[%d] %s", numchild, str);
-      do_cleanups (old_chain);
+      std::string str = ada_varobj_get_value_image (value, opts);
+      return string_printf ("[%d] %s", numchild, str.c_str ());
     }
   else
-    result = xstrprintf ("[%d]", numchild);
-
-  return result;
+    return string_printf ("[%d]", numchild);
 }
 
 /* Return a string representation of the (VALUE, TYPE) pair, using
    the given print options OPTS as our formatting options.  */
 
-static char *
+static std::string
 ada_varobj_get_value_of_variable (struct value *value,
 				  struct type *type,
 				  struct value_print_options *opts)
 {
-  char *result = NULL;
-
   ada_varobj_decode_var (&value, &type);
 
   switch (TYPE_CODE (type))
     {
     case TYPE_CODE_STRUCT:
     case TYPE_CODE_UNION:
-      result = xstrdup ("{...}");
-      break;
+      return "{...}";
     case TYPE_CODE_ARRAY:
-      result = ada_varobj_get_value_of_array_variable (value, type, opts);
-      break;
+      return ada_varobj_get_value_of_array_variable (value, type, opts);
     default:
       if (!value)
-	result = xstrdup ("");
+	return "";
       else
-	result = ada_varobj_get_value_image (value, opts);
-      break;
+	return ada_varobj_get_value_image (value, opts);
     }
-
-  return result;
 }
 
 /* Ada specific callbacks for VAROBJs.  */
@@ -911,20 +876,20 @@ ada_number_of_children (const struct varobj *var)
   return ada_varobj_get_number_of_children (var->value, var->type);
 }
 
-static char *
+static std::string
 ada_name_of_variable (const struct varobj *parent)
 {
   return c_varobj_ops.name_of_variable (parent);
 }
 
-static char *
+static std::string
 ada_name_of_child (const struct varobj *parent, int index)
 {
   return ada_varobj_get_name_of_child (parent->value, parent->type,
-				       parent->name, index);
+				       parent->name.c_str (), index);
 }
 
-static char*
+static std::string
 ada_path_expr_of_child (const struct varobj *child)
 {
   const struct varobj *parent = child->parent;
@@ -932,7 +897,7 @@ ada_path_expr_of_child (const struct varobj *child)
 
   return ada_varobj_get_path_expr_of_child (parent->value,
 					    parent->type,
-					    parent->name,
+					    parent->name.c_str (),
 					    parent_path_expr,
 					    child->index);
 }
@@ -941,7 +906,7 @@ static struct value *
 ada_value_of_child (const struct varobj *parent, int index)
 {
   return ada_varobj_get_value_of_child (parent->value, parent->type,
-					parent->name, index);
+					parent->name.c_str (), index);
 }
 
 static struct type *
@@ -951,7 +916,7 @@ ada_type_of_child (const struct varobj *parent, int index)
 				       index);
 }
 
-static char *
+static std::string
 ada_value_of_variable (const struct varobj *var,
 		       enum varobj_display_formats format)
 {
@@ -1019,9 +984,9 @@ ada_value_has_mutated (const struct varobj *var, struct value *new_val,
 
   varobj_restrict_range (var->children, &from, &to);
   for (i = from; i < to; i++)
-    if (strcmp (ada_varobj_get_name_of_child (new_val, new_type,
-					      var->name, i),
-		VEC_index (varobj_p, var->children, i)->name) != 0)
+    if (ada_varobj_get_name_of_child (new_val, new_type,
+				      var->name.c_str (), i)
+	!= VEC_index (varobj_p, var->children, i)->name)
       return 1;
 
   return 0;

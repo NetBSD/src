@@ -1,6 +1,6 @@
 /* MI Command Set - MI parser.
 
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -208,45 +208,38 @@ mi_parse_argv (const char *args, struct mi_parse *parse)
     }
 }
 
-void
-mi_parse_free (struct mi_parse *parse)
+mi_parse::mi_parse ()
+  : op (MI_COMMAND),
+    command (NULL),
+    token (NULL),
+    cmd (NULL),
+    cmd_start (NULL),
+    args (NULL),
+    argv (NULL),
+    argc (0),
+    all (0),
+    thread_group (-1),
+    thread (-1),
+    frame (-1),
+    language (language_unknown)
 {
-  if (parse == NULL)
-    return;
-  if (parse->command != NULL)
-    xfree (parse->command);
-  if (parse->token != NULL)
-    xfree (parse->token);
-  if (parse->args != NULL)
-    xfree (parse->args);
-  if (parse->argv != NULL)
-    freeargv (parse->argv);
-  xfree (parse);
 }
 
-/* A cleanup that calls mi_parse_free.  */
-
-static void
-mi_parse_cleanup (void *arg)
+mi_parse::~mi_parse ()
 {
-  mi_parse_free ((struct mi_parse *) arg);
+  xfree (command);
+  xfree (token);
+  xfree (args);
+  freeargv (argv);
 }
 
-struct mi_parse *
+std::unique_ptr<struct mi_parse>
 mi_parse (const char *cmd, char **token)
 {
   const char *chp;
-  struct mi_parse *parse = XNEW (struct mi_parse);
   struct cleanup *cleanup;
 
-  memset (parse, 0, sizeof (*parse));
-  parse->all = 0;
-  parse->thread_group = -1;
-  parse->thread = -1;
-  parse->frame = -1;
-  parse->language = language_unknown;
-
-  cleanup = make_cleanup (mi_parse_cleanup, parse);
+  std::unique_ptr<struct mi_parse> parse (new struct mi_parse);
 
   /* Before starting, skip leading white space.  */
   cmd = skip_spaces_const (cmd);
@@ -264,8 +257,6 @@ mi_parse (const char *cmd, char **token)
       chp = skip_spaces_const (chp);
       parse->command = xstrdup (chp);
       parse->op = CLI_COMMAND;
-
-      discard_cleanups (cleanup);
 
       return parse;
     }
@@ -383,7 +374,7 @@ mi_parse (const char *cmd, char **token)
      list.  */
   if (parse->cmd->argv_func != NULL)
     {
-      mi_parse_argv (chp, parse);
+      mi_parse_argv (chp, parse.get ());
       if (parse->argv == NULL)
 	error (_("Problem parsing arguments: %s %s"), parse->command, chp);
     }
@@ -393,8 +384,6 @@ mi_parse (const char *cmd, char **token)
      command line as a single string. */
   if (parse->cmd->cli.cmd != NULL)
     parse->args = xstrdup (chp);
-
-  discard_cleanups (cleanup);
 
   /* Fully parsed, flag as an MI command.  */
   parse->op = MI_COMMAND;

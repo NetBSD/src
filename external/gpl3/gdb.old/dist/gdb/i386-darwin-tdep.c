@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -36,6 +36,7 @@
 #include "solib.h"
 #include "solib-darwin.h"
 #include "dwarf2-frame.h"
+#include <algorithm>
 
 /* Offsets into the struct i386_thread_state where we'll find the saved regs.
    From <mach/i386/thread_status.h> and i386-tdep.h.  */
@@ -137,8 +138,12 @@ i386_darwin_arg_type_alignment (struct type *type)
       int i;
       int res = 4;
       for (i = 0; i < TYPE_NFIELDS (type); i++)
-        res = max (res,
-                   i386_darwin_arg_type_alignment (TYPE_FIELD_TYPE (type, i)));
+	{
+	  int align
+	    = i386_darwin_arg_type_alignment (TYPE_FIELD_TYPE (type, i));
+
+	  res = std::max (res, align);
+	}
       return res;
     }
   /* 2.  The caller aligns nonvector arguments to 4-byte boundaries.  */

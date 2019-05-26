@@ -1,6 +1,6 @@
 /* Process record and replay target for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,6 +35,7 @@
 #include "gdb_bfd.h"
 #include "observer.h"
 #include "infrun.h"
+#include "common/gdb_unlinker.h"
 
 #include <signal.h>
 
@@ -821,7 +822,7 @@ static void
 record_full_open_1 (const char *name, int from_tty)
 {
   if (record_debug)
-    fprintf_unfiltered (gdb_stdlog, "Process record: record_full_open\n");
+    fprintf_unfiltered (gdb_stdlog, "Process record: record_full_open_1\n");
 
   /* check exec */
   if (!target_has_execution)
@@ -969,24 +970,14 @@ record_full_resume (struct target_ops *ops, ptid_t ptid, int step,
             }
           else
             {
-              /* This arch support soft sigle step.  */
+              /* This arch supports soft single step.  */
               if (thread_has_single_step_breakpoints_set (inferior_thread ()))
                 {
                   /* This is a soft single step.  */
                   record_full_resume_step = 1;
                 }
               else
-                {
-                  /* This is a continue.
-                     Try to insert a soft single step breakpoint.  */
-                  if (!gdbarch_software_single_step (gdbarch,
-                                                     get_current_frame ()))
-                    {
-                      /* This system don't want use soft single step.
-                         Use hard sigle step.  */
-                      step = 1;
-                    }
-                }
+		step = !insert_single_step_breakpoints (gdbarch);
             }
         }
 
@@ -1000,6 +991,15 @@ record_full_resume (struct target_ops *ops, ptid_t ptid, int step,
      let's register it with the event loop.  */
   if (target_can_async_p ())
     target_async (1);
+}
+
+/* "to_commit_resume" method for process record target.  */
+
+static void
+record_full_commit_resume (struct target_ops *ops)
+{
+  if (!RECORD_FULL_IS_REPLAY)
+    ops->beneath->to_commit_resume (ops->beneath);
 }
 
 static int record_full_get_sig = 0;
@@ -1159,9 +1159,9 @@ record_full_wait_1 (struct target_ops *ops,
 			     If insert success, set step to 0.  */
 			  set_executing (inferior_ptid, 0);
 			  reinit_frame_cache ();
-			  if (gdbarch_software_single_step (gdbarch,
-                                                            get_current_frame ()))
-			    step = 0;
+
+			  step = !insert_single_step_breakpoints (gdbarch);
+
 			  set_executing (inferior_ptid, 1);
 			}
 
@@ -1172,6 +1172,7 @@ record_full_wait_1 (struct target_ops *ops,
 					    "target beneath\n");
 		      ops->beneath->to_resume (ops->beneath, ptid, step,
 					       GDB_SIGNAL_0);
+		      ops->beneath->to_commit_resume (ops->beneath);
 		      continue;
 		    }
 		}
@@ -1650,7 +1651,7 @@ record_full_insert_breakpoint (struct target_ops *ops,
 	 really need to install regular breakpoints in the inferior.
 	 However, we do have to insert software single-step
 	 breakpoints, in case the target can't hardware step.  To keep
-	 things single, we always insert.  */
+	 things simple, we always insert.  */
       struct cleanup *old_cleanups;
       int ret;
 
@@ -1662,16 +1663,6 @@ record_full_insert_breakpoint (struct target_ops *ops,
 	return ret;
 
       in_target_beneath = 1;
-    }
-  else
-    {
-      CORE_ADDR addr = bp_tgt->reqstd_address;
-      int bplen;
-
-      gdbarch_breakpoint_from_pc (gdbarch, &addr, &bplen);
-
-      bp_tgt->placed_address = addr;
-      bp_tgt->placed_size = bplen;
     }
 
   /* Use the existing entries if found in order to avoid duplication
@@ -1810,6 +1801,14 @@ static enum exec_direction_kind
 record_full_execution_direction (struct target_ops *self)
 {
   return record_full_execution_dir;
+}
+
+/* The to_record_method method of target record-full.  */
+
+enum record_method
+record_full_record_method (struct target_ops *self, ptid_t ptid)
+{
+  return RECORD_METHOD_FULL;
 }
 
 static void
@@ -1975,6 +1974,7 @@ init_record_full_ops (void)
   record_full_ops.to_close = record_full_close;
   record_full_ops.to_async = record_full_async;
   record_full_ops.to_resume = record_full_resume;
+  record_full_ops.to_commit_resume = record_full_commit_resume;
   record_full_ops.to_wait = record_full_wait;
   record_full_ops.to_disconnect = record_disconnect;
   record_full_ops.to_detach = record_detach;
@@ -2000,6 +2000,7 @@ init_record_full_ops (void)
   record_full_ops.to_get_bookmark = record_full_get_bookmark;
   record_full_ops.to_goto_bookmark = record_full_goto_bookmark;
   record_full_ops.to_execution_direction = record_full_execution_direction;
+  record_full_ops.to_record_method = record_full_record_method;
   record_full_ops.to_info_record = record_full_info;
   record_full_ops.to_save_record = record_full_save;
   record_full_ops.to_delete_record = record_full_delete;
@@ -2250,6 +2251,7 @@ init_record_full_core_ops (void)
   record_full_core_ops.to_goto_bookmark = record_full_goto_bookmark;
   record_full_core_ops.to_execution_direction
     = record_full_execution_direction;
+  record_full_core_ops.to_record_method = record_full_record_method;
   record_full_core_ops.to_info_record = record_full_info;
   record_full_core_ops.to_delete_record = record_full_delete;
   record_full_core_ops.to_record_is_replaying = record_full_is_replaying;
@@ -2546,17 +2548,6 @@ cmd_record_full_restore (char *args, int from_tty)
   record_full_open (args, from_tty);
 }
 
-static void
-record_full_save_cleanups (void *data)
-{
-  bfd *obfd = (bfd *) data;
-  char *pathname = xstrdup (bfd_get_filename (obfd));
-
-  gdb_bfd_unref (obfd);
-  unlink (pathname);
-  xfree (pathname);
-}
-
 /* Save the execution log to a file.  We use a modified elf corefile
    format, with an extra section for our data.  */
 
@@ -2567,9 +2558,7 @@ record_full_save (struct target_ops *self, const char *recfilename)
   uint32_t magic;
   struct regcache *regcache;
   struct gdbarch *gdbarch;
-  struct cleanup *old_cleanups;
   struct cleanup *set_cleanups;
-  bfd *obfd;
   int save_size = 0;
   asection *osec = NULL;
   int bfd_offset = 0;
@@ -2580,8 +2569,10 @@ record_full_save (struct target_ops *self, const char *recfilename)
 			recfilename);
 
   /* Open the output file.  */
-  obfd = create_gcore_bfd (recfilename);
-  old_cleanups = make_cleanup (record_full_save_cleanups, obfd);
+  gdb_bfd_ref_ptr obfd (create_gcore_bfd (recfilename));
+
+  /* Arrange to remove the output file on failure.  */
+  gdb::unlinker unlink_file (recfilename);
 
   /* Save the current record entry to "cur_record_full_list".  */
   cur_record_full_list = record_full_list;
@@ -2624,20 +2615,20 @@ record_full_save (struct target_ops *self, const char *recfilename)
       }
 
   /* Make the new bfd section.  */
-  osec = bfd_make_section_anyway_with_flags (obfd, "precord",
+  osec = bfd_make_section_anyway_with_flags (obfd.get (), "precord",
                                              SEC_HAS_CONTENTS
                                              | SEC_READONLY);
   if (osec == NULL)
     error (_("Failed to create 'precord' section for corefile %s: %s"),
 	   recfilename,
            bfd_errmsg (bfd_get_error ()));
-  bfd_set_section_size (obfd, osec, save_size);
-  bfd_set_section_vma (obfd, osec, 0);
-  bfd_set_section_alignment (obfd, osec, 0);
-  bfd_section_lma (obfd, osec) = 0;
+  bfd_set_section_size (obfd.get (), osec, save_size);
+  bfd_set_section_vma (obfd.get (), osec, 0);
+  bfd_set_section_alignment (obfd.get (), osec, 0);
+  bfd_section_lma (obfd.get (), osec) = 0;
 
   /* Save corefile state.  */
-  write_gcore_file (obfd);
+  write_gcore_file (obfd.get ());
 
   /* Write out the record log.  */
   /* Write the magic code.  */
@@ -2647,7 +2638,7 @@ record_full_save (struct target_ops *self, const char *recfilename)
 			"  Writing 4-byte magic cookie "
 			"RECORD_FULL_FILE_MAGIC (0x%s)\n",
 		      phex_nz (magic, 4));
-  bfdcore_write (obfd, osec, &magic, sizeof (magic), &bfd_offset);
+  bfdcore_write (obfd.get (), osec, &magic, sizeof (magic), &bfd_offset);
 
   /* Save the entries to recfd and forward execute to the end of
      record list.  */
@@ -2662,7 +2653,7 @@ record_full_save (struct target_ops *self, const char *recfilename)
           uint64_t addr;
 
 	  type = record_full_list->type;
-          bfdcore_write (obfd, osec, &type, sizeof (type), &bfd_offset);
+          bfdcore_write (obfd.get (), osec, &type, sizeof (type), &bfd_offset);
 
           switch (record_full_list->type)
             {
@@ -2677,11 +2668,11 @@ record_full_save (struct target_ops *self, const char *recfilename)
 
               /* Write regnum.  */
               regnum = netorder32 (record_full_list->u.reg.num);
-              bfdcore_write (obfd, osec, &regnum,
+              bfdcore_write (obfd.get (), osec, &regnum,
 			     sizeof (regnum), &bfd_offset);
 
               /* Write regval.  */
-              bfdcore_write (obfd, osec,
+              bfdcore_write (obfd.get (), osec,
 			     record_full_get_loc (record_full_list),
 			     record_full_list->u.reg.len, &bfd_offset);
               break;
@@ -2699,15 +2690,16 @@ record_full_save (struct target_ops *self, const char *recfilename)
 
 	      /* Write memlen.  */
 	      len = netorder32 (record_full_list->u.mem.len);
-	      bfdcore_write (obfd, osec, &len, sizeof (len), &bfd_offset);
+	      bfdcore_write (obfd.get (), osec, &len, sizeof (len),
+			     &bfd_offset);
 
 	      /* Write memaddr.  */
 	      addr = netorder64 (record_full_list->u.mem.addr);
-	      bfdcore_write (obfd, osec, &addr, 
+	      bfdcore_write (obfd.get (), osec, &addr, 
 			     sizeof (addr), &bfd_offset);
 
 	      /* Write memval.  */
-	      bfdcore_write (obfd, osec,
+	      bfdcore_write (obfd.get (), osec,
 			     record_full_get_loc (record_full_list),
 			     record_full_list->u.mem.len, &bfd_offset);
               break;
@@ -2721,12 +2713,12 @@ record_full_save (struct target_ops *self, const char *recfilename)
 				      (unsigned long) sizeof (count));
 		/* Write signal value.  */
 		signal = netorder32 (record_full_list->u.end.sigval);
-		bfdcore_write (obfd, osec, &signal,
+		bfdcore_write (obfd.get (), osec, &signal,
 			       sizeof (signal), &bfd_offset);
 
 		/* Write insn count.  */
 		count = netorder32 (record_full_list->u.end.insn_num);
-		bfdcore_write (obfd, osec, &count,
+		bfdcore_write (obfd.get (), osec, &count,
 			       sizeof (count), &bfd_offset);
                 break;
             }
@@ -2755,8 +2747,7 @@ record_full_save (struct target_ops *self, const char *recfilename)
     }
 
   do_cleanups (set_cleanups);
-  gdb_bfd_unref (obfd);
-  discard_cleanups (old_cleanups);
+  unlink_file.keep ();
 
   /* Succeeded.  */
   printf_filtered (_("Saved core file %s with execution log.\n"),
@@ -2797,7 +2788,7 @@ record_full_goto_insn (struct record_full_entry *entry,
 static void
 cmd_record_full_start (char *args, int from_tty)
 {
-  execute_command ("target record-full", from_tty);
+  execute_command ((char *) "target record-full", from_tty);
 }
 
 static void

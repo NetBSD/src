@@ -1,6 +1,6 @@
 /* Python interface to inferior signal stop events.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,30 +27,23 @@ PyObject *
 create_signal_event_object (enum gdb_signal stop_signal)
 {
   const char *signal_name;
-  PyObject *signal_name_obj = NULL;
-  PyObject *signal_event_obj =
-      create_stop_event_object (&signal_event_object_type);
+  gdbpy_ref<> signal_event_obj
+    (create_stop_event_object (&signal_event_object_type));
 
-  if (!signal_event_obj)
-    goto fail;
+  if (signal_event_obj == NULL)
+    return NULL;
 
   signal_name = gdb_signal_to_name (stop_signal);
 
-  signal_name_obj = PyString_FromString (signal_name);
+  gdbpy_ref<> signal_name_obj (PyString_FromString (signal_name));
   if (signal_name_obj == NULL)
-    goto fail;
-  if (evpy_add_attribute (signal_event_obj,
+    return NULL;
+  if (evpy_add_attribute (signal_event_obj.get (),
                           "stop_signal",
-                          signal_name_obj) < 0)
-    goto fail;
-  Py_DECREF (signal_name_obj);
+                          signal_name_obj.get ()) < 0)
+    return NULL;
 
-  return signal_event_obj;
-
- fail:
-  Py_XDECREF (signal_name_obj);
-  Py_XDECREF (signal_event_obj);
-  return NULL;
+  return signal_event_obj.release ();
 }
 
 GDBPY_NEW_EVENT_TYPE (signal,

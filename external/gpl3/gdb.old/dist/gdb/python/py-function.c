@@ -1,6 +1,6 @@
 /* Convenience functions implemented in Python.
 
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,7 @@
 #include "completer.h"
 #include "expression.h"
 #include "language.h"
+#include "py-ref.h"
 
 extern PyTypeObject fnpy_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("PyObject");
@@ -37,22 +38,19 @@ static PyObject *
 convert_values_to_python (int argc, struct value **argv)
 {
   int i;
-  PyObject *result = PyTuple_New (argc);
+  gdbpy_ref<> result (PyTuple_New (argc));
 
-  if (! result)
+  if (result == NULL)
     return NULL;
 
   for (i = 0; i < argc; ++i)
     {
-      PyObject *elt = value_to_value_object (argv[i]);
-      if (! elt)
-	{
-	  Py_DECREF (result);
-	  return NULL;
-	}
-      PyTuple_SetItem (result, i, elt);
+      gdbpy_ref<> elt (value_to_value_object (argv[i]));
+      if (elt == NULL)
+	return NULL;
+      PyTuple_SetItem (result.get (), i, elt.release ());
     }
-  return result;
+  return result.release ();
 }
 
 /* Call a Python function object's invoke method.  */
@@ -61,40 +59,32 @@ static struct value *
 fnpy_call (struct gdbarch *gdbarch, const struct language_defn *language,
 	   void *cookie, int argc, struct value **argv)
 {
-  struct value *value = NULL;
-  /* 'result' must be set to NULL, this initially indicates whether
-     the function was called, or not.  */
-  PyObject *result = NULL;
-  PyObject *callable, *args;
-  struct cleanup *cleanup;
+  /* The gdbpy_enter object needs to be placed first, so that it's the last to
+     be destroyed.  */
+  gdbpy_enter enter_py (gdbarch, language);
+  struct value *value;
+  gdbpy_ref<> result;
+  gdbpy_ref<> args (convert_values_to_python (argc, argv));
 
-  cleanup = ensure_python_env (gdbarch, language);
-
-  args = convert_values_to_python (argc, argv);
   /* convert_values_to_python can return NULL on error.  If we
      encounter this, do not call the function, but allow the Python ->
      error code conversion below to deal with the Python exception.
      Note, that this is different if the function simply does not
      have arguments.  */
 
-  if (args)
+  if (args != NULL)
     {
-      callable = PyObject_GetAttrString ((PyObject *) cookie, "invoke");
-      if (! callable)
-	{
-	  Py_DECREF (args);
-	  error (_("No method named 'invoke' in object."));
-	}
+      gdbpy_ref<> callable (PyObject_GetAttrString ((PyObject *) cookie,
+						    "invoke"));
+      if (callable == NULL)
+	error (_("No method named 'invoke' in object."));
 
-      result = PyObject_Call (callable, args, NULL);
-      Py_DECREF (callable);
-      Py_DECREF (args);
+      result.reset (PyObject_Call (callable.get (), args.get (), NULL));
     }
 
-  if (!result)
+  if (result == NULL)
     {
       PyObject *ptype, *pvalue, *ptraceback;
-      char *msg;
 
       PyErr_Fetch (&ptype, &pvalue, &ptraceback);
 
@@ -102,8 +92,8 @@ fnpy_call (struct gdbarch *gdbarch, const struct language_defn *language,
 	 When fetching the error message we need to make our own copy,
 	 we no longer own ptype, pvalue after the call to PyErr_Restore.  */
 
-      msg = gdbpy_exception_to_string (ptype, pvalue);
-      make_cleanup (xfree, msg);
+      gdb::unique_xmalloc_ptr<char>
+	msg (gdbpy_exception_to_string (ptype, pvalue));
 
       if (msg == NULL)
 	{
@@ -131,7 +121,7 @@ fnpy_call (struct gdbarch *gdbarch, const struct language_defn *language,
 	  gdbpy_print_stack ();
 	  if (msg != NULL && *msg != '\0')
 	    error (_("Error occurred in Python convenience function: %s"),
-		   msg);
+		   msg.get ());
 	  else
 	    error (_("Error occurred in Python convenience function."));
 	}
@@ -140,20 +130,16 @@ fnpy_call (struct gdbarch *gdbarch, const struct language_defn *language,
 	  Py_XDECREF (ptype);
 	  Py_XDECREF (pvalue);
 	  Py_XDECREF (ptraceback);
-	  error ("%s", msg);
+	  error ("%s", msg.get ());
 	}
     }
 
-  value = convert_value_from_python (result);
+  value = convert_value_from_python (result.get ());
   if (value == NULL)
     {
-      Py_DECREF (result);
       gdbpy_print_stack ();
       error (_("Error while executing Python code."));
     }
-
-  Py_DECREF (result);
-  do_cleanups (cleanup);
 
   return value;
 }
@@ -165,7 +151,7 @@ static int
 fnpy_init (PyObject *self, PyObject *args, PyObject *kwds)
 {
   const char *name;
-  char *docstring = NULL;
+  gdb::unique_xmalloc_ptr<char> docstring;
 
   if (! PyArg_ParseTuple (args, "s", &name))
     return -1;
@@ -173,27 +159,24 @@ fnpy_init (PyObject *self, PyObject *args, PyObject *kwds)
 
   if (PyObject_HasAttrString (self, "__doc__"))
     {
-      PyObject *ds_obj = PyObject_GetAttrString (self, "__doc__");
+      gdbpy_ref<> ds_obj (PyObject_GetAttrString (self, "__doc__"));
       if (ds_obj != NULL)
 	{
-	  if (gdbpy_is_string (ds_obj))
+	  if (gdbpy_is_string (ds_obj.get ()))
 	    {
-	      docstring = python_string_to_host_string (ds_obj);
+	      docstring = python_string_to_host_string (ds_obj.get ());
 	      if (docstring == NULL)
 		{
 		  Py_DECREF (self);
-		  Py_DECREF (ds_obj);
 		  return -1;
 		}
 	    }
-
-	  Py_DECREF (ds_obj);
 	}
     }
   if (! docstring)
-    docstring = xstrdup (_("This function is not documented."));
+    docstring.reset (xstrdup (_("This function is not documented.")));
 
-  add_internal_function (name, docstring, fnpy_call, self);
+  add_internal_function (name, docstring.release (), fnpy_call, self);
   return 0;
 }
 

@@ -1,6 +1,6 @@
 /* Perform an inferior function call, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,10 +61,9 @@
 
    Unfortunately, on certain older platforms, the debug info doesn't
    indicate reliably how each function was defined.  A function type's
-   TYPE_FLAG_PROTOTYPED flag may be clear, even if the function was
-   defined in prototype style.  When calling a function whose
-   TYPE_FLAG_PROTOTYPED flag is clear, GDB consults this flag to
-   decide what to do.
+   TYPE_PROTOTYPED flag may be clear, even if the function was defined
+   in prototype style.  When calling a function whose TYPE_PROTOTYPED
+   flag is clear, GDB consults this flag to decide what to do.
 
    For modern targets, it is proper to assume that, if the prototype
    flag is clear, that can be trusted: `float' arguments should be
@@ -158,10 +157,11 @@ value_arg_coerce (struct gdbarch *gdbarch, struct value *arg,
   switch (TYPE_CODE (type))
     {
     case TYPE_CODE_REF:
+    case TYPE_CODE_RVALUE_REF:
       {
 	struct value *new_value;
 
-	if (TYPE_CODE (arg_type) == TYPE_CODE_REF)
+	if (TYPE_IS_REFERENCE (arg_type))
 	  return value_cast_pointers (type, arg, 0);
 
 	/* Cast the value to the reference's target type, and then
@@ -169,7 +169,7 @@ value_arg_coerce (struct gdbarch *gdbarch, struct value *arg,
 	   if the value was not previously in memory - in some cases
 	   we should clearly be allowing this, but how?  */
 	new_value = value_cast (TYPE_TARGET_TYPE (type), arg);
-	new_value = value_ref (new_value);
+	new_value = value_ref (new_value, TYPE_CODE (type));
 	return new_value;
       }
     case TYPE_CODE_INT:
@@ -520,8 +520,6 @@ call_thread_fsm_should_stop (struct thread_fsm *self,
 
   if (stop_stack_dummy == STOP_STACK_DUMMY)
     {
-      struct cleanup *old_chain;
-
       /* Done.  */
       thread_fsm_set_finished (self);
 
@@ -531,13 +529,9 @@ call_thread_fsm_should_stop (struct thread_fsm *self,
       f->return_value = get_call_return_value (&f->return_meta_info);
 
       /* Break out of wait_sync_command_done.  */
-      old_chain = make_cleanup_restore_current_ui ();
-      current_ui = f->waiting_ui;
+      scoped_restore save_ui = make_scoped_restore (&current_ui, f->waiting_ui);
       target_terminal_ours ();
       f->waiting_ui->prompt_state = PROMPT_NEEDED;
-
-      /* This restores the previous UI.  */
-      do_cleanups (old_chain);
     }
 
   return 1;

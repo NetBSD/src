@@ -1,4 +1,4 @@
-#   Copyright 1988-2016 Free Software Foundation, Inc.
+#   Copyright 1988-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -511,7 +511,7 @@ gdb_test "set history size" "Argument required .integer to set it to.*" "set his
 #test set history
 gdb_test "set history" "\"set history\" must be followed by the name of a history subcommand.(\[^\r\n\]*\[\r\n\])+List of set history subcommands:(\[^\r\n\]*\[\r\n\])+set history expansion -- Set history expansion on command input(\[^\r\n\]*\[\r\n\])+set history filename -- Set the filename in which to record the command history(\[^\r\n\]*\[\r\n\])+set history save -- Set saving of the history record on exit(\[^\r\n\]*\[\r\n\])+set history size -- Set the size of the command history(\[^\r\n\]*\[\r\n\])+Type \"help set history\" followed by set history subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "set history"
 #test set language
-gdb_test "set language" "Requires an argument. Valid arguments are auto, local, unknown, ada, c, c.., asm, minimal, d, fortran, objective-c, go, java, modula-2, opencl, pascal, rust." "set language"
+gdb_test "set language" "Requires an argument. Valid arguments are ada, c, c.., asm, minimal, d, fortran, go, auto, local, unknown, modula-2, objective-c, opencl, pascal, rust." "set language"
 #test set listsize
 gdb_test "set listsize" "Argument required .integer to set it to.*" "set listsize"
 #test set print "p" abbreviation
