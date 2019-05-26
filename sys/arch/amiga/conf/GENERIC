@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.324 2019/04/26 21:40:28 sevan Exp $
+# $NetBSD: GENERIC,v 1.325 2019/05/26 23:03:31 sevan Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.141 2019/04/13 08:22:58 isaki Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.142 2019/05/26 23:00:57 sevan Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.324 $"
+#ident 		"GENERIC-$Revision: 1.325 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -594,6 +594,7 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device   bcsp                    # BlueCore Serial Protocol
 pseudo-device   btuart                  # Bluetooth HCI UART (H4)
 
+# Veriexec
 include "dev/veriexec.config"
 
 config	netbsd root on ? type ?
