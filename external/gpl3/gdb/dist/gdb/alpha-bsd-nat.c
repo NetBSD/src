@@ -1,6 +1,6 @@
 /* Native-dependent code for Alpha BSD's.
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,6 +47,14 @@ typedef struct fpreg fpregset_t;
 
 #include "gregset.h"
 
+struct alpha_bsd_nat_target final : public inf_ptrace_target
+{
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+};
+
+static alpha_bsd_nat_target the_alpha_bsd_nat_target;
+
 /* Provide *regset() wrappers around the generic Alpha BSD register
    supply/fill routines.  */
 
@@ -87,16 +95,15 @@ getregs_supplies (int regno)
 /* Fetch register REGNO from the inferior.  If REGNO is -1, do this
    for all registers (including the floating point registers).  */
 
-static void
-alphabsd_fetch_inferior_registers (struct target_ops *ops,
-				   struct regcache *regcache, int regno)
+void
+alpha_bsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
 {
   if (regno == -1 || getregs_supplies (regno))
     {
       struct reg gregs;
 
-      if (ptrace (PT_GETREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-		  (PTRACE_TYPE_ARG3) &gregs, ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_GETREGS, regcache->ptid ().pid (),
+		  (PTRACE_TYPE_ARG3) &gregs, ptid_get_lwp (inferior_ptid)) == -1) 
 	perror_with_name (_("Couldn't get registers"));
 
       alphabsd_supply_reg (regcache, (char *) &gregs, regno);
@@ -105,11 +112,11 @@ alphabsd_fetch_inferior_registers (struct target_ops *ops,
     }
 
   if (regno == -1
-      || regno >= gdbarch_fp0_regnum (get_regcache_arch (regcache)))
+      || regno >= gdbarch_fp0_regnum (regcache->arch ()))
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, ptid_get_pid (regcache_get_ptid (regcache)),
+      if (ptrace (PT_GETFPREGS, regcache->ptid ().pid (),
 		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
@@ -120,21 +127,20 @@ alphabsd_fetch_inferior_registers (struct target_ops *ops,
 /* Store register REGNO back into the inferior.  If REGNO is -1, do
    this for all registers (including the floating point registers).  */
 
-static void
-alphabsd_store_inferior_registers (struct target_ops *ops,
-				   struct regcache *regcache, int regno)
+void
+alpha_bsd_nat_target::store_registers (struct regcache *regcache, int regno)
 {
   if (regno == -1 || getregs_supplies (regno))
     {
       struct reg gregs;
-      if (ptrace (PT_GETREGS, ptid_get_pid (regcache_get_ptid (regcache)),
+      if (ptrace (PT_GETREGS, regcache->ptid ().pid (),
                   (PTRACE_TYPE_ARG3) &gregs, ptid_get_lwp (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       alphabsd_fill_reg (regcache, (char *) &gregs, regno);
 
-      if (ptrace (PT_SETREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-                  (PTRACE_TYPE_ARG3) &gregs, ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_SETREGS, regcache->ptid ().pid (),
+                  (PTRACE_TYPE_ARG3) &gregs, ptid_get_lwp (inferior_ptid)) == -1) 
         perror_with_name (_("Couldn't write registers"));
 
       if (regno != -1)
@@ -142,18 +148,18 @@ alphabsd_store_inferior_registers (struct target_ops *ops,
     }
 
   if (regno == -1
-      || regno >= gdbarch_fp0_regnum (get_regcache_arch (regcache)))
+      || regno >= gdbarch_fp0_regnum (regcache->arch ()))
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, ptid_get_pid (regcache_get_ptid (regcache)),
+      if (ptrace (PT_GETFPREGS, regcache->ptid ().pid (),
 		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       alphabsd_fill_fpreg (regcache, (char *) &fpregs, regno);
 
-      if (ptrace (PT_SETFPREGS, ptid_get_pid (regcache_get_ptid (regcache)),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_SETFPREGS, regcache->ptid ().pid (),
+		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1) 
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
@@ -180,12 +186,11 @@ alphabsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   if (pcb->pcb_hw.apcb_ksp == 0)
     return 0;
 
-  regcache_raw_supply (regcache, ALPHA_SP_REGNUM, &pcb->pcb_hw.apcb_ksp);
+  regcache->raw_supply (ALPHA_SP_REGNUM, &pcb->pcb_hw.apcb_ksp);
 
   for (regnum = ALPHA_S0_REGNUM; regnum < ALPHA_A0_REGNUM; regnum++)
-    regcache_raw_supply (regcache, regnum,
-			 &pcb->pcb_context[regnum - ALPHA_S0_REGNUM]);
-  regcache_raw_supply (regcache, ALPHA_RA_REGNUM, &pcb->pcb_context[7]);
+    regcache->raw_supply (regnum, &pcb->pcb_context[regnum - ALPHA_S0_REGNUM]);
+  regcache->raw_supply (ALPHA_RA_REGNUM, &pcb->pcb_context[7]);
 
   return 1;
 }
@@ -204,20 +209,10 @@ alphabsd_target (void)
 
 
 
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_alphabsd_nat (void);
-
 void
 _initialize_alphabsd_nat (void)
 {
-  struct target_ops *t;
-
-  t = alphabsd_target ();
-#ifndef __NetBSD__
-  add_target (t);
-#else
-   nbsd_nat_add_target (t);
-#endif
+  add_inf_child_target (&the_alpha_bsd_nat_target);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (alphabsd_supply_pcb);

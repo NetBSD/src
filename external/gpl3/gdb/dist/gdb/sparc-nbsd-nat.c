@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -80,20 +80,18 @@ sparc32nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   if (pcb->pcb_sp == 0)
     return 0;
 
-  regcache_raw_supply (regcache, SPARC_SP_REGNUM, &pcb->pcb_sp);
-  regcache_raw_supply (regcache, SPARC_O7_REGNUM, &pcb->pcb_pc);
-  regcache_raw_supply (regcache, SPARC32_PSR_REGNUM, &pcb->pcb_psr);
-  regcache_raw_supply (regcache, SPARC32_WIM_REGNUM, &pcb->pcb_wim);
-  regcache_raw_supply (regcache, SPARC32_PC_REGNUM, &pcb->pcb_pc);
+  regcache->raw_supply (SPARC_SP_REGNUM, &pcb->pcb_sp);
+  regcache->raw_supply (SPARC_O7_REGNUM, &pcb->pcb_pc);
+  regcache->raw_supply (SPARC32_PSR_REGNUM, &pcb->pcb_psr);
+  regcache->raw_supply (SPARC32_WIM_REGNUM, &pcb->pcb_wim);
+  regcache->raw_supply (SPARC32_PC_REGNUM, &pcb->pcb_pc);
 
   sparc_supply_rwindow (regcache, pcb->pcb_sp, -1);
 
   return 1;
 }
-
 
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_sparcnbsd_nat (void);
+static sparc_target<inf_ptrace_target> the_sparc_nbsd_nat_target;
 
 void
 _initialize_sparcnbsd_nat (void)
@@ -102,9 +100,7 @@ _initialize_sparcnbsd_nat (void)
   sparc_gregmap = &sparc32nbsd_gregmap;
   sparc_fpregmap = &sparc32_bsd_fpregmap;
 
-  /* Add some extra features to the generic SPARC target.  */
-  t = sparc_target ();
-  nbsd_nat_add_target (t);
+  add_inf_child_target (&sparc_nbsd_nat_target);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (sparc32nbsd_supply_pcb);
