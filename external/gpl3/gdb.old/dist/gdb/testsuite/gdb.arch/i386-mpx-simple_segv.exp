@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2016 Free Software Foundation, Inc.
+# Copyright (C) 2015-2017 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp.  <walfred.tedeschi@intel.com>
 #
@@ -31,7 +31,7 @@ standard_testfile
 
 set comp_flags "-mmpx -fcheck-pointer-bounds -I${srcdir}/../nat/"
 
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} \
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
  [list debug nowarnings additional_flags=${comp_flags}]] } {
     return -1
 }
@@ -73,7 +73,7 @@ with_test_prefix "$parameters" {
              ".*SIGSEGV.*Yes.*Yes.*Yes.*Segmentation fault.*"\
              "set parameters"
 
-    gdb_test "continue" ".*$violation.*" "Display"
+    gdb_test "continue" ".*$violation.*" "display"
 
     gdb_test "where" ".*#0  $hex in upper.*"\
              "should be in upper"
@@ -93,7 +93,7 @@ with_test_prefix "$parameters" {
              ".*SIGSEGV.*No.*Yes.*Yes.*Segmentation fault.*"\
              "set parameters"
 
-    gdb_test "continue" ".*$segv_with_exit.*" "Display"
+    gdb_test "continue" ".*$segv_with_exit.*" "display"
 
     gdb_test "where" "No stack." "no inferior"
 }
@@ -112,7 +112,7 @@ with_test_prefix "$parameters" {
              ".*SIGSEGV.*Yes.*Yes.*No.*Segmentation fault.*"\
              "set parameters"
 
-    gdb_test "continue" ".*$violation.*" "Display"
+    gdb_test "continue" ".*$violation.*" "display"
 
     gdb_test "where" ".*#0  $hex in upper.*"\
              "should be in upper"
