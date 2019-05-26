@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.7 2019/04/07 21:01:43 kamil Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.8 2019/05/26 05:41:45 kamil Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -380,11 +380,11 @@ __sanitizer_cov_trace_pc(void)
 		return;
 	}
 
-	idx = KCOV_LOAD(kd->buf[0]);
+	idx = kd->buf[0];
 	if (idx < kd->bufnent) {
-		KCOV_STORE(kd->buf[idx+1],
-		    (intptr_t)__builtin_return_address(0));
-		KCOV_STORE(kd->buf[0], idx + 1);
+		kd->buf[idx+1] =
+		    (intptr_t)__builtin_return_address(0);
+		kd->buf[0] = idx + 1;
 	}
 }
 
@@ -421,13 +421,13 @@ trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, intptr_t pc)
 		return;
 	}
 
-	idx = KCOV_LOAD(kd->buf[0]);
+	idx = kd->buf[0];
 	if ((idx * 4 + 4) <= kd->bufnent) {
-		KCOV_STORE(kd->buf[idx * 4 + 1], type);
-		KCOV_STORE(kd->buf[idx * 4 + 2], arg1);
-		KCOV_STORE(kd->buf[idx * 4 + 3], arg2);
-		KCOV_STORE(kd->buf[idx * 4 + 4], pc);
-		KCOV_STORE(kd->buf[0], idx + 1);
+		kd->buf[idx * 4 + 1] = type;
+		kd->buf[idx * 4 + 2] = arg1;
+		kd->buf[idx * 4 + 3] = arg2;
+		kd->buf[idx * 4 + 4] = pc;
+		kd->buf[0] = idx + 1;
 	}
 }
 
