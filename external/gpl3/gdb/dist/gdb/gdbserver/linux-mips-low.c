@@ -1,5 +1,5 @@
 /* GNU/Linux/MIPS specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2017 Free Software Foundation, Inc.
+   Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -198,8 +198,8 @@ struct arch_lwp_info
 
 /* Pseudo registers can not be read.  ptrace does not provide a way to
    read (or set) PS_REGNUM, and there's no point in reading or setting
-   ZERO_REGNUM.  We also can not set BADVADDR, CAUSE, or FCRIR via
-   ptrace().  */
+   ZERO_REGNUM, it's always 0.  We also can not set BADVADDR, CAUSE,
+   or FCRIR via ptrace().  */
 
 static int
 mips_cannot_fetch_register (int regno)
@@ -210,6 +210,10 @@ mips_cannot_fetch_register (int regno)
     return 1;
 
   tdesc = current_process ()->tdesc;
+
+  /* On n32 we can't access 64-bit registers via PTRACE_PEEKUSR.  */
+  if (register_size (tdesc, regno) > sizeof (PTRACE_XFER_TYPE))
+    return 1;
 
   if (find_regno (tdesc, "r0") == regno)
     return 1;
@@ -227,6 +231,10 @@ mips_cannot_store_register (int regno)
 
   tdesc = current_process ()->tdesc;
 
+  /* On n32 we can't access 64-bit registers via PTRACE_POKEUSR.  */
+  if (register_size (tdesc, regno) > sizeof (PTRACE_XFER_TYPE))
+    return 1;
+
   if (find_regno (tdesc, "r0") == regno)
     return 1;
 
@@ -238,6 +246,20 @@ mips_cannot_store_register (int regno)
 
   if (find_regno (tdesc, "fir") == regno)
     return 1;
+
+  return 0;
+}
+
+static int
+mips_fetch_register (struct regcache *regcache, int regno)
+{
+  const struct target_desc *tdesc = current_process ()->tdesc;
+
+  if (find_regno (tdesc, "r0") == regno)
+    {
+      supply_register_zeroed (regcache, regno);
+      return 1;
+    }
 
   return 0;
 }
@@ -289,31 +311,21 @@ mips_breakpoint_at (CORE_ADDR where)
   return 0;
 }
 
-/* Mark the watch registers of lwp, represented by ENTRY, as changed,
-   if the lwp's process id is *PID_P.  */
+/* Mark the watch registers of lwp, represented by ENTRY, as changed.  */
 
-static int
-update_watch_registers_callback (struct inferior_list_entry *entry,
-				 void *pid_p)
+static void
+update_watch_registers_callback (thread_info *thread)
 {
-  struct thread_info *thread = (struct thread_info *) entry;
   struct lwp_info *lwp = get_thread_lwp (thread);
-  int pid = *(int *) pid_p;
 
-  /* Only update the threads of this process.  */
-  if (pid_of (thread) == pid)
-    {
-      /* The actual update is done later just before resuming the lwp,
-	 we just mark that the registers need updating.  */
-      lwp->arch_private->watch_registers_changed = 1;
+  /* The actual update is done later just before resuming the lwp,
+     we just mark that the registers need updating.  */
+  lwp->arch_private->watch_registers_changed = 1;
 
-      /* If the lwp isn't stopped, force it to momentarily pause, so
-	 we can update its watch registers.  */
-      if (!lwp->stopped)
-	linux_stop_lwp (lwp);
-    }
-
-  return 0;
+  /* If the lwp isn't stopped, force it to momentarily pause, so
+     we can update its watch registers.  */
+  if (!lwp->stopped)
+    linux_stop_lwp (lwp);
 }
 
 /* This is the implementation of linux_target_ops method
@@ -325,6 +337,15 @@ mips_linux_new_process (void)
   struct arch_process_info *info = XCNEW (struct arch_process_info);
 
   return info;
+}
+
+/* This is the implementation of linux_target_ops method
+   delete_process.  */
+
+static void
+mips_linux_delete_process (struct arch_process_info *info)
+{
+  xfree (info);
 }
 
 /* This is the implementation of linux_target_ops method new_thread.
@@ -339,6 +360,14 @@ mips_linux_new_thread (struct lwp_info *lwp)
   info->watch_registers_changed = 1;
 
   lwp->arch_private = info;
+}
+
+/* Function to call when a thread is being deleted.  */
+
+static void
+mips_linux_delete_thread (struct arch_lwp_info *arch_lwp)
+{
+  xfree (arch_lwp);
 }
 
 /* Create a new mips_watchpoint and add it to the list.  */
@@ -411,7 +440,7 @@ static void
 mips_linux_prepare_to_resume (struct lwp_info *lwp)
 {
   ptid_t ptid = ptid_of (get_lwp_thread (lwp));
-  struct process_info *proc = find_process_pid (ptid_get_pid (ptid));
+  struct process_info *proc = find_process_pid (ptid.pid ());
   struct arch_process_info *priv = proc->priv->arch_private;
 
   if (lwp->arch_private->watch_registers_changed)
@@ -421,7 +450,7 @@ mips_linux_prepare_to_resume (struct lwp_info *lwp)
       if (mips_linux_watch_get_num_valid (&priv->watch_mirror) > 0)
 	{
 	  /* Write the mirrored watch register values.  */
-	  int tid = ptid_get_lwp (ptid);
+	  int tid = ptid.lwp ();
 
 	  if (-1 == ptrace (PTRACE_SET_WATCH_REGS, tid,
 			    &priv->watch_mirror, NULL))
@@ -456,7 +485,6 @@ mips_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
   struct process_info *proc = current_process ();
   struct arch_process_info *priv = proc->priv->arch_private;
   struct pt_watch_regs regs;
-  int pid;
   long lwpid;
   enum target_hw_bp_type watch_type;
   uint32_t irw;
@@ -487,8 +515,7 @@ mips_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
   priv->watch_mirror = regs;
 
   /* Only update the threads of this process.  */
-  pid = pid_of (proc);
-  find_inferior (&all_threads, update_watch_registers_callback, &pid);
+  for_each_thread (proc->pid, update_watch_registers_callback);
 
   return 0;
 }
@@ -504,7 +531,6 @@ mips_remove_point (enum raw_bkpt_type type, CORE_ADDR addr,
   struct arch_process_info *priv = proc->priv->arch_private;
 
   int deleted_one;
-  int pid;
   enum target_hw_bp_type watch_type;
 
   struct mips_watchpoint **pw;
@@ -538,8 +564,8 @@ mips_remove_point (enum raw_bkpt_type type, CORE_ADDR addr,
 				  &priv->watch_mirror);
 
   /* Only update the threads of this process.  */
-  pid = pid_of (proc);
-  find_inferior (&all_threads, update_watch_registers_callback, &pid);
+  for_each_thread (proc->pid, update_watch_registers_callback);
+
   return 0;
 }
 
@@ -651,8 +677,6 @@ ps_get_thread_area (struct ps_prochandle *ph,
   return PS_OK;
 }
 
-#ifdef HAVE_PTRACE_GETREGS
-
 static void
 mips_collect_register (struct regcache *regcache,
 		       int use_64bit, int regno, union mips_register *reg)
@@ -684,6 +708,8 @@ mips_supply_register (struct regcache *regcache,
 
   supply_register (regcache, regno, reg->buf + offset);
 }
+
+#ifdef HAVE_PTRACE_GETREGS
 
 static void
 mips_collect_register_32bit (struct regcache *regcache,
@@ -746,7 +772,9 @@ mips_store_gregset (struct regcache *regcache, const void *buf)
 
   use_64bit = (register_size (regcache->tdesc, 0) == 8);
 
-  for (i = 0; i < 32; i++)
+  supply_register_by_name_zeroed (regcache, "r0");
+
+  for (i = 1; i < 32; i++)
     mips_supply_register (regcache, use_64bit, i, regset + i);
 
   mips_supply_register (regcache, use_64bit,
@@ -818,6 +846,44 @@ mips_store_fpregset (struct regcache *regcache, const void *buf)
 }
 #endif /* HAVE_PTRACE_GETREGS */
 
+/* Take care of 32-bit registers with 64-bit ptrace, POKEUSER side.  */
+
+static void
+mips_collect_ptrace_register (struct regcache *regcache,
+			      int regno, char *buf)
+{
+  int use_64bit = sizeof (PTRACE_XFER_TYPE) == 8;
+
+  if (use_64bit && register_size (regcache->tdesc, regno) == 4)
+    {
+      union mips_register reg;
+
+      mips_collect_register (regcache, 0, regno, &reg);
+      memcpy (buf, &reg, sizeof (reg));
+    }
+  else
+    collect_register (regcache, regno, buf);
+}
+
+/* Take care of 32-bit registers with 64-bit ptrace, PEEKUSER side.  */
+
+static void
+mips_supply_ptrace_register (struct regcache *regcache,
+			     int regno, const char *buf)
+{
+  int use_64bit = sizeof (PTRACE_XFER_TYPE) == 8;
+
+  if (use_64bit && register_size (regcache->tdesc, regno) == 4)
+    {
+      union mips_register reg;
+
+      memcpy (&reg, buf, sizeof (reg));
+      mips_supply_register (regcache, 0, regno, &reg);
+    }
+  else
+    supply_register (regcache, regno, buf);
+}
+
 static struct regset_info mips_regsets[] = {
 #ifdef HAVE_PTRACE_GETREGS
   { PTRACE_GETREGS, PTRACE_SETREGS, 0, 38 * 8, GENERAL_REGS,
@@ -875,7 +941,7 @@ struct linux_target_ops the_low_target = {
   mips_regs_info,
   mips_cannot_fetch_register,
   mips_cannot_store_register,
-  NULL, /* fetch_register */
+  mips_fetch_register,
   mips_get_pc,
   mips_set_pc,
   NULL, /* breakpoint_kind_from_pc */
@@ -888,11 +954,13 @@ struct linux_target_ops the_low_target = {
   mips_remove_point,
   mips_stopped_by_watchpoint,
   mips_stopped_data_address,
-  NULL,
-  NULL,
+  mips_collect_ptrace_register,
+  mips_supply_ptrace_register,
   NULL, /* siginfo_fixup */
   mips_linux_new_process,
+  mips_linux_delete_process,
   mips_linux_new_thread,
+  mips_linux_delete_thread,
   mips_linux_new_fork,
   mips_linux_prepare_to_resume
 };

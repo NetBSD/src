@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2017 Free Software Foundation, Inc.
+# Copyright 1997-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,14 +68,14 @@ gdb_test_multiple "i b" "cleared bp at line before routine" {
 gdb_test "b ending-run.c:1" ".*Breakpoint.*4.*"
 gdb_test "b ending-run.c:$break1_line" ".*Note.*also.*Breakpoint.*5.*" "b ending-run.c:$break1_line, two"
 gdb_test "cle ending-run.c:$break1_line" \
-	".*Deleted breakpoint 5.*" "Cleared 2 by line"
+	".*Deleted breakpoints 4 5.*" "Cleared 2 by line"
 
 gdb_test_multiple "info line ending-run.c:$break1_line" "" {
     -re ".*address (0x\[0-9a-fA-F]*).*$gdb_prompt $" {
         set line_nine $expect_out(1,string)
         gdb_test "b ending-run.c:$break1_line" ".*Breakpoint 6.*ending-run.c, line $break1_line.*"
         gdb_test "b *$line_nine" ".*Note.*also.*Breakpoint 7.*" "breakpoint 7 at *ending-run.c:$break1_line"
-        gdb_test "cle" ".*Deleted breakpoints 4 6 7.*" "clear 2 by default"
+        gdb_test "cle" ".*Deleted breakpoints 6 7.*" "clear 2 by default"
     }
     -re ".*$gdb_prompt $" {
         fail "need to fix test for new compile outcome"

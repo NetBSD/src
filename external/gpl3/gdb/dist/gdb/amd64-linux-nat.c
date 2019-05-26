@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86-64.
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -30,11 +30,10 @@
 #include "gdb_proc_service.h"
 
 #include "amd64-nat.h"
-#include "linux-nat.h"
 #include "amd64-tdep.h"
 #include "amd64-linux-tdep.h"
 #include "i386-linux-tdep.h"
-#include "x86-xstate.h"
+#include "common/x86-xstate.h"
 
 #include "x86-linux-nat.h"
 #include "nat/linux-ptrace.h"
@@ -45,6 +44,18 @@
 #ifndef PTRACE_ARCH_PRCTL
 #define PTRACE_ARCH_PRCTL      30
 #endif
+
+struct amd64_linux_nat_target final : public x86_linux_nat_target
+{
+  /* Add our register access methods.  */
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+
+  bool low_siginfo_fixup (siginfo_t *ptrace, gdb_byte *inf, int direction)
+    override;
+};
+
+static amd64_linux_nat_target the_amd64_linux_nat_target;
 
 /* Mapping between the general-purpose registers in GNU/Linux x86-64
    `struct user' format and GDB's register cache layout for GNU/Linux
@@ -130,17 +141,16 @@ fill_fpregset (const struct regcache *regcache,
    this for all registers (including the floating point and SSE
    registers).  */
 
-static void
-amd64_linux_fetch_inferior_registers (struct target_ops *ops,
-				      struct regcache *regcache, int regnum)
+void
+amd64_linux_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   int tid;
 
   /* GNU/Linux LWP ID's are process ID's.  */
-  tid = ptid_get_lwp (regcache_get_ptid (regcache));
+  tid = regcache->ptid ().lwp ();
   if (tid == 0)
-    tid = ptid_get_pid (regcache_get_ptid (regcache)); /* Not a threaded program.  */
+    tid = regcache->ptid ().pid (); /* Not a threaded program.  */
 
   if (regnum == -1 || amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
@@ -190,7 +200,7 @@ amd64_linux_fetch_inferior_registers (struct target_ops *ops,
 	    if (ptrace (PTRACE_ARCH_PRCTL, tid, &base, ARCH_GET_FS) < 0)
 	      perror_with_name (_("Couldn't get segment register fs_base"));
 
-	    regcache_raw_supply (regcache, AMD64_FSBASE_REGNUM, &base);
+	    regcache->raw_supply (AMD64_FSBASE_REGNUM, &base);
 	  }
 
 	if (regnum == -1 || regnum == AMD64_GSBASE_REGNUM)
@@ -198,7 +208,7 @@ amd64_linux_fetch_inferior_registers (struct target_ops *ops,
 	    if (ptrace (PTRACE_ARCH_PRCTL, tid, &base, ARCH_GET_GS) < 0)
 	      perror_with_name (_("Couldn't get segment register gs_base"));
 
-	    regcache_raw_supply (regcache, AMD64_GSBASE_REGNUM, &base);
+	    regcache->raw_supply (AMD64_GSBASE_REGNUM, &base);
 	  }
       }
 #endif
@@ -209,17 +219,16 @@ amd64_linux_fetch_inferior_registers (struct target_ops *ops,
    -1, do this for all registers (including the floating-point and SSE
    registers).  */
 
-static void
-amd64_linux_store_inferior_registers (struct target_ops *ops,
-				      struct regcache *regcache, int regnum)
+void
+amd64_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   int tid;
 
   /* GNU/Linux LWP ID's are process ID's.  */
-  tid = ptid_get_lwp (regcache_get_ptid (regcache));
+  tid = regcache->ptid ().lwp ();
   if (tid == 0)
-    tid = ptid_get_pid (regcache_get_ptid (regcache)); /* Not a threaded program.  */
+    tid = regcache->ptid ().pid (); /* Not a threaded program.  */
 
   if (regnum == -1 || amd64_native_gregset_supplies_p (gdbarch, regnum))
     {
@@ -278,7 +287,7 @@ amd64_linux_store_inferior_registers (struct target_ops *ops,
 
 	if (regnum == -1 || regnum == AMD64_FSBASE_REGNUM)
 	  {
-	    regcache_raw_collect (regcache, AMD64_FSBASE_REGNUM, &base);
+	    regcache->raw_collect (AMD64_FSBASE_REGNUM, &base);
 
 	    if (ptrace (PTRACE_ARCH_PRCTL, tid, base, ARCH_SET_FS) < 0)
 	      perror_with_name (_("Couldn't write segment register fs_base"));
@@ -286,7 +295,7 @@ amd64_linux_store_inferior_registers (struct target_ops *ops,
 	if (regnum == -1 || regnum == AMD64_GSBASE_REGNUM)
 	  {
 
-	    regcache_raw_collect (regcache, AMD64_GSBASE_REGNUM, &base);
+	    regcache->raw_collect (AMD64_GSBASE_REGNUM, &base);
 	    if (ptrace (PTRACE_ARCH_PRCTL, tid, base, ARCH_SET_GS) < 0)
 	      perror_with_name (_("Couldn't write segment register gs_base"));
 	  }
@@ -378,32 +387,29 @@ ps_get_thread_area (struct ps_prochandle *ph,
    from INF to PTRACE.  If DIRECTION is 0, copy from PTRACE to
    INF.  */
 
-static int
-amd64_linux_siginfo_fixup (siginfo_t *ptrace, gdb_byte *inf, int direction)
+bool
+amd64_linux_nat_target::low_siginfo_fixup (siginfo_t *ptrace,
+					   gdb_byte *inf,
+					   int direction)
 {
   struct gdbarch *gdbarch = get_frame_arch (get_current_frame ());
 
   /* Is the inferior 32-bit?  If so, then do fixup the siginfo
      object.  */
   if (gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 32)
-      return amd64_linux_siginfo_fixup_common (ptrace, inf, direction,
-					       FIXUP_32);
+    return amd64_linux_siginfo_fixup_common (ptrace, inf, direction,
+					     FIXUP_32);
   /* No fixup for native x32 GDB.  */
   else if (gdbarch_addr_bit (gdbarch) == 32 && sizeof (void *) == 8)
-      return amd64_linux_siginfo_fixup_common (ptrace, inf, direction,
-					       FIXUP_X32);
+    return amd64_linux_siginfo_fixup_common (ptrace, inf, direction,
+					     FIXUP_X32);
   else
-    return 0;
+    return false;
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_amd64_linux_nat (void);
 
 void
 _initialize_amd64_linux_nat (void)
 {
-  struct target_ops *t;
-
   amd64_native_gregset32_reg_offset = amd64_linux_gregset32_reg_offset;
   amd64_native_gregset32_num_regs = I386_LINUX_NUM_REGS;
   amd64_native_gregset64_reg_offset = amd64_linux_gregset_reg_offset;
@@ -412,16 +418,8 @@ _initialize_amd64_linux_nat (void)
   gdb_assert (ARRAY_SIZE (amd64_linux_gregset32_reg_offset)
 	      == amd64_native_gregset32_num_regs);
 
-  /* Create a generic x86 GNU/Linux target.  */
-  t = x86_linux_create_target ();
-
-  /* Add our register access methods.  */
-  t->to_fetch_registers = amd64_linux_fetch_inferior_registers;
-  t->to_store_registers = amd64_linux_store_inferior_registers;
+  linux_target = &the_amd64_linux_nat_target;
 
   /* Add the target.  */
-  x86_linux_add_target (t);
-
-  /* Add our siginfo layout converter.  */
-  linux_nat_set_siginfo_fixup (t, amd64_linux_siginfo_fixup);
+  add_inf_child_target (linux_target);
 }

@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,24 +15,26 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DLL_H
-#define DLL_H
+#ifndef GDBSERVER_DLL_H
+#define GDBSERVER_DLL_H
+
+#include <list>
 
 struct dll_info
 {
-  /* This must appear first.  See inferiors.h.
-     The list iterator functions assume it.  */
-  struct inferior_list_entry entry;
+  dll_info (const std::string &name_, CORE_ADDR base_addr_)
+  : name (name_), base_addr (base_addr_)
+  {}
 
-  char *name;
+  std::string name;
   CORE_ADDR base_addr;
 };
 
-extern struct inferior_list all_dlls;
+extern std::list<dll_info> all_dlls;
 extern int dlls_changed;
 
 extern void clear_dlls (void);
 extern void loaded_dll (const char *name, CORE_ADDR base_addr);
 extern void unloaded_dll (const char *name, CORE_ADDR base_addr);
 
-#endif /* DLL_H */
+#endif /* GDBSERVER_DLL_H */

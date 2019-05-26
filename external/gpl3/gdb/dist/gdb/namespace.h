@@ -1,5 +1,5 @@
 /* Code dealing with "using" directives for GDB.
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,8 +19,8 @@
 #ifndef NAMESPACE_H
 #define NAMESPACE_H
 
-#include "vec.h"
-#include "gdb_vecs.h"
+#include "common/vec.h"
+#include "common/gdb_vecs.h"
 #include "gdb_obstack.h"
 
 /* This struct is designed to store data from using directives.  It
@@ -111,7 +111,7 @@ extern void add_using_directive (struct using_direct **using_directives,
 				 const char *src,
 				 const char *alias,
 				 const char *declaration,
-				 VEC (const_char_ptr) *excludes,
+				 const std::vector<const char *> &excludes,
 				 int copy_names,
                                  struct obstack *obstack);
 

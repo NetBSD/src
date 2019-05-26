@@ -1,6 +1,6 @@
 /* Target-dependent code for the Fujitsu FR-V, for GDB, the GNU Debugger.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,7 @@
 #include "dis-asm.h"
 #include "sim-regno.h"
 #include "gdb/sim-frv.h"
-#include "opcodes/frv-desc.h"	/* for the H_SPR_... enums */
+#include "../opcodes/frv-desc.h"	/* for the H_SPR_... enums */
 #include "symtab.h"
 #include "elf-bfd.h"
 #include "elf/frv.h"
@@ -38,8 +38,6 @@
 #include "solib.h"
 #include "frv-tdep.h"
 #include "objfiles.h"
-
-extern void _initialize_frv_tdep (void);
 
 struct frv_unwind_cache		/* was struct frame_extra_info */
   {
@@ -297,16 +295,16 @@ frv_register_type (struct gdbarch *gdbarch, int reg)
 }
 
 static enum register_status
-frv_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
+frv_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
                           int reg, gdb_byte *buffer)
 {
   enum register_status status;
 
   if (reg == iacc0_regnum)
     {
-      status = regcache_raw_read (regcache, iacc0h_regnum, buffer);
+      status = regcache->raw_read (iacc0h_regnum, buffer);
       if (status == REG_VALID)
-	status = regcache_raw_read (regcache, iacc0l_regnum, (bfd_byte *) buffer + 4);
+	status = regcache->raw_read (iacc0l_regnum, (bfd_byte *) buffer + 4);
     }
   else if (accg0_regnum <= reg && reg <= accg7_regnum)
     {
@@ -317,7 +315,7 @@ frv_pseudo_register_read (struct gdbarch *gdbarch, struct regcache *regcache,
       int byte_num = (reg - accg0_regnum) % 4;
       gdb_byte buf[4];
 
-      status = regcache_raw_read (regcache, raw_regnum, buf);
+      status = regcache->raw_read (raw_regnum, buf);
       if (status == REG_VALID)
 	{
 	  memset (buffer, 0, 4);
@@ -339,8 +337,8 @@ frv_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 {
   if (reg == iacc0_regnum)
     {
-      regcache_raw_write (regcache, iacc0h_regnum, buffer);
-      regcache_raw_write (regcache, iacc0l_regnum, (bfd_byte *) buffer + 4);
+      regcache->raw_write (iacc0h_regnum, buffer);
+      regcache->raw_write (iacc0l_regnum, (bfd_byte *) buffer + 4);
     }
   else if (accg0_regnum <= reg && reg <= accg7_regnum)
     {
@@ -351,9 +349,9 @@ frv_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       int byte_num = (reg - accg0_regnum) % 4;
       gdb_byte buf[4];
 
-      regcache_raw_read (regcache, raw_regnum, buf);
+      regcache->raw_read (raw_regnum, buf);
       buf[byte_num] = ((bfd_byte *) buffer)[0];
-      regcache_raw_write (regcache, raw_regnum, buf);
+      regcache->raw_write (raw_regnum, buf);
     }
 }
 
@@ -1112,7 +1110,7 @@ static void
 frv_extract_return_value (struct type *type, struct regcache *regcache,
                           gdb_byte *valbuf)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int len = TYPE_LENGTH (type);
 
@@ -1195,7 +1193,8 @@ static CORE_ADDR
 frv_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
                      struct regcache *regcache, CORE_ADDR bp_addr,
                      int nargs, struct value **args, CORE_ADDR sp,
-		     int struct_return, CORE_ADDR struct_addr)
+		     function_call_return_method return_method,
+		     CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int argreg;
@@ -1232,7 +1231,7 @@ frv_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   argreg = 8;
 
-  if (struct_return)
+  if (return_method == return_method_struct)
     regcache_cooked_write_unsigned (regcache, struct_return_regnum,
                                     struct_addr);
 
@@ -1329,12 +1328,12 @@ frv_store_return_value (struct type *type, struct regcache *regcache,
       bfd_byte val[4];
       memset (val, 0, sizeof (val));
       memcpy (val + (4 - len), valbuf, len);
-      regcache_cooked_write (regcache, 8, val);
+      regcache->cooked_write (8, val);
     }
   else if (len == 8)
     {
-      regcache_cooked_write (regcache, 8, valbuf);
-      regcache_cooked_write (regcache, 9, (bfd_byte *) valbuf + 4);
+      regcache->cooked_write (8, valbuf);
+      regcache->cooked_write (9, (bfd_byte *) valbuf + 4);
     }
   else
     internal_error (__FILE__, __LINE__,
@@ -1582,7 +1581,6 @@ frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       break;
     }
 
-  set_gdbarch_print_insn (gdbarch, print_insn_frv);
   if (frv_abi (gdbarch) == FRV_ABI_FDPIC)
     set_gdbarch_convert_from_func_ptr_addr (gdbarch,
 					    frv_convert_from_func_ptr_addr);

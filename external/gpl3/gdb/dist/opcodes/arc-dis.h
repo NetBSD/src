@@ -1,5 +1,5 @@
 /* Disassembler structures definitions for the ARC.
-   Copyright (C) 1994-2017 Free Software Foundation, Inc.
+   Copyright (C) 1994-2019 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 

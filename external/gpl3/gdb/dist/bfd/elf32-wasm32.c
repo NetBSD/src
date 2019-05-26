@@ -1,5 +1,5 @@
 /* 32-bit ELF for the WebAssembly target
-   Copyright (C) 2017 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,47 +22,46 @@
 #include "bfd.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
-#include "bfd_stdint.h"
 #include "libiberty.h"
 #include "elf/wasm32.h"
 
 static reloc_howto_type elf32_wasm32_howto_table[] =
 {
   HOWTO (R_WASM32_NONE,		/* type */
-         0,			/* rightshift */
-         3,			/* size (0 = byte, 1 = short, 2 = long) */
-         0,			/* bitsize */
-         FALSE,			/* pc_relative */
-         0,			/* bitpos */
-         complain_overflow_dont,/* complain_on_overflow */
-         bfd_elf_generic_reloc,	/* special_function */
-         "R_WASM32_NONE",	/* name */
-         FALSE,			/* partial_inplace */
-         0,			/* src_mask */
-         0,			/* dst_mask */
-         FALSE),		/* pcrel_offset */
+	 0,			/* rightshift */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont,/* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_WASM32_NONE",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0,			/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 
   /* 32 bit absolute */
   HOWTO (R_WASM32_32,		/* type */
-         0,			/* rightshift */
-         2,			/* size (0 = byte, 1 = short, 2 = long) */
-         32,			/* bitsize */
-         FALSE,			/* pc_relative */
-         0,			/* bitpos */
-         complain_overflow_bitfield,/* complain_on_overflow */
-         bfd_elf_generic_reloc,	/* special_function */
-         "R_WASM32_32",	/* name */
-         FALSE,			/* partial_inplace */
-         0xffffffff,		/* src_mask */
-         0xffffffff,		/* dst_mask */
-         FALSE),		/* pcrel_offset */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield,/* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_WASM32_32",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 };
 
 /* Look up the relocation CODE.  */
 
 static reloc_howto_type *
 elf32_wasm32_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
-                                bfd_reloc_code_real_type code)
+				bfd_reloc_code_real_type code)
 {
   switch (code)
     {
@@ -81,13 +80,13 @@ elf32_wasm32_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 static reloc_howto_type *
 elf32_wasm32_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
-                                const char *r_name)
+				const char *r_name)
 {
   unsigned int i;
 
   for (i = 0; i < ARRAY_SIZE (elf32_wasm32_howto_table); i++)
     if (elf32_wasm32_howto_table[i].name != NULL
-        && strcasecmp (elf32_wasm32_howto_table[i].name, r_name) == 0)
+	&& strcasecmp (elf32_wasm32_howto_table[i].name, r_name) == 0)
       return &elf32_wasm32_howto_table[i];
 
   return NULL;
@@ -103,26 +102,29 @@ elf32_wasm32_rtype_to_howto (bfd *abfd, unsigned r_type)
   if (i >= ARRAY_SIZE (elf32_wasm32_howto_table))
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid relocation type %d"),
-			  abfd, (int) r_type);
-      i = R_WASM32_NONE;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return NULL;
     }
 
   if (elf32_wasm32_howto_table[i].type != r_type)
     return NULL;
 
-  return &elf32_wasm32_howto_table[i];
+  return elf32_wasm32_howto_table + i;
 }
 
 /* Translate the ELF-internal relocation RELA into CACHE_PTR.  */
 
-static void
-elf32_wasm32_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
-                                arelent *cache_ptr,
-                                Elf_Internal_Rela *dst)
+static bfd_boolean
+elf32_wasm32_info_to_howto_rela (bfd *abfd,
+				arelent *cache_ptr,
+				Elf_Internal_Rela *dst)
 {
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
+
   cache_ptr->howto = elf32_wasm32_rtype_to_howto (abfd, r_type);
+  return cache_ptr->howto != NULL;
 }
 
 #define ELF_ARCH		bfd_arch_wasm32
@@ -132,13 +134,13 @@ elf32_wasm32_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
    https://github.com/pipcet/binutils-gdb/issues/4  */
 #define ELF_MAXPAGESIZE		4096
 
-#define TARGET_LITTLE_SYM       wasm32_elf32_vec
+#define TARGET_LITTLE_SYM	wasm32_elf32_vec
 #define TARGET_LITTLE_NAME	"elf32-wasm32"
 
-#define elf_backend_can_gc_sections     1
-#define elf_backend_rela_normal         1
+#define elf_backend_can_gc_sections	1
+#define elf_backend_rela_normal		1
 /* For testing. */
-#define elf_backend_want_dynrelro       1
+#define elf_backend_want_dynrelro	1
 
 #define elf_info_to_howto		elf32_wasm32_info_to_howto_rela
 #define elf_info_to_howto_rel		NULL
@@ -146,10 +148,10 @@ elf32_wasm32_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
 #define bfd_elf32_bfd_reloc_type_lookup elf32_wasm32_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup elf32_wasm32_reloc_name_lookup
 
-#define ELF_DYNAMIC_INTERPRETER  "/sbin/elf-dynamic-interpreter.so"
+#define ELF_DYNAMIC_INTERPRETER	 "/sbin/elf-dynamic-interpreter.so"
 
-#define elf_backend_want_got_plt 	1
-#define elf_backend_plt_readonly 	1
-#define elf_backend_got_header_size 	0
+#define elf_backend_want_got_plt	1
+#define elf_backend_plt_readonly	1
+#define elf_backend_got_header_size	0
 
 #include "elf32-target.h"

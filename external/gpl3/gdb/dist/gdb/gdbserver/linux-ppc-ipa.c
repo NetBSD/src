@@ -1,7 +1,7 @@
 /* GNU/Linux/PowerPC specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,8 @@
 #include "server.h"
 #include <sys/mman.h>
 #include "tracepoint.h"
-#include "linux-ppc-tdesc.h"
+#include "arch/ppc-linux-tdesc.h"
+#include "linux-ppc-tdesc-init.h"
 #include <elf.h>
 #ifdef HAVE_GETAUXVAL
 #include <sys/auxv.h>
@@ -190,6 +191,12 @@ get_ipa_tdesc (int idx)
       return tdesc_powerpc_isa205_altivec64l;
     case PPC_TDESC_ISA205_VSX:
       return tdesc_powerpc_isa205_vsx64l;
+    case PPC_TDESC_ISA205_PPR_DSCR_VSX:
+      return tdesc_powerpc_isa205_ppr_dscr_vsx64l;
+    case PPC_TDESC_ISA207_VSX:
+      return tdesc_powerpc_isa207_vsx64l;
+    case PPC_TDESC_ISA207_HTM_VSX:
+      return tdesc_powerpc_isa207_htm_vsx64l;
 #else
     case PPC_TDESC_BASE:
       return tdesc_powerpc_32l;
@@ -205,6 +212,12 @@ get_ipa_tdesc (int idx)
       return tdesc_powerpc_isa205_altivec32l;
     case PPC_TDESC_ISA205_VSX:
       return tdesc_powerpc_isa205_vsx32l;
+    case PPC_TDESC_ISA205_PPR_DSCR_VSX:
+      return tdesc_powerpc_isa205_ppr_dscr_vsx32l;
+    case PPC_TDESC_ISA207_VSX:
+      return tdesc_powerpc_isa207_vsx32l;
+    case PPC_TDESC_ISA207_HTM_VSX:
+      return tdesc_powerpc_isa207_htm_vsx32l;
     case PPC_TDESC_E500:
       return tdesc_powerpc_e500l;
 #endif
@@ -233,6 +246,9 @@ initialize_low_tracepoint (void)
   init_registers_powerpc_isa205_64l ();
   init_registers_powerpc_isa205_altivec64l ();
   init_registers_powerpc_isa205_vsx64l ();
+  init_registers_powerpc_isa205_ppr_dscr_vsx64l ();
+  init_registers_powerpc_isa207_vsx64l ();
+  init_registers_powerpc_isa207_htm_vsx64l ();
 #else
   init_registers_powerpc_32l ();
   init_registers_powerpc_altivec32l ();
@@ -241,6 +257,9 @@ initialize_low_tracepoint (void)
   init_registers_powerpc_isa205_32l ();
   init_registers_powerpc_isa205_altivec32l ();
   init_registers_powerpc_isa205_vsx32l ();
+  init_registers_powerpc_isa205_ppr_dscr_vsx32l ();
+  init_registers_powerpc_isa207_vsx32l ();
+  init_registers_powerpc_isa207_htm_vsx32l ();
   init_registers_powerpc_e500l ();
 #endif
 }

@@ -1,6 +1,6 @@
 /* Target-dependent code for Analog Devices Blackfin processor, for GDB.
 
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
 
    Contributed by Analog Devices, Inc.
 
@@ -121,16 +121,16 @@ static const struct tramp_frame bfin_linux_sigframe =
   {
     { 0x00ADE128, 0xffffffff },	/* P0 = __NR_rt_sigreturn; */
     { 0x00A0, 0xffff },		/* EXCPT 0; */
-    { TRAMP_SENTINEL_INSN, -1 },
+    { TRAMP_SENTINEL_INSN, ULONGEST_MAX },
   },
   bfin_linux_sigframe_init,
 };
 
 static LONGEST
 bfin_linux_get_syscall_number (struct gdbarch *gdbarch,
-                               ptid_t ptid)
+			       thread_info *thread)
 {
-  struct regcache *regcache = get_thread_regcache (ptid);
+  struct regcache *regcache = get_thread_regcache (thread);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   /* The content of a register.  */
   gdb_byte buf[4];
@@ -140,7 +140,7 @@ bfin_linux_get_syscall_number (struct gdbarch *gdbarch,
   /* Getting the system call number from the register.
      When dealing with Blackfin architecture, this information
      is stored at %p0 register.  */
-  regcache_cooked_read (regcache, BFIN_P0_REGNUM, buf);
+  regcache->cooked_read (BFIN_P0_REGNUM, buf);
 
   ret = extract_signed_integer (buf, 4, byte_order);
 
@@ -160,9 +160,6 @@ bfin_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_get_syscall_number (gdbarch,
                                   bfin_linux_get_syscall_number);
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_bfin_linux_tdep;
 
 void
 _initialize_bfin_linux_tdep (void)

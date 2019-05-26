@@ -1,6 +1,6 @@
 /* Low-level siginfo manipulation for amd64.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <signal.h>
-#include "common-defs.h"
+#include "common/common-defs.h"
 #include "amd64-linux-siginfo.h"
 
 #define GDB_SI_SIZE 128

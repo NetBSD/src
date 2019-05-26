@@ -1,6 +1,6 @@
 /* Linux namespaces(7) support.
 
-   Copyright (C) 2015-2017 Free Software Foundation, Inc.
+   Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef LINUX_NAMESPACES_H
-#define LINUX_NAMESPACES_H
+#ifndef NAT_LINUX_NAMESPACES_H
+#define NAT_LINUX_NAMESPACES_H
 
 /* Set to nonzero to enable debugging of Linux namespaces code.  */
 
@@ -73,4 +73,4 @@ extern int linux_mntns_unlink (pid_t pid, const char *filename);
 extern ssize_t linux_mntns_readlink (pid_t pid, const char *filename,
 				     char *buf, size_t bufsiz);
 
-#endif /* LINUX_NAMESPACES_H */
+#endif /* NAT_LINUX_NAMESPACES_H */

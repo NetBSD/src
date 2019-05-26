@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 6.3 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.5 from gdb.texinfo.
 
-Copyright (C) 1988-2017 Free Software Foundation, Inc.
+Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 8.0.1.
+Source-Level Debugger' for GDB (GDB) Version 8.3.
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -44,9 +44,9 @@ Debugging with GDB
 
 This file describes GDB, the GNU symbolic debugger.
 
-   This is the Tenth Edition, for GDB (GDB) Version 8.0.1.
+   This is the Tenth Edition, for GDB (GDB) Version 8.3.
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    This edition of the GDB manual is dedicated to the memory of Fred
 Fish.  Fred was a long-standing contributor to GDB and to Free software
@@ -450,6 +450,17 @@ was developed by SRI International and the University of Cambridge
 Computer Laboratory under DARPA/AFRL contract FA8750-10-C-0237
 ("CTSRD"), as part of the DARPA CRASH research programme.
 
+   Initial support for the FreeBSD/riscv target and native configuration
+was developed by SRI International and the University of Cambridge
+Computer Laboratory (Department of Computer Science and Technology)
+under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the DARPA
+SSITH research programme.
+
+   The original port to the OpenRISC 1000 is believed to be due to
+Alessandro Forin and Per Bothner.  More recent ports have been the work
+of Jeremy Bennett, Franck Jullien, Stefan Wallentowitz and Stafford
+Horne.
+
 
 File: gdb.info,  Node: Sample Session,  Next: Invocation,  Prev: Summary,  Up: Top
 
@@ -496,7 +507,7 @@ Let us use GDB to try to see what is going on.
      There is absolutely no warranty for GDB; type "show warranty"
       for details.
 
-     GDB 8.0.1, Copyright 1999 Free Software Foundation, Inc...
+     GDB 8.3, Copyright 1999 Free Software Foundation, Inc...
      (gdb)
 
 GDB reads only enough symbol data to know where to find the rest when
@@ -836,6 +847,15 @@ though we illustrate the more usual convention.)
      than the default, which is to read it incrementally as it is
      needed.  This makes startup slower, but makes future operations
      faster.
+
+'--readnever'
+     Do not read each symbol file's symbolic debug information.  This
+     makes startup faster but at the expense of not being able to
+     perform symbolic debugging.  DWARF unwind information is also not
+     read, meaning backtraces may become incomplete or inaccurate.  One
+     use of this is when a user simply wants to do the following
+     sequence: attach, dump core, detach.  Loading the debugging
+     information in this case is an unnecessary cause of delay.
 
 
 File: gdb.info,  Node: Mode Options,  Next: Startup,  Prev: File Options,  Up: Invoking GDB
@@ -1326,33 +1346,47 @@ parentheses or other characters that GDB normally excludes from its
 notion of a word.  To permit word completion to work in this situation,
 you may enclose words in ''' (single quote marks) in GDB commands.
 
-   The most likely situation where you might need this is in typing the
-name of a C++ function.  This is because C++ allows function overloading
-(multiple definitions of the same function, distinguished by argument
-type).  For example, when you want to set a breakpoint you may need to
-distinguish whether you mean the version of 'name' that takes an 'int'
-parameter, 'name(int)', or the version that takes a 'float' parameter,
-'name(float)'.  To use the word-completion facilities in this situation,
-type a single quote ''' at the beginning of the function name.  This
-alerts GDB that it may need to consider more information than usual when
-you press <TAB> or 'M-?' to request word completion:
+   A likely situation where you might need this is in typing an
+expression that involves a C++ symbol name with template parameters.
+This is because when completing expressions, GDB treats the '<'
+character as word delimiter, assuming that it's the less-than comparison
+operator (*note C and C++ Operators: C Operators.).
 
-     (gdb) b 'bubble( M-?
-     bubble(double,double)    bubble(int,int)
-     (gdb) b 'bubble(
+   For example, when you want to call a C++ template function
+interactively using the 'print' or 'call' commands, you may need to
+distinguish whether you mean the version of 'name' that was specialized
+for 'int', 'name<int>()', or the version that was specialized for
+'float', 'name<float>()'.  To use the word-completion facilities in this
+situation, type a single quote ''' at the beginning of the function
+name.  This alerts GDB that it may need to consider more information
+than usual when you press <TAB> or 'M-?' to request word completion:
 
-   In some cases, GDB can tell that completing a name requires using
-quotes.  When this happens, GDB inserts the quote for you (while
-completing as much as it can) if you do not type the quote in the first
-place:
+     (gdb) p 'func< M-?
+     func<int>()    func<float>()
+     (gdb) p 'func<
 
-     (gdb) b bub <TAB>
-GDB alters your input line to the following, and rings a bell:
-     (gdb) b 'bubble(
+   When setting breakpoints however (*note Specify Location::), you
+don't usually need to type a quote before the function name, because GDB
+understands that you want to set a breakpoint on a function:
 
-In general, GDB can tell that a quote is needed (and inserts it) if you
-have not yet started typing the argument list when you ask for
-completion on an overloaded symbol.
+     (gdb) b func< M-?
+     func<int>()    func<float>()
+     (gdb) b func<
+
+   This is true even in the case of typing the name of C++ overloaded
+functions (multiple definitions of the same function, distinguished by
+argument type).  For example, when you want to set a breakpoint you
+don't need to distinguish whether you mean the version of 'name' that
+takes an 'int' parameter, 'name(int)', or the version that takes a
+'float' parameter, 'name(float)'.
+
+     (gdb) b bubble( M-?
+     bubble(int)    bubble(double)
+     (gdb) b bubble(dou M-?
+     bubble(double)
+
+   See *note quoting names:: for a description of other scenarios that
+require quoting.
 
    For more information about overloaded functions, see *note C++
 Expressions: C Plus Plus Expressions.  You can use the command 'set
@@ -1616,7 +1650,7 @@ flag alone.  Version 3.1 and later of GCC, the GNU C compiler, provides
 macro information if you are using the DWARF debugging format, and
 specify the option '-g3'.
 
-   *Note Options for Debugging Your Program or GCC: (gcc.info)Debugging
+   *Note Options for Debugging Your Program or GCC: (gcc)Debugging
 Options, for more information on GCC options affecting debug
 information.
 
@@ -1675,9 +1709,12 @@ The _environment._
      Your Program's Environment: Environment.
 
 The _working directory._
-     Your program inherits its working directory from GDB.  You can set
-     the GDB working directory with the 'cd' command in GDB.  *Note Your
-     Program's Working Directory: Working Directory.
+     You can set your program's working directory with the command 'set
+     cwd'.  If you do not set any working directory with this command,
+     your program will inherit GDB's working directory if native
+     debugging, or the remote server's working directory if remote
+     debugging.  *Note Your Program's Working Directory: Working
+     Directory.
 
 The _standard input and output._
      Your program normally uses the same device for standard input and
@@ -1731,8 +1768,16 @@ breakpoints.
      It is sometimes necessary to debug the program during elaboration.
      In these cases, using the 'start' command would stop the execution
      of your program too late, as the program would have already
-     completed the elaboration phase.  Under these circumstances, insert
-     breakpoints in your elaboration code before running your program.
+     completed the elaboration phase.  Under these circumstances, either
+     insert breakpoints in your elaboration code before running your
+     program or use the 'starti' command.
+
+'starti'
+     The 'starti' command does the equivalent of setting a temporary
+     breakpoint at the first instruction of a program's execution and
+     then invoking the 'run' command.  For programs containing an
+     elaboration phase, the 'starti' command will stop execution at the
+     start of the elaboration phase.
 
 'set exec-wrapper WRAPPER'
 'show exec-wrapper'
@@ -1762,7 +1807,7 @@ breakpoints.
 'set startup-with-shell'
 'set startup-with-shell on'
 'set startup-with-shell off'
-'show set startup-with-shell'
+'show startup-with-shell'
      On Unix systems, by default, if a shell is available on your
      target, GDB) uses it to start your program.  Arguments of the 'run'
      command are passed to the shell, which does variable substitution,
@@ -1971,11 +2016,19 @@ environment without having to start GDB over again.
      wrapper instead of using 'set environment'.  *Note set
      exec-wrapper::, for an example doing just that.
 
+     Environment variables that are set by the user are also transmitted
+     to 'gdbserver' to be used when starting the remote inferior.  *note
+     QEnvironmentHexEncoded::.
+
 'unset environment VARNAME'
      Remove variable VARNAME from the environment to be passed to your
      program.  This is different from 'set env VARNAME ='; 'unset
      environment' removes the variable from the environment, rather than
      assigning it an empty value.
+
+     Environment variables that are unset by the user are also unset on
+     'gdbserver' when starting the remote inferior.  *note
+     QEnvironmentUnset::.
 
    _Warning:_ On Unix systems, GDB runs your program using the shell
 indicated by your 'SHELL' environment variable if it exists (or
@@ -1993,29 +2046,48 @@ File: gdb.info,  Node: Working Directory,  Next: Input/Output,  Prev: Environmen
 4.5 Your Program's Working Directory
 ====================================
 
-Each time you start your program with 'run', it inherits its working
-directory from the current working directory of GDB.  The GDB working
-directory is initially whatever it inherited from its parent process
-(typically the shell), but you can specify a new working directory in
-GDB with the 'cd' command.
+Each time you start your program with 'run', the inferior will be
+initialized with the current working directory specified by the 'set
+cwd' command.  If no directory has been specified by this command, then
+the inferior will inherit GDB's current working directory as its working
+directory if native debugging, or it will inherit the remote server's
+current working directory if remote debugging.
 
-   The GDB working directory also serves as a default for the commands
-that specify files for GDB to operate on.  *Note Commands to Specify
-Files: Files.
+'set cwd [DIRECTORY]'
+     Set the inferior's working directory to DIRECTORY, which will be
+     'glob'-expanded in order to resolve tildes ('~').  If no argument
+     has been specified, the command clears the setting and resets it to
+     an empty state.  This setting has no effect on GDB's working
+     directory, and it only takes effect the next time you start the
+     inferior.  The '~' in DIRECTORY is a short for the "home
+     directory", usually pointed to by the 'HOME' environment variable.
+     On MS-Windows, if 'HOME' is not defined, GDB uses the concatenation
+     of 'HOMEDRIVE' and 'HOMEPATH' as fallback.
+
+     You can also change GDB's current working directory by using the
+     'cd' command.  *Note cd command::.
+
+'show cwd'
+     Show the inferior's working directory.  If no directory has been
+     specified by 'set cwd', then the default inferior's working
+     directory is the same as GDB's working directory.
 
 'cd [DIRECTORY]'
      Set the GDB working directory to DIRECTORY.  If not given,
      DIRECTORY uses ''~''.
+
+     The GDB working directory serves as a default for the commands that
+     specify files for GDB to operate on.  *Note Commands to Specify
+     Files: Files.  *Note set cwd command::.
 
 'pwd'
      Print the GDB working directory.
 
    It is generally impossible to find the current working directory of
 the process being debugged (since a program can change its directory
-during its run).  If you work on a system where GDB is configured with
-the '/proc' support, you can use the 'info proc' command (*note SVR4
-Process Information::) to find out the current working directory of the
-debuggee.
+during its run).  If you work on a system where GDB supports the 'info
+proc' command (*note Process Information::), you can use the 'info proc'
+command to find out the current working directory of the debuggee.
 
 
 File: gdb.info,  Node: Input/Output,  Next: Attach,  Prev: Working Directory,  Up: Running
@@ -2176,7 +2248,10 @@ Each inferior may in turn have multiple threads running in it.
    To find out what inferiors exist at any moment, use 'info inferiors':
 
 'info inferiors'
-     Print a list of all inferiors currently being managed by GDB.
+     Print a list of all inferiors currently being managed by GDB.  By
+     default all inferiors are printed, but the argument ID... - a space
+     separated list of inferior numbers - can be used to limit the
+     display to just the requested inferiors.
 
      GDB displays for each inferior (in this order):
 
@@ -2351,7 +2426,7 @@ memory.
    * automatic notification of new threads
    * 'thread THREAD-ID', a command to switch among threads
    * 'info threads', a command to inquire about existing threads
-   * 'thread apply [THREAD-ID-LIST] [ALL] ARGS', a command to apply a
+   * 'thread apply [THREAD-ID-LIST | all] ARGS', a command to apply a
      command to a list of threads
    * thread-specific breakpoints
    * 'set print thread-events', which controls printing of messages on
@@ -2518,7 +2593,7 @@ a Solaris-specific command:
      'Switching to' depends on your system's conventions for identifying
      threads.
 
-'thread apply [THREAD-ID-LIST | all [-ascending]] COMMAND'
+'thread apply [THREAD-ID-LIST | all [-ascending]] [FLAG]... COMMAND'
      The 'thread apply' command allows you to apply the named COMMAND to
      one or more threads.  Specify the threads that you want affected
      using the thread ID list syntax (*note thread ID lists::), or
@@ -2526,6 +2601,51 @@ a Solaris-specific command:
      threads in descending order, type 'thread apply all COMMAND'.  To
      apply a command to all threads in ascending order, type 'thread
      apply all -ascending COMMAND'.
+
+     The FLAG arguments control what output to produce and how to handle
+     errors raised when applying COMMAND to a thread.  FLAG must start
+     with a '-' directly followed by one letter in 'qcs'.  If several
+     flags are provided, they must be given individually, such as '-c
+     -q'.
+
+     By default, GDB displays some thread information before the output
+     produced by COMMAND, and an error raised during the execution of a
+     COMMAND will abort 'thread apply'.  The following flags can be used
+     to fine-tune this behavior:
+
+     '-c'
+          The flag '-c', which stands for 'continue', causes any errors
+          in COMMAND to be displayed, and the execution of 'thread
+          apply' then continues.
+     '-s'
+          The flag '-s', which stands for 'silent', causes any errors or
+          empty output produced by a COMMAND to be silently ignored.
+          That is, the execution continues, but the thread information
+          and errors are not printed.
+     '-q'
+          The flag '-q' ('quiet') disables printing the thread
+          information.
+
+     Flags '-c' and '-s' cannot be used together.
+
+'taas COMMAND'
+     Shortcut for 'thread apply all -s COMMAND'.  Applies COMMAND on all
+     threads, ignoring errors and empty output.
+
+'tfaas COMMAND'
+     Shortcut for 'thread apply all -s frame apply all -s COMMAND'.
+     Applies COMMAND on all frames of all threads, ignoring errors and
+     empty output.  Note that the flag '-s' is specified twice: The
+     first '-s' ensures that 'thread apply' only shows the thread
+     information of the threads for which 'frame apply' produces some
+     output.  The second '-s' is needed to ensure that 'frame apply'
+     shows the frame information of a frame only if the COMMAND
+     successfully produced some output.
+
+     It can for example be used to print a local variable or a function
+     argument without knowing the thread or frame where this variable or
+     argument is, using:
+          (gdb) tfaas p some_local_var_i_do_not_remember_where_it_is
 
 'thread name [NAME]'
      This command assigns a name to the current thread.  If no argument
@@ -3069,6 +3189,13 @@ variables.
      with the 'break' command.  You can delete them, disable them, or
      make them conditional the same way as any other breakpoint.
 
+     In programs using different languages, GDB chooses the syntax to
+     print the list of all breakpoints it sets according to the 'set
+     language' value: using 'set language auto' (see *note Set Language
+     Automatically: Automatically.) means to use the language of the
+     breakpoint's function, other values mean to use the manually
+     specified language (see *note Set Language Manually: Manually.).
+
      The syntax of the regular expression is the standard one used with
      tools like 'grep'.  Note that this is different from the syntax
      used by shells, so for instance 'foo*' matches all functions that
@@ -3198,15 +3325,16 @@ BREAKPOINT-NUMBER.LOCATION-NUMBER.
      1.1                         y    0x080486a2 in void foo<int>() at t.cc:8
      1.2                         y    0x080486ca in void foo<double>() at t.cc:8
 
-   Each location can be individually enabled or disabled by passing
-BREAKPOINT-NUMBER.LOCATION-NUMBER as argument to the 'enable' and
-'disable' commands.  Note that you cannot delete the individual
-locations from the list, you can only delete the entire list of
-locations that belong to their parent breakpoint (with the 'delete NUM'
-command, where NUM is the number of the parent breakpoint, 1 in the
-above example).  Disabling or enabling the parent breakpoint (*note
-Disabling::) affects all of the locations that belong to that
-breakpoint.
+   You cannot delete the individual locations from a breakpoint.
+However, each location can be individually enabled or disabled by
+passing BREAKPOINT-NUMBER.LOCATION-NUMBER as argument to the 'enable'
+and 'disable' commands.  It's also possible to 'enable' and 'disable' a
+range of LOCATION-NUMBER locations using a BREAKPOINT-NUMBER and two
+LOCATION-NUMBERs, in increasing order, separated by a hyphen, like
+'BREAKPOINT-NUMBER.LOCATION-NUMBER1-LOCATION-NUMBER2', in which case GDB
+acts on all the locations in the range (inclusive).  Disabling or
+enabling the parent breakpoint (*note Disabling::) affects all of the
+locations that belong to that breakpoint.
 
    It's quite common to have a breakpoint inside a shared library.
 Shared libraries can be loaded and unloaded explicitly, and possibly
@@ -3619,6 +3747,23 @@ shared library.  Use the 'catch' command to set a catchpoint.
           'Constraint_Error' is defined in package 'Pck', then the
           command to use to catch such exceptions is 'catch exception
           Pck.Constraint_Error'.
+
+     'handlers'
+          An Ada exception being handled.  If an exception name is
+          specified at the end of the command (eg 'catch handlers
+          Program_Error'), the debugger will stop only when this
+          specific exception is handled.  Otherwise, the debugger stops
+          execution when any Ada exception is handled.
+
+          When inserting a handlers catchpoint on a user-defined
+          exception whose name is identical to one of the exceptions
+          defined by the language, the fully qualified name must be used
+          as the exception name.  Otherwise, GDB will assume that it
+          should stop on the pre-defined exception rather than the
+          user-defined one.  For instance, assuming an exception called
+          'Constraint_Error' is defined in package 'Pck', then the
+          command to use to catch such exceptions handling is 'catch
+          handlers Pck.Constraint_Error'.
 
      'exception unhandled'
           An exception that was raised but is not handled by the
@@ -4802,6 +4947,14 @@ breakpoints.  These are the commands for managing your list of skips:
      Disable the specified skip(s).  If RANGE is not specified, disable
      all skips.
 
+'set debug skip [on|off]'
+     Set whether to print the debug output about skipping files and
+     functions.
+
+'show debug skip'
+     Show whether the debug output about skipping files and functions is
+     printed.
+
 
 File: gdb.info,  Node: Signals,  Next: Thread Stops,  Prev: Skipping Over Functions and Files,  Up: Stopping
 
@@ -5761,8 +5914,62 @@ GDB provides the following commands:
      that the accessed memory corresponds to the live target and not
      necessarily to the current replay position.
 
+'set record btrace cpu IDENTIFIER'
+     Set the processor to be used for enabling workarounds for processor
+     errata when decoding the trace.
+
+     Processor errata are defects in processor operation, caused by its
+     design or manufacture.  They can cause a trace not to match the
+     specification.  This, in turn, may cause trace decode to fail.  GDB
+     can detect erroneous trace packets and correct them, thus avoiding
+     the decoding failures.  These corrections are known as "errata
+     workarounds", and are enabled based on the processor on which the
+     trace was recorded.
+
+     By default, GDB attempts to detect the processor automatically, and
+     apply the necessary workarounds for it.  However, you may need to
+     specify the processor if GDB does not yet support it.  This command
+     allows you to do that, and also allows to disable the workarounds.
+
+     The argument IDENTIFIER identifies the CPU and is of the form:
+     'VENDOR:PROCESOR IDENTIFIER'.  In addition, there are two special
+     identifiers, 'none' and 'auto' (default).
+
+     The following vendor identifiers and corresponding processor
+     identifiers are currently supported:
+
+     'intel' FAMILY/MODEL[/STEPPING]
+             
+
+     On GNU/Linux systems, the processor FAMILY, MODEL, and STEPPING can
+     be obtained from '/proc/cpuinfo'.
+
+     If IDENTIFIER is 'auto', enable errata workarounds for the
+     processor on which the trace was recorded.  If IDENTIFIER is
+     'none', errata workarounds are disabled.
+
+     For example, when using an old GDB on a new system, decode may fail
+     because GDB does not support the new processor.  It often suffices
+     to specify an older processor that GDB supports.
+
+          (gdb) info record
+          Active record target: record-btrace
+          Recording format: Intel Processor Trace.
+          Buffer size: 16kB.
+          Failed to configure the Intel Processor Trace decoder: unknown cpu.
+          (gdb) set record btrace cpu intel:6/158
+          (gdb) info record
+          Active record target: record-btrace
+          Recording format: Intel Processor Trace.
+          Buffer size: 16kB.
+          Recorded 84872 instructions in 3189 functions (0 gaps) for thread 1 (...).
+
 'show record btrace replay-memory-access'
      Show the current setting of 'replay-memory-access'.
+
+'show record btrace cpu'
+     Show the processor to be used for enabling trace decode errata
+     workarounds.
 
 'set record btrace bts buffer-size SIZE'
 'set record btrace bts buffer-size unlimited'
@@ -6007,6 +6214,7 @@ executing frame and describes it briefly, similar to the 'frame' command
 * Backtrace::                   Backtraces
 * Selection::                   Selecting a frame
 * Frame Info::                  Information on a frame
+* Frame Apply::                 Applying a command to several frames
 * Frame Filter Management::     Managing frame filters
 
 
@@ -6037,11 +6245,11 @@ address serves as the address of the frame.  Usually this address is
 kept in a register called the "frame pointer register" (*note $fp:
 Registers.) while execution is going on in that frame.
 
-   GDB assigns numbers to all existing stack frames, starting with zero
-for the innermost frame, one for the frame that called it, and so on
-upward.  These numbers do not really exist in your program; they are
-assigned by GDB to give you a way of designating stack frames in GDB
-commands.
+   GDB labels each existing stack frame with a "level", a number that is
+zero for the innermost frame, one for the frame that called it, and so
+on upward.  These level numbers give you a way of designating stack
+frames in GDB commands.  The terms "frame number" and "frame level" can
+be used interchangeably to describe this number.
 
    Some compilers provide a way to compile functions so that they
 operate without stack frames.  (For example, the GCC option
@@ -6065,40 +6273,44 @@ one line per frame, for many frames, starting with the currently
 executing frame (frame zero), followed by its caller (frame one), and on
 up the stack.
 
-'backtrace'
-'bt'
-     Print a backtrace of the entire stack: one line per frame for all
-     frames in the stack.
+   To print a backtrace of the entire stack, use the 'backtrace'
+command, or its alias 'bt'.  This command will print one line per frame
+for frames in the stack.  By default, all stack frames are printed.  You
+can stop the backtrace at any time by typing the system interrupt
+character, normally 'Ctrl-c'.
 
-     You can stop the backtrace at any time by typing the system
-     interrupt character, normally 'Ctrl-c'.
+'backtrace [ARGS...]'
+'bt [ARGS...]'
+     Print the backtrace of the entire stack.  The optional ARGS can be
+     one of the following:
 
-'backtrace N'
-'bt N'
-     Similar, but print only the innermost N frames.
+     'N'
+     'N'
+          Print only the innermost N frames, where N is a positive
+          number.
 
-'backtrace -N'
-'bt -N'
-     Similar, but print only the outermost N frames.
+     '-N'
+     '-N'
+          Print only the outermost N frames, where N is a positive
+          number.
 
-'backtrace full'
-'bt full'
-'bt full N'
-'bt full -N'
-     Print the values of the local variables also.  As described above,
-     N specifies the number of frames to print.
+     'full'
+          Print the values of the local variables also.  This can be
+          combined with a number to limit the number of frames shown.
 
-'backtrace no-filters'
-'bt no-filters'
-'bt no-filters N'
-'bt no-filters -N'
-'bt no-filters full'
-'bt no-filters full N'
-'bt no-filters full -N'
-     Do not run Python frame filters on this backtrace.  *Note Frame
-     Filter API::, for more information.  Additionally use *note disable
-     frame-filter all:: to turn off all frame filters.  This is only
-     relevant when GDB has been configured with 'Python' support.
+     'no-filters'
+          Do not run Python frame filters on this backtrace.  *Note
+          Frame Filter API::, for more information.  Additionally use
+          *note disable frame-filter all:: to turn off all frame
+          filters.  This is only relevant when GDB has been configured
+          with 'Python' support.
+
+     'hide'
+          A Python frame filter might decide to "elide" some frames.
+          Normally such elided frames are still printed, but they are
+          indented relative to the filtered frames that cause them to be
+          elided.  The 'hide' option causes elided frames to not be
+          printed at all.
 
    The names 'where' and 'info stack' (abbreviated 'info s') are
 additional aliases for 'backtrace'.
@@ -6235,21 +6447,63 @@ work on whichever stack frame is selected at the moment.  Here are the
 commands for selecting a stack frame; all of them finish by printing a
 brief description of the stack frame just selected.
 
-'frame N'
-'f N'
-     Select frame number N.  Recall that frame zero is the innermost
-     (currently executing) frame, frame one is the frame that called the
-     innermost one, and so on.  The highest-numbered frame is the one
-     for 'main'.
+'frame [ FRAME-SELECTION-SPEC ]'
+'f [ FRAME-SELECTION-SPEC ]'
+     The 'frame' command allows different stack frames to be selected.
+     The FRAME-SELECTION-SPEC can be any of the following:
 
-'frame STACK-ADDR [ PC-ADDR ]'
-'f STACK-ADDR [ PC-ADDR ]'
-     Select the frame at address STACK-ADDR.  This is useful mainly if
-     the chaining of stack frames has been damaged by a bug, making it
-     impossible for GDB to assign numbers properly to all frames.  In
-     addition, this can be useful when your program has multiple stacks
-     and switches between them.  The optional PC-ADDR can also be given
-     to specify the value of PC for the stack frame.
+     'NUM'
+     'level NUM'
+          Select frame level NUM.  Recall that frame zero is the
+          innermost (currently executing) frame, frame one is the frame
+          that called the innermost one, and so on.  The highest level
+          frame is usually the one for 'main'.
+
+          As this is the most common method of navigating the frame
+          stack, the string 'level' can be omitted.  For example, the
+          following two commands are equivalent:
+
+               (gdb) frame 3
+               (gdb) frame level 3
+
+     'address STACK-ADDRESS'
+          Select the frame with stack address STACK-ADDRESS.  The
+          STACK-ADDRESS for a frame can be seen in the output of 'info
+          frame', for example:
+
+               (gdb) info frame
+               Stack level 1, frame at 0x7fffffffda30:
+                rip = 0x40066d in b (amd64-entry-value.cc:59); saved rip 0x4004c5
+                tail call frame, caller of frame at 0x7fffffffda30
+                source language c++.
+                Arglist at unknown address.
+                Locals at unknown address, Previous frame's sp is 0x7fffffffda30
+
+          The STACK-ADDRESS for this frame is '0x7fffffffda30' as
+          indicated by the line:
+
+               Stack level 1, frame at 0x7fffffffda30:
+
+     'function FUNCTION-NAME'
+          Select the stack frame for function FUNCTION-NAME.  If there
+          are multiple stack frames for function FUNCTION-NAME then the
+          inner most stack frame is selected.
+
+     'view STACK-ADDRESS [ PC-ADDR ]'
+          View a frame that is not part of GDB's backtrace.  The frame
+          viewed has stack address STACK-ADDR, and optionally, a program
+          counter address of PC-ADDR.
+
+          This is useful mainly if the chaining of stack frames has been
+          damaged by a bug, making it impossible for GDB to assign
+          numbers properly to all frames.  In addition, this can be
+          useful when your program has multiple stacks and switches
+          between them.
+
+          When viewing a frame outside the current backtrace using
+          'frame view' then you can always return to the original stack
+          using one of the previous stack frame selection instructions,
+          for example 'frame level 0'.
 
 'up N'
      Move N frames up the stack; N defaults to 1.  For positive numbers
@@ -6280,11 +6534,13 @@ edit the program at the point of execution with your favorite editing
 program by typing 'edit'.  *Note Printing Source Lines: List, for
 details.
 
-'select-frame'
+'select-frame [ FRAME-SELECTION-SPEC ]'
      The 'select-frame' command is a variant of 'frame' that does not
      display the new frame after selecting it.  This command is intended
      primarily for use in GDB command scripts, where the output might be
-     unnecessary and distracting.
+     unnecessary and distracting.  The FRAME-SELECTION-SPEC is as for
+     the 'frame' command described in *note Selecting a Frame:
+     Selection.
 
 'up-silently N'
 'down-silently N'
@@ -6295,7 +6551,7 @@ details.
      distracting.
 
 
-File: gdb.info,  Node: Frame Info,  Next: Frame Filter Management,  Prev: Selection,  Up: Stack
+File: gdb.info,  Node: Frame Info,  Next: Frame Apply,  Prev: Selection,  Up: Stack
 
 8.4 Information About a Frame
 =============================
@@ -6330,27 +6586,179 @@ stack frame.
      The verbose description is useful when something has gone wrong
      that has made the stack format fail to fit the usual conventions.
 
-'info frame ADDR'
-'info f ADDR'
-     Print a verbose description of the frame at address ADDR, without
-     selecting that frame.  The selected frame remains unchanged by this
-     command.  This requires the same kind of address (more than one for
-     some architectures) that you specify in the 'frame' command.  *Note
-     Selecting a Frame: Selection.
+'info frame [ FRAME-SELECTION-SPEC ]'
+'info f [ FRAME-SELECTION-SPEC ]'
+     Print a verbose description of the frame selected by
+     FRAME-SELECTION-SPEC.  The FRAME-SELECTION-SPEC is the same as for
+     the 'frame' command (*note Selecting a Frame: Selection.).  The
+     selected frame remains unchanged by this command.
 
-'info args'
+'info args [-q]'
      Print the arguments of the selected frame, each on a separate line.
 
-'info locals'
+     The optional flag '-q', which stands for 'quiet', disables printing
+     header information and messages explaining why no argument have
+     been printed.
+
+'info args [-q] [-t TYPE_REGEXP] [REGEXP]'
+     Like 'info args', but only print the arguments selected with the
+     provided regexp(s).
+
+     If REGEXP is provided, print only the arguments whose names match
+     the regular expression REGEXP.
+
+     If TYPE_REGEXP is provided, print only the arguments whose types,
+     as printed by the 'whatis' command, match the regular expression
+     TYPE_REGEXP.  If TYPE_REGEXP contains space(s), it should be
+     enclosed in quote characters.  If needed, use backslash to escape
+     the meaning of special characters or quotes.
+
+     If both REGEXP and TYPE_REGEXP are provided, an argument is printed
+     only if its name matches REGEXP and its type matches TYPE_REGEXP.
+
+'info locals [-q]'
      Print the local variables of the selected frame, each on a separate
      line.  These are all variables (declared either static or
      automatic) accessible at the point of execution of the selected
      frame.
 
-
-File: gdb.info,  Node: Frame Filter Management,  Prev: Frame Info,  Up: Stack
+     The optional flag '-q', which stands for 'quiet', disables printing
+     header information and messages explaining why no local variables
+     have been printed.
 
-8.5 Management of Frame Filters.
+'info locals [-q] [-t TYPE_REGEXP] [REGEXP]'
+     Like 'info locals', but only print the local variables selected
+     with the provided regexp(s).
+
+     If REGEXP is provided, print only the local variables whose names
+     match the regular expression REGEXP.
+
+     If TYPE_REGEXP is provided, print only the local variables whose
+     types, as printed by the 'whatis' command, match the regular
+     expression TYPE_REGEXP.  If TYPE_REGEXP contains space(s), it
+     should be enclosed in quote characters.  If needed, use backslash
+     to escape the meaning of special characters or quotes.
+
+     If both REGEXP and TYPE_REGEXP are provided, a local variable is
+     printed only if its name matches REGEXP and its type matches
+     TYPE_REGEXP.
+
+     The command 'info locals -q -t TYPE_REGEXP' can usefully be
+     combined with the commands 'frame apply' and 'thread apply'.  For
+     example, your program might use Resource Acquisition Is
+     Initialization types (RAII) such as 'lock_something_t': each local
+     variable of type 'lock_something_t' automatically places a lock
+     that is destroyed when the variable goes out of scope.  You can
+     then list all acquired locks in your program by doing
+          thread apply all -s frame apply all -s info locals -q -t lock_something_t
+     or the equivalent shorter form
+          tfaas i lo -q -t lock_something_t
+
+
+File: gdb.info,  Node: Frame Apply,  Next: Frame Filter Management,  Prev: Frame Info,  Up: Stack
+
+8.5 Applying a Command to Several Frames.
+=========================================
+
+'frame apply [all | COUNT | -COUNT | level LEVEL...] [FLAG]... COMMAND'
+     The 'frame apply' command allows you to apply the named COMMAND to
+     one or more frames.
+
+     'all'
+          Specify 'all' to apply COMMAND to all frames.
+
+     'COUNT'
+          Use COUNT to apply COMMAND to the innermost COUNT frames,
+          where COUNT is a positive number.
+
+     '-COUNT'
+          Use -COUNT to apply COMMAND to the outermost COUNT frames,
+          where COUNT is a positive number.
+
+     'level'
+          Use 'level' to apply COMMAND to the set of frames identified
+          by the LEVEL list.  LEVEL is a frame level or a range of frame
+          levels as LEVEL1-LEVEL2.  The frame level is the number shown
+          in the first field of the 'backtrace' command output.  E.g.,
+          '2-4 6-8 3' indicates to apply COMMAND for the frames at
+          levels 2, 3, 4, 6, 7, 8, and then again on frame at level 3.
+
+   Note that the frames on which 'frame apply' applies a command are
+also influenced by the 'set backtrace' settings such as 'set backtrace
+past-main' and 'set backtrace limit N'.  See *Note Backtraces:
+Backtrace.
+
+   The FLAG arguments control what output to produce and how to handle
+errors raised when applying COMMAND to a frame.  FLAG must start with a
+'-' directly followed by one letter in 'qcs'.  If several flags are
+provided, they must be given individually, such as '-c -q'.
+
+   By default, GDB displays some frame information before the output
+produced by COMMAND, and an error raised during the execution of a
+COMMAND will abort 'frame apply'.  The following flags can be used to
+fine-tune this behavior:
+
+'-c'
+     The flag '-c', which stands for 'continue', causes any errors in
+     COMMAND to be displayed, and the execution of 'frame apply' then
+     continues.
+'-s'
+     The flag '-s', which stands for 'silent', causes any errors or
+     empty output produced by a COMMAND to be silently ignored.  That
+     is, the execution continues, but the frame information and errors
+     are not printed.
+'-q'
+     The flag '-q' ('quiet') disables printing the frame information.
+
+   The following example shows how the flags '-c' and '-s' are working
+when applying the command 'p j' to all frames, where variable 'j' can
+only be successfully printed in the outermost '#1 main' frame.
+
+     (gdb) frame apply all p j
+     #0  some_function (i=5) at fun.c:4
+     No symbol "j" in current context.
+     (gdb) frame apply all -c p j
+     #0  some_function (i=5) at fun.c:4
+     No symbol "j" in current context.
+     #1  0x565555fb in main (argc=1, argv=0xffffd2c4) at fun.c:11
+     $1 = 5
+     (gdb) frame apply all -s p j
+     #1  0x565555fb in main (argc=1, argv=0xffffd2c4) at fun.c:11
+     $2 = 5
+     (gdb)
+
+   By default, 'frame apply', prints the frame location information
+before the command output:
+
+     (gdb) frame apply all p $sp
+     #0  some_function (i=5) at fun.c:4
+     $4 = (void *) 0xffffd1e0
+     #1  0x565555fb in main (argc=1, argv=0xffffd2c4) at fun.c:11
+     $5 = (void *) 0xffffd1f0
+     (gdb)
+
+   If flag '-q' is given, no frame information is printed:
+     (gdb) frame apply all -q p $sp
+     $12 = (void *) 0xffffd1e0
+     $13 = (void *) 0xffffd1f0
+     (gdb)
+
+'faas COMMAND'
+     Shortcut for 'frame apply all -s COMMAND'.  Applies COMMAND on all
+     frames, ignoring errors and empty output.
+
+     It can for example be used to print a local variable or a function
+     argument without knowing the frame where this variable or argument
+     is, using:
+          (gdb) faas p some_local_var_i_do_not_remember_where_it_is
+
+     Note that the command 'tfaas COMMAND' applies COMMAND on all frames
+     of all threads.  See *Note Threads: Threads.
+
+
+File: gdb.info,  Node: Frame Filter Management,  Prev: Frame Apply,  Up: Stack
+
+8.6 Management of Frame Filters.
 ================================
 
 Frame filters are Python based utilities to manage and decorate the
@@ -6582,428 +6990,4 @@ specify some source line.
 
 'list'
      As described in the preceding table.
-
-
-File: gdb.info,  Node: Specify Location,  Next: Edit,  Prev: List,  Up: Source
-
-9.2 Specifying a Location
-=========================
-
-* Menu:
-
-* Linespec Locations::                Linespec locations
-* Explicit Locations::                Explicit locations
-* Address Locations::                 Address locations
-
-Several GDB commands accept arguments that specify a location of your
-program's code.  Since GDB is a source-level debugger, a location
-usually specifies some line in the source code.  Locations may be
-specified using three different formats: linespec locations, explicit
-locations, or address locations.
-
-
-File: gdb.info,  Node: Linespec Locations,  Next: Explicit Locations,  Up: Specify Location
-
-9.2.1 Linespec Locations
-------------------------
-
-A "linespec" is a colon-separated list of source location parameters
-such as file name, function name, etc.  Here are all the different ways
-of specifying a linespec:
-
-'LINENUM'
-     Specifies the line number LINENUM of the current source file.
-
-'-OFFSET'
-'+OFFSET'
-     Specifies the line OFFSET lines before or after the "current line".
-     For the 'list' command, the current line is the last one printed;
-     for the breakpoint commands, this is the line at which execution
-     stopped in the currently selected "stack frame" (*note Frames:
-     Frames, for a description of stack frames.)  When used as the
-     second of the two linespecs in a 'list' command, this specifies the
-     line OFFSET lines up or down from the first linespec.
-
-'FILENAME:LINENUM'
-     Specifies the line LINENUM in the source file FILENAME.  If
-     FILENAME is a relative file name, then it will match any source
-     file name with the same trailing components.  For example, if
-     FILENAME is 'gcc/expr.c', then it will match source file name of
-     '/build/trunk/gcc/expr.c', but not '/build/trunk/libcpp/expr.c' or
-     '/build/trunk/gcc/x-expr.c'.
-
-'FUNCTION'
-     Specifies the line that begins the body of the function FUNCTION.
-     For example, in C, this is the line with the open brace.
-
-'FUNCTION:LABEL'
-     Specifies the line where LABEL appears in FUNCTION.
-
-'FILENAME:FUNCTION'
-     Specifies the line that begins the body of the function FUNCTION in
-     the file FILENAME.  You only need the file name with a function
-     name to avoid ambiguity when there are identically named functions
-     in different source files.
-
-'LABEL'
-     Specifies the line at which the label named LABEL appears in the
-     function corresponding to the currently selected stack frame.  If
-     there is no current selected stack frame (for instance, if the
-     inferior is not running), then GDB will not search for a label.
-
-'-pstap|-probe-stap [OBJFILE:[PROVIDER:]]NAME'
-     The GNU/Linux tool 'SystemTap' provides a way for applications to
-     embed static probes.  *Note Static Probe Points::, for more
-     information on finding and using static probes.  This form of
-     linespec specifies the location of such a static probe.
-
-     If OBJFILE is given, only probes coming from that shared library or
-     executable matching OBJFILE as a regular expression are considered.
-     If PROVIDER is given, then only probes from that provider are
-     considered.  If several probes match the spec, GDB will insert a
-     breakpoint at each one of those probes.
-
-
-File: gdb.info,  Node: Explicit Locations,  Next: Address Locations,  Prev: Linespec Locations,  Up: Specify Location
-
-9.2.2 Explicit Locations
-------------------------
-
-"Explicit locations" allow the user to directly specify the source
-location's parameters using option-value pairs.
-
-   Explicit locations are useful when several functions, labels, or file
-names have the same name (base name for files) in the program's sources.
-In these cases, explicit locations point to the source line you meant
-more accurately and unambiguously.  Also, using explicit locations might
-be faster in large programs.
-
-   For example, the linespec 'foo:bar' may refer to a function 'bar'
-defined in the file named 'foo' or the label 'bar' in a function named
-'foo'.  GDB must search either the file system or the symbol table to
-know.
-
-   The list of valid explicit location options is summarized in the
-following table:
-
-'-source FILENAME'
-     The value specifies the source file name.  To differentiate between
-     files with the same base name, prepend as many directories as is
-     necessary to uniquely identify the desired file, e.g.,
-     'foo/bar/baz.c'.  Otherwise GDB will use the first file it finds
-     with the given base name.  This option requires the use of either
-     '-function' or '-line'.
-
-'-function FUNCTION'
-     The value specifies the name of a function.  Operations on function
-     locations unmodified by other options (such as '-label' or '-line')
-     refer to the line that begins the body of the function.  In C, for
-     example, this is the line with the open brace.
-
-'-label LABEL'
-     The value specifies the name of a label.  When the function name is
-     not specified, the label is searched in the function of the
-     currently selected stack frame.
-
-'-line NUMBER'
-     The value specifies a line offset for the location.  The offset may
-     either be absolute ('-line 3') or relative ('-line +3'), depending
-     on the command.  When specified without any other options, the line
-     offset is relative to the current line.
-
-   Explicit location options may be abbreviated by omitting any
-non-unique trailing characters from the option name, e.g., 'break -s
-main.c -li 3'.
-
-
-File: gdb.info,  Node: Address Locations,  Prev: Explicit Locations,  Up: Specify Location
-
-9.2.3 Address Locations
------------------------
-
-"Address locations" indicate a specific program address.  They have the
-generalized form *ADDRESS.
-
-   For line-oriented commands, such as 'list' and 'edit', this specifies
-a source line that contains ADDRESS.  For 'break' and other
-breakpoint-oriented commands, this can be used to set breakpoints in
-parts of your program which do not have debugging information or source
-files.
-
-   Here ADDRESS may be any expression valid in the current working
-language (*note working language: Languages.) that specifies a code
-address.  In addition, as a convenience, GDB extends the semantics of
-expressions used in locations to cover several situations that
-frequently occur during debugging.  Here are the various forms of
-ADDRESS:
-
-'EXPRESSION'
-     Any expression valid in the current working language.
-
-'FUNCADDR'
-     An address of a function or procedure derived from its name.  In C,
-     C++, Objective-C, Fortran, minimal, and assembly, this is simply
-     the function's name FUNCTION (and actually a special case of a
-     valid expression).  In Pascal and Modula-2, this is '&FUNCTION'.
-     In Ada, this is 'FUNCTION'Address' (although the Pascal form also
-     works).
-
-     This form specifies the address of the function's first
-     instruction, before the stack frame and arguments have been set up.
-
-''FILENAME':FUNCADDR'
-     Like FUNCADDR above, but also specifies the name of the source file
-     explicitly.  This is useful if the name of the function does not
-     specify the function unambiguously, e.g., if there are several
-     functions with identical names in different source files.
-
-
-File: gdb.info,  Node: Edit,  Next: Search,  Prev: Specify Location,  Up: Source
-
-9.3 Editing Source Files
-========================
-
-To edit the lines in a source file, use the 'edit' command.  The editing
-program of your choice is invoked with the current line set to the
-active line in the program.  Alternatively, there are several ways to
-specify what part of the file you want to print if you want to see other
-parts of the program:
-
-'edit LOCATION'
-     Edit the source file specified by 'location'.  Editing starts at
-     that LOCATION, e.g., at the specified source line of the specified
-     file.  *Note Specify Location::, for all the possible forms of the
-     LOCATION argument; here are the forms of the 'edit' command most
-     commonly used:
-
-     'edit NUMBER'
-          Edit the current source file with NUMBER as the active line
-          number.
-
-     'edit FUNCTION'
-          Edit the file containing FUNCTION at the beginning of its
-          definition.
-
-9.3.1 Choosing your Editor
---------------------------
-
-You can customize GDB to use any editor you want (1).  By default, it is
-'/bin/ex', but you can change this by setting the environment variable
-'EDITOR' before using GDB.  For example, to configure GDB to use the
-'vi' editor, you could use these commands with the 'sh' shell:
-     EDITOR=/usr/bin/vi
-     export EDITOR
-     gdb ...
-   or in the 'csh' shell,
-     setenv EDITOR /usr/bin/vi
-     gdb ...
-
-   ---------- Footnotes ----------
-
-   (1) The only restriction is that your editor (say 'ex'), recognizes
-the following command-line syntax:
-     ex +NUMBER file
-   The optional numeric value +NUMBER specifies the number of the line
-in the file where to start editing.
-
-
-File: gdb.info,  Node: Search,  Next: Source Path,  Prev: Edit,  Up: Source
-
-9.4 Searching Source Files
-==========================
-
-There are two commands for searching through the current source file for
-a regular expression.
-
-'forward-search REGEXP'
-'search REGEXP'
-     The command 'forward-search REGEXP' checks each line, starting with
-     the one following the last line listed, for a match for REGEXP.  It
-     lists the line that is found.  You can use the synonym 'search
-     REGEXP' or abbreviate the command name as 'fo'.
-
-'reverse-search REGEXP'
-     The command 'reverse-search REGEXP' checks each line, starting with
-     the one before the last line listed and going backward, for a match
-     for REGEXP.  It lists the line that is found.  You can abbreviate
-     this command as 'rev'.
-
-
-File: gdb.info,  Node: Source Path,  Next: Machine Code,  Prev: Search,  Up: Source
-
-9.5 Specifying Source Directories
-=================================
-
-Executable programs sometimes do not record the directories of the
-source files from which they were compiled, just the names.  Even when
-they do, the directories could be moved between the compilation and your
-debugging session.  GDB has a list of directories to search for source
-files; this is called the "source path".  Each time GDB wants a source
-file, it tries all the directories in the list, in the order they are
-present in the list, until it finds a file with the desired name.
-
-   For example, suppose an executable references the file
-'/usr/src/foo-1.0/lib/foo.c', and our source path is '/mnt/cross'.  The
-file is first looked up literally; if this fails,
-'/mnt/cross/usr/src/foo-1.0/lib/foo.c' is tried; if this fails,
-'/mnt/cross/foo.c' is opened; if this fails, an error message is
-printed.  GDB does not look up the parts of the source file name, such
-as '/mnt/cross/src/foo-1.0/lib/foo.c'.  Likewise, the subdirectories of
-the source path are not searched: if the source path is '/mnt/cross',
-and the binary refers to 'foo.c', GDB would not find it under
-'/mnt/cross/usr/src/foo-1.0/lib'.
-
-   Plain file names, relative file names with leading directories, file
-names containing dots, etc. are all treated as described above; for
-instance, if the source path is '/mnt/cross', and the source file is
-recorded as '../lib/foo.c', GDB would first try '../lib/foo.c', then
-'/mnt/cross/../lib/foo.c', and after that--'/mnt/cross/foo.c'.
-
-   Note that the executable search path is _not_ used to locate the
-source files.
-
-   Whenever you reset or rearrange the source path, GDB clears out any
-information it has cached about where source files are found and where
-each line is in the file.
-
-   When you start GDB, its source path includes only 'cdir' and 'cwd',
-in that order.  To add other directories, use the 'directory' command.
-
-   The search path is used to find both program source files and GDB
-script files (read using the '-command' option and 'source' command).
-
-   In addition to the source path, GDB provides a set of commands that
-manage a list of source path substitution rules.  A "substitution rule"
-specifies how to rewrite source directories stored in the program's
-debug information in case the sources were moved to a different
-directory between compilation and debugging.  A rule is made of two
-strings, the first specifying what needs to be rewritten in the path,
-and the second specifying how it should be rewritten.  In *note set
-substitute-path::, we name these two parts FROM and TO respectively.
-GDB does a simple string replacement of FROM with TO at the start of the
-directory part of the source file name, and uses that result instead of
-the original file name to look up the sources.
-
-   Using the previous example, suppose the 'foo-1.0' tree has been moved
-from '/usr/src' to '/mnt/cross', then you can tell GDB to replace
-'/usr/src' in all source path names with '/mnt/cross'.  The first lookup
-will then be '/mnt/cross/foo-1.0/lib/foo.c' in place of the original
-location of '/usr/src/foo-1.0/lib/foo.c'.  To define a source path
-substitution rule, use the 'set substitute-path' command (*note set
-substitute-path::).
-
-   To avoid unexpected substitution results, a rule is applied only if
-the FROM part of the directory name ends at a directory separator.  For
-instance, a rule substituting '/usr/source' into '/mnt/cross' will be
-applied to '/usr/source/foo-1.0' but not to '/usr/sourceware/foo-2.0'.
-And because the substitution is applied only at the beginning of the
-directory name, this rule will not be applied to
-'/root/usr/source/baz.c' either.
-
-   In many cases, you can achieve the same result using the 'directory'
-command.  However, 'set substitute-path' can be more efficient in the
-case where the sources are organized in a complex tree with multiple
-subdirectories.  With the 'directory' command, you need to add each
-subdirectory of your project.  If you moved the entire tree while
-preserving its internal organization, then 'set substitute-path' allows
-you to direct the debugger to all the sources with one single command.
-
-   'set substitute-path' is also more than just a shortcut command.  The
-source path is only used if the file at the original location no longer
-exists.  On the other hand, 'set substitute-path' modifies the debugger
-behavior to look at the rewritten location instead.  So, if for any
-reason a source file that is not relevant to your executable is located
-at the original location, a substitution rule is the only method
-available to point GDB at the new location.
-
-   You can configure a default source path substitution rule by
-configuring GDB with the '--with-relocated-sources=DIR' option.  The DIR
-should be the name of a directory under GDB's configured prefix (set
-with '--prefix' or '--exec-prefix'), and directory names in debug
-information under DIR will be adjusted automatically if the installed
-GDB is moved to a new location.  This is useful if GDB, libraries or
-executables with debug information and corresponding source code are
-being moved together.
-
-'directory DIRNAME ...'
-'dir DIRNAME ...'
-     Add directory DIRNAME to the front of the source path.  Several
-     directory names may be given to this command, separated by ':' (';'
-     on MS-DOS and MS-Windows, where ':' usually appears as part of
-     absolute file names) or whitespace.  You may specify a directory
-     that is already in the source path; this moves it forward, so GDB
-     searches it sooner.
-
-     You can use the string '$cdir' to refer to the compilation
-     directory (if one is recorded), and '$cwd' to refer to the current
-     working directory.  '$cwd' is not the same as '.'--the former
-     tracks the current working directory as it changes during your GDB
-     session, while the latter is immediately expanded to the current
-     directory at the time you add an entry to the source path.
-
-'directory'
-     Reset the source path to its default value ('$cdir:$cwd' on Unix
-     systems).  This requires confirmation.
-
-'set directories PATH-LIST'
-     Set the source path to PATH-LIST.  '$cdir:$cwd' are added if
-     missing.
-
-'show directories'
-     Print the source path: show which directories it contains.
-
-'set substitute-path FROM TO'
-     Define a source path substitution rule, and add it at the end of
-     the current list of existing substitution rules.  If a rule with
-     the same FROM was already defined, then the old rule is also
-     deleted.
-
-     For example, if the file '/foo/bar/baz.c' was moved to
-     '/mnt/cross/baz.c', then the command
-
-          (gdb) set substitute-path /foo/bar /mnt/cross
-
-     will tell GDB to replace '/foo/bar' with '/mnt/cross', which will
-     allow GDB to find the file 'baz.c' even though it was moved.
-
-     In the case when more than one substitution rule have been defined,
-     the rules are evaluated one by one in the order where they have
-     been defined.  The first one matching, if any, is selected to
-     perform the substitution.
-
-     For instance, if we had entered the following commands:
-
-          (gdb) set substitute-path /usr/src/include /mnt/include
-          (gdb) set substitute-path /usr/src /mnt/src
-
-     GDB would then rewrite '/usr/src/include/defs.h' into
-     '/mnt/include/defs.h' by using the first rule.  However, it would
-     use the second rule to rewrite '/usr/src/lib/foo.c' into
-     '/mnt/src/lib/foo.c'.
-
-'unset substitute-path [path]'
-     If a path is specified, search the current list of substitution
-     rules for a rule that would rewrite that path.  Delete that rule if
-     found.  A warning is emitted by the debugger if no rule could be
-     found.
-
-     If no path is specified, then all substitution rules are deleted.
-
-'show substitute-path [path]'
-     If a path is specified, then print the source path substitution
-     rule which would rewrite that path, if any.
-
-     If no path is specified, then print all existing source path
-     substitution rules.
-
-   If your source path is cluttered with directories that are no longer
-of interest, GDB may sometimes cause confusion by finding the wrong
-versions of source.  You can correct the situation as follows:
-
-  1. Use 'directory' with no argument to reset the source path to its
-     default value.
-
-  2. Use 'directory' with suitable arguments to reinstall the
-     directories you want in the source path.  You can add all the
-     directories in one command.
 

@@ -115,6 +115,8 @@
 @V@/gdb/ChangeLog-2014 @V@/gdb/ChangeLog.014
 @V@/gdb/ChangeLog-2015 @V@/gdb/ChangeLog.015
 @V@/gdb/ChangeLog-2016 @V@/gdb/ChangeLog.016
+@V@/gdb/ChangeLog-2017 @V@/gdb/ChangeLog.017
+@V@/gdb/ChangeLog-2018 @V@/gdb/ChangeLog.018
 @V@/gdb/ChangeLog-3.x @V@/gdb/ChangeLog.3-x
 @V@/gdb/ada-exp.tab.c @V@/gdb/ada-exp_tab.c
 @V@/gdb/amd64-windows-nat.c @V@/gdb/a64w-nat.c

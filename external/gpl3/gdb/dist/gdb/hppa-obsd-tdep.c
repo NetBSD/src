@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/hppa
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -51,56 +51,56 @@ hppaobsd_supply_gregset (const struct regset *regset,
   gdb_assert (len >= HPPAOBSD_SIZEOF_GREGS);
 
   if (regnum == -1 || regnum == HPPA_R0_REGNUM)
-    regcache_raw_supply (regcache, HPPA_R0_REGNUM, &zero);
+    regcache->raw_supply (HPPA_R0_REGNUM, &zero);
   for (i = HPPA_R1_REGNUM, offset = 4; i <= HPPA_R31_REGNUM; i++, offset += 4)
     {
       if (regnum == -1 || regnum == i)
-	regcache_raw_supply (regcache, i, regs + offset);
+	regcache->raw_supply (i, regs + offset);
     }
 
   if (len >= HPPANBSD_SIZEOF_GREGS)
     {
       if (regnum == -1 || regnum == HPPA_IPSW_REGNUM)
-	regcache_raw_supply (regcache, HPPA_IPSW_REGNUM, regs);
+	regcache->raw_supply (HPPA_IPSW_REGNUM, regs);
       if (regnum == -1 || regnum == HPPA_SAR_REGNUM)
-	regcache_raw_supply (regcache, HPPA_SAR_REGNUM, regs + 32 * 4);
+	regcache->raw_supply (HPPA_SAR_REGNUM, regs + 32 * 4);
       if (regnum == -1 || regnum == HPPA_PCSQ_HEAD_REGNUM)
-	regcache_raw_supply (regcache, HPPA_PCSQ_HEAD_REGNUM, regs + 33 * 4);
+	regcache->raw_supply (HPPA_PCSQ_HEAD_REGNUM, regs + 33 * 4);
       if (regnum == -1 || regnum == HPPA_PCSQ_TAIL_REGNUM)
-	regcache_raw_supply (regcache, HPPA_PCSQ_TAIL_REGNUM, regs + 34 * 4);
+	regcache->raw_supply (HPPA_PCSQ_TAIL_REGNUM, regs + 34 * 4);
       if (regnum == -1 || regnum == HPPA_PCOQ_HEAD_REGNUM)
-	regcache_raw_supply (regcache, HPPA_PCOQ_HEAD_REGNUM, regs + 35 * 4);
+	regcache->raw_supply (HPPA_PCOQ_HEAD_REGNUM, regs + 35 * 4);
       if (regnum == -1 || regnum == HPPA_PCOQ_TAIL_REGNUM)
-	regcache_raw_supply (regcache, HPPA_PCOQ_TAIL_REGNUM, regs + 36 * 4);
+	regcache->raw_supply (HPPA_PCOQ_TAIL_REGNUM, regs + 36 * 4);
       if (regnum == -1 || regnum == HPPA_SR0_REGNUM)
-	regcache_raw_supply (regcache, HPPA_SR0_REGNUM, regs + 37 * 4);
+	regcache->raw_supply (HPPA_SR0_REGNUM, regs + 37 * 4);
       if (regnum == -1 || regnum == HPPA_SR1_REGNUM)
-	regcache_raw_supply (regcache, HPPA_SR1_REGNUM, regs + 38 * 4);
+	regcache->raw_supply (HPPA_SR1_REGNUM, regs + 38 * 4);
       if (regnum == -1 || regnum == HPPA_SR2_REGNUM)
-	regcache_raw_supply (regcache, HPPA_SR2_REGNUM, regs + 39 * 4);
+	regcache->raw_supply (HPPA_SR2_REGNUM, regs + 39 * 4);
       if (regnum == -1 || regnum == HPPA_SR3_REGNUM)
-	regcache_raw_supply (regcache, HPPA_SR3_REGNUM, regs + 40 * 4);
+	regcache->raw_supply (HPPA_SR3_REGNUM, regs + 40 * 4);
       if (regnum == -1 || regnum == HPPA_SR4_REGNUM)
-	regcache_raw_supply (regcache, HPPA_SR4_REGNUM, regs + 41 * 4);
+	regcache->raw_supply (HPPA_SR4_REGNUM, regs + 41 * 4);
       if (regnum == -1 || regnum == HPPA_SR5_REGNUM)
-	regcache_raw_supply (regcache, HPPA_SR5_REGNUM, regs + 42 * 4);
+	regcache->raw_supply (HPPA_SR5_REGNUM, regs + 42 * 4);
       if (regnum == -1 || regnum == HPPA_SR6_REGNUM)
-	regcache_raw_supply (regcache, HPPA_SR6_REGNUM, regs + 43 * 4);
+	regcache->raw_supply (HPPA_SR6_REGNUM, regs + 43 * 4);
       if (regnum == -1 || regnum == HPPA_SR7_REGNUM)
-	regcache_raw_supply (regcache, HPPA_SR7_REGNUM, regs + 44 * 4);
+	regcache->raw_supply (HPPA_SR7_REGNUM, regs + 44 * 4);
       if (regnum == -1 || regnum == HPPA_CR26_REGNUM)
-	regcache_raw_supply (regcache, HPPA_CR26_REGNUM, regs + 45 * 4);
+	regcache->raw_supply (HPPA_CR26_REGNUM, regs + 45 * 4);
       if (regnum == -1 || regnum == HPPA_CR27_REGNUM)
-	regcache_raw_supply (regcache, HPPA_CR27_REGNUM, regs + 46 * 4);
+	regcache->raw_supply (HPPA_CR27_REGNUM, regs + 46 * 4);
     }
   else
     {
       if (regnum == -1 || regnum == HPPA_SAR_REGNUM)
-	regcache_raw_supply (regcache, HPPA_SAR_REGNUM, regs);
+	regcache->raw_supply (HPPA_SAR_REGNUM, regs);
       if (regnum == -1 || regnum == HPPA_PCOQ_HEAD_REGNUM)
-	regcache_raw_supply (regcache, HPPA_PCOQ_HEAD_REGNUM, regs + 32 * 4);
+	regcache->raw_supply (HPPA_PCOQ_HEAD_REGNUM, regs + 32 * 4);
       if (regnum == -1 || regnum == HPPA_PCOQ_TAIL_REGNUM)
-	regcache_raw_supply (regcache, HPPA_PCOQ_TAIL_REGNUM, regs + 33 * 4);
+	regcache->raw_supply (HPPA_PCOQ_TAIL_REGNUM, regs + 33 * 4);
     }
 }
 
@@ -121,7 +121,7 @@ hppaobsd_supply_fpregset (const struct regset *regset,
   for (i = HPPA_FP0_REGNUM; i <= HPPA_FP31R_REGNUM; i++)
     {
       if (regnum == i || regnum == -1)
-	regcache_raw_supply (regcache, i, regs + (i - HPPA_FP0_REGNUM) * 4);
+	regcache->raw_supply (i, regs + (i - HPPA_FP0_REGNUM) * 4);
     }
 }
 
@@ -149,8 +149,10 @@ hppaobsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 				       void *cb_data,
 				       const struct regcache *regcache)
 {
-  cb (".reg", HPPAOBSD_SIZEOF_GREGS, &hppaobsd_gregset, NULL, cb_data);
-  cb (".reg2", HPPAOBSD_SIZEOF_FPREGS, &hppaobsd_fpregset, NULL, cb_data);
+  cb (".reg", HPPAOBSD_SIZEOF_GREGS, HPPAOBSD_SIZEOF_GREGS, &hppaobsd_gregset,
+      NULL, cb_data);
+  cb (".reg2", HPPAOBSD_SIZEOF_FPREGS, HPPAOBSD_SIZEOF_FPREGS,
+      &hppaobsd_fpregset, NULL, cb_data);
 }
 
 
@@ -164,10 +166,6 @@ hppaobsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, hppaobsd_iterate_over_regset_sections);
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_hppabsd_tdep (void);
 
 void
 _initialize_hppabsd_tdep (void)

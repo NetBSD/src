@@ -1,5 +1,5 @@
 /* Portability wrappers for setjmp and longjmp.
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_SETJMP_H
-#define GDB_SETJMP_H
+#ifndef COMMON_GDB_SETJMP_H
+#define COMMON_GDB_SETJMP_H
 
 #include <setjmp.h>
 
@@ -31,4 +31,4 @@
 #define SIGLONGJMP(buf,val)	longjmp((buf), (val))
 #endif
 
-#endif /* GDB_SETJMP_H */
+#endif /* COMMON_GDB_SETJMP_H */

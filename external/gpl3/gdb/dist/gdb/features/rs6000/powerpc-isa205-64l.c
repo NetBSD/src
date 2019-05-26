@@ -10,9 +10,9 @@ static void
 initialize_tdesc_powerpc_isa205_64l (void)
 {
   struct target_desc *result = allocate_target_description ();
-  struct tdesc_feature *feature;
-
   set_tdesc_architecture (result, bfd_scan_arch ("powerpc:common64"));
+
+  struct tdesc_feature *feature;
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.power.core");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 64, "uint64");

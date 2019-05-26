@@ -1,6 +1,7 @@
 # THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
 # Generated from: aarch64.xml
 name:aarch64
+feature:1
 xmltarget:aarch64.xml
 expedite:x29,sp,pc
 64:x0

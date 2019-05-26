@@ -7,7 +7,7 @@
 
 @c This file is part of the GDB manual.
 @c
-@c Copyright (C) 2003-2017 Free Software Foundation, Inc.
+@c Copyright (C) 2003-2019 Free Software Foundation, Inc.
 @c
 @c See the file gdb.texinfo for copying conditions.
 
@@ -396,8 +396,10 @@ is zero, this is the same as @code{dup}; if @var{n} is one, it copies
 the item under the top item, etc.  If @var{n} exceeds the number of
 items on the stack, terminate with an error.
 
-@item @code{rot} (0x33): @var{a} @var{b} @var{c} => @var{c} @var{b} @var{a}
-Rotate the top three items on the stack.
+@item @code{rot} (0x33): @var{a} @var{b} @var{c} => @var{c} @var{a} @var{b}
+Rotate the top three items on the stack.  The top item (c) becomes the third
+item, the next-to-top item (b) becomes the top item and the third item (a) from
+the top becomes the next-to-top item.
 
 @item @code{if_goto} (0x20) @var{offset}: @var{a} @result{}
 Pop an integer off the stack; if it is non-zero, branch to the given

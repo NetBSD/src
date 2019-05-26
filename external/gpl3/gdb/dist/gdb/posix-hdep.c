@@ -1,6 +1,6 @@
 /* Host support routines for MinGW, for GDB, the GNU debugger.
 
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,4 +29,12 @@ gdb_select (int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	    struct timeval *timeout)
 {
   return select (n, readfds, writefds, exceptfds, timeout);
+}
+
+/* Host-dependent console fputs method.  POSIX platforms always return
+   zero, to use the default C 'fputs'.  */
+int
+gdb_console_fputs (const char *buf, FILE *f)
+{
+  return 0;
 }
