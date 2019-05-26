@@ -1,7 +1,7 @@
 /* GNU/Linux S/390 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2016 Free Software Foundation, Inc.
+   Copyright (C) 2016-2017 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
