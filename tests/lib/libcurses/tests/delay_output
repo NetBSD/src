@@ -1,0 +1,5 @@
+include start
+call OK delay_output 30
+call OK addstr "test"
+call OK refresh
+compare delay_output.chk
