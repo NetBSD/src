@@ -43,10 +43,6 @@
 	
 	swiwrite 5
 	exit 0
-
-	.data
-.Lpass:
-	.asciz "pass\n"
 	.endm
 
 # MACRO: fail
@@ -56,16 +52,18 @@
 	adrp	x1, .Lfail
 	add	x1, x1, :lo12:.Lfail
 	swiwrite 5
-	exit 0
-
-	.data
-.Lfail:
-	.asciz "fail\n"
+	exit 1
 	.endm
 
 # MACRO: start
 # All assembler tests should start with a call to "start"
 	.macro start
+	.data
+.Lpass:
+	.asciz "pass\n"
+.Lfail:
+	.asciz "fail\n"
+
 	.text
 .global _start
 _start:

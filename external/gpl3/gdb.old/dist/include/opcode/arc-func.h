@@ -1,5 +1,5 @@
 /* Replace functions for the ARC relocs.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler, GDB, the GNU debugger, and
    the GNU Binutils.
@@ -264,3 +264,18 @@ replace_disp9s1 (unsigned insn, int value ATTRIBUTE_UNUSED)
 }
 
 #endif /* REPLACE_disp9s1 */
+
+/* mask  = 00000000000000000000111111222222.  */
+#ifndef REPLACE_disp12s
+#define REPLACE_disp12s
+ATTRIBUTE_UNUSED static unsigned
+replace_disp12s (unsigned insn, int value ATTRIBUTE_UNUSED)
+{
+  insn = insn & ~0xfff;
+  insn |= ((value >> 0) & 0x003f) << 6;
+  insn |= ((value >> 6) & 0x003f) << 0;
+
+  return insn;
+}
+
+#endif /* REPLACE_disp12s */

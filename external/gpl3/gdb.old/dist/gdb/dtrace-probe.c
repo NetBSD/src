@@ -1,6 +1,6 @@
 /* DTrace probe support for GDB.
 
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
    Contributed by Oracle, Inc.
 
@@ -413,7 +413,7 @@ dtrace_process_dof_probe (struct objfile *objfile,
       for (j = 0; j < ret->probe_argc; j++)
 	{
 	  struct dtrace_probe_arg arg;
-	  struct expression *expr = NULL;
+	  expression_up expr;
 
 	  /* Set arg.expr to ensure all fields in expr are initialized and
 	     the compiler will not warn when arg is used.  */
@@ -435,7 +435,6 @@ dtrace_process_dof_probe (struct objfile *objfile,
 	    }
 	  CATCH (ex, RETURN_MASK_ERROR)
 	    {
-	      expr = NULL;
 	    }
 	  END_CATCH
 
