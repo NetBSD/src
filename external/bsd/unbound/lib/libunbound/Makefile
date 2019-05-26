@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2018/02/06 03:05:48 christos Exp $
+# $NetBSD: Makefile,v 1.4 2019/05/26 02:49:12 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -33,6 +33,7 @@ dname.c \
 dns.c \
 dns64.c \
 dnstree.c \
+edns.c \
 fptr_wlist.c \
 infra.c \
 iter_delegpt.c \
@@ -77,6 +78,7 @@ rtt.c \
 sbuffer.c \
 slabhash.c \
 str2wire.c \
+tcp_conn_limit.c \
 timehist.c \
 tube.c \
 ub_event_pluggable.c \
