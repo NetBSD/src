@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gmac.c,v 1.3 2019/02/23 17:18:38 martin Exp $ */
+/* $NetBSD: sunxi_gmac.c,v 1.4 2019/05/27 23:27:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.3 2019/02/23 17:18:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.4 2019/05/27 23:27:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -108,6 +108,7 @@ sunxi_gmac_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	struct clk *clk_gmac, *clk_gmac_tx;
 	struct fdtbus_reset *rst_gmac;
+	struct fdtbus_regulator *reg_phy;
 	const char *phy_mode;
 	char intrstr[128];
 	bus_addr_t addr;
@@ -145,6 +146,13 @@ sunxi_gmac_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": missing 'phy-mode' property\n");
 		return;
 	}
+
+	reg_phy = fdtbus_regulator_acquire(phandle, "phy-supply");
+	if (reg_phy != NULL && fdtbus_regulator_enable(reg_phy) != 0) {
+		aprint_error(": couldn't enable PHY regualtor\n");
+		return;
+	}
+
 	if (strcmp(phy_mode, "mii") == 0) {
 		if (clk_set_rate(clk_gmac_tx, GMAC_TX_RATE_MII) != 0) {
 			aprint_error(": failed to set TX clock rate (MII)\n");
