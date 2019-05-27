@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.19 2019/05/27 21:10:44 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.20 2019/05/27 21:36:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.19 2019/05/27 21:10:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.20 2019/05/27 21:36:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -998,6 +998,7 @@ axpreg_attach(device_t parent, device_t self, void *aux)
 	struct axpreg_attach_args *aaa = aux;
 	const int phandle = aaa->reg_phandle;
 	const char *name;
+	u_int uvol, min_uvol, max_uvol;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = aaa->reg_i2c;
@@ -1013,6 +1014,15 @@ axpreg_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": %s\n", name);
 	else
 		aprint_normal("\n");
+
+	axpreg_get_voltage(self, &uvol);
+	if (of_getprop_uint32(phandle, "regulator-min-microvolt", &min_uvol) == 0 &&
+	    of_getprop_uint32(phandle, "regulator-max-microvolt", &max_uvol) == 0) {
+		if (uvol < min_uvol || uvol > max_uvol) {
+			aprint_debug_dev(self, "fix voltage %u uV -> %u/%u uV\n", uvol, min_uvol, max_uvol);
+			axpreg_set_voltage(self, min_uvol, max_uvol);
+		}
+	}
 }
 
 CFATTACH_DECL_NEW(axppmic, sizeof(struct axppmic_softc),
