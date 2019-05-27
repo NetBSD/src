@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.32 2019/01/03 15:34:41 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.33 2019/05/27 23:27:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.32 2019/01/03 15:34:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.33 2019/05/27 23:27:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -358,10 +358,15 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_reg_vmmc = fdtbus_regulator_acquire(phandle, "vmmc-supply");
+	if (sc->sc_reg_vmmc != NULL && fdtbus_regulator_enable(sc->sc_reg_vmmc)) {
+		aprint_error(": couldn't enable vmmc-supply\n");
+		return;
+	}
+
 	aprint_naive("\n");
 	aprint_normal(": SD/MMC controller\n");
 
-	sc->sc_reg_vmmc = fdtbus_regulator_acquire(phandle, "vmmc-supply");
 	sc->sc_reg_vqmmc = fdtbus_regulator_acquire(phandle, "vqmmc-supply");
 
 	sc->sc_gpio_cd = fdtbus_gpio_acquire(phandle, "cd-gpios",
