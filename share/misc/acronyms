@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.282 2019/05/24 10:08:46 sevan Exp $
+$NetBSD: acronyms,v 1.283 2019/05/27 16:54:38 sevan Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -186,6 +186,7 @@ GA	go ahead
 GAC	get a clue
 GAL	get a life
 GBTW	get back to work
+GCD	greatest common divisor
 GDPR	General Data Protection Regulation
 GF	girlfriend
 GFU	good for you
