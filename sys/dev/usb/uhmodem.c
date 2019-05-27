@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.19 2019/05/09 02:43:35 mrg Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.20 2019/05/27 03:08:13 maya Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.19 2019/05/09 02:43:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.20 2019/05/27 03:08:13 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -364,6 +364,9 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   sc->sc_dev);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 
