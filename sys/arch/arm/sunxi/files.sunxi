@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.62 2019/05/08 13:40:14 isaki Exp $
+#	$NetBSD: files.sunxi,v 1.63 2019/05/27 21:12:54 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -96,6 +96,16 @@ file	arch/arm/sunxi/sunxi_gmacclk.c		sunxi_gmacclk
 device	sun9immcclk
 attach	sun9immcclk at fdt with sunxi_a80_mmcclk
 file	arch/arm/sunxi/sun9i_a80_mmcclk.c	sunxi_a80_mmcclk
+
+# CPUS clock driver (A80)
+device	sun9icpusclk
+attach	sun9icpusclk at fdt with sunxi_a80_cpusclk
+file	arch/arm/sunxi/sun9i_a80_cpusclk.c	sunxi_a80_cpusclk
+
+# APB0 clock driver (A80)
+device	sun8iapbclk
+attach	sun8iapbclk at fdt with sunxi_a23_apbclk
+file	arch/arm/sunxi/sun8i_a23_apbclk.c	sunxi_a23_apbclk
 
 # Interrupt controller
 device	sunxiintc: pic, pic_splfuncs
