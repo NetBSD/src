@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nmi.c,v 1.1 2018/05/02 21:20:20 jmcneill Exp $ */
+/* $NetBSD: sunxi_nmi.c,v 1.2 2019/05/27 21:11:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.1 2018/05/02 21:20:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.2 2019/05/27 21:11:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,9 +78,17 @@ static const struct sunxi_nmi_config sun6i_a31_r_intc_config = {
 	.enable_reg = 0x40,
 };
 
+static const struct sunxi_nmi_config sun9i_a80_nmi_config = {
+	.name = "NMI",
+	.ctrl_reg = 0x00,
+	.pend_reg = 0x04,
+	.enable_reg = 0x08,
+};
+
 static const struct of_compat_data compat_data[] = {
 	{ "allwinner,sun7i-a20-sc-nmi",	(uintptr_t)&sun7i_a20_sc_nmi_config },
 	{ "allwinner,sun6i-a31-r-intc",	(uintptr_t)&sun6i_a31_r_intc_config },
+	{ "allwinner,sun9i-a80-nmi",	(uintptr_t)&sun9i_a80_nmi_config },
 	{ NULL }
 };
 
