@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.27 2019/05/27 17:32:36 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.28 2019/05/27 18:36:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.27 2019/05/27 17:32:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.28 2019/05/27 18:36:37 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -268,7 +268,7 @@ svs_tree_add(struct cpu_info *ci, vaddr_t va)
 }
 
 static void
-svs_page_add(struct cpu_info *ci, vaddr_t va)
+svs_page_add(struct cpu_info *ci, vaddr_t va, bool global)
 {
 	pd_entry_t *srcpde, *dstpde, pde;
 	size_t idx, pidx;
@@ -289,9 +289,10 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 		panic("%s: L2 page not mapped", __func__);
 	}
 	if (srcpde[idx] & PTE_PS) {
+		KASSERT(!global);
 		pa = srcpde[idx] & PTE_2MFRAME;
 		pa += (paddr_t)(va % NBPD_L2);
-		pde = (srcpde[idx] & ~(PTE_G|PTE_PS|PTE_2MFRAME)) | pa;
+		pde = (srcpde[idx] & ~(PTE_PS|PTE_2MFRAME)) | pa;
 
 		if (pmap_valid_entry(dstpde[pidx])) {
 			panic("%s: L1 page already mapped", __func__);
@@ -311,7 +312,17 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 	if (pmap_valid_entry(dstpde[pidx])) {
 		panic("%s: L1 page already mapped", __func__);
 	}
-	dstpde[pidx] = srcpde[idx] & ~(PTE_G);
+	dstpde[pidx] = srcpde[idx];
+
+	/*
+	 * If we want a global translation, mark both the src and dst with
+	 * PTE_G.
+	 */
+	if (global) {
+		srcpde[idx] |= PTE_G;
+		dstpde[pidx] |= PTE_G;
+		tlbflushg();
+	}
 }
 
 static void
@@ -394,14 +405,14 @@ svs_utls_init(struct cpu_info *ci)
 }
 
 static void
-svs_range_add(struct cpu_info *ci, vaddr_t va, size_t size)
+svs_range_add(struct cpu_info *ci, vaddr_t va, size_t size, bool global)
 {
 	size_t i, n;
 
 	KASSERT(size % PAGE_SIZE == 0);
 	n = size / PAGE_SIZE;
 	for (i = 0; i < n; i++) {
-		svs_page_add(ci, va + i * PAGE_SIZE);
+		svs_page_add(ci, va + i * PAGE_SIZE, global);
 	}
 }
 
@@ -434,12 +445,12 @@ cpu_svs_init(struct cpu_info *ci)
 
 	mutex_init(&ci->ci_svs_mtx, MUTEX_DEFAULT, IPL_VM);
 
-	svs_page_add(ci, (vaddr_t)&pcpuarea->idt);
-	svs_page_add(ci, (vaddr_t)&pcpuarea->ldt);
+	svs_page_add(ci, (vaddr_t)&pcpuarea->idt, true);
+	svs_page_add(ci, (vaddr_t)&pcpuarea->ldt, true);
 	svs_range_add(ci, (vaddr_t)&pcpuarea->ent[cid],
-	    offsetof(struct pcpu_entry, rsp0));
+	    offsetof(struct pcpu_entry, rsp0), true);
 	svs_range_add(ci, (vaddr_t)&__text_user_start,
-	    (vaddr_t)&__text_user_end - (vaddr_t)&__text_user_start);
+	    (vaddr_t)&__text_user_end - (vaddr_t)&__text_user_start, false);
 
 	svs_rsp0_init(ci);
 	svs_utls_init(ci);

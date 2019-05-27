@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.169 2019/05/27 17:32:36 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.170 2019/05/27 18:36:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.169 2019/05/27 17:32:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.170 2019/05/27 18:36:37 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -586,9 +586,6 @@ cpu_init(struct cpu_info *ci)
 
 	/* If global TLB caching is supported, enable it */
 	if (cpu_feature[0] & CPUID_PGE)
-#ifdef SVS
-		if (!svs_enabled)
-#endif
 		cr4 |= CR4_PGE;
 
 	/*
