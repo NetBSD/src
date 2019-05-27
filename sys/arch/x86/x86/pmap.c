@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.331 2019/03/12 08:29:52 gson Exp $	*/
+/*	$NetBSD: pmap.c,v 1.332 2019/05/27 17:32:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.331 2019/03/12 08:29:52 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.332 2019/05/27 17:32:36 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1116,15 +1116,14 @@ pmap_bootstrap(vaddr_t kva_start)
 
 #if !defined(XENPV)
 	/*
-	 * Begin to enable global TLB entries if they are supported.
-	 * The G bit has no effect until the CR4_PGE bit is set in CR4,
-	 * which happens in cpu_init(), which is run on each cpu
-	 * (and happens later)
+	 * Begin to enable global TLB entries if they are supported: add PTE_G
+	 * attribute to already mapped kernel pages.
+	 *
+	 * The G bit has no effect until the CR4_PGE bit is set in CR4, which
+	 * happens later in cpu_init().
 	 */
 	if (cpu_feature[0] & CPUID_PGE) {
-		pmap_pg_g = PTE_G;		/* enable software */
-
-		/* add PTE_G attribute to already mapped kernel pages */
+		pmap_pg_g = PTE_G;
 		pmap_remap_global();
 	}
 #endif

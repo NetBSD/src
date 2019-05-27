@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.7 2019/04/21 06:37:21 maxv Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.8 2019/05/27 17:32:36 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008-2012 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.7 2019/04/21 06:37:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.8 2019/05/27 17:32:36 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -200,10 +200,10 @@ pmap_tlb_invalidate(const pmap_tlb_packet_t *tp)
 	/* Find out what we need to invalidate. */
 	if (tp->tp_count == (uint16_t)-1) {
 		if (tp->tp_pte & PTE_G) {
-			/* Invalidating user and kernel TLB entries. */
+			/* Invalidating all TLB entries. */
 			tlbflushg();
 		} else {
-			/* Invalidating user TLB entries only. */
+			/* Invalidating non-global TLB entries only. */
 			tlbflush();
 		}
 	} else {

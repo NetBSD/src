@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.26 2019/05/15 17:31:41 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.27 2019/05/27 17:32:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.26 2019/05/15 17:31:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.27 2019/05/27 17:32:36 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -432,8 +432,6 @@ cpu_svs_init(struct cpu_info *ci)
 
 	pmap_update(pmap_kernel());
 
-	ci->ci_svs_kpdirpa = pmap_pdirpa(pmap_kernel(), 0);
-
 	mutex_init(&ci->ci_svs_mtx, MUTEX_DEFAULT, IPL_VM);
 
 	svs_page_add(ci, (vaddr_t)&pcpuarea->idt);
@@ -547,11 +545,9 @@ svs_pdir_switch(struct pmap *pmap)
 	KASSERT(kpreempt_disabled());
 	KASSERT(pmap != pmap_kernel());
 
-	ci->ci_svs_kpdirpa = pmap_pdirpa(pmap, 0);
-
 	/* Update the info in the UTLS page */
 	utls = (struct svs_utls *)ci->ci_svs_utls;
-	utls->kpdirpa = ci->ci_svs_kpdirpa;
+	utls->kpdirpa = pmap_pdirpa(pmap, 0);
 
 	mutex_enter(&ci->ci_svs_mtx);
 
