@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.20 2019/05/27 21:36:07 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.21 2019/05/27 23:28:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.20 2019/05/27 21:36:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.21 2019/05/27 23:28:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,6 +208,14 @@ static const struct axppmic_ctrl axp805_ctrls[] = {
 		0x11, __BIT(6), 0x26, __BITS(4,0)),
 };
 
+static const struct axppmic_ctrl axp809_ctrls[] = {
+	/* TODO: This list is incomplete */
+	AXP_CTRL("ldo_io0", 700, 3300, 100,
+		0x90, __BIT(0), 0x91, __BITS(4,0)),
+	AXP_CTRL("ldo_io1", 700, 3300, 100,
+		0x92, __BIT(0), 0x93, __BITS(4,0)),
+};
+
 static const struct axppmic_ctrl axp813_ctrls[] = {
 	AXP_CTRL("dldo1", 700, 3300, 100,
 		0x12, __BIT(3), 0x15, __BITS(4,0)),
@@ -364,6 +372,12 @@ static const struct axppmic_config axp806_config = {
 	.has_mode_set = true,
 };
 
+static const struct axppmic_config axp809_config = {
+	.name = "AXP809",
+	.controls = axp809_ctrls,
+	.ncontrols = __arraycount(axp809_ctrls),
+};
+
 static const struct axppmic_config axp813_config = {
 	.name = "AXP813",
 	.controls = axp813_ctrls,
@@ -388,6 +402,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ "x-powers,axp803",		(uintptr_t)&axp803_config },
 	{ "x-powers,axp805",		(uintptr_t)&axp805_config },
 	{ "x-powers,axp806",		(uintptr_t)&axp806_config },
+	{ "x-powers,axp809",		(uintptr_t)&axp809_config },
 	{ "x-powers,axp813",		(uintptr_t)&axp813_config },
 	{ NULL,				0 }
 };
@@ -910,6 +925,9 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 			config_found(sc->sc_dev, &aaa, NULL);
 		}
 	}
+
+	/* Notify pinctrl drivers that regulators are available. */
+	fdtbus_pinctrl_configure();
 
 	if (c->has_battery)
 		axppmic_attach_sensors(sc);
