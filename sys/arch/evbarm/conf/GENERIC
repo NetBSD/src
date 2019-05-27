@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.33 2019/05/26 14:12:34 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.34 2019/05/27 21:13:29 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -251,6 +251,8 @@ sun9ia80ccu*	at fdt? pass 2		# Allwinner A80 CCU
 sunxiresets*	at fdt? pass 1		# Allwinner Misc. clock resets
 sunxigates*	at fdt? pass 1		# Allwinner Misc. clock gates
 sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
+sun8iapbclk*	at fdt? pass 2		# Allwinner A23 APB0
+sun9icpusclk*	at fdt? pass 2		# Allwinner A80 CPUS
 sun9immcclk*	at fdt? pass 2		# Allwinner A80 SD/MMC-COMM
 tegra124car*	at fdt? pass 3		# NVIDIA Tegra CAR (T124)
 tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
@@ -421,6 +423,7 @@ tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
 iic*		at i2cbus?
 
 # I2C devices
+ac100ic*	at iic?			# AC100 integrated audio codec and RTC
 as3722pmic*	at iic?
 as3722reg*	at as3722pmic?
 axp20x*		at iic?			# AXP209 Power Management IC
