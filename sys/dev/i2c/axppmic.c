@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.18 2019/01/02 18:38:03 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.19 2019/05/27 21:10:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.18 2019/01/02 18:38:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.19 2019/05/27 21:10:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.18 2019/01/02 18:38:03 jmcneill Exp $"
 #define	 AXP_POWER_MODE_BATT_VALID	__BIT(4)
 #define	 AXP_POWER_MODE_BATT_PRESENT	__BIT(5)
 #define	 AXP_POWER_MODE_BATT_CHARGING	__BIT(6)
+
+#define	AXP_CHIP_ID_REG		0x03
 
 #define AXP_POWER_DISABLE_REG	0x32
 #define	 AXP_POWER_DISABLE_CTRL	__BIT(7)
@@ -97,6 +99,10 @@ __KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.18 2019/01/02 18:38:03 jmcneill Exp $"
 #define	AXP_BATT_CAP_WARN_REG	0xe6
 #define	 AXP_BATT_CAP_WARN_LV1	__BITS(7,4)
 #define	 AXP_BATT_CAP_WARN_LV2	__BITS(3,0)
+
+#define	AXP_ADDR_EXT_REG	0xff	/* AXP806 */
+#define	 AXP_ADDR_EXT_MASTER	0
+#define	 AXP_ADDR_EXT_SLAVE	__BIT(4)
 
 struct axppmic_ctrl {
 	device_t	c_dev;
@@ -258,6 +264,7 @@ struct axppmic_config {
 	u_int irq_regs;
 	bool has_battery;
 	bool has_fuel_gauge;
+	bool has_mode_set;
 	struct axppmic_irq poklirq;
 	struct axppmic_irq acinirq;
 	struct axppmic_irq vbusirq;
@@ -339,11 +346,22 @@ static const struct axppmic_config axp803_config = {
 };
 
 static const struct axppmic_config axp805_config = {
-	.name = "AXP805/806",
+	.name = "AXP805",
 	.controls = axp805_ctrls,
 	.ncontrols = __arraycount(axp805_ctrls),
 	.irq_regs = 2,
 	.poklirq = AXPPMIC_IRQ(2, __BIT(0)),
+};
+
+static const struct axppmic_config axp806_config = {
+	.name = "AXP806",
+	.controls = axp805_ctrls,
+	.ncontrols = __arraycount(axp805_ctrls),
+#if notyet
+	.irq_regs = 2,
+	.poklirq = AXPPMIC_IRQ(2, __BIT(0)),
+#endif
+	.has_mode_set = true,
 };
 
 static const struct axppmic_config axp813_config = {
@@ -369,7 +387,7 @@ static const struct axppmic_config axp813_config = {
 static const struct device_compatible_entry compat_data[] = {
 	{ "x-powers,axp803",		(uintptr_t)&axp803_config },
 	{ "x-powers,axp805",		(uintptr_t)&axp805_config },
-	{ "x-powers,axp806",		(uintptr_t)&axp805_config },
+	{ "x-powers,axp806",		(uintptr_t)&axp806_config },
 	{ "x-powers,axp813",		(uintptr_t)&axp813_config },
 	{ NULL,				0 }
 };
@@ -808,7 +826,8 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 	struct axpreg_attach_args aaa;
 	struct i2c_attach_args *ia = aux;
 	int phandle, child, i;
-	uint32_t irq_mask;
+	uint8_t irq_mask, val;
+	int error;
 	void *ih;
 
 	(void) iic_compatible_match(ia, compat_data, &dce);
@@ -824,33 +843,54 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": %s\n", c->name);
 
+	if (c->has_mode_set) {
+		const bool master_mode = of_hasprop(sc->sc_phandle, "x-powers,self-working-mode") ||
+		    of_hasprop(sc->sc_phandle, "x-powers,master-mode");
+
+		iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+		axppmic_write(sc->sc_i2c, sc->sc_addr, AXP_ADDR_EXT_REG,
+		    master_mode ? AXP_ADDR_EXT_MASTER : AXP_ADDR_EXT_SLAVE, I2C_F_POLL);
+		iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+	}
+
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	error = axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_CHIP_ID_REG, &val, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+	if (error != 0) {
+		aprint_error_dev(self, "couldn't read chipid\n");
+		return;
+	}
+	aprint_debug_dev(self, "chipid %#x\n", val);
+
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_POWER;
 	sysmon_pswitch_register(&sc->sc_smpsw);
 
-	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
-	for (i = 1; i <= c->irq_regs; i++) {
-		irq_mask = 0;
-		if (i == c->poklirq.reg)
-			irq_mask |= c->poklirq.mask;
-		if (i == c->acinirq.reg)
-			irq_mask |= c->acinirq.mask;
-		if (i == c->vbusirq.reg)
-			irq_mask |= c->vbusirq.mask;
-		if (i == c->battirq.reg)
-			irq_mask |= c->battirq.mask;
-		if (i == c->chargeirq.reg)
-			irq_mask |= c->chargeirq.mask;
-		if (i == c->chargestirq.reg)
-			irq_mask |= c->chargestirq.mask;
-		axppmic_write(sc->sc_i2c, sc->sc_addr, AXP_IRQ_ENABLE_REG(i), irq_mask, I2C_F_POLL);
-	}
-	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+	if (c->irq_regs > 0) {
+		iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+		for (i = 1; i <= c->irq_regs; i++) {
+			irq_mask = 0;
+			if (i == c->poklirq.reg)
+				irq_mask |= c->poklirq.mask;
+			if (i == c->acinirq.reg)
+				irq_mask |= c->acinirq.mask;
+			if (i == c->vbusirq.reg)
+				irq_mask |= c->vbusirq.mask;
+			if (i == c->battirq.reg)
+				irq_mask |= c->battirq.mask;
+			if (i == c->chargeirq.reg)
+				irq_mask |= c->chargeirq.mask;
+			if (i == c->chargestirq.reg)
+				irq_mask |= c->chargestirq.mask;
+			axppmic_write(sc->sc_i2c, sc->sc_addr, AXP_IRQ_ENABLE_REG(i), irq_mask, I2C_F_POLL);
+		}
+		iic_release_bus(sc->sc_i2c, I2C_F_POLL);
 
-	ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-	    axppmic_intr, sc);
-	if (ih == NULL) {
-		aprint_error_dev(self, "WARNING: couldn't establish interrupt handler\n");
+		ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+		    axppmic_intr, sc);
+		if (ih == NULL) {
+			aprint_error_dev(self, "WARNING: couldn't establish interrupt handler\n");
+		}
 	}
 
 	fdtbus_register_power_controller(sc->sc_dev, sc->sc_phandle,
