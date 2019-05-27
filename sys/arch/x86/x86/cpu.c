@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.168 2019/03/09 08:42:26 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.169 2019/05/27 17:32:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.168 2019/03/09 08:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.169 2019/05/27 17:32:36 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -584,15 +584,12 @@ cpu_init(struct cpu_info *ci)
 
 	lcr0(rcr0() | CR0_WP);
 
-	/*
-	 * On a P6 or above, enable global TLB caching if the
-	 * hardware supports it.
-	 */
+	/* If global TLB caching is supported, enable it */
 	if (cpu_feature[0] & CPUID_PGE)
 #ifdef SVS
 		if (!svs_enabled)
 #endif
-		cr4 |= CR4_PGE;	/* enable global TLB caching */
+		cr4 |= CR4_PGE;
 
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
