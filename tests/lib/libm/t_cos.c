@@ -1,4 +1,4 @@
-/* $NetBSD: t_cos.c,v 1.8 2019/04/25 22:58:23 maya Exp $ */
+/* $NetBSD: t_cos.c,v 1.9 2019/05/27 00:10:36 maya Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -275,13 +275,24 @@ ATF_TC_BODY(cosf_angles, tc)
 		float theta = angles[i].x;
 		float cos_theta = angles[i].fy;
 
+		/*
+		 * Force rounding to float even if FLT_EVAL_METHOD=2,
+		 * as is the case on i386.
+		 *
+		 * The volatile should not be necessary, by C99 Sec.
+		 * 5.2.4.2.2. para. 8 on p. 24 which specifies that
+		 * assignment and cast remove all extra range and precision,
+		 * but seems to be needed to work around a compiler bug.
+		 */ 
+		volatile float result = cosf(theta);
+
 		if (cos_theta == 999)
 			cos_theta = angles[i].y;
 
 		assert(cos_theta != 0);
-		if (!(fabsf((cosf(theta) - cos_theta)/cos_theta) <= eps)) {
+		if (!(fabsf((result - cos_theta)/cos_theta) <= eps)) {
 			atf_tc_fail_nonfatal("cosf(%d deg = %.8g) = %.8g"
-			    " != %.8g", deg, theta, cos(theta), cos_theta);
+			    " != %.8g", deg, theta, result, cos_theta);
 		}
 	}
 }
