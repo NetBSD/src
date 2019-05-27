@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_regulator.c,v 1.7 2019/01/02 18:38:43 jmcneill Exp $ */
+/* $NetBSD: fdt_regulator.c,v 1.8 2019/05/27 23:18:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.7 2019/01/02 18:38:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.8 2019/05/27 23:18:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,8 @@ struct fdtbus_regulator_controller {
 	int rc_phandle;
 	const struct fdtbus_regulator_controller_func *rc_funcs;
 
+	u_int rc_enable_ramp_delay;
+
 	LIST_ENTRY(fdtbus_regulator_controller) rc_next;
 };
 
@@ -54,10 +56,12 @@ fdtbus_register_regulator_controller(device_t dev, int phandle,
 {
 	struct fdtbus_regulator_controller *rc;
 
-	rc = kmem_alloc(sizeof(*rc), KM_SLEEP);
+	rc = kmem_zalloc(sizeof(*rc), KM_SLEEP);
 	rc->rc_dev = dev;
 	rc->rc_phandle = phandle;
 	rc->rc_funcs = funcs;
+
+	of_getprop_uint32(phandle, "regulator-enable-ramp-delay", &rc->rc_enable_ramp_delay);
 
 	LIST_INSERT_HEAD(&fdtbus_regulator_controllers, rc, rc_next);
 
@@ -121,8 +125,16 @@ int
 fdtbus_regulator_enable(struct fdtbus_regulator *reg)
 {
 	struct fdtbus_regulator_controller *rc = reg->reg_rc;
+	int error;
 
-	return rc->rc_funcs->enable(rc->rc_dev, true);
+	error = rc->rc_funcs->enable(rc->rc_dev, true);
+	if (error != 0)
+		return error;
+
+	if (rc->rc_enable_ramp_delay != 0)
+		delay(rc->rc_enable_ramp_delay);
+
+	return 0;
 }
 
 int
