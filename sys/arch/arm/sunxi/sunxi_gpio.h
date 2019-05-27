@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.h,v 1.8 2018/02/18 10:28:37 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.h,v 1.9 2019/05/27 23:27:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -49,6 +49,7 @@ struct sunxi_gpio_pins {
 struct sunxi_gpio_padconf {
 	uint32_t npins;
 	const struct sunxi_gpio_pins *pins;
+	bool has_io_bias_config;
 };
 
 #ifdef SOC_SUN4I_A10
