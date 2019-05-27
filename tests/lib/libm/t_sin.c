@@ -1,4 +1,4 @@
-/* $NetBSD: t_sin.c,v 1.6 2018/11/07 04:00:13 riastradh Exp $ */
+/* $NetBSD: t_sin.c,v 1.7 2019/05/27 00:24:37 maya Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -194,8 +194,8 @@ ATF_TC_BODY(sinf_angles, tc)
 		}
 
 		if (!ok) {
-			atf_tc_fail_nonfatal("sinf(%d deg) = %.17g != %.17g",
-			    deg, (double)sin(theta), (double)sin_theta);
+			atf_tc_fail_nonfatal("sinf(%d deg) = %.8g != %.8g",
+			    deg, sinf(theta), sin_theta);
 		}
 	}
 }
