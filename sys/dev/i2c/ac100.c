@@ -1,4 +1,4 @@
-/* $NetBSD: ac100.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $ */
+/* $NetBSD: ac100.c,v 1.3 2019/05/27 21:11:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_fdt.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.3 2019/05/27 21:11:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +42,10 @@ __KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $");
 #include <dev/clock_subr.h>
 
 #include <dev/i2c/i2cvar.h>
+
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif
 
 #define AC100_CHIP_AUDIO_RST_REG	0x00
 #define AC100_PLL_CTRL1_REG		0x02
@@ -86,6 +92,11 @@ __KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $");
 
 #define AC100_RTC_UPD_TRIG_WRITE	__BIT(15)
 
+static const struct device_compatible_entry compat_data[] = {
+	{ "x-powers,ac100",		0 },
+	{ NULL,				0 }
+};
+
 struct ac100_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
@@ -109,7 +120,15 @@ CFATTACH_DECL_NEW(ac100ic, sizeof(struct ac100_softc),
 static int
 ac100_match(device_t parent, cfdata_t match, void *aux)
 {
-	return I2C_MATCH_ADDRESS_ONLY;	/* XXX */
+	struct i2c_attach_args *ia = aux;
+	int match_result;
+
+	if (iic_use_direct_match(ia, match, compat_data, &match_result))
+		return match_result;
+
+	/* This device is direct-config only. */
+
+	return 0;
 }
 
 static void
@@ -132,7 +151,15 @@ ac100_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.todr_gettime_ymdhms = ac100_rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = ac100_rtc_settime;
 	sc->sc_todr.cookie = sc;
+
+#ifdef FDT
+	const int phandle = ia->ia_cookie;
+	const int rtc_phandle = of_find_firstchild_byname(phandle, "rtc");
+	if (rtc_phandle > 0)
+		fdtbus_todr_attach(self, rtc_phandle, &sc->sc_todr);
+#else
 	todr_attach(&sc->sc_todr);
+#endif
 }
 
 static int
