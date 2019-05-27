@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.23 2019/01/26 14:38:30 thorpej Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.24 2019/05/27 23:26:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.23 2019/01/26 14:38:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.24 2019/05/27 23:26:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.23 2019/01/26 14:38:30 thorpej Exp 
 
 #define	SUNXI_GPIO_MAX_EINT_BANK	5
 #define	SUNXI_GPIO_MAX_EINT		32
+
+#define	SUNXI_GPIO_MAX_BANK		26
 
 #define	SUNXI_GPIO_PORT(port)		(0x24 * (port))
 #define SUNXI_GPIO_CFG(port, pin)	(SUNXI_GPIO_PORT(port) + 0x00 + (0x4 * ((pin) / 8)))
@@ -70,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.23 2019/01/26 14:38:30 thorpej Exp 
 #define	  SUNXI_GPIO_INT_MODE_DOUBLE_EDGE	0x4
 #define	SUNXI_GPIO_INT_CTL(bank)	(0x210 + 0x20 * (bank))
 #define	SUNXI_GPIO_INT_STATUS(bank)	(0x214 + 0x20 * (bank))
+#define	SUNXI_GPIO_GRP_CONFIG(bank)	(0x300 + 0x4 * (bank))
+#define	 SUNXI_GPIO_GRP_IO_BIAS_CONFIGMASK	0xf
 
 static const struct of_compat_data compat_data[] = {
 #ifdef SOC_SUN4I_A10
@@ -125,12 +129,15 @@ struct sunxi_gpio_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+	int sc_phandle;
 	const struct sunxi_gpio_padconf *sc_padconf;
 	kmutex_t sc_lock;
 
 	struct gpio_chipset_tag sc_gp;
 	gpio_pin_t *sc_pins;
 	device_t sc_gpiodev;
+
+	struct fdtbus_regulator *sc_pin_supply[SUNXI_GPIO_MAX_BANK];
 
 	u_int sc_eint_bank_max;
 
@@ -602,7 +609,7 @@ sunxi_pinctrl_parse_pins(int phandle, int *pins_len)
 	len = OF_getproplen(phandle, "allwinner,pins");
 	if (len > 0) {
 		*pins_len = len;
-		return fdtbus_get_string(phandle, "allwinner,pins");
+		return fdtbus_get_prop(phandle, "allwinner,pins", pins_len);
 	}
 
 	return NULL;
@@ -650,6 +657,64 @@ sunxi_pinctrl_parse_drive_strength(int phandle)
 	return -1;
 }
 
+static void
+sunxi_pinctrl_enable_regulator(struct sunxi_gpio_softc *sc,
+    const struct sunxi_gpio_pins *pin_def)
+{
+	char supply_prop[16];
+	uint32_t val;
+	u_int uvol;
+	int error;
+
+	const char c = tolower(pin_def->name[1]);
+	if (c < 'a' || c > 'z')
+		return;
+	const int index = c - 'a';
+
+	if (sc->sc_pin_supply[index] != NULL) {
+		/* Already enabled */
+		return;
+	}
+
+	snprintf(supply_prop, sizeof(supply_prop), "vcc-p%c-supply", c);
+	sc->sc_pin_supply[index] = fdtbus_regulator_acquire(sc->sc_phandle, supply_prop);
+	if (sc->sc_pin_supply[index] == NULL)
+		return;
+
+	aprint_debug_dev(sc->sc_dev, "enable \"%s\"\n", supply_prop);
+	error = fdtbus_regulator_enable(sc->sc_pin_supply[index]);
+	if (error != 0)
+		aprint_error_dev(sc->sc_dev, "failed to enable %s: %d\n", supply_prop, error);
+
+	if (sc->sc_padconf->has_io_bias_config) {
+		error = fdtbus_regulator_get_voltage(sc->sc_pin_supply[index], &uvol);
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev, "failed to get %s voltage: %d\n",
+			    supply_prop, error);
+			uvol = 0;
+		}
+		if (uvol != 0) {
+			if (uvol <= 1800000)
+				val = 0x0;	/* 1.8V */
+			else if (uvol <= 2500000)
+				val = 0x6;	/* 2.5V */
+			else if (uvol <= 2800000)
+				val = 0x9;	/* 2.8V */
+			else if (uvol <= 3000000)
+				val = 0xa;	/* 3.0V */
+			else
+				val = 0xd;	/* 3.3V */
+
+			aprint_debug_dev(sc->sc_dev, "set io bias config for port %d to 0x%x\n",
+			    pin_def->port, val);
+			val = GPIO_READ(sc, SUNXI_GPIO_GRP_CONFIG(pin_def->port));
+			val &= ~SUNXI_GPIO_GRP_IO_BIAS_CONFIGMASK;
+			val |= __SHIFTIN(val, SUNXI_GPIO_GRP_IO_BIAS_CONFIGMASK);
+			GPIO_WRITE(sc, SUNXI_GPIO_GRP_CONFIG(pin_def->port), val);
+		}
+	}
+}
+
 static int
 sunxi_pinctrl_set_config(device_t dev, const void *data, size_t len)
 {
@@ -694,6 +759,8 @@ sunxi_pinctrl_set_config(device_t dev, const void *data, size_t len)
 
 		if (drive_strength != -1)
 			sunxi_gpio_setdrv(sc, pin_def, drive_strength);
+
+		sunxi_pinctrl_enable_regulator(sc, pin_def);
 	}
 
 	mutex_exit(&sc->sc_lock);
@@ -833,6 +900,7 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 		}
 
 	sc->sc_dev = self;
+	sc->sc_phandle = phandle;
 	sc->sc_bst = faa->faa_bst;
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		aprint_error(": couldn't map registers\n");
@@ -847,7 +915,10 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 	fdtbus_register_gpio_controller(self, phandle, &sunxi_gpio_funcs);
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		if (!of_hasprop(child, "function") || !of_hasprop(child, "pins"))
+		bool is_valid =
+		    (of_hasprop(child, "function") && of_hasprop(child, "pins")) ||
+		    (of_hasprop(child, "allwinner,function") && of_hasprop(child, "allwinner,pins"));
+		if (!is_valid)
 			continue;
 		fdtbus_register_pinctrl_config(self, child, &sunxi_pinctrl_funcs);
 	}
