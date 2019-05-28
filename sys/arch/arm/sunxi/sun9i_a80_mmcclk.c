@@ -1,4 +1,4 @@
-/* $NetBSD: sun9i_a80_mmcclk.c,v 1.1 2017/10/08 18:00:36 jmcneill Exp $ */
+/* $NetBSD: sun9i_a80_mmcclk.c,v 1.2 2019/05/28 00:02:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun9i_a80_mmcclk.c,v 1.1 2017/10/08 18:00:36 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun9i_a80_mmcclk.c,v 1.2 2019/05/28 00:02:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,6 +79,9 @@ sun9i_a80_mmcclk_attach(device_t parent, device_t self, void *aux)
 {
 	struct sunxi_ccu_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+	struct fdtbus_reset *rst;
+	struct clk *clk;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
@@ -89,6 +92,17 @@ sun9i_a80_mmcclk_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_clks = sun9i_a80_mmcclk_clks;
 	sc->sc_nclks = __arraycount(sun9i_a80_mmcclk_clks);
+
+	clk = fdtbus_clock_get(phandle, "ahb");
+	if (clk == NULL || clk_enable(clk) != 0) {
+		aprint_error(": couldn't enable clock\n");
+		return;
+	}
+	rst = fdtbus_reset_get(phandle, "ahb");
+	if (rst == NULL || fdtbus_reset_deassert(rst) != 0) {
+		aprint_error(": couldn't de-assert reset\n");
+		return;
+	}
 
 	if (sunxi_ccu_attach(sc) != 0)
 		return;
