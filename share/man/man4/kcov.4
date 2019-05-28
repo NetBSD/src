@@ -1,4 +1,4 @@
-.\"	$NetBSD: kcov.4,v 1.5 2019/05/26 01:44:34 kamil Exp $
+.\"	$NetBSD: kcov.4,v 1.6 2019/05/28 21:31:53 kamil Exp $
 .\"
 .\" Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd May 26, 2019
+.Dd May 28, 2019
 .Dt KCOV 4
 .Os
 .Sh NAME
@@ -165,7 +165,7 @@ main(void)
 	if (ioctl(fd, KCOV_IOC_SETBUFSIZE, &size) == -1)
 		err(1, "ioctl: KCOV_IOC_SETBUFSIZE");
 	cover = mmap(NULL, size * KCOV_ENTRY_SIZE,
-	    PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+	    PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (cover == MAP_FAILED)
 		err(1, "mmap");
 	mode = KCOV_MODE_TRACE_PC;
