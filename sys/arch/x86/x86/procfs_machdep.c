@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.31 2019/05/16 04:26:13 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.32 2019/05/28 16:43:24 kamil Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.31 2019/05/16 04:26:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.32 2019/05/28 16:43:24 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ procfs_getonefeatreg(uint32_t reg, const char * const *table, char *p,
 	size_t l;
 
 	for (size_t i = 0; i < 32; i++) {
-		if ((reg & (1 << i)) && table[i]) {
+		if ((reg & (1U << i)) && table[i]) {
 			l = snprintf(p, *left, "%s ", table[i]);
 			if (l < *left) {
 				*left -= l;
