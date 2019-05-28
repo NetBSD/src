@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.50 2018/07/04 02:02:15 kamil Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.51 2019/05/28 03:53:28 kamil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.50 2018/07/04 02:02:15 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.51 2019/05/28 03:53:28 kamil Exp $");
 
 #include <sys/param.h>
 
@@ -313,7 +313,7 @@ ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
 		end = ufs_rw32(cgp->cg_nclusterblks, needswap);
 	mapp = &freemapp[start / NBBY];
 	map = *mapp++;
-	bit = 1U << (start % NBBY);
+	bit = 1U << ((unsigned int)start % NBBY);
 	for (i = start; i < end; i++) {
 		if ((map & bit) == 0)
 			break;
@@ -334,7 +334,7 @@ ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
 		end = -1;
 	mapp = &freemapp[start / NBBY];
 	map = *mapp--;
-	bit = 1U << (start % NBBY);
+	bit = 1U << ((unsigned int)start % NBBY);
 	for (i = start; i > end; i--) {
 		if ((map & bit) == 0)
 			break;
