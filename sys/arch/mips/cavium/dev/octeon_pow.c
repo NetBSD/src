@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pow.c,v 1.3 2019/04/11 11:40:58 kamil Exp $	*/
+/*	$NetBSD: octeon_pow.c,v 1.4 2019/05/28 08:59:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.3 2019/04/11 11:40:58 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.4 2019/05/28 08:59:34 msaitoh Exp $");
 
 #include "opt_octeon.h"	/* OCTEON_ETH_DEBUG */
 
@@ -515,7 +515,7 @@ octeon_pow_intr_work_debug_per(struct octeon_pow_softc *sc,
  * XXX this does not utilize "tag switch" very well
  */
 /*
- * usually all packet recieve
+ * usually all packet receive
  */
 #define MAX_RX_CNT 0x7fffffff 
 
