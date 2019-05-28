@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.12 2019/03/05 08:25:03 msaitoh Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.13 2019/05/28 08:59:35 msaitoh Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
 #define AXEN_REV_UA2		1
 
 
-/* recieve header */
+/* receive header */
 /*
  *                     +-multicast/broadcast
  *                     |    +-rx_ok

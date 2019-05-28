@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xireg.h,v 1.8 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: if_xireg.h,v 1.9 2019/05/28 08:59:35 msaitoh Exp $	*/
 /*	OpenBSD: if_xereg.h,v 1.1 1999/05/18 19:18:21 niklas Exp	*/
 
 /*
@@ -251,7 +251,7 @@
 /* CMD0 register bits */
 #define ONLINE		0x04	/* Online */
 #define OFFLINE		0x08	/* Online */
-#define ENABLE_RX	0x20	/* Enable reciever */
+#define ENABLE_RX	0x20	/* Enable receiver */
 #define DISABLE_RX	0x80	/* Disable receiver */
 
 /* RX0Msk register bits */

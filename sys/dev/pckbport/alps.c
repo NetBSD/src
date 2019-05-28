@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.11 2019/03/16 03:27:15 ryoon Exp $ */
+/* $NetBSD: alps.c,v 1.12 2019/05/28 08:59:35 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.11 2019/03/16 03:27:15 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.12 2019/05/28 08:59:35 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,13 +340,13 @@ pms_alps_cm_write_nibble(pckbport_tag_t tag, pckbport_slot_t slot, uint8_t nibbl
 	uint8_t cmd[2];
 	uint8_t resp[3];
 	int sendparam;
-	int recieve;
+	int receive;
 	int res;
 
 	sendparam = alps_v7_nibble_command_data_arr[nibble].sendparam;
-	recieve= alps_v7_nibble_command_data_arr[nibble].recieve;
+	receive= alps_v7_nibble_command_data_arr[nibble].receive;
 	cmd[0] = alps_v7_nibble_command_data_arr[nibble].command;
-	if (recieve) {
+	if (receive) {
 		if ((res = pckbport_poll_cmd(tag, slot, cmd, 1, 3, resp, 0)) != 0) {
 			aprint_error("send nibble error: %d\n", res);
 		}

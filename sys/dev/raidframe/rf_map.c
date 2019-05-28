@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.49 2019/02/10 17:13:33 christos Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.50 2019/05/28 08:59:35 msaitoh Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.49 2019/02/10 17:13:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.50 2019/05/28 08:59:35 msaitoh Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -71,7 +71,7 @@ static void rf_FreeASMList(RF_AccessStripeMap_t *asm_list);
  *
  * raidAddress - starting address in RAID address space
  * numBlocks   - number of blocks in RAID address space to access
- * buffer      - buffer to supply/recieve data
+ * buffer      - buffer to supply/receive data
  * remap       - 1 => remap address to spare space
  ***************************************************************************/
 
