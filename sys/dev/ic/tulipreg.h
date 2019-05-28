@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.38 2019/04/03 05:34:39 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.39 2019/05/28 08:59:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -588,7 +588,7 @@ struct tulip_desc {
 #define	OPMODE_PM		0x00000080	/* pass all multicast */
 #define	OPMODE_WINB_AEP		0x00000080	/* accept error packet */
 #define	OPMODE_FKD		0x00000100	/* flaky oscillator disable */
-#define OPMODE_AX_RB		0x00000100	/* recieve broadcast packets */
+#define OPMODE_AX_RB		0x00000100	/* receive broadcast packets */
 #define	OPMODE_FD		0x00000200	/* full-duplex mode */
 #define	OPMODE_OM		0x00000c00	/* operating mode */
 #define	OPMODE_OM_NORMAL	0x00000000	/*     normal mode */

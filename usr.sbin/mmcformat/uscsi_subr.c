@@ -1,4 +1,4 @@
-/* $NetBSD: uscsi_subr.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $	*/
+/* $NetBSD: uscsi_subr.c,v 1.2 2019/05/28 08:59:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -528,14 +528,14 @@ uscsi_mode_sense(struct uscsi_dev *dev,
 {
 	scsicmd cmd;
 
-	bzero(buf, len);		/* initialise recieving buffer	*/
+	bzero(buf, len);		/* initialise receiving buffer	*/
 
 	bzero(cmd, SCSI_CMD_LEN);
 	cmd[ 0] = 0x1a;			/* MODE SENSE			*/
 	cmd[ 1] = 0;			/* -				*/
 	cmd[ 2] = pgcode | pctl;	/* page code and control flags	*/
 	cmd[ 3] = 0;			/* -				*/
-	cmd[ 4] = len;			/* length of recieve buffer	*/
+	cmd[ 4] = len;			/* length of receive buffer	*/
 	cmd[ 5] = 0;			/* control			*/
 
 	return uscsi_command(SCSI_READCMD, dev, &cmd, 6, buf, len, 10000, NULL);
@@ -564,7 +564,7 @@ uscsi_request_sense(struct uscsi_dev *dev, void *buf, size_t len)
 {
 	scsicmd cmd;
 
-	bzero(buf, len);		/* initialise recieving buffer	*/
+	bzero(buf, len);		/* initialise receiving buffer	*/
 
 	bzero(cmd, SCSI_CMD_LEN);
 	cmd[ 0] = 0x03;			/* REQUEST SENSE		*/
