@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.23 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: if_et.c,v 1.24 2019/05/28 07:41:49 msaitoh Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.23 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.24 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -1218,6 +1218,7 @@ et_setmulti(struct et_softc *sc)
 	bcopy(etherbroadcastaddr, addr, ETHER_ADDR_LEN);
 
 	count = 0;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		uint32_t *hp, h;
@@ -1245,6 +1246,7 @@ et_setmulti(struct et_softc *sc)
 		++count;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	for (i = 0; i < 4; ++i)
 		CSR_WRITE_4(sc, ET_MULTI_HASH + (i * 4), hash[i]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.34 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.35 2019/05/28 07:41:49 msaitoh Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.34 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.35 2019/05/28 07:41:49 msaitoh Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -1927,6 +1927,7 @@ cas_iff(struct cas_softc *sc)
 		for (i = 0; i < 16; i++)
 			hash[i] = 0;
 
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			crc = ether_crc32_le(enm->enm_addrlo,
@@ -1940,6 +1941,7 @@ cas_iff(struct cas_softc *sc)
 
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 
 		/* Now load the hash table into the chip (if we are using it) */
 		for (i = 0; i < 16; i++) {

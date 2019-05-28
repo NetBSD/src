@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.83 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: i82586.c,v 1.84 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.83 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.84 2019/05/28 07:41:48 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1769,6 +1769,7 @@ ie_mc_reset(struct ie_softc *sc)
 again:
 	size = 0;
 	sc->mcast_count = 0;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm) {
 		size += 6;
@@ -1776,10 +1777,12 @@ again:
 		    memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
 			ec->ec_if.if_flags |= IFF_ALLMULTI;
 			i82586_ioctl(&ec->ec_if, SIOCSIFFLAGS, NULL);
+			ETHER_UNLOCK(ec);
 			return;
 		}
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	if (size > sc->mcast_addrs_size) {
 		/* Need to allocate more space */
@@ -1793,15 +1796,19 @@ again:
 	/*
 	 * We've got the space; now copy the addresses
 	 */
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm) {
-		if (sc->mcast_count >= IE_MAXMCAST)
+		if (sc->mcast_count >= IE_MAXMCAST) {
+			ETHER_UNLOCK(ec);
 			goto again; /* Just in case */
+		}
 
 		memcpy(&sc->mcast_addrs[sc->mcast_count], enm->enm_addrlo, 6);
 		sc->mcast_count++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	sc->want_mcsetup = 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.50 2019/05/23 10:57:27 msaitoh Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.51 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.50 2019/05/23 10:57:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.51 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include "opt_emac.h"
 
@@ -1176,6 +1176,7 @@ emac_rxdrain(struct emac_softc *sc)
 static int
 emac_set_filter(struct emac_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ethercom;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1195,7 +1196,8 @@ emac_set_filter(struct emac_softc *sc)
 	rmr &= ~(RMR_PMME | RMR_MAE);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo,
 		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
@@ -1222,6 +1224,7 @@ emac_set_filter(struct emac_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 		cnt++;
 	}
+	ETHER_UNLOCK(ec);
 
 	for (i = 1, tmp = gaht[0]; i < regs; i++)
 		tmp &= gaht[i];

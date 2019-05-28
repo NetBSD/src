@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.107 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.108 2019/05/28 07:41:49 msaitoh Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.107 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.108 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1333,6 +1333,7 @@ iy_mc_setup(struct iy_softc *sc)
 	bus_space_write_2(iot, ioh, MEM_PORT_REG, 0);
 	bus_space_write_stream_2(iot, ioh, MEM_PORT_REG, htole16(len));
 
+	ETHER_LOCK(ecp);
 	ETHER_FIRST_MULTI(step, ecp, enm);
 	while (enm) {
 		/*
@@ -1343,6 +1344,7 @@ iy_mc_setup(struct iy_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ecp);
 	dum = bus_space_read_2(iot, ioh, MEM_PORT_REG); /* dummy read */
 	__USE(dum);
 	bus_space_write_2(iot, ioh, XMT_ADDR_REG, last);
@@ -1400,14 +1402,17 @@ iy_mc_reset(struct iy_softc *sc)
 		/*
 		 * Step through the list of addresses.
 		 */
+		ETHER_LOCK(ecp);
 		ETHER_FIRST_MULTI(step, ecp, enm);
 		while (enm) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
 				ifp->if_flags |= IFF_ALLMULTI;
+				ETHER_UNLOCK(ecp);
 				goto setupmulti;
 			}
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ecp);
 		/* OK, we really need to do it now: */
 #if 0
 		if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE))

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.109 2019/05/23 10:40:39 msaitoh Exp $ */
+/* $NetBSD: if_ti.c,v 1.110 2019/05/28 07:41:49 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.109 2019/05/23 10:40:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.110 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1168,18 +1168,24 @@ ti_setmulti(struct ti_softc *sc)
 	 * Remember all multicast addresses so that we can delete them
 	 * later.  Punt if there is a range of addresses or memory shortage.
 	 */
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 		if ((mc = malloc(sizeof(struct ti_mc_entry), M_DEVBUF,
-		    M_NOWAIT)) == NULL)
+		    M_NOWAIT)) == NULL) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 		memcpy(&mc->mc_addr, enm->enm_addrlo, ETHER_ADDR_LEN);
 		SIMPLEQ_INSERT_HEAD(&sc->ti_mc_listhead, mc, mc_entries);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	/* Accept only programmed multicast addresses */
 	ifp->if_flags &= ~IFF_ALLMULTI;

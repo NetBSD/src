@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.56 2019/05/23 10:30:36 msaitoh Exp $	*/
+/*	$NetBSD: lance.c,v 1.57 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.56 2019/05/23 10:30:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.57 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -581,6 +581,8 @@ lance_setladrf(struct ethercom *ec, uint16_t *af)
 		goto allmulti;
 
 	af[0] = af[1] = af[2] = af[3] = 0x0000;
+
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (ETHER_CMP(enm->enm_addrlo, enm->enm_addrhi)) {
@@ -592,6 +594,7 @@ lance_setladrf(struct ethercom *ec, uint16_t *af)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -605,6 +608,7 @@ lance_setladrf(struct ethercom *ec, uint16_t *af)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	return;
 
