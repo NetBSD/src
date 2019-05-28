@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.141 2016/11/21 01:19:35 riastradh Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.142 2019/05/28 08:59:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.141 2016/11/21 01:19:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.142 2019/05/28 08:59:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -460,7 +460,7 @@ fwohci_attach(struct fwohci_softc *sc)
 	sc->fc.config_rom[0] |= fw_crc16(&sc->fc.config_rom[1], 5*4);
 #endif
 
-/* SID recieve buffer must align 2^11 */
+/* SID receive buffer must align 2^11 */
 #define	OHCI_SIDSIZE	(1 << 11)
 	sc->sid_buf = fwdma_alloc_setup(sc->fc.dev, sc->fc.dmat, OHCI_SIDSIZE,
 	    &sc->sid_dma, OHCI_SIDSIZE, BUS_DMA_NOWAIT);
@@ -644,7 +644,7 @@ fwohci_stop(struct fwohci_softc *sc)
 	    OHCI_INT_DMA_ARRS |
 	    OHCI_INT_PHY_BUS_R);
 
-/* FLUSH FIFO and reset Transmitter/Reciever */
+/* FLUSH FIFO and reset Transmitter/Receiver */
 	OWRITE(sc, OHCI_HCCCTL, OHCI_HCC_RESET);
 #endif
 
@@ -1238,7 +1238,7 @@ fwohci_reset(struct fwohci_softc *sc)
 		OWRITE(sc, OHCI_ITCTLCLR(i), OHCI_CNTL_DMA_RUN);
 	}
 
-	/* FLUSH FIFO and reset Transmitter/Reciever */
+	/* FLUSH FIFO and reset Transmitter/Receiver */
 	OWRITE(sc, OHCI_HCCCTL, OHCI_HCC_RESET);
 	if (firewire_debug)
 		printf("resetting OHCI...");

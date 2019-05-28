@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.119 2019/05/28 07:41:48 msaitoh Exp $ */
+/*	$NetBSD: gem.c,v 1.120 2019/05/28 08:59:34 msaitoh Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.119 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.120 2019/05/28 08:59:34 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -820,7 +820,7 @@ gem_reset_rxdma(struct gem_softc *sc)
 	/* Redo ERX Configuration */
 	gem_rx_common(sc);
 
-	/* Give the reciever a swift kick */
+	/* Give the receiver a swift kick */
 	bus_space_write_4(t, h, GEM_RX_KICK, GEM_NRXDESC - 4);
 }
 
@@ -1214,7 +1214,7 @@ gem_init(struct ifnet *ifp)
 		(*sc->sc_hwinit)(sc);
 
 
-	/* step 15.  Give the reciever a swift kick */
+	/* step 15.  Give the receiver a swift kick */
 	bus_space_write_4(t, h, GEM_RX_KICK, GEM_NRXDESC-4);
 
 	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) != 0)

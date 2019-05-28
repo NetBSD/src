@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.reg,v 1.13 2018/02/08 09:05:19 dholland Exp $	*/
+/*	$NetBSD: aic79xx.reg,v 1.14 2019/05/28 08:59:34 msaitoh Exp $	*/
 
 /*
  * Aic79xx register and scratch ram definitions.
@@ -663,7 +663,7 @@ register CMCRXMSG0 {
 }
 
 /*
- * Overlay Recieve Message 0
+ * Overlay Receive Message 0
  */
 register OVLYRXMSG0 {
 	address			0x090
@@ -699,7 +699,7 @@ register DCHRXMSG1 {
 }
 
 /*
- * CMC Recieve Message 1
+ * CMC Receive Message 1
  */
 register CMCRXMSG1 {
 	address			0x091
@@ -709,7 +709,7 @@ register CMCRXMSG1 {
 }
 
 /*
- * Overlay Recieve Message 1
+ * Overlay Receive Message 1
  */
 register OVLYRXMSG1 {
 	address			0x091
@@ -744,7 +744,7 @@ register DCHRXMSG2 {
 }
 
 /*
- * CMC Recieve Message 2
+ * CMC Receive Message 2
  */
 register CMCRXMSG2 {
 	address			0x092
@@ -754,7 +754,7 @@ register CMCRXMSG2 {
 }
 
 /*
- * Overlay Recieve Message 2
+ * Overlay Receive Message 2
  */
 register OVLYRXMSG2 {
 	address			0x092
@@ -783,7 +783,7 @@ register DCHRXMSG3 {
 }
 
 /*
- * CMC Recieve Message 3
+ * CMC Receive Message 3
  */
 register CMCRXMSG3 {
 	address			0x093
@@ -793,7 +793,7 @@ register CMCRXMSG3 {
 }
 
 /*
- * Overlay Recieve Message 3
+ * Overlay Receive Message 3
  */
 register OVLYRXMSG3 {
 	address			0x093
@@ -1201,7 +1201,7 @@ register TARGPCISTAT {
 
 /*
  * LQ Packet In
- * The last LQ Packet recieved
+ * The last LQ Packet received
  */
 register LQIN {
 	address			0x020

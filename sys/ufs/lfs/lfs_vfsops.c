@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.364 2019/01/01 10:06:55 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.365 2019/05/28 08:59:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.364 2019/01/01 10:06:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.365 2019/05/28 08:59:35 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2165,7 +2165,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			/* 
 			 * All the LFS output is done by the segwriter.  It
 			 * will increment numoutput by one for all the bufs it
-			 * recieves.  However this buffer needs one extra to
+			 * receives.  However this buffer needs one extra to
 			 * account for aiodone.
 			 */
 			mutex_enter(vp->v_interlock);

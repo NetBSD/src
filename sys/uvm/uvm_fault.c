@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.205 2019/04/21 15:27:59 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.206 2019/05/28 08:59:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.205 2019/04/21 15:27:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.206 2019/05/28 08:59:35 msaitoh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1434,7 +1434,7 @@ uvm_fault_upper_loan(
 				uvm_wait("flt_noram2");
 				return ERESTART;
 			}
-			/* if we were a loan reciever uobj is gone */
+			/* if we were a loan receiver uobj is gone */
 			if (*ruobj)
 				*ruobj = NULL;
 		}

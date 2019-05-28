@@ -1,4 +1,4 @@
-/* $NetBSD: if_gmc.c,v 1.11 2019/05/28 07:41:46 msaitoh Exp $ */
+/* $NetBSD: if_gmc.c,v 1.12 2019/05/28 08:59:33 msaitoh Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,7 +47,7 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.11 2019/05/28 07:41:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.12 2019/05/28 08:59:33 msaitoh Exp $");
 
 #define	MAX_TXSEG	32
 
@@ -267,7 +267,7 @@ gmc_mii_tick(void *arg)
 	/*
 	 * If we had to increase the number of receive mbufs due to fifo
 	 * overflows, we need a way to decrease them.  So every second we
-	 * recieve less than or equal to MIN_RXMAPS packets, we decrement
+	 * receive less than or equal to MIN_RXMAPS packets, we decrement
 	 * swfree_min until it returns to MIN_RXMAPS.
 	 */
 	if (psc->sc_rxpkts_per_sec <= MIN_RXMAPS

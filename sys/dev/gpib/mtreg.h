@@ -1,4 +1,4 @@
-/*	$NetBSD: mtreg.h,v 1.4 2005/12/11 12:21:21 christos Exp $	*/
+/*	$NetBSD: mtreg.h,v 1.5 2019/05/28 08:59:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, The University of Utah and
@@ -131,7 +131,7 @@ struct	mt_stat {
 #define	MTF_ATEOT	0x0100	/* tape hit EOT - can allow one forward op */
 #define	MTF_PASTEOT	0x0200	/* tape is beyond EOT - force backward motion */
 #define	MTF_DSJTIMEO	0x0400	/* timed out gpibrecv()ing DSJ - continue it */
-#define	MTF_STATTIMEO	0x0800	/* timed out recieving STATUS - continue it */
+#define	MTF_STATTIMEO	0x0800	/* timed out receiving STATUS - continue it */
 #define	MTF_STATCONT	0x1000	/* STATTIMEO is continuable */
 
 /* additional "mtcommand"s */
