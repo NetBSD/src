@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.115 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.116 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.115 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.116 2019/05/28 07:41:49 msaitoh Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1573,13 +1573,15 @@ tl_read_stats(tl_softc_t *sc)
 static void
 tl_addr_filter(tl_softc_t *sc)
 {
+	struct ethercom *ec = &sc->tl_ec;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	uint32_t hash[2] = {0, 0};
 	int i;
 
 	sc->tl_if.if_flags &= ~IFF_ALLMULTI;
-	ETHER_FIRST_MULTI(step, &sc->tl_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 #ifdef TLDEBUG
 		printf("%s: addrs %s %s\n", __func__,
@@ -1596,6 +1598,7 @@ tl_addr_filter(tl_softc_t *sc)
 		}
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 #ifdef TLDEBUG
 	printf("%s: hash1 %x has2 %x\n", __func__, hash[0], hash[1]);
 #endif

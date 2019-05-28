@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.40 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.41 2019/05/28 07:41:50 msaitoh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.40 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.41 2019/05/28 07:41:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -370,6 +370,7 @@ allmulti:	ifp->if_flags |= IFF_ALLMULTI;
 		/* now program new ones */
 		DPRINTF(("%s: initializing hash table\n",
 		    device_xname(sc->axen_dev)));
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -377,6 +378,7 @@ allmulti:	ifp->if_flags |= IFF_ALLMULTI;
 				DPRINTF(("%s: allmulti\n",
 				    device_xname(sc->axen_dev)));
 				memset(hashtbl, 0, sizeof(hashtbl));
+				ETHER_UNLOCK(ec);
 				goto allmulti;
 			}
 			h = ether_crc32_be(enm->enm_addrlo,
@@ -387,6 +389,7 @@ allmulti:	ifp->if_flags |= IFF_ALLMULTI;
 			    ether_sprintf(enm->enm_addrlo)));
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 		rxmode |= AXEN_RXCTL_ACPT_MCAST;
 	}
 

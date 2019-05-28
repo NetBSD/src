@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.172 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.173 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.172 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.173 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3041,6 +3041,7 @@ sipcom_sis900_set_filter(struct sip_softc *sc)
 	/* Set the corresponding bit in the hash table. */
 	mchash[crc >> 4] |= 1 << (crc & 0xf);
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -3052,6 +3053,7 @@ sipcom_sis900_set_filter(struct sip_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -3072,6 +3074,7 @@ sipcom_sis900_set_filter(struct sip_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;

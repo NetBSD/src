@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.53 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.54 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.53 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.54 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -2024,6 +2024,7 @@ gfe_hash_fill(struct gfe_softc *sc)
 	sc->sc_flags &= ~GE_ALLMULTI;
 	if ((ec->ec_if.if_flags & IFF_PROMISC) == 0)
 		sc->sc_pcr &= ~ETH_EPCR_PM;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -2037,6 +2038,7 @@ gfe_hash_fill(struct gfe_softc *sc)
 		}
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	GE_FUNC_EXIT(sc, "");
 	return error;

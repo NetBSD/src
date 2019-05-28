@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.52 2019/05/23 10:57:28 msaitoh Exp $ */
+/* $NetBSD: lemac.c,v 1.53 2019/05/28 07:41:48 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.52 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.53 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -435,6 +435,7 @@ lemac_multicast_op(
 static void
 lemac_multicast_filter(lemac_softc_t *sc)
 {
+	struct ethercom *ec = &sc->sc_ec;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 
@@ -442,16 +443,19 @@ lemac_multicast_filter(lemac_softc_t *sc)
 
 	lemac_multicast_op(sc->sc_mctbl, etherbroadcastaddr, TRUE);
 
-	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (!LEMAC_ADDREQUAL(enm->enm_addrlo, enm->enm_addrhi)) {
 			sc->sc_flags |= LEMAC_ALLMULTI;
 			sc->sc_if.if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
 			return;
 		}
 		lemac_multicast_op(sc->sc_mctbl, enm->enm_addrlo, TRUE);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	sc->sc_flags &= ~LEMAC_ALLMULTI;
 	sc->sc_if.if_flags &= ~IFF_ALLMULTI;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.44 2019/05/23 10:30:35 msaitoh Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.45 2019/05/28 07:41:47 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.44 2019/05/23 10:30:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.45 2019/05/28 07:41:47 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -665,6 +665,7 @@ mace_calcladrf(struct ethercom *ec, uint8_t *af)
 
 	*((uint32_t *)af) = *((uint32_t *)af + 1) = 0;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (ETHER_CMP(enm->enm_addrlo, enm->enm_addrhi)) {
@@ -676,6 +677,7 @@ mace_calcladrf(struct ethercom *ec, uint8_t *af)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -700,6 +702,7 @@ mace_calcladrf(struct ethercom *ec, uint8_t *af)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	return;
 

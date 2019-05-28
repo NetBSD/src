@@ -1,4 +1,4 @@
-/*	$NetBSD: at91emac.c,v 1.28 2019/05/23 16:05:01 msaitoh Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.29 2019/05/28 07:41:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.28 2019/05/23 16:05:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.29 2019/05/28 07:41:46 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -807,6 +807,7 @@ emac_setaddr(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -845,6 +846,7 @@ emac_setaddr(struct ifnet *ifp)
 		ETHER_NEXT_MULTI(step, enm);
 		nma++;
 	}
+	ETHER_UNLOCK(ec);
 
 	// program...
 	DPRINTFN(1,("%s: en0 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,

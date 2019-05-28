@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.56 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.57 2019/05/28 07:41:49 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.56 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.57 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2180,10 +2180,12 @@ mvgbe_filter_setup(struct mvgbe_softc *sc)
 		goto allmulti;
 	}
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/* ranges are complex and somewhat rare */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 		/* chip handles some IPv4 multicast specially */
@@ -2199,6 +2201,7 @@ mvgbe_filter_setup(struct mvgbe_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	goto set;
 
 allmulti:

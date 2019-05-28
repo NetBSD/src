@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.93 2019/04/26 06:33:33 msaitoh Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.94 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.93 2019/04/26 06:33:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.94 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -960,6 +960,7 @@ dp8390_getmcaf(struct ethercom *ec, uint8_t *af)
 	}
 	for (i = 0; i < 8; i++)
 		af[i] = 0;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -975,6 +976,7 @@ dp8390_getmcaf(struct ethercom *ec, uint8_t *af)
 			ifp->if_flags |= IFF_ALLMULTI;
 			for (i = 0; i < 8; i++)
 				af[i] = 0xff;
+			ETHER_UNLOCK(ec);
 			return;
 		}
 
@@ -988,6 +990,7 @@ dp8390_getmcaf(struct ethercom *ec, uint8_t *af)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 }
 
