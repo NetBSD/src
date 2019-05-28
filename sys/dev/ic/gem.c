@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.118 2019/05/24 06:26:38 msaitoh Exp $ */
+/*	$NetBSD: gem.c,v 1.119 2019/05/28 07:41:48 msaitoh Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.118 2019/05/24 06:26:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.119 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -2744,6 +2744,7 @@ gem_setladrf(struct gem_softc *sc)
 	/* Clear hash table */
 	memset(hash, 0, sizeof(hash));
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -2758,6 +2759,7 @@ gem_setladrf(struct gem_softc *sc)
 			 */
 			ifp->if_flags |= IFF_ALLMULTI;
 			v |= GEM_MAC_RX_PROMISC_GRP;
+			ETHER_UNLOCK(ec);
 			goto chipit;
 		}
 
@@ -2772,6 +2774,7 @@ gem_setladrf(struct gem_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	v |= GEM_MAC_RX_HASH_FILTER;
 	ifp->if_flags &= ~IFF_ALLMULTI;

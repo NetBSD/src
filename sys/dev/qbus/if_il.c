@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.34 2019/05/24 08:29:17 msaitoh Exp $	*/
+/*	$NetBSD: if_il.c,v 1.35 2019/05/28 07:41:49 msaitoh Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.34 2019/05/24 08:29:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.35 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -335,6 +335,7 @@ too_many_multis:
 			goto out;
 	} else {
 		int i;
+		struct ethercom *ec = &sc->sc_ec;
 		register struct ether_addr *ep = sc->sc_maddrs;
 		struct ether_multi *enm;
 		struct ether_multistep step;
@@ -345,7 +346,8 @@ too_many_multis:
 		 * multicasts.
 		 */
 		i = 0;
-		ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (++i > 63 /* && k != 0 */) {
 				break;
@@ -353,6 +355,7 @@ too_many_multis:
 			*ep++ = *(struct ether_addr *)enm->enm_addrlo;
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 		if (i == 0) {
 			/* no multicasts! */
 		} else if (i <= 63) {

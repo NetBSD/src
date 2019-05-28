@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.40 2019/04/26 06:33:34 msaitoh Exp $ */
+/* $NetBSD: i82596.c,v 1.41 2019/05/28 07:41:48 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.40 2019/04/26 06:33:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.41 2019/05/28 07:41:48 msaitoh Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -466,7 +466,8 @@ void
 iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 {
 	struct iee_cb *cb = SC_CB(sc, sc->sc_next_cb);
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 
@@ -499,7 +500,8 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 		cb = SC_CB(sc, sc->sc_next_cb + 1);
 		cb->cb_cmd = cmd;
 		cb->cb_mcast.mc_size = 0;
-		ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN) != 0 || cb->cb_mcast.mc_size
@@ -515,6 +517,7 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 			ETHER_NEXT_MULTI(step, enm);
 			cb->cb_mcast.mc_size += ETHER_ADDR_LEN;
 		}
+		ETHER_UNLOCK(ec);
 		if (cb->cb_mcast.mc_size == 0) {
 			/* Can't do exact mcast filtering, do ALLMULTI mode. */
 			ifp->if_flags |= IFF_ALLMULTI;

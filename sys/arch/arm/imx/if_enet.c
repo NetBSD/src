@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.22 2019/05/24 00:13:25 msaitoh Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.23 2019/05/28 07:41:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.22 2019/05/24 00:13:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.23 2019/05/28 07:41:46 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -775,12 +775,14 @@ enet_setmulti(struct enet_softc *sc)
 	} else {
 		gaddr[0] = gaddr[1] = 0;
 
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 			gaddr[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 	}
 
 	ENET_REG_WRITE(sc, ENET_GAUR, gaddr[0]);

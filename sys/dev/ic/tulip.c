@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.195 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: tulip.c,v 1.196 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.195 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.196 2019/05/28 07:41:48 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -2613,6 +2613,7 @@ tlp_filter_setup(struct tulip_softc *sc)
 	sp = TULIP_CDSP(sc);
 	memset(TULIP_CDSP(sc), 0, TULIP_SETUP_PACKET_LEN);
 	cnt = 0;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -2624,6 +2625,7 @@ tlp_filter_setup(struct tulip_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 		if (cnt == (TULIP_MAXADDRS - 2)) {
@@ -2632,6 +2634,7 @@ tlp_filter_setup(struct tulip_softc *sc)
 			 * our station address and broadcast).  Go to
 			 * Hash-Perfect mode.
 			 */
+			ETHER_UNLOCK(ec);
 			goto hashperfect;
 		}
 		cnt++;
@@ -2640,6 +2643,7 @@ tlp_filter_setup(struct tulip_softc *sc)
 		*sp++ = htole32(TULIP_SP_FIELD(enm->enm_addrlo, 2));
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	if (ifp->if_flags & IFF_BROADCAST) {
 		/* ...and the broadcast address. */
@@ -2674,6 +2678,7 @@ tlp_filter_setup(struct tulip_softc *sc)
 		sc->sc_filtmode = TDCTL_Tx_FT_HASH;
 	sp = TULIP_CDSP(sc);
 	memset(TULIP_CDSP(sc), 0, TULIP_SETUP_PACKET_LEN);
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -2685,12 +2690,14 @@ tlp_filter_setup(struct tulip_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 		hash = tlp_mchash(enm->enm_addrlo, hashsize);
 		sp[hash >> 4] |= htole32(1 << (hash & 0xf));
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	if (ifp->if_flags & IFF_BROADCAST) {
 		/* ...and the broadcast address. */
@@ -2919,6 +2926,7 @@ tlp_al981_filter_setup(struct tulip_softc *sc)
 
 	mchash[0] = mchash[1] = 0;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -2930,6 +2938,7 @@ tlp_al981_filter_setup(struct tulip_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -2937,6 +2946,7 @@ tlp_al981_filter_setup(struct tulip_softc *sc)
 		mchash[hash >> 5] |= 1 << (hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
 
@@ -2984,6 +2994,7 @@ tlp_asix_filter_setup(struct tulip_softc *sc)
 
 	mchash[0] = mchash[1] = 0;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -2995,6 +3006,7 @@ tlp_asix_filter_setup(struct tulip_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 		hash = (ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26)
@@ -3005,6 +3017,7 @@ tlp_asix_filter_setup(struct tulip_softc *sc)
 			mchash[1] |= (1 << (hash - 32));
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.132 2019/05/23 13:10:51 msaitoh Exp $ */
+/* $NetBSD: rtw.c,v 1.133 2019/05/28 07:41:48 msaitoh Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.132 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.133 2019/05/28 07:41:48 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -2718,6 +2718,7 @@ rtw_pktfilt_load(struct rtw_softc *sc)
 	/*
 	 * Program the 64-bit multicast hash filter.
 	 */
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		/* XXX */
@@ -2731,6 +2732,7 @@ rtw_pktfilt_load(struct rtw_softc *sc)
 		hashes[hash >> 5] |= (1 << (hash & 0x1f));
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	/* XXX accept all broadcast if scanning */
 	if ((ifp->if_flags & IFF_BROADCAST) != 0)

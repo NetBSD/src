@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.45 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.46 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.45 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.46 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1250,6 +1250,7 @@ cs_set_ladr_filt(struct cs_softc *sc, struct ethercom *ec)
 	 * addresses, in which case we will just accept all packets.
 	 * Justification for this is given in the next comment.
 	 */
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -1280,6 +1281,7 @@ cs_set_ladr_filt(struct cs_softc *sc, struct ethercom *ec)
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}
+	ETHER_UNLOCK(ec);
 
 	/* Now program the chip with the addresses */
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_LOG_ADDR + 0, af[0]);

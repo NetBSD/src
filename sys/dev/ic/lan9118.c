@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.33 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.34 2019/05/28 07:41:48 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.33 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.34 2019/05/28 07:41:48 msaitoh Exp $");
 
 /*
  * The LAN9118 Family
@@ -865,9 +865,10 @@ lan9118_mac_writereg(struct lan9118_softc *sc, int reg, uint32_t val)
 static void
 lan9118_set_filter(struct lan9118_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ec;
 	struct ether_multistep step;
 	struct ether_multi *enm;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = &ec->ec_if;
 	uint32_t mac_cr, h, hashes[2] = { 0, 0 };
 
 	mac_cr = lan9118_mac_readreg(sc, LAN9118_MAC_CR);
@@ -885,7 +886,8 @@ lan9118_set_filter(struct lan9118_softc *sc)
 	if (ifp->if_flags & IFF_ALLMULTI)
 		mac_cr |= LAN9118_MAC_CR_MCPAS;
 	else {
-		ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN) != 0) {
@@ -910,6 +912,7 @@ lan9118_set_filter(struct lan9118_softc *sc)
 			mac_cr |= LAN9118_MAC_CR_HPFILT;
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 		if (mac_cr & LAN9118_MAC_CR_HPFILT) {
 			lan9118_mac_writereg(sc, LAN9118_HASHH, hashes[1]);
 			lan9118_mac_writereg(sc, LAN9118_HASHL, hashes[0]);
