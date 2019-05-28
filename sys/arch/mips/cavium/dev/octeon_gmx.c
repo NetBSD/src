@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.4 2019/05/28 07:41:47 msaitoh Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.5 2019/05/28 14:20:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.4 2019/05/28 07:41:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.5 2019/05/28 14:20:09 msaitoh Exp $");
 
 #include "opt_octeon.h"
 
@@ -922,7 +922,7 @@ octeon_gmx_rgmii_set_mac_addr(struct octeon_gmx_port_softc *sc, uint8_t *addr,
 static int
 octeon_gmx_rgmii_set_filter(struct octeon_gmx_port_softc *sc)
 {
-	struct ethercom *ec = &sc->sc_port_ec;
+	struct ethercom *ec = sc->sc_port_ec;
 	struct ifnet *ifp = &ec->ec_if;
 #ifdef OCTEON_ETH_USE_GMX_CAM
 	struct ether_multi *enm;
