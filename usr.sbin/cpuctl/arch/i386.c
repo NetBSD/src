@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.101 2019/05/28 07:44:14 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.102 2019/05/28 07:51:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.101 2019/05/28 07:44:14 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.102 2019/05/28 07:51:58 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -373,7 +373,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x4d] = "Atom C2000",
 				[0x4e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
 				[0x4f] = "Xeon E[57] v4 (Broadwell), Core i7-69xx Extreme",
-				[0x55] = "Xeon Scalable (Skylake)",
+				[0x55] = "Xeon Scalable (Skylake, Cascade Lake, Copper Lake)",
 				[0x56] = "Xeon D-1500 (Broadwell)",
 				[0x57] = "Xeon Phi [357]200 (Knights Landing)",
 				[0x5a] = "Atom E3500",
@@ -381,13 +381,16 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x5d] = "Atom X3-C3000 (Silvermont)",
 				[0x5e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
 				[0x5f] = "Atom (Goldmont, Denverton)",
-				[0x66] = "Future Core (Cannon Lake)",
+				[0x66] = "8th gen Core i3 (Cannon Lake)",
+				[0x6a] = "Future Xeon (Ice Lake)",
+				[0x6c] = "Future Xeon (Ice Lake)",
 				[0x7a] = "Atom (Goldmont Plus)",
+				[0x7d] = "Future Core (Ice Lake)",
 				[0x7e] = "Future Core (Ice Lake)",
 				[0x85] = "Xeon Phi 7215, 7285, 7295 (Knights Mill)",
 				[0x86] = "Atom (Tremont)",
-				[0x8e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake)",
-				[0x9e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake)",
+				[0x8e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
+				[0x9e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
 			},
 			"Pentium Pro, II or III",	/* Default */
 			NULL,
