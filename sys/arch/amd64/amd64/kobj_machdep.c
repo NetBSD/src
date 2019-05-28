@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.7 2018/12/24 21:48:52 christos Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.8 2019/05/28 03:52:08 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7 2018/12/24 21:48:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.8 2019/05/28 03:52:08 kamil Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -115,7 +115,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		if (error)
 			return -1;
 		val = addr + addend;
-		*where = val;
+		memcpy(where, &val, sizeof(val));
 		break;
 
 	case R_X86_64_PC32:	/* S + A - P */
@@ -125,7 +125,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 			return -1;
 		where32 = (Elf32_Addr *)where;
 		val32 = (Elf32_Addr)(addr + addend - (Elf64_Addr)where);
-		*where32 = val32;
+		memcpy(where32, &val32, sizeof(val32));
 		break;
 
 	case R_X86_64_32:	/* S + A */
@@ -135,7 +135,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 			return -1;
 		val32 = (Elf32_Addr)(addr + addend);
 		where32 = (Elf32_Addr *)where;
-		*where32 = val32;
+		memcpy(where32, &val32, sizeof(val32));
 		break;
 
 	case R_X86_64_GLOB_DAT:	/* S */
@@ -143,13 +143,13 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		error = kobj_sym_lookup(ko, symidx, &addr);
 		if (error)
 			return -1;
-		*where = addr;
+		memcpy(where, &addr, sizeof(addr));
 		break;
 
 	case R_X86_64_RELATIVE:	/* B + A */
 		addr = relocbase + addend;
 		val = addr;
-		*where = val;
+		memcpy(where, &val, sizeof(val));
 		break;
 
 	default:
