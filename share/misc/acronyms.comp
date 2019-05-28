@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.252 2019/05/16 10:28:19 sevan Exp $
+$NetBSD: acronyms.comp,v 1.253 2019/05/28 22:11:32 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1536,6 +1536,8 @@ UB	undefined behavior
 UBSAN	Undefined Behavior Sanitizer
 UC	uncacheable
 UCS	uniform-cost search
+UCS	unified computing system
+UCS	universal coded character set
 UDMA	ultra DMA
 UDO	ultra density optical
 UDP	User Datagram Protocol
@@ -1563,6 +1565,7 @@ USB	universal serial bus
 USWC	uncacheable speculative write combining
 UT	unit test
 UTC	coordinated universal time
+UTF	unicode transformation formats
 UTP	unshielded twisted pair
 UUCP	Unix-to-Unix Copy Protocol
 UUID	universally unique identifier
