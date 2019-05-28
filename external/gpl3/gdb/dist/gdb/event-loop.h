@@ -69,8 +69,7 @@
    infinite loop.
 
    Corollary tasks are the creation and deletion of event sources.  */
-#ifndef _EVENT_LOOP_H_
-#define _EVENT_LOOP_H_
+
 typedef void *gdb_client_data;
 struct async_signal_handler;
 struct async_event_handler;
