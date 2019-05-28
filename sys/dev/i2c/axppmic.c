@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.22 2019/05/28 09:52:17 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.23 2019/05/28 10:14:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.22 2019/05/28 09:52:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.23 2019/05/28 10:14:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,8 @@ struct axppmic_ctrl {
 
 	uint8_t		c_enable_reg;
 	uint8_t		c_enable_mask;
+	uint8_t		c_enable_val;
+	uint8_t		c_disable_val;
 
 	uint8_t		c_voltage_reg;
 	uint8_t		c_voltage_mask;
@@ -127,6 +129,7 @@ struct axppmic_ctrl {
 	  .c_step1 = (step), .c_step1cnt = (((max) - (min)) / (step)) + 1, \
 	  .c_step2 = 0, .c_step2cnt = 0,				\
 	  .c_enable_reg = (ereg), .c_enable_mask = (emask),		\
+	  .c_enable_val = (emask), .c_disable_val = 0,			\
 	  .c_voltage_reg = (vreg), .c_voltage_mask = (vmask) }
 
 #define AXP_CTRL2(name, min, max, step1, step1cnt, step2, step2cnt, ereg, emask, vreg, vmask) \
@@ -134,7 +137,17 @@ struct axppmic_ctrl {
 	  .c_step1 = (step1), .c_step1cnt = (step1cnt),			\
 	  .c_step2 = (step2), .c_step2cnt = (step2cnt),			\
 	  .c_enable_reg = (ereg), .c_enable_mask = (emask),		\
+	  .c_enable_val = (emask), .c_disable_val = 0,			\
 	  .c_voltage_reg = (vreg), .c_voltage_mask = (vmask) }
+
+#define AXP_CTRL_IO(name, min, max, step, ereg, emask, eval, dval, vreg, vmask)	\
+	{ .c_name = (name), .c_min = (min), .c_max = (max),		\
+	  .c_step1 = (step), .c_step1cnt = (((max) - (min)) / (step)) + 1, \
+	  .c_step2 = 0, .c_step2cnt = 0,				\
+	  .c_enable_reg = (ereg), .c_enable_mask = (emask),		\
+	  .c_enable_val = (eval), .c_disable_val = (dval),		\
+	  .c_voltage_reg = (vreg), .c_voltage_mask = (vmask) }
+
 
 static const struct axppmic_ctrl axp803_ctrls[] = {
 	AXP_CTRL("dldo1", 700, 3300, 100,
@@ -210,10 +223,10 @@ static const struct axppmic_ctrl axp805_ctrls[] = {
 
 static const struct axppmic_ctrl axp809_ctrls[] = {
 	/* TODO: This list is incomplete */
-	AXP_CTRL("ldo_io0", 700, 3300, 100,
-		0x90, __BIT(0), 0x91, __BITS(4,0)),
-	AXP_CTRL("ldo_io1", 700, 3300, 100,
-		0x92, __BIT(0), 0x93, __BITS(4,0)),
+	AXP_CTRL_IO("ldo_io0", 700, 3300, 100,
+		0x90, __BITS(3,0), 0x3, 0x7, 0x91, __BITS(4,0)),
+	AXP_CTRL_IO("ldo_io1", 700, 3300, 100,
+		0x92, __BITS(3,0), 0x3, 0x7, 0x93, __BITS(4,0)),
 };
 
 static const struct axppmic_ctrl axp813_ctrls[] = {
@@ -958,10 +971,11 @@ axpreg_enable(device_t dev, bool enable)
 
 	iic_acquire_bus(sc->sc_i2c, flags);
 	if ((error = axppmic_read(sc->sc_i2c, sc->sc_addr, c->c_enable_reg, &val, flags)) == 0) {
+		val &= ~c->c_enable_mask;
 		if (enable)
-			val |= c->c_enable_mask;
+			val |= c->c_enable_val;
 		else
-			val &= ~c->c_enable_mask;
+			val |= c->c_disable_val;
 		error = axppmic_write(sc->sc_i2c, sc->sc_addr, c->c_enable_reg, val, flags);
 	}
 	iic_release_bus(sc->sc_i2c, flags);
