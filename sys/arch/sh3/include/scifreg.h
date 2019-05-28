@@ -1,4 +1,4 @@
-/* $NetBSD: scifreg.h,v 1.10 2006/02/18 00:41:32 uwe Exp $ */
+/* $NetBSD: scifreg.h,v 1.11 2019/05/28 08:59:34 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -123,7 +123,7 @@
 
 /* SCR: serial control */
 #define	SCSCR2_TIE		0x80	/* Transmit Interrupt Enable */
-#define	SCSCR2_RIE		0x40	/* Recieve Interrupt Enable */
+#define	SCSCR2_RIE		0x40	/* Receive Interrupt Enable */
 #define	SCSCR2_TE		0x20	/* Transmit Enable */
 #define	SCSCR2_RE		0x10	/* Receive Enable */
 #define	SCSCR2_CKE1		0x02	/* ClocK Enable 1 */
@@ -136,7 +136,7 @@
 #define	SCSSR2_BRK		0x0010	/* BReaK detection */
 #define	SCSSR2_FER		0x0008	/* Framing ERror */
 #define	SCSSR2_PER		0x0004	/* Parity ERror */
-#define	SCSSR2_RDF		0x0002	/* Recieve fifo Data Full */
+#define	SCSSR2_RDF		0x0002	/* Receive fifo Data Full */
 #define	SCSSR2_DR		0x0001	/* Data Ready */
 
 /* FCR: fifo control */

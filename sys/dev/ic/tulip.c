@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.196 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: tulip.c,v 1.197 2019/05/28 08:59:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.196 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.197 2019/05/28 08:59:34 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -2965,7 +2965,7 @@ tlp_al981_filter_setup(struct tulip_softc *sc)
 /*
  * tlp_asix_filter_setup:
  *
- * 	Set the ASIX AX8814x recieve filter.
+ * 	Set the ASIX AX8814x receive filter.
  */
 static void
 tlp_asix_filter_setup(struct tulip_softc *sc)

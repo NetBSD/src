@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.638 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.639 2019/05/28 08:59:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.638 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.639 2019/05/28 08:59:35 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6789,7 +6789,7 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 	if (error)
 		goto fail_1;
 
-	/* For recieve */
+	/* For receive */
 	error = 0;
 	rx_done = 0;
 	for (i = 0; i < sc->sc_nqueues; i++) {
