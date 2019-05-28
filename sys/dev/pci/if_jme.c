@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.41 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.42 2019/05/28 05:07:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.41 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.42 2019/05/28 05:07:13 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -583,7 +583,7 @@ jme_stop_rx(jme_softc_t *sc)
 			break;
 	}
 	if (i == 0)
-		aprint_error_dev(sc->jme_dev, "stopping recevier timeout!\n");
+		aprint_error_dev(sc->jme_dev, "stopping receiver timeout!\n");
 
 }
 
@@ -1527,7 +1527,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 #endif
 	/*
 	 * Finally request interrupt and give the first descriptor
-	 * owenership to hardware.
+	 * ownership to hardware.
 	 */
 	desc = &sc->jme_txring[headdsc];
 	desc->flags |= htole32(JME_TD_OWN | JME_TD_INTR);
@@ -1605,7 +1605,7 @@ jme_txeof(struct jme_softc *sc)
 		/*
 		 * Only the first descriptor of multi-descriptor
 		 * transmission is updated so driver have to skip entire
-		 * chained buffers for the transmiited frame. In other
+		 * chained buffers for the transmitted frame. In other
 		 * words, JME_TD_OWN bit is valid only at the first
 		 * descriptor of a multi-descriptor transmission.
 		 */
