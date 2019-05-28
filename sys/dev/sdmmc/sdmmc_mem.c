@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.66 2018/11/09 14:38:36 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.67 2019/05/28 00:25:27 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.66 2018/11/09 14:38:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.67 2019/05/28 00:25:27 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -588,6 +588,9 @@ sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		error = sdmmc_mem_sd_init(sc, sf);
 	else
 		error = sdmmc_mem_mmc_init(sc, sf);
+
+	if (error != 0)
+		SET(sf->flags, SFF_ERROR);
 
 out:
 	SDMMC_UNLOCK(sc);
