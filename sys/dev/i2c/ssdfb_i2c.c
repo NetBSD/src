@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_i2c.c,v 1.2 2019/03/17 01:47:57 tnn Exp $ */
+/* $NetBSD: ssdfb_i2c.c,v 1.3 2019/05/28 17:17:16 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_i2c.c,v 1.2 2019/03/17 01:47:57 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_i2c.c,v 1.3 2019/05/28 17:17:16 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -214,7 +214,7 @@ ssdfb_i2c_transfer_rect_ssd1306(void *cookie, uint8_t fromcol, uint8_t tocol,
 	int flags = usepoll ? I2C_F_POLL : 0;
 	uint8_t cc = 0;
 	uint8_t cb = SSDFB_I2C_CTRL_BYTE_DATA_MASK;
-	size_t len = (tocol + 1 - fromcol);
+	size_t len = tocol + 1 - fromcol;
 	int error;
 	/*
 	 * SSD1306 does not implement the Continuation bit correctly.
@@ -258,7 +258,7 @@ ssdfb_i2c_transfer_rect_sh1106(void *cookie, uint8_t fromcol, uint8_t tocol,
 	int flags = usepoll ? I2C_F_POLL : 0;
 	uint8_t cb = SSDFB_I2C_CTRL_BYTE_DATA_MASK;
 	uint8_t cc = SSDFB_I2C_CTRL_BYTE_CONTINUATION_MASK;
-	size_t len = (tocol + 1 - fromcol);
+	size_t len = tocol + 1 - fromcol;
 	int error;
 	uint8_t cmds[] = {
 		SSDFB_CMD_SET_PAGE_START_ADDRESS_BASE + frompage,
@@ -305,7 +305,7 @@ ssdfb_smbus_transfer_rect(void *cookie, uint8_t fromcol, uint8_t tocol,
 	int flags = usepoll ? I2C_F_POLL : 0;
 	uint8_t cb = SSDFB_I2C_CTRL_BYTE_DATA_MASK;
 	uint8_t cc = 0;
-	size_t len = (tocol + 1 - fromcol);
+	size_t len = tocol + 1 - fromcol;
 	uint8_t cmd_higher_col =
 	    SSDFB_CMD_SET_HIGHER_COLUMN_START_ADDRESS_BASE + (fromcol >> 4);
 	uint8_t cmd_lower_col =
