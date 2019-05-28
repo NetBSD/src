@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2018/05/18 12:23:22 joerg Exp $	*/
+/*	$NetBSD: md.c,v 1.4 2019/05/28 13:24:25 gson Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -184,7 +184,7 @@ md_post_newfs(void)
 
 	/* boot blocks ... */
 	msg_display(MSG_dobootblks, pm->diskdev);
-	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
+	if (run_program(RUN_DISPLAY,
 	    "/usr/sbin/installboot -v /dev/r%sc /usr/mdec/xxboot",
 	    pm->diskdev))
 		process_menu(MENU_ok,
