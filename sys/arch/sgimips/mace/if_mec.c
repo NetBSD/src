@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.59 2019/05/23 10:57:27 msaitoh Exp $ */
+/* $NetBSD: if_mec.c,v 1.60 2019/05/28 07:41:48 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.59 2019/05/23 10:57:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.60 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -1514,6 +1514,7 @@ mec_setfilter(struct mec_softc *sc)
 
 	mcnt = 0;
 	mchash = 0;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1522,6 +1523,7 @@ mec_setfilter(struct mec_softc *sc)
 			bus_space_write_8(st, sh, MEC_MULTICAST,
 			    0xffffffffffffffffULL);
 			bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
+			ETHER_UNLOCK(ec);
 			return;
 		}
 
@@ -1532,6 +1534,7 @@ mec_setfilter(struct mec_softc *sc)
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 

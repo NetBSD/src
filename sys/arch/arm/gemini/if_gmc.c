@@ -1,4 +1,4 @@
-/* $NetBSD: if_gmc.c,v 1.10 2019/05/23 13:10:50 msaitoh Exp $ */
+/* $NetBSD: if_gmc.c,v 1.11 2019/05/28 07:41:46 msaitoh Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,7 +47,7 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.10 2019/05/23 13:10:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.11 2019/05/28 07:41:46 msaitoh Exp $");
 
 #define	MAX_TXSEG	32
 
@@ -195,6 +195,7 @@ gmc_txqueue(struct gmc_softc *sc, gmac_hwqueue_t *hwq, struct mbuf *m)
 static void
 gmc_filter_change(struct gmc_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ec;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	uint32_t mhash[2];
@@ -220,7 +221,8 @@ gmc_filter_change(struct gmc_softc *sc)
 
 	mhash[0] = 0;
 	mhash[1] = 0;
-	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		size_t i;
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -231,6 +233,7 @@ gmc_filter_change(struct gmc_softc *sc)
 		mhash[(i >> 5) & 1] |= 1 << (i & 31);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	if (sc->sc_gmac_mcast_filter[0] != mhash[0]
 	    || sc->sc_gmac_mcast_filter[1] != mhash[1]) {

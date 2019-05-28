@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.44 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.45 2019/05/28 07:41:48 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.44 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.45 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1133,6 +1133,7 @@ pq3etsec_mc_setup(
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	for (u_int i = 0; enm != NULL; ) {
 		const char *addr = enm->enm_addrlo;
@@ -1169,6 +1170,7 @@ pq3etsec_mc_setup(
 		}
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	for (u_int i = 0; i < 8; i++) {
 		etsec_write(sc, IGADDR(i), sc->sc_gaddr[i]);
 		etsec_write(sc, GADDR(i), sc->sc_gaddr[i+8]);

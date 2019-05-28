@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3.c,v 1.13 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: emac3.c,v 1.14 2019/05/28 07:41:47 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.13 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.14 2019/05/28 07:41:47 msaitoh Exp $");
 
 #include "debug_playstation2.h"
 
@@ -242,14 +242,18 @@ allmulti:
 		return;
 	}
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	/* XXX always multicast promiscuous mode. XXX use hash table.. */
 	ifp->if_flags |= IFF_ALLMULTI;

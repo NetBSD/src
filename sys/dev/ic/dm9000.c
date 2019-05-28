@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.19 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.20 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -918,6 +918,7 @@ dme_set_addr_filter(struct dme_softc *sc)
 	af[0] = af[1] = af[2] = af[3] = 0x0000;
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		uint16_t hash;
@@ -940,6 +941,7 @@ dme_set_addr_filter(struct dme_softc *sc)
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}
+	ETHER_UNLOCK(ec);
 
 	/* Write the multicast address filter */
 	for (i = 0; i < 4; i++) {

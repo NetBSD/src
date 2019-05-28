@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.6 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.7 2019/05/28 07:41:50 msaitoh Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
@@ -29,7 +29,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.6 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.7 2019/05/28 07:41:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -412,6 +412,7 @@ ure_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 static void
 ure_iff(struct ure_softc *sc)
 {
+	struct ethercom *ec = &sc->ure_ec;
 	struct ifnet *ifp = GET_IFP(sc);
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -440,11 +441,14 @@ allmulti:	ifp->if_flags |= IFF_ALLMULTI;
 	} else {
 		rxmode |= URE_RCR_AM;
 
-		ETHER_FIRST_MULTI(step, &sc->ure_ec, enm);
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			    ETHER_ADDR_LEN))
+			    ETHER_ADDR_LEN)) {
+				ETHER_UNLOCK(ec);
 				goto allmulti;
+			}
 
 			hash = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN)
 			    >> 26;
@@ -455,6 +459,7 @@ allmulti:	ifp->if_flags |= IFF_ALLMULTI;
 
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 
 		hash = bswap32(hashes[0]);
 		hashes[0] = bswap32(hashes[1]);
