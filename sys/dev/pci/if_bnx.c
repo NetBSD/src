@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.84 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.85 2019/05/28 07:41:49 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.84 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.85 2019/05/28 07:41:49 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -5620,10 +5620,12 @@ allmulti:
 		/* Accept one or more multicast(s). */
 		DBPRINT(sc, BNX_INFO, "Enabling selective multicast mode.\n");
 
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN)) {
+				ETHER_UNLOCK(ec);
 				goto allmulti;
 			}
 			h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) &
@@ -5631,6 +5633,7 @@ allmulti:
 			hashes[(h & 0xE0) >> 5] |= 1 << (h & 0x1F);
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 
 		for (i = 0; i < NUM_MC_HASH_REGISTERS; i++)
 			REG_WR(sc, BNX_EMAC_MULTICAST_HASH0 + (i * 4),

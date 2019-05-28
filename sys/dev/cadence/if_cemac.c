@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.20 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.21 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.20 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.21 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -988,6 +988,7 @@ cemac_setaddr(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1030,6 +1031,7 @@ cemac_setaddr(struct ifnet *ifp)
 		ETHER_NEXT_MULTI(step, enm);
 		nma++;
 	}
+	ETHER_UNLOCK(ec);
 
 	// program...
 	DPRINTFN(1,("%s: en0 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,

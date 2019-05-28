@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.25 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.26 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.25 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.26 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1565,6 +1565,7 @@ vte_init_rx_ring(struct vte_softc *sc)
 static void
 vte_rxfilter(struct vte_softc *sc)
 {
+	struct ethercom *ec = &sc->vte_ec;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	struct ifnet *ifp;
@@ -1601,7 +1602,8 @@ vte_rxfilter(struct vte_softc *sc)
 		goto chipit;
 	}
 
-	ETHER_FIRST_MULTI(step, &sc->vte_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	nperf = 0;
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)
@@ -1612,6 +1614,7 @@ vte_rxfilter(struct vte_softc *sc)
 			mchash[1] = 0xFFFF;
 			mchash[2] = 0xFFFF;
 			mchash[3] = 0xFFFF;
+			ETHER_UNLOCK(ec);
 			goto chipit;
 		}
 		/*
@@ -1631,6 +1634,7 @@ vte_rxfilter(struct vte_softc *sc)
 		}
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	if (mchash[0] != 0 || mchash[1] != 0 || mchash[2] != 0 ||
 	    mchash[3] != 0)
 		mcr |= MCR0_MULTICAST;

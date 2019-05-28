@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.38 2019/05/23 10:40:39 msaitoh Exp $ */
+/* $NetBSD: mtd803.c,v 1.39 2019/05/28 07:41:48 msaitoh Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.38 2019/05/23 10:40:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.39 2019/05/28 07:41:48 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -839,6 +839,7 @@ mtd_setmulti(struct mtd_softc *sc)
 		return;
 	}
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		/* We need the 6 most significant bits of the CRC */
@@ -849,6 +850,7 @@ mtd_setmulti(struct mtd_softc *sc)
 		++mcnt;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	/* Accept multicast bit needs to be on? */
 	if (mcnt)

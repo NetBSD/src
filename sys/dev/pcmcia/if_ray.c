@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.93 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.94 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.93 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.94 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -2827,6 +2827,7 @@ ray_update_mcast(struct ray_softc *sc)
 
 	/* see if we have any ranges */
 	if ((count = sc->sc_ec.ec_multicnt) < 17) {
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm) {
 			/* see if this is a range */
@@ -2837,6 +2838,7 @@ ray_update_mcast(struct ray_softc *sc)
 			}
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 	}
 
 	/* track this stuff even when not running */
@@ -2858,12 +2860,14 @@ ray_update_mcast(struct ray_softc *sc)
 		return;
 	SRAM_WRITE_FIELD_1(sc, ccs, ray_cmd_update_mcast, c_nmcast, count);
 	bufp = RAY_HOST_TO_ECF_BASE;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm) {
 		ray_write_region(sc, bufp, enm->enm_addrlo, ETHER_ADDR_LEN);
 		bufp += ETHER_ADDR_LEN;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	(void)ray_issue_cmd(sc, ccs, SCP_UPD_MCAST);
 }
 

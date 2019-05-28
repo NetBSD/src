@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.59 2019/05/23 10:57:27 msaitoh Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.60 2019/05/28 07:41:47 msaitoh Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.59 2019/05/23 10:57:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.60 2019/05/28 07:41:47 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -774,6 +774,7 @@ bmac_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 void
 bmac_setladrf(struct bmac_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -801,7 +802,8 @@ bmac_setladrf(struct bmac_softc *sc)
 
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
 
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
@@ -814,6 +816,7 @@ bmac_setladrf(struct bmac_softc *sc)
 			 */
 			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
 			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
 			goto chipit;
 		}
 
@@ -827,6 +830,7 @@ bmac_setladrf(struct bmac_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 

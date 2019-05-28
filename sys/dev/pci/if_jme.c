@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.42 2019/05/28 05:07:13 msaitoh Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.43 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.42 2019/05/28 05:07:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.43 2019/05/28 07:41:49 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1842,6 +1842,7 @@ jme_mac_config(jme_softc_t *sc)
 static void
 jme_set_filter(jme_softc_t *sc)
 {
+	struct ethercom *ec = &sc->jme_ec;
 	struct ifnet *ifp = &sc->jme_if;
 	struct ether_multistep step;
 	struct ether_multi *enm;
@@ -1879,7 +1880,8 @@ jme_set_filter(jme_softc_t *sc)
 	rxcfg |= RXMAC_MULTICAST;
 	memset(hash, 0, sizeof(hash));
 
-	ETHER_FIRST_MULTI(step, &sc->jme_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 #ifdef JEMDBUG
 		printf("%s: addrs %s %s\n", __func__,
@@ -1898,6 +1900,7 @@ jme_set_filter(jme_softc_t *sc)
 		}
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 #ifdef JMEDEBUG
 	printf("%s: hash1 %x has2 %x\n", __func__, hash[0], hash[1]);
 #endif

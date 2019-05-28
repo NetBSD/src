@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.69 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.70 2019/05/28 07:41:49 msaitoh Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.69 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.70 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -1897,12 +1897,14 @@ nfe_setmulti(struct nfe_softc *sc)
 	memcpy(addr, etherbroadcastaddr, ETHER_ADDR_LEN);
 	memcpy(mask, etherbroadcastaddr, ETHER_ADDR_LEN);
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			ifp->if_flags |= IFF_ALLMULTI;
 			memset(addr, 0, ETHER_ADDR_LEN);
 			memset(mask, 0, ETHER_ADDR_LEN);
+			ETHER_UNLOCK(ec);
 			goto done;
 		}
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {
@@ -1911,6 +1913,7 @@ nfe_setmulti(struct nfe_softc *sc)
 		}
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		mask[i] |= addr[i];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.130 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.131 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.130 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.131 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -723,13 +723,18 @@ ex_set_mc(struct ex_softc *sc)
 		goto allmulti;
 	}
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(estep, ec, enm);
-	if (enm == NULL)
+	if (enm == NULL) {
+		ETHER_UNLOCK(ec);
 		goto nomulti;
+	}
 
-	if ((sc->ex_conf & EX_CONF_90XB) == 0)
+	if ((sc->ex_conf & EX_CONF_90XB) == 0) {
 		/* No multicast hash filtering. */
+		ETHER_UNLOCK(ec);
 		goto allmulti;
+	}
 
 	for (i = 0; i < MCHASHSIZE; i++)
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
@@ -737,14 +742,17 @@ ex_set_mc(struct ex_softc *sc)
 
 	do {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		i = ex_mchash(enm->enm_addrlo);
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
 		    ELINK_COMMAND, ELINK_SETHASHFILBIT | i);
 		ETHER_NEXT_MULTI(estep, enm);
 	} while (enm != NULL);
+	ETHER_UNLOCK(ec);
 	mask |= FIL_MULTIHASH;
 
 nomulti:

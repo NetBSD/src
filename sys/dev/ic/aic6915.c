@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.38 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.39 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.38 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.39 2019/05/28 07:41:48 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1306,9 +1306,12 @@ sf_set_filter(struct sf_softc *sc)
 	 * Now set the hash bits for each multicast address in our
 	 * list.
 	 */
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
-	if (enm == NULL)
+	if (enm == NULL) {
+		ETHER_UNLOCK(ec);
 		goto done;
+	}
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
@@ -1319,11 +1322,13 @@ sf_set_filter(struct sf_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 		sf_set_filter_hash(sc, enm->enm_addrlo);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	/*
 	 * Set "hash only multicast dest, match regardless of VLAN ID".
