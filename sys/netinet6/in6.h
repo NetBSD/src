@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.94 2018/12/10 16:28:52 christos Exp $	*/
+/*	$NetBSD: in6.h,v 1.95 2019/05/28 03:56:46 kamil Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ struct in6_addr {
 		__uint16_t  __u6_addr16[8];
 		uint32_t  __u6_addr32[4];
 	} __u6_addr;			/* 128-bit IP6 address */
-};
+} __packed;
 
 #define s6_addr   __u6_addr.__u6_addr8
 #ifdef _KERNEL	/* XXX nonstandard */
