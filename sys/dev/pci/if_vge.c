@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.71 2019/05/23 13:10:52 msaitoh Exp $ */
+/* $NetBSD: if_vge.c,v 1.72 2019/05/28 07:41:49 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.71 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.72 2019/05/28 07:41:49 msaitoh Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -661,14 +661,17 @@ vge_setmulti(struct vge_softc *sc)
 	}
 
 	/* Now program new ones */
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		/*
 		 * If multicast range, fall back to ALLMULTI.
 		 */
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-				ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		error = vge_cam_set(sc, enm->enm_addrlo);
 		if (error)
@@ -676,19 +679,23 @@ vge_setmulti(struct vge_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	/* If there were too many addresses, use the hash filter. */
 	if (error) {
 		vge_cam_clear(sc);
 
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			/*
 			 * If multicast range, fall back to ALLMULTI.
 			 */
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-					ETHER_ADDR_LEN) != 0)
+			    ETHER_ADDR_LEN) != 0) {
+				ETHER_UNLOCK(ec);
 				goto allmulti;
+			}
 
 			h = ether_crc32_be(enm->enm_addrlo,
 			    ETHER_ADDR_LEN) >> 26;
@@ -696,6 +703,7 @@ vge_setmulti(struct vge_softc *sc)
 
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 
 		CSR_WRITE_4(sc, VGE_MAR0, hashes[0]);
 		CSR_WRITE_4(sc, VGE_MAR1, hashes[1]);

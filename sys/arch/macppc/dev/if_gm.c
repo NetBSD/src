@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.54 2019/05/23 10:57:27 msaitoh Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.55 2019/05/28 07:41:47 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.54 2019/05/23 10:57:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.55 2019/05/28 07:41:47 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -678,6 +678,7 @@ gmac_setladrf(struct gmac_softc *sc)
 	 * the word.
 	 */
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
@@ -692,6 +693,7 @@ gmac_setladrf(struct gmac_softc *sc)
 			for (i = 0; i < 16; i++)
 				hash[i] = 0xffff;
 			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
 			goto chipit;
 		}
 
@@ -705,6 +707,7 @@ gmac_setladrf(struct gmac_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 

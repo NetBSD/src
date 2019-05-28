@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.153 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.154 2019/05/28 07:41:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.153 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.154 2019/05/28 07:41:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -582,6 +582,7 @@ aue_crc(void *addrv)
 Static void
 aue_setmulti(struct aue_softc *sc)
 {
+	struct ethercom		*ec = &sc->aue_ec;
 	struct ifnet		*ifp;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
@@ -605,16 +606,20 @@ allmulti:
 		aue_csr_write_1(sc, AUE_MAR0 + i, 0);
 
 	/* now program new ones */
-	ETHER_FIRST_MULTI(step, &sc->aue_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo,
-		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0)
+		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		h = aue_crc(enm->enm_addrlo);
 		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0x7));
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 }

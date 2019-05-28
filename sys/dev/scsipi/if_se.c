@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.101 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_se.c,v 1.102 2019/05/28 07:41:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.101 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.102 2019/05/28 07:41:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -888,6 +888,7 @@ sc_set_all_multi(struct se_softc *sc, int set)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (ETHER_CMP(enm->enm_addrlo, enm->enm_addrhi)) {
@@ -904,6 +905,7 @@ sc_set_all_multi(struct se_softc *sc, int set)
 			 * typically not possible. The only real alternative
 			 * is to go into promicuous mode and filter by hand.
 			 */
+			ETHER_UNLOCK(ec);
 			return (ENODEV);
 
 		}
@@ -914,6 +916,8 @@ sc_set_all_multi(struct se_softc *sc, int set)
 			return (error);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
+
 	return (error);
 }
 #endif /* not used */

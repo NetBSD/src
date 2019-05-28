@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.26 2019/05/24 06:26:38 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.27 2019/05/28 07:41:49 msaitoh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.26 2019/05/24 06:26:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.27 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2717,10 +2717,12 @@ mvxpe_filter_setup(struct mvxpe_softc *sc)
 		goto allmulti;
 	}
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/* ranges are complex and somewhat rare */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 		/* chip handles some IPv4 multicast specially */
@@ -2736,6 +2738,7 @@ mvxpe_filter_setup(struct mvxpe_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	goto set;
 
 allmulti:

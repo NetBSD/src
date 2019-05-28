@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.44 2019/02/05 06:17:01 msaitoh Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.45 2019/05/28 07:41:47 msaitoh Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.44 2019/02/05 06:17:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.45 2019/05/28 07:41:47 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -623,6 +623,7 @@ camentry(struct sn_softc *sc, int entry, const u_char *ea)
 static void 
 camprogram(struct sn_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ethercom;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	struct ifnet *ifp;
@@ -641,7 +642,8 @@ camprogram(struct sn_softc *sc)
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/* Loop through multicast addresses */
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (mcount == MAXCAM) {
 			 ifp->if_flags |= IFF_ALLMULTI;
@@ -667,6 +669,7 @@ camprogram(struct sn_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	NIC_PUT(sc, SNR_CDP, LOWER(sc->v_cda));
 	NIC_PUT(sc, SNR_CDC, MAXCAM);

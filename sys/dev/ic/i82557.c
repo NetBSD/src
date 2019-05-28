@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.152 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: i82557.c,v 1.153 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.152 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.153 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2227,6 +2227,7 @@ fxp_mc_setup(struct fxp_softc *sc)
 	 * Initialize multicast setup descriptor.
 	 */
 	nmcasts = 0;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		/*
@@ -2247,6 +2248,7 @@ fxp_mc_setup(struct fxp_softc *sc)
 			 * the config block.
 			 */
 			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
 			return;
 		}
 		memcpy(&mcsp->mc_addr[nmcasts][0], enm->enm_addrlo,
@@ -2254,6 +2256,7 @@ fxp_mc_setup(struct fxp_softc *sc)
 		nmcasts++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	/* BIG_ENDIAN: no need to swap to store 0 */
 	mcsp->cb_status = 0;

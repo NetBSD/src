@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.97 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.98 2019/05/28 07:41:50 msaitoh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.97 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.98 2019/05/28 07:41:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -471,6 +471,7 @@ static void
 axe_setmulti(struct axe_softc *sc)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();
+	struct ethercom *ec = &sc->axe_ec;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -503,16 +504,20 @@ axe_setmulti(struct axe_softc *sc)
 	}
 
 	/* Now program new ones */
-	ETHER_FIRST_MULTI(step, &sc->axe_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
 		hashtbl[h >> 3] |= 1U << (h & 7);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	rxmode |= AXE_RXCMD_MULTICAST;
 

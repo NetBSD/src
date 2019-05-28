@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.92 2019/04/26 06:33:34 msaitoh Exp $	*/
+/*	$NetBSD: be.c,v 1.93 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.92 2019/04/26 06:33:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.93 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1148,6 +1148,7 @@ be_mcreset(struct be_softc *sc)
 
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1163,6 +1164,7 @@ be_mcreset(struct be_softc *sc)
 			 */
 			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
 			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
 			goto chipit;
 		}
 
@@ -1173,6 +1175,7 @@ be_mcreset(struct be_softc *sc)
 		hash[crc >> 4] |= 1 << (crc & 0xf);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 

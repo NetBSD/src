@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.43 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.44 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.43 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.44 2019/05/28 07:41:48 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1188,6 +1188,7 @@ sonic_set_filter(struct sonic_softc *sc)
 	entry++;
 
 	/* Add the multicast addresses to the CAM. */
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1196,6 +1197,7 @@ sonic_set_filter(struct sonic_softc *sc)
 			 * The only way to do this on the SONIC is to enable
 			 * reception of all multicast packets.
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -1204,6 +1206,7 @@ sonic_set_filter(struct sonic_softc *sc)
 			 * Out of CAM slots.  Have to enable reception
 			 * of all multicast addresses.
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -1213,6 +1216,7 @@ sonic_set_filter(struct sonic_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;

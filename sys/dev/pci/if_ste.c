@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.55 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.56 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.55 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.56 2019/05/28 07:41:49 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1537,9 +1537,12 @@ ste_set_filter(struct ste_softc *sc)
 
 	memset(mchash, 0, sizeof(mchash));
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
-	if (enm == NULL)
+	if (enm == NULL) {
+		ETHER_UNLOCK(ec);
 		goto done;
+	}
 
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1551,6 +1554,7 @@ ste_set_filter(struct ste_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -1564,6 +1568,7 @@ ste_set_filter(struct ste_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	sc->sc_ReceiveMode |= RM_ReceiveMulticastHash;
 

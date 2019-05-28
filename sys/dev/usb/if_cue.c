@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.83 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.84 2019/05/28 07:41:50 msaitoh Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.83 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.84 2019/05/28 07:41:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -356,6 +356,7 @@ cue_crc(const char *addr)
 Static void
 cue_setmulti(struct cue_softc *sc)
 {
+	struct ethercom		*ec = &sc->cue_ec;
 	struct ifnet		*ifp;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
@@ -381,16 +382,20 @@ allmulti:
 		sc->cue_mctab[i] = 0;
 
 	/* now program new ones */
-	ETHER_FIRST_MULTI(step, &sc->cue_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo,
-		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0)
+		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		h = cue_crc(enm->enm_addrlo);
 		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 

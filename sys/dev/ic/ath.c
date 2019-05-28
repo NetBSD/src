@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.126 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: ath.c,v 1.127 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.126 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.127 2019/05/28 07:41:48 msaitoh Exp $");
 #endif
 
 /*
@@ -1989,6 +1989,7 @@ ath_calcrxfilter(struct ath_softc *sc, enum ieee80211_state state)
 static void
 ath_mode_init(struct ath_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ec;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_hal *ah = sc->sc_ah;
@@ -2028,7 +2029,8 @@ ath_mode_init(struct ath_softc *sc)
 	/* calculate and install multicast filter */
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	mfilt[0] = mfilt[1] = 0;
-	ETHER_FIRST_MULTI(estep, &sc->sc_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(estep, ec, enm);
 	while (enm != NULL) {
 		void *dl;
 		/* XXX Punt on ranges. */
@@ -2047,6 +2049,7 @@ ath_mode_init(struct ath_softc *sc)
 
 		ETHER_NEXT_MULTI(estep, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ath_hal_setmcastfilter(ah, mfilt[0], mfilt[1]);
 	DPRINTF(sc, ATH_DEBUG_MODE, "%s: RX filter 0x%x, MC filter %08x:%08x\n",

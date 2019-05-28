@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.46 2019/05/23 10:51:38 msaitoh Exp $ */
+/* $NetBSD: if_aumac.c,v 1.47 2019/05/28 07:41:47 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.46 2019/05/23 10:51:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.47 2019/05/28 07:41:47 msaitoh Exp $");
 
 
 
@@ -924,6 +924,7 @@ aumac_set_filter(struct aumac_softc *sc)
 	 * The high order bits select the word, while the rest of the bits
 	 * select the bit within the word.
 	 */
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -935,6 +936,7 @@ aumac_set_filter(struct aumac_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is large enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -948,6 +950,7 @@ aumac_set_filter(struct aumac_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 

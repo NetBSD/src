@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.73 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: qe.c,v 1.74 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.73 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.74 2019/05/28 07:41:49 msaitoh Exp $");
 
 #define QEDEBUG
 
@@ -1092,6 +1092,7 @@ qe_mcreset(struct qe_softc *sc)
 
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -1119,6 +1120,7 @@ qe_mcreset(struct qe_softc *sc)
 		hash[crc >> 4] |= 1 << (crc & 0xf);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	/* We need to byte-swap the hash before writing to the chip. */
 	for (i = 0; i < 7; i += 2) {

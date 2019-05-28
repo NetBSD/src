@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.129 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.130 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.129 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.130 2019/05/28 07:41:49 msaitoh Exp $");
 
 
 
@@ -478,11 +478,14 @@ allmulti:
 	CSR_WRITE_4(sc, VR_MAR1, 0);
 
 	/* now program new ones */
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		h = vr_calchash(enm->enm_addrlo);
 
@@ -493,6 +496,7 @@ allmulti:
 		ETHER_NEXT_MULTI(step, enm);
 		mcnt++;
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 

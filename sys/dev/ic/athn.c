@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.20 2019/05/28 07:07:00 msaitoh Exp $	*/
+/*	$NetBSD: athn.c,v 1.21 2019/05/28 07:41:48 msaitoh Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.20 2019/05/28 07:07:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.21 2019/05/28 07:41:48 msaitoh Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -2737,6 +2737,7 @@ athn_set_multi(struct athn_softc *sc)
 		goto done;
 	}
 	lo = hi = 0;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
@@ -2758,6 +2759,7 @@ athn_set_multi(struct athn_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
  done:
+	ETHER_UNLOCK(ec);
 	AR_WRITE(sc, AR_MCAST_FIL0, lo);
 	AR_WRITE(sc, AR_MCAST_FIL1, hi);
 	AR_WRITE_BARRIER(sc);

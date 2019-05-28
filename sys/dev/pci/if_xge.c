@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.30 2019/05/23 10:57:28 msaitoh Exp $ */
+/*      $NetBSD: if_xge.c,v 1.31 2019/05/28 07:41:49 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.30 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.31 2019/05/28 07:41:49 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -887,14 +887,18 @@ xge_mcast_filter(struct xge_softc *sc)
 	int i, numaddr = 1; /* first slot used for card unicast address */
 	uint64_t val;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/* Skip ranges */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
-		if (numaddr == MAX_MCAST_ADDR)
+		if (numaddr == MAX_MCAST_ADDR) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 		for (val = 0, i = 0; i < ETHER_ADDR_LEN; i++) {
 			val <<= 8;
 			val |= enm->enm_addrlo[i];
@@ -908,6 +912,7 @@ xge_mcast_filter(struct xge_softc *sc)
 		numaddr++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	/* set the remaining entries to the broadcast address */
 	for (i = numaddr; i < MAX_MCAST_ADDR; i++) {
 		PIF_WCSR(RMAC_ADDR_DATA0_MEM, 0xffffffffffff0000ULL);

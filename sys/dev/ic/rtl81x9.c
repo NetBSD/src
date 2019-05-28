@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.105 2019/05/23 10:51:39 msaitoh Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.106 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.105 2019/05/23 10:51:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.106 2019/05/28 07:41:48 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -524,14 +524,13 @@ rtk_phy_statchg(struct ifnet *ifp)
 void
 rtk_setmulti(struct rtk_softc *sc)
 {
-	struct ifnet *ifp;
+	struct ethercom *ec = &sc->ethercom;
+	struct ifnet *ifp = &ec->ec_if;
 	uint32_t hashes[2] = { 0, 0 };
 	uint32_t rxfilt;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int h, mcnt;
-
-	ifp = &sc->ethercom.ec_if;
 
 	rxfilt = CSR_READ_4(sc, RTK_RXCFG);
 
@@ -550,12 +549,15 @@ rtk_setmulti(struct rtk_softc *sc)
 	CSR_WRITE_4(sc, RTK_MAR4, 0);
 
 	/* now program new ones */
-	ETHER_FIRST_MULTI(step, &sc->ethercom, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	mcnt = 0;
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		h = rtk_calchash(enm->enm_addrlo);
 		if (h < 32)
@@ -565,6 +567,7 @@ rtk_setmulti(struct rtk_softc *sc)
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 

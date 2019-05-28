@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.89 2019/05/23 13:10:52 msaitoh Exp $ */
+/*	$NetBSD: if_xi.c,v 1.90 2019/05/28 07:41:49 msaitoh Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.89 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.90 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -944,7 +944,7 @@ xi_set_address(struct xi_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	struct ethercom *ether = &sc->sc_ethercom;
+	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multistep step;
 	struct ether_multi *enm;
@@ -965,12 +965,13 @@ xi_set_address(struct xi_softc *sc)
 			indaddr[i] = enaddr[i];
 	num = 1;
 
-	if (ether->ec_multicnt > 9) {
+	if (ec->ec_multicnt > 9) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		goto done;
 	}
 
-	ETHER_FIRST_MULTI(step, ether, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	for (; enm; num++) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {
@@ -980,6 +981,7 @@ xi_set_address(struct xi_softc *sc)
 			 * XXX should we be setting IFF_ALLMULTI here?
 			 */
 			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
 			goto done;
 		}
 		if (sc->sc_chipset >= XI_CHIPSET_MOHAWK)
@@ -990,6 +992,7 @@ xi_set_address(struct xi_softc *sc)
 				indaddr[num * 6 + i] = enm->enm_addrlo[i];
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 done:

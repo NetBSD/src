@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.167 2019/05/23 13:10:51 msaitoh Exp $  */
+/*	$NetBSD: atw.c,v 1.168 2019/05/28 07:41:48 msaitoh Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.167 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.168 2019/05/28 07:41:48 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -2012,17 +2012,21 @@ atw_filter_setup(struct atw_softc *sc)
 	/*
 	 * Program the 64-bit multicast hash filter.
 	 */
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		hash = atw_calchash(enm->enm_addrlo);
 		hashes[hash >> 5] |= 1 << (hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
 		sc->sc_opmode |= ATW_NAR_MM;
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
 

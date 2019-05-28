@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.332 2019/05/24 05:57:35 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.333 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.332 2019/05/24 05:57:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.333 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1806,6 +1806,7 @@ bge_setmulti(struct bge_softc *sc)
 		goto allmulti;
 
 	/* Now program new ones. */
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1817,6 +1818,7 @@ bge_setmulti(struct bge_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -1828,6 +1830,7 @@ bge_setmulti(struct bge_softc *sc)
 		hashes[(h & 0x60) >> 5] |= 1 << (h & 0x1F);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;

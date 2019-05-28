@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.23 2019/05/23 10:57:27 msaitoh Exp $ */
+/* $NetBSD: if_admsw.c,v 1.24 2019/05/28 07:41:47 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.23 2019/05/23 10:57:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.24 2019/05/28 07:41:47 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1134,6 +1134,7 @@ admsw_set_filter(struct admsw_softc *sc)
 
 		ifp->if_flags &= ~IFF_ALLMULTI;
 
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -1167,6 +1168,7 @@ admsw_set_filter(struct admsw_softc *sc)
 			/* Load h/w with mcast address, port = CPU */
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 	}
 
 	conf = REG_READ(CPUP_CONF_REG);

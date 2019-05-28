@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.53 2019/05/23 10:57:28 msaitoh Exp $ */
+/*	$NetBSD: if_dge.c,v 1.54 2019/05/28 07:41:49 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.53 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.54 2019/05/28 07:41:49 msaitoh Exp $");
 
 
 
@@ -2267,6 +2267,7 @@ dge_set_filter(struct dge_softc *sc)
 	for (i = 0; i < MC_TABSIZE; i++)
 		CSR_WRITE(sc, DGE_MTA + (i << 2), 0);
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -2278,6 +2279,7 @@ dge_set_filter(struct dge_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -2293,6 +2295,7 @@ dge_set_filter(struct dge_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;

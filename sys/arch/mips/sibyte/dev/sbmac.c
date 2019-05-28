@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.59 2019/05/23 13:10:50 msaitoh Exp $ */
+/* $NetBSD: sbmac.c,v 1.60 2019/05/28 07:41:47 msaitoh Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.59 2019/05/23 13:10:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.60 2019/05/28 07:41:47 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1894,6 +1894,7 @@ sbmac_setmulti(struct sbmac_softc *sc)
 	 */
 
 	idx = 1;		/* skip station address */
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while ((enm != NULL) && (idx < MAC_ADDR_COUNT)) {
 		reg = sbmac_addr2reg(enm->enm_addrlo);
@@ -1903,6 +1904,7 @@ sbmac_setmulti(struct sbmac_softc *sc)
 		idx++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	/*
 	 * Enable the "accept multicast bits" if we programmed at least one

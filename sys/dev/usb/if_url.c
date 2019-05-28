@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.64 2019/05/23 10:57:29 msaitoh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.65 2019/05/28 07:41:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.64 2019/05/23 10:57:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.65 2019/05/28 07:41:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -658,6 +658,7 @@ url_activate(device_t self, enum devact act)
 Static void
 url_setmulti(struct url_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ec;
 	struct ifnet *ifp;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -676,7 +677,7 @@ url_setmulti(struct url_softc *sc)
 		URL_SETBIT2(sc, URL_RCR, URL_RCR_AAM | URL_RCR_AAP);
 		return;
 	} else if (ifp->if_flags & IFF_ALLMULTI) {
-	allmulti:
+allmulti:
 		ifp->if_flags |= IFF_ALLMULTI;
 		URL_SETBIT2(sc, URL_RCR, URL_RCR_AAM);
 		URL_CLRBIT2(sc, URL_RCR, URL_RCR_AAP);
@@ -688,11 +689,14 @@ url_setmulti(struct url_softc *sc)
 	url_csr_write_4(sc, URL_MAR4, 0);
 
 	/* now program new ones */
-	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			   ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		h = url_calchash(enm->enm_addrlo);
 		if (h < 32)
@@ -702,6 +706,7 @@ url_setmulti(struct url_softc *sc)
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 

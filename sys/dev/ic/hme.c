@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.104 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: hme.c,v 1.105 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.104 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.105 2019/05/28 07:41:48 msaitoh Exp $");
 
 /* #define HMEDEBUG */
 
@@ -1568,6 +1568,7 @@ hme_setladrf(struct hme_softc *sc)
 	 * the word.
 	 */
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1581,6 +1582,7 @@ hme_setladrf(struct hme_softc *sc)
 			 */
 			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
 			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
 			goto chipit;
 		}
 
@@ -1594,6 +1596,7 @@ hme_setladrf(struct hme_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 

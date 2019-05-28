@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.42 2019/05/23 13:10:50 msaitoh Exp $	*/
+/*	$NetBSD: epe.c,v 1.43 2019/05/28 07:41:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.42 2019/05/23 13:10:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.43 2019/05/28 07:41:46 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -722,6 +722,7 @@ epe_setaddr(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -761,6 +762,7 @@ epe_setaddr(struct ifnet *ifp)
 		ETHER_NEXT_MULTI(step, enm);
 		nma++;
 	}
+	ETHER_UNLOCK(ec);
 
 	EPE_WRITE(AFP, 0);
 	bus_space_write_region_1(sc->sc_iot, sc->sc_ioh, EPE_IndAd,

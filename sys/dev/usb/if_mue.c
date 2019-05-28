@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.47 2019/05/26 17:48:47 mlelstv Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.48 2019/05/28 07:41:50 msaitoh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.47 2019/05/26 17:48:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.48 2019/05/28 07:41:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1349,6 +1349,7 @@ mue_prepare_tso(struct mue_softc *sc, struct mbuf *m)
 static void
 mue_setmulti(struct mue_softc *sc)
 {
+	struct ethercom *ec = &sc->mue_ec;
 	struct ifnet *ifp = GET_IFP(sc);
 	const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 	struct ether_multi *enm;
@@ -1386,13 +1387,15 @@ allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
 		pfiltbl[0][0] = MUE_ENADDR_HI(enaddr) | MUE_ADDR_FILTX_VALID;
 		pfiltbl[0][1] = MUE_ENADDR_LO(enaddr);
 		i = 1;
-		ETHER_FIRST_MULTI(step, &sc->mue_ec, enm);
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN)) {
 				memset(pfiltbl, 0, sizeof(pfiltbl));
 				memset(hashtbl, 0, sizeof(hashtbl));
 				rxfilt &= ~MUE_RFE_CTL_MULTICAST_HASH;
+				ETHER_UNLOCK(ec);
 				goto allmulti;
 			}
 			if (i < MUE_NUM_ADDR_FILTX) {
@@ -1410,6 +1413,7 @@ allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
 			i++;
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 		rxfilt |= MUE_RFE_CTL_PERFECT;
 		ifp->if_flags &= ~IFF_ALLMULTI;
 		if (rxfilt & MUE_RFE_CTL_MULTICAST_HASH)

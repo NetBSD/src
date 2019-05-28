@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.80 2019/05/23 10:57:28 msaitoh Exp $ */
+/*      $NetBSD: if_qe.c,v 1.81 2019/05/28 07:41:49 msaitoh Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.80 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.81 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -769,6 +769,7 @@ qe_add_rxbuf(struct qe_softc *sc, int i)
 void
 qe_setup(struct qe_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ec;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	struct qe_cdata *qc = sc->sc_qedata;
@@ -797,7 +798,8 @@ qe_setup(struct qe_softc *sc)
 	 */
 	j = 3; k = 0;
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
 			ifp->if_flags |= IFF_ALLMULTI;
@@ -815,6 +817,7 @@ qe_setup(struct qe_softc *sc)
 		}
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	idx = sc->sc_nexttx;
 	qc->qc_xmit[idx].qe_buf_len = -64;
 

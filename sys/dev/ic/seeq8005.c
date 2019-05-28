@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.63 2019/05/23 13:10:51 msaitoh Exp $ */
+/* $NetBSD: seeq8005.c,v 1.64 2019/05/28 07:41:48 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.63 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.64 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -556,7 +556,8 @@ ea_await_fifo_empty(struct seeq8005_softc *sc)
 		if (SEEQ_READ16(sc, iot, ioh, SEEQ_STATUS) &
 		    SEEQ_STATUS_FIFO_EMPTY)
 			return;
-	log(LOG_ERR, "%s: DMA FIFO failed to empty\n", device_xname(sc->sc_dev));
+	log(LOG_ERR, "%s: DMA FIFO failed to empty\n",
+	    device_xname(sc->sc_dev));
 }
 
 /*
@@ -1396,6 +1397,8 @@ ea_mc_reset_8004(struct seeq8005_softc *sc)
 	}
 	for (i = 0; i < 8; i++)
 		af[i] = 0;
+
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -1424,6 +1427,7 @@ ea_mc_reset_8004(struct seeq8005_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	ea_select_buffer(sc, SEEQ_BUFCODE_MULTICAST);
@@ -1442,12 +1446,14 @@ ea_mc_reset_8005(struct seeq8005_softc *sc)
 
 	naddr = 0;
 	maxaddrs = 5;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		/* Have we got space? */
 		if (naddr >= maxaddrs ||
 		    memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
 			ec->ec_if.if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
 			ea_ioctl(&ec->ec_if, SIOCSIFFLAGS, NULL);
 			return;
 		}
@@ -1456,6 +1462,8 @@ ea_mc_reset_8005(struct seeq8005_softc *sc)
 		naddr++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
+
 	for (; naddr < maxaddrs; naddr++)
 		sc->sc_config1 &= ~(SEEQ_CFG1_STATION_ADDR1 << naddr);
 	SEEQ_WRITE16(sc, sc->sc_iot, sc->sc_ioh, SEEQ_CONFIG1,

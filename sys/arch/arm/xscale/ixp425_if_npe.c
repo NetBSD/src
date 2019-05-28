@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.40 2019/05/23 10:40:39 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.41 2019/05/28 07:41:46 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.40 2019/05/23 10:40:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.41 2019/05/28 07:41:46 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -369,11 +369,13 @@ npe_setmcast(struct npe_softc *sc)
 		memset(clr, 0, ETHER_ADDR_LEN);
 		memset(set, 0xff, ETHER_ADDR_LEN);
 
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN)) {
 				ifp->if_flags |= IFF_ALLMULTI;
+				ETHER_UNLOCK(ec);
 				goto all_multi;
 			}
 
@@ -384,6 +386,7 @@ npe_setmcast(struct npe_softc *sc)
 
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {
 			mask[i] = set[i] | ~clr[i];
@@ -999,6 +1002,7 @@ npe_rxdone(int qid, void *arg)
 
 					/* Multicast */
 
+					ETHER_LOCK(ec);
 					ETHER_FIRST_MULTI(step, ec, enm);
 					while (enm != NULL) {
 						uint64_t lowint, highint, dest;
@@ -1017,6 +1021,8 @@ npe_rxdone(int qid, void *arg)
 						}
 						ETHER_NEXT_MULTI(step, enm);
 					}
+					ETHER_UNLOCK(ec);
+
 					if (match == 0) {
 						/* Discard it */
 #if 0

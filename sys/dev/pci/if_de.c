@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.161 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: if_de.c,v 1.162 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.161 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.162 2019/05/28 07:41:49 msaitoh Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -3205,6 +3205,7 @@ tulip_ifmedia_status(struct ifnet * const ifp, struct ifmediareq *req)
 static void
 tulip_addr_filter(tulip_softc_t * const sc)
 {
+	struct ethercom *ec = TULIP_ETHERCOM(sc);
 	struct ether_multistep step;
 	struct ether_multi *enm;
 
@@ -3237,7 +3238,8 @@ tulip_addr_filter(tulip_softc_t * const sc)
 		 * hardware).
 		 */
 		memset(sc->tulip_setupdata, 0, sizeof(sc->tulip_setupdata));
-		ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 				hash = tulip_mchash(enm->enm_addrlo);
@@ -3254,6 +3256,7 @@ tulip_addr_filter(tulip_softc_t * const sc)
 			}
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 		/*
 		 * No reason to use a hash if we are going to be
 		 * receiving every multicast.
@@ -3293,7 +3296,8 @@ tulip_addr_filter(tulip_softc_t * const sc)
 			/*
 			 * Else can get perfect filtering for 16 addresses.
 			 */
-			ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
+			ETHER_LOCK(ec);
+			ETHER_FIRST_MULTI(step, ec, enm);
 			for (; enm != NULL; idx++) {
 				if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 #if BYTE_ORDER == BIG_ENDIAN
@@ -3311,6 +3315,7 @@ tulip_addr_filter(tulip_softc_t * const sc)
 				}
 				ETHER_NEXT_MULTI(step, enm);
 			}
+			ETHER_UNLOCK(ec);
 			/*
 			 * Add the broadcast address.
 			 */

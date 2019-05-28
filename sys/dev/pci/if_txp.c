@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.55 2019/05/23 10:30:36 msaitoh Exp $ */
+/* $NetBSD: if_txp.c,v 1.56 2019/05/28 07:41:49 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.55 2019/05/23 10:30:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.56 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1952,6 +1952,7 @@ again:
 	else {
 		hash[0] = hash[1] = 0;
 
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -1967,6 +1968,7 @@ again:
 				 * all bits set.)
 				 */
 				ifp->if_flags |= IFF_ALLMULTI;
+				ETHER_UNLOCK(ec);
 				goto again;
 			}
 
@@ -1989,6 +1991,7 @@ again:
 			hash[hashbit / 32] |= (1 << hashbit % 32);
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 
 		if (mcnt > 0) {
 			filter |= TXP_RXFILT_HASHMULTI;

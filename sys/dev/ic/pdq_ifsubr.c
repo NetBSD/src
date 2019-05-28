@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.65 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.66 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.65 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.66 2019/05/28 07:41:48 msaitoh Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -270,6 +270,7 @@ void
 pdq_os_addr_fill(pdq_t *pdq, pdq_lanaddr_t *addr, size_t num_addrs)
 {
 	pdq_softc_t *sc = pdq->pdq_os_ctx;
+	struct ethercom *ec = PDQ_FDDICOM(sc);
 	struct ether_multistep step;
 	struct ether_multi *enm;
 
@@ -284,7 +285,8 @@ pdq_os_addr_fill(pdq_t *pdq, pdq_lanaddr_t *addr, size_t num_addrs)
 	sc->sc_if.if_flags &= ~IFF_ALLMULTI;
 #endif
 
-	ETHER_FIRST_MULTI(step, PDQ_FDDICOM(sc), enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL && num_addrs > 0) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 			((u_short *)addr->lanaddr_bytes)[0] = ((u_short *)enm->enm_addrlo)[0];
@@ -300,6 +302,7 @@ pdq_os_addr_fill(pdq_t *pdq, pdq_lanaddr_t *addr, size_t num_addrs)
 		}
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	/*
 	 * If not all the address fit into the CAM, turn on all-multicast mode.
 	 */

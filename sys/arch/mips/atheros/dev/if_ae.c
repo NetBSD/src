@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.35 2019/05/23 13:10:50 msaitoh Exp $ */
+/* $Id: if_ae.c,v 1.36 2019/05/28 07:41:47 msaitoh Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.35 2019/05/23 13:10:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.36 2019/05/28 07:41:47 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1697,6 +1697,7 @@ ae_filter_setup(struct ae_softc *sc)
 
 	mchash[0] = mchash[1] = 0;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1708,6 +1709,7 @@ ae_filter_setup(struct ae_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -1716,6 +1718,7 @@ ae_filter_setup(struct ae_softc *sc)
 		mchash[hash >> 5] |= 1 << (hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
 

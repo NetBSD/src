@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.3 2017/08/20 11:05:24 maxv Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.4 2019/05/28 07:41:47 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.3 2017/08/20 11:05:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.4 2019/05/28 07:41:47 msaitoh Exp $");
 
 #include "opt_octeon.h"
 
@@ -922,7 +922,8 @@ octeon_gmx_rgmii_set_mac_addr(struct octeon_gmx_port_softc *sc, uint8_t *addr,
 static int
 octeon_gmx_rgmii_set_filter(struct octeon_gmx_port_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_port_ec->ec_if;
+	struct ethercom *ec = &sc->sc_port_ec;
+	struct ifnet *ifp = &ec->ec_if;
 #ifdef OCTEON_ETH_USE_GMX_CAM
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -953,7 +954,8 @@ octeon_gmx_rgmii_set_filter(struct octeon_gmx_port_softc *sc)
 	 * for multicast addresses.
 	 */
 
-	ETHER_FIRST_MULTI(step, sc->sc_port_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		int i;
 
@@ -969,6 +971,7 @@ octeon_gmx_rgmii_set_filter(struct octeon_gmx_port_softc *sc)
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			dprintf("all multicast\n");
 			SET(ifp->if_flags, IFF_ALLMULTI);
+			ETHER_UNLOCK(ec);
 			goto setmulti;
 		}
 		multi++;
@@ -976,6 +979,7 @@ octeon_gmx_rgmii_set_filter(struct octeon_gmx_port_softc *sc)
 		/* XXX XXX XXX */
 		if (multi >= 8) {
 			SET(ifp->if_flags, IFF_ALLMULTI);
+			ETHER_UNLOCK(ec);
 			goto setmulti;
 		}
 		/* XXX XXX XXX */
@@ -1000,6 +1004,7 @@ octeon_gmx_rgmii_set_filter(struct octeon_gmx_port_softc *sc)
 			    _GMX_PORT_RD8(sc, octeon_gmx_rx_adr_cam_regs[i]));
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	CLR(ifp->if_flags, IFF_ALLMULTI);
 
 	OCTEON_ETH_KASSERT(enm == NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.69 2019/05/23 13:10:51 msaitoh Exp $ */
+/*	$NetBSD: if_ie.c,v 1.70 2019/05/28 07:41:48 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.69 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.70 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1499,6 +1499,7 @@ ieioctl(struct ifnet *ifp, u_long cmd, void *data)
 static void
 mc_reset(struct ie_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ethercom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	struct ifnet *ifp;
@@ -1509,7 +1510,7 @@ mc_reset(struct ie_softc *sc)
 	 * Step through the list of addresses.
 	 */
 	sc->mcast_count = 0;
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm) {
 		if (sc->mcast_count >= MAXMCAST ||
 		    ether_cmp(enm->enm_addrlo, enm->enm_addrhi) != 0) {
@@ -1523,6 +1524,7 @@ mc_reset(struct ie_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 setflag:
+	ETHER_UNLOCK(ec);
 	sc->want_mcsetup = 1;
 }
 

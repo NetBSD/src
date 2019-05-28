@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.95 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.96 2019/05/28 07:41:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.95 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.96 2019/05/28 07:41:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -315,6 +315,7 @@ kue_load_fw(struct kue_softc *sc)
 static void
 kue_setmulti(struct kue_softc *sc)
 {
+	struct ethercom		*ec = &sc->kue_ec;
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
@@ -334,17 +335,21 @@ allmulti:
 	sc->kue_rxfilt &= ~KUE_RXFILT_ALLMULTI;
 
 	i = 0;
-	ETHER_FIRST_MULTI(step, &sc->kue_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (i == KUE_MCFILTCNT(sc) ||
 		    memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			ETHER_ADDR_LEN) != 0)
+		    ETHER_ADDR_LEN) != 0) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		memcpy(KUE_MCFILT(sc, i), enm->enm_addrlo, ETHER_ADDR_LEN);
 		ETHER_NEXT_MULTI(step, enm);
 		i++;
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 

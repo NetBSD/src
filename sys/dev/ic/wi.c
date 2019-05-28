@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.252 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: wi.c,v 1.253 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.252 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.253 2019/05/28 07:41:48 msaitoh Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2109,6 +2109,7 @@ wi_info_intr(struct wi_softc *sc)
 STATIC int
 wi_write_multi(struct wi_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ec;
 	struct ifnet *ifp = &sc->sc_if;
 	int n;
 	struct wi_mcast mlist;
@@ -2124,17 +2125,21 @@ allmulti:
 	}
 
 	n = 0;
-	ETHER_FIRST_MULTI(estep, &sc->sc_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(estep, ec, enm);
 	while (enm != NULL) {
 		/* Punt on ranges or too many multicast addresses. */
 		if (!IEEE80211_ADDR_EQ(enm->enm_addrlo, enm->enm_addrhi) ||
-		    n >= sizeof(mlist) / sizeof(mlist.wi_mcast[0]))
+		    n >= sizeof(mlist) / sizeof(mlist.wi_mcast[0])) {
+			ETHER_UNLOCK(ec);
 			goto allmulti;
+		}
 
 		IEEE80211_ADDR_COPY(&mlist.wi_mcast[n], enm->enm_addrlo);
 		n++;
 		ETHER_NEXT_MULTI(estep, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	return wi_write_rid(sc, WI_RID_MCAST_LIST, &mlist,
 	    IEEE80211_ADDR_LEN * n);

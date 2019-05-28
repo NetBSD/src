@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.48 2019/05/23 13:10:51 msaitoh Exp $ */
+/*	$NetBSD: if_ni.c,v 1.49 2019/05/28 07:41:48 msaitoh Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.48 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.49 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -795,6 +795,7 @@ ni_add_rxbuf(struct ni_softc *sc, struct ni_dg *data, int idx)
 void
 ni_setup(struct ni_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ec;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ni_msg *msg;
 	struct ni_ptdb *ptdb;
@@ -824,7 +825,8 @@ ni_setup(struct ni_softc *sc)
 		msg->nm_len += 8;
 		ifp->if_flags &= ~IFF_ALLMULTI;
 		if ((ifp->if_flags & IFF_PROMISC) == 0) {
-			ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+			ETHER_LOCK(ec);
+			ETHER_FIRST_MULTI(step, ec, enm);
 			i = 1;
 			while (enm != NULL) {
 				if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
@@ -838,6 +840,7 @@ ni_setup(struct ni_softc *sc)
 				    ETHER_ADDR_LEN);
 				ETHER_NEXT_MULTI(step, enm);
 			}
+			ETHER_UNLOCK(ec);
 		}
 	} else
 		msg->nm_opcode2 = NI_CLPTDB;

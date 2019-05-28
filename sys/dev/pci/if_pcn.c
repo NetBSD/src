@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.70 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.71 2019/05/28 07:41:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.70 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.71 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1959,6 +1959,7 @@ pcn_set_filter(struct pcn_softc *sc)
 	    sc->sc_initblock.init_ladrf[2] =
 	    sc->sc_initblock.init_ladrf[3] = 0;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1970,6 +1971,7 @@ pcn_set_filter(struct pcn_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -1984,6 +1986,7 @@ pcn_set_filter(struct pcn_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	return;

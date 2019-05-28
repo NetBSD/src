@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.10 2019/05/23 13:10:50 msaitoh Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.11 2019/05/28 07:41:46 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.10 2019/05/23 13:10:50 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.11 2019/05/28 07:41:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -839,7 +839,8 @@ sun4i_emac_ifwatchdog(struct ifnet *ifp)
 static void
 sun4i_emac_rx_hash(struct sun4i_emac_softc *sc)
 {
-	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	struct ethercom *ec = &sc->sc_ec;
+	struct ifnet * const ifp = &ec->ec_if;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	uint32_t hash[2];
@@ -864,12 +865,12 @@ sun4i_emac_rx_hash(struct sun4i_emac_softc *sc)
 	if ((ifp->if_flags & IFF_PROMISC) == 0) {
 		hash[0] = hash[1] = 0;
 
-		ETHER_LOCK(&sc->sc_ec);
-		ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN)) {
-				ETHER_UNLOCK(&sc->sc_ec);
+				ETHER_UNLOCK(ec);
 				/*
 				 * We must listen to a range of multicast
 				 * addresses. For now, just accept all
@@ -895,7 +896,7 @@ sun4i_emac_rx_hash(struct sun4i_emac_softc *sc)
 			hash[crc >> 5] |= __BIT(crc & 31);
 			ETHER_NEXT_MULTI(step, enm);
 		}
-		ETHER_UNLOCK(&sc->sc_ec);
+		ETHER_UNLOCK(ec);
 		ifp->if_flags &= ~IFF_ALLMULTI;
 		rxctl |= EMAC_RX_CTL_MHF;
 	}

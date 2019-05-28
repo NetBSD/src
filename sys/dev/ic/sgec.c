@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.50 2019/05/23 13:10:51 msaitoh Exp $ */
+/*      $NetBSD: sgec.c,v 1.51 2019/05/28 07:41:48 msaitoh Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.50 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.51 2019/05/28 07:41:48 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -650,6 +650,7 @@ ze_add_rxbuf(struct ze_softc *sc, int i)
 void
 ze_setup(struct ze_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ec;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	struct ze_cdata *zc = sc->sc_zedata;
@@ -674,7 +675,8 @@ ze_setup(struct ze_softc *sc)
 	 */
 	j = 16;
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
 			ifp->if_flags |= IFF_ALLMULTI;
@@ -688,6 +690,7 @@ ze_setup(struct ze_softc *sc)
 			break;
 		}
 	}
+	ETHER_UNLOCK(ec);
 
 	/*
 	 * ALLMULTI implies PROMISC in this driver.

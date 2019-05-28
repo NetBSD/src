@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.89 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.90 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.89 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.90 2019/05/28 07:41:48 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1278,6 +1278,7 @@ epic_set_mchash(struct epic_softc *sc)
 
 	mchash[0] = mchash[1] = mchash[2] = mchash[3] = 0;
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1289,6 +1290,7 @@ epic_set_mchash(struct epic_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -1300,6 +1302,7 @@ epic_set_mchash(struct epic_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto sethash;

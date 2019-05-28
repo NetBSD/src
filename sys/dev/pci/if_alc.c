@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.36 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.37 2019/05/28 07:41:49 msaitoh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -3428,12 +3428,14 @@ alc_iff(struct alc_softc *sc)
 		/* Program new filter. */
 		memset(mchash, 0, sizeof(mchash));
 
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 	}
 
 	CSR_WRITE_4(sc, ALC_MAR0, mchash[0]);

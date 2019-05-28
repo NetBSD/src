@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.91 2019/05/23 10:57:28 msaitoh Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.92 2019/05/28 07:41:48 msaitoh Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.91 2019/05/23 10:57:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.92 2019/05/28 07:41:48 msaitoh Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -1551,6 +1551,7 @@ mb86960_getmcaf(struct ethercom *ec, uint8_t *af)
 		goto allmulti;
 
 	memset(af, 0, FE_FILTER_LEN);
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -1563,6 +1564,7 @@ mb86960_getmcaf(struct ethercom *ec, uint8_t *af)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -1576,6 +1578,7 @@ mb86960_getmcaf(struct ethercom *ec, uint8_t *af)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	return;
 

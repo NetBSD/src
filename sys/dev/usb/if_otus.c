@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.37 2019/05/23 13:10:52 msaitoh Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.38 2019/05/28 07:41:50 msaitoh Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.37 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.38 2019/05/28 07:41:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2275,6 +2275,7 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 Static int
 otus_set_multi(struct otus_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ec;
 	struct ifnet *ifp;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -2290,7 +2291,8 @@ otus_set_multi(struct otus_softc *sc)
 		goto done;
 	}
 	lo = hi = 0;
-	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			ifp->if_flags |= IFF_ALLMULTI;
@@ -2305,6 +2307,7 @@ otus_set_multi(struct otus_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
  done:
+	ETHER_UNLOCK(ec);
 	mutex_enter(&sc->sc_write_mtx);
 	hi |= 1 << 31;	/* Make sure the broadcast bit is set. */
 	otus_write(sc, AR_MAC_REG_GROUP_HASH_TBL_L, lo);

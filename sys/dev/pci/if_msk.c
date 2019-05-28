@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.89 2019/05/23 13:10:52 msaitoh Exp $ */
+/* $NetBSD: if_msk.c,v 1.90 2019/05/28 07:41:49 msaitoh Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.89 2019/05/23 13:10:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.90 2019/05/28 07:41:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,11 +371,13 @@ allmulti:
 		}
 	} else {
 		/* First find the tail of the list. */
+		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 				 ETHER_ADDR_LEN)) {
 				ifp->if_flags |= IFF_ALLMULTI;
+				ETHER_UNLOCK(ec);
 				goto allmulti;
 			}
 			h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) &
@@ -387,6 +389,7 @@ allmulti:
 
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		ETHER_UNLOCK(ec);
 		reg |= YU_RCR_MUFLEN;
 	}
 
