@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.21 2019/05/27 23:28:41 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.22 2019/05/28 09:52:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.21 2019/05/27 23:28:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.22 2019/05/28 09:52:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1037,9 +1037,15 @@ axpreg_attach(device_t parent, device_t self, void *aux)
 	if (of_getprop_uint32(phandle, "regulator-min-microvolt", &min_uvol) == 0 &&
 	    of_getprop_uint32(phandle, "regulator-max-microvolt", &max_uvol) == 0) {
 		if (uvol < min_uvol || uvol > max_uvol) {
-			aprint_debug_dev(self, "fix voltage %u uV -> %u/%u uV\n", uvol, min_uvol, max_uvol);
+			aprint_debug_dev(self, "fix voltage %u uV -> %u/%u uV\n",
+			    uvol, min_uvol, max_uvol);
 			axpreg_set_voltage(self, min_uvol, max_uvol);
 		}
+	}
+
+	if (of_hasprop(phandle, "regulator-always-on") ||
+	    of_hasprop(phandle, "regulator-boot-on")) {
+		axpreg_enable(self, true);
 	}
 }
 
