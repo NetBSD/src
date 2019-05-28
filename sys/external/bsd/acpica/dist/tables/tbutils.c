@@ -228,8 +228,9 @@ AcpiTbGetRootTableEntry (
          * 32-bit platform, RSDT: Return 32-bit table entry
          * 64-bit platform, RSDT: Expand 32-bit to 64-bit and return
          */
-        return ((ACPI_PHYSICAL_ADDRESS) (*ACPI_CAST_PTR (
-            UINT32, TableEntry)));
+        UINT32 addr;
+        memcpy(&addr, ACPI_CAST_PTR (UINT32, TableEntry), sizeof(addr));
+        return (ACPI_PHYSICAL_ADDRESS) addr;
     }
     else
     {
