@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.19 2019/05/24 07:34:51 msaitoh Exp $	*/
+/*	$NetBSD: athn.c,v 1.20 2019/05/28 07:07:00 msaitoh Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.19 2019/05/24 07:34:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.20 2019/05/28 07:07:00 msaitoh Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -136,8 +136,8 @@ Static void	athn_ani_lower_immunity(struct athn_softc *);
 Static void	athn_ani_monitor(struct athn_softc *);
 Static void	athn_ani_ofdm_err_trigger(struct athn_softc *);
 Static void	athn_ani_restart(struct athn_softc *);
-Static void	athn_set_multi(struct athn_softc *);
 #endif /* notyet */
+Static void	athn_set_multi(struct athn_softc *);
 
 PUBLIC int
 athn_attach(struct athn_softc *sc)
@@ -2721,12 +2721,11 @@ athn_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(&sc->sc_ic);
 }
 
-#ifdef notyet
 Static void
 athn_set_multi(struct athn_softc *sc)
 {
-	struct arpcom *ac = &sc->sc_ic.ic_ac;
-	struct ifnet *ifp = &ac->ac_if;
+	struct ethercom *ec = &sc->sc_ec;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	const uint8_t *addr;
@@ -2738,7 +2737,7 @@ athn_set_multi(struct athn_softc *sc)
 		goto done;
 	}
 	lo = hi = 0;
-	ETHER_FIRST_MULTI(step, ac, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
 			ifp->if_flags |= IFF_ALLMULTI;
@@ -2763,7 +2762,6 @@ athn_set_multi(struct athn_softc *sc)
 	AR_WRITE(sc, AR_MCAST_FIL1, hi);
 	AR_WRITE_BARRIER(sc);
 }
-#endif /* notyet */
 
 Static int
 athn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
@@ -2805,9 +2803,7 @@ athn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCDELMULTI:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/* setup multicast filter, etc */
-#ifdef notyet
 			athn_set_multi(sc);
-#endif
 			error = 0;
 		}
 		break;
