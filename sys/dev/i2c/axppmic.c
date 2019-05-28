@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.23 2019/05/28 10:14:46 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.24 2019/05/28 20:22:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.23 2019/05/28 10:14:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.24 2019/05/28 20:22:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,7 @@ struct axppmic_ctrl {
 	u_int		c_step1cnt;
 	u_int		c_step2;
 	u_int		c_step2cnt;
+	u_int		c_step2start;
 
 	uint8_t		c_enable_reg;
 	uint8_t		c_enable_mask;
@@ -140,6 +141,15 @@ struct axppmic_ctrl {
 	  .c_enable_val = (emask), .c_disable_val = 0,			\
 	  .c_voltage_reg = (vreg), .c_voltage_mask = (vmask) }
 
+#define AXP_CTRL2_RANGE(name, min, max, step1, step1cnt, step2start, step2, step2cnt, ereg, emask, vreg, vmask) \
+	{ .c_name = (name), .c_min = (min), .c_max = (max),		\
+	  .c_step1 = (step1), .c_step1cnt = (step1cnt),			\
+	  .c_step2start = (step2start),					\
+	  .c_step2 = (step2), .c_step2cnt = (step2cnt),			\
+	  .c_enable_reg = (ereg), .c_enable_mask = (emask),		\
+	  .c_enable_val = (emask), .c_disable_val = 0,			\
+	  .c_voltage_reg = (vreg), .c_voltage_mask = (vmask) }
+
 #define AXP_CTRL_IO(name, min, max, step, ereg, emask, eval, dval, vreg, vmask)	\
 	{ .c_name = (name), .c_min = (min), .c_max = (max),		\
 	  .c_step1 = (step), .c_step1cnt = (((max) - (min)) / (step)) + 1, \
@@ -148,6 +158,10 @@ struct axppmic_ctrl {
 	  .c_enable_val = (eval), .c_disable_val = (dval),		\
 	  .c_voltage_reg = (vreg), .c_voltage_mask = (vmask) }
 
+#define AXP_CTRL_SW(name, ereg, emask)					\
+	{ .c_name = (name), 						\
+	  .c_enable_reg = (ereg), .c_enable_mask = (emask),		\
+	  .c_enable_val = (emask), .c_disable_val = 0 }
 
 static const struct axppmic_ctrl axp803_ctrls[] = {
 	AXP_CTRL("dldo1", 700, 3300, 100,
@@ -222,7 +236,39 @@ static const struct axppmic_ctrl axp805_ctrls[] = {
 };
 
 static const struct axppmic_ctrl axp809_ctrls[] = {
-	/* TODO: This list is incomplete */
+	AXP_CTRL("dc5ldo", 700, 1400, 100,
+		0x10, __BIT(0), 0x1c, __BITS(2,0)),
+	AXP_CTRL("dcdc1", 1600, 3400, 100,
+		0x10, __BIT(1), 0x21, __BITS(4,0)),
+	AXP_CTRL("dcdc2", 600, 1540, 20,
+		0x10, __BIT(2), 0x22, __BITS(5,0)),
+	AXP_CTRL("dcdc3", 600, 1860, 20,
+		0x10, __BIT(3), 0x23, __BITS(5,0)),
+	AXP_CTRL2_RANGE("dcdc4", 600, 2600, 20, 47, 1800, 100, 9,
+		0x10, __BIT(4), 0x24, __BITS(5,0)),
+	AXP_CTRL("dcdc5", 1000, 2550, 50,
+		0x10, __BIT(5), 0x25, __BITS(4,0)),
+	AXP_CTRL("aldo1", 700, 3300, 100,
+		0x10, __BIT(6), 0x28, __BITS(4,0)),
+	AXP_CTRL("aldo2", 700, 3300, 100,
+		0x10, __BIT(7), 0x29, __BITS(4,0)),
+	AXP_CTRL("eldo1", 700, 3300, 100,
+		0x12, __BIT(0), 0x19, __BITS(4,0)),
+	AXP_CTRL("eldo2", 700, 3300, 100,
+		0x12, __BIT(1), 0x1a, __BITS(4,0)),
+	AXP_CTRL("eldo3", 700, 3300, 100,
+		0x12, __BIT(2), 0x1b, __BITS(4,0)),
+	AXP_CTRL2_RANGE("dldo1", 700, 4000, 100, 26, 3400, 200, 4,
+		0x12, __BIT(3), 0x15, __BITS(4,0)),
+	AXP_CTRL("dldo2", 700, 3300, 100,
+		0x12, __BIT(4), 0x16, __BITS(4,0)),
+	AXP_CTRL("aldo3", 700, 3300, 100,
+		0x12, __BIT(5), 0x2a, __BITS(4,0)),
+	AXP_CTRL_SW("sw",
+		0x12, __BIT(6)),
+	/* dc1sw is another switch for dcdc1 */
+	AXP_CTRL("dc1sw", 1600, 3400, 100,
+		0x12, __BIT(7), 0x21, __BITS(4,0)),
 	AXP_CTRL_IO("ldo_io0", 700, 3300, 100,
 		0x90, __BITS(3,0), 0x3, 0x7, 0x91, __BITS(4,0)),
 	AXP_CTRL_IO("ldo_io1", 700, 3300, 100,
@@ -454,6 +500,10 @@ axppmic_set_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axppmic_ctrl *c
 		++reg_val;
 		vol += c->c_step1;
 	}
+
+	if (c->c_step2start)
+		vol = c->c_step2start;
+
 	for (nstep = 0; nstep < c->c_step2cnt && vol < min; nstep++) {
 		++reg_val;
 		vol += c->c_step2;
@@ -492,6 +542,9 @@ axppmic_get_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axppmic_ctrl *c
 	reg_val = __SHIFTOUT(val, c->c_voltage_mask);
 	if (reg_val < c->c_step1cnt) {
 		*pvol = c->c_min + reg_val * c->c_step1;
+	} else if (c->c_step2start) {
+		*pvol = c->c_step2start +
+		    ((reg_val - c->c_step1cnt) * c->c_step2);
 	} else {
 		*pvol = c->c_min + (c->c_step1cnt * c->c_step1) +
 		    ((reg_val - c->c_step1cnt) * c->c_step2);
