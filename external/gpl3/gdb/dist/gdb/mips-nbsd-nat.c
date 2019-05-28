@@ -73,7 +73,7 @@ mips_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get registers"));
       
       mipsnbsd_supply_reg (regcache, (char *) &regs, regno);
@@ -87,7 +87,7 @@ mips_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       mipsnbsd_supply_fpreg (regcache, (char *) &fpregs, regno);
@@ -105,13 +105,13 @@ mips_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       mipsnbsd_fill_reg (regcache, (char *) &regs, regno);
 
       if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid), 
-		  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't write registers"));
 
       if (regno != -1)
@@ -124,13 +124,13 @@ mips_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
       struct fpreg fpregs; 
 
       if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       mipsnbsd_fill_fpreg (regcache, (char *) &fpregs, regno);
 
       if (ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }

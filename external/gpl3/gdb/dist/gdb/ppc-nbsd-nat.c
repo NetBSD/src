@@ -99,7 +99,7 @@ ppc_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, inferior_ptid.lwp ()) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       ppc_supply_gregset (&ppcnbsd_gregset, regcache,
@@ -111,7 +111,7 @@ ppc_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get FP registers"));
 
       ppc_supply_fpregset (&ppcnbsd_fpregset, regcache,
@@ -130,14 +130,14 @@ ppc_nbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       ppc_collect_gregset (&ppcnbsd_gregset, regcache,
 			   regnum, &regs, sizeof regs);
 
       if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't write registers"));
     }
 
@@ -146,14 +146,14 @@ ppc_nbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get FP registers"));
 
       ppc_collect_fpregset (&ppcnbsd_fpregset, regcache,
 			    regnum, &fpregs, sizeof fpregs);
 
       if (ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't set FP registers"));
     }
 }
@@ -162,7 +162,7 @@ void
 supply_gregset (struct regcache *regcache, const gregset_t *gregs)
 {
   if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) gregs, ptid_get_lwp (inferior_ptid)) == -1)
+	      (PTRACE_TYPE_ARG3) gregs, inferior_ptid.lwp ()) == -1)
     perror_with_name (_("Couldn't write registers"));
 }
 
@@ -170,7 +170,7 @@ void
 supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
 {
   if (ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) fpregs, ptid_get_lwp (inferior_ptid)) == -1)
+	      (PTRACE_TYPE_ARG3) fpregs, inferior_ptid.lwp ()) == -1)
     perror_with_name (_("Couldn't set FP registers"));
 }
 
@@ -178,7 +178,7 @@ void
 fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
 {
       if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) gregs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) gregs, inferior_ptid.lwp ()) == -1)
         perror_with_name (_("Couldn't get registers"));
 }
 
@@ -186,7 +186,7 @@ void
 fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
 {
       if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) fpregs, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) fpregs, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get FP registers"));
 }
 
