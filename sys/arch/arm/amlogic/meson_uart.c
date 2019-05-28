@@ -1,4 +1,4 @@
-/* $NetBSD: meson_uart.c,v 1.2 2019/01/20 15:56:40 jmcneill Exp $ */
+/* $NetBSD: meson_uart.c,v 1.3 2019/05/28 05:08:47 ryo Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.2 2019/01/20 15:56:40 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.3 2019/05/28 05:08:47 ryo Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -64,6 +64,7 @@ static int	meson_uart_match(device_t, cfdata_t, void *);
 static void	meson_uart_attach(device_t, device_t, void *);
 
 static int	meson_uart_intr(void *);
+static void	meson_uart_rxsoft(void *);
 
 static int	meson_uart_cngetc(dev_t);
 static void	meson_uart_cnputc(dev_t, int);
@@ -86,14 +87,20 @@ struct meson_uart_softc {
 	device_t sc_dev;
 	bus_space_tag_t	sc_bst;
 	bus_space_handle_t sc_bsh;
+	kmutex_t sc_intr_lock;
 	void *sc_ih;
+	void *sc_sih;
 
 	struct tty *sc_tty;
 
 	int sc_ospeed;
+	unsigned int sc_rbuf_w;		/* write ptr of sc_rbuf[] */
+	unsigned int sc_rbuf_r;		/* read ptr of sc_rbuf[] */
 	tcflag_t sc_cflag;
 
 	u_char sc_buf[1024];
+#define MESON_RBUFSZ	128		/* must be 2^n */
+	u_char sc_rbuf[MESON_RBUFSZ];	/* good enough for sizeof RXFIFO */
 };
 
 static int meson_uart_console_phandle = -1;
@@ -179,11 +186,18 @@ meson_uart_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SERIAL);
 	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL,
 	    FDT_INTR_MPSAFE, meson_uart_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error(": failed to establish interrupt on %s\n",
 		    intrstr);
+		return;
+	}
+
+	sc->sc_sih = softint_establish(SOFTINT_SERIAL, meson_uart_rxsoft, sc);
+	if (sc->sc_sih == NULL) {
+		aprint_error(": failed to establish softint\n");
 		return;
 	}
 
@@ -450,6 +464,7 @@ meson_uart_intr(void *priv)
 	struct tty *tp = sc->sc_tty;
 	uint32_t status, c;
 
+	mutex_spin_enter(&sc->sc_intr_lock);
 	for (;;) {
 		int cn_trapped = 0;
 		status = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
@@ -468,10 +483,31 @@ meson_uart_intr(void *priv)
 		cn_check_magic(tp->t_dev, c & 0xff, meson_uart_cnm_state);
 		if (cn_trapped)
 			continue;
-		tp->t_linesw->l_rint(c & 0xff, tp);
+
+		if ((sc->sc_rbuf_w - sc->sc_rbuf_r) >= (MESON_RBUFSZ - 1))
+			continue;
+		sc->sc_rbuf[sc->sc_rbuf_w++ & (MESON_RBUFSZ - 1)] = c;
 	}
+	mutex_spin_exit(&sc->sc_intr_lock);
+
+	if (sc->sc_rbuf_w != sc->sc_rbuf_r)
+		softint_schedule(sc->sc_sih);
 
 	return 0;
+}
+
+static void
+meson_uart_rxsoft(void *priv)
+{
+	struct meson_uart_softc *sc = priv;
+	struct tty *tp = sc->sc_tty;
+	int c;
+
+	while (sc->sc_rbuf_w != sc->sc_rbuf_r) {
+		c = sc->sc_rbuf[sc->sc_rbuf_r++ & (MESON_RBUFSZ - 1)];
+		if (tp->t_linesw->l_rint(c & 0xff, tp) == -1)
+			break;
+	}
 }
 
 static int
