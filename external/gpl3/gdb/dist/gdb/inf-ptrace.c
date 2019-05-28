@@ -368,7 +368,7 @@ inf_ptrace_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
        * On NetBSD the data field of PT_STEP contains the thread
        * to be stepped; all other threads are continued if this value is > 0
        */
-      sig = ptid_get_lwp(ptid);
+      sig = ptid.lwp ();
 #else
       sig = 0;
 #endif
