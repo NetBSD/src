@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpavar.h,v 1.2 2018/04/19 21:50:06 christos Exp $	*/
+/*	$NetBSD: octeon_fpavar.h,v 1.3 2019/05/28 08:59:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -70,7 +70,7 @@ void	octeon_fpa_dump(void);
 #define FPA_POOL_7_SIZE (16 * OCTEON_CACHE_LINE_SIZE)
 
 /* Pools in use */
-#define FPA_RECV_PKT_POOL		(0)	/* Recieve Packet buffers */
+#define FPA_RECV_PKT_POOL		(0)	/* Receive Packet buffers */
 #define FPA_RECV_PKT_POOL_SIZE		FPA_POOL_0_SIZE
 #define FPA_RECV_PKT_POOL_LINE		16
 #define FPA_WQE_POOL			(1)	/* Work queue entrys */

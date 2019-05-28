@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.13 2019/02/24 21:07:59 kamil Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.14 2019/05/28 08:59:35 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.13 2019/02/24 21:07:59 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.14 2019/05/28 08:59:35 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -830,7 +830,7 @@ sctp_handle_error(struct sctp_chunkhdr *ch,
 			 * IPv4 for that matter) it does not matter. If they
 			 * don't support that type of address, they can NOT
 			 * possibly get that packet type... i.e. with no IPv6
-			 * you can't recieve a IPv6 packet. so we can safely
+			 * you can't receive a IPv6 packet. so we can safely
 			 * ignore this one. If we ever added support for
 			 * HOSTNAME Addresses, then we would need to do
 			 * something here.
