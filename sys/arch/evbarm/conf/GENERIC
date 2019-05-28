@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.34 2019/05/27 21:13:29 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.35 2019/05/28 21:56:24 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -254,6 +254,7 @@ sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
 sun8iapbclk*	at fdt? pass 2		# Allwinner A23 APB0
 sun9icpusclk*	at fdt? pass 2		# Allwinner A80 CPUS
 sun9immcclk*	at fdt? pass 2		# Allwinner A80 SD/MMC-COMM
+sun9iusbclk*	at fdt? pass 2		# Allwinner A80 USB HCI
 tegra124car*	at fdt? pass 3		# NVIDIA Tegra CAR (T124)
 tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 
@@ -585,6 +586,7 @@ tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 exusbphy*	at fdt? pass 9		# Samsung Exynos USB2 PHY
 exusbdrdphy*	at fdt? pass 9		# Samsung Exynos USB3 DRD PHY
 mesonusbphy*	at fdt? pass 9		# Amlogic Meson USB2 PHY
+sun9iusbphy*	at fdt? pass 9		# Allwinner A80 USB PHY
 sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy*	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
