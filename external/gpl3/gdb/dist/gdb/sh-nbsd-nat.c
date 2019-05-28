@@ -69,7 +69,7 @@ sh_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
       struct reg inferior_registers;
 
       if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &inferior_registers, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sh_corefile_supply_regset (&sh_corefile_gregset, regcache, regno,
@@ -91,7 +91,7 @@ sh_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
       struct reg inferior_registers;
 
       if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &inferior_registers, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sh_corefile_collect_regset (&sh_corefile_gregset, regcache, regno,
@@ -99,7 +99,7 @@ sh_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
 				  SHNBSD_SIZEOF_GREGS);
 
       if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp (inferior_ptid)) == -1)
+		  (PTRACE_TYPE_ARG3) &inferior_registers, inferior_ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't set registers"));
 
       if (regno != -1)
