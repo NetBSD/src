@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.4 2019/03/05 08:25:02 msaitoh Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.5 2019/05/29 05:05:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.4 2019/03/05 08:25:02 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.5 2019/05/29 05:05:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -915,11 +915,13 @@ cpsw_init(struct ifnet *ifp)
 
 	/* Reset wrapper */
 	cpsw_write_4(sc, CPSW_WR_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_WR_SOFT_RESET) & 1);
+	while (cpsw_read_4(sc, CPSW_WR_SOFT_RESET) & 1)
+		;
 
 	/* Reset SS */
 	cpsw_write_4(sc, CPSW_SS_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1);
+	while (cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1)
+		;
 
 	/* Clear table and enable ALE */
 	cpsw_write_4(sc, CPSW_ALE_CONTROL,
@@ -931,7 +933,8 @@ cpsw_init(struct ifnet *ifp)
 
 		/* Reset */
 		cpsw_write_4(sc, CPSW_SL_SOFT_RESET(i), 1);
-		while(cpsw_read_4(sc, CPSW_SL_SOFT_RESET(i)) & 1);
+		while (cpsw_read_4(sc, CPSW_SL_SOFT_RESET(i)) & 1)
+			;
 		/* Set Slave Mapping */
 		cpsw_write_4(sc, CPSW_SL_RX_PRI_MAP(i), 0x76543210);
 		cpsw_write_4(sc, CPSW_PORT_P_TX_PRI_MAP(i+1), 0x33221100);
@@ -968,7 +971,8 @@ cpsw_init(struct ifnet *ifp)
 	cpsw_write_4(sc, CPSW_SS_STAT_PORT_EN, 7);
 
 	cpsw_write_4(sc, CPSW_CPDMA_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_CPDMA_SOFT_RESET) & 1);
+	while (cpsw_read_4(sc, CPSW_CPDMA_SOFT_RESET) & 1)
+		;
 
 	for (i = 0; i < 8; i++) {
 		cpsw_write_4(sc, CPSW_CPDMA_TX_HDP(i), 0);
@@ -1084,20 +1088,24 @@ cpsw_stop(struct ifnet *ifp, int disable)
 
 	/* Reset wrapper */
 	cpsw_write_4(sc, CPSW_WR_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_WR_SOFT_RESET) & 1);
+	while (cpsw_read_4(sc, CPSW_WR_SOFT_RESET) & 1)
+		;
 
 	/* Reset SS */
 	cpsw_write_4(sc, CPSW_SS_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1);
+	while (cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1)
+		;
 
 	for (i = 0; i < CPSW_ETH_PORTS; i++) {
 		cpsw_write_4(sc, CPSW_SL_SOFT_RESET(i), 1);
-		while(cpsw_read_4(sc, CPSW_SL_SOFT_RESET(i)) & 1);
+		while (cpsw_read_4(sc, CPSW_SL_SOFT_RESET(i)) & 1)
+			;
 	}
 
 	/* Reset CPDMA */
 	cpsw_write_4(sc, CPSW_CPDMA_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_CPDMA_SOFT_RESET) & 1);
+	while (cpsw_read_4(sc, CPSW_CPDMA_SOFT_RESET) & 1)
+		;
 
 	/* Release any queued transmit buffers. */
 	for (i = 0; i < CPSW_NTXDESCS; i++) {
