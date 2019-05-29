@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_network_subr.c,v 1.7 2009/03/14 21:04:21 dsl Exp $	*/
+/*	$NetBSD: ofw_network_subr.c,v 1.8 2019/05/29 06:21:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.7 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.8 2019/05/29 06:21:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,17 +191,17 @@ of_network_parse_network_type(const char *cp)
 	 */
 	static const struct table_entry mediatab[] = {
 		{ "ethernet,10,rj45,half",
-		  IFM_ETHER|IFM_10_T },
+		  IFM_ETHER | IFM_10_T },
 		{ "ethernet,10,rj45,full",
-		  IFM_ETHER|IFM_10_T|IFM_FDX },
+		  IFM_ETHER | IFM_10_T | IFM_FDX },
 		{ "ethernet,10,aui,half",
-		  IFM_ETHER|IFM_10_5, },
+		  IFM_ETHER | IFM_10_5, },
 		{ "ethernet,10,bnc,half",
-		  IFM_ETHER|IFM_10_2, },
+		  IFM_ETHER | IFM_10_2, },
 		{ "ethernet,100,rj45,half",
-		  IFM_ETHER|IFM_100_TX },
+		  IFM_ETHER | IFM_100_TX },
 		{ "ethernet,100,rj45,full",
-		  IFM_ETHER|IFM_100_TX|IFM_FDX },
+		  IFM_ETHER | IFM_100_TX | IFM_FDX },
 		{ NULL, -1 },
 	};
 	int i;
