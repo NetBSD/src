@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.146 2019/05/18 08:17:39 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.147 2019/05/29 16:54:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -86,6 +86,13 @@
 #define CCR0_SUSPEND	0x80	/* enables SUSP# and SUSPA# pins */
 #define CCR1		0xc1	/* configuration control register 1 */
 #define CCR1_RPL	0x01	/* enables RPLSET and RPLVAL# pins */
+
+/*
+ * CR3
+ */
+#define CR3_PCID		__BITS(11,0)
+#define CR3_PA			__BITS(62,12)
+#define CR3_NO_TLB_FLUSH	__BIT(63)
 
 /*
  * CR4
