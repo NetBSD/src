@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.29 2019/05/29 05:06:39 msaitoh Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.30 2019/05/29 06:21:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.29 2019/05/29 05:06:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.30 2019/05/29 06:21:57 msaitoh Exp $");
 
 #include "debug_playstation2.h"
 
@@ -235,10 +235,10 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Choose a default media. */
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
-		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_NONE);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else {
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	}
 
 	if_attach(ifp);
