@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.13 2019/01/22 03:42:25 msaitoh Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.14 2019/05/29 05:06:39 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.13 2019/01/22 03:42:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.14 2019/05/29 05:06:39 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -234,11 +234,11 @@ static inline void 	hif_wait_stat(uint32_t);
 
 #define cdmac_rx_stat(sc) \
     bus_space_read_4((sc)->sc_dma_rxt, (sc)->sc_dma_rsh, 0 /* XXX hack */)
-    
-#define cdmac_rx_reset(sc) \
+
+#define cdmac_rx_reset(sc)						      \
     bus_space_write_4((sc)->sc_dma_rxt, (sc)->sc_dma_rsh, 0, CDMAC_STAT_RESET)
-    
-#define cdmac_rx_start(sc, val) \
+
+#define cdmac_rx_start(sc, val)						      \
     bus_space_write_4((sc)->sc_dma_rxt, (sc)->sc_dma_rxh, CDMAC_CURDESC, (val))
 
 #define cdmac_tx_stat(sc) \
@@ -246,8 +246,8 @@ static inline void 	hif_wait_stat(uint32_t);
 
 #define cdmac_tx_reset(sc) \
     bus_space_write_4((sc)->sc_dma_txt, (sc)->sc_dma_tsh, 0, CDMAC_STAT_RESET)
-    
-#define cdmac_tx_start(sc, val) \
+
+#define cdmac_tx_start(sc, val)						      \
     bus_space_write_4((sc)->sc_dma_txt, (sc)->sc_dma_txh, CDMAC_CURDESC, (val))
 
 
