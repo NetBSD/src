@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.17 2019/02/05 06:17:01 msaitoh Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.18 2019/05/29 05:06:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.17 2019/02/05 06:17:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.18 2019/05/29 05:06:39 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -240,7 +240,7 @@ static int enic_gethwinfo(struct enic_softc *sc)
 	/*
 	 * First thing first, get the MAC address
 	 */
-	memset(buffer,0,sizeof buffer);
+	memset(buffer, 0, sizeof buffer);
 	buffer[0] = ENIC_CMD_GET_ADDRESS;
 	buffer[3] = ENIC_CMD_GET_ADDRESS;	/* bswap bug */
 	sc->sc_regs->SizeAndFlags = (sizeof buffer) | ES_F_CMD;
@@ -266,7 +266,7 @@ static int enic_gethwinfo(struct enic_softc *sc)
 	/*
 	 * Next get the HW parameters
 	 */
-	memset(buffer,0,sizeof buffer);
+	memset(buffer, 0, sizeof buffer);
 	buffer[0] = ENIC_CMD_GET_INFO;
 	buffer[3] = ENIC_CMD_GET_INFO;	/* bswap bug */
 	sc->sc_regs->SizeAndFlags = (sizeof buffer) | ES_F_CMD;
@@ -524,7 +524,7 @@ enic_init(struct ifnet *ifp)
 		enic_kill_xmit(sc);
 
 		/* Re-post all recv buffers */
-		enic_post_recv(sc,NULL);
+		enic_post_recv(sc, NULL);
 	}
 
 	/* Start the eNIC */
@@ -535,7 +535,7 @@ enic_init(struct ifnet *ifp)
 	ctl &= ~EC_RXDIS;
 	sc->sc_regs->Control = ctl;
 #if 0
-	printf("enic_init <- %x\n",ctl);
+	printf("enic_init <- %x\n", ctl);
 #endif
 
 	if_schedule_deferred_start(ifp);
@@ -685,9 +685,9 @@ enic_intr(void *cookie, void *f)
 
 		fl = saf & (ES_F_MASK &~ ES_F_DONE);
 		if (fl == ES_F_RECV)
-			enic_rint(sc,saf,lo);
+			enic_rint(sc,saf, lo);
 		else if (fl == ES_F_XMIT)
-			enic_tint(sc,saf,lo);
+			enic_tint(sc,saf, lo);
 		else {
 			/*
 			 * we do not currently expect or care for
