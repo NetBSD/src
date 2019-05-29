@@ -93,17 +93,17 @@ armnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 
   read_memory (pcb->pcb_sp, (gdb_byte *) &sf, sizeof sf);
 
-  regcache_raw_supply (regcache, ARM_PC_REGNUM, &sf.sf_pc);
-  regcache_raw_supply (regcache, ARM_SP_REGNUM, &pcb->pcb_sp);
-  regcache_raw_supply (regcache, 12, &pcb->pcb_r12);
-  regcache_raw_supply (regcache, 11, &pcb->pcb_r11);
-  regcache_raw_supply (regcache, 10, &pcb->pcb_r10);
-  regcache_raw_supply (regcache, 9, &pcb->pcb_r9);
-  regcache_raw_supply (regcache, 8, &pcb->pcb_r8);
-  regcache_raw_supply (regcache, 7, &sf.sf_r7);
-  regcache_raw_supply (regcache, 6, &sf.sf_r6);
-  regcache_raw_supply (regcache, 5, &sf.sf_r5);
-  regcache_raw_supply (regcache, 4, &sf.sf_r4);
+  regcache->raw_supply (ARM_PC_REGNUM, &sf.sf_pc);
+  regcache->raw_supply (ARM_SP_REGNUM, &pcb->pcb_sp);
+  regcache->raw_supply (12, &pcb->pcb_r12);
+  regcache->raw_supply (11, &pcb->pcb_r11);
+  regcache->raw_supply (10, &pcb->pcb_r10);
+  regcache->raw_supply (9, &pcb->pcb_r9);
+  regcache->raw_supply (8, &pcb->pcb_r8);
+  regcache->raw_supply (7, &sf.sf_r7);
+  regcache->raw_supply (6, &sf.sf_r6);
+  regcache->raw_supply (5, &sf.sf_r5);
+  regcache->raw_supply (4, &sf.sf_r4);
 
   return 1;
 }
