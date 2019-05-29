@@ -324,10 +324,6 @@ sparc32nbsd_elf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 void
 _initialize_sparcnbsd_tdep (void)
 {
-  /* BFD doesn't set a flavour for NetBSD style a.out core files.  */
-  gdbarch_register_osabi_sniffer (bfd_arch_sparc, bfd_target_unknown_flavour,
-                                  sparcnbsd_core_osabi_sniffer);
-
   gdbarch_register_osabi (bfd_arch_sparc, 0, GDB_OSABI_NETBSD,
 			  sparc32nbsd_elf_init_abi);
 }

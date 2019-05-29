@@ -252,7 +252,7 @@ sparc_store_inferior_registers (struct regcache *regcache, int regnum)
    TARGET_OBJECT_WCOOKIE.  Fetch StackGhost Per-Process XOR cookie.  */
 
 enum target_xfer_status
-sparc_xfer_wcookie (struct target_ops *ops, enum target_object object,
+sparc_xfer_wcookie (enum target_object object,
 		    const char *annex, gdb_byte *readbuf,
 		    const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
 		    ULONGEST *xfered_len)
