@@ -92,4 +92,6 @@ extern const char *get_shell ();
 
 extern gdb::char_vector make_temp_filename (const std::string &f);
 
+extern "C" char *canonicalize_file_name (const char *path);
+
 #endif /* COMMON_PATHSTUFF_H */
