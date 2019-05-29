@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.28 2019/05/27 18:36:37 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.29 2019/05/29 16:54:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.28 2019/05/27 18:36:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.29 2019/05/29 16:54:41 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -228,6 +228,10 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.28 2019/05/27 18:36:37 maxv Exp $");
  */
 
 bool svs_enabled __read_mostly = false;
+bool svs_pcid __read_mostly = false;
+
+static uint64_t svs_pcid_kcr3 __read_mostly;
+static uint64_t svs_pcid_ucr3 __read_mostly;
 
 struct svs_utls {
 	paddr_t kpdirpa;
@@ -405,6 +409,19 @@ svs_utls_init(struct cpu_info *ci)
 }
 
 static void
+svs_pcid_init(struct cpu_info *ci)
+{
+	if (!svs_pcid) {
+		return;
+	}
+
+	svs_pcid_ucr3 = __SHIFTIN(PMAP_PCID_USER, CR3_PCID) | CR3_NO_TLB_FLUSH;
+	svs_pcid_kcr3 = __SHIFTIN(PMAP_PCID_KERN, CR3_PCID) | CR3_NO_TLB_FLUSH;
+
+	ci->ci_svs_updirpa |= svs_pcid_ucr3;
+}
+
+static void
 svs_range_add(struct cpu_info *ci, vaddr_t va, size_t size, bool global)
 {
 	size_t i, n;
@@ -454,6 +471,8 @@ cpu_svs_init(struct cpu_info *ci)
 
 	svs_rsp0_init(ci);
 	svs_utls_init(ci);
+
+	svs_pcid_init(ci);
 }
 
 void
@@ -523,11 +542,14 @@ svs_lwp_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	utls->scratch = 0;
 
 	/*
-	 * Enter the user rsp0. We don't need to flush the TLB here, since
-	 * the user page tables are not loaded.
+	 * Enter the user rsp0. If we're using PCID we must flush the user VA,
+	 * if we aren't it will be flushed during the next CR3 reload.
 	 */
 	pte = ci->ci_svs_rsp0_pte;
 	*pte = L1_BASE[pl1_i(va)];
+	if (svs_pcid) {
+		invpcid(INVPCID_ADDRESS, PMAP_PCID_USER, ci->ci_svs_rsp0);
+	}
 }
 
 static inline pt_entry_t
@@ -558,7 +580,7 @@ svs_pdir_switch(struct pmap *pmap)
 
 	/* Update the info in the UTLS page */
 	utls = (struct svs_utls *)ci->ci_svs_utls;
-	utls->kpdirpa = pmap_pdirpa(pmap, 0);
+	utls->kpdirpa = pmap_pdirpa(pmap, 0) | svs_pcid_kcr3;
 
 	mutex_enter(&ci->ci_svs_mtx);
 
@@ -569,6 +591,10 @@ svs_pdir_switch(struct pmap *pmap)
 	}
 
 	mutex_exit(&ci->ci_svs_mtx);
+
+	if (svs_pcid) {
+		invpcid(INVPCID_CONTEXT, PMAP_PCID_USER, 0);
+	}
 }
 
 static void
@@ -639,6 +665,12 @@ svs_init(void)
 			 */
 			return;
 		}
+	}
+
+	if ((cpu_info_primary.ci_feat_val[1] & CPUID2_PCID) &&
+	    (cpu_info_primary.ci_feat_val[5] & CPUID_SEF_INVPCID)) {
+		svs_pcid = true;
+		lcr4(rcr4() | CR4_PCIDE);
 	}
 
 	svs_enable();
