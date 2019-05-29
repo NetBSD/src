@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.5 2019/05/29 05:05:24 msaitoh Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.6 2019/05/29 06:17:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.5 2019/05/29 05:05:24 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6 2019/05/29 06:17:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -401,6 +401,7 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t dict = device_properties(self);
 	struct ethercom * const ec = &sc->sc_ec;
 	struct ifnet * const ifp = &ec->ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
@@ -544,7 +545,7 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	bus_dmamap_create(sc->sc_bdt, ETHER_MIN_LEN, 1, ETHER_MIN_LEN, 0,
 	    BUS_DMA_WAITOK, &sc->sc_txpad_dm);
 	bus_dmamap_load(sc->sc_bdt, sc->sc_txpad_dm, sc->sc_txpad,
-	    ETHER_MIN_LEN, NULL, BUS_DMA_WAITOK|BUS_DMA_WRITE);
+	    ETHER_MIN_LEN, NULL, BUS_DMA_WAITOK | BUS_DMA_WRITE);
 	bus_dmamap_sync(sc->sc_bdt, sc->sc_txpad_dm, 0, ETHER_MIN_LEN,
 	    BUS_DMASYNC_PREWRITE);
 
@@ -564,14 +565,13 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 
 	cpsw_stop(ifp, 0);
 
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = cpsw_mii_readreg;
-	sc->sc_mii.mii_writereg = cpsw_mii_writereg;
-	sc->sc_mii.mii_statchg = cpsw_mii_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = cpsw_mii_readreg;
+	mii->mii_writereg = cpsw_mii_writereg;
+	mii->mii_statchg = cpsw_mii_statchg;
 
-	sc->sc_ec.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
+	sc->sc_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 
 	/* Initialize MDIO */
 	cpsw_write_4(sc, MDIOCONTROL,
@@ -579,13 +579,12 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	/* Clear ALE */
 	cpsw_write_4(sc, CPSW_ALE_CONTROL, ALECTL_CLEAR_TABLE);
 
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, 0, 0);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, 0, 0);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
 		sc->sc_phy_has_1000t = false;
-		ifmedia_add(&sc->sc_mii.mii_media,
-		    IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
 		sc->sc_phy_has_1000t = cpsw_phy_has_1000t(sc);
 		if (sc->sc_phy_has_1000t) {
@@ -602,7 +601,7 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 #endif
 		}
 
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	}
 
 	if_attach(ifp);
@@ -635,7 +634,7 @@ cpsw_start(struct ifnet *ifp)
 	KERNHIST_FUNC(__func__);
 	KERNHIST_CALLED_5(cpswhist, sc, 0, 0, 0);
 
-	if (__predict_false((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) !=
+	if (__predict_false((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
 	    IFF_RUNNING)) {
 		return;
 	}
@@ -876,7 +875,7 @@ cpsw_new_rxbuf(struct cpsw_softc * const sc, const u_int i)
 	rdp->rx_mb[i] = m;
 
 	error = bus_dmamap_load_mbuf(sc->sc_bdt, rdp->rx_dm[i], rdp->rx_mb[i],
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error) {
 		device_printf(sc->sc_dev, "can't load rx DMA map %d: %d\n",
 		    i, error);
@@ -1114,7 +1113,7 @@ cpsw_stop(struct ifnet *ifp, int disable)
 		rdp->tx_mb[i] = NULL;
 	}
 
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 
 	if (!disable)
@@ -1190,8 +1189,8 @@ cpsw_rxintr(void *arg)
 			return 1;
 		}
 
-		if ((dw[3] & (CPDMA_BD_SOP|CPDMA_BD_EOP)) !=
-		    (CPDMA_BD_SOP|CPDMA_BD_EOP)) {
+		if ((dw[3] & (CPDMA_BD_SOP | CPDMA_BD_EOP)) !=
+		    (CPDMA_BD_SOP | CPDMA_BD_EOP)) {
 			//Debugger();
 		}
 

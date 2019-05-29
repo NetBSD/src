@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.125 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.126 2019/05/29 06:17:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.125 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.126 2019/05/29 06:17:28 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -509,9 +509,9 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 		 * Clear the "sleep mode" bit in the CFDA register.
 		 */
 		reg = pci_conf_read(pc, pa->pa_tag, TULIP_PCI_CFDA);
-		if (reg & (CFDA_SLEEP|CFDA_SNOOZE))
+		if (reg & (CFDA_SLEEP | CFDA_SNOOZE))
 			pci_conf_write(pc, pa->pa_tag, TULIP_PCI_CFDA,
-			    reg & ~(CFDA_SLEEP|CFDA_SNOOZE));
+			    reg & ~(CFDA_SLEEP | CFDA_SNOOZE));
 		break;
 
 	default:
@@ -534,7 +534,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, &iosize) == 0);
 	memh_valid = (pci_mapreg_map(pa, TULIP_PCI_MMBA,
-	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &memt, &memh, NULL, &memsize) == 0);
 	if (memh_valid) {
 		sc->sc_st = memt;
@@ -652,7 +652,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 
 			sc->sc_srom_addrbits = 6;
 			sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF,
-			    M_NOWAIT|M_ZERO);
+			    M_NOWAIT | M_ZERO);
 			memcpy(sc->sc_srom, enaddr, sizeof(enaddr));
 			if (tlp_srom_debug) {
 				aprint_normal("SROM CONTENTS:");
@@ -1274,7 +1274,7 @@ tlp_pci_cogent_21040_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 
 	strcpy(psc->sc_tulip.sc_name, "Cogent multi-port");
-	psc->sc_flags |= TULIP_PCI_SHAREDINTR|TULIP_PCI_SHAREDROM;
+	psc->sc_flags |= TULIP_PCI_SHAREDINTR | TULIP_PCI_SHAREDROM;
 }
 
 static void
@@ -1388,6 +1388,7 @@ static void
 tlp_smc9332dst_tmsw_init(struct tulip_softc *sc)
 {
 	struct tulip_21x4x_media *tm;
+	struct mii_data *mii = &sc->sc_mii;
 	const char *sep = "";
 	uint32_t reg;
 	int i, cnt;
@@ -1396,15 +1397,14 @@ tlp_smc9332dst_tmsw_init(struct tulip_softc *sc)
 	sc->sc_opmode = OPMODE_MBO | OPMODE_PS;
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
 
-	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
-	    tlp_mediastatus);
+	ifmedia_init(&mii->mii_media, 0, tlp_mediachange, tlp_mediastatus);
 	aprint_normal_dev(sc->sc_dev, "");
 
 #define	ADD(m, c) \
-	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);		\
+	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);		\
 	tm->tm_opmode = (c);						\
 	tm->tm_gpdata = GPP_SMC9332DST_INIT;				\
-	ifmedia_add(&sc->sc_mii.mii_media, (m), 0, tm)
+	ifmedia_add(&mii->mii_media, (m), 0, tm)
 #define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0), OPMODE_TTM);
@@ -1448,18 +1448,17 @@ tlp_smc9332dst_tmsw_init(struct tulip_softc *sc)
 		}
 		delay(1000);
 	}
-	if (cnt > 100) {
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_100_TX);
-	} else {
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
-	}
+	if (cnt > 100)
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_100_TX);
+	else
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_10_T);
 }
 
 static void
 tlp_pci_vpc_21140_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
-	char *p1 = (char *) &sc->sc_srom[32];
+	char *p1 = (char *)&sc->sc_srom[32];
 	char *p2 = &sc->sc_name[0];
 
 	do {
@@ -1583,7 +1582,7 @@ tlp_pci_adaptec_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 
 	case 0x2400:
 		strcpy(psc->sc_tulip.sc_name, "Adaptec ANA-6944A");
-		psc->sc_flags |= TULIP_PCI_SHAREDINTR|TULIP_PCI_SHAREDROM;
+		psc->sc_flags |= TULIP_PCI_SHAREDINTR | TULIP_PCI_SHAREDROM;
 		break;
 
 	case 0x2b00:
@@ -1592,7 +1591,7 @@ tlp_pci_adaptec_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 
 	case 0x3000:
 		strcpy(psc->sc_tulip.sc_name, "Adaptec ANA-6922");
-		psc->sc_flags |= TULIP_PCI_SHAREDINTR|TULIP_PCI_SHAREDROM;
+		psc->sc_flags |= TULIP_PCI_SHAREDINTR | TULIP_PCI_SHAREDROM;
 		break;
 
 	default:
@@ -1606,21 +1605,21 @@ static void
 tlp_cogent_em1x0_tmsw_init(struct tulip_softc *sc)
 {
 	struct tulip_21x4x_media *tm;
+	struct mii_data *mii = &sc->sc_mii;
 	const char *sep = "";
 
 	sc->sc_gp_dir = GPP_COGENT_EM1x0_PINS;
 	sc->sc_opmode = OPMODE_MBO | OPMODE_PS;
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
 
-	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
-	    tlp_mediastatus);
+	ifmedia_init(&mii->mii_media, 0, tlp_mediachange, tlp_mediastatus);
 	aprint_normal_dev(sc->sc_dev, "");
 
 #define	ADD(m, c) \
-	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);		\
+	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK | M_ZERO);		\
 	tm->tm_opmode = (c);						\
 	tm->tm_gpdata = GPP_COGENT_EM1x0_INIT;				\
-	ifmedia_add(&sc->sc_mii.mii_media, (m), 0, tm)
+	ifmedia_add(&mii->mii_media, (m), 0, tm)
 #define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
 	if (sc->sc_srom[32] == 0x15) {
@@ -1633,7 +1632,7 @@ tlp_cogent_em1x0_tmsw_init(struct tulip_softc *sc)
 		PRINT("100baseFX-FDX");
 		aprint_normal("\n");
 
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_100_FX);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_100_FX);
 	} else {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, 0),
 		    OPMODE_PS | OPMODE_PCS | OPMODE_SCR);
@@ -1644,7 +1643,7 @@ tlp_cogent_em1x0_tmsw_init(struct tulip_softc *sc)
 		PRINT("100baseTX-FDX");
 		aprint_normal("\n");
 
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_100_TX);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_100_TX);
 	}
 
 #undef ADD

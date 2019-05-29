@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.14 2019/05/29 05:06:40 msaitoh Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.15 2019/05/29 06:17:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.14 2019/05/29 05:06:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.15 2019/05/29 06:17:28 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,23 +84,23 @@ void
 ax88190_media_init(struct dp8390_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
 
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = ax88190_mii_readreg;
-	sc->sc_mii.mii_writereg = ax88190_mii_writereg;
-	sc->sc_mii.mii_statchg = ax88190_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, dp8390_mediachange,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = ax88190_mii_readreg;
+	mii->mii_writereg = ax88190_mii_writereg;
+	mii->mii_statchg = ax88190_mii_statchg;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, dp8390_mediachange,
 	    dp8390_mediastatus);
 
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0,
-		    NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_ap.c,v 1.14 2018/09/30 14:23:24 tsutsui Exp $	*/
+/*	$NetBSD: if_tlp_ap.c,v 1.15 2019/05/29 06:17:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.14 2018/09/30 14:23:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.15 2019/05/29 06:17:28 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -238,19 +238,19 @@ static void
 tlp_ap_tmsw_init(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
 
 	sc->sc_preinit = tlp_ap_preinit;
 
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = NULL;
-	sc->sc_mii.mii_writereg = NULL;
-	sc->sc_mii.mii_statchg = sc->sc_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
-	    tlp_mediastatus);
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_100_TX, 0, NULL);
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_100_TX|IFM_FDX, 0,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = NULL;
+	mii->mii_writereg = NULL;
+	mii->mii_statchg = sc->sc_statchg;
+	ifmedia_init(&mii->mii_media, 0, tlp_mediachange, tlp_mediastatus);
+	ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_100_TX, 0, NULL);
+	ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_100_TX | IFM_FDX, 0,
 	    NULL);
-	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_100_TX);
+	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_100_TX);
 }
 
 static void
@@ -272,7 +272,7 @@ tlp_ap_setmedia(struct tulip_softc *sc)
 	sc->sc_mii.mii_media_active = sc->sc_mii.mii_media.ifm_cur->ifm_media;
 
 	if (ifp->if_flags & IFF_UP)
-		tlp_idle(sc, OPMODE_ST|OPMODE_SR);
+		tlp_idle(sc, OPMODE_ST | OPMODE_SR);
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
 		sc->sc_opmode |= OPMODE_FD;
 	else
