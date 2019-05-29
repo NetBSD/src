@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.15 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.16 2019/05/29 05:06:39 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.15 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.16 2019/05/29 05:06:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1469,7 +1469,7 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 	sc->sc_evcnt_rxintr.ev_count++;
 	rx_cpu_idx = fe_read(sc, RA_FE_PDMA_RX0_CPU_IDX);
 
-	for (;;)  {
+	for (;;) {
 		rx_cpu_idx = (rx_cpu_idx + 1) % RALINK_ETH_NUM_RX_DESC;
 
 		rxs = &sc->sc_rxstate[rx_cpu_idx];
@@ -1803,7 +1803,7 @@ ralink_eth_mii_write(device_t self, int phy_addr, int phy_reg, uint16_t val)
 			return 0;
 		}
 #else
-		if ((fe_read(sc, RA_FE_MDIO_ACCESS) & MDIO_ACCESS_TRG) == 0){
+		if ((fe_read(sc, RA_FE_MDIO_ACCESS) & MDIO_ACCESS_TRG) == 0) {
 			ralink_eth_mdio_enable(sc, false);
 			return 0;
 		}

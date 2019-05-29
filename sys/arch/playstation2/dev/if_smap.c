@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.28 2019/02/05 06:17:01 msaitoh Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.29 2019/05/29 05:06:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.28 2019/02/05 06:17:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.29 2019/05/29 05:06:39 msaitoh Exp $");
 
 #include "debug_playstation2.h"
 
@@ -70,10 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.28 2019/02/05 06:17:01 msaitoh Exp $")
 int	smap_debug = 0;
 #define	DPRINTF(fmt, args...)						\
 	if (smap_debug)							\
-		printf("%s: " fmt, __func__ , ##args) 
+		printf("%s: " fmt, __func__ , ##args)
 #define	DPRINTFN(n, arg)						\
 	if (smap_debug > (n))						\
-		printf("%s: " fmt, __func__ , ##args) 
+		printf("%s: " fmt, __func__ , ##args)
 #define STATIC
 struct smap_softc *__sc;
 void __smap_status(int);
@@ -195,7 +195,7 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 	txbuf = malloc(ETHER_MAX_LEN - ETHER_CRC_LEN + SMAP_FIFO_ALIGN + 16,
 	    M_DEVBUF, M_NOWAIT);
 	if (txbuf == NULL) {
-		printf("%s: no memory.\n", DEVNAME);		
+		printf("%s: no memory.\n", DEVNAME);
 		return;
 	}
 
@@ -210,8 +210,8 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 	sc->tx_buf = (u_int32_t *)ROUND16((vaddr_t)txbuf);
 	sc->rx_buf = (u_int32_t *)ROUND16((vaddr_t)rxbuf);
 
-	/* 
-	 * setup MI layer 
+	/*
+	 * setup MI layer
 	 */
 	strcpy(ifp->if_xname, DEVNAME);
 	ifp->if_softc	= sc;
@@ -232,7 +232,7 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 	mii_attach(&emac3->dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
-	    
+
 	/* Choose a default media. */
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
@@ -244,7 +244,7 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, emac3->eaddr);
-	
+
 	spd_intr_establish(SPD_NIC, smap_intr, sc);
 
 	rnd_attach_source(&sc->rnd_source, DEVNAME,
@@ -315,7 +315,7 @@ smap_intr(void *arg)
 
 	if (cause & SPD_INTR_EMAC3)
 		emac3_intr(arg);
-	
+
 	/* if transmission is pending, start here */
 	ifp = &sc->ethercom.ec_if;
 	if_schedule_deferred_start(ifp);
@@ -397,7 +397,7 @@ smap_rxeof(void *arg)
 		d->ptr	= 0;
 		d->stat	= SMAP_RXDESC_EMPTY;
 		_wbflush();
-		
+
 		if (m != NULL)
 			if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
@@ -446,7 +446,7 @@ smap_txeof(void *arg)
 
 		if (sc->tx_desc_cnt == 0)
 			break;
-		
+
 		sc->tx_buf_freesize += ROUND4(d->sz);
 		sc->tx_desc_cnt--;
 
@@ -556,7 +556,7 @@ smap_watchdog(struct ifnet *ifp)
 {
 	struct smap_softc *sc = ifp->if_softc;
 
-	printf("%s: watchdog timeout\n",DEVNAME);
+	printf("%s: watchdog timeout\n", DEVNAME);
 	sc->ethercom.ec_if.if_oerrors++;
 
 	smap_fifo_init(sc);
@@ -598,7 +598,7 @@ smap_init(struct ifnet *ifp)
 
 	ifp->if_flags |= IFF_RUNNING;
 
-	return (0); 
+	return (0);
 }
 
 void
@@ -658,7 +658,7 @@ smap_desc_init(struct smap_softc *sc)
 
 	sc->tx_desc = (void *)SMAP_TXDESC_BASE;
 	sc->rx_desc = (void *)SMAP_RXDESC_BASE;
-	
+
 	sc->tx_buf_freesize = SMAP_TXBUF_SIZE;
 	sc->tx_fifo_ptr = 0;
 	sc->tx_start_index = 0;
@@ -673,7 +673,7 @@ smap_desc_init(struct smap_softc *sc)
 		d->sz = 0;
 		d->ptr = 0;
 	}
-	
+
 	d = sc->rx_desc;
 	for (i = 0; i < SMAP_DESC_MAX; i++, d++) {
 		d->stat = SMAP_RXDESC_EMPTY;

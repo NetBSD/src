@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.61 2019/02/05 06:17:00 msaitoh Exp $ */
+/*	$NetBSD: if_es.c,v 1.62 2019/05/29 05:06:39 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.61 2019/02/05 06:17:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.62 2019/05/29 05:06:39 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -129,7 +129,7 @@ esmatch(device_t parent, cfdata_t cf, void *aux)
 
 	/* Ameristar A4066 ethernet card */
 	if (zap->manid == 1053 && zap->prodid == 10)
-		return(1);
+		return (1);
 
 	return (0);
 }
@@ -847,7 +847,7 @@ esstart(struct ifnet *ifp)
 		lbuf = (u_long *)(pktbuf);
 		ldata = (u_long *)data;
 		cnt = pktlen / 4;
-		while(cnt--)
+		while (cnt--)
 			*ldata = *lbuf++;
 		if (pktlen & 2) {
 			buf = (u_short *)lbuf;

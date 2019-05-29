@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.13 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.14 2019/05/29 05:06:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.13 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.14 2019/05/29 05:06:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,6 @@ static int
 ax88190_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 
-	
 	return mii_bitbang_readreg(self, &ax88190_mii_bitbang_ops, phy, reg,
 	    val);
 }

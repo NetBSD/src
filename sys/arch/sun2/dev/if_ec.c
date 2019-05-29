@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.31 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.32 2019/05/29 05:06:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.31 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.32 2019/05/29 05:06:40 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -136,7 +136,7 @@ CFATTACH_DECL_NEW(ec, sizeof(struct ec_softc),
 /*
  * Copy board memory to kernel.
  */
-void 
+void
 ec_copyin(struct ec_softc *sc, void *p, int offset, size_t size)
 {
 
@@ -146,14 +146,14 @@ ec_copyin(struct ec_softc *sc, void *p, int offset, size_t size)
 /*
  * Copy from kernel space to board memory.
  */
-void 
+void
 ec_copyout(struct ec_softc *sc, const void *p, int offset, size_t size)
 {
 
 	bus_space_copyout(sc->sc_iot, sc->sc_ioh, offset, p, size);
 }
 
-int 
+int
 ec_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mbmem_attach_args *mbma = aux;
@@ -165,7 +165,7 @@ ec_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 	/* Make sure there is something there... */
-	if (bus_space_map(mbma->mbma_bustag, mbma->mbma_paddr, ECREG_BANK_SZ, 
+	if (bus_space_map(mbma->mbma_bustag, mbma->mbma_paddr, ECREG_BANK_SZ,
 	    0, &bh))
 		return 0;
 	matched = (bus_space_peek_2(mbma->mbma_bustag, bh, 0, NULL) == 0);
@@ -180,7 +180,7 @@ ec_match(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-void 
+void
 ec_attach(device_t parent, device_t self, void *aux)
 {
 	struct ec_softc *sc = device_private(self);
@@ -243,8 +243,8 @@ ec_attach(device_t parent, device_t self, void *aux)
 
 /*
  * Reset interface.
- */     
-void 
+ */
+void
 ec_reset(struct ifnet *ifp)
 {
         int s;
@@ -258,7 +258,7 @@ ec_reset(struct ifnet *ifp)
 /*
  * Initialize interface.
  */
-int 
+int
 ec_init(struct ifnet *ifp)
 {
 	struct ec_softc *sc = ifp->if_softc;
@@ -291,7 +291,7 @@ ec_init(struct ifnet *ifp)
 /*
  * Start output on interface.
  */
-void 
+void
 ec_start(struct ifnet *ifp)
 {
 	struct ec_softc *sc = ifp->if_softc;
@@ -342,7 +342,7 @@ ec_start(struct ifnet *ifp)
 /*
  * Controller interrupt.
  */
-int 
+int
 ec_intr(void *arg)
 {
 	struct ec_softc *sc = arg;
@@ -446,7 +446,7 @@ ec_intr(void *arg)
 /*
  * Read in a packet from the board.
  */
-void 
+void
 ec_recv(struct ec_softc *sc, int intbit)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -535,27 +535,27 @@ ec_recv(struct ec_softc *sc, int intbit)
 	    EC_CSR_INT_BSW(intbit) | intbit);
 }
 
-int 
+int
 ec_mediachange(struct ifnet *ifp)
-{               
+{
 
 	return 0;
 }
 
-void 
+void
 ec_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{  
+{
 
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return;
-        
+
 	ifmr->ifm_status = IFM_AVALID | IFM_ACTIVE;
 }
 
 /*
  * Process an ioctl request. This code needs some work - it looks pretty ugly.
  */
-int 
+int
 ec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -628,7 +628,7 @@ ec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 /*
  * Collision routine.
  */
-void 
+void
 ec_coll(struct ec_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -658,7 +658,7 @@ ec_coll(struct ec_softc *sc)
 /*
  * Device timeout routine.
  */
-void 
+void
 ec_watchdog(struct ifnet *ifp)
 {
 	struct ec_softc *sc = ifp->if_softc;
