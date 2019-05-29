@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.60 2019/03/09 09:09:56 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.61 2019/05/29 16:54:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -179,6 +179,7 @@ void svs_lwp_switch(struct lwp *, struct lwp *);
 void svs_pdir_switch(struct pmap *);
 void svs_init(void);
 extern bool svs_enabled;
+extern bool svs_pcid;
 
 #include <x86/pmap.h>
 

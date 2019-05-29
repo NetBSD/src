@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.170 2019/05/27 18:36:37 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.171 2019/05/29 16:54:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.170 2019/05/27 18:36:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.171 2019/05/29 16:54:41 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -612,6 +612,12 @@ cpu_init(struct cpu_info *ci)
 	/* If SMAP is supported, enable it */
 	if (cpu_feature[5] & CPUID_SEF_SMAP)
 		cr4 |= CR4_SMAP;
+
+#ifdef SVS
+	/* If PCID is supported, enable it */
+	if (svs_pcid)
+		cr4 |= CR4_PCIDE;
+#endif
 
 	if (cr4) {
 		cr4 |= rcr4();

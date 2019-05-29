@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.100 2019/03/10 16:30:01 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.101 2019/05/29 16:54:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -209,6 +209,9 @@ struct pcpu_area {
 } __packed;
 
 extern struct pcpu_area *pcpuarea;
+
+#define PMAP_PCID_KERN	0
+#define PMAP_PCID_USER	1
 
 /*
  * pmap data structures: see pmap.c for details of locking.
