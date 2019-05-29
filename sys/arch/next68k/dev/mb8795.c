@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.63 2019/05/29 05:06:39 msaitoh Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.64 2019/05/29 06:21:57 msaitoh Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.63 2019/05/29 05:06:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.64 2019/05/29 06:21:57 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -156,10 +156,10 @@ mb8795_mediachange(struct ifnet *ifp)
 		    !(bus_space_read_1(sc->sc_bmap_bst, sc->sc_bmap_bsh,
 			    BMAP_DATA) & BMAP_DATA_UTPCARRIER_MASK)) {
 			data = BMAP_DATA_UTPENABLE;
-			sc->sc_media.ifm_cur->ifm_data = IFM_ETHER|IFM_10_T;
+			sc->sc_media.ifm_cur->ifm_data = IFM_ETHER | IFM_10_T;
 		} else {
 			data = BMAP_DATA_BNCENABLE;
-			sc->sc_media.ifm_cur->ifm_data = IFM_ETHER|IFM_10_2;
+			sc->sc_media.ifm_cur->ifm_data = IFM_ETHER | IFM_10_2;
 		}
 		break;
 	case IFM_10_T:
@@ -430,7 +430,7 @@ mb8795_reset(struct mb8795_softc *sc)
 
 	DPRINTF (("%s: mb8795_reset()\n", device_xname(sc->sc_dev)));
 
-	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	sc->sc_ethercom.ec_if.if_timer = 0;
 
 	MBDMA_RESET(sc);
@@ -593,7 +593,7 @@ mb8795_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			device_xname(sc->sc_dev)));
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then

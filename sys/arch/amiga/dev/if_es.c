@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.62 2019/05/29 05:06:39 msaitoh Exp $ */
+/*	$NetBSD: if_es.c,v 1.63 2019/05/29 06:21:56 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.62 2019/05/29 05:06:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.63 2019/05/29 06:21:56 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -177,8 +177,8 @@ esattach(device_t parent, device_t self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 
 	ifmedia_init(&sc->sc_media, 0, esmediachange, esmediastatus);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 
 	/* Attach the interface. */
 	if_attach(ifp);

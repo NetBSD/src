@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.10 2019/04/26 06:33:33 msaitoh Exp $ */
+/* $NetBSD: if_gpn.c,v 1.11 2019/05/29 06:21:56 msaitoh Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.10 2019/04/26 06:33:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.11 2019/05/29 06:21:56 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -174,7 +174,7 @@ gpn_alloc_dmamaps(struct gpn_softc *sc)
 			continue;
 		error = bus_dmamap_create(sc->sc_dmat,
 		    10000, 2, 8192, 0,
-		    BUS_DMA_ALLOCNOW|BUS_DMA_WAITOK,
+		    BUS_DMA_ALLOCNOW | BUS_DMA_WAITOK,
 		    &ti->ti_map);
 		if (error)
 			break;
@@ -441,7 +441,7 @@ gpn_ifstart(struct ifnet *ifp)
 			map = ti->ti_map;
 			error = bus_dmamap_load(sc->sc_dmat, map,
 			    mtod(m, void *), m->m_len, NULL,
-			    BUS_DMA_READ|BUS_DMA_NOWAIT);
+			    BUS_DMA_READ | BUS_DMA_NOWAIT);
 			if (error) {
 				ifp->if_oerrors++;
 				m_freem(m);
@@ -486,7 +486,7 @@ gpn_ipm_ifup(struct gpn_softc *sc)
 {
 	sc->sc_remoteup = true;
 	if (sc->sc_if.if_flags & IFF_UP)
-		ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_1000_T|IFM_FDX);
+		ifmedia_set(&sc->sc_im, IFM_ETHER | IFM_1000_T | IFM_FDX);
 }
 
 static void
@@ -512,7 +512,7 @@ gpn_ipm_ifdown(struct gpn_softc *sc)
 		ti->ti_mbuf = NULL;
 	}
 	sc->sc_lastid = 0;
-	ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_NONE);
+	ifmedia_set(&sc->sc_im, IFM_ETHER | IFM_NONE);
 	sc->sc_remoteup = false;
 }
 
@@ -579,7 +579,7 @@ gpn_ifinit(struct ifnet *ifp)
 	gemini_ipm_produce(&gd, 1);
 
 	if (sc->sc_remoteup)
-		ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_1000_T|IFM_FDX);
+		ifmedia_set(&sc->sc_im, IFM_ETHER | IFM_1000_T | IFM_FDX);
 
 	ifp->if_flags |= IFF_RUNNING;
 
@@ -692,9 +692,9 @@ gpn_attach(device_t parent, device_t self, void *aux)
 	 * Pretend we are full-duplex gigabit ethernet.
 	 */
 	ifmedia_init(&sc->sc_im, 0, gpn_mediachange, gpn_mediastatus);
-	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_1000_T|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_NONE, 0, NULL);
-	ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_NONE);
+	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_1000_T | IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_NONE, 0, NULL);
+	ifmedia_set(&sc->sc_im, IFM_ETHER | IFM_NONE);
 
 	strlcpy(ifp->if_xname, device_xname(self), sizeof(ifp->if_xname));
 	ifp->if_softc = sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.40 2010/01/19 22:07:43 pooka Exp $	*/
+/*	$NetBSD: if_le.c,v 1.41 2019/05/29 06:21:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.40 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.41 2019/05/29 06:21:58 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -84,7 +84,7 @@ void	leattach_sbus(device_t, device_t, void *);
  * Media types supported.
  */
 static int lemedia[] = {
-	IFM_ETHER|IFM_10_5,
+	IFM_ETHER | IFM_10_5,
 };
 #define NLEMEDIA	__arraycount(lemedia)
 
@@ -223,16 +223,14 @@ leattach_sbus(device_t parent, device_t self, void *aux)
 #endif
 		/* Get a DMA handle */
 		if ((error = bus_dmamap_create(dmatag, MEMSIZE, 1, MEMSIZE, 0,
-						BUS_DMA_NOWAIT|BUS_DMA_24BIT,
-						&lesc->sc_dmamap)) != 0) {
+		    BUS_DMA_NOWAIT | BUS_DMA_24BIT, &lesc->sc_dmamap)) != 0) {
 			aprint_error(": DMA map create error %d\n", error);
 			return;
 		}
 
 		/* Allocate DMA buffer */
 		if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, 0, 0,
-					 &seg, 1, &rseg,
-					 BUS_DMA_NOWAIT|BUS_DMA_24BIT)) != 0){
+		    &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
 			aprint_error(": DMA buffer allocation error %d\n",
 			    error);
 			return;
@@ -240,8 +238,8 @@ leattach_sbus(device_t parent, device_t self, void *aux)
 
 		/* Map DMA buffer into kernel space */
 		if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
-				       (void **)&sc->sc_mem,
-				       BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		    (void **)&sc->sc_mem, BUS_DMA_NOWAIT | BUS_DMA_COHERENT))
+		    != 0) {
 			aprint_error(": DMA buffer map error %d\n", error);
 			bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
 			return;

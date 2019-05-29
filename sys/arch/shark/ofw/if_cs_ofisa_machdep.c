@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.11 2015/04/13 21:18:42 riastradh Exp $	*/
+/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.12 2019/05/29 06:21:57 msaitoh Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa_machdep.c,v 1.11 2015/04/13 21:18:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa_machdep.c,v 1.12 2019/05/29 06:21:57 msaitoh Exp $");
 
 #include "opt_compat_old_ofw.h"
 
@@ -144,8 +144,8 @@ cs_ofisa_md_media_fixup(device_t parent, device_t self, void *aux, int *media,
 			media = malloc(2 * sizeof(int), M_TEMP, M_NOWAIT);
 			if (media == NULL)
 				return (NULL);
-			media[0] = IFM_ETHER|IFM_10_T;
-			media[1] = IFM_ETHER|IFM_10_T|IFM_FDX;
+			media[0] = IFM_ETHER | IFM_10_T;
+			media[1] = IFM_ETHER | IFM_10_T | IFM_FDX;
 			*nmediap = 2;
 			*defmediap = media[0];
 		}
@@ -172,5 +172,5 @@ int
 cs_ofisa_md_cfgflags_fixup(device_t parent, device_t self, void *aux)
 {
 
-	return (CFGFLG_USE_SA|CFGFLG_IOCHRDY|CFGFLG_NOT_EEPROM);
+	return (CFGFLG_USE_SA | CFGFLG_IOCHRDY | CFGFLG_NOT_EEPROM);
 }
