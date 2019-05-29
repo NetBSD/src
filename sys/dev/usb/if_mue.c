@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.49 2019/05/29 08:23:54 mlelstv Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.50 2019/05/29 09:04:01 mlelstv Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.49 2019/05/29 08:23:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.50 2019/05/29 09:04:01 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -924,7 +924,7 @@ mue_attach(device_t parent, device_t self, void *aux)
 	usbd_devinfo_free(devinfop);
 
 	mutex_init(&sc->mue_mii_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->mue_usb_lock, MUTEX_DEFAULT, IPL_NET);
+	mutex_init(&sc->mue_usb_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 
 #define MUE_CONFIG_NO	1
 	err = usbd_set_config_no(dev, MUE_CONFIG_NO, 1);
@@ -1632,6 +1632,7 @@ mue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	s = splnet();
 	KASSERT(cd->mue_tx_cnt > 0);
 	cd->mue_tx_cnt--;
+	ifp->if_timer = 0;
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
 			splx(s);
@@ -1644,10 +1645,10 @@ mue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			usbd_clear_endpoint_stall_async(
 			    sc->mue_ep[MUE_ENDPT_TX]);
 		splx(s);
+		ifp->if_flags &= ~IFF_OACTIVE;
 		return;
 	}
 
-	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
