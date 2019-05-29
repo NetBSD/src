@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.8 2019/01/22 03:42:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.9 2019/05/29 05:05:24 msaitoh Exp $");
 
 #include "opt_omapl1x.h"
 
@@ -263,7 +263,7 @@ emac_mii_wait (struct emac_softc * const sc)
 {
 	u_int tries;
 
-	for(tries = 0; tries < 1000; tries++) {
+	for (tries = 0; tries < 1000; tries++) {
 		if ((EMAC_READ(sc, MACMDIOUSERACCESS0) & USERACCESS_GO) == 0)
 			return 0;
 
@@ -1042,7 +1042,8 @@ emac_ifinit (struct ifnet *ifp)
 	EMAC_WRITE(sc, MACHASH2, 0);
 
 	EMAC_WRITE(sc, MACSOFTRESET, 1);
-	while (EMAC_READ(sc, MACSOFTRESET) == 1);
+	while (EMAC_READ(sc, MACSOFTRESET) == 1)
+		;
 
 	/* Till we figure out mcast, do this */
 	EMAC_WRITE(sc, MACHASH1, 0xffffffff);
@@ -1180,7 +1181,7 @@ emac_desc_list_create (struct emac_cppi_bd **desc, void *desc_base_ptr, int ndes
 {
 	int i;
 	struct emac_cppi_bd *ptr = desc_base_ptr;
-	
+
 	for (i = 0; i < ndescs; i++)
 		desc[i] = ptr + i;
 }
@@ -1279,7 +1280,7 @@ emac_attach (device_t parent, device_t self, void *aux)
 	SIMPLEQ_INIT(&tx_chan->free_head);
 	SIMPLEQ_INIT(&tx_chan->inuse_head);
 	for (i = 0; i < EMAC_NTXDESCS; i++) {
-		/* 
+		/*
 		 * Ok, we keep this simple, one dma segment per tx dma map.
 		 * This makes the mapping of the desc's and the dma map's
 		 * pretty straightforward.
