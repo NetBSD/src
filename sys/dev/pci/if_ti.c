@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.110 2019/05/28 07:41:49 msaitoh Exp $ */
+/* $NetBSD: if_ti.c,v 1.111 2019/05/29 10:07:29 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.110 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.111 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1841,6 +1841,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 	/* Set up ifmedia support. */
+	sc->ethercom.ec_ifmedia = &sc->ifmedia;
 	ifmedia_init(&sc->ifmedia, IFM_IMASK, ti_ifmedia_upd, ti_ifmedia_sts);
 	if (sc->ti_copper) {
 		/*
@@ -2765,10 +2766,6 @@ ti_ioctl(struct ifnet *ifp, u_long command, void *data)
 		}
 		sc->ti_if_flags = ifp->if_flags;
 		error = 0;
-		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->ifmedia, command);
 		break;
 	default:
 		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)

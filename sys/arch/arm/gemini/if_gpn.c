@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.11 2019/05/29 06:21:56 msaitoh Exp $ */
+/* $NetBSD: if_gpn.c,v 1.12 2019/05/29 10:07:28 msaitoh Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.11 2019/05/29 06:21:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.12 2019/05/29 10:07:28 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -617,10 +617,6 @@ gpn_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_im, cmd);
-		break;
 	case SIOCSIFPHYADDR: {
 		const struct sockaddr_dl *sdl = satosdl(&ifra->ifra_addr);
 
@@ -688,10 +684,10 @@ gpn_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_dmat = &gemini_bus_dma_tag;
 
-	/*
-	 * Pretend we are full-duplex gigabit ethernet.
-	 */
+	/* Setup ifmedia interface */
+	sc->sc_ec.ec_ifmedia = &sc->sc_im;
 	ifmedia_init(&sc->sc_im, 0, gpn_mediachange, gpn_mediastatus);
+	/* Pretend we are full-duplex gigabit ethernet. */
 	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_1000_T | IFM_FDX, 0, NULL);
 	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_NONE, 0, NULL);
 	ifmedia_set(&sc->sc_im, IFM_ETHER | IFM_NONE);

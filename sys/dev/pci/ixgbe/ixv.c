@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.114 2019/05/23 13:10:52 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.115 2019/05/29 10:07:30 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1572,6 +1572,7 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	 * Specify the media types supported by this adapter and register
 	 * callbacks to update media and link information
 	 */
+	ec->ec_ifmedia = &adapter->media;
 	ifmedia_init(&adapter->media, IFM_IMASK, ixv_media_change,
 	    ixv_media_status);
 	ifmedia_add(&adapter->media, IFM_ETHER | IFM_AUTO, 0, NULL);
@@ -2776,7 +2777,6 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct adapter	*adapter = ifp->if_softc;
 	struct ifcapreq *ifcr = data;
-	struct ifreq	*ifr = data;
 	int		error = 0;
 	int l4csum_en;
 	const int l4csum = IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
@@ -2806,9 +2806,6 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 	}
 
 	switch (command) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		return ifmedia_ioctl(ifp, ifr, &adapter->media, command);
 	case SIOCSIFCAP:
 		/* Layer-4 Rx checksum offload has to be turned on and
 		 * off as a unit.

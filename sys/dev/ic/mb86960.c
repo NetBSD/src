@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.92 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.93 2019/05/29 10:07:29 msaitoh Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.92 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.93 2019/05/29 10:07:29 msaitoh Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -229,6 +229,7 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 	}
 
 	/* Initialize media goo. */
+	sc->sc_ec.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, mb86960_mediachange,
 	    mb86960_mediastatus);
 	if (media != NULL) {
@@ -1159,7 +1160,6 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mb86960_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 #if FE_DEBUG >= 3
@@ -1246,11 +1246,6 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				mb86960_setmode(sc);
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.78 2019/05/15 02:56:48 ozaki-r Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.79 2019/05/29 10:07:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -183,6 +183,7 @@ struct ethercom {
 	int	ec_nvlans;			/* # VLANs on this interface */
 	/* The device handle for the MII bus child device. */
 	struct mii_data				*ec_mii;
+	struct ifmedia				*ec_ifmedia;
 	/* Called after a change to ec_if.if_flags.  Returns
 	 * ENETRESET if the device should be reinitialized with
 	 * ec_if.if_init, 0 on success, not 0 on failure.
