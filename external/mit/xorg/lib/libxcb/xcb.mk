@@ -1,4 +1,4 @@
-#	$NetBSD: xcb.mk,v 1.4 2015/02/03 21:31:31 jmcneill Exp $
+#	$NetBSD: xcb.mk,v 1.5 2019/05/29 13:15:53 maya Exp $
 
 # define XCBEXT to something before including this
 
@@ -17,8 +17,8 @@ LIBDPLIBS=\
 SHLIB_MAJOR?=	0
 SHLIB_MINOR?=	1
 
-PKGCONFIG=	xcb-${XCBEXT}
-PKGCONFIG_VERSION.${PKGCONFIG}=     1.10
+PKGCONFIG=		xcb-${XCBEXT}
+PKGDIST.xcb-${XCBEXT}=	${X11SRCDIR.xcb}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
