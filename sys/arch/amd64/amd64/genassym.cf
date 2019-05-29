@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.75 2019/05/27 17:32:36 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.76 2019/05/29 16:54:41 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -275,6 +275,14 @@ define	ACPI_SUSPEND_CR2	offsetof(struct cpu_info, ci_suspend_cr2)
 define	ACPI_SUSPEND_CR3	offsetof(struct cpu_info, ci_suspend_cr3)
 define	ACPI_SUSPEND_CR4	offsetof(struct cpu_info, ci_suspend_cr4)
 define	ACPI_SUSPEND_CR8	offsetof(struct cpu_info, ci_suspend_cr8)
+
+define	INVPCID_ADDRESS		INVPCID_ADDRESS
+define	INVPCID_CONTEXT		INVPCID_CONTEXT
+define	INVPCID_ALL		INVPCID_ALL
+define	INVPCID_ALL_NONGLOBAL	INVPCID_ALL_NONGLOBAL
+
+define	PMAP_PCID_USER		PMAP_PCID_USER
+define	PMAP_PCID_KERN		PMAP_PCID_KERN
 
 if NIOAPIC > 0
 define		PIC_IOAPIC		offsetof(struct pic, pic_ioapic)
