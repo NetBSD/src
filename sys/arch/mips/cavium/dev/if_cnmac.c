@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.12 2019/04/26 06:33:33 msaitoh Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.13 2019/05/29 07:46:08 msaitoh Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.12 2019/04/26 06:33:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.13 2019/05/29 07:46:08 msaitoh Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -536,33 +536,36 @@ static int
 octeon_eth_mediainit(struct octeon_eth_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
 	prop_object_t phy;
 
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = octeon_eth_mii_readreg;
-	sc->sc_mii.mii_writereg = octeon_eth_mii_writereg;
-	sc->sc_mii.mii_statchg = octeon_eth_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, octeon_eth_mediachange,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = octeon_eth_mii_readreg;
+	mii->mii_writereg = octeon_eth_mii_writereg;
+	mii->mii_statchg = octeon_eth_mii_statchg;
+	sc->sc_ethercom.ec_mii = mii;
+
+	/* Initialize ifmedia structures. */
+	ifmedia_init(&mii->mii_media, 0, octeon_eth_mediachange,
 	    octeon_eth_mediastatus);
 
 	phy = prop_dictionary_get(device_properties(sc->sc_dev), "phy-addr");
 	KASSERT(phy != NULL);
 
-	mii_attach(sc->sc_dev, &sc->sc_mii,
-	    0xffffffff, prop_number_integer_value(phy),
+	mii_attach(sc->sc_dev, mii, 0xffffffff, prop_number_integer_value(phy),
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 
 	/* XXX XXX XXX */
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL) {
+	if (LIST_FIRST(&mii->mii_phys) != NULL) {
 		/* XXX XXX XXX */
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 		/* XXX XXX XXX */
 	} else {
 		/* XXX XXX XXX */
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_NONE,
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE,
 		    MII_MEDIA_NONE, NULL);
 		/* XXX XXX XXX */
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_NONE);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 		/* XXX XXX XXX */
 	}
 	/* XXX XXX XXX */
@@ -827,9 +830,6 @@ octeon_eth_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			sc->sc_gmx_port->sc_port_flowflags =
 				ifr->ifr_media & IFM_ETH_FMASK;
 		}
-		/* FALLTHROUGH */
-	case SIOCGIFMEDIA:
-		/* XXX: Flow contorol */
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 	default:
