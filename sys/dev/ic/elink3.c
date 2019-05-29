@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.148 2019/05/24 06:26:38 msaitoh Exp $	*/
+/*	$NetBSD: elink3.c,v 1.149 2019/05/29 06:17:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.148 2019/05/24 06:26:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.149 2019/05/29 06:17:28 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -135,23 +135,23 @@ struct ep_media {
  * MII and real PHYs attached; no `native' media.
  */
 const struct ep_media ep_vortex_media[] = {
-	{ ELINK_PCI_10BASE_T,	"10baseT",	IFM_ETHER|IFM_10_T,
+	{ ELINK_PCI_10BASE_T,	"10baseT",	IFM_ETHER | IFM_10_T,
 	  ELINKMEDIA_10BASE_T },
-	{ ELINK_PCI_10BASE_T,	"10baseT-FDX",	IFM_ETHER|IFM_10_T|IFM_FDX,
+	{ ELINK_PCI_10BASE_T,	"10baseT-FDX",	IFM_ETHER | IFM_10_T | IFM_FDX,
 	  ELINKMEDIA_10BASE_T },
-	{ ELINK_PCI_AUI,	"10base5",	IFM_ETHER|IFM_10_5,
+	{ ELINK_PCI_AUI,	"10base5",	IFM_ETHER | IFM_10_5,
 	  ELINKMEDIA_AUI },
-	{ ELINK_PCI_BNC,	"10base2",	IFM_ETHER|IFM_10_2,
+	{ ELINK_PCI_BNC,	"10base2",	IFM_ETHER | IFM_10_2,
 	  ELINKMEDIA_10BASE_2 },
-	{ ELINK_PCI_100BASE_TX,	"100baseTX",	IFM_ETHER|IFM_100_TX,
+	{ ELINK_PCI_100BASE_TX,	"100baseTX",	IFM_ETHER | IFM_100_TX,
 	  ELINKMEDIA_100BASE_TX },
-	{ ELINK_PCI_100BASE_TX,	"100baseTX-FDX",IFM_ETHER|IFM_100_TX|IFM_FDX,
+	{ ELINK_PCI_100BASE_TX,	"100baseTX-FDX",IFM_ETHER | IFM_100_TX|IFM_FDX,
 	  ELINKMEDIA_100BASE_TX },
-	{ ELINK_PCI_100BASE_FX,	"100baseFX",	IFM_ETHER|IFM_100_FX,
+	{ ELINK_PCI_100BASE_FX,	"100baseFX",	IFM_ETHER | IFM_100_FX,
 	  ELINKMEDIA_100BASE_FX },
-	{ ELINK_PCI_100BASE_MII,"manual",	IFM_ETHER|IFM_MANUAL,
+	{ ELINK_PCI_100BASE_MII,"manual",	IFM_ETHER | IFM_MANUAL,
 	  ELINKMEDIA_MII },
-	{ ELINK_PCI_100BASE_T4,	"100baseT4",	IFM_ETHER|IFM_100_T4,
+	{ ELINK_PCI_100BASE_T4,	"100baseT4",	IFM_ETHER | IFM_100_T4,
 	  ELINKMEDIA_100BASE_T4 },
 	{ 0,			NULL,		0,
 	  0 },
@@ -162,11 +162,11 @@ const struct ep_media ep_vortex_media[] = {
  * in the 3c509, 3c579, and 3c589.
  */
 const struct ep_media ep_509_media[] = {
-	{ ELINK_W0_CC_UTP,	"10baseT",	IFM_ETHER|IFM_10_T,
+	{ ELINK_W0_CC_UTP,	"10baseT",	IFM_ETHER | IFM_10_T,
 	  ELINKMEDIA_10BASE_T },
-	{ ELINK_W0_CC_AUI,	"10base5",	IFM_ETHER|IFM_10_5,
+	{ ELINK_W0_CC_AUI,	"10base5",	IFM_ETHER | IFM_10_5,
 	  ELINKMEDIA_AUI },
-	{ ELINK_W0_CC_BNC,	"10base2",	IFM_ETHER|IFM_10_2,
+	{ ELINK_W0_CC_BNC,	"10base2",	IFM_ETHER | IFM_10_2,
 	  ELINKMEDIA_10BASE_2 },
 	{ 0,			NULL,		0,
 	  0 },
@@ -319,6 +319,7 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	struct mii_data *mii = &sc->sc_mii;
 	u_int16_t i;
 	u_int8_t myla[ETHER_ADDR_LEN];
 
@@ -426,12 +427,12 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	 * Initialize our media structures and MII info.  We'll
 	 * probe the MII if we discover that we have one.
 	 */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = ep_mii_readreg;
-	sc->sc_mii.mii_writereg = ep_mii_writereg;
-	sc->sc_mii.mii_statchg = ep_statchg;
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ep_media_change,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = ep_mii_readreg;
+	mii->mii_writereg = ep_mii_writereg;
+	mii->mii_statchg = ep_statchg;
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ep_media_change,
 	    ep_media_status);
 
 	/*
@@ -459,16 +460,16 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 		 * we don't, just treat the Boomerang like the Vortex.
 		 */
 		if (sc->ep_flags & ELINK_FLAGS_MII) {
-			mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff,
+			mii_attach(sc->sc_dev, mii, 0xffffffff,
 			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
-			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-				ifmedia_add(&sc->sc_mii.mii_media,
-				    IFM_ETHER|IFM_NONE, 0, NULL);
-				ifmedia_set(&sc->sc_mii.mii_media,
-				    IFM_ETHER|IFM_NONE);
+			if (LIST_FIRST(&mii->mii_phys) == NULL) {
+				ifmedia_add(&mii->mii_media,
+				    IFM_ETHER | IFM_NONE, 0, NULL);
+				ifmedia_set(&mii->mii_media,
+				    IFM_ETHER | IFM_NONE);
 			} else {
-				ifmedia_set(&sc->sc_mii.mii_media,
-				    IFM_ETHER|IFM_AUTO);
+				ifmedia_set(&mii->mii_media,
+				    IFM_ETHER | IFM_AUTO);
 			}
 			break;
 		}
@@ -573,8 +574,8 @@ ep_509_probemedia(struct ep_softc *sc)
 	/* Sanity check that there are any media! */
 	if ((ep_w0_config & ELINK_W0_CC_MEDIAMASK) == 0) {
 		aprint_error("no media present!\n");
-		ifmedia_add(ifm, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(ifm, IFM_ETHER|IFM_NONE);
+		ifmedia_add(ifm, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER | IFM_NONE);
 		return;
 	}
 
@@ -644,8 +645,8 @@ ep_vortex_probemedia(struct ep_softc *sc)
 	/* Sanity check that there are any media! */
 	if ((reset_options & ELINK_PCI_MEDIAMASK) == 0) {
 		aprint_error("no media present!\n");
-		ifmedia_add(ifm, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(ifm, IFM_ETHER|IFM_NONE);
+		ifmedia_add(ifm, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER | IFM_NONE);
 		return;
 	}
 
@@ -878,16 +879,16 @@ ep_roadrunner_mii_enable(struct ep_softc *sc)
 
 	GO_WINDOW(3);
 	bus_space_write_2(iot, ioh, ELINK_W3_RESET_OPTIONS,
-	    ELINK_PCI_100BASE_MII|ELINK_RUNNER_ENABLE_MII);
+	    ELINK_PCI_100BASE_MII | ELINK_RUNNER_ENABLE_MII);
 	delay(1000);
 	bus_space_write_2(iot, ioh, ELINK_W3_RESET_OPTIONS,
-	    ELINK_PCI_100BASE_MII|ELINK_RUNNER_MII_RESET|
+	    ELINK_PCI_100BASE_MII | ELINK_RUNNER_MII_RESET |
 	    ELINK_RUNNER_ENABLE_MII);
 	ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
 	ep_reset_cmd(sc, ELINK_COMMAND, RX_RESET);
 	delay(1000);
 	bus_space_write_2(iot, ioh, ELINK_W3_RESET_OPTIONS,
-	    ELINK_PCI_100BASE_MII|ELINK_RUNNER_ENABLE_MII);
+	    ELINK_PCI_100BASE_MII | ELINK_RUNNER_ENABLE_MII);
 }
 
 /*
@@ -1046,7 +1047,7 @@ ep_media_status(struct ifnet *ifp, struct ifmediareq *req)
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	if (sc->enabled == 0) {
-		req->ifm_active = IFM_ETHER|IFM_NONE;
+		req->ifm_active = IFM_ETHER | IFM_NONE;
 		req->ifm_status = 0;
 		return;
 	}
