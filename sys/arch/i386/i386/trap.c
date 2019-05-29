@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.300 2019/04/06 03:06:25 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.301 2019/05/29 14:28:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.300 2019/04/06 03:06:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.301 2019/05/29 14:28:37 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -467,8 +467,9 @@ kernelfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): BUS/SEGV (%#x) at eip %#x addr %#lx\n",
-		    p->p_pid, l->l_lid, p->p_comm, type, frame->tf_eip, rcr2());
+		printf("pid %d.%d (%s): BUS/SEGV (%#x) at eip %#x addr %#"
+		    PRIxREGISTER "\n", p->p_pid, l->l_lid, p->p_comm,
+		    type, frame->tf_eip, rcr2());
 		frame_dump(frame, pcb);
 #endif
 		KSI_INIT_TRAP(&ksi);
@@ -508,8 +509,9 @@ kernelfault:
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): ILL at eip %#x addr %#lx\n",
-		    p->p_pid, l->l_lid, p->p_comm, frame->tf_eip, rcr2());
+		printf("pid %d.%d (%s): ILL at eip %#x addr %#"
+		    PRIxREGISTER "\n", p->p_pid, l->l_lid, p->p_comm,
+		    frame->tf_eip, rcr2());
 		frame_dump(frame, pcb);
 #endif
 		KSI_INIT_TRAP(&ksi);
