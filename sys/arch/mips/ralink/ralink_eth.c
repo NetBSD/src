@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.17 2019/05/29 06:17:28 msaitoh Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.18 2019/05/29 14:03:36 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.17 2019/05/29 06:17:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.18 2019/05/29 14:03:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -484,7 +484,7 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 	mii->mii_writereg = ralink_eth_mii_write;
 	mii->mii_statchg = ralink_eth_mii_statchg;
 	sc->sc_ethercom.ec_mii = mii;
-	ifmedia_init(mii->mii_media, 0, ether_mediachange, ether_mediastatus);
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 	mii_attach(sc->sc_dev, mii, ~0, MII_PHY_ANY, MII_OFFSET_ANY,
 	    MIIF_FORCEANEG | MIIF_DOPAUSE | MIIF_NOISOLATE);
 
