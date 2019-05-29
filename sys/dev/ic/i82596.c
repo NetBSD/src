@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.41 2019/05/28 07:41:48 msaitoh Exp $ */
+/* $NetBSD: i82596.c,v 1.42 2019/05/29 10:07:29 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.41 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.42 2019/05/29 10:07:29 msaitoh Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -646,6 +646,8 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, sc->sc_shmem_sz,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
+	/* Initialize ifmedia structures. */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_ifmedia;
 	ifmedia_init(&sc->sc_ifmedia, 0, iee_mediachange, iee_mediastatus);
 	if (media != NULL) {
 		for (n = 0 ; n < nmedia ; n++)
@@ -833,12 +835,6 @@ iee_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		err = ifmedia_ioctl(ifp, (struct ifreq *)data,
-		    &sc->sc_ifmedia, cmd);
-		break;
-
 	default:
 		err = ether_ioctl(ifp, cmd, data);
 		if (err == ENETRESET) {

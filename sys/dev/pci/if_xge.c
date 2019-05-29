@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.31 2019/05/28 07:41:49 msaitoh Exp $ */
+/*      $NetBSD: if_xge.c,v 1.32 2019/05/29 10:07:29 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.31 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.32 2019/05/29 10:07:29 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -517,6 +517,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Setup media stuff.
 	 */
+	sc->sc_ethercom.ec_ifmedia = &sc->xena_media;
 	ifmedia_init(&sc->xena_media, IFM_IMASK, xge_xgmii_mediachange,
 	    xge_ifmedia_status);
 	ifmedia_add(&sc->xena_media, IFM_ETHER | IFM_10G_LR, 0, NULL);
@@ -851,11 +852,6 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			    RMAC_PYLD_LEN(ifr->ifr_mtu));
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->xena_media, cmd);
 		break;
 
 	default:

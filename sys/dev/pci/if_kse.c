@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.37 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.38 2019/05/29 10:07:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.37 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.38 2019/05/29 10:07:29 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -490,7 +490,9 @@ kse_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_callout, 0);
 	callout_init(&sc->sc_stat_ch, 0);
 
+	/* Initialize ifmedia structures. */
 	ifm = &sc->sc_media;
+	sc->sc_ethercom.ec_ifmedia = ifm;
 	if (sc->sc_chip == 0x8841) {
 		ifmedia_init(ifm, 0, ifmedia_upd, ifmedia_sts);
 		ifmedia_add(ifm, IFM_ETHER | IFM_10_T, 0, NULL);
@@ -638,17 +640,11 @@ static int
 kse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct kse_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;

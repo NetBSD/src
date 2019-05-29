@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.54 2019/05/28 07:41:49 msaitoh Exp $ */
+/*	$NetBSD: if_dge.c,v 1.55 2019/05/29 10:07:29 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.54 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.55 2019/05/29 10:07:29 msaitoh Exp $");
 
 
 
@@ -908,6 +908,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Setup media stuff.
 	 */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, IFM_IMASK, dge_xgmii_mediachange,
 	    dge_xgmii_mediastatus);
 	if (dgep->dgep_flags & DGEP_F_10G_SR) {
@@ -1454,11 +1455,6 @@ dge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > DGE_MAX_MTU)
 			error = EINVAL;
