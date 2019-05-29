@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.38 2017/05/08 14:42:16 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.39 2019/05/29 01:21:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.38 2017/05/08 14:42:16 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.39 2019/05/29 01:21:33 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -170,7 +170,8 @@ static int	 glob2(Char *, Char *, Char *, const Char *, glob_t *,
 static int	 glob3(Char *, Char *, Char *, const Char *, const Char *,
     const Char *, glob_t *, struct glob_limit *);
 static int	 globextend(const Char *, glob_t *, struct glob_limit *);
-static const Char *globtilde(const Char *, Char *, size_t, glob_t *);
+static int       globtilde(const Char **, const Char *, Char *, size_t,
+    glob_t *);
 static int	 globexp1(const Char *, glob_t *, struct glob_limit *);
 static int	 globexp2(const Char *, const Char *, glob_t *, int *,
     struct glob_limit *);
@@ -378,8 +379,9 @@ globexp2(const Char *ptr, const Char *pattern, glob_t *pglob, int *rv,
 /*
  * expand tilde from the passwd file.
  */
-static const Char *
-globtilde(const Char *pattern, Char *patbuf, size_t patsize, glob_t *pglob)
+static int
+globtilde(const Char **qpatnext, const Char *pattern, Char *patbuf,
+    size_t patsize, glob_t *pglob)
 {
 	struct passwd *pwd;
 	const char *h;
@@ -397,9 +399,10 @@ globtilde(const Char *pattern, Char *patbuf, size_t patsize, glob_t *pglob)
 	_DIAGASSERT(pattern != NULL);
 	_DIAGASSERT(patbuf != NULL);
 	_DIAGASSERT(pglob != NULL);
+	*qpatnext = pattern;
 
 	if (*pattern != TILDE || !(pglob->gl_flags & GLOB_TILDE))
-		return pattern;
+		return 0;
 
 	/* Copy up to the end of the string or / */
 	for (p = pattern + 1, d = (char *)(void *)patbuf; 
@@ -408,7 +411,7 @@ globtilde(const Char *pattern, Char *patbuf, size_t patsize, glob_t *pglob)
 		continue;
 
 	if (d == (char *)(void *)pend)
-		return NULL;
+		return GLOB_ABEND;
 
 	*d = EOS;
 	d = (char *)(void *)patbuf;
@@ -425,9 +428,8 @@ globtilde(const Char *pattern, Char *patbuf, size_t patsize, glob_t *pglob)
 			if (getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf),
 			    &pwd) != 0 || pwd == NULL)
 #endif
-				return pattern;
-			else
-				h = pwd->pw_dir;
+				goto nouser;
+			h = pwd->pw_dir;
 		}
 	}
 	else {
@@ -440,9 +442,8 @@ globtilde(const Char *pattern, Char *patbuf, size_t patsize, glob_t *pglob)
 		if (getpwnam_r(d, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
 		    pwd == NULL)
 #endif
-			return pattern;
-		else
-			h = pwd->pw_dir;
+			goto nouser;
+		h = pwd->pw_dir;
 	}
 
 	/* Copy the home directory */
@@ -450,16 +451,19 @@ globtilde(const Char *pattern, Char *patbuf, size_t patsize, glob_t *pglob)
 		continue;
 
 	if (b == pend)
-		return NULL;
+		return GLOB_ABEND;
 	
 	/* Append the rest of the pattern */
 	while (b < pend && (*b++ = *p++) != EOS)
 		continue;
 
 	if (b == pend)
-		return NULL;
+		return GLOB_ABEND;
 
-	return patbuf;
+	*qpatnext = patbuf;
+	return 0;
+nouser:
+	return (pglob->gl_flags & GLOB_TILDE_CHECK) ?  GLOB_NOMATCH : 0;
 }
 	
 
@@ -481,9 +485,9 @@ glob0(const Char *pattern, glob_t *pglob, struct glob_limit *limit)
 	_DIAGASSERT(pattern != NULL);
 	_DIAGASSERT(pglob != NULL);
 
-	if ((qpatnext = globtilde(pattern, patbuf, sizeof(patbuf),
-	    pglob)) == NULL)
-		return GLOB_ABEND;
+	if ((error = globtilde(&qpatnext, pattern, patbuf, sizeof(patbuf),
+	    pglob)) != 0)
+		return error;
 	oldpathc = pglob->gl_pathc;
 	bufnext = patbuf;
 

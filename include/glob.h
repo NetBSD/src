@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.26 2010/09/06 14:38:56 christos Exp $	*/
+/*	$NetBSD: glob.h,v 1.27 2019/05/29 01:21:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,31 +70,32 @@ typedef struct {
 	int (*gl_stat)(const char *, __gl_stat_t *);
 } glob_t;
 
-#define	GLOB_APPEND	0x0001	/* Append to output from previous call. */
-#define	GLOB_DOOFFS	0x0002	/* Use gl_offs. */
-#define	GLOB_ERR	0x0004	/* Return on error. */
-#define	GLOB_MARK	0x0008	/* Append / to matching directories. */
-#define	GLOB_NOCHECK	0x0010	/* Return pattern itself if nothing matches. */
-#define	GLOB_NOSORT	0x0020	/* Don't sort. */
-#define	GLOB_NOESCAPE	0x1000	/* Disable backslash escaping. */
+#define	GLOB_APPEND	 0x00001 /* Append to output from previous call. */
+#define	GLOB_DOOFFS	 0x00002 /* Use gl_offs. */
+#define	GLOB_ERR	 0x00004 /* Return on error. */
+#define	GLOB_MARK	 0x00008 /* Append / to matching directories. */
+#define	GLOB_NOCHECK	 0x00010 /* Return pattern itself if nothing matches. */
+#define	GLOB_NOSORT	 0x00020 /* Don't sort. */
+#define	GLOB_NOESCAPE	 0x01000 /* Disable backslash escaping. */
 
-#define	GLOB_NOSPACE	(-1)	/* Malloc call failed. */
-#define	GLOB_ABORTED	(-2)	/* Unignored error. */
-#define	GLOB_NOMATCH	(-3)	/* No match, and GLOB_NOCHECK was not set. */
-#define	GLOB_NOSYS	(-4)	/* Implementation does not support function. */
+#define	GLOB_NOSPACE	 (-1)	 /* Malloc call failed. */
+#define	GLOB_ABORTED	 (-2)	 /* Unignored error. */
+#define	GLOB_NOMATCH	 (-3)	 /* No match, and GLOB_NOCHECK was not set. */
+#define	GLOB_NOSYS	 (-4)	 /* Implementation does not support function. */
 
 #if defined(_NETBSD_SOURCE) || defined(HAVE_NBTOOL_CONFIG_H)
-#define	GLOB_ALTDIRFUNC	0x0040	/* Use alternately specified directory funcs. */
-#define	GLOB_BRACE	0x0080	/* Expand braces ala csh. */
-#define	GLOB_MAGCHAR	0x0100	/* Pattern had globbing characters. */
-#define	GLOB_NOMAGIC	0x0200	/* GLOB_NOCHECK without magic chars (csh). */
-#define	GLOB_LIMIT	0x0400	/* Limit memory used by matches to ARG_MAX */
-#define	GLOB_TILDE	0x0800	/* Expand tilde names from the passwd file. */
-/*	GLOB_NOESCAPE	0x1000	above */
-#define	GLOB_PERIOD	0x2000	/* Allow metachars to match leading periods. */
-#define	GLOB_NO_DOTDIRS	0x4000	/* Make . and .. vanish from wildcards. */
-#define	GLOB_STAR	0x8000	/* Use glob ** to recurse directories */
-#define	GLOB_QUOTE	0	/* source compatibility */
+#define	GLOB_ALTDIRFUNC	 0x00040 /* Use alternately specified directory funcs. */
+#define	GLOB_BRACE	 0x00080 /* Expand braces ala csh. */
+#define	GLOB_MAGCHAR	 0x00100 /* Pattern had globbing characters. */
+#define	GLOB_NOMAGIC	 0x00200 /* GLOB_NOCHECK without magic chars (csh). */
+#define	GLOB_LIMIT	 0x00400 /* Limit memory used by matches to ARG_MAX */
+#define	GLOB_TILDE	 0x00800 /* Expand tilde names from the passwd file. */
+/*	GLOB_NOESCAPE	 0x01000 above */
+#define	GLOB_PERIOD	 0x02000 /* Allow metachars to match leading periods. */
+#define	GLOB_NO_DOTDIRS	 0x04000 /* Make . and .. vanish from wildcards. */
+#define	GLOB_STAR	 0x08000 /* Use glob ** to recurse directories */
+#define	GLOB_TILDE_CHECK 0x10000 /* Expand tilde names from the passwd file. */
+#define	GLOB_QUOTE	 0	 /* source compatibility */
 
 #define	GLOB_ABEND	GLOB_ABORTED	/* source compatibility */
 #endif
