@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1139 2019/05/29 01:57:59 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1140 2019/05/29 18:19:03 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -138,7 +138,8 @@ USE_SSP?=	yes
 #
 # What GDB is used?
 #
-.if ${MACHINE} == "amd64"
+.if ${MACHINE} == "amd64" || \
+    ${MACHINE} == "i386"
 HAVE_GDB?=	830
 .else
 HAVE_GDB?=	801
