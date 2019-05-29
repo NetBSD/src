@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.40 2019/05/19 08:17:02 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.41 2019/05/29 16:54:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <machine/segments.h>
 
 #include "opt_xen.h"
+#include "opt_svs.h"
 
 #include "assym.h"
 
@@ -65,6 +66,17 @@ END(x86_mfence)
 
 #ifndef XENPV
 ENTRY(invlpg)
+#ifdef SVS
+	movb	_C_LABEL(svs_pcid),%al
+	testb	%al,%al
+	jz	1f
+	pushq	%rdi
+	pushq	$PMAP_PCID_USER
+	movq	$INVPCID_ADDRESS,%rax
+	invpcid	(%rsp),%rax
+	addq	$16,%rsp
+1:	/* FALLTHROUGH */
+#endif
 	invlpg	(%rdi)
 	ret
 END(invlpg)
@@ -112,7 +124,7 @@ END(ltr)
 ENTRY(tlbflushg)
 	movq	%cr4, %rax
 	testq	$CR4_PGE, %rax
-	jz	1f
+	jz	tlbflush
 	movq	%rax, %rdx
 	andq	$~CR4_PGE, %rdx
 	movq	%rdx, %cr4
@@ -121,8 +133,19 @@ ENTRY(tlbflushg)
 END(tlbflushg)
 
 ENTRY(tlbflush)
-1:
-	movq	%cr3, %rax
+#ifdef SVS
+	movb	_C_LABEL(svs_pcid),%al
+	testb	%al,%al
+	jz	1f
+	xorq	%rax,%rax
+	pushq	%rax
+	pushq	%rax
+	movq	$INVPCID_ALL_NONGLOBAL,%rax
+	invpcid	(%rsp),%rax
+	addq	$16,%rsp
+	ret
+#endif
+1:	movq	%cr3, %rax
 	movq	%rax, %cr3
 	ret
 END(tlbflush)

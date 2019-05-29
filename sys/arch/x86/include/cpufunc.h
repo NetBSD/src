@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.30 2019/05/11 13:40:26 christos Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.31 2019/05/29 16:54:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -64,6 +64,30 @@ void	tlbflushg(void);
 void	invlpg(vaddr_t);
 void	wbinvd(void);
 void	breakpoint(void);
+
+#define INVPCID_ADDRESS		0
+#define INVPCID_CONTEXT		1
+#define INVPCID_ALL		2
+#define INVPCID_ALL_NONGLOBAL	3
+
+static inline void
+invpcid(register_t op, uint64_t pcid, vaddr_t va)
+{
+	struct {
+		uint64_t pcid;
+		uint64_t addr;
+	} desc = {
+		.pcid = pcid,
+		.addr = va
+	};
+
+	asm volatile (
+		"invpcid %[desc],%[op]"
+		:
+		: [desc] "m" (desc), [op] "r" (op)
+		: "memory"
+	);
+}
 
 static inline uint64_t
 rdtsc(void)
