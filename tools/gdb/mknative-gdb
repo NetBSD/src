@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gdb,v 1.7 2016/10/16 04:37:42 mrg Exp $
+#	$NetBSD: mknative-gdb,v 1.8 2019/05/29 01:56:06 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/gdb
@@ -106,13 +106,16 @@ get_gdb_libgdb () {
 	{
 		getvars gdb/Makefile \
 			INTERNAL_CFLAGS LIBGDB_OBS SIM_OBS
-	} | write_mk $_GDBP/arch/$_MACHINE_SUBDIR/defs.mk
+	} | sed -e s@arch/@@g -e s@cli/@@g -e s@common/agent@common-agent@ \
+		-e s@common/@@g -e s@compile/@@g -e s@guile/@@g -e s@mi/@@g \
+		-e s@nat/@@g -e s@python/@@g -e s@target/@@g \
+		-e s@tui/@@g | write_mk $_GDBP/arch/$_MACHINE_SUBDIR/defs.mk
 
 #	getvars gdb/gdbserver/Makefile \
 #		INTERNAL_CFLAGS OBS \
 #		| write_mk $_GDB/bin/gdb/arch/$_MACHINE_SUBDIR/gdbserver.mk
 
-	for i in config.h observer.h observer.inc version.c init.c \
+	for i in config.h version.c init.c \
 	    xml-builtin.c build-gnulib/config.h jit-reader.h
 	do
 	    write_c $_GDBP/arch/$_MACHINE_SUBDIR/$i \
