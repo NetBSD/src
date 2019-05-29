@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_amd.c,v 1.2 2018/07/24 09:47:35 maxv Exp $	*/
+/*	$NetBSD: tprof_x86_amd.c,v 1.3 2019/05/29 17:09:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.2 2018/07/24 09:47:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.3 2019/05/29 17:09:17 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,7 @@ tprof_amd_ident(void)
 
 	switch (CPUID_TO_FAMILY(ci->ci_signature)) {
 	case 0x10:
+	case 0x17:
 		return TPROF_IDENT_AMD_GENERIC;
 	}
 

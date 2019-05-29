@@ -1,7 +1,7 @@
-/*	$NetBSD: tprof_x86.c,v 1.7 2018/11/26 23:20:57 knakahara Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.8 2019/05/29 17:09:18 maxv Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -654,11 +654,57 @@ static struct event_table amd_f10h = {
 	.next = NULL
 };
 
-static struct event_table *
-init_amd_f10h(void)
-{
-	return &amd_f10h;
-}
+/*
+ * AMD Family 17h
+ */
+static struct name_to_event amd_f17h_names[] = {
+	{ "FpRetx87FpOps",		0x02, __BITS(2,0), true },
+	{ "FpRetSseAvxOps",		0x03, __BITS(7,0), true },
+	{ "FpRetiredSerOps",		0x05, __BITS(3,0), true },
+	{ "LsL1DTlbMiss",		0x45, __BITS(7,0), true },
+	{ "LsTableWalker",		0x46, __BITS(3,0), true },
+	{ "LsMisalAccesses",		0x47, 0x00, true },
+	{ "LsInefSwPref",		0x52, __BITS(1,0), true },
+	{ "LsNotHaltedCyc",		0x76, 0x00, true },
+	{ "IcFw32",			0x80, 0x00, true },
+	{ "IcFw32Miss",			0x81, 0x00, true },
+	{ "IcCacheFillL2",		0x82, 0x00, true },
+	{ "IcCacheFillSys",		0x83, 0x00, true },
+	{ "IcFetchStall",		0x87, __BITS(2,0), true },
+	{ "IcCacheInval",		0x8C, __BITS(1,0), true },
+	{ "BpL1TlbMissL2Hit",		0x84, 0x00, true },
+	{ "BpL1TlbMissL2Miss",		0x85, 0x00, true },
+	{ "BpSnpReSync",		0x86, 0x00, true },
+	{ "BpL1BTBCorrect",		0x8A, 0x00, true },
+	{ "BpL2BTBCorrect",		0x8B, 0x00, true },
+	{ "BpTlbRel",			0x99, 0x00, true },
+	{ "ExRetInstr",			0xC0, 0x00, true },
+	{ "ExRetCops",			0xC1, 0x00, true },
+	{ "ExRetBrn",			0xC2, 0x00, true },
+	{ "ExRetBrnMisp",		0xC3, 0x00, true },
+	{ "ExRetBrnTkn",		0xC4, 0x00, true },
+	{ "ExRetBrnTknMisp",		0xC5, 0x00, true },
+	{ "ExRetBrnFar",		0xC6, 0x00, true },
+	{ "ExRetBrnResync",		0xC7, 0x00, true },
+	{ "ExRetBrnIndMisp",		0xCA, 0x00, true },
+	{ "ExRetNearRet",		0xC8, 0x00, true },
+	{ "ExRetNearRetMispred",	0xC9, 0x00, true },
+	{ "ExRetMmxFpInstr@X87",	0xCB, __BIT(0), true },
+	{ "ExRetMmxFpInstr@Mmx",	0xCB, __BIT(1), true },
+	{ "ExRetMmxFpInstr@Sse",	0xCB, __BIT(2), true },
+	{ "ExRetCond",			0xD1, 0x00, true },
+	{ "ExRetCondMisp",		0xD2, 0x00, true },
+	{ "ExDivBusy",			0xD3, 0x00, true },
+	{ "ExDivCount",			0xD4, 0x00, true },
+};
+
+static struct event_table amd_f17h = {
+	.tablename = "AMD Family 17h",
+	.names = amd_f17h_names,
+	.nevents = sizeof(amd_f17h_names) /
+	    sizeof(struct name_to_event),
+	.next = NULL
+};
 
 static struct event_table *
 init_amd_generic(void)
@@ -673,7 +719,9 @@ init_amd_generic(void)
 
 	switch (CPUID_TO_FAMILY(eax)) {
 	case 0x10:
-		return init_amd_f10h();
+		return &amd_f10h;
+	case 0x17:
+		return &amd_f17h;
 	}
 
 	return NULL;

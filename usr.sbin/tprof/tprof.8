@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.13 2018/11/26 23:20:56 knakahara Exp $
+.\"	$NetBSD: tprof.8,v 1.14 2019/05/29 17:09:17 maxv Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 27, 2018
+.Dd May 29, 2019
 .Dt TPROF 8
 .Os
 .Sh NAME
@@ -130,6 +130,8 @@ ARMv8
 .It
 x86 AMD Family 10h
 .It
+x86 AMD Family 17h
+.It
 x86 Intel Generic (all Intel CPUs)
 .It
 x86 Intel Skylake/Kabylake
@@ -168,7 +170,7 @@ were dropped.
 .An -nosplit
 The
 .Nm
-utility is written by
+utility was written by
 .An YAMAMOTO Takashi .
 It was revamped by
 .An Maxime Villard
