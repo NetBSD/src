@@ -1,4 +1,4 @@
-/*	$NetBSD: rthdr.c,v 1.18 2012/03/13 21:13:42 christos Exp $	*/
+/*	$NetBSD: rthdr.c,v 1.19 2019/05/29 02:30:42 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rthdr.c,v 1.18 2012/03/13 21:13:42 christos Exp $");
+__RCSID("$NetBSD: rthdr.c,v 1.19 2019/05/29 02:30:42 msaitoh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -289,7 +289,7 @@ inet6_rth_space(int type, int segments)
 	case IPV6_RTHDR_TYPE_0:
 		return (((segments * 2) + 1) << 3);
 	default:
-		return (0);	/* type not suppported */
+		return (0);	/* type not supported */
 	}
 }
 
