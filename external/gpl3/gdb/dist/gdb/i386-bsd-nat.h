@@ -20,6 +20,8 @@
 #ifndef I386_BSD_NAT_H
 #define I386_BSD_NAT_H
 
+#include "x86-bsd-nat.h"
+
 /* Helper functions.  See definitions.  */
 extern void i386bsd_fetch_inferior_registers (struct regcache *regcache,
 					      int regnum);
