@@ -137,9 +137,9 @@ bsd_kvm_target_open (const char *arg, int from_tty)
   core_kd = temp_kd;
   push_target (&bsd_kvm_ops);
 
-  inf = add_inferior_silent (ptid_get_pid(bsd_kvm_ptid));
+  inf = add_inferior_silent (bsd_kvm_ptid.pid ());
   inf->aspace = maybe_new_address_space ();
-  inf->pspace = add_program_space (inf->aspace);
+  inf->pspace = new program_space (inf->aspace);
 
   add_thread_silent (bsd_kvm_ptid);
   inferior_ptid = bsd_kvm_ptid;
