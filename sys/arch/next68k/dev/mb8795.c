@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.64 2019/05/29 06:21:57 msaitoh Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.65 2019/05/29 10:07:29 msaitoh Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.64 2019/05/29 06:21:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.65 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -111,8 +111,8 @@ mb8795_config(struct mb8795_softc *sc, int *media, int nmedia, int defmedia)
 	ifp->if_flags = IFF_BROADCAST;
 
 	/* Initialize media goo. */
-	ifmedia_init(&sc->sc_media, 0, mb8795_mediachange,
-		     mb8795_mediastatus);
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
+	ifmedia_init(&sc->sc_media, 0, mb8795_mediachange, mb8795_mediastatus);
 	if (media != NULL) {
 		int i;
 		for (i = 0; i < nmedia; i++)
@@ -561,7 +561,6 @@ mb8795_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mb8795_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -640,13 +639,6 @@ mb8795_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				mb8795_init(sc);
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		DPRINTF(("%s: mb8795_ioctl() SIOCSIFMEDIA\n",
-			device_xname(sc->sc_dev)));
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:

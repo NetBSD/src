@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.28 2019/05/23 10:57:27 msaitoh Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.29 2019/05/29 10:07:29 msaitoh Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.28 2019/05/23 10:57:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.29 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1726,6 +1726,8 @@ vmxnet3_setup_interface(struct vmxnet3_softc *sc)
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->vmx_ntxdescs);
 	IFQ_SET_READY(&ifp->if_snd);
 
+	/* Initialize ifmedia structures. */
+	sc->vmx_ethercom.ec_ifmedia = &sc->vmx_media;
 	ifmedia_init(&sc->vmx_media, IFM_IMASK, vmxnet3_media_change,
 	    vmxnet3_media_status);
 	ifmedia_add(&sc->vmx_media, IFM_ETHER | IFM_AUTO, 0, NULL);
@@ -2909,12 +2911,6 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = vmxnet3_change_mtu(sc, ifr->ifr_mtu);
 			VMXNET3_CORE_UNLOCK(sc);
 		}
-		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		s = splnet();
-		error = ifmedia_ioctl(ifp, ifr, &sc->vmx_media, cmd);
-		splx(s);
 		break;
 	case SIOCGIFDATA:
 	case SIOCZIFDATA:

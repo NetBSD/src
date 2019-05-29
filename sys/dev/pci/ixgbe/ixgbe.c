@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.186 2019/05/23 13:10:52 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.187 2019/05/29 10:07:30 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1372,6 +1372,7 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 	 * Specify the media types supported by this adapter and register
 	 * callbacks to update media and link information
 	 */
+	ec->ec_ifmedia = &adapter->media;
 	ifmedia_init(&adapter->media, IFM_IMASK, ixgbe_media_change,
 	    ixgbe_media_status);
 
@@ -6231,9 +6232,6 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
 	}
 
 	switch (command) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		return ifmedia_ioctl(ifp, ifr, &adapter->media, command);
 	case SIOCGI2C:
 	{
 		struct ixgbe_i2c_req	i2c;

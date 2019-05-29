@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.112 2019/05/21 09:18:37 msaitoh Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.113 2019/05/29 10:07:30 msaitoh Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.112 2019/05/21 09:18:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.113 2019/05/29 10:07:30 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -350,6 +350,7 @@ tap_attach(device_t parent, device_t self, void *aux)
 	 * list of supported media, and in the end, the selection of one
 	 * of them.
 	 */
+	sc->sc_ec.ec_ifmedia = &sc->sc_im;
 	ifmedia_init(&sc->sc_im, 0, tap_mediachange, tap_mediastatus);
 	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_1000_T, 0, NULL);
 	ifmedia_add(&sc->sc_im, IFM_ETHER | IFM_1000_T | IFM_FDX, 0, NULL);
@@ -573,17 +574,11 @@ tap_softintr(void *cookie)
 static int
 tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct tap_softc *sc = (struct tap_softc *)ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_im, cmd);
-		break;
 	case SIOCSIFPHYADDR:
 		error = tap_lifaddr(ifp, cmd, (struct ifaliasreq *)data);
 		break;
