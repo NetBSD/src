@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.108 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.109 2019/05/29 10:07:29 msaitoh Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.108 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.109 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -334,6 +334,8 @@ iyattach(device_t parent, device_t self, void *aux)
 	myaddr[5] = eaddr[EEPPEther2] & 0xFF;
 	myaddr[4] = eaddr[EEPPEther2] >> 8;
 
+	/* Initialize ifmedia structures. */
+	sc->sc_ethercom.ec_ifmedia = &sc->iy_ifmedia;
 	ifmedia_init(&sc->iy_ifmedia, 0, iy_mediachange, iy_mediastatus);
 	ifmedia_add(&sc->iy_ifmedia, IFM_ETHER | IFM_10_2, 0, NULL);
 	ifmedia_add(&sc->iy_ifmedia, IFM_ETHER | IFM_10_5, 0, NULL);
@@ -1161,12 +1163,10 @@ iyioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct iy_softc *sc;
 	struct ifaddr *ifa;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	sc = ifp->if_softc;
 	ifa = (struct ifaddr *)data;
-	ifr = (struct ifreq *)data;
 
 #ifdef IYDEBUG
 	printf("iyioctl called with ifp %p (%s) cmd 0x%lx data %p\n",
@@ -1246,10 +1246,6 @@ iyioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->iy_ifmedia, cmd);
-		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 	}

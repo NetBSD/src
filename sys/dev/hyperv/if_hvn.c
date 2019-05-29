@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.2 2019/03/05 08:25:02 msaitoh Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.3 2019/05/29 10:07:29 msaitoh Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.2 2019/03/05 08:25:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.3 2019/05/29 10:07:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -289,6 +289,8 @@ hvn_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, HVN_TX_DESC - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
+	/* Initialize ifmedia structures. */
+	sc->sc_ec.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, IFM_IMASK, hvn_media_change,
 	    hvn_media_status);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
@@ -369,7 +371,6 @@ static int
 hvn_ioctl(struct ifnet *ifp, u_long command, void * data)
 {
 	struct hvn_softc *sc = IFP2SC(ifp);
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -388,10 +389,6 @@ hvn_ioctl(struct ifnet *ifp, u_long command, void * data)
 			if (ifp->if_flags & IFF_RUNNING)
 				hvn_stop(ifp, 1);
 		}
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
 		break;
 	default:
 		error = ether_ioctl(ifp, command, data);

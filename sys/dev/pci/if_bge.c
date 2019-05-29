@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.333 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.334 2019/05/29 10:07:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.333 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.334 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3870,7 +3870,9 @@ bge_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_set_uint32(dict, "phyflags", sc->bge_phy_flags);
 	prop_dictionary_set_uint32(dict, "chipid", sc->bge_chipid);
 
+	/* Initialize ifmedia structures. */
 	if (sc->bge_flags & BGEF_FIBER_TBI) {
+		sc->ethercom.ec_ifmedia = &sc->bge_ifmedia;
 		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,
 		    bge_ifmedia_sts);
 		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER |IFM_1000_SX, 0, NULL);
@@ -3891,6 +3893,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		BGE_CLRBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
 		bge_asf_driver_up(sc);
 
+		sc->ethercom.ec_mii = mii;
 		ifmedia_init(&mii->mii_media, 0, bge_ifmedia_upd,
 			     bge_ifmedia_sts);
 		mii_flags = MIIF_DOPAUSE;
@@ -5814,8 +5817,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 			}
 			sc->bge_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
 		}
-		/* FALLTHROUGH */
-	case SIOCGIFMEDIA:
+
 		if (sc->bge_flags & BGEF_FIBER_TBI) {
 			error = ifmedia_ioctl(ifp, ifr, &sc->bge_ifmedia,
 			    command);

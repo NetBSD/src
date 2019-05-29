@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.46 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.47 2019/05/29 10:07:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.46 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.47 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -399,6 +399,7 @@ cs_attach(struct cs_softc *sc, uint8_t *enaddr, int *media,
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures. */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, cs_mediachange, cs_mediastatus);
 
 	if (media != NULL) {
@@ -1318,7 +1319,6 @@ int
 cs_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct cs_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = data;
 	int state;
 	int result;
 
@@ -1327,11 +1327,6 @@ cs_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	result = 0;		/* Only set if something goes wrong */
 
 	switch (cmd) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		result = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-
 	default:
 		result = ether_ioctl(ifp, cmd, data);
 		if (result == ENETRESET) {

@@ -1,4 +1,4 @@
-/* $NetBSD: if_veth.c,v 1.12 2019/05/29 06:21:57 msaitoh Exp $ */
+/* $NetBSD: if_veth.c,v 1.13 2019/05/29 10:07:29 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.12 2019/05/29 06:21:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.13 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -148,9 +148,10 @@ veth_attach(device_t parent, device_t self, void *opaque)
 	ether_ifattach(ifp, sc->sc_eaddr);
 	if_register(ifp);
 
+	/* Initialize ifmedia structures. */
+	sc->sc_ec.ec_ifmedia = &sc->sc_ifmedia;
 	ifmedia_init(&sc->sc_ifmedia, 0,
-	    veth_ifmedia_change,
-	    veth_ifmedia_status);
+	    veth_ifmedia_change, veth_ifmedia_status);
 	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX, 0, NULL);
 	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX);
 
@@ -322,8 +323,6 @@ veth_watchdog(struct ifnet *ifp)
 static int
 veth_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct veth_softc *sc = ifp->if_softc;
-	struct ifreq *ifr;
 	int s, error;
 
 	vethprintf("%s: %s flags=%x\n", __func__, ifp->if_xname, ifp->if_flags);
@@ -331,11 +330,6 @@ veth_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		ifr = data;
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
-		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {

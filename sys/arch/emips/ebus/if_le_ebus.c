@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.19 2019/05/29 06:21:57 msaitoh Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.20 2019/05/29 10:07:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.19 2019/05/29 06:21:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.20 2019/05/29 10:07:28 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -194,6 +194,7 @@ enic_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures. */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, enic_mediachange, enic_mediastatus);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
@@ -597,7 +598,6 @@ enic_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 #if 0 /*DEBUG*/
 	    {

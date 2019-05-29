@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.56 2019/05/28 07:41:49 msaitoh Exp $ */
+/* $NetBSD: if_txp.c,v 1.57 2019/05/29 10:07:29 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.56 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.57 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -291,6 +291,8 @@ txp_attach(device_t parent, device_t self, void *aux)
 	    ether_sprintf(enaddr));
 	sc->sc_cold = 0;
 
+	/* Initialize ifmedia structures. */
+	sc->sc_arpcom.ec_ifmedia = &sc->sc_ifmedia;
 	ifmedia_init(&sc->sc_ifmedia, 0, txp_ifmedia_upd, txp_ifmedia_sts);
 	if (flags & TXP_FIBER) {
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_FX,
@@ -1249,7 +1251,6 @@ int
 txp_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct txp_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
@@ -1302,10 +1303,6 @@ txp_ioctl(struct ifnet *ifp, u_long command, void *data)
 			 */
 			txp_set_filter(sc);
 		}
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, command);
 		break;
 	default:
 		error = ether_ioctl(ifp, command, data);

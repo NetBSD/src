@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.162 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_de.c,v 1.163 2019/05/29 10:07:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.162 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.163 2019/05/29 10:07:29 msaitoh Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -4821,11 +4821,6 @@ tulip_ifioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 			break;
 		tulip_init(sc);
 		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->tulip_ifmedia, cmd);
-		break;
-
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		/*
@@ -5089,6 +5084,9 @@ tulip_attach(tulip_softc_t * const sc)
 #endif
 
 	(*sc->tulip_boardsw->bd_media_probe)(sc);
+
+	/* Initialize ifmedia structures. */
+	TULIP_ETHERCOM(sc)->ec_ifmedia = &sc->tulip_ifmedia;
 	ifmedia_init(&sc->tulip_ifmedia, 0,
 	    tulip_ifmedia_change, tulip_ifmedia_status);
 	sc->tulip_flags &= ~TULIP_DEVICEPROBE;

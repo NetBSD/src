@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.274 2019/05/15 02:56:48 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.275 2019/05/29 10:07:30 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.274 2019/05/15 02:56:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.275 2019/05/29 10:07:30 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1503,9 +1503,14 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		return ether_delmulti(ifreq_getaddr(cmd, ifr), ec);
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		if (ec->ec_mii == NULL)
+		if (ec->ec_mii != NULL)
+			return ifmedia_ioctl(ifp, ifr, &ec->ec_mii->mii_media,
+			    cmd);
+		else if (ec->ec_ifmedia != NULL)
+			return ifmedia_ioctl(ifp, ifr, ec->ec_ifmedia, cmd);
+		else
 			return ENOTTY;
-		return ifmedia_ioctl(ifp, ifr, &ec->ec_mii->mii_media, cmd);
+		break;
 	case SIOCALIFADDR:
 		sdl = satocsdl(sstocsa(&iflr->addr));
 		if (sdl->sdl_family != AF_LINK)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.52 2019/02/05 06:17:02 msaitoh Exp $	*/
+/*	$NetBSD: tropic.c,v 1.53 2019/05/29 10:07:29 msaitoh Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.52 2019/02/05 06:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.53 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -396,6 +396,8 @@ tr_attach(struct tr_softc *sc)
 		}
 	}
 
+	/* Initialize ifmedia structures. */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, tr_mediachange, tr_mediastatus);
 	if (mediaptr != NULL) {
 		for (i = 0; i < nmedia; i++)
@@ -1546,10 +1548,6 @@ tr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 */
 			break;
 		}
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > sc->sc_maxmtu)

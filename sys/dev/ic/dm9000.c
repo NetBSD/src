@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.20 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.21 2019/05/29 10:07:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -437,6 +437,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures. */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, dme_mediachange, dme_mediastatus);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
@@ -693,16 +694,11 @@ int
 dme_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct dme_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = data;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {

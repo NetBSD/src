@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.84 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: i82586.c,v 1.85 2019/05/29 10:07:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.84 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.85 2019/05/29 10:07:29 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -245,6 +245,7 @@ i82586_attach(struct ie_softc *sc, const char *name, uint8_t *etheraddr,
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize media goo. */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, i82586_mediachange, i82586_mediastatus);
 	if (media != NULL) {
 		for (i = 0; i < nmedia; i++)
@@ -1725,15 +1726,10 @@ int
 i82586_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct ie_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 	switch (cmd) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {

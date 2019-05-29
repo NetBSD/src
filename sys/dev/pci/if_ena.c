@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.14 2019/04/26 04:33:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.15 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2371,11 +2371,6 @@ ena_ioctl(struct ifnet *ifp, u_long command, void *data)
 	case SIOCDELMULTI:
 		break;
 
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		rc = ifmedia_ioctl(ifp, ifr, &adapter->media, command);
-		break;
-
 	case SIOCSIFCAP:
 		{
 			struct ifcapreq *ifcr = data;
@@ -2542,6 +2537,7 @@ ena_setup_ifnet(device_t pdev, struct ena_adapter *adapter,
 	 * Specify the media types supported by this adapter and register
 	 * callbacks to update media and link information
 	 */
+	adapter->sc_ec.ec_ifmedia = &adapter->media;
 	ifmedia_init(&adapter->media, IFM_IMASK,
 	    ena_media_change, ena_media_status);
 	ifmedia_add(&adapter->media, IFM_ETHER | IFM_AUTO, 0, NULL);

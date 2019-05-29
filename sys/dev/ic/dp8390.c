@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.94 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.95 2019/05/29 10:07:29 msaitoh Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.94 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.95 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -66,6 +66,7 @@ void
 dp8390_media_init(struct dp8390_softc *sc)
 {
 
+	sc->sc_ec.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
@@ -812,7 +813,6 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct dp8390_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = data;
-	struct ifreq *ifr = data;
 	int s, error = 0;
 
 	s = splnet();
@@ -890,11 +890,6 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			}
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.57 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: lance.c,v 1.58 2019/05/29 10:07:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.57 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.58 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,7 @@ lance_config(struct lance_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures. */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, lance_mediachange, lance_mediastatus);
 	if (sc->sc_supmedia != NULL) {
 		for (i = 0; i < sc->sc_nsupmedia; i++)
@@ -516,16 +517,11 @@ int
 lance_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct lance_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
