@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.48 2019/05/28 07:41:50 msaitoh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.49 2019/05/29 08:23:54 mlelstv Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.48 2019/05/28 07:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.49 2019/05/29 08:23:54 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -923,6 +923,9 @@ mue_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
+	mutex_init(&sc->mue_mii_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->mue_usb_lock, MUTEX_DEFAULT, IPL_NET);
+
 #define MUE_CONFIG_NO	1
 	err = usbd_set_config_no(dev, MUE_CONFIG_NO, 1);
 	if (err) {
@@ -958,7 +961,6 @@ mue_attach(device_t parent, device_t self, void *aux)
 		sc->mue_tx_list_cnt = MUE_TX_LIST_CNT;
 	}
 	sc->mue_txbufsz = MUE_TX_BUFSIZE;
-	mutex_init(&sc->mue_usb_lock, MUTEX_DEFAULT, IPL_NET);
 
 	/* Find endpoints. */
 	id = usbd_get_interface_descriptor(sc->mue_iface);
@@ -1061,8 +1063,6 @@ mue_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->mue_stat_ch, 0);
 
 	splx(s);
-
-	mutex_init(&sc->mue_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->mue_udev, sc->mue_dev);
 }
