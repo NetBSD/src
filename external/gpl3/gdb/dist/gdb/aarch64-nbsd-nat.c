@@ -61,7 +61,7 @@ aarch64_nbsd_fetch_inferior_registers (struct target_ops *ops,
   pid_t pid = ptid_get_pid (ptid);
   int tid = ptid_get_lwp (ptid);
 
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   if (regnum == -1 || getregs_supplies (gdbarch, regnum))
     {
       struct reg regs;
@@ -96,7 +96,7 @@ aarch64_nbsd_store_inferior_registers (struct target_ops *ops,
   pid_t pid = ptid_get_pid (ptid);
   int tid = ptid_get_lwp (ptid);
 
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   if (regnum == -1 || getregs_supplies (gdbarch, regnum))
     {
       struct reg regs;
@@ -159,13 +159,13 @@ aarch64_nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 
   for (i = 0; i <= 30; i++)
     {
-      regcache_raw_supply (regcache, AARCH64_X0_REGNUM + i, &tf.tf_reg[i]);
+      regcache->raw_supply (AARCH64_X0_REGNUM + i, &tf.tf_reg[i]);
     }
-  regcache_raw_supply (regcache, AARCH64_SP_REGNUM, &tf.tf_sp);
-  regcache_raw_supply (regcache, AARCH64_PC_REGNUM, &tf.tf_pc);
+  regcache->raw_supply (AARCH64_SP_REGNUM, &tf.tf_sp);
+  regcache->raw_supply (AARCH64_PC_REGNUM, &tf.tf_pc);
 
-  regcache_raw_supply (regcache, AARCH64_FPCR_REGNUM, &pcb->pcb_fpregs.fpcr);
-  regcache_raw_supply (regcache, AARCH64_FPSR_REGNUM, &pcb->pcb_fpregs.fpsr);
+  regcache->raw_supply (AARCH64_FPCR_REGNUM, &pcb->pcb_fpregs.fpcr);
+  regcache->raw_supply (AARCH64_FPSR_REGNUM, &pcb->pcb_fpregs.fpsr);
 
   return 1;
 }
