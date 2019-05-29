@@ -1,4 +1,4 @@
-.\"	$NetBSD: tr.1,v 1.22 2017/07/03 21:34:22 wiz Exp $
+.\"	$NetBSD: tr.1,v 1.23 2019/05/29 11:27:34 gutteridge Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)tr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 29, 2013
+.Dd May 29, 2019
 .Dt TR 1
 .Os
 .Sh NAME
@@ -90,11 +90,11 @@ This occurs after all deletion and translation is completed.
 In the first synopsis form, the characters in
 .Ar string1
 are translated into the characters in
-.Ar string2
+.Ar string2 ,
 where the first character in
 .Ar string1
 is translated into the first character in
-.Ar string2
+.Ar string2 ,
 and so on.
 If
 .Ar string1
@@ -134,7 +134,7 @@ to specify sets of characters:
 Any character not described by one of the following conventions
 represents itself.
 .It \eoctal
-A backslash followed by 1, 2 or 3 octal digits represents a character
+A backslash followed by 1, 2, or 3 octal digits represents a character
 with that encoded value.
 To follow an octal sequence with a digit as a character, left zero-pad
 the octal sequence to the full 3 octal digits.
@@ -306,7 +306,7 @@ will have to be rewritten as
 The
 .Nm
 utility has historically not permitted the manipulation of NUL bytes in
-its input and, additionally, stripped NUL's from its input stream.
+its input and, additionally, stripped NULs from its input stream.
 This implementation has removed this behavior as a bug.
 .Pp
 The
@@ -320,7 +320,8 @@ options were ignored unless two strings were specified.
 This implementation will not permit illegal syntax.
 .Sh SEE ALSO
 .Xr dd 1 ,
-.Xr sed 1
+.Xr sed 1 ,
+.Xr ctype 3
 .Sh STANDARDS
 The
 .Nm
