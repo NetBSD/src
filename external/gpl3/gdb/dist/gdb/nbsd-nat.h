@@ -29,13 +29,6 @@ struct nbsd_nat_target : public inf_ptrace_target
   char *pid_to_exec_file (int pid) override;
   int find_memory_regions (find_memory_region_ftype func, void *data) override;
 
-  enum target_xfer_status xfer_partial (enum target_object object,
-					const char *annex,
-					gdb_byte *readbuf,
-					const gdb_byte *writebuf,
-					ULONGEST offset, ULONGEST len,
-					ULONGEST *xfered_len) override;
-
   bool thread_alive (ptid_t ptid) override;
   const char *pid_to_str (ptid_t) override;
 
