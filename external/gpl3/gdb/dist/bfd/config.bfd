@@ -877,7 +877,6 @@ case "${targ}" in
     targ_selvecs=microblaze_elf32_le_vec
     ;;
 
-<<<<<<< config.bfd
   mips*-big-*)
     targ_defvec=mips_ecoff_be_vec
     targ_selvecs=mips_ecoff_le_vec
