@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.32 2019/05/29 05:06:40 msaitoh Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.33 2019/05/29 06:21:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.32 2019/05/29 05:06:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.33 2019/05/29 06:21:57 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -224,8 +224,8 @@ ec_attach(device_t parent, device_t self, void *aux)
 
         /* Initialize ifmedia structures. */
 	ifmedia_init(&sc->sc_media, 0, ec_mediachange, ec_mediastatus);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 
 	/* Now we can attach the interface. */
 	if_attach(ifp);
@@ -586,7 +586,7 @@ ec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then

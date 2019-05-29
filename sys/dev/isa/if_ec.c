@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.35 2018/02/08 09:05:19 dholland Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.36 2019/05/29 06:21:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.35 2018/02/08 09:05:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.36 2019/05/29 06:21:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -722,9 +722,9 @@ ec_media_init(struct dp8390_softc *sc)
 {
 
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_2, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_5, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_2);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10_2, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10_5, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_10_2);
 }
 
 int

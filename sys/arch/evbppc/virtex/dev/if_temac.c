@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.14 2019/05/29 05:06:39 msaitoh Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.15 2019/05/29 06:21:57 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.14 2019/05/29 05:06:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.15 2019/05/29 06:21:57 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -500,10 +500,10 @@ temac_attach(device_t parent, device_t self, void *aux)
 	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
-		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_NONE);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else {
-		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	}
 
 	/* Hold PHY in reset. */
@@ -630,7 +630,7 @@ temac_init(struct ifnet *ifp)
 		sc->sc_rx_drained = 0;
 
 		temac_rxcdsync(sc, 0, TEMAC_NRXDESC,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		cdmac_rx_start(sc, sc->sc_cdaddr + TEMAC_RXDOFF(0));
 	}
 
@@ -743,7 +743,7 @@ temac_start(struct ifnet *ifp)
 		 */
 
 		temac_txcdsync(sc, sc->sc_txcur, dmap->dm_nsegs,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		for (i = 0; i < dmap->dm_nsegs; i++) {
 			sc->sc_txdescs[sc->sc_txcur].desc_addr =
@@ -775,7 +775,7 @@ temac_start(struct ifnet *ifp)
 		sc->sc_txdescs[tail].desc_stat |= CDMAC_STAT_STOP |
 		    CDMAC_STAT_INTR;
 		temac_txcdsync(sc, head, nsegs,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		temac_txkick(sc);
 #if TEMAC_TXDEBUG > 0
@@ -820,7 +820,7 @@ temac_stop(struct ifnet *ifp, int disable)
 	sc->sc_txbusy = 0;
 
 	/* Acknowledge we're down. */
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 static int
@@ -1157,7 +1157,7 @@ temac_rxreap(struct temac_softc *sc)
 			continue;
 		}
 		temac_rxcdsync(sc, sc->sc_rxreap, 1,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		stat = sc->sc_rxdescs[sc->sc_rxreap].desc_stat;
 		m = NULL;
@@ -1234,7 +1234,7 @@ temac_rxreap(struct temac_softc *sc)
 		    head, sc->sc_rxreap, nseg);
 #endif
 		temac_rxcdsync(sc, head, nseg,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		if (TEMAC_ISLAST(tail))
 			cdmac_rx_start(sc, sc->sc_cdaddr + TEMAC_RXDOFF(0));

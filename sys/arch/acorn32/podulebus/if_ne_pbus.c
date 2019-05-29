@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.19 2019/04/25 10:08:45 msaitoh Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.20 2019/05/29 06:21:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.19 2019/04/25 10:08:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.20 2019/05/29 06:21:56 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -496,9 +496,9 @@ eh600_preattach(struct ne_pbus_softc *sc)
 	bus_space_write_1(nict, nich, DP83905_MCRA, DP83905_MCRA_INT3);
 
 	/* Enable interrupts for the card */
-	tmp = bus_space_read_1(&sc->sc_tag,sc->sc_extrah,0);
+	tmp = bus_space_read_1(&sc->sc_tag, sc->sc_extrah, 0);
 	tmp |= EH_INTR_MASK;
-	bus_space_write_1(&sc->sc_tag,sc->sc_extrah,0,tmp);
+	bus_space_write_1(&sc->sc_tag, sc->sc_extrah, 0, tmp);
 }
 
 /*
@@ -572,7 +572,7 @@ void
 en_init_media(struct dp8390_softc *sc)
 {
 	static int en_media[] = {
-		IFM_ETHER|IFM_10_T
+		IFM_ETHER | IFM_10_T
 	};
 
 	aprint_normal_dev(sc->sc_dev, "10baseT, default 10baseT\n");

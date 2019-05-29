@@ -1,4 +1,4 @@
-/* $NetBSD: if_veth.c,v 1.11 2018/09/03 16:29:28 riastradh Exp $ */
+/* $NetBSD: if_veth.c,v 1.12 2019/05/29 06:21:57 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.11 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.12 2019/05/29 06:21:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -151,8 +151,8 @@ veth_attach(device_t parent, device_t self, void *opaque)
 	ifmedia_init(&sc->sc_ifmedia, 0,
 	    veth_ifmedia_change,
 	    veth_ifmedia_status);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
-	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX, 0, NULL);
+	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX);
 
 	sc->sc_rx_intr = softint_establish(SOFTINT_NET, veth_softrx, sc);
 	if (sc->sc_rx_intr == NULL)
@@ -272,7 +272,7 @@ veth_start(struct ifnet *ifp)
 
 	vethprintf("%s: %s flags=%x\n", __func__, ifp->if_xname, ifp->if_flags);
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	for (;;) {
