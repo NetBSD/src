@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.140 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.141 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -10132,7 +10132,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		/var/run to /var/run/{named,lwresd} for improved chroot/setuid
 		support. [christos 20090412]
 	libbind: Update to 6.0-rc1. Use md5 for randomid instead of
-		sequential id, add suppport for DS, SSHFP, RRSIG, NSEC, DNSKEY,
+		sequential id, add support for DS, SSHFP, RRSIG, NSEC, DNSKEY,
 		DHCID, NSEC3, NSEC3PARAM, HIP and DLV, various new API
 		functions.  [christos 20090412]
 	re(4): Add support for RTL8168CP and RTL8168D. [tsutsui 20090413]

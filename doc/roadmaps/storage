@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.26 2018/04/12 19:12:25 jdolecek Exp $
+$NetBSD: storage,v 1.27 2019/05/29 02:34:19 msaitoh Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -210,7 +210,7 @@ more drivers.
  - Contact jdolecek or tls for further information.
 
 
-7. nvme suppport
+7. nvme support
 ----------------
 
 nvme ("NVM Express") is a hardware interface standard for PCI-attached

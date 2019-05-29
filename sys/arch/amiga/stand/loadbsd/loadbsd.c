@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.35 2011/07/10 21:02:39 mhitch Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.36 2019/05/29 02:34:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -413,7 +413,7 @@ main(int argc, char **argv)
 		sleep(2);
 	} else {
 		/*
-		 * Either the kernel doesn't suppport loading directly to
+		 * Either the kernel doesn't support loading directly to
 		 * fastmem or the -Z flag was given.  Verify kernel image
 		 * fits into chipmem.
 		 */
