@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.147 2019/05/15 04:42:01 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.148 2019/05/29 16:03:30 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -3188,4 +3188,37 @@ doc/LAST_MINUTE
 
 	Welcome to 8.1_RC.
 	[martin]
+
+sys/arch/x86/include/specialreg.h		1.143, 1.145 via patch
+sys/arch/x86/x86/procfs_machdep.c		1.30
+
+	- Add TSX_FORCE_ABORT related definitions.
+	- Add cpuid7 edx bit 10 "MD_CLEAR".
+	[msaitoh, ticket #1270]
+
+sys/netinet/ip_encap.c				1.71
+
+	Fix build failure when INET6 is disabled.
+	[knakahara, ticket #1271]
+
+sys/ufs/ffs/ffs_alloc.c				1.164
+
+	PR 53990, PR 52380, PR 52102:
+	Fix rare allocation botch in ffs_nodealloccg().
+	[kardel, ticket #1272]
+
+sys/netipsec/ipsecif.c				1.16
+
+	Don't clear calculated Tx tos value for IPv[46] over IPv6.
+	[knakahara, ticket #1273]
+
+include/assert.h				1.23
+
+	Limit static_assert visibility to C11.
+	[maya, ticket #1275]
+
+sys/net/rtsock.c				1.250
+
+	Don't take softnet_lock in sysctl_rtable.
+	[ozaki-r, ticket #1276]
 
