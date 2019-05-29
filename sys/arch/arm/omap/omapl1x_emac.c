@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.9 2019/05/29 05:05:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.10 2019/05/29 06:21:56 msaitoh Exp $");
 
 #include "opt_omapl1x.h"
 
@@ -1020,7 +1020,7 @@ emac_ifstop (struct ifnet *ifp, int disable)
 
 	mutex_exit(rx_chan->lock);
 
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 static int
@@ -1335,10 +1335,10 @@ emac_attach (device_t parent, device_t self, void *aux)
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
 		ifmedia_add(&sc->sc_mii.mii_media,
-		    IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
+		    IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 	}
 
 	strlcpy(ifp->if_xname, xname, IFNAMSIZ);

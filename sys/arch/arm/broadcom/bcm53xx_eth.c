@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.35 2019/04/26 06:33:33 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.36 2019/05/29 06:21:56 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -65,9 +65,9 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.35 2019/04/26 06:33:33 msaitoh Exp
 //#define BCMETH_MPSAFE
 
 #ifdef BCMETH_COUNTERS
-#define	BCMETH_EVCNT_ADD(a,b)	((void)((a).ev_count += (b)))
+#define	BCMETH_EVCNT_ADD(a, b)	((void)((a).ev_count += (b)))
 #else
-#define	BCMETH_EVCNT_ADD(a,b)	do { } while (/*CONSTCOND*/0)
+#define	BCMETH_EVCNT_ADD(a, b)	do { } while (/*CONSTCOND*/0)
 #endif
 #define	BCMETH_EVCNT_INCR(a)	BCMETH_EVCNT_ADD((a), 1)
 
@@ -377,8 +377,8 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	 * Since each port in plugged into the switch/flow-accelerator,
 	 * we hard code at Gige Full-Duplex with Flow Control enabled.
 	 */
-	int ifmedia = IFM_ETHER|IFM_1000_T|IFM_FDX;
-	//ifmedia |= IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE;
+	int ifmedia = IFM_ETHER | IFM_1000_T | IFM_FDX;
+	//ifmedia |= IFM_FLOW | IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
 	ifmedia_init(&sc->sc_media, IFM_IMASK, bcmeth_mediachange,
 	    bcmeth_mediastatus);
 	ifmedia_add(&sc->sc_media, ifmedia, 0, NULL);
@@ -550,7 +550,7 @@ bcmeth_ifinit(struct ifnet *ifp)
 	    | (lladdr[1] << 16) | (lladdr[2] << 24);
 #endif
 
-	sc->sc_intmask = DESCPROTOERR|DATAERR|DESCERR;
+	sc->sc_intmask = DESCPROTOERR | DATAERR | DESCERR;
 
 	/* 5. Load RCVADDR_LO with new pointer */
 	bcmeth_rxq_reset(sc, &sc->sc_rxq);
@@ -589,13 +589,13 @@ bcmeth_ifinit(struct ifnet *ifp)
 	bcmeth_write_4(sc, GMAC_INTRCVLAZY, sc->sc_rcvlazy);
 
 	/* 11. Enable transmit queues in TQUEUE, and ensure that the transmit scheduling mode is correctly set in TCTRL. */
-	sc->sc_intmask |= XMTINT_0|XMTUF;
+	sc->sc_intmask |= XMTINT_0 | XMTUF;
 	bcmeth_write_4(sc, sc->sc_txq.txq_reg_xmtctl,
 	    bcmeth_read_4(sc, sc->sc_txq.txq_reg_xmtctl) | XMTCTL_ENABLE);
 
 
 	/* 12. Enable receive queues in RQUEUE, */
-	sc->sc_intmask |= RCVINT|RCVDESCUF|RCVFIFOOF;
+	sc->sc_intmask |= RCVINT | RCVDESCUF | RCVFIFOOF;
 	bcmeth_write_4(sc, sc->sc_rxq.rxq_reg_rcvctl,
 	    bcmeth_read_4(sc, sc->sc_rxq.rxq_reg_rcvctl) | RCVCTL_ENABLE);
 
@@ -817,7 +817,7 @@ bcmeth_mapcache_create(
 	for (u_int i = 0; i < maxmaps; i++) {
 		int error = bus_dmamap_create(sc->sc_dmat, dmc->dmc_maxmapsize,
 		     dmc->dmc_maxseg, dmc->dmc_maxmapsize, 0,
-		     BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW, &dmc->dmc_maps[i]);
+		     BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &dmc->dmc_maps[i]);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
 			    "failed to creat dma map cache "
@@ -919,7 +919,7 @@ bcmeth_rx_buf_alloc(
 	M_SETCTX(m, map);
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
 	int error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "fail to load rx dmamap: %d\n",
 		    error);
@@ -932,7 +932,7 @@ bcmeth_rx_buf_alloc(
 #ifdef BCMETH_RCVMAGIC
 	*mtod(m, uint32_t *) = htole32(BCMETH_RCVMAGIC);
 	bus_dmamap_sync(sc->sc_dmat, map, 0, sizeof(uint32_t),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, map, sizeof(uint32_t),
 	    map->dm_mapsize - sizeof(uint32_t), BUS_DMASYNC_PREREAD);
 #else
@@ -1137,7 +1137,7 @@ bcmeth_rxq_consume(
 		} else
 #endif /* BCMETH_RCVMAGIC */
 		if (rxsts
-		    & (RXSTS_CRC_ERROR|RXSTS_OVERSIZED|RXSTS_PKT_OVERFLOW)) {
+		    & (RXSTS_CRC_ERROR |RXSTS_OVERSIZED |RXSTS_PKT_OVERFLOW)) {
 			aprint_error_dev(sc->sc_dev,
 			    "[%zu]: count=%zu rxsts=%#x\n",
 			    consumer - rxq->rxq_first, desc_count, rxsts);
@@ -1263,7 +1263,7 @@ bcmeth_rxq_reset(
 	/*
 	 * Last descriptor has the wrap flag.
 	 */
-	rxdb->rxdb_flags = htole32(RXDB_FLAG_ET|RXDB_FLAG_IC);
+	rxdb->rxdb_flags = htole32(RXDB_FLAG_ET | RXDB_FLAG_IC);
 
 	/*
 	 * Reset the producer consumer indexes.
@@ -1274,7 +1274,7 @@ bcmeth_rxq_reset(
 	if (rxq->rxq_threshold < BCMETH_MINRXMBUFS)
 		rxq->rxq_threshold = BCMETH_MINRXMBUFS;
 
-	sc->sc_intmask |= RCVINT|RCVFIFOOF|RCVDESCUF;
+	sc->sc_intmask |= RCVINT | RCVFIFOOF | RCVDESCUF;
 
 	/*
 	 * Restart the receiver at the first descriptor
