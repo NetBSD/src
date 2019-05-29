@@ -329,11 +329,12 @@ case ${gdb_host} in
 	esac
 	;;
     nbsd)
+	NATDEPFILES="${NATDEPFILES} nbsd-nat.o bsd-kvm.o"
+	LOADLIBES='-lkvm'
 	case ${gdb_host_cpu} in
 	    alpha)
 		# Host: NetBSD/alpha
-		NATDEPFILES="${NATDEPFILES} alpha-bsd-nat.o bsd-kvm.o"
-		LOADLIBES='-lkvm'
+		NATDEPFILES="${NATDEPFILES} alpha-bsd-nat.o"
 		;;
 	    mips)
 		# Host: NetBSD/mips
@@ -341,12 +342,11 @@ case ${gdb_host} in
 		;;
 	    pa)
 		# Host: NetBSD/hppa
-		NATDEPFILES="${NATDEPFILES} nbsd-nat.o hppa-nbsd-nat.o"
+		NATDEPFILES="${NATDEPFILES} hppa-nbsd-nat.o"
 		;;
 	    powerpc)
 		# Host: NetBSD/powerpc
-		NATDEPFILES="${NATDEPFILES} ppc-nbsd-nat.o bsd-kvm.o"
-		LOADLIBES='-lkvm'
+		NATDEPFILES="${NATDEPFILES} ppc-nbsd-nat.o"
 		;;
 	    sh)
 		# Host: NetBSD/sh
@@ -356,22 +356,24 @@ case ${gdb_host} in
 	esac
 	;;
     nbsd64)
+	NATDEPFILES="${NATDEPFILES} nbsd-nat.o bsd-kvm.o"
+	LOADLIBES='-lkvm'
 	case ${gdb_host_cpu} in
 	    i386)
 		# Host: NetBSD/amd64
-		NATDEPFILES="${NATDEPFILES} nbsd-nat.o amd64-nat.o x86-nat.o \
-		nat/x86-dregs.o x86-bsd-nat.o amd64-bsd-nat.o amd64-nbsd-nat.o"
+		NATDEPFILES="${NATDEPFILES} amd64-nbsd-nat.o amd64-bsd-nat.o \
+		amd64-nat.o x86-bsd-nat.o x86-nat.o nat/x86-dregs.o"
 		;;
 	    sparc)
 		# Host: NetBSD/sparc64
-		NATDEPFILES="${NATDEPFILES} sparc64-nbsd-nat.o sparc-nat.o \
-		bsd-kvm.o"
-		LOADLIBES='-lkvm'
+		NATDEPFILES="${NATDEPFILES} sparc64-nbsd-nat.o sparc-nat.o"
 		;;
 
 	esac
 	;;
     nbsdelf)
+	NATDEPFILES="${NATDEPFILES} nbsd-nat.o bsd-kvm.o"
+	LOADLIBES='-lkvm'
 	case ${gdb_host_cpu} in
 	    arm)
 		# Host: NetBSD/arm
@@ -379,26 +381,20 @@ case ${gdb_host} in
 		;;
 	    i386)
 		# Host: NetBSD/i386 ELF
-		NATDEPFILES="${NATDEPFILES} nbsd-nat.o x86-nat.o \
-		nat/x86-dregs.o \
-		x86-bsd-nat.o i386-bsd-nat.o i386-nbsd-nat.o bsd-kvm.o"
-		LOADLIBES='-lkvm'
+		NATDEPFILES="${NATDEPFILES} i386-nbsd-nat.o i386-bsd-nat.o \
+		x86-bsd-nat.o x86-nat.o nat/x86-dregs.o"
 		;;
 	    m68k)
 		# Host: NetBSD/m68k ELF
-		NATDEPFILES="${NATDEPFILES} m68k-bsd-nat.o bsd-kvm.o"
-		LOADLIBES='-lkvm'
+		NATDEPFILES="${NATDEPFILES} m68k-bsd-nat.o"
 		;;
 	    sparc)
 		# Host: NetBSD/sparc ELF
-		NATDEPFILES="${NATDEPFILES} sparc-nat.o sparc-nbsd-nat.o \
-		bsd-kvm.o"
-		LOADLIBES='-lkvm'
+		NATDEPFILES="${NATDEPFILES} sparc-nat.o sparc-nbsd-nat.o"
 		;;
 	    vax)
 		# Host: NetBSD/vax ELF
-		NATDEPFILES="${NATDEPFILES} vax-bsd-nat.o bsd-kvm.o"
-		LOADLIBES='-lkvm'
+		NATDEPFILES="${NATDEPFILES} vax-bsd-nat.o"
 		;;
 
 	esac
