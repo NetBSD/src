@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98.2.12 2019/05/14 17:12:19 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98.2.13 2019/05/29 15:43:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -427,6 +427,7 @@
 #define CPUID_SEF_AVX512_4VNNIW	__BIT(2)
 #define CPUID_SEF_AVX512_4FMAPS	__BIT(3)
 #define CPUID_SEF_MD_CLEAR	__BIT(10)
+#define CPUID_SEF_TSX_FORCE_ABORT __BIT(13) /* MSR_TSX_FORCE_ABORT bit 0 */
 #define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
 #define CPUID_SEF_L1D_FLUSH	__BIT(28) /* IA32_FLUSH_CMD MSR */
@@ -436,7 +437,9 @@
 
 #define CPUID_SEF_FLAGS2	"\20" \
 				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
-					"\33" "IBRS"	"\34" "STIBP"	\
+				"\13" "MD_CLEAR"			\
+			"\16" "TSX_FORCE_ABORT"				\
+	"\33" "IBRS"	"\34" "STIBP"					\
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP" "\37CORE_CAP"	"\40" "SSBD"
 
 /*
@@ -747,8 +750,9 @@
 #define 	IA32_ARCH_SKIP_L1DFL_VMENTRY 0x08
 #define 	IA32_ARCH_SSB_NO	0x10
 #define 	IA32_ARCH_MDS_NO	0x20
-#define MSR_IA32_FLUSH_CMD 0x10b
+#define MSR_IA32_FLUSH_CMD	0x10b
 #define 	IA32_FLUSH_CMD_L1D_FLUSH 0x01
+#define MSR_TSX_FORCE_ABORT	0x10f
 #define MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define MSR_BBL_CR_CTL		0x119	/* PII+ only */
