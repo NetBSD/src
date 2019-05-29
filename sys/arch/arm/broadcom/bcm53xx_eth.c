@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.37 2019/05/29 10:07:28 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.38 2019/05/29 13:25:54 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -686,7 +686,6 @@ bcmeth_ifwatchdog(struct ifnet *ifp)
 static int
 bcmeth_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct bcmeth_softc *sc	 = ifp->if_softc;
 	const int s = splnet();
 	int error;
 
