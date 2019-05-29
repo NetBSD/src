@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.2 2019/05/25 01:37:54 thorpej Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.3 2019/05/29 03:25:46 thorpej Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -148,6 +148,13 @@
 		<string>LeMaker Banana Pi</string>
 		<key>u-boot-pkg</key>
 		<string>bananapi</string>
+	</dict>
+	<key>lemaker,bananapro</key>
+	<dict>
+		<key>description</key>
+		<string>LeMaker Banana Pro</string>
+		<key>u-boot-pkg</key>
+		<string>bananapro</string>
 	</dict>
 	<key>sinovoip,bpi-m3</key>
 	<dict>
