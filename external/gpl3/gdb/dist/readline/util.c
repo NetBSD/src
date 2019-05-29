@@ -508,9 +508,6 @@ _rl_tropen ()
 
   if (_rl_tracefp)
     fclose (_rl_tracefp);
-#if 1
-  snprintf (fnbuf, sizeof(fnbuf), "/var/tmp/rltrace.%ld", (long)getpid());
-#else
 #if defined (_WIN32) && !defined (__CYGWIN__)
   /* Windows doesn't have /var/tmp, so open the trace file in the
      user's temporary directory instead.  */
@@ -520,7 +517,7 @@ _rl_tropen ()
 	    : "."),
 	   getpid ());
 #else
-  sprintf (fnbuf, "/var/tmp/rltrace.%ld", (long) getpid ());
+  snprintf (fnbuf, sizeof(fnbuf), "/var/tmp/rltrace.%ld", (long)getpid());
 #endif
   unlink (fnbuf);
   _rl_tracefp = fopen (fnbuf, "w+");
