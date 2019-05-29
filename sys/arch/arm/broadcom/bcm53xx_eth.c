@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.36 2019/05/29 06:21:56 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.37 2019/05/29 10:07:28 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -379,6 +379,7 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	 */
 	int ifmedia = IFM_ETHER | IFM_1000_T | IFM_FDX;
 	//ifmedia |= IFM_FLOW | IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
+	ec->ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, IFM_IMASK, bcmeth_mediachange,
 	    bcmeth_mediastatus);
 	ifmedia_add(&sc->sc_media, ifmedia, 0, NULL);
@@ -686,16 +687,10 @@ static int
 bcmeth_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct bcmeth_softc *sc	 = ifp->if_softc;
-	struct ifreq * const ifr = data;
 	const int s = splnet();
 	int error;
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error != ENETRESET)

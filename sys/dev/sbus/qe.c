@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.74 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: qe.c,v 1.75 2019/05/29 10:07:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.74 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.75 2019/05/29 10:07:30 msaitoh Exp $");
 
 #define QEDEBUG
 
@@ -283,6 +283,7 @@ qeattach(device_t parent, device_t self, void *aux)
 	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
 	/* Initialize media properties */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_ifmedia;
 	ifmedia_init(&sc->sc_ifmedia, 0, qe_ifmedia_upd, qe_ifmedia_sts);
 	ifmedia_add(&sc->sc_ifmedia,
 		    IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0),
@@ -872,7 +873,6 @@ qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = data;
-	struct ifreq *ifr = data;
 	int s, error = 0;
 
 	s = splnet();
@@ -937,11 +937,6 @@ qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 				qe_mcreset(sc);
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
 		break;
 
 	default:

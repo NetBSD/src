@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.31 2019/05/23 13:10:51 msaitoh Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.32 2019/05/29 10:07:29 msaitoh Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.31 2019/05/23 13:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.32 2019/05/29 10:07:29 msaitoh Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -276,6 +276,7 @@ mb86950_config(struct mb86950_softc *sc, int *media, int nmedia, int defmedia)
 	/* XXX The Tiara LANCard uses board jumpers to change media.
 	 *       This code may have to be changed for other cards.
 	 */
+	sc->sc_ec.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, mb86950_mediachange,
 	    mb86950_mediastatus);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
@@ -428,7 +429,6 @@ mb86950_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct mb86950_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 
 	int s, error = 0;
 
@@ -502,11 +502,6 @@ mb86950_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 			mb86950_dump(LOG_DEBUG, sc);
 		}
 #endif
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:

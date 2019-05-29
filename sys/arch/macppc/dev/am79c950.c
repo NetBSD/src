@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.45 2019/05/28 07:41:47 msaitoh Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.46 2019/05/29 10:07:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.45 2019/05/28 07:41:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.46 2019/05/29 10:07:28 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -154,6 +154,7 @@ mcsetup(struct mc_softc *sc, uint8_t *lladdr)
 	ifp->if_watchdog = mcwatchdog;
 
 	/* Initialize ifmedia structures */
+	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, mc_mediachange, mc_mediastatus);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
@@ -170,7 +171,6 @@ mcioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mc_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa;
-	struct ifreq *ifr;
 
 	int	s = splnet(), err = 0;
 
@@ -231,12 +231,6 @@ mcioctl(struct ifnet *ifp, u_long cmd, void *data)
 				mcreset(sc);
 			err = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		ifr = (struct ifreq *) data;
-		err = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:

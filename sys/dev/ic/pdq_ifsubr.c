@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.66 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.67 2019/05/29 10:07:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.66 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.67 2019/05/29 10:07:29 msaitoh Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -436,15 +436,6 @@ pdq_ifioctl(struct ifnet *ifp, ioctl_cmd_t cmd, void *data)
 	}
 #endif /* SIOCSIFMTU */
 
-#if defined(IFM_FDDI) && defined(SIOCSIFMEDIA)
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA: {
-		struct ifreq *ifr = (struct ifreq *)data;
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
-		break;
-	}
-#endif
-
 	default: {
 		error = ether_ioctl(ifp, cmd, data);
 		break;
@@ -479,6 +470,9 @@ pdq_ifattach(pdq_softc_t *sc, ifnet_ret_t (*ifwatchdog)(int unit))
 #if defined(IFM_FDDI)
 	{
 	const int media = sc->sc_ifmedia.ifm_media;
+
+	/* Initialize ifmedia structures. */
+	PDQ_FDDICOM(sc)->ec_ifmedia = &sc->sc_ifmedia;
 	ifmedia_init(&sc->sc_ifmedia, IFM_FDX,
 	    pdq_ifmedia_change, pdq_ifmedia_status);
 	ifmedia_add(&sc->sc_ifmedia, media, 0, 0);

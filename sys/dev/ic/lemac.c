@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.53 2019/05/28 07:41:48 msaitoh Exp $ */
+/* $NetBSD: lemac.c,v 1.54 2019/05/29 10:07:29 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.53 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.54 2019/05/29 10:07:29 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -771,12 +771,6 @@ lemac_ifioctl(
 		}
 		break;
 
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, (struct ifreq *)data,
-		    &sc->sc_ifmedia, cmd);
-		break;
-
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		break;
@@ -981,9 +975,10 @@ lemac_ifattach(lemac_softc_t *sc)
 		rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 		    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
+		/* Initialize ifmedia structures. */
+		sc->sc_ec.ec_ifmedia = &sc->sc_ifmedia;
 		ifmedia_init(&sc->sc_ifmedia, 0,
-		    lemac_ifmedia_change,
-		    lemac_ifmedia_status);
+		    lemac_ifmedia_change, lemac_ifmedia_status);
 		if (sc->sc_prodname[4] == '5')	/* DE205 is UTP/AUI */
 			ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO,
 			    0, 0);
