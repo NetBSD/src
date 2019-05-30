@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <errno.h>
 #include <sys/param.h>
 #include <sys/time.h>
