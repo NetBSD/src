@@ -29,6 +29,7 @@
 #include "gdbcore.h"
 #include "inferior.h"          /* for get_exec_file */
 #include "gdbthread.h"
+#include "arch-utils.h"
 
 #include <fcntl.h>
 #include <kvm.h>
