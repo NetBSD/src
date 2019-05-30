@@ -29,7 +29,12 @@
 #include "m68k-tdep.h"
 #include "inf-ptrace.h"
 
+#ifdef __NetBSD__
+#include "nbsd-nat.h"
+struct m68k_bsd_nat_target final : public nbsd_nat_target
+#else
 struct m68k_bsd_nat_target final : public inf_ptrace_target
+#endif
 {
   void fetch_registers (struct regcache *, int) override;
   void store_registers (struct regcache *, int) override;
