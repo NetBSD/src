@@ -30,8 +30,9 @@
 #include "inf-ptrace.h"
 #include "regcache.h"
 #include "inf-ptrace.h"
+#include "nbsd-nat.h"
 
-struct sh_nbsd_nat_target final : public inf_ptrace_target
+struct sh_nbsd_nat_target final : public nbsd_nat_target
 {
   void fetch_registers (struct regcache *, int) override;
   void store_registers (struct regcache *, int) override;
@@ -39,14 +40,6 @@ struct sh_nbsd_nat_target final : public inf_ptrace_target
 
 static sh_nbsd_nat_target the_sh_nbsd_nat_target;
 
-#ifndef HAVE_GREGSET_T
-typedef struct reg gregset_t;
-#endif
-
-#ifndef HAVE_FPREGSET_T
-struct fpreg { };
-typedef struct fpreg fpregset_t;
-#endif
 #include "gregset.h"
  
 /* Determine if PT_GETREGS fetches this register.  */
@@ -62,18 +55,19 @@ typedef struct fpreg fpregset_t;
 void
 sh_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
 {
-  pid_t pid = regcache->ptid ().pid ();
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
 
   if (regno == -1 || GETREGS_SUPPLIES (regcache->arch (), regno))
     {
-      struct reg inferior_registers;
+      struct reg regs;
 
-      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &inferior_registers, inferior_ptid.lwp ()) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sh_corefile_supply_regset (&sh_corefile_gregset, regcache, regno,
-				 (char *) &inferior_registers,
+				 (char *) &regs,
 				 SHNBSD_SIZEOF_GREGS);
 
       if (regno != -1)
@@ -84,22 +78,22 @@ sh_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
 void
 sh_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
 {
-  pid_t pid = regcache->ptid ().pid ();
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
 
   if (regno == -1 || GETREGS_SUPPLIES (regcache->arch (), regno))
     {
-      struct reg inferior_registers;
+      struct reg regs;
 
-      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &inferior_registers, inferior_ptid.lwp ()) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sh_corefile_collect_regset (&sh_corefile_gregset, regcache, regno,
-				  (char *) &inferior_registers,
+				  (char *) &regs,
 				  SHNBSD_SIZEOF_GREGS);
 
-      if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &inferior_registers, inferior_ptid.lwp ()) == -1)
+      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't set registers"));
 
       if (regno != -1)

@@ -110,8 +110,6 @@ sparc64nbsd_gregset_supplies_p (struct gdbarch *gdbarch, int regnum)
   return 0;
 }
 
-/* Determine whether `fpregset_t' contains register REGNUM.  */
-
 static int
 sparc64nbsd_fpregset_supplies_p (struct gdbarch *gdbarch, int regnum)
 {
