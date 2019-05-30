@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.31 2019/05/29 16:54:41 maxv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.32 2019/05/30 21:40:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 static inline void
 x86_pause(void)
 {
-	asm volatile ("pause");
+	__asm volatile ("pause");
 }
 
 void	x86_lfence(void);
@@ -81,7 +81,7 @@ invpcid(register_t op, uint64_t pcid, vaddr_t va)
 		.addr = va
 	};
 
-	asm volatile (
+	__asm volatile (
 		"invpcid %[desc],%[op]"
 		:
 		: [desc] "m" (desc), [op] "r" (op)
@@ -94,7 +94,7 @@ rdtsc(void)
 {
 	uint32_t low, high;
 
-	asm volatile (
+	__asm volatile (
 		"rdtsc"
 		: "=a" (low), "=d" (high)
 		:
@@ -127,7 +127,7 @@ x86_getss(void)
 {
 	uint16_t val;
 
-	asm volatile (
+	__asm volatile (
 		"mov	%%ss,%[val]"
 		: [val] "=r" (val)
 		:
@@ -138,7 +138,7 @@ x86_getss(void)
 static inline void
 setds(uint16_t val)
 {
-	asm volatile (
+	__asm volatile (
 		"mov	%[val],%%ds"
 		:
 		: [val] "r" (val)
@@ -148,7 +148,7 @@ setds(uint16_t val)
 static inline void
 setes(uint16_t val)
 {
-	asm volatile (
+	__asm volatile (
 		"mov	%[val],%%es"
 		:
 		: [val] "r" (val)
@@ -158,7 +158,7 @@ setes(uint16_t val)
 static inline void
 setfs(uint16_t val)
 {
-	asm volatile (
+	__asm volatile (
 		"mov	%[val],%%fs"
 		:
 		: [val] "r" (val)
@@ -172,7 +172,7 @@ void	setusergs(int);
 #define FUNC_CR(crnum)					\
 	static inline void lcr##crnum(register_t val)	\
 	{						\
-		asm volatile (				\
+		__asm volatile (				\
 			"mov	%[val],%%cr" #crnum	\
 			:				\
 			: [val] "r" (val)		\
@@ -181,7 +181,7 @@ void	setusergs(int);
 	static inline register_t rcr##crnum(void)	\
 	{						\
 		register_t val;				\
-		asm volatile (				\
+		__asm volatile (				\
 			"mov	%%cr" #crnum ",%[val]"	\
 			: [val] "=r" (val)		\
 			:				\
@@ -211,7 +211,7 @@ FUNC_CR(8)
 #define FUNC_DR(drnum)					\
 	static inline void ldr##drnum(register_t val)	\
 	{						\
-		asm volatile (				\
+		__asm volatile (				\
 			"mov	%[val],%%dr" #drnum	\
 			:				\
 			: [val] "r" (val)		\
@@ -220,7 +220,7 @@ FUNC_CR(8)
 	static inline register_t rdr##drnum(void)	\
 	{						\
 		register_t val;				\
-		asm volatile (				\
+		__asm volatile (				\
 			"mov	%%dr" #drnum ",%[val]"	\
 			: [val] "=r" (val)		\
 			:				\
@@ -255,13 +255,13 @@ union savefpu;
 static inline void
 fninit(void)
 {
-	asm volatile ("fninit");
+	__asm volatile ("fninit");
 }
 
 static inline void
 fnclex(void)
 {
-	asm volatile ("fnclex");
+	__asm volatile ("fnclex");
 }
 
 void	fnsave(union savefpu *);
@@ -273,7 +273,7 @@ void	frstor(const union savefpu *);
 static inline void
 clts(void)
 {
-	asm volatile ("clts");
+	__asm volatile ("clts");
 }
 
 void	stts(void);
@@ -289,7 +289,7 @@ rdxcr(uint32_t xcr)
 {
 	uint32_t low, high;
 
-	asm volatile (
+	__asm volatile (
 		"xgetbv"
 		: "=a" (low), "=d" (high)
 		: "c" (xcr)
@@ -305,7 +305,7 @@ wrxcr(uint32_t xcr, uint64_t val)
 
 	low = val;
 	high = val >> 32;
-	asm volatile (
+	__asm volatile (
 		"xsetbv"
 		:
 		: "a" (low), "d" (high), "c" (xcr)
@@ -325,13 +325,13 @@ void x86_enable_intr(void);
 static inline void
 x86_disable_intr(void)
 {
-	asm volatile ("cli");
+	__asm volatile ("cli");
 }
 
 static inline void
 x86_enable_intr(void)
 {
-	asm volatile ("sti");
+	__asm volatile ("sti");
 }
 #endif /* XENPV */
 
@@ -358,7 +358,7 @@ rdmsr(u_int msr)
 {
 	uint32_t low, high;
 
-	asm volatile (
+	__asm volatile (
 		"rdmsr"
 		: "=a" (low), "=d" (high)
 		: "c" (msr)
@@ -377,7 +377,7 @@ wrmsr(u_int msr, uint64_t val)
 
 	low = val;
 	high = val >> 32;
-	asm volatile (
+	__asm volatile (
 		"wrmsr"
 		:
 		: "a" (low), "d" (high), "c" (msr)
