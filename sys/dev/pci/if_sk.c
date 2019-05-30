@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.97 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.98 2019/05/30 02:32:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.97 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.98 2019/05/30 02:32:18 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1214,6 +1214,7 @@ void
 sk_attach(device_t parent, device_t self, void *aux)
 {
 	struct sk_if_softc *sc_if = device_private(self);
+	struct mii_data *mii = &sc_if->sk_mii;
 	struct sk_softc *sc = device_private(parent);
 	struct skc_attach_args *sa = aux;
 	struct sk_txmap_entry	*entry;
@@ -1434,35 +1435,33 @@ sk_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTFN(2, ("sk_attach: 1\n"));
 
-	sc_if->sk_mii.mii_ifp = ifp;
+	mii->mii_ifp = ifp;
 	switch (sc->sk_type) {
 	case SK_GENESIS:
-		sc_if->sk_mii.mii_readreg = sk_xmac_miibus_readreg;
-		sc_if->sk_mii.mii_writereg = sk_xmac_miibus_writereg;
-		sc_if->sk_mii.mii_statchg = sk_xmac_miibus_statchg;
+		mii->mii_readreg = sk_xmac_miibus_readreg;
+		mii->mii_writereg = sk_xmac_miibus_writereg;
+		mii->mii_statchg = sk_xmac_miibus_statchg;
 		break;
 	case SK_YUKON:
 	case SK_YUKON_LITE:
 	case SK_YUKON_LP:
-		sc_if->sk_mii.mii_readreg = sk_marv_miibus_readreg;
-		sc_if->sk_mii.mii_writereg = sk_marv_miibus_writereg;
-		sc_if->sk_mii.mii_statchg = sk_marv_miibus_statchg;
+		mii->mii_readreg = sk_marv_miibus_readreg;
+		mii->mii_writereg = sk_marv_miibus_writereg;
+		mii->mii_statchg = sk_marv_miibus_statchg;
 		mii_flags = MIIF_DOPAUSE;
 		break;
 	}
 
-	sc_if->sk_ethercom.ec_mii = &sc_if->sk_mii;
-	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
-	    sk_ifmedia_upd, ether_mediastatus);
-	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
+	sc_if->sk_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, sk_ifmedia_upd, ether_mediastatus);
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, mii_flags);
-	if (LIST_EMPTY(&sc_if->sk_mii.mii_phys)) {
+	if (LIST_EMPTY(&mii->mii_phys)) {
 		aprint_error_dev(sc_if->sk_dev, "no PHY found!\n");
-		ifmedia_add(&sc_if->sk_mii.mii_media, IFM_ETHER | IFM_MANUAL,
-			    0, NULL);
-		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER | IFM_MANUAL);
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else
-		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	callout_init(&sc_if->sk_tick_ch, 0);
 	callout_reset(&sc_if->sk_tick_ch, hz, sk_tick, sc_if);
