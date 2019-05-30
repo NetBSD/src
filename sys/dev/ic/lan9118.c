@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.34 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.35 2019/05/30 02:32:18 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.34 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.35 2019/05/30 02:32:18 msaitoh Exp $");
 
 /*
  * The LAN9118 Family
@@ -156,6 +156,7 @@ int
 lan9118_attach(struct lan9118_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
 	uint32_t val, irq_cfg;
 	int timo, i;
 
@@ -232,19 +233,19 @@ lan9118_attach(struct lan9118_softc *sc)
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 #endif
 
-	sc->sc_ec.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, 0,
+	sc->sc_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0,
 	    lan9118_ifm_change, lan9118_ifm_status);
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = lan9118_miibus_readreg;
-	sc->sc_mii.mii_writereg = lan9118_miibus_writereg;
-	sc->sc_mii.mii_statchg = lan9118_miibus_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = lan9118_miibus_readreg;
+	mii->mii_writereg = lan9118_miibus_writereg;
+	mii->mii_statchg = lan9118_miibus_statchg;
 
 	/*
 	 * Number of instance of Internal PHY is always 0.  External PHY
 	 * number that above.
 	 */
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1, MII_OFFSET_ANY, 0);
+	mii_attach(sc->sc_dev, mii, 0xffffffff, 1, MII_OFFSET_ANY, 0);
 
 	if (sc->sc_id == LAN9118_ID_9115 || sc->sc_id == LAN9118_ID_9117 ||
 	    sc->sc_id == LAN9218_ID_9215 || sc->sc_id == LAN9218_ID_9217) {
@@ -271,15 +272,15 @@ lan9118_attach(struct lan9118_softc *sc)
 			delay(1);	/* Once wait more 5 cycle */
 
 			/* Call mii_attach, avoid at phy1. */
-			mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff,
+			mii_attach(sc->sc_dev, mii, 0xffffffff,
 			    0, MII_OFFSET_ANY, 0);
 			for (i = 2; i < MII_NPHY; i++)
-				mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff,
+				mii_attach(sc->sc_dev, mii, 0xffffffff,
 				    i, MII_OFFSET_ANY, 0);
 		}
 	}
 
-	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
+	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	/* Attach the interface. */
 	if_attach(ifp);
