@@ -81,8 +81,6 @@ mipsnbsd_supply_gregset (const struct regset *regset,
   const char *regs = (const char *) gregs;
   int i;
 
-  memset (zerobuf, 0, MAX_REGISTER_SIZE);
-
   gdb_assert (len >= MIPSNBSD_NUM_GREGS * regsize);
 
   for (i = 0; i <= MIPS_PC_REGNUM; i++)
@@ -140,8 +138,6 @@ mipsnbsd_supply_reg (struct regcache *regcache, const char *regs, int regno)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   int i;
-
-  memset (zerobuf, 0, MAX_REGISTER_SIZE);
 
   for (i = 0; i <= gdbarch_pc_regnum (gdbarch); i++)
     {
