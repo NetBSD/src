@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.82 2019/03/03 04:51:57 mrg Exp $	*/
+/*	$NetBSD: atactl.c,v 1.83 2019/05/30 21:32:08 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.82 2019/03/03 04:51:57 mrg Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.83 2019/05/30 21:32:08 mlelstv Exp $");
 #endif
 
 
@@ -53,6 +53,9 @@ __RCSID("$NetBSD: atactl.c,v 1.82 2019/03/03 04:51:57 mrg Exp $");
 
 #include <dev/ata/atareg.h>
 #include <sys/ataio.h>
+
+#include <dev/scsipi/scsi_spc.h>
+#include <sys/scsiio.h>
 
 struct ata_smart_error {
 	struct {
@@ -90,6 +93,53 @@ struct ata_smart_errorlog {
 	uint8_t			checksum;
 } __packed;
 
+#define SCSI_ATA_PASS_THROUGH_16	0x85
+struct scsi_ata_pass_through_16 {
+	uint8_t			opcode;
+	uint8_t			byte2;
+#define SATL_NODATA	0x06
+#define SATL_PIO_IN	0x08
+#define SATL_PIO_OUT	0x0a
+#define	SATL_EXTEND	0x01
+	uint8_t			byte3;
+#define SATL_CKCOND	0x20
+#define SATL_READ	0x08
+#define SATL_BLOCKS	0x04
+#define SATL_LEN(x)	((x) & 0x03)
+	uint8_t			features[2];
+	uint8_t			sector_count[2];
+	uint8_t			lba[6];
+	uint8_t			device;
+	uint8_t			ata_cmd;
+	uint8_t			control;
+} __packed;
+
+#define SCSI_ATA_PASS_THROUGH_12	0xa1
+struct scsi_ata_pass_through_12 {
+	uint8_t			opcode;
+	uint8_t			byte2;
+	uint8_t			byte3;
+	uint8_t			features[1];
+	uint8_t			sector_count[1];
+	uint8_t			lba[3];
+	uint8_t			device;
+	uint8_t			ata_cmd;
+	uint8_t			reserved;
+	uint8_t			control;
+} __packed;
+
+struct scsi_ata_return_descriptor {
+	uint8_t			descr;
+#define SCSI_ATA_RETURN_DESCRIPTOR	9
+	uint8_t			additional_length;
+	uint8_t			extend;
+	uint8_t			error;
+	uint8_t			sector_count[2];
+	uint8_t			lba[6];
+	uint8_t			device;
+	uint8_t			status;
+} __packed;
+
 struct command {
 	const char *cmd_name;
 	const char *arg_names;
@@ -103,6 +153,8 @@ struct bitinfo {
 
 __dead static void	usage(void);
 static void	ata_command(struct atareq *);
+static int	satl_command(struct atareq *, int);
+static const uint8_t *satl_return_desc(const uint8_t *, size_t, uint8_t);
 static void	print_bitinfo(const char *, const char *, u_int,
     const struct bitinfo *);
 static void	print_bitinfo2(const char *, const char *, u_int, u_int,
@@ -119,6 +171,7 @@ static void	fillataparams(void);
 static int	is_smart(void);
 
 static int	fd;				/* file descriptor for device */
+static int	use_satl;			/* tunnel through SATL */
 static const	char *dvname;			/* device name */
 static char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 static const	char *cmdname;			/* command user issued */
@@ -531,10 +584,25 @@ ata_command(struct atareq *req)
 {
 	int error;
 
-	error = ioctl(fd, ATAIOCCOMMAND, req);
-
-	if (error == -1)
-		err(1, "ATAIOCCOMMAND failed");
+	switch (use_satl) {
+	case 0:
+		error = ioctl(fd, ATAIOCCOMMAND, req);
+		if (error == 0)
+			break;
+		if (errno != ENOTTY)
+			err(1, "ATAIOCCOMMAND failed");
+		use_satl = 1;
+		/* FALLTHROUGH */
+	case 1:
+		error = satl_command(req, 16);
+		if (error == 0)
+			return;
+		use_satl = 2;
+		/* FALLTHROUGH */
+	case 2:
+		(void) satl_command(req, 12);
+		return;
+	}
 
 	switch (req->retsts) {
 
@@ -560,6 +628,191 @@ ata_command(struct atareq *req)
 		exit(1);
 	}
 }
+
+/*
+ * Wrapper that calls SCIOCCOMMAND for a tunneled ATA command
+ */
+static int
+satl_command(struct atareq *req, int cmdlen)
+{
+	scsireq_t sreq;
+	int error;
+	union {
+		struct scsi_ata_pass_through_12 cmd12;
+		struct scsi_ata_pass_through_16 cmd16;
+	} c;
+	uint8_t b2, b3;
+	const uint8_t *desc;
+
+	b2 = SATL_NODATA;
+	if (req->datalen > 0) {
+		if (req->flags & ATACMD_READ)
+			b2 = SATL_PIO_IN;
+		else
+			b2 = SATL_PIO_OUT;
+	}
+
+	b3 = SATL_BLOCKS;
+	if (req->datalen > 0) {
+		b3 |= 2; /* sector count holds count */
+	} else {
+		b3 |= SATL_CKCOND;
+	}
+	if (req->datalen == 0 || req->flags & ATACMD_READ)
+		b3 |= SATL_READ;
+
+	switch (cmdlen) {
+	case 16:
+		c.cmd16.opcode = SCSI_ATA_PASS_THROUGH_16;
+		c.cmd16.byte2 = b2;
+		c.cmd16.byte3 = b3;
+		c.cmd16.features[0] = 0;
+		c.cmd16.features[1] = req->features;
+		c.cmd16.sector_count[0] = 0;
+		c.cmd16.sector_count[1] = req->sec_count;
+		c.cmd16.lba[0] = 0;
+		c.cmd16.lba[1] = req->sec_num;
+		c.cmd16.lba[2] = 0;
+		c.cmd16.lba[3] = req->cylinder;
+		c.cmd16.lba[4] = 0;
+		c.cmd16.lba[5] = req->cylinder >> 8;
+		c.cmd16.device = 0;
+		c.cmd16.ata_cmd = req->command;
+		c.cmd16.control = 0;
+		break;
+	case 12:
+		c.cmd12.opcode = SCSI_ATA_PASS_THROUGH_12;
+		c.cmd12.byte2 = b2;
+		c.cmd12.byte3 = b3;
+		c.cmd12.features[0] = req->features;
+		c.cmd12.sector_count[0] = req->sec_count;
+		c.cmd12.lba[0] = req->sec_num;
+		c.cmd12.lba[1] = req->cylinder;
+		c.cmd12.lba[2] = req->cylinder >> 8;
+		c.cmd12.device = 0;
+		c.cmd12.reserved = 0;
+		c.cmd12.ata_cmd = req->command;
+		c.cmd12.control = 0;
+		break;
+	default:
+		fprintf(stderr, "ATA command with bad length\n");
+		exit(1);
+	}
+
+	memset(&sreq, 0, sizeof(sreq));
+	memcpy(sreq.cmd, &c, cmdlen);
+	sreq.cmdlen = cmdlen;
+	sreq.databuf = req->databuf;
+	sreq.datalen = req->datalen;
+	sreq.senselen = sizeof(sreq.sense);
+	sreq.timeout = req->timeout;
+
+	if (sreq.datalen > 0) {
+		if (req->flags & ATACMD_READ)
+			sreq.flags |= SCCMD_READ;
+		if (req->flags & ATACMD_WRITE)
+			sreq.flags |= SCCMD_WRITE;
+	}
+
+	error = ioctl(fd, SCIOCCOMMAND, &sreq);
+	if (error == -1)
+		err(1, "SCIOCCOMMAND failed");
+
+	req->datalen = sreq.datalen_used;
+	req->retsts = ATACMD_OK;
+	req->error = 0;
+
+	switch (sreq.retsts) {
+	case SCCMD_OK:
+		return 0;
+	case SCCMD_TIMEOUT:
+		fprintf(stderr, "SATL command timed out\n");
+		exit(1);
+	case SCCMD_BUSY:
+		fprintf(stderr, "SATL command returned busy\n");
+		exit(1);
+	case SCCMD_SENSE:
+		desc = NULL;
+		switch (SSD_RCODE(sreq.sense[0])) {
+		case 0x00:
+			return 0;
+		case 0x70:
+			if (sreq.sense[2] == SKEY_NO_SENSE)
+				return 0;
+			if (sreq.sense[2] == SKEY_ILLEGAL_REQUEST)
+				return 1;
+			break;
+		case 0x72:
+		case 0x73:
+			desc = satl_return_desc(sreq.sense, sreq.senselen_used,
+				SCSI_ATA_RETURN_DESCRIPTOR);
+			break;
+		default:
+			break;
+		}
+
+		if (desc && desc[1] >= 12) {
+			req->sec_count = desc[5];
+			req->sec_num = desc[7];
+			req->head = (desc[12] & 0xf0) |
+			            ((desc[7] >> 24) & 0x0f);
+			req->cylinder = desc[11] << 8 | desc[9];
+			req->retsts = desc[13];
+			req->error = desc[3];
+			return 0;
+		}
+
+		fprintf(stderr, "SATL command error: rcode %02x key %u\n",
+			SSD_RCODE(sreq.sense[0]),
+			SSD_SENSE_KEY(sreq.sense[2]));
+		if (desc) {
+			int i, n;
+			n = desc[1]+2;
+			printf("ATA Return Descriptor:");
+			for (i=0; i<n; ++i)
+				printf(" %02x",desc[i]);
+			printf("\n");
+		}
+		exit(1);
+	default:
+		fprintf(stderr, "SCSIIOCCOMMAND returned unknown result code "
+			"%d\n", sreq.retsts);
+		exit(1);
+	}
+}
+
+static const uint8_t *
+satl_return_desc(const uint8_t *sense, size_t len, uint8_t type)
+{
+	const uint8_t *p, *endp;
+	size_t l, extra;
+	
+	if (len < 8)
+		return NULL;
+	extra = sense[7];
+	len -= 8;
+	if (extra < len)
+		len = extra;
+	if (len < 2)
+		return NULL;
+
+	switch (sense[0]) {
+	case 0x72:
+	case 0x73:
+		p = &sense[8];
+		endp = &p[len-1];
+		while (p < endp) {
+			if (p[0] == type)
+				return p;
+			l = p[1];
+			p += l + 2;
+		}
+		break;
+	}
+
+	return NULL;
+}
+
 
 /*
  * Print out strings associated with particular bitmasks
