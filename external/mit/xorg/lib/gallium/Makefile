@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2019/05/16 01:22:35 christos Exp $
+# $NetBSD: Makefile,v 1.28 2019/05/30 23:15:46 maya Exp $
 
 # Link the gallium mega driver.
 
@@ -959,6 +959,8 @@ LIBDPLIBS+=	expat		${.CURDIR}/../../../../../external/mit/expat/lib/libexpat
 LIBDPLIBS+=	terminfo	${.CURDIR}/../../../../../lib/libterminfo
 LIBDPLIBS+=	z		${.CURDIR}/../../../../../lib/libz
 LIBDPLIBS+=	execinfo	${.CURDIR}/../../../../../lib/libexecinfo
+LIBDPLIBS+=	X11-xcb         ${.CURDIR}/../libX11/libX11-xcb
+LIBDPLIBS+=	xcb-dri2        ${.CURDIR}/../libxcb/dri2
 
 # gallium drivers requiring LLVM
 .if ${BUILD_LLVMPIPE} == 1 || ${BUILD_RADEON} == 1
