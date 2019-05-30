@@ -25,10 +25,6 @@
 #include "alpha-bsd-tdep.h"
 #include "inf-ptrace.h"
 
-#ifdef __NetBSD__
-#include "nbsd-nat.h"
-#endif
-
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>
@@ -37,18 +33,8 @@
 #include <sys/procfs.h>
 #endif
 
-#ifndef HAVE_GREGSET_T
-typedef struct reg gregset_t;
-#endif
-
-#ifndef HAVE_FPREGSET_T 
-typedef struct fpreg fpregset_t; 
-#endif 
-
-#include "gregset.h"
-
 #ifdef __NetBSD__
-#include nbsd-nat.h"
+#include "nbsd-nat.h"
 struct alpha_bsd_nat_target final : public nbsd_nat_target
 #else
 struct alpha_bsd_nat_target final : public inf_ptrace_target
@@ -60,33 +46,6 @@ struct alpha_bsd_nat_target final : public inf_ptrace_target
 
 static alpha_bsd_nat_target the_alpha_bsd_nat_target;
 
-/* Provide *regset() wrappers around the generic Alpha BSD register
-   supply/fill routines.  */
-
-void
-supply_gregset (struct regcache *regcache, const gregset_t *gregsetp)
-{
-  alphabsd_supply_reg (regcache, (const char *) gregsetp, -1);
-}
-
-void
-fill_gregset (const struct regcache *regcache, gregset_t *gregsetp, int regno)
-{
-  alphabsd_fill_reg (regcache, (char *) gregsetp, regno);
-}
-
-void
-supply_fpregset (struct regcache *regcache, const fpregset_t *fpregsetp)
-{
-  alphabsd_supply_fpreg (regcache, (const char *) fpregsetp, -1);
-}
-
-void
-fill_fpregset (const struct regcache *regcache,
-	       fpregset_t *fpregsetp, int regno)
-{
-  alphabsd_fill_fpreg (regcache, (char *) fpregsetp, regno);
-}
 
 /* Determine if PT_GETREGS fetches this register.  */
 
@@ -203,19 +162,6 @@ alphabsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 
   return 1;
 }
-
-struct target_ops *
-alphabsd_target (void)
-{
-  struct target_ops *t;
-
-  t = inf_ptrace_target ();
-  t->to_fetch_registers = alphabsd_fetch_inferior_registers;
-  t->to_store_registers = alphabsd_store_inferior_registers;
-
-  return t;
-}
-
 
 
 void
