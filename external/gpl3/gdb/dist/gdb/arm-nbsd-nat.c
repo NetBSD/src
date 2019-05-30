@@ -50,7 +50,7 @@ typedef struct fpreg fpregset_t;
 
 #include "gregset.h"
 
-class arm_netbsd_nat_target final : public inf_ptrace_target
+class arm_nbsd_nat_target final : public nbsd_nat_target
 {
 public:
   /* Add our register access methods.  */
@@ -58,7 +58,7 @@ public:
   void store_registers (struct regcache *, int) override;
 };
 
-static arm_netbsd_nat_target the_arm_netbsd_nat_target;
+static arm_nbsd_nat_target the_arm_nbsd_nat_target;
 
 extern int arm_apcs_32;
 
@@ -136,20 +136,21 @@ arm_supply_vfpregset (struct regcache *regcache, struct fpreg *vfpregset)
   int regno;
 
   for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
-    regcache->raw_supply (regno,
-			  (char *) &fparegset->fpr[regno - ARM_F0_REGNUM]);
+    regcache->raw_supply (regno, (char *) &fparegset->fpr[regno - ARM_F0_REGNUM]);
 
   regcache->raw_supply (ARM_FPS_REGNUM, (char *) &fparegset->fpr_fpsr);
 }
 
 static void
-fetch_register (struct regcache *regcache, int regno)
+arm_nbsd_nat_fetch_register (struct regcache *regcache, int regno)
 {
-  struct reg inferior_registers;
+  struct reg regs;
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
   int ret;
 
-  ret = ptrace (PT_GETREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_registers, inferior_ptid.lwp ());
+  ret = ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp);
 
   if (ret < 0)
     {
@@ -160,32 +161,28 @@ fetch_register (struct regcache *regcache, int regno)
   switch (regno)
     {
     case ARM_SP_REGNUM:
-      regcache->raw_supply (ARM_SP_REGNUM, (char *) &inferior_registers.r_sp);
+      regcache->raw_supply (ARM_SP_REGNUM, (char *) &regs.r_sp);
       break;
 
     case ARM_LR_REGNUM:
-      regcache->raw_supply (ARM_LR_REGNUM, (char *) &inferior_registers.r_lr);
+      regcache->raw_supply (ARM_LR_REGNUM, (char *) &regs.r_lr);
       break;
 
     case ARM_PC_REGNUM:
       /* This is ok: we're running native...  */
-      inferior_registers.r_pc = gdbarch_addr_bits_remove
-				  (regcache->arch (),
-				   inferior_registers.r_pc);
-      regcache->raw_supply (ARM_PC_REGNUM, (char *) &inferior_registers.r_pc);
+      regs.r_pc = gdbarch_addr_bits_remove (regcache->arch (), regs.r_pc);
+      regcache->raw_supply (ARM_PC_REGNUM, (char *) &regs.r_pc);
       break;
 
     case ARM_PS_REGNUM:
       if (arm_apcs_32)
-	regcache->raw_supply (ARM_PS_REGNUM,
-			      (char *) &inferior_registers.r_cpsr);
+	regcache->raw_supply (ARM_PS_REGNUM, (char *) &regs.r_cpsr);
       else
-	regcache->raw_supply (ARM_PS_REGNUM,
-			      (char *) &inferior_registers.r_pc);
+	regcache->raw_supply (ARM_PS_REGNUM, (char *) &regs.r_pc);
       break;
 
     default:
-      regcache->raw_supply (regno, (char *) &inferior_registers.r[regno]);
+      regcache->raw_supply (regno, (char *) &regs.r[regno]);
       break;
     }
 }
@@ -193,12 +190,14 @@ fetch_register (struct regcache *regcache, int regno)
 static void
 fetch_regs (struct regcache *regcache)
 {
-  struct reg inferior_registers;
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
+  struct reg regs;
   int ret;
   int regno;
 
-  ret = ptrace (PT_GETREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_registers, inferior_ptid.lwp ());
+  ret = ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp);
 
   if (ret < 0)
     {
@@ -206,17 +205,17 @@ fetch_regs (struct regcache *regcache)
       return;
     }
 
-  arm_supply_gregset (regcache, &inferior_registers);
+  arm_supply_gregset (regcache, &regs);
 }
 
 static void
 fetch_fp_register (struct regcache *regcache, int regno)
 {
-  struct fpreg inferior_fp_registers;
+  struct fpreg fpregs;
   int ret;
 
-  ret = ptrace (PT_GETFPREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, inferior_ptid.lwp ()); 
+  ret = ptrace (PT_GETFPREGS, pid,
+		(PTRACE_TYPE_ARG3) &fpregs, lwp); 
 
   if (ret < 0)
     {
@@ -228,12 +227,12 @@ fetch_fp_register (struct regcache *regcache, int regno)
     {
     case ARM_FPS_REGNUM:
       regcache->raw_supply (ARM_FPS_REGNUM,
-			    (char *) &inferior_fp_registers.fpr_fpsr);
+			    (char *) &fpregs.fpr_fpsr);
       break;
 
     default:
       regcache->raw_supply
-	(regno, (char *) &inferior_fp_registers.fpr[regno - ARM_F0_REGNUM]);
+	(regno, (char *) &fpregs.fpr[regno - ARM_F0_REGNUM]);
       break;
     }
 }
@@ -241,11 +240,13 @@ fetch_fp_register (struct regcache *regcache, int regno)
 static void
 fetch_fp_regs (struct regcache *regcache)
 {
-  struct fpreg inferior_fp_registers;
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
+  struct fpreg fpregs;
   int ret;
 
-  ret = ptrace (PT_GETFPREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, inferior_ptid.lwp ());
+  ret = ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp);
 
   if (ret < 0)
     {
@@ -253,7 +254,7 @@ fetch_fp_regs (struct regcache *regcache)
       return;
     }
 
-  arm_supply_vfpregset (regcache, &inferior_fp_registers);
+  arm_supply_vfpregset (regcache, &fpregs);
 }
 
 void
@@ -278,11 +279,13 @@ static void
 store_register (const struct regcache *regcache, int regno)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct reg inferior_registers;
+  struct reg regs;
   int ret;
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
 
-  ret = ptrace (PT_GETREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_registers, inferior_ptid.lwp ()); 
+  ret = ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp); 
 
   if (ret < 0)
     {
@@ -293,17 +296,16 @@ store_register (const struct regcache *regcache, int regno)
   switch (regno)
     {
     case ARM_SP_REGNUM:
-      regcache->raw_collect (ARM_SP_REGNUM, (char *) &inferior_registers.r_sp);
+      regcache->raw_collect (ARM_SP_REGNUM, (char *) &regs.r_sp);
       break;
 
     case ARM_LR_REGNUM:
-      regcache->raw_collect (ARM_LR_REGNUM, (char *) &inferior_registers.r_lr);
+      regcache->raw_collect (ARM_LR_REGNUM, (char *) &regs.r_lr);
       break;
 
     case ARM_PC_REGNUM:
       if (arm_apcs_32)
-	regcache->raw_collect (ARM_PC_REGNUM,
-			       (char *) &inferior_registers.r_pc);
+	regcache->raw_collect (ARM_PC_REGNUM, (char *) &regs.r_pc);
       else
 	{
 	  unsigned pc_val;
@@ -311,16 +313,14 @@ store_register (const struct regcache *regcache, int regno)
 	  regcache->raw_collect (ARM_PC_REGNUM, (char *) &pc_val);
 	  
 	  pc_val = gdbarch_addr_bits_remove (gdbarch, pc_val);
-	  inferior_registers.r_pc ^= gdbarch_addr_bits_remove
-				       (gdbarch, inferior_registers.r_pc);
-	  inferior_registers.r_pc |= pc_val;
+	  regs.r_pc ^= gdbarch_addr_bits_remove (gdbarch, regs.r_pc);
+	  regs.r_pc |= pc_val;
 	}
       break;
 
     case ARM_PS_REGNUM:
       if (arm_apcs_32)
-	regcache->raw_collect (ARM_PS_REGNUM,
-			       (char *) &inferior_registers.r_cpsr);
+	regcache->raw_collect (ARM_PS_REGNUM, (char *) &regs.r_cpsr);
       else
 	{
 	  unsigned psr_val;
@@ -328,19 +328,17 @@ store_register (const struct regcache *regcache, int regno)
 	  regcache->raw_collect (ARM_PS_REGNUM, (char *) &psr_val);
 
 	  psr_val ^= gdbarch_addr_bits_remove (gdbarch, psr_val);
-	  inferior_registers.r_pc = gdbarch_addr_bits_remove
-				      (gdbarch, inferior_registers.r_pc);
-	  inferior_registers.r_pc |= psr_val;
+	  regs.r_pc = gdbarch_addr_bits_remove (gdbarch, regs.r_pc);
+	  regs.r_pc |= psr_val;
 	}
       break;
 
     default:
-      regcache->raw_collect (regno, (char *) &inferior_registers.r[regno]);
+      regcache->raw_collect (regno, (char *) &regs.r[regno]);
       break;
     }
 
-  ret = ptrace (PT_SETREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_registers, inferior_ptid.lwp ());
+  ret = ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp);
 
   if (ret < 0)
     warning (_("unable to write register %d to inferior"), regno);
@@ -350,22 +348,24 @@ static void
 store_regs (const struct regcache *regcache)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  struct reg inferior_registers;
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
+  struct reg regs;
   int ret;
   int regno;
 
 
   for (regno = ARM_A1_REGNUM; regno < ARM_SP_REGNUM; regno++)
-    regcache->raw_collect (regno, (char *) &inferior_registers.r[regno]);
+    regcache->raw_collect (regno, (char *) &regs.r[regno]);
 
-  regcache->raw_collect (ARM_SP_REGNUM, (char *) &inferior_registers.r_sp);
-  regcache->raw_collect (ARM_LR_REGNUM, (char *) &inferior_registers.r_lr);
+  regcache->raw_collect (ARM_SP_REGNUM, (char *) &regs.r_sp);
+  regcache->raw_collect (ARM_LR_REGNUM, (char *) &regs.r_lr);
 
   if (arm_apcs_32)
     {
-      regcache->raw_collect (ARM_PC_REGNUM, (char *) &inferior_registers.r_pc);
-      regcache->raw_collect (ARM_PS_REGNUM,
-			     (char *) &inferior_registers.r_cpsr);
+      regcache->raw_collect (ARM_PC_REGNUM, (char *) &regs.r_pc);
+      regcache->raw_collect (ARM_PS_REGNUM, (char *) &regs.r_cpsr);
     }
   else
     {
@@ -378,11 +378,10 @@ store_regs (const struct regcache *regcache)
       pc_val = gdbarch_addr_bits_remove (gdbarch, pc_val);
       psr_val ^= gdbarch_addr_bits_remove (gdbarch, psr_val);
 
-      inferior_registers.r_pc = pc_val | psr_val;
+      regs.r_pc = pc_val | psr_val;
     }
 
-  ret = ptrace (PT_SETREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_registers, inferior_ptid.lwp ()); 
+  ret = ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp); 
 
   if (ret < 0)
     warning (_("unable to store general registers"));
@@ -391,11 +390,13 @@ store_regs (const struct regcache *regcache)
 static void
 store_fp_register (const struct regcache *regcache, int regno)
 {
-  struct fpreg inferior_fp_registers;
+  struct fpreg fpregs;
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
   int ret;
 
-  ret = ptrace (PT_GETFPREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, inferior_ptid.lwp ()); 
+  ret = ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp); 
 
   if (ret < 0)
     {
@@ -406,18 +407,15 @@ store_fp_register (const struct regcache *regcache, int regno)
   switch (regno)
     {
     case ARM_FPS_REGNUM:
-      regcache->raw_collect (ARM_FPS_REGNUM,
-			     (char *) &inferior_fp_registers.fpr_fpsr);
+      regcache->raw_collect (ARM_FPS_REGNUM, (char *) &fpregs.fpr_fpsr);
       break;
 
     default:
-      regcache->raw_collect
-	(regno, (char *) &inferior_fp_registers.fpr[regno - ARM_F0_REGNUM]);
+      regcache->raw_collect (regno, (char *) &fpregs.fpr[regno - ARM_F0_REGNUM]);
       break;
     }
 
-  ret = ptrace (PT_SETFPREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, inferior_ptid.lwp ()); 
+  ret = ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp); 
 
   if (ret < 0)
     warning (_("unable to write register %d to inferior"), regno);
@@ -426,20 +424,20 @@ store_fp_register (const struct regcache *regcache, int regno)
 static void
 store_fp_regs (const struct regcache *regcache)
 {
-  struct fpreg inferior_fp_registers;
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
+  struct fpreg fpregs;
   int ret;
   int regno;
 
 
   for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
-    regcache->raw_collect
-      (regno, (char *) &inferior_fp_registers.fpr[regno - ARM_F0_REGNUM]);
+    regcache->raw_collect (regno, (char *) &fpregs.fpr[regno - ARM_F0_REGNUM]);
 
-  regcache->raw_collect (ARM_FPS_REGNUM,
-			 (char *) &inferior_fp_registers.fpr_fpsr);
+  regcache->raw_collect (ARM_FPS_REGNUM, (char *) &fpregs.fpr_fpsr);
 
-  ret = ptrace (PT_SETFPREGS, regcache->ptid ().pid (),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, inferior_ptid.lwp ());
+  ret = ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp);
 
   if (ret < 0)
     warning (_("unable to store floating-point registers"));
@@ -542,7 +540,7 @@ static struct core_fns arm_netbsd_elfcore_fns =
 void
 _initialize_arm_netbsd_nat (void)
 {
-  add_inf_child_target (&the_arm_netbsd_nat_target);
+  add_inf_child_target (&the_arm_nbsd_nat_target);
 
   deprecated_add_core_fns (&arm_netbsd_core_fns);
   deprecated_add_core_fns (&arm_netbsd_elfcore_fns);

@@ -83,7 +83,7 @@ x86bsd_dr_set (int regnum, unsigned long value)
   for (thread_info *thread : current_inferior ()->non_exited_threads ())
     {
       if (ptrace (PT_SETDBREGS, get_ptrace_pid (thread->ptid),
-		  (PTRACE_TYPE_ARG3) &dbregs, inferior_ptid.lwp ()) == -1)
+		  (PTRACE_TYPE_ARG3) &dbregs, thread->ptid.lwp ()) == -1)
 	perror_with_name (_("Couldn't write debug registers"));
     }
 }
