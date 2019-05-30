@@ -138,6 +138,7 @@ sparc_fetch_inferior_registers (struct regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   pid_t pid;
+  int lwp = regcache->ptid ().lwp ();
 
   /* NOTE: cagney/2002-12-03: This code assumes that the currently
      selected light weight processes' registers can be written
@@ -166,7 +167,7 @@ sparc_fetch_inferior_registers (struct regcache *regcache, int regnum)
     {
       gregset_t regs;
 
-      if (ptrace (PTRACE_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, inferior_ptid.lwp ()) == -1)
+      if (ptrace (PTRACE_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sparc_supply_gregset (sparc_gregmap, regcache, -1, &regs);
@@ -178,7 +179,7 @@ sparc_fetch_inferior_registers (struct regcache *regcache, int regnum)
     {
       fpregset_t fpregs;
 
-      if (ptrace (PTRACE_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, inferior_ptid.lwp ()) == -1)
+      if (ptrace (PTRACE_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       sparc_supply_fpregset (sparc_fpregmap, regcache, -1, &fpregs);
@@ -190,6 +191,7 @@ sparc_store_inferior_registers (struct regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   pid_t pid;
+  int lwp = regcache->ptid ().lwp ();
 
   /* NOTE: cagney/2002-12-02: See comment in fetch_inferior_registers
      about threaded assumptions.  */
@@ -199,7 +201,7 @@ sparc_store_inferior_registers (struct regcache *regcache, int regnum)
     {
       gregset_t regs;
 
-      if (ptrace (PTRACE_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, inferior_ptid.lwp ()) == -1)
+      if (ptrace (PTRACE_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sparc_collect_gregset (sparc_gregmap, regcache, regnum, &regs);
@@ -225,7 +227,7 @@ sparc_store_inferior_registers (struct regcache *regcache, int regnum)
     {
       fpregset_t fpregs, saved_fpregs;
 
-      if (ptrace (PTRACE_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, inferior_ptid.lwp ()) == -1)
+      if (ptrace (PTRACE_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't get floating-point registers"));
 
       memcpy (&saved_fpregs, &fpregs, sizeof (fpregs));
@@ -238,7 +240,7 @@ sparc_store_inferior_registers (struct regcache *regcache, int regnum)
       if (memcmp (&saved_fpregs, &fpregs, sizeof (fpregs)) != 0)
 	{
 	  if (ptrace (PTRACE_SETFPREGS, pid,
-		      (PTRACE_TYPE_ARG3) &fpregs, inferior_ptid.lwp ()) == -1)
+		      (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	    perror_with_name (_("Couldn't write floating-point registers"));
 	}
 
