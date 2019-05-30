@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.158 2019/04/05 23:44:59 uwe Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.159 2019/05/30 02:32:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.158 2019/04/05 23:44:59 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.159 2019/05/30 02:32:18 msaitoh Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -560,6 +560,7 @@ re_attach(struct rtk_softc *sc)
 {
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	struct ifnet *ifp;
+	struct mii_data *mii = &sc->mii;
 	int error = 0, i;
 
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
@@ -850,16 +851,16 @@ re_attach(struct rtk_softc *sc)
 	callout_init(&sc->rtk_tick_ch, 0);
 
 	/* Do MII setup */
-	sc->mii.mii_ifp = ifp;
-	sc->mii.mii_readreg = re_miibus_readreg;
-	sc->mii.mii_writereg = re_miibus_writereg;
-	sc->mii.mii_statchg = re_miibus_statchg;
-	sc->ethercom.ec_mii = &sc->mii;
-	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, ether_mediachange,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = re_miibus_readreg;
+	mii->mii_writereg = re_miibus_writereg;
+	mii->mii_statchg = re_miibus_statchg;
+	sc->ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 	    ether_mediastatus);
-	mii_attach(sc->sc_dev, &sc->mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
-	ifmedia_set(&sc->mii.mii_media, IFM_ETHER | IFM_AUTO);
+	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	/*
 	 * Call MI attach routine.

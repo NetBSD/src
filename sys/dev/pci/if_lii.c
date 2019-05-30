@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.25 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.26 2019/05/30 02:32:18 msaitoh Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.25 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.26 2019/05/30 02:32:18 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -237,6 +237,7 @@ lii_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	pcireg_t cmd;
@@ -310,16 +311,15 @@ lii_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tick_ch, 0);
 	callout_setfunc(&sc->sc_tick_ch, lii_tick, sc);
 
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = lii_mii_readreg;
-	sc->sc_mii.mii_writereg = lii_mii_writereg;
-	sc->sc_mii.mii_statchg = lii_mii_statchg;
-	sc->sc_ec.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, lii_media_change,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = lii_mii_readreg;
+	mii->mii_writereg = lii_mii_writereg;
+	mii->mii_statchg = lii_mii_statchg;
+	sc->sc_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, lii_media_change,
 	    lii_media_status);
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
-	    MII_OFFSET_ANY, 0);
-	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
+	mii_attach(sc->sc_dev, mii, 0xffffffff, 1, MII_OFFSET_ANY, 0);
+	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;

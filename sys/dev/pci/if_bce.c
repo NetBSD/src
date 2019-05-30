@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.51 2019/02/03 03:19:27 mrg Exp $	 */
+/* $NetBSD: if_bce.c,v 1.52 2019/05/30 02:32:18 msaitoh Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.51 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.52 2019/05/30 02:32:18 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -257,6 +257,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 	int             error, i, pmreg, rseg;
 	uint16_t	phyval;
 	struct ifnet   *ifp;
+	struct mii_data *mii = &sc->bce_mii;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->bce_dev = self;
@@ -424,21 +425,20 @@ bce_attach(device_t parent, device_t self, void *aux)
 
 	/* Initialize our media structures and probe the MII. */
 
-	sc->bce_mii.mii_ifp = ifp;
-	sc->bce_mii.mii_readreg = bce_mii_read;
-	sc->bce_mii.mii_writereg = bce_mii_write;
-	sc->bce_mii.mii_statchg = bce_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = bce_mii_read;
+	mii->mii_writereg = bce_mii_write;
+	mii->mii_statchg = bce_statchg;
 
-	sc->ethercom.ec_mii = &sc->bce_mii;
-	ifmedia_init(&sc->bce_mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
-	mii_attach(sc->bce_dev, &sc->bce_mii, 0xffffffff, MII_PHY_ANY,
+	sc->ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
+	mii_attach(sc->bce_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_FORCEANEG|MIIF_DOPAUSE);
-	if (LIST_FIRST(&sc->bce_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->bce_mii.mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->bce_mii.mii_media, IFM_ETHER | IFM_NONE);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
-		ifmedia_set(&sc->bce_mii.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	/* get the phy */
 	sc->bce_phy = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
 	    BCE_MAGIC_PHY) & 0x1f;

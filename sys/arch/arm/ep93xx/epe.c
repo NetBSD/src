@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.43 2019/05/28 07:41:46 msaitoh Exp $	*/
+/*	$NetBSD: epe.c,v 1.44 2019/05/30 02:32:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.43 2019/05/28 07:41:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.44 2019/05/30 02:32:17 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -284,6 +284,7 @@ epe_init(struct epe_softc *sc)
 	char *addr;
 	int rsegs, err, i;
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
 	int mdcdiv = DEFAULT_MDCDIV;
 
 	callout_init(&sc->epe_tick_ch, 0);
@@ -396,16 +397,16 @@ epe_init(struct epe_softc *sc)
 		mdcdiv = device_cfdata(sc->sc_dev)->cf_flags;
 	EPE_WRITE(SelfCtl, (SelfCtl_MDCDIV(mdcdiv) | SelfCtl_PSPRS));
 
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = epe_mii_readreg;
-	sc->sc_mii.mii_writereg = epe_mii_writereg;
-	sc->sc_mii.mii_statchg = epe_statchg;
-	sc->sc_ec.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, epe_mediachange,
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = epe_mii_readreg;
+	mii->mii_writereg = epe_mii_writereg;
+	mii->mii_statchg = epe_statchg;
+	sc->sc_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, IFM_IMASK, epe_mediachange,
 		ether_mediastatus);
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-		MII_OFFSET_ANY, 0);
-	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY, 0);
+	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	EPE_WRITE(BMCtl, BMCtl_RxEn | BMCtl_TxEn);
 	EPE_WRITE(IntEn, IntEn_REOFIE);
