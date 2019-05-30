@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.101 2019/04/25 10:08:45 msaitoh Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.102 2019/05/30 02:32:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.101 2019/04/25 10:08:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.102 2019/05/30 02:32:18 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -231,7 +231,8 @@ smc91cxx_attach(struct smc91cxx_softc *sc, uint8_t *myea)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	struct ifmedia *ifm = &sc->sc_mii.mii_media;
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia *ifm = &mii->mii_media;
 	const char *idstr;
 	uint32_t miicapabilities;
 	uint16_t tmp;
@@ -312,11 +313,11 @@ smc91cxx_attach(struct smc91cxx_softc *sc, uint8_t *myea)
 	 * Initialize our media structures and MII info.  We will
 	 * probe the MII if we are on the SMC91Cxx
 	 */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = smc91cxx_mii_readreg;
-	sc->sc_mii.mii_writereg = smc91cxx_mii_writereg;
-	sc->sc_mii.mii_statchg = smc91cxx_statchg;
-	sc->sc_ec.ec_mii = &sc->sc_mii;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = smc91cxx_mii_readreg;
+	mii->mii_writereg = smc91cxx_mii_writereg;
+	mii->mii_statchg = smc91cxx_statchg;
+	sc->sc_ec.ec_mii = mii;
 	ifmedia_init(ifm, IFM_IMASK, smc91cxx_mediachange,
 	    smc91cxx_mediastatus);
 
@@ -343,15 +344,15 @@ smc91cxx_attach(struct smc91cxx_softc *sc, uint8_t *myea)
 				sc->sc_internal_phy = !(tmp & CR_AUI_SELECT);
 			} else
 				aprint_normal("\n");
-			mii_attach(sc->sc_dev, &sc->sc_mii, miicapabilities,
+			mii_attach(sc->sc_dev, mii, miicapabilities,
 			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
-			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-				ifmedia_add(&sc->sc_mii.mii_media,
+			if (LIST_FIRST(&mii->mii_phys) == NULL) {
+				ifmedia_add(&mii->mii_media,
 				    IFM_ETHER | IFM_NONE, 0, NULL);
-				ifmedia_set(&sc->sc_mii.mii_media,
+				ifmedia_set(&mii->mii_media,
 				    IFM_ETHER | IFM_NONE);
 			} else {
-				ifmedia_set(&sc->sc_mii.mii_media,
+				ifmedia_set(&mii->mii_media,
 				    IFM_ETHER | IFM_AUTO);
 			}
 			sc->sc_flags |= SMC_FLAGS_HAS_MII;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.60 2019/05/28 07:41:48 msaitoh Exp $ */
+/* $NetBSD: if_mec.c,v 1.61 2019/05/30 02:32:17 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.60 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.61 2019/05/30 02:32:17 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -430,6 +430,7 @@ mec_attach(device_t parent, device_t self, void *aux)
 	struct mec_softc *sc = device_private(self);
 	struct mace_attach_args *maa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
 	uint64_t address, command;
 	const char *macaddr;
 	struct mii_softc *child;
@@ -572,26 +573,24 @@ mec_attach(device_t parent, device_t self, void *aux)
 
 	/* Done, now attach everything */
 
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = mec_mii_readreg;
-	sc->sc_mii.mii_writereg = mec_mii_writereg;
-	sc->sc_mii.mii_statchg = mec_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = mec_mii_readreg;
+	mii->mii_writereg = mec_mii_writereg;
+	mii->mii_statchg = mec_statchg;
 
 	/* Set up PHY properties */
-	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
-	child = LIST_FIRST(&sc->sc_mii.mii_phys);
+	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
 		/* No PHY attached */
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL,
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL,
 		    0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 		sc->sc_phyaddr = child->mii_phy;
 	}
 

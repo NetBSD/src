@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.39 2019/05/28 07:41:48 msaitoh Exp $ */
+/* $NetBSD: mtd803.c,v 1.40 2019/05/30 02:32:18 msaitoh Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.39 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.40 2019/05/30 02:32:18 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -130,6 +130,7 @@ int
 mtd_config(struct mtd_softc *sc)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
+	struct mii_data *mii = &sc->mii;
 	int i;
 
 	/* Read station address */
@@ -148,22 +149,21 @@ mtd_config(struct mtd_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Setup MII interface */
-	sc->mii.mii_ifp = ifp;
-	sc->mii.mii_readreg = mtd_mii_readreg;
-	sc->mii.mii_writereg = mtd_mii_writereg;
-	sc->mii.mii_statchg = mtd_mii_statchg;
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = mtd_mii_readreg;
+	mii->mii_writereg = mtd_mii_writereg;
+	mii->mii_statchg = mtd_mii_statchg;
 
-	sc->ethercom.ec_mii = &sc->mii;
-	ifmedia_init(&sc->mii.mii_media, 0, ether_mediachange,
-	    ether_mediastatus);
+	sc->ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 
-	mii_attach(sc->dev, &sc->mii, 0xffffffff, MII_PHY_ANY, 0, 0);
+	mii_attach(sc->dev, mii, 0xffffffff, MII_PHY_ANY, 0, 0);
 
-	if (LIST_FIRST(&sc->mii.mii_phys) == NULL) {
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(sc->dev, "Unable to configure MII\n");
 		return 1;
 	} else
-		ifmedia_set(&sc->mii.mii_media, IFM_ETHER | IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	if (mtd_init_desc(sc))
 		return 1;
