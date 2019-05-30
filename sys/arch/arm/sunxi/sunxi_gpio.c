@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.24 2019/05/27 23:26:20 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.25 2019/05/30 18:19:36 tnn Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.24 2019/05/27 23:26:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.25 2019/05/30 18:19:36 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -120,7 +120,7 @@ static const struct of_compat_data compat_data[] = {
 struct sunxi_gpio_eint {
 	int (*eint_func)(void *);
 	void *eint_arg;
-	int eint_flags;
+	bool eint_mpsafe;
 	int eint_bank;
 	int eint_num;
 };
@@ -429,11 +429,10 @@ sunxi_gpio_intr(void *priv)
 			eint = &sc->sc_eint[bank][bit - 1];
 			if (eint->eint_func == NULL)
 				continue;
-			const bool mpsafe = (eint->eint_flags & FDT_INTR_MPSAFE) != 0;
-			if (!mpsafe)
+			if (!eint->eint_mpsafe)
 				KERNEL_LOCK(1, curlwp);
 			ret |= eint->eint_func(eint->eint_arg);
-			if (!mpsafe)
+			if (!eint->eint_mpsafe)
 				KERNEL_UNLOCK_ONE(curlwp);
 		}
 	}
@@ -442,13 +441,84 @@ sunxi_gpio_intr(void *priv)
 }
 
 static void *
-sunxi_gpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
+sunxi_intr_enable(struct sunxi_gpio_softc *sc,
+    const struct sunxi_gpio_pins *pin_def, u_int mode, bool mpsafe,
+    int (*func)(void *), void *arg)
+{
+	uint32_t val;
+	struct sunxi_gpio_eint *eint;
+	
+	if (pin_def->functions[pin_def->eint_func] == NULL ||
+	    strcmp(pin_def->functions[pin_def->eint_func], "irq") != 0)
+		return NULL;
+
+	KASSERT(pin_def->eint_num < SUNXI_GPIO_MAX_EINT);
+
+	mutex_enter(&sc->sc_lock);
+
+	eint = &sc->sc_eint[pin_def->eint_bank][pin_def->eint_num];
+	if (eint->eint_func != NULL) {
+		mutex_exit(&sc->sc_lock);
+		return NULL;	/* in use */
+	}
+
+	/* Set function */
+	if (sunxi_gpio_setfunc(sc, pin_def, "irq") != 0) {
+		mutex_exit(&sc->sc_lock);
+		return NULL;
+	}
+
+	eint->eint_func = func;
+	eint->eint_arg = arg;
+	eint->eint_mpsafe = mpsafe;
+	eint->eint_bank = pin_def->eint_bank;
+	eint->eint_num = pin_def->eint_num;
+
+	/* Configure eint mode */
+	val = GPIO_READ(sc, SUNXI_GPIO_INT_CFG(eint->eint_bank, eint->eint_num));
+	val &= ~SUNXI_GPIO_INT_MODEMASK(eint->eint_num);
+	val |= __SHIFTIN(mode, SUNXI_GPIO_INT_MODEMASK(eint->eint_num));
+	GPIO_WRITE(sc, SUNXI_GPIO_INT_CFG(eint->eint_bank, eint->eint_num), val);
+
+	/* Enable eint */
+	val = GPIO_READ(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank));
+	val |= __BIT(eint->eint_num);
+	GPIO_WRITE(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank), val);
+
+	mutex_exit(&sc->sc_lock);
+
+	return eint;
+}
+
+static void
+sunxi_intr_disable(struct sunxi_gpio_softc *sc, struct sunxi_gpio_eint *eint)
+{
+	uint32_t val;
+
+	KASSERT(eint->eint_func != NULL);
+
+	mutex_enter(&sc->sc_lock);
+
+	/* Disable eint */
+	val = GPIO_READ(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank));
+	val &= ~__BIT(eint->eint_num);
+	GPIO_WRITE(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank), val);
+	GPIO_WRITE(sc, SUNXI_GPIO_INT_STATUS(eint->eint_bank), __BIT(eint->eint_num));
+
+	eint->eint_func = NULL;
+	eint->eint_arg = NULL;
+	eint->eint_mpsafe = false;
+
+	mutex_exit(&sc->sc_lock);
+}
+
+static void *
+sunxi_fdt_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
     int (*func)(void *), void *arg)
 {
 	struct sunxi_gpio_softc * const sc = device_private(dev);
+	bool mpsafe = (flags & FDT_INTR_MPSAFE) != 0;
 	const struct sunxi_gpio_pins *pin_def;
-	struct sunxi_gpio_eint *eint;
-	uint32_t val;
 	u_int mode;
 
 	if (ipl != IPL_VM) {
@@ -489,74 +559,21 @@ sunxi_gpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	pin_def = sunxi_gpio_lookup(sc, port, pin);
 	if (pin_def == NULL)
 		return NULL;
-	if (pin_def->functions[pin_def->eint_func] == NULL ||
-	    strcmp(pin_def->functions[pin_def->eint_func], "irq") != 0)
-		return NULL;
 
-	KASSERT(pin_def->eint_num < SUNXI_GPIO_MAX_EINT);
-
-	mutex_enter(&sc->sc_lock);
-
-	eint = &sc->sc_eint[pin_def->eint_bank][pin_def->eint_num];
-	if (eint->eint_func != NULL) {
-		mutex_exit(&sc->sc_lock);
-		return NULL;	/* in use */
-	}
-
-	/* Set function */
-	if (sunxi_gpio_setfunc(sc, pin_def, "irq") != 0) {
-		mutex_exit(&sc->sc_lock);
-		return NULL;
-	}
-
-	eint->eint_func = func;
-	eint->eint_arg = arg;
-	eint->eint_flags = flags;
-	eint->eint_bank = pin_def->eint_bank;
-	eint->eint_num = pin_def->eint_num;
-
-	/* Configure eint mode */
-	val = GPIO_READ(sc, SUNXI_GPIO_INT_CFG(eint->eint_bank, eint->eint_num));
-	val &= ~SUNXI_GPIO_INT_MODEMASK(eint->eint_num);
-	val |= __SHIFTIN(mode, SUNXI_GPIO_INT_MODEMASK(eint->eint_num));
-	GPIO_WRITE(sc, SUNXI_GPIO_INT_CFG(eint->eint_bank, eint->eint_num), val);
-
-	/* Enable eint */
-	val = GPIO_READ(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank));
-	val |= __BIT(eint->eint_num);
-	GPIO_WRITE(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank), val);
-
-	mutex_exit(&sc->sc_lock);
-
-	return eint;
+	return sunxi_intr_enable(sc, pin_def, mode, mpsafe, func, arg);
 }
 
 static void
-sunxi_gpio_disestablish(device_t dev, void *ih)
+sunxi_fdt_intr_disestablish(device_t dev, void *ih)
 {
 	struct sunxi_gpio_softc * const sc = device_private(dev);
 	struct sunxi_gpio_eint * const eint = ih;
-	uint32_t val;
 
-	KASSERT(eint->eint_func != NULL);
-
-	mutex_enter(&sc->sc_lock);
-
-	/* Disable eint */
-	val = GPIO_READ(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank));
-	val &= ~__BIT(eint->eint_num);
-	GPIO_WRITE(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank), val);
-	GPIO_WRITE(sc, SUNXI_GPIO_INT_STATUS(eint->eint_bank), __BIT(eint->eint_num));
-
-	eint->eint_func = NULL;
-	eint->eint_arg = NULL;
-	eint->eint_flags = 0;
-
-	mutex_exit(&sc->sc_lock);
+	sunxi_intr_disable(sc, eint);
 }
 
 static bool
-sunxi_gpio_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
+sunxi_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 {
 	struct sunxi_gpio_softc * const sc = device_private(dev);
 	const struct sunxi_gpio_pins *pin_def;
@@ -579,10 +596,73 @@ sunxi_gpio_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 }
 
 static struct fdtbus_interrupt_controller_func sunxi_gpio_intrfuncs = {
-	.establish = sunxi_gpio_establish,
-	.disestablish = sunxi_gpio_disestablish,
-	.intrstr = sunxi_gpio_intrstr,
+	.establish = sunxi_fdt_intr_establish,
+	.disestablish = sunxi_fdt_intr_disestablish,
+	.intrstr = sunxi_fdt_intrstr,
 };
+
+static void *
+sunxi_gpio_intr_establish(void *vsc, int pin, int ipl, int irqmode,
+    int (*func)(void *), void *arg)
+{
+	struct sunxi_gpio_softc * const sc = vsc;
+	bool mpsafe = (irqmode & GPIO_INTR_MPSAFE) != 0;
+	int type = irqmode & GPIO_INTR_MODE_MASK;
+	const struct sunxi_gpio_pins *pin_def;
+	u_int mode;
+
+	switch (type) {
+	case GPIO_INTR_POS_EDGE:
+		mode = SUNXI_GPIO_INT_MODE_POS_EDGE;
+		break;
+	case GPIO_INTR_NEG_EDGE:
+		mode = SUNXI_GPIO_INT_MODE_NEG_EDGE;
+		break;
+	case GPIO_INTR_DOUBLE_EDGE:
+		mode = SUNXI_GPIO_INT_MODE_DOUBLE_EDGE;
+		break;
+	case GPIO_INTR_HIGH_LEVEL:
+		mode = SUNXI_GPIO_INT_MODE_HIGH_LEVEL;
+		break;
+	case GPIO_INTR_LOW_LEVEL:
+		mode = SUNXI_GPIO_INT_MODE_LOW_LEVEL;
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev, "%s: unsupported irq type 0x%x\n",
+				 __func__, type);
+		return NULL;
+	}
+
+	if (pin < 0 || pin >= sc->sc_padconf->npins)
+		return NULL;
+	pin_def = &sc->sc_padconf->pins[pin];
+
+	return sunxi_intr_enable(sc, pin_def, mode, mpsafe, func, arg);
+}
+
+static void
+sunxi_gpio_intr_disestablish(void *vsc, void *ih)
+{
+	struct sunxi_gpio_softc * const sc = vsc;
+	struct sunxi_gpio_eint * const eint = ih;
+
+	sunxi_intr_disable(sc, eint);
+}
+
+static bool
+sunxi_gpio_intrstr(void *vsc, int pin, int irqmode, char *buf, size_t buflen)
+{
+	struct sunxi_gpio_softc * const sc = vsc;
+	const struct sunxi_gpio_pins *pin_def;
+
+	if (pin < 0 || pin >= sc->sc_padconf->npins)
+		return NULL;
+	pin_def = &sc->sc_padconf->pins[pin];
+
+	snprintf(buf, buflen, "GPIO %s", pin_def->name);
+
+	return true;
+}
 
 static const char *
 sunxi_pinctrl_parse_function(int phandle)
@@ -840,6 +920,9 @@ sunxi_gpio_attach_ports(struct sunxi_gpio_softc *sc)
 	gp->gp_pin_read = sunxi_gpio_pin_read;
 	gp->gp_pin_write = sunxi_gpio_pin_write;
 	gp->gp_pin_ctl = sunxi_gpio_pin_ctl;
+	gp->gp_intr_establish = sunxi_gpio_intr_establish;
+	gp->gp_intr_disestablish = sunxi_gpio_intr_disestablish;
+	gp->gp_intr_str = sunxi_gpio_intrstr;
 
 	const u_int npins = sc->sc_padconf->npins;
 	sc->sc_pins = kmem_zalloc(sizeof(*sc->sc_pins) * npins, KM_SLEEP);
@@ -849,6 +932,13 @@ sunxi_gpio_attach_ports(struct sunxi_gpio_softc *sc)
 		sc->sc_pins[pin].pin_num = pin;
 		sc->sc_pins[pin].pin_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT |
 		    GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN;
+		if (pin_def->functions[pin_def->eint_func] != NULL &&
+		    strcmp(pin_def->functions[pin_def->eint_func], "irq") == 0) {
+			sc->sc_pins[pin].pin_intrcaps =
+			    GPIO_INTR_POS_EDGE | GPIO_INTR_NEG_EDGE |
+			    GPIO_INTR_HIGH_LEVEL | GPIO_INTR_LOW_LEVEL |
+			    GPIO_INTR_DOUBLE_EDGE | GPIO_INTR_MPSAFE;
+		}
 		sc->sc_pins[pin].pin_state = sunxi_gpio_pin_read(sc, pin);
 		strlcpy(sc->sc_pins[pin].pin_defname, pin_def->name,
 		    sizeof(sc->sc_pins[pin].pin_defname));
