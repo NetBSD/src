@@ -111,7 +111,6 @@ bsd_kvm_target_open (const char *arg, int from_tty)
   kvm_t *temp_kd;
   struct inferior *inf;
   char *filename = NULL;
-  struct gdbarch_info info;
 
   target_preopen (from_tty);
 
