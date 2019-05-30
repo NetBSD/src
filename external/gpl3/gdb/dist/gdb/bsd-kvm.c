@@ -110,6 +110,7 @@ bsd_kvm_target_open (const char *arg, int from_tty)
   kvm_t *temp_kd;
   struct inferior *inf;
   char *filename = NULL;
+  struct gdbarch_info info;
 
   target_preopen (from_tty);
 
@@ -140,6 +141,8 @@ bsd_kvm_target_open (const char *arg, int from_tty)
   inf = add_inferior_silent (bsd_kvm_ptid.pid ());
   inf->aspace = maybe_new_address_space ();
   inf->pspace = new program_space (inf->aspace);
+
+  inf->gdbarch = get_current_arch ();
 
   add_thread_silent (bsd_kvm_ptid);
   inferior_ptid = bsd_kvm_ptid;
