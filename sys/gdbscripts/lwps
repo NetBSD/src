@@ -1,4 +1,4 @@
-#	$NetBSD: lwps,v 1.4 2011/02/05 14:12:05 yamt Exp $
+#	$NetBSD: lwps,v 1.5 2019/05/30 07:17:35 mrg Exp $
 
 define lwps
 	set $i = 0
@@ -8,7 +8,7 @@ define lwps
 			set $p = allproc.lh_first
 		end
 		if ($p)
-			printf "\t     lwp   pid   lid     flag            wchan\n"
+			printf "\t       lwp   pid   lid     flag              wchan\n"
 		end
 		while ($p)
 			set $l = $p->p_lwps.lh_first
@@ -34,35 +34,89 @@ document lwps
 ps for lwps
 end
 
-define threadlist
-	set $i = 0
+define procs
+	set $p = allproc.lh_first
 
-	while ($i < 2)
-		if ($i == 0)
-			set $p = allproc.lh_first
+	printf "           paddr   pid     flag  stat    n         firstlwp          command\n"                       
+	while ($p)
+		printf "%16lx %5d %8x %4x %5d %16lx %16s\n", \
+			$p, $p->p_pid, $p->p_flag, $p->p_stat, \
+			$nlwps, $p->p_lwps.lh_first, \
+			(char *) $p->p_comm
+		set $p = $p->p_list.le_next
+	end
+end
+document procs
+Show one line summary of all processes (ps)
+end
+
+define threadinfo
+	set $l = (struct lwp *)$arg0
+	set $pid = $arg1
+
+	set $j = 0
+	set $n = $l->l_name
+	#if ($n == 0)
+	#	set $n = (char *)""
+	#end
+	printf "           laddr   pid   lid     flag                 wchan\n"                       
+	printf "%16lx %5d %5d %8x      %16lx", \
+		$l, $pid, $l->l_lid, $l->l_flag, $l->l_wchan
+	if ($n != 0)
+		printf "  %16s", $n
+	end
+        printf "\n\n"
+        kvm proc $l
+	where
+        printf "\n"
+end
+document threadinfo
+Print out the stack and other data of a single thread.
+end
+
+define procthreadsaddr
+	set $p = (struct proc *)$arg0
+	set $l = $p->p_lwps.lh_first
+	set $nlwps = $p->p_nlwps
+	set $pid = $p->p_pid
+
+	printf "           paddr   pid     flag  stat    n         firstlwp          command\n"                       
+	printf "%16lx %5d %8x %4x %5d %16lx %16s\n\n", \
+		$p, $pid, $p->p_flag, $p->p_stat, \
+		$nlwps, $p->p_lwps.lh_first, \
+		(char *) $p->p_comm
+	while ($l)
+		threadinfo $l $pid
+		set $l = $l->l_sibling.le_next
+		set $j++
+	end
+end
+document procthreadsaddr
+Print out the stack of all threads in a particular process,
+found via struct proc * address.
+end
+
+define procthreadspid
+	set $pid = (unsigned)$arg0
+	set $p = allproc.lh_first
+	while ($p)
+		if ($pid == $p->p_pid)
+			procthreadsaddr $p
+			loop_break
 		end
-		while ($p)
-			set $l = $p->p_lwps.lh_first
-			set $j = 0
-			while ($j < $p->p_nlwps)
-			        printf "\n"
-			printf "proc: %16lx %5d %8x %4x %5d %16lx %s", \
-				$p, $p->p_pid, \
-				$p->p_flag, $p->p_stat, $p->p_nlwps, $p->p_lwps.lh_first, \
-				(char *) $p->p_comm
-			printf "\n"
-				printf "Thread: %16lx %5d %5d %8x %16lx\n", \
-					$l, $p->p_pid, $l->l_lid, $l->l_flag, $l->l_wchan
-			        kvm proc $l
-				where
-			        printf "\n"
-			        printf "\n"
-				set $l = $l->l_sibling.le_next
-				set $j++
-		end
-			set $p = $p->p_list.le_next
-		end
-		set $i++
+		set $p = $p->p_list.le_next
+	end
+end
+document procthreadspid
+Print out the stack of all threads in a particular process,
+found via PID.
+end
+
+define threadlist
+	set $p = allproc.lh_first
+	while ($p)
+		procthreadsaddr $p
+		set $p = $p->p_list.le_next
 	end
 end
 document threadlist
