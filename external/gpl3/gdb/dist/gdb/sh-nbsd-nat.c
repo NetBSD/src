@@ -40,8 +40,6 @@ struct sh_nbsd_nat_target final : public nbsd_nat_target
 
 static sh_nbsd_nat_target the_sh_nbsd_nat_target;
 
-#include "gregset.h"
- 
 /* Determine if PT_GETREGS fetches this register.  */
 #define GETREGS_SUPPLIES(gdbarch, regno) \
   (((regno) >= R0_REGNUM && (regno) <= (R0_REGNUM + 15)) \

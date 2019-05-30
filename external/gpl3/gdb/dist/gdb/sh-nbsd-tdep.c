@@ -217,10 +217,6 @@ shnbsd_init_abi (struct gdbarch_info info,
 void
 _initialize_shnbsd_tdep (void)
 {
-  /* BFD doesn't set a flavour for NetBSD style a.out core files.  */
-  gdbarch_register_osabi_sniffer (bfd_arch_sh, bfd_target_unknown_flavour,
-                                  shnbsd_core_osabi_sniffer);
-
   gdbarch_register_osabi (bfd_arch_sh, 0, GDB_OSABI_NETBSD,
 			  shnbsd_init_abi);
 }
