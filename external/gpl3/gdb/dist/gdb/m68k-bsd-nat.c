@@ -59,7 +59,7 @@ m68kbsd_fpregset_supplies_p (int regnum)
 static void
 m68kbsd_supply_gregset (struct regcache *regcache, const void *gregs)
 {
-  const char *regs = (const char *)gregs;
+  const gdb_byte *regs = (const gdb_byte *)gregs;
   int regnum;
 
   for (regnum = M68K_D0_REGNUM; regnum <= M68K_PC_REGNUM; regnum++)
@@ -72,7 +72,7 @@ static void
 m68kbsd_supply_fpregset (struct regcache *regcache, const void *fpregs)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  const char *regs = fpregs;
+  const gdb_byte *regs = (const gdb_byte *)fpregs;
   int regnum;
 
   for (regnum = M68K_FP0_REGNUM; regnum <= M68K_FPI_REGNUM; regnum++)
@@ -87,7 +87,7 @@ static void
 m68kbsd_collect_gregset (const struct regcache *regcache,
 			 void *gregs, int regnum)
 {
-  char *regs = (char *)gregs;
+  gdb_byte *regs = (gdb_byte *)gregs;
   int i;
 
   for (i = M68K_D0_REGNUM; i <= M68K_PC_REGNUM; i++)
@@ -105,7 +105,7 @@ m68kbsd_collect_fpregset (struct regcache *regcache,
 			  void *fpregs, int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  char *regs = fpregs;
+  gdb_byte *regs = (gdb_byte *)fpregs;
   int i;
 
   for (i = M68K_FP0_REGNUM; i <= M68K_FPI_REGNUM; i++)
@@ -220,7 +220,7 @@ m68kbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   tmp = pcb->pcb_ps & 0xffff;
   regcache->raw_supply (M68K_PS_REGNUM, &tmp);
 
-  read_memory (pcb->pcb_regs[PCB_REGS_FP] + 4, (char *) &tmp, sizeof tmp);
+  read_memory (pcb->pcb_regs[PCB_REGS_FP] + 4, (gdb_byte *) &tmp, sizeof tmp);
   regcache->raw_supply (M68K_PC_REGNUM, &tmp);
 
   return 1;
