@@ -32,7 +32,13 @@
 #include "vax-tdep.h"
 #include "inf-ptrace.h"
 
+#ifdef __NetBSD__
+#include "nbsd-nat.h"
+struct vax_bsd_nat_target final : public nbsd_nat_target
+#else
 struct vax_bsd_nat_target final : public inf_ptrace_target
+#endif
+
 {
   void fetch_registers (struct regcache *, int) override;
   void store_registers (struct regcache *, int) override;
@@ -45,7 +51,7 @@ static vax_bsd_nat_target the_vax_bsd_nat_target;
 static void
 vaxbsd_supply_gregset (struct regcache *regcache, const void *gregs)
 {
-  const gdb_byte *regs = gregs;
+  const gdb_byte *regs = (const gdb_byte *)gregs;
   int regnum;
 
   for (regnum = 0; regnum < VAX_NUM_REGS; regnum++)
@@ -59,7 +65,7 @@ static void
 vaxbsd_collect_gregset (const struct regcache *regcache,
 			void *gregs, int regnum)
 {
-  gdb_byte *regs = gregs;
+  gdb_byte *regs = (gdb_byte *)gregs;
   int i;
 
   for (i = 0; i <= VAX_NUM_REGS; i++)
@@ -77,9 +83,11 @@ void
 vax_bsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
   struct reg regs;
-  pid_t pid = regcache->ptid ().pid ();
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
 
-  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  inferior_ptid.lwp ()) == -1)
+  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  lwp) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   vaxbsd_supply_gregset (regcache, &regs);
@@ -92,14 +100,16 @@ void
 vax_bsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
   struct reg regs;
-  pid_t pid = regcache->ptid ().pid ();
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
 
-  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  inferior_ptid.lwp ()) == -1)
+  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   vaxbsd_collect_gregset (regcache, &regs, regnum);
 
-  if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  inferior_ptid.lwp ()) == -1)
+  if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  lwp) == -1)
     perror_with_name (_("Couldn't write registers"));
 }
 
