@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.61 2019/03/28 10:44:29 kardel Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.62 2019/05/30 21:44:49 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.61 2019/03/28 10:44:29 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.62 2019/05/30 21:44:49 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -458,7 +458,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 			cmdlen = UFI_COMMAND_LENGTH;	/* XXX */
 		else
 			cmdlen = sizeof(scbus->sc_sense_cmd);
-		if (periph->periph_version < 0x05) /* SPC-3 */
+		if (periph->periph_version < 0x04) /* SPC-2 */
 			senselen = 18;
 		else
 			senselen = sizeof(xs->sense);
@@ -498,6 +498,7 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 {
 	UMASSHIST_FUNC(); UMASSHIST_CALLED();
 	struct scsipi_xfer *xs = priv;
+	size_t extra;
 
 	DPRINTFM(UDMASS_CMD, "sc %#jx: xs=%#jx residue=%jd status=%jd",
 	    (uintptr_t)sc, (uintptr_t)xs, residue, status);
@@ -507,7 +508,9 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	case STATUS_CMD_OK:
 	case STATUS_CMD_UNKNOWN:
 		/* getting sense data succeeded */
-		if (residue == 0 || residue == 14)/* XXX */
+		extra = sizeof(xs->sense.scsi_sense)
+		      - sizeof(xs->sense.scsi_sense.extra_bytes);
+		if (residue <= extra)
 			xs->error = XS_SENSE;
 		else
 			xs->error = XS_SHORTSENSE;
