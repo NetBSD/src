@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1372 2019/04/15 09:01:28 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1373 2019/05/30 16:04:04 mlelstv Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -7692,6 +7692,7 @@ product VIATECH VT8237A_SATA_2	0x5337	VT8237A Integrated SATA Controller
 product VIATECH VT3351_IOAPIC	0x5351	VT3351 I/O APIC Interrupt Controller
 product VIATECH P4M900_IOAPIC	0x5364	CN896/P4M900 IOAPIC
 product VIATECH VT8237S_SATA	0x5372	VT8237S Integrated SATA Controller
+product VIATECH VT8237S_SATA_2 0x7372  VT8237S Integrated SATA Controller
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8251_SATA	0x6287	VT8251 Integrated SATA Controller
 product VIATECH P4M900_6	0x6364	CN896/P4M900 Security Device
@@ -7702,6 +7703,7 @@ product VIATECH P4M900_7	0x7364	CN896/P4M900 Host Bridge
 product VIATECH VT8231		0x8231	VT8231 PCI-ISA Bridge
 product VIATECH VT8231_PWR	0x8235	VT8231 Power Management Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 (Apollo KT133) PCI to AGP Bridge
+product VIATECH VX855          0x8409  VX855  PCI-LPC Bridge
 product VIATECH CX700		0x8324	CX700 PCI-LPC Bridge
 product VIATECH VX800		0x8353	VX800/VX820 PCI-LPC Bridge
 product VIATECH VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
