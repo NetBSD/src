@@ -1,5 +1,4 @@
-/* Native-dependent code for BSD Unix running on ARM's, for GDB.
-
+/*
    Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -40,16 +39,6 @@
 #include "inf-ptrace.h"
 #include "bsd-kvm.h"
 
-#ifndef HAVE_GREGSET_T
-typedef struct reg gregset_t;
-#endif
-
-#ifndef HAVE_FPREGSET_T
-typedef struct fpreg fpregset_t;
-#endif
-
-#include "gregset.h"
-
 class arm_nbsd_nat_target final : public nbsd_nat_target
 {
 public:
@@ -61,6 +50,10 @@ public:
 static arm_nbsd_nat_target the_arm_nbsd_nat_target;
 
 extern int arm_apcs_32;
+
+#define FPSCR(r) ((char *) &(r)->fpr_vfp.vfp_fpscr)
+#define FPREG(r, regno) \
+    ((char *) (r)->fpr_vfp.vfp_regs + 8 * ((regno) - ARM_D0_REGNUM))
 
 static int
 armnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
@@ -135,14 +128,14 @@ arm_supply_vfpregset (struct regcache *regcache, struct fpreg *vfpregset)
 {
   int regno;
 
-  for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
-    regcache->raw_supply (regno, (char *) &fparegset->fpr[regno - ARM_F0_REGNUM]);
+  for (regno = ARM_D0_REGNUM; regno < 16 + ARM_D0_REGNUM; regno++)
+    regcache->raw_supply (regno, FPREG(vfpregset, regno));
 
-  regcache->raw_supply (ARM_FPS_REGNUM, (char *) &fparegset->fpr_fpsr);
+  regcache->raw_supply (ARM_FPSCR_REGNUM, FPSCR(vfpregset));
 }
 
 static void
-arm_nbsd_nat_fetch_register (struct regcache *regcache, int regno)
+fetch_register (struct regcache *regcache, int regno)
 {
   struct reg regs;
   ptid_t ptid = regcache->ptid ();
@@ -211,11 +204,13 @@ fetch_regs (struct regcache *regcache)
 static void
 fetch_fp_register (struct regcache *regcache, int regno)
 {
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
   struct fpreg fpregs;
   int ret;
 
-  ret = ptrace (PT_GETFPREGS, pid,
-		(PTRACE_TYPE_ARG3) &fpregs, lwp); 
+  ret = ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp); 
 
   if (ret < 0)
     {
@@ -225,14 +220,13 @@ fetch_fp_register (struct regcache *regcache, int regno)
 
   switch (regno)
     {
-    case ARM_FPS_REGNUM:
-      regcache->raw_supply (ARM_FPS_REGNUM,
-			    (char *) &fpregs.fpr_fpsr);
+    case ARM_FPSCR_REGNUM:
+      regcache->raw_supply (ARM_FPSCR_REGNUM, FPSCR(&fpregs));
       break;
 
     default:
-      regcache->raw_supply
-	(regno, (char *) &fpregs.fpr[regno - ARM_F0_REGNUM]);
+      regno += ARM_D0_REGNUM;
+      regcache->raw_supply (regno, FPREG(&fpregs, regno));
       break;
     }
 }
@@ -407,11 +401,11 @@ store_fp_register (const struct regcache *regcache, int regno)
   switch (regno)
     {
     case ARM_FPS_REGNUM:
-      regcache->raw_collect (ARM_FPS_REGNUM, (char *) &fpregs.fpr_fpsr);
+      regcache->raw_collect (ARM_FPS_REGNUM, FPSCR(&fpregs));
       break;
 
     default:
-      regcache->raw_collect (regno, (char *) &fpregs.fpr[regno - ARM_F0_REGNUM]);
+      regcache->raw_collect (regno, FPREG(&fpregs, regno));
       break;
     }
 
@@ -432,10 +426,10 @@ store_fp_regs (const struct regcache *regcache)
   int regno;
 
 
-  for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
-    regcache->raw_collect (regno, (char *) &fpregs.fpr[regno - ARM_F0_REGNUM]);
+  for (regno = ARM_D0_REGNUM; regno < 16 + ARM_D0_REGNUM; regno++)
+    regcache->raw_collect (regno, FPREG(&fpregs, regno));
 
-  regcache->raw_collect (ARM_FPS_REGNUM, (char *) &fpregs.fpr_fpsr);
+  regcache->raw_collect (ARM_FPSCR_REGNUM, FPSCR(&fpregs));
 
   ret = ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp);
 
