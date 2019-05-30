@@ -131,7 +131,7 @@ _initialize_amd64nbsd_nat (void)
   amd64_native_gregset32_num_regs = ARRAY_SIZE (amd64nbsd32_r_reg_offset);
   amd64_native_gregset64_reg_offset = amd64nbsd_r_reg_offset;
 
-  bsd_kvm_add_target (amd64nbsd_supply_pcb);
-
   add_inf_child_target (&the_amd64_nbsd_nat_target);
+
+  bsd_kvm_add_target (amd64nbsd_supply_pcb);
 }
