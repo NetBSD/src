@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.2 2019/05/24 14:28:48 nonaka Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.3 2019/05/30 11:15:29 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.2 2019/05/24 14:28:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.3 2019/05/30 11:15:29 nonaka Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -43,6 +43,7 @@ __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:1
 #include "lapic.h"
 #include "genfb.h"
 #include "opt_ddb.h"
+#include "vmbus.h"
 #include "wsdisplay.h"
 #endif
 
@@ -988,6 +989,7 @@ hyperv_modcmd(modcmd_t cmd, void *aux)
 	return rv;
 }
 
+#if NVMBUS > 0
 /*
  * genfb at vmbus
  */
@@ -1086,10 +1088,12 @@ populate_fbinfo(device_t dev, prop_dictionary_t dict)
 	}
 #endif
 }
+#endif
 
 device_t
 device_hyperv_register(device_t dev, void *aux)
 {
+#if NVMBUS > 0
 	device_t parent = device_parent(dev);
 
 	if (parent && device_is_a(parent, "vmbus") && !x86_found_console) {
@@ -1128,5 +1132,6 @@ device_hyperv_register(device_t dev, void *aux)
 			return NULL;
 		}
 	}
+#endif
 	return NULL;
 }
