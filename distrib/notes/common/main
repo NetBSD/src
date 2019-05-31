@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.535.2.4 2019/05/14 17:18:20 martin Exp $
+.\"	$NetBSD: main,v 1.535.2.5 2019/05/31 08:37:28 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -491,7 +491,7 @@ It represents a selected subset of fixes deemed important for
 security or stability reasons.
 The complete list of changes can be found in the
 CHANGES-8.1:
-.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.1_RC1/CHANGES-8.1
+.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.1/CHANGES-8.1
 file in the top level directory of the NetBSD
 \*V release
 tree.
