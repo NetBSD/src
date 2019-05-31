@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.8 2018/08/27 13:36:14 riastradh Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.9 2019/05/31 01:58:07 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.8 2018/08/27 13:36:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.9 2019/05/31 01:58:07 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -163,7 +163,7 @@ radeonfb_setconfig_task(struct radeon_task *task)
 	enum { CONS_VGA, CONS_GENFB, CONS_NONE } what_was_cons;
 	static const struct genfb_ops zero_genfb_ops;
 	struct genfb_ops genfb_ops = zero_genfb_ops;
-	int error;
+	int error, n;
 
 	KASSERT(sc->sc_scheduled);
 
@@ -194,6 +194,19 @@ radeonfb_setconfig_task(struct radeon_task *task)
 	} else {
 		what_was_cons = CONS_NONE;
 		prop_dictionary_set_bool(dict, "is_console", false);
+	}
+
+	/* Make the first EDID we find available to wsfb */
+	for (n = 0; n < rfa->rfa_fb_helper->connector_count; n++) {
+		struct drm_connector *connector =
+		    rfa->rfa_fb_helper->connector_info[n]->connector;
+		struct drm_property_blob *edid = connector->edid_blob_ptr;
+		if (edid && edid->data) {
+			prop_data_t edid_data =
+			    prop_data_create_data(edid->data, edid->length);
+			prop_dictionary_set(dict, "EDID", edid_data);
+			break;
+		}
 	}
 
 	sc->sc_genfb.sc_dev = sc->sc_dev;
