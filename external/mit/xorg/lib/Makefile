@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2019/04/16 21:20:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.50 2019/05/31 11:13:27 maya Exp $
 
 # build libraries for xorg
 
@@ -19,11 +19,13 @@ SUBDIR+=libdrm_radeon pixman
 SUBDIR+=xkeyboard-config
 .endif
 SUBDIR+=libxcb \
+	.WAIT \
+	libX11 \
 	.WAIT
 .if !defined(MLIBDIR)
 SUBDIR+=${EXTRA_DRI_DIRS} dri${OLD_PREFIX} gallium${OLD_PREFIX}
 .endif
-SUBDIR+=fontconfig libSM libX11 \
+SUBDIR+=fontconfig libSM \
 	.WAIT \
 	libXcomposite libXdamage libXext libXfixes libXt \
 	libxkbfile libepoxy \
