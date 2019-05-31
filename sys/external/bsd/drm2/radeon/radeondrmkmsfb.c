@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.11 2019/05/31 03:28:48 maya Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.12 2019/05/31 03:41:32 maya Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.11 2019/05/31 03:28:48 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.12 2019/05/31 03:41:32 maya Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -192,6 +192,9 @@ radeonfb_drmfb_mmapfb(struct drmfb_softc *drmfb, off_t offset, int prot)
 	if (offset < 0)
 		return -1;
 
+	const unsigned num_pages __diagused = rbo->tbo.num_pages;
+
+	KASSERT(offset < (num_pages << PAGE_SHIFT));
 	KASSERT(rbo->tbo.mem.bus.is_iomem);
 
 	if (ISSET(rbo->tbo.mem.placement, TTM_PL_FLAG_WC))
