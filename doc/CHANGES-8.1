@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.148 2019/05/29 16:03:30 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.149 2019/05/31 02:49:45 msaitoh Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -3222,3 +3222,7 @@ sys/net/rtsock.c				1.250
 	Don't take softnet_lock in sysctl_rtable.
 	[ozaki-r, ticket #1276]
 
+sys/arch/sparc64/sparc64/db_trace.c		1.51-1.53
+
+	Fix kernel debugger stack trace on sparc64.
+	[martin, ticket #1274]
