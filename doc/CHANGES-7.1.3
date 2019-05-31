@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.3,v 1.1.2.51 2019/05/29 15:54:58 martin Exp $
+# $NetBSD: CHANGES-7.1.3,v 1.1.2.52 2019/05/31 08:15:11 martin Exp $
 
 A complete list of changes from the NetBSD 7.1.2 release to the NetBSD 7.1.3
 release:
@@ -511,4 +511,9 @@ sys/ufs/ffs/ffs_alloc.c				1.164
 	PR 53990, PR 52380, PR 52102:
 	Fix rare allocation botch in ffs_nodealloccg().
 	[kardel, ticket #1697]
+
+sys/dev/scsipi/scsipi_ioctl.c			1.72 (patch)
+
+	Use correct size when copying outgoing sense data.
+	[mlelstv, ticket #1698]
 
