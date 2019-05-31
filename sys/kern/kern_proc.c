@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.228 2019/03/01 11:06:57 pgoyette Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.229 2019/05/31 23:01:39 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.228 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.229 2019/05/31 23:01:39 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -246,6 +246,7 @@ static kauth_listener_t proc_listener;
 
 static void fill_proc(const struct proc *, struct proc *, bool);
 static int fill_pathname(struct lwp *, pid_t, void *, size_t *);
+static int fill_cwd(struct lwp *, pid_t, void *, size_t *);
 
 static int
 proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -1945,6 +1946,12 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		sysctl_relock();
 		return error;
 
+	case KERN_PROC_CWD:
+		sysctl_unlock();
+		error = fill_cwd(l, pid, oldp, oldlenp);
+		sysctl_relock();
+		return error;
+
 	case KERN_PROC_ARGV:
 	case KERN_PROC_NARGV:
 	case KERN_PROC_ENV:
@@ -2574,6 +2581,58 @@ fill_pathname(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	*oldlenp = len;
 	if (pid != -1)
 		mutex_exit(p->p_lock);
+	return error;
+}
+
+static int
+fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
+{
+	int error;
+	struct proc *p;
+	char *path;
+	char *bp, *bend;
+	struct cwdinfo *cwdi;
+	struct vnode *vp;
+	size_t len, lenused;
+	const int flags = GETCWD_CHECK_ACCESS;
+
+	if ((error = proc_find_locked(l, &p, pid)) != 0)
+		return error;
+
+	len = MAXPATHLEN * 4;
+	if (*oldlenp < 2) {
+		if (pid != -1)
+			mutex_exit(p->p_lock);
+		return ERANGE;
+	}
+
+	path = kmem_alloc(len, KM_SLEEP);
+
+	bp = &path[len];
+	bend = bp;
+	*(--bp) = '\0';
+
+	cwdi = p->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	vp = cwdi->cwdi_cdir;
+	error = getcwd_common(vp, NULL, &bp, path, len/2, flags, l);
+	rw_exit(&cwdi->cwdi_lock);
+
+	if (error)
+		goto out;
+
+	lenused = bend - bp;
+
+	if (oldp != NULL) {
+		error = sysctl_copyout(l, bp, oldp, lenused);
+		if (error == 0 && *oldlenp < lenused)
+			error = ENOSPC;
+	}
+	*oldlenp = lenused;
+out:
+	if (pid != -1)
+		mutex_exit(p->p_lock);
+	kmem_free(path, len);
 	return error;
 }
 
