@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.30 2019/05/31 05:47:22 mlelstv Exp $
+.\"	$NetBSD: atactl.8,v 1.31 2019/05/31 16:38:27 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,8 @@ It is used by specifying a device or bus to manipulate,
 the command to perform, and any arguments the command may require.
 .Pp
 You may also control devices which are inside a SCSI enclosure, this
-includes many USB disks. In this case ATA commands are passed through
+includes many USB disks.
+In this case ATA commands are passed through
 the SCSI layer using SATL commands.
 .Sh DEVICE COMMANDS
 The following commands may be used on IDE and ATA devices.
