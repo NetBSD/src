@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb.c,v 1.4 2018/08/27 13:36:14 riastradh Exp $	*/
+/*	$NetBSD: drmfb.c,v 1.5 2019/05/31 01:30:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.4 2018/08/27 13:36:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.5 2019/05/31 01:30:08 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -92,7 +92,7 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 	struct genfb_ops genfb_ops = zero_genfb_ops;
 	enum { CONS_VGA, CONS_GENFB, CONS_NONE } what_was_cons;
 	bool is_console;
-	int error;
+	int error, n;
 
 	/* genfb requires this.  */
 	KASSERTMSG((void *)&sc->sc_genfb == device_private(da->da_dev),
@@ -133,6 +133,19 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 		}
 	} else {
 		what_was_cons = CONS_NONE;
+	}
+
+	/* Make the first EDID we find available to wsfb */
+	for (n = 0; n < da->da_fb_helper->connector_count; n++) {
+		struct drm_connector *connector =
+		    da->da_fb_helper->connector_info[n]->connector;
+		struct drm_property_blob *edid = connector->edid_blob_ptr;
+		if (edid && edid->data) {
+			prop_data_t edid_data =
+			    prop_data_create_data(edid->data, edid->length);
+			prop_dictionary_set(dict, "EDID", edid_data);
+			break;
+		}
 	}
 
 	sc->sc_genfb.sc_dev = sc->sc_da.da_dev;
