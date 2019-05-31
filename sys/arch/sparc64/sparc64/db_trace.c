@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.50 2013/03/04 20:17:46 christos Exp $ */
+/*	$NetBSD: db_trace.c,v 1.50.30.1 2019/05/31 02:48:41 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50 2013/03/04 20:17:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50.30.1 2019/05/31 02:48:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50 2013/03/04 20:17:46 christos Exp $
 #include <sys/systm.h>
 #include <machine/db_machdep.h>
 #include <machine/ctlreg.h>
+#include <machine/vmparam.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_proc.h>
@@ -163,7 +164,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (kernel_only) {
 			if (pc < KERNBASE || pc >= KERNEND)
 				break;
-			if (frame < KERNBASE || frame >= EINTSTACK)
+			if (frame < KERNBASE || frame >= VM_MAX_KERNEL_ADDRESS)
 				break;
 		} else {
 			if (frame == 0 || frame == (vaddr_t)-1)
