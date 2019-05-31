@@ -1,4 +1,4 @@
-#	$NetBSD: t_rtable.sh,v 1.4 2018/11/09 06:45:03 ozaki-r Exp $
+#	$NetBSD: t_rtable.sh,v 1.5 2019/05/31 15:36:10 gson Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -447,6 +447,7 @@ bridge_rtable_manyaddrs_head()
 
 	atf_set "descr" "Tests brconfig addr under many MAC addresses"
 	atf_set "require.progs" "rump_server"
+	atf_set "timeout" "1200"
 }
 
 bridge_rtable_manyaddrs_body()
