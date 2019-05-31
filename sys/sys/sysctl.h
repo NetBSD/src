@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.229 2018/12/05 18:16:51 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.230 2019/05/31 23:01:39 kamil Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -585,6 +585,7 @@ struct kinfo_lwp {
 #define	KERN_PROC_ENV		3	/* environ */
 #define	KERN_PROC_NENV		4	/* number of strings in above */
 #define	KERN_PROC_PATHNAME 	5	/* path to executable */
+#define	KERN_PROC_CWD 		6	/* current working dir */
 
 /*
  * KERN_SYSVIPC subtypes
