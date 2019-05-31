@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb.c,v 1.5 2019/05/31 01:30:08 jmcneill Exp $	*/
+/*	$NetBSD: drmfb.c,v 1.6 2019/05/31 10:47:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.5 2019/05/31 01:30:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.6 2019/05/31 10:47:48 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -144,6 +144,7 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 			prop_data_t edid_data =
 			    prop_data_create_data(edid->data, edid->length);
 			prop_dictionary_set(dict, "EDID", edid_data);
+			prop_object_release(edid_data);
 			break;
 		}
 	}
