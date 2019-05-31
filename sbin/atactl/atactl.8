@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.29 2019/03/03 04:51:57 mrg Exp $
+.\"	$NetBSD: atactl.8,v 1.30 2019/05/31 05:47:22 mlelstv Exp $
 .\"
 .\" Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,6 +48,10 @@ control devices which reside on standard IDE and ATA controllers, or
 the ATA bus itself.
 It is used by specifying a device or bus to manipulate,
 the command to perform, and any arguments the command may require.
+.Pp
+You may also control devices which are inside a SCSI enclosure, this
+includes many USB disks. In this case ATA commands are passed through
+the SCSI layer using SATL commands.
 .Sh DEVICE COMMANDS
 The following commands may be used on IDE and ATA devices.
 Note that not all devices support all commands.
@@ -279,6 +283,8 @@ command written by
 significantly enhanced the
 .Cm smart status
 support.
+.An Michael van Elst
+added support for SATL.
 .Sh BUGS
 The output from the
 .Cm identify
@@ -295,3 +301,5 @@ The
 .Cm smart status
 command currently guesses the vendor attribute name table to use,
 and may be wrong or miss supported devices.
+.Pp
+SATL bus commands don't work yet.
