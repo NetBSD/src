@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.9 2019/05/31 01:58:07 jmcneill Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.10 2019/05/31 02:35:08 maya Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,36 +31,15 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.9 2019/05/31 01:58:07 jmcneill Exp $");
-
-#ifdef _KERNEL_OPT
-#include "vga.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.10 2019/05/31 02:35:08 maya Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
 
-#include <dev/pci/pciio.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-
-#include <dev/pci/wsdisplay_pci.h>
-#include <dev/wsfb/genfbvar.h>
-
-#if NVGA > 0
-/*
- * XXX All we really need is vga_is_console from vgavar.h, but the
- * header files are missing their own dependencies, so we need to
- * explicitly drag in the other crap.
- */
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
-#endif
-
 #include <drm/drmP.h>
 #include <drm/drm_fb_helper.h>
+#include <drm/drmfb.h>
+#include <drm/drmfb_pci.h>
 
 #include <radeon.h>
 #include "radeon_drv.h"
@@ -68,11 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.9 2019/05/31 01:58:07 jmcneill 
 #include "radeondrmkmsfb.h"
 
 struct radeonfb_softc {
-	/* XXX genfb requires the genfb_softc to be first.  */
-	struct genfb_softc		sc_genfb;
+	struct drmfb_softc		sc_drmfb; /* XXX Must be first.  */
 	device_t			sc_dev;
 	struct radeonfb_attach_args	sc_rfa;
-	struct radeon_task		sc_setconfig_task;
+	struct radeon_task		sc_attach_task;
 	bool				sc_scheduled:1;
 	bool				sc_attached:1;
 };
@@ -81,22 +59,20 @@ static int	radeonfb_match(device_t, cfdata_t, void *);
 static void	radeonfb_attach(device_t, device_t, void *);
 static int	radeonfb_detach(device_t, int);
 
-static void	radeonfb_setconfig_task(struct radeon_task *);
+static void	radeonfb_attach_task(struct radeon_task *);
 
-static int	radeonfb_genfb_ioctl(void *, void *, unsigned long, void *,
-		    int, struct lwp *);
-static paddr_t	radeonfb_genfb_mmap(void *, void *, off_t, int);
-static int	radeonfb_genfb_enable_polling(void *);
-static int	radeonfb_genfb_disable_polling(void *);
-static bool	radeonfb_genfb_shutdown(device_t, int);
-static bool	radeonfb_genfb_setmode(struct genfb_softc *, int);
-
-static const struct genfb_mode_callback radeonfb_genfb_mode_callback = {
-	.gmc_setmode = radeonfb_genfb_setmode,
-};
+static paddr_t	radeonfb_drmfb_mmapfb(struct drmfb_softc *, off_t, int);
+static bool	radeonfb_shutdown(device_t, int);
 
 CFATTACH_DECL_NEW(radeondrmkmsfb, sizeof(struct radeonfb_softc),
     radeonfb_match, radeonfb_attach, radeonfb_detach, NULL);
+
+static const struct drmfb_params radeonfb_drmfb_params = {
+	.dp_mmapfb = radeonfb_drmfb_mmapfb,
+	.dp_mmap = drmfb_pci_mmap,
+	.dp_ioctl = drmfb_pci_ioctl,
+	.dp_is_vga_console = drmfb_pci_is_vga_console,
+};
 
 static int
 radeonfb_match(device_t parent, cfdata_t match, void *aux)
@@ -120,8 +96,8 @@ radeonfb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	radeon_task_init(&sc->sc_setconfig_task, &radeonfb_setconfig_task);
-	error = radeon_task_schedule(parent, &sc->sc_setconfig_task);
+	radeon_task_init(&sc->sc_attach_task, &radeonfb_attach_task);
+	error = radeon_task_schedule(parent, &sc->sc_attach_task);
 	if (error) {
 		aprint_error_dev(self, "failed to schedule mode set: %d\n",
 		    error);
@@ -139,12 +115,21 @@ static int
 radeonfb_detach(device_t self, int flags)
 {
 	struct radeonfb_softc *const sc = device_private(self);
+	int error;
 
 	if (sc->sc_scheduled)
 		return EBUSY;
+;
 
 	if (sc->sc_attached) {
-		/* XXX genfb detach?  Help?  */
+		pmf_device_deregister(self);
+		error = drmfb_detach(&sc->sc_drmfb, flags);
+		if (error) {
+			/* XXX Ugh.  */
+			(void)pmf_device_register1(self, NULL, NULL,
+			    &radeonfb_shutdown);
+			return error;
+		}
 		sc->sc_attached = false;
 	}
 
@@ -152,238 +137,70 @@ radeonfb_detach(device_t self, int flags)
 }
 
 static void
-radeonfb_setconfig_task(struct radeon_task *task)
+radeonfb_attach_task(struct radeon_task *task)
 {
 	struct radeonfb_softc *const sc = container_of(task,
-	    struct radeonfb_softc, sc_setconfig_task);
-	const prop_dictionary_t dict = device_properties(sc->sc_dev);
+	    struct radeonfb_softc, sc_attach_task);
 	const struct radeonfb_attach_args *const rfa = &sc->sc_rfa;
-	const struct drm_fb_helper_surface_size *const sizes =
-	    &rfa->rfa_fb_sizes;
-	enum { CONS_VGA, CONS_GENFB, CONS_NONE } what_was_cons;
-	static const struct genfb_ops zero_genfb_ops;
-	struct genfb_ops genfb_ops = zero_genfb_ops;
-	int error, n;
+	const struct drmfb_attach_args da = {
+		.da_dev = sc->sc_dev,
+		.da_fb_helper = rfa->rfa_fb_helper,
+		.da_fb_sizes = &rfa->rfa_fb_sizes,
+		.da_fb_vaddr = __UNVOLATILE(rfa->rfa_fb_ptr),
+		.da_fb_linebytes = rfa->rfa_fb_linebytes,
+		.da_params = &radeonfb_drmfb_params,
+	};
+	int error;
 
 	KASSERT(sc->sc_scheduled);
 
-	/* XXX Ugh...  Pass these parameters some other way!  */
-	prop_dictionary_set_uint32(dict, "width", sizes->surface_width);
-	prop_dictionary_set_uint32(dict, "height", sizes->surface_height);
-	prop_dictionary_set_uint8(dict, "depth", sizes->surface_bpp);
-	prop_dictionary_set_uint16(dict, "linebytes", rfa->rfa_fb_linebytes);
-	prop_dictionary_set_uint32(dict, "address", 0); /* XXX >32-bit */
-	CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-	prop_dictionary_set_uint64(dict, "virtual_address",
-	    (uint64_t)(uintptr_t)rfa->rfa_fb_ptr);
 
-	prop_dictionary_set_uint64(dict, "mode_callback",
-	    (uint64_t)(uintptr_t)&radeonfb_genfb_mode_callback);
-
-	/* XXX Whattakludge!  */
-#if NVGA > 0
-	if (vga_is_console(rfa->rfa_fb_helper->dev->pdev->pd_pa.pa_iot, -1)) {
-		what_was_cons = CONS_VGA;
-		prop_dictionary_set_bool(dict, "is_console", true);
-		vga_cndetach();
-	} else
-#endif
-	if (genfb_is_console() && genfb_is_enabled()) {
-		what_was_cons = CONS_GENFB;
-		prop_dictionary_set_bool(dict, "is_console", true);
-	} else {
-		what_was_cons = CONS_NONE;
-		prop_dictionary_set_bool(dict, "is_console", false);
-	}
-
-	/* Make the first EDID we find available to wsfb */
-	for (n = 0; n < rfa->rfa_fb_helper->connector_count; n++) {
-		struct drm_connector *connector =
-		    rfa->rfa_fb_helper->connector_info[n]->connector;
-		struct drm_property_blob *edid = connector->edid_blob_ptr;
-		if (edid && edid->data) {
-			prop_data_t edid_data =
-			    prop_data_create_data(edid->data, edid->length);
-			prop_dictionary_set(dict, "EDID", edid_data);
-			break;
-		}
-	}
-
-	sc->sc_genfb.sc_dev = sc->sc_dev;
-	genfb_init(&sc->sc_genfb);
-	genfb_ops.genfb_ioctl = radeonfb_genfb_ioctl;
-	genfb_ops.genfb_mmap = radeonfb_genfb_mmap;
-	genfb_ops.genfb_enable_polling = radeonfb_genfb_enable_polling;
-	genfb_ops.genfb_disable_polling = radeonfb_genfb_disable_polling;
-
-	error = genfb_attach(&sc->sc_genfb, &genfb_ops);
+	error = drmfb_attach(&sc->sc_drmfb, &da);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "failed to attach genfb: %d\n",
+		aprint_error_dev(sc->sc_dev, "failed to attach drmfb: %d\n",
 		    error);
-		goto fail0;
+		return;
 	}
-	sc->sc_attached = true;
-
-	if (!pmf_device_register1(sc->sc_dev, NULL, NULL,
-	    radeonfb_genfb_shutdown))
+	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, &radeonfb_shutdown))
 		aprint_error_dev(sc->sc_dev,
-		    "couldn't establish power handler\n");
+		    "failed to register shutdown handler\n");
 
-	/* Success!  */
-	sc->sc_scheduled = false;
-	return;
-
-fail0:	/* XXX Restore console...  */
-	switch (what_was_cons) {
-	case CONS_VGA:
-		break;
-	case CONS_GENFB:
-		break;
-	case CONS_NONE:
-		break;
-	default:
-		break;
-	}
+	sc->sc_attached = true;
 }
 
-static int
-radeonfb_genfb_ioctl(void *v, void *vs, unsigned long cmd, void *data, int flag,
-    struct lwp *l)
+static bool
+radeonfb_shutdown(device_t self, int flags)
 {
-	struct genfb_softc *const genfb = v;
-	struct radeonfb_softc *const sc = container_of(genfb,
-	    struct radeonfb_softc, sc_genfb);
-	struct drm_device *const dev = sc->sc_rfa.rfa_fb_helper->dev;
-	const struct pci_attach_args *const pa = &dev->pdev->pd_pa;
+	struct radeonfb_softc *const sc = device_private(self);
 
-	switch (cmd) {
-	case WSDISPLAYIO_GTYPE:
-		*(unsigned int *)data = WSDISPLAY_TYPE_PCIVGA;
-		return 0;
-
-	/* PCI config read/write passthrough.  */
-	case PCI_IOC_CFGREAD:
-	case PCI_IOC_CFGWRITE:
-		return pci_devioctl(pa->pa_pc, pa->pa_tag, cmd, data, flag, l);
-
-	case WSDISPLAYIO_GET_BUSID:
-		return wsdisplayio_busid_pci(dev->dev, pa->pa_pc, pa->pa_tag,
-		    data);
-
-	default:
-		return EPASSTHROUGH;
-	}
+	return drmfb_shutdown(&sc->sc_drmfb, flags);
 }
 
 static paddr_t
-radeonfb_genfb_mmap(void *v, void *vs, off_t offset, int prot)
+radeonfb_drmfb_mmapfb(struct drmfb_softc *drmfb, off_t offset, int prot)
 {
-	struct genfb_softc *const genfb = v;
-	struct radeonfb_softc *const sc = container_of(genfb,
-	    struct radeonfb_softc, sc_genfb);
+	struct radeonfb_softc *const sc = container_of(drmfb,
+	    struct radeonfb_softc, sc_drmfb);
 	struct drm_fb_helper *const helper = sc->sc_rfa.rfa_fb_helper;
 	struct drm_framebuffer *const fb = helper->fb;
 	struct radeon_framebuffer *const rfb = container_of(fb,
 	    struct radeon_framebuffer, base);
 	struct drm_gem_object *const gobj = rfb->obj;
 	struct radeon_bo *const rbo = gem_to_radeon_bo(gobj);
-	struct drm_device *const dev = helper->dev;
-	const struct pci_attach_args *const pa = &dev->pdev->pd_pa;
-	unsigned int i;
+	int flags = 0;
 
 	if (offset < 0)
 		return -1;
 
-	/* Treat low memory as the framebuffer itself.  */
-	if (offset < genfb->sc_fbsize) {
-		const unsigned num_pages __diagused = rbo->tbo.num_pages;
-		int flags = 0;
+	const unsigned num_pages __diagused = rbo->tbo.num_pages;
 
-		KASSERT(genfb->sc_fbsize == (num_pages << PAGE_SHIFT));
-		KASSERT(rbo->tbo.mem.bus.is_iomem);
+	KASSERT(offset == (num_pages << PAGE_SHIFT));
+	KASSERT(rbo->tbo.mem.bus.is_iomem);
 
-		if (ISSET(rbo->tbo.mem.placement, TTM_PL_FLAG_WC))
-			flags |= BUS_SPACE_MAP_PREFETCHABLE;
+	if (ISSET(rbo->tbo.mem.placement, TTM_PL_FLAG_WC))
+		flags |= BUS_SPACE_MAP_PREFETCHABLE;
 
-		return bus_space_mmap(rbo->tbo.bdev->memt,
-		    rbo->tbo.mem.bus.base, rbo->tbo.mem.bus.offset + offset,
-		    prot, flags);
-	}
-
-	/* XXX Cargo-culted from genfb_pci.  */
-	if (kauth_authorize_machdep(kauth_cred_get(),
-		KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0) {
-		aprint_normal_dev(dev->dev, "mmap at %"PRIxMAX" rejected\n",
-		    (uintmax_t)offset);
-		return -1;
-	}
-
-	for (i = 0; PCI_BAR(i) <= PCI_MAPREG_ROM; i++) {
-		pcireg_t type;
-		bus_addr_t addr;
-		bus_size_t size;
-		int flags;
-
-		/* Interrogate the BAR.  */
-		if (!pci_mapreg_probe(pa->pa_pc, pa->pa_tag, PCI_BAR(i),
-			&type))
-			continue;
-		if (PCI_MAPREG_TYPE(type) != PCI_MAPREG_TYPE_MEM)
-			continue;
-		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, PCI_BAR(i), type,
-			&addr, &size, &flags))
-			continue;
-
-		/* Try to map it if it's in range.  */
-		if ((addr <= offset) && (offset < (addr + size)))
-			return bus_space_mmap(pa->pa_memt, addr,
-			    (offset - addr), prot, flags);
-
-		/* Skip a slot if this was a 64-bit BAR.  */
-		if ((PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM) &&
-		    (PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT))
-			i += 1;
-	}
-
-	/* Failure!  */
-	return -1;
-}
-
-static int
-radeonfb_genfb_enable_polling(void *cookie)
-{
-	struct genfb_softc *const genfb = cookie;
-	struct radeonfb_softc *const sc = container_of(genfb,
-	    struct radeonfb_softc, sc_genfb);
-
-	return drm_fb_helper_debug_enter_fb(sc->sc_rfa.rfa_fb_helper);
-}
-
-static int
-radeonfb_genfb_disable_polling(void *cookie)
-{
-	struct genfb_softc *const genfb = cookie;
-	struct radeonfb_softc *const sc = container_of(genfb,
-	    struct radeonfb_softc, sc_genfb);
-
-	return drm_fb_helper_debug_leave_fb(sc->sc_rfa.rfa_fb_helper);
-}
-
-static bool
-radeonfb_genfb_shutdown(device_t self, int flags)
-{
-	genfb_enable_polling(self);
-	return true;
-}
-
-static bool
-radeonfb_genfb_setmode(struct genfb_softc *genfb, int mode)
-{
-	struct radeonfb_softc *sc = (struct radeonfb_softc *)genfb;
-	struct drm_fb_helper *fb_helper = sc->sc_rfa.rfa_fb_helper;
-
-	if (mode == WSDISPLAYIO_MODE_EMUL)
-		drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper);
-
-	return true;
+	return bus_space_mmap(rbo->tbo.bdev->memt,
+	    rbo->tbo.mem.bus.base, rbo->tbo.mem.bus.offset + offset,
+	    prot, flags);
 }
