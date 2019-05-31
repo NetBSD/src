@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.550 2018/11/13 18:48:25 scole Exp $
+.\"	$NetBSD: main,v 1.551 2019/05/31 13:38:57 maya Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -157,8 +157,7 @@ The default kernel on CD-ROMs has ACPI enabled.
 This is known to cause issues on a few machines which have buggy ACPI
 implementations.
 .Pp
-To boot with ACPI disabled, choose the "no ACPI" option from the boot menu,
-or interrupt the menu and enter the
+To boot with ACPI disabled, interrupt the menu and enter the
 .Nx
 boot prompt.
 Type
