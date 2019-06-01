@@ -854,6 +854,18 @@ ThreadLister::ThreadLister(int pid)
     error_(true),
     entry_((struct linux_dirent *)buffer_.data()),
     bytes_read_(0) {
+#if SANITIZER_NETBSD
+  /*
+   * netbsd does not have "tasks". Our lwp's are not like processes, 
+   * and this is used to suspend each task by attaching to them and stopping
+   * them. We do this at the process level, so we hijack the descriptor to
+   * permanently store our pid (the pid to trace and stop), and bytes_read_
+   * to store a copy of it, that we set to -1 once we read it.
+   */
+  descriptor_ = pid;
+  bytes_read_ = pid;
+  error_ = false;
+#else
   char task_directory_path[80];
   internal_snprintf(task_directory_path, sizeof(task_directory_path),
                     "/proc/%d/task/", pid);
@@ -865,9 +877,15 @@ ThreadLister::ThreadLister(int pid)
     error_ = false;
     descriptor_ = openrv;
   }
+#endif
 }
 
 int ThreadLister::GetNextTID() {
+#if SANITIZER_NETBSD
+  int tid = bytes_read_;
+  bytes_read_ = -1;
+  return tid;
+#else
   int tid = -1;
   do {
     if (error_)
@@ -882,17 +900,25 @@ int ThreadLister::GetNextTID() {
     entry_ = (struct linux_dirent *)(((char *)entry_) + entry_->d_reclen);
   } while (tid < 0);
   return tid;
+#endif
 }
 
 void ThreadLister::Reset() {
+#if SANITIZER_NETBSD
+  bytes_read_ = descriptor_;
+  error_ = false;
+#else
   if (error_ || descriptor_ < 0)
     return;
   internal_lseek(descriptor_, 0, SEEK_SET);
+#endif
 }
 
 ThreadLister::~ThreadLister() {
+#ifndef SANITIZER_NETBSD
   if (descriptor_ >= 0)
     internal_close(descriptor_);
+#endif
 }
 
 bool ThreadLister::error() { return error_; }
