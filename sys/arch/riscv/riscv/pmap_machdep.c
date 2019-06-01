@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: pmap_machdep.c,v 1.2 2015/03/31 01:14:57 matt Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.3 2019/06/01 12:42:28 maxv Exp $");
 
 #include <sys/param.h>
 
@@ -100,7 +100,7 @@ paddr_t
 pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t va)
 {
 	KASSERT(VM_MAX_KERNEL_ADDRESS <= va && (intptr_t) va < 0);
-	const pmap_pdetab_t *ptb = pmap_kernel()->pm_pdetab;
+	const pmap_pdetab_t *ptb = pmap_kernel()->pm_md.md_pdetab;
 	pd_entry_t pde;
 
 #ifdef _LP64
@@ -136,6 +136,12 @@ pmap_md_init(void)
 }
 
 bool
+pmap_md_ok_to_steal_p(const uvm_physseg_t bank, size_t npgs)
+{
+	return true;
+}
+
+bool
 pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 {
 	return false;
@@ -150,9 +156,9 @@ pmap_md_pdetab_activate(struct pmap *pmap)
 void
 pmap_md_pdetab_init(struct pmap *pmap)
 {
-	pmap->pm_pdetab[NPDEPG-1] = pmap_kernel()->pm_pdetab[NPDEPG-1];
+	pmap->pm_md.md_pdetab[NPDEPG-1] = pmap_kernel()->pm_md.md_pdetab[NPDEPG-1];
 	pmap->pm_md.md_ptbr =
-	    pmap_md_direct_mapped_vaddr_to_paddr((vaddr_t)pmap->pm_pdetab);
+	    pmap_md_direct_mapped_vaddr_to_paddr((vaddr_t)pmap->pm_md.md_pdetab);
 }
 
 // TLB mainenance routines

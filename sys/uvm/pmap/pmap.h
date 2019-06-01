@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 2019/05/20 17:00:57 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 2019/06/01 12:42:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -134,6 +134,9 @@ struct pmap {
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	vaddr_t			pm_minaddr;
 	vaddr_t			pm_maxaddr;
+#ifdef __HAVE_PMAP_MD
+	struct pmap_md		pm_md;
+#endif
 	struct pmap_asid_info	pm_pai[1];
 };
 

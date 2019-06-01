@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: pmap.h,v 1.2 2019/06/01 12:42:28 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,12 +42,12 @@
 #include <sys/pool.h>
 #include <sys/evcnt.h>
 
+#include <uvm/uvm_physseg.h>
 #include <uvm/pmap/vmpagemd.h>
 
 #include <riscv/pte.h>
 
-#define	PMAP_SEGTABSIZE		(__SHIFTOUT(PTE_PPN0, PTE_PPN0) + 1)
-#define	PMAP_PDETABSIZE		(__SHIFTOUT(PTE_PPN0, PTE_PPN0) + 1)
+#define	PMAP_SEGTABSIZE		NPTEPG
 
 #define NBSEG		(NBPG*NPTEPG)
 #ifdef _LP64
@@ -76,6 +76,15 @@
 
 #define pmap_phys_address(x)		(x)
 
+#ifndef __BSD_PTENTRY_T__
+#define __BSD_PTENTRY_T__
+#ifdef _LP64
+#define PRIxPTE         PRIx64
+#else
+#define PRIxPTE         PRIx32
+#endif
+#endif /* __BSD_PTENTRY_T__ */
+
 #define PMAP_NEED_PROCWR
 static inline void
 pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
@@ -96,6 +105,7 @@ pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
 #define __HAVE_PMAP_MD
 struct pmap_md {
 	paddr_t md_ptbr;
+	pd_entry_t *md_pdetab;
 };
 
 struct vm_page *
@@ -112,6 +122,7 @@ bool    pmap_md_tlb_check_entry(void *, vaddr_t, tlb_asid_t, pt_entry_t);
 
 void	pmap_md_pdetab_activate(struct pmap *);
 void	pmap_md_pdetab_init(struct pmap *);
+bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
 
 #ifdef __PMAP_PRIVATE
 static inline void
@@ -166,9 +177,9 @@ pmap_md_tlb_asid_max(void)
 struct vm_page_md {
 	uintptr_t mdpg_dummy[3];
 };
-#endif /* !__HVE_VM_PAGE_MD */
-
 __CTASSERT(sizeof(struct vm_page_md) == sizeof(uintptr_t)*3);
+
+#endif /* !__HAVE_VM_PAGE_MD */
 
 #endif /* MODULAR || _MODULE */
 

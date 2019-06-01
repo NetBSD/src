@@ -1,4 +1,4 @@
-#	$NetBSD: files.riscv,v 1.1 2015/03/28 16:13:56 matt Exp $
+#	$NetBSD: files.riscv,v 1.2 2019/06/01 12:42:27 maxv Exp $
 #
 
 maxpartitions	16
@@ -41,7 +41,7 @@ file	dev/md_root.c				memory_disk_hooks
 file	kern/subr_disk_mbr.c			disk
 
 file	uvm/pmap/pmap.c
-file	uvm/pmap/pmap_pv.c
+file	uvm/pmap/pmap_pvt.c
 file	uvm/pmap/pmap_segtab.c
 file	uvm/pmap/pmap_tlb.c
 
@@ -50,13 +50,6 @@ file	arch/riscv/riscv/core32_machdep.c	compat_netbsd32 & coredump
 file	arch/riscv/riscv/netbsd32_machdep.c	compat_netbsd32
 file	arch/riscv/riscv/sig32_machdep.c	compat_netbsd32
 include "compat/netbsd32/files.netbsd32"
-
-# Linux compatibility (COMPAT_LINUX)	XXX Highly experimental
-#include "compat/ossaudio/files.ossaudio"
-#include "compat/linux/files.linux"
-#include "compat/linux/arch/riscv/files.linux_riscv"
-#file	arch/riscv/riscv/linux_trap.c		compat_linux
-#file	arch/riscv/riscv/linux_syscall.c	compat_linux
 
 device	mainbus { [instance=-1] }
 attach	mainbus at root

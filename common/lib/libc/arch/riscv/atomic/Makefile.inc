@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2019/04/17 07:40:34 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2019/06/01 12:42:27 maxv Exp $
 
 .for op in add and cas nand or sub swap xor
 sizes=32
@@ -27,7 +27,7 @@ SRCS.atomic+=	atomic_init_cas.c			\
 
 .endif #LIB
 
-.if ${LIB} == "c"
+.if defined(LIB) && ${LIB} == "c"
 SRCS.atomic+=	atomic_and_16_nv_cas.c atomic_and_8_nv_cas.c
 .endif
 

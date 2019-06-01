@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef CORENAME
-__RCSID("$NetBSD: core_machdep.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
+__RCSID("$NetBSD: core_machdep.c,v 1.2 2019/06/01 12:42:28 maxv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -83,7 +83,7 @@ CORENAME(cpu_coredump)(struct lwp *l, struct coredump_iostate *iocookie,
 	cpustate.tf.tf_badaddr = tf->tf_badaddr;
 	cpustate.tf.tf_cause = tf->tf_cause;
 	cpustate.tf.tf_sr = tf->tf_sr;
-	if (fpu_valid_p()) {
+	if (fpu_valid_p(l)) {
 		cpustate.fpregs = ((struct pcb *)lwp_getpcb(l))->pcb_fpregs;
 	} else {
 		memset(&cpustate.fpregs, 0, sizeof(cpustate.fpregs));

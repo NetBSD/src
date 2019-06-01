@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.7 2018/02/05 10:41:12 maya Exp $ */
+/* $NetBSD: locore.S,v 1.8 2019/06/01 12:42:28 maxv Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -91,7 +91,11 @@ ENTRY_NP(start)
 	REG_S	t0, -SZREG(s3)		// store in highest first level PDE
 #endif
 
-#if (VM_MIN_KERNEL_ADDRESS >> XSEGSHIFT) != (VM_MAX_KERNEL_ADDRESS >> XSEGSHIFT)
+	/*
+	 * XXX XXX XXX: This is completely broken and wrong, we should map only
+	 * the kernel sections, and the direct map should be mapped later in C.
+	 */
+#if 0 && (VM_MIN_KERNEL_ADDRESS >> XSEGSHIFT) != (VM_MAX_KERNEL_ADDRESS >> XSEGSHIFT)
 #error VM_MIN_KERNEL_ADDRESS not in same first level PDE as VM_MAX_KERNEL_ADDRESS
 #endif
 	// We allocated the kernel first PTE page so let's insert in the
@@ -144,7 +148,7 @@ ENTRY_NP(start)
 
 	PTR_LA	t1, _C_LABEL(kernel_pmap_store)
 	add	t2, s2, s11 		// PA -> VA
-	PTR_S	t2, PM_PDETAB(t1)	// VA of kernel PDETAB
+	PTR_S	t2, PM_MD_PDETAB(t1)	// VA of kernel PDETAB
 	PTR_S	s2, PM_MD_PTBR(t1)	// PA of kernel PDETAB
 
 	// Now we should ready to start initializing the kernel.

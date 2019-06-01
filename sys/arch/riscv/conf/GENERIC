@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.9 2018/08/01 20:04:13 maxv Exp $
+# $NetBSD: GENERIC,v 1.10 2019/06/01 12:42:27 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/riscv/conf/std.riscv64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 maxusers	64		# estimated number of users
 
@@ -74,9 +74,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 include 	"conf/compat_netbsd70.config"
 
 options 	COMPAT_OSSAUDIO
-options 	COMPAT_NETBSD32
-#options 	COMPAT_LINUX
-#options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
+#options 	COMPAT_NETBSD32
 #options 	EXEC_ELF32
 
 # Wedge support

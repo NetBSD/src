@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.riscv,v 1.3 2018/09/22 12:24:03 rin Exp $
+#	$NetBSD: Makefile.riscv,v 1.4 2019/06/01 12:42:27 maxv Exp $
 
 # Makefile for NetBSD
 #
@@ -39,7 +39,6 @@ GENASSYM_CONF=	${RISCV}/riscv/genassym.cf
 ##
 CPPFLAGS+=	-D${MACHINE}
 CFLAGS+=	-mcmodel=medany
-CFLAGS+=	-msoft-float
 .if !defined(LP64) || ${LP64} == "no"
 CFLAGS+=	-m32
 AFLAGS+=	-m32
@@ -70,7 +69,7 @@ locore.o: ${RISCV}/riscv/locore.S assym.h
 ## (5) link settings
 ##
 .if ${MACHINE_ARCH} == "riscv64" && ${LP64:Uyes} == "yes"
-TEXTADDR?=              0xFFFFFFFF80002000
+TEXTADDR?=              0xFFFFFFC000000000
 .else   
 TEXTADDR?=		0xC0001000
 .endif
