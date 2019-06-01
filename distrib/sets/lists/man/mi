@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1644 2019/05/01 06:47:45 mlelstv Exp $
+# $NetBSD: mi,v 1.1645 2019/06/01 13:21:27 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -540,6 +540,7 @@
 ./usr/share/man/cat1/srtconfig.0		man-netutil-catman	.cat
 ./usr/share/man/cat1/ssh-add.0			man-secsh-catman	.cat
 ./usr/share/man/cat1/ssh-agent.0		man-secsh-catman	.cat
+./usr/share/man/cat1/ssh-copy-id.0		man-secsh-catman	.cat
 ./usr/share/man/cat1/ssh-keygen.0		man-secsh-catman	.cat
 ./usr/share/man/cat1/ssh-keyscan.0		man-secsh-catman	.cat
 ./usr/share/man/cat1/ssh.0			man-secsh-catman	.cat
@@ -3765,6 +3766,7 @@
 ./usr/share/man/html1/srtconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html1/ssh-add.html		man-secsh-htmlman	html
 ./usr/share/man/html1/ssh-agent.html		man-secsh-htmlman	html
+./usr/share/man/html1/ssh-copy-id.html		man-secsh-htmlman	html
 ./usr/share/man/html1/ssh-keygen.html		man-secsh-htmlman	html
 ./usr/share/man/html1/ssh-keyscan.html		man-secsh-htmlman	html
 ./usr/share/man/html1/ssh.html			man-secsh-htmlman	html
@@ -6642,6 +6644,7 @@
 ./usr/share/man/man1/srtconfig.1		man-netutil-man		.man
 ./usr/share/man/man1/ssh-add.1			man-secsh-man		.man
 ./usr/share/man/man1/ssh-agent.1		man-secsh-man		.man
+./usr/share/man/man1/ssh-copy-id.1		man-secsh-man		.man
 ./usr/share/man/man1/ssh-keygen.1		man-secsh-man		.man
 ./usr/share/man/man1/ssh-keyscan.1		man-secsh-man		.man
 ./usr/share/man/man1/ssh.1			man-secsh-man		.man
