@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.230 2019/05/31 23:19:38 kamil Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.231 2019/06/01 00:19:43 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.230 2019/05/31 23:19:38 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.231 2019/06/01 00:19:43 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2594,7 +2594,6 @@ fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	struct cwdinfo *cwdi;
 	struct vnode *vp;
 	size_t len, lenused;
-	const int flags = GETCWD_CHECK_ACCESS;
 
 	if ((error = proc_find_locked(l, &p, pid)) != 0)
 		return error;
@@ -2615,7 +2614,7 @@ fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	cwdi = p->p_cwdi;
 	rw_enter(&cwdi->cwdi_lock, RW_READER);
 	vp = cwdi->cwdi_cdir;
-	error = getcwd_common(vp, NULL, &bp, path, len/2, flags, l);
+	error = getcwd_common(vp, NULL, &bp, path, len/2, 0, l);
 	rw_exit(&cwdi->cwdi_lock);
 
 	if (error)
