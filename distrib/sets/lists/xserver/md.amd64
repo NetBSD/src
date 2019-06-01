@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.107 2019/05/13 08:38:45 uki Exp $
+# $NetBSD: md.amd64,v 1.108 2019/06/01 07:55:31 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -126,7 +126,7 @@
 ./usr/X11R7/lib/modules/drivers/r128_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/radeon_drv.so.18	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/radeon_drv.so.19	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv_old.so	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv_old.so.6	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeonhd_drv.so		-unknown-	xorg,obsolete
