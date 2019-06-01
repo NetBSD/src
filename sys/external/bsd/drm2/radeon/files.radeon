@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.25 2019/02/04 08:18:08 mrg Exp $
+#	$NetBSD: files.radeon,v 1.26 2019/06/01 05:55:45 nakayama Exp $
 
 version	20180827
 
@@ -7,7 +7,7 @@ device	radeon: drmkms, drmkms_pci, drmkms_ttm, radeonfbbus, firmload
 attach	radeon at pci
 
 # XXX Rename this to radeonfb when the legacy radeonfb(4) is gone.
-device	radeondrmkmsfb: radeonfbbus, genfb, wsemuldisplaydev
+device	radeondrmkmsfb: radeonfbbus, drmfb, drmfb_pci, wsemuldisplaydev
 attach	radeondrmkmsfb at radeonfbbus
 
 # Our overrides first.
