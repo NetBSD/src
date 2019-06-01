@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1645 2019/06/01 13:21:27 jmcneill Exp $
+# $NetBSD: mi,v 1.1646 2019/06/01 21:42:02 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2346,7 +2346,7 @@
 ./usr/share/man/cat8/acorn26/boot26.0		man-obsolete		obsolete
 ./usr/share/man/cat8/acorn26/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/acorn32/MAKEDEV.0		man-obsolete		obsolete
-./usr/share/man/cat8/acorn32/boot.0		man-obsolete		obsolete
+./usr/share/man/cat8/acorn32/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/acorn32/boot32.0		man-sys-catman		.cat
 ./usr/share/man/cat8/acorn32/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/acorn32/nbfs.0		man-sys-catman		.cat
