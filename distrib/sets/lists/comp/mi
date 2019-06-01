@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2274 2019/05/18 08:38:00 mlelstv Exp $
+#	$NetBSD: mi,v 1.2275 2019/06/01 21:42:02 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4614,7 +4614,7 @@
 ./usr/share/man/cat3/CIRCLEQ_NEXT.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/CIRCLEQ_PREV.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/CIRCLEQ_REMOVE.0		comp-obsolete		obsolete
-./usr/share/man/cat3/CMSG_DATA.0		comp-obsolete		obsolete
+./usr/share/man/cat3/CMSG_DATA.0		comp-c-catman		.cat
 ./usr/share/man/cat3/CMSG_FIRSTHDR.0		comp-c-catman		.cat
 ./usr/share/man/cat3/CMSG_LEN.0			comp-c-catman		.cat
 ./usr/share/man/cat3/CMSG_NXTHDR.0		comp-c-catman		.cat
@@ -7154,7 +7154,7 @@
 ./usr/share/man/cat3/getc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getc_unlocked.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getcap.0			comp-obsolete		obsolete
-./usr/share/man/cat3/getcchar.0			comp-obsolete		obsolete
+./usr/share/man/cat3/getcchar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getchar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getchar_unlocked.0		comp-c-catman		.cat
