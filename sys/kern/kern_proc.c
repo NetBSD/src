@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.231 2019/06/01 00:19:43 kamil Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.232 2019/06/01 19:48:29 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.231 2019/06/01 00:19:43 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.232 2019/06/01 19:48:29 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2599,11 +2599,6 @@ fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 		return error;
 
 	len = MAXPATHLEN * 4;
-	if (*oldlenp < 2) {
-		if (pid != -1)
-			mutex_exit(p->p_lock);
-		return ERANGE;
-	}
 
 	path = kmem_alloc(len, KM_SLEEP);
 
