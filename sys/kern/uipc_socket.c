@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.279 2019/05/08 14:05:18 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.280 2019/06/01 15:20:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.279 2019/05/08 14:05:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.280 2019/06/01 15:20:51 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1323,6 +1323,7 @@ dontblock:
 				m = m->m_next;
 			} else {
 				sbfree(&so->so_rcv, m);
+				/* XXX XXX XXX: should set mbuf_removed? */
 				if (paddr) {
 					*paddr = m;
 					so->so_rcv.sb_mb = m->m_next;
@@ -1331,6 +1332,8 @@ dontblock:
 				} else {
 					m = so->so_rcv.sb_mb = m_free(m);
 				}
+				/* XXX XXX XXX: isn't there an sbsync()
+				 * missing here? */
 			}
 		}
 	}
