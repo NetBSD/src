@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.46 2019/04/16 21:20:51 mrg Exp $
+# $NetBSD: md.amd64,v 1.47 2019/06/01 07:55:31 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg,compatx11file
@@ -155,7 +155,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/openchrome_drv.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/r128_drv.so.6.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.6.debug	-unknown-		xorg,debug,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.18.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.19.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv_old.so.6.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1.debug	-unknown-		xorg,debug,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	-unknown-		xorg,debug
