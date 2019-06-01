@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.333 2019/05/27 18:36:37 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.334 2019/06/01 08:12:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.333 2019/05/27 18:36:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334 2019/06/01 08:12:26 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4017,7 +4017,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	pt_entry_t * const *pdes;
 	struct pmap *pmap2;
 	vaddr_t blockend, va;
-	int lvl;
+	int lvl, i;
 
 	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
 
@@ -4034,8 +4034,8 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	if (!(prot & VM_PROT_EXECUTE))
 		bit_put = pmap_pg_nx;
 
-	sva &= PTE_FRAME;
-	eva &= PTE_FRAME;
+	sva &= ~PAGE_MASK;
+	eva &= ~PAGE_MASK;
 
 	/* Acquire pmap. */
 	kpreempt_disable();
@@ -4058,7 +4058,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		spte = &ptes[pl1_i(va)];
 		epte = &ptes[pl1_i(blockend)];
 
-		for (/* */; spte < epte; spte++) {
+		for (i = 0; spte < epte; spte++, i++) {
 			pt_entry_t opte, npte;
 
 			do {
@@ -4070,7 +4070,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			} while (pmap_pte_cas(spte, opte, npte) != opte);
 
 			if ((opte & PTE_D) != 0) {
-				vaddr_t tva = x86_ptob(spte - ptes);
+				vaddr_t tva = va + x86_ptob(i);
 				pmap_tlb_shootdown(pmap, tva, opte,
 				    TLBSHOOT_WRITE_PROTECT);
 			}
