@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: pte.h,v 1.2 2019/06/01 12:42:28 maxv Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -239,30 +239,6 @@ pte_set(pt_entry_t *ptep, pt_entry_t pte)
 	*ptep = pte;
 }
 
-static inline pd_entry_t
-pte_invalid_pde(void)
-{
-	return 0;
-}
-
-static inline pd_entry_t
-pte_pde_pdetab(paddr_t pa)
-{
-	return PTE_V | PTE_G | PTE_T | pa;
-}
-
-static inline pd_entry_t
-pte_pde_ptpage(paddr_t pa)
-{
-	return PTE_V | PTE_G | PTE_T | pa;
-}
-
-static inline bool
-pte_pde_valid_p(pd_entry_t pde)
-{
-	return (pde & (PTE_V|PTE_T)) == (PTE_V|PTE_T);
-}
-
 static inline paddr_t
 pte_pde_to_paddr(pd_entry_t pde)
 {
@@ -283,4 +259,11 @@ pte_pde_cas(pd_entry_t *pdep, pd_entry_t opde, pt_entry_t npde)
 	return 0;
 #endif
 }
+
+static inline pt_entry_t
+pte_value(pt_entry_t pte)
+{
+	return pte;
+}
+
 #endif /* _RISCV_PTE_H_ */
