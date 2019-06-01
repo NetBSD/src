@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.28 2019/05/18 08:54:38 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.29 2019/06/01 06:54:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.28 2019/05/18 08:54:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.29 2019/06/01 06:54:28 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -673,6 +673,10 @@ mds_detect_method(void)
 		return;
 	}
 
+	if (cpuid_level < 7) {
+		return;
+	}
+
 	x86_cpuid(0x7, descs);
 	if (descs[3] & CPUID_SEF_ARCH_CAP) {
 		msr = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
@@ -850,7 +854,7 @@ cpu_speculation_init(struct cpu_info *ci)
 #endif
 
 	/*
-	 * Microarchectural Data Sampling.
+	 * Microarchitectural Data Sampling.
 	 *
 	 * cpu0 is the one that detects the method and sets the global
 	 * variable.
