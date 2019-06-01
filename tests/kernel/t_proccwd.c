@@ -1,4 +1,4 @@
-/*	$NetBSD: t_proccwd.c,v 1.1 2019/06/01 19:49:02 kamil Exp $	*/
+/*	$NetBSD: t_proccwd.c,v 1.2 2019/06/01 22:18:23 kamil Exp $	*/
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_proccwd.c,v 1.1 2019/06/01 19:49:02 kamil Exp $");
+__RCSID("$NetBSD: t_proccwd.c,v 1.2 2019/06/01 22:18:23 kamil Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -84,7 +84,7 @@ ATF_TC_BODY(prompt_pid, tc)
 		ATF_REQUIRE_EQ(strlen(buf) + 1, prompted_len);
 		ATF_REQUIRE(strlen(buf) > 0);
 
-		if (t[i] == -1 || t[i] == getpid() || t[i] == getppid()) {
+		if (t[i] == -1 || t[i] == getpid()) {
 			getcwd(cwdbuf, MAXPATHLEN);
 			ATF_REQUIRE_EQ(strcmp(buf, cwdbuf), 0);
 			ATF_REQUIRE(strlen(buf) > strlen("/"));
@@ -133,7 +133,7 @@ ATF_TC_BODY(chroot, tc)
 		ASSERT(chroot(buf) == 0);
 
 		errno = 0;
-		rv = getproccwd(NULL, &len, pid_one);
+		rv = getproccwd(buf, &len, pid_one);
 		ASSERT(rv == -1);
 		ASSERT(errno == ENOENT);
 
