@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.87 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: viaide.c,v 1.88 2019/06/01 08:20:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.87 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.88 2019/06/01 08:20:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,6 +309,16 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  NULL,
 	  via_chip_map,
 	},
+	{ PCI_PRODUCT_VIATECH_VX800,
+	  0,
+	  "VIA Technologies VX800 SATA Controller",
+	  via_sata_chip_map_new,
+	},
+	{ PCI_PRODUCT_VIATECH_VX855,
+	  0,
+	  NULL,
+	  via_sata_chip_map_new,
+	},
 	{ PCI_PRODUCT_VIATECH_VX900_IDE,
 	  0,
 	  NULL,
@@ -347,6 +357,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT8237S_SATA,
 	  0,
 	  "VIA Technologies VT8237S SATA Controller",
+	  via_sata_chip_map_7,
+	},
+	{ PCI_PRODUCT_VIATECH_VT8237S_SATA_RAID,
+	  0,
+	  "VIA Technologies VT8237S SATA Controller (RAID mode)",
 	  via_sata_chip_map_7,
 	},
 	{ 0,
@@ -544,6 +559,14 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 				break;
 			case PCI_PRODUCT_VIATECH_VT8251:
 				aprint_normal("VT8251 ATA133 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+				break;
+			case PCI_PRODUCT_VIATECH_VX800:
+				aprint_normal("VT800 ATA133 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+				break;
+			case PCI_PRODUCT_VIATECH_VX855:
+				aprint_normal("VT855 ATA133 controller\n");
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 				break;
 			default:
