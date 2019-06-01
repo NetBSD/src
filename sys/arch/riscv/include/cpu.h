@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.4 2015/04/01 21:55:03 matt Exp $ */
+/* $NetBSD: cpu.h,v 1.5 2019/06/01 12:42:28 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -68,11 +68,10 @@ struct cpu_info {
 	volatile u_int ci_intr_depth;
 
 	tlb_asid_t ci_pmap_asid_cur;
-#if 0
-	union pmap_pdetab *ci_pmap_user_pdetab;
+
+	union pmap_segtab *ci_pmap_user_segtab;
 #ifdef _LP64
-	union pmap_pdetab *ci_pmap_user_pde0tab;
-#endif
+	union pmap_segtab *ci_pmap_user_seg0tab;
 #endif
 
 	struct evcnt ci_ev_fpu_saves;
