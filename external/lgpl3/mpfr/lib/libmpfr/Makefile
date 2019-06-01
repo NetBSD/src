@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2018/09/04 05:16:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2019/06/01 08:29:16 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -281,12 +281,6 @@ CPPFLAGS+=	-I. \
 .include "../../../gmp/Makefile.arch"
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${GMP_MACHINE_ARCH}
 CPPFLAGS+=	-I${.CURDIR}/../../dist/src
-
-# XXX
-# XXX XXX check mips*
-# XXX XXX do something more, more ports!!
-# XXX
-# XXX missing: arm* sparc sh3* m68k/m68000 (powerpc64/ia64)
 
 # IEEE FP support.  No VAX here.
 .if ${MACHINE_ARCH} == "x86_64" || \
