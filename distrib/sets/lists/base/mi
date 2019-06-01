@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1204 2019/05/07 05:02:41 thorpej Exp $
+# $NetBSD: mi,v 1.1205 2019/06/01 13:21:27 jmcneill Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -951,6 +951,7 @@
 ./usr/bin/ssh					base-secsh-bin
 ./usr/bin/ssh-add				base-secsh-bin
 ./usr/bin/ssh-agent				base-secsh-bin
+./usr/bin/ssh-copy-id				base-secsh-bin
 ./usr/bin/ssh-keygen				base-secsh-bin
 ./usr/bin/ssh-keyscan				base-secsh-bin
 ./usr/bin/stat					base-util-bin
