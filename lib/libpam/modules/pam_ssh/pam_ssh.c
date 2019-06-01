@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.26 2018/08/26 08:54:03 christos Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.27 2019/06/01 07:15:39 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.26 2018/08/26 08:54:03 christos Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.27 2019/06/01 07:15:39 mlelstv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -119,13 +119,14 @@ pam_ssh_load_key(const char *dir, const char *kfn, const char *passphrase,
 	 * accept only an empty passphrase.
 	 */
 	r = sshkey_load_private(fn, "", &key, &comment);
-	if (r && !(*passphrase == '\0' && nullok)) {
+	if (r == 0 && !(*passphrase == '\0' && nullok)) {
+		openpam_log(PAM_LOG_DEBUG, "rejected unencrypted key from %s", fn);
 		sshkey_free(key);
 		free(comment);
 		return (NULL);
 	}
 	if (r)
-		sshkey_load_private(fn, passphrase, &key, &comment);
+		r = sshkey_load_private(fn, passphrase, &key, &comment);
 	if (r) {
 		openpam_log(PAM_LOG_DEBUG, "failed to load key from %s", fn);
 		if (comment != NULL)
