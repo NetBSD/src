@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.138 2019/03/01 03:05:08 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.139 2019/06/01 19:54:34 kamil Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd February 28, 2019
+.Dd June 1, 2019
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1026,6 +1026,7 @@ The fourth level name is as follows:
 .It Dv KERN_PROC_NARGV	The number of argv strings
 .It Dv KERN_PROC_NENV	The number of environ strings
 .It Dv KERN_PROC_PATHNAME	The full pathname of the executable
+.It Dv KERN_PROC_CWD	The current working directory
 .El
 .It Li kern.profiling ( Dv KERN_PROF )
 Return profiling information about the kernel.
