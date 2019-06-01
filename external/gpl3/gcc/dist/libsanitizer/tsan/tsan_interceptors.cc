@@ -44,7 +44,7 @@ using namespace __tsan;  // NOLINT
 #define mallopt(a, b)
 #endif
 
-#if SANITIZER_LINUX || SANITIZER_FREEBSD
+#if SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD
 #define PTHREAD_CREATE_DETACHED 1
 #elif SANITIZER_MAC
 #define PTHREAD_CREATE_DETACHED 2
@@ -2020,7 +2020,7 @@ TSAN_INTERCEPTOR(int, sigaction, int sig, sigaction_t *act, sigaction_t *old) {
   sigactions[sig].sa_flags = *(volatile int*)&act->sa_flags;
   internal_memcpy(&sigactions[sig].sa_mask, &act->sa_mask,
       sizeof(sigactions[sig].sa_mask));
-#if !SANITIZER_FREEBSD && !SANITIZER_MAC
+#if !SANITIZER_FREEBSD && !SANITIZER_MAC && !SANITIZER_NETBSD
   sigactions[sig].sa_restorer = act->sa_restorer;
 #endif
   sigaction_t newact;
