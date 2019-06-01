@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2018/05/01 19:59:46 christos Exp $
+#	$NetBSD: Makefile,v 1.37 2019/06/01 17:02:59 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -9,7 +9,8 @@ GNUHOSTDIST=    ${GDBDIR}/dist
 FIND_ARGS=	\! \( -type d -name sim -prune \)
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
-		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-,"
+		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
+		--without-mpfr
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
 
