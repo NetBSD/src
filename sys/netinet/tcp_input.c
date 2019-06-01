@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.413 2018/11/08 06:43:52 msaitoh Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.414 2019/06/01 15:18:42 kamil Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.413 2018/11/08 06:43:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.414 2019/06/01 15:18:42 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1350,11 +1350,11 @@ tcp_input(struct mbuf *m, int off, int proto)
 		if ((optlen == TCPOLEN_TSTAMP_APPA ||
 		     (optlen > TCPOLEN_TSTAMP_APPA &&
 		      optp[TCPOLEN_TSTAMP_APPA] == TCPOPT_EOL)) &&
-		    *(u_int32_t *)optp == htonl(TCPOPT_TSTAMP_HDR) &&
+		    be32dec(optp) == TCPOPT_TSTAMP_HDR &&
 		    (th->th_flags & TH_SYN) == 0) {
 			opti.ts_present = 1;
-			opti.ts_val = ntohl(*(u_int32_t *)(optp + 4));
-			opti.ts_ecr = ntohl(*(u_int32_t *)(optp + 8));
+			opti.ts_val = be32dec(optp + 4);
+			opti.ts_ecr = be32dec(optp + 8);
 			optp = NULL;	/* we've parsed the options */
 		}
 	}
