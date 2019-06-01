@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2017/12/10 20:38:14 bouyer Exp $
+#	$NetBSD: Makefile,v 1.3 2019/06/01 06:59:17 kre Exp $
 #
 
 PROG= t_hid
@@ -23,6 +23,7 @@ DPADD+= ${ATF_C}
 LDADD+= -latf-c
 LDADD+= -lrump
 LDADD+= -lrumpuser
+LDADD+= -lrumpvfs
 LDADD+= -lpthread
 
 .include <bsd.prog.mk>
