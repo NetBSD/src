@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1143 2019/05/30 21:33:57 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1144 2019/06/02 11:35:55 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1148,6 +1148,20 @@ MKRADEONFIRMWARE.i386=		yes
 # Only install the tegra firmware on evbarm.
 MKTEGRAFIRMWARE.evbarm=		yes
 
+# MesaLib.old and MesaLib7 go together, and MesaLib is alone.
+HAVE_MESA_VER?=	18
+.if ${HAVE_MESA_VER} == "10"
+EXTERNAL_MESALIB_DIR?=	MesaLib.old
+.elif ${HAVE_MESA_VER} == "18"
+EXTERNAL_MESALIB_DIR?=	MesaLib
+.endif
+
+# Default to LLVM run-time if x86 and X11 and Mesa 18
+.if ${MKX11} != "no" && ${HAVE_MESA_VER} == "18"
+MKLLVMRT.amd64=		yes
+MKLLVMRT.i386=		yes
+.endif
+
 #
 # MK* options which default to "no".  Note that MKZFS has a different
 # default for some platforms, see above.  Please keep alphabetically
@@ -1279,18 +1293,6 @@ _NEEDS_LIBCXX.x86_64=		yes
 
 .if ${MKLLVM} == "yes" && ${_NEEDS_LIBCXX.${MACHINE_ARCH}:Uno} == "yes"
 MKLIBCXX:=	yes
-.endif
-
-# MesaLib.old and MesaLib7 go together, and MesaLib is alone.
-HAVE_MESA_VER?=	18
-.if ${HAVE_MESA_VER} == "10"
-EXTERNAL_MESALIB_DIR?=	MesaLib.old
-.elif ${HAVE_MESA_VER} == "18"
-EXTERNAL_MESALIB_DIR?=	MesaLib
-.  if ${MKX11} != "no" && \
-    (${MACHINE} == "amd64" || ${MACHINE} == "i386")
-MKLLVMRT:=		yes
-.  endif
 .endif
 
 #
