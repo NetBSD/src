@@ -1,4 +1,4 @@
-/*	$NetBSD: synapticsreg.h,v 1.11 2019/04/22 00:53:59 blymn Exp $	*/
+/*	$NetBSD: synapticsreg.h,v 1.12 2019/06/02 08:55:00 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -101,6 +101,12 @@
 /* Extended mode button masks. */
 #define	SYN_1BUTMASK			0x1
 #define	SYN_2BUTMASK			0x1
+#define	SYN_3BUTMASK			0x2
+#define	SYN_4BUTMASK			0x2
+#define	SYN_5BUTMASK			0x4
+#define	SYN_6BUTMASK			0x4
+#define	SYN_7BUTMASK			0x8
+#define	SYN_8BUTMASK			0x8
 
 /* Touchpad edge boundaries (Recommended values from Synaptics documentation) */
 #define	SYNAPTICS_EDGE_LEFT		1632
