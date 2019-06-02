@@ -234,7 +234,7 @@
 /* #undef HAVE_LIBBABELTRACE */
 
 /* Define if you have the expat library. */
-/* #undef HAVE_LIBEXPAT */
+#define HAVE_LIBEXPAT 1
 
 /* Define to 1 if you have the `libiconvlist' function. */
 /* #undef HAVE_LIBICONVLIST */
@@ -582,7 +582,7 @@
 /* #undef HAVE_WRESIZE */
 
 /* Define to 1 if you have the `XML_StopParser' function. */
-/* #undef HAVE_XML_STOPPARSER */
+#define HAVE_XML_STOPPARSER 1
 
 /* Define to 1 if your system has the _etext variable. */
 #define HAVE__ETEXT 1
