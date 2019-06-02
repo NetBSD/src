@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.254 2019/06/02 19:04:34 sevan Exp $
+$NetBSD: acronyms.comp,v 1.255 2019/06/02 20:18:23 alnsn Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -276,6 +276,7 @@ CPL	current privilege level
 CPLD	complex programmable logic device
 CPP	C preprocessor
 CPS	characters per second
+CPS	continuation-passing style
 CPT	command pass through
 CPU	central processing unit
 CR	carriage return
