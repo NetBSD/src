@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2019/06/01 17:02:59 christos Exp $
+#	$NetBSD: Makefile,v 1.38 2019/06/02 23:28:32 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -60,6 +60,8 @@ MKNATIVE_CONFIGURE_PRESET= \
 	ac_cv_prog_cc_cross=yes \
 	ac_cv_func_fork_works=yes \
 	ac_cv_func_strcoll_works=yes \
+	ac_cv_func_XML_StopParser=yes \
+	ac_cv_libexpat=yes \
 	bash_cv_func_ctype_nonascii=yes \
 	bash_cv_func_sigsetjmp=present \
 	bash_cv_func_strcoll_broken=no \
