@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2014/08/05 15:40:58 apb Exp $
+#	$NetBSD: Makefile,v 1.28 2019/06/02 17:18:57 thorpej Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -16,8 +16,20 @@
 #		KERNEL_name	GZBOOT_name	GZIMG_name
 #		RELOC_ADDR	WHICH_kernel
 #	
-.if ${MACHINE_ARCH} == "arm"
-# Little endian platforms.
+.if ${MACHINE_ARCH} == "arm" || \
+    ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmv4"
+# Little endian ARMv4 platforms.
+ARCH_TARGETS=	GEMINI		GEMINI		GEMINI		\
+		0x01600000	netbsd				\
+								\
+		TS7200		TS7200		TS7200_wd0	\
+		0x60660000	netbsd-wd0			\
+								\
+		SMDK2800	SMDK2800	SMDK2800	\
+		0x00000000	netbsd
+.elif ${MACHINE_ARCH} == "arm" || \
+      ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmv5"
+# Little endian ARMv5 platforms.
 ARCH_TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 		0x00140000	netbsd-sd0			\
 								\
@@ -29,9 +41,6 @@ ARCH_TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 								\
 		CP3100		IQ80321		CP3100_wd0	\
 		0xf0080000	netbsd-wd0			\
-								\
-		GEMINI		GEMINI		GEMINI		\
-		0x01600000	netbsd				\
 								\
 		IQ80310		IQ80310		IQ80310_sd0	\
 		0x00080000	netbsd-sd0			\
@@ -46,15 +55,10 @@ ARCH_TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 		0xf0080000	netbsd-wd0			\
 								\
 		TEAMASA_NPWR	IQ80310		TEAMASA_NPWR_sd0 \
-		0x00080000	netbsd-sd0			\
-								\
-		TS7200		TS7200		TS7200_wd0	\
-		0x60660000	netbsd-wd0			\
-								\
-		SMDK2800	SMDK2800	SMDK2800	\
-		0x00000000	netbsd
-.elif ${MACHINE_ARCH} == "armeb"
-# Big endian platforms.
+		0x00080000	netbsd-sd0
+.elif ${MACHINE_ARCH} == "armeb" || \
+      ${MACHINE_ARCH} == "earmeb" || ${MACHINE_ARCH} == "earmv5eb"
+# Big endian ARMv5 platforms.
 ARCH_TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 		0x00140000	netbsd-sd0			\
 								\
