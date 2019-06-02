@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1144 2019/06/02 11:35:55 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1145 2019/06/02 21:29:13 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1157,7 +1157,9 @@ EXTERNAL_MESALIB_DIR?=	MesaLib
 .endif
 
 # Default to LLVM run-time if x86 and X11 and Mesa 18
-.if ${MKX11} != "no" && ${HAVE_MESA_VER} == "18"
+# XXX This knows that MKX11=no is default below, but would
+# require splitting the below loop in two parts.
+.if ${MKX11:Uno} != "no" && ${HAVE_MESA_VER} == "18"
 MKLLVMRT.amd64=		yes
 MKLLVMRT.i386=		yes
 .endif
