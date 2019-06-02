@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.106 2019/05/18 07:33:10 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.107 2019/06/02 17:13:15 thorpej Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -136,8 +136,8 @@ __mkimage: .USE
 
 ARCHES.arm=		armv4 xscale armv5t armv6 armv7
 ARCHES.armeb=		armv4 xscale armv5t armv6
-ARCHES.earm=		xscale armv5t armv6 armv7
-ARCHES.earmeb=		xscale armv5t armv6
+ARCHES.earm=		armv4 xscale armv5t armv6 armv7
+ARCHES.earmeb=		armv4 xscale armv5t armv6
 ARCHES.earmhf=		armv6hf armv7hf
 ARCHES.earmhfeb=	armv6hf
 ARCHES.earmv4=		armv4
