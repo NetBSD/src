@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.253 2019/05/28 22:11:32 sevan Exp $
+$NetBSD: acronyms.comp,v 1.254 2019/06/02 19:04:34 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -294,6 +294,10 @@ CSI	common system interface
 CSMA	carrier sense multiple access
 CSMA/CA	carrier sense multiple access with collision avoidance
 CSMA/CD	carrier sense multiple access with collision detection
+CSP	communicating sequential processes
+CSP	content security policy
+CSP	constrain satisfaction problems
+CSP	cryptographic service provider
 CSR	control [and] status registers
 CSRG	Computer Systems Research Group
 CSS	cascading style sheets
