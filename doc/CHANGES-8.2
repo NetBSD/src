@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.1 2019/06/02 08:27:40 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.2 2019/06/02 08:30:16 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -8,4 +8,9 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 8.1_STABLE.
 	[snj]
+
+sys/arch/x86/x86/spectre.c			1.29
+
+	Fix boot on old CPUs.
+	[maxv, ticket #1279]
 
