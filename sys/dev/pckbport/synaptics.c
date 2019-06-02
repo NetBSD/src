@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.48 2019/04/22 00:53:59 blymn Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.49 2019/06/02 08:55:00 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.48 2019/04/22 00:53:59 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.49 2019/06/02 08:55:00 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,6 +321,9 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 				/* unreached */
 				break;
 			}
+
+			if ((val & SYN_CCAP_HAS_ADV_GESTURE_MODE))
+				sc->flags |= SYN_FLAG_HAS_ADV_GESTURE_MODE;
 		}
 	}
 }
@@ -477,7 +480,8 @@ pms_synaptics_enable(void *vsc)
 		synaptics_poll_cmd(psc, PMS_SET_SCALE11, 0);
 
 	/* Set advanced gesture mode */
-	if (sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE)
+	if ((sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE) ||
+	    (sc->flags & SYN_FLAG_HAS_ADV_GESTURE_MODE))
 		synaptics_special_write(psc, SYNAPTICS_WRITE_DELUXE_3, 0x3); 
 
 	synaptics_poll_cmd(psc, PMS_DEV_ENABLE, 0);
@@ -990,9 +994,33 @@ pms_synaptics_parse(struct pms_softc *psc)
 		/* Pressure */
 		sp.sp_z = psc->packet[2];
 
-		/* Left/Right button handling. */
-		sp.sp_left = psc->packet[0] & PMS_LBUTMASK;
-		sp.sp_right = psc->packet[0] & PMS_RBUTMASK;
+		if ((psc->packet[0] ^ psc->packet[3]) & 0x02) {
+			/* extended buttons */
+
+			aprint_debug_dev(psc->sc_dev,
+			    "synaptics_parse: %02x %02x %02x %02x %02x %02x\n",
+			    psc->packet[0], psc->packet[1], psc->packet[2],
+			    psc->packet[3], psc->packet[4], psc->packet[5]);
+
+			if ((psc->packet[4] & SYN_1BUTMASK) != 0)
+				sp.sp_left = PMS_LBUTMASK;
+
+			if ((psc->packet[4] & SYN_3BUTMASK) != 0)
+				sp.sp_middle = PMS_MBUTMASK;
+
+			if ((psc->packet[5] & SYN_2BUTMASK) != 0)
+				sp.sp_right = PMS_RBUTMASK;
+
+			if ((psc->packet[5] & SYN_4BUTMASK) != 0)
+				sp.sp_up = 1;
+
+			if ((psc->packet[4] & SYN_5BUTMASK) != 0)
+				sp.sp_down = 1;
+		} else {
+			/* Left/Right button handling. */
+			sp.sp_left = psc->packet[0] & PMS_LBUTMASK;
+			sp.sp_right = psc->packet[0] & PMS_RBUTMASK;
+		}
 
 		/* Up/Down buttons. */
 		if (sc->flags & SYN_FLAG_HAS_BUTTONS_4_5) {
