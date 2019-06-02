@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.88 2019/06/01 08:20:14 jdolecek Exp $	*/
+/*	$NetBSD: viaide.c,v 1.89 2019/06/02 14:48:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.88 2019/06/01 08:20:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.89 2019/06/02 14:48:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,22 +302,12 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_CX700_IDE,
 	  0,
 	  NULL,
-	  via_chip_map,
+	  via_sata_chip_map_new,
 	},
 	{ PCI_PRODUCT_VIATECH_CX700M2_IDE,
 	  0,
 	  NULL,
 	  via_chip_map,
-	},
-	{ PCI_PRODUCT_VIATECH_VX800,
-	  0,
-	  "VIA Technologies VX800 SATA Controller",
-	  via_sata_chip_map_new,
-	},
-	{ PCI_PRODUCT_VIATECH_VX855,
-	  0,
-	  NULL,
-	  via_sata_chip_map_new,
 	},
 	{ PCI_PRODUCT_VIATECH_VX900_IDE,
 	  0,
