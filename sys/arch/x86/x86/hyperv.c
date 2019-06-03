@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.3 2019/05/30 11:15:29 nonaka Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.4 2019/06/03 09:51:04 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.3 2019/05/30 11:15:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.4 2019/06/03 09:51:04 nonaka Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -753,7 +753,7 @@ int
 hyperv_is_gen1(void)
 {
 
-	return !bootmethod_efi;
+	return !efi_probe();
 }
 
 void
