@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.97 2017/03/21 10:20:38 riastradh Exp $	*/
+/*	$NetBSD: namei.h,v 1.98 2019/06/03 06:05:39 msaitoh Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.41 2017/03/21 10:20:12 riastradh Exp 
+ *   from: NetBSD: namei.src,v 1.42 2019/06/03 06:04:21 msaitoh Exp 
  */
 
 /*
@@ -208,7 +208,7 @@ struct nameidata {
  * Namecache entry.  This structure is arranged so that frequently
  * accessed and mostly read-only data is toward the front, with
  * infrequently accessed data and the lock towards the rear.  The
- * lock is then more likely to be in a seperate cache line.
+ * lock is then more likely to be in a separate cache line.
  *
  * Locking rules:
  *
