@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.59 2018/09/03 16:29:28 riastradh Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.60 2019/06/03 05:59:02 msaitoh Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.59 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.60 2019/06/03 05:59:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ static volatile int u;
 #define	HDC_RSTAT	*(volatile char *)(sc->sc_regs + 4)
 
 /*
- * new-config's hdcmatch() is similiar to old-config's hdcprobe(), 
+ * new-config's hdcmatch() is similar to old-config's hdcprobe(), 
  * thus we probe for the existence of the controller and reset it.
  * NB: we can't initialize the controller yet, since space for hdcsoftc 
  *     is not yet allocated. Thus we do this in hdcattach()...
