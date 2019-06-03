@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_qmgr.c,v 1.7 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: ixp425_qmgr.c,v 1.8 2019/06/03 06:04:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -60,7 +60,7 @@
 */
 #include <sys/cdefs.h>
 /*__FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_qmgr.c,v 1.1 2006/11/19 23:55:23 sam Exp $");*/
-__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.7 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.8 2019/06/03 06:04:20 msaitoh Exp $");
 
 /*
  * Intel XScale Queue Manager support.
@@ -792,7 +792,7 @@ ixpqmgr_intr(void *arg)
 		      *
 		      * The search will end when all the bits of the interrupt
 		      * register are cleared. There is no need to maintain
-		      * a seperate value and test it at each iteration.
+		      * a separate value and test it at each iteration.
 		      */
 		     if (intRegVal & sc->lowPriorityTableFirstHalfMask) {
 			 priorityTableIndex = 0;
