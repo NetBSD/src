@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_gpio.c,v 1.6 2016/10/05 15:54:58 ryo Exp $	*/
+/*	$NetBSD: ralink_gpio.c,v 1.7 2019/06/03 06:04:20 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_gpio.c -- Ralink 3052 gpio driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.6 2016/10/05 15:54:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.7 2019/06/03 06:04:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -586,7 +586,7 @@ ra_gpio_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * map the registers
 	 *
-	 * we map the Sysctl, and PIO registers seperately so we can use the
+	 * we map the Sysctl, and PIO registers separately so we can use the
 	 * defined register offsets sanely; just use the correct corresponding
 	 * bus_space_handle
 	 */

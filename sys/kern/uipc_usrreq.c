@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.192 2019/03/01 11:06:57 pgoyette Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.193 2019/06/03 06:04:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.192 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.193 2019/06/03 06:04:20 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1258,7 +1258,7 @@ unp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		/*
 		 * If the connection is fully established, break the
 		 * association with uipc_lock and give the connected
-		 * pair a seperate lock to share.
+		 * pair a separate lock to share.
 		 */
 		KASSERT(so2->so_head != NULL);
 		unp_setpeerlocks(so, so2);
