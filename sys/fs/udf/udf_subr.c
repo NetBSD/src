@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.145 2019/01/01 10:06:54 hannken Exp $ */
+/* $NetBSD: udf_subr.c,v 1.146 2019/06/03 06:04:20 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.145 2019/01/01 10:06:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.146 2019/06/03 06:04:20 msaitoh Exp $");
 #endif /* not lint */
 
 
@@ -6514,7 +6514,7 @@ recount:
 /*
  * Read and write file extent in/from the buffer.
  *
- * The splitup of the extent into seperate request-buffers is to minimise
+ * The splitup of the extent into separate request-buffers is to minimise
  * copying around as much as possible.
  *
  * block based file reading and writing
