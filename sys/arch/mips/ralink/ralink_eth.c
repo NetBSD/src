@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.18 2019/05/29 14:03:36 msaitoh Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.19 2019/06/03 06:04:20 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.18 2019/05/29 14:03:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.19 2019/06/03 06:04:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -381,7 +381,7 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 	 * map the registers
 	 *
 	 * we map the Sysctl, Frame Engine and Ether Switch registers
-	 * seperately so we can use the defined register offsets sanely
+	 * separately so we can use the defined register offsets sanely
 	 */
 	if ((error = bus_space_map(sc->sc_memt, RA_SYSCTL_BASE,
 	    sc->sc_sy_size, 0, &sc->sc_sy_memh)) != 0) {
