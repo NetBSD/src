@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.90 2019/05/28 07:41:49 msaitoh Exp $ */
+/* $NetBSD: if_msk.c,v 1.91 2019/06/03 05:22:57 msaitoh Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.90 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.91 2019/06/03 05:22:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1242,8 +1242,6 @@ msk_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Do miibus setup.
 	 */
-	msk_init_yukon(sc_if);
-
 	DPRINTFN(2, ("msk_attach: 1\n"));
 
 	mii->mii_ifp = ifp;
