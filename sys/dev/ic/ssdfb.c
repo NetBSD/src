@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.4 2019/05/30 07:37:17 tnn Exp $ */
+/* $NetBSD: ssdfb.c,v 1.5 2019/06/04 16:36:18 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.4 2019/05/30 07:37:17 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.5 2019/06/04 16:36:18 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -301,7 +301,7 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 	if (sc->sc_is_console)
 		ssdfb_set_usepoll(sc, true);
 
-	mutex_init(&sc->sc_cond_mtx, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_cond_mtx, MUTEX_DEFAULT, IPL_SCHED);
 	cv_init(&sc->sc_cond, "ssdfb");
 	error = kthread_create(PRI_SOFTCLOCK, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN,
 	    NULL, ssdfb_thread, sc, &sc->sc_thread, "%s",
