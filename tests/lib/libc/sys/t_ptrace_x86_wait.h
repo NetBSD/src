@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.14 2019/06/04 12:17:05 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.15 2019/06/04 12:17:42 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -2600,7 +2600,7 @@ static __inline void get_xmm_regs(void* v_xmm)
 {
 	const struct {
 		uint64_t a, b;
-	} fill = {0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F};
+	} fill __aligned(16) = {0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F};
 
 	__asm__ __volatile__(
 		/* fill registers with clobber pattern */
