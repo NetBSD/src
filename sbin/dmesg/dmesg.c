@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.41 2018/10/30 19:40:36 kre Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.42 2019/06/04 11:37:39 kre Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.41 2018/10/30 19:40:36 kre Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.42 2019/06/04 11:37:39 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,27 +291,25 @@ main(int argc, char *argv[])
 #endif
 
 			switch (ch) {
-			case '[':
 #ifndef SMALL
+			case '[':
 				frac = false;
 				scale = 0;
-#endif
 				ADDC(ch);
 				continue;
+#endif
 			case '<':
 				log = 1;
 				continue;
 			case '>':
 				log = 0;
 				continue;
-			case ']':
 #ifndef SMALL
+			case ']':
 				frac = false;
-#endif
 				ADDC(ch);
 				ADDC('\0');
 				tstamp = 0;
-#ifndef SMALL
 				sec = fsec = 0;
 				switch (sscanf(tbuf, "[%jd.%ld]", &sec, &fsec)){
 				case EOF:
@@ -374,21 +372,21 @@ main(int argc, char *argv[])
 				}
 				if (!quiet || deltas)
 					printf("] ");
-#endif
 				continue;
+#endif
 			case ' ':
 				if (!tstamp)
 					continue;
 				/*FALLTHROUGH*/
 			default:
+#ifndef SMALL
 				if (tstamp) {
 				    ADDC(ch);
-#ifndef SMALL
 				    if (ch == '.')
 					frac = true;
-#endif
 				    continue;
 				}
+#endif
 				if (log)
 					continue;
 				break;
