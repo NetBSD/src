@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.29 2014/07/11 14:59:53 christos Exp $	*/
+/*	$NetBSD: fat.c,v 1.30 2019/06/04 00:08:00 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fat.c,v 1.29 2014/07/11 14:59:53 christos Exp $");
+__RCSID("$NetBSD: fat.c,v 1.30 2019/06/04 00:08:00 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -562,8 +562,8 @@ writefat(int fs, struct bootblock *boot, struct fatEntry *fat, int correct_fat)
 				break;
 			if (fat[cl].next == CLUST_FREE)
 				boot->NumFree++;
-			*p++ |= (u_char)(fat[cl + 1].next << 4);
-			*p++ = (u_char)(fat[cl + 1].next >> 4);
+			*p++ |= (u_char)(fat[cl].next << 4);
+			*p++ = (u_char)(fat[cl].next >> 4);
 			break;
 		}
 	}
