@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.358 2019/05/06 08:05:03 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.359 2019/06/04 11:54:03 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.358 2019/05/06 08:05:03 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.359 2019/06/04 11:54:03 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -913,6 +913,19 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	mutex_enter(proc_lock);
 	mutex_enter(p->p_lock);
 
+	/*
+	 * If we are exiting, demise now.
+	 *
+	 * This avoids notifying tracer and deadlocking.
+	 */
+	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
+		lwp_exit(l);
+		panic("trapsignal");
+		/* NOTREACHED */
+	}
+
 	mask = &l->l_sigmask;
 	ps = p->p_sigacts;
 	action = SIGACTION_PS(ps, signo).sa_handler;
@@ -1569,6 +1582,19 @@ eventswitch(int code)
 	        (code == TRAP_EXEC));
 
 	/*
+	 * If we are exiting, demise now.
+	 *
+	 * This avoids notifying tracer and deadlocking.
+	*/
+	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
+		lwp_exit(l);
+		panic("eventswitch");
+		/* NOTREACHED */
+	}
+
+	/*
 	 * If there's a pending SIGKILL process it immediately.
 	 */
 	if (p->p_xsig == SIGKILL ||
@@ -1620,6 +1646,21 @@ sigswitch(int ppmask, int signo, bool relock)
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_stat == LSONPROC);
 	KASSERT(p->p_nrlwps > 0);
+
+	/*
+	 * If we are exiting, demise now.
+	 *
+	 * This avoids notifying tracer and deadlocking.
+	 */
+	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
+		mutex_exit(p->p_lock);
+		if (relock) {
+			mutex_exit(proc_lock);
+		}
+		lwp_exit(l);
+		panic("sigswitch");
+		/* NOTREACHED */
+	}
 
 	/*
 	 * On entry we know that the process needs to stop.  If it's
@@ -2393,6 +2434,18 @@ proc_stoptrace(int trapno, int sysnum, const register_t args[],
 		ksi.ksi_args[i] = args[i];
 
 	mutex_enter(p->p_lock);
+
+	/*
+	 * If we are exiting, demise now.
+	 *
+	 * This avoids notifying tracer and deadlocking.
+	 */
+	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
+		mutex_exit(p->p_lock);
+		lwp_exit(l);
+		panic("proc_stoptrace");
+		/* NOTREACHED */
+	}
 
 	/*
 	 * If there's a pending SIGKILL process it immediately.
