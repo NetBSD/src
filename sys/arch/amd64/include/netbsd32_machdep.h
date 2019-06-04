@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.22 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.23 2019/06/04 16:29:53 mgorny Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -6,6 +6,22 @@
 #include <sys/ucontext.h>
 #include <compat/sys/ucontext.h>
 #include <compat/sys/siginfo.h>
+
+/*
+ * i386 ptrace constants
+ * Please keep in sync with sys/arch/i386/include/ptrace.h.
+ */
+#define	PT32_STEP		(PT_FIRSTMACH + 0)
+#define	PT32_GETREGS		(PT_FIRSTMACH + 1)
+#define	PT32_SETREGS		(PT_FIRSTMACH + 2)
+#define	PT32_GETFPREGS		(PT_FIRSTMACH + 3)
+#define	PT32_SETFPREGS		(PT_FIRSTMACH + 4)
+#define	PT32_GETXMMREGS		(PT_FIRSTMACH + 5)
+#define	PT32_SETXMMREGS		(PT_FIRSTMACH + 6)
+#define	PT32_GETDBREGS		(PT_FIRSTMACH + 7)
+#define	PT32_SETDBREGS		(PT_FIRSTMACH + 8)
+#define	PT32_SETSTEP		(PT_FIRSTMACH + 9)
+#define	PT32_CLEARSTEP		(PT_FIRSTMACH + 10)
 
 #define NETBSD32_POINTER_TYPE uint32_t
 typedef	struct { NETBSD32_POINTER_TYPE i32; } netbsd32_pointer_t;
@@ -150,6 +166,9 @@ struct x86_64_set_mtrr_args32 {
 };
 
 #define NETBSD32_MID_MACHINE MID_I386
+
+/* Translate ptrace() PT_* request from 32-bit userland to kernel. */
+int netbsd32_ptrace_translate_request(int);
 
 int netbsd32_process_read_regs(struct lwp *, struct reg32 *);
 int netbsd32_process_read_fpregs(struct lwp *, struct fpreg32 *, size_t *);

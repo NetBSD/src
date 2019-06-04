@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ptrace.c,v 1.6 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_ptrace.c,v 1.7 2019/06/04 16:29:53 mgorny Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.6 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.7 2019/06/04 16:29:53 mgorny Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -46,6 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.6 2019/01/27 02:08:40 pgoyette
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+
+#ifndef PTRACE_TRANSLATE_REQUEST32
+#define PTRACE_TRANSLATE_REQUEST32(x) x
+#endif
 
 /*
  * PTRACE methods
@@ -243,6 +247,8 @@ int
 netbsd32_ptrace(struct lwp *l, const struct netbsd32_ptrace_args *uap,
     register_t *retval)
 {
+	int req;
+
 	/* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
@@ -250,7 +256,11 @@ netbsd32_ptrace(struct lwp *l, const struct netbsd32_ptrace_args *uap,
 		syscallarg(int) data;
 	} */
 
-	return do_ptrace(&netbsd32_ptm, l, SCARG(uap, req), SCARG(uap, pid),
+	req = PTRACE_TRANSLATE_REQUEST32(SCARG(uap, req));
+	if (req == -1)
+		return EOPNOTSUPP;
+
+	return do_ptrace(&netbsd32_ptm, l, req, SCARG(uap, pid),
 	    SCARG_P32(uap, addr), SCARG(uap, data), retval);
 }
 
