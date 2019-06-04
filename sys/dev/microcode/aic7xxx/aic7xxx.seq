@@ -40,7 +40,7 @@
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.seq,v 1.123 2003/01/20 20:44:55 gibbs Exp $
  */
 
-VERSION = "$NetBSD: aic7xxx.seq,v 1.19 2014/10/18 08:33:28 snj Exp $"
+VERSION = "$NetBSD: aic7xxx.seq,v 1.20 2019/06/04 10:15:22 msaitoh Exp $"
 PATCH_ARG_LIST = "struct ahc_softc *ahc"
 PREFIX = "ahc_"
 
@@ -1640,7 +1640,7 @@ mesgin_complete:
 	test	SEQ_FLAGS, NOT_IDENTIFIED jnz mesgin_proto_violation;
 
 	/*
-	 * If we recevied good status but never successfully sent the
+	 * If we received good status but never successfully sent the
 	 * cdb, abort the command.
 	 */
 	test	SCB_SCSI_STATUS,0xff	jnz complete_accepted;
