@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.258 2019/06/04 17:46:28 sevan Exp $
+$NetBSD: acronyms.comp,v 1.259 2019/06/04 18:01:18 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -722,6 +722,7 @@ IRTF	Internet Research Task Force
 IS	information system
 ISA	industry standard architecture
 ISA	instruction set architecture
+ISE	instant secure erase
 ISDN	integrated services digital network
 ISI	inter-symbol interference
 ISL	initial system load
