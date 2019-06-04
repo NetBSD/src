@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.19 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.1 2019/06/04 15:07:55 hannken Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_array.c,v 1.19 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: xdr_array.c,v 1.1 2019/06/04 15:07:55 hannken Exp $");
 #endif
 #endif
 
