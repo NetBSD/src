@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.256 2019/06/04 17:36:02 sevan Exp $
+$NetBSD: acronyms.comp,v 1.257 2019/06/04 17:43:23 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1385,6 +1385,7 @@ SMF	single mode fiber
 SMI	structure of management information
 SMI	system management interrupt
 SMM	system management mode
+SMP	serial management protocol
 SMP	symmetric multiprocessing
 SMT	simultaneous multithreading
 SMTP	Simple Mail Transfer Protocol
