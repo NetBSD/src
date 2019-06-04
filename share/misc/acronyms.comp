@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.255 2019/06/02 20:18:23 alnsn Exp $
+$NetBSD: acronyms.comp,v 1.256 2019/06/04 17:36:02 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -205,6 +205,7 @@ CC	carbon copy
 CCD	charge coupled device
 CCI	co-channel interferer
 CCNUMA	cache-coherent non-uniform memory access
+CCTL	command completion time limit
 CD	cache disable
 CD	compact disc
 CDDA	compact disc digital audio
@@ -496,6 +497,7 @@ EPIC	explicitly parallel instruction computing
 EPP	enhanced parallel port
 EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
+ERC	error recovery control
 ERD	emergency recovery disk
 ERD	entity relationship diagram
 ERE	extended regular expression
@@ -1486,6 +1488,7 @@ TKIP	Temporal Key Integrity Protocol
 TLA	top level aggregator
 TLB	translation lookaside buffer
 TLD	top level domain
+TLER	time-limited error recovery
 TLI	transport layer interface
 TLS	thread local storage
 TLS	transport layer security
