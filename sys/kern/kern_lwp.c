@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.201 2019/05/17 03:34:26 ozaki-r Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.202 2019/06/04 11:54:03 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.201 2019/05/17 03:34:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.202 2019/06/04 11:54:03 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1084,9 +1084,17 @@ lwp_exit(struct lwp *l)
 	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_EXIT)) ==
 	    (PSL_TRACED|PSL_TRACELWP_EXIT)) {
 		mutex_enter(p->p_lock);
-		p->p_lwp_exited = l->l_lid;
-		eventswitch(TRAP_LWP);
-		mutex_enter(proc_lock);
+		if (ISSET(p->p_sflag, PS_WEXIT)) {
+			mutex_exit(p->p_lock);
+			/*
+			 * We are exiting, bail out without informing parent
+			 * about a terminating LWP as it would deadlock.
+			 */
+		} else {
+			p->p_lwp_exited = l->l_lid;
+			eventswitch(TRAP_LWP);
+			mutex_enter(proc_lock);
+		}
 	}
 
 	LIST_REMOVE(l, l_list);
