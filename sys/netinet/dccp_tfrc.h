@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.h,v 1.10 2005/10/26 11:36:49 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.h,v 1.2 2016/07/07 06:55:43 msaitoh Exp $ */
+/*	$NetBSD: dccp_tfrc.h,v 1.3 2019/06/04 10:15:22 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson 
@@ -231,7 +231,7 @@ struct tfrc_recv_ccb {
 void *tfrc_recv_init(struct dccpcb *);
 
 /* Free the receiver side
- * args: ccb - ccb of recevier
+ * args: ccb - ccb of receiver
  */
 void tfrc_recv_free(void *);
 

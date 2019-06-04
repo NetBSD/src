@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.135 2019/02/04 10:09:31 mrg Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.136 2019/06/04 10:15:22 msaitoh Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.135 2019/02/04 10:09:31 mrg Exp $
+ * $Id: aic7xxx.c,v 1.136 2019/06/04 10:15:22 msaitoh Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.135 2019/02/04 10:09:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.136 2019/06/04 10:15:22 msaitoh Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -1107,7 +1107,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 					printf("\tCRC Value Mismatch\n");
 				if ((sstat2 & CRCENDERR) != 0)
 					printf("\tNo terminal CRC packet "
-					       "recevied\n");
+					       "received\n");
 				if ((sstat2 & CRCREQERR) != 0)
 					printf("\tIllegal CRC packet "
 					       "request\n");

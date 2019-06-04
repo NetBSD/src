@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.h,v 1.1 2014/03/16 09:34:45 martin Exp $ */
+/* $NetBSD: umcs.h,v 1.2 2019/06/04 10:15:22 msaitoh Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.h 252123 2013-06-23 20:19:51Z thomas $ */
 
 /*-
@@ -170,7 +170,7 @@
 #define	MCS7840_DEV_SPx_LOOP_PIPES	0x01	/* Loop Bulk-Out FIFO to the
 						 * Bulk-In FIFO, default = 0 */
 #define	MCS7840_DEV_SPx_SKIP_ERR_DATA	0x02	/* Drop data bytes from UART,
-						 * which were recevied with
+						 * which were received with
 						 * errors, default = 0 */
 #define	MCS7840_DEV_SPx_RESET_OUT_FIFO	0x04	/* Reset Bulk-Out FIFO */
 #define	MCS7840_DEV_SPx_RESET_IN_FIFO	0x08	/* Reset Bulk-In FIFO */
@@ -564,9 +564,9 @@
 #define	MCS7840_UART_ISR_NOPENDING	0x01	/* No interrupt pending */
 #define	MCS7840_UART_ISR_INTMASK	0x3f	/* Mask to select interrupt
 						 * source */
-#define	MCS7840_UART_ISR_RXERR		0x06	/* Recevir error */
-#define	MCS7840_UART_ISR_RXHASDATA	0x04	/* Recevier has data */
-#define	MCS7840_UART_ISR_RXTIMEOUT	0x0c	/* Recevier timeout */
+#define	MCS7840_UART_ISR_RXERR		0x06	/* Receive error */
+#define	MCS7840_UART_ISR_RXHASDATA	0x04	/* Receiver has data */
+#define	MCS7840_UART_ISR_RXTIMEOUT	0x0c	/* Receiver timeout */
 #define	MCS7840_UART_ISR_TXEMPTY	0x02	/* Transmitter empty */
 #define	MCS7840_UART_ISR_MSCHANGE	0x00	/* Modem status change */
 
