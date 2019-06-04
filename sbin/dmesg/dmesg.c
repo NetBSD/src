@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.42 2019/06/04 11:37:39 kre Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.43 2019/06/04 11:59:05 kre Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.42 2019/06/04 11:37:39 kre Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.43 2019/06/04 11:59:05 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,7 +391,6 @@ main(int argc, char *argv[])
 					continue;
 				break;
 			}
-			newl = 0;
 		}
 		newl = ch == '\n';
 		(void)vis(buf, ch, VIS_NOSLASH, 0);
