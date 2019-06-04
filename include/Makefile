@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.145 2019/04/24 10:26:08 roy Exp $
+#	$NetBSD: Makefile,v 1.146 2019/06/04 15:07:55 hannken Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -47,6 +47,7 @@ INCSDIR=	/usr/include
 SUBDIR=		rpc
 SUBDIR+=	../common/include/prop
 SUBDIR+=	../common/include/ppath
+SUBDIR+=	../common/include/rpc
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
