@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.121 2019/05/19 08:46:15 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.122 2019/06/04 16:29:53 mgorny Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.121 2019/05/19 08:46:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.122 2019/06/04 16:29:53 mgorny Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -334,6 +334,28 @@ cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
 	    sizeof(md_core));
 }
 #endif
+
+int
+netbsd32_ptrace_translate_request(int req)
+{
+
+	switch (req)
+	{
+	case 0 ... PT_FIRSTMACH - 1:	return req;
+	case PT32_STEP:			return PT_STEP;
+	case PT32_GETREGS:		return PT_GETREGS;
+	case PT32_SETREGS:		return PT_SETREGS;
+	case PT32_GETFPREGS:		return PT_GETFPREGS;
+	case PT32_SETFPREGS:		return PT_SETFPREGS;
+	case PT32_GETXMMREGS:		return -1;
+	case PT32_SETXMMREGS:		return -1;
+	case PT32_GETDBREGS:		return PT_GETDBREGS;
+	case PT32_SETDBREGS:		return PT_SETDBREGS;
+	case PT32_SETSTEP:		return PT_SETSTEP;
+	case PT32_CLEARSTEP:		return PT_CLEARSTEP;
+	default:			return -1;
+	}
+}
 
 int
 netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)

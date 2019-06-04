@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.13 2019/02/07 00:19:54 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.14 2019/06/04 16:29:53 mgorny Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -87,6 +87,8 @@
 #define process_reg32		struct reg32
 #define process_fpreg32		struct fpreg32
 #define process_dbreg32		struct dbreg32
+
+#define PTRACE_TRANSLATE_REQUEST32(x) netbsd32_ptrace_translate_request(x)
 #endif	/* COMPAT_NETBSD32 */
 #endif	/* _KERNEL_OPT */
 
