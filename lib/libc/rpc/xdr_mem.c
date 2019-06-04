@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_mem.c,v 1.19 2013/03/11 20:19:30 tron Exp $	*/
+/*	$NetBSD: xdr_mem.c,v 1.20 2019/06/04 08:44:08 hannken Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_mem.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_mem.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_mem.c,v 1.19 2013/03/11 20:19:30 tron Exp $");
+__RCSID("$NetBSD: xdr_mem.c,v 1.20 2019/06/04 08:44:08 hannken Exp $");
 #endif
 #endif
 
@@ -79,6 +79,7 @@ static u_int xdrmem_getpos(XDR *);
 static bool_t xdrmem_setpos(XDR *, u_int);
 static int32_t *xdrmem_inline_aligned(XDR *, u_int);
 static int32_t *xdrmem_inline_unaligned(XDR *, u_int);
+static bool_t xdrmem_control(XDR *xdrs, int request, void *info);
 
 static const struct	xdr_ops xdrmem_ops_aligned = {
 	xdrmem_getlong_aligned,
@@ -89,7 +90,7 @@ static const struct	xdr_ops xdrmem_ops_aligned = {
 	xdrmem_setpos,
 	xdrmem_inline_aligned,
 	xdrmem_destroy,
-	NULL,	/* xdrmem_control */
+	xdrmem_control
 };
 
 static const struct	xdr_ops xdrmem_ops_unaligned = {
@@ -101,7 +102,7 @@ static const struct	xdr_ops xdrmem_ops_unaligned = {
 	xdrmem_setpos,
 	xdrmem_inline_unaligned,
 	xdrmem_destroy,
-	NULL,	/* xdrmem_control */
+	xdrmem_control
 };
 
 /*
@@ -242,4 +243,21 @@ xdrmem_inline_unaligned(XDR *xdrs, u_int len)
 {
 
 	return (0);
+}
+
+static bool_t
+xdrmem_control(XDR *xdrs, int request, void *info)
+{
+	xdr_bytesrec *xptr;
+
+	switch (request) {
+
+	case XDR_GET_BYTES_AVAIL:
+		xptr = (xdr_bytesrec *)info;
+		xptr->xc_is_last_record = TRUE;
+		xptr->xc_num_avail = xdrs->x_handy;
+		return (TRUE);
+
+	}
+	return (FALSE);
 }
