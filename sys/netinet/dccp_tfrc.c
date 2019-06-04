@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.c,v 1.16 2006/03/01 17:34:08 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.c,v 1.4 2016/07/07 06:55:43 msaitoh Exp $ */
+/*	$NetBSD: dccp_tfrc.c,v 1.5 2019/06/04 10:15:22 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.4 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.5 2019/06/04 10:15:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -1637,7 +1637,7 @@ tfrc_recv_init(struct dccpcb * pcb)
 	return ccb;
 }
 /* Free the receiver side
- * args: ccb - ccb of recevier
+ * args: ccb - ccb of receiver
  * Tested u:OK
  */
 void
