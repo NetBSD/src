@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_mem.c,v 1.20 2019/06/04 08:44:08 hannken Exp $	*/
+/*	$NetBSD: xdr_mem.c,v 1.1 2019/06/04 15:07:55 hannken Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_mem.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_mem.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_mem.c,v 1.20 2019/06/04 08:44:08 hannken Exp $");
+__RCSID("$NetBSD: xdr_mem.c,v 1.1 2019/06/04 15:07:55 hannken Exp $");
 #endif
 #endif
 
