@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_i386_wait.h,v 1.8 2019/05/10 16:24:35 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_i386_wait.h,v 1.9 2019/06/04 12:17:05 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -226,6 +226,7 @@ ATF_TC_BODY(i386_regs_gp_write, tc)
 			:
 		);
 
+		DPRINTF("Before comparing results\n");
 		FORKEE_ASSERT_EQ(v_eax, eax);
 		FORKEE_ASSERT_EQ(v_ebx, ebx);
 		FORKEE_ASSERT_EQ(v_ecx, ecx);
@@ -393,6 +394,7 @@ ATF_TC_BODY(i386_regs_ebp_esp_write, tc)
 			:
 		);
 
+		DPRINTF("Before comparing results\n");
 		FORKEE_ASSERT_EQ(v_esp, esp);
 		FORKEE_ASSERT_EQ(v_ebp, ebp);
 

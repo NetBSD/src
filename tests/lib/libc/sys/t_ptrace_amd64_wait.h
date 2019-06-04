@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_amd64_wait.h,v 1.10 2019/05/10 16:24:35 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_amd64_wait.h,v 1.11 2019/06/04 12:17:05 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -262,6 +262,7 @@ ATF_TC_BODY(x86_64_regs_gp_write, tc)
 			:
 		);
 
+		DPRINTF("Before comparing results\n");
 		FORKEE_ASSERT_EQ(v_rax, rax);
 		FORKEE_ASSERT_EQ(v_rbx, rbx);
 		FORKEE_ASSERT_EQ(v_rcx, rcx);
@@ -462,6 +463,7 @@ ATF_TC_BODY(x86_64_regs_r8_write, tc)
 			: "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15"
 		);
 
+		DPRINTF("Before comparing results\n");
 		FORKEE_ASSERT_EQ(v_r8[0], r8[0]);
 		FORKEE_ASSERT_EQ(v_r8[1], r8[1]);
 		FORKEE_ASSERT_EQ(v_r8[2], r8[2]);
