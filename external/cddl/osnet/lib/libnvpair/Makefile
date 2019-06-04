@@ -1,15 +1,13 @@
-#	$NetBSD: Makefile,v 1.9 2018/05/28 21:05:09 chs Exp $
+#	$NetBSD: Makefile,v 1.10 2019/06/04 08:45:17 hannken Exp $
 
 .include <bsd.init.mk>
 
 .PATH:  ${.CURDIR}/../../dist/lib/libnvpair
 .PATH:  ${.CURDIR}/../../dist/common/nvpair
-.PATH:  ${.CURDIR}/../../dist/uts/common/rpc
 
 CPPFLAGS+=	-I${OSNETDIR}/sys \
 		-I${OPENSOLARIS_USR_DISTDIR}/head \
-		-I${OPENSOLARIS_SYS_DISTDIR}/common \
-		-I${OPENSOLARIS_SYS_DISTDIR}/uts/common
+		-I${OPENSOLARIS_SYS_DISTDIR}/common
 
 CPPFLAGS+=	-Wall \
 		-Wno-unknown-pragmas \
@@ -21,9 +19,6 @@ CPPFLAGS+=	-Wall \
 LIB=	nvpair
 
 SRCS=	libnvpair.c nvpair_alloc_system.c nvpair_alloc_fixed.c nvpair.c fnvpair.c nvpair_json.c
-SRCS+=	xdr.c
-SRCS+=	xdr_array.c
-SRCS+=	xdr_mem.c
 
 .include "../../Makefile.zfs"
 .include <bsd.lib.mk>
