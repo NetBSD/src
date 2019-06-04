@@ -34,6 +34,7 @@
  *
  */
 
+#if defined(_KERNEL) || defined(_STANDALONE)
 #ifndef _RPC_XDR_H
 #define	_RPC_XDR_H
 
@@ -646,3 +647,6 @@ extern bool_t	xdr_replymsg_hdr(XDR *, struct rpc_msg *);
 #endif
 
 #endif	/* !_RPC_XDR_H */
+#else /* defined(_KERNEL) || defined(_STANDALONE) */
+#include_next <rpc/xdr.h>
+#endif /* defined(_KERNEL) || defined(_STANDALONE) */
