@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tcplike.c,v 1.19 2005/07/27 06:27:25 nishida Exp $	*/
-/*	$NetBSD: dccp_tcplike.c,v 1.3 2016/04/26 08:44:44 ozaki-r Exp $ */
+/*	$NetBSD: dccp_tcplike.c,v 1.4 2019/06/04 10:15:22 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003 Magnus Erixzon
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tcplike.c,v 1.3 2016/04/26 08:44:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tcplike.c,v 1.4 2019/06/04 10:15:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -888,7 +888,7 @@ void tcplike_recv_term(void *ccb)
 }
 
 /* Free the receiver side
- * args: ccb - ccb of recevier
+ * args: ccb - ccb of receiver
  */
 void
 tcplike_recv_free(void *ccb)
