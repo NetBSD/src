@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1374 2019/06/01 08:13:31 jdolecek Exp $
+$NetBSD: pcidevs,v 1.1375 2019/06/04 09:09:47 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3530,12 +3530,13 @@ product INTEL I218_V2		0x15a1	I218-V Ethernet Connection
 product INTEL I218_LM3		0x15a2	I218-LM Ethernet Connection
 product INTEL I218_V3		0x15a3	I218-V Ethernet Connection
 product INTEL X552_VF		0x15a8	X552 VF
-product INTEL X552_VF_HV	0x15a9	X552 VF
+product INTEL X552_VF_HV	0x15a9	X552 VF (Hyper-V)
 product INTEL X552_KX4		0x15aa	X552 KX4
 product INTEL X552_KR		0x15ab	X552 KR
 product INTEL X552_SFP		0x15ac	X552 SFP+
 product INTEL X557_AT2		0x15ad	X557-AT2
 product INTEL X552_1G_T		0x15ae	X552 1000Base-T
+product INTEL X552_XFI		0x15b0	X552 XFI
 product INTEL C3K_X553_VF_HYPV	0x15b4	C3000 X553 VF (Hyper-V)
 product INTEL I219_LM2		0x15b7	I219-LM Ethernet Connection
 product INTEL I219_V2		0x15b8	I219-V Ethernet Connection
@@ -3551,6 +3552,8 @@ product INTEL C3K_X553_VF	0x15c5	C3000 X553 VF
 product INTEL C3K_X553_SGMII_BP	0x15c6	C3000 X553 1GbE SGMII Backplane (10G SKU)
 product INTEL C3K_X553_SGMII_BP_L 0x15c7 C3000 X553 1GbE SGMII Backplane (non-10G SKU)
 product INTEL C3K_X553_10G_T	0x15c8	C3000 X553 10GBASE-T (X557)
+product INTEL C3K_X553_QSFP	0x15ca	C3000 X553 10G QSFP
+product INTEL C3K_X553_QSFP_N	0x15cc	C3000 X553 10G QSFP
 product INTEL C3K_X553_KR_SFP	0x15ce	C3000 X553 10G SFP+ (KR)
 product INTEL X550T1	 	0x15d1	X550 10G Ethernet
 product INTEL I219_V5		0x15d6	I219-V Ethernet Connection
