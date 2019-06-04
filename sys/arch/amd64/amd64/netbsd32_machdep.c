@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.122 2019/06/04 16:29:53 mgorny Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.123 2019/06/04 16:30:19 mgorny Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.122 2019/06/04 16:29:53 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.123 2019/06/04 16:30:19 mgorny Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -395,23 +395,19 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs, size_t *sz)
 int
 netbsd32_process_read_dbregs(struct lwp *l, struct dbreg32 *regs, size_t *sz)
 {
-#if notyet
-	struct pcb *pcb;
+	struct dbreg regs64;
 
-	pcb = lwp_getpcb(l);
+	x86_dbregs_read(l, &regs64);
+	memset(regs, 0, sizeof(*regs));
+	regs->dr[0] = regs64.dr[0] & 0xffffffff;
+	regs->dr[1] = regs64.dr[1] & 0xffffffff;
+	regs->dr[2] = regs64.dr[2] & 0xffffffff;
+	regs->dr[3] = regs64.dr[3] & 0xffffffff;
 
-	regs->dr[0] = pcb->pcb_dbregs->dr[0] & 0xffffffff;
-	regs->dr[1] = pcb->pcb_dbregs->dr[1] & 0xffffffff;
-	regs->dr[2] = pcb->pcb_dbregs->dr[2] & 0xffffffff;
-	regs->dr[3] = pcb->pcb_dbregs->dr[3] & 0xffffffff;
-
-	regs->dr[6] = pcb->pcb_dbregs->dr[6] & 0xffffffff;
-	regs->dr[7] = pcb->pcb_dbregs->dr[7] & 0xffffffff;
+	regs->dr[6] = regs64.dr[6] & 0xffffffff;
+	regs->dr[7] = regs64.dr[7] & 0xffffffff;
 
 	return 0;
-#else
-	return ENOTSUP;
-#endif
 }
 
 int
@@ -478,23 +474,29 @@ int
 netbsd32_process_write_dbregs(struct lwp *l, const struct dbreg32 *regs,
     size_t sz)
 {
-#if notyet
-	struct pcb *pcb;
+	size_t i;
+	struct dbreg regs64;
 
-	pcb = lwp_getpcb(l);
+	/* Check that DR0-DR3 contain user-space address */
+	for (i = 0; i < X86_DBREGS; i++) {
+		if (regs->dr[i] >= VM_MAXUSER_ADDRESS32)
+			return EINVAL;
+	}
 
-	pcb->pcb_dbregs->dr[0] = regs->dr[0];
-	pcb->pcb_dbregs->dr[1] = regs->dr[1];
-	pcb->pcb_dbregs->dr[2] = regs->dr[2];
-	pcb->pcb_dbregs->dr[3] = regs->dr[3];
+	if (regs->dr[7] & X86_DR7_GENERAL_DETECT_ENABLE) {
+		return EINVAL;
+	}
 
-	pcb->pcb_dbregs->dr[6] = regs->dr[6];
-	pcb->pcb_dbregs->dr[7] = regs->dr[7];
+	regs64.dr[0] = regs->dr[0];
+	regs64.dr[1] = regs->dr[1];
+	regs64.dr[2] = regs->dr[2];
+	regs64.dr[3] = regs->dr[3];
 
+	regs64.dr[6] = regs->dr[6];
+	regs64.dr[7] = regs->dr[7];
+
+	x86_dbregs_write(l, &regs64);
 	return 0;
-#else
-	return ENOTSUP;
-#endif
 }
 
 int
