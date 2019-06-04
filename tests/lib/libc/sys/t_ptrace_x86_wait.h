@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.13 2019/05/10 18:07:10 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.14 2019/06/04 12:17:05 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -2387,6 +2387,7 @@ ATF_TC_BODY(x86_regs_mm_write, tc)
 		DPRINTF("Before running assembly from child\n");
 		get_mm_regs(v_mm);
 
+		DPRINTF("Before comparing results\n");
 		FORKEE_ASSERT_EQ(v_mm[0], mm[0]);
 		FORKEE_ASSERT_EQ(v_mm[1], mm[1]);
 		FORKEE_ASSERT_EQ(v_mm[2], mm[2]);
@@ -2724,6 +2725,7 @@ ATF_TC_BODY(x86_regs_xmm_write, tc)
 		DPRINTF("Before running assembly from child\n");
 		get_xmm_regs(v_xmm);
 
+		DPRINTF("Before comparing results\n");
 		FORKEE_ASSERT(!memcmp(&v_xmm[0], &xmm[0], sizeof(*xmm)));
 		FORKEE_ASSERT(!memcmp(&v_xmm[1], &xmm[1], sizeof(*xmm)));
 		FORKEE_ASSERT(!memcmp(&v_xmm[2], &xmm[2], sizeof(*xmm)));
