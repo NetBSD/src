@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.25 2019/05/30 18:19:36 tnn Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.26 2019/06/04 19:49:43 tnn Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.25 2019/05/30 18:19:36 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.26 2019/06/04 19:49:43 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,6 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.25 2019/05/30 18:19:36 tnn Exp $");
 #define	  SUNXI_GPIO_INT_MODE_DOUBLE_EDGE	0x4
 #define	SUNXI_GPIO_INT_CTL(bank)	(0x210 + 0x20 * (bank))
 #define	SUNXI_GPIO_INT_STATUS(bank)	(0x214 + 0x20 * (bank))
+#define	SUNXI_GPIO_INT_DEBOUNCE(bank)	(0x218 + 0x20 * (bank))
+#define	  SUNXI_GPIO_INT_DEBOUNCE_CLK_PRESCALE	__BITS(6,4)
+#define	  SUNXI_GPIO_INT_DEBOUNCE_CLK_SEL	__BIT(0)
 #define	SUNXI_GPIO_GRP_CONFIG(bank)	(0x300 + 0x4 * (bank))
 #define	 SUNXI_GPIO_GRP_IO_BIAS_CONFIGMASK	0xf
 
@@ -479,6 +482,9 @@ sunxi_intr_enable(struct sunxi_gpio_softc *sc,
 	val &= ~SUNXI_GPIO_INT_MODEMASK(eint->eint_num);
 	val |= __SHIFTIN(mode, SUNXI_GPIO_INT_MODEMASK(eint->eint_num));
 	GPIO_WRITE(sc, SUNXI_GPIO_INT_CFG(eint->eint_bank, eint->eint_num), val);
+
+	val = SUNXI_GPIO_INT_DEBOUNCE_CLK_SEL;
+	GPIO_WRITE(sc, SUNXI_GPIO_INT_DEBOUNCE(eint->eint_bank), val);
 
 	/* Enable eint */
 	val = GPIO_READ(sc, SUNXI_GPIO_INT_CTL(eint->eint_bank));
