@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.5 2019/06/04 16:36:18 tnn Exp $ */
+/* $NetBSD: ssdfb.c,v 1.6 2019/06/05 20:32:28 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.5 2019/06/04 16:36:18 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.6 2019/06/05 20:32:28 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -854,6 +854,7 @@ ssdfb_thread(void *arg)
 	}
 
 	mutex_exit(&sc->sc_cond_mtx);
+	kthread_exit(0);
 }
 
 static void
