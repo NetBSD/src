@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.35 2019/05/28 21:56:24 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.36 2019/06/05 03:38:09 thorpej Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -113,6 +113,7 @@ makeoptions	DTS="
 	sun8i-a83t-tbs-a711.dts
 
 	sun8i-h2-plus-bananapi-m2-zero.dts
+	sun8i-h2-plus-bananapi-p2-zero.dts
 	sun8i-h2-plus-libretech-all-h3-cc.dts
 	sun8i-h2-plus-orangepi-r1.dts
 	sun8i-h2-plus-orangepi-zero.dts
