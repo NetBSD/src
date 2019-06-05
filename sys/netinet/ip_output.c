@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.313 2019/06/05 01:27:20 knakahara Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.314 2019/06/05 01:31:04 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.313 2019/06/05 01:27:20 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.314 2019/06/05 01:31:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -616,15 +616,18 @@ sendit:
 		if (error || ipsec_done)
 			goto done;
 	}
-#endif
 
-	/*
-	 * Run through list of hooks for output packets.
-	 */
-	error = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_OUT);
-	if (error || m == NULL) {
-		IP_STATINC(IP_STAT_PFILDROP_OUT);
-		goto done;
+	if (!ipsec_used || !natt_frag)
+#endif
+	{
+		/*
+		 * Run through list of hooks for output packets.
+		 */
+		error = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_OUT);
+		if (error || m == NULL) {
+			IP_STATINC(IP_STAT_PFILDROP_OUT);
+			goto done;
+		}
 	}
 
 	ip = mtod(m, struct ip *);
