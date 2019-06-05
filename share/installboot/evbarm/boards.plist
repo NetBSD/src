@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.3 2019/05/29 03:25:46 thorpej Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.4 2019/06/05 07:22:49 thorpej Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -156,12 +156,26 @@
 		<key>u-boot-pkg</key>
 		<string>bananapro</string>
 	</dict>
+	<key>sinovoip,bpi-m2-zero</key>
+	<dict>
+		<key>description</key>
+		<string>Banana Pi BPI-M2 Zero</string>
+		<key>u-boot-pkg</key>
+		<string>bananapi-m2-zero</string>
+	</dict>
 	<key>sinovoip,bpi-m3</key>
 	<dict>
 		<key>description</key>
 		<string>Banana Pi BPI-M3</string>
 		<key>u-boot-pkg</key>
 		<string>bananapi-m3</string>
+	</dict>
+	<key>sinovoip,bpi-p2-zero</key>
+	<dict>
+		<key>description</key>
+		<string>Banana Pi BPI-P2 Zero</string>
+		<key>u-boot-pkg</key>
+		<string>bananapi-p2-zero</string>
 	</dict>
 
 	<key>cubietech,cubieboard2</key>
