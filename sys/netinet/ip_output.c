@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.312 2019/05/15 02:59:18 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.313 2019/06/05 01:27:20 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.312 2019/05/15 02:59:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.313 2019/06/05 01:27:20 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -777,7 +777,7 @@ sendit:
 		 * processing can occur.
 		 */
 		if (natt_frag) {
-			error = ip_output(m, opt, ro,
+			error = ip_output(m, opt, NULL,
 			    flags | IP_RAWOUTPUT | IP_NOIPNEWID,
 			    imo, inp);
 		} else {
