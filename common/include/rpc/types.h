@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1 2019/06/04 15:07:55 hannken Exp $	*/
+/*	$NetBSD: types.h,v 1.2 2019/06/05 16:25:43 hannken Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -62,6 +62,19 @@ typedef   int32_t rpc_inline_t;
 #	define NULL	0
 #endif
 
+#if defined(_KERNEL) || defined(_STANDALONE)
+
+#define warn(msg,...) /**/
+
+typedef __caddr_t caddr_t;
+
+#include <sys/kmem.h>
+
+#define mem_alloc(bsize)	kmem_alloc(bsize, KM_SLEEP)
+#define mem_free(ptr, bsize)	kmem_free(ptr, bsize)
+
+#else /* _KERNEL || _STANDALONE */
+
 #define mem_alloc(bsize)	calloc((size_t)1, bsize)
 #define mem_free(ptr, bsize)	free(ptr)
 
@@ -103,5 +116,7 @@ struct __rpc_sockinfo {
 	int si_socktype;
 	int si_alen;
 };
+
+#endif /* _KERNEL || _STANDALONE */
 
 #endif /* !_RPC_TYPES_H_ */
