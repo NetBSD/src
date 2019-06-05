@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.54 2019/04/11 09:14:07 msaitoh Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.55 2019/06/05 17:50:06 triaxx Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.54 2019/04/11 09:14:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.55 2019/06/05 17:50:06 triaxx Exp $");
 
 
 /*
@@ -111,9 +111,6 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 	const struct mii_phydesc *mpd;
 	int rev;
 	const char *sep = "";
-
-	ma = aux;
-	mii = ma->mii_data;
 
 	rev = MII_REV(ma->mii_id2);
 	mpd = mii_phy_match(ma, rgephys);
