@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.solmod,v 1.6 2019/02/17 04:05:58 rin Exp $
+#	$NetBSD: Makefile.solmod,v 1.7 2019/06/05 16:28:07 hannken Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
@@ -22,7 +22,7 @@ SRCS+=	fm.c
 SRCS+=	list.c
 SRCS+=	nvpair_alloc_system.c
 
-.PATH:	${ZFSDIR}/dist/uts/common/rpc
+.PATH:	${NETBSDSRCDIR}/common/lib/libc/rpc
 
 SRCS+=	xdr.c
 SRCS+=	xdr_array.c
