@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.1 2019/06/04 15:07:55 hannken Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.2 2019/06/05 16:25:43 hannken Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_array.c,v 1.1 2019/06/04 15:07:55 hannken Exp $");
+__RCSID("$NetBSD: xdr_array.c,v 1.2 2019/06/05 16:25:43 hannken Exp $");
 #endif
 #endif
 
@@ -49,6 +49,15 @@ __RCSID("$NetBSD: xdr_array.c,v 1.1 2019/06/04 15:07:55 hannken Exp $");
  * These are the "non-trivial" xdr primitives used to serialize and de-serialize
  * arrays.  See xdr.h for more info on the interface to xdr.
  */
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+
+#include <sys/param.h>
+#include <lib/libkern/libkern.h>
+#include <rpc/types.h>
+#include <rpc/xdr.h>
+
+#else /* _KERNEL || _STANDALONE */
 
 #include "namespace.h"
 
@@ -65,6 +74,8 @@ __RCSID("$NetBSD: xdr_array.c,v 1.1 2019/06/04 15:07:55 hannken Exp $");
 __weak_alias(xdr_array,_xdr_array)
 __weak_alias(xdr_vector,_xdr_vector)
 #endif
+
+#endif /* _KERNEL || _STANDALONE */
 
 /*
  * XDR an array of arbitrary elements
