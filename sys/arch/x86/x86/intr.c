@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.144 2019/02/15 08:54:01 nonaka Exp $	*/
+/*	$NetBSD: intr.c,v 1.145 2019/06/05 04:31:37 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.144 2019/02/15 08:54:01 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.145 2019/06/05 04:31:37 knakahara Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -661,6 +661,19 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 	if (pic == &i8259_pic) {
 		idtvec = ICU_OFFSET + pin;
 	} else {
+		/*
+		 * TODO to support MSI (not MSI-X) multiple vectors
+		 *
+		 * PCI Local Bus Specification Revision 3.0 says the devices
+		 * which use MSI multiple vectors increment the low order bits
+		 * of MSI message data.
+		 * On the other hand, Intel SDM "10.11.2 Message Data Register
+		 * Format" says the 7:0 bits of MSI message data mean Interrupt
+		 * Descriptor Table(IDT) vector.
+		 * As the result of these two documents, the IDT vectors which
+		 * are used by a device using MSI multiple vectors must be
+		 * continuous.
+		 */
 		idtvec = idt_vec_alloc(APIC_LEVEL(level), IDT_INTR_HIGH);
 	}
 	if (idtvec == 0) {
