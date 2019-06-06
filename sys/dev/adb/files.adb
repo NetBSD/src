@@ -1,5 +1,5 @@
 # 
-#	$NetBSD: files.adb,v 1.7 2012/08/30 01:27:44 macallan Exp $
+#	$NetBSD: files.adb,v 1.8 2019/06/06 20:59:58 macallan Exp $
 #
 # Apple Desktop Bus protocol and drivers
 
@@ -7,7 +7,7 @@ defflag	adbdebug.h	ADB_DEBUG
 defflag	adbdebug.h	ADBKBD_DEBUG
 defflag	adbdebug.h	ADBMS_DEBUG
 defflag	adbdebug.h	ADBBT_DEBUG
-defflag adbdebug.h	ADBKBD_POWER_PANIC
+defflag adbdebug.h	ADBKBD_POWER_DDB
 
 define adb_bus {}
 
