@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.36 2019/06/05 03:38:09 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.37 2019/06/06 22:41:02 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -315,8 +315,8 @@ vcmbox*		at bcmmbox?
 
 # DMA controller
 bcmdmac*	at fdt?			# Broadcom BCM283x DMA controller
-sun4idma*       at fdt?			# Allwinner DMA controller (sun4i)
-sun6idma*	at fdt?			# Allwinner DMA controller (sun6i)
+sun4idma*	at fdt? pass 4		# Allwinner DMA controller (sun4i)
+sun6idma*	at fdt?	pass 4		# Allwinner DMA controller (sun6i)
 tegraapbdma*	at fdt? pass 4		# NVIDIA Tegra APB DMA
 
 # FUSE controller
