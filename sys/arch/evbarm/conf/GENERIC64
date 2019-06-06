@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.95 2019/05/31 14:52:17 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.96 2019/06/06 22:41:02 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -218,7 +218,7 @@ qemufwcfg*	at acpi?
 
 # DMA controller
 bcmdmac*	at fdt?			# Broadcom BCM283x DMA controller
-sun6idma*	at fdt?			# Allwinner DMA controller (sun6i)
+sun6idma*	at fdt?	pass 4		# Allwinner DMA controller (sun6i)
 tegraapbdma*	at fdt? pass 4		# NVIDIA Tegra APB DMA
 
 # FUSE controller
