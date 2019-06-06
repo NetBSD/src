@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-pinebook.dts,v 1.15 2019/02/03 13:19:20 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64-pinebook.dts,v 1.16 2019/06/06 23:19:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -88,18 +88,6 @@
 
 &codec {
 	allwinner,pa-gpios = <&pio 7 7 GPIO_ACTIVE_HIGH>;	/* PH7 */
-	status = "okay";
-};
-
-&codec_analog {
-	status = "okay";
-};
-
-&dai {
-	status = "okay";
-};
-
-&sound {
 	status = "okay";
 };
 
