@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.160 2019/05/08 13:40:19 isaki Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.161 2019/06/06 12:59:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.160 2019/05/08 13:40:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.161 2019/06/06 12:59:33 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2264,8 +2264,21 @@ uaudio_round_blocksize(void *addr, int blk,
 Static int
 uaudio_get_props(void *addr)
 {
-	return AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT;
+	struct uaudio_softc *sc;
+	int props;
 
+	sc = addr;
+	props = 0;
+	if ((sc->sc_mode & AUMODE_PLAY))
+		props |= AUDIO_PROP_PLAYBACK;
+	if ((sc->sc_mode & AUMODE_RECORD))
+		props |= AUDIO_PROP_CAPTURE;
+
+	/* XXX I'm not sure all bidirectional devices support FULLDUP&INDEP */
+	if (props == (AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE))
+		props |= AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT;
+
+	return props;
 }
 
 Static void
