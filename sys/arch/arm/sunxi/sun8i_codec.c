@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_codec.c,v 1.6 2019/05/08 13:40:14 isaki Exp $ */
+/* $NetBSD: sun8i_codec.c,v 1.7 2019/06/06 23:19:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.6 2019/05/08 13:40:14 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.7 2019/06/06 23:19:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -333,7 +333,7 @@ sun8i_codec_thread(struct work *wk, void *priv)
 }
 
 static const char * compatible[] = {
-	"allwinner,sun50i-a64-codec",
+	"allwinner,sun8i-a33-codec",
 	NULL
 };
 

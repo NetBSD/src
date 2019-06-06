@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_i2s.c,v 1.4 2019/05/08 13:40:14 isaki Exp $ */
+/* $NetBSD: sunxi_i2s.c,v 1.5 2019/06/06 23:19:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.4 2019/05/08 13:40:14 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.5 2019/06/06 23:19:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -108,7 +108,7 @@ static const struct sunxi_i2s_config sun50i_a64_codec_config = {
 };
 
 static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun50i-a64-acodec-i2s",
+	{ "allwinner,sun50i-a64-codec-i2s",
 	  (uintptr_t)&sun50i_a64_codec_config },
 
 	{ NULL }
