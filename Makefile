@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.325 2018/11/11 07:43:35 maya Exp $
+#	$NetBSD: Makefile,v 1.326 2019/06/06 14:51:43 martin Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -93,8 +93,7 @@
 #   obj:             creates object directories.
 #   do-distrib-dirs: creates the distribution directories.
 #   includes:        installs include files.
-#   do-lib:          builds and installs prerequisites from lib
-#                    if ${MKCOMPAT} != "no".
+#   do-lib:          builds and installs prerequisites from lib.
 #   do-compat-lib:   builds and installs prerequisites from compat/lib
 #                    if ${MKCOMPAT} != "no".
 #   do-x11:          builds and installs X11 tools and libraries
