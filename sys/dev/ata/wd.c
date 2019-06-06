@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.450 2019/05/24 06:01:05 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.451 2019/06/06 20:41:04 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.450 2019/05/24 06:01:05 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.451 2019/06/06 20:41:04 mlelstv Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -734,7 +734,8 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 		xfer->c_bio.flags |= ATA_FUA;
 	}
 
-	wd->inflight++;
+	if (xfer->c_retries == 0)
+		wd->inflight++;
 	switch (wd->atabus->ata_bio(wd->drvp, xfer)) {
 	case ATACMD_TRY_AGAIN:
 		panic("wdstart1: try again");
@@ -989,7 +990,9 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 
+	mutex_enter(&wd->sc_lock);
 	wd->inflight--;
+	mutex_exit(&wd->sc_lock);
 	dk_done(dksc, bp);
 	dk_start(dksc, NULL);
 }
