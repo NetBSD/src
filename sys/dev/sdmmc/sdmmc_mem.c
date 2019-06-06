@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.67 2019/05/28 00:25:27 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.68 2019/06/06 20:50:46 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.67 2019/05/28 00:25:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.68 2019/06/06 20:50:46 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -122,6 +122,12 @@ static const struct {
 
 	/* DDR50 */
 	{ "DDR50",		SMC_CAPS_UHS_DDR50,	 50000 },
+};
+
+static const int sdmmc_mmc_timings[] = {
+	[EXT_CSD_HS_TIMING_LEGACY]	= 26000,
+	[EXT_CSD_HS_TIMING_HIGHSPEED]	= 52000,
+	[EXT_CSD_HS_TIMING_HS200]	= 200000
 };
 
 /*
@@ -955,18 +961,14 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 		if (ISSET(sc->sc_caps, SMC_CAPS_MMC_HS200) &&
 		    ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_HS200_1_8V) {
-			sf->csd.tran_speed = 200000;	/* 200MHz SDR */
 			hs_timing = EXT_CSD_HS_TIMING_HS200;
 		} else if (ISSET(sc->sc_caps, SMC_CAPS_MMC_DDR52) &&
 		    ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_DDR52_1_8V) {
-			sf->csd.tran_speed = 52000;	/* 52MHz */
 			hs_timing = EXT_CSD_HS_TIMING_HIGHSPEED;
 			ddr = true;
 		} else if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_52M) {
-			sf->csd.tran_speed = 52000;	/* 52MHz */
 			hs_timing = EXT_CSD_HS_TIMING_HIGHSPEED;
 		} else if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_26M) {
-			sf->csd.tran_speed = 26000;	/* 26MHz */
 			hs_timing = EXT_CSD_HS_TIMING_LEGACY;
 		} else {
 			aprint_error_dev(sc->sc_dev,
@@ -1007,16 +1009,25 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		    !ISSET(sc->sc_caps, SMC_CAPS_MMC_HIGHSPEED)) {
 			hs_timing = EXT_CSD_HS_TIMING_LEGACY;
 		}
+
+		const int target_timing = hs_timing;
 		if (hs_timing != EXT_CSD_HS_TIMING_LEGACY) {
-			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
-			    EXT_CSD_HS_TIMING, hs_timing, false);
-			if (error) {
-				aprint_error_dev(sc->sc_dev,
-				    "can't change high speed %d, error %d\n",
-				    hs_timing, error);
-				return error;
+			while (hs_timing >= EXT_CSD_HS_TIMING_LEGACY) {
+				error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
+				    EXT_CSD_HS_TIMING, hs_timing, false);
+				if (error == 0 || hs_timing == EXT_CSD_HS_TIMING_LEGACY)
+					break;
+				hs_timing--;
 			}
 		}
+		if (hs_timing != target_timing) {
+			aprint_debug_dev(sc->sc_dev,
+			    "card failed to switch to timing mode %d, using %d\n",
+			    target_timing, hs_timing);
+		}
+
+		KASSERT(hs_timing < __arraycount(sdmmc_mmc_timings));
+		sf->csd.tran_speed = sdmmc_mmc_timings[hs_timing];
 
 		if (sc->sc_busclk > sf->csd.tran_speed)
 			sc->sc_busclk = sf->csd.tran_speed;
