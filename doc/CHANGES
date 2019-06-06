@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2545 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2546 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -371,6 +371,8 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	bufq_priocscan(9): Enabled by default in GENERIC kernel config of all
 		tier 1 & most tier 2 ports. See system specific config otherwise.
 		[sevan 20190426]
+	rktsadc(4): New thermal sensor driver for RockChip RK3328 and RK3399
+		on-CPU sensors.  [mrg 20190426]
 	bind: Import version 9.14.1. [christos 20190427]
 	acpi(4): Updated ACPICA to 20190405. [christos 20190428]
 	dhcpcd(8): Import dhcpcd-7.2.2 [roy 20190504]
