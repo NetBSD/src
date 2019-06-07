@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.273 2019/04/06 03:06:27 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.274 2019/06/07 00:18:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5649,8 +5649,6 @@ ENTRY(ipi_savefpstate)
 
 ENTRY(savefpstate)
 	cmp	%o0, 0
-	bz	Lfp_null_fpstate
-	 nop
 	rd	%psr, %o1		! enable FP before we begin
 	set	PSR_EF, %o2
 	or	%o1, %o2, %o1
@@ -5691,22 +5689,6 @@ Lfp_finish:
 	std	%f28, [%o0 + FS_REGS + (4*28)]
 	retl
 	 std	%f30, [%o0 + FS_REGS + (4*30)]
-
-/* Handle NULL fpstate argument for savefpstate */
-Lfp_null_fpstate:
-#ifdef DIAGNOSTIC
-	ld	[%o5 + CPUINFO_CPUNO], %o1
-	sethi	%hi(Lpanic_savefpstate), %o0
-	call	_C_LABEL(panic)
-	 or	%o0, %lo(Lpanic_savefpstate), %o0
-#else
-	sethi	%hi(CPUINFO_VA), %o5
-	ldd	[%o5 + CPUINFO_SAVEFPSTATE_NULL], %o2
-	inccc   %o3
-	addx    %o2, 0, %o2
-	retl
-	 std	%o2, [%o5 + CPUINFO_SAVEFPSTATE_NULL]
-#endif
 
 /*
  * Store the (now known nonempty) FP queue.
