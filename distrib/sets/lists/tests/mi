@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.815 2019/06/01 19:49:02 kamil Exp $
+# $NetBSD: mi,v 1.816 2019/06/07 21:32:34 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2186,6 +2186,7 @@
 ./usr/tests/kernel/t_lwpctl			tests-obsolete		obsolete
 ./usr/tests/kernel/t_mkdir			tests-obsolete		obsolete
 ./usr/tests/kernel/t_mqueue			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/t_origin			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_pipe			tests-obsolete		obsolete
 ./usr/tests/kernel/t_poll3w			tests-obsolete		obsolete
 ./usr/tests/kernel/t_pollts			tests-obsolete		obsolete
