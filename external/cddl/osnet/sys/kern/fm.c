@@ -19,8 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
  */
 
 /*
@@ -53,18 +52,24 @@
  */
 
 #include <sys/types.h>
-#include <sys/pset.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
 #include <sys/sysevent.h>
 #include <sys/nvpair.h>
 #include <sys/cmn_err.h>
 #include <sys/cpuvar.h>
 #include <sys/sysmacros.h>
 #include <sys/systm.h>
+#include <sys/compress.h>
+#include <sys/cpuvar.h>
+#include <sys/kobj.h>
+#include <sys/kstat.h>
+#include <sys/processor.h>
+#ifdef __NetBSD__
 #include <sys/cpu.h>
-#include <sys/atomic.h>
+#else
+#include <sys/pcpu.h>
+#endif
+#include <sys/sunddi.h>
 #include <sys/systeminfo.h>
 #include <sys/sysevent/eventdefs.h>
 #include <sys/fm/util.h>
@@ -78,7 +83,11 @@ static const char *fm_url = "http://www.sun.com/msg";
 static const char *fm_msgid = "SUNOS-8000-0G";
 static char *volatile fm_panicstr = NULL;
 
+#ifdef illumos
 errorq_t *ereport_errorq;
+#endif
+void *ereport_dumpbuf;
+size_t ereport_dumplen;
 
 static uint_t ereport_chanlen = ERPT_EVCH_MAX;
 static evchan_t *ereport_chan = NULL;
@@ -86,6 +95,86 @@ static ulong_t ereport_qlen = 0;
 static size_t ereport_size = 0;
 static int ereport_cols = 80;
 
+extern void fastreboot_disable_highpil(void);
+
+/*
+ * Common fault management kstats to record ereport generation
+ * failures
+ */
+
+struct erpt_kstat {
+	kstat_named_t	erpt_dropped;		/* num erpts dropped on post */
+	kstat_named_t	erpt_set_failed;	/* num erpt set failures */
+	kstat_named_t	fmri_set_failed;	/* num fmri set failures */
+	kstat_named_t	payload_set_failed;	/* num payload set failures */
+};
+
+static struct erpt_kstat erpt_kstat_data = {
+	{ "erpt-dropped", KSTAT_DATA_UINT64 },
+	{ "erpt-set-failed", KSTAT_DATA_UINT64 },
+	{ "fmri-set-failed", KSTAT_DATA_UINT64 },
+	{ "payload-set-failed", KSTAT_DATA_UINT64 }
+};
+
+#ifdef illumos
+/*ARGSUSED*/
+static void
+fm_drain(void *private, void *data, errorq_elem_t *eep)
+{
+	nvlist_t *nvl = errorq_elem_nvl(ereport_errorq, eep);
+
+	if (!panicstr)
+		(void) fm_ereport_post(nvl, EVCH_TRYHARD);
+	else
+		fm_nvprint(nvl);
+}
+#endif
+
+void
+fm_init(void)
+{
+	kstat_t *ksp;
+
+#ifdef illumos
+	(void) sysevent_evc_bind(FM_ERROR_CHAN,
+	    &ereport_chan, EVCH_CREAT | EVCH_HOLD_PEND);
+
+	(void) sysevent_evc_control(ereport_chan,
+	    EVCH_SET_CHAN_LEN, &ereport_chanlen);
+#endif
+
+	if (ereport_qlen == 0)
+		ereport_qlen = ERPT_MAX_ERRS * MAX(max_ncpus, 4);
+
+	if (ereport_size == 0)
+		ereport_size = ERPT_DATA_SZ;
+
+#ifdef illumos
+	ereport_errorq = errorq_nvcreate("fm_ereport_queue",
+	    (errorq_func_t)fm_drain, NULL, ereport_qlen, ereport_size,
+	    FM_ERR_PIL, ERRORQ_VITAL);
+	if (ereport_errorq == NULL)
+		panic("failed to create required ereport error queue");
+#endif
+
+	ereport_dumpbuf = kmem_alloc(ereport_size, KM_SLEEP);
+	ereport_dumplen = ereport_size;
+
+	/* Initialize ereport allocation and generation kstats */
+	ksp = kstat_create("unix", 0, "fm", "misc", KSTAT_TYPE_NAMED,
+	    sizeof (struct erpt_kstat) / sizeof (kstat_named_t),
+	    KSTAT_FLAG_VIRTUAL);
+
+	if (ksp != NULL) {
+		ksp->ks_data = &erpt_kstat_data;
+		kstat_install(ksp);
+	} else {
+		cmn_err(CE_NOTE, "failed to create fm/misc kstat\n");
+
+	}
+}
+
+#ifdef illumos
 /*
  * Formatting utility function for fm_nvprintr.  We attempt to wrap chunks of
  * output so they aren't split across console lines, and return the end column.
@@ -97,22 +186,22 @@ fm_printf(int depth, int c, int cols, const char *format, ...)
 	va_list ap;
 	int width;
 	char c1;
-	return 0;
+
 	va_start(ap, format);
 	width = vsnprintf(&c1, sizeof (c1), format, ap);
 	va_end(ap);
 
 	if (c + width >= cols) {
-		printf("\n\r");
+		console_printf("\n\r");
 		c = 0;
 		if (format[0] != ' ' && depth > 0) {
-			printf(" ");
+			console_printf(" ");
 			c++;
 		}
 	}
 
 	va_start(ap, format);
-	vprintf(format, ap);
+	console_vprintf(format, ap);
 	va_end(ap);
 
 	return ((c + width) % cols);
@@ -270,15 +359,15 @@ fm_nvprint(nvlist_t *nvl)
 	char *class;
 	int c = 0;
 
-	printf("\r");
+	console_printf("\r");
 
 	if (nvlist_lookup_string(nvl, FM_CLASS, &class) == 0)
 		c = fm_printf(0, c, ereport_cols, "%s", class);
 
 	if (fm_nvprintr(nvl, 0, c, ereport_cols) != 0)
-		printf("\n");
+		console_printf("\n");
 
-	printf("\n");
+	console_printf("\n");
 }
 
 /*
@@ -295,9 +384,26 @@ fm_panic(const char *format, ...)
 	va_list ap;
 
 	(void) atomic_cas_ptr((void *)&fm_panicstr, NULL, (void *)format);
+#if defined(__i386) || defined(__amd64)
+	fastreboot_disable_highpil();
+#endif /* __i386 || __amd64 */
 	va_start(ap, format);
-	vcmn_err(CE_PANIC, format, ap);
+	vpanic(format, ap);
 	va_end(ap);
+}
+
+/*
+ * Simply tell the caller if fm_panicstr is set, ie. an fma event has
+ * caused the panic. If so, something other than the default panic
+ * diagnosis method will diagnose the cause of the panic.
+ */
+int
+is_fm_panic()
+{
+	if (fm_panicstr)
+		return (1);
+	else
+		return (0);
 }
 
 /*
@@ -306,47 +412,107 @@ fm_panic(const char *format, ...)
  * We print the message here so that it comes after the system is quiesced.
  * A one-line summary is recorded in the log only (cmn_err(9F) with "!" prefix).
  * The rest of the message is for the console only and not needed in the log,
- * so it is printed using printf().  We break it up into multiple
+ * so it is printed using console_printf().  We break it up into multiple
  * chunks so as to avoid overflowing any small legacy prom_printf() buffers.
  */
 void
 fm_banner(void)
 {
-	struct timespec tod;
+	timespec_t tod;
 	hrtime_t now;
 
 	if (!fm_panicstr)
 		return; /* panic was not initiated by fm_panic(); do nothing */
 
-	getnanotime(&tod);
-	now = hardclock_ticks;
+	if (panicstr) {
+		tod = panic_hrestime;
+		now = panic_hrtime;
+	} else {
+		gethrestime(&tod);
+		now = gethrtime_waitfree();
+	}
 
 	cmn_err(CE_NOTE, "!SUNW-MSG-ID: %s, "
 	    "TYPE: Error, VER: 1, SEVERITY: Major\n", fm_msgid);
 
-	printf(
+	console_printf(
 "\n\rSUNW-MSG-ID: %s, TYPE: Error, VER: 1, SEVERITY: Major\n"
 "EVENT-TIME: 0x%lx.0x%lx (0x%llx)\n",
 	    fm_msgid, tod.tv_sec, tod.tv_nsec, (u_longlong_t)now);
 
-	printf(
+	console_printf(
 "PLATFORM: %s, CSN: -, HOSTNAME: %s\n"
-"SOURCE: %s, REV: %s\n",
-	    machine, hostname, "NetBSD",
-	    osrelease);
+"SOURCE: %s, REV: %s %s\n",
+	    platform, utsname.nodename, utsname.sysname,
+	    utsname.release, utsname.version);
 
-	printf(
+	console_printf(
 "DESC: Errors have been detected that require a reboot to ensure system\n"
 "integrity.  See %s/%s for more information.\n",
 	    fm_url, fm_msgid);
 
-	printf(
-"AUTO-RESPONSE: NetBSD will not attempt to save and diagnose the error telemetry\n"
+	console_printf(
+"AUTO-RESPONSE: Solaris will attempt to save and diagnose the error telemetry\n"
 "IMPACT: The system will sync files, save a crash dump if needed, and reboot\n"
-"REC-ACTION: Save the error summary below\n");
+"REC-ACTION: Save the error summary below in case telemetry cannot be saved\n");
 
-	printf("\n");
+	console_printf("\n");
 }
+
+/*
+ * Utility function to write all of the pending ereports to the dump device.
+ * This function is called at either normal reboot or panic time, and simply
+ * iterates over the in-transit messages in the ereport sysevent channel.
+ */
+void
+fm_ereport_dump(void)
+{
+	evchanq_t *chq;
+	sysevent_t *sep;
+	erpt_dump_t ed;
+
+	timespec_t tod;
+	hrtime_t now;
+	char *buf;
+	size_t len;
+
+	if (panicstr) {
+		tod = panic_hrestime;
+		now = panic_hrtime;
+	} else {
+		if (ereport_errorq != NULL)
+			errorq_drain(ereport_errorq);
+		gethrestime(&tod);
+		now = gethrtime_waitfree();
+	}
+
+	/*
+	 * In the panic case, sysevent_evc_walk_init() will return NULL.
+	 */
+	if ((chq = sysevent_evc_walk_init(ereport_chan, NULL)) == NULL &&
+	    !panicstr)
+		return; /* event channel isn't initialized yet */
+
+	while ((sep = sysevent_evc_walk_step(chq)) != NULL) {
+		if ((buf = sysevent_evc_event_attr(sep, &len)) == NULL)
+			break;
+
+		ed.ed_magic = ERPT_MAGIC;
+		ed.ed_chksum = checksum32(buf, len);
+		ed.ed_size = (uint32_t)len;
+		ed.ed_pad = 0;
+		ed.ed_hrt_nsec = SE_TIME(sep);
+		ed.ed_hrt_base = now;
+		ed.ed_tod_base.sec = tod.tv_sec;
+		ed.ed_tod_base.nsec = tod.tv_nsec;
+
+		dumpvp_write(&ed, sizeof (ed));
+		dumpvp_write(buf, len);
+	}
+
+	sysevent_evc_walk_fini(chq);
+}
+#endif
 
 /*
  * Post an error report (ereport) to the sysevent error channel.  The error
@@ -358,16 +524,31 @@ fm_ereport_post(nvlist_t *ereport, int evc_flag)
 {
 	size_t nvl_size = 0;
 	evchan_t *error_chan;
+	sysevent_id_t eid;
 
-#if 0
 	(void) nvlist_size(ereport, &nvl_size, NV_ENCODE_NATIVE);
 	if (nvl_size > ERPT_DATA_SZ || nvl_size == 0) {
-		printf("fm_ereport_post: dropped report\n");
+		atomic_inc_64(&erpt_kstat_data.erpt_dropped.value.ui64);
 		return;
 	}
 
-	fm_banner();
-	fm_nvprint(ereport);
+#ifdef illumos
+	if (sysevent_evc_bind(FM_ERROR_CHAN, &error_chan,
+	    EVCH_CREAT|EVCH_HOLD_PEND) != 0) {
+		atomic_inc_64(&erpt_kstat_data.erpt_dropped.value.ui64);
+		return;
+	}
+
+	if (sysevent_evc_publish(error_chan, EC_FM, ESC_FM_ERROR,
+	    SUNW_VENDOR, FM_PUB, ereport, evc_flag) != 0) {
+		atomic_inc_64(&erpt_kstat_data.erpt_dropped.value.ui64);
+		(void) sysevent_evc_unbind(error_chan);
+		return;
+	}
+	(void) sysevent_evc_unbind(error_chan);
+#else
+	(void) ddi_log_sysevent(NULL, SUNW_VENDOR, EC_DEV_STATUS,
+	    ESC_DEV_DLE, ereport, &eid, DDI_SLEEP);
 #endif
 }
 
@@ -459,8 +640,8 @@ fm_nvlist_create(nv_alloc_t *nva)
 
 	if (nvlist_xalloc(&nvl, NV_UNIQUE_NAME, nvhdl) != 0) {
 		if (hdl_alloced) {
-			kmem_free(nvhdl, sizeof (nv_alloc_t));
 			nv_alloc_fini(nvhdl);
+			kmem_free(nvhdl, sizeof (nv_alloc_t));
 		}
 		return (NULL);
 	}
@@ -626,7 +807,7 @@ fm_payload_set(nvlist_t *payload, ...)
 	va_end(ap);
 
 	if (ret)
-		printf("fm_payload_set: failed\n");
+		atomic_inc_64(&erpt_kstat_data.payload_set_failed.value.ui64);
 }
 
 /*
@@ -640,6 +821,14 @@ fm_payload_set(nvlist_t *payload, ...)
  *	detector		nvlist_t	<detector>
  *	ereport-payload		nvlist_t	<var args>
  *
+ * We don't actually add a 'version' member to the payload.  Really,
+ * the version quoted to us by our caller is that of the category 1
+ * "ereport" event class (and we require FM_EREPORT_VERS0) but
+ * the payload version of the actual leaf class event under construction
+ * may be something else.  Callers should supply a version in the varargs,
+ * or (better) we could take two version arguments - one for the
+ * ereport category 1 classification (expect FM_EREPORT_VERS0) and one
+ * for the leaf class.
  */
 void
 fm_ereport_set(nvlist_t *ereport, int version, const char *erpt_class,
@@ -651,24 +840,24 @@ fm_ereport_set(nvlist_t *ereport, int version, const char *erpt_class,
 	int ret;
 
 	if (version != FM_EREPORT_VERS0) {
-		printf("fm_payload_set: bad version\n");
+		atomic_inc_64(&erpt_kstat_data.erpt_set_failed.value.ui64);
 		return;
 	}
 
 	(void) snprintf(ereport_class, FM_MAX_CLASS, "%s.%s",
 	    FM_EREPORT_CLASS, erpt_class);
 	if (nvlist_add_string(ereport, FM_CLASS, ereport_class) != 0) {
-		printf("fm_payload_set: can't add\n");
+		atomic_inc_64(&erpt_kstat_data.erpt_set_failed.value.ui64);
 		return;
 	}
 
 	if (nvlist_add_uint64(ereport, FM_EREPORT_ENA, ena)) {
-		printf("fm_payload_set: can't add\n");
+		atomic_inc_64(&erpt_kstat_data.erpt_set_failed.value.ui64);
 	}
 
 	if (nvlist_add_nvlist(ereport, FM_EREPORT_DETECTOR,
 	    (nvlist_t *)detector) != 0) {
-		printf("fm_payload_set: can't add\n");
+		atomic_inc_64(&erpt_kstat_data.erpt_set_failed.value.ui64);
 	}
 
 	va_start(ap, detector);
@@ -677,7 +866,251 @@ fm_ereport_set(nvlist_t *ereport, int version, const char *erpt_class,
 	va_end(ap);
 
 	if (ret)
-		printf("fm_payload_set: can't add\n");
+		atomic_inc_64(&erpt_kstat_data.erpt_set_failed.value.ui64);
+}
+
+/*
+ * Set-up and validate the members of an hc fmri according to;
+ *
+ *	Member name		Type		Value
+ *	===================================================
+ *	version			uint8_t		0
+ *	auth			nvlist_t	<auth>
+ *	hc-name			string		<name>
+ *	hc-id			string		<id>
+ *
+ * Note that auth and hc-id are optional members.
+ */
+
+#define	HC_MAXPAIRS	20
+#define	HC_MAXNAMELEN	50
+
+static int
+fm_fmri_hc_set_common(nvlist_t *fmri, int version, const nvlist_t *auth)
+{
+	if (version != FM_HC_SCHEME_VERSION) {
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+		return (0);
+	}
+
+	if (nvlist_add_uint8(fmri, FM_VERSION, version) != 0 ||
+	    nvlist_add_string(fmri, FM_FMRI_SCHEME, FM_FMRI_SCHEME_HC) != 0) {
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+		return (0);
+	}
+
+	if (auth != NULL && nvlist_add_nvlist(fmri, FM_FMRI_AUTHORITY,
+	    (nvlist_t *)auth) != 0) {
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+		return (0);
+	}
+
+	return (1);
+}
+
+void
+fm_fmri_hc_set(nvlist_t *fmri, int version, const nvlist_t *auth,
+    nvlist_t *snvl, int npairs, ...)
+{
+	nv_alloc_t *nva = nvlist_lookup_nv_alloc(fmri);
+	nvlist_t *pairs[HC_MAXPAIRS];
+	va_list ap;
+	int i;
+
+	if (!fm_fmri_hc_set_common(fmri, version, auth))
+		return;
+
+	npairs = MIN(npairs, HC_MAXPAIRS);
+
+	va_start(ap, npairs);
+	for (i = 0; i < npairs; i++) {
+		const char *name = va_arg(ap, const char *);
+		uint32_t id = va_arg(ap, uint32_t);
+		char idstr[11];
+
+		(void) snprintf(idstr, sizeof (idstr), "%u", id);
+
+		pairs[i] = fm_nvlist_create(nva);
+		if (nvlist_add_string(pairs[i], FM_FMRI_HC_NAME, name) != 0 ||
+		    nvlist_add_string(pairs[i], FM_FMRI_HC_ID, idstr) != 0) {
+			atomic_inc_64(
+			    &erpt_kstat_data.fmri_set_failed.value.ui64);
+		}
+	}
+	va_end(ap);
+
+	if (nvlist_add_nvlist_array(fmri, FM_FMRI_HC_LIST, pairs, npairs) != 0)
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+
+	for (i = 0; i < npairs; i++)
+		fm_nvlist_destroy(pairs[i], FM_NVA_RETAIN);
+
+	if (snvl != NULL) {
+		if (nvlist_add_nvlist(fmri, FM_FMRI_HC_SPECIFIC, snvl) != 0) {
+			atomic_inc_64(
+			    &erpt_kstat_data.fmri_set_failed.value.ui64);
+		}
+	}
+}
+
+/*
+ * Set-up and validate the members of an dev fmri according to:
+ *
+ *	Member name		Type		Value
+ *	====================================================
+ *	version			uint8_t		0
+ *	auth			nvlist_t	<auth>
+ *	devpath			string		<devpath>
+ *	[devid]			string		<devid>
+ *	[target-port-l0id]	string		<target-port-lun0-id>
+ *
+ * Note that auth and devid are optional members.
+ */
+void
+fm_fmri_dev_set(nvlist_t *fmri_dev, int version, const nvlist_t *auth,
+    const char *devpath, const char *devid, const char *tpl0)
+{
+	int err = 0;
+
+	if (version != DEV_SCHEME_VERSION0) {
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+		return;
+	}
+
+	err |= nvlist_add_uint8(fmri_dev, FM_VERSION, version);
+	err |= nvlist_add_string(fmri_dev, FM_FMRI_SCHEME, FM_FMRI_SCHEME_DEV);
+
+	if (auth != NULL) {
+		err |= nvlist_add_nvlist(fmri_dev, FM_FMRI_AUTHORITY,
+		    (nvlist_t *)auth);
+	}
+
+	err |= nvlist_add_string(fmri_dev, FM_FMRI_DEV_PATH, devpath);
+
+	if (devid != NULL)
+		err |= nvlist_add_string(fmri_dev, FM_FMRI_DEV_ID, devid);
+
+	if (tpl0 != NULL)
+		err |= nvlist_add_string(fmri_dev, FM_FMRI_DEV_TGTPTLUN0, tpl0);
+
+	if (err)
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+
+}
+
+/*
+ * Set-up and validate the members of an cpu fmri according to:
+ *
+ *	Member name		Type		Value
+ *	====================================================
+ *	version			uint8_t		0
+ *	auth			nvlist_t	<auth>
+ *	cpuid			uint32_t	<cpu_id>
+ *	cpumask			uint8_t		<cpu_mask>
+ *	serial			uint64_t	<serial_id>
+ *
+ * Note that auth, cpumask, serial are optional members.
+ *
+ */
+void
+fm_fmri_cpu_set(nvlist_t *fmri_cpu, int version, const nvlist_t *auth,
+    uint32_t cpu_id, uint8_t *cpu_maskp, const char *serial_idp)
+{
+	uint64_t *failedp = &erpt_kstat_data.fmri_set_failed.value.ui64;
+
+	if (version < CPU_SCHEME_VERSION1) {
+		atomic_inc_64(failedp);
+		return;
+	}
+
+	if (nvlist_add_uint8(fmri_cpu, FM_VERSION, version) != 0) {
+		atomic_inc_64(failedp);
+		return;
+	}
+
+	if (nvlist_add_string(fmri_cpu, FM_FMRI_SCHEME,
+	    FM_FMRI_SCHEME_CPU) != 0) {
+		atomic_inc_64(failedp);
+		return;
+	}
+
+	if (auth != NULL && nvlist_add_nvlist(fmri_cpu, FM_FMRI_AUTHORITY,
+	    (nvlist_t *)auth) != 0)
+		atomic_inc_64(failedp);
+
+	if (nvlist_add_uint32(fmri_cpu, FM_FMRI_CPU_ID, cpu_id) != 0)
+		atomic_inc_64(failedp);
+
+	if (cpu_maskp != NULL && nvlist_add_uint8(fmri_cpu, FM_FMRI_CPU_MASK,
+	    *cpu_maskp) != 0)
+		atomic_inc_64(failedp);
+
+	if (serial_idp == NULL || nvlist_add_string(fmri_cpu,
+	    FM_FMRI_CPU_SERIAL_ID, (char *)serial_idp) != 0)
+			atomic_inc_64(failedp);
+}
+
+/*
+ * Set-up and validate the members of a mem according to:
+ *
+ *	Member name		Type		Value
+ *	====================================================
+ *	version			uint8_t		0
+ *	auth			nvlist_t	<auth>		[optional]
+ *	unum			string		<unum>
+ *	serial			string		<serial>	[optional*]
+ *	offset			uint64_t	<offset>	[optional]
+ *
+ *	* serial is required if offset is present
+ */
+void
+fm_fmri_mem_set(nvlist_t *fmri, int version, const nvlist_t *auth,
+    const char *unum, const char *serial, uint64_t offset)
+{
+	if (version != MEM_SCHEME_VERSION0) {
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+		return;
+	}
+
+	if (!serial && (offset != (uint64_t)-1)) {
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+		return;
+	}
+
+	if (nvlist_add_uint8(fmri, FM_VERSION, version) != 0) {
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+		return;
+	}
+
+	if (nvlist_add_string(fmri, FM_FMRI_SCHEME, FM_FMRI_SCHEME_MEM) != 0) {
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+		return;
+	}
+
+	if (auth != NULL) {
+		if (nvlist_add_nvlist(fmri, FM_FMRI_AUTHORITY,
+		    (nvlist_t *)auth) != 0) {
+			atomic_inc_64(
+			    &erpt_kstat_data.fmri_set_failed.value.ui64);
+		}
+	}
+
+	if (nvlist_add_string(fmri, FM_FMRI_MEM_UNUM, unum) != 0) {
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+	}
+
+	if (serial != NULL) {
+		if (nvlist_add_string_array(fmri, FM_FMRI_MEM_SERIAL_ID,
+		    (char **)&serial, 1) != 0) {
+			atomic_inc_64(
+			    &erpt_kstat_data.fmri_set_failed.value.ui64);
+		}
+		if (offset != (uint64_t)-1 && nvlist_add_uint64(fmri,
+		    FM_FMRI_MEM_OFFSET, offset) != 0) {
+			atomic_inc_64(
+			    &erpt_kstat_data.fmri_set_failed.value.ui64);
+		}
+	}
 }
 
 void
@@ -685,27 +1118,28 @@ fm_fmri_zfs_set(nvlist_t *fmri, int version, uint64_t pool_guid,
     uint64_t vdev_guid)
 {
 	if (version != ZFS_SCHEME_VERSION0) {
-		printf("fm_fmri_zfs_set: bad version\n");
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
 		return;
 	}
 
 	if (nvlist_add_uint8(fmri, FM_VERSION, version) != 0) {
-		printf("fm_fmri_zfs_set: can't set\n");
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
 		return;
 	}
 
 	if (nvlist_add_string(fmri, FM_FMRI_SCHEME, FM_FMRI_SCHEME_ZFS) != 0) {
-		printf("fm_fmri_zfs_set: can't set\n");
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
 		return;
 	}
 
 	if (nvlist_add_uint64(fmri, FM_FMRI_ZFS_POOL, pool_guid) != 0) {
-		printf("fm_fmri_zfs_set: can't set\n");
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
 	}
 
 	if (vdev_guid != 0) {
 		if (nvlist_add_uint64(fmri, FM_FMRI_ZFS_VDEV, vdev_guid) != 0) {
-			printf("fm_fmri_zfs_set: can't set\n");
+			atomic_inc_64(
+			    &erpt_kstat_data.fmri_set_failed.value.ui64);
 		}
 	}
 }
@@ -746,7 +1180,7 @@ fm_ena_generate_cpu(uint64_t timestamp, processorid_t cpuid, uchar_t format)
 			ena = (uint64_t)((format & ENA_FORMAT_MASK) |
 			    ((cpuid << ENA_FMT1_CPUID_SHFT) &
 			    ENA_FMT1_CPUID_MASK) |
-			    ((hardclock_ticks << ENA_FMT1_TIME_SHFT) &
+			    ((gethrtime_waitfree() << ENA_FMT1_TIME_SHFT) &
 			    ENA_FMT1_TIME_MASK));
 		}
 		break;
@@ -764,7 +1198,11 @@ fm_ena_generate_cpu(uint64_t timestamp, processorid_t cpuid, uchar_t format)
 uint64_t
 fm_ena_generate(uint64_t timestamp, uchar_t format)
 {
+#ifdef __NetBSD__
 	return (fm_ena_generate_cpu(timestamp, cpu_index(curcpu()), format));
+#else
+	return (fm_ena_generate_cpu(timestamp, PCPU_GET(cpuid), format));
+#endif
 }
 
 uint64_t
@@ -830,4 +1268,140 @@ fm_ena_time_get(uint64_t ena)
 	}
 
 	return (time);
+}
+
+#ifdef illumos
+/*
+ * Convert a getpcstack() trace to symbolic name+offset, and add the resulting
+ * string array to a Fault Management ereport as FM_EREPORT_PAYLOAD_NAME_STACK.
+ */
+void
+fm_payload_stack_add(nvlist_t *payload, const pc_t *stack, int depth)
+{
+	int i;
+	char *sym;
+	ulong_t off;
+	char *stkpp[FM_STK_DEPTH];
+	char buf[FM_STK_DEPTH * FM_SYM_SZ];
+	char *stkp = buf;
+
+	for (i = 0; i < depth && i != FM_STK_DEPTH; i++, stkp += FM_SYM_SZ) {
+		if ((sym = kobj_getsymname(stack[i], &off)) != NULL)
+			(void) snprintf(stkp, FM_SYM_SZ, "%s+%lx", sym, off);
+		else
+			(void) snprintf(stkp, FM_SYM_SZ, "%lx", (long)stack[i]);
+		stkpp[i] = stkp;
+	}
+
+	fm_payload_set(payload, FM_EREPORT_PAYLOAD_NAME_STACK,
+	    DATA_TYPE_STRING_ARRAY, depth, stkpp, NULL);
+}
+#endif
+
+#ifdef illumos
+void
+print_msg_hwerr(ctid_t ct_id, proc_t *p)
+{
+	uprintf("Killed process %d (%s) in contract id %d "
+	    "due to hardware error\n", p->p_pid, p->p_user.u_comm, ct_id);
+}
+#endif
+
+void
+fm_fmri_hc_create(nvlist_t *fmri, int version, const nvlist_t *auth,
+    nvlist_t *snvl, nvlist_t *bboard, int npairs, ...)
+{
+	nv_alloc_t *nva = nvlist_lookup_nv_alloc(fmri);
+	nvlist_t *pairs[HC_MAXPAIRS];
+	nvlist_t **hcl;
+	uint_t n;
+	int i, j;
+	va_list ap;
+	char *hcname, *hcid;
+
+	if (!fm_fmri_hc_set_common(fmri, version, auth))
+		return;
+
+	/*
+	 * copy the bboard nvpairs to the pairs array
+	 */
+	if (nvlist_lookup_nvlist_array(bboard, FM_FMRI_HC_LIST, &hcl, &n)
+	    != 0) {
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+		return;
+	}
+
+	for (i = 0; i < n; i++) {
+		if (nvlist_lookup_string(hcl[i], FM_FMRI_HC_NAME,
+		    &hcname) != 0) {
+			atomic_inc_64(
+			    &erpt_kstat_data.fmri_set_failed.value.ui64);
+			return;
+		}
+		if (nvlist_lookup_string(hcl[i], FM_FMRI_HC_ID, &hcid) != 0) {
+			atomic_inc_64(
+			    &erpt_kstat_data.fmri_set_failed.value.ui64);
+			return;
+		}
+
+		pairs[i] = fm_nvlist_create(nva);
+		if (nvlist_add_string(pairs[i], FM_FMRI_HC_NAME, hcname) != 0 ||
+		    nvlist_add_string(pairs[i], FM_FMRI_HC_ID, hcid) != 0) {
+			for (j = 0; j <= i; j++) {
+				if (pairs[j] != NULL)
+					fm_nvlist_destroy(pairs[j],
+					    FM_NVA_RETAIN);
+			}
+			atomic_inc_64(
+			    &erpt_kstat_data.fmri_set_failed.value.ui64);
+			return;
+		}
+	}
+
+	/*
+	 * create the pairs from passed in pairs
+	 */
+	npairs = MIN(npairs, HC_MAXPAIRS);
+
+	va_start(ap, npairs);
+	for (i = n; i < npairs + n; i++) {
+		const char *name = va_arg(ap, const char *);
+		uint32_t id = va_arg(ap, uint32_t);
+		char idstr[11];
+		(void) snprintf(idstr, sizeof (idstr), "%u", id);
+		pairs[i] = fm_nvlist_create(nva);
+		if (nvlist_add_string(pairs[i], FM_FMRI_HC_NAME, name) != 0 ||
+		    nvlist_add_string(pairs[i], FM_FMRI_HC_ID, idstr) != 0) {
+			for (j = 0; j <= i; j++) {
+				if (pairs[j] != NULL)
+					fm_nvlist_destroy(pairs[j],
+					    FM_NVA_RETAIN);
+			}
+			atomic_inc_64(
+			    &erpt_kstat_data.fmri_set_failed.value.ui64);
+			return;
+		}
+	}
+	va_end(ap);
+
+	/*
+	 * Create the fmri hc list
+	 */
+	if (nvlist_add_nvlist_array(fmri, FM_FMRI_HC_LIST, pairs,
+	    npairs + n) != 0) {
+		atomic_inc_64(&erpt_kstat_data.fmri_set_failed.value.ui64);
+		return;
+	}
+
+	for (i = 0; i < npairs + n; i++) {
+			fm_nvlist_destroy(pairs[i], FM_NVA_RETAIN);
+	}
+
+	if (snvl != NULL) {
+		if (nvlist_add_nvlist(fmri, FM_FMRI_HC_SPECIFIC, snvl) != 0) {
+			atomic_inc_64(
+			    &erpt_kstat_data.fmri_set_failed.value.ui64);
+			return;
+		}
+	}
 }

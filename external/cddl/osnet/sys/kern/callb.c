@@ -1,12 +1,9 @@
-/*	$NetBSD: callb.c,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
-
 /*
  * CDDL HEADER START
  *
  * The contents of this file are subject to the terms of the
- * Common Development and Distribution License, Version 1.0 only
- * (the "License").  You may not use this file except in compliance
- * with the License.
+ * Common Development and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
  *
  * You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
  * or http://www.opensolaris.org/os/licensing.
@@ -22,11 +19,9 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2004 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
-
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -111,14 +106,24 @@ void
 callb_fini(void *dummy __unused)
 {
 	callb_t *cp;
+	int i;
 
 	mutex_enter(&ct->ct_lock);
-	while ((cp = ct->ct_freelist) != NULL) {
-		ct->ct_freelist = cp->c_next;
-		ct->ct_ncallb--;
-		kmem_free(cp, sizeof (callb_t));
+	for (i = 0; i < 16; i++) {
+		while ((cp = ct->ct_freelist) != NULL) {
+			ct->ct_freelist = cp->c_next;
+			ct->ct_ncallb--;
+			kmem_free(cp, sizeof (callb_t));
+		}
+		if (ct->ct_ncallb == 0)
+			break;
+		/* Not all callbacks finished, waiting for the rest. */
+		mutex_exit(&ct->ct_lock);
+		tsleep(ct, 0, "callb", hz / 4);
+		mutex_enter(&ct->ct_lock);
 	}
-	ASSERT(ct->ct_ncallb == 0);
+	if (ct->ct_ncallb > 0)
+		printf("%s: Leaked %d callbacks!\n", __func__, ct->ct_ncallb);
 	mutex_exit(&ct->ct_lock);
 	mutex_destroy(&callb_safe_mutex);
 	mutex_destroy(&callb_table.ct_lock);
@@ -270,7 +275,7 @@ callb_execute_class(int class, int code)
 
 #ifdef CALLB_DEBUG
 		printf("callb_execute: name=%s func=%p arg=%p\n",
-			cp->c_name, (void *)cp->c_func, (void *)cp->c_arg);
+		    cp->c_name, (void *)cp->c_func, (void *)cp->c_arg);
 #endif /* CALLB_DEBUG */
 
 		mutex_exit(&ct->ct_lock);
@@ -309,12 +314,14 @@ callb_generic_cpr(void *arg, int code)
 	switch (code) {
 	case CB_CODE_CPR_CHKPT:
 		cp->cc_events |= CALLB_CPR_START;
+#ifdef CPR_NOT_THREAD_SAFE
 		while (!(cp->cc_events & CALLB_CPR_SAFE))
 			/* cv_timedwait() returns -1 if it times out. */
-			if ((ret = cv_timedwait(&cp->cc_callb_cv,
-			    cp->cc_lockp,
-			    callb_timeout_sec * hz)) == -1)
+			if ((ret = cv_reltimedwait(&cp->cc_callb_cv,
+			    cp->cc_lockp, (callb_timeout_sec * hz),
+			    TR_CLOCK_TICK)) == -1)
 				break;
+#endif
 		break;
 
 	case CB_CODE_CPR_RESUME:
@@ -360,3 +367,74 @@ callb_unlock_table(void)
 	cv_broadcast(&ct->ct_busy_cv);
 	mutex_exit(&ct->ct_lock);
 }
+
+#ifdef illumos
+/*
+ * Return a boolean value indicating whether a particular kernel thread is
+ * stopped in accordance with the cpr callback protocol.  If returning
+ * false, also return a pointer to the thread name via the 2nd argument.
+ */
+boolean_t
+callb_is_stopped(kthread_id_t tp, caddr_t *thread_name)
+{
+	callb_t *cp;
+	boolean_t ret_val;
+
+	mutex_enter(&ct->ct_lock);
+
+	for (cp = ct->ct_first_cb[CB_CL_CPR_DAEMON];
+	    cp != NULL && tp != cp->c_thread; cp = cp->c_next)
+		;
+
+	ret_val = (cp != NULL);
+	if (ret_val) {
+		/*
+		 * We found the thread in the callback table and have
+		 * provisionally set the return value to true.  Now
+		 * see if it is marked "safe" and is sleeping or stopped.
+		 */
+		callb_cpr_t *ccp = (callb_cpr_t *)cp->c_arg;
+
+		*thread_name = cp->c_name;	/* in case not stopped */
+		mutex_enter(ccp->cc_lockp);
+
+		if (ccp->cc_events & CALLB_CPR_SAFE) {
+			int retry;
+
+			mutex_exit(ccp->cc_lockp);
+			for (retry = 0; retry < CALLB_MAX_RETRY; retry++) {
+				thread_lock(tp);
+				if (tp->t_state & (TS_SLEEP | TS_STOPPED)) {
+					thread_unlock(tp);
+					break;
+				}
+				thread_unlock(tp);
+				delay(CALLB_THREAD_DELAY);
+			}
+			ret_val = retry < CALLB_MAX_RETRY;
+		} else {
+			ret_val =
+			    (ccp->cc_events & CALLB_CPR_ALWAYS_SAFE) != 0;
+			mutex_exit(ccp->cc_lockp);
+		}
+	} else {
+		/*
+		 * Thread not found in callback table.  Make the best
+		 * attempt to identify the thread in the error message.
+		 */
+		ulong_t offset;
+		char *sym = kobj_getsymname((uintptr_t)tp->t_startpc,
+		    &offset);
+
+		*thread_name = sym ? sym : "*unknown*";
+	}
+
+	mutex_exit(&ct->ct_lock);
+	return (ret_val);
+}
+#endif	/* illumos */
+
+#if defined(__FreeBSD__) && defined(_KERNEL)
+SYSINIT(sol_callb, SI_SUB_DRIVERS, SI_ORDER_FIRST, callb_init, NULL);
+SYSUNINIT(sol_callb, SI_SUB_DRIVERS, SI_ORDER_FIRST, callb_fini, NULL);
+#endif
