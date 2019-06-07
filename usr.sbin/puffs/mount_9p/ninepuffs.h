@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.h,v 1.13 2019/05/17 08:48:04 ozaki-r Exp $	*/
+/*	$NetBSD: ninepuffs.h,v 1.14 2019/06/07 05:34:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -151,10 +151,13 @@ uint16_t	p9pbuf_get_tag(struct puffs_framebuf *);
 int	proto_getqid(struct puffs_framebuf *, struct qid9p *);
 int	proto_getstat(struct puffs_usermount *, struct puffs_framebuf *, struct vattr *,
 		      char **, uint16_t *);
-int	proto_expect_walk_nqids(struct puffs_framebuf *, uint16_t *);
+int	proto_expect_walk_nqids(struct puffs_usermount *,
+	                        struct puffs_framebuf *, uint16_t *);
 int	proto_expect_stat(struct puffs_usermount *, struct puffs_framebuf *,
 	                  struct vattr *);
-int	proto_expect_qid(struct puffs_framebuf *, uint8_t, struct qid9p *);
+int	proto_expect_qid(struct puffs_usermount *, struct puffs_framebuf *,
+	                 uint8_t, struct qid9p *);
+int	proto_handle_rerror(struct puffs_usermount *, struct puffs_framebuf *);
 
 int	proto_cc_dupfid(struct puffs_usermount *, p9pfid_t, p9pfid_t);
 int	proto_cc_clunkfid(struct puffs_usermount *, p9pfid_t, int);

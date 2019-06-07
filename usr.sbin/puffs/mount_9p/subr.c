@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.6 2007/11/30 19:02:39 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.7 2019/06/07 05:34:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.6 2007/11/30 19:02:39 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.7 2019/06/07 05:34:34 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -139,7 +139,7 @@ getdfwithoffset(struct puffs_usermount *pu, struct p9pnode *p9n, off_t wantoff,
 		GETRESPONSE(pb);
 
 		if (p9pbuf_get_type(pb) != P9PROTO_R_READ) {
-			rv = EPROTO;
+			rv = proto_handle_rerror(pu, pb);
 			goto out;
 		}
 
