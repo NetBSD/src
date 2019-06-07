@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.332 2019/05/02 02:51:01 mrg Exp $
+#	$NetBSD: build.sh,v 1.333 2019/06/07 15:49:20 sborrill Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -494,7 +494,7 @@ level of source directory"
 	uname_m=$(uname -m 2>/dev/null)
 	uname_p=$(uname -p 2>/dev/null || echo "unknown")
 	case "${uname_p}" in
-	''|unknown|*[^-_A-Za-z0-9]*) uname_p="${uname_m}" ;;
+	''|unknown|*[!-_A-Za-z0-9]*) uname_p="${uname_m}" ;;
 	esac
 
 	id_u=$(id -u 2>/dev/null || /usr/xpg4/bin/id -u 2>/dev/null)
@@ -1937,7 +1937,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.332 2019/05/02 02:51:01 mrg Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.333 2019/06/07 15:49:20 sborrill Exp $
 # with these arguments: ${_args}
 #
 
