@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.639 2019/05/28 08:59:35 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.640 2019/06/07 04:39:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.639 2019/05/28 08:59:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.640 2019/06/07 04:39:15 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3541,9 +3541,9 @@ wm_set_ral(struct wm_softc *sc, const uint8_t *enaddr, int idx)
 	int rv;
 
 	if (enaddr != NULL) {
-		ral_lo = enaddr[0] | (enaddr[1] << 8) | (enaddr[2] << 16) |
-		    (enaddr[3] << 24);
-		ral_hi = enaddr[4] | (enaddr[5] << 8);
+		ral_lo = (uint32_t)enaddr[0] | ((uint32_t)enaddr[1] << 8) |
+		    ((uint32_t)enaddr[2] << 16) | ((uint32_t)enaddr[3] << 24);
+		ral_hi = (uint32_t)enaddr[4] | ((uint32_t)enaddr[5] << 8);
 		ral_hi |= RAL_AV;
 	} else {
 		ral_lo = 0;
@@ -5198,7 +5198,7 @@ wm_init_rss(struct wm_softc *sc)
 	CTASSERT(sizeof(rss_key) == RSS_KEYSIZE);
 
 	for (i = 0; i < RETA_NUM_ENTRIES; i++) {
-		int qid, reta_ent;
+		unsigned int qid, reta_ent;
 
 		qid  = i % sc->sc_nqueues;
 		switch (sc->sc_type) {
@@ -5915,9 +5915,9 @@ wm_init_locked(struct ifnet *ifp)
 
 	/* Set registers about MSI-X */
 	if (wm_is_using_msix(sc)) {
-		uint32_t ivar;
+		uint32_t ivar, qintr_idx;
 		struct wm_queue *wmq;
-		int qid, qintr_idx;
+		unsigned int qid;
 
 		if (sc->sc_type == WM_T_82575) {
 			/* Interrupt control */
