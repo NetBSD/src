@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.152 2019/04/26 16:56:57 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.153 2019/06/07 15:18:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.152 2019/04/26 16:56:57 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.153 2019/06/07 15:18:20 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -258,8 +258,14 @@ rl_set_prompt(const char *prompt)
 	if (rl_prompt == NULL)
 		return -1;
 
-	while ((p = strchr(rl_prompt, RL_PROMPT_END_IGNORE)) != NULL)
-		*p = RL_PROMPT_START_IGNORE;
+	while ((p = strchr(rl_prompt, RL_PROMPT_END_IGNORE)) != NULL) {
+		/* Remove adjacent end/start markers to avoid double-escapes. */
+		if (p[1] == RL_PROMPT_START_IGNORE) {
+			memmove(p, p + 2, 1 + strlen(p + 2));
+		} else {
+			*p = RL_PROMPT_START_IGNORE;
+		}
+	}
 
 	return 0;
 }
