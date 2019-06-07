@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.154 2019/06/07 15:19:29 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.155 2019/06/07 15:21:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.154 2019/06/07 15:19:29 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.155 2019/06/07 15:21:48 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -2237,6 +2237,7 @@ _rl_update_pos(void)
 
 	rl_point = (int)(li->cursor - li->buffer);
 	rl_end = (int)(li->lastchar - li->buffer);
+	rl_line_buffer[rl_end] = '\0';
 }
 
 void
