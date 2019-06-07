@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.43 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.44 2019/06/07 20:13:54 christos Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.43 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.44 2019/06/07 20:13:54 christos Exp $");
 
 #define	ELFSIZE		32
 
@@ -134,8 +134,8 @@ int
 netbsd32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
-	size_t len;
-	AuxInfo ai[ELF_AUX_ENTRIES], *a;
+	size_t len, vlen;
+	AuxInfo ai[ELF_AUX_ENTRIES], *a, *execname;
 	struct elf_args *ap;
 	int error;
 
@@ -200,17 +200,36 @@ netbsd32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 		a->a_v = l->l_proc->p_stackbase;
 		a++;
 
+		execname = a;
+		a->a_type = AT_SUN_EXECNAME;
+		a++;
+
 		exec_free_emul_arg(pack);
+	} else {
+		execname = NULL;
 	}
 
 	a->a_type = AT_NULL;
 	a->a_v = 0;
 	a++;
 
-	len = (a - ai) * sizeof(AuxInfo);
+	vlen = (a - ai) * sizeof(ai[0]);
+
+	KASSERT(vlen <= sizeof(ai));
+
+	if (execname) {
+		char *path = l->l_proc->p_path;
+		execname->a_v = (uintptr_t)(*stackp + vlen);
+		len = strlen(path) + 1;
+		if ((error = copyout(path, (*stackp + vlen), len)) != 0)
+			return error;
+		len = ALIGN(len);
+	} else {
+		len = 0;
+	}
 	if ((error = copyout(ai, *stackp, len)) != 0)
 		return error;
-	*stackp += len;
+	*stackp += vlen + len;
 
 	return 0;
 }
