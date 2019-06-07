@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.13 2019/05/29 07:46:08 msaitoh Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.14 2019/06/07 07:41:22 martin Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.13 2019/05/29 07:46:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.14 2019/06/07 07:41:22 martin Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -372,10 +372,10 @@ octeon_eth_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	octeon_gmx_set_mac_addr(sc->sc_gmx_port, enaddr);
-	octeon_gmx_set_filter(sc->sc_gmx_port);
 
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+	octeon_gmx_set_filter(sc->sc_gmx_port);
 
 	/* XXX */
 	sc->sc_rate_recv_check_link_cap.tv_sec = 1;
