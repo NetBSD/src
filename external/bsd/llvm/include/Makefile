@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2019/04/03 15:21:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.50 2019/06/07 05:22:28 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -294,11 +294,15 @@ NATIVE_LLVM_TARGETMC=		LLVMInitialize${NATIVE_LLVM_ARCH}TargetMC
 
 llvm/Config/config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in
 	mkdir -p ${.TARGET:H}
-	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d -e /LLVM_NATIVE_/d \
-	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d -e 'x' \
+	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d \
+		    -e /LLVM_HOST_TRIPLE/d \
+		    -e /LLVM_NATIVE_/d \
+		    -e /LLVM_VERSION_/d \
+		    -e /PACKAGE_VERSION/d -e 'x' \
 	    < ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in \
 	    > ${.TARGET}.tmp
 	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_HOST_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
 .if defined(NATIVE_LLVM_ARCH)
 	printf '#define LLVM_NATIVE_ARCH ${NATIVE_LLVM_ARCH}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_NATIVE_ASMPARSER ${NATIVE_LLVM_ASMPARSER}\n' >> ${.TARGET}.tmp
@@ -318,11 +322,15 @@ llvm/Config/config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm
 
 llvm/Config/llvm-config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm/Config/llvm-config.h.in
 	mkdir -p ${.TARGET:H}
-	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d -e /LLVM_NATIVE_/d \
-	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d -e 'x' \
+	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d \
+		    -e /LLVM_HOST_TRIPLE/d \
+		    -e /LLVM_NATIVE_/d \
+		    -e /LLVM_VERSION_/d \
+		    -e /PACKAGE_VERSION/d -e 'x' \
 	    < ${LLVM_TOPLEVEL}/config/llvm/Config/llvm-config.h.in \
 	    > ${.TARGET}.tmp
 	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_HOST_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
 .if defined(NATIVE_LLVM_ARCH)
 	printf '#define LLVM_NATIVE_ARCH ${NATIVE_LLVM_ARCH}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_NATIVE_ASMPARSER ${NATIVE_LLVM_ASMPARSER}\n' >> ${.TARGET}.tmp
