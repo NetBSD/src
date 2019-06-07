@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_tmr.c,v 1.9 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm2835_tmr.c,v 1.10 2019/06/07 13:43:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.9 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.10 2019/06/07 13:43:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,6 @@ bcm2835_tmr_delay(unsigned int n)
 			delta %= counts_per_usec;
 		}
 	}
-
 }
 
 /*
