@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.45 2019/02/15 23:20:35 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.46 2019/06/07 15:19:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ extern int		 history_base, history_length;
 extern int		 max_input_history;
 extern const char	*rl_basic_word_break_characters;
 extern char		*rl_completer_word_break_characters;
-extern char		*rl_completer_quote_characters;
+extern const char	*rl_completer_quote_characters;
 extern rl_compentry_func_t *rl_completion_entry_function;
 extern char		*(*rl_completion_word_break_hook)(void);
 extern rl_completion_func_t *rl_attempted_completion_function;
