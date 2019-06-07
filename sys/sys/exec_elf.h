@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.160 2018/05/24 17:05:18 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.161 2019/06/07 23:35:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1341,6 +1341,7 @@ struct exec_package;
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds(struct lwp *, struct exec_package *);
+int	elf32_populate_auxv(struct lwp *, struct exec_package *, char **);
 int	elf32_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 
@@ -1353,6 +1354,7 @@ int	elf32_check_header(Elf32_Ehdr *);
 
 #ifdef EXEC_ELF64
 int	exec_elf64_makecmds(struct lwp *, struct exec_package *);
+int	elf64_populate_auxv(struct lwp *, struct exec_package *, char **);
 int	elf64_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 

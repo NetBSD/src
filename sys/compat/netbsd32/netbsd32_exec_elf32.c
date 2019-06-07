@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.44 2019/06/07 20:13:54 christos Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.45 2019/06/07 23:35:53 christos Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.44 2019/06/07 20:13:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.45 2019/06/07 23:35:53 christos Exp $");
 
 #define	ELFSIZE		32
 
@@ -134,102 +134,10 @@ int
 netbsd32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
-	size_t len, vlen;
-	AuxInfo ai[ELF_AUX_ENTRIES], *a, *execname;
-	struct elf_args *ap;
 	int error;
 
 	if ((error = netbsd32_copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
-	a = ai;
-
-	memset(ai, 0, sizeof(ai));
-
-	/*
-	 * Push extra arguments on the stack needed by dynamically
-	 * linked binaries
-	 */
-	if ((ap = (struct elf_args *)pack->ep_emul_arg)) {
-
-		a->a_type = AT_PHDR;
-		a->a_v = ap->arg_phaddr;
-		a++;
-
-		a->a_type = AT_PHENT;
-		a->a_v = ap->arg_phentsize;
-		a++;
-
-		a->a_type = AT_PHNUM;
-		a->a_v = ap->arg_phnum;
-		a++;
-
-		a->a_type = AT_PAGESZ;
-		a->a_v = PAGE_SIZE;
-		a++;
-
-		a->a_type = AT_BASE;
-		a->a_v = ap->arg_interp;
-		a++;
-
-		a->a_type = AT_FLAGS;
-		a->a_v = 0;
-		a++;
-
-		a->a_type = AT_ENTRY;
-		a->a_v = ap->arg_entry;
-		a++;
-
-		a->a_type = AT_EUID;
-		a->a_v = kauth_cred_geteuid(l->l_cred);
-		a++;
-
-		a->a_type = AT_RUID;
-		a->a_v = kauth_cred_getuid(l->l_cred);
-		a++;
-
-		a->a_type = AT_EGID;
-		a->a_v = kauth_cred_getegid(l->l_cred);
-		a++;
-
-		a->a_type = AT_RGID;
-		a->a_v = kauth_cred_getgid(l->l_cred);
-		a++;
-
-		a->a_type = AT_STACKBASE;
-		a->a_v = l->l_proc->p_stackbase;
-		a++;
-
-		execname = a;
-		a->a_type = AT_SUN_EXECNAME;
-		a++;
-
-		exec_free_emul_arg(pack);
-	} else {
-		execname = NULL;
-	}
-
-	a->a_type = AT_NULL;
-	a->a_v = 0;
-	a++;
-
-	vlen = (a - ai) * sizeof(ai[0]);
-
-	KASSERT(vlen <= sizeof(ai));
-
-	if (execname) {
-		char *path = l->l_proc->p_path;
-		execname->a_v = (uintptr_t)(*stackp + vlen);
-		len = strlen(path) + 1;
-		if ((error = copyout(path, (*stackp + vlen), len)) != 0)
-			return error;
-		len = ALIGN(len);
-	} else {
-		len = 0;
-	}
-	if ((error = copyout(ai, *stackp, len)) != 0)
-		return error;
-	*stackp += vlen + len;
-
-	return 0;
+	return elf32_populate_auxv(l, pack, stackp);
 }
