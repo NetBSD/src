@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.c,v 1.10 2019/05/17 08:48:04 ozaki-r Exp $	*/
+/*	$NetBSD: nineproto.c,v 1.11 2019/06/07 05:34:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nineproto.c,v 1.10 2019/05/17 08:48:04 ozaki-r Exp $");
+__RCSID("$NetBSD: nineproto.c,v 1.11 2019/06/07 05:34:34 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -188,6 +188,49 @@ proto_getstat(struct puffs_usermount *pu, struct puffs_framebuf *pb, struct vatt
 	return 0;
 }
 
+static int
+proto_rerror(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+    uint32_t *_errno)
+{
+	struct puffs9p *p9p = puffs_getspecific(pu);
+	uint16_t size;
+	int rv;
+	char *name;
+
+	/* Skip size[4] Rerror tag[2] */
+	rv = puffs_framebuf_seekset(pb,
+	    sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint16_t));
+	if (rv == -1)
+		return EPROTO;
+
+	rv = p9pbuf_get_str(pb, &name, &size);
+	if (rv != 0)
+		return rv;
+	if (p9p->protover == P9PROTO_VERSION_U) {
+		rv = p9pbuf_get_4(pb, _errno);
+	} else {
+		/* TODO Convert error string to errno */
+		rv = EPROTO;
+	}
+
+	return rv;
+}
+
+int
+proto_handle_rerror(struct puffs_usermount *pu, struct puffs_framebuf *pb)
+{
+	int rv;
+	uint32_t _errno;
+
+	if (p9pbuf_get_type(pb) != P9PROTO_R_ERROR)
+		return EPROTO;
+
+	rv = proto_rerror(pu, pb, &_errno);
+	if (rv == 0)
+		rv = _errno;
+	return rv;
+}
+
 int
 proto_cc_dupfid(struct puffs_usermount *pu, p9pfid_t oldfid, p9pfid_t newfid)
 {
@@ -206,7 +249,7 @@ proto_cc_dupfid(struct puffs_usermount *pu, p9pfid_t oldfid, p9pfid_t newfid)
 	p9pbuf_put_2(pb, 0);
 	GETRESPONSE(pb);
 
-	rv = proto_expect_walk_nqids(pb, &qids);
+	rv = proto_expect_walk_nqids(pu, pb, &qids);
 	if (rv == 0 && qids != 0)
 		rv = EPROTO;
 
@@ -232,7 +275,7 @@ proto_cc_clunkfid(struct puffs_usermount *pu, p9pfid_t fid, int waitforit)
 	if (waitforit) {
 		if (puffs_framev_enqueue_cc(pcc, p9p->servsock, pb, 0) == 0) {
 			if (p9pbuf_get_type(pb) != P9PROTO_R_CLUNK)
-				rv = EPROTO;
+				rv = proto_handle_rerror(pu, pb);
 		} else {
 			rv = errno;
 		}
@@ -269,7 +312,7 @@ proto_cc_open(struct puffs_usermount *pu, p9pfid_t fid,
 	p9pbuf_put_1(pb, mode);
 	GETRESPONSE(pb);
 	if (p9pbuf_get_type(pb) != P9PROTO_R_OPEN)
-		rv = EPROTO;
+		rv = proto_handle_rerror(pu, pb);
 
  out:
 	puffs_framebuf_destroy(pb);
@@ -349,20 +392,22 @@ proto_make_stat(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 }
 
 int
-proto_expect_walk_nqids(struct puffs_framebuf *pb, uint16_t *nqids)
+proto_expect_walk_nqids(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+    uint16_t *nqids)
 {
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_WALK)
-		return EPROTO;
+		return proto_handle_rerror(pu, pb);
 	return p9pbuf_get_2(pb, nqids);
 }
 
 int
-proto_expect_qid(struct puffs_framebuf *pb, uint8_t op, struct qid9p *qid)
+proto_expect_qid(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+    uint8_t op, struct qid9p *qid)
 {
 
 	if (p9pbuf_get_type(pb) != op)
-		return EPROTO;
+		return proto_handle_rerror(pu, pb);
 	return proto_getqid(pb, qid);
 }
 
@@ -374,7 +419,7 @@ proto_expect_stat(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	int rv;
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_STAT)
-		return EPROTO;
+		return proto_handle_rerror(pu, pb);
 	if ((rv = p9pbuf_get_2(pb, &dummy)))
 		return rv;
 	return proto_getstat(pu, pb, va, NULL, NULL);
