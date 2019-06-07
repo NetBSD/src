@@ -85,7 +85,7 @@ int	uda_ssio_getdev(void *, struct audio_device *ret);
 void*	uda_ssio_allocm(void *, int, size_t);
 void	uda_ssio_freem(void *, void *, size_t);
 size_t	uda_ssio_round_buffersize(void *, int, size_t);
-int	uda_ssio_getprops(void *);
+int	uda_ssio_get_props(void *);
 void	uda_ssio_get_locks(void *, kmutex_t**, kmutex_t**);
 
 struct audio_hw_if uda1341_hw_if = {
@@ -105,7 +105,7 @@ struct audio_hw_if uda1341_hw_if = {
 	.allocm			= uda_ssio_allocm,
 	.freem			= uda_ssio_freem,
 	.round_buffersize	= uda_ssio_round_buffersize,
-	.get_props		= uda_ssio_getprops,
+	.get_props		= uda_ssio_get_props,
 	.get_locks		= uda_ssio_get_locks
 };
 
@@ -406,7 +406,7 @@ uda_ssio_round_buffersize(void *handle, int direction, size_t bufsize)
 }
 
 int
-uda_ssio_getprops(void *handle)
+uda_ssio_get_props(void *handle)
 {
 	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE;
 }
