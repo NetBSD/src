@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.260 2019/06/07 10:52:40 sevan Exp $
+$NetBSD: acronyms.comp,v 1.261 2019/06/07 11:36:12 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -56,6 +56,7 @@ AN	Arabic number
 ANR	application not responding
 ANSI	American National Standards Institute
 AO	analog output
+AOC	add-on card
 AOL	Alert-on-LAN
 AOS	add or subtract
 AP	access point
