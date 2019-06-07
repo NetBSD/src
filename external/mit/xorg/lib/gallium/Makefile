@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2019/06/07 06:00:05 mrg Exp $
+# $NetBSD: Makefile,v 1.31 2019/06/07 12:11:43 mrg Exp $
 
 # Link the gallium mega driver.
 
@@ -1007,6 +1007,17 @@ LLVMRT_LIBS+=	\
 		AArch64AsmPrinter \
 		AArch64Disassembler \
 		AArch64TargetInfo
+.endif
+
+.if ${MACHINE_CPU} == "arm"
+# XXX duplicates
+LLVMRT_LIBS+=	\
+		ARMCodeGen \
+		ARMTargetInfo \
+		ARMMCTargetDesc \
+		ARMAsmParser \
+		ARMAsmPrinter \
+		ARMUtils
 .endif
 
 LLVMRT_LIBS+=	\
