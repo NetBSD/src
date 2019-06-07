@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.22 2019/05/17 08:48:04 ozaki-r Exp $	*/
+/*	$NetBSD: node.c,v 1.23 2019/06/07 05:34:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.22 2019/05/17 08:48:04 ozaki-r Exp $");
+__RCSID("$NetBSD: node.c,v 1.23 2019/06/07 05:34:34 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -62,6 +62,10 @@ do_getattr(struct puffs_usermount *pu, struct puffs_node *pn, struct vattr *vap)
 	p9pbuf_put_4(pb, p9n->fid_base);
 	GETRESPONSE(pb);
 
+	if (p9pbuf_get_type(pb) != P9PROTO_R_STAT) {
+		rv = proto_handle_rerror(pu, pb);
+		goto out;
+	}
 	rv = proto_expect_stat(pu, pb, vap);
 
  out:
@@ -101,7 +105,7 @@ puffs9p_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo 
 	p9pbuf_put_str(pb, pcn->pcn_name);
 	GETRESPONSE(pb);
 
-	rv = proto_expect_walk_nqids(pb, &nqid);
+	rv = proto_expect_walk_nqids(pu, pb, &nqid);
 	if (rv) {
 		rv = ENOENT;
 		goto out;
@@ -234,8 +238,9 @@ puffs9p_node_setattr(struct puffs_usermount *pu, void *opc,
 	proto_make_stat(pu, pb, va, NULL, pn->pn_va.va_type);
 	GETRESPONSE(pb);
 
-	if (p9pbuf_get_type(pb) != P9PROTO_R_WSTAT)
-		rv = EPROTO;
+	if (p9pbuf_get_type(pb) != P9PROTO_R_WSTAT) {
+		rv = proto_handle_rerror(pu, pb);
+	}
 
  out:
 	RETURN(rv);
@@ -330,7 +335,7 @@ puffs9p_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 		GETRESPONSE(pb);
 
 		if (p9pbuf_get_type(pb) != P9PROTO_R_READ) {
-			rv = EPROTO;
+			rv = proto_handle_rerror(pu, pb);
 			break;
 		}
 
@@ -378,7 +383,7 @@ puffs9p_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 		GETRESPONSE(pb);
 
 		if (p9pbuf_get_type(pb) != P9PROTO_R_WRITE) {
-			rv = EPROTO;
+			rv = proto_handle_rerror(pu, pb);
 			break;
 		}
 
@@ -430,7 +435,7 @@ nodecreate(struct puffs_usermount *pu, struct puffs_node *pn,
 		p9pbuf_put_str(pb, ""); /* extension[s] */
 	GETRESPONSE(pb);
 
-	rv = proto_expect_qid(pb, P9PROTO_R_CREATE, &nqid);
+	rv = proto_expect_qid(pu, pb, P9PROTO_R_CREATE, &nqid);
 	if (rv)
 		goto out;
 
@@ -512,7 +517,7 @@ noderemove(struct puffs_usermount *pu, struct puffs_node *pn)
 	GETRESPONSE(pb);
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_REMOVE) {
-		rv = EPROTO;
+		rv = proto_handle_rerror(pu, pb);
 	} else {
 		proto_cc_clunkfid(pu, p9n->fid_base, 0);
 		p9n->fid_base = P9P_INVALFID;
@@ -585,7 +590,7 @@ puffs9p_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 	GETRESPONSE(pb);
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_WSTAT)
-		rv = EPROTO;
+		rv = proto_handle_rerror(pu, pb);
 
  out:
 	RETURN(rv);
