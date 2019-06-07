@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.16 2019/05/09 17:09:51 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.17 2019/06/07 12:43:52 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.16 2019/05/09 17:09:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.17 2019/06/07 12:43:52 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -99,6 +99,7 @@ xen_spllower(int nlevel)
 }
 
 
+#if !defined(XENPVHVM)
 void
 x86_disable_intr(void)
 {
@@ -116,6 +117,8 @@ x86_enable_intr(void)
 	if (__predict_false(_vci->evtchn_upcall_pending))
 		hypervisor_force_callback();
 }
+
+#endif /* !XENPVHVM */
 
 u_long
 xen_read_psl(void)
