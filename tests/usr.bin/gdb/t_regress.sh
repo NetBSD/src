@@ -1,4 +1,4 @@
-# $NetBSD: t_regress.sh,v 1.1 2016/04/08 10:09:16 gson Exp $
+# $NetBSD: t_regress.sh,v 1.2 2019/06/07 19:05:15 gson Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,7 +71,28 @@ EOF
 	atf_check -s exit:1 -o ignore -e ignore grep "annot access memory" gdb.out
 }
 
+# PR 54154
+
+atf_test_case xml
+xml_head() {
+	atf_set "descr" "Test that gdb was built with XML support"
+	atf_set "require.progs" "gdb"
+}
+xml_body() {
+	cat <<\EOF >target.xml
+<target version="1.0">
+  <architecture>i386:x86-64</architecture>
+</target>
+EOF
+	cat <<EOF >test.gdb
+set tdesc filename "target.xml"
+EOF
+	gdb --batch -x test.gdb >gdb.out 2>&1
+	atf_check -s exit:1 -o ignore -e ignore grep "Can not parse XML" gdb.out
+}
+
 atf_init_test_cases() {
 	atf_add_test_case threads
 	atf_add_test_case pie
+	atf_add_test_case xml
 }
