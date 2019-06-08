@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.359 2019/03/14 19:10:04 kre Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.360 2019/06/08 23:48:33 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.359 2019/03/14 19:10:04 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.360 2019/06/08 23:48:33 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -3127,6 +3127,17 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		    VM_MAPENT_ISWIRED(current) == 0 &&
 		    old_prot == VM_PROT_NONE &&
 		    new_prot != VM_PROT_NONE) {
+
+			/*
+			 * We must call pmap_update() here because the
+			 * pmap_protect() call above might have removed some
+			 * pmap entries and uvm_map_pageable() might create
+			 * some new pmap entries that rely on the prior
+			 * removals being completely finished.
+			 */
+
+			pmap_update(map->pmap);
+
 			if (uvm_map_pageable(map, current->start,
 			    current->end, false,
 			    UVM_LK_ENTER|UVM_LK_EXIT) != 0) {
