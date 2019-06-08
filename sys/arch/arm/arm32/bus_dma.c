@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.113 2018/09/14 10:13:02 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.114 2019/06/08 11:57:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.113 2018/09/14 10:13:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.114 2019/06/08 11:57:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1021,9 +1021,6 @@ _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 /*
  * Common function for DMA map synchronization.  May be called
  * by bus-specific DMA map synchronization functions.
- *
- * This version works for the Virtually Indexed Virtually Tagged
- * cache found on 32-bit ARM processors.
  *
  * XXX Should have separate versions for write-through vs.
  * XXX write-back caches.  We currently assume write-back
