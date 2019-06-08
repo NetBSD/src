@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.63 2019/05/25 04:25:30 isaki Exp $	*/
+/*	$NetBSD: yds.c,v 1.64 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.63 2019/05/25 04:25:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.64 2019/06/08 08:02:38 isaki Exp $");
 
 #include "mpu.h"
 
@@ -1728,8 +1728,8 @@ static int
 yds_get_props(void *addr)
 {
 
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-	    AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 static void

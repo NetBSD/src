@@ -1,4 +1,4 @@
-/*	$NetBSD: arcofi.c,v 1.2 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: arcofi.c,v 1.3 2019/06/08 08:02:38 isaki Exp $	*/
 /*	$OpenBSD: arcofi.c,v 1.6 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
@@ -984,7 +984,7 @@ static int
 arcofi_get_props(void *v)
 {
 
-	return 0;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE;
 }
 
 static void

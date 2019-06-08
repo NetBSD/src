@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.83 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: auvia.c,v 1.84 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.83 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.84 2019/06/08 08:02:38 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -971,19 +971,9 @@ auvia_free(void *addr, void *ptr, size_t size)
 static int
 auvia_get_props(void *addr)
 {
-	struct auvia_softc *sc;
-	int props;
 
-	props = AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
-	sc = addr;
-	/*
-	 * Even if the codec is fixed-rate, set_param() succeeds for any sample
-	 * rate because of aurateconv.  Applications can't know what rate the
-	 * device can process in the case of mmap().
-	 */
-	if (!AC97_IS_FIXED_RATE(sc->codec_if))
-		props |= AUDIO_PROP_MMAP;
-	return props;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 static void

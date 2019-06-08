@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.40 2019/05/25 04:41:53 isaki Exp $	*/
+/*	$NetBSD: btsco.c,v 1.41 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.40 2019/05/25 04:41:53 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.41 2019/06/08 08:02:38 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -1009,7 +1009,8 @@ static int
 btsco_get_props(void *hdl)
 {
 
-	return AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_FULLDUPLEX;
 }
 
 static void
