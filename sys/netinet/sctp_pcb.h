@@ -1,5 +1,5 @@
 /*	$KAME: sctp_pcb.h,v 1.21 2005/07/16 01:18:47 suz Exp $	*/
-/*	$NetBSD: sctp_pcb.h,v 1.1 2015/10/13 21:28:35 rjs Exp $ */
+/*	$NetBSD: sctp_pcb.h,v 1.2 2019/06/08 23:23:34 rjs Exp $ */
 
 #ifndef __SCTP_PCB_H__
 #define __SCTP_PCB_H__
@@ -754,7 +754,7 @@ int
 sctp_initiate_iterator(asoc_func af, uint32_t, uint32_t, void *, uint32_t,
 		       end_func ef, struct sctp_inpcb *);
 
-extern void in6_sin6_2_sin (struct sockaddr_in *,
+void in6_sin6_2_sin (struct sockaddr_in *,
                             struct sockaddr_in6 *sin6);
 
 #endif /* _KERNEL */
