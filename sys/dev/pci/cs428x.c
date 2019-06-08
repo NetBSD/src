@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.19 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.20 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.19 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.20 2019/06/08 08:02:38 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,14 +166,9 @@ cs428x_round_buffersize(void *addr, int direction,
 int
 cs428x_get_props(void *addr)
 {
-	int retval;
 
-	retval = AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
-#ifdef MMAP_READY
-	/* How can I mmap ? */
-	retval |= AUDIO_PROP_MMAP;
-#endif
-	return retval;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 /* AC97 */

@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.43 2019/05/08 13:40:19 isaki Exp $ */
+/* $NetBSD: bba.c,v 1.44 2019/06/08 08:02:38 isaki Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.43 2019/05/08 13:40:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.44 2019/06/08 08:02:38 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,6 @@ static int	bba_getdev(void *, struct audio_device *);
 static void	*bba_allocm(void *, int, size_t);
 static void	bba_freem(void *, void *, size_t);
 static size_t	bba_round_buffersize(void *, int, size_t);
-static int	bba_get_props(void *);
 static int	bba_trigger_output(void *, void *, void *, int,
 				   void (*)(void *), void *,
 				   const audio_params_t *);
@@ -164,7 +163,7 @@ static const struct audio_hw_if sa_hw_if = {
 	.allocm			= bba_allocm,		/* md */
 	.freem			= bba_freem,		/* md */
 	.round_buffersize	= bba_round_buffersize,	/* md */
-	.get_props		= bba_get_props,
+	.get_props		= am7930_get_props,
 	.trigger_output		= bba_trigger_output,	/* md */
 	.trigger_input		= bba_trigger_input,	/* md */
 	.get_locks		= bba_get_locks,
@@ -616,13 +615,6 @@ bba_intr(void *addr)
 	mutex_exit(&sc->sc_am7930.sc_intr_lock);
 
 	return 0;
-}
-
-static int
-bba_get_props(void *addr)
-{
-
-	return AUDIO_PROP_MMAP | am7930_get_props(addr);
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.c,v 1.6 2019/05/08 13:40:14 isaki Exp $ */
+/* $NetBSD: sunxi_codec.c,v 1.7 2019/06/08 08:02:37 isaki Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.6 2019/05/08 13:40:14 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.7 2019/06/08 08:02:37 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -255,9 +255,9 @@ sunxi_codec_getdev(void *priv, struct audio_device *adev)
 static int
 sunxi_codec_get_props(void *priv)
 {
-	return AUDIO_PROP_PLAYBACK|AUDIO_PROP_CAPTURE|
-	    AUDIO_PROP_INDEPENDENT|AUDIO_PROP_MMAP|
-	    AUDIO_PROP_FULLDUPLEX;
+
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE|
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 static int
