@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.12 2019/06/08 08:02:37 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.13 2019/06/08 08:20:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.12 2019/06/08 08:02:37 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.13 2019/06/08 08:20:10 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -838,7 +838,10 @@ audioattach(device_t parent, device_t self, void *aux)
 	audio_filter_reg_t rfil;
 	const struct sysctlnode *node;
 	void *hdlp;
-	bool is_indep;
+	bool has_playback;
+	bool has_capture;
+	bool has_indep;
+	bool has_fulldup;
 	int mode;
 	int props;
 	int error;
@@ -884,30 +887,39 @@ audioattach(device_t parent, device_t self, void *aux)
 	props = audio_get_props(sc);
 	mutex_exit(sc->sc_lock);
 
-	if ((props & AUDIO_PROP_FULLDUPLEX))
-		aprint_normal(": full duplex");
-	else
-		aprint_normal(": half duplex");
+	has_playback = (props & AUDIO_PROP_PLAYBACK);
+	has_capture  = (props & AUDIO_PROP_CAPTURE);
+	has_indep    = (props & AUDIO_PROP_INDEPENDENT);
+	has_fulldup  = (props & AUDIO_PROP_FULLDUPLEX);
 
-	is_indep = (props & AUDIO_PROP_INDEPENDENT);
+	KASSERT(has_playback || has_capture);
+	/* Unidirectional device must have neither FULLDUP nor INDEPENDENT. */
+	if (!has_playback || !has_capture) {
+		KASSERT(!has_indep);
+		KASSERT(!has_fulldup);
+	}
+
 	mode = 0;
-	if ((props & AUDIO_PROP_PLAYBACK)) {
+	if (has_playback) {
+		aprint_normal(": playback");
 		mode |= AUMODE_PLAY;
-		aprint_normal(", playback");
 	}
-	if ((props & AUDIO_PROP_CAPTURE)) {
+	if (has_capture) {
+		aprint_normal("%c capture", has_playback ? ',' : ':');
 		mode |= AUMODE_RECORD;
-		aprint_normal(", capture");
 	}
-	if ((props & AUDIO_PROP_MMAP) != 0)
-		aprint_normal(", mmap");
-	if (is_indep)
-		aprint_normal(", independent");
+	if (has_playback && has_capture) {
+		if (has_fulldup)
+			aprint_normal(", full duplex");
+		else
+			aprint_normal(", half duplex");
+
+		if (has_indep)
+			aprint_normal(", independent");
+	}
 
 	aprint_naive("\n");
 	aprint_normal("\n");
-
-	KASSERT((mode & (AUMODE_PLAY | AUMODE_RECORD)) != 0);
 
 	/* probe hw params */
 	memset(&phwfmt, 0, sizeof(phwfmt));
@@ -915,7 +927,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	memset(&pfil, 0, sizeof(pfil));
 	memset(&rfil, 0, sizeof(rfil));
 	mutex_enter(sc->sc_lock);
-	error = audio_hw_probe(sc, is_indep, &mode, &phwfmt, &rhwfmt);
+	error = audio_hw_probe(sc, has_indep, &mode, &phwfmt, &rhwfmt);
 	if (error) {
 		mutex_exit(sc->sc_lock);
 		aprint_error_dev(self, "audio_hw_probe failed, "
