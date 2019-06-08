@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.51 2019/05/08 13:40:17 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.52 2019/06/08 08:02:37 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.51 2019/05/08 13:40:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.52 2019/06/08 08:02:37 isaki Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -664,7 +664,7 @@ vs_get_props(void *hdl)
 {
 
 	DPRINTF(1, ("vs_get_props\n"));
-	return 0 /* | dependent | half duplex | no mmap */;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE;
 }
 
 static void

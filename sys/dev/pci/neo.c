@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.53 2019/05/08 13:40:19 isaki Exp $	*/
+/*	$NetBSD: neo.c,v 1.54 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.53 2019/05/08 13:40:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.54 2019/06/08 08:02:38 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -948,8 +948,8 @@ static int
 neo_get_props(void *addr)
 {
 
-	return AUDIO_PROP_INDEPENDENT | AUDIO_PROP_MMAP |
-	    AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 static void

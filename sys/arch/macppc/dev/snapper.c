@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.51 2019/05/16 23:39:37 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.52 2019/06/08 08:02:37 isaki Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.51 2019/05/16 23:39:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.52 2019/06/08 08:02:37 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -1242,7 +1242,9 @@ snapper_round_buffersize(void *h, int dir, size_t size)
 static int
 snapper_get_props(void *h)
 {
-	return AUDIO_PROP_FULLDUPLEX /* | AUDIO_PROP_MMAP */;
+
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_FULLDUPLEX;
 }
 
 static int

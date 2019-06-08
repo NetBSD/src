@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.55 2019/05/12 13:40:19 maya Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.56 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.55 2019/05/12 13:40:19 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.56 2019/06/08 08:02:38 isaki Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -1559,7 +1559,8 @@ static int
 cmpci_get_props(void *handle)
 {
 
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 static int

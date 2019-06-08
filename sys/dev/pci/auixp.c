@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.46 2019/05/08 13:40:18 isaki Exp $ */
+/* $NetBSD: auixp.c,v 1.47 2019/06/08 08:02:38 isaki Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.46 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.47 2019/06/08 08:02:38 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -559,7 +559,8 @@ static int
 auixp_get_props(void *hdl)
 {
 
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 

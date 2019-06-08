@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.19 2019/05/08 13:40:14 isaki Exp $ */
+/* $NetBSD: toccata.c,v 1.20 2019/06/08 08:02:36 isaki Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.19 2019/05/08 13:40:14 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.20 2019/06/08 08:02:36 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -444,7 +444,8 @@ toccata_getdev(void *addr, struct audio_device *retp)
 int
 toccata_get_props(void *addr)
 {
-	return 0;
+
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE;
 }
 
 void

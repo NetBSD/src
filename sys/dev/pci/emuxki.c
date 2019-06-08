@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.69 2019/05/29 13:12:59 isaki Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.70 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.69 2019/05/29 13:12:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.70 2019/06/08 08:02:38 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1234,7 +1234,8 @@ static int
 emuxki_get_props(void *hdl)
 {
 
-	return AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 static int

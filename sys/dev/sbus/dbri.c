@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.40 2019/05/08 13:40:19 isaki Exp $	*/
+/*	$NetBSD: dbri.c,v 1.41 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.40 2019/05/08 13:40:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.41 2019/06/08 08:02:38 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1856,7 +1856,8 @@ static int
 dbri_get_props(void *hdl)
 {
 
-	return AUDIO_PROP_MMAP | AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_FULLDUPLEX;
 }
 
 static int

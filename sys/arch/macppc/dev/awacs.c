@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.47 2019/05/08 13:40:15 isaki Exp $	*/
+/*	$NetBSD: awacs.c,v 1.48 2019/06/08 08:02:37 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.47 2019/05/08 13:40:15 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.48 2019/06/08 08:02:37 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -967,7 +967,9 @@ awacs_round_buffersize(void *h, int dir, size_t size)
 static int
 awacs_get_props(void *h)
 {
-	return AUDIO_PROP_FULLDUPLEX /* | AUDIO_PROP_MMAP */;
+
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_FULLDUPLEX;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.100 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: eap.c,v 1.101 2019/06/08 08:02:38 isaki Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.100 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.101 2019/06/08 08:02:38 isaki Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -1647,8 +1647,8 @@ eap_get_props(void *addr)
 
 	ei = addr;
 	sc = device_private(ei->parent);
-	prop = AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-	    AUDIO_PROP_FULLDUPLEX;
+	prop = AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 	/* The es1370 only has one clock, so it's not independent */
 	if (!sc->sc_1371 && ei->index == EAP_DAC2)
 		prop &= ~AUDIO_PROP_INDEPENDENT;

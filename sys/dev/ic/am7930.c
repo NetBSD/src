@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.58 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: am7930.c,v 1.59 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.58 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.59 2019/06/08 08:02:38 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -333,7 +333,9 @@ am7930_halt_input(void *addr)
 int
 am7930_get_props(void *addr)
 {
-	return AUDIO_PROP_FULLDUPLEX;
+
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_FULLDUPLEX;
 }
 
 /*

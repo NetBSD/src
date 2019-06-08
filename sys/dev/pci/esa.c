@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.64 2019/05/08 13:40:18 isaki Exp $ */
+/* $NetBSD: esa.c,v 1.65 2019/06/08 08:02:38 isaki Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.64 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.65 2019/06/08 08:02:38 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -475,7 +475,8 @@ static int
 esa_get_props(void *hdl)
 {
 
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 static int

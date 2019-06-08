@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.85 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: ess.c,v 1.86 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.85 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.86 2019/06/08 08:02:38 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2177,14 +2177,15 @@ int
 ess_1788_get_props(void *addr)
 {
 
-	return AUDIO_PROP_MMAP;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE;
 }
 
 int
 ess_1888_get_props(void *addr)
 {
 
-	return AUDIO_PROP_MMAP | AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_FULLDUPLEX;
 }
 
 void
