@@ -59,7 +59,7 @@ getfpregs_supplies (struct gdbarch *gdbarch, int regnum)
 }
 
 void
-aarch64_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
+aarch64_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
   ptid_t ptid = regcache->ptid ();
   pid_t pid = ptid.pid ();
@@ -93,7 +93,7 @@ aarch64_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
    this for all registers.  */
 
 void
-aarch64_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
+aarch64_nbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
   ptid_t ptid = regcache->ptid ();
   pid_t pid = ptid.pid ();
@@ -110,7 +110,7 @@ aarch64_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
       regcache_collect_regset (&aarch64_nbsd_gregset, regcache,regnum, &regs,
 			       sizeof (regs));
 
-      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, tid) == -1)
+      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't write registers"));
     }
 
@@ -118,13 +118,13 @@ aarch64_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, tid) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       regcache_collect_regset (&aarch64_nbsd_fpregset, regcache,regnum, &fpregs,
 				sizeof (fpregs));
 
-      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, tid) == -1)
+      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
