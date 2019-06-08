@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.30 2019/05/11 07:31:57 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.31 2019/06/08 07:27:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -50,44 +50,13 @@
 
 /* -------------------------------------------------------------------------- */
 
-static void
-nvmm_arch_copystate(void *_dst, void *_src, uint64_t flags)
-{
-	struct nvmm_x64_state *src = _src;
-	struct nvmm_x64_state *dst = _dst;
-
-	if (flags & NVMM_X64_STATE_GPRS) {
-		memcpy(dst->gprs, src->gprs, sizeof(dst->gprs));
-	}
-	if (flags & NVMM_X64_STATE_SEGS) {
-		memcpy(dst->segs, src->segs, sizeof(dst->segs));
-	}
-	if (flags & NVMM_X64_STATE_CRS) {
-		memcpy(dst->crs, src->crs, sizeof(dst->crs));
-	}
-	if (flags & NVMM_X64_STATE_DRS) {
-		memcpy(dst->drs, src->drs, sizeof(dst->drs));
-	}
-	if (flags & NVMM_X64_STATE_MSRS) {
-		memcpy(dst->msrs, src->msrs, sizeof(dst->msrs));
-	}
-	if (flags & NVMM_X64_STATE_INTR) {
-		memcpy(&dst->intr, &src->intr, sizeof(dst->intr));
-	}
-	if (flags & NVMM_X64_STATE_FPU) {
-		memcpy(&dst->fpu, &src->fpu, sizeof(dst->fpu));
-	}
-}
-
-/* -------------------------------------------------------------------------- */
-
 /*
  * Undocumented debugging function. Helpful.
  */
 int
-nvmm_vcpu_dump(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
+nvmm_vcpu_dump(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
-	struct nvmm_x64_state state;
+	struct nvmm_x64_state *state = vcpu->state;
 	uint16_t *attr;
 	size_t i;
 	int ret;
@@ -96,31 +65,31 @@ nvmm_vcpu_dump(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
 		"ES", "CS", "SS", "DS", "FS", "GS", "GDT", "IDT", "LDT", "TR"
 	};
 
-	ret = nvmm_vcpu_getstate(mach, cpuid, &state, NVMM_X64_STATE_ALL);
+	ret = nvmm_vcpu_getstate(mach, vcpu, NVMM_X64_STATE_ALL);
 	if (ret == -1)
 		return -1;
 
-	printf("+ VCPU id=%d\n", (int)cpuid);
-	printf("| -> RIP=%"PRIx64"\n", state.gprs[NVMM_X64_GPR_RIP]);
-	printf("| -> RSP=%"PRIx64"\n", state.gprs[NVMM_X64_GPR_RSP]);
-	printf("| -> RAX=%"PRIx64"\n", state.gprs[NVMM_X64_GPR_RAX]);
-	printf("| -> RBX=%"PRIx64"\n", state.gprs[NVMM_X64_GPR_RBX]);
-	printf("| -> RCX=%"PRIx64"\n", state.gprs[NVMM_X64_GPR_RCX]);
-	printf("| -> RFLAGS=%p\n", (void *)state.gprs[NVMM_X64_GPR_RFLAGS]);
+	printf("+ VCPU id=%d\n", (int)vcpu->cpuid);
+	printf("| -> RIP=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RIP]);
+	printf("| -> RSP=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RSP]);
+	printf("| -> RAX=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RAX]);
+	printf("| -> RBX=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RBX]);
+	printf("| -> RCX=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RCX]);
+	printf("| -> RFLAGS=%p\n", (void *)state->gprs[NVMM_X64_GPR_RFLAGS]);
 	for (i = 0; i < NVMM_X64_NSEG; i++) {
-		attr = (uint16_t *)&state.segs[i].attrib;
+		attr = (uint16_t *)&state->segs[i].attrib;
 		printf("| -> %s: sel=0x%x base=%"PRIx64", limit=%x, attrib=%x\n",
 		    segnames[i],
-		    state.segs[i].selector,
-		    state.segs[i].base,
-		    state.segs[i].limit,
+		    state->segs[i].selector,
+		    state->segs[i].base,
+		    state->segs[i].limit,
 		    *attr);
 	}
-	printf("| -> MSR_EFER=%"PRIx64"\n", state.msrs[NVMM_X64_MSR_EFER]);
-	printf("| -> CR0=%"PRIx64"\n", state.crs[NVMM_X64_CR_CR0]);
-	printf("| -> CR3=%"PRIx64"\n", state.crs[NVMM_X64_CR_CR3]);
-	printf("| -> CR4=%"PRIx64"\n", state.crs[NVMM_X64_CR_CR4]);
-	printf("| -> CR8=%"PRIx64"\n", state.crs[NVMM_X64_CR_CR8]);
+	printf("| -> MSR_EFER=%"PRIx64"\n", state->msrs[NVMM_X64_MSR_EFER]);
+	printf("| -> CR0=%"PRIx64"\n", state->crs[NVMM_X64_CR_CR0]);
+	printf("| -> CR3=%"PRIx64"\n", state->crs[NVMM_X64_CR_CR3]);
+	printf("| -> CR4=%"PRIx64"\n", state->crs[NVMM_X64_CR_CR4]);
+	printf("| -> CR8=%"PRIx64"\n", state->crs[NVMM_X64_CR_CR8]);
 
 	return 0;
 }
@@ -456,18 +425,18 @@ x86_gva_to_gpa(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 }
 
 int
-nvmm_gva_to_gpa(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
+nvmm_gva_to_gpa(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
     gvaddr_t gva, gpaddr_t *gpa, nvmm_prot_t *prot)
 {
-	struct nvmm_x64_state state;
+	struct nvmm_x64_state *state = vcpu->state;
 	int ret;
 
-	ret = nvmm_vcpu_getstate(mach, cpuid, &state,
+	ret = nvmm_vcpu_getstate(mach, vcpu,
 	    NVMM_X64_STATE_CRS | NVMM_X64_STATE_MSRS);
 	if (ret == -1)
 		return -1;
 
-	return x86_gva_to_gpa(mach, &state, gva, gpa, prot);
+	return x86_gva_to_gpa(mach, state, gva, gpa, prot);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -720,10 +689,10 @@ assist_io_batch(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 }
 
 int
-nvmm_assist_io(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
-    struct nvmm_exit *exit)
+nvmm_assist_io(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
-	struct nvmm_x64_state state;
+	struct nvmm_x64_state *state = vcpu->state;
+	struct nvmm_exit *exit = vcpu->exit;
 	struct nvmm_io io;
 	uint64_t cnt = 0; /* GCC */
 	uint8_t iobuf[8];
@@ -743,21 +712,21 @@ nvmm_assist_io(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 	io.size = exit->u.io.operand_size;
 	io.data = iobuf;
 
-	ret = nvmm_vcpu_getstate(mach, cpuid, &state,
+	ret = nvmm_vcpu_getstate(mach, vcpu,
 	    NVMM_X64_STATE_GPRS | NVMM_X64_STATE_SEGS |
 	    NVMM_X64_STATE_CRS | NVMM_X64_STATE_MSRS);
 	if (ret == -1)
 		return -1;
 
 	if (exit->u.io.rep) {
-		cnt = rep_get_cnt(&state, exit->u.io.address_size);
+		cnt = rep_get_cnt(state, exit->u.io.address_size);
 		if (__predict_false(cnt == 0)) {
-			state.gprs[NVMM_X64_GPR_RIP] = exit->u.io.npc;
+			state->gprs[NVMM_X64_GPR_RIP] = exit->u.io.npc;
 			goto out;
 		}
 	}
 
-	if (__predict_false(state.gprs[NVMM_X64_GPR_RFLAGS] & PSL_D)) {
+	if (__predict_false(state->gprs[NVMM_X64_GPR_RFLAGS] & PSL_D)) {
 		psld = true;
 	}
 
@@ -771,7 +740,7 @@ nvmm_assist_io(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 			reg = NVMM_X64_GPR_RSI;
 		}
 
-		gva = state.gprs[reg];
+		gva = state->gprs[reg];
 		gva &= size_to_mask(exit->u.io.address_size);
 
 		if (exit->u.io.seg != -1) {
@@ -780,25 +749,25 @@ nvmm_assist_io(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 			if (io.in) {
 				seg = NVMM_X64_SEG_ES;
 			} else {
-				seg = fetch_segment(mach, &state);
+				seg = fetch_segment(mach, state);
 				if (seg == -1)
 					return -1;
 			}
 		}
 
-		if (__predict_true(is_long_mode(&state))) {
+		if (__predict_true(is_long_mode(state))) {
 			if (seg == NVMM_X64_SEG_GS || seg == NVMM_X64_SEG_FS) {
-				segment_apply(&state.segs[seg], &gva);
+				segment_apply(&state->segs[seg], &gva);
 			}
 		} else {
-			ret = segment_check(&state.segs[seg], gva, io.size);
+			ret = segment_check(&state->segs[seg], gva, io.size);
 			if (ret == -1)
 				return -1;
-			segment_apply(&state.segs[seg], &gva);
+			segment_apply(&state->segs[seg], &gva);
 		}
 
 		if (exit->u.io.rep && !psld) {
-			iocnt = assist_io_batch(mach, &state, &io, gva, cnt);
+			iocnt = assist_io_batch(mach, state, &io, gva, cnt);
 			if (iocnt == -1)
 				return -1;
 			goto done;
@@ -807,9 +776,9 @@ nvmm_assist_io(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 
 	if (!io.in) {
 		if (!exit->u.io.str) {
-			memcpy(io.data, &state.gprs[NVMM_X64_GPR_RAX], io.size);
+			memcpy(io.data, &state->gprs[NVMM_X64_GPR_RAX], io.size);
 		} else {
-			ret = read_guest_memory(mach, &state, gva, io.data,
+			ret = read_guest_memory(mach, state, gva, io.data,
 			    io.size);
 			if (ret == -1)
 				return -1;
@@ -820,13 +789,13 @@ nvmm_assist_io(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 
 	if (io.in) {
 		if (!exit->u.io.str) {
-			memcpy(&state.gprs[NVMM_X64_GPR_RAX], io.data, io.size);
+			memcpy(&state->gprs[NVMM_X64_GPR_RAX], io.data, io.size);
 			if (io.size == 4) {
 				/* Zero-extend to 64 bits. */
-				state.gprs[NVMM_X64_GPR_RAX] &= size_to_mask(4);
+				state->gprs[NVMM_X64_GPR_RAX] &= size_to_mask(4);
 			}
 		} else {
-			ret = write_guest_memory(mach, &state, gva, io.data,
+			ret = write_guest_memory(mach, state, gva, io.data,
 			    io.size);
 			if (ret == -1)
 				return -1;
@@ -836,24 +805,24 @@ nvmm_assist_io(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 done:
 	if (exit->u.io.str) {
 		if (__predict_false(psld)) {
-			state.gprs[reg] -= iocnt * io.size;
+			state->gprs[reg] -= iocnt * io.size;
 		} else {
-			state.gprs[reg] += iocnt * io.size;
+			state->gprs[reg] += iocnt * io.size;
 		}
 	}
 
 	if (exit->u.io.rep) {
 		cnt -= iocnt;
-		rep_set_cnt(&state, exit->u.io.address_size, cnt);
+		rep_set_cnt(state, exit->u.io.address_size, cnt);
 		if (cnt == 0) {
-			state.gprs[NVMM_X64_GPR_RIP] = exit->u.io.npc;
+			state->gprs[NVMM_X64_GPR_RIP] = exit->u.io.npc;
 		}
 	} else {
-		state.gprs[NVMM_X64_GPR_RIP] = exit->u.io.npc;
+		state->gprs[NVMM_X64_GPR_RIP] = exit->u.io.npc;
 	}
 
 out:
-	ret = nvmm_vcpu_setstate(mach, cpuid, &state, NVMM_X64_STATE_GPRS);
+	ret = nvmm_vcpu_setstate(mach, vcpu, NVMM_X64_STATE_GPRS);
 	if (ret == -1)
 		return -1;
 
@@ -3141,10 +3110,10 @@ assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 }
 
 int
-nvmm_assist_mem(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
-    struct nvmm_exit *exit)
+nvmm_assist_mem(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
-	struct nvmm_x64_state state;
+	struct nvmm_x64_state *state = vcpu->state;
+	struct nvmm_exit *exit = vcpu->exit;
 	struct x86_instr instr;
 	uint64_t cnt = 0; /* GCC */
 	int ret;
@@ -3154,7 +3123,7 @@ nvmm_assist_mem(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 		return -1;
 	}
 
-	ret = nvmm_vcpu_getstate(mach, cpuid, &state,
+	ret = nvmm_vcpu_getstate(mach, vcpu,
 	    NVMM_X64_STATE_GPRS | NVMM_X64_STATE_SEGS |
 	    NVMM_X64_STATE_CRS | NVMM_X64_STATE_MSRS);
 	if (ret == -1)
@@ -3165,30 +3134,30 @@ nvmm_assist_mem(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 		 * The instruction was not fetched from the kernel. Fetch
 		 * it ourselves.
 		 */
-		ret = fetch_instruction(mach, &state, exit);
+		ret = fetch_instruction(mach, state, exit);
 		if (ret == -1)
 			return -1;
 	}
 
 	ret = x86_decode(exit->u.mem.inst_bytes, exit->u.mem.inst_len,
-	    &instr, &state);
+	    &instr, state);
 	if (ret == -1) {
 		errno = ENODEV;
 		return -1;
 	}
 
 	if (instr.legpref.rep || instr.legpref.repn) {
-		cnt = rep_get_cnt(&state, instr.address_size);
+		cnt = rep_get_cnt(state, instr.address_size);
 		if (__predict_false(cnt == 0)) {
-			state.gprs[NVMM_X64_GPR_RIP] += instr.len;
+			state->gprs[NVMM_X64_GPR_RIP] += instr.len;
 			goto out;
 		}
 	}
 
 	if (instr.opcode->movs) {
-		ret = assist_mem_double(mach, &state, &instr);
+		ret = assist_mem_double(mach, state, &instr);
 	} else {
-		ret = assist_mem_single(mach, &state, &instr, exit);
+		ret = assist_mem_single(mach, state, &instr, exit);
 	}
 	if (ret == -1) {
 		errno = ENODEV;
@@ -3197,20 +3166,20 @@ nvmm_assist_mem(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 
 	if (instr.legpref.rep || instr.legpref.repn) {
 		cnt -= 1;
-		rep_set_cnt(&state, instr.address_size, cnt);
+		rep_set_cnt(state, instr.address_size, cnt);
 		if (cnt == 0) {
-			state.gprs[NVMM_X64_GPR_RIP] += instr.len;
+			state->gprs[NVMM_X64_GPR_RIP] += instr.len;
 		} else if (__predict_false(instr.legpref.repn)) {
-			if (state.gprs[NVMM_X64_GPR_RFLAGS] & PSL_Z) {
-				state.gprs[NVMM_X64_GPR_RIP] += instr.len;
+			if (state->gprs[NVMM_X64_GPR_RFLAGS] & PSL_Z) {
+				state->gprs[NVMM_X64_GPR_RIP] += instr.len;
 			}
 		}
 	} else {
-		state.gprs[NVMM_X64_GPR_RIP] += instr.len;
+		state->gprs[NVMM_X64_GPR_RIP] += instr.len;
 	}
 
 out:
-	ret = nvmm_vcpu_setstate(mach, cpuid, &state, NVMM_X64_STATE_GPRS);
+	ret = nvmm_vcpu_setstate(mach, vcpu, NVMM_X64_STATE_GPRS);
 	if (ret == -1)
 		return -1;
 
