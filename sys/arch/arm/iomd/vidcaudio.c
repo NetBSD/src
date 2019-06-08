@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.58 2019/05/08 13:40:14 isaki Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.59 2019/06/08 08:02:36 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.58 2019/05/08 13:40:14 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.59 2019/06/08 08:02:36 isaki Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -487,7 +487,7 @@ static int
 vidcaudio_get_props(void *addr)
 {
 
-	return 0;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE;
 }
 
 static void
