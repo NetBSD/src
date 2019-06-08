@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.262 2019/06/07 11:41:44 sevan Exp $
+$NetBSD: acronyms.comp,v 1.263 2019/06/08 13:13:01 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -853,6 +853,7 @@ MAC	mandatory access control
 MAC	{media,medium} access control
 MAC	message authentication {check,code}
 MADT	multiple APIC descriptor table
+MAMR	microwave-assisted magnetic recording
 MB	megabyte
 MBA	multi-boot agent
 MBR	master boot record
