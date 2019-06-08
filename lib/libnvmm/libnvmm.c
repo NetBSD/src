@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.13 2019/05/11 07:31:57 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.14 2019/06/08 07:27:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -224,7 +224,6 @@ nvmm_machine_create(struct nvmm_machine *mach)
 	memset(mach, 0, sizeof(*mach));
 	mach->machid = args.machid;
 	mach->pages = pages;
-	mach->npages = __capability.max_vcpus;
 	mach->areas = areas;
 
 	return 0;
@@ -272,7 +271,8 @@ nvmm_machine_configure(struct nvmm_machine *mach, uint64_t op, void *conf)
 }
 
 int
-nvmm_vcpu_create(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
+nvmm_vcpu_create(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
+    struct nvmm_vcpu *vcpu)
 {
 	struct nvmm_ioc_vcpu_create args;
 	struct nvmm_comm_page *comm;
@@ -292,41 +292,42 @@ nvmm_vcpu_create(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
 
 	mach->pages[cpuid] = comm;
 
+	vcpu->cpuid = cpuid;
+	vcpu->state = &comm->state;
+	vcpu->event = &comm->event;
+	vcpu->exit = malloc(sizeof(*vcpu->exit));
+
 	return 0;
 }
 
 int
-nvmm_vcpu_destroy(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
+nvmm_vcpu_destroy(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
 	struct nvmm_ioc_vcpu_destroy args;
 	struct nvmm_comm_page *comm;
 	int ret;
 
 	args.machid = mach->machid;
-	args.cpuid = cpuid;
+	args.cpuid = vcpu->cpuid;
 
 	ret = ioctl(nvmm_fd, NVMM_IOC_VCPU_DESTROY, &args);
 	if (ret == -1)
 		return -1;
 
-	comm = mach->pages[cpuid];
+	comm = mach->pages[vcpu->cpuid];
 	munmap(comm, PAGE_SIZE);
+	free(vcpu->exit);
 
 	return 0;
 }
 
 int
-nvmm_vcpu_setstate(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
-    void *state, uint64_t flags)
+nvmm_vcpu_setstate(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
+    uint64_t flags)
 {
 	struct nvmm_comm_page *comm;
 
-	if (__predict_false(cpuid >= mach->npages)) {
-		return -1;
-	}
-	comm = mach->pages[cpuid];
-
-	nvmm_arch_copystate(&comm->state, state, flags);
+	comm = mach->pages[vcpu->cpuid];
 	comm->state_commit |= flags;
 	comm->state_cached |= flags;
 
@@ -334,68 +335,57 @@ nvmm_vcpu_setstate(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 }
 
 int
-nvmm_vcpu_getstate(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
-    void *state, uint64_t flags)
+nvmm_vcpu_getstate(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
+    uint64_t flags)
 {
 	struct nvmm_ioc_vcpu_getstate args;
 	struct nvmm_comm_page *comm;
 	int ret;
 
-	if (__predict_false(cpuid >= mach->npages)) {
-		return -1;
-	}
-	comm = mach->pages[cpuid];
+	comm = mach->pages[vcpu->cpuid];
 
 	if (__predict_true((flags & ~comm->state_cached) == 0)) {
-		goto out;
+		return 0;
 	}
 	comm->state_wanted = flags & ~comm->state_cached;
 
 	args.machid = mach->machid;
-	args.cpuid = cpuid;
+	args.cpuid = vcpu->cpuid;
 
 	ret = ioctl(nvmm_fd, NVMM_IOC_VCPU_GETSTATE, &args);
 	if (ret == -1)
 		return -1;
 
-out:
-	nvmm_arch_copystate(state, &comm->state, flags);
 	return 0;
 }
 
 int
-nvmm_vcpu_inject(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
-    struct nvmm_event *event)
+nvmm_vcpu_inject(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
 	struct nvmm_comm_page *comm;
 
-	if (__predict_false(cpuid >= mach->npages)) {
-		return -1;
-	}
-	comm = mach->pages[cpuid];
-
-	memcpy(&comm->event, event, sizeof(comm->event));
+	comm = mach->pages[vcpu->cpuid];
 	comm->event_commit = true;
 
 	return 0;
 }
 
 int
-nvmm_vcpu_run(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
-    struct nvmm_exit *exit)
+nvmm_vcpu_run(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
 	struct nvmm_ioc_vcpu_run args;
 	int ret;
 
 	args.machid = mach->machid;
-	args.cpuid = cpuid;
+	args.cpuid = vcpu->cpuid;
 	memset(&args.exit, 0, sizeof(args.exit));
 
 	ret = ioctl(nvmm_fd, NVMM_IOC_VCPU_RUN, &args);
 	if (ret == -1)
 		return -1;
 
-	memcpy(exit, &args.exit, sizeof(args.exit));
+	/* No comm support yet, just copy. */
+	memcpy(vcpu->exit, &args.exit, sizeof(args.exit));
 
 	return 0;
 }

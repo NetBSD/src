@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.11 2019/05/11 07:31:57 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.12 2019/06/08 07:27:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -60,9 +60,15 @@ struct nvmm_callbacks {
 struct nvmm_machine {
 	nvmm_machid_t machid;
 	struct nvmm_comm_page **pages;
-	size_t npages;
 	void *areas; /* opaque */
 	struct nvmm_callbacks cbs;
+};
+
+struct nvmm_vcpu {
+	nvmm_cpuid_t cpuid;
+	struct nvmm_vcpu_state *state;
+	struct nvmm_event *event;
+	struct nvmm_exit *exit;
 };
 
 #define NVMM_MACH_CONF_CALLBACKS	NVMM_MACH_CONF_LIBNVMM_BEGIN
@@ -80,28 +86,28 @@ int nvmm_machine_create(struct nvmm_machine *);
 int nvmm_machine_destroy(struct nvmm_machine *);
 int nvmm_machine_configure(struct nvmm_machine *, uint64_t, void *);
 
-int nvmm_vcpu_create(struct nvmm_machine *, nvmm_cpuid_t);
-int nvmm_vcpu_destroy(struct nvmm_machine *, nvmm_cpuid_t);
-int nvmm_vcpu_setstate(struct nvmm_machine *, nvmm_cpuid_t, void *, uint64_t);
-int nvmm_vcpu_getstate(struct nvmm_machine *, nvmm_cpuid_t, void *, uint64_t);
-int nvmm_vcpu_inject(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_event *);
-int nvmm_vcpu_run(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *);
+int nvmm_vcpu_create(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_vcpu *);
+int nvmm_vcpu_destroy(struct nvmm_machine *, struct nvmm_vcpu *);
+int nvmm_vcpu_setstate(struct nvmm_machine *, struct nvmm_vcpu *, uint64_t);
+int nvmm_vcpu_getstate(struct nvmm_machine *, struct nvmm_vcpu *, uint64_t);
+int nvmm_vcpu_inject(struct nvmm_machine *, struct nvmm_vcpu *);
+int nvmm_vcpu_run(struct nvmm_machine *, struct nvmm_vcpu *);
 
 int nvmm_gpa_map(struct nvmm_machine *, uintptr_t, gpaddr_t, size_t, int);
 int nvmm_gpa_unmap(struct nvmm_machine *, uintptr_t, gpaddr_t, size_t);
 int nvmm_hva_map(struct nvmm_machine *, uintptr_t, size_t);
 int nvmm_hva_unmap(struct nvmm_machine *, uintptr_t, size_t);
 
-int nvmm_gva_to_gpa(struct nvmm_machine *, nvmm_cpuid_t, gvaddr_t, gpaddr_t *,
+int nvmm_gva_to_gpa(struct nvmm_machine *, struct nvmm_vcpu *, gvaddr_t, gpaddr_t *,
     nvmm_prot_t *);
 int nvmm_gpa_to_hva(struct nvmm_machine *, gpaddr_t, uintptr_t *,
     nvmm_prot_t *);
 
-int nvmm_assist_io(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *);
-int nvmm_assist_mem(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *);
+int nvmm_assist_io(struct nvmm_machine *, struct nvmm_vcpu *);
+int nvmm_assist_mem(struct nvmm_machine *, struct nvmm_vcpu *);
 
 int nvmm_ctl(int, void *, size_t);
 
-int nvmm_vcpu_dump(struct nvmm_machine *, nvmm_cpuid_t);
+int nvmm_vcpu_dump(struct nvmm_machine *, struct nvmm_vcpu *);
 
 #endif /* _LIBNVMM_H_ */
