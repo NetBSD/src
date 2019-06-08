@@ -1,4 +1,4 @@
-/*	$NetBSD: h_mem_assist.c,v 1.10 2019/05/11 07:31:57 maxv Exp $	*/
+/*	$NetBSD: h_mem_assist.c,v 1.11 2019/06/08 07:27:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -68,33 +68,33 @@ init_seg(struct nvmm_x64_state_seg *seg, int type, int sel)
 }
 
 static void
-reset_machine(struct nvmm_machine *mach)
+reset_machine(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
-	struct nvmm_x64_state state;
+	struct nvmm_x64_state *state = vcpu->state;
 
-	memset(&state, 0, sizeof(state));
+	memset(state, 0, sizeof(*state));
 
 	/* Default. */
-	state.gprs[NVMM_X64_GPR_RFLAGS] = PSL_MBO;
-	init_seg(&state.segs[NVMM_X64_SEG_CS], SDT_MEMERA, GSEL(GCODE_SEL, SEL_KPL));
-	init_seg(&state.segs[NVMM_X64_SEG_SS], SDT_MEMRWA, GSEL(GDATA_SEL, SEL_KPL));
-	init_seg(&state.segs[NVMM_X64_SEG_DS], SDT_MEMRWA, GSEL(GDATA_SEL, SEL_KPL));
-	init_seg(&state.segs[NVMM_X64_SEG_ES], SDT_MEMRWA, GSEL(GDATA_SEL, SEL_KPL));
-	init_seg(&state.segs[NVMM_X64_SEG_FS], SDT_MEMRWA, GSEL(GDATA_SEL, SEL_KPL));
-	init_seg(&state.segs[NVMM_X64_SEG_GS], SDT_MEMRWA, GSEL(GDATA_SEL, SEL_KPL));
+	state->gprs[NVMM_X64_GPR_RFLAGS] = PSL_MBO;
+	init_seg(&state->segs[NVMM_X64_SEG_CS], SDT_MEMERA, GSEL(GCODE_SEL, SEL_KPL));
+	init_seg(&state->segs[NVMM_X64_SEG_SS], SDT_MEMRWA, GSEL(GDATA_SEL, SEL_KPL));
+	init_seg(&state->segs[NVMM_X64_SEG_DS], SDT_MEMRWA, GSEL(GDATA_SEL, SEL_KPL));
+	init_seg(&state->segs[NVMM_X64_SEG_ES], SDT_MEMRWA, GSEL(GDATA_SEL, SEL_KPL));
+	init_seg(&state->segs[NVMM_X64_SEG_FS], SDT_MEMRWA, GSEL(GDATA_SEL, SEL_KPL));
+	init_seg(&state->segs[NVMM_X64_SEG_GS], SDT_MEMRWA, GSEL(GDATA_SEL, SEL_KPL));
 
 	/* Blank. */
-	init_seg(&state.segs[NVMM_X64_SEG_GDT], 0, 0);
-	init_seg(&state.segs[NVMM_X64_SEG_IDT], 0, 0);
-	init_seg(&state.segs[NVMM_X64_SEG_LDT], SDT_SYSLDT, 0);
-	init_seg(&state.segs[NVMM_X64_SEG_TR], SDT_SYS386BSY, 0);
+	init_seg(&state->segs[NVMM_X64_SEG_GDT], 0, 0);
+	init_seg(&state->segs[NVMM_X64_SEG_IDT], 0, 0);
+	init_seg(&state->segs[NVMM_X64_SEG_LDT], SDT_SYSLDT, 0);
+	init_seg(&state->segs[NVMM_X64_SEG_TR], SDT_SYS386BSY, 0);
 
 	/* Protected mode enabled. */
-	state.crs[NVMM_X64_CR_CR0] = CR0_PG|CR0_PE|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM;
+	state->crs[NVMM_X64_CR_CR0] = CR0_PG|CR0_PE|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM;
 
 	/* 64bit mode enabled. */
-	state.crs[NVMM_X64_CR_CR4] = CR4_PAE;
-	state.msrs[NVMM_X64_MSR_EFER] = EFER_LME | EFER_SCE | EFER_LMA;
+	state->crs[NVMM_X64_CR_CR4] = CR4_PAE;
+	state->msrs[NVMM_X64_MSR_EFER] = EFER_LME | EFER_SCE | EFER_LMA;
 
 	/* Stolen from x86/pmap.c */
 #define	PATENTRY(n, type)	(type << ((n) * 8))
@@ -104,18 +104,18 @@ reset_machine(struct nvmm_machine *mach)
 #define	PAT_WP		0x5ULL
 #define	PAT_WB		0x6ULL
 #define	PAT_UCMINUS	0x7ULL
-	state.msrs[NVMM_X64_MSR_PAT] =
+	state->msrs[NVMM_X64_MSR_PAT] =
 	    PATENTRY(0, PAT_WB) | PATENTRY(1, PAT_WT) |
 	    PATENTRY(2, PAT_UCMINUS) | PATENTRY(3, PAT_UC) |
 	    PATENTRY(4, PAT_WB) | PATENTRY(5, PAT_WT) |
 	    PATENTRY(6, PAT_UCMINUS) | PATENTRY(7, PAT_UC);
 
 	/* Page tables. */
-	state.crs[NVMM_X64_CR_CR3] = 0x3000;
+	state->crs[NVMM_X64_CR_CR3] = 0x3000;
 
-	state.gprs[NVMM_X64_GPR_RIP] = 0x2000;
+	state->gprs[NVMM_X64_GPR_RIP] = 0x2000;
 
-	if (nvmm_vcpu_setstate(mach, 0, &state, NVMM_X64_STATE_ALL) == -1)
+	if (nvmm_vcpu_setstate(mach, vcpu, NVMM_X64_STATE_ALL) == -1)
 		err(errno, "nvmm_vcpu_setstate");
 }
 
@@ -216,11 +216,11 @@ mem_callback(struct nvmm_mem *mem)
 }
 
 static int
-handle_memory(struct nvmm_machine *mach, struct nvmm_exit *exit)
+handle_memory(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
 	int ret;
 
-	ret = nvmm_assist_mem(mach, 0, exit);
+	ret = nvmm_assist_mem(mach, vcpu);
 	if (ret == -1) {
 		err(errno, "nvmm_assist_mem");
 	}
@@ -229,15 +229,15 @@ handle_memory(struct nvmm_machine *mach, struct nvmm_exit *exit)
 }
 
 static void
-run_machine(struct nvmm_machine *mach)
+run_machine(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
-	struct nvmm_exit exit;
+	struct nvmm_exit *exit = vcpu->exit;
 
 	while (1) {
-		if (nvmm_vcpu_run(mach, 0, &exit) == -1)
+		if (nvmm_vcpu_run(mach, vcpu) == -1)
 			err(errno, "nvmm_vcpu_run");
 
-		switch (exit.reason) {
+		switch (exit->reason) {
 		case NVMM_EXIT_NONE:
 			break;
 
@@ -246,7 +246,7 @@ run_machine(struct nvmm_machine *mach)
 			return;
 
 		case NVMM_EXIT_MEMORY:
-			handle_memory(mach, &exit);
+			handle_memory(mach, vcpu);
 			break;
 
 		case NVMM_EXIT_SHUTDOWN:
@@ -270,19 +270,20 @@ struct test {
 };
 
 static void
-run_test(struct nvmm_machine *mach, const struct test *test)
+run_test(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
+    const struct test *test)
 {
 	uint64_t *res;
 	size_t size;
 
 	size = (size_t)test->code_end - (size_t)test->code_begin;
 
-	reset_machine(mach);
+	reset_machine(mach, vcpu);
 
 	memset(mmiobuf, 0, PAGE_SIZE);
 	memcpy(instbuf, test->code_begin, size);
 
-	run_machine(mach);
+	run_machine(mach, vcpu);
 
 	res = (uint64_t *)mmiobuf;
 	if (*res == test->wanted) {
@@ -344,17 +345,18 @@ static struct nvmm_callbacks callbacks = {
 int main(int argc, char *argv[])
 {
 	struct nvmm_machine mach;
+	struct nvmm_vcpu vcpu;
 	size_t i;
 
 	if (nvmm_machine_create(&mach) == -1)
 		err(errno, "nvmm_machine_create");
-	if (nvmm_vcpu_create(&mach, 0) == -1)
+	if (nvmm_vcpu_create(&mach, 0, &vcpu) == -1)
 		err(errno, "nvmm_vcpu_create");
 	nvmm_machine_configure(&mach, NVMM_MACH_CONF_CALLBACKS, &callbacks);
 	map_pages(&mach);
 
 	for (i = 0; tests[i].name != NULL; i++) {
-		run_test(&mach, &tests[i]);
+		run_test(&mach, &vcpu, &tests[i]);
 	}
 
 	return 0;
