@@ -332,6 +332,10 @@ case ${gdb_host} in
 	NATDEPFILES="${NATDEPFILES} nbsd-nat.o bsd-kvm.o"
 	LOADLIBES='-lkvm'
 	case ${gdb_host_cpu} in
+	    aarch64)
+		# Host: NetBSD/aarch64
+		NATDEPFILES="${NATDEPFILES} aarch64-nbsd-nat.o"
+		;;
 	    alpha)
 		# Host: NetBSD/alpha
 		NATDEPFILES="${NATDEPFILES} alpha-bsd-nat.o"
