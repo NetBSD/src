@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.41 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: interwave.c,v 1.42 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.41 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.42 2019/06/08 08:02:38 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1452,7 +1452,7 @@ iw_get_props(void *addr)
 	struct iw_softc *sc;
 
 	sc = addr;
-	return AUDIO_PROP_MMAP |
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
 		(sc->sc_fullduplex ? AUDIO_PROP_FULLDUPLEX : 0);
 }
 

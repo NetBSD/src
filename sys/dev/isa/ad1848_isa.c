@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.39 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.40 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.39 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.40 2019/06/08 08:02:38 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -783,6 +783,6 @@ ad1848_isa_get_props(void *addr)
 	struct ad1848_isa_softc *isc;
 
 	isc = addr;
-	return AUDIO_PROP_MMAP |
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
 		(isc->sc_playdrq != isc->sc_recdrq ? AUDIO_PROP_FULLDUPLEX : 0);
 }

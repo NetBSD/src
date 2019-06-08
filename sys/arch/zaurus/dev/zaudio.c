@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.22 2019/05/08 13:40:17 isaki Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.23 2019/06/08 08:02:37 isaki Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.22 2019/05/08 13:40:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.23 2019/06/08 08:02:37 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ int
 zaudio_get_props(void *hdl)
 {
 
-	return AUDIO_PROP_MMAP;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE;
 }
 
 void
