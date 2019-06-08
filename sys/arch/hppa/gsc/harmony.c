@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.6 2019/05/08 13:40:15 isaki Exp $	*/
+/*	$NetBSD: harmony.c,v 1.7 2019/06/08 08:02:37 isaki Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -972,7 +972,8 @@ int
 harmony_get_props(void *vsc)
 {
 
-	return AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_FULLDUPLEX;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.57 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: autri.c,v 1.58 2019/06/08 08:02:38 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.57 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.58 2019/06/08 08:02:38 isaki Exp $");
 
 #include "midi.h"
 
@@ -1061,8 +1061,9 @@ autri_find_dma(struct autri_softc *sc, void *addr)
 static int
 autri_get_props(void *addr)
 {
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-	    AUDIO_PROP_FULLDUPLEX;
+
+	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 static void
