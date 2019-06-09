@@ -5,7 +5,7 @@ h_run()
 
 	export COLUMNS=80
 	export LINES=24
-	$(atf_get_srcdir)/director \
+	$(atf_get_srcdir)/director $2 \
 	    -T $(atf_get_srcdir) \
 	    -t atf \
 	    -I $(atf_get_srcdir)/tests \
@@ -290,7 +290,7 @@ delay_output_head()
 }
 delay_output_body()
 {
-	h_run delay_output
+	h_run delay_output -v
 }
 
 atf_test_case derwin
