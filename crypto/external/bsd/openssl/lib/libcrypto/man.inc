@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.13 2018/10/08 16:31:35 christos Exp $
+#	$NetBSD: man.inc,v 1.14 2019/06/09 18:44:30 christos Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -387,6 +387,7 @@ SSL_get_fd.3 \
 SSL_get_peer_cert_chain.3 \
 SSL_get_peer_certificate.3 \
 SSL_get_peer_signature_nid.3 \
+SSL_get_peer_tmp_key.3 \
 SSL_get_psk_identity.3 \
 SSL_get_rbio.3 \
 SSL_get_server_tmp_key.3 \
