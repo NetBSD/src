@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.7 2019/05/28 07:41:50 msaitoh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.8 2019/06/09 13:35:47 mrg Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
@@ -29,7 +29,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.7 2019/05/28 07:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.8 2019/06/09 13:35:47 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1095,6 +1095,17 @@ ure_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
+	callout_init(&sc->ure_stat_ch, 0);
+	usb_init_task(&sc->ure_tick_task, ure_tick_task, sc, 0);
+	mutex_init(&sc->ure_mii_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	/*
+	 * ure_phyno is set to 0 below when configuration has succeeded.
+	 * if it is still -1 in detach, then ifmedia/mii/etc was not
+	 * setup and should not be torn down.
+	 */
+	sc->ure_phyno = -1;
+
 #define URE_CONFIG_NO	1 /* XXX */
 	error = usbd_set_config_no(dev, URE_CONFIG_NO, 1);
 	if (error) {
@@ -1105,9 +1116,6 @@ ure_attach(device_t parent, device_t self, void *aux)
 
 	if (uaa->uaa_product == USB_PRODUCT_REALTEK_RTL8152)
 		sc->ure_flags |= URE_FLAG_8152;
-
-	usb_init_task(&sc->ure_tick_task, ure_tick_task, sc, 0);
-	mutex_init(&sc->ure_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 
 #define URE_IFACE_IDX  0 /* XXX */
 	error = usbd_device2interface_handle(dev, URE_IFACE_IDX, &sc->ure_iface);
@@ -1235,8 +1243,6 @@ ure_attach(device_t parent, device_t self, void *aux)
 	rnd_attach_source(&sc->ure_rnd_source, device_xname(sc->ure_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
-	callout_init(&sc->ure_stat_ch, 0);
-
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->ure_udev, sc->ure_dev);
@@ -1268,16 +1274,18 @@ ure_detach(device_t self, int flags)
 
 	s = splusb();
 
-	if (ifp->if_flags & IFF_RUNNING)
-		ure_stop(ifp, 1);
+	/* partial-attach, below items weren't configured. */
+	if (sc->ure_phyno != -1) {
+		if (ifp->if_flags & IFF_RUNNING)
+			ure_stop(ifp, 1);
 
-	callout_destroy(&sc->ure_stat_ch);
-	rnd_detach_source(&sc->ure_rnd_source);
-	mii_detach(&sc->ure_mii, MII_PHY_ANY, MII_OFFSET_ANY);
-	ifmedia_delete_instance(&sc->ure_mii.mii_media, IFM_INST_ANY);
-	if (ifp->if_softc != NULL) {
-		ether_ifdetach(ifp);
-		if_detach(ifp);
+		rnd_detach_source(&sc->ure_rnd_source);
+		mii_detach(&sc->ure_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+		ifmedia_delete_instance(&sc->ure_mii.mii_media, IFM_INST_ANY);
+		if (ifp->if_softc != NULL) {
+			ether_ifdetach(ifp);
+			if_detach(ifp);
+		}
 	}
 
 	if (--sc->ure_refcnt >= 0) {
@@ -1286,9 +1294,10 @@ ure_detach(device_t self, int flags)
 	}
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->ure_udev, sc->ure_dev);
-
+	callout_destroy(&sc->ure_stat_ch);
 	mutex_destroy(&sc->ure_mii_lock);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->ure_udev, sc->ure_dev);
 
 	return 0;
 }
