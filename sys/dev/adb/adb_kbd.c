@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.28 2019/06/06 20:59:58 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.29 2019/06/09 14:18:29 christos Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.28 2019/06/06 20:59:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.29 2019/06/09 14:18:29 christos Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -465,14 +469,15 @@ adbkbd_keys(struct adbkbd_softc *sc, uint8_t k1, uint8_t k2)
 		sc->sc_timestamp = now;
 		if (((diff > 1) && (diff < 5)) ||
 		     (sc->sc_power_button_delay == 0)) {
-
-			/* power button, report to sysmon */
+#ifdef DDB
 			if (sc->sc_power_dbg) {
 				Debugger();
-			} else {
-				sc->sc_pe = k1;
-				sysmon_task_queue_sched(0, adbkbd_powerbutton, sc);
+				return;
 			}
+#endif
+			/* power button, report to sysmon */
+			sc->sc_pe = k1;
+			sysmon_task_queue_sched(0, adbkbd_powerbutton, sc);
 		}
 	} else {
 
