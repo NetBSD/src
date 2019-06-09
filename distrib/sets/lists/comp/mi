@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2275 2019/06/01 21:42:02 kamil Exp $
+#	$NetBSD: mi,v 1.2276 2019/06/09 18:42:43 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5098,6 +5098,7 @@
 ./usr/share/man/cat3/SQLITE_VERSION.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SQLITE_VTAB_CONSTRAINT_SUPPORT.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SQLITE_WIN32_DATA_DIRECTORY_TYPE.0   comp-c-catman           .cat
+./usr/share/man/cat3/SSL_get_peer_tmp_key.0	comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/SSL_CIPHER_get_name.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SSL_COMP_add_compression_method.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SSL_CONF_CTX_new.0			comp-c-catman	.cat,openssl=11
@@ -13147,6 +13148,7 @@
 ./usr/share/man/html3/SQLITE_VERSION.html	comp-c-htmlman		html
 ./usr/share/man/html3/SQLITE_VTAB_CONSTRAINT_SUPPORT.html	comp-c-htmlman		html
 ./usr/share/man/html3/SQLITE_WIN32_DATA_DIRECTORY_TYPE.html       comp-c-htmlman          html
+./usr/share/man/html3/SSL_get_peer_tmp_key.html	comp-c-htmlman		himl,openssl=11
 ./usr/share/man/html3/SSL_CIPHER_get_name.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_COMP_add_compression_method.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CONF_CTX_new.html		comp-c-htmlman	html,openssl=11
@@ -21039,6 +21041,7 @@
 ./usr/share/man/man3/SQLITE_VERSION.3	comp-c-man		.man
 ./usr/share/man/man3/SQLITE_VTAB_CONSTRAINT_SUPPORT.3	comp-c-man		.man
 ./usr/share/man/man3/SQLITE_WIN32_DATA_DIRECTORY_TYPE.3   comp-c-man              .man
+./usr/share/man/man3/SSL_get_peer_tmp_key.3	comp-c-man		.man,openssl=11
 ./usr/share/man/man3/SSL_CIPHER_get_name.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_COMP_add_compression_method.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CONF_CTX_new.3			comp-c-man	.man,openssl=11
