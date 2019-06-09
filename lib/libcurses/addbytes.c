@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.51 2019/05/20 22:17:41 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.52 2019/06/09 07:40:14 blymn Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.51 2019/05/20 22:17:41 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.52 2019/06/09 07:40:14 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,9 +47,9 @@ __RCSID("$NetBSD: addbytes.c,v 1.51 2019/05/20 22:17:41 blymn Exp $");
 #endif
 
 #define	SYNCH_IN	{y = win->cury; x = win->curx;}
-#define	SYNCH_OUT	{win->cury = y; win->curx = x; win->ocury = y; win->ocurx = x;}
+#define	SYNCH_OUT	{win->cury = y; win->curx = x;}
 #define	PSYNCH_IN	{*y = win->cury; *x = win->curx;}
-#define	PSYNCH_OUT	{win->cury = *y; win->curx = *x; win->ocury = *y; win->ocurx = *x;}
+#define	PSYNCH_OUT	{win->cury = *y; win->curx = *x;}
 
 #ifndef _CURSES_USE_MACROS
 
@@ -94,7 +94,7 @@ int
 mvwaddbytes(WINDOW *win, int y, int x, const char *bytes, int count)
 {
 
-	if (_cursesi_wmove(win, y, x, 0) == ERR)
+	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return _cursesi_waddbytes(win, bytes, count, 0, 1);
@@ -241,14 +241,12 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 		case '\r':
 			*x = 0;
 			win->curx = *x;
-			win->ocurx = *x;
 			return OK;
 
 		case '\b':
 			if (--(*x) < 0)
 				*x = 0;
 			win->curx = *x;
-			win->ocurx = *x;
 			return OK;
 		}
 	}
@@ -364,12 +362,10 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 			if (--*x < 0)
 				*x = 0;
 			win->curx = *x;
-			win->ocurx = *x;
 			return OK;
 		case L'\r':
 			*x = 0;
 			win->curx = *x;
-			win->ocurx = *x;
 			return OK;
 		case L'\n':
 			wclrtoeol(win);
@@ -512,7 +508,6 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		(*lnp) = win->alines[*y];
 	}
 	win->cury = *y;
-	win->ocury = *y;
 
 	/* add spacing character */
 #ifdef DEBUG
@@ -602,11 +597,10 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		}
 		lp = &win->alines[*y]->line[0];
 		(*lnp) = win->alines[*y];
-		win->curx = win->ocurx = *x;
-		win->cury = win->ocury = *y;
+		win->curx = *x;
+		win->cury = *y;
 	} else {
 		win->curx = *x;
-		win->ocurx = *x;
 
 		/* clear the remining of the current characer */
 		if (*x && *x < win->maxx) {

@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wch.c,v 1.8 2019/05/20 22:17:41 blymn Exp $ */
+/*   $NetBSD: add_wch.c,v 1.9 2019/06/09 07:40:14 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wch.c,v 1.8 2019/05/20 22:17:41 blymn Exp $");
+__RCSID("$NetBSD: add_wch.c,v 1.9 2019/06/09 07:40:14 blymn Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -76,7 +76,7 @@ mvadd_wch(int y, int x, const cchar_t *wch)
 int
 mvwadd_wch(WINDOW *win, int y, int x, const cchar_t *wch)
 {
-	if (_cursesi_wmove(win, y, x, 0) == ERR)
+	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return wadd_wch(win, wch);

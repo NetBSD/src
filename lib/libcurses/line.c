@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.10 2019/05/20 22:17:41 blymn Exp $	*/
+/*	$NetBSD: line.c,v 1.11 2019/06/09 07:40:14 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: line.c,v 1.10 2019/05/20 22:17:41 blymn Exp $");
+__RCSID("$NetBSD: line.c,v 1.11 2019/06/09 07:40:14 blymn Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -71,7 +71,7 @@ int
 mvwhline(WINDOW *win, int y, int x, chtype ch, int count)
 {
 
-	if (_cursesi_wmove(win, y, x, 0) == ERR)
+	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return whline(win, ch, count);
@@ -97,7 +97,7 @@ whline(WINDOW *win, chtype ch, int count)
 	for (i = 0; i < n; i++)
 		mvwaddch(win, win->cury, ocurx + i, ch);
 
-	_cursesi_wmove(win, win->cury, ocurx, 1);
+	wmove(win, win->cury, ocurx);
 	return OK;
 #else
 	cchar_t cch, *cchp;
@@ -143,7 +143,7 @@ int
 mvwvline(WINDOW *win, int y, int x, chtype ch, int count)
 {
 
-	if (_cursesi_wmove(win, y, x, 0) == ERR)
+	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return wvline(win, ch, count);
@@ -170,7 +170,7 @@ wvline(WINDOW *win, chtype ch, int count)
 	for (i = 0; i < n; i++)
 		mvwaddch(win, ocury + i, ocurx, ch);
 
-	_cursesi_wmove(win, ocury, ocurx, 1);
+	wmove(win, ocury, ocurx);
 	return OK;
 #else
 	cchar_t cch, *cchp;
@@ -208,7 +208,7 @@ int mvwhline_set(WINDOW *win, int y, int x, const cchar_t *wch, int n)
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
-	if ( _cursesi_wmove( win, y , x , 0) == ERR )
+	if ( wmove( win, y , x ) == ERR )
 		return ERR;
 
 	return whline_set( win, wch, n );
@@ -245,7 +245,7 @@ int whline_set(WINDOW *win, const cchar_t *wch, int n)
 		mvwadd_wch(win, win->cury, ocurx + i * cw, &cc);
 	}
 
-	_cursesi_wmove(win, win->cury, ocurx, 1);
+	wmove(win, win->cury, ocurx);
 	__sync(win);
 	return OK;
 #endif /* HAVE_WCHAR */
@@ -274,7 +274,7 @@ int mvwvline_set(WINDOW *win, int y, int x, const cchar_t *wch, int n)
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
-	if (_cursesi_wmove(win, y, x, 0) == ERR)
+	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return wvline_set(win, wch, n);
@@ -307,7 +307,7 @@ int wvline_set(WINDOW *win, const cchar_t *wch, int n)
 #endif /* DEBUG */
 	}
 
-	_cursesi_wmove(win, ocury, ocurx, 1);
+	wmove(win, ocury, ocurx);
 	__sync(win);
 	return OK;
 #endif /* HAVE_WCHAR */

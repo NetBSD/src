@@ -1,4 +1,4 @@
-/*   $NetBSD: addwstr.c,v 1.5 2019/05/20 22:17:41 blymn Exp $ */
+/*   $NetBSD: addwstr.c,v 1.6 2019/06/09 07:40:14 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addwstr.c,v 1.5 2019/05/20 22:17:41 blymn Exp $");
+__RCSID("$NetBSD: addwstr.c,v 1.6 2019/06/09 07:40:14 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -114,7 +114,7 @@ mvaddnwstr(int y, int x, const wchar_t *str, int count)
 int
 mvwaddnwstr(WINDOW *win, int y, int x, const wchar_t *str, int count)
 {
-	if (_cursesi_wmove(win, y, x, 0) == ERR)
+	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return waddnwstr(win, str, count);

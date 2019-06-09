@@ -1,4 +1,4 @@
-/*	$NetBSD: addch.c,v 1.20 2019/05/20 22:17:41 blymn Exp $	*/
+/*	$NetBSD: addch.c,v 1.21 2019/06/09 07:40:14 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addch.c,v 1.20 2019/05/20 22:17:41 blymn Exp $");
+__RCSID("$NetBSD: addch.c,v 1.21 2019/06/09 07:40:14 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -74,7 +74,7 @@ int
 mvwaddch(WINDOW *win, int y, int x, chtype ch)
 {
 
-	if (_cursesi_wmove(win, y, x, 0) == ERR)
+	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return waddch(win, ch);

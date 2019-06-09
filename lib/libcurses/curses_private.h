@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.70 2019/05/20 22:17:41 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.71 2019/06/09 07:40:14 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -111,7 +111,6 @@ struct __window {		/* Window structure. */
 	struct __window	*nextp, *orig;	/* Subwindows list and parent. */
 	int begy, begx;			/* Window home. */
 	int cury, curx;			/* Current x, y coordinates. */
-	int ocury, ocurx;		/* Previous x, y coordinates. */
 	int maxy, maxx;			/* Maximum values for curx, cury. */
 	int reqy, reqx;			/* Size requested when created */
 	int ch_off;			/* x offset for firstch/lastch. */
@@ -352,7 +351,6 @@ void     _cursesi_reset_wacs(SCREEN *);
 #endif /* HAVE_WCHAR */
 void     _cursesi_resetterm(SCREEN *);
 int      _cursesi_setterm(char *, SCREEN *);
-int	_cursesi_wmove(WINDOW *, int, int, int);
 int	 __delay(void);
 unsigned int	 __hash_more(const void *, size_t, unsigned int);
 #define	__hash(s, len)	__hash_more((s), (len), 0u)

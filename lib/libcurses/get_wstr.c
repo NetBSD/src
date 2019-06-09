@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wstr.c,v 1.7 2019/05/20 22:17:41 blymn Exp $ */
+/*   $NetBSD: get_wstr.c,v 1.8 2019/06/09 07:40:14 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wstr.c,v 1.7 2019/05/20 22:17:41 blymn Exp $");
+__RCSID("$NetBSD: get_wstr.c,v 1.8 2019/06/09 07:40:14 blymn Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -98,7 +98,7 @@ mvget_wstr(int y, int x, wchar_t *wstr)
 int
 mvwgetn_wstr(WINDOW *win, int y, int x, wchar_t *wstr, int n)
 {
-	if (_cursesi_wmove(win, y, x, 0) == ERR)
+	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return wgetn_wstr(win, wstr, n);
@@ -113,7 +113,7 @@ __warn_references(mvget_wstr,
 int
 mvwget_wstr(WINDOW *win, int y, int x, wchar_t *wstr)
 {
-	if (_cursesi_wmove(win, y, x, 0) == ERR)
+	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return wget_wstr(win, wstr);
@@ -188,7 +188,7 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 				if ((wchar_t)wc == ec) {
 					mvwadd_wch(win, win->cury,
 						win->curx, &cc);
-					_cursesi_wmove(win, win->cury, win->curx - 1, 1);
+					wmove(win, win->cury, win->curx - 1);
 				}
 				if (wc == KEY_BACKSPACE || wc == KEY_LEFT) {
 					/* getch() displays the key sequence */
@@ -196,7 +196,7 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 						win->curx - 1, &cc);
 					mvwadd_wch(win, win->cury,
 						win->curx - 2, &cc);
-					_cursesi_wmove(win, win->cury, win->curx - 1, 1);
+					wmove(win, win->cury, win->curx - 1);
 				}
 				wstr--;
 				if (n != -1) {
@@ -208,7 +208,7 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 					/* getch() displays the other keys */
 					mvwadd_wch(win, win->cury,
 						win->curx - 1, &cc);
-				_cursesi_wmove(win, win->cury, oldx, 1);
+				wmove(win, win->cury, oldx);
 			}
 		} else if (wc == kc) {
 			*wstr = L'\0';
@@ -219,29 +219,29 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 				while (wstr != ostr) {
 					mvwadd_wch(win, win->cury,
 						win->curx - 1, &cc);
-					_cursesi_wmove(win, win->cury, win->curx - 1, 1);
+					wmove(win, win->cury, win->curx - 1);
 					wstr--;
 					if (n != -1)
 						/* We're counting chars */
 						remain++;
 				}
 				mvwadd_wch(win, win->cury, win->curx - 1, &cc);
-				_cursesi_wmove(win, win->cury, win->curx - 1, 1);
+				wmove(win, win->cury, win->curx - 1);
 			} else
 				/* getch() displays the kill character */
 				mvwadd_wch( win, win->cury, oldx, &cc );
-			_cursesi_wmove(win, win->cury, oldx, 0);
+			wmove(win, win->cury, oldx);
 		} else if (wc >= KEY_MIN && wc <= KEY_MAX) {
 			/* get_wch() displays these characters */
 			mvwadd_wch( win, win->cury, win->curx - 1, &cc );
-			_cursesi_wmove(win, win->cury, win->curx - 1, 1);
+			wmove(win, win->cury, win->curx - 1);
 		} else {
 			if (remain) {
 				wstr++;
 				remain--;
 			} else {
 				mvwadd_wch(win, win->cury, win->curx - 1, &cc);
-				_cursesi_wmove(win, win->cury, win->curx - 1, 1);
+				wmove(win, win->cury, win->curx - 1);
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.18 2019/05/20 22:17:41 blymn Exp $	*/
+/*	$NetBSD: copywin.c,v 1.19 2019/06/09 07:40:14 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.18 2019/05/20 22:17:41 blymn Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.19 2019/06/09 07:40:14 blymn Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -119,7 +119,7 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 			 * background character
 			 */
 			if ((dooverlay && !isspace(sp->ch)) || !dooverlay) {
-				_cursesi_wmove(dstwin, dminrow, dcol, 0);
+				wmove(dstwin, dminrow, dcol);
 #ifdef DEBUG
 	__CTRACE(__CTRACE_WINDOW, "copywin: dcol = %d\n", dcol);
 #endif
