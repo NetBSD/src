@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2019/06/07 12:11:43 mrg Exp $
+# $NetBSD: Makefile,v 1.32 2019/06/09 01:56:49 mrg Exp $
 
 # Link the gallium mega driver.
 
@@ -1013,6 +1013,7 @@ LLVMRT_LIBS+=	\
 # XXX duplicates
 LLVMRT_LIBS+=	\
 		ARMCodeGen \
+		ARMDisassembler \
 		ARMTargetInfo \
 		ARMMCTargetDesc \
 		ARMAsmParser \
