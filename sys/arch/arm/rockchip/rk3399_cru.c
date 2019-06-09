@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.7 2019/04/26 08:28:11 mrg Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.8 2019/06/09 16:14:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.7 2019/04/26 08:28:11 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.8 2019/06/09 16:14:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -165,11 +165,11 @@ static const struct rk_cru_cpu_rate armclkl_rates[] = {
         RK3399_CPUL_RATE(1488000000, 1, 6, 6),
         RK3399_CPUL_RATE(1416000000, 1, 6, 6),
         RK3399_CPUL_RATE(1200000000, 1, 5, 5),
-        RK3399_CPUL_RATE(1008000000, 1, 4, 4),
-        RK3399_CPUL_RATE( 816000000, 1, 3, 3),
+        RK3399_CPUL_RATE(1008000000, 1, 5, 5),
+        RK3399_CPUL_RATE( 816000000, 1, 4, 4),
         RK3399_CPUL_RATE( 696000000, 1, 3, 3),
-        RK3399_CPUL_RATE( 600000000, 1, 2, 2),
-        RK3399_CPUL_RATE( 408000000, 1, 1, 1),
+        RK3399_CPUL_RATE( 600000000, 1, 3, 3),
+        RK3399_CPUL_RATE( 408000000, 1, 2, 2),
         RK3399_CPUL_RATE( 312000000, 1, 1, 1),
         RK3399_CPUL_RATE( 216000000, 1, 1, 1),
         RK3399_CPUL_RATE(  96000000, 1, 1, 1),
@@ -798,6 +798,18 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 	RK_GATE(RK3399_PCLK_TSADC, "pclk_tsadc", "pclk_perilp1", CLKGATE_CON(22), 13),
 };
 
+static void
+rk3399_cru_init(struct rk_cru_softc *sc)
+{
+	struct rk_cru_clk *clk;
+
+	/*
+	 * Force an update of BPLL to bring it out of slow mode.
+	 */
+	clk = rk_cru_clock_find(sc, "armclkb");
+	clk_set_rate(&clk->base, clk_get_rate(&clk->base));
+}
+
 static int
 rk3399_cru_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -826,6 +838,8 @@ rk3399_cru_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": RK3399 CRU\n");
+
+	rk3399_cru_init(sc);
 
 	rk_cru_print(sc);
 }
