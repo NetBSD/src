@@ -585,7 +585,7 @@ print_strings (const char *filename, FILE *stream, file_ptr address,
 	    else
 #elif !BFD_HOST_64BIT_LONG
 	    if (start != (unsigned long) start)
-	      printf ("++%7llu ", (unsigned long) start);
+	      printf ("++%7lu ", (unsigned long) start);
 	    else
 #endif
 	      printf ("%7ld ", (long) start);
