@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.122 2019/05/25 03:25:08 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.123 2019/06/10 21:18:04 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.122 2019/05/25 03:25:08 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.123 2019/06/10 21:18:04 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -94,7 +94,8 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.122 2019/05/25 03:25:08 kamil Exp $");
 static int debug = 0;
 
 #define DPRINTF(a, ...)	do  \
-	if (debug) printf(a,  ##__VA_ARGS__); \
+	if (debug) \
+	printf("%s() %s:%d " a, __func__, __FILE__, __LINE__,  ##__VA_ARGS__); \
     while (/*CONSTCOND*/0)
 
 #ifndef TEST_VFORK_ENABLED
