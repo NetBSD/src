@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2276 2019/06/09 18:42:43 christos Exp $
+#	$NetBSD: mi,v 1.2277 2019/06/10 10:28:41 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -13148,7 +13148,7 @@
 ./usr/share/man/html3/SQLITE_VERSION.html	comp-c-htmlman		html
 ./usr/share/man/html3/SQLITE_VTAB_CONSTRAINT_SUPPORT.html	comp-c-htmlman		html
 ./usr/share/man/html3/SQLITE_WIN32_DATA_DIRECTORY_TYPE.html       comp-c-htmlman          html
-./usr/share/man/html3/SSL_get_peer_tmp_key.html	comp-c-htmlman		himl,openssl=11
+./usr/share/man/html3/SSL_get_peer_tmp_key.html	comp-c-htmlman		html,openssl=11
 ./usr/share/man/html3/SSL_CIPHER_get_name.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_COMP_add_compression_method.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CONF_CTX_new.html		comp-c-htmlman	html,openssl=11
