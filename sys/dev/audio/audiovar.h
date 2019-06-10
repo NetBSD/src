@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.2 2019/05/08 13:40:17 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.3 2019/06/10 13:12:51 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -140,6 +140,12 @@ struct audio_softc {
 	 */
 	const struct audio_hw_if *hw_if;
 	void		*hw_hdl;
+
+	/*
+	 * Properties obtained by get_props().
+	 * No need any locks to read this variable.
+	 */
+	int sc_props;
 
 	/*
 	 * List of opened descriptors.
